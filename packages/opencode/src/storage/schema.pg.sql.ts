@@ -1,6 +1,6 @@
-import { integer } from "drizzle-orm/sqlite-core"
+import { integer } from "drizzle-orm/pg-core"
 
-export const Timestamps = {
+export const TimestampsPg = {
   time_created: integer()
     .notNull()
     .$default(() => Date.now()),

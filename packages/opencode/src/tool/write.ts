@@ -14,6 +14,7 @@ import { InstanceState } from "@/effect/instance-state"
 import { trimDiff } from "./edit"
 import { assertExternalDirectoryEffect } from "./external-directory"
 import * as Bom from "@/util/bom"
+import { Coordination } from "./coordination"
 
 const MAX_PROJECT_DIAGNOSTICS_FILES = 5
 
@@ -42,6 +43,22 @@ export const WriteTool = Tool.define(
             ? params.filePath
             : path.join(instance.directory, params.filePath)
           yield* assertExternalDirectoryEffect(ctx, filepath)
+
+          // Check path reservation from coordination layer
+          let reservation: import("./coordination").PathReservation | null = null
+          try {
+            reservation = yield* Coordination.checkPathReserved(filepath)
+          } catch (e) {
+            // Graceful fallback: if coordination tables don't exist or query fails,
+            // log warning and allow the write to proceed
+            yield* Effect.logWarning("coordination check failed, allowing write", {
+              filepath,
+              error: String(e),
+            })
+          }
+          if (reservation && reservation.taskId !== ctx.sessionID) {
+            throw new Error(`Path ${filepath} is reserved by task ${reservation.taskId}. Cannot write.`)
+          }
 
           const exists = yield* fs.existsSafe(filepath)
           const source = exists ? yield* Bom.readFile(fs, filepath) : { bom: false, text: "" }

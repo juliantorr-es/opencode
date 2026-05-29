@@ -1,0 +1,4 @@
+Read structured messages from the coordination message ledger.
+Supports filtering by recipient, kind/type, session_id, sender, wave, and ISO timestamp ranges.
+Tracks unread state per-agent in .read_state.json and registers a heartbeat on every call so send_message knows this agent is alive (10s TTL).
+Returns structured JSON output with: messages array, count, total_in_buffer, unread count, last_read timestamp, and caller agent.

@@ -1,5 +1,5 @@
 import { describe, expect } from "bun:test"
-import { Effect, Layer } from "effect"
+import { Cause, Effect, Exit, Layer } from "effect"
 import { DuckDBQueryTool } from "../../src/tool/duckdb-query"
 import { DuckDB } from "@/storage/db.duckdb"
 import { testEffect } from "../lib/effect"
@@ -106,6 +106,33 @@ describe("DuckDBQueryTool", () => {
       const tool = yield* info.init()
       yield* tool.execute({ sql: "SELECT * FROM t LIMIT 10" }, makeCtx())
       expect(captured[0]).toBe("SELECT * FROM t LIMIT 10")
+    }),
+  )
+
+  it.effect("returns InvalidArgumentsError when duckdb binary is missing", () =>
+    Effect.gen(function* () {
+      const failingClient = makeFakeClient([])
+      failingClient.all = async () => {
+        throw new Error("Failed to spawn duckdb: spawn duckdb ENOENT")
+      }
+
+      const info = yield* DuckDBQueryTool.pipe(
+        Effect.provide(Layer.succeed(DuckDB.Service, failingClient as any)),
+      )
+      const tool = yield* info.init()
+
+      const exit = yield* Effect.exit(
+        tool.execute({ sql: "SELECT 1" }, makeCtx()),
+      )
+
+      expect(Exit.isFailure(exit)).toBe(true)
+      if (Exit.isFailure(exit)) {
+        const error = Cause.squash(exit.cause)
+        expect(error).toBeInstanceOf(Tool.InvalidArgumentsError)
+        if (error instanceof Tool.InvalidArgumentsError) {
+          expect(error.detail).toContain("brew install duckdb")
+        }
+      }
     }),
   )
 })

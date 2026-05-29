@@ -1,0 +1,4 @@
+Run the project validation command for the current workspace.
+Prefer the project's own `validate` script when present, otherwise fall back to the most appropriate typecheck/check command.
+Return the command output and fail when the validation command exits non-zero.
+

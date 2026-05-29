@@ -1,0 +1,8 @@
+Read a file from node_modules (or any path outside the workspace). For reading Effect types, framework internals, or library source. Returns a structured digest like read_source.
+
+PARAMETERS:
+- `package` (required): Package name or path relative to workspace root, e.g. 'effect' or 'node_modules/effect/dist/Layer.d.ts'
+- `file` (optional): Specific file within the package, e.g. 'Layer.d.ts', 'ManagedRuntime.d.ts'
+- `symbol` (optional): Look for a specific exported symbol: class, interface, function name
+- `grep_pattern` (optional): Grep for a pattern across the package's type definitions
+- `summary_only` (optional): Return only the matching lines, not full file content

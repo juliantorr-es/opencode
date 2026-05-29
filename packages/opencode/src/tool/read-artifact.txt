@@ -1,0 +1,9 @@
+Read a JSON or JSONL artifact and return a condensed, agent-optimized digest. Filter by profile to only get context relevant to your domain. Never returns raw files.
+For JSONL files: filters by key=value, relevance profile, and limit (last N).
+For JSON files: condenses arrays (first 3 items), collapses nested objects (first 5 keys).
+Supports summary_only mode for a 5-line executive summary.
+Supports field selection with comma-separated field names.
+
+Output format:
+  JSONL: {"type":"jsonl","total_records":N,"returned":N,"categories":{...},"records":[...]}
+  JSON:  {"type":"json","top_level_keys":[...],"array_counts":{...},"data":{...}}

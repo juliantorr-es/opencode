@@ -1,0 +1,8 @@
+Publish a finding summary to the cross-session artifact registry. Other sessions can discover this via discover_findings. Does NOT share the full artifact — only metadata.
+Findings are stored as JSONL under docs/json/opencode/registry/artifacts.v1.jsonl.
+Supports dedup: same session + same summary = skip (already published).
+Each record captures finding_type, summary, source_artifact, relevance_profiles (parsed from JSON),
+confidence, ttl_seconds, and an ISO timestamp.
+
+Output format:
+  {"status":"published","finding_id":"...","expires_at":"..."}

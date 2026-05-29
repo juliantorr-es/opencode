@@ -1,0 +1,14 @@
+Replace text in a file with exact matching. Automatically records edit metadata (who, why, what changed) — no need to call record_edit separately. Other agents see this via read_source.
+
+PARAMETERS:
+- `file` (required): Path to the file to edit
+- `oldText` (required): Exact text to replace — must match uniquely in the file
+- `newText` (required): Replacement text
+- `reason` (required): Why this edit is being made — one sentence
+- `plan_step` (optional): Which plan step or repair directive this corresponds to
+
+SAFETY:
+- oldText must match exactly once in the file (unique match)
+- If 0 matches: fails with "not found"
+- If 2+ matches: fails with "must be unique"
+- Edit metadata is automatically recorded to the edit_log.v1.jsonl

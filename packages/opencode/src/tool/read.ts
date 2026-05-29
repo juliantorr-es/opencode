@@ -1,9 +1,11 @@
 import { Effect, Option, Schema, Scope, Stream } from "effect"
 import { NonNegativeInt } from "@opencode-ai/core/schema"
 import * as path from "path"
+import { pathToFileURL } from "url"
 import * as Tool from "./tool"
 import { AppFileSystem } from "@opencode-ai/core/filesystem"
 import { LSP } from "@/lsp/lsp"
+import { SymbolContext } from "@/lsp/symbol-context"
 import DESCRIPTION from "./read.txt"
 import { InstanceState } from "@/effect/instance-state"
 import { assertExternalDirectoryEffect } from "./external-directory"
@@ -257,6 +259,7 @@ export const ReadTool = Tool.define(
             preview: sliced.slice(0, 20).join("\n"),
             truncated,
             loaded: [] as string[],
+            astContext: [] as string[][],
           },
         }
       }
@@ -277,6 +280,7 @@ export const ReadTool = Tool.define(
             preview: msg,
             truncated: false,
             loaded: loaded.map((item) => item.filepath),
+            astContext: [] as string[][],
           },
           attachments: [
             {
@@ -299,6 +303,12 @@ export const ReadTool = Tool.define(
         )
       }
 
+      const astContext: SymbolContext.SymbolContext[] = yield* SymbolContext.resolveSymbolContexts(
+        lsp,
+        filepath,
+        file.offset,
+        file.offset + file.raw.length - 1,
+      )
       let output = [`<path>${filepath}</path>`, `<type>file</type>`, "<content>\n"].join("\n")
       output += file.raw.map((line, i) => `${i + file.offset}: ${line}`).join("\n")
 
@@ -314,6 +324,10 @@ export const ReadTool = Tool.define(
       }
       output += "\n</content>"
 
+      if (astContext.length > 0) {
+        output += `\n\n<ast-context>\n${SymbolContext.formatSymbolContexts(astContext)}\n</ast-context>`
+      }
+
       yield* warm(filepath)
 
       if (loaded.length > 0) {
@@ -327,6 +341,7 @@ export const ReadTool = Tool.define(
           preview: file.raw.slice(0, 20).join("\n"),
           truncated,
           loaded: loaded.map((item) => item.filepath),
+          astContext: astContext.map((context) => context.path.map((symbol) => symbol.name)),
         },
       }
     })
@@ -339,3 +354,4 @@ export const ReadTool = Tool.define(
     }
   }),
 )
+

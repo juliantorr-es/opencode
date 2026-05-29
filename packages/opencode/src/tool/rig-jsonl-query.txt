@@ -1,0 +1,13 @@
+Run bounded read-only DuckDB queries against JSONL or JSON evidence artifacts.
+
+PARAMETERS:
+- `artifact` (required): Path to the JSON or JSONL artifact
+- `query` (required): SQL query to execute against the artifact view
+- `table` (optional, default "evidence"): Optional SQL view name
+
+CAPABILITIES:
+- Uses DuckDB's read_json_auto function to query JSONL files
+- Returns structured results with row count and rows
+
+REQUIREMENTS:
+- The `duckdb` CLI binary must be installed on the system

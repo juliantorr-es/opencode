@@ -58,6 +58,65 @@ const readLayer = (flags: Partial<RuntimeFlags.Info> = {}) =>
 const it = testEffect(readLayer())
 const scout = testEffect(readLayer({ experimentalScout: true }))
 
+const nestedSymbolLsp = LSP.Service.of({
+  init: () => Effect.void,
+  status: () => Effect.succeed([]),
+  hasClients: () => Effect.succeed(true),
+  touchFile: () => Effect.void,
+  diagnostics: () => Effect.succeed({}),
+  hover: () => Effect.succeed([]),
+  definition: () => Effect.succeed([]),
+  references: () => Effect.succeed([]),
+  implementation: () => Effect.succeed([]),
+  documentSymbol: () =>
+    Effect.succeed([
+      {
+        name: "Outer",
+        kind: 5,
+        range: {
+          start: { line: 0, character: 0 },
+          end: { line: 10, character: 1 },
+        },
+        selectionRange: {
+          start: { line: 0, character: 0 },
+          end: { line: 0, character: 6 },
+        },
+        children: [
+          {
+            name: "method",
+            kind: 6,
+            range: {
+              start: { line: 2, character: 2 },
+              end: { line: 8, character: 3 },
+            },
+            selectionRange: {
+              start: { line: 2, character: 2 },
+              end: { line: 2, character: 8 },
+            },
+            children: [
+              {
+                name: "inner",
+                kind: 12,
+                range: {
+                  start: { line: 4, character: 4 },
+                  end: { line: 6, character: 5 },
+                },
+                selectionRange: {
+                  start: { line: 4, character: 4 },
+                  end: { line: 4, character: 9 },
+                },
+              },
+            ],
+          },
+        ],
+      },
+    ]),
+  workspaceSymbol: () => Effect.succeed([]),
+  prepareCallHierarchy: () => Effect.succeed([]),
+  incomingCalls: () => Effect.succeed([]),
+  outgoingCalls: () => Effect.succeed([]),
+})
+
 const init = Effect.fn("ReadToolTest.init")(function* () {
   const info = yield* ReadTool
   return yield* info.init()
@@ -234,11 +293,13 @@ describe("tool.read external_directory permission", () => {
 
   it.live("asks for external_directory permission when reading relative path outside project", () =>
     Effect.gen(function* () {
+      const outer = yield* tmpdirScoped()
       const dir = yield* tmpdirScoped({ git: true })
+      yield* put(path.join(outer, "outside.txt"), "outside content")
 
       const { items, next } = asks()
 
-      yield* fail(dir, { filePath: "../outside.txt" }, next)
+      yield* exec(dir, { filePath: path.relative(dir, path.join(outer, "outside.txt")) }, next)
       const ext = items.find((item) => item.permission === "external_directory")
       expect(ext).toBeDefined()
     }),
@@ -439,6 +500,36 @@ describe("tool.read truncation", () => {
       expect(result.output).toContain("line14")
       expect(result.output).not.toContain("line0")
       expect(result.output).not.toContain("line15")
+    }),
+  )
+
+  it.instance("includes ast context for enclosing symbols", () =>
+    Effect.gen(function* () {
+      const test = yield* TestInstance
+      const file = path.join(test.directory, "nested.ts")
+      yield* put(
+        file,
+        [
+          "export class Outer {",
+          "  method() {",
+          "    const inner = () => {",
+          "      return 1",
+          "    }",
+          "    return inner()",
+          "  }",
+          "}",
+        ].join("\n"),
+      )
+
+      const result = yield* run({ filePath: file, offset: 4, limit: 2 }).pipe(
+        Effect.provideService(LSP.Service, nestedSymbolLsp),
+      )
+
+      expect(result.output).toContain("<ast-context>")
+      expect(result.output).toContain("Outer [1-11]")
+      expect(result.output).toContain("method [3-9]")
+      expect(result.output).toContain("inner [5-7]")
+      expect(result.metadata.astContext).toEqual([["Outer", "method", "inner"]])
     }),
   )
 

@@ -1,0 +1,9 @@
+Read a source file and return a structured, agent-optimized digest. Strips boilerplate, extracts imports/exports/key symbols, highlights the relevant section. Never returns raw text — always pre-digested.
+
+PARAMETERS:
+- `file` (required): Path to the source file
+- `focus` (optional): Function name, class name, or symbol to focus on. Returns only the relevant section + imports.
+- `summary_only` (optional): Return a 10-line overview: imports, exports, top-level symbols. No body content.
+- `include_imports` (optional, default true): Always include the import block at the top.
+
+OUTPUT: A JSON object with path, language, total_lines, imports, exports, symbols, and optionally content, focus section, or summary.

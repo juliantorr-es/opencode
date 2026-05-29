@@ -2,5 +2,7 @@ export { Config } from "@/config/config"
 export { Server } from "./server/server"
 export { bootstrap } from "./cli/bootstrap"
 export * as Log from "@opencode-ai/core/util/log"
+// @deprecated use DatabaseAdapter.Service instead — direct Database access
+// bypasses the adapter layer. Database is now Postgres-native (PGlite or node-postgres).
 export { Database } from "@/storage/db"
-export { JsonMigration } from "@/storage/json-migration"
+export { applyMigrations } from "@/storage/db.pg"

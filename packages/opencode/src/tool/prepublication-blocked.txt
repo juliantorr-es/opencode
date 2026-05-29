@@ -1,0 +1,8 @@
+Record a prepublication review verdict of 'blocked' for a candidate boundary.
+Writes a single JSON record under docs/json/opencode/approvals/prepublication_blocked.v1.json.
+Each record captures schema_version, candidate_packet_digest, candidate_boundary_identifier,
+parsed reviewer_set, review_round, status, blocker_description, repair_path, session_id,
+and an ISO timestamp.
+
+Output format:
+  {"status":"blocked","candidate_boundary_identifier":"...","review_round":...}

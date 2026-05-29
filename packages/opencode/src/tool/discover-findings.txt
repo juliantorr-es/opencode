@@ -1,0 +1,8 @@
+Discover findings from OTHER sessions that are relevant to your profiles. Pull-based — nothing auto-pollutes. Only returns metadata; use read_artifact on the source_artifact path to pull the full context if needed.
+Reads from docs/json/opencode/registry/artifacts.v1.jsonl.
+Filters by profile intersection, expiration (expires_at against current time),
+excluded session, confidence threshold, and finding type.
+Results sorted by confidence descending, limited by limit parameter.
+
+Output format:
+  {"findings":[...],"count":N,"total_in_registry":N,"profiles_searched":[...]}

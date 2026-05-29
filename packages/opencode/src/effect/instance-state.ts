@@ -14,7 +14,17 @@ export interface InstanceState<A, E = never, R = never> {
 
 export const context = Effect.gen(function* () {
   const ctx = yield* InstanceRef
-  if (!ctx) return yield* Effect.die(new Error("InstanceRef not provided"))
+  if (!ctx) {
+    // Tools like RigGitTool capture InstanceState.context during Tool.define()
+    // which runs at layer-construction time (before any request provides InstanceRef).
+    // Return a best-effort fallback so the tool registry can initialise.
+    const fallback = {
+      directory: process.cwd(),
+      project: { id: "__uninitialized__" } as any,
+      worktree: undefined as any,
+    }
+    return fallback as any
+  }
   return ctx
 })
 

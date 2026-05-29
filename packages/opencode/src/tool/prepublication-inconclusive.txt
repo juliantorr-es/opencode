@@ -1,0 +1,7 @@
+Record a prepublication review verdict of 'inconclusive' for a candidate boundary.
+Writes a single JSON record under docs/json/opencode/approvals/prepublication_inconclusive.v1.json.
+Each record captures schema_version, candidate_packet_digest, candidate_boundary_identifier,
+parsed reviewer_set, review_round, status, reason, session_id, and an ISO timestamp.
+
+Output format:
+  {"status":"inconclusive","candidate_boundary_identifier":"...","review_round":...}

@@ -12,6 +12,7 @@ import { Config } from "@/config/config"
 import { Cause, Effect, Exit, Schema, Scope } from "effect"
 import { EffectBridge } from "@/effect/bridge"
 import { RuntimeFlags } from "@/effect/runtime-flags"
+import { Coordination } from "./coordination"
 
 export interface TaskPromptOps {
   cancel(sessionID: SessionID): Effect.Effect<void>
@@ -40,6 +41,12 @@ const BaseParameterFields = {
       "This should only be set if you mean to resume a previous task (you can pass a prior task_id and the task will continue the same subagent session as before instead of creating a fresh one)",
   }),
   command: Schema.optional(Schema.String).annotate({ description: "The command that triggered this task" }),
+  wave: Schema.optional(Schema.Number).annotate({
+    description: "The orchestration wave number this task belongs to (for coordination tracking)",
+  }),
+  wave_type: Schema.optional(Schema.String).annotate({
+    description: "The orchestration wave type this task belongs to (e.g. 'execution', 'critique', 'validation')",
+  }),
 }
 
 const BaseParameters = Schema.Struct(BaseParameterFields)
@@ -158,6 +165,16 @@ export const TaskTool = Tool.define(
           ],
         }))
 
+      // Record coordination claim for this task
+      yield* Coordination.claimTask(
+        nextSession.id,
+        ctx.sessionID,
+        params.subagent_type,
+        params.description,
+        params.wave ?? 0,
+        (params.wave_type ?? "") as Coordination.WaveType | "",
+      )
+
       const msg = yield* MessageV2.get({ sessionID: ctx.sessionID, messageID: ctx.messageID }).pipe(Effect.orDie)
       if (msg.info.role !== "assistant") return yield* Effect.fail(new Error("Not an assistant message"))
 
@@ -197,7 +214,9 @@ export const TaskTool = Tool.define(
           },
           parts,
         })
-        return result.parts.findLast((item) => item.type === "text")?.text ?? ""
+        const text = result.parts.findLast((item) => item.type === "text")?.text ?? ""
+        yield* Coordination.releaseTask(nextSession.id, text)
+        return text
       })
 
       const inject = Effect.fn("TaskTool.injectBackgroundResult")(function* (
@@ -238,12 +257,16 @@ export const TaskTool = Tool.define(
           metadata,
           run: runTask().pipe(
             Effect.tap((text) => inject("completed", text).pipe(Effect.ignore)),
-            Effect.catchCause((cause) =>
-              (Cause.hasInterruptsOnly(cause)
-                ? Effect.void
-                : inject("error", errorText(Cause.squash(cause))).pipe(Effect.ignore)
-              ).pipe(Effect.andThen(Effect.failCause(cause))),
-            ),
+            Effect.catchCause((cause) => {
+                const errorMsg = errorText(Cause.squash(cause))
+                const handle = Cause.hasInterruptsOnly(cause)
+                  ? Effect.void
+                  : Effect.gen(function* () {
+                      yield* Coordination.failTask(nextSession.id, errorMsg)
+                      yield* inject("error", errorMsg).pipe(Effect.ignore)
+                    })
+                return handle.pipe(Effect.andThen(Effect.failCause(cause)))
+              }),
           ),
         })
 
@@ -268,15 +291,27 @@ export const TaskTool = Tool.define(
         Effect.sync(() => {
           ctx.abort.addEventListener("abort", onAbort)
         }),
-        () =>
-          Effect.gen(function* () {
+        () => {
+          const useEffect = Effect.gen(function* () {
             const text = yield* runTask()
             return {
               title: params.description,
               metadata,
               output: output(nextSession.id, text),
             }
-          }),
+          })
+          return Effect.catch(
+            useEffect,
+            (error: unknown) =>
+              Effect.gen(function* () {
+                yield* Coordination.failTask(
+                  nextSession.id,
+                  error instanceof Error ? error.message : String(error),
+                )
+                return yield* Effect.fail(error)
+              }),
+          )
+        },
         (_, exit) =>
           Effect.gen(function* () {
             if (Exit.hasInterrupts(exit)) yield* cancel

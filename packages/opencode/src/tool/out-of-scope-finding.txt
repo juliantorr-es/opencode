@@ -1,0 +1,10 @@
+Record an out-of-scope finding to BOTH the project debt registry AND the cross-session registry (30-day TTL). Future sessions will auto-discover this during planning.
+
+PARAMETERS:
+- `affected_files` (required): JSON array of affected file paths
+- `language` (required): Language/subsystem (python, typescript, config, etc.)
+- `why_matters` (required): Why this finding matters
+- `best_practice_anchor` (required): Best practice reference (PEP 8, Ruff rule, etc.)
+- `recommended_slice` (required): Recommended future work slice — what mission scope would address this
+
+OUTPUT: Status, whether finding was recorded or duplicate, file count, and cross-session publication status.

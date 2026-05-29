@@ -42,6 +42,31 @@ import { CoordinationTool } from "./coordination"
 import { RigGitTool } from "./rig-git"
 import { SendMessageTool } from "./send-message"
 import { ReadMessagesTool } from "./read-messages"
+import { ToolFailureTool } from "./tool-failure"
+import { ToolFeedbackTool } from "./tool-feedback"
+import { ProposePlanTool } from "./propose-plan"
+import { RevisePlanTool } from "./revise-plan"
+import { CommentPlanTool } from "./comment-plan"
+import { ReviewCriticismTool } from "./review-criticism"
+import { QaObservedCleanTool } from "./qa-observed-clean"
+import { PublishFindingTool } from "./publish-finding"
+import { DiscoverFindingsTool } from "./discover-findings"
+import { CurateContextTool } from "./curate-context"
+import { ReadArtifactTool } from "./read-artifact"
+import { ReadSourceTool } from "./read-source"
+import { ReadLibTool } from "./read-lib"
+import { SmartEditTool } from "./smart-edit"
+import { SmartWriteTool } from "./smart-write"
+import { SmartBatchTool } from "./smart-batch"
+import { ReplaceSymbolTool } from "./replace-symbol"
+import { RigJsonlQueryTool } from "./rig-jsonl-query"
+import { RigSchemaValidateTool } from "./rig-schema-validate"
+import { GenerateReportTool } from "./generate-report"
+import { PrepareDelegationTool } from "./prepare-delegation"
+import { PrepublicationAdmittedTool } from "./prepublication-admitted"
+import { PrepublicationBlockedTool } from "./prepublication-blocked"
+import { PrepublicationInconclusiveTool } from "./prepublication-inconclusive"
+import { OutOfScopeFindingTool } from "./out-of-scope-finding"
 import { Glob } from "@opencode-ai/core/util/glob"
 import path from "path"
 import { pathToFileURL } from "url"
@@ -67,12 +92,13 @@ import { Reference } from "@/reference/reference"
 import { BackgroundJob } from "@/background/job"
 import { RuntimeFlags } from "@/effect/runtime-flags"
 import { Storage } from "@/storage/storage"
+import { RecordStressWaveTool } from "./record-stress-wave"
+import { RecordExecutionWaveTool } from "./record-execution-wave"
 import { DuckDBQueryTool } from "./duckdb-query"
 import { DuckDB } from "@/storage/db.duckdb"
 import { DuckDBConfig } from "@/storage/duckdb-config"
 import { DatabaseAdapter } from "@/storage/adapter"
 import { DatabaseConfig } from "@/effect/database-config"
-
 const log = Log.create({ service: "tool.registry" })
 
 export function webSearchEnabled(providerID: ProviderID, flags = { exa: false, parallel: false }) {
@@ -140,6 +166,31 @@ export const layer = Layer.effect(
     const sendMessage = yield* SendMessageTool
     const readMessages = yield* ReadMessagesTool
     const duckdbQuery = yield* DuckDBQueryTool
+    const toolFailure = yield* ToolFailureTool
+    const toolFeedback = yield* ToolFeedbackTool
+    const proposePlan = yield* ProposePlanTool
+    const revisePlan = yield* RevisePlanTool
+    const commentPlan = yield* CommentPlanTool
+    const reviewCriticism = yield* ReviewCriticismTool
+    const qaObservedClean = yield* QaObservedCleanTool
+    const publishFinding = yield* PublishFindingTool
+    const discoverFindings = yield* DiscoverFindingsTool
+    const curateContext = yield* CurateContextTool
+    const readArtifact = yield* ReadArtifactTool
+    const readSource = yield* ReadSourceTool
+    const readLib = yield* ReadLibTool
+    const smartEdit = yield* SmartEditTool
+    const smartWrite = yield* SmartWriteTool
+    const smartBatch = yield* SmartBatchTool
+    const replaceSymbol = yield* ReplaceSymbolTool
+    const rigJsonlQuery = yield* RigJsonlQueryTool
+    const rigSchemaValidate = yield* RigSchemaValidateTool
+    const generateReport = yield* GenerateReportTool
+    const prepareDelegation = yield* PrepareDelegationTool
+    const prepublicationAdmitted = yield* PrepublicationAdmittedTool
+    const prepublicationBlocked = yield* PrepublicationBlockedTool
+    const prepublicationInconclusive = yield* PrepublicationInconclusiveTool
+    const outOfScopeFinding = yield* OutOfScopeFindingTool
     const agent = yield* Agent.Service
 
     const state = yield* InstanceState.make<State>(
@@ -262,7 +313,34 @@ export const layer = Layer.effect(
             rig_git: Tool.init(riggit),
             send_message: Tool.init(sendMessage),
             read_messages: Tool.init(readMessages),
+            record_stress_wave: Tool.init(RecordStressWaveTool),
+            record_execution_wave: Tool.init(RecordExecutionWaveTool),
             duckdb_query: Tool.init(duckdbQuery),
+            tool_failure: Tool.init(toolFailure),
+            tool_feedback: Tool.init(toolFeedback),
+            publish_finding: Tool.init(publishFinding),
+            discover_findings: Tool.init(discoverFindings),
+            curate_context: Tool.init(curateContext),
+            read_artifact: Tool.init(readArtifact),
+            propose_plan: Tool.init(proposePlan),
+            revise_plan: Tool.init(revisePlan),
+            comment_plan: Tool.init(commentPlan),
+            review_criticism: Tool.init(reviewCriticism),
+            qa_observed_clean: Tool.init(qaObservedClean),
+            read_source: Tool.init(readSource),
+            read_lib: Tool.init(readLib),
+            smart_edit: Tool.init(smartEdit),
+            smart_write: Tool.init(smartWrite),
+            smart_batch: Tool.init(smartBatch),
+            replace_symbol: Tool.init(replaceSymbol),
+            rig_jsonl_query: Tool.init(rigJsonlQuery),
+            rig_schema_validate: Tool.init(rigSchemaValidate),
+            generate_report: Tool.init(generateReport),
+            prepare_delegation: Tool.init(prepareDelegation),
+            prepublication_admitted: Tool.init(prepublicationAdmitted),
+            prepublication_blocked: Tool.init(prepublicationBlocked),
+            prepublication_inconclusive: Tool.init(prepublicationInconclusive),
+            out_of_scope_finding: Tool.init(outOfScopeFinding),
         })
 
         return {
@@ -284,11 +362,38 @@ export const layer = Layer.effect(
             tool.test,
             tool.inspect_failure,
             tool.report,
+            tool.tool_failure,
+            tool.tool_feedback,
+            tool.propose_plan,
+            tool.revise_plan,
+            tool.comment_plan,
+            tool.review_criticism,
+            tool.qa_observed_clean,
+            tool.read_source,
+            tool.read_lib,
+            tool.smart_edit,
+            tool.smart_write,
+            tool.smart_batch,
+            tool.replace_symbol,
+            tool.rig_jsonl_query,
+            tool.rig_schema_validate,
+            tool.generate_report,
+            tool.prepare_delegation,
+            tool.prepublication_admitted,
+            tool.prepublication_blocked,
+            tool.prepublication_inconclusive,
+            tool.out_of_scope_finding,
             tool.search_replace,
             tool.prepare_checkpoint,
             tool.checkpoint,
             tool.publish_checkpoint,
             tool.generate_published_checkpoint_report,
+            tool.record_stress_wave,
+            tool.record_execution_wave,
+            tool.publish_finding,
+            tool.discover_findings,
+            tool.curate_context,
+            tool.read_artifact,
             ...(flags.experimentalScout ? [tool.repo_clone, tool.repo_overview] : []),
             tool.skill,
             tool.patch,

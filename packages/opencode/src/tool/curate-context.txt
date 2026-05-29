@@ -1,0 +1,8 @@
+Curate the active mission context from subagent-produced artifacts. Assembles a living context document that each wave receives — stale artifacts are flagged for archival. Agents use read_artifact(context) to get the latest curated view.
+Context is stored at docs/json/opencode/sessions/<sessionID>/context/current.v1.json.
+Stale artifacts are moved to docs/json/opencode/archive/<sessionID>/<wave>/.
+Findings and artifacts are merged into wave history with a timestamp.
+
+Output format:
+  {"status":"curated","wave":"...","findings_added":N,"artifacts_added":N,
+   "stale_archived":N,"total_active_findings":N,"context_path":"..."}

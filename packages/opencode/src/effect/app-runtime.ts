@@ -1,7 +1,6 @@
 import { Layer, ManagedRuntime } from "effect"
 import { attach } from "./run-service"
 import * as Observability from "@opencode-ai/core/effect/observability"
-
 import { AppFileSystem } from "@opencode-ai/core/filesystem"
 import { Bus } from "@/bus"
 import { Auth } from "@/auth"
@@ -55,10 +54,11 @@ import { SyncEvent } from "@/sync"
 import { Npm } from "@opencode-ai/core/npm"
 import { memoMap } from "@opencode-ai/core/effect/memo-map"
 import { DataMigration } from "@/data-migration"
+import { DatabaseAdapter } from "@/storage/adapter"
 import { BackgroundJob } from "@/background/job"
 import { EventV2Bridge } from "@/event-v2-bridge"
 import { RuntimeFlags } from "@/effect/runtime-flags"
-
+import { DatabaseConfig } from "@/effect/database-config"
 export const AppLayer = Layer.mergeAll(
   Npm.defaultLayer,
   AppFileSystem.defaultLayer,
@@ -86,6 +86,7 @@ export const AppLayer = Layer.mergeAll(
   SessionStatus.defaultLayer,
   BackgroundJob.defaultLayer,
   RuntimeFlags.defaultLayer,
+  DatabaseAdapter.defaultLayer,
   SessionRunState.defaultLayer,
   SessionProcessor.defaultLayer,
   SessionCompaction.defaultLayer,
@@ -114,15 +115,16 @@ export const AppLayer = Layer.mergeAll(
   SyncEvent.defaultLayer,
   EventV2Bridge.defaultLayer,
   DataMigration.defaultLayer,
-).pipe(Layer.provideMerge(InstanceLayer.layer), Layer.provideMerge(Observability.layer))
-
+).pipe(
+  Layer.provideMerge(DatabaseConfig.defaultLayer),
+  Layer.provideMerge(InstanceLayer.layer),
+  Layer.provideMerge(Observability.layer),
+)
 const rt = ManagedRuntime.make(AppLayer, { memoMap })
 type Runtime = Pick<typeof rt, "runSync" | "runPromise" | "runPromiseExit" | "runFork" | "runCallback" | "dispose">
-
 /** Services provided by AppRuntime — i.e. what an Effect run via AppRuntime.runPromise can yield. */
 export type AppServices = ManagedRuntime.ManagedRuntime.Services<typeof rt>
 const wrap = (effect: Parameters<typeof rt.runSync>[0]) => attach(effect as never) as never
-
 export const AppRuntime: Runtime = {
   runSync(effect) {
     return rt.runSync(wrap(effect))

@@ -1,0 +1,1 @@
+Apply multiple edits atomically. Accepts a JSON array of {file, oldText, newText, reason} objects. All edits are applied together — if any fails, none are applied. Auto-records metadata for each edit.

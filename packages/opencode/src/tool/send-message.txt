@@ -1,0 +1,11 @@
+Broadcast wave directives, blockers, clarifications, and handoffs to the coordination ledger.
+Messages are stored as JSONL under .rig/messages/ and are visible to other sessions via read_messages.
+Supports dry-run to preview without writing.
+
+Output format:
+  ┌──────────────────────────────────────────┐
+  │ ✉  directive → executor                  │
+  │ subject: Wave 1 — Learning               │
+  │ status:  delivered                        │
+  │ id: 20260529T093000_dir_active            │
+  └──────────────────────────────────────────┘

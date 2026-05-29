@@ -1,0 +1,9 @@
+Run a read-only git command on the current repository. Returns structured output bounded to safe limits.
+
+Available commands:
+- status: Working tree status (porcelain format)
+- diff: Unstaged or staged diff for a path
+- log: Recent commit history
+- branch: Local (and remote with --all) branch listing
+- show: Show file contents at a specific ref
+- ls-files: List tracked files matching a pattern

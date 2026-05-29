@@ -1,0 +1,7 @@
+Record execution wave results including changed files, tests run, and boundary verification.
+Execution wave records are appended as JSONL under docs/json/opencode/sessions/<sessionID>/waves/execution.v1.jsonl.
+Each record captures plan_id, executor, parsed changed_files and tests_run arrays,
+validation_passed, boundary_verified, notes, session_id, and an ISO timestamp.
+
+Output format:
+  {"status":"ok","plan_id":"...","executor":"..."}

@@ -1,0 +1,4 @@
+Run the project test command for the current workspace.
+Prefer the project's own `test` script when present, otherwise fall back to the most appropriate test command.
+Return the command output and fail when the test command exits non-zero.
+

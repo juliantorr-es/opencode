@@ -1,0 +1,8 @@
+Validate JSON or JSONL artifacts against a JSON Schema without modifying files.
+
+PARAMETERS:
+- `artifact` (required): Path to the JSON or JSONL artifact
+- `schema` (optional): Path to a JSON Schema file to validate against
+- `label` (optional): Human-readable label for the validation result (defaults to artifact path)
+
+OUTPUT: A JSON object with validation status, label, artifact path, kind, schema path, and error details.

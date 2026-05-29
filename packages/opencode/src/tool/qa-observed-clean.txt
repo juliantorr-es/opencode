@@ -1,0 +1,7 @@
+Record a QA observation that tests exercise the production boundary cleanly.
+QA observations are appended as JSONL under docs/json/opencode/sessions/<sessionID>/qa/observations.v1.jsonl.
+Each record captures schema_version, plan_id, boundary, verdict, parsed tests_examined and
+production_paths_exercised arrays, notes, session_id, and an ISO timestamp.
+
+Output format:
+  {"status":"ok","plan_id":"...","boundary":"...","verdict":"qa_observed_clean"}

@@ -1,0 +1,20 @@
+Run read-only SQL queries against DuckDB for analytical and diagnostic purposes.
+
+IMPORTANT: DuckDB connects to an empty in-memory database by default. No project data is loaded into DuckDB — it is a separate analytical engine, not the primary database. This tool is useful for:
+- Running DuckDB-native analytical SQL
+- Testing and experimenting with DuckDB SQL syntax
+- Processing data that has been explicitly loaded into DuckDB
+
+REQUIREMENTS:
+- The `duckdb` CLI binary must be installed on the system
+- Install via: brew install duckdb (macOS), apt install duckdb (Debian/Ubuntu), or download from https://duckdb.org/docs/installation/
+
+SAFETY:
+- All queries run with the `-readonly` flag — INSERT, UPDATE, DELETE, CREATE, DROP, ALTER are rejected at the process level
+- A SQL firewall blocks dangerous functions: read_text, read_blob, read_csv, read_parquet, read_json, query_table, ATTACH, load_extension, LOAD, EXPORT, COPY … TO
+- A mandatory LIMIT is applied to all queries (default 1000 rows, maximum 10000)
+- Output is automatically truncated if it exceeds size limits
+
+PARAMETERS:
+- `sql` (required): The DuckDB SQL query string to execute
+- `limit` (optional, default 1000, max 10000): Maximum number of rows to return

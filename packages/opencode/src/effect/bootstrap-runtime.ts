@@ -10,11 +10,13 @@ import { Vcs } from "@/project/vcs"
 import { Snapshot } from "@/snapshot"
 import { Bus } from "@/bus"
 import { Config } from "@/config/config"
+import { DatabaseAdapter } from "@/storage/adapter"
 import * as Observability from "@opencode-ai/core/effect/observability"
 import { memoMap } from "@opencode-ai/core/effect/memo-map"
 
 export const BootstrapLayer = Layer.mergeAll(
   Config.defaultLayer,
+  DatabaseAdapter.defaultLayer,
   Plugin.defaultLayer,
   ShareNext.defaultLayer,
   Format.defaultLayer,

@@ -3,7 +3,7 @@ import { Context, Effect, Layer, Option } from "effect"
 
 import { DatabaseAdapter } from "./adapter"
 import { DuckDBConfig } from "./duckdb-config"
-import { initViewsSql } from "./schema.duckdb"
+import { initTablesSql, initViewsSql } from "./schema.duckdb"
 
 // ── Constants ───────────────────────────────────────────────
 
@@ -65,6 +65,9 @@ export function runPipeline(dbPath: string, adapter: DatabaseAdapter.Interface, 
     yield* Effect.promise(() => execDuckDB(dbPath, CREATE_META_TABLE, signal))
     yield* Effect.promise(() => execDuckDBStdin(dbPath, CREATE_SESSION_TABLE, JSON.stringify(sessions), signal))
     yield* Effect.promise(() => execDuckDBStdin(dbPath, CREATE_PART_TABLE, JSON.stringify(parts), signal))
+
+    // 4b. Create analytical tables
+    yield* Effect.promise(() => execDuckDB(dbPath, initTablesSql(), signal))
 
     // 5. Create analytical views
     yield* Effect.promise(() => execDuckDB(dbPath, initViewsSql(), signal))

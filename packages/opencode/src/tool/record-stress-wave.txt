@@ -1,0 +1,7 @@
+Record stress wave attacks attempted, surviving weaknesses or breakages, repaired seams, and recommendations.
+Stress wave records are appended as JSONL under docs/json/opencode/sessions/<sessionID>/waves/stress.v1.jsonl.
+Each record captures plan_id, adversary, attack_surface, parsed attacks_attempted and findings arrays,
+verdict, session_id, and an ISO timestamp.
+
+Output format:
+  {"status":"ok","plan_id":"...","adversary":"...","verdict":"..."}

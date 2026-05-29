@@ -1,0 +1,3 @@
+Report a tool that isn't working as intended. Aggregated into a feedback artifact for post-run review.
+Appends or updates a structured feedback record in docs/json/opencode/sessions/<sessionID>/feedback/tool_feedback.v1.jsonl.
+Deduplicates by SHA-256 hash of tool_name|issue|sessionID and increments occurrence count on repeat submissions.

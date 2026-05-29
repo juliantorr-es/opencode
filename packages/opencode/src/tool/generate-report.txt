@@ -1,0 +1,7 @@
+Produce the final session report by consuming ALL artifacts from the curated context. Archives everything into docs/json/opencode/archive/<session>/ so the next session starts clean. Outputs a session summary for the user.
+
+PARAMETERS:
+- `session_summary` (required): Narrative summary of what was accomplished this session
+- `next_steps` (optional): Recommended next convergent course
+
+OUTPUT: Report path, artifacts archived count, waves completed, and findings consumed.

@@ -51,6 +51,64 @@ export const ALL_VIEWS = [
   TOOL_USAGE_VIEW,
 ] as const
 
+// ── Analytical table definitions ────────────────────────────
+//
+// Tables back the cross-session analytical pipeline. Unlike views,
+// these are created as persistent tables to store structured event
+// data written by agents during execution, QA, and diagnostics.
+// Materialized by the DuckDB pipeline on init -- see pipeline.ts step 4b.
+
+/** Waves table for stress-test and adversary-wave records. */
+export const WAVES_TABLE = `
+CREATE TABLE IF NOT EXISTS _analytics_waves (
+  session_id TEXT, plan_id TEXT, wave_type TEXT, adversary TEXT,
+  attack_surface TEXT, attacks_attempted TEXT, findings TEXT,
+  verdict TEXT, recorded_at BIGINT
+)` as const
+
+/** Findings table for out-of-scope and cross-session findings. */
+export const FINDINGS_TABLE = `
+CREATE TABLE IF NOT EXISTS _analytics_findings (
+  finding_id TEXT PRIMARY KEY, session_id TEXT, affected_files TEXT,
+  language TEXT, why_matters TEXT, best_practice_anchor TEXT,
+  recommended_slice TEXT, finding_type TEXT, confidence REAL,
+  ttl_seconds BIGINT, expires_at BIGINT, recorded_at BIGINT
+)` as const
+
+/** Registry table for cross-session artifact publishing. */
+export const REGISTRY_TABLE = `
+CREATE TABLE IF NOT EXISTS _analytics_registry (
+  dedup_key TEXT PRIMARY KEY, finding_id TEXT, session_id TEXT,
+  finding_type TEXT, summary TEXT, source_artifact TEXT,
+  relevance_profiles TEXT, confidence REAL, ttl_seconds BIGINT,
+  published_at BIGINT, expires_at BIGINT
+)` as const
+
+/** QA observations table for test-coverage and boundary-exercise tracking. */
+export const QA_TABLE = `
+CREATE TABLE IF NOT EXISTS _analytics_qa_observations (
+  plan_id TEXT, boundary TEXT, tests_examined TEXT,
+  production_paths_exercised TEXT, notes TEXT, recorded_at BIGINT
+)` as const
+
+/** Diagnostics table for tool-failure and runtime error tracking. */
+export const DIAGNOSTICS_TABLE = `
+CREATE TABLE IF NOT EXISTS _analytics_diagnostics (
+  session_id TEXT, tool_name TEXT, error_message TEXT,
+  args_used TEXT, recovery_attempted INTEGER, recorded_at BIGINT
+)` as const
+
+/** All analytical tables to create on init (before views). */
+export const ALL_TABLES = [
+  WAVES_TABLE, FINDINGS_TABLE, REGISTRY_TABLE,
+  QA_TABLE, DIAGNOSTICS_TABLE,
+] as const
+
+/** Create all analytical tables in the DuckDB session. Call before initViewsSql. */
+export function initTablesSql(): string {
+  return ALL_TABLES.join(";\n")
+}
+
 // ── View initialization ────────────────────────────────────
 
 /**

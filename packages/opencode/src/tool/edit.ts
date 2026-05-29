@@ -18,6 +18,8 @@ import { Snapshot } from "@/snapshot"
 import { assertExternalDirectoryEffect } from "./external-directory"
 import { AppFileSystem } from "@opencode-ai/core/filesystem"
 import * as Bom from "@/util/bom"
+import { Coordination } from "./coordination"
+import { FileLock } from "./file-lock"
 
 function normalizeLineEndings(text: string): string {
   return text.replaceAll("\r\n", "\n")
@@ -32,16 +34,8 @@ function convertToLineEnding(text: string, ending: "\n" | "\r\n"): string {
   return text.replaceAll("\n", "\r\n")
 }
 
-const locks = new Map<string, Semaphore.Semaphore>()
-
 function lock(filePath: string) {
-  const resolvedFilePath = AppFileSystem.resolve(filePath)
-  const hit = locks.get(resolvedFilePath)
-  if (hit) return hit
-
-  const next = Semaphore.makeUnsafe(1)
-  locks.set(resolvedFilePath, next)
-  return next
+  return FileLock.lock(filePath)
 }
 
 export const Parameters = Schema.Struct({
@@ -81,11 +75,27 @@ export const EditTool = Tool.define(
             ? params.filePath
             : path.join(instance.directory, params.filePath)
           yield* assertExternalDirectoryEffect(ctx, filePath)
+          // Check path reservation from coordination layer
+          let reservation: import("./coordination").PathReservation | null = null
+          try {
+            reservation = yield* Coordination.checkPathReserved(filePath)
+          } catch (e) {
+            // Graceful fallback: if coordination tables don't exist or query fails,
+            // log warning and allow the edit to proceed
+            yield* Effect.logWarning("coordination check failed, allowing edit", {
+              filePath,
+              error: String(e),
+            })
+          }
+          if (reservation && reservation.taskId !== ctx.sessionID) {
+            throw new Error(`Path ${filePath} is reserved by task ${reservation.taskId}. Cannot edit.`)
+          }
 
           let diff = ""
           let contentOld = ""
           let contentNew = ""
-          yield* lock(filePath).withPermits(1)(
+          const sem = yield* lock(filePath)
+          yield* sem.withPermits(1)(
             Effect.gen(function* () {
               if (params.oldString === "") {
                 const existed = yield* afs.existsSafe(filePath)
