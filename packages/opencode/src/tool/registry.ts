@@ -29,6 +29,19 @@ import * as Log from "@opencode-ai/core/util/log"
 import { LspTool } from "./lsp"
 import * as Truncate from "./truncate"
 import { ApplyPatchTool } from "./apply_patch"
+import { ValidateTool } from "./validate"
+import { TestTool } from "./test"
+import { InspectFailureTool } from "./inspect_failure"
+import { ReportTool } from "./report"
+import { SearchReplaceTool } from "./search_replace"
+import { PrepareCheckpointTool } from "./prepare_checkpoint"
+import { CheckpointTool } from "./checkpoint"
+import { PublishCheckpointTool } from "./publish_checkpoint"
+import { GeneratePublishedCheckpointReportTool } from "./generate_published_checkpoint_report"
+import { CoordinationTool } from "./coordination"
+import { RigGitTool } from "./rig-git"
+import { SendMessageTool } from "./send-message"
+import { ReadMessagesTool } from "./read-messages"
 import { Glob } from "@opencode-ai/core/util/glob"
 import path from "path"
 import { pathToFileURL } from "url"
@@ -53,6 +66,12 @@ import { Permission } from "@/permission"
 import { Reference } from "@/reference/reference"
 import { BackgroundJob } from "@/background/job"
 import { RuntimeFlags } from "@/effect/runtime-flags"
+import { Storage } from "@/storage/storage"
+import { DuckDBQueryTool } from "./duckdb-query"
+import { DuckDB } from "@/storage/db.duckdb"
+import { DuckDBConfig } from "@/storage/duckdb-config"
+import { DatabaseAdapter } from "@/storage/adapter"
+import { DatabaseConfig } from "@/effect/database-config"
 
 const log = Log.create({ service: "tool.registry" })
 
@@ -79,32 +98,7 @@ export interface Interface {
 
 export class Service extends Context.Service<Service, Interface>()("@opencode/ToolRegistry") {}
 
-export const layer: Layer.Layer<
-  Service,
-  never,
-  | Config.Service
-  | Plugin.Service
-  | Question.Service
-  | Todo.Service
-  | Agent.Service
-  | Skill.Service
-  | Session.Service
-  | BackgroundJob.Service
-  | Provider.Service
-  | Git.Service
-  | RepositoryCache.Service
-  | Reference.Service
-  | LSP.Service
-  | Instruction.Service
-  | AppFileSystem.Service
-  | Bus.Service
-  | HttpClient.HttpClient
-  | ChildProcessSpawner
-  | Ripgrep.Service
-  | Format.Service
-  | Truncate.Service
-  | RuntimeFlags.Service
-> = Layer.effect(
+export const layer = Layer.effect(
   Service,
   Effect.gen(function* () {
     const config = yield* Config.Service
@@ -131,7 +125,21 @@ export const layer: Layer.Layer<
     const edit = yield* EditTool
     const greptool = yield* GrepTool
     const patchtool = yield* ApplyPatchTool
+    const validate = yield* ValidateTool
+    const test = yield* TestTool
+    const inspectFailure = yield* InspectFailureTool
+    const report = yield* ReportTool
+    const searchReplace = yield* SearchReplaceTool
+    const prepareCheckpoint = yield* PrepareCheckpointTool
+    const checkpoint = yield* CheckpointTool
+    const publishCheckpoint = yield* PublishCheckpointTool
+    const publishedCheckpointReport = yield* GeneratePublishedCheckpointReportTool
     const skilltool = yield* SkillTool
+    const coordinationtool = yield* CoordinationTool
+    const riggit = yield* RigGitTool
+    const sendMessage = yield* SendMessageTool
+    const readMessages = yield* ReadMessagesTool
+    const duckdbQuery = yield* DuckDBQueryTool
     const agent = yield* Agent.Service
 
     const state = yield* InstanceState.make<State>(
@@ -238,9 +246,23 @@ export const layer: Layer.Layer<
           repo_overview: Tool.init(repoOverview),
           skill: Tool.init(skilltool),
           patch: Tool.init(patchtool),
+          validate: Tool.init(validate),
+          test: Tool.init(test),
+          inspect_failure: Tool.init(inspectFailure),
+          report: Tool.init(report),
+          search_replace: Tool.init(searchReplace),
+          prepare_checkpoint: Tool.init(prepareCheckpoint),
+          checkpoint: Tool.init(checkpoint),
+          publish_checkpoint: Tool.init(publishCheckpoint),
+          generate_published_checkpoint_report: Tool.init(publishedCheckpointReport),
           question: Tool.init(question),
           lsp: Tool.init(lsptool),
           plan: Tool.init(plan),
+            coordination: Tool.init(coordinationtool),
+            rig_git: Tool.init(riggit),
+            send_message: Tool.init(sendMessage),
+            read_messages: Tool.init(readMessages),
+            duckdb_query: Tool.init(duckdbQuery),
         })
 
         return {
@@ -258,11 +280,27 @@ export const layer: Layer.Layer<
             tool.fetch,
             tool.todo,
             tool.search,
+            tool.validate,
+            tool.test,
+            tool.inspect_failure,
+            tool.report,
+            tool.search_replace,
+            tool.prepare_checkpoint,
+            tool.checkpoint,
+            tool.publish_checkpoint,
+            tool.generate_published_checkpoint_report,
             ...(flags.experimentalScout ? [tool.repo_clone, tool.repo_overview] : []),
             tool.skill,
             tool.patch,
             ...(flags.experimentalLspTool ? [tool.lsp] : []),
             ...(flags.experimentalPlanMode && flags.client === "cli" ? [tool.plan] : []),
+            ...(flags.experimentalCoordination ? [
+              tool.coordination,
+              tool.rig_git,
+              tool.send_message,
+              tool.read_messages,
+            ] : []),
+            ...(flags.experimentalDuckDBQuery ? [tool.duckdb_query] : []),
           ],
           task: tool.task,
           read: tool.read,
@@ -393,6 +431,11 @@ export const defaultLayer = Layer.suspend(() =>
       Layer.provide(Ripgrep.defaultLayer),
       Layer.provide(Truncate.defaultLayer),
     )
+    .pipe(Layer.provide(DuckDBConfig.defaultLayer))
+    .pipe(Layer.provide(DatabaseConfig.defaultLayer))
+    .pipe(Layer.provide(DatabaseAdapter.defaultLayer))
+    .pipe(Layer.provide(DuckDB.layer))
+    .pipe(Layer.provide(Storage.defaultLayer))
     .pipe(Layer.provide(RuntimeFlags.defaultLayer)),
 )
 

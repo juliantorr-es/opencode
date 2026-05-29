@@ -1,0 +1,228 @@
+import { spawn } from "child_process"
+import { Context, Effect, Layer, Option } from "effect"
+
+import { DatabaseAdapter } from "./adapter"
+import { DuckDBConfig } from "./duckdb-config"
+import { initViewsSql } from "./schema.duckdb"
+
+// ── Constants ───────────────────────────────────────────────
+
+const CURRENT_SCHEMA_VERSION = 1
+
+const CREATE_META_TABLE = `
+CREATE TABLE IF NOT EXISTS _pipeline_meta (
+  schema_version INTEGER NOT NULL PRIMARY KEY,
+  created_at_epoch BIGINT NOT NULL
+)`
+
+const CHECK_META = "SELECT schema_version FROM _pipeline_meta LIMIT 1"
+
+const WRITE_META = `
+INSERT OR REPLACE INTO _pipeline_meta (schema_version, created_at_epoch)
+VALUES (${CURRENT_SCHEMA_VERSION}, CAST(epoch_ms(CURRENT_TIMESTAMP) AS BIGINT))`
+
+const CREATE_SESSION_TABLE = `
+CREATE OR REPLACE TABLE _pipeline_session AS
+SELECT * FROM read_json_auto('/dev/stdin')`
+
+const CREATE_PART_TABLE = `
+CREATE OR REPLACE TABLE _pipeline_part AS
+SELECT * FROM read_json_auto('/dev/stdin')`
+
+// ── Service ─────────────────────────────────────────────────
+
+export interface Interface {}
+
+export class Service extends Context.Service<Service, Interface>()("@opencode/DuckDBPipeline") {}
+
+// ── Pipeline helpers ────────────────────────────────────────
+
+export function runPipeline(dbPath: string, adapter: DatabaseAdapter.Interface, signal?: AbortSignal): Effect.Effect<void> {
+  if (dbPath === ":memory:") { return Effect.void }
+  return Effect.gen(function* () {
+    // 1. Check meta guard — skip if already populated at this schema version
+    const meta = yield* Effect.promise(() => metaCheck(dbPath))
+    if (meta !== null && meta >= CURRENT_SCHEMA_VERSION) {
+      yield* Effect.logInfo("DuckDB pipeline already populated, skipping")
+      return
+    }
+
+    // 2. Export session data from Postgres
+    const sessions = yield* adapter.query((db: any) =>
+      db.all(
+        "SELECT id, project_id, time_created, time_updated, CAST(model AS text) AS model FROM session ORDER BY time_created DESC LIMIT 1000",
+      ),
+    )
+
+    // 3. Export part data from Postgres (tool call data)
+    const parts = yield* adapter.query((db: any) =>
+      db.all(
+        "SELECT id, session_id, CAST(data AS text) AS data FROM part ORDER BY time_created DESC LIMIT 5000",
+      ),
+    )
+
+    // 4. Run DuckDB pipeline (spawn process for each step, no -readonly)
+    yield* Effect.promise(() => execDuckDB(dbPath, CREATE_META_TABLE, signal))
+    yield* Effect.promise(() => execDuckDBStdin(dbPath, CREATE_SESSION_TABLE, JSON.stringify(sessions), signal))
+    yield* Effect.promise(() => execDuckDBStdin(dbPath, CREATE_PART_TABLE, JSON.stringify(parts), signal))
+
+    // 5. Create analytical views
+    yield* Effect.promise(() => execDuckDB(dbPath, initViewsSql(), signal))
+
+    // 6. Write meta as LAST step — if anything above fails, meta is not written
+    yield* Effect.promise(() => execDuckDB(dbPath, WRITE_META, signal))
+
+    yield* Effect.logInfo("DuckDB pipeline completed", dbPath)
+  }).pipe(
+    Effect.catch((error: unknown) =>
+      Effect.logError("DuckDB pipeline failed (non-fatal)").pipe(
+        Effect.annotateLogs("error", String(error)),
+      ),
+    ),
+    Effect.withSpan("DuckDBPipeline.run"),
+  )
+}
+
+/** Spawn duckdb (no -readonly, no firewall — pipeline internal only). */
+function execDuckDB(dbPath: string, sql: string, signal?: AbortSignal): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const proc = spawn("duckdb", [dbPath, "-json", "-c", sql])
+    let stderr = ""
+    const timer = setTimeout(() => {
+      proc.kill()
+      reject(new Error("duckdb timeout after 60s"))
+    }, 60_000)
+
+    const onAbort = signal
+      ? () => {
+          proc.kill()
+          reject(new Error("duckdb aborted via signal"))
+        }
+      : undefined
+
+    if (onAbort) signal!.addEventListener("abort", onAbort, { once: true })
+
+    const cleanup = () => {
+      clearTimeout(timer)
+      if (onAbort) signal?.removeEventListener("abort", onAbort)
+    }
+
+    proc.stderr?.on("data", (d: Buffer) => {
+      stderr += d.toString()
+    })
+    proc.stdout?.on("data", () => {}) // drain stdout
+    proc.on("close", (code) => {
+      cleanup()
+      if (code !== 0) reject(new Error(`duckdb failed: ${stderr}`))
+      else resolve()
+    })
+    proc.on("error", (err) => {
+      cleanup()
+      reject(err)
+    })
+  })
+}
+
+/** Spawn duckdb with stdin JSON data. */
+function execDuckDBStdin(dbPath: string, sql: string, data: string, signal?: AbortSignal): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const proc = spawn("duckdb", [dbPath, "-json", "-c", sql])
+    let stderr = ""
+    const timer = setTimeout(() => {
+      proc.kill()
+      reject(new Error("duckdb timeout after 60s"))
+    }, 60_000)
+
+    const onAbort = signal
+      ? () => {
+          proc.kill()
+          reject(new Error("duckdb aborted via signal"))
+        }
+      : undefined
+
+    if (onAbort) signal!.addEventListener("abort", onAbort, { once: true })
+
+    const cleanup = () => {
+      clearTimeout(timer)
+      if (onAbort) signal?.removeEventListener("abort", onAbort)
+    }
+
+    proc.stderr?.on("data", (d: Buffer) => {
+      stderr += d.toString()
+    })
+    proc.stdout?.on("data", () => {}) // drain stdout
+    proc.on("close", (code) => {
+      cleanup()
+      if (code !== 0) reject(new Error(`duckdb failed: ${stderr}`))
+      else resolve()
+    })
+    proc.on("error", (err) => {
+      cleanup()
+      reject(err)
+    })
+    proc.stdin?.end(data)
+  })
+}
+/** Check the _pipeline_meta table for existing schema_version. */
+async function metaCheck(dbPath: string): Promise<number | null> {
+  if (dbPath === ":memory:") {
+    return null
+  }
+  try {
+    const result = await new Promise<any[]>((resolve) => {
+      const proc = spawn("duckdb", [dbPath, "-json", "-c", CHECK_META])
+      let stdout = ""
+      proc.stdout?.on("data", (d: Buffer) => {
+        stdout += d.toString()
+      })
+      proc.stderr?.on("data", () => {}) // drain stderr
+      proc.on("close", (code) => {
+        if (code !== 0) {
+          // Table doesn't exist yet — not an error
+          resolve([])
+        } else {
+          try {
+            resolve(JSON.parse(stdout))
+          } catch {
+            resolve([])
+          }
+        }
+      })
+      proc.on("error", () => resolve([]))
+    })
+    if (result.length === 0) return null
+    return (result[0] as any)?.schema_version ?? null
+  } catch {
+    return null
+  }
+}
+
+// ── Layer ───────────────────────────────────────────────────
+
+export const layer = Layer.effect(
+  Service,
+  Effect.gen(function* () {
+    const config = yield* DuckDBConfig.Service
+    const adapter = yield* DatabaseAdapter.Service
+    const dbPath = Option.match(config.dbPath, {
+      onNone: () => ":memory:",
+      onSome: String,
+    })
+
+    // Run pipeline in background fiber — never blocks app startup
+    const abortController = new AbortController()
+    yield* Effect.addFinalizer(() => Effect.sync(() => abortController.abort()))
+    yield* Effect.forkScoped(
+      runPipeline(dbPath, adapter, abortController.signal).pipe(
+        Effect.ignore,
+      ),
+    )
+
+    return Service.of({})
+  }),
+)
+
+export const defaultLayer: Layer.Layer<Service, never, DuckDBConfig.Service> = 
+  layer.pipe(Layer.provide(DatabaseAdapter.defaultLayer))
+
+export * as DuckDBPipeline from "./pipeline"
