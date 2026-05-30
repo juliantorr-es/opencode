@@ -1,5 +1,7 @@
 import type { Session } from "@opencode-ai/sdk/v2/client"
-import { createMemo, createSignal, For, Match, Show, Switch } from "solid-js"
+import { createMemo, createSignal, For, Match, onCleanup, Show, Switch } from "solid-js"
+import { debounce } from "@solid-primitives/scheduled"
+import fuzzysort from "fuzzysort"
 import { createStore } from "solid-js/store"
 import { useQuery } from "@tanstack/solid-query"
 import { Button } from "@opencode-ai/ui/button"
@@ -51,6 +53,8 @@ type HomeSessionGroup = {
   sessions: HomeSessionRecord[]
 }
 
+type TimeFilter = "all" | "today" | "week" | "month"
+
 export default function Home() {
   const settings = useSettings()
   return (
@@ -69,7 +73,7 @@ function HomeDesign() {
   const server = useServer()
   const language = useLanguage()
   const notification = useNotification()
-  const [state, setState] = createStore({ search: "", project: undefined as string | undefined })
+  const [state, setState] = createStore({ search: "", timeFilter: "all" as TimeFilter, agentFilter: "" as string, modelFilter: "" as string, project: undefined as string | undefined })
 
   const projects = createMemo(() => layout.projects.list())
   const selectedProject = createMemo(() => projects().find((project) => project.worktree === state.project))
@@ -80,6 +84,8 @@ function HomeDesign() {
     return directories(project)
   })
   const search = createMemo(() => state.search.trim())
+  const debouncedSetSearch = debounce((value: string) => setState("search", value), 200)
+  onCleanup(() => debouncedSetSearch.clear())
   const sessionLoad = useQuery(() => ({
     queryKey: ["home", "sessions", ...projectDirectories()] as const,
     queryFn: async () => {
@@ -91,7 +97,7 @@ function HomeDesign() {
   const projectByID = createMemo(
     () => new Map(projects().flatMap((project) => (project.id ? [[project.id, project] as const] : []))),
   )
-  const records = createMemo(() => {
+  const fullRecords = createMemo(() => {
     return [
       ...new Map(
         projectDirectories()
@@ -110,13 +116,44 @@ function HomeDesign() {
         }
       })
       .filter((record) => {
-        const value = search().toLowerCase()
-        if (!value) return true
-        return `${record.session.title} ${record.projectName}`.toLowerCase().includes(value)
+        const value = search()
+        if (value && !fuzzysort.single(value, `${record.session.title ?? ""} ${record.projectName}`)) return false
+        if (state.timeFilter !== "all") {
+          const time = DateTime.fromMillis(record.session.time.updated ?? record.session.time.created)
+          const now = DateTime.local()
+          switch (state.timeFilter) {
+            case "today":
+              if (!time.hasSame(now, "day")) return false
+              break
+            case "week":
+              if (!time.hasSame(now, "week")) return false
+              break
+            case "month":
+              if (!time.hasSame(now, "month")) return false
+              break
+          }
+        }
+        if (state.agentFilter && record.session.agent !== state.agentFilter) return false
+        if (state.modelFilter && record.session.model?.id !== state.modelFilter) return false
+        return true
       })
-      .slice(0, HOME_SESSION_LIMIT)
   })
+  const records = createMemo(() => fullRecords().slice(0, HOME_SESSION_LIMIT))
   const groups = createMemo(() => groupSessions(records(), language))
+  const uniqueAgents = createMemo(() => {
+    const agents = new Set<string>()
+    for (const record of fullRecords()) {
+      if (record.session.agent) agents.add(record.session.agent)
+    }
+    return [...agents].sort()
+  })
+  const uniqueModels = createMemo(() => {
+    const models = new Set<string>()
+    for (const record of fullRecords()) {
+      if (record.session.model?.id) models.add(record.session.model.id)
+    }
+    return [...models].sort()
+  })
 
   function selectProject(directory: string) {
     if (!projects().some((project) => project.worktree === directory)) return
@@ -236,9 +273,17 @@ function HomeDesign() {
           <HomeSessionSearch
             value={state.search}
             placeholder={language.t("home.sessions.search.placeholder")}
-            onInput={(value) => setState("search", value)}
+            onInput={(value) => debouncedSetSearch(value)}
             clearLabel={language.t("common.clear")}
-            onClear={() => setState("search", "")}
+            onClear={() => { debouncedSetSearch.clear(); setState("search", ""); }}
+            timeFilter={state.timeFilter}
+            onTimeFilterChange={(filter) => setState("timeFilter", filter)}
+            agentFilter={state.agentFilter}
+            onAgentFilterChange={(filter) => setState("agentFilter", filter)}
+            uniqueAgents={uniqueAgents()}
+            modelFilter={state.modelFilter}
+            onModelFilterChange={(filter) => setState("modelFilter", filter)}
+            uniqueModels={uniqueModels()}
           />
           <div class="mt-3 overflow-auto flex-1">
             <div class="pt-3 flex flex-col gap-6">
@@ -501,33 +546,92 @@ function HomeSessionSearch(props: {
   value: string
   placeholder: string
   clearLabel: string
+  timeFilter: TimeFilter
   onInput: (value: string) => void
   onClear: () => void
+  onTimeFilterChange: (filter: TimeFilter) => void
+  agentFilter: string
+  onAgentFilterChange: (filter: string) => void
+  uniqueAgents: string[]
+  modelFilter: string
+  onModelFilterChange: (filter: string) => void
+  uniqueModels: string[]
 }) {
+  const language = useLanguage()
+  const [menuOpen, setMenuOpen] = createSignal(false)
   return (
-    <label class="ml-4 flex h-9 w-[calc(100%_-_48px)] sticky top-0 inset-x-0 items-center gap-2 rounded-[6px] bg-v2-background-bg-deep px-3 py-1 text-v2-icon-icon-muted transition-[background-color,box-shadow] duration-[120ms] ease-in-out focus-within:bg-v2-background-bg-base focus-within:shadow-[0_0_0_0.5px_var(--v2-border-border-focus),var(--v2-elevation-raised)]">
-      <IconV2 name="magnifying-glass" size="small" />
-      <input
-        class="min-w-0 flex-1 border-0 bg-transparent text-v2-text-text-base outline-0 [font-weight:440] placeholder:text-v2-text-text-faint"
-        value={props.value}
-        placeholder={props.placeholder}
-        aria-label={props.placeholder}
-        onInput={(event) => props.onInput(event.currentTarget.value)}
-      />
-      <Show when={props.value.trim()}>
-        <button
-          type="button"
-          class="flex size-5 shrink-0 items-center justify-center rounded text-v2-icon-icon-muted hover:bg-v2-overlay-simple-overlay-hover focus-visible:bg-v2-overlay-simple-overlay-hover focus-visible:outline-none"
-          aria-label={props.clearLabel}
-          onClick={(event) => {
-            event.preventDefault()
-            props.onClear()
-          }}
-        >
-          <Icon name="close-small" size="small" />
-        </button>
-      </Show>
-    </label>
+    <div class="ml-4 w-[calc(100%_-_48px)] sticky top-0 inset-x-0 flex items-center gap-2">
+      <MenuV2 gutter={4} modal={false} placement="bottom-start" open={menuOpen()} onOpenChange={setMenuOpen}>
+        <MenuV2.Trigger
+          as={ButtonV2}
+          variant="ghost"
+          size="normal"
+          icon="menu"
+          class="shrink-0 h-9"
+          aria-label={`${language.t("home.sessions.filter.label")}: ${language.t(`home.sessions.filter.${props.timeFilter}`)}`}
+        />
+        <MenuV2.Portal>
+          <MenuV2.Content>
+            <MenuV2.RadioGroup value={props.timeFilter} onChange={(v) => props.onTimeFilterChange(v as TimeFilter)}>
+              <For each={["all", "today", "week", "month"] as TimeFilter[]}>
+                {(key) => (
+                  <MenuV2.RadioItem value={key}>
+                    {language.t(`home.sessions.filter.${key}`)}
+                  </MenuV2.RadioItem>
+                )}
+              </For>
+            </MenuV2.RadioGroup>
+            <MenuV2.Separator />
+            <MenuV2.Group>
+              <MenuV2.GroupLabel>{language.t("home.sessions.filter.agent")}</MenuV2.GroupLabel>
+              <MenuV2.RadioGroup value={props.agentFilter} onChange={(v) => props.onAgentFilterChange(v)}>
+                <MenuV2.RadioItem value="">{language.t("home.sessions.filter.agentAll")}</MenuV2.RadioItem>
+                <For each={props.uniqueAgents}>
+                  {(agent) => (
+                    <MenuV2.RadioItem value={agent}>{agent}</MenuV2.RadioItem>
+                  )}
+                </For>
+              </MenuV2.RadioGroup>
+            </MenuV2.Group>
+            <MenuV2.Separator />
+            <MenuV2.Group>
+              <MenuV2.GroupLabel>{language.t("home.sessions.filter.model")}</MenuV2.GroupLabel>
+              <MenuV2.RadioGroup value={props.modelFilter} onChange={(v) => props.onModelFilterChange(v)}>
+                <MenuV2.RadioItem value="">{language.t("home.sessions.filter.modelAll")}</MenuV2.RadioItem>
+                <For each={props.uniqueModels}>
+                  {(model) => (
+                    <MenuV2.RadioItem value={model}>{model}</MenuV2.RadioItem>
+                  )}
+                </For>
+              </MenuV2.RadioGroup>
+            </MenuV2.Group>
+          </MenuV2.Content>
+        </MenuV2.Portal>
+      </MenuV2>
+      <label class="flex h-9 flex-1 items-center gap-2 rounded-[6px] bg-v2-background-bg-deep px-3 py-1 text-v2-icon-icon-muted transition-[background-color,box-shadow] duration-[120ms] ease-in-out focus-within:bg-v2-background-bg-base focus-within:shadow-[0_0_0_0.5px_var(--v2-border-border-focus),var(--v2-elevation-raised)]">
+        <IconV2 name="magnifying-glass" size="small" />
+        <input
+          class="min-w-0 flex-1 border-0 bg-transparent text-v2-text-text-base outline-0 [font-weight:440] placeholder:text-v2-text-text-faint"
+          value={props.value}
+          placeholder={props.placeholder}
+          aria-label={props.placeholder}
+          onInput={(event) => props.onInput(event.currentTarget.value)}
+        />
+        <Show when={props.value.trim()}>
+          <button
+            type="button"
+            class="flex size-5 shrink-0 items-center justify-center rounded text-v2-icon-icon-muted hover:bg-v2-overlay-simple-overlay-hover focus-visible:bg-v2-overlay-simple-overlay-hover focus-visible:outline-none"
+            aria-label={props.clearLabel}
+            onClick={(event) => {
+              event.preventDefault()
+              props.onClear()
+            }}
+          >
+            <Icon name="close-small" size="small" />
+          </button>
+        </Show>
+      </label>
+    </div>
   )
 }
 
