@@ -6,7 +6,7 @@ import { useDialog } from "@opencode-ai/ui/context/dialog"
 import { createMemo, createSignal, For, Show } from "solid-js"
 import { useLanguage } from "@/context/language"
 import { useProviders } from "@/hooks/use-providers"
-import type { AgentDef } from "./dialog-manage-agents"
+import type { AgentDef } from "@/types/agent"
 
 type ModelOption = { label: string; value: string }
 

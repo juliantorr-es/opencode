@@ -10,6 +10,7 @@ import { createMemo, createSignal, Show } from "solid-js"
 import { useLanguage } from "@/context/language"
 import { useSync } from "@/context/sync"
 import { DialogEditAgent } from "./dialog-edit-agent"
+import type { AgentDef } from "@/types/agent"
 
 const api = () => (typeof window !== "undefined" ? (window as unknown as Record<string, unknown>).api : undefined) as
   | {
@@ -17,19 +18,6 @@ const api = () => (typeof window !== "undefined" ? (window as unknown as Record<
       setCustomAgents?: (agents: unknown[]) => Promise<void>
     }
   | undefined
-
-export type AgentDef = {
-  id: string
-  name: string
-  prompt: string
-  description?: string
-  model?: string
-  variant?: string
-  temperature?: number
-  top_p?: number
-  color?: string
-  steps?: number
-}
 
 type AgentEntry = {
   source: "built-in" | "custom"
@@ -90,16 +78,29 @@ export const DialogManageAgents: Component = () => {
     return entries
   })
 
-  const saveCustomAgents = (agents: AgentDef[]) => {
+  const saveCustomAgents = async (agents: AgentDef[]) => {
+    const prev = customAgents()
     setCustomAgents(agents)
-    api()?.setCustomAgents?.(agents)
+    try {
+      const a = api()
+      if (a?.setCustomAgents) {
+        await a.setCustomAgents(agents)
+      }
+    } catch (err) {
+      setCustomAgents(prev)
+      showToast({
+        title: "Error",
+        description: "Failed to save custom agents — changes not persisted",
+      })
+      console.error("Failed to save custom agents:", err)
+    }
   }
 
   const handleCreateAgent = () => {
     dialog.show(() => (
       <DialogEditAgent
-        onSave={(agent) => {
-          saveCustomAgents([...customAgents(), agent])
+        onSave={async (agent) => {
+          await saveCustomAgents([...customAgents(), agent])
           showToast({
             title: language.t("dialog.agents.create"),
             description: `"${agent.name}" created`,
@@ -113,8 +114,8 @@ export const DialogManageAgents: Component = () => {
     dialog.show(() => (
       <DialogEditAgent
         agent={agent}
-        onSave={(updated) => {
-          saveCustomAgents(customAgents().map((a) => (a.id === updated.id ? updated : a)))
+        onSave={async (updated) => {
+          await saveCustomAgents(customAgents().map((a) => (a.id === updated.id ? updated : a)))
           showToast({
             title: language.t("dialog.agents.edit"),
             description: `"${updated.name}" saved`,
@@ -128,10 +129,10 @@ export const DialogManageAgents: Component = () => {
     setConfirmDelete(agent)
   }
 
-  const handleConfirmDelete = () => {
+  const handleConfirmDelete = async () => {
     const agent = confirmDelete()
     if (!agent) return
-    saveCustomAgents(customAgents().filter((a) => a.id !== agent.id))
+    await saveCustomAgents(customAgents().filter((a) => a.id !== agent.id))
     showToast({
       title: language.t("dialog.agents.delete"),
       description: `"${agent.name}" deleted`,

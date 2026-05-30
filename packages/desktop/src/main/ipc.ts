@@ -17,6 +17,23 @@ import { runDesktopMenuAction } from "./desktop-menu-actions"
 import { getStore } from "./store"
 import { getPinchZoomEnabled, setPinchZoomEnabled, setTitlebar, updateTitlebar } from "./windows"
 
+const RESERVED_STORE_NAMES = ["desktop-custom-agents"]
+
+function isValidAgentDef(val: unknown): val is Record<string, unknown> {
+  if (typeof val !== "object" || val === null) return false
+  const obj = val as Record<string, unknown>
+  return typeof obj.id === "string" && typeof obj.name === "string" && typeof obj.prompt === "string"
+}
+
+function validateAndFilterAgents(raw: unknown): unknown[] {
+  if (!Array.isArray(raw)) return []
+  return raw.filter((item): item is Record<string, unknown> => {
+    if (isValidAgentDef(item)) return true
+    console.warn("Dropping invalid agent entry:", item)
+    return false
+  })
+}
+
 const pickerFilters = (ext?: string[]) => {
   if (!ext || ext.length === 0) return undefined
   return [{ name: "Files", extensions: ext }]
@@ -47,6 +64,23 @@ type Deps = {
 }
 
 export function registerIpcHandlers(deps: Deps) {
+  const RESERVED_STORE_NAMES = ["desktop-custom-agents"]
+
+  function isValidAgentDef(val: unknown): val is Record<string, unknown> {
+    if (typeof val !== "object" || val === null) return false
+    const obj = val as Record<string, unknown>
+    return typeof obj.id === "string" && typeof obj.name === "string" && typeof obj.prompt === "string"
+  }
+
+  function validateAndFilterAgents(raw: unknown): unknown[] {
+    if (!Array.isArray(raw)) return []
+    return raw.filter((item): item is Record<string, unknown> => {
+      if (isValidAgentDef(item)) return true
+      console.warn("Dropping invalid agent entry:", item)
+      return false
+    })
+  }
+
   ipcMain.handle("kill-sidecar", () => deps.killSidecar())
 
   ipcMain.handle("await-initialization", (event: IpcMainInvokeEvent) => {
@@ -81,6 +115,7 @@ export function registerIpcHandlers(deps: Deps) {
     deps.recordFatalRendererError(error),
   )
   ipcMain.handle("store-get", (_event: IpcMainInvokeEvent, name: string, key: string) => {
+    if (RESERVED_STORE_NAMES.includes(name)) throw new Error(`Access denied: '${name}' is a reserved store namespace`)
     try {
       const store = getStore(name)
       const value = store.get(key)
@@ -91,12 +126,15 @@ export function registerIpcHandlers(deps: Deps) {
     }
   })
   ipcMain.handle("store-set", (_event: IpcMainInvokeEvent, name: string, key: string, value: string) => {
+    if (RESERVED_STORE_NAMES.includes(name)) throw new Error(`Access denied: '${name}' is a reserved store namespace`)
     getStore(name).set(key, value)
   })
   ipcMain.handle("store-delete", (_event: IpcMainInvokeEvent, name: string, key: string) => {
+    if (RESERVED_STORE_NAMES.includes(name)) throw new Error(`Access denied: '${name}' is a reserved store namespace`)
     getStore(name).delete(key)
   })
   ipcMain.handle("store-clear", (_event: IpcMainInvokeEvent, name: string) => {
+    if (RESERVED_STORE_NAMES.includes(name)) throw new Error(`Access denied: '${name}' is a reserved store namespace`)
     getStore(name).clear()
   })
   ipcMain.handle("store-keys", (_event: IpcMainInvokeEvent, name: string) => {
@@ -219,11 +257,11 @@ export function registerIpcHandlers(deps: Deps) {
 
   ipcMain.handle("get-desktop-custom-agents", () => {
     const store = getStore("desktop-custom-agents")
-    return (store.get("agents") as unknown[]) ?? []
+    return validateAndFilterAgents(store.get("agents"))
   })
   ipcMain.handle("set-desktop-custom-agents", (_event: IpcMainInvokeEvent, agents: unknown[]) => {
     const store = getStore("desktop-custom-agents")
-    store.set("agents", agents)
+    store.set("agents", validateAndFilterAgents(agents))
   })
 }
 
