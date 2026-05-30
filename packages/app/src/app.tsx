@@ -78,6 +78,8 @@ declare global {
       exportDebugLogs?: () => Promise<string>
       getCustomAgents?: () => Promise<unknown[]>
       setCustomAgents?: (agents: unknown[]) => Promise<void>
+      getMcpServers?: () => Promise<unknown[]>
+      setMcpServers?: (servers: unknown[]) => Promise<void>
     }
   }
 }

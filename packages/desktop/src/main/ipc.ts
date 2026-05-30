@@ -17,7 +17,7 @@ import { runDesktopMenuAction } from "./desktop-menu-actions"
 import { getStore } from "./store"
 import { getPinchZoomEnabled, setPinchZoomEnabled, setTitlebar, updateTitlebar } from "./windows"
 
-const RESERVED_STORE_NAMES = ["desktop-custom-agents"]
+const RESERVED_STORE_NAMES = ["desktop-custom-agents", "desktop-mcp-servers"]
 
 function isValidAgentDef(val: unknown): val is Record<string, unknown> {
   if (typeof val !== "object" || val === null) return false
@@ -30,6 +30,26 @@ function validateAndFilterAgents(raw: unknown): unknown[] {
   return raw.filter((item): item is Record<string, unknown> => {
     if (isValidAgentDef(item)) return true
     console.warn("Dropping invalid agent entry:", item)
+    return false
+  })
+}
+
+function isValidMcpEntry(val: unknown): val is Record<string, unknown> {
+  if (typeof val !== "object" || val === null) return false
+  const obj = val as Record<string, unknown>
+  if (typeof obj.name !== "string") return false
+  const config = obj.config as Record<string, unknown> | undefined
+  if (!config || typeof config !== "object") return false
+  if (config.type === "local" && !Array.isArray(config.command)) return false
+  if (config.type === "remote" && typeof config.url !== "string") return false
+  return config.type === "local" || config.type === "remote"
+}
+
+function validateAndFilterMcpServers(raw: unknown): unknown[] {
+  if (!Array.isArray(raw)) return []
+  return raw.filter((item): item is Record<string, unknown> => {
+    if (isValidMcpEntry(item)) return true
+    console.warn("Dropping invalid MCP server entry:", item)
     return false
   })
 }
@@ -64,23 +84,6 @@ type Deps = {
 }
 
 export function registerIpcHandlers(deps: Deps) {
-  const RESERVED_STORE_NAMES = ["desktop-custom-agents"]
-
-  function isValidAgentDef(val: unknown): val is Record<string, unknown> {
-    if (typeof val !== "object" || val === null) return false
-    const obj = val as Record<string, unknown>
-    return typeof obj.id === "string" && typeof obj.name === "string" && typeof obj.prompt === "string"
-  }
-
-  function validateAndFilterAgents(raw: unknown): unknown[] {
-    if (!Array.isArray(raw)) return []
-    return raw.filter((item): item is Record<string, unknown> => {
-      if (isValidAgentDef(item)) return true
-      console.warn("Dropping invalid agent entry:", item)
-      return false
-    })
-  }
-
   ipcMain.handle("kill-sidecar", () => deps.killSidecar())
 
   ipcMain.handle("await-initialization", (event: IpcMainInvokeEvent) => {
@@ -262,6 +265,15 @@ export function registerIpcHandlers(deps: Deps) {
   ipcMain.handle("set-desktop-custom-agents", (_event: IpcMainInvokeEvent, agents: unknown[]) => {
     const store = getStore("desktop-custom-agents")
     store.set("agents", validateAndFilterAgents(agents))
+  })
+
+  ipcMain.handle("get-desktop-mcp-servers", () => {
+    const store = getStore("desktop-mcp-servers")
+    return validateAndFilterMcpServers(store.get("servers"))
+  })
+  ipcMain.handle("set-desktop-mcp-servers", (_event: IpcMainInvokeEvent, servers: unknown[]) => {
+    const store = getStore("desktop-mcp-servers")
+    store.set("servers", validateAndFilterMcpServers(servers))
   })
 }
 

@@ -108,4 +108,6 @@ export type ElectronAPI = {
   getDesktopPluginConfig?: () => Promise<any>
   getCustomAgents: () => Promise<AgentDef[]>
   setCustomAgents: (agents: AgentDef[]) => Promise<void>
+  getMcpServers: () => Promise<unknown[]>
+  setMcpServers: (servers: unknown[]) => Promise<void>
 }

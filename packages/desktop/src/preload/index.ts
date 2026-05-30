@@ -84,6 +84,8 @@ const api: ElectronAPI = {
   getDesktopPluginConfig: () => ipcRenderer.invoke("get-desktop-plugin-config"),
   getCustomAgents: () => ipcRenderer.invoke("get-desktop-custom-agents"),
   setCustomAgents: (agents) => ipcRenderer.invoke("set-desktop-custom-agents", agents),
+  getMcpServers: () => ipcRenderer.invoke("get-desktop-mcp-servers"),
+  setMcpServers: (servers) => ipcRenderer.invoke("set-desktop-mcp-servers", servers),
 }
 
 contextBridge.exposeInMainWorld("api", api)
