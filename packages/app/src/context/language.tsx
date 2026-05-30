@@ -216,7 +216,7 @@ export const { use: useLanguage, provider: LanguageProvider } = createSimpleCont
       initialValue: dicts.get(initial) ?? base,
     })
 
-    const t = i18n.translator(() => dict() ?? base, i18n.resolveTemplate) as (
+    const t = i18n.translator(() => dict() ?? base, i18n.resolveTemplate).t as (
       key: keyof Dictionary,
       params?: Record<string, string | number | boolean>,
     ) => string
