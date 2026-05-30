@@ -9,7 +9,9 @@ export const SETTINGS_STORE = IPC.store.SETTINGS
 export const DEFAULT_SERVER_URL_KEY = "defaultServerUrl"
 export const WSL_ENABLED_KEY = "wslEnabled"
 export const PINCH_ZOOM_ENABLED_KEY = "pinchZoomEnabled"
-export const UPDATER_ENABLED = app.isPackaged && CHANNEL !== "dev"
+export function getUpdaterEnabled(): boolean {
+  return app.isPackaged && CHANNEL !== "dev"
+}
 
 export const APP_IDS: Record<Channel, string> = {
   dev: "ai.opencode.desktop.dev",

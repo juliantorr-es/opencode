@@ -1,6 +1,7 @@
 import { MainLogger } from "electron-log"
 import log from "electron-log/main.js"
 import { app, crashReporter, netLog, shell } from "electron"
+import { electronPlatformPaths } from "./platform-config"
 import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from "node:fs"
 import { ZipWriter, BlobWriter, BlobReader } from "@zip.js/zip.js"
 import { dirname, join } from "node:path"
@@ -34,9 +35,9 @@ export function initLogging() {
 }
 
 export function initCrashReporter() {
-  const dir = join(app.getPath("userData"), "Crashpad")
+  const dir = join(electronPlatformPaths.getPath("userData"), "Crashpad")
   mkdirSync(dir, { recursive: true })
-  app.setPath("crashDumps", dir)
+  electronPlatformPaths.setPath("crashDumps", dir)
   crashReporter.start({ uploadToServer: false, compress: true })
   write("crash", "crash reporter started", { path: dir })
 }
@@ -54,14 +55,14 @@ export async function exportDebugLogs() {
     await netLog.stopLogging().catch((error) => write("network", "failed to stop net log", { error }))
   }
 
-  const output = join(app.getPath("downloads"), `opencode-debug-${stamp()}.zip`)
+  const output = join(electronPlatformPaths.getPath("downloads"), `opencode-debug-${stamp()}.zip`)
   try {
     write("main", "exporting debug logs", { output })
     await writeZip(output, [
       { name: "manifest.json", data: Buffer.from(JSON.stringify(manifest(), null, 2)) },
       ...collect(root, "desktop"),
       ...serverLogRoots().flatMap((dir, i) => collect(dir, `server-${i + 1}`)),
-      ...collect(app.getPath("crashDumps"), "crashpad"),
+      ...collect(electronPlatformPaths.getPath("crashDumps"), "crashpad"),
     ])
     shell.showItemInFolder(output)
     return output
@@ -99,7 +100,7 @@ export function tail(): string {
 }
 
 function initRunDirectory() {
-  root = join(app.getPath("userData"), "logs")
+  root = join(electronPlatformPaths.getPath("userData"), "logs")
   run = join(root, stamp())
   mkdirSync(run, { recursive: true })
 }
@@ -133,17 +134,17 @@ function cleanup() {
 function manifest() {
   return {
     generated: new Date().toISOString(),
-    version: app.getVersion(),
-    name: app.getName(),
-    packaged: app.isPackaged,
+    version: electronPlatformPaths.getVersion(),
+    name: electronPlatformPaths.getName(),
+    packaged: electronPlatformPaths.isPackaged,
     platform: process.platform,
     arch: process.arch,
     versions: process.versions,
     uptime: process.uptime(),
-    userData: app.getPath("userData"),
+    userData: electronPlatformPaths.getPath("userData"),
     logs: root,
     currentRun: run,
-    crashDumps: app.getPath("crashDumps"),
+    crashDumps: electronPlatformPaths.getPath("crashDumps"),
     serverLogs: serverLogRoots(),
     netLog: netLogPath,
   }
@@ -151,7 +152,7 @@ function manifest() {
 
 function serverLogRoots() {
   const xdgData = process.env.XDG_DATA_HOME || join(homedir(), ".local", "share")
-  return [...new Set([join(xdgData, "opencode", "log"), join(app.getPath("userData"), "opencode", "log")])]
+  return [...new Set([join(xdgData, "opencode", "log"), join(electronPlatformPaths.getPath("userData"), "opencode", "log")])]
 }
 
 type Entry = { name: string; path?: string; data?: Buffer }

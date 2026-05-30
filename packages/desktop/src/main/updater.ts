@@ -1,6 +1,6 @@
 import { app, dialog } from "electron"
 import pkg from "electron-updater"
-import { UPDATER_ENABLED } from "./constants"
+import { getUpdaterEnabled } from "./constants"
 import { getLogger } from "./logging"
 
 const { autoUpdater } = pkg
@@ -9,7 +9,7 @@ let downloadedVersion: string | undefined
 let pendingCheck: Promise<UpdateCheckResult> | undefined
 
 export function setupAutoUpdater() {
-  if (!UPDATER_ENABLED) return
+  if (!getUpdaterEnabled()) return
   const logger = getLogger()
   autoUpdater.logger = logger
   autoUpdater.channel = "latest"
@@ -26,7 +26,7 @@ export function setupAutoUpdater() {
 }
 
 export async function checkUpdate(): Promise<UpdateCheckResult> {
-  if (!UPDATER_ENABLED) return { updateAvailable: false }
+  if (!getUpdaterEnabled()) return { updateAvailable: false }
   if (downloadedVersion) return { updateAvailable: true, version: downloadedVersion }
   if (pendingCheck) return pendingCheck
 
@@ -88,7 +88,7 @@ export async function installUpdate(killSidecar: () => Promise<void>) {
 }
 
 export async function checkForUpdates(alertOnFail: boolean, killSidecar: () => Promise<void>) {
-  if (!UPDATER_ENABLED) return
+  if (!getUpdaterEnabled()) return
   const logger = getLogger()
   logger.log("checkForUpdates invoked", { alertOnFail })
   const result = await checkUpdate()

@@ -3,6 +3,7 @@ import { access, readFile, readdir } from "node:fs/promises"
 import { dirname, extname, join } from "node:path"
 import util from "node:util"
 import { app } from "electron"
+import { electronPlatformPaths } from "./platform-config"
 
 const execFilePromise = util.promisify(execFile)
 
@@ -44,7 +45,7 @@ export function wslPath(path: string, mode: "windows" | "linux" | null): string 
 async function checkMacosApp(appName: string) {
   const locations = [`/Applications/${appName}.app`, `/System/Applications/${appName}.app`]
 
-  locations.push(`${app.getPath("home")}/Applications/${appName}.app`)
+  locations.push(`${electronPlatformPaths.getPath("home")}/Applications/${appName}.app`)
 
   for (const location of locations) {
     if (await exists(location)) return true

@@ -2,6 +2,7 @@ import Store from "electron-store"
 import { app } from "electron"
 
 import { IPC } from "./ipc-channels"
+import { electronPlatformPaths } from "./platform-config"
 
 const cache = new Map<string, Store>()
 
@@ -14,7 +15,7 @@ export function getStore(name: string = IPC.store.SETTINGS) {
   if (cached) return cached
   const next = new Store({
     name,
-    cwd: app.getPath("userData"),
+    cwd: electronPlatformPaths.getPath("userData"),
     fileExtension: "",
     accessPropertiesByDotNotation: false,
   })

@@ -13,7 +13,8 @@ import contextMenu from "electron-context-menu"
 
 import type { InitStep, ServerReadyData, SqliteMigrationProgress, WslConfig } from "../preload/types"
 import { checkAppExists, resolveAppPath, wslPath } from "./apps"
-import { APP_IDS, CHANNEL, UPDATER_ENABLED } from "./constants"
+import { APP_IDS, CHANNEL, getUpdaterEnabled } from "./constants"
+import { electronPlatformPaths } from "./platform-config"
 import { registerIpcHandlers, sendDeepLinks, sendMenuCommand, sendSqliteMigrationProgress } from "./ipc"
 import { exportDebugLogs, initCrashReporter, initLogging, startNetLog, write as writeLog } from "./logging"
 import { parseMarkdown } from "./markdown"
@@ -79,7 +80,7 @@ function setInitStep(step: InitStep) {
 }
 
 async function killSidecar() {
-  const lockPath = join(app.getPath("userData"), ".crash_lock")
+  const lockPath = join(electronPlatformPaths.getPath("userData"), ".crash_lock")
   try { unlinkSync(lockPath) } catch { /* ignore */ }
   if (!server) return
   const current = server
@@ -117,7 +118,7 @@ const main = Effect.gen(function* () {
 
   process.env.OPENCODE_DISABLE_EMBEDDED_WEB_UI = "true"
 
-  const appId = app.isPackaged ? APP_IDS[CHANNEL] : "ai.opencode.desktop.dev"
+  const appId = electronPlatformPaths.getAppId()
   const onboardingTestRoot = ((): string | undefined => {
     if (!TEST_ONBOARDING) return
 
@@ -133,13 +134,13 @@ const main = Effect.gen(function* () {
     process.env.XDG_STATE_HOME = join(root, "state")
     return root
   })()
-  app.setName(app.isPackaged ? APP_NAMES[CHANNEL] : "OpenCode Dev")
+  app.setName(electronPlatformPaths.isPackaged ? APP_NAMES[CHANNEL] : "OpenCode Dev")
   app.setAppUserModelId(appId)
-  app.setPath(
+  electronPlatformPaths.setPath(
     "userData",
-    onboardingTestRoot ? join(onboardingTestRoot, "desktop") : join(app.getPath("appData"), appId),
+    onboardingTestRoot ? join(onboardingTestRoot, "desktop") : join(electronPlatformPaths.getPath("appData"), appId),
   )
-  if (onboardingTestRoot) app.setPath("sessionData", join(onboardingTestRoot, "session"))
+  if (onboardingTestRoot) electronPlatformPaths.setPath("sessionData", join(onboardingTestRoot, "session"))
   logger = initLogging()
   initCrashReporter()
 
@@ -150,8 +151,8 @@ const main = Effect.gen(function* () {
   }
 
   logger.log("app starting", {
-    version: app.getVersion(),
-    packaged: app.isPackaged,
+    version: electronPlatformPaths.getVersion(),
+    packaged: electronPlatformPaths.isPackaged,
     onboardingTest: Boolean(onboardingTestRoot),
   })
 
@@ -160,14 +161,14 @@ const main = Effect.gen(function* () {
   app.commandLine.appendSwitch("proxy-bypass-list", "<-loopback>")
   const features = app.commandLine.getSwitchValue("enable-features")
   app.commandLine.appendSwitch("enable-features", features ? `${jsCallStackFeature},${features}` : jsCallStackFeature)
-  if (!app.isPackaged) app.commandLine.appendSwitch("remote-debugging-port", "9222")
+  if (!electronPlatformPaths.isPackaged) app.commandLine.appendSwitch("remote-debugging-port", "9222")
 
   if (!app.requestSingleInstanceLock()) {
     app.quit()
     return
   }
 
-  preferAppEnv(app.getPath("userData"))
+  preferAppEnv(electronPlatformPaths.getPath("userData"))
 
   app.on("second-instance", (_event: Event, argv: string[]) => {
     const urls = argv.filter((arg: string) => arg.startsWith("opencode://"))
@@ -237,7 +238,7 @@ const main = Effect.gen(function* () {
       },
       (e) => Effect.runPromise(e),
     ),
-    getWindowConfig: () => ({ updaterEnabled: UPDATER_ENABLED }),
+    getWindowConfig: () => ({ updaterEnabled: getUpdaterEnabled() }),
     consumeInitialDeepLinks: () => pendingDeepLinks.splice(0),
     getDefaultServerUrl: () => getDefaultServerUrl(),
     setDefaultServerUrl: (url) => setDefaultServerUrl(url),
@@ -261,9 +262,9 @@ const main = Effect.gen(function* () {
       systemInfo: {
         platform: process.platform,
         arch: process.arch,
-        version: app.getVersion(),
-        userDataPath: app.getPath("userData"),
-        logPath: join(app.getPath("userData"), "logs"),
+        version: electronPlatformPaths.getVersion(),
+        userDataPath: electronPlatformPaths.getPath("userData"),
+        logPath: join(electronPlatformPaths.getPath("userData"), "logs"),
       },
     }),
     safeModeAction: async (action) => {
@@ -281,7 +282,7 @@ const main = Effect.gen(function* () {
   yield* Effect.promise(() => app.whenReady())
 
   let overlay: BrowserWindow | null = null
-  const crashLock = join(app.getPath("userData"), ".crash_lock")
+  const crashLock = join(electronPlatformPaths.getPath("userData"), ".crash_lock")
   const safeModeRequested = process.argv.includes("--safe-mode") || process.env.OPENCODE_SAFE_MODE === "1"
   const crashDetected = existsSync(crashLock)
   const inSafeMode = safeModeRequested || crashDetected
@@ -361,7 +362,7 @@ const main = Effect.gen(function* () {
     const { listener, health } = yield* Effect.promise(() =>
       spawnLocalServer(hostname, port, password, {
         needsMigration,
-        userDataPath: app.getPath("userData"),
+        userDataPath: electronPlatformPaths.getPath("userData"),
         onSqliteProgress: (progress) => initEmitter.emit("sqlite", progress),
         onStdout: (message) => writeLog("server", "stdout", { message }),
         onStderr: (message) => writeLog("server", "stderr", { message }, "warn"),

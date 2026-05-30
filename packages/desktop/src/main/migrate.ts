@@ -3,6 +3,7 @@ import log from "electron-log/main.js"
 import { existsSync, readdirSync, readFileSync } from "node:fs"
 import { join } from "node:path"
 import { APP_IDS, CHANNEL } from "./constants"
+import { electronPlatformPaths } from "./platform-config"
 import { getStore } from "./store"
 
 const TAURI_MIGRATED_KEY = "tauriMigrated"
@@ -12,16 +13,16 @@ const TAURI_MIGRATED_KEY = "tauriMigrated"
 function tauriDir(id: string) {
   switch (process.platform) {
     case "darwin":
-      return join(app.getPath("home"), "Library", "Application Support", id)
+      return join(electronPlatformPaths.getPath("home"), "Library", "Application Support", id)
     case "win32":
-      return join(process.env.APPDATA ?? join(app.getPath("home"), "AppData", "Roaming"), id)
+      return join(process.env.APPDATA ?? join(electronPlatformPaths.getPath("home"), "AppData", "Roaming"), id)
     default:
-      return join(process.env.XDG_DATA_HOME ?? join(app.getPath("home"), ".local", "share"), id)
+      return join(process.env.XDG_DATA_HOME ?? join(electronPlatformPaths.getPath("home"), ".local", "share"), id)
   }
 }
 
 function tauriAppId() {
-  return app.isPackaged ? APP_IDS[CHANNEL] : "ai.opencode.desktop.dev"
+  return electronPlatformPaths.getAppId()
 }
 
 // Migrate a single Tauri .dat file into the corresponding electron-store.
