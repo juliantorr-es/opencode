@@ -169,6 +169,27 @@ function TimelineThinkingRow(props: { reasoningHeading?: string; showReasoningSu
   )
 }
 
+type PrBadgeProps = {
+  number: number
+  state: "open" | "closed" | "merged"
+}
+
+function PrBadge(props: PrBadgeProps) {
+  const colors: Record<string, string> = {
+    open: "bg-green-500/10 text-green-500 border-green-500/30",
+    closed: "bg-red-500/10 text-red-500 border-red-500/30",
+    merged: "bg-purple-500/10 text-purple-500 border-purple-500/30",
+  }
+  return (
+    <span
+      class={`inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-full border ${colors[props.state] ?? colors.open}`}
+    >
+      <span>#{props.number}</span>
+      <span>{props.state}</span>
+    </span>
+  )
+}
+
 function TimelineDiffSummaryRow(props: { diffs: SummaryDiff[] }) {
   const language = useLanguage()
   const maxFiles = 10

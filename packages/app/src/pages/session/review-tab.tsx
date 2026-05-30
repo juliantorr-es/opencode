@@ -1,4 +1,4 @@
-import { createEffect, onCleanup, type JSX } from "solid-js"
+import { createEffect, createResource, createSignal, onCleanup, type JSX } from "solid-js"
 import { makeEventListener } from "@solid-primitives/event-listener"
 import type { SnapshotFileDiff, VcsFileDiff } from "@opencode-ai/sdk/v2"
 import { SessionReview } from "@opencode-ai/ui/session-review"
@@ -11,6 +11,9 @@ import type { SelectedLineRange } from "@/context/file"
 import { useSDK } from "@/context/sdk"
 import { useLayout } from "@/context/layout"
 import type { LineComment } from "@/context/comments"
+import { useLanguage } from "@/context/language"
+import { Button } from "@opencode-ai/ui/button"
+import { TextField } from "@opencode-ai/ui/text-field"
 
 export type DiffStyle = "unified" | "split"
 
@@ -51,6 +54,9 @@ export function SessionReviewTab(props: SessionReviewTabProps) {
 
   const sdk = useSDK()
   const layout = useLayout()
+  const language = useLanguage()
+  const [branchName, setBranchName] = createSignal("")
+  const [commitMessage, setCommitMessage] = createSignal("")
 
   const readFile = async (path: string) => {
     return sdk.client.file
@@ -129,8 +135,49 @@ export function SessionReviewTab(props: SessionReviewTabProps) {
     props.onScrollRef?.(undefined)
   })
 
+  const [token] = createResource(async () => {
+    try {
+      const api = (window as unknown as { api?: { githubGetToken?: () => Promise<string | null> } }).api
+      return (await api?.githubGetToken?.()) ?? null
+    } catch {
+      return null
+    }
+  })
+  const hasToken = () => !!token()
+
   return (
-    <SessionReview
+    <div class="flex flex-col gap-2">
+      <div class="flex flex-col gap-1 px-3 pt-2 pb-1 border-b border-border">
+        <div class="flex items-center gap-2">
+          <TextField
+            value={branchName()}
+            onValueChange={setBranchName}
+            placeholder={language.t("github.branchName")}
+            class="flex-1"
+          />
+        </div>
+        <div class="flex items-center gap-2">
+          <TextField
+            value={commitMessage()}
+            onValueChange={setCommitMessage}
+            placeholder={language.t("github.commitMessage")}
+            class="flex-1"
+          />
+          <Button
+            size="small"
+            disabled={!hasToken() || !branchName() || !commitMessage()}
+            onClick={async () => {
+              if (!branchName() || !commitMessage()) return
+              const api = (window as unknown as { api?: { githubSetToken?: (t: string) => Promise<void> } }).api
+              if (!api?.githubSetToken) return
+              console.log("[github] create PR", { branch: branchName(), message: commitMessage() })
+            }}
+          >
+            {language.t("github.createPullRequest")}
+          </Button>
+        </div>
+      </div>
+      <SessionReview
       title={props.title}
       empty={props.empty}
       scrollRef={(el) => {
@@ -167,5 +214,6 @@ export function SessionReviewTab(props: SessionReviewTabProps) {
       focusedComment={props.focusedComment}
       onFocusedCommentChange={props.onFocusedCommentChange}
     />
+    </div>
   )
 }

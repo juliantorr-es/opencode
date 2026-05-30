@@ -30,6 +30,16 @@ export const parseNewSessionDeepLink = (input: string) => {
   return { directory, prompt }
 }
 
+export const parseGitHubOAuthCallback = (input: string) => {
+  const url = parseUrl(input)
+  if (!url) return null
+  if (url.hostname !== "github-oauth") return null
+  const code = url.searchParams.get("code")
+  const state = url.searchParams.get("state")
+  if (!code || !state) return null
+  return { code, state }
+}
+
 export const collectOpenProjectDeepLinks = (urls: string[]) =>
   urls.map(parseDeepLink).filter((directory): directory is string => !!directory)
 

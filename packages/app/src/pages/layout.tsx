@@ -3,6 +3,7 @@ import {
   createEffect,
   createMemo,
   createResource,
+  createSignal,
   For,
   on,
   onCleanup,
@@ -62,6 +63,7 @@ import { useTheme, type ColorScheme } from "@opencode-ai/ui/theme/context"
 import { useCommand, type CommandOption } from "@/context/command"
 import { ConstrainDragXAxis, getDraggableId } from "@/utils/solid-dnd"
 import { DebugBar } from "@/components/debug-bar"
+import { KeyHintOverlay } from "@/components/key-hint-overlay"
 import { Titlebar, type TitlebarUpdate } from "@/components/titlebar"
 import { useServer } from "@/context/server"
 import { useLanguage, type Locale } from "@/context/language"
@@ -78,6 +80,7 @@ import {
   collectOpenProjectDeepLinks,
   deepLinkEvent,
   drainPendingDeepLinks,
+  parseGitHubOAuthCallback,
 } from "./layout/deep-links"
 import { createInlineEditorController } from "./layout/inline-editor"
 import {
@@ -125,6 +128,34 @@ export default function Layout(props: ParentProps) {
   const providers = useProviders()
   const dialog = useDialog()
   const command = useCommand()
+
+  // ── Key hint overlay (modifier hold detection) ──
+  const [showKeyHints, setShowKeyHints] = createSignal(false)
+  let modifierTimer: ReturnType<typeof setTimeout> | undefined
+  const isMac = typeof navigator === "object" && /(Mac|iPod|iPhone|iPad)/.test(navigator.platform)
+  const modKey = isMac ? "Meta" : "Control"
+
+  onMount(() => {
+    makeEventListener(document, "keydown", (e: KeyboardEvent) => {
+      if (e.key !== modKey) return
+      if ((e.target as HTMLElement)?.closest?.("input, textarea, [contenteditable]")) return
+      if (modifierTimer !== undefined || showKeyHints()) return
+      modifierTimer = setTimeout(() => {
+        modifierTimer = undefined
+        setShowKeyHints(true)
+      }, 500)
+    })
+
+    makeEventListener(document, "keyup", (e: KeyboardEvent) => {
+      if (e.key !== modKey) return
+      if (modifierTimer !== undefined) {
+        clearTimeout(modifierTimer)
+        modifierTimer = undefined
+      }
+      setShowKeyHints(false)
+    })
+  })
+
   const theme = useTheme()
   const language = useLanguage()
   const newDesign = createMemo(() => settings.general.newLayoutDesigns())
@@ -1384,6 +1415,13 @@ export default function Layout(props: ParentProps) {
       const href = link.prompt ? `/${slug}/session?prompt=${encodeURIComponent(link.prompt)}` : `/${slug}/session`
       navigateWithSidebarReset(href)
     }
+
+    for (const url of urls) {
+      const oauth = parseGitHubOAuthCallback(url)
+      if (!oauth) continue
+      const api = (window as unknown as { api?: { githubOAuthCallback?: (code: string, state: string) => Promise<void> } }).api
+      void api?.githubOAuthCallback?.(oauth.code, oauth.state)
+    }
   }
 
   onMount(() => {
@@ -2363,6 +2401,7 @@ export default function Layout(props: ParentProps) {
   )
 
   return (
+    <>
     <Show
       when={!newDesign()}
       fallback={
@@ -2536,6 +2575,12 @@ export default function Layout(props: ParentProps) {
         <Toast.Region />
       </div>
     </Show>
+    <KeyHintOverlay
+      command={command}
+      visible={showKeyHints()}
+      onClose={() => setShowKeyHints(false)}
+    />
+    </>
   )
 }
 

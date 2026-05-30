@@ -8,6 +8,7 @@ import {
   sameRepositoryReference,
   parseRepositoryReference,
   parseRemoteRepositoryReference,
+  parseGitHubRemote,
   validateRepositoryBranch,
   InvalidRepositoryBranchError,
   InvalidRepositoryReferenceError,
@@ -97,6 +98,7 @@ export type Error =
 
 export interface Interface {
   ensure: (input: EnsureInput) => Effect.Effect<Result, Error>
+  parseGitHubRemote: (input: string) => { owner: string; repo: string } | null
 }
 
 export class Service extends Context.Service<Service, Interface>()("@opencode/RepositoryCache") {}
@@ -308,6 +310,7 @@ export const layer: Layer.Layer<Service, never, AppFileSystem.Service | Git.Serv
       ensure: Effect.fn("RepositoryCache.ensure")(function* (input) {
         return yield* ensureWithServices(input, { fs, git })
       }),
+      parseGitHubRemote: (input: string) => parseGitHubRemote(input),
     })
   }),
 )
