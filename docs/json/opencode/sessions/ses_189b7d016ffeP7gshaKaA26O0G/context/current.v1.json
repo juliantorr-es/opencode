@@ -1,0 +1,102 @@
+{
+  "schema_version": "v1",
+  "session_id": "ses_189b7d016ffeP7gshaKaA26O0G",
+  "mission_status": "complete",
+  "last_updated": "2026-05-30T00:35:07.713193+00:00",
+  "current_wave": "architecture",
+  "waves": {
+    "architecture": {
+      "started_at": "2026-05-30T00:35:07.713193+00:00",
+      "completed_at": "2026-05-30T00:35:07.713193+00:00",
+      "findings": [
+        {
+          "source": "architect",
+          "summary": "Effect<out A, out E = never, out R = never> — all covariant. Def.execute uses Effect.Effect<ExecuteResult<M>> = Effect<ExecuteResult<M>, never, never>. Tools return Effect<..., never, Services>. Covariant R means Services is NOT subtype of never → TS2345 on Tool.define().",
+          "confidence": 1.0,
+          "relevance_profiles": [
+            "architecture",
+            "execution"
+          ],
+          "wave": "architecture"
+        },
+        {
+          "source": "architect",
+          "summary": "82 total TS2345 errors: ~14 source tool files + 1 app-runtime.ts + 3 v2/session.ts + ~64 test files. Primary fix changes Def.execute R from never to any, fixing ~78 errors.",
+          "confidence": 0.95,
+          "relevance_profiles": [
+            "architecture",
+            "execution"
+          ],
+          "wave": "architecture"
+        },
+        {
+          "source": "architect",
+          "summary": "EffectBridge.make() captures full Effect context and provides all services at runtime via Effect.provide(ctx). R parameter is purely type-level — no runtime behavior change from any fix.",
+          "confidence": 0.9,
+          "relevance_profiles": [
+            "architecture"
+          ],
+          "wave": "architecture"
+        },
+        {
+          "source": "architect",
+          "summary": "app-runtime.ts error is separate Layer.provideMerge type inference issue. v2/session.ts errors are SQLite→Pg migration debt, unrelated to Effect layer types.",
+          "confidence": 0.8,
+          "relevance_profiles": [
+            "architecture",
+            "execution"
+          ],
+          "wave": "architecture"
+        }
+      ],
+      "artifacts": [
+        "docs/json/opencode/plans/tool-layer-type-errors.v1.json"
+      ]
+    }
+  },
+  "active_findings": [
+    {
+      "source": "architect",
+      "summary": "Effect<out A, out E = never, out R = never> — all covariant. Def.execute uses Effect.Effect<ExecuteResult<M>> = Effect<ExecuteResult<M>, never, never>. Tools return Effect<..., never, Services>. Covariant R means Services is NOT subtype of never → TS2345 on Tool.define().",
+      "confidence": 1.0,
+      "relevance_profiles": [
+        "architecture",
+        "execution"
+      ],
+      "wave": "architecture"
+    },
+    {
+      "source": "architect",
+      "summary": "82 total TS2345 errors: ~14 source tool files + 1 app-runtime.ts + 3 v2/session.ts + ~64 test files. Primary fix changes Def.execute R from never to any, fixing ~78 errors.",
+      "confidence": 0.95,
+      "relevance_profiles": [
+        "architecture",
+        "execution"
+      ],
+      "wave": "architecture"
+    },
+    {
+      "source": "architect",
+      "summary": "EffectBridge.make() captures full Effect context and provides all services at runtime via Effect.provide(ctx). R parameter is purely type-level — no runtime behavior change from any fix.",
+      "confidence": 0.9,
+      "relevance_profiles": [
+        "architecture"
+      ],
+      "wave": "architecture"
+    },
+    {
+      "source": "architect",
+      "summary": "app-runtime.ts error is separate Layer.provideMerge type inference issue. v2/session.ts errors are SQLite→Pg migration debt, unrelated to Effect layer types.",
+      "confidence": 0.8,
+      "relevance_profiles": [
+        "architecture",
+        "execution"
+      ],
+      "wave": "architecture"
+    }
+  ],
+  "active_artifacts": [
+    "docs/json/opencode/plans/tool-layer-type-errors.v1.json"
+  ],
+  "archived": []
+}

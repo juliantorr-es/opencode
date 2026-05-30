@@ -1,0 +1,220 @@
+{
+  "artifact": {
+    "schema": "rig.relay.cartography.v1",
+    "lane": "github-integration-hardening",
+    "generational": 1,
+    "generated_at": "2026-05-30T03:14:00Z",
+    "session_id": "ses_current"
+  },
+  "lane": "github-integration-hardening",
+  "status": "complete",
+  "files_mapped": [
+    "packages/app/src/pages/session/review-tab.tsx (220 lines, SolidJS, exists, clean)",
+    "packages/opencode/src/github/service.ts (194 lines, Effect, exists, clean — DEAD CODE, zero callers)",
+    "packages/opencode/src/github/types.ts (35 lines, Effect Schema, exists, clean)",
+    "packages/opencode/src/github/index.ts (3 lines, empty barrel, exists, clean)",
+    "packages/opencode/src/provider/auth.ts (229 lines, Effect, exists, clean, 5 callers)",
+    "packages/opencode/src/account/account.ts (460 lines, Effect, exists, clean, 5 callers)",
+    "packages/opencode/src/account/account.sql.ts (40 lines, Drizzle SQLite, exists, DIRTY — TimestampsPg migration in progress)",
+    "packages/opencode/src/account/account.pg.sql.ts (40 lines, Drizzle Postgres, exists, untracked/new)",
+    "packages/opencode/src/account/repo.ts (170 lines, Drizzle+Effect, exists, clean)",
+    "packages/opencode/src/account/schema.ts (100 lines, Effect Schema, exists, clean)",
+    "packages/app/src/i18n/en.ts (1070 lines, i18n dict, exists, clean — 13 github.* keys at lines 590-602)",
+    "packages/desktop/src/main/ipc.ts (503 lines, Electron IPC, exists, clean — github handlers at lines 388-477)",
+    "packages/desktop/src/preload/index.ts (101 lines, preload bridge, exists, clean)",
+    "packages/desktop/src/preload/types.ts (130 lines, API types, exists, clean)"
+  ],
+  "entry_points": [
+    {
+      "name": "SessionReviewTab",
+      "file": "packages/app/src/pages/session/review-tab.tsx",
+      "signature": "export function SessionReviewTab(props: SessionReviewTabProps)",
+      "caller": "packages/app/src/pages/session.tsx:55 (single caller)",
+      "token_path": "window.api.githubGetToken() via createResource (line 140-145)",
+      "has_token_guard": true,
+      "guard_type": "disabled button when no token",
+      "error_ui": "None — no error state rendered when token is missing"
+    },
+    {
+      "name": "GitHubService.layer",
+      "file": "packages/opencode/src/github/service.ts",
+      "signature": "export const layer = (token: string): Layer.Layer<Service>",
+      "production_callers": 0,
+      "status": "DEAD CODE — never wired into any Effect composition",
+      "methods": ["createPullRequest", "getPullRequestStatus", "listPullRequests"],
+      "auth_model": "Token passed as parameter to layer(), no runtime token refresh"
+    },
+    {
+      "name": "ProviderAuth.service",
+      "file": "packages/opencode/src/provider/auth.ts",
+      "signature": "export class Service extends Context.Service<Service, Interface>()(\"@opencode/ProviderAuth\")",
+      "callers": ["server/routes/instance/httpapi/handlers/provider.ts", "server/routes/instance/httpapi/server.ts", "server/routes/instance/httpapi/groups/provider.ts", "effect/app-runtime.ts", "test/plugin/auth-override.test.ts"],
+      "status": "Healthy — 5 callers",
+      "auth_model": "Plugin-driven OAuth + API key auth via Hooks, delegates token storage to Auth.Service"
+    },
+    {
+      "name": "Account.service",
+      "file": "packages/opencode/src/account/account.ts",
+      "signature": "export class Service extends Context.Service<Service, Interface>()(\"@opencode/Account\")",
+      "callers": 5,
+      "status": "Healthy — 5 callers, 2 test files (~800 lines coverage)",
+      "auth_model": "Device code OAuth flow + refresh token cache (Effect Cache with AccountID key, zero TTL)"
+    },
+    {
+      "name": "github IPC handlers",
+      "file": "packages/desktop/src/main/ipc.ts",
+      "channels": ["github-oauth-start", "github-oauth-callback", "github-get-token", "github-set-token", "github-clear-token", "github-api-proxy"],
+      "token_storage": "electron-store under 'github-auth' namespace, encrypted via safeStorage",
+      "status": "Wired — all 6 handlers exist and are connected via preload bridge"
+    }
+  ],
+  "findings": [
+    {
+      "id": "GH-001",
+      "file": "packages/app/src/pages/session/review-tab.tsx",
+      "severity": "low",
+      "description": "Review tab does not crash on missing token — createResource wraps githubGetToken in try/catch and returns null. The button is disabled when no token. However, there is no error UI or 'please authenticate' message shown.",
+      "pattern_type": "missing-error-ui",
+      "details": "language.t('github.noAuth') key exists in en.ts (line 593) but is never used in review-tab.tsx. The button is silently disabled with no user feedback. CreateResource on line 140 catches all errors and returns null."
+    },
+    {
+      "id": "GH-002",
+      "file": "packages/opencode/src/github/service.ts",
+      "severity": "critical",
+      "description": "GitHubService is completely dead code — zero production callers across the entire monorepo. The Effect service layer exists but was never wired into any Layer composition, app-runtime, or route handler. The github/index.ts barrel is empty.",
+      "pattern_type": "dead-code",
+      "details": "grep for 'from.*github/service' across all packages/*.ts returns zero results. grep for 'GitHubService' in packages/opencode/src/ returns only the file itself. No octokit.request() or octokit.paginate() calls exist in packages/opencode/src/. The @octokit/rest and @octokit/graphql deps are unused in the core."
+    },
+    {
+      "id": "GH-003",
+      "file": "packages/opencode/src/github/service.ts",
+      "severity": "medium",
+      "description": "All 3 API methods use `Effect.tryPromise` with catch mapper, so errors are properly handled in the Effect Error channel. However, the handleResponse function has no guard for non-JSON responses — if GitHub returns a non-JSON 200, response.json() throws and is caught only by the generic catch mapper.",
+      "pattern_type": "error-handling-weakness",
+      "details": "Line 53: `handleResponse` calls `response.json()` on success. If GitHub returns an HTML/empty 200, this throws with 'Unexpected token < in JSON'. The catch: (error) => error as Error re-throws without proper type wrapping. Lines 118, 144, 172: `catch: (error) => error as Error` is unsafe — assumes error is already an Error type."
+    },
+    {
+      "id": "GH-004",
+      "file": "packages/opencode/src/account/account.ts",
+      "severity": "medium",
+      "description": "Token refresh race is partially mitigated via Effect Cache with per-accountID key, but has a critical flaw: Cache is created with `timeToLive: Duration.zero` and NO TTL on entries. Once a token is cached, it stays forever. If a refresh succeeds with a bad token (e.g. server returns stale data), all subsequent reads get the bad token until process restart.",
+      "pattern_type": "token-refresh-race",
+      "details": "Lines 271-286: Cache.make has capacity: Infinity, timeToLive: Duration.zero — entries never expire. The lookup function checks freshness before refreshing, but once computed, the value is cached permanently. No explicit mutex on the DB write (repo.persistToken at line 263). Serialization is per-AccountID only — parallel requests for different accounts can race."
+    },
+    {
+      "id": "GH-005",
+      "file": "packages/app/src/i18n/en.ts",
+      "severity": "low",
+      "description": "All 3 i18n keys used in review-tab.tsx (github.branchName, github.commitMessage, github.createPullRequest) exist in en.ts. However, github.noAuth, github.prCreated, github.prStatus, github.prOpen, github.prClosed, github.prMerged, github.statusPassed, github.statusFailed, github.statusPending, github.statusUnknown keys also exist but are not used anywhere. No parity test covers github.* keys across locales.",
+      "pattern_type": "missing-locale-keys",
+      "details": "13 github.* keys defined in en.ts:590-602. Non-English locales have zero github.* keys — they fall back to English via base merge in language.tsx. i18n parity test (parity.test.ts) only tests 2 session keys, not github keys. No locale file except en.ts contains github.* translations."
+    },
+    {
+      "id": "GH-006",
+      "file": "packages/opencode/src/account/repo.ts",
+      "severity": "high",
+      "description": "Account delete cascade does NOT clean up GitHub tokens stored in electron-store. Two separate token storage systems exist: (1) AccountTable stores OpenCode server access/refresh tokens (cleaned up on delete), (2) electron-store under 'github-auth' namespace stores GitHub API token (NOT cleaned up on account delete). No IPC handler for github-clear-token is called during account deletion.",
+      "pattern_type": "missing-cascade-cleanup",
+      "details": "AccountRepo.remove (repo.ts:95-103) deletes account from AccountTable and clears active_account_id. Only cleans up OpenCode server tokens. The GitHub token in electron-store (packages/desktop/src/main/ipc.ts:456-458) is never touched by the account service because they run in different processes (main vs renderer). The renderer has no mechanism to call githubClearToken when an account is deleted."
+    },
+    {
+      "id": "GH-007",
+      "file": "packages/desktop/src/main/ipc.ts",
+      "severity": "high",
+      "description": "IPC handler github-set-token has no authorization guard — any renderer code can set an arbitrary GitHub token. The handler (line 450-453) validates only that the token is a non-empty string, then encrypts and stores it. Combined with the lack of IPC schema validation at the preload boundary, a compromised renderer can inject a malicious GitHub token.",
+      "pattern_type": "missing-ipc-guard",
+      "details": "Line 450: ipcMain.handle('github-set-token', (_event, token: string) => { if (typeof token !== 'string' || !token) throw new Error('Invalid token'); ... }). No user confirmation, no permission prompt, no origin validation. The same applies to github-clear-token (line 456-458) which silently deletes the stored token."
+    },
+    {
+      "id": "GH-008",
+      "file": "packages/app/src/pages/session/review-tab.tsx",
+      "severity": "medium",
+      "description": "PR creation button onClick handler is a stub — only logs to console. No actual GitHub API call is made. The github/service.ts layer exists but is not wired, and review-tab.tsx imports from packages/opencode/ only via SDK types, not the service layer.",
+      "pattern_type": "stub-implementation",
+      "details": "Line 173-175: onClick handler calls console.log and returns. The comment '# TODO: wire actual GitHub API call' is implicitly missing — there's no TODO comment either. The desktop-menu also has a Create Pull Request action (desktop-menu.ts:119) that is similarly unimplemented."
+    },
+    {
+      "id": "GH-009",
+      "file": "packages/opencode/src/github/service.ts",
+      "severity": "information",
+      "description": "Service uses native fetch() instead of Octokit — even though @octokit/rest and @octokit/graphql are declared dependencies. Using Octokit would provide automatic pagination, retry logic, rate limit handling, and request/response typing. The current implementation handles none of these.",
+      "pattern_type": "non-canonical-http-client",
+      "details": "Lines 84, 115, 141, 172: All use raw fetch() with manual URL construction and Bearer token headers. No retry on 429 (rate limit), no pagination support, no response body schema validation beyond type assertions. Compare with account.ts which uses HttpClient with schemaBodyJson for type-safe parsing."
+    }
+  ],
+  "dependencies": {
+    "github_service_deps": ["effect (Context, Effect, Layer, Schema)", "github/types.ts"],
+    "account_module_deps": ["effect", "@opencode-ai/core/effect/service-use", "effect/unstable/http (HttpClient, FetchHttpClient)", "drizzle-orm", "./repo", "./url", "./schema"],
+    "provider_auth_deps": ["@opencode-ai/plugin", "@opencode-ai/core/effect/service-use", "@/auth", "@/effect/instance-state", "@opencode-ai/core/schema", "../plugin", "./schema", "effect"],
+    "review_tab_deps": ["solid-js", "@solid-primitives/event-listener", "@opencode-ai/sdk/v2", "@opencode-ai/ui/session-review", "@/context/sdk", "@/context/layout", "@/context/comments", "@/context/language", "@opencode-ai/ui/button", "@opencode-ai/ui/text-field"],
+    "desktop_ipc_deps": ["electron", "@/preload/types", "./desktop-menu-actions", "./store", "./windows", "node:crypto"],
+    "octokit_in_core": "NONE — @octokit/rest, @octokit/graphql, @octokit/webhooks-types are declared deps with zero imports in packages/opencode/src/"
+  },
+  "test_coverage": {
+    "github_service": "ZERO — no tests exist for github/service.ts",
+    "provider_auth": "INDIRECT — test/plugin/auth-override.test.ts (104 lines) tests plugin auth override, not the full ProviderAuth flow",
+    "account_service": "GOOD — test/account/service.test.ts (452 lines) covers OAuth device flow, token refresh, poll error states",
+    "account_repo": "GOOD — test/account/repo.test.ts (352 lines) covers CRUD, cascade cleanup, edge cases",
+    "review_tab": "ZERO — no tests anywhere in packages/app/ for the review tab",
+    "ipc_handlers": "ZERO — no tests for any desktop IPC handlers",
+    "i18n_parity": "PARTIAL — parity.test.ts only tests 2 session keys, not github keys"
+  },
+  "shared_file_fragments_needed": [
+    {
+      "file": "packages/desktop/src/preload/types.ts",
+      "fragment": "ElectronAPI type — all 6 github methods already exist. No new types needed.",
+      "conflict_risk": "HIGH — multiple sessions modify this file"
+    },
+    {
+      "file": "packages/desktop/src/preload/index.ts",
+      "fragment": "Preload bridge — all 6 github methods already wired. No new methods needed.",
+      "conflict_risk": "HIGH — multiple sessions modify this file"
+    },
+    {
+      "file": "packages/app/src/i18n/en.ts",
+      "fragment": "13 github.* keys already exist at lines 590-602. No new keys needed for hardening. Keys to verify: github.branchName, github.commitMessage, github.createPullRequest, github.noAuth.",
+      "conflict_risk": "MEDIUM — i18n file is stable, additions are append-only"
+    },
+    {
+      "file": "packages/opencode/src/github/service.ts",
+      "fragment": "If reviving this dead code: needs wiring into app-runtime.ts Layer composition. The service is self-contained and has no consumers, so wiring is additive only.",
+      "conflict_risk": "LOW — no existing callers to conflict with"
+    }
+  ],
+  "dirty_files_preserve": [
+    {
+      "file": "packages/opencode/src/account/account.sql.ts",
+      "status": "staged",
+      "delta": "3-line replacement: Timestamps → TimestampsPg (Postgres migration fix)",
+      "must_preserve": true
+    },
+    {
+      "file": "packages/opencode/src/account/account.pg.sql.ts",
+      "status": "untracked",
+      "delta": "New 40-line Postgres variant of account table definitions",
+      "must_preserve": true
+    }
+  ],
+  "git_history_insights": {
+    "primary_commit": "0115fa771 — feat(desktop): Phase 2 — GitHub Integration + PR Management",
+    "all_github_files_introduced_by": "0115fa771 (Julian Torres, single commit)",
+    "all_github_files_clean_vs_dev": true,
+    "deleted_github_files": ["packages/opencode/src/cli/cmd/github.ts (unstaged D)", "packages/opencode/src/cli/cmd/pr.ts (unstaged D)"],
+    "account_module_refactored_recently": true,
+    "refactoring_commits": ["c026e2508 — refactor: eliminate account/ barrel", "312f10f79 — refactor(account): destroy Account facade", "87e23abb1 — refactor: remove ProviderAuth facade"]
+  },
+  "recommended_architect_scope": "1. Wire GitHubService.layer into app-runtime or make it accessible via IPC proxy (revive dead code)\n2. Add error UI to review-tab.tsx when no token — use existing github.noAuth i18n key\n3. Add account-delete → githubClearToken IPC call cascade\n4. Add authorization guard to github-set-token IPC handler (user confirmation dialog)\n5. Fix unsafe `catch: (error) => error as Error` in service.ts to properly type errors\n6. Add TTL-based cache eviction or revalidation to refreshTokenCache in account.ts\n7. Add parity test for github.* i18n keys across all locales\n8. Replace raw fetch() with HttpClient or Octokit for rate limit handling\n9. Add tests for github/service.ts (unit + integration with mock server)",
+  "pre_existing_findings_incorporated": [
+    "ses_18a1bfabdffejje11RqviXPdW6: DesktopHostSlotMap type indexing issue (blocks clean typecheck)",
+    "ses_18a43d32bffe9O4e2692RJRGyy: Schema.String.annotations() runtime error in 10 tool files",
+    "ses_18a5-20260529-debt: Desktop Electron app has no uncaughtException/unhandledRejection handler, no CSP — silent crashes possible",
+    "ses_18a5-20260529-debt: Desktop package has only 2 test files for 29 source modules — no IPC handler tests",
+    "ses_18a53812cffeLNpJhsNaOx2SIW: Electron desktop IPC has no runtime schema validation at preload boundary — compromised renderer can send arbitrary IPC messages"
+  ],
+  "archived_cartography_reference": "docs/json/opencode/archive/ses_189614d70ffex8hGdTS2OLHHCA/ses_189614d70ffex8hGdTS2OLHHCA/artifacts/cartography-github-integration-ui.v1.json",
+  "archived_cartography_smoking_guns_carried_forward": [
+    "parseGitHubRemote() has zero production callers — dead code",
+    "@octokit/rest, @octokit/graphql declared but not imported in source — dead dependencies"
+  ],
+  "out_of_scope_findings_recorded": []
+}

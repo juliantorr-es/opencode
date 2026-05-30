@@ -25,6 +25,7 @@ export interface FileAttachmentPart extends PartBase {
 export interface AgentPart extends PartBase {
   type: "agent"
   name: string
+  subagent?: boolean
 }
 
 export interface ImageAttachmentPart {

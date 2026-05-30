@@ -1,0 +1,18 @@
+{
+  "schema_version": "v1",
+  "plan_id": "desktop-phase1-remaining",
+  "plan_revision": 2,
+  "title": "Desktop App Phase 1 Remaining Features — Revised",
+  "boundary": "desktop-feature-parity-phase1-remaining",
+  "consumer_purpose": "Deliver the remaining 3 Phase 1 desktop app features from the audit: Agent configuration UI, Context display/overflow awareness, and Settings polish.",
+  "claim_atoms": [
+    "Agent configuration create/edit dialog exists with name, prompt, model selection, provider config, using electron-store",
+    "Context display indicator shows compaction events and warning color at 80%+ threshold",
+    "Settings dialog has reorganized categories with Agents tab, search in panels, and improved keyboard nav"
+  ],
+  "content": "# Desktop App Phase 1 Remaining Features — REVISION 2\n\n## Boundary\n`desktop-feature-parity-phase1-remaining` — Agent config UI, context display, settings polish\n\n## Consumer Purpose\nDesktop app users gain the ability to create and edit custom agents (matching TUI functionality), see context pressure/compaction indicators, and navigate settings with search and improved keyboard controls.\n\n---\n\n## SLICE 1 — AGENT CONFIGURATION UI (HIGHEST IMPACT)\n\n### Key Architecture Decision\nAgent data flows through the sidecar HTTP REST API, NOT Electron IPC. The SDK provides `sdk.app.agents()` but no create/update endpoint. Custom agents must be stored locally in electron-store (named `desktop-custom-agents`) and merged with SDK agents in the UI.\n\n### Files\n\n| File | Action | Description |\n|---|---|---|\n| `packages/app/src/components/dialog-manage-agents.tsx` | **NEW** | Management dialog listing all agents (SDK + custom) with search, add/edit/delete |\n| `packages/app/src/components/dialog-edit-agent.tsx` | **NEW** | Edit form for agent name, prompt, model selection, variant, temperature, top_p, color |\n| `packages/app/src/components/settings-agents.tsx` | **NEW** | Settings panel with \"Manage Agents\" button |\n| `packages/app/src/components/dialog-settings.tsx` | **MODIFY** | Add \"Agents\" tab between Shortcuts and Providers (additive) |\n| `packages/app/src/i18n/en.ts` | **MODIFY** | Add agent dialog i18n keys |\n| `packages/desktop/src/preload/types.ts` | **MODIFY** | Add `getCustomAgents`/`setCustomAgents` to ElectronAPI (additive, 2 lines) |\n| `packages/desktop/src/main/ipc.ts` | **MODIFY** | Add IPC handlers `get-desktop-custom-agents` and `set-desktop-custom-agents` using electron-store (additive, ~8 lines) |\n\n### IPC Channels\n- `get-desktop-custom-agents` → returns `AgentDef[]` from store named `desktop-custom-agents`\n- `set-desktop-custom-agents` → saves `AgentDef[]` to store\n\n### AgentDef Type\n```typescript\ntype AgentDef = {\n  name: string\n  prompt?: string\n  model?: string\n  variant?: string\n  temperature?: number\n  top_p?: number\n  color?: string\n}\n```",
+  "status": "proposed",
+  "created_at": "2026-05-29T23:54:34.503617+00:00",
+  "modified_at": "2026-05-29T23:55:08.386063+00:00",
+  "revision_notes": "Revision 2 incorporates cartographer findings: agent data flows via SDK not IPC, SessionContextTab already exists, compaction SSE events exist but unlistened, settings already has keyboard nav via Kobalte Tabs, models/shortcuts already have search."
+}

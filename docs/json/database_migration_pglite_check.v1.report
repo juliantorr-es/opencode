@@ -1,0 +1,75 @@
+=== PGlite Compatibility Audit for Database Migration ===
+
+Generated: 2026-05-28T18:19:00Z
+
+1. PACKAGE: @electric-sql/pglite
+   Latest version: 0.4.6
+   Status: Alpha (labeled "alpha" in README)
+   Description: WASM Postgres build packaged into a TypeScript client library.
+                Runs Postgres in browser, Node.js, Bun, and Deno.
+                Only 3.7 MB gzipped.
+   License: Apache 2.0 / PostgreSQL License (dual)
+   Total versions on npm: 69
+
+2. DRIZZLE ORM PGLITE ADAPTER: EXISTS
+   drizzle-orm latest version: 0.45.2
+   Exports found:
+     - drizzle-orm/pglite          (entry point)
+     - drizzle-orm/pglite/driver   (driver implementation)
+     - drizzle-orm/pglite/session  (session layer)
+     - drizzle-orm/pglite/migrator (migration support)
+   Full ORM adapter support confirmed. PgliteSession, PgliteTransaction,
+   PglitePreparedQuery all present.
+
+3. TRANSACTION ISOLATION LEVEL (REPEATABLE READ): SUPPORTED
+   PGlite's transaction() method simply issues "BEGIN", "COMMIT", and "ROLLBACK"
+   SQL commands via the Postgres wire protocol. Since PGlite runs a real Postgres
+   engine in WASM, all standard Postgres SQL features are inherited:
+   - Users can run "BEGIN TRANSACTION ISOLATION LEVEL REPEATABLE READ" directly
+     via the raw exec() method.
+   - Drizzle ORM via PgTransactionConfig supports isolationLevel with values:
+     'read uncommitted', 'read committed', 'repeatable read', 'serializable'.
+     The adapter calls "SET TRANSACTION ISOLATION LEVEL <level>" on the inner
+     PGlite transaction.
+   - PgTransactionConfig also supports accessMode and deferrable options.
+   Caveat: PGlite is single-user/single-connection. REPEATABLE READ technically
+   works but has no concurrent transactions to isolate against. It may still be
+   useful for read-consistency within a single transaction.
+
+4. SELECT FOR UPDATE: SUPPORTED
+   Since PGlite passes raw SQL to the Postgres engine, "SELECT ... FOR UPDATE"
+   is fully supported at the SQL level. Drizzle ORM supports it via the
+   .$forUpdate() query modifier on prepared statements.
+   Caveat: Single-user mode means FOR UPDATE has no concurrent writers to block,
+   but it operates correctly when present. If migrating to PGlite as an embedded
+   Postgres (replacing SQLite), FOR UPDATE works but is effectively a no-op
+   within single-connection usage.
+
+5. KEY LIMITATIONS
+   - Single user/connection: PGlite cannot handle concurrent connections.
+     All queries are serialized through a JS-level mutex (#queryMutex and
+     #transactionMutex in base.ts).
+   - WASM-bound: Data is in-memory or persisted to indexedDB/filesystem,
+     not a remote Postgres server.
+   - Alpha status: Package is pre-1.0, API may change.
+   - Only 3.7 MB gzipped WASM binary — supports many Postgres extensions
+     (pgvector, etc.) but may not support all Postgres 16 features.
+
+6. MIGRATION FEASIBILITY
+   FEASIBLE with caveats:
+   - drizzle-orm/pglite provides a drop-in adapter for existing Drizzle schema
+     definitions (pg-core types).
+   - SQLite types map directly: text() -> text(), integer() -> integer(),
+     real() -> double precision(), text({mode:'json'}) -> jsonb(),
+     integer({mode:'boolean'}) -> boolean()
+   - $default and $onUpdate work identically in pg-core.
+   - Data migration needed for json columns: existing SQLite TEXT columns with
+     JSON content must be cast to Postgres jsonb type in the migration SQL.
+   - Primary concern: single-user limitation means PGlite is not a replacement
+     for multi-connection access patterns. Evaluate whether the OpenCode desktop
+     app requires concurrent database access.
+
+Summary: PGlite + drizzle-orm/pglite provides a viable path for SQLite-to-Postgres
+migration on the desktop, with full Drizzle ORM support including transactions,
+isolation levels, and prepared statements. The main tradeoff is the single-user
+limitation inherent to the WASM Postgres architecture.

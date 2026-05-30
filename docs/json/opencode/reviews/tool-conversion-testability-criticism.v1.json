@@ -1,0 +1,203 @@
+{
+  "schema": "rig.relay.criticism.v1",
+  "review_id": "criticism-20260529-tool-conversion-testability",
+  "target_plan": "docs/json/opencode/handoffs/tool-conversion-to-builtins.v1.json",
+  "target_plan_revision": 1,
+  "reviewer": "claim-adversary",
+  "reviewed_at": "2026-05-29T23:50:00Z",
+  "verification_method": "bun -e one-liners from packages/opencode/ + source inspection of 27 actual built-in tool files",
+  "critical_context": "The plan describes work (27 new tool files, 6 built-in merges) that was ALREADY COMMITTED in a1414d8c8. All 27 tools already exist as Effect Tool.define modules. This evaluation treats the plan's proposed changes as its testability claims.",
+  "assessment_summary": {
+    "testability_score": 2.3,
+    "score_rationale": "Below 3.0 means most changes cannot be verified with ≤10-line bun -e scripts. File I/O patterns are independently testable, but every tool's actual execution (Effect runtime, AppFileSystem, InstanceState, Schema validation) requires full-layer provisioning that exceeds 10 lines.",
+    "blocking_finding": "The plan has NO per-tool test strategy — it identifies 'no tests exist' as a risk (severity: medium) but does not prescribe test approaches per tool. Tests are deferred to 'P2 work' with no strategy.",
+    "accuracy_finding": "Plan claims '27 new tools to create' but all already exist. Claims '6 existing built-ins to merge' but all 6 already exist and are registered. Claims 'no tests exist' — true for the 27 new tools, but 27 other tool test files DO exist in test/tool/, demonstrating the infrastructure exists but wasn't applied to these tools."
+  },
+  "per_tool_testability": {
+    "file_based_tools": {
+      "tools": [
+        "propose-plan.ts",
+        "revise-plan.ts",
+        "comment-plan.ts",
+        "review-criticism.ts",
+        "prepare-delegation.ts",
+        "prepare-checkpoint.ts",
+        "publish-checkpoint.ts",
+        "generate-published-checkpoint-report.ts",
+        "prepublication-admitted.ts",
+        "prepublication-blocked.ts",
+        "prepublication-inconclusive.ts",
+        "generate-report.ts",
+        "curate-context.ts",
+        "rig-schema-validate.ts"
+      ],
+      "verdict": "PARTIAL",
+      "core_io_testable_in_10_lines": true,
+      "evidence": "FILE_IO_TEST: PASS (7 lines), JSONL_APPEND_TEST: PASS (8 lines) — Bun.file().write(), Bun.file().json(), file append all work standalone.",
+      "full_execution_testable_in_10_lines": false,
+      "why_full_execution_fails": "Every tool wraps logic in Effect.gen(function* () { const fs = yield* AppFileSystem.Service; const instance = yield* InstanceState.context; ... }). Testing AppFileSystem alone outside the app runtime failed: 'undefined is not an object (evaluating layer.build)'. Each tool requires: Effect runtime, AppFileSystem layer, InstanceState layer, Schema decoder initialization, Tool.define init context.",
+      "existing_test_model": "failure-tools.test.ts (35 imports, full TestInstance + Layer.provide chain — 155 lines minimal). Even 'simple' tool tests require provisioning 20+ services (Agent, Provider, Session, Git, LSP, Bus, etc.).",
+      "can_isolate_output": true,
+      "can_isolate_execution": false
+    },
+    "duckdb_aware_dual_backend": {
+      "tools": [
+        "record-stress-wave.ts",
+        "record-execution-wave.ts",
+        "qa-observed-clean.ts",
+        "out-of-scope-finding.ts",
+        "publish-finding.ts",
+        "discover-findings.ts",
+        "tool-failure.ts",
+        "tool-feedback.ts",
+        "rig-jsonl-query.ts"
+      ],
+      "verdict": "PARTIAL with caveats",
+      "jsonl_fallback_testable_in_10_lines": true,
+      "evidence": "JSONL_APPEND_TEST: PASS (8 lines), SHA256_DEDUP_TEST: PASS (8 lines for dedup logic). The JSONL write path is pure file I/O.",
+      "duckdb_path_testable_in_10_lines": false,
+      "why_duckdb_fails": "DuckDB subprocess spawn requires: path resolution, firewall bypass logic, pipe error handling, optional runtime flag. The duckdb-query.test.ts is 139 lines with fake client mock.",
+      "dual_path_verification_gap": "The dual-backend pattern creates two code paths per tool. The plan does not describe how to test that both paths produce identical output. SHA-256 dedup (out-of-scope-finding) works in 8 lines standalone, but the cross-path consistency cannot be verified without both DuckDB and JSONL paths executing.",
+      "can_isolate_jsonl_path": true,
+      "can_isolate_duckdb_path": false
+    },
+    "complex_effect_tools": {
+      "tools": [
+        "read-source.ts",
+        "read-lib.ts",
+        "smart-edit.ts",
+        "smart-write.ts",
+        "smart-batch.ts",
+        "replace-symbol.ts",
+        "read-artifact.ts"
+      ],
+      "verdict": "NOT TESTABLE IN 10 LINES",
+      "core_io_testable_in_10_lines": "MINIMAL (some utility functions)",
+      "extract_imports_testable": true,
+      "evidence": "Import extraction (filter lines starting with 'import') is testable in 5 lines. Symbol extraction via regex is testable in 8 lines. File read via Bun.file() is testable in 3 lines.",
+      "full_execution_testable_in_10_lines": false,
+      "dependency_chain": [
+        "read-source.ts: requires Git service (dirty detection, git blame, git log) — 358 lines total, 7 imports including Git",
+        "smart-edit.ts: requires edit metadata recording, existing file state, atomic replace — 153 lines, 6 imports",
+        "smart-batch.ts: requires atomic multi-file operations with rollback — multi-file state management",
+        "replace-symbol.ts: requires ast-grep or regex transformation with git state",
+        "read-lib.ts: requires node_modules path resolution outside workspace",
+        "read-artifact.ts: requires structured artifact format parsing with profile-based filtering"
+      ],
+      "can_isolate_utilities": true,
+      "can_isolate_tool": false
+    }
+  },
+  "blocking_findings": [
+    {
+      "severity": "BLOCKING",
+      "category": "claim",
+      "finding": "Plan claims '27 new tools to create' and '6 existing built-ins to merge' — all 33 tools ALREADY EXIST as built-in Effect Tool.define modules in packages/opencode/src/tool/, committed in a1414d8c8. The plan describes work already completed.",
+      "evidence": "smart_find on src/tool/ shows 55+ Tool.define() exports. All 27 listed files exist. All 6 'merge' files exist.",
+      "repair_path": "Revise plan to describe testing strategy for existing tools, not creation."
+    },
+    {
+      "severity": "BLOCKING",
+      "category": "strategy",
+      "finding": "Plan has ZERO per-tool test strategy. Risk section lists 'no tests exist' at severity: medium but defers to 'P2 work' without describing per-tool test approaches, fixture patterns, or verification criteria.",
+      "evidence": "Full plan document search for 'test' yields only: risk description ('No tests exist'), 'P2 work', and a single reference to test file in execution step 14 ('bun test for existing tool tests'). No per-tool strategy.",
+      "repair_path": "Add a test strategy section with: (a) per-tool test approach, (b) dual-backend consistency verification plan, (c) JSONL fallback test pattern, (d) DuckDB integration test pattern, (e) Effect runtime test harness pattern."
+    },
+    {
+      "severity": "WEAK",
+      "category": "claim",
+      "finding": "Plan claims 'No tests exist' as a risk — this is technically true for the 27 tools, but 27 OTHER tool test files exist in test/tool/, proving the test infrastructure is mature. The plan doesn't reference existing patterns.",
+      "evidence": "test/tool/ has 27 test files: duckdb-query.test.ts (139 lines), failure-tools.test.ts (155 lines with 35 imports), etc. These demonstrate the TestInstance + Layer pattern.",
+      "repair_path": "Reference existing test patterns (TestInstance, testEffect helper, Layer provision chain) and describe how new tests follow the same pattern."
+    }
+  ],
+  "testability_score_breakdown": {
+    "score": 2.3,
+    "scale": "1-5 (5 = all changes verifiable in ≤10 line bun -e)",
+    "breakdown": [
+      {
+        "dimension": "file_io_pattern_testability",
+        "score": 4.5,
+        "explanation": "JSON file read/write, JSONL append, directory creation are all testable in ≤10 lines with Bun.file(). These are the CORE OUTPUT patterns of 14 file-based tools."
+      },
+      {
+        "dimension": "sha_dedup_testability",
+        "score": 4.0,
+        "explanation": "SHA-256 hashing with crypto.subtle is testable in 8 lines. out-of-scope-finding's dedup logic can be verified independently."
+      },
+      {
+        "dimension": "duckdb_path_testability",
+        "score": 1.0,
+        "explanation": "DuckDB subprocess spawn cannot be tested in 10 lines. Requires firewall bypass, path resolution, error handling, dual output comparison."
+      },
+      {
+        "dimension": "effect_runtime_testability",
+        "score": 1.5,
+        "explanation": "Running a tool's Effect.gen execute() requires full layer provisioning. Even AppFileSystem.Default standalone failed ('layer.build is undefined'). Must use TestInstance pattern from existing tests (155+ lines)."
+      },
+      {
+        "dimension": "git_dependent_testability",
+        "score": 1.0,
+        "explanation": "Tools requiring Git service (read-source, smart-edit) cannot be tested without repository state, git blame, dirty detection. Not verifiable in 10 lines."
+      },
+      {
+        "dimension": "validation_schema_testability",
+        "score": 3.0,
+        "explanation": "Schema.Struct validation IS testable with Schema.decodeUnknownSync in ~8 lines (verified: Schema rejects missing fields cleanly). But the tool integration with Tool.define init context is not."
+      },
+      {
+        "dimension": "plan_test_strategy_coverage",
+        "score": 0.0,
+        "explanation": "The plan has NO per-tool test strategy. Score = 0 for this dimension."
+      }
+    ]
+  },
+  "verification_scripts": {
+    "file_io_pass": {
+      "lines": 7,
+      "script": "const plan = { id: 'test', boundary: 'test-boundary', content: 'hello' }\nawait Bun.write('/tmp/test-plan-io.json', JSON.stringify(plan, null, 2))\nconst result = await Bun.file('/tmp/test-plan-io.json').json()\nconsole.log(result.id === 'test' ? 'PASS' : 'FAIL')",
+      "verdict": "PASS"
+    },
+    "jsonl_append_pass": {
+      "lines": 8,
+      "script": "const record = { plan_id: 'test', executor: 'test', validation_passed: true, recorded_at: new Date().toISOString() }\nconst line = JSON.stringify(record) + '\\n'\nawait Bun.write('/tmp/test-wave.jsonl', line, { flag: 'a' })\nconst content = await Bun.file('/tmp/test-wave.jsonl').text()\nconst parsed = JSON.parse(content.trim())\nconsole.log(parsed.plan_id === 'test' ? 'PASS' : 'FAIL')",
+      "verdict": "PASS"
+    },
+    "sha256_dedup_pass": {
+      "lines": 8,
+      "script": "const data = JSON.stringify({ affected_files: ['test.ts'], language: 'ts' })\nconst hash1 = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(data)).then(...)\nconst hash2 = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(data)).then(...)\nconsole.log(hash1 === hash2 ? 'PASS' : 'FAIL')",
+      "verdict": "PASS"
+    },
+    "effect_runtime_fail": {
+      "lines": 12,
+      "script": "import { Effect, Layer } from 'effect'\nimport { AppFileSystem } from '@opencode-ai/core/filesystem'\nEffect.gen(function* () {\n  const fs = yield* AppFileSystem.Service\n  yield* fs.writeFileString('/tmp/effect-test.txt', 'hello\\n')\n  const content = yield* fs.readFileString('/tmp/effect-test.txt')\n  console.log(content === 'hello' ? 'PASS' : 'FAIL')\n}).pipe(Effect.provide(Layer.mergeAll(AppFileSystem.Default)), Effect.runPromise)",
+      "verdict": "FAIL ('layer.build is undefined' — requires full app runtime provisioning)",
+      "realistic_minimum": "155 lines + 35 imports (using existing TestInstance pattern from failure-tools.test.ts)"
+    }
+  },
+  "existing_test_infrastructure": {
+    "test_tool_count": 27,
+    "test_pattern": "TestInstance + Layer.provide + testEffect helper",
+    "example_complexity": "failure-tools.test.ts: 155 lines, 35 imports from 20+ modules including Agent, Provider, Session, Git, LSP, Bus, Truncate, Storage, etc.",
+    "key_finding": "Even the 'simple' tool tests require full application layer provisioning. A 10-line bun -e script cannot substitute for the Effect runtime setup.",
+    "infrastructure_exists": true,
+    "applied_to_new_tools": false
+  },
+  "out_of_scope_findings": [
+    {
+      "finding": "Plan is stale — describes creation work already completed in a1414d8c8. Should be updated or archived and replaced with a test-strategy-targeted plan.",
+      "affected_files": ["docs/json/opencode/handoffs/tool-conversion-to-builtins.v1.json"]
+    },
+    {
+      "finding": "Existing 27 test files in test/tool/ demonstrate robust Effect-based test infrastructure but were not applied to the 27 new built-in tools. This suggests the tools were created without test coverage.",
+      "affected_files": ["packages/opencode/src/tool/*.ts", "packages/opencode/test/tool/*.test.ts"]
+    }
+  ],
+  "recommendations": [
+    "Replace the stale plan with a test-strategy plan that covers each tool's test approach",
+    "Use the existing TestInstance pattern (from failure-tools.test.ts) as the test harness template",
+    "Implement JSONL fallback-only tests first (testable in 10 lines) as smoke tests",
+    "Add DuckDB dual-path consistency tests separately (not isolable in 10 lines)",
+    "Break complex tools (read-source, smart-edit) into testable utility functions (extractImports, extractSymbols, cleanContent) that ARE verifiable in 10 lines"
+  ]
+}

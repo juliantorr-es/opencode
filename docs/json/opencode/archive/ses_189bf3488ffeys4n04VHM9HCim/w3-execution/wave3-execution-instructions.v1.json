@@ -1,0 +1,50 @@
+{
+  "schema": "rig.relay.execution_instructions.v1",
+  "wave": "w3-execution",
+  "prepared_at": "2026-05-30T00:29:00Z",
+  "prepared_by": "orchestrator",
+  "mission": "Fix tool Layer never-mismatch — 82 TS2345 errors + 6 Schema.Literal API issues",
+  "pending_architect_plan": true,
+  "expected_framework_changes": {
+    "file": "packages/opencode/src/tool/tool.ts",
+    "description": "Add R generic to Def interface for execute's required services channel. Propagate through DefWithoutID, Init, Info, define.",
+    "current_types": {
+      "Def": "Def<P, M> { execute(args, ctx): Effect<ExecuteResult<M>> }",
+      "DefWithoutID": "DefWithoutID<P, M> = Omit<Def<P, M>, 'id'>",
+      "Init": "Init<P, M> = DefWithoutID<P, M> | (() => Effect<DefWithoutID<P, M>>)",
+      "Info": "Info<P, M> { id: string, init: () => Effect<DefWithoutID<P, M>> }",
+      "define": "define<P, M, R>(id, init: Effect<Init<P, M>, never, R>): Effect<Info<P, M>, never, R | Truncate | Agent>"
+    },
+    "expected_target_types": {
+      "Def": "Def<P, M, R=never> { execute(args, ctx): Effect<ExecuteResult<M>, never, R> }",
+      "DefWithoutID": "DefWithoutID<P, M, R=never> = Omit<Def<P, M, R>, 'id'>",
+      "Init": "Init<P, M, R=never> = DefWithoutID<P, M, R> | (() => Effect<DefWithoutID<P, M, R>>)",
+      "Info": "Info<P, M, R=never> { id: string, init: () => Effect<DefWithoutID<P, M, R>> }",
+      "define": "define<P, M, R, R2=never, ID>(id, init: Effect<Init<P, M, R2>, never, R>): Effect<Info<P, M, R2>, never, R | R2 | Truncate | Agent> & { id: ID }"
+    }
+  },
+  "expected_tool_changes": {
+    "description": "14 tool files with execute() yielding services — types should auto-resolve after framework fix",
+    "files": [
+      "coordination.ts", "edit.ts", "prepare-delegation.ts", "propose-plan.ts",
+      "read-artifact.ts", "read-lib.ts", "read-source.ts", "rig-jsonl-query.ts",
+      "rig-schema-validate.ts", "send-message.ts", "smart-edit.ts",
+      "task.ts", "tool-feedback.ts", "write.ts"
+    ]
+  },
+  "schema_literal_fixes": {
+    "description": "6 files use Schema.Literal(a,b,c) — should be Schema.Literals([a,b,c])",
+    "files": ["comment-plan.ts", "coordination.ts", "discover-findings.ts", "publish-finding.ts", "record-stress-wave.ts", "rig-git.ts"]
+  },
+  "dirty_file_preservation": {
+    "note": "19 tool files are dirty — any edits MUST be additive",
+    "dirty_files": [
+      "comment-plan.ts", "duckdb-query.ts", "edit.ts", "generate-report.ts",
+      "out-of-scope-finding.ts", "prepublication-admitted.ts", "prepublication-blocked.ts",
+      "prepublication-inconclusive.ts", "propose-plan.ts", "qa-observed-clean.ts",
+      "registry.ts", "replace-symbol.ts", "review-criticism.ts", "revise-plan.ts",
+      "smart-batch.ts", "smart-write.ts", "todo.ts", "tool-failure.ts", "tool-feedback.ts"
+    ]
+  },
+  "concurrent_session_note": "ses_189c0383effeKgHWZiRvf05vm7 running Phase 1 lane closure. No known file conflicts with tool/ directory."
+}

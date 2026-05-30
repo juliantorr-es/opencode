@@ -1,0 +1,169 @@
+{
+  "schema_version": "rig.relay.cartography.v1",
+  "lane": "mcp-management-crash-fixes",
+  "generated_at": "2026-05-30T03:15:00Z",
+  "agent": "cartographer",
+  "status": "complete",
+  "files_mapped": [
+    "packages/app/src/components/dialog-select-mcp.tsx",
+    "packages/app/src/components/dialog-edit-mcp.tsx",
+    "packages/opencode/src/mcp/index.ts",
+    "packages/desktop/src/main/ipc.ts",
+    "packages/desktop/src/main/store.ts",
+    "packages/app/src/components/prompt-input.tsx",
+    "packages/app/src/types/mcp.ts",
+    "packages/desktop/src/preload/index.ts",
+    "packages/opencode/src/config/mcp.ts"
+  ],
+  "findings": [
+    {
+      "id": "MCP-001",
+      "file": "packages/app/src/components/dialog-select-mcp.tsx",
+      "line": 380,
+      "severity": "resolved",
+      "status": "ALREADY_FIXED",
+      "description": "FI-002 onSave handler — was described as no-op in follow-up-issues.v1.json, but current code at line 380-396 correctly persists: reads from api.getMcpServers(), merges entry, writes via api.setMcpServers(), calls sdk.client.mcp.add(), and refetches queries. The follow-up-issues.v1.json (generated 2026-05-30T02:50:00Z) is stale — fix was applied by orchestrator at 2026-05-30T00:45:41.331Z.",
+      "pattern_type": "already-fixed",
+      "code_path": "onSave handler at dialog-select-mcp.tsx:380 → api.getMcpServers() line 381 → merge line 383-387 → api.setMcpServers() line 388 → sdk.client.mcp.add() line 389 → queryClient.refetchQueries() line 390 → setEditingEntry(undefined) line 394"
+    },
+    {
+      "id": "MCP-002",
+      "severity": "critical",
+      "pattern_type": "dual-source-of-truth",
+      "description": "FI-003 Dual source of truth — THREE independent stores for MCP server state: (1) sync.data.mcp (SDK runtime status, Record<string, Status>), (2) electron-store 'desktop-mcp-servers' (persisted config array), (3) Config.Service (opencode file config, ConfigMCP.Info). The dialog renders the server list from sync.data.mcp (line 108: Object.entries(sync.data.mcp ?? {})) but edit/delete reads from electron-store via api.getMcpServers() (line 67, 91, 381). The addMutation (line 129-146) only calls sdk.client.mcp.add() — it does NOT write to electron-store. Servers added via the inline form appear in the list at runtime but are lost on restart. The onSave handler (line 380) correctly writes to both, but addMutation bypasses electron-store entirely.",
+      "divergence_points": [
+        {"operation": "add", "writes_sdk": true, "writes_electron_store": false, "line": 129},
+        {"operation": "edit", "writes_sdk": true, "writes_electron_store": true, "line": 380},
+        {"operation": "delete", "writes_sdk": true, "writes_electron_store": true, "line": 77},
+        {"operation": "toggle", "writes_sdk": true, "writes_electron_store": false, "line": 113}
+      ],
+      "impact": "Servers added via the desktop UI dialog are not persisted to electron-store. After app restart, added servers are gone from electron-store but may still appear if the SDK re-reads from its own config. Conversely, servers only in electron-store (pre-existing or added programmatically) appear in the list but fail to edit because handleEdit reads from electron-store."
+    },
+    {
+      "id": "MCP-003",
+      "severity": "low",
+      "pattern_type": "delete-refetch",
+      "description": "FI-005 Delete refetch — confirmRemove (line 77-101) properly refetches after deletion. It calls queryClient.refetchQueries(queryOptions.mcp(pathKey(sync.directory))) at line 99. The delete flow is: disconnect → auth.remove → filter from electron-store array → write back → refetch queries → clear confirmDelete signal.",
+      "code_path": "confirmRemove line 77 → sdk.client.mcp.disconnect() line 81 → sdk.client.mcp.auth.remove() line 86 → api.getMcpServers() line 91 → api.setMcpServers(filtered) line 94 → queryClient.refetchQueries() line 99 → setConfirmDelete(undefined) line 100"
+    },
+    {
+      "id": "MCP-004",
+      "severity": "medium",
+      "pattern_type": "transport-validation",
+      "description": "FI-011 Transport configuration — isValidMcpEntry (ipc.ts:73-81) validates config.type must be 'local' or 'remote'. The DialogEditMcp UI only offers these two types via a toggle (dialog-edit-mcp.tsx:96-113). Unsupported types passed programmatically are silently dropped by validateAndFilterMcpServers (ipc.ts:101-108) with only a console.warn. No crash occurs, but invalid entries are silently lost with no user feedback.",
+      "validation_boundary": "ipc.ts:73-81 validates type, name (string), command (array if local), url (string if remote). Falls through to return false for any other type."
+    },
+    {
+      "id": "MCP-005",
+      "severity": "low",
+      "pattern_type": "reactive-render",
+      "description": "FI-028 sync.data.mcp subscription — The dialog's server list uses createMemo(() => Object.entries(sync.data.mcp ?? {}).map(...)) (line 108), which is a reactive SolidJS memo. SolidJS batches updates so rapid state changes don't crash, but every status change triggers a re-render of the entire list. The toggle mutation (line 113) refetches queries on success, which cascades into another sync.data.mcp update. With many servers, this could cause jank but not crashes.",
+      "code_path": "createMemo line 108 → sync.data.mcp (reactive store) → rendered in <List> component"
+    },
+    {
+      "id": "MCP-006",
+      "severity": "major",
+      "pattern_type": "add-persist-missing",
+      "description": "Add mutation (line 129-146) does not persist to electron-store. addMutation.mutationFn calls sdk.client.mcp.add() only. On success it resets the form and refetches queries, but never calls api.setMcpServers(). Contrast with onSave (line 380) which correctly writes to both. This means servers added via the inline add form exist only in the SDK runtime state, not in electron-store.",
+      "code_path": "addMutation line 129 → sdk.client.mcp.add({name, config}) line 136 → setStore mode='list' line 139 → queryClient.refetchQueries() line 141 (NO api.setMcpServers call)",
+      "fix": "Add api.setMcpServers call in addMutation.onSuccess or mutationFn, reading existing servers, appending new entry, and writing back — same pattern as onSave handler."
+    },
+    {
+      "id": "MCP-007",
+      "severity": "major",
+      "pattern_type": "nested-dialog-portal",
+      "description": "Stress finding F-032: DialogEditMcp uses useDialog().close() (dialog-edit-mcp.tsx:57) which may close the outer DialogSelectMcp dialog instead of just the edit overlay. Kobalte's dialog context uses a stack-based approach; nested Dialog-within-Dialog can cause competing portal layers.",
+      "file": "packages/app/src/components/dialog-edit-mcp.tsx",
+      "line": 57,
+      "existing_finding_id": "F-032",
+      "source": "docs/json/opencode/stress/mcp-management-ui.v1.json"
+    },
+    {
+      "id": "MCP-008",
+      "severity": "medium",
+      "pattern_type": "add-only-remote",
+      "description": "Stress finding F-033: The inline add form in DialogSelectMcp only supports remote MCP servers (type:'remote', URL-based). DialogEditMcp supports both local and remote, but the add flow can't create local servers. No UI field for command/args exists in the add form.",
+      "file": "packages/app/src/components/dialog-select-mcp.tsx",
+      "line": 131,
+      "existing_finding_id": "F-033",
+      "source": "docs/json/opencode/stress/mcp-management-ui.v1.json"
+    },
+    {
+      "id": "MCP-009",
+      "severity": "medium",
+      "pattern_type": "unsafe-window-api",
+      "description": "All electron-store reads use (window as any).api pattern with optional chaining (api?.getMcpServers?.()). This provides no type safety on IPC calls. Silent failures when the API is missing or returns unexpected types.",
+      "file": "packages/app/src/components/dialog-select-mcp.tsx",
+      "lines": [66, 91, 380, 381]
+    },
+    {
+      "id": "MCP-010",
+      "severity": "informational",
+      "pattern_type": "no-tests",
+      "description": "No tests exist for MCP management UI components. Zero test files for dialog-select-mcp.tsx, dialog-edit-mcp.tsx, or the desktop MCP IPC handlers. The only MCP tests in the repo are httpapi-mcp.test.ts and httpapi-mcp-oauth.test.ts (in packages/opencode/test/server/, testing the HTTP API, not the UI).",
+      "test_gap": "dialog-select-mcp, dialog-edit-mcp, ipc MCP handlers, electron-store MCP persistence."
+    }
+  ],
+  "dirty_files_to_preserve": [
+    {
+      "file": "packages/opencode/src/mcp/index.ts",
+      "status": "MODIFIED (23 lines uncommitted)",
+      "change": "Import from deleted cli/cmd/tui/event replaced with inline TuiEvent stub (ToastShow only)",
+      "risk": "Type drift — local stub may diverge from canonical TuiEvent definition. Do not touch during MCP management fixes unless you need TuiEvent.ToastShow."
+    }
+  ],
+  "entry_points": [
+    {"name": "handleEdit", "file": "dialog-select-mcp.tsx", "line": 64, "reads": "api.getMcpServers() from electron-store"},
+    {"name": "handleDelete", "file": "dialog-select-mcp.tsx", "line": 215, "sets": "confirmDelete signal"},
+    {"name": "confirmRemove", "file": "dialog-select-mcp.tsx", "line": 77, "writes": "electron-store + SDK disconnect"},
+    {"name": "onSave", "file": "dialog-select-mcp.tsx", "line": 380, "writes": "electron-store + SDK add + refetch"},
+    {"name": "onCancel", "file": "dialog-select-mcp.tsx", "line": 396, "sets": "editingEntry(undefined)"},
+    {"name": "submitAdd", "file": "dialog-select-mcp.tsx", "line": 173, "calls": "addMutation.mutate()"},
+    {"name": "addMutation", "file": "dialog-select-mcp.tsx", "line": 129, "writes": "sdk.client.mcp.add() only (no electron-store)"},
+    {"name": "handleSave", "file": "dialog-edit-mcp.tsx", "line": 55, "builds": "McpServerEntry, calls props.onSave(entry)"}
+  ],
+  "shared_file_fragments_needed": [
+    "dialog-select-mcp.tsx#add-mutation-persist — add api.setMcpServers() call to addMutation.onSuccess",
+    "dialog-select-mcp.tsx#handleEdit-reconciliation — fallback when server exists in sync.data.mcp but not in electron-store",
+    "ipc.ts#mcp-handler-try-catch — wrap store.set in try/catch for reliability"
+  ],
+  "recommended_architect_scope": [
+    "Add electron-store persistence to addMutation.onSuccess (read existing servers, append new entry, write back via api.setMcpServers, refetch)",
+    "Add reconciliation in handleEdit: when server not found in electron-store, construct entry from sync.data.mcp metadata or initialize default config",
+    "Fix nested dialog portal: render DialogEditMcp as inline panel inside DialogSelectMcp instead of nested Dialog component, or use separate portal context",
+    "Add try/catch to set-desktop-mcp-servers IPC handler for crash-safe persistence",
+    "Prevent empty-string name bypass in isValidMcpEntry validation",
+    "Consider adding editMutation useMutation (currently onSave is a raw async function, not a mutation, so there's no loading state during edit save)"
+  ],
+  "pre_existing_findings_integrated": {
+    "stress_artifact": "docs/json/opencode/stress/mcp-management-ui.v1.json",
+    "critical_findings": ["F-031: Dual source of truth (merged into MCP-002)", "F-032: Nested dialog portal (MCP-007)", "F-033: Add only remote (MCP-008)"],
+    "validation_artifact": "docs/json/opencode/validation/mcp-management-ui.v1.json",
+    "follow_up_issues": "docs/json/opencode/sessions/current/follow-up-issues.v1.json",
+    "resolved_issues": ["FI-002 (onSave no-op) — already fixed in current code"],
+    "still_active_issues": ["FI-003 (dual SOT)", "FI-005 (delete refetch — handled)", "FI-011 (transport — handled with silent drop)", "FI-028 (rapid state — handled reactively)"]
+  },
+  "smoking_guns": [
+    {
+      "id": "SG-1",
+      "risk": "P0 data loss",
+      "finding": "addMutation (line 129) never writes to electron-store. Servers added via the UI exist only at runtime in the SDK. After app restart, added servers are lost.",
+      "code": "dialog-select-mcp.tsx:129-146",
+      "fix": "Add api.setMcpServers() call with current servers + new entry in addMutation.onSuccess"
+    },
+    {
+      "id": "SG-2",
+      "risk": "P0 wrong dialog close",
+      "finding": "DialogEditMcp's useDialog().close() may close the outer dialog instead of the edit overlay due to nested Kobalte dialog context",
+      "code": "dialog-edit-mcp.tsx:57 + dialog-select-mcp.tsx",
+      "fix": "Render edit form inline instead of nested Dialog, or use separate portal"
+    },
+    {
+      "id": "SG-3",
+      "risk": "P1 dual source of truth",
+      "finding": "List renders from sync.data.mcp (SDK status) but edit/delete operates on electron-store. No reconciliation between the two. A server visible in the list may fail to edit if not in electron-store.",
+      "code": "dialog-select-mcp.tsx:108 vs 64-71",
+      "fix": "Add reconciliation in handleEdit to construct default entry when server not found in electron-store"
+    }
+  ]
+}

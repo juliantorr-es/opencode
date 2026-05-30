@@ -8,6 +8,12 @@ import { useSettings } from "@/context/settings"
 import { dict as en } from "@/i18n/en"
 import { Persist, persisted } from "@/utils/persist"
 
+// ── Custom event for AI command routing ──
+export const AI_COMMAND_EVENT = "opencode:ai-command"
+export function dispatchAiCommand(command: string, payload?: string) {
+  window.dispatchEvent(new CustomEvent(AI_COMMAND_EVENT, { detail: { command, payload } }))
+}
+
 const IS_MAC = typeof navigator === "object" && /(Mac|iPod|iPhone|iPad)/.test(navigator.platform)
 
 const PALETTE_ID = "command.palette"
@@ -79,6 +85,7 @@ export interface CommandOption {
   category?: string
   keybind?: KeybindConfig
   slash?: string
+  icon?: string
   suggested?: boolean
   disabled?: boolean
   hidden?: boolean
@@ -94,6 +101,7 @@ export type CommandCatalogItem = {
   category?: string
   keybind?: KeybindConfig
   slash?: string
+  icon?: string
   hidden?: boolean
 }
 
@@ -229,6 +237,25 @@ function isEditableTarget(target: EventTarget | null) {
   return false
 }
 
+// ── AI command definitions ──
+export const AI_COMMANDS: Omit<CommandOption, "onSelect">[] = [
+  { id: "ai.explain", title: "Explain Code", description: "Explain the selected code", icon: "code", slash: "explain", category: "AI Actions" },
+  { id: "ai.refactor", title: "Refactor Code", description: "Refactor the selected code", icon: "edit", slash: "refactor", category: "AI Actions" },
+  { id: "ai.test", title: "Generate Tests", description: "Generate tests for selected code", icon: "checklist", slash: "test", category: "AI Actions" },
+  { id: "ai.fix", title: "Fix Issues", description: "Fix issues in selected code", icon: "check", slash: "fix", category: "AI Actions" },
+  { id: "ai.deploy", title: "Deploy", description: "Start deployment flow", icon: "cloud-upload", slash: "deploy", category: "AI Actions" },
+  { id: "ai.review", title: "Review PR", description: "Review a pull request", icon: "glasses", slash: "review", category: "AI Actions" },
+  { id: "ai.commit", title: "Commit Changes", description: "Commit staged changes", icon: "branch", slash: "commit", category: "AI Actions" },
+  { id: "ai.search", title: "Search Codebase", description: "Semantic search across the codebase", icon: "magnifying-glass", slash: "search", category: "AI Actions" },
+]
+
+// ── Recent / favorite tracking (embedded in command context) ──
+export type CommandUsageRecord = {
+  id: string
+  lastUsed: number
+  useCount: number
+}
+
 export const { use: useCommand, provider: CommandProvider } = createSimpleContext({
   name: "Command",
   init: () => {
@@ -239,6 +266,37 @@ export const { use: useCommand, provider: CommandProvider } = createSimpleContex
       registrations: [] as CommandRegistration[],
       suspendCount: 0,
     })
+
+    // ── Recent/favorite tracking ──
+    const [recentStore, setRecentStore] = createStore<{ recents: CommandUsageRecord[]; favorites: string[] }>({
+      recents: [],
+      favorites: [],
+    })
+    const [persistedRecents, setPersistedRecents, , recentsReady] = persisted(
+      Persist.global("command.recents.v1"),
+      createStore<{ recents: CommandUsageRecord[]; favorites: string[] }>({ recents: [], favorites: [] }),
+    )
+    createEffect(() => {
+      if (!recentsReady()) return
+      setRecentStore("recents", persistedRecents.recents)
+      setRecentStore("favorites", persistedRecents.favorites)
+    })
+    const trackUse = (id: string) => {
+      const now = Date.now()
+      const existing = recentStore.recents.find((r) => r.id === id)
+      const next: CommandUsageRecord[] = existing
+        ? recentStore.recents.map((r) => (r.id === id ? { ...r, lastUsed: now, useCount: r.useCount + 1 } : r))
+        : [...recentStore.recents, { id, lastUsed: now, useCount: 1 }]
+      setRecentStore("recents", next.sort((a, b) => b.lastUsed - a.lastUsed).slice(0, 20))
+      setPersistedRecents("recents", recentStore.recents)
+    }
+    const toggleFavorite = (id: string) => {
+      const exists = recentStore.favorites.includes(id)
+      const next = exists ? recentStore.favorites.filter((f) => f !== id) : [...recentStore.favorites, id]
+      setRecentStore("favorites", next)
+      setPersistedRecents("favorites", next)
+    }
+    const isFavorite = (id: string) => recentStore.favorites.includes(id)
     const warnedDuplicates = new Set<string>()
 
     type CommandCatalog = Record<string, CommandCatalogItem>
@@ -404,6 +462,17 @@ export const { use: useCommand, provider: CommandProvider } = createSimpleContex
       })
     }
 
+    // Register AI commands
+    const aiRegistrationKey = "ai.global"
+    const aiOptions = createMemo(() =>
+      AI_COMMANDS.map((cmd) => ({
+        ...cmd,
+        onSelect: () => dispatchAiCommand(cmd.slash ?? cmd.id.replace("ai.", "")),
+      })),
+    )
+    const aiEntry: CommandRegistration = { key: aiRegistrationKey, options: aiOptions }
+    setStore("registrations", (arr) => upsertCommandRegistration(arr, aiEntry))
+
     return {
       register,
       trigger(id: string, source?: CommandSource) {
@@ -434,6 +503,16 @@ export const { use: useCommand, provider: CommandProvider } = createSimpleContex
       get options() {
         return options()
       },
+      // ── Tracking ──
+      get recents() {
+        return recentStore.recents
+      },
+      get favorites() {
+        return recentStore.favorites
+      },
+      trackUse,
+      toggleFavorite,
+      isFavorite,
     }
   },
 })

@@ -1,0 +1,20 @@
+{
+  "schema_version": "v1",
+  "plan_id": "lane-2-unified-command-palette",
+  "plan_revision": 1,
+  "title": "Unified Command Palette — AI Commands, Universal Search, Cmd+K Prominence",
+  "boundary": "lane-2-unified-command-palette",
+  "consumer_purpose": "Make Cmd+K the single most powerful surface — a universal command palette with AI actions, categorized results, recent/favorites tracking, slash integration, and global hotkey prominence",
+  "claim_atoms": [
+    "AI agent commands registered in command.tsx with custom event dispatch",
+    "Command palette evolved with category icons, recent/favorites, intent detection",
+    "Layout shows Cmd+K hint in titlebar area",
+    "Prompt input shows command palette results on / prefix",
+    "Cmd+K from prompt input shows full palette",
+    "Placeholder updated to mention Cmd+K"
+  ],
+  "content": "## Plan: Unified Command Palette (Lane 2)\n\n### Files to modify:\n1. **packages/app/src/context/command.tsx** — Add AI command registration with custom event dispatch, recent/favorites tracking\n2. **packages/app/src/components/dialog-command-palette.tsx** — Evolve with category icons, recent/favorites sections, intent detection, descriptions\n3. **packages/app/src/pages/layout.tsx** — Add Cmd+K hint badge in the layout header area\n4. **packages/app/src/components/prompt-input.tsx** — Add slash command integration with AI commands from catalog, Cmd+K handler, updated placeholder\n\n### Step-by-step:\n1. In command.tsx: register AI commands (/explain, /refactor, /test, /fix, /deploy, /review, /commit, /search) with onSelect dispatching custom events. Add persisted recent/favorites tracking.\n2. In dialog-command-palette.tsx: enhance UI with category icons, recent/favorites sections at top, intent detection (slash prefix, natural language routing), description display alongside titles. Track command usage for recents.\n3. In layout.tsx: add a subtle \"⌘K\" badge in the layout shell header that hints at the command palette, with a tooltip.\n4. In prompt-input.tsx: merge AI commands into the slash popover, handle Cmd+K to show full palette, update placeholder to mention Cmd+K.",
+  "status": "proposed",
+  "created_at": "2026-05-30T06:38:19.960835+00:00",
+  "modified_at": "2026-05-30T06:38:19.961036+00:00"
+}

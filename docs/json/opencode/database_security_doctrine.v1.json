@@ -1,0 +1,121 @@
+{
+  "schema_version": "rig.relay.database_security_doctrine.v1",
+  "generated_at": "2026-05-28T20:00:00.000000+00:00",
+  "author": "Phase 1.2 execution subagent",
+  "status": "current",
+  "env_convention": {
+    "prefix": "OPENCODE_",
+    "url_var": "OPENCODE_DATABASE_URL",
+    "ssl_var": "OPENCODE_DATABASE_SSL",
+    "pool_size_var": "OPENCODE_DATABASE_POOL_SIZE",
+    "rationale": "All application-level environment variables use the OPENCODE_ prefix to namespace them from system-level or third-party variables. $DATABASE_URL is reserved by many platforms (Heroku, Render, etc.) and would risk collision or accidental credential exposure. The OPENCODE_ prefix matches the existing convention established by OPENCODE_SERVER_PASSWORD, OPENCODE_SERVER_USERNAME, OPENCODE_DB, and all OPENCODE_* runtime flags defined in src/effect/runtime-flags.ts."
+  },
+  "secrets_pattern": {
+    "mechanism": "Effect Redacted type",
+    "reference_path": "src/server/auth.ts",
+    "access_pattern": "Secrets are stored as Redacted.Redacted values typed via Effect Config's Config.redacted(). Access requires explicit Redacted.value() unwrapping at the point of use. The Redacted type prevents accidental logging or serialization of secret material through the standard toString() and JSON serialization path (Redacted returns '<redacted>' for both).",
+    "principle": "Credentials must be redacted at the config boundary and explicitly unwrapped only at the point of use (connection establishment). No raw secret value should appear in ad-hoc data structures, log messages, error messages, serialized state, or process env spread into subprocesses."
+  },
+  "local_binding": {
+    "host": "localhost",
+    "rationale": "PGlite (embedded Postgres for local/desktop use) must bind to localhost/127.0.0.1 only. Binding to 0.0.0.0 would expose the local embedded database to the network, defeating the security model of a local-only database. The application is a CLI/desktop tool — there is no legitimate multi-host access pattern for the PGlite instance. CI postgres connections also bind to localhost via the postgres service container."
+  },
+  "ci_tls_requirements": {
+    "required": true,
+    "production_config": {
+      "mode": "require",
+      "rejectUnauthorized": true
+    },
+    "rationale": "CI environments run ephemeral Postgres containers and may share hosts. TLS encryption ensures credentials are never transmitted in plaintext even on loopback. The pg driver must use ssl: { rejectUnauthorized: true } in CI. For local PGlite, TLS is not required (connections are local Unix domain sockets or loopback TCP). The OPENCODE_DATABASE_SSL env var (defaulting to true) controls this — set it to false for local PGlite or development postgres without TLS."
+  },
+  "role_separation": {
+    "app_role": {
+      "name": "opencode_app",
+      "grants": "CRUD (SELECT, INSERT, UPDATE, DELETE) on public schema only",
+      "schema": "public"
+    },
+    "migration_role": {
+      "name": "opencode_migration",
+      "grants": "DDL (CREATE, ALTER, DROP) on public schema, held only during migration execution",
+      "schema": "public"
+    },
+    "principle": "Privilege separation via least privilege. The application runtime (opencode_app) never holds DDL capabilities. Migration operations use a separate role (opencode_migration) activated only during schema migration windows. This prevents accidental or malicious schema changes through the application connection pool. In PGlite (local embedded), role separation is advisory but the connection configuration should still use distinct user strings for app vs migration to maintain the pattern."
+  },
+  "credential_isolation": {
+    "risk": "Database credentials (connection URLs containing passwords) may leak to subprocesses if the OPENCODE_DATABASE_URL env var is included in the process.env spread pattern used by shell execution and LSP server subprocess spawning.",
+    "leak_paths": [
+      {
+        "file": "src/tool/shell.ts",
+        "mechanism": "Spreads process.env into subprocess env (line 419)",
+        "risk_level": "high"
+      },
+      {
+        "file": "src/lsp/server.ts",
+        "mechanism": "Spreads process.env into LSP subprocess env (multiple locations e.g. lines 110, 141, 200, 335, 518, 572, 1128, 1162, etc.)",
+        "risk_level": "high"
+      }
+    ],
+    "mitigation_pattern": "OPENCODE_DATABASE_URL must NOT be set as a process-level env var. Instead, it must be read via Effect Config (Config.redacted) from either a .env file or an explicit environment variable injection point that is explicitly excluded from subprocess env spreads. The Effect ConfigModule pattern (see src/effect/database-config.ts) reads the value at layer construction time and stores it as a Redacted.Redacted in the service's resolved config, so the raw value never exists in process.env for subprocesses to inherit. The DatabaseAdapter layer (src/storage/adapter.ts) uses Layer.unwrap to resolve DatabaseConfig.Service at layer-construction time, so NO module-load-time reads of process.env / Flag occur. Credentials are Redacted until Redacted.value() is called at the connection point in makePgAdapter(). If process-level consumption is unavoidable (e.g. for pg CLI tools), opt-in env injection should be explicit and narrow."
+  },
+  "model_transition": {
+    "from": "SQLite file-permissions model — security relies on filesystem-level permissions on the database file (~/.opencode/opencode.db). No network exposure, no credentials in env vars, no TLS concerns.",
+    "to": "Postgres network-auth + TLS model — security relies on TCP connection authentication, TLS encryption, and role-based access control. Credentials are present in env vars (via Effect Config) and must be carefully isolated from subprocess injection.",
+    "new_concerns": [
+      "Credentials in environment variables may leak to subprocesses via process.env spreads",
+      "TLS must be verified (rejectUnauthorized: true) to prevent MITM on CI",
+      "Local PGlite must not bind to 0.0.0.0",
+      "Role separation must be enforced at connection level (app vs migration)",
+      "Connection strings (containing passwords) may appear in error messages, logs, or telemetry"
+    ],
+    "coexistence_period": "During the migration window, both SQLite (src/storage/db.ts) and Postgres (src/storage/db.pg.ts) backends coexist. The security doctrine applies to Postgres connections immediately. SQLite remains governed by file permissions during this period. The DatabaseAdapter interface (src/storage/adapter.ts) abstracts over both backends, reads DatabaseConfig via the Effect layer (not Flag/process.env at module load), and the security properties of each backend are documented in their respective implementation files."
+  },
+  "implementation_phases": [
+    {
+      "phase": "Phase 0.5",
+      "deliverables": [
+        "database_security_doctrine.v1.json (this document)",
+        "src/effect/database-config.ts (Effect Config module for database connection parameters)",
+        "src/storage/db.pg.ts (Postgres adapter stub with SSL requirement docs)"
+      ],
+      "validation_gate": "All three artifacts exist, schema-validated, and the Config module compiles against the existing Effect service registry."
+    },
+    {
+      "phase": "Phase 1.2 (Credential isolation in runtime layers)",
+      "deliverables": [
+        "src/effect/database-config.ts: url field made optional (Config.option), defaultLayer exported with Layer.orDie",
+        "src/storage/adapter.ts: defaultLayer uses Layer.unwrap to read DatabaseConfig.Service (NOT Flag/process.env at module load), embedded Layer.provide(DatabaseConfig.defaultLayer)",
+        "src/effect/app-runtime.ts: DatabaseConfig.defaultLayer provided via Layer.provideMerge; DatabaseAdapter.defaultLayer wired into mergeAll",
+        "src/effect/bootstrap-runtime.ts: DatabaseAdapter.defaultLayer wired into mergeAll",
+        "docs/json/opencode/database_security_doctrine.v1.json updated to reflect Phase 1.2"
+      ],
+      "validation_gate": "No OPENCODE_DATABASE_URL process.env reads at module load time in adapter.ts. Credentials are Redacted until explicit unwrap at connection point. DatabaseConfig is wired into both runtime layers."
+    },
+    {
+      "phase": "Phase 1.3 (PgAdapter)",
+      "deliverables": [
+        "PgAdapter reads DatabaseConfig service for URL, SSL, and pool size",
+        "PgAdapter uses Redacted.value(url) at connection establishment",
+        "PgAdapter applies ssl: { rejectUnauthorized: true } in CI"
+      ],
+      "validation_gate": "PgAdapter integration test passes with SSL-enabled CI postgres and SSL-disabled local PGlite."
+    },
+    {
+      "phase": "Phase 1.8 (Role enforcement)",
+      "deliverables": [
+        "Migration script uses opencode_migration role",
+        "Application pool uses opencode_app role",
+        "Migration runner drops to opencode_app role after DDL complete"
+      ],
+      "validation_gate": "Integration test verifies app role cannot execute DDL."
+    },
+    {
+      "phase": "Phase 2.0 (Credential isolation audit)",
+      "deliverables": [
+        "Audit of all process.env spreads in subprocess spawning paths",
+        "Explicit filter or exclusion list for OPENCODE_DATABASE_URL",
+        "Optional: mechanism to inject DB credentials to specific subprocesses that need them"
+      ],
+      "validation_gate": "Process env audit script confirms OPENCODE_DATABASE_URL never reaches subprocess env."
+    }
+  ]
+}

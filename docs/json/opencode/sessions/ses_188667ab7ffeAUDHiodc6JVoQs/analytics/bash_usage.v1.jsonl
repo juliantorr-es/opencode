@@ -1,0 +1,2 @@
+{"at":"2026-05-30T06:47:10.362Z","session_id":"ses_188667ab7ffeAUDHiodc6JVoQs","agent":"lane-owner","binary":"tsgo","command":"tsgo --noEmit 2>&1 | grep -E \"error TS\" | wc -l","reason":"Run tsgo directly and count errors","elapsed_ms":11,"exit_code":0}
+{"at":"2026-05-30T06:47:13.478Z","session_id":"ses_188667ab7ffeAUDHiodc6JVoQs","agent":"lane-owner","binary":"tsgo","command":"tsgo --noEmit 2>&1 | head -200","reason":"Run tsgo directly to see all errors","elapsed_ms":15,"exit_code":0}

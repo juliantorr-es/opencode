@@ -1,0 +1,364 @@
+{
+  "schema_version": "1.0",
+  "artifact_kind": "cartography",
+  "profile": "cartography",
+  "title": "Desktop Main Process Analysis — Titlebar, Dialogs, IPC, Build System",
+  "generated_at": "2026-05-29T23:00:00Z",
+  "source_files": [
+    "packages/desktop/src/main/windows.ts",
+    "packages/desktop/src/main/index.ts",
+    "packages/desktop/src/main/ipc.ts",
+    "packages/desktop/src/main/menu.ts",
+    "packages/desktop/src/main/updater.ts",
+    "packages/desktop/src/main/desktop-menu-actions.ts",
+    "packages/desktop/src/main/store.ts",
+    "packages/desktop/src/main/constants.ts",
+    "packages/desktop/src/preload/index.ts",
+    "packages/desktop/src/preload/types.ts",
+    "packages/desktop/package.json",
+    "packages/desktop/electron-builder.config.ts"
+  ],
+  "sections": [
+    {
+      "title": "1. Titlebar / Frame Configuration Per Platform",
+      "id": "titlebar-frame",
+      "findings": [
+        {
+          "finding": "TitlebarTheme type is minimal — only a `mode` field",
+          "detail": "At packages/desktop/src/preload/types.ts:16-17, TitlebarTheme is `{ mode: \"light\" | \"dark\" }`. It is imported by windows.ts as a type-only import.",
+          "file": "packages/desktop/src/preload/types.ts",
+          "line": 16
+        },
+        {
+          "finding": "Darwin (macOS): hidden titleBarStyle with custom traffic light position, no frame:false",
+          "detail": "In createMainWindow() at windows.ts:149-153 and createLoadingWindow() at windows.ts:197, darwin uses `{ titleBarStyle: \"hidden\", trafficLightPosition: { x: 12, y: 14 } }`. The frame is NOT set to false — Electron's hidden titleBarStyle keeps the native frame but hides the title text, allowing custom traffic light positioning.",
+          "file": "packages/desktop/src/main/windows.ts",
+          "line": 149
+        },
+        {
+          "finding": "Win32: frameless window with custom titleBarOverlay",
+          "detail": "In createMainWindow() at windows.ts:155-159 and createLoadingWindow() at windows.ts:199-203, win32 uses `{ frame: false, titleBarStyle: \"hidden\", titleBarOverlay: overlay({ mode }) }`. This creates a fully frameless window with a software-rendered title bar overlay controlled by the overlay() function.",
+          "file": "packages/desktop/src/main/windows.ts",
+          "line": 155
+        },
+        {
+          "finding": "Linux: no titlebar customization at all",
+          "detail": "Neither createMainWindow() nor createLoadingWindow() have any platform-specific spread for Linux. Linux gets default frame behavior with no titlebar overlay and no hidden titlebar style — the platform spread conditions are only for 'darwin' and 'win32'.",
+          "file": "packages/desktop/src/main/windows.ts",
+          "line": 148
+        },
+        {
+          "finding": "overlay() returns a transparent color with symbolColor based on mode",
+          "detail": "At windows.ts:81-88, overlay() returns `{ color: '#00000000' (fully transparent), symbolColor: mode === 'dark' ? 'white' : 'black', height: max(40, round(40 * zoom)) }`. The color is fully transparent (alpha = 0), meaning the titlebar area itself is invisible — the renderer draws its own titlebar behind it. This only applies on Windows.",
+          "file": "packages/desktop/src/main/windows.ts",
+          "line": 81
+        },
+        {
+          "finding": "updateTitlebar() is a no-op on non-Win32",
+          "detail": "At windows.ts:95-98, updateTitlebar() returns immediately if process.platform !== 'win32'. It calls win.setTitleBarOverlay() with the theme and zoom factor, but only for Win32 windows.",
+          "file": "packages/desktop/src/main/windows.ts",
+          "line": 95
+        },
+        {
+          "finding": "setTitlebar() stores the theme in a WeakMap and calls updateTitlebar()",
+          "detail": "At windows.ts:90-93, setTitlebar stores the theme in a `titlebarThemes` WeakMap<BrowserWindow, Partial<TitlebarTheme>> (defined at line 57), then calls updateTitlebar(). The WeakMap means the theme is GC'd when the window is destroyed.",
+          "file": "packages/desktop/src/main/windows.ts",
+          "line": 90
+        },
+        {
+          "finding": "updateTitlebar is called from zoom changes as well",
+          "detail": "updateTitlebar(win) is called from updateZoom() at windows.ts:445-448 and from setZoom() in desktop-menu-actions.ts:80-83. It's also called from the IPC handler for set-zoom-factor at ipc.ts:237.",
+          "file": "packages/desktop/src/main/windows.ts",
+          "line": 445
+        },
+        {
+          "finding": "The set-titlebar IPC channel in ipc.ts passes the full TitlebarTheme from renderer",
+          "detail": "At ipc.ts:240-245: `ipcMain.handle('set-titlebar', (event, theme: TitlebarTheme) => { ... setTitlebar(win, theme) })`. The renderer can push theme updates to the main process via this IPC channel.",
+          "file": "packages/desktop/src/main/ipc.ts",
+          "line": 240
+        }
+      ]
+    },
+    {
+      "title": "2. ALL dialog.showMessageBox / showSaveDialog / showOpenDialog Calls",
+      "id": "dialog-calls",
+      "findings": [
+        {
+          "finding": "[A] wireWindowRecovery — showMessageBox with hardcoded English strings",
+          "detail": "In windows.ts:293-313, the `show()` inner function calls `dialog.showMessageBox(win, { type: 'warning', buttons: ['Relaunch', 'Export Logs', ...], message: 'OpenCode failed to load', detail: '...' })`. All strings are hardcoded: 'Relaunch', 'Export Logs', 'Keep Waiting', 'Quit', 'OpenCode failed to load', 'OpenCode window terminated unexpectedly', 'OpenCode is not responding', 'You can relaunch the app, open the logs, or keep waiting.'",
+          "file": "packages/desktop/src/main/windows.ts",
+          "line": 299,
+          "hardcoded_strings": [
+            {"string": "Relaunch", "context": "Button text"},
+            {"string": "Export Logs", "context": "Button text"},
+            {"string": "Keep Waiting", "context": "Button text (wait mode)"},
+            {"string": "Quit", "context": "Button text (non-wait mode)"},
+            {"string": "OpenCode failed to load", "context": "Message title"},
+            {"string": "Window: ${name}", "context": "Detail line 1"},
+            {"string": "URL: ${validatedURL}", "context": "Detail line 2"},
+            {"string": "Error: ${errorCode} ${errorDescription}", "context": "Detail line 3"},
+            {"string": "OpenCode window terminated unexpectedly", "context": "Message title for render-process-gone"},
+            {"string": "Reason: ${details.reason}", "context": "Detail line 1"},
+            {"string": "Code: ${details.exitCode ?? '<unknown>'}", "context": "Detail line 2"},
+            {"string": "OpenCode is not responding", "context": "Message title for unresponsive"},
+            {"string": "You can relaunch the app, open the logs, or keep waiting.", "context": "Detail for unresponsive"}
+          ]
+        },
+        {
+          "finding": "[B] session-export-data IPC handler — showSaveDialog",
+          "detail": "In ipc.ts:110-126: `dialog.showSaveDialog({ title: opts?.title ?? 'Export Session', defaultPath: opts?.defaultPath, filters: opts?.filters })`. Default title is 'Export Session'.",
+          "file": "packages/desktop/src/main/ipc.ts",
+          "line": 110,
+          "hardcoded_strings": [
+            {"string": "Export Session", "context": "Save dialog default title"}
+          ]
+        },
+        {
+          "finding": "[C] session-import-file IPC handler — showOpenDialog",
+          "detail": "In ipc.ts:132-143: `dialog.showOpenDialog({ title: opts?.title ?? 'Import Session', filters: opts?.filters, properties: ['openFile'] })`. Default title is 'Import Session'.",
+          "file": "packages/desktop/src/main/ipc.ts",
+          "line": 132,
+          "hardcoded_strings": [
+            {"string": "Import Session", "context": "Open dialog default title"}
+          ]
+        },
+        {
+          "finding": "[D] open-directory-picker IPC handler — showOpenDialog",
+          "detail": "In ipc.ts:182-190: `dialog.showOpenDialog({ properties: ['openDirectory', ...(opts?.multiple ? ['multiSelections'] : []), 'createDirectory'], title: opts?.title ?? 'Choose a folder', defaultPath: opts?.defaultPath })`. Default title is 'Choose a folder'.",
+          "file": "packages/desktop/src/main/ipc.ts",
+          "line": 184,
+          "hardcoded_strings": [
+            {"string": "Choose a folder", "context": "Directory picker default title"}
+          ]
+        },
+        {
+          "finding": "[E] open-file-picker IPC handler — showOpenDialog",
+          "detail": "In ipc.ts:200-209: `dialog.showOpenDialog({ properties: ['openFile', ...(opts?.multiple ? ['multiSelections'] : [])], title: opts?.title ?? 'Choose a file', defaultPath: opts?.defaultPath, filters: pickerFilters(opts?.extensions) })`. Default title is 'Choose a file'.",
+          "file": "packages/desktop/src/main/ipc.ts",
+          "line": 200,
+          "hardcoded_strings": [
+            {"string": "Choose a file", "context": "File picker default title"}
+          ]
+        },
+        {
+          "finding": "[F] save-file-picker IPC handler — showSaveDialog",
+          "detail": "In ipc.ts:212-217: `dialog.showSaveDialog({ title: opts?.title ?? 'Save file', defaultPath: opts?.defaultPath })`. Default title is 'Save file'.",
+          "file": "packages/desktop/src/main/ipc.ts",
+          "line": 214,
+          "hardcoded_strings": [
+            {"string": "Save file", "context": "Save file picker default title"}
+          ]
+        },
+        {
+          "finding": "[G] Updater — showMessageBox on check failure",
+          "detail": "In updater.ts:99-104: `dialog.showMessageBox({ type: 'error', message: 'Update check failed.', title: 'Update Error' })`. All strings hardcoded in English.",
+          "file": "packages/desktop/src/main/updater.ts",
+          "line": 99,
+          "hardcoded_strings": [
+            {"string": "Update check failed.", "context": "Error message"},
+            {"string": "Update Error", "context": "Error title"}
+          ]
+        },
+        {
+          "finding": "[H] Updater — showMessageBox on already up-to-date",
+          "detail": "In updater.ts:109-112: `dialog.showMessageBox({ type: 'info', message: \"You're up to date.\", title: 'No Updates' })`. All strings hardcoded.",
+          "file": "packages/desktop/src/main/updater.ts",
+          "line": 109,
+          "hardcoded_strings": [
+            {"string": "You're up to date.", "context": "Info message"},
+            {"string": "No Updates", "context": "Info title"}
+          ]
+        },
+        {
+          "finding": "[I] Updater — showMessageBox on update ready",
+          "detail": "In updater.ts:117-125: `dialog.showMessageBox({ type: 'info', message: 'Update ${version} downloaded. Restart now?', title: 'Update Ready', buttons: ['Restart', 'Later'] })`. All strings hardcoded.",
+          "file": "packages/desktop/src/main/updater.ts",
+          "line": 117,
+          "hardcoded_strings": [
+            {"string": "Update ${result.version ?? ''} downloaded. Restart now?", "context": "Update prompt message"},
+            {"string": "Update Ready", "context": "Update prompt title"},
+            {"string": "Restart", "context": "Button text"},
+            {"string": "Later", "context": "Button text"}
+          ]
+        },
+        {
+          "finding": "No dialog.showMessageBox calls exist in menu.ts",
+          "detail": "menu.ts (68 lines) does not import `dialog` at all — it only uses `Menu`, `MenuItemConstructorOptions`, `BrowserWindow`, and `shell`.",
+          "file": "packages/desktop/src/main/menu.ts",
+          "line": 1
+        },
+        {
+          "finding": "No dialog.showMessageBox calls exist in desktop-menu-actions.ts",
+          "detail": "desktop-menu-actions.ts (85 lines) does not import `dialog` — it only uses `BrowserWindow` and functions from `./windows`.",
+          "file": "packages/desktop/src/main/desktop-menu-actions.ts",
+          "line": 1
+        }
+      ],
+      "summary": "Total: 9 dialog call sites across 3 files (windows.ts, ipc.ts, updater.ts). All strings are hardcoded English with no i18n/locale mechanism.",
+      "total_dialog_sites": 9,
+      "files_with_dialogs": [
+        "packages/desktop/src/main/windows.ts (1 showMessageBox with 3 variants)",
+        "packages/desktop/src/main/ipc.ts (3 showOpenDialog, 2 showSaveDialog)",
+        "packages/desktop/src/main/updater.ts (3 showMessageBox)"
+      ]
+    },
+    {
+      "title": "3. IPC Mechanism: State Flow Between Renderer and Main",
+      "id": "ipc-mechanism",
+      "findings": [
+        {
+          "finding": "Architecture: contextBridge.exposeInMainWorld + ipcMain.handle/on",
+          "detail": "The preload script (preload/index.ts) uses `contextBridge.exposeInMainWorld('api', api)` to expose an `ElectronAPI` typed object to the renderer. The renderer accesses `window.api.*`. Communication uses `ipcRenderer.invoke()` (return promise) and `ipcRenderer.send()` (fire-and-forget) on the renderer side, matched by `ipcMain.handle()` (returns value) and `ipcMain.on()` (fire-and-forget) on the main side.",
+          "file": "packages/desktop/src/preload/index.ts",
+          "line": 100
+        },
+        {
+          "finding": "Invoke/Handle channels (request-response, renderer→main)",
+          "detail": "33 IPC channels using the invoke/handle pattern (ipcRenderer.invoke → ipcMain.handle):",
+          "channels": [
+            "kill-sidecar", "await-initialization", "get-window-config",
+            "consume-initial-deep-links", "get-default-server-url", "set-default-server-url",
+            "get-wsl-config", "set-wsl-config", "get-display-backend", "set-display-backend",
+            "parse-markdown", "check-app-exists", "wsl-path", "resolve-app-path",
+            "run-updater", "check-update", "install-update", "set-background-color",
+            "export-debug-logs", "record-fatal-renderer-error",
+            "session-export-data", "session-import-file",
+            "store-get", "store-set", "store-delete", "store-clear", "store-keys", "store-length",
+            "open-directory-picker", "open-file-picker", "save-file-picker",
+            "open-path", "read-clipboard-image",
+            "get-window-count", "get-window-focused", "set-window-focus", "show-window",
+            "get-zoom-factor", "set-zoom-factor", "get-pinch-zoom-enabled", "set-pinch-zoom-enabled",
+            "set-titlebar", "run-desktop-menu-action",
+            "get-desktop-custom-agents", "set-desktop-custom-agents", "delete-desktop-custom-agent",
+            "get-desktop-mcp-servers", "set-desktop-mcp-servers",
+            "get-desktop-plugin-config", "set-desktop-plugin-config",
+            "github-oauth-start", "github-oauth-callback", "github-get-token", "github-set-token", "github-clear-token", "github-api-proxy"
+          ],
+          "note": "Some github-* channels reference imports from ./github-ipc which does NOT exist as a file on disk. These are likely pending work from an in-progress extraction."
+        },
+        {
+          "finding": "Send/On channels (fire-and-forget, renderer→main)",
+          "detail": "3 IPC channels using the send/on pattern (ipcRenderer.send → ipcMain.on):",
+          "channels": [
+            {"channel": "open-link", "direction": "renderer→main", "usage": "Open URL in external browser"},
+            {"channel": "show-notification", "direction": "renderer→main", "usage": "Show OS notification"},
+            {"channel": "relaunch", "direction": "renderer→main", "usage": "Relaunch the app"},
+            {"channel": "loading-window-complete", "direction": "renderer→main", "usage": "Signal loading window done"}
+          ]
+        },
+        {
+          "finding": "Send/On channels (main→renderer, push from main)",
+          "detail": "5 IPC channels using webContents.send pattern (main pushes to renderer):",
+          "channels": [
+            {"channel": "init-step", "direction": "main→renderer", "usage": "Send initialization progress"},
+            {"channel": "sqlite-migration-progress", "direction": "main→renderer", "usage": "SQLite migration progress"},
+            {"channel": "menu-command", "direction": "main→renderer", "usage": "Menu action triggered"},
+            {"channel": "deep-link", "direction": "main→renderer", "usage": "Deep link received"},
+            {"channel": "pinch-zoom-enabled-changed", "direction": "main→renderer", "usage": "Pinch zoom setting changed"},
+            {"channel": "zoom-factor-changed", "direction": "main→renderer", "usage": "Zoom factor changed"}
+          ],
+          "preload_handlers": "On the preload side, these are received via `ipcRenderer.on(channel, handler)` and exposed to the renderer as callbacks (e.g., onMenuCommand, onDeepLink, onSqliteMigrationProgress, onPinchZoomEnabledChanged, onZoomFactorChanged). They return an unsubscribe function."
+        },
+        {
+          "finding": "Store system: electron-store with named stores and reserved namespaces",
+          "detail": "The `getStore()` function (store.ts:12-23) creates/caches electron-store instances keyed by name, with cwd set to `app.getPath('userData')` and dot-notation disabled. All stores use an empty fileExtension (no .json suffix). Generic IPC handlers (store-get, store-set, store-delete, store-clear, store-keys, store-length) expose CRUD to the renderer but block writes to RESERVED_STORE_NAMES: ['desktop-custom-agents', 'desktop-mcp-servers', 'desktop-plugin-config', 'github-auth'] (ipc.ts:26). Those reserved stores have dedicated IPC handlers with valibot validation via `validateAndFilterAgents`/`validateAndFilterMcpServers`/`validateAndFilterPluginConfigs` (imported from `./ipc-validation` which does NOT exist as a file on disk — likely pending extraction).",
+          "file": "packages/desktop/src/main/store.ts",
+          "line": 12
+        },
+        {
+          "finding": "Preferences/Settings flow: no dedicated IPC channel for locale",
+          "detail": "Looking at the constants (constants.ts:7,8,9,10), the known setting keys are: 'defaultServerUrl', 'wslEnabled', 'pinchZoomEnabled'. There is NO dedicated IPC channel for locale or language preference. The generic store-get/store-set handlers could be used for arbitrary key-value storage by the renderer, but there is no mechanism for the main process to know about locale preferences. The app does not use Electron's `app.getLocale()` or any locale passing from main to renderer at startup.",
+          "file": "packages/desktop/src/main/constants.ts",
+          "line": 7
+        }
+      ],
+      "summary": "The IPC system is fully generic: the preload exposes typed methods, ipcMain handles them, and the renderer sees `window.api.*`. There are approximately 50+ channels total. No locale/i18n pass-through exists — all dialog strings are hardcoded in English."
+    },
+    {
+      "title": "4. Build System",
+      "id": "build-system",
+      "findings": [
+        {
+          "finding": "Build system: electron-vite for dev/build, electron-builder for packaging",
+          "detail": "From package.json scripts (lines 13-22): `dev` uses `electron-vite dev`, `build` uses `electron-vite build`, `package` uses `electron-builder --config electron-builder.config.ts`. Typecheck uses `tsgo -b`. Prebuild and predev scripts use `bun`.",
+          "file": "packages/desktop/package.json",
+          "line": 13
+        },
+        {
+          "finding": "Entry point: out/main/index.js (compiled from src/main/index.ts)",
+          "detail": "The package.json `main` field is `./out/main/index.js`. electron-vite compiles src/main/*.ts to out/main/*.js.",
+          "file": "packages/desktop/package.json",
+          "line": 24
+        },
+        {
+          "finding": "Key dependencies for the main process",
+          "detail": "Runtime deps: `electron-window-state` (window state persistence), `electron-store` (key-value persistence), `electron-updater` (auto-update), `electron-context-menu`, `electron-log`, `effect` (Effect TS), `@zip.js/zip.js`, `drizzle-orm`, `marked`. Dev deps: `electron` 41.2.1, `electron-builder` ^26, `electron-vite` ^5.",
+          "file": "packages/desktop/package.json",
+          "line": 26
+        },
+        {
+          "finding": "Electron Builder config: three channels (dev, beta, prod)",
+          "detail": "electron-builder.config.ts exports a config driven by OPENCODE_CHANNEL env var. Dev: appId=ai.opencode.desktop.dev, productName='OpenCode Dev'. Beta: appId=ai.opencode.desktop.beta, publishes to anomalyco/opencode-beta. Prod: appId=ai.opencode.desktop, publishes to anomalyco/opencode. All targets: macOS (dmg+zip), Windows (nsis), Linux (AppImage+deb+rpm).",
+          "file": "packages/desktop/electron-builder.config.ts",
+          "line": 81
+        },
+        {
+          "finding": "Platform-specific titlebar: frame:false on Windows only",
+          "detail": "The Electron window is frameless (frame:false) ONLY on Win32. On macOS it uses hiddenTitleBar with traffic light positioning but keeps the native frame. On Linux it uses the default frame with no customization.",
+          "file": "packages/desktop/src/main/windows.ts",
+          "line": 149
+        },
+        {
+          "finding": "Window state managed by electron-window-state",
+          "detail": "windows.ts:120-126 uses `windowState({ defaultWidth: 1280, defaultHeight: 800 })` to remember window position/size. The state is managed via `state.manage(win)` at line 170.",
+          "file": "packages/desktop/src/main/windows.ts",
+          "line": 120
+        }
+      ]
+    },
+    {
+      "title": "5. Key Architectural Observations",
+      "id": "observations",
+      "observations": [
+        {
+          "observation": "Locale/i18n gap: 0 locale plumbing exists between main and renderer",
+          "detail": "The main process has no way to receive or query the user's chosen locale. The renderer could store a locale preference via the generic store-get/set mechanism, but no main process code reads it. All 9 dialog sites have hardcoded English strings. The menu (menu.ts) uses display strings from `@opencode-ai/app/desktop-menu` which may have its own i18n."
+        },
+        {
+          "observation": "Missing files in working tree: github-ipc.ts and ipc-validation.ts",
+          "detail": "ipc.ts imports `./github-ipc` (registerGithubIpcHandlers) and `./ipc-validation` (validateAndFilterAgents, validateAndFilterMcpServers, validateAndFilterPluginConfigs). Neither file exists on disk — these are referenced in the HEAD version of ipc.ts but the extraction is incomplete. This is a build-breaking state if a full build is attempted."
+        },
+        {
+          "observation": "setTitlebar flows from renderer via IPC",
+          "detail": "The renderer calls `window.api.setTitlebar({ mode: 'light'|'dark' })` which invokes the 'set-titlebar' IPC handler in ipc.ts. The main process stores the theme in a WeakMap keyed on the window, then calls updateTitlebar() which is a no-op unless platform is win32."
+        },
+        {
+          "observation": "Window recovery dialog blocks on user input and supports round-tripping",
+          "detail": "wireWindowRecovery's show() loops until the user clicks 'Relaunch' (calls app.relaunch + exit), 'Export Logs' (exports logs and continues waiting if wait=true), or 'Quit'/'Keep Waiting' (exits/resumes). The dialog is modal to the window. Buttons change based on `wait` parameter: 'Keep Waiting' replaces 'Quit'."
+        },
+        {
+          "observation": "All main process state is eagerly loaded via Effect.fnUntraced at startup",
+          "detail": "index.ts uses Effect.gen() as a main coroutine. The IPC handlers are REGISTERED before app.whenReady() via registerIpcHandlers(deps). The deps object captures callbacks into the main Effect. They are lazily resolved when the renderer invokes them."
+        }
+      ]
+    },
+    {
+      "title": "6. Out-of-Scope Findings / Missing Files",
+      "id": "missing-files",
+      "findings": [
+        {
+          "finding": "github-ipc.ts does not exist on disk but is imported by ipc.ts",
+          "detail": "ipc.ts:19 imports `./github-ipc` and calls `registerGithubIpcHandlers()` at line 371. The file doesn't exist in src/main/. This appears to be an in-progress extraction where GitHub OAuth code was removed from ipc.ts (visible in unstaged diff: -200 lines) but the extracted file wasn't created. Build would fail for a fresh checkout.",
+          "affected_files": ["packages/desktop/src/main/ipc.ts"],
+          "language": "typescript"
+        },
+        {
+          "finding": "ipc-validation.ts does not exist on disk but is imported by ipc.ts",
+          "detail": "ipc.ts:22-24 imports `./ipc-validation` for validateAndFilterAgents, validateAndFilterMcpServers, validateAndFilterPluginConfigs. The file doesn't exist in src/main/. Same extraction-in-progress issue.",
+          "affected_files": ["packages/desktop/src/main/ipc.ts"],
+          "language": "typescript"
+        }
+      ]
+    }
+  ]
+}

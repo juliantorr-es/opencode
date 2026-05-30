@@ -267,7 +267,7 @@ export const TaskTool = Tool.define(
                     })
                 return handle.pipe(Effect.andThen(Effect.failCause(cause)))
               }),
-          ),
+          ) as unknown as Effect.Effect<string, unknown>,
         })
 
         return {

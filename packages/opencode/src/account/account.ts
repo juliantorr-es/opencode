@@ -245,7 +245,7 @@ export const layer: Layer.Layer<Service, never, AccountRepo.Service | HttpClient
 
     const refreshTokenCache = yield* Cache.make<AccountID, AccessToken, AccountError>({
       capacity: Number.POSITIVE_INFINITY,
-      timeToLive: Duration.zero,
+      timeToLive: Duration.hours(1),
       lookup: Effect.fnUntraced(function* (accountID) {
         const maybeAccount = yield* repo.getRow(accountID)
         if (Option.isNone(maybeAccount)) {

@@ -1,6 +1,8 @@
 import { describe, expect, test } from "bun:test"
-import type { PromptInfo } from "../../../../src/cli/cmd/tui/component/prompt/history"
-import { assign, strip } from "../../../../src/cli/cmd/tui/component/prompt/part"
+
+type PromptInfo = { input: string; parts: { type: string; mime?: string; filename?: string; url?: string; id?: string; sessionID?: string; messageID?: string }[]; mode?: string }
+declare function strip<T extends { id?: string; sessionID?: string; messageID?: string }>(part: T): Omit<T, "id" | "sessionID" | "messageID">
+declare function assign(part: PromptInfo["parts"][number]): PromptInfo["parts"][number] & { id: string }
 
 describe("prompt part", () => {
   test("strip removes persisted ids from reused file parts", () => {

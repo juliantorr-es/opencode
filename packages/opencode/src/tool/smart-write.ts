@@ -6,9 +6,9 @@ import path from "path"
 import DESCRIPTION from "./smart-write.txt"
 
 const Parameters = Schema.Struct({
-  file: Schema.String.annotations({ description: "Path to the file to write" }),
-  content: Schema.String.annotations({ description: "Content to write" }),
-  reason: Schema.String.annotations({ description: "Why this file is being written — one sentence" }),
+  file: Schema.String.annotate({ description: "Path to the file to write" }),
+  content: Schema.String.annotate({ description: "Content to write" }),
+  reason: Schema.String.annotate({ description: "Why this file is being written — one sentence" }),
   plan_step: Schema.optional(Schema.String).annotate({
     description: "Which plan step this corresponds to",
   }),

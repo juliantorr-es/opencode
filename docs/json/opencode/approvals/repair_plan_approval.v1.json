@@ -1,0 +1,12 @@
+{
+  "schema_version": "rig.repair_plan_approval.v1",
+  "candidate_packet_digest": "ada16ffa8d058e9ebeb18aa7d45e64c35fb899e8a655f5802277c088c5d83e8f",
+  "candidate_boundary_identifier": "duckdb-query-tool",
+  "plan_revision": 2,
+  "repair_plan_artifact": "docs/json/opencode/plans/repair-plan-duckdb-stress.v1.json",
+  "red_team_approval": "docs/json/opencode/approvals/red_team_approval.v1.json",
+  "reviewer_set": ["orchestrator"],
+  "decision": "approved",
+  "decision_rationale": "Repair plan addresses all 4 stress findings: F-001 (subprocess timeout via setTimeout + AbortSignal in execSQL), F-002 (remove inner Effect.orDie so InvalidArgumentsError propagates), F-003 (add single-line comment and string literal stripping to firewall), F-004 (rename idleTimeoutMs→queueTimeoutMs, add executionTimeoutMs). All repairs are narrow, targeted, and within the duckdb-query-tool boundary.",
+  "issued_at": "2026-05-29T10:48:00.000000+00:00"
+}

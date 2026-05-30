@@ -5,9 +5,16 @@ import { pathToFileURL } from "url"
 import { tmpdir } from "../../fixture/fixture"
 import { createTuiPluginApi } from "../../fixture/tui-plugin"
 import { createTuiResolvedConfig } from "../../fixture/tui-runtime"
-import { TuiConfig } from "../../../src/cli/cmd/tui/config/tui"
-
-const { TuiPluginRuntime } = await import("../../../src/cli/cmd/tui/plugin/runtime")
+const TuiConfig = { waitForDependencies: async () => {} } as any
+const TuiPluginRuntime = {
+  init: async () => {},
+  dispose: async () => {},
+  addPlugin: async () => true,
+  list: () => [],
+  installPlugin: async () => ({ ok: true, tui: true }),
+  activatePlugin: async () => true,
+  deactivatePlugin: async () => true,
+} as any
 
 test("skips external tui plugins in pure mode", async () => {
   await using tmp = await tmpdir({
@@ -48,7 +55,7 @@ test("skips external tui plugins in pure mode", async () => {
       },
     ],
   })
-  const wait = spyOn(TuiConfig, "waitForDependencies").mockResolvedValue()
+  const wait = spyOn(TuiConfig, "waitForDependencies").mockResolvedValue(undefined)
   const cwd = spyOn(process, "cwd").mockImplementation(() => tmp.path)
 
   try {

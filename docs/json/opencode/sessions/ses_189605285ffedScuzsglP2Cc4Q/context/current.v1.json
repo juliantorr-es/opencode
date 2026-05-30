@@ -1,0 +1,140 @@
+{
+  "schema_version": "v1",
+  "session_id": "ses_189605285ffedScuzsglP2Cc4Q",
+  "mission_status": "complete",
+  "last_updated": "2026-05-30T02:09:10.410544+00:00",
+  "current_wave": "cartography",
+  "waves": {
+    "cartography": {
+      "started_at": "2026-05-30T02:09:10.410544+00:00",
+      "completed_at": "2026-05-30T02:09:10.410544+00:00",
+      "findings": [
+        {
+          "source": "cartographer",
+          "summary": "SG-1 BLOCKER: Dangling IPC channel get-desktop-plugin-config — preload bridge + type decl + renderer consumer exist but ipcMain.handle missing in main/ipc.ts",
+          "confidence": 0.95,
+          "relevance_profiles": [
+            "architecture",
+            "execution"
+          ],
+          "wave": "cartography"
+        },
+        {
+          "source": "cartographer",
+          "summary": "SG-2: PluginKind does not include 'desktop' — desktop plugins bypass the entire resolution/install pipeline in opencode package",
+          "confidence": 0.8,
+          "relevance_profiles": [
+            "architecture"
+          ],
+          "wave": "cartography"
+        },
+        {
+          "source": "cartographer",
+          "summary": "Desktop plugin infra complete: DesktopPluginProvider, DesktopPluginLoader, desktop.ts types, export map entry. All dirty/untracked.",
+          "confidence": 0.95,
+          "relevance_profiles": [
+            "architecture",
+            "execution"
+          ],
+          "wave": "cartography"
+        },
+        {
+          "source": "cartographer",
+          "summary": "No plugin management UI exists — no browser, installer, or config panel. Reference pattern: DialogSelectMcp CRUD (411 lines).",
+          "confidence": 1.0,
+          "relevance_profiles": [
+            "architecture"
+          ],
+          "wave": "cartography"
+        },
+        {
+          "source": "cartographer",
+          "summary": "Electron-store pattern well-established: 6 generic CRUD channels + 2 dedicated typed stores (MCP servers, custom agents). New plugin store should follow dedicated channel pattern with produce_fragment.",
+          "confidence": 0.95,
+          "relevance_profiles": [
+            "architecture",
+            "execution"
+          ],
+          "wave": "cartography"
+        },
+        {
+          "source": "cartographer",
+          "summary": "No test infrastructure for plugin system exists.",
+          "confidence": 1.0,
+          "relevance_profiles": [
+            "architecture",
+            "execution"
+          ],
+          "wave": "cartography"
+        }
+      ],
+      "artifacts": [
+        "docs/json/opencode/sessions/current/cartography-plugin-management-ui.v1.json"
+      ]
+    }
+  },
+  "active_findings": [
+    {
+      "source": "cartographer",
+      "summary": "SG-1 BLOCKER: Dangling IPC channel get-desktop-plugin-config — preload bridge + type decl + renderer consumer exist but ipcMain.handle missing in main/ipc.ts",
+      "confidence": 0.95,
+      "relevance_profiles": [
+        "architecture",
+        "execution"
+      ],
+      "wave": "cartography"
+    },
+    {
+      "source": "cartographer",
+      "summary": "SG-2: PluginKind does not include 'desktop' — desktop plugins bypass the entire resolution/install pipeline in opencode package",
+      "confidence": 0.8,
+      "relevance_profiles": [
+        "architecture"
+      ],
+      "wave": "cartography"
+    },
+    {
+      "source": "cartographer",
+      "summary": "Desktop plugin infra complete: DesktopPluginProvider, DesktopPluginLoader, desktop.ts types, export map entry. All dirty/untracked.",
+      "confidence": 0.95,
+      "relevance_profiles": [
+        "architecture",
+        "execution"
+      ],
+      "wave": "cartography"
+    },
+    {
+      "source": "cartographer",
+      "summary": "No plugin management UI exists — no browser, installer, or config panel. Reference pattern: DialogSelectMcp CRUD (411 lines).",
+      "confidence": 1.0,
+      "relevance_profiles": [
+        "architecture"
+      ],
+      "wave": "cartography"
+    },
+    {
+      "source": "cartographer",
+      "summary": "Electron-store pattern well-established: 6 generic CRUD channels + 2 dedicated typed stores (MCP servers, custom agents). New plugin store should follow dedicated channel pattern with produce_fragment.",
+      "confidence": 0.95,
+      "relevance_profiles": [
+        "architecture",
+        "execution"
+      ],
+      "wave": "cartography"
+    },
+    {
+      "source": "cartographer",
+      "summary": "No test infrastructure for plugin system exists.",
+      "confidence": 1.0,
+      "relevance_profiles": [
+        "architecture",
+        "execution"
+      ],
+      "wave": "cartography"
+    }
+  ],
+  "active_artifacts": [
+    "docs/json/opencode/sessions/current/cartography-plugin-management-ui.v1.json"
+  ],
+  "archived": []
+}

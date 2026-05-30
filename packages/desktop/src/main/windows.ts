@@ -7,6 +7,7 @@ import { dirname, isAbsolute, join, relative, resolve } from "node:path"
 import { fileURLToPath, pathToFileURL } from "node:url"
 import type { TitlebarTheme } from "../preload/types"
 import { PINCH_ZOOM_ENABLED_KEY } from "./constants"
+import { IPC } from "./ipc-channels"
 import { exportDebugLogs, write as writeLog } from "./logging"
 import { getStore } from "./store"
 import { createUnresponsiveSampler } from "./unresponsive"
@@ -101,7 +102,7 @@ export function setPinchZoomEnabled(enabled: boolean) {
   getStore().set(PINCH_ZOOM_ENABLED_KEY, enabled)
   for (const win of BrowserWindow.getAllWindows()) {
     pinchZoomEnabled.set(win, enabled)
-    win.webContents.send("pinch-zoom-enabled-changed", enabled)
+    win.webContents.send(IPC.push.PINCH_ZOOM_ENABLED_CHANGED, enabled)
     if (!enabled && win.webContents.getZoomFactor() !== 1) win.webContents.setZoomFactor(1)
     updateZoom(win)
   }
@@ -444,7 +445,7 @@ function clampZoom(value: number) {
 
 function updateZoom(win: BrowserWindow) {
   updateTitlebar(win)
-  win.webContents.send("zoom-factor-changed", win.webContents.getZoomFactor())
+  win.webContents.send(IPC.push.ZOOM_FACTOR_CHANGED, win.webContents.getZoomFactor())
 }
 
 function upsertKeyValue(obj: Record<string, any>, keyToChange: string, value: any) {

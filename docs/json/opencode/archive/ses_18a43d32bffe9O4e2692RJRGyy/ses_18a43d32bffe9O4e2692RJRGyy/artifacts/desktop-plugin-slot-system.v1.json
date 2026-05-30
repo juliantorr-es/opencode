@@ -1,0 +1,20 @@
+{
+  "schema_version": "v1",
+  "plan_id": "desktop-plugin-slot-system",
+  "plan_revision": 3,
+  "title": "DesktopPlugin Slot System (Slice 2) — Revision 2",
+  "boundary": "desktop-plugin-slot-system",
+  "consumer_purpose": "Enable Electron/SolidJS desktop plugins to inject UI components at named slot positions in the renderer, using a renderer-native DesktopPluginLoader and scoped store access.",
+  "claim_atoms": [
+    "DesktopPlugin type is defined in @opencode-ai/plugin independently of @opentui/core types",
+    "DesktopHostSlotMap defines at least 3 named slot positions (sidebar_content, window_titlebar) for the Electron renderer",
+    "DesktopSlotPlugin can register SolidJS components at named slots",
+    "DesktopPluginModule is added to the PluginModule union type in @opencode-ai/plugin (desktop xor server xor tui)",
+    "A renderer-native DesktopPluginLoader handles desktop plugin lifecycle using Vite module resolution and IPC-forwarded config from electron-store"
+  ],
+  "content": "## DesktopPlugin Slot System — Revision 2\n\n### Changes from Revision 1 (per critic review)\n- **REMOVED**: PluginKind extension to server-side PluginLoader (claim 5). Desktop plugins run in Electron renderer with Vite, not Node.js sidecar.\n- **ADDED**: Renderer-native DesktopPluginLoader as claim 5 — standalone, in renderer process.\n- **ADDED**: SolidJS ErrorBoundary in DesktopSlotRenderer as core requirement.\n- **ADDED**: Scoped plugin store with key namespace `plugin:<id>:` for security.\n- **ADDED**: IPC-bridged config transport layer.\n- **PRESERVED**: Claims 1-4 (already implemented in packages/plugin/src/desktop.ts and index.ts).\n\n### Files to Create\n1. `packages/plugin/src/desktop.ts` — DesktopPlugin types (DONE)\n2. `packages/desktop/src/renderer/desktop-plugin.tsx` — DesktopSlotProvider, SlotPortal, DesktopSlotRenderer with ErrorBoundary, useDesktopSlots()\n3. `packages/desktop/src/renderer/plugin-store.ts` — ScopedPluginStore with key namespace `plugin:<id>:`\n4. `packages/desktop/src/renderer/plugin-loader.ts` — DesktopPluginLoader for Vite module resolution\n\n### Files to Modify (additive only)\n1. `packages/plugin/src/index.ts` — PluginModule union type (DONE)\n2. `packages/plugin/package.json` — Add `./desktop` export, add `solid-js` peer dep\n3. `packages/desktop/package.json` — Add `@opencode-ai/plugin` workspace dep\n4. `packages/desktop/src/preload/types.ts` — Add optional `getDesktopPluginConfig?: () => Promise<any>` to ElectronAPI (additive)\n5. `packages/desktop/src/main/ipc.ts` — Add `get-desktop-plugin-config` IPC handler reading electron-store (additive)\n6. `packages/desktop/src/renderer/index.tsx` — Wrap `<DesktopSlotProvider>` (additive)\n\n### Files NOT Modified (deferred)\n- `packages/desktop/src/preload/index.ts` — No preload changes for plugins beyond config\n- `packages/opencode/src/plugin/shared.ts` — Server-side PluginLoader NOT extended with kind:desktop\n- Any dirty files — preserved exactly as-is\n\n### Evidence Plan\n1. **Typecheck**: `cd packages/desktop && bun run typecheck` passes\n2. **Error boundary**: Slot component throws → ErrorBoundary catches → other slots render\n3. **Store isolation**: Plugin keys are scoped to `plugin:<id>:` namespace\n4. **Config handoff**: Electron store config reaches renderer via IPC\n",
+  "status": "proposed",
+  "created_at": "2026-05-29T22:01:23.979166+00:00",
+  "modified_at": "2026-05-29T22:03:36.902875+00:00",
+  "revision_notes": "Revision 2 addresses all 3 blocking critic findings: (1) Removed server-side PluginKind extension — added renderer-native DesktopPluginLoader; (2) Added ErrorBoundary to DesktopSlotRenderer as core infrastructure; (3) Replaced raw store access with scoped key-namespace storage. Added IPC-bridged config transport as prerequisite."
+}

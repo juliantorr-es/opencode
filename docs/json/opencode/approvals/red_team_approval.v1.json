@@ -1,0 +1,46 @@
+{
+  "schema_version": "rig.red_team_approval.v1",
+  "candidate_packet_digest": "ada16ffa8d058e9ebeb18aa7d45e64c35fb899e8a655f5802277c088c5d83e8f",
+  "candidate_boundary_identifier": "duckdb-query-tool",
+  "plan_revision": 2,
+  "plan_artifact": "docs/json/opencode/plans/duckdb-analytics-query-tool.v2.json",
+  "red_team_set": ["stress"],
+  "verdict": "falsified_blocking",
+  "blocking_findings": [
+    {
+      "id": "F-001",
+      "severity": "critical",
+      "mechanism": "execSQL in db.duckdb.ts",
+      "finding": "Missing subprocess timeout: spawn('duckdb', ...) has no timeout, no AbortSignal, no kill timer. A long-running query (e.g., SELECT generate_series(1, 1000000000)) holds a pool slot indefinitely. After 4 hanging queries, the pool is completely blocked for 30s queue timeout intervals.",
+      "repair_path": "Add setTimeout(() => proc.kill(), timeoutMs) in execSQL. Default 30s. Wire AbortSignal for Effect fiber cancellation."
+    },
+    {
+      "id": "F-002",
+      "severity": "critical",
+      "mechanism": "duckdb-query.ts execute + Effect.orDie",
+      "finding": "The tool detects 'Failed to spawn duckdb' and produces a Tool.InvalidArgumentsError with user-friendly install guide. But .pipe(Effect.orDie) converts the fail to a defect. The outer tool.ts wrapper applies another orDie. The install guide never reaches the LLM — all errors become opaque defects.",
+      "repair_path": "Remove .pipe(Effect.orDie) from the execute function, or handle spawn failures as Effect.fail so the outer tool wrapper error channel returns them."
+    },
+    {
+      "id": "F-003",
+      "severity": "high",
+      "mechanism": "duckdb-firewall.ts checkSQLFirewall",
+      "finding": "Substring matching on blocked function names causes false positives on string literals, column names (load_factor blocks due to 'load'), single-line comments mentioning blocked functions.",
+      "repair_path": "Add string literal and single-line comment stripping before analysis. Consider word-boundary matching or function-call pattern detection."
+    },
+    {
+      "id": "F-004",
+      "severity": "high",
+      "mechanism": "DuckDBConnectionPool idleTimeout",
+      "finding": "30s timeout only covers queue wait time, not execution time. Once a slot opens, there is no execution timeout. Users see 'timed out' but the subprocess continues as an orphan.",
+      "repair_path": "Add per-query execution timeout that kills the subprocess. Pool-wide timeout that covers both queue and execution."
+    }
+  ],
+  "non_blocking_findings": [
+    "Empty SQL string passes schema validation (no minLength on sql parameter)",
+    "No subprocess cancellation on Effect fiber cancellation (orphan processes)",
+    "COPY FROM not explicitly blocked by application firewall (only -readonly blocks it)",
+    "Column aliases like load_shedding or attach_file cause false-positive firewall blocks"
+  ],
+  "issued_at": "2026-05-29T10:47:00.000000+00:00"
+}

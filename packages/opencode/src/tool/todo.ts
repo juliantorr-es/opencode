@@ -51,7 +51,7 @@ export const TodoWriteTool = Tool.define<typeof Parameters, Metadata, Todo.Servi
               todos: params.todos,
             },
           }
-        }),
+        }).pipe(Effect.orDie),
     } satisfies Tool.DefWithoutID<typeof Parameters, Metadata>
   }),
 )

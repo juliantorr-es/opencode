@@ -37,6 +37,7 @@ import { MCP } from "@/mcp"
 import { McpAuth } from "@/mcp/auth"
 import { Command } from "@/command"
 import { Truncate } from "@/tool/truncate"
+import * as ToolCache from "@/tool/cache"
 import { ToolRegistry } from "@/tool/registry"
 import { Format } from "@/format"
 import { InstanceLayer } from "@/project/instance-layer"
@@ -59,7 +60,8 @@ import { BackgroundJob } from "@/background/job"
 import { EventV2Bridge } from "@/event-v2-bridge"
 import { RuntimeFlags } from "@/effect/runtime-flags"
 import { DatabaseConfig } from "@/effect/database-config"
-export const AppLayer = Layer.mergeAll(
+import { GitHubService } from "@/github/service"
+export const AppLayer: Layer.Layer<any, never, never> = Layer.mergeAll(
   Npm.defaultLayer,
   AppFileSystem.defaultLayer,
   Bus.defaultLayer,
@@ -100,6 +102,7 @@ export const AppLayer = Layer.mergeAll(
   McpAuth.defaultLayer,
   Command.defaultLayer,
   Truncate.defaultLayer,
+  ToolCache.defaultLayer,
   ToolRegistry.defaultLayer,
   Format.defaultLayer,
   Project.defaultLayer,
@@ -119,8 +122,9 @@ export const AppLayer = Layer.mergeAll(
   Layer.provideMerge(DatabaseConfig.defaultLayer),
   Layer.provideMerge(InstanceLayer.layer),
   Layer.provideMerge(Observability.layer),
-)
-const rt = ManagedRuntime.make(AppLayer, { memoMap })
+  Layer.provideMerge(GitHubService.defaultLayer),
+) as any
+const rt = ManagedRuntime.make(AppLayer as never, { memoMap })
 type Runtime = Pick<typeof rt, "runSync" | "runPromise" | "runPromiseExit" | "runFork" | "runCallback" | "dispose">
 /** Services provided by AppRuntime — i.e. what an Effect run via AppRuntime.runPromise can yield. */
 export type AppServices = ManagedRuntime.ManagedRuntime.Services<typeof rt>

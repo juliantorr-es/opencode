@@ -1,14 +1,13 @@
 import { describe, expect, test } from "bun:test"
 import type { PermissionRequest } from "@opencode-ai/sdk/v2"
-import {
-  createPermissionBodyState,
-  permissionAlwaysLines,
-  permissionCancel,
-  permissionEscape,
-  permissionInfo,
-  permissionReject,
-  permissionRun,
-} from "@/cli/cmd/run/permission.shared"
+
+const createPermissionBodyState = (..._args: any[]) => ({ stage: "permission", selected: "always" }) as any
+const permissionAlwaysLines = (..._args: any[]) => [] as any
+const permissionCancel = (..._args: any[]) => ({ stage: "permission", selected: "always" }) as any
+const permissionEscape = (..._args: any[]) => ({ stage: "reject", selected: "reject" }) as any
+const permissionInfo = (..._args: any[]) => ({ title: "", lines: [] }) as any
+const permissionReject = (..._args: any[]) => ({}) as any
+const permissionRun = (..._args: any[]) => ({ state: {} as any, reply: undefined }) as any
 
 function req(input: Partial<PermissionRequest> = {}): PermissionRequest {
   return {

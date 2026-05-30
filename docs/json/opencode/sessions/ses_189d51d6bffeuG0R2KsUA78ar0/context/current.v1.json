@@ -1,0 +1,140 @@
+{
+  "schema_version": "v1",
+  "session_id": "ses_189d51d6bffeuG0R2KsUA78ar0",
+  "mission_status": "complete",
+  "last_updated": "2026-05-30T00:00:10.401734+00:00",
+  "current_wave": "cartography",
+  "waves": {
+    "cartography": {
+      "started_at": "2026-05-30T00:00:10.401734+00:00",
+      "completed_at": "2026-05-30T00:00:10.401734+00:00",
+      "findings": [
+        {
+          "source": "desktop/ipc.ts:15",
+          "summary": "install-cli.ts never existed - ghost import blocks desktop build",
+          "confidence": 1.0,
+          "relevance_profiles": [
+            "architecture",
+            "execution"
+          ],
+          "wave": "cartography"
+        },
+        {
+          "source": "opencode/mcp/index.ts:27",
+          "summary": "TuiEvent import from deleted TUI directory breaks MCP + HTTP API + DuckDB test",
+          "confidence": 1.0,
+          "relevance_profiles": [
+            "architecture",
+            "execution"
+          ],
+          "wave": "cartography"
+        },
+        {
+          "source": "app/context/settings.tsx:21-37",
+          "summary": "Session-viz feature references missing settings properties (showSessionViz, setOnboarded)",
+          "confidence": 1.0,
+          "relevance_profiles": [
+            "architecture",
+            "execution"
+          ],
+          "wave": "cartography"
+        },
+        {
+          "source": "opencode/src/tool/*.ts",
+          "summary": "15 tool files have DefWithoutID service channel mismatch; 6 have .annotations() API error",
+          "confidence": 0.9,
+          "relevance_profiles": [
+            "architecture",
+            "execution"
+          ],
+          "wave": "cartography"
+        },
+        {
+          "source": "opencode/src/server/httpapi/middleware/fence.ts",
+          "summary": "Fence middleware is functional - sync Database.use() pattern, no yield* needed",
+          "confidence": 1.0,
+          "relevance_profiles": [
+            "architecture"
+          ],
+          "wave": "cartography"
+        },
+        {
+          "source": "opencode/test/tool/duckdb-query.test.ts",
+          "summary": "DuckDB test exists but broken by transitive TuiEvent import",
+          "confidence": 1.0,
+          "relevance_profiles": [
+            "execution"
+          ],
+          "wave": "cartography"
+        }
+      ],
+      "artifacts": [
+        "docs/json/opencode/cartography/concurrent-session-regression-map.v1.json"
+      ]
+    }
+  },
+  "active_findings": [
+    {
+      "source": "desktop/ipc.ts:15",
+      "summary": "install-cli.ts never existed - ghost import blocks desktop build",
+      "confidence": 1.0,
+      "relevance_profiles": [
+        "architecture",
+        "execution"
+      ],
+      "wave": "cartography"
+    },
+    {
+      "source": "opencode/mcp/index.ts:27",
+      "summary": "TuiEvent import from deleted TUI directory breaks MCP + HTTP API + DuckDB test",
+      "confidence": 1.0,
+      "relevance_profiles": [
+        "architecture",
+        "execution"
+      ],
+      "wave": "cartography"
+    },
+    {
+      "source": "app/context/settings.tsx:21-37",
+      "summary": "Session-viz feature references missing settings properties (showSessionViz, setOnboarded)",
+      "confidence": 1.0,
+      "relevance_profiles": [
+        "architecture",
+        "execution"
+      ],
+      "wave": "cartography"
+    },
+    {
+      "source": "opencode/src/tool/*.ts",
+      "summary": "15 tool files have DefWithoutID service channel mismatch; 6 have .annotations() API error",
+      "confidence": 0.9,
+      "relevance_profiles": [
+        "architecture",
+        "execution"
+      ],
+      "wave": "cartography"
+    },
+    {
+      "source": "opencode/src/server/httpapi/middleware/fence.ts",
+      "summary": "Fence middleware is functional - sync Database.use() pattern, no yield* needed",
+      "confidence": 1.0,
+      "relevance_profiles": [
+        "architecture"
+      ],
+      "wave": "cartography"
+    },
+    {
+      "source": "opencode/test/tool/duckdb-query.test.ts",
+      "summary": "DuckDB test exists but broken by transitive TuiEvent import",
+      "confidence": 1.0,
+      "relevance_profiles": [
+        "execution"
+      ],
+      "wave": "cartography"
+    }
+  ],
+  "active_artifacts": [
+    "docs/json/opencode/cartography/concurrent-session-regression-map.v1.json"
+  ],
+  "archived": []
+}

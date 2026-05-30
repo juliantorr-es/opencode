@@ -1,0 +1,82 @@
+{
+  "artifact": {
+    "schema": "rig.relay.cartography.v1",
+    "lane": "command-palette-expansion",
+    "generated_at": "2026-05-30T02:10:00Z",
+    "agent": "cartographer",
+    "session": "current"
+  },
+  "blockers": [
+    {
+      "id": "B1",
+      "severity": "BLOCKER",
+      "title": "No command palette UI exists",
+      "detail": "showPalette() at command.tsx:357 calls run('file.open', 'palette') which opens the file dialog. There is no searchable list of all commands. The entire palette component must be built from scratch.",
+      "files": ["packages/app/src/context/command.tsx"]
+    },
+    {
+      "id": "B2",
+      "severity": "BLOCKER",
+      "title": "Dirty work must be resolved",
+      "detail": "key-hint-overlay.tsx is untracked 250-line WIP. layout.tsx has 37 uncommitted lines wiring modifier-hold detection. Palette expansion must adopt or reconcile this work.",
+      "files": ["packages/app/src/components/key-hint-overlay.tsx", "packages/app/src/pages/layout.tsx"]
+    }
+  ],
+  "architecture": {
+    "command_types": ["CommandOption", "CommandCatalogItem", "CommandRegistration", "Keybind", "KeybindConfig", "CommandSource"],
+    "provider_chain": "CommandProvider wraps app via createSimpleContext. useCommand() hook provides: bind(), run(), register(), showPalette(). Layout.tsx calls useCommand() for palette trigger.",
+    "registration_sites": [
+      {"file": "packages/app/src/pages/session/use-session-commands.tsx", "key": "session", "commands": 30, "categories": 11},
+      {"file": "packages/app/src/components/titlebar.tsx", "commands": 14},
+      {"file": "packages/app/src/pages/layout.tsx", "commands": "sidebar.toggle, project.*, settings.*, theme.*, language.*"},
+      {"file": "packages/app/src/components/prompt-input.tsx", "key": "prompt-input", "commands": "dynamically derived from catalog"}
+    ],
+    "catalog_approx_50_commands": true,
+    "dispatch_pipeline": "KeyboardEvent → handleKeyDown → matchKeybind → run(id, source) → command.onSelect()",
+    "catalog_persistence": "catalog() computed from all register() calls. Persisted via Persist utility in user settings for keybind overrides.",
+    "zero_circular_deps": true
+  },
+  "existing_filtering": {
+    "fuzzy_search_available": true,
+    "fuzzysort_version": "3.1.0",
+    "useFilteredList": "Available from @opencode-ai/ui/hooks — uses fuzzysort + keyboard nav. Async via createResource.",
+    "list_search_component": "Higher-level wrapper above useFilteredList. Used in dialog-manage-agents, dialog-select-model. Includes search bar, grouping, empty states.",
+    "direct_fuzzysort_usage": "Used in settings-keybinds for inline filtering",
+    "debounce_available": "@solid-primitives/scheduled already imported in session.tsx",
+    "wired_for_command_search": false
+  },
+  "plugin_extension_points": {
+    "SlashCommand_source": "field in slash-popover.tsx:10-18: 'command' | 'mcp' | 'skill'",
+    "useCommand_public_export": "packages/app/src/index.ts:3 re-exports useCommand",
+    "note": "Plugins could register commands via useCommand().register(). The SlashCommand.source field shows the seam exists."
+  },
+  "keybind_system": {
+    "pipeline": "parseKeybind(config) → Keybind[] → matchKeybind() for dispatch → formatKeybind() for display",
+    "overrides": "Persisted via user settings, merged with defaults",
+    "conflict_detection": "UpsertCommandRegistration merges without duplicates",
+    "no_keyboard_nav_infrastructure": "Arrow-key navigation through search results, active selection state, keyboard-only flow must be built from scratch"
+  },
+  "dirty_files": {
+    "key_hint_overlay_tsx": "untracked, ~250 lines WIP",
+    "layout_tsx": "37 lines uncommitted wiring modifier-hold detection"
+  },
+  "test_coverage": {
+    "status": "MINIMAL",
+    "files": [
+      {"file": "tests/command/parse.test.ts", "lines": 56},
+      {"file": "tests/command/format.test.ts", "lines": 40}
+    ],
+    "zero_dispatch_integration_tests": true
+  },
+  "i18n": {
+    "category_keys": 17,
+    "title_keys_plus": 13,
+    "languages": 18,
+    "all_commands_in_i18n": true
+  },
+  "deferred_seams": [
+    "Keyboard-only navigation infrastructure (arrow keys, active selection, enter to confirm)",
+    "Plugin-contributed command registration endpoint from plugin sandbox API",
+    "Command search debounce / rate limiting for large catalogs"
+  ]
+}

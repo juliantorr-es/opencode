@@ -1,0 +1,100 @@
+{
+  "schema_version": "v1",
+  "session_id": "ses_18866e01affeOgAYjQrORVhbMK",
+  "mission_status": "in_progress",
+  "last_updated": "2026-05-30T06:38:03.818276+00:00",
+  "current_wave": "learning",
+  "waves": {
+    "learning": {
+      "started_at": "2026-05-30T06:38:03.818276+00:00",
+      "completed_at": "2026-05-30T06:38:03.818276+00:00",
+      "findings": [
+        {
+          "source": "cache.ts",
+          "summary": "Current cache is unbounded Ref<Record> with inflight dedup via Deferred. No TTL, no LRU, no stats.",
+          "confidence": 1,
+          "relevance_profiles": [
+            "architecture",
+            "execution"
+          ],
+          "wave": "learning"
+        },
+        {
+          "source": "tool.ts",
+          "summary": "wrap() uses cache.getOrCompute for cacheable tools, cache.invalidate() for non-cacheable tools. No config passed.",
+          "confidence": 1,
+          "relevance_profiles": [
+            "architecture",
+            "execution"
+          ],
+          "wave": "learning"
+        },
+        {
+          "source": "convention-scout",
+          "summary": "Codebase uses Clock.currentTimeMillis for time, Duration.minutes/hours for TTL, Map insertion-order for LRU. No existing CacheStats pattern.",
+          "confidence": 0.95,
+          "relevance_profiles": [
+            "architecture"
+          ],
+          "wave": "learning"
+        },
+        {
+          "source": "registry.ts",
+          "summary": "ToolCache.defaultLayer is provided in the layer graph. No other consumers.",
+          "confidence": 1,
+          "relevance_profiles": [
+            "execution"
+          ],
+          "wave": "learning"
+        }
+      ],
+      "artifacts": [
+        "docs/json/opencode/cartography/cache.ts.analysis.v1.json"
+      ]
+    }
+  },
+  "active_findings": [
+    {
+      "source": "cache.ts",
+      "summary": "Current cache is unbounded Ref<Record> with inflight dedup via Deferred. No TTL, no LRU, no stats.",
+      "confidence": 1,
+      "relevance_profiles": [
+        "architecture",
+        "execution"
+      ],
+      "wave": "learning"
+    },
+    {
+      "source": "tool.ts",
+      "summary": "wrap() uses cache.getOrCompute for cacheable tools, cache.invalidate() for non-cacheable tools. No config passed.",
+      "confidence": 1,
+      "relevance_profiles": [
+        "architecture",
+        "execution"
+      ],
+      "wave": "learning"
+    },
+    {
+      "source": "convention-scout",
+      "summary": "Codebase uses Clock.currentTimeMillis for time, Duration.minutes/hours for TTL, Map insertion-order for LRU. No existing CacheStats pattern.",
+      "confidence": 0.95,
+      "relevance_profiles": [
+        "architecture"
+      ],
+      "wave": "learning"
+    },
+    {
+      "source": "registry.ts",
+      "summary": "ToolCache.defaultLayer is provided in the layer graph. No other consumers.",
+      "confidence": 1,
+      "relevance_profiles": [
+        "execution"
+      ],
+      "wave": "learning"
+    }
+  ],
+  "active_artifacts": [
+    "docs/json/opencode/cartography/cache.ts.analysis.v1.json"
+  ],
+  "archived": []
+}

@@ -52,7 +52,7 @@ export const ProposePlanTool = Tool.define(
     return {
       description: DESCRIPTION,
       parameters: Parameters,
-      execute: (params: Schema.Schema.Type<typeof Parameters>) =>
+      execute: (params: Schema.Schema.Type<typeof Parameters>, ctx: Tool.Context) =>
         Effect.gen(function* () {
           // Validate claim_atoms is valid JSON array of strings
           let claimAtoms: string[]
@@ -152,7 +152,7 @@ export const ProposePlanTool = Tool.define(
               2,
             ),
           }
-        }),
+        }).pipe(Effect.orDie),
     }
   }),
 )

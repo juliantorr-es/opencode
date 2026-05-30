@@ -1,0 +1,100 @@
+{
+  "schema_version": "v1",
+  "session_id": "ses_current",
+  "artifact_type": "feasibility_case_study",
+  "title": "Agent .md Profile → Self-Contained Agent Loop: Feasibility Case Study",
+  "generated_at": "2026-05-30T06:48:00Z",
+  "status": "final",
+  "request": "Turn each agent .md profile into a proper self-contained agent loop with its own lifecycle for consistency",
+  "executive_summary": "The proposal is feasible but represents a multi-phase architectural project, not a quick refactor. The current architecture has strong foundations (Effect service layer, structured config loading, InstanceState pattern, permission system) but the agent loop itself is a single generic streaming loop that varies only by prompt + permissions. The entire wave-based orchestration model — cartographer → architect → critic → gate → executor → validator → stress → repair — is a prompt-driven convention with zero structural enforcement. Making it per-agent requires a planned extraction. Estimated effort: 1-2 weeks for lifecycle decorator (Approach A), 3-4 weeks for phase-enforced runners (Approach B).",
+
+  "current_architecture": {
+    "agents_in_system": "~51 .md files in ~/.config/opencode/agents/ + 8 built-in agents in agent.ts = ~59 total agent types",
+    "loading_system": "packages/opencode/src/config/agent.ts — globs {agent,agents}/**/*.md, parses YAML frontmatter, normalizes into Agent.Info",
+    "registry": "packages/opencode/src/agent/agent.ts — Effect Context Service with InstanceState<Record<string, Info>>, built once per project",
+    "processor": "packages/opencode/src/session/processor.ts — single generic LLM streaming loop for ALL agents",
+    "task_spawning": "packages/opencode/src/tool/task.ts — creates child sessions with derived permissions, uses same processor",
+    "key_insight": "The entire wave lifecycle (cartographer → architect → critic → gate → executor → validator → stress → repair) has ZERO runtime enforcement — it's a prompt-only convention"
+  },
+
+  "structural_vs_prompt_analysis": {
+    "structurally_enforced": [
+      "Agent schema validation — .md frontmatter validated against Schema.Struct",
+      "Permission ruleset merging — 4-layer merge with subagent session derivation",
+      "Task tool restriction — agent must explicitly allow task: to spawn sub-subagents",
+      "Background flag gating — OPENCODE_EXPERIMENTAL_BACKGROUND_SUBAGENTS runtime flag required",
+      "Editor hiding — hidden:true agents filtered from @ autocomplete"
+    ],
+    "prompt_driven_only": [
+      "Wave sequence ordering (cartographer before architect before executor)",
+      "Parallel fan-out of sub-subagents (serial vs parallel is a prompt suggestion)",
+      "Verification standards ('find 5 examples', 'every claim must cite file:line')",
+      "Handoff JSON formats (executor handoff, lane-owner handoff — no unified schema)",
+      "Repair cycle limits ('max 3 cycles then escalate' — no structural limit)",
+      "Lane-owner trust-but-verify (verify executor claims independently)",
+      "Adversary outcome lattice (prepublication-conductor verdict combination)",
+      "Session-end rituals (tool_feedback → lesson_register → session_diff → roadmap_progress)",
+      "'Never ask user' rule — prompt instruction, not structural enforcer"
+    ]
+  },
+
+  "sub_subagent_ambiguity": {
+    "finding": "Many sub-subagents described in agent .md profiles (surface-mapper, module-grapher, root-cause-analyst, impact-assessor, etc.) are referenced as if they're dedicated agent types, but they may not have dedicated .md files in ~/.config/opencode/agents/. The system relies on task(subagent_type) finding an existing agent by name — if no .md file exists, it either reuses other agent types or the task tool falls back.",
+    "impact": "The subagent fan-out tables in .md profiles are aspirational rather than actual — they describe ideal subagent types that may exist only as prompt-notional roles, not as runnable agent configurations."
+  },
+
+  "adversary_consolidation_opportunity": {
+    "finding": "The 8 adversary profiles (claim-adversary, evidence-adversary, authority-adversary, security-adversary, recovery-adversary, production-proof-adversary, lane-collision-adversary, publication-truth-adversary) follow an identical template with negligible variation — same persona ('patient, well-articulated senior colleague'), same output format (JSON repair directive), same article sections. They differ only in the specific attack domain.",
+    "impact": "This is an 8x code consolidation opportunity. A single parameterized adversary generator could produce all 8 variants from a domain parameter, dramatically reducing lifecycle duplication."
+  },
+
+  "handoff_fragmentation": {
+    "finding": "Every agent type has a different handoff format defined only in prose: executor uses JSON with verification block, critic uses Markdown tables with 7-axis scores, architect uses JSON with fixes/risks/validation, lane-owner uses send_message(body=JSON.stringify({...})). No unified handoff schema exists across all agents.",
+    "impact": "verify_handoff tool validates a generic contract but cannot check field completeness or structure for specific agent types."
+  },
+
+  "feasibility_approaches": {
+    "approach_a": {
+      "name": "Lifecycle Decorator",
+      "effort": "1-2 weeks",
+      "description": "Add optional lifecycle: field to AgentSchema. Create LifecycleEngine service that wraps existing processor with phase-awareness. Advisory-only (warning-level) validation. Backward compatible.",
+      "feasibility": "HIGH — directly feasible, low disruption",
+      "recommended_as": "Immediate first step"
+    },
+    "approach_b": {
+      "name": "Phase-Enforced Agent Runners",
+      "effort": "3-4 weeks",
+      "description": "Discriminated union of agent types with type-specific runners. Each runner enforces phase ordering, parallel fan-out, and phase-gated tool access. Generic loop remains fallback for simple agents.",
+      "feasibility": "MODERATE — feasible with careful scoping",
+      "recommended_as": "Medium-term after telemetry from Approach A"
+    },
+    "approach_c": {
+      "name": "Full Workflow Engine",
+      "effort": "6-8 weeks",
+      "description": "DAG-based workflow engine with lifecycle definitions as JSON schema, phase enforcement, conditional branching, native repair cycles, escalation paths.",
+      "feasibility": "LOW — too ambitious for current stage",
+      "recommended_as": "Deferred post-Postgres-migration"
+    }
+  },
+
+  "code_seams_for_lifecycle": {
+    "config/agent.ts:33-76": "Add optional lifecycle: field to AgentSchema",
+    "agent/agent.ts:29-50": "Add lifecycle field to Agent.Info runtime type",
+    "agent/agent.ts:82-327": "InstanceState.make() is the natural lifecycle state initialization hook",
+    "session/processor.ts:87-863": "Wrap session processor with LifecycleEngine that selects behavior by agent type",
+    "tool/task.ts:103-286": "Propagate lifecycle context when spawning subagent sessions",
+    "permission/index.ts": "Add phase-aware tool gating via additional ruleset in merge chain"
+  },
+
+  "recommendation": "Adopt Approach A first (lifecycle decorator, 1-2 weeks) to get lifecycle telemetry and schema. Then based on telemetry data, implement Approach B for the highest-value agent types: cartographer (parallel fan-out), executor (edit-verify cycle), lane-owner (full wave lifecycle). Defer Approach C until after Postgres migration. The InstanceState pattern already provides the lifecycle state seam — no new infrastructure needed.",
+
+  "key_findings": [
+    {"id": "LC-001", "severity": "critical", "finding": "Agent lifecycle is entirely prompt-driven — no runtime enforcement of wave sequences, phase ordering, parallel fan-out, or verification standards"},
+    {"id": "LC-002", "severity": "high", "finding": "No structural enforcement of phase ordering — tools are gated by permission set at session creation, not dynamically by lifecycle phase"},
+    {"id": "LC-003", "severity": "high", "finding": "Sub-subagents referenced in .md profiles (surface-mapper, module-grapher, etc.) may not have dedicated .md files — the fan-out tables are aspirational"},
+    {"id": "LC-004", "severity": "medium", "finding": "8 adversary profiles share ~95% identical template — strong consolidation opportunity into parameterized generator"},
+    {"id": "LC-005", "severity": "medium", "finding": "Handoff formats are fragmented across agent types with no unified schema — verify_handoff can't validate per-type completeness"},
+    {"id": "LC-006", "severity": "low", "finding": "InstanceState pattern is the natural lifecycle seam and requires no new infrastructure"},
+    {"id": "LC-007", "severity": "low", "finding": "Permission system is mature enough to support phase-aware tool gating via additional ruleset in merge chain"}
+  ]
+}

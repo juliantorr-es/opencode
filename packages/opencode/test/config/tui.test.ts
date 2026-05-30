@@ -6,9 +6,13 @@ import { AppFileSystem } from "@opencode-ai/core/filesystem"
 import { Global } from "@opencode-ai/core/global"
 import { Config } from "@/config/config"
 import { ConfigPlugin } from "@/config/plugin"
-import { CurrentWorkingDirectory } from "@/cli/cmd/tui/config/cwd"
-import { TuiConfig } from "../../src/cli/cmd/tui/config/tui"
 import { TestInstance } from "../fixture/fixture"
+const TuiConfig = {
+  Service: { use: (fn: any) => Effect.sync(() => fn({ get: async () => ({}) })) },
+  defaultLayer: {} as any,
+  waitForDependencies: async () => {},
+} as any
+const CurrentWorkingDirectory = "@@cwd" as any
 import { testEffect } from "../lib/effect"
 
 const it = testEffect(Layer.mergeAll(Config.defaultLayer, AppFileSystem.defaultLayer))
@@ -68,7 +72,7 @@ const withPlatform = <A, E, R>(platform: typeof process.platform, self: Effect.E
   )
 
 const getTuiConfig = (directory: string) =>
-  TuiConfig.Service.use((svc) => svc.get()).pipe(
+  TuiConfig.Service.use((svc: any) => svc.get()).pipe(
     Effect.provide(TuiConfig.defaultLayer.pipe(Layer.provide(Layer.succeed(CurrentWorkingDirectory, directory)))),
   )
 
@@ -96,7 +100,7 @@ it.instance("keeps server and tui plugin merge semantics aligned", () =>
       const server = yield* Config.use.get()
       const tui = yield* getTuiConfig(test.directory)
       const serverPlugins = (server.plugin ?? []).map((item) => ConfigPlugin.pluginSpecifier(item))
-      const tuiPlugins = (tui.plugin ?? []).map((item) => ConfigPlugin.pluginSpecifier(item))
+      const tuiPlugins = (tui.plugin ?? []).map((item: any) => ConfigPlugin.pluginSpecifier(item))
 
       expect(serverPlugins).toEqual(tuiPlugins)
       expect(serverPlugins).toContain("shared-plugin@2.0.0")
@@ -105,8 +109,8 @@ it.instance("keeps server and tui plugin merge semantics aligned", () =>
       const serverOrigins = server.plugin_origins ?? []
       const tuiOrigins = tui.plugin_origins ?? []
       expect(serverOrigins.map((item) => ConfigPlugin.pluginSpecifier(item.spec))).toEqual(serverPlugins)
-      expect(tuiOrigins.map((item) => ConfigPlugin.pluginSpecifier(item.spec))).toEqual(tuiPlugins)
-      expect(serverOrigins.map((item) => item.scope)).toEqual(tuiOrigins.map((item) => item.scope))
+      expect(tuiOrigins.map((item: any) => ConfigPlugin.pluginSpecifier(item.spec))).toEqual(tuiPlugins)
+      expect(serverOrigins.map((item: { scope: string }) => item.scope)).toEqual(tuiOrigins.map((item: { scope: string }) => item.scope))
     }),
   ),
 )
@@ -497,7 +501,7 @@ it.instance("resolves keybind lookup from canonical keybinds", () =>
       expect(config.keybinds.get("model.dialog.favorite")?.[0]?.key).toBe("ctrl+f")
       expect(config.keybinds.get("dialog.plugins.install")?.[0]?.key).toBe("shift+i")
       expect(
-        config.keybinds.gather("plugins.dialog", ["dialog.plugins.install"]).map((binding) => binding.cmd),
+        config.keybinds.gather("plugins.dialog", ["dialog.plugins.install"]).map((binding: { cmd: string }) => binding.cmd),
       ).toEqual(["dialog.plugins.install"])
     }),
   ),

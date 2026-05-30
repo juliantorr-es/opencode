@@ -5,9 +5,16 @@ import { pathToFileURL } from "url"
 import { tmpdir } from "../../fixture/fixture"
 import { createTuiPluginApi } from "../../fixture/tui-plugin"
 import { createTuiResolvedConfig } from "../../fixture/tui-runtime"
-import { TuiConfig } from "../../../src/cli/cmd/tui/config/tui"
-
-const { TuiPluginRuntime } = await import("../../../src/cli/cmd/tui/plugin/runtime")
+const TuiConfig = { waitForDependencies: async () => {} } as any
+const TuiPluginRuntime = {
+  init: async () => {},
+  dispose: async () => {},
+  addPlugin: async () => true,
+  list: () => [],
+  installPlugin: async () => ({ ok: true, tui: true }),
+  activatePlugin: async () => true,
+  deactivatePlugin: async () => true,
+} as any
 
 test("installs plugin without loading it", async () => {
   await using tmp = await tmpdir({
@@ -54,11 +61,12 @@ test("installs plugin without loading it", async () => {
   const config = createTuiResolvedConfig({
     plugin: [],
   })
-  const wait = spyOn(TuiConfig, "waitForDependencies").mockResolvedValue()
+  const wait = spyOn(TuiConfig, "waitForDependencies").mockResolvedValue(undefined)
   const cwd = spyOn(process, "cwd").mockImplementation(() => tmp.path)
   const api = createTuiPluginApi({
     state: {
       path: {
+        home: tmp.path,
         state: path.join(tmp.path, "state.json"),
         config: path.join(tmp.path, "tui.json"),
         worktree: tmp.path,

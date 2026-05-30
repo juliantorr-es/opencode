@@ -1,0 +1,74 @@
+{
+  "schema_version": "rig.relay.plan_review.v1",
+  "review_type": "pre-execution_critic",
+  "plan_id": "agent-config-hardening",
+  "plan_revision": 2,
+  "reviewer": "critic",
+  "reviewed_at": "2026-05-30T03:19:00Z",
+  "verdict": "APPROVE WITH CONDITIONS",
+  "seven_axis_scores": {
+    "coupling": {
+      "score": 5,
+      "max": 5,
+      "note": "Single file change. Only new import is Spinner (used in 6 other files). Props.onSave type change from void to void|Promise<void> is widening — all existing callers pass sync functions which remain assignable."
+    },
+    "debuggability": {
+      "score": 2,
+      "max": 5,
+      "note": "BLOCKING: Two related bugs. (A) saveCustomAgents in dialog-manage-agents.tsx catches IPC errors internally and does NOT re-throw. handleCreateAgent/handleEditAgent/handleConfirmDelete then unconditionally fire success toasts even after failed save. (B) handleSave's catch block logs to console but shows no UI feedback — dialog closes even on save failure. Developer sees no actionable error context."
+    },
+    "convergence": {
+      "score": 5,
+      "max": 5,
+      "note": "Well-scoped. Explicitly acknowledges H-005 is already fixed (commit 9e953e7be). Follows existing patterns (Spinner like 6 other files, error handling like saveCustomAgents). Deferred items (FI-070 prompt length, FI-071 key collision, FI-075 cross-window sync) correctly left out of scope."
+    },
+    "surface_area": {
+      "score": 5,
+      "max": 5,
+      "note": "All changes in ONE file (dialog-edit-agent.tsx). Props type is local (not exported). No new exports. Zero external consumer impact."
+    },
+    "testability": {
+      "score": 3,
+      "max": 5,
+      "note": "Locale-safe parsing (Number(value.replace(',','.'))) could be extracted to a testable utility but is kept inline. isSaving guard logic testable. No automated test coverage proposed — only manual validation steps 3-7. BUN -e testing possible for parsing logic but not for component integration."
+    },
+    "error_clarity": {
+      "score": 2,
+      "max": 5,
+      "note": "handleSave catch block only logs to console.error — no user-visible toast or UI feedback on error. Parent's saveCustomAgents error toast is clear but fires alongside an unconditional success toast from handleCreateAgent/handleEditAgent/handleConfirmDelete. User sees both 'Error' toast and 'saved' toast simultaneously on IPC failure."
+    },
+    "reversibility": {
+      "score": 5,
+      "max": 5,
+      "note": "Single file, sequential apply steps (A1→A5) in same file. Full revert via git checkout is clean. No external API contract changes."
+    }
+  },
+  "objections": [
+    {
+      "axis": "Debuggability",
+      "severity": "blocking",
+      "file": "packages/app/src/components/dialog-manage-agents.tsx",
+      "line": 81,
+      "finding": "saveCustomAgents catches IPC errors internally without re-throwing. All 3 callers (handleCreateAgent line 99, handleEditAgent line 113, handleConfirmDelete line 132) then fire unconditional success toasts via showToast after await saveCustomAgents resolves. Plan boundary excludes this file entirely, claiming H-005 'already fixed', but this is a distinct bug in the error propagation chain."
+    },
+    {
+      "axis": "Error clarity",
+      "severity": "blocking",
+      "file": "packages/app/src/components/dialog-edit-agent.tsx",
+      "line": 69,
+      "finding": "Plan's proposed handleSave catch block only console.errors on failure and still lets dialog.close() proceed via finally. Because saveCustomAgents swallows the IPC error (objection above), handleSave's catch never fires for IPC failures anyway. Dialog closes even on save failure — user loses form inputs and has no retry path."
+    }
+  ],
+  "conditions_for_approval": [
+    "Fix saveCustomAgents (dialog-manage-agents.tsx:81-97) to re-throw after its internal catch block, OR restructure so the child dialog receives success/failure feedback and stays open on error. Add a conditional showToast that fires success only when saveCustomAgents did not catch.",
+    "Fix handleSave error path (dialog-edit-agent.tsx): on IPC failure, keep dialog open with an error indicator or toast so user can retry without losing form inputs. Remove dialog.close() from the error path.",
+    "Add claim atom for 'dialog stays open on save failure, user can retry'"
+  ],
+  "recommendations": [
+    "Extract locale-safe parsing into a testable utility function + unit test (current inline is fine for simplicity but creates a testability gap)",
+    "Add language.t('common.saving') i18n key for the button loading text instead of hardcoded 'Saving...'",
+    "Locate the 6th cartographer finding (cartographer reported 6, plan addresses 5) — likely FI-029 (setLoaded(true) before IPC load resolves) — and either include or explicitly defer it"
+  ],
+  "comments_appended": 5,
+  "verdict_detail": "APPROVE WITH CONDITIONS — fix the error propagation chain in dialog-manage-agents.tsx before executing. The dialog-edit-agent.tsx changes (A1-A5) are sound but incomplete without addressing the parent-side error swallowing"
+}

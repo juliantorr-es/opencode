@@ -1,0 +1,22 @@
+{
+  "schema_version": "v1",
+  "plan_id": "lifecycle-engine-v2",
+  "plan_revision": 1,
+  "title": "Lifecycle Engine — Fix existing framework + add integrations",
+  "boundary": "lifecycle-engine-v2",
+  "consumer_purpose": "Complete lifecycle engine framework with proper hook-based engine, agent schema integration, and consistent built-in definitions",
+  "claim_atoms": [
+    "Lifecycle schemas use Effect Schema with optional description",
+    "Engine uses hook-based approach (onProcessorRun/onRepair) instead of opaque processorHandle",
+    "Engine handles all transitions: success, failure, always",
+    "Engine properly records PhaseResult before any early return",
+    "agent.ts Agent.Info has optional lifecycle field (Schema.Unknown)",
+    "config/agent.ts AgentSchema has optional lifecycle field + KNOWN_KEYS entry",
+    "Built-in lifecycle constants use UPPER naming consistent with the mission spec",
+    "Engine errors capture structured error messages, not String(cause) destruction"
+  ],
+  "content": "## Changes\n\n### 1. definition.ts — Fix description optionality\n- Change `description: Schema.String` to `description: Schema.optional(Schema.String)`\n\n### 2. engine.ts — Rewrite with proper hook API\n- Replace `processorHandle: { process: (input: any) => Effect.Effect<any> }` with hooks:\n  - `onProcessorRun: (phase: Phase) => Effect.Effect<PhaseResult>`\n  - `onRepair: (phase: Phase, attempt: number, error: string) => Effect.Effect<PhaseResult>`\n- Replace `String(cause)` with proper error extraction\n- Fix abort escalation to record PhaseResult before returning\n- Add condition: \"always\" to transition resolution\n- Keep onPhaseEnter/onPhaseExit hooks\n\n### 3. builtins.ts — Rename constants to UPPER_CASE\n- CARTographer_lifecycle → CARTOGRAPHER_LIFECYCLE\n- EXECUTOR_lifecycle → EXECUTOR_LIFECYCLE\n- CRITIC_lifecycle → CRITIC_LIFECYCLE\n- LANE_OWNER_lifecycle → LANE_OWNER_LIFECYCLE\n- Update BUILTIN_LIFECYCLES to use new names\n\n### 4. config/agent.ts — Add lifecycle field\n- Add `lifecycle: Schema.optional(Schema.Unknown)` to AgentSchema Struct\n- Add `\"lifecycle\"` to KNOWN_KEYS array\n\n### 5. agent/agent.ts — Add lifecycle field\n- Add `lifecycle: Schema.optional(Schema.Unknown)` to Agent.Info schema\n\n### 6. lifecycle.ts — Update barrel\n- Export * from \"./builtins\" already exists\n\n### 7. JSON Schema — Fix description required\n- Remove \"description\" from Phase required array\n",
+  "status": "proposed",
+  "created_at": "2026-05-30T07:25:07.820769+00:00",
+  "modified_at": "2026-05-30T07:25:07.820962+00:00"
+}

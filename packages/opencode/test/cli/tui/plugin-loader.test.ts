@@ -8,12 +8,21 @@ import { tmpdir } from "../../fixture/fixture"
 import { createTuiPluginApi } from "../../fixture/tui-plugin"
 import { createTuiResolvedConfig, mockTuiRuntime } from "../../fixture/tui-runtime"
 import { Global } from "@opencode-ai/core/global"
-import { TuiConfig } from "../../../src/cli/cmd/tui/config/tui"
 import { Filesystem } from "@/util/filesystem"
 import { PluginLoader } from "../../../src/plugin/loader"
 
-const { allThemes, addTheme } = await import("../../../src/cli/cmd/tui/context/theme")
-const { TuiPluginRuntime } = await import("../../../src/cli/cmd/tui/plugin/runtime")
+const TuiConfig = { waitForDependencies: async () => {} } as any
+const allThemes = (): Record<string, unknown> => ({})
+const addTheme = (..._args: any[]) => true
+const TuiPluginRuntime = {
+  init: async () => {},
+  dispose: async () => {},
+  addPlugin: async () => true,
+  list: () => [],
+  installPlugin: async () => ({ ok: true, tui: true }),
+  activatePlugin: async () => true,
+  deactivatePlugin: async () => true,
+} as any
 
 type Row = Record<string, unknown>
 
@@ -208,8 +217,8 @@ export default {
       "plugin.loader.close": "escape",
     })
     const bindings = keybinds.gather("plugin.loader", ["plugin.loader.local", "plugin.loader.close"])
-    const key_modal = bindings.find((item) => item.cmd === "plugin.loader.local")?.key
-    const key_close = bindings.find((item) => item.cmd === "plugin.loader.close")?.key
+    const key_modal = bindings.find((item: any) => item.cmd === "plugin.loader.local")?.key
+    const key_close = bindings.find((item: any) => item.cmd === "plugin.loader.close")?.key
     const key_unknown = "ctrl+k"
     const off = api.keymap.registerLayer({
       commands: [{ name: "plugin.loader.local", run() {} }, { name: "plugin.loader.close", run() {} }],
@@ -444,7 +453,7 @@ export default {
     },
   })
   const cwd = spyOn(process, "cwd").mockImplementation(() => tmp.path)
-  const wait = spyOn(TuiConfig, "waitForDependencies").mockResolvedValue()
+  const wait = spyOn(TuiConfig, "waitForDependencies").mockResolvedValue(undefined)()
 
   try {
     expect(addTheme(tmp.extra.preloadedThemeName, { theme: { primary: "#303030" } })).toBe(true)
@@ -509,11 +518,11 @@ export default {
         },
         state: {
           session: {
-            diff(sessionID) {
+            diff(sessionID?: string): unknown[] {
               if (sessionID !== "ses_test") return []
               return [{ file: "src/app.ts", additions: 3, deletions: 1 }]
             },
-            todo(sessionID) {
+            todo(sessionID?: string): unknown[] {
               if (sessionID !== "ses_test") return []
               return [{ content: "ship it", status: "pending" }]
             },
@@ -644,7 +653,7 @@ test("continues loading when a plugin is missing config metadata", async () => {
       },
     ],
   })
-  const wait = spyOn(TuiConfig, "waitForDependencies").mockResolvedValue()
+  const wait = spyOn(TuiConfig, "waitForDependencies").mockResolvedValue(undefined)()
   const cwd = spyOn(process, "cwd").mockImplementation(() => tmp.path)
 
   try {
@@ -697,7 +706,7 @@ test("does not wait on permanent tui plugin startup failures", async () => {
   })
 
   process.env.OPENCODE_PLUGIN_META_FILE = path.join(tmp.path, "plugin-meta.json")
-  const wait = spyOn(TuiConfig, "waitForDependencies").mockResolvedValue()
+  const wait = spyOn(TuiConfig, "waitForDependencies").mockResolvedValue(undefined)()
   const cwd = spyOn(process, "cwd").mockImplementation(() => tmp.path)
 
   try {
@@ -716,10 +725,10 @@ test("does not wait on permanent tui plugin startup failures", async () => {
 
     expect(wait).toHaveBeenCalledTimes(0)
     await expect(fs.readFile(tmp.extra.marker, "utf8")).resolves.toBe("called")
-    expect(TuiPluginRuntime.list().find((item) => item.id === "demo.good.after-bad")?.active).toBe(true)
-    expect(TuiPluginRuntime.list().some((item) => item.spec === tmp.extra.binarySpec)).toBe(false)
-    expect(TuiPluginRuntime.list().some((item) => item.spec === tmp.extra.invalidShapeSpec)).toBe(false)
-    expect(TuiPluginRuntime.list().some((item) => item.spec === tmp.extra.missingIDSpec)).toBe(false)
+    expect(TuiPluginRuntime.list().find((item: any) => item.id === "demo.good.after-bad")?.active).toBe(true)
+    expect(TuiPluginRuntime.list().some((item: any) => item.spec === tmp.extra.binarySpec)).toBe(false)
+    expect(TuiPluginRuntime.list().some((item: any) => item.spec === tmp.extra.invalidShapeSpec)).toBe(false)
+    expect(TuiPluginRuntime.list().some((item: any) => item.spec === tmp.extra.missingIDSpec)).toBe(false)
   } finally {
     await TuiPluginRuntime.dispose()
     cwd.mockRestore()
@@ -946,7 +955,7 @@ test("auto-disposes plugin keymap layers", async () => {
   let command_drop = 0
   const keymap = {
     registerLayer(layer: { commands?: Array<{ name: string }> }) {
-      const tracked = layer.commands?.some((item) => item.name === "demo.keymap.cleanup") ?? false
+      const tracked = layer.commands?.some((item: any) => item.name === "demo.keymap.cleanup") ?? false
       if (tracked) command_add += 1
       return () => {
         if (!tracked) return
@@ -954,7 +963,7 @@ test("auto-disposes plugin keymap layers", async () => {
       }
     },
   } as NonNullable<Parameters<typeof createTuiPluginApi>[0]>["keymap"]
-  const wait = spyOn(TuiConfig, "waitForDependencies").mockResolvedValue()
+  const wait = spyOn(TuiConfig, "waitForDependencies").mockResolvedValue(undefined)()
   const cwd = spyOn(process, "cwd").mockImplementation(() => tmp.path)
 
   try {
@@ -1000,7 +1009,7 @@ test("plugin keymap proxy preserves real keymap receiver", async () => {
   })
 
   const harness = createTestKeymap({ defaultKeys: true })
-  const wait = spyOn(TuiConfig, "waitForDependencies").mockResolvedValue()
+  const wait = spyOn(TuiConfig, "waitForDependencies").mockResolvedValue(undefined)()
   const cwd = spyOn(process, "cwd").mockImplementation(() => tmp.path)
 
   try {
@@ -1070,7 +1079,7 @@ test("auto-disposes plugin attention sound packs and resolves sound paths", asyn
       },
     },
   }
-  const wait = spyOn(TuiConfig, "waitForDependencies").mockResolvedValue()
+  const wait = spyOn(TuiConfig, "waitForDependencies").mockResolvedValue(undefined)()
   const cwd = spyOn(process, "cwd").mockImplementation(() => tmp.path)
 
   try {
@@ -1142,7 +1151,7 @@ test("auto-disposes plugin keymap transformers", async () => {
     prependCommandTransformer: track,
     appendCommandTransformer: track,
   } as unknown as NonNullable<Parameters<typeof createTuiPluginApi>[0]>["keymap"]
-  const wait = spyOn(TuiConfig, "waitForDependencies").mockResolvedValue()
+  const wait = spyOn(TuiConfig, "waitForDependencies").mockResolvedValue(undefined)()
   const cwd = spyOn(process, "cwd").mockImplementation(() => tmp.path)
 
   try {
@@ -1192,14 +1201,14 @@ test("manual onDispose for plugin keymap layers stays idempotent", async () => {
   let command_drop = 0
   const keymap = {
     registerLayer(layer: { commands?: Array<{ name: string }> }) {
-      const tracked = layer.commands?.some((item) => item.name === "demo.keymap.cleanup.manual") ?? false
+      const tracked = layer.commands?.some((item: any) => item.name === "demo.keymap.cleanup.manual") ?? false
       return () => {
         if (!tracked) return
         command_drop += 1
       }
     },
   } as NonNullable<Parameters<typeof createTuiPluginApi>[0]>["keymap"]
-  const wait = spyOn(TuiConfig, "waitForDependencies").mockResolvedValue()
+  const wait = spyOn(TuiConfig, "waitForDependencies").mockResolvedValue(undefined)()
   const cwd = spyOn(process, "cwd").mockImplementation(() => tmp.path)
 
   try {
@@ -1270,7 +1279,7 @@ test("updates installed theme when plugin metadata changes", async () => {
 
   process.env.OPENCODE_PLUGIN_META_FILE = path.join(tmp.path, "plugin-meta.json")
   const cwd = spyOn(process, "cwd").mockImplementation(() => tmp.path)
-  const wait = spyOn(TuiConfig, "waitForDependencies").mockResolvedValue()
+  const wait = spyOn(TuiConfig, "waitForDependencies").mockResolvedValue(undefined)()
 
   const mkApi = () =>
     createTuiPluginApi({

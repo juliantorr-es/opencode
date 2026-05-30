@@ -6,9 +6,9 @@ import path from "path"
 import DESCRIPTION from "./replace-symbol.txt"
 
 const Parameters = Schema.Struct({
-  file: Schema.String.annotations({ description: "Path to the source file" }),
-  pattern: Schema.String.annotations({ description: "Symbol pattern to replace (literal string, not regex)" }),
-  replacement: Schema.String.annotations({ description: "Replacement text" }),
+  file: Schema.String.annotate({ description: "Path to the source file" }),
+  pattern: Schema.String.annotate({ description: "Symbol pattern to replace (literal string, not regex)" }),
+  replacement: Schema.String.annotate({ description: "Replacement text" }),
   language: Schema.optional(Schema.String).annotate({
     description: "Source language hint (py, ts, js, rs, etc.)",
   }),

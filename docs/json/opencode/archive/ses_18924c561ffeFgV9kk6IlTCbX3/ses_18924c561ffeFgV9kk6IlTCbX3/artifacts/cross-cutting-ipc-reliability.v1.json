@@ -1,0 +1,454 @@
+{
+  "lane": "cross-cutting-ipc-reliability",
+  "status": "complete",
+  "wave": "cartography",
+  "generated_at": "2026-05-29T23:00:00Z",
+  "profiles": ["cartography", "architecture", "execution"],
+  "files_mapped": [
+    "packages/desktop/src/main/ipc.ts",
+    "packages/desktop/src/main/store.ts",
+    "packages/desktop/src/main/constants.ts",
+    "packages/desktop/src/preload/index.ts",
+    "packages/desktop/src/preload/types.ts",
+    "packages/desktop/src/main/index.ts",
+    "packages/desktop/src/renderer/index.tsx",
+    "packages/desktop/src/renderer/webview-zoom.ts",
+    "packages/desktop/src/renderer/loading.tsx",
+    "packages/desktop/tests/ipc-plugin-config.test.ts",
+    "packages/app/src/components/dialog-manage-agents.tsx",
+    "packages/app/src/components/dialog-edit-agent.tsx",
+    "packages/app/src/components/dialog-select-mcp.tsx",
+    "packages/app/src/components/dialog-edit-mcp.tsx",
+    "packages/app/src/types/mcp.ts",
+    "packages/app/src/context/sync.tsx",
+    "packages/app/src/context/directory-sync.ts",
+    "packages/app/src/context/server-sync.tsx",
+    "packages/app/src/app.tsx"
+  ],
+  "findings": [
+    {
+      "id": "IPC-001",
+      "file": "packages/app/src/components/dialog-edit-mcp.tsx",
+      "line": 55,
+      "severity": "critical",
+      "description": "[FI-002] handleSave calls props.onSave(entry) WITHOUT await, then immediately calls dialog.close(). The onSave callback in dialog-select-mcp.tsx (line 377-393) is async and does persistence + SDK update. Since handleSave doesn't await, dialog closes before save completes. User sees no error feedback on failure — only console.warn. Race window: if user re-opens and edits again before first save completes, stale state may overwrite.",
+      "pattern_type": "fire-and-forget"
+    },
+    {
+      "id": "IPC-002",
+      "file": "packages/app/src/components/dialog-edit-agent.tsx",
+      "line": 59,
+      "severity": "critical",
+      "description": "[FI-002b] handleSave calls props.onSave(...) WITHOUT await, then immediately calls dialog.close(). Parent's onSave callback (dialog-manage-agents.tsx:104-112) is async and awaits saveCustomAgents with error toast, but since handleSave never awaits, dialog closes before save completes. Race window for stale-state overwrite identical to IPC-001.",
+      "pattern_type": "fire-and-forget"
+    },
+    {
+      "id": "IPC-003",
+      "file": "packages/app/src/components/dialog-select-mcp.tsx",
+      "line": 173,
+      "severity": "critical",
+      "description": "[FI-001] submitAdd uses addMutation which calls sdk.client.mcp.add() but does NOT write to electron-store 'desktop-mcp-servers'. Added MCP servers will appear in sync.data.mcp (SDK state) but won't survive app restart. This makes the 'Add MCP Server' flow essentially transient — servers added this way disappear when the app restarts.",
+      "pattern_type": "missing-persist"
+    },
+    {
+      "id": "IPC-004",
+      "file": "packages/app/src/components/dialog-select-mcp.tsx",
+      "line": 107,
+      "severity": "high",
+      "description": "[FI-003] Dual source of truth for MCP servers: (1) sync.data.mcp from SDK for connection status display, (2) electron-store 'desktop-mcp-servers' for persistence. No reconciliation path exists. If SDK server restarts, sync.data.mcp resets to empty but electron-store has data. The add flow ONLY writes to SDK (IPC-003), the edit flow writes to both, and the delete flow reads from store. Three different write strategies for the same logical entity.",
+      "pattern_type": "dual-sot"
+    },
+    {
+      "id": "IPC-005",
+      "file": "packages/app/src/components/dialog-select-mcp.tsx",
+      "line": 377,
+      "severity": "high",
+      "description": "[FI-008] MCP edit onSave writes to electron-store FIRST via api.setMcpServers(), THEN calls sdk.client.mcp.add() for the SDK. If SDK call fails, store already has new data but server isn't updated — out of sync with no rollback. Catch block only does console.warn.",
+      "pattern_type": "race-condition"
+    },
+    {
+      "id": "IPC-006",
+      "file": "packages/app/src/components/dialog-select-mcp.tsx",
+      "line": 77,
+      "severity": "high",
+      "description": "[FI-009] MCP delete (confirmRemove) has 3 sequential async ops with no transaction: (1) sdk disconnect, (2) auth.remove, (3) read store → filter → write store. If step 3 fails after step 1 succeeded, server is disconnected but still in store. If step 1 fails, steps 2-3 still execute — deleting a server that couldn't be disconnected.",
+      "pattern_type": "race-condition"
+    },
+    {
+      "id": "IPC-007",
+      "file": "packages/desktop/src/main/ipc.ts",
+      "line": 287,
+      "severity": "high",
+      "description": "[FI-003] get-desktop-mcp-servers and set-desktop-mcp-servers handlers have no try/catch. A disk error in store.set() or store.get() propagates as unhandled exception in the IPC handler, rejecting the invoke() promise as an IPC error (swallowed by preload since callers don't .catch() every call).",
+      "pattern_type": "error-swallowing"
+    },
+    {
+      "id": "IPC-008",
+      "file": "packages/app/src/components/dialog-manage-agents.tsx",
+      "line": 46,
+      "severity": "high",
+      "description": "[FI-001 residual] Initial load function uses .then() without .catch(). If getCustomAgents IPC fails, the promise rejects silently. customAgents stays empty[] and user sees no custom agents with no error indication. Also a race condition: if user rapidly opens dialog and creates/edits before the async .then() runs, the stale response will overwrite local edits.",
+      "pattern_type": "unhandled-reject"
+    },
+    {
+      "id": "IPC-009",
+      "file": "packages/app/src/components/dialog-manage-agents.tsx",
+      "line": 53,
+      "severity": "medium",
+      "description": "[FI-003b] Dual source for agents: sync.data.agent (SDK, read-only) for built-in agents, electron-store 'desktop-custom-agents' for custom agents. UI merges both. Custom agents are NEVER synced back to SDK server. If a built-in agent is referenced in custom config and then deleted from server, stale reference persists.",
+      "pattern_type": "dual-sot"
+    },
+    {
+      "id": "IPC-010",
+      "file": "packages/app/src/components/dialog-manage-agents.tsx",
+      "line": 132,
+      "severity": "medium",
+      "description": "[FI-004] Deleting a custom agent only removes it from 'desktop-custom-agents' store. Does NOT clean up MCP server registrations in 'desktop-mcp-servers' that may reference that agent. No cross-reference cleanup between store namespaces.",
+      "pattern_type": "stale-data"
+    },
+    {
+      "id": "IPC-011",
+      "file": "packages/desktop/src/main/store.ts",
+      "line": 12,
+      "severity": "medium",
+      "description": "[FI-006] electron-store is synchronous. All store.set() calls in IPC handlers are sync inside async handlers. The read-modify-write pattern (read store → validate in memory → write store) is vulnerable to race: if two IPC handlers execute between read and write, the second write overwrites the first. The dialog-select-mcp.tsx edit flow (read whole array → modify → write back) is the most vulnerable.",
+      "pattern_type": "race-condition"
+    },
+    {
+      "id": "IPC-012",
+      "file": "packages/desktop/src/main/ipc.ts",
+      "line": 181,
+      "severity": "high",
+      "description": "[FI-007] Generic 'store-set' IPC handler writes string values with only reserved-name guard. No schema validation at the preload boundary. Any renderer code (or compromised renderer) can write arbitrary data to any non-reserved electron-store namespace. Combined with no runtime validation on preload bridge, this is an insecure-by-design write path.",
+      "pattern_type": "security-gap"
+    },
+    {
+      "id": "IPC-013",
+      "file": "packages/desktop/src/renderer/index.tsx",
+      "line": 71,
+      "severity": "medium",
+      "description": "Fire-and-forget: void window.api.consumeInitialDeepLinks().then(...) without .catch(). If IPC fails (e.g., before initialization complete), unhandled promise rejection. Deep links are silently lost.",
+      "pattern_type": "unhandled-reject"
+    },
+    {
+      "id": "IPC-014",
+      "file": "packages/desktop/src/renderer/webview-zoom.ts",
+      "line": 53,
+      "severity": "low",
+      "description": "Fire-and-forget: void window.api.getPinchZoomEnabled().then(...) without .catch(). Cosmetic — zoom state defaults to false on error.",
+      "pattern_type": "unhandled-reject"
+    },
+    {
+      "id": "IPC-015",
+      "file": "packages/app/src/app.tsx",
+      "line": 166,
+      "severity": "low",
+      "description": "Fire-and-forget: void window.api?.setTitlebar?.({ mode }) explicitly discards promise. Cosmetic — titlebar theme on error is acceptable.",
+      "pattern_type": "fire-and-forget"
+    },
+    {
+      "id": "IPC-016",
+      "file": "packages/app/src/components/dialog-select-mcp.tsx",
+      "line": 108,
+      "severity": "high",
+      "description": "[FI-010] dialog-select-mcp reads sync.data.mcp for display but persists to electron-store. The queryClient.refetchQueries call in onSave is NOT awaited (parallel fire-and-forget to the persist). If persist succeeds but refetch fails, UI shows stale server list until next sync.",
+      "pattern_type": "race-condition"
+    },
+    {
+      "id": "IPC-017",
+      "file": "packages/desktop/src/preload/index.ts",
+      "line": 6,
+      "severity": "high",
+      "description": "Dead code: preload still exposes installCli: () => ipcRenderer.invoke('install-cli'), but the ipcMain.handle('install-cli') handler was removed from ipc.ts. Any renderer call to window.api.installCli() will hang forever (IPC channel has no listener).",
+      "pattern_type": "dead-code"
+    },
+    {
+      "id": "IPC-018",
+      "file": "packages/app/src/components/dialog-manage-agents.tsx",
+      "line": 81,
+      "severity": "low",
+      "description": "[FI-022] saveCustomAgents has no loading/submitting state. User can click save multiple times triggering concurrent IPC writes. dialog-select-mcp has addMutation.isPending for add form but delete and edit flows lack pending indicators.",
+      "pattern_type": "missing-ux"
+    },
+    {
+      "id": "IPC-019",
+      "file": "packages/desktop/tests/ipc-plugin-config.test.ts",
+      "line": 1,
+      "severity": "critical",
+      "description": "[TEST-GAP-001] Only test file in desktop package tests validation functions DUPLICATED inline from ipc.ts. Zero tests for: IPC handlers, electron-store persistence, dialog CRUD flows, concurrent access, error recovery. Desktop package has no 'test' script in package.json. Dialog components have 0 tests even in the app package.",
+      "pattern_type": "test-gap"
+    },
+    {
+      "id": "IPC-020",
+      "file": "packages/desktop/src/preload/types.ts",
+      "line": 51,
+      "severity": "medium",
+      "description": "The ElectronAPI type defines getMcpServers as returning Promise<unknown[]> and setMcpServers as accepting unknown[]. Meanwhile app/src/types/mcp.ts defines a typed McpServerEntry type. There is no shared type contract between the preload type definition and the app's typed usage — the app casts through (window as any).api, bypassing the ElectronAPI type entirely.",
+      "pattern_type": "type-safety-gap"
+    }
+  ],
+  "dependency_graph": {
+    "ipc.ts": {
+      "imports": [
+        "node:child_process",
+        "node:fs",
+        "node:crypto",
+        "electron (BrowserWindow, Notification, app, clipboard, dialog, ipcMain, shell, safeStorage, net)",
+        "../preload/types (InitStep, FatalRendererError, ServerReadyData, SqliteMigrationProgress, TitlebarTheme, WindowConfig, WslConfig)",
+        "./desktop-menu-actions",
+        "./store (getStore)",
+        "./windows (getPinchZoomEnabled, setPinchZoomEnabled, setTitlebar, updateTitlebar)"
+      ],
+      "handlers_registered": [
+        "kill-sidecar", "await-initialization", "get-window-config", "consume-initial-deep-links",
+        "get-default-server-url", "set-default-server-url", "get-wsl-config", "set-wsl-config",
+        "get-display-backend", "set-display-backend", "parse-markdown", "check-app-exists",
+        "wsl-path", "resolve-app-path", "loading-window-complete (on)", "run-updater",
+        "check-update", "install-update", "set-background-color", "export-debug-logs",
+        "session-export-data", "session-import-file", "record-fatal-renderer-error",
+        "store-get", "store-set", "store-delete", "store-clear", "store-keys", "store-length",
+        "open-directory-picker", "open-file-picker", "save-file-picker",
+        "open-link (on)", "open-path", "read-clipboard-image",
+        "show-notification (on)", "get-window-count", "get-window-focused",
+        "set-window-focus", "show-window", "relaunch (on)",
+        "get-zoom-factor", "set-zoom-factor", "get-pinch-zoom-enabled", "set-pinch-zoom-enabled",
+        "set-titlebar", "run-desktop-menu-action",
+        "get-desktop-custom-agents", "set-desktop-custom-agents",
+        "get-desktop-mcp-servers", "set-desktop-mcp-servers",
+        "get-desktop-plugin-config", "set-desktop-plugin-config",
+        "github-oauth-start", "github-oauth-callback", "github-get-token",
+        "github-set-token", "github-clear-token", "github-api-proxy"
+      ]
+    },
+    "store.ts": {
+      "imports": ["electron-store", "electron (app)", "./constants (SETTINGS_STORE)"],
+      "exports": ["getStore"],
+      "namespaces_used": {
+        "opencode.settings": "generic settings store (default)",
+        "desktop-custom-agents": "custom agent configs (agents key)",
+        "desktop-mcp-servers": "MCP server configs (servers key)",
+        "desktop-plugin-config": "plugin configs (configs key)",
+        "github-auth": "GitHub OAuth token (access_token key)"
+      }
+    },
+    "dialog-manage-agents": {
+      "imports": ["@opencode-ai/ui/*", "@/context/language", "@/context/sync", "./dialog-edit-agent", "@/types/agent"],
+      "ipc_calls": ["api().getCustomAgents()", "api().setCustomAgents()"],
+      "sync_data": ["sync.data.agent (read-only for built-in agents)"],
+      "flow": "renderer click → dialog.show(DialogEditAgent) → onSave → saveCustomAgents → api.setCustomAgents → electron-store write → toast"
+    },
+    "dialog-select-mcp": {
+      "imports": ["@tanstack/solid-query", "solid-js", "@/context/sync", "@/context/sdk", "@opencode-ai/ui/*", "./dialog-edit-mcp", "@/types/mcp"],
+      "ipc_calls": ["api?.getMcpServers?.()", "api?.setMcpServers?.(servers)"],
+      "sdk_calls": [
+        "sdk.client.mcp.connect/disconnect",
+        "sdk.client.mcp.add",
+        "sdk.client.mcp.auth.remove",
+        "sdk.client.mcp.auth.authenticate"
+      ],
+      "sync_data": ["sync.data.mcp (read for connection status)"],
+      "flow": "renderer click → handleEdit → api.getMcpServers → setEditingEntry → dialog.show(DialogEditMcp) → onSave (in dialog-select-mcp) → api.getMcpServers → modify → api.setMcpServers → sdk.client.mcp.add → queryClient.refetchQueries → setEditingEntry(undefined)"
+    },
+    "dialog-edit-mcp": {
+      "imports": ["@opencode-ai/ui/*", "solid-js", "@/context/language", "@/types/mcp"],
+      "flow": "form signals → handleSave → props.onSave(entry) → dialog.close()  [NOTE: onSave NOT awaited — CRITICAL]"
+    },
+    "dialog-edit-agent": {
+      "imports": ["@opencode-ai/ui/*", "solid-js", "@/context/language", "@/hooks/use-providers", "@/types/agent"],
+      "flow": "form signals → handleSave → props.onSave(agentDef) → dialog.close()  [NOTE: onSave NOT awaited — CRITICAL]"
+    }
+  },
+  "entry_points": [
+    {
+      "name": "dialog-edit-agent.handleSave",
+      "file": "packages/app/src/components/dialog-edit-agent.tsx",
+      "line": 59,
+      "type": "dialog-close-before-save",
+      "is_awaited": false,
+      "has_error_handling": false,
+      "notes": "CRITICAL: Calls async onSave without await, closes dialog immediately. Parent error toast fires after dialog is gone."
+    },
+    {
+      "name": "dialog-edit-mcp.handleSave",
+      "file": "packages/app/src/components/dialog-edit-mcp.tsx",
+      "line": 55,
+      "type": "dialog-close-before-save",
+      "is_awaited": false,
+      "has_error_handling": false,
+      "notes": "CRITICAL: Same pattern. Calls async onSave without await. Dialog closes before persistence completes."
+    },
+    {
+      "name": "dialog-select-mcp.submitAdd",
+      "file": "packages/app/src/components/dialog-select-mcp.tsx",
+      "line": 173,
+      "type": "sdk-write-without-store-persist",
+      "is_awaited": true,
+      "has_error_handling": true,
+      "notes": "CRITICAL: Uses addMutation which calls sdk.client.mcp.add() but never writes to electron-store. Servers lost on restart."
+    },
+    {
+      "name": "dialog-select-mcp.onSave (edit)",
+      "file": "packages/app/src/components/dialog-select-mcp.tsx",
+      "line": 377,
+      "type": "ipc-write-before-sdk-write",
+      "is_awaited": true,
+      "has_error_handling": true,
+      "notes": "HIGH: Store write before SDK update. No rollback. Also refetchQueries not awaited (parallel)."
+    },
+    {
+      "name": "dialog-select-mcp.confirmRemove",
+      "file": "packages/app/src/components/dialog-select-mcp.tsx",
+      "line": 77,
+      "type": "no-transaction-3-step",
+      "is_awaited": true,
+      "has_error_handling": true,
+      "notes": "HIGH: 3 sequential ops with no rollback. Partial failure leaves inconsistent state."
+    },
+    {
+      "name": "dialog-manage-agents.initialLoad",
+      "file": "packages/app/src/components/dialog-manage-agents.tsx",
+      "line": 46,
+      "type": "then-without-catch-and-race",
+      "is_awaited": false,
+      "has_error_handling": false,
+      "notes": "HIGH: .then() without .catch(). Race with user edits if save completes before load."
+    },
+    {
+      "name": "saveCustomAgents",
+      "file": "packages/app/src/components/dialog-manage-agents.tsx",
+      "line": 81,
+      "type": "proper-async-with-rollback",
+      "is_awaited": true,
+      "has_error_handling": true,
+      "notes": "GOOD: Async with try/catch, state rollback, and error toast. Best pattern in the codebase."
+    },
+    {
+      "name": "renderer.consumeInitialDeepLinks",
+      "file": "packages/desktop/src/renderer/index.tsx",
+      "line": 71,
+      "type": "then-without-catch",
+      "is_awaited": false,
+      "has_error_handling": false,
+      "notes": "MEDIUM: .then() without .catch(). Deep links silently lost on IPC failure."
+    }
+  ],
+  "store_namespace_map": {
+    "opencode.settings": {
+      "handler": "generic store-get/store-set (line 161-193)",
+      "keys": "dynamic (any string)",
+      "reserved": false,
+      "access_via": "preload.storeGet/storeSet",
+      "purpose": "General settings storage"
+    },
+    "desktop-custom-agents": {
+      "handler": "get-desktop-custom-agents (line 282-285), set-desktop-custom-agents (line 287-289)",
+      "keys": ["agents"],
+      "reserved": true,
+      "access_via": "preload.getCustomAgents/setCustomAgents",
+      "purpose": "Custom agent definitions",
+      "validation": "validateAndFilterAgents"
+    },
+    "desktop-mcp-servers": {
+      "handler": "get-desktop-mcp-servers (line 291-294), set-desktop-mcp-servers (line 296-298)",
+      "keys": ["servers"],
+      "reserved": true,
+      "access_via": "preload.getMcpServers/setMcpServers",
+      "purpose": "MCP server configuration",
+      "validation": "validateAndFilterMcpServers"
+    },
+    "desktop-plugin-config": {
+      "handler": "get-desktop-plugin-config (line 300-303), set-desktop-plugin-config (line 305-308)",
+      "keys": ["configs"],
+      "reserved": true,
+      "access_via": "preload.getDesktopPluginConfig/setDesktopPluginConfig",
+      "purpose": "Plugin configuration",
+      "validation": "validateAndFilterPluginConfigs"
+    },
+    "github-auth": {
+      "handler": "github-get-token (line 373-381), github-set-token (line 383-386), github-clear-token (line 388-390)",
+      "keys": ["access_token"],
+      "reserved": true,
+      "access_via": "preload.githubGetToken/githubSetToken/githubClearToken",
+      "purpose": "Encrypted GitHub OAuth token",
+      "validation": "safeStorage encryption"
+    }
+  },
+  "sync_data_vs_store_map": {
+    "sync.data.agent": {
+      "source": "SDK server sync (built-in agents from opencode server)",
+      "read_by": ["dialog-manage-agents.tsx:53", "prompt-input.tsx:585", "session-header.tsx:234", "local.tsx:64", "message-timeline.tsx:351"],
+      "writes_to_store": false,
+      "store_complement": "desktop-custom-agents (custom agents)",
+      "reconciliation": "none — built-in and custom are merged in UI only"
+    },
+    "sync.data.mcp": {
+      "source": "SDK server MCP connection status (runtime state, not persistence)",
+      "read_by": ["dialog-select-mcp.tsx:108-109,115,151,274", "status-popover.tsx:23,91", "status-popover-body.tsx:114,319-321"],
+      "writes_to_store": false,
+      "store_complement": "desktop-mcp-servers (persistent config)",
+      "reconciliation": "none — sync.data.mcp = runtime connection status, store = config. Mismatch when server restarts."
+    }
+  },
+  "shared_file_fragments_needed": [
+    "packages/desktop/src/main/ipc.ts#write-queue — Add per-namespace write queue to prevent read-modify-write races on electron-store",
+    "packages/desktop/src/main/ipc.ts#sync-reconciliation — Add endpoint to read electron-store MCP configs and reconcile with SDK sync state",
+    "packages/desktop/src/main/ipc.ts#transaction-boundary — Add rollback pattern for multi-step operations (delete flow, edit flow)",
+    "packages/desktop/src/preload/types.ts#McpServerEntry — Share type between preload/types.ts and app/types/mcp.ts",
+    "packages/desktop/src/preload/index.ts#remove-install-cli — Remove dead installCli bridge method"
+  ],
+  "dirty_files_preserve": [
+    ".opencode/opencode.jsonc",
+    "AGENTS.md",
+    "packages/app/src/context/settings.tsx",
+    "packages/core/src/flag/flag.ts",
+    "packages/opencode/script/schema.ts",
+    "packages/opencode/src/account/account.sql.ts",
+    "packages/opencode/src/cli/effect-cmd.ts",
+    "packages/opencode/src/control-plane/workspace.ts",
+    "packages/opencode/src/data-migration.ts",
+    "packages/opencode/src/mcp/index.ts",
+    "packages/opencode/src/project/project.sql.ts",
+    "packages/opencode/src/project/project.ts",
+    "packages/opencode/src/server/**/*",
+    "packages/opencode/src/session/**/*",
+    "packages/opencode/src/tool/registry.ts",
+    "packages/opencode/src/v2/session.ts"
+  ],
+  "dirty_files_note": "None of the IPC/store/dialog files in this lane's scope are dirty. All dirty files are in unrelated packages (opencode CLI restructuring, opencode backend).",
+  "recommended_architect_scope": {
+    "priority_critical": [
+      "Fix IPC-001: Make dialog-edit-mcp.handleSave async and await props.onSave before dialog.close(). Add error toast in handleSave.",
+      "Fix IPC-002: Make dialog-edit-agent.handleSave async and await props.onSave before dialog.close().",
+      "Fix IPC-003: Add electron-store write to dialog-select-mcp.tsx submitAdd flow so added servers persist across app restart."
+    ],
+    "priority_high": [
+      "Fix IPC-004/IPC-005: Add reconciliation between sync.data.mcp and electron-store. Fix write order: SDK first, then store. Add rollback.",
+      "Fix IPC-006: Add transactional boundary to MCP delete flow (all-or-nothing for disconnect/auth-remove/store-delete).",
+      "Fix IPC-008: Add .catch() to getCustomAgents().then() initial load. Add loaded flag guard to prevent race with concurrent edits.",
+      "Fix IPC-012: Add runtime schema validation to generic store-set handler. Restrict to allow-listed namespaces.",
+      "Fix IPC-017: Remove dead installCli bridge method from preload/index.ts."
+    ],
+    "priority_medium": [
+      "Fix IPC-007: Add try/catch to get/set-desktop-mcp-servers handlers in ipc.ts.",
+      "Fix IPC-011: Add write queue or optimistic-locking with version counters for electron-store read-modify-write patterns.",
+      "Fix IPC-016: Await queryClient.refetchQueries in MCP edit onSave.",
+      "Fix IPC-009: Add cross-reference cleanup when deleting custom agents that have MCP references.",
+      "Add test coverage: IPC handler integration tests, store persistence tests, dialog flow tests, concurrent CRUD tests."
+    ],
+    "priority_low": [
+      "Fix IPC-018: Add loading/submitting state to all dialog save handlers.",
+      "Fix IPC-020: Share McpServerEntry type between preload/types.ts and app/types/mcp.ts.",
+      "Fix IPC-013, IPC-014, IPC-015: Add .catch() to renderer fire-and-forget promises for diagnostic logging."
+    ]
+  },
+  "tool_feedback": [
+    {
+      "tool_name": "task",
+      "issue": "Subagent type 'test-reader' is not a valid agent type",
+      "severity": "minor",
+      "expected": "test-reader to be a valid subagent type",
+      "actual": "Error: Unknown agent type",
+      "workaround": "Replaced with 'explore' subagent type which has file read capability"
+    }
+  ]
+}

@@ -1,0 +1,147 @@
+{
+  "schema_version": "v1",
+  "session_id": "ses_189236ae5ffeok37XYP77QrxvU",
+  "mission_status": "complete",
+  "last_updated": "2026-05-30T03:14:41.145020+00:00",
+  "current_wave": "cartography",
+  "waves": {
+    "cartography": {
+      "started_at": "2026-05-30T03:14:41.145020+00:00",
+      "completed_at": "2026-05-30T03:14:41.145020+00:00",
+      "findings": [
+        {
+          "source": "packages/opencode/src/github/service.ts",
+          "summary": "GitHubService is dead code — zero callers, never wired into any Effect layer",
+          "confidence": 0.95,
+          "relevance_profiles": [
+            "architecture",
+            "execution"
+          ],
+          "wave": "cartography"
+        },
+        {
+          "source": "packages/opencode/src/account/repo.ts",
+          "summary": "Account delete cascade does NOT clean up GitHub token in electron-store",
+          "confidence": 0.9,
+          "relevance_profiles": [
+            "architecture",
+            "safety"
+          ],
+          "wave": "cartography"
+        },
+        {
+          "source": "packages/desktop/src/main/ipc.ts",
+          "summary": "github-set-token IPC handler has no authorization guard or input validation",
+          "confidence": 0.9,
+          "relevance_profiles": [
+            "architecture",
+            "safety",
+            "security"
+          ],
+          "wave": "cartography"
+        },
+        {
+          "source": "packages/app/src/pages/session/review-tab.tsx",
+          "summary": "PR creation button is a stub (console.log only) — no API call wired",
+          "confidence": 0.95,
+          "relevance_profiles": [
+            "architecture",
+            "execution"
+          ],
+          "wave": "cartography"
+        },
+        {
+          "source": "packages/opencode/src/account/account.ts",
+          "summary": "Token refresh cache has zero TTL — cached entries never expire, fresh entries persist forever",
+          "confidence": 0.8,
+          "relevance_profiles": [
+            "architecture"
+          ],
+          "wave": "cartography"
+        },
+        {
+          "source": "packages/app/src/i18n/en.ts",
+          "summary": "13 github.* i18n keys exist but only 3 are used; no parity test covers github keys",
+          "confidence": 0.9,
+          "relevance_profiles": [
+            "architecture"
+          ],
+          "wave": "cartography"
+        }
+      ],
+      "artifacts": [
+        "docs/json/opencode/sessions/ses_current/artifacts/cartography-github-integration-hardening.v1.json"
+      ]
+    }
+  },
+  "active_findings": [
+    {
+      "source": "packages/opencode/src/github/service.ts",
+      "summary": "GitHubService is dead code — zero callers, never wired into any Effect layer",
+      "confidence": 0.95,
+      "relevance_profiles": [
+        "architecture",
+        "execution"
+      ],
+      "wave": "cartography"
+    },
+    {
+      "source": "packages/opencode/src/account/repo.ts",
+      "summary": "Account delete cascade does NOT clean up GitHub token in electron-store",
+      "confidence": 0.9,
+      "relevance_profiles": [
+        "architecture",
+        "safety"
+      ],
+      "wave": "cartography"
+    },
+    {
+      "source": "packages/desktop/src/main/ipc.ts",
+      "summary": "github-set-token IPC handler has no authorization guard or input validation",
+      "confidence": 0.9,
+      "relevance_profiles": [
+        "architecture",
+        "safety",
+        "security"
+      ],
+      "wave": "cartography"
+    },
+    {
+      "source": "packages/app/src/pages/session/review-tab.tsx",
+      "summary": "PR creation button is a stub (console.log only) — no API call wired",
+      "confidence": 0.95,
+      "relevance_profiles": [
+        "architecture",
+        "execution"
+      ],
+      "wave": "cartography"
+    },
+    {
+      "source": "packages/opencode/src/account/account.ts",
+      "summary": "Token refresh cache has zero TTL — cached entries never expire, fresh entries persist forever",
+      "confidence": 0.8,
+      "relevance_profiles": [
+        "architecture"
+      ],
+      "wave": "cartography"
+    },
+    {
+      "source": "packages/app/src/i18n/en.ts",
+      "summary": "13 github.* i18n keys exist but only 3 are used; no parity test covers github keys",
+      "confidence": 0.9,
+      "relevance_profiles": [
+        "architecture"
+      ],
+      "wave": "cartography"
+    }
+  ],
+  "active_artifacts": [
+    "docs/json/opencode/sessions/ses_current/artifacts/cartography-github-integration-hardening.v1.json"
+  ],
+  "archived": [
+    {
+      "from": "docs/json/opencode/archive/ses_189614d70ffex8hGdTS2OLHHCA/ses_189614d70ffex8hGdTS2OLHHCA/artifacts/cartography-github-integration-ui.v1.json",
+      "to": "/Users/user/Developer/GitHub/opencode-desktop-dev/docs/json/opencode/archive/ses_189236ae5ffeok37XYP77QrxvU/cartography/cartography-github-integration-ui.v1.json"
+    }
+  ]
+}

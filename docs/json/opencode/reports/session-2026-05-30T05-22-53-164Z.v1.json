@@ -1,0 +1,105 @@
+{
+  "schema_version": "v1",
+  "report_id": "session-2026-05-30T05-22-53-164Z.v1",
+  "session_id": "ses_1893e637bffeskVK9WF4WK2Nc6",
+  "generated_at": "2026-05-30T05:22:53.201000+00:00",
+  "session_summary": "Session completed full planning cycle for three-layer performance optimization. Cartography phase mapped 3 independent lanes: ToolCache, Parallel Dispatch, and WorkerPool. Architect synthesized combined plan. Critic reviewed with 5 blocking conditions, correcting the phase order. Plan artifact created at docs/json/opencode/handoffs/three-layer-perf-plan-handoff.v1.json. No implementation done — plan is repaired and ready for Phase 1 execution.",
+  "next_steps": "Implement Phase 1 (ToolCache) with critic conditions applied. Details in the session prompt below.",
+  "waves_completed": [
+    "wave-1-cartography",
+    "plan-gate"
+  ],
+  "wave_details": {
+    "wave-1-cartography": {
+      "started_at": "2026-05-30T05:00:04.847362+00:00",
+      "completed_at": "2026-05-30T05:00:04.847362+00:00",
+      "findings": [
+        {
+          "source": "cartographer-1",
+          "summary": "ToolCache: wrap() in tool.ts is injection point. ScopedCache has inflight dedup. ~6 cacheable tools (read_source, grep, glob, read, read_artifact, registry). ExecuteResult is JSON-serializable. Blocker: wrap() has no cache service access.",
+          "confidence": 0.95,
+          "relevance_profiles": [
+            "architecture",
+            "execution"
+          ],
+          "wave": "wave-1-cartography"
+        },
+        {
+          "source": "cartographer-2",
+          "summary": "Parallel dispatch: AI SDK streamText() already runs tools in parallel via Promise.all. Tool dispatch is INSIDE the AI SDK, not in opencode code. Quick win: 5-permit semaphore in tools.ts bridge. No ordering dependencies.",
+          "confidence": 0.95,
+          "relevance_profiles": [
+            "architecture",
+            "execution"
+          ],
+          "wave": "wave-1-cartography"
+        },
+        {
+          "source": "cartographer-3",
+          "summary": "WorkerPool: Effect 4.0 ships unstable/workers with Worker<O,I>, RpcWorker, Schema-encoded init. Worker needs ~6 services vs ~60. Tool.Context NOT serializable — needs WorkerContext extraction. Shell tool (648 lines) is best candidate.",
+          "confidence": 0.9,
+          "relevance_profiles": [
+            "architecture",
+            "execution"
+          ],
+          "wave": "wave-1-cartography"
+        }
+      ],
+      "artifacts": [
+        "cartographer-1 tool cache analysis",
+        "cartographer-2 parallel dispatch analysis",
+        "cartographer-3 worker pool analysis"
+      ]
+    },
+    "plan-gate": {
+      "started_at": "2026-05-30T05:03:42.480768+00:00",
+      "completed_at": "2026-05-30T05:03:42.480768+00:00",
+      "findings": [
+        {
+          "source": "architect",
+          "summary": "Three-layer plan: Phase 1 ToolCache (~120 lines), Phase 2 Parallel Dispatch (~5 lines), Phase 3 WorkerPool (~350 lines). Original order: Phase 2 → 1 → 3 by value-to-effort.",
+          "confidence": 0.9,
+          "relevance_profiles": [
+            "architecture"
+          ],
+          "wave": "plan-gate"
+        },
+        {
+          "source": "critic",
+          "summary": "Verdict: REPAIR_REQUIRED. 5 blocking conditions: (1) Swap Phase 1 before Phase 2, (2) Add observable spans on semaphore + cache, (3) Add `cacheable` marker to Tool.Def, (4) 30s semaphore timeout, (5) Pin effect version for unstable/workers.",
+          "confidence": 0.95,
+          "relevance_profiles": [
+            "architecture",
+            "execution"
+          ],
+          "wave": "plan-gate"
+        },
+        {
+          "source": "critic",
+          "summary": "Phase order must be: ToolCache → Parallel Dispatch → WorkerPool. Cache hits reduce concurrent load, making semaphore tuning data-driven. Semaphore must have logging, spans, and timeout. Cache must emit hit/miss annotations. ToolCache should be opt-in via `cacheable` marker.",
+          "confidence": 0.95,
+          "relevance_profiles": [
+            "architecture"
+          ],
+          "wave": "plan-gate"
+        }
+      ],
+      "artifacts": [
+        "architect 3-layer plan",
+        "critic review - repair required"
+      ]
+    }
+  },
+  "total_findings": 6,
+  "findings_by_profile": {
+    "architecture": 6,
+    "execution": 4
+  },
+  "artifacts_consumed": [
+    "cartographer-1 tool cache analysis",
+    "cartographer-2 parallel dispatch analysis",
+    "cartographer-3 worker pool analysis",
+    "architect 3-layer plan",
+    "critic review - repair required"
+  ]
+}

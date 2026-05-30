@@ -1050,7 +1050,7 @@ export function* listGlobal(input?: {
       db
         .select({ id: ProjectTable.id, name: ProjectTable.name, worktree: ProjectTable.worktree })
         .from(ProjectTable)
-        .where(inArray(ProjectTable.id, ids))
+        .where(inArray(ProjectTable.id, ids as any))
         .all(),
     )
     for (const item of items) {

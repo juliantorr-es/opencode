@@ -5,18 +5,18 @@ import { InstanceState } from "@/effect/instance-state"
 import DESCRIPTION from "./prepublication-blocked.txt"
 
 const Parameters = Schema.Struct({
-  candidate_packet_digest: Schema.String.annotations({
+  candidate_packet_digest: Schema.String.annotate({
     description: "Digest of the candidate claim packet",
   }),
-  candidate_boundary_identifier: Schema.String.annotations({
+  candidate_boundary_identifier: Schema.String.annotate({
     description: "The boundary identifier being blocked",
   }),
-  reviewer_set: Schema.String.annotations({ description: "JSON array of reviewer agent names" }),
-  review_round: Schema.Number.annotations({ description: "Review round number" }),
-  blocker_description: Schema.String.annotations({
+  reviewer_set: Schema.String.annotate({ description: "JSON array of reviewer agent names" }),
+  review_round: Schema.Number.annotate({ description: "Review round number" }),
+  blocker_description: Schema.String.annotate({
     description: "Description of what is blocking publication",
   }),
-  repair_path: Schema.optional(Schema.String).annotations({
+  repair_path: Schema.optional(Schema.String).annotate({
     description: "Recommended repair path",
   }),
 })

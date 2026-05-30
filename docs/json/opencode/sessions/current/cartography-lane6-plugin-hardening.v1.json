@@ -1,0 +1,164 @@
+{
+  "schema": "rig.relay.cartography.v1",
+  "lane": "plugin-management-hardening",
+  "generated_at": "2026-05-30T03:15:00Z",
+  "agent": "cartographer",
+  "status": "complete",
+  "files_mapped": [
+    "packages/desktop/src/renderer/dialog-manage-plugins.tsx",
+    "packages/desktop/src/renderer/dialog-install-plugin.tsx",
+    "packages/desktop/src/main/desktop-menu-actions.ts",
+    "packages/desktop/src/main/ipc.ts",
+    "packages/desktop/src/main/store.ts",
+    "packages/desktop/src/renderer/plugin-loader.ts",
+    "packages/desktop/src/renderer/plugin-context.tsx",
+    "packages/desktop/src/renderer/index.tsx",
+    "packages/desktop/src/preload/index.ts",
+    "packages/desktop/src/preload/types.ts",
+    "packages/app/src/desktop-menu.ts",
+    "packages/plugin/src/desktop.ts",
+    "packages/desktop/tests/ipc-plugin-config.test.ts",
+    "docs/json/opencode/stress/plugin-management-dependency-failures.json",
+    "docs/json/opencode/plans/plugin-management-ui.v1.json"
+  ],
+  "entry_points": [
+    "installPlugin" → "dialog-install-plugin.tsx:submit() → window.api.setDesktopPluginConfig() → ipcMain.handle('set-desktop-plugin-config') → store.set()",
+    "togglePlugin" → "dialog-manage-plugins.tsx:toggleEnabled() → window.api.setDesktopPluginConfig() → ipcMain.handle → store.set()",
+    "deletePlugin" → "dialog-manage-plugins.tsx:removePlugin() → window.api.setDesktopPluginConfig() → ipcMain.handle → store.set()",
+    "openPluginManager" → "desktop-menu.ts:213 (command) → main/index.ts sendMenuCommand() → preload:onMenuCommand → renderer/index.tsx:365 dynamic import → dialog.show()"
+  ],
+  "findings": [
+    {
+      "id": "PLUGIN-001",
+      "fi_reference": "FI-008",
+      "severity": "high",
+      "pattern_type": "error-swallowing",
+      "file": "packages/desktop/src/renderer/dialog-install-plugin.tsx",
+      "line": 68,
+      "description": "Install flow calls window.api.getDesktopPluginConfig() WITHOUT optional chaining (line 68), and window.api.setDesktopPluginConfig(updated) WITHOUT optional chaining (line 84). If preload bridge fails to expose these methods (browser dev mode, CSP, contextIsolation issue), throws TypeError. The try/catch at line 85 catches it and shows generic 'Failed to install plugin' — original error details lost.",
+      "evidence": "dialog-install-plugin.tsx:68 `const current = await window.api.getDesktopPluginConfig()` vs stress artifact: 'TypeError caught by try/catch, shows generic error, error details lost'",
+      "fix": "Add optional chaining: window.api?.getDesktopPluginConfig?.(). Preserve error context in catch block: setError(e instanceof Error ? e.message : 'Failed to install plugin')"
+    },
+    {
+      "id": "PLUGIN-002",
+      "fi_reference": "FI-009",
+      "severity": "high",
+      "pattern_type": "persistence-issue",
+      "file": "packages/desktop/src/renderer/dialog-manage-plugins.tsx",
+      "line": 47,
+      "description": "toggleEnabled() reads from local configs() signal (line 48: `configs().map(...)`) instead of fetching fresh state from the store. If two toggles fire rapidly, the second toggle operates on stale signal state that hasn't been updated by the first toggle's IPC result. This can cause lost toggle writes: first sets enabled=true, second uses old state and sets enabled=false, overwriting the first. Same pattern in removePlugin() (line 60).",
+      "evidence": "toggleEnabled at line 47-56: reads configs() local signal, computes updated array, writes via setDesktopPluginConfig, updates from result. Between read and write, a concurrent operation can overwrite.",
+      "fix": "Read fresh from store before computing delta: `const current = await window.api.getDesktopPluginConfig(); const updated = current.configs.map(...)` + add in-flight flag to prevent concurrent toggles on same plugin."
+    },
+    {
+      "id": "PLUGIN-003",
+      "fi_reference": "FI-010",
+      "severity": "medium",
+      "pattern_type": "unhandled-promise-rejection",
+      "file": "packages/desktop/src/renderer/index.tsx",
+      "line": 366,
+      "description": "Menu command 'open-plugin-manager' correctly dispatches to dynamic import of dialog-manage-plugins, but the .then() has NO .catch() handler. If the dynamic import fails (file deleted, syntax error, network issue during dev HMR), the rejection is unhandled — silent failure affecting the Electron app. desktop-menu-actions.ts does not need changes since 'open-plugin-manager' is a command (not an action), routed through sendMenuCommand → preload → renderer event listener.",
+      "evidence": "renderer/index.tsx:365-369: `menuTrigger = (id) => { if (id === 'open-plugin-manager') { void import('./dialog-manage-plugins').then((x) => { dialog.show(...) }) } }` — no .catch(). desktop-menu-actions.ts: never has plugin entries — correct.",
+      "fix": "Add .catch(): `import('./dialog-manage-plugins').then(...).catch((e) => console.error('Failed to load plugin manager:', e))`"
+    },
+    {
+      "id": "PLUGIN-004",
+      "fi_reference": "FI-017",
+      "severity": "high",
+      "pattern_type": "missing-try-catch",
+      "file": "packages/desktop/src/main/ipc.ts",
+      "line": 415,
+      "description": "Both plugin IPC handlers (get-desktop-plugin-config at line 415, set-desktop-plugin-config at line 419) lack try/catch wrapping. If getStore() throws (disk full, permissions, directory not writable) or store.set()/store.get() fails, the rejection propagates raw to the renderer as an unhandled IPC error. Compare with session-export-data (line 175) which DOES wrap in try/catch and returns structured errors. The same gap affects get-desktop-custom-agents (line 395), set-desktop-custom-agents (line 398), get-desktop-mcp-servers (line 402), and set-desktop-mcp-servers (line 405).",
+      "evidence": "ipc.ts:415-422: no try/catch. ipc.ts:175-186: session-export-data HAS try/catch. plugin-management-dependency-failures.json: 'Unhandled exception propagates through the IPC handler — no try/catch wraps the handler body.'",
+      "fix": "Wrap both handlers in try/catch, return { configs: [], dropped: 0 } on failure with console.error diagnostic."
+    },
+    {
+      "id": "PLUGIN-005",
+      "fi_reference": "FI-025",
+      "severity": "high",
+      "pattern_type": "race-condition",
+      "file": "packages/desktop/src/renderer/dialog-manage-plugins.tsx",
+      "line": 58,
+      "description": "Install-delete race: if user installs a plugin (submit at dialog-install-plugin.tsx:75-84) and immediately deletes it (removePlugin at dialog-manage-plugins.tsx:58-68), the delete handler reads from local configs() signal which may still hold the pre-install state. Delete sends the filtered array WITHOUT the new plugin to the store, overwriting the just-installed entry. Same race exists for install followed by toggle, and toggle followed by delete. The set-desktop-plugin-config IPC handler (ipc.ts:419-422) is a simple write — it doesn't validate that the input is based on the current store state.",
+      "evidence": "removePlugin at line 59: `const filtered = configs().filter(...)` reads local signal. submit at dialog-install-plugin.tsx:78: `const updated = [...current.configs, newEntry]` reads remote state via IPC but then the dialog closes and manage dialog may not have refetched.",
+      "fix": "Add per-plugin in-flight lock in the IPC handler: reject set-desktop-plugin-config if a concurrent write is in progress for the same plugin name. Or use electron-store atomic writes with a version counter."
+    },
+    {
+      "id": "PLUGIN-006",
+      "fi_reference": "Stress artifact",
+      "severity": "medium",
+      "pattern_type": "i18n-network-error-shielding",
+      "file": "packages/desktop/src/renderer/dialog-manage-plugins.tsx",
+      "line": 33,
+      "description": "loadConfigs() at line 33 calls window.api.getDesktopPluginConfig() WITHOUT optional chaining at the window.api level. Stress artifact (plugin-management-dependency-failures.json) documents: 'If window.api is undefined (browser dev mode) or getDesktopPluginConfig is absent, throws TypeError, caught by try/catch, sets empty configs — no user-facing error, no console warning.' The fallback IS adequate (catches the TypeError), but silent silent failure makes debugging difficult. The empty `.catch {}` at line 37 is also completely silent — no console.warn.",
+      "evidence": "dialog-manage-plugins.tsx:33-40: `try { const result = await window.api.getDesktopPluginConfig() ... } catch { setConfigs([]); setDropped(0) }` — silent empty catch.",
+      "fix": "Add console.warn in catch block: `catch { console.warn('getDesktopPluginConfig failed — plugin features disabled'); setConfigs([]); setDropped(0) }`"
+    },
+    {
+      "id": "PLUGIN-007",
+      "fi_reference": "Comprehensive audit FI-025 adjacency",
+      "severity": "medium",
+      "pattern_type": "stale-read-pattern",
+      "file": "packages/desktop/src/renderer/dialog-install-plugin.tsx",
+      "line": 68,
+      "description": "submit() reads fresh plugin config from store (line 68) but the dialog-manage-plugins.tsx uses local signal state for toggle/delete operations. This inconsistency means the install dialog always works with fresh data but the manage dialog works with potentially stale signals. After install completes, the dialog-manage-plugins.tsx's configs() signal doesn't update until the manage dialog calls loadConfigs again (only on mount).",
+      "evidence": "dialog-install-plugin.tsx:68 fetches fresh from store. dialog-manage-plugins.tsx:47-48, 59-60 reads from local signal. The manage dialog only calls loadConfigs once on mount (line 128: `;(async () => await loadConfigs())()`).",
+      "fix": "After install completes, signal the manage dialog to refetch: add a callback/event mechanism or use a shared reactive store."
+    },
+    {
+      "id": "PLUGIN-008",
+      "fi_reference": "FI-025 adjacency — all-store-handlers",
+      "severity": "medium",
+      "pattern_type": "missing-try-catch",
+      "file": "packages/desktop/src/main/ipc.ts",
+      "line": 395,
+      "description": "All 4 'get/set-desktop-*' handler pairs (custom-agents at 395-399, mcp-servers at 402-406, plugin-config at 415-422) lack try/catch. The pattern is consistent: they all use getStore() + store.set()/get() without error wrapping. If any store operation fails, the Promise rejects bare. The store-get generic handler (line 232) DOES have a try/catch — making the dedicated handlers LESS robust than the generic handler.",
+      "evidence": "ipc.ts:232: store-get has try/catch. ipc.ts:395-399, 402-406, 415-422: no try/catch.",
+      "fix": "Wrap all dedicated store handlers in try/catch returning default empty state on failure."
+    }
+  ],
+  "shared_file_fragments_needed": [
+    "ipc.ts#RESERVED_STORE_NAMES — no concurrent changes needed (already includes desktop-plugin-config)",
+    "ipc.ts#plugin-ipc-handlers — wrap get-desktop-plugin-config + set-desktop-plugin-config in try/catch"
+  ],
+  "dirty_files_preserve": [
+    {
+      "file": "packages/plugin/src/desktop.ts",
+      "status": "untracked",
+      "note": "Dirty file — treated as external. Do not edit. Contains DesktopPluginModule/DesktopPluginApi types."
+    },
+    {
+      "file": "packages/desktop/src/renderer/plugin-context.tsx",
+      "status": "committed",
+      "note": "Committed file — preserve existing content. Narrow edits only if required."
+    },
+    {
+      "file": "packages/desktop/src/renderer/plugin-loader.ts",
+      "status": "committed",
+      "note": "Committed file — preserve existing content. Already has .catch(() => undefined) guard from prior fix."
+    },
+    {
+      "file": "docs/json/opencode/stress/plugin-management-dependency-failures.json",
+      "status": "untracked",
+      "note": "Stress artifact. Read-only reference. Do not modify."
+    },
+    {
+      "file": "docs/json/opencode/plans/plugin-management-ui.v1.json",
+      "status": "untracked",
+      "note": "Plan artifact. Read-only reference. All 9 fixes from this plan (fix-A through fix-I) are already applied."
+    }
+  ],
+  "recommended_architect_scope": "Add try/catch to all 4 electron-store dedicated IPC handlers (get/set custom-agents, mcp-servers, plugin-config). Add optional chaining guards to all window.api calls in dialog-manage-plugins.tsx and dialog-install-plugin.tsx. Add in-flight flag to prevent concurrent install/toggle/delete races. Add .catch() to dynamic import in renderer/index.tsx:366. Surface console.warn in catch blocks for debugging. Consider adding version counter or optimistic locking to set-desktop-plugin-config IPC handler.",
+  "applied_fixes_from_prior_sessions": [
+    "fix-A: IPC handlers added (ipc.ts lines 415-422) — DONE",
+    "fix-B: PluginKind includes 'desktop' — DONE",
+    "fix-C: DesktopPluginProvider wired in index.tsx — DONE",
+    "fix-D: Typed ElectronAPI with PluginConfigEntry — DONE",
+    "fix-E: dialog-manage-plugins.tsx created — DONE",
+    "fix-F: dialog-install-plugin.tsx created — DONE",
+    "fix-G: i18n keys added — DONE",
+    "fix-H: plugin manager menu trigger — DONE",
+    "fix-I: bun tests for validation — DONE (13 tests at packages/desktop/tests/ipc-plugin-config.test.ts)",
+    "B1-B4 blocker repairs (i18n wrapping, cancel button onClick, Switch children, menu action) — DONE"
+  ]
+}

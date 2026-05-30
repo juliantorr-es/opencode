@@ -1,7 +1,30 @@
 import { Bus } from "@/bus"
-import { TuiEvent } from "@/cli/cmd/tui/event"
+const TuiEvent = {
+  PromptAppend: {
+    type: "prompt.append" as const,
+    properties: Schema.Struct({ text: Schema.String }),
+  },
+  CommandExecute: {
+    type: "command.execute" as const,
+    properties: Schema.Struct({ command: Schema.String }),
+  },
+  ToastShow: {
+    type: "toast.show" as const,
+    properties: Schema.Struct({
+      title: Schema.String,
+      message: Schema.String,
+      variant: Schema.String,
+      duration: Schema.Number,
+    }),
+  },
+  SessionSelect: {
+    type: "session.select" as const,
+    properties: Schema.Struct({ sessionID: Schema.String }),
+  },
+}
+import { SessionID } from "@/session/schema"
 import { Session } from "@/session/session"
-import { Effect } from "effect"
+import { Effect, Schema } from "effect"
 import { HttpApiBuilder, HttpApiError } from "effect/unstable/httpapi"
 import { nextTuiRequest, submitTuiResponse } from "@/server/shared/tui-control"
 import { InstanceHttpApi } from "../api"
@@ -98,7 +121,7 @@ export const tuiHandlers = HttpApiBuilder.group(InstanceHttpApi, "tui", (handler
       payload: typeof TuiEvent.SessionSelect.properties.Type
     }) {
       if (!ctx.payload.sessionID.startsWith("ses")) return yield* new HttpApiError.BadRequest({})
-      yield* SessionError.mapStorageNotFound(session.get(ctx.payload.sessionID))
+      yield* SessionError.mapStorageNotFound(session.get(ctx.payload.sessionID as SessionID))
       yield* bus.publish(TuiEvent.SessionSelect, ctx.payload)
       return true
     })

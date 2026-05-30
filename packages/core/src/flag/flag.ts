@@ -43,6 +43,7 @@ export const Flag = {
     copy === undefined ? process.platform === "win32" : truthy("OPENCODE_EXPERIMENTAL_DISABLE_COPY_ON_SELECT"),
   OPENCODE_MODELS_URL: process.env["OPENCODE_MODELS_URL"],
   OPENCODE_MODELS_PATH: process.env["OPENCODE_MODELS_PATH"],
+  OPENCODE_DATABASE_URL: process.env["OPENCODE_DATABASE_URL"],
   OPENCODE_DB: process.env["OPENCODE_DB"],
 
   OPENCODE_WORKSPACE_ID: process.env["OPENCODE_WORKSPACE_ID"],

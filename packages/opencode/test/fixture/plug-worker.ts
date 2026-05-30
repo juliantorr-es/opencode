@@ -1,7 +1,19 @@
 import path from "path"
 
-import { createPlugTask, type PlugCtx, type PlugDeps } from "../../src/cli/cmd/plug"
 import { Filesystem } from "@/util/filesystem"
+
+type PlugCtx = { vcs: string; worktree: string; directory: string }
+type PlugDeps = {
+  spinner: () => { start(): void; stop(): void }
+  log: { error(...args: any[]): void; info(...args: any[]): void; success(...args: any[]): void }
+  resolve: () => Promise<string>
+  readText: (file: string) => Promise<string>
+  write: (file: string, text: string) => Promise<void>
+  exists: (file: string) => Promise<boolean>
+  files: (dir: string, name: string) => [string, string]
+  global: string
+}
+declare function createPlugTask(opts: { mod: string; global?: boolean; force?: boolean }, deps: PlugDeps): (ctx: PlugCtx) => Promise<boolean>
 
 type Msg = {
   dir: string

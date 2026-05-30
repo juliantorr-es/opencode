@@ -1,0 +1,311 @@
+{
+  "schema_version": "rig.plan.v1",
+  "plan_revision": 2,
+  "title": "Postgres Backend Migration & Profile Parity (Revised v2)",
+  "generated_at": "2026-05-29T01:19:15.439194+00:00",
+  "author": "orchestrator",
+  "status": "draft",
+  "summary": "Revised plan incorporating critique findings. Replace SQLite runtime with Postgres for live state (DuckDB deferred to separate track). Achieve profile parity between repo source and installed OpenCode config, allowing Track 2.1-2.3 to proceed in parallel with Track 1.",
+  "current_state": {
+    "runtime_backend": "SQLite via bun:sqlite or node:sqlite (db.bun.ts / db.node.ts)",
+    "adapter_seam": "DatabaseAdapter.Service exists with Interface (query/transaction/afterCommit), SQLiteAdapter impl, PostgresTransactionOptions typed but unused. Zero production consumers of the adapter in src/ (only 1 test file).",
+    "schemas": "8 files (7 .sql.ts with sqliteTable + 1 schema.sql.ts helper) from drizzle-orm/sqlite-core",
+    "live_call_sites": "11 Database.use/transaction in src/ (excl adapter bridge) across 6 files: data-migration.ts(4), project/project.ts(3), control-plane/workspace.ts(1), sync/index.ts(1), server/projectors.ts(1), server/shared/fence.ts(1). Plus 2 Database.Client() calls in v2/session.ts and index.ts, and 4 Database.getPath calls in cli/cmd/db.ts",
+    "adapter_consumers": "15 source files use DatabaseAdapter.Service via yield* pattern (1 additional files references it in type signatures only)",
+    "postgres_packages": "None - no pg, PGlite, @effect/sql-pg, or drizzle-orm/pg-core imports exist",
+    "effect_drizzle_bridge": "packages/effect-drizzle-sqlite exists but is SQLite-specific. No pg counterpart. Decision: DrizzleLikeClient wrapper is the intentional boundary; no new bridge package needed.",
+    "test_call_sites": "52 Database.use calls in 13 test files. 35 test files import resetDatabase().",
+    "duckdb": "Not present in codebase. Deferred to Track 3.",
+    "profile_parity": "Installed OpenCode config has wave model + gate behavior not yet reflected in source prompts/docs."
+  },
+  "critique_summary": {
+    "plan_revision_1": "v1 had 5 blocking defects: (1) exit condition vs stretch contradiction, (2) schema file naming assumption wrong, (3) Phase 1.5 vs deferred_seams contradiction, (4) no security foundation, (5) no data migration path. Plus 10 lane collisions, 5 falsified evidence claims, and insufficient repair limit. Plan coherence scored 3/10 by claim-adversary.",
+    "blocking_defects_repaired": [
+      "Exit condition: removed DuckDB requirement, moved to Track 3 (deferred)",
+      "Schema file naming: added Phase 1.0 rename step",
+      "Phase 1.5: resolved contradiction, split into migrated vs deferred",
+      "Security: added Phase 0.5 (Database Security Foundation)",
+      "Data migration: added Phase 1.7b (SQLite-to-Postgres migration)",
+      "repair_limit: increased from 5 to 12",
+      "Track 2 dependency: downgraded — Phases 2.1-2.3 can proceed in parallel",
+      "Call site counts: corrected to actual values from codebase",
+      "Missing files: added app-runtime.ts, bootstrap-runtime.ts, node.ts, json-migration.ts",
+      "PRAGMAs: explicitly enumerated and addressed",
+      "#db Postgres init: added db.pg.ts and import map entry",
+      "Test infrastructure: added selection mechanism requirement",
+      "CI/CD: added Postgres service configuration"
+    ]
+  },
+  "tracks": [
+    {
+      "track": 1,
+      "name": "Database Migration",
+      "exit_condition": "Postgres is the authoritative write path, PGlite handles local/desktop, SQLite is no longer the default backend. Existing user data has a documented migration path.",
+      "phases": [
+        {
+          "phase": "0.5",
+          "name": "Database Security Foundation",
+          "description": "Establish credential management, TLS requirements, and access control model before any Postgres code is written. Define $DATABASE_URL via Effect Redacted-backed config. Document pg_hba.conf requirements. Ensure PGlite binds to localhost only. Define Postgres role separation (opencode_app CRUD, opencode_migration DDL). Add SSL requirement for pg driver.",
+          "files_changed": [
+            "src/config/ (new database config module with Redacted-backed secrets)",
+            "src/storage/db.pg.ts (ssl configuration)",
+            "docs/json/opencode/database_security_doctrine.v1.json (new artifact)"
+          ],
+          "acceptance": "Database credentials are never exposed in process.env to subprocesses. TLS is required for CI pg connections. PGlite binds to localhost only. Config schema validates required connection params.",
+          "blocking_defects": null
+        },
+        {
+          "phase": "1.0",
+          "name": "Rename SQLite Schema Files",
+          "description": "Rename all 8 .sql.ts schema files to .sqlite.sql.ts to make room for parallel .pg.sql.ts files. Update all ~30 import sites across src/ and test/. This is a mechanical rename requiring no logic changes.",
+          "files_changed": [
+            "src/session/session.sql.ts → src/session/session.sqlite.sql.ts",
+            "src/project/project.sql.ts → src/project/project.sqlite.sql.ts",
+            "src/account/account.sql.ts → src/account/account.sqlite.sql.ts",
+            "src/control-plane/workspace.sql.ts → src/control-plane/workspace.sqlite.sql.ts",
+            "src/sync/event.sql.ts → src/sync/event.sqlite.sql.ts",
+            "src/share/share.sql.ts → src/share/share.sqlite.sql.ts",
+            "src/storage/schema.sql.ts → src/storage/schema.sqlite.sql.ts",
+            "src/data-migration.sql.ts → src/data-migration.sqlite.sql.ts",
+            "src/storage/schema.ts (update re-exports to .sqlite.sql paths)",
+            "~30 import sites in src/ and test/",
+            "drizzle.config.ts (change glob to **/*.sqlite.sql.ts)"
+          ],
+          "acceptance": "All imports updated. typecheck passes. rename is pure refactor with zero runtime behavior change.",
+          "blocking_defects": null
+        },
+        {
+          "phase": "0.5/1.0 shared",
+          "name": "Guard SQLite PRAGMAs",
+          "description": "Replace 11 unconditional SQLite PRAGMAs in db.ts and json-migration.ts with backend-conditional or equivalent Postgres statements. db.ts PRAGMAs: journal_mode=WAL, synchronous=NORMAL, busy_timeout=5000, cache_size=-64000, foreign_keys=ON, wal_checkpoint. json-migration.ts PRAGMAs: journal_mode=WAL, synchronous=OFF, cache_size=10000, temp_store=MEMORY, foreign_keys=ON.",
+          "files_changed": [
+            "src/storage/db.ts",
+            "src/storage/json-migration.ts"
+          ],
+          "acceptance": "No SQLite PRAGMAs are executed unconditionally. Postgres connections have SET statements where equivalents exist.",
+          "blocking_defects": null
+        },
+        {
+          "phase": "1.1",
+          "name": "Postgres Driver & Dependencies",
+          "description": "Add PGlite (@electric-sql/pglite) for local/desktop and pg for CI. Drizzle ORM v1.0.0-rc.2 already contains pg-core, pglite driver, and node-postgres driver. Add CI Postgres service configuration in GitHub Actions workflow.",
+          "files_changed": [
+            "packages/opencode/package.json (add @electric-sql/pglite, pg, @types/pg)",
+            "packages/opencode/bun.lock",
+            ".github/workflows/ (add Postgres service container for CI tests)",
+            "packages/opencode/src/storage/db.pg.ts (new Postgres init function)",
+            "packages/opencode/package.json (add #db-pg import alias point to db.pg.ts)"
+          ],
+          "acceptance": "bun add completes, typecheck passes, drizzle-orm/pg-core and pglite imports resolve",
+          "blocking_defects": null
+        },
+        {
+          "phase": "1.2",
+          "name": "Postgres Schema Files",
+          "description": "Create parallel .pg.sql.ts schema files alongside renamed .sqlite.sql.ts files. Each maps sqliteTable→pgTable, text({mode:'json'})→jsonb(), integer({mode:'boolean'})→boolean(). Extract shared TimestampsPg helper using pg-core's integer(). Keep import resolution via explicit path (consumers choose which file to import).",
+          "files_changed": [
+            "src/storage/schema.pg.sql.ts (new TimestampsPg helper)",
+            "src/session/session.pg.sql.ts (new - 6 tables)",
+            "src/project/project.pg.sql.ts (new - 1 table)",
+            "src/account/account.pg.sql.ts (new - 3 tables)",
+            "src/control-plane/workspace.pg.sql.ts (new - 1 table)",
+            "src/sync/event.pg.sql.ts (new - 2 tables)",
+            "src/share/share.pg.sql.ts (new - 1 table)",
+            "src/data-migration.pg.sql.ts (new - 1 table)"
+          ],
+          "acceptance": "Each .pg.sql.ts file imports from drizzle-orm/pg-core, uses pgTable(), jsonb() for JSON columns, boolean() for boolean columns. Same $type() generics. Same index/primaryKey/references API. typecheck passes.",
+          "blocking_defects": "Phase 1.0 (rename) must be complete first"
+        },
+        {
+          "phase": "1.3",
+          "name": "PostgresAdapter Implementation",
+          "description": "Create PgAdapter implementing the same Interface as SQLiteAdapter. Uses PGlite for local path and pg driver for CI. Uncomment PgClient compat check. Wire defaultLayer for config/env-based backend selection (default to SQLite during transition, switchable via $OPENCODE_DATABASE_URL or config flag). Uses DrizzleLikeClient wrapper pattern (not effect-drizzle bridge) as the intentional boundary.",
+          "files_changed": [
+            "src/storage/adapter.ts (add PgAdapter, wire defaultLayer selection)",
+            "src/storage/db.pg.ts (complete init function)",
+            "src/effect/app-runtime.ts (ensure adapter layer is provided)",
+            "src/effect/bootstrap-runtime.ts (ensure adapter layer is provided)"
+          ],
+          "acceptance": "PgAdapter compiles, defaultLayer accepts config/env-based selection. adapter unit tests pass with both adapters. app-runtime.ts and bootstrap-runtime.ts provide the adapter layer.",
+          "blocking_defects": "Phases 0.5, 1.0, 1.1, 1.2 must be complete"
+        },
+        {
+          "phase": "1.4",
+          "name": "Postgres Migration Config & Initial DDL",
+          "description": "Create drizzle.config.pg.ts with dialect: 'postgresql', schema glob restricted to .pg.sql.ts files. Generate initial Postgres migration. Apply as part of startup alongside SQLite migrations (config-gated).",
+          "files_changed": [
+            "drizzle.config.pg.ts (new)",
+            "migration-pg/ (new migration output directory)",
+            "src/storage/db.ts (add Postgres migration loading path)"
+          ],
+          "acceptance": "drizzle-kit generates valid Postgres DDL from .pg.sql.ts schemas. Migration applies on startup when Postgres backend is active.",
+          "blocking_defects": "Phase 1.2 (schema files) must be complete"
+        },
+        {
+          "phase": "1.5",
+          "name": "Migrate Production Database Call Sites",
+          "description": "Convert 8 of 11 direct Database.use/transaction call sites to use DatabaseAdapter.Service. 3 sites remain deferred (projectors.ts, fence.ts with TODO(gov-migration) markers, cli/cmd/db.ts as CLI tool). Priority: data-migration.ts(4 - inside Effect.gen, straightforward), project/project.ts(3 standalone functions - shadow Effect service methods), control-plane/workspace.ts(synced()), sync/index.ts(process fn - nested tx seam). Handle 8 json_extract sql tagged templates in data-migration.ts for Postgres jsonb operator compatibility.",
+          "files_changed": [
+            "src/data-migration.ts (4 sites)",
+            "src/project/project.ts (3 standalone functions)",
+            "src/control-plane/workspace.ts (synced function)",
+            "src/sync/index.ts (process function - nested transaction)",
+            "src/v2/session.ts (Database.Client() call)",
+            "src/index.ts (drizzle-orm/bun-sqlite import gating)",
+            "src/session/projectors-next.ts (TxOrDb type update)",
+            "src/effect/app-runtime.ts (ensure adapter provided)",
+            "src/effect/bootstrap-runtime.ts (ensure adapter provided)",
+            "src/storage/json-migration.ts (SQLite-locked type signature update)",
+            "src/node.ts (public Database export deprecation or guard)"
+          ],
+          "acceptance": "8 of 11 Database.use/transaction sites in src/ use DatabaseAdapter.Service. 3 deferred sites documented. data-migration.ts sql tagged templates use Postgres-compatible jsonb operators. typecheck passes.",
+          "blocking_defects": "Phases 1.3 (adapter) and 1.4 (migration) must be complete"
+        },
+        {
+          "phase": "1.6",
+          "name": "Migrate Test Database Call Sites",
+          "description": "Convert 52 Database.use calls across 13 test files to use DatabaseAdapter.Service. Update 35 resetDatabase importers. Provide Postgres layer selection in testEffect composition. Add schema-per-test isolation model for Postgres parallel execution. Audit httpapi-exercise/runner.ts and runtime.ts indirection layer.",
+          "files_changed": [
+            "test/lib/effect.ts (add adapter layer selection to testEffect)",
+            "test/fixture/db.ts (update resetDatabase for Postgres compatibility)",
+            "13 test files with Database.use calls (see plan v1 evidence list)",
+            "35 test files importing resetDatabase (transitive fix through fixture)",
+            "test/server/httpapi-exercise/ (audit indirection layer)"
+          ],
+          "acceptance": "All test files use DatabaseAdapter.Service or testEffect with configurable backend. Tests pass under both SQLite and Postgres adapters. Postgres tests have schema-per-test isolation.",
+          "blocking_defects": "Phase 1.5 must be complete. Postgres CI service must be provisioned."
+        },
+        {
+          "phase": "1.7",
+          "name": "SQLite-to-Postgres Data Migration",
+          "description": "Write a script that reads all tables from the existing SQLite ~/.local/share/opencode/opencode.db, batch-inserts into Postgres, verifies row counts and checksums per table, then renames SQLite file to opencode.db.pre-pg-migration as rollback safety net.",
+          "files_changed": [
+            "src/cli/cmd/migrate-to-pg.ts (new command)",
+            "docs/json/opencode/data_migration_plan.v1.json (new artifact)"
+          ],
+          "acceptance": "All data from SQLite is present in Postgres. Rollback is available by renaming the old file back. CLI command is documented.",
+          "blocking_defects": "Phase 1.6 (test validation) must pass"
+        },
+        {
+          "phase": "1.8",
+          "name": "SQLite Deprecation & Cleanup",
+          "description": "Mark SQLite as legacy. Remove db.bun.ts + db.node.ts fallbacks. Merge schema files to single pg-core-backed source (remove .sqlite.sql.ts). Clean up PRAGMAs, journal-based migration loading, #db import alias. Remove resetDatabase() SQLite file deletion. Update node.ts public API.",
+          "files_changed": [
+            "src/storage/db.bun.ts (remove)",
+            "src/storage/db.node.ts (remove)",
+            "src/storage/schema.sqlite.sql.ts (remove - schema.pg.sql.ts becomes canonical)",
+            "All .sqlite.sql.ts files (remove)",
+            "drizzle.config.ts (change to postgresql dialect)",
+            "drizzle.config.pg.ts (remove - now primary config)",
+            "package.json (#db import alias cleanup)",
+            "test/fixture/db.ts (Postgres-native cleanup)",
+            "src/node.ts (update public API)"
+          ],
+          "acceptance": "SQLite is no longer the default backend. No SQLite-specific files in src/storage/. All tests pass with Postgres. Existing users with .db.pre-pg-migration files have documented restore path.",
+          "blocking_defects": "Phase 1.7 (data migration) must be complete. Deferred seams (projectors.ts, fence.ts, cli/cmd/db.ts) must have explicit non-SQLite resolution or documented SQLite-only carveout."
+        }
+      ],
+      "deferred_seams": [
+        {
+          "file": "src/server/projectors.ts:15",
+          "reason": "convertEvent callback is non-Effect sync function. Marked TODO(gov-migration). Needs SyncEvent.init() signature change to support Effect context. Deferred to post-migration integration milestone.",
+          "resolution": "Until resolved, projectors continue to work through SQLiteAdapter compatibility path (which delegates to Database.use internally).",
+          "status": "frozen_pending_integration"
+        },
+        {
+          "file": "src/server/shared/fence.ts:15",
+          "reason": "load() is non-Effect synchronous function exported to HTTP middleware. Marked TODO(gov-migration). Deferred to post-migration integration milestone.",
+          "resolution": "Until resolved, fence continues to work through SQLiteAdapter path.",
+          "status": "frozen_pending_integration"
+        },
+        {
+          "file": "src/cli/cmd/db.ts",
+          "reason": "CLI inspection tool that opens SQLite directly and spawns sqlite3 subprocess. May need SQLite access for interactive debugging even after migration. Intentional carveout.",
+          "resolution": "Document as SQLite-only debugging tool. Does not affect production behavior.",
+          "status": "frozen_pending_integration"
+        }
+      ]
+    },
+    {
+      "track": 2,
+      "name": "Profile Parity",
+      "exit_condition": "Repo-side prompts/config/docs match installed OpenCode behavior and no longer drift back to builder-style execution.",
+      "allow_parallel_with_track_1": true,
+      "phases": [
+        {
+          "phase": "2.1",
+          "name": "Orchestrator Wave Model in Source",
+          "description": "Encode the learning-first, delegate-first flow, no-self-inspection rule before learning returns, and concrete approval-artifact gates as first-class behavior. Zero database coupling - can proceed in parallel with Track 1.",
+          "files_changed": [
+            "config/agent_config/ or prompts/ (source equivalents of installed OpenCode profiles)"
+          ],
+          "acceptance": "Source-backed orchestrator prompt matches installed behavior. Approval artifacts are enforced as gates.",
+          "blocking_defects": null
+        },
+        {
+          "phase": "2.2",
+          "name": "Reviewer Set Cleanup & Posture",
+          "description": "Clean up legacy rig-* source profiles. Add long-horizon senior-engineer behavior as default. Enforce 'three long-run proposals' requirement on blocking reviews.",
+          "files_changed": [
+            "config/agent_config/ (reviewer profile files)"
+          ],
+          "acceptance": "Source prompt files contain the same reviewer posture as installed config.",
+          "blocking_defects": null
+        },
+        {
+          "phase": "2.3",
+          "name": "Validation Flow Alignment",
+          "description": "Make execution, repair, validator, and prepublication agree on self-validation-before-handoff rule in source.",
+          "files_changed": [
+            "config/agent_config/ (validator/prepublication profiles)"
+          ],
+          "acceptance": "Source prompts encode the self-validation-before-handoff rule.",
+          "blocking_defects": null
+        },
+        {
+          "phase": "2.4",
+          "name": "Documentation Update",
+          "description": "Update docs to reflect Postgres backend truth. Remove SQLite assumptions. Profile/protocol docs should describe contracts and evidence, not backend details. This phase genuinely depends on Track 1 being substantially complete.",
+          "files_changed": [
+            "docs/ (relevant documentation files)"
+          ],
+          "acceptance": "Documentation is backend-agnostic where appropriate, accurate where backend-specific.",
+          "blocking_defects": "Track 1 must be substantially complete."
+        }
+      ]
+    },
+    {
+      "track": 3,
+      "name": "DuckDB Analytical Sidecar (Deferred)",
+      "exit_condition": "DuckDB is wired for analytical synthesis. Analysis tools return decisions, not raw rows.",
+      "phases": [],
+      "blocked_by": [
+        "Track 1 must be complete (Postgres is the data source for DuckDB)"
+      ],
+      "status": "deferred"
+    }
+  ],
+  "repair_limit": 12,
+  "per_phase_repair_ceiling": 2,
+  "revision_cycles": 0,
+  "dependencies": {
+    "track_2_phases_2.1_2.3_independent": true,
+    "track_2_phase_2.4_depends_on_track_1": true,
+    "track_3_depends_on_track_1": true,
+    "rationale": "Phases 2.1-2.3 describe agent behavior (orchestrator wave model, approval gates) with zero database references. Phase 2.4 (documentation) and Track 3 (DuckDB) both require the final backend contract."
+  },
+  "rollback_strategy": {
+    "method": "Pinned SQLite version + pre-migration data backup",
+    "details": "Before Phase 1.7 runs, the entire SQLite database file is copied to opencode.db.pre-pg-migration. If Postgres has issues, revert by: (a) switching OPENCODE_DATABASE_URL back to empty, (b) renaming .db.pre-pg-migration back to opencode.db, (c) SQLite becomes active again. Phase 1.8 is never rolled back independently of Phase 1.7."
+  },
+  "data_integrity_checks": [
+    "Pre-migration: FK constraint audit on existing SQLite data",
+    "Post-migration: row count per table + SHA256 checksum match between SQLite source and Postgres destination",
+    "Rollback: verify no data loss after rollback by comparing pre-copy checksums"
+  ],
+  "out_of_scope": [
+    "DuckDB analytical sidecar (Track 3) - deferred to separate milestone",
+    "effect-drizzle-pg bridge package - DrizzleLikeClient wrapper is the intentional boundary",
+    "Adding new database-backed features beyond the migration"
+  ]
+}

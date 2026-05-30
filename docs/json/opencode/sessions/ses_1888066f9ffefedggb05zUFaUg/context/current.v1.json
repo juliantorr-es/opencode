@@ -1,0 +1,124 @@
+{
+  "schema_version": "v1",
+  "session_id": "ses_1888066f9ffefedggb05zUFaUg",
+  "mission_status": "complete",
+  "last_updated": "2026-05-30T06:10:27.099132+00:00",
+  "current_wave": "plan",
+  "waves": {
+    "plan": {
+      "started_at": "2026-05-30T06:10:27.099132+00:00",
+      "completed_at": "2026-05-30T06:10:27.099132+00:00",
+      "findings": [
+        {
+          "source": "i18n-parity-platform-polish",
+          "summary": "18 locale files missing 89-115 keys each vs en.ts (963 keys)",
+          "confidence": 1.0,
+          "relevance_profiles": [
+            "architecture",
+            "execution"
+          ],
+          "wave": "plan"
+        },
+        {
+          "source": "i18n-parity-platform-polish",
+          "summary": "updateTitlebar early-returns on non-Win32; Linux uses default frame",
+          "confidence": 1.0,
+          "relevance_profiles": [
+            "architecture",
+            "execution"
+          ],
+          "wave": "plan"
+        },
+        {
+          "source": "i18n-parity-platform-polish",
+          "summary": "Electron recovery dialogs have hardcoded English buttons; no locale IPC channel exists",
+          "confidence": 1.0,
+          "relevance_profiles": [
+            "architecture",
+            "execution"
+          ],
+          "wave": "plan"
+        },
+        {
+          "source": "i18n-parity-platform-polish",
+          "summary": "No CLDR pluralization support in @solid-primitives/i18n — 963 keys with 10+ count-interpolated keys",
+          "confidence": 1.0,
+          "relevance_profiles": [
+            "architecture",
+            "execution"
+          ],
+          "wave": "plan"
+        },
+        {
+          "source": "i18n-parity-platform-polish",
+          "summary": "language.tsx exposes t() via useLanguage; no date/number formatting utilities exist",
+          "confidence": 1.0,
+          "relevance_profiles": [
+            "architecture",
+            "execution"
+          ],
+          "wave": "plan"
+        }
+      ],
+      "artifacts": [
+        "docs/json/opencode/plans/i18n-parity-platform-polish.v1.json"
+      ]
+    }
+  },
+  "active_findings": [
+    {
+      "source": "i18n-parity-platform-polish",
+      "summary": "18 locale files missing 89-115 keys each vs en.ts (963 keys)",
+      "confidence": 1.0,
+      "relevance_profiles": [
+        "architecture",
+        "execution"
+      ],
+      "wave": "plan"
+    },
+    {
+      "source": "i18n-parity-platform-polish",
+      "summary": "updateTitlebar early-returns on non-Win32; Linux uses default frame",
+      "confidence": 1.0,
+      "relevance_profiles": [
+        "architecture",
+        "execution"
+      ],
+      "wave": "plan"
+    },
+    {
+      "source": "i18n-parity-platform-polish",
+      "summary": "Electron recovery dialogs have hardcoded English buttons; no locale IPC channel exists",
+      "confidence": 1.0,
+      "relevance_profiles": [
+        "architecture",
+        "execution"
+      ],
+      "wave": "plan"
+    },
+    {
+      "source": "i18n-parity-platform-polish",
+      "summary": "No CLDR pluralization support in @solid-primitives/i18n — 963 keys with 10+ count-interpolated keys",
+      "confidence": 1.0,
+      "relevance_profiles": [
+        "architecture",
+        "execution"
+      ],
+      "wave": "plan"
+    },
+    {
+      "source": "i18n-parity-platform-polish",
+      "summary": "language.tsx exposes t() via useLanguage; no date/number formatting utilities exist",
+      "confidence": 1.0,
+      "relevance_profiles": [
+        "architecture",
+        "execution"
+      ],
+      "wave": "plan"
+    }
+  ],
+  "active_artifacts": [
+    "docs/json/opencode/plans/i18n-parity-platform-polish.v1.json"
+  ],
+  "archived": []
+}

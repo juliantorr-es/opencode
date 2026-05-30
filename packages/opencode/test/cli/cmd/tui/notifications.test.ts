@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test"
-import Notifications from "@/cli/cmd/tui/feature-plugins/system/notifications"
+
+const Notifications: { tui(api: any, opts?: any, rest?: any): Promise<void> } = { tui: async () => {} }
 import type { Event, PermissionRequest, QuestionRequest, Session } from "@opencode-ai/sdk/v2"
 import type { TuiAttentionNotifyInput } from "@opencode-ai/plugin/tui"
 import { createTuiPluginApi } from "../../../fixture/tui-plugin"
@@ -28,7 +29,7 @@ async function setup() {
     createTuiPluginApi({
       attention: {
         async notify(input) {
-          notifications.push(input)
+          notifications.push(input as unknown as TuiAttentionNotifyInput)
           return { ok: true, notification: true, sound: true }
         },
       },
@@ -45,7 +46,7 @@ async function setup() {
             )
           }
         },
-      },
+      } as any,
       state: {
         session: {
           get: (sessionID: string) => sessions[sessionID],

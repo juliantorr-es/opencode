@@ -427,7 +427,7 @@ export const layer = Layer.effect(
             if (
               recentParts.length !== DOOM_LOOP_THRESHOLD ||
               !recentParts.every(
-                (part) =>
+                (part: MessageV2.Part) =>
                   part.type === "tool" &&
                   part.tool === value.name &&
                   part.state.status !== "pending" &&

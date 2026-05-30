@@ -26,7 +26,7 @@ interface WriteTarget {
 }
 
 const Parameters = Schema.Struct({
-  edits: Schema.String.annotations({
+  edits: Schema.String.annotate({
     description:
       'JSON array of edit objects: [{"file":"...","oldText":"...","newText":"...","reason":"..."}]',
   }),

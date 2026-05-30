@@ -33,10 +33,11 @@ export const DialogManagePlugins: Component = () => {
   const loadConfigs = async () => {
     setLoading(true)
     try {
-      const result = await window.api.getDesktopPluginConfig()
+      const result = await window.api.getDesktopPluginConfig?.()
       setConfigs(result.configs)
       setDropped(result.dropped)
-    } catch {
+    } catch (e) {
+      console.warn("Failed to load plugin configs:", e)
       setConfigs([])
       setDropped(0)
     } finally {
@@ -45,22 +46,30 @@ export const DialogManagePlugins: Component = () => {
   }
 
   const toggleEnabled = async (name: string, current: boolean) => {
-    const updated = configs().map((c) => (c.name === name ? { ...c, enabled: !current } : c))
     try {
-      const result = await window.api.setDesktopPluginConfig(updated)
-      setConfigs(result.configs)
-      setDropped(result.dropped)
+      const fresh = await window.api.getDesktopPluginConfig?.()
+      if (!fresh) return
+      const updated = fresh.configs.map((c) => (c.name === name ? { ...c, enabled: !current } : c))
+      const result = await window.api.setDesktopPluginConfig?.(updated)
+      if (result) {
+        setConfigs(result.configs)
+        setDropped(result.dropped)
+      }
     } catch {
       await loadConfigs()
     }
   }
 
   const removePlugin = async (name: string) => {
-    const filtered = configs().filter((c) => c.name !== name)
     try {
-      const result = await window.api.setDesktopPluginConfig(filtered)
-      setConfigs(result.configs)
-      setDropped(result.dropped)
+      const fresh = await window.api.getDesktopPluginConfig?.()
+      if (!fresh) return
+      const filtered = fresh.configs.filter((c) => c.name !== name)
+      const result = await window.api.setDesktopPluginConfig?.(filtered)
+      if (result) {
+        setConfigs(result.configs)
+        setDropped(result.dropped)
+      }
     } catch {
       await loadConfigs()
     }
@@ -99,21 +108,33 @@ export const DialogManagePlugins: Component = () => {
       return
     }
 
-    // Check for duplicate
-    if (configs().some((c) => c.name === name)) {
-      setInstallError(t("desktop.plugin.install.duplicateName"))
-      return
-    }
-
     setInstalling(true)
     try {
+      const fresh = await window.api.getDesktopPluginConfig?.()
+      if (!fresh) {
+        setInstallError("Failed to load plugin config")
+        setInstalling(false)
+        return
+      }
+
+      // Check for duplicate using fresh state
+      if (fresh.configs.some((c) => c.name === name)) {
+        setInstallError(t("desktop.plugin.install.duplicateName"))
+        setInstalling(false)
+        return
+      }
+
       const newEntry: PluginConfigEntry = {
         name,
         path: installMode() === "npm" ? name : name,
         enabled: true,
       }
-      const updated = [...configs(), newEntry]
-      const result = await window.api.setDesktopPluginConfig(updated)
+      const updated = [...fresh.configs, newEntry]
+      const result = await window.api.setDesktopPluginConfig?.(updated)
+      if (!result) {
+        setInstallError("Failed to install plugin")
+        return
+      }
       setConfigs(result.configs)
       setDropped(result.dropped)
       setMode("list")

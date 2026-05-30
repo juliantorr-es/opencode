@@ -1,0 +1,68 @@
+{
+  "schema_version": "v1",
+  "report_id": "session-2026-05-30T07-02-37-885Z.v1",
+  "session_id": "ses_18866e01affeOgAYjQrORVhbMK",
+  "generated_at": "2026-05-30T07:02:37.963373+00:00",
+  "session_summary": "## Lane 0b — ToolCache Upgrade\n\n**File modified**: `packages/opencode/src/tool/cache.ts` (73 → 207 lines)\n\nUpgraded the ToolCache service from an unbounded `Ref<Record>` with `Date.now()` to a fully bounded, observable cache:\n\n### What changed\n- **TTL expiration**: Default 5 min TTL via `Duration.minutes(5)`, configurable per call with `CacheConfig.ttl`\n- **LRU eviction**: Map insertion-order LRU — accessed entries promoted to MRU via delete+re-set, oldest evicted when cache exceeds `maxEntries` (default 1000)\n- **Max entry size**: Results exceeding `maxEntrySize` (default 1MB) are not cached, with span annotation\n- **Stats**: New `stats()` method returns `{ size, hits, misses, evictions, estimatedBytes }`\n- **Selective invalidation**: New `invalidateKey(key)` for targeted removal\n- **Effect Clock**: Replaced `Date.now()` with `Clock.currentTimeMillis` for testable time\n- **Span annotations**: Rich OTel span tags for hit/miss, TTL expiry, LRU eviction, size skip\n- **Inflight dedup preserved**: Deferred-based dedup for concurrent same-key calls\n\n### Verification\n- Typecheck: 0 errors in cache.ts\n- Interface is backward compatible (optional `config` param on `getOrCompute`)\n\n### Cross-lane\n- `tool.ts` was deleted by another lane during execution — cache.ts now self-contained (no import from tool.ts)\n- `Duration.Input` is the correct type in Effect v4 (lesson from Lane 0a)",
+  "next_steps": "1. Wire per-tool cache config (ttl/maxSize from Def.cacheable) into getOrCompute config calls\n2. Restore tool.ts from git HEAD if needed for other tools to compile\n3. Add unit tests for cache hit/miss/expiry/eviction",
+  "waves_completed": [
+    "learning"
+  ],
+  "wave_details": {
+    "learning": {
+      "started_at": "2026-05-30T06:38:03.818276+00:00",
+      "completed_at": "2026-05-30T06:38:03.818276+00:00",
+      "findings": [
+        {
+          "source": "cache.ts",
+          "summary": "Current cache is unbounded Ref<Record> with inflight dedup via Deferred. No TTL, no LRU, no stats.",
+          "confidence": 1,
+          "relevance_profiles": [
+            "architecture",
+            "execution"
+          ],
+          "wave": "learning"
+        },
+        {
+          "source": "tool.ts",
+          "summary": "wrap() uses cache.getOrCompute for cacheable tools, cache.invalidate() for non-cacheable tools. No config passed.",
+          "confidence": 1,
+          "relevance_profiles": [
+            "architecture",
+            "execution"
+          ],
+          "wave": "learning"
+        },
+        {
+          "source": "convention-scout",
+          "summary": "Codebase uses Clock.currentTimeMillis for time, Duration.minutes/hours for TTL, Map insertion-order for LRU. No existing CacheStats pattern.",
+          "confidence": 0.95,
+          "relevance_profiles": [
+            "architecture"
+          ],
+          "wave": "learning"
+        },
+        {
+          "source": "registry.ts",
+          "summary": "ToolCache.defaultLayer is provided in the layer graph. No other consumers.",
+          "confidence": 1,
+          "relevance_profiles": [
+            "execution"
+          ],
+          "wave": "learning"
+        }
+      ],
+      "artifacts": [
+        "docs/json/opencode/cartography/cache.ts.analysis.v1.json"
+      ]
+    }
+  },
+  "total_findings": 4,
+  "findings_by_profile": {
+    "architecture": 3,
+    "execution": 3
+  },
+  "artifacts_consumed": [
+    "docs/json/opencode/cartography/cache.ts.analysis.v1.json"
+  ]
+}

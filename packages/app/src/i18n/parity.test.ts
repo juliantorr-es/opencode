@@ -12,22 +12,22 @@ import { dict as ko } from "./ko"
 import { dict as no } from "./no"
 import { dict as pl } from "./pl"
 import { dict as ru } from "./ru"
-import { dict as uk } from "./uk"
 import { dict as th } from "./th"
+import { dict as tr } from "./tr"
+import { dict as uk } from "./uk"
 import { dict as zh } from "./zh"
 import { dict as zht } from "./zht"
-import { dict as tr } from "./tr"
 
-const locales = [ar, br, bs, da, de, es, fr, ja, ko, no, pl, ru, uk, th, tr, zh, zht]
-const keys = ["command.session.previous.unseen", "command.session.next.unseen"] as const
+const enKeys = Object.keys(en).sort()
+const locales: Record<string, Record<string, string>> = {
+  ar, br, bs, da, de, es, fr, ja, ko, no, pl, ru, th, tr, uk, zh, zht,
+}
 
 describe("i18n parity", () => {
-  test("non-English locales translate targeted unseen session keys", () => {
-    for (const locale of locales) {
-      for (const key of keys) {
-        expect(locale[key]).toBeDefined()
-        expect(locale[key]).not.toBe(en[key])
-      }
-    }
-  })
+  for (const [name, locale] of Object.entries(locales)) {
+    test(`${name} has all keys present in en.ts`, () => {
+      const missing = enKeys.filter((k) => !(k in locale))
+      expect(missing).toEqual([])
+    })
+  }
 })

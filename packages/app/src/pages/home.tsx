@@ -34,6 +34,7 @@ import { sessionPermissionRequest } from "@/pages/session/composer/session-reque
 import { ServerHealthIndicator } from "@/components/server/server-row"
 import { useServers } from "@/context/servers"
 import { useSettings } from "@/context/settings"
+import { DESKTOP_FEEDBACK_URL } from "@/constants"
 
 const HOME_SESSION_LIMIT = 15
 const HOME_ROW =
@@ -250,7 +251,7 @@ function HomeDesign() {
         clearNotifications={clearNotifications}
         unseenCount={unseenCount}
         openSettings={openSettings}
-        openHelp={() => platform.openLink("https://opencode.ai/desktop-feedback")}
+        openHelp={() => platform.openLink(DESKTOP_FEEDBACK_URL)}
         language={language}
       />
 

@@ -1,7 +1,18 @@
 {
+  "share": "auto",
   "$schema": "https://opencode.ai/config.json",
   "provider": {},
-  "permission": {},
+  "permission": {
+    "bash": { "git *": "allow", "git diff *": "allow", "bun *": "allow", "*": "allow" },
+    "task": "allow",
+    "websearch": "allow",
+    "read": { "*.env": "deny", "*.env.*": "deny", "*": "allow" },
+    "edit": { "*": "allow" },
+    "question": "deny",
+    "external_directory": "deny",
+    "webfetch": "deny",
+    "doom_loop": "deny"
+  },
   "mcp": {},
   "tools": {
     "github-triage": false,

@@ -5,6 +5,8 @@ import { createSimpleContext } from "@opencode-ai/ui/context"
 import { Persist, persisted } from "@/utils/persist"
 import { dict as en } from "@/i18n/en"
 import { dict as uiEn } from "@opencode-ai/ui/i18n/en"
+import { tPlural } from "@/i18n/plural"
+import { formatDate, formatNumber } from "@/i18n/format"
 
 export type Locale =
   | "en"
@@ -234,6 +236,9 @@ export const { use: useLanguage, provider: LanguageProvider } = createSimpleCont
       locales: LOCALES,
       label,
       t,
+      tPlural: (key: string, count: number) => tPlural(t, key, count, intl()),
+      formatDate: (date: Date | number, options?: Intl.DateTimeFormatOptions) => formatDate(date, intl(), options),
+      formatNumber: (n: number, options?: Intl.NumberFormatOptions) => formatNumber(n, intl(), options),
       setLocale(next: Locale) {
         setStore("locale", normalizeLocale(next))
       },

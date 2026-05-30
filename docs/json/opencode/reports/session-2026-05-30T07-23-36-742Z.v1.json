@@ -1,0 +1,96 @@
+{
+  "schema_version": "v1",
+  "report_id": "session-2026-05-30T07-23-36-742Z.v1",
+  "session_id": "ses_18890b731ffeePNNO4mmQLnllk",
+  "generated_at": "2026-05-30T07:23:36.844014+00:00",
+  "session_summary": "## Phase 0 — Native Tool Framework Upgrade: Complete ✅\n\n**Mission:** Migrate all 54 `.opencode/tool/*.ts` plugin-SDK tools to native Effect-based `Tool.Def` implementations with industry-leading reliability, debuggability, concurrency, memory, and lifecycle standards.\n\n### What was done (5 implementation lanes + 1 verification lane)\n\n| Lane | File | Change | Status |\n|---|---|---|---|\n| **0a** | `tool.ts` | Extended `Tool.Def` with `cacheable {ttl,maxSize}`, `timeout`, `retry`, `maxConcurrency`, `errorTaxonomy`. Added error hierarchy: `ToolError`, `TimeoutError`, `TransientError`, `ValidationError`. Upgraded `wrap()` to 5-layer pipeline (core → retry → timeout → per-tool semaphore → enriched spans). 182→287 lines. | ✅ |\n| **0b** | `cache.ts` | LRU eviction, TTL (5min default), maxEntries (1000), maxEntrySize (1MB), stats tracking, Effect Clock. 73→207 lines. | ✅ |\n| **0c** | `registry.ts` | Wired `ToolCache.Service`, `cacheStats()` on Interface, `fromPlugin()` error wrapping, `ToolCache.defaultLayer` provision in defaultLayer chain. | ✅ |\n| **0d** | `session/tools.ts` | Split global semaphore into readSemaphore(10)/writeSemaphore(3). Bridge-level span enrichment. Propegated `cacheable` through `tools()` return. | ✅ |\n| **0e** | 4 gap tools | Created `delegate.ts` (97 lines), `session-diff.ts` (111 lines), `github-triage.ts` (86 lines), `github-pr-search.ts` (106 lines) as native `Tool.Def` with Effect Schema parameters. | ✅ |\n| **0f** | Verification | Typecheck: 0 new errors across all Phase 0 files. Claim-adversary pass. | ✅ |\n\n### Cross-lane incident handled\nA concurrent session deleted `tool.ts`, `registry.ts`, `session/tools.ts` from the working tree mid-session. Lane 0a's 159-additions to tool.ts and Lane 0d's semaphore split were lost. Two repair lanes re-applied the changes. Final verification: 0 new errors.\n\n### Files modified\n- `packages/opencode/src/tool/tool.ts` (182→287 lines, +error hierarchy, +5-layer wrap)\n- `packages/opencode/src/tool/cache.ts` (73→207 lines, +LRU/TTL/stats)\n- `packages/opencode/src/tool/registry.ts` (+ToolCache wiring, +4 gap tool registrations, +cacheable propagation)\n- `packages/opencode/src/session/tools.ts` (209→225 lines, +semaphore split, +span enrichment)\n\n### Files created\n- `packages/opencode/src/tool/delegate.ts` + `delegate.txt`\n- `packages/opencode/src/tool/session-diff.ts` + `session-diff.txt`\n- `packages/opencode/src/tool/github-triage.ts` + `github-triage.txt`\n- `packages/opencode/src/tool/github-pr-search.ts` + `github-pr-search.txt`\n\n### Quality outcomes\n- All 58 existing native tools compile unchanged (backward compatible)\n- 4 gap tools now have native Effect implementations (no more spawnSync → python3)\n- Error hierarchy enables LLM recovery from tool failures\n- Read/write semaphore split prevents write starvation\n- Bounded cache prevents memory leaks\n- Every tool gets richer span tracing automatically",
+  "next_steps": "**Phase 1: Upgrade all 58 existing native tools** to adopt the new framework features selectively:\n- Add `cacheable` config (TTL/maxSize) to read-only tools\n- Add `timeout` to slow tools (shell, repo_clone)\n- Add `retry` to network tools (webfetch, websearch)\n- Add `formatValidationError` to tools that lack it\n- Migrate from `Effect.orDie` to typed `ToolError` hierarchy\n\n**Phase 2: GitHub service consolidation** — the 2 new github tools (`github-triage`, `github-pr-search`) use raw `fetch()`. Create a proper `GitHub.Service` with auth, rate limiting, and retry, then wire the tools to use it.\n\n**Phase 3: WorkerPool (from roadmap)** — offload shell tool CPU-bound AST parsing to Effect worker thread.",
+  "waves_completed": [
+    "lane-0e-gap-tools",
+    "lane-0a-0d-complete"
+  ],
+  "wave_details": {
+    "lane-0e-gap-tools": {
+      "started_at": "2026-05-30T06:46:26.431774+00:00",
+      "completed_at": "2026-05-30T06:46:26.431774+00:00",
+      "findings": [
+        {
+          "source": "lane-0e",
+          "summary": "4 gap tools created as native Tool.Def: delegate.ts (97 lines), session-diff.ts (111 lines), github-triage.ts (86 lines), github-pr-search.ts (106 lines). All registered in registry.ts. Typecheck passes with 0 new errors.",
+          "confidence": 1,
+          "relevance_profiles": [
+            "execution"
+          ],
+          "wave": "lane-0e-gap-tools"
+        }
+      ],
+      "artifacts": [
+        "packages/opencode/src/tool/delegate.ts",
+        "packages/opencode/src/tool/delegate.txt",
+        "packages/opencode/src/tool/session-diff.ts",
+        "packages/opencode/src/tool/session-diff.txt",
+        "packages/opencode/src/tool/github-triage.ts",
+        "packages/opencode/src/tool/github-triage.txt",
+        "packages/opencode/src/tool/github-pr-search.ts",
+        "packages/opencode/src/tool/github-pr-search.txt"
+      ]
+    },
+    "lane-0a-0d-complete": {
+      "started_at": "2026-05-30T06:54:26.991404+00:00",
+      "completed_at": "2026-05-30T06:54:26.991404+00:00",
+      "findings": [
+        {
+          "source": "lane-0a",
+          "summary": "Tool.Def extended with timeout, retry, maxConcurrency, cacheable config, errorTaxonomy. wrap() upgraded with 5-layer pipeline: core/retry/timeout/semaphore/span. Typecheck: 0 errors. 159 additions, 23 deletions to tool.ts.",
+          "confidence": 0.95,
+          "relevance_profiles": [
+            "architecture",
+            "execution"
+          ],
+          "wave": "lane-0a-0d-complete"
+        },
+        {
+          "source": "lane-0d",
+          "summary": "session/tools.ts: semaphore split into read(10)/write(3). Bridge-level span enrichment. registry.ts: propagated new fields through tools() return. Typecheck: 0 errors.",
+          "confidence": 0.95,
+          "relevance_profiles": [
+            "architecture",
+            "execution"
+          ],
+          "wave": "lane-0a-0d-complete"
+        },
+        {
+          "source": "observation",
+          "summary": "Registry.ts has 3 additive editors: Lane 0e (4 gap tool registrations), Lane 0d (field propagation), pending Lane 0c (cache config wiring). These should be additive — no conflict expected.",
+          "confidence": 0.8,
+          "relevance_profiles": [
+            "orchestration"
+          ],
+          "wave": "lane-0a-0d-complete"
+        }
+      ],
+      "artifacts": [
+        "packages/opencode/src/tool/tool.ts (modified by lane-0a)",
+        "packages/opencode/src/session/tools.ts (modified by lane-0d)"
+      ]
+    }
+  },
+  "total_findings": 4,
+  "findings_by_profile": {
+    "execution": 3,
+    "architecture": 2,
+    "orchestration": 1
+  },
+  "artifacts_consumed": [
+    "packages/opencode/src/tool/delegate.ts",
+    "packages/opencode/src/tool/delegate.txt",
+    "packages/opencode/src/tool/session-diff.ts",
+    "packages/opencode/src/tool/session-diff.txt",
+    "packages/opencode/src/tool/github-triage.ts",
+    "packages/opencode/src/tool/github-triage.txt",
+    "packages/opencode/src/tool/github-pr-search.ts",
+    "packages/opencode/src/tool/github-pr-search.txt",
+    "packages/opencode/src/tool/tool.ts (modified by lane-0a)",
+    "packages/opencode/src/session/tools.ts (modified by lane-0d)"
+  ]
+}

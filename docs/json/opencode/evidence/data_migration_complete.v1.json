@@ -1,0 +1,57 @@
+{
+  "schema_version": "rig.relay.evidence.v1",
+  "phase": "1.6b",
+  "phase_name": "Data Migration Pipeline Complete",
+  "generated_at": "2026-05-29T02:00:00Z",
+  "plan_generated_at": "2026-05-28T21:00:00.000000+00:00",
+  "plan_revision": 1,
+  "author": "builder",
+  "status": "candidate_local",
+  "summary": "Completed the SQLite-to-Postgres data migration pipeline with FK audit, table copying, row verification, and rollback backup.",
+  "files_changed": [
+    {
+      "path": "packages/opencode/src/cli/cmd/migrate-to-pg.ts",
+      "kind": "modified",
+      "content_sha256": "e4827d0a85e5b14369016af0c56cb6ebf661283afd6b9a1d0abdb5a97e30e90f",
+      "description": "Full migration pipeline: FK audit, table copy, verification, rollback backup, migration flag"
+    }
+  ],
+  "pipeline_phases": {
+    "phase_0_rollback_prep": "Rename SQLite db to .pre-pg-migration backup",
+    "phase_1_source_open": "Open renamed SQLite as read-only source",
+    "phase_2_fk_audit": "Check all 14 FK relationships (optional via --force)",
+    "phase_3_pg_connect": "Connect to Postgres (PGlite path or pg Pool)",
+    "phase_4_copy": "Copy all tables in dependency order (parents before children)",
+    "phase_5_verification": "Compare row counts and SHA256 checksums between source and destination",
+    "phase_6_flag": "Create .rig/postgres-migration-complete flag file"
+  },
+  "acceptance_criteria_met": [
+    {
+      "criterion": "Data copied from SQLite to Postgres without data loss",
+      "status": "met",
+      "evidence": "Verification phase compares row counts and SHA256 checksums for every table"
+    },
+    {
+      "criterion": "Rollback backup created before migration",
+      "status": "met",
+      "evidence": "renameForRollback renames .db to .db.pre-pg-migration before any write to PG"
+    },
+    {
+      "criterion": "Migration orders tables by dependency (parents before children)",
+      "status": "met",
+      "evidence": "TABLE_ORDER defined with correct dependency order; unknown tables appended at end"
+    },
+    {
+      "criterion": "Post-migration verification confirms data integrity",
+      "status": "met",
+      "evidence": "verifyTableData checks per-table row counts AND SHA256 checksums"
+    }
+  ],
+  "result": {
+    "rollback_backup": "opencode.db.pre-pg-migration",
+    "migration_flag": ".rig/postgres-migration-complete",
+    "verification_method": "Row count + SHA256 checksum for each of 15 tables",
+    "type_conversions": "JSON columns parsed via JSON.parse(), boolean columns converted from 0/1",
+    "compatible_backends": ["PGlite (local/file)", "pg Pool (remote)"]
+  }
+}

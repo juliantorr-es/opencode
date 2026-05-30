@@ -1,0 +1,298 @@
+{
+  "schema_version": "v1",
+  "artifact_type": "cartography_learning",
+  "session_id": "ses_current",
+  "generated_at": "2026-05-30T06:00:00.000Z",
+  "profile": "cartography",
+  "surface_map": {
+    "files_examined": [
+      "packages/opencode/src/tool/task.ts",
+      "packages/opencode/src/tool/coordination.ts",
+      "packages/opencode/src/coordination/coord-events.ts",
+      "packages/opencode/src/coordination/coordination.pg.sql.ts",
+      "packages/opencode/src/background/job.ts",
+      "packages/opencode/src/bus/index.ts",
+      "packages/opencode/src/bus/bus-event.ts",
+      "packages/opencode/src/tool/registry.ts"
+    ]
+  },
+  "findings": {
+    "A": {
+      "question": "In task.ts, exactly where are claimTask/releaseTask/failTask called? Show the line numbers.",
+      "answer": "File: packages/opencode/src/tool/task.ts",
+      "claimTask": [
+        {
+          "line": 190,
+          "context": "yield* Coordination.claimTask(nextSession.id, ctx.sessionID, params.subagent_type, params.description, params.wave ?? 0, (params.wave_type ?? '') as Coordination.WaveType | '')",
+          "phase": "Before task execution starts (when agent session is created)"
+        }
+      ],
+      "releaseTask": [
+        {
+          "line": 241,
+          "context": "yield* Coordination.releaseTask(nextSession.id, text)",
+          "phase": "Inside runTask() — after successful prompt completion, returns text"
+        }
+      ],
+      "failTask": [
+        {
+          "line": 296,
+          "context": "yield* Coordination.failTask(nextSession.id, errorMsg)",
+          "phase": "Inside runTask().pipe(Effect.catchCause()) — after background task failure (non-interrupt)"
+        },
+        {
+          "line": 341,
+          "context": "yield* Coordination.failTask(nextSession.id, errorMsg)",
+          "phase": "Inside foreground task's Effect.catch() — after foreground execution failure"
+        }
+      ],
+      "writeTaskStatus_calls": [
+        {
+          "line": 203,
+          "status": "running",
+          "phase": "Immediately after claimTask — always called"
+        },
+        {
+          "line": 248,
+          "status": "completed",
+          "phase": "Inside runTask() after releaseTask"
+        },
+        {
+          "line": 290,
+          "status": "completed",
+          "phase": "Inside background success handler (redundant with line 248 same path)"
+        },
+        {
+          "line": 299,
+          "status": "failed",
+          "phase": "Inside background error handler after failTask"
+        },
+        {
+          "line": 344,
+          "status": "failed",
+          "phase": "Inside foreground error handler after failTask"
+        }
+      ]
+    },
+    "B": {
+      "question": "What does the Coordination namespace export look like in task.ts? (line 15 shows import)",
+      "answer": "File: packages/opencode/src/tool/task.ts, line 15",
+      "import_line": "import { Coordination } from \"./coordination\"",
+      "export_line": "File: packages/opencode/src/tool/coordination.ts, line 625",
+      "export": "export * as Coordination from \"./coordination\"",
+      "coordination_exports": [
+        "WaveTypes (const array)",
+        "WaveType (type)",
+        "TaskClaim (type)",
+        "PathReservation (type)",
+        "FanOutGroup (type)",
+        "ensureCoordinationTables (Effect)",
+        "claimTask (Effect fn — 6 params: taskId, sessionId, subagentType, description, wave, waveType)",
+        "releaseTask (Effect fn — 2 params: taskId, result)",
+        "failTask (Effect fn — 2 params: taskId, error)",
+        "getClaim (Effect fn — 1 param: taskId)",
+        "getSessionClaims (Effect fn — 1 param: sessionId)",
+        "getWaveClaims (Effect fn — 3 params: sessionId, wave, waveType)",
+        "reservePath (Effect fn — 3 params: path, taskId, sessionId)",
+        "releasePath (Effect fn — 2 params: path, taskId)",
+        "checkPathReserved (Effect fn — 1 param: path)",
+        "getFanOutGroup (Effect fn — 3 params: sessionId, wave, waveType)",
+        "formatStructuredResult (pure function)",
+        "CoordinationParameters (Schema)",
+        "CoordinationTool (Tool.define — meta-tool with operations: claims|reservations|wave_status|all)"
+      ],
+      "task.ts_usage_of_coordination": [
+        "Coordination.claimTask (line 190)",
+        "Coordination.releaseTask (line 241)",
+        "Coordination.failTask (lines 296, 341)",
+        "Coordination.WaveType (line 191 — type cast only)"
+      ]
+    },
+    "C": {
+      "question": "Does releaseTask/failTask already emit any events to the orchestration bus? Look at their implementations.",
+      "answer": "NO — neither releaseTask nor failTask emits any bus events.",
+      "releaseTask_implementation": "File: packages/opencode/src/tool/coordination.ts, lines 247-284",
+      "releaseTask_behavior": [
+        "Performs a DuckDB transaction",
+        "SELECTs the claim by taskId",
+        "UPDATEs status to 'released', sets result and released_at",
+        "If wave > 0 and waveType: increments complete_count in coordination_fan_out table",
+        "No EventBus.publish call, no TaskStatusChanged, no side-effect beyond DuckDB"
+      ],
+      "failTask_implementation": "File: packages/opencode/src/tool/coordination.ts, lines 286-323",
+      "failTask_behavior": [
+        "Performs a DuckDB transaction",
+        "SELECTs the claim by taskId",
+        "UPDATEs status to 'failed', sets error and released_at",
+        "If wave > 0 and waveType: increments complete_count in coordination_fan_out table",
+        "No EventBus.publish call, no TaskStatusChanged, no side-effect beyond DuckDB"
+      ],
+      "conclusion": "Both functions are purely DuckDB-persistent. The task.ts file does emit writeTaskStatus() which writes to a JSONL file, but that's a separate side-channel, not the Bus event system."
+    },
+    "D": {
+      "question": "Is there any event bus or publish/subscribe system in the codebase that task completion/failure events should be published to?",
+      "answer": "YES — there is a full PubSub-based event bus system, AND a TaskStatusChanged bus event is already defined but never published.",
+      "bus_system": {
+        "file": "packages/opencode/src/bus/index.ts",
+        "exports": [
+          "Interface (type) with publish, subscribe, subscribeAll methods",
+          "Service (Context.Service class)",
+          "layer (Layer.effect)",
+          "defaultLayer",
+          "publish (standalone async function)",
+          "subscribe (standalone function)",
+          "subscribeAll (standalone function)"
+        ],
+        "publish_api": "Bus.Service → publish(def, properties) or standalone Bus.publish(def, properties)",
+        "uses": "Effect.PubSub under the hood with typed and wildcard PubSub channels",
+        "provider": "Layer from bus/index.ts is already wired into ToolRegistry's defaultLayer (registry.ts line 550: Layer.provide(Bus.layer))"
+      },
+      "task_status_event": {
+        "file": "packages/opencode/src/coordination/coord-events.ts",
+        "lines": "4-15",
+        "definition": "export const TaskStatusChanged = BusEvent.define('coordination.task_status', Schema.Struct({...}))",
+        "fields": ["session_id", "task_id", "task_type", "status", "description", "agent_name?", "changed_at"],
+        "currently_published": "NEVER",
+        "search_proof": "grep for 'TaskStatusChanged' across entire codebase: only 1 match — the definition itself at coord-events.ts:4"
+      },
+      "other_coordination_events_defined_but_unpublished": [
+        "PathClaimed (coord-events.ts:17-24) — defined, never published",
+        "SessionHeartbeat (coord-events.ts:27-36) — defined, never published",
+        "ActivityLogged (coord-events.ts:39-48) — defined, never published"
+      ],
+      "conclusion": "The event definition exists in coord-events.ts, the Bus infrastructure is wired, but nothing publishes TaskStatusChanged. This is the exact seam that needs plumbing: import the event + Bus.Service into task.ts, and call Bus.publish(TaskStatusChanged, {...}) alongside Coordination.releaseTask/failTask."
+    },
+    "E": {
+      "question": "What's the TaskClaim type's current structure — does it have everything needed for a 'fleet' view (lane_id, agent_role, plan_id)?",
+      "answer": "NO — TaskClaim is missing lane_id, agent_role, and plan_id fields entirely.",
+      "current_taskclaim_type": {
+        "file": "packages/opencode/src/tool/coordination.ts",
+        "lines": "28-41",
+        "fields": [
+          {"name": "taskId", "type": "string"},
+          {"name": "sessionId", "type": "string"},
+          {"name": "wave", "type": "number"},
+          {"name": "waveType", "type": "WaveType | ''"},
+          {"name": "subagentType", "type": "string"},
+          {"name": "description", "type": "string"},
+          {"name": "status", "type": "'claimed' | 'released' | 'failed'"},
+          {"name": "result", "type": "string?", "optional": true},
+          {"name": "error", "type": "string?", "optional": true},
+          {"name": "createdAt", "type": "number"},
+          {"name": "releasedAt", "type": "number?", "optional": true}
+        ]
+      },
+      "current_db_schema": {
+        "file": "packages/opencode/src/coordination/coordination.pg.sql.ts",
+        "lines": "3-15",
+        "columns": [
+          "task_id TEXT PK",
+          "session_id TEXT NOT NULL",
+          "wave INTEGER DEFAULT 0",
+          "wave_type TEXT DEFAULT ''",
+          "subagent_type TEXT NOT NULL",
+          "description TEXT NOT NULL",
+          "status TEXT NOT NULL (claimed|released|failed)",
+          "result TEXT?",
+          "error TEXT?",
+          "created_at INTEGER NOT NULL",
+          "released_at INTEGER?"
+        ]
+      },
+      "missing_for_fleet_view": [
+        {"field": "lane_id", "purpose": "Identifies which multi-lane stream this task belongs to"},
+        {"field": "agent_role", "purpose": "Role within the lane (cartographer/architect/executor/etc)"},
+        {"field": "plan_id", "purpose": "Associated plan identifier for traceability"}
+      ]
+    },
+    "F": {
+      "question": "Check if there's a 'task_board' tool file somewhere. If not, what tool provides the current task_board functionality?",
+      "answer": "NO task_board tool file exists. The CoordinationTool (coordination meta-tool) provides the current task_board-equivalent functionality.",
+      "task_board_search": {
+        "path_searched": "packages/opencode/src/tool/",
+        "files_found_with_name": "None",
+        "registry_check": "registry.ts imports CoordinationTool from ./coordination but no task_board import"
+      },
+      "current_task_board_equivalent": {
+        "tool_name": "coordination",
+        "file": "packages/opencode/src/tool/coordination.ts",
+        "lines": "498-625",
+        "operations": [
+          {"op": "claims", "result": "Session claims, task-specific claim, or all claims depending on filters"},
+          {"op": "reservations", "result": "Active path reservations"},
+          {"op": "wave_status", "result": "Fan-out group status with total/complete/pending tasks"},
+          {"op": "all", "result": "Summary counts of claims, reservations, fan-out groups"}
+        ],
+        "gated_by": "flags.experimentalCoordination flag in registry.ts (line 453-457)",
+        "status": "Registered in registry.ts at line 351 as 'coordination: Tool.init(coordinationtool)' and added to builtin array"
+      },
+      "note": "There is ALSO a task_board SYSTEM TOOL provided by the OpenCode runtime (listed in the available tool names like smart_git, smart_grep etc.). This system tool is NOT a file in the src/tool directory. It's a runtime-provided tool that reads from the knowledge graph/correlation ledger. The coordination DuckDB-backed tool is the project's own implementation for the same domain."
+    },
+    "G": {
+      "question": "Look for any existing 'fleet' or 'dashboard' operations in the coordination tool.",
+      "answer": "NONE — there are no 'fleet' or 'dashboard' operations.",
+      "coordination_tool_operations": ["claims", "reservations", "wave_status", "all"],
+      "fleet_search_result": "grep for 'fleet|dashboard' in packages/opencode/src/tool — 0 matches",
+      "wave_status_closest_match": {
+        "file": "packages/opencode/src/tool/coordination.ts",
+        "lines": "537-578",
+        "description": "Shows total tasks, complete count, pending count, and running task IDs for a specific session/wave/waveType fan-out group. This is the closest thing to a dashboard view."
+      }
+    }
+  },
+  "smoking_guns": [
+    {
+      "id": "SG-1",
+      "severity": "HIGH",
+      "summary": "TaskStatusChanged bus event is defined but NEVER published — event system is wired but unused for task lifecycle",
+      "evidence": "coord-events.ts:4 defines TaskStatusChanged; grep for TaskStatusChanged across entire codebase returns only the definition. task.ts uses Coordination.claimTask/releaseTask/failTask (DuckDB) + writeTaskStatus (JSONL) but never Bus.publish(TaskStatusChanged, ...)",
+      "impact": "Real-time orchestration subscribers (SSE event stream, dashboard) have zero visibility into task lifecycle. The writeTaskStatus JSONL file at docs/json/opencode/coordination/messages.v1.jsonl is a parallel side-channel not integrated with the Bus system."
+    },
+    {
+      "id": "SG-2",
+      "severity": "MEDIUM",
+      "summary": "TaskClaim type/DuckDB table lacks lane_id, agent_role, and plan_id — cannot support fleet view",
+      "evidence": "coordination.ts:28-41 TaskClaim type has only taskId, sessionId, wave, waveType, subagentType, description, status. pg.sql.ts:3-15 CoordinationClaimTable columns match the TS type exactly. No lane_id, agent_role, or plan_id columns anywhere.",
+      "impact": "Cannot correlate tasks to lane streams or plan boundaries without extending the schema. The 'fleet' view required by multi-lane orchestration is impossible with current schema."
+    },
+    {
+      "id": "SG-3",
+      "severity": "MEDIUM",
+      "summary": "releaseTask/failTask are purely DuckDB-persistent — no bus event emission, no observable side-effects",
+      "evidence": "coordination.ts:247-284 (releaseTask) and 286-323 (failTask): both do DuckDB SELECT + UPDATE transactions only. No Bus.Service usage, no publish calls.",
+      "impact": "Any consumer that listens to the Bus for task lifecycle events (like a real-time dashboard, fleet monitor, or the SSE event handler at server/routes/instance/httpapi/handlers/event.ts) never sees task completions or failures."
+    },
+    {
+      "id": "SG-4",
+      "severity": "LOW",
+      "summary": "writeTaskStatus writes to a side-channel JSONL file with near-duplicate data to the DuckDB coordination tables",
+      "evidence": "task.ts:105-127 defines writeTaskStatus which writes to docs/json/opencode/coordination/messages.v1.jsonl with fields overlapping Coordination.claimTask parameters. This is a 42-line unstaged addition (not yet committed).",
+      "impact": "Data duplication between DuckDB coordination_claim table and JSONL messages file. Two sources of truth for task status with no reconciliation protocol."
+    }
+  ],
+  "dependencies": {
+    "task.ts_imports": [
+      {"library": "Coordination from ./coordination", "used_for": "claimTask, releaseTask, failTask, WaveType"},
+      {"library": "BackgroundJob from @/background/job", "used_for": "background.start(), background.get()"},
+      {"library": "effect (Cause, Effect, Exit, Schema, Scope)", "used_for": "Effect system"},
+      {"library": "node:fs", "used_for": "writeTaskStatus JSONL writes (newly added, unstaged)"}
+    ],
+    "not_imported_by_task_ts": [
+      "Bus from '../bus' — NOT imported",
+      "CoordEvents from './coord-events' or '@/coordination/coord-events' — NOT imported",
+      "TaskStatusChanged — NOT referenced"
+    ],
+    "registry_wiring": {
+      "coordination_tool": {
+        "import_line": "registry.ts:41 — import { CoordinationTool } from \"./coordination\"",
+        "init_line": "registry.ts:350 — coordination: Tool.init(coordinationtool)",
+        "gated": "registry.ts:453 — ...(flags.experimentalCoordination ? [tool.coordination, ...] : [])",
+        "always_in_builtin": false — gated behind experimentalCoordination flag"
+      },
+      "bus_layer": {
+        "already_wired": true,
+        "location": "registry.ts:550 — Layer.provide(Bus.layer) in defaultLayer"
+      }
+    }
+  }
+}

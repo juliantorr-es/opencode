@@ -63,7 +63,7 @@ function waitReady(input: { directory?: string; name?: string }) {
 function insertAccount() {
   return Effect.acquireRelease(
     Effect.sync(() => {
-      Database.Client()
+      (Database.Client() as any)
         .$client.prepare(
           "INSERT INTO account (id, email, url, access_token, refresh_token, time_created, time_updated) VALUES (?, ?, ?, ?, ?, ?, ?)",
         )
@@ -80,7 +80,7 @@ function insertAccount() {
     }),
     (id) =>
       Effect.sync(() => {
-        Database.Client().$client.prepare("DELETE FROM account WHERE id = ?").run(id)
+        (Database.Client() as any).$client.prepare("DELETE FROM account WHERE id = ?").run(id)
       }),
   )
 }

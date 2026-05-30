@@ -1,0 +1,706 @@
+{
+  "schema": "rig.relay.surface_map.v1",
+  "generated_at": "2026-05-29T12:00:00Z",
+  "files": {
+    "packages/app/src/components/dialog-edit-agent.tsx": {
+      "path": "packages/app/src/components/dialog-edit-agent.tsx",
+      "language": "typescript",
+      "framework": "SolidJS",
+      "size_lines": 194,
+      "imports": {
+        "external": [
+          { "source": "@opencode-ai/ui/button", "symbols": ["Button"], "line": 1 },
+          { "source": "@opencode-ai/ui/dialog", "symbols": ["Dialog"], "line": 2 },
+          { "source": "@opencode-ai/ui/text-field", "symbols": ["TextField"], "line": 3 },
+          { "source": "@opencode-ai/ui/select", "symbols": ["Select"], "line": 4 },
+          { "source": "@opencode-ai/ui/context/dialog", "symbols": ["useDialog"], "line": 5 },
+          { "source": "solid-js", "symbols": ["createMemo", "createSignal", "For", "Show"], "line": 6 }
+        ],
+        "internal": [
+          { "source": "@/context/language", "symbols": ["useLanguage"], "line": 7 },
+          { "source": "@/hooks/use-providers", "symbols": ["useProviders"], "line": 8 },
+          { "source": "@/types/agent", "symbols": ["AgentDef"], "line": 9, "type_only": true }
+        ]
+      },
+      "exports": {
+        "named": [
+          { "name": "DialogEditAgent", "line": 24, "kind": "function_component" }
+        ],
+        "default": null
+      },
+      "types_and_interfaces": [
+        { "name": "ModelOption", "line": 11, "kind": "type", "fields": "{ label: string; value: string }" },
+        { "name": "Props", "line": 13, "kind": "type", "fields": "{ agent?: AgentDef; onSave: (agent: AgentDef) => void }" }
+      ],
+      "constants": [
+        { "name": "AGENT_COLORS", "line": 18, "value": "readonly array of 14 hex color strings" }
+      ],
+      "components": [
+        {
+          "name": "DialogEditAgent",
+          "line": 24,
+          "signature": "export function DialogEditAgent(props: Props)",
+          "props": { "agent": "AgentDef | undefined", "onSave": "(agent: AgentDef) => void" }
+        }
+      ],
+      "state": {
+        "useSignal": [
+          { "name": "name", "line": 29, "initial": "props.agent?.name ?? \"\"", "type": "string" },
+          { "name": "prompt", "line": 30, "initial": "props.agent?.prompt ?? \"\"", "type": "string" },
+          { "name": "description", "line": 31, "initial": "props.agent?.description ?? \"\"", "type": "string" },
+          { "name": "model", "line": 32, "initial": "props.agent?.model ?? \"\"", "type": "string" },
+          { "name": "variant", "line": 33, "initial": "props.agent?.variant ?? \"\"", "type": "string" },
+          { "name": "temperature", "line": 34, "initial": "props.agent?.temperature?.toString() ?? \"\"", "type": "string" },
+          { "name": "topP", "line": 35, "initial": "props.agent?.top_p?.toString() ?? \"\"", "type": "string" },
+          { "name": "color", "line": 36, "initial": "props.agent?.color ?? \"\"", "type": "string" }
+        ],
+        "useMemo": [
+          { "name": "connectedProviders", "line": 38, "depends_on": "providers.connected()" },
+          { "name": "modelOptions", "line": 40, "depends_on": "connectedProviders()", "returns": "ModelOption[]" },
+          { "name": "currentModel", "line": 53, "depends_on": "model(), modelOptions()", "returns": "ModelOption | undefined" }
+        ],
+        "useRef": [],
+        "useStore": []
+      },
+      "event_handlers": [
+        { "name": "handleSave", "line": 59, "handler": "() => void", "effect": "Builds AgentDef from signals, calls props.onSave, then dialog.close()" },
+        { "name": "setName (onChange)", "line": 89, "target_prop": "TextField.value", "parameter": "string" },
+        { "name": "setPrompt (onChange)", "line": 97, "target_prop": "TextField.value", "parameter": "string" },
+        { "name": "setDescription (onChange)", "line": 108, "target_prop": "TextField.value", "parameter": "string" },
+        { "name": "model onSelect", "line": 120, "target_prop": "Select.onSelect", "parameter": "ModelOption | undefined" },
+        { "name": "setVariant (onChange)", "line": 132, "target_prop": "TextField.value", "parameter": "string" },
+        { "name": "setTemperature (onChange)", "line": 142, "target_prop": "TextField.value", "parameter": "string" },
+        { "name": "setTopP (onChange)", "line": 154, "target_prop": "TextField.value", "parameter": "string" },
+        { "name": "color toggle (onClick)", "line": 176, "target": "color swatch button", "parameter": "MouseEvent" },
+        { "name": "cancel (onClick)", "line": 184, "target": "Cancel Button", "effect": "dialog.close()" },
+        { "name": "save (onClick)", "line": 187, "target": "Save Button", "effect": "handleSave(), disabled when !name()" }
+      ],
+      "ipc_calls": [],
+      "sdk_calls": [],
+      "bridge_calls": [],
+      "error_handling": [
+        { "line": 61, "pattern": "Number.parseFloat with Math.min/Math.max clamping for temperature (0-2) and top_p (0-1)" },
+        { "line": 70, "pattern": "Number.isNaN guard before assigning temperature/top_p" },
+        { "line": 62, "pattern": "Empty string checked via !== \"\" before parsing" }
+      ],
+      "crash_risk_factors": [
+        "temperature() and topP() are strings; Number.parseFloat('') returns NaN — guarded by !== '' check",
+        "crypto.randomUUID() used for new agent ID — may fail in non-secure context (SolidJS SSR edge case)"
+      ]
+    },
+
+    "packages/app/src/components/dialog-manage-agents.tsx": {
+      "path": "packages/app/src/components/dialog-manage-agents.tsx",
+      "language": "typescript",
+      "framework": "SolidJS",
+      "size_lines": 236,
+      "imports": {
+        "external": [
+          { "source": "@opencode-ai/ui/dialog", "symbols": ["Dialog"], "line": 1 },
+          { "source": "@opencode-ai/ui/button", "symbols": ["Button"], "line": 2 },
+          { "source": "@opencode-ai/ui/context/dialog", "symbols": ["useDialog"], "line": 3 },
+          { "source": "@opencode-ai/ui/list", "symbols": ["List"], "line": 4 },
+          { "source": "@opencode-ai/ui/icon", "symbols": ["Icon"], "line": 5 },
+          { "source": "@opencode-ai/ui/icon-button", "symbols": ["IconButton"], "line": 6 },
+          { "source": "@opencode-ai/ui/toast", "symbols": ["showToast"], "line": 7 },
+          { "source": "solid-js", "symbols": ["Component", "createMemo", "createSignal", "Show"], "line": 8, "types": ["Component"] }
+        ],
+        "internal": [
+          { "source": "@/context/language", "symbols": ["useLanguage"], "line": 10 },
+          { "source": "@/context/sync", "symbols": ["useSync"], "line": 11 },
+          { "source": "./dialog-edit-agent", "symbols": ["DialogEditAgent"], "line": 12 },
+          { "source": "@/types/agent", "symbols": ["AgentDef"], "line": 13, "type_only": true }
+        ]
+      },
+      "exports": {
+        "named": [
+          { "name": "DialogManageAgents", "line": 32, "kind": "component_export" }
+        ],
+        "default": null
+      },
+      "types_and_interfaces": [
+        { "name": "AgentEntry", "line": 22, "kind": "type", "fields": "{ source: 'built-in' | 'custom'; name: string; description?: string; model?: string; color?: string; agentDef?: AgentDef; builtinModel?: string }" }
+      ],
+      "constants": [
+        { "name": "api", "line": 15, "kind": "arrow_function", "returns": "getCustomAgents/setCustomAgents bridge | undefined", "risk": "uses `window` cast as unknown — unchecked if api shape changes" }
+      ],
+      "components": [
+        {
+          "name": "DialogManageAgents",
+          "line": 32,
+          "signature": "export const DialogManageAgents: Component = () => { ... }",
+          "props": "none (Component with no Props)"
+        }
+      ],
+      "state": {
+        "useSignal": [
+          { "name": "customAgents", "line": 37, "initial": "[]", "type": "AgentDef[]" },
+          { "name": "loaded", "line": 38, "initial": "false", "type": "boolean" },
+          { "name": "confirmDelete", "line": 39, "initial": "null", "type": "AgentDef | null" }
+        ],
+        "useMemo": [
+          { "name": "builtinAgents", "line": 52, "depends_on": "sync.data.agent", "description": "Filters out subagent mode and hidden agents" },
+          { "name": "agentList", "line": 56, "depends_on": "builtinAgents(), customAgents()", "returns": "AgentEntry[]" }
+        ],
+        "useRef": [],
+        "useStore": []
+      },
+      "event_handlers": [
+        { "name": "handleCreateAgent", "line": 99, "signature": "() => void", "effect": "Shows DialogEditAgent, onSave calls saveCustomAgents with new agent appended" },
+        { "name": "handleEditAgent", "line": 113, "signature": "(agent: AgentDef) => void", "effect": "Shows DialogEditAgent with existing agent, onSave calls saveCustomAgents with mapped array" },
+        { "name": "handleDeleteAgent", "line": 128, "signature": "(agent: AgentDef) => void", "effect": "Sets confirmDelete signal" },
+        { "name": "handleConfirmDelete", "line": 132, "signature": "() => Promise<void>", "effect": "Filters out deleted agent, saves, shows toast, clears confirmDelete" },
+        { "name": "handleCancelDelete", "line": 143, "signature": "() => void", "effect": "Clears confirmDelete signal" },
+        { "name": "modelLabel", "line": 147, "signature": "(entry: AgentEntry) => string | undefined", "effect": "Helper — not an event handler per se" },
+        { "name": "onClick -> handleCreateAgent", "line": 158, "target": "Create Button" },
+        { "name": "onClick -> handleEditAgent(i.agentDef!)", "line": 208, "target": "Edit IconButton" },
+        { "name": "onClick -> handleDeleteAgent(i.agentDef!)", "line": 215, "target": "Delete IconButton" },
+        { "name": "onClick -> handleConfirmDelete", "line": 222, "target": "Confirm Delete Button" },
+        { "name": "onClick -> handleCancelDelete", "line": 225, "target": "Cancel Delete Button" }
+      ],
+      "ipc_calls": [],
+      "sdk_calls": [],
+      "bridge_calls": [
+        { "line": 46, "expression": "a.getCustomAgents()", "target": "window.api.getCustomAgents", "channel": "window.api", "returns": "Promise<unknown[]>", "guard": "optional chaining via api() helper" },
+        { "line": 87, "expression": "a.setCustomAgents(agents)", "target": "window.api.setCustomAgents", "channel": "window.api", "parameters": "unknown[]" }
+      ],
+      "error_handling": [
+        { "line": 84, "pattern": "try/catch in saveCustomAgents — rollback customAgents to prev on failure, showToast with error description, console.error" },
+        { "line": 15, "pattern": "typeof window !== 'undefined' guard for SSR", "risk": "non-null assertion (!) on .getCustomAgents and .setCustomAgents" },
+        { "line": 42, "pattern": "loaded() gate prevents re-fetch on re-renders" },
+        { "line": 90, "pattern": "setCustomAgents(prev) rollback on failure" }
+      ],
+      "crash_risk_factors": [
+        "Line 46: a.getCustomAgents() may fail if window.api exists but is not the expected shape — no type guard on the api return",
+        "Line 15: (window as unknown as Record<string, unknown>).api — no runtime validation of api shape",
+        "Line 47: (agents ?? []) as AgentDef[] — unchecked cast from unknown[], invalid data silently accepted",
+        "Non-null assertions on i.agentDef! (lines 202, 208, 215) — crashes if agentDef is undefined on a custom entry",
+        "Effect-like code runs in component body at line 42-50 (not in createEffect) — may execute on every render"
+      ]
+    },
+
+    "packages/app/src/components/dialog-select-mcp.tsx": {
+      "path": "packages/app/src/components/dialog-select-mcp.tsx",
+      "language": "typescript",
+      "framework": "SolidJS + TanStack Query",
+      "size_lines": 410,
+      "imports": {
+        "external": [
+          { "source": "@tanstack/solid-query", "symbols": ["useMutation", "useQueryClient"], "line": 1 },
+          { "source": "solid-js", "symbols": ["Component", "createMemo", "createSignal", "Show"], "line": 2, "types": ["Component"] },
+          { "source": "solid-js/store", "symbols": ["createStore"], "line": 3 },
+          { "source": "@opencode-ai/ui/dialog", "symbols": ["Dialog"], "line": 6 },
+          { "source": "@opencode-ai/ui/list", "symbols": ["List"], "line": 7 },
+          { "source": "@opencode-ai/ui/switch", "symbols": ["Switch"], "line": 8 },
+          { "source": "@opencode-ai/ui/button", "symbols": ["Button"], "line": 12 },
+          { "source": "@opencode-ai/ui/icon-button", "symbols": ["IconButton"], "line": 13 },
+          { "source": "@opencode-ai/ui/text-field", "symbols": ["TextField"], "line": 14 },
+          { "source": "@opencode-ai/ui/dropdown-menu", "symbols": ["DropdownMenu"], "line": 15 },
+          { "source": "@opencode-ai/sdk/v2/client", "symbols": ["McpRemoteConfig"], "line": 16, "type_only": true }
+        ],
+        "internal": [
+          { "source": "@/context/sync", "symbols": ["useSync"], "line": 4 },
+          { "source": "@/context/sdk", "symbols": ["useSDK"], "line": 5 },
+          { "source": "@/context/language", "symbols": ["useLanguage"], "line": 9 },
+          { "source": "@/context/server-sync", "symbols": ["useQueryOptions"], "line": 10 },
+          { "source": "@/utils/path-key", "symbols": ["pathKey"], "line": 11 },
+          { "source": "./dialog-edit-mcp", "symbols": ["DialogEditMcp"], "line": 17 },
+          { "source": "@/types/mcp", "symbols": ["McpServerEntry"], "line": 18, "type_only": true }
+        ]
+      },
+      "exports": {
+        "named": [
+          { "name": "DialogSelectMcp", "line": 45, "kind": "component_export" },
+          { "name": "McpHealthIndicator", "line": 28, "kind": "function_component" }
+        ],
+        "default": null
+      },
+      "constants": [
+        { "name": "statusLabels", "line": 20, "value": "status → i18n key mapping for 5 MCP statuses" }
+      ],
+      "components": [
+        {
+          "name": "McpHealthIndicator",
+          "line": 28,
+          "signature": "function McpHealthIndicator(props: { status?: string })",
+          "props": "{ status?: string }",
+          "description": "Stateless colored dot — green (connected), red (failed), yellow (needs_auth/needs_client_registration), gray (disabled/undefined)"
+        },
+        {
+          "name": "DialogSelectMcp",
+          "line": 45,
+          "signature": "export const DialogSelectMcp: Component = () => { ... }",
+          "props": "none"
+        }
+      ],
+      "types": [
+        { "name": "FormMode", "line": 43, "kind": "type_alias", "value": "'list' | 'add'" }
+      ],
+      "state": {
+        "useSignal": [
+          { "name": "editingEntry", "line": 61, "initial": "undefined", "type": "McpServerEntry | undefined" },
+          { "name": "confirmDelete", "line": 62, "initial": "undefined", "type": "string | undefined" }
+        ],
+        "useStore": [
+          { "name": "store", "line": 52, "type": "{ mode: FormMode; addForm: { name: string; url: string; error: string } }", "initial": "{ mode: 'list', addForm: { name: '', url: '', error: '' } }" }
+        ],
+        "useMemo": [
+          { "name": "items", "line": 107, "depends_on": "sync.data.mcp", "returns": "sorted { name, status }[]" },
+          { "name": "enabledCount", "line": 159, "depends_on": "items()", "returns": "number" },
+          { "name": "totalCount", "line": 160, "depends_on": "items()", "returns": "number" },
+          { "name": "isFormMode", "line": 162, "depends_on": "store.mode", "returns": "boolean" },
+          { "name": "formTitle", "line": 200, "depends_on": "isFormMode()", "returns": "string | JSX element" }
+        ],
+        "useRef": []
+      },
+      "mutations": [
+        { "name": "toggle", "line": 113, "mutationFn": "(name: string) => Promise<void>", "behavior": "disconnect if connected, authenticate if needs_auth, else connect", "onSuccess": "refetchQueries mcp" },
+        { "name": "addMutation", "line": 129, "mutationFn": "({ name, url }) => sdk.client.mcp.add(...)", "onSuccess": "reset form to list mode, refetch", "onError": "set store.addForm.error" },
+        { "name": "disconnectMutation", "line": 149, "mutationFn": "(name: string) => disconnect if connected", "onSuccess": "refetchQueries mcp" }
+      ],
+      "event_handlers": [
+        { "name": "handleEdit", "line": 64, "signature": "async (name: string) => Promise<void>", "effect": "loads server from window.api.getMcpServers, sets editingEntry" },
+        { "name": "confirmRemove", "line": 77, "signature": "async () => Promise<void>", "effect": "disconnect, auth.remove, filter from store, refetch queries, clear confirmDelete" },
+        { "name": "cancelDelete", "line": 103, "signature": "() => void", "effect": "sets confirmDelete(undefined)" },
+        { "name": "startAdd", "line": 164, "signature": "() => void", "effect": "sets mode='add', resets addForm" },
+        { "name": "resetForm", "line": 169, "signature": "() => void", "effect": "sets mode='list'" },
+        { "name": "submitAdd", "line": 173, "signature": "() => void", "effect": "validates name/url, calls addMutation.mutate" },
+        { "name": "handleKeyDown", "line": 188, "signature": "(event: KeyboardEvent) => void", "effect": "Escape→resetForm, Enter→submitAdd, stopPropagation" },
+        { "name": "handleRemove", "line": 215, "signature": "(name: string) => void", "effect": "sets confirmDelete(name)" },
+        { "name": "onChange (name)", "line": 241, "target": "TextField value", "writes": "store.addForm.name" },
+        { "name": "onChange (url)", "line": 251, "target": "TextField value", "writes": "store.addForm.url" },
+        { "name": "onKeyDown", "line": 242, "target": "TextField", "handler": "handleKeyDown" },
+        { "name": "onSelect (edit)", "line": 315, "target": "DropdownMenu.Item", "handler": "() => handleEdit(i.name)" },
+        { "name": "onSelect (remove)", "line": 322, "target": "DropdownMenu.Item", "handler": "() => handleRemove(i.name)" },
+        { "name": "onClick (startAdd)", "line": 355, "target": "Add MCP Server Button" },
+        { "name": "onClick (submitAdd)", "line": 367, "target": "Add Server Button" },
+        { "name": "onClick (DropdownMenu)", "line": 309, "effect": "e.stopPropagation()" },
+        { "name": "onPointerDown (DropdownMenu)", "line": 310, "effect": "e.stopPropagation()" },
+        { "name": "List.onSelect", "line": 268, "effect": "toggle.mutate(x.name) if toggle is not pending" },
+        { "name": "Switch.onChange", "line": 336, "effect": "toggle.mutate(i.name) if toggle is not pending" }
+      ],
+      "ipc_calls": [],
+      "sdk_calls": [
+        { "line": 81, "expression": "sdk.client.mcp.disconnect({ name })" },
+        { "line": 86, "expression": "sdk.client.mcp.auth.remove({ name })" },
+        { "line": 117, "expression": "sdk.client.mcp.disconnect({ name })" },
+        { "line": 121, "expression": "sdk.client.mcp.auth.authenticate({ name })" },
+        { "line": 124, "expression": "sdk.client.mcp.connect({ name })" },
+        { "line": 136, "expression": "sdk.client.mcp.add({ name: input.name, config })" },
+        { "line": 153, "expression": "sdk.client.mcp.disconnect({ name })" },
+        { "line": 389, "expression": "sdk.client.mcp.add({ name: entry.name, config: entry.config })" }
+      ],
+      "bridge_calls": [
+        { "line": 67, "expression": "(window as any).api.getMcpServers?.()", "return": "unknown[]" },
+        { "line": 91, "expression": "(window as any).api.getMcpServers?.()", "return": "unknown[]" },
+        { "line": 94, "expression": "(window as any).api.setMcpServers?.(...)", "parameter": "filtered unknown[]" },
+        { "line": 380, "expression": "(window as any).api.getMcpServers?.()", "return": "unknown[]" },
+        { "line": 388, "expression": "(window as any).api.setMcpServers?.(...)", "parameter": "unknown[]" }
+      ],
+      "error_handling": [
+        { "line": 65, "pattern": "try/catch in handleEdit — console.warn on failure, silently ignores" },
+        { "line": 80, "pattern": "try/catch in confirmRemove — three separate blocks: disconnect, auth.remove, store. Each catches independently" },
+        { "line": 83, "pattern": "console.warn for disconnect failure" },
+        { "line": 86, "pattern": "empty catch block for auth.remove — expected to potentially not exist" },
+        { "line": 143, "pattern": "addMutation.onError — extracts message via instanceof Error ? .message : String(err)" },
+        { "line": 174, "pattern": "submitAdd — early returns on empty name/url with setStore error" },
+        { "line": 176, "pattern": "Validation: server name required" },
+        { "line": 181, "pattern": "Validation: server URL required" },
+        { "line": 391, "pattern": "try/catch in onSave — console.warn on persist failure" },
+        { "line": 254, "pattern": "Conditional error display based on store.addForm.error" },
+        { "line": 268, "pattern": "toggle.isPending guard on List.onSelect — prevents double-click race" },
+        { "line": 335, "pattern": "toggle.isPending guard on Switch.onChange — prevents double-toggle race" }
+      ],
+      "crash_risk_factors": [
+        "Line 66: (window as any).api — no type safety on bridge access, any cast defeats all type checking",
+        "Line 67-68: servers?.find((s: any) => s.name === name) — any cast on server entry, no validation before use",
+        "Lines 91-94: any cast on servers and inline arrow callbacks — silent type erosion",
+        "Line 277: statusLabels[status() as keyof typeof statusLabels] — crashes if status returns unexpected string",
+        "Line 380: (await api?.getMcpServers?.()) ?? [] — double optional chaining may produce undefined[]",
+        "Line 383: servers.findIndex((s: any) => ...) — unchecked cast on MCP server entries from bridge",
+        "Line 113-127: toggle mutation uses sync.data.mcp[name] which may be stale between renders",
+        "Line 286: const enabled = () => status() === 'connected' — closure in list render may reference stale status value"
+      ]
+    },
+
+    "packages/desktop/src/main/ipc.ts": {
+      "path": "packages/desktop/src/main/ipc.ts",
+      "language": "typescript",
+      "framework": "Electron (Main Process)",
+      "size_lines": 502,
+      "imports": {
+        "node_builtins": [
+          { "source": "node:child_process", "symbols": ["execFile"], "line": 1 },
+          { "source": "node:fs", "symbols": ["readFileSync", "writeFileSync"], "line": 2 },
+          { "source": "node:crypto", "symbols": ["crypto"], "line": 21 }
+        ],
+        "electron": [
+          { "source": "electron", "symbols": ["BrowserWindow", "Notification", "app", "clipboard", "dialog", "ipcMain", "shell", "safeStorage", "net"], "line": 3 },
+          { "source": "electron", "symbols": ["IpcMainEvent", "IpcMainInvokeEvent"], "line": 4, "type_only": true }
+        ],
+        "external": [
+          { "source": "@opencode-ai/app/desktop-menu", "symbols": ["DesktopMenuAction"], "line": 5, "type_only": true }
+        ],
+        "internal": [
+          { "source": "../preload/types", "symbols": ["InitStep", "FatalRendererError", "ServerReadyData", "SqliteMigrationProgress", "TitlebarTheme", "WindowConfig", "WslConfig"], "line": 7 },
+          { "source": "./desktop-menu-actions", "symbols": ["runDesktopMenuAction"], "line": 17 },
+          { "source": "./store", "symbols": ["getStore"], "line": 18 },
+          { "source": "./windows", "symbols": ["getPinchZoomEnabled", "setPinchZoomEnabled", "setTitlebar", "updateTitlebar"], "line": 19 }
+        ]
+      },
+      "exports": {
+        "named": [
+          { "name": "registerIpcHandlers", "line": 139, "kind": "function" },
+          { "name": "sendSqliteMigrationProgress", "line": 492, "kind": "function" },
+          { "name": "sendMenuCommand", "line": 496, "kind": "function" },
+          { "name": "sendDeepLinks", "line": 500, "kind": "function" }
+        ],
+        "default": null
+      },
+      "constants": [
+        { "name": "GITHUB_CLIENT_ID", "line": 23, "value": "\"Iv23li7XUy0RKw5TlZ3K\"", "scope": "module", "security_note": "Hardcoded OAuth client ID" },
+        { "name": "GITHUB_TOKEN_URL", "line": 24, "value": "\"https://github.com/login/oauth/access_token\"" },
+        { "name": "pendingOAuth", "line": 31, "value": "new Map<string, PkceState>()", "scope": "module" },
+        { "name": "RESERVED_STORE_NAMES", "line": 56, "value": "[\"desktop-custom-agents\", \"desktop-mcp-servers\", \"desktop-plugin-config\", \"github-auth\"]", "scope": "module" },
+        { "name": "ALLOWED_GITHUB_HOSTNAMES", "line": 461, "value": "[\"api.github.com\", \"uploads.github.com\"]", "scope": "module" }
+      ],
+      "types_and_interfaces": [
+        { "name": "PkceState", "line": 26, "kind": "type", "fields": "{ code_verifier: string; state: string }" },
+        { "name": "Deps", "line": 115, "kind": "type", "fields": "16 injected dependency functions covering sidecar, initialization, window config, deep links, server URL, WSL, display backend, markdown, app resolution, updates, debug logs, renderer errors" }
+      ],
+      "helper_functions": [
+        { "name": "generateCodeVerifier", "line": 33, "signature": "(): string", "implementation": "crypto.randomBytes(32).toString('base64url')" },
+        { "name": "generateCodeChallenge", "line": 37, "signature": "async (verifier: string): Promise<string>", "implementation": "SHA-256 digest of verifier, base64url encoded" },
+        { "name": "encryptToken", "line": 42, "signature": "(plaintext: string): string", "implementation": "safeStorage.encryptString → base64", "throws": "Error if safeStorage unavailable" },
+        { "name": "decryptToken", "line": 49, "signature": "(encoded: string): string", "implementation": "base64 decode → safeStorage.decryptString", "throws": "Error if safeStorage unavailable" },
+        { "name": "isValidAgentDef", "line": 58, "signature": "(val: unknown): val is Record<string, unknown>", "type_guard": "checks typeof id === string && typeof name === string && typeof prompt === string" },
+        { "name": "validateAndFilterAgents", "line": 64, "signature": "(raw: unknown): unknown[]", "returns": "filtered array of valid agent defs, drops invalid with console.warn" },
+        { "name": "isValidMcpEntry", "line": 73, "signature": "(val: unknown): val is Record<string, unknown>", "type_guard": "checks name string, config object, type-dependent fields (command array for local, url string for remote)" },
+        { "name": "isValidPluginConfigEntry", "line": 84, "signature": "(val: unknown): val is Record<string, unknown>", "type_guard": "checks name, path, enabled fields" },
+        { "name": "validateAndFilterPluginConfigs", "line": 90, "signature": "(raw: unknown): { configs: unknown[]; dropped: number }", "returns": "filtered configs + drop count" },
+        { "name": "validateAndFilterMcpServers", "line": 101, "signature": "(raw: unknown): unknown[]", "returns": "filtered MCP server array, drops invalid with console.warn" },
+        { "name": "pickerFilters", "line": 110, "signature": "(ext?: string[]): { name: string; extensions: string[] }[] | undefined" }
+      ],
+      "main_function": {
+        "name": "registerIpcHandlers",
+        "line": 139,
+        "signature": "export function registerIpcHandlers(deps: Deps)",
+        "description": "Registers ~56 IPC handlers (ipcMain.handle + ipcMain.on) via the Deps abstraction"
+      },
+      "ipc_handlers": {
+        "ipcMain.handle": [
+          { "channel": "kill-sidecar", "line": 140 },
+          { "channel": "await-initialization", "line": 142, "note": "sends progress via event.sender.send('init-step', step)" },
+          { "channel": "get-window-config", "line": 146 },
+          { "channel": "consume-initial-deep-links", "line": 147 },
+          { "channel": "get-default-server-url", "line": 148 },
+          { "channel": "set-default-server-url", "line": 149 },
+          { "channel": "get-wsl-config", "line": 152 },
+          { "channel": "set-wsl-config", "line": 153 },
+          { "channel": "get-display-backend", "line": 154 },
+          { "channel": "set-display-backend", "line": 155 },
+          { "channel": "parse-markdown", "line": 158 },
+          { "channel": "check-app-exists", "line": 159 },
+          { "channel": "wsl-path", "line": 160 },
+          { "channel": "resolve-app-path", "line": 163 },
+          { "channel": "run-updater", "line": 165 },
+          { "channel": "check-update", "line": 166 },
+          { "channel": "install-update", "line": 167 },
+          { "channel": "set-background-color", "line": 168 },
+          { "channel": "export-debug-logs", "line": 169 },
+          { "channel": "session-export-data", "line": 171, "params": "(data: string, opts?: {title, defaultPath, filters})" },
+          { "channel": "session-import-file", "line": 194, "params": "(opts?: {title, filters})" },
+          { "channel": "record-fatal-renderer-error", "line": 215 },
+          { "channel": "store-get", "line": 218, "params": "(name: string, key: string)", "guard": "RESERVED_STORE_NAMES check" },
+          { "channel": "store-set", "line": 229, "params": "(name: string, key: string, value: string)", "guard": "RESERVED_STORE_NAMES check" },
+          { "channel": "store-delete", "line": 233, "params": "(name: string, key: string)", "guard": "RESERVED_STORE_NAMES check" },
+          { "channel": "store-clear", "line": 237, "params": "(name: string)", "guard": "RESERVED_STORE_NAMES check" },
+          { "channel": "store-keys", "line": 241, "params": "(name: string)" },
+          { "channel": "store-length", "line": 245, "params": "(name: string)" },
+          { "channel": "open-directory-picker", "line": 250, "params": "(opts?: { multiple, title, defaultPath })" },
+          { "channel": "open-file-picker", "line": 263, "params": "(opts?: { multiple, title, defaultPath, accept, extensions })" },
+          { "channel": "save-file-picker", "line": 280, "params": "(opts?: { title, defaultPath })" },
+          { "channel": "open-path", "line": 296, "params": "(path: string, app?: string)", "note": "uses execFile for non-default app" },
+          { "channel": "read-clipboard-image", "line": 305, "note": "returns { buffer, width, height } or null" },
+          { "channel": "get-window-count", "line": 317 },
+          { "channel": "get-window-focused", "line": 319 },
+          { "channel": "set-window-focus", "line": 324 },
+          { "channel": "show-window", "line": 329 },
+          { "channel": "get-zoom-factor", "line": 339 },
+          { "channel": "set-zoom-factor", "line": 340, "note": "calls updateTitlebar(win) after" },
+          { "channel": "get-pinch-zoom-enabled", "line": 346 },
+          { "channel": "set-pinch-zoom-enabled", "line": 347 },
+          { "channel": "set-titlebar", "line": 350 },
+          { "channel": "run-desktop-menu-action", "line": 355 },
+          { "channel": "get-desktop-custom-agents", "line": 359, "note": "reads from 'desktop-custom-agents' store, validates" },
+          { "channel": "set-desktop-custom-agents", "line": 363, "note": "validates and writes to store" },
+          { "channel": "get-desktop-mcp-servers", "line": 368, "note": "reads from 'desktop-mcp-servers' store, validates" },
+          { "channel": "set-desktop-mcp-servers", "line": 372, "note": "validates and writes to store" },
+          { "channel": "get-desktop-plugin-config", "line": 377, "note": "reads from 'desktop-plugin-config' store, validates" },
+          { "channel": "set-desktop-plugin-config", "line": 381, "note": "validates and writes to store, returns { configs, dropped }" },
+          { "channel": "github-oauth-start", "line": 388, "note": "PKCE OAuth flow start, opens browser" },
+          { "channel": "github-oauth-callback", "line": 408, "note": "exchanges code for token via net.fetch, encrypts with safeStorage" },
+          { "channel": "github-get-token", "line": 438, "note": "decrypts and returns token or null" },
+          { "channel": "github-set-token", "line": 450, "note": "encrypts and stores token" },
+          { "channel": "github-clear-token", "line": 456 },
+          { "channel": "github-api-proxy", "line": 463, "note": "proxy to GitHub API with hostname whitelist, Bearer auth from store" }
+        ],
+        "ipcMain.on": [
+          { "channel": "loading-window-complete", "line": 164 },
+          { "channel": "open-link", "line": 292, "note": "shell.openExternal(url)" },
+          { "channel": "show-notification", "line": 313, "note": "new Notification({ title, body }).show()" },
+          { "channel": "relaunch", "line": 334, "note": "app.relaunch(); app.exit(0)" }
+        ],
+        "webContents.send": [
+          { "channel": "init-step", "line": 143, "sender": "await-initialization handler" },
+          { "channel": "sqlite-migration-progress", "line": 493, "sender": "sendSqliteMigrationProgress" },
+          { "channel": "menu-command", "line": 497, "sender": "sendMenuCommand" },
+          { "channel": "deep-link", "line": 501, "sender": "sendDeepLinks" }
+        ]
+      },
+      "error_handling": [
+        { "line": 43, "pattern": "safeStorage.isEncryptionAvailable() guard — throws Error if unavailable" },
+        { "line": 50, "pattern": "same guard on decrypt" },
+        { "line": 58, "pattern": "isValidAgentDef type guard — rejects non-object, missing id/name/prompt" },
+        { "line": 64, "pattern": "validateAndFilterAgents — console.warn for dropped items, returns empty array for non-array" },
+        { "line": 73, "pattern": "isValidMcpEntry type guard — validates name, config, type-dependent fields" },
+        { "line": 90, "pattern": "validateAndFilterPluginConfigs — returns drop count alongside filtered array" },
+        { "line": 178, "pattern": "try/catch in session-export-data — returns { error: message } on failure" },
+        { "line": 200, "pattern": "try/catch in session-import-file — returns { error: message } on failure" },
+        { "line": 219, "pattern": "store-get — try/catch returns null on any error, RESERVED_STORE_NAMES throws" },
+        { "line": 229, "pattern": "store-set — RESERVED_STORE_NAMES throws" },
+        { "line": 233, "pattern": "store-delete — RESERVED_STORE_NAMES throws" },
+        { "line": 237, "pattern": "store-clear — RESERVED_STORE_NAMES throws" },
+        { "line": 416, "pattern": "github-oauth-callback — throws Error on CSRF mismatch (state not found)" },
+        { "line": 432, "pattern": "github-oauth-callback — throws Error if no access_token in response" },
+        { "line": 442, "pattern": "github-get-token — try/catch on decrypt, deletes token on failure, returns null" },
+        { "line": 451, "pattern": "github-set-token — throws 'Invalid token' if not string or empty" },
+        { "line": 464, "pattern": "github-api-proxy — URL validation via URL.canParse, hostname whitelist check, empty token check" }
+      ],
+      "security_patterns": [
+        "PKCE OAuth flow with code_verifier and code_challenge (lines 33-40)",
+        "safeStorage.encryptString/decryptString for token encryption (lines 42-54)",
+        "RESERVED_STORE_NAMES guards prevent renderer from accessing sensitive stores (line 56, used in lines 218-237)",
+        "ALLOWED_GITHUB_HOSTNAMES whitelist for API proxy (line 461)",
+        "CSRF state check in OAuth callback (line 416)",
+        "URL validation via URL.canParse (line 464)",
+        "User-Agent header set for GitHub API calls (line 483)"
+      ],
+      "crash_risk_factors": [
+        "Line 178-191: writeFileSync on user-chosen path — no error if file exists, no permission check",
+        "Line 207: readFileSync on user-chosen path — no error handling for binary files",
+        "Line 298-302: execFile with user-influenced app name — command injection potential, though app is from Deps not user",
+        "Line 340-345: set-zoom-factor uses event.sender.getZoomFactor() from the invoke event — correct usage",
+        "Line 408-436: OAuth callback relies on in-memory Map for PKCE state — lost on restart, no persistence",
+        "Line 463-489: Body forwarded verbatim to GitHub API — no size limit check",
+        "Potential issue: many ipcMain.handle handlers silently convert undefined to null (e.g., store line 223-224)"
+      ]
+    },
+
+    "packages/desktop/src/main/store.ts": {
+      "path": "packages/desktop/src/main/store.ts",
+      "language": "typescript",
+      "framework": "Electron (Main Process)",
+      "size_lines": 23,
+      "imports": {
+        "external": [
+          { "source": "electron-store", "symbols": ["Store"], "line": 1 },
+          { "source": "electron", "symbols": ["app"], "line": 2 }
+        ],
+        "internal": [
+          { "source": "./constants", "symbols": ["SETTINGS_STORE"], "line": 4 }
+        ]
+      },
+      "exports": {
+        "named": [
+          { "name": "getStore", "line": 12, "kind": "function" }
+        ],
+        "default": null
+      },
+      "module_state": [
+        { "name": "cache", "line": 6, "kind": "Map<string, Store>", "access": "module-level singleton cache" }
+      ],
+      "functions": [
+        {
+          "name": "getStore",
+          "line": 12,
+          "signature": "export function getStore(name = SETTINGS_STORE): Store",
+          "behavior": "Returns cached Store instance or creates new one with cwd=app.getPath('userData'), fileExtension='', accessPropertiesByDotNotation=false"
+        }
+      ],
+      "error_handling": [
+        { "line": 8, "pattern": "Comment warning: module hoisting issue — Store must not be instantiated before app.setPath('userData',...)" }
+      ],
+      "crash_risk_factors": [
+        "CRITICAL: Lines 8-11 document a subtle module hoisting bug. If getStore() or any import of this module is hoisted before app.setPath, the Store writes to the wrong directory",
+        "No validation that name is a safe filesystem string — Store constructor could receive arbitrary name",
+        "No try/catch on Store constructor — could throw if cwd path is invalid"
+      ]
+    }
+  },
+
+  "config_files": {
+    "packages/app/package.json": {
+      "path": "packages/app/package.json",
+      "name": "@opencode-ai/app",
+      "version": "1.15.12",
+      "type": "module",
+      "entry_points": {
+        ".": "./src/index.ts",
+        "./desktop-menu": "./src/desktop-menu.ts",
+        "./vite": "./vite.js",
+        "./index.css": "./src/index.css"
+      },
+      "scripts": {
+        "typecheck": "tsgo -b",
+        "test": "bun run test:unit",
+        "test:unit": "bun test --preload ./happydom.ts ./src",
+        "build": "vite build",
+        "dev": "vite"
+      },
+      "test_runner": "bun test with happy-dom preload",
+      "test_environment": "happy-dom (via happydom.ts preload script)",
+      "key_dependencies": {
+        "solid-js": "catalog:",
+        "@tanstack/solid-query": "5.91.4",
+        "@opencode-ai/ui": "workspace:*",
+        "@opencode-ai/sdk": "workspace:*",
+        "@opencode-ai/core": "workspace:*",
+        "effect": "catalog:"
+      }
+    },
+    "packages/app/tsconfig.json": {
+      "path": "packages/app/tsconfig.json",
+      "compiler": "TypeScript (bundler resolution)",
+      "jsx": "preserve (jsxImportSource: solid-js)",
+      "strict": true,
+      "paths": {
+        "@/*": ["./src/*"]
+      },
+      "composite": true,
+      "outDir": "node_modules/.ts-dist",
+      "emitDeclarationOnly": true,
+      "important_flags": {
+        "skipLibCheck": true,
+        "isolatedModules": true,
+        "moduleResolution": "bundler"
+      }
+    },
+    "packages/desktop/package.json": {
+      "path": "packages/desktop/package.json",
+      "name": "@opencode-ai/desktop",
+      "version": "1.15.12",
+      "type": "module",
+      "private": true,
+      "main": "./out/main/index.js",
+      "test_runner": null,
+      "key_dependencies": {
+        "electron-store": "^10",
+        "electron-updater": "^6",
+        "electron-window-state": "^5.0.3",
+        "drizzle-orm": "catalog:",
+        "effect": "catalog:",
+        "electron": "41.2.1 (dev)"
+      },
+      "build_tool": "electron-vite",
+      "packaging": "electron-builder"
+    },
+    "packages/desktop/tsconfig.json": {
+      "path": "packages/desktop/tsconfig.json",
+      "compiler": "TypeScript (bundler resolution)",
+      "strict": true,
+      "jsx": "preserve (jsxImportSource: solid-js)",
+      "noEmit": true,
+      "types": ["vite/client", "node", "electron"],
+      "references": [{ "path": "../app" }],
+      "important_flags": {
+        "skipLibCheck": true,
+        "isolatedModules": true,
+        "moduleResolution": "bundler"
+      }
+    }
+  },
+
+  "import_alias_summary": {
+    "@/*": {
+      "resolve_to": "packages/app/src/* (via tsconfig paths)",
+      "used_in": ["packages/app/src/components/"],
+      "aliases_seen": [
+        "@/context/language",
+        "@/context/sync",
+        "@/context/sdk",
+        "@/context/server-sync",
+        "@/hooks/use-providers",
+        "@/types/agent",
+        "@/types/mcp",
+        "@/utils/path-key"
+      ]
+    }
+  },
+
+  "cross_file_relationships": {
+    "dialog-manage-agents → dialog-edit-agent": {
+      "type": "child_component",
+      "file_a": "packages/app/src/components/dialog-manage-agents.tsx",
+      "file_b": "packages/app/src/components/dialog-edit-agent.tsx",
+      "mechanism": "import { DialogEditAgent } from './dialog-edit-agent' (line 12)",
+      "usage": "Called via dialog.show(() => <DialogEditAgent ... />) in handleCreateAgent (line 100) and handleEditAgent (line 114)"
+    },
+    "dialog-select-mcp → dialog-edit-mcp": {
+      "type": "child_component",
+      "file_a": "packages/app/src/components/dialog-select-mcp.tsx",
+      "file_b": "packages/app/src/components/dialog-edit-mcp.tsx",
+      "mechanism": "import { DialogEditMcp } from './dialog-edit-mcp' (line 17)",
+      "usage": "Rendered conditionally when editingEntry() is set (line 375)"
+    },
+    "renderer (dialog-manage-agents) → main (store)": {
+      "type": "bridge",
+      "mechanism": "window.api.getCustomAgents / setCustomAgents (Electron preload bridge)",
+      "main_handler": "ipc.ts lines 359-366 (get-desktop-custom-agents / set-desktop-custom-agents)",
+      "validation": "validateAndFilterAgents on both read and write in main process",
+      "store_backend": "electron-store instance named 'desktop-custom-agents'"
+    },
+    "renderer (dialog-select-mcp) → main (store)": {
+      "type": "bridge",
+      "mechanism": "window.api.getMcpServers / setMcpServers (Electron preload bridge)",
+      "main_handler": "ipc.ts lines 368-375 (get-desktop-mcp-servers / set-desktop-mcp-servers)",
+      "validation": "validateAndFilterMcpServers on both read and write in main process",
+      "store_backend": "electron-store instance named 'desktop-mcp-servers'"
+    },
+    "renderer (dialog-select-mcp) → SDK": {
+      "type": "sdk_client",
+      "mechanism": "sdk.client.mcp.* (SDK v2)",
+      "calls": ["disconnect", "connect", "add", "auth.authenticate", "auth.remove"]
+    },
+    "desktop main → app package": {
+      "type": "project_reference",
+      "from": "packages/desktop/tsconfig.json",
+      "to": "packages/app",
+      "references": [{ "path": "../app" }]
+    }
+  },
+
+  "boundary_summary": {
+    "renderer_process": {
+      "frameworks": ["SolidJS", "TanStack Solid Query", "Vite"],
+      "components_analyzed": ["DialogEditAgent", "DialogManageAgents", "DialogSelectMcp"],
+      "total_solid_signals": 11,
+      "total_solid_stores": 1,
+      "total_memos": 9,
+      "total_mutations": 3,
+      "bridge_calls_total": 7,
+      "sdk_calls_total": 8
+    },
+    "main_process": {
+      "frameworks": ["Electron 41.2.1", "electron-store", "electron-updater"],
+      "handlers_analyzed": {
+        "ipcMain.handle": 50,
+        "ipcMain.on": 4,
+        "webContents.send": 4
+      },
+      "total_lines": 502,
+      "validation_functions": 5,
+      "token_management_functions": 5
+    }
+  }
+}

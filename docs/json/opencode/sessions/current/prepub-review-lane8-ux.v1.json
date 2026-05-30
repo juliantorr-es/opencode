@@ -1,0 +1,97 @@
+{
+  "schema_version": "rig.relay.plan_critic_review.v1",
+  "lane": "subagent-delegation-ux",
+  "lane_index": 8,
+  "session": "ses_18924c561ffeFgV9kk6IlTCbX3",
+  "generated_at": "2026-05-29T03:15:00Z",
+  "reviewer": "critic",
+  "plan_revision_under_review": 3,
+  "plan_artifact": "docs/json/opencode/sessions/current/prefab-architect-lane8-ux.v1.json",
+  "follow_up_issues": ["FI-022", "FI-023", "FI-053", "FI-054", "FI-055"],
+  "code_state": "Phase 2 subagent-delegation-ui published at bdfcc0741. Code at this SHA has delegate type in AtOption, handleAtSelect, groupBy, and rank — but NO group headers, NO pill visual distinction, NO frecency.",
+  "seven_axis_scores": {
+    "coupling": {
+      "score": 3,
+      "note": "No new module couplings. Group header changes stay in slash-popover.tsx. Frecency would add a dependency on Persist (already imported at prompt-input.tsx:50). Two filter pipelines (composer dropdown and @mention) use different exclusion criteria — the plan correctly flags but defers unification."
+    },
+    "debuggability": {
+      "score": 3,
+      "note": "UX change, minimal debuggability impact. Frecency tracking could silently fail (never persist). Recommend console.warn on frecency init failure."
+    },
+    "convergence": {
+      "score": 4,
+      "note": "Group headers are the right v1 solution for FI-022. Aligned with Phase 2 base. Rank collision (FI-023) mitigation is critical. Frecency adds scope not justified by any follow-up issue."
+    },
+    "surface_area": {
+      "score": 4,
+      "note": "AtOption type already exported with delegate variant. PromptPopover props are internal to prompt-input/. No public API changes. Only concern: if visual pill distinction requires AgentPart type expansion (adding description field), that could affect buildRequestParts consumers."
+    },
+    "testability": {
+      "score": 2,
+      "note": "No test plan. Popover rendering requires SolidJS DOM. No existing tests for PromptPopover or useFilteredList integration. Group header rendering would be best verified via visual regression. Recommend at minimum: (a) atKey group isolation test, (b) slice-not-splitting-group test."
+    },
+    "error_clarity": {
+      "score": 4,
+      "note": "N/A for most changes. Frecency in-memory corruption would be silent. Recommend warning log on load."
+    },
+    "reversibility": {
+      "score": 4,
+      "note": "Group headers are pure rendering — revert by removing section labels. Rank change is a single number edit. Frecency adds local storage state (revert needs cleanup). Pill visual distinction touches createPill + pushAgent — revert is clean."
+    }
+  },
+  "verdict": "APPROVE WITH CONDITIONS",
+  "blocking_objections": [
+    {
+      "id": "O1",
+      "axis": "surface_area",
+      "file": "packages/app/src/components/prompt-input/slash-popover.tsx",
+      "line": 70,
+      "severity": "blocking",
+      "finding": "Group headers require structural changes to PromptPopover. The current flat `For each={props.atFlat.slice(0, 10)}` cannot render section labels between groups. The `slice(0, 10)` must be applied AFTER grouping, or a group header may appear with zero items below it."
+    },
+    {
+      "id": "O2",
+      "axis": "convergence",
+      "file": "packages/app/src/components/prompt-input.tsx",
+      "line": 702,
+      "severity": "blocking",
+      "finding": "Visual distinction between agent and delegate pills (FI-054) is not addressed. createPill sets data-type='agent' for ALL agent selections. handleAtSelect converts both agent and delegate to {type:'agent'} — delegate origin is lost at insertion time. pushAgent cannot distinguish delegates when parsing the DOM."
+    },
+    {
+      "id": "O3",
+      "axis": "coupling",
+      "file": "packages/app/src/components/prompt-input.tsx",
+      "line": 637,
+      "severity": "blocking",
+      "finding": "Rank collision between delegate and agent groups (FI-023). Both use rank 0, causing non-deterministic interleaving depending on insertion order."
+    }
+  ],
+  "conditions_for_approval": [
+    "C1: Specify the grouped rendering approach in PromptPopover — either pass grouped data from parent or compute group boundaries from the flat list. Verify slice(0,10) does not cut between groups.",
+    "C2: Address visual distinction for delegate pills (FI-054) — either carry delegate origin through createPill/pushAgent with data-subagent, or explicitly document in-plan that identical pills are intentional.",
+    "C3: Fix rank collision (FI-023) — either merge delegate+agent into one 'people' group (rank 0 with same group key), or assign delegate rank 0.5.",
+    "C4: Scope frecency explicitly — either defer to follow-up or specify storage key + cleanup strategy."
+  ],
+  "follow_up_issues_to_file": [
+    {
+      "id": "FU-1",
+      "title": "Unify agent filter pipelines (composer dropdown vs @mention)",
+      "description": "Composer dropdown excludes mode==='primary'. @mention excludes mode==='subagent'. Different exclusion criteria cause subagent-mode agents to appear in one surface but not the other inconsistently. See prefab-architect-lane8-ux cross-session insight.",
+      "recommended_lane": "cross-cutting-agent-config"
+    },
+    {
+      "id": "FU-2",
+      "title": "Delegate description persistence in AgentPart type",
+      "description": "FI-053: Delegate descriptions shown in popover are lost on commit. If users rely on descriptions to identify which subagent they selected, this is a UX gap. Add optional description to AgentPart type or document as intentional.",
+      "recommended_lane": "subagent-delegation-ux"
+    },
+    {
+      "id": "FU-3",
+      "title": "Frecency for subagent usage ranking",
+      "description": "Currently no follow-up issue requires frecency. If deemed valuable, create a separate lane with: storage key specification, usage increment hook, sort override in agentList, and cleanup/revert strategy.",
+      "recommended_lane": "subagent-frecency-ranking"
+    }
+  ],
+  "subagents_deployed": [],
+  "comment_ledger_entries": 7
+}

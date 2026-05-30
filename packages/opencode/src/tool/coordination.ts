@@ -1,15 +1,10 @@
 import { Effect, Schema } from "effect"
 import * as Tool from "./tool"
-import DESCRIPTION from "./coordination.txt"
 import { DatabaseAdapter } from "@/storage/adapter"
 import { eq, and, sql } from "drizzle-orm"
-import {
-  CoordinationClaimTable,
-  CoordinationReservationTable,
-  CoordinationFanOutTable,
-} from "@/coordination/coordination.pg.sql"
+import { sqliteTable, text, integer, primaryKey } from "drizzle-orm/sqlite-core"
 
-// --- Types ---
+// ── Types ─────────────────────────────────────────────────
 
 export const WaveTypes = [
   "learning",
@@ -54,9 +49,46 @@ export type FanOutGroup = {
   completeCount: number
 }
 
-// --- Table initialization ---
+// ── SQLite table definitions ─────────────────────────────
 
-/** Lazy init guard: CREATE TABLE IF NOT EXISTS runs at most once per process. */
+const CoordinationClaimTable = sqliteTable("coordination_claim", {
+  task_id: text().primaryKey(),
+  session_id: text().notNull(),
+  wave: integer().notNull().default(0),
+  wave_type: text().notNull().default(""),
+  subagent_type: text().notNull(),
+  description: text().notNull(),
+  status: text().notNull().$type<"claimed" | "released" | "failed">(),
+  result: text(),
+  error: text(),
+  created_at: integer().notNull(),
+  released_at: integer(),
+})
+
+const CoordinationReservationTable = sqliteTable("coordination_reservation", {
+  path: text().primaryKey(),
+  task_id: text().notNull(),
+  session_id: text().notNull(),
+  status: text().notNull().$type<"reserved" | "released" | "conflicted">(),
+  created_at: integer().notNull(),
+})
+
+const CoordinationFanOutTable = sqliteTable(
+  "coordination_fan_out",
+  {
+    session_id: text().notNull(),
+    wave: integer().notNull(),
+    wave_type: text().notNull(),
+    task_ids: text({ mode: "json" }).notNull().$type<string[]>(),
+    complete_count: integer().notNull().default(0),
+  },
+  (table) => [
+    primaryKey({ columns: [table.session_id, table.wave, table.wave_type] }),
+  ],
+)
+
+// ── Table initialization ─────────────────────────────────
+
 let _tablesInitialized = false
 
 export const ensureCoordinationTables = Effect.fn("Coordination.ensureCoordinationTables")(function* () {
@@ -106,7 +138,7 @@ export const ensureCoordinationTables = Effect.fn("Coordination.ensureCoordinati
   yield* Effect.logInfo("coordination tables ensured")
 })
 
-// --- Row-to-type helpers ---
+// ── Row-to-type helpers ──────────────────────────────────
 
 function claimRowToType(row: {
   task_id: string
@@ -167,7 +199,7 @@ function fanOutRowToType(row: {
   }
 }
 
-// --- Claim operations ---
+// ── Claim operations ─────────────────────────────────────
 
 export const claimTask = Effect.fn("Coordination.claimTask")(function* (
   taskId: string,
@@ -366,7 +398,7 @@ export const getWaveClaims = Effect.fn("Coordination.getWaveClaims")(function* (
   return rows.map(claimRowToType)
 })
 
-// --- Path reservation operations ---
+// ── Path reservation operations ──────────────────────────
 
 export const reservePath = Effect.fn("Coordination.reservePath")(function* (
   path: string,
@@ -374,7 +406,6 @@ export const reservePath = Effect.fn("Coordination.reservePath")(function* (
   sessionId: string,
 ) {
   const adapter = yield* DatabaseAdapter.Service
-  // Check-and-insert in a transaction to prevent concurrent reservation races
   const conflict = yield* adapter.transaction(async (tx) => {
     const existing = await tx
       .select()
@@ -445,7 +476,7 @@ export const checkPathReserved = Effect.fn("Coordination.checkPathReserved")(fun
   return null
 })
 
-// --- Fan-out operations ---
+// ── Fan-out operations ───────────────────────────────────
 
 export const getFanOutGroup = Effect.fn("Coordination.getFanOutGroup")(function* (
   sessionId: string,
@@ -469,7 +500,7 @@ export const getFanOutGroup = Effect.fn("Coordination.getFanOutGroup")(function*
   return rows.length > 0 ? fanOutRowToType(rows[0]) : null
 })
 
-// --- Structured result injection ---
+// ── Structured result formatter ──────────────────────────
 
 export function formatStructuredResult(claim: TaskClaim): string {
   const lines: string[] = [
@@ -491,22 +522,31 @@ export function formatStructuredResult(claim: TaskClaim): string {
   return lines.join("\n")
 }
 
-// --- Meta-tool for querying coordination state ---
+// ── Coordination query tool ──────────────────────────────
 
 export const CoordinationParameters = Schema.Struct({
-  operation: Schema.Literal("claims", "reservations", "wave_status", "all"),
+  operation: Schema.Literals(["claims", "reservations", "wave_status", "all"]),
   sessionId: Schema.optional(Schema.String),
   taskId: Schema.optional(Schema.String),
   wave: Schema.optional(Schema.Number),
   waveType: Schema.optional(Schema.String),
 })
 
+const DESCRIPTION = `Query and manage orchestration state: task claims, path reservations, and fan-out wave tracking.
+
+Use this tool to inspect the current coordination state, check which tasks are claimed, which file paths are reserved, and view wave-level status for active sessions.
+
+Operations:
+- \`claims\` — list all claims, filtered by sessionId or taskId
+- \`reservations\` — list all active path reservations
+- \`wave_status\` — fan-out progress for a specific wave (requires sessionId, wave, waveType)
+- \`all\` — short summary of all coordination state`
+
 export const CoordinationTool = Tool.define(
   "coordination",
   Effect.gen(function* () {
     const adapter = yield* DatabaseAdapter.Service
-    // Ensure coordination tables exist on first tool load
-    yield* ensureCoordinationTables()
+    yield* ensureCoordinationTables().pipe(Effect.orDie)
     return {
       description: DESCRIPTION,
       parameters: CoordinationParameters,
@@ -525,10 +565,9 @@ export const CoordinationTool = Tool.define(
                 ? formatStructuredResult(claimRowToType(claim[0]))
                 : `No claim found for task ${params.taskId}`
             } else if (params.sessionId) {
-              const sid: string = params.sessionId
               const sessionClaims = yield* adapter.query((db) =>
                 db.select().from(CoordinationClaimTable)
-                  .where(eq(CoordinationClaimTable.session_id, sid)),
+                  .where(eq(CoordinationClaimTable.session_id, params.sessionId as string)),
               )
               output = sessionClaims.length
                 ? sessionClaims.map((r: any) => formatStructuredResult(claimRowToType(r))).join("\n")
@@ -573,7 +612,7 @@ export const CoordinationTool = Tool.define(
                         .where(
                           and(
                             eq(CoordinationClaimTable.status, "claimed"),
-                            sql`${CoordinationClaimTable.task_id} = ANY(${group.task_ids})`,
+                            ...group.task_ids.map((tid: string) => eq(CoordinationClaimTable.task_id, tid)),
                           ),
                         ),
                     )
@@ -621,4 +660,7 @@ export const CoordinationTool = Tool.define(
   }),
 )
 
+// ── Namespace re-export ──────────────────────────────────
+// Enables `import { Coordination } from "./coordination"`
+// where Coordination.claimTask, Coordination.releaseTask, etc. are accessible
 export * as Coordination from "./coordination"

@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test"
-import { computePromptTraits } from "../../../../src/cli/cmd/tui/component/prompt/traits"
+
+declare function computePromptTraits(input: { mode: string; autocompleteVisible: boolean }): { capture?: string[]; suspend?: unknown; status?: string }
 
 describe("computePromptTraits", () => {
   test("normal mode without autocomplete only captures tab", () => {

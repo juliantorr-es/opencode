@@ -1,0 +1,89 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "docs/schemas/rig.relay.red_team_approval.v1.schema.json",
+  "title": "Red Team Approval",
+  "description": "Approval artifact from the red-team review cycle, recording the attack surface, blocking findings, and surviving weakness after adversarial testing.",
+  "type": "object",
+  "required": [
+    "candidate_packet_digest",
+    "candidate_boundary_identifier",
+    "plan_revision",
+    "reviewer_set",
+    "decision",
+    "decision_rationale",
+    "attack_surface",
+    "blocking_findings",
+    "surviving_weakness",
+    "issued_at"
+  ],
+  "properties": {
+    "candidate_packet_digest": {
+      "type": "string",
+      "description": "SHA256 digest of the candidate packet under review"
+    },
+    "candidate_boundary_identifier": {
+      "type": "string",
+      "description": "Identifier for the candidate boundary under red-team review"
+    },
+    "plan_revision": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Revision number of the plan being reviewed"
+    },
+    "reviewer_set": {
+      "type": "array",
+      "description": "List of red-team reviewers and their dispositions",
+      "items": {
+        "type": "string"
+      }
+    },
+    "decision": {
+      "type": "string",
+      "description": "Red-team approval decision",
+      "enum": ["approved", "repair_required", "blocked"]
+    },
+    "decision_rationale": {
+      "type": "string",
+      "description": "Narrative rationale for the decision"
+    },
+    "attack_surface": {
+      "type": "array",
+      "description": "Identified attack surface areas examined during review",
+      "items": {
+        "type": "string"
+      }
+    },
+    "blocking_findings": {
+      "type": "array",
+      "description": "Findings that block approval and require repair",
+      "items": {
+        "type": "object",
+        "required": ["id", "description", "severity"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique identifier for the finding"
+          },
+          "description": {
+            "type": "string",
+            "description": "Description of the finding"
+          },
+          "severity": {
+            "type": "string",
+            "description": "Severity level of the finding",
+            "enum": ["critical", "high", "medium", "low"]
+          }
+        }
+      }
+    },
+    "surviving_weakness": {
+      "type": "string",
+      "description": "Strongest surviving weakness after red-team attack"
+    },
+    "issued_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp when the approval was issued"
+    }
+  }
+}

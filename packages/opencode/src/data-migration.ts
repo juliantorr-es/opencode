@@ -47,7 +47,7 @@ export const layer = Layer.effect(
               yield* Effect.sync(() =>
                 Database.transaction((db) => {
                   const usageBySession = new Map<SessionID, Usage>(
-                    sessions.map((session) => [
+                    sessions.map((session: typeof SessionTable.$inferSelect) => [
                       session.id,
                       { cost: 0, tokens: { input: 0, output: 0, reasoning: 0, cache: { read: 0, write: 0 } } },
                     ]),
@@ -68,7 +68,7 @@ export const layer = Layer.effect(
                       and(
                         inArray(
                           MessageTable.session_id,
-                          sessions.map((session) => session.id),
+                          sessions.map((session: typeof SessionTable.$inferSelect) => session.id),
                         ),
                         sql`json_extract(${MessageTable.data}, '$.role') = 'assistant'`,
                       ),

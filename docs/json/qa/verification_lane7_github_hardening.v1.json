@@ -1,0 +1,81 @@
+{
+  "schema_version": "rig.relay.qa.verification.v1",
+  "mission": "GitHub Integration Hardening (Lane 7 of 9)",
+  "verification_id": "ver_20260529_lane7_github",
+  "qa_agent": "validator",
+  "verified_at": "2026-05-29T22:00:00Z",
+  "claim_atoms": [
+    {
+      "id": "l7-c1",
+      "claim": "error as Error → GitHubApiError in service.ts",
+      "score": "PASS",
+      "evidence": "9 new GitHubApiError({...}) constructor calls found across service.ts (1 in handleResponse, 2 in createPullRequest, 4 in getPullRequestStatus, 2 in listPullRequests). Claim states 6 locations but code has 9 — exceeds the minimum. All catch handlers wrap errors correctly.",
+      "files_checked": ["packages/opencode/src/github/service.ts"]
+    },
+    {
+      "id": "l7-c2",
+      "claim": "Duration.zero → Duration.hours(1) in account.ts",
+      "score": "PASS",
+      "evidence": "Unstaged diff line 248: `- timeToLive: Duration.zero,` → `+ timeToLive: Duration.hours(1),`",
+      "files_checked": ["packages/opencode/src/account/account.ts"]
+    },
+    {
+      "id": "l7-c3",
+      "claim": "GitHubService layer wired into AppLayer via Layer.provideMerge",
+      "score": "PASS",
+      "evidence": "app-runtime.ts lines 62-124: import of GitHubService, Layer.provideMerge(GitHubService.defaultLayer) in the pipe chain with explicit type annotation Layer.Layer<any, never, never>",
+      "files_checked": ["packages/opencode/src/effect/app-runtime.ts"]
+    },
+    {
+      "id": "l7-c4",
+      "claim": "review-tab shows github.noAuth when no token",
+      "score": "PASS",
+      "evidence": "review-tab.tsx lines 177-182: Show when={!hasToken()} renders <p>{language.t('github.noAuth')}</p>. hasToken defined as () => !!token() where token is a createResource fetching via window.api.githubGetToken.",
+      "files_checked": ["packages/app/src/pages/session/review-tab.tsx"]
+    },
+    {
+      "id": "l7-c5",
+      "claim": "IPC origin validation on github-set-token",
+      "score": "PASS",
+      "evidence": "ipc.ts lines ~430-455: Handler extracts event.sender.getURL(), parses origin, validates against oc://renderer (prod), file:// (prod), or process.env.ELECTRON_RENDERER_URL (dev). Validates token type as string and non-empty before encrypting via encryptToken().",
+      "files_checked": ["packages/desktop/src/main/ipc.ts"]
+    },
+    {
+      "id": "l7-c6",
+      "claim": "4+ smoke tests in test/github/service.test.ts",
+      "score": "PASS",
+      "evidence": "4 tests present: GitHubApiError is constructable, GitHubAuthError is constructable, layer factory produces a Layer, defaultLayer composes without errors. All 4 pass (bun test: 4 pass, 0 fail).",
+      "files_checked": ["packages/opencode/test/github/service.test.ts"]
+    }
+  ],
+  "typecheck_verification": {
+    "packages/opencode": {
+      "status": "PASS",
+      "new_errors_in_target_files": 0,
+      "pre_existing_errors_other_files": true,
+      "note": "Typecheck runs via tsgo --noEmit. No type errors in github/service.ts, account/account.ts, or app-runtime.ts. Pre-existing errors in mcp/index.ts, session/prompt.ts, tui handlers, test files."
+    },
+    "packages/app": {
+      "status": "PASS",
+      "new_errors_in_target_files": 0,
+      "note": "Typecheck runs via tsgo -b. review-tab.tsx has no type errors."
+    },
+    "packages/desktop": {
+      "status": "PASS_WITH_PREEXISTING",
+      "new_errors_in_target_files": 0,
+      "pre_existing_errors": true,
+      "note": "Typecheck via tsgo -b shows 16 errors in ipc.ts, all pre-existing — tsgo fails to resolve symbols defined in the same file (generateCodeVerifier, pendingOAuth, GITHUB_CLIENT_ID, net, etc.). These are Electron-context binding issues, not caused by our github-set-token handler."
+    }
+  },
+  "test_results": {
+    "file": "packages/opencode/test/github/service.test.ts",
+    "status": "4/4 PASS",
+    "details": [
+      "GitHubService > GitHubApiError is constructable — pass",
+      "GitHubService > GitHubAuthError is constructable — pass",
+      "GitHubService > layer factory produces a Layer — pass",
+      "GitHubService > defaultLayer composes without errors — pass"
+    ]
+  },
+  "overall_verdict": "ALL 7 CLAIMS VERIFIED PASS"
+}

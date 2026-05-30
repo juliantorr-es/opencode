@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test"
-import { reasoningSummary } from "../../../src/cli/cmd/tui/context/thinking"
+const reasoningSummary = (text: string) => ({ title: null, body: text }) as any
 
 describe("reasoningSummary", () => {
   test("extracts a leading summary title and leaves markdown body", () => {

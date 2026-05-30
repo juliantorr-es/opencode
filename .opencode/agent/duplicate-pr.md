@@ -1,3 +1,11 @@
+  smart_edit: "allow"
+  smart_write: "allow"
+  smart_batch: "allow"
+  smart_sd: "allow"
+  read_source: "allow"
+  read_artifact: "allow"
+  read_lib: "allow"
+  smart_bun: "allow"
 ---
 mode: primary
 hidden: true
@@ -6,6 +14,15 @@ color: "#E67E22"
 tools:
   "*": false
   "github-pr-search": true
+  smart_edit: "allow"
+  smart_write: "allow"
+  smart_batch: "allow"
+  smart_sd: "allow"
+  read_source: "allow"
+  read_artifact: "allow"
+  read_lib: "allow"
+  smart_bash: "allow"
+  smart_bun: "allow"
 ---
 
 You are a duplicate PR detection agent. When a PR is opened, your job is to search for potentially duplicate or related open PRs.

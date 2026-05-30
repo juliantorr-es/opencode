@@ -1,4 +1,26 @@
-import { TuiEvent } from "@/cli/cmd/tui/event"
+const TuiEvent = {
+  PromptAppend: {
+    type: "prompt.append" as const,
+    properties: Schema.Struct({ text: Schema.String }),
+  },
+  CommandExecute: {
+    type: "command.execute" as const,
+    properties: Schema.Struct({ command: Schema.String }),
+  },
+  ToastShow: {
+    type: "toast.show" as const,
+    properties: Schema.Struct({
+      title: Schema.String,
+      message: Schema.String,
+      variant: Schema.String,
+      duration: Schema.Number,
+    }),
+  },
+  SessionSelect: {
+    type: "session.select" as const,
+    properties: Schema.Struct({ sessionID: Schema.String }),
+  },
+}
 import { TuiRequest as TuiRequestPayload } from "@/server/shared/tui-control"
 import { Schema } from "effect"
 import { HttpApi, HttpApiEndpoint, HttpApiError, HttpApiGroup, OpenApi } from "effect/unstable/httpapi"

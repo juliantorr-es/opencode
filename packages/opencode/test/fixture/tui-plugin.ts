@@ -1,7 +1,75 @@
 import { createOpencodeClient } from "@opencode-ai/sdk/v2"
 import { RGBA, type CliRenderer } from "@opentui/core"
-import type { HostPluginApi } from "../../src/cli/cmd/tui/plugin/slots"
 import { createTuiResolvedConfig } from "./tui-runtime"
+
+type HostPluginApi = {
+  app: { version: string }
+  attention: {
+    notify(input: { title?: string; message: string; sound?: boolean | { when?: string; name?: string; volume?: number }; notification?: boolean | { when?: string } }): Promise<{ ok: boolean; notification: boolean; sound: boolean; skipped?: string }>
+    soundboard: {
+      registerPack(pack: { id: string; name?: string; sounds: Record<string, string> }): () => void
+      activate(id: string, options?: { persist?: boolean }): boolean
+      current(): string
+      list(): { id: string; name?: string; active: boolean; builtin: boolean }[]
+    }
+  }
+  keys: { formatSequence(): string; formatBindings(): undefined }
+  client: unknown
+  event: { on(): () => void }
+  renderer: CliRenderer
+  slots: { register(): string }
+  plugins: { list(): unknown[]; activate(): Promise<boolean>; deactivate(): Promise<boolean>; add(): Promise<boolean>; install(): Promise<{ ok: boolean; message: string }> }
+  lifecycle: { signal: AbortSignal; onDispose(): () => void }
+  keymap: {
+    acquireResource(key: symbol, setup: () => () => void): () => void
+    registerLayer(): () => void
+    runCommand(): { ok: boolean }
+  }
+  mode: { current(): string; push(): () => void }
+  route: { register(): () => void; navigate(): void; current: { name: string } }
+  ui: {
+    Dialog: () => null
+    DialogAlert: () => null
+    DialogConfirm: () => null
+    DialogPrompt: () => null
+    DialogSelect: () => null
+    Slot: () => null
+    Prompt: () => null
+    toast(): void
+    dialog: { replace(): void; clear(): void; setSize(size: string): void; size: string; depth: number; open: boolean }
+  }
+  tuiConfig: Record<string, unknown>
+  kv: { get<Value = unknown>(name: string, fallback?: Value): Value; set(name: string, value: unknown): void; ready: boolean }
+  state: {
+    ready: boolean
+    config: Record<string, unknown>
+    provider: unknown[]
+    path: { home: string; state: string; config: string; worktree: string; directory: string }
+    vcs: unknown
+    session: {
+      count(): number
+      get(id: string): unknown
+      diff(): unknown[]
+      todo(): unknown[]
+      messages(): unknown[]
+      status(): unknown
+      permission(): unknown[]
+      question(): unknown[]
+    }
+    part(): unknown[]
+    lsp(): unknown[]
+    mcp(): unknown[]
+  }
+  theme: {
+    current: Record<string, unknown>
+    selected: string
+    has(name: string): boolean
+    set(name: string): boolean
+    install(file: string): Promise<unknown>
+    mode(): string
+    ready: boolean
+  }
+}
 
 type Count = {
   event_add: number
@@ -272,7 +340,7 @@ export function createTuiPluginApi(opts: Opts = {}): HostPluginApi {
           depth = 0
           size = "medium"
         },
-        setSize: (next) => {
+        setSize: (next: "medium" | "large" | "xlarge") => {
           size = next
         },
         get size() {

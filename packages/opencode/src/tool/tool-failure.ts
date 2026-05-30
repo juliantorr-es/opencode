@@ -6,8 +6,8 @@ import path from "path"
 import DESCRIPTION from "./tool-failure.txt"
 
 const Parameters = Schema.Struct({
-  tool_name: Schema.String.annotations({ description: "Name of the tool that failed" }),
-  error_message: Schema.String.annotations({ description: "Error message from the tool" }),
+  tool_name: Schema.String.annotate({ description: "Name of the tool that failed" }),
+  error_message: Schema.String.annotate({ description: "Error message from the tool" }),
   args_used: Schema.optional(Schema.String).annotate({
     description: "JSON of the arguments that were passed",
   }),

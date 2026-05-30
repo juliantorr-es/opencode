@@ -1,0 +1,61 @@
+{
+  "schema_version": "v1",
+  "report_id": "session-2026-05-29T21-49-02-119Z.v1",
+  "session_id": "ses_18a53812cffeLNpJhsNaOx2SIW",
+  "generated_at": "2026-05-29T21:49:02.163617+00:00",
+  "session_summary": "# Real-Time Session Visualization — Design Assessment\n\n## Verdict: **Yes, absolutely possible. ~95% of the backend is already built.**\n\nThis session conducted deep-dive explorations into the event pipeline, IPC architecture, and UI component library to produce a comprehensive architectural design. Three specialized subagents mapped every relevant file across 4 packages.\n\n## What Already Exists (The 95%)\n\n### Two Production SSE Endpoints\n- **`GET /event`** — streams ALL Bus events as SSE (text/event-stream) with 10s heartbeat\n- **`GET /global/event`** — cross-instance event stream, same format\n- Both use Effect Sse.encode pipeline, SDK has full client with reconnection\n\n### 40+ Bus Events (already streaming)\nsession.status, message.part.delta, file.edited, permission.asked, pty.created, tool events, lsp diagnostics, workspace status, question lifecycle... All currently available via the SSE stream.\n\n### 27+ EventV2 Execution Events (not yet in SSE, but exists)\ntool.called, tool.progress, tool.success, tool.failed, text.delta, reasoning.delta, shell.started/ended, compaction, retries... These carry the rich per-session execution detail.\n\n### Renderer Already Consumes SSE\nServerSDKProvider in `packages/app/src/context/server-sdk.tsx` already connects to `/global/event` and delivers typed events through a reactive emitter.\n\n### Panel Infrastructure is Mature\n- SessionSidePanel (tabbed right panel with animated width transitions)\n- ResizeHandle (drag-to-resize with collapse)\n- StatusPopover (colored dot + popover body for real-time status)\n- CSS animations throughout (no motion library needed — pure @keyframes)\n\n## What Needs Building (The 5%)\n\n### Backend — Coordination Bus Events (1-2 days)\n4 new Bus event types: task_status, path_claimed, session_heartbeat, activity_logged\nWire publish calls in existing coordination tools.\n\n### Renderer — Viz Components (4-7 days)\n- SessionVizProvider context (filters SSE events for viz state)\n- CodebaseMap (SVG package tree with CSS-animated pulse indicators)\n- ActivityFeed (capped DOM list, event types with icons)\n- SessionBadge (titlebar status indicators)\n- Integration into SessionSidePanel (new \"Viz\" tab) or as floating window\n\n## Design Artifact\nFull architecture and implementation plan written to: `docs/json/opencode/plans/desktop-session-viz.v1.json`\n\n## Two Topology Options\n\n| Option | Pros | Cons |\n|---|---|---|\n| **In-window tab** (in SessionSidePanel) | Shares SSE connection, simplest, no window management | Constrained to existing layout |\n| **Floating BrowserWindow** (loading-window pattern) | Fully independent, can live on 2nd monitor | Needs own SolidJS entry + SSE subscription |\n\n## Total Effort: ~1-2 weeks for full implementation",
+  "next_steps": "## Recommended Next Session\n\nStart with Phase 1 — Event Pipeline: Define the 4 coordination Bus event types and wire the publish points. This is the gating dependency for everything else and has zero risk (no existing code modified).\n\nThe full plan is at `docs/json/opencode/plans/desktop-session-viz.v1.json` with implementation phases, file-by-file changes, and dependency breakdown.",
+  "waves_completed": [
+    "design"
+  ],
+  "wave_details": {
+    "design": {
+      "started_at": "2026-05-29T21:48:51.240694+00:00",
+      "completed_at": "2026-05-29T21:48:51.240694+00:00",
+      "findings": [
+        {
+          "source": "map-renderer-ipc",
+          "summary": "Renderer already consumes /global/event SSE stream via ServerSDKProvider. 6 main→renderer push channels exist. Two topology options: in-window tab in SessionSidePanel or separate BrowserWindow.",
+          "confidence": 0.95,
+          "relevance_profiles": [
+            "execution",
+            "ux"
+          ],
+          "wave": "design"
+        },
+        {
+          "source": "map-event-pipeline",
+          "summary": "Two SSE endpoints exist (/event, /global/event). 40+ Bus event types. EventV2 has 27+ execution detail events (tool.called, text.delta, reasoning.delta). Coordination is DB-only — needs Bus event definitions added.",
+          "confidence": 0.95,
+          "relevance_profiles": [
+            "architecture",
+            "execution"
+          ],
+          "wave": "design"
+        },
+        {
+          "source": "map-ui-patterns",
+          "summary": "No motion library — all animations are CSS @keyframes. No graph viz deps. No virtual list. SessionSidePanel tabbed panel + ResizeHandle + StatusPopover are the patterns to extend. SVG DOM for graph.",
+          "confidence": 0.95,
+          "relevance_profiles": [
+            "ux",
+            "execution"
+          ],
+          "wave": "design"
+        }
+      ],
+      "artifacts": [
+        "docs/json/opencode/plans/desktop-session-viz.v1.json"
+      ]
+    }
+  },
+  "total_findings": 3,
+  "findings_by_profile": {
+    "execution": 3,
+    "ux": 2,
+    "architecture": 1
+  },
+  "artifacts_consumed": [
+    "docs/json/opencode/plans/desktop-session-viz.v1.json"
+  ]
+}

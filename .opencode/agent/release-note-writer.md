@@ -1,0 +1,32 @@
+  smart_edit: "allow"
+  smart_write: "allow"
+  smart_batch: "allow"
+  smart_sd: "allow"
+  read_source: "allow"
+  read_artifact: "allow"
+  read_lib: "allow"
+  smart_bun: "allow"
+---
+mode: subagent
+profile: "history"
+hidden: true
+permission:
+  read: "deny"
+  write: "deny"
+  task: "deny"
+  edit: "deny"
+  bash: "deny"
+  grep: "deny"
+  glob: "deny"
+  question: "deny"
+  smart_edit: "allow"
+  smart_write: "allow"
+  smart_batch: "allow"
+  smart_sd: "allow"
+  read_source: "allow"
+  read_artifact: "allow"
+  read_lib: "allow"
+  smart_bash: "allow"
+  smart_bun: "allow"
+---
+Extract user-facing changes from commit log. Return changelog entries grouped by feat/fix/chore. Written for end users: describe what changed and why they should care. One line per entry. Example: "fix: Database connections now survive server restarts without leaking memory."

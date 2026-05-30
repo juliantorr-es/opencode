@@ -1,0 +1,471 @@
+{
+  "artifact": {
+    "schema": "rig.relay.cartography.v1",
+    "lane": "GitHub Integration + PR Management",
+    "generated_at": "2026-05-30T01:00:00Z",
+    "updated_at": "2026-05-30T01:02:00Z",
+    "session_id": "ses_current",
+    "profiles": ["cartography", "architecture"],
+    "pre_existing_findings": [
+      {
+        "finding_id": "ses_18a5-20260529-debt-ipc",
+        "summary": "[typescript] Electron desktop IPC has compile-time TypeScript types only — no runtime schema validation at the preload boundary",
+        "file": "packages/desktop/src/preload/types.ts",
+        "confidence": 0.9
+      },
+      {
+        "finding_id": "ses_18a5-20260529-debt-tests",
+        "summary": "[typescript] Desktop package has only 2 test files for 29 source modules — no IPC handler tests",
+        "file": "packages/desktop/test/",
+        "confidence": 0.9
+      },
+      {
+        "finding_id": "ses_18a5-20260529-debt-security",
+        "summary": "[typescript] Desktop Electron app has no main-process uncaughtException/unhandledRejection handler",
+        "file": "packages/desktop/src/main/index.ts",
+        "confidence": 0.9
+      }
+    ]
+  },
+  "surface_map": {
+    "entry_points": {
+      "github_remote_parsing": {
+        "primary": "packages/opencode/src/util/repository.ts:213",
+        "function": "parseGitHubRemote() — parses git URLs into {owner, repo}",
+        "zero_production_callers": "Critical finding: parseGitHubRemote() has zero production callers. Only referenced in a stale test (github-remote.test.ts:2) that imports from a non-existent module path '../../src/cli/cmd/github'"
+      },
+      "provider_api_surface": {
+        "schema": "packages/opencode/src/provider/schema.ts",
+        "note": "Contains ProviderID branded type with githubCopilot and gitlab as well-known providers. No GitHub API client exists yet."
+      },
+      "repo_clone_tool": {
+        "file": "packages/opencode/src/tool/repo_clone.ts",
+        "note": "Existing tool for cloning GitHub repos via RepositoryCache — closest existing GitHub API integration point"
+      },
+      "github_copilot_plugin": {
+        "file": "packages/opencode/src/plugin/github-copilot/copilot.ts",
+        "note": "395 lines — handles Copilot auth (device code flow, OAuth token exchange), model URL rewriting, enterprise domain support. Existing GitHub auth flow."
+      },
+      "cloudflare_github_app": {
+        "file": "packages/function/src/api.ts",
+        "line": 116,
+        "note": "Hono-based Cloudflare Worker with GitHub App token exchange endpoints using @octokit/rest and @octokit/auth-app. Endpoints: POST /exchange_github_app_token, GET /get_github_app_installation"
+      },
+      "session_pages": {
+        "review_tab": "packages/app/src/pages/session/review-tab.tsx",
+        "message_timeline": "packages/app/src/pages/session/message-timeline.tsx",
+        "composer": "packages/app/src/pages/session/composer/index.ts",
+        "note": "No PR-related UI exists in any session page. SessionReviewTab shows file diffs only."
+      },
+      "desktop_electron": {
+        "ipc_handlers": "packages/desktop/src/main/ipc.ts",
+        "preload_bridge": "packages/desktop/src/preload/index.ts",
+        "preload_types": "packages/desktop/src/preload/types.ts"
+      }
+    },
+    "import_aliases": {
+      "@/*": "packages/opencode/src/*",
+      "@opencode-ai/core/*": "packages/opencode-core/src/*",
+      "@opencode-ai/sdk/*": "packages/sdk/js/src/*",
+      "@opencode-ai/app/*": "packages/app/src/*",
+      "@opencode-ai/ui/*": "packages/ui/src/*",
+      "@opencode-ai/plugin": "packages/plugin/src/*"
+    },
+    "package_boundaries": [
+      { "name": "@opencode-ai/core", "path": "packages/opencode/", "entry": "src/index.ts" },
+      { "name": "@opencode-ai/app", "path": "packages/app/", "entry": "src/index.ts" },
+      { "name": "@opencode-ai/sdk", "path": "packages/sdk/js/", "entry": "src/index.ts" },
+      { "name": "@opencode-ai/ui", "path": "packages/ui/", "entry": "src/index.ts" },
+      { "name": "@opencode-ai/plugin", "path": "packages/plugin/", "entry": "src/index.ts" },
+      { "name": "desktop", "path": "packages/desktop/", "entry": "src/main/index.ts" },
+      { "name": "function", "path": "packages/function/", "entry": "src/api.ts" }
+    ],
+    "framework_versions": {
+      "solidjs": "solid-js (used throughout app package)",
+      "solid-router": "@solidjs/router",
+      "tanstack_query": "@tanstack/solid-query",
+      "effect": "effect (Effect + Schema + Layer)",
+      "electron": "electron (desktop package)"
+    },
+    "test_infrastructure": {
+      "runner": "bun:test",
+      "config": "packages/opencode/package.json",
+      "github_test_file": "packages/opencode/test/cli/github-remote.test.ts (91 lines, 12 test cases, all passing — parses various git URL formats to {owner, repo})",
+      "stale_import_warning": "Test imports parseGitHubRemote from '../../src/cli/cmd/github' which does not exist. The function lives in '../../src/util/repository'. Test is likely broken.",
+      "test_gap": "No integration tests for GitHub API, no mock server, no OAuth flow tests"
+    }
+  },
+  "existing_types": {
+    "RemoteReference": {
+      "file": "packages/opencode/src/util/repository.ts:16",
+      "definition": "BaseReference & { protocol?: string }",
+      "fields": "host, path, segments, owner?, repo, remote, label, protocol?",
+      "used_by": [
+        "packages/opencode/src/reference/reference.ts:9 — imports and uses RemoteReference",
+        "packages/opencode/src/reference/repository-cache.ts:15 — imports RemoteReference type",
+        "packages/opencode/src/tool/repo_clone.ts — uses reference throughout"
+      ]
+    },
+    "FileReference": {
+      "file": "packages/opencode/src/util/repository.ts:20",
+      "definition": "BaseReference & { host: 'file', protocol: 'file:' }"
+    },
+    "RepositoryError": {
+      "file": "packages/opencode/src/util/repository.ts:51",
+      "union_of": [
+        "InvalidRepositoryReferenceError (Schema.TaggedErrorClass)",
+        "UnsupportedLocalRepositoryError (Schema.TaggedErrorClass)",
+        "InvalidRepositoryBranchError (Schema.TaggedErrorClass)"
+      ]
+    },
+    "RepositoryCache types": {
+      "file": "packages/opencode/src/reference/repository-cache.ts",
+      "errors": [
+        "InvalidRepositoryError",
+        "InvalidBranchError",
+        "CloneFailedError",
+        "FetchFailedError",
+        "CheckoutFailedError",
+        "ResetFailedError",
+        "LockFailedError",
+        "CacheOperationError"
+      ],
+      "service_interface": "RepositoryCache.Service — Effect service with ensure(), parseRemoteReference(), validateBranch()"
+    },
+    "SDK types": {
+      "VcsInfo": "packages/sdk/js/src/v2/gen/types.gen.ts:1602",
+      "VcsFileDiff": "packages/sdk/js/src/v2/gen/types.gen.ts:1614",
+      "VcsFileStatus": "packages/sdk/js/src/v2/gen/types.gen.ts:1607",
+      "VcsApplyError": "packages/sdk/js/src/v2/gen/types.gen.ts:1622",
+      "AccountV2oAuthCredential": "packages/sdk/js/src/v2/gen/types.gen.ts:3370",
+      "ProviderAuthMethod": "packages/sdk/js/src/v2/gen/types.gen.ts:1744",
+      "ProviderAuthAuthorization": "packages/sdk/js/src/v2/gen/types.gen.ts:1777",
+      "McpOAuthConfig": "packages/sdk/js/src/v2/gen/types.gen.ts:1147",
+      "ReferenceConfigEntry": "packages/sdk/js/src/v2/gen/types.gen.ts:945"
+    }
+  },
+  "dependency_graph": {
+    "repository.ts_dependents": [
+      "packages/opencode/src/reference/reference.ts — imports parseRepositoryReference, repositoryCachePath, RemoteReference",
+      "packages/opencode/src/reference/repository-cache.ts — imports RemoteReference type",
+      "packages/opencode/src/tool/repo_clone.ts — imports repositoryCachePath",
+      "packages/opencode/src/tool/repo_overview.ts — imports parseRepositoryReference, repositoryCachePath"
+    ],
+    "graph_structure": "util/repository.ts → reference/repository-cache.ts → reference/reference.ts → tool/*. No circular edges detected.",
+    "github_copilot_plugin_dependents": [
+      "packages/opencode/src/plugin/index.ts — exports github-copilot plugin",
+      "packages/opencode/src/session/llm/request.ts — references github-copilot models"
+    ],
+    "octokit_dependency_analysis": {
+      "declared_in_package_json": {
+        "@octokit/rest": "packages/opencode/package.json:112 (catalog: version)",
+        "@octokit/graphql": "packages/opencode/package.json:111 (9.0.2)",
+        "@octokit/webhooks-types": "packages/opencode/package.json:47 (7.6.1)"
+      },
+      "actual_usage": {
+        "@octokit/rest": "NOT USED IN packages/opencode/src/ — zero imports. Only used in packages/function/src/api.ts:6 (Cloudflare Worker)",
+        "@octokit/graphql": "NOT USED ANYWHERE — zero imports site-wide",
+        "@octokit/webhooks-types": "NOT USED ANYWHERE — zero imports site-wide",
+        "@octokit/auth-app": "Only in packages/function/src/api.ts:5"
+      },
+      "verdict": "Three Octokit packages are declared as dependencies of @opencode-ai/core but are not imported anywhere in the source code. They may be dead dependencies, available for future GitHub API work without adding new dependencies."
+    }
+  },
+  "conventions": {
+    "oauth_patterns": {
+      "exists_in_app": "packages/app/src/components/dialog-connect-provider.tsx — full OAuth flow UI with OAuthCodeView, OAuthAutoView, OAuthPromptsView components (653 lines)",
+      "in_sdk_types": "packages/sdk/js/src/v2/gen/types.gen.ts — ProviderAuthMethod, ProviderAuthAuthorization, AccountV2oAuthCredential",
+      "copilot_auth": "packages/opencode/src/plugin/github-copilot/copilot.ts — implements device code flow for GitHub Copilot (lines 241+), OAuth token exchange against github.com",
+      "mcp_oauth": "packages/opencode/src/mcp/oauth-provider.ts — PKCE authorization_code flow with local callback server on port 19876",
+      "mcp_auth_persistence": "packages/opencode/src/mcp/auth.ts — Effect service storing OAuth tokens to mcp-auth.json via AppFileSystem",
+      "i18n_keys": "packages/app/src/i18n/en.ts — 11 OAuth-related i18n keys (provider.auth.*)",
+      "canonical_pattern": "OAuth in the app uses ProviderAuthMethod/ProviderAuthAuthorization SDK types + DialogConnectProvider component with method selection, API key, OAuth code, and OAuth auto views"
+    },
+    "api_client_patterns": {
+      "canonical_pattern": "Frontend uses generated SDK client (@opencode-ai/sdk/v2/client) via createSdkForServer(). Backend uses fetch with AbortController or Effect's HttpClient. No axios.",
+      "examples": [
+        "packages/app/src/utils/server.ts:20 — createSdkForServer() factory",
+        "packages/app/src/context/server-sync.tsx:49 — SDK client with TanStack Query",
+        "packages/app/src/context/server-sdk.tsx:22 — dual client (SSE + direct API)",
+        "packages/opencode/src/provider/provider.ts:644 — fetch with AbortController timers",
+        "packages/opencode/src/file/ripgrep.ts:131 — Effect's HttpClient"
+      ]
+    },
+    "ipc_handler_patterns": {
+      "file": "packages/desktop/src/main/ipc.ts",
+      "registration": "registerIpcHandlers(deps: Deps) — all handlers pass through deps object",
+      "naming": "kebab-case channels: 'kill-sidecar', 'store-get', 'open-link'",
+      "preload_bridge": "contextBridge.exposeInMainWorld('api', api) with ElectronAPI type",
+      "no_runtime_validation": "Types only at compile time — no schema validation at preload boundary",
+      "canonical_handler": "ipcMain.handle('channel-name', (event, args) => deps.method(args))",
+      "canonical_bridge": "methodName: (args) => ipcRenderer.invoke('channel-name', args)",
+      "window_security": "contextIsolation: true, nodeIntegration: false, sandbox: true (packages/desktop/src/main/windows.ts:120)"
+    },
+    "effect_service_patterns": {
+      "canonical_pattern": [
+        "1. Schema types with Schema.Struct / Schema.Class (data models)",
+        "2. Tagged errors with Schema.TaggedErrorClass (error types)",
+        "3. Interface type with readonly Effect methods (interface)",
+        "4. Service class: Context.Service<Service, Interface>()('@opencode/...') (tag)",
+        "5. use = serviceUse(Service) (consumer helper)",
+        "6. layer = Layer.effect(Service, Effect.gen(...)) (implementation)",
+        "7. defaultLayer = layer.pipe(Layer.provide(...)) (dependency wiring)"
+      ],
+      "prevalence": "66+ services use Context.Service, 49+ use Layer.effect"
+    },
+    "i18n_patterns": {
+      "framework": "@solid-primitives/i18n",
+      "key_format": "dot-notation: domain.subdomain.description",
+      "param_format": "double-brace Handlebars: {{param}}",
+      "locale_count": "16 locales + en (base)",
+      "merge_pattern": "App dict + UI dict merged per locale",
+      "loading": "en is bundled statically; others lazy-loaded via dynamic import",
+      "canonical_usage": "language.t('key', { params }) in components"
+    }
+  },
+  "ui_surface": {
+    "review_tab": {
+      "file": "packages/app/src/pages/session/review-tab.tsx",
+      "lines": 172,
+      "current_capability": "Shows file diffs (SnapshotFileDiff | VcsFileDiff), supports split/unified view, line comments, file restore",
+      "no_pr_ui": "No PR creation UI, no branch selection, no commit message input — this is where a 'Create PR' button/pane would go"
+    },
+    "message_timeline": {
+      "file": "packages/app/src/pages/session/message-timeline.tsx",
+      "lines": 1615,
+      "current_capability": "Virtualized timeline of session messages, diffs, tool calls. Has share/unshare session, archive, delete",
+      "no_pr_integration": "No PR status display, no CI/CD indicators in message timeline — potential integration point"
+    },
+    "composer": {
+      "files": [
+        "packages/app/src/pages/session/composer/index.ts",
+        "packages/app/src/pages/session/composer/session-composer-state.ts",
+        "packages/app/src/pages/session/composer/session-request-tree.ts"
+      ],
+      "current_capability": "Session composer — message input, permission dock, request tree"
+    },
+    "desktop_menu": {
+      "file": "packages/app/src/desktop-menu.ts",
+      "lines": 224,
+      "current_menu_actions": [
+        "Open code in editor",
+        "Copy relative path",
+        "Create new session",
+        "Share session",
+        "Open project configuration",
+        "Open models configuration",
+        "Open accounts",
+        "Open about panel",
+        "Switch session agent"
+      ],
+      "no_github_actions": "No GitHub-related menu actions — potential 'Create PR', 'View PR status' etc."
+    }
+  },
+  "auth_patterns": {
+    "existing_oauth_flow": {
+      "component": "packages/app/src/components/dialog-connect-provider.tsx",
+      "lines": 653,
+      "views": ["MethodSelection", "ApiAuthView", "OAuthCodeView", "OAuthAutoView", "OAuthPromptsView"],
+      "sdk_types": ["ProviderAuthMethod", "ProviderAuthAuthorization", "AccountV2oAuthCredential"]
+    },
+    "copilot_device_code_flow": {
+      "file": "packages/opencode/src/plugin/github-copilot/copilot.ts",
+      "lines": "241+",
+      "description": "Gets user code via POST to github.com/.../device/code, polls for token, then exchanges for access_token"
+    },
+    "mcp_oauth_flow": {
+      "file": "packages/opencode/src/mcp/oauth-provider.ts",
+      "description": "PKCE authorization_code flow with @modelcontextprotocol/sdk OAuthClientProvider interface",
+      "callback_server": "packages/opencode/src/mcp/oauth-callback.ts — local HTTP server on port 19876 at /mcp/oauth/callback",
+      "auth_persistence": "packages/opencode/src/mcp/auth.ts — Effect service, file-based JSON at Global.Path.data + 'mcp-auth.json'"
+    },
+    "core_auth_storage": {
+      "file": "packages/opencode/src/auth/index.ts",
+      "types": "Oauth (access/refresh/expires), Api (key), WellKnown — discriminated union via 'type' field",
+      "persistence": "AppFileSystem to file"
+    },
+    "github_app_token_exchange": {
+      "file": "packages/function/src/api.ts",
+      "endpoints": [
+        "POST /exchange_github_app_token — exchanges OIDC token for GitHub App installation token (uses @octokit/auth-app)",
+        "POST /exchange_github_app_token_with_pat — same but with user PAT",
+        "GET /get_github_app_installation — checks if GitHub App is installed"
+      ]
+    },
+    "no_github_oauth": "No GitHub OAuth app flow exists in the desktop or opencode packages. No GitHub API token storage. The function package has GitHub App auth but that's a Cloudflare Worker, not the desktop app."
+  },
+  "ipc_needs": {
+    "existing_ipc_infrastructure": {
+      "main_process": "packages/desktop/src/main/ipc.ts",
+      "preload_bridge": "packages/desktop/src/preload/index.ts",
+      "type_definitions": "packages/desktop/src/preload/types.ts",
+      "handler_pattern": "registerIpcHandlers(deps: Deps) → ipcMain.handle('channel-name', ...)",
+      "channel_count": "33 current IPC channels",
+      "naming_convention": "kebab-case for channels, camelCase for bridge methods",
+      "store_pattern": "electron-store backed by named stores with RESERVED_STORE_NAMES protection"
+    },
+    "needed_for_github": [
+      {
+        "channel": "github-oauth-start",
+        "purpose": "Start GitHub OAuth flow in system browser",
+        "pattern": "ipcMain.handle('github-oauth-start', () => shell.openExternal('https://github.com/login/oauth/authorize?...'))"
+      },
+      {
+        "channel": "github-oauth-callback",
+        "purpose": "Receive OAuth callback with auth code (deep link handler exists — onDeepLink in preload/types.ts)",
+        "existing_infrastructure": "onDeepLink already registered — channel 'deep-link' with string[] payload. Can be reused for OAuth callback."
+      },
+      {
+        "channel": "github-get-token",
+        "purpose": "Get stored GitHub access token",
+        "pattern": "ipcMain.handle('github-get-token', () => getStore('github').get('access_token'))"
+      },
+      {
+        "channel": "github-api-proxy",
+        "purpose": "Proxy GitHub API requests (avoids CORS from renderer, attaches auth token from main process store)",
+        "pattern": "ipcMain.handle('github-api-proxy', (event, {method, path, body}) => fetch(`https://api.github.com${path}`, {method, headers: {Authorization: `Bearer ${token}`}, body}))"
+      },
+      {
+        "channel": "github-get-repo-info",
+        "purpose": "Get repository info from the detected git remote",
+        "note": "local git operations don't need IPC — they use opencode's Git service directly"
+      }
+    ],
+    "electron_api_changes": {
+      "types_file": "packages/desktop/src/preload/types.ts — ElectronAPI type needs new methods (githubGetToken? etc.)",
+      "bridge_file": "packages/desktop/src/preload/index.ts — contextBridge needs new method mappings",
+      "ipc_file": "packages/desktop/src/main/ipc.ts — registerIpcHandlers needs new handlers"
+    }
+  },
+  "shared_file_risks": {
+    "i18n_en_ts": {
+      "file": "packages/app/src/i18n/en.ts",
+      "lines": 1020,
+      "current_github_related_keys": 0,
+      "risk": "Adding GitHub UI strings requires adding to all 16 locale files",
+      "ocr_hotspots": [
+        "provider.auth.* — 11 OAuth-related keys per locale (reusable pattern)",
+        "dialog.* — dialog namespace for new GitHub dialogs",
+        "session.* — session-related keys"
+      ],
+      "locale_files_count": 16,
+      "i18n_framework": "@solid-primitives/i18n with i18n.flatten() pattern",
+      "recommendation": "Use existing provider.auth.* pattern namespace for GitHub auth strings; create github.* namespace for GitHub-specific UI"
+    },
+    "desktop_menu_ts": {
+      "file": "packages/app/src/desktop-menu.ts",
+      "lines": 224,
+      "risk": "Adding GitHub menu items requires new DesktopMenuAction types and entries in DESKTOP_MENU"
+    },
+    "ipc_types_ts": {
+      "file": "packages/desktop/src/preload/types.ts",
+      "lines": 114,
+      "risk": "High contention file — ElectronAPI type modified by multiple sessions recently (MCP, agents, plugins). Multiple parallel editors risk merge conflicts."
+    }
+  },
+  "api_surface": {
+    "already_modeled": {
+      "remote_parsing": "parseGitHubRemote() → {owner, repo} for any git URL format (zero production callers — dead code)",
+      "repo_clone": "repo_clone tool with RepositoryCache (clone, fetch, checkout, refresh)",
+      "reference_resolution": "Reference service resolves git references from config",
+      "copilot_auth": "GitHub Copilot auth plugin with device code flow and token management",
+      "provider_registry": "githubCopilot provider ID in ProviderID schema",
+      "oauth_flow_ui": "Full OAuth flow UI in dialog-connect-provider.tsx (reusable pattern for GitHub OAuth)",
+      "mcp_oauth": "PKCE OAuth with callback server — pattern reusable for GitHub OAuth callback handling",
+      "account_management": "AuthSet/AuthRemove API endpoints for account credential management",
+      "deep_link_handler": "onDeepLink IPC channel — reusable for GitHub OAuth callback via custom URL scheme",
+      "vcs_types": "VcsInfo, VcsFileDiff, VcsFileStatus in SDK types",
+      "event_vcs": "EventVcsBranchUpdated — VCS branch tracking event (packages/sdk/js/src/v2/gen/types.gen.ts:2711)",
+      "github_app_token_exchange": "packages/function/src/api.ts — Cloudflare Worker with Octokit for GitHub App token exchange"
+    },
+    "octokit_dependencies_available": {
+      "@octokit/rest": "declared but NOT imported in source — available for GitHub API work without package.json change",
+      "@octokit/graphql": "declared but NOT imported — available for GraphQL API work",
+      "@octokit/webhooks-types": "declared but NOT imported — available for webhook event type definitions"
+    },
+    "not_yet_modeled_but_needed": [
+      "GitHub OAuth app flow (client ID, redirect URI, token exchange)",
+      "GitHub API client initialization from stored token",
+      "PR creation from session diff (POST /repos/:owner/:repo/pulls)",
+      "Commit message and branch name input UI",
+      "GitHub issue/PR template awareness",
+      "CI/CD status polling (check runs, statuses via @octokit/rest)",
+      "PR review workflow (comment, approve, request changes)",
+      "Git workflow interop (create branch, push branch, status checks)",
+      "PR list view in desktop sidebar"
+    ]
+  },
+  "smoking_guns": [
+    {
+      "severity": "blocking",
+      "summary": "parseGitHubRemote() has zero production callers — the function is dead code. Test imports from a non-existent module path",
+      "files": [
+        "packages/opencode/src/util/repository.ts:213",
+        "packages/opencode/test/cli/github-remote.test.ts:2"
+      ],
+      "impact": "The core GitHub URL parsing logic is effectively untested and unused. Any architect relying on it must verify it works first."
+    },
+    {
+      "severity": "blocking",
+      "summary": "No PR creation code exists anywhere — not even type definitions for PR creation",
+      "files": ["packages/opencode/src/", "packages/app/src/"],
+      "impact": "PR management lane involves greenfield development across all layers (types, API calls, UI, IPC)"
+    },
+    {
+      "severity": "high",
+      "summary": "@octokit/rest, @octokit/graphql, and @octokit/webhooks-types are declared dependencies but NOT imported anywhere in packages/opencode/src/. They may be dead dependencies.",
+      "files": ["packages/opencode/package.json:47,111,112"],
+      "impact": "These can be reused for GitHub API work without adding new dependencies, but their presence in package.json may be accidental or for future use."
+    },
+    {
+      "severity": "high",
+      "summary": "Cloudflare Function (packages/function/src/api.ts) has the only working Octokit integration — for GitHub App token exchange in CI context, not desktop",
+      "files": ["packages/function/src/api.ts"],
+      "impact": "The existing GitHub API code is in a serverless function, not the desktop app. The Octokit auth patterns used there (createAppAuth) are specific to GitHub App installation tokens, not user OAuth tokens."
+    },
+    {
+      "severity": "high",
+      "summary": "Desktop IPC has no runtime schema validation — preload types are compile-time only",
+      "files": ["packages/desktop/src/preload/types.ts", "packages/desktop/src/main/ipc.ts"],
+      "impact": "Adding GitHub OAuth token handling IPC channels increases security surface. Pre-existing finding."
+    },
+    {
+      "severity": "high",
+      "summary": "i18n/en.ts has 1020 lines with 16 locale mirror files — every GitHub UI string addition requires 17-file update",
+      "file": "packages/app/src/i18n/en.ts",
+      "impact": "Design i18n strategy early. Recommend namespacing under 'github.*'"
+    },
+    {
+      "severity": "medium",
+      "summary": "Desktop package has only 2 test files for 29 source modules — new IPC handlers won't have test coverage",
+      "file": "packages/desktop/test/",
+      "impact": "New GitHub IPC handlers need test coverage built from scratch"
+    },
+    {
+      "severity": "medium",
+      "summary": "No uncaughtException handler in desktop Electron main process — OAuth callback errors could cause silent crashes",
+      "file": "packages/desktop/src/main/index.ts",
+      "impact": "Pre-existing finding. GitHub OAuth callback handlers need explicit error resilience."
+    },
+    {
+      "severity": "medium",
+      "summary": "The deep-link IPC channel (onDeepLink) already exists and receives URL callbacks — can be reused for GitHub OAuth redirect without adding a new event type",
+      "files": ["packages/desktop/src/preload/types.ts:27", "packages/desktop/src/main/ipc.ts:288"],
+      "impact": "Opportunity: reuse existing deep link infrastructure for GitHub OAuth callback URLs (opencode://github-oauth/callback?...)"
+    }
+  ],
+  "git_history_insights": {
+    "recent_github_related_commits": [
+      "b633a8b1c — refactor(scout): fold github remote parsing into repository",
+      "aee552c04 — fix(repository): type expected reference failures (#28880)",
+      "5bfd7fd16 — refactor(repository): clarify reference domain (#28182)",
+      "5cf9abe74 — feat(scout): materialize configured reference repos (#26692)"
+    ],
+    "active_branch": "dev (no delta from origin/dev)",
+    "workflow_pattern": "'Apply PR #XXXXX' pattern — external contributions applied as squashed commits",
+    "auth_activity": "Recent OAuth/account service refactoring — auth renamed from 'v2 auth' to 'account'",
+    "sdk_nature": "Auto-generated ('chore: generate' with occasional manual fixes)",
+    "upstream_branches": "~560 branches on upstream remote, including worktree-* branches for active development"
+  },
+  "out_of_scope_findings_recorded": []
+}

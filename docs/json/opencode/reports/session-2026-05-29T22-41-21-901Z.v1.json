@@ -1,0 +1,126 @@
+{
+  "schema_version": "v1",
+  "report_id": "session-2026-05-29T22-41-21-901Z.v1",
+  "session_id": "ses_18a1c74dbffe9rUYi3yYUQbGGL",
+  "generated_at": "2026-05-29T22:41:21.976110+00:00",
+  "session_summary": "# Desktop App Runtime Performance Audit — Complete\n\n## Mission\nAudit the OpenCode Electron desktop application (`packages/desktop/`) for runtime performance issues — covering startup sequence, main process initialization, sidecar boot, renderer loading, IPC overhead, bundle composition, and dependency weight.\n\n## Learning Wave Completed\n\nThree parallel learning subagents explored:\n1. **Desktop Architecture** — Mapped startup sequence (22 phases), IPC boundary (46 handlers), bundle content, renderer imports, and identified 10 performance concerns\n2. **Import Analysis** — Audited packages/app/ and packages/core/ for eager loads, top-level awaits, side-effect imports, and lazy-loading opportunities\n3. **Dependency Chain** (ongoing) — Tracing dependency graph from desktop entry to transitive imports\n\n## Performance Findings\n\n### 🔴 Critical Issues\n\n**1. Shell Env Probe Blocks Main Process (up to 5s)**\n- `preferAppEnv()` → `loadShellEnv()` runs `spawnSync(userShell, [\"-il\", \"-c\", \"env -0\"])` with 5s timeout\n- The `-il` flag loads interactive shell configuration which can be heavy (nvm, rvm, direnv, etc.)\n- This is the single largest synchronous blocker in Phase 1 startup\n- **Fix**: Make async or limit to non-interactive shell probe, cache result\n\n**2. Sidecar Health Check Delays Main Window (up to 30s)**\n- After forking sidecar via `utilityProcess.fork()`, main process waits for 'ready' message then polls `GET /global/health` up to 30s\n- Main window creation awaits this fiber — user sees nothing until complete\n- **Fix**: Show main window immediately with 'connecting' state, do health check in background\n\n**3. Port Discovery Dance Wastes 50-100ms**\n- Main process creates TCP server on port 0, listens, grabs port, closes server — all to find a free port\n- Then sends port to sidecar which binds to it\n- **Fix**: Sidecar listens on port 0 and reports its bound port in the 'ready' message\n\n**4. Renderer Waits for 5 Resources Before First Paint**\n- `index.tsx` shows `AppInterface` only after: `defaultServer`, `sidecar` (awaitInitialization), `windowConfig`, `windowCount`, `locale` all resolve\n- The `sidecar` resource is the critical path — only resolves after health check\n- **Fix**: Progressive rendering — show UI shell immediately, fill in server-dependent parts later\n\n### 🟡 Moderate Issues\n\n**5. 46 IPC Handlers Registered Eagerly Before app.whenReady()**\n- All handlers (store, updater, WSL, clipboard, etc.) registered in bulk\n- Many never used on typical sessions\n- **Fix**: Use `ipcMain.handle` lazily — register on first invoke\n\n**6. electron-context-menu Loaded at Module Level**\n- Imported at top of `index.ts` and called in first line of main Effect\n- Adds ~15-50ms to module eval and startup\n- **Fix**: Defer to after window creation\n\n**7. CA Certificate Loading Blocks Startup (100-500ms)**\n- `getCACertificates(\"default\")` + `getCACertificates(\"system\")` can be expensive\n- Blocks Phase 1 before app.whenReady\n- **Fix**: Make async, defer to Phase 2, or cache between runs\n\n**8. Main Process Bundle Has No Code Splitting**\n- `effect`, `drizzle-orm`, `electron-store`, `marked`, `@zip.js/zip.js` all bundled in single chunk\n- Only `@lydell/node-pty` is externalized\n- **Fix**: Dynamic import for rarely-used modules (marked, @zip.js/zip.js)\n\n**9. Loading Screen Imports Full App CSS Bundle**\n- `loading.tsx` imports `@opencode-ai/app/index.css` (~200KB+ Tailwind output)\n- Could use minimal inline styles for loading splash\n- **Fix**: Extract loading-specific CSS, avoid pulling full app bundle\n\n**10. top-level await in packages/core/src/global.ts**\n- `await Promise.all([7 fs.mkdir calls])` blocks Node.js startup\n- Currently NOT imported by desktop app (only by server/CLI) — but a latent risk\n- **Fix**: Defer to explicit init() call\n\n### 🟢 Low/Informational\n\n- All 24 AI SDK providers use `Effect.promise(() => import(...))` — good lazy pattern\n- No DB pools, WebSocket servers, or HTTP servers at module level in core/app\n- route-level code splitting with `solid-js` `lazy()` \n- Non-English locales dynamically imported — good pattern\n\n## Recommended Improvement Slices\n\n### Slice 1: Immediate Wins (Low Risk, High Impact)\n1. **Eliminate port discovery** — sidecar listens on port 0, reports port via ready message\n2. **Defer electron-context-menu** — move to after window creation\n3. **Lazy IPC handler registration** — register only essential handlers, lazy-register rest\n4. **Async CA certificate loading** — non-blocking\n\n### Slice 2: Sidecar Bootstrap (Medium Impact)\n5. **Show main window before health check** — progressive enhancement with 'connecting' state\n6. **Parallel sidecar fork** — trigger earlier in startup sequence\n\n### Slice 3: Bundle Optimization (Medium Impact)\n7. **Code-split main process** — dynamic import for zip.js, marked, electron-store\n8. **CSS bundle audit for loading screen** — extract minimal loading styles\n\n### Slice 4: Shell Env Probe (Higher Risk)\n9. **Replace spawnSync with async approach** — cache env, avoid interactive shell\n\n## Key Metrics\n- **Startup phases**: 22 sequential, 4 blocking phases\n- **IPC handlers**: 46 total (42 handle + 4 on)\n- **Main bundle**: single chunk, ~5-10MB (with sidecar server)\n- **Renderer bundle**: ~1-3MB gzip / 5-10MB uncompressed\n- **Top startup time sink**: Shell env probe (up to 5s) + sidecar health check (up to 30s)\n- **Estimated improvement from Slice 1**: 200-600ms faster perceived startup",
+  "next_steps": "1. Review and prioritize the improvement slices — recommend starting with Slice 1 (port discovery, lazy IPC, deferred context-menu, async CA certs) as these are low-risk, high-impact changes\n2. Assign Slice 1 to an execution session with preflight path checks\n3. After Slice 1 lands, profile with `hyperfine` to measure before/after startup times\n4. Proceed to Slice 2 (non-blocking sidecar health check) which requires reworking the renderer initialization flow\n5. Slice 3 (code splitting) can be done in parallel with Slice 2 as it's purely build configuration changes\n6. Slice 4 (shell env probe) requires careful testing as it touches environment loading",
+  "waves_completed": [
+    "learning"
+  ],
+  "wave_details": {
+    "learning": {
+      "started_at": "2026-05-29T22:41:03.460937+00:00",
+      "completed_at": "2026-05-29T22:41:03.460937+00:00",
+      "findings": [
+        {
+          "source": "explore (architecture)",
+          "summary": "Desktop startup has 22 sequential phases with shell env probe (up to 5s blocking), sidecar health check (30s timeout), and bulk IPC registration as top bottlenecks",
+          "confidence": 0.95,
+          "relevance_profiles": [
+            "performance",
+            "architecture"
+          ],
+          "wave": "learning"
+        },
+        {
+          "source": "explore (architecture)",
+          "summary": "Port discovery dance wastes 50-100ms — TCP server created just to find a free port when sidecar could report its own",
+          "confidence": 0.9,
+          "relevance_profiles": [
+            "performance",
+            "execution"
+          ],
+          "wave": "learning"
+        },
+        {
+          "source": "explore (architecture)",
+          "summary": "46 IPC handlers registered eagerly before app.whenReady — most unused on typical session",
+          "confidence": 0.95,
+          "relevance_profiles": [
+            "performance",
+            "architecture"
+          ],
+          "wave": "learning"
+        },
+        {
+          "source": "explore (architecture)",
+          "summary": "Renderer waits for 5 resources before first render including sidecar awaitInitialization (30s worst case)",
+          "confidence": 0.9,
+          "relevance_profiles": [
+            "performance"
+          ],
+          "wave": "learning"
+        },
+        {
+          "source": "explore (import analysis)",
+          "summary": "packages/core/src/global.ts has top-level await blocking on 7 fs.mkdir calls — but desktop doesn't import this path",
+          "confidence": 0.99,
+          "relevance_profiles": [
+            "architecture",
+            "execution"
+          ],
+          "wave": "learning"
+        },
+        {
+          "source": "explore (import analysis)",
+          "summary": "All 24 AI SDK providers use Effect.promise(() => import(...)) — good lazy pattern",
+          "confidence": 0.99,
+          "relevance_profiles": [
+            "architecture"
+          ],
+          "wave": "learning"
+        },
+        {
+          "source": "explore (import analysis)",
+          "summary": "No DB pools, WebSocket servers, or HTTP servers created at module level in core or app",
+          "confidence": 0.99,
+          "relevance_profiles": [
+            "architecture"
+          ],
+          "wave": "learning"
+        },
+        {
+          "source": "orchestrator",
+          "summary": "electron-context-menu imported and called eagerly at module level — could be deferred to after window creation",
+          "confidence": 0.9,
+          "relevance_profiles": [
+            "performance"
+          ],
+          "wave": "learning"
+        },
+        {
+          "source": "orchestrator",
+          "summary": "CA certificate loading (getCACertificates default + system) can take 100-500ms blocking startup",
+          "confidence": 0.8,
+          "relevance_profiles": [
+            "performance"
+          ],
+          "wave": "learning"
+        },
+        {
+          "source": "orchestrator",
+          "summary": "Main process bundle has no code splitting — effect, drizzle-orm, electron-store, marked, @zip.js/zip.js bundled together",
+          "confidence": 0.95,
+          "relevance_profiles": [
+            "performance",
+            "execution"
+          ],
+          "wave": "learning"
+        }
+      ],
+      "artifacts": [
+        "docs/json/opencode/plans/desktop-runtime-audit.v1.json"
+      ]
+    }
+  },
+  "total_findings": 10,
+  "findings_by_profile": {
+    "performance": 7,
+    "architecture": 5,
+    "execution": 3
+  },
+  "artifacts_consumed": [
+    "docs/json/opencode/plans/desktop-runtime-audit.v1.json"
+  ]
+}

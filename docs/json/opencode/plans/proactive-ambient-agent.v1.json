@@ -1,0 +1,22 @@
+{
+  "schema_version": "v1",
+  "plan_id": "proactive-ambient-agent",
+  "plan_revision": 1,
+  "title": "Proactive Ambient Agent — Lane 3",
+  "boundary": "packages/app/src/ambient/ + components/ambient-* + context/ambient.tsx + layout integration",
+  "consumer_purpose": "Give the desktop app a sixth sense — proactive status indicators that surface git changes, test failures, outdated deps, PR activity, and session memory without interrupting flow",
+  "claim_atoms": [
+    "Ambient context provider with watchers registry and polling",
+    "5 watcher modules (git, test, deps, pr-activity, session-memory)",
+    "Ambient status bar with auto-hide and slide-up animation",
+    "Ambient popover for detail view on click",
+    "Layout integration with AmbientProvider + AmbientStatusBar",
+    "All watchers gracefully handle unavailable data",
+    "TypeScript compiles cleanly",
+    "Existing tests pass"
+  ],
+  "content": "## Architecture\n\n### Context Provider (ambient.tsx)\n- Uses `createSimpleContext` pattern matching all other contexts\n- Manages a registry of watchers, each returning status objects\n- Watchers run on intervals (30s, 60s, 5min depending on type)\n- Status types: \"ok\" | \"info\" | \"warning\" | \"alert\"\n- Each status has: id, label, description, icon, severity, action, dismissible, timestamp\n- Dismissed insights are tracked in a Set (session-only, not persisted)\n\n### Watcher Modules (ambient/watchers/*.ts)\n- Each watcher is a pure async function returning WatcherResult | null\n- Git watcher: checks uncommitted/unpushed/merge-conflicts via IPC\n- Test watcher: detects recently modified test files\n- Deps watcher: checks for outdated dependencies\n- PR watcher: checks for open PRs needing review\n- Session memory: remembers recent work context\n\n### Components\n- `AmbientStatusBar`: Fixed bottom bar, shows watcher status dots, auto-hides after 30s idle\n- `AmbientPopover`: Uses @opencode-ai/ui/popover, shows detail + action + dismiss\n\n### Layout Integration\n- Wrap content in `<AmbientProvider>` in layout.tsx\n- Render `<AmbientStatusBar />` next to DebugBar\n- Import in layout.tsx",
+  "status": "proposed",
+  "created_at": "2026-05-30T06:38:29.953371+00:00",
+  "modified_at": "2026-05-30T06:38:29.953719+00:00"
+}

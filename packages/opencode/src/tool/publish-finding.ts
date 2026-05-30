@@ -6,15 +6,7 @@ import { createHash } from "node:crypto"
 import DESCRIPTION from "./publish-finding.txt"
 
 const Parameters = Schema.Struct({
-  finding_type: Schema.Literal(
-    "bug",
-    "pattern",
-    "plan",
-    "convention",
-    "dependency",
-    "risk",
-    "optimization",
-  ).annotate({
+  finding_type: Schema.Literals(["bug", "pattern", "plan", "convention", "dependency", "risk", "optimization"]).annotate({
     description: "Type: bug | pattern | plan | convention | dependency | risk | optimization",
   }),
   summary: Schema.String.annotate({

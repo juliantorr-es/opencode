@@ -1,0 +1,101 @@
+{
+  "schema_version": "v1",
+  "artifact": "critic-review",
+  "plan_id": "tool-registry-upgrade-lane-0c",
+  "plan_revision": 1,
+  "reviewer": "critic",
+  "verdict": "REJECT",
+  "reviewed_at": "2026-05-30T06:45:00Z",
+  "axes": {
+    "coupling": {
+      "score": 2,
+      "note": "CacheConfig as Context.Tag in cache.ts forces every ToolCache consumer to also provide CacheConfig. Config should be a factory parameter, not a DI service. fromPlugin error wrapping adds success-path dependency between registry.ts and ToolError classes. registry.ts already imports ToolCache — no new coupling from that direction."
+    },
+    "debuggability": {
+      "score": 1,
+      "note": "fromPlugin catchAll swallows ALL errors into generic string messages — typed ToolError/TimeoutError/TransientError/ValidationError are discarded. Stack traces lost. TTL parse failures defect with no span annotation. No structured logging on cache eviction."
+    },
+    "convergence": {
+      "score": 2,
+      "note": "Plan was written against stale baseline — tool.ts error classes already exist (lines 41-75). File length estimates are off (tool.ts 319 actual vs 199 claimed). Claim atoms metadata mismatched (3 listed vs 8 claimed). Plan describes work already done."
+    },
+    "surface_area": {
+      "score": 2,
+      "note": "Adding stats() method to exported Interface (cache.ts) widens the contract mandatoryly — every implementation now needs it. CacheConfig export from cache.ts leaks config internals. fromPlugin return type implicitly widened to include error-success union."
+    },
+    "testability": {
+      "score": 2,
+      "note": "No test strategy for TTL expiry races, concurrent eviction, maxEntrySize enforcement, or edge cases (zero/negative config values). Cache's inflight dedup interacts with TTL in untested ways. Cannot verify in 10-line bun -e script."
+    },
+    "error_clarity": {
+      "score": 2,
+      "note": "fromPlugin error wrapper: `[id] Plugin tool error: ${error.message}` — no type tag, no stack, no span attributes on the error path. TTL parse failures defect with no hint about which config key caused it. Cache eviction is silent."
+    },
+    "reversibility": {
+      "score": 3,
+      "note": "Changes are mostly additive and isolated to 3 files. cache.ts is new (untracked), tool.ts changes are already applied, registry.ts changes are additive. Reverting cache.ts removes all caching. fromPlugin wrapping can be reverted independently. CacheConfig removal from registry.ts defaultLayer is clean. Score 3 only because plan describes work already done as future work."
+    }
+  },
+  "objections": [
+    {
+      "id": "OB-01",
+      "severity": "BLOCKING",
+      "axis": "convergence",
+      "file": "packages/opencode/src/tool/tool.ts:41-75",
+      "finding": "Plan claims to ADD ToolError, TimeoutError, TransientError, ValidationError — all four already exist. Plan file-length estimate (199→230) is wrong (actual is 319 lines). Stale baseline will cause duplicate declarations or corrupted diffs on execution."
+    },
+    {
+      "id": "OB-02",
+      "severity": "BLOCKING",
+      "axis": "error_clarity",
+      "file": "packages/opencode/src/tool/registry.ts:280",
+      "finding": "fromPlugin error wrapping uses catchAll that converts ALL errors (including typed ToolError subtypes) into a success response with generic string message. Completely defeats the ToolError hierarchy this plan establishes. Plugin timeouts, transient failures, and validation errors all become indistinguishable string messages."
+    },
+    {
+      "id": "OB-03",
+      "severity": "BLOCKING",
+      "axis": "coupling",
+      "file": "packages/opencode/src/tool/cache.ts",
+      "finding": "CacheConfig Context.Tag inside cache.ts creates mandatory DI coupling: every consumer providing a ToolCache layer must also provide CacheConfig. Config should be a factory parameter, not a DI service."
+    },
+    {
+      "id": "OB-04",
+      "severity": "BLOCKING",
+      "axis": "evidence",
+      "file": "docs/json/opencode/plans/tool-registry-upgrade-lane-0c.v1.json",
+      "finding": "claim_atoms_total declares 8 atoms but only 3 are listed. 5 missing atoms make boundary verification impossible."
+    }
+  ],
+  "conditions_for_approval": [
+    "C1: Revise the plan against the current working-tree state (git status). Remove the stale tool.ts error-class section entirely. Correct all file-length estimates.",
+    "C2: Replace fromPlugin catchAll with catchTag/catchAllDefect that preserves error types. ToolError subclasses must survive the plugin bridge, not be swallowed.",
+    "C3: Remove CacheConfig Context.Tag from cache.ts. Use a parameterized layer factory: `layer(config?: Partial<CacheConfig>)` instead of DI service. This decouples config from provisioning.",
+    "C4: Populate all 8 claim atoms explicitly in the claim_atoms array, each as a discrete falsifiable statement. Remove the claim_atoms_total field or derive it from the array."
+  ],
+  "follow_up_issues": [
+    {
+      "id": "FU-01",
+      "description": "Add dedicated test suite for cache eviction, TTL expiry races, maxEntrySize enforcement, and inflight/TTL interaction. Use controlled clock (Effect.Clock.TestClock) for deterministic TTL testing.",
+      "priority": "before-merge"
+    },
+    {
+      "id": "FU-02",
+      "description": "Add structured logging to cache eviction events and TTL expiry decisions. Use Effect.logDebug with annotateCurrentSpan capturing cache key, entry age, config values.",
+      "priority": "before-merge"
+    },
+    {
+      "id": "FU-03",
+      "description": "Define TTL as DurationInput instead of string to avoid runtime parse failures. If string is required for serialization, add validation at the boundary with a default fallback and warning log.",
+      "priority": "recommended"
+    }
+  ],
+  "comment_ids": [
+    "comment-tool-registry-upgrade-lane-0c-r1-c1",
+    "comment-tool-registry-upgrade-lane-0c-r1-c2",
+    "comment-tool-registry-upgrade-lane-0c-r1-c3",
+    "comment-tool-registry-upgrade-lane-0c-r1-c4",
+    "comment-tool-registry-upgrade-lane-0c-r1-c5",
+    "comment-tool-registry-upgrade-lane-0c-r1-c6",
+    "comment-tool-registry-upgrade-lane-0c-r1-c7"
+  ]
+}

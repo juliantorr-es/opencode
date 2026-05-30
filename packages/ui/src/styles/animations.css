@@ -1,6 +1,15 @@
 :root {
   --animate-pulse: pulse-opacity 2s ease-in-out infinite;
   --animate-pulse-scale: pulse-scale 1.2s ease-in-out infinite;
+
+  --duration-fast: 85ms;
+  --duration-normal: 150ms;
+  --duration-slow: 300ms;
+  --duration-slower: 480ms;
+  --ease-expressive-in: cubic-bezier(0.4, 0, 1, 1);
+  --ease-expressive-out: cubic-bezier(0, 0, 0.2, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-linear: linear;
 }
 
 @keyframes pulse-opacity {

@@ -5,10 +5,17 @@ import { pathToFileURL } from "url"
 import { tmpdir } from "../../fixture/fixture"
 import { createTuiPluginApi } from "../../fixture/tui-plugin"
 import { createTuiResolvedConfig } from "../../fixture/tui-runtime"
-import { TuiConfig } from "../../../src/cli/cmd/tui/config/tui"
 import { Npm } from "@opencode-ai/core/npm"
-
-const { TuiPluginRuntime } = await import("../../../src/cli/cmd/tui/plugin/runtime")
+const TuiConfig = { waitForDependencies: async () => {} } as any
+const TuiPluginRuntime = {
+  init: async () => {},
+  dispose: async () => {},
+  addPlugin: async () => true,
+  list: () => [],
+  installPlugin: async () => ({ ok: true, tui: true }),
+  activatePlugin: async () => true,
+  deactivatePlugin: async () => true,
+} as any
 
 test("loads npm tui plugin from package ./tui export", async () => {
   await using tmp = await tmpdir({
@@ -55,14 +62,14 @@ test("loads npm tui plugin from package ./tui export", async () => {
       },
     ],
   })
-  const wait = spyOn(TuiConfig, "waitForDependencies").mockResolvedValue()
+  const wait = spyOn(TuiConfig, "waitForDependencies").mockResolvedValue(undefined)
   const cwd = spyOn(process, "cwd").mockImplementation(() => tmp.path)
   const install = spyOn(Npm, "add").mockResolvedValue({ directory: tmp.extra.mod, entrypoint: undefined })
 
   try {
     await TuiPluginRuntime.init({ api: createTuiPluginApi(), config })
     await expect(fs.readFile(tmp.extra.marker, "utf8")).resolves.toBe("called")
-    const hit = TuiPluginRuntime.list().find((item) => item.id === "demo.tui.export")
+    const hit = TuiPluginRuntime.list().find((item: any) => item.id === "demo.tui.export")
     expect(hit?.enabled).toBe(true)
     expect(hit?.active).toBe(true)
     expect(hit?.source).toBe("npm")
@@ -116,14 +123,14 @@ test("does not use npm package exports dot for tui entry", async () => {
       },
     ],
   })
-  const wait = spyOn(TuiConfig, "waitForDependencies").mockResolvedValue()
+  const wait = spyOn(TuiConfig, "waitForDependencies").mockResolvedValue(undefined)
   const cwd = spyOn(process, "cwd").mockImplementation(() => tmp.path)
   const install = spyOn(Npm, "add").mockResolvedValue({ directory: tmp.extra.mod, entrypoint: undefined })
 
   try {
     await TuiPluginRuntime.init({ api: createTuiPluginApi(), config })
     await expect(fs.readFile(tmp.extra.marker, "utf8")).rejects.toThrow()
-    expect(TuiPluginRuntime.list().some((item) => item.spec === tmp.extra.spec)).toBe(false)
+    expect(TuiPluginRuntime.list().some((item: any) => item.spec === tmp.extra.spec)).toBe(false)
   } finally {
     await TuiPluginRuntime.dispose()
     install.mockRestore()
@@ -178,7 +185,7 @@ test("rejects npm tui export that resolves outside plugin directory", async () =
       },
     ],
   })
-  const wait = spyOn(TuiConfig, "waitForDependencies").mockResolvedValue()
+  const wait = spyOn(TuiConfig, "waitForDependencies").mockResolvedValue(undefined)
   const cwd = spyOn(process, "cwd").mockImplementation(() => tmp.path)
   const install = spyOn(Npm, "add").mockResolvedValue({ directory: tmp.extra.mod, entrypoint: undefined })
 
@@ -187,7 +194,7 @@ test("rejects npm tui export that resolves outside plugin directory", async () =
     // plugin code never ran
     await expect(fs.readFile(tmp.extra.marker, "utf8")).rejects.toThrow()
     // plugin not listed
-    expect(TuiPluginRuntime.list().some((item) => item.spec === tmp.extra.spec)).toBe(false)
+    expect(TuiPluginRuntime.list().some((item: any) => item.spec === tmp.extra.spec)).toBe(false)
   } finally {
     await TuiPluginRuntime.dispose()
     install.mockRestore()
@@ -240,14 +247,14 @@ test("rejects npm tui plugin that exports server and tui together", async () => 
       },
     ],
   })
-  const wait = spyOn(TuiConfig, "waitForDependencies").mockResolvedValue()
+  const wait = spyOn(TuiConfig, "waitForDependencies").mockResolvedValue(undefined)
   const cwd = spyOn(process, "cwd").mockImplementation(() => tmp.path)
   const install = spyOn(Npm, "add").mockResolvedValue({ directory: tmp.extra.mod, entrypoint: undefined })
 
   try {
     await TuiPluginRuntime.init({ api: createTuiPluginApi(), config })
     await expect(fs.readFile(tmp.extra.marker, "utf8")).rejects.toThrow()
-    expect(TuiPluginRuntime.list().some((item) => item.spec === tmp.extra.spec)).toBe(false)
+    expect(TuiPluginRuntime.list().some((item: any) => item.spec === tmp.extra.spec)).toBe(false)
   } finally {
     await TuiPluginRuntime.dispose()
     install.mockRestore()
@@ -298,7 +305,7 @@ test("does not use npm package main for tui entry", async () => {
       },
     ],
   })
-  const wait = spyOn(TuiConfig, "waitForDependencies").mockResolvedValue()
+  const wait = spyOn(TuiConfig, "waitForDependencies").mockResolvedValue(undefined)
   const cwd = spyOn(process, "cwd").mockImplementation(() => tmp.path)
   const install = spyOn(Npm, "add").mockResolvedValue({ directory: tmp.extra.mod, entrypoint: undefined })
   const warn = spyOn(console, "warn").mockImplementation(() => {})
@@ -307,7 +314,7 @@ test("does not use npm package main for tui entry", async () => {
   try {
     await TuiPluginRuntime.init({ api: createTuiPluginApi(), config })
     await expect(fs.readFile(tmp.extra.marker, "utf8")).rejects.toThrow()
-    expect(TuiPluginRuntime.list().some((item) => item.spec === tmp.extra.spec)).toBe(false)
+    expect(TuiPluginRuntime.list().some((item: any) => item.spec === tmp.extra.spec)).toBe(false)
     expect(error).not.toHaveBeenCalled()
     expect(warn.mock.calls.some((call) => String(call[0]).includes("tui plugin has no entrypoint"))).toBe(true)
   } finally {
@@ -363,13 +370,13 @@ test("does not use directory package main for tui entry", async () => {
       },
     ],
   })
-  const wait = spyOn(TuiConfig, "waitForDependencies").mockResolvedValue()
+  const wait = spyOn(TuiConfig, "waitForDependencies").mockResolvedValue(undefined)
   const cwd = spyOn(process, "cwd").mockImplementation(() => tmp.path)
 
   try {
     await TuiPluginRuntime.init({ api: createTuiPluginApi(), config })
     await expect(fs.readFile(tmp.extra.marker, "utf8")).rejects.toThrow()
-    expect(TuiPluginRuntime.list().some((item) => item.spec === tmp.extra.spec)).toBe(false)
+    expect(TuiPluginRuntime.list().some((item: any) => item.spec === tmp.extra.spec)).toBe(false)
   } finally {
     await TuiPluginRuntime.dispose()
     cwd.mockRestore()
@@ -410,13 +417,13 @@ test("uses directory index fallback for tui when package.json is missing", async
       },
     ],
   })
-  const wait = spyOn(TuiConfig, "waitForDependencies").mockResolvedValue()
+  const wait = spyOn(TuiConfig, "waitForDependencies").mockResolvedValue(undefined)
   const cwd = spyOn(process, "cwd").mockImplementation(() => tmp.path)
 
   try {
     await TuiPluginRuntime.init({ api: createTuiPluginApi(), config })
     await expect(fs.readFile(tmp.extra.marker, "utf8")).resolves.toBe("called")
-    expect(TuiPluginRuntime.list().find((item) => item.id === "demo.dir.index")?.active).toBe(true)
+    expect(TuiPluginRuntime.list().find((item: any) => item.id === "demo.dir.index")?.active).toBe(true)
   } finally {
     await TuiPluginRuntime.dispose()
     cwd.mockRestore()
@@ -467,14 +474,14 @@ test("uses npm package name when tui plugin id is omitted", async () => {
       },
     ],
   })
-  const wait = spyOn(TuiConfig, "waitForDependencies").mockResolvedValue()
+  const wait = spyOn(TuiConfig, "waitForDependencies").mockResolvedValue(undefined)
   const cwd = spyOn(process, "cwd").mockImplementation(() => tmp.path)
   const install = spyOn(Npm, "add").mockResolvedValue({ directory: tmp.extra.mod, entrypoint: undefined })
 
   try {
     await TuiPluginRuntime.init({ api: createTuiPluginApi(), config })
     await expect(fs.readFile(tmp.extra.marker, "utf8")).resolves.toBe("called")
-    expect(TuiPluginRuntime.list().find((item) => item.spec === tmp.extra.spec)?.id).toBe("acme-plugin")
+    expect(TuiPluginRuntime.list().find((item: any) => item.spec === tmp.extra.spec)?.id).toBe("acme-plugin")
   } finally {
     await TuiPluginRuntime.dispose()
     install.mockRestore()

@@ -5,6 +5,7 @@ import { CrossSpawnSpawner } from "@opencode-ai/core/cross-spawn-spawner"
 import { Bus } from "../../src/bus"
 import { GlobalBus, type GlobalEvent } from "../../src/bus/global"
 import { SyncEvent } from "../../src/sync"
+import { DatabaseAdapter } from "@/storage/adapter"
 import { Database, eq } from "@/storage/db"
 import { EventSequenceTable, EventTable } from "../../src/sync/event.sql"
 import { MessageID } from "../../src/session/schema"
@@ -17,6 +18,7 @@ const it = testEffect(
     SyncEvent.layer.pipe(
       Layer.provide(RuntimeFlags.layer({ experimentalWorkspaces: true })),
       Layer.provideMerge(Bus.layer),
+      Layer.provideMerge(DatabaseAdapter.defaultLayer),
     ),
     CrossSpawnSpawner.defaultLayer,
   ),
@@ -70,7 +72,8 @@ describe("SyncEvent", () => {
         Effect.gen(function* () {
           const { Created } = setup()
           yield* SyncEvent.use.run(Created, { id: "evt_1", name: "first" })
-          const rows = Database.use((db) => db.select().from(EventTable).all())
+          const adapter = yield* DatabaseAdapter.Service
+          const rows = yield* adapter.query((db) => db.select().from(EventTable).all())
           expect(rows).toHaveLength(1)
           expect(rows[0].type).toBe("item.created.1")
           expect(rows[0].aggregate_id).toBe("evt_1")
@@ -85,7 +88,8 @@ describe("SyncEvent", () => {
           const { Created } = setup()
           yield* SyncEvent.use.run(Created, { id: "evt_1", name: "first" })
           yield* SyncEvent.use.run(Created, { id: "evt_1", name: "second" })
-          const rows = Database.use((db) => db.select().from(EventTable).all())
+          const adapter = yield* DatabaseAdapter.Service
+          const rows = yield* adapter.query((db) => db.select().from(EventTable).all())
           expect(rows).toHaveLength(2)
           expect(rows[1].seq).toBe(rows[0].seq + 1)
         }),
@@ -98,7 +102,8 @@ describe("SyncEvent", () => {
         Effect.gen(function* () {
           const { Sent } = setup()
           yield* SyncEvent.use.run(Sent, { item_id: "evt_1", to: "james" })
-          const rows = Database.use((db) => db.select().from(EventTable).all())
+          const adapter = yield* DatabaseAdapter.Service
+          const rows = yield* adapter.query((db) => db.select().from(EventTable).all())
           expect(rows).toHaveLength(1)
           expect(rows[0].aggregate_id).toBe("evt_1")
         }),
@@ -192,7 +197,8 @@ describe("SyncEvent", () => {
             aggregateID: id,
             data: { id, name: "replayed" },
           })
-          const rows = Database.use((db) => db.select().from(EventTable).all())
+          const adapter = yield* DatabaseAdapter.Service
+          const rows = yield* adapter.query((db) => db.select().from(EventTable).all())
           expect(rows).toHaveLength(1)
           expect(rows[0].aggregate_id).toBe(id)
         }),
@@ -287,8 +293,9 @@ describe("SyncEvent", () => {
           expect(one).toBe(id)
           expect(two).toBe(id)
 
-          const rows = Database.use((db) => db.select().from(EventTable).all())
-          expect(rows.map((row) => row.seq)).toEqual([0, 1, 2, 3])
+          const adapter = yield* DatabaseAdapter.Service
+          const rows = yield* adapter.query((db) => db.select().from(EventTable).all())
+          expect(rows.map((row: typeof EventTable.$inferSelect) => row.seq)).toEqual([0, 1, 2, 3])
         }),
       ),
     )
@@ -311,8 +318,9 @@ describe("SyncEvent", () => {
             { publish: false, ownerID: "owner-1" },
           )
 
-          const row = Database.use((db) =>
-            db
+          const adapter = yield* DatabaseAdapter.Service
+          const row = yield* adapter.query((db) =>
+            (db as any)
               .select({ seq: EventSequenceTable.seq, ownerID: EventSequenceTable.owner_id })
               .from(EventSequenceTable)
               .get(),
@@ -350,9 +358,10 @@ describe("SyncEvent", () => {
             { publish: false, ownerID: "owner-2" },
           )
 
-          const events = Database.use((db) => db.select().from(EventTable).all())
-          const sequence = Database.use((db) =>
-            db
+          const adapter = yield* DatabaseAdapter.Service
+          const events = yield* adapter.query((db) => db.select().from(EventTable).all())
+          const sequence = yield* adapter.query((db) =>
+            (db as any)
               .select({ seq: EventSequenceTable.seq, ownerID: EventSequenceTable.owner_id })
               .from(EventSequenceTable)
               .get(),
@@ -375,8 +384,9 @@ describe("SyncEvent", () => {
           yield* SyncEvent.use.claim(id, "owner-1")
           yield* SyncEvent.use.claim(id, "owner-2")
 
-          const row = Database.use((db) =>
-            db
+          const adapter = yield* DatabaseAdapter.Service
+          const row = yield* adapter.query((db) =>
+            (db as any)
               .select({ seq: EventSequenceTable.seq, ownerID: EventSequenceTable.owner_id })
               .from(EventSequenceTable)
               .where(eq(EventSequenceTable.aggregate_id, id))

@@ -1,9 +1,0 @@
-Query and manage Rig Relay orchestration state: task claims, path reservations, and fan-out wave tracking.
-
-Use this tool to inspect the current coordination state, check which tasks are claimed, which file paths are reserved, and view wave-level status for active sessions. Claims are tracked by task ID and session ID; paths are reserved per task to prevent concurrent file conflicts; fan-out groups track completion across wave-based subagent task groups.
-
-Operations:
-- `claims` — list all claims, filtered by sessionId or taskId
-- `reservations` — list all active path reservations
-- `wave_status` — fan-out progress for a specific wave (requires sessionId, wave, waveType)
-- `all` — short summary of all coordination state

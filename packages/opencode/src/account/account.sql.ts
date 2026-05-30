@@ -1,7 +1,7 @@
 import { sqliteTable, text, integer, primaryKey } from "drizzle-orm/sqlite-core"
 
 import { type AccessToken, type AccountID, type OrgID, type RefreshToken } from "./schema"
-import { Timestamps } from "../storage/schema.sql"
+import { TimestampsPg } from "../storage/schema.pg.sql"
 
 export const AccountTable = sqliteTable("account", {
   id: text().$type<AccountID>().primaryKey(),
@@ -10,7 +10,7 @@ export const AccountTable = sqliteTable("account", {
   access_token: text().$type<AccessToken>().notNull(),
   refresh_token: text().$type<RefreshToken>().notNull(),
   token_expiry: integer(),
-  ...Timestamps,
+  ...TimestampsPg,
 })
 
 export const AccountStateTable = sqliteTable("account_state", {
@@ -33,7 +33,7 @@ export const ControlAccountTable = sqliteTable(
     active: integer({ mode: "boolean" })
       .notNull()
       .$default(() => false),
-    ...Timestamps,
+    ...TimestampsPg,
   },
   (table) => [primaryKey({ columns: [table.email, table.url] })],
 )

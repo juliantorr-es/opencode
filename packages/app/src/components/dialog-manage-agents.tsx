@@ -16,8 +16,11 @@ const api = () => (typeof window !== "undefined" ? (window as unknown as Record<
   | {
       getCustomAgents?: () => Promise<unknown[]>
       setCustomAgents?: (agents: unknown[]) => Promise<void>
+      deleteCustomAgent?: (id: string) => Promise<void>
     }
   | undefined
+
+let writeQueue: Promise<void> = Promise.resolve()
 
 type AgentEntry = {
   source: "built-in" | "custom"
@@ -37,6 +40,8 @@ export const DialogManageAgents: Component = () => {
   const [customAgents, setCustomAgents] = createSignal<AgentDef[]>([])
   const [loaded, setLoaded] = createSignal(false)
   const [confirmDelete, setConfirmDelete] = createSignal<AgentDef | null>(null)
+  const [isSaving, setIsSaving] = createSignal(false)
+  const [isDeleting, setIsDeleting] = createSignal(false)
 
   // Load custom agents from electron-store
   if (!loaded()) {
@@ -45,7 +50,7 @@ export const DialogManageAgents: Component = () => {
       setLoaded(true)
       a.getCustomAgents().then((agents) => {
         setCustomAgents((agents ?? []) as AgentDef[])
-      })
+      }).catch(err => console.error("Failed to load custom agents:", err))
     }
   }
 
@@ -79,20 +84,27 @@ export const DialogManageAgents: Component = () => {
   })
 
   const saveCustomAgents = async (agents: AgentDef[]) => {
+    setIsSaving(true)
     const prev = customAgents()
     setCustomAgents(agents)
-    try {
+    const task = writeQueue.then(async () => {
       const a = api()
       if (a?.setCustomAgents) {
         await a.setCustomAgents(agents)
       }
+    })
+    writeQueue = task.catch(() => {})
+    try {
+      await task
     } catch (err) {
       setCustomAgents(prev)
       showToast({
-        title: "Error",
+        title: language.t("dialog.agents.save.failed"),
         description: "Failed to save custom agents — changes not persisted",
       })
       console.error("Failed to save custom agents:", err)
+    } finally {
+      setIsSaving(false)
     }
   }
 
@@ -132,12 +144,29 @@ export const DialogManageAgents: Component = () => {
   const handleConfirmDelete = async () => {
     const agent = confirmDelete()
     if (!agent) return
-    await saveCustomAgents(customAgents().filter((a) => a.id !== agent.id))
-    showToast({
-      title: language.t("dialog.agents.delete"),
-      description: `"${agent.name}" deleted`,
-    })
+    setIsDeleting(true)
     setConfirmDelete(null)
+    try {
+      const a = api()
+      if (a?.deleteCustomAgent) {
+        await a.deleteCustomAgent(agent.id)
+        setCustomAgents(customAgents().filter((a) => a.id !== agent.id))
+      } else {
+        await saveCustomAgents(customAgents().filter((a) => a.id !== agent.id))
+      }
+      showToast({
+        title: language.t("dialog.agents.delete"),
+        description: `"${agent.name}" deleted`,
+      })
+    } catch (err) {
+      showToast({
+        title: language.t("dialog.agents.delete.failed"),
+        description: "Failed to delete custom agent — changes not persisted",
+      })
+      console.error("Failed to delete custom agent:", err)
+    } finally {
+      setIsDeleting(false)
+    }
   }
 
   const handleCancelDelete = () => {
@@ -155,7 +184,7 @@ export const DialogManageAgents: Component = () => {
       title={language.t("dialog.agents.manage")}
       description={language.t("dialog.agents.manage.description")}
       action={
-        <Button class="h-7 -my-1 text-14-medium" icon="plus-small" tabIndex={-1} onClick={handleCreateAgent}>
+        <Button class="h-7 -my-1 text-14-medium" icon="plus-small" tabIndex={-1} onClick={handleCreateAgent} disabled={isSaving()}>
           {language.t("dialog.agents.create")}
         </Button>
       }
@@ -219,7 +248,7 @@ export const DialogManageAgents: Component = () => {
               }>
                 <div class="flex items-center gap-1 shrink-0">
                   <span class="text-12-medium text-text-weak">{language.t("dialog.agents.delete.confirm")}</span>
-                  <Button size="small" variant="ghost" class="text-text-danger-base" onClick={handleConfirmDelete}>
+                  <Button size="small" variant="ghost" class="text-text-danger-base" onClick={handleConfirmDelete} disabled={isDeleting()}>
                     {language.t("common.delete")}
                   </Button>
                   <Button size="small" variant="ghost" onClick={handleCancelDelete}>

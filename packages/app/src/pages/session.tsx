@@ -67,6 +67,13 @@ import { extractPromptFromParts } from "@/utils/prompt"
 import { same } from "@/utils/same"
 import { formatServerError } from "@/utils/server-errors"
 import { useUsageExceededDialogs } from "./session/usage-exceeded-dialogs"
+import * as Review from "./session/session-review"
+import { createSessionHistoryLoader, type SessionHistoryWindowInput } from "./session/session-history-loader"
+import * as Scroll from "./session/session-scroll"
+
+// ---------------------------------------------------------------------------
+// Module-level types and helpers (extracted to session/session-history-loader.ts)
+// ---------------------------------------------------------------------------
 
 const emptyUserMessages: UserMessage[] = []
 type FollowupItem = FollowupDraft & { id: string }
@@ -76,110 +83,12 @@ const emptyFollowups: FollowupItem[] = []
 type ChangeMode = "git" | "branch" | "turn"
 type VcsMode = "git" | "branch"
 
-type SessionHistoryWindowInput = {
-  sessionID: () => string | undefined
-  loaded: () => number
-  visibleUserMessages: () => UserMessage[]
-  historyMore: () => boolean
-  historyLoading: () => boolean
-  loadMore: (sessionID: string) => Promise<void>
-  userScrolled: () => boolean
-  scroller: () => HTMLDivElement | undefined
-}
+// Module-level types (SessionHistoryWindowInput extracted to session/session-history-loader.ts)
+// ---------------------------------------------------------------------------
 
-function createSessionHistoryLoader(input: SessionHistoryWindowInput) {
-  const historyScrollThreshold = 200
-  let shiftFrame: number | undefined
-
-  const [state, setState] = createStore({
-    shift: false,
-  })
-
-  const userMessages = createMemo(() => input.visibleUserMessages(), emptyUserMessages, {
-    equals: same,
-  })
-
-  const cancelShiftReset = () => {
-    if (shiftFrame === undefined) return
-    cancelAnimationFrame(shiftFrame)
-    shiftFrame = undefined
-  }
-
-  const scheduleShiftReset = () => {
-    cancelShiftReset()
-    shiftFrame = requestAnimationFrame(() => {
-      shiftFrame = undefined
-      setState("shift", false)
-    })
-  }
-
-  const fetchOlderMessages = async () => {
-    const id = input.sessionID()
-    if (!id) return
-    if (!input.historyMore() || input.historyLoading()) return
-
-    // TODO(session-timeline): switch this to core cursor-based part pagination when that API lands.
-    const beforeVisible = input.visibleUserMessages().length
-    let loaded = input.loaded()
-    let growth = 0
-
-    cancelShiftReset()
-    setState("shift", true)
-
-    while (true) {
-      await input.loadMore(id)
-      if (input.sessionID() !== id) return
-
-      const nextLoaded = input.loaded()
-      const raw = nextLoaded - loaded
-      loaded = nextLoaded
-      growth = input.visibleUserMessages().length - beforeVisible
-
-      if (growth > 0) break
-      if (raw <= 0) break
-      if (!input.historyMore()) break
-    }
-
-    if (growth > 0) {
-      scheduleShiftReset()
-      return
-    }
-
-    setState("shift", false)
-  }
-
-  const loadAndReveal = () => fetchOlderMessages()
-
-  const onScrollerScroll = () => {
-    if (!input.userScrolled()) return
-    const el = input.scroller()
-    if (!el) return
-    if (el.scrollTop >= historyScrollThreshold) return
-
-    void fetchOlderMessages()
-  }
-
-  createEffect(
-    on(
-      input.sessionID,
-      () => {
-        cancelShiftReset()
-        setState({ shift: false })
-      },
-      { defer: true },
-    ),
-  )
-
-  onCleanup(cancelShiftReset)
-
-  return {
-    userMessages,
-    shift: () => state.shift,
-    loadAndReveal,
-    onScrollerScroll,
-  }
-}
-
+// ---------------------------------------------------------------------------
+// Page component — session view
+// ---------------------------------------------------------------------------
 export default function Page() {
   const serverSync = useServerSync()
   const layout = useLayout()
@@ -293,9 +202,8 @@ export default function Page() {
     return next
   }
 
-  const openReviewPanel = () => {
-    if (!view().reviewPanel.opened()) view().reviewPanel.open()
-  }
+  // --- Review helpers (extracted to session/session-review.ts) ---
+  const openReviewPanel = () => Review.openReviewPanel(view())
 
   const info = createMemo(() => (params.id ? sync.session.get(params.id) : undefined))
   const isChildSession = createMemo(() => !!info()?.parentID)
@@ -482,18 +390,10 @@ export default function Page() {
     }
   })
   const refreshVcs = debounce(() => void queryClient.invalidateQueries({ queryKey: vcsKey() }), 100)
-  const reviewDiffs = () => {
-    if (store.changes === "git" || store.changes === "branch")
-      // avoids suspense
-      return vcsQuery.isFetched ? (vcsQuery.data ?? []) : []
-    return turnDiffs()
-  }
-  const reviewCount = () => reviewDiffs().length
-  const hasReview = () => reviewCount() > 0
-  const reviewReady = () => {
-    if (store.changes === "git" || store.changes === "branch") return !vcsQuery.isPending
-    return true
-  }
+  const reviewDiffs = () => Review.reviewDiffs(store, vcsQuery, turnDiffs)
+  const reviewCount = () => Review.reviewCount(store, vcsQuery, turnDiffs)
+  const hasReview = () => Review.hasReview(store, vcsQuery, turnDiffs)
+  const reviewReady = () => Review.reviewReady(store, vcsQuery)
 
   const newSessionWorktree = createMemo(() => {
     if (store.newSessionWorktree === "create") return "create"
@@ -609,18 +509,9 @@ export default function Page() {
 
   const scrollGestureWindowMs = 250
 
-  const markScrollGesture = (target?: EventTarget | null) => {
-    const root = scroller
-    if (!root) return
-
-    const el = target instanceof Element ? target : undefined
-    const nested = el?.closest("[data-scrollable]")
-    if (nested && nested !== root) return
-
-    setUi("scrollGesture", Date.now())
-  }
-
-  const hasScrollGesture = () => Date.now() - ui.scrollGesture < scrollGestureWindowMs
+  // --- Scroll helpers (extracted to session/session-scroll.ts) ---
+  const markScrollGesture = (target?: EventTarget | null) => Scroll.markScrollGesture(scroller, (ts) => setUi("scrollGesture", ts), target)
+  const hasScrollGesture = () => Scroll.hasScrollGesture(ui.scrollGesture, scrollGestureWindowMs)
 
   const [sessionSync] = createResource(
     () => [sdk.directory, params.id] as const,
@@ -1017,18 +908,12 @@ export default function Page() {
     </Show>
   )
 
-  const reviewPanel = () => (
-    <div class="flex flex-col h-full overflow-hidden bg-background-stronger contain-strict">
-      <div class="relative pt-2 flex-1 min-h-0 overflow-hidden">
-        {reviewContent({
-          diffStyle: layout.review.diffStyle(),
-          onDiffStyleChange: layout.review.setDiffStyle,
-          loadingClass: "px-6 py-4 text-text-weak",
-          emptyClass: "h-full pb-64 -mt-4 flex flex-col items-center justify-center text-center gap-6",
-        })}
-      </div>
-    </div>
-  )
+  const reviewPanel = () => Review.reviewPanelLayout(reviewContent({
+    diffStyle: layout.review.diffStyle(),
+    onDiffStyleChange: layout.review.setDiffStyle,
+    loadingClass: "px-6 py-4 text-text-weak",
+    emptyClass: "h-full pb-64 -mt-4 flex flex-col items-center justify-center text-center gap-6",
+  }))
 
   createEffect(
     on(
@@ -1042,45 +927,11 @@ export default function Page() {
     ),
   )
 
-  const reviewDiffId = (path: string) => {
-    const sum = checksum(path)
-    if (!sum) return
-    return `session-review-diff-${sum}`
-  }
+  const reviewDiffId = (path: string) => Review.reviewDiffId(path)
+  const reviewDiffTop = (path: string) => Review.reviewDiffTop(tree, path)
 
-  const reviewDiffTop = (path: string) => {
-    const root = tree.reviewScroll
-    if (!root) return
-
-    const id = reviewDiffId(path)
-    if (!id) return
-
-    const el = document.getElementById(id)
-    if (!(el instanceof HTMLElement)) return
-    if (!root.contains(el)) return
-
-    const a = el.getBoundingClientRect()
-    const b = root.getBoundingClientRect()
-    return a.top - b.top + root.scrollTop
-  }
-
-  const scrollToReviewDiff = (path: string) => {
-    const root = tree.reviewScroll
-    if (!root) return false
-
-    const top = reviewDiffTop(path)
-    if (top === undefined) return false
-
-    view().setScroll("review", { x: root.scrollLeft, y: top })
-    root.scrollTo({ top, behavior: "auto" })
-    return true
-  }
-
-  const focusReviewDiff = (path: string) => {
-    openReviewPanel()
-    view().review.openPath(path)
-    setTree({ activeDiff: path, pendingDiff: path })
-  }
+  const scrollToReviewDiff = (path: string) => Review.scrollToReviewDiff(tree, view(), path)
+  const focusReviewDiff = (path: string) => Review.focusReviewDiff(view(), setTree, path)
 
   createEffect(() => {
     const pending = tree.pendingDiff
@@ -1193,43 +1044,20 @@ export default function Page() {
     overflowAnchor: "dynamic",
   })
 
-  let scrollStateFrame: number | undefined
-  let scrollStateTarget: HTMLDivElement | undefined
   let fillFrame: number | undefined
 
-  const jumpThreshold = (el: HTMLDivElement) => Math.max(400, el.clientHeight)
+  const jumpThreshold = (el: HTMLDivElement) => Scroll.jumpThreshold(el)
+  const updateScrollState = (el: HTMLDivElement) => Scroll.updateScrollState(el, (update) => setUi("scroll", update))
 
-  const updateScrollState = (el: HTMLDivElement) => {
-    const max = el.scrollHeight - el.clientHeight
-    const distance = max - el.scrollTop
-    const overflow = max > 1
-    const bottom = !overflow || distance <= 2
-    const jump = overflow && distance > jumpThreshold(el)
+  const scrollStateFrameRef = { value: undefined as number | undefined }
+  const scrollStateTargetRef = { value: undefined as HTMLDivElement | undefined }
 
-    if (ui.scroll.overflow === overflow && ui.scroll.bottom === bottom && ui.scroll.jump === jump) return
-    setUi("scroll", { overflow, bottom, jump })
-  }
-
-  const scheduleScrollState = (el: HTMLDivElement) => {
-    scrollStateTarget = el
-    if (scrollStateFrame !== undefined) return
-
-    scrollStateFrame = requestAnimationFrame(() => {
-      scrollStateFrame = undefined
-
-      const target = scrollStateTarget
-      scrollStateTarget = undefined
-      if (!target) return
-
-      updateScrollState(target)
-    })
-  }
+  const scheduleScrollState = (el: HTMLDivElement) => Scroll.scheduleScrollState(el, scrollStateFrameRef, scrollStateTargetRef, updateScrollState)
 
   const resumeScroll = () => {
     setStore("messageId", undefined)
     autoScroll.forceScrollToBottom()
     clearMessageHash()
-
     const el = scroller
     if (el) scheduleScrollState(el)
   }
@@ -1647,7 +1475,7 @@ export default function Page() {
     if (todoTimer !== undefined) window.clearTimeout(todoTimer)
     if (diffFrame !== undefined) cancelAnimationFrame(diffFrame)
     if (diffTimer !== undefined) window.clearTimeout(diffTimer)
-    if (scrollStateFrame !== undefined) cancelAnimationFrame(scrollStateFrame)
+    if (scrollStateFrameRef.value !== undefined) cancelAnimationFrame(scrollStateFrameRef.value)
     if (fillFrame !== undefined) cancelAnimationFrame(fillFrame)
   })
 

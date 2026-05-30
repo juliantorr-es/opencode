@@ -1,0 +1,190 @@
+{
+  "schema_version": "rig.relay.validation_artifact.v1",
+  "session_id": "ses_lane6_validation",
+  "generated_at": "2026-05-30T03:30:00Z",
+  "validator": "qa",
+  "boundary": "Plugin Management Hardening (Lane 6 of 9)",
+  "verdict": "MIXED — 2/5 claims pass, 3/5 fail. Typecheck has pre-existing errors plus one lane-induced type error.",
+  "files_examined": [
+    "packages/desktop/src/main/ipc.ts",
+    "packages/desktop/src/renderer/dialog-install-plugin.tsx",
+    "packages/desktop/src/renderer/dialog-manage-plugins.tsx",
+    "packages/desktop/src/renderer/index.tsx"
+  ],
+  "typecheck_result": {
+    "status": "fail",
+    "exit_code": 2,
+    "lane_relevant_errors": [
+      {
+        "file": "src/main/ipc.ts",
+        "line": 71,
+        "code": "TS2345",
+        "message": "Argument of type 'Promise<T>' is not assignable to parameter of type 'Promise<void>'.",
+        "root_cause": "writeQueues is Map<string, Promise<void>> but serializedWrite returns Promise<T>",
+        "severity": "minor",
+        "lane_related": false
+      },
+      {
+        "file": "src/renderer/cli.ts",
+        "line": 7,
+        "code": "TS2339",
+        "message": "Property 'installCli' does not exist on type 'ElectronAPI'.",
+        "severity": "minor",
+        "lane_related": false
+      }
+    ],
+    "pre_existing_errors": [
+      "../app/src/components/dialog-manage-agents.tsx(87,18): TS2304 — missing writeQueue",
+      "../app/src/components/dialog-manage-agents.tsx(146,12): TS2551 — missing deleteCustomAgent",
+      "../app/src/components/prompt-input.tsx(598,16): TS2367 — unintentional comparison",
+      "../app/src/components/prompt-input/slash-popover.tsx(73,23): TS2367 — unintentional comparison"
+    ]
+  },
+  "claim_atoms": [
+    {
+      "id": 1,
+      "description": "All 6 dedicated store IPC handlers wrapped in try/catch with console.error",
+      "verdict": "FAIL",
+      "details": {
+        "handlers_checked": [
+          {
+            "handler": "get-desktop-custom-agents",
+            "line": 324,
+            "has_try_catch": false,
+            "has_console_error": false
+          },
+          {
+            "handler": "set-desktop-custom-agents",
+            "line": 328,
+            "has_try_catch": false,
+            "has_console_error": false
+          },
+          {
+            "handler": "get-desktop-mcp-servers",
+            "line": 338,
+            "has_try_catch": true,
+            "has_console_error": true,
+            "catch_action": "console.error + returns { servers: [], dropped: 0 }"
+          },
+          {
+            "handler": "set-desktop-mcp-servers",
+            "line": 347,
+            "has_try_catch": true,
+            "has_console_error": true,
+            "catch_action": "console.error + rethrows"
+          },
+          {
+            "handler": "get-desktop-plugin-config",
+            "line": 359,
+            "has_try_catch": false,
+            "has_console_error": false
+          },
+          {
+            "handler": "set-desktop-plugin-config",
+            "line": 363,
+            "has_try_catch": true,
+            "has_console_error": true,
+            "catch_action": "console.error + rethrows"
+          }
+        ],
+        "summary": "3/6 handlers wrapped (get/set-mcp-servers, set-plugin-config). 3/6 unwrapped: get/set/delete-desktop-custom-agents and get-desktop-plugin-config."
+      }
+    },
+    {
+      "id": 2,
+      "description": "All window.api calls in dialog-*.tsx use optional chaining ?.()",
+      "verdict": "FAIL",
+      "details": {
+        "dialog_install_plugin_calls": [
+          { "call": "window.api.openDirectoryPicker?.()", "line": 37, "has_optional_chaining": true },
+          { "call": "window.api.getDesktopPluginConfig()", "line": 76, "has_optional_chaining": false },
+          { "call": "window.api.setDesktopPluginConfig?.(updated)", "line": 82, "has_optional_chaining": true }
+        ],
+        "dialog_manage_plugins_calls": [
+          { "call": "window.api.getDesktopPluginConfig() [loadConfigs]", "line": 38, "has_optional_chaining": false },
+          { "call": "window.api.setDesktopPluginConfig(updated) [toggleEnabled]", "line": 53, "has_optional_chaining": false },
+          { "call": "window.api.setDesktopPluginConfig(filtered) [removePlugin]", "line": 64, "has_optional_chaining": false },
+          { "call": "window.api.getDesktopPluginConfig?.() [submitInstall]", "line": 107, "has_optional_chaining": true },
+          { "call": "window.api.setDesktopPluginConfig?.(updated) [submitInstall]", "line": 123, "has_optional_chaining": true },
+          { "call": "window.api.openDirectoryPicker?.() [openFilePicker]", "line": 148, "has_optional_chaining": true }
+        ],
+        "summary": "Only 5/9 window.api calls use ?.(). The getDesktopPluginConfig call in dialog-install-plugin.tsx and all three calls in the main component body (loadConfigs, toggleEnabled, removePlugin) lack optional chaining."
+      }
+    },
+    {
+      "id": 3,
+      "description": "toggleEnabled, removePlugin, submitInstall fetch fresh state from store instead of local signal",
+      "verdict": "FAIL",
+      "details": {
+        "toggleEnabled": {
+          "fetches_fresh_state": false,
+          "behavior": "Uses configs() local signal to compute update, sends to store, uses returned result. Only fetches fresh state on catch via loadConfigs().",
+          "evidence": "const updated = configs().map(...)"
+        },
+        "removePlugin": {
+          "fetches_fresh_state": false,
+          "behavior": "Uses configs() local signal to compute update, sends to store. Only fetches fresh state on catch via loadConfigs().",
+          "evidence": "const filtered = configs().filter(...)"
+        },
+        "submitInstall": {
+          "fetches_fresh_state": true,
+          "behavior": "Calls window.api.getDesktopPluginConfig?.() to get fresh state before computing update.",
+          "evidence": "const fresh = await window.api.getDesktopPluginConfig?.()"
+        },
+        "summary": "Only submitInstall fetches fresh state. toggleEnabled and removePlugin still operate on stale local signal."
+      }
+    },
+    {
+      "id": 4,
+      "description": "Dynamic import in index.tsx has .catch() handler",
+      "verdict": "PASS",
+      "details": {
+        "file": "packages/desktop/src/renderer/index.tsx",
+        "line": 365,
+        "evidence": "void import('./dialog-manage-plugins').then((x) => { ... }).catch((e) => { console.error('Failed to load plugin manager dialog:', e) })",
+        "catch_handler": "console.error('Failed to load plugin manager dialog:', e)"
+      }
+    },
+    {
+      "id": 5,
+      "description": "loadConfigs catch block logs console.warn",
+      "verdict": "PASS",
+      "details": {
+        "file": "packages/desktop/src/renderer/dialog-manage-plugins.tsx",
+        "line": 43,
+        "evidence": "catch (e) { console.warn('Failed to load plugin configs:', e); setConfigs([]); setDropped(0); }",
+        "catch_log": "console.warn('Failed to load plugin configs:', e)",
+        "fallback_behavior": "setConfigs([]), setDropped(0)"
+      }
+    }
+  ],
+  "findings": [
+    {
+      "severity": "blocking",
+      "claim_id": 1,
+      "summary": "3/6 dedicated store IPC handlers lack try/catch guards. Custom-agents handlers (get, set, delete) and get-desktop-plugin-config handler are unprotected against store read/write failures."
+    },
+    {
+      "severity": "blocking",
+      "claim_id": 2,
+      "summary": "Only 5/9 window.api calls across both dialog files use optional chaining. The getDesktopPluginConfig read call in dialog-install-plugin.tsx and all three component-body calls (loadConfigs, toggleEnabled, removePlugin) in dialog-manage-plugins.tsx are unprotected."
+    },
+    {
+      "severity": "major",
+      "claim_id": 3,
+      "summary": "toggleEnabled and removePlugin compute updates from the local configs() signal instead of fetching fresh state from the store. This creates a race condition: if another dialog or process modifies plugin config between mount and action, the stale update overwrites those changes."
+    },
+    {
+      "severity": "minor",
+      "claim_id": null,
+      "summary": "ipc.ts line 71 has a type error (TS2345) caused by serializedWrite returning Promise<T> but writeQueues being typed as Map<string, Promise<void>>. Pre-existing, not directly from this lane but surfaces on typecheck."
+    }
+  ],
+  "recommendations": [
+    "Wrap get-desktop-custom-agents, set-desktop-custom-agents, delete-desktop-custom-agent, get-desktop-plugin-config in try/catch with console.error",
+    "Add ?.() to window.api.getDesktopPluginConfig() in dialog-install-plugin.tsx (line 76)",
+    "Add ?.() to all window.api.setDesktopPluginConfig() calls in dialog-manage-plugins.tsx (toggleEnabled, removePlugin)",
+    "Refactor toggleEnabled and removePlugin to fetch fresh state via window.api.getDesktopPluginConfig?.() before computing updates (matching submitInstall pattern)",
+    "Fix writeQueues map type in ipc.ts to resolve TS2345 (Map<string, Promise<unknown>>)"
+  ]
+}

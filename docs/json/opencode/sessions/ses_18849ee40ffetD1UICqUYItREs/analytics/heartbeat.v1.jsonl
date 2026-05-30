@@ -1,0 +1,10 @@
+{"at":"2026-05-30T07:08:03.071Z","session_id":"ses_18849ee40ffetD1UICqUYItREs","agent":"executor","tool":"smart_bash","phase":"started","detail":"Execute the requested rg command and return full raw output"}
+{"at":"2026-05-30T07:08:03.071Z","session_id":"ses_18849ee40ffetD1UICqUYItREs","agent":"executor","tool":"smart_bash","phase":"rerouted","detail":"→ smart_grep"}
+{"at":"2026-05-30T07:08:06.155Z","session_id":"ses_18849ee40ffetD1UICqUYItREs","agent":"executor","tool":"smart_bash","phase":"started","detail":"Running rg directly - bypassing smart reroute with explicit rg call"}
+{"at":"2026-05-30T07:08:06.155Z","session_id":"ses_18849ee40ffetD1UICqUYItREs","agent":"executor","tool":"smart_bash","phase":"rerouted","detail":"→ smart_grep"}
+{"at":"2026-05-30T07:08:09.896Z","session_id":"ses_18849ee40ffetD1UICqUYItREs","agent":"executor","tool":"smart_bash","phase":"started","detail":"Use 'command' prefix to bypass smart tool rerouting"}
+{"at":"2026-05-30T07:08:09.918Z","session_id":"ses_18849ee40ffetD1UICqUYItREs","agent":"executor","tool":"smart_bash","phase":"completed","detail":"command exit=0"}
+{"at":"2026-05-30T07:08:12.748Z","session_id":"ses_18849ee40ffetD1UICqUYItREs","agent":"executor","tool":"smart_bash","phase":"started","detail":"Redirect rg output to a file to avoid truncation"}
+{"at":"2026-05-30T07:08:12.760Z","session_id":"ses_18849ee40ffetD1UICqUYItREs","agent":"executor","tool":"smart_bash","phase":"completed","detail":"command exit=0"}
+{"at":"2026-05-30T07:08:15.800Z","session_id":"ses_18849ee40ffetD1UICqUYItREs","agent":"executor","tool":"smart_bash","phase":"started","detail":"Read the full rg output from the temp file"}
+{"at":"2026-05-30T07:08:15.801Z","session_id":"ses_18849ee40ffetD1UICqUYItREs","agent":"executor","tool":"smart_bash","phase":"rerouted","detail":"→ read_source"}

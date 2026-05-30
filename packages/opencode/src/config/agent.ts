@@ -45,6 +45,13 @@ const AgentSchema = Schema.StructWithRest(
     }),
     maxSteps: Schema.optional(PositiveInt).annotate({ description: "@deprecated Use 'steps' field instead." }),
     permission: Schema.optional(ConfigPermission.Info),
+    lifecycle: Schema.optional(
+      Schema.Struct({
+        type: Schema.Literals(["linear", "dag", "generic"]),
+        phases: Schema.optional(Schema.mutable(Schema.Array(Schema.Any))),
+        transitions: Schema.optional(Schema.mutable(Schema.Array(Schema.Any))),
+      }),
+    ).annotate({ description: "Lifecycle definition for this agent — phases, transitions, and tool gating" }),
   }),
   [Schema.Record(Schema.String, Schema.Any)],
 )
@@ -66,6 +73,7 @@ const KNOWN_KEYS = new Set([
   "permission",
   "disable",
   "tools",
+  "lifecycle",
 ])
 
 // Post-parse normalisation:

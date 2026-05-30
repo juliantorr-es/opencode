@@ -1,0 +1,110 @@
+{
+  "schema_version": "rig.relay.qa.validation.v1",
+  "artifact": "ToolCache Upgrade Validation",
+  "target": "packages/opencode/src/tool/cache.ts",
+  "validator": "qa",
+  "validated_at": "2026-05-30T07:05:00Z",
+  "criteria": [
+    {
+      "id": 1,
+      "name": "Interface completeness",
+      "result": "PASS",
+      "evidence": "Exports CacheConfig (line 15), CacheStats (line 21), Interface (line 29) with getOrCompute, invalidate, invalidateKey, stats methods. All signatures include required parameters."
+    },
+    {
+      "id": 2,
+      "name": "TTL defaults",
+      "result": "PASS",
+      "evidence": "getOrCompute accepts optional CacheConfig. Defaults: maxEntries=1000 (line 103), ttl=Duration.minutes(5) (line 101), maxEntrySize=1024*1024 (line 104). All defaults correctly applied via ?? operator."
+    },
+    {
+      "id": 3,
+      "name": "Clock",
+      "result": "PASS",
+      "evidence": "Uses `Clock.currentTimeMillis` from Effect (line 100). No `Date.now()` usage anywhere in the file."
+    },
+    {
+      "id": 4,
+      "name": "LRU promotion and eviction",
+      "result": "PASS",
+      "details": "Minor consistency issue flagged below",
+      "evidence": "Hit promotion uses map.delete(key)+map.set(key,entry) re-insertion which pushes to MRU end via Map insertion ordering (lines 110-111). LRU eviction during insert iterates map keys (first = oldest) and deletes while over maxEntries (lines 145-152). Map preserves insertion order so .keys().next() returns the LRU entry."
+    },
+    {
+      "id": 5,
+      "name": "Stats completeness",
+      "result": "PASS",
+      "evidence": "stats() returns { size, hits, misses, evictions, estimatedBytes } (lines 185-197). All counters backed by Refs: hits (line 51), misses (line 52), evictions (line 53), estimatedBytes (line 54)."
+    },
+    {
+      "id": 6,
+      "name": "Expiry checking and removal",
+      "result": "PASS",
+      "evidence": "Expired entries checked on access: `if (entry.expiresAt > t)` for hit (line 109), else expired removal (line 114). Expired sweep also performed during new insertion loop (lines 137-141)."
+    },
+    {
+      "id": 7,
+      "name": "Max entry size skipping",
+      "result": "PASS",
+      "evidence": "`approximateSize` (lines 42-48) serializes to JSON and measures bytes. Entry is skipped (not cached) if size > maxEntrySize (line 130). Deferred is still succeeded to unblock awaiters (line 164). Span annotation on skip."
+    },
+    {
+      "id": 8,
+      "name": "Span annotations",
+      "result": "PASS",
+      "evidence": "Annotated spans for: hit (line 112), miss with dedup (line 122), miss without dedup (line 126), expired eviction (lines 115-117), LRU eviction (lines 153-155), maxEntrySize skip (lines 164-167). All use `Effect.annotateCurrentSpan`."
+    },
+    {
+      "id": 9,
+      "name": "Inflight dedup preservation",
+      "result": "PASS",
+      "details": "MAJOR finding below — defect propagation gap",
+      "evidence": "Inflight dedup structure preserved: Map<CacheKey, Deferred.Deferred<any>> in Ref (line 49). Check before compute (lines 119-123), create+store new Deferred (lines 127-128), cleanup in Effect.ensuring (lines 131-135)."
+    },
+    {
+      "id": 10,
+      "name": "Backward compatibility of invalidate",
+      "result": "PASS",
+      "evidence": "invalidate() creates new Map (Ref.set(cache, new Map())) and resets estimatedBytes to 0 (lines 169-171). invalidateKey() removes the specific key and recalculates bytes (lines 173-182). Both preserve the clear/remove contract."
+    }
+  ],
+  "findings": [
+    {
+      "severity": "MAJOR",
+      "category": "correctness",
+      "target": "Inflight dedup Deferred defect propagation",
+      "files": ["packages/opencode/src/tool/cache.ts"],
+      "lines": [125, 131, 157, 162],
+      "description": "When `compute()` defects (uncaught exception, case: 'Die'), the inflight dedup Deferred `d` is never completed. `Effect.ensuring` properly cleans up the inflight map entry, but the Deferred itself remains unresolved. Concurrent callers who entered via the inflight dedup path and are awaiting `Deferred.await(existing)` (line 123) will hang forever because their Deferred is never succeeded or failed.",
+      "reproduction": "1. Request A calls getOrCompute('X', ...) — no cache, no inflight entry → creates Deferred d, starts compute\n2. Request B calls getOrCompute('X', ...) — finds d in inflight → awaits d\n3. A's compute defects (e.g., throws synchronously inside compute)\n4. Effect.ensuring cleanup runs, removes key from inflight map\n5. Deferred d is never resolved → B hangs forever",
+      "evidence": "Deferred is only succeeded (never failed/died) on lines 157 and 162 via `Deferred.succeed`. No `Deferred.fail`, `Deferred.die`, or `Deferred.done` call exists. The Effect library provides `Deferred.into` (Deferred.ts:1226) which correctly handles this by capturing `Effect.exit(self)` and completing the Deferred with the full Exit, including defects.",
+      "repair": "Replace the manual Deferred.succeed approach with `Deferred.into(compute(), d)` or use `Effect.exit(compute())` + `Deferred.done(d, exit)` to ensure defects are propagated. Also import `Exit` from 'effect'."
+    },
+    {
+      "severity": "MINOR",
+      "category": "consistency",
+      "target": "Direct Map mutation bypassing Ref.update",
+      "files": ["packages/opencode/src/tool/cache.ts"],
+      "lines": [110, 111, 114, 127],
+      "description": "Cache hit promotion (lines 110-111), expired entry removal (line 114), and inflight entry insertion (line 127) mutate Map objects directly after obtaining them via `Ref.get()`. These mutations modify the Ref's internal state through the shared mutable reference, but bypass the `Ref.update` pattern used consistently elsewhere (LRU eviction on lines 136-153, invalidate on line 169, invalidateKey on line 176, inflight cleanup on line 132).",
+      "evidence": "Line 108: `const map = yield* Ref.get(cache)` — obtains Map reference\nLines 110-111: `map.delete(key); map.set(key, entry)` — mutates Ref's Map directly\nLine 114: `map.delete(key)` — mutates Ref's Map directly\nLine 119: `const pending = yield* Ref.get(inflight)` — obtains Map reference\nLine 127: `pending.set(key, d)` — mutates Ref's Map directly\nCompare with line 136: `yield* Ref.update(cache, (m) => { ... m.set(key, ...); return m })` — correct pattern",
+      "repair": "Replace direct mutations with `Ref.update` calls: wrap hit promotion and expired entry removal inside `Ref.update(cache, ...)` blocks, and inflight insertion inside `Ref.update(inflight, ...)`."
+    },
+    {
+      "severity": "INFO",
+      "category": "race_condition",
+      "target": "Non-atomic inflight dedup check-and-set",
+      "files": ["packages/opencode/src/tool/cache.ts"],
+      "lines": [119, 127],
+      "description": "The inflight dedup check-and-set is non-atomic: `Ref.get(inflight)` returns the map, then `pending.get(key)` checks it, then `pending.set(key, d)` adds the new Deferred. Between the check and the set, another concurrent request can also find no existing entry and create its own Deferred. Result: two concurrent computations for the same key.",
+      "evidence": "Lines 119-127: check and set are separate Ref.get + direct mutation operations with no atomic boundary.",
+      "repair": "Use `Ref.modify` for an atomic check-and-set: `yield* Ref.modify(inflight, (m) => { const existing = m.get(key); if (existing) return [existing, m]; const d = Deferred.makeUnsafe(); m.set(key, d); return [d, m]; })`"
+    }
+  ],
+  "verdict": "PASS",
+  "blocking_findings": 0,
+  "major_findings": 1,
+  "minor_findings": 1,
+  "info_findings": 1,
+  "recommendation": "Address the MAJOR finding (inflight Deferred defect propagation) before production use. The MINOR consistency finding is advisory. The cache is otherwise well-structured and all 10 criteria pass."
+}

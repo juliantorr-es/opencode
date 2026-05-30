@@ -82,6 +82,10 @@ export type Event =
   | EventAccountAdded
   | EventAccountRemoved
   | EventAccountSwitched
+  | EventCoordinationSessionHeartbeat
+  | EventCoordinationTaskStatus
+  | EventCoordinationPathClaimed
+  | EventCoordinationActivityLogged
 
 export type OAuth = {
   type: "oauth"
@@ -883,6 +887,10 @@ export type GlobalEvent = {
     | EventAccountAdded
     | EventAccountRemoved
     | EventAccountSwitched
+    | EventCoordinationSessionHeartbeat
+    | EventCoordinationTaskStatus
+    | EventCoordinationPathClaimed
+    | EventCoordinationActivityLogged
     | SyncEventMessageUpdated
     | SyncEventMessageRemoved
     | SyncEventMessagePartUpdated
@@ -3406,6 +3414,56 @@ export type EventAccountSwitched = {
     serviceID: string
     from?: string
     to?: string
+  }
+}
+
+export type EventCoordinationSessionHeartbeat = {
+  id: string
+  type: "coordination.session_heartbeat"
+  properties: {
+    session_id: string
+    agent: string
+    status: "active" | "idle" | "blocked"
+    current_file?: string
+    mission_summary?: string
+    heartbeat_at: number
+  }
+}
+
+export type EventCoordinationTaskStatus = {
+  id: string
+  type: "coordination.task_status"
+  properties: {
+    session_id: string
+    task_id: string
+    task_type: string
+    status: "running" | "completed" | "failed" | "blocked"
+    description: string
+    agent_name?: string
+    changed_at: number
+  }
+}
+
+export type EventCoordinationPathClaimed = {
+  id: string
+  type: "coordination.path_claimed"
+  properties: {
+    session_id: string
+    path: string
+    intent: "edit" | "create" | "read" | "delete"
+    claimed_at: number
+  }
+}
+
+export type EventCoordinationActivityLogged = {
+  id: string
+  type: "coordination.activity_logged"
+  properties: {
+    session_id: string
+    action: string
+    target?: string
+    details?: Record<string, unknown>
+    logged_at: number
   }
 }
 

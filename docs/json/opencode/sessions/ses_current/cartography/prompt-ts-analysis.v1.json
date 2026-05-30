@@ -1,0 +1,192 @@
+{
+  "schema": "rig.analysis.cartography.v1",
+  "session_id": "ses_current",
+  "artifact_kind": "cartography",
+  "profile": "cartography",
+  "target": "packages/opencode/src/session/prompt.ts",
+  "generated_at": "2026-05-30T08:00:00Z",
+  "total_lines": 1781,
+  "exports": [
+    { "name": "Interface", "kind": "interface", "line": 90 },
+    { "name": "Service", "kind": "class extends Context.Service", "line": 99 },
+    { "name": "layer", "kind": "Layer.effect", "line": 101 },
+    { "name": "defaultLayer", "kind": "Layer.suspend", "line": 1641 },
+    { "name": "PromptInput", "kind": "Schema.Struct", "line": 1681 },
+    { "name": "LoopInput", "kind": "Schema.Class", "line": 1705 },
+    { "name": "ShellInput", "kind": "Schema.Struct", "line": 1709 },
+    { "name": "CommandInput", "kind": "Schema.Struct", "line": 1718 },
+    { "name": "createStructuredOutputTool", "kind": "function", "line": 1747 },
+    { "name": "SessionPrompt", "kind": "namespace re-export", "line": 1781 }
+  ],
+  "interface_methods": [
+    { "name": "cancel", "signature": "(sessionID: SessionID) => Effect.Effect<void>", "line": 91 },
+    { "name": "prompt", "signature": "(input: PromptInput) => Effect.Effect<MessageV2.WithParts, Image.Error>", "line": 92 },
+    { "name": "loop", "signature": "(input: LoopInput) => Effect.Effect<MessageV2.WithParts>", "line": 93 },
+    { "name": "shell", "signature": "(input: ShellInput) => Effect.Effect<MessageV2.WithParts, Session.BusyError>", "line": 94 },
+    { "name": "command", "signature": "(input: CommandInput) => Effect.Effect<MessageV2.WithParts, Image.Error>", "line": 95 },
+    { "name": "resolvePromptParts", "signature": "(template: string) => Effect.Effect<PromptInput[\"parts\"]>", "line": 96 }
+  ],
+  "runloop": {
+    "function_name": "runLoop",
+    "wrapped_by": "loop → SessionRunState.ensureRunning",
+    "signature": "(sessionID: SessionID) => any",
+    "effect_tag": "SessionPrompt.run",
+    "loop_type": "while (true)",
+    "loop_lines": "1244-1498",
+    "loop_entry_point": "loop (line 1500) → state.ensureRunning → runLoop",
+    "loop_exit_condition": "assistant finish !== 'tool-calls' AND no pending tool calls AND lastUser.id < lastAssistant.id",
+    "steps_per_iteration": {
+      "set_busy": { "action": "status.set(sessionID, { type: 'busy' })", "line": 1253 },
+      "load_messages": { "action": "MessageV2.filterCompactedEffect(sessionID)", "line": 1256 },
+      "parse_latest": { "action": "MessageV2.latest(msgs) → { user, assistant, finished, tasks }", "line": 1258 },
+      "detect_tool_calls": { "action": "Check for non-orphaned tool calls in assistant", "lines": "1262-1271" },
+      "check_exit": { "action": "break if finished without tool-calls", "lines": "1273-1291" },
+      "fork_title": { "action": "Step 1: fork title generation", "lines": "1293-1300" },
+      "resolve_model": { "action": "getModel(providerID, modelID, sessionID)", "line": 1302 },
+      "pop_task": { "action": "tasks.pop() — subtask or compaction", "lines": "1303-1329" },
+      "resolve_agent": { "action": "agents.get(lastUser.agent)", "lines": "1331-1335" },
+      "apply_reminders": { "action": "SessionReminders.apply({ messages, agent, session })", "lines": "1341-1345" },
+      "create_assistant_msg": { "action": "New MessageV2.Assistant, sessions.updateMessage(msg)", "lines": "1347-1362" },
+      "create_processor": { "action": "processor.create({ assistantMessage: msg, sessionID, model })", "lines": "1374-1380" },
+      "resolve_tools": { "action": "SessionTools.resolve({ agent, session, model, processor: handle, ... })", "lines": "1387-1401" },
+      "add_structured_tool": { "action": "Add StructuredOutput if json_schema format", "lines": "1403-1410" },
+      "fork_summary": { "action": "Step 1: fork summary generation", "lines": "1412-1413" },
+      "build_system_prompt": { "action": "sys.skills(agent) + sys.environment(model) + instruction.system() + modelMsgs", "lines": "1435-1441" },
+      "call_process": { "action": "handle.process({ user, agent, permission, sessionID, system, messages, tools, model, toolChoice })", "lines": "1444-1455" },
+      "handle_result": { "action": "Result routing: stop→break, compact→schedule, continue→loop", "lines": "1476-1489" }
+    },
+    "post_loop": {
+      "prune": "compaction.prune({ sessionID }) — forked",
+      "return": "lastAssistant(sessionID)"
+    }
+  },
+  "processor_usage": {
+    "import_source": "./processor",
+    "service_resolution": "yield* SessionProcessor.Service",
+    "create_call_site": "line 1374-1380, inside runLoop",
+    "create_arguments": {
+      "assistantMessage": "MessageV2.Assistant (fresh per step)",
+      "sessionID": "SessionID",
+      "model": "Provider.Model"
+    },
+    "handle_interface": {
+      "message": "MessageV2.Assistant (getter)",
+      "updateToolCall": "(toolCallID, update) => Effect<MessageV2.ToolPart | undefined>",
+      "completeToolCall": "(toolCallID, output) => Effect<void>",
+      "process": "(streamInput: LLM.StreamInput) => Effect<Result>"
+    },
+    "process_call": "line 1444: handle.process({ user, agent, permission, sessionID, parentSessionID, system, messages, tools, model, toolChoice })",
+    "result_values": ["compact", "stop", "continue"]
+  },
+  "agent_resolution": {
+    "loading_method": "agents.get(lastUser.agent)",
+    "agent_info_structure": {
+      "source": "packages/opencode/src/agent/agent.ts",
+      "fields": "name, description, mode (subagent|primary|all), native, hidden, topP, temperature, color, permission (Ruleset), model, variant, prompt, options, steps"
+    },
+    "built_in_agents": [
+      { "name": "build", "mode": "primary", "permission": "*: allow; doom_loop: ask; question: deny" },
+      { "name": "plan", "mode": "primary", "permission": "edit: deny (except plan files); plan_exit: allow" },
+      { "name": "general", "mode": "subagent", "permission": "defaults + todowrite: deny" },
+      { "name": "explore", "mode": "subagent", "permission": "only grep, glob, list, bash, webfetch, websearch, read" },
+      { "name": "scout", "mode": "subagent", "permission": "explore + repo_clone, repo_overview (experimental)" },
+      { "name": "compaction", "mode": "primary", "hidden": true, "permission": "all denied" },
+      { "name": "title", "mode": "primary", "hidden": true, "permission": "all denied" },
+      { "name": "summary", "mode": "primary", "hidden": true, "permission": "all denied" }
+    ],
+    "user_overrides": "From cfg.agent — disable, field override, permission merge",
+    "applied_in_runloop_at": "line 1331 (get) + line 1339 (steps) + line 1435 (skills)",
+    "used_in_tools": "SessionTools.resolve() filters by agent permission; permission: session.permission passed to process()"
+  },
+  "permission_gating": {
+    "architecture": "3-layer evaluation: defaults → user config → user-approved 'always' rules",
+    "action_types": ["allow", "deny", "ask"],
+    "key_permission_ids": ["read", "edit", "bash", "glob", "grep", "list", "task", "webfetch", "websearch", "external_directory", "todowrite", "question", "doom_loop", "plan_enter", "plan_exit", "repo_clone", "repo_overview", "lsp", "skill"],
+    "ask_mechanism": "Permission.ask() → Deferred → Bus Event.Asked → user reply (once/always/reject)",
+    "tool_resolution_gate": "SessionTools.resolve() uses Permission.disabled() to filter denied tools",
+    "runloop_flow": "session.permission passed to handle.process(); subtask tool calls use permission.ask() with merged rulesets",
+    "doom_loop_detection": "processor.ts: ≥3 identical consecutive tool calls triggers 'doom_loop' permission ask",
+    "subagent_permission_derivation": "deriveSubagentSessionPermission() inherits parent edit denies, denies + external_directory rules, forces todowrite+task deny"
+  },
+  "subagent_spawning": {
+    "mechanism": "TaskTool from @/tool/task, called via handleSubtask (line 303-494)",
+    "detection": "MessageV2.latest(msgs).tasks contains subtask type → handleSubtask()",
+    "handleSubtask_flow": [
+      "Resolve model (task.model or fallback to current model)",
+      "Create assistant message + tool call part with TaskTool.id",
+      "Fire plugin hook 'tool.execute.before'",
+      "Look up target agent via agents.get(task.agent)",
+      "Call taskTool.execute(taskArgs, ctx) with merged permission rules",
+      "Handle interruption via Effect.onInterrupt",
+      "Update part state, fire 'tool.execute.after'",
+      "If task.command, inject 'Summarize' user message"
+    ],
+    "TaskTool_permission_gate": "Permission.ask('task', [subagent_type]) unless bypassAgentCheck",
+    "child_session": "Created via sessions.create() with deriveSubagentSessionPermission()",
+    "coordination": "Coordination.claimTask → releaseTask/failTask",
+    "background_support": "If background: true and experimentalBackgroundSubagents flag set, forks via BackgroundJob.Service and returns immediately",
+    "foreground_flow": "Effect.acquireUseRelease with abort propagation; runs taskTool.run() inline",
+    "promptOps_interface": "{ cancel, resolvePromptParts, prompt }",
+    "priority_extraction": "TaskTool has wave/wave_type fields for orchestration metadata"
+  },
+  "test_infrastructure": {
+    "test_file": "packages/opencode/test/session/prompt.test.ts",
+    "test_lines": 2346,
+    "test_dirty": true,
+    "test_dirty_details": "11 type annotation fixes (TS7006), uncommitted",
+    "test_key_helpers": [
+      { "name": "makePrompt", "description": "Builds test prompt layer, optional processor: 'blocking'", "line": 167 },
+      { "name": "makeHttp", "description": "HTTP-backed test layer", "line": 236 },
+      { "name": "makeHttpNoLLMServer", "description": "HTTP layer without LLM server", "line": 240 },
+      { "name": "providerCfg", "description": "Provider config from URL", "line": 281 },
+      { "name": "waitForBusy", "description": "Polls until session busy", "line": 325 },
+      { "name": "addSubtask", "description": "Database insertion for subtask", "line": 417 }
+    ]
+  },
+  "schema_types": {
+    "PromptInput": {
+      "type": "Schema.Struct",
+      "fields": "sessionID, messageID?, model?, agent?, noReply?, tools? (deprecated), format?, system?, variant?, parts[]"
+    },
+    "LoopInput": {
+      "type": "Schema.Class('SessionPrompt.LoopInput')",
+      "fields": "sessionID"
+    },
+    "ShellInput": {
+      "type": "Schema.Struct",
+      "fields": "sessionID, messageID?, agent, model?, command"
+    },
+    "CommandInput": {
+      "type": "Schema.Struct",
+      "fields": "sessionID, agent?, model?, arguments?, command, variant?, parts?"
+    }
+  },
+  "lifecycle_phases": {
+    "existing": [
+      { "phase": "prompt → createUserMessage", "location": "user submits message" },
+      { "phase": "loop → ensureRunning", "location": "concurrency gate" },
+      { "phase": "runLoop iteration", "location": "while(true) { processor.create → handle.process → result routing }" },
+      { "phase": "handleSubtask", "location": "child session for subagents" },
+      { "phase": "compaction", "location": "overflow or explicit compaction tasks" },
+      { "phase": "shell execution", "location": "state.startShell → shellImpl → child process" },
+      { "phase": "command execution", "location": "state.ensureRunning → prompt or subtask" }
+    ],
+    "phase_gaps": [
+      "No explicit architect/executor/qa phase state machine — phases are implicit in loop steps",
+      "No wave-based orchestration built into the loop — TaskTool.wave/wave_type metadata exists but is not structurally enforced in prompt.ts",
+      "No pre/post execution hooks for authorization boundaries — permission is inline during tool execution",
+      "SessionRunState provides concurrency serialization but not phased lifecycle"
+    ]
+  },
+  "key_files_referenced": {
+    "processor": "packages/opencode/src/session/processor.ts — LLM stream handling, tool call lifecycle",
+    "agent": "packages/opencode/src/agent/agent.ts — Agent.Info schema, built-in agents, permission defaults",
+    "permission": "packages/opencode/src/permission/index.ts — ask/reply/evaluate, Deferred-based gating",
+    "task": "packages/opencode/src/tool/task.ts — TaskTool, subagent spawning",
+    "subagent_permissions": "packages/opencode/src/agent/subagent-permissions.ts — child session permission derivation",
+    "run_state": "packages/opencode/src/session/run-state.ts — SessionRunState.ensureRunning",
+    "session_tools": "packages/opencode/src/session/tools.ts — SessionTools.resolve",
+    "instance_state": "packages/opencode/src/effect/instance-state.ts — per-directory state cache",
+    "reminders": "packages/opencode/src/session/reminders.ts — SessionReminders.apply"
+  }
+}

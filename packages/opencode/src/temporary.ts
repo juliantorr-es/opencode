@@ -1,5 +1,5 @@
 import yargs from "yargs"
-import { TuiThreadCommand } from "./cli/cmd/tui/thread"
+
 import { InstallationVersion } from "@opencode-ai/core/installation/version"
 import { hideBin } from "yargs/helpers"
 import { Log } from "./node"
@@ -29,5 +29,4 @@ const cli = yargs(hideBin(process.argv))
     describe: "run without external plugins",
     type: "boolean",
   })
-  .command(TuiThreadCommand)
   .parse()

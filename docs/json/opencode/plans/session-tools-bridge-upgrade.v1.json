@@ -1,0 +1,20 @@
+{
+  "schema_version": "v1",
+  "plan_id": "session-tools-bridge-upgrade",
+  "plan_revision": 1,
+  "title": "Lane 0d — SessionTools Bridge: split semaphores, propagate per-tool config, enrich spans",
+  "boundary": "packages/opencode/src/session/tools.ts + tool.ts fields",
+  "consumer_purpose": "The session bridge (tools.ts) selects the correct semaphore pool based on tool cacheability, applies per-tool timeouts and concurrency limits from Tool.Def, and enriches span tracing with tool type and semaphore availability.",
+  "claim_atoms": [
+    "Semaphore split: readSemaphore(10) for cacheable tools, writeSemaphore(3) for non-cacheable",
+    "Per-tool maxConcurrency: per-tool Semaphore via Map when item.maxConcurrency is set",
+    "Per-tool timeout: Effect.timeout(item.timeout) when set, no wrapper when undefined",
+    "Span enrichment: tool.type=builtin|mcp on both execution paths, semaphore.available count",
+    "Backward compatibility: all 58 existing tools without new fields use defaults",
+    "Add timeout?, maxConcurrency?, retry? to Tool.Def interface in tool.ts"
+  ],
+  "content": "# Lane 0d — SessionTools Bridge Upgrade\n\n## Files to modify\n\n1. **packages/opencode/src/tool/tool.ts** — Add `timeout?`, `maxConcurrency?`, `retry?` to `Def` interface\n2. **packages/opencode/src/session/tools.ts** — Split semaphore, propagate config, enrich spans\n\n## Changes\n\n### Change 1: tool.ts — Add config fields to Def interface\n\nAdd optional fields to `Def`:\n```\ntimeout?: DurationInput    // e.g. \"30 seconds\"\nmaxConcurrency?: number    // per-tool concurrency limit\nretry?: number             // retry count\n```\n\nImport `type { DurationInput } from \"effect\"` (or use `string` if DurationInput is complex).\n\n### Change 2: tools.ts — Split semaphore\n\nReplace:\n```\nconst semaphore = yield* Semaphore.make(5)\n```\nWith:\n```\nconst readSemaphore = yield* Semaphore.make(10)\nconst writeSemaphore = yield* Semaphore.make(3)\nconst perToolSemaphores = new Map<string, Semaphore.Semaphore>()\n```\n\nAdd helper inside resolve:\n```\nconst chooseSemaphore = (item: Tool.Def): Semaphore.Semaphore => {\n  if (item.maxConcurrency) {\n    let s = perToolSemaphores.get(item.id)\n    if (!s) {\n      s = Semaphore.make(item.maxConcurrency)\n      perToolSemaphores.set(item.id, s)\n    }\n    return s\n  }\n  return item.cacheable ? readSemaphore : writeSemaphore\n}\n```\n\nReplace `semaphore.withPermit(...)` with `chooseSemaphore(item).withPermit(...)` in both built-in and MCP sections.\n\n### Change 3: tools.ts — Per-tool timeout\n\nIn built-in section, add timeout wrapper only when item.timeout is set:\n```\nconst effect = item.execute(args, ctx)\nconst withTimeout = item.timeout\n  ? effect.pipe(Effect.timeout(item.timeout))\n  : effect\n```\n\n### Change 4: tools.ts — Enrich span tracing\n\nIn built-in section — the withSpan is on the outer semaphore block. Add:\n- `\"tool.type\": \"builtin\"`\n- `\"semaphore.available\": Semaphore.availablePermits(chooseSemaphore(item))` (or use a ref)\n\nFor MCP section — the withSpan already exists on line ~150. Add `\"tool.type\": \"mcp\"` to the existing attributes.\n\n## Edit order\n\n1. Edit tool.ts first (add fields to Def)\n2. Edit tools.ts (semaphore split + config + spans)\n\n## Verification\n\n```bash\ncd packages/opencode && bun run typecheck\n```",
+  "status": "proposed",
+  "created_at": "2026-05-30T06:38:03.659392+00:00",
+  "modified_at": "2026-05-30T06:38:03.659783+00:00"
+}

@@ -1,0 +1,66 @@
+{
+  "schema_version": "v1",
+  "report_id": "session-2026-05-30T07-41-52-402Z.v1",
+  "session_id": "ses_18862e469ffe8YopxMcyWkIgKg",
+  "generated_at": "2026-05-30T07:41:52.462955+00:00",
+  "session_summary": "## Triple-Lane Session Complete\n\n### Lane 1 — coordination.ts rewrite ✅\nThe coordination.ts file was restored by a concurrent session (not my lane-owner's output). It's 625 lines, covers all 4 import sites (task.ts, write.ts, edit.ts, registry.ts), implements 3 Drizzle SQLite tables (Claim, Reservation, FanOut) with full CRUD operations and a query tool. Verified working.\n\n### Lane 2 — PG Migration table definitions ✅\nAll 7 .sql.ts ↔ .pg.sql.ts pairs are 100% complete and type-correct. Postgres type conversions (text({mode:\"json\"})→jsonb, integer({mode:\"boolean\"})→boolean) are all correctly applied. The 3% on the roadmap reflects the **application layer** migration (import switching + dual-write plumbing), not schema work. Updated PG-001 to 40%.\n\n### Lane 3 — Workflow Engine 🆕\nCreated the lifecycle engine package from scratch:\n- **definition.ts** — LifecycleDefinition, Phase, Transition, PhaseResult schemas\n- **engine.ts** — LifecycleEngine Effect Service with hook-based architecture (onProcessorRun/onRepair/onPhaseEnter/onPhaseExit), retry loops with escalation, phase-level tool gating support\n- **builtins.ts** — 4 built-in lifecycle constants: CARTOGRAPHER_LIFECYCLE (3 phases, 5 parallel subagents), EXECUTOR_LIFECYCLE (3 phases, edit-verify cycle), CRITIC_LIFECYCLE (3 phases, 7 parallel subagents), LANE_OWNER_LIFECYCLE (7 phases, full wave lifecycle with repair cycles)\n- **lifecycle.ts** — barrel re-exports\n- **config/agent.ts** — optional `lifecycle:` field added to AgentSchema\n- **agent/agent.ts** — optional `lifecycle` field added to Agent.Info\n- **JSON Schema** at docs/schemas/rig.lifecycle_definition.v1.schema.json\n\nTypecheck passes. Total: 5 new files, 2 files modified.",
+  "next_steps": "1. PG-001: Switch production code imports from .sql.ts to .pg.sql.ts + implement dual-write in the DB adapter layer (the schema layer is done)\n2. Wire the LifecycleEngine into the outer session loop (prompt.ts runLoop) — currently it's a standalone service, not yet integrated\n3. The concurrent session that restored coordination.ts may have left session/tools.ts in a broken state — investigate that conflict\n4. Roadmap: Create a workflow-engine roadmap item (CI-005?) to track lifecycle engine integration",
+  "waves_completed": [
+    "session-end"
+  ],
+  "wave_details": {
+    "session-end": {
+      "started_at": "2026-05-30T07:41:43.131389+00:00",
+      "completed_at": "2026-05-30T07:41:43.131389+00:00",
+      "findings": [
+        {
+          "source": "lane-3-handoff",
+          "summary": "Lifecycle engine created: 4 new files in packages/opencode/src/lifecycle/ + AgentSchema extension + JSON schema. Typecheck passes.",
+          "confidence": 1.0,
+          "relevance_profiles": [
+            "architecture",
+            "execution"
+          ],
+          "wave": "session-end"
+        },
+        {
+          "source": "lane-2-handoff",
+          "summary": "PG migration schema layer verified 100% complete — all 7 .sql.ts files have complete .pg.sql.ts equivalents. Remaining work is application-layer import switching.",
+          "confidence": 1.0,
+          "relevance_profiles": [
+            "architecture"
+          ],
+          "wave": "session-end"
+        },
+        {
+          "source": "concurrent-session",
+          "summary": "coordination.ts restored by concurrent session — 625 lines, all 4 import sites covered, Drizzle SQLite tables with claim/reservation/fan-out support.",
+          "confidence": 1.0,
+          "relevance_profiles": [
+            "execution"
+          ],
+          "wave": "session-end"
+        }
+      ],
+      "artifacts": [
+        "packages/opencode/src/lifecycle/definition.ts",
+        "packages/opencode/src/lifecycle/engine.ts",
+        "packages/opencode/src/lifecycle/builtins.ts",
+        "packages/opencode/src/lifecycle/lifecycle.ts",
+        "docs/schemas/rig.lifecycle_definition.v1.schema.json"
+      ]
+    }
+  },
+  "total_findings": 3,
+  "findings_by_profile": {
+    "architecture": 2,
+    "execution": 2
+  },
+  "artifacts_consumed": [
+    "packages/opencode/src/lifecycle/definition.ts",
+    "packages/opencode/src/lifecycle/engine.ts",
+    "packages/opencode/src/lifecycle/builtins.ts",
+    "packages/opencode/src/lifecycle/lifecycle.ts",
+    "docs/schemas/rig.lifecycle_definition.v1.schema.json"
+  ]
+}

@@ -1,0 +1,193 @@
+{
+  "artifact_type": "learning",
+  "profile": "cartography",
+  "session": "ses_189be7e7bffehxwEBREeNs8CFH",
+  "generated_at": "2026-05-29T23:30:00Z",
+  "mission": "Map Tool Layer never-mismatch errors",
+  "findings": {
+    "runtime_safety": {
+      "verdict": "ALL tools are runtime-safe",
+      "mechanism": "Tool.define() calls wrap() which overrides execute with Effect.gen(...).pipe(Effect.orDie, Effect.withSpan(...)). This runs at runtime regardless of the tool file's own content.",
+      "source_file": "packages/opencode/src/tool/tool.ts",
+      "source_line": 111,
+      "code": "return Effect.gen(function* () { ... }).pipe(Effect.orDie, Effect.withSpan(\"Tool.execute\", ...))"
+    },
+    "files_with_orDie_in_own_file": {
+      "count": 55,
+      "verdict": "Double-wrapped — their own .pipe(Effect.orDie) is redundant but convention-consistent",
+      "files": [
+        "apply_patch.ts", "checkpoint.ts", "comment-plan.ts", "coordination.ts",
+        "curate-context.ts", "discover-findings.ts", "duckdb-query.ts", "edit.ts",
+        "generate_published_checkpoint_report.ts", "generate-report.ts", "glob.ts",
+        "grep.ts", "lsp.ts", "out-of-scope-finding.ts", "plan.ts", "prepare-delegation.ts",
+        "prepublication-admitted.ts", "prepublication-blocked.ts", "prepublication-inconclusive.ts",
+        "propose-plan.ts", "publish-finding.ts", "publish_checkpoint.ts", "qa-observed-clean.ts",
+        "question.ts", "read-artifact.ts", "read-lib.ts", "read-messages.ts", "read-source.ts",
+        "read.ts", "record-execution-wave.ts", "record-stress-wave.ts", "replace-symbol.ts",
+        "review-criticism.ts", "revise-plan.ts", "rig-git.ts", "rig-jsonl-query.ts",
+        "rig-schema-validate.ts", "search_replace.ts", "send-message.ts", "shell.ts",
+        "skill.ts", "smart-batch.ts", "smart-edit.ts", "smart-write.ts", "task.ts",
+        "test.ts", "todo.ts", "tool-failure.ts", "tool-feedback.ts", "validate.ts",
+        "webfetch.ts", "websearch.ts", "write.ts", "apply_patch.ts"
+      ]
+    },
+    "files_missing_orDie_in_own_file": {
+      "count": 4,
+      "verdict": "Safe — these use Effect.sync or Effect.succeed with no yield* inside, so no errors can escape. tool.ts wrap still applies orDie at runtime.",
+      "detail": "These tools are synchronous and cannot produce Effect errors. Effect.orDie on Effect.sync is a no-op.",
+      "files": [
+        {
+          "file": "inspect_failure.ts",
+          "line": 21,
+          "current_pattern": "Effect.sync(() => {...})",
+          "services_yielded_in_execute": [],
+          "has_error_throw": false
+        },
+        {
+          "file": "invalid.ts",
+          "line": 14,
+          "current_pattern": "Effect.succeed({...})",
+          "services_yielded_in_execute": [],
+          "has_error_throw": false
+        },
+        {
+          "file": "prepare_checkpoint.ts",
+          "line": 18,
+          "current_pattern": "Effect.sync(() => {...})",
+          "services_yielded_in_execute": [],
+          "has_error_throw": false
+        },
+        {
+          "file": "report.ts",
+          "line": 14,
+          "current_pattern": "Effect.sync(() => {...})",
+          "services_yielded_in_execute": [],
+          "has_error_throw": false
+        }
+      ]
+    },
+    "type_errors_total": {
+      "count": 458,
+      "tool_source_file_errors": 35,
+      "test_tool_file_errors": 10,
+      "app_runtime_errors": 1,
+      "test_effect_errors": 1
+    },
+    "error_clusters": {
+      "cluster_a_tool_define_inference_failure": {
+        "error_code": "TS2345",
+        "count": 14,
+        "description": "Effect<{...execute: (...) => Effect<..., never, Service>}, never, Service> is not assignable to Effect<Init<Parameters, Metadata>, never, Service>",
+        "root_cause": "Def.execute is typed as Effect.Effect<ExecuteResult<M>> (unconstrained, unknown/unknown). Tool files return Effect<ExecuteResult<M>, never, AppFileSystem.Service | InstanceState.Service>. In Effect v4, Effect type parameters may be invariant, so Effect<A, never, R> is not assignable to Effect<A, unknown, unknown>. This causes Init → DefWithoutID type inference to fail.",
+        "affected_files": [
+          {"file": "coordination.ts", "line": 506, "has_orDie": true, "note": "Error channel = DatabaseError from ensureCoordinationTables()"},
+          {"file": "edit.ts", "line": 54, "has_orDie": true, "note": "Has .pipe(Effect.orDie) in unstaged diff"},
+          {"file": "prepare-delegation.ts", "line": 37, "has_orDie": true},
+          {"file": "propose-plan.ts", "line": 49, "has_orDie": true, "note": "Has .pipe(Effect.orDie) in unstaged diff"},
+          {"file": "read-artifact.ts", "line": 53, "has_orDie": true},
+          {"file": "read-lib.ts", "line": 29, "has_orDie": true},
+          {"file": "read-source.ts", "line": 182, "has_orDie": true, "note": "R = AppFileSystem.Service | Service (2 services)"},
+          {"file": "rig-jsonl-query.ts", "line": 21, "has_orDie": true, "note": "Error: Metadata shape mismatch, not service/error channel"},
+          {"file": "rig-schema-validate.ts", "line": 86, "has_orDie": true, "note": "Error: Metadata shape mismatch"},
+          {"file": "send-message.ts", "line": 80, "has_orDie": true, "note": "Error: Metadata shape mismatch"},
+          {"file": "smart-edit.ts", "line": 20, "has_orDie": true},
+          {"file": "task.ts", "line": 105, "has_orDie": true, "note": "Also has Scope requirement"},
+          {"file": "tool-feedback.ts", "line": 35, "has_orDie": true},
+          {"file": "write.ts", "line": 30, "has_orDie": true}
+        ],
+        "fix_pattern": "Cast init to Effect<Init<...>, never, R> or wrap the execute function's return type to narrow to never, never before tool.ts wrap."
+      },
+      "cluster_b_app_runtime_layer_remainder": {
+        "error_code": "TS2345",
+        "count": 1,
+        "file": "src/effect/app-runtime.ts",
+        "line": 123,
+        "message": "Layer<..., never, Service | Service> is not assignable to Layer<..., never, never>",
+        "root_cause": "One of the layers in AppLayer (Layer.mergeAll) has a remaining requirement of Service | Service instead of never. Likely InstanceLayer.layer, Observability.layer, or DatabaseConfig.defaultLayer.",
+        "affected_file": "packages/opencode/src/effect/app-runtime.ts",
+        "fix_pattern": "Add .pipe(Layer.provideMerge(...)) for the missing service, or cast with as never"
+      },
+      "cluster_c_test_file_layer_remainder": {
+        "error_code": "TS2345",
+        "count": 10,
+        "affected_files": [
+          "test/tool/checkpoint-tools.test.ts:66",
+          "test/tool/failure-tools.test.ts:66",
+          "test/tool/project-tools.test.ts:65",
+          "test/tool/registry.test.ts:98-103",
+          "test/tool/search-replace.test.ts:65",
+          "test/tool/skill.test.ts:30",
+          "test/tool/task.test.ts:46-47"
+        ],
+        "message": "Layer<..., never, Service | Service> is not assignable to Layer<..., never, never>",
+        "root_cause": "Test files provide layers with remaining service requirements to ManagedRuntime.make or layer piping that expects never requirements.",
+        "fix_pattern": "Add Layer.provideMerge for the missing services, or cast Layer with as never"
+      },
+      "cluster_d_read_lib_multi_error": {
+        "error_code": "TS2769, TS2739, TS2339, TS2322",
+        "count": 5,
+        "file": "src/tool/read-lib.ts",
+        "lines": [209, 215, 218, 221, 223],
+        "root_cause": "Effect.fnUntraced generator returns Generator<Effect<void, never, never>, void, any> not assignable to Effect<void, never, never>. Plus fs.readDirectory and fs.stat don't exist on AppFileSystem.Service type.",
+        "fix_pattern": "Fix Effect.fnUntraced return type annotation. Use correct AppFileSystem API methods."
+      },
+      "cluster_e_read_source_unknown_assignments": {
+        "error_code": "TS2322, TS1360",
+        "count": 7,
+        "file": "src/tool/read-source.ts",
+        "lines": [316, 317, 318, 319, 320, 321, 334],
+        "root_cause": "Values read from JSON or Record<string, unknown> are 'unknown' type and being assigned to 'string' typed fields without narrowing.",
+        "fix_pattern": "Add type assertions or runtime narrowing checks"
+      },
+      "cluster_f_schema_literal_argument_count": {
+        "error_code": "TS2554",
+        "count": 6,
+        "affected_files": [
+          "src/tool/comment-plan.ts:19, 29",
+          "src/tool/coordination.ts:497",
+          "src/tool/discover-findings.ts:13",
+          "src/tool/publish-finding.ts:11",
+          "src/tool/record-stress-wave.ts:25",
+          "src/tool/rig-git.ts:7"
+        ],
+        "root_cause": "Schema.Literal(...) with multiple arguments expects array in Effect v4 beta: Schema.Literals([...]) instead of Schema.Literal(a, b, c)",
+        "fix_pattern": "Replace Schema.Literal(a, b, c) with Schema.Literals([a, b, c])"
+      }
+    },
+    "files_with_unstaged_orDie_fixes": {
+      "count": 2,
+      "detail": "These files already have the .pipe(Effect.orDie) fix in unstaged changes waiting to be committed",
+      "files": [
+        {"file": "edit.ts", "line": 218, "old": "}),", "new": "}).pipe(Effect.orDie),"},
+        {"file": "propose-plan.ts", "line": 155, "old": "}),", "new": "}).pipe(Effect.orDie),"}
+      ]
+    },
+    "smoking_guns": {
+      "gun_1": "Def.execute return type is Effect.Effect<ExecuteResult<M>> (unconstrained), but tools return Effect<..., never, Service>. Effect v4 appears invariant in type params, causing Init inference to fail at ~14 Tool.define callsites.",
+      "gun_2": "coordination.ts yields ensureCoordinationTables() which returns Effect<void, DatabaseError, Adapter.Service> in the outer Effect.gen (not inside execute). This poisons the error channel for Tool.define's init parameter.",
+      "gun_3": "app-runtime.ts Layer.mergeAll accumulates Service | Service requirements instead of never. The layer with non-never remainder needs to be provided or merged away.",
+      "gun_4": "read-lib.ts uses fs.readDirectory and fs.stat which don't exist on AppFileSystem.Service. The walkDirectory Effect.fnUntraced generator also has an incompatible return type."
+    },
+    "recommended_fix_pattern": {
+      "for_ts2345_tool_define": "At the Tool.define callsites, the outer Effect.gen must resolve to never in the error channel. Fix: if the outer gen yields anything that can fail (like ensureCoordinationTables()), add .pipe(Effect.orDie). For the Init type inference issue on the returned object, the fix is in tool.ts — either widen Def.execute's return to covariant Effect params or add an explicit type cast in the wrap function.",
+      "for_sync_tools_missing_orDie": "Adding .pipe(Effect.orDie) is unnecessary for Effect.sync/Effect.succeed (no error possible), but can be added for consistency if desired.",
+      "for_app_runtime_layer": "Identify which merged layer has the Service | Service remainder and provide it with Layer.provideMerge(...) or cast with Layer as never.",
+      "for_schema_literal": "Replace Schema.Literal(a, b, c, d) with Schema.Literals([a, b, c, d]) in all affected files.",
+      "for_test_layers": "Add Layer.provideMerge for remaining services in test layer construction, or cast Layer with as unknown as Layer<..., never, never>."
+    },
+    "pre_existing_findings_relevant": [
+      {
+        "id": "ses_18a5-20260529-debt",
+        "type": "debt",
+        "summary": "[typescript] Schema.String.annotations is not a function — tool-failure.ts crashes during import",
+        "published_at": "2026-05-29T21:38:06"
+      },
+      {
+        "id": "ses_18a4-20260529-debt",
+        "type": "debt",
+        "summary": "[typescript] 10 tool files still use Schema.String.annotations({...}) which is a runtime error",
+        "published_at": "2026-05-29T21:57:41"
+      }
+    ]
+  }
+}

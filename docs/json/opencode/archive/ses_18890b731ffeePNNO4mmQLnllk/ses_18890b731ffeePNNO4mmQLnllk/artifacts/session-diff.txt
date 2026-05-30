@@ -1,0 +1,7 @@
+Generate a consolidated diff summary of all changes made in this session — files created, modified, deleted, net line counts, per-package breakdown. Use this at session end for PR descriptions and handoffs.
+
+PARAMETERS:
+- `session_id` (optional): Session to summarize (defaults to current session)
+- `format` (optional): "summary" or "full" — summary returns counts only, full includes file lists
+
+OUTPUT: Structured diff summary with files_created, files_modified, files_deleted, net_lines, per_package, agents_involved.

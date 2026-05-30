@@ -1,0 +1,444 @@
+{
+  "schema_version": "v1",
+  "audit_title": "OpenCode Desktop App — Feature Parity & UX Audit",
+  "generated_at": "2026-05-29T23:45:00.000Z",
+  "sections": {
+    "feature_parity_gaps": {
+      "description": "TUI CLI features/commands that are missing, partially present, or equivalently implemented in the desktop app UI",
+      "gaps": [
+        {
+          "tui_feature": "Plugin management (opencode plugin list/install/remove)",
+          "desktop_status": "missing",
+          "priority": "high",
+          "effort": "medium",
+          "notes": "Plugin system supports npm packages with hooks. Desktop has no plugin browser, installer, or config UI. Users must use CLI. IPC channel get-desktop-plugin-config exists in preload but no UI."
+        },
+        {
+          "tui_feature": "GitHub integration (opencode github install/login/run)",
+          "desktop_status": "missing",
+          "priority": "high",
+          "effort": "xlarge",
+          "notes": "Full GitHub App OAuth flow, workflow file generation, CI/CD event handler mode (issue_comment, PR review). 1649-line module. Desktop has no GitHub integration UI at all."
+        },
+        {
+          "tui_feature": "PR management (opencode pr)",
+          "desktop_status": "missing",
+          "priority": "high",
+          "effort": "medium",
+          "notes": "Create PRs, push branches from local changes. Desktop has review panel but no PR creation/publishing flow."
+        },
+        {
+          "tui_feature": "MCP server management (opencode mcp add/list/auth/logout/debug)",
+          "desktop_status": "partial",
+          "priority": "high",
+          "effort": "medium",
+          "notes": "Desktop has dialog-select-mcp for using MCP tools in session, but no full management UI for adding/removing/configuring MCP servers. TUI supports 6 subcommands."
+        },
+        {
+          "tui_feature": "Session export/import (opencode export / import)",
+          "desktop_status": "missing",
+          "priority": "medium",
+          "effort": "small",
+          "notes": "Export sanitizes sessions (redacts API keys), import parses share URLs and JSON. Desktop has fork/share dialogs but no export/import feature boundary."
+        },
+        {
+          "tui_feature": "Usage statistics dashboard (opencode stats)",
+          "desktop_status": "missing",
+          "priority": "medium",
+          "effort": "medium",
+          "notes": "Displays session counts, tool usage rankings, model usage breakdowns. 393-line module. Desktop has session viz panel but no aggregate statistics."
+        },
+        {
+          "tui_feature": "Agent configuration (opencode agent list/create/edit/delete)",
+          "desktop_status": "missing",
+          "priority": "high",
+          "effort": "medium",
+          "notes": "TUI supports creating custom agents with system prompts, model selection, provider config. Desktop has agent selection dropdown but no agent creation/config UI."
+        },
+        {
+          "tui_feature": "Model listing/management (opencode models)",
+          "desktop_status": "partial",
+          "priority": "medium",
+          "effort": "small",
+          "notes": "Desktop has dialog-manage-models and model selection, but no provider-specific model listing, verbose mode, or model capability inspection."
+        },
+        {
+          "tui_feature": "Provider OAuth login/logout (opencode providers login/logout)",
+          "desktop_status": "partial",
+          "priority": "medium",
+          "effort": "small",
+          "notes": "Desktop has DialogConnectProvider for some providers but TUI supports full OAuth flow with plugin auth hooks, custom provider config, and org-scoped provider management."
+        },
+        {
+          "tui_feature": "Account/console management (opencode console login/logout/switch/orgs)",
+          "desktop_status": "partial",
+          "priority": "medium",
+          "effort": "small",
+          "notes": "Desktop has account-related UI but lacks org switching, full login/logout flow management, and console URL configuration."
+        },
+        {
+          "tui_feature": "Database admin (opencode db)",
+          "desktop_status": "missing",
+          "priority": "low",
+          "effort": "medium",
+          "notes": "Open SQLite/Postgres console, run queries, view migration status. Primarily developer-facing; acceptable gap for desktop."
+        },
+        {
+          "tui_feature": "Database migration (opencode migrate-to-pg)",
+          "desktop_status": "missing",
+          "priority": "low",
+          "effort": "xlarge",
+          "notes": "711-line migration system: SQLite→Postgres/PGlite migration with verification, rollback, FK auditing. One-shot migration tool, not interactive; gap is acceptable."
+        },
+        {
+          "tui_feature": "Self-upgrade management (opencode upgrade)",
+          "desktop_status": "partial",
+          "priority": "medium",
+          "effort": "small",
+          "notes": "Desktop has auto-updater (electron-updater) but no manual check/apply UI in settings. TUI upgrade command provides interactive upgrade flow."
+        },
+        {
+          "tui_feature": "Uninstall management (opencode uninstall)",
+          "desktop_status": "equivalent",
+          "priority": "low",
+          "effort": "small",
+          "notes": "Desktop app can be uninstalled via OS mechanisms. TUI uninstall is more thorough (cleans shell config, data dirs). Equivalent for practical purposes."
+        },
+        {
+          "tui_feature": "Server mode controls (opencode serve / web / acp)",
+          "desktop_status": "partial",
+          "priority": "low",
+          "effort": "small",
+          "notes": "Desktop runs server automatically via sidecar. No UI for controlling server port, network binding, or ACP protocol mode."
+        },
+        {
+          "tui_feature": "SDK generation (opencode generate)",
+          "desktop_status": "missing",
+          "priority": "low",
+          "effort": "small",
+          "notes": "Generates TypeScript SDK from OpenAPI specs. Developer tool; acceptable gap."
+        },
+        {
+          "tui_feature": "Context compaction & overflow detection",
+          "desktop_status": "missing",
+          "priority": "medium",
+          "effort": "medium",
+          "notes": "TUI automatically compacts context window and detects overflow. Desktop session UI has no indication of context pressure or compaction events."
+        },
+        {
+          "tui_feature": "Subagent delegation (general subagent, @general mentions)",
+          "desktop_status": "missing",
+          "priority": "high",
+          "effort": "medium",
+          "notes": "TUI supports @general to delegate complex multi-step tasks to a subagent. Desktop composer supports @mentions but only for files/agents, not the general subagent."
+        },
+        {
+          "tui_feature": "Skill loading and built-in skills",
+          "desktop_status": "missing",
+          "priority": "medium",
+          "effort": "small",
+          "notes": "TUI has a skill tool that loads specialized instructions. Desktop has no skill browser or loading UI."
+        },
+        {
+          "tui_feature": "Native LLM runtime (experimental)",
+          "desktop_status": "missing",
+          "priority": "low",
+          "effort": "xlarge",
+          "notes": "TUI has experimental native (local) LLM runtime. Desktop depends on remote providers or server-managed models."
+        },
+        {
+          "tui_feature": "Tool permission management per-session",
+          "desktop_status": "partial",
+          "priority": "medium",
+          "effort": "small",
+          "notes": "Desktop has permission provider and dialog for tool permissions, but TUI has finer-grained ALWAYS/ASK/NEVER modes. UI for customizing per-tool permissions per-session is limited."
+        }
+      ]
+    },
+    "ux_improvement_opportunities": [
+      {
+        "area": "Onboarding flow",
+        "current_state": "Single dialog (dialog-onboarding) shown on first launch. Basic provider setup and project selection.",
+        "opportunity": "Multi-step guided onboarding: (1) Welcome + product tour, (2) Provider/API key setup with inline validation, (3) Project selection with recent projects, (4) First prompt with template suggestions. Include progress indicator and skip option.",
+        "impact": "high",
+        "effort": "medium",
+        "references": ["VSCode welcome experience", "Cursor onboarding", "Linear setup wizard"]
+      },
+      {
+        "area": "Command palette",
+        "current_state": "Command palette exists but scope is limited to basic navigation and settings.",
+        "opportunity": "Extensible command palette with fuzzy search, recent commands, keyboard-only navigation, plugin-contributed commands, and mode indicator (commands vs. files vs. symbols).",
+        "impact": "high",
+        "effort": "medium",
+        "references": ["VSCode command palette (Cmd+K)", "Linear command menu", "Raycast"]
+      },
+      {
+        "area": "Session search and filter",
+        "current_state": "No search across sessions. Session list is basic with name/date display.",
+        "opportunity": "Full-text search across all sessions with keyword highlighting. Filter by date range, agent used, model, tool usage. Pin/bookmark important sessions. Bulk session management (archive, delete, export).",
+        "impact": "high",
+        "effort": "medium",
+        "references": ["ChatGPT history search", "Claude project search", "Slack search"]
+      },
+      {
+        "area": "Message-level search",
+        "current_state": "No search within a session timeline.",
+        "opportunity": "In-session search with keyboard shortcut (Cmd+F). Highlight matching messages. Filter by message type (tool calls, code changes, user prompts, AI responses). Jump-to-match navigation.",
+        "impact": "medium",
+        "effort": "small",
+        "references": ["iTerm2 search", "VSCode search in file", "Discord message search"]
+      },
+      {
+        "area": "Session diff/comparison",
+        "current_state": "Review panel shows git/branch/turn diffs but no side-by-side session comparison.",
+        "opportunity": "Select two sessions and view a diff of: messages, files changed, tools used, model responses. Useful for before/after comparisons and regression analysis.",
+        "impact": "medium",
+        "effort": "large",
+        "references": ["GitKraken compare", "Linear activity diff", "Notion page history"]
+      },
+      {
+        "area": "Inline diff editing and approval",
+        "current_state": "Review panel shows diffs as read-only. Users accept/reject via buttons.",
+        "opportunity": "Inline code editing within diffs: modify the proposed changes before accepting. Stage individual hunks instead of all-or-nothing. Keyboard shortcuts for accept/reject/edit.",
+        "impact": "high",
+        "effort": "large",
+        "references": ["GitHub PR file view with edit", "VSCode merge editor", "Fork (Git client)"]
+      },
+      {
+        "area": "File change visualization / timeline",
+        "current_state": "Session viz panel shows activity feed but no visual file change timeline.",
+        "opportunity": "Timeline view showing which files were modified at each turn. Color-coded by operation (create/modify/delete). Click to jump to the specific diff. Filter by file type or directory.",
+        "impact": "medium",
+        "effort": "medium",
+        "references": ["GitHub pulse view", "git log --graph visualization", "Obsidian graph view"]
+      },
+      {
+        "area": "Multi-modal input / rich composer",
+        "current_state": "Composer supports @mentions (files/agents), /commands, image paste/drop, shell mode toggle, followup queue.",
+        "opportunity": "Add: inline code block insertion with syntax highlighting, typed command suggestions with descriptions, multi-file drag-and-drop with preview, voice input (Web Speech API), snippet/template picker, and auto-complete for agent instructions.",
+        "impact": "medium",
+        "effort": "medium",
+        "references": ["ChatGPT voice mode", "Claude Artifacts", "GitHub Copilot chat"]
+      },
+      {
+        "area": "Terminal panel polish",
+        "current_state": "Multi-tab terminal with drag-and-drop, WebSocket transport, xterm-like emulation.",
+        "opportunity": "Add: true xterm.js integration with full CSI support, 256-color themes, font ligatures, search (Ctrl+Shift+F), split panes, persistent sessions across app restarts, and environment variable inspection.",
+        "impact": "medium",
+        "effort": "large",
+        "references": ["iTerm2", "Warp terminal", "VSCode integrated terminal"]
+      },
+      {
+        "area": "MCP server browser and marketplace",
+        "current_state": "Dialog-select-mcp shows configured MCP servers but no discovery mechanism.",
+        "opportunity": "In-app MCP server browser: discover public MCP servers, one-click add, authentication status badges, server health indicators, and tool preview. Community- contributed indexes.",
+        "impact": "high",
+        "effort": "large",
+        "references": ["VS Code extension marketplace", "Cursor MCP integration", "npm search UX"]
+      },
+      {
+        "area": "Plugin marketplace UI",
+        "current_state": "No plugin management UI at all.",
+        "opportunity": "Browse, install, and configure plugins from npm. Show plugin capabilities, permissions, and version info. One-click install from search results. Plugin settings panel.",
+        "impact": "medium",
+        "effort": "xlarge",
+        "references": ["VSCode extensions view", "Obsidian community plugins", "Figma plugins"]
+      },
+      {
+        "area": "Theme customizer",
+        "current_state": "35 dynamic themes using Oklch color space via dropdown selector. No customization.",
+        "opportunity": "Visual theme editor: tweak colors, preview in real-time, save custom themes. Import/export theme JSON. Community theme gallery. Adaptive theme based on system appearance.",
+        "impact": "low",
+        "effort": "medium",
+        "references": ["VSCode theme editor", "iTerm2 color presets", "Theme Studio"]
+      },
+      {
+        "area": "Keyboard shortcut discoverability",
+        "current_state": "Settings-keybinds panel lists shortcuts but no in-app hints or shortcut discovery mode.",
+        "opportunity": "Press-and-hold modifier key to show shortcut overlay. Context-sensitive tooltips showing shortcuts. Shortcut conflict detection. Custom keybinding editor with search.",
+        "impact": "high",
+        "effort": "medium",
+        "references": ["Linear shortcut hints", "ProtonMail keyboard navigation", "VSCode shortcut overlay"]
+      },
+      {
+        "area": "Progress visibility and cancellation",
+        "current_state": "Basic progress indicators during LLM calls. Session shows activity feed.",
+        "opportunity": "Detailed progress: current tool being executed, estimated time remaining, editable tool queue (reorder/cancel pending tools), streaming token display with statistics (tokens/sec, cost estimate).",
+        "impact": "high",
+        "effort": "medium",
+        "references": ["ChatGPT streaming display", "Claude thinking indicator", "Warp progress for commands"]
+      },
+      {
+        "area": "Notification and alert management",
+        "current_state": "System notifications on completion, sound effects, basic notification provider.",
+        "opportunity": "Notification center: history of all desktop notifications, action buttons (open session, retry, view diff), focus mode (mute during deep work), custom notification rules per event type.",
+        "impact": "medium",
+        "effort": "medium",
+        "references": ["Slack notification center", "macOS notification history", "Linear activity log"]
+      }
+    ],
+    "design_system_concerns": [
+      {
+        "concern": "Two parallel design systems (OC-2 v1 and V2) with different token naming conventions exist simultaneously",
+        "severity": "high",
+        "recommendation": "Establish a single source of truth for design tokens. Consolidate v1 components into v2 or vice versa. Create a token dictionary mapping old→new names. Add runtime deprecation warnings for v1 token usage."
+      },
+      {
+        "concern": "No formal design token documentation file or schema",
+        "severity": "high",
+        "recommendation": "Create a canonical design token JSON schema in docs/schemas/. Document all tokens with their values, usage guidelines, and which components consume them. Generate TypeScript types from the schema."
+      },
+      {
+        "concern": "No automated accessibility testing",
+        "severity": "high",
+        "recommendation": "Integrate axe-core or similar a11y testing into the testing pipeline. Add baseline a11y assertions to all existing story files. Use @kobalte/core's built-in a11y guarantees but verify at the render level."
+      },
+      {
+        "concern": "No visual regression testing",
+        "severity": "medium",
+        "recommendation": "Adopt Chromatic, Percy, or Playwright screenshot tests for all 81 story files. Establish a visual baseline and diff workflow in CI. Tag stories with viewport variants."
+      },
+      {
+        "concern": "2 of 55 v1 components lack story files; 2 of 26 v2 components lack story files",
+        "severity": "low",
+        "recommendation": "Audit which components are missing stories. Add stories for the missing 4 components. Enforce 100% story coverage in CI with a lint rule or test."
+      },
+      {
+        "concern": "105 custom SVG icons (v1) plus separate v2 icon sprite — overlapping icon sets with no deduplication",
+        "severity": "medium",
+        "recommendation": "Merge v1 and v2 icon sets into a single canonical icon library. Remove duplicates, standardize on sizing (16/20/24dp), and generate a single optimized sprite sheet. Add TypeScript icon name types."
+      },
+      {
+        "concern": "Tailwind CSS v4 config and custom theme tokens are not versioned or published",
+        "severity": "medium",
+        "recommendation": "Extract theme configuration into a versioned npm package (@opencode-ai/design-tokens). Publish alongside the UI library. Consumers should import from a single source."
+      },
+      {
+        "concern": "@kobalte/core version may lag behind upstream, creating a11y regression risk",
+        "severity": "medium",
+        "recommendation": "Pin @kobalte/core to a specific release and automate dependency upgrade testing with a11y assertions. Monitor upstream for breaking changes and security fixes."
+      }
+    ],
+    "architectural_observations": [
+      {
+        "observation": "IPC channel installCli exposed in preload bridge but no ipcMain.handle registered — renders calls from renderer will hang indefinitely",
+        "implication": "Any renderer code that calls window.electronAPI.installCli() will hang as there's no main-process handler to respond",
+        "recommendation": "Either implement the installCli handler in ipc.ts or remove the channel from preload. Audit all IPC channels for orphaned handlers."
+      },
+      {
+        "observation": "Desktop renderer (SolidJS) and TUI CLI (Effect-TS) use entirely different UI frameworks and paradigms",
+        "implication": "No shared UI code between desktop and TUI. Feature development must be done twice for CLI and desktop parity. Bug fixes and UX improvements don't transfer between surfaces.",
+        "recommendation": "Accept this as architectural intent (different surfaces serve different users). Establish a clear feature parity matrix and maintain it as a living document. Prioritize desktop for rich GUI interactions and TUI for scripting/CI."
+      },
+      {
+        "observation": "Desktop app depends on sidecar HTTP server for all LLM and business logic operations",
+        "implication": "Desktop cannot function without the sidecar process. If the sidecar crashes or hangs, the UI becomes non-functional (ConnectionError screen). Single point of failure.",
+        "recommendation": "Add sidecar health monitoring with auto-restart. Implement stale detection (no heartbeat within N seconds → show recovery UI rather than frozen state). Consider in-process fallback for read-only operations."
+      },
+      {
+        "observation": "Desktop menu system uses both Electron native menus (macOS) and a React/Solid custom menu (Windows/Linux titlebar overlay)",
+        "implication": "Menu actions are centralized in desktop-menu-actions.ts but the rendering path differs per platform, creating potential for platform-specific bugs.",
+        "recommendation": "Unify menu action dispatch regardless of rendering path. Add platform-specific integration tests. Document the menu action flow: user → native/custom menu → IPC → desktop-menu-actions → sidecar."
+      },
+      {
+        "observation": "Postgres migration (migrate-to-pg) is in progress but desktop app has no awareness of the dual storage backend",
+        "implication": "Desktop may read stale SQLite data while migration runs, or may attempt operations that assume SQLite schema. No UI for migration progress or rollback.",
+        "recommendation": "Surface migration state to desktop via IPC. Add migration progress indicator to settings. Block write operations during migration. Eventually deprecate SQLite path once PGlite/Postgres is stable."
+      },
+      {
+        "observation": "Desktop app has 13+ Context providers in a nested provider tree (provider-hell pattern)",
+        "implication": "Deeply nested context providers make debugging state issues harder. Adding new providers requires editing multiple wrapper components. Performance impact from context re-renders.",
+        "recommendation": "Consider consolidating related contexts (server-related, settings-related, session-related). Evaluate SolidJS context optimization patterns. Profile re-render impact of context changes."
+      },
+      {
+        "observation": "Desktop app uses Electron 41.2 with electron-vite 5 — modern but fast-moving target",
+        "implication": "Electron 41 is new (2026). APromise-based IPC changes, utilityProcess API may still evolve. Auto-update targeting GitHub Releases is working but fragile across major Electron versions.",
+        "recommendation": "Pin Electron minor version. Maintain an upgrade checklist for each major Electron bump. Test full IPC flow after upgrade. Consider Electron security model updates (contextIsolation, sandbox)."
+      },
+      {
+        "observation": "UI library (55+26=81 components) has no formal versioning or changelog",
+        "implication": "Consumers (@opencode-ai/app, potential external consumers) cannot track breaking changes. Storybook stories serve as de facto docs but there's no migration guide between versions.",
+        "recommendation": "Add conventional commits and auto-changelog generation to @opencode-ai/ui. Publish a CHANGELOG.md. Add semantic versioning with major/minor/patch based on component API changes."
+      },
+      {
+        "observation": "Desktop app uses @opencode-ai/sdk/v2 for API communication but the SDK itself is generated from OpenAPI specs",
+        "implication": "SDK regeneration may introduce breaking changes that are not caught until runtime. No TypeScript compile-time safety between SDK types and desktop usage patterns.",
+        "recommendation": "Add SDK integration tests that verify critical API calls work end-to-end. Consider code generation of type guards. Pin SDK version in desktop package.json and upgrade deliberately."
+      }
+    ],
+    "blockers_found": [
+      {
+        "description": "installCli IPC channel is registered in preload bridge (window.electronAPI.installCli) but no ipcMain.handle('installCli') handler exists in main process — any renderer code calling this will hang indefinitely",
+        "location": "packages/desktop/src/preload/index.ts (channel exposed) + packages/desktop/src/main/ipc.ts (handler missing)",
+        "severity": "blocking"
+      },
+      {
+        "description": "Two parallel design systems (v1 and v2) with different token naming cause component inconsistency — 81 components split across two systems with no clear migration path to v2",
+        "location": "packages/ui/src/components/ (v1, 55 components) vs packages/ui/src/v2/components/ (v2, 26 components)",
+        "severity": "major"
+      },
+      {
+        "description": "Desktop auto-updater logs spinning (stdout → stderr) from @electron/remote workaround pollutes stderr; error logged every poll cycle",
+        "location": "packages/desktop/src/main/updater.ts",
+        "severity": "minor"
+      }
+    ],
+    "prioritized_roadmap": [
+      {
+        "phase": "Phase 1: Quick Wins",
+        "items": [
+          "Fix orphaned installCli IPC channel — add handler or remove from preload",
+          "Add in-session message search (Cmd+F) with highlight and jump-to-match navigation",
+          "Add export/import UI for sessions (JSON file picker, share URL import)",
+          "Add session statistics summary to session viz panel (message count, tool calls, tokens used)",
+          "Add context compaction indicator to message timeline header (warn when approaching context limit)",
+          "Add missing story files for the 4 components without stories",
+          "Add model provider-specific model listing to settings-models dialog",
+          "Surface migration state via IPC if Postgres migration is in progress"
+        ]
+      },
+      {
+        "phase": "Phase 2: Core Parity",
+        "items": [
+          "Plugin management UI — browse installed plugins, install new ones, configure plugin settings",
+          "Agent configuration UI — create/edit custom agents with system prompt, model, provider selection",
+          "MCP server management UI — full CRUD for MCP servers, auth status display, connect/disconnect flow",
+          "GitHub integration UI — connect GitHub App, view CI status, manage workflow files",
+          "PR management UI — create PR from session changes, push branch with commit, select base branch",
+          "Command palette expansion — plugin-contributed commands, fuzzy search, keyboard-only mode",
+          "Session search and filter — full-text search across sessions, filter by date/agent/model",
+          "Subagent delegation UI — invoke @general or custom subagents from the composer"
+        ]
+      },
+      {
+        "phase": "Phase 3: UX Leadership",
+        "items": [
+          "Inline diff editing — modify proposed changes before accepting, stage individual hunks",
+          "Session diff/comparison — side-by-side session comparison for before/after analysis",
+          "Guided multi-step onboarding — welcome tour, provider setup, project selection with template prompts",
+          "MCP server browser — discover public MCP servers, one-click add, health indicators, tool preview",
+          "Plugin marketplace UI — browse, search, and install plugins from npm in-app",
+          "Design system consolidation — merge v1/v2 components into single system, formal design token schema",
+          "Automated a11y testing — axe-core integration in CI, 100% story coverage with a11y assertions",
+          "Visual regression testing — Playwright/Percy screenshots for all components",
+          "Theme customizer — visual editor, custom theme save/export, community theme gallery",
+          "Keyboard shortcut discoverability — hold-modifier overlay, shortcut conflict detection, custom keybind editor"
+        ]
+      }
+    ],
+    "deferred": [
+      "Performance profiling of the virtualized message timeline (virtua/solid)",
+      "Security audit of IPC channels (all 42 channels) for privilege escalation",
+      "Auto-update reliability testing across platforms (macOS notarization, Windows code signing, Linux AppImage)",
+      "Desktop app memory usage analysis (Electron renderer memory, sidecar memory)",
+      "Cross-platform testing matrix (macOS ARM/x64, Windows, Linux deb/rpm/AppImage)",
+      "Telemetry and crash reporting data quality review",
+      "Sidecar startup time optimization and cold-start experience",
+      "Internationalization completeness audit (18 languages — verify all strings translated)",
+      "Detailed component-by-component design system migration plan from v1→v2",
+      "Electron 41 new API evaluation (Service Workers, Window Management, Keyboard Lock)",
+      "Deep link handler security review (opencode:// protocol injection risks)",
+      "Desktop app build pipeline review (electron-vite, packaging, CI artifact generation)"
+    ]
+  }
+}

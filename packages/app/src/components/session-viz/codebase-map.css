@@ -1,0 +1,17 @@
+/* Pulse animation for active package nodes */
+@keyframes pulse-scale {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.animate-pulse-scale {
+  animation: pulse-scale 2s ease-in-out infinite;
+  will-change: opacity;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-pulse-scale {
+    animation: none;
+    opacity: 1;
+  }
+}

@@ -1,0 +1,257 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "docs/schemas/rig.relay.database_security_doctrine.v1.schema.json",
+  "title": "Database Security Doctrine",
+  "description": "Security doctrine governing credential management, TLS requirements, and access control for the Postgres backend migration.",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "generated_at",
+    "author",
+    "status",
+    "env_convention",
+    "secrets_pattern",
+    "local_binding",
+    "ci_tls_requirements",
+    "role_separation",
+    "credential_isolation",
+    "model_transition",
+    "implementation_phases"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "description": "Schema identifier",
+      "enum": ["rig.relay.database_security_doctrine.v1"]
+    },
+    "generated_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp of generation"
+    },
+    "author": {
+      "type": "string",
+      "description": "Author of the doctrine"
+    },
+    "status": {
+      "type": "string",
+      "description": "Current policy status",
+      "enum": ["draft", "ratified", "superseded"]
+    },
+    "env_convention": {
+      "type": "object",
+      "required": ["prefix", "url_var", "ssl_var", "pool_size_var", "rationale"],
+      "properties": {
+        "prefix": {
+          "type": "string",
+          "description": "Env var prefix convention",
+          "enum": ["OPENCODE_"]
+        },
+        "url_var": {
+          "type": "string",
+          "description": "Database URL env var name"
+        },
+        "ssl_var": {
+          "type": "string",
+          "description": "Database SSL env var name"
+        },
+        "pool_size_var": {
+          "type": "string",
+          "description": "Database pool size env var name"
+        },
+        "rationale": {
+          "type": "string",
+          "description": "Rationale for the prefix convention"
+        }
+      }
+    },
+    "secrets_pattern": {
+      "type": "object",
+      "required": ["mechanism", "reference_path", "access_pattern", "principle"],
+      "properties": {
+        "mechanism": {
+          "type": "string",
+          "description": "Secret handling mechanism used"
+        },
+        "reference_path": {
+          "type": "string",
+          "description": "Path to reference implementation"
+        },
+        "access_pattern": {
+          "type": "string",
+          "description": "Pattern for accessing redacted values"
+        },
+        "principle": {
+          "type": "string",
+          "description": "Governing security principle"
+        }
+      }
+    },
+    "local_binding": {
+      "type": "object",
+      "required": ["host", "rationale"],
+      "properties": {
+        "host": {
+          "type": "string",
+          "description": "The host address PGlite must bind to"
+        },
+        "rationale": {
+          "type": "string",
+          "description": "Rationale for localhost-only binding"
+        }
+      }
+    },
+    "ci_tls_requirements": {
+      "type": "object",
+      "required": ["required", "production_config", "rationale"],
+      "properties": {
+        "required": {
+          "type": "boolean",
+          "description": "Whether TLS is required in CI"
+        },
+        "production_config": {
+          "type": "object",
+          "description": "Node.js TLS config for production/postgres connections",
+          "required": ["mode", "rejectUnauthorized"],
+          "properties": {
+            "mode": {
+              "type": "string",
+              "enum": ["disable", "allow", "prefer", "require"]
+            },
+            "rejectUnauthorized": {
+              "type": "boolean"
+            }
+          }
+        },
+        "rationale": {
+          "type": "string",
+          "description": "Rationale for TLS requirement"
+        }
+      }
+    },
+    "role_separation": {
+      "type": "object",
+      "required": ["app_role", "migration_role", "principle"],
+      "properties": {
+        "app_role": {
+          "type": "object",
+          "required": ["name", "grants", "schema"],
+          "properties": {
+            "name": {
+              "type": "string",
+              "description": "Postgres role name for application use"
+            },
+            "grants": {
+              "type": "string",
+              "description": "SQL grant type for this role"
+            },
+            "schema": {
+              "type": "string",
+              "description": "Schema this role operates on"
+            }
+          }
+        },
+        "migration_role": {
+          "type": "object",
+          "required": ["name", "grants", "schema"],
+          "properties": {
+            "name": {
+              "type": "string",
+              "description": "Postgres role name for migration use"
+            },
+            "grants": {
+              "type": "string",
+              "description": "SQL grant type for this role"
+            },
+            "schema": {
+              "type": "string",
+              "description": "Schema this role operates on"
+            }
+          }
+        },
+        "principle": {
+          "type": "string",
+          "description": "Governing privilege principle"
+        }
+      }
+    },
+    "credential_isolation": {
+      "type": "object",
+      "required": ["risk", "leak_paths", "mitigation_pattern"],
+      "properties": {
+        "risk": {
+          "type": "string",
+          "description": "Description of credential leak risk"
+        },
+        "leak_paths": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["file", "mechanism", "risk_level"],
+            "properties": {
+              "file": {
+                "type": "string"
+              },
+              "mechanism": {
+                "type": "string"
+              },
+              "risk_level": {
+                "type": "string",
+                "enum": ["high", "medium", "low"]
+              }
+            }
+          }
+        },
+        "mitigation_pattern": {
+          "type": "string",
+          "description": "Pattern to prevent credential leaks"
+        }
+      }
+    },
+    "model_transition": {
+      "type": "object",
+      "required": ["from", "to", "new_concerns", "coexistence_period"],
+      "properties": {
+        "from": {
+          "type": "string",
+          "description": "Current security model"
+        },
+        "to": {
+          "type": "string",
+          "description": "Target security model"
+        },
+        "new_concerns": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "New security concerns introduced by the transition"
+        },
+        "coexistence_period": {
+          "type": "string",
+          "description": "Description of the coexistence period and its security implications"
+        }
+      }
+    },
+    "implementation_phases": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["phase", "deliverables", "validation_gate"],
+        "properties": {
+          "phase": {
+            "type": "string"
+          },
+          "deliverables": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "validation_gate": {
+            "type": "string"
+          }
+        }
+      },
+      "description": "Ordered implementation phases for the security doctrine"
+    }
+  }
+}

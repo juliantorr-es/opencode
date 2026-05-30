@@ -227,15 +227,15 @@ export const layer = Layer.effect(
         }
         const query = Database.Client()
           .select()
-          .from(SessionTable)
+          .from(SessionTable as any)
           .where(conditions.length > 0 ? and(...conditions) : undefined)
           .orderBy(
             order === "asc" ? asc(sortColumn) : desc(sortColumn),
             order === "asc" ? asc(SessionTable.id) : desc(SessionTable.id),
           )
 
-        const rows = input.limit === undefined ? query.all() : query.limit(input.limit).all()
-        return (direction === "previous" ? rows.toReversed() : rows).map((row) => fromRow(row))
+        const rows = input.limit === undefined ? (query as any).all() : (query as any).limit(input.limit).all()
+        return (direction === "previous" ? rows.toReversed() : rows).map((row: typeof SessionTable.$inferSelect) => fromRow(row))
       }),
       messages: Effect.fn("V2Session.messages")(function* (input) {
         yield* result.get(input.sessionID)
@@ -277,7 +277,7 @@ export const layer = Layer.effect(
           const rows = input.limit === undefined ? query.all() : query.limit(input.limit).all()
           return direction === "previous" ? rows.toReversed() : rows
         })
-        return yield* Effect.forEach(rows, (row) => decode(row))
+        return yield* Effect.forEach(rows, (row) => decode(row as any))
       }),
       context: Effect.fn("V2Session.context")(function* (sessionID) {
         yield* result.get(sessionID)
@@ -310,7 +310,7 @@ export const layer = Layer.effect(
             .orderBy(asc(SessionMessageTable.time_created), asc(SessionMessageTable.id))
             .all()
         })
-        return yield* Effect.forEach(rows, (row) => decode(row))
+        return yield* Effect.forEach(rows, (row) => decode(row as any))
       }),
       prompt: Effect.fn("V2Session.prompt")(function* (input) {
         yield* result.get(input.sessionID)

@@ -6,7 +6,7 @@ import path from "path"
 import DESCRIPTION from "./generate-report.txt"
 
 const Parameters = Schema.Struct({
-  session_summary: Schema.String.annotations({ description: "Narrative summary of what was accomplished this session" }),
+  session_summary: Schema.String.annotate({ description: "Narrative summary of what was accomplished this session" }),
   next_steps: Schema.optional(Schema.String).annotate({ description: "Recommended next convergent course" }),
 })
 

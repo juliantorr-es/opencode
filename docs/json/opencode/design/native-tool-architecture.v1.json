@@ -1,0 +1,486 @@
+{
+  "schema_version": "v1",
+  "generated_at": "2026-05-29T00:00:00.000Z",
+  "title": "Native Tool Architecture — Industry-Leading Design",
+  "scope": "All tools under packages/opencode/src/tool/, their runtime integration in session/tools.ts, and the 200-tool future.",
+  "design_authority": "Implements patterns on top of Effect v4, Schema, Tool.define, ToolCache, Semaphore, and the existing Bus/Execution event pipeline.",
+
+  "schema": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "title": "NativeToolArchitectureDesign",
+    "type": "object",
+    "properties": {
+      "schema_version": { "type": "string", "const": "v1" },
+      "reliability": { "$ref": "#/$defs/designSection" },
+      "debuggability": { "$ref": "#/$defs/designSection" },
+      "operator_ux": { "$ref": "#/$defs/designSection" },
+      "strict_concurrency": { "$ref": "#/$defs/designSection" },
+      "true_parallelism": { "$ref": "#/$defs/designSection" },
+      "memory_usage": { "$ref": "#/$defs/designSection" },
+      "lifecycle_management": { "$ref": "#/$defs/designSection" },
+      "new_tool_template": { "$ref": "#/$defs/template" },
+      "anti_patterns": { "type": "array", "items": { "$ref": "#/$defs/antiPattern" } },
+      "registry_growth_plan": { "$ref": "#/$defs/growthPlan" }
+    },
+    "$defs": {
+      "designSection": {
+        "type": "object",
+        "properties": {
+          "principles": { "type": "array", "items": { "type": "string" } },
+          "patterns": { "type": "array", "items": { "$ref": "#/$defs/pattern" } },
+          "rationale": { "type": "string" }
+        },
+        "required": ["principles", "patterns", "rationale"]
+      },
+      "pattern": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" },
+          "problem": { "type": "string" },
+          "solution": { "type": "string" },
+          "pseudocode": { "type": "string" },
+          "confidence": { "type": "number", "minimum": 0, "maximum": 1 }
+        },
+        "required": ["name", "problem", "solution", "pseudocode", "confidence"]
+      },
+      "template": {
+        "type": "object",
+        "properties": {
+          "steps": { "type": "array", "items": { "type": "string" } },
+          "skeleton": { "type": "string" },
+          "checklist": { "type": "object" }
+        },
+        "required": ["steps", "skeleton", "checklist"]
+      },
+      "antiPattern": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" },
+          "symptom": { "type": "string" },
+          "why_bad": { "type": "string" },
+          "replace_with": { "type": "string" }
+        },
+        "required": ["name", "symptom", "why_bad", "replace_with"]
+      },
+      "growthPlan": {
+        "type": "object",
+        "properties": {
+          "phases": { "type": "array", "items": { "type": "object" } }
+        }
+      }
+    }
+  },
+
+  "reliability": {
+    "principles": [
+      "Every tool execute path MUST have exactly one error channel with typed, matchable errors — never raw Effect.orDie swallowing.",
+      "Network tools MUST have retry with exponential backoff; filesystem and local tools MUST use deterministic fallbacks, not retry.",
+      "Input validation MUST use Schema.decodeUnknownEffect with a typed InvalidArgumentsError — never ad-hoc typeof checks in execute.",
+      "Timeouts MUST be applied at the tool level, not just the semaphore layer, so one stuck tool cannot block the pool.",
+      "Circuit breakers MUST guard shared external resources (HTTP, DB, shell) before the semaphore is acquired."
+    ],
+    "patterns": [
+      {
+        "name": "TypedErrorHierarchy",
+        "problem": "Every tool uses Effect.orDie which crashes the entire fiber on any error. The LLM gets no recovery signal.",
+        "solution": "Introduce a ToolError tagged union. Every tool returns Effect<ExecuteResult, ToolError>. The session bridge catches and converts to user-facing messages. orDie is reserved for programming errors only (Schema bugs, unreachable branches).",
+        "pseudocode": "// -- packages/opencode/src/tool/errors.ts --\nimport { Schema } from \"effect\"\n\n// Base tagged error for ALL recoverable tool errors\nexport class ToolError extends Schema.TaggedErrorClass<ToolError>()(\"ToolError\", {\n  tool: Schema.String,\n  detail: Schema.String,\n  recoverable: Schema.Boolean,\n}) {\n  get message(): string {\n    const hint = this.recoverable\n      ? \" Please correct the input and retry.\"\n      : \" This cannot be recovered by retrying.\"\n    return `[${this.tool}] ${this.detail}.${hint}`\n  }\n}\n\n// Specific subtypes for network tools\nexport class NetworkError extends Schema.TaggedErrorClass<NetworkError>()(\"NetworkError\", {\n  tool: Schema.String,\n  detail: Schema.String,\n  statusCode: Schema.optional(Schema.Number),\n}) {\n  override get message(): string {\n    const code = this.statusCode ? ` (HTTP ${this.statusCode})` : \"\"\n    return `[${this.tool}] Network request failed${code}: ${this.detail}. The tool will retry automatically.`\n  }\n}\n\nexport class TimeoutError extends Schema.TaggedErrorClass<TimeoutError>()(\"TimeoutError\", {\n  tool: Schema.String,\n  detail: Schema.String,\n  durationMs: Schema.Number,\n}) {\n  override get message(): string {\n    return `[${this.tool}] Timed out after ${this.durationMs}ms: ${this.detail}. Consider a larger timeout or a simpler operation.`\n  }\n}\n\nexport class PermissionDeniedError extends Schema.TaggedErrorClass<PermissionDeniedError>()(\"PermissionDeniedError\", {\n  tool: Schema.String,\n  detail: Schema.String,\n  resource: Schema.String,\n}) {\n  override get message(): string {\n    return `[${this.tool}] Permission denied for resource \"${this.resource}\": ${this.detail}.`\n  }\n}\n\n// -- In session/tools.ts, the catch boundary becomes:\nyield* Effect.catchAll(error => {\n  if (error instanceof ToolError) {\n    yield* Execution.publishFailed(bus, ctx.sessionID, callID, tool.id, error.message)\n    return { title: tool.id, metadata: { error: true }, output: error.message }\n  }\n  // Unknown errors still orDie (programming errors)\n  return yield* Effect.die(error)\n})",
+        "confidence": 0.9
+      },
+      {
+        "name": "RetryWithExponentialBackoff",
+        "problem": "Network tools (webfetch, websearch, repo_clone) have zero retry logic. A transient DNS failure fails the entire LLM turn.",
+        "solution": "Use Effect.retry with Schedule.exponential for network tools. Apply at the execute level, not the tool definition level.",
+        "pseudocode": "// Inside a network tool's execute method:\nreturn Effect.gen(function* () {\n  const result = yield* httpRequest(params).pipe(\n    Effect.retry({\n      while: (error) => error instanceof NetworkError && error.statusCode !== 403 && error.statusCode !== 404,\n      schedule: Schedule.exponential(\"500 millis\").pipe(\n        Schedule.either(Schedule.recurs(3)),\n        Schedule.union(Schedule.maxDelay(\"10 seconds\")),\n      ),\n    }),\n    Effect.timeout(\"25 seconds\"),\n  )\n  return formatResult(result)\n}).pipe(\n  Effect.catchSome((error) => {\n    if (error instanceof TimeoutError) return Effect.succeed({\n      title: 'fetch',\n      metadata: { status: 'timeout' },\n      output: `Request timed out after 25s. Try a simpler URL or check network.`\n    })\n    return Effect.fail(error) // let the bridge handle other ToolErrors\n  }),\n)",
+        "confidence": 0.95
+      },
+      {
+        "name": "InputValidationGate",
+        "problem": "Tools do ad-hoc validation inside execute, mixing validation and business logic.",
+        "solution": "Schema.decodeUnknownEffect in the wrap function already hoists a decoder. Every tool MUST define a Parameters Schema.Struct and NEVER validate inside execute. formatValidationError MUST be implemented for every tool to produce LLM-readable error messages.",
+        "pseudocode": "// In tool.ts wrap() — already present but should be mandatory:\nconst decoded = yield* decode(args).pipe(\n  Effect.mapError((error) =>\n    new InvalidArgumentsError({\n      tool: id,\n      detail: toolInfo.formatValidationError\n        ? toolInfo.formatValidationError(error)\n        : String(error),\n    }),\n  ),\n)\n\n// Every tool MUST provide formatValidationError — example:\nformatValidationError: (error) => {\n  if (ParseResult.isParseError(error)) {\n    const issues = ParseResult.getErrors(error).map(e =>\n      `- ${e.path.join('.')}: ${e.message}`\n    ).join('\\n')\n    return `Validation failed:\\n${issues}\\n\\nExpected schema:\\n${JSON.stringify(Parameters.ast, null, 2)}`\n  }\n  return String(error)\n}",
+        "confidence": 1.0
+      },
+      {
+        "name": "PerToolTimeout",
+        "problem": "The global 5-permit semaphore has no timeout. One stuck tool (e.g., shell waiting on stdin) blocks 4 other slots.",
+        "solution": "Every tool MUST use Effect.timeout at the execute scope. Long-running tools (shell, repo_clone) should surface progress via ctx.metadata() so the bridge can update tool call state before the timeout fires.",
+        "pseudocode": "// In each tool's execute method — the outermost pipe:\nexecute: (params, ctx) =>\n  Effect.gen(function* () {\n    // ... happy path logic\n  }).pipe(\n    Effect.timeout({\n      duration: toolSpecificTimeout,   // e.g. 120_000 for shell, 10_000 for grep\n      onTimeout: () => new TimeoutError({ tool: id, detail: 'execution timed out', durationMs: toolSpecificTimeout }),\n    }),\n    Effect.catchTag('TimeoutError', (err) => Effect.succeed({\n      title: id,\n      metadata: { timedOut: true, durationMs: err.durationMs },\n      output: `[${id}] Timed out after ${err.durationMs}ms. ${getRecoveryHint(id)}`,\n    })),\n  )",
+        "confidence": 0.9
+      },
+      {
+        "name": "CircuitBreakerForSharedResources",
+        "problem": "When the LLM calls shell 5 times concurrently and the disk is thrashing, all 5 calls fail. Then the next turn also sends 5 shell calls that also fail.",
+        "solution": "Wrap shared external resources (ChildProcessSpawner, HttpClient) in a circuit breaker. Trip after N consecutive failures, half-open after a cooldown. This prevents cascading failure across turns.",
+        "pseudocode": "// -- packages/opencode/src/tool/circuit-breaker.ts --\nimport { CircuitBreaker as CB } from \"effect\"\n\nexport class ToolCircuitBreaker extends Context.Service<ToolCircuitBreaker>()(\"@opencode/ToolCircuitBreaker\", {\n  // CircuitBreaker factory from effect\n  ref: CB.CircuitBreaker<unknown, unknown>,\n}) {}\n\n// In tool definition:\nconst cb = yield* ToolCircuitBreaker\nreturn {\n  execute: (params, ctx) => cb.ref.pipe(\n    CB.withCircuitBreaker(\n      Effect.gen(function* () {\n        // actual shell/spawn logic\n      }),\n    ),\n  ),\n}\n\n// Default config: maxFailures=5, resetPeriod='30 seconds'\n// This prevents repeated failures from flooding the semaphore pool",
+        "confidence": 0.7
+      }
+    ],
+    "rationale": "The current architecture relies on Effect.orDie at every tool boundary, which is the worst possible error strategy for an agent-facing system. The LLM cannot recover from a die because it cannot distinguish 'transient network blip' from 'programming error'. By introducing a typed ToolError hierarchy, every error becomes a first-class value the LLM can read, understand, and act on. Retry with exponential backoff on network tools makes the system resilient to transient failures without the LLM even knowing. The circuit breaker prevents cascading failure patterns that waste both the semaphore pool and the LLM's context window."
+  },
+
+  "debuggability": {
+    "principles": [
+      "Every tool execution MUST produce a complete trace from 'LLM decided to call' through 'result returned' in OpenTelemetry-compatible spans.",
+      "Span attributes MUST include session.id, message.id, tool.call_id, and tool.name on EVERY span, not just the outer wrapper.",
+      "Structured logging at 'info' for lifecycle events, 'debug' for inner operations — never f-string interpolation, always structured objects.",
+      "Long-running tools (>5s) MUST emit periodic heartbeat metadata via ctx.metadata() so the UI shows progress.",
+      "Every tool MUST have a 'dryRun' mode for debugging parameter construction without side effects."
+    ],
+    "patterns": [
+      {
+        "name": "SpanPropagationChain",
+        "problem": "Effect.withSpan is only applied in the outer wrap() and fromPlugin() boundaries. Inner operations (file reads, API calls, cache lookups) have no spans, so deep debugging requires adding spans per-investigation.",
+        "solution": "Every tool MUST annotate its inner Effect.fn() calls with Effect.withSpan(name, { attributes }). Use Effect.fn() for named functions — it automatically creates span context. Propagate trace context across fiber boundaries with Effect.forkScoped (not Effect.fork) to maintain span hierarchy.",
+        "pseudocode": "// Every helper defined with Effect.fn() gets auto-spanning:\nconst resolvePath = Effect.fn(\"ReadTool.resolvePath\")(function* (file: string) {\n  // This function creates a span at \"ReadTool.resolvePath\" automatically\n  const instance = yield* InstanceState.context\n  return path.isAbsolute(file) ? file : path.join(instance.directory, file)\n})\n\n// For side-effect operations, annotate spans explicitly:\nconst result = yield* fs.readFileString(filePath).pipe(\n  Effect.withSpan(\"ReadTool.readFile\", {\n    attributes: { \"file.path\": filePath, \"file.size\": fileSize },\n  }),\n)\n\n// When forking, use forkScoped to maintain span parent-child:\nyield* Effect.forkScoped(    // NOT Effect.fork — forkScoped maintains trace\n  processLargeResult(stream).pipe(\n    Effect.withSpan(\"ShellTool.processStream\"),\n  ),\n)\n\n// In session/tools.ts, wrap the entire semaphore.withPermit with a root span:\nsemaphore.withPermit(\n  Effect.gen(function* () {\n    // ... tool execution\n  }).pipe(\n    Effect.withSpan(\"Tool.execute\", {\n      attributes: {\n        \"tool.name\": item.id,\n        \"session.id\": ctx.sessionID,\n        \"message.id\": ctx.messageID,\n        \"tool.call_id\": ctx.callID,\n        \"tool.cacheable\": item.cacheable,\n        \"semaphore.permits_used\": 1,\n      },\n    }),\n  ),\n)",
+        "confidence": 0.95
+      },
+      {
+        "name": "StructuredLoggingBoundary",
+        "problem": "The shell tool uses log.info with structured objects, but most tools have no logging at all. Debugging tool issues requires adding console.log or reading raw spans.",
+        "solution": "Every tool file creates ONE module-level logger. All logging uses structured objects, not f-string interpolation. Log levels: error (unexpected failures), info (lifecycle: started, completed, cached hit/miss, truncated), debug (inner operations: file reads, API roundtrips, parameter resolution).",
+        "pseudocode": "// Top of every tool file:\nimport * as Log from \"@opencode-ai/core/util/log\"\nconst log = Log.create({ service: \"tool.<name>\" })    // e.g., \"tool.grep\", \"tool.shell\"\n\n// Inside execute:\nlog.info(\"tool execution started\", {\n  params: { pattern: params.pattern, path: params.path },\n  callID: ctx.callID,\n})\n\n// Inside cache check:\nlog.debug(\"cache lookup\", { cacheable: true, key: cacheKey, hit: Boolean(cached) })\n\n// On error (before typed error is returned):\nlog.error(\"network request failed\", {\n  url,\n  statusCode: error.statusCode,\n  durationMs: Date.now() - start,\n})\n\n// NEVER:\nlog.info(`Started tool ${id} with params ${JSON.stringify(params)}`)",
+        "confidence": 1.0
+      },
+      {
+        "name": "HeartbeatForLongRunningTools",
+        "problem": "Shell tool can run for 2+ minutes. The UI shows 'running' with no updates. If the tool hangs, there's no signal until the timeout fires.",
+        "solution": "Tools expected to run >5s MUST call ctx.metadata() at regular intervals with progress info. The shell tool already does this via its metadata callback — make this a documented pattern. Tools like repo_clone, webfetch with large downloads, and duckdb-query with long-running queries should implement this.",
+        "pseudocode": "// Heartbeat pattern for long-running tools:\nconst heartbeat = yield* Effect.forever(\n  Effect.sleep(\"2 seconds\").pipe(\n    Effect.andThen(() => ctx.metadata({\n      metadata: {\n        status: \"running\",\n        progress: { bytesDownloaded, totalBytes, elapsedMs },\n      },\n    })),\n  ),\n)\nyield* Effect.forkScoped(heartbeat)\n\n// When done, the fiber is auto-interrupted by the scope\n// This keeps the UI updated without blocking execution",
+        "confidence": 0.85
+      },
+      {
+        "name": "ExecutionEventAuditTrail",
+        "problem": "The execution.ts publishStarted/Completed/Failed events exist but only for coordination, not for debugging individual tool behavior.",
+        "solution": "Emit execution events with full parameter digests (not full parameters — hashed if sensitive), duration, error codes, and cache status. These feed into the observability JSONL for post-hoc analysis.",
+        "pseudocode": "yield* Execution.publishCompleted(bus, ctx.sessionID, ctx.callID, item.id, item.description, {\n  durationMs: Date.now() - startTime,\n  cacheHit: Boolean(cached),\n  outputTruncated: result.metadata.truncated,\n  outputSizeBytes: Buffer.byteLength(result.output, 'utf-8'),\n  parameterHash: hash(JSON.stringify(args)),     // not raw args\n  errorCode: result.metadata.error ?? null,\n})",
+        "confidence": 0.9
+      }
+    ],
+    "rationale": "An agent calling tools is a distributed trace — it crosses LLM turns, tool boundaries, and potentially network calls. Without proper span propagation, every debugging session starts with 'where did this value come from?' The structured logging boundary at the tool level means engineers can grep for `tool.shell` or `tool.grep` without noise. Heartbeat metadata bridges the gap between 'tool is running' and the final result, which is critical for user trust."
+  },
+
+  "operator_ux": {
+    "principles": [
+      "Every tool output MUST be a structured ExecuteResult with title, metadata, and output — the LLM should never receive raw text except in the output field.",
+      "Error messages MUST tell the LLM what to do next, not just what went wrong.",
+      "Progress indicators MUST be exposed via ctx.metadata() so the UI layer can render them.",
+      "Every tool MUST provide a formatValidationError that produces LLM-actionable messages: 'The X field was expected to be Y, got Z. Rewrite your input to use Y.'",
+      "Tool outputs MUST be deterministic for the same inputs — the LLM should be able to predict the output shape.",
+      "Metadata MUST distinguish execution-level info (timing, cache hits) from result-level info (match count, truncated)."
+    ],
+    "patterns": [
+      {
+        "name": "StructuredExecuteResultContract",
+        "problem": "Some tools return JSON in the output string, some return natural language. The LLM cannot predict the shape.",
+        "solution": "Every ExecuteResult follows a strict contract: title (1-line summary for UI), metadata (structured, for programmatic inspection), output (formatted text for LLM consumption). Metadata MUST include status: 'success' | 'fail' | 'timeout' | 'partial', and relevant counters. For structured data, output MUST be either plain text (for LLM readability) or JSON (for programmatic use) — never a hybrid.",
+        "pseudocode": "// Canonical ExecuteResult shape:\n{\n  title: `${tool.id}: one-line summary for UI`,   // e.g., \"grep: findUser\"\n  metadata: {\n    status: 'success',       // canonical status — one of: success, fail, timeout, partial, error\n    toolCallId: ctx.callID,  // for correlation\n    // Tool-specific structured metadata:\n    matches: 42,\n    truncated: false,\n    // Execution metadata (not result metadata) is annotated by the wrapper:\n    // cacheHit, durationMs, outputSizeBytes come from the bridge, not the tool\n  },\n  output: `Found 42 matches:\\n\\n/path/to/file.ts:\\n  Line 12: const user = findUser(id)\\n...`,  // LLM-facing formatted text\n}\n\n// Error result:\n{\n  title: 'smart_edit',\n  metadata: { status: 'fail', file: '/path/to/file.ts', reason: 'not_found' },\n  output: JSON.stringify({\n    status: 'fail',\n    error: 'oldText not found in file',\n    hint: 'Check exact whitespace and line endings. The file currently starts with: \"import { ... }\"',\n  }, null, 2),\n}",
+        "confidence": 1.0
+      },
+      {
+        "name": "LLM-ActionableErrorMessages",
+        "problem": "Tool error messages describe what's broken but not what the LLM should do differently.",
+        "solution": "Every error message follows the formula: [WHAT went wrong] + [WHAT the LLM should change] + [HOW to fix it]. Never just 'Invalid argument' or 'File not found'. The InvalidArgumentsError already does this — extend it to all tool-level errors.",
+        "pseudocode": "// Good:\n`File not found: ${filePath}. Check that the path exists and is readable.`\n\n// Also good:\n`Pattern \"${pattern}\" is not a valid regex: ${error.message}. Try escaping special characters or using a simpler pattern.`\n\n// Bad — no actionable guidance:\n`Invalid pattern`\n\n// Canonical format for formatValidationError:\n`The ${this.tool} tool was called with invalid arguments for field \"${fieldPath}\": expected ${expected}, got ${got}.\\nPlease rewrite the input so ${fieldPath} satisfies ${description}.\\n\\nFull schema:\\n${JSON.stringify(schema, null, 2)}`",
+        "confidence": 1.0
+      },
+      {
+        "name": "NoSurprisingSideEffects",
+        "problem": "Some tools perform side effects (writing files, modifying state) during init. The LLM should never be surprised by side effects that happen before it calls execute.",
+        "solution": "Init MUST be pure — acquire services, compile schemas, build closures. All side effects MUST happen inside execute. If lazy initialization is needed (e.g., shell tool loading tree-sitter WASM), it MUST use lazy() or Effect.lazyPromise, never init-time awaits.",
+        "pseudocode": "// Good — init is pure:\nexport const GrepTool = Tool.define(\n  'grep',\n  Effect.gen(function* () {\n    const fs = yield* AppFileSystem.Service\n    const rg = yield* Ripgrep.Service\n    return {\n      description: DESCRIPTION,\n      parameters: Parameters,\n      cacheable: true,\n      execute: (params, ctx) =>\n        Effect.gen(function* () {\n          // All side effects happen here\n          const result = yield* rg.search({ ... })\n          return { title, metadata, output }\n        }),\n    }\n  }),\n)\n\n// Also good — lazy WASM loading:\nconst parser = lazy(async () => {\n  // This runs on first parse() call, not at init time\n  const { Parser } = await import('web-tree-sitter')\n  // ...\n  return { bash, ps }\n})",
+        "confidence": 1.0
+      }
+    ],
+    "rationale": "The LLM is the most expensive consumer of tool output. Every token in the output burns reasoning budget. Structured metadata lets the LLM quickly assess the result without reading the full output. Actionable error messages prevent the LLM from making the same mistake twice in the same turn. The init purity guarantee means the LLM can trust that tool descriptions are accurate without worrying about latent state."
+  },
+
+  "strict_concurrency": {
+    "principles": [
+      "The global 5-permit semaphore is a shared resource pool, not a concurrency management strategy — it prevents thundering herd but does not prevent starvation.",
+      "Read-only tools (grep, read, glob) MUST NOT compete with write tools (edit, write, shell) for the same permits — use separate read/write pools or priority queuing.",
+      "Tools that share an external connection (HTTP client, DuckDB connection) MUST use a dedicated connection pool, not the global semaphore.",
+      "Per-tool max concurrency limits MUST prevent a single tool type from monopolizing the pool (e.g., shell max 2, grep max 5).",
+      "The semaphore MUST have a timeout so a stuck permit is released."
+    ],
+    "patterns": [
+      {
+        "name": "ReadWriteSemaphoreSeparation",
+        "problem": "A single 5-permit semaphore means 5 grep calls block all writes. The LLM often issues several reads in parallel, then a write — the write waits for all reads.",
+        "solution": "Split into readSemaphore (5 permits) and writeSemaphore (2 permits). Writes acquire both (or have priority over reads in the write pool). Read-only tools (cacheable: true) use the read semaphore. Write tools (edit, write, smart_edit, shell, bash) use the write semaphore.",
+        "pseudocode": "// In session/tools.ts:\nconst readSemaphore = yield* Semaphore.make(5)\nconst writeSemaphore = yield* Semaphore.make(2)\n\n// In tool resolution:\nconst semaphore = isWriteTool(item.id) ? writeSemaphore : readSemaphore\n\ntools[item.id] = tool({\n  execute: (args, options) =>\n    run.promise(\n      semaphore.withPermit(\n        Effect.gen(function* () {\n          // ...\n        }).pipe(\n          Effect.withSpan(\"Tool.execute\", ...)\n        ),\n      ),\n    ),\n})\n\n// Helper:\nconst WRITE_TOOLS = new Set(['edit', 'write', 'smart_edit', 'shell', 'smart_batch', 'search_replace', 'checkpoint', 'apply_patch', 'prepare_checkpoint'])\nfunction isWriteTool(id: string): boolean {\n  return WRITE_TOOLS.has(id)\n}",
+        "confidence": 0.85
+      },
+      {
+        "name": "PerToolConcurrencyLimit",
+        "problem": "Without per-tool limits, shell (which spawns processes) can use all 5 permits. Then grep (which is fast and cheap) blocks on a shell that's waiting on apt-get.",
+        "solution": "Each tool defines maxConcurrency in its metadata. The session bridge enforces this with a per-tool Semaphore or a weighted semaphore pool. Fast tools (grep, glob, read) get higher limits; heavy tools (shell, repo_clone) get lower.",
+        "pseudocode": "// Extend Tool.Def:\nexport interface Def<..., R = any> {\n  // ... existing fields\n  cacheable?: boolean\n  maxConcurrency?: number     // NEW — max concurrent executions per tool\n  isWrite?: boolean            // NEW — uses write semaphore\n  timeoutMs?: number           // NEW — tool-specific timeout\n}\n\n// In session/tools.ts:\nconst perToolSemaphores = new Map<string, Semaphore>()\n\nfunction getToolSemaphore(id: string, maxConcurrency?: number): Semaphore {\n  if (!maxConcurrency) return isWriteTool(id) ? writeSemaphore : readSemaphore\n  let sem = perToolSemaphores.get(id)\n  if (!sem) {\n    sem = Semaphore.make(maxConcurrency)\n    perToolSemaphores.set(id, sem)\n  }\n  return sem\n}\n\n// Then:\nconst toolSemaphore = getToolSemaphore(item.id, item.maxConcurrency)\n// Acquire BOTH the global semaphore (for fairness) AND the per-tool semaphore\n// Better: just use per-tool semaphore when specified, else fall back to global",
+        "confidence": 0.8
+      },
+      {
+        "name": "SharedConnectionPool",
+        "problem": "Multiple tools may share an HttpClient or DuckDB connection. Without pooling, each tool creates its own connection, exhausting file descriptors.",
+        "solution": "Tools that share a resource acquire it from a pooled Service layer (already done via Layer.provide in registry.ts). Ensure pool sizes match tool concurrency. HttpClient already has connection pooling; DuckDB uses a single adapter.",
+        "pseudocode": "// Good — already the pattern:\n// In registry.ts defaultLayer:\nLayer.provide(FetchHttpClient.layer)   // shared HTTP client with connection pooling\nLayer.provide(DatabaseAdapter.defaultLayer)  // shared DB adapter\n\n// Tool acquires shared service:\nconst http = yield* HttpClient.HttpClient  // same client reused across tools\n\n// If a tool needs an exclusive connection:\nconst db = yield* DatabaseAdapter.Service\nconst exclusive = yield* db.checkout()  // acquire from pool\n// ... use exclusive connection ...\nyield* Scope.close()  // return to pool",
+        "confidence": 0.9
+      }
+    ],
+    "rationale": "A single semaphore with equal weighting for all tools is the database equivalent of a table-level lock. Read-write separation allows the LLM to issue parallel grep/read calls during research without blocking writes. Per-tool concurrency limits prevent a single heavy tool (shell, repo_clone) from consuming all permits. Connection pooling at the service layer means tools don't compete for file descriptors."
+  },
+
+  "true_parallelism": {
+    "principles": [
+      "Tools that read different resources (different files, different URLs) CAN run in parallel safely.",
+      "Tools that write or mutate shared state (same file, same DB row) MUST run serially.",
+      "The AI SDK natural tool call model already parallelizes independent tool calls — the architecture must not fight this.",
+      "Tools that spawn sub-operations (batch edits, multi-file reads) MUST use Effect.forEach with bounded concurrency, not unbounded.",
+      "Fiber cancellation MUST be clean — no orphaned processes, no leaked file handles."
+    ],
+    "patterns": [
+      {
+        "name": "BoundedParallelismForSubOperations",
+        "problem": "SmartBatchTool applies edits in sequence; multi-file reads could be parallel but aren't.",
+        "solution": "Use Effect.forEach with { concurrency: N } for sub-operations. Choose N based on resource type: file reads can use high concurrency (8-16), network calls use moderate (4-8), writes use 1 (serial).",
+        "pseudocode": "// Inside a batch tool:\nconst results = yield* Effect.forEach(\n  params.edits,\n  (edit) =>\n    Effect.gen(function* () {\n      // apply single edit\n      return yield* applyOne(edit, ctx)\n    }).pipe(\n      Effect.withSpan(\"BatchEdit.apply\", {\n        attributes: { \"edit.file\": edit.file },\n      }),\n    ),\n  { concurrency: 4 },   // small bounded concurrency — not \"unbounded\"\n)\n\n// For file reads (grep, read tool):\nconst stats = yield* Effect.forEach(\n  files,\n  (file) => fs.stat(file).pipe(Effect.catch(() => Effect.succeed(undefined))),\n  { concurrency: 16 },  // file system handles this well\n)",
+        "confidence": 0.9
+      },
+      {
+        "name": "FiberCleanScopeForSubprocesses",
+        "problem": "Shell tool spawns child processes. If the fiber is interrupted (abort, timeout), the child process must be killed. Currently handled via Effect.scoped + Effect.forkScoped — this is correct but must be enforced universally.",
+        "solution": "Every tool that spawns external processes MUST wrap them in Effect.scoped with a finalizer that kills the process. Use Effect.acquireRelease for WASM parsers and file handles. Never use raw Promise without bridge.",
+        "pseudocode": "// Canonical scoped subprocess pattern:\nconst result = yield* Effect.scoped(\n  Effect.gen(function* () {\n    const proc = yield* spawner.spawn(cmd)\n    \n    // Auto-cleanup when scope closes (abort, timeout, completion):\n    yield* Effect.addFinalizer(() =>\n      Effect.orDie(proc.kill({ forceKillAfter: \"3 seconds\" }))\n    )\n    \n    const output = yield* collectOutput(proc)\n    return output\n  }),\n)\n\n// Canonical scoped resource pattern:\nyield* Effect.acquireRelease(\n  openResource(),      // acquire\n  (resource) => closeResource(resource),  // release\n).pipe(\n  Effect.flatMap((resource) => useResource(resource)),\n)",
+        "confidence": 1.0
+      },
+      {
+        "name": "SequentialSemaphoreForConflictingTools",
+        "problem": "Two concurrent smart_edit calls on the same file will race — one overwrites the other.",
+        "solution": "Use a keyed semaphore per-resource (file path, URL, DB row). Tools that mutate a resource acquire a semaphore keyed on the resource identifier. This is a stripe lock pattern.",
+        "pseudocode": "// -- packages/opencode/src/tool/stripe-lock.ts --\nimport { Effect, HashMap, Ref, Semaphore } from \"effect\"\n\nexport class StripeLock extends Context.Service<StripeLock>()(\"@opencode/StripeLock\", {\n  ref: Ref.Ref<HashMap.HashMap<string, Semaphore>>,\n}) {}\n\nexport const getLock = Effect.fn(\"StripeLock.getLock\")(function* (key: string) {\n  const service = yield* StripeLock\n  let sem = yield* Ref.get(service.ref).pipe(\n    Effect.map((map) => HashMap.get(map, key)),\n  )\n  if (sem._tag === \"None\") {\n    const newSem = yield* Semaphore.make(1)\n    yield* Ref.update(service.ref, (map) => HashMap.set(map, key, newSem))\n    sem = { _tag: \"Some\", value: newSem }\n  }\n  return sem.value\n})\n\n// Usage in smart_edit:\nconst lock = yield* getLock(params.file)\nreturn lock.withPermit(\n  Effect.gen(function* () {\n    return yield* applyEdit(params)\n  }),\n)",
+        "confidence": 0.75
+      }
+    ],
+    "rationale": "Effect's fiber model already provides the primitives for true parallelism. The key insight is that the LLM can independently call multiple tools, and the AI SDK parallelizes these calls. The architecture must not add artificial serialization where none is needed, while preventing races on shared mutable state. The stripe lock pattern is a pragmatic middle ground between 'no concurrency control' and 'global serialization' for write-on-file tools."
+  },
+
+  "memory_usage": {
+    "principles": [
+      "Tool outputs MUST be evaluated against a memory budget before being constructed — large results MUST stream to disk, not buffer in memory.",
+      "Every tool MUST define maxOutputBytes = 50KB in config, enforced by the truncation layer before the output reaches the LLM.",
+      "Tool caches MUST have an eviction strategy (LRU with TTL), not unbounded Map growth.",
+      "Service layers (HTTP pools, DB connections, WASM parsers) MUST be released when the tool scope ends.",
+      "Tools MUST NOT retain references to previous results across invocations."
+    ],
+    "patterns": [
+      {
+        "name": "StreamingLargeResultsToDisk",
+        "problem": "Shell tool already handles large output by streaming to truncation files. But most tools load entire file contents into memory before processing.",
+        "solution": "For tools that read large files or fetch large URLs, use Stream instead of Effect to process data incrementally. The truncate service already provides a write() method for spilling to disk — tools should use it proactively.",
+        "pseudocode": "// Good — shell tool streams output through a sliding window:\nconst keep = limits.maxBytes * 2\nlet full = ''\nconst list: Chunk[] = []\nlet used = 0\nlet file = ''\n\nyield* Effect.forkScoped(\n  Stream.runForEach(Stream.decodeText(handle.all), (chunk) => {\n    list.push({ text: chunk, size })\n    used += size\n    while (used > keep && list.length > 1) {\n      const item = list.shift()\n      used -= item.size\n    }\n    // spill to disk if over budget\n    if (Buffer.byteLength(full) > limits.maxBytes) {\n      return trunc.write(full).pipe(\n        Effect.andThen((path) => { file = path; full = '' }),\n      )\n    }\n    return Effect.void\n  }),\n)\n\n// For large file reads — use streaming:\nexport function readLargeFile(filePath: string, maxBytes: number) {\n  return Stream.fromReadable(() => createReadStream(filePath)).pipe(\n    Stream.takeWhile((_) => /* byte budget remaining */),\n    Stream.runCollect,\n    Effect.map((chunks) => Buffer.concat([...chunks]).toString('utf-8')),\n  )\n}",
+        "confidence": 0.9
+      },
+      {
+        "name": "CacheEvictionStrategy",
+        "problem": "ToolCache currently grows unbounded — stale entries are never removed. Runaway LLM sessions with many tool calls will leak memory.",
+        "solution": "Add maxEntries (default 100) and ttl (default 5 minutes) to ToolCache. Use LRU eviction when the cache exceeds maxEntries. Inflight dedup entries must also be bounded.",
+        "pseudocode": "// Enhanced ToolCache:\ninterface CacheConfig {\n  maxEntries: number     // default 100\n  ttlMs: number          // default 300000 (5 min)\n}\n\nconst getOrCompute = (key, compute) =>\n  Effect.gen(function* () {\n    const map = yield* Ref.get(cache)\n    const entry = map[key]\n    if (entry && (Date.now() - entry.storedAt) < config.ttlMs) {\n      return entry.result\n    }\n    // ... compute and store ...\n    yield* evictIfNeeded()\n  })\n\nconst evictIfNeeded = Effect.fn(\"Cache.evictIfNeeded\")(function* () {\n  const map = yield* Ref.get(cache)\n  const keys = Object.keys(map)\n  if (keys.length <= config.maxEntries) return\n  // Evict oldest entries\n  const sorted = keys.sort((a, b) => map[a].storedAt - map[b].storedAt)\n  const toRemove = sorted.slice(0, keys.length - config.maxEntries)\n  yield* Ref.update(cache, (m) => {\n    const next = { ...m }\n    for (const key of toRemove) delete next[key]\n    return next\n  })\n})",
+        "confidence": 0.95
+      },
+      {
+        "name": "ScopeBoundServiceRelease",
+        "problem": "Services acquired in init or execute may not be released between tool calls.",
+        "solution": "Tools MUST use Effect.scoped for transient resources (subprocesses, file handles, network connections). Init-acquired services (those via yield* Service) are long-lived and managed by the Layer graph — these are fine. The danger is tools that acquire resources inside execute without scoping.",
+        "pseudocode": "// Define tool-specific transient resources:\nexport const MyToolLive = Layer.scoped(\n  MyTool,\n  Effect.gen(function* () {\n    const conn = yield* openPooledConnection()  // acquired once per tool lifecycle\n    yield* Effect.addFinalizer(() => closeConnection(conn))\n    return MyTool.of({ conn })\n  }),\n)\n\n// Or for per-execution resources:\nexecute: (params, ctx) =>\n  Effect.scoped(\n    Effect.gen(function* () {\n      const tempDir = yield* makeTempDir()\n      yield* Effect.addFinalizer(() => removeTempDir(tempDir))\n      return yield* doWork(tempDir, params)\n    }),\n  )",
+        "confidence": 1.0
+      }
+    ],
+    "rationale": "Tool caches and stream buffers are the two biggest memory risks in the current architecture. The cache grows unbounded — in a 200-tool future with cacheable flags on every read tool, a long session could accumulate thousands of cached grep/read results. The streaming pattern from shell tool is the gold standard; it should be the default for any tool that processes more than 50KB."
+  },
+
+  "lifecycle_management": {
+    "principles": [
+      "Tool init acquires stable services (DB, HTTP, FileSystem) — never mutable per-execution state.",
+      "Tool execute creates and releases ephemeral resources (temp files, subprocesses, transactions).",
+      "Cache invalidation happens when a write tool executes — this is already implemented by calling cache.invalidate() after write tools.",
+      "Tool refresh/reload is triggered by config changes or plugin reload — init must be re-entrant.",
+      "The registry is the single source of truth for which tools are available — individual tools never self-register."
+    ],
+    "patterns": [
+      {
+        "name": "PureInitWithLazyServices",
+        "problem": "Some tools do heavy work in init (loading WASM, building complex closures). This delays session startup.",
+        "solution": "Init MUST be fast (<5ms). Heavy initialization (WASM loading, schema compilation) MUST use lazy(() => ...) or Effect.lazyPromise so the cost is deferred to first execution.",
+        "pseudocode": "// Good — lazy parser init (from shell.ts):\nconst parser = lazy(async () => {\n  // This runs on first parse() call, not at Tool.define time\n  const { Parser } = await import('web-tree-sitter')\n  // ... heavy WASM loading ...\n  return { bash, ps }\n})\n\n// Good — schema is compiled at module load (fast):\nconst Parameters = Schema.Struct({\n  pattern: Schema.String,\n})\n\n// Bad — waiting in init:\nexport const HeavyTool = Tool.define(\n  'heavy',\n  Effect.gen(function* () {\n    const language = yield* Effect.promise(() => loadHeavyWasm())  // Blocks init\n    return {\n      execute: (params, ctx) => useLanguage(language),\n    }\n  }),\n)\n\n// Good — deferred to execute:\nexport const HeavyTool = Tool.define(\n  'heavy',\n  Effect.gen(function* () {\n    const lazyLanguage = lazy(() => loadHeavyWasm())\n    return {\n      execute: (params, ctx) =>\n        Effect.gen(function* () {\n          const language = yield* Effect.promise(() => lazyLanguage())\n          return useLanguage(language)\n        }),\n    }\n  }),\n)",
+        "confidence": 0.9
+      },
+      {
+        "name": "CacheInvalidationOnWrite",
+        "problem": "ToolCache.invalidate() is called after every non-cacheable tool execution, clearing the ENTIRE cache. This is too aggressive — it invalidates grep results when write edits an unrelated file.",
+        "solution": "Selective invalidation: only clear cache entries whose key or file path touches the written file. Use a tag-based invalidation system: each cache entry stores which files/URLs it depends on, and write tools report which files they modified.",
+        "pseudocode": "// Cache entry now includes tags:\ninterface CacheEntry {\n  result: any\n  storedAt: number\n  tags: string[]   // e.g., ['file:/path/to/foo.ts', 'glob:*.ts']\n}\n\n// Write tools publish affected tags:\nconst invalidateTags = writeToolTags(params)  // ['file:/path/to/foo.ts']\n\nyield* cache.invalidateTags(invalidateTags)\n\n// Cache invalidation:\nconst invalidateTags: Interface['invalidateTags'] = (tags) =>\n  Ref.update(cache, (m) => {\n    const next = { ...m }\n    for (const key of Object.keys(next)) {\n      if (next[key].tags.some((t) => tags.includes(t))) {\n        delete next[key]\n      }\n    }\n    return next\n  })",
+        "confidence": 0.7
+      },
+      {
+        "name": "ToolRefreshOnConfigChange",
+        "problem": "When config changes (e.g., new plugin tool loaded), tools are not refreshed. The LLM may see stale tool descriptions.",
+        "solution": "The registry already uses InstanceState which rebuilds state when dependencies change. Ensure that tools that depend on config (shell tool's shell selection, websearch's provider selection) re-read config on every execute, not once at init.",
+        "pseudocode": "// Good — shell tool re-reads config on every execute:\nreturn () =>\n  Effect.gen(function* () {\n    const cfg = yield* config.get()  // re-reads on each init call\n    const shell = Shell.acceptable(cfg.shell)\n    return {\n      description: prompt.description,\n      parameters: prompt.parameters,\n      execute: ...,\n    }\n  })\n\n// Bad — config read once at tool registration:\nexport const BadTool = Tool.define(\n  'bad',\n  Effect.gen(function* () {\n    const cfg = yield* config.get()  // captured once, never updates\n    return {\n      description: `Current timeout: ${cfg.timeout}`,  // stale if config changes\n      execute: ...\n    }\n  }),\n)",
+        "confidence": 0.85
+      }
+    ],
+    "rationale": "The lifecycle split between init and execute is the most important architectural boundary in the tool system. Init is for services that live for the entire session (rarely change). Execute is for the per-call logic. The current architecture already gets this mostly right — shell tool is the exemplar with its lazy parser, per-execute config reads, and scoped subprocess management. The biggest gap is cache invalidation granularity: clearing the entire cache on every write is wasteful."
+  },
+
+  "new_tool_template": {
+    "steps": [
+      "1. Create `packages/opencode/src/tool/<name>.ts` with Parameters schema, service acquisition in init, and lazy-heavy-resource pattern.",
+      "2. Implement formatValidationError for LLM-actionable schema error messages.",
+      "3. Choose cacheable: true (read-only, deterministic) or cacheable: false (writes, non-deterministic).",
+      "4. Choose maxConcurrency (default: 5 for reads, 2 for writes, 1 for subprocess-spawning).",
+      "5. Import and yield in `registry.ts` — add to Effect.all init block and builtin array.",
+      "6. Add to the semaphore split in `session/tools.ts` (read vs write pool).",
+      "7. Provide a `packages/opencode/src/tool/<name>.txt` description file for the LLM-facing description.",
+      "8. Add tests in `packages/opencode/src/tool/__tests__/<name>.test.ts`.",
+      "9. Run `bun typecheck` from packages/opencode."
+    ],
+    "skeleton": "// packages/opencode/src/tool/<name>.ts\nimport { Effect, Schema } from \"effect\"\nimport * as Tool from \"./tool\"\nimport * as Log from \"@opencode-ai/core/util/log\"\nimport DESCRIPTION from \"./<name>.txt\"\n\n// ---- 1. Parameters Schema (one declaration, exported for testing) ----\nexport const Parameters = Schema.Struct({\n  input: Schema.String.annotate({ description: \"Primary input parameter\" }),\n  option: Schema.optional(Schema.Number).annotate({\n    description: \"Optional numeric parameter\",\n  }),\n})\n\n// ---- 2. Module-level logger ----\nconst log = Log.create({ service: \"tool.<name>\" })\n\n// ---- 3. Tool definition (pure init, deferred heavy resources) ----\nexport const MyTool = Tool.define(\n  \"<name>\",\n  Effect.gen(function* () {\n    // Acquire session-level services here (HTTP, FS, DB)\n    const fs = yield* AppFileSystem.Service\n\n    // Defer heavy resources with lazy()\n    // const heavy = lazy(() => loadHeavyWasm())\n\n    return {\n      description: DESCRIPTION,\n      parameters: Parameters,\n      cacheable: false,              // Set to true if read-only & deterministic\n      maxConcurrency: 2,             // Set appropriate limit\n      timeoutMs: 10_000,             // Tool-specific timeout\n\n      // ---- 4. LLM-actionable validation error ----\n      formatValidationError: (error) => {\n        if (ParseResult.isParseError(error)) {\n          return `Invalid <name> arguments: ${ParseResult.getErrors(error)\n            .map(e => `- ${e.path.join('.')}: ${e.message}`)\n            .join('\\n')}\\nExpected schema: ${JSON.stringify(Parameters.ast, null, 2)}`\n        }\n        return String(error)\n      },\n\n      // ---- 5. Execute — all side effects here ----\n      execute: (params: Schema.Schema.Type<typeof Parameters>, ctx: Tool.Context) =>\n        Effect.gen(function* () {\n          log.info(\"execution started\", {\n            input: params.input,\n            callID: ctx.callID,\n          })\n\n          // Validate business rules (NOT schema — schema is already validated)\n          if (params.input.length === 0) {\n            return {\n              title: \"<name>\",\n              metadata: { status: \"fail\" },\n              output: `[<name>] Input cannot be empty. Provide at least one character.`,\n            }\n          }\n\n          // ---- 6. Core logic ----\n          const result = yield* doWork(params, fs).pipe(\n            // Effect.withSpan(\"MyTool.doWork\", { attributes: { ... } }),\n          )\n\n          return {\n            title: `<name>: ${params.input.slice(0, 50)}`,\n            metadata: { status: \"success\", key: result.key },\n            output: formatResult(result),\n          }\n        }).pipe(\n          // ---- 7. Reliability wrappers ----\n          Effect.timeout({\n            duration: \"10 seconds\",\n            onTimeout: () => new ToolError({\n              tool: \"<name>\",\n              detail: \"execution timed out\",\n              recoverable: true,\n            }),\n          }),\n          Effect.catchTag(\"ToolError\", (error) =>\n            Effect.succeed({\n              title: \"<name>\",\n              metadata: { status: \"error\" },\n              output: error.message,\n            }),\n          ),\n          Effect.orDie,  // still die on unexpected errors\n        ),\n    }\n  }),\n)\n\nexport * as MyTool from \"./<name>\"\n",
+    "checklist": {
+      "pre_creation": [
+        "Does an existing tool do this already? (avoid duplication)",
+        "Is the tool read-only or write? Determines cacheable, semaphore pool, concurrency limit.",
+        "What's the max expected output size? Determines streaming vs buffering.",
+        "What external resources does it need? (HTTP, FS, DB, subprocess) Determines service acquisition.",
+        "Is it deterministic for same inputs? Determines cacheable flag.",
+        "What's the expected latency? Determines timeout, heartbeat, retry."
+      ],
+      "skeleton_applied": [
+        "Tool.define with Schema.Struct parameters",
+        "formatValidationError implemented",
+        "module-level logger created",
+        "cacheable flag set correctly",
+        "maxConcurrency set (if not default)",
+        "timeoutMs set",
+        "Effect.orDie on execute as outermost pipe",
+        "Output follows StructuredExecuteResult contract (title, metadata.status, output)",
+        "Error messages are LLM-actionable"
+      ],
+      "integration": [
+        "Added to registry.ts imports",
+        "Yielded in Effect.all init block",
+        "Added to builtin array (with feature flag if experimental)",
+        "Added to semaphore split in session/tools.ts (read vs write)",
+        "Description file <name>.txt created"
+      ],
+      "testing": [
+        "Unit tests for Parameters schema validation",
+        "Unit tests for formatValidationError messages",
+        "Integration test in tool execution context",
+        "Cache hit/miss test (if cacheable)",
+        "Concurrent invocation test (if maxConcurrency < 5)",
+        "Timeout test (if timeoutMs set)",
+        "Error recovery test (LLM-actionable error messages)"
+      ]
+    }
+  },
+
+  "anti_patterns": [
+    {
+      "name": "Effect.orDieEverything",
+      "symptom": "Every tool execute ends with .pipe(Effect.orDie). All errors become defects.",
+      "why_bad": "The LLM cannot recover from orDie. The session bridge cannot distinguish 'file not found' from 'type error in schema'. Debugging requires reading stderr, not the tool response.",
+      "replace_with": "Use a typed error hierarchy (ToolError/NetworkError/TimeoutError/PermissionDeniedError). Return structured error ExecuteResults. Reserve orDie for unrecoverable programming errors only."
+    },
+    {
+      "name": "SideEffectsInInit",
+      "symptom": "Loading WASM, opening connections, or writing files during Tool.define init.",
+      "why_bad": "Init runs once at session start. If it fails, the entire session fails. If it succeeds, the resource is held for the session duration. Heavy init delays session startup.",
+      "replace_with": "Use lazy(() => ...) for heavyweight initialization. Defer to first execute call. Use Effect.acquireRelease for resources with explicit lifetimes."
+    },
+    {
+      "name": "BareStringOutputs",
+      "symptom": "Returning plain strings from execute instead of structured ExecuteResult objects.",
+      "why_bad": "The bridge can't extract structured metadata (status, truncated, error codes). The UI can't render progress or status. Debugging requires parsing the output string.",
+      "replace_with": "Always return a full ExecuteResult with title, metadata (including status), and output. Metadata is for machines; output is for the LLM."
+    },
+    {
+      "name": "OneGlobalSemaphoreForEverything",
+      "symptom": "All tools share a single 5-permit semaphore regardless of read/write nature or resource type.",
+      "why_bad": "5 running grep calls block a write edit. A stuck shell blocks the entire pool. Fast tools can't bypass the queue.",
+      "replace_with": "Split into read/write semaphores. Add per-tool maxConcurrency limits. Use stripe locks for same-file writes."
+    },
+    {
+      "name": "UnboundedCacheGrowth",
+      "symptom": "ToolCache stores entries in a plain object with no eviction. Cache grows until session ends.",
+      "why_bad": "A long session with many tool calls accumulates thousands of cache entries. Memory grows unbounded.",
+      "replace_with": "LRU cache with maxEntries and TTL. Tag-based selective invalidation instead of full cache clear."
+    },
+    {
+      "name": "AdHocValidationInExecute",
+      "symptom": "Using typeof, instanceof, or manual checks inside execute instead of Schema.decodeUnknownEffect.",
+      "why_bad": "Bypasses the typed error system. FormatValidationError is never called. Error messages are inconsistent across tools.",
+      "replace_with": "Define all input constraints in the Parameters Schema. Use Schema.transform or Schema.filter for complex validation. Let the wrapper handle decode errors."
+    },
+    {
+      "name": "MixingExecutionAndResultMetadata",
+      "symptom": "Returning cacheHit, durationMs, or callID inside the tool's metadata field. The bridge already annotates this.",
+      "why_bad": "The tool runs in a cached context — it may not have executed at all. Execution metadata belongs on the span/event, not on the result.",
+      "replace_with": "Metadata is for tool-specific result data (match counts, file paths, truncated flag). Execution metadata (cache hit, timing, spans) belongs on the span attributes and execution events."
+    },
+    {
+      "name": "DeeplyNestedGenerators",
+      "symptom": "Effect.gen inside Effect.gen inside Effect.gen, three levels deep, all in execute.",
+      "why_bad": "Readability suffers. Error handling is duplicated. Span names are lost because anonymous gens don't get automatic span names.",
+      "replace_with": "Extract named helpers with Effect.fn(\"Name.name\")(function* () { ... }). Main execute reads as the happy path. Each helper handles its own errors."
+    },
+    {
+      "name": "ModuleScopeMutableState",
+      "symptom": "Using module-level let variables or mutable objects to cache state across tool calls.",
+      "why_bad": "Race conditions between concurrent tool calls. State leaks across sessions. Testing becomes non-deterministic.",
+      "replace_with": "Use Ref or Queue from Effect for mutable state. Use Layer-scoped services for persistent state. Never use module-level let."
+    }
+  ],
+
+  "registry_growth_plan": {
+    "phases": [
+      {
+        "phase": 1,
+        "name": "Consolidation — 50 tools",
+        "actions": [
+          "Implement TypedError hierarchy and migrate all existing tools from orDie to ToolError",
+          "Split global semaphore into read/write pools",
+          "Add LRU eviction with TTL to ToolCache",
+          "Audit all tools for init purity (lazy heavy resources)",
+          "Add module-level structured loggers to all tools",
+          "Mandatory formatValidationError on all tools",
+          "Add tool-specific timeoutMs to all tools"
+        ]
+      },
+      {
+        "phase": 2,
+        "name": "Control — 100 tools",
+        "actions": [
+          "Per-tool maxConcurrency limits via per-tool semaphores",
+          "Tag-based cache invalidation (invalidate only relevant entries)",
+          "Circuit breaker for shared external resources",
+          "Stripe locks for same-file write tools",
+          "Heartbeat pattern for long-running tools",
+          "Auto-description generation from Schema annotations (deprecate .txt files)",
+          "Tool registry becomes a Tree — categories, sub-tools, hierarchical IDs"
+        ]
+      },
+      {
+        "phase": 3,
+        "name": "Autonomy — 200+ tools",
+        "actions": [
+          "Dynamic tool discovery — tools register themselves from any package via a manifest",
+          "Global weighted semaphore pool (tools bid for permits by priority/type)",
+          "Predictive caching — prefetch cache entries based on LLM turn context",
+          "Tool health monitoring — auto-disable flaky tools, promote reliable ones",
+          "Lane-scoped tool visibility — different agents see different tool subsets",
+          "Effect-based tool composition — combine tools without custom orchestration",
+          "Resource budgets per-tool-call (max memory, max CPU time, max disk I/O)"
+        ]
+      }
+    ]
+  }
+}

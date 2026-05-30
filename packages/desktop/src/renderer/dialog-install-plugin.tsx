@@ -65,7 +65,7 @@ export const DialogInstallPlugin: Component<DialogInstallPluginProps> = (props) 
 
     setInstalling(true)
     try {
-      const current = await window.api.getDesktopPluginConfig()
+      const current = await window.api.getDesktopPluginConfig?.()
 
       // Check for duplicate name
       if (current.configs.some((c) => c.name === name)) {
@@ -81,7 +81,7 @@ export const DialogInstallPlugin: Component<DialogInstallPluginProps> = (props) 
       }
 
       const updated = [...current.configs, newEntry]
-      await window.api.setDesktopPluginConfig(updated)
+      await window.api.setDesktopPluginConfig?.(updated)
       props.onInstalled?.()
     } catch {
       setError("Failed to install plugin")

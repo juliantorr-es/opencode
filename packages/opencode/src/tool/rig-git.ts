@@ -4,7 +4,7 @@ import { Git } from "@/git"
 import { InstanceState } from "@/effect/instance-state"
 import DESCRIPTION from "./rig-git.txt"
 
-const Command = Schema.Literal("status", "diff", "log", "branch", "show", "ls-files")
+const Command = Schema.Literals(["status", "diff", "log", "branch", "show", "ls-files"])
 
 const Parameters = Schema.Struct({
   command: Command.annotate({ description: "The git command to run" }),

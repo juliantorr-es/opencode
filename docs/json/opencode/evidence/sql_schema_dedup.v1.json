@@ -1,0 +1,76 @@
+{
+  "schema_version": "rig.relay.evidence.v1",
+  "phase": "1.7b",
+  "phase_name": "SQLite Schema File Removal — Deduplicate Schema Definitions",
+  "generated_at": "2026-05-29T02:20:00Z",
+  "plan_generated_at": "2026-05-28T21:00:00.000000+00:00",
+  "plan_revision": 1,
+  "author": "builder",
+  "status": "candidate_local",
+  "summary": "Removed all SQLite schema files (.sql.ts) after verifying that Postgres schema files (.pg.sql.ts) cover the same tables. Schema definitions are now exclusively Postgres.",
+  "files_deleted": [
+    {
+      "path": "packages/opencode/src/account/account.sql.ts",
+      "content_sha256": "24481f54ccd8e6b0e37556d492d8a980c53670fcd4e6720f2d072e331be38c78",
+      "replaced_by": "packages/opencode/src/account/account.pg.sql.ts"
+    },
+    {
+      "path": "packages/opencode/src/control-plane/workspace.sql.ts",
+      "content_sha256": "045c8a5c37ee97cf12fd7613e2c9762af1f333818ff2a3da3c3a78b87b430a5b",
+      "replaced_by": "packages/opencode/src/control-plane/workspace.pg.sql.ts"
+    },
+    {
+      "path": "packages/opencode/src/data-migration.sql.ts",
+      "content_sha256": "ac6d62f353263b1fdade7c1010752d902280cd2781caa7e3240c1781d20736aa",
+      "replaced_by": "packages/opencode/src/data-migration.pg.sql.ts"
+    },
+    {
+      "path": "packages/opencode/src/project/project.sql.ts",
+      "content_sha256": "d0b7f335c226e69fc6dd7e52319f36e36afc9910bfe17748f5b3981120eaf54c",
+      "replaced_by": "packages/opencode/src/project/project.pg.sql.ts"
+    },
+    {
+      "path": "packages/opencode/src/session/session.sql.ts",
+      "content_sha256": "e282d2caf116a553b23f9aedd6f07ee5c24736165c1aa97d1e4783553694fa1b",
+      "replaced_by": "packages/opencode/src/session/session.pg.sql.ts"
+    },
+    {
+      "path": "packages/opencode/src/share/share.sql.ts",
+      "content_sha256": "98d848b64a36bf53070db0a23fabc96894bb690b23ce57bb9b65d0523f3c87ed",
+      "replaced_by": "packages/opencode/src/share/share.pg.sql.ts"
+    },
+    {
+      "path": "packages/opencode/src/storage/schema.sql.ts",
+      "content_sha256": "5062dbe8e86bfad26647b800111ecf04ebeb551b6e00de32b050c25f1fc15dca",
+      "replaced_by": "packages/opencode/src/storage/schema.pg.sql.ts"
+    },
+    {
+      "path": "packages/opencode/src/sync/event.sql.ts",
+      "content_sha256": "698cfe4526a53fb85bc78950a0f4284bddd0df4b3448be6c2b29172deac153c8",
+      "replaced_by": "packages/opencode/src/sync/event.pg.sql.ts"
+    }
+  ],
+  "acceptance_criteria_met": [
+    {
+      "criterion": "All .sql.ts files removed from src/",
+      "status": "met",
+      "evidence": "fd --exclude '*.pg.sql.ts' --exclude '*.duckdb.ts' in src/ shows zero .sql.ts files"
+    },
+    {
+      "criterion": "All 9 .pg.sql.ts files present and covering same schemas",
+      "status": "met",
+      "evidence": "Account, ControlPlane/Workspace, DataMigration, Project, Session, Share, Storage/schema, Sync/Event, Coordination — 9 pg schema files present"
+    },
+    {
+      "criterion": "No stale imports from deleted .sql.ts files",
+      "status": "met",
+      "evidence": "All imports updated to reference .pg.sql.ts paths"
+    },
+    {
+      "criterion": "drizzle-kit config picks up .pg.sql.ts files for DDL generation",
+      "status": "met",
+      "evidence": "drizzle.config.ts schema glob: './src/**/*.pg.sql.ts'"
+    }
+  ],
+  "results": "8 SQLite schema files removed. 9 Postgres schema files active (including coordination.pg.sql.ts). Schema definitions unified on Postgres dialect with pgTable constructs, jsonb columns, and Postgres-compatible types."
+}

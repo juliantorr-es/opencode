@@ -1911,7 +1911,7 @@ noLLMServer.instance(
         sessionID: session.id,
         messageID: msg.info.id,
       })
-      const text = stored.parts.filter((part) => part.type === "text").map((part) => part.text)
+      const text = stored.parts.filter((part: MessageV2.Part): part is Extract<MessageV2.Part, { type: "text" }> => part.type === "text").map((part: Extract<MessageV2.Part, { type: "text" }>) => part.text)
 
       expect(text[0]?.startsWith("Called the Read tool with the following input:")).toBe(true)
       expect(text[1]?.includes("Read tool failed to read")).toBe(true)
@@ -1996,13 +1996,13 @@ noLLMServer.instance(
 
       const stored = yield* MessageV2.get({ sessionID: session.id, messageID: message.info.id })
       const synthetic = stored.parts.filter(
-        (part): part is MessageV2.TextPart => part.type === "text" && part.synthetic === true,
+        (part: MessageV2.Part): part is MessageV2.TextPart => part.type === "text" && part.synthetic === true,
       )
-      const reference = synthetic.find((part) => part.text.startsWith("Referenced configured reference @docs."))
+      const reference = synthetic.find((part: MessageV2.TextPart) => part.text.startsWith("Referenced configured reference @docs."))
 
       expect(reference?.metadata?.reference).toMatchObject({ name: "docs", kind: "local", path: docs })
-      expect(synthetic.some((part) => part.text.includes(`Reference root: ${docs}`))).toBe(true)
-      expect(synthetic.some((part) => part.text.includes("subagent scout"))).toBe(true)
+      expect(synthetic.some((part: MessageV2.TextPart) => part.text.includes(`Reference root: ${docs}`))).toBe(true)
+      expect(synthetic.some((part: MessageV2.TextPart) => part.text.includes("subagent scout"))).toBe(true)
 
       yield* sessions.remove(session.id)
     }),
@@ -2051,9 +2051,9 @@ noLLMServer.instance(
 
       const stored = yield* MessageV2.get({ sessionID: session.id, messageID: message.info.id })
       const synthetic = stored.parts.filter(
-        (part): part is MessageV2.TextPart => part.type === "text" && part.synthetic === true,
+        (part: MessageV2.Part): part is MessageV2.TextPart => part.type === "text" && part.synthetic === true,
       )
-      const reference = synthetic.find((part) =>
+      const reference = synthetic.find((part: MessageV2.TextPart) =>
         part.text.startsWith("Referenced configured reference @docs/README.md."),
       )
 
@@ -2065,8 +2065,8 @@ noLLMServer.instance(
         targetPath: readme,
         source: { value: "@docs/README.md", start: 5, end: 20 },
       })
-      expect(synthetic.findIndex((part) => part === reference)).toBeLessThan(
-        synthetic.findIndex((part) => part.text.startsWith("Called the Read tool with the following input:")),
+      expect(synthetic.findIndex((part: MessageV2.TextPart) => part === reference)).toBeLessThan(
+        synthetic.findIndex((part: MessageV2.TextPart) => part.text.startsWith("Called the Read tool with the following input:")),
       )
 
       yield* sessions.remove(session.id)
@@ -2109,8 +2109,8 @@ noLLMServer.instance(
         noReply: true,
       })
       const stored = yield* MessageV2.get({ sessionID: session.id, messageID: message.info.id })
-      const textParts = stored.parts.filter((part) => part.type === "text")
-      const hasContent = textParts.some((part) => part.text.includes("special content"))
+      const textParts = stored.parts.filter((part: MessageV2.Part): part is Extract<MessageV2.Part, { type: "text" }> => part.type === "text")
+      const hasContent = textParts.some((part: Extract<MessageV2.Part, { type: "text" }>) => part.text.includes("special content"))
       expect(hasContent).toBe(true)
 
       yield* sessions.remove(session.id)

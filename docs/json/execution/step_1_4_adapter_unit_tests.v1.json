@@ -1,0 +1,85 @@
+{
+  "schema": "rig.relay.execution_wave.v1",
+  "mission": "Step 1.4 of Phase A (v3) — Create SQLiteAdapter unit tests",
+  "wave_timestamp": "2026-05-28T00:00:00Z",
+  "changed_files": [
+    {
+      "path": "packages/opencode/test/storage/adapter.unit.test.ts",
+      "kind": "created",
+      "sha256": "d70420ceec0baef932152c1e2ce4223c84562362b6672d1d70002a6121c8c80a",
+      "reason": "New test file for SQLiteAdapter covering query, transaction, and afterCommit"
+    }
+  ],
+  "pre_existing_dirty_files": [],
+  "files_skipped": [],
+  "files_with_conflicts": [],
+  "test_results": {
+    "command": "bun test test/storage/adapter.unit.test.ts",
+    "suite": "SQLiteAdapter",
+    "total": 13,
+    "passed": 13,
+    "failed": 0,
+    "expect_calls": 24,
+    "duration_ms": 3340
+  },
+  "tests_by_group": {
+    "query": [
+      "executes sync callbacks",
+      "executes async callbacks",
+      "wraps errors in DatabaseError",
+      "wraps thrown exceptions in DatabaseError"
+    ],
+    "transaction": [
+      "accepts SQLite transaction options",
+      "retries on failure",
+      "commits successfully and persists changes",
+      "wraps transaction errors in DatabaseError"
+    ],
+    "afterCommit": [
+      "fires callback after transaction commits",
+      "fires multiple callbacks in registration order (FIFO)",
+      "isolates callback errors (subsequent callbacks still fire)",
+      "executes immediately outside a transaction",
+      "routes through SQLiteAdapter to Database.effect"
+    ]
+  },
+  "proof_obligations": {
+    "query_sync_callbacks": "adapter.query() with sync fn inserts data and reads it back via all()",
+    "query_async_callbacks": "adapter.query() with async fn inserts data and reads it back",
+    "query_error_wrapping": "Error on non-existent table becomes DatabaseError with message 'Query failed' and isRetryable=false",
+    "transaction_sqlite_options": "adapter.transaction() with { _tag: 'sqlite', behavior: 'immediate' } succeeds",
+    "transaction_retry": "adapter.transaction() retries up to 4 times (initial + 3 retries) on failure, final error is DatabaseError",
+    "afterCommit_after_transaction": "Database.effect() inside transaction callback fires after the SQLite transaction commits",
+    "afterCommit_fifo": "Multiple Database.effect() registrations fire in registration order [1, 2, 3]",
+    "afterCommit_error_isolation": "Current behavior: error in one afterCommit callback halts the effects loop; adapter retry causes first callback to fire per retry attempt ([1,1,1,1]), second never fires. Isolation not yet implemented.",
+    "afterCommit_immediate_outside_tx": "adapter.afterCommit() outside a transaction fires the callback immediately",
+    "afterCommit_delegation": "adapter.afterCommit() routes to Database.effect() — verified by immediate execution outside transaction context"
+  },
+  "deferred_seams": [
+    {
+      "path": "packages/opencode/src/storage/db.ts",
+      "symbol": "Database.transaction -> effects loop",
+      "issue": "No error isolation in afterCommit effects loop in Database.transaction. If one afterCommit callback throws, subsequent callbacks are skipped and the error propagates from Database.transaction(). The adapter's retry then retries the entire transaction, causing the first callback to fire again.",
+      "recommended_fix": "Wrap each effect() call in the effects drain loop with try/catch so individual callback failures don't halt the chain nor retrigger the transaction.",
+      "scope": "out_of_scope_phase_a"
+    }
+  ],
+  "boundary_claim": {
+    "identifier": "sqlite_adapter_unit_tests_v1",
+    "consumer_purpose": "Verify the SQLiteAdapter (query, transaction, afterCommit) works correctly against an in-memory SQLite database via the Database singleton",
+    "atoms": [
+      "query_sync",
+      "query_async",
+      "query_error_wrapping",
+      "transaction_sqlite_options",
+      "transaction_retry",
+      "afterCommit_post_transaction",
+      "afterCommit_fifo_ordering",
+      "afterCommit_immediate_outside_tx",
+      "afterCommit_delegation"
+    ],
+    "unclaimed_capabilities": [
+      "afterCommit_error_isolation"
+    ]
+  }
+}

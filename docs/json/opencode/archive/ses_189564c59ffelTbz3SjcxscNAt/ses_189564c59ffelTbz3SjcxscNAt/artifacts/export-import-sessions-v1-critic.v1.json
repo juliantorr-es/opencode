@@ -1,0 +1,111 @@
+{
+  "schema_version": "rig.relay.review.v1",
+  "plan_id": "export-import-sessions-v1",
+  "plan_revision": 1,
+  "reviewer": "critic",
+  "reviewed_at": "2026-05-30T02:18:30Z",
+  "verdict": "APPROVE_WITH_CONDITIONS",
+  "axis_scores": {
+    "coupling": {
+      "score": 3,
+      "max": 5,
+      "summary": "Intra-package dependencies clean. Missing Platform abstraction bridge — dialogs use window.api directly, coupling app components to Electron types and breaking web support."
+    },
+    "debuggability": {
+      "score": 2,
+      "max": 5,
+      "summary": "All failure scenarios collapse into 1-2 generic i18n keys with no description propagation. IPC null cancellation can crash (JSON.parse(null)). IPC handlers lack try/catch. No Effect.withSpan annotations."
+    },
+    "convergence": {
+      "score": 3,
+      "max": 5,
+      "summary": "Follows established patterns well. BLOCKER: importSession depends on InstanceState.context (via Session.use.create()) but import has no active project instance. Orphaned exportSession() function. Misleading sanitization scope."
+    },
+    "surface_area": {
+      "score": 3,
+      "max": 5,
+      "summary": "~23 files across 4 packages. Plan references non-existent routes/session.ts (actual: groups/session.ts + handlers/session.ts). i18n touches 18 locale files. SDK bypass means raw fetch() in desktop."
+    },
+    "testability": {
+      "score": 2,
+      "max": 5,
+      "summary": "Core schema (fix-A) 4/5. Server (fix-B) 3/5. Desktop IPC (fix-C) 1/5 — zero IPC test infra. Dialogs (fix-D/E) 1/5 — zero component test infra. Commands (fix-F) 2/5. i18n (fix-G) 5/5."
+    },
+    "error_clarity": {
+      "score": 2,
+      "max": 5,
+      "summary": "No typed error for Schema decode failures (cryptic ParseError → 500). IPC crashes unhandled. Null cancellation unguarded. 500-msg limit unenforced. Missing Effect.withSpan."
+    },
+    "reversibility": {
+      "score": 3,
+      "max": 5,
+      "summary": "Core + UI groups not independently revertible. IPC bridge (3 files) HIGH conflict risk. i18n (18 files) VERY HIGH coordination surface. Untyped IPC bridge creates silent runtime failures if reverted out of order."
+    }
+  },
+  "blocking_findings": [
+    {
+      "id": "BLOCKER-1",
+      "file": "packages/opencode/src/session/session.ts:553-568",
+      "description": "importSession calls Session.use.create() which requires InstanceState.context (projectID, directory, worktree). During import from file, there is no active project instance. The plan must specify how session creation works without InstanceState.",
+      "severity": "blocking"
+    },
+    {
+      "id": "BLOCKER-2",
+      "file": "packages/app/src/context/platform.tsx:23-117",
+      "description": "Plan says dialogs call window.api.* directly from app components, bypassing the Platform type abstraction. Must add exportSessionData?()/importSessionFile?() as optional methods on Platform type (following exportDebugLogs precedent) and implement in desktop renderer createPlatform().",
+      "severity": "blocking"
+    },
+    {
+      "id": "BLOCKER-3",
+      "file": "packages/opencode/src/server/routes",
+      "description": "Fix-B references non-existent file routes/session.ts. Actual server routes are groups/session.ts (HttpApiGroup) and handlers/session.ts (handlers). The POST /session/import endpoint must be added to both.",
+      "severity": "blocking"
+    },
+    {
+      "id": "BLOCKER-4",
+      "file": "packages/opencode/src/server/routes/instance/httpapi/handlers/v2/session.ts",
+      "description": "No typed error handling for Schema.decode(ExportedSession)(body) failures. Effect Schema ParseError is cryptic. Must wrap with catchTag('ParseError', ...) → InvalidRequestError(400) following existing catchTag patterns.",
+      "severity": "blocking"
+    },
+    {
+      "id": "BLOCKER-5",
+      "file": "packages/desktop/src/main/ipc.ts",
+      "description": "IPC handlers for session-export-data and session-import-file use writeFileSync/readFileSync without try/catch. Disk full (ENOSPC), permission (EACCES), or deleted-file (ENOENT) errors crash the main process.",
+      "severity": "blocking"
+    },
+    {
+      "id": "BLOCKER-6",
+      "file": "packages/app/src/components/dialog-import.tsx (planned)",
+      "description": "No null guard on IPC cancellation. Import dialog: await window.api.importSessionFile() returns null on cancel. JSON.parse(null) throws SyntaxError. Export dialog: null path passed to success toast.",
+      "severity": "blocking"
+    }
+  ],
+  "conditions": [
+    "Resolve InstanceState.context dependency for importSession — accept explicit projectID/directory parameters or use createNext directly",
+    "Add exportSessionData?() / importSessionFile?() as optional methods on Platform type (platform.tsx), implement in desktop renderer createPlatform()",
+    "Correct file references from routes/session.ts to groups/session.ts + handlers/session.ts",
+    "Add typed error for Schema decode: InvalidRequestError(400) with catchTag('ParseError', ...)",
+    "Add try/catch to IPC handlers around writeFileSync/readFileSync",
+    "Add null guards in both dialog handlers for IPC cancellation (if result === null return)",
+    "Add Effect.withSpan('Session.export') and Effect.withSpan('Session.import') annotations",
+    "Clarify sanitize toggle label — 'Remove permission rules, share URL, and local paths only' with info note that message content is not sanitized",
+    "Either add call site for exportSession() or remove it to avoid dead code"
+  ],
+  "subagent_summaries": {
+    "coupling-auditor": "10 dependency edges examined. Edge 7 (Platform bridge missing) is only blocking coupling issue. Edge 3 (exportSession orphaned) is informational. All other edges acceptable.",
+    "surface-area-mapper": "23 files across 4 packages. Plan references non-existent routes/session.ts. Platform type needs new optional methods. SDK bypass means desktop uses raw fetch(). 15 non-English locales silently fall back.",
+    "isolation-tester": "Core schema 4/5 testable (pure functions). Desktop IPC 1/5 (zero test infra). Dialogs 1/5 (zero component test infra). i18n 5/5 (trivially testable).",
+    "error-trace-auditor": "7 failure scenarios traced. Most critical: Schema decode errors invisible to user, IPC crashes unhandled, null cancellation causes SyntaxError, no span annotations, misleading sanitization scope.",
+    "convergence-checker": "Pattern consistency generally strong. REAL BLOCKER: InstanceState dependency for importSession. Sanitization scope misleading. Creates tracked migration debt on SyncEvent write path.",
+    "debuggability-forecaster": "1/5 rating — all failures collapse to 1-2 generic i18n keys with no description. Worst: large session silent truncation, migration errors with opaque refs, no telemetry for export/import.",
+    "reversibility-checker": "Core+UI groups not independently revertible. IPC bridge (3 files) HIGH conflict risk. i18n (18 files) VERY HIGH coordination surface. Untyped IPC bridge creates silent failure modes."
+  },
+  "follow_up_issues": [
+    "Message-content sanitization (v2) — API key scanning, path stripping in tool outputs",
+    "Desktop IPC test infrastructure — mock dialog.showSaveDialog/showOpenDialog",
+    "SyncEvent vs EventV2 migration debt — re-examine import path when Postgres migration finalizes",
+    "SDK regeneration alignment — migrate import from raw fetch to generated client after v1",
+    "500-message limit enforcement — add count protection in both export/import paths",
+    "Add semantic error discrimination in dialog catch handlers (network vs 400 vs 500)"
+  ]
+}

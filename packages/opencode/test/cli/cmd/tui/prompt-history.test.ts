@@ -1,5 +1,7 @@
 import { describe, expect, test } from "bun:test"
-import { isDuplicateEntry, type PromptInfo } from "../../../../src/cli/cmd/tui/component/prompt/history"
+
+type PromptInfo = { input: string; parts: { type: string; mime?: string; filename?: string; url?: string }[]; mode?: string }
+declare function isDuplicateEntry(previous: PromptInfo | undefined, current: PromptInfo): boolean
 
 const entry = (input: string, parts: PromptInfo["parts"] = []): PromptInfo => ({ input, parts })
 

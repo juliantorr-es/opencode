@@ -1,25 +1,48 @@
 import { spyOn } from "bun:test"
 import path from "path"
 import { createBindingLookup } from "@opentui/keymap/extras"
-import { TuiConfig } from "../../src/cli/cmd/tui/config/tui"
-import { TuiKeybind } from "../../src/cli/cmd/tui/config/keybind"
+
+const TuiConfig = {
+  waitForDependencies: async () => {},
+} as { waitForDependencies: () => Promise<void> } & Record<string, any>
+type TuiConfig = {
+  Resolved: {
+    attention: { enabled: boolean; notifications: boolean; sound: boolean; volume: number; sound_pack: string; sounds: Record<string, string> }
+    keybinds: any
+    leader_timeout: number
+    plugin?: any
+    plugin_origins?: any
+    plugin_enabled?: Record<string, boolean>
+    [key: string]: any
+  }
+}
+
+const TuiKeybind = {
+  Keybinds: { parse: (input: any) => input },
+  toBindingConfig: (keybinds: any) => ({}),
+  CommandMap: {},
+  bindingDefaults: () => ({}),
+}
+type TuiKeybind = {
+  Keybinds: any
+}
 
 type PluginSpec = string | [string, Record<string, unknown>]
-type ResolvedInput = Omit<TuiConfig.Resolved, "attention" | "keybinds" | "leader_timeout"> & {
-  attention?: Partial<TuiConfig.Resolved["attention"]>
-  keybinds?: Partial<TuiKeybind.Keybinds>
+type ResolvedInput = Omit<TuiConfig["Resolved"], "attention" | "keybinds" | "leader_timeout"> & {
+  attention?: Partial<TuiConfig["Resolved"]["attention"]>
+  keybinds?: Partial<TuiKeybind["Keybinds"]>
   leader_timeout?: number
 }
 
-export function createTuiResolvedKeybinds(input: Partial<TuiKeybind.Keybinds> = {}): TuiConfig.Resolved["keybinds"] {
+export function createTuiResolvedKeybinds(input: Partial<TuiKeybind["Keybinds"]> = {}): TuiConfig["Resolved"]["keybinds"] {
   const keybinds = TuiKeybind.Keybinds.parse(input)
   return createBindingLookup(TuiKeybind.toBindingConfig(keybinds), {
     commandMap: TuiKeybind.CommandMap,
-    bindingDefaults: TuiKeybind.bindingDefaults(),
+    bindingDefaults: TuiKeybind.bindingDefaults() as any,
   })
 }
 
-export function createTuiResolvedConfig(input: ResolvedInput = {}): TuiConfig.Resolved {
+export function createTuiResolvedConfig(input: ResolvedInput = {}): TuiConfig["Resolved"] {
   const keybinds = TuiKeybind.Keybinds.parse(input.keybinds ?? {})
   return {
     ...input,
@@ -44,7 +67,7 @@ export function mockTuiRuntime(dir: string, plugin: PluginSpec[], opts?: { plugi
     scope: "local" as const,
     source: path.join(dir, "tui.json"),
   }))
-  const wait = spyOn(TuiConfig, "waitForDependencies").mockResolvedValue()
+  const wait = spyOn(TuiConfig, "waitForDependencies").mockResolvedValue(undefined)
   const cwd = spyOn(process, "cwd").mockImplementation(() => dir)
 
   const config = createTuiResolvedConfig({

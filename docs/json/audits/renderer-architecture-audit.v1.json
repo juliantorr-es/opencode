@@ -1,0 +1,170 @@
+{
+  "schema": "rig.relay.audit.renderer_architecture.v1",
+  "generated_at": "2026-05-30T06:05:00Z",
+  "scope": "packages/app/src",
+  "architecture_score": "moderate",
+  "state_management": {
+    "pattern": "mixed",
+    "centralization": "mixed",
+    "persistence": "hybrid",
+    "providers_count": 21,
+    "details": {
+      "dominant_pattern": "createSimpleContext from @opencode-ai/ui/context — all 21 providers use this pattern",
+      "providers": [
+        "PlatformProvider", "ThemeProvider", "MetaProvider", "QueryProvider",
+        "SettingsProvider", "PermissionProvider", "LayoutProvider",
+        "NotificationProvider", "ModelsProvider", "CommandProvider",
+        "HighlightsProvider", "LanguageProvider", "ServerProvider",
+        "ServersProvider", "ServerSDKProvider", "ServerSyncProvider",
+        "TerminalProvider", "FileProvider", "PromptProvider", "CommentsProvider",
+        "DialogProvider", "MarkedProvider", "FileComponentProvider",
+        "LocalProvider", "SessionVizProvider"
+      ],
+      "local_state_mechanism": "createStore (solid-js/store) — 167 matches across the app; createSignal reserved for simple booleans",
+      "persistence_engine": "persisted() from @/utils/persist with 3 tiers: Persist.global (localStorage), Persist.workspace (file-per-directory), Persist.scoped (file-per-session). Backed by LRU cache (500 entries, 8MB), quota handling, eviction, and legacy migration.",
+      "server_state": "@tanstack/solid-query with refetchOnReconnect/Mount/WindowFocus all disabled",
+      "real_time_sync": "ServerSDK creates SSE connection; ServerSync processes events via applyGlobalEvent/applyDirectoryEvent reducers; optimistic updates via mergeOptimisticPage",
+      "cache_strategy": "Pervasive LRU eviction: file content (40 entries/20MB), directory stores (30 dirs/20min TTL), session caches (40), terminals (20), prompts (20), comments (20), file views (20 sessions/500 files each)"
+    }
+  },
+  "data_flow": {
+    "typed_channels": true,
+    "caching": "sophisticated",
+    "offline_capability": "limited",
+    "details": {
+      "electron_main_to_preload": "50+ ipcMain.handle() channels with typed ElectronAPI interface in packages/desktop/src/preload/types.ts",
+      "preload_to_renderer": "contextBridge.exposeInMainWorld('api', api) — all 50+ methods exposed via window.api",
+      "renderer_types": "Window interface augmented in app.tsx — incomplete (many window.api methods not declared); desktop renderer relies on implicit typing",
+      "type_consistency": "Moderate — ElectronAPI is well-typed in preload but renderer side is ad-hoc",
+      "server_chain": "Platform → Server → ServerSDK (SSE) → ServerSync (reducers + child stores) → SDK (directory-scoped)",
+      "cache_layers": [
+        "@tanstack/solid-query with disabled auto-refetch",
+        "In-memory LRU cache (500 entries, 8MB)",
+        "Session prefetch with TTL",
+        "File view cache (persisted per-session)",
+        "Scoped cache utility with TTL"
+      ],
+      "offline_capability": "None — ConnectionGate blocks UI until server health check passes. Background checks with 10s timeout."
+    }
+  },
+  "hardcoded_constants": [
+    {"file": "packages/app/src/entry.tsx:60", "what": "Notification icon URL: https://opencode.ai/favicon-96x96-v3.png", "severity": "medium", "context": "Hardcoded absolute URL for notification icon."},
+    {"file": "packages/app/src/entry.tsx:97", "what": "Default server URL detection: location.hostname.includes('opencode.ai') → localhost:4096", "severity": "high", "context": "Hardcoded domain detection and magic port number."},
+    {"file": "packages/app/src/entry.tsx:42", "what": "localStorage key: opencode.settings.dat:defaultServerUrl", "severity": "medium", "context": "Storage key string not in constants file."},
+    {"file": "packages/app/src/context/settings.tsx:57-60", "what": "Font defaults (System Mono, System Sans, JetBrainsMono) and layout feature flag based on VITE_OPENCODE_CHANNEL !== 'prod'", "severity": "low", "context": "Font names are reasonable; env-based feature flag is fragile."},
+    {"file": "packages/app/src/utils/persist.ts:39-40", "what": "CACHE_MAX_ENTRIES=500, CACHE_MAX_BYTES=8MB", "severity": "low", "context": "Not configurable."},
+    {"file": "packages/app/src/app.tsx:203-211", "what": "Health check timeout: '10 seconds' hardcoded", "severity": "low", "context": "Effect.timeoutOrElse with literal duration string."},
+    {"file": "packages/app/src/desktop-menu.ts:206-208", "what": "Hardcoded URLs: opencode.ai/docs, discord, github issues", "severity": "low", "context": "Reasonable support links but scattered."},
+    {"file": "packages/app/src/pages/home.tsx,layout.tsx,error.tsx", "what": "Feedback URL: https://opencode.ai/desktop-feedback repeated 3x", "severity": "low", "context": "Duplicated across page files."},
+    {"file": "packages/app/src/pages/layout/helpers.ts:61", "what": "Favicon URL: https://opencode.ai/favicon.svg", "severity": "low", "context": "Hardcoded SVG URL for OpenCode project icon."},
+    {"file": "packages/app/src/i18n/*.ts", "what": "Default server placeholder: http://localhost:4096 in 19 locale files", "severity": "low", "context": "Magic port number duplicated in every locale."}
+  ],
+  "code_quality": {
+    "lazy_loading": true,
+    "error_boundaries": "some",
+    "test_coverage": "moderate",
+    "typescript_strictness": "moderate",
+    "details": {
+      "lazy_routes": [
+        "/ → HomeRoute (lazy(() => import('@/pages/home')))",
+        "/:dir/session/:id? → SessionRoute (lazy(() => import('@/pages/session')))"
+      ],
+      "lazy_sub_components": "StatusPopoverBody, StatusPopoverServerBody",
+      "dynamic_imports_not_lazy": "~6 dialogs use import() inside event handlers — code-split but not Suspense-preloadable",
+      "error_boundaries": {
+        "count": 2,
+        "locations": [
+          "app.tsx:172 — top-level ErrorBoundary wrapping AppBaseProviders with Sentry",
+          "use-session-commands.tsx:265 — local boundary around message action buttons"
+        ],
+        "assessment": "Single top-level boundary covers entire app. No per-route or per-component isolation."
+      },
+      "test_files": 143,
+      "test_gaps": [
+        "No tests for app.tsx (provider composition, routing)",
+        "No tests for layout.tsx (942 lines, critical state)",
+        "No tests for many component dialogs",
+        "No e2e tests in packages/app"
+      ],
+      "large_files": [
+        {"file": "packages/app/src/pages/layout.tsx", "lines": 2396, "risk": "Layout, sidebar, header, keybindings all in one file"},
+        {"file": "packages/app/src/pages/session.tsx", "lines": 1845, "risk": "Rendering, state, keyboard shortcuts, followups, revert, scroll management"},
+        {"file": "packages/app/src/context/layout.tsx", "lines": 942, "risk": "Persistence, migration, session tabs, project management"},
+        {"file": "packages/app/src/utils/persist.ts", "lines": 612, "risk": "Complex persistence engine in single file"},
+        {"file": "packages/app/src/context/server-sync.tsx", "lines": 465, "risk": "Central sync hub coordinating SDK, queries, and global state"}
+      ],
+      "hooks_assessment": {
+        "hook_files_in_hooks_dir": 1,
+        "page_colocated_hooks": 2,
+        "dominant_pattern": "Inline reactive primitives — createMemo (214+ in components), createEffect (42+), createSignal (56+) spread across components",
+        "concern": "prompt-input.tsx alone has ~30 createMemo calls. layout.tsx has ~30 createMemo. These should be extracted."
+      }
+    }
+  },
+  "routing": {
+    "library": "@solidjs/router",
+    "mode": "Hash-based via Dynamic component",
+    "routes": [
+      {"path": "/", "component": "HomeRoute (lazy)", "description": "Home/landing page"},
+      {"path": "/:dir", "component": "DirectoryLayout", "description": "Directory-scoped shell"},
+      {"path": "/:dir/session/:id?", "component": "SessionRoute (lazy)", "description": "Session page with optional ID"}
+    ],
+    "provider_nesting": "Router wrapped inside: ServerProvider → ServersProvider → ConnectionGate → ServerKey → QueryProvider → ServerSDKProvider → ServerSyncProvider (10+ levels total)"
+  },
+  "i18n": {
+    "locales": 19,
+    "framework": "@solid-primitives/i18n + custom LanguageProvider + UiI18nBridge",
+    "most_consumed_provider": "Language — 67 import sites"
+  },
+  "strengths": [
+    "Well-typed Electron IPC bridge with comprehensive ElectronAPI interface (50+ typed methods)",
+    "Sophisticated persistence engine with LRU cache, quota handling, eviction, legacy migration, and platform adaptation (web localStorage vs desktop IPC store)",
+    "Real-time bidirectional server sync with SSE event stream, global event reducer pattern, and optimistic updates",
+    "Consistent context provider pattern — all 21 providers use createSimpleContext from @opencode-ai/ui/context",
+    "Well-layered provider dependency chain (Platform → Server → ServerSDK → ServerSync → SDK) with no circular dependencies",
+    "Lazy-loaded routes with code splitting on the two main page bundles",
+    "Top-level ErrorBoundary with Sentry integration for crash reporting",
+    "Comprehensive i18n with 19 locales, dynamic import, and UI bridge pattern",
+    "Good test presence (~143 test files) co-located with source, including tests for most context providers and utilities",
+    "Strong platform abstraction (Platform type) that cleanly separates web vs desktop behavior with optional methods",
+    "Extensible command palette system with typed keybindings and registration API",
+    "Pervasive LRU eviction strategy preventing unbounded memory growth across all caches",
+    "Workspace-scoped and session-scoped persistence keys derived from path checksums"
+  ],
+  "weaknesses": [
+    "Excessive provider nesting depth (10+ levels) — can impact SolidJS reactivity performance and debugging",
+    "Hardcoded URLs (opencode.ai, localhost:4096) and localStorage keys scattered across files rather than centralized in constants",
+    "Window.api type declarations in renderer are incomplete — methods added ad-hoc without matching ElectronAPI interface",
+    "Only 1 custom hook in src/hooks/ — reactive logic inlined in components with excessive createMemo usage (30+ in prompt-input.tsx alone)",
+    "Giant monolithic files: layout.tsx (2396 lines), session.tsx (1845 lines), context/layout.tsx (942 lines)",
+    "Only 2 ErrorBoundary instances — no per-route or per-component error isolation. One crash takes down the entire app.",
+    "No offline capability — ConnectionGate blocks the entire UI if server is unreachable",
+    "Type duplication: AgentDef and McpServerEntry types exist in both packages/app/src/types/ and packages/desktop/src/preload/types.ts with identical shapes — drift risk",
+    "No automated e2e tests in packages/app directory",
+    "Feature flag (VITE_OPENCODE_CHANNEL) is string-based env comparison with no runtime toggle mechanism or devtools",
+    "Commented-out Suspense fallback in app.tsx (RouterRoot) — dead code",
+    "Lazy loading is sparse — only 2 route-level lazy() calls. 6+ dialogs use dynamic import() without lazy() (not Suspense-preloadable)",
+    "Mixed code-splitting patterns (lazy vs dynamic import) for dialogs — inconsistent"
+  ],
+  "recommendations": [
+    "Extract hardcoded URLs (opencode.ai, localhost:4096) and magic values into a centralized config/constants module",
+    "Complete Window.api type declarations in app.tsx to match the full ElectronAPI interface",
+    "Create composable hooks in src/hooks/ by extracting repeated memo chains from prompt-input.tsx, layout.tsx, and message-timeline.tsx",
+    "Split large files: extract layout concerns from pages/layout.tsx into focused modules; split session.tsx into manageable units",
+    "Add per-route error boundaries (ErrorBoundary on each Route) for better error isolation",
+    "Consolidate duplicate type definitions (AgentDef, McpServerEntry) between packages/app and packages/desktop into a shared package",
+    "Implement graceful offline fallback with cached last-known-good data instead of blocking at connection gate",
+    "Remove commented-out code in app.tsx",
+    "Consider reducing provider nesting depth with context composition or a consolidation step",
+    "Adopt consistent lazy() pattern for all dialogs instead of mixed dynamic import() usage",
+    "Add e2e tests for critical user flows",
+    "Extract magic cache limits (CACHE_MAX_ENTRIES, CACHE_MAX_BYTES, health check timeout) into configurable constants"
+  ],
+  "out_of_scope_findings": [
+    {
+      "file": "docs/findings/out-of-scope-findings.jsonl",
+      "finding": "Type duplication: AgentDef and McpServerEntry defined independently in packages/app/src/types/ and packages/desktop/src/preload/types.ts",
+      "severity": "medium"
+    }
+  ]
+}

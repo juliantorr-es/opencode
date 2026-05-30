@@ -2,6 +2,18 @@
 - The default branch in this repo is `dev`.
 - Local `main` ref may not exist; use `dev` or `origin/dev` for diffs.
 
+## Multi-Lane Execution Model
+
+When the mission scope contains multiple independent features or work items, each item is a separate lane. All lanes progress through the wave sequence concurrently — not one at a time, not sequentially through the backlog.
+
+Wave 1 launches cartographers for every lane simultaneously. Wave 2 launches architects for every lane simultaneously (including parallel critic reviews). Wave 3 launches executors for every lane simultaneously. And so on through validation, stress, repair, and publication.
+
+Each lane completes its full lifecycle independently of other lanes. The orchestrator coordinates the fan-out at each wave boundary and publishes all completed lanes at session end.
+
+Zero-contention lanes (touching different files) need no special coordination. Contention on shared files is resolved via `produce_fragment` with a consolidator assembly step before checkpoints are created.
+
+The orchestrator must never serialize lanes. If 6 features remain, launch 6 cartographers in wave 1. The work is concurrent, not sequential.
+
 ## Commits and PR Titles
 
 Use conventional commit-style messages and PR titles: `type(scope): summary`.

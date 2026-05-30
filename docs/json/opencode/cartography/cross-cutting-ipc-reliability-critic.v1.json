@@ -1,0 +1,120 @@
+{
+  "schema": "rig.relay.critic.plan_review.v1",
+  "lane": "cross-cutting-ipc-reliability",
+  "generated_at": "2026-05-30T03:30:00Z",
+  "agent": "critic",
+  "session": "ses_18924c561ffeFgV9kk6IlTCbX3",
+  "review_of": "prefab-architect-lane1-ipc-reliability (plan not yet finalized — reviewing prefab prompt + cartography + source)",
+  "verdict": "REJECT — plan needs narrowing before approval",
+  "review": {
+    "axes": {
+      "coupling": {
+        "score": 2,
+        "max": 5,
+        "note": "Proposed write queue adds central mutable state (per-namespace queue map) to ipc.ts's 503-line monolith. The write queue couples ipc.ts to a concurrency model (sequential queue per namespace) that existing handlers don't participate in. Worse, it adds state that other IPC lanes (mcp-hardening, plugin-hardening) must either use or ignore — fragmented concurrency model."
+      },
+      "debuggability": {
+        "score": 3,
+        "max": 5,
+        "note": "The fire-and-forget fix (awaiting onSave) improves debuggability significantly — async errors now propagate. However, dialog-edit-mcp's parent onSave (dialog-select-mcp.tsx:381-392) still catches errors with console.warn only, producing no user-visible toast. Agent dialog has toast on error. MCP dialog does not."
+      },
+      "convergence": {
+        "score": 2,
+        "max": 5,
+        "note": "Write queue diverges from existing ipc.ts architecture. The file currently has zero shared mutable state between handlers — each handler is independent and stateless. Adding a queue with per-namespace locking, flush semantics, and stale-rejection logic introduces a new architectural pattern for what is fundamentally a renderer-side bug. The plan moves away from the existing stateless-handler pattern."
+      },
+      "surface_area": {
+        "score": 2,
+        "max": 5,
+        "note": "Plan proposes changes across ~10 files and 4 packages (ipc.ts, store.ts, 4 renderer components, preload types). The 3 critical bugs are fixable in 3 renderer files. The write queue alone would add ~50+ lines to ipc.ts, affecting the 60+ handlers registered there. Version counter adds yet another dimension (main process needs to track per-namespace versions, reject stale writes, return version tokens)."
+      },
+      "testability": {
+        "score": 1,
+        "max": 5,
+        "note": "No test scope. None of the 4 dialog files have test files. No IPC handler integration tests exist. The fix relies entirely on manual QA. Deferred is acceptable for P0 bugs but must be explicit."
+      },
+      "error_clarity": {
+        "score": 3,
+        "max": 5,
+        "note": "Console.warn for MCP failures (dialog-select-mcp.tsx:391) is invisible to users. Agent dialog has toast on error. Inconsistent error UX between the two dialogs will persist after the fix unless addressed."
+      },
+      "reversibility": {
+        "score": 4,
+        "max": 5,
+        "note": "Per-namespace write queue changes in ipc.ts are reasonably isolated — each namespace handler is a single block. Reverting the queue would affect 6 handlers (agents, MCP, plugins, get/set for each). However, the version counter would contaminate all IPC responses, making reversion harder."
+      }
+    },
+    "objections": [
+      {
+        "id": "O-001",
+        "axis": "boundary",
+        "severity": "blocking",
+        "finding": "Write queue + version counter misaligned with root cause. The 3 critical bugs (IPC-001: dialog-edit-mcp.tsx:55 no-await, IPC-002: dialog-edit-agent.tsx:59 no-await, IPC-003: dialog-select-mcp.tsx:173 missing persist) are all renderer-side call-site bugs. Electron-store is synchronous — sequential calls are already ordered by Node's event loop. The prefab proposes 50+ lines of main-process architecture for bugs that are fixed with ~15 lines of renderer changes.",
+        "repair": "Drop write queue and version counter. Fix 3 renderer call-sites only: (A) Make dialog-edit-mcp.tsx:55 handleSave async, await onSave. (B) Make dialog-edit-agent.tsx:59 handleSave async, await onSave. (C) Add electron-store write in dialog-select-mcp.tsx submitAdd or mutationFn after SDK add()."
+      },
+      {
+        "id": "O-002",
+        "axis": "authority",
+        "severity": "blocking",
+        "finding": "Dual SOT reconciliation fundamentally misunderstands sync.data.mcp vs electron-store. sync.data.mcp = SDK runtime connection status (connected/disconnected/failed/error). electron-store = persistent server configuration (commands, URLs, timeouts). They have different schemas, lifetimes, and purposes. Reading sync.data as store fallback returns status objects with no config fields, corrupting the UI. Writing store data to sync would push config objects into status slots.",
+        "repair": "Remove Dual SOT Reconciliation entirely. The only missing write is IPC-003 (submitAdd never writes to store). Keep sync.data.mcp as read-only runtime status."
+      },
+      {
+        "id": "O-003",
+        "axis": "surface_area",
+        "severity": "blocking",
+        "finding": "Scope is too wide (~10 files, 4 packages) for 3 critical bugs fixable in 3 renderer files. The write queue, version counter, and reconciliation add risk to ipc.ts's 60+ existing handlers for zero benefit to the critical issues.",
+        "repair": "Narrow to strict minimum: 3 renderer files. Defer write queue + version counter to separate lane with explicit evidence of actual main-process race conditions."
+      }
+    ],
+    "high_concerns": [
+      {
+        "id": "H-001",
+        "axis": "error_clarity",
+        "finding": "MCP dialog error handling is silent (console.warn only). Agent dialog has toast on failure. After IPC-001 fix, MCP failures will still be invisible to users.",
+        "repair": "Add error toast to dialog-select-mcp.tsx:391's catch block, matching dialog-manage-agents.tsx:94's showToast pattern."
+      },
+      {
+        "id": "H-002",
+        "axis": "testability",
+        "finding": "Zero test coverage. No IPC handler tests, no dialog flow tests, no store persistence tests. Fix relies on manual QA.",
+        "repair": "Add explicit test-debt note to plan. File follow-up issue for IPC integration test harness."
+      },
+      {
+        "id": "H-003",
+        "axis": "convergence",
+        "finding": "commit c8b69c473 already removed dead installCli preload code (IPC-017). Including in scope would be redundant.",
+        "repair": "Mark IPC-017 as done. Exclude from plan."
+      }
+    ],
+    "conditions_for_approval": [
+      "Drop write queue and version counter from scope",
+      "Drop Dual SOT Reconciliation from scope",
+      "Limit boundary to 3 renderer files: dialog-edit-mcp.tsx, dialog-edit-agent.tsx, dialog-select-mcp.tsx",
+      "Add error toast to MCP onSave catch block matching agent pattern",
+      "File explicit test-debt follow-up for IPC integration test harness"
+    ],
+    "follow_up_issues": [
+      "IPC integration test harness — dialog flow tests, store persistence tests, concurrent CRUD tests",
+      "Read-modify-write atomicity: evaluate whether a renderer-side write queue (within mutationFn) is needed after the 3 critical fixes land",
+      "Schema validation: add runtime type guard between store content and sync.data for MCP servers",
+      "Type dedup: merge McpServerEntry between preload/types.ts and app/types/mcp.ts"
+    ]
+  },
+  "evidence": {
+    "source_artifacts": [
+      "docs/json/opencode/cartography/cross-cutting-ipc-reliability.v1.json",
+      "docs/json/opencode/sessions/current/prefab-architect-lane1-ipc-reliability.v1.json",
+      "docs/json/opencode/handoffs/desktop-phase2-followup.v1.json",
+      "docs/json/opencode/sessions/current/follow-up-issues.v1.json"
+    ],
+    "source_files": [
+      "packages/app/src/components/dialog-edit-mcp.tsx:55-60 — fire-and-forget handleSave",
+      "packages/app/src/components/dialog-edit-agent.tsx:59-73 — fire-and-forget handleSave",
+      "packages/app/src/components/dialog-select-mcp.tsx:173-187 — submitAdd missing persist",
+      "packages/app/src/components/dialog-select-mcp.tsx:375-393 — MCP onSave error handling (console.warn, no toast)",
+      "packages/app/src/components/dialog-manage-agents.tsx:81-97 — agent onSave error handling (toast exists)",
+      "packages/desktop/src/main/ipc.ts:282-298 — current IPC handlers (sync, no write queue needed)"
+    ]
+  }
+}

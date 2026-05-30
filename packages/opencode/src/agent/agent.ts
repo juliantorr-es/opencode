@@ -45,6 +45,13 @@ export const Info = Schema.Struct({
   variant: Schema.optional(Schema.String),
   prompt: Schema.optional(Schema.String),
   options: Schema.Record(Schema.String, Schema.Unknown),
+  lifecycle: Schema.optional(
+    Schema.Struct({
+      type: Schema.Literals(["linear", "dag", "generic"]),
+      phases: Schema.optional(Schema.mutable(Schema.Array(Schema.Any))),
+      transitions: Schema.optional(Schema.mutable(Schema.Array(Schema.Any))),
+    }),
+  ),
   steps: Schema.optional(Schema.Finite),
 }).annotate({ identifier: "Agent" })
 export type Info = DeepMutable<Schema.Schema.Type<typeof Info>>

@@ -5,6 +5,7 @@
   inset: 0;
   z-index: 50;
   background-color: var(--overlay-simple-overlay-scrim);
+  animation: dialog-overlay-in var(--v2-duration-normal) var(--v2-ease-expressive-out) forwards;
 }
 
 [data-component="dialog"] {
@@ -146,5 +147,23 @@
   &[data-size="x-large"] [data-slot="dialog-container"] {
     width: 800px;
     height: 560px;
+  }
+
+  animation: dialog-content-in var(--v2-duration-slow) var(--v2-ease-spring) forwards;
+}
+
+@keyframes dialog-overlay-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes dialog-content-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
   }
 }

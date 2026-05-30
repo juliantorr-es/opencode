@@ -16,7 +16,7 @@ import * as Tool from "./tool"
 import { Config } from "@/config/config"
 import { type ToolContext as PluginToolContext, type ToolDefinition } from "@opencode-ai/plugin"
 import type { JSONSchema7, JSONSchema7Definition } from "@ai-sdk/provider"
-import { Schema } from "effect"
+import { Schema, Effect, Layer, Context } from "effect"
 import z from "zod"
 import { Plugin } from "../plugin"
 import { Provider } from "@/provider/provider"
@@ -70,7 +70,6 @@ import { OutOfScopeFindingTool } from "./out-of-scope-finding"
 import { Glob } from "@opencode-ai/core/util/glob"
 import path from "path"
 import { pathToFileURL } from "url"
-import { Effect, Layer, Context } from "effect"
 import { FetchHttpClient, HttpClient } from "effect/unstable/http"
 import { ChildProcessSpawner } from "effect/unstable/process/ChildProcessSpawner"
 import { CrossSpawnSpawner } from "@opencode-ai/core/cross-spawn-spawner"
@@ -91,7 +90,6 @@ import { Permission } from "@/permission"
 import { Reference } from "@/reference/reference"
 import { BackgroundJob } from "@/background/job"
 import { RuntimeFlags } from "@/effect/runtime-flags"
-import { Storage } from "@/storage/storage"
 import { RecordStressWaveTool } from "./record-stress-wave"
 import { RecordExecutionWaveTool } from "./record-execution-wave"
 import { DuckDBQueryTool } from "./duckdb-query"
@@ -99,6 +97,13 @@ import { DuckDB } from "@/storage/db.duckdb"
 import { DuckDBConfig } from "@/storage/duckdb-config"
 import { DatabaseAdapter } from "@/storage/adapter"
 import { DatabaseConfig } from "@/effect/database-config"
+import { Storage } from "@/storage/storage"
+import { DelegateTool } from "./delegate"
+import { SessionDiffTool } from "./session-diff"
+import { GithubTriageTool } from "./github-triage"
+import { GithubPrSearchTool } from "./github-pr-search"
+import * as ToolCache from "./cache"
+
 const log = Log.create({ service: "tool.registry" })
 
 export function webSearchEnabled(providerID: ProviderID, flags = { exa: false, parallel: false }) {
@@ -120,6 +125,7 @@ export interface Interface {
   readonly all: () => Effect.Effect<Tool.Def[]>
   readonly named: () => Effect.Effect<{ task: TaskDef; read: ReadDef }>
   readonly tools: (model: { providerID: ProviderID; modelID: ModelID; agent: Agent.Info }) => Effect.Effect<Tool.Def[]>
+  readonly cacheStats: () => Effect.Effect<ToolCache.CacheStats>
 }
 
 export class Service extends Context.Service<Service, Interface>()("@opencode/ToolRegistry") {}
@@ -133,6 +139,7 @@ export const layer = Layer.effect(
     const skill = yield* Skill.Service
     const truncate = yield* Truncate.Service
     const flags = yield* RuntimeFlags.Service
+    const cache = yield* ToolCache.Service
 
     const invalid = yield* InvalidTool
     const task = yield* TaskTool
@@ -165,6 +172,8 @@ export const layer = Layer.effect(
     const riggit = yield* RigGitTool
     const sendMessage = yield* SendMessageTool
     const readMessages = yield* ReadMessagesTool
+    const recordStressWave = yield* RecordStressWaveTool
+    const recordExecutionWave = yield* RecordExecutionWaveTool
     const duckdbQuery = yield* DuckDBQueryTool
     const toolFailure = yield* ToolFailureTool
     const toolFeedback = yield* ToolFeedbackTool
@@ -191,6 +200,10 @@ export const layer = Layer.effect(
     const prepublicationBlocked = yield* PrepublicationBlockedTool
     const prepublicationInconclusive = yield* PrepublicationInconclusiveTool
     const outOfScopeFinding = yield* OutOfScopeFindingTool
+    const delegate = yield* DelegateTool
+    const sessionDiff = yield* SessionDiffTool
+    const githubTriage = yield* GithubTriageTool
+    const githubPrSearch = yield* GithubPrSearchTool
     const agent = yield* Agent.Service
 
     const state = yield* InstanceState.make<State>(
@@ -243,6 +256,13 @@ export const layer = Layer.effect(
                   },
                 }
               }).pipe(
+                Effect.catch((error: unknown) =>
+                  Effect.succeed({
+                    title: id,
+                    metadata: { status: "error" },
+                    output: `[${id}] Plugin tool error: ${error instanceof Error ? error.message : String(error)}`,
+                  }),
+                ),
                 Effect.withSpan("Tool.execute", {
                   attributes: {
                     "tool.name": id,
@@ -313,8 +333,8 @@ export const layer = Layer.effect(
             rig_git: Tool.init(riggit),
             send_message: Tool.init(sendMessage),
             read_messages: Tool.init(readMessages),
-            record_stress_wave: Tool.init(RecordStressWaveTool),
-            record_execution_wave: Tool.init(RecordExecutionWaveTool),
+            record_stress_wave: Tool.init(recordStressWave),
+            record_execution_wave: Tool.init(recordExecutionWave),
             duckdb_query: Tool.init(duckdbQuery),
             tool_failure: Tool.init(toolFailure),
             tool_feedback: Tool.init(toolFeedback),
@@ -341,6 +361,10 @@ export const layer = Layer.effect(
             prepublication_blocked: Tool.init(prepublicationBlocked),
             prepublication_inconclusive: Tool.init(prepublicationInconclusive),
             out_of_scope_finding: Tool.init(outOfScopeFinding),
+            delegate: Tool.init(delegate),
+            session_diff: Tool.init(sessionDiff),
+            github_triage: Tool.init(githubTriage),
+            github_pr_search: Tool.init(githubPrSearch),
         })
 
         return {
@@ -383,6 +407,10 @@ export const layer = Layer.effect(
             tool.prepublication_blocked,
             tool.prepublication_inconclusive,
             tool.out_of_scope_finding,
+            tool.delegate,
+            tool.session_diff,
+            tool.github_triage,
+            tool.github_pr_search,
             tool.search_replace,
             tool.prepare_checkpoint,
             tool.checkpoint,
@@ -497,6 +525,7 @@ export const layer = Layer.effect(
             jsonSchema,
             execute: tool.execute,
             formatValidationError: tool.formatValidationError,
+            cacheable: (tool as any).cacheable,
           }
         }),
         { concurrency: "unbounded" },
@@ -508,7 +537,11 @@ export const layer = Layer.effect(
       return { task: s.task, read: s.read }
     })
 
-    return Service.of({ ids, all, named, tools })
+    const cacheStats: Interface["cacheStats"] = Effect.fn("ToolRegistry.cacheStats")(function* () {
+      return yield* cache.stats()
+    })
+
+    return Service.of({ ids, all, named, tools, cacheStats })
   }),
 )
 
@@ -536,6 +569,7 @@ export const defaultLayer = Layer.suspend(() =>
       Layer.provide(Ripgrep.defaultLayer),
       Layer.provide(Truncate.defaultLayer),
     )
+    .pipe(Layer.provide(ToolCache.defaultLayer))
     .pipe(Layer.provide(DuckDBConfig.defaultLayer))
     .pipe(Layer.provide(DatabaseConfig.defaultLayer))
     .pipe(Layer.provide(DatabaseAdapter.defaultLayer))

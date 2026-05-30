@@ -3,6 +3,7 @@ import { ServerConnection } from "@/context/server"
 import { createSdkForServer } from "./server"
 import { Accessor, createEffect, onCleanup } from "solid-js"
 import { createStore, reconcile } from "solid-js/store"
+import { TIMEOUTS } from "@/constants"
 
 export type ServerHealth = { healthy: boolean; version?: string }
 
@@ -13,10 +14,10 @@ interface CheckServerHealthOptions {
   retryDelayMs?: number
 }
 
-const defaultTimeoutMs = 3000
+const defaultTimeoutMs = TIMEOUTS.SERVER_HEALTH
 const defaultRetryCount = 2
-const defaultRetryDelayMs = 100
-const cacheMs = 750
+const defaultRetryDelayMs = TIMEOUTS.SERVER_HEALTH_RETRY_DELAY
+const cacheMs = TIMEOUTS.SERVER_HEALTH_CACHE_MS
 const healthCache = new Map<
   string,
   { at: number; done: boolean; fetch: typeof globalThis.fetch; promise: Promise<ServerHealth> }

@@ -33,6 +33,8 @@ export interface Settings {
     editToolPartsExpanded: boolean
     showSessionProgressBar: boolean
     showCustomAgents: boolean
+    showSessionViz: boolean
+    onboarded: boolean
     newLayoutDesigns?: boolean
   }
   updates: {
@@ -121,6 +123,8 @@ const defaultSettings: Settings = {
     editToolPartsExpanded: false,
     showSessionProgressBar: true,
     showCustomAgents: false,
+    showSessionViz: true,
+    onboarded: false,
   },
   updates: {
     startup: true,
@@ -243,6 +247,14 @@ export const { use: useSettings, provider: SettingsProvider } = createSimpleCont
         showCustomAgents: withFallback(() => store.general?.showCustomAgents, defaultSettings.general.showCustomAgents),
         setShowCustomAgents(value: boolean) {
           setStore("general", "showCustomAgents", value)
+        },
+        showSessionViz: withFallback(() => store.general?.showSessionViz, defaultSettings.general.showSessionViz),
+        setShowSessionViz(value: boolean) {
+          setStore("general", "showSessionViz", value)
+        },
+        onboarded: withFallback(() => store.general?.onboarded, defaultSettings.general.onboarded),
+        setOnboarded(value: boolean) {
+          setStore("general", "onboarded", value)
         },
         newLayoutDesigns: withFallback(() => store.general?.newLayoutDesigns, newLayoutDesignsDefault),
         setNewLayoutDesigns(value: boolean) {

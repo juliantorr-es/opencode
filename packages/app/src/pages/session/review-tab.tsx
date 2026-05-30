@@ -1,4 +1,4 @@
-import { createEffect, createResource, createSignal, onCleanup, type JSX } from "solid-js"
+import { Show, createEffect, createResource, createSignal, onCleanup, type JSX } from "solid-js"
 import { makeEventListener } from "@solid-primitives/event-listener"
 import type { SnapshotFileDiff, VcsFileDiff } from "@opencode-ai/sdk/v2"
 import { SessionReview } from "@opencode-ai/ui/session-review"
@@ -177,6 +177,11 @@ export function SessionReviewTab(props: SessionReviewTabProps) {
           </Button>
         </div>
       </div>
+      <Show when={!hasToken()}>
+        <p class="text-muted-foreground text-xs px-3 py-1">
+          {language.t("github.noAuth")}
+        </p>
+      </Show>
       <SessionReview
       title={props.title}
       empty={props.empty}

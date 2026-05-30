@@ -1,0 +1,13 @@
+{
+  "schema_version": "v1",
+  "report_id": "session-2026-05-30T02-37-04-003Z.v1",
+  "session_id": "ses_18946b5ceffe6A1UJiTVMtxWMc",
+  "generated_at": "2026-05-30T02:37:04.040225+00:00",
+  "session_summary": "Stress test of GitHub Integration + PR Management lane (plan revision 2). Analyzed 13 files across 4 packages. Verdict: FALSIFIED — 2 blocking, 14 major, 8 medium findings. Two claim atoms falsified: User cannot authenticate via OAuth (parseGitHubOAuthCallback orphaned, no bridge method for github-oauth-callback) and auth status check is broken (hasToken checks method existence not token value). OAuth deep-link callback infrastructure exists but is completely disconnected — URLs are received and silently dropped. Additional critical findings: pendingOAuth Map has no eviction (unbounded memory growth), IPC proxy lacks try/catch for safeStorage/network failures, GitHubService has no proxy adapter for desktop, Auth header can be overridden by caller, redirects leak Bearer token, PR button onClick is a console.log no-op. Surviving surfaces: safeStorage roundtrip is correct, RESERVED_STORE_NAMES guards work, token never stored as plaintext, URL allowlist validation works, parseGitHubOAuthCallback returns null for non-github-oauth hostnames.",
+  "next_steps": "1. Fix BLOCKER: Wire parseGitHubOAuthCallback into layout.tsx handleDeepLinks — add github-oauth-callback preload bridge method 2. Fix BLOCKER: Change hasToken() to call githubGetToken() and check non-null return 3. Fix MAJOR: Add try/catch to decryptToken and net.fetch in github-api-proxy 4. Fix MAJOR: Add TTL eviction to pendingOAuth Map 5. Fix MAJOR: Add proxy adapter to GitHubService.layer 6. Fix MAJOR: Filter out Authorization header from options?.headers 7. Fix MAJOR: Add `redirect: 'error'` or redirect hostname validation 8. Fix MAJOR: Add HTTP method allowlist to github-api-proxy 9. Fix MAJOR: Wire PR button onClick to actual createPullRequest 10. Fix MAJOR: Add weak ref or TTL cleanup for pendingOAuth entries deleted before fetch fails",
+  "waves_completed": [],
+  "wave_details": {},
+  "total_findings": 0,
+  "findings_by_profile": {},
+  "artifacts_consumed": []
+}

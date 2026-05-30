@@ -24,9 +24,19 @@ import { McpOAuthCallback } from "./oauth-callback"
 import { McpAuth } from "./auth"
 import { BusEvent } from "../bus/bus-event"
 import { Bus } from "@/bus"
-import { TuiEvent } from "@/cli/cmd/tui/event"
+const TuiEvent = {
+  ToastShow: {
+    type: "toast.show" as const,
+    properties: Schema.Struct({
+      title: Schema.String,
+      message: Schema.String,
+      variant: Schema.String,
+      duration: Schema.Number,
+    }),
+  },
+}
 import open from "open"
-import { Effect, Exit, Layer, Option, Context, Schema, Stream } from "effect"
+import { Effect, Exit, Layer, Option, Context, Schema, Stream, Semaphore } from "effect"
 import { EffectBridge } from "@/effect/bridge"
 import { InstanceState } from "@/effect/instance-state"
 import { ChildProcess, ChildProcessSpawner } from "effect/unstable/process"
@@ -280,6 +290,16 @@ export const layer = Layer.effect(
     const auth = yield* McpAuth.Service
     const bus = yield* Bus.Service
 
+    const serverLocks = new Map<string, Semaphore.Semaphore>()
+    const withServerLock = (name: string) => {
+      let sem = serverLocks.get(name)
+      if (!sem) {
+        sem = Semaphore.makeUnsafe(1)
+        serverLocks.set(name, sem)
+      }
+      return sem
+    }
+
     type Transport = StdioClientTransport | StreamableHTTPClientTransport | SSEClientTransport
 
     /**
@@ -508,15 +528,29 @@ export const layer = Layer.effect(
 
     function watch(s: State, name: string, client: MCPClient, bridge: EffectBridge.Shape, timeout?: number) {
       client.setNotificationHandler(ToolListChangedNotificationSchema, async () => {
-        log.info("tools list changed notification received", { server: name })
-        if (s.clients[name] !== client || s.status[name]?.status !== "connected") return
+        await bridge.promise(
+          withServerLock(name).withPermits(1)(
+            Effect.gen(function* () {
+              console.log(`[MCP] Acquired lock for server "${name}"`)
+              try {
+                log.info("tools list changed notification received", { server: name })
+                if (s.clients[name] !== client || s.status[name]?.status !== "connected") return
 
-        const listed = await bridge.promise(defs(name, client, timeout))
-        if (!listed) return
-        if (s.clients[name] !== client || s.status[name]?.status !== "connected") return
+                const listed = yield* defs(name, client, timeout)
+                if (!listed) return
+                if (s.clients[name] !== client || s.status[name]?.status !== "connected") return
 
-        s.defs[name] = listed
-        await bridge.promise(bus.publish(ToolsChanged, { server: name }).pipe(Effect.ignore))
+                s.defs[name] = listed
+                yield* bus.publish(ToolsChanged, { server: name }).pipe(Effect.ignore)
+              } finally {
+                console.log(`[MCP] Released lock for server "${name}"`)
+              }
+            }),
+          ).pipe(
+            Effect.timeout(30_000),
+            Effect.catchTag("TimeoutError", () => Effect.void),
+          ),
+        )
       })
     }
 
@@ -634,17 +668,31 @@ export const layer = Layer.effect(
     })
 
     const createAndStore = Effect.fn("MCP.createAndStore")(function* (name: string, mcp: ConfigMCP.Info) {
-      const s = yield* InstanceState.get(state)
-      const result = yield* create(name, mcp)
+      return yield* withServerLock(name).withPermits(1)(
+        Effect.gen(function* () {
+          console.log(`[MCP] Acquired lock for server "${name}"`)
+          try {
+            const s = yield* InstanceState.get(state)
+            const result = yield* create(name, mcp)
 
-      s.status[name] = result.status
-      if (!result.mcpClient) {
-        yield* closeClient(s, name)
-        delete s.clients[name]
-        return result.status
-      }
+            s.status[name] = result.status
+            if (!result.mcpClient) {
+              yield* closeClient(s, name)
+              delete s.clients[name]
+              return result.status
+            }
 
-      return yield* storeClient(s, name, result.mcpClient, result.defs!, mcp.timeout)
+            return yield* storeClient(s, name, result.mcpClient, result.defs!, mcp.timeout)
+          } finally {
+            console.log(`[MCP] Released lock for server "${name}"`)
+          }
+        }),
+      ).pipe(
+        Effect.timeout(30_000),
+        Effect.catchTag("TimeoutError", () =>
+          Effect.succeed({ status: "failed", error: `Semaphore lock timed out for "${name}"` } satisfies Status),
+        ),
+      )
     })
 
     const add = Effect.fn("MCP.add")(function* (name: string, mcp: ConfigMCP.Info) {
@@ -660,11 +708,23 @@ export const layer = Layer.effect(
     })
 
     const disconnect = Effect.fn("MCP.disconnect")(function* (name: string) {
-      yield* requireMcpConfig(name)
-      const s = yield* InstanceState.get(state)
-      yield* closeClient(s, name)
-      delete s.clients[name]
-      s.status[name] = { status: "disabled" }
+      return yield* withServerLock(name).withPermits(1)(
+        Effect.gen(function* () {
+          console.log(`[MCP] Acquired lock for server "${name}"`)
+          try {
+            yield* requireMcpConfig(name)
+            const s = yield* InstanceState.get(state)
+            yield* closeClient(s, name)
+            delete s.clients[name]
+            s.status[name] = { status: "disabled" }
+          } finally {
+            console.log(`[MCP] Released lock for server "${name}"`)
+          }
+        }),
+      ).pipe(
+        Effect.timeout(30_000),
+        Effect.catchTag("TimeoutError", () => Effect.void),
+      )
     })
 
     const tools = Effect.fn("MCP.tools")(function* () {

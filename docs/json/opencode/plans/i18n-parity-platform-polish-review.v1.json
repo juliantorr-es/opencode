@@ -1,0 +1,19 @@
+{
+  "schema_version": "v1",
+  "plan_id": "i18n-parity-platform-polish-review",
+  "plan_revision": 1,
+  "title": "i18n Parity & Platform Polish — Critic Review",
+  "boundary": "i18n-parity-platform-polish-review",
+  "consumer_purpose": "Record critic review findings for plan revision 1",
+  "claim_atoms": [
+    "Review recorded 7 critic comments",
+    "2 blocking issues found: button label comparison and free variable 'dict'",
+    "2 blocking issues found: IPC locale race and dialog string translation gap",
+    "2 weak issues found: missing try-catch on Linux titlebar and test no longer checks actual translation",
+    "1 informational finding: plan scope too broad for single plan"
+  ],
+  "content": "Recorded at docs/json/opencode/plans/i18n-parity-platform-polish/comments.v1.jsonl",
+  "status": "proposed",
+  "created_at": "2026-05-30T06:11:57.296044+00:00",
+  "modified_at": "2026-05-30T06:11:57.296240+00:00"
+}

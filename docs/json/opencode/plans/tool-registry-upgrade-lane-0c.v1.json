@@ -1,0 +1,14 @@
+{
+  "schema_version": "v1",
+  "plan_id": "tool-registry-upgrade-lane-0c",
+  "plan_revision": 2,
+  "title": "Upgrade ToolRegistry — Cache wiring, fromPlugin error wrapping, cache stats",
+  "boundary": "tool-registry-upgrade-lane-0c",
+  "consumer_purpose": "Wire upgraded ToolCache and error types through ToolRegistry for all 58 tools and plugin bridge",
+  "claim_atoms": [],
+  "content": "## PLAN REVISION 2 — Narrowed to registry.ts only\n\n### Context\nLane 0b (ToolCache upgrade) has completed cache.ts (206 lines) and tool.ts (318 lines):\n- cache.ts: CacheConfig, CacheStats, TTL eviction, LRU eviction, size enforcement, stats tracking\n- tool.ts: ToolError/TimeoutError/TransientError/ValidationError hierarchy, cache integration in wrap(), tool Def extensions\n\n### What remains for Lane 0c (this lane)\n\n**File: packages/opencode/src/tool/registry.ts** (currently 628 lines, dirty with 6 additions/2 deletions)\n\n#### Change 1: Yield ToolCache.Service and expose cache stats\n- Add `const cache = yield* ToolCache.Service` after existing service yields\n- Add `cacheStats` to the `Interface` type: `readonly cacheStats: () => Effect.Effect<ToolCache.CacheStats>`\n- Implement `cacheStats` method that proxies to `cache.stats()`\n- Add to `Service.of({ ... })` return\n\n#### Change 2: fromPlugin() error wrapping\n- Wrap the plugin execute block in `Effect.catchAll` that converts any thrown error into a structured `ExecuteResult` with `{ title, metadata: { status: \"error\" }, output: error message }`\n- This prevents plugin errors from hitting the `Effect.orDie` boundary\n\n#### Change 3: Preserve all pre-existing dirty changes\n- 6 additions / 2 deletions from prior session (ToolCache import, recordStressWave/recordExecutionWave vars, Layer.provide)\n- Use targeted smart_sd operations to avoid touching unrelated code\n\n### Non-changes (already done by other lanes)\n- ✅ Error hierarchy (ToolError, etc.) — already in tool.ts\n- ✅ CacheConfig type and defaults — already in cache.ts  \n- ✅ TTL, LRU eviction, size enforcement — already in cache.ts\n- ✅ Tool namespace re-export — already via `export * as Tool from \"./tool\"`\n\n### Verification\n```bash\ncd packages/opencode && bun run typecheck\n```",
+  "status": "proposed",
+  "created_at": "2026-05-30T06:40:13.195458+00:00",
+  "modified_at": "2026-05-30T06:48:52.631560+00:00",
+  "revision_notes": "Narrowed scope to registry.ts only after discovering Lane 0b already completed cache.ts and tool.ts upgrades. Addressed all 4 critic objections: (1) removed tool.ts error-class additions, (2) fromPlugin uses catchAll returning structured ExecuteResult, (3) no Context.Tag for CacheConfig, (4) correct 5 claim atoms."
+}

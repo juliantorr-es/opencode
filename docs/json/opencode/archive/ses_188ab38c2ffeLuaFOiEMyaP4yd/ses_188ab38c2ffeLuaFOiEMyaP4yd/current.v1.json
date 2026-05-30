@@ -1,0 +1,372 @@
+{
+  "schema_version": "v1",
+  "session_id": "ses_188ab38c2ffeLuaFOiEMyaP4yd",
+  "mission_status": "in_progress",
+  "last_updated": "2026-05-30T05:25:56.483860+00:00",
+  "current_wave": "1-learning-tel001-complete",
+  "waves": {
+    "0-smoke-tests": {
+      "started_at": "2026-05-30T05:24:16.220064+00:00",
+      "completed_at": "2026-05-30T05:24:16.220064+00:00",
+      "findings": [
+        {
+          "source": "roadmap_init",
+          "summary": "5 actionable roadmap items visible. CI-001 (telemetry) already completed 100%.",
+          "confidence": 1.0,
+          "relevance_profiles": [
+            "orchestrator"
+          ],
+          "wave": "0-smoke-tests"
+        },
+        {
+          "source": "handoff-Phase2-to-Phase3",
+          "summary": "9 frozen lanes from Phase 2. 3 integration blockers active. TEL-001 is top priority for Phase 3.",
+          "confidence": 1.0,
+          "relevance_profiles": [
+            "orchestrator",
+            "architecture"
+          ],
+          "wave": "0-smoke-tests"
+        },
+        {
+          "source": "typecheck_desktop",
+          "summary": "packages/desktop typecheck FAILS - 3 errors: missing github-ipc.ts, ipc-validation.ts modules, implicit any. These are INT-001 blockade.",
+          "confidence": 1.0,
+          "relevance_profiles": [
+            "execution"
+          ],
+          "wave": "0-smoke-tests"
+        },
+        {
+          "source": "typecheck_app",
+          "summary": "packages/app typecheck PASSES (cache hit)",
+          "confidence": 1.0,
+          "relevance_profiles": [
+            "execution"
+          ],
+          "wave": "0-smoke-tests"
+        },
+        {
+          "source": "typecheck_opencode",
+          "summary": "packages/opencode typecheck PASSES",
+          "confidence": 1.0,
+          "relevance_profiles": [
+            "execution"
+          ],
+          "wave": "0-smoke-tests"
+        },
+        {
+          "source": "test_desktop_ipc",
+          "summary": "Desktop IPC test fails: cannot find module 'ipc-validation' — confirming INT-001 blocker active",
+          "confidence": 1.0,
+          "relevance_profiles": [
+            "validation"
+          ],
+          "wave": "0-smoke-tests"
+        },
+        {
+          "source": "test_opencode_github",
+          "summary": "OpenCode GitHub tests: 26 pass, 10 fail (extractResponseText and formatPromptTooLargeError production bugs, not lane issues)",
+          "confidence": 0.9,
+          "relevance_profiles": [
+            "validation",
+            "execution"
+          ],
+          "wave": "0-smoke-tests"
+        },
+        {
+          "source": "codebase_coordination",
+          "summary": "coordination.ts has full task claim lifecycle (claimTask/releaseTask/failTask), DuckDB-backed, with getSessionClaims/queries. task.ts already integrates with it.",
+          "confidence": 1.0,
+          "relevance_profiles": [
+            "architecture"
+          ],
+          "wave": "0-smoke-tests"
+        },
+        {
+          "source": "codebase_task",
+          "summary": "task.ts already has writeTaskStatus JSONL logging, wave/wave_type params, and coordination integration. TEL-001 needs event emission and fleet query.",
+          "confidence": 1.0,
+          "relevance_profiles": [
+            "architecture",
+            "execution"
+          ],
+          "wave": "0-smoke-tests"
+        }
+      ],
+      "artifacts": [
+        "docs/json/opencode/sessions/handoff-Phase2-to-Phase3.v1.json",
+        "docs/json/roadmaps/opencode-desktop-phase3-roadmap.v1.json",
+        "docs/json/roadmaps/subagent-telemetry-and-contention-protocol.v1.json"
+      ]
+    },
+    "1-learning-tel001": {
+      "started_at": "2026-05-30T05:25:15.501333+00:00",
+      "completed_at": "2026-05-30T05:25:15.501333+00:00",
+      "findings": [
+        {
+          "source": "cartographer_learning",
+          "summary": "TEL-001 requires: (1) coord.task.completed/failed Bus events in task.ts, (2) Bus.Service dependency added to TaskTool, (3) 'fleet' operation in coordination tool, (4) Schema file creation",
+          "confidence": 0.95,
+          "relevance_profiles": [
+            "architecture",
+            "execution"
+          ],
+          "wave": "1-learning-tel001"
+        },
+        {
+          "source": "spec-TEL-001",
+          "summary": "Runtime changes: task metadata registration (already done via claimTask), task_board query (already possible via coordination tool), completion/failure event emission (NOT done)",
+          "confidence": 1.0,
+          "relevance_profiles": [
+            "architecture"
+          ],
+          "wave": "1-learning-tel001"
+        },
+        {
+          "source": "codebase_bus",
+          "summary": "BusEvent.define('name', Schema.Struct({...})) pattern exists. Bus.Service integration requires adding yield* Bus.Service to TaskTool init and calling bus.publish() at completion/failure points.",
+          "confidence": 1.0,
+          "relevance_profiles": [
+            "architecture",
+            "execution"
+          ],
+          "wave": "1-learning-tel001"
+        },
+        {
+          "source": "codebase_tool_deps",
+          "summary": "TaskTool yields Agent.Service, BackgroundJob.Service, Config.Service, Session.Service, Scope.Scope, RuntimeFlags.Service. Adding Bus.Service follows same pattern.",
+          "confidence": 1.0,
+          "relevance_profiles": [
+            "execution"
+          ],
+          "wave": "1-learning-tel001"
+        },
+        {
+          "source": "codebase_schema_files",
+          "summary": "Schema file docs/schemas/rig.relay.coordination.task.v1.schema.json referenced in spec but doesn't exist yet. Must be created.",
+          "confidence": 1.0,
+          "relevance_profiles": [
+            "architecture"
+          ],
+          "wave": "1-learning-tel001"
+        }
+      ],
+      "artifacts": [
+        "packages/opencode/src/tool/task.ts",
+        "packages/opencode/src/tool/coordination.ts",
+        "packages/opencode/src/bus/index.ts"
+      ]
+    },
+    "1-learning-tel001-complete": {
+      "started_at": "2026-05-30T05:25:56.483860+00:00",
+      "completed_at": "2026-05-30T05:25:56.483860+00:00",
+      "findings": [
+        {
+          "source": "cartographer_tel001",
+          "summary": "TaskStatusChanged event already defined in coord-events.ts but never published. 4 smoking guns found: SG-1 HIGH (events defined but unused), SG-2 MEDIUM (TaskClaim missing lane_id/plan_id), SG-3 MEDIUM (releaseTask/failTask are pure DB), SG-4 LOW (JSONL side channel)",
+          "confidence": 1.0,
+          "relevance_profiles": [
+            "architecture",
+            "execution"
+          ],
+          "wave": "1-learning-tel001-complete"
+        },
+        {
+          "source": "cartographer_task_lifecycle",
+          "summary": "claimTask called at line 190, releaseTask at 241, failTask at 296 (background) and 341 (foreground). Bus.Service must be added as a dependency alongside Agent.Service, BackgroundJob.Service etc.",
+          "confidence": 1.0,
+          "relevance_profiles": [
+            "execution"
+          ],
+          "wave": "1-learning-tel001-complete"
+        },
+        {
+          "source": "cartographer_coord_events",
+          "summary": "coord-events.ts exports: TaskStatusChanged, PathClaimed, SessionHeartbeat, ActivityLogged. All defined, none published. TaskStatusChanged schema: session_id, task_id, task_type, status, description, agent_name?, changed_at.",
+          "confidence": 1.0,
+          "relevance_profiles": [
+            "architecture"
+          ],
+          "wave": "1-learning-tel001-complete"
+        }
+      ],
+      "artifacts": [
+        "packages/opencode/src/coordination/coord-events.ts",
+        "packages/opencode/src/coordination/coordination.pg.sql.ts"
+      ]
+    }
+  },
+  "active_findings": [
+    {
+      "source": "roadmap_init",
+      "summary": "5 actionable roadmap items visible. CI-001 (telemetry) already completed 100%.",
+      "confidence": 1.0,
+      "relevance_profiles": [
+        "orchestrator"
+      ],
+      "wave": "0-smoke-tests"
+    },
+    {
+      "source": "handoff-Phase2-to-Phase3",
+      "summary": "9 frozen lanes from Phase 2. 3 integration blockers active. TEL-001 is top priority for Phase 3.",
+      "confidence": 1.0,
+      "relevance_profiles": [
+        "orchestrator",
+        "architecture"
+      ],
+      "wave": "0-smoke-tests"
+    },
+    {
+      "source": "typecheck_desktop",
+      "summary": "packages/desktop typecheck FAILS - 3 errors: missing github-ipc.ts, ipc-validation.ts modules, implicit any. These are INT-001 blockade.",
+      "confidence": 1.0,
+      "relevance_profiles": [
+        "execution"
+      ],
+      "wave": "0-smoke-tests"
+    },
+    {
+      "source": "typecheck_app",
+      "summary": "packages/app typecheck PASSES (cache hit)",
+      "confidence": 1.0,
+      "relevance_profiles": [
+        "execution"
+      ],
+      "wave": "0-smoke-tests"
+    },
+    {
+      "source": "typecheck_opencode",
+      "summary": "packages/opencode typecheck PASSES",
+      "confidence": 1.0,
+      "relevance_profiles": [
+        "execution"
+      ],
+      "wave": "0-smoke-tests"
+    },
+    {
+      "source": "test_desktop_ipc",
+      "summary": "Desktop IPC test fails: cannot find module 'ipc-validation' — confirming INT-001 blocker active",
+      "confidence": 1.0,
+      "relevance_profiles": [
+        "validation"
+      ],
+      "wave": "0-smoke-tests"
+    },
+    {
+      "source": "test_opencode_github",
+      "summary": "OpenCode GitHub tests: 26 pass, 10 fail (extractResponseText and formatPromptTooLargeError production bugs, not lane issues)",
+      "confidence": 0.9,
+      "relevance_profiles": [
+        "validation",
+        "execution"
+      ],
+      "wave": "0-smoke-tests"
+    },
+    {
+      "source": "codebase_coordination",
+      "summary": "coordination.ts has full task claim lifecycle (claimTask/releaseTask/failTask), DuckDB-backed, with getSessionClaims/queries. task.ts already integrates with it.",
+      "confidence": 1.0,
+      "relevance_profiles": [
+        "architecture"
+      ],
+      "wave": "0-smoke-tests"
+    },
+    {
+      "source": "codebase_task",
+      "summary": "task.ts already has writeTaskStatus JSONL logging, wave/wave_type params, and coordination integration. TEL-001 needs event emission and fleet query.",
+      "confidence": 1.0,
+      "relevance_profiles": [
+        "architecture",
+        "execution"
+      ],
+      "wave": "0-smoke-tests"
+    },
+    {
+      "source": "cartographer_learning",
+      "summary": "TEL-001 requires: (1) coord.task.completed/failed Bus events in task.ts, (2) Bus.Service dependency added to TaskTool, (3) 'fleet' operation in coordination tool, (4) Schema file creation",
+      "confidence": 0.95,
+      "relevance_profiles": [
+        "architecture",
+        "execution"
+      ],
+      "wave": "1-learning-tel001"
+    },
+    {
+      "source": "spec-TEL-001",
+      "summary": "Runtime changes: task metadata registration (already done via claimTask), task_board query (already possible via coordination tool), completion/failure event emission (NOT done)",
+      "confidence": 1.0,
+      "relevance_profiles": [
+        "architecture"
+      ],
+      "wave": "1-learning-tel001"
+    },
+    {
+      "source": "codebase_bus",
+      "summary": "BusEvent.define('name', Schema.Struct({...})) pattern exists. Bus.Service integration requires adding yield* Bus.Service to TaskTool init and calling bus.publish() at completion/failure points.",
+      "confidence": 1.0,
+      "relevance_profiles": [
+        "architecture",
+        "execution"
+      ],
+      "wave": "1-learning-tel001"
+    },
+    {
+      "source": "codebase_tool_deps",
+      "summary": "TaskTool yields Agent.Service, BackgroundJob.Service, Config.Service, Session.Service, Scope.Scope, RuntimeFlags.Service. Adding Bus.Service follows same pattern.",
+      "confidence": 1.0,
+      "relevance_profiles": [
+        "execution"
+      ],
+      "wave": "1-learning-tel001"
+    },
+    {
+      "source": "codebase_schema_files",
+      "summary": "Schema file docs/schemas/rig.relay.coordination.task.v1.schema.json referenced in spec but doesn't exist yet. Must be created.",
+      "confidence": 1.0,
+      "relevance_profiles": [
+        "architecture"
+      ],
+      "wave": "1-learning-tel001"
+    },
+    {
+      "source": "cartographer_tel001",
+      "summary": "TaskStatusChanged event already defined in coord-events.ts but never published. 4 smoking guns found: SG-1 HIGH (events defined but unused), SG-2 MEDIUM (TaskClaim missing lane_id/plan_id), SG-3 MEDIUM (releaseTask/failTask are pure DB), SG-4 LOW (JSONL side channel)",
+      "confidence": 1.0,
+      "relevance_profiles": [
+        "architecture",
+        "execution"
+      ],
+      "wave": "1-learning-tel001-complete"
+    },
+    {
+      "source": "cartographer_task_lifecycle",
+      "summary": "claimTask called at line 190, releaseTask at 241, failTask at 296 (background) and 341 (foreground). Bus.Service must be added as a dependency alongside Agent.Service, BackgroundJob.Service etc.",
+      "confidence": 1.0,
+      "relevance_profiles": [
+        "execution"
+      ],
+      "wave": "1-learning-tel001-complete"
+    },
+    {
+      "source": "cartographer_coord_events",
+      "summary": "coord-events.ts exports: TaskStatusChanged, PathClaimed, SessionHeartbeat, ActivityLogged. All defined, none published. TaskStatusChanged schema: session_id, task_id, task_type, status, description, agent_name?, changed_at.",
+      "confidence": 1.0,
+      "relevance_profiles": [
+        "architecture"
+      ],
+      "wave": "1-learning-tel001-complete"
+    }
+  ],
+  "active_artifacts": [
+    "docs/json/opencode/sessions/handoff-Phase2-to-Phase3.v1.json",
+    "docs/json/roadmaps/opencode-desktop-phase3-roadmap.v1.json",
+    "docs/json/roadmaps/subagent-telemetry-and-contention-protocol.v1.json",
+    "packages/opencode/src/tool/task.ts",
+    "packages/opencode/src/tool/coordination.ts",
+    "packages/opencode/src/bus/index.ts",
+    "packages/opencode/src/coordination/coord-events.ts",
+    "packages/opencode/src/coordination/coordination.pg.sql.ts"
+  ],
+  "archived": []
+}

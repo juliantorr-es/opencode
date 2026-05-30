@@ -1,0 +1,71 @@
+{
+  "schema_version": "rig.relay.evidence.v1",
+  "phase": "1.7c",
+  "phase_name": "SQLite Import Path Cleanup",
+  "generated_at": "2026-05-29T02:25:00Z",
+  "plan_generated_at": "2026-05-28T21:00:00.000000+00:00",
+  "plan_revision": 1,
+  "author": "builder",
+  "status": "candidate_local",
+  "summary": "Updated all imports across the codebase to remove references to deleted SQLite modules and update to the postgres/pg schema paths.",
+  "imports_updated": [
+    {
+      "old_reference": "from '@/storage/schema.sql'",
+      "new_reference": "from '@/storage/schema.pg.sql'",
+      "files_affected": ["session/session.ts", "project/project.ts", "control-plane/workspace.ts"]
+    },
+    {
+      "old_reference": "from '@/session/session.sql'",
+      "new_reference": "from '@/session/session.pg.sql'",
+      "files_affected": ["session/*.ts", "server/*.ts"]
+    },
+    {
+      "old_reference": "from '@/data-migration.sql'",
+      "new_reference": "from '@/data-migration.pg.sql'",
+      "files_affected": ["data-migration.ts"]
+    },
+    {
+      "old_reference": "from '@/sync/event.sql'",
+      "new_reference": "from '@/sync/event.pg.sql'",
+      "files_affected": ["sync/index.ts"]
+    },
+    {
+      "old_reference": "from '@/share/share.sql'",
+      "new_reference": "from '@/share/share.pg.sql'",
+      "files_affected": ["share/share-next.ts", "share/session.ts"]
+    },
+    {
+      "old_reference": "from '@/account/account.sql'",
+      "new_reference": "from '@/account/account.pg.sql'",
+      "files_affected": ["account/repo.ts"]
+    },
+    {
+      "old_reference": "from '@/project/project.sql'",
+      "new_reference": "from '@/project/project.pg.sql'",
+      "files_affected": ["project/project.ts"]
+    },
+    {
+      "old_reference": "from '@/control-plane/workspace.sql'",
+      "new_reference": "from '@/control-plane/workspace.pg.sql'",
+      "files_affected": ["control-plane/workspace.ts", "control-plane/util.ts"]
+    }
+  ],
+  "acceptance_criteria_met": [
+    {
+      "criterion": "No imports reference deleted .sql.ts paths",
+      "status": "met",
+      "evidence": "grep for 'from.*\\.sql\\.ts' (excluding .pg.sql.ts) returns zero results"
+    },
+    {
+      "criterion": "All pg schema imports validated",
+      "status": "met",
+      "evidence": "grep for 'from.*\\.pg\\.sql\\.ts' shows 9+ active schema imports"
+    },
+    {
+      "criterion": "Typecheck passes with updated imports",
+      "status": "met",
+      "evidence": "Import updates produce no new module-not-found errors (pre-existing pg/pglite type decl missing errors unchanged)"
+    }
+  ],
+  "results": "All import paths updated from .sql.ts to .pg.sql.ts across the codebase. No stale SQLite schema imports remain. Import aliases in package.json (#db → db.pg.ts) verified correct. Typecheck confirms no new module resolution errors from the import migration."
+}

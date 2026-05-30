@@ -1,0 +1,64 @@
+{
+  "schema": "rig.relay.phase_plan.v1",
+  "plan_id": "phase0-framework-upgrade",
+  "title": "Phase 0 — Native Tool Framework Upgrade",
+  "status": "in_progress",
+  "lanes": [
+    {
+      "id": "lane-0a",
+      "title": "Upgrade tool.ts — Tool.Def, wrap(), error taxonomy",
+      "file": "packages/opencode/src/tool/tool.ts",
+      "status": "launched",
+      "depends_on": []
+    },
+    {
+      "id": "lane-0b",
+      "title": "Upgrade cache.ts — TTL, LRU eviction, size limits",
+      "file": "packages/opencode/src/tool/cache.ts",
+      "status": "launched",
+      "depends_on": []
+    },
+    {
+      "id": "lane-0c",
+      "title": "Upgrade registry.ts — wire cache config, error types",
+      "file": "packages/opencode/src/tool/registry.ts",
+      "status": "launched",
+      "depends_on": ["lane-0b"]
+    },
+    {
+      "id": "lane-0d",
+      "title": "Upgrade session/tools.ts — per-tool timeout, split semaphore, spans",
+      "file": "packages/opencode/src/session/tools.ts",
+      "status": "launched",
+      "depends_on": ["lane-0a"]
+    },
+    {
+      "id": "lane-0e",
+      "title": "Create 4 gap tools as native Tool.Def",
+      "files": [
+        "packages/opencode/src/tool/delegate.ts",
+        "packages/opencode/src/tool/session-diff.ts",
+        "packages/opencode/src/tool/github-triage.ts",
+        "packages/opencode/src/tool/github-pr-search.ts"
+      ],
+      "status": "launched",
+      "depends_on": ["lane-0a"]
+    },
+    {
+      "id": "lane-0f",
+      "title": "Verification — typecheck, claim-adversary, integration validation",
+      "status": "pending",
+      "depends_on": ["lane-0a", "lane-0b", "lane-0c", "lane-0d", "lane-0e"]
+    }
+  ],
+  "contention_map": {
+    "write_write_conflicts": [],
+    "read_write_dependencies": [
+      {"reader": "lane-0c", "writer": "lane-0b", "file": "cache.ts", "mitigation": "Lane 0c designed for dual-interface compat"},
+      {"reader": "lane-0d", "writer": "lane-0a", "file": "tool.ts", "mitigation": "Additive changes only, no removal"},
+      {"reader": "lane-0f", "writers": ["lane-0a", "lane-0b", "lane-0c", "lane-0d", "lane-0e"], "mitigation": "Read-only, runs last"}
+    ]
+  },
+  "generated_at": "2026-05-30T06:33:00Z",
+  "launched_by": "orchestrator"
+}

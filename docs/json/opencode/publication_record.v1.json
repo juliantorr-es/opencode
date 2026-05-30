@@ -1,0 +1,133 @@
+{
+  "schema": "rig.relay.builder_publication_record.v1",
+  "publication_id": "pub-20260529-duckdb-query-tool",
+  "generated_at": "2026-05-29T10:55:00Z",
+  "author": "orchestrator",
+  "status": "published_candidate_boundary",
+  "builder_claim": "DuckDB analytical query tool (duckdb_query) — a safe, gated, read-only raw SQL passthrough tool for agent-facing DuckDB queries, registered in ToolRegistry behind experimentalDuckDBQuery flag, with consolidated SQL firewall, subprocess timeout, and stress repairs applied",
+  "target_ref": "dev",
+  "base_sha": "caf2451dae69f968e77d23438abd430355c33a23",
+  "candidate_packet_digest": "ada16ffa8d058e9ebeb18aa7d45e64c35fb899e8a655f5802277c088c5d83e8f",
+  "plan_revision": 2,
+  "plan_artifact": "docs/json/opencode/plans/duckdb-analytics-query-tool.v2.json",
+  "approval_artifact": "docs/json/opencode/approvals/plan_approval.v1.json",
+
+  "required_proof": {
+    "description": "Demonstrate that the duckdb_query tool is safely wired into ToolRegistry behind experimental flag, with SQL firewall consolidation, LIMIT enforcement, missing-binary handling, and subprocess timeout"
+  },
+
+  "observed_proof": {
+    "claim_atoms_verified": 9,
+    "claim_atoms_passing": 9,
+    "claim_atoms_failing": 0,
+    "evidence": [
+      {"artifact": "docs/json/opencode/evidence/duckdb_tool_created.v1.json", "description": "Tool creation and registry wiring"},
+      {"artifact": "docs/json/opencode/evidence/duckdb_stress_repair.v1.json", "description": "Stress findings repaired (F-001 through F-004)"},
+      {"artifact": "docs/json/opencode/evidence/duckdb_validation_complete.v1.json", "description": "Claim atom verification and test results"}
+    ]
+  },
+
+  "alternatives_rejected": [
+    {
+      "alternative": "Tool named 'analytics' instead of 'duckdb_query'",
+      "rejection_evidence": "analytics implies higher-level functionality than raw SQL passthrough. duckdb_query is honest about the backend and operation type."
+    },
+    {
+      "alternative": "No feature flag — unconditional registration",
+      "rejection_evidence": "DuckDB binary may not be installed. Feature flag prevents crashes and follows codebase conventions (experimentalCoordination, experimentalScout, etc.)."
+    },
+    {
+      "alternative": "Route through DatabaseAdapter.Service instead of DuckDB.Service",
+      "rejection_evidence": "DatabaseAdapter.Service tag conflict prevents DuckDBAdapter from being merged into AppLayer. DuckDB.Service (@opencode/DuckDB) is a separate tag with no conflict."
+    }
+  ],
+
+  "intended_released_boundary": {
+    "identifier": "duckdb-query-tool",
+    "consumer_purpose": "Enable read-only analytical SQL queries against DuckDB for agent-assisted debugging and introspection",
+    "atoms": [
+      "duckdb_query tool registered in ToolRegistry behind experimentalDuckDBQuery flag",
+      "Consolidated SQL firewall module (duckdb-firewall.ts) shared by db.duckdb.ts and adapter.ts",
+      "Mandatory LIMIT enforcement (default 1000, max 10000)",
+      "Missing DuckDB binary → human-readable install guide error",
+      "Subprocess timeout + AbortSignal (30s default)",
+      "Pool with queue timeout and execution timeout"
+    ]
+  },
+
+  "implemented_capabilities": [
+    "duckdb_query tool definition with Schema.Struct parameter validation",
+    "LIMIT enforcement via regex detection + append",
+    "Missing-binary detection with brew/apt/winget install guide",
+    "Consolidated SQL firewall (10 blocked functions + COPY…TO)",
+    "Firewall false-positive reduction (single-line comment + string literal stripping)",
+    "Subprocess timeout (30s) with AbortSignal cancellation",
+    "Pool queue timeout (30s) + execution timeout (30s)",
+    "Feature flag gating (experimentalDuckDBQuery)",
+    "DuckDB.layer provision in ToolRegistry.defaultLayer",
+    "Namespace re-export (export * as DuckDB)",
+    "14 firewall unit tests, 4 tool tests, 3 pool-timeout tests = 21 total"
+  ],
+
+  "capabilities_explicitly_not_implemented": [
+    "Postgres → DuckDB data pipeline (deferred)",
+    "Persistent DuckDB database file (deferred)",
+    "Analytical views / pre-registered intents (deferred)",
+    "WASM DuckDB in-process integration (deferred)",
+    "Integration tests with real duckdb binary (CI-gated)"
+  ],
+
+  "tests_run": [
+    {"suite": "duckdb-firewall.test.ts", "tests": 14, "passed": 14, "failed": 0},
+    {"suite": "duckdb-query.test.ts", "tests": 4, "passed": 4, "failed": 0},
+    {"suite": "duckdb-pool-timeout.test.ts", "tests": 3, "passed": 3, "failed": 0}
+  ],
+
+  "schemas_and_audits_produced": [
+    {"path": "docs/json/opencode/plans/duckdb-analytics-query-tool.v2.json", "kind": "Plan"},
+    {"path": "docs/json/opencode/plans/repair-plan-duckdb-stress.v1.json", "kind": "Repair Plan"},
+    {"path": "docs/json/opencode/approvals/plan_approval.v1.json", "kind": "Plan Approval"},
+    {"path": "docs/json/opencode/approvals/red_team_approval.v1.json", "kind": "Red Team Approval"},
+    {"path": "docs/json/opencode/approvals/repair_plan_approval.v1.json", "kind": "Repair Plan Approval"}
+  ],
+
+  "external_effects_executed": [],
+  "external_effects_not_executed": ["git push — checkpoint not created from restricted tool environment"],
+
+  "known_dirty_or_foreign_paths_excluded": [
+    "packages/opencode/src/storage/adapter.ts (pre-existing modifications preserved)",
+    "packages/opencode/src/storage/db.duckdb.ts (pre-existing modifications preserved)",
+    "packages/opencode/src/tool/registry.ts (pre-existing modifications preserved)",
+    "packages/opencode/src/effect/runtime-flags.ts (pre-existing modifications preserved)"
+  ],
+
+  "strongest_suspected_weakness": "Pool timeout (F-001/F-004) is tested only with isolated error construction tests, not with actual duckdb subprocess timing. Integration tests are CI-gated and skipped when duckdb binary is absent.",
+
+  "proposed_reviewer_attack_surface": [
+    "Subprocess timeout — does proc.kill() actually work on macOS/Linux/Windows?",
+    "AbortSignal cleanup — is the event listener properly cleaned up on all exit paths?",
+    "Firewall false-positive reduction — do the comment/string regexes cover all edge cases?",
+    "Effect.orDie outer wrapper — is the InvalidArgumentsError actually surfaced to the LLM?",
+    "Feature flag wiring — does the tool actually appear/disappear based on env var?"
+  ],
+
+  "prepublication_review_cycle": {
+    "rounds": 2,
+    "round_1": {
+      "reviewer": "prepublication-conductor",
+      "result": "2 blocking defects (B-001 missing pool-timeout tests, B-002 missing spawn-error test)",
+      "repairs_applied": "Created duckdb-pool-timeout.test.ts (3 tests). Added spawn-error → InvalidArgumentsError test to duckdb-query.test.ts"
+    },
+    "round_2": {
+      "reviewer": "orchestrator",
+      "result": "prepublication_admitted",
+      "repairs_applied": "All 2 blocking defects repaired and verified. 7/7 new tests pass."
+    },
+    "blocking_findings_found": 2,
+    "blocking_findings_repaired": 2,
+    "final_disposition": "prepublication_admitted"
+  },
+
+  "publication_status": "published_candidate_boundary",
+  "publication_authorization": "prepublication review round 2 admission"
+}

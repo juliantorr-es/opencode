@@ -1,0 +1,8 @@
+{"at":"2026-05-30T03:26:46.931Z","session_id":"ses_189156212ffeb6JMfrUZOPGZDv","agent":"validator","tool":"smart_grep","pattern":"(get|set)-(desktop-custom-agents|mcp-servers|desktop-plugin-config)","path":"packages/desktop/src/main/ipc.ts"}
+{"at":"2026-05-30T03:26:47.251Z","session_id":"ses_189156212ffeb6JMfrUZOPGZDv","agent":"validator","tool":"smart_grep","pattern":"try\\s*\\{","path":"packages/desktop/src/main/ipc.ts"}
+{"at":"2026-05-30T03:26:49.425Z","session_id":"ses_189156212ffeb6JMfrUZOPGZDv","agent":"validator","tool":"smart_grep","pattern":"desktop-custom-agents","path":"packages/desktop/src/main/ipc.ts"}
+{"at":"2026-05-30T03:26:49.713Z","session_id":"ses_189156212ffeb6JMfrUZOPGZDv","agent":"validator","tool":"smart_grep","pattern":"mcp-server","path":"packages/desktop/src/main/ipc.ts"}
+{"at":"2026-05-30T03:26:50.010Z","session_id":"ses_189156212ffeb6JMfrUZOPGZDv","agent":"validator","tool":"smart_grep","pattern":"plugin-config","path":"packages/desktop/src/main/ipc.ts"}
+{"at":"2026-05-30T03:26:58.372Z","session_id":"ses_189156212ffeb6JMfrUZOPGZDv","agent":"validator","tool":"smart_grep","pattern":"ipcMain.handle","path":"packages/desktop/src/main/ipc.ts"}
+{"at":"2026-05-30T03:28:03.746Z","session_id":"ses_189156212ffeb6JMfrUZOPGZDv","agent":"validator","tool":"smart_bun","command":"typecheck","elapsed_ms":9,"exit_code":1}
+{"at":"2026-05-30T03:28:12.626Z","session_id":"ses_189156212ffeb6JMfrUZOPGZDv","agent":"validator","tool":"smart_bun","command":"run","elapsed_ms":749,"exit_code":2}

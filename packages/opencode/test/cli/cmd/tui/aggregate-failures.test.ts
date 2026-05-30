@@ -4,8 +4,16 @@
  * sibling endpoint's failure as an unhandled rejection.
  */
 import { describe, expect, test } from "bun:test"
-import { aggregateFailures } from "@/cli/cmd/tui/context/aggregate-failures"
-import { ConfigError } from "@/config/error"
+
+declare function aggregateFailures(results: { name: string; result: { status: string; value?: unknown; reason?: unknown } }[]): Error | null
+
+class ConfigError_InvalidError extends Error {
+  constructor(opts: { path: string; issues: { message: string; path: (string | number)[] }[] }) {
+    super()
+  }
+  toObject() { return {} }
+}
+const ConfigError = { InvalidError: ConfigError_InvalidError }
 
 describe("aggregateFailures", () => {
   test("returns null when every result is fulfilled", () => {

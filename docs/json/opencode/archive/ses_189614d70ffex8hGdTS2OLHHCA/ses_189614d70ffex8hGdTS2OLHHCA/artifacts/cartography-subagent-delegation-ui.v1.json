@@ -1,0 +1,390 @@
+{
+  "schema": "rig.relay.cartography.v1",
+  "session": "current",
+  "wave": 1,
+  "lane": "subagent-delegation-ui",
+  "status": "complete",
+  "artifact_kind": "learning_artifact",
+  "generated_at": "2026-05-29T10:00:00Z",
+  "profiles": ["cartography", "architecture"],
+  "surface_map": {
+    "project_type": "monorepo (bun workspace)",
+    "package": {
+      "path": "packages/app",
+      "framework": "SolidJS 1.9.x",
+      "ui_library": "@kobalte/core (popover)",
+      "query_library": "@tanstack/solid-query",
+      "entry_point": "packages/app/src/components/prompt-input.tsx",
+      "test_runner": "vitest",
+      "test_config": "packages/app/vitest.config.ts",
+      "import_alias": {
+        "@/*": "packages/app/src/*",
+        "@opencode-ai/*": "node_modules/@opencode-ai/*"
+      }
+    },
+    "key_files": [
+      {
+        "path": "packages/app/src/components/prompt-input.tsx",
+        "role": "Main input component — 2155 lines, single PromptInput export",
+        "contains": [
+          "handleAtSelect (line 591)",
+          "atKey (line 600)",
+          "agentList (line 584)",
+          "handleSlashSelect (line 666)",
+          "createPill (line 697)",
+          "renderEditor (line 728)",
+          "parseFromDOM (line 800)",
+          "flushText/pushFile/pushAgent/visit (lines 805-862)",
+          "handleInput (line 882)",
+          "addPart (line 932)",
+          "handleKeyDown (line 1134)",
+          "agentsQuery/globalProvidersQuery/providersQuery (line 1296)",
+          "ComposerPickerItemState (line 1933)",
+          "ComposerPickerTriggerState (line 1940)",
+          "ComposerPickerState (line 1949)",
+          "ComposerAgentControlState (line 1964)",
+          "ComposerModelControlState (line 1973)",
+          "ComposerPickerTrigger (line 1986)",
+          "ComposerPickerMenuItem (line 2006)",
+          "ComposerPicker (line 2022)",
+          "ComposerAgentControl (line 2070)",
+          "ComposerModelControl (line 2093)"
+        ]
+      },
+      {
+        "path": "packages/app/src/components/prompt-input/slash-popover.tsx",
+        "role": "Popover component for @mentions and /commands",
+        "contains": [
+          "AtOption type (line 6): {type:'agent'|'file', name/path, display, recent?}",
+          "SlashCommand interface (line 10): {id, trigger, title, description, keybind, type, source}",
+          "PromptPopover component (line 36)"
+        ]
+      },
+      {
+        "path": "packages/app/src/context/prompt.tsx",
+        "role": "Prompt type definitions and session management",
+        "contains": [
+          "PartBase interface (line 9): {type, content, start, end}",
+          "TextPart (line 15), FileAttachmentPart (line 19), AgentPart (line 25), ImageAttachmentPart (line 30)",
+          "ContentPart = TextPart | FileAttachmentPart | AgentPart | ImageAttachmentPart (line 38)",
+          "Prompt = ContentPart[] (line 39)"
+        ]
+      },
+      {
+        "path": "packages/app/src/context/local.tsx",
+        "role": "Local state: agent selection, model selection",
+        "contains": [
+          "agent.list() (line 64): filters out subagents and hidden agents",
+          "agent.current()/set()/move(): agent cycling in composer bar",
+          "model.current()/set()/cycle(): model selection"
+        ]
+      },
+      {
+        "path": "packages/app/src/hooks/use-providers.ts",
+        "role": "Provider data hook wrapping useServerSync()",
+        "contains": [
+          "useProviders() returns: all(), default(), popular(), connected(), paid()"
+        ]
+      }
+    ],
+    "prompt_input_submodules": [
+      "prompt-input/editor-dom.ts",
+      "prompt-input/attachments.ts",
+      "prompt-input/files.ts",
+      "prompt-input/history.ts",
+      "prompt-input/submit.ts",
+      "prompt-input/slash-popover.tsx",
+      "prompt-input/context-items.tsx",
+      "prompt-input/image-attachments.ts",
+      "prompt-input/drag-overlay.ts",
+      "prompt-input/placeholder.ts",
+      "prompt-input/paste.ts",
+      "prompt-input/build-request-parts.ts"
+    ]
+  },
+  "dependency_graph": {
+    "consumers_of_prompt_input": [
+      { "file": "pages/session/composer/session-composer-region.tsx", "imports": "PromptInput" },
+      { "file": "pages/session/composer/session-composer-region.tsx", "imports": "FollowupDraft" },
+      { "file": "pages/session.tsx", "imports": "FollowupDraft, sendFollowupDraft" }
+    ],
+    "agent_data_flow": {
+      "source": "sdk.app.agents() via @opencode-ai/sdk/v2/client",
+      "query": "useQueryOptions().agents(pathKey(directory)) → agentsQuery",
+      "secondary_queries": [
+        "queryOptions.providers(null) → globalProvidersQuery",
+        "queryOptions.providers(pathKey(directory)) → providersQuery"
+      ],
+      "agent_memo": "line 584: sync.data.agent.filter(!hidden && mode!=='primary').map → AtOption[]",
+      "agent_names_memo": "line 589: local.agent.list() → string[]",
+      "filter_hook": "useFilteredList<AtOption> with groupBy: agent(0) > recent(1) > file(2)",
+      "display": "PromptPopover renders atFlat.slice(0,10) with brain icon + @name for agents"
+    },
+    "no_circular_dependencies": true,
+    "composer_controls": "All Composer* types and functions are PRIVATE to prompt-input.tsx — never exported or imported elsewhere"
+  },
+  "conventions": {
+    "popover_patterns": {
+      "prompt_popover": {
+        "file": "packages/app/src/components/prompt-input/slash-popover.tsx",
+        "pattern": "Custom absolute-positioned div, not KobaltePopover — positioned at -top-2 translate-y-full, no portal",
+        "renders": "<Switch> on props.popover value: 'at' | 'slash'",
+        "at_limit": "atFlat.slice(0, 10) — max 10 items shown in @ popover"
+      },
+      "composer_picker_popover": {
+        "file": "packages/app/src/components/prompt-input.tsx:2022",
+        "pattern": "Raw @kobalte/core/popover with Portal",
+        "props": "state-driven: open, placement, gutter, modal, onOpenChange",
+        "content": "Search input + <For each={items}> + bottom action item"
+      },
+      "kobalte_popover_import": "import { Popover as KobaltePopover } from \"@kobalte/core/popover\""
+    },
+    "at_mention_system": {
+      "trigger": "@ character in contenteditable editor",
+      "detection": "handleInput checks beforeCursor.lastIndexOf('@') vs lastIndexOf('/')",
+      "constraints": "query.length <= 100, no spaces or newlines after @",
+      "options": "agents first (rank 0), then recent files (rank 1), then all files (rank 2)",
+      "selection": "handleAtSelect calls addPart({ type:'agent', name, content }) or addPart({ type:'file', path, content })",
+      "dom_insert": "createPill creates <span data-type='agent' data-name='...' contenteditable=false>@name</span>",
+      "dom_readback": "parseFromDOM walks childNodes, identifies pills by el.dataset.type, calls pushFile/pushAgent"
+    },
+    "slash_command_system": {
+      "trigger": "/ character at cursor position 0 (start of editor)",
+      "detection": "handleInput checks beforeCursor.lastIndexOf('/'), cursor === 1 (empty editor with '/')",
+      "source": "useCommand().options filter: !disabled, !startsWith('suggested.'), has .slash field",
+      "types": "builtin (from command registry) and custom (from sync.data.command)",
+      "custom_sources": "\"command\" | \"mcp\" | \"skill\"",
+      "selection": "handleSlashSelect → clearEditor + command.trigger(cmd.id, 'slash') for builtins; setEditorText('/cmd ') for custom"
+    },
+    "agent_display": {
+      "composer_control": "ComposerAgentControl renders a Select dropdown with agent names as options",
+      "composer_control_state": "{ title, keybind, options: string[], current: string, style, onSelect }",
+      "agent_pill_in_editor": "@name shown as inline <span> with data-type='agent', contenteditable=false",
+      "local_context_agent_list": "local.agent.list() filters mode !== 'subagent' && !hidden (line 64 of local.tsx)"
+    }
+  },
+  "test_infrastructure": {
+    "test_runner": "vitest (packages/app/vitest.config.ts)",
+    "test_files_found": {
+      "prompt_input_direct": [],
+      "composer_related": [],
+      "agent_related": [],
+      "slash_popover": []
+    },
+    "no_tests_for_prompt_input": "No test files found for prompt-input, slash-popover, ComposerPicker, ComposerAgentControl, or ComposerModelControl. The prompt-input system has zero test coverage.",
+    "recommendation": "Tests should be added alongside the @general delegation feature. See out-of-scope finding."
+  },
+  "git_history": {
+    "slash_popover_creation": "2026-02-06 by Adam, extracted from monolithic prompt-input.tsx",
+    "slash_popover_evolution": "7 commits over 4 months, styling changes (bordered→CSS var shadow), agent/file rendering split",
+    "recent_agent_work": [
+      { "date": "2026-05-29", "sha": "069da3d78", "msg": "Phase 1 feature parity — agent config UI (dialog-edit-agent.tsx, dialog-manage-agents.tsx, settings-agents.tsx)" },
+      { "date": "2026-05-20", "sha": "ed839846d", "msg": "CLI: replace subagent tabs with on-demand picker" },
+      { "date": "2026-05-14", "sha": "22de34c4d", "msg": "feat: add experimental background subagents" }
+    ],
+    "no_diff_from_dev": "Current HEAD matches origin/dev for all prompt-input files"
+  },
+  "key_findings": [
+    {
+      "id": "A-001",
+      "severity": "foundation",
+      "category": "architecture",
+      "finding": "The @mention popover system supports two types: 'agent' and 'file'. Agent mentions are derived from sync.data.agent, filtered to exclude hidden agents and the 'primary' mode agent.",
+      "file": "packages/app/src/components/prompt-input.tsx",
+      "line": 584
+    },
+    {
+      "id": "A-002",
+      "severity": "foundation",
+      "category": "architecture",
+      "finding": "The agent list in the composer dropdown (ComposerAgentControl) uses local.agent.list() which filters mode !== 'subagent'. This means subagents are NOT shown in the composer dropdown.",
+      "file": "packages/app/src/context/local.tsx",
+      "line": 64
+    },
+    {
+      "id": "A-003",
+      "severity": "critical",
+      "category": "gap",
+      "finding": "There is NO existing @general mention in the desktop UI. The string '@general' does not appear in the components directory. The 'general' agent name only appears in settings (settings.general.*) — unrelated to the @mention system.",
+      "file": "packages/app/src/components",
+      "line": 0
+    },
+    {
+      "id": "A-004",
+      "severity": "critical",
+      "category": "gap",
+      "finding": "The AtOption type only supports 'agent' and 'file' discriminants. There is no 'subagent' or 'general' or delegation option type. To add @general or @agent delegate mentions, AtOption must be extended.",
+      "file": "packages/app/src/components/prompt-input/slash-popover.tsx",
+      "line": 6
+    },
+    {
+      "id": "A-005",
+      "severity": "foundation",
+      "category": "convention",
+      "finding": "The agent list for @mentions (agentList, line 584) filters !hidden && mode !== 'primary' from sync.data.agent. But the composer dropdown (local.agent.list, line 64 of local.tsx) filters mode !== 'subagent' && !hidden. These are different datasets — @mentions show the 'primary' agent inclusive, but exclude subagents via different criteria.",
+      "file": "packages/app/src/components/prompt-input.tsx",
+      "line": 584
+    },
+    {
+      "id": "A-006",
+      "severity": "important",
+      "category": "convention",
+      "finding": "The PromptPopover component renders @mentions in a custom positioned div (not Kobalte portal), limited to 10 items. Each agent item shows a brain icon + @name. File items show directory/filename with FileIcon. Agent items appear first (rank 0).",
+      "file": "packages/app/src/components/prompt-input/slash-popover.tsx",
+      "line": 36
+    },
+    {
+      "id": "A-007",
+      "severity": "important",
+      "category": "architecture",
+      "finding": "Keyboard navigation in @ popover: ArrowUp/ArrowDown/Enter/Tab navigate and select. Ctrl+N and Ctrl+P also navigate (vim-like). Tab selects the active popover item. Escape closes. The useFilteredList hook provides onKeyDown handler.",
+      "file": "packages/app/src/components/prompt-input.tsx",
+      "line": 1222
+    },
+    {
+      "id": "A-008",
+      "severity": "important",
+      "category": "architecture",
+      "finding": "Editor DOM model: contenteditable div with child nodes. Text is stored as text nodes. Agent/file @mentions are stored as <span data-type='agent|file'> with data-name/data-path attributes, contenteditable=false. The parseFromDOM function walks childNodes reading dataset attributes.",
+      "file": "packages/app/src/components/prompt-input.tsx",
+      "line": 800
+    },
+    {
+      "id": "A-009",
+      "severity": "important",
+      "category": "convention",
+      "finding": "The handleAtSelect function differentiates between agent and file types. When adding an agent part, it uses addPart({ type: 'agent', name: option.name, content: '@' + option.name }). The addPart function handles pill creation and DOM insertion, including replacing the '@query' text with the pill.",
+      "file": "packages/app/src/components/prompt-input.tsx",
+      "line": 591
+    },
+    {
+      "id": "A-010",
+      "severity": "foundation",
+      "category": "architecture",
+      "finding": "The handleInput function detects @ and / triggers by checking the text before the cursor. For @, it checks that no space or newline appears between @ and cursor. For /, it requires cursor to be exactly at position 1 (start of empty editor).",
+      "file": "packages/app/src/components/prompt-input.tsx",
+      "line": 891
+    },
+    {
+      "id": "A-011",
+      "severity": "foundation",
+      "category": "architecture",
+      "finding": "ComposerAgentControl renders a Select dropdown populated with agent names from local.agent.list(). It has a sliders icon and a TooltipKeybind. ComposerModelControl renders either a ModelSelectorPopover (paid) or a Button (unpaid). Both are state-driven and private to prompt-input.tsx.",
+      "file": "packages/app/src/components/prompt-input.tsx",
+      "line": 2070
+    },
+    {
+      "id": "A-012",
+      "severity": "debt",
+      "category": "coverage",
+      "finding": "Zero test coverage for the @mention system, slash commands, or composer controls. No test files found for prompt-input, slash-popover, ComposerPicker, or any agent display component.",
+      "file": "packages/app/tests"
+    }
+  ],
+  "smoking_guns": [
+    {
+      "id": "SG-001",
+      "severity": "blocker",
+      "finding": "No existing @general agent mention in desktop UI. The @general suggestion in the prompt is not implemented.",
+      "files": ["packages/app/src/components/prompt-input/slash-popover.tsx", "packages/app/src/components/prompt-input.tsx"],
+      "fix": "Add {type:'general'} or {type:'subagent'} discriminant to AtOption, wire into agentList/query pipeline"
+    },
+    {
+      "id": "SG-002",
+      "severity": "blocker",
+      "finding": "AtOption type (line 6 of slash-popover.tsx) only supports 'agent' | 'file'. Cannot represent subagent delegates. Must add a new discriminant for delegation targets.",
+      "files": ["packages/app/src/components/prompt-input/slash-popover.tsx:6"],
+      "fix": "Extend AtOption: { type: 'agent' | 'file' | 'delegate'; name: string; display: string; delegate?: string }"
+    },
+    {
+      "id": "SG-003",
+      "severity": "important",
+      "finding": "Two different agent list filters exist: agentList (line 584) filters !hidden && mode !== 'primary' for @mentions, while local.agent.list() (local.tsx:64) filters mode !== 'subagent' && !hidden for the composer dropdown. These serve different purposes but use different exclusion logic.",
+      "files": ["packages/app/src/components/prompt-input.tsx:584", "packages/app/src/context/local.tsx:64"],
+      "fix": "Add a third agent list for delegation or unify the filter logic with a type parameter"
+    },
+    {
+      "id": "SG-004",
+      "severity": "important",
+      "finding": "The @mention query system is coupled to file search (files.searchFilesAndDirectories). The items async function merges agents + pinned files + file search results. Adding a new @mention type would need to be added alongside, not inside, the file search pipeline.",
+      "files": ["packages/app/src/components/prompt-input.tsx:611"],
+      "fix": "Separate agent/delegate options from file options in the useFilteredList items function"
+    },
+    {
+      "id": "SG-005",
+      "severity": "debt",
+      "finding": "Zero tests for the entire @mention/slash/agent display system. Any delegation feature lands without regression safety.",
+      "files": ["packages/app/tests"],
+      "fix": "Add tests for handleAtSelect, handleSlashSelect, addPart, createPill, parseFromDOM, and PromptPopover rendering"
+    }
+  ],
+  "extension_points": {
+    "adding_new_at_types": {
+      "steps": [
+        "1. Extend AtOption type in slash-popover.tsx — add new discriminant (e.g., {type:'delegate', name, display, delegate?})",
+        "2. Add rendering branch in PromptPopover <Match when='at'> for the new type",
+        "3. Add agent source to agentList/agentNames memos or create a new delegateList memo",
+        "4. Add the new type to atKey function for filtering",
+        "5. Handle selection in handleAtSelect — create appropriate ContentPart type or reuse AgentPart",
+        "6. Add the new type to createPill with appropriate data attributes",
+        "7. Add DOM parsing in pushAgent/pushFile or create pushDelegate in parseFromDOM",
+        "8. Add the new part type to ContentPart union in context/prompt.tsx (if needed)",
+        "9. Wire keyboard navigation — already handled generically via useFilteredList",
+        "10. Add i18n strings for the new type's popover display"
+      ],
+      "minimal_changeset": [
+        "slash-popover.tsx:6 (AtOption type)",
+        "slash-popover.tsx:69 (_Match when='at' agent branch clone at line 69)",
+        "prompt-input.tsx:584 (agentList or new delegateList memo)",
+        "prompt-input.tsx:600 (atKey for new type)",
+        "prompt-input.tsx:591 (handleAtSelect for new type)",
+        "prompt-input.tsx:697 (createPill for new type)",
+        "prompt-input.tsx:815 (pushFile/pushAgent/pushDelegate in parseFromDOM)",
+        "context/prompt.tsx:25 (AgentPart or new DelegatePart type)",
+        "context/prompt.tsx:38 (ContentPart union)"
+      ]
+    },
+    "composer_agent_control_extension": {
+      "approach": "ComposerAgentControl already renders a Select with agent names. To add subagent delegation, add a second control or enhance the existing one with a popover/toggle for delegation type.",
+      "state_shape": "ComposerAgentControlState would need {..., delegateOptions?: string[], delegateCurrent?: string, onDelegateSelect?: (value) => void }"
+    }
+  },
+  "i18n_touch_points": [
+    {
+      "key": "prompt.popover.emptyResults",
+      "file": "packages/app/src/components/prompt-input/slash-popover.tsx:52",
+      "usage": "Shown when atFlat has no results (empty @ query)"
+    },
+    {
+      "key": "prompt.popover.emptyCommands",
+      "file": "packages/app/src/components/prompt-input/slash-popover.tsx:108",
+      "usage": "Shown when slashFlat has no results"
+    },
+    {
+      "key": "prompt.slash.badge.skill / .mcp / .custom",
+      "file": "packages/app/src/components/prompt-input/slash-popover.tsx:120",
+      "usage": "Badge labels for custom slash command sources"
+    },
+    {
+      "key": "prompt.placeholder",
+      "file": "packages/app/src/components/prompt-input/placeholder.ts",
+      "usage": "Placeholder text for the editor"
+    },
+    {
+      "key": "New i18n needed for delegation",
+      "note": "When adding delegate @mentions, new i18n keys will be needed for: popover labels, empty states, and tooltip keybinds"
+    }
+  ],
+  "out_of_scope_findings_recorded": [
+    {
+      "id": "OOS-001",
+      "finding": "Zero test coverage for the @mention system, slash commands, and composer agent controls — must add tests alongside delegation feature",
+      "file": "packages/app/components/prompt-input",
+      "recommended_slice": "Add component tests for handleAtSelect, handleSlashSelect, addPart, createPill, parseFromDOM, and PromptPopover rendering"
+    }
+  ],
+  "files_created": ["docs/json/opencode/sessions/current/cartography-subagent-delegation-ui.v1.json"],
+  "files_modified": [],
+  "blockers": [],
+  "dirty_files_preserved": []
+}

@@ -1,0 +1,8 @@
+{"at":"2026-05-30T07:05:03.528Z","session_id":"ses_1884e4762ffeGNcTeqW84qB1Z2","agent":"memory-leak-hunter","tool":"smart_grep","phase":"started","detail":"Deferred\\.(succeed|fail|complete|die)"}
+{"at":"2026-05-30T07:05:03.596Z","session_id":"ses_1884e4762ffeGNcTeqW84qB1Z2","agent":"memory-leak-hunter","tool":"smart_grep","phase":"completed","detail":"Deferred\\.(succeed|fail|complete|die)"}
+{"at":"2026-05-30T07:05:03.603Z","session_id":"ses_1884e4762ffeGNcTeqW84qB1Z2","agent":"memory-leak-hunter","tool":"smart_grep","phase":"started","detail":"Ref\\.get.*cache"}
+{"at":"2026-05-30T07:05:03.665Z","session_id":"ses_1884e4762ffeGNcTeqW84qB1Z2","agent":"memory-leak-hunter","tool":"smart_grep","phase":"completed","detail":"Ref\\.get.*cache"}
+{"at":"2026-05-30T07:05:07.218Z","session_id":"ses_1884e4762ffeGNcTeqW84qB1Z2","agent":"memory-leak-hunter","tool":"smart_grep","phase":"started","detail":"cache\\.stats\\b|\\.stats\\(\\)"}
+{"at":"2026-05-30T07:05:07.281Z","session_id":"ses_1884e4762ffeGNcTeqW84qB1Z2","agent":"memory-leak-hunter","tool":"smart_grep","phase":"completed","detail":"cache\\.stats\\b|\\.stats\\(\\)"}
+{"at":"2026-05-30T07:05:07.557Z","session_id":"ses_1884e4762ffeGNcTeqW84qB1Z2","agent":"memory-leak-hunter","tool":"smart_grep","phase":"started","detail":"Effect\\.exit\\("}
+{"at":"2026-05-30T07:05:07.611Z","session_id":"ses_1884e4762ffeGNcTeqW84qB1Z2","agent":"memory-leak-hunter","tool":"smart_grep","phase":"completed","detail":"Effect\\.exit\\("}

@@ -71,7 +71,7 @@ export const DuckDBQueryTool = Tool.define(
             },
             output: JSON.stringify(rows, null, 2),
           }
-        }),
+        }).pipe(Effect.orDie),
     }
   }),
 )

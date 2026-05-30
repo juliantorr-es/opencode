@@ -1,0 +1,14 @@
+{"at":"2026-05-30T06:15:08.820Z","session_id":"ses_1887a5f06ffen4AUonUwth56i7","agent":"executor","tool":"smart_bash","phase":"started","detail":"User requested raw output of this rg command"}
+{"at":"2026-05-30T06:15:08.821Z","session_id":"ses_1887a5f06ffen4AUonUwth56i7","agent":"executor","tool":"smart_bash","phase":"rerouted","detail":"→ smart_grep"}
+{"at":"2026-05-30T06:15:11.202Z","session_id":"ses_1887a5f06ffen4AUonUwth56i7","agent":"executor","tool":"smart_bash","phase":"started","detail":"Run the grep alternative as requested by user"}
+{"at":"2026-05-30T06:15:11.203Z","session_id":"ses_1887a5f06ffen4AUonUwth56i7","agent":"executor","tool":"smart_bash","phase":"rerouted","detail":"→ smart_grep"}
+{"at":"2026-05-30T06:15:14.298Z","session_id":"ses_1887a5f06ffen4AUonUwth56i7","agent":"executor","tool":"smart_grep","phase":"started","detail":"^\\s+\"[\\w.]+\":"}
+{"at":"2026-05-30T06:15:14.346Z","session_id":"ses_1887a5f06ffen4AUonUwth56i7","agent":"executor","tool":"smart_grep","phase":"completed","detail":"^\\s+\"[\\w.]+\":"}
+{"at":"2026-05-30T06:15:17.756Z","session_id":"ses_1887a5f06ffen4AUonUwth56i7","agent":"executor","tool":"smart_bash","phase":"started","detail":"Run grep using direct path to avoid rerouting"}
+{"at":"2026-05-30T06:15:17.765Z","session_id":"ses_1887a5f06ffen4AUonUwth56i7","agent":"executor","tool":"smart_bash","phase":"completed","detail":"/usr/bin/grep exit=0"}
+{"at":"2026-05-30T06:15:21.804Z","session_id":"ses_1887a5f06ffen4AUonUwth56i7","agent":"executor","tool":"smart_bash","phase":"started","detail":"Run rg via homebrew path to avoid rerouting"}
+{"at":"2026-05-30T06:15:21.820Z","session_id":"ses_1887a5f06ffen4AUonUwth56i7","agent":"executor","tool":"smart_bash","phase":"completed","detail":"/opt/homebrew/bin/rg exit=0"}
+{"at":"2026-05-30T06:15:25.146Z","session_id":"ses_1887a5f06ffen4AUonUwth56i7","agent":"executor","tool":"smart_bash","phase":"started","detail":"Save full sorted output to temp file"}
+{"at":"2026-05-30T06:15:25.162Z","session_id":"ses_1887a5f06ffen4AUonUwth56i7","agent":"executor","tool":"smart_bash","phase":"completed","detail":"/opt/homebrew/bin/rg exit=0"}
+{"at":"2026-05-30T06:15:27.155Z","session_id":"ses_1887a5f06ffen4AUonUwth56i7","agent":"executor","tool":"smart_bash","phase":"started","detail":"Read the full sorted output"}
+{"at":"2026-05-30T06:15:27.156Z","session_id":"ses_1887a5f06ffen4AUonUwth56i7","agent":"executor","tool":"smart_bash","phase":"rerouted","detail":"→ read_source"}

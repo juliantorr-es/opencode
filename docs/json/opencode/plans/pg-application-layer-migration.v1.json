@@ -1,0 +1,19 @@
+{
+  "schema_version": "v1",
+  "plan_id": "pg-application-layer-migration",
+  "plan_revision": 1,
+  "title": "PG application layer migration — switch imports to .pg.sql.ts bridge files",
+  "boundary": "pg-application-layer-migration",
+  "consumer_purpose": "Enable production code to reference Postgres-variant schema files (.pg.sql.ts) for future PG-native table definitions",
+  "claim_atoms": [
+    "All CLEAN production code files that import from .sql.ts will switch to .pg.sql.ts",
+    "All 6 existing .pg.sql.ts bridge files re-export from .sql.ts — no behavior change",
+    "1 new bridge file created for sync/event.sql.ts",
+    "DIRTY files (session/, storage/, project/, data-migration/, control-plane/) will NOT be touched",
+    "adapter.ts dual-write architecture is already sufficient — no changes needed"
+  ],
+  "content": "## PG Application Layer Migration Plan\n\n### Rationale\nThe codebase already has 6 .pg.sql.ts bridge files that re-export from .sql.ts sources. These provide an import-path abstraction layer: when true PG table definitions are needed, only the .pg.sql.ts files change.\n\n### What changes\n1. **Create** `packages/opencode/src/sync/event.pg.sql.ts` — bridge re-exporting EventSequenceTable and EventTable from event.sql\n2. **Change imports** in 5 CLEAN files from .sql to .pg.sql:\n   - session/projectors.ts:  `./session.sql` → `./session.pg.sql`, `@/control-plane/workspace.sql` → `@/control-plane/workspace.pg.sql`\n   - worktree/index.ts:  `../project/project.sql` → `../project/project.pg.sql`\n   - account/repo.ts:  `./account.sql` → `./account.pg.sql`\n   - share/share-next.ts:  `./share.sql` → `./share.pg.sql`\n   - sync/index.ts:  `./event.sql` → `./event.pg.sql`\n\n### What stays\n- adapter.ts already has SQLite/PG adapter selection — no DualWriteAdapter needed for this phase\n- DIRTY files (session/, storage/, project/, data-migration/, control-plane/) are left untouched\n- storage/schema.ts is dirty and stays on .sql imports for now\n\n### Verification\n- `bun typecheck` from packages/opencode/",
+  "status": "proposed",
+  "created_at": "2026-05-30T07:49:23.518540+00:00",
+  "modified_at": "2026-05-30T07:49:23.518915+00:00"
+}

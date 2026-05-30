@@ -7,7 +7,7 @@ import type { Permission } from "../permission"
 import type { ProjectID } from "../project/schema"
 import type { SessionID, MessageID, PartID } from "./schema"
 import type { WorkspaceID } from "../control-plane/schema"
-import { Timestamps } from "../storage/schema.sql"
+import { TimestampsPg } from "../storage/schema.pg.sql"
 
 type PartData = Omit<MessageV2.Part, "id" | "sessionID" | "messageID">
 type InfoData<T extends MessageV2.Info = MessageV2.Info> = T extends unknown ? Omit<T, "id" | "sessionID"> : never
@@ -47,7 +47,7 @@ export const SessionTable = sqliteTable(
       providerID: string
       variant?: string
     }>(),
-    ...Timestamps,
+    ...TimestampsPg,
     time_compacting: integer(),
     time_archived: integer(),
   },
@@ -66,7 +66,7 @@ export const MessageTable = sqliteTable(
       .$type<SessionID>()
       .notNull()
       .references(() => SessionTable.id, { onDelete: "cascade" }),
-    ...Timestamps,
+    ...TimestampsPg,
     data: text({ mode: "json" }).notNull().$type<InfoData>(),
   },
   (table) => [index("message_session_time_created_id_idx").on(table.session_id, table.time_created, table.id)],
@@ -81,7 +81,7 @@ export const PartTable = sqliteTable(
       .notNull()
       .references(() => MessageTable.id, { onDelete: "cascade" }),
     session_id: text().$type<SessionID>().notNull(),
-    ...Timestamps,
+    ...TimestampsPg,
     data: text({ mode: "json" }).notNull().$type<PartData>(),
   },
   (table) => [
@@ -101,7 +101,7 @@ export const TodoTable = sqliteTable(
     status: text().notNull(),
     priority: text().notNull(),
     position: integer().notNull(),
-    ...Timestamps,
+    ...TimestampsPg,
   },
   (table) => [
     primaryKey({ columns: [table.session_id, table.position] }),
@@ -118,7 +118,7 @@ export const SessionMessageTable = sqliteTable(
       .notNull()
       .references(() => SessionTable.id, { onDelete: "cascade" }),
     type: text().$type<SessionMessage.Type>().notNull(),
-    ...Timestamps,
+    ...TimestampsPg,
     data: text({ mode: "json" }).notNull().$type<SessionMessageData>(),
   },
   (table) => [
@@ -132,6 +132,6 @@ export const PermissionTable = sqliteTable("permission", {
   project_id: text()
     .primaryKey()
     .references(() => ProjectTable.id, { onDelete: "cascade" }),
-  ...Timestamps,
+  ...TimestampsPg,
   data: text({ mode: "json" }).notNull().$type<Permission.Ruleset>(),
 })

@@ -68,7 +68,7 @@ const emitDeepLinks = (urls: string[]) => {
 }
 
 const listenForDeepLinks = () => {
-  void window.api.consumeInitialDeepLinks().then((urls) => emitDeepLinks(urls))
+  void window.api.consumeInitialDeepLinks().then((urls) => emitDeepLinks(urls)).catch(err => console.error("Failed to consume initial deep links:", err))
   return window.api.onDeepLink((urls) => emitDeepLinks(urls))
 }
 
@@ -365,6 +365,8 @@ render(() => {
       if (id === "open-plugin-manager") {
         void import("./dialog-manage-plugins").then((x) => {
           dialog.show(() => <x.DialogManagePlugins />)
+        }).catch((e) => {
+          console.error("Failed to load plugin manager dialog:", e)
         })
         return
       }

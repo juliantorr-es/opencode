@@ -1,0 +1,92 @@
+{
+  "schema": "rig.relay.concurrency_stress_findings.v1",
+  "target": "packages/opencode/src/tool/cache.ts",
+  "analyzed_at": "2026-05-30T00:00:00Z",
+  "ref_semantics": {
+    "implementation": "Effect.sync(() => { self.ref.current = f(self.ref.current) }) — synchronous read-modify-write, NO CAS loop, NO locking",
+    "get_returns": "self.ref.current — actual reference to mutable value (not a copy)",
+    "implication": "Mutating a Map returned by Ref.get mutates the Ref's internal state directly; Ref.update is a blind write with no compare-and-swap"
+  },
+  "findings": [
+    {
+      "id": "CACHE-RACE-001",
+      "scenario": "Two fibers, same key, concurrent getOrCompute",
+      "race_window": "Line 111 → Line 112: between `const d = yield* Deferred.make<any>()` (yield point) and `pending.set(key, d)` (direct mutation of inflight map). Lines 100-106 are the inflight dedup check.",
+      "effect": "Both fibers read the inflight Map at line 100 while it is empty for the key. At line 111, Fiber A yields to create Deferred d1. Fiber B runs, reads the same inflight Map (still empty because d1 hasn't been set yet), creates d2. Both fibers' `pending.set(key, d)` at line 112 execute — whichever runs last overwrites the other in the inflight map. BOTH fibers proceed to compute() at line 114, wasting one full computation. Each resolves its own Deferred, so no waiting fiber hangs, but the dedup is defeated.",
+      "severity": "major",
+      "finding": "The inflight deduplication (lines 100-106) has a race window between Deferred.make (line 111) and the actual map insertion (line 112). Two fibers racing on the same key will both miss the dedup check and both compute. The last `pending.set(key, d)` wins, leaving one Deferred orphaned. Fix: atomically insert into the inflight map BEFORE creating the Deferred, using `Ref.update` with an atomic conditional check."
+    },
+    {
+      "id": "CACHE-RACE-002",
+      "scenario": "Concurrent getOrCompute + invalidate — cache hit promotion lost",
+      "race_window": "Line 77 → Lines 82-83: `const map = yield* Ref.get(cache)` gets the Map, then `map.delete(key); map.set(key, entry)` mutates it. Between these, `invalidate()` at line 170 does `Ref.set(cache, new Map())`.",
+      "effect": "Fiber A hits at line 79-86. It reads the cache Map (M1) at line 77, then at lines 82-83 promotes the entry by mutating M1 in-place. If Fiber B calls `invalidate()` at line 170 between lines 77 and 82-83, the cache Ref now holds M2 (new empty Map). Fiber A's mutations are on the orphaned M1 — the promotion is completely lost. The return value at line 86 is still correct (read from the entry at line 78), but the entry's MRU position is gone. Also, `estimatedBytes` goes negative: invalidate sets it to 0, then Fiber A's line 90 (`Ref.update(estimatedBytes, (b) => b - entry.size)`) subtracts from 0, making it -entry.size until the next recalculation at line 156.",
+      "severity": "major",
+      "finding": "The hit promotion (lines 82-83) and expired cleanup (lines 89-90) mutate a local snapshot obtained via `Ref.get`, not through `Ref.update`. If `invalidate()` replaces the cache Map between Ref.get and the mutation, the promotion is lost and estimatedBytes goes negative. Fix: all mutations of the cache Map should go through `Ref.update` so they compose atomically with invalidation."
+    },
+    {
+      "id": "CACHE-RACE-003",
+      "scenario": "Concurrent getOrCompute for different keys — estimatedBytes double-write",
+      "race_window": "Lines 155-156: `const currentMap = yield* Ref.get(cache)` then `yield* Ref.set(estimatedBytes, recalcBytes(currentMap))`. Between these two lines, another fiber may modify the cache.",
+      "effect": "Two fibers A (key X) and B (key Y) both reach line 155. A reads the cache (has X), sets estimatedBytes to size(X). B reads the cache (has X+Y because both `Ref.update(cache, ...)` at line 131 completed), sets estimatedBytes to size(X+Y). If B's read happens after A's write, estimatedBytes is correct (X+Y). But if A reads AFTER B's insertion, but B writes BEFORE A, the sequence can be: A reads cache (size_X), B reads cache (size_X+Y), B sets estimatedBytes=size_X+Y, A sets estimatedBytes=size_X. Final state: estimatedBytes=size_X when cache has X+Y. The inconsistency is temporary until the next insert triggers a recalculation.",
+      "severity": "minor",
+      "finding": "estimatedBytes is set via `Ref.set` after a separate `Ref.get(cache)`, creating a TOCTOU window. A concurrent fiber may add entries between the read and write. The final value may undercount. Fix: combine the read and write into a single `Ref.update(cache, fn)` that also returns the recalculated bytes, or use `SynchronizedRef` for the cache/estimatedBytes pair."
+    },
+    {
+      "id": "CACHE-RACE-004",
+      "scenario": "Many concurrent getOrComputes for different keys filling the cache — LRU eviction races",
+      "race_window": "Lines 131-146: `Ref.update(cache, (m) => { ... evict loop ...; m.set(key, entry); return m })`. The eviction loop (lines 132-143) operates on a per-fiber snapshot within the update function.",
+      "effect": "With `maxEntries=1000` and 10 concurrent fibers adding 10 different keys to a full cache, each fiber's `Ref.update` does its own eviction. Since `Ref.update` is a synchronous `self.ref.current = fn(self.ref.current)` with no CAS, concurrent updates can write-write conflict. Fiber A reads the map (1000 entries), evicts 1, inserts key_A → m now has 1000 entries. Fiber B reads the map (Fiber A's updated m, same reference because mutated in-place), evicts 1, inserts key_B → m still has 1000 entries. The net result is correct because both mutate the SAME Map object in-place — the blind write `self.ref.current = m` is a no-op since m is already the reference in cache.ref.current. However, the ref.update function is re-executed as many times as there are fibers, each doing its own eviction + insertion. No eviction is lost, but each fiber's `evictedCount` reflects only its own evictions. Combined they are correct. **However**, if `invalidate()` (Ref.set with `new Map()`) occurs concurrently, the blind write in Ref.update becomes destructive — it replaces the new empty Map with the fiber's mutated old Map, resurrecting stale entries.",
+      "severity": "major",
+      "finding": "The `Ref.update(cache, fn)` pattern is safe under concurrent in-place mutations because all fibers mutate the same Map reference. However, if `invalidate()` (line 170) replaces the cache Ref with `new Map()` while fibers are in-flight, those fibers' subsequent `Ref.update(cache, fn)` will overwrite the empty map with their per-fiber snapshot, resurrecting entries that should have been cleared. This is a data integrity issue. Fix: use `SynchronizedRef` for the cache, or replace the `Ref.set(new Map())` pattern in invalidate with `Ref.update(cache, (m) => { m.clear(); return m })`."
+    },
+    {
+      "id": "CACHE-RACE-005",
+      "scenario": "Concurrent getOrCompute where one compute fails (defects) — DEADLOCK",
+      "race_window": "Lines 111 → 126/158: Deferred `d` is created at line 111, set into inflight at line 112, and resolved ONLY at lines 126 or 158 after a successful compute. If compute at line 114 fails, neither line 126 nor 158 executes.",
+      "effect": "Fiber A creates Deferred `d` and puts it in inflight. Fiber B arrives for the same key, finds `d` in inflight at line 101-102, and awaits `d` at line 105. Fiber A's compute at line 114 fails with a defect. The `ensuring` block (lines 116-119) runs and removes the key from inflight. The error propagates through `yield* compute()` at line 114, skipping lines 123-166 entirely. `Deferred.succeed(d, result)` is NEVER called. Fiber B is now stuck at line 105 (`yield* Deferred.await(existing)`) forever. The Deferred is never resolved and never failed — it's pending for the lifetime of the process. If multiple fibers arrived during the inflight window, ALL of them deadlock.",
+      "severity": "blocker",
+      "finding": "When compute() fails at line 114, the Deferred placed in inflight at line 112 is never resolved (succeed or fail). Any fiber waiting on it via the dedup path (line 105) will deadlock forever. This is a permanent resource leak. Fix: (a) use `Deferred.fail` or `Deferred.die` in an `Effect.onError` / `Effect.catchAll` on the compute, or (b) use `Effect.cached` from Effect's standard library which handles this correctly, or (c) use `Deferred.completeWith` with the compute Effect so the Deferred automatically mirrors the compute outcome."
+    },
+    {
+      "id": "CACHE-RACE-006",
+      "scenario": "Concurrent invalidation of key that's being computed — invalidation lost",
+      "race_window": "Lines 174-182 (invalidateKey) → Lines 114-144 (compute → cache insert). Fiber A is computing key X. Fiber B calls invalidateKey(X) or invalidate(). Neither checks the inflight map.",
+      "effect": "Fiber A starts computing key X at line 114. Fiber B calls `invalidateKey(X)` at line 176. The cache Ref has no entry for X yet (Fiber A hasn't reached line 131). `invalidateKey` deletes nothing. Or Fiber B calls `invalidate()` at line 170, replacing the cache with an empty Map. Fiber A finishes compute, reaches line 131, and inserts the entry for X into whatever Map is currently in the cache Ref. If `invalidate()` ran, Fiber A's `Ref.update(cache, fn)` reads the new empty Map, adds the entry, and writes it back. Result: the invalidation is completely undone — the entry for X is cached despite being 'invalidated' during its computation. The inflight map is never consulted by invalidation operations.",
+      "severity": "major",
+      "finding": "Invalidate and invalidateKey (lines 169-182) only clear the cache Map, not the inflight map. A computation that is already running will insert its result into the cache after invalidation, silently re-populating the supposedly-cleared entry. Users who invalidate a key to force a fresh computation will be surprised when the stale result is cached. Fix: invalidateKey should also fail the in-flight Deferred and delete from inflight, or set a tombstone that getOrCompute checks before inserting."
+    },
+    {
+      "id": "CACHE-RACE-007",
+      "scenario": "Concurrent stats() while heavy operations are running — inconsistent snapshot",
+      "race_window": "Lines 186-192: `Effect.all` reads `hits`, `misses`, `evictions`, `estimatedBytes`, `cache` sequentially. Between each read, fibers interleave.",
+      "effect": "stats() reads five Refs sequentially via `Effect.all` (which runs effects in sequence by default). Fiber A runs stats(): reads hits=5 (yield), fiber B does a getOrCompute that increments misses and evictions, fiber A resumes and reads misses=2, evictions=1, estimatedBytes=4096, cache='{size:3}'. The returned stats show hits=5 (from before fiber B), misses=2 (after fiber B), evictions=1 (after fiber B), cache size=3 (after fiber B). The cache size (3) minus hits (5) = 2 entries that supposedly were misses but the stats show only 2 misses. Not a catastrophically broken invariant but inconsistent: hits+misses != total_operations for that instant. More critically, estimatedBytes may not match the cache map contents.",
+      "severity": "minor",
+      "finding": "stats() at lines 184-200 reads each Ref sequentially without a global snapshot. Under concurrent load, the returned values are from different points in time. hits+misses may not equal total lookups, and estimatedBytes may disagree with cache contents. Fix: use `SynchronizedRef` with a shared lock, or accept the relaxed consistency and document it."
+    },
+    {
+      "id": "CACHE-RACE-008",
+      "scenario": "Ref.update is blind assignment — concurrent overwrite danger with Ref.set",
+      "race_window": "Line 131 (`Ref.update(cache, fn)`) implementation: `self.ref.current = fn(self.ref.current)`. This is a blind read-modify-write with NO CAS.",
+      "effect": "The implications of the blind assignment in `Ref.update` are minimal when ALL mutations are in-place on the same Map object — the write `self.ref.current = m` is a no-op since `m` is already the reference in `self.ref.current`. But the moment any code uses `Ref.set(cache, new Map())` (like `invalidate()` at line 170), concurrent `Ref.update` calls become dangerous: Fiber A's update function runs on m1 (old Map), Fiber B calls invalidate (Ref.set to m2, new Map), Fiber A's update finishes and does `self.ref.current = m1` — this OVERWRITES m2 with m1, resurrecting all stale entries. This completely breaks the cache consistency.",
+      "severity": "blocker",
+      "finding": "The blind assignment in `Ref.update` (`self.ref.current = f(self.ref.current)`) combined with `Ref.set(new Map())` in invalidate creates a write-write conflict: a concurrent fiber's update function can resurrect the stale Map after invalidate cleared it. `Ref.update` should use CAS (compare-and-swap) or the cache should use `SynchronizedRef` which provides proper locked read-modify-write. Fix: replace `Ref.set(cache, new Map())` in invalidate with `Ref.update(cache, (m) => { m.clear(); return m })` (mutate in-place instead of replacing). This works because all concurrent `Ref.update` calls mutate the same in-place object."
+    },
+    {
+      "id": "CACHE-RACE-009",
+      "scenario": "inflight Map mutated via Ref.get + direct .set() — bypasses Ref abstraction",
+      "race_window": "Lines 100-112: `const pending = yield* Ref.get(inflight)` then `pending.set(key, d)`. The Map is mutated directly without going through `Ref.update`.",
+      "effect": "`pending` is the actual Map reference stored in the `inflight` Ref (since `Ref.get` returns `self.ref.current`). `pending.set(key, d)` mutates the Ref's internal state by side effect, bypassing the Ref API. The cleanup at lines 116-119 uses `Ref.update(inflight, ...)` which is the proper path. This asymmetry means: (a) the inflight map is mutated by side effect for insertion but via `Ref.update` for deletion — any reader not expecting this pattern would miss the insertion; (b) if anyone ever replaces the inflight Map with `Ref.set(inflight, new Map())`, the direct mutation at line 112 would be orphaned. Currently no code does this, so it's safe but fragile.",
+      "severity": "informational",
+      "finding": "The inflight Map is mutated via `Ref.get().set()` (line 112) but cleaned up via `Ref.update` (lines 116-119). This asymmetric pattern works because Ref.get returns the actual reference. It's a code smell that should be unified to always go through `Ref.update` for both insert and delete. This prevents breakage if the Ref implementation changes to return copies."
+    },
+    {
+      "id": "CACHE-RACE-010",
+      "scenario": "estimatedBytes double-subtraction on concurrent expired entry handling",
+      "race_window": "Lines 89-90: two fibers both find the same expired entry in the cache and both subtract from estimatedBytes.",
+      "effect": "Two fibers A and B both call getOrCompute for key X. Both find the same expired entry at line 80 (expiresAt <= t). Both delete from their local snapshot at line 89. Both call `Ref.update(estimatedBytes, (b) => b - entry.size)` at line 90 — DOUBLE SUBTRACTION. Then both call `Ref.update(cache, ...)` at line 131 — but only one will actually delete it from the cache (the first one runs, evictCount=1; the second retries with the updated map where X is already gone, evictCount=0). The estimatedBytes is now undercounted by entry.size. It's corrected at line 156 (`Ref.set(estimatedBytes, recalcBytes(...))`), but there's a window where estimatedBytes is wrong.",
+      "severity": "minor",
+      "finding": "Two concurrent fibers both finding the same expired entry will both subtract from estimatedBytes at line 90. The double subtraction is corrected at line 156 when the full recalculation runs, but between lines 90 and 156, estimatedBytes is undercounted. Fix: line 90 is unnecessary if line 156 always follows (which it does when size <= maxEntrySize). Remove the speculative subtraction at line 90 and rely on the full recalculation at line 156."
+    }
+  ]
+}

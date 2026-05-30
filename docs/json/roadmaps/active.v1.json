@@ -1,0 +1,368 @@
+{
+  "schema_version": "v1",
+  "title": "opencode-desktop Phase 3 Roadmap",
+  "phases": {
+    "3-0": "Cross-Session Infrastructure",
+    "3-1": "Postgres Migration",
+    "3-2": "Decouple Bootstrap & Config",
+    "3-3": "Audit Product-Shape Hardcoding",
+    "3-4": "Dialog Component Tests",
+    "3-5": "Localization Completion"
+  },
+  "items": [
+    {
+      "id": "CI-001",
+      "title": "Telemetry dashboard — heartbeat collection + task_board fleet view",
+      "phase": "3-0",
+      "priority": 1,
+      "status": "completed",
+      "completion_pct": 100,
+      "depends_on": [],
+      "effort": "moderate",
+      "context_summary": "Add heartbeat.v1.jsonl emission to all smart tools, enhance task_board to read heartbeats and show fleet status with per-agent phase timelines and stale detection.",
+      "next_step": "Done. Verify in next session.",
+      "sessions": [
+        {
+          "ref": "current",
+          "note": "Heartbeat added to 6 smart tools, task_board enhanced with fleet+alerts",
+          "pct": 100
+        },
+        {
+          "ref": "ses_188ab38c2ffeLuaFOiEMyaP4yd",
+          "note": "TEL-001 implemented: Bus events now published at all 4 task lifecycle points (running, completed, failed x2). Schema file created. task.ts now emits TaskStatusChanged events via Bus system. Pre-existing TaskStatusChanged event definition in coord-events.ts now has its first subscriber (publisher).",
+          "pct": 100
+        }
+      ]
+    },
+    {
+      "id": "CI-002",
+      "title": "Contention detection — shared file auto-detection in produce_fragment",
+      "phase": "3-0",
+      "priority": 2,
+      "status": "completed",
+      "completion_pct": 100,
+      "depends_on": [
+        "CI-001"
+      ],
+      "effort": "moderate",
+      "context_summary": "When two lanes touch the same file via produce_fragment, the system should auto-detect and flag the contention. Anchor adjustment should happen silently; only real collisions escalate.",
+      "next_step": "Design the contention data model — what does a collision look like in the fragment protocol?",
+      "sessions": [
+        {
+          "ref": "ses_1889078ffffe7O5MjdVuSRnVa4",
+          "note": "Contention detection implemented. Created contention.ts (267 lines) with in-memory fragment tracking, anchor overlap heuristics (numeric + named), collision Bus events. Added 'contention' operation to CoordinationTool. coord-events.ts consolidated with all 6 event definitions.",
+          "pct": 100
+        }
+      ]
+    },
+    {
+      "id": "CI-003",
+      "title": "Secretary (lane-owner) agent — delegate a full lane lifecycle",
+      "phase": "3-0",
+      "priority": 3,
+      "status": "completed",
+      "completion_pct": 100,
+      "depends_on": [
+        "CI-001"
+      ],
+      "effort": "moderate",
+      "context_summary": "Lane-owner agent receives a mission from orchestrator, runs full wave lifecycle, reports back via structured handoff/blocker/alert messages. Supports cancel, pivot, and warm resume.",
+      "next_step": "Done. Test in next multi-lane session.",
+      "sessions": [
+        {
+          "ref": "current",
+          "note": "Agent definition created with full communication protocol",
+          "pct": 100
+        }
+      ]
+    },
+    {
+      "id": "CI-004",
+      "title": "Cross-session roadmap tools — active/blueprint/audit system",
+      "phase": "3-0",
+      "priority": 4,
+      "status": "in_progress",
+      "completion_pct": 0,
+      "depends_on": [
+        "CI-003"
+      ],
+      "effort": "moderate",
+      "context_summary": "Five tools: roadmap_init (startup injection), roadmap_progress (update status), roadmap_next (dependency-resolved next actions), roadmap_deprecate (mark obsolete), roadmap_prioritize (reorder). File structure: blueprint (rarely updated), active.v1.json (frequently updated), progress.v1.jsonl (append-only audit).",
+      "next_step": "Create the 5 roadmap tools and the initial blueprint."
+    },
+    {
+      "id": "CI-005",
+      "title": "Lessons register — cross-session pattern memory",
+      "phase": "3-0",
+      "priority": 5,
+      "status": "completed",
+      "completion_pct": 100,
+      "depends_on": [],
+      "effort": "low",
+      "context_summary": "lesson_register tool records one-sentence insights to lessons.v1.jsonl. Categories: codebase, workflow, architecture, tool, timing, convention. Future sessions read these at startup.",
+      "next_step": "Done. Verify lessons are being recorded and discovered.",
+      "sessions": [
+        {
+          "ref": "current",
+          "note": "Tool created, orchestrator prompt updated with session-end ritual",
+          "pct": 100
+        }
+      ]
+    },
+    {
+      "id": "CI-006",
+      "title": "Session diff tool — consolidated change reporting",
+      "phase": "3-0",
+      "priority": 6,
+      "status": "completed",
+      "completion_pct": 100,
+      "depends_on": [],
+      "effort": "low",
+      "context_summary": "session_diff tool aggregates edit_logs, runs git diff --stat, and produces per-package breakdown with file lists. Used for PR descriptions and handoffs.",
+      "next_step": "Done. Verify output quality in next session.",
+      "sessions": [
+        {
+          "ref": "current",
+          "note": "Tool created, orchestrator prompt updated",
+          "pct": 100
+        }
+      ]
+    },
+    {
+      "id": "PG-001",
+      "title": "Complete Drizzle schema definitions for all tables on Postgres",
+      "phase": "3-1",
+      "priority": 1,
+      "status": "in_progress",
+      "completion_pct": 40,
+      "depends_on": [],
+      "effort": "high",
+      "context_summary": "account.pg.sql.ts exists untracked, account.sql.ts has staged TimestampsPg changes. ~6 tables need Pg schema definitions. Must be dual-write compatible with SQLite during migration.",
+      "next_step": "Inventory remaining tables, finish Pg schema for each, add dual-write validation.",
+      "sessions": [
+        {
+          "ref": "ses_188a98d02ffeWrvjShgB1ilH9P",
+          "note": "Completed Phase 1 — ToolCache: New ToolCache service (~80 lines), wired into tool.ts/registry.ts/app-runtime.ts, 8 cacheable tools marked, typecheck passes with 0 new errors.",
+          "pct": 3
+        },
+        {
+          "ref": "ses_current",
+          "note": "Schema definitions verified 100% complete — all 7 SQLite tables have complete Postgres equivalents. The remaining 60% is the application layer migration (production code switching imports from .sql.ts to .pg.sql.ts + dual-write plumbing). Schema layer is ready — deployment layer needs the pipeline work.",
+          "pct": 40
+        },
+        {
+          "ref": "ses_18862e469ffe8YopxMcyWkIgKg",
+          "note": "Schemas complete. Next step: application layer — switch production imports from .sql.ts to .pg.sql.ts + implement dual-write in the DB adapter layer.",
+          "pct": 40
+        }
+      ]
+    },
+    {
+      "id": "PG-002",
+      "title": "Migration runner with dual SQLite+Pg CI support",
+      "phase": "3-1",
+      "priority": 2,
+      "status": "not_started",
+      "completion_pct": 0,
+      "depends_on": [
+        "PG-001"
+      ],
+      "effort": "high",
+      "context_summary": "Need migration runner that can target either SQLite or Pg based on env. Test suite runs against both. CI matrix: SQLite (fast feedback) + Pg (correctness).",
+      "next_step": "Design migration runner API — how does it know which dialect to use?"
+    },
+    {
+      "id": "PG-003",
+      "title": "Validate all Drizzle queries execute on Postgres — CI with Pg service",
+      "phase": "3-1",
+      "priority": 3,
+      "status": "not_started",
+      "completion_pct": 0,
+      "depends_on": [
+        "PG-002"
+      ],
+      "effort": "high",
+      "context_summary": "27+ test files use SQLite. Need Pg test targets. Prior session added account.pg.sql.ts but couldn't run tests because CI lacks Postgres service container.",
+      "next_step": "Add Postgres service to CI workflow, tag tests with @pg, run subset against Pg."
+    },
+    {
+      "id": "PG-004",
+      "title": "Production Postgres connection pool and health checks",
+      "phase": "3-1",
+      "priority": 4,
+      "status": "not_started",
+      "completion_pct": 0,
+      "depends_on": [
+        "PG-003"
+      ],
+      "effort": "moderate",
+      "context_summary": "Connection pool with retry logic, health check endpoint, graceful degradation if Pg is unreachable.",
+      "next_step": "Design connection pool API — Effect Layer or class-based?"
+    },
+    {
+      "id": "DC-001",
+      "title": "Extract Electron assumptions from config resolution",
+      "phase": "3-2",
+      "priority": 1,
+      "status": "not_started",
+      "completion_pct": 0,
+      "depends_on": [
+        "PG-001"
+      ],
+      "effort": "high",
+      "context_summary": "Desktop app assumes Electron everywhere. Config resolution assumes filesystem paths (app.getPath). Need to extract the Electron-specific parts behind an interface so the renderer can run in Chrome.",
+      "next_step": "Audit all app.getPath calls, classify them as Electron-only vs portable."
+    },
+    {
+      "id": "DC-002",
+      "title": "Renderer loads in Chrome without Electron — definition of done",
+      "phase": "3-2",
+      "priority": 2,
+      "status": "not_started",
+      "completion_pct": 0,
+      "depends_on": [
+        "DC-001"
+      ],
+      "effort": "high",
+      "context_summary": "Goal: open localhost:5173 in Chrome and see the full app UI working. No Electron APIs in the renderer code path. This is the decoupling verification milestone.",
+      "next_step": "List every Electron API used in the renderer. For each: mock, polyfill, or extract."
+    },
+    {
+      "id": "DC-003",
+      "title": "Plugin system decoupled from Electron IPC",
+      "phase": "3-2",
+      "priority": 3,
+      "status": "not_started",
+      "completion_pct": 0,
+      "depends_on": [
+        "DC-001"
+      ],
+      "effort": "moderate",
+      "context_summary": "Plugins currently communicate via Electron IPC channels. Need abstract transport layer so plugins work in Chrome (postMessage) and Electron (ipcRenderer).",
+      "next_step": "Design PluginTransport interface — what does postMessage look like vs ipcRenderer?"
+    },
+    {
+      "id": "HC-001",
+      "title": "Break up 503-line ipc.ts god module",
+      "phase": "3-3",
+      "priority": 1,
+      "status": "not_started",
+      "completion_pct": 0,
+      "depends_on": [
+        "DC-001"
+      ],
+      "effort": "high",
+      "context_summary": "Phase 2 extracted github-ipc.ts from ipc.ts. The remaining 503 lines are a god module mixing MCP handlers, session management, file system ops, and window controls. Each concern needs its own module.",
+      "next_step": "Inventory ipc.ts by concern: how many distinct handler groups exist?"
+    },
+    {
+      "id": "HC-002",
+      "title": "Dynamic menu actions — not hardcoded desktop menu",
+      "phase": "3-3",
+      "priority": 2,
+      "status": "not_started",
+      "completion_pct": 0,
+      "depends_on": [
+        "HC-001"
+      ],
+      "effort": "moderate",
+      "context_summary": "Desktop menu actions are hardcoded in the main process. Should be registered by feature modules, similar to how IPC handlers are registered.",
+      "next_step": "Design menu action registry — what does a feature module declare?"
+    },
+    {
+      "id": "HC-003",
+      "title": "Preload bridge type generation — not manually typed",
+      "phase": "3-3",
+      "priority": 3,
+      "status": "not_started",
+      "completion_pct": 0,
+      "depends_on": [
+        "HC-001"
+      ],
+      "effort": "moderate",
+      "context_summary": "The preload bridge (exposing main-process APIs to renderer) is manually typed. If an IPC handler changes signature, the bridge type silently drifts. Generate types from handler definitions.",
+      "next_step": "Map all IPC handler signatures → generate bridge type from source of truth."
+    },
+    {
+      "id": "HC-004",
+      "title": "Dead code removal sweep",
+      "phase": "3-3",
+      "priority": 4,
+      "status": "not_started",
+      "completion_pct": 0,
+      "depends_on": [
+        "HC-001",
+        "HC-002"
+      ],
+      "effort": "low",
+      "context_summary": "After extraction and decoupling, unused imports, dead modules, and zombie code paths will be revealed. Remove them.",
+      "next_step": "Run ts-prune or similar after HC-001 and HC-002 complete."
+    },
+    {
+      "id": "DT-001",
+      "title": "Dialog component test harness",
+      "phase": "3-4",
+      "priority": 1,
+      "status": "not_started",
+      "completion_pct": 0,
+      "depends_on": [],
+      "effort": "low",
+      "context_summary": "Phase 2 added 54 IPC tests but zero dialog component tests. Need a SolidJS dialog test harness: mount, interact, assert visible/hidden, assert callbacks fired.",
+      "next_step": "Build test harness: mountDialog(), clickButton(), assertDialogVisible()."
+    },
+    {
+      "id": "DT-002",
+      "title": "15+ dialog component tests",
+      "phase": "3-4",
+      "priority": 2,
+      "status": "not_started",
+      "completion_pct": 0,
+      "depends_on": [
+        "DT-001"
+      ],
+      "effort": "moderate",
+      "context_summary": "15+ SolidJS dialogs with zero test coverage: dialog-edit-agent, dialog-select-mcp, dialog-mcp-form, dialog-settings, dialog-export, dialog-import, dialog-delete-confirm, and more.",
+      "next_step": "Write tests for each dialog: smoke (renders), interaction (buttons work), state (form values persist)."
+    },
+    {
+      "id": "L10N-001",
+      "title": "Locale fallback chain",
+      "phase": "3-5",
+      "priority": 1,
+      "status": "not_started",
+      "completion_pct": 0,
+      "depends_on": [],
+      "effort": "low",
+      "context_summary": "github.* keys exist in only 1 of 17 locales. Need a fallback chain: requested locale → parent locale (zh-CN → zh) → base (en). Missing keys silently fall through instead of showing key names.",
+      "next_step": "Implement fallback chain in the i18n provider."
+    },
+    {
+      "id": "L10N-002",
+      "title": "Parity tests across all 17 locales",
+      "phase": "3-5",
+      "priority": 2,
+      "status": "not_started",
+      "completion_pct": 0,
+      "depends_on": [
+        "L10N-001"
+      ],
+      "effort": "low",
+      "context_summary": "Test that every locale has keys for all user-facing strings. Missing keys → test failure. Tests run in CI and block PRs that add English keys without locale stubs.",
+      "next_step": "Build key inventory script: extract all t() calls, check each locale file."
+    },
+    {
+      "id": "L10N-003",
+      "title": "Bulk stub generation for missing locale keys",
+      "phase": "3-5",
+      "priority": 3,
+      "status": "not_started",
+      "completion_pct": 0,
+      "depends_on": [
+        "L10N-002"
+      ],
+      "effort": "low",
+      "context_summary": "Script that reads English locale, finds missing keys in other locales, generates stubs with [LANG] marker. Human translators replace markers, but the app is usable immediately.",
+      "next_step": "Build stub generator: read en.ts → for each target locale → emit missing keys as stubs."
+    }
+  ]
+}

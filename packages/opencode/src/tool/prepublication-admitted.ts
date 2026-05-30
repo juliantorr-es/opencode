@@ -5,15 +5,15 @@ import { InstanceState } from "@/effect/instance-state"
 import DESCRIPTION from "./prepublication-admitted.txt"
 
 const Parameters = Schema.Struct({
-  candidate_packet_digest: Schema.String.annotations({
+  candidate_packet_digest: Schema.String.annotate({
     description: "Digest of the candidate claim packet",
   }),
-  candidate_boundary_identifier: Schema.String.annotations({
+  candidate_boundary_identifier: Schema.String.annotate({
     description: "The boundary identifier being admitted",
   }),
-  reviewer_set: Schema.String.annotations({ description: "JSON array of reviewer agent names" }),
-  review_round: Schema.Number.annotations({ description: "Review round number" }),
-  notes: Schema.optional(Schema.String).annotations({ description: "Additional admission notes" }),
+  reviewer_set: Schema.String.annotate({ description: "JSON array of reviewer agent names" }),
+  review_round: Schema.Number.annotate({ description: "Review round number" }),
+  notes: Schema.optional(Schema.String).annotate({ description: "Additional admission notes" }),
 })
 
 export const PrepublicationAdmittedTool = Tool.define(

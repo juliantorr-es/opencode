@@ -7,11 +7,11 @@ import path from "path"
 import DESCRIPTION from "./out-of-scope-finding.txt"
 
 const Parameters = Schema.Struct({
-  affected_files: Schema.String.annotations({ description: "JSON array of affected file paths" }),
-  language: Schema.String.annotations({ description: "Language/subsystem" }),
-  why_matters: Schema.String.annotations({ description: "Why this finding matters" }),
-  best_practice_anchor: Schema.String.annotations({ description: "Best practice reference" }),
-  recommended_slice: Schema.String.annotations({ description: "Recommended future work slice" }),
+  affected_files: Schema.String.annotate({ description: "JSON array of affected file paths" }),
+  language: Schema.String.annotate({ description: "Language/subsystem" }),
+  why_matters: Schema.String.annotate({ description: "Why this finding matters" }),
+  best_practice_anchor: Schema.String.annotate({ description: "Best practice reference" }),
+  recommended_slice: Schema.String.annotate({ description: "Recommended future work slice" }),
 })
 
 export const OutOfScopeFindingTool = Tool.define(

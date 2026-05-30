@@ -1,0 +1,142 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "docs/schemas/rig.relay.migration_caller_inventory.v1.schema.json",
+  "title": "Database Migration Caller Inventory",
+  "description": "Inventory of all files importing Database.* functions from @/storage/db, classified by call site usage patterns for migration planning.",
+  "type": "object",
+  "required": ["schema", "generated_at", "total_files", "total_call_sites", "files", "patterns"],
+  "properties": {
+    "schema": {
+      "type": "string",
+      "description": "Schema identifier",
+      "enum": ["rig.relay.migration_caller_inventory.v1"]
+    },
+    "generated_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp of generation"
+    },
+    "total_files": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Total number of files importing from Database"
+    },
+    "total_call_sites": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Total number of Database.* call sites across all files"
+    },
+    "files": {
+      "type": "array",
+      "description": "Per-file inventory entries",
+      "items": {
+        "type": "object",
+        "required": ["path", "call_sites"],
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "Repository-relative path to file"
+          },
+          "call_sites": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["line", "function", "wrapping", "read_or_write", "drizzle_method", "tables_accessed"],
+              "properties": {
+                "line": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "description": "Line number of the call site"
+                },
+                "function": {
+                  "type": "string",
+                  "description": "Database.* function called",
+                  "enum": [
+                    "Database.use",
+                    "Database.transaction",
+                    "Database.Client",
+                    "Database.getPath",
+                    "Database.close",
+                    "Database.effect",
+                    "db helper (Database.use)",
+                    "tx helper (Database.transaction)",
+                    "query helper (Database.use)",
+                    "Database (import)"
+                  ]
+                },
+                "wrapping": {
+                  "type": "string",
+                  "description": "How the call is wrapped in Effect or sync context",
+                  "enum": [
+                    "Effect.sync",
+                    "Effect.try",
+                    "Effect.fn",
+                    "raw sync",
+                    "Effect.fnUntraced",
+                    "async function",
+                    "promise callback"
+                  ]
+                },
+                "read_or_write": {
+                  "type": "string",
+                  "description": "Whether the operation reads, writes, or both",
+                  "enum": ["read", "write", "both"]
+                },
+                "drizzle_method": {
+                  "type": "string",
+                  "description": "Drizzle query builder method chain"
+                },
+                "tables_accessed": {
+                  "type": "array",
+                  "items": { "type": "string" },
+                  "description": "Drizzle tables referenced"
+                },
+                "notes": {
+                  "type": "string",
+                  "description": "Optional notes about the call site"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "patterns": {
+      "type": "object",
+      "required": [
+        "total_Effect_sync_wraps",
+        "total_Effect_try_wraps",
+        "total_raw_calls",
+        "total_get_calls",
+        "total_run_calls"
+      ],
+      "properties": {
+        "total_Effect_sync_wraps": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Total number of Effect.sync wraps"
+        },
+        "total_Effect_try_wraps": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Total number of Effect.try wraps"
+        },
+        "total_raw_calls": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Total number of raw (unwrapped) synchronous calls"
+        },
+        "total_get_calls": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Total number of .get() call sites across all files"
+        },
+        "total_run_calls": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Total number of .run() call sites across all files"
+        }
+      }
+    }
+  }
+}

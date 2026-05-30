@@ -22,6 +22,7 @@ export const RigJsonlQueryTool = Tool.define(
     return {
       description: DESCRIPTION,
       parameters: Parameters,
+      cacheable: true,
       execute: (params: Schema.Schema.Type<typeof Parameters>, _ctx: Tool.Context) =>
         Effect.gen(function* () {
           const instance = yield* InstanceState.context

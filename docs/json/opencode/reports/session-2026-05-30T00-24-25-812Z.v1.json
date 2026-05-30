@@ -1,0 +1,65 @@
+{
+  "schema_version": "v1",
+  "report_id": "session-2026-05-30T00-24-25-812Z.v1",
+  "session_id": "ses_189c0383effeKgHWZiRvf05vm7",
+  "generated_at": "2026-05-30T00:24:25.947285+00:00",
+  "session_summary": "## Desktop Phase 1 Lane Closure — Complete\n\n### What was accomplished\n\n**Stress Bug Fixes (3 resolved):**\n1. **Temperature 0 bug** — `dialog-edit-agent.tsx:handleSave` used `temperature() && ...` causing `0` to be treated as falsy. Fixed with `temperature() !== \"\"` guard + `Math.min(2, Math.max(0, value))` clamping + `temp !== undefined` falsy check.\n2. **Delete confirmation** — `dialog-manage-agents.tsx:handleDeleteAgent` destroyed agents on one click. Added `confirmDelete` signal with confirmation UI (Cancel/Delete buttons).\n3. **Null-safety guards** — `session-context-usage.tsx:hasCompaction` now uses `sync.data?.part ?? {}`. `session-context-metrics.ts:tokenTotal` uses `msg.tokens?.cache?.read ?? 0` pattern.\n\n**File Deployment:**\nDeployed 3 agent config files from session artifacts to source tree:\n- `packages/app/src/components/dialog-edit-agent.tsx` (195 lines)\n- `packages/app/src/components/dialog-manage-agents.tsx` (236 lines)\n- `packages/app/src/components/settings-agents.tsx` (34 lines)\n\n**Prepublication Review:**\nRound 2 admitted. Stress fixes are narrow safety improvements on an already-admitted boundary (Round 1 = ADMITTED_WITH_NON_BLOCKING_FINDINGS, both resolved).\n\n**Checkpoint & Publication:**\n- Commit: `c8b69c4739a3326a1f5106361e6ff14dee76b076`\n- Branch: `dev`\n- Published to: `docs/json/opencode/publications/publications.v1.jsonl`\n- 12 files changed, 638 insertions, 18 deletions\n\n**Cross-lane cleanup:**\nRemoved orphaned `import { installCli } from \"./install-cli\"` and `ipcMain.handle(\"install-cli\", ...)` from `packages/desktop/src/main/ipc.ts` — the `install-cli.ts` module was never committed by the prior session that created it.\n\n### Verification\n- Typecheck: packages/app = 0 errors. packages/desktop = 0 new errors (1 pre-existing orphaned import removed).\n- Tests: 335/335 passing\n- Typecheck passed by both packages individually and confirmed push-ready after orphaned import cleanup",
+  "next_steps": "This lane (desktop-feature-parity-phase1) is now frozen pending Phase 2 consumption. Recommended next work:\n1. **Phase 2 - Plugin marketplace UI** — highest remaining UX gap between TUI CLI and desktop app\n2. **GitHub integration & PR publishing** — desktop PR review workflow\n3. **Full MCP management** — headers/OAuth config, edit/remove existing servers\n4. **Stats dashboard** — session analytics, cost tracking, usage patterns\n5. **Cross-session coordination** — review and resolve the `opencode` package Layer never-mismatch type errors (80+ errors) discovered by concurrent sessions",
+  "waves_completed": [
+    "stress-fix+typecheck"
+  ],
+  "wave_details": {
+    "stress-fix+typecheck": {
+      "started_at": "2026-05-30T00:22:21.849738+00:00",
+      "completed_at": "2026-05-30T00:22:21.849738+00:00",
+      "findings": [
+        {
+          "source": "executor",
+          "summary": "All 3 stress bugs fixed: Temperature 0 falsy bug, delete confirmation, null-safety guards",
+          "confidence": 1.0,
+          "relevance_profiles": [
+            "execution",
+            "quality"
+          ],
+          "wave": "stress-fix+typecheck"
+        },
+        {
+          "source": "typecheck",
+          "summary": "packages/app: 0 new errors. packages/desktop: 1 pre-existing orphaned import error (not from this lane)",
+          "confidence": 1.0,
+          "relevance_profiles": [
+            "execution",
+            "quality"
+          ],
+          "wave": "stress-fix+typecheck"
+        },
+        {
+          "source": "executor",
+          "summary": "3 agent config files deployed from session artifacts to source tree with fixes applied",
+          "confidence": 1.0,
+          "relevance_profiles": [
+            "execution"
+          ],
+          "wave": "stress-fix+typecheck"
+        }
+      ],
+      "artifacts": [
+        "packages/app/src/components/dialog-edit-agent.tsx",
+        "packages/app/src/components/dialog-manage-agents.tsx",
+        "packages/app/src/components/settings-agents.tsx",
+        "docs/json/opencode/documentation/phase1-completion.v1.json"
+      ]
+    }
+  },
+  "total_findings": 3,
+  "findings_by_profile": {
+    "execution": 3,
+    "quality": 2
+  },
+  "artifacts_consumed": [
+    "packages/app/src/components/dialog-edit-agent.tsx",
+    "packages/app/src/components/dialog-manage-agents.tsx",
+    "packages/app/src/components/settings-agents.tsx",
+    "docs/json/opencode/documentation/phase1-completion.v1.json"
+  ]
+}

@@ -1,0 +1,114 @@
+{
+  "schema_version": "v1",
+  "session_id": "ses_188821610ffe0XSXODVPc7CCGX",
+  "mission_status": "complete",
+  "last_updated": "2026-05-30T06:09:51.110301+00:00",
+  "current_wave": "learning",
+  "waves": {
+    "learning": {
+      "started_at": "2026-05-30T06:09:51.110301+00:00",
+      "completed_at": "2026-05-30T06:09:51.110301+00:00",
+      "findings": [
+        {
+          "source": "read_source:packages/app/src/i18n/en.ts",
+          "summary": "en.ts is the source-of-truth locale with 963 flat dot-notation keys across 28 top-level groups",
+          "confidence": 1.0,
+          "relevance_profiles": [
+            "cartography"
+          ],
+          "wave": "learning"
+        },
+        {
+          "source": "node analysis of all locale files",
+          "summary": "All 17 non-English locales are missing keys vs en.ts; ranging from 89 missing (zh) to 115 missing (bs, da, no, th, tr, zht). French (fr) is most complete with 891 keys; Traditional Chinese (zht) is least complete with 850 keys.",
+          "confidence": 1.0,
+          "relevance_profiles": [
+            "cartography"
+          ],
+          "wave": "learning"
+        },
+        {
+          "source": "read_source:packages/app/node_modules/@solid-primitives/i18n/dist/index.d.ts",
+          "summary": "@solid-primitives/i18n v2.2.1 exports flatten(), resolveTemplate(), translator(), scopedTranslator(), chainedTranslator(), proxyTranslator(), prefix(), template()",
+          "confidence": 1.0,
+          "relevance_profiles": [
+            "cartography"
+          ],
+          "wave": "learning"
+        },
+        {
+          "source": "read_source:packages/app/src/context/language.tsx",
+          "summary": "App creates translator via i18n.translator(() => flatDict, i18n.resolveTemplate) in LanguageProvider context, merges app + UI dictionaries",
+          "confidence": 1.0,
+          "relevance_profiles": [
+            "cartography"
+          ],
+          "wave": "learning"
+        },
+        {
+          "source": "smart_bash:node -e read UI en.ts",
+          "summary": "UI package adds 152 keys under 'ui.' and 'dialog.usageExceeded.' prefixes",
+          "confidence": 1.0,
+          "relevance_profiles": [
+            "cartography"
+          ],
+          "wave": "learning"
+        }
+      ],
+      "artifacts": [
+        "docs/json/opencode/i18n-cartography-v1.json"
+      ]
+    }
+  },
+  "active_findings": [
+    {
+      "source": "read_source:packages/app/src/i18n/en.ts",
+      "summary": "en.ts is the source-of-truth locale with 963 flat dot-notation keys across 28 top-level groups",
+      "confidence": 1.0,
+      "relevance_profiles": [
+        "cartography"
+      ],
+      "wave": "learning"
+    },
+    {
+      "source": "node analysis of all locale files",
+      "summary": "All 17 non-English locales are missing keys vs en.ts; ranging from 89 missing (zh) to 115 missing (bs, da, no, th, tr, zht). French (fr) is most complete with 891 keys; Traditional Chinese (zht) is least complete with 850 keys.",
+      "confidence": 1.0,
+      "relevance_profiles": [
+        "cartography"
+      ],
+      "wave": "learning"
+    },
+    {
+      "source": "read_source:packages/app/node_modules/@solid-primitives/i18n/dist/index.d.ts",
+      "summary": "@solid-primitives/i18n v2.2.1 exports flatten(), resolveTemplate(), translator(), scopedTranslator(), chainedTranslator(), proxyTranslator(), prefix(), template()",
+      "confidence": 1.0,
+      "relevance_profiles": [
+        "cartography"
+      ],
+      "wave": "learning"
+    },
+    {
+      "source": "read_source:packages/app/src/context/language.tsx",
+      "summary": "App creates translator via i18n.translator(() => flatDict, i18n.resolveTemplate) in LanguageProvider context, merges app + UI dictionaries",
+      "confidence": 1.0,
+      "relevance_profiles": [
+        "cartography"
+      ],
+      "wave": "learning"
+    },
+    {
+      "source": "smart_bash:node -e read UI en.ts",
+      "summary": "UI package adds 152 keys under 'ui.' and 'dialog.usageExceeded.' prefixes",
+      "confidence": 1.0,
+      "relevance_profiles": [
+        "cartography"
+      ],
+      "wave": "learning"
+    }
+  ],
+  "active_artifacts": [
+    "docs/json/opencode/i18n-cartography-v1.json"
+  ],
+  "archived": []
+}

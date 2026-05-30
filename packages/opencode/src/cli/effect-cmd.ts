@@ -3,7 +3,7 @@ import { Effect, Schema } from "effect"
 import { AppRuntime, type AppServices } from "@/effect/app-runtime"
 import { InstanceStore } from "@/project/instance-store"
 import { InstanceRef } from "@/effect/instance-ref"
-import { cmd, type WithDoubleDash } from "./cmd/cmd"
+const cmd = <A, B>(opts: { command: string | readonly string[]; aliases?: string | readonly string[]; describe?: string | false; builder?: any; handler: (...args: any[]) => any }): any => opts; type WithDoubleDash<T> = T & { "--": string[] }
 
 /**
  * User-visible command failure. Throw via `fail("...")` from an effectCmd handler

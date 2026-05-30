@@ -3,7 +3,9 @@ import { Dialog } from "@opencode-ai/ui/dialog"
 import { TextField } from "@opencode-ai/ui/text-field"
 import { Select } from "@opencode-ai/ui/select"
 import { useDialog } from "@opencode-ai/ui/context/dialog"
+import { showToast } from "@opencode-ai/ui/toast"
 import { createMemo, createSignal, For, Show } from "solid-js"
+import { Spinner } from "@opencode-ai/ui/spinner"
 import { useLanguage } from "@/context/language"
 import { useProviders } from "@/hooks/use-providers"
 import type { AgentDef } from "@/types/agent"
@@ -12,7 +14,7 @@ type ModelOption = { label: string; value: string }
 
 type Props = {
   agent?: AgentDef
-  onSave: (agent: AgentDef) => void
+  onSave: (agent: AgentDef) => Promise<void>
 }
 
 const AGENT_COLORS = [
@@ -34,6 +36,7 @@ export function DialogEditAgent(props: Props) {
   const [temperature, setTemperature] = createSignal(props.agent?.temperature?.toString() ?? "")
   const [topP, setTopP] = createSignal(props.agent?.top_p?.toString() ?? "")
   const [color, setColor] = createSignal(props.agent?.color ?? "")
+  const [isSaving, setIsSaving] = createSignal(false)
 
   const connectedProviders = createMemo(() => providers.connected())
 
@@ -56,22 +59,34 @@ export function DialogEditAgent(props: Props) {
     return modelOptions().find((o) => o.value === val)
   })
 
-  const handleSave = () => {
-    const id = props.agent?.id ?? crypto.randomUUID()
-    const temp = temperature() !== "" ? Math.min(2, Math.max(0, Number.parseFloat(temperature()))) : undefined
-    const tp = topP() !== "" ? Math.min(1, Math.max(0, Number.parseFloat(topP()))) : undefined
-    props.onSave({
-      id,
-      name: name(),
-      prompt: prompt(),
-      description: description() || undefined,
-      model: model() || undefined,
-      variant: variant() || undefined,
-      temperature: temp !== undefined && !Number.isNaN(temp) ? temp : undefined,
-      top_p: tp !== undefined && !Number.isNaN(tp) ? tp : undefined,
-      color: color() || undefined,
-    })
-    dialog.close()
+  const handleSave = async () => {
+    if (isSaving()) return
+    setIsSaving(true)
+    try {
+      const id = props.agent?.id ?? crypto.randomUUID()
+      const temp = temperature() !== "" ? Math.min(2, Math.max(0, Number(temperature().replace(",", ".")))) : undefined
+      const tp = topP() !== "" ? Math.min(1, Math.max(0, Number(topP().replace(",", ".")))) : undefined
+      await props.onSave({
+        id,
+        name: name(),
+        prompt: prompt(),
+        description: description() || undefined,
+        model: model() || undefined,
+        variant: variant() || undefined,
+        temperature: temp !== undefined && !Number.isNaN(temp) ? temp : undefined,
+        top_p: tp !== undefined && !Number.isNaN(tp) ? tp : undefined,
+        color: color() || undefined,
+      })
+      dialog.close()
+    } catch (err) {
+      showToast({
+        title: language.t("dialog.agents.save.failed"),
+        description: (err as Error).message ?? "Failed to save agent",
+      })
+      console.error("Failed to save agent:", err)
+    } finally {
+      setIsSaving(false)
+    }
   }
 
   return (
@@ -184,8 +199,13 @@ export function DialogEditAgent(props: Props) {
           <Button type="button" variant="ghost" size="large" onClick={() => dialog.close()}>
             {language.t("common.cancel")}
           </Button>
-          <Button type="button" variant="primary" size="large" disabled={!name()} onClick={handleSave}>
-            {language.t("common.save")}
+          <Button type="button" variant="primary" size="large" disabled={!name() || isSaving()} onClick={handleSave}>
+            {isSaving() ? (
+              <span class="flex items-center gap-2">
+                <Spinner class="size-4" />
+                Saving...
+              </span>
+            ) : language.t("common.save")}
           </Button>
         </div>
       </div>

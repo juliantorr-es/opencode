@@ -249,7 +249,7 @@ it.live("session.processor effect tests capture llm input cleanly", () =>
 
         expect(value).toBe("continue")
         expect(calls).toBe(1)
-        expect(parts.some((part) => part.type === "text" && part.text === "hello")).toBe(true)
+        expect(parts.some((part: MessageV2.Part) => part.type === "text" && part.text === "hello")).toBe(true)
       }),
     { config: (url) => providerCfg(url) },
   ),
@@ -317,14 +317,14 @@ it.live("session.processor effect tests preserve text start time", () =>
           .pipe(Effect.forkChild)
 
         yield* waitFor(
-          Effect.sync(() => MessageV2.parts(msg.id).find((part): part is MessageV2.TextPart => part.type === "text")),
+          Effect.sync(() => MessageV2.parts(msg.id).find((part: MessageV2.Part): part is MessageV2.TextPart => part.type === "text")),
           "timed out waiting for text part",
         )
         yield* Effect.sleep("20 millis")
         gate.resolve()
 
         const exit = yield* Fiber.await(run)
-        const text = MessageV2.parts(msg.id).find((part): part is MessageV2.TextPart => part.type === "text")
+        const text = MessageV2.parts(msg.id).find((part: MessageV2.Part): part is MessageV2.TextPart => part.type === "text")
 
         expect(Exit.isSuccess(exit)).toBe(true)
         expect(text?.text).toBe("hello")
@@ -376,8 +376,8 @@ it.live("session.processor effect tests stop after token overflow requests compa
         const parts = MessageV2.parts(msg.id)
 
         expect(value).toBe("compact")
-        expect(parts.some((part) => part.type === "text" && part.text === "after")).toBe(true)
-        expect(parts.some((part) => part.type === "step-finish")).toBe(true)
+        expect(parts.some((part: MessageV2.Part) => part.type === "text" && part.text === "after")).toBe(true)
+        expect(parts.some((part: MessageV2.Part) => part.type === "step-finish")).toBe(true)
       }),
     { config: (url) => providerCfg(url) },
   ),
@@ -419,8 +419,8 @@ it.live("session.processor effect tests capture reasoning from http mock", () =>
         })
 
         const parts = MessageV2.parts(msg.id)
-        const reasoning = parts.find((part): part is MessageV2.ReasoningPart => part.type === "reasoning")
-        const text = parts.find((part): part is MessageV2.TextPart => part.type === "text")
+        const reasoning = parts.find((part: MessageV2.Part): part is MessageV2.ReasoningPart => part.type === "reasoning")
+        const text = parts.find((part: MessageV2.Part): part is MessageV2.TextPart => part.type === "text")
 
         expect(value).toBe("continue")
         expect(yield* llm.calls).toBe(1)
@@ -467,12 +467,12 @@ it.live("session.processor effect tests reset reasoning state across retries", (
         })
 
         const parts = MessageV2.parts(msg.id)
-        const reasoning = parts.filter((part): part is MessageV2.ReasoningPart => part.type === "reasoning")
+        const reasoning = parts.filter((part: MessageV2.Part): part is MessageV2.ReasoningPart => part.type === "reasoning")
 
         expect(value).toBe("continue")
         expect(yield* llm.calls).toBe(2)
-        expect(reasoning.some((part) => part.text === "two")).toBe(true)
-        expect(reasoning.some((part) => part.text === "onetwo")).toBe(false)
+        expect(reasoning.some((part: MessageV2.ReasoningPart) => part.text === "two")).toBe(true)
+        expect(reasoning.some((part: MessageV2.ReasoningPart) => part.text === "onetwo")).toBe(false)
       }),
     { config: (url) => providerCfg(url) },
   ),
@@ -561,7 +561,7 @@ it.live("session.processor effect tests retry recognized structured json errors"
 
         expect(value).toBe("continue")
         expect(yield* llm.calls).toBe(2)
-        expect(parts.some((part) => part.type === "text" && part.text === "after")).toBe(true)
+        expect(parts.some((part: MessageV2.Part) => part.type === "text" && part.text === "after")).toBe(true)
         expect(handle.message.error).toBeUndefined()
       }),
     { config: (url) => providerCfg(url) },
@@ -709,7 +709,7 @@ it.live("session.processor effect tests complete AI SDK tool calls when native f
         })
 
         const parts = MessageV2.parts(msg.id)
-        const call = parts.find((part): part is MessageV2.ToolPart => part.type === "tool")
+        const call = parts.find((part: MessageV2.Part): part is MessageV2.ToolPart => part.type === "tool")
 
         expect(value).toBe("continue")
         expect(yield* llm.calls).toBe(1)
@@ -767,14 +767,14 @@ it.live("session.processor effect tests mark pending tools as aborted on cleanup
 
         yield* llm.wait(1)
         yield* waitFor(
-          Effect.sync(() => MessageV2.parts(msg.id).find((part): part is MessageV2.ToolPart => part.type === "tool")),
+          Effect.sync(() => MessageV2.parts(msg.id).find((part: MessageV2.Part): part is MessageV2.ToolPart => part.type === "tool")),
           "timed out waiting for tool part",
         )
         yield* Fiber.interrupt(run)
 
         const exit = yield* Fiber.await(run)
         const parts = MessageV2.parts(msg.id)
-        const call = parts.find((part): part is MessageV2.ToolPart => part.type === "tool")
+        const call = parts.find((part: MessageV2.Part): part is MessageV2.ToolPart => part.type === "tool")
 
         expect(Exit.isFailure(exit)).toBe(true)
         if (Exit.isFailure(exit)) {

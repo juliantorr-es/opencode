@@ -1,0 +1,100 @@
+{
+  "schema_version": "v1",
+  "session_id": "ses_1891f079dffeOVSz1B89KDuqLw",
+  "mission_status": "complete",
+  "last_updated": "2026-05-30T03:23:09.969512+00:00",
+  "current_wave": "architecture",
+  "waves": {
+    "architecture": {
+      "started_at": "2026-05-30T03:23:09.969512+00:00",
+      "completed_at": "2026-05-30T03:23:09.969512+00:00",
+      "findings": [
+        {
+          "source": "cartographer",
+          "summary": "7 of 9 cartographer GH findings are actionable. GH-002 (GitHubService dead code) is partially resolved — service exists and has layer but is unwired. GH-006 (token cleanup) infrastructure exists (handler+bridge) but no desktop account UI to hook into.",
+          "confidence": 0.95,
+          "relevance_profiles": [
+            "architecture",
+            "execution"
+          ],
+          "wave": "architecture"
+        },
+        {
+          "source": "impact-assessor",
+          "summary": "4 unsafe error cast locations (not 3) in service.ts. The error as Error pattern is a latent type error — native Error doesn't satisfy the declared Error = GitHubApiError | GitHubAuthError union.",
+          "confidence": 0.95,
+          "relevance_profiles": [
+            "execution"
+          ],
+          "wave": "architecture"
+        },
+        {
+          "source": "impact-assessor",
+          "summary": "AppLayer already has `as any` cast from concurrent lane work — adding Layer.provideMerge will be silently absorbed. No new type errors from wiring changes.",
+          "confidence": 0.9,
+          "relevance_profiles": [
+            "execution"
+          ],
+          "wave": "architecture"
+        },
+        {
+          "source": "plan",
+          "summary": "6 fixes in apply order: fix-D (error casts), fix-E (TTL), fix-A (wire into AppLayer), fix-B (error UI), fix-C (IPC origin guard), fix-F (smoke test). 1 deferred: fix-G (token cleanup — handler exists, no desktop UI).",
+          "confidence": 0.95,
+          "relevance_profiles": [
+            "architecture",
+            "execution"
+          ],
+          "wave": "architecture"
+        }
+      ],
+      "artifacts": [
+        "docs/json/opencode/plans/github-integration-hardening-v1.v1.json"
+      ]
+    }
+  },
+  "active_findings": [
+    {
+      "source": "cartographer",
+      "summary": "7 of 9 cartographer GH findings are actionable. GH-002 (GitHubService dead code) is partially resolved — service exists and has layer but is unwired. GH-006 (token cleanup) infrastructure exists (handler+bridge) but no desktop account UI to hook into.",
+      "confidence": 0.95,
+      "relevance_profiles": [
+        "architecture",
+        "execution"
+      ],
+      "wave": "architecture"
+    },
+    {
+      "source": "impact-assessor",
+      "summary": "4 unsafe error cast locations (not 3) in service.ts. The error as Error pattern is a latent type error — native Error doesn't satisfy the declared Error = GitHubApiError | GitHubAuthError union.",
+      "confidence": 0.95,
+      "relevance_profiles": [
+        "execution"
+      ],
+      "wave": "architecture"
+    },
+    {
+      "source": "impact-assessor",
+      "summary": "AppLayer already has `as any` cast from concurrent lane work — adding Layer.provideMerge will be silently absorbed. No new type errors from wiring changes.",
+      "confidence": 0.9,
+      "relevance_profiles": [
+        "execution"
+      ],
+      "wave": "architecture"
+    },
+    {
+      "source": "plan",
+      "summary": "6 fixes in apply order: fix-D (error casts), fix-E (TTL), fix-A (wire into AppLayer), fix-B (error UI), fix-C (IPC origin guard), fix-F (smoke test). 1 deferred: fix-G (token cleanup — handler exists, no desktop UI).",
+      "confidence": 0.95,
+      "relevance_profiles": [
+        "architecture",
+        "execution"
+      ],
+      "wave": "architecture"
+    }
+  ],
+  "active_artifacts": [
+    "docs/json/opencode/plans/github-integration-hardening-v1.v1.json"
+  ],
+  "archived": []
+}

@@ -5,13 +5,13 @@ import { InstanceState } from "@/effect/instance-state"
 import DESCRIPTION from "./qa-observed-clean.txt"
 
 const Parameters = Schema.Struct({
-  plan_id: Schema.String.annotations({ description: "Plan identifier" }),
-  boundary: Schema.String.annotations({ description: "Boundary name that was QA verified" }),
-  tests_examined: Schema.String.annotations({ description: "JSON array of test identifiers examined" }),
-  production_paths_exercised: Schema.String.annotations({
+  plan_id: Schema.String.annotate({ description: "Plan identifier" }),
+  boundary: Schema.String.annotate({ description: "Boundary name that was QA verified" }),
+  tests_examined: Schema.String.annotate({ description: "JSON array of test identifiers examined" }),
+  production_paths_exercised: Schema.String.annotate({
     description: "JSON array of production paths confirmed exercised",
   }),
-  notes: Schema.optional(Schema.String).annotations({ description: "Additional QA notes" }),
+  notes: Schema.optional(Schema.String).annotate({ description: "Additional QA notes" }),
 })
 
 export const QaObservedCleanTool = Tool.define(

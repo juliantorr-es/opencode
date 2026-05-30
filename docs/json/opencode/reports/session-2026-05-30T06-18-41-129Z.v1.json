@@ -1,0 +1,87 @@
+{
+  "schema_version": "v1",
+  "report_id": "session-2026-05-30T06-18-41-129Z.v1",
+  "session_id": "ses_18882e2a9ffesFf7zybR9UgBrp",
+  "generated_at": "2026-05-30T06:18:41.165090+00:00",
+  "session_summary": "## Lane E — i18n Parity & Platform Polish ✅\n\n**Completed 7 fixes across app and desktop packages:**\n\n### Fix A: Locale Parity ✅\n- Filled 89–123 missing keys in all 17 non-English locale files (English fallback + TODO comments)\n- All 18 locales now at 971 keys each (en.ts: 971)\n\n### Fix B: Comprehensive parity test ✅  \n- Replaced 2-key test with exhaustive 17-locale × 971-key validation\n- `bun test ./src/i18n/parity.test.ts` — ALL 17 tests pass\n\n### Fix C: CLDR Pluralization ✅\n- Created `plural.ts` with `Intl.PluralRules`-based pluralization + safe fallback\n- Exposed `tPlural(key, count)` from `useLanguage` context\n\n### Fix D: Date/Number Formatting ✅\n- Created `format.ts` with `Intl.DateTimeFormat`/`Intl.NumberFormat` wrappers\n- Exposed `formatDate()` and `formatNumber()` from `useLanguage` context\n\n### Fix E: i18n Native Electron Dialogs ✅\n- Created `dialog-strings.ts` with structured recovery dialog strings\n- Added proactive locale sync IPC (renderer → main process)\n- Fixed button routing to use `result.response` index instead of string comparison\n- Cross-package locale bridge deferred (English-only for now)\n\n### Fix F: Linux Custom Titlebar ✅\n- Extended `updateTitlebar` to apply on Linux\n- Added try-catch for Wayland compositor compatibility\n- Extended `createMainWindow`/`createLoadingWindow` custom frame to Linux\n\n### Fix G: macOS Vibrancy ✅\n- Added `vibrancy: \"fullscreen-ui\"` to macOS window config in `createMainWindow`\n\n### Files Created: 3\n- `packages/app/src/i18n/plural.ts`\n- `packages/app/src/i18n/format.ts`  \n- `packages/desktop/src/main/dialog-strings.ts`\n\n### Files Modified: 21\n- 18 locale files (en.ts + 17 locales)\n- `parity.test.ts`, `language.tsx`\n- `windows.ts`, `ipc.ts`, `preload/types.ts`, `preload/index.ts`\n\n### Deferred Items\n- Cross-package locale bridge for actual dialog string translation\n- Translation quality audit (new keys are English fallback)\n- Intl.PluralRules polyfill for older V8\n- Linux titleBarOverlay may not work on all Wayland compositors",
+  "next_steps": "1. Merge this lane's work\n2. Future: cross-package locale bridge for native dialog translations\n3. Future: translation quality audit for filled locale keys\n4. Future: Intl.PluralRules polyfill if targeting older Electron versions",
+  "waves_completed": [
+    "cartography"
+  ],
+  "wave_details": {
+    "cartography": {
+      "started_at": "2026-05-30T06:08:19.306044+00:00",
+      "completed_at": "2026-05-30T06:08:19.306044+00:00",
+      "findings": [
+        {
+          "source": "en.ts",
+          "summary": "en.ts has 963 flat key-value pairs as source of truth",
+          "confidence": 1,
+          "relevance_profiles": "all",
+          "wave": "cartography"
+        },
+        {
+          "source": "locale_comparison",
+          "summary": "zh.ts has 874 keys (89 missing), uk.ts 861 (102 missing), 6 locales have 857 keys (106 missing), 9 locales have 848 keys (115 missing)",
+          "confidence": 1,
+          "relevance_profiles": "all",
+          "wave": "cartography"
+        },
+        {
+          "source": "@solid-primitives/i18n",
+          "summary": "Library v2.2.1 provides flatten(), translator(), resolveTemplate() for {{key}} interpolation. No CLDR pluralization support built-in.",
+          "confidence": 1,
+          "relevance_profiles": "all",
+          "wave": "cartography"
+        },
+        {
+          "source": "language.tsx",
+          "summary": "Uses i18n.flatten on merged app+ui dicts, i18n.translator with i18n.resolveTemplate for {{param}} templates",
+          "confidence": 1,
+          "relevance_profiles": "all",
+          "wave": "cartography"
+        },
+        {
+          "source": "windows.ts",
+          "summary": "setTitlebar/updateTitlebar only applies to win32. Linux uses system frame. createMainWindow only handles darwin and win32 frame options.",
+          "confidence": 1,
+          "relevance_profiles": "all",
+          "wave": "cartography"
+        },
+        {
+          "source": "windows.ts",
+          "summary": "dialog.showMessageBox in wireWindowRecovery uses hardcoded English strings like 'Relaunch', 'Export Logs', 'Quit', 'Keep Waiting'. Error messages are also hardcoded English.",
+          "confidence": 1,
+          "relevance_profiles": "all",
+          "wave": "cartography"
+        },
+        {
+          "source": "preload/types.ts",
+          "summary": "TitlebarTheme already defined. ElectronAPI type shows IPC channels. get/set pattern used for preferences.",
+          "confidence": 1,
+          "relevance_profiles": "all",
+          "wave": "cartography"
+        }
+      ],
+      "artifacts": [
+        "packages/app/src/i18n/en.ts",
+        "packages/app/node_modules/@solid-primitives/i18n/dist/index.d.ts",
+        "packages/desktop/src/main/windows.ts",
+        "packages/desktop/src/main/index.ts",
+        "packages/desktop/src/preload/types.ts"
+      ]
+    }
+  },
+  "total_findings": 7,
+  "findings_by_profile": {
+    "a": 7,
+    "l": 14
+  },
+  "artifacts_consumed": [
+    "packages/app/src/i18n/en.ts",
+    "packages/app/node_modules/@solid-primitives/i18n/dist/index.d.ts",
+    "packages/desktop/src/main/windows.ts",
+    "packages/desktop/src/main/index.ts",
+    "packages/desktop/src/preload/types.ts"
+  ]
+}

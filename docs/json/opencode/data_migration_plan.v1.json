@@ -1,0 +1,192 @@
+{
+  "schema_version": "rig.relay.data_migration_plan.v1",
+  "generated_at": "2026-05-28T17:00:00.000000+00:00",
+  "author": "rig-relay-executor",
+  "status": "ratified",
+  "title": "SQLite-to-Postgres Data Migration Procedure",
+  "summary": "Complete procedure for migrating from the existing SQLite database (opencode.db) to a Postgres or PGlite destination. Covers pre-requisites, FK audit, data copy, post-migration verification, and rollback.",
+  "cli_command": "opencode db migrate-to-pg [pg-url]",
+  "env_var": "PG_URL",
+  "destination_env_var": "OPENCODE_DATABASE_URL",
+  "procedures": {
+    "prerequisites": {
+      "description": "Pre-requisites that must be satisfied before running the migration command.",
+      "steps": [
+        {
+          "order": 1,
+          "action": "Install Postgres or PGlite dependencies",
+          "detail": "Postgres: ensure pg is running and accessible via connection string. PGlite: bundled with app — no separate server needed.",
+          "verification": "psql <connection-string> -c 'SELECT 1' -- PGlite: N/A"
+        },
+        {
+          "order": 2,
+          "action": "Run Postgres DDL migrations",
+          "detail": "The destination Postgres schema must already exist with all required tables. Run `opencode db migrate-pg-schema` (or equivalent drizzle-kit migrate) before data migration.",
+          "verification": "psql <connection-string> -c '\\dt' -- verify expected tables exist"
+        },
+        {
+          "order": 3,
+          "action": "Ensure SQLite database is accessible",
+          "detail": "The SQLite database at Database.getPath() must exist and be readable. Run `opencode db path` to verify the path.",
+          "verification": "ls -la $(opencode db path)"
+        },
+        {
+          "order": 4,
+          "action": "Choose connection URL origin",
+          "detail": "Provide the Postgres connection string as a positional argument or set the PG_URL environment variable. The connection string format: postgresql://user:pass@host:port/dbname",
+          "verification": "PG_URL is resolved"
+        }
+      ]
+    },
+    "pre_migration_rollback": {
+      "description": "Before any data is copied, the migration command renames the active SQLite database file to preserve a rollback point.",
+      "steps": [
+        {
+          "order": 1,
+          "action": "Rename opencode.db → opencode.db.pre-pg-migration",
+          "detail": "The active SQLite file (full path from Database.getPath()) is renamed atomically. If a .pre-pg-migration file already exists, the migration aborts to prevent accidental overwrite.",
+          "verification": "ls -la <dbPath>.pre-pg-migration"
+        },
+        {
+          "order": 2,
+          "action": "Open renamed file as read-only source",
+          "detail": "The renamed file becomes the data source. The original path is now free — a fresh empty SQLite database will be created on next app launch if OPENCODE_DATABASE_URL is not set."
+        }
+      ]
+    },
+    "fk_audit": {
+      "description": "Foreign key integrity audit performed before data copy. Can be skipped with --force.",
+      "audited_relations": [
+        { "table": "session", "column": "project_id", "refTable": "project", "refColumn": "id", "nullable": false },
+        { "table": "session", "column": "workspace_id", "refTable": "workspace", "refColumn": "id", "nullable": true },
+        { "table": "session", "column": "parent_id", "refTable": "session", "refColumn": "id", "nullable": true },
+        { "table": "message", "column": "session_id", "refTable": "session", "refColumn": "id", "nullable": false },
+        { "table": "part", "column": "message_id", "refTable": "message", "refColumn": "id", "nullable": false },
+        { "table": "part", "column": "session_id", "refTable": "session", "refColumn": "id", "nullable": false },
+        { "table": "todo", "column": "session_id", "refTable": "session", "refColumn": "id", "nullable": false },
+        { "table": "session_message", "column": "session_id", "refTable": "session", "refColumn": "id", "nullable": false },
+        { "table": "permission", "column": "project_id", "refTable": "project", "refColumn": "id", "nullable": false },
+        { "table": "session_share", "column": "session_id", "refTable": "session", "refColumn": "id", "nullable": false },
+        { "table": "workspace", "column": "project_id", "refTable": "project", "refColumn": "id", "nullable": false },
+        { "table": "event", "column": "aggregate_id", "refTable": "event_sequence", "refColumn": "aggregate_id", "nullable": false },
+        { "table": "account_state", "column": "active_account_id", "refTable": "account", "refColumn": "id", "nullable": true }
+      ],
+      "audit_sql": "For each FK: SELECT <fk.column> AS val FROM <fk.table> WHERE <where clause> LIMIT 1000",
+      "orphan_limit": 1000,
+      "on_violation": "Migration halts with a detailed violation report. Use --force to skip audit and migrate anyway.",
+      "on_pass": "Migration proceeds to data copy."
+    },
+    "data_copy": {
+      "description": "Data is copied table-by-table from SQLite source to Postgres destination in parent-before-child order.",
+      "table_order": [
+        "project",
+        "account",
+        "event_sequence",
+        "workspace",
+        "session",
+        "account_state",
+        "message",
+        "session_share",
+        "part",
+        "todo",
+        "session_message",
+        "permission",
+        "control_account",
+        "event",
+        "data_migration"
+      ],
+      "type_conversions": {
+        "json_columns": "Columns stored as text({mode:'json'}) in SQLite are parsed via JSON.parse() before insertion as jsonb() in Postgres.",
+        "boolean_columns": "Columns stored as integer({mode:'boolean'}) in SQLite are converted to boolean (1/true/'1' → true) for Postgres boolean columns."
+      },
+      "insert_strategy": "INSERT ... ON CONFLICT DO NOTHING per row, batched through a single client connection.",
+      "verification": "Row count reported per table during copy."
+    },
+    "post_migration_verification": {
+      "description": "After data copy completes, every table is verified by row count and SHA256 checksum. Can be skipped with --skip-verify.",
+      "checks": [
+        {
+          "type": "row_count_match",
+          "detail": "SELECT COUNT(*) is executed on both SQLite source and Postgres destination for every table. Counts must match exactly.",
+          "on_failure": "Migration fails with discrepancy report. Rollback backup preserved."
+        },
+        {
+          "type": "sha256_checksum_match",
+          "detail": "All rows are read in deterministic order (ORDER BY 1) from both SQLite and Postgres. Each row is canonicalized to tab-separated values (null → \\N), newline-delimited, then SHA256-hashed. Checksums must match exactly.",
+          "on_failure": "Migration fails with discrepancy report showing both checksums. Rollback backup preserved."
+        }
+      ],
+      "output": "Per-table status (OK or MISMATCH with row counts and truncated SHA256). Summary passes or fails."
+    },
+    "completion": {
+      "description": "Steps performed after successful verification to mark migration as complete.",
+      "steps": [
+        {
+          "order": 1,
+          "action": "Create migration flag file",
+          "detail": "A flag file at <dbDir>/.rig/postgres-migration-complete is created. The flag file content is the ISO 8601 timestamp of completion.",
+          "verification": "cat <dbDir>/.rig/postgres-migration-complete"
+        },
+        {
+          "order": 2,
+          "action": "Set OPENCODE_DATABASE_URL",
+          "detail": "Set the OPENCODE_DATABASE_URL environment variable to the Postgres connection string. The application will use Postgres instead of SQLite on next launch.",
+          "verification": "echo $OPENCODE_DATABASE_URL"
+        }
+      ]
+    },
+    "rollback": {
+      "description": "Procedure to revert to the SQLite database after migration.",
+      "steps": [
+        {
+          "order": 1,
+          "action": "Unset OPENCODE_DATABASE_URL",
+          "detail": "Remove or unset the OPENCODE_DATABASE_URL environment variable so the application falls back to SQLite.",
+          "command": "unset OPENCODE_DATABASE_URL"
+        },
+        {
+          "order": 2,
+          "action": "Restore SQLite from rollback backup",
+          "detail": "Rename the .pre-pg-migration backup back to the original database filename.",
+          "command": "mv <dbPath>.pre-pg-migration <dbPath>"
+        },
+        {
+          "order": 3,
+          "action": "Remove migration flag (optional)",
+          "detail": "If the migration flag exists, remove it to allow re-running migration.",
+          "command": "rm <dbDir>/.rig/postgres-migration-complete"
+        },
+        {
+          "order": 4,
+          "action": "Verify rollback",
+          "detail": "Launch the application and verify that data is accessible from the restored SQLite database.",
+          "verification": "opencode db path && opencode db 'SELECT count(*) FROM session'"
+        }
+      ],
+      "data_safety": "The original SQLite database is preserved intact under the .pre-pg-migration suffix throughout the entire migration. Verification failure does NOT delete the backup — it remains for manual restore.",
+      "re_migration": "To re-run migration after rollback: remove the .pre-pg-migration backup (or restore it first), ensure the destination Postgres tables are empty, and run the command again."
+    },
+    "flags": {
+      "--force": "Skip FK audit and proceed with migration even if orphaned records exist.",
+      "--dry-run": "Run FK audit only. Does not rename SQLite, connect to Postgres, or copy data.",
+      "--skip-verify": "Skip post-migration row count and SHA256 checksum verification. Intended for CI/testing where verification is handled externally."
+    },
+    "error_scenarios": {
+      "rollback_backup_exists": {
+        "condition": ".pre-pg-migration file already exists from a previous migration attempt.",
+        "message": "Rollback backup already exists. Remove it manually or restore it first to re-run migration.",
+        "resolution": "rm <dbPath>.pre-pg-migration || mv <dbPath>.pre-pg-migration <dbPath>"
+      },
+      "postgres_connection_failure": {
+        "condition": "Cannot connect to the specified Postgres URL.",
+        "message": "Postgres connection failed or URL is invalid.",
+        "resolution": "Verify the connection string, ensure the Postgres server is running, and check firewall/SSL settings."
+      },
+      "verification_mismatch": {
+        "condition": "Row count or checksum mismatch detected after data copy.",
+        "message": "Verification FAILED — discrepancies found. Rollback backup preserved at <backupPath>.",
+        "resolution": "Investigate the cause (data corruption, schema mismatch, type conversion error), fix the issue, drop Postgres tables, clear the backup, and re-run migration."
+      }
+    }
+  }
+}

@@ -1,0 +1,388 @@
+{
+  "schema_version": "rig.plan.v1",
+  "plan_revision": 1,
+  "revision_cycles": 0,
+  "title": "Final Closures: Storage Substrate & Profile Parity",
+  "generated_at": "2026-05-28T20:00:00.000000+00:00",
+  "author": "orchestrator",
+  "status": "draft",
+  "summary": "Two remaining closures to reach full definition: (1) Storage Substrate — Postgres becomes the only live write backend, DuckDB is wired as analytical sidecar, all Database.use paths go through the adapter seam, and SQLite is removed; (2) Profile Parity — repo source agents, approvals, permissions, and skills match installed OpenCode behavior. Execution is sequential and must not skip evidence gates.",
+  "current_state": {
+    "database_adapter": "Fully implemented in packages/opencode/src/storage/adapter.ts with DrizzleLikeClient Interface (query, transaction, afterCommit), SQLiteAdapter impl, PgAdapter impl, and defaultLayer selecting based on OPENCODE_DATABASE_URL presence. Phase 1 adapter hardening complete (13 unit tests passing, afterCommit refactored, discriminated transaction options, retry support).",
+    "postgres_schema_files": "All 8 .pg.sql.ts files exist: session.pg.sql.ts, project.pg.sql.ts, account.pg.sql.ts, workspace.pg.sql.ts, event.pg.sql.ts, share.pg.sql.ts, schema.pg.sql.ts, data-migration.pg.sql.ts. drizzle.config.pg.ts exists with dialect: postgresql. DrizzleLikeClient supports pg-core tables structurally.",
+    "postgres_dependencies": "@electric-sql/pglite, pg, @types/pg, drizzle-orm/pg-core, drizzle-orm/pglite, drizzle-orm/node-postgres installed.",
+    "adapter_consumers": "82 DatabaseAdapter references across codebase. Multiple consumers already use yield* DatabaseAdapter.Service pattern. 12-16 raw Database.* calls remain in 6 source files.",
+    "coordination_tool": "Exists with wave types: learning, critique, execution, validation, stress, repair, documentation, publish, report.",
+    "sqlite_schema_files": "All 8 .sqlite.sql.ts files exist alongside .pg.sql.ts variants. Runtime imports still reference .sqlite.sql.ts variants (~35-42 import sites).",
+    "sqlite_backend": "db.bun.ts and db.node.ts still active. #db import alias points to bun-sqlite. json-migration.ts still active. SQLite PRAGMAs execute unconditionally.",
+    "postgres_ddl": "migration-pg/ directory does not exist. drizzle-kit generate has not been run against drizzle.config.pg.ts.",
+    "data_migration": "No migrate-to-pg CLI command exists. SQLite-to-Postgres one-way migration not implemented.",
+    "duckdb_analytical": "Zero DuckDB references anywhere in the codebase (no imports, no config, no schemas, no sidecar).",
+    "ci_postgres": "No Postgres service container in GitHub Actions. No test/fixture/pg.ts exists. No CI-backed Postgres test runner.",
+    "coordination_persistence": "coordination.ts is purely in-memory Maps. No disk-backed or database-backed persistent coordination state.",
+    "credential_isolation": "FLAG.OPENCODE_DATABASE_URL reads process.env at module load time — no Effect Redacted-based credential management for database URL.",
+    "profile_parity": {
+      "orchestrator_agent": "No orchestrator.md in .opencode/agent/. No wave-model orchestrator enforcement.",
+      "subagents": "No critic/reviewer, executor, validator, stress, or repair agent profiles in .opencode/agent/.",
+      "approval_gates": "plan_approval.v1.json schema exists as doc artifact. red_team_approval and repair_plan_approval schemas do not exist.",
+      "permissions": "opencode.jsonc has empty permissions — no read/search/task-only enforcement for orchestrator.",
+      "installed_skills": "Only 2 skills in repo (effect, improve-codebase-architecture) vs ~13 in installed OpenCode.",
+      "legacy_profiles": "Legacy reviewer profiles and no long-horizon senior-engineer behavior default."
+    },
+    "typecheck_baseline": "280 pre-existing errors (Effect v4 beta Layer R-type mismatches in test files, not caused by storage work)."
+  },
+  "dirty_file_audit": {
+    "audit_command": "git status --porcelain (run at plan creation time)",
+    "generated_at": "2026-05-28T20:00:00.000000+00:00",
+    "total_modified": "0 baseline (fresh plan — dirty file audit to be updated at execution time by subagent)",
+    "total_untracked": "0 baseline (fresh plan)",
+    "files_in_scope": [
+      {
+        "path": "packages/opencode/src/storage/adapter.ts",
+        "status": "clean",
+        "strategy": "additive edit for pg migration wiring and DuckDB layer registration"
+      },
+      {
+        "path": "packages/opencode/src/storage/db.ts",
+        "status": "clean",
+        "strategy": "additive edit for backend detection and PRAGMA gating"
+      },
+      {
+        "path": "packages/opencode/src/storage/db.pg.ts",
+        "status": "clean",
+        "strategy": "additive edit for DuckDB sidecar init and migration-pg loading"
+      },
+      {
+        "path": "packages/opencode/src/control-plane/workspace.ts",
+        "status": "clean",
+        "strategy": "convert remaining raw Database.use call at line ~986 (waitEvent) to DatabaseAdapter.Service"
+      },
+      {
+        "path": "packages/opencode/src/server/shared/fence.ts",
+        "status": "clean",
+        "strategy": "convert plain load() function (line ~15) to Effect-compatible DatabaseAdapter.Service"
+      },
+      {
+        "path": "packages/opencode/src/server/projectors.ts",
+        "status": "clean",
+        "strategy": "convert sync convertEvent callback (line ~15) to accept DatabaseAdapter.Service via Effect context"
+      },
+      {
+        "path": "packages/opencode/src/data-migration.ts",
+        "status": "clean",
+        "strategy": "convert 4 raw Database.use calls + json_extract → jsonb operators; or defer to Phase 1.6"
+      },
+      {
+        "path": "packages/opencode/src/project/project.ts",
+        "status": "clean",
+        "strategy": "convert 3 raw Database.use calls to DatabaseAdapter.Service"
+      },
+      {
+        "path": "packages/opencode/src/sync/index.ts",
+        "status": "clean",
+        "strategy": "verify any remaining raw calls migrated; process() already uses adapter.afterCommit per Phase 1"
+      },
+      {
+        "path": "packages/opencode/src/effect/app-runtime.ts",
+        "status": "clean",
+        "strategy": "add DuckDB layer provision and credential-secured DB init"
+      },
+      {
+        "path": "packages/opencode/src/effect/bootstrap-runtime.ts",
+        "status": "clean",
+        "strategy": "add DuckDB layer provision and credential-secured DB init"
+      }
+    ],
+    "out_of_scope_dirty_files": [],
+    "conflict_policy": "If any edit would remove or conflict with existing modifications (from parallel agents), stop and report the conflict. Preserve all pre-existing modifications exactly. Use expected_before_sha256 on all search_replace operations on dirty files."
+  },
+  "tracks": [
+    {
+      "track": 1,
+      "name": "Storage Substrate",
+      "exit_condition": "Postgres is the only live write backend for runtime state. DuckDB is wired as the analytical/read-model sidecar. Every SQLite-native schema has a Postgres-native equivalent (DONE — verified in current_state). A one-way SQLite → Postgres data migration exists. All live Database.use/Database.transaction paths are behind the adapter seam. SQLite runtime files and SQLite-native schemas are removed.",
+      "phases": [
+        {
+          "phase": "1.0",
+          "name": "DuckDB Analytical Sidecar",
+          "description": "Install DuckDB dependencies (@duckdb/duckdb-wasm or duckdb npm package). Create analytical schema definitions using DuckDB-native SQL (parquet-backed reads, JSON extraction). Create db.duckdb.ts init function. Register DuckDB layer in app-runtime.ts and bootstrap-runtime.ts. Wire DuckDB as read-model sidecar — not as write backend. Analytical queries route to DuckDB, transactional writes route to Postgres. Add #db-duckdb import alias to package.json. Add DuckDB adapter class to adapter.ts (read-only Interface subset). Update DrizzleLikeClient to accept DuckDB structurally if needed.",
+          "files_changed": [
+            "packages/opencode/package.json (add @duckdb/duckdb-wasm or duckdb npm package, add #db-duckdb alias)",
+            "packages/opencode/bun.lock",
+            "packages/opencode/src/storage/db.duckdb.ts (new — DuckDB init function with analytical query support)",
+            "packages/opencode/src/storage/adapter.ts (add DuckDBAdapter or read-only layer registration)",
+            "packages/opencode/src/effect/app-runtime.ts (add DuckDB layer provision)",
+            "packages/opencode/src/effect/bootstrap-runtime.ts (add DuckDB layer provision)",
+            "packages/opencode/src/storage/schema.duckdb.ts (new — DuckDB analytical schema definitions if needed)"
+          ],
+          "acceptance": "DuckDB dependency installs. db.duckdb.ts creates DuckDB connection. app-runtime.ts and bootstrap-runtime.ts provide DuckDB layer. Analytical queries can route to DuckDB. typecheck passes. DuckDBAdapter compiles. Existing Postgres transaction path unaffected.",
+          "blocking_defects": null
+        },
+        {
+          "phase": "1.1",
+          "name": "Generate Postgres DDL + Migration Directory",
+          "description": "Run drizzle-kit generate against drizzle.config.pg.ts to produce initial Postgres migration in migration-pg/. Create migration-pg/ directory with the generated SQL files. Apply migration on startup when Postgres backend is active (modify db.pg.ts init to run migrations). Verify generated DDL is valid Postgres (no SQLite-specific syntax like json_extract, no PRAGMA statements).",
+          "files_changed": [
+            "packages/opencode/migration-pg/ (new directory with generated DDL files)",
+            "packages/opencode/src/storage/db.pg.ts (add migration loading path: run drizzle-kit generated SQL on first connect)"
+          ],
+          "acceptance": "drizzle-kit generate runs successfully with zero errors. migration-pg/ directory contains valid Postgres DDL. Migration applies on Postgres backend startup. Syntax verified: no SQLite-specific functions or PRAGMAs in generated DDL.",
+          "blocking_defects": ["Phase 0.5 database_security_doctrine.v1 ratified", ".pg.sql.ts schema files verified against target Postgres version"]
+        },
+        {
+          "phase": "1.2",
+          "name": "Credential Isolation with Effect Redacted",
+          "description": "Replace FLAG.OPENCODE_DATABASE_URL process.env reads at module load time with Effect Config-backed credential management using Effect Redacted. Create DatabaseConfig Effect module that reads OPENCODE_DATABASE_URL via Config.redacted(). Wire credential provisioning into app-runtime.ts and bootstrap-runtime.ts. Ensure credentials never leak into subprocess env. Document in database_security_doctrine.v1.json.",
+          "files_changed": [
+            "packages/opencode/src/effect/database-config.ts (new — Effect Redacted-backed DatabaseURL config layer)",
+            "packages/opencode/src/storage/db.ts (remove immediate process.env reads, accept config via Effect context)",
+            "packages/opencode/src/storage/db.pg.ts (accept config via Effect context instead of process.env)",
+            "packages/opencode/src/effect/app-runtime.ts (wire DatabaseConfig layer)",
+            "packages/opencode/src/effect/bootstrap-runtime.ts (wire DatabaseConfig layer)"
+          ],
+          "acceptance": "No OPENCODE_DATABASE_URL process.env reads at module load time. Credentials are Redacted until explicit unwrap at connection point. typecheck passes. Tests pass with mock credential provider.",
+          "blocking_defects": ["Phase 1.0 (DuckDB sidecar) can run in parallel — no dependency"]
+        },
+        {
+          "phase": "1.3",
+          "name": "Migrate All Remaining Database Consumers to Adapter",
+          "description": "Convert all remaining direct Database.use/Database.transaction calls to DatabaseAdapter.Service. Target inventory: workspace.ts line ~986 (waitEvent sync callback), server/shared/fence.ts line ~15 (plain load function), server/projectors.ts line ~15 (sync convertEvent callback), data-migration.ts (4 calls + json_extract → jsonb operators), project/project.ts (3 standalone calls), sync/index.ts (verified in Phase 1, but audit for any remaining). Handle json_extract sql tagged templates → Postgres jsonb operators (->> for text extraction, ::numeric cast for numeric extraction). All files must be typecheck-clean after conversion.",
+          "files_changed": [
+            "packages/opencode/src/control-plane/workspace.ts (waitEvent: convert sync callback to Effect-based DatabaseAdapter.Service)",
+            "packages/opencode/src/server/shared/fence.ts (load: convert plain function to Effect-compatible DatabaseAdapter.Service usage)",
+            "packages/opencode/src/server/projectors.ts (convertEvent: convert sync callback to DatabaseAdapter.Service via Effect context injection)",
+            "packages/opencode/src/data-migration.ts (4 Database.use calls + json_extract → jsonb ->> + ::numeric)",
+            "packages/opencode/src/project/project.ts (3 standalone Database.use calls)"
+          ],
+          "acceptance": "Zero remaining raw Database.use/Database.transaction calls in src/ (excluding test files). All json_extract references in src/ converted to Postgres jsonb operators. typecheck passes. Tests pass with both SQLiteAdapter and PgAdapter.",
+          "blocking_defects": ["Phase 1.1 (DDL) complete — schemas must exist for adapter usage", "Phase 1.2 (credentials) can be parallel"]
+        },
+        {
+          "phase": "1.4",
+          "name": "Postgres CI Service + Test Infrastructure",
+          "description": "Add GitHub Actions Postgres service container configuration. Create test/fixture/pg.ts with PGlite or pg service-backed test harness. Add schema-per-test isolation for Postgres parallel execution (CREATE SCHEMA test_${workerId} / DROP SCHEMA ... CASCADE). Update testEffect to allow adapter layer selection (SQLite or Postgres) based on env var. Create CI test runner workflow or modify existing workflow to include Postgres service container. Add adapter integration tests for PgAdapter running against real Postgres.",
+          "files_changed": [
+            ".github/workflows/ (add Postgres service container to test workflow or create ci-pg.yml)",
+            "packages/opencode/test/fixture/pg.ts (new — PGlite/pg test harness with schema isolation)",
+            "packages/opencode/test/lib/effect.ts (add test-specific adapter layer selection)",
+            "packages/opencode/test/storage/adapter.pg.test.ts (new — PgAdapter integration tests)"
+          ],
+          "acceptance": "GitHub Actions workflow starts Postgres service container. test/fixture/pg.ts connects and runs queries. Schema-per-test isolation verified in CI. PgAdapter integration tests pass. SQLiteAdapter unit tests still pass.",
+          "blocking_defects": ["Phase 1.0 (DuckDB) and 1.1 (DDL) complete", "Phase 1.2 (credentials) complete — test harness needs credential provisioning"]
+        },
+        {
+          "phase": "1.5",
+          "name": "Persistent Coordination Backend",
+          "description": "Replace in-memory Maps in coordination.ts with disk-backed or database-backed persistent coordination state. Use the Postgres or DuckDB connection for coordination state persistence. Support wave state recovery after process restart. Implement coordination lease persistence, artifact state persistence. Add coordination migration to the DDL set if Postgres-backed.",
+          "files_changed": [
+            "packages/opencode/src/coordination/coordination.ts (replace in-memory Maps with DatabaseAdapter-backed persistence)",
+            "packages/opencode/src/coordination/coordination.pg.sql.ts or coordination.duckdb.sql.ts (new — coordination schema if DB-backed)"
+          ],
+          "acceptance": "Coordination state survives process restart. Leases, artifact claims, and handoff state are recoverable. typecheck passes. Coordination property tests pass with persistence layer.",
+          "blocking_defects": ["Phase 1.3 (adapter consumers) complete — coordination must use DatabaseAdapter"]
+        },
+        {
+          "phase": "1.6",
+          "name": "SQLite-to-Postgres Data Migration Command",
+          "description": "Write migrate-to-pg.ts CLI command in packages/opencode/src/cli/cmd/. Reads SQLite directly via Database import from ./storage/db (bypassing adapter layer for read-only source access). Writes to Postgres via PGlite/pg client (bypassing adapter layer for write-only destination access). Pre-migration FK audit on existing SQLite data (report violations, halt if found). Post-migration verification: row count per table + SHA256 checksum match between SQLite source and Postgres destination. Rollback: renames opencode.db to opencode.db.pre-pg-migration. Create migration flag file (.rig/postgres-migration-complete).",
+          "files_changed": [
+            "packages/opencode/src/cli/cmd/migrate-to-pg.ts (new — one-way SQLite-to-Postgres migration command)",
+            "packages/opencode/src/cli/cmd/index.ts (register migrate-to-pg command)",
+            "docs/json/opencode/data_migration_plan.v1.json (new — migration procedure documentation)"
+          ],
+          "acceptance": "All data from SQLite present in Postgres. Row counts and SHA256 checksums match. FK violations detected and reported before migration begins. Rollback available via .db.pre-pg-migration rename. CLI command documented in --help. typecheck passes.",
+          "blocking_defects": ["Phase 1.3 (adapter consumers) complete — ensures no concurrent writes during migration", "Phase 1.4 (CI Postgres) complete — migration must be testable in CI", "FK audit: violations must be repaired before migration"]
+        },
+        {
+          "phase": "1.7",
+          "name": "SQLite Deprecation & Cleanup",
+          "description": "Switch #db import alias to db.pg.ts (PGlite init) instead of db.bun.ts. Remove db.bun.ts, db.node.ts. Remove all .sqlite.sql.ts files (.pg.sql.ts become canonical). Remove json-migration.ts. Remove drizzle.config.ts or change to postgresql dialect (drizzle.config.pg.ts becomes primary). Update package.json #db alias to point to db.pg.ts. Remove #db-pg alias (now redundant with #db). Update node.ts public API. Clean up test/fixture/db.ts for Postgres-native cleanup (remove SQLite file deletion). Update docs to reflect Postgres default. Remove SQLite PRAGMA gating (no longer needed). Update all import sites referencing .sqlite.sql.ts to reference .pg.sql.ts.",
+          "files_changed": [
+            "packages/opencode/package.json (#db alias → db.pg.ts; remove #db-pg)",
+            "packages/opencode/src/storage/db.bun.ts (remove)",
+            "packages/opencode/src/storage/db.node.ts (remove)",
+            "packages/opencode/src/storage/json-migration.ts (remove)",
+            "packages/opencode/src/storage/schema.sqlite.sql.ts (remove — .pg.sql.ts is canonical)",
+            "packages/opencode/src/session/session.sqlite.sql.ts (remove)",
+            "packages/opencode/src/project/project.sqlite.sql.ts (remove)",
+            "packages/opencode/src/account/account.sqlite.sql.ts (remove)",
+            "packages/opencode/src/control-plane/workspace.sqlite.sql.ts (remove)",
+            "packages/opencode/src/sync/event.sqlite.sql.ts (remove)",
+            "packages/opencode/src/share/share.sqlite.sql.ts (remove)",
+            "packages/opencode/src/data-migration.sqlite.sql.ts (remove)",
+            "packages/opencode/drizzle.config.ts (change to postgresql dialect, rename drizzle.config.pg.ts → drizzle.config.ts or consolidate)",
+            "packages/opencode/src/node.ts (update public API to reflect Postgres default)",
+            "packages/opencode/test/fixture/db.ts (Postgres-native cleanup, remove SQLite file deletion)",
+            "~35-42 import sites across src/ and test/ referencing .sqlite.sql.ts → .pg.sql.ts"
+          ],
+          "acceptance": "SQLite is no longer the default backend. No SQLite-specific files remain in src/storage/. No .sqlite.sql.ts files remain in src/. All imports reference .pg.sql.ts. #db alias points to db.pg.ts (PGlite). All tests pass with Postgres. Existing users with .db.pre-pg-migration have documented restore path. typecheck passes.",
+          "blocking_defects": [
+            "Phase 1.6 (data migration) complete — users must migrate before SQLite removal",
+            "Phase 1.3 (adapter consumers) complete — all Database.use calls migrated",
+            "Phase 1.4 (CI Postgres) complete — tests must run against Postgres",
+            "Phase 1.5 (persistent coordination) complete — coordination must not depend on SQLite"
+          ]
+        },
+        {
+          "phase": "1.8",
+          "name": "Typecheck & Test Recovery",
+          "description": "Run full typecheck after all SQLite removal. Fix any broken imports or adapter mismatches. Run full test suite against Postgres backend. Verify all tests pass. Record final typecheck count and test results as evidence artifacts. Verify zero evidence of SQLite in src/ (grep for sqliteTable, bun-sqlite, better-sqlite3, db.bun, node-sqlite3).",
+          "files_changed": [
+            "docs/json/opencode/evidence/typecheck_final_storage.v1.json (new — final typecheck count after Storage Substrate closure)"
+          ],
+          "acceptance": "typecheck passes with zero errors (or only pre-existing Effect v4 Layer errors). Full test suite passes with Postgres backend. grep for SQLite patterns returns zero hits in src/. All evidence artifacts committed.",
+          "blocking_defects": ["Phase 1.7 (SQLite cleanup) complete"]
+        }
+      ],
+      "deferred_seams_after_1.8": [
+        "DuckDB analytical query integration into agent tools and Ralph scanner — DuckDB is wired but not yet consumed by agent-facing tools for synthesized conclusions.",
+        "effect-drizzle-pg bridge package — DrizzleLikeClient wrapper pattern remains the intentional boundary (not a deferred bug).",
+        "PGlite full feature verification against all Postgres-specific DDL features (partitioning, row-level security, etc.) — deferred to proof-of-use."
+      ]
+    },
+    {
+      "track": 2,
+      "name": "Profile Parity",
+      "exit_condition": "Repo source (.opencode/agent/, opencode.jsonc, skills/) can reproduce the installed OpenCode agent behavior: orchestrator agent with wave-model subagents, approval artifact gates, proper permission restrictions, reviewer set with long-horizon behavior, validator self-audit rules, and matching installed skills.",
+      "allow_parallel_with_track_1": false,
+      "note_on_paths": ".opencode/agent/ is the target directory for agent profiles. opencode.jsonc is the target file for permissions. opencode.jsonc has empty permissions — executor must verify exact structure before editing. Some profile parity work targets src/agent/ (source-level agent config) vs .opencode/agent/ (repo-local config). Executor must distinguish between the two and verify exact target path before editing.",
+      "phases": [
+        {
+          "phase": "2.1",
+          "name": "Orchestrator Agent Profile With Wave Model",
+          "description": "Create .opencode/agent/orchestrator.md with wave-model orchestration behavior: learning-first, delegate-first, no-self-inspection rule, approval-artifact gates (plan_approval.v1.json, red_team_approval.v1.json, repair_plan_approval.v1.json) as first-class enforced gates. Orchestrator reads current revision count from state JSON and halts if exceeds 5. Orchestrator enforces the chronology state machine (code commit → yield → audit receipt → commit audit). Orchestrator remains read/search/task-only — no mutation capabilities beyond sending messages and reading messages.",
+          "files_changed": [
+            ".opencode/agent/orchestrator.md (new — wave-model orchestrator agent profile with approval gate enforcement)"
+          ],
+          "acceptance": "orchestrator.md exists with wave-model instructions matching installed behavior. Approval artifacts referenced by path. Chronology state machine encoded. Orchestrator restricted to read/search/task-only.",
+          "blocking_defects": null
+        },
+        {
+          "phase": "2.2",
+          "name": "Wave-Model Subagent Profiles",
+          "description": "Create subagent profiles for each wave type: critic/reviewer (long-horizon senior engineer — 3 architectural proposals per review), executor (additive edits, dirty-file preservation, blast radius control), validator (self-validation-before-handoff rule, schema validation, bounded checks), stress (hostile pass with 5-minute review cycle, attack concurrency/contention/recovery/leaks/input), repair (JSON repair directives, no deadlock loops).",
+          "files_changed": [
+            ".opencode/agent/critic.md (new — long-horizon senior engineer with 3-proposal requirement per review)",
+            ".opencode/agent/executor.md (new — additive edits, blast radius control, dirty-file preservation)",
+            ".opencode/agent/validator.md (new — self-validation-before-handoff, schema validation, bounded checks)",
+            ".opencode/agent/stress.md (new — hostile pass, 'break my newest mechanism', attack surface enumeration)",
+            ".opencode/agent/repair.md (new — JSON repair directives, delta-focused, no deadlock loops)"
+          ],
+          "acceptance": "All 5 subagent profiles exist. Critic encodes three-proposal requirement. Validator encodes self-validation-before-handoff. Stress encodes focused hostile pass. Repair encodes JSON directive consumption. Each profile references its approval gate dependencies.",
+          "blocking_defects": ["Phase 2.1 complete — subagents must reference orchestrator gate"]
+        },
+        {
+          "phase": "2.3",
+          "name": "Approval Gate Schemas & Artifact Templates",
+          "description": "Create missing approval schema files. Ensure docs/json/opencode/approvals/plan_approval.v1.json exists with correct schema. Create docs/json/opencode/approvals/red_team_approval.v1.json and docs/json/opencode/approvals/repair_plan_approval.v1.json. Each schema must include: candidate_packet_digest, candidate_boundary_identifier, plan_revision, decision (approved/denied/repair_required), decision_rationale, reviewer_set, surviving_non_blocking_concerns, issued_at. Ensure JSON Schema definitions exist under docs/schemas/ for each approval artifact kind.",
+          "files_changed": [
+            "docs/json/opencode/approvals/red_team_approval.v1.json (new — red team approval artifact with correct schema)",
+            "docs/json/opencode/approvals/repair_plan_approval.v1.json (new — repair plan approval artifact with correct schema)",
+            "docs/schemas/rig.relay.red_team_approval.v1.schema.json (new — JSON Schema for red team approval)",
+            "docs/schemas/rig.relay.repair_plan_approval.v1.schema.json (new — JSON Schema for repair plan approval)",
+            "docs/schemas/rig.relay.plan_approval.v1.schema.json (new — JSON Schema for plan approval, if not existing)"
+          ],
+          "acceptance": "All 3 approval schemas exist and validate. Artifact templates exist at docs/json/opencode/approvals/. plan_approval.v1.json already exists with plan_revision 3 content. JSON Schema files compile with json module (no Python syntax contamination).",
+          "blocking_defects": null
+        },
+        {
+          "phase": "2.4",
+          "name": "Permission Restrictions & Role Enforcement",
+          "description": "Update opencode.jsonc with proper permission restrictions. Orchestrator: read/search/task-only (no mutation). Executor: write allowed but limited to target files. Critic/reviewer: read-only. Validator: read + schema-validate only. Stress: read + override-approved only. Repair: write allowed but limited to repair delta. Enforce AGENTS.md conventions: no git amend/force-push, no git restore/checkout/reset/clean for undo, no dirty file discarding.",
+          "files_changed": [
+            "packages/opencode/opencode.jsonc (update permissions: read/search/task for orchestrator, write-limited for executor, read-only for reviewer, validate-only for validator, stress-limited, repair-delta for repair)",
+            ".opencode/agent/permissions.md (new — permission doctrine documenting role-to-permission mapping)"
+          ],
+          "acceptance": "opencode.jsonc has non-empty permissions. Orchestrator denied write. Executor allowed write but limited. Reviewer read-only. Validator read + validate. All roles verify against AGENTS.md conventions. typecheck passes (if opencode.jsonc is type-checked).",
+          "blocking_defects": ["Phase 2.1 complete — orchestrator profile needs matching permissions", "Phase 2.2 complete — subagent profiles need matching permissions"]
+        },
+        {
+          "phase": "2.5",
+          "name": "Skill Parity — Install Missing Skills",
+          "description": "Identify the ~11 missing skills (installed OpenCode has ~13, repo has 2). Install or create skill files matching the installed set. Ensure each skill has: proper name, description trigger pattern, instruction body, and references. Verify skill loading works. Document any skills intentionally excluded with rationale.",
+          "files_changed": [
+            ".opencode/skills/ (add 11 new skill files matching installed OpenCode skill set)",
+            ".opencode/skills/manifest.json (update with new skills if manifest exists)"
+          ],
+          "acceptance": "Skill count matches installed OpenCode (~13). Each skill loads and provides instructions. Existing 2 skills preserved. Excluded skills documented with rationale.",
+          "blocking_defects": null
+        },
+        {
+          "phase": "2.6",
+          "name": "Profile End-to-End Validation",
+          "description": "Run end-to-end validation of all profiles: verify orchestrator delegates to subagents, subagents respect permissions, approval gates enforced, stress pass produces findings, repair consumes directives. Create e2e test profile or validation script. Document any gaps between repo profiles and installed behavior as deferred seams or out-of-scope findings.",
+          "files_changed": [
+            "docs/json/opencode/evidence/profile_parity_e2e.v1.json (new — e2e validation results evidence artifact)"
+          ],
+          "acceptance": "All profiles validated. Permission restrictions verified by test. Approval gates enforced in test flow. Stress-repair cycle verified. Installed behavior gaps documented as deferred seams.",
+          "blocking_defects": [
+            "Phase 2.1 (orchestrator) complete",
+            "Phase 2.2 (subagents) complete",
+            "Phase 2.3 (approval gates) complete",
+            "Phase 2.4 (permissions) complete",
+            "Phase 2.5 (skills) complete"
+          ]
+        }
+      ]
+    }
+  ],
+  "repair_limit": 10,
+  "per_phase_repair_ceiling": 2,
+  "rollback_strategy": {
+    "method": "Per-phase checkpoint commits with pinned SQLite version retained through Phase 1.6",
+    "pre_1.6_code_rollback": "git revert the most recent checkpoint commit. Pre-1.6 work is purely additive (new files, adapter additions, schema additions) and does not remove SQLite. DuckDB and credential isolation changes are backward-compatible.",
+    "post_1.6_data_rollback": "Unset OPENCODE_DATABASE_URL. Rename opencode.db.pre-pg-migration back to opencode.db. Postgres drops are reversible by reapplying the initial migration-pg/ DDL. Migration flag file removed.",
+    "post_1.7_rollback": "git revert the Phase 1.7 checkpoint commit + restore .db.pre-pg-migration. Phase 1.7 is the only destructive removal phase (removes SQLite files). Pre-1.7 rollback path available as long as Phase 1.7 is not committed.",
+    "pre_1.7_stoppage": "Phase 1.6 (data migration) and Phase 1.7 (SQLite cleanup) are gated by explicit approval. Do not proceed to Phase 1.7 until Phase 1.6 migration is verified in CI and all adapter consumer conversion is complete.",
+    "track_2_rollback": "Track 2 (Profile Parity) is entirely additive (new files in .opencode/agent/, .opencode/skills/). Rollback is git revert of the checkpoint commit. No permanent destructive changes."
+  },
+  "data_integrity_checks": [
+    "Pre-migration (Phase 1.6): FK constraint audit on existing SQLite data. Repair violations before migration begins.",
+    "Post-migration (Phase 1.6): Row count per table + SHA256 checksum match between SQLite source and Postgres destination.",
+    "Rollback: Verify no data loss after rollback by comparing pre-copy checksums.",
+    "Phase 1.3: Verify workspace.ts waitEvent, projectors.ts convertEvent, fence.ts load produce identical results with DatabaseAdapter.Service as with raw Database.use.",
+    "Phase 1.0 (DuckDB): DuckDB must not shadow Postgres writes. Verify read-model isolation — DuckDB queries do not write through to Postgres.",
+    "Phase 1.7: grep for SQLite patterns (sqliteTable, bun-sqlite, better-sqlite3, db.bun, node-sqlite3, .sqlite.sql.ts) in src/ before and after cleanup."
+  ],
+  "evidence_artifacts_produced": [
+    "docs/json/opencode/plans/final_closures_plan.v1.json — this plan",
+    "docs/json/opencode/evidence/duckdb_sidecar_install.v1.json — Phase 1.0 completion",
+    "docs/json/opencode/evidence/pg_ddl_generated.v1.json — Phase 1.1 completion",
+    "docs/json/opencode/evidence/credential_migration.v1.json — Phase 1.2 completion",
+    "docs/json/opencode/evidence/adapter_consumer_complete.v1.json — Phase 1.3 completion",
+    "docs/json/opencode/evidence/ci_postgres_operational.v1.json — Phase 1.4 completion",
+    "docs/json/opencode/evidence/persistent_coordination.v1.json — Phase 1.5 completion",
+    "docs/json/opencode/evidence/data_migration_complete.v1.json — Phase 1.6 completion",
+    "docs/json/opencode/evidence/sql_cleanup_complete.v1.json — Phase 1.7 completion",
+    "docs/json/opencode/evidence/typecheck_final_storage.v1.json — Phase 1.8 completion",
+    "docs/json/opencode/evidence/profile_parity_e2e.v1.json — Phase 2.6 completion",
+    "docs/json/opencode/approvals/plan_approval.v1.json — plan approval artifact",
+    "docs/json/opencode/approvals/red_team_approval.v1.json — red team approval artifact (Phase 2.3)",
+    "docs/json/opencode/approvals/repair_plan_approval.v1.json — repair plan approval artifact (Phase 2.3)",
+    "docs/schemas/rig.relay.red_team_approval.v1.schema.json — red team approval schema (Phase 2.3)",
+    "docs/schemas/rig.relay.repair_plan_approval.v1.schema.json — repair plan approval schema (Phase 2.3)",
+    "docs/schemas/rig.relay.plan_approval.v1.schema.json — plan approval schema (Phase 2.3)"
+  ],
+  "out_of_scope": [
+    "DuckDB full analytical query optimization and integration into agent-facing tools (DuckDB is wired but agent tools do not yet consume DuckDB for synthesized conclusions — documented in deferred seams)",
+    "effect-drizzle-pg bridge package (DrizzleLikeClient wrapper pattern is intentional boundary)",
+    "New database-backed features beyond migration and sidecar wiring",
+    "PGlite full feature verification against all Postgres DDL features (deferred to proof-of-use)",
+    "DuckDB Wasm in-browser support (desktop-native parquet reads are sufficient)",
+    "Migration of existing CI workflows beyond Postgres service container addition",
+    "Architectural changes to Ralph scanner to consume DuckDB analytical results"
+  ],
+  "full_definition_exit_conditions": {
+    "postgres_is_only_write_backend": "Phase 1.7 (SQLite cleanup) and Phase 1.8 (verification) complete. No SQLite runtime files remain. #db alias points to db.pg.ts. All Database.use calls migrated to adapter.",
+    "duckdb_wired_as_analytical_sidecar": "Phase 1.0 (DuckDB) complete. db.duckdb.ts exists. app-runtime.ts and bootstrap-runtime.ts provide DuckDB layer. Analytical queries can route to DuckDB.",
+    "sqlite_to_postgres_migration_story": "Phase 1.6 (data migration) complete. migrate-to-pg CLI command exists and is documented.",
+    "all_database_use_behind_adapter_seam": "Phase 1.3 (adapter consumers) complete. Zero raw Database.use calls in src/.",
+    "agent_tools_return_decisions_receipts": "Phase 2.1-2.6 (agent profiles) complete. Orchestrator agent enforces artifact-based handoff with approvals and receipts.",
+    "repo_matches_installed_behavior": "Phase 2.1-2.6 (Profile Parity track) complete. Orchestrator, subagents, approvals, permissions, and skills match installed OpenCode.",
+    "critics_as_long_horizon_senior_engineers": "Phase 2.2 (critic profile) complete. Critic encodes three-proposal requirement per review.",
+    "orchestrator_read_search_task_only": "Phase 2.4 (permissions) complete. opencode.jsonc enforces orchestrator role restrictions.",
+    "approval_and_review_artifacts_real_versioned": "Phase 2.3 (approval schemas) complete. All 3 approval schemas exist with JSON Schema definitions and versioned artifacts.",
+    "sqlite_and_legacy_profiles_removed": "Phase 1.7 (SQLite cleanup) and Phase 2.1-2.6 (profile cleanup) complete. No SQLite in src/. No legacy profiles — all profiles match installed wave-model structure.",
+    "proven_under_real_boundaries": "Phase 1.8 (typecheck recovery) and Phase 2.6 (e2e validation) complete. Validation, typecheck, stress, and repair cycles all verified."
+  }
+}

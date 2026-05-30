@@ -1,0 +1,163 @@
+{
+  "artifact_kind": "rig.cartography.file_analysis.v1",
+  "analyzed_file": "packages/desktop/src/main/github-ipc.ts",
+  "file_status": "MISSING — does not exist on disk",
+  "reconstructed_from": "git diff HEAD~1 vs working tree of packages/desktop/src/main/ipc.ts",
+  "analysis_date": "2026-05-30T06:37:00Z",
+  "sections": {
+    "critical_finding": {
+      "severity": "BLOCKER",
+      "summary": "File is imported at ipc.ts:19 but does not exist. Working tree will not build.",
+      "committed_version": "HEAD (8b9230e51) has all GitHub OAuth code inline in ipc.ts (503 lines)",
+      "modified_version": "working tree ipc.ts strips ~200 lines of GitHub code, adds import and call — but never creates the extracted file"
+    },
+    "ipc_channels": {
+      "total_github_channels": 6,
+      "channels": [
+        {
+          "channel": "github-oauth-start",
+          "direction": "invoke (renderer→main)",
+          "args": "none",
+          "returns": "Promise<string> — OAuth session ID",
+          "purpose": "Generates PKCE challenge, opens browser for GitHub authorization",
+          "handler_registered_in": "reconstructed github-ipc.ts"
+        },
+        {
+          "channel": "github-oauth-callback",
+          "direction": "invoke (renderer→main)",
+          "args": "code: string, state: string",
+          "returns": "Promise<void>",
+          "purpose": "Exchanges OAuth code for token via PKCE, stores encrypted",
+          "handler_registered_in": "reconstructed github-ipc.ts"
+        },
+        {
+          "channel": "github-get-token",
+          "direction": "invoke (renderer→main)",
+          "args": "none",
+          "returns": "Promise<string | null>",
+          "purpose": "Decrypts and returns stored access token",
+          "handler_registered_in": "reconstructed github-ipc.ts"
+        },
+        {
+          "channel": "github-set-token",
+          "direction": "invoke (renderer→main)",
+          "args": "token: string",
+          "returns": "Promise<void>",
+          "purpose": "Encrypts and stores a manually-provided token",
+          "handler_registered_in": "reconstructed github-ipc.ts"
+        },
+        {
+          "channel": "github-clear-token",
+          "direction": "invoke (renderer→main)",
+          "args": "none",
+          "returns": "Promise<void>",
+          "purpose": "Deletes stored token",
+          "handler_registered_in": "reconstructed github-ipc.ts"
+        },
+        {
+          "channel": "github-api-proxy",
+          "direction": "invoke (renderer→main)",
+          "args": "url: string, options?: {method?, headers?, body?}",
+          "returns": "Promise<{status, body} | {error: ...}>",
+          "purpose": "Restricted HTTP proxy for github.com API requests with auth",
+          "handler_registered_in": "reconstructed github-ipc.ts"
+        }
+      ]
+    },
+    "hardcoded_values": {
+      "client_id": {
+        "value": "Iv23li7XUy0RKw5TlZ3K",
+        "used_in": [
+          "github-oauth-start — constructing authorize URL params",
+          "github-oauth-callback — constructing token exchange body"
+        ],
+        "const_name": "GITHUB_CLIENT_ID"
+      },
+      "urls": [
+        {
+          "value": "https://github.com/login/oauth/access_token",
+          "purpose": "OAuth token exchange endpoint",
+          "const_name": "GITHUB_TOKEN_URL"
+        },
+        {
+          "value": "https://github.com/login/oauth/authorize",
+          "purpose": "OAuth authorization endpoint (base, built with query params)"
+        },
+        {
+          "value": "opencode://github-oauth",
+          "purpose": "Custom protocol redirect URI (hardcoded in 2 separate locations)",
+          "occurrences": 2
+        }
+      ],
+      "scopes": {
+        "value": "repo,user",
+        "purpose": "GitHub OAuth scopes"
+      },
+      "api_headers": {
+        "Accept": "application/vnd.github+json",
+        "User-Agent": "opencode-desktop"
+      },
+      "allowed_hostnames": [
+        "api.github.com",
+        "uploads.github.com"
+      ],
+      "env_var_reads": [],
+      "port_numbers": []
+    },
+    "import_exports": {
+      "reconstructed_imports": [
+        "import crypto from \"node:crypto\"",
+        "import { net, safeStorage, shell } from \"electron\"",
+        "import { getStore } from \"./store\""
+      ],
+      "exports": [
+        {
+          "name": "registerGithubIpcHandlers",
+          "signature": "export function registerGithubIpcHandlers(): void",
+          "parameters": "none (no DI — unlike registerIpcHandlers which takes Deps)"
+        }
+      ],
+      "consumers": [
+        {
+          "file": "packages/desktop/src/main/ipc.ts:19",
+          "import": "import { registerGithubIpcHandlers } from \"./github-ipc\"",
+          "call_site": "ipc.ts:~376, at end of registerIpcHandlers()"
+        }
+      ]
+    },
+    "store_namespace": {
+      "name": "github-auth",
+      "key": "access_token",
+      "protection": "listed in RESERVED_STORE_NAMES (ipc.ts:27) — blocked from generic store-get/set/delete handlers"
+    },
+    "code_quality": {
+      "blockers": [
+        "File does not exist — broken import at ipc.ts:19"
+      ],
+      "yellow_flags": [
+        "Hardcoded client ID — no env var or channel override, fork-hostile",
+        "Hardcoded redirect_uri duplicated in two locations",
+        "No channel differentiation (dev/beta/prod share same GitHub App)",
+        "In-memory pendingOAuth Map — lost on restart, stale browser tabs",
+        "O(n) state lookup iterates entire Map",
+        "Zero-dependency handler function — no DI, directly calls getStore/safeStorage, harder to test",
+        "No safeStorage fallback — throws if system keychain unavailable",
+        "API proxy errors serialized as JSON.stringify inside Error.message — type mismatch with preload bridge signature"
+      ],
+      "green_flags": [
+        "Good architectural extraction reducing ipc.ts from 503 to ~385 lines",
+        "Secure OAuth: PKCE flow (no client secret), SHA-256 code challenge",
+        "Encrypted token storage via Electron safeStorage",
+        "Restricted API proxy (allowlist-based, not open)",
+        "Store namespace protected from generic access"
+      ]
+    },
+    "overall_pattern": {
+      "architecture": "Self-contained subsystem with module-level state + electron-store persistence + OS-level encryption",
+      "auth_flow": "PKCE OAuth 2.0 → encrypted token storage → authenticated API proxy",
+      "persistence": "electron-store named 'github-auth' with Electron safeStorage encryption",
+      "security_model": "Write: safeStorage.encryptString → base64 → store. Read: store → base64 → safeStorage.decryptString",
+      "error_handling": "Token retrieval: silent null on decrypt failure (auto-clears). API proxy: throws strings, not Error objects"
+    }
+  }
+}

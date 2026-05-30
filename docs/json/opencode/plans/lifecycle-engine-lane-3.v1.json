@@ -1,0 +1,22 @@
+{
+  "schema_version": "v1",
+  "plan_id": "lifecycle-engine-lane-3",
+  "plan_revision": 2,
+  "title": "Complete Lifecycle Engine Package + Extend AgentSchema and Agent.Info",
+  "boundary": "lifecycle-engine",
+  "consumer_purpose": "Provide the lifecycle engine package for OpenCode agents with schema, engine, and built-in lifecycle definitions plus integration into AgentSchema and Agent.Info",
+  "claim_atoms": [
+    "definition.ts provides Phase, Transition, LifecycleDefinition, PhaseResult schemas and standalone types",
+    "engine.ts has LifecycleEngine Effect Service with execute(), retry/escalation, and onPhaseEnter/onPhaseExit hooks",
+    "builtins.ts has CARTOGRAPHER, EXECUTOR, CRITIC, LANE_OWNER lifecycle constants",
+    "lifecycle.ts barrel re-exports all files",
+    "docs/schemas/rig.lifecycle_definition.v1.schema.json validates lifecycle definitions",
+    "config/agent.ts AgentSchema has optional lifecycle field",
+    "agent/agent.ts Agent.Info has optional lifecycle field"
+  ],
+  "content": "# Lifecycle Engine Package — Revised Completion Plan\n\n## Current State\n- definition.ts has schemas + duplicate constants (CARTOGRAPHER_LIFECYCLE etc.)\n- builtins.ts has different versions of the same constants (CARTographer_lifecycle etc.)\n- Type errors: Schema.Schema.Type produces readonly arrays incompatible with mutable object literals\n- Missing: JSON Schema, config/agent.ts lifecycle field, agent/agent.ts lifecycle field, onPhaseEnter/onPhaseExit hooks\n\n## Changes\n\n### 1. packages/opencode/src/lifecycle/definition.ts\n- **REMOVE** the 4 duplicate constants (CARTOGRAPHER_LIFECYCLE, etc.) — they conflict with builtins.ts versions\n- **CHANGE** Phase, Transition, LifecycleDefinition, PhaseResult from Schema.Schema.Type aliases to standalone interfaces\n- Keep schemas for runtime validation\n- Plain interfaces avoid readonly/mutable mismatch\n\n### 2. packages/opencode/src/lifecycle/engine.ts\n- Add `onPhaseEnter?: (phase, input) => Effect<void>` to Interface\n- Add `onPhaseExit?: (phase, result, input) => Effect<void>` to Interface\n- Integrate hooks into the execute() retry loop\n- The hooks fire for every phase attempt (including retries)\n\n### 3. packages/opencode/src/lifecycle/builtins.ts (no changes)\n- Constants are well-defined and use correct phase structure\n- Remove type annotations — use `satisfies LifecycleDefinition` instead of `: LifecycleDefinition`\n- Or just remove explicit type annotation and let inference work\n\n### 4. docs/schemas/rig.lifecycle_definition.v1.schema.json\n- Full JSON Schema for LifecycleDefinition including Phase and Transition\n\n### 5. packages/opencode/src/config/agent.ts\n- Add optional lifecycle field to AgentSchema.Struct (inline sub-schema)\n\n### 6. packages/opencode/src/agent/agent.ts\n- Add optional lifecycle field to Agent.Info Schema.Struct (inline sub-schema)\n\n## Non-goals (deferred per critic)\n- Tests for engine state machine — deferred to follow-up lane\n- Effect.withSpan annotations — deferred to follow-up lane\n- Import shared LifecycleDefinitionSchema instead of inline — deferred to follow-up",
+  "status": "proposed",
+  "created_at": "2026-05-30T07:14:17.839556+00:00",
+  "modified_at": "2026-05-30T07:22:39.852119+00:00",
+  "revision_notes": "Addressed critic feedback: removed duplicate constants from definition.ts, use standalone interfaces to fix readonly/mutable type errors, added onPhaseEnter/onPhaseExit hooks to engine"
+}

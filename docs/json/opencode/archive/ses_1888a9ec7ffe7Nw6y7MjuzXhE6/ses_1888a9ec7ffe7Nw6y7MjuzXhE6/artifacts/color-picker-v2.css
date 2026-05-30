@@ -1,0 +1,141 @@
+[data-component="color-picker-v2"] {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  font-family: var(--v2-font-family-sans);
+}
+
+[data-slot="color-picker-v2-label"] {
+  font-size: 13px;
+  font-weight: 530;
+  color: var(--v2-text-text-base);
+  line-height: 1;
+}
+
+[data-slot="color-picker-v2-input-row"] {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+[data-slot="color-picker-v2-preview"] {
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  box-shadow: inset 0 0 0 0.5px var(--v2-alpha-dark-12);
+  flex-shrink: 0;
+}
+
+[data-slot="color-picker-v2-input"] {
+  flex: 1;
+  height: 28px;
+  padding: 0 8px;
+  border: 0.5px solid var(--v2-border-border-muted);
+  border-radius: 6px;
+  background: var(--v2-background-bg-base);
+  color: var(--v2-text-text-base);
+  font-family: var(--v2-font-family-sans);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  outline: none;
+  transition: border-color var(--v2-duration-fast) var(--v2-ease-expressive-out);
+}
+
+[data-slot="color-picker-v2-input"]:focus {
+  border-color: var(--v2-border-border-focus);
+  box-shadow: 0 0 0 1px var(--v2-border-border-focus);
+}
+
+[data-component="color-picker-v2"][data-invalid] [data-slot="color-picker-v2-input"] {
+  border-color: var(--v2-state-border-danger);
+}
+
+[data-slot="color-picker-v2-picker-btn"] {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 0.5px solid var(--v2-border-border-muted);
+  border-radius: 6px;
+  background: var(--v2-background-bg-base);
+  color: var(--v2-icon-icon-base);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background var(--v2-duration-fast) var(--v2-ease-expressive-out),
+              color var(--v2-duration-fast) var(--v2-ease-expressive-out);
+}
+
+[data-slot="color-picker-v2-picker-btn"]:hover {
+  background: var(--v2-overlay-simple-overlay-hover);
+  color: var(--v2-icon-icon-hover);
+}
+
+[data-slot="color-picker-v2-picker-btn"]:active {
+  background: var(--v2-overlay-simple-overlay-pressed);
+}
+
+[data-slot="color-picker-v2-error"] {
+  font-size: 11px;
+  color: var(--v2-state-fg-danger);
+  line-height: 1;
+}
+
+[data-slot="color-picker-v2-swatches"] {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 4px;
+}
+
+[data-slot="color-picker-v2-swatch"] {
+  width: 100%;
+  aspect-ratio: 1;
+  border: 0.5px solid var(--v2-alpha-dark-12);
+  border-radius: 4px;
+  cursor: pointer;
+  padding: 0;
+  outline: none;
+  transition: transform var(--v2-duration-fast) var(--v2-ease-expressive-out),
+              box-shadow var(--v2-duration-fast) var(--v2-ease-expressive-out);
+}
+
+[data-slot="color-picker-v2-swatch"]:hover {
+  transform: scale(1.15);
+  z-index: 1;
+}
+
+[data-slot="color-picker-v2-swatch"]:focus-visible {
+  outline: 2px solid var(--v2-border-border-focus);
+  outline-offset: 2px;
+}
+
+[data-slot="color-picker-v2-swatch"][data-active] {
+  box-shadow: 0 0 0 1.5px var(--v2-background-bg-base), 0 0 0 3px var(--v2-border-border-focus);
+  transform: scale(1.15);
+  z-index: 1;
+}
+
+[data-slot="color-picker-v2-recent"] {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+[data-slot="color-picker-v2-recent-label"] {
+  font-size: 11px;
+  font-weight: 440;
+  color: var(--v2-text-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+[data-slot="color-picker-v2-recent-swatches"] {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+[data-slot="color-picker-v2-recent-swatches"] [data-slot="color-picker-v2-swatch"] {
+  width: 24px;
+}

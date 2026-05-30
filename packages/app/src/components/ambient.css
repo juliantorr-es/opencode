@@ -1,0 +1,175 @@
+.ambient-bar-visible {
+  position: fixed;
+  bottom: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+  animation: ambient-slide-up 0.3s ease-out;
+}
+
+.ambient-bar-hidden {
+  position: fixed;
+  bottom: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+  animation: ambient-slide-down 0.3s ease-in forwards;
+  pointer-events: none;
+}
+
+@keyframes ambient-slide-up {
+  from {
+    transform: translateX(-50%) translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes ambient-slide-down {
+  from {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(-50%) translateY(100%);
+    opacity: 0;
+  }
+}
+
+.ambient-bar-inner {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 12px;
+  border-radius: 9999px;
+  background: var(--v2-background-bg-raised-stronger-non-alpha, var(--surface-raised-stronger-non-alpha, #1e1e2e));
+  border: 1px solid var(--border-base, #313244);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.ambient-dot {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 6px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  border-radius: 6px;
+  color: var(--text-weaker, #6c7086);
+  font-size: 11px;
+  line-height: 1;
+  transition: color 0.15s, background 0.15s;
+}
+
+.ambient-dot:hover {
+  color: var(--text-base, #cdd6f4);
+  background: var(--surface-raised-base-hover, rgba(255, 255, 255, 0.05));
+}
+
+.ambient-dot-indicator {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.ambient-dot-label {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 80px;
+}
+
+.ambient-overflow {
+  font-size: 10px;
+  color: var(--text-weaker, #6c7086);
+  padding: 0 4px;
+}
+
+.ambient-popover-card {
+  width: 280px;
+  border-radius: 12px;
+  background: var(--surface-raised-stronger, #1e1e2e);
+  border: 1px solid var(--border-base, #313244);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ambient-popover-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ambient-popover-icon {
+  display: flex;
+  align-items: center;
+}
+
+.ambient-popover-title {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-strong, #cdd6f4);
+}
+
+.ambient-popover-description {
+  font-size: 12px;
+  color: var(--text-base, #a6adc8);
+  line-height: 1.4;
+  margin: 0;
+}
+
+.ambient-popover-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 4px;
+}
+
+.ambient-popover-timestamp {
+  font-size: 11px;
+  color: var(--text-weaker, #6c7086);
+}
+
+.ambient-popover-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ambient-action-btn {
+  font-size: 11px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--border-base, #313244);
+  background: var(--surface-base, #313244);
+  color: var(--text-base, #cdd6f4);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.ambient-action-btn:hover {
+  background: var(--surface-raised-base-hover, rgba(255, 255, 255, 0.1));
+}
+
+.ambient-dismiss-btn {
+  font-size: 11px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  color: var(--text-weaker, #6c7086);
+  cursor: pointer;
+  transition: color 0.15s;
+}
+
+.ambient-dismiss-btn:hover {
+  color: var(--text-base, #cdd6f4);
+}

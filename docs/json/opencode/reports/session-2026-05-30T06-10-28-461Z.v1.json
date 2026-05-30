@@ -1,0 +1,74 @@
+{
+  "schema_version": "v1",
+  "report_id": "session-2026-05-30T06-10-28-461Z.v1",
+  "session_id": "ses_188821610ffe0XSXODVPc7CCGX",
+  "generated_at": "2026-05-30T06:10:28.497732+00:00",
+  "session_summary": "## i18n Cartography Results\n\nCompleted a comprehensive read-only analysis of the OpenCode Desktop i18n system across all locale files and the @solid-primitives/i18n library.\n\n### Key Findings\n\n**1. Architecture**: The app uses @solid-primitives/i18n v2.2.1 with flat dot-notation dictionaries (963 keys in en.ts + 152 from UI package). The translator is created via `i18n.translator(() => dict, i18n.resolveTemplate)` in the LanguageProvider context. Dictionaries are lazy-loaded per locale and cached.\n\n**2. Locale Coverage**: All 17 non-English locales have incomplete translations. French leads at 92.5% (891/963 keys), while Traditional Chinese lags at 88.2% (850/963 keys).\n\n**3. Critical Gap Zones**:\n- **dialog.agents** (18 keys) and **dialog.mcp** (19 keys) are entirely untranslated in every single locale\n- **github.** (13 keys) completely untranslated across all locales\n- **home.** (18 of 21 keys) untranslated in 16/17 locales\n- **settings.general.row.** (21 keys — new UI settings) untranslated in 16/17 locales\n\n**4. Library API**: @solid-primitives/i18n exports flatten (nested→flat dict), resolveTemplate ({{ }} interpolation), translator (reactive lookup), scopedTranslator (prefix scoping), chainedTranslator/proxyTranslator (object-style access), and prefix/template helpers.\n\n**5. Test Coverage**: Only 1 parity test exists, checking exactly 2 specific session keys. No comprehensive translation completeness tests.\n\n**6. Artifact produced**: docs/json/opencode/i18n-cartography-v1.json",
+  "next_steps": "Potential next steps could include: (1) Adding comprehensive translation parity tests, (2) Filling the universally missing key groups (dialog.agents, dialog.mcp, github, settings.general.row, home.*), (3) Creating a translation management script to auto-detect missing keys, (4) Considering a TMS integration for community translations.",
+  "waves_completed": [
+    "learning"
+  ],
+  "wave_details": {
+    "learning": {
+      "started_at": "2026-05-30T06:09:51.110301+00:00",
+      "completed_at": "2026-05-30T06:09:51.110301+00:00",
+      "findings": [
+        {
+          "source": "read_source:packages/app/src/i18n/en.ts",
+          "summary": "en.ts is the source-of-truth locale with 963 flat dot-notation keys across 28 top-level groups",
+          "confidence": 1.0,
+          "relevance_profiles": [
+            "cartography"
+          ],
+          "wave": "learning"
+        },
+        {
+          "source": "node analysis of all locale files",
+          "summary": "All 17 non-English locales are missing keys vs en.ts; ranging from 89 missing (zh) to 115 missing (bs, da, no, th, tr, zht). French (fr) is most complete with 891 keys; Traditional Chinese (zht) is least complete with 850 keys.",
+          "confidence": 1.0,
+          "relevance_profiles": [
+            "cartography"
+          ],
+          "wave": "learning"
+        },
+        {
+          "source": "read_source:packages/app/node_modules/@solid-primitives/i18n/dist/index.d.ts",
+          "summary": "@solid-primitives/i18n v2.2.1 exports flatten(), resolveTemplate(), translator(), scopedTranslator(), chainedTranslator(), proxyTranslator(), prefix(), template()",
+          "confidence": 1.0,
+          "relevance_profiles": [
+            "cartography"
+          ],
+          "wave": "learning"
+        },
+        {
+          "source": "read_source:packages/app/src/context/language.tsx",
+          "summary": "App creates translator via i18n.translator(() => flatDict, i18n.resolveTemplate) in LanguageProvider context, merges app + UI dictionaries",
+          "confidence": 1.0,
+          "relevance_profiles": [
+            "cartography"
+          ],
+          "wave": "learning"
+        },
+        {
+          "source": "smart_bash:node -e read UI en.ts",
+          "summary": "UI package adds 152 keys under 'ui.' and 'dialog.usageExceeded.' prefixes",
+          "confidence": 1.0,
+          "relevance_profiles": [
+            "cartography"
+          ],
+          "wave": "learning"
+        }
+      ],
+      "artifacts": [
+        "docs/json/opencode/i18n-cartography-v1.json"
+      ]
+    }
+  },
+  "total_findings": 5,
+  "findings_by_profile": {
+    "cartography": 5
+  },
+  "artifacts_consumed": [
+    "docs/json/opencode/i18n-cartography-v1.json"
+  ]
+}

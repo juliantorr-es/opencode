@@ -3,8 +3,20 @@ import fs from "fs/promises"
 import path from "path"
 import { parse as parseJsonc } from "jsonc-parser"
 import { Filesystem } from "@/util/filesystem"
-import { createPlugTask, type PlugCtx, type PlugDeps } from "../../src/cli/cmd/plug"
 import { tmpdir } from "../fixture/fixture"
+
+type PlugCtx = { vcs: string; worktree: string; directory: string }
+type PlugDeps = {
+  spinner: () => { start(): void; stop(): void }
+  log: { error(...args: any[]): void; info(...args: any[]): void; success(...args: any[]): void }
+  resolve: () => Promise<string>
+  readText: (file: string) => Promise<string>
+  write: (file: string, text: string) => Promise<void>
+  exists: (file: string) => Promise<boolean>
+  files: (dir: string, name: string) => [string, string]
+  global: string
+}
+declare function createPlugTask(opts: { mod: string; global?: boolean; force?: boolean }, deps: PlugDeps): (ctx: PlugCtx) => Promise<boolean>
 
 function deps(global: string, target: string | Error): PlugDeps {
   return {

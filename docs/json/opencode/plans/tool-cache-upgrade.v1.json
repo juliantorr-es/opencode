@@ -1,0 +1,22 @@
+{
+  "schema_version": "v1",
+  "plan_id": "tool-cache-upgrade",
+  "plan_revision": 1,
+  "title": "Upgrade ToolCache with TTL, LRU eviction, stats, and size tracking",
+  "boundary": "packages/opencode/src/tool/cache.ts",
+  "consumer_purpose": "The ToolCache service needs bounded memory usage (max entries, TTL expiry, LRU eviction) and observability (stats) for the tool execution pipeline.",
+  "claim_atoms": [
+    "Replace Record with Map for LRU ordering",
+    "Add CacheConfig with maxEntries (default 1000), ttl (default 5 min), maxEntrySize (default 1MB)",
+    "Add invalidateKey() for targeted entry removal",
+    "Add stats() returning CacheStats {size, hits, misses, evictions, estimatedBytes}",
+    "Use Clock.currentTimeMillis instead of Date.now()",
+    "Preserve inflight dedup pattern",
+    "Backward compatible: existing callers work unchanged",
+    "All interface signatures updated, no type errors"
+  ],
+  "content": "## Plan: Upgrade ToolCache\n\n### Current State\ncache.ts is ~73 lines with Ref<Record<string, CacheEntry>> using Date.now() and no bounds. Inflight dedup uses Ref<Record<string, Deferred>>.\n\n### Changes\n\n1. **Import changes**: Add `Clock`, `Duration` to effect imports. Remove nothing.\n\n2. **Types**: \n   - `CacheEntry`: change `storedAt: number` → `expiresAt: number`, add `size: number`\n   - No more `Record` — use `Map<CacheKey, CacheEntry>` for LRU-ordered iteration\n   - Add `CacheConfig` interface with optional `maxEntries`, `ttl`, `maxEntrySize`\n   - Add `CacheStats` interface\n   - Extend `Interface`: add `invalidateKey`, `stats` methods; add optional `config` param to `getOrCompute`\n\n3. **Layer implementation changes**:\n   - `Ref.make({})` (Record) → `Ref.make(new Map())` (Map)\n   - `Ref.make(0)` for hits, misses, evictions, estimatedBytes\n   - `yield* Clock` → get clock.currentTimeMillis instead of Date.now()\n   - `getOrCompute`:\n     - Hit check: map.has(key) && entry.expiresAt > now → promote to MRU (delete+re-set), increment hits, return\n     - Expired: delete, increment evictions, fall through\n     - Inflight dedup preserved\n     - After compute: check maxEntrySize, if too large skip caching\n     - Insert: evict expired entries, LRU evict until under maxEntries, insert, recalculate bytes\n   - `invalidate`: clear map, reset bytes\n   - `invalidateKey`: delete from map, recalculate bytes\n   - `stats`: return all counters + map.size + bytes\n\n4. **No other files touched**: tool.ts and registry.ts are already wired with ToolCache.Interface import. The interface extension is backward compatible (optional config param, existing methods unchanged).\n\n### Risk\n- Low: single file change, backward compatible interface\n- Medium: Map insertion-order LRU is approximate (not true access-order tracking without manual re-insertion)\n",
+  "status": "proposed",
+  "created_at": "2026-05-30T06:38:19.088975+00:00",
+  "modified_at": "2026-05-30T06:38:19.089176+00:00"
+}

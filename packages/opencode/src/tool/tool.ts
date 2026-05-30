@@ -1,10 +1,11 @@
-import { Effect, Schema } from "effect"
+import { Duration, Effect, Option, Schedule, Schema, Semaphore } from "effect"
 import type { JSONSchema7 } from "@ai-sdk/provider"
 import type { MessageV2 } from "../session/message-v2"
 import type { Permission } from "../permission"
 import type { SessionID, MessageID } from "../session/schema"
 import * as Truncate from "./truncate"
 import { Agent } from "@/agent/agent"
+import * as ToolCache from "./cache"
 
 interface Metadata {
   [key: string]: any
@@ -31,6 +32,45 @@ export class InvalidArgumentsError extends Schema.TaggedErrorClass<InvalidArgume
   }
 }
 
+export class ToolError extends Schema.TaggedErrorClass<ToolError>()("ToolError", {
+  tool: Schema.String,
+  detail: Schema.String,
+  recoverable: Schema.Boolean,
+}) {
+  override get message() {
+    return `[${this.tool}] ${this.detail}`
+  }
+}
+
+export class TimeoutError extends Schema.TaggedErrorClass<TimeoutError>()("TimeoutError", {
+  tool: Schema.String,
+  detail: Schema.String,
+  durationMs: Schema.Number,
+}) {
+  override get message() {
+    return `Tool "${this.tool}" timed out after ${this.durationMs}ms: ${this.detail}`
+  }
+}
+
+export class TransientError extends Schema.TaggedErrorClass<TransientError>()("TransientError", {
+  tool: Schema.String,
+  detail: Schema.String,
+}) {
+  override get message() {
+    return `[${this.tool}] Transient error: ${this.detail}. Retrying may help.`
+  }
+}
+
+export class ValidationError extends Schema.TaggedErrorClass<ValidationError>()("ValidationError", {
+  tool: Schema.String,
+  detail: Schema.String,
+  field: Schema.String,
+}) {
+  override get message() {
+    return `[${this.tool}] Validation error on field "${this.field}": ${this.detail}`
+  }
+}
+
 export type Context<M extends Metadata = Metadata> = {
   sessionID: SessionID
   messageID: MessageID
@@ -53,18 +93,25 @@ export interface ExecuteResult<M extends Metadata = Metadata> {
 export interface Def<
   Parameters extends Schema.Decoder<unknown> = Schema.Decoder<unknown>,
   M extends Metadata = Metadata,
+  R = any,
 > {
   id: string
   description: string
   parameters: Parameters
   jsonSchema?: JSONSchema7
-  execute(args: Schema.Schema.Type<Parameters>, ctx: Context): Effect.Effect<ExecuteResult<M>>
+  execute(args: Schema.Schema.Type<Parameters>, ctx: Context<M>): Effect.Effect<ExecuteResult<M>, never, R>
   formatValidationError?(error: unknown): string
+  cacheable?: boolean | { ttl?: Duration.Input; maxSize?: number }
+  timeout?: Duration.Input
+  retry?: { times: number; backoff: Duration.Input; onError?: Array<{ error: new (...args: any[]) => Error }> }
+  maxConcurrency?: number
+  errorTaxonomy?: { recoverable?: boolean; userActionable?: boolean }
 }
 export type DefWithoutID<
   Parameters extends Schema.Decoder<unknown> = Schema.Decoder<unknown>,
   M extends Metadata = Metadata,
-> = Omit<Def<Parameters, M>, "id">
+  R = any,
+> = Omit<Def<Parameters, M, R>, "id">
 
 export interface Info<
   Parameters extends Schema.Decoder<unknown> = Schema.Decoder<unknown>,
@@ -94,9 +141,9 @@ export type InferDef<T> =
       ? Def<P, M>
       : never
 
-function wrap<Parameters extends Schema.Decoder<unknown>, Result extends Metadata>(
+function wrap<Parameters extends Schema.Decoder<unknown>, M extends Metadata>(
   id: string,
-  init: Init<Parameters, Result>,
+  init: Init<Parameters, M>,
   truncate: Truncate.Interface,
   agents: Agent.Interface,
 ) {
@@ -108,6 +155,13 @@ function wrap<Parameters extends Schema.Decoder<unknown>, Result extends Metadat
       // every LLM tool invocation.
       const decode = Schema.decodeUnknownEffect(toolInfo.parameters)
       const execute = toolInfo.execute
+
+      // Layer 4: Per-tool semaphore for maxConcurrency control
+      let semaphore: Semaphore.Semaphore | undefined
+      if (toolInfo.maxConcurrency !== undefined && toolInfo.maxConcurrency > 0) {
+        semaphore = yield* Semaphore.make(toolInfo.maxConcurrency)
+      }
+
       toolInfo.execute = (args, ctx) => {
         const attrs = {
           "tool.name": id,
@@ -115,7 +169,9 @@ function wrap<Parameters extends Schema.Decoder<unknown>, Result extends Metadat
           "message.id": ctx.messageID,
           ...(ctx.callID ? { "tool.call_id": ctx.callID } : {}),
         }
-        return Effect.gen(function* () {
+
+        // Layer 1: Core pipeline — decode, execute, truncate (unchanged logic)
+        const core: Effect.Effect<ExecuteResult<M>, any, any> = Effect.gen(function* () {
           const decoded = yield* decode(args).pipe(
             Effect.mapError(
               (error) =>
@@ -140,7 +196,57 @@ function wrap<Parameters extends Schema.Decoder<unknown>, Result extends Metadat
               ...(truncated.truncated && { outputPath: truncated.outputPath }),
             },
           }
-        }).pipe(Effect.orDie, Effect.withSpan("Tool.execute", { attributes: attrs }))
+        })
+
+        // Compose pipeline inside-out using explicit any-erased type
+        let pipeline: Effect.Effect<any, any, any> = core as any
+
+        // Layer 2: Retry with exponential backoff if retry is configured
+        if (toolInfo.retry !== undefined) {
+          const { times, backoff } = toolInfo.retry
+          pipeline = pipeline.pipe(
+            Effect.retry({ times, schedule: Schedule.exponential(backoff) }),
+          )
+        }
+
+        // Layer 3: Timeout envelope via Effect.timeoutOption
+        if (toolInfo.timeout !== undefined) {
+          const timeoutDuration = Duration.fromInputUnsafe(toolInfo.timeout)
+          const durationMs = Duration.toMillis(timeoutDuration)
+          pipeline = pipeline.pipe(
+            Effect.timeoutOption(timeoutDuration),
+            Effect.flatMap((option) => {
+              if (Option.isNone(option)) {
+                return Effect.fail(
+                  new TimeoutError({ tool: id, detail: "Tool execution timed out", durationMs }),
+                )
+              }
+              return Effect.succeed(option.value)
+            }),
+          )
+        }
+
+        // Layer 4: Per-tool semaphore (wraps after retry + timeout)
+        if (semaphore !== undefined) {
+          pipeline = semaphore.withPermits(1)(pipeline)
+        }
+
+        // Layer 5: Enriched span attributes
+        const orDied: Effect.Effect<ExecuteResult<M>> = Effect.orDie(
+          pipeline as Effect.Effect<ExecuteResult<M>, any, any>,
+        ) as any
+        return (orDied as any).pipe(
+          Effect.withSpan("Tool.execute", { attributes: attrs }),
+          Effect.annotateCurrentSpan({
+            "tool.cacheable": String(toolInfo.cacheable !== undefined),
+            ...(toolInfo.maxConcurrency !== undefined
+              ? { "tool.max_concurrency": toolInfo.maxConcurrency }
+              : {}),
+            ...(toolInfo.timeout !== undefined
+              ? { "tool.timeout_ms": Duration.toMillis(Duration.fromInputUnsafe(toolInfo.timeout)) }
+              : {}),
+          }),
+        ) as any
       }
       return toolInfo
     })

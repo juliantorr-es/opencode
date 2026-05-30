@@ -92,7 +92,7 @@ export const RevisePlanTool = Tool.define(
               2,
             ),
           }
-        }),
+        }).pipe(Effect.orDie),
     }
   }),
 )

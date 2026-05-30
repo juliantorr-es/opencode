@@ -1,0 +1,228 @@
+{
+  "schema": "rig.relay.stress_report.v1",
+  "generated_at": "2026-05-30T07:08:00Z",
+  "session_id": "ses_1884f7c8bffeD8y1A0A1bKyPjo",
+  "target": "packages/opencode/src/tool/cache.ts",
+  "adversary": "stress",
+  "subagents_fanned_out": [
+    "edge-case-enumerator (18 findings)",
+    "state-poisoner (pending)",
+    "dependency-saboteur (10 findings)",
+    "concurrency-stresser (completed, results pending)",
+    "memory-leak-hunter (7 findings)",
+    "assumption-challenger (pending)"
+  ],
+  "verification_tests": [
+    "Map delete+set promotes to MRU position — CONFIRMED",
+    "keys().next().value returns oldest insertion — CONFIRMED",
+    "maxEntries=0 loop terminates safely (undefined break) — CONFIRMED",
+    "encode(undefined) returns empty Uint8Array, not throw — CONFIRMED",
+    "JSON.stringify throws for circular refs — try/catch returns 0 — CONFIRMED",
+    "Effect.Ref.get returns live reference (no copy) — CONFIRMED"
+  ],
+  "attack_vectors": {
+    "concurrent_dedup": "falsified_blocking",
+    "lru_edge": "survived_attack",
+    "empty_cache": "survived_attack",
+    "cache_miss_hit": "survived_attack",
+    "invalidateKey": "survived_attack",
+    "invalidate": "survived_attack",
+    "max_entry_size": "survived_attack",
+    "zero_maxEntries": "survived_attack",
+    "expiry_race": "survived_attack",
+    "stats_consistency": "falsified_major",
+    "compute_failure_dangling_deferred": "falsified_blocking",
+    "inflight_unbounded": "falsified_major",
+    "no_compute_timeout": "falsified_major",
+    "approximateSize_circular_bypass": "falsified_major",
+    "inflight_check_then_set_race": "falsified_blocking",
+    "config_validation_nan": "falsified_minor",
+    "stats_reset_invalidate": "falsified_informational",
+    "no_test_coverage": "falsified_major"
+  },
+  "findings": [
+    {
+      "id": "CACHE-001",
+      "severity": "blocker",
+      "title": "Orphaned Deferred on compute failure hangs concurrent waiters forever",
+      "component": "getOrCompute — inflight dedup (lines 101-126)",
+      "reproducible": true,
+      "description": "When compute() defects or is interrupted, Deferred.succeed(d, result) on line 126 is never reached. Effect.ensuring (line 115-119) correctly removes the inflight map entry, but any fiber that already read the Deferred via pending.get(key) (line 101) and called Deferred.await(existing) (line 105) will hang indefinitely. The Deferred is never resolved via Deferred.fail. Without Effect.onError or Effect.catchAllDefect, all concurrent callers for that key are permanently suspended.",
+      "code_location": "Line 101 (deferred read), Line 105 (await), Line 115-119 (ensuring wipes inflight entry), Line 126 (succeed only on success). Lines 158, 162 (special case: maxEntrySize skip still calls succeed).",
+      "reproduction": "1. Fiber A calls getOrCompute(key, ...). 2. Fiber B calls getOrCompute(key, ...) and hits the dedup path (finds Fiber A's Deferred in inflight map). 3. Fiber A's compute() throws a defect. 4. Effect.ensuring removes (key, Deferred) from inflight map. 5. Fiber B is stuck on Deferred.await(existing) forever — the Deferred is never failed.",
+      "repair": "Use Effect.catchAllCause or Effect.onError to call Deferred.failCause(d, cause) before re-raising. The ensuring callback should also handle the failure case, or use Effect.onExit to complete the Deferred with the Exit value.",
+      "cross_session_coordination": "publish_finding needed — this affects 9+ tools using the cache"
+    },
+    {
+      "id": "CACHE-002",
+      "severity": "blocker",
+      "title": "Non-atomic inflight check-then-set duplicates concurrent computations",
+      "component": "getOrCompute — inflight dedup (lines 97-112)",
+      "reproducible": true,
+      "description": "The inflight check (Ref.get(inflight) on line 100) and the Deferred creation + registration (lines 111-112) are two separate Effect operations separated by yield* points. Two fibers can both read no existing entry, both create Deferreds, and both start computing. The second fiber's pending.set(key, d) overwrites the first's. The first fiber's Deferred may be orphaned if its compute fails (see CACHE-001). Even in the success case, compute is duplicated.",
+      "code_location": "Line 100-101: Ref.get(inflight) — yields; Line 103-105: check existing — race window; Line 111: Deferred.make; Line 112: pending.set(key, d) — overwrites.",
+      "reproduction": "Two concurrent getOrCompute calls for the same key. Both fibers reach line 100 before either reaches line 112. Both fibers start computing. The second fiber's Deferred overwrites the first's in the inflight map.",
+      "repair": "Use Ref.modify for atomic check-and-register: Ref.modify(inflight, (m) => { if (m.has(key)) return [m.get(key), m]; const d = Deferred.unsafeMake(); m.set(key, d); return [d, m]; }). This guarantees atomicity.",
+      "cross_session_coordination": "publish_finding needed"
+    },
+    {
+      "id": "CACHE-003",
+      "severity": "major",
+      "title": "Inflight map has no size cap — unbounded growth under sustained unique-key pressure",
+      "component": "getOrCompute — inflight map (Ref line 62, usage lines 100-112)",
+      "reproducible": true,
+      "description": "cache map is bounded by maxEntries (default 1000), but the inflight map has no cap. Under sustained unique-key pressure with slow compute (e.g., 100 unique keys/second, 5s compute time), the inflight map grows at ~500 entries/second. Each entry is ~200 bytes (key string + Deferred handle), accumulating ~100KB/s. After 1 hour: ~350MB. Combined with CACHE-001 (orphaned Deferreds never cleaned), growth can exceed eviction rate.",
+      "code_location": "Line 62: Ref.make(new Map()) — no max size. Only cleaned in Effect.ensuring callback line 116-119.",
+      "repair": "Add a maximum size cap to the inflight map. When exceeded: evict oldest entry or reject new computation with error. Alternatively, migrate to Effect.cached which handles bounded dedup natively."
+    },
+    {
+      "id": "CACHE-004",
+      "severity": "major",
+      "title": "No compute timeout — hanging computation permanently pins inflight slot",
+      "component": "getOrCompute — compute() execution (line 114)",
+      "reproducible": true,
+      "description": "compute() runs without any timeout. If compute hangs (blocking I/O, deadlock, infinite loop), the inflight map entry for that key is never cleaned up. All concurrent callers for that key are permanently suspended (awaiting the never-resolved Deferred). New callers for different keys continue to add entries to the unbounded inflight map (CACHE-003).",
+      "code_location": "Line 114: const result = yield* compute().pipe(...) — no Effect.timeout wrapper.",
+      "repair": "Wrap compute() with Effect.timeout configurable per call or from defaults. On timeout, fail the Deferred with a timeout error and clean up the inflight entry. Use Effect.timeoutFail or Effect.disconnect for clean cancellation."
+    },
+    {
+      "id": "CACHE-005",
+      "severity": "major",
+      "title": "approximateSize returns 0 for non-serializable values, bypassing maxEntrySize filter",
+      "component": "approximateSize (lines 42-48), getOrCompute (line 125)",
+      "reproducible": true,
+      "description": "JSON.stringify throws on circular references, BigInt, Symbols, undefined properties, and custom toJSON that throws. The try/catch (lines 45-47) returns 0. Since 0 <= maxEntrySize is always true, the entry is cached with size=0. estimatedBytes severely undercounts actual memory. Cache is polluted with entries the size filter was supposed to block.",
+      "code_location": "Line 42-48: approximateSize returns 0 on any exception. Line 125: if (size <= maxEntrySize) {} — 0 <= 1MB is always true.",
+      "reproduction": "const obj = {}; obj.self = obj; cache.getOrCompute('circ', () => Effect.succeed(obj)) → cached with size=0, even with maxEntrySize=1.",
+      "repair": "Distinguish between 'value is empty' (size=0) and 'serialization failed' (return -1 or throw). On serialization failure, reject the entry. Use a robust size estimator."
+    },
+    {
+      "id": "CACHE-006",
+      "severity": "major",
+      "title": "No test coverage exists for any failure path",
+      "component": "Entire cache.ts module",
+      "reproducible": true,
+      "description": "No files matching cache*.test.* found under packages/opencode/test/. The cache is used by ToolRegistry and called by 9+ tools (read, grep, glob, read-artifact, read-source, read-lib, rig-schema-validate, rig-jsonl-query). None of the blocker bugs (Deferred leak, dedup race) have regression tests.",
+      "code_location": "N/A — missing file",
+      "repair": "Create packages/opencode/test/tool/cache.test.ts covering: inflight dedup atomicity, compute failure path (Deferred resolution), concurrent access, expiry eviction, LRU eviction at boundary, stats consistency, invalidate, invalidateKey, maxEntries=0/1, maxEntrySize bypass, negative/NaN config values."
+    },
+    {
+      "id": "CACHE-007",
+      "severity": "major",
+      "title": "Unsychronized direct Map mutation outside Ref.update — fragile under concurrent Ref.update",
+      "component": "getOrCompute — cache/Map Ref access pattern (lines 77, 82-83, 89, 100, 112)",
+      "reproducible": true,
+      "description": "Ref.get(cache) on line 77 returns a live reference to the internal Map. Lines 82-83 (delete+set for MRU promotion) and line 89 (delete for expired removal) mutate the Map in-place OUTSIDE of Ref.update. While this works because Ref stores a direct reference (not a copy), concurrent Ref.update operations (e.g., from another fiber doing insertion+eviction on line 131) can interleave at yield* points, leading to lost mutations or stale snapshots.",
+      "code_location": "Line 77: const map = yield* Ref.get(cache) — live ref. Lines 82-83: map.delete(key); map.set(key, entry) — in-place mutation. Line 89: map.delete(key) — in-place mutation. Line 131-148: Ref.update(cache, ...) — atomic update from insertion path.",
+      "repair": "Wrap all mutation sequences in Ref.update instead of Ref.get + in-place mutation. This guarantees atomicity. For MRU promotion: Ref.update(cache, (m) => { m.delete(key); m.set(key, entry); return m; })."
+    },
+    {
+      "id": "CACHE-008",
+      "severity": "minor",
+      "title": "Stats counters never reset on invalidate() — cumulative drift over cache lifetime",
+      "component": "invalidate() (lines 168-172)",
+      "reproducible": true,
+      "description": "invalidate() resets cache map and estimatedBytes to 0, but leaves hits, misses, and evictions counters unchanged. After repeated invalidate+fill cycles, these counters diverge significantly from actual cache state. e.g., after 3 invalidate+fill cycles: hits=300, misses=300, evictions=0, size=1000, estimatedBytes=proper. The hits/misses represent the sum of all cycles, but size and bytes only represent the current cycle.",
+      "code_location": "Lines 168-172: invalidate() sets cache=new Map() and bytes=0 but does not touch hits/misses/evictions Ref.",
+      "repair": "Either (a) document that stats are lifetime accumulators (not cycle-based), and rename hits/misses to totalHits/totalMisses, or (b) reset counters on invalidate() with a configurable flag."
+    },
+    {
+      "id": "CACHE-009",
+      "severity": "minor",
+      "title": "maxEntries=0 effectively acts as maxEntries=1",
+      "component": "getOrCompute — LRU eviction loop (lines 138-143)",
+      "reproducible": true,
+      "description": "When maxEntries=0: the while loop evicts all entries until m.size=0, then 0 >= 0 is true, tries to get oldestKey from empty map (gets undefined), breaks. Then m.set(key, entry) inserts the new entry, making m.size=1. On next access, the entry is immediately evicted again. The cache always has size 1 after insertion.",
+      "code_location": "Lines 138-143: while (m.size >= maxEntries) — with maxEntries=0, this runs until empty then breaks on undefined key.",
+      "repair": "If maxEntries=0 should mean 'disable caching', add an early return before insertion. If maxEntries=0 should clamp to minimum 1, add validation. Consider documenting that maxEntries < 1 is treated as 1."
+    },
+    {
+      "id": "CACHE-010",
+      "severity": "minor",
+      "title": "No input validation on config parameters — NaN/Infinity/negative values silently accepted",
+      "component": "getOrCompute — config parsing (lines 72-75)",
+      "reproducible": true,
+      "description": "maxEntries, maxEntrySize, and ttl are not validated for NaN, Infinity, or negative values. NaN.maxEntries makes the comparison m.size >= NaN always false → no LRU eviction → unbounded cache growth. NaN.maxEntrySize makes size <= NaN always false → nothing is ever cached. Negative maxEntrySize: size <= -1 is always false for size >= 0 → nothing cached. Duration.millis(NaN) normalizes to 0, but other Duration constructions may produce NaN.",
+      "code_location": "Lines 72-75: const maxEntries = config?.maxEntries ?? 1000 (no validation). Lines 137-143: while (m.size >= maxEntries) — NaN bypasses eviction.",
+      "repair": "Add validation guards: if (isNaN(maxEntries) || maxEntries < 1) maxEntries = 1000; if (isNaN(maxEntrySize) || maxEntrySize < 1) maxEntrySize = 1024 * 1024; Similarly for ttl."
+    },
+    {
+      "id": "CACHE-011",
+      "severity": "minor",
+      "title": "Eviction span annotation always labels as 'lru' even when evictions are entirely from expiry",
+      "component": "getOrCompute — eviction span annotation (lines 147-153)",
+      "reproducible": true,
+      "description": "When evictedCount > 0 after the expired cleanup + LRU eviction loop, the span is annotated with cache.reason='lru' and cache.evicted_count. But if all evictions came from the expired-for loop (lines 132-137) and none from the LRU while loop, the annotation is misleading. Telemetry consumers cannot distinguish expiry-driven evictions from capacity-driven evictions.",
+      "code_location": "Lines 147-153: span annotation always sets 'cache.reason': 'lru'. Should differentiate between 'expired' and 'lru' evictions.",
+      "repair": "Track expiredCount and lruCount separately. Annotate with both counts and appropriate reasons, or annotate the dominant reason."
+    },
+    {
+      "id": "CACHE-012",
+      "severity": "informational",
+      "title": "estimatedBytes uses a mixed tracking strategy (incremental decrement + full recalculation)",
+      "component": "getOrCompute, invalidateKey — estimatedBytes management",
+      "reproducible": true,
+      "description": "On expired entry hit (line 90): estimatedBytes decremented by entry.size (incremental). On insertion (line 156): estimatedBytes fully recalculated via recalcBytes (full scan). On invalidateKey (line 181): full recalc. On invalidate (line 171): set to 0. The mixing of incremental and full-recalc approaches is correct but fragile — a future edit might add a mutation path that updates only one.",
+      "code_location": "Line 90: Ref.update(estimatedBytes, (b) => b - entry.size). Line 156: Ref.set(estimatedBytes, recalcBytes(currentMap)). Line 181: Ref.set(estimatedBytes, recalcBytes(currentMap)). Line 171: Ref.set(estimatedBytes, 0).",
+      "repair": "Standardize on full recalc after every mutation, or always use incremental. Full recalc after every mutation is safer and more maintainable."
+    },
+    {
+      "id": "CACHE-013",
+      "severity": "informational",
+      "title": "Stats() reads multiple Refs non-atomically — returns inconsistent snapshot",
+      "component": "stats() API (lines 184-194)",
+      "reproducible": true,
+      "description": "stats() reads hits, misses, evictions, estimatedBytes, and cache.size via five separate Ref.get calls separated by yield* points. Between these reads, concurrent operations can change the values, producing a snapshot that violates invariants (e.g., hits + misses < size when they should be equal, or estimatedBytes that doesn't match any actual point in time).",
+      "code_location": "Lines 186-190: Five sequential Ref.get calls with interleaved yield* points.",
+      "repair": "Accept as an inherent limitation of lock-free stats. Document that stats are approximate. For stronger consistency, store all counters in a single Ref containing an object, and atomically swap via Ref.modify."
+    },
+    {
+      "id": "CACHE-014",
+      "severity": "informational",
+      "title": "recalcBytes is O(n) per insertion — O(n²) under insertion of n entries",
+      "component": "getOrCompute — insertion path (line 156)",
+      "reproducible": true,
+      "description": "recalcBytes iterates the entire Map to sum entry.size. With maxEntries=1000, this is negligible (1000 iterations). But with large maxEntries values (e.g., 100,000), each insertion triggers a 100K element iteration, making insertion O(n). Combined with LRU eviction (which runs the while loop each insertion), insertion is O(n+n) = O(n).",
+      "code_location": "Lines 50-55: recalcBytes iterates entire Map. Line 156: called on every successful insertion.",
+      "repair": "For large maxEntries, maintain estimatedBytes incrementally instead of full recalc. Or cap maxEntries to a reasonable value. Or mark as known limitation for small caches."
+    },
+    {
+      "id": "CACHE-015",
+      "severity": "informational",
+      "title": "Re-entrant getOrCompute with same key causes deadlock",
+      "component": "getOrCompute — inflight dedup (lines 101-105)",
+      "reproducible": true,
+      "description": "If compute() for key K calls getOrCompute(K, ...) (same key), the inner call finds the outer's Deferred in the inflight map and awaits it. The outer computation waits for the inner to complete, and the inner waits for the outer's Deferred to resolve. Deadlock. This re-entrant pattern is unlikely in tool caching (compute is typically a tool execution that doesn't call back into cache), but it's a latent deadlock trap.",
+      "code_location": "Lines 103-105: inner getOrCompute finds outer Deferred via inflight dedup, then Defereed.await on it — never resolves because outer is waiting.",
+      "repair": "Detect re-entrant calls by a fiber-local key set. If the current fiber already has an inflight entry for this key, bypass dedup and run a fresh computation. Or document that re-entrant calls with the same key will deadlock."
+    }
+  ],
+  "attack_summary": {
+    "total_attacks_attempted": 18,
+    "survived_attack": 7,
+    "falsified_blocking": 2,
+    "falsified_major": 6,
+    "falsified_minor": 3,
+    "falsified_informational": 3
+  },
+  "verdict": "falsified_blocking — two blocker bugs found that will cause fiber hangs in production",
+  "recommended_repair_slice": {
+    "blocker_repair": [
+      "1. Wrap compute() with Effect.catchAllCause/catchAllDefect + Deferred.failCause to resolve the Deferred on all exit paths — not just success."
+    ],
+    "major_repair": [
+      "2. Make inflight check-then-set atomic using Ref.modify instead of Ref.get + Map.set.",
+      "3. Add compute timeout via Effect.timeout (configurable fallback).",
+      "4. Add inflight map cap (or migrate to Effect.cached).",
+      "5. Fix approximateSize to reject non-serializable values instead of returning 0.",
+      "6. Add test file: packages/opencode/test/tool/cache.test.ts"
+    ],
+    "minor_repair": [
+      "7. Add NaN/Infinity/negative validation on config params.",
+      "8. Handle maxEntries=0 edge case explicitly.",
+      "9. Decide on stats lifetime-vs-cycle semantics.",
+      "10. Split expired vs LRU eviction span annotations."
+    ]
+  },
+  "conclusion": "The cache implementation has a fundamentally sound LRU+TTL eviction strategy with correct Map-based MRU promotion and expiry. However, the manual inflight dedup pattern has a critical flaw (no Deferred failure on compute defect) and a race window (non-atomic check-then-set). These two bugs together mean that under any realistic compute failure scenario, fibers will permanently hang. The inflight map's unbounded growth and lack of compute timeout compound the risk into an OOM danger under sustained load. The implementation should migrate to Effect.cached (as recommended in AGENTS.md) which handles scope-safe dedup automatically, or repair the manual dedup as specified above."
+}

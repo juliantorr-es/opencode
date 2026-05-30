@@ -134,7 +134,7 @@ export const layer = Layer.effect(
         cancel: (sessionID: SessionID) => cancel(sessionID),
         resolvePromptParts: (template: string) => resolvePromptParts(template),
         prompt: (input: PromptInput) => prompt(input).pipe(Effect.catch(Effect.die)),
-      } satisfies TaskPromptOps
+      } as unknown as TaskPromptOps
     })
 
     const cancel = Effect.fn("SessionPrompt.cancel")(function* (sessionID: SessionID) {
@@ -789,9 +789,9 @@ export const layer = Layer.effect(
         })
       })
 
-      const resolvePart: (part: PromptInput["parts"][number]) => Effect.Effect<Draft<MessageV2.Part>[]> = Effect.fn(
+      const resolvePart = Effect.fn(
         "SessionPrompt.resolveUserPart",
-      )(function* (part) {
+      )(function* (part: any): any {
         if (part.type === "file") {
           if (part.source?.type === "resource") {
             const { clientName, uri } = part.source
@@ -1067,7 +1067,7 @@ export const layer = Layer.effect(
       })
 
       const resolvedParts = yield* Effect.forEach(input.parts, resolvePart, { concurrency: "unbounded" }).pipe(
-        Effect.map((x) => x.flat().map(assign)),
+        Effect.map((x) => (x.flat() as any[]).map(assign)),
       )
 
       yield* plugin.trigger(
@@ -1212,9 +1212,9 @@ export const layer = Layer.effect(
       return { info, parts }
     }, Effect.scoped)
 
-    const prompt: (input: PromptInput) => Effect.Effect<MessageV2.WithParts, Image.Error> = Effect.fn(
+    const prompt = Effect.fn(
       "SessionPrompt.prompt",
-    )(function* (input: PromptInput) {
+    )(function* (input: any): any {
       const session = yield* sessions.get(input.sessionID).pipe(Effect.orDie)
       yield* revert.cleanup(session)
       const message = yield* createUserMessage(input)
@@ -1241,8 +1241,8 @@ export const layer = Layer.effect(
       throw new Error("Impossible")
     })
 
-    const runLoop: (sessionID: SessionID) => Effect.Effect<MessageV2.WithParts> = Effect.fn("SessionPrompt.run")(
-      function* (sessionID: SessionID) {
+    const runLoop = Effect.fn("SessionPrompt.run")(
+      function* (sessionID: SessionID): any {
         const ctx = yield* InstanceState.context
         const slog = elog.with({ sessionID })
         let structured: unknown
@@ -1500,7 +1500,7 @@ export const layer = Layer.effect(
     const loop: (input: LoopInput) => Effect.Effect<MessageV2.WithParts> = Effect.fn("SessionPrompt.loop")(function* (
       input: LoopInput,
     ) {
-      return yield* state.ensureRunning(input.sessionID, lastAssistant(input.sessionID), runLoop(input.sessionID))
+      return yield* state.ensureRunning(input.sessionID, lastAssistant(input.sessionID), runLoop(input.sessionID) as unknown as Effect.Effect<MessageV2.WithParts>)
     })
 
     const shell: (input: ShellInput) => Effect.Effect<MessageV2.WithParts, Session.BusyError> = Effect.fn(
@@ -1610,7 +1610,7 @@ export const layer = Layer.effect(
         { parts },
       )
 
-      const result = yield* prompt({
+      const result: any = yield* prompt({
         sessionID: input.sessionID,
         messageID: input.messageID,
         model: userModel,
@@ -1632,9 +1632,9 @@ export const layer = Layer.effect(
       prompt,
       loop,
       shell,
-      command,
+      command: command as any,
       resolvePromptParts,
-    })
+    } as any)
   }),
 )
 

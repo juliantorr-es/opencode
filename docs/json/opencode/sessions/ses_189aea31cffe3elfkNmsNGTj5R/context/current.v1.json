@@ -1,0 +1,172 @@
+{
+  "schema_version": "v1",
+  "session_id": "ses_189aea31cffe3elfkNmsNGTj5R",
+  "mission_status": "complete",
+  "last_updated": "2026-05-30T00:40:11.125121+00:00",
+  "current_wave": "review",
+  "waves": {
+    "review": {
+      "started_at": "2026-05-30T00:40:11.125121+00:00",
+      "completed_at": "2026-05-30T00:40:11.125121+00:00",
+      "findings": [
+        {
+          "source": "critic",
+          "summary": "Plan written against stale ipc.ts (RESERVED_STORE_NAMES removed in commit 9e953e7be)",
+          "confidence": 0.95,
+          "relevance_profiles": [
+            "architecture",
+            "execution"
+          ],
+          "wave": "review"
+        },
+        {
+          "source": "critic",
+          "summary": "Additive change claim is false — Step 4 requires destructive rewrites on a file already 81% dirty (261/323 lines)",
+          "confidence": 0.95,
+          "relevance_profiles": [
+            "execution"
+          ],
+          "wave": "review"
+        },
+        {
+          "source": "critic",
+          "summary": "Startup injection has no error handling — silent data loss on server disappearance after restart",
+          "confidence": 0.9,
+          "relevance_profiles": [
+            "architecture",
+            "safety"
+          ],
+          "wave": "review"
+        },
+        {
+          "source": "critic",
+          "summary": "SDK API surface for mcp.auth.remove() and local config shapes not verified — building against assumed API",
+          "confidence": 0.85,
+          "relevance_profiles": [
+            "architecture"
+          ],
+          "wave": "review"
+        },
+        {
+          "source": "critic",
+          "summary": "Command string splitting (split on whitespace) breaks for quoted arguments",
+          "confidence": 0.8,
+          "relevance_profiles": [
+            "execution"
+          ],
+          "wave": "review"
+        },
+        {
+          "source": "critic",
+          "summary": "i18n namespace inconsistency between existing dialog.server.* and new dialog.mcp.* keys",
+          "confidence": 0.9,
+          "relevance_profiles": [
+            "execution"
+          ],
+          "wave": "review"
+        },
+        {
+          "source": "critic",
+          "summary": "Delete flow partial-failure leaves orphaned auth tokens or disconnected zombies",
+          "confidence": 0.85,
+          "relevance_profiles": [
+            "safety"
+          ],
+          "wave": "review"
+        },
+        {
+          "source": "critic",
+          "summary": "OAuth clientSecret in plaintext electron-store — no encryption path",
+          "confidence": 0.95,
+          "relevance_profiles": [
+            "safety"
+          ],
+          "wave": "review"
+        }
+      ],
+      "artifacts": [
+        "docs/json/opencode/plans/desktop-mcp-management-ui/comments.v1.jsonl (7 new entries)"
+      ]
+    }
+  },
+  "active_findings": [
+    {
+      "source": "critic",
+      "summary": "Plan written against stale ipc.ts (RESERVED_STORE_NAMES removed in commit 9e953e7be)",
+      "confidence": 0.95,
+      "relevance_profiles": [
+        "architecture",
+        "execution"
+      ],
+      "wave": "review"
+    },
+    {
+      "source": "critic",
+      "summary": "Additive change claim is false — Step 4 requires destructive rewrites on a file already 81% dirty (261/323 lines)",
+      "confidence": 0.95,
+      "relevance_profiles": [
+        "execution"
+      ],
+      "wave": "review"
+    },
+    {
+      "source": "critic",
+      "summary": "Startup injection has no error handling — silent data loss on server disappearance after restart",
+      "confidence": 0.9,
+      "relevance_profiles": [
+        "architecture",
+        "safety"
+      ],
+      "wave": "review"
+    },
+    {
+      "source": "critic",
+      "summary": "SDK API surface for mcp.auth.remove() and local config shapes not verified — building against assumed API",
+      "confidence": 0.85,
+      "relevance_profiles": [
+        "architecture"
+      ],
+      "wave": "review"
+    },
+    {
+      "source": "critic",
+      "summary": "Command string splitting (split on whitespace) breaks for quoted arguments",
+      "confidence": 0.8,
+      "relevance_profiles": [
+        "execution"
+      ],
+      "wave": "review"
+    },
+    {
+      "source": "critic",
+      "summary": "i18n namespace inconsistency between existing dialog.server.* and new dialog.mcp.* keys",
+      "confidence": 0.9,
+      "relevance_profiles": [
+        "execution"
+      ],
+      "wave": "review"
+    },
+    {
+      "source": "critic",
+      "summary": "Delete flow partial-failure leaves orphaned auth tokens or disconnected zombies",
+      "confidence": 0.85,
+      "relevance_profiles": [
+        "safety"
+      ],
+      "wave": "review"
+    },
+    {
+      "source": "critic",
+      "summary": "OAuth clientSecret in plaintext electron-store — no encryption path",
+      "confidence": 0.95,
+      "relevance_profiles": [
+        "safety"
+      ],
+      "wave": "review"
+    }
+  ],
+  "active_artifacts": [
+    "docs/json/opencode/plans/desktop-mcp-management-ui/comments.v1.jsonl (7 new entries)"
+  ],
+  "archived": []
+}

@@ -877,4 +877,118 @@ export const dict = {
   "error.childStore.persistedProjectIconCreateFailed": "永続プロジェクトアイコンの作成に失敗しました",
   "error.childStore.storeCreateFailed": "ストアの作成に失敗しました",
   "terminal.connectionLost.abnormalClose": "WebSocket が異常終了しました: {{code}}",
+  "command.palette.empty": "No matching commands",  // TODO: translate
+  "command.palette.search.placeholder": "Search commands...",  // TODO: translate
+  "command.project.index": "Switch to project {{index}}",  // TODO: translate
+  "command.project.next": "Next project",  // TODO: translate
+  "command.project.previous": "Previous project",  // TODO: translate
+  "common.clear": "Clear",  // TODO: translate
+  "dialog.agents.color": "Color",  // TODO: translate
+  "dialog.agents.create": "Create Agent",  // TODO: translate
+  "dialog.agents.delete": "Delete",  // TODO: translate
+  "dialog.agents.delete.confirm": "Are you sure?",  // TODO: translate
+  "dialog.agents.delete.failed": "Failed to delete agent",  // TODO: translate
+  "dialog.agents.description": "Description",  // TODO: translate
+  "dialog.agents.edit": "Edit Agent",  // TODO: translate
+  "dialog.agents.manage": "Manage Agents",  // TODO: translate
+  "dialog.agents.manage.description": "Create and edit custom agents",  // TODO: translate
+  "dialog.agents.model": "Model",  // TODO: translate
+  "dialog.agents.name": "Name",  // TODO: translate
+  "dialog.agents.prompt": "System Prompt",  // TODO: translate
+  "dialog.agents.save.failed": "Failed to save agent",  // TODO: translate
+  "dialog.agents.source.builtin": "Built-in",  // TODO: translate
+  "dialog.agents.source.custom": "Custom",  // TODO: translate
+  "dialog.agents.temperature": "Temperature",  // TODO: translate
+  "dialog.agents.top_p": "Top P",  // TODO: translate
+  "dialog.agents.variant": "Variant",  // TODO: translate
+  "dialog.mcp.action.add": "Add MCP Server",  // TODO: translate
+  "dialog.mcp.action.auth": "Authenticate",  // TODO: translate
+  "dialog.mcp.action.edit": "Edit",  // TODO: translate
+  "dialog.mcp.action.remove": "Remove",  // TODO: translate
+  "dialog.mcp.action.removeAuth": "Remove auth",  // TODO: translate
+  "dialog.mcp.addTitle": "Add MCP Server",  // TODO: translate
+  "dialog.mcp.editTitle": "Edit MCP Server",  // TODO: translate
+  "dialog.mcp.form.command": "Command",  // TODO: translate
+  "dialog.mcp.form.commandPlaceholder": "npx -y @modelcontextprotocol/server-foo",  // TODO: translate
+  "dialog.mcp.form.enabled": "Enabled",  // TODO: translate
+  "dialog.mcp.form.local": "Local (command)",  // TODO: translate
+  "dialog.mcp.form.name": "Server name",  // TODO: translate
+  "dialog.mcp.form.namePlaceholder": "my-mcp-server",  // TODO: translate
+  "dialog.mcp.form.remote": "Remote (URL)",  // TODO: translate
+  "dialog.mcp.form.timeout": "Timeout (ms)",  // TODO: translate
+  "dialog.mcp.form.timeoutPlaceholder": "5000",  // TODO: translate
+  "dialog.mcp.form.type": "Type",  // TODO: translate
+  "dialog.mcp.form.url": "Server URL",  // TODO: translate
+  "dialog.mcp.form.urlPlaceholder": "http://localhost:3000",  // TODO: translate
+  "dialog.recovery.exportLogs": "Export Logs",  // TODO: translate
+  "dialog.recovery.failedToLoad": "OpenCode failed to load",  // TODO: translate
+  "dialog.recovery.keepWaiting": "Keep Waiting",  // TODO: translate
+  "dialog.recovery.notResponding": "OpenCode is not responding",  // TODO: translate
+  "dialog.recovery.notRespondingDetail": "You can relaunch the app, open the logs, or keep waiting.",  // TODO: translate
+  "dialog.recovery.quit": "Quit",  // TODO: translate
+  "dialog.recovery.relaunch": "Relaunch",  // TODO: translate
+  "dialog.recovery.terminated": "OpenCode window terminated unexpectedly",  // TODO: translate
+  "error.page.action.exportLogs": "Export Logs",  // TODO: translate
+  "github.branchName": "Branch Name",  // TODO: translate
+  "github.commitMessage": "Commit Message",  // TODO: translate
+  "github.createPullRequest": "Create Pull Request",  // TODO: translate
+  "github.noAuth": "Connect GitHub to create PRs",  // TODO: translate
+  "github.prClosed": "Closed",  // TODO: translate
+  "github.prCreated": "Pull Request #{{number}} created",  // TODO: translate
+  "github.prMerged": "Merged",  // TODO: translate
+  "github.prOpen": "Open",  // TODO: translate
+  "github.prStatus": "PR Status",  // TODO: translate
+  "github.statusFailed": "Failed",  // TODO: translate
+  "github.statusPassed": "Passed",  // TODO: translate
+  "github.statusPending": "Pending",  // TODO: translate
+  "github.statusUnknown": "Unknown",  // TODO: translate
+  "home.project.add": "Add project",  // TODO: translate
+  "home.projects": "Projects",  // TODO: translate
+  "home.sessions.empty": "No sessions found",  // TODO: translate
+  "home.sessions.empty.description": "Start a new session for this project",  // TODO: translate
+  "home.sessions.filter.agent": "Agent",  // TODO: translate
+  "home.sessions.filter.agentAll": "All Agents",  // TODO: translate
+  "home.sessions.filter.all": "All Sessions",  // TODO: translate
+  "home.sessions.filter.label": "Filter",  // TODO: translate
+  "home.sessions.filter.model": "Model",  // TODO: translate
+  "home.sessions.filter.modelAll": "All Models",  // TODO: translate
+  "home.sessions.filter.month": "This Month",  // TODO: translate
+  "home.sessions.filter.today": "Today",  // TODO: translate
+  "home.sessions.filter.week": "This Week",  // TODO: translate
+  "home.sessions.group.older": "Older",  // TODO: translate
+  "home.sessions.group.today": "Today",  // TODO: translate
+  "home.sessions.group.yesterday": "Yesterday",  // TODO: translate
+  "home.sessions.search.placeholder": "Search sessions",  // TODO: translate
+  "home.title": "Home",  // TODO: translate
+  "language.uk": "Українська",  // TODO: translate
+  "session.child.backToParent": "Back to main session.",  // TODO: translate
+  "session.child.promptDisabled": "Subagent sessions cannot be prompted.",  // TODO: translate
+  "session.new.project.add": "Add project",  // TODO: translate
+  "session.new.project.new": "New project",  // TODO: translate
+  "session.new.project.search": "Search projects",  // TODO: translate
+  "session.review.noBranchChanges": "No branch changes yet",  // TODO: translate
+  "session.review.noUncommittedChanges": "No uncommitted changes yet",  // TODO: translate
+  "settings.general.row.newLayoutDesigns.description": "Enable the redesigned layout, home, composer, and session UI",  // TODO: translate
+  "settings.general.row.newLayoutDesigns.title": "New layout and designs",  // TODO: translate
+  "settings.general.row.pinchZoom.description": "Allow trackpad pinch and Ctrl-scroll gestures to zoom",  // TODO: translate
+  "settings.general.row.pinchZoom.title": "Pinch to zoom",  // TODO: translate
+  "settings.general.row.shell.autoDefault": "Auto (Default)",  // TODO: translate
+  "settings.general.row.shell.description": "Choose the shell used for your terminal. Compatible shells are also used for agent tool calls.",  // TODO: translate
+  "settings.general.row.shell.terminalOnly": "terminal only",  // TODO: translate
+  "settings.general.row.shell.title": "Terminal Shell",  // TODO: translate
+  "settings.general.row.showCustomAgents.description": "Show the agent picker in the v2 desktop composer",  // TODO: translate
+  "settings.general.row.showCustomAgents.title": "Custom agents",  // TODO: translate
+  "settings.general.row.showFileTree.description": "Show the file tree panel in desktop sessions",  // TODO: translate
+  "settings.general.row.showFileTree.title": "File tree",  // TODO: translate
+  "settings.general.row.showNavigation.description": "Show the back and forward buttons in the desktop title bar",  // TODO: translate
+  "settings.general.row.showNavigation.title": "Navigation controls",  // TODO: translate
+  "settings.general.row.showSearch.description": "Show the search and command palette button in the desktop title bar",  // TODO: translate
+  "settings.general.row.showSearch.title": "Command palette",  // TODO: translate
+  "settings.general.row.showStatus.description": "Show the server status button in the desktop title bar",  // TODO: translate
+  "settings.general.row.showStatus.title": "Server status",  // TODO: translate
+  "settings.general.row.showTerminal.description": "Show the terminal button in the desktop title bar",  // TODO: translate
+  "settings.general.row.showTerminal.title": "Terminal",  // TODO: translate
+  "settings.general.section.advanced": "Advanced",  // TODO: translate
+  "sidebar.empty.description": "Open a project to get started",  // TODO: translate
+  "sidebar.empty.title": "No projects open",  // TODO: translate
 }

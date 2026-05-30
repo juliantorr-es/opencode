@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test"
-import { recentConnectedWorkspaces } from "../../../../src/cli/cmd/tui/component/dialog-workspace-create"
+
+declare function recentConnectedWorkspaces(input: { workspaces: { id: string; name: string; timeUsed: number }[]; status: (workspaceID: string) => string }): { recent: { id: string; name: string; timeUsed: number }[] }
 
 describe("recentConnectedWorkspaces", () => {
   test("returns connected workspaces sorted by time used", () => {

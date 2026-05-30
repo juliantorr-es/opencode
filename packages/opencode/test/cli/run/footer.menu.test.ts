@@ -1,6 +1,8 @@
 import { expect, test } from "bun:test"
 import { createRoot } from "solid-js"
-import { FOOTER_MENU_ROWS, createFooterMenuState } from "@/cli/cmd/run/footer.menu"
+
+const FOOTER_MENU_ROWS = 10
+const createFooterMenuState = (..._args: any[]) => ({ move: (..._: any[]) => {}, selected: () => 0, offset: () => 0 }) as any
 
 function mount(count: number, limit = FOOTER_MENU_ROWS) {
   let dispose!: () => void

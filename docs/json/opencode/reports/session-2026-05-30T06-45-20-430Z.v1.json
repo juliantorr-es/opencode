@@ -1,0 +1,149 @@
+{
+  "schema_version": "v1",
+  "report_id": "session-2026-05-30T06-45-20-430Z.v1",
+  "session_id": "ses_18862e469ffe8YopxMcyWkIgKg",
+  "generated_at": "2026-05-30T06:45:20.512555+00:00",
+  "session_summary": "## Feasibility Case Study: Agent .md Profile → Self-Contained Agent Loop\n\n**Verdict: Feasible with significant architectural investment.**\n\n### What was discovered:\n1. **Current architecture**: ~51 agent .md files in ~/.config/opencode/agents/ + 8 built-in agents. All run through a single generic LLM streaming loop (session/processor.ts). The entire wave lifecycle (cartographer → architect → critic → gate → executor → validator → stress → repair) is a **prompt-only convention** with zero runtime enforcement.\n\n2. **The gap**: Agent type is just a string. No discriminated union, no lifecycle state machine, no phase-gated tool access, no structural verification contracts. A cartographer session, critic session, and executor session are structurally identical — only the prompt + permissions differ.\n\n3. **What works**: The Effect Service architecture with InstanceState pattern provides a natural seam for lifecycle state. The permission system is mature enough to support phase-aware tool gating. Agent .md loading is clean and schema-validated.\n\n4. **Three approaches identified**:\n   - **A (Lifecycle Decorator, 1-2 weeks)**: Add optional lifecycle: field to AgentSchema with advisory validation. HIGH feasibility.\n   - **B (Phase-Enforced Runners, 3-4 weeks)**: Discriminated union of agent types with type-specific runners enforcing phase ordering. MODERATE feasibility.\n   - **C (Full Workflow Engine, 6-8 weeks)**: DAG-based workflow engine with conditional branching, native repair cycles. LOW feasibility for current stage.\n\n5. **Key cross-cutting discoveries**:\n   - Sub-subagents (surface-mapper, module-grapher, etc.) may not have dedicated .md files — fan-out tables are aspirational\n   - 8 adversary profiles share ~95% identical template — consolidation opportunity\n   - Handoff formats are fragmented across agent types with no unified schema\n   - InstanceState pattern is the natural lifecycle seam\n\n6. **Recommendation**: Approach A first (lifecycle decorator) for telemetry, then Approach B for highest-value agents (cartographer, executor, lane-owner). Defer Approach C to post-Postgres-migration.",
+  "next_steps": "1. Read the full feasibility artifact at docs/json/opencode/sessions/current/feasibility-agent-lifecycle-case-study.v1.json\n2. Consider adopting Approach A as a foundation — adding lifecycle: field to AgentSchema is low-risk and provides valuable telemetry\n3. The adversary consolidation opportunity (8 profiles → parameterized generator) is an independent quick win\n4. Sub-subagent audit: determine which referenced sub-subagents have actual .md files vs which are prompt-only notional roles",
+  "waves_completed": [
+    "feasibility-case-study-synthesis",
+    "final"
+  ],
+  "wave_details": {
+    "feasibility-case-study-synthesis": {
+      "started_at": "2026-05-30T06:43:38.853168+00:00",
+      "completed_at": "2026-05-30T06:43:38.853168+00:00",
+      "findings": [
+        {
+          "source": "orchestrator-direct-discovery",
+          "summary": "Agent .md profiles contain complex lifecycle descriptions but they are entirely prompt-driven — no code enforcement",
+          "confidence": 1.0,
+          "relevance_profiles": [
+            "architecture",
+            "execution",
+            "orchestration"
+          ],
+          "wave": "feasibility-case-study-synthesis"
+        },
+        {
+          "source": "orchestrator-direct-discovery",
+          "summary": "SessionProcessor uses a single generic LLM streaming loop for ALL agents — only prompt + permissions differ between agent types",
+          "confidence": 1.0,
+          "relevance_profiles": [
+            "architecture",
+            "execution"
+          ],
+          "wave": "feasibility-case-study-synthesis"
+        },
+        {
+          "source": "orchestrator-direct-discovery",
+          "summary": "Agent type is just a string in .md frontmatter — no discriminated union or type-level safety for agent-specific behavior",
+          "confidence": 1.0,
+          "relevance_profiles": [
+            "architecture"
+          ],
+          "wave": "feasibility-case-study-synthesis"
+        },
+        {
+          "source": "orchestrator-direct-discovery",
+          "summary": "Handoff and verification contracts are prompt conventions, not code-level invariants — verify_handoff tool exists but is optional",
+          "confidence": 0.9,
+          "relevance_profiles": [
+            "architecture",
+            "qa"
+          ],
+          "wave": "feasibility-case-study-synthesis"
+        },
+        {
+          "source": "orchestrator-direct-discovery",
+          "summary": "Effect service architecture is well-suited for lifecycle-aware wrappers — agent service, permission service, and session processor all use Effect Context Services",
+          "confidence": 1.0,
+          "relevance_profiles": [
+            "architecture"
+          ],
+          "wave": "feasibility-case-study-synthesis"
+        },
+        {
+          "source": "orchestrator-direct-discovery",
+          "summary": "Four cartographer subagents launched for deeper analysis: agent config loading, session processor lifecycle, task tool spawning, and .md profile pattern analysis",
+          "confidence": 1.0,
+          "relevance_profiles": [
+            "orchestration"
+          ],
+          "wave": "feasibility-case-study-synthesis"
+        }
+      ],
+      "artifacts": [
+        "docs/json/opencode/sessions/current/feasibility-agent-lifecycle-case-study.v1.json"
+      ]
+    },
+    "final": {
+      "started_at": "2026-05-30T06:45:07.675504+00:00",
+      "completed_at": "2026-05-30T06:45:07.675504+00:00",
+      "findings": [
+        {
+          "source": "orchestrator-analysis",
+          "summary": "Agent lifecycle is entirely prompt-driven — no runtime enforcement of wave sequences. Feasibility case study produced and stored at docs/json/opencode/sessions/current/feasibility-agent-lifecycle-case-study.v1.json",
+          "confidence": 1.0,
+          "relevance_profiles": [
+            "orchestration",
+            "architecture"
+          ],
+          "wave": "final"
+        },
+        {
+          "source": "cartographer-D",
+          "summary": "51 agent .md files exist in ~/.config/opencode/agents/ plus 8 built-in agents. Sub-subagents (surface-mapper, root-cause-analyst) may not have dedicated .md files — fan-out tables are aspirational",
+          "confidence": 0.9,
+          "relevance_profiles": [
+            "architecture",
+            "execution"
+          ],
+          "wave": "final"
+        },
+        {
+          "source": "cartographer-A",
+          "summary": "InstanceState pattern is the natural lifecycle state seam — no new infrastructure needed for lifecycle tracking",
+          "confidence": 1.0,
+          "relevance_profiles": [
+            "architecture"
+          ],
+          "wave": "final"
+        },
+        {
+          "source": "cartographer-D",
+          "summary": "8 adversary profiles share ~95% identical template — consolidation opportunity into parameterized generator",
+          "confidence": 1.0,
+          "relevance_profiles": [
+            "architecture"
+          ],
+          "wave": "final"
+        },
+        {
+          "source": "cartographer-D",
+          "summary": "Handoff formats are fragmented across agent types with no unified schema — verify_handoff can't validate per-type completeness",
+          "confidence": 1.0,
+          "relevance_profiles": [
+            "architecture",
+            "qa"
+          ],
+          "wave": "final"
+        }
+      ],
+      "artifacts": [
+        "docs/json/opencode/sessions/current/feasibility-agent-lifecycle-case-study.v1.json"
+      ]
+    }
+  },
+  "total_findings": 11,
+  "findings_by_profile": {
+    "architecture": 10,
+    "execution": 3,
+    "orchestration": 3,
+    "qa": 2
+  },
+  "artifacts_consumed": [
+    "docs/json/opencode/sessions/current/feasibility-agent-lifecycle-case-study.v1.json",
+    "docs/json/opencode/sessions/current/feasibility-agent-lifecycle-case-study.v1.json"
+  ]
+}

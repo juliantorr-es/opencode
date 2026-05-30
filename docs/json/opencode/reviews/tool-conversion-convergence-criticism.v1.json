@@ -1,0 +1,177 @@
+{
+  "schema": "rig.relay.criticism.v1",
+  "plan_id": "handoff-20260529-tool-conversion-v2",
+  "reviewed_at": "2026-05-30T03:00:00Z",
+  "reviewer": "convergence-checker",
+  "target": "docs/json/opencode/handoffs/tool-conversion-to-builtins.v1.json",
+  "architecture_sources_consulted": [
+    "docs/json/opencode/plans/pg_backend_migration.v3.json",
+    "docs/json/opencode/plans/final_closures_plan.v2.json",
+    "docs/json/opencode/plans/pg-runtime-wiring-layer-fix.v1.json",
+    "docs/json/opencode/plans/duckdb-analytics-query-tool.v2.json",
+    "docs/json/opencode/plans/duckdb-data-pipeline.v1.json",
+    "docs/json/opencode/plans/phase1_adapter_hardening.v3.json",
+    "packages/opencode/src/storage/adapter.ts",
+    "packages/opencode/src/storage/db.duckdb.ts",
+    "packages/opencode/src/storage/db.pg.ts",
+    "packages/opencode/src/storage/db.ts",
+    "packages/opencode/src/storage/pipeline.ts",
+    "packages/opencode/src/storage/schema.duckdb.ts",
+    "packages/opencode/src/storage/schema.ts",
+    "packages/opencode/src/storage/duckdb-pipe.ts",
+    "packages/opencode/src/storage/duckdb-firewall.ts",
+    "packages/opencode/src/tool/registry.ts",
+    "packages/opencode/src/tool/record-execution-wave.ts",
+    "packages/opencode/src/tool/out-of-scope-finding.ts",
+    "packages/opencode/src/tool/publish-finding.ts",
+    "packages/opencode/src/tool/duckdb-query.ts",
+    "packages/opencode/src/tool/rig-jsonl-query.ts",
+    "PROJECT.md"
+  ],
+  "assessment": {
+    "convergence_score": 2.5,
+    "score_rationale": "The plan correctly identifies the right tool locations and the Tool.define conversion pattern, matching the repo conventions. However, it is architecturally divergent from the PG migration roadmap (Track 3 deferred, not started), the dual-backend pattern is unimplemented in practice, and it creates a third subprocess-based persistence path that bypasses the DatabaseAdapter seam the entire migration is building toward."
+  },
+  "findings": [
+    {
+      "id": "C01",
+      "title": "DuckDBWritePool (Option B) diverged — no pool service, no wire-up in any tool",
+      "severity": "blocking",
+      "category": "execution_credibility",
+      "target": "handoff.duckdb_write_client_approach",
+      "plan_claim": "Option B preferred — create a lightweight DuckDBWritePool service. Tools yield DuckDBWritePool.Service for writes.",
+      "observed_reality": "duckdb-pipe.ts exports a plain async function execDuckDBWrite() (Option A pattern, not Option B). This function is imported zero times across the entire tool directory (grep confirms zero callers). The analytical tables (WAVES_TABLE, FINDINGS_TABLE, etc.) are defined in schema.duckdb.ts and created by pipeline.ts, but no tool ever writes to them. The dual-backend write path exists only as infrastructure, never wired into any tool.",
+      "gap": "The plan recommends a shared Service but produced an orphaned helper. The plan claims 10 DuckDB-aware tools will write to DuckDB + JSONL, but 10 tools write to JSONL only.",
+      "repair": "Either (a) remove the dual-backend claims and the unused analytical table infrastructure until DuckDB is actually wired, or (b) implement DuckDBWritePool.Service and wire it into the 10 planned tools."
+    },
+    {
+      "id": "C02",
+      "title": "DuckDB built ahead of PG migration schedule — contradicts Track 3 deferral",
+      "severity": "blocking",
+      "category": "architecture_alignment",
+      "target": "handoff.core_architectural_decision",
+      "plan_claim": "Dual-backend DuckDB + JSONL pattern for analytical tools. DuckDB is a natural extension of the existing DuckDB data pipeline.",
+      "architectural_context": "pg_backend_migration.v3.json (approved plan) defines DuckDB as Track 3: 'blocked_by: [Track 1 must be complete]'. The final_closures_plan.v2.json Phase 1.1 also places DuckDB after PG DDL generation and credential isolation. Track 1 (PG migration) is NOT complete — SQLiteAdapter still wraps Database.use internally, db.bun.ts/node.ts still exist, and pg migrations have not been generated applied.",
+      "observed_reality": "DuckDB data pipeline (pipeline.ts, db.duckdb.ts, schema.duckdb.ts, duckdb-config.ts) was built in commit db80e0055 as a complete infrastructure. The analytical views reference Postgres table names (session s, part p) that the PG migration hasn't fully established yet. The DuckDB layer is provided in the runtime (app-runtime.ts, bootstrap-runtime.ts) ahead of PG being the default backend.",
+      "gap": "DuckDB was built before its architectural prerequisite (PG migration Track 1) was complete. The DuckDB analytical views are tightly coupled to PG schema assumptions that may still be in flux.",
+      "repair": "Document as a schedule deviation. Ensure DuckDB views are updated reactively to any PG schema changes. Or gate DuckDB layer provisioning behind a runtime flag that defaults to off until PG migration is complete."
+    },
+    {
+      "id": "C03",
+      "title": "DuckDB creates third persistence path — bypasses DatabaseAdapter seam",
+      "severity": "high",
+      "category": "architecture_divergence",
+      "target": "handoff.core_architectural_decision + duckdb_schema_extensions_needed",
+      "plan_claim": "DuckDB is an 'analytical sidecar' — separate from the transactional database.",
+      "architectural_context": "The entire PG migration (all 3 plan versions) is built around the DatabaseAdapter seam (adapter.ts DrizzleLikeClient Interface). SQLiteAdapter and PgAdapter both satisfy this Interface. All transactional reads/writes route through this seam.",
+      "observed_reality": "DuckDB does NOT route through DatabaseAdapter. It has its own Service (DuckDB.Service in db.duckdb.ts), its own connection pool, its own CLI spawn pattern, its own firewall (duckdb-firewall.ts), its own config (duckdb-config.ts), its own pipeline (pipeline.ts), and its own write pipe (duckdb-pipe.ts). There is an adapter.ts makeDuckDBAdapter() function (line 275) that appears to wrap DuckDB in the DatabaseAdapter Interface, but nothing in the codebase calls it — it's dead code. This means the codebase now has THREE independent database access patterns: (1) legacy db.ts use/transaction, (2) DatabaseAdapter.Service (PG/SQLite via Drizzle), (3) DuckDB.Service (read) + duckdb-pipe (write) via subprocess spawn.",
+      "gap": "DuckDB duplicates infrastructure (pool, config, layer, error types) that should either share the DatabaseAdapter seam or be explicitly documented as separate for good reason.",
+      "repair": "Either (a) wire DuckDBAdapter into the DatabaseAdapter.Service so analytical queries route through the same interface, or (b) document an explicit architecture decision explaining why DuckDB must bypass the seam and accept the maintenance burden."
+    },
+    {
+      "id": "C04",
+      "title": "Dual-backend pattern (JSONL + DuckDB) is specified but not implemented",
+      "severity": "high",
+      "category": "claim_inflation",
+      "target": "handoff.duckdb_aware_dual_backend",
+      "plan_claim": "10 DuckDB-aware tools should write to DuckDB AND always write to JSONL. Detailed code pattern provided for dual-backend execution.",
+      "observed_reality": "Every DuckDB-aware tool file (record-execution-wave.ts, record-stress-wave.ts, out-of-scope-finding.ts, publish-finding.ts, tool-failure.ts, tool-feedback.ts, qa-observed-clean.ts, discover-findings.ts) writes exclusively to JSONL via AppFileSystem. None imports duckdb-pipe.ts or DuckDB.Service for writes. The grep for execDuckDBWrite across the tool directory returns zero matches. The analytical tables (WAVES_TABLE, FINDINGS_TABLE, etc.) exist in schema.duckdb.ts but are never populated by any tool — they only get created by pipeline.ts on startup.",
+      "gap": "The plan describes a dual-backend pattern for 10 tools but the execution implements JSONL-only writes for all 10. DuckDB writes are completely absent from the tool layer.",
+      "repair": "Either (a) implement the DuckDB write path in each tool (using execDuckDBWrite or a proper write pool), or (b) update the plan to remove the 'duckdb_aware' classification and document these as JSONL-only tools with DuckDB as a deferred enhancement."
+    },
+    {
+      "id": "C05",
+      "title": "rig-jsonl-query creates a fourth DuckDB subprocess path — bypassing DuckDB.Service",
+      "severity": "medium",
+      "category": "fragmentation",
+      "target": "handoff.execution_order.steps[12]",
+      "plan_claim": "rig-jsonl-query tool uses DuckDB subprocess to query JSONL. Solutions: (a) uv run --with duckdb python3 -, (b) firewall bypass parameter, (c) spawn duckdb with bypass flag.",
+      "observed_reality": "rig-jsonl-query.ts spawns duckdb CLI directly via execFileAsync('duckdb', ['-json', '-c', sql]) — a raw subprocess without -readonly, without the firewall, without the connection pool, without even going through DuckDB.Service. This is the FOURTH distinct DuckDB subprocess pattern in the codebase: (1) pipeline.ts: spawn duckdb WITHOUT -readonly for DDL, (2) db.duckdb.ts DuckDB.Service: spawn duckdb WITH -readonly + firewall for agent queries, (3) duckdb-pipe.ts execDuckDBWrite: spawn duckdb WITHOUT -readonly for tool writes, (4) rig-jsonl-query.ts: spawn duckdb WITHOUT -readonly and WITHOUT firewall for JSONL queries. None of the planned mitigations were implemented.",
+      "gap": "Four separate subprocess patterns for DuckDB, each with different security properties. The firewall bypass in rig-jsonl-query is completely unrestricted.",
+      "repair": "Consolidate all DuckDB subprocess spawns behind a single abstraction. At minimum, rig-jsonl-query should use DuckDB.Service with a firewall-bypass parameter, not a raw execFileAsync."
+    },
+    {
+      "id": "C06",
+      "title": "DuckDB infra uses raw child_process.spawn instead of Effect's ChildProcessSpawner",
+      "severity": "medium",
+      "category": "convention_violation",
+      "target": "packages/opencode/src/storage/duckdb-pipe.ts, db.duckdb.ts, pipeline.ts",
+      "plan_claim": "No specific statement about Effect service usage.",
+      "architectural_context": "AGENTS.md and packages/opencode/AGENTS.md specify: 'Prefer ChildProcessSpawner.ChildProcessSpawner with ChildProcess.make(...) instead of custom process wrappers.' pipeline.ts, db.duckdb.ts, and duckdb-pipe.ts all use raw child_process.spawn.",
+      "observed_reality": "All three DuckDB files import spawn from 'child_process' directly. The effect/unstable/process API is already available (registry.ts imports ChildProcessSpawner). This creates untracked subprocess lifecycle, no ScopedCache cleanup integration, no abort signal propagation through Effect layers.",
+      "gap": "Raw child_process usage outside the Effect-managed subprocess framework. These subprocesses are not part of Effect's fiber supervision tree.",
+      "repair": "Migrate to ChildProcessSpawner.ChildProcessSpawner + ChildProcess.make for all DuckDB subprocess management. Ensures proper cleanup, abort signal propagation, and effect integration."
+    },
+    {
+      "id": "C07",
+      "title": "27 new tools are correctly located — but naming convention has one inconsistency",
+      "severity": "informational",
+      "category": "convention_alignment",
+      "target": "handoff.files_to_create",
+      "plan_claim": "27 new tools in packages/opencode/src/tool/ with kebab-case naming.",
+      "observed_reality": "All 27 tools are in the correct directory. The registry.ts imports all of them. Two tools use underscore style instead of kebab: publish_checkpoint.ts and generate_published_checkpoint_report.ts (existing built-ins, not from this plan). All 27 new tools correctly use kebab-case. The naming convention is consistent with the existing codebase.",
+      "gap": "No real gap — this is verifying alignment. The two underscore-named tools existed before this plan and are not part of the 27.",
+      "repair": "None needed. Verify in final cleanup that the naming convention is documented."
+    },
+    {
+      "id": "C08",
+      "title": "DuckDB analytical views tightly coupled to PG schema that may still change",
+      "severity": "high",
+      "category": "coupling_risk",
+      "target": "handoff.duckdb_schema_extensions_needed",
+      "plan_claim": "Analytical views reference Postgres tables (session s, part p) with DuckDB-idiomatic SQL functions.",
+      "observed_reality": "The views in schema.duckdb.ts hardcode PG table names and column assumptions. While schema.ts already re-exports from .pg.sql.ts (PG schemas exist), the PG migration is not complete — migration-pg/ DDL hasn't been generated, db.pg.ts init isn't the default startup path, and the #db alias still points to db.bun.ts. If the PG schema changes during Track 1 completion, the DuckDB views become stale and must be updated in lockstep.",
+      "gap": "DuckDB views are a secondary source of truth that must stay synchronized with PG schema changes during ongoing migration work. This introduces a coupling hazard.",
+      "repair": "Add a compile-time or test-time assertion that DuckDB view column references match current PG schema. This could be a test that parses view SQL and validates column names against pgTable definitions."
+    }
+  ],
+  "deviating_patterns": [
+    {
+      "pattern": "Subprocess-based DuckDB access outside Effect service framework",
+      "files": ["db.duckdb.ts", "pipeline.ts", "duckdb-pipe.ts", "rig-jsonl-query.ts"],
+      "preferred": "ChildProcessSpawner + DatabaseAdapter seam",
+      "severity": "medium"
+    },
+    {
+      "pattern": "Four independent DuckDB subprocess paths with different security postures",
+      "files": ["db.duckdb.ts:readonly+firewall", "pipeline.ts:no-readonly+no-firewall", "duckdb-pipe.ts:no-readonly+no-firewall", "rig-jsonl-query.ts:no-readonly+no-firewall"],
+      "preferred": "Single DuckDB abstraction with read/write mode selection",
+      "severity": "high"
+    },
+    {
+      "pattern": "Orphaned infrastructure (makeDuckDBAdapter in adapter.ts, execDuckDBWrite in duckdb-pipe.ts)",
+      "files": ["adapter.ts:275", "duckdb-pipe.ts:23"],
+      "preferred": "Dead code removal or wiring into actual consumers",
+      "severity": "medium"
+    },
+    {
+      "pattern": "DuckDB built before Track 1 (PG migration) is complete",
+      "files": ["pipeline.ts", "db.duckdb.ts", "app-runtime.ts"],
+      "preferred": "PG migration Track 1 completion before DuckDB Track 3 (per approved plan)",
+      "severity": "blocking"
+    }
+  ],
+  "summary": {
+    "areas_aligned": [
+      "All 27 new tools created in packages/opencode/src/tool/ with kebab-case naming",
+      "Tool.define pattern used correctly with Effect.gen and Schema.Struct",
+      "Registry.ts correctly imports all new tools and registers them",
+      "Tool conversion from @opencode-ai/plugin API to built-in Effect tools is correct per codebase conventions",
+      "The pipeline.ts and schema.duckdb.ts analytical table infrastructure exists and compiles"
+    ],
+    "areas_divergent": [
+      "DuckDB built ahead of PG migration completion (contradicts approved plan sequencing)",
+      "Dual-backend write pattern (JSONL + DuckDB) specified but NOT implemented in any tool",
+      "DuckDBWritePool.Service (recommended Option B) not implemented — orphaned duckdb-pipe.ts helper instead",
+      "Four separate DuckDB subprocess patterns with inconsistent security postures",
+      "DuckDB bypasses DatabaseAdapter seam — third independent database access pattern",
+      "Raw child_process.spawn instead of Effect's ChildProcessSpawner"
+    ],
+    "recommended_immediate_actions": [
+      "Either wire DuckDB writes into the 10 planned tools or remove the dual-backend claims from the plan artifact",
+      "Gateway the DuckDB layer provision behind a runtime flag until PG Track 1 is complete",
+      "Consolidate the four DuckDB subprocess patterns into one abstraction (preferably using ChildProcessSpawner)",
+      "Remove or wire makeDuckDBAdapter() dead code in adapter.ts"
+    ]
+  }
+}

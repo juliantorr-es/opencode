@@ -83,7 +83,7 @@ export const SendMessageTool = Tool.define(
     return {
       description: DESCRIPTION,
       parameters: Parameters,
-      execute: (params: Schema.Schema.Type<typeof Parameters>) =>
+      execute: (params: Schema.Schema.Type<typeof Parameters>, ctx: Tool.Context) =>
         Effect.gen(function* () {
           // Resolve kind: provided kind overrides type for forward compat
           const effectiveKind = params.kind ?? params.type

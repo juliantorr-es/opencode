@@ -186,6 +186,7 @@ export const ReadSourceTool = Tool.define(
     return {
       description: DESCRIPTION,
       parameters: Parameters,
+      cacheable: true,
       execute: (params: Schema.Schema.Type<typeof Parameters>, ctx: Tool.Context) =>
         Effect.gen(function* () {
           const instance = yield* InstanceState.context
@@ -311,14 +312,14 @@ export const ReadSourceTool = Tool.define(
               }
 
               if (allEdits.length > 0) {
-                const latest = allEdits[allEdits.length - 1]
+                const latest = allEdits[allEdits.length - 1] as Record<string, unknown>
                 digest.last_edit = {
-                  agent: latest.agent,
-                  session_id: latest.session_id,
-                  reason: latest.reason,
-                  change_summary: latest.change_summary,
-                  plan_step: latest.plan_step,
-                  edited_at: latest.edited_at,
+                  agent: latest.agent as string,
+                  session_id: latest.session_id as string,
+                  reason: latest.reason as string,
+                  change_summary: latest.change_summary as string,
+                  plan_step: latest.plan_step as string,
+                  edited_at: latest.edited_at as string,
                   total_edits_this_session: allEdits.filter(
                     (e) => e.session_id === latest.session_id,
                   ).length,
@@ -328,9 +329,9 @@ export const ReadSourceTool = Tool.define(
                   digest.edit_history = allEdits
                     .slice(-5)
                     .map((e) => ({
-                      agent: e.agent,
-                      reason: e.reason,
-                      edited_at: e.edited_at,
+                      agent: (e as Record<string, unknown>).agent as string,
+                      reason: (e as Record<string, unknown>).reason as string,
+                      edited_at: (e as Record<string, unknown>).edited_at as string,
                     })) satisfies EditHistoryEntry[]
                 }
               }

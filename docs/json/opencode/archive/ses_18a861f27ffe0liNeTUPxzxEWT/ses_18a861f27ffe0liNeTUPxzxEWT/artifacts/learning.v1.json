@@ -1,0 +1,155 @@
+{
+  "schema": "rig.relay.learning_artifact.v1",
+  "wave": "learning",
+  "session_id": "orchestrator",
+  "generated_at": "2026-05-29T20:45:30Z",
+  "mission": "Convert 35 plugin-style tools from .opencode/tool/ into built-in Effect tools in packages/opencode/src/tool/, integrated with DuckDB analytical infrastructure.",
+  "codebase_study": {
+    "duckdb_pipeline": {
+      "architecture": {
+        "write_path": "pipeline.ts spawns duckdb WITHOUT -readonly — the only write-capable path. Creates _pipeline_meta, _pipeline_session, _pipeline_part tables + analytics views.",
+        "read_path": "db.duckdb.ts DuckDB.Service spawns WITH -readonly — agent-facing read-only client. Connection pool (max 4). CLI subprocess via duckdb binary.",
+        "firewall": "duckdb-firewall.ts blocks read_json_auto, read_parquet, read_csv, ATTACH, LOAD, EXPORT for agent-facing queries.",
+        "config": "duckdb-config.ts reads OPENCODE_DUCKDB_PATH env var (optional). When unset, DuckDB is unavailable — tools work via JSONL fallback.",
+        "layer_chain": "DuckDBConfig.defaultLayer → DatabaseConfig → DatabaseAdapter → DuckDB.layer → Storage.defaultLayer",
+        "pipeline_sequence": "metaCheck → export sessions → export parts → CREATE_META_TABLE → CREATE_SESSION_TABLE → CREATE_PART_TABLE → createTables (NEW) → initViewsSql → WRITE_META"
+      },
+      "new_tables_added_phase_1": [
+        "_analytics_waves — stress/execution wave records",
+        "_analytics_findings — out-of-scope findings, cross-session debt",
+        "_analytics_registry — cross-session artifact publishing registry",
+        "_analytics_qa_observations — QA boundary exercise tracking",
+        "_analytics_diagnostics — tool failures and feedback"
+      ],
+      "known_limitations": [
+        "DuckDB.Service is READ-ONLY — tools that write must use separate non-readonly subprocess",
+        ":memory: mode skips pipeline entirely",
+        "No write pool service exists yet — tools need write helper (execDuckDBWrite)"
+      ]
+    },
+    "plugin_tool_patterns": {
+      "total_files": 35,
+      "location": ".opencode/tool/*.ts",
+      "common_structure": "import { tool } from \"@opencode-ai/plugin\" / import { spawnSync } from \"node:child_process\" / function runPython() / export default tool({ description, args, async execute })",
+      "python_script_pattern": "Each tool embeds a Python script as String.raw literal in the execute function. Python handles file I/O, JSON parsing, dedup, date arithmetic via spawnSync('python3', ['-', ...args])",
+      "runtime_context": "context.worktree (base path), context.sessionID, context.agent — all available in Tool.Context as ctx.sessionID, ctx.agent, InstanceState.context.directory",
+      "tool_pattern_complexity": {
+        "simple_appends": ["tool_failure.ts", "qa_observed_clean.ts", "comment_plan.ts", "record_execution_wave.ts", "record_stress_wave.ts"],
+        "medium_validation": ["propose_plan.ts", "revise_plan.ts", "tool_feedback.ts", "publish_finding.ts"],
+        "complex_multi_io": ["out_of_scope_finding.ts", "discover_findings.ts", "read_source.ts", "smart_edit.ts", "curate_context.ts", "generate_report.ts"],
+        "special_spawn": ["rig_jsonl_query.ts — spawns uv run --with duckdb python3 -"],
+        "already_builtins": ["send_message.ts", "read_messages.ts", "publish_checkpoint.ts", "prepare_checkpoint.ts", "inspect_failure.ts", "generate_published_checkpoint_report.ts"]
+      }
+    },
+    "builtin_tool_pattern_tool_define": {
+      "file": "packages/opencode/src/tool/tool.ts",
+      "pattern": "Tool.define(\"name\", Effect.gen(function* () { const deps = yield* ...; return { description, parameters: Schema.Struct({...}), execute: (params) => Effect.gen(function* () { ... }).pipe(Effect.orDie) } }))",
+      "context_type": "Tool.Context { sessionID, messageID, agent, abort, messages, ask, metadata }",
+      "description_source": "Some tools use DESCRIPTION from <name>.txt files (send-message.txt, read-messages.txt, etc.)",
+      "init_pattern": "Tool.init(tool) wraps the effect-produced definition into a Tool.Def with id, parameters, jsonSchema, execute",
+      "export_pattern": "export * as Name from \"./name\" — namespace re-export per Module shape convention"
+    },
+    "tool_storage_matrix": {
+      "duckdb_aware_dual_backend": [
+        { "tool": "record-stress-wave", "duckdb_table": "_analytics_waves", "jsonl_path": "docs/json/opencode/sessions/<id>/waves/stress.v1.jsonl" },
+        { "tool": "record-execution-wave", "duckdb_table": "_analytics_waves", "jsonl_path": "docs/json/opencode/sessions/<id>/waves/execution.v1.jsonl" },
+        { "tool": "qa-observed-clean", "duckdb_table": "_analytics_qa_observations", "jsonl_path": "docs/json/opencode/sessions/<id>/qa/observations.v1.jsonl" },
+        { "tool": "out-of-scope-finding", "duckdb_table": "_analytics_findings", "jsonl_path": "docs/findings/out-of-scope-findings.jsonl" },
+        { "tool": "publish-finding", "duckdb_table": "_analytics_registry", "jsonl_path": "docs/json/opencode/registry/artifacts.v1.jsonl" },
+        { "tool": "discover-findings", "duckdb_table": "_analytics_registry", "jsonl_path": "docs/json/opencode/registry/artifacts.v1.jsonl" },
+        { "tool": "tool-failure", "duckdb_table": "_analytics_diagnostics", "jsonl_path": "docs/json/opencode/sessions/<id>/failures/failures.v1.jsonl" },
+        { "tool": "tool-feedback", "duckdb_table": "_analytics_diagnostics", "jsonl_path": "docs/json/opencode/sessions/<id>/feedback/tool_feedback.v1.jsonl" },
+        { "tool": "rig-jsonl-query", "duckdb_table": "reads JSONL files via DuckDB subprocess", "jsonl_path": "any JSON/JSONL file" },
+        { "tool": "rig-schema-validate", "duckdb_table": "—", "jsonl_path": "schema validation files" },
+        { "tool": "read-artifact", "duckdb_table": "registry + context", "jsonl_path": "any JSON/JSONL artifact" }
+      ],
+      "file_only": [
+        "propose-plan", "revise-plan", "comment-plan", "review-criticism",
+        "send-message", "read-messages",
+        "prepare-delegation", "generate-report",
+        "prepublication-admitted", "prepublication-blocked", "prepublication-inconclusive",
+        "read-source", "read-lib",
+        "smart-edit", "smart-write", "smart-batch", "replace-symbol",
+        "curate-context",
+        "prepare-checkpoint", "publish-checkpoint", "generate-published-checkpoint-report", "inspect-failure"
+      ],
+      "github_plugins_remain": [".opencode/tool/github-pr-search.ts", ".opencode/tool/github-triage.ts"]
+    },
+    "registry_state": {
+      "file": "packages/opencode/src/tool/registry.ts",
+      "current_builtin_tools": 44,
+      "pre_existing_dirty": true,
+      "dirty_preserved_patterns": [
+        "Lines 261-266 have indentation inconsistencies (tab stop vs spaces for coordination tool block)",
+        "packages/opencode/src/storage/adapter.ts (pre-existing dirty — not modified)",
+        "packages/opencode/src/effect/app-runtime.ts (pre-existing dirty — not modified)",
+        "packages/opencode/src/effect/bootstrap-runtime.ts (pre-existing dirty — not modified)"
+      ],
+      "layer_provisioning": "DuckDBConfig.defaultLayer is already provisioned (line 434). DuckDB.layer is provisioned (line 437). No new services needed.",
+      "registration_pattern": "yield* XTool → Tool.init(xTool) in Effect.all → tool.x_tool → entry in builtin array"
+    }
+  },
+  "conversion_approach": {
+    "method": "Each .opencode/tool/<name>.ts file gets a corresponding packages/opencode/src/tool/<name>.ts (using kebab-case) using Tool.define + Effect pattern. Python logic (file I/O, JSON parsing, dedup, date handling) gets replaced with direct TypeScript/Effect equivalents.",
+    "file_naming": "kebab-case.ts for built-in (propose-plan.ts), underscore for plugin (propose_plan.ts)",
+    "tool_naming": "snake_case in Tool.define(\"tool_name\"), PascalCase for namespace export (export * as ToolName)",
+    "dual_backend_approach": "Always write to JSONL first (primary persistence). Optionally write to DuckDB via execDuckDBWrite helper when DuckDBConfig signals availability.",
+    "dedup_strategy": "For tools with dedup (tool_feedback, out_of_scope_finding, publish_finding): read existing JSONL, parse lines, check dedup_key (SHA-256 hash). TypeScript has crypto.subtle for SHA-256.",
+    "timestamp_approach": "Use Date.now() for Unix epoch millis or new Date().toISOString() for ISO 8601. Effect.DateTime.nowAsDate also available."
+  },
+  "risks_and_mitigations": {
+    "risk_python_to_ts_translation": {
+      "severity": "high",
+      "detail": "Plugin tools embed Python scripts (50-185 lines each) for file I/O, JSON parsing, dedup, SHA-256, subprocess. Must be replaced with TypeScript equivalents. Most complex: read_source.ts (~185 lines Python), smart_edit.ts (~90 lines), out_of_scope_finding.ts (~103 lines).",
+      "mitigation": "Start with simplest tools first (tool-failure, QA, wave records) to establish pattern, then tackle complex tools."
+    },
+    "risk_duckdb_write_contention": {
+      "severity": "medium",
+      "detail": "DuckDB supports 1 writer + multiple readers. Multiple tools writing concurrently could cause lock contention.",
+      "mitigation": "File writes as JSONL primary path. DuckDB writes are optional enhancement. Use execDuckDBWrite helper pattern."
+    },
+    "risk_registry_dirty_state": {
+      "severity": "medium",
+      "detail": "registry.ts has pre-existing dirty modifications from other lanes. Additive edits required—no reformatting or removing existing entries.",
+      "mitigation": "Add new imports in alphabetical order in import block, add yield* init calls before the Effect.all block, add Tool.init entries and builtin array items at the end."
+    },
+    "risk_tool_count": {
+      "severity": "medium",
+      "detail": "27 new tools to create + 6 to merge = 33 files to touch. 70+ registrations to add to registry.ts. High volume increases risk of errors.",
+      "mitigation": "Batch into groups of 2-4 tools per delegation. Verify each batch with typecheck."
+    }
+  },
+  "blast_radius": {
+    "files_touched": [
+      "packages/opencode/src/tool/*.ts (27 new files + 6 modified)",
+      "packages/opencode/src/tool/registry.ts (modified)",
+      "packages/opencode/src/storage/schema.duckdb.ts (modified—done)",
+      "packages/opencode/src/storage/pipeline.ts (modified—done)",
+      "packages/opencode/src/storage/duckdb-pipe.ts (potentially new—write helper)"
+    ],
+    "untouched": [
+      "packages/opencode/src/storage/db.duckdb.ts (no changes needed—read-only client stays as-is)",
+      "packages/opencode/src/storage/duckdb-config.ts (no changes needed)",
+      "packages/opencode/src/storage/duckdb-firewall.ts (no changes needed)",
+      ".opencode/tool/*.ts (files stay as-is—not deleted)",
+      ".opencode/agent/*.md (no changes)",
+      ".opencode/opencode.jsonc (no changes)"
+    ],
+    "test_impact": [
+      "test/tool/duckdb-query.test.ts (21 tests — must pass)",
+      "test/tool/send-message.test.ts — must pass after merge",
+      "test/tool/read-messages.test.ts — must pass after merge"
+    ]
+  },
+  "current_execution_state": {
+    "phase_0": "COMPLETE — checkpointed at db80e005",
+    "phase_1": "COMPLETE — schema tables added, pipeline.ts updated",
+    "phase_2a_send_message": "IN_PROGRESS (background)",
+    "phase_2a_read_messages": "IN_PROGRESS (background)",
+    "phase_2b_tool_failure_feedback": "IN_PROGRESS (background)",
+    "phase_2b_wave_tools": "IN_PROGRESS (background)",
+    "phase_2c_plan_tools": "IN_PROGRESS (background)",
+    "phase_2_remaining": ["finding tools", "prepublication tools", "read/write tools", "context tools", "query tools", "generate-report", "prepare-delegation"],
+    "phase_3_5": "NOT_STARTED — registry update, typecheck, test, final checkpoint"
+  }
+}

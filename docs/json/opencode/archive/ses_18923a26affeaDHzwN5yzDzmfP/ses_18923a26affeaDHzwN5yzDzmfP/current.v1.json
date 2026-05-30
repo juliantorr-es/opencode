@@ -1,0 +1,84 @@
+{
+  "schema_version": "v1",
+  "session_id": "ses_18923a26affeaDHzwN5yzDzmfP",
+  "mission_status": "complete",
+  "last_updated": "2026-05-30T03:15:11.806534+00:00",
+  "current_wave": "1-cartography",
+  "waves": {
+    "1-cartography": {
+      "started_at": "2026-05-30T03:15:11.806534+00:00",
+      "completed_at": "2026-05-30T03:15:11.806534+00:00",
+      "findings": [
+        {
+          "source": "cartography-mcp-management-crash-fixes.v1.json",
+          "summary": "MCP management has 3 critical issues: (1) addMutation does not persist to electron-store, (2) nested DialogEditMcp may close outer dialog via portal conflict, (3) dual source of truth between sync.data.mcp and electron-store with no reconciliation",
+          "confidence": 0.92,
+          "relevance_profiles": [
+            "architecture",
+            "execution",
+            "safety"
+          ],
+          "wave": "1-cartography"
+        },
+        {
+          "source": "module-grapher",
+          "summary": "Two completely independent MCP data sources: SDK status (sync.data.mcp) for display, electron-store for editing. No reconciliation path exists. addMutation bypasses electron-store entirely.",
+          "confidence": 0.95,
+          "relevance_profiles": [
+            "architecture",
+            "execution"
+          ],
+          "wave": "1-cartography"
+        },
+        {
+          "source": "surface-mapper",
+          "summary": "FI-002 already fixed — onSave handler now correctly persists to both electron-store and SDK. 9 files mapped across 4 packages.",
+          "confidence": 0.98,
+          "relevance_profiles": [
+            "architecture"
+          ],
+          "wave": "1-cartography"
+        }
+      ],
+      "artifacts": [
+        "docs/json/opencode/sessions/current/cartography-mcp-management-crash-fixes.v1.json"
+      ]
+    }
+  },
+  "active_findings": [
+    {
+      "source": "cartography-mcp-management-crash-fixes.v1.json",
+      "summary": "MCP management has 3 critical issues: (1) addMutation does not persist to electron-store, (2) nested DialogEditMcp may close outer dialog via portal conflict, (3) dual source of truth between sync.data.mcp and electron-store with no reconciliation",
+      "confidence": 0.92,
+      "relevance_profiles": [
+        "architecture",
+        "execution",
+        "safety"
+      ],
+      "wave": "1-cartography"
+    },
+    {
+      "source": "module-grapher",
+      "summary": "Two completely independent MCP data sources: SDK status (sync.data.mcp) for display, electron-store for editing. No reconciliation path exists. addMutation bypasses electron-store entirely.",
+      "confidence": 0.95,
+      "relevance_profiles": [
+        "architecture",
+        "execution"
+      ],
+      "wave": "1-cartography"
+    },
+    {
+      "source": "surface-mapper",
+      "summary": "FI-002 already fixed — onSave handler now correctly persists to both electron-store and SDK. 9 files mapped across 4 packages.",
+      "confidence": 0.98,
+      "relevance_profiles": [
+        "architecture"
+      ],
+      "wave": "1-cartography"
+    }
+  ],
+  "active_artifacts": [
+    "docs/json/opencode/sessions/current/cartography-mcp-management-crash-fixes.v1.json"
+  ],
+  "archived": []
+}

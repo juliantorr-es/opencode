@@ -1,5 +1,6 @@
 import type { GlobalEvent } from "@opencode-ai/sdk/v2"
-import type { EventSource } from "../../src/cli/cmd/tui/context/sdk"
+
+type EventSource = { subscribe(handler: (event: GlobalEvent) => void | Promise<void>): Promise<() => void> }
 
 export const worktree = "/tmp/opencode"
 export const directory = `${worktree}/packages/opencode`

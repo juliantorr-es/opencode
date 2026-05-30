@@ -986,7 +986,7 @@ export function parts(message_id: MessageID) {
     db.select().from(PartTable).where(eq(PartTable.message_id, message_id)).orderBy(PartTable.id).all(),
   )
   return rows.map(
-    (row) =>
+    (row: typeof PartTable.$inferSelect) =>
       ({
         ...row.data,
         id: row.id,

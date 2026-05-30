@@ -23,6 +23,10 @@
   user-select: none;
   cursor: pointer;
   outline: none;
+  transition: background var(--v2-duration-normal) var(--v2-ease-expressive-out),
+              opacity var(--v2-duration-normal) var(--v2-ease-expressive-out),
+              box-shadow var(--v2-duration-normal) var(--v2-ease-expressive-out),
+              color var(--v2-duration-fast) var(--v2-ease-expressive-out);
 }
 
 [data-component="button-v2"]:focus {

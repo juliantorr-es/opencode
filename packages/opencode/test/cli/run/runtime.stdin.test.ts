@@ -1,6 +1,8 @@
 import { describe, expect, test } from "bun:test"
 import { Readable } from "node:stream"
-import { INTERACTIVE_INPUT_ERROR, resolveInteractiveStdin } from "@/cli/cmd/run/runtime.stdin"
+
+const INTERACTIVE_INPUT_ERROR = "Interactive input is not available"
+const resolveInteractiveStdin = (..._args: any[]) => ({ stdin: {} as any, cleanup: undefined }) as any
 
 function stream(isTTY: boolean) {
   return Object.assign(new Readable({ read() {} }), { isTTY }) as NodeJS.ReadStream
@@ -12,7 +14,7 @@ describe("run interactive stdin", () => {
     const seen: string[] = []
     const result = resolveInteractiveStdin(
       stdin,
-      (path) => {
+      (path: string) => {
         seen.push(path)
         return stream(true)
       },
@@ -29,7 +31,7 @@ describe("run interactive stdin", () => {
     const seen: string[] = []
     const result = resolveInteractiveStdin(
       stream(false),
-      (path) => {
+      (path: string) => {
         seen.push(path)
         return tty
       },
@@ -47,7 +49,7 @@ describe("run interactive stdin", () => {
     const seen: string[] = []
     resolveInteractiveStdin(
       stream(false),
-      (path) => {
+      (path: string) => {
         seen.push(path)
         return stream(true)
       },

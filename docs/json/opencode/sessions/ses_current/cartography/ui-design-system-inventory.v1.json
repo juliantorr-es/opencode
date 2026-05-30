@@ -1,0 +1,285 @@
+{
+  "schema": "rig.relay.cartography.inventory.v1",
+  "session": "ses_current",
+  "generated_at": "2026-05-29T10:00:00Z",
+  "profile": "cartography",
+  "package": "@opencode-ai/ui",
+  "version": "1.15.12",
+
+  "v1_components": {
+    "total_components_with_css": 54,
+    "total_tsx_component_files": 64,
+    "all_v1_css_files": [
+      "accordion.css", "animated-number.css", "app-icon.css", "avatar.css",
+      "basic-tool.css", "button.css", "card.css", "checkbox.css",
+      "collapsible.css", "context-menu.css", "dialog.css", "diff-changes.css",
+      "dock-surface.css", "dropdown-menu.css", "file.css", "file-icon.css",
+      "hover-card.css", "icon.css", "icon-button.css", "image-preview.css",
+      "inline-input.css", "keybind.css", "list.css", "logo.css",
+      "markdown.css", "message-nav.css", "message-part.css", "popover.css",
+      "progress.css", "progress-circle.css", "provider-icon.css",
+      "radio-group.css", "resize-handle.css", "scroll-view.css", "select.css",
+      "session-review.css", "session-turn.css", "shell-submessage.css",
+      "spinner.css", "sticky-accordion-header.css", "switch.css", "tabs.css",
+      "tag.css", "text-field.css", "text-reveal.css", "text-shimmer.css",
+      "text-strikethrough.css", "toast.css", "tool-count-label.css",
+      "tool-count-summary.css", "tool-error-card.css", "tool-status-title.css",
+      "tooltip.css", "typewriter.css"
+    ]
+  },
+
+  "v2_components": {
+    "total_component_tsx_files": 27,
+    "total_component_css_files": 24,
+    "total_style_files": 3,
+    "has_v2_index_barrel": false,
+    "has_v2_components_index_barrel": false,
+    "all_v2_components": [
+      { "name": "AccordionV2", "file": "accordion-v2.tsx", "css": "accordion-v2.css", "uses_data_component": true },
+      { "name": "Avatar", "file": "avatar-v2.tsx", "css": "avatar-v2.css", "uses_data_component": true },
+      { "name": "Tag", "file": "badge-v2.tsx", "css": "badge-v2.css", "uses_data_component": true },
+      { "name": "BasicToolV2", "file": "basic-tool-v2.tsx", "css": "basic-tool-v2.css", "uses_data_component": true },
+      { "name": "ButtonV2", "file": "button-v2.tsx", "css": "button-v2.css", "uses_data_component": true },
+      { "name": "CheckboxV2", "file": "checkbox-v2.tsx", "css": "checkbox-v2.css", "uses_data_component": false },
+      { "name": "Dialog", "file": "dialog-v2.tsx", "css": "dialog-v2.css", "uses_data_component": true },
+      { "name": "DiffChanges", "file": "diff-changes-v2.tsx", "css": "diff-changes-v2.css", "uses_data_component": true },
+      { "name": "FieldV2 / Field", "file": "field-v2.tsx", "css": "field-v2.css", "uses_data_component": true },
+      { "name": "IconButtonV2", "file": "icon-button-v2.tsx", "css": "icon-button-v2.css", "uses_data_component": true },
+      { "name": "Icon (sprite)", "file": "icon.tsx", "css": null, "uses_data_component": false },
+      { "name": "InlineInputV2", "file": "inline-input-v2.tsx", "css": "inline-input-v2.css", "uses_data_component": true },
+      { "name": "KeybindV2", "file": "keybind-v2.tsx", "css": "keybind-v2.css", "uses_data_component": true },
+      { "name": "LineCommentV2", "file": "line-comment-v2.tsx", "css": "line-comment-v2.css", "uses_data_component": true },
+      { "name": "MenuV2 (namespace)", "file": "menu-v2.tsx", "css": "menu-v2.css", "uses_data_component": true },
+      { "name": "RadioGroupV2", "file": "radio-v2.tsx", "css": "radio-v2.css", "uses_data_component": true },
+      { "name": "SegmentedControlV2", "file": "segmented-control-v2.tsx", "css": "segmented-control-v2.css", "uses_data_component": true },
+      { "name": "SelectV2", "file": "select-v2.tsx", "css": "select-v2.css", "uses_data_component": true },
+      { "name": "Switch", "file": "switch-v2.tsx", "css": "switch-v2.css", "uses_data_component": true },
+      { "name": "TabsV2", "file": "tabs-v2.tsx", "css": "tabs-v2.css", "uses_data_component": true },
+      { "name": "TextInputV2", "file": "text-input-v2.tsx", "css": "text-input-v2.css", "uses_data_component": true },
+      { "name": "TextShimmerV2", "file": "text-shimmer-v2.tsx", "css": "text-shimmer-v2.css", "uses_data_component": true },
+      { "name": "TextareaV2", "file": "textarea-v2.tsx", "css": "textarea-v2.css", "uses_data_component": true },
+      { "name": "ToastV2 (namespace)", "file": "toast-v2.tsx", "css": "toast-v2.css", "uses_data_component": true },
+      { "name": "ToolErrorCardV2", "file": "tool-error-card-v2.tsx", "css": "tool-error-card-v2.css", "uses_data_component": true },
+      { "name": "TooltipV2", "file": "tooltip-v2.tsx", "css": "tooltip-v2.css", "uses_data_component": true },
+      { "name": "WordmarkV2", "file": "wordmark-v2.tsx", "css": null, "uses_data_component": false }
+    ],
+    "v2_css_files": {
+      "global_styles": ["styles/colors.css", "styles/theme.css", "styles/tailwind.css"],
+      "component_styles": [
+        "accordion-v2.css", "avatar-v2.css", "badge-v2.css", "basic-tool-v2.css",
+        "button-v2.css", "checkbox-v2.css", "dialog-v2.css", "diff-changes-v2.css",
+        "field-v2.css", "icon-button-v2.css", "inline-input-v2.css", "keybind-v2.css",
+        "line-comment-v2.css", "menu-v2.css", "radio-v2.css", "segmented-control-v2.css",
+        "select-v2.css", "switch-v2.css", "tabs-v2.css", "text-input-v2.css",
+        "text-shimmer-v2.css", "textarea-v2.css", "toast-v2.css", "tool-error-card-v2.css",
+        "tooltip-v2.css"
+      ]
+    }
+  },
+
+  "v1_to_v2_migration_map": {
+    "migrated_components": [
+      { "v1": "accordion", "v2": "AccordionV2", "file": "accordion-v2.tsx", "status": "migrated" },
+      { "v1": "avatar", "v2": "Avatar", "file": "avatar-v2.tsx", "status": "migrated" },
+      { "v1": "basic-tool", "v2": "BasicToolV2", "file": "basic-tool-v2.tsx", "status": "migrated" },
+      { "v1": "button", "v2": "ButtonV2", "file": "button-v2.tsx", "status": "migrated" },
+      { "v1": "checkbox", "v2": "CheckboxV2", "file": "checkbox-v2.tsx", "status": "migrated" },
+      { "v1": "dialog", "v2": "Dialog", "file": "dialog-v2.tsx", "status": "migrated" },
+      { "v1": "diff-changes", "v2": "DiffChanges", "file": "diff-changes-v2.tsx", "status": "migrated" },
+      { "v1": "icon-button", "v2": "IconButtonV2", "file": "icon-button-v2.tsx", "status": "migrated" },
+      { "v1": "inline-input", "v2": "InlineInputV2", "file": "inline-input-v2.tsx", "status": "migrated" },
+      { "v1": "keybind", "v2": "KeybindV2", "file": "keybind-v2.tsx", "status": "migrated" },
+      { "v1": "select", "v2": "SelectV2", "file": "select-v2.tsx", "status": "migrated" },
+      { "v1": "switch", "v2": "Switch", "file": "switch-v2.tsx", "status": "migrated" },
+      { "v1": "tabs", "v2": "TabsV2", "file": "tabs-v2.tsx", "status": "migrated" },
+      { "v1": "text-field", "v2": "TextInputV2", "file": "text-input-v2.tsx", "status": "migrated" },
+      { "v1": "text-shimmer", "v2": "TextShimmerV2", "file": "text-shimmer-v2.tsx", "status": "migrated" },
+      { "v1": "toast", "v2": "ToastV2 (namespace)", "file": "toast-v2.tsx", "status": "migrated" },
+      { "v1": "tool-error-card", "v2": "ToolErrorCardV2", "file": "tool-error-card-v2.tsx", "status": "migrated" },
+      { "v1": "tooltip", "v2": "TooltipV2", "file": "tooltip-v2.tsx", "status": "migrated" },
+      { "v1": "tag", "v2": "Tag", "file": "badge-v2.tsx", "status": "partially-migrated", "note": "v2 exported as Tag from badge-v2.tsx" },
+      { "v1": "radio-group", "v2": "RadioGroupV2", "file": "radio-v2.tsx", "status": "partially-migrated", "note": "v1 uses radio-group.css, v2 uses radio-v2.css" },
+      { "v1": "line-comment", "v2": "LineCommentV2", "file": "line-comment-v2.tsx", "status": "migrated" }
+    ],
+    "v2_only_components": [
+      { "name": "MenuV2 (namespace)", "file": "menu-v2.tsx", "note": "v1 had dropdown-menu.css + context-menu.css but no tsx component" },
+      { "name": "FieldV2 / Field", "file": "field-v2.tsx", "note": "New layout component with no v1 equivalent" },
+      { "name": "SegmentedControlV2", "file": "segmented-control-v2.tsx", "note": "New component with no v1 equivalent" },
+      { "name": "Icon (sprite)", "file": "icon.tsx", "note": "Different icon system — v1 uses separate SVG files" },
+      { "name": "WordmarkV2", "file": "wordmark-v2.tsx", "note": "SVG logo with no v1 equivalent" }
+    ],
+    "v1_only_components": [
+      "animated-number", "app-icon", "card", "collapsible",
+      "context-menu", "dropdown-menu", "dock-surface", "file",
+      "file-icon", "hover-card", "icon (v1)", "image-preview",
+      "list", "logo", "markdown", "message-part",
+      "message-nav", "popover", "progress", "progress-circle",
+      "provider-icon", "resize-handle", "spinner", "scroll-view",
+      "session-review", "session-turn", "shell-submessage",
+      "sticky-accordion-header", "text-reveal", "text-strikethrough",
+      "tool-count-label", "tool-count-summary", "tool-status-title",
+      "typewriter"
+    ]
+  },
+
+  "duplicate_css_layers": {
+    "analysis": "Both v1 and v2 use the same CSS layer name 'theme' but are structured completely differently with entirely separate custom properties.",
+    "v1_layers": {
+      "declared_in": "packages/ui/src/styles/index.css",
+      "layer_order": "@layer theme, base, components, utilities",
+      "custom_properties": {
+        "colors": "Raw palette: --gray-dark-*, --gray-light-*, --gray-dark-alpha-*, --gray-light-alpha-* etc.",
+        "theme": "Semantic tokens: --background-base, --surface-*, --text-*, --icon-*, --border-*, etc.",
+        "naming_convention": "kebab-case with no prefix (e.g., --background-base, --text-strong)"
+      }
+    },
+    "v2_layers": {
+      "declared_in": "packages/ui/src/v2/styles/colors.css and theme.css",
+      "layer_order": "@layer theme (no explicit layer order in v2)",
+      "custom_properties": {
+        "colors": "--v2-grey-*, --v2-alpha-dark-*, --v2-alpha-light-*, --v2-red-*, etc.",
+        "theme": "--v2-background-*, --v2-text-*, --v2-icon-*, --v2-border-*, --v2-elevation-*, etc.",
+        "naming_convention": "--v2- prefixed kebab-case"
+      }
+    },
+    "duplicate_layer_names": [
+      {
+        "layer": "theme",
+        "v1_file": "styles/colors.css → @import layer(theme)",
+        "v2_file": "v2/styles/colors.css → @layer theme",
+        "risk": "If both v1/index.css and v2 CSS are loaded on the same page, both sets of --v2-* and non-prefixed custom properties co-exist, but the layer cascade may conflict if v2's theme.css is loaded outside v1's layer ordering"
+      }
+    ],
+    "conflicting_properties_assessment": "No direct conflicts: v1 uses unprefixed tokens (--background-base), v2 uses --v2- prefixed tokens. However, v1 theme.css defines ~350 CSS custom properties, v2 theme.css defines another ~100 (with duplicates in light/dark blocks). Both loaded = memory overhead but no cascade conflict."
+  },
+
+  "duplicate_icon_sets": {
+    "analysis": "Two completely separate icon systems exist side by side with no overlap.",
+    "v1_icon_system": {
+      "type": "External SVG files + Icon component",
+      "locations": [
+        "packages/ui/src/assets/icons/app/ (16 icons — .svg + .png)",
+        "packages/ui/src/assets/icons/provider/ (34 icons — all .svg)",
+        "packages/ui/src/components/app-icons/",
+        "packages/ui/src/components/file-icons/",
+        "packages/ui/src/components/provider-icons/"
+      ],
+      "consumption_path": "packages/ui/src/components/icon.tsx (v1) or @opencode-ai/ui/icons/*",
+      "format": "Separate SVG files per icon"
+    },
+    "v2_icon_system": {
+      "type": "Inline SVG sprite (single bundled file)",
+      "locations": [
+        "packages/ui/src/v2/components/icon.tsx"
+      ],
+      "consumption_path": "import { Icon } from '@opencode-ai/ui/v2/components/icon'",
+      "format": "Inline SVG string definitions rendered into an <svg><symbol> sprite at runtime via ensureSprite()",
+      "available_icons": ["edit", "folder-add-left", "grid-plus", "help", "sidebar-right", "status", "status-active", "magnifying-glass", "menu", "plus", "settings-gear", "xmark-small", "outline-chevron-down", "outline-dots"],
+      "note": "The v2 Icon's 'name' prop accepts 'string & {}' so technically any string is accepted at compile-time, but only 14 defined icons render. Unknown names fall back to 'plus'."
+    },
+    "duplicate_icons_found": false,
+    "note": "The two systems are entirely separate — different locations, different rendering strategies, different icon sets. v2 has far fewer icons (14) compared to v1's unlimited external SVGs."
+  },
+
+  "css_selector_patterns": {
+    "v1_pattern": {
+      "selector_format": "data-component and data-slot attribute selectors",
+      "examples": [
+        "[data-component=\"button\"]",
+        "[data-slot=\"icon-svg\"]",
+        "[data-variant=\"primary\"]"
+      ],
+      "adoption": "All 54 v1 CSS files use data-component/data-slot selectors. No className-based selectors found in CSS (though some tsx files may pass class via className).",
+      "custom_properties": "Unprefixed: --background-base, --text-strong, --icon-base, etc. Uses --font-family-sans, --font-size-small, etc. from theme.css."
+    },
+    "v2_pattern": {
+      "selector_format": "data-component and data-slot attribute selectors (same pattern as v1!)",
+      "examples": [
+        "[data-component=\"button-v2\"]",
+        "[data-slot=\"dialog-footer\"]",
+        "[data-size=\"normal\"]"
+      ],
+      "custom_properties": "--v2- prefixed: --v2-background-bg-base, --v2-text-text-base, --v2-icon-icon-base, etc. Also uses --v2-grey-*, --v2-alpha-dark-*, --v2-elevation-*.",
+      "note": "Same selector convention as v1 — just different component names. No className-based selectors anywhere."
+    },
+    "distinction": "The primary pattern difference is the custom property naming: v1 uses unprefixed tokens for everything (--background-base), v2 uses --v2- prefix (--v2-background-bg-base). The data-component/ data-slot attribute selector convention is identical between v1 and v2 — no architectural shift in CSS methodology."
+  },
+
+  "consumption_pattern": {
+    "package_entry": "packages/ui/package.json",
+    "v1_import_pattern": "import { Component } from '@opencode-ai/ui/component-name'",
+    "v1_export": "\"./*\": \"./src/components/*.tsx\" (wildcard path mapping per component)",
+    "v2_import_pattern": "import { ComponentV2 } from '@opencode-ai/ui/v2/components/component-v2'",
+    "v2_export": "\"./v2/*\": \"./src/v2/*\" (wildcard path mapping for v2 subtree)",
+    "v1_styles_import": "import '@opencode-ai/ui/styles' (loads index.css with all 54 component CSS files + theme)",
+    "v2_styles_import": "import '@opencode-ai/ui/v2/styles/tailwind' (loads colors.css + theme.css only — no component CSS)",
+    "v2_component_css_import": "Each v2 component imports its own CSS file locally (import './component-v2.css')",
+    "no_barrel_exports": true,
+    "note": "There are NO index.ts barrel files at v2/ root or v2/components/. All imports are direct file-path"
+  },
+
+  "theme_system_comparison": {
+    "v1": {
+      "colors_file": "styles/colors.css (773 lines) — 12 raw palette sets × light/dark with legacy aliases (smoke, yuzu, cobalt, apple, ember, solaris, lilac, coral, mint, blue, ink, amber)",
+      "theme_file": "styles/theme.css (610 lines) — flat CSS custom properties with @media (prefers-color-scheme) dark overrides",
+      "color_scheme_control": "CSS @media prefers-color-scheme + manual overrides"
+    },
+    "v2": {
+      "colors_file": "v2/styles/colors.css (172 lines) — 9 raw palette sets (grey, red, orange, yellow, green, cyan, blue, purple, pink) + alpha-dark/alpha-light scales",
+      "theme_file": "v2/styles/theme.css (378 lines) — structured semantic tokens (background, text, icon, border, overlay, state, elevation, illustration) with separated [data-color-scheme='light'] and [data-color-scheme='dark'] attribute selectors",
+      "color_scheme_control": "Explicit [data-color-scheme] HTML attribute (JS-controlled, no media query fallback — the OS media query block is commented out)"
+    },
+    "key_difference": "v2 has a flatter token structure (no SASS-like nesting) and avoids @media query for dark mode in favor of [data-color-scheme] attribute switching. v2 tokens are --v2- prefixed to co-exist with v1 tokens."
+  },
+
+  "recommendations": [
+    {
+      "priority": "high",
+      "area": "barrel_exports",
+      "description": "Add barrel export files: v2/index.ts and v2/components/index.ts to enable clean imports like `import { ButtonV2 } from '@opencode-ai/ui/v2'` instead of direct file paths."
+    },
+    {
+      "priority": "high",
+      "area": "v1_style_loading",
+      "description": "V1's styles/index.css loads ALL 54 component CSS files on every import via @import. As v2 components replace v1 usage, prune unused v1 CSS imports to reduce bundle size. Currently there's no mechanism to load only needed v1 component CSS."
+    },
+    {
+      "priority": "medium",
+      "area": "v2_component_css_separation",
+      "description": "V2 component CSS is imported per-component via `import './component-v2.css'` in each .tsx file. This means if v2 is used alongside v1, the v1 styles/index.css is still loaded separately. Consider whether v2 component CSS should be loaded via the same global layer mechanism."
+    },
+    {
+      "priority": "medium",
+      "area": "icon_system_consolidation",
+      "description": "Two entirely separate icon systems exist: v1's external SVG file approach (unlimited icons via files) vs v2's inline SVG sprite (14 icons hard-coded). They should be consolidated into a single system, likely the sprite approach with all icons migrated."
+    },
+    {
+      "priority": "medium",
+      "area": "v1_only_components_migration",
+      "description": "34 v1 components still lack v2 counterparts, including: card, markdown, popover, progress, spinner, scroll-view, list, and many app-specific components (message-part, session-review, shell-submessage, etc.). These need v2 equivalents or a decision to keep them v1-only."
+    },
+    {
+      "priority": "low",
+      "area": "v2_css_layer_ordering",
+      "description": "V2 CSS files declare `@layer theme` but do NOT participate in the same layer cascade as v1's `@layer theme, base, components, utilities`. If both are loaded, v2's styles appear in the `theme` layer (lowest priority) regardless of where the loader imports them. This may cause unintended overrides."
+    },
+    {
+      "priority": "low",
+      "area": "naming_inconsistency",
+      "description": "badge-v2.tsx exports `Tag` not `Badge`. V1 has a `tag` component with tag.css. This naming inconsistency between the file name (badge) and the export (Tag) could cause confusion."
+    },
+    {
+      "priority": "low",
+      "area": "stories_duplication",
+      "description": "26 v2 .stories.tsx files accompany components. If migrating from v1, existing v1 stories should be removed or consolidated to avoid having parallel story files for the same component."
+    }
+  ],
+
+  "pre_existing_findings_cross_reference": [
+    {
+      "finding_id": "ses_18a5-20260529-debt",
+      "summary": "@opencode-ai/core uses wildcard export with no public API boundary",
+      "relevance": "Same concern applies to @opencode-ai/ui's wildcard exports (./* → ./src/components/*.tsx)"
+    }
+  ]
+}

@@ -1,0 +1,143 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "rig.relay.native_tool_architecture.v1.schema.json",
+  "title": "NativeToolArchitectureDesign",
+  "type": "object",
+  "required": ["schema_version", "generated_at", "title", "scope", "reliability", "debuggability", "operator_ux", "strict_concurrency", "true_parallelism", "memory_usage", "lifecycle_management", "new_tool_template", "anti_patterns", "registry_growth_plan"],
+  "properties": {
+    "schema_version": { "type": "string", "description": "Schema version identifier" },
+    "generated_at": { "type": "string", "format": "date-time", "description": "ISO 8601 generation timestamp" },
+    "title": { "type": "string", "description": "Human-readable design document title" },
+    "scope": { "type": "string", "description": "Scope boundary of the design" },
+    "design_authority": { "type": "string", "description": "Key libraries and patterns the design builds on" },
+    "reliability": {
+      "type": "object",
+      "description": "Error boundaries, retry, circuit breakers, input validation",
+      "required": ["principles", "patterns", "rationale"],
+      "properties": {
+        "principles": { "type": "array", "items": { "type": "string" } },
+        "patterns": { "$ref": "#/$defs/designPatterns" },
+        "rationale": { "type": "string" }
+      }
+    },
+    "debuggability": {
+      "type": "object",
+      "description": "Span propagation, structured logging, heartbeats, execution events",
+      "required": ["principles", "patterns", "rationale"],
+      "properties": {
+        "principles": { "type": "array", "items": { "type": "string" } },
+        "patterns": { "$ref": "#/$defs/designPatterns" },
+        "rationale": { "type": "string" }
+      }
+    },
+    "operator_ux": {
+      "type": "object",
+      "description": "LLM-facing error messages, structured output contract, progress indicators",
+      "required": ["principles", "patterns", "rationale"],
+      "properties": {
+        "principles": { "type": "array", "items": { "type": "string" } },
+        "patterns": { "$ref": "#/$defs/designPatterns" },
+        "rationale": { "type": "string" }
+      }
+    },
+    "strict_concurrency": {
+      "type": "object",
+      "description": "Read/write semaphore separation, per-tool limits, connection pooling",
+      "required": ["principles", "patterns", "rationale"],
+      "properties": {
+        "principles": { "type": "array", "items": { "type": "string" } },
+        "patterns": { "$ref": "#/$defs/designPatterns" },
+        "rationale": { "type": "string" }
+      }
+    },
+    "true_parallelism": {
+      "type": "object",
+      "description": "Fiber model, bounded parallelism for sub-operations, scoped resources",
+      "required": ["principles", "patterns", "rationale"],
+      "properties": {
+        "principles": { "type": "array", "items": { "type": "string" } },
+        "patterns": { "$ref": "#/$defs/designPatterns" },
+        "rationale": { "type": "string" }
+      }
+    },
+    "memory_usage": {
+      "type": "object",
+      "description": "Streaming, cache eviction, scope-bound service release",
+      "required": ["principles", "patterns", "rationale"],
+      "properties": {
+        "principles": { "type": "array", "items": { "type": "string" } },
+        "patterns": { "$ref": "#/$defs/designPatterns" },
+        "rationale": { "type": "string" }
+      }
+    },
+    "lifecycle_management": {
+      "type": "object",
+      "description": "Init vs execute purity, cache invalidation, refresh on config change",
+      "required": ["principles", "patterns", "rationale"],
+      "properties": {
+        "principles": { "type": "array", "items": { "type": "string" } },
+        "patterns": { "$ref": "#/$defs/designPatterns" },
+        "rationale": { "type": "string" }
+      }
+    },
+    "new_tool_template": {
+      "type": "object",
+      "description": "Step-by-step checklist and skeleton for creating new tools",
+      "required": ["steps", "skeleton", "checklist"],
+      "properties": {
+        "steps": { "type": "array", "items": { "type": "string" } },
+        "skeleton": { "type": "string", "description": "Canonical TypeScript skeleton for a new tool" },
+        "checklist": { "type": "object", "description": "Pre-creation, implementation, integration, and testing checklist" }
+      }
+    },
+    "anti_patterns": {
+      "type": "array",
+      "description": "Patterns to avoid with reasons and replacements",
+      "items": {
+        "type": "object",
+        "required": ["name", "symptom", "why_bad", "replace_with"],
+        "properties": {
+          "name": { "type": "string" },
+          "symptom": { "type": "string" },
+          "why_bad": { "type": "string" },
+          "replace_with": { "type": "string" }
+        }
+      }
+    },
+    "registry_growth_plan": {
+      "type": "object",
+      "description": "Phased plan for scaling from 50 to 200+ tools",
+      "required": ["phases"],
+      "properties": {
+        "phases": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["phase", "name", "actions"],
+            "properties": {
+              "phase": { "type": "integer" },
+              "name": { "type": "string" },
+              "actions": { "type": "array", "items": { "type": "string" } }
+            }
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "designPatterns": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "problem", "solution", "pseudocode", "confidence"],
+        "properties": {
+          "name": { "type": "string" },
+          "problem": { "type": "string" },
+          "solution": { "type": "string" },
+          "pseudocode": { "type": "string" },
+          "confidence": { "type": "number", "minimum": 0, "maximum": 1 }
+        }
+      }
+    }
+  }
+}

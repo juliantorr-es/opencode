@@ -1,0 +1,83 @@
+{
+  "schema": "rig.relay.execution_instructions.v1",
+  "wave": "w3-execution",
+  "prepared_at": "2026-05-30T00:33:00Z",
+  "prepared_by": "orchestrator",
+  "plan_id": "fix-tool-layer-mismatch",
+  "plan_revision": 1,
+  "mission": "Fix tool Layer never-mismatch — 82 TS2345 errors + 6 Schema.Literal + read-lib/read-source + app-runtime",
+  "read_first": [
+    "docs/json/opencode/plans/fix-tool-layer-mismatch.v1.json",
+    "packages/opencode/src/tool/tool.ts"
+  ],
+  "framework_change": {
+    "file": "packages/opencode/src/tool/tool.ts",
+    "description": "Add R generic to Def interface and propagate through type chain",
+    "exact_changes": [
+      {
+        "target": "Def<Parameters, M>",
+        "change": "Add R=never: Def<Parameters extends Schema.Decoder<unknown> = Schema.Decoder<unknown>, M extends Metadata = Metadata, R = never>",
+        "execute_change": "execute(args: Schema.Schema.Type<Parameters>, ctx: Context): Effect.Effect<ExecuteResult<M>, never, R>"
+      },
+      {
+        "target": "DefWithoutID<P, M>",
+        "change": "Add R=never: DefWithoutID<Parameters, M, R = never> = Omit<Def<Parameters, M, R>, 'id'>"
+      },
+      {
+        "target": "Init<P, M>",
+        "change": "Add R=never: Init<Parameters, M, R = never> = DefWithoutID<Parameters, M, R> | (() => Effect<DefWithoutID<Parameters, M, R>>)"
+      },
+      {
+        "target": "Info<P, M>",
+        "change": "Add R=never: Info<Parameters, M, R = never> { id: string; init: () => Effect<DefWithoutID<Parameters, M, R>> }"
+      },
+      {
+        "target": "define<P, M, R, ID>",
+        "change": "Add R2=never: define<Parameters, Result, R, R2 = never, ID extends string>(id, init: Effect<Init<Parameters, Result, R2>, never, R>): Effect<Info<Parameters, Result, R2>, never, R | R2 | Truncate.Service | Agent.Service> & { id: ID }"
+      },
+      {
+        "target": "wrap<P, M>",
+        "change": "Add R=never: wrap<Parameters, Result, R = never>(id, init: Init<Parameters, Result, R>, truncate, agents)"
+      },
+      {
+        "target": "init<P, M>",
+        "change": "Add R=never: init<P, M, R = never>(def: DefWithoutID<P, M, R>, ctx: Context<M>): Effect<Info<P, M>, never, ...>"
+      }
+    ]
+  },
+  "schema_literal_fixes": {
+    "description": "Replace Schema.Literal(a,b,c) with Schema.Literals([a,b,c]) in 6 files",
+    "files": [
+      {"file": "comment-plan.ts", "lines": ["category: Schema.Literal(\"boundary\", ...)", "severity: Schema.Literal(\"informational\", ...)"], "note": "DIRTY — preserve existing edits"},
+      {"file": "coordination.ts", "lines": ["operation: Schema.Literal(\"claims\", ...)"]},
+      {"file": "discover-findings.ts", "lines": ["finding_type: Schema.Literal(\"bug\", ...)"]},
+      {"file": "publish-finding.ts", "lines": ["finding_type: Schema.Literal(\"bug\", ...)"]},
+      {"file": "record-stress-wave.ts", "lines": ["verdict: Schema.Literal(\"survived_attack\", ...)"]},
+      {"file": "rig-git.ts", "lines": ["Command = Schema.Literal(\"status\", ...)"]}
+    ]
+  },
+  "app_runtime_fix": {
+    "file": "src/effect/app-runtime.ts",
+    "line": 123,
+    "change": "const rt = ManagedRuntime.make(AppLayer as never, { memoMap })",
+    "current": "const rt = ManagedRuntime.make(AppLayer, { memoMap })"
+  },
+  "read_source_ts_fix": {
+    "description": "Fix 7 unknown→string type safety errors at lines 316-334",
+    "change": "Cast JSON.parse entries explicitly: 'as Record<string, unknown>' → properly typed accesses"
+  },
+  "read_lib_ts_fix": {
+    "description": "Fix 5 errors — Effect.fnUntraced generator issue + missing fs methods",
+    "change": "May need: change from Effect.fnUntraced to Effect.gen, or add explicit type annotations"
+  },
+  "dirty_file_preservation": {
+    "note": "19 tool files are dirty. All edits must be additive. Never remove unrelated code.",
+    "dirty_schema_literal_files": ["comment-plan.ts", "coordination.ts"],
+    "strategy": "Search_replace for exact literal pattern only, no reformatting"
+  },
+  "verification": {
+    "primary": "cd packages/opencode && bun typecheck 2>&1 | grep -c 'error TS2345'",
+    "target": 0,
+    "full": "cd packages/opencode && bun typecheck 2>&1 | grep -c 'error TS'"
+  }
+}

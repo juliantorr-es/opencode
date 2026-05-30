@@ -1,0 +1,112 @@
+{
+  "schema_version": "v1",
+  "session_id": "ses_1884f7c8bffeD8y1A0A1bKyPjo",
+  "mission_status": "complete",
+  "last_updated": "2026-05-30T07:08:08.155122+00:00",
+  "current_wave": "stress",
+  "waves": {
+    "stress": {
+      "started_at": "2026-05-30T07:08:08.155122+00:00",
+      "completed_at": "2026-05-30T07:08:08.155122+00:00",
+      "findings": [
+        {
+          "source": "memory-leak-hunter",
+          "summary": "1 blocker (Deferred orphaned on compute failure), 3 major (inflight map unbounded, approximateSize returns 0 for circular refs, no compute timeout)",
+          "confidence": 0.95,
+          "relevance_profiles": [
+            "stress",
+            "execution",
+            "repair"
+          ],
+          "wave": "stress"
+        },
+        {
+          "source": "edge-case-enumerator",
+          "summary": "2 blocker (compute failure hangs waiters, concurrent dedup race), 1 major (maxEntries=0), 8 minor, 6 informational — total 18 findings",
+          "confidence": 0.9,
+          "relevance_profiles": [
+            "stress",
+            "execution",
+            "architecture"
+          ],
+          "wave": "stress"
+        },
+        {
+          "source": "dependency-saboteur",
+          "summary": "2 blocker (Deferred leak on failure, Deferred overwrite race), 5 major (unsynchronized Map mutation, eviction span mislabel, no test coverage, NaN TTL, negative TTL), 1 minor (size-0 bypass), 2 informational",
+          "confidence": 0.9,
+          "relevance_profiles": [
+            "stress",
+            "execution",
+            "safety"
+          ],
+          "wave": "stress"
+        },
+        {
+          "source": "direct-analysis",
+          "summary": "Verified Map LRU behavior correct. Confirmed Ref.get returns live reference. Identified compute timeout gap, inflight cap gap, and estimatedBytes dual-pattern fragility.",
+          "confidence": 0.95,
+          "relevance_profiles": [
+            "stress",
+            "architecture"
+          ],
+          "wave": "stress"
+        }
+      ],
+      "artifacts": [
+        "docs/json/stress/edge_cases_cache.v1.json",
+        "docs/json/stress/tool-cache-stress-report.v1.json"
+      ]
+    }
+  },
+  "active_findings": [
+    {
+      "source": "memory-leak-hunter",
+      "summary": "1 blocker (Deferred orphaned on compute failure), 3 major (inflight map unbounded, approximateSize returns 0 for circular refs, no compute timeout)",
+      "confidence": 0.95,
+      "relevance_profiles": [
+        "stress",
+        "execution",
+        "repair"
+      ],
+      "wave": "stress"
+    },
+    {
+      "source": "edge-case-enumerator",
+      "summary": "2 blocker (compute failure hangs waiters, concurrent dedup race), 1 major (maxEntries=0), 8 minor, 6 informational — total 18 findings",
+      "confidence": 0.9,
+      "relevance_profiles": [
+        "stress",
+        "execution",
+        "architecture"
+      ],
+      "wave": "stress"
+    },
+    {
+      "source": "dependency-saboteur",
+      "summary": "2 blocker (Deferred leak on failure, Deferred overwrite race), 5 major (unsynchronized Map mutation, eviction span mislabel, no test coverage, NaN TTL, negative TTL), 1 minor (size-0 bypass), 2 informational",
+      "confidence": 0.9,
+      "relevance_profiles": [
+        "stress",
+        "execution",
+        "safety"
+      ],
+      "wave": "stress"
+    },
+    {
+      "source": "direct-analysis",
+      "summary": "Verified Map LRU behavior correct. Confirmed Ref.get returns live reference. Identified compute timeout gap, inflight cap gap, and estimatedBytes dual-pattern fragility.",
+      "confidence": 0.95,
+      "relevance_profiles": [
+        "stress",
+        "architecture"
+      ],
+      "wave": "stress"
+    }
+  ],
+  "active_artifacts": [
+    "docs/json/stress/edge_cases_cache.v1.json",
+    "docs/json/stress/tool-cache-stress-report.v1.json"
+  ],
+  "archived": []
+}

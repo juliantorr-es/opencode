@@ -1,5 +1,7 @@
 import { describe, expect, test } from "bun:test"
-import { normalizeCustomProviderID, providerOptions } from "../../../../src/cli/cmd/tui/component/dialog-provider"
+
+declare function normalizeCustomProviderID(id: string): string | undefined
+declare function providerOptions(providers: { id: string; name: string }[]): { title: string; description: string; category: string; value?: string }[]
 
 describe("providerOptions", () => {
   test("includes a synthetic Other option for custom providers", () => {

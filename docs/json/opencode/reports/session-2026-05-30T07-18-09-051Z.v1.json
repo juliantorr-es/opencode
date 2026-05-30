@@ -1,0 +1,13 @@
+{
+  "schema_version": "v1",
+  "report_id": "session-2026-05-30T07-18-09-051Z.v1",
+  "session_id": "ses_1884ca163ffeqYfTIIz8rwmXrQ",
+  "generated_at": "2026-05-30T07:18:09.090847+00:00",
+  "session_summary": "## Lane 1: Rewrite coordination.ts\n\n**Mission**: Rewrite `packages/opencode/src/tool/coordination.ts` from scratch after it was deleted from the working tree. The file is imported by 4 modules (task.ts, write.ts, edit.ts, registry.ts) with specific API signatures.\n\n**What was done**:\n- Created a clean 666-line replacement with zero typecheck errors\n- Uses SQLite tables (`sqliteTable` from `drizzle-orm/sqlite-core`) instead of the original PG tables\n- Uses `DatabaseAdapter.Service` from `@/storage/adapter` for all DB access (same pattern as original)\n- Defines all 3 coordination tables inline (no separate .sql.ts file needed)\n- Exports all required types: `WaveType`, `TaskClaim`, `PathReservation`, `FanOutGroup`\n- Exports all required functions via namespace (`export * as Coordination`): `claimTask`, `releaseTask`, `failTask`, `getClaim`, `getSessionClaims`, `getWaveClaims`, `reservePath`, `releasePath`, `checkPathReserved`, `getFanOutGroup`, `ensureCoordinationTables`, `formatStructuredResult`\n- Exports `CoordinationTool` — an Effect-tool with 4 operations (claims, reservations, wave_status, all) gated behind `experimentalCoordination` flag\n\n**Fixes during validation**:\n1. `Schema.Literal(\"a\", \"b\", ...)` → `Schema.Literals([\"a\", \"b\", ...])` (Effect v4 API change)\n2. Added `.pipe(Effect.orDie)` to `ensureCoordinationTables()` call to match Tool.define's `never` error channel\n\n**Key design decisions**:\n- Table definitions inline for single-file simplicity (no separate .sql.ts)\n- Raw SQL for CREATE TABLE IF NOT EXISTS (matching original pattern)\n- Drizzle ORM query builders for SELECT/INSERT/UPDATE (matching original pattern)\n- Atomic `complete_count + 1` via `sql` template literal for fan-out tracking",
+  "next_steps": "The file is ready for merge. Downstream consumers (task.ts, write.ts, edit.ts, registry.ts) should all resolve correctly. No changes needed to those files — their imports match exactly.",
+  "waves_completed": [],
+  "wave_details": {},
+  "total_findings": 0,
+  "findings_by_profile": {},
+  "artifacts_consumed": []
+}

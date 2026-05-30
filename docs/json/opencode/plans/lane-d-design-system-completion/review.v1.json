@@ -1,0 +1,99 @@
+{
+  "schema_version": "v1",
+  "plan_id": "lane-d-design-system-completion",
+  "plan_revision": 1,
+  "reviewer": "critic",
+  "reviewed_at": "2026-05-30T06:30:00Z",
+  "verdict": "REVISE",
+  "scores": {
+    "coupling": 3,
+    "debuggability": 3,
+    "surface_area": 2,
+    "testability": 2,
+    "error_clarity": 1,
+    "reversibility": 3,
+    "convergence": 3
+  },
+  "score_notes": {
+    "coupling": "Animation tokens couple to existing component CSS (button-v2.css, dialog-v2.css). v1 cleanup is vague and could open unrelated files. New components are appropriately isolated.",
+    "debuggability": "CSS variables are devtools-friendly. ColorPicker localStorage side-effect is opaque. data-component only specified for Slider, not ColorPicker/EmptyState. No error instrumentation.",
+    "surface_area": "5 independent work items across 14+ files + indeterminate v1 inventory. Should be minimum 2-3 distinct lanes. ResolvedTheme type widening affects all theme consumers across packages.",
+    "testability": "Storybook stories required (good). No unit tests, no accessibility tests, no hex validation tests. localStorage recent-colors coupling is untestable without mocking.",
+    "error_clarity": "Zero error states defined for any component. Slider prop validation (min>max, step<=0) unaddressed. ColorPicker invalid hex input has no specified behavior. No @property rules for animation CSS types.",
+    "reversibility": "New components are additive (easy revert). Animation tokens in 3 CSS sections (root, light, dark) + types.ts + resolve.ts + existing component CSS = complex rollback. v1 cleanup with deletions is irreversible.",
+    "convergence": "Missing components + animation tokens align with v2 migration goal. CSS naming inconsistency (--v2-* vs unprefixed --duration-*). ResolvedTheme type mismatch with animation value types."
+  },
+  "blocking_findings": [
+    {
+      "id": "BF-1",
+      "axis": "error_clarity",
+      "severity": "blocking",
+      "finding": "Theme type mismatch: ResolvedTheme = Record<ThemeToken, ColorValue> (types.ts:70) is color-only. Animation tokens (durations, cubic-bezier easings) cannot fit in ColorValue which is HexColor | CssVarRef.",
+      "file_line": "packages/ui/src/theme/types.ts:68-70",
+      "repair": "Define DurationValue and EasingValue types. Create a ResolvedAnimationTokens record or add sub-objects (durations, easing) to ResolvedTheme. Do not widen ColorValue."
+    },
+    {
+      "id": "BF-2",
+      "axis": "surface_area",
+      "severity": "blocking",
+      "finding": "Surface area creep: 5 independent work items bundled into 1 lane — animation tokens (5 files), Slider (3 files), ColorPicker (3 files), EmptyState (3 files), v1 cleanup (indeterminate). No runtime dependency between them.",
+      "file_line": "plan content — Work Items 1 through 5",
+      "repair": "Split into minimum 3 lanes: (A) Animation token system only (types + CSS vars + resolve), (B) New components (Slider + ColorPicker + EmptyState use same story pattern), (C) v1 cleanup as separate explore task."
+    },
+    {
+      "id": "BF-3",
+      "axis": "error_clarity",
+      "severity": "blocking",
+      "finding": "Zero error states defined across all 3 new components. Slider: no validation for min>max or step≤0. ColorPicker: no behavior for invalid hex (#GGG, partial #FF). EmptyState: no icon fallback handling.",
+      "file_line": "plan content — Work Items 2, 3, 4",
+      "repair": "Add error state specification per component: min>max clamping in Slider, aria-invalid for hex input, console.warn for invalid props, @property rules for animation CSS var types in theme.css."
+    }
+  ],
+  "non_blocking_findings": [
+    {
+      "id": "NB-1",
+      "axis": "convergence",
+      "severity": "weak",
+      "finding": "CSS naming inconsistency: v2 uses --v2-* prefix for all tokens. Animation tokens proposed as unprefixed --duration-fast, --ease-*.",
+      "file_line": "packages/ui/src/v2/styles/theme.css:1-378",
+      "repair": "Use --v2-duration-fast, --v2-duration-normal, --v2-ease-expressive-out to match existing convention."
+    },
+    {
+      "id": "NB-2",
+      "axis": "coupling",
+      "severity": "weak",
+      "finding": "Animation tokens applied to existing button-v2.css and dialog-v2.css in same change as token creation.",
+      "file_line": "packages/ui/src/v2/components/button-v2.css",
+      "repair": "Split into: (1a) Token system only (additive), (1b) Token adoption in existing components (pure find-and-replace, separate change)."
+    },
+    {
+      "id": "NB-3",
+      "axis": "debuggability",
+      "severity": "weak",
+      "finding": "data-component attribute specified only for Slider, not for ColorPicker or EmptyState.",
+      "file_line": "plan content — Work Items 2, 3, 4",
+      "repair": "Add data-component=\"color-picker-v2\" and data-component=\"empty-state-v2\" explicitly. State that ALL v2 components follow this convention."
+    },
+    {
+      "id": "NB-4",
+      "axis": "testability",
+      "severity": "weak",
+      "finding": "Storybook stories required but no unit/a11y/integration tests for Slider (Kobalte keyboard nav), ColorPicker (hex validation, localStorage), or EmptyState (variant rendering).",
+      "file_line": "packages/ui/src/v2/components/ (new files)",
+      "repair": "Add *.test.tsx files: slider-v2.test.tsx (min/max, orientation, keyboard), color-picker-v2.test.tsx (input validation, recent colors fallback), empty-state-v2.test.tsx (variant rendering, icon fallback)."
+    }
+  ],
+  "existing_tokens_affected": [
+    "packages/ui/src/v2/components/button-v2.css (148 lines, hardcoded transitions could use tokens)",
+    "packages/ui/src/v2/components/dialog-v2.css (151 lines, currently has no transitions)",
+    "packages/ui/src/v2/components/text-input-v2.css (uses hardcoded 85ms ease-out)",
+    "packages/ui/src/v2/components/textarea-v2.css (uses hardcoded 85ms ease-out)",
+    "packages/ui/src/v2/components/select-v2.css (uses hardcoded 85ms ease-out, 120ms ease-out)",
+    "packages/ui/src/v2/components/radio-v2.css (uses hardcoded 170ms ease-out)",
+    "packages/ui/src/v2/components/tooltip-v2.css (uses hardcoded 120ms ease-out, 80ms ease-in)",
+    "packages/ui/src/v2/components/menu-v2.css (uses hardcoded 120ms ease-out)",
+    "packages/ui/src/v2/components/toast-v2.css (uses hardcoded 140ms ease-out, 100ms ease-in)",
+    "packages/ui/src/v2/components/accordion-v2.css (uses hardcoded 150ms ease, 180ms ease-out)"
+  ],
+  "summary": "The plan attempts too much in a single lane (5 work items, 14+ files, type system changes, exploratory inventory). Three blocking issues must be resolved: (1) the ResolvedTheme type cannot hold animation values — requires separate type design, (2) surface area must be split into independent lanes, (3) zero error states specified for any component. The CSS naming convention inconsistency (--v2-* vs unprefixed animation vars) and coupling of token creation to existing component edits are significant non-blocking issues. Verdict: REVISE — split into lanes, fix the type mismatch, and add error states before execution."
+}

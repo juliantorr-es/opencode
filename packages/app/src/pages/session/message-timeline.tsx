@@ -70,6 +70,8 @@ import { messageAgentColor } from "@/utils/agent"
 import { sessionTitle } from "@/utils/session-title"
 import { makeTimer } from "@solid-primitives/timer"
 import { MessageComment, SummaryDiff, Timeline, TimelineRow, TimelineRowMap } from "./message-timeline.data"
+import { DialogFork } from "@/components/dialog-fork"
+import { TimelineScrubber, type TurnSummary } from "./timeline-scrubber"
 
 const emptyMessages: MessageType[] = []
 const emptyParts: PartType[] = []
@@ -349,6 +351,39 @@ export function MessageTimeline(props: {
   })
   const working = createMemo(() => sessionStatus().type !== "idle")
   const tint = createMemo(() => messageAgentColor(sessionMessages(), sync.data.agent))
+
+  // Build turn summaries from timeline rows for the TimelineScrubber component
+  const scrubberTurns = createMemo((): TurnSummary[] => {
+    const rows = timelineRows()
+    const result: TurnSummary[] = []
+    for (const row of rows) {
+      if (row._tag === "UserMessage") {
+        result.push({
+          index: result.length,
+          userMessage: "User",
+          agentType: "build",
+          toolCallCount: 0,
+          fileEditCount: 0,
+          timestamp: 0,
+          duration: 0,
+        })
+      } else if (row._tag === "AssistantPart") {
+        const existing = result.find(s => s.userMessage === "Assistant" + row.userMessageID)
+        if (!existing) {
+          result.push({
+            index: result.length,
+            userMessage: "Assistant" + row.userMessageID,
+            agentType: "build",
+            toolCallCount: 1,
+            fileEditCount: 0,
+            timestamp: 0,
+            duration: 0,
+          })
+        }
+      }
+    }
+    return result
+  })
 
   const [timeoutDone, setTimeoutDone] = createSignal(true)
 
@@ -1196,12 +1231,22 @@ export function MessageTimeline(props: {
         return (
           <TimelineRowFrame row={turnDividerRow}>
             <div data-slot="session-turn-message-container" class="w-full px-4 md:px-5">
-              <div data-slot="session-turn-compaction">
-                <MessageDivider
-                  label={language.t(
-                    turnDividerRow().label === "compaction" ? "ui.messagePart.compaction" : "ui.message.interrupted",
-                  )}
-                />
+              <div class="flex items-center gap-2">
+                <div data-slot="session-turn-compaction" class="flex-1">
+                  <MessageDivider
+                    label={language.t(
+                      turnDividerRow().label === "compaction" ? "ui.messagePart.compaction" : "ui.message.interrupted",
+                    )}
+                  />
+                </div>
+                <button
+                  type="button"
+                  class="opacity-0 group-hover:opacity-100 transition-opacity text-xs text-text-muted hover:text-text-base px-1.5 py-0.5 rounded-[4px] hover:bg-background-menu shrink-0"
+                  onClick={() => dialog.show(() => <DialogFork />)}
+                  title={language.t("command.session.fork")}
+                >
+                  Fork ↷
+                </button>
               </div>
             </div>
           </TimelineRowFrame>
@@ -1215,6 +1260,7 @@ export function MessageTimeline(props: {
               <div
                 data-slot="session-turn-assistant-content"
                 aria-hidden={workingTurn(assistantPartRow().userMessageID)}
+                style={tint() ? { "border-left": `2px solid ${tint()}`, "padding-left": "12px" } : {}}
               >
                 {renderAssistantPartGroup(assistantPartRow)}
               </div>
@@ -1269,6 +1315,17 @@ export function MessageTimeline(props: {
       }
       case "BottomSpacer":
         return <div data-timeline-row="bottom-spacer" aria-hidden="true" class="h-16" />
+      case "Checkpoint": {
+        const checkpointRow = row as Accessor<TimelineRowByTag<"Checkpoint">>
+        return (
+          <div class="flex items-center justify-center py-1 px-4">
+            <div class="flex items-center gap-2 text-text-muted">
+              <div class="w-2 h-2 rotate-45 bg-text-muted/50" />
+              <span class="text-[11px]">{checkpointRow().label ?? "Checkpoint"}</span>
+            </div>
+          </div>
+        )
+      }
     }
   }
 
@@ -1300,6 +1357,16 @@ export function MessageTimeline(props: {
           </div>
         </button>
       </div>
+      <TimelineScrubber
+        turns={scrubberTurns()}
+        activeTurnIndex={0}
+        onTurnSelect={(index) => {
+          const row = timelineRows()[index]
+          if (row && virtualizer) {
+            virtualizer.scrollToIndex(index)
+          }
+        }}
+      />
       <ScrollView
         viewportRef={bindListRoot}
         onWheel={handleListWheel}

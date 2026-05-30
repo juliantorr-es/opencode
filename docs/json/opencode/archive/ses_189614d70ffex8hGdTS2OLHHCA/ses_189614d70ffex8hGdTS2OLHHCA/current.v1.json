@@ -1,0 +1,350 @@
+{
+  "schema_version": "v1",
+  "session_id": "ses_189614d70ffex8hGdTS2OLHHCA",
+  "mission_status": "complete",
+  "last_updated": "2026-05-30T02:48:19.782211+00:00",
+  "current_wave": "w7-publication",
+  "waves": {
+    "w1-cartography": {
+      "started_at": "2026-05-30T02:04:28.177251+00:00",
+      "completed_at": "2026-05-30T02:10:58.970962+00:00",
+      "findings": [
+        {
+          "source": "handoff_doc",
+          "summary": "Phase 2 has 6 independent lanes to complete. All lanes touch different files. Zero contention except i18n/en.ts and ipc.ts shared files use produce_fragment.",
+          "confidence": 1.0,
+          "relevance_profiles": [
+            "architecture",
+            "execution"
+          ],
+          "wave": "w1-cartography"
+        },
+        {
+          "source": "code_survey",
+          "summary": "MCP dialog-select-mcp.tsx is the reference CRUD pattern for plugin UI. Uses window.api pattern, electron-store, Dialog from @opencode-ai/ui/dialog.",
+          "confidence": 1.0,
+          "relevance_profiles": [
+            "execution"
+          ],
+          "wave": "w1-cartography"
+        },
+        {
+          "source": "code_survey",
+          "summary": "home.tsx has existing dirty TimeFilter work-in-progress. Search/filter state, TimeFilter type, filtered records memo already started.",
+          "confidence": 1.0,
+          "relevance_profiles": [
+            "execution"
+          ],
+          "wave": "w1-cartography"
+        },
+        {
+          "source": "code_survey",
+          "summary": "prompt-input.tsx (2155 lines) has full @mention system with AtOption, SlashCommand, PromptPopover. ComposerPicker, ComposerAgentControl exist for agent display.",
+          "confidence": 1.0,
+          "relevance_profiles": [
+            "architecture",
+            "execution"
+          ],
+          "wave": "w1-cartography"
+        },
+        {
+          "source": "code_survey",
+          "summary": "command.tsx (438 lines) has full useCommand system with Keybind, CommandOption, CommandCatalogItem, showPalette. 27 useCommand call sites across 14 files.",
+          "confidence": 1.0,
+          "relevance_profiles": [
+            "architecture",
+            "execution"
+          ],
+          "wave": "w1-cartography"
+        },
+        {
+          "source": "code_survey",
+          "summary": "store.ts uses electron-store with getStore(name). IPC handlers in ipc.ts follow registerIpcHandlers(deps) pattern with window.api bridge.",
+          "confidence": 1.0,
+          "relevance_profiles": [
+            "architecture",
+            "execution"
+          ],
+          "wave": "w1-cartography"
+        },
+        {
+          "source": "cartographer-plugin-management-ui",
+          "summary": "Plugin Management UI cartography complete. 6 smoking guns found including BLOCKER dangling IPC channel. DesktopPluginProvider/DesktopPluginLoader exist but no management UI.",
+          "confidence": 1.0,
+          "relevance_profiles": [
+            "architecture",
+            "execution"
+          ],
+          "wave": "w1-cartography"
+        },
+        {
+          "source": "cartographer-plugin-management-ui",
+          "summary": "Shared file strategy: ipc.ts, preload/types.ts, preload/index.ts use produce_fragment. Only 4 dirty files preserved.",
+          "confidence": 1.0,
+          "relevance_profiles": [
+            "execution"
+          ],
+          "wave": "w1-cartography"
+        },
+        {
+          "source": "cartographer-SearchFilter",
+          "summary": "home.tsx TimeFilter work already started: MenuV2.RadioGroup, luxon-based filtering. Missing i18n, debounce, fuzzysort. session.agent/model fields available for agent/model filtering.",
+          "confidence": 1.0,
+          "relevance_profiles": [
+            "architecture",
+            "execution"
+          ],
+          "wave": "w1-cartography"
+        },
+        {
+          "source": "cartographer-CommandPalette",
+          "summary": "No palette UI exists. showPalette() opens file dialog. ~50 commands across 11 categories. fuzzysort+useFilteredList available but not wired. Dirty key-hint-overlay.tsx is 250-line WIP.",
+          "confidence": 1.0,
+          "relevance_profiles": [
+            "architecture",
+            "execution"
+          ],
+          "wave": "w1-cartography"
+        },
+        {
+          "source": "cartographer-SubagentDelegation",
+          "summary": "No @general mention exists. AtOption needs 'delegate' discriminant. 10-step extension pattern documented. Composer controls are private to prompt-input.tsx. Zero test coverage for @mention system.",
+          "confidence": 1.0,
+          "relevance_profiles": [
+            "architecture",
+            "execution"
+          ],
+          "wave": "w1-cartography"
+        },
+        {
+          "source": "cartographer-PluginMgmt",
+          "summary": "BLOCKER: dangling IPC channel get-desktop-plugin-config. PluginKind omits 'desktop'. Plugin provider/loader exists but no UI. 4 dirty files preserved. 3 shared files need produce_fragment.",
+          "confidence": 1.0,
+          "relevance_profiles": [
+            "architecture",
+            "execution"
+          ],
+          "wave": "w1-cartography"
+        },
+        {
+          "source": "cartographer-ExportImport",
+          "summary": "Export/import is greenfield. dialog-fork.tsx is template. save-file-picker IPC ready. @zip.js/zip.js already used. No sanitization utility. Active Postgres migration affects session tables.",
+          "confidence": 1.0,
+          "relevance_profiles": [
+            "architecture",
+            "execution"
+          ],
+          "wave": "w1-cartography"
+        }
+      ],
+      "artifacts": [
+        "docs/json/opencode/handoffs/desktop-phase2-remaining.v1.json",
+        "docs/json/opencode/sessions/current/cartography-plugin-management-ui.v1.json",
+        "docs/json/opencode/sessions/current/cartography-command-palette-expansion.v1.json",
+        "docs/json/opencode/sessions/current/cartography-subagent-delegation-ui.v1.json",
+        "docs/json/opencode/sessions/current/cartography-session-search-filter.v1.json",
+        "docs/json/opencode/sessions/current/cartography-export-import-sessions.v1.json"
+      ]
+    },
+    "w1-cartography-complete": {
+      "started_at": "2026-05-30T02:11:10.650431+00:00",
+      "completed_at": "2026-05-30T02:11:10.650431+00:00",
+      "findings": [
+        {
+          "source": "cartographer-github",
+          "summary": "GitHub integration greenfield. parseGitHubRemote dead code. @octokit/rest unused. OAuth patterns exist. Review tab is PR entry point.",
+          "confidence": 1.0,
+          "relevance_profiles": [
+            "architecture",
+            "execution"
+          ],
+          "wave": "w1-cartography-complete"
+        }
+      ],
+      "artifacts": [
+        "docs/json/opencode/sessions/current/cartography-github-integration-ui.v1.json"
+      ]
+    },
+    "w7-publication": {
+      "started_at": "2026-05-30T02:48:19.782211+00:00",
+      "completed_at": "2026-05-30T02:48:19.782211+00:00",
+      "findings": [
+        {
+          "source": "publication",
+          "summary": "All 6 Phase 2 lanes complete. 6 commits pushed to dev (b98c0f79→aae417b4). Files changed across packages: app, desktop, opencode, sdk. All checkpoints published.",
+          "confidence": 1.0,
+          "relevance_profiles": [
+            "all"
+          ],
+          "wave": "w7-publication"
+        }
+      ],
+      "artifacts": [
+        "docs/json/opencode/plans/*.v1.json (6 plan artifacts)",
+        "docs/json/opencode/sessions/current/cartography-*.v1.json (6 cartography artifacts)",
+        "docs/json/opencode/publications/publications.v1.jsonl (6 publication records)"
+      ]
+    }
+  },
+  "active_findings": [
+    {
+      "source": "handoff_doc",
+      "summary": "Phase 2 has 6 independent lanes to complete. All lanes touch different files. Zero contention except i18n/en.ts and ipc.ts shared files use produce_fragment.",
+      "confidence": 1.0,
+      "relevance_profiles": [
+        "architecture",
+        "execution"
+      ],
+      "wave": "w1-cartography"
+    },
+    {
+      "source": "code_survey",
+      "summary": "MCP dialog-select-mcp.tsx is the reference CRUD pattern for plugin UI. Uses window.api pattern, electron-store, Dialog from @opencode-ai/ui/dialog.",
+      "confidence": 1.0,
+      "relevance_profiles": [
+        "execution"
+      ],
+      "wave": "w1-cartography"
+    },
+    {
+      "source": "code_survey",
+      "summary": "home.tsx has existing dirty TimeFilter work-in-progress. Search/filter state, TimeFilter type, filtered records memo already started.",
+      "confidence": 1.0,
+      "relevance_profiles": [
+        "execution"
+      ],
+      "wave": "w1-cartography"
+    },
+    {
+      "source": "code_survey",
+      "summary": "prompt-input.tsx (2155 lines) has full @mention system with AtOption, SlashCommand, PromptPopover. ComposerPicker, ComposerAgentControl exist for agent display.",
+      "confidence": 1.0,
+      "relevance_profiles": [
+        "architecture",
+        "execution"
+      ],
+      "wave": "w1-cartography"
+    },
+    {
+      "source": "code_survey",
+      "summary": "command.tsx (438 lines) has full useCommand system with Keybind, CommandOption, CommandCatalogItem, showPalette. 27 useCommand call sites across 14 files.",
+      "confidence": 1.0,
+      "relevance_profiles": [
+        "architecture",
+        "execution"
+      ],
+      "wave": "w1-cartography"
+    },
+    {
+      "source": "code_survey",
+      "summary": "store.ts uses electron-store with getStore(name). IPC handlers in ipc.ts follow registerIpcHandlers(deps) pattern with window.api bridge.",
+      "confidence": 1.0,
+      "relevance_profiles": [
+        "architecture",
+        "execution"
+      ],
+      "wave": "w1-cartography"
+    },
+    {
+      "source": "cartographer-plugin-management-ui",
+      "summary": "Plugin Management UI cartography complete. 6 smoking guns found including BLOCKER dangling IPC channel. DesktopPluginProvider/DesktopPluginLoader exist but no management UI.",
+      "confidence": 1.0,
+      "relevance_profiles": [
+        "architecture",
+        "execution"
+      ],
+      "wave": "w1-cartography"
+    },
+    {
+      "source": "cartographer-plugin-management-ui",
+      "summary": "Shared file strategy: ipc.ts, preload/types.ts, preload/index.ts use produce_fragment. Only 4 dirty files preserved.",
+      "confidence": 1.0,
+      "relevance_profiles": [
+        "execution"
+      ],
+      "wave": "w1-cartography"
+    },
+    {
+      "source": "cartographer-SearchFilter",
+      "summary": "home.tsx TimeFilter work already started: MenuV2.RadioGroup, luxon-based filtering. Missing i18n, debounce, fuzzysort. session.agent/model fields available for agent/model filtering.",
+      "confidence": 1.0,
+      "relevance_profiles": [
+        "architecture",
+        "execution"
+      ],
+      "wave": "w1-cartography"
+    },
+    {
+      "source": "cartographer-CommandPalette",
+      "summary": "No palette UI exists. showPalette() opens file dialog. ~50 commands across 11 categories. fuzzysort+useFilteredList available but not wired. Dirty key-hint-overlay.tsx is 250-line WIP.",
+      "confidence": 1.0,
+      "relevance_profiles": [
+        "architecture",
+        "execution"
+      ],
+      "wave": "w1-cartography"
+    },
+    {
+      "source": "cartographer-SubagentDelegation",
+      "summary": "No @general mention exists. AtOption needs 'delegate' discriminant. 10-step extension pattern documented. Composer controls are private to prompt-input.tsx. Zero test coverage for @mention system.",
+      "confidence": 1.0,
+      "relevance_profiles": [
+        "architecture",
+        "execution"
+      ],
+      "wave": "w1-cartography"
+    },
+    {
+      "source": "cartographer-PluginMgmt",
+      "summary": "BLOCKER: dangling IPC channel get-desktop-plugin-config. PluginKind omits 'desktop'. Plugin provider/loader exists but no UI. 4 dirty files preserved. 3 shared files need produce_fragment.",
+      "confidence": 1.0,
+      "relevance_profiles": [
+        "architecture",
+        "execution"
+      ],
+      "wave": "w1-cartography"
+    },
+    {
+      "source": "cartographer-ExportImport",
+      "summary": "Export/import is greenfield. dialog-fork.tsx is template. save-file-picker IPC ready. @zip.js/zip.js already used. No sanitization utility. Active Postgres migration affects session tables.",
+      "confidence": 1.0,
+      "relevance_profiles": [
+        "architecture",
+        "execution"
+      ],
+      "wave": "w1-cartography"
+    },
+    {
+      "source": "cartographer-github",
+      "summary": "GitHub integration greenfield. parseGitHubRemote dead code. @octokit/rest unused. OAuth patterns exist. Review tab is PR entry point.",
+      "confidence": 1.0,
+      "relevance_profiles": [
+        "architecture",
+        "execution"
+      ],
+      "wave": "w1-cartography-complete"
+    },
+    {
+      "source": "publication",
+      "summary": "All 6 Phase 2 lanes complete. 6 commits pushed to dev (b98c0f79→aae417b4). Files changed across packages: app, desktop, opencode, sdk. All checkpoints published.",
+      "confidence": 1.0,
+      "relevance_profiles": [
+        "all"
+      ],
+      "wave": "w7-publication"
+    }
+  ],
+  "active_artifacts": [
+    "docs/json/opencode/handoffs/desktop-phase2-remaining.v1.json",
+    "docs/json/opencode/sessions/current/cartography-plugin-management-ui.v1.json",
+    "docs/json/opencode/sessions/current/cartography-command-palette-expansion.v1.json",
+    "docs/json/opencode/sessions/current/cartography-subagent-delegation-ui.v1.json",
+    "docs/json/opencode/sessions/current/cartography-session-search-filter.v1.json",
+    "docs/json/opencode/sessions/current/cartography-export-import-sessions.v1.json",
+    "docs/json/opencode/sessions/current/cartography-github-integration-ui.v1.json",
+    "docs/json/opencode/plans/*.v1.json (6 plan artifacts)",
+    "docs/json/opencode/sessions/current/cartography-*.v1.json (6 cartography artifacts)",
+    "docs/json/opencode/publications/publications.v1.jsonl (6 publication records)"
+  ],
+  "archived": []
+}

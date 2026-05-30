@@ -650,7 +650,7 @@ describe("Project.list and Project.get", () => {
 
       const all = Project.list()
       expect(all.length).toBeGreaterThan(0)
-      expect(all.find((p) => p.id === project.id)).toBeDefined()
+      expect(all.find((p: Project.Info) => p.id === project.id)).toBeDefined()
     }),
   )
 

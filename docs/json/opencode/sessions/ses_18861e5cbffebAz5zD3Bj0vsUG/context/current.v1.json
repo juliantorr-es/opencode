@@ -1,0 +1,174 @@
+{
+  "schema_version": "v1",
+  "session_id": "ses_18861e5cbffebAz5zD3Bj0vsUG",
+  "mission_status": "complete",
+  "last_updated": "2026-05-30T06:45:41.250958+00:00",
+  "current_wave": "cartography",
+  "waves": {
+    "cartography": {
+      "started_at": "2026-05-30T06:45:41.250958+00:00",
+      "completed_at": "2026-05-30T06:45:41.250958+00:00",
+      "findings": [
+        {
+          "source": "processor.ts:756",
+          "summary": "Processor.process() is event-driven LLM stream loop — tool execution is abstracted in AI SDK, not in opencode code",
+          "confidence": 0.99,
+          "relevance_profiles": [
+            "architecture",
+            "execution"
+          ],
+          "wave": "cartography"
+        },
+        {
+          "source": "processor.ts:73",
+          "summary": "No explicit state machine — ProcessorContext uses 4 boolean flags (shouldBreak, blocked, needsCompaction, aborted) instead of enum",
+          "confidence": 0.99,
+          "relevance_profiles": [
+            "architecture"
+          ],
+          "wave": "cartography"
+        },
+        {
+          "source": "prompt.ts:1244",
+          "summary": "Two-layer loop: inner process() handles one LLM stream, outer runLoop() handles across-turn lifecycle (compaction, subtasks, MAX_STEPS)",
+          "confidence": 0.99,
+          "relevance_profiles": [
+            "architecture",
+            "execution"
+          ],
+          "wave": "cartography"
+        },
+        {
+          "source": "prompt.ts:1477",
+          "summary": "Compaction is external fork from processor — outer loop creates compaction.create(), not handled in processor",
+          "confidence": 0.99,
+          "relevance_profiles": [
+            "architecture",
+            "execution"
+          ],
+          "wave": "cartography"
+        },
+        {
+          "source": "prompt.ts:1331",
+          "summary": "Agent switching is entirely outside processor — outer loop re-resolves agent on each iteration from lastUser.agent field",
+          "confidence": 0.99,
+          "relevance_profiles": [
+            "architecture"
+          ],
+          "wave": "cartography"
+        },
+        {
+          "source": "processor.ts:463",
+          "summary": "Doom loop detection is sole agent-aware code in processor: 3 consecutive identical tool calls trigger permission.ask()",
+          "confidence": 0.95,
+          "relevance_profiles": [
+            "execution"
+          ],
+          "wave": "cartography"
+        },
+        {
+          "source": "task.ts, run-state.ts",
+          "summary": "Background tasks/subagents fork entirely separate sessions — independent processing loops, parent cancellation cascades via sessionId/parentSessionId matching",
+          "confidence": 0.95,
+          "relevance_profiles": [
+            "architecture"
+          ],
+          "wave": "cartography"
+        },
+        {
+          "source": "processor.ts:every-handler",
+          "summary": "Event system dual-write migration in progress (v2 events) — branching at every event handler via experimentalEventSystem flag",
+          "confidence": 0.99,
+          "relevance_profiles": [
+            "execution"
+          ],
+          "wave": "cartography"
+        }
+      ],
+      "artifacts": [
+        "docs/json/opencode/sessions/current/cartography-processor-lifecycle.v1.json"
+      ]
+    }
+  },
+  "active_findings": [
+    {
+      "source": "processor.ts:756",
+      "summary": "Processor.process() is event-driven LLM stream loop — tool execution is abstracted in AI SDK, not in opencode code",
+      "confidence": 0.99,
+      "relevance_profiles": [
+        "architecture",
+        "execution"
+      ],
+      "wave": "cartography"
+    },
+    {
+      "source": "processor.ts:73",
+      "summary": "No explicit state machine — ProcessorContext uses 4 boolean flags (shouldBreak, blocked, needsCompaction, aborted) instead of enum",
+      "confidence": 0.99,
+      "relevance_profiles": [
+        "architecture"
+      ],
+      "wave": "cartography"
+    },
+    {
+      "source": "prompt.ts:1244",
+      "summary": "Two-layer loop: inner process() handles one LLM stream, outer runLoop() handles across-turn lifecycle (compaction, subtasks, MAX_STEPS)",
+      "confidence": 0.99,
+      "relevance_profiles": [
+        "architecture",
+        "execution"
+      ],
+      "wave": "cartography"
+    },
+    {
+      "source": "prompt.ts:1477",
+      "summary": "Compaction is external fork from processor — outer loop creates compaction.create(), not handled in processor",
+      "confidence": 0.99,
+      "relevance_profiles": [
+        "architecture",
+        "execution"
+      ],
+      "wave": "cartography"
+    },
+    {
+      "source": "prompt.ts:1331",
+      "summary": "Agent switching is entirely outside processor — outer loop re-resolves agent on each iteration from lastUser.agent field",
+      "confidence": 0.99,
+      "relevance_profiles": [
+        "architecture"
+      ],
+      "wave": "cartography"
+    },
+    {
+      "source": "processor.ts:463",
+      "summary": "Doom loop detection is sole agent-aware code in processor: 3 consecutive identical tool calls trigger permission.ask()",
+      "confidence": 0.95,
+      "relevance_profiles": [
+        "execution"
+      ],
+      "wave": "cartography"
+    },
+    {
+      "source": "task.ts, run-state.ts",
+      "summary": "Background tasks/subagents fork entirely separate sessions — independent processing loops, parent cancellation cascades via sessionId/parentSessionId matching",
+      "confidence": 0.95,
+      "relevance_profiles": [
+        "architecture"
+      ],
+      "wave": "cartography"
+    },
+    {
+      "source": "processor.ts:every-handler",
+      "summary": "Event system dual-write migration in progress (v2 events) — branching at every event handler via experimentalEventSystem flag",
+      "confidence": 0.99,
+      "relevance_profiles": [
+        "execution"
+      ],
+      "wave": "cartography"
+    }
+  ],
+  "active_artifacts": [
+    "docs/json/opencode/sessions/current/cartography-processor-lifecycle.v1.json"
+  ],
+  "archived": []
+}

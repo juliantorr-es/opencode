@@ -1,0 +1,12 @@
+Record a subagent delegation in the coordination ledger and provide instructions for spawning the subagent via the `task` tool.
+Use this to coordinate delegation before calling `task` — it validates the agent exists, checks activity, and records the intent.
+If called without subagent_type, lists all known subagents.
+
+PARAMETERS:
+- `subagent_type` (optional): Agent name to delegate to. Omit to list available agents.
+- `prompt` (optional): The task prompt for the subagent
+- `description` (optional): Short description (defaults to first 80 chars of prompt)
+- `workspace` (optional): 'share' for concurrent git-worktree isolation
+- `model` (optional): Optional model override
+
+OUTPUT: Delegation record with status, subagent type, and next steps.

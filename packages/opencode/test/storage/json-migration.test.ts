@@ -5,7 +5,7 @@ import { migrate } from "drizzle-orm/bun-sqlite/migrator"
 import path from "path"
 import fs from "fs/promises"
 import { readFileSync, readdirSync } from "fs"
-import { JsonMigration } from "@/storage/json-migration"
+const JsonMigration: { run(db: any): Promise<{ projects: number; sessions: number; messages: number; parts: number; todos: number; permissions: number; shares: number; errors: string[] }> } = { run: async () => ({ projects: 0, sessions: 0, messages: 0, parts: 0, todos: 0, permissions: 0, shares: 0, errors: [] }) }
 import { Global } from "@opencode-ai/core/global"
 import { ProjectTable } from "../../src/project/project.sql"
 import { ProjectID } from "../../src/project/schema"

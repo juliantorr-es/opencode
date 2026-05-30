@@ -1,0 +1,98 @@
+{
+  "schema_version": "v1",
+  "review_type": "plan_review",
+  "plan_id": "ipc-channels-registry",
+  "plan_revision": 1,
+  "reviewer": "critic",
+  "reviewed_at": "2026-05-29T06:25:00Z",
+  "axes": {
+    "coupling": {
+      "score": 8,
+      "concerns": [
+        "Preload importing from `../main/ipc-channels.ts` — safe because ipc-channels.ts is a pure string constants file with ZERO electron imports. Verified by plan assertion and consistent with architecture.",
+        "github-ipc.ts extraction reduces coupling in ipc.ts. However, ipc.ts already has a dirty import of `registerGithubIpcHandlers` from `./github-ipc` but github-ipc.ts DOES NOT EXIST on disk — the code is currently broken. The plan correctly identifies this as a prerequisite.",
+        "app-config.ts adds a new module with `import { app } from \"electron\"` — acceptable as constants.ts already imports app.",
+        "apps.ts gaining an electron import for `app.getPath(\"home\")` — this is a new dependency on Electron in a module that currently has none. Justified: it replaces `process.env.HOME` with the Electron-native API."
+      ],
+      "recommendation": "Clean coupling profile. No cross-layer violations. Proceed."
+    },
+    "surface_area": {
+      "score": 6,
+      "concerns": [
+        "14 files (3 created + 11 modified) is large but proportional — 60+ magic strings in ipc.ts alone + 50+ in preload/index.ts + cross-references across 8 other files.",
+        "Per AGENTS.md file conventions, this does NOT touch any shared registry files (like tool/registry.ts), so no fragment-based consolidation is needed.",
+        "Dirty files in play: ipc.ts (82+200 dirty), preload/index.ts (1+1 dirty), preload/types.ts (8+4 dirty), windows.ts (8+4 dirty). Executor must preserve ALL existing dirty regions. The plan mentions this for ipc.ts and windows.ts but NOT for preload/index.ts or preload/types.ts — both have live dirty changes from parallel lanes that must be preserved.",
+        "Scalable concern: this creates a precedent that every IPC change requires updating up to 4 files (ipc-channels.ts, ipc.ts, preload/index.ts, types.ts). The plan should document a workflow for adding new channels."
+      ],
+      "recommendation": "Acceptable surface area. Add dirty-file preservation for preload/index.ts and preload/types.ts to the risk assessment section."
+    },
+    "convergence": {
+      "score": 8,
+      "concerns": [
+        "STRONG alignment with target architecture: single source of truth for IPC channel names instead of scattered magic strings.",
+        "APP_IDS consolidation: currently duplicated in index.ts (line 47) and migrate.ts (line 25). Plan moves both to constants.ts. Correct and overdue.",
+        "process.env.HOME → app.getPath(\"home\"): matches Electron best practices. The risk assessment correctly notes that checkMacosApp runs after app.whenReady() because it's called from IPC handlers (ipc.ts line 90, index.ts line 251 passing as dep). Verified safe.",
+        "EXCELLENT: The github-ipc.ts extraction was already partially done (dirty import + removed code blocks in ipc.ts) but the file itself was never created. The plan completes this seam and fixes a broken build state.",
+        "Minor: `homedir()` → `app.getPath(\"home\")` in migrate.ts is listed for `tauriDir()` function, but migrate.ts also uses `homedir()` in three other places (lines 16, 18, 20 for OS-specific path construction). The plan only mentions `tauriDir()`. Need to check if the other homedir() calls are also being replaced — they're in the same function path. The plan should clarify scope: only tauriDir() gets app.getPath(\"home\"), or the function gets refactored entirely."
+      ],
+      "recommendation": "Strong convergence. Clarify scope of `homedir()` changes in migrate.ts."
+    },
+    "error_clarity": {
+      "score": 7,
+      "concerns": [
+        "IMPROVEMENT: Replace magic strings with const references. TypeScript catches typos at compile time. When a channel name is wrong, the error traces to `IPC.handle.CHANNEL_NAME` not a raw string.",
+        "CRITICAL TYPE BUG: The `IpcChannel` type as defined includes `undefined` in its union. The expression `{ [G in \"handle\"|\"send\"|\"push\"]: ... }[keyof typeof IPC]` indexes with \"store\" (a key of `typeof IPC` that exists in the outer object but not in the mapped type), yielding `undefined`. Any parameter typed as `IpcChannel` would accept `undefined`. Fix: change the outer index to `[\"handle\" | \"send\" | \"push\"]` matching the mapped type, or use `Exclude<keyof typeof IPC, \"store\">` symmetrically.",
+        "No runtime validation of channel names at ipcMain.handle() registration — but this is acceptable for a pure refactoring. The compile-time check covers the common failure mode (typo).",
+        "Missing spans: IPC handler registration in registerIpcHandlers() would benefit from structured logging that records the channel name being registered. Currently if a handler throws, you see the error but not which channel triggered it. Not introduced by this plan but worth filing as a follow-up."
+      ],
+      "recommendation": "Fix the IpcChannel type to exclude undefined from the union. File follow-up for IPC handler error spans."
+    },
+    "testability": {
+      "score": 7,
+      "concerns": [
+        "Mechanical refactoring — no behavioral changes. All existing tests should pass unmodified.",
+        "ipc-channels.ts is trivially testable: a 5-line test can verify all 72 channel strings are non-empty and match expected patterns.",
+        "app-config.ts with computed values (getAppIdentity uses app.isPackaged + ternary) is harder to test in isolation because of the electron dependency, but this is already the pattern used by constants.ts (UPDATER_ENABLED same pattern).",
+        "No new tests are strictly required for this refactoring, but a compile-time check (`bun typecheck`) is the primary validation."
+      ],
+      "recommendation": "Acceptable. Add a quick-render test for the IPC channel registry (verify all values are strings and unique)."
+    },
+    "reversibility": {
+      "score": 8,
+      "concerns": [
+        "Clean rollback plan provided in reverse wave order: git checkout files in reverse, then rm new files. Correct.",
+        "Wave ordering is dependency-respecting: new files created first (Wave A), then modifications (Waves B-D). This means each wave can be independently verified.",
+        "Reversibility concern: if github-ipc.ts (step 3) is created but ipc.ts (step 6) already has its dirty import from a previous lane, rolling back ipc.ts to HEAD would drop the dirty import. But the rollback plan already accounts for this — it reverts ipc.ts first, then removes github-ipc.ts. The dirty import was from ipc.ts's dirty state, not from the committed state, so reverting ipc.ts to HEAD removes the import dependency. Clean.",
+        "14 files is large but the rollback is linear and well-documented."
+      ],
+      "recommendation": "Clean. Proceed."
+    },
+    "debuggability": {
+      "score": 7,
+      "concerns": [
+        "INDIRECT IMPROVEMENT: IPC channel constants make debugging easier — stack traces show `IPC.handle.KILL_SIDECAR` instead of a raw string literal. Developer can grep for the constant name.",
+        "No explicit error-trace annotations or span additions. The refactoring doesn't affect existing error handling paths.",
+        "The dirty region in ipc.ts already removes crypto/safeStorage/net and GitHub OAuth code — this was a partial refactoring. If a runtime error occurs related to GitHub OAuth, the stack trace now points to `github-ipc.ts` which is an improvement over the monolithic ipc.ts.",
+        "Follow-up opportunity: adding Effect.withSpan-style annotations to IPC handler registration would dramatically improve debuggability of runtime failures."
+      ],
+      "recommendation": "Acceptable for refactoring scope. File follow-up for IPC handler span annotations."
+    }
+  },
+  "overall_verdict": "changes_requested",
+  "blockers": [
+    "BLOCKER 1: IpcChannel type has `undefined` in its union — every usage of IpcChannel as a parameter type will incorrectly accept `undefined`. Fix the outer index to exclude \"store\" from the key set.",
+    "BLOCKER 2: Dirty file preservation for preload/index.ts and preload/types.ts not mentioned in risk assessment. Both have live uncommitted changes from parallel lanes that must survive the refactoring. Add to risk assessment table."
+  ],
+  "conditions": [
+    "Fix the IpcChannel type definition to exclude \"store\" from the outer indexed access — use `Exclude<keyof typeof IPC, \"store\">` on both the mapped type key AND the outer index.",
+    "Add dirty-file preservation notes for preload/index.ts and preload/types.ts in the risk assessment section.",
+    "Clarify the scope of homedir() → app.getPath(\"home\") replacement in migrate.ts: is it only tauriDir() or all 4 call sites?",
+    "Verify that the github-ipc.ts creation (step 3) matches the existing dirty import in ipc.ts exactly (same function names, same imports)."
+  ],
+  "follow_up_issues": [
+    "Add IPC handler error span annotations: wrap registerIpcHandlers handler registrations with structured logging that captures the channel name on error.",
+    "Add a quick-render test (`bun test`) for ipc-channels.ts that verifies all 72 channel values are non-empty strings and the IPC object shape is correct.",
+    "Document workflow for adding new IPC channels: update ipc-channels.ts (add constant), ipc.ts (register handler), preload/index.ts (add bridge method), and types.ts (update ElectronAPI).",
+    "Replace remaining homedir() calls in migrate.ts (lines 16, 18, 20) and index.ts (lines 117, 282) with app.getPath(\"home\") in a follow-up slice."
+  ]
+}

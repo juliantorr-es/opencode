@@ -1,0 +1,54 @@
+{"at":"2026-05-30T05:52:56.902Z","session_id":"ses_1888ebd5dffeGl3g3MrW3dTCdZ","agent":"lane-owner","tool":"smart_grep","pattern":"produce_fragment","path":""}
+{"at":"2026-05-30T05:52:59.700Z","session_id":"ses_1888ebd5dffeGl3g3MrW3dTCdZ","agent":"lane-owner","tool":"smart_find","pattern":"coordination.ts","path":""}
+{"at":"2026-05-30T05:53:01.159Z","session_id":"ses_1888ebd5dffeGl3g3MrW3dTCdZ","agent":"lane-owner","tool":"smart_find","pattern":"coord-events*","path":""}
+{"at":"2026-05-30T05:53:02.555Z","session_id":"ses_1888ebd5dffeGl3g3MrW3dTCdZ","agent":"lane-owner","tool":"smart_find","pattern":"produce_fragment*","path":""}
+{"at":"2026-05-30T05:53:07.523Z","session_id":"ses_1888ebd5dffeGl3g3MrW3dTCdZ","agent":"lane-owner","tool":"smart_grep","pattern":"class BusEvent","path":""}
+{"at":"2026-05-30T05:53:08.662Z","session_id":"ses_1888ebd5dffeGl3g3MrW3dTCdZ","agent":"lane-owner","tool":"smart_find","pattern":"**/src/coordination/**","path":""}
+{"at":"2026-05-30T05:53:09.628Z","session_id":"ses_1888ebd5dffeGl3g3MrW3dTCdZ","agent":"lane-owner","tool":"smart_find","pattern":"**/src/bus/**","path":""}
+{"at":"2026-05-30T05:53:14.459Z","session_id":"ses_1888ebd5dffeGl3g3MrW3dTCdZ","agent":"lane-owner","tool":"smart_find","pattern":"coord-events*","path":"packages/opencode/src"}
+{"at":"2026-05-30T05:53:15.508Z","session_id":"ses_1888ebd5dffeGl3g3MrW3dTCdZ","agent":"lane-owner","tool":"smart_find","pattern":"**/src/coordination/**","path":""}
+{"at":"2026-05-30T05:53:16.552Z","session_id":"ses_1888ebd5dffeGl3g3MrW3dTCdZ","agent":"lane-owner","tool":"smart_find","pattern":"**/src/tool/coordination*","path":""}
+{"at":"2026-05-30T05:53:20.336Z","session_id":"ses_1888ebd5dffeGl3g3MrW3dTCdZ","agent":"lane-owner","tool":"smart_find","pattern":"coord-events.ts","path":""}
+{"at":"2026-05-30T05:53:20.591Z","session_id":"ses_1888ebd5dffeGl3g3MrW3dTCdZ","agent":"lane-owner","tool":"smart_grep","pattern":"from.*coord-events","path":""}
+{"at":"2026-05-30T05:53:23.262Z","session_id":"ses_1888ebd5dffeGl3g3MrW3dTCdZ","agent":"lane-owner","tool":"smart_grep","pattern":"import.*CoordEvents","path":"packages/opencode/src"}
+{"at":"2026-05-30T05:53:29.072Z","session_id":"ses_1888ebd5dffeGl3g3MrW3dTCdZ","agent":"lane-owner","tool":"smart_find","pattern":"**/src/tool/*.ts","path":""}
+{"at":"2026-05-30T05:53:29.382Z","session_id":"ses_1888ebd5dffeGl3g3MrW3dTCdZ","agent":"lane-owner","tool":"smart_grep","pattern":"export.*tool","path":"packages/opencode/src"}
+{"at":"2026-05-30T05:53:38.724Z","session_id":"ses_1888ebd5dffeGl3g3MrW3dTCdZ","agent":"lane-owner","tool":"smart_find","pattern":"**/src/bus/index.ts","path":""}
+{"at":"2026-05-30T05:53:39.089Z","session_id":"ses_1888ebd5dffeGl3g3MrW3dTCdZ","agent":"lane-owner","tool":"smart_grep","pattern":"Bus\\.emit|Bus\\.publish|GlobalBus\\.emit","path":"packages/opencode/src"}
+{"at":"2026-05-30T05:53:41.254Z","session_id":"ses_1888ebd5dffeGl3g3MrW3dTCdZ","agent":"lane-owner","tool":"smart_grep","pattern":"export.*Bus|class Bus|Bus\\.publish","path":"packages/opencode/src"}
+{"at":"2026-05-30T05:53:42.384Z","session_id":"ses_1888ebd5dffeGl3g3MrW3dTCdZ","agent":"lane-owner","tool":"smart_find","pattern":"**/src/bus.ts","path":""}
+{"at":"2026-05-30T05:53:44.780Z","session_id":"ses_1888ebd5dffeGl3g3MrW3dTCdZ","agent":"lane-owner","tool":"smart_grep","pattern":"import.*Bus.*from","path":"packages/opencode/src"}
+{"at":"2026-05-30T05:53:47.880Z","session_id":"ses_1888ebd5dffeGl3g3MrW3dTCdZ","agent":"lane-owner","tool":"smart_find","pattern":"src/bus/index.ts","path":""}
+{"at":"2026-05-30T05:53:48.137Z","session_id":"ses_1888ebd5dffeGl3g3MrW3dTCdZ","agent":"lane-owner","tool":"smart_grep","pattern":"export const Bus|class Bus|function publish|export function publish","path":"packages/opencode/src/bus"}
+{"at":"2026-05-30T05:53:50.139Z","session_id":"ses_1888ebd5dffeGl3g3MrW3dTCdZ","agent":"lane-owner","tool":"smart_find","pattern":"**/bus/**","path":"packages/opencode/src"}
+{"at":"2026-05-30T05:53:50.489Z","session_id":"ses_1888ebd5dffeGl3g3MrW3dTCdZ","agent":"lane-owner","tool":"smart_grep","pattern":"publish.*Bus","path":"packages/opencode/src"}
+{"at":"2026-05-30T05:53:52.747Z","session_id":"ses_1888ebd5dffeGl3g3MrW3dTCdZ","agent":"lane-owner","tool":"smart_find","pattern":"tsconfig*.json","path":"packages/opencode"}
+{"at":"2026-05-30T05:53:53.065Z","session_id":"ses_1888ebd5dffeGl3g3MrW3dTCdZ","agent":"lane-owner","tool":"smart_grep","pattern":"\"@/bus\"","path":"packages/opencode"}
+{"at":"2026-05-30T05:53:58.017Z","session_id":"ses_1888ebd5dffeGl3g3MrW3dTCdZ","agent":"lane-owner","tool":"smart_find","pattern":"src/bus.ts*","path":"packages/opencode"}
+{"at":"2026-05-30T05:53:58.322Z","session_id":"ses_1888ebd5dffeGl3g3MrW3dTCdZ","agent":"lane-owner","tool":"smart_find","pattern":"**/index.ts","path":"packages/opencode/src/bus"}
+{"at":"2026-05-30T05:54:03.620Z","session_id":"ses_1888ebd5dffeGl3g3MrW3dTCdZ","agent":"lane-owner","tool":"smart_find","pattern":"**/bus/index.*","path":"packages/opencode/node_modules/@opencode-ai"}
+{"at":"2026-05-30T05:54:07.151Z","session_id":"ses_1888ebd5dffeGl3g3MrW3dTCdZ","agent":"lane-owner","tool":"smart_grep","pattern":"\\\"bus\\\"","path":"packages/opencode/src"}
+{"at":"2026-05-30T05:54:10.642Z","session_id":"ses_1888ebd5dffeGl3g3MrW3dTCdZ","agent":"lane-owner","tool":"smart_grep","pattern":"from.*@opencode-ai/core/bus","path":"packages/opencode/src"}
+{"at":"2026-05-30T05:54:10.982Z","session_id":"ses_1888ebd5dffeGl3g3MrW3dTCdZ","agent":"lane-owner","tool":"smart_grep","pattern":"import.*Bus.*from","path":"packages/opencode/src/coordination"}
+{"at":"2026-05-30T05:54:12.973Z","session_id":"ses_1888ebd5dffeGl3g3MrW3dTCdZ","agent":"lane-owner","tool":"smart_find","pattern":"bus","path":"packages/opencode/src/bus"}
+{"at":"2026-05-30T05:54:13.309Z","session_id":"ses_1888ebd5dffeGl3g3MrW3dTCdZ","agent":"lane-owner","tool":"smart_grep","pattern":"from ['\\\"]@/bus['\\\"]","path":"packages/opencode/src"}
+{"at":"2026-05-30T05:54:17.390Z","session_id":"ses_1888ebd5dffeGl3g3MrW3dTCdZ","agent":"lane-owner","tool":"smart_find","pattern":"index.ts","path":"packages/opencode/node_modules/@opencode-ai/core"}
+{"at":"2026-05-30T05:54:17.440Z","session_id":"ses_1888ebd5dffeGl3g3MrW3dTCdZ","agent":"lane-owner","tool":"smart_find","pattern":"bus*","path":"packages/opencode/node_modules/@opencode-ai"}
+{"at":"2026-05-30T05:54:19.910Z","session_id":"ses_1888ebd5dffeGl3g3MrW3dTCdZ","agent":"lane-owner","tool":"smart_find","pattern":"bus","path":"packages/opencode/node_modules/@opencode-ai"}
+{"at":"2026-05-30T05:54:22.187Z","session_id":"ses_1888ebd5dffeGl3g3MrW3dTCdZ","agent":"lane-owner","tool":"smart_find","pattern":"package.json","path":"/Users/user/Developer/GitHub/opencode-desktop-dev/packages"}
+{"at":"2026-05-30T05:54:24.632Z","session_id":"ses_1888ebd5dffeGl3g3MrW3dTCdZ","agent":"lane-owner","tool":"smart_find","pattern":"opencode-ai.*core","path":"/Users/user/Developer/GitHub/opencode-desktop-dev"}
+{"at":"2026-05-30T05:54:27.658Z","session_id":"ses_1888ebd5dffeGl3g3MrW3dTCdZ","agent":"lane-owner","tool":"smart_find","pattern":"**/src/**","path":"/Users/user/Developer/GitHub/opencode-desktop-dev/packages/core"}
+{"at":"2026-05-30T05:54:29.710Z","session_id":"ses_1888ebd5dffeGl3g3MrW3dTCdZ","agent":"lane-owner","tool":"smart_find","pattern":"bus*","path":"/Users/user/Developer/GitHub/opencode-desktop-dev/packages/core"}
+{"at":"2026-05-30T05:54:32.189Z","session_id":"ses_1888ebd5dffeGl3g3MrW3dTCdZ","agent":"lane-owner","tool":"smart_find","pattern":"bus*","path":"/Users/user/Developer/GitHub/opencode-desktop-dev/packages/opencode/node_modules"}
+{"at":"2026-05-30T05:54:32.582Z","session_id":"ses_1888ebd5dffeGl3g3MrW3dTCdZ","agent":"lane-owner","tool":"smart_find","pattern":"bus*","path":"/Users/user/Developer/GitHub/opencode-desktop-dev/node_modules/@opencode-ai"}
+{"at":"2026-05-30T05:54:34.671Z","session_id":"ses_1888ebd5dffeGl3g3MrW3dTCdZ","agent":"lane-owner","tool":"smart_bun","command":"typecheck","elapsed_ms":8,"exit_code":1}
+{"at":"2026-05-30T05:54:48.285Z","session_id":"ses_1888ebd5dffeGl3g3MrW3dTCdZ","agent":"lane-owner","tool":"smart_grep","pattern":"\"scripts\"","path":"packages/opencode/package.json"}
+{"at":"2026-05-30T05:55:02.023Z","session_id":"ses_1888ebd5dffeGl3g3MrW3dTCdZ","agent":"lane-owner","tool":"smart_bun","command":"run","elapsed_ms":11672,"exit_code":2}
+{"at":"2026-05-30T05:55:35.015Z","session_id":"ses_1888ebd5dffeGl3g3MrW3dTCdZ","agent":"lane-owner","tool":"smart_grep","pattern":"CoordinationTool|Coordination\\b","path":"packages/opencode/src/tool"}
+{"at":"2026-05-30T05:55:35.414Z","session_id":"ses_1888ebd5dffeGl3g3MrW3dTCdZ","agent":"lane-owner","tool":"smart_grep","pattern":"\"coordination\"","path":"packages/opencode/src"}
+{"at":"2026-05-30T05:55:42.071Z","session_id":"ses_1888ebd5dffeGl3g3MrW3dTCdZ","agent":"lane-owner","tool":"smart_sd","file":"packages/opencode/src/tool/coordination.ts"}
+{"at":"2026-05-30T05:55:44.504Z","session_id":"ses_1888ebd5dffeGl3g3MrW3dTCdZ","agent":"lane-owner","tool":"smart_sd","file":"packages/opencode/src/tool/coordination.ts"}
+{"at":"2026-05-30T05:55:47.656Z","session_id":"ses_1888ebd5dffeGl3g3MrW3dTCdZ","agent":"lane-owner","tool":"smart_sd","file":"packages/opencode/src/tool/coordination.ts"}
+{"at":"2026-05-30T05:55:50.941Z","session_id":"ses_1888ebd5dffeGl3g3MrW3dTCdZ","agent":"lane-owner","tool":"smart_sd","file":"packages/opencode/src/tool/coordination.ts"}
+{"at":"2026-05-30T05:56:00.648Z","session_id":"ses_1888ebd5dffeGl3g3MrW3dTCdZ","agent":"lane-owner","tool":"smart_grep","pattern":"typecheck","path":"packages/opencode/package.json"}
+{"at":"2026-05-30T05:56:02.702Z","session_id":"ses_1888ebd5dffeGl3g3MrW3dTCdZ","agent":"lane-owner","tool":"smart_grep","pattern":"tsgo|typecheck","path":"packages/opencode/package.json"}

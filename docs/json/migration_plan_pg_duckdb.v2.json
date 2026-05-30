@@ -1,0 +1,153 @@
+{
+  "schema": "rig.relay.migration_plan.v2",
+  "generated_at": "2026-05-28T18:00:00Z",
+  "status": "admitted_for_phase0",
+  "architectural_decisions": {
+    "database_adapter": {
+      "status": "resolved",
+      "decision": "Define DatabaseAdapter as an abstract Effect Service that both the existing sync SQLite backend and async PgClient implement",
+      "interface": "DatabaseAdapter { query<T>(fn: (db: DrizzleLikeClient) => T): Effect<T, AdapterError>; transaction<T>(fn: (db: DrizzleLikeClient) => T, opts?: { isolation?: string }): Effect<T, AdapterError> }",
+      "existing_patterns_to_wrap": {
+        "session_session_ts_db_helper": "Effect.sync(() => Database.use(fn)) at session/session.ts:507-508 — wraps in Effect.sync; PgClient would return Effect natively, so DatabaseAdapter returns Effect in both cases",
+        "account_repo_ts_query": "Effect.try({ try: () => Database.use(f) }) at account/repo.ts:49-53 — uses Effect.try for sync exceptions; DatabaseAdapter returns typed Effect failures (AdapterError), allowing caller to use Effect.catchAll uniformly"
+      },
+      "rationale": [
+        "Bridges the sync/async call-pattern mismatch identified by claim-adversary (Finding H)",
+        "All 36+ call sites convert in ONE coordinated refactor with a single abstraction boundary",
+        "After conversion, the usePostgres feature flag is a trivial routing decision at the adapter level, not duplicated if/else at every call site",
+        "The adapter wraps the existing synchronous SQLite path in Effect.sync (no behavioral change) while the Postgres path returns Effect natively"
+      ],
+      "blocks_phase": 1
+    },
+    "desktop_postgres": {
+      "status": "resolved",
+      "decision": "Use PGlite (@electric-sql/pglite) as the embedded Postgres for desktop/local deployment",
+      "rationale": [
+        "PGlite embeds Postgres via WASM — no Docker, no system Postgres install required",
+        "Bundles with the app: offline-capable, zero-infrastructure desktop UX",
+        "Drizzle pg-core works with PGlite via standard postgres wire protocol (pglite exposes a pg client interface)",
+        "Avoids the Docker Compose dependency for local development — pglite runs in-process",
+        "Falls back gracefully: if PGlite is unavailable, usePostgres=false keeps SQLite path",
+        "PGlite DDL compatibility must be verified in Phase 0 (run Drizzle pg-core schema generation against PGlite and assert all tables create)"
+      ],
+      "ci_strategy": "GitHub Actions services.postgres:16 for CI tests. Local dev uses PGlite.",
+      "blocks_phase": 3
+    },
+    "sync_event_concurrency": {
+      "status": "resolved",
+      "decision": "Use REPEATABLE READ isolation with SELECT ... FOR UPDATE on EventSequenceTable to serialize aggregate access",
+      "sqlite_equivalent": "SQLite behavior: 'immediate' transaction acquires write lock at BEGIN, serializing all access (sync/index.ts:151-169)",
+      "postgres_strategy": {
+        "isolation_level": "REPEATABLE READ (not SERIALIZABLE — too expensive for event writes)",
+        "locking": "SELECT ... FOR UPDATE on EventSequenceTable row for the aggregate_id being written",
+        "retry": "Up to 3 retries with exponential backoff on serialization_failure (40001)",
+        "connection_pool": "Single writer connection for event sequencer (avoids deadlock); reader connections can pool freely"
+      },
+      "comment": "The read+increment+write of the sequence counter is the critical section. SELECT FOR UPDATE on the aggregate_id row serializes access to that aggregate. Under REPEATABLE READ, a concurrent transaction reading the same row will block (not see a snapshot) because FOR UPDATE takes a row lock. If a deadlock occurs, Postgres kills one transaction; the retry loop handles it.",
+      "confirms": "Postgres row-level locking makes this safe at high concurrency without the global write-lock cost of SQLite's 'immediate' transactions",
+      "blocks_phase": 3
+    }
+  },
+  "column_type_mappings": {
+    "$default(() => Date.now())": "default(sql`now()`) via timestampsPg() helper",
+    "$onUpdate(() => Date.now())": "App-layer trigger (no Postgres DDL equivalent); session.ts sets time_updated on mutation",
+    "text({ mode: 'json' })": "jsonb() in pg-core (11 columns across session, project, workspace, event schemas)",
+    "integer({ mode: 'boolean' })": "boolean() in pg-core (ControlAccountTable.active)",
+    "real()": "doublePrecision() in pg-core (session.cost column)"
+  },
+  "phases": [
+    {
+      "id": "phase_0_evidence_inventory",
+      "name": "Evidence Inventory",
+      "kind": "discovery",
+      "code_changes": false,
+      "outputs": [
+        "docs/json/database_migration_caller_inventory.v1.json — enumerating all import sites, call sites, event persistence gates, effect-drizzle coupling files",
+        "docs/json/database_migration_schema_diff.v1.json — column-by-column diff of cumulative SQLite schema vs Postgres initial migration output",
+        "docs/json/database_migration_effect_drizzle_audit.v1.json — classification of each effect-drizzle-sqlite file as keep/replace/abstract",
+        "PGlite DDL compatibility check: run `drizzle-kit generate` with pg-core definitions, apply to PGlite, verify all tables"
+      ],
+      "admission_condition": "None (no code changes)",
+      "next_blocker": "Phase 1 requires DatabaseAdapter interface design (architectural_decisions.database_adapter) and Phase 3 requires sync concurrency design (architectural_decisions.sync_event_concurrency) — both are resolved above"
+    },
+    {
+      "id": "phase_1_adapter_conversion",
+      "name": "DatabaseAdapter + Service Conversion",
+      "kind": "execution",
+      "code_changes": true,
+      "admission_condition": "Phase 0 evidence inventory complete",
+      "description": [
+        "1a. Define DatabaseAdapter Effect Service interface (architectural_decisions.database_adapter)",
+        "1b. Implement SQLiteAdapter wrapping existing Database.use/transaction in Effect.sync",
+        "1c. Implement PgClientAdapter wrapping drizzle-orm/pg-core in Effect (async)",
+        "1d. Add usePostgres feature flag routing at the adapter level",
+        "1e. Convert ALL 36+ call sites in ONE coordinated refactor commit",
+        "1f. Add Postgres service container to CI workflow for adapter tests",
+        "1g. Create test/fixture/pg.ts for Postgres-backed Effect service tests"
+      ],
+      "note": "One coordinated refactor commit, not per-service incremental. The adapter boundary means the refactor is mechanical (wrap in DatabaseAdapter.query() instead of Database.use()), not architectural."
+    },
+    {
+      "id": "phase_2_schema_migration",
+      "name": "Postgres Schema + Data Migration",
+      "kind": "execution",
+      "admission_condition": "Phase 1 complete — DatabaseAdapter live with usePostgres=false as default",
+      "description": [
+        "2a. Create parallel pgTable definitions alongside sqliteTable in separate files (session.pg.sql.ts, session.sqlite.sql.ts)",
+        "2b. Extract shared column definitions to common file to prevent drift",
+        "2c. Generate Postgres initial migration via drizzle-kit (dialect: postgresql)",
+        "2d. Column-by-column diff of generated migration vs cumulative SQLite schema",
+        "2e. Write SQLite→Postgres data migration script (opencode db migrate-to-pg, idempotent, ON CONFLICT DO NOTHING)",
+        "2f. Add CI lint rule that pgTable columns match sqliteTable columns"
+      ]
+    },
+    {
+      "id": "phase_3_postgres_primary",
+      "name": "Postgres Primary, SQLite Fallback",
+      "kind": "execution",
+      "admission_condition": "Phase 2 complete + sync event concurrency design accepted",
+      "description": [
+        "3a. Enable usePostgres=true as default",
+        "3b. Implement SELECT ... FOR UPDATE on EventSequenceTable in sync/index.ts event writer",
+        "3c. Add retry loop for serialization failures (max 3, exponential backoff)",
+        "3d. Remove experimentalWorkspaces gating from event persistence",
+        "3e. Validate JSON file store (Storage.Service) coexistence",
+        "3f. Integration tests for concurrent event writes against Postgres"
+      ],
+      "escape_hatch": "usePostgres=false at startup reverts to SQLite"
+    },
+    {
+      "id": "phase_4_duckdb_stretch",
+      "name": "DuckDB Analytical Sidecar (Stretch)",
+      "kind": "execution",
+      "admission_condition": "Postgres has served 30 calendar days without data-loss regression",
+      "description": [
+        "4a. Build batch export CLI: opencode analytics export --since",
+        "4b. Derive DuckDB schema from actual tool query patterns (read report.ts, inspect_failure.ts, checkpoint.ts)",
+        "4c. Benchmark DuckDB write concurrency before committing to concurrent ingestion",
+        "4d. No DuckDB dependency in critical path"
+      ]
+    },
+    {
+      "id": "phase_5_sqlite_removal",
+      "name": "SQLite Removal",
+      "kind": "removal",
+      "admission_condition": "All of: (a) Postgres served 30 calendar days without data-loss regression, (b) all 22 call site files migrated, (c) CI runs Postgres for all tests, (d) PGlite verified for desktop deployment",
+      "description": [
+        "Delete db.bun.ts, db.node.ts, json-migration.ts, 20 migration folders",
+        "Remove drizzle-orm/bun-sqlite and drizzle-orm/node-sqlite dependencies",
+        "Remove #db import alias from package.json imports",
+        "Clean up test/fixture/db.sqlite.ts references"
+      ]
+    }
+  ],
+  "previous_critic_findings_addressed": {
+    "claim_adversary_H_incremental_big_bang": "DatabaseAdapter Effect service as single abstraction boundary — all 36+ call sites convert in one coordinated refactor",
+    "authority_adversary_F1_pgclient_interface": "DatabaseAdapter interface explicitly defined with query/transaction signatures wrapping both sync (Effect.sync) and async (Effect) paths",
+    "authority_adversary_F8_sync_event_concurrency": "REPEATABLE READ + SELECT FOR UPDATE + retry loop — explicit design with SQLite equivalent mapping",
+    "authority_adversary_F4_desktop_postgres": "PGlite as explicit embedded Postgres choice, with DDL compatibility check in Phase 0",
+    "evidence_adversary_onupdate_jsonb_boolean": "column_type_mappings table with explicit: $onUpdate → app-layer trigger, text({mode:'json'}) → jsonb(), integer({mode:'boolean'}) → boolean()",
+    "claim_adversary_effect_drizzle_coupling": "Phase 0 requires effect-drizzle-sqlite audit (keep/replace/abstract)",
+    "authority_adversary_CI_test_harness": "CI Postgres service container + test/fixture/pg.ts in Phase 1"
+  }
+}

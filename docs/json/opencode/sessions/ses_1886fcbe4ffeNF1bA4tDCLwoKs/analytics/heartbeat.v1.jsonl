@@ -1,0 +1,24 @@
+{"at":"2026-05-30T06:26:42.151Z","session_id":"ses_1886fcbe4ffeNF1bA4tDCLwoKs","agent":"executor","tool":"smart_bash","phase":"started","detail":"Command 1: check if file is tracked by git"}
+{"at":"2026-05-30T06:26:42.169Z","session_id":"ses_1886fcbe4ffeNF1bA4tDCLwoKs","agent":"executor","tool":"smart_bash","phase":"completed","detail":"git exit=0"}
+{"at":"2026-05-30T06:26:42.540Z","session_id":"ses_1886fcbe4ffeNF1bA4tDCLwoKs","agent":"executor","tool":"smart_bash","phase":"started","detail":"Command 2: check git status of file"}
+{"at":"2026-05-30T06:26:42.541Z","session_id":"ses_1886fcbe4ffeNF1bA4tDCLwoKs","agent":"executor","tool":"smart_bash","phase":"rerouted","detail":"→ smart_git"}
+{"at":"2026-05-30T06:26:43.012Z","session_id":"ses_1886fcbe4ffeNF1bA4tDCLwoKs","agent":"executor","tool":"smart_bash","phase":"started","detail":"Command 3: check if file is in git index"}
+{"at":"2026-05-30T06:26:43.037Z","session_id":"ses_1886fcbe4ffeNF1bA4tDCLwoKs","agent":"executor","tool":"smart_bash","phase":"completed","detail":"git exit=0"}
+{"at":"2026-05-30T06:26:43.465Z","session_id":"ses_1886fcbe4ffeNF1bA4tDCLwoKs","agent":"executor","tool":"smart_bash","phase":"started","detail":"Command 4: check if file is gitignored"}
+{"at":"2026-05-30T06:26:43.487Z","session_id":"ses_1886fcbe4ffeNF1bA4tDCLwoKs","agent":"executor","tool":"smart_bash","phase":"failed","detail":"git exit=1"}
+{"at":"2026-05-30T06:26:43.881Z","session_id":"ses_1886fcbe4ffeNF1bA4tDCLwoKs","agent":"executor","tool":"smart_bash","phase":"started","detail":"Command 5: count lines in file"}
+{"at":"2026-05-30T06:26:43.881Z","session_id":"ses_1886fcbe4ffeNF1bA4tDCLwoKs","agent":"executor","tool":"smart_bash","phase":"rerouted","detail":"→ read_source"}
+{"at":"2026-05-30T06:26:44.260Z","session_id":"ses_1886fcbe4ffeNF1bA4tDCLwoKs","agent":"executor","tool":"smart_bash","phase":"started","detail":"Command 6: file details"}
+{"at":"2026-05-30T06:26:44.261Z","session_id":"ses_1886fcbe4ffeNF1bA4tDCLwoKs","agent":"executor","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-30T06:26:44.776Z","session_id":"ses_1886fcbe4ffeNF1bA4tDCLwoKs","agent":"executor","tool":"smart_bash","phase":"started","detail":"Command 7: show first 5 lines from git HEAD"}
+{"at":"2026-05-30T06:26:44.776Z","session_id":"ses_1886fcbe4ffeNF1bA4tDCLwoKs","agent":"executor","tool":"smart_bash","phase":"rerouted","detail":"→ smart_git"}
+{"at":"2026-05-30T06:26:50.670Z","session_id":"ses_1886fcbe4ffeNF1bA4tDCLwoKs","agent":"executor","tool":"smart_bash","phase":"started","detail":"Command 2: git status short to avoid reroute"}
+{"at":"2026-05-30T06:26:50.699Z","session_id":"ses_1886fcbe4ffeNF1bA4tDCLwoKs","agent":"executor","tool":"smart_bash","phase":"completed","detail":"sh exit=0"}
+{"at":"2026-05-30T06:26:51.100Z","session_id":"ses_1886fcbe4ffeNF1bA4tDCLwoKs","agent":"executor","tool":"smart_bash","phase":"started","detail":"Command 5: count lines, avoid reroute"}
+{"at":"2026-05-30T06:26:51.112Z","session_id":"ses_1886fcbe4ffeNF1bA4tDCLwoKs","agent":"executor","tool":"smart_bash","phase":"completed","detail":"sh exit=0"}
+{"at":"2026-05-30T06:26:51.589Z","session_id":"ses_1886fcbe4ffeNF1bA4tDCLwoKs","agent":"executor","tool":"smart_bash","phase":"started","detail":"Command 6: file details, avoid reroute"}
+{"at":"2026-05-30T06:26:51.607Z","session_id":"ses_1886fcbe4ffeNF1bA4tDCLwoKs","agent":"executor","tool":"smart_bash","phase":"completed","detail":"sh exit=0"}
+{"at":"2026-05-30T06:26:52.115Z","session_id":"ses_1886fcbe4ffeNF1bA4tDCLwoKs","agent":"executor","tool":"smart_bash","phase":"started","detail":"Command 7: show first 5 lines from git HEAD, avoid reroute"}
+{"at":"2026-05-30T06:26:52.139Z","session_id":"ses_1886fcbe4ffeNF1bA4tDCLwoKs","agent":"executor","tool":"smart_bash","phase":"completed","detail":"sh exit=0"}
+{"at":"2026-05-30T06:26:54.735Z","session_id":"ses_1886fcbe4ffeNF1bA4tDCLwoKs","agent":"executor","tool":"smart_bash","phase":"started","detail":"Command 4: check gitignore with exit code visible"}
+{"at":"2026-05-30T06:26:54.760Z","session_id":"ses_1886fcbe4ffeNF1bA4tDCLwoKs","agent":"executor","tool":"smart_bash","phase":"completed","detail":"sh exit=0"}

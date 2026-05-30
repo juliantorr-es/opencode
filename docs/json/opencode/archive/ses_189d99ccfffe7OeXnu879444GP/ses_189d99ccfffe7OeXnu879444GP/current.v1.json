@@ -1,0 +1,392 @@
+{
+  "schema_version": "v1",
+  "session_id": "ses_189d99ccfffe7OeXnu879444GP",
+  "mission_status": "in_progress",
+  "last_updated": "2026-05-30T00:06:54.165608+00:00",
+  "current_wave": "7",
+  "waves": {
+    "1": {
+      "started_at": "2026-05-29T23:54:21.759663+00:00",
+      "completed_at": "2026-05-29T23:54:21.759663+00:00",
+      "findings": [
+        {
+          "source": "pre-fabricated research",
+          "summary": "Settings dialog uses vertical Tabs with 4 categories: General, Shortcuts, Providers, Models. No search/filter.",
+          "confidence": 1.0,
+          "relevance_profiles": [
+            "architecture",
+            "execution"
+          ],
+          "wave": "1"
+        },
+        {
+          "source": "pre-fabricated research",
+          "summary": "Management dialogs use `List` component with search, groupBy, sortBy. dialog-manage-models.tsx is the pattern.",
+          "confidence": 1.0,
+          "relevance_profiles": [
+            "architecture",
+            "execution"
+          ],
+          "wave": "1"
+        },
+        {
+          "source": "pre-fabricated research",
+          "summary": "Agents loaded via sdk.app.agents() → normalizeAgentList. Agent type: name, model, variant, prompt, temperature, etc. Read-only currently.",
+          "confidence": 1.0,
+          "relevance_profiles": [
+            "architecture",
+            "execution"
+          ],
+          "wave": "1"
+        },
+        {
+          "source": "pre-fabricated research",
+          "summary": "SessionContextUsage component already exists with ProgressCircle, metrics, tooltips — context display is 95% done.",
+          "confidence": 1.0,
+          "relevance_profiles": [
+            "architecture",
+            "execution"
+          ],
+          "wave": "1"
+        },
+        {
+          "source": "pre-fabricated research",
+          "summary": "i18n keys settings.agents.title/description already exist. ShowCustomAgents toggle exists in settings.",
+          "confidence": 1.0,
+          "relevance_profiles": [
+            "architecture",
+            "execution"
+          ],
+          "wave": "1"
+        },
+        {
+          "source": "pre-fabricated research",
+          "summary": "Agent config schema in packages/opencode/src/config/agent.ts: model, variant, temperature, top_p, prompt, tools, mode, hidden, color, steps, permission.",
+          "confidence": 1.0,
+          "relevance_profiles": [
+            "architecture",
+            "execution"
+          ],
+          "wave": "1"
+        },
+        {
+          "source": "pre-fabricated research",
+          "summary": "Dirty files: install-cli.ts (new), ipc.ts (additive install-cli handler), home.tsx (session search), dialog-select-mcp.tsx (MCP health), key-hint-overlay.tsx (new), layout.tsx, index.ts, sidecar.ts, server.ts, store.ts, preload/types.ts",
+          "confidence": 1.0,
+          "relevance_profiles": [
+            "execution",
+            "coordination"
+          ],
+          "wave": "1"
+        }
+      ],
+      "artifacts": [
+        "docs/json/opencode/plans/desktop-phase1-remaining.v1.json",
+        "docs/json/opencode/handoffs/desktop-feature-parity-handoff.v1.json"
+      ]
+    },
+    "2": {
+      "started_at": "2026-05-29T23:54:56.950911+00:00",
+      "completed_at": "2026-05-29T23:54:56.950911+00:00",
+      "findings": [
+        {
+          "source": "cartographer",
+          "summary": "All agent data flows through sidecar HTTP REST API, NOT Electron IPC. No IPC channels for agents.",
+          "confidence": 1.0,
+          "relevance_profiles": [
+            "architecture",
+            "execution"
+          ],
+          "wave": "2"
+        },
+        {
+          "source": "cartographer",
+          "summary": "SessionContextTab already exists with 14 stats + breakdown bar. Overflow/pressure state MISSING — no warning colors.",
+          "confidence": 1.0,
+          "relevance_profiles": [
+            "architecture",
+            "execution"
+          ],
+          "wave": "2"
+        },
+        {
+          "source": "cartographer",
+          "summary": "Backend emits 4 compaction event types but renderer listens to zero of them. Compaction SSE gap.",
+          "confidence": 1.0,
+          "relevance_profiles": [
+            "architecture",
+            "execution"
+          ],
+          "wave": "2"
+        },
+        {
+          "source": "cartographer",
+          "summary": "Settings has keyboard nav via Kobalte Tabs (ArrowUp/Down). Models has search via useFilteredList. Shortcuts has search via fuzzysort. General and Providers have NO search.",
+          "confidence": 1.0,
+          "relevance_profiles": [
+            "architecture",
+            "execution"
+          ],
+          "wave": "2"
+        },
+        {
+          "source": "cartographer",
+          "summary": "ComposerAgentControl at packages/app/src/components/prompt-input.tsx handles agent selection in the composer.",
+          "confidence": 1.0,
+          "relevance_profiles": [
+            "execution"
+          ],
+          "wave": "2"
+        }
+      ],
+      "artifacts": [
+        "docs/json/opencode/cartography/phase1-feature-parity-map.v1.json"
+      ]
+    },
+    "3": {
+      "started_at": "2026-05-30T00:01:08.342420+00:00",
+      "completed_at": "2026-05-30T00:01:08.342420+00:00",
+      "findings": [
+        {
+          "source": "executor",
+          "summary": "All 3 Phase 1 features implemented. 3 new files created, 7 files modified. Typecheck passes with zero new errors.",
+          "confidence": 1.0,
+          "relevance_profiles": [
+            "execution",
+            "architecture"
+          ],
+          "wave": "3"
+        },
+        {
+          "source": "executor",
+          "summary": "Agent config: dialog-manage-agents.tsx (search+groups), dialog-edit-agent.tsx (form), settings-agents.tsx (settings panel). IPC handlers for custom agent CRUD.",
+          "confidence": 1.0,
+          "relevance_profiles": [
+            "execution"
+          ],
+          "wave": "3"
+        },
+        {
+          "source": "executor",
+          "summary": "Context display: session-context-usage.tsx updated with 80%+ yellow, 95%+ red warnings, compaction detection badge.",
+          "confidence": 1.0,
+          "relevance_profiles": [
+            "execution"
+          ],
+          "wave": "3"
+        },
+        {
+          "source": "executor",
+          "summary": "Settings: Agents tab added between Shortcuts and Providers in dialog-settings.tsx.",
+          "confidence": 1.0,
+          "relevance_profiles": [
+            "execution"
+          ],
+          "wave": "3"
+        }
+      ],
+      "artifacts": [
+        "packages/app/src/components/dialog-manage-agents.tsx",
+        "packages/app/src/components/dialog-edit-agent.tsx",
+        "packages/app/src/components/settings-agents.tsx"
+      ]
+    },
+    "7": {
+      "started_at": "2026-05-30T00:06:54.165608+00:00",
+      "completed_at": "2026-05-30T00:06:54.165608+00:00",
+      "findings": [
+        {
+          "source": "historian",
+          "summary": "Phase 1 completion documented at docs/json/opencode/documentation/phase1-completion.v1.json. Lane frozen pending Phase 2 integration.",
+          "confidence": 1.0,
+          "relevance_profiles": [
+            "architecture",
+            "execution"
+          ],
+          "wave": "7"
+        }
+      ],
+      "artifacts": [
+        "docs/json/opencode/documentation/phase1-completion.v1.json"
+      ]
+    }
+  },
+  "active_findings": [
+    {
+      "source": "pre-fabricated research",
+      "summary": "Settings dialog uses vertical Tabs with 4 categories: General, Shortcuts, Providers, Models. No search/filter.",
+      "confidence": 1.0,
+      "relevance_profiles": [
+        "architecture",
+        "execution"
+      ],
+      "wave": "1"
+    },
+    {
+      "source": "pre-fabricated research",
+      "summary": "Management dialogs use `List` component with search, groupBy, sortBy. dialog-manage-models.tsx is the pattern.",
+      "confidence": 1.0,
+      "relevance_profiles": [
+        "architecture",
+        "execution"
+      ],
+      "wave": "1"
+    },
+    {
+      "source": "pre-fabricated research",
+      "summary": "Agents loaded via sdk.app.agents() → normalizeAgentList. Agent type: name, model, variant, prompt, temperature, etc. Read-only currently.",
+      "confidence": 1.0,
+      "relevance_profiles": [
+        "architecture",
+        "execution"
+      ],
+      "wave": "1"
+    },
+    {
+      "source": "pre-fabricated research",
+      "summary": "SessionContextUsage component already exists with ProgressCircle, metrics, tooltips — context display is 95% done.",
+      "confidence": 1.0,
+      "relevance_profiles": [
+        "architecture",
+        "execution"
+      ],
+      "wave": "1"
+    },
+    {
+      "source": "pre-fabricated research",
+      "summary": "i18n keys settings.agents.title/description already exist. ShowCustomAgents toggle exists in settings.",
+      "confidence": 1.0,
+      "relevance_profiles": [
+        "architecture",
+        "execution"
+      ],
+      "wave": "1"
+    },
+    {
+      "source": "pre-fabricated research",
+      "summary": "Agent config schema in packages/opencode/src/config/agent.ts: model, variant, temperature, top_p, prompt, tools, mode, hidden, color, steps, permission.",
+      "confidence": 1.0,
+      "relevance_profiles": [
+        "architecture",
+        "execution"
+      ],
+      "wave": "1"
+    },
+    {
+      "source": "pre-fabricated research",
+      "summary": "Dirty files: install-cli.ts (new), ipc.ts (additive install-cli handler), home.tsx (session search), dialog-select-mcp.tsx (MCP health), key-hint-overlay.tsx (new), layout.tsx, index.ts, sidecar.ts, server.ts, store.ts, preload/types.ts",
+      "confidence": 1.0,
+      "relevance_profiles": [
+        "execution",
+        "coordination"
+      ],
+      "wave": "1"
+    },
+    {
+      "source": "cartographer",
+      "summary": "All agent data flows through sidecar HTTP REST API, NOT Electron IPC. No IPC channels for agents.",
+      "confidence": 1.0,
+      "relevance_profiles": [
+        "architecture",
+        "execution"
+      ],
+      "wave": "2"
+    },
+    {
+      "source": "cartographer",
+      "summary": "SessionContextTab already exists with 14 stats + breakdown bar. Overflow/pressure state MISSING — no warning colors.",
+      "confidence": 1.0,
+      "relevance_profiles": [
+        "architecture",
+        "execution"
+      ],
+      "wave": "2"
+    },
+    {
+      "source": "cartographer",
+      "summary": "Backend emits 4 compaction event types but renderer listens to zero of them. Compaction SSE gap.",
+      "confidence": 1.0,
+      "relevance_profiles": [
+        "architecture",
+        "execution"
+      ],
+      "wave": "2"
+    },
+    {
+      "source": "cartographer",
+      "summary": "Settings has keyboard nav via Kobalte Tabs (ArrowUp/Down). Models has search via useFilteredList. Shortcuts has search via fuzzysort. General and Providers have NO search.",
+      "confidence": 1.0,
+      "relevance_profiles": [
+        "architecture",
+        "execution"
+      ],
+      "wave": "2"
+    },
+    {
+      "source": "cartographer",
+      "summary": "ComposerAgentControl at packages/app/src/components/prompt-input.tsx handles agent selection in the composer.",
+      "confidence": 1.0,
+      "relevance_profiles": [
+        "execution"
+      ],
+      "wave": "2"
+    },
+    {
+      "source": "executor",
+      "summary": "All 3 Phase 1 features implemented. 3 new files created, 7 files modified. Typecheck passes with zero new errors.",
+      "confidence": 1.0,
+      "relevance_profiles": [
+        "execution",
+        "architecture"
+      ],
+      "wave": "3"
+    },
+    {
+      "source": "executor",
+      "summary": "Agent config: dialog-manage-agents.tsx (search+groups), dialog-edit-agent.tsx (form), settings-agents.tsx (settings panel). IPC handlers for custom agent CRUD.",
+      "confidence": 1.0,
+      "relevance_profiles": [
+        "execution"
+      ],
+      "wave": "3"
+    },
+    {
+      "source": "executor",
+      "summary": "Context display: session-context-usage.tsx updated with 80%+ yellow, 95%+ red warnings, compaction detection badge.",
+      "confidence": 1.0,
+      "relevance_profiles": [
+        "execution"
+      ],
+      "wave": "3"
+    },
+    {
+      "source": "executor",
+      "summary": "Settings: Agents tab added between Shortcuts and Providers in dialog-settings.tsx.",
+      "confidence": 1.0,
+      "relevance_profiles": [
+        "execution"
+      ],
+      "wave": "3"
+    },
+    {
+      "source": "historian",
+      "summary": "Phase 1 completion documented at docs/json/opencode/documentation/phase1-completion.v1.json. Lane frozen pending Phase 2 integration.",
+      "confidence": 1.0,
+      "relevance_profiles": [
+        "architecture",
+        "execution"
+      ],
+      "wave": "7"
+    }
+  ],
+  "active_artifacts": [
+    "docs/json/opencode/plans/desktop-phase1-remaining.v1.json",
+    "docs/json/opencode/handoffs/desktop-feature-parity-handoff.v1.json",
+    "docs/json/opencode/cartography/phase1-feature-parity-map.v1.json",
+    "packages/app/src/components/dialog-manage-agents.tsx",
+    "packages/app/src/components/dialog-edit-agent.tsx",
+    "packages/app/src/components/settings-agents.tsx",
+    "docs/json/opencode/documentation/phase1-completion.v1.json"
+  ],
+  "archived": []
+}

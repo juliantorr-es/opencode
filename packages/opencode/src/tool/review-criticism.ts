@@ -59,7 +59,7 @@ export const ReviewCriticismTool = Tool.define(
             },
             output: JSON.stringify(result, null, 2),
           }
-        }),
+        }).pipe(Effect.orDie),
     }
   }),
 )

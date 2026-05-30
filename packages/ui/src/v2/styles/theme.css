@@ -93,6 +93,16 @@
     --v2-illustration-illustration-layer-02: var(--v2-grey-400);
     --v2-illustration-illustration-layer-03: var(--v2-grey-500);
 
+    /* ── Animation ── */
+    --v2-duration-fast: 85ms;
+    --v2-duration-normal: 150ms;
+    --v2-duration-slow: 300ms;
+    --v2-duration-slower: 480ms;
+    --v2-ease-expressive-in: cubic-bezier(0.4, 0, 1, 1);
+    --v2-ease-expressive-out: cubic-bezier(0, 0, 0.2, 1);
+    --v2-ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+    --v2-ease-linear: linear;
+
     --font-family-text: "Inter", sans-serif;
     --v2-font-family-sans: "Inter", sans-serif;
   }
@@ -285,6 +295,16 @@
     --v2-illustration-illustration-layer-01: var(--v2-grey-300);
     --v2-illustration-illustration-layer-02: var(--v2-grey-400);
     --v2-illustration-illustration-layer-03: var(--v2-grey-500);
+
+    /* ── Animation ── */
+    --v2-duration-fast: 85ms;
+    --v2-duration-normal: 150ms;
+    --v2-duration-slow: 300ms;
+    --v2-duration-slower: 480ms;
+    --v2-ease-expressive-in: cubic-bezier(0.4, 0, 1, 1);
+    --v2-ease-expressive-out: cubic-bezier(0, 0, 0.2, 1);
+    --v2-ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+    --v2-ease-linear: linear;
   }
 
   /* Explicit dark mode via data attribute (Storybook toggle, runtime JS) */
@@ -373,5 +393,15 @@
     --v2-illustration-illustration-layer-01: var(--v2-grey-900);
     --v2-illustration-illustration-layer-02: var(--v2-grey-800);
     --v2-illustration-illustration-layer-03: var(--v2-grey-700);
+
+    /* ── Animation ── */
+    --v2-duration-fast: 85ms;
+    --v2-duration-normal: 150ms;
+    --v2-duration-slow: 300ms;
+    --v2-duration-slower: 480ms;
+    --v2-ease-expressive-in: cubic-bezier(0.4, 0, 1, 1);
+    --v2-ease-expressive-out: cubic-bezier(0, 0, 0.2, 1);
+    --v2-ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+    --v2-ease-linear: linear;
   }
 }

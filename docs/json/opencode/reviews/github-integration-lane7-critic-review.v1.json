@@ -1,0 +1,89 @@
+{
+  "schema_version": "v1",
+  "review_id": "github-integration-lane7-critic-review",
+  "plan_id": "github-integration-pr-management",
+  "plan_revision": 2,
+  "reviewer": "critic",
+  "reviewed_at": "2026-05-29T12:00:00Z",
+  "verdict": "APPROVE WITH CONDITIONS",
+  "axes": {
+    "coupling": {
+      "score": 3,
+      "rationale": "ipc.ts at 503 lines is becoming a God module hosting PKCE OAuth, safeStorage, and API proxy alongside MCP, agents, plugins, and OS handlers. Fix-B and Fix-E both land in the same 3 files. Precedent for extraction exists (desktop-menu-actions.ts). RepositoryCache gets a GitHub-specific method in its generic interface."
+    },
+    "debuggability": {
+      "score": 3,
+      "rationale": "safeStorage error messages are clear. GitHubProxyError has structured fields. OAuth state mismatch detection works. But: github-oauth-start returns undocumented UUID, API proxy errors use JSON.stringify inside Error (IPC serialization buries structure), no OAuth flow timeout, no OAuth cancellation mechanism."
+    },
+    "convergence": {
+      "score": 4,
+      "rationale": "Revives dead code (parseGitHubRemote had 0 callers). Leverages existing patterns: Effect service, IPC handlers, ElectronAPI extension, produce_fragment for shared files. New code organized into github/ module. Minor: ipc.ts continues growing instead of being split into domain modules."
+    },
+    "surface_area": {
+      "score": 2,
+      "rationale": "Major surface expansion: 6 new ElectronAPI methods, 1 new DesktopMenuAction union member affecting 9 files across 2 packages, RepositoryCache interface addition, new @opencode-ai/core/github module export, new deep-links.ts export. Each is a permanent API commitment. githubSetToken has no format validation."
+    },
+    "testability": {
+      "score": 2,
+      "rationale": "fix-A is well-tested (12 test cases). fix-C is testable with mocked Octokit. Everything else requires Electron runtime: OAuth flow (browser + deep link), safeStorage (system keychain), IPC proxy (net.fetch). PR UI requires DOM. Heavy reliance on manual testing."
+    },
+    "error_clarity": {
+      "score": 3,
+      "rationale": "Good: safeStorage error, GitHubProxyError fields, OAuth state mismatch, github.noAuth key. Problems: API proxy throws JSON.stringify'd errors through IPC (renderer must parse .message), github-oauth-callback returns bare true, no OAuth timeout errors, no OAuth cancellation flow."
+    },
+    "reversibility": {
+      "score": 3,
+      "rationale": "Rollback plan documented with clear order. fix-A, fix-C, fix-D are independently revertible. Concern: fix-B and fix-E share 3 files (ipc.ts, preload/types.ts, preload/index.ts) — handlers are inlined, so reverting one requires surgical line identification. DesktopMenuAction union cleanup must sync with ElectronAPI type cleanup."
+    }
+  },
+  "findings_filed": [
+    {
+      "id": "F1",
+      "category": "boundary",
+      "severity": "blocking",
+      "summary": "ipc.ts God module — extract GitHub IPC handlers into separate module"
+    },
+    {
+      "id": "F2",
+      "category": "security",
+      "severity": "weak",
+      "summary": "githubSetToken lacks format validation and has no confirmation dialog"
+    },
+    {
+      "id": "F3",
+      "category": "evidence",
+      "severity": "weak",
+      "summary": "API proxy error serialization through IPC is fragile (JSON.stringify in Error.message)"
+    },
+    {
+      "id": "F4",
+      "category": "boundary",
+      "severity": "informational",
+      "summary": "13 i18n keys only in en.ts — will show undefined in 15 other locales"
+    },
+    {
+      "id": "F5",
+      "category": "claim",
+      "severity": "informational",
+      "summary": "parseGitHubRemote added to RepositoryCache interface pollutes generic service with GitHub-specific method"
+    }
+  ],
+  "conditions_for_approval": [
+    "Extract GitHub IPC handlers into packages/desktop/src/main/github-ipc.ts (separate module, registered by registerIpcHandlers)",
+    "Add GitHub PAT format validation to githubSetToken (main process or preload side)",
+    "Replace JSON.stringify Error pattern in github-api-proxy with structured return object for IPC-safe error propagation",
+    "Add github.* keys to 15 non-English locale files or implement fallback in LanguageProvider"
+  ],
+  "follow_up_issues": [
+    "Token revocation — githubClearToken should call GitHub /applications/{client_id}/token DELETE endpoint",
+    "Cross-process cleanup — no mechanism for coordinated token cleanup across OpenCode server + Electron main processes",
+    "OAuth flow timeout — pendingOAuth Map entries leak if user never completes browser flow",
+    "Enterprise GitHub support — ALLOWED_GITHUB_HOSTNAMES excludes self-hosted GitHub instances"
+  ],
+  "key_risks_assessment": {
+    "wiring_dead_code_back_in": "parseGitHubRemote is sound. Uses well-tested helper functions (normalizeRepositoryInput, parseRepositoryReference). 12 test cases pass. No issues.",
+    "ipc_security": "Token is safeStorage-encrypted at rest, never exposed to renderer (attached server-side in proxy), store is reserved. Weak spot: githubSetToken in preload bridge accepts any string without format validation.",
+    "account_delete_cascade": "Not addressed in plan. githubClearToken removes from electron-store but doesn't revoke token server-side. Cross-process cleanup (OpenCode server + Electron) not designed. Out of scope for this lane but important gap.",
+    "lane_boundary": "Lane is broad — 5 fixes across 16+ files covering OAuth, PR management, CI/CD, API proxy, UI. At upper limit of 'narrow'. Could be split into auth (fix-B+fix-E) and PR (fix-A+fix-C+fix-D) sub-lanes."
+  }
+}

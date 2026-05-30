@@ -1,0 +1,32 @@
+{"at":"2026-05-30T06:05:45.810Z","session_id":"ses_18883018cffenu9YszSD55DClJ","agent":"cartographer","tool":"smart_find","phase":"started","detail":"*github-ipc*"}
+{"at":"2026-05-30T06:05:45.864Z","session_id":"ses_18883018cffenu9YszSD55DClJ","agent":"cartographer","tool":"smart_find","phase":"completed","detail":"*github-ipc*"}
+{"at":"2026-05-30T06:05:47.204Z","session_id":"ses_18883018cffenu9YszSD55DClJ","agent":"cartographer","tool":"smart_find","phase":"started","detail":"*github*ipc*"}
+{"at":"2026-05-30T06:05:47.291Z","session_id":"ses_18883018cffenu9YszSD55DClJ","agent":"cartographer","tool":"smart_find","phase":"completed","detail":"*github*ipc*"}
+{"at":"2026-05-30T06:05:47.300Z","session_id":"ses_18883018cffenu9YszSD55DClJ","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"github-ipc"}
+{"at":"2026-05-30T06:05:47.364Z","session_id":"ses_18883018cffenu9YszSD55DClJ","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"github-ipc"}
+{"at":"2026-05-30T06:05:50.399Z","session_id":"ses_18883018cffenu9YszSD55DClJ","agent":"cartographer","tool":"smart_find","phase":"started","detail":"*github*"}
+{"at":"2026-05-30T06:05:50.452Z","session_id":"ses_18883018cffenu9YszSD55DClJ","agent":"cartographer","tool":"smart_find","phase":"completed","detail":"*github*"}
+{"at":"2026-05-30T06:05:51.207Z","session_id":"ses_18883018cffenu9YszSD55DClJ","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Find github files in main directory"}
+{"at":"2026-05-30T06:05:51.207Z","session_id":"ses_18883018cffenu9YszSD55DClJ","agent":"cartographer","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-30T06:05:56.353Z","session_id":"ses_18883018cffenu9YszSD55DClJ","agent":"cartographer","tool":"smart_find","phase":"started","detail":"*"}
+{"at":"2026-05-30T06:05:56.389Z","session_id":"ses_18883018cffenu9YszSD55DClJ","agent":"cartographer","tool":"smart_find","phase":"completed","detail":"*"}
+{"at":"2026-05-30T06:06:08.879Z","session_id":"ses_18883018cffenu9YszSD55DClJ","agent":"cartographer","tool":"smart_git","phase":"started","detail":"diff"}
+{"at":"2026-05-30T06:06:08.895Z","session_id":"ses_18883018cffenu9YszSD55DClJ","agent":"cartographer","tool":"smart_git","phase":"completed","detail":"diff exit=0"}
+{"at":"2026-05-30T06:06:12.556Z","session_id":"ses_18883018cffenu9YszSD55DClJ","agent":"cartographer","tool":"smart_git","phase":"started","detail":"diff"}
+{"at":"2026-05-30T06:06:12.573Z","session_id":"ses_18883018cffenu9YszSD55DClJ","agent":"cartographer","tool":"smart_git","phase":"completed","detail":"diff exit=0"}
+{"at":"2026-05-30T06:06:12.579Z","session_id":"ses_18883018cffenu9YszSD55DClJ","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"github"}
+{"at":"2026-05-30T06:06:12.629Z","session_id":"ses_18883018cffenu9YszSD55DClJ","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"github"}
+{"at":"2026-05-30T06:06:12.636Z","session_id":"ses_18883018cffenu9YszSD55DClJ","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"github"}
+{"at":"2026-05-30T06:06:12.684Z","session_id":"ses_18883018cffenu9YszSD55DClJ","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"github"}
+{"at":"2026-05-30T06:06:22.194Z","session_id":"ses_18883018cffenu9YszSD55DClJ","agent":"cartographer","tool":"smart_git","phase":"started","detail":"show"}
+{"at":"2026-05-30T06:06:22.212Z","session_id":"ses_18883018cffenu9YszSD55DClJ","agent":"cartographer","tool":"smart_git","phase":"failed","detail":"show exit=128"}
+{"at":"2026-05-30T06:06:27.488Z","session_id":"ses_18883018cffenu9YszSD55DClJ","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Get the committed version of ipc.ts to see the full GitHub OAuth code that was extracted"}
+{"at":"2026-05-30T06:06:27.488Z","session_id":"ses_18883018cffenu9YszSD55DClJ","agent":"cartographer","tool":"smart_bash","phase":"rerouted","detail":"→ smart_git"}
+{"at":"2026-05-30T06:06:30.104Z","session_id":"ses_18883018cffenu9YszSD55DClJ","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Get the committed version of ipc.ts to see the full GitHub OAuth code"}
+{"at":"2026-05-30T06:06:30.105Z","session_id":"ses_18883018cffenu9YszSD55DClJ","agent":"cartographer","tool":"smart_bash","phase":"rerouted","detail":"→ smart_git"}
+{"at":"2026-05-30T06:06:34.102Z","session_id":"ses_18883018cffenu9YszSD55DClJ","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Get the full diff of ipc.ts to see all removed GitHub OAuth code"}
+{"at":"2026-05-30T06:06:34.103Z","session_id":"ses_18883018cffenu9YszSD55DClJ","agent":"cartographer","tool":"smart_bash","phase":"rerouted","detail":"→ smart_git"}
+{"at":"2026-05-30T06:06:36.551Z","session_id":"ses_18883018cffenu9YszSD55DClJ","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Get committed version of ipc.ts"}
+{"at":"2026-05-30T06:06:36.571Z","session_id":"ses_18883018cffenu9YszSD55DClJ","agent":"cartographer","tool":"smart_bash","phase":"completed","detail":"git exit=0"}
+{"at":"2026-05-30T06:06:38.931Z","session_id":"ses_18883018cffenu9YszSD55DClJ","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Write committed ipc.ts to temp file for analysis"}
+{"at":"2026-05-30T06:06:38.951Z","session_id":"ses_18883018cffenu9YszSD55DClJ","agent":"cartographer","tool":"smart_bash","phase":"completed","detail":"git exit=0"}

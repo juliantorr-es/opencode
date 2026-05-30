@@ -19,6 +19,7 @@ import { createSessionTabs } from "@/pages/session/helpers"
 import { extractPromptFromParts } from "@/utils/prompt"
 import { UserMessage } from "@opencode-ai/sdk/v2"
 import { useSessionLayout } from "@/pages/session/session-layout"
+import { ErrorBoundary } from "solid-js"
 
 export type SessionCommandContext = {
   navigateMessageByOffset: (offset: number) => void
@@ -260,7 +261,14 @@ export const useSessionCommands = (actions: SessionCommandContext) => {
 
   const chooseMcp = () => {
     void import("@/components/dialog-select-mcp").then((x) => {
-      dialog.show(() => <x.DialogSelectMcp />)
+      dialog.show(() => (
+        <ErrorBoundary fallback={(err) => {
+          console.error("MCP dialog error:", err)
+          return <div class="p-4 text-text-critical">MCP dialog error: {(err as Error)?.message ?? String(err)}</div>
+        }}>
+          <x.DialogSelectMcp />
+        </ErrorBoundary>
+      ))
     })
   }
 

@@ -1,0 +1,140 @@
+{
+  "schema_version": "v1",
+  "session_id": "ses_189b28e78ffemSVlFouS9j5o2y",
+  "mission_status": "complete",
+  "last_updated": "2026-05-30T00:35:29.309106+00:00",
+  "current_wave": "learning",
+  "waves": {
+    "learning": {
+      "started_at": "2026-05-30T00:35:29.309106+00:00",
+      "completed_at": "2026-05-30T00:35:29.309106+00:00",
+      "findings": [
+        {
+          "source": "dialog-select-mcp.tsx",
+          "summary": "Current MCP dialog already has 261 lines of enhancement work (add remote server, health indicators, toggle connect/disconnect, dropdown delete) but only pretends to delete (just disconnects), only supports remote servers, has no edit capability",
+          "confidence": 1.0,
+          "relevance_profiles": [
+            "cartography",
+            "execution"
+          ],
+          "wave": "learning"
+        },
+        {
+          "source": "packages/desktop/src/preload/types.ts",
+          "summary": "NO MCP-specific ElectronAPI methods exist — the desktop app uses SDK client HTTP calls to the sidecar server, not Electron IPC",
+          "confidence": 1.0,
+          "relevance_profiles": [
+            "cartography",
+            "architecture"
+          ],
+          "wave": "learning"
+        },
+        {
+          "source": "packages/opencode/src/config/mcp.ts",
+          "summary": "MCP config schema has two discriminated types: Local (command, environment, enabled, timeout) and Remote (url, enabled, headers, oauth, timeout) with discriminator 'type'",
+          "confidence": 1.0,
+          "relevance_profiles": [
+            "cartography",
+            "execution"
+          ],
+          "wave": "learning"
+        },
+        {
+          "source": "packages/opencode/src/mcp/index.ts",
+          "summary": "MCP.Service add() stores config in-memory only (s.config[name] = mcp) — not persisted to config file. No remove() or update() methods exist on the interface",
+          "confidence": 1.0,
+          "relevance_profiles": [
+            "cartography",
+            "architecture"
+          ],
+          "wave": "learning"
+        },
+        {
+          "source": "packages/app/src/components/dialog-manage-agents.tsx",
+          "summary": "Management dialog pattern: List with search/group/sort, create via dialog-edit, inline edit/delete buttons, confirm-before-delete pattern, persistence via electron-store IPC",
+          "confidence": 1.0,
+          "relevance_profiles": [
+            "cartography"
+          ],
+          "wave": "learning"
+        },
+        {
+          "source": "packages/opencode/src/server/routes/instance/httpapi/groups/mcp.ts",
+          "summary": "HTTP API exposes 6 endpoint groups: GET status, POST add, POST authStart/Callback/Authenticate, DELETE authRemove, POST connect/disconnect — the SDK client generates from this OpenAPI spec",
+          "confidence": 1.0,
+          "relevance_profiles": [
+            "cartography"
+          ],
+          "wave": "learning"
+        }
+      ],
+      "artifacts": [
+        "docs/json/opencode/cartography/mcp-ecosystem-for-phase2.v1.json"
+      ]
+    }
+  },
+  "active_findings": [
+    {
+      "source": "dialog-select-mcp.tsx",
+      "summary": "Current MCP dialog already has 261 lines of enhancement work (add remote server, health indicators, toggle connect/disconnect, dropdown delete) but only pretends to delete (just disconnects), only supports remote servers, has no edit capability",
+      "confidence": 1.0,
+      "relevance_profiles": [
+        "cartography",
+        "execution"
+      ],
+      "wave": "learning"
+    },
+    {
+      "source": "packages/desktop/src/preload/types.ts",
+      "summary": "NO MCP-specific ElectronAPI methods exist — the desktop app uses SDK client HTTP calls to the sidecar server, not Electron IPC",
+      "confidence": 1.0,
+      "relevance_profiles": [
+        "cartography",
+        "architecture"
+      ],
+      "wave": "learning"
+    },
+    {
+      "source": "packages/opencode/src/config/mcp.ts",
+      "summary": "MCP config schema has two discriminated types: Local (command, environment, enabled, timeout) and Remote (url, enabled, headers, oauth, timeout) with discriminator 'type'",
+      "confidence": 1.0,
+      "relevance_profiles": [
+        "cartography",
+        "execution"
+      ],
+      "wave": "learning"
+    },
+    {
+      "source": "packages/opencode/src/mcp/index.ts",
+      "summary": "MCP.Service add() stores config in-memory only (s.config[name] = mcp) — not persisted to config file. No remove() or update() methods exist on the interface",
+      "confidence": 1.0,
+      "relevance_profiles": [
+        "cartography",
+        "architecture"
+      ],
+      "wave": "learning"
+    },
+    {
+      "source": "packages/app/src/components/dialog-manage-agents.tsx",
+      "summary": "Management dialog pattern: List with search/group/sort, create via dialog-edit, inline edit/delete buttons, confirm-before-delete pattern, persistence via electron-store IPC",
+      "confidence": 1.0,
+      "relevance_profiles": [
+        "cartography"
+      ],
+      "wave": "learning"
+    },
+    {
+      "source": "packages/opencode/src/server/routes/instance/httpapi/groups/mcp.ts",
+      "summary": "HTTP API exposes 6 endpoint groups: GET status, POST add, POST authStart/Callback/Authenticate, DELETE authRemove, POST connect/disconnect — the SDK client generates from this OpenAPI spec",
+      "confidence": 1.0,
+      "relevance_profiles": [
+        "cartography"
+      ],
+      "wave": "learning"
+    }
+  ],
+  "active_artifacts": [
+    "docs/json/opencode/cartography/mcp-ecosystem-for-phase2.v1.json"
+  ],
+  "archived": []
+}

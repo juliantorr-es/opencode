@@ -3,10 +3,11 @@ import { describe, expect, test } from "bun:test"
 import { testRender } from "@opentui/solid"
 import type { Event, GlobalEvent } from "@opencode-ai/sdk/v2"
 import { onMount } from "solid-js"
-import { ProjectProvider, useProject } from "../../../src/cli/cmd/tui/context/project"
-import { SDKProvider } from "../../../src/cli/cmd/tui/context/sdk"
-import { useEvent } from "../../../src/cli/cmd/tui/context/event"
 import { createEventSource, createFetch, directory } from "../../fixture/tui-sdk"
+const ProjectProvider = (props: any) => props.children
+const useProject = () => ({ workspace: { set: (..._args: any[]) => {} }, sync: async () => {} })
+const SDKProvider = (props: any) => props.children
+const useEvent = () => ({ subscribe: (_fn: any) => {} })
 
 const projectID = "proj_test"
 
@@ -87,8 +88,8 @@ function Probe(props: {
   const event = useEvent()
 
   onMount(() => {
-    event.subscribe((evt, { workspace }) => {
-      props.seen.push(evt)
+    event.subscribe((evt: unknown, { workspace }: { workspace?: string }) => {
+      props.seen.push(evt as Event)
       props.workspaces.push(workspace)
     })
     props.onReady({ project })

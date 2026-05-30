@@ -1,0 +1,25 @@
+{
+  "schema": "rig.coordination.design_decisions.v1",
+  "generated_at": "2026-05-28T15:00:00Z",
+  "decisions": [
+    {
+      "id": "session-local-state",
+      "status": "accepted",
+      "context": "Coordination state (claims, path reservations, fan-out groups) is stored in in-memory Maps",
+      "decision": "Keep coordination state session-local and in-memory",
+      "rationale": [
+        "Coordination is gated behind experimentalCoordination flag — not production",
+        "Designed for single-session orchestration: all subagents share same process",
+        "No inter-process sharing or cross-session persistence required at this stage",
+        "Process restart resets coordination state, which is acceptable for experimental feature"
+      ],
+      "consequences": [
+        "State is lost on process restart",
+        "Not shared across separate OpenCode processes",
+        "If persistence needed later, migrate to JSON artifact / append-only JSONL pattern"
+      ],
+      "implicit_blockers": ["Schema.Literal API mismatch in coordination.ts:208 — pre-existing type error"],
+      "scope_notes": "Session-local is intentional; not a defect"
+    }
+  ]
+}

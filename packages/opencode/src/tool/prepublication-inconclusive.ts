@@ -5,15 +5,15 @@ import { InstanceState } from "@/effect/instance-state"
 import DESCRIPTION from "./prepublication-inconclusive.txt"
 
 const Parameters = Schema.Struct({
-  candidate_packet_digest: Schema.String.annotations({
+  candidate_packet_digest: Schema.String.annotate({
     description: "Digest of the candidate claim packet",
   }),
-  candidate_boundary_identifier: Schema.String.annotations({
+  candidate_boundary_identifier: Schema.String.annotate({
     description: "The boundary identifier",
   }),
-  reviewer_set: Schema.String.annotations({ description: "JSON array of reviewer agent names" }),
-  review_round: Schema.Number.annotations({ description: "Review round number" }),
-  reason: Schema.String.annotations({ description: "Reason for inconclusive verdict" }),
+  reviewer_set: Schema.String.annotate({ description: "JSON array of reviewer agent names" }),
+  review_round: Schema.Number.annotate({ description: "Review round number" }),
+  reason: Schema.String.annotate({ description: "Reason for inconclusive verdict" }),
 })
 
 export const PrepublicationInconclusiveTool = Tool.define(

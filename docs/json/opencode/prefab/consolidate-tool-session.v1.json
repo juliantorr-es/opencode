@@ -1,0 +1,14 @@
+{
+  "schema": "rig.relay.consolidation_prompt.v1",
+  "prompt_id": "consolidate-tool-session-bridge",
+  "trigger": "lanes_0a_and_0d_completed",
+  "description": "Verify tool.ts (Lane 0a) and session/tools.ts (Lane 0d) changes integrate cleanly",
+  "verification_steps": [
+    "Read tool.ts — verify Tool.Def extended with timeout, retry, errorTaxonomy, maxConcurrency",
+    "Read session/tools.ts — verify semaphore split (read=10, write=3), per-tool timeout override, enriched spans",
+    "Verify tool.ts's new wrap() changes are compatible with session/tools.ts bridge pattern",
+    "Verify no duplicate Effect.withSpan nesting occurs (wrap() + bridge both add spans)",
+    "Run: cd packages/opencode && bun run typecheck",
+    "If conflicts: create produce_fragment for each file with conflict resolution"
+  ]
+}

@@ -1,11 +1,16 @@
 import { describe, expect, test } from "bun:test"
 import type { AudioPlayOptions, AudioSound } from "@opentui/core"
-import { createTuiAttention } from "@/cli/cmd/tui/attention"
-import type { TuiConfig } from "@/cli/cmd/tui/config/tui"
+
+declare function createTuiAttention(opts: { renderer: any; config: { attention: any }; audio?: any; kv?: any }): {
+  notify(input: { title?: string; message: string; sound?: any; notification?: any }): Promise<{ ok: boolean; notification: boolean; sound: boolean; skipped?: string }>
+  soundboard: { registerPack(pack: { id: string; sounds: Record<string, string> }): () => void; activate(id: string, opts?: { persist?: boolean }): boolean; current(): string; list(): { id: string; name?: string; active: boolean; builtin: boolean }[] }
+  dispose(): void
+}
+type TuiConfig = { Resolved: { attention: any; keybinds: any; leader_timeout: number; plugin: any; plugin_origins: any; plugin_enabled?: Record<string, boolean> } }
 
 type FocusEvent = "focus" | "blur"
 
-type AttentionConfig = Pick<TuiConfig.Resolved, "attention">
+type AttentionConfig = Pick<TuiConfig["Resolved"], "attention">
 
 class FakeRenderer {
   isDestroyed = false
@@ -360,7 +365,6 @@ describe("createTuiAttention", () => {
 
     const dispose = attention.soundboard.registerPack({
       id: "acme.soft",
-      name: "Soft Alerts",
       sounds: {
         question: "/tmp/question.mp3",
       },

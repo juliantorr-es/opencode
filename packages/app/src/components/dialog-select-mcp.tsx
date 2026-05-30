@@ -13,6 +13,7 @@ import { Button } from "@opencode-ai/ui/button"
 import { IconButton } from "@opencode-ai/ui/icon-button"
 import { TextField } from "@opencode-ai/ui/text-field"
 import { DropdownMenu } from "@opencode-ai/ui/dropdown-menu"
+import { showToast } from "@opencode-ai/ui/toast"
 import type { McpRemoteConfig } from "@opencode-ai/sdk/v2/client"
 import { DialogEditMcp } from "./dialog-edit-mcp"
 import type { McpServerEntry } from "@/types/mcp"
@@ -68,6 +69,9 @@ export const DialogSelectMcp: Component = () => {
       const entry = servers?.find((s: any) => s.name === name)
       if (entry) {
         setEditingEntry(entry)
+      } else if (sync.data.mcp[name]) {
+        // Server exists in sync but not in electron-store — construct stub entry
+        setEditingEntry({ name, config: { type: "local", command: [], enabled: true } })
       }
     } catch (e) {
       console.warn("Failed to load server config for edit:", e)
@@ -112,16 +116,24 @@ export const DialogSelectMcp: Component = () => {
 
   const toggle = useMutation(() => ({
     mutationFn: async (name: string) => {
-      const status = sync.data.mcp[name]
-      if (status?.status === "connected") {
-        await sdk.client.mcp.disconnect({ name })
-        return
+      try {
+        const status = sync.data.mcp[name]
+        if (status?.status === "connected") {
+          await sdk.client.mcp.disconnect({ name })
+          return
+        }
+        if (status?.status === "needs_auth") {
+          await sdk.client.mcp.auth.authenticate({ name })
+          return
+        }
+        await sdk.client.mcp.connect({ name })
+      } catch (err) {
+        showToast({
+          title: language.t("dialog.mcp.error"),
+          description: `Server "${name}": ${err instanceof Error ? err.message : String(err)}`,
+          variant: "error",
+        })
       }
-      if (status?.status === "needs_auth") {
-        await sdk.client.mcp.auth.authenticate({ name })
-        return
-      }
-      await sdk.client.mcp.connect({ name })
     },
     onSuccess: () => queryClient.refetchQueries(queryOptions.mcp(pathKey(sync.directory))),
   }))
@@ -134,6 +146,15 @@ export const DialogSelectMcp: Component = () => {
         enabled: true,
       }
       await sdk.client.mcp.add({ name: input.name, config })
+      // Persist to electron-store (matching onSave pattern at line 380)
+      try {
+        const api = (window as any).api
+        const servers = (await api?.getMcpServers?.()) ?? []
+        servers.push({ name: input.name, config })
+        await api?.setMcpServers?.(servers)
+      } catch (e) {
+        console.warn("Failed to persist server to store:", e)
+      }
     },
     onSuccess: () => {
       setStore("addForm", { name: "", url: "", error: "" })
@@ -148,12 +169,28 @@ export const DialogSelectMcp: Component = () => {
 
   const disconnectMutation = useMutation(() => ({
     mutationFn: async (name: string) => {
-      const status = sync.data.mcp[name]
-      if (status?.status === "connected") {
-        await sdk.client.mcp.disconnect({ name })
+      try {
+        const status = sync.data.mcp[name]
+        if (status?.status === "connected") {
+          await sdk.client.mcp.disconnect({ name })
+        }
+      } catch (err) {
+        showToast({
+          title: language.t("dialog.mcp.error"),
+          description: err instanceof Error ? err.message : String(err),
+          variant: "error",
+        })
+        throw err
       }
     },
     onSuccess: () => queryClient.refetchQueries(queryOptions.mcp(pathKey(sync.directory))),
+    onError: (err) => {
+      showToast({
+        title: language.t("dialog.mcp.error"),
+        description: err instanceof Error ? err.message : String(err),
+        variant: "error",
+      })
+    },
   }))
 
   const enabledCount = createMemo(() => items().filter((i) => i.status === "connected").length)
@@ -180,6 +217,10 @@ export const DialogSelectMcp: Component = () => {
     const url = store.addForm.url.trim()
     if (!url) {
       setStore("addForm", "error", "Server URL is required")
+      return
+    }
+    if (!URL.canParse(url)) {
+      setStore("addForm", "error", "Invalid server URL")
       return
     }
     addMutation.mutate({ name, url })
@@ -385,8 +426,8 @@ export const DialogSelectMcp: Component = () => {
               } else {
                 servers.push(entry)
               }
-              await api?.setMcpServers?.(servers)
               await sdk.client.mcp.add({ name: entry.name, config: entry.config })
+              await api?.setMcpServers?.(servers)
               await queryClient.refetchQueries(queryOptions.mcp(pathKey(sync.directory)))
             } catch (e) {
               console.warn("Failed to persist edited server:", e)

@@ -1,0 +1,30 @@
+{"at":"2026-05-30T06:05:42.651Z","session_id":"ses_1888305f2ffepTG39kjxbN7HOm","agent":"cartographer","tool":"smart_git","phase":"started","detail":"diff"}
+{"at":"2026-05-30T06:05:42.671Z","session_id":"ses_1888305f2ffepTG39kjxbN7HOm","agent":"cartographer","tool":"smart_git","phase":"completed","detail":"diff exit=0"}
+{"at":"2026-05-30T06:05:42.702Z","session_id":"ses_1888305f2ffepTG39kjxbN7HOm","agent":"cartographer","tool":"smart_git","phase":"started","detail":"status"}
+{"at":"2026-05-30T06:05:42.771Z","session_id":"ses_1888305f2ffepTG39kjxbN7HOm","agent":"cartographer","tool":"smart_git","phase":"completed","detail":"status exit=0"}
+{"at":"2026-05-30T06:05:51.142Z","session_id":"ses_1888305f2ffepTG39kjxbN7HOm","agent":"cartographer","tool":"smart_find","phase":"started","detail":"github-ipc*"}
+{"at":"2026-05-30T06:05:51.175Z","session_id":"ses_1888305f2ffepTG39kjxbN7HOm","agent":"cartographer","tool":"smart_find","phase":"completed","detail":"github-ipc*"}
+{"at":"2026-05-30T06:05:51.183Z","session_id":"ses_1888305f2ffepTG39kjxbN7HOm","agent":"cartographer","tool":"smart_git","phase":"started","detail":"diff"}
+{"at":"2026-05-30T06:05:51.199Z","session_id":"ses_1888305f2ffepTG39kjxbN7HOm","agent":"cartographer","tool":"smart_git","phase":"completed","detail":"diff exit=0"}
+{"at":"2026-05-30T06:05:53.762Z","session_id":"ses_1888305f2ffepTG39kjxbN7HOm","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"ipcRenderer\\.(invoke|send|on)\\(\""}
+{"at":"2026-05-30T06:05:53.818Z","session_id":"ses_1888305f2ffepTG39kjxbN7HOm","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"ipcRenderer\\.(invoke|send|on)\\(\""}
+{"at":"2026-05-30T06:05:58.473Z","session_id":"ses_1888305f2ffepTG39kjxbN7HOm","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"window\\.api\\."}
+{"at":"2026-05-30T06:05:58.524Z","session_id":"ses_1888305f2ffepTG39kjxbN7HOm","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"window\\.api\\."}
+{"at":"2026-05-30T06:05:58.530Z","session_id":"ses_1888305f2ffepTG39kjxbN7HOm","agent":"cartographer","tool":"smart_git","phase":"started","detail":"show"}
+{"at":"2026-05-30T06:05:58.546Z","session_id":"ses_1888305f2ffepTG39kjxbN7HOm","agent":"cartographer","tool":"smart_git","phase":"failed","detail":"show exit=128"}
+{"at":"2026-05-30T06:06:03.113Z","session_id":"ses_1888305f2ffepTG39kjxbN7HOm","agent":"cartographer","tool":"smart_git","phase":"started","detail":"diff"}
+{"at":"2026-05-30T06:06:03.130Z","session_id":"ses_1888305f2ffepTG39kjxbN7HOm","agent":"cartographer","tool":"smart_git","phase":"completed","detail":"diff exit=0"}
+{"at":"2026-05-30T06:06:08.911Z","session_id":"ses_1888305f2ffepTG39kjxbN7HOm","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Get the full diff to see all removed IPC channels"}
+{"at":"2026-05-30T06:06:08.911Z","session_id":"ses_1888305f2ffepTG39kjxbN7HOm","agent":"cartographer","tool":"smart_bash","phase":"rerouted","detail":"→ smart_git"}
+{"at":"2026-05-30T06:06:11.542Z","session_id":"ses_1888305f2ffepTG39kjxbN7HOm","agent":"cartographer","tool":"smart_git","phase":"started","detail":"show"}
+{"at":"2026-05-30T06:06:11.557Z","session_id":"ses_1888305f2ffepTG39kjxbN7HOm","agent":"cartographer","tool":"smart_git","phase":"completed","detail":"show exit=0"}
+{"at":"2026-05-30T06:06:23.839Z","session_id":"ses_1888305f2ffepTG39kjxbN7HOm","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"win\\.webContents\\.send\\("}
+{"at":"2026-05-30T06:06:23.886Z","session_id":"ses_1888305f2ffepTG39kjxbN7HOm","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"win\\.webContents\\.send\\("}
+{"at":"2026-05-30T06:06:23.894Z","session_id":"ses_1888305f2ffepTG39kjxbN7HOm","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"webContents\\.send\\(\""}
+{"at":"2026-05-30T06:06:23.941Z","session_id":"ses_1888305f2ffepTG39kjxbN7HOm","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"webContents\\.send\\(\""}
+{"at":"2026-05-30T06:06:30.443Z","session_id":"ses_1888305f2ffepTG39kjxbN7HOm","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"See all IPC channels in the committed version"}
+{"at":"2026-05-30T06:06:30.443Z","session_id":"ses_1888305f2ffepTG39kjxbN7HOm","agent":"cartographer","tool":"smart_bash","phase":"rerouted","detail":"→ smart_git"}
+{"at":"2026-05-30T06:06:35.060Z","session_id":"ses_1888305f2ffepTG39kjxbN7HOm","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"List all removed ipcMain handlers from the diff"}
+{"at":"2026-05-30T06:06:35.060Z","session_id":"ses_1888305f2ffepTG39kjxbN7HOm","agent":"cartographer","tool":"smart_bash","phase":"rerouted","detail":"→ smart_git"}
+{"at":"2026-05-30T06:06:37.803Z","session_id":"ses_1888305f2ffepTG39kjxbN7HOm","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Extract removed IPC handlers from git diff"}
+{"at":"2026-05-30T06:06:37.859Z","session_id":"ses_1888305f2ffepTG39kjxbN7HOm","agent":"cartographer","tool":"smart_bash","phase":"completed","detail":"python3 exit=0"}

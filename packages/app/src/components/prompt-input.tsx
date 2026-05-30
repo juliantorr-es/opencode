@@ -8,6 +8,7 @@ import {
   For,
   Show,
   onCleanup,
+  onMount,
   createMemo,
   createSignal,
   createResource,
@@ -46,7 +47,7 @@ import { Select } from "@opencode-ai/ui/select"
 import { useDialog } from "@opencode-ai/ui/context/dialog"
 import { ModelSelectorPopover } from "@/components/dialog-select-model"
 import { useProviders } from "@/hooks/use-providers"
-import { useCommand } from "@/context/command"
+import { useCommand, dispatchAiCommand, AI_COMMAND_EVENT } from "@/context/command"
 import { Persist, persisted } from "@/utils/persist"
 import { usePermission } from "@/context/permission"
 import { useLanguage } from "@/context/language"
@@ -72,6 +73,7 @@ import { PromptContextItems } from "./prompt-input/context-items"
 import { PromptImageAttachments } from "./prompt-input/image-attachments"
 import { PromptDragOverlay } from "./prompt-input/drag-overlay"
 import { promptPlaceholder } from "./prompt-input/placeholder"
+import { ComposerAgentControl, ComposerModelControl, ComposerPicker, ComposerPickerTrigger, ComposerPickerMenuItem, type ComposerPickerItemState, type ComposerPickerTriggerState, type ComposerPickerState, type ComposerAgentControlState, type ComposerModelControlState } from "./prompt-input/composer-picker"
 import { ImagePreview } from "@opencode-ai/ui/image-preview"
 import { useQueries } from "@tanstack/solid-query"
 import { useQueryOptions } from "@/context/server-sync"
@@ -79,6 +81,7 @@ import { pathKey } from "@/utils/path-key"
 import { base64Encode } from "@opencode-ai/core/util/encode"
 import { displayName } from "@/pages/layout/helpers"
 
+// ── Types ──
 interface PromptInputProps {
   class?: string
   variant?: "dock" | "new-session"
@@ -121,6 +124,7 @@ const EXAMPLES = [
   "prompt.example.25",
 ] as const
 
+// ── PromptInput Component ──
 export const PromptInput: Component<PromptInputProps> = (props) => {
   const sdk = useSDK()
   const navigate = useNavigate()
@@ -141,6 +145,45 @@ export const PromptInput: Component<PromptInputProps> = (props) => {
   const platform = usePlatform()
   const settings = useSettings()
   const { params, tabs, view } = useSessionLayout()
+
+  // ── AI command event listener ──
+  onMount(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent<{ command: string; payload?: string }>).detail
+      if (!detail) return
+      const { command: aiCmd, payload } = detail
+
+      if (aiCmd === "prompt" && payload) {
+        // Route natural language prompt to agent
+        setEditorText(payload)
+        prompt.set([{ type: "text", content: payload, start: 0, end: payload.length }], payload.length)
+        focusEditorEnd()
+        return
+      }
+
+      // Route AI command to agent with context
+      const messages: Record<string, string> = {
+        explain: "Explain the selected code in detail.",
+        refactor: "Refactor the selected code to improve its structure and readability.",
+        test: "Generate comprehensive tests for the selected code.",
+        fix: "Identify and fix issues in the selected code.",
+        deploy: "Start the deployment process.",
+        review: "Review the current pull request or changes.",
+        commit: "Commit the staged changes with a descriptive message.",
+        search: "Search the codebase for relevant code and patterns.",
+      }
+      const message = messages[aiCmd]
+      if (message) {
+        const text = payload ? `${message}\n\n${payload}` : message
+        setEditorText(text)
+        prompt.set([{ type: "text", content: text, start: 0, end: text.length }], text.length)
+        focusEditorEnd()
+      }
+    }
+    window.addEventListener(AI_COMMAND_EVENT, handler)
+    onCleanup(() => window.removeEventListener(AI_COMMAND_EVENT, handler))
+  })
+
   let editorRef!: HTMLDivElement
   let fileInputRef: HTMLInputElement | undefined
   let scrollRef!: HTMLDivElement
@@ -586,15 +629,17 @@ export const PromptInput: Component<PromptInputProps> = (props) => {
       .filter((agent) => !agent.hidden && agent.mode !== "primary")
       .map((agent): AtOption =>
         agent.mode === "subagent"
-          ? { type: "delegate", name: agent.name, display: agent.name, description: agent.description }
+          ? { type: "subagent", name: agent.name, display: agent.name, description: agent.description }
           : { type: "agent", name: agent.name, display: agent.name }),
   )
   const agentNames = createMemo(() => local.agent.list().map((agent) => agent.name))
 
   const handleAtSelect = (option: AtOption | undefined) => {
     if (!option) return
-    if (option.type === "agent" || option.type === "delegate") {
+    if (option.type === "agent") {
       addPart({ type: "agent", name: option.name, content: "@" + option.name, start: 0, end: 0 })
+    } else if (option.type === "subagent") {
+      addPart({ type: "agent", name: option.name, content: "@" + option.name, start: 0, end: 0, subagent: true })
     } else {
       addPart({ type: "file", path: option.path, content: "@" + option.path, start: 0, end: 0 })
     }
@@ -602,7 +647,7 @@ export const PromptInput: Component<PromptInputProps> = (props) => {
 
   const atKey = (x: AtOption | undefined) => {
     if (!x) return ""
-    if (x.type === "delegate") return `delegate:${x.name}`
+    if (x.type === "subagent") return `subagent:${x.name}`
     return x.type === "agent" ? `agent:${x.name}` : `file:${x.path}`
   }
 
@@ -628,14 +673,15 @@ export const PromptInput: Component<PromptInputProps> = (props) => {
     key: atKey,
     filterKeys: ["display"],
     groupBy: (item) => {
-      if (item.type === "delegate") return "delegate"
+      if (item.type === "subagent") return "delegate"
       if (item.type === "agent") return "agent"
       if (item.recent) return "recent"
       return "file"
     },
     sortGroupsBy: (a, b) => {
       const rank = (category: string) => {
-        if (category === "delegate" || category === "agent") return 0
+        if (category === "agent") return 0
+        if (category === "delegate") return 0.5
         if (category === "recent") return 1
         return 2
       }
@@ -704,7 +750,12 @@ export const PromptInput: Component<PromptInputProps> = (props) => {
     pill.textContent = part.content
     pill.setAttribute("data-type", part.type)
     if (part.type === "file") pill.setAttribute("data-path", part.path)
-    if (part.type === "agent") pill.setAttribute("data-name", part.name)
+    if (part.type === "agent") {
+      pill.setAttribute("data-name", part.name)
+      if ("subagent" in part && part.subagent) {
+        pill.setAttribute("data-subagent", "")
+      }
+    }
     pill.setAttribute("contenteditable", "false")
     pill.style.userSelect = "text"
     pill.style.cursor = "default"
@@ -831,13 +882,17 @@ export const PromptInput: Component<PromptInputProps> = (props) => {
 
     const pushAgent = (agent: HTMLElement) => {
       const content = agent.textContent ?? ""
-      parts.push({
+      const part: AgentPart & { subagent?: boolean } = {
         type: "agent",
         name: agent.dataset.name!,
         content,
         start: position,
         end: position + content.length,
-      })
+      }
+      if (agent.dataset.subagent !== undefined) {
+        part.subagent = true
+      }
+      parts.push(part)
       position += content.length
     }
 
@@ -1318,7 +1373,7 @@ export const PromptInput: Component<PromptInputProps> = (props) => {
 
   const designPlaceholder = () => {
     if (store.mode === "shell") return placeholder()
-    return "Ask anything, / for commands, @ for context..."
+    return "Ask anything or press ⌘K, / for commands, @ for context..."
   }
 
   const modelControlState = createMemo<ComposerModelControlState>(() => ({
@@ -1932,228 +1987,5 @@ export const PromptInput: Component<PromptInputProps> = (props) => {
         </Match>
       </Switch>
     </div>
-  )
-}
-
-type ComposerPickerItemState = {
-  icon: IconProps["name"]
-  label: string
-  selected?: boolean
-  onSelect: () => void
-}
-
-type ComposerPickerTriggerState = {
-  action: string
-  icon?: IconProps["name"]
-  label: string
-  class?: string
-  style: JSX.CSSProperties | undefined
-  onPress: () => void
-}
-
-type ComposerPickerState = {
-  open: boolean
-  trigger: ComposerPickerTriggerState
-  search: string
-  searchPlaceholder: string
-  clearLabel: string
-  items: ComposerPickerItemState[]
-  action: ComposerPickerItemState
-  listClass?: string
-  searchRef: (el: HTMLInputElement) => void
-  onOpenChange: (open: boolean) => void
-  onSearchInput: (value: string) => void
-  onSearchClear: () => void
-}
-
-type ComposerAgentControlState = {
-  title: string
-  keybind: string
-  options: string[]
-  current: string
-  style: JSX.CSSProperties | undefined
-  onSelect: (value: string | undefined) => void
-}
-
-type ComposerModelControlState = {
-  loading: boolean
-  paid: boolean
-  title: string
-  keybind: string
-  model: ReturnType<typeof useLocal>["model"]
-  providerID?: string
-  modelName: string
-  style: JSX.CSSProperties | undefined
-  onClose: () => void
-  onUnpaidClick: () => void
-}
-
-function ComposerPickerTrigger(props: ComponentProps<"button"> & { state: ComposerPickerTriggerState }) {
-  const [local, rest] = splitProps(props, ["state", "class", "style", "onClick"])
-  return (
-    <button
-      {...rest}
-      data-action={local.state.action}
-      type="button"
-      class={`flex h-7 min-w-0 items-center gap-1.5 rounded px-2 text-[13px] font-[440] leading-5 tracking-[-0.04px] text-v2-text-text-faint transition-colors hover:bg-v2-overlay-simple-overlay-hover focus-visible:bg-v2-overlay-simple-overlay-hover focus-visible:outline-none ${local.state.class ?? ""}`}
-      style={local.state.style}
-      onClick={() => local.state.onPress()}
-    >
-      <Show when={local.state.icon}>
-        {(icon) => <Icon name={icon()} size="small" class="shrink-0 text-v2-icon-icon-muted" />}
-      </Show>
-      <span class="min-w-0 truncate leading-5">{local.state.label}</span>
-      <Icon name="chevron-down" size="small" class="shrink-0 text-v2-icon-icon-muted" />
-    </button>
-  )
-}
-
-function ComposerPickerMenuItem(props: { state: ComposerPickerItemState }) {
-  return (
-    <button
-      type="button"
-      class="flex h-7 w-full items-center gap-2 rounded px-3 text-left text-[13px] font-[440] leading-5 tracking-[-0.04px] text-v2-text-text-base hover:bg-v2-overlay-simple-overlay-hover focus-visible:bg-v2-overlay-simple-overlay-hover focus-visible:outline-none"
-      onClick={props.state.onSelect}
-    >
-      <Icon name={props.state.icon} size="small" class="shrink-0 text-v2-icon-icon-base" />
-      <span class="min-w-0 flex-1 truncate leading-5">{props.state.label}</span>
-      <Show when={props.state.selected}>
-        <Icon name="check-small" size="small" class="shrink-0 text-v2-icon-icon-base" />
-      </Show>
-    </button>
-  )
-}
-
-function ComposerPicker(props: { state: ComposerPickerState }) {
-  return (
-    <KobaltePopover
-      open={props.state.open}
-      placement="bottom-start"
-      gutter={4}
-      modal={false}
-      onOpenChange={props.state.onOpenChange}
-    >
-      <KobaltePopover.Trigger as={ComposerPickerTrigger} state={props.state.trigger} />
-      <KobaltePopover.Portal>
-        <KobaltePopover.Content
-          class="w-[243px] overflow-hidden rounded-md bg-v2-background-bg-layer-01 shadow-[var(--v2-elevation-floating)] focus:outline-none"
-          onOpenAutoFocus={(event) => event.preventDefault()}
-        >
-          <div class={`flex flex-col p-0.5 ${props.state.listClass ?? ""}`}>
-            <div class="flex h-7 items-center gap-2 rounded px-3 text-v2-icon-icon-muted">
-              <Icon name="magnifying-glass" size="small" class="shrink-0" />
-              <input
-                ref={props.state.searchRef}
-                value={props.state.search}
-                placeholder={props.state.searchPlaceholder}
-                class="h-7 min-w-0 flex-1 border-0 bg-transparent text-[13px] font-[440] leading-5 tracking-[-0.04px] text-v2-text-text-base outline-none placeholder:text-v2-text-text-faint"
-                onInput={(event) => props.state.onSearchInput(event.currentTarget.value)}
-              />
-              <Show when={props.state.search.trim()}>
-                <button
-                  type="button"
-                  class="flex size-5 items-center justify-center rounded text-v2-icon-icon-muted hover:bg-v2-overlay-simple-overlay-hover"
-                  onClick={props.state.onSearchClear}
-                  aria-label={props.state.clearLabel}
-                >
-                  <Icon name="close-small" size="small" />
-                </button>
-              </Show>
-            </div>
-            <For each={props.state.items}>{(item) => <ComposerPickerMenuItem state={item} />}</For>
-          </div>
-          <div class="h-px bg-v2-border-border-muted" />
-          <div class="flex flex-col p-0.5">
-            <ComposerPickerMenuItem state={props.state.action} />
-          </div>
-        </KobaltePopover.Content>
-      </KobaltePopover.Portal>
-    </KobaltePopover>
-  )
-}
-
-function ComposerAgentControl(props: { state: ComposerAgentControlState }) {
-  return (
-    <div class="relative">
-      <div class="pointer-events-none absolute left-2 top-1/2 z-10 flex size-4 -translate-y-1/2 items-center justify-center text-v2-icon-icon-muted">
-        <Icon name="sliders" size="small" />
-      </div>
-      <TooltipKeybind placement="top" gutter={4} title={props.state.title} keybind={props.state.keybind}>
-        <Select
-          size="normal"
-          options={props.state.options}
-          current={props.state.current}
-          onSelect={props.state.onSelect}
-          class="max-w-[175px] justify-start text-v2-text-text-faint [&_[data-component=icon]]:text-v2-icon-icon-muted"
-          valueClass="truncate pl-5 text-[13px] font-[440] leading-5 text-v2-text-text-faint"
-          triggerStyle={props.state.style}
-          triggerProps={{ "data-action": "prompt-agent" }}
-          variant="ghost"
-        />
-      </TooltipKeybind>
-    </div>
-  )
-}
-
-function ComposerModelControl(props: { state: ComposerModelControlState }) {
-  return (
-    <Show when={!props.state.loading}>
-      <Show
-        when={props.state.paid}
-        fallback={
-          <TooltipKeybind placement="top" gutter={4} title={props.state.title} keybind={props.state.keybind}>
-            <Button
-              data-action="prompt-model"
-              as="div"
-              variant="ghost"
-              size="normal"
-              class="min-w-0 max-w-[220px] justify-start text-[13px] font-[440] leading-5 text-v2-text-text-faint group"
-              style={props.state.style}
-              onClick={props.state.onUnpaidClick}
-            >
-              <Show when={props.state.providerID}>
-                {(providerID) => (
-                  <ProviderIcon
-                    id={providerID()}
-                    class="size-4 shrink-0 opacity-40 group-hover:opacity-100 transition-opacity duration-150"
-                    style={{ "will-change": "opacity", transform: "translateZ(0)" }}
-                  />
-                )}
-              </Show>
-              <span class="truncate">{props.state.modelName}</span>
-              <Icon name="chevron-down" size="small" class="shrink-0 text-v2-icon-icon-muted" />
-            </Button>
-          </TooltipKeybind>
-        }
-      >
-        <TooltipKeybind placement="top" gutter={4} title={props.state.title} keybind={props.state.keybind}>
-          <ModelSelectorPopover
-            model={props.state.model}
-            triggerAs={Button}
-            triggerProps={{
-              variant: "ghost",
-              size: "normal",
-              style: props.state.style,
-              class:
-                "min-w-0 max-w-[220px] justify-start text-[13px] font-[440] leading-5 text-v2-text-text-faint group",
-              "data-action": "prompt-model",
-            }}
-            onClose={props.state.onClose}
-          >
-            <Show when={props.state.providerID}>
-              {(providerID) => (
-                <ProviderIcon
-                  id={providerID()}
-                  class="size-4 shrink-0 opacity-40 group-hover:opacity-100 transition-opacity duration-150"
-                  style={{ "will-change": "opacity", transform: "translateZ(0)" }}
-                />
-              )}
-            </Show>
-            <span class="truncate">{props.state.modelName}</span>
-            <Icon name="chevron-down" size="small" class="shrink-0 text-v2-icon-icon-muted" />
-          </ModelSelectorPopover>
-        </TooltipKeybind>
-      </Show>
-    </Show>
   )
 }

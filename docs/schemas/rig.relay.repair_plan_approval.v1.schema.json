@@ -1,0 +1,100 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "docs/schemas/rig.relay.repair_plan_approval.v1.schema.json",
+  "title": "Repair Plan Approval",
+  "description": "Approval artifact for a repair plan after red-team findings, recording what was fixed, residual defects, and the number of repair rounds.",
+  "type": "object",
+  "required": [
+    "candidate_packet_digest",
+    "candidate_boundary_identifier",
+    "plan_revision",
+    "reviewer_set",
+    "decision",
+    "decision_rationale",
+    "findings_fixed",
+    "residual_defects",
+    "repair_rounds",
+    "issued_at"
+  ],
+  "properties": {
+    "candidate_packet_digest": {
+      "type": "string",
+      "description": "SHA256 digest of the candidate packet under review"
+    },
+    "candidate_boundary_identifier": {
+      "type": "string",
+      "description": "Identifier for the candidate boundary being repaired"
+    },
+    "plan_revision": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Revision number of the plan being repaired"
+    },
+    "reviewer_set": {
+      "type": "array",
+      "description": "List of repair reviewers and their dispositions",
+      "items": {
+        "type": "string"
+      }
+    },
+    "decision": {
+      "type": "string",
+      "description": "Repair approval decision",
+      "enum": ["approved", "repair_failed", "escalated"]
+    },
+    "decision_rationale": {
+      "type": "string",
+      "description": "Narrative rationale for the decision"
+    },
+    "findings_fixed": {
+      "type": "array",
+      "description": "List of red-team findings that were fixed",
+      "items": {
+        "type": "object",
+        "required": ["id", "description", "repair_summary"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Reference to the red-team finding ID"
+          },
+          "description": {
+            "type": "string",
+            "description": "Description of the fixed finding"
+          },
+          "repair_summary": {
+            "type": "string",
+            "description": "Summary of the repair applied"
+          }
+        }
+      }
+    },
+    "residual_defects": {
+      "type": "array",
+      "description": "Defects that remain after repair (non-blocking)",
+      "items": {
+        "type": "object",
+        "required": ["description", "rationale"],
+        "properties": {
+          "description": {
+            "type": "string",
+            "description": "Description of the residual defect"
+          },
+          "rationale": {
+            "type": "string",
+            "description": "Rationale for not fixing this defect"
+          }
+        }
+      }
+    },
+    "repair_rounds": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Number of repair rounds completed"
+    },
+    "issued_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp when the approval was issued"
+    }
+  }
+}

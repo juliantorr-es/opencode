@@ -1,0 +1,124 @@
+{
+  "schema_version": "v1",
+  "session_id": "ses_1888a2ca8ffe7bISg3AhtQV4gM",
+  "mission_status": "complete",
+  "last_updated": "2026-05-30T05:59:55.103711+00:00",
+  "current_wave": "cartography",
+  "waves": {
+    "cartography": {
+      "started_at": "2026-05-30T05:59:55.103711+00:00",
+      "completed_at": "2026-05-30T05:59:55.103711+00:00",
+      "findings": [
+        {
+          "source": "desktop-decoupling-audit",
+          "summary": "Desktop Electron app has moderate decoupling quality. IPC handlers use DI pattern (strength) but 50+ magic-string channels (weakness). Test coverage is minimal (3 files, 0% on IPC/windows/menu/updater). Hardcoded assumptions in GitHub OAuth client ID, app identity, macOS paths, protocol names.",
+          "confidence": 0.95,
+          "relevance_profiles": [
+            "cartography",
+            "architecture"
+          ],
+          "wave": "cartography"
+        },
+        {
+          "source": "desktop-decoupling-audit",
+          "summary": "Preload bridge surface is fully typed (ElectronAPI interface) but has 38 methods with 50+ magic-string channels. No shared channel constants file. Renderer accesses all via window.api.",
+          "confidence": 0.95,
+          "relevance_profiles": [
+            "cartography",
+            "architecture",
+            "safety"
+          ],
+          "wave": "cartography"
+        },
+        {
+          "source": "desktop-decoupling-audit",
+          "summary": "Test coverage is minimal: only 3 test files covering pure validation functions and shell-utils. Zero tests for IPC handlers, window management, menu, updater, server/sidecar, or the preload bridge.",
+          "confidence": 1.0,
+          "relevance_profiles": [
+            "cartography",
+            "architecture"
+          ],
+          "wave": "cartography"
+        },
+        {
+          "source": "desktop-decoupling-audit",
+          "summary": "GitHub OAuth client ID (Iv23li7XUy0RKw5TlZ3K) is hardcoded plaintext. App IDs/names duplicated across index.ts and migrate.ts. macOS paths (/.app) hardcoded in apps.ts.",
+          "confidence": 1.0,
+          "relevance_profiles": [
+            "cartography",
+            "safety"
+          ],
+          "wave": "cartography"
+        },
+        {
+          "source": "desktop-decoupling-audit",
+          "summary": "Git history shows evolution from Tauri to Electron with recent modularization (github-ipc.ts, ipc-validation.ts extraction). Effect-TS used in main process but not consistently.",
+          "confidence": 0.9,
+          "relevance_profiles": [
+            "cartography"
+          ],
+          "wave": "cartography"
+        }
+      ],
+      "artifacts": [
+        "docs/json/opencode/audits/desktop-decoupling-audit.v1.json"
+      ]
+    }
+  },
+  "active_findings": [
+    {
+      "source": "desktop-decoupling-audit",
+      "summary": "Desktop Electron app has moderate decoupling quality. IPC handlers use DI pattern (strength) but 50+ magic-string channels (weakness). Test coverage is minimal (3 files, 0% on IPC/windows/menu/updater). Hardcoded assumptions in GitHub OAuth client ID, app identity, macOS paths, protocol names.",
+      "confidence": 0.95,
+      "relevance_profiles": [
+        "cartography",
+        "architecture"
+      ],
+      "wave": "cartography"
+    },
+    {
+      "source": "desktop-decoupling-audit",
+      "summary": "Preload bridge surface is fully typed (ElectronAPI interface) but has 38 methods with 50+ magic-string channels. No shared channel constants file. Renderer accesses all via window.api.",
+      "confidence": 0.95,
+      "relevance_profiles": [
+        "cartography",
+        "architecture",
+        "safety"
+      ],
+      "wave": "cartography"
+    },
+    {
+      "source": "desktop-decoupling-audit",
+      "summary": "Test coverage is minimal: only 3 test files covering pure validation functions and shell-utils. Zero tests for IPC handlers, window management, menu, updater, server/sidecar, or the preload bridge.",
+      "confidence": 1.0,
+      "relevance_profiles": [
+        "cartography",
+        "architecture"
+      ],
+      "wave": "cartography"
+    },
+    {
+      "source": "desktop-decoupling-audit",
+      "summary": "GitHub OAuth client ID (Iv23li7XUy0RKw5TlZ3K) is hardcoded plaintext. App IDs/names duplicated across index.ts and migrate.ts. macOS paths (/.app) hardcoded in apps.ts.",
+      "confidence": 1.0,
+      "relevance_profiles": [
+        "cartography",
+        "safety"
+      ],
+      "wave": "cartography"
+    },
+    {
+      "source": "desktop-decoupling-audit",
+      "summary": "Git history shows evolution from Tauri to Electron with recent modularization (github-ipc.ts, ipc-validation.ts extraction). Effect-TS used in main process but not consistently.",
+      "confidence": 0.9,
+      "relevance_profiles": [
+        "cartography"
+      ],
+      "wave": "cartography"
+    }
+  ],
+  "active_artifacts": [
+    "docs/json/opencode/audits/desktop-decoupling-audit.v1.json"
+  ],
+  "archived": []
+}

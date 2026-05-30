@@ -10,7 +10,7 @@ const Parameters = Schema.Struct({
       "JSON array of profiles to match against (e.g. '[\"architecture\",\"execution\"]')",
   }),
   finding_type: Schema.optional(
-    Schema.Literal("bug", "pattern", "plan", "convention", "dependency", "risk", "optimization"),
+    Schema.Literals(["bug", "pattern", "plan", "convention", "dependency", "risk", "optimization"]),
   ).annotate({
     description: "Filter by finding type: bug | pattern | plan | convention | dependency | risk | optimization",
   }),

@@ -1,0 +1,46 @@
+{
+  "schema": "rig.relay.execution_instructions.v1",
+  "wave": "w4-validation",
+  "prepared_at": "2026-05-30T00:34:00Z",
+  "prepared_by": "orchestrator",
+  "plan_id": "fix-tool-layer-mismatch",
+  "mission": "Validate that the tool Layer fix eliminates all TS2345 errors without introducing new issues",
+  "validation_steps": [
+    {
+      "step": 1,
+      "description": "Run full typecheck in packages/opencode",
+      "command": "cd packages/opencode && bun typecheck 2>&1",
+      "expected": "0 TS2345 errors",
+      "acceptance": "All 82 TS2345 errors eliminated"
+    },
+    {
+      "step": 2,
+      "description": "Verify no regression in other packages",
+      "command": "cd /Users/user/Developer/GitHub/opencode-desktop-dev && bun typecheck 2>&1 | grep 'error TS' | head -20",
+      "expected": "No new errors in other packages beyond pre-existing ones"
+    },
+    {
+      "step": 3,
+      "description": "Verify Schema.Literal fix didn't introduce runtime issues",
+      "command": "cd packages/opencode && rg 'Schema\\.Literal\\(' src/tool/ --no-filename | grep -v 'Schema\\.Literals\\[' | head -10",
+      "expected": "No remaining Schema.Literal(a,b,c) patterns (only Schema.Literals([...]) allowed)"
+    },
+    {
+      "step": 4,
+      "description": "Verify dirty files are preserved",
+      "command": "cd packages/opencode && git diff --stat src/tool/",
+      "expected": "Only expected changes shown, no unintended modifications"
+    },
+    {
+      "step": 5,
+      "description": "Verify runtime safety by checking wrap() function still adds .pipe(Effect.orDie)",
+      "command": "cd packages/opencode && grep -A5 'toolInfo.execute =' src/tool/tool.ts",
+      "expected": ".pipe(Effect.orDie) present in the wrapper"
+    }
+  ],
+  "regression_risks": [
+    "R generic on Def might not propagate correctly through Omit<>",
+    "Info<R> might break tool consumers that don't expect R",
+    "Schema.Literals might have different runtime behavior than Schema.Literal"
+  ]
+}

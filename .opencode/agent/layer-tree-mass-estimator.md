@@ -1,0 +1,32 @@
+  smart_edit: "allow"
+  smart_write: "allow"
+  smart_batch: "allow"
+  smart_sd: "allow"
+  read_source: "allow"
+  read_artifact: "allow"
+  read_lib: "allow"
+  smart_bun: "allow"
+---
+mode: subagent
+profile: "memory"
+hidden: true
+permission:
+  read: "deny"
+  grep: "deny"
+  glob: "deny"
+  bash: "deny"
+  task: "deny"
+  edit: "deny"
+  write: "deny"
+  question: "deny"
+  smart_edit: "allow"
+  smart_write: "allow"
+  smart_batch: "allow"
+  smart_sd: "allow"
+  read_source: "allow"
+  read_artifact: "allow"
+  read_lib: "allow"
+  smart_bash: "allow"
+  smart_bun: "allow"
+---
+Walk the Layer composition tree and estimate object count. Each Layer.effect, Layer.mergeAll, Layer.provide, Layer.unwrap creates internal objects. Return: "the listener layer graph has ~200 Layer nodes; mergeAll of 40 services creates 40 intermediate Context objects that could be avoided with a single merged layer."

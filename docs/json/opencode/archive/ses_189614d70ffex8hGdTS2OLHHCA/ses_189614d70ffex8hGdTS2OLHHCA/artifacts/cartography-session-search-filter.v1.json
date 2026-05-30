@@ -1,0 +1,487 @@
+{
+  "artifact_type": "cartography",
+  "lane": "session-search-filter",
+  "version": "1.0",
+  "generated_at": "2026-05-30T02:10:00Z",
+  "profiles": ["cartography", "architecture", "execution"],
+  "sections": {
+    "current_state": {
+      "dirty_files_preserved": [
+        {
+          "file": "packages/app/src/pages/home.tsx",
+          "status": "unstaged modified (M)",
+          "diff_stat": "103 changed: 77 additions, 26 deletions",
+          "existing_work": "TimeFilter WIP added by execution agent (ses_189f1b621ffe)",
+          "what_was_added": [
+            "TimeFilter type: \"all\" | \"today\" | \"week\" | \"month\" (line 54)",
+            "TIME_FILTER_LABELS constant with hardcoded English strings (lines 57-62)",
+            "timeFilter field added to createStore state (line 81)",
+            "Time-range filter branch in records memo after text search (lines 123-136)",
+            "timeFilter/onTimeFilterChange props passed to HomeSessionSearch",
+            "New HomeSessionSearch component with MenuV2.RadioGroup filter dropdown and search input (lines 523-583)"
+          ],
+          "what_is_missing_in_dirty": [
+            "TIME_FILTER_LABELS uses hardcoded English — no i18n translations",
+            "No debounce on search input",
+            "No fuzzysort — uses naive String.includes()",
+            "Filter labels need i18n keys (home.sessions.filter.all, etc.)",
+            "No agent/model filter — only time range"
+          ],
+          "edit_history": [
+            "23:32:49 - Added TimeFilter type and label constant",
+            "23:32:51 - Added timeFilter field to state store",
+            "23:32:54 - Added time-range filtering to records memo",
+            "23:32:57 - Passed timeFilter props to HomeSessionSearch",
+            "23:33:06 - Added filter dropdown with MenuV2.RadioGroup + search input"
+          ]
+        },
+        {
+          "file": "packages/app/src/context/settings.tsx",
+          "status": "unstaged modified (M)",
+          "diff_stat": "12 additions",
+          "existing_work": "Session viz + onboarding settings added",
+          "what_was_added": [
+            "showSessionViz + setShowSessionViz (default: true)",
+            "onboarded + setOnboarded (default: false)"
+          ],
+          "relevance": "Settings infrastructure available for filter state persistence"
+        }
+      ],
+      "existing_i18n_keys_used": {
+        "home.sessions.search.placeholder": "\"Search sessions\"",
+        "home.sessions.empty": "\"No sessions found\"",
+        "home.sessions.empty.description": "\"Start a new session for this project\"",
+        "home.sessions.group.today": "\"Today\"",
+        "home.sessions.group.yesterday": "\"Yesterday\"",
+        "home.sessions.group.older": "\"Older\"",
+        "home.empty.title": "\"No recent projects\"",
+        "home.empty.description": "\"Get started by opening a local project\"",
+        "home.project.add": "\"Add project\"",
+        "home.projects": "\"Projects\"",
+        "sidebar.project.recentSessions": "\"Recent sessions\"",
+        "sidebar.project.clearNotifications": "\"Clear notifications\"",
+        "sidebar.settings": "\"Settings\"",
+        "common.clear": "\"Clear\"",
+        "common.loading": "\"Loading\"",
+        "common.moreOptions": "\"More options\"",
+        "command.session.new": "\"New session\""
+      },
+      "missing_i18n_keys_needed": [
+        "home.sessions.filter.all",
+        "home.sessions.filter.today",
+        "home.sessions.filter.week",
+        "home.sessions.filter.month",
+        "home.sessions.filter.label"
+      ]
+    },
+    "data_model": {
+      "session_type": {
+        "source": "packages/sdk/js/src/v2/gen/types.gen.ts:751",
+        "export_type": "Session",
+        "fields": {
+          "id": "string",
+          "directory": "string",
+          "projectID": "string",
+          "title": "string | undefined",
+          "parentID": "string | undefined",
+          "time": "{} with created/updated timestamps (millis)",
+          "status": "SessionStatus",
+          "summary": "string | undefined",
+          "agent": "string | undefined",
+          "model": "string | undefined",
+          "tags": "string[] | undefined"
+        },
+        "relevance": "session.agent and session.model fields available for agent/model filtering (though may not be populated on all sessions)"
+      },
+      "session_flow": {
+        "data_source": "Server SDK via @opencode-ai/sdk/v2/client",
+        "fetch_layer": "useServerSync() → sync.project.loadSessions(directory)",
+        "query_layer": "@tanstack/solid-query useQuery (home.tsx:90-95)",
+        "context": "useLayout() provides layout.projects.list(), selected project",
+        "child_store": "sync.child(directory, {bootstrap: false}) returns [sessionStore]",
+        "sorting": "sortedRootSessions(store, Date.now()) from helpers.ts — sorts by time.updated descending, recent sessions sorted by ID",
+        "dedup": "Map keyed by pathKey(session.directory):session.id",
+        "filter_pipeline": "text search (includes) → time filter (luxon hasSame) → slice(HOME_SESSION_LIMIT=15)",
+        "grouping": "groupSessions() → [Today, Yesterday, Older] groups"
+      },
+      "local_project_type": {
+        "source": "packages/app/src/context/layout.tsx:55",
+        "type": "Partial<Project> & { worktree: string; expanded: boolean }",
+        "fields": ["worktree", "name", "id", "icon", "sandboxes", "expanded"]
+      }
+    },
+    "search_patterns": {
+      "current_text_search": {
+        "location": "home.tsx:116-119 (records memo .filter())",
+        "implementation": "String.includes() case-insensitive",
+        "fields_searched": ["session.title", "projectName"],
+        "code": "`${record.session.title} ${record.projectName}`.toLowerCase().includes(value)",
+        "limitations": [
+          "Naive includes — no fuzzysort",
+          "No debounce on input — fires on every keystroke",
+          "Only searches title + project name, not session messages",
+          "No search highlighting in results"
+        ]
+      },
+      "useFilteredList_hook": {
+        "source": "packages/ui/src/hooks/use-filtered-list.tsx:19-130",
+        "framework": "SolidJS resource + fuzzysort",
+        "usage_patterns": [
+          {
+            "file": "packages/app/src/components/prompt-input.tsx:611",
+            "usage": "useFilteredList<AtOption>({ items, key, filterKeys: [\"name\", \"description\"], groupBy })"
+          },
+          {
+            "file": "packages/app/src/components/settings-models.tsx:38",
+            "usage": "useFilteredList<ModelItem>({ items: () => models(), key: (m) => m.name, filterKeys: [\"name\"], groupBy })"
+          }
+        ],
+        "interface": {
+          "items": "T[] | ((filter: string) => T[] | Promise<T[]>)",
+          "key": "(item: T) => string",
+          "filterKeys?": "string[] (fields for fuzzysort)",
+          "current?": "T",
+          "groupBy?": "(x: T) => string",
+          "sortBy?": "(a: T, b: T) => number",
+          "sortGroupsBy?": "function"
+        },
+        "returns": {
+          "grouped": "resource with groups",
+          "filter": "() => string",
+          "flat": "memo of flat items",
+          "onInput": "(value: string) => void",
+          "onKeyDown": "(event: KeyboardEvent) => void",
+          "active": "signal",
+          "clear": "() => void"
+        },
+        "relevance": "Available but not used in home.tsx — current search is manual String.includes()"
+      },
+      "fuzzysort_usage_elsewhere": [
+        "packages/app/src/components/settings-keybinds.tsx:183 — fuzzysort.go(needle, items)",
+        "packages/app/src/components/dialog-select-directory.tsx:179 — fuzzysort for directory search",
+        "packages/ui/src/hooks/use-filtered-list.tsx — uses fuzzysort internally"
+      ]
+    },
+    "ui_components": {
+      "home_page_components": {
+        "Home": {
+          "type": "default export",
+          "location": "home.tsx:63-72",
+          "purpose": "Feature gate — switches between HomeDesign (new) and LegacyHome (old)",
+          "gate": "settings.general.newLayoutDesigns()"
+        },
+        "HomeDesign": {
+          "type": "function component",
+          "location": "home.tsx:78-308",
+          "purpose": "Main home page layout with project sidebar + session list",
+          "state": "createStore({ search, timeFilter, project })",
+          "key_patterns": [
+            "Records filtering: text search → time filter → slice(15)",
+            "Session grouping via groupSessions()",
+            "Uses useQuery from @tanstack/solid-query for data loading"
+          ]
+        },
+        "HomeSessionSearch": {
+          "type": "function component",
+          "location": "home.tsx:523-583",
+          "purpose": "Search input + time filter dropdown (NEW — added in dirty changes)",
+          "props": {
+            "value": "string",
+            "placeholder": "string",
+            "clearLabel": "string",
+            "timeFilter": "TimeFilter",
+            "onInput": "(value: string) => void",
+            "onClear": "() => void",
+            "onTimeFilterChange": "(filter: TimeFilter) => void"
+          },
+          "ui": [
+            "MenuV2.Trigger (button with menu icon) for time filter",
+            "MenuV2.RadioGroup with 4 options: All Sessions, Today, This Week, This Month",
+            "Magnifying glass icon + input field",
+            "Clear button (X icon) shown when value.trim() is truthy"
+          ],
+          "missing": [
+            "No i18n for TIME_FILTER_LABELS — hardcoded English",
+            "No debounce",
+            "No agent or model filter dropdowns yet"
+          ]
+        },
+        "HomeSessionRow": {
+          "type": "function component",
+          "location": "home.tsx:631-693",
+          "purpose": "Single session row in the list",
+          "props": "{ record: HomeSessionRecord; openSession: (session: Session) => void }",
+          "features": [
+            "Status indicator: spinner (working), warning dot (permissions), error dot, unseen dot",
+            "Title with text ellipsis (sessionTitle or session.id fallback)",
+            "Project name shown next to title",
+            "Agent color tint via messageAgentColor()"
+          ]
+        },
+        "HomeSessionGroupHeader": {
+          "type": "function component",
+          "location": "home.tsx:608-629",
+          "purpose": "Group header with title and optional 'New session' button"
+        },
+        "HomeEmptyState": {
+          "type": "function component",
+          "location": "home.tsx:585-606",
+          "purpose": "Empty state with icon, title, description, and action button"
+        },
+        "HomeSessionSkeleton": {
+          "type": "function component",
+          "location": "home.tsx:694-706",
+          "purpose": "Loading skeleton with 4 placeholder rows"
+        },
+        "HomeProjectColumn": {
+          "type": "function component",
+          "location": "home.tsx:309-432",
+          "purpose": "Left sidebar with project list, multi-server support, settings/help buttons"
+        },
+        "HomeProjectRow": {
+          "type": "function component",
+          "location": "home.tsx:434-508",
+          "purpose": "Project row with avatar, name, context menu"
+        },
+        "groupSessions": {
+          "type": "utility function",
+          "location": "home.tsx:707-730",
+          "purpose": "Groups session records into Today/Yesterday/Older buckets",
+          "impl": "Uses DateTime.hasSame() with luxon"
+        },
+        "LegacyHome": {
+          "type": "function component",
+          "location": "home.tsx:732-855",
+          "purpose": "Old home page layout with logo and recent project list",
+          "note": "Not affected by search/filter changes"
+        }
+      },
+      "available_ui_primitives": {
+        "MenuV2": "@opencode-ai/ui/v2/components/menu-v2.jsx",
+        "MenuV2.RadioGroup": "Radio item group for filter selection",
+        "MenuV2.RadioItem": "Radio items within group",
+        "ButtonV2": "@opencode-ai/ui/v2/components/button-v2.jsx",
+        "IconV2": "@opencode-ai/ui/v2/components/icon.jsx",
+        "AvatarV2": "@opencode-ai/ui/v2/components/avatar-v2.jsx",
+        "IconButtonV2": "@opencode-ai/ui/v2/components/icon-button-v2.jsx",
+        "Spinner": "@opencode-ai/ui/spinner",
+        "Icon": "@opencode-ai/ui/icon"
+      }
+    },
+    "filter_extensions_needed": {
+      "time_filter": {
+        "status": "ALREADY STARTED in dirty home.tsx",
+        "type": "TimeFilter = \"all\" | \"today\" | \"week\" | \"month\"",
+        "ui": "MenuV2.RadioGroup dropdown",
+        "impl": "luxon DateTime.hasSame()",
+        "remaining_work": [
+          "Replace hardcoded labels with language.t() calls",
+          "Add i18n keys (home.sessions.filter.*)",
+          "Consider debouncing the search + filter combo"
+        ]
+      },
+      "agent_filter": {
+        "status": "NOT STARTED",
+        "data_source": "session.agent (string) or sessionStore.agent[] list",
+        "available_agent_data": "sessionStore.agent has {name, color}[] from server sync context",
+        "suggested_approach": "MenuV2 with checkbox items or RadioGroup for agent selection",
+        "challenges": [
+          "Agents are project-specific — need to determine available agents from loaded sessions",
+          "session.agent field may be undefined for older sessions",
+          "Need to extract unique agent names from session records"
+        ]
+      },
+      "model_filter": {
+        "status": "NOT STARTED",
+        "data_source": "session.model (string) — available on Session type",
+        "suggested_approach": "MenuV2 with checkbox items for model selection",
+        "challenges": [
+          "session.model may be undefined for many sessions",
+          "Model names can be long — need ellipsis in filter UI",
+          "Need to extract unique model names from session records"
+        ]
+      },
+      "search_improvements": {
+        "status": "NOT STARTED (current is naive String.includes)",
+        "available_tools": [
+          "fuzzysort (already a dependency in package.json catalog)",
+          "useFilteredList hook from @opencode-ai/ui/hooks (but uses createResource — async overhead for local filtering)",
+          "@solid-primitives/scheduled debounce (already used in session.tsx)"
+        ],
+        "recommended_improvements": [
+          "Replace String.includes with fuzzysort.go() on session.title",
+          "Add debounce (200ms) on search input via @solid-primitives/scheduled",
+          "Optionally search session.summary in addition to title"
+        ]
+      },
+      "persistence": {
+        "settings_context": "packages/app/src/context/settings.tsx (dirty — has showSessionViz/onboarded added)",
+        "filter_state_persistence": "Current filter state is in-memory only (createStore in HomeDesign). Could persist to localStorage or settings for session-to-session persistence.",
+        "available_persistence_mechanisms": [
+          "Persist.persisted() pattern — used by layout context",
+          "Settings context — via useSettings() provider"
+        ]
+      }
+    },
+    "i18n_impact": {
+      "existing_relevant_keys": [
+        "home.sessions.search.placeholder: \"Search sessions\"",
+        "home.sessions.empty: \"No sessions found\"",
+        "home.sessions.empty.description: \"Start a new session for this project\"",
+        "home.sessions.group.today: \"Today\"",
+        "home.sessions.group.yesterday: \"Yesterday\"",
+        "home.sessions.group.older: \"Older\"",
+        "common.clear: \"Clear\""
+      ],
+      "new_keys_needed": [
+        "home.sessions.filter.all — \"All Sessions\"",
+        "home.sessions.filter.today — \"Today\"",
+        "home.sessions.filter.week — \"This Week\"",
+        "home.sessions.filter.month — \"This Month\"",
+        "home.sessions.filter.agent — \"Agent\" [for agent filter dropdown]",
+        "home.sessions.filter.model — \"Model\" [for model filter dropdown]",
+        "home.sessions.filter.label — \"Filter\" [for aria-label on filter button]",
+        "home.sessions.filter.clear — \"Clear filters\" [if adding reset button]"
+      ]
+    },
+    "test_infrastructure": {
+      "home_page_tests": {
+        "exists": false,
+        "note": "No test files found for home.tsx (HomeSessionSearch, HomeSessionRow, HomeDesign) or the session list"
+      },
+      "related_tests": {
+        "packages/app/src/pages/layout/helpers.test.ts": {
+          "size": "226 lines",
+          "tests": ["roots", "sortedRootSessions", "projectForSession", "displayName", "errorMessage"],
+          "runner": "bun:test with happy-dom"
+        },
+        "packages/app/src/context/layout.test.ts": {
+          "size": "70 lines",
+          "tests": ["pruneSessionKeys", "ensureSessionKey", "createSessionKeyReader"]
+        }
+      },
+      "test_runner_config": {
+        "runner": "bun test",
+        "preload": "./happydom.ts (happy-dom global registrator)",
+        "scope": "./src (searches for *.test.{ts,tsx})",
+        "import": "bun:test {describe, expect, test}",
+        "assertion_style": "expect().toBe(), expect().toEqual(), etc."
+      }
+    },
+    "dependency_graph": {
+      "import_chain_for_sessions": {
+        "Home → home.tsx": {
+          "imports_from_sdk": "Session from @opencode-ai/sdk/v2/client",
+          "imports_from_ui": "Button, Logo, Spinner, AvatarV2, ButtonV2, IconV2, IconButtonV2, MenuV2, Icon, useDialog",
+          "imports_from_context_local": "useLayout, LocalProject from @/context/layout",
+          "imports_from_other_local": "displayName, sortedRootSessions, projectForSession from @/pages/layout/helpers; sessionTitle from @/utils/session-title; messageAgentColor from @/utils/agent; pathKey from @/utils/path-key; useLanguage; useNotification; usePermission; useServer; useServerSync; usePlatform; useSettings; useServers; ServerConnection",
+          "external_deps": "solid-js, solid-js/store, @tanstack/solid-query, @solidjs/router, luxon"
+        }
+      },
+      "available_agent_and_model_data": {
+        "from_session_sdk": "Session.agent?: string, Session.model?: string (defined in types.gen.ts)",
+        "from_session_store": "sessionStore.agent[] (array of {name, string}) from server sync context"
+      }
+    },
+    "key_findings": [
+      {
+        "finding": "TimeFilter WIP in home.tsx — already has time filter UI and logic, but hardcoded English labels",
+        "file": "packages/app/src/pages/home.tsx",
+        "lines": "54-62, 81, 123-136, 523-583",
+        "severity": "informational"
+      },
+      {
+        "finding": "No test file exists for home.tsx — the session search/filter pipeline is untested",
+        "file": "packages/app/src/pages/home.tsx",
+        "lines": "N/A",
+        "severity": "weak"
+      },
+      {
+        "finding": "Current text search uses naive String.includes() — fuzzysort is already available as a dependency",
+        "file": "packages/app/src/pages/home.tsx",
+        "lines": "116-119",
+        "severity": "informational"
+      },
+      {
+        "finding": "useFilteredList hook from @opencode-ai/ui/hooks is available but uses async createResource — not ideal for local in-memory session filtering where synchronous is fine",
+        "file": "packages/ui/src/hooks/use-filtered-list.tsx",
+        "lines": "19-130",
+        "severity": "informational"
+      },
+      {
+        "finding": "settings.tsx has showSessionViz and onboarded boolean settings recently added by another lane — may need to add filter persistence settings",
+        "file": "packages/app/src/context/settings.tsx",
+        "lines": "dirty additions",
+        "severity": "informational"
+      },
+      {
+        "finding": "Session type in SDK has agent? and model? fields — filter-by-agent and filter-by-model are feasible at the data model level",
+        "file": "packages/sdk/js/src/v2/gen/types.gen.ts",
+        "lines": "751-800",
+        "severity": "informational"
+      }
+    ],
+    "smoking_guns": [
+      {
+        "title": "TimeFilter labels are hardcoded English — will break in non-English locales immediately",
+        "detail": "TIME_FILTER_LABELS at home.tsx:57-62 uses literal strings ('All Sessions', 'Today', etc.) instead of language.t() calls. Every other i18n key in the component uses language.t() (home.sessions.search.placeholder, home.sessions.group.today, etc.). This is a localization regression that will ship if the dirty changes are committed as-is.",
+        "file": "packages/app/src/pages/home.tsx",
+        "lines": "57-62",
+        "severity": "blocking"
+      },
+      {
+        "title": "No search input debounce — every keystroke triggers full re-filter of all sessions",
+        "detail": "The onInput handler directly calls setState('search', value) which triggers reactive re-evaluation of the records memo (which iterates all sessions). For projects with many sessions, this will cause jank. @solid-primitives/scheduled debounce is already available as a dependency.",
+        "file": "packages/app/src/pages/home.tsx",
+        "lines": "551 (onInput)",
+        "severity": "blocking"
+      },
+      {
+        "title": "Text search only covers title+projectName — misses session summary and message content",
+        "detail": "The current implementation `${session.title} ${projectName}`.toLowerCase().includes(value) ignores session.summary (which often contains the actual task description). Users searching for a task description won't find it unless it matches the auto-generated title.",
+        "file": "packages/app/src/pages/home.tsx",
+        "line": "117",
+        "severity": "weak"
+      }
+    ],
+    "blockers": [],
+    "files_mapped": [
+      "packages/app/src/pages/home.tsx (DIRTY)",
+      "packages/app/src/context/layout.tsx",
+      "packages/app/src/pages/layout/helpers.ts",
+      "packages/app/src/utils/session-title.ts",
+      "packages/app/src/utils/agent.ts",
+      "packages/app/src/context/settings.tsx (DIRTY)",
+      "packages/app/src/context/server-sync.tsx",
+      "packages/app/src/i18n/en.ts",
+      "packages/sdk/js/src/v2/gen/types.gen.ts (Session type)",
+      "packages/ui/src/hooks/use-filtered-list.tsx",
+      "packages/app/src/components/prompt-input.tsx",
+      "packages/app/src/components/settings-models.tsx",
+      "packages/app/src/pages/layout/helpers.test.ts",
+      "packages/app/src/context/layout.test.ts",
+      "packages/app/package.json",
+      "packages/app/tsconfig.json"
+    ]
+  },
+  "handoff": {
+    "status": "complete",
+    "files_created": ["docs/json/opencode/sessions/current/cartography-session-search-filter.v1.json"],
+    "files_modified": [],
+    "dirty_files_preserved": [
+      "packages/app/src/pages/home.tsx — TimeFilter WIP preserved",
+      "packages/app/src/context/settings.tsx — session viz settings preserved"
+    ],
+    "key_findings": [
+      "TimeFilter work already started in home.tsx (5 edit commits) with MenuV2.RadioGroup dropdown and luxon-based filtering",
+      "TIME_FILTER_LABELS is hardcoded English — must add i18n keys before committing",
+      "No search debounce — every keystroke re-filters all sessions",
+      "No test coverage for home.tsx at all",
+      "useFilteredList hook exists but uses async createResource — may need synchronous alternative",
+      "Fuzzysort already available as dependency but not used in home.tsx",
+      "Session.agent and Session.model fields available in SDK for agent/model filtering",
+      "Agent colors and names available via sessionStore.agent[] and utils/agent.ts"
+    ],
+    "blockers": []
+  }
+}

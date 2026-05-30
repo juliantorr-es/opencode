@@ -1,7 +1,7 @@
 import Store from "electron-store"
 import { app } from "electron"
 
-import { SETTINGS_STORE } from "./constants"
+import { IPC } from "./ipc-channels"
 
 const cache = new Map<string, Store>()
 
@@ -9,7 +9,7 @@ const cache = new Map<string, Store>()
 // module import hoisting causes this to run before app.setPath("userData", ...)
 // in index.ts has executed, which would result in files being written to the default directory
 // (e.g. bad: %APPDATA%\@opencode-ai\desktop\opencode.settings vs good: %APPDATA%\ai.opencode.desktop.dev\opencode.settings).
-export function getStore(name = SETTINGS_STORE) {
+export function getStore(name: string = IPC.store.SETTINGS) {
   const cached = cache.get(name)
   if (cached) return cached
   const next = new Store({

@@ -1,0 +1,241 @@
+/* ── SVG Container ── */
+
+.context-graph-svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* ── Node Circles ── */
+
+.context-graph-node-group {
+  cursor: pointer;
+}
+
+.context-graph-node {
+  transition: opacity 200ms ease;
+}
+
+/* ── Edge Lines ── */
+
+.context-graph-edge {
+  transition: opacity 200ms ease;
+}
+
+/* ── Node Labels ── */
+
+.context-graph-label {
+  pointer-events: none;
+  transition: opacity 200ms ease;
+  dominant-baseline: hanging;
+}
+
+/* ── Focus Pulse Ring ── */
+
+.context-graph-pulse-ring {
+  animation: context-graph-pulse 2s ease-in-out infinite;
+  transform-origin: center;
+}
+
+@keyframes context-graph-pulse {
+  0% {
+    opacity: 0.5;
+    stroke-width: 2px;
+  }
+  50% {
+    opacity: 1;
+    stroke-width: 1px;
+  }
+  100% {
+    opacity: 0.5;
+    stroke-width: 2px;
+  }
+}
+
+/* ── Legend ── */
+
+.context-graph-legend {
+  position: absolute;
+  bottom: 12px;
+  left: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: var(--surface-raised-base, rgba(255, 255, 255, 0.06));
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  pointer-events: auto;
+}
+
+.context-graph-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.context-graph-legend-label {
+  font-size: 11px;
+  color: var(--text-base, #cdd6f4);
+  line-height: 1;
+  white-space: nowrap;
+}
+
+/* ── Panel Container ── */
+
+.agent-context-panel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 400px;
+  max-width: 90vw;
+  height: 100vh;
+  z-index: 999;
+  display: flex;
+  flex-direction: column;
+  background: var(--surface-base, #1e1e2e);
+  border-left: 1px solid var(--border-base, #313244);
+  box-shadow: -4px 0 24px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+  transition: width 200ms ease, opacity 200ms ease, transform 200ms ease;
+}
+
+.agent-context-panel[data-open="false"] {
+  width: 0 !important;
+  opacity: 0;
+  transform: translateX(100%);
+  pointer-events: none;
+}
+
+.agent-context-panel[data-open="true"] {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+/* ── Backdrop ── */
+
+.agent-context-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 998;
+  background: rgba(0, 0, 0, 0.3);
+  animation: agent-context-backdrop-fade-in 0.2s ease-out;
+}
+
+@keyframes agent-context-backdrop-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* ── Topbar ── */
+
+.agent-context-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border-base, #313244);
+  flex-shrink: 0;
+}
+
+.agent-context-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-base, #cdd6f4);
+}
+
+.agent-context-count {
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--text-weak, #6c7086);
+  padding: 2px 8px;
+  border-radius: 9999px;
+  background: var(--surface-raised-base, rgba(255, 255, 255, 0.05));
+}
+
+.agent-context-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.agent-context-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-weak, #6c7086);
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  line-height: 1;
+}
+
+.agent-context-close:hover {
+  background: var(--surface-raised-base-hover, rgba(255, 255, 255, 0.08));
+  color: var(--text-base, #cdd6f4);
+}
+
+/* ── Body ── */
+
+.agent-context-body {
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+}
+
+/* ── Legend Area ── */
+
+.agent-context-legend-area {
+  position: relative;
+  flex-shrink: 0;
+  height: 48px;
+  border-top: 1px solid var(--border-base, #313244);
+}
+
+/* ── Motion Reduce ── */
+
+@media (prefers-reduced-motion: reduce) {
+  .agent-context-panel {
+    transition: none;
+  }
+
+  .agent-context-backdrop {
+    animation: none;
+  }
+
+  .context-graph-pulse-ring {
+    animation: none;
+    opacity: 0.6;
+  }
+
+  .context-graph-node,
+  .context-graph-edge,
+  .context-graph-label {
+    transition: none;
+  }
+}
+
+/* ── Light mode compatibility ── */
+
+@media (prefers-color-scheme: light) {
+  .agent-context-panel {
+    background: var(--surface-base, #ffffff);
+    border-left-color: var(--border-base, #e2e8f0);
+  }
+}

@@ -1,0 +1,786 @@
+{
+  "schema_version": "rig.relay.follow_up_issues.v1",
+  "generated_at": "2026-05-30T02:50:00Z",
+  "source_session": "ses_189614d70ffex8hGdTS2OLHHCA",
+  "source_report": "docs/json/opencode/reports/session-2026-05-30T02-48-25-050Z.v1.json",
+  "source_publications": "docs/json/opencode/publications/publications.v1.jsonl",
+  "total_issues": 77,
+  "summary": {
+    "P0_critical": 14,
+    "P1_high": 33,
+    "P2_medium": 15,
+    "P3_low": 15
+  },
+  "issues": [
+    {
+      "id": "FI-001",
+      "lane": "cross-cutting",
+      "title": "Fire-and-forget IPC writes cause electron-store corruption on rapid CRUD",
+      "description": "Multiple IPC handlers (set-desktop-custom-agents, set-desktop-mcp-servers, saveCustomAgents) use fire-and-forget Promise patterns without awaiting the IPC write result. Rapid create/edit/delete operations race, causing last-write-wins data loss. Electron-store's atomic temp+rename prevents torn writes but the last rename silently discards earlier changes. Agent config, MCP servers, and plugin config are all affected. STRESS-002, F-014.",
+      "priority": "P0",
+      "effort": "medium",
+      "depends_on": [],
+      "recommended_action": "Serialize IPC writes through a write queue per store namespace. Make all saveCustomAgents/setMcpServers/setPluginConfig functions async, await IPC responses, and gate UI buttons during flush. Add monotonic version counter in main process to reject stale writes."
+    },
+    {
+      "id": "FI-002",
+      "lane": "mcp-management-ui",
+      "title": "MCP edit onSave handler discards all edits without persistence",
+      "description": "The onSave handler for DialogEditMcp at dialog-select-mcp.tsx:191-193 only calls setEditingEntry(undefined) — it never persists the edited entry to electron-store or calls any SDK mutation. The user sees the dialog close and no error, but the server configuration is unchanged. This makes the entire edit feature non-functional. F-001 (blocker).",
+      "priority": "P0",
+      "effort": "small",
+      "depends_on": [],
+      "recommended_action": "Add an editMutation useMutation that reads current servers from electron-store, replaces the edited entry, writes back via api.setMcpServers(), syncs with SDK, and refetches queries on success."
+    },
+    {
+      "id": "FI-003",
+      "lane": "mcp-management-ui",
+      "title": "Dual source of truth for MCP server state — SDK vs electron-store have no reconciliation",
+      "description": "The server list renders from SDK sync.data.mcp but edit/delete reads/writes from electron-store — two completely independent stores with different schemas and lifetimes. A server can appear in the list but fail to edit (not in store), be editable but invisible, or re-appear after deletion on refetch. No sync or migration exists between the two stores. F-031 (blocker).",
+      "priority": "P0",
+      "effort": "medium",
+      "depends_on": [],
+      "recommended_action": "Add reconciliation step when handleEdit finds a server in sync.data.mcp not in electron-store: fall back to constructing a default entry from available SDK data. Better: unify data source to always read from electron-store and use SDK status only for status indicators."
+    },
+    {
+      "id": "FI-004",
+      "lane": "mcp-management-ui",
+      "title": "Nested Kobalte dialog portal conflict — DialogEditMcp close may close outer DialogSelectMcp",
+      "description": "DialogEditMcp uses useDialog() from the same dialog context as DialogSelectMcp. When DialogEditMcp calls dialog.close(), the context's stack-based close may close the outermost dialog instead of just the inner edit overlay. Nested Dialog-within-Dialog architecture creates competing portal layers with z-index, focus trap, and Escape key conflicts. F-032 (blocker).",
+      "priority": "P0",
+      "effort": "medium",
+      "depends_on": [],
+      "recommended_action": "Restructure to avoid nested dialogs: render DialogEditMcp as an inline drawer/panel inside DialogSelectMcp instead of a separate Dialog component, or replace the content of DialogSelectMcp with the edit form instead of overlaying a second dialog."
+    },
+    {
+      "id": "FI-005",
+      "lane": "agent-configuration-ui",
+      "title": "IPC handlers lack schema validation — type cast bypass corrupts persistence",
+      "description": "set-desktop-custom-agents stores agents with no runtime validation via store.set('agents', agents). Null, strings, objects all pass through. On read, a number '42' persists and propagates as non-iterable, causing TypeError crash. STRESS-004 (blocker).",
+      "priority": "P0",
+      "effort": "small",
+      "depends_on": [],
+      "recommended_action": "Add Array.isArray() runtime guard in both IPC handlers. In set: if (!Array.isArray(agents)) throw new Error('Expected array'). In get: const agents = Array.isArray(raw) ? raw : []. Also add renderer-side validation."
+    },
+    {
+      "id": "FI-006",
+      "lane": "context-display",
+      "title": "Null guard missing on sync.data — crashes all downstream consumers when store uninitialized",
+      "description": "Multiple components access sync.data.agent, sync.data.message, sync.data.part without optional chaining. When sync store is not yet initialized, these crash with TypeError. Affects SessionContextUsage, dialog-manage-agents, and session-context-metrics. STRESS-010, STRESS-005, STRESS-006 (blockers).",
+      "priority": "P0",
+      "effort": "small",
+      "depends_on": [],
+      "recommended_action": "Add optional chaining everywhere: (sync.data?.agent ?? []), sync.data?.message[params.id] ?? [], sync.data?.part ?? {}. Guard tokenTotal with null-safety for msg.tokens fields."
+    },
+    {
+      "id": "FI-007",
+      "lane": "agent-configuration-ui",
+      "title": "Temperature 0 and top_p 0 silently dropped to undefined by truthy check",
+      "description": "In handleSave: temp && !Number.isNaN(temp) ? temp : undefined. When temperature=0, 0 && ... evaluates to falsy, ternary takes the undefined branch. Users intentionally setting temperature=0 for deterministic greedy decoding get their value silently replaced. STRESS-009 (blocker). Temperature and top_p bounds also not enforced (STRESS-001, blocker).",
+      "priority": "P0",
+      "effort": "small",
+      "depends_on": [],
+      "recommended_action": "Use explicit undefined check: temperature: temp !== undefined && !Number.isNaN(temp) ? Math.min(2, Math.max(0, temp)) : undefined. Same pattern for top_p."
+    },
+    {
+      "id": "FI-008",
+      "lane": "agent-configuration-ui",
+      "title": "handleDeleteAgent with undefined id silently deletes ALL custom agents",
+      "description": "If an agent has undefined id (corrupted store data, schema migration), handleDeleteAgent(agent): customAgents().filter((a) => a.id !== agent.id) evaluates undefined !== undefined which is false for ALL agents. Every agent is removed. STRESS-008 (blocker).",
+      "priority": "P0",
+      "effort": "small",
+      "depends_on": [],
+      "recommended_action": "Add guard: if (!agent?.id) return; in handleDeleteAgent. Validate agent IDs on load — filter out entries missing required id field."
+    },
+    {
+      "id": "FI-009",
+      "lane": "agent-configuration-ui",
+      "title": "No delete confirmation dialog — instant irreversible deletion of custom agents",
+      "description": "handleDeleteAgent immediately removes the agent from local state and store with no confirmation dialog. An accidental click permanently deletes the custom agent (prompt, model config, color) with no undo. Toast only shows the deleted name without undo action. STRESS-003 (blocker).",
+      "priority": "P0",
+      "effort": "small",
+      "depends_on": [],
+      "recommended_action": "Add a confirmation dialog before deletion. Options: ConfirmationDialog component, Toast with undo action button and 5-second timeout, or soft-delete with undo window."
+    },
+    {
+      "id": "FI-010",
+      "lane": "agent-configuration-ui",
+      "title": "sortBy crashes when agent.name is undefined — empty agent list renders nothing",
+      "description": "List component sortBy: (a, b) => a.name.localeCompare(b.name) throws TypeError if any agent entry has undefined name. Crashes the entire agent list rendering including both built-in and custom sections. STRESS-007 (blocker).",
+      "priority": "P0",
+      "effort": "tiny",
+      "depends_on": [],
+      "recommended_action": "Add fallback in sortBy: (a.name ?? '').localeCompare(b.name ?? ''). Also skip agents with falsy name in AgentEntry construction."
+    },
+    {
+      "id": "FI-011",
+      "lane": "mcp-management-ui",
+      "title": "Empty catch block on auth.remove swallows all errors — orphaned credentials possible",
+      "description": "The empty catch block in confirmRemove was intended to suppress 'method not found' errors but catches ALL errors: network failures, auth failures, permission errors. A failing auth.remove could leave auth credentials stored while the server is removed, creating orphaned credential leak. F-012 (major).",
+      "priority": "P0",
+      "effort": "small",
+      "depends_on": [],
+      "recommended_action": "Discriminate error types: catch only if error code indicates 'method not found'. Re-throw other errors, or log structured context via console.warn."
+    },
+    {
+      "id": "FI-012",
+      "lane": "mcp-management-ui",
+      "title": "validateAndFilterMcpServers silently drops all entries — total data wipe with no notification",
+      "description": "If ALL servers in the array are invalid (migration bug or corruption), validateAndFilterMcpServers returns an empty array with only console.warn per entry. The caller sets this to electron-store, effectively wiping all MCP server configuration. User sees empty list with no error or explanation. F-010 (major).",
+      "priority": "P0",
+      "effort": "small",
+      "depends_on": [],
+      "recommended_action": "If filtered length is 0 while original length > 0, throw an error instead of destroying data. Add structured warning event logging. Keep original data and warn rather than setting empty array."
+    },
+    {
+      "id": "FI-013",
+      "lane": "plugin-management-ui",
+      "title": "Plugin i18n keys not resolved — all UI strings show raw key identifiers",
+      "description": "All 22 desktop.plugin.* i18n keys are passed as raw string literals directly to Dialog title/description, TextField label/placeholder, and Button children instead of being resolved through the t() function. The dialog title displays 'desktop.plugin.manage.title' instead of 'Plugin Manager'. Dependency failure, blocker.",
+      "priority": "P0",
+      "effort": "small",
+      "depends_on": [],
+      "recommended_action": "Wrap all raw i18n key strings with t() calls across dialog-manage-plugins.tsx and dialog-install-plugin.tsx. Every desktop.plugin.* string must be: title={t('desktop.plugin.manage.title')}."
+    },
+    {
+      "id": "FI-014",
+      "lane": "plugin-management-ui",
+      "title": "Cancel button in dialog-install-plugin missing onClick handler",
+      "description": "The Cancel button in dialog-install-plugin.tsx renders with no onClick handler. User cannot dismiss the install dialog without submitting or refreshing the page. Blocking UX defect. Dependency failure.",
+      "priority": "P0",
+      "effort": "tiny",
+      "depends_on": [],
+      "recommended_action": "Add onClick={cancelInstall} handler to the Cancel button, matching the pattern in dialog-manage-plugins.tsx."
+    },
+    {
+      "id": "FI-015",
+      "lane": "mcp-management-ui",
+      "title": "addMutation only supports remote MCP server type — no local server creation",
+      "description": "The inline 'Add MCP Server' form always constructs McpRemoteConfig with type:'remote' and a URL. There is no UI field or toggle for adding local MCP servers (command + args). DialogEditMcp supports both local and remote via its entry prop, but the add form only produces remote entries. F-033 (major).",
+      "priority": "P1",
+      "effort": "small",
+      "depends_on": ["FI-002"],
+      "recommended_action": "Add a type toggle (local/remote) to the add form, or reuse DialogEditMcp for both add and edit flows."
+    },
+    {
+      "id": "FI-016",
+      "lane": "mcp-management-ui",
+      "title": "MCP toggle mutation has no onError handler — connect/authenticate failures silently swallowed",
+      "description": "The toggle mutation only has onSuccess handler. If connect or authenticate throws (network error, server unreachable), the error propagates to TanStack Query internally but never surfaces to the user. The toggle button appears to do nothing — no toast, no feedback. F-034 (major).",
+      "priority": "P1",
+      "effort": "tiny",
+      "depends_on": [],
+      "recommended_action": "Add onError handler to toggle mutation that shows a toast with error title and description."
+    },
+    {
+      "id": "FI-017",
+      "lane": "mcp-management-ui",
+      "title": "resetForm allows escape from pending addMutation — list becomes interactive during add",
+      "description": "resetForm() unconditionally sets store.mode to 'list' without checking addMutation.isPending. User can submit an add, then click back arrow or Escape to return to list mode while add is still in flight. addMutation.onSuccess refetches queries, potentially disrupting in-progress list interactions. F-035 (major).",
+      "priority": "P1",
+      "effort": "small",
+      "depends_on": [],
+      "recommended_action": "Guard resetForm: if (addMutation.isPending) return before setting mode to 'list'. Show loading spinner instead of allowing navigation away."
+    },
+    {
+      "id": "FI-018",
+      "lane": "mcp-management-ui",
+      "title": "IPC set-desktop-mcp-servers handler has no try/catch — disk errors cause unhandled rejections",
+      "description": "The set-desktop-mcp-servers IPC handler directly calls store.set('servers', ...) without any try/catch. If electron-store encounters a disk error, the exception becomes an unhandled Promise rejection in the renderer process. F-036 (major).",
+      "priority": "P1",
+      "effort": "tiny",
+      "depends_on": [],
+      "recommended_action": "Wrap store.set in try/catch in the IPC handler, return structured error result instead of throwing."
+    },
+    {
+      "id": "FI-019",
+      "lane": "mcp-management-ui",
+      "title": "No URL validation in dialog-edit-mcp — arbitrary protocol/dangerous values accepted",
+      "description": "The URL TextField accepts any input with no validation. User can enter 'javascript:alert(1)' or arbitrary garbage. While the SDK may eventually reject invalid URLs, the UI provides no immediate feedback. F-038 (major).",
+      "priority": "P1",
+      "effort": "tiny",
+      "depends_on": [],
+      "recommended_action": "Add URL validation before saving: try { new URL(url()) } catch { show error }."
+    },
+    {
+      "id": "FI-020",
+      "lane": "mcp-management-ui",
+      "title": "isValidMcpEntry allows empty name strings and empty command arrays",
+      "description": "isValidMcpEntry checks typeof name !== 'string' which passes for empty string ''. A server with name '' can be stored and renders blank entries. Similarly, command: [] passes Array.isArray check but specifies no executable. F-005, F-006 (major).",
+      "priority": "P1",
+      "effort": "tiny",
+      "depends_on": [],
+      "recommended_action": "Add if (typeof obj.name !== 'string' || obj.name.trim() === '') return false. Add if (config.type === 'local' && (!Array.isArray(config.command) || config.command.length === 0)) return false."
+    },
+    {
+      "id": "FI-021",
+      "lane": "cross-cutting",
+      "title": "Whitespace-only names bypass empty-name guards in multiple dialogs",
+      "description": "Multiple dialogs (dialog-edit-agent, dialog-edit-mcp) check !name() for disabled state but whitespace-only strings are truthy. Agent and MCP server entries can be saved with invisible names. F-008, STRESS-013 (major).",
+      "priority": "P1",
+      "effort": "tiny",
+      "depends_on": [],
+      "recommended_action": "Change guards to !name().trim() and add name().trim() in handleSave across all affected dialogs."
+    },
+    {
+      "id": "FI-022",
+      "lane": "subagent-delegation-ui",
+      "title": "No visual group headers in @popover — keyboard navigation has no contextual cues",
+      "description": "The @popover renders a flat list with no group headers for delegate/agent/recent/file groups. Users navigating by keyboard have no contextual cue which group they're in. The only visual differentiator is the icon (brain vs share). Stress finding F01 (major).",
+      "priority": "P1",
+      "effort": "small",
+      "depends_on": [],
+      "recommended_action": "Add group headers to the popover when multiple groups are present using the groupBy category to render section labels above the first item of each group."
+    },
+    {
+      "id": "FI-023",
+      "lane": "subagent-delegation-ui",
+      "title": "Delegate and agent groups share rank 0 — non-deterministic interleaving",
+      "description": "Delegate and agent groups both use rank 0 in useFilteredList. Their ordering depends on insertion order (delegates first, then agents in agentList construction) rather than being deterministic. Groups may interleave instead of staying contiguous when names sort across groups. Stress finding F02 (major).",
+      "priority": "P1",
+      "effort": "small",
+      "depends_on": [],
+      "recommended_action": "Either merge delegate and agent into a single 'people' group (same rank, same group key), or ensure delegates sort after agents using distinct ranks."
+    },
+    {
+      "id": "FI-024",
+      "lane": "agent-configuration-ui",
+      "title": "IPC toast lies to user — success confirmation fires before IPC write completes",
+      "description": "saveCustomAgents is fire-and-forget. Toast confirmation fires before the IPC write completes. If the write fails (disk full, permissions), the toast has already confirmed success. STRESS-011 (major).",
+      "priority": "P1",
+      "effort": "small",
+      "depends_on": ["FI-001"],
+      "recommended_action": "Make saveCustomAgents async, await the IPC call, and only show success toast after confirmation. Add error toast on failure."
+    },
+    {
+      "id": "FI-025",
+      "lane": "agent-configuration-ui",
+      "title": "Edit while deleted — silent no-op save with false confirmation toast",
+      "description": "User opens edit dialog for agent A, then deletes agent A. When clicking Save, customAgents().map(a => a.id === 'A' ? updated : a) passes through unchanged. Toast says '\"Agent A\" saved' but nothing was persisted. STRESS-012 (major).",
+      "priority": "P1",
+      "effort": "small",
+      "depends_on": [],
+      "recommended_action": "Add existence check before save: if (!customAgents().some(a => a.id === updated.id)) { showToast error; return; }."
+    },
+    {
+      "id": "FI-026",
+      "lane": "agent-configuration-ui",
+      "title": "crypto.randomUUID may not be available in some Electron contexts",
+      "description": "handleSave uses crypto.randomUUID() without fallback. In Electron renderers with restricted security settings, this may throw TypeError. New agent creation crashes silently. STRESS-015 (major).",
+      "priority": "P1",
+      "effort": "tiny",
+      "depends_on": [],
+      "recommended_action": "Add fallback: crypto.randomUUID?.() ?? Date.now().toString(36) + Math.random().toString(36).slice(2)."
+    },
+    {
+      "id": "FI-027",
+      "lane": "agent-configuration-ui",
+      "title": "Locale-dependent number parsing corrupts temperature/top_p for EU users",
+      "description": "Number.parseFloat('0,7') returns 0 because parseFloat stops at comma. EU users typing comma as decimal separator will have values silently truncated. STRESS-016 (major).",
+      "priority": "P1",
+      "effort": "tiny",
+      "depends_on": [],
+      "recommended_action": "Normalize decimal separator: (temperature() ?? '').replace(',', '.') before parsing."
+    },
+    {
+      "id": "FI-028",
+      "lane": "context-display",
+      "title": "useSessionLayout hook called unconditionally — crashes when rendered outside session page",
+      "description": "SessionContextUsage calls useSessionLayout() at the top of the component function. If rendered outside a session page where SessionLayoutContext is not provided, the hook throws. The component is wrapped in Show when={params.id} but the hook runs before that guard. STRESS-017 (major).",
+      "priority": "P1",
+      "effort": "small",
+      "depends_on": [],
+      "recommended_action": "Guard the hook call or use a conditional pattern to check context availability before calling useSessionLayout."
+    },
+    {
+      "id": "FI-029",
+      "lane": "agent-configuration-ui",
+      "title": "setLoaded(true) called before async IPC load resolves — stale data overwrites user edits",
+      "description": "DialogManageAgents calls setLoaded(true) on line 56 BEFORE getCustomAgents().then(...) resolves. If the user creates/edits/deletes an agent in the brief window between setLoaded and promise resolution, the later-resolving promise can overwrite the user's changes. STRESS-018 (major).",
+      "priority": "P1",
+      "effort": "small",
+      "depends_on": [],
+      "recommended_action": "Move setLoaded(true) inside the .then() callback: .then((agents) => { setCustomAgents(agents ?? []); setLoaded(true) }). Add .catch() handler."
+    },
+    {
+      "id": "FI-030",
+      "lane": "context-display",
+      "title": "Null usage (unknown model limit) silently displayed as 0% — indistinguishable from zero usage",
+      "description": "When model limit is undefined, getSessionContextMetrics returns usage: null. SessionContextUsage converts this to 0 via context()?.usage ?? 0. The progress circle shows 0% green, indistinguishable from actual zero usage. STRESS-014 (major).",
+      "priority": "P1",
+      "effort": "small",
+      "depends_on": [],
+      "recommended_action": "Propagate null usage through display. Show 'N/A' or a dash when usage is null. Tooltip should show 'Context limit unknown' instead of 0%."
+    },
+    {
+      "id": "FI-031",
+      "lane": "mcp-management-ui",
+      "title": "handleEdit double-call race — second response can win with stale data",
+      "description": "handleEdit is async: it fetches servers from electron-store, finds the entry, and sets editingEntry. If user clicks Edit on server-A then immediately server-B, two API calls are in flight. If server-A's response arrives last, editingEntry overwrites to server-A even though user last clicked server-B. F-013 (major).",
+      "priority": "P1",
+      "effort": "small",
+      "depends_on": [],
+      "recommended_action": "Add abort pattern with counter or AbortController. Only apply setEditingEntry if response matches the latest request."
+    },
+    {
+      "id": "FI-032",
+      "lane": "mcp-management-ui",
+      "title": "Negatives timeout values and whitespace-only names pass through dialog-edit-mcp",
+      "description": "Timeout field accepts negative values like -5000 via manual typing (type='number' min={0} only affects browser stepper). Whitespace-only names pass through as truthy strings. F-009, F-008 (major).",
+      "priority": "P1",
+      "effort": "tiny",
+      "depends_on": [],
+      "recommended_action": "Add min/max validation for timeout: if (timeoutVal < 0 || timeoutVal > MAX_TIMEOUT) timeoutVal = undefined. Add trim to name field in handleSave."
+    },
+    {
+      "id": "FI-033",
+      "lane": "mcp-management-ui",
+      "title": "confirmRemove lacks execution guard — rapid double-click triggers concurrent deletes",
+      "description": "confirmRemove is async with no isPending flag. Double-clicking Delete runs confirmRemove twice concurrently. Second call's disconnect throws (empty catch), second store removal finds nothing (no-op), refetchQueries runs twice. F-004 (major).",
+      "priority": "P1",
+      "effort": "small",
+      "depends_on": [],
+      "recommended_action": "Add isDeleting signal that gates confirmRemove. Disable Delete button while executing."
+    },
+    {
+      "id": "FI-034",
+      "lane": "github-integration-pr-management",
+      "title": "GitHub i18n keys missing in 15 non-EN locale files",
+      "description": "The 14 github.* i18n keys are only defined in en.ts. 15 non-English locale files lack these keys. Non-English users fall back to English text for all GitHub UI. Deferred seam.",
+      "priority": "P1",
+      "effort": "medium",
+      "depends_on": [],
+      "recommended_action": "Add github.* keys to all 15 non-EN locale files (ar, br, bs, da, de, es, fr, ja, ko, no, pl, ru, th, tr, uk)."
+    },
+    {
+      "id": "FI-035",
+      "lane": "plugin-management-ui",
+      "title": "Plugin i18n keys missing in 15 non-EN locale files",
+      "description": "The 22 desktop.plugin.* i18n keys are only defined in the renderer's en.ts. 15 non-English locale files lack these keys. Non-English users see English text for all plugin management UI.",
+      "priority": "P1",
+      "effort": "medium",
+      "depends_on": [],
+      "recommended_action": "Add desktop.plugin.* keys to all 15 non-EN locale files for the desktop renderer."
+    },
+    {
+      "id": "FI-036",
+      "lane": "github-integration-pr-management",
+      "title": "Actual PR API calls from renderer are placeholder — no real GitHub API integration",
+      "description": "The PR creation UI in review-tab and PrBadge in message-timeline are placeholder UIs. No actual Octokit API calls from the renderer for PR creation, listing, or status checking. Deferred seam.",
+      "priority": "P1",
+      "effort": "large",
+      "depends_on": [],
+      "recommended_action": "Wire the Octokit Effect service layer to the renderer UI. Connect PR creation flow from session changes to actual createPullRequest API call."
+    },
+    {
+      "id": "FI-037",
+      "lane": "github-integration-pr-management",
+      "title": "OAuth safeStorage fallback not handled — encryption failure blocks login",
+      "description": "If Electron safeStorage.encryptString/decryptString fails (keychain unavailable, Linux without libsecret), the OAuth flow has no fallback. Token storage either succeeds with encryption or fails entirely. Deferred seam.",
+      "priority": "P1",
+      "effort": "small",
+      "depends_on": [],
+      "recommended_action": "Add fallback: if safeStorage is unavailable, store token with at-rest obfuscation and show a security notice to the user."
+    },
+    {
+      "id": "FI-038",
+      "lane": "github-integration-pr-management",
+      "title": "OAuth Map eviction policy not defined — stale tokens accumulate in memory",
+      "description": "The OAuth token map in the service layer has no eviction policy. As users authenticate with multiple GitHub accounts or re-authenticate, stale tokens accumulate in memory without cleanup. Deferred seam.",
+      "priority": "P1",
+      "effort": "small",
+      "depends_on": [],
+      "recommended_action": "Add TTL-based eviction or LRU cache for OAuth token map. Remove tokens on logout/deauthorization."
+    },
+    {
+      "id": "FI-039",
+      "lane": "github-integration-pr-management",
+      "title": "CI/CD polling strategy not implemented — PR status is static",
+      "description": "PR CI/CD status display has no polling strategy. Once fetched, the status never updates. Users must manually refresh to see new CI results. Deferred seam.",
+      "priority": "P1",
+      "effort": "medium",
+      "depends_on": ["FI-036"],
+      "recommended_action": "Implement configurable polling interval (e.g., 30s) via TanStack Query refetchInterval for PR status queries."
+    },
+    {
+      "id": "FI-040",
+      "lane": "export-import-sessions",
+      "title": "Partial import rollback not implemented — failed import leaves partially written state",
+      "description": "When importing a session fails mid-way (e.g., message 300 of 500), there is no rollback mechanism. The session may be partially imported with no way to recover to previous state. Deferred seam.",
+      "priority": "P1",
+      "effort": "medium",
+      "depends_on": [],
+      "recommended_action": "Wrap import into a transaction with rollback capability. Delete partially written data on failure."
+    },
+    {
+      "id": "FI-041",
+      "lane": "mcp-management-ui",
+      "title": "Switch label in plugin management rendered incorrectly — children used instead of label prop",
+      "description": "<Switch label={entry.enabled ? 'desktop.plugin.list.enabled' : 'desktop.plugin.list.disabled'}> passes a label prop, but SwitchProps does not declare a label prop. The visible label renders through children via <Kobalte.Label>{children}</Kobalte.Label>. Combined with i18n issue, no visible label text appears. Dependency failure, major.",
+      "priority": "P1",
+      "effort": "tiny",
+      "depends_on": [],
+      "recommended_action": "Pass label text as children: <Switch>{t(entry.enabled ? 'desktop.plugin.list.enabled' : 'desktop.plugin.list.disabled')}</Switch>."
+    },
+    {
+      "id": "FI-042",
+      "lane": "export-import-sessions",
+      "title": "IPC test infrastructure missing — no automated testing for export/import IPC handlers",
+      "description": "The export-import-sessions lane added IPC handlers for session-export-data and session-import-file but deferred the IPC test infrastructure. These handlers involve file I/O and error paths that are not tested. Deferred seam.",
+      "priority": "P2",
+      "effort": "medium",
+      "depends_on": [],
+      "recommended_action": "Add automated tests for the IPC handlers using Electron testing utilities or mocks."
+    },
+    {
+      "id": "FI-043",
+      "lane": "export-import-sessions",
+      "title": "Message-content sanitization v2 — deeper filtering needed for sensitive data",
+      "description": "The current sanitizeSession function removes permission rules, share URLs, and local file paths. V2 sanitization should also handle embedded secrets, API keys, and other sensitive patterns that may appear in message content. Deferred seam.",
+      "priority": "P2",
+      "effort": "medium",
+      "depends_on": [],
+      "recommended_action": "Add regex-based detection for common secret patterns (API keys, tokens, passwords) in message content. Add user-configurable sanitization filters."
+    },
+    {
+      "id": "FI-044",
+      "lane": "export-import-sessions",
+      "title": "Drag-and-drop import not implemented — only file dialog import available",
+      "description": "Users can only import sessions via the file picker dialog. Drag-and-drop import onto the home page or session list is not implemented. Deferred seam.",
+      "priority": "P2",
+      "effort": "medium",
+      "depends_on": [],
+      "recommended_action": "Implement drag-and-drop handler on the session list area that accepts .json files and triggers import flow."
+    },
+    {
+      "id": "FI-045",
+      "lane": "export-import-sessions",
+      "title": "Multi-session export not supported — only single session export",
+      "description": "Users can only export one session at a time. Batch export of multiple selected sessions is not implemented. Deferred seam.",
+      "priority": "P2",
+      "effort": "medium",
+      "depends_on": [],
+      "recommended_action": "Add multi-select to session list and batch export flow that exports all selected sessions into one or multiple files."
+    },
+    {
+      "id": "FI-046",
+      "lane": "export-import-sessions",
+      "title": "ZIP compression for export not implemented — plain JSON only",
+      "description": "Export produces plain JSON files without ZIP compression. Large sessions with many messages produce large files. @zip.js/zip.js is already a dependency. Deferred seam.",
+      "priority": "P2",
+      "effort": "small",
+      "depends_on": [],
+      "recommended_action": "Add ZIP compression option to export dialog using @zip.js/zip.js. Default to compressed, allow raw JSON export option."
+    },
+    {
+      "id": "FI-047",
+      "lane": "export-import-sessions",
+      "title": "Body size limit not enforced on import — large files can crash renderer",
+      "description": "Import has no body size limit. A multi-megabyte JSON file could crash the renderer process during parsing. Deferred seam.",
+      "priority": "P2",
+      "effort": "small",
+      "depends_on": [],
+      "recommended_action": "Add configurable file size limit (e.g., 50MB) on import with user-facing error for oversized files."
+    },
+    {
+      "id": "FI-048",
+      "lane": "export-import-sessions",
+      "title": "Binary file rejection not implemented — non-JSON files accepted silently",
+      "description": "The import flow accepts any file without validating its content is valid JSON. Binary files, images, or corrupt files may be processed and produce confusing error messages. Deferred seam.",
+      "priority": "P2",
+      "effort": "small",
+      "depends_on": [],
+      "recommended_action": "Add content-type sniffing before JSON.parse. Reject non-JSON files with clear error message before attempting to parse."
+    },
+    {
+      "id": "FI-049",
+      "lane": "session-search-filter",
+      "title": "Message content search not implemented — only title/projectName search",
+      "description": "Session search only matches on title and projectName. Users cannot search within message content to find sessions by what was discussed. Deferred seam.",
+      "priority": "P2",
+      "effort": "large",
+      "depends_on": [],
+      "recommended_action": "Add optional full-text search of message content. Consider a search-index layer or SQL FTS with the Postgres backend."
+    },
+    {
+      "id": "FI-050",
+      "lane": "session-search-filter",
+      "title": "Unknown fallback for sessions without agent/model not handled",
+      "description": "When filtering by agent or model, sessions that lack an agent or model field have no fallback. The filter simply excludes them. Deferred seam.",
+      "priority": "P2",
+      "effort": "small",
+      "depends_on": [],
+      "recommended_action": "Add 'Unknown' option to agent/model filter dropdowns that includes sessions with missing agent/model fields."
+    },
+    {
+      "id": "FI-051",
+      "lane": "command-palette-expansion",
+      "title": "Plugin-contributed command registration not implemented",
+      "description": "The command palette supports only built-in commands. Plugins cannot register their own commands to appear in the palette. Deferred seam.",
+      "priority": "P2",
+      "effort": "large",
+      "depends_on": [],
+      "recommended_action": "Design and implement a command registration API for plugins. Add IPC channels for plugins to contribute commands to the palette."
+    },
+    {
+      "id": "FI-052",
+      "lane": "command-palette-expansion",
+      "title": "Command palette component tests not written",
+      "description": "The new DialogCommandPalette component has no automated tests. The 2 i18n keys and keyboard navigation need test coverage. Deferred seam.",
+      "priority": "P3",
+      "effort": "medium",
+      "depends_on": [],
+      "recommended_action": "Add component tests for DialogCommandPalette covering fuzzy search, keyboard navigation, empty state, and command execution."
+    },
+    {
+      "id": "FI-053",
+      "lane": "subagent-delegation-ui",
+      "title": "Delegate descriptions lost on commit — AgentPart type has no description field",
+      "description": "When a delegate mention is committed as a ContentPart, the description shown in the popover is permanently lost. AgentPart type has no description field. Stress finding F03 (minor).",
+      "priority": "P2",
+      "effort": "small",
+      "depends_on": [],
+      "recommended_action": "Either add optional description to AgentPart type and data-description attribute to the DOM pill, or document this as intentional design."
+    },
+    {
+      "id": "FI-054",
+      "lane": "subagent-delegation-ui",
+      "title": "No visual distinction between agent and delegate pills in editor",
+      "description": "Both agent and delegate mentions render identically in the editor with createPill setting data-type='agent' regardless of origin. The share icon from the popover is not preserved in the editor DOM. Stress finding F04 (minor).",
+      "priority": "P2",
+      "effort": "small",
+      "depends_on": [],
+      "recommended_action": "Add data-subagent attribute or render a different visual (e.g., share icon) for delegate mentions in the editor."
+    },
+    {
+      "id": "FI-055",
+      "lane": "subagent-delegation-ui",
+      "title": "Subagents appear in both @popover and composer dropdown with different representations",
+      "description": "Subagent-mode agents appear in the @popover as delegates (with share icon) and potentially in the composer agent dropdown as regular agents. Users may see the same agent twice with different UI treatment. Stress finding F05 (minor).",
+      "priority": "P2",
+      "effort": "small",
+      "depends_on": [],
+      "recommended_action": "Either exclude subagent-mode agents from the composer dropdown, or use consistent representation across both surfaces."
+    },
+    {
+      "id": "FI-056",
+      "lane": "plugin-management-ui",
+      "title": "npm resolution pipeline not implemented — install accepts npm spec but has no real resolution",
+      "description": "The npm install field accepts a package specifier but there is no npm resolution pipeline. Package download, dependency resolution, and installation into the plugin directory are not implemented. Deferred seam.",
+      "priority": "P2",
+      "effort": "xlarge",
+      "depends_on": [],
+      "recommended_action": "Design and implement npm package resolution for plugins: package download, version resolution, dependency tree calculation, and plugin directory installation."
+    },
+    {
+      "id": "FI-057",
+      "lane": "plugin-management-ui",
+      "title": "Per-plugin config panel not implemented — no configuration UI for individual plugins",
+      "description": "Plugins can store per-plugin config via the store system but there is no UI for users to view or edit individual plugin settings. Deferred seam.",
+      "priority": "P2",
+      "effort": "medium",
+      "depends_on": [],
+      "recommended_action": "Design and implement per-plugin config panel accessible from the manage dialog. Allow plugins to declare their config schema."
+    },
+    {
+      "id": "FI-058",
+      "lane": "plugin-management-ui",
+      "title": "Plugin health indicators not implemented — no status display for plugins",
+      "description": "The manage dialog shows plugin name and enabled status but has no health indicators. Users cannot see if a plugin failed to load, has errors, or is running normally. Deferred seam.",
+      "priority": "P2",
+      "effort": "medium",
+      "depends_on": [],
+      "recommended_action": "Add health status indicators (green/yellow/red) based on plugin load state, error count, and last heartbeat."
+    },
+    {
+      "id": "FI-059",
+      "lane": "plugin-management-ui",
+      "title": "Loader cache invalidation not implemented — stale plugins may persist after update",
+      "description": "The plugin loader caches loaded plugins but has no cache invalidation strategy. After updating or removing a plugin, the cached version may still be active until app restart. Deferred seam.",
+      "priority": "P2",
+      "effort": "medium",
+      "depends_on": [],
+      "recommended_action": "Add cache invalidation on plugin install/uninstall/update. Implement version-based cache keys or forced reload mechanism."
+    },
+    {
+      "id": "FI-060",
+      "lane": "mcp-management-ui",
+      "title": "Query cache accumulates entries per directory switch — memory grows unbounded",
+      "description": "refetchQueries uses queryOptions.mcp(pathKey(sync.directory)) as the query filter. When the user switches directories, query keys accumulate permanently in the cache with no gcTime or staleTime eviction. F-025 (minor).",
+      "priority": "P3",
+      "effort": "small",
+      "depends_on": [],
+      "recommended_action": "Set staleTime or gcTime on query options to evict old directory entries, or remove stale query keys on directory switch."
+    },
+    {
+      "id": "FI-061",
+      "lane": "context-display",
+      "title": "hasCompaction O(n) iteration on every streaming event — performance degrades with session size",
+      "description": "hasCompaction iterates ALL messages checking sync.data.part[msg.id] for compaction parts. On each streaming event the memo re-evaluates and scans the entire message list. 1000+ messages cause visible UI jank. STRESS-019 (major).",
+      "priority": "P3",
+      "effort": "small",
+      "depends_on": [],
+      "recommended_action": "Short-circuit: only check last N (e.g., 10) messages since compaction parts only appear on recent messages. Or maintain a Set of session IDs with compaction, updated incrementally."
+    },
+    {
+      "id": "FI-062",
+      "lane": "context-display",
+      "title": "Usage percentage can exceed 100% without special visual indicator",
+      "description": "Math.round((total / limit) * 100) produces >100 when total exceeds limit. ProgressCircle may render incorrectly, color logic shows red (>=95%) but doesn't distinguish approaching limit from over limit. STRESS-024 (minor).",
+      "priority": "P3",
+      "effort": "small",
+      "depends_on": [],
+      "recommended_action": "Clamp at 100: Math.min(100, Math.round(...)). Add pulsing/exclamation indicator when over limit."
+    },
+    {
+      "id": "FI-063",
+      "lane": "cross-cutting",
+      "title": "No user-facing error when IPC methods fail — handleEdit, store failures show no toast",
+      "description": "Multiple code paths silently swallow IPC failures with only console.warn: handleEdit fetch failure (F-016), store removal failure in confirmRemove (F-017), and loadConfigs failure in dialog-manage-plugins. Users see nothing happen with no feedback. F-016, F-017 (minor).",
+      "priority": "P3",
+      "effort": "small",
+      "depends_on": [],
+      "recommended_action": "Add toast notifications for IPC failures. Show structured error messages rather than silent console.warn."
+    },
+    {
+      "id": "FI-064",
+      "lane": "mcp-management-ui",
+      "title": "Dead code: disconnectMutation defined but never used",
+      "description": "A useMutation named disconnectMutation is defined at dialog-select-mcp.tsx:149-155 but never called anywhere. It is dead code from an earlier refactor. F-015 (minor).",
+      "priority": "P3",
+      "effort": "tiny",
+      "depends_on": [],
+      "recommended_action": "Remove the unused disconnectMutation to eliminate confusion. If intended for future use, add a comment explaining planned usage."
+    },
+    {
+      "id": "FI-065",
+      "lane": "mcp-management-ui",
+      "title": "Float timeout values pass through dialog-edit-mcp without rounding",
+      "description": "Number('1.5') returns 1.5 which passes NaN check and is stored as timeout: 1.5. Float values could cause unexpected behavior in SDK/OS APIs that expect integer milliseconds. F-021 (minor).",
+      "priority": "P3",
+      "effort": "tiny",
+      "depends_on": [],
+      "recommended_action": "Use Math.round(timeoutVal) to ensure integer timeout values."
+    },
+    {
+      "id": "FI-066",
+      "lane": "mcp-management-ui",
+      "title": "addMutation onSuccess doesn't wait for refetch — stale data briefly visible",
+      "description": "onSuccess immediately sets mode to 'list' and resets the form, then calls refetchQueries. Brief window where list shown but query data hasn't refreshed yet — newly added server won't appear until refetch completes. F-022 (minor).",
+      "priority": "P3",
+      "effort": "tiny",
+      "depends_on": [],
+      "recommended_action": "Await the refetch before switching mode: await queryClient.refetchQueries(...); setStore('mode', 'list')."
+    },
+    {
+      "id": "FI-067",
+      "lane": "mcp-management-ui",
+      "title": "addMutation onError shows raw error to user — may expose internal details",
+      "description": "onError extracts err instanceof Error ? err.message : String(err) and sets it as form error text. If SDK returns verbose internal errors, these are displayed directly without sanitization. F-023 (minor).",
+      "priority": "P3",
+      "effort": "tiny",
+      "depends_on": [],
+      "recommended_action": "Sanitize error messages: map known error patterns to user-friendly messages, fall back to generic message for unknown patterns."
+    },
+    {
+      "id": "FI-068",
+      "lane": "mcp-management-ui",
+      "title": "List component key conflict — duplicate empty keys possible",
+      "description": "List component key is (x) => x?.name ?? ''. Two entries with empty names get key '' causing SolidJS reconciliation issues. F-024 (minor). Root cause is empty name validation (FI-020).",
+      "priority": "P3",
+      "effort": "tiny",
+      "depends_on": ["FI-020"],
+      "recommended_action": "Use more unique key: x?.name ?? crypto.randomUUID(). But FI-020 (validate empty name) is the root cause."
+    },
+    {
+      "id": "FI-069",
+      "lane": "mcp-management-ui",
+      "title": "(window as any).api bypass — no type safety on IPC boundary",
+      "description": "IPC bridge accessed via (window as any).api with optional chaining. No TypeScript types shared between preload script and renderer code. Renaming a method in preload gives no compile-time error. F-020 (minor).",
+      "priority": "P3",
+      "effort": "small",
+      "depends_on": [],
+      "recommended_action": "Define shared type for preload API interface and type window.api with it. Import the type in all consuming components."
+    },
+    {
+      "id": "FI-070",
+      "lane": "agent-configuration-ui",
+      "title": "No prompt length limit — 128px textarea with 10K chars is difficult to use",
+      "description": "Agent prompt field is a multiline TextField with max-h-32 (128px) and overflow-y-auto. A 10,000 character prompt produces a tiny scrollable window with no character count or expand mechanism. STRESS-020 (minor).",
+      "priority": "P3",
+      "effort": "small",
+      "depends_on": [],
+      "recommended_action": "Increase max-height or remove it, add expand/collapse button, and add character count indicator."
+    },
+    {
+      "id": "FI-071",
+      "lane": "agent-configuration-ui",
+      "title": "Agent list key collision with duplicate names",
+      "description": "List key = `${x?.source}:${x?.name}`. Two custom agents with the same name collide on key. SolidJS may reuse DOM nodes incorrectly. STRESS-021 (minor).",
+      "priority": "P3",
+      "effort": "tiny",
+      "depends_on": [],
+      "recommended_action": "Use unique ID in key: include agentDef.id or a fallback index."
+    },
+    {
+      "id": "FI-072",
+      "lane": "context-display",
+      "title": "Dead import: createSignal imported but never used in SessionContextUsage",
+      "description": "SessionContextUsage imports createSignal from solid-js but the component never uses it. STRESS-022 (minor).",
+      "priority": "P3",
+      "effort": "tiny",
+      "depends_on": [],
+      "recommended_action": "Remove createSignal from imports."
+    },
+    {
+      "id": "FI-073",
+      "lane": "cross-cutting",
+      "title": "No loading state while IPC fetch is pending — flash of empty list in multiple dialogs",
+      "description": "DialogManageAgents and DialogManagePlugins render immediately with empty data while IPC resolves. No loading skeleton or spinner. On slow I/O, user sees empty list that populates abruptly. STRESS-023 (minor).",
+      "priority": "P3",
+      "effort": "medium",
+      "depends_on": [],
+      "recommended_action": "Use loaded() signal to show loading indicator while IPC is pending across both agent config and plugin management dialogs."
+    },
+    {
+      "id": "FI-074",
+      "lane": "context-display",
+      "title": "CSS custom properties for usage colors have no fallback — undefined in custom themes",
+      "description": "Usage colors reference var(--state-fg-danger) and var(--state-fg-warning). Custom themes that don't define these variables result in uncolored progress circles. STRESS-026 (informational).",
+      "priority": "P3",
+      "effort": "tiny",
+      "depends_on": [],
+      "recommended_action": "Add CSS fallbacks: var(--state-fg-danger, red) and var(--state-fg-warning, orange)."
+    },
+    {
+      "id": "FI-075",
+      "lane": "agent-configuration-ui",
+      "title": "No cross-window synchronization — stale agent list in secondary windows",
+      "description": "getCustomAgents() is called once per mount. If two windows share the project, modifications in window B are not reflected in window A until dialog is reopened. STRESS-027 (informational).",
+      "priority": "P3",
+      "effort": "medium",
+      "depends_on": [],
+      "recommended_action": "Add IPC listener for store-change events from main process, or poll on window focus."
+    },
+    {
+      "id": "FI-076",
+      "lane": "mcp-management-ui",
+      "title": "ipcMain.handle registrations are not removed on app teardown — hot-reload hazard",
+      "description": "registerIpcHandlers uses ipcMain.handle without cleanup. If called twice (dev hot-reload, testing), Electron throws on duplicate handler registration. F-028 (informational).",
+      "priority": "P3",
+      "effort": "small",
+      "depends_on": [],
+      "recommended_action": "Call registerIpcHandlers only once or add ipcMain.removeHandler calls before registration."
+    },
+    {
+      "id": "FI-077",
+      "lane": "cross-cutting",
+      "title": "Produce_fragment consolidator for shared files not integrated",
+      "description": "The session used produce_fragment for shared files (ipc.ts, en.ts, preload types/index) but the consolidator assembly step was not run before checkpoints. Integration is needed to finalize shared file composition. From session report next_steps.",
+      "priority": "P1",
+      "effort": "small",
+      "depends_on": [],
+      "recommended_action": "Run produce_fragment consolidator for the shared files modified concurrently: ipc.ts, en.ts, preload/types.ts, preload/index.ts. Resolve any fragment conflicts."
+    }
+  ]
+}

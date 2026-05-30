@@ -1,19 +1,16 @@
 import { Button } from "@opencode-ai/ui/button"
-import { Dialog } from "@opencode-ai/ui/dialog"
 import { TextField } from "@opencode-ai/ui/text-field"
-import { useDialog } from "@opencode-ai/ui/context/dialog"
 import { createEffect, createMemo, createSignal, Show } from "solid-js"
 import { useLanguage } from "@/context/language"
 import type { McpServerEntry } from "@/types/mcp"
 
 type Props = {
   entry?: McpServerEntry
-  onSave: (entry: McpServerEntry) => void
+  onSave: (entry: McpServerEntry) => Promise<void>
   onCancel?: () => void
 }
 
 export function DialogEditMcp(props: Props) {
-  const dialog = useDialog()
   const language = useLanguage()
 
   const isEditing = createMemo(() => !!props.entry)
@@ -52,8 +49,16 @@ export function DialogEditMcp(props: Props) {
     )
   })
 
-  const handleSave = () => {
+  const handleSave = async () => {
     const timeoutVal = timeoutValue() !== "" ? Number(timeoutValue()) : undefined
+
+    if (type() === "local") {
+      const cmdStr = command().trim()
+      if (!cmdStr || cmdStr.split(/\s+/).filter(Boolean).length === 0) return
+    }
+
+    if (type() === "remote" && !URL.canParse(url())) return
+
     const entry: McpServerEntry = {
       name: name(),
       config:
@@ -72,16 +77,11 @@ export function DialogEditMcp(props: Props) {
               enabled: true,
             },
     }
-    props.onSave(entry)
-    dialog.close()
+    await props.onSave(entry)
   }
 
   return (
-    <Dialog
-      title={isEditing() ? language.t("dialog.mcp.action.edit") : language.t("dialog.mcp.addTitle")}
-      class="w-full max-w-[480px] mx-auto"
-    >
-      <div class="flex flex-col gap-5 p-6 pt-0">
+    <div class="flex flex-col gap-5 p-5 bg-surface-base rounded-md border border-border-weak-base">
         <TextField
           autofocus
           type="text"
@@ -143,7 +143,7 @@ export function DialogEditMcp(props: Props) {
         </Show>
 
         <div class="flex justify-end gap-2 pt-2">
-          <Button type="button" variant="ghost" size="large" onClick={() => { props.onCancel?.(); dialog.close(); }}>
+          <Button type="button" variant="ghost" size="large" onClick={() => { props.onCancel?.(); }}>
             {language.t("common.cancel")}
           </Button>
           <Button
@@ -156,7 +156,6 @@ export function DialogEditMcp(props: Props) {
             {language.t("common.save")}
           </Button>
         </div>
-      </div>
-    </Dialog>
+    </div>
   )
 }

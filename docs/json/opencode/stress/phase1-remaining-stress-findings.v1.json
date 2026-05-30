@@ -1,0 +1,528 @@
+{
+  "schema_version": "rig.relay.stress_report.v1",
+  "generated_at": "2026-05-30T00:10:00Z",
+  "agent": "stress",
+  "session_id": "ses_189cea8fcffel0e4bsbn447Pek",
+  "subagent_deployments": [
+    "edge-case-enumerator",
+    "state-poisoner",
+    "dependency-saboteur",
+    "concurrency-stresser",
+    "memory-leak-hunter",
+    "assumption-challenger"
+  ],
+  "features_analyzed": [
+    "agent-configuration-ui",
+    "context-display",
+    "settings-polish"
+  ],
+  "files_analyzed": [
+    "packages/app/src/components/dialog-manage-agents.tsx",
+    "packages/app/src/components/dialog-edit-agent.tsx",
+    "packages/app/src/components/settings-agents.tsx",
+    "packages/app/src/components/session-context-usage.tsx",
+    "packages/app/src/components/session/session-context-metrics.ts",
+    "packages/app/src/components/session/session-context-metrics.test.ts",
+    "packages/desktop/src/main/ipc.ts",
+    "packages/ui/src/context/dialog.tsx",
+    "packages/ui/src/components/list.tsx"
+  ],
+  "findings": [
+    {
+      "id": "STRESS-001",
+      "severity": "blocker",
+      "feature": "agent-configuration-ui",
+      "category": "input-validation",
+      "title": "Temperature and top_p bounds not enforced in handleSave",
+      "description": "The HTML number inputs for temperature (min=0, max=2) and top_p (min=0, max=1) only provide browser-level validation. The handleSave function calls Number.parseFloat without clamping. A user can type '999' for temperature or '-5' for top_p — these values pass through to the AgentDef and downstream to LLM providers. This could cause unexpected or broken LLM behavior.",
+      "file": "packages/app/src/components/dialog-edit-agent.tsx",
+      "line": 61,
+      "code_snippet": "const temp = temperature() ? Number.parseFloat(temperature()) : undefined\nconst tp = topP() ? Number.parseFloat(topP()) : undefined\n...\ntemperature: temp && !Number.isNaN(temp) ? temp : undefined,\ntop_p: tp && !Number.isNaN(tp) ? tp : undefined",
+      "reproduction_steps": [
+        "Open dialog-edit-agent for create/edit",
+        "Set temperature to '999' by typing in the number field or pasting",
+        "Click Save",
+        "Observe: agent is saved with temperature=999, no error shown"
+      ],
+      "repair_instruction": "Add clamping in handleSave:\n- const clampedTemp = temp !== undefined ? Math.min(2, Math.max(0, temp)) : undefined\n- const clampedTp = tp !== undefined ? Math.min(1, Math.max(0, tp)) : undefined",
+      "subagent_sources": ["edge-case-enumerator", "assumption-challenger"]
+    },
+    {
+      "id": "STRESS-002",
+      "severity": "blocker",
+      "feature": "agent-configuration-ui",
+      "category": "concurrency",
+      "title": "IPC write-after-write race corrupts electron-store on rapid CRUD",
+      "description": "saveCustomAgents calls api()?.setCustomAgents?.(agents) which returns a Promise that is NOT awaited. Three distinct race scenarios:\n1. RAPID DELETES: Delete A then Delete B rapidly → second IPC write (delete B result) may resolve before first (delete A result) → store ends with zombie agent B.\n2. RAPID CREATES: Create A then Create B → second IPC write may resolve before first → store ends with only agent A (B lost).\n3. EDIT+DELETE RACE: Edit B then immediately Delete A → delete IPC write may resolve before edit → store has both [A, B_edited] when it should have [B_edited].\nLocal Solid signal is always correct (synchronous updates), but persisted store permanently diverges.",
+      "file": "packages/app/src/components/dialog-manage-agents.tsx",
+      "line": 92,
+      "code_snippet": "const saveCustomAgents = (agents: AgentDef[]) => {\n  setCustomAgents(agents)\n  api()?.setCustomAgents?.(agents)  // Promise not awaited\n}",
+      "reproduction_steps": [
+        "Create 2 custom agents (A and B)",
+        "Rapidly click delete on agent A, then agent B",
+        "Close and reopen app",
+        "Observe: agent A or B may reappear (stale IPC write won race)",
+        "ALTERNATIVELY: Edit agent B then delete agent A rapidly",
+        "On reload, agent A may be resurrected"
+      ],
+      "repair_instruction": "Serialize writes through a queue. Make saveCustomAgents async, await the IPC, and disable create/edit/delete buttons during flush. Option: add a monotonic version counter in the main process so stale writes are rejected. The version-based approach: store a `__version` alongside agents in electron-store, increment on every write, reject writes with older version.",
+      "subagent_sources": ["state-poisoner", "concurrency-stresser"]
+    },
+    {
+      "id": "STRESS-003",
+      "severity": "blocker",
+      "feature": "agent-configuration-ui",
+      "category": "crud-safety",
+      "title": "No delete confirmation — instant irreversible deletion",
+      "description": "handleDeleteAgent immediately removes the agent from local state and store with no confirmation dialog. An accidental click on the trash icon permanently deletes the custom agent (prompt, model config, color, all settings) with no undo. The toast notification only shows the deleted name but does not provide an undo action.",
+      "file": "packages/app/src/components/dialog-manage-agents.tsx",
+      "line": 126,
+      "code_snippet": "const handleDeleteAgent = (agent: AgentDef) => {\n  saveCustomAgents(customAgents().filter((a) => a.id !== agent.id))\n  showToast({\n    title: language.t('dialog.agents.delete'),\n    description: `\"${agent.name}\" deleted`,\n  })\n}",
+      "reproduction_steps": [
+        "Open agent management dialog with custom agents",
+        "Click the trash icon on any custom agent",
+        "Observe: agent immediately deleted, no confirmation"
+      ],
+      "repair_instruction": "Add a confirmation dialog before deletion. Options: (1) ConfirmationDialog component, (2) Toast with undo action button and 5-second timeout, (3) Soft-delete with undo window.",
+      "subagent_sources": ["edge-case-enumerator"]
+    },
+    {
+      "id": "STRESS-004",
+      "severity": "blocker",
+      "feature": "agent-configuration-ui",
+      "category": "state-corruption",
+      "title": "IPC handlers lack schema validation — type cast bypass corrupts persistence",
+      "description": "set-desktop-custom-agents stores agents with `store.set('agents', agents)` where agents is typed `unknown[]` but has zero runtime validation. Null, strings, objects all pass through. On read, `store.get('agents') as unknown[]` is equally unchecked — a number '42' persists and propagates as a non-iterable value, causing `TypeError: number is not iterable` when the renderer tries `for (const agent of customAgents())`.",
+      "file": "packages/desktop/src/main/ipc.ts",
+      "line": 220,
+      "code_snippet": "ipcMain.handle('get-desktop-custom-agents', () => {\n  const store = getStore('desktop-custom-agents')\n  return (store.get('agents') as unknown[]) ?? []\n})\nipcMain.handle('set-desktop-custom-agents', (_event, agents: unknown[]) => {\n  const store = getStore('desktop-custom-agents')\n  store.set('agents', agents)\n})",
+      "reproduction_steps": [
+        "Send IPC with null: ipcRenderer.invoke('set-desktop-custom-agents', null)",
+        "Observe: store.set('agents', null) persists null",
+        "Call get-desktop-custom-agents: null ?? [] evaluates to [] (null caught)",
+        "But send string 'invalid': store.set('agents', 'invalid')",
+        "Now get returns 'invalid' (truthy, not caught by ??)",
+        "Renderer crashes on for-of iteration: TypeError: customAgents is not iterable"
+      ],
+      "repair_instruction": "Add `Array.isArray()` runtime guard in both IPC handlers. In set: `if (!Array.isArray(agents)) throw new Error('Expected array')`. In get: `const raw = store.get('agents'); const agents = Array.isArray(raw) ? raw : []; return agents`. Also add validation in renderer's .then() handler as defense-in-depth.",
+      "subagent_sources": ["state-poisoner", "assumption-challenger", "dependency-saboteur"]
+    },
+    {
+      "id": "STRESS-005",
+      "severity": "blocker",
+      "feature": "context-display",
+      "category": "render-safety",
+      "title": "sync.data.part accessed without optional chaining — crashes hasCompaction memo",
+      "description": "In SessionContextUsage.hasCompaction(): `const parts = sync.data.part`. If sync.data.part is undefined (store not initialized, event reducer hasn't populated it, stale session data), `parts[msg.id]` throws `TypeError: Cannot read properties of undefined`. This crashes inside the createMemo, propagating upward to collapse the entire SessionContextUsage component (tooltip, progress circle, compaction badge).",
+      "file": "packages/app/src/components/session-context-usage.tsx",
+      "line": 67,
+      "code_snippet": "const parts = sync.data.part\nfor (const msg of messages()) {\n  const msgParts = parts[msg.id]\n  if (msgParts?.some((p) => p.type === 'compaction')) return true\n}",
+      "reproduction_steps": [
+        "Run with sync store that has no 'part' field initialized",
+        "Open any session",
+        "Observe: TypeError crashes SessionContextUsage"
+      ],
+      "repair_instruction": "Guard the part access: `const parts = sync.data.part ?? {}` or use optional chaining throughout: `const msgParts = sync.data.part?.[msg.id]?.some(...)`",
+      "subagent_sources": ["dependency-saboteur", "edge-case-enumerator"]
+    },
+    {
+      "id": "STRESS-006",
+      "severity": "blocker",
+      "feature": "context-display",
+      "category": "data-integrity",
+      "title": "tokenTotal crashes on missing tokens fields, cost reduce produces NaN",
+      "description": "tokenTotal() accesses `msg.tokens.input + msg.tokens.output + msg.tokens.reasoning + msg.tokens.cache.read + msg.tokens.cache.write` without null-safety. If msg.tokens is undefined, or tokens.cache is missing, this throws TypeError. Also, the cost reduce: `sum + (msg.role === 'assistant' ? msg.cost : 0)` produces NaN when msg.cost is undefined (not a number). Both crash or corrupt the entire getSessionContextMetrics pipeline.",
+      "file": "packages/app/src/components/session/session-context-metrics.ts",
+      "line": 38,
+      "code_snippet": "return msg.tokens.input + msg.tokens.output + msg.tokens.reasoning + msg.tokens.cache.read + msg.tokens.cache.write\n...\nconst totalCost = messages.reduce((sum, msg) => sum + (msg.role === 'assistant' ? msg.cost : 0), 0)",
+      "reproduction_steps": [
+        "Load session containing an assistant message with incomplete tokens data (e.g., missing tokens.cache)",
+        "Observe: TypeError in tokenTotal → metrics memo crash → component collapse"
+      ],
+      "repair_instruction": "Rewrite tokenTotal with null-safety:\n  const t = msg.tokens; if (!t) return 0;\n  const safe = (n: unknown) => typeof n === 'number' ? n : 0;\n  return safe(t.input) + safe(t.output) + safe(t.reasoning) + safe(t.cache?.read) + safe(t.cache?.write)\nGuard cost: `msg.role === 'assistant' ? (typeof msg.cost === 'number' ? msg.cost : 0) : 0`",
+      "subagent_sources": ["dependency-saboteur", "edge-case-enumerator"]
+    },
+    {
+      "id": "STRESS-007",
+      "severity": "blocker",
+      "feature": "agent-configuration-ui",
+      "category": "render-safety",
+      "title": "sortBy crashes when agent.name is undefined (missing name on built-in agent)",
+      "description": "The List component's sortBy callback: `(a, b) => a.name.localeCompare(b.name)` throws `TypeError: Cannot read properties of undefined (reading 'localeCompare')` if any agent entry has an undefined name. This crashes the entire agent list rendering, including both built-in and custom sections.",
+      "file": "packages/app/src/components/dialog-manage-agents.tsx",
+      "line": 85,
+      "code_snippet": "sortBy={(a, b) => a.name.localeCompare(b.name)}",
+      "reproduction_steps": [
+        "Ensure a built-in agent from sync.data.agent has missing or null name field",
+        "Open dialog-manage-agents",
+        "Observe: List component crashes with TypeError, no agents displayed"
+      ],
+      "repair_instruction": "Add fallback in sortBy: `sortBy={(a, b) => (a.name ?? '').localeCompare(b.name ?? '')}`. Also add a guard when constructing AgentEntry: skip agents with falsy name.",
+      "subagent_sources": ["edge-case-enumerator"]
+    },
+    {
+      "id": "STRESS-008",
+      "severity": "blocker",
+      "feature": "agent-configuration-ui",
+      "category": "crud-safety",
+      "title": "handleDeleteAgent with undefined id silently deletes ALL custom agents",
+      "description": "If an agent has undefined id (corrupted store data, schema migration), `handleDeleteAgent(agent)`: `customAgents().filter((a) => a.id !== agent.id)` evaluates `undefined !== undefined` which is `false` for ALL agents. Every agent is removed from the list. Toast shows one name, but all agents disappear.",
+      "file": "packages/app/src/components/dialog-manage-agents.tsx",
+      "line": 127,
+      "code_snippet": "saveCustomAgents(customAgents().filter((a) => a.id !== agent.id))",
+      "reproduction_steps": [
+        "Insert a custom agent with missing 'id' field into electron-store",
+        "Open dialog and click delete on that agent",
+        "Observe: ALL custom agents vanish despite toast showing only one name"
+      ],
+      "repair_instruction": "Add guard: `if (!agent?.id) return;` in handleDeleteAgent. Validate agent IDs on load — filter out entries missing required id field.",
+      "subagent_sources": ["edge-case-enumerator"]
+    },
+    {
+      "id": "STRESS-009",
+      "severity": "blocker",
+      "feature": "agent-configuration-ui",
+      "category": "input-validation",
+      "title": "Temperature 0 and top_p 0 silently dropped to undefined due to truthy check",
+      "description": "In handleSave: `temp && !Number.isNaN(temp) ? temp : undefined`. When temperature=0, `0 && ...` evaluates to 0 (falsy), and the ternary takes the `undefined` branch. A user intentionally setting temperature to 0 (deterministic greedy decoding) or top_p to 0 (nucleus sampling off) will have their values silently replaced with undefined.",
+      "file": "packages/app/src/components/dialog-edit-agent.tsx",
+      "line": 63,
+      "code_snippet": "temperature: temp && !Number.isNaN(temp) ? temp : undefined,\ntop_p: tp && !Number.isNaN(tp) ? tp : undefined",
+      "reproduction_steps": [
+        "Open dialog-edit-agent, set temperature to 0",
+        "Click Save",
+        "Observe: agent saved with temperature: undefined (0 was lost)"
+      ],
+      "repair_instruction": "Use explicit undefined check: `temperature: temp !== undefined && !Number.isNaN(temp) ? Math.min(2, Math.max(0, temp)) : undefined`",
+      "subagent_sources": ["assumption-challenger"]
+    },
+    {
+      "id": "STRESS-010",
+      "severity": "blocker",
+      "feature": "agent-configuration-ui",
+      "category": "render-safety",
+      "title": "sync.data accessed without optional chaining — undefined store crashes all consumers",
+      "description": "Multiple components access sync.data.agent, sync.data.message, sync.data.part without guarding for sync.data being undefined. If the sync store isn't initialized yet, `sync.data.agent` in dialog-manage-agents.tsx line 64 and `sync.data.message[params.id]` in session-context-usage.tsx line 46 throw `TypeError: Cannot read properties of undefined`. This crashes the entire component tree with no error boundary.",
+      "file": "packages/app/src/components/dialog-manage-agents.tsx",
+      "line": 64,
+      "code_snippet": "return (sync.data.agent ?? []).filter(...)  // crash: sync.data is undefined",
+      "reproduction_steps": [
+        "Navigate to a route or state where sync context is not yet provided",
+        "Open any component using sync.data",
+        "Observe: TypeError crashes the component"
+      ],
+      "repair_instruction": "Use optional chaining everywhere: `(sync.data?.agent ?? []).filter(...)`, `sync.data?.message[params.id] ?? []`, `sync.data?.part ?? {}`. Consider wrapping in `<Show when={sync.data}>` at a higher level.",
+      "subagent_sources": ["dependency-saboteur"]
+    },
+    {
+      "id": "STRESS-011",
+      "severity": "major",
+      "feature": "agent-configuration-ui",
+      "category": "concurrency",
+      "title": "IPC setCustomAgents await/success toast race — lies to user on persistence failure",
+      "description": "Toast confirmation fires BEFORE the IPC write completes. handleDeleteAgent calls `saveCustomAgents(...)` (fire-and-forget IPC), then immediately calls `showToast(...)`. If the IPC write fails (disk full, permissions), the toast has already confirmed success. The same applies to create and edit operations.",
+      "file": "packages/app/src/components/dialog-manage-agents.tsx",
+      "line": 128,
+      "code_snippet": "saveCustomAgents(customAgents().filter((a) => a.id !== agent.id))\nshowToast({ title: language.t('dialog.agents.delete'), description: `\"${agent.name}\" deleted` })",
+      "reproduction_steps": [
+        "Make electron-store unwritable (chmod to 0444)",
+        "Delete a custom agent",
+        "Observe: toast confirms deletion, but reload shows agent still exists"
+      ],
+      "repair_instruction": "Make saveCustomAgents async, await the IPC call, and only show success toast after confirmation. Add error toast on failure: `try { await api()?.setCustomAgents?.(agents); showToast(success) } catch { showToast({ variant: 'error', title: 'Failed to save' }) }`",
+      "subagent_sources": ["concurrency-stresser", "state-poisoner"]
+    },
+    {
+      "id": "STRESS-012",
+      "severity": "major",
+      "feature": "agent-configuration-ui",
+      "category": "concurrency",
+      "title": "Edit while deleted → silent no-op save with false confirmation",
+      "description": "User opens edit dialog for agent A, then deletes agent A from the manage dialog. When clicking Save in the edit dialog, `customAgents().map(a => a.id === 'A' ? updated : a)` — agent A no longer exists in the signal, so the map passes through unchanged. Toast says '\"Agent A\" saved' but nothing was persisted.",
+      "file": "packages/app/src/components/dialog-manage-agents.tsx",
+      "line": 113,
+      "code_snippet": "saveCustomAgents(customAgents().map((a) => (a.id === updated.id ? updated : a)))",
+      "reproduction_steps": [
+        "Have at least 2 custom agents",
+        "Click Edit on agent A → edit dialog opens",
+        "Go to manage dialog (still open in background), delete agent A",
+        "Make changes in edit dialog, click Save",
+        "Observe: toast confirms save, but agent A is gone — nothing was saved"
+      ],
+      "repair_instruction": "Add existence check before save: `if (!customAgents().some(a => a.id === updated.id)) { showToast({ variant: 'error', title: 'Agent no longer exists' }); return; }`",
+      "subagent_sources": ["concurrency-stresser"]
+    },
+    {
+      "id": "STRESS-013",
+      "severity": "major",
+      "feature": "agent-configuration-ui",
+      "category": "input-validation",
+      "title": "Whitespace-only name bypasses empty-name guard",
+      "description": "Save button disabled when `!name()`. Whitespace-only string `'   '` is truthy, so button is enabled. Agent can be saved with an invisible name. handleSave doesn't trim the name either.",
+      "file": "packages/app/src/components/dialog-edit-agent.tsx",
+      "line": 155,
+      "code_snippet": "<Button ... disabled={!name()}>",
+      "reproduction_steps": [
+        "Open agent create dialog",
+        "Type three spaces in name field",
+        "Observe: Save button enabled (truthy check)",
+        "Click Save — agent created with name='   '"
+      ],
+      "repair_instruction": "Change guard to `disabled={!name().trim()}`. Also trim in handleSave: `name: name().trim()`.",
+      "subagent_sources": ["assumption-challenger", "edge-case-enumerator"]
+    },
+    {
+      "id": "STRESS-014",
+      "severity": "major",
+      "feature": "context-display",
+      "category": "data-accuracy",
+      "title": "Null usage (unknown model limit) silently displayed as 0%",
+      "description": "When model limit is undefined (provider model not found in registry), getSessionContextMetrics returns usage: null. SessionContextUsage converts this to 0 via `context()?.usage ?? 0`. The progress circle shows 0% green, indistinguishable from actual zero usage. User cannot tell 'no limit data' from 'no tokens used'.",
+      "file": "packages/app/src/components/session-context-usage.tsx",
+      "line": 62,
+      "code_snippet": "const usage = createMemo(() => context()?.usage ?? 0)",
+      "reproduction_steps": [
+        "Use a model not registered in provider metadata",
+        "Observe: ProgressCircle shows 0% green",
+        "Expected: show 'N/A' or '-' for unknown"
+      ],
+      "repair_instruction": "Propagate null usage through the display. Show 'N/A' or a dash when usage is null. The tooltip should show 'Context limit unknown' instead of 0%.",
+      "subagent_sources": ["assumption-challenger", "edge-case-enumerator"]
+    },
+    {
+      "id": "STRESS-015",
+      "severity": "major",
+      "feature": "agent-configuration-ui",
+      "category": "runtime-safety",
+      "title": "crypto.randomUUID may not be available in some Electron contexts",
+      "description": "handleSave uses `crypto.randomUUID()` without fallback. In Electron renderers with restricted security settings or older Chromium, this may throw `TypeError: crypto.randomUUID is not a function`. New agent creation crashes silently — dialog stays open with no error feedback.",
+      "file": "packages/app/src/components/dialog-edit-agent.tsx",
+      "line": 60,
+      "code_snippet": "const id = props.agent?.id ?? crypto.randomUUID()",
+      "reproduction_steps": [
+        "Run in Electron context without crypto.randomUUID",
+        "Create new agent and click Save",
+        "Observe: crash, dialog stays open"
+      ],
+      "repair_instruction": "Add fallback: `crypto.randomUUID?.() ?? Date.now().toString(36) + Math.random().toString(36).slice(2)`",
+      "subagent_sources": ["dependency-saboteur", "edge-case-enumerator"]
+    },
+    {
+      "id": "STRESS-016",
+      "severity": "major",
+      "feature": "agent-configuration-ui",
+      "category": "input-validation",
+      "title": "Locale-dependent number parsing corrupts temperature/top_p",
+      "description": "Number.parseFloat('0,7') returns 0 because parseFloat stops at comma. Users in EU locales typing comma as decimal separator will have values silently truncated. `0,7` becomes `0`, `1,5` becomes `1`. The step=0.1 HTML attribute provides incomplete protection.",
+      "file": "packages/app/src/components/dialog-edit-agent.tsx",
+      "line": 61,
+      "code_snippet": "const temp = temperature() ? Number.parseFloat(temperature()) : undefined",
+      "reproduction_steps": [
+        "Type '0,7' in the temperature field",
+        "Click Save",
+        "Observe: temperature saved as 0 instead of 0.7"
+      ],
+      "repair_instruction": "Normalize decimal separator: `(temperature() ?? '').replace(',', '.')` before parsing.",
+      "subagent_sources": ["dependency-saboteur"]
+    },
+    {
+      "id": "STRESS-017",
+      "severity": "major",
+      "feature": "context-display",
+      "category": "render-safety",
+      "title": "useSessionLayout hook called unconditionally — crashes when rendered outside session page",
+      "description": "SessionContextUsage calls `useSessionLayout()` at the top of the component function (line 38). If this component is rendered outside a session page where SessionLayoutContext is not provided, the hook throws. The component is wrapped in `<Show when={params.id}>` but the hook runs before that guard.",
+      "file": "packages/app/src/components/session-context-usage.tsx",
+      "line": 38,
+      "code_snippet": "const { params, tabs, view } = useSessionLayout()  // crashes if no session",
+      "reproduction_steps": [
+        "Render SessionContextUsage on a non-session route",
+        "Observe: TypeError from useSessionLayout"
+      ],
+      "repair_instruction": "Guard the hook call or use a try/catch. Better: make the hook conditional or check a context availability flag.",
+      "subagent_sources": ["edge-case-enumerator"]
+    },
+    {
+      "id": "STRESS-018",
+      "severity": "major",
+      "feature": "agent-configuration-ui",
+      "category": "load-safety",
+      "title": "setLoaded(true) called before async IPC load resolves — stale data can overwrite user edits",
+      "description": "The component calls `setLoaded(true)` on line 56 BEFORE the `getCustomAgents().then(...)` resolves. If the user creates/edits/deletes an agent in the brief window between setLoaded and promise resolution, the later-resolving promise's `setCustomAgents()` call can overwrite the user's local changes with stale IPC data.",
+      "file": "packages/app/src/components/dialog-manage-agents.tsx",
+      "line": 53,
+      "code_snippet": "if (!loaded()) {\n  const a = api()\n  if (a?.getCustomAgents) {\n    setLoaded(true)  // <-- premature\n    a.getCustomAgents().then((agents) => {\n      setCustomAgents((agents ?? []) as AgentDef[])\n    })\n  }\n}",
+      "reproduction_steps": [
+        "Open dialog with slow IPC (throttled)",
+        "Immediately create a new agent",
+        "Observe: the initial IPC load resolves AFTER the create, overwriting the new agent"
+      ],
+      "repair_instruction": "Move setLoaded(true) inside the .then() callback: `.then((agents) => { setCustomAgents(agents ?? []); setLoaded(true) })`. Also add a .catch() handler.",
+      "subagent_sources": ["state-poisoner", "edge-case-enumerator"]
+    },
+    {
+      "id": "STRESS-019",
+      "severity": "major",
+      "feature": "context-display",
+      "category": "performance",
+      "title": "hasCompaction O(n) iteration on every streaming event — performance degrades with session size",
+      "description": "hasCompaction iterates ALL messages checking sync.data.part[msg.id] for compaction parts. On each new streaming event (message part update), the memo re-evaluates and scans the entire message list. For sessions with 1000+ messages, this creates visible UI jank on every streaming chunk. Additionally, getSessionContextMetrics.build() also iterates all messages (reduce + backward scan), doubling the work.",
+      "file": "packages/app/src/components/session-context-usage.tsx",
+      "line": 64,
+      "code_snippet": "for (const msg of messages()) {\n  const msgParts = parts[msg.id]\n  if (msgParts?.some((p) => p.type === 'compaction')) return true\n}",
+      "reproduction_steps": [
+        "Open session with 1000+ messages",
+        "Stream a long response (many part updates)",
+        "Observe: hasCompaction and metrics both iterate 1000+ messages per update"
+      ],
+      "repair_instruction": "Short-circuit: only check the last N (e.g., 10) messages since compaction parts only appear on recent messages. Or maintain a side-channel Set of session IDs known to have compaction, updated incrementally by the sync event reducer.",
+      "subagent_sources": ["memory-leak-hunter", "concurrency-stresser", "edge-case-enumerator"]
+    },
+    {
+      "id": "STRESS-020",
+      "severity": "minor",
+      "feature": "agent-configuration-ui",
+      "category": "ux",
+      "title": "No prompt length limit — 128px textarea with 10K chars is difficult to use",
+      "description": "Prompt field is a multiline TextField with max-h-32 (128px) and overflow-y-auto. A 10,000 character prompt produces a tiny scrollable window. No character count, no expand mechanism.",
+      "file": "packages/app/src/components/dialog-edit-agent.tsx",
+      "line": 88,
+      "code_snippet": "class='max-h-32 w-full overflow-y-auto font-mono text-xs'",
+      "repair_instruction": "Increase max-height or remove it, add expand/collapse button, and add character count indicator.",
+      "subagent_sources": ["edge-case-enumerator"]
+    },
+    {
+      "id": "STRESS-021",
+      "severity": "minor",
+      "feature": "agent-configuration-ui",
+      "category": "data-integrity",
+      "title": "Agent list key collision with duplicate names",
+      "description": "List key = `${x?.source}:${x?.name}`. Two custom agents with the same name collide on key. Solid.js may reuse DOM nodes incorrectly.",
+      "file": "packages/app/src/components/dialog-manage-agents.tsx",
+      "line": 84,
+      "code_snippet": "key={(x) => `${x?.source}:${x?.name}`}",
+      "repair_instruction": "Use unique ID in key: include agentDef.id or a fallback index.",
+      "subagent_sources": ["edge-case-enumerator"]
+    },
+    {
+      "id": "STRESS-022",
+      "severity": "minor",
+      "feature": "context-display",
+      "category": "code-quality",
+      "title": "Dead import: createSignal imported but never used",
+      "description": "session-context-usage.tsx imports createSignal but the component never uses it.",
+      "file": "packages/app/src/components/session-context-usage.tsx",
+      "line": 1,
+      "code_snippet": "import { Match, Show, Switch, createMemo, createSignal } from 'solid-js'",
+      "repair_instruction": "Remove createSignal from import.",
+      "subagent_sources": ["memory-leak-hunter"]
+    },
+    {
+      "id": "STRESS-023",
+      "severity": "minor",
+      "feature": "agent-configuration-ui",
+      "category": "ux",
+      "title": "No loading state while IPC fetch is pending — flash of empty list",
+      "description": "DialogManageAgents renders immediately with customAgents=[] while getCustomAgents() IPC resolves. No loading skeleton or spinner. On slow disk I/O, user sees empty list that populates abruptly.",
+      "file": "packages/app/src/components/dialog-manage-agents.tsx",
+      "line": 53,
+      "code_snippet": "a.getCustomAgents().then((agents) => { setCustomAgents(...) })",
+      "repair_instruction": "Use loaded() signal to show a loading indicator while IPC is pending. Show skeleton or spinner.",
+      "subagent_sources": ["edge-case-enumerator", "concurrency-stresser"]
+    },
+    {
+      "id": "STRESS-024",
+      "severity": "minor",
+      "feature": "context-display",
+      "category": "edge-case",
+      "title": "Usage percentage can exceed 100% (over-limit) without special visual indicator",
+      "description": "Math.round((total / limit) * 100) produces >100 when total exceeds limit. ProgressCircle may render incorrectly, color logic shows red (>=95%) but doesn't distinguish 'approaching limit' from 'over limit'.",
+      "file": "packages/app/src/components/session/session-context-metrics.ts",
+      "line": 75,
+      "code_snippet": "usage: limit ? Math.round((total / limit) * 100) : null",
+      "repair_instruction": "Clamp at 100: `Math.min(100, Math.round(...))`. Add pulsing/exclamation indicator when over limit.",
+      "subagent_sources": ["assumption-challenger", "edge-case-enumerator"]
+    },
+    {
+      "id": "STRESS-025",
+      "severity": "informational",
+      "feature": "settings-polish",
+      "category": "edge-case",
+      "title": "Agents tab icon 'brain' may not exist in icon set",
+      "description": "The tab trigger uses `<Icon name='brain' />`. Previous edit history shows 'bot' was removed because it didn't exist. If 'brain' is also missing, the tab renders without an icon.",
+      "file": "packages/app/src/components/dialog-settings.tsx",
+      "line": 36,
+      "code_snippet": "<Icon name='brain' />",
+      "repair_instruction": "Verify 'brain' exists in the icon set's type definitions. Test with a known icon name if not.",
+      "subagent_sources": ["edge-case-enumerator"]
+    },
+    {
+      "id": "STRESS-026",
+      "severity": "informational",
+      "feature": "context-display",
+      "category": "edge-case",
+      "title": "usageColor uses CSS custom properties with no fallback — undefined in custom themes",
+      "description": "Usage colors reference `var(--state-fg-danger)` and `var(--state-fg-warning)`. Custom themes that don't define these variables result in uncolored progress circles.",
+      "file": "packages/app/src/components/session-context-usage.tsx",
+      "line": 77,
+      "code_snippet": "if (pct >= 95) return 'var(--state-fg-danger)'",
+      "repair_instruction": "Add CSS fallbacks: `var(--state-fg-danger, red)` and `var(--state-fg-warning, orange)`.",
+      "subagent_sources": ["edge-case-enumerator"]
+    },
+    {
+      "id": "STRESS-027",
+      "severity": "informational",
+      "feature": "agent-configuration-ui",
+      "category": "edge-case",
+      "title": "No cross-window synchronization — stale agent list in secondary windows",
+      "description": "getCustomAgents() is called once per mount. If two windows share the project, modifications in window B are not reflected in window A until dialog is reopened.",
+      "file": "packages/app/src/components/dialog-manage-agents.tsx",
+      "line": 53,
+      "code_snippet": "if (!loaded()) { ... a.getCustomAgents().then(...) }",
+      "repair_instruction": "Add IPC listener for store-change events from main process, or poll on window focus.",
+      "subagent_sources": ["edge-case-enumerator"]
+    },
+    {
+      "id": "STRESS-028",
+      "severity": "informational",
+      "feature": "agent-configuration-ui",
+      "category": "edge-case",
+      "title": "No cross-window IPC write serialization — last-write-wins on shared electron-store",
+      "description": "Two windows writing concurrently to the same electron-store file can lose writes. The conf library uses atomic temp+rename which prevents torn writes but last rename wins, silently discarding the first window's changes.",
+      "file": "packages/desktop/src/main/ipc.ts",
+      "line": 224,
+      "code_snippet": "ipcMain.handle('set-desktop-custom-agents', (_event, agents: unknown[]) => { store.set('agents', agents) })",
+      "repair_instruction": "For single-window use: theoretical only. For multi-window support: add file-lock or version counter in the IPC handler.",
+      "subagent_sources": ["concurrency-stresser"]
+    }
+  ],
+  "summary": {
+    "total_findings": 28,
+    "by_severity": {
+      "blocker": 10,
+      "major": 8,
+      "minor": 6,
+      "informational": 4
+    },
+    "by_feature": {
+      "agent-configuration-ui": 18,
+      "context-display": 8,
+      "settings-polish": 1,
+      "cross-cutting": 1
+    },
+    "critical_immediate_repairs": [
+      "STRESS-001: Clamp temperature/top_p in handleSave",
+      "STRESS-002: Serialize IPC writes to prevent store corruption",
+      "STRESS-003: Add delete confirmation dialog",
+      "STRESS-004: Add Array.isArray validation in IPC handlers",
+      "STRESS-005: Guard sync.data.part with optional chaining",
+      "STRESS-006: Null-safety for tokenTotal and cost reduce",
+      "STRESS-007: Guard sortBy with undefined-safe localeCompare",
+      "STRESS-008: Guard handleDeleteAgent against undefined id",
+      "STRESS-009: Fix temperature=0 silently dropped",
+      "STRESS-010: Guard sync.data with optional chaining"
+    ],
+    "verdict": "survived_attack_with_repairs",
+    "attack_surface_summary": "3 features attacked across 9 files with 6 parallel subagents. 28 findings identified: 10 blockers, 8 major, 6 minor, 4 informational. The Agent Configuration UI has the most severe vulnerabilities (18 of 28 findings). The systemic root cause is twofold: (1) fire-and-forget IPC writes in saveCustomAgents enabling store corruption through race conditions, and (2) complete absence of null/type guards on sync.data, sync.data.part, msg.tokens, and crypto.randomUUID — any undefined value in the data chain causes component-level crashes with no error boundaries. The Context Display has a blocking crash when sync.data.part is undefined and when msg.tokens fields are incomplete. The most urgent repair is adding optional chaining guards across all sync.data and token access points, followed by IPC write serialization."
+  }
+}

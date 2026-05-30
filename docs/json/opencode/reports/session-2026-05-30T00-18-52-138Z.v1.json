@@ -1,0 +1,159 @@
+{
+  "schema_version": "v1",
+  "report_id": "session-2026-05-30T00-18-52-138Z.v1",
+  "session_id": "ses_189d5b3cdffeF47WZMGVllqvf6",
+  "generated_at": "2026-05-30T00:18:52.172653+00:00",
+  "session_summary": "## Session: Fix Concurrent Session Regressions\n\nSuccessfully fixed all blocking concurrent-session regressions across 3 packages (desktop, opencode, app) without introducing any new type errors.\n\n### What was done — 4 Packets\n\n**PACKET A — TuiEvent module recreation** (`packages/opencode/src/cli/cmd/tui/event.ts`, new 53 lines)\n- Recreated 4 BusEvent definitions (ToastShow, CommandExecute, PromptAppend, SessionSelect) that were deleted when the entire `tui/` directory was removed\n- Unblocked 3 importing files (mcp/index.ts, handlers/tui.ts, groups/tui.ts)\n- **0 type errors, DuckDB test restored to 4/4 PASS**\n\n**PACKET B — App settings properties** (`packages/app/src/context/settings.tsx`, modified)\n- Added `showSessionViz`, `setShowSessionViz`, `onboarded`, `setOnboarded` to Settings interface, defaults, accessors, and setters\n- Used existing `withFallback` + `setStore` pattern (per critic's correction)\n- Unblocked 4 consuming components\n- **Typecheck passes**\n\n**PACKET C — install-cli module** (`packages/desktop/src/main/install-cli.ts`, new 15 lines)\n- Created async `installCli()` using `promisify(execFile)` to run `opencode --version`\n- Proper error wrapping with handler path identification (per critic's recommendation)\n- Satisfied 4 wiring points in IPC bridge\n- **Desktop typecheck: 0 errors**\n\n**PACKET D — Registry tool init** (`packages/opencode/src/tool/registry.ts`, 4 lines)\n- Added yield* init for RecordStressWaveTool and RecordExecutionWaveTool\n- Fixed Tool.init() to use unwrapped variables\n- **0 registry.ts errors**\n\n### Verification Results\n| Target | Result | Time |\n|---|---|---|\n| DuckDB test (4 tests) | ✅ PASS | 2.59s |\n| Desktop typecheck | ✅ 0 errors | — |\n| App typecheck | ✅ PASS | — |\n| Opencode typecheck | ✅ 0 new errors (455 pre-existing) | — |\n\n### Pre-existing debt NOT addressed\n- Tool Layer never-mismatch (~80 errors across src + tests)\n- TUI module resolution failures (~117 in tests)\n- Postgres migration debt (~16 errors)\n- Implicit any parameters (~170 errors)\n\n### Out-of-scope findings\n1. JSON syntax error in `next-session-briefing.v1.json` line 193 — array literal without brackets.",
+  "next_steps": "1. **Fix tool Layer never-mismatch** — This affects ~80 errors across source and test files. Root cause: the `Init` pattern in the tool framework creates `Effect<..., never, Service>` that doesn't satisfy `Effect<..., never, never>`. Fixing this one architectural issue eliminates ~18% of all opencode type errors.\n2. **Clean up dead TUI references** — 117 TS2307 errors in tests reference deleted TUI components. Either recreate them as stubs or remove the test references.\n3. **Fix postgres migration debt in v2/session.ts** — ~16 errors from SQLite types vs Pg API mismatch.\n4. **Run prepublication review** for the desktop plugin slice (DesktopPlugin types, DesktopPluginProvider, DesktopPluginLoader, ScopedPluginStore, IPC config transport).\n5. **Fix the handoff briefing JSON** syntax error in `docs/json/opencode/handoffs/next-session-briefing.v1.json` line 193.\n6. **Coordinate with ses_189d99cc** — another active orchestrator session running Phase 1 feature validation/stress tests.",
+  "waves_completed": [
+    "W1",
+    "W3",
+    "W3-complete",
+    "W7"
+  ],
+  "wave_details": {
+    "W1": {
+      "started_at": "2026-05-30T00:00:37.247804+00:00",
+      "completed_at": "2026-05-30T00:00:37.247804+00:00",
+      "findings": [
+        {
+          "source": "cartographer",
+          "summary": "6 regression areas mapped: (1) install-cli ghost import needs module creation, (2) TuiEvent module deleted in TUI removal — needs recreation, (3) Settings interface missing 3 properties for session-viz + onboarding features, (4) 82 type errors in tool files (error channel + Schema annotations + registry init), (5) fence.ts middleware OK - sync Database.use(), (6) DuckDB test blocked by Area 2",
+          "confidence": 0.9,
+          "relevance_profiles": [
+            "execution",
+            "architecture"
+          ],
+          "wave": "W1"
+        }
+      ],
+      "artifacts": [
+        "docs/json/opencode/cartography/concurrent-session-regression-map.v1.json"
+      ]
+    },
+    "W3": {
+      "started_at": "2026-05-30T00:05:00.203783+00:00",
+      "completed_at": "2026-05-30T00:05:00.203783+00:00",
+      "findings": [
+        {
+          "source": "architect",
+          "summary": "Plan created with 4 independent packets: A-TuiEvent, B-Settings, C-install-cli, D-registry. Pre-existing fixes from other sessions reduce tool error channel work.",
+          "confidence": 0.9,
+          "relevance_profiles": [
+            "execution"
+          ],
+          "wave": "W3"
+        },
+        {
+          "source": "critic",
+          "summary": "Blocking finding: Packet B pseudocode doesn't match actual settings.tsx pattern. Must use store.general?.propName with setStore(), not settings.general.propName with update().",
+          "confidence": 1.0,
+          "relevance_profiles": [
+            "execution"
+          ],
+          "wave": "W3"
+        },
+        {
+          "source": "preflight_check",
+          "summary": "All 4 target paths are free of conflicts. No active claims from other sessions.",
+          "confidence": 1.0,
+          "relevance_profiles": [
+            "execution"
+          ],
+          "wave": "W3"
+        }
+      ],
+      "artifacts": [
+        "docs/json/opencode/plans/fix-concurrent-session-regressions.v1.json",
+        "docs/json/opencode/plans/fix-concurrent-session-regressions/comments.v1.jsonl"
+      ]
+    },
+    "W3-complete": {
+      "started_at": "2026-05-30T00:07:32.583270+00:00",
+      "completed_at": "2026-05-30T00:07:32.583270+00:00",
+      "findings": [
+        {
+          "source": "execution",
+          "summary": "Packet A (TuiEvent): Created packages/opencode/src/cli/cmd/tui/event.ts with BusEvent.define for ToastShow, CommandExecute, PromptAppend, SessionSelect",
+          "confidence": 1.0,
+          "relevance_profiles": [
+            "execution",
+            "validation"
+          ],
+          "wave": "W3-complete"
+        },
+        {
+          "source": "execution",
+          "summary": "Packet B (Settings): Added showSessionViz, setShowSessionViz, onboarded, setOnboarded to settings.tsx interface, defaults, accessors and setters. Green typecheck.",
+          "confidence": 1.0,
+          "relevance_profiles": [
+            "execution",
+            "validation"
+          ],
+          "wave": "W3-complete"
+        },
+        {
+          "source": "execution",
+          "summary": "Packet C (install-cli): Created packages/desktop/src/main/install-cli.ts with execFile('opencode --version') and error wrapping. Desktop typecheck passes.",
+          "confidence": 1.0,
+          "relevance_profiles": [
+            "execution",
+            "validation"
+          ],
+          "wave": "W3-complete"
+        },
+        {
+          "source": "execution",
+          "summary": "Packet D (registry): Added yield* RecordStressWaveTool/RecordExecutionWaveTool init and switched Tool.init() to unwrapped variables. Already partially applied by prior session.",
+          "confidence": 1.0,
+          "relevance_profiles": [
+            "execution",
+            "validation"
+          ],
+          "wave": "W3-complete"
+        }
+      ],
+      "artifacts": [
+        "packages/opencode/src/cli/cmd/tui/event.ts",
+        "packages/desktop/src/main/install-cli.ts"
+      ]
+    },
+    "W7": {
+      "started_at": "2026-05-30T00:18:45.219384+00:00",
+      "completed_at": "2026-05-30T00:18:45.219384+00:00",
+      "findings": [
+        {
+          "source": "historian",
+          "summary": "Session fully documented with archive records, change manifest, and session reports. 4 JSON artifacts created.",
+          "confidence": 1.0,
+          "relevance_profiles": [
+            "all"
+          ],
+          "wave": "W7"
+        }
+      ],
+      "artifacts": [
+        "docs/json/opencode/archive/ses_189d51d6bffeuG0R2KsUA78ar0/ses_189d51d6bffeuG0R2KsUA78ar0/current.v1.json",
+        "docs/json/opencode/archive/ses_189d51d6bffeuG0R2KsUA78ar0/ses_189d51d6bffeuG0R2KsUA78ar0/artifacts/concurrent-session-regression-fix.v1.json",
+        "docs/json/opencode/reports/session-2026-05-30T00-17-24-000Z.v1.json"
+      ]
+    }
+  },
+  "total_findings": 9,
+  "findings_by_profile": {
+    "execution": 8,
+    "architecture": 1,
+    "validation": 4,
+    "all": 1
+  },
+  "artifacts_consumed": [
+    "docs/json/opencode/cartography/concurrent-session-regression-map.v1.json",
+    "docs/json/opencode/plans/fix-concurrent-session-regressions.v1.json",
+    "docs/json/opencode/plans/fix-concurrent-session-regressions/comments.v1.jsonl",
+    "packages/opencode/src/cli/cmd/tui/event.ts",
+    "packages/desktop/src/main/install-cli.ts",
+    "docs/json/opencode/archive/ses_189d51d6bffeuG0R2KsUA78ar0/ses_189d51d6bffeuG0R2KsUA78ar0/current.v1.json",
+    "docs/json/opencode/archive/ses_189d51d6bffeuG0R2KsUA78ar0/ses_189d51d6bffeuG0R2KsUA78ar0/artifacts/concurrent-session-regression-fix.v1.json",
+    "docs/json/opencode/reports/session-2026-05-30T00-17-24-000Z.v1.json"
+  ]
+}

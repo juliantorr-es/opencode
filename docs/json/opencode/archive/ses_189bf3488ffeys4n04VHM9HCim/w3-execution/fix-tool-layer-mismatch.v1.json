@@ -1,0 +1,22 @@
+{
+  "schema_version": "v1",
+  "plan_id": "fix-tool-layer-mismatch",
+  "plan_revision": 1,
+  "title": "Fix tool Layer never-mismatch — add R generic to Def.execute type",
+  "boundary": "fix-tool-layer-mismatch",
+  "consumer_purpose": "Eliminate 82 TS2345 type errors caused by Effect v4 invariant params mismatch between Def.execute (Effect<..., unknown, unknown>) and tool execute returns (Effect<..., never, Service>)",
+  "claim_atoms": [
+    "Add R generic to Def interface for execute's service channel",
+    "Propagate R through DefWithoutID, Init, Info, and define()",
+    "Fix 14 source tool files — types auto-resolve after framework change",
+    "Fix app-runtime.ts Layer remainder with type cast",
+    "Fix 6 Schema.Literal call sites with Schema.Literals",
+    "Fix test files — cascading type fixes for 64 errors",
+    "All edits on dirty files must be additive — preserve existing changes",
+    "Verify with bun typecheck in packages/opencode"
+  ],
+  "content": "## Plan: Fix Tool Layer never-mismatch (82 TS2345 errors)\n\n### Root Cause\n`Def.execute` in `packages/opencode/src/tool/tool.ts` is typed as:\n```typescript\nexecute(args, ctx): Effect.Effect<ExecuteResult<M>>\n```\nThis expands to `Effect<ExecuteResult<M>, unknown, unknown>`. Effect v4 uses **invariant type parameters**, so when tools return `Effect<ExecuteResult, never, Service>` (after `.pipe(Effect.orDie)`), TypeScript rejects because `never ≠ unknown` and `Service ≠ unknown`.\n\n### Approach: Add R generic to Def interface\nAdd a generic `R` parameter to `Def` to properly type the required services channel.\n\n#### Changes needed:\n\n**A. Framework change — tool.ts (1 file)**\n\n1. Add `R = never` to `Def<Parameters, M, R>`\n2. Change execute return type: `Effect<ExecuteResult<M>, never, R>`\n3. Propagate `R` through `DefWithoutID`: `DefWithoutID<P, M, R> = Omit<Def<P, M, R>, \"id\">`\n4. Propagate `R` through `Init`: `Init<P, M, R> = DefWithoutID<P, M, R> | (() => Effect<DefWithoutID<P, M, R>>)`\n5. Propagate `R` through `Info`: `Info<P, M, R> { init: () => Effect<DefWithoutID<P, M, R>> }`\n6. Update `define()` to accept `R2` for execute context: `define<P, M, R, R2=never, ID>(id, init: Effect<Init<P, M, R2>, never, R>): Effect<Info<P, M, R2>, never, R | R2 | Truncate | Agent>`\n7. `wrap()` function: Propagate `R` through; the wrapper's new execute already applies `.pipe(Effect.orDie)` so no runtime change needed\n8. `init()` function: Update type signature\n\n**B. Schema.Literal fixes (6 files)**\n\nReplace `Schema.Literal(a, b, c, ...)` with `Schema.Literals([a, b, c, ...])` in:\n- `comment-plan.ts` (2 occurrences: category, severity)\n- `coordination.ts` (operation field)\n- `discover-findings.ts` (finding_type field)\n- `publish-finding.ts` (finding_type field)\n- `record-stress-wave.ts` (verdict field)\n- `rig-git.ts` (Command field)\n\n**C. app-runtime.ts fix**\n\nCast `AppLayer` at the `ManagedRuntime.make` call site:\n```typescript\nconst rt = ManagedRuntime.make(AppLayer as never, { memoMap })\n```\nOr use a proper type annotation on AppLayer cast.\n\n**D. Test file fixes (cascading)**\n\nThe `R` generic on `Def`/`DefWithoutID`/`Info` will cascade into test files. Tests that create tool layers will need to provide the required services. This is the correct constraint — tests SHOULD provide the services that tools need.\n\n### Dirty file preservation\n19 tool files have uncommitted changes. Edits to `tool.ts` are the only framework change — all other files get their types auto-resolved. The 6 Schema.Literal files among the dirty ones need additive edits only.\n\n### Verification\n```bash\ncd packages/opencode && bun typecheck 2>&1 | grep \"error TS2345\" | wc -l\n# Should be 0 after fix\n```\n",
+  "status": "proposed",
+  "created_at": "2026-05-30T00:32:36.583926+00:00",
+  "modified_at": "2026-05-30T00:32:36.584095+00:00"
+}

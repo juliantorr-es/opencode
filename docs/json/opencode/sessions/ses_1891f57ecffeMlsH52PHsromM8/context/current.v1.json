@@ -1,0 +1,66 @@
+{
+  "schema_version": "v1",
+  "session_id": "ses_1891f57ecffeMlsH52PHsromM8",
+  "mission_status": "in_progress",
+  "last_updated": "2026-05-30T03:22:18.258370+00:00",
+  "current_wave": "2",
+  "waves": {
+    "2": {
+      "started_at": "2026-05-30T03:16:30.357483+00:00",
+      "completed_at": "2026-05-30T03:22:18.258370+00:00",
+      "findings": [
+        {
+          "source": "critic-review",
+          "summary": "Waiting for architect plan for lane 4 MCP management hardening. Cartography complete with 15 findings across 11 files.",
+          "confidence": 1.0,
+          "relevance_profiles": [
+            "review"
+          ],
+          "wave": "2"
+        },
+        {
+          "source": "critic-synthesis",
+          "summary": "MCP Management Hardening plan reviewed across 7 axes. 4 blocking findings, 1 high finding, 1 informational. Debuggability (2/5) is weakest axis due to double-toast bug, invisible semaphore deadlocks, silent save failures, and ErrorBoundary ignoring error objects. Coupling (1/5), Surface area (1/5), and Reversibility (5/5) are strongest.",
+          "confidence": 1.0,
+          "relevance_profiles": [
+            "review",
+            "architecture",
+            "execution"
+          ],
+          "wave": "2"
+        }
+      ],
+      "artifacts": [
+        "docs/json/opencode/cartography/mcp-management-hardening.v1.json",
+        "docs/json/opencode/plans/opencode-mcp-mgmt-hardening/comments.v1.jsonl"
+      ]
+    }
+  },
+  "active_findings": [
+    {
+      "source": "critic-review",
+      "summary": "Waiting for architect plan for lane 4 MCP management hardening. Cartography complete with 15 findings across 11 files.",
+      "confidence": 1.0,
+      "relevance_profiles": [
+        "review"
+      ],
+      "wave": "2"
+    },
+    {
+      "source": "critic-synthesis",
+      "summary": "MCP Management Hardening plan reviewed across 7 axes. 4 blocking findings, 1 high finding, 1 informational. Debuggability (2/5) is weakest axis due to double-toast bug, invisible semaphore deadlocks, silent save failures, and ErrorBoundary ignoring error objects. Coupling (1/5), Surface area (1/5), and Reversibility (5/5) are strongest.",
+      "confidence": 1.0,
+      "relevance_profiles": [
+        "review",
+        "architecture",
+        "execution"
+      ],
+      "wave": "2"
+    }
+  ],
+  "active_artifacts": [
+    "docs/json/opencode/cartography/mcp-management-hardening.v1.json",
+    "docs/json/opencode/plans/opencode-mcp-mgmt-hardening/comments.v1.jsonl"
+  ],
+  "archived": []
+}

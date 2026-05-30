@@ -1,0 +1,24 @@
+{
+  "schema_version": "v1",
+  "plan_id": "desktop-runtime-execution",
+  "plan_revision": 1,
+  "title": "Desktop App Runtime Performance Execution",
+  "boundary": "desktop-runtime-execution",
+  "consumer_purpose": "Execute all four slices of desktop runtime performance improvements — port discovery fix, lazy IPC, deferred context-menu, async CA certs, non-blocking sidecar health check, code splitting, shell env probe optimization, and renderer CSS audit",
+  "claim_atoms": [
+    "Port discovery eliminated: sidecar listens on 0, reports port in 'ready' message",
+    "electron-context-menu deferred to after window creation",
+    "IPC handlers lazy-registered: only essential handlers registered at startup",
+    "CA certificate loading made async/non-blocking",
+    "Main window shown before sidecar health check completes",
+    "Sidecar fork triggered earlier in startup sequence",
+    "Code-split main process: dynamic import for zip.js, marked",
+    "Loading screen CSS reduced: minimal styles, no full app bundle",
+    "Shell env probe made async or non-interactive",
+    "All changes additive to existing dirty files"
+  ],
+  "content": "Desktop App Runtime Performance Execution Plan\n\n== SCOPE ==\nExecute all four improvement slices identified in the desktop runtime audit across packages/desktop/. The existing dirty files from prior sessions must be preserved — all changes are additive.\n\n== SLICE 1 — IMMEDIATE WINS ==\n\nTask 1.1: Eliminate Port Discovery (sidecar.ts + server.ts + index.ts)\n- Current: main process creates TCP server on port 0, listens, gets port, closes server, then passes port to sidecar\n- Target: sidecar process listens on port 0 internally, reports bound port in 'ready' message\n- Changes: sidecar.ts start() binds to port 0 and reports real port; server.ts spawnLocalServer handles dynamic port; index.ts port discovery block removed\n- Files: packages/desktop/src/main/sidecar.ts, packages/desktop/src/main/server.ts, packages/desktop/src/main/index.ts\n\nTask 1.2: Defer electron-context-menu (index.ts)\n- Current: import at module top, contextMenu() called as first line of main Effect\n- Target: move contextMenu() call to after createMainWindow()\n- Files: packages/desktop/src/main/index.ts\n\nTask 1.3: Lazy IPC Handler Registration (ipc.ts + index.ts)\n- Current: all 46 handlers registered in single registerIpcHandlers() call before app.whenReady()\n- Target: register only essential handlers early (sidecar lifecycle, window config, deep links); lazy-register the rest\n- Files: packages/desktop/src/main/ipc.ts, packages/desktop/src/main/index.ts\n\nTask 1.4: Async CA Certificate Loading (index.ts)\n- Current: synchronous getCACertificates blocking Phase 1\n- Target: make async, move to after app.whenReady\n- Files: packages/desktop/src/main/index.ts\n\n== SLICE 2 — SIDECAR BOOT ==\n\nTask 2.1: Non-blocking Sidecar Health Check (index.ts + server.ts + preload/types.ts)\n- Target: show main window before health check completes, pass status to renderer\n- Files: packages/desktop/src/main/index.ts, packages/desktop/src/main/server.ts\n\nTask 2.2: Earlier Sidecar Fork (index.ts)\n- Target: trigger sidecar fork as early as possible in sequence\n- Files: packages/desktop/src/main/index.ts\n\n== SLICE 3 — BUNDLE OPTIMIZATION ==\n\nTask 3.1: Code-split Main Process (logging.ts, markdown.ts)\n- Target: dynamic import for @zip.js/zip.js and marked\n- Files: packages/desktop/src/main/logging.ts, packages/desktop/src/main/markdown.ts\n\nTask 3.2: Loading Screen CSS Audit (loading.tsx, loading.html)\n- Target: minimal loading CSS, avoid full app bundle\n- Files: packages/desktop/src/renderer/loading.tsx\n\n== SLICE 4 — SHELL ENV ==\n\nTask 4.1: Optimize Shell Env Probe (shell-env.ts)\n- Target: non-interactive shell probe, reduced timeout, cached result\n- Files: packages/desktop/src/main/shell-env.ts",
+  "status": "proposed",
+  "created_at": "2026-05-29T22:43:10.669279+00:00",
+  "modified_at": "2026-05-29T22:43:10.669475+00:00"
+}

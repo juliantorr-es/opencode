@@ -5,7 +5,7 @@ import { getDirectory, getFilename } from "@opencode-ai/core/util/path"
 
 export type AtOption =
   | { type: "agent"; name: string; display: string }
-  | { type: "delegate"; name: string; display: string; description?: string }
+  | { type: "subagent"; name: string; display: string; description?: string }
   | { type: "file"; path: string; display: string; recent?: boolean }
 
 export interface SlashCommand {
@@ -34,6 +34,36 @@ type PromptPopoverProps = {
   t: (key: string) => string
 }
 
+function buildGroups(items: AtOption[], limit: number): { label: string; items: AtOption[] }[] {
+  const groupMap = new Map<string, AtOption[]>()
+  for (const item of items) {
+    const groupKey = item.type === "subagent" ? "delegate" : item.type === "agent" ? "agent" : item.recent ? "recent" : "file"
+    const label = groupKey === "agent" ? "Agents" : groupKey === "delegate" ? "Delegates" : groupKey === "recent" ? "Recent Files" : "Files"
+    let group = groupMap.get(label)
+    if (!group) {
+      group = []
+      groupMap.set(label, group)
+    }
+    group.push(item)
+  }
+
+  const result: { label: string; items: AtOption[] }[] = []
+  let count = 0
+  for (const label of groupMap.keys()) {
+    const items = groupMap.get(label)!
+    if (count + items.length <= limit) {
+      result.push({ label, items })
+      count += items.length
+    } else if (count < limit) {
+      result.push({ label, items: items.slice(0, limit - count) })
+      break
+    } else {
+      break
+    }
+  }
+  return result
+}
+
 export const PromptPopover: Component<PromptPopoverProps> = (props) => {
   return (
     <Show when={props.popover}>
@@ -52,62 +82,69 @@ export const PromptPopover: Component<PromptPopoverProps> = (props) => {
               when={props.atFlat.length > 0}
               fallback={<div class="text-text-weak px-2 py-1">{props.t("prompt.popover.emptyResults")}</div>}
             >
-              <For each={props.atFlat.slice(0, 10)}>
-                {(item) => {
-                  const key = props.atKey(item)
+              <For each={buildGroups(props.atFlat, 10)}>
+                {(group) => (
+                  <>
+                    <div class="text-12-regular text-text-subtle px-2 py-1 uppercase tracking-wider">{group.label}</div>
+                    <For each={group.items}>
+                      {(item) => {
+                        const key = props.atKey(item)
 
-                  if (item.type === "agent") {
-                    return (
-                      <button
-                        class="w-full flex items-center gap-x-2 rounded-md px-2 py-0.5"
-                        classList={{ "bg-surface-raised-base-hover": props.atActive === key }}
-                        onClick={() => props.onAtSelect(item)}
-                        onMouseEnter={() => props.setAtActive(key)}
-                      >
-                        <Icon name="brain" size="small" class="text-icon-info-active shrink-0" />
-                        <span class="text-14-regular text-text-strong whitespace-nowrap">@{item.name}</span>
-                      </button>
-                    )
-                  }
+                        if (item.type === "agent") {
+                          return (
+                            <button
+                              class="w-full flex items-center gap-x-2 rounded-md px-2 py-0.5"
+                              classList={{ "bg-surface-raised-base-hover": props.atActive === key }}
+                              onClick={() => props.onAtSelect(item)}
+                              onMouseEnter={() => props.setAtActive(key)}
+                            >
+                              <Icon name="brain" size="small" class="text-icon-info-active shrink-0" />
+                              <span class="text-14-regular text-text-strong whitespace-nowrap">@{item.name}</span>
+                            </button>
+                          )
+                        }
 
-                  if (item.type === "delegate") {
-                    return (
-                      <button
-                        class="w-full flex items-center gap-x-2 rounded-md px-2 py-0.5"
-                        classList={{ "bg-surface-raised-base-hover": props.atActive === key }}
-                        onClick={() => props.onAtSelect(item)}
-                        onMouseEnter={() => props.setAtActive(key)}
-                      >
-                        <Icon name="share" size="small" class="text-icon-info-active shrink-0" />
-                        <span class="text-14-regular text-text-strong whitespace-nowrap">@{item.name}</span>
-                        <Show when={item.description}>
-                          <span class="text-12-regular text-text-weak truncate ml-1">{item.description}</span>
-                        </Show>
-                      </button>
-                    )
-                  }
+                        if (item.type === "subagent") {
+                          return (
+                            <button
+                              class="w-full flex items-center gap-x-2 rounded-md px-2 py-0.5"
+                              classList={{ "bg-surface-raised-base-hover": props.atActive === key }}
+                              onClick={() => props.onAtSelect(item)}
+                              onMouseEnter={() => props.setAtActive(key)}
+                            >
+                              <Icon name="share" size="small" class="text-icon-info-active shrink-0" />
+                              <span class="text-14-regular text-text-strong whitespace-nowrap">@{item.name}</span>
+                              <Show when={item.description}>
+                                <span class="text-12-regular text-text-weak truncate ml-1">{item.description}</span>
+                              </Show>
+                            </button>
+                          )
+                        }
 
-                  const isDirectory = item.path.endsWith("/")
-                  const directory = isDirectory ? item.path : getDirectory(item.path)
-                  const filename = isDirectory ? "" : getFilename(item.path)
+                        const isDirectory = item.path.endsWith("/")
+                        const directory = isDirectory ? item.path : getDirectory(item.path)
+                        const filename = isDirectory ? "" : getFilename(item.path)
 
-                  return (
-                    <button
-                      class="w-full flex items-center gap-x-2 rounded-md px-2 py-0.5"
-                      classList={{ "bg-surface-raised-base-hover": props.atActive === key }}
-                      onClick={() => props.onAtSelect(item)}
-                      onMouseEnter={() => props.setAtActive(key)}
-                    >
-                      <FileIcon node={{ path: item.path, type: "file" }} class="shrink-0 size-4" />
-                      <div class="flex items-center text-14-regular min-w-0">
-                        <span class="text-text-weak whitespace-nowrap truncate min-w-0">{directory}</span>
-                        <Show when={!isDirectory}>
-                          <span class="text-text-strong whitespace-nowrap">{filename}</span>
-                        </Show>
-                      </div>
-                    </button>
-                  )
-                }}
+                        return (
+                          <button
+                            class="w-full flex items-center gap-x-2 rounded-md px-2 py-0.5"
+                            classList={{ "bg-surface-raised-base-hover": props.atActive === key }}
+                            onClick={() => props.onAtSelect(item)}
+                            onMouseEnter={() => props.setAtActive(key)}
+                          >
+                            <FileIcon node={{ path: item.path, type: "file" }} class="shrink-0 size-4" />
+                            <div class="flex items-center text-14-regular min-w-0">
+                              <span class="text-text-weak whitespace-nowrap truncate min-w-0">{directory}</span>
+                              <Show when={!isDirectory}>
+                                <span class="text-text-strong whitespace-nowrap">{filename}</span>
+                              </Show>
+                            </div>
+                          </button>
+                        )
+                      }}
+                    </For>
+                  </>
+                )}
               </For>
             </Show>
           </Match>

@@ -1,0 +1,88 @@
+{
+  "schema_version": "v1",
+  "session_id": "ses_1891e68b1ffeYXmDtt8h0DvA6c",
+  "mission_status": "complete",
+  "last_updated": "2026-05-30T03:18:35.329807+00:00",
+  "current_wave": "wave-2-review",
+  "waves": {
+    "wave-2-review": {
+      "started_at": "2026-05-30T03:18:35.329807+00:00",
+      "completed_at": "2026-05-30T03:18:35.329807+00:00",
+      "findings": [
+        {
+          "source": "cartography-mcp-management-crash-fixes.v1.json",
+          "summary": "FI-002 (onSave) already fixed at line 380. MCP-006 (addMutation no persist) is the critical remaining bug. MCP-007 (nested dialog) causes wrong dialog close.",
+          "confidence": 0.95,
+          "relevance_profiles": [
+            "review",
+            "architecture",
+            "execution"
+          ],
+          "wave": "wave-2-review"
+        },
+        {
+          "source": "prefab-architect-lane2-mcp-crashes.v1.json",
+          "summary": "Architect prefab omitted MCP-006 and MCP-007, aimed to fix already-done FI-002. Must be revised.",
+          "confidence": 0.95,
+          "relevance_profiles": [
+            "review",
+            "architecture"
+          ],
+          "wave": "wave-2-review"
+        },
+        {
+          "source": "review-lane2-mcp-crashes.v1.json",
+          "summary": "3 blocking objections: (1) addMutation persist missing, (2) nested dialog, (3) re-fixing already-done work. 7 conditions for approval.",
+          "confidence": 0.95,
+          "relevance_profiles": [
+            "review",
+            "architecture",
+            "execution"
+          ],
+          "wave": "wave-2-review"
+        }
+      ],
+      "artifacts": [
+        "docs/json/opencode/sessions/current/review-lane2-mcp-crashes.v1.json"
+      ]
+    }
+  },
+  "active_findings": [
+    {
+      "source": "cartography-mcp-management-crash-fixes.v1.json",
+      "summary": "FI-002 (onSave) already fixed at line 380. MCP-006 (addMutation no persist) is the critical remaining bug. MCP-007 (nested dialog) causes wrong dialog close.",
+      "confidence": 0.95,
+      "relevance_profiles": [
+        "review",
+        "architecture",
+        "execution"
+      ],
+      "wave": "wave-2-review"
+    },
+    {
+      "source": "prefab-architect-lane2-mcp-crashes.v1.json",
+      "summary": "Architect prefab omitted MCP-006 and MCP-007, aimed to fix already-done FI-002. Must be revised.",
+      "confidence": 0.95,
+      "relevance_profiles": [
+        "review",
+        "architecture"
+      ],
+      "wave": "wave-2-review"
+    },
+    {
+      "source": "review-lane2-mcp-crashes.v1.json",
+      "summary": "3 blocking objections: (1) addMutation persist missing, (2) nested dialog, (3) re-fixing already-done work. 7 conditions for approval.",
+      "confidence": 0.95,
+      "relevance_profiles": [
+        "review",
+        "architecture",
+        "execution"
+      ],
+      "wave": "wave-2-review"
+    }
+  ],
+  "active_artifacts": [
+    "docs/json/opencode/sessions/current/review-lane2-mcp-crashes.v1.json"
+  ],
+  "archived": []
+}

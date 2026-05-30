@@ -20,13 +20,7 @@ const Parameters = Schema.Struct({
   findings: Schema.String.annotate({
     description: "JSON array of finding objects with severity, description, and repair_instruction",
   }),
-  verdict: Schema.Literal(
-    "survived_attack",
-    "falsified_blocking",
-    "unproven_material",
-    "deferred_outside_boundary",
-    "informational",
-  ).annotate({
+  verdict: Schema.Literals(["survived_attack", "falsified_blocking", "unproven_material", "deferred_outside_boundary", "informational"]).annotate({
     description:
       "Overall verdict: survived_attack | falsified_blocking | unproven_material | deferred_outside_boundary | informational",
   }),

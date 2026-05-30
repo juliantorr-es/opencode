@@ -1,0 +1,264 @@
+{
+  "schema_version": "v1",
+  "session_id": "ses_1891e8ed2ffeECKfNRF9gHdGB3",
+  "mission_status": "complete",
+  "last_updated": "2026-05-30T03:22:37.360228+00:00",
+  "current_wave": "wave-2-architecture",
+  "waves": {
+    "wave-2-architecture": {
+      "started_at": "2026-05-30T03:20:23.955519+00:00",
+      "completed_at": "2026-05-30T03:22:37.360228+00:00",
+      "findings": [
+        {
+          "source": "self-review",
+          "summary": "Fix 7's {data,error} wrapper is too invasive — requires updating 3 type declarations + 7 callsites. Replaced with try/catch returning safe fallbacks (zero caller changes).",
+          "confidence": "high",
+          "relevance_profiles": [
+            "architecture",
+            "execution"
+          ],
+          "wave": "wave-2-architecture"
+        },
+        {
+          "source": "source-analysis",
+          "summary": "Window.api types declared in 3 places (preload/types.ts, app.tsx, dialog-manage-agents.tsx local type). Any IPC return type change must update all 3.",
+          "confidence": "high",
+          "relevance_profiles": [
+            "architecture",
+            "execution"
+          ],
+          "wave": "wave-2-architecture"
+        },
+        {
+          "source": "source-analysis",
+          "summary": "dialog-manage-agents load and renderer consumeInitialDeepLinks both fire promises without .catch() — unhandled rejections if IPC fails.",
+          "confidence": "high",
+          "relevance_profiles": [
+            "architecture",
+            "execution",
+            "safety"
+          ],
+          "wave": "wave-2-architecture"
+        },
+        {
+          "source": "source-analysis",
+          "summary": "submitAdd in dialog-select-mcp calls SDK via mutation but never persists to electron-store. Servers lost on restart.",
+          "confidence": "high",
+          "relevance_profiles": [
+            "architecture",
+            "execution"
+          ],
+          "wave": "wave-2-architecture"
+        },
+        {
+          "source": "source-analysis",
+          "summary": "electron-store is synchronous — per-namespace promise queue in ipc.ts serializes read-modify-write cycles from concurrent renderer calls.",
+          "confidence": "medium",
+          "relevance_profiles": [
+            "architecture",
+            "execution"
+          ],
+          "wave": "wave-2-architecture"
+        },
+        {
+          "source": "architect-self",
+          "summary": "Fix 7 error model: re-throw after logging to preserve caller try/catch blocks (dialog-manage-agents.tsx saveCustomAgents reverts optimistic state + shows toast on rejection)",
+          "confidence": "high",
+          "relevance_profiles": [
+            "architecture",
+            "execution"
+          ],
+          "wave": "wave-2-architecture"
+        },
+        {
+          "source": "critic-review",
+          "summary": "Fix 8 serializedWrite must re-throw errors (not console.error + resolve undefined) so callers' existing try/catch blocks work",
+          "confidence": "high",
+          "relevance_profiles": [
+            "architecture",
+            "execution"
+          ],
+          "wave": "wave-2-architecture"
+        },
+        {
+          "source": "critic-review",
+          "summary": "Fix 10 must extract validation functions to ipc-validation.ts and import in tests, not copy-paste like existing ipc-plugin-config.test.ts",
+          "confidence": "high",
+          "relevance_profiles": [
+            "architecture",
+            "execution"
+          ],
+          "wave": "wave-2-architecture"
+        },
+        {
+          "source": "impact-assessor-review",
+          "summary": "All 3 getMcpServers callers and 1 getCustomAgents caller use (window as any).api — type changes won't catch at compile time. Fix 7 re-throw approach avoids this risk entirely.",
+          "confidence": "high",
+          "relevance_profiles": [
+            "architecture",
+            "execution"
+          ],
+          "wave": "wave-2-architecture"
+        },
+        {
+          "source": "impact-assessor-review",
+          "summary": "7 additional fire-and-forget promise sites found across codebase — deferred to out-of-scope finding",
+          "confidence": "medium",
+          "relevance_profiles": [
+            "architecture"
+          ],
+          "wave": "wave-2-architecture"
+        },
+        {
+          "source": "validation-designer-review",
+          "summary": "cli.ts still calls window.api.installCli() with try/catch — handler already removed. Removing preload bridge changes error type but is safe (caught by existing try/catch)",
+          "confidence": "high",
+          "relevance_profiles": [
+            "execution"
+          ],
+          "wave": "wave-2-architecture"
+        },
+        {
+          "source": "validation-designer-review",
+          "summary": "Fix 6 pre-check not needed — rg confirms zero callers of preload bridge method",
+          "confidence": "high",
+          "relevance_profiles": [
+            "execution"
+          ],
+          "wave": "wave-2-architecture"
+        }
+      ],
+      "artifacts": [
+        "docs/json/opencode/plans/ipc-reliability-lane1.v1.json",
+        "docs/json/opencode/plans/ipc-reliability-lane1.v1.json",
+        "docs/json/opencode/plans/ipc-reliability-lane1/comments.v1.jsonl"
+      ]
+    }
+  },
+  "active_findings": [
+    {
+      "source": "self-review",
+      "summary": "Fix 7's {data,error} wrapper is too invasive — requires updating 3 type declarations + 7 callsites. Replaced with try/catch returning safe fallbacks (zero caller changes).",
+      "confidence": "high",
+      "relevance_profiles": [
+        "architecture",
+        "execution"
+      ],
+      "wave": "wave-2-architecture"
+    },
+    {
+      "source": "source-analysis",
+      "summary": "Window.api types declared in 3 places (preload/types.ts, app.tsx, dialog-manage-agents.tsx local type). Any IPC return type change must update all 3.",
+      "confidence": "high",
+      "relevance_profiles": [
+        "architecture",
+        "execution"
+      ],
+      "wave": "wave-2-architecture"
+    },
+    {
+      "source": "source-analysis",
+      "summary": "dialog-manage-agents load and renderer consumeInitialDeepLinks both fire promises without .catch() — unhandled rejections if IPC fails.",
+      "confidence": "high",
+      "relevance_profiles": [
+        "architecture",
+        "execution",
+        "safety"
+      ],
+      "wave": "wave-2-architecture"
+    },
+    {
+      "source": "source-analysis",
+      "summary": "submitAdd in dialog-select-mcp calls SDK via mutation but never persists to electron-store. Servers lost on restart.",
+      "confidence": "high",
+      "relevance_profiles": [
+        "architecture",
+        "execution"
+      ],
+      "wave": "wave-2-architecture"
+    },
+    {
+      "source": "source-analysis",
+      "summary": "electron-store is synchronous — per-namespace promise queue in ipc.ts serializes read-modify-write cycles from concurrent renderer calls.",
+      "confidence": "medium",
+      "relevance_profiles": [
+        "architecture",
+        "execution"
+      ],
+      "wave": "wave-2-architecture"
+    },
+    {
+      "source": "architect-self",
+      "summary": "Fix 7 error model: re-throw after logging to preserve caller try/catch blocks (dialog-manage-agents.tsx saveCustomAgents reverts optimistic state + shows toast on rejection)",
+      "confidence": "high",
+      "relevance_profiles": [
+        "architecture",
+        "execution"
+      ],
+      "wave": "wave-2-architecture"
+    },
+    {
+      "source": "critic-review",
+      "summary": "Fix 8 serializedWrite must re-throw errors (not console.error + resolve undefined) so callers' existing try/catch blocks work",
+      "confidence": "high",
+      "relevance_profiles": [
+        "architecture",
+        "execution"
+      ],
+      "wave": "wave-2-architecture"
+    },
+    {
+      "source": "critic-review",
+      "summary": "Fix 10 must extract validation functions to ipc-validation.ts and import in tests, not copy-paste like existing ipc-plugin-config.test.ts",
+      "confidence": "high",
+      "relevance_profiles": [
+        "architecture",
+        "execution"
+      ],
+      "wave": "wave-2-architecture"
+    },
+    {
+      "source": "impact-assessor-review",
+      "summary": "All 3 getMcpServers callers and 1 getCustomAgents caller use (window as any).api — type changes won't catch at compile time. Fix 7 re-throw approach avoids this risk entirely.",
+      "confidence": "high",
+      "relevance_profiles": [
+        "architecture",
+        "execution"
+      ],
+      "wave": "wave-2-architecture"
+    },
+    {
+      "source": "impact-assessor-review",
+      "summary": "7 additional fire-and-forget promise sites found across codebase — deferred to out-of-scope finding",
+      "confidence": "medium",
+      "relevance_profiles": [
+        "architecture"
+      ],
+      "wave": "wave-2-architecture"
+    },
+    {
+      "source": "validation-designer-review",
+      "summary": "cli.ts still calls window.api.installCli() with try/catch — handler already removed. Removing preload bridge changes error type but is safe (caught by existing try/catch)",
+      "confidence": "high",
+      "relevance_profiles": [
+        "execution"
+      ],
+      "wave": "wave-2-architecture"
+    },
+    {
+      "source": "validation-designer-review",
+      "summary": "Fix 6 pre-check not needed — rg confirms zero callers of preload bridge method",
+      "confidence": "high",
+      "relevance_profiles": [
+        "execution"
+      ],
+      "wave": "wave-2-architecture"
+    }
+  ],
+  "active_artifacts": [
+    "docs/json/opencode/plans/ipc-reliability-lane1.v1.json",
+    "docs/json/opencode/plans/ipc-reliability-lane1.v1.json",
+    "docs/json/opencode/plans/ipc-reliability-lane1/comments.v1.jsonl"
+  ],
+  "archived": []
+}

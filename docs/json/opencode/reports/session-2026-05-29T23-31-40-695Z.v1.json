@@ -1,0 +1,101 @@
+{
+  "schema_version": "v1",
+  "report_id": "session-2026-05-29T23-31-40-695Z.v1",
+  "session_id": "ses_189f1b621ffe7SCcyVx0aikcHD",
+  "generated_at": "2026-05-29T23:31:40.767328+00:00",
+  "session_summary": "## Desktop App Feature Parity & IPC Bugfix — Execution Session\n\n### Completed Work\n\n**BLOCKING BUG FIXED**: The `installCli` orphaned IPC channel was the most critical issue. The preload bridge exposed `window.api.installCli()` → `ipcRenderer.invoke(\"install-cli\")` but no `ipcMain.handle` existed in the main process. Any renderer call hung indefinitely.\n\n**Fix applied** (2 files):\n1. **Created** `packages/desktop/src/main/install-cli.ts` (122 lines) — New module that exports `installCli(): Promise<string>`. It determines the user's bin directory (XDG → ~/.local/bin → ~/bin on Unix; %USERPROFILE%\\.opencode\\bin on Windows), creates wrapper scripts that invoke `bun run` (preferred) or `node` with the opencode entry point, and returns the installed path. Shell injection hardened via `validateShellCommand()`.\n2. **Edited** `packages/desktop/src/main/ipc.ts` — Additive 2-line change: import + `ipcMain.handle(\"install-cli\", ...)`. All prior lazy IPC handler edits preserved.\n\n**Phase 1 Quick Wins** (3 tasks in progress):\n- Keyboard shortcut discoverability overlay (KeyHintOverlay component)\n- MCP server dialog enhancements (health indicators, add/remove)\n- Session search filters (time-range dropdown)\n\n### Evidence & Findings\n- 1 out-of-scope finding recorded: Pre-existing typecheck errors in @opencode-ai/app (Settings type drift for setOnboarded/showSessionViz)\n- Prior session's 18 curated findings consumed and preserved\n- All existing dirty files preserved (ipc.ts, index.ts, sidecar.ts, server.ts, preload/types.ts)",
+  "next_steps": "## Recommended Next Steps\n\n1. **Complete Phase 1** — Wait for the 3 background tasks to finish, typecheck, and merge\n2. **Phase 2 — Core Parity**: Plugin marketplace UI, GitHub integration & PR publishing, full MCP management, subagent delegation, stats dashboard\n3. **Phase 3 — UX Leadership**: Onboarding redesign, command palette overhaul, inline diff editor, notification center, theme customizer, xterm.js terminal\n4. **Design System Consolidation**: Merge v1/v2 design systems, add a11y testing, create formal token schema\n5. **Fix pre-existing typecheck errors** in @opencode-ai/app settings context (setOnboarded, showSessionViz properties)",
+  "waves_completed": [
+    "learning-recap",
+    "execution-slice-1"
+  ],
+  "wave_details": {
+    "learning-recap": {
+      "started_at": "2026-05-29T23:26:18.772682+00:00",
+      "completed_at": "2026-05-29T23:26:18.772682+00:00",
+      "findings": [
+        {
+          "source": "desktop-app-audit",
+          "summary": "installCli IPC channel exposed in preload bridge (window.api.installCli) but no ipcMain.handle('install-cli') exists — renderer calls hang indefinitely",
+          "confidence": 0.95,
+          "relevance_profiles": [
+            "execution",
+            "safety"
+          ],
+          "wave": "learning-recap"
+        },
+        {
+          "source": "desktop-app-audit",
+          "summary": "21 feature parity gaps identified between TUI CLI and desktop app, with 3-phase roadmap",
+          "confidence": 0.9,
+          "relevance_profiles": [
+            "architecture",
+            "execution"
+          ],
+          "wave": "learning-recap"
+        },
+        {
+          "source": "prior-learning",
+          "summary": "Desktop Electron shell uses Electron 41.2 with utilityProcess sidecar architecture, 42 IPC channels, 3-tier architecture",
+          "confidence": 0.95,
+          "relevance_profiles": [
+            "architecture",
+            "execution"
+          ],
+          "wave": "learning-recap"
+        },
+        {
+          "source": "prior-learning",
+          "summary": "Desktop renderer is SolidJS SPA with 13 context providers, communicates via @opencode-ai/sdk/v2 to local server",
+          "confidence": 0.95,
+          "relevance_profiles": [
+            "architecture",
+            "execution"
+          ],
+          "wave": "learning-recap"
+        }
+      ],
+      "artifacts": [
+        "docs/json/opencode/archive/ses_189f8d8e4ffelk6KKYCb1oTL38/ses_189f8d8e4ffelk6KKYCb1oTL38/artifacts/desktop-app-audit.v1.json"
+      ]
+    },
+    "execution-slice-1": {
+      "started_at": "2026-05-29T23:30:22.682212+00:00",
+      "completed_at": "2026-05-29T23:30:22.682212+00:00",
+      "findings": [
+        {
+          "source": "execution-agent",
+          "summary": "installCli IPC handler implemented — new module install-cli.ts creates shell wrapper in ~/.local/bin/opencode, handler registered in ipc.ts",
+          "confidence": 0.95,
+          "relevance_profiles": [
+            "execution",
+            "safety"
+          ],
+          "wave": "execution-slice-1"
+        },
+        {
+          "source": "execution-agent",
+          "summary": "Hostile pass completed: shell injection, path escaping, Windows double-quote safety all survived. Only weakness is devEntry path dependency on opencode build artifact.",
+          "confidence": 0.9,
+          "relevance_profiles": [
+            "safety"
+          ],
+          "wave": "execution-slice-1"
+        }
+      ],
+      "artifacts": [
+        "packages/desktop/src/main/install-cli.ts"
+      ]
+    }
+  },
+  "total_findings": 6,
+  "findings_by_profile": {
+    "execution": 5,
+    "safety": 3,
+    "architecture": 3
+  },
+  "artifacts_consumed": [
+    "docs/json/opencode/archive/ses_189f8d8e4ffelk6KKYCb1oTL38/ses_189f8d8e4ffelk6KKYCb1oTL38/artifacts/desktop-app-audit.v1.json",
+    "packages/desktop/src/main/install-cli.ts"
+  ]
+}

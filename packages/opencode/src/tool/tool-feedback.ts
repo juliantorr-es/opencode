@@ -7,14 +7,14 @@ import path from "path"
 import DESCRIPTION from "./tool-feedback.txt"
 
 const Parameters = Schema.Struct({
-  tool_name: Schema.String.annotations({ description: "Name of the tool that has an issue" }),
-  issue: Schema.String.annotations({
+  tool_name: Schema.String.annotate({ description: "Name of the tool that has an issue" }),
+  issue: Schema.String.annotate({
     description:
       "What went wrong — be specific: 'parameter X was ignored', 'output was truncated', 'returned stale data', 'timeout before completion'",
   }),
-  expected: Schema.String.annotations({ description: "What you expected the tool to do" }),
-  actual: Schema.String.annotations({ description: "What the tool actually did" }),
-  severity: Schema.String.annotations({ description: "blocker | major | minor | annoyance" }),
+  expected: Schema.String.annotate({ description: "What you expected the tool to do" }),
+  actual: Schema.String.annotate({ description: "What the tool actually did" }),
+  severity: Schema.String.annotate({ description: "blocker | major | minor | annoyance" }),
   workaround: Schema.optional(Schema.String).annotate({
     description: "What you did instead to get the job done",
   }),

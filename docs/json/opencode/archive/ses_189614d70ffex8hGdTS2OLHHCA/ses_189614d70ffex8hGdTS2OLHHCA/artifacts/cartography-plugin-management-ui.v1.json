@@ -1,0 +1,340 @@
+{
+  "artifact": {
+    "schema": "rig.relay.cartography.v1",
+    "lane": "plugin-management-ui",
+    "generated_at": "2026-05-29T23:30:00Z",
+    "agent": "cartographer",
+    "session": "current"
+  },
+  "entry_points": {
+    "app_entry": {
+      "file": "packages/desktop/src/renderer/index.tsx",
+      "status": "not_dirty",
+      "plugin_integration": "DesktopPluginProvider already wired as wrapper around PlatformProvider (lines ~70-80). No plugin management UI or dialog exists.",
+      "needs": "Plugin management dialog import + dialog.show() call, similar to DialogSelectMcp pattern in packages/app/src/pages/session/use-session-commands.tsx:262-263"
+    },
+    "dialog_invocation": {
+      "reference_pattern": "packages/app/src/pages/session/use-session-commands.tsx:262-263",
+      "code": "void import(\"@/components/dialog-select-mcp\").then((x) => { dialog.show(() => <x.DialogSelectMcp />) })",
+      "note": "Plugin browser/manager dialog should follow this lazy import + dialog.show() pattern"
+    },
+    "slot_insertion_points": {
+      "window_titlebar": "packages/plugin/src/desktop.ts:7",
+      "window_titlebar_left": "packages/plugin/src/desktop.ts:8",
+      "sidebar_content": "packages/plugin/src/desktop.ts:9",
+      "sidebar_footer": "packages/plugin/src/desktop.ts:10",
+      "note": "These 4 slots are where plugin components render. The DesktopSlotRenderer should be placed in the titlebar/sidebar templates."
+    }
+  },
+  "ipc_channel_patterns": {
+    "generic_store_crud": {
+      "channels": ["store-get", "store-set", "store-delete", "store-clear", "store-keys", "store-length"],
+      "main_handler": "packages/desktop/src/main/ipc.ts:120-149",
+      "preload_bridge": "packages/desktop/src/preload/index.ts:26-31",
+      "type_decl": "packages/desktop/src/preload/types.ts:60-65",
+      "renderer_consumer": "packages/desktop/src/renderer/index.tsx:119-144",
+      "guard": "RESERVED_STORE_NAMES in main/ipc.ts:20 rejects store names ['desktop-custom-agents', 'desktop-mcp-servers'] from generic CRUD"
+    },
+    "dedicated_typed_store_pattern": {
+      "description": "Canonical pattern for NEW electron-store-backed data. MCP servers and custom agents are the two existing references.",
+      "example_channels": ["get-desktop-mcp-servers", "set-desktop-mcp-servers"],
+      "example_main_handler": "packages/desktop/src/main/ipc.ts:270-277",
+      "example_preload_bridge": "packages/desktop/src/preload/index.ts:87-88",
+      "example_type_decl": "packages/desktop/src/preload/types.ts:111-112",
+      "steps": [
+        "1. Add store name to RESERVED_STORE_NAMES in main/ipc.ts:20",
+        "2. Create dedicated ipcMain.handle(\"get-desktop-*\") / ipcMain.handle(\"set-desktop-*\") in main/ipc.ts",
+        "3. Add validation helper function if needed (see validateAndFilterMcpServers at ipc.ts:37)",
+        "4. Add method signatures to ElectronAPI interface in preload/types.ts",
+        "5. Wire ipcRenderer.invoke calls in preload/index.ts",
+        "6. Add PRODUCE_FRAGMENT registrations for main/ipc.ts and preload/index.ts"
+      ]
+    },
+    "dangling_ipc_channel": {
+      "channel": "get-desktop-plugin-config",
+      "severity": "BLOCKER",
+      "impact": "DesktopPluginLoader.ensureConfigs() at plugin-loader.ts:39 calls window.api.getDesktopPluginConfig?.() which resolves to undefined at runtime. Plugins will never load.",
+      "file_preload_bridge": "packages/desktop/src/preload/index.ts:84",
+      "file_type_decl": "packages/desktop/src/preload/types.ts:108",
+      "file_renderer_consumer": "packages/desktop/src/renderer/plugin-loader.ts:39",
+      "missing_handler": "ipcMain.handle('get-desktop-plugin-config', ...) does NOT exist in main/ipc.ts",
+      "repair_path": "Add handler matching the MCP/agents pattern using a new 'desktop-plugin-config' store name, add to RESERVED_STORE_NAMES"
+    }
+  },
+  "type_dependencies": {
+    "plugin_sdk_types": {
+      "package": "@opencode-ai/plugin",
+      "export_path": "./desktop",
+      "source_file": "packages/plugin/src/desktop.ts",
+      "dirty": "untracked — new file being developed",
+      "types_exported": [
+        "DesktopHostSlotMap — 4 built-in slots",
+        "DesktopSlotMap<Slots> — extensible slot map",
+        "DesktopSlotPlugin<Slots> — component map for slot registration",
+        "DesktopPluginApi — slots, store, lifecycle API sandbox",
+        "DesktopPlugin — (api) => Promise<void> entrypoint",
+        "DesktopPluginModule — module shape with desktop/server/tui mutual exclusion"
+      ]
+    },
+    "opencode_plugin_runtime_types": {
+      "source_file": "packages/opencode/src/plugin/shared.ts",
+      "dirty": false,
+      "key_types": {
+        "PluginKind": "\"server\" | \"tui\" (NOT including \"desktop\" — desktop uses separate DesktopPluginModule)",
+        "PluginPackage": "{ name, version, description?, opencode?, opencodePlugin?, ... }",
+        "PluginEntry": "{ spec, target, kind, entrypoint?, options?, ... }",
+        "PluginSource": "\"file\" | \"npm\""
+      },
+      "note": "Desktop plugins bypass this entire pipeline. They use a totally separate loading mechanism (dynamic renderer import() + IPC config bridge). PluginKind should probably include \"desktop\" for feature parity."
+    },
+    "desktop_renderer_types": {
+      "plugin_loader": "packages/desktop/src/renderer/plugin-loader.ts:10-16",
+      "custom_types": {
+        "PluginConfigEntry": "{ name: string, path: string, enabled: boolean, config?: Record<string, unknown> }",
+        "SlotName": "keyof DesktopHostSlotMap"
+      }
+    }
+  },
+  "existing_components": {
+    "completed": {
+      "DesktopPluginProvider": {
+        "file": "packages/desktop/src/renderer/plugin-context.tsx",
+        "dirty": "untracked",
+        "exports": ["DesktopPluginProvider", "DesktopSlotRenderer", "useDesktopSlot"],
+        "status": "COMPLETE — provider, slot renderer, and registration hook all implemented"
+      },
+      "DesktopPluginLoader": {
+        "file": "packages/desktop/src/renderer/plugin-loader.ts",
+        "dirty": "untracked",
+        "exports": ["DesktopPluginLoader"],
+        "status": "COMPLETE — class-based loader with loadAll(), loadPlugin(), dispose(), per-plugin store"
+      },
+      "desktop.ts types": {
+        "file": "packages/plugin/src/desktop.ts",
+        "dirty": "untracked",
+        "status": "COMPLETE — 6 type exports, 4 slot definitions, plugin API contract"
+      },
+      "export map entry": {
+        "file": "packages/plugin/package.json",
+        "dirty": "staged",
+        "status": "COMPLETE — ./desktop export added (staged)"
+      }
+    },
+    "missing": {
+      "plugin_browser_dialog": {
+        "description": "Dialog to browse installed/available plugins (enable/disable, view info)",
+        "reference": "dialog-select-mcp.tsx (411 lines) — CRUD list with health indicators, add/edit/delete",
+        "patterns_to_follow": [
+          "Dialog from @opencode-ai/ui/dialog",
+          "useDialog() from @opencode-ai/ui/context/dialog",
+          "lazy import pattern via void import('...').then(x => dialog.show(() => <x.Component />))"
+        ]
+      },
+      "plugin_installer_dialog": {
+        "description": "Dialog to install new plugins (npm specifier or file path)",
+        "reference": "dialog-edit-mcp.tsx (163 lines) — form with TextField, validation, save/cancel",
+        "note": "Could be combined with browser dialog or be a sub-dialog like DialogEditMcp in dialog-select-mcp.tsx:376-397"
+      },
+      "plugin_config_panel": {
+        "description": "Per-plugin configuration UI",
+        "note": "Each plugin has config?: Record<string, unknown> in PluginConfigEntry. Config panel could be generic key-value editor or custom UI per plugin."
+      },
+      "ipc_handler_for_plugin_config": {
+        "description": "ipcMain.handle('get-desktop-plugin-config') — currently dangling/missing",
+        "severity": "BLOCKER",
+        "reference": "Use same pattern as get-desktop-mcp-servers at main/ipc.ts:270-277"
+      },
+      "preload_types_update": {
+        "description": "Typed response for getDesktopPluginConfig instead of Promise<any>",
+        "file": "packages/desktop/src/preload/types.ts:108",
+        "current_type": "getDesktopPluginConfig?: () => Promise<any>",
+        "suggested_type": "PluginConfigEntry[] from a shared type"
+      },
+      "i18n_strings": {
+        "all_files": {
+          "desktop_en": "packages/desktop/src/renderer/i18n/en.ts (28 lines)",
+          "app_i18n": "packages/app/src/i18n/ (en.ts likely exists)"
+        },
+        "note": "No plugin-related i18n strings exist yet. Plugin management UI will need new strings (browse, install, uninstall, enable/disable, configure plugin, etc.)"
+      },
+      "test_infrastructure": {
+        "status": "NONE",
+        "note": "No test files exist in packages/plugin/, packages/desktop/test/. No plugin-specific tests anywhere. The test patterns in packages/desktop/ are vitest (html.test.ts, shell-env.test.ts)."
+      }
+    },
+    "reference_pattern_exports": {
+      "dialog_components_available": 19,
+      "dialog_components_list": [
+        "dialog-connect-provider.tsx", "dialog-edit-agent.tsx", "dialog-edit-mcp.tsx",
+        "dialog-edit-project.tsx", "dialog-fork.tsx", "dialog-manage-agents.tsx",
+        "dialog-manage-models.tsx", "dialog-onboarding.tsx", "dialog-release-notes.tsx",
+        "dialog-select-directory.tsx", "dialog-select-file.tsx", "dialog-select-mcp.tsx",
+        "dialog-select-model.tsx", "dialog-select-model-unpaid.tsx", "dialog-select-provider.tsx",
+        "dialog-select-server.tsx", "dialog-settings.tsx", "dialog-usage-exceeded.tsx",
+        "dialog-custom-provider.tsx"
+      ]
+    }
+  },
+  "ui_patterns_to_follow": {
+    "dialog_component": {
+      "import": "import { Dialog } from \"@opencode-ai/ui/dialog\"",
+      "usage": "<Dialog title=\"...\">...</Dialog>",
+      "props": ["title (required)", "description", "size", "fit", "transition", "class"]
+    },
+    "dialog_provider": {
+      "import": "import { DialogProvider, useDialog } from \"@opencode-ai/ui/context/dialog\"",
+      "wrapper": "packages/app/src/app.tsx:178 — <DialogProvider> wraps entire app",
+      "hook": "const dialog = useDialog()",
+      "show": "dialog.show(() => <MyComponent />)",
+      "close": "dialog.close()"
+    },
+    "web_app_bridge": {
+      "import": "const api = (window as any).api",
+      "invocation": "api?.methodName?.() with optional chaining",
+      "type_declaration": "packages/app/src/app.tsx:76-84 — Window.api? optional methods",
+      "note": "All web app IPC calls use ?. optional chaining since window.api may not exist in browser"
+    },
+    "electron_store_dedicated_channel": {
+      "preload_type": "add method to ElectronAPI interface (preload/types.ts)",
+      "preload_bridge": "add ipcRenderer.invoke call (preload/index.ts)",
+      "main_handler": "add ipcMain.handle with validation (main/ipc.ts)",
+      "reserved_guard": "add store name to RESERVED_STORE_NAMES (main/ipc.ts:20)"
+    }
+  },
+  "shared_file_risk_assessment": {
+    "i18n_en_ts": {
+      "file": "packages/desktop/src/renderer/i18n/en.ts",
+      "risk": "LOW — only 28 lines, simple dict export. Plugin string additions are additive. No concurrent lane contention expected.",
+      "strategy": "Additive — append new keys to the dict object"
+    },
+    "main_ipc_ts": {
+      "file": "packages/desktop/src/main/ipc.ts",
+      "risk": "HIGH — shared escalation zone for 7+ lane types (MCP, agents, plugins, settings, window ops). Multiple sessions may add handlers. The RESERVED_STORE_NAMES list is short and likely to grow.",
+      "strategy": "PRODUCE_FRAGMENT — use produce_fragment for ipcMain.handle registrations and RESERVED_STORE_NAMES additions. Consolidator assembles them.",
+      "existing_reserved_stores": ["desktop-custom-agents", "desktop-mcp-servers"],
+      "proposed_reserved_additions": ["desktop-plugin-config"]
+    },
+    "preload_types_ts": {
+      "file": "packages/desktop/src/preload/types.ts",
+      "risk": "MEDIUM — ElectronAPI interface is single-file, methods are additive. Use produce_fragment for method additions.",
+      "strategy": "PRODUCE_FRAGMENT — add method signatures to ElectronAPI interface"
+    },
+    "preload_index_ts": {
+      "file": "packages/desktop/src/preload/index.ts",
+      "risk": "MEDIUM — contextBridge.exposeInMainWorld object is single-file. Use produce_fragment for bridge method additions.",
+      "strategy": "PRODUCE_FRAGMENT — add ipcRenderer.invoke mappings"
+    },
+    "desktop_renderer_index_tsx": {
+      "file": "packages/desktop/src/renderer/index.tsx",
+      "risk": "LOW — plugin provider already wired in. Adding dialog invocation is additive.",
+      "strategy": "Direct edit — narrow, additive import + render change"
+    },
+    "plugin_package_json": {
+      "file": "packages/plugin/package.json",
+      "risk": "LOW — already staged with ./desktop export. No further changes expected for management UI.",
+      "strategy": "Already staged — preserve current state"
+    }
+  },
+  "test_infrastructure": {
+    "status": "NONE",
+    "test_files_found": {
+      "packages/desktop": ["src/renderer/html.test.ts", "src/main/shell-env.test.ts"],
+      "packages/plugin": ["NONE"],
+      "packages/opencode": ["plugin tests may exist under tests/"]
+    },
+    "test_framework": "vitest (based on html.test.ts import patterns)",
+    "mocking_patterns": "NOT EXAMINED — no plugin tests exist to analyze mocking patterns",
+    "recommendation": "Plugin management UI tests should mock window.api IPC bridge calls (the plugin-context.tsx and dialog components). Look at test patterns in packages/desktop/test/ or how existing test doubles mock electron-store."
+  },
+  "git_delta": {
+    "dirty_files": {
+      "packages/plugin/package.json": "staged — ./desktop export entry added",
+      "packages/desktop/src/renderer/plugin-context.tsx": "untracked — new file (79 lines)",
+      "packages/desktop/src/renderer/plugin-loader.ts": "untracked — new file (126 lines)",
+      "packages/plugin/src/desktop.ts": "untracked — new file (50 lines)"
+    },
+    "files_preserved_from_dirty": [
+      "packages/desktop/src/renderer/plugin-context.tsx",
+      "packages/desktop/src/renderer/plugin-loader.ts",
+      "packages/desktop/src/main/index.ts",
+      "packages/desktop/src/main/sidecar.ts"
+    ],
+    "git_history": {
+      "plugin_related_commits_last_30": [
+        "1abce7801 feat(desktop): Phase 2 MCP Server Management UI — full CRUD with electron-store persistence",
+        "9e953e7be fix(desktop): address 4 prepublication blockers — async save, store guards, validation, type dedup",
+        "c8b69c473 fix(desktop): remove orphaned install-cli import and handler — file no longer exists",
+        "069da3d78 feat(desktop): Phase 1 feature parity — agent config UI, context warnings, settings polish",
+        "caf2451da chore: generate"
+      ],
+      "note": "The MCP phase 2 commit (1abce7801) is the most recent and has the closest CRUD pattern to what plugin management needs"
+    }
+  },
+  "smoking_guns": [
+    {
+      "id": "SG-1",
+      "severity": "BLOCKER",
+      "title": "Dangling IPC channel: get-desktop-plugin-config",
+      "detail": "Preload bridge (preload/index.ts:84) wires getDesktopPluginConfig → ipcRenderer.invoke('get-desktop-plugin-config'), type declared (preload/types.ts:108), renderer consumer calls it (plugin-loader.ts:39), but NO ipcMain.handle exists in main/ipc.ts. The edit history shows it was 'added' then removed. Plugins will silently fail to load.",
+      "files": ["packages/desktop/src/main/ipc.ts", "packages/desktop/src/preload/index.ts:84", "packages/desktop/src/preload/types.ts:108", "packages/desktop/src/renderer/plugin-loader.ts:39"],
+      "fix": "Add ipcMain.handle('get-desktop-plugin-config') using desktop-plugin-config store + RESERVED_STORE_NAMES + validation"
+    },
+    {
+      "id": "SG-2",
+      "severity": "MAJOR",
+      "title": "PluginKind does not include 'desktop'",
+      "detail": "packages/opencode/src/plugin/shared.ts:37 defines PluginKind = 'server' | 'tui'. Desktop plugins use a completely separate mechanism (DesktopPluginModule) but there's no type-level connection. Plugin resolution, listing, install, and config all live in the opencode package through the PluginKind/Pipeline — desktop plugins are invisible to that system.",
+      "files": ["packages/opencode/src/plugin/shared.ts:37"],
+      "fix": "Add 'desktop' to PluginKind union, wire through resolvePluginEntrypoint and readV1Plugin"
+    },
+    {
+      "id": "SG-3",
+      "severity": "MAJOR",
+      "title": "No plugin management UI exists",
+      "detail": "No dialog for browsing, installing, enabling/disabling, configuring, or removing desktop plugins. Only the provider/loader infrastructure exists. Users have no way to manage plugins.",
+      "files": [],
+      "fix": "Implement plugin browser dialog (reference: dialog-select-mcp.tsx) and installer sub-dialog (reference: dialog-edit-mcp.tsx). Wire into app via command trigger or settings panel."
+    },
+    {
+      "id": "SG-4",
+      "severity": "MEDIUM",
+      "title": "No i18n strings for plugin management",
+      "detail": "The desktop renderer i18n (packages/desktop/src/renderer/i18n/en.ts) is only 28 lines with no plugin-related strings. Plugin management UI will need new translation keys.",
+      "files": ["packages/desktop/src/renderer/i18n/en.ts"],
+      "fix": "Add plugin-related translation keys to en.ts dictionary"
+    },
+    {
+      "id": "SG-5",
+      "severity": "MEDIUM",
+      "title": "No plugin-related constants in main/constants.ts",
+      "detail": "constants.ts defines SETTINGS_STORE and individual setting keys but has nothing for plugin config stores. New plugin config store names need to be added here for consistency.",
+      "files": ["packages/desktop/src/main/constants.ts"],
+      "fix": "Add PLUGIN_CONFIG_STORE or similar constant"
+    },
+    {
+      "id": "SG-6",
+      "severity": "MINOR",
+      "title": "No E2E or unit test coverage for desktop plugin system",
+      "detail": "Zero test files exist for any of the 4 new plugin files (desktop.ts, plugin-context.tsx, plugin-loader.ts, package.json export). The test infrastructure patterns (vitest) exist in packages/desktop/ but aren't used.",
+      "files": [],
+      "fix": "Add vitest tests for DesktopPluginLoader, DesktopPluginProvider, and IPC handler mocks"
+    }
+  ],
+  "deferred_seams": [
+    {
+      "seam": "Plugin npm install/resolution pipeline",
+      "description": "The opencode package has a full PluginLoader, PluginInstaller, and shared.ts resolution pipeline. Desktop plugins could eventually use this for npm-based installs instead of the current path-based config.",
+      "out_of_scope": true
+    },
+    {
+      "seam": "Server/TUI plugin parity",
+      "description": "Only desktop slot rendering is implemented. Server plugins (Hooks-based) and TUI plugins (opentui-based) are separate systems not touched by this lane.",
+      "out_of_scope": true
+    },
+    {
+      "seam": "Sidecar plugin loading",
+      "description": "Plugins currently load in the renderer process via dynamic import(). Could also be loaded through the sidecar for isolation.",
+      "out_of_scope": true
+    }
+  ]
+}

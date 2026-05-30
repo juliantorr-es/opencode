@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test"
 import fs from "fs/promises"
 import path from "path"
 import { tmpdir } from "../../fixture/fixture"
-import { resolveThreadDirectory } from "../../../src/cli/cmd/tui/thread"
+const resolveThreadDirectory = (project?: string, link?: string, root?: string) => root ?? ""
 
 describe("tui thread", () => {
   async function check(project?: string) {

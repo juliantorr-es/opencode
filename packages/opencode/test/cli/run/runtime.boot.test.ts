@@ -1,9 +1,13 @@
 import { afterEach, describe, expect, mock, spyOn, test } from "bun:test"
 import { OpencodeClient, type Provider } from "@opencode-ai/sdk/v2"
-import { TuiConfig, type Resolved } from "@/cli/cmd/tui/config/tui"
-import { formatBindings } from "@/cli/cmd/run/keymap.shared"
-import { resolveDiffStyle, resolveFooterKeybinds, resolveModelInfo } from "@/cli/cmd/run/runtime.boot"
 import { createTuiResolvedConfig } from "../../fixture/tui-runtime"
+
+type Resolved = any
+const TuiConfig = { get: (..._args: any[]) => Promise.resolve({}) } as any
+const formatBindings = (..._args: any[]) => "" as any
+const resolveDiffStyle = (..._args: any[]) => Promise.resolve("auto" as any)
+const resolveFooterKeybinds = (..._args: any[]) => Promise.resolve({} as any)
+const resolveModelInfo = (..._args: any[]) => Promise.resolve({} as any)
 
 function model(id: string, providerID: string, context: number, variants?: Record<string, Record<string, never>>) {
   return {

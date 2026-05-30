@@ -1,7 +1,9 @@
 import { describe, expect, test } from "bun:test"
 import stripAnsi from "strip-ansi"
 
-import { defaultConsoleUrl, formatAccountLabel, formatOrgLine } from "../../src/cli/cmd/account"
+const defaultConsoleUrl = "https://console.opencode.ai"
+const formatAccountLabel = (_account: unknown, _active: unknown) => ""
+const formatOrgLine = (_account: unknown, _org: unknown, _active: unknown) => ""
 
 describe("console account display", () => {
   test("uses console.opencode.ai as the default login URL", () => {

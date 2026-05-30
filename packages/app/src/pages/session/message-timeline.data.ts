@@ -29,6 +29,7 @@ export type TimelineRowMap = {
   DiffSummary: { userMessageID: string; diffs: SummaryDiff[] }
   Error: { userMessageID: string; text: string }
   BottomSpacer: {}
+  Checkpoint: { userMessageID: string; label?: string }
 }
 
 export namespace TimelineRow {
@@ -66,6 +67,10 @@ export namespace TimelineRow {
     userMessageID: string
   }> {}
   export class BottomSpacer extends Data.TaggedClass("BottomSpacer")<{}> {}
+  export class Checkpoint extends Data.TaggedClass("Checkpoint")<{
+    userMessageID: string
+    label?: string
+  }> {}
 
   export type TimelineRow =
     | CommentStrip
@@ -77,6 +82,7 @@ export namespace TimelineRow {
     | Error
     | Retry
     | BottomSpacer
+    | Checkpoint
 
   export const key = (row: TimelineRow) => {
     switch (row._tag) {
@@ -98,6 +104,8 @@ export namespace TimelineRow {
         return `retry:${row.userMessageID}`
       case "BottomSpacer":
         return "bottom-spacer"
+      case "Checkpoint":
+        return `checkpoint:${row.userMessageID}${row.label ?? ""}`
     }
   }
 

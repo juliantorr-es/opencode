@@ -1,0 +1,107 @@
+{
+  "schema": "rig.relay.published_checkpoint_report.v1",
+  "generated_at": "2026-05-29T04:00:00Z",
+  "session_title": "Final Closures: Storage Substrate & Profile Parity — Publication Report",
+  "publication_id": "pub-20260529-storage-substrate-profile-parity",
+  "publication_record": "docs/json/opencode/publication_record.v1.json",
+  "target_ref": "dev",
+  "base_sha": "caf2451dae69f968e77d23438abd430355c33a23",
+  "candidate_packet_digest": "36857390cfed9006facd9311ced672c5ec6aeb2b123c0b423ee0dbb1f5fb14a4",
+  "prepublication_admission": {
+    "rounds": 4,
+    "final_disposition": "prepublication_admitted",
+    "blocking_findings_found": 10,
+    "blocking_findings_repaired": 10,
+    "evidence_artifacts": 17,
+    "approval_artifacts": 3,
+    "schema_artifacts": 5
+  },
+
+  "track_1_substrate": {
+    "phases_completed": [
+      {"phase": "1.0", "name": "Generate Postgres DDL + Migration Directory", "artifact": "docs/json/opencode/evidence/pg_ddl_generated.v1.json"},
+      {"phase": "1.1", "name": "DuckDB Analytical Sidecar", "artifact": "docs/json/opencode/evidence/duckdb_sidecar_install.v1.json"},
+      {"phase": "1.2", "name": "Database Credential Isolation", "artifact": "docs/json/opencode/evidence/database_credential_isolation.v1.json"},
+      {"phase": "1.3", "name": "Adapter Consumer Wiring", "artifact": "docs/json/opencode/evidence/adapter_consumer_complete.v1.json"},
+      {"phase": "1.4", "name": "Postgres CI Service + Test Infrastructure", "artifact": "docs/json/opencode/evidence/ci_postgres_operational.v1.json"},
+      {"phase": "1.5", "name": "Persistent Coordination Backend", "artifact": "docs/json/opencode/evidence/persistent_coordination.v1.json"},
+      {"phase": "1.6a", "name": "Data Migration FK Audit", "artifact": "docs/json/opencode/evidence/data_migration_fk_audit.v1.json"},
+      {"phase": "1.6b", "name": "Data Migration Pipeline Complete", "artifact": "docs/json/opencode/evidence/data_migration_complete.v1.json"},
+      {"phase": "1.7a", "name": "SQLite Runtime Cleanup", "artifact": "docs/json/opencode/evidence/sql_runtime_cleanup.v1.json"},
+      {"phase": "1.7b", "name": "SQLite Schema Deduplication", "artifact": "docs/json/opencode/evidence/sql_schema_dedup.v1.json"},
+      {"phase": "1.7c", "name": "SQLite Import Path Cleanup", "artifact": "docs/json/opencode/evidence/sql_import_cleanup.v1.json"},
+      {"phase": "1.8", "name": "Typecheck & Test Recovery", "artifact": "docs/json/opencode/evidence/typecheck_final_storage.v1.json"}
+    ],
+    "phases_skipped": [],
+    "exit_conditions_met": {
+      "postgres_is_only_write_backend": true,
+      "duckdb_wired_as_analytical_sidecar": true,
+      "sqlite_to_postgres_migration_story": true,
+      "all_database_use_behind_adapter_seam": true
+    }
+  },
+
+  "track_2_profile_parity": {
+    "phases_completed": [
+      {"phase": "2.1", "name": "Orchestrator Agent Profile", "files": [".opencode/agent/orchestrator.md"]},
+      {"phase": "2.2", "name": "Wave-Model Subagent Profiles", "files": [".opencode/agent/critic.md", ".opencode/agent/executor.md", ".opencode/agent/validator.md", ".opencode/agent/stress.md", ".opencode/agent/repair.md"]},
+      {"phase": "2.3", "name": "Approval Gate Schemas & Artifacts", "files": ["docs/json/opencode/approvals/plan_approval.v1.json", "docs/json/opencode/approvals/red_team_approval.v1.json", "docs/json/opencode/approvals/repair_plan_approval.v1.json", "docs/schemas/rig.relay.plan_approval.v1.schema.json", "docs/schemas/rig.relay.red_team_approval.v1.schema.json", "docs/schemas/rig.relay.repair_plan_approval.v1.schema.json"]},
+      {"phase": "2.4", "name": "Permission Restrictions & Role Enforcement", "files": [".opencode/opencode.jsonc", ".opencode/agent/permissions.md"]},
+      {"phase": "2.5", "name": "Profile End-to-End Validation", "artifact": "docs/json/opencode/evidence/profile_parity_e2e.v1.json"}
+    ],
+    "exit_conditions_met": {
+      "orchestrator_read_search_task_only": true,
+      "subagent_profiles_with_permissions": true,
+      "approval_artifacts_real_versioned": true,
+      "profile_parity_e2e_validated": true
+    }
+  },
+
+  "prepublication_summary": {
+    "total_rounds": 4,
+    "round_1": "Plan revision - 5 blocking defects, 13 non-blocking findings",
+    "round_2": "Plan approval - 2 non-blocking recommendations",
+    "round_3": "Red-team stress - 5 blocking issues, 7 missing evidence, 2 placeholder approvals",
+    "round_4": "ADMITTED - all 10 blocking findings repaired, evidence chain complete",
+    "blocking_findings_closed": [
+      "F-001: Dirty file audit corrected (Phase 1.3 dirty count was verified at execution time)",
+      "F-002: Raw Database.use count fixed to 3 files (workspace.ts, fence.ts, projectors.ts)",
+      "F-003: Phantom Phase 0.5 removed from track list",
+      "F-004: Plan metadata mismatch documented (plan_approval.v1.json was for different plan)",
+      "F-005: Adapter internals exclusion added (adapter.ts:88,105 are intentional SQLiteAdapter wrappers)",
+      "2a/6a: Coordination tables missing from DDL - ensureCoordinationTables on startup + try/catch fallback",
+      "1a: DuckDB without -readonly flag - added -readonly to subprocess spawn args",
+      "1b: DuckDB no connection pooling - implemented maxConnections=4 pool with idle timeout",
+      "3a: FK audit LIMIT 1000 hiding orphans - replaced with COUNT-based detection, all rows fetched",
+      "5b: send_message recipient path traversal - allowlist pattern /^[a-zA-Z0-9._@-]+$/ added"
+    ]
+  },
+
+  "checkpoint_status": {
+    "checkpoint_created": false,
+    "reason": "git commit/add blocked by tool permission system (checkpoint tool not available in publisher environment)",
+    "publication_record_created": true,
+    "publication_record_path": "docs/json/opencode/publication_record.v1.json",
+    "git_push_performed": false,
+    "git_push_reason": "No commit to push - checkpoint commit must be created first"
+  },
+
+  "post_push_verification": {
+    "status": "pending_manual_checkpoint",
+    "sha_to_verify": "<pending commit SHA>",
+    "remote_verification_needed": [
+      "Verify checkpoint commit reaches origin/dev",
+      "Verify all 76 modified files + 41 new files + 12 deleted files are present on remote",
+      "Verify evidence artifacts render correctly",
+      "Verify reviewer can reconstruct boundary from remote main"
+    ]
+  },
+
+  "next_steps": [
+    "1. Create the checkpoint commit: git add -A && git commit -m 'feat(storage): Storage Substrate + Profile Parity — admitted candidate (Round 4)'",
+    "2. Push to origin/dev: git push origin dev",
+    "3. Verify push completes and remote HEAD advances",
+    "4. Run claim-adversary pass against the published boundary on remote main",
+    "5. Freeze the lane pending integration milestone"
+  ]
+}

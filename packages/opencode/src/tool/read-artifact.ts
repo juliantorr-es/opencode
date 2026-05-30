@@ -56,7 +56,8 @@ export const ReadArtifactTool = Tool.define(
     return {
       description: DESCRIPTION,
       parameters: Parameters,
-      execute: (params: Schema.Schema.Type<typeof Parameters>) =>
+      cacheable: true,
+      execute: (params: Schema.Schema.Type<typeof Parameters>, ctx: Tool.Context) =>
         Effect.gen(function* () {
           const instance = yield* InstanceState.context
           const artifactPath = path.resolve(instance.directory, params.artifact)

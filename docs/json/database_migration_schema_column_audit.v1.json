@@ -1,0 +1,244 @@
+{
+  "schema": "rig.relay.schema_column_audit.v1",
+  "generated_at": "2026-05-28T18:19:00Z",
+  "total_tables": 15,
+  "total_columns": 111,
+  "tables": [
+    {
+      "file": "packages/opencode/src/account/account.sql.ts",
+      "table_name": "AccountTable",
+      "table_sql_name": "account",
+      "columns": [
+        { "name": "id", "sqlite_type": "text()", "has_default": false, "has_on_update": false, "pg_equivalent": "text()", "notes": "primaryKey; $type<AccountID>" },
+        { "name": "email", "sqlite_type": "text()", "has_default": false, "has_on_update": false, "pg_equivalent": "text()", "notes": "notNull" },
+        { "name": "url", "sqlite_type": "text()", "has_default": false, "has_on_update": false, "pg_equivalent": "text()", "notes": "notNull" },
+        { "name": "access_token", "sqlite_type": "text()", "has_default": false, "has_on_update": false, "pg_equivalent": "text()", "notes": "notNull; $type<AccessToken>" },
+        { "name": "refresh_token", "sqlite_type": "text()", "has_default": false, "has_on_update": false, "pg_equivalent": "text()", "notes": "notNull; $type<RefreshToken>" },
+        { "name": "token_expiry", "sqlite_type": "integer()", "has_default": false, "has_on_update": false, "pg_equivalent": "integer()", "notes": "" },
+        { "name": "time_created", "sqlite_type": "integer()", "has_default": true, "has_on_update": false, "pg_equivalent": "integer()", "notes": "$default(() => Date.now()); via Timestamps spread" },
+        { "name": "time_updated", "sqlite_type": "integer()", "has_default": false, "has_on_update": true, "pg_equivalent": "integer()", "notes": "$onUpdate(() => Date.now()); via Timestamps spread" }
+      ]
+    },
+    {
+      "file": "packages/opencode/src/account/account.sql.ts",
+      "table_name": "AccountStateTable",
+      "table_sql_name": "account_state",
+      "columns": [
+        { "name": "id", "sqlite_type": "integer()", "has_default": false, "has_on_update": false, "pg_equivalent": "integer()", "notes": "primaryKey; autoincrement not required (explicit insert)" },
+        { "name": "active_account_id", "sqlite_type": "text()", "has_default": false, "has_on_update": false, "pg_equivalent": "text()", "notes": "$type<AccountID>; references AccountTable.id onDelete set null" },
+        { "name": "active_org_id", "sqlite_type": "text()", "has_default": false, "has_on_update": false, "pg_equivalent": "text()", "notes": "$type<OrgID>" }
+      ]
+    },
+    {
+      "file": "packages/opencode/src/account/account.sql.ts",
+      "table_name": "ControlAccountTable",
+      "table_sql_name": "control_account",
+      "columns": [
+        { "name": "email", "sqlite_type": "text()", "has_default": false, "has_on_update": false, "pg_equivalent": "text()", "notes": "notNull; composite PK with url" },
+        { "name": "url", "sqlite_type": "text()", "has_default": false, "has_on_update": false, "pg_equivalent": "text()", "notes": "notNull; composite PK with email" },
+        { "name": "access_token", "sqlite_type": "text()", "has_default": false, "has_on_update": false, "pg_equivalent": "text()", "notes": "notNull; $type<AccessToken>" },
+        { "name": "refresh_token", "sqlite_type": "text()", "has_default": false, "has_on_update": false, "pg_equivalent": "text()", "notes": "notNull; $type<RefreshToken>" },
+        { "name": "token_expiry", "sqlite_type": "integer()", "has_default": false, "has_on_update": false, "pg_equivalent": "integer()", "notes": "" },
+        { "name": "active", "sqlite_type": "integer({ mode: 'boolean' })", "has_default": true, "has_on_update": false, "pg_equivalent": "boolean()", "notes": "$default(() => false); LEGACY table" },
+        { "name": "time_created", "sqlite_type": "integer()", "has_default": true, "has_on_update": false, "pg_equivalent": "integer()", "notes": "$default(() => Date.now()); via Timestamps spread" },
+        { "name": "time_updated", "sqlite_type": "integer()", "has_default": false, "has_on_update": true, "pg_equivalent": "integer()", "notes": "$onUpdate(() => Date.now()); via Timestamps spread" }
+      ]
+    },
+    {
+      "file": "packages/opencode/src/control-plane/workspace.sql.ts",
+      "table_name": "WorkspaceTable",
+      "table_sql_name": "workspace",
+      "columns": [
+        { "name": "id", "sqlite_type": "text()", "has_default": false, "has_on_update": false, "pg_equivalent": "text()", "notes": "primaryKey; $type<WorkspaceID>" },
+        { "name": "type", "sqlite_type": "text()", "has_default": false, "has_on_update": false, "pg_equivalent": "text()", "notes": "notNull" },
+        { "name": "name", "sqlite_type": "text()", "has_default": false, "has_on_update": false, "pg_equivalent": "text()", "notes": "notNull; default('') — Drizzle SQL-level default, not $default" },
+        { "name": "branch", "sqlite_type": "text()", "has_default": false, "has_on_update": false, "pg_equivalent": "text()", "notes": "" },
+        { "name": "directory", "sqlite_type": "text()", "has_default": false, "has_on_update": false, "pg_equivalent": "text()", "notes": "" },
+        { "name": "extra", "sqlite_type": "text({ mode: 'json' })", "has_default": false, "has_on_update": false, "pg_equivalent": "jsonb()", "notes": "needs data migration cast: jsonb(column::text)" },
+        { "name": "project_id", "sqlite_type": "text()", "has_default": false, "has_on_update": false, "pg_equivalent": "text()", "notes": "notNull; $type<ProjectID>; references ProjectTable.id onDelete cascade" },
+        { "name": "time_used", "sqlite_type": "integer()", "has_default": true, "has_on_update": false, "pg_equivalent": "integer()", "notes": "$default(() => Date.now()) — tracks last usage time" }
+      ]
+    },
+    {
+      "file": "packages/opencode/src/data-migration.sql.ts",
+      "table_name": "DataMigrationTable",
+      "table_sql_name": "data_migration",
+      "columns": [
+        { "name": "name", "sqlite_type": "text()", "has_default": false, "has_on_update": false, "pg_equivalent": "text()", "notes": "primaryKey" },
+        { "name": "time_completed", "sqlite_type": "integer()", "has_default": false, "has_on_update": false, "pg_equivalent": "integer()", "notes": "notNull" }
+      ]
+    },
+    {
+      "file": "packages/opencode/src/project/project.sql.ts",
+      "table_name": "ProjectTable",
+      "table_sql_name": "project",
+      "columns": [
+        { "name": "id", "sqlite_type": "text()", "has_default": false, "has_on_update": false, "pg_equivalent": "text()", "notes": "primaryKey; $type<ProjectID>" },
+        { "name": "worktree", "sqlite_type": "text()", "has_default": false, "has_on_update": false, "pg_equivalent": "text()", "notes": "notNull" },
+        { "name": "vcs", "sqlite_type": "text()", "has_default": false, "has_on_update": false, "pg_equivalent": "text()", "notes": "" },
+        { "name": "name", "sqlite_type": "text()", "has_default": false, "has_on_update": false, "pg_equivalent": "text()", "notes": "" },
+        { "name": "icon_url", "sqlite_type": "text()", "has_default": false, "has_on_update": false, "pg_equivalent": "text()", "notes": "" },
+        { "name": "icon_url_override", "sqlite_type": "text()", "has_default": false, "has_on_update": false, "pg_equivalent": "text()", "notes": "" },
+        { "name": "icon_color", "sqlite_type": "text()", "has_default": false, "has_on_update": false, "pg_equivalent": "text()", "notes": "" },
+        { "name": "time_created", "sqlite_type": "integer()", "has_default": true, "has_on_update": false, "pg_equivalent": "integer()", "notes": "$default(() => Date.now()); via Timestamps spread" },
+        { "name": "time_updated", "sqlite_type": "integer()", "has_default": false, "has_on_update": true, "pg_equivalent": "integer()", "notes": "$onUpdate(() => Date.now()); via Timestamps spread" },
+        { "name": "time_initialized", "sqlite_type": "integer()", "has_default": false, "has_on_update": false, "pg_equivalent": "integer()", "notes": "" },
+        { "name": "sandboxes", "sqlite_type": "text({ mode: 'json' })", "has_default": false, "has_on_update": false, "pg_equivalent": "jsonb()", "notes": "notNull; $type<string[]>; needs data migration cast: jsonb(column::text)" },
+        { "name": "commands", "sqlite_type": "text({ mode: 'json' })", "has_default": false, "has_on_update": false, "pg_equivalent": "jsonb()", "notes": "$type<{ start?: string }>; needs data migration cast: jsonb(column::text)" }
+      ]
+    },
+    {
+      "file": "packages/opencode/src/session/session.sql.ts",
+      "table_name": "SessionTable",
+      "table_sql_name": "session",
+      "columns": [
+        { "name": "id", "sqlite_type": "text()", "has_default": false, "has_on_update": false, "pg_equivalent": "text()", "notes": "primaryKey; $type<SessionID>" },
+        { "name": "project_id", "sqlite_type": "text()", "has_default": false, "has_on_update": false, "pg_equivalent": "text()", "notes": "notNull; $type<ProjectID>; references ProjectTable.id onDelete cascade" },
+        { "name": "workspace_id", "sqlite_type": "text()", "has_default": false, "has_on_update": false, "pg_equivalent": "text()", "notes": "$type<WorkspaceID>" },
+        { "name": "parent_id", "sqlite_type": "text()", "has_default": false, "has_on_update": false, "pg_equivalent": "text()", "notes": "$type<SessionID>" },
+        { "name": "slug", "sqlite_type": "text()", "has_default": false, "has_on_update": false, "pg_equivalent": "text()", "notes": "notNull" },
+        { "name": "directory", "sqlite_type": "text()", "has_default": false, "has_on_update": false, "pg_equivalent": "text()", "notes": "notNull" },
+        { "name": "path", "sqlite_type": "text()", "has_default": false, "has_on_update": false, "pg_equivalent": "text()", "notes": "" },
+        { "name": "title", "sqlite_type": "text()", "has_default": false, "has_on_update": false, "pg_equivalent": "text()", "notes": "notNull" },
+        { "name": "version", "sqlite_type": "text()", "has_default": false, "has_on_update": false, "pg_equivalent": "text()", "notes": "notNull" },
+        { "name": "share_url", "sqlite_type": "text()", "has_default": false, "has_on_update": false, "pg_equivalent": "text()", "notes": "" },
+        { "name": "summary_additions", "sqlite_type": "integer()", "has_default": false, "has_on_update": false, "pg_equivalent": "integer()", "notes": "" },
+        { "name": "summary_deletions", "sqlite_type": "integer()", "has_default": false, "has_on_update": false, "pg_equivalent": "integer()", "notes": "" },
+        { "name": "summary_files", "sqlite_type": "integer()", "has_default": false, "has_on_update": false, "pg_equivalent": "integer()", "notes": "" },
+        { "name": "summary_diffs", "sqlite_type": "text({ mode: 'json' })", "has_default": false, "has_on_update": false, "pg_equivalent": "jsonb()", "notes": "$type<Snapshot.FileDiff[]>; needs data migration cast: jsonb(column::text)" },
+        { "name": "cost", "sqlite_type": "real()", "has_default": false, "has_on_update": false, "pg_equivalent": "double precision()", "notes": "notNull; default(0) — Drizzle SQL-level default" },
+        { "name": "tokens_input", "sqlite_type": "integer()", "has_default": false, "has_on_update": false, "pg_equivalent": "integer()", "notes": "notNull; default(0)" },
+        { "name": "tokens_output", "sqlite_type": "integer()", "has_default": false, "has_on_update": false, "pg_equivalent": "integer()", "notes": "notNull; default(0)" },
+        { "name": "tokens_reasoning", "sqlite_type": "integer()", "has_default": false, "has_on_update": false, "pg_equivalent": "integer()", "notes": "notNull; default(0)" },
+        { "name": "tokens_cache_read", "sqlite_type": "integer()", "has_default": false, "has_on_update": false, "pg_equivalent": "integer()", "notes": "notNull; default(0)" },
+        { "name": "tokens_cache_write", "sqlite_type": "integer()", "has_default": false, "has_on_update": false, "pg_equivalent": "integer()", "notes": "notNull; default(0)" },
+        { "name": "revert", "sqlite_type": "text({ mode: 'json' })", "has_default": false, "has_on_update": false, "pg_equivalent": "jsonb()", "notes": "$type<{messageID; partID?; snapshot?; diff?}>; needs data migration cast: jsonb(column::text)" },
+        { "name": "permission", "sqlite_type": "text({ mode: 'json' })", "has_default": false, "has_on_update": false, "pg_equivalent": "jsonb()", "notes": "$type<Permission.Ruleset>; needs data migration cast: jsonb(column::text)" },
+        { "name": "agent", "sqlite_type": "text()", "has_default": false, "has_on_update": false, "pg_equivalent": "text()", "notes": "" },
+        { "name": "model", "sqlite_type": "text({ mode: 'json' })", "has_default": false, "has_on_update": false, "pg_equivalent": "jsonb()", "notes": "$type<{id; providerID; variant?}>; needs data migration cast: jsonb(column::text)" },
+        { "name": "time_created", "sqlite_type": "integer()", "has_default": true, "has_on_update": false, "pg_equivalent": "integer()", "notes": "$default(() => Date.now()); via Timestamps spread" },
+        { "name": "time_updated", "sqlite_type": "integer()", "has_default": false, "has_on_update": true, "pg_equivalent": "integer()", "notes": "$onUpdate(() => Date.now()); via Timestamps spread" },
+        { "name": "time_compacting", "sqlite_type": "integer()", "has_default": false, "has_on_update": false, "pg_equivalent": "integer()", "notes": "" },
+        { "name": "time_archived", "sqlite_type": "integer()", "has_default": false, "has_on_update": false, "pg_equivalent": "integer()", "notes": "" }
+      ]
+    },
+    {
+      "file": "packages/opencode/src/session/session.sql.ts",
+      "table_name": "MessageTable",
+      "table_sql_name": "message",
+      "columns": [
+        { "name": "id", "sqlite_type": "text()", "has_default": false, "has_on_update": false, "pg_equivalent": "text()", "notes": "primaryKey; $type<MessageID>" },
+        { "name": "session_id", "sqlite_type": "text()", "has_default": false, "has_on_update": false, "pg_equivalent": "text()", "notes": "notNull; $type<SessionID>; references SessionTable.id onDelete cascade" },
+        { "name": "time_created", "sqlite_type": "integer()", "has_default": true, "has_on_update": false, "pg_equivalent": "integer()", "notes": "$default(() => Date.now()); via Timestamps spread" },
+        { "name": "time_updated", "sqlite_type": "integer()", "has_default": false, "has_on_update": true, "pg_equivalent": "integer()", "notes": "$onUpdate(() => Date.now()); via Timestamps spread" },
+        { "name": "data", "sqlite_type": "text({ mode: 'json' })", "has_default": false, "has_on_update": false, "pg_equivalent": "jsonb()", "notes": "notNull; $type<InfoData>; needs data migration cast: jsonb(column::text)" }
+      ]
+    },
+    {
+      "file": "packages/opencode/src/session/session.sql.ts",
+      "table_name": "PartTable",
+      "table_sql_name": "part",
+      "columns": [
+        { "name": "id", "sqlite_type": "text()", "has_default": false, "has_on_update": false, "pg_equivalent": "text()", "notes": "primaryKey; $type<PartID>" },
+        { "name": "message_id", "sqlite_type": "text()", "has_default": false, "has_on_update": false, "pg_equivalent": "text()", "notes": "notNull; $type<MessageID>; references MessageTable.id onDelete cascade" },
+        { "name": "session_id", "sqlite_type": "text()", "has_default": false, "has_on_update": false, "pg_equivalent": "text()", "notes": "notNull; $type<SessionID>" },
+        { "name": "time_created", "sqlite_type": "integer()", "has_default": true, "has_on_update": false, "pg_equivalent": "integer()", "notes": "$default(() => Date.now()); via Timestamps spread" },
+        { "name": "time_updated", "sqlite_type": "integer()", "has_default": false, "has_on_update": true, "pg_equivalent": "integer()", "notes": "$onUpdate(() => Date.now()); via Timestamps spread" },
+        { "name": "data", "sqlite_type": "text({ mode: 'json' })", "has_default": false, "has_on_update": false, "pg_equivalent": "jsonb()", "notes": "notNull; $type<PartData>; needs data migration cast: jsonb(column::text)" }
+      ]
+    },
+    {
+      "file": "packages/opencode/src/session/session.sql.ts",
+      "table_name": "TodoTable",
+      "table_sql_name": "todo",
+      "columns": [
+        { "name": "session_id", "sqlite_type": "text()", "has_default": false, "has_on_update": false, "pg_equivalent": "text()", "notes": "notNull; $type<SessionID>; references SessionTable.id onDelete cascade" },
+        { "name": "content", "sqlite_type": "text()", "has_default": false, "has_on_update": false, "pg_equivalent": "text()", "notes": "notNull" },
+        { "name": "status", "sqlite_type": "text()", "has_default": false, "has_on_update": false, "pg_equivalent": "text()", "notes": "notNull" },
+        { "name": "priority", "sqlite_type": "text()", "has_default": false, "has_on_update": false, "pg_equivalent": "text()", "notes": "notNull" },
+        { "name": "position", "sqlite_type": "integer()", "has_default": false, "has_on_update": false, "pg_equivalent": "integer()", "notes": "notNull; composite PK with session_id" },
+        { "name": "time_created", "sqlite_type": "integer()", "has_default": true, "has_on_update": false, "pg_equivalent": "integer()", "notes": "$default(() => Date.now()); via Timestamps spread" },
+        { "name": "time_updated", "sqlite_type": "integer()", "has_default": false, "has_on_update": true, "pg_equivalent": "integer()", "notes": "$onUpdate(() => Date.now()); via Timestamps spread" }
+      ]
+    },
+    {
+      "file": "packages/opencode/src/session/session.sql.ts",
+      "table_name": "SessionMessageTable",
+      "table_sql_name": "session_message",
+      "columns": [
+        { "name": "id", "sqlite_type": "text()", "has_default": false, "has_on_update": false, "pg_equivalent": "text()", "notes": "primaryKey; $type<SessionMessage.ID>" },
+        { "name": "session_id", "sqlite_type": "text()", "has_default": false, "has_on_update": false, "pg_equivalent": "text()", "notes": "notNull; $type<SessionID>; references SessionTable.id onDelete cascade" },
+        { "name": "type", "sqlite_type": "text()", "has_default": false, "has_on_update": false, "pg_equivalent": "text()", "notes": "notNull; $type<SessionMessage.Type>" },
+        { "name": "time_created", "sqlite_type": "integer()", "has_default": true, "has_on_update": false, "pg_equivalent": "integer()", "notes": "$default(() => Date.now()); via Timestamps spread" },
+        { "name": "time_updated", "sqlite_type": "integer()", "has_default": false, "has_on_update": true, "pg_equivalent": "integer()", "notes": "$onUpdate(() => Date.now()); via Timestamps spread" },
+        { "name": "data", "sqlite_type": "text({ mode: 'json' })", "has_default": false, "has_on_update": false, "pg_equivalent": "jsonb()", "notes": "notNull; $type<SessionMessageData>; needs data migration cast: jsonb(column::text)" }
+      ]
+    },
+    {
+      "file": "packages/opencode/src/session/session.sql.ts",
+      "table_name": "PermissionTable",
+      "table_sql_name": "permission",
+      "columns": [
+        { "name": "project_id", "sqlite_type": "text()", "has_default": false, "has_on_update": false, "pg_equivalent": "text()", "notes": "primaryKey; references ProjectTable.id onDelete cascade" },
+        { "name": "time_created", "sqlite_type": "integer()", "has_default": true, "has_on_update": false, "pg_equivalent": "integer()", "notes": "$default(() => Date.now()); via Timestamps spread" },
+        { "name": "time_updated", "sqlite_type": "integer()", "has_default": false, "has_on_update": true, "pg_equivalent": "integer()", "notes": "$onUpdate(() => Date.now()); via Timestamps spread" },
+        { "name": "data", "sqlite_type": "text({ mode: 'json' })", "has_default": false, "has_on_update": false, "pg_equivalent": "jsonb()", "notes": "notNull; $type<Permission.Ruleset>; needs data migration cast: jsonb(column::text)" }
+      ]
+    },
+    {
+      "file": "packages/opencode/src/share/share.sql.ts",
+      "table_name": "SessionShareTable",
+      "table_sql_name": "session_share",
+      "columns": [
+        { "name": "session_id", "sqlite_type": "text()", "has_default": false, "has_on_update": false, "pg_equivalent": "text()", "notes": "primaryKey; references SessionTable.id onDelete cascade" },
+        { "name": "id", "sqlite_type": "text()", "has_default": false, "has_on_update": false, "pg_equivalent": "text()", "notes": "notNull" },
+        { "name": "secret", "sqlite_type": "text()", "has_default": false, "has_on_update": false, "pg_equivalent": "text()", "notes": "notNull" },
+        { "name": "url", "sqlite_type": "text()", "has_default": false, "has_on_update": false, "pg_equivalent": "text()", "notes": "notNull" },
+        { "name": "time_created", "sqlite_type": "integer()", "has_default": true, "has_on_update": false, "pg_equivalent": "integer()", "notes": "$default(() => Date.now()); via Timestamps spread" },
+        { "name": "time_updated", "sqlite_type": "integer()", "has_default": false, "has_on_update": true, "pg_equivalent": "integer()", "notes": "$onUpdate(() => Date.now()); via Timestamps spread" }
+      ]
+    },
+    {
+      "file": "packages/opencode/src/storage/schema.sql.ts",
+      "table_name": "(Timestamps spread — used by 10 tables)",
+      "table_sql_name": "—",
+      "columns": [
+        { "name": "time_created", "sqlite_type": "integer()", "has_default": true, "has_on_update": false, "pg_equivalent": "integer()", "notes": "$default(() => Date.now()); included in Account, ControlAccount, Project, Session, Message, Part, Todo, SessionMessage, Permission, SessionShare" },
+        { "name": "time_updated", "sqlite_type": "integer()", "has_default": false, "has_on_update": true, "pg_equivalent": "integer()", "notes": "$onUpdate(() => Date.now()); included in the same 10 tables as time_created" }
+      ]
+    },
+    {
+      "file": "packages/opencode/src/sync/event.sql.ts",
+      "table_name": "EventSequenceTable",
+      "table_sql_name": "event_sequence",
+      "columns": [
+        { "name": "aggregate_id", "sqlite_type": "text()", "has_default": false, "has_on_update": false, "pg_equivalent": "text()", "notes": "notNull; primaryKey" },
+        { "name": "seq", "sqlite_type": "integer()", "has_default": false, "has_on_update": false, "pg_equivalent": "integer()", "notes": "notNull" },
+        { "name": "owner_id", "sqlite_type": "text()", "has_default": false, "has_on_update": false, "pg_equivalent": "text()", "notes": "" }
+      ]
+    },
+    {
+      "file": "packages/opencode/src/sync/event.sql.ts",
+      "table_name": "EventTable",
+      "table_sql_name": "event",
+      "columns": [
+        { "name": "id", "sqlite_type": "text()", "has_default": false, "has_on_update": false, "pg_equivalent": "text()", "notes": "primaryKey" },
+        { "name": "aggregate_id", "sqlite_type": "text()", "has_default": false, "has_on_update": false, "pg_equivalent": "text()", "notes": "notNull; references EventSequenceTable.aggregate_id onDelete cascade" },
+        { "name": "seq", "sqlite_type": "integer()", "has_default": false, "has_on_update": false, "pg_equivalent": "integer()", "notes": "notNull" },
+        { "name": "type", "sqlite_type": "text()", "has_default": false, "has_on_update": false, "pg_equivalent": "text()", "notes": "notNull" },
+        { "name": "data", "sqlite_type": "text({ mode: 'json' })", "has_default": false, "has_on_update": false, "pg_equivalent": "jsonb()", "notes": "notNull; $type<Record<string, unknown>>; needs data migration cast: jsonb(column::text)" }
+      ]
+    }
+  ],
+  "summary": {
+    "total_json_columns": 12,
+    "total_boolean_columns": 1,
+    "total_real_columns": 1,
+    "total_onupdate_columns": 10,
+    "total_default_date_columns": 11,
+    "total_default_other_columns": 1,
+    "note_default_date_columns": "includes 10 time_created columns + WorkspaceTable.time_used, all using $default(() => Date.now())",
+    "note_default_other_columns": "ControlAccountTable.active uses $default(() => false)",
+    "note_sql_default_columns": "additional SQL-level defaults (not $default): WorkspaceTable.name default(''), SessionTable.cost default(0), SessionTable.tokens_input default(0), SessionTable.tokens_output default(0), SessionTable.tokens_reasoning default(0), SessionTable.tokens_cache_read default(0), SessionTable.tokens_cache_write default(0)"
+  }
+}

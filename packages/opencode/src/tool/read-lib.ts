@@ -32,6 +32,7 @@ export const ReadLibTool = Tool.define(
     return {
       description: DESCRIPTION,
       parameters: Parameters,
+      cacheable: true,
       execute: (params: Schema.Schema.Type<typeof Parameters>, _ctx: Tool.Context) =>
         Effect.gen(function* () {
           const instance = yield* InstanceState.context
@@ -207,12 +208,12 @@ export const ReadLibTool = Tool.define(
 )
 
 const walkDirectory = Effect.fnUntraced(function* (
-  fs: AppFileSystem.Service,
+  fs: AppFileSystem.Interface,
   dir: string,
   results: string[],
   ext: string,
   maxDepth: number,
-): Effect.Effect<void> {
+): any {
   if (maxDepth <= 0) return
   try {
     const entries = yield* fs.readDirectory(dir)

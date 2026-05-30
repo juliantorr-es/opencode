@@ -48,6 +48,7 @@ import Layout from "@/pages/layout"
 import { ErrorPage } from "./pages/error"
 import { useCheckServerHealth } from "./utils/server-health"
 import { ServersProvider } from "./context/servers"
+import { AppErrorBoundary } from "./components/error-boundary"
 
 const HomeRoute = lazy(() => import("@/pages/home"))
 const Session = lazy(() => import("@/pages/session"))
@@ -78,8 +79,18 @@ declare global {
       exportDebugLogs?: () => Promise<string>
       getCustomAgents?: () => Promise<unknown[]>
       setCustomAgents?: (agents: unknown[]) => Promise<void>
+      deleteCustomAgent?: (id: string) => Promise<void>
       getMcpServers?: () => Promise<unknown[]>
       setMcpServers?: (servers: unknown[]) => Promise<void>
+      recordFatalRendererError?: (error: { error: string; url: string; version?: string; platform: string; os?: string }) => Promise<void>
+      openLink?: (url: string) => void
+      openDirectoryPickerDialog?: (opts?: { title?: string; multiple?: boolean; defaultPath?: string }) => Promise<string | string[] | null>
+      checkUpdate?: () => Promise<{ updateAvailable: boolean; version?: string }>
+      installUpdate?: () => Promise<void>
+      runUpdater?: (alertOnFail: boolean) => Promise<void>
+      getDefaultServerUrl?: () => Promise<string | null>
+      setDefaultServerUrl?: (url: string | null) => Promise<void>
+      githubOAuthCallback?: (code: string, state: string) => Promise<void>
     }
   }
 }
@@ -330,10 +341,10 @@ export function AppInterface(props: {
                     component={props.router ?? Router}
                     root={(routerProps) => <RouterRoot appChildren={props.children}>{routerProps.children}</RouterRoot>}
                   >
-                    <Route path="/" component={HomeRoute} />
-                    <Route path="/:dir" component={DirectoryLayout}>
+                    <Route path="/" component={() => <AppErrorBoundary><HomeRoute /></AppErrorBoundary>} />
+                    <Route path="/:dir" component={() => <AppErrorBoundary><DirectoryLayout /></AppErrorBoundary>}>
                       <Route path="/" component={() => <Navigate href="session" />} />
-                      <Route path="/session/:id?" component={SessionRoute} />
+                      <Route path="/session/:id?" component={() => <AppErrorBoundary><SessionRoute /></AppErrorBoundary>} />
                     </Route>
                   </Dynamic>
                 </ServerSyncProvider>

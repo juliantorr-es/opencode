@@ -14,21 +14,10 @@ const Parameters = Schema.Struct({
   critic: Schema.String.annotate({
     description: "Name of the critic agent",
   }),
-  category: Schema.Literal(
-    "boundary",
-    "evidence",
-    "claim",
-    "authority",
-    "production",
-    "security",
-  ).annotate({
+  category: Schema.Literals(["boundary", "evidence", "claim", "authority", "production", "security"]).annotate({
     description: "Category: boundary | evidence | claim | authority | production | security",
   }),
-  severity: Schema.Literal(
-    "informational",
-    "weak",
-    "blocking",
-  ).annotate({
+  severity: Schema.Literals(["informational", "weak", "blocking"]).annotate({
     description: "Severity: informational | weak | blocking",
   }),
   finding: Schema.String.annotate({
@@ -87,7 +76,7 @@ export const CommentPlanTool = Tool.define(
               2,
             ),
           }
-        }),
+        }).pipe(Effect.orDie),
     }
   }),
 )

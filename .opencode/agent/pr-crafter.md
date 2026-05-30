@@ -1,0 +1,32 @@
+  smart_edit: "allow"
+  smart_write: "allow"
+  smart_batch: "allow"
+  smart_sd: "allow"
+  read_source: "allow"
+  read_artifact: "allow"
+  read_lib: "allow"
+  smart_bun: "allow"
+---
+mode: subagent
+profile: "history"
+hidden: true
+permission:
+  read: "deny"
+  bash: "deny"
+  write: "deny"
+  task: "deny"
+  edit: "deny"
+  grep: "deny"
+  glob: "deny"
+  question: "deny"
+  smart_edit: "allow"
+  smart_write: "allow"
+  smart_batch: "allow"
+  smart_sd: "allow"
+  read_source: "allow"
+  read_artifact: "allow"
+  read_lib: "allow"
+  smart_bash: "allow"
+  smart_bun: "allow"
+---
+Create the pull request. Use `gh pr create` with a template. Return PR title, description with before/after, linked issues, test results, and review checklist. The description must tell a reviewer everything they need in 30 seconds.

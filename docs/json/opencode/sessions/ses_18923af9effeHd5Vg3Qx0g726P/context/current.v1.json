@@ -1,0 +1,142 @@
+{
+  "schema_version": "v1",
+  "session_id": "ses_18923af9effeHd5Vg3Qx0g726P",
+  "mission_status": "complete",
+  "last_updated": "2026-05-30T03:15:15.149415+00:00",
+  "current_wave": "cartography",
+  "waves": {
+    "cartography": {
+      "started_at": "2026-05-30T03:15:15.149415+00:00",
+      "completed_at": "2026-05-30T03:15:15.149415+00:00",
+      "findings": [
+        {
+          "source": "ipc.ts",
+          "summary": "20 findings across 5 files: 3 critical fire-and-forget saves (IPC-001, IPC-002, IPC-003), 4 high-severity race conditions (IPC-005, IPC-006, IPC-008, IPC-016), 2 dual-source-of-truth issues (IPC-004, IPC-009), test gap (IPC-019)",
+          "confidence": 0.95,
+          "relevance_profiles": [
+            "architecture",
+            "execution"
+          ],
+          "wave": "cartography"
+        },
+        {
+          "source": "dialog-edit-mcp.tsx:55",
+          "summary": "handleSave calls async onSave without await — dialog closes before persistence completes. Same pattern in dialog-edit-agent.tsx:59",
+          "confidence": 1.0,
+          "relevance_profiles": [
+            "architecture",
+            "execution"
+          ],
+          "wave": "cartography"
+        },
+        {
+          "source": "dialog-select-mcp.tsx:173",
+          "summary": "Add MCP server does NOT write to electron-store — servers lost on restart. SDK-only add is transient",
+          "confidence": 0.98,
+          "relevance_profiles": [
+            "architecture",
+            "execution"
+          ],
+          "wave": "cartography"
+        },
+        {
+          "source": "dialog-select-mcp.tsx:377-393",
+          "summary": "MCP edit writes store before SDK, has no rollback. Delete has 3 ops with no transaction boundary",
+          "confidence": 0.95,
+          "relevance_profiles": [
+            "architecture",
+            "execution"
+          ],
+          "wave": "cartography"
+        },
+        {
+          "source": "preload/index.ts:6",
+          "summary": "Dead installCli bridge method — handler removed from ipc.ts but preload still exposes it",
+          "confidence": 1.0,
+          "relevance_profiles": [
+            "execution"
+          ],
+          "wave": "cartography"
+        },
+        {
+          "source": "ipc.ts:56",
+          "summary": "Generic store-set has no runtime schema validation — any non-reserved namespace can be written by compromised renderer",
+          "confidence": 0.9,
+          "relevance_profiles": [
+            "architecture",
+            "execution"
+          ],
+          "wave": "cartography"
+        }
+      ],
+      "artifacts": [
+        "docs/json/opencode/cartography/cross-cutting-ipc-reliability.v1.json"
+      ]
+    }
+  },
+  "active_findings": [
+    {
+      "source": "ipc.ts",
+      "summary": "20 findings across 5 files: 3 critical fire-and-forget saves (IPC-001, IPC-002, IPC-003), 4 high-severity race conditions (IPC-005, IPC-006, IPC-008, IPC-016), 2 dual-source-of-truth issues (IPC-004, IPC-009), test gap (IPC-019)",
+      "confidence": 0.95,
+      "relevance_profiles": [
+        "architecture",
+        "execution"
+      ],
+      "wave": "cartography"
+    },
+    {
+      "source": "dialog-edit-mcp.tsx:55",
+      "summary": "handleSave calls async onSave without await — dialog closes before persistence completes. Same pattern in dialog-edit-agent.tsx:59",
+      "confidence": 1.0,
+      "relevance_profiles": [
+        "architecture",
+        "execution"
+      ],
+      "wave": "cartography"
+    },
+    {
+      "source": "dialog-select-mcp.tsx:173",
+      "summary": "Add MCP server does NOT write to electron-store — servers lost on restart. SDK-only add is transient",
+      "confidence": 0.98,
+      "relevance_profiles": [
+        "architecture",
+        "execution"
+      ],
+      "wave": "cartography"
+    },
+    {
+      "source": "dialog-select-mcp.tsx:377-393",
+      "summary": "MCP edit writes store before SDK, has no rollback. Delete has 3 ops with no transaction boundary",
+      "confidence": 0.95,
+      "relevance_profiles": [
+        "architecture",
+        "execution"
+      ],
+      "wave": "cartography"
+    },
+    {
+      "source": "preload/index.ts:6",
+      "summary": "Dead installCli bridge method — handler removed from ipc.ts but preload still exposes it",
+      "confidence": 1.0,
+      "relevance_profiles": [
+        "execution"
+      ],
+      "wave": "cartography"
+    },
+    {
+      "source": "ipc.ts:56",
+      "summary": "Generic store-set has no runtime schema validation — any non-reserved namespace can be written by compromised renderer",
+      "confidence": 0.9,
+      "relevance_profiles": [
+        "architecture",
+        "execution"
+      ],
+      "wave": "cartography"
+    }
+  ],
+  "active_artifacts": [
+    "docs/json/opencode/cartography/cross-cutting-ipc-reliability.v1.json"
+  ],
+  "archived": []
+}

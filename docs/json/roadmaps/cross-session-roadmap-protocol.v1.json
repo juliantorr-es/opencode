@@ -1,0 +1,198 @@
+{
+  "schema_version": "rig.relay.roadmap_control_plane.v1",
+  "title": "Cross-Session Roadmap Control Plane — Tool Specifications",
+  "generated_at": "2026-05-30T04:05:00Z",
+  "status": "proposed",
+  "tools": [
+    {
+      "name": "roadmap_init",
+      "description": "Injected at every session start, typically via read_messages or a new system-init hook. Returns the active roadmap DAG pruned to items whose dependencies are met or already in-progress. Past session cross-references are embedded in each item so the orchestrator can pick up mid-stream without rediscovery.",
+      "behavior": {
+        "trigger": "Automatic on session start. Orchestrator does NOT call this — the runtime calls it before the first user message.",
+        "input": "None (uses session_id from context)",
+        "output": {
+          "roadmap_id": "phase-3-opencode-desktop",
+          "active_phases": [
+            {
+              "id": "PHASE_3_0",
+              "title": "Cross-Session Coordination Infrastructure",
+              "status": "ready",
+              "completion": 0,
+              "items": [
+                {
+                  "id": "TEL-001",
+                  "title": "task_board fleet visibility",
+                  "status": "ready",
+                  "completion_pct": 0,
+                  "depends_on": [],
+                  "context": "Phase 2 session ses_189 identified that task_board only shows knowledge graph entries, not actual background tasks. Fix: coordination store must register task metadata at spawn time.",
+                  "prior_sessions": [
+                    {"session_id": "ses_189", "note": "Designed protocol, filed finding"}
+                  ],
+                  "next_step": "Extend task() tool to accept and register lane_id + role + files_modified metadata at spawn time. Wire into coordination store queries."
+                }
+              ]
+            }
+          ],
+          "total_completion_pct": 12,
+          "next_actionable_items": [
+            {"item_id": "TEL-001", "priority": 1},
+            {"item_id": "TEL-005", "priority": 2},
+            {"item_id": "PG-001", "priority": 3}
+          ]
+        },
+        "caching": "The roadmap artifact sits at docs/json/roadmaps/active.v1.json, updated by roadmap_progress. roadmap_init reads this file and enriches it with the latest session findings.",
+        "file_dependency": "docs/json/roadmaps/active.v1.json — the canonical live roadmap, NOT docs/json/roadmaps/opencode-desktop-phase3-roadmap.v1.json (which is the blueprint)."
+      },
+      "edge_cases": [
+        "No roadmap artifact exists: return empty roadmap, suggest creating one via propose_roadmap",
+        "Orphaned items (depends_on item was deleted): warn, skip from next_actionable",
+        "All items completed: return completion summary, set status=complete"
+      ]
+    },
+    {
+      "name": "roadmap_progress",
+      "description": "Called at session end (or on milestone within a session) to persist progress. Updates the active roadmap artifact with a new session entry and recalculates completion percentages up the phase tree.",
+      "behavior": {
+        "caller": "Orchestrator, typically during curate_context or generate_report",
+        "signature": "roadmap_progress(item_id: string, status: 'not_started' | 'in_progress' | 'complete' | 'blocked' | 'deprecated', completion_pct: number, note: string, blocker?: { description: string, depends_on: string[] })",
+        "output": {
+          "item_id": "TEL-001",
+          "previous_status": "ready",
+          "new_status": "in_progress",
+          "completion_pct": 30,
+          "updated_at": "2026-05-30T04:05:00Z",
+          "session_ref": "ses_189x",
+          "phase_completion_pct": 5,
+          "roadmap_completion_pct": 14,
+          "new_next_actionable_items": ["TEL-002", "PG-001"]
+        },
+        "file_affected": "docs/json/roadmaps/active.v1.json",
+        "append_logic": "Each update appends a line to docs/json/roadmaps/active.v1.jsonl (audit trail). The active.v1.json file is re-materialized from the latest state of each item.",
+        "recalculation": "When an item reaches 100%, check all items that depend on it. If their deps are now all met, move them from 'blocked' to 'ready' and include them in next_actionable_items."
+      },
+      "edge_cases": [
+        "Item already at 100%: warn, allow override with force=true",
+        "completion_pct decreases: warn but allow (re-prioritization or descope)",
+        "status=blocked without blocker: require blocker field, reject otherwise",
+        "Note >500 chars: truncate with ... marker"
+      ]
+    },
+    {
+      "name": "roadmap_next",
+      "description": "Read-only query. Returns the top-N actionable items sorted by priority whose dependencies are all met, and whose completion_pct < 100. Designed to answer 'what should I work on next?' without reading the full roadmap.",
+      "behavior": {
+        "caller": "Orchestrator at session start or after completing a work item",
+        "signature": "roadmap_next(limit: number = 5, phase_id?: string, include_deprecated: boolean = false)",
+        "output": {
+          "count": 3,
+          "items": [
+            {
+              "rank": 1,
+              "item_id": "TEL-001",
+              "title": "task_board fleet visibility",
+              "phase": "Cross-Session Coordination Infrastructure",
+              "completion_pct": 0,
+              "priority": "P1",
+              "effort": "medium",
+              "next_step": "Extend task() tool to register lane_id + role metadata at spawn time",
+              "context_summary": "Phase 2 showed task_board is blind to background tasks. Fix before attempting any multi-lane session.",
+              "blocked_by": null
+            },
+            {
+              "rank": 2,
+              "item_id": "TST-001",
+              "title": "Set up SolidJS testing harness",
+              "phase": "Dialog Component Test Coverage",
+              "completion_pct": 0,
+              "priority": "P2",
+              "effort": "medium",
+              "next_step": "Add vitest + solid-testing-library to packages/app",
+              "context_summary": "Phase 2 added 54 IPC tests but zero dialog component tests.",
+              "blocked_by": null
+            }
+          ],
+          "total_actionable": 7,
+          "total_roadmap_items": 28,
+          "roadmap_completion_pct": 14
+        },
+        "sorting": "Priority (P1→P4), then effort (small→large), then dependency count (fewer deps first), then alphabetical.",
+        "filtering": "Items with status=complete or status=deprecated are excluded unless include_deprecated=true. Items whose dependencies include an incomplete item are excluded unless show_blocked=true."
+      },
+      "edge_cases": [
+        "No actionable items: return empty list with status='all_complete' or 'all_blocked' with list of blockers",
+        "limit > total actionable: return all, no error",
+        "phase_id given but no items in phase: return empty with phase_summary"
+      ]
+    },
+    {
+      "name": "roadmap_deprecate",
+      "description": "Removes a roadmap item from the active set without deleting its history. Sets status=deprecated with a TTL. Deprecated items are hidden from roadmap_next but visible in roadmap_progress history and roadmap_init --show-deprecated.",
+      "behavior": {
+        "caller": "Orchestrator or lane-owner secretary when a session discovers the item is no longer relevant",
+        "signature": "roadmap_deprecate(item_id: string, reason: string, ttl_days: number = 30, replacement_item_id?: string)",
+        "output": {
+          "item_id": "TEL-006",
+          "previous_status": "ready",
+          "new_status": "deprecated",
+          "reason": "Lessons register was superseded by the findings registry — discover_findings covers the same need with richer metadata.",
+          "deprecated_at": "2026-05-30T04:05:00Z",
+          "ttl_days": 30,
+          "replacement": "discover_findings tool",
+          "expires_at": "2026-06-29T04:05:00Z"
+        },
+        "file_affected": "docs/json/roadmaps/active.v1.json — item moved to deprecated[] array instead of items[]",
+        "revival": "If a future session calls roadmap_progress on a deprecated item with status=in_progress, it moves back to active automatically with a warning. This handles the case where the item was deprecated prematurely.",
+        "dependency_cascade": "When an item is deprecated, all items that depend exclusively on it are automatically blocked with reason='Upstream dependency deprecated'. If they also depend on other items, they remain ready if those deps are met."
+      },
+      "edge_cases": [
+        "Item already deprecated: extend TTL, keep existing reason unless new reason provided",
+        "Item has dependent items: list them in output, cascade block",
+        "replacement_item_id doesn't exist: warn but allow (may be future item)"
+      ]
+    },
+    {
+      "name": "roadmap_prioritize",
+      "description": "Changes an item's priority within its phase, or moves an item to a different phase. Roadmap order is recalculated on next roadmap_next call.",
+      "behavior": {
+        "caller": "Orchestrator when business priorities shift",
+        "signature": "roadmap_prioritize(item_id: string, priority: 'P1' | 'P2' | 'P3' | 'P4', phase_id?: string, order_hint?: number)",
+        "output": {
+          "item_id": "TEL-001",
+          "old_priority": "P1",
+          "new_priority": "P2",
+          "old_phase": "PHASE_3_0",
+          "new_phase": "PHASE_3_0",
+          "order_hint": 2,
+          "recalculated_next": ["PG-001", "TST-001", "TEL-005"]
+        },
+        "file_affected": "docs/json/roadmaps/active.v1.json",
+        "recalculation": "After re-prioritization, roadmap_next is re-evaluated and the new order is returned in output so the orchestrator sees the impact immediately."
+      },
+      "edge_cases": [
+        "Item doesn't exist: reject with available items list",
+        "phase_id changes but phase doesn't exist: create phase automatically with status=ready, warn",
+        "Conflicting order_hint: items at same order_hint sort alphabetically by item_id"
+      ]
+    }
+  ],
+  "file_structure": {
+    "blueprint": "docs/json/roadmaps/opencode-desktop-phase3-roadmap.v1.json — the master plan, updated infrequently (phase boundaries)",
+    "active": "docs/json/roadmaps/active.v1.json — the live snapshot, updated by every roadmap_progress call",
+    "audit_trail": "docs/json/roadmaps/progress.v1.jsonl — append-only log of all roadmap_progress, roadmap_deprecate, roadmap_prioritize calls",
+    "schema": "docs/schemas/rig.relay.roadmap_control_plane.v1.schema.json — schema for all three files"
+  },
+  "session_integration": {
+    "startup": "roadmap_init runs automatically → injects next_actionable_items into orchestrator context",
+    "during": "Orchestrator can call roadmap_next at any decision point: 'what should I work on next?'",
+    "end": "Orchestrator calls roadmap_progress for each completed/modified item during generate_report",
+    "secretary_integration": "Lane-owner secretary calls roadmap_progress when a lane completes, and roadmap_next to pick its next lane",
+    "cross_session_findings_integration": "discover_findings matches against roadmap item IDs. A finding tagged with item_id=TEL-001 shows up when that item is queried via roadmap_next."
+  },
+  "pre_existing_findings_from_phase_2": [
+    "Each session has ~5 edge case categories per tool, derived from actual session failures",
+    "roadmap_progress edge cases came from the 'critic rejected prefab' timing issue — without progress tracking, we didn't know lanes were in wrong state",
+    "roadmap_deprecate came from FI-002 (onSave already fixed) — the follow-up issue was stale but had no deprecation mechanism",
+    "roadmap_next came from session start blind spots — every session rediscovered the context from scratch"
+  ]
+}

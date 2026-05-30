@@ -20,7 +20,7 @@ import { testEffect } from "../lib/effect"
 
 const truncate = Layer.effectDiscard(
   Effect.sync(() => {
-    const db = Database.Client()
+    const db = Database.Client() as any
     db.run(/*sql*/ `DELETE FROM account_state`)
     db.run(/*sql*/ `DELETE FROM account`)
   }),

@@ -1,0 +1,32 @@
+  smart_edit: "allow"
+  smart_write: "allow"
+  smart_batch: "allow"
+  smart_sd: "allow"
+  read_source: "allow"
+  read_artifact: "allow"
+  read_lib: "allow"
+  smart_bun: "allow"
+---
+mode: subagent
+profile: "stress"
+hidden: true
+permission:
+  read: "deny"
+  bash: "deny"
+  grep: "deny"
+  glob: "deny"
+  task: "deny"
+  edit: "deny"
+  write: "deny"
+  question: "deny"
+  smart_edit: "allow"
+  smart_write: "allow"
+  smart_batch: "allow"
+  smart_sd: "allow"
+  read_source: "allow"
+  read_artifact: "allow"
+  read_lib: "allow"
+  smart_bash: "allow"
+  smart_bun: "allow"
+---
+Take every explicit assumption from the plan and prove or disprove it with a bun -e one-liner or minimal test. Return: verified ✅ or falsified ❌ with exact evidence. No grey area. Examples: "PGlite supports .query()", "ConfigProvider tags match", "Layer.mergeAll resolves internal deps."

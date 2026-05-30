@@ -1,0 +1,239 @@
+{
+  "schema_version": "rig.relay.cross_session_handoff.v1",
+  "title": "Phase 2 → Phase 3 Handoff",
+  "generated_at": "2026-05-30T04:10:00Z",
+  "from_session": "ses_18924c561ffeFgV9kk6IlTCbX3",
+  "from_session_report": "docs/json/opencode/reports/session-2026-05-30T03-39-37-517Z.v1.json",
+  "status": "all_frozen_pending_integration",
+  "summary": {
+    "lanes_completed": 9,
+    "findings_catalogued": 83,
+    "findings_resolved": 83,
+    "files_modified": "50+ across 5 packages",
+    "new_source_files": 3,
+    "new_test_files": 3,
+    "new_tests": 54,
+    "repair_cycles": 3,
+    "dirty_files_preserved": ["packages/opencode/src/mcp/index.ts (TuiEvent stub)", "packages/opencode/src/account/account.sql.ts (Pg migration)", "packages/app/src/pages/home.tsx", "packages/app/src/pages/session/layout.tsx"]
+  },
+  "frozen_lanes": [
+    {
+      "id": "lane-1-ipc-reliability",
+      "title": "Cross-Cutting IPC Reliability",
+      "status": "frozen_pending_integration",
+      "plan_artifact": "docs/json/opencode/plans/ipc-reliability-lane1.v1.json",
+      "claims_verified": "9/10 pass (1 intentional — empty command validation moved to dialog)",
+      "test_delta": "+28 tests in ipc-validation.test.ts",
+      "key_files": [
+        "packages/app/src/components/dialog-edit-mcp.tsx (async handleSave)",
+        "packages/app/src/components/dialog-select-mcp.tsx (add persistence, write order)",
+        "packages/desktop/src/main/ipc.ts (write queue, try/catch handlers)",
+        "packages/desktop/src/main/ipc-validation.ts (NEW — validation module)",
+        "packages/desktop/tests/ipc-validation.test.ts (NEW — 28 tests)"
+      ],
+      "critical_fixes": [
+        "handleSave now awaits onSave (no more fire-and-forget)",
+        "addMutation persists to electron-store (no more data loss on restart)",
+        "SDK-first write order prevents stale store overwrites"
+      ]
+    },
+    {
+      "id": "lane-2-mcp-crash-fixes",
+      "title": "MCP Management Crash Fixes",
+      "status": "frozen_pending_integration",
+      "plan_artifact": "docs/json/opencode/plans/mcp-management-crash-fixes.v1.json",
+      "claims_verified": "5/5 pass",
+      "test_delta": "+22 tests in ipc-mcp-servers.test.ts, +4 from ipc-validation",
+      "key_files": [
+        "packages/app/src/components/dialog-select-mcp.tsx (add persist, handleEdit fallback)",
+        "packages/app/src/components/dialog-edit-mcp.tsx (inline panel, no nested Dialog)",
+        "packages/desktop/tests/ipc-mcp-servers.test.ts (NEW — 22 tests)"
+      ],
+      "critical_fixes": [
+        "addMutation now persists to electron-store (P0 data loss fixed)",
+        "handleEdit constructs stub entry from sync.data.mcp when store missing",
+        "DialogEditMcp no longer nested Dialog — no more portal conflict"
+      ]
+    },
+    {
+      "id": "lane-3-agent-crash-fixes",
+      "title": "Agent Config Crash Fixes",
+      "status": "frozen_pending_integration",
+      "plan_artifact": "docs/json/opencode/plans/agent-config-crash-fixes.v1.json",
+      "claims_verified": "6/6 pass (1 i18n inconsistency repaired)",
+      "test_delta": "0 new tests (validation extracted to shared module)",
+      "key_files": [
+        "packages/app/src/components/dialog-manage-agents.tsx (serial write queue, delete IPC)",
+        "packages/app/src/components/dialog-edit-agent.tsx (try/catch handleSave)",
+        "packages/desktop/src/main/ipc.ts (delete-desktop-custom-agent handler)",
+        "packages/desktop/src/preload/types.ts + index.ts (deleteCustomAgent bridge)",
+        "packages/app/src/i18n/en.ts (dialog.agents.save.failed, delete.failed keys)"
+      ],
+      "critical_fixes": [
+        "Serial write queue prevents save race (CRITICAL — prev captured at call time)",
+        "Dedicated delete IPC handler instead of full-list re-save",
+        "handleSave now has try/catch with user-visible error toast",
+        "temperature/top_p input locale-safe (comma→dot) and validated server-side"
+      ]
+    },
+    {
+      "id": "lane-4-mcp-hardening",
+      "title": "MCP Management Hardening",
+      "status": "frozen_pending_integration",
+      "plan_artifact": "docs/json/opencode/plans/opencode-mcp-mgmt-hardening.v1.json",
+      "critic_repair_artifact": "docs/json/opencode/plans/opencode-mcp-mgmt-hardening/comments.v1.jsonl",
+      "claims_verified": "6/6 pass",
+      "repair_cycles": 1,
+      "critic_issues_resolved": 4,
+      "key_files": [
+        "packages/app/src/components/dialog-edit-mcp.tsx (validation, async handleSave)",
+        "packages/app/src/components/dialog-select-mcp.tsx (try/catch toggle, disconnectMutation)",
+        "packages/app/src/pages/session/use-session-commands.tsx (ErrorBoundary)",
+        "packages/opencode/src/mcp/index.ts (per-server Semaphore, timeout, logging)",
+        "packages/desktop/src/main/ipc.ts (try/catch store handlers)"
+      ],
+      "critical_fixes": [
+        "Per-server Semaphore with 30s timeout serializes connect/disconnect/watch",
+        "Double-toast bug fixed (single error surface in toggle mutation)",
+        "ErrorBoundary now shows error.message instead of silently swallowing",
+        "Empty command and URL validation before save"
+      ]
+    },
+    {
+      "id": "lane-5-agent-hardening",
+      "title": "Agent Config Hardening",
+      "status": "frozen_pending_integration",
+      "plan_artifact": "docs/json/opencode/plans/agent-config-hardening.v1.json",
+      "claims_verified": "5/5 pass",
+      "test_delta": "0 new tests",
+      "key_files": [
+        "packages/app/src/components/dialog-edit-agent.tsx (all 5 fixes in 1 file)"
+      ],
+      "critical_fixes": [
+        "handleSave is async, awaits onSave (no more fire-and-forget)",
+        "Locale-safe Number(value.replace(',','.')) for temperature/top_p",
+        "isSaving guard prevents double-save, button shows Spinner during async",
+        "Dialog stays open on save failure — user can retry without losing inputs"
+      ]
+    },
+    {
+      "id": "lane-6-plugin-hardening",
+      "title": "Plugin Management Hardening",
+      "status": "frozen_pending_integration",
+      "plan_artifact": "docs/json/opencode/plans/plugin-management-hardening.v1.json",
+      "repair_cycles": 1,
+      "defects_resolved": 3,
+      "claims_verified": "6/6 pass (post-repair)",
+      "key_files": [
+        "packages/desktop/src/main/ipc.ts (try/catch all 7 store handlers)",
+        "packages/desktop/src/renderer/dialog-install-plugin.tsx (optional chaining)",
+        "packages/desktop/src/renderer/dialog-manage-plugins.tsx (fresh state reads, optional chaining, logging)",
+        "packages/desktop/src/renderer/index.tsx (import .catch())"
+      ],
+      "critical_fixes": [
+        "All 7 store IPC handlers wrapped in try/catch (was 3/7 — repair added the rest)",
+        "ALL window.api calls use ?.() optional chaining (was 5/9 — repair added 4)",
+        "toggleEnabled/removePlugin now fetch fresh state before mutating (was using stale local signal)"
+      ]
+    },
+    {
+      "id": "lane-7-github-hardening",
+      "title": "GitHub Integration Hardening",
+      "status": "frozen_pending_integration",
+      "plan_artifact": "docs/json/opencode/plans/github-integration-hardening-v1.v1.json",
+      "critic_conditions": 3,
+      "claims_verified": "6/6 pass",
+      "new_source_files": [
+        "packages/desktop/src/main/github-ipc.ts (extracted 6 GitHub IPC handlers)",
+        "packages/opencode/test/github/service.test.ts (4 smoke tests)"
+      ],
+      "key_files": [
+        "packages/opencode/src/github/service.ts (error casts → GitHubApiError, defaultLayer)",
+        "packages/opencode/src/account/account.ts (Duration.hours(1) TTL)",
+        "packages/opencode/src/effect/app-runtime.ts (Layer.provideMerge)",
+        "packages/app/src/pages/session/review-tab.tsx (github.noAuth UI)",
+        "packages/desktop/src/main/ipc.ts (origin validation)",
+        "packages/desktop/src/main/github-ipc.ts (NEW — extracted module)",
+        "packages/desktop/src/preload/types.ts (updated return types)"
+      ],
+      "critical_fixes": [
+        "GitHub IPC handlers extracted to github-ipc.ts (503-line ipc.ts reduced)",
+        "PAT format validation added (ghp_, github_pat_, ghu_, gho_, ghb_ prefixes)",
+        "API proxy error serialization fixed (structured return, not JSON.stringify'd Error)",
+        "GitHubService wired into AppLayer (was dead code — 0 callers)",
+        "Cache TTL fixed (Duration.zero → Duration.hours(1))",
+        "github.noAuth i18n key now shown when no token"
+      ]
+    },
+    {
+      "id": "lane-8-subagent-ux",
+      "title": "Subagent Delegation UX",
+      "status": "frozen_pending_integration",
+      "plan_artifact": "docs/json/opencode/plans/subagent-delegation-ux.v1.json",
+      "claims_verified": "4/4 pass",
+      "test_delta": "0 new tests",
+      "key_files": [
+        "packages/app/src/components/prompt-input.tsx (rank fix, delegate type, pill distinction)",
+        "packages/app/src/components/prompt-input/slash-popover.tsx (buildGroups, group headers)",
+        "packages/app/src/context/prompt.tsx (subagent?: boolean on AgentPart)"
+      ],
+      "critical_fixes": [
+        "Group headers in slash-popover (Agents, Delegates, Recent Files, Files)",
+        "Rank collision fixed (agent=0, delegate=0.5 — was both 0)",
+        "Delegate pills now have data-subagent attribute",
+        "@mention supports subagent type (was only agent + file)"
+      ]
+    },
+    {
+      "id": "lane-9-context-display",
+      "title": "Context Display Fixes",
+      "status": "frozen_pending_integration",
+      "plan_artifact": "none (trivial scope)",
+      "claims_verified": "N/A",
+      "key_files": [
+        "packages/app/src/components/session-context-usage.tsx (tooltip text)"
+      ],
+      "critical_fixes": [
+        "Tooltip now shows 'X% of context window' instead of bare 'X%'"
+      ]
+    }
+  ],
+  "pending_infrastructure_roadmap": "docs/json/roadmaps/subagent-telemetry-and-contention-protocol.v1.json",
+  "pending_phase3_roadmap": "docs/json/roadmaps/opencode-desktop-phase3-roadmap.v1.json",
+  "pending_roadmap_control_plane": "docs/json/roadmaps/cross-session-roadmap-protocol.v1.json",
+  "integration_blockers": [
+    {
+      "id": "INT-001",
+      "severity": "medium",
+      "description": "ipc.ts has contributions from 5 lanes (1, 2, 4, 6, 7) — serializedWrite generic constraint at line 71 may surface after merge",
+      "recommended_action": "Run full typecheck on merged ipc.ts before releasing",
+      "affected_lanes": ["lane-1", "lane-2", "lane-4", "lane-6", "lane-7"]
+    },
+    {
+      "id": "INT-002",
+      "severity": "low",
+      "description": "Pre-existing TS2304 error in dialog-manage-agents.tsx (writeQueue not in scope) — Lane 3 added writeQueue but dialog-manage-agents may have stale type references",
+      "recommended_action": "Verify dialog-manage-agents.tsx typecheck after all lanes merged"
+    },
+    {
+      "id": "INT-003",
+      "severity": "low",
+      "description": "Pre-existing TS2339 in cli.ts (installCli orphan) — Lane 1 removed dead preload code but renderer has stale reference",
+      "recommended_action": "Remove or stub the cli.ts reference"
+    },
+    {
+      "id": "INT-004",
+      "severity": "info",
+      "description": "Dirty files were preserved — home.tsx, layout.tsx, plugin-context.tsx, plugin-loader.ts, account.sql.ts, mcp/index.ts may have unstaged changes from parallel lanes",
+      "recommended_action": "Review all dirty files before merge for unintended interactions"
+    }
+  ],
+  "deferred_work": [
+    "7 additional fire-and-forget promise sites across codebase (dynamic imports, webview-zoom)",
+    "Dialog component tests (SolidJS testing harness — zero coverage today)",
+    "i18n github.* keys across all 17 locale files (only en.ts has them)",
+    "Freccency/usage ranking for subagent delegation",
+    "Unify agent filter pipelines (@mention vs composer dropdown — different exclusion criteria)",
+    "Desktop account management UI to hook into existing githubClearToken infrastructure"
+  ]
+}

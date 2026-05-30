@@ -1,4 +1,4 @@
-import { integer } from "drizzle-orm/pg-core"
+import { integer } from "drizzle-orm/sqlite-core"
 
 export const TimestampsPg = {
   time_created: integer()

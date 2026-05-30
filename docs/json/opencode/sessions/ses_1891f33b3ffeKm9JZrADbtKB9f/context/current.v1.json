@@ -1,0 +1,88 @@
+{
+  "schema_version": "v1",
+  "session_id": "ses_1891f33b3ffeKm9JZrADbtKB9f",
+  "mission_status": "complete",
+  "last_updated": "2026-05-30T03:20:14.939123+00:00",
+  "current_wave": "review",
+  "waves": {
+    "review": {
+      "started_at": "2026-05-30T03:20:14.939123+00:00",
+      "completed_at": "2026-05-30T03:20:14.939123+00:00",
+      "findings": [
+        {
+          "source": "critic-review-lane5",
+          "summary": "Agent Config Hardening plan approved with conditions: 2 blocking issues found in error propagation chain",
+          "confidence": 0.95,
+          "relevance_profiles": [
+            "review",
+            "execution",
+            "architecture"
+          ],
+          "wave": "review"
+        },
+        {
+          "source": "critic-review-lane5",
+          "summary": "saveCustomAgents in dialog-manage-agents.tsx swallows IPC errors without re-throwing, causing 3 call sites to fire unconditional success toasts on failure",
+          "confidence": 0.98,
+          "relevance_profiles": [
+            "execution",
+            "architecture"
+          ],
+          "wave": "review"
+        },
+        {
+          "source": "critic-review-lane5",
+          "summary": "handleSave proposed catch block insufficient: console.error only, no UI feedback, dialog closes on error, and parent swallows errors so catch never fires",
+          "confidence": 0.98,
+          "relevance_profiles": [
+            "execution",
+            "architecture"
+          ],
+          "wave": "review"
+        }
+      ],
+      "artifacts": [
+        "docs/json/opencode/plans/agent-config-hardening/comments.v1.jsonl (5 entries appended)",
+        "docs/json/opencode/sessions/current/review-lane5-agent-hardening.v1.json"
+      ]
+    }
+  },
+  "active_findings": [
+    {
+      "source": "critic-review-lane5",
+      "summary": "Agent Config Hardening plan approved with conditions: 2 blocking issues found in error propagation chain",
+      "confidence": 0.95,
+      "relevance_profiles": [
+        "review",
+        "execution",
+        "architecture"
+      ],
+      "wave": "review"
+    },
+    {
+      "source": "critic-review-lane5",
+      "summary": "saveCustomAgents in dialog-manage-agents.tsx swallows IPC errors without re-throwing, causing 3 call sites to fire unconditional success toasts on failure",
+      "confidence": 0.98,
+      "relevance_profiles": [
+        "execution",
+        "architecture"
+      ],
+      "wave": "review"
+    },
+    {
+      "source": "critic-review-lane5",
+      "summary": "handleSave proposed catch block insufficient: console.error only, no UI feedback, dialog closes on error, and parent swallows errors so catch never fires",
+      "confidence": 0.98,
+      "relevance_profiles": [
+        "execution",
+        "architecture"
+      ],
+      "wave": "review"
+    }
+  ],
+  "active_artifacts": [
+    "docs/json/opencode/plans/agent-config-hardening/comments.v1.jsonl (5 entries appended)",
+    "docs/json/opencode/sessions/current/review-lane5-agent-hardening.v1.json"
+  ],
+  "archived": []
+}

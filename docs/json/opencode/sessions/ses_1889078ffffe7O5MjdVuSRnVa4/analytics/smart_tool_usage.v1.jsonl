@@ -1,0 +1,26 @@
+{"at":"2026-05-30T05:51:12.740Z","session_id":"ses_1889078ffffe7O5MjdVuSRnVa4","agent":"orchestrator","tool":"smart_bun","command":"typecheck","elapsed_ms":10,"exit_code":1}
+{"at":"2026-05-30T05:51:13.257Z","session_id":"ses_1889078ffffe7O5MjdVuSRnVa4","agent":"orchestrator","tool":"smart_bun","command":"test","elapsed_ms":70,"exit_code":1}
+{"at":"2026-05-30T05:51:13.525Z","session_id":"ses_1889078ffffe7O5MjdVuSRnVa4","agent":"orchestrator","tool":"smart_find","pattern":"*.json","path":"docs/json/opencode"}
+{"at":"2026-05-30T05:51:15.747Z","session_id":"ses_1889078ffffe7O5MjdVuSRnVa4","agent":"orchestrator","tool":"smart_grep","pattern":"typecheck","path":"packages/desktop/package.json"}
+{"at":"2026-05-30T05:51:18.960Z","session_id":"ses_1889078ffffe7O5MjdVuSRnVa4","agent":"orchestrator","tool":"smart_find","pattern":"subagent-telemetry*","path":""}
+{"at":"2026-05-30T05:51:30.313Z","session_id":"ses_1889078ffffe7O5MjdVuSRnVa4","agent":"orchestrator","tool":"smart_grep","pattern":"validateAndFilterAgent|validateAndFilterMcp|isValidPluginConfig","path":"packages/desktop/src/main/ipc.ts"}
+{"at":"2026-05-30T05:51:43.268Z","session_id":"ses_1889078ffffe7O5MjdVuSRnVa4","agent":"orchestrator","tool":"smart_find","pattern":"roadmap*.json","path":"docs"}
+{"at":"2026-05-30T05:51:43.555Z","session_id":"ses_1889078ffffe7O5MjdVuSRnVa4","agent":"orchestrator","tool":"smart_find","pattern":"subagent-telemetry*","path":"docs"}
+{"at":"2026-05-30T05:51:45.695Z","session_id":"ses_1889078ffffe7O5MjdVuSRnVa4","agent":"orchestrator","tool":"smart_grep","pattern":"subagent-telemetry-and-contention-protocol","path":"docs"}
+{"at":"2026-05-30T05:51:45.982Z","session_id":"ses_1889078ffffe7O5MjdVuSRnVa4","agent":"orchestrator","tool":"smart_grep","pattern":"opencode-desktop-phase3-roadmap","path":"docs"}
+{"at":"2026-05-30T05:51:58.652Z","session_id":"ses_1889078ffffe7O5MjdVuSRnVa4","agent":"orchestrator","tool":"smart_grep","pattern":"CI-002","path":"docs/json/opencode"}
+{"at":"2026-05-30T05:51:58.934Z","session_id":"ses_1889078ffffe7O5MjdVuSRnVa4","agent":"orchestrator","tool":"smart_find","pattern":"handoff-Phase2-to-Phase3*","path":"docs"}
+{"at":"2026-05-30T05:52:03.147Z","session_id":"ses_1889078ffffe7O5MjdVuSRnVa4","agent":"orchestrator","tool":"smart_grep","pattern":"TEL-002","path":"docs/json/opencode/archive/ses_188ab38c2ffeLuaFOiEMyaP4yd/ses_188ab38c2ffeLuaFOi"}
+{"at":"2026-05-30T05:53:30.493Z","session_id":"ses_1889078ffffe7O5MjdVuSRnVa4","agent":"orchestrator","tool":"smart_grep","pattern":"extractResponseText","path":"packages/opencode"}
+{"at":"2026-05-30T05:53:30.655Z","session_id":"ses_1889078ffffe7O5MjdVuSRnVa4","agent":"orchestrator","tool":"smart_grep","pattern":"formatPromptTooLargeError","path":"packages/opencode"}
+{"at":"2026-05-30T05:53:38.811Z","session_id":"ses_1889078ffffe7O5MjdVuSRnVa4","agent":"orchestrator","tool":"smart_grep","pattern":"extractResponseText|formatPromptTooLargeError","path":"packages/opencode/src"}
+{"at":"2026-05-30T05:54:21.322Z","session_id":"ses_1889078ffffe7O5MjdVuSRnVa4","agent":"orchestrator","tool":"smart_find","pattern":"github-ipc.ts","path":"packages/desktop/src/main"}
+{"at":"2026-05-30T05:54:21.523Z","session_id":"ses_1889078ffffe7O5MjdVuSRnVa4","agent":"orchestrator","tool":"smart_find","pattern":"ipc-validation.ts","path":"packages/desktop/src/main"}
+{"at":"2026-05-30T05:54:33.358Z","session_id":"ses_1889078ffffe7O5MjdVuSRnVa4","agent":"orchestrator","tool":"smart_bun","command":"test","elapsed_ms":15,"exit_code":0}
+{"at":"2026-05-30T05:54:35.770Z","session_id":"ses_1889078ffffe7O5MjdVuSRnVa4","agent":"orchestrator","tool":"smart_grep","pattern":"\"typecheck\"","path":"packages/desktop/package.json"}
+{"at":"2026-05-30T05:54:36.059Z","session_id":"ses_1889078ffffe7O5MjdVuSRnVa4","agent":"orchestrator","tool":"smart_grep","pattern":"\"typecheck\"","path":"package.json"}
+{"at":"2026-05-30T05:55:10.593Z","session_id":"ses_1889078ffffe7O5MjdVuSRnVa4","agent":"orchestrator","tool":"smart_bun","command":"run","elapsed_ms":544,"exit_code":0}
+{"at":"2026-05-30T05:55:41.213Z","session_id":"ses_1889078ffffe7O5MjdVuSRnVa4","agent":"orchestrator","tool":"smart_find","pattern":"contention*","path":"packages/opencode/src/coordination"}
+{"at":"2026-05-30T05:56:33.472Z","session_id":"ses_1889078ffffe7O5MjdVuSRnVa4","agent":"orchestrator","tool":"smart_grep","pattern":"tool.*execut|execute.*tool|dispatch","path":"packages/opencode/src/tool"}
+{"at":"2026-05-30T05:56:33.824Z","session_id":"ses_1889078ffffe7O5MjdVuSRnVa4","agent":"orchestrator","tool":"smart_grep","pattern":"class Tool|Tool\\.define|Tool\\.create|Def\\.execute","path":"packages/opencode/src/tool"}
+{"at":"2026-05-30T05:57:44.225Z","session_id":"ses_1889078ffffe7O5MjdVuSRnVa4","agent":"orchestrator","tool":"smart_bun","command":"run","elapsed_ms":1306,"exit_code":2}

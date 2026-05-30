@@ -1,0 +1,79 @@
+{
+  "schema_version": "rig.relay.evidence.v1",
+  "phase": "1.3",
+  "phase_name": "Adapter Consumer Wiring Completion",
+  "generated_at": "2026-05-29T01:00:00Z",
+  "plan_generated_at": "2026-05-28T21:00:00.000000+00:00",
+  "plan_revision": 1,
+  "author": "builder",
+  "status": "candidate_local",
+  "summary": "Completed wiring of all application services to DatabaseAdapter.Service, replacing direct Database.* calls with the adapter pattern.",
+  "files_changed": [
+    {
+      "path": "packages/opencode/src/session/session.ts",
+      "kind": "modified",
+      "content_sha256": "daa4eca93cd3010f1ad46672aa07efec45d2b67b1d886ece13c7ae5e48c73eeb",
+      "description": "Replaced Database.use/transaction calls with yield* DatabaseAdapter.Service adapter query/transaction patterns"
+    },
+    {
+      "path": "packages/opencode/src/session/message-v2.ts",
+      "kind": "modified",
+      "content_sha256": "ca427b5a7c836571ebe7f3ac7bd50bc4d416de51a026d528038f12d5757ab75c",
+      "description": "Converted direct database access to adapter pattern"
+    },
+    {
+      "path": "packages/opencode/src/project/project.ts",
+      "kind": "modified",
+      "content_sha256": "c4a98b748917bf296f7023fe2db7d48a18508e4699f0e7ff940239a4d581af28",
+      "description": "Migrated project persistence to DatabaseAdapter.Service"
+    },
+    {
+      "path": "packages/opencode/src/control-plane/workspace.ts",
+      "kind": "modified",
+      "content_sha256": "5ce6f376eb92feb233e08acf37bafc79e3136ef07a98afb0e4949bd32e769ee7",
+      "description": "Replaced Database.getPath() and direct db calls with adapter queries"
+    },
+    {
+      "path": "packages/opencode/src/server/projectors.ts",
+      "kind": "modified",
+      "content_sha256": "44c25f74ed596c8562f3a331ea0de76236aff579cbc5969217906dc3c2c4184a",
+      "description": "Wired projector state persistence through DatabaseAdapter"
+    },
+    {
+      "path": "packages/opencode/src/server/shared/fence.ts",
+      "kind": "modified",
+      "content_sha256": "159bde59a4eadc189aec7b0cb6fcf731c521edc6bf773fe697b9f444a12884f9",
+      "description": "Database fence queries migrated to adapter pattern"
+    },
+    {
+      "path": "packages/opencode/src/data-migration.ts",
+      "kind": "modified",
+      "content_sha256": "0fb20e94a8d465f57e4f5104ebde7436e96cb75491543198af4ca4f3e146caaf",
+      "description": "Migration state tracking via adapter instead of direct Database.*"
+    },
+    {
+      "path": "packages/opencode/src/sync/index.ts",
+      "kind": "modified",
+      "content_sha256": "95681554df534921a16636b39e732c61edb02637978e42c7a234c5fe84662afa",
+      "description": "Sync event storage adapted through DatabaseAdapter"
+    }
+  ],
+  "acceptance_criteria_met": [
+    {
+      "criterion": "All application services use DatabaseAdapter.Service for database access",
+      "status": "met",
+      "evidence": "8 session/project/control-plane/server files migrated from raw Database.* to yield* DatabaseAdapter.Service patterns"
+    },
+    {
+      "criterion": "Direct Database.* calls eliminated from production code",
+      "status": "met",
+      "evidence": "Remaining raw Database.* calls confined to adapter.ts internals and CLI migration/debug commands"
+    },
+    {
+      "criterion": "Type safety preserved through DrizzleLikeClient interface",
+      "status": "met",
+      "evidence": "all migrated callers compile with DrizzleLikeClient-compatible signatures"
+    }
+  ],
+  "results": "All 8 consumer files successfully migrated to adapter pattern. Remaining raw Database.* access paths are confined to adapter internals (SQLiteAdapter wrapping) and CLI-only commands (migrate-to-pg, db.ts debug)."
+}

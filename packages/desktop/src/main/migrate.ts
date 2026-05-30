@@ -1,9 +1,8 @@
 import { app } from "electron"
 import log from "electron-log/main.js"
 import { existsSync, readdirSync, readFileSync } from "node:fs"
-import { homedir } from "node:os"
 import { join } from "node:path"
-import { CHANNEL } from "./constants"
+import { APP_IDS, CHANNEL } from "./constants"
 import { getStore } from "./store"
 
 const TAURI_MIGRATED_KEY = "tauriMigrated"
@@ -13,22 +12,16 @@ const TAURI_MIGRATED_KEY = "tauriMigrated"
 function tauriDir(id: string) {
   switch (process.platform) {
     case "darwin":
-      return join(homedir(), "Library", "Application Support", id)
+      return join(app.getPath("home"), "Library", "Application Support", id)
     case "win32":
-      return join(process.env.APPDATA ?? join(homedir(), "AppData", "Roaming"), id)
+      return join(process.env.APPDATA ?? join(app.getPath("home"), "AppData", "Roaming"), id)
     default:
-      return join(process.env.XDG_DATA_HOME ?? join(homedir(), ".local", "share"), id)
+      return join(process.env.XDG_DATA_HOME ?? join(app.getPath("home"), ".local", "share"), id)
   }
 }
 
-// The Tauri app identifier changes between dev/beta/prod builds.
-const TAURI_APP_IDS: Record<string, string> = {
-  dev: "ai.opencode.desktop.dev",
-  beta: "ai.opencode.desktop.beta",
-  prod: "ai.opencode.desktop",
-}
 function tauriAppId() {
-  return app.isPackaged ? TAURI_APP_IDS[CHANNEL] : "ai.opencode.desktop.dev"
+  return app.isPackaged ? APP_IDS[CHANNEL] : "ai.opencode.desktop.dev"
 }
 
 // Migrate a single Tauri .dat file into the corresponding electron-store.

@@ -35,8 +35,8 @@ function sqlite(db: Database.TxOrDb, sessionID: SessionID): SessionMessageUpdate
         .where(and(eq(SessionMessageTable.session_id, sessionID), eq(SessionMessageTable.type, "assistant")))
         .orderBy(desc(SessionMessageTable.id))
         .all()
-        .map((row) => decodeMessage({ ...row.data, id: row.id, type: row.type }))
-        .find((message): message is SessionMessage.Assistant => message.type === "assistant" && !message.time.completed)
+        .map((row: typeof SessionMessageTable.$inferSelect) => decodeMessage({ ...row.data, id: row.id, type: row.type }))
+        .find((message: SessionMessage.Message): message is SessionMessage.Assistant => message.type === "assistant" && !message.time.completed)
     },
     getCurrentCompaction() {
       return db
@@ -45,8 +45,8 @@ function sqlite(db: Database.TxOrDb, sessionID: SessionID): SessionMessageUpdate
         .where(and(eq(SessionMessageTable.session_id, sessionID), eq(SessionMessageTable.type, "compaction")))
         .orderBy(desc(SessionMessageTable.id))
         .all()
-        .map((row) => decodeMessage({ ...row.data, id: row.id, type: row.type }))
-        .find((message): message is SessionMessage.Compaction => message.type === "compaction")
+        .map((row: typeof SessionMessageTable.$inferSelect) => decodeMessage({ ...row.data, id: row.id, type: row.type }))
+        .find((message: SessionMessage.Message): message is SessionMessage.Compaction => message.type === "compaction")
     },
     getCurrentShell(callID) {
       return db
@@ -55,8 +55,8 @@ function sqlite(db: Database.TxOrDb, sessionID: SessionID): SessionMessageUpdate
         .where(and(eq(SessionMessageTable.session_id, sessionID), eq(SessionMessageTable.type, "shell")))
         .orderBy(desc(SessionMessageTable.id))
         .all()
-        .map((row) => decodeMessage({ ...row.data, id: row.id, type: row.type }))
-        .find((message): message is SessionMessage.Shell => message.type === "shell" && message.callID === callID)
+        .map((row: typeof SessionMessageTable.$inferSelect) => decodeMessage({ ...row.data, id: row.id, type: row.type }))
+        .find((message: SessionMessage.Message): message is SessionMessage.Shell => message.type === "shell" && message.callID === callID)
     },
     updateAssistant(assistant) {
       const { id, type, ...data } = assistant

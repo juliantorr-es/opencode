@@ -1,0 +1,21 @@
+{
+  "schema_version": "v1",
+  "lane_id": "duckdb-analytics-query-tool",
+  "generated_at": "2026-05-29T10:50:00Z",
+  "description": "Validation and claim atom verification for DuckDB query tool",
+  "claim_atoms_verified": 9,
+  "claim_atoms_passing": 9,
+  "claim_atoms_failing": 0,
+  "test_files": [
+    "test/storage/duckdb-firewall.test.ts (14 tests)",
+    "test/tool/duckdb-query.test.ts (3 tests)"
+  ],
+  "total_tests_passing": 17,
+  "total_tests_failing": 0,
+  "typecheck_result": "zero new duckdb-related errors (383 pre-existing)",
+  "schema_validations": [
+    "plan_approval.v1.json",
+    "red_team_approval.v1.json",
+    "repair_plan_approval.v1.json"
+  ]
+}
