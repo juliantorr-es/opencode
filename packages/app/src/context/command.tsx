@@ -355,7 +355,9 @@ export const { use: useCommand, provider: CommandProvider } = createSimpleContex
     }
 
     const showPalette = () => {
-      run("file.open", "palette")
+      void import("@/components/dialog-command-palette").then((x) => {
+        dialog.show(() => <x.DialogCommandPalette />)
+      }).catch((e) => console.error("[palette] failed to load dialog-command-palette", e))
     }
 
     const handleKeyDown = (event: KeyboardEvent) => {
