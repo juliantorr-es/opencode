@@ -22,7 +22,9 @@ import { render } from "solid-js/web"
 import pkg from "../../package.json"
 import { initI18n, t } from "./i18n"
 import { resetZoom, setPinchZoomEnabled, webviewZoom, zoomIn, zoomOut } from "./webview-zoom"
+import { DesktopPluginProvider } from "./plugin-context"
 import "./styles.css"
+import { useDialog } from "@opencode-ai/ui/context/dialog"
 import { useTheme } from "@opencode-ai/ui/theme"
 
 const root = document.getElementById("root")
@@ -218,6 +220,10 @@ const createPlatform = (): Platform => {
 
     exportDebugLogs: () => window.api.exportDebugLogs(),
 
+    sessionExportData: (data, opts) => window.api.sessionExportData(data, opts),
+
+    sessionImportFile: (opts) => window.api.sessionImportFile(opts),
+
     recordFatalRendererError: (error) => window.api.recordFatalRendererError(error),
 
     restart: async () => {
@@ -354,7 +360,16 @@ render(() => {
 
   function Inner() {
     const cmd = useCommand()
-    menuTrigger = (id) => cmd.trigger(id)
+    const dialog = useDialog()
+    menuTrigger = (id) => {
+      if (id === "open-plugin-manager") {
+        void import("./dialog-manage-plugins").then((x) => {
+          dialog.show(() => <x.DialogManagePlugins />)
+        })
+        return
+      }
+      cmd.trigger(id)
+    }
 
     const theme = useTheme()
 
@@ -378,8 +393,9 @@ render(() => {
   })
 
   return (
-    <PlatformProvider value={platform}>
-      <AppBaseProviders locale={locale.latest}>
+    <DesktopPluginProvider>
+      <PlatformProvider value={platform}>
+        <AppBaseProviders locale={locale.latest}>
         <Show
           when={
             !defaultServer.loading &&
@@ -403,5 +419,6 @@ render(() => {
         </Show>
       </AppBaseProviders>
     </PlatformProvider>
+    </DesktopPluginProvider>
   )
 }, root!)

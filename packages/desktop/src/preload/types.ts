@@ -41,6 +41,13 @@ export type AgentDef = {
   steps?: number
 }
 
+export type PluginConfigEntry = {
+  name: string
+  path: string
+  enabled: boolean
+  config?: Record<string, unknown>
+}
+
 export type ElectronAPI = {
   killSidecar: () => Promise<void>
   installCli: () => Promise<string>
@@ -105,9 +112,18 @@ export type ElectronAPI = {
   setBackgroundColor: (color: string) => Promise<void>
   exportDebugLogs: () => Promise<string>
   recordFatalRendererError: (error: FatalRendererError) => Promise<void>
-  getDesktopPluginConfig?: () => Promise<any>
+  getDesktopPluginConfig: () => Promise<{ configs: PluginConfigEntry[]; dropped: number }>
+  setDesktopPluginConfig: (configs: PluginConfigEntry[]) => Promise<{ configs: PluginConfigEntry[]; dropped: number }>
   getCustomAgents: () => Promise<AgentDef[]>
   setCustomAgents: (agents: AgentDef[]) => Promise<void>
   getMcpServers: () => Promise<unknown[]>
   setMcpServers: (servers: unknown[]) => Promise<void>
+  githubStartOAuth: () => Promise<string>
+  githubOAuthCallback: (code: string, state: string) => Promise<void>
+  githubGetToken: () => Promise<string | null>
+  githubSetToken: (token: string) => Promise<void>
+  githubClearToken: () => Promise<void>
+  githubApiProxy: (url: string, options?: { method?: string; headers?: Record<string, string>; body?: string }) => Promise<{ status: number; body: string }>
+  sessionExportData: (data: string, opts?: { title?: string; defaultPath?: string; filters?: Array<{ name: string; extensions: string[] }> }) => Promise<string | { error: string } | null>
+  sessionImportFile: (opts?: { title?: string; filters?: Array<{ name: string; extensions: string[] }> }) => Promise<string | { error: string } | null>
 }

@@ -82,10 +82,19 @@ const api: ElectronAPI = {
   exportDebugLogs: () => ipcRenderer.invoke("export-debug-logs"),
   recordFatalRendererError: (error) => ipcRenderer.invoke("record-fatal-renderer-error", error),
   getDesktopPluginConfig: () => ipcRenderer.invoke("get-desktop-plugin-config"),
+  setDesktopPluginConfig: (configs) => ipcRenderer.invoke("set-desktop-plugin-config", configs),
   getCustomAgents: () => ipcRenderer.invoke("get-desktop-custom-agents"),
   setCustomAgents: (agents) => ipcRenderer.invoke("set-desktop-custom-agents", agents),
   getMcpServers: () => ipcRenderer.invoke("get-desktop-mcp-servers"),
   setMcpServers: (servers) => ipcRenderer.invoke("set-desktop-mcp-servers", servers),
+  githubStartOAuth: () => ipcRenderer.invoke("github-oauth-start"),
+  githubOAuthCallback: (code, state) => ipcRenderer.invoke("github-oauth-callback", code, state),
+  githubGetToken: () => ipcRenderer.invoke("github-get-token"),
+  githubSetToken: (token) => ipcRenderer.invoke("github-set-token", token),
+  githubClearToken: () => ipcRenderer.invoke("github-clear-token"),
+  githubApiProxy: (url, options) => ipcRenderer.invoke("github-api-proxy", url, options),
+  sessionExportData: (data, opts) => ipcRenderer.invoke("session-export-data", data, opts),
+  sessionImportFile: (opts) => ipcRenderer.invoke("session-import-file", opts),
 }
 
 contextBridge.exposeInMainWorld("api", api)

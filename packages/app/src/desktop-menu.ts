@@ -3,6 +3,7 @@ export type DesktopMenuPlatform = "macos" | "windows"
 export type DesktopMenuAction =
   | "app.checkForUpdates"
   | "app.relaunch"
+  | "github.createPullRequest"
   | "edit.undo"
   | "edit.redo"
   | "edit.cut"
@@ -114,6 +115,8 @@ export const DESKTOP_MENU: DesktopMenu[] = [
         accelerator: { macos: "Cmd+Shift+N", windows: "Ctrl+Shift+N" },
       },
       { type: "separator" },
+      { type: "separator" },
+      { type: "item", label: "Create Pull Request...", action: "github.createPullRequest" },
       { type: "item", label: "Close Window", action: "window.close", role: "close" },
     ],
   },
@@ -203,6 +206,13 @@ export const DESKTOP_MENU: DesktopMenu[] = [
       { type: "item", label: "OpenCode Documentation", href: "https://opencode.ai/docs" },
       { type: "item", label: "Support Forum", href: "https://discord.com/invite/opencode" },
       { type: "item", label: "Export Logs...", command: "logs.export" },
+      { type: "separator" },
+      {
+        type: "item",
+        label: "Plugin Manager",
+        command: "open-plugin-manager",
+        accelerator: { macos: "Cmd+Shift+P" },
+      },
       { type: "separator" },
       {
         type: "item",
