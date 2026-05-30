@@ -1,0 +1,295 @@
+{
+  "schema": "rig.relay.reporting_honesty_audit.v1",
+  "audit_id": "AH-007",
+  "generated_at": "2026-05-30T10:43:00Z",
+  "lane_id": "AH-007",
+  "methodology": "Automated keyword grep + Python JSON structural analysis + manual cross-referencing of 52 top-level JSON artifacts under docs/json/opencode (excluding archive/, sessions/, and knowledge/ subdirectories). Detection criteria: 8 specific patterns (see detection_criteria field). Grep patterns: \"proven\", \"industry-leading\", \"production-proven\", \"proven_under_real_boundaries\", \"zero errors\", \"0 errors\", \"zero-error\", \"complete\", \"verified\" with evidence cross-reference. Each finding classified per severity_rubric (high/medium/low) and assigned a maturity level from the taxonomy.",
+  "severity_rubric": {
+    "high": "Evidence actively contradicts the claim. Example: claim says \"zero errors\" but data shows 280 errors; claim says \"production-proven\" but no deployment exists.",
+    "medium": "Evidence is missing, insufficient, or internally inconsistent. Examples: empty verification section, bare aggregation claims without evidence links, concurrency claims without stress testing.",
+    "low": "Claim is technically true but framing minimizes context or is misleading in aggregate. Examples: \"zero new errors\" buries 383 pre-existing errors; internal field naming contradictions."
+  },
+  "detection_criteria": [
+    "grep for overclaim keywords: \"proven\", \"industry-leading\", \"production-proven\", \"proven_under_real_boundaries\", \"zero errors\", \"0 errors\", \"zero-error\", \"complete \u2705\", \"all cycles verified\"",
+    "cross-reference each claim match against evidence in same artifact and related artifacts",
+    "flag empty verification/known_issues/deferred_items sections in completion documents",
+    "flag concurrency/stress/race-condition claims that lack stress testing evidence references",
+    "check for internal contradictions (e.g., severity labels vs data, claim atoms vs actual values)",
+    "check for cross-artifact contradictions (e.g., one evidence file claims X while another admits not-X)",
+    "flag comparative claims (\"industry-leading\", \"proven\") without cited benchmarks or deployment evidence",
+    "classify each finding using severity_rubric definitions",
+    "assign suggested_maturity_level from taxonomy based on strongest supported evidence"
+  ],
+  "maturity_level_taxonomy": {
+    "interface_exists": "Defined but stub/placeholder \u2014 no production implementation, no tests",
+    "typecheck_passes": "Compiles clean \u2014 zero type errors in the declared target scope",
+    "unit_tested": "Has unit tests that exercise the production boundary directly",
+    "concurrency_tested": "Tested under concurrent/parallel load \u2014 race conditions surfaced and addressed",
+    "integrated": "Wired into runtime path \u2014 consumed by real callers in production code",
+    "permission_enforced": "Actually gated at security/permission boundary \u2014 not just flag-checked",
+    "dogfooded": "Used under real multi-agent contention in production-like or deployed environment"
+  },
+  "findings": [
+    {
+      "artifact_path": "docs/json/opencode/evidence/phase1_completion.v1.json",
+      "observed_claim": "Phase artifact titled 'phase_1_adapter_hardening' claims 'Claim atom C8: true' indicating typecheck baseline and final zero-error state verified",
+      "evidence_gap": "Same artifact records typecheck_final.error_count=280 (baseline was 243), typecheck_regression=true. C8 cannot be 'true' when the error count increased by 37 and the exit_code was 2. The artifact also names itself 'completion' while listing 5 deferred defects and 6 remaining regression errors.",
+      "suggested_maturity_level": "interface_exists",
+      "severity": "high",
+      "pattern_type": "zero-error claim contradicted by own evidence"
+    },
+    {
+      "artifact_path": "docs/json/opencode/plans/pg_backend_migration.v1.json",
+      "observed_claim": "Claims 'Postgres adapter is production-proven' in the blocking_defects / exit condition field for Track 1",
+      "evidence_gap": "The Postgres adapter was integration-tested locally and in CI but never deployed to production. 'Production-proven' implies sustained runtime under real user workload. No deployment record, no uptime metrics, no production incident log exists. The plan itself is still in 'draft' status.",
+      "suggested_maturity_level": "unit_tested",
+      "severity": "high",
+      "pattern_type": "production-proven without deployment"
+    },
+    {
+      "artifact_path": "docs/json/opencode/plans/final_closures_plan.v2.json",
+      "observed_claim": "Field 'proven_under_real_boundaries' claims 'Phase 1.8 (typecheck recovery) and Phase 2.5 (e2e validation) complete. Validation, typecheck, stress, and repair cycles all verified.'",
+      "evidence_gap": "Bare aggregation claim \u2014 does not link to the individual evidence artifacts, test outputs, or verification records that would substantiate each cycle. A plan artifact claiming 'all verified' without evidence citations is a forward-looking statement disguised as evidence.",
+      "suggested_maturity_level": "interface_exists",
+      "severity": "high",
+      "pattern_type": "bare verification claim without evidence links"
+    },
+    {
+      "artifact_path": "docs/json/opencode/plans/final_closures_plan.v1.json",
+      "observed_claim": "Same 'proven_under_real_boundaries' field with identical bare claim structure",
+      "evidence_gap": "Identical issue to v2 \u2014 bare aggregation without evidence artifact citations.",
+      "suggested_maturity_level": "interface_exists",
+      "severity": "high",
+      "pattern_type": "bare verification claim without evidence links"
+    },
+    {
+      "artifact_path": "docs/json/opencode/uiux_audit_report.v1.json",
+      "observed_claim": "Three instances of 'industry-leading': (1) 'industry-leading approach used by few apps' for design tokens, (2) 'truly industry-leading' for theme engine comparing to VS Code/Linear/Raycast, (3) 'path_to_industry_leading' as a future goal",
+      "evidence_gap": "The report's own weaknesses section identifies a v1/v2 design token split, inconsistent animation patterns, no a11y regression testing, and missing value-tier features. Calling the system 'industry-leading' while acknowledging these gaps is internally inconsistent. No comparative benchmarks against VS Code, Linear, or Raycast are provided beyond qualitative opinion.",
+      "suggested_maturity_level": "unit_tested",
+      "severity": "medium",
+      "pattern_type": "industry-leading without comparative evidence"
+    },
+    {
+      "artifact_path": "docs/json/opencode/documentation/phase1-completion.v1.json",
+      "observed_claim": "Completion document titled 'Phase 1 Completion' with verification, known_issues, and deferred_items sections",
+      "evidence_gap": "The verification section is empty ({}), known_issues and deferred_items are empty arrays ([]), and features list is also empty. A completion document with empty verification and zero documented issues or deferred items contradicts the evidence layer (phase1_completion.v1.json) which lists 5 deferred defects and admitted regression errors. Typecheck reports 'PASS_WITH_PREEXISTING_ERRORS' without specifying what the pre-existing count is.",
+      "suggested_maturity_level": "interface_exists",
+      "severity": "medium",
+      "pattern_type": "empty verification in completion document"
+    },
+    {
+      "artifact_path": "docs/json/opencode/reports/session-2026-05-30T07-23-36-742Z.v1.json",
+      "observed_claim": "'Phase 0 \u2014 Native Tool Framework Upgrade: Complete \u2705' with 'industry-leading reliability, debuggability, concurrency, memory, and lifecycle standards'. Also claims 'Typecheck: 0 new errors across all Phase 0 files'",
+      "evidence_gap": "The same report acknowledges a concurrent session deleted working tree files (tool.ts, registry.ts, session/tools.ts) mid-session that had to be restored via two repair lanes. 'Industry-leading standards' is a comparative claim without evidence of benchmarking against any standard. The '0 new errors' claim is factually correct for Phase 0 files but the report's own narrative of cross-session deletion undermines the confident completion framing.",
+      "suggested_maturity_level": "typecheck_passes",
+      "severity": "medium",
+      "pattern_type": "industry-leading and complete claims with cross-session interference"
+    },
+    {
+      "artifact_path": "docs/json/opencode/reports/session-2026-05-30T07-41-52-402Z.v1.json",
+      "observed_claim": "'Triple-Lane Session Complete \u2705' \u2014 all three lanes marked complete with checkmarks",
+      "evidence_gap": "Lane 1's coordination.ts rewrite explicitly states 'was restored by a concurrent session (not my lane-owner's output)'. The lane claims completion for work it didn't author. While the report honestly discloses the restoration, the 'Complete \u2705' framing for lane 1 attributes completion to this session for work restored by another.",
+      "suggested_maturity_level": "unit_tested",
+      "severity": "medium",
+      "pattern_type": "completion claim for restored-by-other work"
+    },
+    {
+      "artifact_path": "docs/json/opencode/evidence/persistent_coordination.v1.json",
+      "observed_claim": "Status 'candidate_local' with summary 'Coordination state now survives process restart' and concurrency-related claims without stress testing",
+      "evidence_gap": "No coordination-specific tests exist yet (admitted in deferred_seams). 'Survives process restart' is claimed without demonstrating a restart test. Concurrency claims about ON CONFLICT DO UPDATE semantics are not backed by concurrent-load or stress testing. The file references no test suite for the coordination persistence layer.",
+      "suggested_maturity_level": "interface_exists",
+      "severity": "medium",
+      "pattern_type": "concurrency claim without stress evidence"
+    },
+    {
+      "artifact_path": "docs/json/opencode/plans/phase1_adapter_hardening.v1.json",
+      "observed_claim": "Plan lists 'Complete PgAdapter implementation' as an acceptance criterion while simultaneously deferring it to Phase 2",
+      "evidence_gap": "The claim is self-contradictory: a feature cannot be both 'Complete' and 'deferred'. This undermines confidence in the plan's status vocabulary and suggests slippery scope boundaries.",
+      "suggested_maturity_level": "interface_exists",
+      "severity": "medium",
+      "pattern_type": "self-contradictory complete/deferred claim"
+    },
+    {
+      "artifact_path": "docs/json/opencode/evidence/duckdb_validation_complete.v1.json",
+      "observed_claim": "'zero new duckdb-related errors (383 pre-existing)' \u2014 frames typecheck result as passing while acknowledging 383 pre-existing errors",
+      "evidence_gap": "'Zero new errors' is accurate but minimizes the significance of 383 pre-existing type errors in the codebase. A reader might interpret 'validation complete' as 'the overall typecheck passes' rather than 'the duckdb portion introduces no new errors.' The claim is technically true but framing is misleading in aggregate.",
+      "suggested_maturity_level": "typecheck_passes",
+      "severity": "low",
+      "pattern_type": "minimization of pre-existing debt"
+    },
+    {
+      "artifact_path": "docs/json/opencode/evidence/typecheck_final.v1.json",
+      "observed_claim": "'new_regression_errors': [] (empty array) indicating no new regression errors from the phase",
+      "evidence_gap": "Same artifact lists 'regression_errors' array with 6 entries across workspace.ts (339, 609, 716, 908, 989) and a selectDistinct error. An empty 'new_regression_errors' with 6 populated 'regression_errors' entries is a direct internal contradiction. Either the field naming is confusing or the data is inconsistent.",
+      "suggested_maturity_level": "typecheck_passes",
+      "severity": "low",
+      "pattern_type": "internal data contradiction in evidence"
+    },
+    {
+      "artifact_path": "docs/json/opencode/plans/phase1_adapter_hardening.v2.json",
+      "observed_claim": "Claim atom C8: 'Typecheck baseline established and final zero-error state verified' \u2014 used as an acceptance criterion",
+      "evidence_gap": "The evidence (phase1_completion.v1.json) that verifies this plan shows typecheck_exit_code=2, error_count=280, and typecheck_regression=true. The plan's own evidence contradicts the acceptance criterion. The plan claims C8=true in its verification but the evidence says otherwise.",
+      "suggested_maturity_level": "interface_exists",
+      "severity": "medium",
+      "pattern_type": "plan claim contradicted by own verification evidence"
+    },
+    {
+      "artifact_path": "docs/json/opencode/evidence/adapter_consumer_complete.v1.json",
+      "observed_claim": "'All 8 consumers migrated to DatabaseAdapter.Service \u2014 Direct Database.* calls eliminated from production code'",
+      "evidence_gap": "Cross-referenced with evidence/phase1_completion.v1.json which admits '12 remaining raw Database.* calls in 6 files: data-migration.ts(4), project.ts(3), workspace.ts(1), projectors.ts(1), fence.ts(1), sync/index.ts(2)'. Two evidence files disagree with each other about whether Database.* calls were eliminated.",
+      "suggested_maturity_level": "unit_tested",
+      "severity": "high",
+      "pattern_type": "cross-evidence contradiction"
+    },
+    {
+      "artifact_path": "docs/json/opencode/state.v1.json",
+      "observed_claim": "Status 'published_candidate_boundary' with 7 waves completed (learning, critique, execution, validation, stress, repair, documentation)",
+      "evidence_gap": "The approval_artifacts field is empty ({}). A 'published_candidate_boundary' status with no approval artifacts referenced is inconsistent with the lane vocabulary which requires reviewer admission before publication. No reviewer signature or verification record is linked.",
+      "suggested_maturity_level": "interface_exists",
+      "severity": "medium",
+      "pattern_type": "published status without approval artifacts"
+    }
+  ],
+  "summary": {
+    "total_artifacts_scanned": 52,
+    "total_findings": 15,
+    "high_severity": 5,
+    "medium_severity": 8,
+    "low_severity": 2,
+    "worst_offenders": [
+      {
+        "artifact_path": "docs/json/opencode/evidence/phase1_completion.v1.json",
+        "reason": "Names itself 'completion' while recording 280 typecheck errors (+37 regression), C8=false, 5 deferred defects. The title and data contradict each other directly.",
+        "overclaim_type": "completion framing with regressed evidence"
+      },
+      {
+        "artifact_path": "docs/json/opencode/plans/pg_backend_migration.v1.json",
+        "reason": "Declares Postgres adapter 'production-proven' \u2014 the strongest possible claim \u2014 for software that was never deployed to production.",
+        "overclaim_type": "production-proven without deployment"
+      },
+      {
+        "artifact_path": "docs/json/opencode/evidence/adapter_consumer_complete.v1.json",
+        "reason": "Claims 'Direct Database.* calls eliminated' while another evidence file (phase1_completion) admits 12 remaining raw calls in 6 files. Two evidence files authoritatively disagree.",
+        "overclaim_type": "cross-evidence contradiction"
+      },
+      {
+        "artifact_path": "docs/json/opencode/plans/final_closures_plan.v2.json",
+        "reason": "Bare 'all cycles verified' aggregation without linking individual evidence artifacts. A plan claiming verification is not itself verification.",
+        "overclaim_type": "bare verification aggregation"
+      },
+      {
+        "artifact_path": "docs/json/opencode/plans/final_closures_plan.v1.json",
+        "reason": "Same bare aggregation as v2.",
+        "overclaim_type": "bare verification aggregation"
+      }
+    ],
+    "recommended_rewrite_priority": [
+      {
+        "rank": 1,
+        "artifact": "docs/json/opencode/evidence/phase1_completion.v1.json",
+        "action": "Either rename to remove 'completion' framing or update C8 and typecheck_final to reflect actual 280-error state",
+        "effort": "~15 min",
+        "impact": "Eliminates the most egregious title-vs-data contradiction"
+      },
+      {
+        "rank": 2,
+        "artifact": "docs/json/opencode/plans/pg_backend_migration.v1.json",
+        "action": "Replace 'production-proven' with 'integration-tested' or 'locally-verified' \u2014 the adapter has CI tests but zero production runtime",
+        "effort": "~5 min",
+        "impact": "Removes an indefensible absolute claim"
+      },
+      {
+        "rank": 3,
+        "artifact": "docs/json/opencode/evidence/adapter_consumer_complete.v1.json",
+        "action": "Cross-reference with phase1_completion evidence and either update the claim to '8/8 consumers migrated, 12 raw calls remain in 6 files (deferred)' or align both evidence files",
+        "effort": "~15 min",
+        "impact": "Resolves contradictory evidence chain"
+      },
+      {
+        "rank": 4,
+        "artifact": "docs/json/opencode/plans/final_closures_plan.v2.json",
+        "action": "Replace bare 'all cycles verified' with explicit references to each evidence artifact (e.g., 'typecheck verified at evidence/typecheck_final_storage.v1.json, stress verified at stress/*.json')",
+        "effort": "~20 min",
+        "impact": "Converts opaque claim into traceable evidence graph"
+      },
+      {
+        "rank": 5,
+        "artifact": "docs/json/opencode/documentation/phase1-completion.v1.json",
+        "action": "Fill the empty verification {} section with actual test output from the evidence layer, and populate known_issues/deferred_items from phase1_completion evidence",
+        "effort": "~20 min",
+        "impact": "Completes the verification chain that is currently missing"
+      },
+      {
+        "rank": 6,
+        "artifact": "docs/json/opencode/reports/session-2026-05-30T07-23-36-742Z.v1.json",
+        "action": "Add cross-session qualification to 'Complete \u2705' framing noting the concurrent-session deletion incident, and remove or qualify 'industry-leading' unless comparative benchmarks are cited",
+        "effort": "~10 min",
+        "impact": "Aligns completion language with incident disclosure"
+      },
+      {
+        "rank": 7,
+        "artifact": "docs/json/opencode/uiux_audit_report.v1.json",
+        "action": "Replace 'industry-leading' with 'competitive' or 'well-architected' unless comparative benchmarks against VS Code/Linear/Raycast are added",
+        "effort": "~15 min",
+        "impact": "Aligns praise language with documented weaknesses"
+      },
+      {
+        "rank": 8,
+        "artifact": "docs/json/opencode/state.v1.json",
+        "action": "Populate approval_artifacts with actual approval records, or downgrade status to 'candidate_local' to match the empty artifacts field",
+        "effort": "~10 min",
+        "impact": "Aligns status vocabulary with actual artifact state"
+      },
+      {
+        "rank": 9,
+        "artifact": "docs/json/opencode/evidence/persistent_coordination.v1.json",
+        "action": "Add explicit qualification that concurrency claims have not been stress-tested, and add a deferred task for coordination-layer stress testing",
+        "effort": "~10 min",
+        "impact": "Honest scoping of concurrency claims"
+      },
+      {
+        "rank": 10,
+        "artifact": "docs/json/opencode/reports/session-2026-05-30T07-41-52-402Z.v1.json",
+        "action": "Add explicit attribution for Lane 1's output: 'restored by concurrent session, verified by this lane' rather than claiming completion with \u2705",
+        "effort": "~5 min",
+        "impact": "Clear ownership attribution"
+      }
+    ],
+    "positive_examples": [
+      {
+        "artifact": "docs/json/opencode/evidence/profile_parity_e2e.v1.json",
+        "reason": "265-line validation with specific line-numbered evidence for each criterion. No bare claims."
+      },
+      {
+        "artifact": "docs/json/opencode/evidence/database_credential_isolation.v1.json",
+        "reason": "7 criteria with line-numbered evidence, honest about scope boundaries."
+      },
+      {
+        "artifact": "docs/json/opencode/publication_record.v2.json",
+        "reason": "4 prepublication review rounds, 10 blocking findings found and repaired, honest round count, clear evidence artifact references."
+      },
+      {
+        "artifact": "docs/json/opencode/evidence/ci_postgres_operational.v1.json",
+        "reason": "Explicitly states 'cannot_verify_remotely_tsgo_not_available' rather than claiming pass without verification."
+      },
+      {
+        "artifact": "docs/json/opencode/evidence/duckdb_validation_complete.v1.json",
+        "reason": "Scoped, measured \u2014 9/9 claim atoms, 17/17 tests, explicit typecheck result. Small and honest."
+      }
+    ],
+    "patterns_summary": {
+      "completion_framing_with_known_debt": 4,
+      "production_or_industry_without_evidence": 2,
+      "bare_aggregation_verification": 3,
+      "empty_verification_sections": 1,
+      "cross_evidence_contradiction": 1,
+      "internal_evidence_contradiction": 1,
+      "concurrency_without_stress_evidence": 1,
+      "self_contradictory_claims": 1,
+      "debt_minimization": 1,
+      "published_status_without_approval": 1,
+      "positive_honesty_patterns": 5
+    }
+  }
+}

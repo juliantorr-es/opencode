@@ -96,9 +96,16 @@ export const layer = Layer.effect(
           })
         }
 
-        // 2. Check inflight dedup
-        const pending = yield* Ref.get(inflight)
-        const existing = pending.get(key)
+        // 2. Check inflight dedup atomically
+        const d = yield* Deferred.make<any>()
+        const existing = yield* Ref.modify(inflight, (pending) => {
+          const existing = pending.get(key)
+          if (existing) {
+            return [existing, pending] as const
+          }
+          pending.set(key, d)
+          return [undefined, pending] as const
+        })
         if (existing) {
           yield* Ref.update(misses, (n) => n + 1)
           yield* Effect.annotateCurrentSpan({ "cache.hit": false, "cache.dedup": true })
@@ -108,8 +115,6 @@ export const layer = Layer.effect(
         // 3. New computation
         yield* Ref.update(misses, (n) => n + 1)
         yield* Effect.annotateCurrentSpan({ "cache.hit": false, "cache.dedup": false })
-        const d = yield* Deferred.make<any>()
-        pending.set(key, d)
 
         // Capture the exit so the Deferred always resolves — even on defect
         const exit = yield* compute().pipe(

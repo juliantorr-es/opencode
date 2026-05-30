@@ -11,7 +11,7 @@ import { ModelID } from "@/provider/schema"
 import { Plugin } from "@/plugin"
 import type { TaskPromptOps } from "@/tool/task"
 import { type Tool as AITool, tool, jsonSchema, type ToolExecutionOptions, asSchema } from "ai"
-import { Effect, Semaphore } from "effect"
+import { Effect, Option, Semaphore } from "effect"
 import { MessageV2 } from "./message-v2"
 import * as Session from "./session"
 import { SessionProcessor } from "./processor"
@@ -20,6 +20,7 @@ import * as Log from "@opencode-ai/core/util/log"
 import { EffectBridge } from "@/effect/bridge"
 import { Bus } from "@/bus"
 import * as Execution from "@/tool/execution"
+import { PhaseGate } from "@/lifecycle/gate"
 
 const log = Log.create({ service: "session.tools" })
 
@@ -42,6 +43,7 @@ export const resolve = Effect.fn("SessionTools.resolve")(function* (input: {
   const truncate = yield* Truncate.Service
   const readSemaphore = yield* Semaphore.make(10)
   const writeSemaphore = yield* Semaphore.make(3)
+  const phaseGate = yield* Effect.serviceOption(PhaseGate.Service)
 
   const context = (args: Record<string, unknown>, options: ToolExecutionOptions): Tool.Context => ({
     sessionID: input.session.id,
@@ -91,6 +93,10 @@ export const resolve = Effect.fn("SessionTools.resolve")(function* (input: {
           toolSemaphore.withPermit(
             Effect.gen(function* () {
               const ctx = context(args, options)
+              // Phase gate: reject tools not allowed by the current lifecycle phase
+              if (Option.isSome(phaseGate)) {
+                yield* phaseGate.value.checkAllowed(item.id)
+              }
               yield* plugin.trigger(
                 "tool.execute.before",
                 { tool: item.id, sessionID: ctx.sessionID, callID: ctx.callID },

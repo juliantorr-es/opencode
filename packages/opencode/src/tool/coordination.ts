@@ -1,7 +1,7 @@
 import { Effect, Schema } from "effect"
 import * as Tool from "./tool"
 import { DatabaseAdapter } from "@/storage/adapter"
-import { eq, and, sql } from "drizzle-orm"
+import { eq, and, sql, inArray } from "drizzle-orm"
 import { sqliteTable, text, integer, primaryKey } from "drizzle-orm/sqlite-core"
 
 // ── Types ─────────────────────────────────────────────────
@@ -255,7 +255,7 @@ export const claimTask = Effect.fn("Coordination.claimTask")(function* (
         const existing = rows[0]
         await tx
           .update(CoordinationFanOutTable)
-          .set({ task_ids: [...existing.task_ids, taskId] })
+          .set({ task_ids: existing.task_ids.includes(taskId) ? existing.task_ids : [...existing.task_ids, taskId] })
           .where(
             and(
               eq(CoordinationFanOutTable.session_id, sessionId),
@@ -418,7 +418,15 @@ export const reservePath = Effect.fn("Coordination.reservePath")(function* (
       )
       .limit(1)
     if (existing.length > 0 && existing[0].task_id !== taskId) {
-      return { success: false as const, reason: `Path already reserved by task ${existing[0].task_id}` }
+      const isStale = Date.now() - existing[0].created_at > 300_000
+      if (isStale) {
+        // Release stale reservation so the new claim can proceed
+        await tx.update(CoordinationReservationTable)
+          .set({ status: "released" })
+          .where(eq(CoordinationReservationTable.path, path))
+      } else {
+        return { success: false as const, reason: `Path already reserved by task ${existing[0].task_id}` }
+      }
     }
     await tx
       .insert(CoordinationReservationTable)
@@ -502,21 +510,30 @@ export const getFanOutGroup = Effect.fn("Coordination.getFanOutGroup")(function*
 
 // ── Structured result formatter ──────────────────────────
 
+function escapeXml(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&apos;")
+}
+
 export function formatStructuredResult(claim: TaskClaim): string {
   const lines: string[] = [
-    `<task id="${claim.taskId}" status="${claim.status}">`,
-    `  <description>${claim.description}</description>`,
-    `  <subagent_type>${claim.subagentType}</subagent_type>`,
+    `<task id="${escapeXml(claim.taskId)}" status="${escapeXml(claim.status)}">`,
+    `  <description>${escapeXml(claim.description)}</description>`,
+    `  <subagent_type>${escapeXml(claim.subagentType)}</subagent_type>`,
   ]
   if (claim.wave > 0) {
     lines.push(`  <wave>${claim.wave}</wave>`)
-    if (claim.waveType) lines.push(`  <wave_type>${claim.waveType}</wave_type>`)
+    if (claim.waveType) lines.push(`  <wave_type>${escapeXml(claim.waveType)}</wave_type>`)
   }
   if (claim.result) {
-    lines.push(`  <task_result>${claim.result}</task_result>`)
+    lines.push(`  <task_result>${escapeXml(claim.result)}</task_result>`)
   }
   if (claim.error) {
-    lines.push(`  <error>${claim.error}</error>`)
+    lines.push(`  <error>${escapeXml(claim.error)}</error>`)
   }
   lines.push(`</task>`)
   return lines.join("\n")
@@ -585,8 +602,23 @@ export const CoordinationTool = Tool.define(
               db.select().from(CoordinationReservationTable)
                 .where(eq(CoordinationReservationTable.status, "reserved")),
             )
-            output = active.length
-              ? active.map((r: { path: string; task_id: string }) => `  ${r.path} (task: ${r.task_id})`).join("\n")
+            const cutoff = Date.now() - 300_000
+            const nonStale = active.filter((r: { created_at: number }) => r.created_at > cutoff)
+            // Auto-release stale reservations for next time
+            if (active.length > nonStale.length) {
+              yield* adapter.query((db) =>
+                db.update(CoordinationReservationTable)
+                  .set({ status: "released" })
+                  .where(
+                    and(
+                      eq(CoordinationReservationTable.status, "reserved"),
+                      sql`${CoordinationReservationTable.created_at} < ${cutoff}`,
+                    ),
+                  ),
+              )
+            }
+            output = nonStale.length
+              ? nonStale.map((r: { path: string; task_id: string }) => `  ${r.path} (task: ${r.task_id})`).join("\n")
               : "No active path reservations"
           } else if (params.operation === "wave_status") {
             if (!params.sessionId || !params.wave || !params.waveType) {
@@ -612,7 +644,7 @@ export const CoordinationTool = Tool.define(
                         .where(
                           and(
                             eq(CoordinationClaimTable.status, "claimed"),
-                            ...group.task_ids.map((tid: string) => eq(CoordinationClaimTable.task_id, tid)),
+                            inArray(CoordinationClaimTable.task_id, group.task_ids),
                           ),
                         ),
                     )

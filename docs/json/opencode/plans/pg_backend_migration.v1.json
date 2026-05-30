@@ -140,7 +140,7 @@
             "test/fixture/db.ts (update cleanup logic)"
           ],
           "acceptance": "SQLite is no longer the default backend. No SQLite-specific files in src/storage/. All tests pass with Postgres.",
-          "blocking_defects": "Phases 1.5 and 1.6 complete; Postgres adapter is production-proven"
+          "blocking_defects": "Phases 1.5 and 1.6 complete; Postgres adapter is integration-tested — CI + local Pg service"
         }
       ]
     },

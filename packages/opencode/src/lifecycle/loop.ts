@@ -7,6 +7,7 @@ import type { LifecycleDefinition, PhaseResult } from "./definition"
 import { parseLifecycle, PhaseFailureError } from "./definition"
 import { execute } from "./engine"
 import { BUILTIN_LIFECYCLES } from "./builtins"
+import { PhaseGate } from "./gate"
 
 const log = Log.create({ service: "lifecycle.loop" })
 
@@ -63,6 +64,8 @@ export const runLifecycledPrompt = Effect.fn("LifecycleLoop.run")(function* (
     return []
   }
 
+  const phaseGate = yield* PhaseGate.Service
+
   log.info("running lifecycled prompt for agent %s — %s phases (%s)", input.agent.name, lifecycle.phases.length, lifecycle.type)
 
   const results: PhaseResult[] = yield* execute({
@@ -72,6 +75,7 @@ export const runLifecycledPrompt = Effect.fn("LifecycleLoop.run")(function* (
       Effect.gen(function* () {
         yield* Effect.annotateCurrentSpan("lifecycle.phase", phase.id)
         log.info("entering phase: %s (%s)", phase.id, phase.name)
+        yield* phaseGate.enterPhase(lifecycle.type, phase)
       }),
 
     onPhaseExit: (phase, result) =>
@@ -128,7 +132,9 @@ export const runLifecycledPrompt = Effect.fn("LifecycleLoop.run")(function* (
           retriesUsed: attempt + 1,
         }
       }),
-  })
+  }).pipe(
+    Effect.ensuring(phaseGate.exitPhase()),
+  )
 
   log.info("lifecycled prompt complete — %s phases executed", results.length)
   return results
