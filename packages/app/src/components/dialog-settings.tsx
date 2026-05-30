@@ -8,6 +8,7 @@ import { SettingsGeneral } from "./settings-general"
 import { SettingsKeybinds } from "./settings-keybinds"
 import { SettingsProviders } from "./settings-providers"
 import { SettingsModels } from "./settings-models"
+import { SettingsAgents } from "./settings-agents"
 
 export const DialogSettings: Component = () => {
   const language = useLanguage()
@@ -30,6 +31,10 @@ export const DialogSettings: Component = () => {
                     <Tabs.Trigger value="shortcuts">
                       <Icon name="keyboard" />
                       {language.t("settings.tab.shortcuts")}
+                    </Tabs.Trigger>
+                    <Tabs.Trigger value="agents">
+                      <Icon name="brain" />
+                      {language.t("settings.agents.title")}
                     </Tabs.Trigger>
                   </div>
                 </div>
@@ -66,6 +71,9 @@ export const DialogSettings: Component = () => {
         </Tabs.Content>
         <Tabs.Content value="models" class="no-scrollbar">
           <SettingsModels />
+        </Tabs.Content>
+        <Tabs.Content value="agents" class="no-scrollbar">
+          <SettingsAgents />
         </Tabs.Content>
       </Tabs>
     </Dialog>

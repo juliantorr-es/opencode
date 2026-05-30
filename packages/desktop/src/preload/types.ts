@@ -28,6 +28,19 @@ export type FatalRendererError = {
   os?: string
 }
 
+export type AgentDef = {
+  id: string
+  name: string
+  prompt: string
+  description?: string
+  model?: string
+  variant?: string
+  temperature?: number
+  top_p?: number
+  color?: string
+  steps?: number
+}
+
 export type ElectronAPI = {
   killSidecar: () => Promise<void>
   installCli: () => Promise<string>
@@ -92,4 +105,7 @@ export type ElectronAPI = {
   setBackgroundColor: (color: string) => Promise<void>
   exportDebugLogs: () => Promise<string>
   recordFatalRendererError: (error: FatalRendererError) => Promise<void>
+  getDesktopPluginConfig?: () => Promise<any>
+  getCustomAgents: () => Promise<AgentDef[]>
+  setCustomAgents: (agents: AgentDef[]) => Promise<void>
 }

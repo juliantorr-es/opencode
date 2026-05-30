@@ -35,7 +35,7 @@ type Metrics = {
 }
 
 const tokenTotal = (msg: AssistantMessage) => {
-  return msg.tokens.input + msg.tokens.output + msg.tokens.reasoning + msg.tokens.cache.read + msg.tokens.cache.write
+  return (msg.tokens?.input ?? 0) + (msg.tokens?.output ?? 0) + (msg.tokens?.reasoning ?? 0) + (msg.tokens?.cache?.read ?? 0) + (msg.tokens?.cache?.write ?? 0)
 }
 
 const lastAssistantWithTokens = (messages: Message[]) => {

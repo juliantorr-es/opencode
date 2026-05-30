@@ -76,6 +76,8 @@ declare global {
     api?: {
       setTitlebar?: (theme: { mode: "light" | "dark" }) => Promise<void>
       exportDebugLogs?: () => Promise<string>
+      getCustomAgents?: () => Promise<unknown[]>
+      setCustomAgents?: (agents: unknown[]) => Promise<void>
     }
   }
 }

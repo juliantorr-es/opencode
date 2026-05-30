@@ -12,6 +12,7 @@ import type {
   WindowConfig,
   WslConfig,
 } from "../preload/types"
+import { installCli } from "./install-cli"
 import { runDesktopMenuAction } from "./desktop-menu-actions"
 import { getStore } from "./store"
 import { getPinchZoomEnabled, setPinchZoomEnabled, setTitlebar, updateTitlebar } from "./windows"
@@ -47,6 +48,7 @@ type Deps = {
 
 export function registerIpcHandlers(deps: Deps) {
   ipcMain.handle("kill-sidecar", () => deps.killSidecar())
+  ipcMain.handle("install-cli", () => installCli())
   ipcMain.handle("await-initialization", (event: IpcMainInvokeEvent) => {
     const send = (step: InitStep) => event.sender.send("init-step", step)
     return deps.awaitInitialization(send)
@@ -213,6 +215,15 @@ export function registerIpcHandlers(deps: Deps) {
   })
   ipcMain.handle("run-desktop-menu-action", (event: IpcMainInvokeEvent, action: DesktopMenuAction) => {
     runDesktopMenuAction(BrowserWindow.fromWebContents(event.sender), action)
+  })
+
+  ipcMain.handle("get-desktop-custom-agents", () => {
+    const store = getStore("desktop-custom-agents")
+    return (store.get("agents") as unknown[]) ?? []
+  })
+  ipcMain.handle("set-desktop-custom-agents", (_event: IpcMainInvokeEvent, agents: unknown[]) => {
+    const store = getStore("desktop-custom-agents")
+    store.set("agents", agents)
   })
 }
 

@@ -1,7 +1,8 @@
-import { Match, Show, Switch, createMemo } from "solid-js"
+import { Match, Show, Switch, createMemo, createSignal } from "solid-js"
 import { Tooltip, type TooltipProps } from "@opencode-ai/ui/tooltip"
 import { ProgressCircle } from "@opencode-ai/ui/progress-circle"
 import { Button } from "@opencode-ai/ui/button"
+import { Icon } from "@opencode-ai/ui/icon"
 
 import { useFile } from "@/context/file"
 import { useLayout } from "@/context/layout"
@@ -58,6 +59,26 @@ export function SessionContextUsage(props: SessionContextUsageProps) {
     return usd().format(metrics().totalCost)
   })
 
+  const usage = createMemo(() => context()?.usage ?? 0)
+
+  const hasCompaction = createMemo(() => {
+    const sessionID = params.id
+    if (!sessionID) return false
+    const parts = sync.data?.part ?? {}
+    for (const msg of messages()) {
+      const msgParts = parts[msg.id]
+      if (msgParts?.some((p) => p.type === "compaction")) return true
+    }
+    return false
+  })
+
+  const usageColor = createMemo(() => {
+    const pct = usage()
+    if (pct >= 95) return "var(--state-fg-danger)"
+    if (pct >= 80) return "var(--state-fg-warning)"
+    return undefined
+  })
+
   const openContext = () => {
     if (!params.id) return
 
@@ -73,8 +94,11 @@ export function SessionContextUsage(props: SessionContextUsageProps) {
   }
 
   const circle = () => (
-    <div class="flex items-center justify-center">
-      <ProgressCircle size={16} strokeWidth={2} percentage={context()?.usage ?? 0} />
+    <div
+      class="flex items-center justify-center"
+      style={usageColor() ? ({ "--border-active": usageColor() } as Record<string, string>) : undefined}
+    >
+      <ProgressCircle size={16} strokeWidth={2} percentage={usage()} />
     </div>
   )
 
@@ -98,26 +122,39 @@ export function SessionContextUsage(props: SessionContextUsageProps) {
         <span class="text-text-invert-strong">{cost()}</span>
         <span class="text-text-invert-base">{language.t("context.usage.cost")}</span>
       </div>
+      <Show when={hasCompaction()}>
+        <div class="flex items-center gap-2 pt-1">
+          <Icon name="collapse" class="text-text-invert-base size-3" />
+          <span class="text-text-invert-base">Compacted</span>
+        </div>
+      </Show>
     </div>
   )
 
   return (
     <Show when={params.id}>
       <Tooltip value={tooltipValue()} placement={props.placement ?? "top"}>
-        <Switch>
-          <Match when={variant() === "indicator"}>{circle()}</Match>
-          <Match when={true}>
-            <Button
-              type="button"
-              variant="ghost"
-              class="size-6"
-              onClick={openContext}
-              aria-label={language.t("context.usage.view")}
-            >
-              {circle()}
-            </Button>
-          </Match>
-        </Switch>
+        <div class="relative">
+          <Switch>
+            <Match when={variant() === "indicator"}>{circle()}</Match>
+            <Match when={true}>
+              <Button
+                type="button"
+                variant="ghost"
+                class="size-6"
+                onClick={openContext}
+                aria-label={language.t("context.usage.view")}
+              >
+                {circle()}
+              </Button>
+            </Match>
+          </Switch>
+          <Show when={hasCompaction()}>
+            <div class="absolute -top-0.5 -right-0.5 size-2.5 flex items-center justify-center">
+              <div class="size-2 rounded-full bg-[var(--state-fg-warning)]" />
+            </div>
+          </Show>
+        </div>
       </Tooltip>
     </Show>
   )
