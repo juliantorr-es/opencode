@@ -1,0 +1,138 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://rig.relay/schemas/builder_publication_record.v1",
+  "title": "Builder Publication Record",
+  "description": "Schema for builder publication records that capture the claim, proof, alternatives, boundary, and publication status of a lane's work.",
+  "type": "object",
+  "properties": {
+    "schemaVersion": {
+      "type": "string",
+      "description": "Version of this schema"
+    },
+    "builderClaim": {
+      "type": "string",
+      "description": "The builder's stated claim about what was accomplished"
+    },
+    "requiredProof": {
+      "type": "string",
+      "description": "The proof required to validate the claim"
+    },
+    "observedProof": {
+      "type": "string",
+      "description": "The proof actually obtained"
+    },
+    "alternativesRejected": {
+      "type": "array",
+      "description": "Alternative approaches considered and rejected",
+      "items": {
+        "type": "object",
+        "properties": {
+          "alternative": {
+            "type": "string",
+            "description": "Description of the alternative"
+          },
+          "reason": {
+            "type": "string",
+            "description": "Why the alternative was rejected"
+          }
+        }
+      }
+    },
+    "intendedBoundary": {
+      "type": "string",
+      "description": "The narrow boundary that was intended to be released"
+    },
+    "consumerPurpose": {
+      "type": "string",
+      "description": "The consumer purpose this boundary serves"
+    },
+    "implementedCapabilities": {
+      "type": "array",
+      "description": "Capabilities that were implemented",
+      "items": {
+        "type": "string"
+      }
+    },
+    "unimplementedCapabilities": {
+      "type": "array",
+      "description": "Capabilities explicitly left unimplemented",
+      "items": {
+        "type": "string"
+      }
+    },
+    "testsRun": {
+      "type": "array",
+      "description": "Tests that were actually run",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "result": {
+            "type": "string",
+            "enum": ["passed", "failed", "skipped"]
+          }
+        }
+      }
+    },
+    "schemasProduced": {
+      "type": "array",
+      "description": "Schemas produced during this work",
+      "items": {
+        "type": "string"
+      }
+    },
+    "auditsProduced": {
+      "type": "array",
+      "description": "Audits produced during this work",
+      "items": {
+        "type": "string"
+      }
+    },
+    "externalEffectsExecuted": {
+      "type": "array",
+      "description": "External effects that were actually executed",
+      "items": {
+        "type": "string"
+      }
+    },
+    "externalEffectsNotExecuted": {
+      "type": "array",
+      "description": "External effects explicitly not executed",
+      "items": {
+        "type": "string"
+      }
+    },
+    "dirtyPaths": {
+      "type": "array",
+      "description": "Known dirty or foreign paths excluded from the slice",
+      "items": {
+        "type": "string"
+      }
+    },
+    "strongestWeakness": {
+      "type": "string",
+      "description": "The strongest suspected weakness of this work"
+    },
+    "reviewerAttackSurface": {
+      "type": "string",
+      "description": "Proposed reviewer attack surface"
+    },
+    "prepublicationReviewDigest": {
+      "type": "string",
+      "description": "Digest of the prepublication review cycle"
+    },
+    "publicationStatus": {
+      "type": "string",
+      "enum": [
+        "candidate_local",
+        "published_candidate_boundary",
+        "published_candidate_blocked",
+        "published_candidate_external_acceptance_pending"
+      ],
+      "description": "Builder-issued publication status"
+    }
+  },
+  "required": ["schemaVersion", "builderClaim", "publicationStatus"]
+}

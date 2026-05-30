@@ -5,68 +5,82 @@ import { existsSync, readdirSync, readFileSync } from "node:fs"
 function resolvePath(worktree: string, p: string): string { return resolve(worktree, p) }
 
 export default tool({
-  description: "Show the task operations dashboard: fleet status with heartbeat phase timelines, running tasks, completed tasks, blocked tasks, and alerts.",
+  description: "Fleet dashboard — running tasks, heartbeat phase timelines, artifact summaries, and alerts. Auto-scoped: secretary sees their subagents, orchestrator sees all lanes.",
   args: {
-    wave: tool.schema.string().optional().describe("Filter by wave name"),
-    status: tool.schema.string().optional().describe("Filter by status: running | completed | failed | blocked"),
-    session_id: tool.schema.string().optional().describe("Filter by session ID"),
+    scope: tool.schema.string().optional().describe("'lane' (only my session), 'all' (everything), or omit for auto-detect based on caller"),
   },
   async execute(args, context) {
-    const coordPath = resolvePath(context.worktree, "docs/json/opencode/coordination/messages.v1.jsonl")
-    const knowledgeBase = resolvePath(context.worktree, "docs/json/opencode/knowledge/sessions")
     const sessionsBase = resolvePath(context.worktree, "docs/json/opencode/sessions")
+    const coordPath = resolvePath(context.worktree, "docs/json/opencode/coordination/messages.v1.jsonl")
+    const now = Date.now()
 
-    // Read coordination messages
-    const messages: any[] = []
-    if (existsSync(coordPath)) {
-      try {
-        readFileSync(coordPath, "utf8").split("\n").filter(Boolean).forEach(l => {
-          try { const m = JSON.parse(l); if (m.kind === "task_status" || m.kind === "handoff" || m.kind === "heartbeat") messages.push(m) } catch {}
-        })
-      } catch (_) {}
-    }
+    // Determine scope: secretary = lane, orchestrator = all
+    const maxAge = args.max_age_minutes ?? (context.agent === "secretary" ? 60 : 0)
+    const isSecretary = context.agent === "secretary"
+    const isOrchestrator = context.agent === "orchestrator"
+    const scope = args.scope || (isSecretary ? "lane" : "all")
 
-    // Build tasks from coordination
-    const tasks: Record<string, any> = {}
-    for (const msg of messages) {
-      if (args.wave && msg.wave !== args.wave) continue
-      if (args.session_id && msg.session_id !== args.session_id) continue
-
-      const id = msg.task_id || msg.message_id || `msg_${Math.random().toString(36).slice(2, 8)}`
-      if (!tasks[id]) tasks[id] = { task_id: id, source: "coordination", agent: msg.subagent_type || msg.sender || "?", description: msg.subject || "", wave: msg.wave, events: [] }
-      tasks[id].events.push({ status: msg.task_status || msg.status || msg.kind || "unknown", at: msg.sent_at, detail: msg.body?.slice(0, 120) || "" })
-    }
-
-    // Read heartbeats for fleet status
-    const heartbeats: Record<string, any> = {}
+    // Read heartbeats grouped by session
+    const sessions: Record<string, { agent: string; phases: any[]; artifacts: any }> = {}
+    
     if (existsSync(sessionsBase)) {
-      try {
-        for (const dir of readdirSync(sessionsBase, { withFileTypes: true }).filter(d => d.isDirectory())) {
-          const hbPath = resolve(sessionsBase, dir.name, "analytics", "heartbeat.v1.jsonl")
-          if (!existsSync(hbPath)) continue
-          if (args.session_id && dir.name !== args.session_id) continue
+      for (const dir of readdirSync(sessionsBase, { withFileTypes: true }).filter(d => d.isDirectory())) {
+        const sid = dir.name
+        if (scope === "lane" && sid !== context.sessionID) continue
+        
+        const hbPath = resolve(sessionsBase, sid, "analytics", "heartbeat.v1.jsonl")
+        const artPath = resolve(sessionsBase, sid, "artifacts", `${sid}.v1.json`)
 
+        // Read heartbeats
+        const phases: any[] = []
+        let agent = "?"
+        if (existsSync(hbPath)) {
           try {
-            readFileSync(hbPath, "utf8").split("\n").filter(Boolean).forEach(l => {
+            for (const line of readFileSync(hbPath, "utf8").split("\n").filter(Boolean)) {
               try {
-                const hb = JSON.parse(l)
-                const key = `${hb.session_id?.slice(0, 8) || "?"}|${hb.agent || "?"}`
-                if (!heartbeats[key]) heartbeats[key] = { session_id: hb.session_id, agent: hb.agent, phases: [] as any[] }
-                heartbeats[key].phases.push({ tool: hb.tool, phase: hb.phase, detail: (hb.detail || "").slice(0, 100), at: hb.at || "" })
+                const hb = JSON.parse(line)
+                agent = hb.agent || agent
+                phases.push({ tool: hb.tool, phase: hb.phase, detail: (hb.detail || "").slice(0, 80), at: hb.at || "" })
               } catch {}
-            })
+            }
           } catch (_) {}
         }
-      } catch (_) {}
+
+        // Read artifact summary
+        let artifacts: any = null
+        if (existsSync(artPath)) {
+          try {
+            const art = JSON.parse(readFileSync(artPath, "utf8"))
+            artifacts = {
+              events: art.total_events || 0,
+              tools: art.tools_used || {},
+              files: (art.files_touched || []).length,
+            }
+          } catch {}
+        }
+
+        // Filter by age if maxAge is set
+        let tooOld = false
+        if (maxAge > 0 && phases.length > 0) {
+          try {
+            const firstAt = new Date(phases[0].at).getTime()
+            tooOld = (Date.now() - firstAt) > maxAge * 60000
+          } catch {}
+        }
+        if (!tooOld && (phases.length > 0 || artifacts)) {
+          sessions[sid] = { agent, phases, artifacts }
+        }
+      }
     }
 
-    // Build fleet from heartbeats
+    // Build fleet
     const fleet: any[] = []
     const alerts: any[] = []
-    const now = Date.now()
-    for (const [, hb] of Object.entries(heartbeats) as [string, any][]) {
-      const phases = hb.phases
+
+    for (const [sid, data] of Object.entries(sessions)) {
+      const phases = data.phases
       if (!phases.length) continue
+
       const last = phases[phases.length - 1]
       const firstAt = phases[0]?.at
       const lastAt = last?.at
@@ -75,61 +89,112 @@ export default tool({
       const lastHbAgo = lastAt ? Math.floor((now - new Date(lastAt).getTime()) / 1000) : 999
       const stale = isRunning && lastHbAgo > 60
 
-      if (stale) alerts.push({ severity: "warning", session: hb.session_id?.slice(0, 16), agent: hb.agent, message: `No heartbeat for ${lastHbAgo}s` })
-      if (isRunning && elapsed > 120) alerts.push({ severity: "info", session: hb.session_id?.slice(0, 16), agent: hb.agent, message: `Running for ${elapsed}s` })
+      if (stale) alerts.push({ severity: "warning", session: sid.slice(0, 16), agent: data.agent, message: `No heartbeat for ${lastHbAgo}s` })
+      if (isRunning && elapsed > 120 && !stale) alerts.push({ severity: "info", session: sid.slice(0, 16), agent: data.agent, message: `Active for ${elapsed}s` })
 
       fleet.push({
-        session: hb.session_id?.slice(0, 16),
-        agent: hb.agent,
-        status: isRunning ? "running" : last?.phase,
-        current: `${last?.tool}:${last?.phase}`,
+        session: sid.slice(0, 16),
+        agent: data.agent,
+        status: isRunning ? "running" : last?.phase === "completed" ? "done" : last?.phase,
+        current: isRunning ? `${last?.tool}:${last?.phase}` : "—",
         detail: last?.detail || "",
         elapsed_s: elapsed,
         stale,
-        tool_count: new Set(phases.map((p: any) => p.tool)).size,
+        tool_calls: new Set(phases.map(p => p.tool)).size,
+        artifacts: data.artifacts,
       })
     }
+
+    // Sort: running first, then recent completions
     fleet.sort((a, b) => (a.status === "running" ? -1 : 1) || b.elapsed_s - a.elapsed_s)
 
-    // Build dashboard from tasks
-    const dashboard: any[] = []
-    for (const [, task] of Object.entries(tasks) as [string, any][]) {
-      const events = task.events || []
-      const latest = events.length ? events[events.length - 1].status : "unknown"
-      if (args.status && latest !== args.status) continue
+    // Read coordination for lane groupings
+    const lanes: Record<string, { secretaries: string[]; handoffs: number }> = {}
+    if (existsSync(coordPath)) {
+      try {
+        for (const line of readFileSync(coordPath, "utf8").split("\n").filter(Boolean)) {
+          try {
+            const msg = JSON.parse(line)
+            if (msg.kind === "handoff") {
+              const body = typeof msg.body === "string" ? (() => { try { return JSON.parse(msg.body) } catch { return {} } })() : msg.body
+              const laneId = body?.lane_id || "unknown"
+              if (!lanes[laneId]) lanes[laneId] = { secretaries: [], handoffs: 0 }
+              lanes[laneId].handoffs++
+            }
+            if (msg.kind === "delegation" && msg.agent === "secretary") {
+              const body = typeof msg.body === "string" ? (() => { try { return JSON.parse(msg.body) } catch { return {} } })() : msg.body
+              const laneId = body?.lane_id || msg.subject?.match(/Lane (\S+)/)?.[1] || "unknown"
+              if (!lanes[laneId]) lanes[laneId] = { secretaries: [], handoffs: 0 }
+              lanes[laneId].secretaries.push(msg.session_id?.slice(0, 16) || "?")
+            }
+          } catch {}
+        }
+      } catch (_) {}
+    }
 
-      let elapsed = 0
-      let stale = false
-      if (events.length) {
+    // Auto-expire delegated entries that never got a heartbeat
+    // BUT: if heartbeats exist, the agent IS running — upgrade to deployed regardless of coordination
+    const deadDelegations: string[] = []
+    for (const [sid, data] of Object.entries(sessions)) {
+      if (data.phases.length === 0 && data.agent !== "?") {
+        // No heartbeats — check if this was a delegation that was never acted on
         try {
-          const first = new Date(events[0].at).getTime()
-          const last = new Date(events[events.length - 1].at).getTime()
-          elapsed = Math.floor((now - first) / 1000)
-          if (latest === "running" && (now - last) > 30000) stale = true
+          const coordLines = existsSync(coordPath) ? readFileSync(coordPath, "utf8").split("\n").filter(Boolean).slice(-200) : []
+          for (const line of coordLines) {
+            try {
+              const msg = JSON.parse(line)
+              if (msg.kind === "delegation" && msg.session_id === sid) {
+                const age = (now - new Date(msg.sent_at).getTime()) / 1000
+                if (age > 60) deadDelegations.push(sid)
+                break
+              }
+            } catch {}
+          }
         } catch {}
       }
-
-      dashboard.push({
-        task_id: task.task_id?.slice(0, 16),
-        source: task.source, agent: task.agent,
-        description: task.description, wave: task.wave,
-        status: latest, stale, elapsed_seconds: elapsed,
-        event_count: events.length,
-        timeline: events.slice(-10).map((e: any) => ({ status: e.status, at: (e.at || "").slice(0, 19), detail: (e.detail || "").slice(0, 80) })),
-      })
+      // Heartbeats exist → agent is running. Coordination status is irrelevant.
     }
-    dashboard.sort((a, b) => ({ running: 0, blocked: 1, completed: 2, failed: 3 }[a.status] ?? 4) - ({ running: 0, blocked: 1, completed: 2, failed: 3 }[b.status] ?? 4))
 
-    const counts: Record<string, number> = {}
-    for (const t of dashboard) counts[t.status] = (counts[t.status] || 0) + 1
-    const summary = Object.entries(counts).map(([k, v]) => `${v} ${k}`).join(" | ") || "no tasks"
+    // Counts
+    const running = fleet.filter(f => f.status === "running")
+    const done = fleet.filter(f => f.status === "done")
+    const failed = fleet.filter(f => f.status === "failed")
+    const staleList = fleet.filter(f => f.stale)
+    const abandoned = fleet.filter(f => deadDelegations.includes(f.session))
 
-    return JSON.stringify({
-      dashboard, total: dashboard.length,
-      fleet, fleet_total: fleet.length,
+    // Remove abandoned from active fleet
+    const activeFleet = fleet.filter(f => !deadDelegations.includes(f.session))
+
+    // Build response based on scope
+    const result: any = {
+      summary: `${running.length} running, ${done.length} done, ${failed.length} failed${staleList.length ? `, ${staleList.length} stale` : ""}${abandoned.length ? `, ${abandoned.length} abandoned` : ""}`,
+      fleet: activeFleet,
+      total: activeFleet.length,
       alerts,
-      summary,
-      hint: "Use wave=<name>, status=<running|completed|failed|blocked>, or session_id=<id> to filter.",
-    }, null, 2)
+    }
+
+    // Alert for dead delegations
+    for (const sid of deadDelegations) {
+      alerts.push({ severity: "info", session: sid.slice(0, 16), message: "Delegation abandoned — task() was never called." })
+    }
+
+    if (isOrchestrator && Object.keys(lanes).length > 0) {
+      result.lanes = Object.entries(lanes).map(([id, l]) => ({
+        lane_id: id,
+        secretaries: l.secretaries.length,
+        handoffs: l.handoffs,
+        status: l.handoffs > 0 ? "completed" : "running",
+      }))
+    }
+
+    if (isSecretary && running.length === 0 && done.length > 0) {
+      result.hint = "All your subagents are done. Time to verify and hand off to the orchestrator."
+    } else if (isSecretary && staleList.length > 0) {
+      result.hint = `${staleList.length} subagent(s) appear stalled. Consider respawning them.`
+    } else if (isOrchestrator && staleList.length > 0) {
+      result.hint = `${staleList.length} session(s) with no recent heartbeat. Check if secretaries are still alive.`
+    }
+
+    return JSON.stringify(result, null, 2)
   },
 })

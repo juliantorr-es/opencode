@@ -19,6 +19,15 @@ function hb(context: any, tool: string, phase: string, detail: string) {
   } catch (_) {}
 }
 
+function artifactLog(context: any, event: Record<string, unknown>) {
+  try {
+    const dir = resolve(context.worktree, `docs/json/opencode/sessions/${context.sessionID}/artifacts`)
+    if (!existsSync(dir)) mkdirSync(dir, { recursive: true })
+    appendFileSync(resolve(dir, `${context.sessionID}.v1.jsonl`),
+      JSON.stringify({ at: new Date().toISOString(), ...event }) + "\n", "utf8")
+  } catch (_) {}
+}
+
 export default tool({
   description: "Run git operations (status, diff, add, commit, push, log, branch) with structured output. Replaces all git bash commands.",
   args: {
@@ -27,6 +36,7 @@ export default tool({
     path: tool.schema.string().optional().describe("Limit to a specific file or directory (appended as '-- <path>'). Use this to filter status/diff/log to one file instead of the whole repo."),
     files: tool.schema.string().optional().describe("JSON array of file paths for add/checkout operations"),
     message: tool.schema.string().optional().describe("Commit message (for commit operation)"),
+    style: tool.schema.string().optional().describe("Output style for diff: 'delta' (syntax-highlighted, default), 'raw' (plain git diff)"),
   },
   async execute(args, context) {
     hb(context, "smart_git", "started", args.operation?.slice(0, 80) || "")
@@ -95,6 +105,17 @@ export default tool({
     const stdout = result.stdout?.trim() || ""
     const stderr = result.stderr?.trim() || ""
 
+    // Post-process diff output through delta for syntax highlighting
+    let styledDiff = ""
+    if (["diff", "diff-stat", "show"].includes(args.operation) && stdout && (args.style ?? "delta") !== "raw") {
+      const deltaResult = spawnSync("delta", [], {
+        input: stdout, encoding: "utf8", maxBuffer: 1024 * 1024 * 2, timeout: 5000,
+      })
+      if (deltaResult.status === 0 && deltaResult.stdout?.trim()) {
+        styledDiff = deltaResult.stdout.trim()
+      }
+    }
+
     const output: Record<string, unknown> = {
       operation: args.operation,
       command: cmd.join(" "),
@@ -143,10 +164,12 @@ export default tool({
       }
     }
 
+    if (styledDiff) output.styled_diff = styledDiff.slice(0, 3000)
     if (stderr) output.stderr = stderr
     if (result.error) { hb(context, "smart_git", "failed", result.error.message); output.status = "error"; output.error = result.error.message }
     else { hb(context, "smart_git", result.status === 0 ? "completed" : "failed", `${args.operation} exit=${result.status}`); output.status = result.status === 0 ? "success" : "error" }
 
+    artifactLog(context, { tool: "smart_git", action: "git_op", operation: args.operation, exit_code: result.status })
     return JSON.stringify(output, null, 2)
   },
 })

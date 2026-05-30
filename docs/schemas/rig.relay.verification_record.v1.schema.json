@@ -1,0 +1,123 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://rig.relay/schemas/verification_record.v1",
+  "title": "Verification Record",
+  "description": "Schema for reviewer verification records that capture the inspection, falsification attempts, and admission decision for a published candidate.",
+  "type": "object",
+  "properties": {
+    "schemaVersion": {
+      "type": "string",
+      "description": "Version of this schema"
+    },
+    "subjectSha": {
+      "type": "string",
+      "description": "SHA of the subject commit under review"
+    },
+    "builderPublicationDigest": {
+      "type": "string",
+      "description": "Digest of the builder's publication record"
+    },
+    "prepublicationReviewDigest": {
+      "type": "string",
+      "description": "Digest of the prepublication review cycle"
+    },
+    "policyApplied": {
+      "type": "string",
+      "description": "Policy that was applied during verification"
+    },
+    "consumerPurposeVerified": {
+      "type": "string",
+      "description": "The consumer purpose being verified"
+    },
+    "filesInspected": {
+      "type": "array",
+      "description": "Files inspected from remote main",
+      "items": {
+        "type": "string"
+      }
+    },
+    "productionPathsExercised": {
+      "type": "array",
+      "description": "Production paths that were exercised",
+      "items": {
+        "type": "string"
+      }
+    },
+    "falsifiersAttempted": {
+      "type": "array",
+      "description": "Falsification attempts and their results",
+      "items": {
+        "type": "object",
+        "properties": {
+          "falsifier": {
+            "type": "string",
+            "description": "Description of the falsification attempt"
+          },
+          "succeeded": {
+            "type": "boolean",
+            "description": "Whether the falsification succeeded"
+          },
+          "evidence": {
+            "type": "string",
+            "description": "Evidence for the outcome"
+          }
+        },
+        "required": ["falsifier", "succeeded"]
+      }
+    },
+    "falsifiersSucceeded": {
+      "type": "array",
+      "description": "Falsification attempts that succeeded",
+      "items": {
+        "type": "string"
+      }
+    },
+    "falsifiersDefeated": {
+      "type": "array",
+      "description": "Falsification attempts that were defeated",
+      "items": {
+        "type": "string"
+      }
+    },
+    "untestedClaims": {
+      "type": "array",
+      "description": "Claims that were not tested",
+      "items": {
+        "type": "string"
+      }
+    },
+    "verifiedBoundary": {
+      "type": "string",
+      "description": "The boundary that was verified"
+    },
+    "downgradedClaims": {
+      "type": "array",
+      "description": "Claims that were downgraded from the builder's assertion",
+      "items": {
+        "type": "string"
+      }
+    },
+    "consumerAdmissionDecision": {
+      "type": "string",
+      "description": "The admission decision for the consumer"
+    },
+    "reviewerIssuedStatus": {
+      "type": "string",
+      "enum": [
+        "verified_narrow_release",
+        "verified_with_blocking_defects",
+        "downgraded_candidate_repair_required",
+        "frozen_pending_integration",
+        "prepublication_admitted",
+        "prepublication_repair_required",
+        "prepublication_blocked_external_dependency"
+      ],
+      "description": "Reviewer-issued status for the candidate"
+    },
+    "freezeDecision": {
+      "type": "string",
+      "description": "Decision on whether to freeze the lane"
+    }
+  },
+  "required": ["schemaVersion", "subjectSha", "reviewerIssuedStatus"]
+}

@@ -7,6 +7,15 @@ function resolvePath(worktree: string, p: string): string {
   return resolve(worktree, p)
 }
 
+function artifactLog(context: any, event: Record<string, unknown>) {
+  try {
+    const dir = resolve(context.worktree, `docs/json/opencode/sessions/${context.sessionID}/artifacts`)
+    if (!existsSync(dir)) mkdirSync(dir, { recursive: true })
+    appendFileSync(resolve(dir, `${context.sessionID}.v1.jsonl`),
+      JSON.stringify({ at: new Date().toISOString(), ...event }) + "\n", "utf8")
+  } catch (_) {}
+}
+
 interface BatchEdit {
   file: string
   oldText: string
@@ -160,6 +169,7 @@ export default tool({
       results.push(snap.edit.file)
     }
 
+    artifactLog(context, { tool: "smart_batch", action: "batch_edited", files: results.join(", "), edits: results.length })
     return JSON.stringify({
       status: "applied",
       edits_applied: results.length,

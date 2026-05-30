@@ -39,4 +39,22 @@ describe("DialogSelectMcp", () => {
     dlg.dispose()
     dlg.assertHidden()
   })
+
+  test("renders Add MCP Server button in list mode", async () => {
+    const dlg = await mountDialog(() =>
+      h(selectMcpMod.DialogSelectMcp, {}),
+    )
+    expect(document.body.textContent).toContain("Add MCP Server")
+    dlg.dispose()
+  })
+
+  test("renders empty state with description", async () => {
+    const dlg = await mountDialog(() =>
+      h(selectMcpMod.DialogSelectMcp, {}),
+    )
+    // Language keys for title and description rendered
+    expect(document.body.textContent).toContain("dialog.mcp.title")
+    expect(document.body.textContent).toContain("dialog.mcp.description")
+    dlg.dispose()
+  })
 })

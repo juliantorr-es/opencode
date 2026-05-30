@@ -7,6 +7,15 @@ function resolvePath(worktree: string, p: string): string {
   return resolve(worktree, p)
 }
 
+function artifactLog(context: any, event: Record<string, unknown>) {
+  try {
+    const dir = resolve(context.worktree, `docs/json/opencode/sessions/${context.sessionID}/artifacts`)
+    if (!existsSync(dir)) mkdirSync(dir, { recursive: true })
+    appendFileSync(resolve(dir, `${context.sessionID}.v1.jsonl`),
+      JSON.stringify({ at: new Date().toISOString(), ...event }) + "\n", "utf8")
+  } catch (_) {}
+}
+
 export default tool({
   description: "Replace text in a file with exact matching. Automatically records edit metadata (who, why, what changed). Post-write verification confirms the edit persisted.",
   args: {
@@ -98,6 +107,7 @@ export default tool({
       appendFileSync(logPath, JSON.stringify(record) + "\n", "utf8")
     } catch (_) {}
 
+    artifactLog(context, { tool: "smart_edit", action: "edited", file: args.file, detail: args.reason?.slice(0, 80) })
     return JSON.stringify({
       status: "applied",
       file: args.file,

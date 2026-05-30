@@ -13,6 +13,8 @@ import h from "solid-js/h/dist/h.js"
 import { mountDialog } from "@/test-utils/dialog-harness"
 import { mockAllDialogDeps, mockLanguage } from "@/test-utils/dialog-mocks"
 
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms))
+
 type Entry = { name: string; config: { type: "local" | "remote"; command?: string[]; url?: string; timeout?: number; enabled: boolean } }
 type Mod = typeof import("./dialog-edit-mcp")
 let mod: Mod
@@ -30,7 +32,6 @@ describe("DialogEditMcp", () => {
     const dlg = await mountDialog(() =>
       h(mod.DialogEditMcp, { onSave }),
     )
-    // DialogEditMcp is a form fragment — no [data-component="dialog"] wrapper
     expect(document.body.textContent).toContain("dialog.mcp.form.name")
     expect(document.body.textContent).toContain("dialog.mcp.form.command")
     expect(document.body.textContent).toContain("common.cancel")
@@ -67,6 +68,37 @@ describe("DialogEditMcp", () => {
     const onSave = mock(async (_e: Entry) => {})
     const dlg = await mountDialog(() => h(mod.DialogEditMcp, { onSave }))
     expect(document.body.textContent).toContain("dialog.mcp.form.name")
+    dlg.dispose()
+  })
+
+  // ── save interaction ──────────────────────────────────────────────────
+  test("save button calls onSave with remote config when editing", async () => {
+    const entry: Entry = {
+      name: "remote-server",
+      config: { type: "remote", url: "http://localhost:3000", enabled: true },
+    }
+    const onSave = mock(async (_e: Entry) => {})
+    const dlg = await mountDialog(() =>
+      h(mod.DialogEditMcp, { entry, onSave }),
+    )
+    dlg.clickButton("common.save")
+    await sleep(20)
+    expect(onSave).toHaveBeenCalledTimes(1)
+    dlg.dispose()
+  })
+
+  test("save button is not disabled when editing local config", async () => {
+    const entry: Entry = {
+      name: "my-server",
+      config: { type: "local", command: ["node", "index.js"], enabled: true },
+    }
+    const onSave = mock(async (_e: Entry) => {})
+    const dlg = await mountDialog(() =>
+      h(mod.DialogEditMcp, { entry, onSave }),
+    )
+    const btn = [...document.querySelectorAll("button")].find((b) => b.textContent?.trim() === "common.save")
+    expect(btn).toBeTruthy()
+    expect(btn!.disabled).toBe(false)
     dlg.dispose()
   })
 })

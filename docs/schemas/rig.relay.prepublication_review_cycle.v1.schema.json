@@ -1,0 +1,99 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://rig.relay/schemas/prepublication_review_cycle.v1",
+  "title": "Prepublication Review Cycle",
+  "description": "Schema for prepublication review cycles that capture review rounds, findings, builder responses, and the admission verdict.",
+  "type": "object",
+  "properties": {
+    "schemaVersion": {
+      "type": "string",
+      "description": "Version of this schema"
+    },
+    "reviewRound": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Review round number (1-based)"
+    },
+    "candidateBoundary": {
+      "type": "string",
+      "description": "The boundary of the candidate under review"
+    },
+    "candidateSha": {
+      "type": "string",
+      "description": "SHA of the candidate commit being reviewed"
+    },
+    "findings": {
+      "type": "array",
+      "description": "Findings identified during this review round",
+      "items": {
+        "type": "object",
+        "properties": {
+          "findingId": {
+            "type": "string",
+            "description": "Unique identifier for this finding"
+          },
+          "axis": {
+            "type": "string",
+            "description": "Review axis (e.g. coupling, safety, surface_area)"
+          },
+          "severity": {
+            "type": "string",
+            "enum": ["blocking", "informational"],
+            "description": "Severity of the finding"
+          },
+          "description": {
+            "type": "string",
+            "description": "Detailed description of the finding"
+          },
+          "blocking": {
+            "type": "boolean",
+            "description": "Whether this finding blocks publication"
+          }
+        },
+        "required": ["findingId", "axis", "severity", "description", "blocking"]
+      }
+    },
+    "builderResponses": {
+      "type": "array",
+      "description": "Builder responses to findings",
+      "items": {
+        "type": "object",
+        "properties": {
+          "findingId": {
+            "type": "string",
+            "description": "The finding being responded to"
+          },
+          "resolution": {
+            "type": "string",
+            "description": "Resolution status: fixed, wontfix, deferred, disputed"
+          },
+          "description": {
+            "type": "string",
+            "description": "Detailed response description"
+          }
+        },
+        "required": ["findingId", "resolution"]
+      }
+    },
+    "verdict": {
+      "type": "string",
+      "enum": [
+        "prepublication_admitted",
+        "prepublication_repair_required",
+        "prepublication_blocked_external_dependency"
+      ],
+      "description": "Verdict for this review round"
+    },
+    "admittedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Timestamp when the candidate was admitted"
+    },
+    "rejectedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Timestamp when the candidate was rejected"
+    }
+  },
+  "required": ["schemaVersion", "reviewRound", "candidateBoundary", "findings", "verdict"]
+}

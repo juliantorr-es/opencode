@@ -1,0 +1,42 @@
+import { pgTable, text, integer, index, real, jsonb, boolean } from "drizzle-orm/pg-core"
+import { TimestampsPg } from "../storage/schema.pg.sql"
+
+export const RuntimeEventTable = pgTable(
+  "runtime_events",
+  {
+    id: text().primaryKey(),
+    session_id: text().notNull(),
+    run_id: text().notNull(),
+    parent_event_id: text(),
+    correlation_id: text(),
+    ts: text().notNull(),
+    actor: text().notNull(),
+    event_type: text().notNull(),
+    phase: text(),
+    status: text(),
+    tool_name: text(),
+    file_path: text(),
+    model: text(),
+    duration_ms: integer(),
+    token_input: integer(),
+    token_output: integer(),
+    error_code: text(),
+    error_message: text(),
+    recoverable: boolean(),
+    payload_json: jsonb(),
+    campaign_id: text(),
+    lane_id: text(),
+    role: text(),
+    ...TimestampsPg,
+  },
+  (table) => [
+    index("runtime_events_session_idx").on(table.session_id),
+    index("runtime_events_event_type_idx").on(table.event_type),
+    index("runtime_events_ts_idx").on(table.ts),
+    index("runtime_events_actor_idx").on(table.actor),
+    index("runtime_events_run_id_idx").on(table.run_id),
+    index("runtime_events_session_ts_idx").on(table.session_id, table.ts),
+    index("runtime_events_campaign_id_idx").on(table.campaign_id),
+    index("runtime_events_lane_id_idx").on(table.lane_id),
+  ],
+)

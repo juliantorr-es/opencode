@@ -19,13 +19,23 @@ function hb(context: any, tool: string, phase: string, detail: string) {
   } catch (_) {}
 }
 
+function artifactLog(context: any, event: Record<string, unknown>) {
+  try {
+    const dir = resolve(context.worktree, `docs/json/opencode/sessions/${context.sessionID}/artifacts`)
+    if (!existsSync(dir)) mkdirSync(dir, { recursive: true })
+    appendFileSync(resolve(dir, `${context.sessionID}.v1.jsonl`),
+      JSON.stringify({ at: new Date().toISOString(), ...event }) + "\n", "utf8")
+  } catch (_) {}
+}
+
 export default tool({
   description: "Run bun operations (typecheck, test, install) and return structured results. Replaces bash for all bun commands.",
   args: {
-    command: tool.schema.string().describe("typecheck | test | install | run | tsgo | tsc — the bun operation"),
+    command: tool.schema.string().describe("typecheck | test | install | run | tsgo | tsc | solidjs-test — the bun operation"),
     cwd: tool.schema.string().optional().describe("Working directory (e.g. 'packages/opencode'). Defaults to workspace root."),
     args: tool.schema.string().optional().describe("Additional args to pass to bun, e.g. '--filter src/storage' or a test file path"),
     timeout_seconds: tool.schema.number().optional().describe("Max execution time (default 120)"),
+    test_pattern: tool.schema.string().optional().describe("Test name pattern to filter (maps to --test-name-pattern)"),
   },
   async execute(args, context) {
     hb(context, "smart_bun", "started", args.command?.slice(0, 80) || "")
@@ -37,6 +47,7 @@ export default tool({
       run: "run",
       tsgo: "x tsgo",
       tsc: "x tsc",
+      "solidjs-test": "test --conditions=browser",
     }
     
     const bunCmd = validCommands[args.command]
@@ -45,12 +56,17 @@ export default tool({
         status: "error",
         error: `Unknown command: '${args.command}'`,
         valid: Object.keys(validCommands),
+        hint: "For SolidJS projects, use command: 'solidjs-test' to auto-configure --conditions=browser",
       }, null, 2)
     }
 
-    const cmdArgs = [bunCmd]
+    // Split multi-word commands (e.g. "run typecheck" → ["run", "typecheck"])
+    const cmdArgs = bunCmd.split(/\s+/)
     let shellMode = false
     let shellCmd = ""
+    if (args.command === "test" && args.test_pattern) {
+      cmdArgs.push("--test-name-pattern", args.test_pattern)
+    }
     if (args.args) {
       // Detect shell operators — switch to shell mode for piping/redirection
       if (/[|><&;]/.test(args.args)) {
@@ -111,7 +127,7 @@ export default tool({
       errorSummary = { files: files.size, total: errors.length }
     }
 
-    // Parse test output
+    // Parse test output — extract pass/fail counts AND test names
     let testSummary: Record<string, unknown> = {}
     if (args.command === "test" && stdout) {
       const passMatch = stdout.match(/(\d+)\s+pass/)
@@ -120,6 +136,20 @@ export default tool({
       if (passMatch) testSummary.pass = parseInt(passMatch[1])
       if (failMatch) testSummary.fail = parseInt(failMatch[1])
       if (totalMatch) testSummary.total = parseInt(totalMatch[1])
+      
+      // Extract individual test names from output
+      const testLines = stdout.split("\n")
+      const passed: string[] = []
+      const failed: string[] = []
+      for (const line of testLines) {
+        const pf = line.match(/^\s*(✓|✗)\s+(.+?)\s+\[([\d.]+)(m?s)\]/)
+        if (pf) {
+          if (pf[1] === "✓") passed.push(pf[2]!.trim())
+          else failed.push(pf[2]!.trim())
+        }
+      }
+      if (passed.length > 0) testSummary.passed_tests = passed.slice(0, 20)
+      if (failed.length > 0) testSummary.failed_tests = failed.slice(0, 20)
     }
 
     // Fallback: if typecheck script not found, try bun x tsgo --noEmit directly
@@ -215,6 +245,7 @@ export default tool({
         JSON.stringify({ at: new Date().toISOString(), session_id: context.sessionID, agent: context.agent, tool: "smart_bun", command: args.command, elapsed_ms: elapsed, exit_code: result.status }) + "\n", "utf8")
     } catch (_) {}
 
+    artifactLog(context, { tool: "smart_bun", action: "ran", command: args.command, exit_code: result.status, cwd: args.cwd || "root" })
     return JSON.stringify(output, null, 2)
   },
 })

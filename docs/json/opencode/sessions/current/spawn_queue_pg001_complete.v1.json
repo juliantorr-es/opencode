@@ -1,0 +1,49 @@
+{
+  "schema": "rig.orchestrator.spawn_queue.v1",
+  "trigger_item": "PG-001",
+  "trigger_status": "completed",
+  "generated_at": "2026-05-30T20:05:00Z",
+  "spawn_on_completion": [
+    {
+      "id": "PG-002",
+      "agent": "execution",
+      "description": "Migration runner with dual SQLite+Pg CI support",
+      "prompt": "MISSION: Complete PG-002 — 'Migration runner with dual SQLite+Pg CI support' — Phase 3-1.\n\nCreate a migration runner that can target either SQLite or Postgres based on env config.\n\n## Context\n- PG-001 (Phase 1.2) just completed — all .pg.sql.ts schema files exist with proper pg-core definitions\n- Phase 1.4 already has drizzle.config.pg.ts configured\n- Phase 0.5 installed PGlite and pg packages\n- Phase 1.3 has PgAdapter in adapter.ts\n\n## Requirements\n1. Ensure drizzle-kit can generate Postgres DDL from .pg.sql.ts files\n2. Run 'bun install' first in packages/opencode/ to materialize Postgres driver dependencies\n3. Create migration runner that applies pg migrations on startup\n4. Test suite can run against both SQLite (fast feedback) and Pg (correctness)\n5. CI matrix: SQLite + Pg service container\n\n## Files to touch\n- packages/opencode/src/storage/db.pg.ts (ensure migration loading path)\n- packages/opencode/src/storage/db.ts (add Postgres migration loading path alongside SQLite)\n- packages/opencode/package.json (verify deps)\n\nReturn a handoff JSON with lane_id='PG-002', status, files_created/modified, verification details.",
+      "deps": ["PG-001"],
+      "key_files": ["packages/opencode/src/storage/*.pg.sql.ts", "packages/opencode/src/storage/db.pg.ts", "packages/opencode/drizzle.config.pg.ts"]
+    },
+    {
+      "id": "DC-001",
+      "agent": "explore",
+      "description": "Extract Electron assumptions from config resolution",
+      "prompt": "MISSION: Complete DC-001 — 'Extract Electron assumptions from config resolution' — Phase 3-2.\n\nStudy the desktop app's config resolution to find and catalog all Electron-specific assumptions.\n\n## Context\n- Phase 2 extracted ipc.ts sufficiently that PG-001 is now done\n- The desktop app assumes Electron everywhere\n- Config resolution assumes filesystem paths via app.getPath()\n\n## Requirements\n1. Read and audit all app.getPath calls in packages/desktop/ and packages/app/\n2. Classify each as Electron-only vs portable\n3. List every Electron API used in the renderer code path\n4. For each: determine if it can be mocked, polyfilled, or needs extraction\n5. Focus on config resolution (bootstrap, path config, workspace config)\n\n## Return\nReturn a handoff JSON with lane_id='DC-001', status, an 'artifacts_created' list (esp the audit artifact), findings_summary, and blockers. Recommend the follow-on approach (what to extract first).",
+      "deps": ["PG-001"],
+      "key_files": ["packages/desktop/src/main/**/*.ts", "packages/app/src/**/*.tsx"]
+    },
+    {
+      "id": "DC-002",
+      "agent": "execution",
+      "description": "Renderer loads in Chrome without Electron",
+      "prompt": "MISSION: Complete DC-002 — 'Renderer loads in Chrome without Electron' — Phase 3-2.\n\nGoal: open localhost:5173 in Chrome and see the full app UI working. No Electron APIs in the renderer code path.\n\n## Context\n- DC-001 audit (which must have completed) details every Electron API in the renderer\n- Each API needs: mock, polyfill, or extract\n- The renderer is SolidJS-based in packages/app/\n\n## Requirements\n1. Read the DC-001 audit findings\n2. Create polyfills/mocks for each Electron API used in renderer\n3. Ensure the Vite dev server (localhost:5173) starts without Electron\n4. Key APIs to handle: preload bridge, ipcRenderer, dialog, shell, clipboard\n\n## Files to touch\n- packages/app/src/ (renderer code)\n- packages/app/vite.config.ts (dev server config)\n\nReturn a handoff JSON with lane_id='DC-002', status, files_created/modified, verification.",
+      "deps": ["DC-001"],
+      "key_files": ["packages/app/src/**/*.tsx"]
+    },
+    {
+      "id": "DC-003",
+      "agent": "execution",
+      "description": "Plugin system decoupled from Electron IPC",
+      "prompt": "MISSION: Complete DC-003 — 'Plugin system decoupled from Electron IPC' — Phase 3-2.\n\nPlugins currently communicate via Electron IPC channels. Need abstract transport layer so plugins work in Chrome (postMessage) and Electron (ipcRenderer).\n\n## Context\n- DC-001 must have audited the Electron assumptions\n- Plugin system lives in packages/opencode/src/plugin/\n- Plugins use IPC channels in packages/desktop/src/main/\n\n## Requirements\n1. Design PluginTransport interface\n2. Implement ElectronIpcTransport (existing behavior)\n3. Implement PostMessageTransport (Chrome)\n4. Wire transport selection at plugin load time\n\n## Files to touch\n- packages/opencode/src/plugin/\n- packages/desktop/src/main/plugin/\n\nReturn a handoff JSON with lane_id='DC-003', status, files_created/modified, verification.",
+      "deps": ["DC-001"],
+      "key_files": ["packages/opencode/src/plugin/**", "packages/desktop/src/main/ipc.ts"]
+    },
+    {
+      "id": "HC-001",
+      "agent": "explore",
+      "description": "Break up 503-line ipc.ts god module",
+      "prompt": "MISSION: Complete HC-001 — 'Break up 503-line ipc.ts god module' — Phase 3-3.\n\nPhase 2 extracted github-ipc.ts from the main ipc.ts. The remaining 503 lines are a god module mixing MCP handlers, session management, file system ops, and window controls.\n\n## Context\n- ipc.ts is at packages/desktop/src/main/ipc.ts\n- After github-ipc extraction, 503 lines remain\n- Each concern needs its own module\n\n## Requirements\n1. Inventory ipc.ts by concern: how many distinct handler groups exist?\n2. Classify each group: what module should it live in?\n3. Create a refactoring plan (not the refactor itself — just the plan)\n4. Identify IPC channels used, parameter types, return types\n5. Check if there's overlap with DC-001/DC-003 transport work\n\n## Return\nReturn a handoff JSON with lane_id='HC-001', status, artifacts_created (esp the refactoring plan), findings_summary, and a recommended extraction order.",
+      "deps": ["DC-001"],
+      "key_files": ["packages/desktop/src/main/ipc.ts"]
+    }
+  ],
+  "parallel_spawn": "All 5 spawn simultaneously as background:true tasks. PG-002 depends only on PG-001. DC-002, DC-003, HC-001 depend on DC-001 (which also unblocks from PG-001). Spawn all 5 immediately when PG-001 completes."
+}

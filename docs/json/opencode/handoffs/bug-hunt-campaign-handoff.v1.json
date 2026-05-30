@@ -1,0 +1,125 @@
+{
+  "schema": "rig.opencode.handoff.v1",
+  "handoff_type": "campaign_completion",
+  "from_session": "ses_1859990d7ffenQQZvJ5BMoE38I",
+  "from_agent": "orchestrator",
+  "generated_at": "2026-05-30T11:35:00Z",
+  "campaign": "Bug-Hunting Crusade — Phase 1 (Discovery)",
+  "campaign_status": "discovery_complete",
+  "repo_state": {
+    "branch": "dev",
+    "head_sha": "61a7810d86bb24ba4b11c0493dbe333de5f50457",
+    "head_message": "fix(core): architecture hardening — cache atomicity, coordination bugs, lifecycle gating, placeholder tools, reporting audit",
+    "dirty": true,
+    "note": "~164 modified files, ~60+ untracked (docs/json/ artifacts from prior sessions). Clean new artifacts from this session."
+  },
+  "completed_work": {
+    "scouts_deployed": 15,
+    "scouts_completed": 14,
+    "lines_inspected": "~25,000",
+    "files_inspected": "200+ across 13 packages/surfaces",
+    "findings_cataloged": 76,
+    "by_severity": { "critical": 13, "high": 22, "medium": 28, "low": 13 },
+    "artifact_path": "docs/json/opencode/bug-hunt-report.v1.json"
+  },
+  "what_to_do_next": "Execute the P0 and P1 fixes identified in the bug ledger. The campaign should shift from discovery to repair.",
+  "top_10_repairs": [
+    {
+      "priority": "P0",
+      "id": "FIX-01",
+      "summary": "Delete crash lock in will-quit handler",
+      "file": "packages/desktop/src/main/index.ts",
+      "effort": "1 line",
+      "bug_id": "H01",
+      "evidence": "Line 294 writes crashLock. No code deletes it. Every restart after crash enters safe mode forever."
+    },
+    {
+      "priority": "P0",
+      "id": "FIX-02",
+      "summary": "Enable PRAGMA foreign_keys = ON in production SQLite",
+      "files": ["packages/opencode/src/storage/db.ts", "packages/opencode/src/storage/db.pg.ts"],
+      "effort": "2 lines",
+      "bug_id": "H03",
+      "evidence": "Production db init never runs PRAGMA foreign_keys=ON. Test code does at json-migration.test.ts:79. Cascade deletes are silent no-ops."
+    },
+    {
+      "priority": "P0",
+      "id": "FIX-03",
+      "summary": "Fix FileLock unguarded lazy-init race",
+      "file": "packages/opencode/src/tool/file-lock.ts",
+      "effort": "~15 lines",
+      "bug_id": "C01",
+      "evidence": "Module-level Map, two concurrent lock() calls both see get() undefined, both create semaphore, second set() overwrites. Use Ref.modify."
+    },
+    {
+      "priority": "P0",
+      "id": "FIX-04",
+      "summary": "Fix cache inflight cleanup order",
+      "file": "packages/opencode/src/tool/cache.ts",
+      "effort": "~5 lines",
+      "bug_id": "C02",
+      "evidence": "Lines 120-127: Effect.ensuring removes inflight entry BEFORE cache Ref.update at line 144. Race window for duplicate computation."
+    },
+    {
+      "priority": "P0",
+      "id": "FIX-05",
+      "summary": "Wire invalidation bus to file edit events",
+      "files": ["packages/opencode/src/context/invalidation-bus.ts", "packages/opencode/src/file/watcher.ts"],
+      "effort": "~20 lines",
+      "bug_id": "C05",
+      "evidence": "ContextInvalidationBus.notify() is only called from agent-facing tools (mark_context_stale, request_context_refresh). No code calls notify('file.edited') when files actually change. All context workers are dead code as a result."
+    },
+    {
+      "priority": "P0",
+      "id": "FIX-06",
+      "summary": "Emit test/validation events to EventStore",
+      "files": ["packages/opencode/src/tool/test.ts", "packages/opencode/src/tool/smart-bun.ts"],
+      "effort": "~30 lines",
+      "bug_id": "C12",
+      "evidence": "test.ts never imports EventStore. smart-bun.ts only writes to analytics file. agent-queries.ts queries eventType='test_run' — no code produces this event. get_validation_context always returns null."
+    },
+    {
+      "priority": "P1",
+      "id": "FIX-07",
+      "summary": "Add try/catch around JSON.parse in comment-plan.ts",
+      "file": "packages/opencode/src/tool/comment-plan.ts",
+      "effort": "~5 lines",
+      "bug_id": "M12"
+    },
+    {
+      "priority": "P1",
+      "id": "FIX-08",
+      "summary": "Add sanitizeEnv() call in PTY spawn",
+      "file": "packages/opencode/src/pty/index.ts",
+      "effort": "1 line",
+      "bug_id": "H22",
+      "evidence": "pty/index.ts:198 spreads ...process.env without sanitizeEnv(). cross-spawn-spawner.ts:109 does call it. PTY leaks API keys to every terminal."
+    },
+    {
+      "priority": "P1",
+      "id": "FIX-09",
+      "summary": "Prevent plugin tools from colliding with built-in names",
+      "file": "packages/opencode/src/tool/registry.ts",
+      "effort": "~10 lines",
+      "bug_id": "H30"
+    },
+    {
+      "priority": "P2",
+      "id": "FIX-10",
+      "summary": "Add TTL/lease to coordination claims",
+      "file": "packages/opencode/src/tool/coordination.ts",
+      "effort": "~20 lines",
+      "bug_id": "H06"
+    }
+  ],
+  "known_blockers": [
+    "Cannot run tests from repo root — 'do not run tests from root' guard. Need to cd packages/opencode and run 'bun test'.",
+    "DuckDB context projection VIEW and TABLE share name _ctx_file_relevance with different schemas — needs name split before ranking works.",
+    "Campaign state machine in campaign/ directory is speculative architecture — not wired into production execution."
+  ],
+  "lessons_transferred": [
+    "invalidation-bus-dead-code: The invalidation bus was never wired to real file events — context workers subscribed to scopes never triggered by production code.",
+    "plugin-same-process-no-sandbox: All 5 critical plugin findings share one root cause — plugins run in-process with full host access.",
+    "validation-pipeline-disconnected: Test/validate results never recorded to EventStore; validation parser worker queries empty store."
+  ]
+}

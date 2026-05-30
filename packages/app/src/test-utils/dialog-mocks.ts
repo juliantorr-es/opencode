@@ -175,8 +175,10 @@ export function mockUiPrimitives(): void {
       return h("button", {
         "data-component": "button",
         disabled: props.disabled,
-        onClick: props.onClick,
         class: props.class || "",
+        ref: (el: HTMLButtonElement) => {
+          el.onclick = typeof props.onClick === "function" ? props.onClick : null
+        },
       }, props.children)
     }
     return { Button }
@@ -185,7 +187,13 @@ export function mockUiPrimitives(): void {
   // @opencode-ai/ui/icon-button
   mock.module("@opencode-ai/ui/icon-button", () => {
     function IconButton(props: any) {
-      return h("button", { "data-component": "icon-button", "aria-label": props["aria-label"] }, props.children)
+      return h("button", {
+        "data-component": "icon-button",
+        "aria-label": props["aria-label"],
+        ref: (el: HTMLButtonElement) => {
+          el.onclick = typeof props.onClick === "function" ? props.onClick : null
+        },
+      }, props.children)
     }
     return { IconButton }
   })
@@ -288,6 +296,7 @@ export function mockUiPrimitives(): void {
     useQueryClient: () => ({}),
     useMutation: () => ({
       mutateAsync: async () => {},
+      mutate: () => {},
       isPending: false,
     }),
     useQuery: () => ({

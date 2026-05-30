@@ -1,0 +1,145 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://rig.relay/schemas/review_manifest.v1",
+  "title": "Review Manifest",
+  "description": "Schema for review manifests that capture the subject, artifacts, weight rubric, comparison data, and verdict of a review cycle.",
+  "type": "object",
+  "properties": {
+    "manifestVersion": {
+      "type": "string",
+      "description": "Version of the manifest schema format"
+    },
+    "reviewId": {
+      "type": "string",
+      "description": "Unique identifier for this review"
+    },
+    "campaignId": {
+      "type": "string",
+      "description": "Campaign this review belongs to"
+    },
+    "laneId": {
+      "type": "string",
+      "description": "Lane this review belongs to"
+    },
+    "subject": {
+      "type": "object",
+      "description": "The artifact or slice under review",
+      "properties": {
+        "type": {
+          "type": "string",
+          "description": "Type of subject: plan, diff, schema, test, documentation"
+        },
+        "id": {
+          "type": "string",
+          "description": "Identifier of the subject"
+        },
+        "version": {
+          "type": "string",
+          "description": "Version string of the subject"
+        }
+      },
+      "required": ["type", "id"]
+    },
+    "artifacts": {
+      "type": "array",
+      "description": "Supporting artifacts attached to this review",
+      "items": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "Path to the artifact"
+          },
+          "type": {
+            "type": "string",
+            "description": "MIME type or category of the artifact"
+          },
+          "sha256": {
+            "type": "string",
+            "description": "SHA-256 digest of the artifact content"
+          }
+        },
+        "required": ["path", "type", "sha256"]
+      }
+    },
+    "weight": {
+      "type": "object",
+      "description": "Weight rubric for scoring the review",
+      "properties": {
+        "categories": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "Category name (e.g. coupling, safety, surface_area)"
+              },
+              "weight": {
+                "type": "number",
+                "description": "Relative weight of this category"
+              },
+              "maxScore": {
+                "type": "number",
+                "description": "Maximum achievable score for this category"
+              }
+            },
+            "required": ["name", "weight", "maxScore"]
+          }
+        },
+        "totalWeight": {
+          "type": "number",
+          "description": "Sum of all category weights"
+        }
+      },
+      "required": ["categories", "totalWeight"]
+    },
+    "comparison": {
+      "type": "object",
+      "description": "Comparison data when reviewing against a baseline",
+      "properties": {
+        "method": {
+          "type": "string",
+          "description": "Comparison method: diff, ast_diff, semantic, manual"
+        },
+        "baselineId": {
+          "type": "string",
+          "description": "Identifier of the baseline subject"
+        },
+        "targetId": {
+          "type": "string",
+          "description": "Identifier of the target subject"
+        },
+        "diffs": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          },
+          "description": "Array of diff entries between baseline and target"
+        }
+      },
+      "required": ["method"]
+    },
+    "verdict": {
+      "type": "object",
+      "description": "Final review verdict",
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": ["passed", "failed", "inconclusive"],
+          "description": "Overall review status"
+        },
+        "score": {
+          "type": "number",
+          "description": "Aggregate numeric score"
+        },
+        "summary": {
+          "type": "string",
+          "description": "Human-readable summary of the verdict"
+        }
+      },
+      "required": ["status", "score", "summary"]
+    }
+  },
+  "required": ["manifestVersion", "reviewId", "subject", "verdict"]
+}

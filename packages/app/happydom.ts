@@ -2,6 +2,19 @@ import { GlobalRegistrator } from "@happy-dom/global-registrator"
 
 GlobalRegistrator.register()
 
+// Bun's built-in JSX transform for .tsx files defaults to React.createElement.
+// SolidJS components use JSX syntax that bun transforms to React.createElement calls.
+// We provide a React shim that delegates to SolidJS's hyperscript.
+import h from "solid-js/h/dist/h.js"
+
+const React = {
+  createElement(type: any, props: any, ...children: any[]) {
+    return h(type, props, ...children)
+  },
+  Fragment: (props: any) => props.children,
+}
+;(globalThis as any).React = React
+
 const originalGetContext = HTMLCanvasElement.prototype.getContext
 // @ts-expect-error - we're overriding with a simplified mock
 HTMLCanvasElement.prototype.getContext = function (contextType: string, _options?: unknown) {

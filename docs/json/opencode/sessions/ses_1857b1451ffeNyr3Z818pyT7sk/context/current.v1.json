@@ -1,0 +1,49 @@
+{
+  "schema_version": "v1",
+  "profile": "execution",
+  "entries": [
+    {
+      "finding": "PG-001 COMPLETED — All 9 .pg.sql.ts files now use pgTable() from drizzle-orm/pg-core. 16 tables with proper column mappings. 0 new type errors.",
+      "lane": "PG-001",
+      "impact": "Unblocks PG-002, DC-001, DC-002, DC-003, HC-001",
+      "added_at": "2026-05-30T20:22:53.781Z"
+    },
+    {
+      "finding": "DT-001 COMPLETED — Dialog test harness enhanced with data-testid, expectedTimes. 11/11 tests pass. --conditions browser flag required for SolidJS.",
+      "lane": "DT-001",
+      "impact": "Unblocks DT-002 (15+ dialog tests)",
+      "added_at": "2026-05-30T20:22:53.781Z"
+    },
+    {
+      "finding": "schema.pg.sql.ts now imports integer from drizzle-orm/pg-core (was sqlite-core). All .pg.sql.ts files import from pg-core only.",
+      "lane": "PG-001",
+      "impact": "Phase 1.2 complete — all schema files defined",
+      "added_at": "2026-05-30T20:22:53.781Z"
+    },
+    {
+      "finding": "Test harness needs --conditions browser flag for SolidJS render() in bun. bunfig.toml [test] section does not support conditions.",
+      "lane": "DT-001",
+      "impact": "All future SolidJS test scripts must pass --conditions browser",
+      "added_at": "2026-05-30T20:22:53.781Z"
+    },
+    {
+      "finding": "DC-001 COMPLETED — PlatformPaths interface exists with ElectronPlatformPaths and BrowserPlatformPaths. 14 direct app.* calls remain in 5 files (constants.ts, store.ts, index.ts, logging.ts, apps.ts). Wiring work is mechanical.",
+      "lane": "DC-001",
+      "impact": "Unblocks DC-002 execution and HC-001 execution",
+      "added_at": "2026-05-30T20:24:43.346Z"
+    },
+    {
+      "finding": "DC-002 exploration found renderer has ZERO direct Electron imports. browser-api.ts (343 lines, 291 test lines) exists but never wired. Vite dev server on port 3000 ready. Only action needed: wire installBrowserApi() in entry.tsx.",
+      "lane": "DC-002",
+      "impact": "DC-002 execution scope is minimal — single wiring change",
+      "added_at": "2026-05-30T20:24:43.346Z"
+    },
+    {
+      "finding": "21 of 51 window.api.* methods have browser-api.ts polyfills. 30 missing including: killSidecar, awaitInitialization, openFilePicker, saveFilePicker, openPath, setZoomFactor, getPinchZoomEnabled, readClipboardImage, resolveAppPath, checkAppExists, desktop menu actions, WSL config.",
+      "lane": "DC-001",
+      "impact": "Browser polyfill gap inventory available for future Chrome support work",
+      "added_at": "2026-05-30T20:24:43.346Z"
+    }
+  ],
+  "curated_at": "2026-05-30T20:24:43.346Z"
+}

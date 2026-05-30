@@ -4,6 +4,55 @@ import { existsSync, readFileSync } from "node:fs"
 
 function resolvePath(worktree: string, p: string): string { return resolve(worktree, p) }
 
+// Tree-sitter AST for precise focus extraction
+let tsReady = false, ParserCtor: any, tsLang: any, tsxLang: any
+async function ensureTs(worktree: string) {
+  if (tsReady) return
+  const wtPath = resolve(worktree, "node_modules/web-tree-sitter"); const T = await import(wtPath)
+  await T.default.init()
+  const base = resolve(worktree, "node_modules/tree-sitter-typescript")
+  tsLang = await T.default.Language.load(resolve(base, "tree-sitter-typescript.wasm"))
+  tsxLang = await T.default.Language.load(resolve(base, "tree-sitter-tsx.wasm"))
+  ParserCtor = T.default
+  tsReady = true
+}
+
+function artifactLog(context: any, event: Record<string, unknown>) {
+  try {
+    const dir = resolve(context.worktree, `docs/json/opencode/sessions/${context.sessionID}/artifacts`)
+    if (!existsSync(dir)) mkdirSync(dir, { recursive: true })
+    appendFileSync(resolve(dir, `${context.sessionID}.v1.jsonl`),
+      JSON.stringify({ at: new Date().toISOString(), ...event }) + "\n", "utf8")
+  } catch (_) {}
+}
+
+function astFocus(source: string, name: string, filePath: string): { start: number; end: number } | null {
+  const lang = filePath.endsWith(".tsx") ? tsxLang : tsLang
+  const parser = new ParserCtor()
+  parser.setLanguage(lang)
+  const tree = parser.parse(source)
+  const cursor = tree.walk()
+
+  const targetTypes = ["function_declaration", "method_definition", "arrow_function", "class_declaration",
+    "interface_declaration", "type_alias_declaration", "lexical_declaration", "variable_declaration", "export_statement"]
+
+  let result: { start: number; end: number } | null = null
+  const visit = () => {
+    const node = cursor.currentNode()
+    if (result) return
+    if (targetTypes.includes(node.type)) {
+      const nameNode = node.childForFieldName?.("name") ?? node.namedChildren?.find((c: any) => c.type === "identifier")
+      if (nameNode && source.slice(nameNode.startIndex, nameNode.endIndex) === name) {
+        result = { start: node.startIndex, end: node.endIndex }
+      }
+    }
+    if (!result && cursor.gotoFirstChild()) { visit(); cursor.gotoParent() }
+    if (!result && cursor.gotoNextSibling()) visit()
+  }
+  visit()
+  return result
+}
+
 export default tool({
   description: "Read a source file and return a structured digest — imports, exports, key symbols, and optional focus on a specific symbol.",
   args: {
@@ -54,9 +103,25 @@ export default tool({
       if (m) { symbols.push({ line: i + 1, name: m[1]!, kind: "const_fn", text: s.slice(0, 120) }); continue }
     }
 
-    // Focus mode
+    // Focus mode: use tree-sitter AST for precise extraction, fall back to regex+braces
     let focusedSection: string | null = null
+    let focusMethod = "regex"
     if (args.focus) {
+      try {
+        await ensureTs(context.worktree)
+        const range = astFocus(content, args.focus, args.file)
+        if (range) {
+          const section = content.slice(range.start, range.end)
+          const importBlock = imports.map(i => i.text).join("\n")
+          const startLine = content.slice(0, range.start).split("\n").length
+          const endLine = startLine + section.split("\n").length - 1
+          focusedSection = `${importBlock}\n\n// --- ${args.focus} (lines ${startLine}-${endLine}, AST) ---\n${section}`
+          focusMethod = "tree-sitter AST"
+        }
+      } catch (_) {}
+
+      // Fall back to regex + brace counting
+      if (!focusedSection) {
       const sym = symbols.find(s => s.name === args.focus) || symbols.find(s => s.name.toLowerCase() === args.focus.toLowerCase())
       if (sym) {
         const start = sym.line - 1
@@ -77,8 +142,10 @@ export default tool({
         focusedSection = `${importBlock}\n\n// --- ${args.focus} (lines ${start + 1}-${end + 1}) ---\n${section}`
       }
     }
+  }
 
     const output: Record<string, unknown> = {
+      status: "ok",
       file: args.file,
       total_lines: lines.length,
       import_count: imports.length,
@@ -92,6 +159,7 @@ export default tool({
       output.symbols = symbols.slice(0, 15).map(s => `${s.kind} ${s.name} (line ${s.line})`)
     } else if (focusedSection) {
       output.focused = args.focus
+      output.focus_method = focusMethod
       output.content = focusedSection.slice(0, 3000)
     } else {
       output.imports = imports.slice(0, 20)
@@ -107,6 +175,7 @@ export default tool({
     }
 
     // Strip large raw content to avoid overwhelming
+    artifactLog(context, { tool: "read_source", action: "read", file: args.file, lines: lines.length })
     return JSON.stringify(output, null, 2)
   },
 })

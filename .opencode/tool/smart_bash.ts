@@ -16,6 +16,15 @@ function hb(context: any, tool: string, phase: string, detail: string) {
   } catch (_) {}
 }
 
+function artifactLog(context: any, event: Record<string, unknown>) {
+  try {
+    const dir = resolve(context.worktree, `docs/json/opencode/sessions/${context.sessionID}/artifacts`)
+    if (!existsSync(dir)) mkdirSync(dir, { recursive: true })
+    appendFileSync(resolve(dir, `${context.sessionID}.v1.jsonl`),
+      JSON.stringify({ at: new Date().toISOString(), ...event }) + "\n", "utf8")
+  } catch (_) {}
+}
+
 export default tool({
   description: "Run a bash command with structured logging and automatic smart-tool rerouting. Prefer smart_bun, smart_git, smart_grep, smart_find, smart_sd, read_source — use this only for commands without a smart equivalent. This tool auto-reroutes to the right smart tool when it detects a match.",
   args: {
@@ -64,6 +73,7 @@ export default tool({
       "find": { tool: "smart_find",  extract: (p) => { const a = p.filter(x => !x.startsWith("-")); return { pattern: a[a.length-1] || "*", path: a.length > 1 ? a[0] : "." } } },
       "ls":   { tool: "smart_find",  extract: (p) => { const a = p.filter(x => !x.startsWith("-")); return { pattern: "*", path: a[0] || "." } } },
       "cat":  { tool: "read_source", extract: (p) => { const a = p.filter(x => !x.startsWith("-")); if (a.length === 0) return null; return { file: a.join(" ") } } },
+      "bat":  { tool: "read_source", extract: (p) => { const a = p.filter(x => !x.startsWith("-")); if (a.length === 0) return null; return { file: a.join(" ") } } },
       "git":  { tool: "smart_git",   extract: (p) => { const ops = ["status","diff","add","commit","push","log","branch","rev-parse","stash","checkout","show"]; const effective = p[0] === "-C" ? p.slice(2) : p; const op = (effective[0]||"").replace("--",""); return ops.includes(op) ? { operation: op, args: effective.slice(1).join(" ") } : null } },
       "bun":  { tool: "smart_bun",   extract: (p) => { const sub = p[0] === "run" ? p[1] : p[0]; return ["typecheck","test","install","run","tsgo","tsc"].includes(sub) ? { command: sub, args: p.slice(sub === "run" ? 2 : 1).join(" ") || undefined } : null } },
       "sd":   { tool: "smart_sd",    extract: (p) => { const a = p.filter(x => !x.startsWith("-")); if (a.length < 3) return null; return { file: a[a.length-1]!, old: a[0]!, new: a[1]!, reason: args.reason } } },
@@ -93,9 +103,17 @@ export default tool({
       }, null, 2)
     }
     
+    // Rust replacement: swap cat→bat, ls→eza for better output when falling through to bash
+    let actualCmd = args.command
+    if (binary === "cat" && !r) actualCmd = args.command.replace(/^cat\b/, "bat --paging=never")
+    if (binary === "ls" && !r) {
+      const hasFlags = /^ls\s+-/.test(args.command)
+      actualCmd = hasFlags ? args.command : args.command.replace(/^ls\b/, "eza --color=always")
+    }
+
     const timeout = (args.timeout_seconds ?? 60) * 1000
     const startTime = Date.now()
-    const result = spawnSync(args.command, [], { cwd, encoding: "utf8", maxBuffer: 1024 * 1024 * 2, timeout, shell: true })
+    const result = spawnSync(actualCmd, [], { cwd, encoding: "utf8", maxBuffer: 1024 * 1024 * 2, timeout, shell: true })
     const elapsed = Date.now() - startTime
     const stdout = (result.stdout || "").trim()
     const stderr = (result.stderr || "").trim()
@@ -107,13 +125,14 @@ export default tool({
         JSON.stringify({ at: new Date().toISOString(), session_id: context.sessionID, agent: context.agent, binary, command: cmd.slice(0,200), reason: args.reason, elapsed_ms: elapsed, exit_code: result.status }) + "\n", "utf8")
     } catch (_) {}
     
-    const output: any = { status: result.status === 0 ? "pass" : "fail", command: cmd.slice(0,200), elapsed_ms: elapsed }
+    const output: any = { status: result.status === 0 ? "pass" : "fail", command: actualCmd.slice(0,200), elapsed_ms: elapsed }
     const lines = stdout.split("\n")
     if (lines.length > 40) { output.head = lines.slice(0,20).join("\n"); output.tail = lines.slice(-20).join("\n"); output.truncated = lines.length }
     else if (stdout) output.stdout = stdout
     if (stderr) output.stderr = stderr.slice(0, 500)
     if (result.error) { output.status = "error"; output.error = result.error.message }
     hb(context, "smart_bash", result.status === 0 ? "completed" : "failed", `${binary} exit=${result.status}`)
+    artifactLog(context, { tool: "smart_bash", action: "bash", command: cmd.slice(0, 100), exit_code: result.status })
     return JSON.stringify(output, null, 2)
   },
 })

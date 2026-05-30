@@ -16,6 +16,15 @@ function hb(context: any, tool: string, phase: string, detail: string) {
   } catch (_) {}
 }
 
+function artifactLog(context: any, event: Record<string, unknown>) {
+  try {
+    const dir = resolve(context.worktree, `docs/json/opencode/sessions/${context.sessionID}/artifacts`)
+    if (!existsSync(dir)) mkdirSync(dir, { recursive: true })
+    appendFileSync(resolve(dir, `${context.sessionID}.v1.jsonl`),
+      JSON.stringify({ at: new Date().toISOString(), ...event }) + "\n", "utf8")
+  } catch (_) {}
+}
+
 function analytics(context: any, tool: string, extra: Record<string, unknown>) {
   try {
     const dir = resolve(context.worktree, "docs/json/opencode/sessions/" + context.sessionID + "/analytics")
@@ -34,6 +43,7 @@ export default tool({
     max_results: tool.schema.number().optional().describe("Max results (default 30)"),
     summary_only: tool.schema.boolean().optional().describe("Return only file paths + match counts, not individual matches"),
     context_lines: tool.schema.number().optional().describe("Lines of context around each match (default 0)"),
+    word_boundary: tool.schema.boolean().optional().describe("Match whole words only (adds \\b around pattern). Prevents Effect.all() matching Drizzle .all()."),
   },
   async execute(args, context) {
     hb(context, "smart_grep", "started", args.pattern?.slice(0, 80) || "")
@@ -43,9 +53,10 @@ export default tool({
     const ctxLines = args.context_lines ?? 0
 
     const cmd = ["rg", "--no-heading", "--line-number", "--color", "never"]
+    const pattern = args.word_boundary ? `\\b${args.pattern}\\b` : args.pattern
     if (args.glob) cmd.push("-g", args.glob)
     if (ctxLines > 0) cmd.push("-C", String(ctxLines))
-    cmd.push(args.pattern, searchPath)
+    cmd.push(pattern, searchPath)
 
     const startTime = Date.now()
     const result = spawnSync(cmd[0], cmd.slice(1), {
@@ -105,6 +116,7 @@ export default tool({
 
     const resultObj: Record<string, unknown> = {
       status: "ok",
+      status: "ok",
       pattern: args.pattern,
       command: cmdStr,
       elapsed_ms: elapsed,
@@ -137,6 +149,7 @@ export default tool({
 
     analytics(context, "smart_grep", { pattern: args.pattern.slice(0, 100), path: (args.path || "").slice(0, 80) })
     hb(context, "smart_grep", "completed", (args.pattern || "").slice(0, 80))
+    artifactLog(context, { tool: "smart_grep", action: "searched", pattern: args.pattern.slice(0, 80), results: resultObj.returned, files: resultObj.unique_files })
     return JSON.stringify(resultObj, null, 2)
   },
 })
