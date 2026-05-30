@@ -4,6 +4,8 @@ profile: "orchestration"
 color: "#6C5CE7"
 description: Orchestration controller for wave-model agent delegation
 permission:
+  friction: "allow"
+  tool_feedback: "allow"
   task: "allow"
   smart_write: "allow"
   read: "deny"

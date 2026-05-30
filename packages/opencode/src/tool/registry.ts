@@ -67,6 +67,7 @@ import { PrepublicationAdmittedTool } from "./prepublication-admitted"
 import { PrepublicationBlockedTool } from "./prepublication-blocked"
 import { PrepublicationInconclusiveTool } from "./prepublication-inconclusive"
 import { OutOfScopeFindingTool } from "./out-of-scope-finding"
+import { ReviewManifestTool } from "./review-manifest"
 import { Glob } from "@opencode-ai/core/util/glob"
 import path from "path"
 import { pathToFileURL } from "url"
@@ -97,11 +98,56 @@ import { DuckDB } from "@/storage/db.duckdb"
 import { DuckDBConfig } from "@/storage/duckdb-config"
 import { DatabaseAdapter } from "@/storage/adapter"
 import { DatabaseConfig } from "@/effect/database-config"
+import { layer as EventStoreLayer } from "@/event/event-store"
+import { layer as EventAgentQueriesLayer } from "@/event/agent-queries"
 import { Storage } from "@/storage/storage"
+import { AnalyticsTool } from "./analytics"
+import { JSONQueryTool } from "./json-query"
+import { LogActivityTool } from "./log-activity"
+import { PreflightCheckTool } from "./preflight-check"
+import { ProduceFragmentTool } from "./produce-fragment"
+import { RoadmapDeprecateTool } from "./roadmap-deprecate"
+import { RoadmapInitTool } from "./roadmap-init"
+import { RoadmapNextTool } from "./roadmap-next"
+import { RoadmapPrioritizeTool } from "./roadmap-prioritize"
+import { RoadmapProgressTool } from "./roadmap-progress"
+import { SmartBashTool } from "./smart-bash"
+import { SmartBunTool } from "./smart-bun"
+import { SmartFindTool } from "./smart-find"
+import { SmartGitTool } from "./smart-git"
+import { SmartGrepTool } from "./smart-grep"
+import { SmartSdTool } from "./smart-sd"
+import { TaskBoardTool } from "./task-board"
+import { VerifyHandoffTool } from "./verify-handoff"
 import { DelegateTool } from "./delegate"
 import { SessionDiffTool } from "./session-diff"
 import { GithubTriageTool } from "./github-triage"
 import { GithubPrSearchTool } from "./github-pr-search"
+import {
+  LastFailedToolsTool,
+  LastEditedFilesTool,
+  PermissionDenialsTool,
+  PhaseTransitionsTool,
+  LastCheckpointTool,
+  SuccessfulTestTool,
+  EventsForFileTool,
+  EventsForErrorCodeTool,
+  EventsSinceCheckpointTool,
+} from "../event/agent-queries"
+import {
+  GetOperatingPictureTool,
+  GetProjectMapTool,
+  GetWorkingSetTool,
+  GetFileContextTool,
+  GetRelatedContextTool,
+  QueryEventHistoryTool,
+  GetValidationContextTool,
+  GetClaimContextTool,
+  UpdateScratchpadTool,
+  MarkContextStaleTool,
+  RequestContextRefreshTool,
+} from "../context/tools"
+import { defaultLayer as FileMemoryLayer } from "../context/file-memory"
 import * as ToolCache from "./cache"
 
 const log = Log.create({ service: "tool.registry" })
@@ -191,6 +237,24 @@ export const layer = Layer.effect(
     const smartEdit = yield* SmartEditTool
     const smartWrite = yield* SmartWriteTool
     const smartBatch = yield* SmartBatchTool
+    const analytics = yield* AnalyticsTool
+    const jsonQuery = yield* JSONQueryTool
+    const logActivity = yield* LogActivityTool
+    const preflightCheck = yield* PreflightCheckTool
+    const produceFragment = yield* ProduceFragmentTool
+    const roadmapDeprecate = yield* RoadmapDeprecateTool
+    const roadmapInit = yield* RoadmapInitTool
+    const roadmapNext = yield* RoadmapNextTool
+    const roadmapPrioritize = yield* RoadmapPrioritizeTool
+    const roadmapProgress = yield* RoadmapProgressTool
+    const smartBash = yield* SmartBashTool
+    const smartBun = yield* SmartBunTool
+    const smartFind = yield* SmartFindTool
+    const smartGit = yield* SmartGitTool
+    const smartGrep = yield* SmartGrepTool
+    const smartSd = yield* SmartSdTool
+    const taskBoard = yield* TaskBoardTool
+    const verifyHandoff = yield* VerifyHandoffTool
     const replaceSymbol = yield* ReplaceSymbolTool
     const rigJsonlQuery = yield* RigJsonlQueryTool
     const rigSchemaValidate = yield* RigSchemaValidateTool
@@ -200,10 +264,31 @@ export const layer = Layer.effect(
     const prepublicationBlocked = yield* PrepublicationBlockedTool
     const prepublicationInconclusive = yield* PrepublicationInconclusiveTool
     const outOfScopeFinding = yield* OutOfScopeFindingTool
+    const reviewManifest = yield* ReviewManifestTool
     const delegate = yield* DelegateTool
     const sessionDiff = yield* SessionDiffTool
     const githubTriage = yield* GithubTriageTool
     const githubPrSearch = yield* GithubPrSearchTool
+    const lastFailedTools = yield* LastFailedToolsTool
+    const lastEditedFiles = yield* LastEditedFilesTool
+    const permissionDenials = yield* PermissionDenialsTool
+    const phaseTransitions = yield* PhaseTransitionsTool
+    const lastCheckpoint = yield* LastCheckpointTool
+    const successfulTest = yield* SuccessfulTestTool
+    const eventsForFile = yield* EventsForFileTool
+    const eventsForErrorCode = yield* EventsForErrorCodeTool
+    const eventsSinceCheckpoint = yield* EventsSinceCheckpointTool
+    const getOperatingPicture = yield* GetOperatingPictureTool
+    const getProjectMap = yield* GetProjectMapTool
+    const getWorkingSet = yield* GetWorkingSetTool
+    const getFileContext = yield* GetFileContextTool
+    const getRelatedContext = yield* GetRelatedContextTool
+    const queryEventHistory = yield* QueryEventHistoryTool
+    const getValidationContext = yield* GetValidationContextTool
+    const getClaimContext = yield* GetClaimContextTool
+    const updateScratchpad = yield* UpdateScratchpadTool
+    const markContextStale = yield* MarkContextStaleTool
+    const requestContextRefresh = yield* RequestContextRefreshTool
     const agent = yield* Agent.Service
 
     const state = yield* InstanceState.make<State>(
@@ -293,8 +378,17 @@ export const layer = Layer.effect(
 
         const plugins = yield* plugin.list()
         for (const p of plugins) {
+          const pluginId = (p as any).pluginId
+          if (pluginId) {
+            const allowed = yield* plugin.checkCapability(pluginId, "tool.register")
+            if (!allowed) {
+              log.warn("plugin tool registration denied", { pluginId })
+              continue
+            }
+          }
           for (const [id, def] of Object.entries(p.tool ?? {})) {
-            custom.push(fromPlugin(id, def))
+            const safeId = pluginId ? `plugin-${pluginId.replace(/^@/, "").replace(/[/._]/g, "-").replace(/[^a-zA-Z0-9-]/g, "")}-${id}` : id
+            custom.push(fromPlugin(safeId, def))
           }
         }
 
@@ -352,6 +446,24 @@ export const layer = Layer.effect(
             smart_edit: Tool.init(smartEdit),
             smart_write: Tool.init(smartWrite),
             smart_batch: Tool.init(smartBatch),
+            analytics: Tool.init(analytics),
+            json_query: Tool.init(jsonQuery),
+            log_activity: Tool.init(logActivity),
+            preflight_check: Tool.init(preflightCheck),
+            produce_fragment: Tool.init(produceFragment),
+            roadmap_deprecate: Tool.init(roadmapDeprecate),
+            roadmap_init: Tool.init(roadmapInit),
+            roadmap_next: Tool.init(roadmapNext),
+            roadmap_prioritize: Tool.init(roadmapPrioritize),
+            roadmap_progress: Tool.init(roadmapProgress),
+            smart_bash: Tool.init(smartBash),
+            smart_bun: Tool.init(smartBun),
+            smart_find: Tool.init(smartFind),
+            smart_git: Tool.init(smartGit),
+            smart_grep: Tool.init(smartGrep),
+            smart_sd: Tool.init(smartSd),
+            task_board: Tool.init(taskBoard),
+            verify_handoff: Tool.init(verifyHandoff),
             replace_symbol: Tool.init(replaceSymbol),
             rig_jsonl_query: Tool.init(rigJsonlQuery),
             rig_schema_validate: Tool.init(rigSchemaValidate),
@@ -365,6 +477,27 @@ export const layer = Layer.effect(
             session_diff: Tool.init(sessionDiff),
             github_triage: Tool.init(githubTriage),
             github_pr_search: Tool.init(githubPrSearch),
+            query_last_failed_tools: Tool.init(lastFailedTools),
+            query_last_edited_files: Tool.init(lastEditedFiles),
+            query_permission_denials: Tool.init(permissionDenials),
+            query_phase_transitions: Tool.init(phaseTransitions),
+            query_last_checkpoint: Tool.init(lastCheckpoint),
+            query_last_successful_test: Tool.init(successfulTest),
+            query_events_for_file: Tool.init(eventsForFile),
+            query_events_for_error: Tool.init(eventsForErrorCode),
+            query_events_since_checkpoint: Tool.init(eventsSinceCheckpoint),
+            get_operating_picture: Tool.init(getOperatingPicture),
+            get_project_map: Tool.init(getProjectMap),
+            get_working_set: Tool.init(getWorkingSet),
+            get_file_context: Tool.init(getFileContext),
+            get_related_context: Tool.init(getRelatedContext),
+            query_event_history: Tool.init(queryEventHistory),
+            get_validation_context: Tool.init(getValidationContext),
+            get_claim_context: Tool.init(getClaimContext),
+            update_scratchpad: Tool.init(updateScratchpad),
+            mark_context_stale: Tool.init(markContextStale),
+            request_context_refresh: Tool.init(requestContextRefresh),
+            review_manifest: Tool.init(reviewManifest),
         })
 
         return {
@@ -392,12 +525,31 @@ export const layer = Layer.effect(
             tool.revise_plan,
             tool.comment_plan,
             tool.review_criticism,
+            tool.review_manifest,
             tool.qa_observed_clean,
             tool.read_source,
             tool.read_lib,
             tool.smart_edit,
             tool.smart_write,
             tool.smart_batch,
+            tool.analytics,
+            tool.json_query,
+            tool.log_activity,
+            tool.preflight_check,
+            tool.produce_fragment,
+            tool.roadmap_deprecate,
+            tool.roadmap_init,
+            tool.roadmap_next,
+            tool.roadmap_prioritize,
+            tool.roadmap_progress,
+            tool.smart_bash,
+            tool.smart_bun,
+            tool.smart_find,
+            tool.smart_git,
+            tool.smart_grep,
+            tool.smart_sd,
+            tool.task_board,
+            tool.verify_handoff,
             tool.replace_symbol,
             tool.rig_jsonl_query,
             tool.rig_schema_validate,
@@ -411,6 +563,26 @@ export const layer = Layer.effect(
             tool.session_diff,
             tool.github_triage,
             tool.github_pr_search,
+            tool.query_last_failed_tools,
+            tool.query_last_edited_files,
+            tool.query_permission_denials,
+            tool.query_phase_transitions,
+            tool.query_last_checkpoint,
+            tool.query_last_successful_test,
+            tool.query_events_for_file,
+            tool.query_events_for_error,
+            tool.query_events_since_checkpoint,
+            tool.get_operating_picture,
+            tool.get_project_map,
+            tool.get_working_set,
+            tool.get_file_context,
+            tool.get_related_context,
+            tool.query_event_history,
+            tool.get_validation_context,
+            tool.get_claim_context,
+            tool.update_scratchpad,
+            tool.mark_context_stale,
+            tool.request_context_refresh,
             tool.search_replace,
             tool.prepare_checkpoint,
             tool.checkpoint,
@@ -575,7 +747,10 @@ export const defaultLayer = Layer.suspend(() =>
     .pipe(Layer.provide(DatabaseAdapter.defaultLayer))
     .pipe(Layer.provide(DuckDB.layer))
     .pipe(Layer.provide(Storage.defaultLayer))
-    .pipe(Layer.provide(RuntimeFlags.defaultLayer)),
+    .pipe(Layer.provide(RuntimeFlags.defaultLayer))
+    .pipe(Layer.provide(EventStoreLayer))
+    .pipe(Layer.provide(EventAgentQueriesLayer))
+    .pipe(Layer.provide(FileMemoryLayer)),
 )
 
 function isZodType(value: unknown): value is z.ZodType {

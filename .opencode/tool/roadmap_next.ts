@@ -11,6 +11,7 @@ export default tool({
   args: {
     limit: tool.schema.number().optional().describe("Max items (default 5)"),
     phase: tool.schema.string().optional().describe("Filter to phase"),
+    show_blocked: tool.schema.boolean().optional().describe("Include blocked items in results with their blockers"),
   },
   async execute(args, context) {
     const activePath = resolvePath(context.worktree, "docs/json/roadmaps/active.v1.json")
@@ -28,6 +29,7 @@ export default tool({
     const effortOrder: Record<string, number> = { low: 0, moderate: 1, high: 2 }
     const ready: any[] = []
     const inProgress: any[] = []
+    const blocked: any[] = []
     let blockedCount = 0
 
     for (const [id, item] of Object.entries(items) as [string, any][]) {
@@ -49,7 +51,10 @@ export default tool({
       }
 
       if (item.status === "in_progress") inProgress.push(entry)
-      else if (unmet.length) blockedCount++
+      else if (unmet.length) {
+        blockedCount++
+        if (args.show_blocked) blocked.push(entry)
+      }
       else ready.push(entry)
     }
 
@@ -61,11 +66,14 @@ export default tool({
       ? `Continue: ${inProgress[0].id} — ${inProgress[0].title.slice(0, 80)} (${inProgress[0].completion_pct}% done)`
       : ready[0] ? `Start: ${ready[0].id} — ${ready[0].title.slice(0, 80)}` : null
 
-    return JSON.stringify({
+    const result: any = {
       next: nextUp, total_ready: ready.length, total_in_progress: inProgress.length,
       total_blocked: blockedCount, total_completed: completedIds.size,
       recommendation,
       hint: "Use roadmap_init(show_all=true) to see full picture.",
-    }, null, 2)
+    }
+    if (args.show_blocked) result.blocked = blocked
+
+    return JSON.stringify(result, null, 2)
   },
 })

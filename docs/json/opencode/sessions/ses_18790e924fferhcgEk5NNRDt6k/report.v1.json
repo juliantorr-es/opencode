@@ -1,0 +1,12 @@
+{
+  "schema_version": "v1",
+  "session_id": "ses_18790e924fferhcgEk5NNRDt6k",
+  "summary": "## CI-004: Cross-session roadmap tools — Complete\n\n### What was done\n1. **Created blueprint file**: `docs/json/roadmaps/opencode-desktop-phase3-roadmap.v1.json` — 22 items across 6 phases, serves as the canonical initial state for roadmap_init.\n\n2. **Fixed roadmap_init.ts** — added fallback to active.v1.json when blueprint is missing, so sessions without the blueprint can still bootstrap from the live active state.\n\n3. **Fixed roadmap_progress.ts** — `completion_pct` now preserves existing value when omitted (was silently resetting to 0). Notes over 500 chars are truncated to prevent bloated audit entries.\n\n4. **Fixed roadmap_next.ts** — added `show_blocked` parameter (optional boolean). When true, blocked items are included in results with their unmet dependencies listed.\n\n5. **Fixed roadmap_deprecate.ts** — handles re-deprecation (extends TTL, preserves previous reason). Cascade-blocks dependent items with structured reason.\n\n6. **Fixed roadmap_prioritize.ts** — auto-creates phase when moving item to non-existent phase (with warning flag).\n\n### Claim verification\n- All 8 claim atoms verified: blueprint exists, fallback works, pct preserved, notes truncated, show_blocked present, re-deprecation handled, phase auto-created, audit trail preserved.\n\n### Files created\n- docs/json/roadmaps/opencode-desktop-phase3-roadmap.v1.json\n\n### Files modified\n- .opencode/tool/roadmap_init.ts\n- .opencode/tool/roadmap_progress.ts\n- .opencode/tool/roadmap_next.ts\n- .opencode/tool/roadmap_deprecate.ts\n- .opencode/tool/roadmap_prioritize.ts",
+  "stats": {
+    "edits": 5,
+    "findings": 0,
+    "feedback": 0,
+    "waves": []
+  },
+  "completed_at": "2026-05-30T10:33:52.744Z"
+}

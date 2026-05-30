@@ -1,0 +1,12 @@
+{
+  "schema_version": "v1",
+  "session_id": "ses_1875eb7efffePv2DYTjjIDTZsg",
+  "summary": "Lane 1 complete: Created persistent runtime event store for the OpenCode desktop app.\n\nFiles created:\n- packages/opencode/src/event/runtime-event.ts — Canonical RuntimeEvent Effect Schema with 21 fields\n- packages/opencode/src/event/event.sql.ts — Drizzle ORM runtime_events table with 6 indexes\n- packages/opencode/src/event/event-store.ts — EventStore service with record() and query() methods\n- packages/opencode/src/event/event-bridge.ts — Bus→EventStore bridge layer (background fiber)\n- packages/opencode/src/event/index.ts — Public API barrel exports\n\nFile modified:\n- packages/opencode/src/storage/schema.ts — Added RuntimeEventTable re-export\n\nTypecheck: 0 new errors (49 pre-existing).\nNo existing tests broken (pre-existing project.ts test failure unrelated).\nNo existing files were modified beyond adding one re-export to schema.ts.",
+  "stats": {
+    "edits": 15,
+    "findings": 0,
+    "feedback": 0,
+    "waves": []
+  },
+  "completed_at": "2026-05-30T11:37:28.621Z"
+}

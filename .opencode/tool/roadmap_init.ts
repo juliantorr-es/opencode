@@ -21,9 +21,12 @@ export default tool({
     const activePath = resolvePath(context.worktree, "docs/json/roadmaps/active.v1.json")
     const progressPath = resolvePath(context.worktree, "docs/json/roadmaps/progress.v1.jsonl")
 
-    const blueprint = readJson(blueprintPath)
+    let blueprint = readJson(blueprintPath)
     if (!blueprint) {
-      return JSON.stringify({ error: "No blueprint found", path: blueprintPath }, null, 2)
+      blueprint = readJson(activePath)
+    }
+    if (!blueprint) {
+      return JSON.stringify({ error: "No roadmap artifacts found. Run propose_plan or create blueprint first.", blueprint_path: blueprintPath, active_path: activePath }, null, 2)
     }
 
     const items: Record<string, any> = {}

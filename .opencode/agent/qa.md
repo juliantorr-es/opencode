@@ -4,6 +4,8 @@ mode: subagent
 hidden: true
 temperature: 0.1
 permission:
+  tool_feedback: "allow"
+  friction: "allow"
   edit: deny
   bash:
     "*": deny

@@ -1,0 +1,57 @@
+{"at":"2026-05-30T11:49:31.572Z","session_id":"ses_18748f603ffeBnAjmPjIKmOZpy","agent":"lane-owner","tool":"smart_find","phase":"started","detail":"*launch*"}
+{"at":"2026-05-30T11:49:31.605Z","session_id":"ses_18748f603ffeBnAjmPjIKmOZpy","agent":"lane-owner","tool":"smart_find","phase":"completed","detail":"*launch*"}
+{"at":"2026-05-30T11:49:41.644Z","session_id":"ses_18748f603ffeBnAjmPjIKmOZpy","agent":"lane-owner","tool":"smart_find","phase":"started","detail":"*.ts"}
+{"at":"2026-05-30T11:49:41.644Z","session_id":"ses_18748f603ffeBnAjmPjIKmOZpy","agent":"lane-owner","tool":"smart_find","phase":"completed","detail":"*.ts"}
+{"at":"2026-05-30T11:49:49.864Z","session_id":"ses_18748f603ffeBnAjmPjIKmOZpy","agent":"lane-owner","tool":"smart_find","phase":"started","detail":"*.ts"}
+{"at":"2026-05-30T11:49:49.865Z","session_id":"ses_18748f603ffeBnAjmPjIKmOZpy","agent":"lane-owner","tool":"smart_find","phase":"completed","detail":"*.ts"}
+{"at":"2026-05-30T11:50:16.577Z","session_id":"ses_18748f603ffeBnAjmPjIKmOZpy","agent":"lane-owner","tool":"smart_bash","phase":"started","detail":"Read full main process initialization file"}
+{"at":"2026-05-30T11:50:16.577Z","session_id":"ses_18748f603ffeBnAjmPjIKmOZpy","agent":"lane-owner","tool":"smart_bash","phase":"rerouted","detail":"→ read_source"}
+{"at":"2026-05-30T11:50:25.070Z","session_id":"ses_18748f603ffeBnAjmPjIKmOZpy","agent":"lane-owner","tool":"smart_bash","phase":"started","detail":"Get file line count"}
+{"at":"2026-05-30T11:50:25.104Z","session_id":"ses_18748f603ffeBnAjmPjIKmOZpy","agent":"lane-owner","tool":"smart_bash","phase":"completed","detail":"wc exit=0"}
+{"at":"2026-05-30T11:50:44.806Z","session_id":"ses_18748f603ffeBnAjmPjIKmOZpy","agent":"lane-owner","tool":"smart_bash","phase":"started","detail":"Read lines 20-120 of main init file"}
+{"at":"2026-05-30T11:50:50.730Z","session_id":"ses_18748f603ffeBnAjmPjIKmOZpy","agent":"lane-owner","tool":"smart_bash","phase":"started","detail":"Read lines 20-120 of main initialization file"}
+{"at":"2026-05-30T11:50:50.753Z","session_id":"ses_18748f603ffeBnAjmPjIKmOZpy","agent":"lane-owner","tool":"smart_bash","phase":"completed","detail":"head exit=0"}
+{"at":"2026-05-30T11:50:59.959Z","session_id":"ses_18748f603ffeBnAjmPjIKmOZpy","agent":"lane-owner","tool":"smart_bash","phase":"started","detail":"Read first 200 lines of main init file"}
+{"at":"2026-05-30T11:50:59.959Z","session_id":"ses_18748f603ffeBnAjmPjIKmOZpy","agent":"lane-owner","tool":"smart_bash","phase":"rerouted","detail":"→ read_source"}
+{"at":"2026-05-30T11:51:08.508Z","session_id":"ses_18748f603ffeBnAjmPjIKmOZpy","agent":"lane-owner","tool":"smart_bash","phase":"started","detail":"Read lines 1-200 of main init file"}
+{"at":"2026-05-30T11:51:08.628Z","session_id":"ses_18748f603ffeBnAjmPjIKmOZpy","agent":"lane-owner","tool":"smart_bash","phase":"completed","detail":"python3 exit=0"}
+{"at":"2026-05-30T11:51:19.603Z","session_id":"ses_18748f603ffeBnAjmPjIKmOZpy","agent":"lane-owner","tool":"smart_bash","phase":"started","detail":"Read lines 201-391 of main init file"}
+{"at":"2026-05-30T11:51:19.665Z","session_id":"ses_18748f603ffeBnAjmPjIKmOZpy","agent":"lane-owner","tool":"smart_bash","phase":"completed","detail":"python3 exit=0"}
+{"at":"2026-05-30T11:51:23.857Z","session_id":"ses_18748f603ffeBnAjmPjIKmOZpy","agent":"lane-owner","tool":"smart_bash","phase":"started","detail":"Read sidecar init file"}
+{"at":"2026-05-30T11:51:23.899Z","session_id":"ses_18748f603ffeBnAjmPjIKmOZpy","agent":"lane-owner","tool":"smart_bash","phase":"completed","detail":"python3 exit=0"}
+{"at":"2026-05-30T11:51:27.767Z","session_id":"ses_18748f603ffeBnAjmPjIKmOZpy","agent":"lane-owner","tool":"smart_bash","phase":"started","detail":"Read sidecar init flow (lines 50+)"}
+{"at":"2026-05-30T11:51:27.798Z","session_id":"ses_18748f603ffeBnAjmPjIKmOZpy","agent":"lane-owner","tool":"smart_bash","phase":"completed","detail":"python3 exit=0"}
+{"at":"2026-05-30T11:51:31.289Z","session_id":"ses_18748f603ffeBnAjmPjIKmOZpy","agent":"lane-owner","tool":"smart_bash","phase":"started","detail":"Read server.ts for sidecar spawning logic"}
+{"at":"2026-05-30T11:51:31.319Z","session_id":"ses_18748f603ffeBnAjmPjIKmOZpy","agent":"lane-owner","tool":"smart_bash","phase":"completed","detail":"python3 exit=0"}
+{"at":"2026-05-30T11:51:35.603Z","session_id":"ses_18748f603ffeBnAjmPjIKmOZpy","agent":"lane-owner","tool":"smart_bash","phase":"started","detail":"Read preload types for init models"}
+{"at":"2026-05-30T11:51:35.639Z","session_id":"ses_18748f603ffeBnAjmPjIKmOZpy","agent":"lane-owner","tool":"smart_bash","phase":"completed","detail":"python3 exit=0"}
+{"at":"2026-05-30T11:51:40.970Z","session_id":"ses_18748f603ffeBnAjmPjIKmOZpy","agent":"lane-owner","tool":"smart_bash","phase":"started","detail":"Read IPC init handler"}
+{"at":"2026-05-30T11:51:41.007Z","session_id":"ses_18748f603ffeBnAjmPjIKmOZpy","agent":"lane-owner","tool":"smart_bash","phase":"completed","detail":"python3 exit=0"}
+{"at":"2026-05-30T11:51:43.312Z","session_id":"ses_18748f603ffeBnAjmPjIKmOZpy","agent":"lane-owner","tool":"smart_find","phase":"started","detail":"main.ts*"}
+{"at":"2026-05-30T11:51:43.313Z","session_id":"ses_18748f603ffeBnAjmPjIKmOZpy","agent":"lane-owner","tool":"smart_find","phase":"completed","detail":"main.ts*"}
+{"at":"2026-05-30T11:51:47.632Z","session_id":"ses_18748f603ffeBnAjmPjIKmOZpy","agent":"lane-owner","tool":"smart_find","phase":"started","detail":"*.ts*"}
+{"at":"2026-05-30T11:51:47.651Z","session_id":"ses_18748f603ffeBnAjmPjIKmOZpy","agent":"lane-owner","tool":"smart_find","phase":"completed","detail":"*.ts*"}
+{"at":"2026-05-30T11:51:52.199Z","session_id":"ses_18748f603ffeBnAjmPjIKmOZpy","agent":"lane-owner","tool":"smart_find","phase":"started","detail":"*.ts*"}
+{"at":"2026-05-30T11:51:52.200Z","session_id":"ses_18748f603ffeBnAjmPjIKmOZpy","agent":"lane-owner","tool":"smart_find","phase":"completed","detail":"*.ts*"}
+{"at":"2026-05-30T11:52:00.071Z","session_id":"ses_18748f603ffeBnAjmPjIKmOZpy","agent":"lane-owner","tool":"smart_grep","phase":"started","detail":"duckdb|DuckDB"}
+{"at":"2026-05-30T11:52:00.144Z","session_id":"ses_18748f603ffeBnAjmPjIKmOZpy","agent":"lane-owner","tool":"smart_grep","phase":"completed","detail":"duckdb|DuckDB"}
+{"at":"2026-05-30T11:52:02.518Z","session_id":"ses_18748f603ffeBnAjmPjIKmOZpy","agent":"lane-owner","tool":"smart_grep","phase":"started","detail":"pglite|PGlite|pgLite"}
+{"at":"2026-05-30T11:52:02.590Z","session_id":"ses_18748f603ffeBnAjmPjIKmOZpy","agent":"lane-owner","tool":"smart_grep","phase":"completed","detail":"pglite|PGlite|pgLite"}
+{"at":"2026-05-30T11:52:07.181Z","session_id":"ses_18748f603ffeBnAjmPjIKmOZpy","agent":"lane-owner","tool":"smart_find","phase":"started","detail":"*.ts"}
+{"at":"2026-05-30T11:52:07.181Z","session_id":"ses_18748f603ffeBnAjmPjIKmOZpy","agent":"lane-owner","tool":"smart_find","phase":"completed","detail":"*.ts"}
+{"at":"2026-05-30T11:52:11.646Z","session_id":"ses_18748f603ffeBnAjmPjIKmOZpy","agent":"lane-owner","tool":"smart_find","phase":"started","detail":"*.ts"}
+{"at":"2026-05-30T11:52:11.647Z","session_id":"ses_18748f603ffeBnAjmPjIKmOZpy","agent":"lane-owner","tool":"smart_find","phase":"completed","detail":"*.ts"}
+{"at":"2026-05-30T11:52:16.799Z","session_id":"ses_18748f603ffeBnAjmPjIKmOZpy","agent":"lane-owner","tool":"smart_grep","phase":"started","detail":"MCP|McpServer|createMcp"}
+{"at":"2026-05-30T11:52:16.822Z","session_id":"ses_18748f603ffeBnAjmPjIKmOZpy","agent":"lane-owner","tool":"smart_grep","phase":"completed","detail":"MCP|McpServer|createMcp"}
+{"at":"2026-05-30T11:52:21.103Z","session_id":"ses_18748f603ffeBnAjmPjIKmOZpy","agent":"lane-owner","tool":"smart_grep","phase":"started","detail":"plugin|Plugin"}
+{"at":"2026-05-30T11:52:21.115Z","session_id":"ses_18748f603ffeBnAjmPjIKmOZpy","agent":"lane-owner","tool":"smart_grep","phase":"completed","detail":"plugin|Plugin"}
+{"at":"2026-05-30T11:52:23.347Z","session_id":"ses_18748f603ffeBnAjmPjIKmOZpy","agent":"lane-owner","tool":"smart_find","phase":"started","detail":"*.ts"}
+{"at":"2026-05-30T11:52:23.347Z","session_id":"ses_18748f603ffeBnAjmPjIKmOZpy","agent":"lane-owner","tool":"smart_find","phase":"completed","detail":"*.ts"}
+{"at":"2026-05-30T11:52:30.497Z","session_id":"ses_18748f603ffeBnAjmPjIKmOZpy","agent":"lane-owner","tool":"smart_bash","phase":"started","detail":"Read wireWindowRecovery and loading window code"}
+{"at":"2026-05-30T11:52:30.535Z","session_id":"ses_18748f603ffeBnAjmPjIKmOZpy","agent":"lane-owner","tool":"smart_bash","phase":"completed","detail":"python3 exit=0"}
+{"at":"2026-05-30T11:52:33.202Z","session_id":"ses_18748f603ffeBnAjmPjIKmOZpy","agent":"lane-owner","tool":"smart_bash","phase":"started","detail":"Read loading window creation code"}
+{"at":"2026-05-30T11:52:33.242Z","session_id":"ses_18748f603ffeBnAjmPjIKmOZpy","agent":"lane-owner","tool":"smart_bash","phase":"completed","detail":"python3 exit=0"}
+{"at":"2026-05-30T11:52:35.864Z","session_id":"ses_18748f603ffeBnAjmPjIKmOZpy","agent":"lane-owner","tool":"smart_bash","phase":"started","detail":"Read migration code"}
+{"at":"2026-05-30T11:52:35.906Z","session_id":"ses_18748f603ffeBnAjmPjIKmOZpy","agent":"lane-owner","tool":"smart_bash","phase":"completed","detail":"python3 exit=0"}
+{"at":"2026-05-30T11:52:38.990Z","session_id":"ses_18748f603ffeBnAjmPjIKmOZpy","agent":"lane-owner","tool":"smart_bash","phase":"started","detail":"Read preload bridge setup"}
+{"at":"2026-05-30T11:52:39.024Z","session_id":"ses_18748f603ffeBnAjmPjIKmOZpy","agent":"lane-owner","tool":"smart_bash","phase":"completed","detail":"python3 exit=0"}

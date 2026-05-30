@@ -1,0 +1,268 @@
+{
+  "artifact": "rig.relay.learning_artifact.v1",
+  "title": "Desktop App Initialization Sequence Cartography",
+  "profile": "cartography",
+  "session": "ses_1874f0231ffe",
+  "generated_at": "2026-05-30T11:51:00Z",
+  "subagents_used": ["surface-mapper", "module-grapher", "convention-scout", "test-reader", "diff-historian", "explore"],
+  "sections": {
+    "entry_points": {
+      "electron_main_process": {
+        "path": "packages/desktop/src/main/index.ts",
+        "output": "out/main/index.js",
+        "framework": "Electron 41 + Effect-TS (Effect.gen for orchestration, Effect.runFork to launch)",
+        "role": "App lifecycle root — logging, crash reporter, proxy config, sidecar spawn, window creation, IPC handler registration, deep links, menus, updater",
+        "build_config": "electron.vite.config.ts → main entry: src/main/index.ts"
+      },
+      "sidecar_utility_process": {
+        "path": "packages/desktop/src/main/sidecar.ts",
+        "output": "out/main/sidecar.js (separate rollup entry)",
+        "framework": "Plain async JS (no Effect)",
+        "role": "Forked via Electron utilityProcess.fork(). Dynamically imports virtual:opencode-server, runs optional SQLite JsonMigration, starts Effect-based HTTP server",
+        "communication": "process.parentPort postMessage/on('message') protocol"
+      },
+      "preload_bridge": {
+        "path": "packages/desktop/src/preload/index.ts",
+        "output": "out/preload/index.js (CJS via electron-vite)",
+        "role": "contextBridge.exposeInMainWorld('api', api) exposing ~67 typed methods",
+        "security": "contextIsolation: true, nodeIntegration: false, sandbox: false"
+      },
+      "renderer_solidjs_ui": {
+        "path": "packages/desktop/src/renderer/index.tsx",
+        "html": "packages/desktop/src/renderer/index.html",
+        "output": "out/renderer/ (SolidJS + Vite)",
+        "role": "UI entry — creates Platform provider with desktop-native APIs, wraps @opencode-ai/app AppInterface",
+        "ui_framework": "SolidJS via @opencode-ai/app/vite plugin"
+      },
+      "loading_screen": {
+        "path": "packages/desktop/src/renderer/loading.tsx",
+        "html": "packages/desktop/src/renderer/loading.html",
+        "role": "Separate BrowserWindow shown during sidecar init and migrations. Shows progress via IPC push events INIT_STEP and SQLITE_MIGRATION_PROGRESS"
+      },
+      "shared_ui_package": {
+        "path": "packages/app/src/app.tsx",
+        "exports": {"AppBaseProviders": "line 172", "AppInterface": "line 326"},
+        "role": "Core app shell with routing, providers, error boundaries, connection gating"
+      },
+      "effect_service_runtime": {
+        "path": "packages/opencode/src/effect/app-runtime.ts",
+        "role": "Merges ~54 service layers (Npm, Bus, Auth, Config, Git, File, FileWatcher, Plugin, Provider, Agent, MCP, ToolRegistry, etc.) into a single AppLayer, creates ManagedRuntime"
+      },
+      "http_server": {
+        "path": "packages/opencode/src/server/server.ts",
+        "role": "Effect-based HTTP server (@effect/platform + HttpRouter), started by sidecar with port fallback"
+      },
+      "build_scripts": {
+        "predev": "packages/desktop/scripts/predev.ts",
+        "prebuild": "packages/desktop/scripts/prebuild.ts",
+        "build_node": "packages/opencode/script/build-node.ts",
+        "build_cli": "packages/opencode/script/build.ts"
+      }
+    },
+    "initialization_sequence": {
+      "phase_1_electron_main": {
+        "description": "Electron main process startup — packages/desktop/src/main/index.ts (all inside Effect.gen, forked via Effect.runFork)",
+        "steps": [
+          {"order": 1, "action": "contextMenu setup", "file": "src/main/index.ts:108", "detail": "Right-click context menu config (save image, disable search options)"},
+          {"order": 2, "action": "process.chdir(homedir())", "file": "src/main/index.ts:111-113", "detail": "CD to home dir for ripgrep compatibility. Silently caught on failure."},
+          {"order": 3, "action": "Set env OPENCODE_DISABLE_EMBEDDED_WEB_UI=true", "file": "src/main/index.ts:115", "detail": "Disables embedded web UI for desktop"},
+          {"order": 4, "action": "onboardingTestRoot setup", "file": "src/main/index.ts:118-132", "detail": "If OPENCODE_TEST_ONBOARDING=1: creates temp dir, sets :memory: DB, XDG dirs"},
+          {"order": 5, "action": "app.setName() / app.setAppUserModelId() / app.setPath('userData')", "file": "src/main/index.ts:134-138", "detail": "App identity and data directory setup"},
+          {"order": 6, "action": "initLogging()", "file": "src/main/index.ts:139", "detail": "Electron-log initialization with per-scope files, console transport, log rotation (7 day cleanup)"},
+          {"order": 7, "action": "initCrashReporter()", "file": "src/main/index.ts:141", "detail": "Crashpad startup (local only, no upload). Crash dumps in userData/Crashpad/"},
+          {"order": 8, "action": "Set default CA certificates (system + default merge)", "file": "src/main/index.ts:143-147", "detail": "Non-critical — caught and logged on failure, continues"},
+          {"order": 9, "action": "ensureLoopbackNoProxy() + useEnvProxy()", "file": "src/main/index.ts:149-153", "detail": "Ensures loopback/localhost bypass NO_PROXY, enables global proxy from env"},
+          {"order": 10, "action": "Command line switches", "file": "src/main/index.ts:156-158", "detail": "proxy-bypass-list, enable-features (js call stacks in crash reports), remote-debugging-port=9222 (dev only)"},
+          {"order": 11, "action": "app.requestSingleInstanceLock()", "file": "src/main/index.ts:160-163", "detail": "If another instance: quit immediately"},
+          {"order": 12, "action": "preferAppEnv(userDataPath)", "file": "src/main/index.ts:165", "detail": "Loads shell env and sets OPENCODE_CLIENT=desktop, file watcher/icon discovery flags"},
+          {"order": 13, "action": "Register app event handlers", "file": "src/main/index.ts:167-214", "detail": "second-instance (deep links), open-url, before-quit/will-quit (kill sidecar), child-process-gone, render-process-gone, SIGINT/SIGTERM"},
+          {"order": 14, "action": "setRelaunchHandler()", "file": "src/main/index.ts:207-209", "detail": "Kill sidecar → app.relaunch() → app.exit(0)"},
+          {"order": 15, "action": "registerIpcHandlers()", "file": "src/main/index.ts:218-258", "detail": "All IPC handlers (init, config, store, fs, session, window, locale, github auth, plugin transport, capabilities)"},
+          {"order": 16, "action": "app.whenReady()", "file": "src/main/index.ts:260", "detail": "Electron app ready"},
+          {"order": 17, "action": "migrate()", "file": "src/main/index.ts:262", "detail": "Tauri data migration (best-effort, skipped if already migrated, non-blocking)"},
+          {"order": 18, "action": "app.setAsDefaultProtocolClient('opencode')", "file": "src/main/index.ts:263", "detail": "Deep link protocol registration"},
+          {"order": 19, "action": "registerRendererProtocol()", "file": "src/main/index.ts:264", "detail": "Custom oc:// protocol for serving renderer files"},
+          {"order": 20, "action": "setDockIcon()", "file": "src/main/index.ts:265", "detail": "macOS dock icon"},
+          {"order": 21, "action": "setupAutoUpdater()", "file": "src/main/index.ts:266", "detail": "electron-updater config (autoUpdate if packaged and not dev)"},
+          {"order": 22, "action": "startNetLog()", "file": "src/main/index.ts:267-271", "detail": "Chrome net log capture (non-critical, caught)"},
+          {"order": 23, "action": "needsMigration check", "file": "src/main/index.ts:273-281", "detail": "Check if opencode.db exists in XDG_DATA_HOME. False for :memory: mode."},
+          {"order": 24, "action": "Port negotiation", "file": "src/main/index.ts:283-301", "detail": "Bind ephemeral port (0 -> random port via net.createServer) or use OPENCODE_PORT env"},
+          {"order": 25, "action": "Loading task: spawnLocalServer()", "file": "src/main/index.ts:320-350", "detail": "fork utilityProcess with sidecar.js, send start command, poll health check every 100ms (30s timeout)"},
+          {"order": 26, "action": "Loading overlay decision", "file": "src/main/index.ts:352-358", "detail": "If migration needed and loading takes >1s: show loading window"},
+          {"order": 27, "action": "Fiber.await(loadingTask)", "file": "src/main/index.ts:360", "detail": "Wait for sidecar to be healthy"},
+          {"order": 28, "action": "setInitStep({phase:'done'})", "file": "src/main/index.ts:361", "detail": "Notify renderer that init is complete"},
+          {"order": 29, "action": "createMainWindow()", "file": "src/main/index.ts:363", "detail": "Open main BrowserWindow (1280x800, sandboxed preload, custom titlebar)"},
+          {"order": 30, "action": "createMenu()", "file": "src/main/index.ts:365-381", "detail": "macOS native menu (trigger, checkForUpdates, relaunch)"},
+          {"order": 31, "action": "overlay.close()", "file": "src/main/index.ts:383", "detail": "Close loading overlay when main window ready"}
+        ]
+      },
+      "phase_2_sidecar_utility": {
+        "description": "Utility process startup — packages/desktop/src/main/sidecar.ts",
+        "steps": [
+          {"order": 1, "action": "prepareSidecarEnv()", "file": "src/main/sidecar.ts:102-108", "detail": "Set OPENCODE_SERVER_USERNAME, OPENCODE_SERVER_PASSWORD, XDG_STATE_HOME"},
+          {"order": 2, "action": "ensureLoopbackNoProxy() + useSystemCertificates() + useEnvProxy()", "file": "src/main/sidecar.ts:110-147", "detail": "All caught and logged on failure, non-blocking"},
+          {"order": 3, "action": "Dynamic import virtual:opencode-server", "file": "src/main/sidecar.ts:64", "detail": "Imports { Database, JsonMigration, Log, Server } from compiled server bundle"},
+          {"order": 4, "action": "Log.init({level:'WARN'})", "file": "src/main/sidecar.ts:65", "detail": "Sidecar-side logging init"},
+          {"order": 5, "action": "(optional) JsonMigration.run()", "file": "src/main/sidecar.ts:67-83", "detail": "If needsMigration=true: runs SQLite JSON migrations, sends progress updates via parentPort"},
+          {"order": 6, "action": "Server.listen()", "file": "src/main/sidecar.ts:85-90", "detail": "Starts Effect-based HTTP server on the negotiated port. After ready: postMessage({type:'ready'})"},
+          {"order": 7, "action": "Error handling", "file": "src/main/sidecar.ts:92-98", "detail": "On any error: postMessage({type:'error'}) then process.exit(1)"}
+        ]
+      },
+      "phase_3_renderer_ui": {
+        "description": "Renderer startup — packages/desktop/src/renderer/index.tsx",
+        "steps": [
+          {"order": 1, "action": "window.api.getWindowConfig()", "file": "src/renderer/index.tsx:312", "detail": "Fetches updaterEnabled flag. Caught: defaults to {updaterEnabled: false}"},
+          {"order": 2, "action": "window.api.getWindowFocused()", "file": "src/renderer/index.tsx:235", "detail": "Fallback: document.hasFocus()"},
+          {"order": 3, "action": "window.api.consumeInitialDeepLinks()", "file": "src/renderer/index.tsx:71", "detail": "Retrieves any pending deep links from main process"},
+          {"order": 4, "action": "window.api.awaitInitialization()", "file": "src/renderer/index.tsx:27 (loading.tsx)", "detail": "Listens for init step events, returns server URL/password when ready"},
+          {"order": 5, "action": "loadLocale() - window.api.getLocalePreference()", "file": "src/renderer/index.tsx:313-335", "detail": "Loads locale preference, falls back to legacy storage"},
+          {"order": 6, "action": "window.api.getDefaultServerUrl()", "file": "src/renderer/index.tsx:262", "detail": "Caught: defaults to null"},
+          {"order": 7, "action": "window.api.getWslConfig()", "file": "src/renderer/index.tsx:86-89", "detail": "Caught: defaults to disabled"},
+          {"order": 8, "action": "window.api.getDesktopPluginConfig()", "file": "src/renderer/index.tsx:39 (plugin-context.tsx)", "detail": "Caught: defaults to undefined"},
+          {"order": 9, "action": "Show gate — resource loading guard", "file": "src/renderer/index.tsx:401-408", "detail": "<Show when={!defaultServer.loading && !sidecar.loading && !windowConfig.loading && !windowCount.loading && !locale.loading}> — UI hidden until all resources load"},
+          {"order": 10, "action": "AppBaseProviders + AppInterface mount", "file": "src/renderer/index.tsx:410-425", "detail": "SolidJS component tree mount — theme provider, i18n, router, error boundaries, server sync"}
+        ]
+      },
+      "phase_4_effect_runtime": {
+        "description": "Effect service runtime — packages/opencode/src/effect/app-runtime.ts (lazy, on first demand)",
+        "steps": [
+          {"order": 1, "action": "AppLayer construction", "file": "src/effect/app-runtime.ts:64-127", "detail": "Layer.mergeAll(54 services) — all lazy, not initialized yet"},
+          {"order": 2, "action": "ManagedRuntime.make(AppLayer)", "file": "src/effect/app-runtime.ts:128", "detail": "Runtime creation — still lazy, services built on first yield*"},
+          {"order": 3, "action": "InstanceBootstrap.run() (when project loaded)", "file": "packages/opencode/src/project/bootstrap.ts:20-58", "detail": "Eager init: Config.get() → Plugin.init() → parallel init of Reference, LSP, ShareNext, Format, File, FileWatcher, Vcs, Snapshot, Project"},
+          {"order": 4, "action": "DataMigration (background fiber)", "file": "packages/opencode/src/data-migration.ts:155", "detail": "Forked background fiber: runs session_usage_from_messages migration against Database"}
+        ]
+      }
+    },
+    "service_initialization_points": {
+      "database_layer": {
+        "items": [
+          {"service": "DatabaseConfig", "file": "packages/opencode/src/effect/database-config.ts:4", "pattern": "ConfigService.Service (env vars OPENCODE_DATABASE_URL/SSL/POOL_SIZE)"},
+          {"service": "DatabaseAdapter", "file": "packages/opencode/src/storage/adapter.ts:80", "pattern": "Effect service — if url set → PGlite/Pool+Drizzle, else → SQLite adapter"},
+          {"service": "Database.Client (global singleton)", "file": "packages/opencode/src/storage/db.ts:42-54", "pattern": "Non-Effect singleton. Lazy init on first call. Resolves path from RuntimeFlags"},
+          {"service": "DataMigration", "file": "packages/opencode/src/data-migration.ts:18", "pattern": "Effect service — forks background fiber for migration run"}
+        ]
+      },
+      "mcp_servers": {
+        "items": [
+          {"service": "MCP.Service", "file": "packages/opencode/src/mcp/index.ts:282", "pattern": "NOT initialized at startup. Registered lazily per-session in acp-next/service.ts:915 via registerMcpServers()"},
+          {"service": "McpAuth", "file": "packages/opencode/src/mcp/auth.ts:44", "pattern": "Effect service — OAuth token management per server URL"}
+        ]
+      },
+      "plugin_system": {
+        "items": [
+          {"service": "Plugin.Service", "file": "packages/opencode/src/plugin/index.ts:59", "pattern": "Eager init in bootstrap.ts:37. Loads 9 built-in auth plugins + external plugins from config. 'Plugin can mutate config so it has to be initialized before anything else'"}
+        ]
+      },
+      "agent_loop_llm": {
+        "items": [
+          {"service": "LLM.Service", "file": "packages/opencode/src/session/llm.ts:56", "pattern": "Effect service — streamText from ai SDK with middleware"},
+          {"service": "Agent.Service", "file": "packages/opencode/src/agent/agent.ts:85", "pattern": "Effect service — sub-agent capability using streamObject"},
+          {"service": "SessionProcessor.Service", "file": "packages/opencode/src/session/processor.ts:85", "pattern": "Effect service — orchestrates LLM call → tool execution → result handling"},
+          {"service": "Session.Service", "file": "packages/opencode/src/session/session.ts", "pattern": "Effect service — CRUD for sessions, stored in SQLite/PG via Database"}
+        ]
+      },
+      "tool_registry": {
+        "items": [
+          {"service": "ToolRegistry.Service", "file": "packages/opencode/src/tool/registry.ts:144", "pattern": "Effect service — registers ~60 built-in tools (Read, Write, Edit, Grep, Bash, Task, etc.) + plugin tools in parallel"}
+        ]
+      },
+      "config_and_env": {
+        "items": [
+          {"service": "Config.Service", "file": "packages/opencode/src/config/config.ts", "pattern": "Effect service — loads config files + env vars"},
+          {"service": "RuntimeFlags", "file": "packages/opencode/src/effect/runtime-flags.ts:16", "pattern": "ConfigService.Service — ~30 OPENCODE_* env vars as feature flags"},
+          {"service": "DatabaseConfig", "file": "packages/opencode/src/effect/database-config.ts:4", "pattern": "PG connection string, SSL, pool size from env"},
+          {"service": "ServerAuthConfig", "file": "packages/opencode/src/server/auth.ts:17", "pattern": "Server authentication config"}
+        ]
+      },
+      "telemetry": {
+        "items": [
+          {"service": "Observability", "file": "packages/opencode/src/effect/app-runtime.ts:123", "pattern": "Layer.provideMerge — OpenTelemetry tracing setup"},
+          {"service": "OtelTracer (imported)", "file": "packages/opencode/src/session/llm.ts:25", "pattern": "From @effect/opentelemetry/Tracer, used for ai SDK experimental_telemetry"}
+        ]
+      },
+      "file_watching": {
+        "items": [
+          {"service": "FileWatcher.Service", "file": "packages/opencode/src/file/watcher.ts:65", "pattern": "Effect service — @parcel/watcher native bindings, lazy-load backend"},
+          {"service": "File.Service", "file": "packages/opencode/src/file/index.ts:328", "pattern": "Effect service — read/write/search with Ripgrep"},
+          {"service": "Project.Service", "file": "packages/opencode/src/project/project.ts", "pattern": "Effect service — project DB CRUD, VCS root detection"},
+          {"service": "Vcs.Service", "file": "packages/opencode/src/project/vcs.ts", "pattern": "Effect service — git operations, subscribes to FileWatcher events"}
+        ]
+      }
+    },
+    "ipc_bridge": {
+      "architecture": {
+        "main_process": "packages/desktop/src/main/ipc.ts",
+        "channel_registry": "packages/desktop/src/main/ipc-channels.ts",
+        "contract": "packages/desktop/src/main/ipc-contract.ts",
+        "preload_bridge": "packages/desktop/src/preload/index.ts",
+        "api_type": "packages/desktop/src/preload/types.ts (ElectronAPI interface)"
+      },
+      "channel_groups": {
+        "handle_rpc": "65 channels — ipcMain.handle / ipcRenderer.invoke two-way RPC",
+        "send_fire_and_forget": "5 channels — ipcRenderer.send / ipcMain.on fire-and-forget (renderer→main)",
+        "push_main_to_renderer": "7 channels — webContents.send / ipcRenderer.on push (main→renderer)",
+        "store_namespaces": "5 namespaces — electron-store named stores"
+      },
+      "security": {
+        "contextIsolation": true,
+        "nodeIntegration": false,
+        "sandbox": false,
+        "exposed_api": "window.api with 67 typed methods (no raw ipcRenderer access)",
+        "validated": "ipc-validation.ts validates agent/MCP/plugin configs before storage",
+        "hostname_restricted": "GitHub API proxy restricted to api.github.com, uploads.github.com"
+      },
+      "init_pattern": {
+        "renderer_calls": "window.api.awaitInitialization(onStep) → ipcRenderer.on('init-step', onStep) + typedInvoke('await-initialization') → main sends streaming events via webContents.send + one-shot ServerReadyData via ipcMain.handle"
+      }
+    },
+    "error_handling": {
+      "critical_failures_block_startup": [
+        {"failure": "Sidecar spawn failure (60s timeout / error message)", "behavior": "App init rejects permanently. No retry mechanism.", "file": "src/main/index.ts:320-350"},
+        {"failure": "Main process crash (uncaught exception)", "behavior": "Process dies — NO global uncaughtException/unhandledRejection handler", "file": "N/A — gap"},
+        {"failure": "Renderer process crash", "behavior": "Recovery dialog (Relaunch / Export Logs / Quit)", "file": "src/main/windows.ts:352-365"}
+      ],
+      "non_critical_failures_continue": [
+        {"failure": "System CA certs load failure", "behavior": "Logged warning, continues", "file": "src/main/index.ts:143-147"},
+        {"failure": "Global proxy from env failure", "behavior": "Logged warning, continues", "file": "src/main/index.ts:59-66"},
+        {"failure": "Net log start failure", "behavior": "Logged warning, continues", "file": "src/main/index.ts:267-271"},
+        {"failure": "Sidecar health check timeout", "behavior": "Logged error, app continues (server may be slow)", "file": "src/main/index.ts:339-346"},
+        {"failure": "Tauri migration failure", "behavior": "Logged warning, per-file try/catch", "file": "src/main/migrate.ts:34-38"},
+        {"failure": "Plugin loading failure", "behavior": "console.error, app runs without plugins", "file": "packages/desktop/src/renderer/plugin-context.tsx:44"},
+        {"failure": "Plugin rendering error", "behavior": "ErrorBoundary with hidden fallback div", "file": "packages/desktop/src/renderer/plugin-context.tsx:64"}
+      ],
+      "recovery_patterns": [
+        {"name": "wireWindowRecovery", "file": "src/main/windows.ts:271", "events_handled": ["did-fail-load", "did-fail-provisional-load", "render-process-gone", "unresponsive", "responsive"], "dialog": "Modal dialog with: Relaunch / Export Logs / Quit / Keep Waiting (unresponsive only)"},
+        {"name": "unresponsive sampler", "file": "src/main/unresponsive.ts:7", "detail": "Collects JS stacks every 1s for 15s, logs on flush. No auto-recovery."},
+        {"name": "React ErrorBoundary (root)", "file": "packages/app/src/app.tsx:183", "fallback": "Sentry.captureException + ErrorPage component"},
+        {"name": "React AppErrorBoundary (per-route)", "file": "packages/app/src/app.tsx:345-348", "detail": "Each route has its own boundary — one crash doesn't break others"},
+        {"name": "ConnectionGate retry", "file": "packages/app/src/app.tsx:204", "detail": "Server health check polling every 1s, 10s blocking phase → background phase"},
+        {"name": "console transport degradation", "file": "src/main/logging.ts:191-201", "detail": "If stdout is broken pipe (EPIPE), console logging disabled silently"}
+      ],
+      "gaps": [
+        "No global uncaughtException/unhandledRejection handlers — any unexpected main process exception crashes without recovery",
+        "Sidecar has no retry/backoff — single 60s timeout then permanent failure",
+        "No degraded mode / safe mode — it's full startup or failure with recovery dialog",
+        "Sentry GlobalHandlers filtered out in production — prod crashes only caught by explicit ErrorBoundary captureException calls",
+        "No exponential backoff in health check polling"
+      ]
+    },
+    "pre_existing_findings": {
+      "relevant": [
+        {"type": "debt", "summary": "applyMigrations defined at db.pg.ts:25 but never called anywhere in runtime", "file": "packages/opencode/src/storage/db.pg.ts:25"},
+        {"type": "debt", "summary": "migration-pg/ has 1 migration vs migration/ has 20 — massive gap", "file": "packages/opencode/migration-pg/"}
+      ]
+    },
+    "architectural_observations": [
+      "Three distinct process layers: Electron main (Node.js), sidecar utility process (Node.js), and renderer (SolidJS sandbox). Each has separate start sequence.",
+      "The Electron main process is surprisingly thin — its job is to spawn the sidecar, handle deep links/window management/OS integration, and proxy IPC. All business logic lives in the Effect runtime inside the sidecar.",
+      "Effect-TS is used throughout for structured concurrency (Effect.gen, Deferred, Fiber, Layer). The main init sequence is a single Effect.gen orchestrated with Deferred for cross-task synchronization.",
+      "The IPC bridge is extremely well-typed — channel constants in ipc-channels.ts, contracts in ipc-contract.ts, preload bridge in preload/index.ts, all using the same IPC constant. There's even a validation script (scripts/validate-ipc-migration.ts).",
+      "The sidecar spawn is the single critical path. port:0 negotiation, fork + health poll + migration is entirely sequential within the loading Task fiber. No retry mechanism.",
+      "Database adapter selection (SQLite vs PGlite/PG) happens at Effect runtime construction time based on OPENCODE_DATABASE_URL env var. The runtime doesn't restart if the DB connection fails.",
+      "The renderer init gates the entire UI behind a Show component waiting on 5 async resources (defaultServer, sidecar, windowConfig, windowCount, locale). This creates a hard block — all five must resolve (or fail with defaults) before any UI renders.",
+      "The opencode package (packages/opencode) is built separately via script/build-node.ts and consumed by the sidecar via a virtual import (virtual:opencode-server). This is a surprising build-time coupling — the server bundle must exist before the desktop app can run.",
+      "Plugin loading is the only service that has an explicit 'init before everything else' comment (bootstrap.ts:37) because plugins can mutate config. All other services initialize lazily on first demand.",
+      "The three init phases (server_waiting → sqlite_waiting → done) are communicated from main to renderer via IPC push. The loading.tsx screen can display a progress bar for SQLite migrations."
+    ]
+  }
+}

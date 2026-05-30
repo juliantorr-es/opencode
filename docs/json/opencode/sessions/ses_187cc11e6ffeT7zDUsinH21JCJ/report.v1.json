@@ -1,0 +1,12 @@
+{
+  "schema_version": "v1",
+  "session_id": "ses_187cc11e6ffeT7zDUsinH21JCJ",
+  "summary": "## Lane 1 — Drizzle .get() Migration in project.ts\n\n### Summary\nReplaced all 13 `Drizzle .get()` calls in `packages/opencode/src/project/project.ts` with Postgres-compatible `.limit(1)` + array destructuring. This fixes the desktop app boot crash (`d5.select().from(...).where(...).get is not a function`) when running on PGlite/Postgres.\n\n### Files modified\n- **packages/opencode/src/project/project.ts** — 13 replacements applied\n\n### Plan artifact created\n- `docs/json/opencode/plans/packages-opencode-src-project-project-ts-get-migration.v1.json`\n\n### All 13 replacements by pattern\n| Pattern | Lines | Count | Description |\n|---------|-------|-------|-------------|\n| A — transaction callback | 193, 194, 205, 206 | 4 | `const [x] = d.select()...limit(1)` |\n| B — yield* db(...) select | 244, 360, 419, 434, 451 | 5 | `const [row] = yield* db(...limit(1))` |\n| C — yield* db(...) update+returning | 365+378, 438+444, 454+460 | 3 (×2 each) | `.returning().limit(1)` + `const [result]` |\n| D — Database.use() sync | 504 | 1 | `const [row] = Database.use(...limit(1))` |\n\n### Verification\n- Zero `.get()` calls remaining in project.ts\n- Typecheck passes — no errors in project.ts (pre-existing errors only in unrelated src/session/projectors.ts)\n- All existing `if (!row)` / `if (!result)` guards remain valid (destructuring yields `undefined` for empty arrays, identical to `.get()` behavior)\n\n### Key insight\nDrizzle's `.get()` is a SQLite-only method. Postgres/PGlite uses `.limit(1)` which returns an array. The destructuring pattern `const [row] = ...limit(1)` preserves the exact same runtime semantics — `undefined` for no results, the row for one result.",
+  "stats": {
+    "edits": 6,
+    "findings": 0,
+    "feedback": 0,
+    "waves": []
+  },
+  "completed_at": "2026-05-30T09:34:43.024Z"
+}

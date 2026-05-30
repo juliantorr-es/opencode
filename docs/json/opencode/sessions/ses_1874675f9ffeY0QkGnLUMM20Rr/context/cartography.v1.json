@@ -1,0 +1,206 @@
+{
+  "schema": "rig.relay.cartography.v1",
+  "generated_at": "2026-05-30T12:00:00Z",
+  "agent": "cartographer",
+  "profiles": ["cartography", "all"],
+  "scope": "MCP server init, plugin system, agent loop, error isolation patterns",
+  "sections": {
+    "mcp_init": {
+      "summary": "MCP (Model Context Protocol) servers are managed entirely client-side as a singleton Effect Service via the Effect library's dependency injection system. No registry, launcher, or server process manager exists — the MCP module creates SDK clients that connect to external server processes over stdio/SSE/StreamableHTTP.",
+      "key_files": [
+        {"file": "packages/opencode/src/mcp/index.ts", "lines": 1042, "role": "Core MCP service — all server lifecycle (connect, create, add, remove, watch, tools, status). Single file monolith."},
+        {"file": "packages/opencode/src/mcp/auth.ts", "lines": 145, "role": "MCP OAuth token persistence — read/write/remove credentials by server name."},
+        {"file": "packages/opencode/src/mcp/oauth-provider.ts", "lines": 200, "role": "OAuth client provider for StreamableHTTP transport."},
+        {"file": "packages/opencode/src/mcp/oauth-callback.ts", "lines": "?","role": "OAuth callback HTTP handler."},
+        {"file": "packages/opencode/src/config/mcp.ts", "lines": 61, "role": "MCP config schemas — Local, Remote, OAuth config types."},
+        {"file": "packages/app/src/types/mcp.ts", "lines": 17, "role": "Desktop app MCP server entry types (McpServerEntry, McpServerConfig)."},
+        {"file": "packages/desktop/src/main/ipc-config.ts", "lines": 117, "role": "Desktop IPC handlers for get/set MCP server configs via electron-store."},
+        {"file": "packages/desktop/src/main/ipc-contract.ts", "lines": 446, "role": "IPC contract with IpcResult<T> = IpcOk<T> | IpcErr pattern."},
+        {"file": "packages/opencode/src/server/routes/instance/httpapi/handlers/mcp.ts", "lines": 112, "role": "HTTP API handlers for MCP — status, add, auth, connect, disconnect."},
+        {"file": "packages/opencode/src/server/routes/instance/httpapi/groups/mcp.ts", "lines": 157, "role": "API group definitions for MCP endpoints."}
+      ],
+      "service_layer_wiring": {
+        "layer_definition": "packages/opencode/src/mcp/index.ts:286",
+        "service_class": "export class Service extends Context.Service<Service, Interface>()('@opencode/MCP') {}",
+        "interface_section": "lines 253-280 — defines add(), connect(), disconnect(), create(), status(), tools(), getPrompts(), getResources(), supportsOAuth(), startAuth(), finishAuth(), authenticate(), removeAuth()",
+        "default_layer": "line 1036 — layer.pipe(Layer.provide(McpAuth.layer), Layer.provide(Bus.layer), Layer.provide(Config.defaultLayer), Layer.provide(CrossSpawnSpawner.defaultLayer), Layer.provide(AppFileSystem.defaultLayer))",
+        "app_runtime_inclusion": "packages/opencode/src/effect/app-runtime.ts:49 — MCP.defaultLayer listed in AppLayer mergeAll()"
+      },
+      "server_lifecycle": {
+        "startup": "All configured MCP servers are connected during Effect layer initialization (the layer is Effect.effect, not Layer.sync). connectTransport() creates Client then calls client.connect(transport). Explicitly NO server registry — each server key maps to one MCP SDK Client.",
+        "local_servers": "connectLocal() at line 442 — creates StdioClientTransport with command/args/env from config. Uses CrossSpawnSpawner. Example: transport = new StdioClientTransport({ command, args, env, stderr: 'pipe' })",
+        "remote_servers": "connectRemote() at line 325 — creates StreamableHTTPClientTransport or SSEClientTransport with optional OAuth provider.",
+        "connect_transport": "connectTransport() at lines 309-319 — Effect.acquireUseRelease pattern: creates Client, calls withTimeout(client.connect(t), timeout), returns client. Release path is effectively client.close().",
+        "create_function": "create() at line 477 — dispatches to connectLocal/connectRemote based on config type. Returns { client?, status, defs }. Errors caught with Effect.catch(try=>...).",
+        "create_and_store": "createAndStore() at line 670 — calls create(), stores client/defs/status/config in State (via InstanceState), sets up watch() for tool list changes.",
+        "add_function": "add() at line 698 — saves MCP config then calls createAndStore(). reconnect() at line ~575 — iterates config, calls create(key, mcp).pipe(Effect.catch(() => Effect.void)).",
+        "close_client": "closeClient() at lines 623-628 — deletes defs, calls client.close() with Effect.tryPromise(() => client.close()).pipe(Effect.ignore).",
+        "status": "Status is a Schema.Union of 'disconnected' | 'connecting' | 'connected' | 'failed' | 'disabled' at lines 103-110. Tracked per-server in State.status map."
+      },
+      "crash_handling": {
+        "connection_failure": "connectTransport uses Effect.acquireUseRelease — if client.connect() throws, transport is released. Connect failures in create() are caught with Effect.catch() returning { client: undefined, status: { status: 'failed', error } }.",
+        "reconnection": "No explicit reconnection logic exists. createAndStore() with Effect.catchTag('TimeoutError') wraps with timeout. The reconnect() function (line ~575) iterates config and calls create(key, mcp).pipe(Effect.catch(() => Effect.void)) — silently swallowing errors.",
+        "watch_failure": "watch() uses Effect.catchTag('TimeoutError', () => Effect.void) around the Semaphore lock — notifications silently swallowed on timeout.",
+        "pid_collection": "getPids() at line ~520 collects child PIDs, using Effect.catch(() => Effect.succeed([])).",
+        "missing_retry": "NO Effect.retry or Schedule anywhere in MCP index.ts. Timeouts and failures result in 'failed' status with no reconnection schedule.",
+        "Effect_die_leak": "Per the MCP critic review (docs/json/opencode/reviews/opencode-mcp-mgmt-hardening-critic.v1.json): Effect.withSpan missing on 5 throw/defect paths (~557, ~562, ~576, ~630, ~635). throw new Error() bypasses Effect trace system entirely."
+      },
+      "isolation": {
+        "semaphore_per_server": "serverLocks = new Map<string, Semaphore.Semaphore>() at line 293. Each server has a Semaphore(1) acquired via withServerLock(name).withPermits(1).",
+        "timeout_on_lock": "watch() uses Effect.timeout(30_000) around lock acquisition.",
+        "no_process_sandboxing": "StdioClientTransport spawns child processes via CrossSpawnSpawner with NO process isolation (no cgroups, no containers, no namespace isolation).",
+        "no_circuit_breaker": "No circuit breaker pattern exists. Failed servers stay in 'failed' status until explicit reconnection.",
+        "state_isolation": "MCP module maintains a module-level State via InstanceState.get() — not isolated per server. A crash in one server's handler could theoretically corrupt shared state."
+      },
+      "IPC_to_opencode_flow": {
+        "desktop_store": "packages/desktop/src/main/ipc-config.ts:61-83 — GET_DESKTOP_MCP_SERVERS/SET_DESKTOP_MCP_SERVERS IPC handlers read/write electron-store('desktop-mcp-servers'). Validate with validateAndFilterMcpServers() pattern.",
+        "preload_bridge": "packages/desktop/src/preload/index.ts:53-54 — getMcpServers/setMcpServers via typedInvoke().",
+        "browser_api": "packages/app/src/browser-api.ts — no direct MCP servers API (browser variant uses opencode's HTTP layer).",
+        "app_types": "packages/app/src/types/mcp.ts — McpServerEntry type wraps McpLocalConfig | McpRemoteConfig from @opencode-ai/sdk/v2."
+      }
+    },
+    "plugin_system": {
+      "summary": "Two separate plugin systems coexist: (1) the opencode Effect-based plugin system (server/TUI plugins) that runs via the core app, and (2) a desktop Electron-only plugin system (bundled/desktop plugins) that loads via dynamic import() in the renderer process. The two systems have different initialization paths and error handling.",
+      "opencode_plugin_system": {
+        "core_module": "packages/opencode/src/plugin/? — Plugin service provides hooks lifecycle.",
+        "config": "packages/opencode/src/config/plugin.ts:85 — Plugin discovery: load(dir) scans config files for plugin specs, deduplicates origins, resolves npm specifiers.",
+        "core_plugin_sdk": "packages/core/src/plugin.ts:192 — Plugin.Hooks lifecycle: hook types for session lifecycle events. Plugin define() and Service via Context.Service.",
+        "plugin_sdk": "packages/plugin/src/index.ts:335 — Plugin type = (input: PluginInput, options?) => Promise<Hooks>. SDK for third-party plugin authors.",
+        "lifecycle_events": "packages/core/src/plugin.ts:69-77 — Hooks type defines hook inputs/outputs for: 'session.create.before', 'session.create.after', 'tool.execute.before', 'tool.execute.after', 'session.compact.before', etc.",
+        "layer_wiring": "packages/opencode/src/effect/app-runtime.ts:15 — Plugin.defaultLayer in AppLayer."
+      },
+      "desktop_plugin_system": {
+        "loader": "packages/desktop/src/renderer/plugin-loader.ts — DesktopPluginLoader class. loadAll() calls window.api.getDesktopPluginConfig?(), then dynamically imports each plugin by path.",
+        "transport_renderer": "packages/desktop/src/renderer/plugin-transport.ts — Renderer-side plugin transport.",
+        "transport_main": "packages/desktop/src/main/plugin-transport.ts — Main process plugin transport.",
+        "transport_ipc": "packages/desktop/src/main/plugin-transport-ipc.ts — IPC plugin transport bridge.",
+        "context": "packages/desktop/src/renderer/plugin-context.tsx — DesktopPluginProvider SolidJS context.",
+        "desktop_plugin_sdk": "packages/plugin/src/desktop.ts — DesktopPluginModule with desktop() entrypoint.",
+        "missing_config_handler": "Per plan (docs/json/opencode/plans/plugin-management-ui.v1.json): GET_DESKTOP_PLUGIN_CONFIG IPC handler is missing from main process. plugin-loader.ts catches IPC rejection via .catch(() => []).",
+        "missing_ui": "No dialog-manage-plugins.tsx or dialog-install-plugin.tsx exist yet."
+      },
+      "crash_handling": {
+        "loader_catch": "plugin-loader.ts catches IPC rejection with .catch(() => []) — no unhandled promise rejection, but silent failure with no user feedback.",
+        "no_quarantine": "No quarantine or disable mechanism for problematic plugins. No plugin health checks or crash detection.",
+        "no_disabled_state": "Plugin disable/enable stored in electron-store config, but disabled plugins are still loaded (just not activated).",
+        "effect_catch": "opencode plugin system uses Effect.catchAll around plugin hooks — hook failures don't crash the app but may silently degrade behavior."
+      }
+    },
+    "agent_loop_init": {
+      "summary": "There is no single 'AgentLoop' class file. Instead, the session processing is split across multiple modules wired via Effect layers. The SessionProcessor orchestrates the LLM interaction loop.",
+      "session_layer": "packages/opencode/src/session/session.ts — Session service: create, list, get, update, archive sessions. Uses drizzle-orm with SQLite/PG via DatabaseAdapter.",
+      "session_processor": "packages/opencode/src/session/processor.ts — SessionProcessor: the message processing loop. Handles tool calls, LLM streaming, message assembly.",
+      "llm_service": "packages/opencode/src/session/llm.ts — LLM service: model initialization, streaming, completion.",
+      "tools_resolver": "packages/opencode/src/session/tools.ts — resolve() function: merges built-in tools from ToolRegistry with MCP tools from MCP.Service. Uses Semaphore(10) for reads, Semaphore(3) for writes.",
+      "session_prompt": "packages/opencode/src/session/prompt.ts — Prompt service: builds system prompts, injects plugin hooks.",
+      "compaction": "packages/opencode/src/session/compaction.ts — Session compaction: truncates long sessions.",
+      "dependencies": "SessionProcessor depends on: Agent, Provider, MCP, Plugin, Permission, ToolRegistry, Session, Bus, LLM, and more — all through Effect service resolution.",
+      "error_handling": {
+        "runner": "packages/opencode/src/effect/runner.ts — Runner service with Cancelled error class and busy error handling.",
+        "run_state": "packages/opencode/src/session/run-state.ts — SessionRunState with runner busy detection, Effect.catchTag('RunnerBusy').",
+        "TypedResult": "packages/opencode/src/tool/typed-result.ts — SessionProcessor wraps tool execution in TypedResult for typed failure info + suggested next actions.",
+        "no_crash_recovery": "No explicit crash recovery for agent sessions. If the processor crashes, the session is terminated with no auto-resume mechanism."
+      }
+    },
+    "error_isolation_patterns": {
+      "effect_patterns": {
+        "Effect_catch": "Widely used — Effect.catch(() => ...) and Effect.catchTag('Tag', () => ...). 48 total matches in packages/opencode/src.",
+        "Effect_catchAll": "Less common — server/routes/instance/httpapi/handlers/pty.ts uses it most heavily (6 matches).",
+        "Effect_retry": "Used in session/tools.ts and session/processor.ts — but NOT in MCP module.",
+        "Semaphore": "Used for concurrency control: MCP server locks (line 293), tool read/write semaphores (session/tools.ts:92), snapshot locks.",
+        "Effect_acquireUseRelease": "Used for resource lifecycle: MCP connectTransport (line 309), config reads, share operations.",
+        "Effect_timeout": "Used in MCP watch (30s), MCP connectTransport, session tools, background jobs.",
+        "Layer_scoping": "Effect layers provide resource lifecycle. Each service has defaultLayer that provides dependencies. Layer.provide()/Layer.provideMerge() composes them.",
+        "InstanceState_pattern": "packages/opencode/src/effect/instance-state.ts — wraps mutable state in Effect Ref for safe concurrent access. Used by MCP module."
+      },
+      "ipc_error_pattern": {
+        "IpcResult": "packages/desktop/src/main/ipc-contract.ts:46-56 — IpcResult<T> = IpcOk<T> | IpcErr pattern. withIpcResult() wraps handlers in try/catch returning structured errors.",
+        "normalizeIpcError": "line 67 — normalizes error objects to IpcErr format.",
+        "serializedWrite": "Used in ipc-config.ts for concurrent write safety.",
+        "validation_pattern": "validateAndFilter* functions used for MCP servers (ipc-config.ts) and planned for plugin configs — filters invalid entries with dropped count."
+      },
+      "bus_event_pattern": {
+        "bus_system": "packages/opencode/src/bus/ — PubSub event system. BusEvent.define() creates typed events. Used by MCP for ToolsChanged (line 61) and BrowserOpenFailed (line 68) notifications.",
+        "error_handling": "Bus publishing wrapped in Effect.ignore — publish failures are silently dropped."
+      },
+      "missing_patterns": [
+        "NO circuit breaker pattern anywhere in the codebase.",
+        "NO health check system for services (MCP servers, plugins, database). No /health endpoint or periodic health probes.",
+        "NO graceful degradation — if MCP init fails in the layer, the entire layer init fails (could prevent app startup).",
+        "NO retry wrappers or exponential backoff in MCP connections.",
+        "NO crash quarantine for plugins or MCP servers.",
+        "NO bounded error context — errors propagate through Effect channel but with no explicit containment boundaries."
+      ],
+      "existing_service_errors": {
+        "MCP_Failed_error": "packages/opencode/src/mcp/index.ts:76 — NamedError.create('MCPFailed', ...) — tagged error for MCP failures.",
+        "MCP_NotFoundError": "line 80 — NotFoundError extends Schema.TaggedErrorClass",
+        "McpServerNotFoundError": "packages/opencode/src/server/routes/instance/httpapi/errors.ts:143",
+        "BusyError": "packages/opencode/src/session/session.ts:445 — SessionBusyError",
+        "McpUnsupportedOAuthError": "packages/opencode/src/server/routes/instance/httpapi/groups/mcp.ts:27 — tagged error for unsupported OAuth"
+      }
+    },
+    "critic_findings_applied": {
+      "mcp_mgmt_hardening_review": {
+        "artifact": "docs/json/opencode/reviews/opencode-mcp-mgmt-hardening-critic.v1.json",
+        "status": "REJECTED — 4 blocking findings, 5 high-severity",
+        "blocking_findings": [
+          "Double-toast bug in Fix B (belt-and-suspenders pattern — two simultaneous error toasts, neither showing server name)",
+          "Semaphore deadlock invisible (Fix E) — no timeout on withPermits(1), leaked permits lock server permanently",
+          "ErrorBoundary fallback ignores error object (Fix F) — shows generic text, no error.message in UI",
+          "isValidMcpEntry conflation (Fix A) — adding validation to storage guard silently drops previously saved entries"
+        ],
+        "high_severity_findings": [
+          "Fix A validation has no user feedback — user clicks Save, nothing happens",
+          "FI-011: empty catch {} on auth.remove swallows all errors (orphaned credential leak risk)",
+          "Fix E watch() integration underspecified — notification handler runs outside Effect context, semaphore acquisition needed in async callback",
+          "Fix C silent save failure — handleSave becomes async but no try/catch around await",
+          "Effect.withSpan missing on 5 throw/defect paths (~557, ~562, ~576, ~630, ~635) — production crash traces invisible"
+        ]
+      }
+    },
+    "smoking_guns": [
+      {
+        "id": "SG-1",
+        "severity": "critical",
+        "summary": "MCP init is part of the AppLayer Effect layer startup — if ANY MCP server fails to connect, the entire layer init may fail, preventing app from starting",
+        "evidence": "MCP.defaultLayer (line 1036) is an Effect.effect, not Layer.sync. Layer.mergeAll includes MCP.defaultLayer in AppRuntime. If connectTransport throws on any configured MCP server during layer initialization, it could cause the entire Effect layer to fail.",
+        "file": "packages/opencode/src/mcp/index.ts:286, packages/opencode/src/effect/app-runtime.ts:49"
+      },
+      {
+        "id": "SG-2",
+        "severity": "high",
+        "summary": "No retry or reconnection for MCP servers — failed servers stay dead",
+        "evidence": "Effect.retry and Schedule are never used in mcp/index.ts. Connection failures result in 'failed' status with no automatic retry. The only recovery path is manual reconnection via HTTP API or restart.",
+        "file": "packages/opencode/src/mcp/index.ts"
+      },
+      {
+        "id": "SG-3",
+        "severity": "high",
+        "summary": "No process isolation for local MCP servers — child processes inherit full app privileges",
+        "evidence": "StdioClientTransport spawns child processes with command/args from config. No cgroups, namespace, or capability isolation. An MCP server process has access to the same filesystem and network as the opencode app.",
+        "file": "packages/opencode/src/mcp/index.ts:442-475"
+      },
+      {
+        "id": "SG-4",
+        "severity": "medium",
+        "summary": "Desktop plugin IPC handler is missing — plugins silently fail to load",
+        "evidence": "No get-desktop-plugin-config IPC handler exists in main process. plugin-loader.ts catches the rejection with .catch(() => []) — users see zero plugins with no error feedback. Documented in plugin-management-ui plan (fix-A).",
+        "file": "packages/desktop/src/renderer/plugin-loader.ts"
+      },
+      {
+        "id": "SG-5",
+        "severity": "medium",
+        "summary": "MCP module is a single 1042-line file — no separation of concerns",
+        "evidence": "All server lifecycle, transport management, tool conversion, OAuth handling, status tracking, and config processing live in one file. No sub-modules or helper extraction.",
+        "file": "packages/opencode/src/mcp/index.ts"
+      },
+      {
+        "id": "SG-6",
+        "severity": "medium",
+        "summary": "No health check or heartbeat for service dependencies",
+        "evidence": "No /health endpoint, no periodic health probes, no service health registry. MCP status is tracked only on explicit status() calls. Layer startup is all-or-nothing.",
+        "file": "packages/opencode/src"
+      }
+    ]
+  }
+}

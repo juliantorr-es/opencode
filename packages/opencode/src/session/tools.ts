@@ -7,6 +7,7 @@ import { Tool } from "@/tool/tool"
 import { ToolJsonSchema } from "@/tool/json-schema"
 import { ToolRegistry } from "@/tool/registry"
 import { Truncate } from "@/tool/truncate"
+import * as TypedResult from "@/tool/typed-result"
 import { ModelID } from "@/provider/schema"
 import { Plugin } from "@/plugin"
 import type { TaskPromptOps } from "@/tool/task"
@@ -102,7 +103,12 @@ export const resolve = Effect.fn("SessionTools.resolve")(function* (input: {
                 { tool: item.id, sessionID: ctx.sessionID, callID: ctx.callID },
                 { args },
               )
-              const result = yield* item.execute(args, ctx)
+              // Wrap execution in TypedResult so all tool results carry typed
+              // failure info + suggested next actions, even on defects.
+              const result = yield* TypedResult.wrapExecute(
+                item.id,
+                item.execute(args, ctx) as Effect.Effect<Tool.ExecuteResult, never, any>,
+              )
               const output = {
                 ...result,
                 attachments: result.attachments?.map((attachment) => ({

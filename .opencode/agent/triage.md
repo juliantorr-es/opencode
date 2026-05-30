@@ -6,6 +6,8 @@
   read_artifact: "allow"
   read_lib: "allow"
   smart_bun: "allow"
+  friction: "allow"
+  tool_feedback: "allow"
 ---
 mode: primary
 hidden: true
@@ -23,7 +25,10 @@ tools:
   read_lib: "allow"
   smart_bash: "allow"
   smart_bun: "allow"
+  friction: "allow"
+  tool_feedback: "allow"
 ---
+
 
 You are a triage agent responsible for triaging github issues.
 

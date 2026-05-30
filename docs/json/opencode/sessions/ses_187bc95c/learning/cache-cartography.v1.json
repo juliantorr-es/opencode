@@ -1,0 +1,182 @@
+{
+  "artifact": "rig.relay.learning_artifact.v1",
+  "artifact_id": "cache-cartography-v1",
+  "title": "ToolCache Surface Area Cartography",
+  "profile": "cartography",
+  "generated_at": "2026-05-30T10:30:00Z",
+  "mapped_by": "cartographer",
+  "files_inspected": [
+    "packages/opencode/src/tool/cache.ts",
+    "packages/opencode/src/tool/tool.ts",
+    "packages/opencode/src/tool/registry.ts",
+    "packages/opencode/src/effect/app-runtime.ts",
+    "packages/opencode/src/session/tools.ts",
+    "packages/opencode/src/tool/execution.ts"
+  ],
+
+  "section_1_surface_map": {
+    "file": "packages/opencode/src/tool/cache.ts",
+    "total_lines": 221,
+    "imports": {
+      "module": "effect",
+      "symbols": ["Clock", "Context", "Deferred", "Duration", "Effect", "Exit", "Layer", "Ref"]
+    },
+    "exports": {
+      "types": [
+        { "name": "CacheConfig", "kind": "interface", "line": 15, "fields": ["maxEntries?", "ttl?", "maxEntrySize?"] },
+        { "name": "CacheStats", "kind": "interface", "line": 21, "fields": ["size", "hits", "misses", "evictions", "estimatedBytes"] },
+        { "name": "Interface", "kind": "interface", "line": 29, "methods": ["getOrCompute", "invalidate", "invalidateKey", "stats"] }
+      ],
+      "classes": [
+        { "name": "Service", "kind": "Context.Service<Service, Interface>", "tag": "@opencode/ToolCache", "line": 40 }
+      ],
+      "values": [
+        { "name": "layer", "line": 58, "type": "Layer.effect(Service, ...)" },
+        { "name": "defaultLayer", "line": 220, "type": "alias for layer" }
+      ]
+    },
+    "private_symbols": [
+      { "name": "CacheKey", "kind": "type alias", "value": "string" },
+      { "name": "CacheEntry", "kind": "interface", "fields": ["value: any", "expiresAt: number", "size: number"] },
+      { "name": "approximateSize", "kind": "function" },
+      { "name": "recalcBytes", "kind": "function" }
+    ]
+  },
+
+  "section_2_callers": {
+    "tool_ts": {
+      "import": { "line": 8, "statement": "import * as ToolCache from \"./cache\"" },
+      "usage": "DEAD IMPORT — ToolCache is never referenced anywhere in tool.ts. The `cacheable` field on `Def` interface (line 104) is a plain property, not wired to ToolCache.",
+      "verdict": "Unused import"
+    },
+    "registry_ts": {
+      "import": { "line": 105, "statement": "import * as ToolCache from \"./cache\"" },
+      "usages": [
+        { "line": 128, "code": "readonly cacheStats: () => Effect.Effect<ToolCache.CacheStats>", "purpose": "Type reference in Interface" },
+        { "line": 142, "code": "const cache = yield* ToolCache.Service", "purpose": "Service acquisition" },
+        { "line": 541, "code": "return yield* cache.stats()", "purpose": "Only actual call — never calls getOrCompute" },
+        { "line": 572, "code": ".pipe(Layer.provide(ToolCache.defaultLayer))", "purpose": "Layer provisioning" }
+      ],
+      "verdict": "Imports ToolCache but only uses cache.stats(). getOrCompute is never called. cacheable flag is passed through in tools() output (line 528) but consumed only by session/tools.ts for semaphore selection."
+    },
+    "app_runtime_ts": {
+      "import": { "line": 40, "statement": "import * as ToolCache from \"@/tool/cache\"" },
+      "usages": [
+        { "line": 105, "code": "ToolCache.defaultLayer,", "purpose": "Merged into AppLayer" }
+      ],
+      "verdict": "Only provides the layer. No method calls."
+    },
+    "session_tools_ts": {
+      "import": "ToolCache NOT imported here directly",
+      "usage": "cacheable flag is read from item at line 89: `const toolSemaphore = (item as any).cacheable ? readSemaphore : writeSemaphore`",
+      "verdict": "cacheable flag used for semaphore routing, NOT for ToolCache routing. The caching infrastructure is completely bypassed."
+    }
+  },
+
+  "section_3_internal_state_analysis": {
+    "refs_created_in_layer": [
+      { "name": "cache", "type": "Ref<Map<CacheKey, CacheEntry>>", "initial_value": "new Map()", "line": 61, "purpose": "Stores cached tool results with expiration" },
+      { "name": "inflight", "type": "Ref<Map<CacheKey, Deferred.Deferred<any>>>", "initial_value": "new Map()", "line": 62, "purpose": "Deduplicates concurrent compute for same key" },
+      { "name": "hits", "type": "Ref<number>", "initial_value": "0", "line": 63 },
+      { "name": "misses", "type": "Ref<number>", "initial_value": "0", "line": 64 },
+      { "name": "evictions", "type": "Ref<number>", "initial_value": "0", "line": 65 },
+      { "name": "estimatedBytes", "type": "Ref<number>", "initial_value": "0", "line": 66 }
+    ],
+    "key_data_mutations": {
+      "cache_map_direct_mutation": "cache.ts:82-84 — map.delete(key), map.set(key, entry) on Map ref from Ref.get, NOT via Ref.update. Relies on Map reference identity.",
+      "inflight_direct_mutation": "cache.ts:108-116 — pending = yield* Ref.get(inflight); ... pending.set(key, d). Direct mutation, not Ref.update.",
+      "ensuring_cleanup": "cache.ts:119-123 — Ref.update(inflight, (m) => { m.delete(key); return m }). Uses Ref.update but still mutates-in-place and returns same ref.",
+      "cache_insertion": "cache.ts:198-208 — Ref.update(cache, (m) => { ... m.set(key, ...); return m }). Same in-place mutation pattern."
+    },
+    "dedup_mechanism": "Uses mutable Map obtained via Ref.get. Direct mutation (pending.set) makes inflight entry visible to other fibers before the compute starts. Since all fibers share the same Map reference, subsequent Ref.get calls see the added Deferred."
+  },
+
+  "section_4_race_condition_analysis": {
+    "race_1_inflight_cache_gap": {
+      "severity": "HIGH",
+      "window": "Between inflight cleanup (ensuring at line 119-123) and cache insertion (Ref.update at line 198-208)",
+      "description": "After compute() finishes with success, the Effect.ensuring callback removes the key from the inflight map BEFORE the cache is populated. A concurrent fiber arriving in this gap sees: cache miss (not yet inserted) → inflight miss (already cleaned up) → starts a DUPLICATE compute.",
+      "timeline": [
+        "t0: Fiber A compute() finishes, Exit captured",
+        "t1: ensuring() runs — inflight map deletes key",
+        "t2: Fiber B getOrCompute — Ref.get(cache) → MISS",
+        "t3: Fiber B getOrCompute — Ref.get(inflight) → MISS (cleaned at t1!)",
+        "t4: Fiber B creates new Deferred, starts DUPLICATE compute",
+        "t5: Fiber A Deferred.done() — resolves original deferred",
+        "t6: Fiber A Ref.update(cache) — inserts result into cache"
+      ],
+      "result": "Two concurrent computations run for the same key. Wasted work. Potentially stale results if compute has side effects.",
+      "fix": "Swap order: populate cache BEFORE clearing inflight. Or use a single Ref with a tagged union (Cached | Computing | Inflight)."
+    },
+    "race_2_direct_map_mutation": {
+      "severity": "MEDIUM",
+      "window": "Bypassing Ref.update for the inflight map",
+      "description": "The inflight map entry is added via direct mutation (pending.set at line 116) on a reference obtained from Ref.get. This works because Map is a reference type and Ref.get returns the same reference. However: (a) it breaks Ref's immutability semantics, (b) if Ref ever returned a copy, dedup silently breaks, (c) the ensuring cleanup uses the inconsistent Ref.update pattern.",
+      "result": "Fragile synchronization. Works by accident of JS reference semantics."
+    },
+    "race_3_invalidateKey_does_not_clear_inflight": {
+      "severity": "LOW",
+      "description": "invalidateKey (line 158) deletes from the cache map but does not touch the inflight map. A compute already in flight continues and caches its result AFTER invalidation. Invalidation is effectively lost for in-flight computations.",
+      "result": "Stale cached result if the intent was to prevent the result from being cached."
+    }
+  },
+
+  "section_5_test_surface": {
+    "dedicated_tests": "NONE — No test file exists for cache.ts",
+    "indirect_coverage": "NONE — ToolCache (getOrCompute) is never called from any production or test code",
+    "cacheStats_calls": "registry.cacheStats() is defined but never called from any consumer",
+    "relevant_test_files_checked": [
+      "packages/opencode/test/session/llm.test.ts — test token cache only, not ToolCache",
+      "packages/opencode/test/session/session.test.ts — test token cache only",
+      "packages/opencode/test/session/snapshot-tool-race.test.ts — unrelated",
+      "packages/opencode/test/session/session-schema.test.ts — unrelated",
+      "packages/opencode/test/session/messages-pagination.test.ts — unrelated"
+    ],
+    "verdict": "Zero test coverage. 221 lines of untested concurrent logic with known race conditions."
+  },
+
+  "section_6_smoking_guns": [
+    {
+      "id": "SG-1",
+      "priority": "HIGH",
+      "summary": "ToolCache inflight dedup has a TOCTOU gap allowing duplicate compute calls",
+      "file": "packages/opencode/src/tool/cache.ts:119-208",
+      "detail": "The ensuring inflight cleanup at lines 119-123 runs BEFORE cache insertion at lines 198-208. A concurrent fiber can observe (cache=miss, inflight=miss) and start a second compute for the same key."
+    },
+    {
+      "id": "SG-2",
+      "priority": "HIGH",
+      "summary": "ToolCache is defined but 100% dead code — getOrCompute never called",
+      "file": "packages/opencode/src/tool/cache.ts:68",
+      "detail": "getOrCompute exists with full LRU eviction, TTL, max entry size, inflight dedup, stats. No caller ever invokes it. 8 tools declare cacheable:true but the flag only controls semaphore selection in session/tools.ts, not caching."
+    },
+    {
+      "id": "SG-3",
+      "priority": "MEDIUM",
+      "summary": "Dead import in tool.ts — ToolCache imported but never referenced",
+      "file": "packages/opencode/src/tool/tool.ts:8",
+      "detail": "import * as ToolCache from './cache' is imported but never used in the file beyond the import statement."
+    },
+    {
+      "id": "SG-4",
+      "priority": "MEDIUM",
+      "summary": "Inflight map mutated via direct reference instead of Ref.update",
+      "file": "packages/opencode/src/tool/cache.ts:108-116",
+      "detail": "pending.set(key, d) directly mutates the Map stored in Ref. Breaks Ref abstraction. Works only because JS Map is a reference type."
+    },
+    {
+      "id": "SG-5",
+      "priority": "MEDIUM",
+      "summary": "Zero tests for concurrent caching logic",
+      "file": "packages/opencode/src/tool/cache.ts",
+      "detail": "221-line module with Ref-based concurrent state, LRU eviction, TTL expiration, and inflight dedup has zero tests. Race condition SG-1 would be caught by a simple concurrent test."
+    },
+    {
+      "id": "SG-6",
+      "priority": "LOW",
+      "summary": "invalidateKey does not clear in-flight computations",
+      "file": "packages/opencode/src/tool/cache.ts:158-166",
+      "detail": "invalidateKey only deletes from the cache map. If a compute for that key is in-flight, it completes and caches its result, effectively ignoring the invalidation."
+    }
+  ]
+}

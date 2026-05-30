@@ -27,7 +27,7 @@ type SidecarMessage =
   | { type: "sqlite"; progress: { type: "InProgress"; value: number } | { type: "Done" } }
   | { type: "ready" }
   | { type: "stopped" }
-  | { type: "error"; error: { message: string; stack?: string } }
+  | { type: "error"; error: { message: string; stack?: string }; component: string }
 
 type ParentPort = {
   postMessage(message: SidecarMessage): void
@@ -84,7 +84,13 @@ async function start(command: StartCommand) {
     })
     parentPort.postMessage({ type: "ready" })
   } catch (error) {
-    parentPort.postMessage({ type: "error", error: serializeError(error) })
+    const err = error instanceof Error ? error : new Error(String(error))
+    const component = /PGlite|Database/i.test(err.message) ? "db"
+      : /migrat/i.test(err.message) ? "migration"
+      : /DuckDB/i.test(err.message) ? "duckdb"
+      : /listen|Server/i.test(err.message) ? "server"
+      : "unknown"
+    parentPort.postMessage({ type: "error", error: serializeError(err), component })
     setImmediate(() => process.exit(1))
   }
 }

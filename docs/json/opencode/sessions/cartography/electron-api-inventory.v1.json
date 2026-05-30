@@ -1,0 +1,158 @@
+{
+  "schema_version": "1.0",
+  "artifact_kind": "electron_api_inventory",
+  "generated_at": "2026-05-30T12:00:00.000Z",
+  "scope": {
+    "target": "packages/app/",
+    "excluded": ["packages/desktop/src/main/"],
+    "runtime": "renderer/browser-side (SolidJS + Vite)"
+  },
+  "summary": {
+    "status": "ZERO_DIRECT_ELECTRON_USAGE",
+    "note": "The renderer code in packages/app/ has no direct Electron API usage. This project uses Tauri as its desktop runtime, not Electron. All 'electron' string occurrences are in variable names, comments, or project-structure visualization labels.",
+    "total_findings": 0,
+    "total_false_positives": 7
+  },
+  "architecture_findings": {
+    "desktop_runtime": "Tauri (not Electron)",
+    "evidence": [
+      {
+        "file": "packages/app/src/components/titlebar.tsx",
+        "lines": [51],
+        "detail": "const tauriApi = () => (window as unknown as { __TAURI__?: TauriApi }).__TAURI__",
+        "note": "Renderers checks for window.__TAURI__ — confirms Tauri integration"
+      },
+      {
+        "file": "packages/app/src/context/platform.tsx",
+        "lines": [12, 13, 47],
+        "detail": "type PlatformName = 'web' | 'desktop'; type DesktopOS = 'macos' | 'windows' | 'linux'; Many Platform properties documented 'Tauri only'",
+        "note": "Platform abstraction layer with 'Tauri only' annotations — the architecture is designed for Tauri"
+      },
+      {
+        "file": "packages/app/package.json",
+        "lines": null,
+        "detail": "electron is NOT listed in dependencies or devDependencies",
+        "note": "No Electron dependency at all"
+      }
+    ],
+    "renderer_desktop_integration": "Platform abstraction pattern — the PlatformProvider injects desktop capabilities (file pickers, notifications, zoom, menus, clipboard images) as a dependency, not as Electron imports"
+  },
+  "false_positive_occurrences": [
+    {
+      "file": "packages/app/src/components/titlebar.tsx",
+      "lines": [81, 231, 232, 235, 522],
+      "electron_api": "electronWindows (variable name)",
+      "import_style": "none — local variable",
+      "usage": "Variable named 'electronWindows' that checks if platform is 'windows' AND not Tauri. Despite the name, this is a platform check with no Electron API call.",
+      "classification": "false_positive",
+      "notes": "Misleading variable name — it should be called 'nativeWindows' or 'desktopWindows'. Checks for Windows OS without Tauri, not Electron."
+    },
+    {
+      "file": "packages/app/src/components/dialog-manage-agents.tsx",
+      "line": 46,
+      "electron_api": "electron-store (comment only)",
+      "import_style": "none — comment",
+      "usage": "Comment reads: '// Load custom agents from electron-store'. Historical reference to a previous storage backend.",
+      "classification": "false_positive",
+      "notes": "Just a code comment referencing a previous Electron-based storage implementation."
+    },
+    {
+      "file": "packages/app/src/components/dialog-select-mcp.tsx",
+      "lines": [73, 149],
+      "electron_api": "electron-store (comments only)",
+      "import_style": "none — comments",
+      "usage": "Comments reference 'electron-store' as a storage layer. Historical artifact.",
+      "classification": "false_positive",
+      "notes": "Comments referencing previous Electron-based storage persistence layer."
+    },
+    {
+      "file": "packages/app/src/utils/codebase-graph.ts",
+      "line": 63,
+      "electron_api": "preload (string label)",
+      "import_style": "none — string value",
+      "usage": "Label: { id: 'desktop-preload', label: 'preload', path: 'packages/desktop/src/preload' }",
+      "classification": "false_positive",
+      "notes": "This is a codebase visualization node label pointing to the desktop package's preload directory. Not an actual preload reference in the renderer."
+    },
+    {
+      "file": "packages/app/src/components/session-viz/codebase-map.tsx",
+      "line": 43,
+      "electron_api": "preload (string label)",
+      "import_style": "none — string value",
+      "usage": "Label: { id: 'desktop-preload', label: 'preload', color: '#7D3C98' }",
+      "classification": "false_positive",
+      "notes": "Codebase visualization node label for the desktop preload directory. Not an Electron preload usage."
+    },
+    {
+      "file": "packages/app/index.html",
+      "line": 15,
+      "electron_api": "oc-theme-preload.js (script src)",
+      "import_style": "none — HTML script tag",
+      "usage": "<script id='oc-theme-preload-script' src='/oc-theme-preload.js'></script> — Theme preload script",
+      "classification": "false_positive",
+      "notes": "This is a theme preload script (sets data-theme/data-color-scheme before Vite mounts), NOT an Electron preload script. Contains only DOM/localStorage operations."
+    },
+    {
+      "file": "packages/app/src/theme-preload.test.ts",
+      "lines": [1, 3, 21, 34, 44],
+      "electron_api": "theme-preload (test file)",
+      "import_style": "none — test description",
+      "usage": "Tests for the oc-theme-preload.js script. No Electron APIs.",
+      "classification": "false_positive",
+      "notes": "Test file for the theme preload script. Does not test Electron preload behavior."
+    }
+  ],
+  "patterns_searched": {
+    "require('electron')": 0,
+    "require(\"electron\")": 0,
+    "import ... from 'electron'": 0,
+    "window.require('electron')": 0,
+    "window.electron": 0,
+    "ipcRenderer": 0,
+    "remote.": 0,
+    "contextBridge|contextIsolation": 0,
+    "preload (Electron context)": 0,
+    "app. (Electron module)": 0,
+    "shell. (Electron module)": 0,
+    "dialog. (Electron module)": 0,
+    "clipboard. (Electron module)": 0,
+    "screen. (Electron module)": 0,
+    "nativeImage": 0,
+    "Menu (Electron)": 0,
+    "Tray": 0,
+    "Notification (Electron)": 0,
+    "BrowserWindow": 0,
+    "desktopCapturer": 0,
+    "webFrame": 0,
+    "crashReporter": 0
+  },
+  "renderer_desktop_capabilities": {
+    "pattern": "Platform abstraction via PlatformProvider",
+    "desktop_apis_used": [
+      "window.__TAURI__ (for Tauri integration)",
+      "navigator.clipboard.writeText() (browser Clipboard API)",
+      "event.clipboardData.setData() (browser ClipboardEvent API)",
+      "document.execCommand('copy') (legacy browser API)"
+    ],
+    "desktop_capabilities_abstracted": [
+      "openLink(url) — opens URL in default browser",
+      "openPath(path, app?) — opens local file/app (Tauri)",
+      "notify(title, desc, href) — system notification (Tauri)",
+      "openFilePickerDialog() — native file picker (Tauri)",
+      "openDirectoryPickerDialog() — native directory picker (Tauri)",
+      "saveFilePickerDialog() — native save dialog (Tauri)",
+      "checkUpdate() / updateAndRestart() — auto-update (Tauri)",
+      "webviewZoom — zoom level accessor",
+      "readClipboardImage() — clipboard image (Tauri)",
+      "DesktopMenuAction — native menu actions"
+    ],
+    "architectural_note": "If migrating from Tauri to Electron, the PlatformProvider interface is the seam. Implement an ElectronPlatformProvider that wires electron.shell.openExternal, electron.dialog.showOpenDialog, electron.ipcRenderer, etc. without changing any renderer code."
+  },
+  "out_of_scope_findings": [
+    {
+      "file": "packages/app/src/components/titlebar.tsx:81",
+      "summary": "Misleading variable name 'electronWindows' — should be 'nativeWindows' or 'desktopWindows'",
+      "finding_type": "debt"
+    }
+  ]
+}

@@ -49,6 +49,7 @@ import { ErrorPage } from "./pages/error"
 import { useCheckServerHealth } from "./utils/server-health"
 import { ServersProvider } from "./context/servers"
 import { AppErrorBoundary } from "./components/error-boundary"
+import { InspectorPage } from "./components/inspector/inspector-page"
 
 const HomeRoute = lazy(() => import("@/pages/home"))
 const Session = lazy(() => import("@/pages/session"))
@@ -345,6 +346,7 @@ export function AppInterface(props: {
                     <Route path="/:dir" component={() => <AppErrorBoundary><DirectoryLayout /></AppErrorBoundary>}>
                       <Route path="/" component={() => <Navigate href="session" />} />
                       <Route path="/session/:id?" component={() => <AppErrorBoundary><SessionRoute /></AppErrorBoundary>} />
+                      <Route path="/inspector" component={() => <InspectorPage />} />
                     </Route>
                   </Dynamic>
                 </ServerSyncProvider>

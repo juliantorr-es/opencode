@@ -1,0 +1,12 @@
+{
+  "schema_version": "v1",
+  "session_id": "ses_187bd45b5ffe7CBXIDVRkQrcg3",
+  "summary": "## Lane L10N-001: Locale Fallback Chain\n\n### Summary\nImplemented a locale fallback chain in the i18n provider (`language.tsx`) so that missing translation keys gracefully fall through the locale hierarchy before showing the raw key name.\n\n### Changes\n1. **`packages/app/src/context/language.tsx`** (modified — additive, preserved existing dirty changes):\n   - Added `PARENT_LOCALE` mapping: `zht → zh` (Traditional Chinese falls back to Simplified Chinese)\n   - Added exported `resolveKey()` pure utility function (testable without Solid.js context)\n   - Replaced `i18n.translator()` call with custom `t()` function implementing fallback chain:\n     - Current locale dict → parent locale dict → English (en) base → raw key\n\n2. **`packages/app/src/i18n/fallback.test.ts`** (new):\n   - 8 test cases covering: direct hit, parent fallback, base fallback from current+parent, triple miss, direct en lookup, template params, current-over-parent priority\n\n### Fallback chain\n| Locale | Chain |\n|--------|-------|\n| `en` | `en` → raw key |\n| `zh` | `zh` → `en` → raw key |\n| `zht` | `zht` → `zh` → `en` → raw key |\n| `fr`, `de`, `br`, etc. | locale → `en` → raw key |\n\n### Verification\n- 8/8 fallback tests passing\n- 17/17 parity tests passing (no regression)\n- TypeScript `--noEmit` passes\n- Dirty files preserved (i18n.d.ts, language.tsx)",
+  "stats": {
+    "edits": 4,
+    "findings": 0,
+    "feedback": 0,
+    "waves": []
+  },
+  "completed_at": "2026-05-30T09:46:30.210Z"
+}

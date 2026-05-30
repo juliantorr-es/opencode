@@ -141,6 +141,10 @@ enforcement (see `AGENTS.md` Git section).
 **Frontmatter:**
 ```yaml
 permission:
+  friction: "allow"
+  tool_feedback: "allow"
+  tool_feedback: "allow"
+  friction: "allow"
   "*": "deny"
   task: "allow"
   read: "allow"
@@ -175,6 +179,8 @@ block.
 **Frontmatter:**
 ```yaml
 permission:
+  tool_feedback: "allow"
+  friction: "allow"
   "*": "deny"
   read: "allow"
   grep: "allow"
@@ -209,6 +215,8 @@ run without oversight.
 **Frontmatter:**
 ```yaml
 permission:
+  tool_feedback: "allow"
+  friction: "allow"
   "*": "deny"
   read: "allow"
   bash: "ask"
@@ -238,6 +246,8 @@ block enforces this by denying all write tools.
 **Frontmatter:**
 ```yaml
 permission:
+  tool_feedback: "allow"
+  friction: "allow"
   "*": "deny"
   read: "allow"
   grep: "allow"
@@ -269,6 +279,8 @@ from leaking unvalidated changes into the commit record.
 **Frontmatter:**
 ```yaml
 permission:
+  tool_feedback: "allow"
+  friction: "allow"
   "*": "deny"
   read: "allow"
   grep: "allow"
@@ -296,6 +308,8 @@ denying all mutation tools.
 **Frontmatter:**
 ```yaml
 permission:
+  tool_feedback: "allow"
+  friction: "allow"
   "*": "deny"
   read: "allow"
   grep: "allow"

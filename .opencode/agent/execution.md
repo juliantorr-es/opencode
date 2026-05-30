@@ -4,6 +4,9 @@ mode: subagent
 hidden: true
 temperature: 0.1
 permission:
+  friction: "allow"
+  tool_feedback: "allow"
+  tool_feedback: "allow"
   edit: allow
   task: deny
   websearch: deny

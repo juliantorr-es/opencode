@@ -1,0 +1,12 @@
+{
+  "schema_version": "v1",
+  "session_id": "ses_18748de67ffePikGDnCtROCuJq",
+  "summary": "Lane RL-003: Event Taxonomy Enforcement. Complete audit of all runtime event emission sites across packages/opencode/src. Found 39 BusEvent.define() calls with 43 unique event type strings, 13 more projector-consumed session.next.* events, 7 plugin hook trigger sites, and 0 analytics/telemetry calls. The event system is 90% consistent with domain.verb dot-notation but has 3 hyphenated exceptions, 1 deprecated event, and ~60% of the proposed canonical taxonomy events (plugin, checkpoint, validation, migration, debug) don't exist yet. Artifact written to docs/json/opencode/findings/event-taxonomy-audit.v1.json with full inventory, naming inconsistency report, schema gap analysis, and phased migration plan.",
+  "stats": {
+    "edits": 1,
+    "findings": 0,
+    "feedback": 0,
+    "waves": []
+  },
+  "completed_at": "2026-05-30T11:51:59.924Z"
+}

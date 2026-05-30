@@ -1,0 +1,51 @@
+{
+  "schema_version": "rig.opencode.subagent_handoff.v1",
+  "lane_id": "IN-002-cart",
+  "session_id": null,
+  "agent": "cartographer",
+  "status": "completed",
+  "completed_at": "2026-05-30T12:32:00Z",
+  "artifact_path": "docs/json/opencode/cartography/in-002-review-compression-map.v1.json",
+  "summary": "Mapped all 8 infrastructure systems required for the Review Compression System (IN-002). Found the existing plan, diff, validation, historian, checkpoint, claims, red-team, and governance landscape. Identified 10 concrete gaps, 7 smoking guns, and 4 missing schemas that must be addressed before review compression can be built.",
+  "findings": {
+    "total_gaps": 10,
+    "total_smoking_guns": 7,
+    "missing_schemas": [
+      "rig.relay.review_manifest.v1",
+      "rig.relay.builder_publication_record.v1",
+      "rig.relay.verification_record.v1",
+      "rig.relay.prepublication_review_cycle.v1"
+    ],
+    "critical_gaps": [
+      "GAP-001: No automated plan/diff comparison exists — critic reviews do this manually",
+      "GAP-005: No review_weight / risk_score / change_weight metrics — core requirement is greenfield",
+      "GAP-007: No review manifest format or schema exists at all",
+      "GAP-002: claim_atoms are free-text strings, not structured file references"
+    ]
+  },
+  "key_data_sources": {
+    "plan_artifacts": "docs/json/opencode/plans/{id}.v1.json — 90+ plan files, envelope schema with claim_atoms",
+    "structured_diffs": "Snapshot.FileDiff[] via snapshot/index.ts diffFull() — per-file additions/deletions/status/patch",
+    "edit_logs": "docs/json/opencode/sessions/{id}/edits/edit_log.v1.jsonl — execution trace per edit",
+    "publication_ledger": "docs/json/opencode/publications/publications.v1.jsonl — 8 entries with claim_atoms + changed_files",
+    "validation_records": "5+ formats across validation/, qa/, stress/, waves/ directories — no common schema",
+    "prepublication_records": "docs/json/opencode/approvals/prepublication_{admitted,blocked,inconclusive}.v1.json",
+    "red_team_records": "docs/json/opencode/approvals/red_team_approval.v1.json + concurrency-stress/",
+    "coordination_messages": "docs/json/opencode/coordination/messages.v1.jsonl — files_created, files_modified, claim_atoms_verified"
+  },
+  "recommended_sequence": [
+    "Phase 1: Create 4 missing governance schemas (builder_publication_record, verification_record, prepublication_review_cycle, review_manifest)",
+    "Phase 2: Build plan/diff comparison engine — reads plan boundary + claim_atoms, parses Snapshot.FileDiff[], produces deviation report",
+    "Phase 3: Design review weight rubric — classify changes by type, path, dependency impact",
+    "Phase 4: Build manifest generator — Effect service that reads all data sources and produces review_manifest output"
+  ],
+  "claim_atoms": [
+    "C1: Plan artifacts use envelope schema with claim_atoms as free-text strings — no structured file references",
+    "C2: Structured diffs exist via Snapshot.FileDiff[] and Vcs.FileDiff[] — per-file additions/deletions/status/patch available",
+    "C3: Five validation schema families coexist with zero unification and no JSON Schema files",
+    "C4: Three governance schemas required by AGENTS.md do not exist as schema files",
+    "C5: No automated plan/diff comparison, test delta tracking, or review weight metrics exist in the codebase",
+    "C6: Prepublication verdict fabrication is possible — documented governance integrity gap",
+    "C7: Key data sources for review compression exist but are fragmented across multiple directory structures"
+  ]
+}

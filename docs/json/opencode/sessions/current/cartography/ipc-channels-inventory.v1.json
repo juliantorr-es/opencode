@@ -1,0 +1,201 @@
+{
+  "schema_version": "v1",
+  "generated_at": "2026-05-30T12:00:00Z",
+  "agent": "cartographer",
+  "profile": "cartography",
+  "summary": {
+    "total_ipc_handle_channels": 57,
+    "total_ipc_send_channels": 5,
+    "total_ipc_push_channels": 7,
+    "total_ipc_store_namespaces": 5,
+    "total_ipc_main_handle_registrations": 60,
+    "total_ipc_main_on_registrations": 5,
+    "total_context_bridge_methods": 66,
+    "defined_but_unregistered": ["opencode:event:explain"],
+    "does_not_use_with_ipc_result": ["github-ipc.ts (5/6 handlers)", "ipc-capabilities.ts"]
+  },
+  "channel_registry": {
+    "source_file": "packages/desktop/src/main/ipc-channels.ts",
+    "groups": {
+      "handle": {
+        "count": 57,
+        "prefix": "opencode:",
+        "mechanism": "ipcMain.handle / ipcRenderer.invoke (two-way RPC)",
+        "direction": "renderer->main"
+      },
+      "send": {
+        "count": 5,
+        "prefix": "opencode:",
+        "mechanism": "ipcMain.on / ipcRenderer.send (fire-and-forget)",
+        "direction": "renderer->main"
+      },
+      "push": {
+        "count": 7,
+        "prefix": "opencode:",
+        "mechanism": "webContents.send / event.sender.send → ipcRenderer.on (push)",
+        "direction": "main->renderer"
+      },
+      "store": {
+        "count": 5,
+        "purpose": "electron-store namespace keys (reserved names)"
+      }
+    }
+  },
+  "handler_modules": [
+    {
+      "file": "packages/desktop/src/main/ipc-init.ts",
+      "handler_count": 20,
+      "channels": ["opencode:kill-sidecar", "opencode:await-initialization", "opencode:get-window-config", "opencode:consume-initial-deep-links", "opencode:get-default-server-url", "opencode:set-default-server-url", "opencode:get-wsl-config", "opencode:set-wsl-config", "opencode:get-display-backend", "opencode:set-display-backend", "opencode:parse-markdown", "opencode:check-app-exists", "opencode:wsl-path", "opencode:resolve-app-path", "opencode:run-updater", "opencode:check-update", "opencode:install-update", "opencode:set-background-color", "opencode:export-debug-logs", "opencode:record-fatal-renderer-error"],
+      "also_handles_send": ["opencode:loading-window-complete"]
+    },
+    {
+      "file": "packages/desktop/src/main/ipc-window.ts",
+      "handler_count": 10,
+      "channels": ["opencode:get-window-count", "opencode:get-window-focused", "opencode:set-window-focus", "opencode:show-window", "opencode:get-zoom-factor", "opencode:set-zoom-factor", "opencode:get-pinch-zoom-enabled", "opencode:set-pinch-zoom-enabled", "opencode:set-titlebar", "opencode:run-desktop-menu-action"]
+    },
+    {
+      "file": "packages/desktop/src/main/ipc-config.ts",
+      "handler_count": 7,
+      "channels": ["opencode:get-desktop-custom-agents", "opencode:set-desktop-custom-agents", "opencode:delete-desktop-custom-agent", "opencode:get-desktop-mcp-servers", "opencode:set-desktop-mcp-servers", "opencode:get-desktop-plugin-config", "opencode:set-desktop-plugin-config"]
+    },
+    {
+      "file": "packages/desktop/src/main/ipc-store.ts",
+      "handler_count": 6,
+      "channels": ["opencode:store-get", "opencode:store-set", "opencode:store-delete", "opencode:store-clear", "opencode:store-keys", "opencode:store-length"]
+    },
+    {
+      "file": "packages/desktop/src/main/github-ipc.ts",
+      "handler_count": 6,
+      "channels": ["opencode:github-oauth-start", "opencode:github-oauth-callback", "opencode:github-get-token", "opencode:github-set-token", "opencode:github-clear-token", "opencode:github-api-proxy"]
+    },
+    {
+      "file": "packages/desktop/src/main/ipc-fs.ts",
+      "handler_count": 5,
+      "channels": ["opencode:open-directory-picker", "opencode:open-file-picker", "opencode:save-file-picker", "opencode:open-path", "opencode:read-clipboard-image"],
+      "also_handles_send": ["opencode:open-link", "opencode:show-notification"]
+    },
+    {
+      "file": "packages/desktop/src/main/ipc-session.ts",
+      "handler_count": 2,
+      "channels": ["opencode:session-export-data", "opencode:session-import-file"]
+    },
+    {
+      "file": "packages/desktop/src/main/ipc-locale.ts",
+      "handler_count": 2,
+      "channels": ["opencode:set-locale-preference", "opencode:get-locale-preference"]
+    },
+    {
+      "file": "packages/desktop/src/main/ipc-capabilities.ts",
+      "handler_count": 1,
+      "channels": ["opencode:get-capabilities"]
+    },
+    {
+      "file": "packages/desktop/src/main/plugin-transport-ipc.ts",
+      "handler_count": 1,
+      "channels": ["opencode:plugin:invoke"],
+      "also_handles_send": ["opencode:plugin:send"]
+    },
+    {
+      "file": "packages/desktop/src/main/ipc.ts",
+      "handler_count": 0,
+      "channels": [],
+      "also_handles_send": ["opencode:relaunch"],
+      "also_sends_push": ["opencode:sqlite-migration-progress", "opencode:menu-command", "opencode:deep-link"]
+    }
+  ],
+  "push_channels_main_to_renderer": [
+    {
+      "channel": "opencode:init-step",
+      "sender": { "file": "packages/desktop/src/main/ipc-init.ts", "line": 49, "mechanism": "event.sender.send" },
+      "renderer_listener": { "file": "packages/desktop/src/preload/index.ts", "line": 75, "mechanism": "ipcRenderer.on", "bridge_method": "awaitInitialization(onStep)" }
+    },
+    {
+      "channel": "opencode:sqlite-migration-progress",
+      "sender": { "file": "packages/desktop/src/main/ipc.ts", "line": 41, "mechanism": "win.webContents.send", "function": "sendSqliteMigrationProgress" },
+      "renderer_listener": { "file": "packages/desktop/src/preload/index.ts", "line": 82, "bridge_method": "onSqliteMigrationProgress(cb)" }
+    },
+    {
+      "channel": "opencode:menu-command",
+      "sender": { "file": "packages/desktop/src/main/ipc.ts", "line": 45, "mechanism": "win.webContents.send", "function": "sendMenuCommand" },
+      "renderer_listener": { "file": "packages/desktop/src/preload/index.ts", "line": 87, "bridge_method": "onMenuCommand(cb)" }
+    },
+    {
+      "channel": "opencode:deep-link",
+      "sender": { "file": "packages/desktop/src/main/ipc.ts", "line": 49, "mechanism": "win.webContents.send", "function": "sendDeepLinks" },
+      "renderer_listener": { "file": "packages/desktop/src/preload/index.ts", "line": 92, "bridge_method": "onDeepLink(cb)" }
+    },
+    {
+      "channel": "opencode:pinch-zoom-enabled-changed",
+      "sender": { "file": "packages/desktop/src/main/windows.ts", "line": 105, "mechanism": "win.webContents.send" },
+      "renderer_listener": { "file": "packages/desktop/src/preload/index.ts", "line": 97, "bridge_method": "onPinchZoomEnabledChanged(cb)" }
+    },
+    {
+      "channel": "opencode:zoom-factor-changed",
+      "sender": { "file": "packages/desktop/src/main/windows.ts", "line": 448, "mechanism": "win.webContents.send", "function": "updateZoom" },
+      "renderer_listener": { "file": "packages/desktop/src/preload/index.ts", "line": 102, "bridge_method": "onZoomFactorChanged(cb)" }
+    },
+    {
+      "channel": "opencode:plugin:push",
+      "sender": { "file": "packages/desktop/src/main/plugin-transport-ipc.ts", "line": 95, "mechanism": "win.webContents.send", "function": "sendPluginPush" },
+      "renderer_listener": { "file": "packages/desktop/src/renderer/plugin-transport.ts", "mechanism": "window.api.pluginOn (dynamic)" }
+    }
+  ],
+  "context_bridge_methods": {
+    "source": "packages/desktop/src/preload/index.ts:107",
+    "export_name": "contextBridge.exposeInMainWorld('api', api)",
+    "renderer_access": "window.api.*",
+    "type_definition": "packages/desktop/src/preload/types.ts:58 (ElectronAPI type)",
+    "method_counts": {
+      "invoke_methods": 52,
+      "send_methods": 4,
+      "complex_listener_methods": 6,
+      "complex_plugin_methods": 4,
+      "total": 66
+    },
+    "all_methods": [
+      "killSidecar", "getWindowConfig", "consumeInitialDeepLinks", "getDefaultServerUrl", "setDefaultServerUrl",
+      "getWslConfig", "setWslConfig", "getDisplayBackend", "setDisplayBackend", "parseMarkdownCommand",
+      "checkAppExists", "wslPath", "resolveAppPath", "storeGet", "storeSet", "storeDelete", "storeClear",
+      "storeKeys", "storeLength", "getWindowCount", "openDirectoryPicker", "openFilePicker", "saveFilePicker",
+      "openPath", "readClipboardImage", "getWindowFocused", "setWindowFocus", "showWindow", "getZoomFactor",
+      "setZoomFactor", "getPinchZoomEnabled", "setPinchZoomEnabled", "setTitlebar", "runDesktopMenuAction",
+      "runUpdater", "checkUpdate", "installUpdate", "setBackgroundColor", "exportDebugLogs",
+      "recordFatalRendererError", "getDesktopPluginConfig", "setDesktopPluginConfig", "getCustomAgents",
+      "setCustomAgents", "deleteCustomAgent", "getMcpServers", "setMcpServers", "githubStartOAuth",
+      "githubOAuthCallback", "githubGetToken", "githubSetToken", "githubClearToken", "githubApiProxy",
+      "sessionExportData", "sessionImportFile", "setLocalePreference", "getLocalePreference",
+      "openLink", "showNotification", "relaunch", "loadingWindowComplete",
+      "awaitInitialization", "onSqliteMigrationProgress", "onMenuCommand", "onDeepLink",
+      "onPinchZoomEnabledChanged", "onZoomFactorChanged"
+    ]
+  },
+  "renderer_usage_in_app_package": {
+    "direct_electron_imports": 0,
+    "direct_window_api_calls": 1,
+    "notes": "packages/app/src uses Platform type from context/platform.tsx. window.api.setTitlebar is called directly in app.tsx:178. All other ElectronAPI access goes through Platform interface abstraction via React context, with optional chaining (api?.method?.())",
+    "methods_used_via_platform": [
+      "setTitlebar", "githubGetToken", "githubSetToken", "githubOAuthCallback", "checkAppExists",
+      "readClipboardImage", "sessionExportData", "sessionImportFile", "runDesktopMenuAction",
+      "getMcpServers", "setMcpServers", "getCustomAgents", "setCustomAgents", "deleteCustomAgent",
+      "getLocalePreference", "setLocalePreference", "getWindowFocused", "setWindowFocus", "showWindow",
+      "onDeepLink", "onMenuCommand", "showNotification"
+    ]
+  },
+  "smoking_guns": [
+    {
+      "severity": "low",
+      "finding": "IPC.handle.EVENT_EXPLAIN ('opencode:event:explain') defined in ipc-channels.ts:70 but has NO ipcMain.handle registration, NO contract entry, and NO preload bridge method",
+      "file": "packages/desktop/src/main/ipc-channels.ts",
+      "line": 70
+    },
+    {
+      "severity": "medium",
+      "finding": "Inconsistent error handling pattern: 57/60 handlers use withIpcResult() envelope. github-ipc.ts (5/6 handlers) and ipc-capabilities.ts skip it and return/throw raw values",
+      "file": "packages/desktop/src/main/github-ipc.ts"
+    },
+    {
+      "severity": "info",
+      "finding": "git status: workspace has dirty files including docs/json/opencode/coordination/messages.v1.jsonl.tmp indicating concurrent session activity"
+    }
+  ]
+}

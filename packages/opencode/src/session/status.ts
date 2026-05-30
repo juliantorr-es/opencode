@@ -1,4 +1,5 @@
 import { BusEvent } from "@/bus/bus-event"
+import { EventName } from "@/event/event-names"
 import { Bus } from "@/bus"
 import { InstanceState } from "@/effect/instance-state"
 import { SessionID } from "./schema"
@@ -33,7 +34,7 @@ export type Info = Schema.Schema.Type<typeof Info>
 
 export const Event = {
   Status: BusEvent.define(
-    "session.status",
+    EventName.SessionStatus,
     Schema.Struct({
       sessionID: SessionID,
       status: Info,
@@ -41,7 +42,7 @@ export const Event = {
   ),
   // deprecated
   Idle: BusEvent.define(
-    "session.idle",
+    EventName.SessionIdle,
     Schema.Struct({
       sessionID: SessionID,
     }),

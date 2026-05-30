@@ -1,0 +1,27 @@
+{"at":"2026-05-30T11:55:41.844Z","session_id":"ses_18743d1eaffeHfs9b26B5AnyaE","agent":"lane-owner","tool":"smart_grep","pattern":"import \\{ createHash \\} from","path":"packages/opencode/src"}
+{"at":"2026-05-30T11:58:57.613Z","session_id":"ses_18743d1eaffeHfs9b26B5AnyaE","agent":"lane-owner","tool":"smart_bun","command":"typecheck","elapsed_ms":30,"exit_code":2}
+{"at":"2026-05-30T11:59:02.720Z","session_id":"ses_18743d1eaffeHfs9b26B5AnyaE","agent":"lane-owner","tool":"smart_bun","command":"tsgo","elapsed_ms":8,"exit_code":1}
+{"at":"2026-05-30T11:59:04.497Z","session_id":"ses_18743d1eaffeHfs9b26B5AnyaE","agent":"lane-owner","tool":"smart_grep","pattern":"\"typecheck\"","path":"packages/opencode/package.json"}
+{"at":"2026-05-30T11:59:04.887Z","session_id":"ses_18743d1eaffeHfs9b26B5AnyaE","agent":"lane-owner","tool":"smart_grep","pattern":"\"scripts\"","path":"packages/opencode/package.json"}
+{"at":"2026-05-30T11:59:20.908Z","session_id":"ses_18743d1eaffeHfs9b26B5AnyaE","agent":"lane-owner","tool":"smart_bun","command":"run","elapsed_ms":11485,"exit_code":2}
+{"at":"2026-05-30T11:59:37.408Z","session_id":"ses_18743d1eaffeHfs9b26B5AnyaE","agent":"lane-owner","tool":"smart_grep","pattern":"Effect\\.fork|import.*fork","path":"packages/opencode/src"}
+{"at":"2026-05-30T11:59:37.863Z","session_id":"ses_18743d1eaffeHfs9b26B5AnyaE","agent":"lane-owner","tool":"smart_grep","pattern":"catchAll","path":"packages/opencode/src/agent/scratchpad.ts"}
+{"at":"2026-05-30T11:59:38.104Z","session_id":"ses_18743d1eaffeHfs9b26B5AnyaE","agent":"lane-owner","tool":"smart_grep","pattern":"Effect\\.fork|Fork|fork","path":"packages/opencode/src/tool/cache.ts"}
+{"at":"2026-05-30T11:59:51.478Z","session_id":"ses_18743d1eaffeHfs9b26B5AnyaE","agent":"lane-owner","tool":"smart_grep","pattern":"catchAll","path":"packages/opencode/src"}
+{"at":"2026-05-30T11:59:51.514Z","session_id":"ses_18743d1eaffeHfs9b26B5AnyaE","agent":"lane-owner","tool":"smart_grep","pattern":"forkScoped|forkIn|Effect\\.ignore","path":"packages/opencode/src"}
+{"at":"2026-05-30T12:00:06.424Z","session_id":"ses_18743d1eaffeHfs9b26B5AnyaE","agent":"lane-owner","tool":"smart_grep","pattern":"forkDaemon|forkScoped|forkIn","path":"packages/opencode/src"}
+{"at":"2026-05-30T12:00:34.757Z","session_id":"ses_18743d1eaffeHfs9b26B5AnyaE","agent":"lane-owner","tool":"smart_grep","pattern":"Effect\\.background","path":"packages/opencode/src"}
+{"at":"2026-05-30T12:00:34.771Z","session_id":"ses_18743d1eaffeHfs9b26B5AnyaE","agent":"lane-owner","tool":"smart_grep","pattern":"import.*Scope","path":"packages/opencode/src/tool/cache.ts"}
+{"at":"2026-05-30T12:00:55.709Z","session_id":"ses_18743d1eaffeHfs9b26B5AnyaE","agent":"lane-owner","tool":"smart_grep","pattern":"\"effect\"","path":"packages/opencode/package.json"}
+{"at":"2026-05-30T12:01:44.328Z","session_id":"ses_18743d1eaffeHfs9b26B5AnyaE","agent":"lane-owner","tool":"smart_grep","pattern":"forkScoped","path":"packages/opencode/src/context/project-map.ts"}
+{"at":"2026-05-30T12:02:26.065Z","session_id":"ses_18743d1eaffeHfs9b26B5AnyaE","agent":"lane-owner","tool":"smart_grep","pattern":"Effect\\.catch\\(","path":"packages/opencode/src"}
+{"at":"2026-05-30T12:04:10.014Z","session_id":"ses_18743d1eaffeHfs9b26B5AnyaE","agent":"lane-owner","tool":"smart_find","pattern":"*","path":"packages/opencode/src/context/"}
+{"at":"2026-05-30T12:04:14.079Z","session_id":"ses_18743d1eaffeHfs9b26B5AnyaE","agent":"lane-owner","tool":"smart_grep","pattern":"import.*Option.*from \\\"effect\\\"","path":"packages/opencode/src/context"}
+{"at":"2026-05-30T12:04:16.313Z","session_id":"ses_18743d1eaffeHfs9b26B5AnyaE","agent":"lane-owner","tool":"smart_grep","pattern":"import.*Clock.*from \\\"effect\\\"","path":"packages/opencode/src/context"}
+{"at":"2026-05-30T12:04:16.739Z","session_id":"ses_18743d1eaffeHfs9b26B5AnyaE","agent":"lane-owner","tool":"smart_grep","pattern":"import.*Effect.*from \\\"effect\\\"","path":"packages/opencode/src/context"}
+{"at":"2026-05-30T12:05:48.310Z","session_id":"ses_18743d1eaffeHfs9b26B5AnyaE","agent":"lane-owner","tool":"smart_bun","command":"run","elapsed_ms":21381,"exit_code":2}
+{"at":"2026-05-30T12:06:50.214Z","session_id":"ses_18743d1eaffeHfs9b26B5AnyaE","agent":"lane-owner","tool":"smart_bun","command":"run","elapsed_ms":18156,"exit_code":2}
+{"at":"2026-05-30T12:07:42.736Z","session_id":"ses_18743d1eaffeHfs9b26B5AnyaE","agent":"lane-owner","tool":"smart_grep","pattern":"export.*Bus","path":"packages/opencode/src/bus"}
+{"at":"2026-05-30T12:08:00.564Z","session_id":"ses_18743d1eaffeHfs9b26B5AnyaE","agent":"lane-owner","tool":"smart_grep","pattern":"import.*FileMemory.*from","path":"packages/opencode/src/context"}
+{"at":"2026-05-30T12:09:14.294Z","session_id":"ses_18743d1eaffeHfs9b26B5AnyaE","agent":"lane-owner","tool":"smart_sd","file":"packages/opencode/src/context/file-memory.ts"}
+{"at":"2026-05-30T12:11:54.551Z","session_id":"ses_18743d1eaffeHfs9b26B5AnyaE","agent":"lane-owner","tool":"smart_find","pattern":"index.ts","path":"packages/opencode/src/context/"}

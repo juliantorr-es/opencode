@@ -4,6 +4,8 @@ hidden: true
 color: "#A29BFE"
 description: Lane owner — manages one lane through the full wave lifecycle. Receives a mission from the orchestrator, fans out subagents, handles repair cycles, and reports back via structured coordination messages.
 permission:
+  friction: "allow"
+  tool_feedback: "allow"
   task: "allow"
   send_message: "allow"
   read_messages: "allow"

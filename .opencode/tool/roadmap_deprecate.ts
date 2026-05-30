@@ -24,12 +24,27 @@ export default tool({
     if (!items[args.item_id]) return JSON.stringify({ error: `Item '${args.item_id}' not found` }, null, 2)
 
     const item = items[args.item_id]
+    const wasAlreadyDeprecated = item.status === "deprecated"
+    const previousReason = item.deprecation_reason || null
     const exp = new Date(Date.now() + 30 * 86400000).toISOString()
+
     item.status = "deprecated"
-    item.deprecation_reason = args.reason
-    item.deprecation_replacement = args.replacement || null
+    item.deprecation_reason = args.reason || item.deprecation_reason || args.reason
+    item.deprecation_replacement = args.replacement !== undefined ? args.replacement : (item.deprecation_replacement || null)
     item.deprecation_session = args.session_ref || context.sessionID
     item.deprecation_expires = exp
+
+    // Cascade block dependents
+    const cascaded: any[] = []
+    for (const [id, depItem] of Object.entries(items) as [string, any][]) {
+      if (id === args.item_id) continue
+      const deps: string[] = (depItem as any).depends_on || []
+      if (deps.includes(args.item_id) && (depItem as any).status !== "deprecated") {
+        (depItem as any).status = "blocked"
+        (depItem as any).blocked_reason = `Upstream dependency '${args.item_id}' deprecated: ${args.reason}`
+        cascaded.push({ id, title: (depItem as any).title })
+      }
+    }
 
     writeFileSync(ap, JSON.stringify(active, null, 2), "utf8")
     try { mkdirSync(resolvePath(context.worktree, "docs/json/roadmaps"), { recursive: true }) } catch (_) {}
@@ -46,7 +61,9 @@ export default tool({
     return JSON.stringify({
       status: "deprecated", item_id: args.item_id, title: item.title,
       reason: args.reason, replacement: args.replacement || null,
-      expires_in_30_days: true, orphaned_dependents: orphaned,
+      was_already_deprecated: wasAlreadyDeprecated, previous_reason: previousReason,
+      expires_in_30_days: true, expires_at: exp,
+      cascaded_blocked: cascaded, orphaned_dependents: orphaned,
     }, null, 2)
   },
 })

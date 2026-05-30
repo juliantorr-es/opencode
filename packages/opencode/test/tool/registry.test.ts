@@ -92,6 +92,8 @@ const brokenPluginLayer = Layer.succeed(
           },
         },
       ]),
+    checkCapability: () => Effect.succeed(true),
+    getRegistry: () => Effect.succeed({} as any),
   }),
 )
 

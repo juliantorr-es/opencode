@@ -1,0 +1,10 @@
+{"at":"2026-05-30T09:46:20.561Z","session_id":"ses_187ba9779ffeH1hF05F7UTX2Rc","agent":"architect","tool":"smart_find","pattern":"*.pg.sql.ts","path":"packages/opencode/src"}
+{"at":"2026-05-30T09:46:20.570Z","session_id":"ses_187ba9779ffeH1hF05F7UTX2Rc","agent":"architect","tool":"smart_find","pattern":"migrate*","path":"packages/opencode/src"}
+{"at":"2026-05-30T09:46:24.882Z","session_id":"ses_187ba9779ffeH1hF05F7UTX2Rc","agent":"architect","tool":"smart_find","pattern":"database-config*","path":"packages/opencode/src"}
+{"at":"2026-05-30T09:46:27.150Z","session_id":"ses_187ba9779ffeH1hF05F7UTX2Rc","agent":"architect","tool":"smart_grep","pattern":"\"#db\"","path":"packages/opencode"}
+{"at":"2026-05-30T09:46:29.577Z","session_id":"ses_187ba9779ffeH1hF05F7UTX2Rc","agent":"architect","tool":"smart_grep","pattern":"from \\\"drizzle-orm/bun-sqlite/migrator\\\"","path":"packages/opencode"}
+{"at":"2026-05-30T09:47:08.212Z","session_id":"ses_187ba9779ffeH1hF05F7UTX2Rc","agent":"architect","tool":"smart_grep","pattern":"migrate.*migration|applyMigration|runMigration","path":"packages/opencode/src"}
+{"at":"2026-05-30T09:47:10.403Z","session_id":"ses_187ba9779ffeH1hF05F7UTX2Rc","agent":"architect","tool":"smart_grep","pattern":"applyMigrations|from.*db\\.pg","path":"packages/opencode/test"}
+{"at":"2026-05-30T09:50:16.888Z","session_id":"ses_187ba9779ffeH1hF05F7UTX2Rc","agent":"architect","tool":"smart_find","pattern":"flag*","path":"packages/opencode/src"}
+{"at":"2026-05-30T09:50:17.254Z","session_id":"ses_187ba9779ffeH1hF05F7UTX2Rc","agent":"architect","tool":"smart_grep","pattern":"Flag\\.OPENCODE_DB","path":"packages/opencode"}
+{"at":"2026-05-30T09:50:20.612Z","session_id":"ses_187ba9779ffeH1hF05F7UTX2Rc","agent":"architect","tool":"smart_grep","pattern":"OPENCODE_DB\\b","path":"packages/core/src"}

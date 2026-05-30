@@ -1,0 +1,101 @@
+{
+  "schema_version": "v1",
+  "plan_id": "evidence-governed-sm",
+  "title": "Evidence-Governed Multi-Agent State Machine",
+  "generated_at": "2026-05-30T12:00:00Z",
+  "status": "draft",
+  "description": "Formalizes the campaign-lane bureaucracy pattern: Orchestrator decomposes into lanes, Secretary drives a state machine per lane, Role agents perform bounded work, transitions require materialized evidence from the event ledger, Historians checkpoint, Integrator merges, Auditor verifies process integrity.",
+  "foundation": {
+    "existing_roles": ["orchestrator", "lane-owner", "cartographer", "architect", "critic", "executor", "validator", "stress", "repair", "historian"],
+    "existing_infrastructure": ["RuntimeEvent schema + EventStore", "ContextInvalidationBus", "Authority contracts", "Typed tool results", "Context packet assembly", "DuckDB analytics"],
+    "key_insight": "The existing wave sequence (scout → architect → critic → executor → validator → redteam → repair → historian) is already a state machine. Formalize it as a declarative spec with evidence-gated transitions instead of prompt-based orchestration."
+  },
+  "lanes": [
+    {
+      "lane_id": "SM-001",
+      "title": "Campaign, Lane, Binder Types — Core Domain Model",
+      "priority": 1,
+      "effort": "moderate",
+      "description": "Define the core domain types for the state machine architecture: Campaign, Lane, Binder, Role, Transition, Evidence. These types are the foundation for all subsequent lanes. Every role, transition, and evidence reference uses these types.",
+      "target_files": ["packages/opencode/src/campaign/types.ts"]
+    },
+    {
+      "lane_id": "SM-002",
+      "title": "State Machine Spec — Declarative Definition + Reducer",
+      "priority": 2,
+      "effort": "high",
+      "description": "Declarative state machine spec format (YAML-data, not code-soup). Reducer that deterministically produces current state from event stream. States define allowed tools, exit criteria, transitions. Transitions are PredicateSpec arrays checked in priority order. The reducer is a pure function: f(previousState, event, spec) → nextState. Must be deterministic — same events always produce same state.",
+      "target_files": ["packages/opencode/src/campaign/state-machine.ts"]
+    },
+    {
+      "lane_id": "SM-003",
+      "title": "Transition Predicate Engine — Typed Predicates over Event Ledger",
+      "priority": 3,
+      "effort": "high",
+      "description": "Typed predicate system that drives state transitions. Predicates query the event ledger, file memory, claim state, and DuckDB views. event_exists, latest_validation_passed, claims_acquired, has_claim_conflict, permission_denied, retry_budget_remaining, user_approval_granted, etc. Each predicate has a typed schema and a resolver that checks it against runtime state. This is how transitions become deterministic instead of vibes-based.",
+      "target_files": ["packages/opencode/src/campaign/predicates.ts"]
+    },
+    {
+      "lane_id": "SM-004",
+      "title": "Secretary State Machine Controller — Lane Runtime",
+      "priority": 4,
+      "effort": "high",
+      "description": "The Secretary is the state machine controller per lane — NOT a reasoning agent. It loads the lane's state machine spec, runs the reducer on the lane's event stream, checks transition predicates, launches role agents when the state machine says so, maintains the lane binder, enforces role contracts (allowed tools, forbidden behaviors), and returns the binder when the lane completes. This replaces the current lane-owner pattern with a deterministic controller.",
+      "target_files": ["packages/opencode/src/campaign/secretary.ts"]
+    },
+    {
+      "lane_id": "SM-005",
+      "title": "Role Contracts — Typed Contracts for Each Agent Role",
+      "priority": 5,
+      "effort": "moderate",
+      "description": "Typed contracts for each role: Scout, Architect, Critic, Executor, Validator, RedTeam, Repair, Historian, Auditor, Integrator. Each contract defines: allowed tools, forbidden tools, input schema, output schema, allowed files, max budget, stop conditions, terminal statuses. The Secretary enforces these contracts before launching a role agent. If the agent tries to use a disallowed tool, the runtime blocks it. A Scout that tries to edit is blocked by the contract, not just the prompt.",
+      "target_files": ["packages/opencode/src/campaign/role-contracts.ts"]
+    },
+    {
+      "lane_id": "SM-006",
+      "title": "Binder Schema + Persistence — First-Class Lane Artifact",
+      "priority": 6,
+      "effort": "moderate",
+      "description": "The Lane Binder is a first-class runtime object containing: mission objective, lane scope, owned files/claims, scout reports, architecture plan, critic reviews, approved implementation plan, execution events, diff summary, validation results, red-team findings, repair history, checkpoint commit, residual risks, handoff summary. Both human-readable and machine-readable. Persisted to the event store. The binder is what crosses agent boundaries — it prevents information decay.",
+      "target_files": ["packages/opencode/src/campaign/binder.ts"]
+    },
+    {
+      "lane_id": "SM-007",
+      "title": "Campaign Orchestrator + Lane Dependency Graph",
+      "priority": 7,
+      "effort": "high",
+      "description": "Campaign-level orchestrator state machine: campaign_created → global_scouting → scope_synthesis → lane_decomposition → lane_dispatch → waiting_for_lanes → integration_review → final_validation → push_ready → pushed. The orchestrator builds a lane dependency graph: some lanes run in parallel, some are sequenced. Lane C cannot start until Lane B's binder has stable API types. The orchestrator blocks lanes whose dependencies are unmet. Final integration review runs before push.",
+      "target_files": ["packages/opencode/src/campaign/orchestrator.ts"]
+    },
+    {
+      "lane_id": "SM-008",
+      "title": "Auditor — Campaign-Level Process Integrity",
+      "priority": 8,
+      "effort": "moderate",
+      "description": "The Auditor sits at campaign level and checks process integrity. It asks: Did every lane have a scout report? Did every executor have an approved plan? Did any lane edit outside its claim? Did validation happen after edits? Did any red-team finding get ignored? Did the historian checkpoint the correct diff? Did any lane return with uncommitted changes? Did any binder omit residual risk? The auditor produces an audit report that must pass before push. This prevents the process from becoming theater.",
+      "target_files": ["packages/opencode/src/campaign/auditor.ts"]
+    },
+    {
+      "lane_id": "SM-009",
+      "title": "Integrator — Cross-Lane Merge + Final Validation",
+      "priority": 9,
+      "effort": "moderate",
+      "description": "The Integrator merges lane checkpoints before final push. Resolves checkpoint order, detects contract drift (one lane changes an API another lane depends on), runs cross-lane validation, updates campaign binder, produces final integration diff, requests final critic/red-team if scope changed. Without this, the orchestrator becomes overloaded.",
+      "target_files": ["packages/opencode/src/campaign/integrator.ts"]
+    }
+  ],
+  "campaign_states": {
+    "orchestrator": ["created", "scouting", "scope_synthesis", "lane_decomposition", "lane_dispatch", "waiting_for_lanes", "integration_review", "final_validation", "push_ready", "pushed"],
+    "lane": ["created", "scouting", "scoped", "planning", "critic_review", "approved", "executing", "validating", "red_team", "repairing", "historian", "checkpointed", "returned"]
+  },
+  "transition_examples": [
+    {"from": "planning", "to": "critic_review", "when": "plan_produced"},
+    {"from": "critic_review", "to": "planning", "when": "plan_rejected"},
+    {"from": "critic_review", "to": "executing", "when": "plan_approved"},
+    {"from": "executing", "to": "validating", "when": "edit_applied"},
+    {"from": "validating", "to": "repairing", "when": "new_test_failure"},
+    {"from": "validating", "to": "red_team", "when": "validation_passed"},
+    {"from": "red_team", "to": "repairing", "when": "finding_confirmed"},
+    {"from": "red_team", "to": "historian", "when": "no_blocking_findings"}
+  ]
+}

@@ -1,0 +1,32 @@
+{"at":"2026-05-30T10:33:36.307Z","session_id":"ses_1878dc06bffeaidw6dX2fsFex6","agent":"validator","tool":"smart_grep","phase":"started","detail":"\\.opencode/tool/"}
+{"at":"2026-05-30T10:33:36.555Z","session_id":"ses_1878dc06bffeaidw6dX2fsFex6","agent":"validator","tool":"smart_grep","phase":"completed","detail":"\\.opencode/tool/"}
+{"at":"2026-05-30T10:33:36.588Z","session_id":"ses_1878dc06bffeaidw6dX2fsFex6","agent":"validator","tool":"smart_find","phase":"started","detail":"*.ts"}
+{"at":"2026-05-30T10:33:36.589Z","session_id":"ses_1878dc06bffeaidw6dX2fsFex6","agent":"validator","tool":"smart_find","phase":"completed","detail":"*.ts"}
+{"at":"2026-05-30T10:33:44.915Z","session_id":"ses_1878dc06bffeaidw6dX2fsFex6","agent":"validator","tool":"smart_bash","phase":"started","detail":"Validate blueprint structure: count items, phases, CI status, sessions arrays, required fields"}
+{"at":"2026-05-30T10:33:44.915Z","session_id":"ses_1878dc06bffeaidw6dX2fsFex6","agent":"validator","tool":"smart_bash","phase":"rerouted","detail":"→ read_source"}
+{"at":"2026-05-30T10:33:46.911Z","session_id":"ses_1878dc06bffeaidw6dX2fsFex6","agent":"validator","tool":"smart_bash","phase":"started","detail":"Verify active roadmap structure and content"}
+{"at":"2026-05-30T10:33:46.912Z","session_id":"ses_1878dc06bffeaidw6dX2fsFex6","agent":"validator","tool":"smart_bash","phase":"rerouted","detail":"→ read_source"}
+{"at":"2026-05-30T10:33:50.213Z","session_id":"ses_1878dc06bffeaidw6dX2fsFex6","agent":"validator","tool":"smart_bash","phase":"started","detail":"Parse blueprint JSON to count items, phases, check CI status, sessions, and required fields"}
+{"at":"2026-05-30T10:33:50.280Z","session_id":"ses_1878dc06bffeaidw6dX2fsFex6","agent":"validator","tool":"smart_bash","phase":"completed","detail":"python3 exit=0"}
+{"at":"2026-05-30T10:33:51.774Z","session_id":"ses_1878dc06bffeaidw6dX2fsFex6","agent":"validator","tool":"smart_bash","phase":"started","detail":"Parse active roadmap to verify structure and existence"}
+{"at":"2026-05-30T10:33:51.813Z","session_id":"ses_1878dc06bffeaidw6dX2fsFex6","agent":"validator","tool":"smart_bash","phase":"completed","detail":"python3 exit=0"}
+{"at":"2026-05-30T10:34:26.000Z","session_id":"ses_1878dc06bffeaidw6dX2fsFex6","agent":"validator","tool":"smart_grep","phase":"started","detail":"was_already_deprecated"}
+{"at":"2026-05-30T10:34:26.014Z","session_id":"ses_1878dc06bffeaidw6dX2fsFex6","agent":"validator","tool":"smart_grep","phase":"completed","detail":"was_already_deprecated"}
+{"at":"2026-05-30T10:34:26.023Z","session_id":"ses_1878dc06bffeaidw6dX2fsFex6","agent":"validator","tool":"smart_grep","phase":"started","detail":"wasAlreadyDeprecated"}
+{"at":"2026-05-30T10:34:26.027Z","session_id":"ses_1878dc06bffeaidw6dX2fsFex6","agent":"validator","tool":"smart_grep","phase":"completed","detail":"wasAlreadyDeprecated"}
+{"at":"2026-05-30T10:34:26.035Z","session_id":"ses_1878dc06bffeaidw6dX2fsFex6","agent":"validator","tool":"smart_grep","phase":"started","detail":"readJson\\(activePath\\)"}
+{"at":"2026-05-30T10:34:26.039Z","session_id":"ses_1878dc06bffeaidw6dX2fsFex6","agent":"validator","tool":"smart_grep","phase":"completed","detail":"readJson\\(activePath\\)"}
+{"at":"2026-05-30T10:34:26.047Z","session_id":"ses_1878dc06bffeaidw6dX2fsFex6","agent":"validator","tool":"smart_grep","phase":"started","detail":"truncatedNote"}
+{"at":"2026-05-30T10:34:26.051Z","session_id":"ses_1878dc06bffeaidw6dX2fsFex6","agent":"validator","tool":"smart_grep","phase":"completed","detail":"truncatedNote"}
+{"at":"2026-05-30T10:34:26.059Z","session_id":"ses_1878dc06bffeaidw6dX2fsFex6","agent":"validator","tool":"smart_grep","phase":"started","detail":"show_blocked"}
+{"at":"2026-05-30T10:34:26.063Z","session_id":"ses_1878dc06bffeaidw6dX2fsFex6","agent":"validator","tool":"smart_grep","phase":"completed","detail":"show_blocked"}
+{"at":"2026-05-30T10:34:26.073Z","session_id":"ses_1878dc06bffeaidw6dX2fsFex6","agent":"validator","tool":"smart_grep","phase":"started","detail":"auto_created_phase|autoCreatedPhase"}
+{"at":"2026-05-30T10:34:26.078Z","session_id":"ses_1878dc06bffeaidw6dX2fsFex6","agent":"validator","tool":"smart_grep","phase":"completed","detail":"auto_created_phase|autoCreatedPhase"}
+{"at":"2026-05-30T10:34:40.156Z","session_id":"ses_1878dc06bffeaidw6dX2fsFex6","agent":"validator","tool":"smart_grep","phase":"started","detail":"orphaned_dependents"}
+{"at":"2026-05-30T10:34:40.171Z","session_id":"ses_1878dc06bffeaidw6dX2fsFex6","agent":"validator","tool":"smart_grep","phase":"completed","detail":"orphaned_dependents"}
+{"at":"2026-05-30T10:34:40.180Z","session_id":"ses_1878dc06bffeaidw6dX2fsFex6","agent":"validator","tool":"smart_grep","phase":"started","detail":"const orphaned"}
+{"at":"2026-05-30T10:34:40.184Z","session_id":"ses_1878dc06bffeaidw6dX2fsFex6","agent":"validator","tool":"smart_grep","phase":"completed","detail":"const orphaned"}
+{"at":"2026-05-30T10:34:42.870Z","session_id":"ses_1878dc06bffeaidw6dX2fsFex6","agent":"validator","tool":"smart_grep","phase":"started","detail":"completion_pct \\?\\? item\\.completion_pct \\?\\? 0"}
+{"at":"2026-05-30T10:34:42.876Z","session_id":"ses_1878dc06bffeaidw6dX2fsFex6","agent":"validator","tool":"smart_grep","phase":"completed","detail":"completion_pct \\?\\? item\\.completion_pct \\?\\? 0"}
+{"at":"2026-05-30T10:34:43.304Z","session_id":"ses_1878dc06bffeaidw6dX2fsFex6","agent":"validator","tool":"smart_grep","phase":"started","detail":"cascaded: any\\[\\]"}
+{"at":"2026-05-30T10:34:43.309Z","session_id":"ses_1878dc06bffeaidw6dX2fsFex6","agent":"validator","tool":"smart_grep","phase":"completed","detail":"cascaded: any\\[\\]"}

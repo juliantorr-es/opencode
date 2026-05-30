@@ -23,11 +23,6 @@
       "next_step": "Done. Verify in next session.",
       "sessions": [
         {
-          "ref": "current",
-          "note": "Heartbeat added to 6 smart tools, task_board enhanced with fleet+alerts",
-          "pct": 100
-        },
-        {
           "ref": "ses_188ab38c2ffeLuaFOiEMyaP4yd",
           "note": "TEL-001 implemented: Bus events now published at all 4 task lifecycle points (running, completed, failed x2). Schema file created. task.ts now emits TaskStatusChanged events via Bus system. Pre-existing TaskStatusChanged event definition in coord-events.ts now has its first subscriber (publisher).",
           "pct": 100
@@ -67,21 +62,14 @@
       ],
       "effort": "moderate",
       "context_summary": "Lane-owner agent receives a mission from orchestrator, runs full wave lifecycle, reports back via structured handoff/blocker/alert messages. Supports cancel, pivot, and warm resume.",
-      "next_step": "Done. Test in next multi-lane session.",
-      "sessions": [
-        {
-          "ref": "current",
-          "note": "Agent definition created with full communication protocol",
-          "pct": 100
-        }
-      ]
+      "next_step": "Done. Test in next multi-lane session."
     },
     {
       "id": "CI-004",
       "title": "Cross-session roadmap tools — active/blueprint/audit system",
       "phase": "3-0",
       "priority": 4,
-      "status": "in_progress",
+      "status": "not_started",
       "completion_pct": 0,
       "depends_on": [
         "CI-003"
@@ -95,38 +83,24 @@
       "title": "Lessons register — cross-session pattern memory",
       "phase": "3-0",
       "priority": 5,
-      "status": "completed",
-      "completion_pct": 100,
+      "status": "not_started",
+      "completion_pct": 0,
       "depends_on": [],
       "effort": "low",
       "context_summary": "lesson_register tool records one-sentence insights to lessons.v1.jsonl. Categories: codebase, workflow, architecture, tool, timing, convention. Future sessions read these at startup.",
-      "next_step": "Done. Verify lessons are being recorded and discovered.",
-      "sessions": [
-        {
-          "ref": "current",
-          "note": "Tool created, orchestrator prompt updated with session-end ritual",
-          "pct": 100
-        }
-      ]
+      "next_step": "Done. Verify lessons are being recorded and discovered."
     },
     {
       "id": "CI-006",
       "title": "Session diff tool — consolidated change reporting",
       "phase": "3-0",
       "priority": 6,
-      "status": "completed",
-      "completion_pct": 100,
+      "status": "not_started",
+      "completion_pct": 0,
       "depends_on": [],
       "effort": "low",
       "context_summary": "session_diff tool aggregates edit_logs, runs git diff --stat, and produces per-package breakdown with file lists. Used for PR descriptions and handoffs.",
-      "next_step": "Done. Verify output quality in next session.",
-      "sessions": [
-        {
-          "ref": "current",
-          "note": "Tool created, orchestrator prompt updated",
-          "pct": 100
-        }
-      ]
+      "next_step": "Done. Verify output quality in next session."
     },
     {
       "id": "PG-001",
@@ -134,7 +108,7 @@
       "phase": "3-1",
       "priority": 1,
       "status": "in_progress",
-      "completion_pct": 40,
+      "completion_pct": 45,
       "depends_on": [],
       "effort": "high",
       "context_summary": "account.pg.sql.ts exists untracked, account.sql.ts has staged TimestampsPg changes. ~6 tables need Pg schema definitions. Must be dual-write compatible with SQLite during migration.",
@@ -154,6 +128,11 @@
           "ref": "ses_18862e469ffe8YopxMcyWkIgKg",
           "note": "Schemas complete. Next step: application layer — switch production imports from .sql.ts to .pg.sql.ts + implement dual-write in the DB adapter layer.",
           "pct": 40
+        },
+        {
+          "ref": "ses_1875ffac7ffejFAZbiBzU8lfPI",
+          "note": "Session built complete Runtime Event infrastructure: Event Persistence (schema, store, bridge), Timeline Inspector UI (7 components + route), DuckDB Analytics (6 views), Debug Export + Flight Recorder. Pre-fabricated next-wave UX and Agent Workbench lanes.",
+          "pct": 45
         }
       ]
     },
@@ -190,14 +169,26 @@
       "title": "Production Postgres connection pool and health checks",
       "phase": "3-1",
       "priority": 4,
-      "status": "not_started",
-      "completion_pct": 0,
+      "status": "completed",
+      "completion_pct": 100,
       "depends_on": [
         "PG-003"
       ],
       "effort": "moderate",
       "context_summary": "Connection pool with retry logic, health check endpoint, graceful degradation if Pg is unreachable.",
-      "next_step": "Design connection pool API — Effect Layer or class-based?"
+      "next_step": "Design connection pool API — Effect Layer or class-based?",
+      "sessions": [
+        {
+          "ref": "pg-004-pool",
+          "note": "Production Postgres connection pool implemented: PgPool service with retry+error classification, health check, graceful degradation to SQLite, pool config via env vars, and test suite.",
+          "pct": 0
+        },
+        {
+          "ref": "ses_187c14877ffevDC25n5mJfcOOp",
+          "note": "PgPool service with retry (3 attempts, exponential backoff), error classification (auth/SSL skip retry), health check (SELECT 1), graceful degradation to SQLite. All 20/20 tests pass.",
+          "pct": 100
+        }
+      ]
     },
     {
       "id": "DC-001",

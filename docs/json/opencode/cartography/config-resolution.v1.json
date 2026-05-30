@@ -1,0 +1,183 @@
+{
+  "schema": "rig.opencode.cartography.v1",
+  "generated_at": "2026-05-30T09:32:00Z",
+  "profile": "cartography",
+  "title": "Desktop App Config Resolution Surface Area",
+  "sections": {
+    "surface_map": {
+      "packages_app_src_config": {
+        "exists": false,
+        "note": "Directory packages/app/src/config/ does NOT exist. The renderer web app has zero Electron imports and no config module of its own."
+      },
+      "desktop_main_config_files": [
+        {
+          "file": "packages/desktop/src/main/constants.ts:19",
+          "imports": ["{ app } from 'electron'"],
+          "app_isPackaged": "line 12",
+          "exports": "CHANNEL, APP_IDS, UPDATER_ENABLED, store key constants"
+        },
+        {
+          "file": "packages/desktop/src/main/app-config.ts:23 (NEW)",
+          "imports": ["{ app } from 'electron'"],
+          "app_isPackaged": "line 21",
+          "env": "OPENCODE_GITHUB_CLIENT_ID",
+          "exports": "getGithubClientId, getHealthEndpoint, getCustomProtocol, getAppIdentity"
+        },
+        {
+          "file": "packages/desktop/src/main/store.ts:24",
+          "imports": ["{ app } from 'electron'", "Store from 'electron-store'"],
+          "app_getPath": "app.getPath('userData') line 17",
+          "exports": "getStore() — lazy electron-store singleton per namespace"
+        },
+        {
+          "file": "packages/desktop/src/main/ipc-channels.ts:102 (NEW)",
+          "imports": "none",
+          "exports": "IPC.handle/send/push/store — centralized registry of 60+ channels"
+        },
+        {
+          "file": "packages/desktop/src/main/server.ts:248",
+          "imports": ["{ app, utilityProcess } from 'electron'"],
+          "process_env": "XDG_STATE_HOME, OPENCODE_EXPERIMENTAL_*, OPENCODE_CLIENT",
+          "exports": "getDefaultServerUrl, setDefaultServerUrl, getWslConfig, setWslConfig, preferAppEnv, spawnLocalServer"
+        },
+        {
+          "file": "packages/desktop/src/main/index.ts:357",
+          "imports": ["{ app, BrowserWindow } from 'electron'"],
+          "is_entry_point": true,
+          "app_setPath": "setPath('userData', join(app.getPath('appData'), appId)) lines 135-137",
+          "app_getPath": "getPath('appData') line 137, getPath('userData') lines 167/309",
+          "xdg_overrides": "XDG_DATA/CONFIG/CACHE/STATE_HOME + OPENCODE_DB=:memory: for onboarding tests lines 126-130"
+        }
+      ],
+      "opencode_src_config": {
+        "exists": true,
+        "total_files": 23,
+        "framework": "Effect-TS (v4 beta) with Schema validation",
+        "barrel_file": "No barrel — each file exports its own namespace via `export * as ConfigX from './x'`",
+        "no_electron_usage": true,
+        "config_schema": "Config.Info (Schema.Struct defining ~40 top-level fields)",
+        "loading_priority": "10 levels from well-known remote → global config file → project .opencode/ → env vars → managed/MDM",
+        "validation": "Effect Schema declarative validation with parse/error reporting"
+      }
+    },
+    "critical_architecture_discovery": "TWO COMPLETELY SEPARATE CONFIG SYSTEMS",
+    "dual_config_systems": {
+      "system_a": {
+        "name": "Desktop Shell Config (electron-store)",
+        "scope": "Electron app preferences: window state, WSL, display backend, plugins, custom agents, MCP servers, locale, zoom",
+        "storage": "electron-store JSON files under app.getPath('userData')",
+        "schema": "NONE — raw key-value",
+        "access_by_renderer": "window.api.* IPC methods (storeGet/Set, getWslConfig, etc.)",
+        "preload_bridge": "contextBridge.exposeInMainWorld('api', api) — 55 methods total",
+        "main_handlers": "packages/desktop/src/main/ipc.ts — registerIpcHandlers()",
+        "renderer_storage_adapter": "packages/desktop/src/renderer/index.tsx — AsyncStorage wrapper around window.api.storeGet/Set"
+      },
+      "system_b": {
+        "name": "Backend Opencode Config (Effect Schema)",
+        "scope": "Runtime configuration: providers, models, agents, commands, MCP definitions, permissions, shell, logLevel, server, share, etc.",
+        "storage": "JSONC files in XDG config dirs (~/.config/opencode/) and project .opencode/ directories",
+        "schema": "Effect Schema — full declarative validation (Config.Info type)",
+        "access_by_renderer": "HTTP API via SDK — NOT IPC",
+        "fetch_pattern": "sdk.global.config.get() / sdk.config.get() via TanStack Query",
+        "renderer_store": "SolidJS reactive stores (serverSync.data.config and sync.data.config)",
+        "server_side_construction": "packages/opencode/src/config/config.ts:381 — Config.layer merges from 10 sources",
+        "http_api": "packages/opencode/src/server/routes/instance/httpapi/groups/config.ts — GET/PATCH /config"
+      }
+    },
+    "config_flow_diagram": {
+      "desktop_shell_config": "Main (electron-store) ──IPC──▶ Preload (contextBridge) ──window.api──▶ Renderer",
+      "backend_config": "Sidecar Server (Effect Schema) ──HTTP──▶ SDK Client ──TanStack Query──▶ SolidJS Store ──context──▶ Components",
+      "note": "These are TWO SEPARATE PATHS. IPC config is for Electron shell preferences. HTTP config is for opencode runtime settings. They don't share a data model."
+    },
+    "electron_api_calls_catalog": {
+      "file_catalog": [
+        {"file": "packages/desktop/src/main/store.ts:17", "api": "app.getPath('userData')", "purpose": "electron-store cwd"},
+        {"file": "packages/desktop/src/main/logging.ts:37", "api": "app.getPath('userData')", "purpose": "Crashpad directory"},
+        {"file": "packages/desktop/src/main/logging.ts:57", "api": "app.getPath('downloads')", "purpose": "Debug log export"},
+        {"file": "packages/desktop/src/main/logging.ts:64", "api": "app.getPath('crashDumps')", "purpose": "Collect crashpad logs"},
+        {"file": "packages/desktop/src/main/logging.ts:102", "api": "app.getPath('userData')", "purpose": "Log root"},
+        {"file": "packages/desktop/src/main/logging.ts:143", "api": "app.getPath('userData')", "purpose": "Debug manifest"},
+        {"file": "packages/desktop/src/main/logging.ts:146", "api": "app.getPath('crashDumps')", "purpose": "Debug manifest"},
+        {"file": "packages/desktop/src/main/logging.ts:154", "api": "app.getPath('userData')", "purpose": "Server log roots"},
+        {"file": "packages/desktop/src/main/index.ts:137", "api": "app.getPath('appData')", "purpose": "Base for userData override"},
+        {"file": "packages/desktop/src/main/index.ts:167", "api": "app.getPath('userData')", "purpose": "Pass to preferAppEnv()"},
+        {"file": "packages/desktop/src/main/index.ts:309", "api": "app.getPath('userData')", "purpose": "Pass to sidecar"},
+        {"file": "packages/desktop/src/main/apps.ts:47", "api": "app.getPath('home')", "purpose": "macOS app location"},
+        {"file": "packages/desktop/src/main/migrate.ts:15", "api": "app.getPath('home')", "purpose": "macOS Tauri dir"},
+        {"file": "packages/desktop/src/main/migrate.ts:17", "api": "app.getPath('home')", "purpose": "Windows Tauri fallback"},
+        {"file": "packages/desktop/src/main/migrate.ts:19", "api": "app.getPath('home')", "purpose": "Linux Tauri fallback"}
+      ],
+      "totals": {
+        "getPath('userData')": 7,
+        "getPath('home')": 4,
+        "getPath('crashDumps')": 2,
+        "getPath('appData')": 1,
+        "getPath('downloads')": 1,
+        "isPackaged": {"uses": ["constants.ts:12", "app-config.ts:21", "index.ts:117,133,151,160", "logging.ts:138", "migrate.ts:24", "windows.ts:66"]},
+        "setPath": {"calls": ["index.ts:135-137 (userData)", "index.ts:139 (sessionData)", "logging.ts:39 (crashDumps)"]}
+      }
+    },
+    "preload_bridge_summary": {
+      "files": ["index.ts:104", "types.ts:136"],
+      "contextBridge": "exposeInMainWorld('api', api) at index.ts:103",
+      "total_methods": 55,
+      "config_methods_available_to_renderer": "storeGet/Set/Delete/Clear/Keys/Length, getWindowConfig, getDefaultServerUrl, getWslConfig, getDisplayBackend, getDesktopPluginConfig, getCustomAgents, getMcpServers, getLocalePreference",
+      "type_declaration": "packages/desktop/src/renderer/env.d.ts — Window.api: ElectronAPI"
+    },
+    "dirty_and_new_files": {
+      "modified_relevant": [
+        {"file": "packages/desktop/src/main/index.ts", "status": "modified unstaged", "delta": "89 lines — removing SQLite migration overlay"},
+        {"file": "packages/desktop/src/main/server.ts", "status": "modified unstaged", "delta": "50 lines"},
+        {"file": "packages/desktop/src/main/sidecar.ts", "status": "modified unstaged", "delta": "99 lines"}
+      ],
+      "new_untracked": [
+        {"file": "packages/desktop/src/main/app-config.ts", "purpose": "Centralizes app identity, GitHub OAuth, protocol constants"},
+        {"file": "packages/desktop/src/main/ipc-channels.ts", "purpose": "Centralized IPC channel registry — single source of truth"}
+      ]
+    },
+    "smoking_guns": [
+      {
+        "id": 1,
+        "severity": "critical",
+        "finding": "packages/app/src/config/ DOES NOT EXIST",
+        "detail": "The directory the user asked about doesn't exist. Config is split across TWO completely separate systems: (A) Desktop shell config via electron-store/IPC and (B) Backend opencode config via Effect Schema/HTTP."
+      },
+      {
+        "id": 2,
+        "severity": "high",
+        "finding": "Two completely separate config systems with different access patterns, storage, and validation",
+        "detail": "Desktop config: electron-store (no schema, IPC bridge). Backend config: Effect Schema (validated, HTTP API). They don't share data models. A developer looking for 'the config' needs to understand which system they need.",
+        "files_a": ["packages/desktop/src/main/store.ts", "packages/desktop/src/main/ipc.ts", "packages/desktop/src/preload/index.ts"],
+        "files_b": ["packages/opencode/src/config/config.ts", "packages/opencode/src/server/routes/instance/httpapi/groups/config.ts"],
+        "files_renderer_bridge": ["packages/app/src/context/server-sync.tsx", "packages/app/src/context/global-sync/bootstrap.ts"]
+      },
+      {
+        "id": 3,
+        "severity": "medium",
+        "finding": "Desktop electron-store has NO schema validation or type safety (beyond store key strings)",
+        "detail": "window.api.storeSet(namespace, key, value) accepts any key/value. The renderer wraps it in a generic AsyncStorage. No type checks, no migration strategy for shape changes.",
+        "files": ["packages/desktop/src/main/store.ts:12-24", "packages/desktop/src/main/ipc.ts:90+", "packages/desktop/src/renderer/index.tsx:121-142"]
+      },
+      {
+        "id": 4,
+        "severity": "low",
+        "finding": "Stale preload types after SQLite overlay removal (SqliteMigrationProgress, InitStep 'sqlite_waiting')",
+        "files": ["packages/desktop/src/preload/types.ts:3,11"]
+      },
+      {
+        "id": 5,
+        "severity": "info",
+        "finding": "Backend config consumers in the desktop app read config via SDK HTTP API, NOT via IPC",
+        "detail": "Config readers like settings-general.tsx use 'serverSync.data.config.shell' (TanStack Query → SDK HTTP API). They never call window.api.* for backend config.",
+        "files": ["packages/app/src/components/settings-general.tsx:207"]
+      },
+      {
+        "id": 6,
+        "severity": "info",
+        "finding": "Main process sets userData path override — critical for electron-store placement",
+        "detail": "index.ts:135-137 sets app.setPath('userData', join(app.getPath('appData'), appId)). This MUST happen before any getStore() call due to module hoisting timing (documented in store.ts comment).",
+        "files": ["packages/desktop/src/main/index.ts:135-137", "packages/desktop/src/main/store.ts:6-10"]
+      }
+    ]
+  }
+}

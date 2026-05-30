@@ -1,0 +1,12 @@
+{
+  "schema_version": "v1",
+  "session_id": "ses_187878bebffeevm9pMNMJCy0wD",
+  "summary": "Lane AH-007 completed: Reporting Honesty Audit across 52 JSON artifacts under docs/json/opencode. Identified 15 overclaim findings (5 high, 8 medium, 2 low severity) across evidence, plans, reports, and documentation. Established a maturity level taxonomy (interface_exists → dogfooded) and severity rubric. Created schema at docs/schemas/rig.relay.reporting_honesty_audit.v1.schema.json. Output audit artifact at docs/json/opencode/audits/reporting-honesty-audit.v1.json. Key discoveries: (1) phase1_completion claims zero errors with 280 actual errors, (2) pg_backend_migration claims production-proven without deployment, (3) adapter_consumer_complete and phase1_completion contradict each other on Database.* call elimination, (4) final_closures_plan uses bare 'all cycles verified' with no evidence links, (5) empty verification section in phase1-completion documentation. No source files were modified.",
+  "stats": {
+    "edits": 2,
+    "findings": 0,
+    "feedback": 0,
+    "waves": []
+  },
+  "completed_at": "2026-05-30T10:51:02.022Z"
+}

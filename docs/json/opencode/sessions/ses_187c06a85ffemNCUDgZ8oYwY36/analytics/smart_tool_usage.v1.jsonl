@@ -1,0 +1,22 @@
+{"at":"2026-05-30T09:38:16.773Z","session_id":"ses_187c06a85ffemNCUDgZ8oYwY36","agent":"cartographer","tool":"smart_grep","pattern":"app\\.getPath\\b|app\\.getAppPath\\b","path":"packages/app/src"}
+{"at":"2026-05-30T09:38:17.176Z","session_id":"ses_187c06a85ffemNCUDgZ8oYwY36","agent":"cartographer","tool":"smart_grep","pattern":"require\\(['\"]electron['\"]\\)","path":"packages/app/src"}
+{"at":"2026-05-30T09:38:17.606Z","session_id":"ses_187c06a85ffemNCUDgZ8oYwY36","agent":"cartographer","tool":"smart_grep","pattern":"from ['\"]electron['\"]","path":"packages/app/src"}
+{"at":"2026-05-30T09:38:17.956Z","session_id":"ses_187c06a85ffemNCUDgZ8oYwY36","agent":"cartographer","tool":"smart_grep","pattern":"remote\\.app|remote\\.require","path":"packages/app/src"}
+{"at":"2026-05-30T09:38:18.343Z","session_id":"ses_187c06a85ffemNCUDgZ8oYwY36","agent":"cartographer","tool":"smart_grep","pattern":"process\\.electron|window\\.electron","path":"packages/app/src"}
+{"at":"2026-05-30T09:38:18.745Z","session_id":"ses_187c06a85ffemNCUDgZ8oYwY36","agent":"cartographer","tool":"smart_grep","pattern":"window\\.require\\(['\"]electron['\"]\\)","path":"packages/app/src"}
+{"at":"2026-05-30T09:38:19.270Z","session_id":"ses_187c06a85ffemNCUDgZ8oYwY36","agent":"cartographer","tool":"smart_grep","pattern":"contextBridge","path":"packages/app/src"}
+{"at":"2026-05-30T09:38:19.545Z","session_id":"ses_187c06a85ffemNCUDgZ8oYwY36","agent":"cartographer","tool":"smart_grep","pattern":"isElectron|isDesktop|isBrowser","path":"packages/app/src"}
+{"at":"2026-05-30T09:38:19.924Z","session_id":"ses_187c06a85ffemNCUDgZ8oYwY36","agent":"cartographer","tool":"smart_grep","pattern":"navigator\\.userAgent","path":"packages/app/src"}
+{"at":"2026-05-30T09:38:20.395Z","session_id":"ses_187c06a85ffemNCUDgZ8oYwY36","agent":"cartographer","tool":"smart_grep","pattern":"platform|electron","path":"packages/app/src"}
+{"at":"2026-05-30T09:38:25.068Z","session_id":"ses_187c06a85ffemNCUDgZ8oYwY36","agent":"cartographer","tool":"smart_grep","pattern":"platform\\.","path":"packages/app/src"}
+{"at":"2026-05-30T09:38:25.085Z","session_id":"ses_187c06a85ffemNCUDgZ8oYwY36","agent":"cartographer","tool":"smart_grep","pattern":"electron|desktop|native","path":"packages/app/src"}
+{"at":"2026-05-30T09:38:25.202Z","session_id":"ses_187c06a85ffemNCUDgZ8oYwY36","agent":"cartographer","tool":"smart_find","pattern":"*preload*","path":"packages/app"}
+{"at":"2026-05-30T09:38:25.375Z","session_id":"ses_187c06a85ffemNCUDgZ8oYwY36","agent":"cartographer","tool":"smart_find","pattern":"*electron*","path":"packages/app"}
+{"at":"2026-05-30T09:38:25.587Z","session_id":"ses_187c06a85ffemNCUDgZ8oYwY36","agent":"cartographer","tool":"smart_find","pattern":"*bridge*","path":"packages/app"}
+{"at":"2026-05-30T09:38:28.954Z","session_id":"ses_187c06a85ffemNCUDgZ8oYwY36","agent":"cartographer","tool":"smart_grep","pattern":"PlatformProvider|provider: PlatformProvider|usePlatform","path":"packages/app/src"}
+{"at":"2026-05-30T09:38:29.739Z","session_id":"ses_187c06a85ffemNCUDgZ8oYwY36","agent":"cartographer","tool":"smart_find","pattern":"*desktop*","path":"packages"}
+{"at":"2026-05-30T09:38:30.457Z","session_id":"ses_187c06a85ffemNCUDgZ8oYwY36","agent":"cartographer","tool":"smart_grep","pattern":"createSimpleContext|platform\\.tsx","path":"packages"}
+{"at":"2026-05-30T09:38:35.748Z","session_id":"ses_187c06a85ffemNCUDgZ8oYwY36","agent":"cartographer","tool":"smart_find","pattern":"*","path":"packages/desktop"}
+{"at":"2026-05-30T09:38:39.524Z","session_id":"ses_187c06a85ffemNCUDgZ8oYwY36","agent":"cartographer","tool":"smart_find","pattern":"*.ts","path":"packages/desktop"}
+{"at":"2026-05-30T09:38:40.263Z","session_id":"ses_187c06a85ffemNCUDgZ8oYwY36","agent":"cartographer","tool":"smart_find","pattern":"*preload*|*main*|*renderer*","path":"packages/desktop"}
+{"at":"2026-05-30T09:38:43.064Z","session_id":"ses_187c06a85ffemNCUDgZ8oYwY36","agent":"cartographer","tool":"smart_find","pattern":"*.ts","path":"packages/desktop/src"}

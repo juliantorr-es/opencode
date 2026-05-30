@@ -1,0 +1,12 @@
+{
+  "schema_version": "v1",
+  "session_id": "ses_18787ba56ffe8Vjc37W9Xo3MSn",
+  "summary": "Lane AH-004 completed: Adversarial/concurrency test suite for coordination layer. Created `packages/opencode/test/tool/coordination.test.ts` with 15 tests covering 6 required scenarios: T1 (path reservation race detection), T2 (stale claim handling — cross-session isolation), T3 (fan-out group membership), T4 (wave status correctness with released/failed/claimed statuses + wave scope isolation), T4b (cross-wave leakage), T5 (XML escaping — formatStructuredResult properly escapes all special chars), T6a (reservation lifecycle), T6b (stale reservation behavior). NOTE: Transaction-based coordination API functions (claimTask, releaseTask, failTask, reservePath, releasePath) could not be tested directly due to PGlite SET TRANSACTION incompatibility in the adapter.transaction layer. Testing is done via raw SQL inserts + Drizzle ORM read queries. CoordinationTool tests (T6c) deferred as they require Truncate and Agent service layers. All 15 tests pass and typecheck shows no errors in the test file.",
+  "stats": {
+    "edits": 33,
+    "findings": 0,
+    "feedback": 0,
+    "waves": []
+  },
+  "completed_at": "2026-05-30T11:23:58.132Z"
+}

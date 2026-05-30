@@ -1,0 +1,12 @@
+{
+  "schema_version": "v1",
+  "session_id": "ses_18787e3deffevT0vkCrlVsQBPu",
+  "summary": "Lane AH-001: Fixed atomicity race in tool cache inflight deduplication.\n\nCompleted full lifecycle: learning (cartographer, convention-scout, historian) → planning (architect) → review (critic, GATE approved) → execution (applied edit) → verification (typecheck 0 errors, diff verified) → validation → handoff.\n\nThe inflight dedup registration in packages/opencode/src/tool/cache.ts used a non-atomic Ref.get(inflight) + pending.get(key) + pending.set(key, d) pattern. Two fibers could both check, both see no pending computation, and both compute the same key. The fix replaces this with a single atomic Ref.modify(inflight, ...) call that checks for an existing pending computation and registers the new one atomically.\n\nThe Deferred is eagerly created before Ref.modify (since Deferred.make() is an Effect), then atomically registered inside the modify callback. The dedup path returns early via Deferred.await(existing). The compute path proceeds with computation unchanged. The Effect.ensuring cleanup is untouched.\n\nSingle file changed: packages/opencode/src/tool/cache.ts (33 lines diff, typecheck passes).",
+  "stats": {
+    "edits": 2,
+    "findings": 0,
+    "feedback": 0,
+    "waves": []
+  },
+  "completed_at": "2026-05-30T10:51:04.112Z"
+}

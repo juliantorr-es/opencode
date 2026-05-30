@@ -1,0 +1,21 @@
+{
+  "schema_version": "v1",
+  "plan_id": "runtime-event-schema-lane-1",
+  "plan_revision": 1,
+  "title": "Runtime Event Schema + Persistence Layer",
+  "boundary": "packages/opencode/src/event/",
+  "consumer_purpose": "Persist all bus events to SQLite for audit, replay, and debugging",
+  "claim_atoms": [
+    "RuntimeEvent Effect schema defined",
+    "runtime_events SQLite table created via Drizzle",
+    "EventStore service with record(query available",
+    "Bus→EventStore bridge subscribes to all bus events",
+    "Registered in schema.ts",
+    "Typecheck passes",
+    "Existing tests pass"
+  ],
+  "content": "## Files to create\n\n### 1. packages/opencode/src/event/runtime-event.ts\n- Define RuntimeEvent schema using Effect Schema (Schema.Struct)\n- Fields: id, sessionId, runId, parentEventId?, correlationId?, ts, actor (literal union), eventType, phase?, status?, toolName?, filePath?, model?, durationMs?, tokenInput?, tokenOutput?, errorCode?, errorMessage?, recoverable?, payloadJson?\n- actor is literal union: \"user\" | \"assistant\" | \"tool\" | \"system\" | \"lifecycle\"\n- Use Schema.String, Schema.Number, Schema.Boolean, Schema.optional, Schema.optionalNullable\n\n### 2. packages/opencode/src/event/event.sql.ts\n- runtime_events table using sqliteTable from drizzle-orm/sqlite-core\n- snake_case columns matching RuntimeEvent fields\n- Indexes on session_id, event_type, ts, actor\n- Use $type<T>() for typed columns\n- payload_json stored as text({ mode: \"json\" })\n\n### 3. packages/opencode/src/event/event-store.ts\n- EventStore interface with record(event: RuntimeEvent) and query(filters) methods\n- Use DatabaseAdapter.Service for DB access via Effect\n- Implement insert for record\n- Implement query with WHERE clause building for filters\n\n### 4. packages/opencode/src/event/event-bridge.ts\n- Layer that subscribes to all bus events via Bus.Service.subscribeAll()\n- Transforms each Payload into RuntimeEvent\n- Records via EventStore\n- Runs as background fiber (Effect.forkScoped) in a Layer.scoped\n\n### 5. packages/opencode/src/event/index.ts\n- Re-export everything from all modules\n\n## Files to modify\n\n### 6. packages/opencode/src/storage/schema.ts\n- Add `export { RuntimeEventTable } from \"../event/event.sql\"`\n\n## Important patterns\n- Use Effect.gen for all effectful code\n- Use Context.Tag for service tags\n- Use Layer.effect / Layer.scoped for layers\n- Use existing Log utility\n- Follow snake_case for Drizzle columns\n- Use text({ mode: \"json\" }) for JSON payload field",
+  "status": "proposed",
+  "created_at": "2026-05-30T11:25:58.603Z",
+  "modified_at": "2026-05-30T11:25:58.603Z"
+}

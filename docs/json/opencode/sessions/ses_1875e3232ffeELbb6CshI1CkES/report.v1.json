@@ -1,0 +1,12 @@
+{
+  "schema_version": "v1",
+  "session_id": "ses_1875e3232ffeELbb6CshI1CkES",
+  "summary": "Lane 4: Debug Packet Export + Flight Recorder\n\n## Files Created\n1. **packages/opencode/src/debug/index.ts** — Barrel exports for the debug module\n2. **packages/opencode/src/debug/debug-packet.ts** — DebugPacket type definitions (10+ interfaces) and `assembleDebugPacket()` Effect function that queries session, config, permission, git stores\n3. **packages/opencode/src/debug/debug-export.ts** — `exportDebugPacket()` Effect function that writes the debug packet to a structured zip using @zip.js/zip.js\n4. **packages/opencode/src/debug/flight-recorder.ts** — Runtime Flight Recorder with:\n   - In-memory ring buffer via Effect Ref (default 1000 events)\n   - Event type allowlist for safety (no sensitive event types recorded)\n   - Service interface (record/snapshot/flush/getEvents/reset)\n   - Configurable layer + wiredLayer that auto-subscribes to bus\n5. **packages/app/src/components/inspector/export-button.tsx** — Frontend export button with radio-button export type selection, platform integration, toast notifications\n\n## DebugPacket Structure\n- version, generatedAt, appVersion, dbSchemaVersion\n- session: { metadata, messages, runtimeEvents, toolCalls, fileEdits, permissionDecisions, lifecycleTransitions, mcpEvents, errors }\n- redactedConfig — sensitive keys (api_key, token, secret, etc.) masked\n- Optional: gitDiff, duckDbQueries\n\n## Flight Recorder Design\n- Lock-free ring buffer using Effect Ref (atomic state transitions)\n- Event type allowlist prevents sensitive data capture\n- wireToBus subscribes to bus.subscribeAll() with scoped lifecycle\n- flush() currently logs events; EventStore batch persistence is a follow-up\n- wiredLayer auto-activates the recorder when composed into the app layer\n\n## Key Decisions\n- Use Effect.tryPromise for @zip.js/zip.js async operations\n- Event type filtering in flight recorder (allow-list pattern)\n- Partial failure: each data source wrapped in try/catch\n- Config redaction recursive up to 5 levels deep\n\n## Verification\n- Typecheck: 0 errors in debug/ files (all remaining errors are pre-existing in lifecycle/, event/, and test files)\n\n## Dependencies\n- @zip.js/zip.js: already existed in packages/opencode/package.json\n- Effect: already existed\n- Bus, Session, Permission, Config, Git services: all already existed",
+  "stats": {
+    "edits": 6,
+    "findings": 0,
+    "feedback": 0,
+    "waves": []
+  },
+  "completed_at": "2026-05-30T11:35:51.380Z"
+}

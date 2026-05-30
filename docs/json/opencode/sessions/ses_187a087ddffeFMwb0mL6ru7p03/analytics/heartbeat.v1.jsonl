@@ -1,0 +1,2 @@
+{"at":"2026-05-30T10:13:14.966Z","session_id":"ses_187a087ddffeFMwb0mL6ru7p03","agent":"execution","tool":"smart_grep","phase":"started","detail":"(?<![\\w.])t\\(\"([^\"]+)\""}
+{"at":"2026-05-30T10:13:14.970Z","session_id":"ses_187a087ddffeFMwb0mL6ru7p03","agent":"execution","tool":"smart_grep","phase":"failed","detail":"rg: regex parse error:\n    (?:(?<![\\w.])t\\(\"([^\"]+)\")\n       ^^^^\nerror: look-around, including look-ahead and look-behind, is not supported\n\nConsider enabling PCRE2 with the --pcre2 flag, which can h"}

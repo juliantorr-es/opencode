@@ -1,0 +1,22 @@
+{"at":"2026-05-30T09:41:57.013Z","session_id":"ses_187bd0b22ffeTH188jN5awv13X","agent":"convention-scout","tool":"smart_grep","phase":"started","detail":"app\\.getPath\\("}
+{"at":"2026-05-30T09:41:57.187Z","session_id":"ses_187bd0b22ffeTH188jN5awv13X","agent":"convention-scout","tool":"smart_grep","phase":"completed","detail":"app\\.getPath\\("}
+{"at":"2026-05-30T09:41:57.423Z","session_id":"ses_187bd0b22ffeTH188jN5awv13X","agent":"convention-scout","tool":"smart_grep","phase":"started","detail":"app\\.getAppPath\\("}
+{"at":"2026-05-30T09:41:57.529Z","session_id":"ses_187bd0b22ffeTH188jN5awv13X","agent":"convention-scout","tool":"smart_grep","phase":"completed","detail":"app\\.getAppPath\\("}
+{"at":"2026-05-30T09:41:57.920Z","session_id":"ses_187bd0b22ffeTH188jN5awv13X","agent":"convention-scout","tool":"smart_grep","phase":"started","detail":"remote\\.app"}
+{"at":"2026-05-30T09:41:58.030Z","session_id":"ses_187bd0b22ffeTH188jN5awv13X","agent":"convention-scout","tool":"smart_grep","phase":"completed","detail":"remote\\.app"}
+{"at":"2026-05-30T09:41:58.301Z","session_id":"ses_187bd0b22ffeTH188jN5awv13X","agent":"convention-scout","tool":"smart_grep","phase":"started","detail":"remote\\.require\\("}
+{"at":"2026-05-30T09:41:58.409Z","session_id":"ses_187bd0b22ffeTH188jN5awv13X","agent":"convention-scout","tool":"smart_grep","phase":"completed","detail":"remote\\.require\\("}
+{"at":"2026-05-30T09:41:58.927Z","session_id":"ses_187bd0b22ffeTH188jN5awv13X","agent":"convention-scout","tool":"smart_grep","phase":"started","detail":"require\\(('|\")electron('|\")\\)"}
+{"at":"2026-05-30T09:41:59.038Z","session_id":"ses_187bd0b22ffeTH188jN5awv13X","agent":"convention-scout","tool":"smart_grep","phase":"completed","detail":"require\\(('|\")electron('|\")\\)"}
+{"at":"2026-05-30T09:41:59.546Z","session_id":"ses_187bd0b22ffeTH188jN5awv13X","agent":"convention-scout","tool":"smart_grep","phase":"started","detail":"import.*from\\s+(['\"])electron\\1"}
+{"at":"2026-05-30T09:41:59.550Z","session_id":"ses_187bd0b22ffeTH188jN5awv13X","agent":"convention-scout","tool":"smart_grep","phase":"failed","detail":"rg: regex parse error:\n    (?:import.*from\\s+(['\"])electron\\1)\n                                    ^^\nerror: backreferences are not supported\n\nConsider enabling PCRE2 with the --pcre2 flag, which can "}
+{"at":"2026-05-30T09:41:59.987Z","session_id":"ses_187bd0b22ffeTH188jN5awv13X","agent":"convention-scout","tool":"smart_grep","phase":"started","detail":"contextBridge\\.exposeInMainWorld"}
+{"at":"2026-05-30T09:42:00.099Z","session_id":"ses_187bd0b22ffeTH188jN5awv13X","agent":"convention-scout","tool":"smart_grep","phase":"completed","detail":"contextBridge\\.exposeInMainWorld"}
+{"at":"2026-05-30T09:42:00.299Z","session_id":"ses_187bd0b22ffeTH188jN5awv13X","agent":"convention-scout","tool":"smart_grep","phase":"started","detail":"webUtils|getPathForFile"}
+{"at":"2026-05-30T09:42:00.407Z","session_id":"ses_187bd0b22ffeTH188jN5awv13X","agent":"convention-scout","tool":"smart_grep","phase":"completed","detail":"webUtils|getPathForFile"}
+{"at":"2026-05-30T09:42:00.747Z","session_id":"ses_187bd0b22ffeTH188jN5awv13X","agent":"convention-scout","tool":"smart_grep","phase":"started","detail":"ipcRenderer\\.invoke\\(.*config"}
+{"at":"2026-05-30T09:42:00.880Z","session_id":"ses_187bd0b22ffeTH188jN5awv13X","agent":"convention-scout","tool":"smart_grep","phase":"completed","detail":"ipcRenderer\\.invoke\\(.*config"}
+{"at":"2026-05-30T09:42:01.295Z","session_id":"ses_187bd0b22ffeTH188jN5awv13X","agent":"convention-scout","tool":"smart_grep","phase":"started","detail":"ipcMain\\.handle\\(.*config"}
+{"at":"2026-05-30T09:42:01.403Z","session_id":"ses_187bd0b22ffeTH188jN5awv13X","agent":"convention-scout","tool":"smart_grep","phase":"completed","detail":"ipcMain\\.handle\\(.*config"}
+{"at":"2026-05-30T09:42:01.614Z","session_id":"ses_187bd0b22ffeTH188jN5awv13X","agent":"convention-scout","tool":"smart_grep","phase":"started","detail":"getConfig|getConfigValue"}
+{"at":"2026-05-30T09:42:01.721Z","session_id":"ses_187bd0b22ffeTH188jN5awv13X","agent":"convention-scout","tool":"smart_grep","phase":"completed","detail":"getConfig|getConfigValue"}

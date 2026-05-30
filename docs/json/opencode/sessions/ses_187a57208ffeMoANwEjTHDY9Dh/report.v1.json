@@ -1,0 +1,12 @@
+{
+  "schema_version": "v1",
+  "session_id": "ses_187a57208ffeMoANwEjTHDY9Dh",
+  "summary": "## L10N-002: i18n Key Parity Test\n\n### What was built\nEnhanced `packages/app/src/i18n/parity.test.ts` with:\n\n1. **Locale parity checks** (preserved from original) — every non-en locale file has all keys defined in en.ts. 17 locales × 971 keys each, all in sync.\n\n2. **Code key extraction** (new) — pure TypeScript file walker scans all .ts/.tsx files, extracting literal keys from `t()` calls using an anchored regex that excludes test framework calls and filters out non-i18n strings via `isLikelyI18nKey()`.\n\n3. **Code key completeness check** (new) — every t() call key extracted from source must exist in en.ts or be allowlisted. Fails CI with source file:line references.\n\n4. **Stale allowlist detection** (new) — if a allowlisted key is later added to en.ts + all locales, the test fails alerting to remove it from the allowlist.\n\n5. **Key inventory report** (new) — prints summary counts in CI output for visibility.\n\n### Key stats\n- 971 en.ts keys, 651 code-extracted keys, 5 dynamic keys (home.tsx filters), 45 allowlist entries\n- 0 stale allowlist entries, 0 unknown keys\n- 20 test cases pass in ~146ms\n\n### What was NOT modified\n- Locale files (17 locale .ts files untouched)\n- Fallback implementation (L10N-001)\n- CI pipeline (test auto-discovers .test.ts files)\n- UI or desktop i18n packages",
+  "stats": {
+    "edits": 12,
+    "findings": 0,
+    "feedback": 0,
+    "waves": []
+  },
+  "completed_at": "2026-05-30T10:19:11.685Z"
+}

@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto"
 import { EventEmitter } from "node:events"
-import { existsSync, mkdirSync, rmSync } from "node:fs"
+import { existsSync, mkdirSync, rmSync, unlinkSync, writeFileSync } from "node:fs"
 import * as http from "node:http"
 import { createServer } from "node:net"
 import { homedir, tmpdir } from "node:os"
@@ -34,6 +34,7 @@ import {
   setRelaunchHandler,
   setBackgroundColor,
   setDockIcon,
+  transitionToSafeMode,
 } from "./windows"
 import { migrate } from "./migrate"
 import { checkUpdate, checkForUpdates, installUpdate, setupAutoUpdater } from "./updater"
@@ -78,6 +79,8 @@ function setInitStep(step: InitStep) {
 }
 
 async function killSidecar() {
+  const lockPath = join(app.getPath("userData"), ".crash_lock")
+  try { unlinkSync(lockPath) } catch { /* ignore */ }
   if (!server) return
   const current = server
   server = null
@@ -253,9 +256,43 @@ const main = Effect.gen(function* () {
     setBackgroundColor: (color) => setBackgroundColor(color),
     exportDebugLogs: () => exportDebugLogs(),
     recordFatalRendererError: (error) => writeLog("renderer", "fatal renderer error", { ...error }, "error"),
+    getSafeModeDiagnostics: async () => ({
+      error: { message: "No diagnostics available", component: "unknown" },
+      systemInfo: {
+        platform: process.platform,
+        arch: process.arch,
+        version: app.getVersion(),
+        userDataPath: app.getPath("userData"),
+        logPath: join(app.getPath("userData"), "logs"),
+      },
+    }),
+    safeModeAction: async (action) => {
+      switch (action) {
+        case "retry_normal_startup":
+          app.relaunch()
+          app.exit(0)
+          break
+        default:
+          writeLog("safe-mode", `safe mode action: ${action}`, {}, "info")
+      }
+    },
   })
 
   yield* Effect.promise(() => app.whenReady())
+
+  let overlay: BrowserWindow | null = null
+  const crashLock = join(app.getPath("userData"), ".crash_lock")
+  const safeModeRequested = process.argv.includes("--safe-mode") || process.env.OPENCODE_SAFE_MODE === "1"
+  const crashDetected = existsSync(crashLock)
+  const inSafeMode = safeModeRequested || crashDetected
+  if (inSafeMode) {
+    overlay = transitionToSafeMode(createLoadingWindow(), {
+      message: safeModeRequested ? "Safe mode requested" : "Previous session crashed",
+      component: "system",
+    })
+  } else {
+    writeFileSync(crashLock, String(process.pid), "utf-8")
+  }
 
   if (!TEST_ONBOARDING) migrate()
   app.setAsDefaultProtocolClient("opencode")
@@ -270,44 +307,46 @@ const main = Effect.gen(function* () {
     ),
   )
 
-  const needsMigration = ((): boolean => {
+  const needsMigration = inSafeMode ? false : ((): boolean => {
     if (process.env.OPENCODE_DB === ":memory:") return false
 
     const xdg = process.env.XDG_DATA_HOME
     const base = xdg && xdg.length > 0 ? xdg : join(homedir(), ".local", "share")
     return !existsSync(join(base, "opencode", "opencode.db"))
   })()
-  let overlay: BrowserWindow | null = null
 
-  const port = yield* Effect.gen(function* () {
-    const fromEnv = process.env.OPENCODE_PORT
-    if (fromEnv) {
-      const parsed = Number.parseInt(fromEnv, 10)
-      if (!Number.isNaN(parsed)) return parsed
-    }
+  let loadingTask: Fiber.Fiber<void, unknown> = yield* Effect.void.pipe(Effect.forkChild)
 
-    const res = yield* Deferred.make<number, unknown>()
-    const server = createServer()
-    server.on("error", (e) => Deferred.failSync(res, () => e))
-    server.listen(0, "127.0.0.1", () => {
-      const address = server.address()
-      if (typeof address !== "object" || !address) {
-        server.close()
-        Deferred.failSync(res, () => new Error("Failed to get port"))
-        return
+  if (!inSafeMode) {
+    const port = yield* Effect.gen(function* () {
+      const fromEnv = process.env.OPENCODE_PORT
+      if (fromEnv) {
+        const parsed = Number.parseInt(fromEnv, 10)
+        if (!Number.isNaN(parsed)) return parsed
       }
-      const port = address.port
-      server.close(() => Effect.runSync(Deferred.succeed(res, port)))
+
+      const res = yield* Deferred.make<number, unknown>()
+      const server = createServer()
+      server.on("error", (e) => Deferred.failSync(res, () => e))
+      server.listen(0, "127.0.0.1", () => {
+        const address = server.address()
+        if (typeof address !== "object" || !address) {
+          server.close()
+          Deferred.failSync(res, () => new Error("Failed to get port"))
+          return
+        }
+        const p = address.port
+        server.close(() => Effect.runSync(Deferred.succeed(res, p)))
+      })
+
+      return yield* Deferred.await(res)
     })
+    const hostname = "127.0.0.1"
+    const url = `http://${hostname}:${port}`
+    const password = randomUUID()
 
-    return yield* Deferred.await(res)
-  })
-  const hostname = "127.0.0.1"
-  const url = `http://${hostname}:${port}`
-  const password = randomUUID()
-
-  const loadingTask = yield* Effect.gen(function* () {
-    logger.log("sidecar connection started", { url })
+    loadingTask = yield* Effect.gen(function* () {
+      logger.log("sidecar connection started", { url })
 
     initEmitter.on("sqlite", (progress: SqliteMigrationProgress) => {
       setInitStep({ phase: "sqlite_waiting" })
@@ -347,8 +386,9 @@ const main = Effect.gen(function* () {
 
     logger.log("loading task finished")
   }).pipe(Effect.forkChild)
+  }
 
-  if (needsMigration) {
+  if (!inSafeMode && needsMigration) {
     const show = yield* loadingTask.pipe(
       Fiber.await,
       Effect.timeout("1 second"),
@@ -361,12 +401,14 @@ const main = Effect.gen(function* () {
     }
   }
 
-  yield* Fiber.await(loadingTask)
-  setInitStep({ phase: "done" })
+  if (!inSafeMode) {
+    yield* Fiber.await(loadingTask)
+    setInitStep({ phase: "done" })
 
-  if (overlay) yield* Deferred.await(loadingComplete)
+    if (overlay) yield* Deferred.await(loadingComplete)
 
-  mainWindow = createMainWindow()
+    mainWindow = createMainWindow()
+  }
   if (mainWindow) {
     createMenu({
       trigger: (id) => {

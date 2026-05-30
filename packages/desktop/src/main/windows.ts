@@ -182,6 +182,15 @@ export function createMainWindow() {
   return win
 }
 
+export function transitionToSafeMode(win: BrowserWindow, error: { message: string; component: string }): BrowserWindow {
+  win.setSize(800, 600)
+  win.center()
+  win.setResizable(true)
+  win.setTitle("OpenCode — Safe Mode")
+  loadWindow(win, "safe-mode.html")
+  return win
+}
+
 export function createLoadingWindow() {
   const mode = tone()
   const win = new BrowserWindow({

@@ -1,0 +1,111 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "opencode.runtime_event.v1",
+  "title": "OpenCode Runtime Event",
+  "description": "Schema for a single runtime event in OpenCode's event-driven execution model. Events capture actor actions, tool invocations, lifecycle transitions, and system diagnostics with normalized error codes and performance metadata.",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Unique event identifier"
+    },
+    "sessionId": {
+      "type": "string",
+      "description": "Session that owns this event"
+    },
+    "runId": {
+      "type": "string",
+      "description": "Run (turn) identifier within the session"
+    },
+    "parentEventId": {
+      "type": "string",
+      "description": "Optional parent event ID for event hierarchy"
+    },
+    "correlationId": {
+      "type": "string",
+      "description": "Optional correlation ID for cross-event tracing"
+    },
+    "ts": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp when the event occurred"
+    },
+    "actor": {
+      "type": "string",
+      "enum": ["user", "assistant", "tool", "system", "lifecycle"],
+      "description": "Actor that produced the event"
+    },
+    "eventType": {
+      "type": "string",
+      "description": "Dot-notation event type identifier (e.g. session.next.tool.called)"
+    },
+    "phase": {
+      "type": "string",
+      "description": "Optional phase label within the session lifecycle"
+    },
+    "status": {
+      "type": "string",
+      "enum": ["started", "succeeded", "failed", "denied", "cancelled", "recovered"],
+      "description": "Event status describing the outcome"
+    },
+    "toolName": {
+      "type": "string",
+      "description": "Name of the tool if this event relates to a tool invocation"
+    },
+    "filePath": {
+      "type": "string",
+      "description": "File path associated with the event, if any"
+    },
+    "model": {
+      "type": "string",
+      "description": "Model identifier if this event relates to an LLM call"
+    },
+    "durationMs": {
+      "type": "number",
+      "description": "Duration in milliseconds for the event's operation"
+    },
+    "tokenInput": {
+      "type": "number",
+      "description": "Number of input tokens consumed"
+    },
+    "tokenOutput": {
+      "type": "number",
+      "description": "Number of output tokens produced"
+    },
+    "errorCode": {
+      "type": "string",
+      "description": "Normalized error code in dot-notation (e.g. tool.timeout, lifecycle.phase_gate_denied)"
+    },
+    "errorMessage": {
+      "type": "string",
+      "description": "Human-readable error message"
+    },
+    "recoverable": {
+      "type": "boolean",
+      "description": "Whether the error is recoverable"
+    },
+    "payloadJson": {
+      "description": "Full original event properties as a free-form JSON value"
+    }
+  },
+  "required": ["id", "sessionId", "runId", "ts", "actor", "eventType"],
+  "additionalProperties": false,
+  "examples": [
+    {
+      "id": "evt_abc123",
+      "sessionId": "ses_def456",
+      "runId": "run_789ghi",
+      "parentEventId": "evt_abc122",
+      "ts": "2026-05-30T12:00:00Z",
+      "actor": "tool",
+      "eventType": "session.next.tool.called",
+      "phase": "execution",
+      "status": "succeeded",
+      "toolName": "search_replace",
+      "filePath": "src/main.ts",
+      "durationMs": 342,
+      "tokenInput": 1500,
+      "tokenOutput": 280
+    }
+  ]
+}

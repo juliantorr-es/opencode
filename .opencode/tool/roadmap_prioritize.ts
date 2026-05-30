@@ -24,10 +24,20 @@ export default tool({
 
     if (!items[args.item_id]) return JSON.stringify({ error: `Item '${args.item_id}' not found` }, null, 2)
 
+    // Auto-create phase if it doesn't exist
+    if (args.phase && !active.phases) active.phases = {}
+    const autoCreatedPhase = args.phase && active.phases && !active.phases[args.phase]
+    if (autoCreatedPhase) {
+      active.phases[args.phase] = args.phase
+    }
+
     const item = items[args.item_id]
     const changes: any = {}
     if (args.priority !== undefined) { changes.priority = { from: item.priority, to: args.priority }; item.priority = args.priority }
-    if (args.phase) { changes.phase = { from: item.phase, to: args.phase }; item.phase = args.phase }
+    if (args.phase) {
+      changes.phase = { from: item.phase, to: args.phase }; item.phase = args.phase
+    }
+    if (autoCreatedPhase) changes.auto_created_phase = args.phase
 
     writeFileSync(ap, JSON.stringify(active, null, 2), "utf8")
     try { mkdirSync(resolvePath(context.worktree, "docs/json/roadmaps"), { recursive: true }) } catch (_) {}
@@ -48,7 +58,7 @@ export default tool({
 
     return JSON.stringify({
       status: "reprioritized", item_id: args.item_id, title: item.title,
-      changes, reason: args.reason, next_up: nextUp,
+      changes, reason: args.reason, auto_created_phase: autoCreatedPhase ? args.phase : null, next_up: nextUp,
     }, null, 2)
   },
 })

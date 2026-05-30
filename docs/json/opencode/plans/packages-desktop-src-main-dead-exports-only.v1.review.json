@@ -1,0 +1,114 @@
+{
+  "schema_version": "v1",
+  "plan_id": "packages-desktop-src-main-dead-exports-only",
+  "review_id": "packages-desktop-src-main-dead-exports-only.v1.review",
+  "reviewer": "plan-reviewer",
+  "reviewed_at": "2026-05-30T10:40:00.000Z",
+  "verdict": "APPROVE WITH CONDITIONS",
+  "summary": "Plan is well-scoped and all 7 files' dead exports are genuinely unreferenced. No dynamic access patterns, no package.json exports field, no barrel file re-exports. The WslConfig type in server.ts is an identical duplicate of the one in preload/types.ts — making it internal is safe. Conditional on removing getStoredLocale from ipc-locale.ts since it's equally dead and leaving it would create a stale export that no one imports but the plan already visits its sole consumer.",
+  "scoring": {
+    "safety": {
+      "score": 5,
+      "note": "No dynamic access (eval/require/import()), no external package consumers (private: true, no exports field), no barrel file re-exports. package.json has no 'exports' field. WslConfig in server.ts is an identical duplicate of preload/types.ts version — making it internal is safe since no code imports WslConfig from server.ts."
+    },
+    "scope_fidelity": {
+      "score": 4,
+      "note": "Boundary is 'packages/desktop/src/main/ — dead exports only'. All listed changes are within this boundary. BUT: getStoredLocale() in ipc-locale.ts is also a dead export (imported only by ipc.ts for re-export which is also dead) — plan could either include it or explicitly document the deferral."
+    },
+    "completeness": {
+      "score": 4,
+      "note": "All claimed items are genuinely dead. The tgz archive reference confirms sendSqliteMigrationProgress has zero live importers. All 4 app-config functions: grep shows zero import matches in live source for getHealthEndpoint, getCustomProtocol, getAppIdentity, getAppIdentityForPlatform. SETTINGS_STORE has zero live importers. setConfigPlatformPaths/updaterEnabledForPlatform/tail/setStorePlatformPaths all confirmed dead. Missing: getStoredLocale in ipc-locale.ts (see scope_fidelity)."
+    },
+    "reversibility": {
+      "score": 5,
+      "note": "All changes are additive removals in 7 independent files. smart_batch provides atomic apply. Git checkout of the 7 files would undo perfectly. No interdependency between changes — removing tail() from logging.ts has zero effect on removing WslConfig export from server.ts."
+    },
+    "execution_risk": {
+      "score": 4,
+      "note": "Risk is low because each change is removal-only. Main concern: the app-config.ts and constants.ts removals cascade to their imports — if any remaining export (like getGithubClientId in app-config.ts or UPDATER_ENABLED in constants.ts) secretly depends on a shared import, removing it breaks. Verified: getGithubClientId uses no imports. UPDATER_ENABLED uses 'app' (retained). CHANNEL/APP_IDS stay because other files import them."
+    }
+  },
+  "blocking_findings": [
+    {
+      "axis": "completeness",
+      "file": "packages/desktop/src/main/ipc-locale.ts:7",
+      "finding": "getStoredLocale() in ipc-locale.ts is also a dead export — it is imported only by ipc.ts (for re-export) and nowhere else. Since the re-export from ipc.ts is being removed, this function becomes unreferenced. If the plan boundary truly covers 'dead exports in packages/desktop/src/main/', this is an omission. Either include it or explicitly state the deferral.",
+      "severity": "blocking"
+    }
+  ],
+  "informational_findings": [
+    {
+      "file": "docs/json/opencode/plans/pg-runtime-wiring-layer-fix.v1.json:19",
+      "finding": "Past plan pg-runtime-wiring-layer-fix intended to rename sendSqliteMigrationProgress to sendMigrationProgress. That rename either wasn't executed or was reverted. The current plan simply removes it — this is safe since the function has zero importers, but the historical intent to rename suggests there was a desired name. If rename was the preferred direction, the removal means consumers (if any reappear) would need a new name. Low risk since function is truly dead."
+    },
+    {
+      "file": "packages/desktop/src/main/constants.ts:10",
+      "finding": "SETTINGS_STORE is IPC.store.SETTINGS. Removing it also makes the 'import { IPC }' from ipc-channels unused in constants.ts, which the plan correctly says to remove. Verified: no other line in constants.ts uses IPC."
+    },
+    {
+      "file": "packages/desktop/src/main/constants.ts:8",
+      "finding": "UPDATER_ENABLED (deprecated) remains even after removing updaterEnabledForPlatform. This is correct — UPDATER_ENABLED is still imported by index.ts, updater.ts, and menu.ts. The deprecated const acts as a bridge until those consumers are migrated."
+    },
+    {
+      "file": "packages/desktop/src/main/app-config.ts:28",
+      "finding": "getAppIdentityForPlatform was the 'platform-abstracted' replacement for getAppIdentity (added by DC-001). Both are now dead. This suggests the platform abstraction work (DC-001) created the functions but no consumer was ever wired up. Worth filing a follow-up to verify DC-001 is complete."
+    }
+  ],
+  "conditions_for_approval": [
+    "Either add getStoredLocale() removal from ipc-locale.ts to the scope, or update the plan's boundary claim to explicitly exclude it with a justification."
+  ],
+  "follow_up_issues": [
+    "Verify DC-001 (platform-config abstraction) is complete: app-config.ts and constants.ts both have 'platform-abstracted' functions (getAppIdentityForPlatform, updaterEnabledForPlatform) that were added but never consumed. If DC-001's consumers were supposed to be wired up in a later lane, those lanes may have stalled.",
+    "The getStoredLocale() function in ipc-locale.ts is a dead export. Not in scope of this plan, but worth removing in a follow-up or widening this plan to include it."
+  ],
+  "per_item_verification": {
+    "ipc_ts": {
+      "sendSqliteMigrationProgress": {
+        "status": "verified_dead",
+        "evidence": "1 match in live source (the definition itself). 0 importers.",
+        "dynamic_access_risk": "none"
+      },
+      "getStoredLocale_reexport": {
+        "status": "verified_dead",
+        "evidence": "Re-exported at ipc.ts:35 but nothing imports it from ./ipc.",
+        "dynamic_access_risk": "none"
+      },
+      "SqliteMigrationProgress_import": {
+        "status": "verified_dead_dependency",
+        "evidence": "Only used by sendSqliteMigrationProgress which is being removed. Type is still defined in preload/types.ts and used in preload/index.ts + ipc-contract.ts.",
+        "dynamic_access_risk": "none"
+      }
+    },
+    "app_config_ts": {
+      "getHealthEndpoint": "verified_dead — 0 importers in live source",
+      "getCustomProtocol": "verified_dead — 0 importers in live source",
+      "getAppIdentity": "verified_dead — 0 importers in live source",
+      "getAppIdentityForPlatform": "verified_dead — 0 importers in live source",
+      "associated_imports": "verified_dead_dependency — all imports (CHANNEL, APP_IDS, PlatformPaths, electronPlatformPaths, app) are only used by the 4 removed functions. getGithubClientId (staying) uses no imports."
+    },
+    "constants_ts": {
+      "SETTINGS_STORE": "verified_dead — 0 importers in live source. IPC import becomes removable.",
+      "setConfigPlatformPaths": "verified_dead — 0 importers in live source",
+      "updaterEnabledForPlatform": "verified_dead — 0 importers in live source",
+      "PlatformPaths_electronPlatformPaths": "verified_dead_dependency — only used by setConfigPlatformPaths and updaterEnabledForPlatform. Can be removed."
+    },
+    "logging_ts": {
+      "tail": "verified_dead — 0 importers in live source. No other file imports from ./logging with 'tail'",
+      "is_rollback_safe": "yes — tail() has no side effects, returns a string from log file"
+    },
+    "menu_app_ts": {
+      "BrowserWindow_import": "verified_dead — type import at menu-app.ts:13, used nowhere in file"
+    },
+    "store_ts": {
+      "setStorePlatformPaths": "verified_dead — 0 importers in live source. PlatformPaths/electronPlatformPaths imports become removable.",
+      "import_cascade_safe": "yes — getStore (staying) uses IPC and Store imports, not PlatformPaths"
+    },
+    "server_ts": {
+      "WslConfig_export": {
+        "status": "verified_internalizable",
+        "evidence": "WslConfig is a duplicate of preload/types.ts:15. Nobody imports WslConfig from server.ts. All internal usage (getWslConfig, setWslConfig) is within server.ts.",
+        "re-export_check": "preload/types.ts already exports identical WslConfig type"
+      }
+    }
+  }
+}

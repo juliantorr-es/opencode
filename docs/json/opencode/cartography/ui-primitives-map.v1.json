@@ -1,0 +1,238 @@
+{
+  "schema": "rig.relay.cartography_artifact.v1",
+  "generated_at": "2026-05-30T10:15:00Z",
+  "profile": "cartography",
+  "artifact_kind": "learning_artifact",
+  "scope": "packages/ui and packages/app UI surface cartography",
+  "sections": {
+    "surface_map": {
+      "package_name": "@opencode-ai/ui",
+      "version": "1.15.12",
+      "solidjs_version": "1.9.10",
+      "module_type": "ESM",
+      "no_top_level_barrel": true,
+      "exports_map": {
+        "pattern": "@opencode-ai/ui/<name> → ./src/components/<name>.tsx",
+        "./*": "./src/components/*.tsx",
+        "./i18n/*": "./src/i18n/*.ts",
+        "./pierre": "./src/pierre/index.ts",
+        "./pierre/*": "./src/pierre/*.ts",
+        "./hooks": "./src/hooks/index.ts",
+        "./context": "./src/context/index.ts",
+        "./context/*": "./src/context/*.tsx",
+        "./styles": "./src/styles/index.css",
+        "./styles/tailwind": "./src/styles/tailwind/index.css",
+        "./theme": "./src/theme/index.ts",
+        "./theme/*": "./src/theme/*.ts",
+        "./theme/context": "./src/theme/context.tsx",
+        "./v2/*": "./src/v2/*",
+        "./icons/provider": "./src/components/provider-icons/types.ts",
+        "./icons/file-type": "./src/components/file-icons/types.ts",
+        "./icons/app": "./src/components/app-icons/types.ts",
+        "./fonts/*": "./src/assets/fonts/*",
+        "./audio/*": "./src/assets/audio/*"
+      },
+      "component_files": {
+        "total_non_story": 69,
+        "total_story_files": 39,
+        "key_components": [
+          "accordion.tsx", "animated-number.tsx", "app-icon.tsx", "avatar.tsx",
+          "basic-tool.tsx", "button.tsx", "card.tsx", "checkbox.tsx",
+          "collapsible.tsx", "context-menu.tsx", "dialog.tsx", "diff-changes.tsx",
+          "dock-prompt.tsx", "dock-surface.tsx", "dropdown-menu.tsx",
+          "file.tsx", "file-icon.tsx", "file-media.tsx", "file-search.tsx",
+          "file-ssr.tsx", "favicon.tsx", "font.tsx", "hover-card.tsx",
+          "icon.tsx", "icon-button.tsx", "image-preview.tsx", "inline-input.tsx",
+          "keybind.tsx", "line-comment.tsx", "list.tsx", "logo.tsx",
+          "markdown.tsx", "message-nav.tsx", "message-part.tsx",
+          "motion-spring.tsx", "popover.tsx", "progress.tsx", "progress-circle.tsx",
+          "provider-icon.tsx", "radio-group.tsx", "resize-handle.tsx",
+          "scroll-view.tsx", "select.tsx", "session-retry.tsx", "session-review.tsx",
+          "session-turn.tsx", "spinner.tsx", "sticky-accordion-header.tsx",
+          "switch.tsx", "tabs.tsx", "tag.tsx", "text-field.tsx",
+          "text-reveal.tsx", "text-shimmer.tsx", "text-strikethrough.tsx",
+          "toast.tsx", "tool-count-label.tsx", "tool-count-summary.tsx",
+          "tool-error-card.tsx", "tool-status-title.tsx", "tooltip.tsx",
+          "typewriter.tsx"
+        ],
+        "subdirectory_barrels": [
+          "src/hooks/index.ts → exports useFilteredList, createAutoScroll",
+          "src/context/index.ts → exports helper, data, file, dialog, i18n contexts",
+          "src/components/message-part/index.ts → exports Message, ShellSubmessage, etc.",
+          "src/theme/index.ts → exports DesktopTheme, ThemeProvider, useTheme, 30+ built-in themes"
+        ]
+      },
+      "app_component_files": {
+        "total_tsx": 50,
+        "subdirectories_with_barrels": ["agent-collaboration/", "agent-context-graph/", "agent-studio/", "session/", "session-viz/"],
+        "top_level_barrel": "none — no packages/app/src/components/index.ts"
+      }
+    },
+    "styling_approach": {
+      "summary": "Three-layer styling: Tailwind CSS v4 (utility classes) + CSS custom properties (design tokens) + per-component CSS files (data-attribute selectors)",
+      "tailwind": {
+        "version": "tailwindcss v4 (via @tailwindcss/vite plugin, no tailwind.config.ts)",
+        "entry": "@import \"@opencode-ai/ui/styles/tailwind\" in packages/app/src/index.css",
+        "theme_config": "packages/ui/src/styles/tailwind/index.css uses @theme directive with CSS variable references",
+        "no_tailwind_config": "No tailwind.config.ts exists in any package — uses CSS-first Tailwind v4 config via @theme blocks",
+        "usage_patterns": {
+          "static_classes": "class=\"titlebar-icon w-8 h-6 p-0 box-border\"",
+          "dynamic_classes": "classList={{ \"bg-icon-success-base\": ready() && healthy(), ... }}",
+          "arbitrary_selectors": "class=\"[&_[data-slot=popover-body]]:p-0\"",
+          "important_suffix": "class=\"!w-9 shrink-0\"",
+          "css_vars_in_tailwind": "class=\"bg-background-strong shadow-[var(--shadow-lg-border-base)]\""
+        }
+      },
+      "design_tokens": {
+        "two_namespaces": {
+          "v1_legacy": {
+            "prefixes": ["--background-", "--surface-", "--text-", "--border-", "--icon-", "--button-", "--shadow-", "--syntax-", "--markdown-"],
+            "definition": "packages/ui/src/styles/theme.css (610 lines) — dark/light theme variables resolved via CSS custom properties"
+          },
+          "v2_new": {
+            "prefixes": ["--v2-background-", "--v2-text-", "--v2-icon-", "--v2-border-", "--v2-overlay-", "--v2-state-", "--v2-elevation-"],
+            "definition": "packages/ui/src/v2/styles/ — newer design system, imported via @import \"@opencode-ai/ui/v2/styles/tailwind.css\"",
+            "usage": "Used in StatusPopoverV2 and other newLayoutDesigns() gated components"
+          }
+        },
+        "color_system": {
+          "raw_colors": "packages/ui/src/styles/colors.css (773 lines) — 12-step gray scale (light + dark), accent color scales, alpha variants",
+          "tailwind_bridge": "packages/ui/src/styles/tailwind/colors.css (285 lines) — generated @theme block mapping CSS vars → tailwind color classes",
+          "generated": "/* Generated by script/tailwind.ts */ — colors.css is auto-generated from theme.css"
+        },
+        "typography": {
+          "sans": "var(--font-family-sans): ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+          "mono": "var(--font-family-mono): ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace",
+          "sizes": "--font-size-small: 13px; --font-size-base: 14px; --font-size-large: 16px; --font-size-x-large: 20px",
+          "utility_classes": ".text-12-regular, .text-12-medium, .text-14-regular, .text-14-medium, .text-14-mono, .text-16-medium, .text-20-medium"
+        }
+      },
+      "component_css": {
+        "pattern": "Each component (button.tsx) has a corresponding CSS file (button.css) using data-attribute selectors",
+        "mechanism": "Components set data-* attributes (data-component, data-variant, data-size, data-slot) in TSX → CSS targets [data-component=\"button\"][data-variant=\"primary\"]",
+        "files": ["button.css", "card.css", "popover.css", "dialog.css", "tabs.css", "switch.css", "checkbox.css", "icon.css", "icon-button.css", "text-field.css", "select.css", "tag.css", "tooltip.css", "hover-card.css", "context-menu.css", "dropdown-menu.css", "progress.css", "progress-circle.css", "radio-group.css", "scroll-view.css", "spinner.css", "toast.css", "markdown.css", "list.css", "collapsible.css", "accordion.css", "avatar.css", "file.css", "file-icon.css", "provider-icon.css", "keybind.css", "resize-handle.css", "inline-input.css", "basic-tool.css", "session-review.css", "session-turn.css", "sticky-accordion-header.css", "shell-submessage.css", "text-reveal.css", "text-shimmer.css", "text-strikethrough.css", "tool-error-card.css", "tool-status-title.css", "tool-count-label.css", "tool-count-summary.css", "message-part.css", "message-nav.css", "diff-changes.css", "dock-surface.css", "image-preview.css", "animated-number.css", "typewriter.css"],
+        "example_button_css_source": "[data-component=\"button\"] { display: inline-flex; ... &[data-variant=\"primary\"] { background-color: var(--button-primary-base); ... } &[data-variant=\"ghost\"] { ... } &[data-variant=\"secondary\"] { ... } &[data-size=\"small\"] { height: 24px; ... } &[data-size=\"normal\"] { height: 28px; ... } &[data-size=\"large\"] { height: 32px; ... } }"
+      }
+    },
+    "import_paths": {
+      "app_imports_from_ui": {
+        "pattern": "import { Thing } from \"@opencode-ai/ui/thing\" (deep subpath, no barrel)",
+        "examples": [
+          "import { Button } from \"@opencode-ai/ui/button\"",
+          "import { Icon } from \"@opencode-ai/ui/icon\"",
+          "import { Popover } from \"@opencode-ai/ui/popover\"",
+          "import { Tabs } from \"@opencode-ai/ui/tabs\"",
+          "import { Switch } from \"@opencode-ai/ui/switch\"",
+          "import { Dialog } from \"@opencode-ai/ui/dialog\"",
+          "import { Tooltip } from \"@opencode-ai/ui/tooltip\"",
+          "import { TextField } from \"@opencode-ai/ui/text-field\"",
+          "import { IconButton } from \"@opencode-ai/ui/icon-button\"",
+          "import { Select } from \"@opencode-ai/ui/select\"",
+          "import { Toast, showToast } from \"@opencode-ai/ui/toast\"",
+          "import { useDialog } from \"@opencode-ai/ui/context/dialog\"",
+          "import { useFilteredList } from \"@opencode-ai/ui/hooks\""
+        ],
+        "v2_imports": [
+          "import { IconButtonV2 } from \"@opencode-ai/ui/v2/components/icon-button-v2.jsx\"",
+          "import { Icon as IconV2 } from \"@opencode-ai/ui/v2/components/icon.jsx\""
+        ],
+        "core_imports": [
+          "import { findLast } from \"@opencode-ai/core/util/array\"",
+          "import { base64Encode } from \"@opencode-ai/core/util/encode\""
+        ],
+        "sdk_imports": [
+          "import { UserMessage } from \"@opencode-ai/sdk/v2\""
+        ]
+      },
+      "app_local_imports": {
+        "path_alias": "@/* → ./src/* (defined in packages/app/tsconfig.json paths)",
+        "context_hooks": "import { useLanguage } from \"@/context/language\"; import { useServer } from \"@/context/server\"; import { useSync } from \"@/context/sync\"; import { useServers } from \"@/context/servers\"; import { useSDK } from \"@/context/sdk\"",
+        "pages": "import { ErrorPage } from \"@/pages/error\"",
+        "components": "import { DialogSelectModel } from \"@/components/dialog-select-model\""
+      }
+    },
+    "solidjs_patterns": {
+      "consistency": "high — strong conventions across all 100+ component files",
+      "component_signature": {
+        "primary_85pct": "export function Foo(props: FooProps) { const [local, rest] = splitProps(props, [...]) ... }",
+        "secondary_15pct": "export const Foo: Component<FooProps> = (props) => { ... }",
+        "props_extends": "interface FooProps extends ComponentProps<typeof Kobalte>, ParentProps { ... }"
+      },
+      "kobalte_wrapping": {
+        "pattern": "import { Popover as Kobalte } from \"@kobalte/core/popover\" — wrap Kobalte primitives in custom components with data-* attributes",
+        "kobalte_components_used": ["button", "popover", "dialog", "tabs", "switch", "checkbox", "select", "hover-card", "progress", "radio-group", "collapsible", "accordion", "context-menu", "dropdown-menu"],
+        "kobalte_version": "via pnpm catalog (root package.json)"
+      },
+      "reactive_primitives_frequency": {
+        "createMemo": "very high (~900+ app, ~100 ui) — dominates derived state",
+        "createSignal": "high (~300 app, ~60 ui) — local UI state toggles",
+        "createStore": "high (~180 app, ~30 ui) — complex/structured state (preferred over multiple signals)",
+        "createEffect": "moderate (~250 app, ~50 ui) — side effects, scroll, URL sync",
+        "Show": "dominant (~500 app, ~100 ui) — primary conditional",
+        "For": "moderate (~150 app, ~35 ui) — array rendering",
+        "Switch/Match": "moderate (~80/160 app, ~5/10 ui) — multi-branch conditionals",
+        "createResource": "moderate (~40 app, ~5 ui) — async data fetching",
+        "onMount": "moderate (~45 app, ~10 ui) — startup init",
+        "onCleanup": "low (~30 app, ~5 ui) — paired with timers/listeners",
+        "splitProps": "moderate (~13 app, ~20 ui) — prop splitting in every component",
+        "Dynamic": "low (~10 app, ~2 ui) — dynamic component rendering",
+        "ErrorBoundary": "low (~5 app, ~2 ui) — error isolation",
+        "on()": "low (~15 app, ~5 ui) — explicit effect deps",
+        "produce": "low (~5 app, 0 ui) — immer-style mutations"
+      },
+      "context_pattern": {
+        "createContext": "~15 across both packages",
+        "hook_export": "export function useX() { const ctx = useContext(XContext); if (!ctx) throw new Error('Missing XProvider'); return ctx }",
+        "shared_contexts": ["dialog", "i18n", "language", "server", "sync", "servers", "platform", "sdk", "settings", "layout", "file", "prompt", "comments", "command", "permission"]
+      },
+      "third_party_solidjs": {
+        "@kobalte/core": "Headless UI primitives (popover, dialog, tabs, dropdown, select, checkbox, switch, radio, collapsible, button, context-menu, accordion)",
+        "@tanstack/solid-query": "TanStack Query v5 for async data",
+        "@solidjs/router": "File-based routing (useParams, useNavigate, useLocation, A component)",
+        "@solidjs/meta": "Document head management",
+        "@solid-primitives/*": "10+ primitives: event-listener, i18n, storage, media, resize-observer, timer, scheduled, scroll, websocket, active-element, audio, event-bus, bounds",
+        "solid-list": "Virtualized list rendering",
+        "@thisbeyond/solid-dnd": "Drag and drop",
+        "motion": "Animation library (motion 12.34.5)",
+        "@sentry/solid": "Error tracking"
+      }
+    },
+    "key_findings": [
+      {
+        "finding": "No index.ts barrel — all UI imports are deep subpath imports via package.json exports map",
+        "file": "packages/ui/package.json:6-27",
+        "evidence": "import { Button } from '@opencode-ai/ui/button' pattern used throughout app"
+      },
+      {
+        "finding": "Tailwind v4 with no tailwind.config.ts — uses CSS @theme directive and CSS-first configuration",
+        "file": "packages/ui/src/styles/tailwind/index.css:1-79",
+        "evidence": "No tailwind.config.* files found in any package"
+      },
+      {
+        "finding": "Design tokens are CSS custom properties with dual v1/v2 namespaces — v2 is newer design system",
+        "file": "packages/ui/src/styles/theme.css:1-610",
+        "evidence": "v2 tokens imported via @opencode-ai/ui/v2/styles/tailwind.css, used in StatusPopoverV2"
+      },
+      {
+        "finding": "Components style via data-attribute selectors in companion .css files, not inline or CSS modules",
+        "file": "packages/ui/src/components/button.css:1-195",
+        "evidence": "[data-component=\"button\"][data-variant=\"primary\"] pattern across all ~50 CSS files"
+      },
+      {
+        "finding": "Kobalte is the headless UI foundation — every interactive component wraps Kobalte primitives",
+        "file": "packages/ui/src/components/popover.tsx:1",
+        "evidence": "import { Popover as Kobalte } from '@kobalte/core/popover' in all interactive components"
+      },
+      {
+        "finding": "createMemo dominates over createSignal — derived computation is the primary reactive pattern",
+        "file": "packages/app/src/components/status-popover.tsx:21-30",
+        "evidence": "5 createMemo calls vs 1 createSignal in just one file; ~900 createMemo usages across app"
+      },
+      {
+        "finding": "@/* is the only path alias — maps to ./src/*, used for all local imports",
+        "file": "packages/app/tsconfig.json:21",
+        "evidence": "\"paths\": { \"@/*\": [\"./src/*\"] } — no @ui or @components alias exists"
+      }
+    ]
+  }
+}

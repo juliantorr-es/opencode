@@ -1,0 +1,21 @@
+{
+  "schema_version": "v1",
+  "plan_id": "plugintransport-interface-electron-browser-implementations-wiring",
+  "plan_revision": 1,
+  "title": "PluginTransport: Abstract transport layer for plugin IPC",
+  "boundary": "PluginTransport interface + Electron + Browser implementations + wiring",
+  "consumer_purpose": "Decouple plugins from Electron IPC so they can work in Chrome (postMessage) and Electron (ipcRenderer)",
+  "claim_atoms": [
+    "PluginTransport interface defined",
+    "ElectronPluginTransport implements it via ipcRenderer",
+    "BrowserPluginTransport implements it via BroadcastChannel",
+    "Transport wired into DesktopPluginApi in plugin-loader.ts",
+    "Plugin IPC channels added to registry",
+    "Main process handlers registered",
+    "Type check passes"
+  ],
+  "content": "## Plan: PluginTransport Layer (DC-003)\n\n### Files to create\n1. **packages/desktop/src/renderer/plugin-transport.ts** — PluginTransport interface + Electron/Browser implementations\n2. **packages/desktop/src/main/plugin-transport.ts** — Main process plugin transport handler\n\n### Files to modify\n3. **packages/desktop/src/main/ipc-channels.ts** — Add plugin message IPC channels\n4. **packages/desktop/src/main/ipc.ts** — Register plugin transport IPC handlers\n5. **packages/desktop/src/renderer/plugin-loader.ts** — Wire transport into DesktopPluginApi\n\n### Design\n\n#### PluginTransport interface (plugin-transport.ts)\n```ts\nexport interface PluginTransport {\n  send(channel: string, data?: unknown): void\n  on(channel: string, handler: (data: unknown) => void): () => void\n  off(channel: string, handler: (data: unknown) => void): void\n}\n```\n\n#### ElectronPluginTransport (renderer-side)\n- Uses `ipcRenderer.send()`, `ipcRenderer.on()`, `ipcRenderer.removeListener()`\n- Handlers are pre-wrapped to strip the Electron event object\n- WeakMap tracks original→wrapped handlers for proper off()\n\n#### BrowserPluginTransport  \n- Uses `BroadcastChannel` with a predefined channel name\n- `send()` posts structured {channel, data} messages\n- `on()` filters incoming messages by channel name\n- Support for proper cleanup\n\n#### Wiring\n- In `DesktopPluginLoader.loadEntry()`, construct the transport based on environment detection\n- Add `transport` to the API object passed to plugins\n- Plugins access it as part of their DesktopPluginApi\n\n#### Main process\n- Register handlers for `opencode:plugin:send` and `opencode:plugin:on` IPC channels\n- Route plugin messages between main and renderer processes\n\n### Files NOT modified\n- @opencode-ai/plugin SDK (external npm package, not in workspace)\n- Other packages outside desktop/\n\n### Risk assessment\n- Low: The transport is additive — existing plugin API unchanged\n- Medium: ElectronPluginTransport needs access to ipcRenderer (available in preload, but plugins use window.api)\n- Low: No existing tests to break (plugin testing is minimal)\n",
+  "status": "proposed",
+  "created_at": "2026-05-30T10:10:03.128Z",
+  "modified_at": "2026-05-30T10:10:03.128Z"
+}

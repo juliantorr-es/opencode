@@ -1,0 +1,57 @@
+{
+  "schema_version": "v1",
+  "profile": "planning",
+  "entries": [
+    {
+      "file": "evidence/phase1_completion.v1.json",
+      "finding": "Named 'phase1 completion' with 280 typecheck errors and C8=false — contradiction between title and evidence",
+      "added_at": "2026-05-30T10:42:02.371Z"
+    },
+    {
+      "file": "plans/pg_backend_migration.v1.json",
+      "finding": "Claims 'production-proven' for Postgres adapter never deployed in production",
+      "added_at": "2026-05-30T10:42:02.371Z"
+    },
+    {
+      "file": "plans/final_closures_plan.v2.json",
+      "finding": "Bare 'all cycles verified' claim without linking individual evidence artifacts",
+      "added_at": "2026-05-30T10:42:02.371Z"
+    },
+    {
+      "file": "uiux_audit_report.v1.json",
+      "finding": "Three 'industry-leading' claims contradicted by own weaknesses section",
+      "added_at": "2026-05-30T10:42:02.371Z"
+    },
+    {
+      "file": "documentation/phase1-completion.v1.json",
+      "finding": "Empty verification section {} in completion document",
+      "added_at": "2026-05-30T10:42:02.371Z"
+    },
+    {
+      "file": "reports/session-2026-05-30T07-23-36-742Z.v1.json",
+      "finding": "Claims 'industry-leading' standards and 'Complete ✅' with concurrent session interference",
+      "added_at": "2026-05-30T10:42:02.371Z"
+    },
+    {
+      "file": "reports/session-2026-05-30T07-41-52-402Z.v1.json",
+      "finding": "Claims completion for Lane 1 where work was 'restored by a concurrent session'",
+      "added_at": "2026-05-30T10:42:02.371Z"
+    },
+    {
+      "file": "evidence/persistent_coordination.v1.json",
+      "finding": "Concurrency claim without stress evidence",
+      "added_at": "2026-05-30T10:42:02.371Z"
+    },
+    {
+      "file": "plans/phase1_adapter_hardening.v1.json",
+      "finding": "Self-contradictory: 'Complete PgAdapter — deferred to Phase 2'",
+      "added_at": "2026-05-30T10:42:02.371Z"
+    },
+    {
+      "file": "evidence/duckdb_validation_complete.v1.json",
+      "finding": "Claims 'zero new duckdb-related errors (383 pre-existing)' minimizing significant debt",
+      "added_at": "2026-05-30T10:42:02.371Z"
+    }
+  ],
+  "curated_at": "2026-05-30T10:42:02.371Z"
+}

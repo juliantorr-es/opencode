@@ -1,4 +1,5 @@
 import { BusEvent } from "@/bus/bus-event"
+import { EventName } from "@/event/event-names"
 import { Bus } from "@/bus"
 import { SessionID } from "./schema"
 import { Effect, Layer, Context, Schema } from "effect"
@@ -18,7 +19,7 @@ export type Info = Schema.Schema.Type<typeof Info>
 
 export const Event = {
   Updated: BusEvent.define(
-    "todo.updated",
+    EventName.TodoUpdated,
     Schema.Struct({
       sessionID: SessionID,
       todos: Schema.Array(Info),

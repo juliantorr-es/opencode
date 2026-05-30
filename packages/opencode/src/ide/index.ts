@@ -1,4 +1,5 @@
 import { BusEvent } from "@/bus/bus-event"
+import { EventName } from "@/event/event-names"
 import { Schema } from "effect"
 import { NamedError } from "@opencode-ai/core/util/error"
 import * as Log from "@opencode-ai/core/util/log"
@@ -16,7 +17,7 @@ const log = Log.create({ service: "ide" })
 
 export const Event = {
   Installed: BusEvent.define(
-    "ide.installed",
+    EventName.IdeInstalled,
     Schema.Struct({
       ide: Schema.String,
     }),

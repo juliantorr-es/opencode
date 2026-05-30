@@ -7,6 +7,7 @@ import { eq } from "drizzle-orm"
 import { inArray } from "drizzle-orm"
 import { Project } from "@/project/project"
 import { BusEvent } from "@/bus/bus-event"
+import { EventName } from "@/event/event-names"
 import { GlobalBus } from "@/bus/global"
 import { Auth } from "@/auth"
 import { SyncEvent } from "@/sync"
@@ -47,18 +48,18 @@ export type ConnectionStatus = Schema.Schema.Type<typeof ConnectionStatus>
 
 export const Event = {
   Ready: BusEvent.define(
-    "workspace.ready",
+    EventName.WorkspaceReady,
     Schema.Struct({
       name: Schema.String,
     }),
   ),
   Failed: BusEvent.define(
-    "workspace.failed",
+    EventName.WorkspaceFailed,
     Schema.Struct({
       message: Schema.String,
     }),
   ),
-  Status: BusEvent.define("workspace.status", ConnectionStatus),
+  Status: BusEvent.define(EventName.WorkspaceStatus, ConnectionStatus),
 }
 
 function fromRow(row: typeof WorkspaceTable.$inferSelect): Info {

@@ -122,12 +122,55 @@ export default tool({
       if (totalMatch) testSummary.total = parseInt(totalMatch[1])
     }
 
+    // Fallback: if typecheck script not found, try bun x tsgo --noEmit directly
+    let fallbackNote = ""
+    if (args.command === "typecheck" && result.status !== 0 && (stderr.includes("Script not found") || stderr.includes("script not found") || stderr.includes("Missing script"))) {
+      const fbResult = spawnSync("bun", ["x", "tsgo", "--noEmit"], spawnOpts)
+      if (fbResult.stdout?.trim() || (fbResult.stderr?.trim() && fbResult.stderr.includes("error TS"))) {
+        // Replace result with tsgo fallback
+        fallbackNote = `bun run typecheck not found in ${cwd}/package.json. Fell back to bun x tsgo --noEmit.`
+        errors = []
+        warnings = []
+        const fbStderr = fbResult.stderr?.trim() || ""
+        const errorRe = /^(.+?)\((\d+),(\d+)\):\s*(error|warning)\s+(TS\d+):\s*(.+)/
+        for (const line of fbStderr.split("\n")) {
+          const m = line.trim().match(errorRe)
+          if (m) {
+            errors.push({ file: m[1]!, line: parseInt(m[2]!), col: parseInt(m[3]!), level: m[4]!, code: m[5]!, message: m[6]! })
+          } else if (line.trim() && !line.startsWith("bun") && !line.startsWith("tsgo")) {
+            warnings.push(line.trim())
+          }
+        }
+        const files = new Set(errors.map((e: any) => e.file))
+        errorSummary = { files: files.size, total: errors.length }
+        // Use fallback result
+        Object.assign(result, { status: fbResult.status, stdout: fbResult.stdout, stderr: fbResult.stderr })
+      }
+    }
+
     const output: Record<string, unknown> = {
-      status: result.status === 0 ? "pass" : "fail",
       command: shellMode ? `bun ${bunCmd} ${args.args}` : `bun ${cmdArgs.join(" ")}`,
       cwd,
       elapsed_ms: elapsed,
       exit_code: result.status,
+    }
+
+    // Distinguish typecheck-found-errors (exit 1) from tool failure (exit 2+)
+    if (args.command === "typecheck" && result.status === 1 && errors.length > 0) {
+      output.status = "type_errors_found"
+      output.type_errors = errors.slice(0, 30)
+      output.error_summary = errorSummary
+      output.note = `Typecheck found ${errorSummary.total} errors in ${errorSummary.files} files. This is expected during development — fix these errors to get exit_code 0.`
+    } else if (args.command === "typecheck" && result.status === 0) {
+      output.status = "pass"
+      output.note = "Typecheck passed — no errors."
+    } else if (args.command === "run" && result.status === 2) {
+      output.status = "fail"
+      output.hint = `bun run failed with exit 2. The script may not exist, or no package.json with scripts was found in ${cwd}. Check available scripts with: smart_find(pattern="package.json") then read_source on the relevant file.`
+    } else if (result.status === 0) {
+      output.status = "pass"
+    } else {
+      output.status = "fail"
     }
 
     if (errors.length > 0) {
@@ -158,12 +201,11 @@ export default tool({
       output.error = result.error.message
     }
 
-    // Detect "Script not found" — common when cwd doesn't contain the package.json with that script
-    if (result.status !== 0 && (stderr.includes("Script not found") || stderr.includes("script not found") || stderr.includes("Missing script"))) {
-      output.hint = `Script "${args.command}" not found in ${cwd}/package.json. Try providing cwd to the package that defines this script (e.g. cwd: "packages/opencode"). Use smart_find(pattern="package.json") to locate package.json files.`
-    }
+    if (fallbackNote) output.fallback_note = fallbackNote
 
-    hb(context, "smart_bun", result.status === 0 ? "completed" : "failed", `${args.command} exit=${result.status}`)
+    // Heartbeat: only mark as failed if tool itself broke, not if typecheck found errors
+    const isToolFailure = result.error || (result.status !== 0 && !(args.command === "typecheck" && errors.length > 0))
+    hb(context, "smart_bun", isToolFailure ? "failed" : "completed", `${args.command} exit=${result.status}`)
 
     // Analytics
     const logDir = resolvePath(context.worktree, "docs/json/opencode/sessions/" + context.sessionID + "/analytics")

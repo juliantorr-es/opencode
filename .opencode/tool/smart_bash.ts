@@ -58,16 +58,16 @@ export default tool({
     
     // Rerouting table: bash binary -> smart tool
     const reroutes: Record<string, { tool: string, extract: (parts: string[]) => Record<string, string> | null }> = {
-      "rg":   { tool: "smart_grep",  extract: (p) => p.length >= 2 ? { pattern: p[0], path: p.slice(1).join(" ") } : null },
-      "grep": { tool: "smart_grep",  extract: (p) => p.length >= 2 ? { pattern: p[0], path: p.slice(1).join(" ") } : null },
-      "fd":   { tool: "smart_find",  extract: (p) => ({ pattern: p[p.length-1] || "*" }) },
-      "find": { tool: "smart_find",  extract: () => ({ pattern: "*" }) },
-      "ls":   { tool: "smart_find",  extract: (p) => { const args = p.filter(a => !a.startsWith("-")); return { pattern: "*", path: args[0] || "." } } },
-      "cat":  { tool: "read_source", extract: (p) => p.length >= 1 ? { file: p[p.length-1] } : null },
+      "rg":   { tool: "smart_grep",  extract: (p) => { const a = p.filter(x => !x.startsWith("-")); if (a.length < 2) return null; return { pattern: a[0]!, path: a.slice(1).join(" ") } } },
+      "grep": { tool: "smart_grep",  extract: (p) => { const a = p.filter(x => !x.startsWith("-")); if (a.length < 2) return null; return { pattern: a[0]!, path: a.slice(1).join(" ") } } },
+      "fd":   { tool: "smart_find",  extract: (p) => { const a = p.filter(x => !x.startsWith("-")); return { pattern: a[a.length-1] || "*", path: a.length > 1 ? a[0] : "." } } },
+      "find": { tool: "smart_find",  extract: (p) => { const a = p.filter(x => !x.startsWith("-")); return { pattern: a[a.length-1] || "*", path: a.length > 1 ? a[0] : "." } } },
+      "ls":   { tool: "smart_find",  extract: (p) => { const a = p.filter(x => !x.startsWith("-")); return { pattern: "*", path: a[0] || "." } } },
+      "cat":  { tool: "read_source", extract: (p) => { const a = p.filter(x => !x.startsWith("-")); if (a.length === 0) return null; return { file: a.join(" ") } } },
       "git":  { tool: "smart_git",   extract: (p) => { const ops = ["status","diff","add","commit","push","log","branch","rev-parse","stash","checkout","show"]; const effective = p[0] === "-C" ? p.slice(2) : p; const op = (effective[0]||"").replace("--",""); return ops.includes(op) ? { operation: op, args: effective.slice(1).join(" ") } : null } },
-      "bun":  { tool: "smart_bun",   extract: (p) => { const sub = p[0] === "run" ? p[1] : p[0]; return ["typecheck","test","install","run"].includes(sub) ? { command: sub, args: p.slice(sub === "run" ? 2 : 1).join(" ") || undefined } : null } },
-      "sd":   { tool: "smart_sd",    extract: (p) => p.length >= 3 ? { file: p[p.length-1], old: p[0], new: p[1], reason: args.reason } : null },
-      "sed":  { tool: "smart_sd", extract: (p) => { const args = p.filter(a => !a.startsWith("-") && !a.startsWith("'")); if (args.length < 2) return null; const file = args[args.length-1]!; const expr = args[0]!; const sMatch = expr.match(/^s([^a-z]).*\1.*\1/); if (!sMatch) return null; return { file, old: expr, new: "", reason: args.reason } } },
+      "bun":  { tool: "smart_bun",   extract: (p) => { const sub = p[0] === "run" ? p[1] : p[0]; return ["typecheck","test","install","run","tsgo","tsc"].includes(sub) ? { command: sub, args: p.slice(sub === "run" ? 2 : 1).join(" ") || undefined } : null } },
+      "sd":   { tool: "smart_sd",    extract: (p) => { const a = p.filter(x => !x.startsWith("-")); if (a.length < 3) return null; return { file: a[a.length-1]!, old: a[0]!, new: a[1]!, reason: args.reason } } },
+      "sed":  { tool: "smart_sd",    extract: (p) => { const a = p.filter(x => !x.startsWith("-") && !x.startsWith("'")); if (a.length < 2) return null; const file = a[a.length-1]!; const expr = a[0]!; const sMatch = expr.match(/^s([^a-z]).*\1.*\1/); if (!sMatch) return null; return { file, old: expr, new: "", reason: args.reason } } },
     }
     
     const r = reroutes[binary]
@@ -81,9 +81,16 @@ export default tool({
           original: cmd.slice(0, 100),
           to: r.tool,
           params: params,
-          hint: "Automatically rerouted to " + r.tool + ". Call " + r.tool + " directly next time."
+          hint: `Rerouted to ${r.tool}. Call ${r.tool} directly next time — it's faster and returns structured output.`,
         }, null, 2)
       }
+      // Extraction failed — tell the agent why and fall through to bash
+      return JSON.stringify({
+        status: "reroute_failed",
+        original: cmd.slice(0, 100),
+        binary: binary,
+        hint: `Could not convert '${binary}' command to ${r.tool} format. Running as raw bash instead. Consider calling ${r.tool} directly with the right arguments.`,
+      }, null, 2)
     }
     
     const timeout = (args.timeout_seconds ?? 60) * 1000

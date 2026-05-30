@@ -1,0 +1,77 @@
+{
+  "schema_version": "v1",
+  "profile": "execution",
+  "entries": [
+    {
+      "finding": "No general-purpose secrets redaction exists in the codebase. 14 narrow-scope mechanisms exist but none cover tool output, agent messages, file reads, or subprocess env.",
+      "severity": "critical",
+      "added_at": "2026-05-30T11:52:00.757Z"
+    },
+    {
+      "finding": "sanitizedProcessEnv in packages/core/src/util/opencode-process.ts is MISNAMED — performs zero sanitization, passes ALL env vars including secrets to subprocesses.",
+      "severity": "critical",
+      "added_at": "2026-05-30T11:52:00.757Z"
+    },
+    {
+      "finding": "Sidecar password (OPENCODE_SERVER_PASSWORD) injected into process.env in sidecar.ts:103-105, then passed to utilityProcess.fork in server.ts:76 with ALL env vars via createSidecarEnv().",
+      "severity": "high",
+      "added_at": "2026-05-30T11:52:00.757Z"
+    },
+    {
+      "finding": "Enterprise storage (packages/enterprise/src/core/storage.ts:67-83) reads AWS access keys/secret keys from process.env with non-null assertions and no validation.",
+      "severity": "high",
+      "added_at": "2026-05-30T11:52:00.757Z"
+    },
+    {
+      "finding": "Provider credentials written back into process.env in multiple places: AWS_BEARER_TOKEN_BEDROCK (provider.ts:301), AICORE_SERVICE_KEY (provider.ts:549), OPENCODE_CONSOLE_TOKEN (config.ts:689).",
+      "severity": "high",
+      "added_at": "2026-05-30T11:52:00.757Z"
+    },
+    {
+      "finding": "Provider auto-detection (packages/core/src/plugin/env.ts) scans ALL provider env keys and auto-enables providers if matching env var exists.",
+      "severity": "high",
+      "added_at": "2026-05-30T11:52:00.757Z"
+    },
+    {
+      "finding": "Config variable substitution supports {env:VAR_NAME} syntax (config/variable.ts:37) — can read ANY env var into runtime config.",
+      "severity": "medium",
+      "added_at": "2026-05-30T11:52:00.757Z"
+    },
+    {
+      "finding": "No file-read security exists: no is_likely_binary, no resolve_safe_path, no MAX_TEXT_FILE, no SENSITIVE_READ_PATTERNS.",
+      "severity": "high",
+      "added_at": "2026-05-30T11:52:00.757Z"
+    },
+    {
+      "finding": "No bash command security: no rerouting, no dangerous pattern detection, no command substitution blocking.",
+      "severity": "high",
+      "added_at": "2026-05-30T11:52:00.757Z"
+    },
+    {
+      "finding": "Debug packet config redaction (debug-packet.ts:124) uses key-name-only matching — values could still leak if keys are unknown.",
+      "severity": "medium",
+      "added_at": "2026-05-30T11:52:00.757Z"
+    },
+    {
+      "finding": "Session export sanitization (session-export.ts:32) does not scan message content — secrets in conversation history could leak in exports.",
+      "severity": "medium",
+      "added_at": "2026-05-30T11:52:00.757Z"
+    },
+    {
+      "finding": "Build-time Sentry auth token read in electron.vite.config.ts:18 — token could leak through CI logs or build artifacts.",
+      "severity": "medium",
+      "added_at": "2026-05-30T11:52:00.757Z"
+    },
+    {
+      "finding": "GitHub token in release script (finalize-latest-json.ts:29) — read from GH_TOKEN/GITHUB_TOKEN with no validation.",
+      "severity": "medium",
+      "added_at": "2026-05-30T11:52:00.757Z"
+    },
+    {
+      "finding": "Hardcoded GitHub OAuth client ID in app-config.ts:1 — low risk (GitHub client IDs are public) but sets bad precedent.",
+      "severity": "low",
+      "added_at": "2026-05-30T11:52:00.757Z"
+    }
+  ],
+  "curated_at": "2026-05-30T11:52:00.757Z"
+}

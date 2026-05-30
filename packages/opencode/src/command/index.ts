@@ -1,4 +1,5 @@
 import { BusEvent } from "@/bus/bus-event"
+import { EventName } from "@/event/event-names"
 import { InstanceState } from "@/effect/instance-state"
 import { EffectBridge } from "@/effect/bridge"
 import type { InstanceContext } from "@/project/instance-context"
@@ -16,7 +17,7 @@ type State = {
 
 export const Event = {
   Executed: BusEvent.define(
-    "command.executed",
+    EventName.CommandExecuted,
     Schema.Struct({
       name: Schema.String,
       sessionID: SessionID,

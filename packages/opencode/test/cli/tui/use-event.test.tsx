@@ -41,7 +41,7 @@ function vcs(branch: string): Event {
 function update(version: string): Event {
   return {
     id: `evt_update_${version}`,
-    type: "installation.update-available",
+    type: "installation.update_available",
     properties: {
       version,
     },

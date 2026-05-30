@@ -1,3 +1,5 @@
+import path from "path"
+import fs from "fs/promises"
 import type {
   Hooks,
   PluginInput,
@@ -20,21 +22,70 @@ import { CloudflareAIGatewayAuthPlugin, CloudflareWorkersAuthPlugin } from "./cl
 import { AzureAuthPlugin } from "./azure"
 import { DigitalOceanAuthPlugin } from "./digitalocean"
 import { XaiAuthPlugin } from "./xai"
-import { Effect, Layer, Context, Stream } from "effect"
+import { Effect, Layer, Context, Stream, Option } from "effect"
 import { EffectBridge } from "@/effect/bridge"
 import { InstanceState } from "@/effect/instance-state"
 import { errorMessage } from "@/util/error"
+import { HealthRegistry, HealthStatus } from "@/server/health"
+import { Global } from "@opencode-ai/core/global"
 import { PluginLoader } from "./loader"
 import { parsePluginSpecifier, readPluginId, readV1Plugin, resolvePluginId } from "./shared"
 import { registerAdapter } from "@/control-plane/adapters"
 import type { WorkspaceAdapter } from "@/control-plane/types"
 import { RuntimeFlags } from "@/effect/runtime-flags"
 import { InstallationChannel } from "@opencode-ai/core/installation/version"
+import { Registry as CapabilityRegistry, makeCapabilityRegistry, checkCapability, HOOK_CAPABILITY_MAP, ALWAYS_ALLOWED_HOOKS, makeFallbackState, makeHookDispatchGuard, HookDispatchGuard, type TrustLevel } from "./capability"
 
 const log = Log.create({ service: "plugin" })
 
+// ── Plugin health store (crash counters + quarantine) ────────
+// Persisted to a JSON file in the Global data directory so crash
+// counts survive restarts and auto-quarantined plugins stay disabled.
+
+interface PluginHealthEntry {
+  crashCount: number
+  quarantined: boolean
+  lastCrashed?: string
+}
+
+interface PluginHealthStore {
+  plugins: Record<string, PluginHealthEntry>
+}
+
+const PLUGIN_HEALTH_FILE = path.join(Global.Path.data, "plugin-health.json")
+
+function loadPluginHealthStore(): Effect.Effect<PluginHealthStore> {
+  return Effect.promise<PluginHealthStore>(async () => {
+    try {
+      const raw = await fs.readFile(PLUGIN_HEALTH_FILE, "utf-8")
+      return JSON.parse(raw) as PluginHealthStore
+    } catch {
+      return { plugins: {} }
+    }
+  })
+}
+
+function savePluginHealthStore(store: PluginHealthStore): Effect.Effect<void> {
+  return Effect.tryPromise({
+    try: () => fs.writeFile(PLUGIN_HEALTH_FILE, JSON.stringify(store, null, 2)),
+    catch: () => {},
+  }).pipe(Effect.ignore)
+}
+
+const MAX_CRASHES_BEFORE_QUARANTINE = 3
+
+type PluginRegistration = {
+  pluginId: string
+  trust: TrustLevel
+}
+
+type ListedPlugin = Hooks & { pluginId?: string }
+
 type State = {
   hooks: Hooks[]
+  registrations: PluginRegistration[]
+  capabilityRegistry: CapabilityRegistry
+  dispatchGuard: HookDispatchGuard
 }
 
 // Hook names that follow the (input, output) => Promise<void> trigger pattern
@@ -54,6 +105,12 @@ export interface Interface {
   ) => Effect.Effect<Output>
   readonly list: () => Effect.Effect<Hooks[]>
   readonly init: () => Effect.Effect<void>
+  readonly checkCapability: (pluginId: string, capability: string) => Effect.Effect<boolean>
+  readonly getRegistry: () => Effect.Effect<CapabilityRegistry>
+  /** Reset the crash counter and clear quarantine for a plugin. */
+  readonly unquarantine: (pluginId: string) => Effect.Effect<void>
+  /** Get the persisted crash/quarantine status for all plugins. */
+  readonly getCrashStatus: () => Effect.Effect<Record<string, { crashCount: number; quarantined: boolean; lastCrashed?: string }>>
 }
 
 export class Service extends Context.Service<Service, Interface>()("@opencode/Plugin") {}
@@ -107,17 +164,34 @@ function getLegacyPlugins(mod: Record<string, unknown>) {
   return result
 }
 
-async function applyPlugin(load: PluginLoader.Loaded, input: PluginInput, hooks: Hooks[]) {
+async function applyPlugin(load: PluginLoader.Loaded, input: PluginInput, hooks: Hooks[]): Promise<string> {
   const plugin = readV1Plugin(load.mod, load.spec, "server", "detect")
   if (plugin) {
-    await resolvePluginId(load.source, load.spec, load.target, readPluginId(plugin.id, load.spec), load.pkg)
+    const pluginId = await resolvePluginId(load.source, load.spec, load.target, readPluginId(plugin.id, load.spec), load.pkg)
     hooks.push(await (plugin as PluginModule).server(input, load.options))
-    return
+    return pluginId
   }
 
   for (const server of getLegacyPlugins(load.mod)) {
     hooks.push(await server(input, load.options))
   }
+  return load.spec
+}
+
+const SECRET_PATTERNS = ["apiKey", "token", "password", "secret", "key", "credential", "auth"] as const
+
+function hasSecretKey(key: string): boolean {
+  return SECRET_PATTERNS.some((pattern) => key.toLowerCase().includes(pattern.toLowerCase()))
+}
+
+function stripSecrets<T extends Record<string, unknown>>(config: T): T {
+  const result = { ...config }
+  for (const key of Object.keys(result)) {
+    if (hasSecretKey(key)) {
+      delete result[key]
+    }
+  }
+  return result
 }
 
 export const layer = Layer.effect(
@@ -130,7 +204,10 @@ export const layer = Layer.effect(
     const state = yield* InstanceState.make<State>(
       Effect.fn("Plugin.state")(function* (ctx) {
         const hooks: Hooks[] = []
+        const registrations: PluginRegistration[] = []
         const bridge = yield* EffectBridge.make()
+        const capabilityRegistry = yield* makeCapabilityRegistry()
+        const dispatchGuard = makeHookDispatchGuard(capabilityRegistry)
 
         function publishPluginError(message: string) {
           bridge.fork(bus.publish(Session.Event.Error, { error: new NamedError.Unknown({ message }).toObject() }))
@@ -170,7 +247,12 @@ export const layer = Layer.effect(
               log.error("failed to load internal plugin", { name: plugin.name, error: err })
             },
           }).pipe(Effect.option)
-          if (init._tag === "Some") hooks.push(init.value)
+          if (init._tag === "Some") {
+            hooks.push(init.value)
+            const pluginId = plugin.name ?? `built-in-${registrations.length}`
+            registrations.push({ pluginId, trust: "built-in" })
+            yield* capabilityRegistry.register(pluginId, makeFallbackState("built-in"))
+          }
         }
 
         const plugins = flags.pure ? [] : (cfg.plugin_origins ?? [])
@@ -225,32 +307,37 @@ export const layer = Layer.effect(
 
           // Keep plugin execution sequential so hook registration and execution
           // order remains deterministic across plugin runs.
-          yield* Effect.tryPromise({
+          const pluginId = yield* Effect.tryPromise({
             try: () => applyPlugin(load, input, hooks),
             catch: (err) => {
               const message = errorMessage(err)
               log.error("failed to load plugin", { path: load.spec, error: message })
-              return message
+              return ""
             },
-          }).pipe(
-            Effect.catch(() => {
-              // TODO: make proper events for this
-              // bus.publish(Session.Event.Error, {
-              //   error: new NamedError.Unknown({
-              //     message: `Failed to load plugin ${load.spec}: ${message}`,
-              //   }).toObject(),
-              // })
-              return Effect.void
-            }),
-          )
+          }).pipe(Effect.catch(() => Effect.succeed("")))
+
+          if (pluginId) {
+            registrations.push({ pluginId, trust: "external" })
+            yield* capabilityRegistry.register(pluginId, makeFallbackState("external"))
+          }
         }
 
         // Notify plugins of current config
-        for (const hook of hooks) {
+        // Filter secrets per-plugin based on capability manifest.
+        for (let i = 0; i < hooks.length; i++) {
+          const hook = hooks[i]
+          const pluginId = registrations[i]?.pluginId
+          let configForPlugin = cfg
+          if (pluginId) {
+            const hasSecretsAccess: boolean = yield* checkCapability(capabilityRegistry, pluginId, "secrets.access" as any) as any
+            if (!hasSecretsAccess) {
+              configForPlugin = stripSecrets(cfg as any) as any
+            }
+          }
           yield* Effect.tryPromise({
-            try: () => Promise.resolve((hook as any).config?.(cfg)),
+            try: () => Promise.resolve((hook as any).config?.(configForPlugin)),
             catch: (err) => {
-              log.error("plugin config hook failed", { error: err })
+              log.error("plugin config hook failed", { pluginId: pluginId ?? "unknown", error: err })
             },
           }).pipe(Effect.ignore)
         }
@@ -270,46 +357,158 @@ export const layer = Layer.effect(
         )
 
         // Subscribe to bus events, fiber interrupted when scope closes
+        // SAFETY: Each event dispatch checks the plugin's event.subscribe capability and network access gate.
         yield* (yield* bus.subscribeAll()).pipe(
           Stream.runForEach((input) =>
-            Effect.sync(() => {
-              for (const hook of hooks) {
-                void hook["event"]?.({ event: input as any })
-              }
-            }),
+            Effect.flatMap(
+              Effect.forEach(
+                hooks.map((_, i) => i),
+                (i) => {
+                  const fn = hooks[i]["event"]
+                  if (!fn) return Effect.succeed(undefined)
+                  const pluginId = registrations[i]?.pluginId
+                  if (!pluginId) {
+                    fn({ event: input as any })
+                    return Effect.succeed(undefined)
+                  }
+                  return Effect.flatMap(
+                    dispatchGuard.shouldDispatch("event", pluginId),
+                    (allowed) =>
+                      Effect.sync(() => {
+                        if (!allowed) return
+                        fn({ event: input as any })
+                      }),
+                  )
+                },
+                { discard: true },
+              ),
+              () => Effect.void,
+            ),
           ),
           Effect.forkScoped,
         )
 
-        return { hooks }
-      }),
+        return { hooks, registrations, capabilityRegistry, dispatchGuard }
+      }).pipe(Effect.orDie),
     )
 
-    const trigger = Effect.fn("Plugin.trigger")(function* <
-      Name extends TriggerName,
-      Input = Parameters<Required<Hooks>[Name]>[0],
-      Output = Parameters<Required<Hooks>[Name]>[1],
-    >(name: Name, input: Input, output: Output) {
-      if (!name) return output
-      const s = yield* InstanceState.get(state)
-      for (const hook of s.hooks) {
-        const fn = hook[name] as any
-        if (!fn) continue
-        yield* Effect.promise(async () => fn(input, output))
-      }
-      return output
-    })
+    const pluginHealthStore = yield* loadPluginHealthStore()
+
+    const persistCrash: (pluginId: string) => Effect.Effect<void> = (pluginId) =>
+      Effect.gen(function* () {
+        const entry: PluginHealthEntry = pluginHealthStore.plugins[pluginId] ?? { crashCount: 0, quarantined: false }
+        entry.crashCount++
+        entry.lastCrashed = new Date().toISOString()
+        if (entry.crashCount >= MAX_CRASHES_BEFORE_QUARANTINE) {
+          entry.quarantined = true
+          log.warn("plugin auto-quarantined after repeated crashes", { pluginId, crashCount: entry.crashCount })
+        }
+        pluginHealthStore.plugins[pluginId] = entry
+        yield* savePluginHealthStore(pluginHealthStore)
+        const reg: any = yield* InstanceState.get(state)
+        yield* reg?.capabilityRegistry?.setCrashCount?.(pluginId, entry.crashCount)
+        yield* reg?.capabilityRegistry?.setQuarantined?.(pluginId, entry.quarantined)
+      }).pipe(Effect.catch(() => Effect.void))
+
+    const persistSuccess: (pluginId: string) => Effect.Effect<void> = (pluginId) =>
+      Effect.gen(function* () {
+        const entry = pluginHealthStore.plugins[pluginId]
+        if (entry && entry.crashCount > 0) {
+          entry.crashCount = 0
+          pluginHealthStore.plugins[pluginId] = entry
+          yield* savePluginHealthStore(pluginHealthStore)
+          const reg: any = yield* InstanceState.get(state)
+          yield* reg?.capabilityRegistry?.setCrashCount?.(pluginId, 0)
+        }
+      }).pipe(Effect.catch(() => Effect.void))
+
+    const trigger: Interface["trigger"] = function (name: any, input: any, output: any) {
+      return Effect.gen(function* () {
+        if (!name) return output
+        const s: any = yield* InstanceState.get(state)
+        if ((ALWAYS_ALLOWED_HOOKS as Set<string>).has(name)) {
+          for (const hook of s.hooks) {
+            const fn = (hook as any)[name]
+            if (!fn) continue
+            yield* Effect.tryPromise({ try: () => fn(input, output), catch: (err) => { log.error("plugin hook error", { pluginId: "unknown", hook: name, error: err }) } })
+          }
+          return output
+        }
+        const requiredCapability = (HOOK_CAPABILITY_MAP as Record<string, string>)[name]
+        if (!requiredCapability) return output
+        for (let i = 0; i < s.hooks.length; i++) {
+          const fn = (s.hooks[i] as any)[name]
+          if (!fn) continue
+          const pluginId = s.registrations[i]?.pluginId ?? "unknown"
+          const allowed: boolean = yield* (s.dispatchGuard as HookDispatchGuard).shouldDispatch(name, pluginId) as any
+          if (!allowed) { log.warn("plugin hook dispatch blocked by guard", { pluginId, hook: name }); continue }
+          const result = yield* Effect.tryPromise({
+            try: () => fn(input, output),
+            catch: (err) => {
+              log.error("plugin hook error", { pluginId, hook: name, error: err })
+              return err
+            },
+          }).pipe(Effect.exit)
+          if (result._tag === "Success") {
+            yield* persistSuccess(pluginId)
+          } else {
+            yield* persistCrash(pluginId)
+          }
+        }
+        return output
+      })
+    } as any
 
     const list = Effect.fn("Plugin.list")(function* () {
       const s = yield* InstanceState.get(state)
-      return s.hooks
+      return s.hooks.map((hook, i) => {
+        const listed: ListedPlugin = Object.assign(hook, { pluginId: s.registrations[i]?.pluginId })
+        return listed
+      })
     })
 
     const init = Effect.fn("Plugin.init")(function* () {
       yield* InstanceState.get(state)
     })
 
-    return Service.of({ trigger, list, init })
+    const checkCapabilityFn = Effect.fn("Plugin.checkCapability")(function* (pluginId: string, capability: string) {
+      const s = yield* InstanceState.get(state)
+      return yield* checkCapability(s.capabilityRegistry, pluginId, capability as any)
+    })
+
+    const getRegistry = Effect.fn("Plugin.getRegistry")(function* () {
+      const s = yield* InstanceState.get(state)
+      return s.capabilityRegistry
+    })
+
+    const unquarantine = Effect.fn("Plugin.unquarantine")(function* (pluginId: string) {
+      const entry = pluginHealthStore.plugins[pluginId]
+      if (entry) {
+        entry.crashCount = 0
+        entry.quarantined = false
+        delete entry.lastCrashed
+        yield* savePluginHealthStore(pluginHealthStore)
+      }
+      const reg: any = yield* InstanceState.get(state)
+      yield* reg?.capabilityRegistry?.setCrashCount?.(pluginId, 0)
+      yield* reg?.capabilityRegistry?.setQuarantined?.(pluginId, false)
+      log.info("plugin manually un-quarantined", { pluginId })
+    })
+
+    const getCrashStatus = Effect.fn("Plugin.getCrashStatus")(function* () {
+      return yield* Effect.succeed({ ...pluginHealthStore.plugins })
+    })
+
+    // Report Plugin health to optional HealthRegistry
+    const hr = yield* Effect.serviceOption(HealthRegistry)
+    if (Option.isSome(hr)) {
+      yield* hr.value.set("plugin", {
+        status: HealthStatus.Healthy,
+        updatedAt: Date.now(),
+      })
+    }
+
+    return Service.of({ trigger, list, init, checkCapability: checkCapabilityFn, getRegistry, unquarantine, getCrashStatus })
   }),
 )
 

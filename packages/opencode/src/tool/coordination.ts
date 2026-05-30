@@ -51,7 +51,7 @@ export type FanOutGroup = {
 
 // ── SQLite table definitions ─────────────────────────────
 
-const CoordinationClaimTable = sqliteTable("coordination_claim", {
+export const CoordinationClaimTable = sqliteTable("coordination_claim", {
   task_id: text().primaryKey(),
   session_id: text().notNull(),
   wave: integer().notNull().default(0),
@@ -65,7 +65,7 @@ const CoordinationClaimTable = sqliteTable("coordination_claim", {
   released_at: integer(),
 })
 
-const CoordinationReservationTable = sqliteTable("coordination_reservation", {
+export const CoordinationReservationTable = sqliteTable("coordination_reservation", {
   path: text().primaryKey(),
   task_id: text().notNull(),
   session_id: text().notNull(),
@@ -73,7 +73,7 @@ const CoordinationReservationTable = sqliteTable("coordination_reservation", {
   created_at: integer().notNull(),
 })
 
-const CoordinationFanOutTable = sqliteTable(
+export const CoordinationFanOutTable = sqliteTable(
   "coordination_fan_out",
   {
     session_id: text().notNull(),

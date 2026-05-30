@@ -1,0 +1,27 @@
+{"at":"2026-05-30T10:35:53.732Z","session_id":"ses_1878c49caffeb2nyQWIbZyYz1y","agent":"lane-owner","tool":"smart_grep","pattern":"import.*from.*\"#db\"","path":"packages/opencode/src/storage"}
+{"at":"2026-05-30T10:35:53.747Z","session_id":"ses_1878c49caffeb2nyQWIbZyYz1y","agent":"lane-owner","tool":"smart_grep","pattern":"PgPool|\\\"./pg-pool\\\"","path":"packages/opencode/src/storage"}
+{"at":"2026-05-30T10:35:56.599Z","session_id":"ses_1878c49caffeb2nyQWIbZyYz1y","agent":"lane-owner","tool":"smart_find","pattern":"pg-pool*","path":"packages/opencode/src/storage"}
+{"at":"2026-05-30T10:36:01.334Z","session_id":"ses_1878c49caffeb2nyQWIbZyYz1y","agent":"lane-owner","tool":"smart_find","pattern":"pg-pool*","path":"packages/opencode/test"}
+{"at":"2026-05-30T10:36:11.953Z","session_id":"ses_1878c49caffeb2nyQWIbZyYz1y","agent":"lane-owner","tool":"smart_grep","pattern":"#db|db\\.pg","path":"packages/opencode"}
+{"at":"2026-05-30T10:36:13.749Z","session_id":"ses_1878c49caffeb2nyQWIbZyYz1y","agent":"lane-owner","tool":"smart_grep","pattern":"\"#db\"","path":"packages/opencode"}
+{"at":"2026-05-30T10:36:55.211Z","session_id":"ses_1878c49caffeb2nyQWIbZyYz1y","agent":"lane-owner","tool":"smart_find","pattern":"*pg-pool*","path":"packages/opencode/test"}
+{"at":"2026-05-30T10:36:55.224Z","session_id":"ses_1878c49caffeb2nyQWIbZyYz1y","agent":"lane-owner","tool":"smart_find","pattern":"*pool*","path":"packages/opencode/test/storage"}
+{"at":"2026-05-30T10:37:13.096Z","session_id":"ses_1878c49caffeb2nyQWIbZyYz1y","agent":"lane-owner","tool":"smart_grep","pattern":"health","path":"packages/opencode/src/server/routes/instance/httpapi"}
+{"at":"2026-05-30T10:37:13.303Z","session_id":"ses_1878c49caffeb2nyQWIbZyYz1y","agent":"lane-owner","tool":"smart_find","pattern":"pg-pool*","path":"packages/opencode/test"}
+{"at":"2026-05-30T10:39:14.101Z","session_id":"ses_1878c49caffeb2nyQWIbZyYz1y","agent":"lane-owner","tool":"smart_find","pattern":"*pg*fixture*","path":"packages/opencode/test"}
+{"at":"2026-05-30T10:39:17.016Z","session_id":"ses_1878c49caffeb2nyQWIbZyYz1y","agent":"lane-owner","tool":"smart_grep","pattern":"import.*fixture/pg","path":"packages/opencode/test"}
+{"at":"2026-05-30T10:39:17.270Z","session_id":"ses_1878c49caffeb2nyQWIbZyYz1y","agent":"lane-owner","tool":"smart_find","pattern":"*fixture/pg*","path":"packages/opencode/test"}
+{"at":"2026-05-30T10:39:29.809Z","session_id":"ses_1878c49caffeb2nyQWIbZyYz1y","agent":"lane-owner","tool":"smart_bun","command":"typecheck","elapsed_ms":8,"exit_code":1}
+{"at":"2026-05-30T10:39:32.428Z","session_id":"ses_1878c49caffeb2nyQWIbZyYz1y","agent":"lane-owner","tool":"smart_grep","pattern":"typecheck|check-types","path":"packages/opencode/package.json"}
+{"at":"2026-05-30T10:39:37.153Z","session_id":"ses_1878c49caffeb2nyQWIbZyYz1y","agent":"lane-owner","tool":"smart_bun","command":"tsgo","elapsed_ms":7,"exit_code":1}
+{"at":"2026-05-30T10:39:51.534Z","session_id":"ses_1878c49caffeb2nyQWIbZyYz1y","agent":"lane-owner","tool":"smart_bun","command":"typecheck","elapsed_ms":7,"exit_code":1}
+{"at":"2026-05-30T10:40:01.301Z","session_id":"ses_1878c49caffeb2nyQWIbZyYz1y","agent":"lane-owner","tool":"smart_grep","pattern":"\\\"scripts\\\"","path":"packages/opencode/package.json"}
+{"at":"2026-05-30T10:41:28.458Z","session_id":"ses_1878c49caffeb2nyQWIbZyYz1y","agent":"lane-owner","tool":"smart_bun","command":"test","elapsed_ms":4232,"exit_code":0}
+{"at":"2026-05-30T10:52:37.558Z","session_id":"ses_1878c49caffeb2nyQWIbZyYz1y","agent":"lane-owner","tool":"smart_sd","file":"packages/opencode/src/storage/db.pg.ts"}
+{"at":"2026-05-30T10:52:49.915Z","session_id":"ses_1878c49caffeb2nyQWIbZyYz1y","agent":"lane-owner","tool":"smart_sd","file":"packages/opencode/src/storage/db.pg.ts"}
+{"at":"2026-05-30T10:52:52.525Z","session_id":"ses_1878c49caffeb2nyQWIbZyYz1y","agent":"lane-owner","tool":"smart_sd","file":"packages/opencode/src/storage/db.pg.ts"}
+{"at":"2026-05-30T10:53:13.204Z","session_id":"ses_1878c49caffeb2nyQWIbZyYz1y","agent":"lane-owner","tool":"smart_grep","pattern":"function PgAdapter|const PgAdapter|PgAdapter","path":"packages/opencode/src/storage/adapter.ts"}
+{"at":"2026-05-30T10:53:27.216Z","session_id":"ses_1878c49caffeb2nyQWIbZyYz1y","agent":"lane-owner","tool":"smart_sd","file":"packages/opencode/src/storage/adapter.ts"}
+{"at":"2026-05-30T10:53:30.759Z","session_id":"ses_1878c49caffeb2nyQWIbZyYz1y","agent":"lane-owner","tool":"smart_sd","file":"packages/opencode/src/storage/adapter.ts"}
+{"at":"2026-05-30T10:53:33.434Z","session_id":"ses_1878c49caffeb2nyQWIbZyYz1y","agent":"lane-owner","tool":"smart_sd","file":"packages/opencode/src/storage/adapter.ts"}
+{"at":"2026-05-30T10:53:36.168Z","session_id":"ses_1878c49caffeb2nyQWIbZyYz1y","agent":"lane-owner","tool":"smart_grep","pattern":"import.*PgAdapter|from.*adapter.*PgAdapter","path":"packages/opencode/src"}

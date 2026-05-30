@@ -1,5 +1,6 @@
 import { Bus } from "@/bus"
 import { BusEvent } from "@/bus/bus-event"
+import { EventName } from "@/event/event-names"
 import { ConfigPermission } from "@/config/permission"
 import { InstanceState } from "@/effect/instance-state"
 import { ProjectID } from "@/project/schema"
@@ -67,9 +68,9 @@ export const Approval = Schema.Struct({
 export type Approval = Schema.Schema.Type<typeof Approval>
 
 export const Event = {
-  Asked: BusEvent.define("permission.asked", Request),
+  Asked: BusEvent.define(EventName.PermissionAsked, Request),
   Replied: BusEvent.define(
-    "permission.replied",
+    EventName.PermissionReplied,
     Schema.Struct({
       sessionID: SessionID,
       requestID: PermissionID,

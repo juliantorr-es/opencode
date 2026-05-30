@@ -1,0 +1,57 @@
+{
+  "schema_version": "v1",
+  "profile": "cartography",
+  "entries": [
+    {
+      "summary": "Desktop app uses Electron 41.2.1 via electron-vite with main/preload/renderer split",
+      "file": "packages/desktop/package.json:55",
+      "added_at": "2026-05-30T11:53:22.588Z"
+    },
+    {
+      "summary": "IPC bridge has 63 invoke handles, 5 send channels, 7 push channels — all typed via ipc-contract.ts",
+      "file": "packages/desktop/src/main/ipc-channels.ts",
+      "added_at": "2026-05-30T11:53:22.588Z"
+    },
+    {
+      "summary": "Sidecar architecture: opencode server runs as Electron utilityProcess worker thread",
+      "file": "packages/desktop/src/main/sidecar.ts",
+      "added_at": "2026-05-30T11:53:22.588Z"
+    },
+    {
+      "summary": "Health endpoint at /api/global/health is a stub — always returns {healthy: true} with no actual checks",
+      "file": "packages/opencode/src/server/routes/instance/httpapi/handlers/global.ts:75",
+      "added_at": "2026-05-30T11:53:22.588Z"
+    },
+    {
+      "summary": "Database layer uses PGlite (embedded Postgres) by default, falls back to node-postgres for remote",
+      "file": "packages/opencode/src/storage/db.pg.ts",
+      "added_at": "2026-05-30T11:53:22.588Z"
+    },
+    {
+      "summary": "Global.Path uses XDG paths: ~/.local/share/opencode for data, ~/.config/opencode for config",
+      "file": "packages/core/src/global.ts",
+      "added_at": "2026-05-30T11:53:22.588Z"
+    },
+    {
+      "summary": "native/ directory referenced in electron-builder config does NOT exist on disk",
+      "file": "packages/desktop/electron-builder.config.ts:36",
+      "added_at": "2026-05-30T11:53:22.588Z"
+    },
+    {
+      "summary": "Auto-update via electron-updater, enabled only when packaged and non-dev channel",
+      "file": "packages/desktop/src/main/updater.ts",
+      "added_at": "2026-05-30T11:53:22.588Z"
+    },
+    {
+      "summary": "Unresponsive sampler collects JS call stacks at 1s intervals for 15s during renderer hangs",
+      "file": "packages/desktop/src/main/unresponsive.ts",
+      "added_at": "2026-05-30T11:53:22.588Z"
+    },
+    {
+      "summary": "macOS notarization enabled, hardened runtime with all JIT exceptions",
+      "file": "packages/desktop/resources/entitlements.plist",
+      "added_at": "2026-05-30T11:53:22.588Z"
+    }
+  ],
+  "curated_at": "2026-05-30T11:53:22.588Z"
+}

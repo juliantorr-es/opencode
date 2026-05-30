@@ -7,6 +7,7 @@ import { ChildProcess } from "effect/unstable/process"
 import { AppProcess } from "@opencode-ai/core/process"
 import path from "path"
 import { BusEvent } from "@/bus/bus-event"
+import { EventName } from "@/event/event-names"
 import * as Log from "@opencode-ai/core/util/log"
 import { makeRuntime } from "@opencode-ai/core/effect/runtime"
 import semver from "semver"
@@ -21,13 +22,13 @@ export type ReleaseType = "patch" | "minor" | "major"
 
 export const Event = {
   Updated: BusEvent.define(
-    "installation.updated",
+    EventName.InstallationUpdated,
     Schema.Struct({
       version: Schema.String,
     }),
   ),
   UpdateAvailable: BusEvent.define(
-    "installation.update-available",
+    EventName.InstallationUpdateAvailable,
     Schema.Struct({
       version: Schema.String,
     }),

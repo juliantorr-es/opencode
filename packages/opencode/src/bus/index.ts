@@ -2,6 +2,7 @@ import { Effect, Exit, Layer, PubSub, Scope, Context, Stream, Schema } from "eff
 import { EffectBridge } from "@/effect/bridge"
 import * as Log from "@opencode-ai/core/util/log"
 import { BusEvent } from "./bus-event"
+import { EventName } from "@/event/event-names"
 import { GlobalBus } from "./global"
 import { InstanceState } from "@/effect/instance-state"
 import { makeRuntime } from "@/effect/run-service"
@@ -15,7 +16,7 @@ const log = Log.create({ service: "bus" })
 type BusProperties<D extends BusEvent.Definition<string, Schema.Top>> = Schema.Schema.Type<D["properties"]>
 
 export const InstanceDisposed = BusEvent.define(
-  "server.instance.disposed",
+  EventName.ServerInstanceDisposed,
   Schema.Struct({
     directory: Schema.String,
   }),

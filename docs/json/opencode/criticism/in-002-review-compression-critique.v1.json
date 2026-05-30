@@ -1,0 +1,331 @@
+{
+  "schema_version": "rig.opencode.critic_review.v1",
+  "review_id": "critique-in-002-v1",
+  "subject": "IN-002 Review Compression System — Plan Critique",
+  "reviewed_at": "2026-05-30T12:45:00Z",
+  "reviewer": "critic",
+  "verdict": "REJECT — requires 3 preconditions and 3 mid-build corrections",
+  "source": "docs/json/opencode/cartography/in-002-review-compression-map.v1.json",
+  "findings_by_axis": {
+    "coupling": {
+      "score": 2,
+      "summary": "Manifest depends on 4+ data sources with no degradation strategy. Missing any single source produces a silent hole, not a documented degraded manifest.",
+      "severity": "high",
+      "risks": [
+        {
+          "id": "C-001",
+          "risk": "Plan artifact missing → plan/diff deviation collapses entirely. ~90 plan files exist but not all lanes have plan artifacts. Some fixes are ad-hoc without a formal plan (e.g., edit-only lanes). The compressor has no 'plan unavailable' degradation path.",
+          "evidence": "docs/json/opencode/cartography/in-002-review-compression-map.v1.json: systems_examined.plans.count: '~90+ plan files across ~50 plan IDs'. But GAP-007 states 'the entire IN-002 deliverable has no schema, no tool, no format definition'. Unplanned edits exist (edit_log writes without plan_id).",
+          "file": "docs/json/opencode/plans/ah-001-inflight-atomicity.v1.json:8-12",
+          "recommendation": "Define three degradation tiers: (1) Full manifest — all sources present, (2) Diff-only manifest — plan unavailable, (3) Emergency manifest — only diff stats available. Each tier is a valid, labeled output, not a crash or silent omission."
+        },
+        {
+          "id": "C-002",
+          "risk": "Validation data spans 5+ incompatible schemas with different field sets. The compressor must either normalize all 5 (high coupling, fragile to new formats) or support only a subset (coverage gap). A 6th schema added next month breaks the compressor.",
+          "evidence": "docs/json/opencode/cartography/in-002-review-compression-map.v1.json: gaps.GAP-003: '5+ validation schema families coexist with zero unification'. Smoking gun SG-003: 'Five validation schema families coexist with zero unification'. Confirmed: validation_report.v1 (per-file checklist), qa.validation.v1 (criteria-based), validation_artifact.v1 (claim-atom validation), qa.verification.v1 (per-claim PASS/FAIL), stress_report.v1 (red-team findings).",
+          "file": "docs/json/opencode/validation/plugin-transport-validation.v1.json (schema_version: rig.relay.validation_report.v1) vs docs/json/opencode/sessions/lane6/validation_artifact.v1.json (schema_version: rig.relay.validation_artifact.v1) vs docs/json/qa/verification_lane7_github_hardening.v1.json (schema_version: rig.relay.qa.verification.v1)",
+          "recommendation": "Build the compressor to consume a unified intermediate format. Create a validation normalizer layer that reads all 5+ formats and produces a common ValidationRun type. This isolates the compressor from schema drift. As a precondition, the 3 missing governance schemas (builder_publication_record, verification_record, prepublication_review_cycle) MUST be created first — they are listed as required by AGENTS.md and are prerequisites, not deliverables of this initiative."
+        },
+        {
+          "id": "C-003",
+          "risk": "session-diff.ts is documented as a placeholder tool (pre-existing debt finding). The compressor depends on it for diff aggregation. If it stalls or produces wrong output, the entire diff_summary and plan_vs_diff_deviation sections are affected.",
+          "evidence": "docs/json/opencode/findings/out-of-scope-findings.jsonl (line referenced in pre_existing_findings_incorporated): 'Two tools in registry are placeholders (delegate.ts, session-diff.ts) — erodes trust in tool registry'. docs/json/opencode/cartography/in-002-review-compression-map.v1.json: existing_data_sources.for_diff_analysis lists session-diff tool as 'Medium — aggregates edit_log, but from-scratch per session'.",
+          "file": "packages/opencode/src/tool/session-diff.ts",
+          "recommendation": "Either repair session-diff.ts (remove placeholder status, add error handling) before building the compressor, or build diff aggregation directly from Snapshot.FileDiff[] and edit_log JSONL, bypassing session-diff as the intermediary."
+        }
+      ]
+    },
+    "debuggability": {
+      "score": 1,
+      "summary": "When a classification is wrong, there is zero traceability to diagnose it. The weight rubric produces opaque labels ('mechanical', 'high', 'critical') without logging which rules matched.",
+      "severity": "high",
+      "risks": [
+        {
+          "id": "D-001",
+          "risk": "Weight rubric decisions are not logged. A file classified as 'mechanical' when it was a security change provides no audit trail of which path pattern, change type, or dependency count triggered the classification. Developer cannot backtrack without re-running the compressor and diffing outputs.",
+          "evidence": "The cartography map's GAP-005 bridge says 'Define risk scoring rubric: file path patterns, change type (add/delete/modify), dependency count, boundary proximity' but does NOT include 'log classification decisions' or 'annotate with rationale'. The proposed review_manifest schema sections (in schema_requirements_for_review_manifest) include 'review_weight_map: per-file weight classification with rationale' but 'rationale' is unspecified — could be a number, not a human-readable explanation.",
+          "file": "docs/json/opencode/cartography/in-002-review-compression-map.v1.json: schema_requirements_for_review_manifest.new_schemas_needed[0].proposed_sections",
+          "recommendation": "Require that each entry in review_weight_map includes: { file, weight, rationale: string[], matching_rules: string[] }. The rationale must be an array of human-readable strings like ['path_pattern: src/security/* → critical', 'change_type: modified → medium']. Use Effect.annotateCurrentSpan during classification so the decision chain is captured in observability."
+        },
+        {
+          "id": "D-002",
+          "risk": "Claim-to-file matching is completely opaque. The compressor must extract file references from free-text claim_atoms (GAP-002). Without NLP or structured file references, the matching logic will be regex-based heuristics that fail silently. When a claim like 'All Database.use paths go through the adapter seam' should match 82 files but the regex misses them, there is no alert or confidence score.",
+          "evidence": "docs/json/opencode/cartography/in-002-review-compression-map.v1.json: GAP-002: 'claim_atoms are free-text strings, not structured file references. No plan schema field tracks this plan touches these files.' SG-002: 'claim_atoms are free-text strings, not structured file references.' Sampled from ah-001-inflight-atomicity.v1.json: 'Two fibers can both check inflight, both see no pending computation, and both compute the same key' — zero file references. 'No other functionality changes — TTL, eviction, API interface remain identical' — zero file references.",
+          "file": "docs/json/opencode/plans/ah-001-inflight-atomicity.v1.json:8-12",
+          "recommendation": "Do NOT build an NLP-based claim-to-file matcher. It will be unreliable and un-debuggable. Instead: (1) Add an optional 'files' field to the plan schema (array of file patterns/globs) as a near-term bridge, and (2) For the compressor, produce a 'claim_to_file_confidence' score per claim: 'exact_match' for explicit file references (regex-extracted), 'pattern_match' for glob-matched, 'unmatched' for free-text claims with no file reference. Surface unmatched claims prominently in the manifest so reviewers know which claims could not be verified against the diff."
+        },
+        {
+          "id": "D-003",
+          "risk": "Weight rubric version is not tracked. A file classified under rubric v1 may be reclassified under rubric v2. Without versioning, a developer seeing 'mechanical' cannot tell which rubric produced it. Wrong classifications become permanent artifacts with no upgrade path.",
+          "evidence": "The cartography map does not propose rubric versioning anywhere in GAP-005 bridges or schema requirements.",
+          "file": "docs/json/opencode/cartography/in-002-review-compression-map.v1.json: gaps.GAP-005",
+          "recommendation": "Add rubric_version to the review_manifest envelope. Store rubric definitions as versioned JSON artifacts (e.g., docs/json/opencode/rubrics/weight-rubric.v1.json). When the rubric changes, old manifests retain their original version reference."
+        }
+      ]
+    },
+    "convergence": {
+      "score": 1,
+      "summary": "The comparison engine has no path to reliable convergence. Free-text claim_atoms (GAP-002), 5 incompatible validation schemas (GAP-003), no test delta capability (GAP-004), and prepublication fabrication risk (SG-006) compound to create a system that will produce wrong manifests confidently.",
+      "severity": "high",
+      "risks": [
+        {
+          "id": "CV-001",
+          "risk": "Claim-to-file matching is fundamentally underdetermined. Free-text claim_atoms describe outcomes ('All Database.use paths go through the adapter seam') and behaviors ('Two fibers can both check inflight') — not files. A regex that extracts 'Database.use' will match 82 files, but the claim is about architectural migration status, not file presence. The compressor cannot distinguish 'claim satisfied' from 'claim mentioned in code'.",
+          "evidence": "SG-002 (free-text claim_atoms, no structured file references). Confirmed by sampling: ah-001-inflight-atomicity.v1.json claim_atoms mention 'cache.ts' once in 5 atoms (the only file reference). l7-c1 from verification: 'error as Error → GitHubApiError in service.ts' — mentions a file but as prose, not structured path. l7-c3: 'GitHubService layer wired into AppLayer via Layer.provideMerge' — no file reference at all.",
+          "file": "docs/json/opencode/plans/ah-001-inflight-atomicity.v1.json:8-12; docs/json/qa/verification_lane7_github_hardening.v1.json claim_atoms",
+          "recommendation": "Define three matching tiers with explicit boundaries: (1) EXACT: claim atoms that contain parseable file paths (e.g., 'packages/opencode/src/tool/cache.ts') → verify file exists in diff. (2) PATTERN: claim atoms with glob/file-type patterns (e.g., '*.test.ts') → verify count matches. (3) UNVERIFIABLE: pure prose claims → emit 'unverifiable' label, do not attempt matching. Document this as a known limitation of the current claim_atom format. The bridge is to add structured 'files' field to plan schema (recommended in GAP-002 bridge)."
+        },
+        {
+          "id": "CV-002",
+          "risk": "Partial matches will silently appear complete. If a claim says 'All 6 store IPC handlers wrapped in try/catch' and the diff touches only 2 of 6, the compressor matching the file paths 'ipc.ts' will see a match and report 'claimed files touched'. It will NOT verify the claim's quantitative assertion (all 6 handlers). The manifest would show 100% plan-diff alignment when the claim is actually 33% satisfied.",
+          "evidence": "verification_artifact.v1.json claim_atom 1: 'All 6 dedicated store IPC handlers wrapped in try/catch with console.error' — a quantitative claim that requires semantic verification (checking each handler's implementation), not just file presence. The compressor cannot evaluate this claim type.",
+          "file": "docs/json/opencode/sessions/lane6/validation_artifact.v1.json: claim_atoms[1]",
+          "recommendation": "Classify claim_atoms by verifiability: (a) file-presence claims (does file X exist in diff), (b) quantitative claims (all N handlers wrapped), (c) behavioral claims (race is fixed). Only type (a) can be machine-verified by the compressor. Types (b) and (c) should be flagged as 'requires human review' in the manifest. This is not a weakness of the compressor — it's an honest scoping boundary."
+        },
+        {
+          "id": "CV-003",
+          "risk": "The compressor must normalize 5+ validation schemas. Each schema uses a different verdict format: validation_report.v1 uses 'pass/pass_with_minor_concerns', validation_artifact.v1 uses 'PASS/FAIL', stress_report.v1 uses 'survived_attack_with_repairs'. The compressor must either map all to a common vocabulary (losing nuance) or preserve originals (inconsistent manifest).",
+          "evidence": "SG-003: 'Five validation schema families coexist with zero unification'. Confirmed by reading all 5 formats: validation_report.v1 verdict='pass_with_minor_concerns' (plugin-transport-validation.v1.json), validation_artifact.v1 verdict='MIXED — 2/5 claims pass, 3/5 fail' (sessions/lane6/validation_artifact.v1.json), qa.verification.v1 has per-claim PASS/FAIL but no top-level verdict (verification_lane7_github_hardening.v1.json), stress_report.v1 verdict='survived_attack_with_repairs' (phase1-remaining-stress-findings.v1.json).",
+          "file": "Multiple files across docs/json/opencode/validation/, docs/json/opencode/sessions/, docs/json/opencode/qa/, docs/json/opencode/stress/",
+          "recommendation": "Create a ValidationRun normalizer as a separate, testable module before building the compressor. It must: (1) detect schema_version, (2) extract verdict as normalized enum (PASS, FAIL, MIXED, INCONCLUSIVE), (3) extract findings as common Finding[] type, (4) emit warnings for unrecognized schema_versions. The compressor consumes ValidationRun[], not raw files."
+        },
+        {
+          "id": "CV-004",
+          "risk": "Prepublication verdict fabrication (SG-006) means the compressor may ingest fabricated review data as genuine. A falsely admitted publication would appear to have passed all gates, when in fact the review was never conducted. The compressor amplifies the governance gap by legitimizing fake data in a machine-readable manifest.",
+          "evidence": "SG-006: 'Prepublication verdict fabrication is possible — verdicts can be recorded before review occurs (documented governance gap). Review compression would surface these as genuine.' Found in both cartography artifacts. docs/findings/out-of-scope-findings.jsonl explicitly records this.",
+          "file": "docs/findings/out-of-scope-findings.jsonl (line 9 per cartography)",
+          "recommendation": "The compressor MUST include provenance metadata for every prepublication verdict it surfaces: tool_name, session_id, timestamp, reviewer_agent_name. Include a prepublication_trust_score field that flags verdicts as 'proven' (all metadata present, timestamp matches review window) vs 'suspect' (missing metadata, improbable chronology). This turns SG-006 from a blind spot into an explicit manifest signal."
+        },
+        {
+          "id": "CV-005",
+          "risk": "No test delta capability exists (GAP-004). The compressor's 'test deltas with pass/fail summaries' section would be empty or contain only point-in-time snapshots. A reader cannot tell if tests improved or regressed.",
+          "evidence": "GAP-004: 'No test delta/comparison capability. No tool or logic compares tests before vs tests after for a lane. Test results are point-in-time snapshots only.' SG-004: 'No test delta mechanism exists — validation results are point-in-time snapshots with no before/after comparison.'",
+          "file": "docs/json/opencode/cartography/in-002-review-compression-map.v1.json: gaps.GAP-004",
+          "recommendation": "Either: (1) Build a test baseline capture mechanism as a prerequisite (capture test results before execution), or (2) Remove 'test deltas' from the review_manifest schema v1 and mark it as deferred. A manifest that claims to show test deltas but shows point-in-time snapshots is worse than one that honestly omits the section."
+        }
+      ]
+    },
+    "surface_area": {
+      "score": 3,
+      "summary": "The proposal bundles 4 schema creations, a comparison engine, a weight rubric, and a generator tool into one initiative. Three of the four schemas are actually prerequisites already mandated by AGENTS.md — they should not count as new surface area.",
+      "severity": "medium",
+      "risks": [
+        {
+          "id": "SA-001",
+          "risk": "4 new schemas is too many for one delivery. The correct decomposition is: (1) 3 governance schemas are AGENTS.md requirements that should be fast-tracked as independent work — they are prerequisites, not deliverables. (2) The review_manifest schema and generator tool is the actual IN-002 deliverable. (3) The weight rubric is a Phase 2 enhancement.",
+          "evidence": "docs/json/opencode/cartography/in-002-review-compression-map.v1.json: schema_requirements_for_review_manifest.new_schemas_needed lists 4 schemas. But AGENTS.md explicitly requires builder_publication_record, verification_record, and prepublication_review_cycle — these are POLICY MANDATES, not IN-002 scope. Only rig.relay.review_manifest.v1 is truly new.",
+          "file": "AGENTS.md (requires the 3 governance schemas); docs/schemas/ (confirmed: 10 schemas exist, none matching the 3 mandated ones)",
+          "recommendation": "Split into 3 independent tracks: Track A (P0) — Create 3 governance schemas mandated by AGENTS.md. Track B (P0) — Design review_manifest.v1 schema + build aggregation engine (plan + diff only, no weights). Track C (P1) — Design weight rubric and integrate into manifest. Tracks A and B can run in parallel. Track C depends on B being proven in production."
+        },
+        {
+          "id": "SA-002",
+          "risk": "The weight rubric and review_manifest schema are being designed in parallel. The rubric needs the manifest schema to output to; the manifest schema needs the rubric fields to know what to include. This circular dependency risks both being wrong.",
+          "evidence": "cartography map: 'Phase 4: Build manifest generator — Effect service that reads all data sources and produces review_manifest output' vs 'Phase 3: Design review weight rubric'. These are sequential but have field-level coupling. The manifest's review_weight_map section shape depends on the rubric's output format.",
+          "file": "docs/json/opencode/cartography/in-002-review-compression-map.v1.json: recommended_immediate_next",
+          "recommendation": "Design the manifest schema first with review_weight_map as a generic 'per-file weight entry' array. Then design the rubric to populate that schema. This avoids the circular dependency."
+        },
+        {
+          "id": "SA-003",
+          "risk": "New tool surface area — a manifest generator tool as an 'Effect service' — adds an execution dependency. If this tool is built as a standalone CLI (rather than a library function), it needs its own runtime, error handling, and test coverage. If built as a library, it needs integration into the existing tool registry.",
+          "evidence": "cartography map: recommended_immediate_next step 5: 'Prototype manifest generator tool — Effect service that reads all data sources and produces rig.relay.review_manifest.v1 output'. The delivery mechanism is unspecified.",
+          "file": "docs/json/opencode/cartography/in-002-review-compression-map.v1.json: recommended_immediate_next[5]",
+          "recommendation": "Deliver as a library function (generateReviewManifest) first, with a thin CLI wrapper. Avoid building an Effect Service Layer until the schema and data flow are proven. The generator should be a pure(ish) function: (plan, diffs, validations, publications) → manifest."
+        }
+      ]
+    },
+    "testability": {
+      "score": 2,
+      "summary": "The comparison engine and validation normalizer can be tested with synthetic data, but the claim-to-file matcher is untestable without real plan/diff pairs due to its NLP-like nature.",
+      "severity": "medium",
+      "risks": [
+        {
+          "id": "T-001",
+          "risk": "Claim-to-file matching cannot be tested deterministically. If the compressor uses regex heuristics to extract file references from free-text claim_atoms, the test cases become a list of known claim_atom patterns and expected file extracts. Any new phrasing pattern from a plan author will break the tests. The test suite becomes a brittle oracle of all possible writing styles.",
+          "evidence": "claim_atoms from ah-001-inflight-atomicity.v1.json use 3 different reference styles: (1) explicit file path ('tool/cache.ts'), (2) embedded reference ('No other functionality changes — TTL, eviction, API interface remain identical' — no files), (3) behavioral ('Two fibers can both check inflight'). No consistent referencing convention.",
+          "file": "docs/json/opencode/plans/ah-001-inflight-atomicity.v1.json:8-12",
+          "recommendation": "Do NOT build a heuristic file-reference extractor into the compressor. Instead: (1) Add structured 'files' field to plan schema (short-term bridge). (2) For the compressor, match only against 'files_explicitly_claimed' — an empty list means 'all claims unverifiable by file matching'. This is testable: given known files[], known diffs[], assert files_claimed ∩ files_changed = expected. No NLP required."
+        },
+        {
+          "id": "T-002",
+          "risk": "The validation normalizer requires test fixtures for all 5+ schema formats. Some formats may have only 1 real-world example (e.g., stress_report.v1 has only 1 file). Synthetic fixtures must be crafted with realistic edge cases (missing fields, null values, unknown schema_versions).",
+          "evidence": "SG-003: 5 formats identified. Only 1 stress_report.v1 exists (phase1-remaining-stress-findings.v1.json). Only 2 validation_artifact.v1 exist (session/lane6). Only 1 qa.verification.v1 exists (verification_lane7). Test coverage requires synthetic fixtures for each format's edge cases.",
+          "file": "docs/json/opencode/stress/phase1-remaining-stress-findings.v1.json; docs/json/opencode/sessions/lane6/validation_artifact.v1.json; docs/json/qa/verification_lane7_github_hardening.v1.json",
+          "recommendation": "Build test fixtures from real examples + synthetic edge cases. Required fixtures per format: (1) well-formed complete record, (2) well-formed minimal record, (3) corrupt/invalid JSON, (4) unsupported schema_version, (5) empty findings list. This is 25 fixtures minimum for 5 formats — doable but must be scoped explicitly."
+        },
+        {
+          "id": "T-003",
+          "risk": "Weight rubric testability depends on the rubric design. A rubric based on 'file path patterns, change type, dependency count, boundary proximity' has clear test cases: given file X with status Y and dependency count Z, assert weight W. But 'boundary proximity' is ambiguous — does it mean files in packages/opencode/src/storage/ when boundary is 'storage-substrate', or files that import from boundary packages? The second requires dependency graph analysis, which is expensive to compute in tests.",
+          "evidence": "GAP-005 bridges: 'Define risk scoring rubric: file path patterns, change type (add/delete/modify), dependency count, boundary proximity'. 'Boundary proximity' is undefined — could be lexical (file path prefix match) or semantic (import graph analysis).",
+          "file": "docs/json/opencode/cartography/in-002-review-compression-map.v1.json: gaps.GAP-005.bridges",
+          "recommendation": "Define 'boundary proximity' lexically (file path starts with boundary path prefix) for v1. This is testable with a 10-line synthetic fixture. Defer semantic boundary proximity (import-graph-based) to v2 with a note that it requires a dependency graph service."
+        }
+      ]
+    },
+    "error_clarity": {
+      "score": 1,
+      "summary": "No error handling strategy is described for the manifest generator. Mid-way failures from corrupt data sources produce unclear errors or silently degraded output.",
+      "severity": "high",
+      "risks": [
+        {
+          "id": "E-001",
+          "risk": "Corrupt validation JSON produces a generic JSON parse error with no context about which file, which lane, or which section of the compressor was processing it. A developer debugging a failed manifest generation sees 'Unexpected token } in JSON at position 1234' with no file path.",
+          "evidence": "The cartography map does not define error handling for any data source ingestion. The proposed review_manifest schema has 'provenance: data_sources_used, tool_versions' but no error tracking within the generation process.",
+          "file": "docs/json/opencode/cartography/in-002-review-compression-map.v1.json: schema_requirements_for_review_manifest.new_schemas_needed[0].proposed_sections",
+          "recommendation": "Wrap all data source reads with structured error reporting: (1) Each data source read is wrapped in Effect.catchAll that captures [source_file, parse_error, recovery_action]. (2) The manifest includes a 'data_quality' section listing per-source: file_path, status (ok/corrupt/missing), error_detail, recovery_action. (3) A corrupt validation file produces one degraded section, not a failed manifest."
+        },
+        {
+          "id": "E-002",
+          "risk": "Missing data sources (e.g., publication ledger doesn't have entry for this lane) should produce a clearly labeled 'data_unavailable' manifest section, not a confusing empty section or a crash. But the proposal doesn't specify degradation semantics. A developer seeing 'validation_summary: []' doesn't know if no validation ran or the data was missing.",
+          "evidence": "publications.v1.jsonl has only 8 entries. Most lanes have no publication record. Most sessions have no validation record. The compressor will frequently encounter missing data. Without explicit null/empty semantics, the manifest output is ambiguous.",
+          "file": "docs/json/opencode/publications/publications.v1.jsonl (8 entries total); docs/json/opencode/sessions/ (many sessions without validation artifacts)",
+          "recommendation": "Every manifest section must be one of: 'available' (data present and parsed), 'missing' (source looked for but not found), 'error' (source found but corrupt/unparseable). An empty validation_summary must not be possible — it's either 'available: { ... }' or 'missing: { reason: "no validation records for this lane" }'."
+        },
+        {
+          "id": "E-003",
+          "risk": "When the comparison engine encounters a claim_atom it cannot parse (e.g., a plan with malformed JSON), the error should identify the exact plan artifact, the exact claim_atom index, and what the parser expected. Without this, the developer must manually read all 90+ plan files to find the bad one.",
+          "evidence": "~90+ plan files across ~50 plan IDs. Some are well-formed (ah-001-inflight-atomicity.v1.json follows envelope schema), others may have embedded Markdown content. No JSON Schema exists to validate plan artifacts at write time.",
+          "file": "docs/json/opencode/cartography/in-002-review-compression-map.v1.json: surface_map.plans.schema.schema_file: 'NONE — no JSON Schema for the plan artifact itself exists'",
+          "recommendation": "Add JSON Schema validation for plan artifacts as a prerequisite. A plan that fails validation should have its error recorded in the manifest's data_quality section with exact file path, claim_atom index, and validation error. Without schema validation at write time, the compressor inherits the burden of parsing ad-hoc artifact formats."
+        }
+      ]
+    },
+    "reversibility": {
+      "score": 3,
+      "summary": "Manifests can be regenerated as long as source data persists, but source data is session-scoped and ephemeral. The weight rubric is the most reversible component (re-run with new rubric → new manifests), but weight baking into downstream review decisions is hard to retcon.",
+      "severity": "medium",
+      "risks": [
+        {
+          "id": "R-001",
+          "risk": "Manifest regeneration depends on source data persistence. Session artifacts (edit_logs, checkpoint records, wave records) are stored in session-scoped directories. When sessions are archived or cleaned up, the source data for regenerating manifests is lost. The manifest becomes a snapshot that cannot be re-derived.",
+          "evidence": "SG-007: 'Validation, QA, stress, and checkpoint artifacts are scattered across session-scoped and cross-session directories with no unified index.' Edit logs at docs/json/opencode/sessions/{sessionID}/edits/edit_log.v1.jsonl. Checkpoints at sessions/{sessionID}/checkpoints/. Waves at sessions/{sessionID}/waves/. If sessions/ is pruned, source data is gone.",
+          "file": "docs/json/opencode/sessions/ (many session directories); SG-007 from cartography map",
+          "recommendation": "Design manifests as cacheable, not archival. The review_manifest should include a 'regenerable' flag: true if all source data is still available, false if any source has been cleaned up. Store the source data digests (SHA256 of each source artifact) in the manifest's provenance section so it's clear what data produced it."
+        },
+        {
+          "id": "R-002",
+          "risk": "Weight rubric changes require full regeneration across ALL lanes. If rubric v1 classifies security boundary changes as 'medium' and rubric v2 fixes this to 'critical', every manifest ever generated with v1 is misleading. The number of manifests to regenerate scales with lanes completed (~50+ plan IDs, many with multiple revisions).",
+          "evidence": "No rubric versioning is proposed. ~50 plan IDs across the codebase, each potentially producing a manifest. Regenerating ~50+ manifests requires all source data to still exist (see R-001) and the generator to be backward-compatible with old data sources.",
+          "file": "docs/json/opencode/cartography/in-002-review-compression-map.v1.json: gaps.GAP-005",
+          "recommendation": "Version the weight rubric explicitly (docs/json/opencode/rubrics/weight-rubric.v{N}.json). Each manifest records its rubric_version. When the rubric changes, flag manifests using old versions as 'stale — review weights may be inaccurate' rather than silently regenerating them. Regeneration is a user-triggered operation, not automatic."
+        },
+        {
+          "id": "R-003",
+          "risk": "The plan/diff comparison engine has the highest reversal cost if it's wrong. Re-classifying a claim from 'verified' to 'unverifiable' after the fact changes the manifest's risk profile. If teams build review policies on manifest output (e.g., 'skip review for mechanical-only manifests'), a wrong classification has real downstream consequences that are hard to undo.",
+          "evidence": "The cartography map does not discuss downstream consumers of the review manifest. If manifests influence actual review processes (which is the stated consumer purpose: 'shows developers only what they actually need to review'), then misclassification has cost.",
+          "file": "docs/json/opencode/cartography/in-002-review-compression-map.v1.json: title: 'Review Compression System — Infrastructure Map'",
+          "recommendation": "First release: manifests are INFORMATIONAL ONLY. No review policy should depend on manifest output. Second release (after validation): manifests can influence review routing. This phased approach limits the blast radius of wrong classifications and gives time to correct rubric errors before they have consequences. Document this phase gate explicitly."
+        }
+      ]
+    }
+  },
+  "cross_cutting_observations": [
+    {
+      "id": "CC-001",
+      "summary": "Three of four 'new schemas' are actually policy mandates from AGENTS.md that should have existed already — they are prerequisites, not IN-002 surface area. This artificially inflates the plan's scope by ~80%.",
+      "action": "Create builder_publication_record.v1, verification_record.v1, and prepublication_review_cycle.v1 schemas as independent Track A, prioritized before IN-002 execution. These are debt repayment, not new feature work."
+    },
+    {
+      "id": "CC-002",
+      "summary": "The claim_to_file_matching convergence problem (CV-001) is the single biggest risk. Without structured file references in claim_atoms, the compressor is fundamentally limited. Proceeding without addressing GAP-002 means building on sand.",
+      "action": "Add 'files' field to plan schema as a prerequisite. This is a one-field addition to propose-plan.ts that unlocks deterministic claim-to-file matching. The compressor should only match against explicit files[] — not NLP-extract from prose."
+    },
+    {
+      "id": "CC-003",
+      "summary": "Prepublication verdict fabrication (SG-006) undermines trust in the entire manifest. A compressor that surfaces fabricated reviews as genuine is worse than no compressor, because it gives false confidence.",
+      "action": "Add provenance metadata and trust_score to every prepublication verdict surfaced in the manifest. Flag verdicts with missing or improbable provenance. This is a single section in the manifest schema that converts a governance gap into an observability signal."
+    },
+    {
+      "id": "CC-004",
+      "summary": "The weight rubric is the most speculative component. Its design is undefined ('file path patterns, change type, dependency count, boundary proximity'), and its convergence on correct classification cannot be tested without production data. Building it in Phase 1 risks shipping a rubric that misclassifies critical changes as mechanical.",
+      "action": "Defer weight rubric to Phase 2 (Track C). Phase 1 delivers a manifest with plan_summary, diff_summary, plan_vs_diff_deviation, validation_summary (baseline). No weights, no risk scoring. This is still valuable — it answers 'what changed and is it in scope?' Judges can build their own weight assessment from the raw data."
+    }
+  ],
+  "preconditions_for_approval": [
+    {
+      "id": "PRE-001",
+      "priority": "P0",
+      "condition": "Create 3 governance schemas mandated by AGENTS.md: builder_publication_record.v1, verification_record.v1, prepublication_review_cycle.v1. These are prerequisites, not IN-002 scope, but the compressor depends on them for upstream data.",
+      "evidence": "docs/schemas/ confirmed: 10 schemas exist, none matching these 3 names. AGENTS.md explicitly requires them. cartography map GAP-008."
+    },
+    {
+      "id": "PRE-002",
+      "priority": "P0",
+      "condition": "Add optional 'files' field to plan schema (array of file patterns/globs). Without this, claim-to-file matching is heuristics on prose, which is untestable and unreliable.",
+      "evidence": "GAP-002: 'claim_atoms are free-text strings, not structured file references'. SG-002. Sampled claim_atoms confirm: <30% contain parseable file references."
+    },
+    {
+      "id": "PRE-003",
+      "priority": "P0",
+      "condition": "Fix session-diff.ts placeholder status or bypass it entirely. The compressor depends on diff aggregation, and a placeholder tool cannot be a production dependency.",
+      "evidence": "Pre-existing debt finding: 'Two tools in registry are placeholders (delegate.ts, session-diff.ts).' cartography map lists session-diff as a data source."
+    },
+    {
+      "id": "PRE-004",
+      "priority": "P1",
+      "condition": "Add JSON Schema validation for plan artifacts. With ~90+ plans and no schema file, the compressor inherits all parsing errors. Schema validation at write time prevents malformed inputs.",
+      "evidence": "cartography map: surface_map.plans.schema.schema_file: 'NONE — no JSON Schema for the plan artifact itself exists'."
+    }
+  ],
+  "required_manifest_features": [
+    {
+      "id": "F-001",
+      "feature": "Data quality section",
+      "description": "Every manifest must include a 'data_quality' section listing per-source availability, parse status, and provenance. This prevents silent degradation and enables debugging.",
+      "rationale": "E-001, E-002: Without this, missing or corrupt sources produce ambiguous output."
+    },
+    {
+      "id": "F-002",
+      "feature": "Per-section availability tiers",
+      "description": "Each section is one of: 'available', 'missing', 'error'. Empty arrays are not valid section values.",
+      "rationale": "E-002: Distinguishes 'no data' from 'data is empty' from 'data source missing'."
+    },
+    {
+      "id": "F-003",
+      "feature": "Prepublication provenance + trust_score",
+      "description": "Every prepublication verdict surfaced includes tool_name, session_id, timestamp, reviewer_agent_name. trust_score: 'proven' | 'suspect' based on metadata completeness and chronology.",
+      "rationale": "CV-004: Prevents fabricated verdicts from being surfaced as genuine."
+    },
+    {
+      "id": "F-004",
+      "feature": "Claim verifiability classification",
+      "description": "Each claim_atom in plan_vs_diff_deviation is classified as: 'exact_match', 'pattern_match', 'unverifiable', or 'mismatch'. Unverifiable claims are not silently omitted — they surface prominently.",
+      "rationale": "CV-001, CV-002: Honest scoping of machine-verifiable vs human-review-required claims."
+    },
+    {
+      "id": "F-005",
+      "feature": "Rubric version + rubric artifact reference",
+      "description": "The manifest records rubric_version and the path to the rubric artifact that produced its weights. When rubric changes, old manifests are flagged as 'stale' rather than silently regenerated.",
+      "rationale": "D-003, R-002: Enables correct interpretation of old manifests after rubric evolution."
+    }
+  ],
+  "recommended_phasing": {
+    "track_a_name": "Governance Schema Foundation (P0 — prerequisite)",
+    "track_a_deliverables": [
+      "docs/schemas/rig.relay.builder_publication_record.v1.schema.json",
+      "docs/schemas/rig.relay.verification_record.v1.schema.json",
+      "docs/schemas/rig.relay.prepublication_review_cycle.v1.schema.json",
+      "Add 'files' field to plan artifact schema",
+      "Add JSON Schema for plan artifacts",
+      "Fix/validate session-diff.ts placeholder status",
+      "Add plan Schema validation at propose-plan write time"
+    ],
+    "track_a_verification": "All 3 schemas validate against real data. plan artifacts have 'files' field and JSON Schema. session-diff.ts production-ready.",
+    "track_b_name": "Review Manifest Baseline (P0 — IN-002 core)",
+    "track_b_deliverables": [
+      "Design rig.relay.review_manifest.v1 schema (no weight rubric fields)",
+      "Build validation normalizer (reads 5+ formats → ValidationRun[])",
+      "Build plan/diff comparison engine (baseline: exact file matching only)",
+      "Build manifest generator as pure function (plan, diffs, validations → manifest)",
+      "Integration: produce manifests for 3 historical lanes (verify against known results)"
+    ],
+    "track_b_verification": "3 historical lane manifests match human understanding. No weight rubric. 'Unverifiable' claims surfaced explicitly.",
+    "track_c_name": "Review Weight Rubric (P1 — enhancement)",
+    "track_c_deliverables": [
+      "Design weight-rubric.v1.json with lexical boundary proximity only",
+      "Build weight calculator (file path patterns + change type + dependency count)",
+      "Integrate into manifest generator",
+      "Validate against historical lanes: do weights match human-judged criticality?"
+    ],
+    "track_c_verification": "Weight rubric produces explainable, auditable classifications. Historical lane weights match human expectation within 1 tier of tolerance."
+  }
+}

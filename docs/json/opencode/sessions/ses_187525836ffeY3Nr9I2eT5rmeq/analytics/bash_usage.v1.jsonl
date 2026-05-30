@@ -1,0 +1,2 @@
+{"at":"2026-05-30T11:39:41.675Z","session_id":"ses_187525836ffeY3Nr9I2eT5rmeq","agent":"lane-owner","binary":"npx","command":"npx tsgo --noEmit 2>&1 | tail -30","reason":"Typecheck the new files with tsgo","elapsed_ms":7,"exit_code":1}
+{"at":"2026-05-30T11:40:06.458Z","session_id":"ses_187525836ffeY3Nr9I2eT5rmeq","agent":"lane-owner","binary":"which","command":"which tsgo 2>&1; npx --yes tsgo --noEmit 2>&1 | tail -5","reason":"Find tsgo and try running it","elapsed_ms":12597,"exit_code":0}

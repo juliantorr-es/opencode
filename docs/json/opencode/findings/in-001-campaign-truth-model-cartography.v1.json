@@ -1,0 +1,317 @@
+{
+  "schemaVersion": "rig.relay.cartography.v1",
+  "artifactKind": "cartography_finding",
+  "laneId": "IN-001-cart",
+  "mission": "Explore existing event system, session lifecycle, and coordination infrastructure for campaign-level event-sourced truth model",
+  "surveyedAt": "2026-05-30T12:20:00.000Z",
+  "systems": [
+    {
+      "name": "RuntimeEvent Schema",
+      "file": "packages/opencode/src/event/runtime-event.ts",
+      "stateTracked": "Flat runtime events: id, sessionId, runId, parentEventId, correlationId, ts, actor, eventType, phase, status, toolName, filePath, model, durationMs, tokens, errorCode, errorMessage, recoverable, payloadJson",
+      "durability": "Stored in SQLite `runtime_events` table via EventStore (event-store.ts). Survives restart. No PG migration exists for this table — only defined as drizzle sqliteTable. Would need PG migration to work with Postgres.",
+      "eventFormat": "Flat Effect Schema struct — not event-sourced (no aggregate_id, no seq, no versioning). Single flat table with no snapshot support.",
+      "relations": "Bridged from Bus events via EventBridge. Queried by AgentQueries service and DuckDB analytical queries (event-queries.ts). Has parentEventId for causation tracking but correlationId for correlation tracking is optional.",
+      "gaps": [
+        "No aggregate concept — events belong to sessionId but aren't ordered per-aggregate",
+        "eventType is freeform string with no global registry enforcement at the schema level — EventName registry exists in event-names.ts as a const record but is advisory only",
+        "No explicit causation chain enforced — parentEventId is optional, correlationId is optional",
+        "No snapshot support — replay requires scanning all events",
+        "No versioning or schema migration for event payloads",
+        "payloadJson is Schema.Unknown — untyped blob"
+      ]
+    },
+    {
+      "name": "Event Store (EventStore)",
+      "file": "packages/opencode/src/event/event-store.ts",
+      "stateTracked": "Records RuntimeEvent objects to `runtime_events` table. Queryable by sessionId, runId, eventType, actor, status, parentEventId, time range.",
+      "durability": "Full durability via SQLite. Effect Layer pattern — `DatabaseAdapter` service dependency.",
+      "eventFormat": "Drizzle ORM sqliteTable with snake_case columns mirroring RuntimeEvent schema. JSON stored in payload_json column.",
+      "relations": "Consumed by AgentQueries (agent-facing tools), EventBridge (bus subscription), explanation engine (explanation.ts).",
+      "gaps": [
+        "Only 2 methods: record() and query(). No getById(), no subscribe(), no stream replay, no snapshots.",
+        "No aggregate-level ordering — events are ordered by ts DESC/ASC but not by aggregate sequence number.",
+        "Query is limited to 100 rows default — no pagination for large session replays.",
+        "No projection system — consumers must query and compute themselves."
+      ]
+    },
+    {
+      "name": "Event Bridge (EventBridge)",
+      "file": "packages/opencode/src/event/event-bridge.ts",
+      "stateTracked": "Subscribes to all Bus events via bus.subscribeAll(), converts to RuntimeEvent, records via EventStore.",
+      "durability": "Layer-defined but NOT wired into any runtime layer chain. The layer is exported but never provided.",
+      "eventFormat": "Converts Bus payloads to RuntimeEvent format — heuristic actor inference from event type prefix.",
+      "relations": "Sits between Bus (in-memory PubSub) and EventStore (SQLite). Currently a dead layer.",
+      "gaps": [
+        "LAYER IS NOT WIRED — defined but never provided to runtime",
+        "sessionId extraction is fragile — tries sessionID or session_id from properties",
+        "runId reuses extractSessionId — likely wrong for multi-run sessions",
+        "No filtering — subscribes to ALL bus events including high-frequency stream events",
+        "Events not deduplicated — bus redelivery would create duplicates"
+      ]
+    },
+    {
+      "name": "Bus System (Event Bus)",
+      "file": "packages/opencode/src/bus/index.ts, bus/bus-event.ts, bus/global.ts",
+      "stateTracked": "In-memory PubSub with typed event definitions. Types are Effect Schema structs. GlobalBus is an EventEmitter that mirrors all bus events for cross-process awareness.",
+      "durability": "Ephemeral — in-memory only. Does not survive restart. GlobalBus is an EventEmitter (no durability).",
+      "eventFormat": "BusEvent.define(type: EventName, properties: Schema) creates typed definitions. Registry in bus-event.ts tracks all defined events.",
+      "relations": "Used by all subsystems for internal pub-sub. EventBridge subscribes to all events for persistence. Session projectors use bus events for updates.",
+      "gaps": [
+        "No durability — all bus events lost on restart",
+        "No replay — new subscribers can't see past events",
+        "No ordering guarantees across typed channels",
+        "No backpressure — PubSub.unbounded() everywhere",
+        "BusEvent.define() warns but allows unregistered event types"
+      ]
+    },
+    {
+      "name": "Sync System (Event-Sourced Event Store)",
+      "file": "packages/opencode/src/sync/index.ts, event.sql.ts",
+      "stateTracked": "Proper event-sourced store with aggregate_id, seq, type, data columns. Used by session sync for durable event sourcing. Def=Definition with typed properties, registry, projectors.",
+      "durability": "Full durability — stored in `event` and `event_sequence` SQLite tables. Migration exists in migration/20260323234822_events/. Versioned event types with migration helpers.",
+      "eventFormat": "EventTable (id, aggregate_id, seq, type, data) + EventSequenceTable (aggregate_id, seq, owner_id). Proper event sourcing with sequential ordering per aggregate.",
+      "relations": "Used by session sync (projectors-next.ts has SyncEvent integration). Supports typed projectors that convert event data to SQL writes.",
+      "gaps": [
+        "Currently only used by session sync — not leveraged for campaign/lane events",
+        "owner_id is nullable and unclear in usage",
+        "No snapshot strategies (interval-based, threshold-based, etc.)",
+        "No cross-aggregate queries — events are scoped to single aggregate_id",
+        "No explicit event versioning on the schema level (version is part of type naming convention only)"
+      ]
+    },
+    {
+      "name": "Session Lifecycle",
+      "file": "packages/opencode/src/session/session.ts, session.sql.ts, status.ts, run-state.ts",
+      "stateTracked": "Sessions (id, project, workspace, slug, directory, title, version, usage data, revert). Messages (id, session_id, data). Parts (id, message_id, data). SessionStatus (idle/retry/busy). Todos. Permissions. Session run state (runners per session).",
+      "durability": "Full durability — SessionTable, MessageTable, PartTable, TodoTable, SessionMessageTable, PermissionTable all in SQLite.",
+      "eventFormat": "Drizzle ORM sqliteTable — not event-sourced. Sync events provide event sourcing layer on top.",
+      "relations": "Session creates sync events (session.created, session.updated, etc.). Session projectors write to session tables from events. Bus publishes session.status events.",
+      "gaps": [
+        "No campaign association — sessions don't know which campaign they belong to",
+        "No lane association — sessions don't track which lane they run for",
+        "Run state (run-state.ts) is in-memory only",
+        "No session-level event sourcing — all state is mutable SQL rows"
+      ]
+    },
+    {
+      "name": "Coordination System",
+      "file": "packages/opencode/src/tool/coordination.ts",
+      "stateTracked": "Task claims (task_id, session_id, wave, wave_type, subagent_type, description, status, result, error, timestamps). Path reservations (path, task_id, session_id, status, timestamps). Fan-out groups (parent_task_id, child_task_id, wave_type).",
+      "durability": "Full durability — CoordinationClaimTable, CoordinationReservationTable, CoordinationFanOutTable all SQLite.",
+      "eventFormat": "Drizzle ORM sqliteTable with snake_case columns. Not event-sourced — mutable SQL rows.",
+      "relations": "Claims HTTP API (claims.ts group and handlers) provides list+tree endpoints. CoordEvents defines SubagentPhaseChanged bus event. CoordinationCoordTool provides read/info/status ops.",
+      "gaps": [
+        "No event sourcing — claims are mutable state, no history of transitions",
+        "No campaign association — claims reference session_id but not campaign_id or lane_id",
+        "Status transitions are manual string updates — no state machine enforcement",
+        "No lifecycle hooks — claim created/released/failed has no side-effect triggers",
+        "Fan-out tracking is minimal — parent/child task tracking without result aggregation"
+      ]
+    },
+    {
+      "name": "Campaign System (Design/Prototype)",
+      "file": "packages/opencode/src/campaign/",
+      "stateTracked": "Campaign schema (id, goal, phase, lanes, authorityContract, contextPacketBuilder, budgets, checkpoints). Lane schema (id, campaignId, scope, claimedFiles, dependencyIds, currentState, secretaryId, roleInstances, binder). Binder (missionObjective, scope, claims, scoutReports, architecturePlan, criticReviews, executionEvents, diffSummary, validationResults, redTeamFindings, repairHistory, checkpointCommit, handoffSummary).",
+      "durability": "NOT WIRED INTO PRODUCTION — zero imports from outside campaign/. All campaign types are Effect Schemas (memory-only). No DB tables exist.",
+      "eventFormat": "Pure memory types — campaign has its own RuntimeEvent type (type, timestamp, data) distinct from event/runtime-event.ts. Transition struct supports evidence refs.",
+      "relations": "Secretary (secretary.ts) provides lane lifecycle state machine. StateMachine (state-machine.ts) provides deterministic reducer with predicate engine. Integrator (integrator.ts) handles multi-lane merging. Predicates (predicates.ts) evaluate events against transition rules.",
+      "gaps": [
+        "ZERO PRODUCTION WIRING — entire module is an unimplemented design",
+        "Campaign's RuntimeEvent type (type, timestamp, data) duplicates event/RuntimeEvent without reuse",
+        "No DB persistence — StateTag enum state machine in secretary.ts is Ref-based (in-memory)",
+        "reduceCampaignState is defined but never called anywhere",
+        "Secretary layer is never provided to any runtime",
+        "CampaignIntegrator is never provided to any runtime",
+        "Integrator's getBinders() is stubbed with empty array",
+        "Terminal statuses defined in types.ts (9 values) but never enforced in state machine",
+        "Binder references claims, plans, reviews, etc. by string ID — no referential integrity",
+        "Role-contracts.ts (776 lines) is well-designed but also completely unconnected"
+      ]
+    },
+    {
+      "name": "Checkpoint System",
+      "file": "packages/opencode/src/tool/checkpoint.ts, checkpoint-tools.ts",
+      "stateTracked": "CheckpointRecord (id, sessionID, messageID, title, published, time, failures, report). Stored as file in storage under checkpoint/{sessionID}/{id}.",
+      "durability": "File-based — stored via Storage.write(). Survives restart.",
+      "eventFormat": "JSON record with simple fields. No schema enforcement beyond TypeScript type.",
+      "relations": "CheckpointTool is a registered tool. FormatCheckpointRecord creates human-readable output. collectFailures scans messages for failure patterns.",
+      "gaps": [
+        "No campaign association — checkpoints are session-scoped only",
+        "No published checkpoint tracking across lanes",
+        "No integration with coordination system — checkpoint has no relation to claims/waves",
+        "No event store integration — creating a checkpoint doesn't emit a bus event or record event"
+      ]
+    },
+    {
+      "name": "Claims System",
+      "file": "packages/opencode/src/tool/coordination.ts (tables), server/routes/instance/httpapi/groups/claims.ts (API schema), handlers/claims.ts (HTTP handlers)",
+      "stateTracked": "CoordinationClaimTable and CoordinationReservationTable in SQLite. HTTP API exposes list and tree endpoints. ClaimInfo schema includes taskId, sessionId, wave, waveType, subagentType, description, status, result, error, timestamps.",
+      "durability": "Full durability — SQLite tables.",
+      "eventFormat": "Drizzle ORM — not event-sourced. Not integrated with EventStore or Bus.",
+      "relations": "Claims API is REST-only (no event subscription). Claims exposed via OpenAPI at /api/claims. Reserved files tracked independently from claimed tasks.",
+      "gaps": [
+        "No campaign or lane association — claims reference sessionId only",
+        "Claim status is a plain string — no state machine validation",
+        "No claim lifecycle events emitted to bus or event store",
+        "Reservation status is string — same problem",
+        "No integration with Sync system's event-sourced store",
+        "Claims can't be grouped into campaigns"
+      ]
+    },
+    {
+      "name": "Event Queries (DuckDB Analytical)",
+      "file": "packages/opencode/src/event/event-queries.ts",
+      "stateTracked": "Failure hotspots, slow tools, file contention, phase gate denials, error summaries, session timelines. Views defined in schema.duckdb.ts.",
+      "durability": "DuckDB analytical queries — read-only views over runtime_events table.",
+      "eventFormat": "Raw SQL queries over DuckDB views.",
+      "relations": "Consumes RuntimeEvent data via DuckDB analytical substrate.",
+      "gaps": [
+        "Only covers existing runtime_events fields — no campaign, lane, or claim dimensions",
+        "Views are DuckDB-specific — not available in SQLite",
+        "No campaign analytics (lane completion times, state transition histograms, etc.)"
+      ]
+    }
+  ],
+  "dataModelMap": {
+    "eventStore": {
+      "system": "runtime_events table in SQLite",
+      "type": "Mutable state",
+      "eventSourced": false,
+      "aggregateRoot": "none (session-scoped flat table)",
+      "wired": true
+    },
+    "syncEventStore": {
+      "system": "event + event_sequence tables in SQLite",
+      "type": "Event-sourced",
+      "eventSourced": true,
+      "aggregateRoot": "aggregate_id (string)",
+      "wired": true
+    },
+    "bus": {
+      "system": "In-memory PubSub",
+      "type": "Ephemeral pub-sub",
+      "eventSourced": false,
+      "aggregateRoot": "none",
+      "wired": true
+    },
+    "coordination": {
+      "system": "claim + reservation + fan_out tables in SQLite",
+      "type": "Mutable state",
+      "eventSourced": false,
+      "aggregateRoot": "none (session-scoped)",
+      "wired": true
+    },
+    "campaign": {
+      "system": "No tables — pure Effect Schema types",
+      "type": "In-memory only (design)",
+      "eventSourced": false,
+      "aggregateRoot": "campaignId",
+      "wired": false
+    },
+    "checkpoint": {
+      "system": "File-based storage",
+      "type": "JSON files",
+      "eventSourced": false,
+      "aggregateRoot": "sessionID",
+      "wired": true
+    }
+  },
+  "conventions": {
+    "effectServices": {
+      "pattern": "Context.Service<Service, Interface>()(\"@opencode/ServiceName\")",
+      "location": "Throughout event-store.ts, agent-queries.ts, secretary.ts, bus/index.ts, coordination.ts",
+      "layerPattern": "Layer.effect(Service, Effect.gen(function* () { ... return Service.of(...) }))"
+    },
+    "eventDefinitions": {
+      "pattern": "BusEvent.define(EventName.Name, Schema.Struct({...}))",
+      "location": "bus/bus-event.ts, coord-events.ts, session/status.ts",
+      "eventNamePattern": "EventName constant in event-names.ts — PascalCase.SnakeCase -> 'domain.verb'"
+    },
+    "dbModels": {
+      "pattern": "sqliteTable() from drizzle-orm/sqlite-core",
+      "location": "All SQL table definitions (event.sql.ts, session.sql.ts, coordination.ts, sync/event.sql.ts)"
+    }
+  },
+  "keyFindings": [
+    {
+      "id": "F-001",
+      "severity": "blocker",
+      "summary": "Entire campaign/ module is a design prototype — zero production wiring",
+      "details": "campaign/types.ts, state-machine.ts, secretary.ts, integrator.ts, predicates.ts, role-contracts.ts define 2600+ lines of typed schemas, state machines, predicate engines, and role contracts. NOTHING is imported outside campaign/. reduceCampaignState is defined but never called. Secretary.Service is tagged '@opencode/Secretary' but never provided to any layer. CampaignIntegrator is tagged '@opencode/CampaignIntegrator' but never provided.",
+      "impact": "Campaign truth model must either wire existing campaign module or design new infrastructure from scratch"
+    },
+    {
+      "id": "F-002",
+      "severity": "blocker",
+      "summary": "No campaign → session → lane association exists in any wired system",
+      "details": "Sessions have no campaignId field. Claims (coordination) have no campaignId or laneId field. Checkpoints are session-scoped only. EventStore events are scoped to sessionId only. Coordination claims are session-scoped.",
+      "impact": "Cannot reconstruct which session/claim/checkpoint belongs to which campaign/lane without adding foreign key references"
+    },
+    {
+      "id": "F-003",
+      "severity": "major",
+      "summary": "Two separate event stores exist with no integration",
+      "details": "EventStore (event/event-store.ts) stores flat RuntimeEvent records in runtime_events table. SyncEvent (sync/index.ts) stores proper event-sourced events in event + event_sequence tables. They're completely independent — no shared types, no cross-references, different consumers.",
+      "impact": "Campaign truth model must choose one substrate or bridge both — sync system's event-sourced model is the more natural foundation"
+    },
+    {
+      "id": "F-004",
+      "severity": "major",
+      "summary": "EventBridge layer is defined but dead — no runtime wiring",
+      "details": "event-bridge.ts exports a layer that subscribes to all Bus events and records them in EventStore. This layer is never provided to any runtime. Runtime events only get stored if something else writes them (e.g., agent-queries tool calls).",
+      "impact": "Many runtime events may not reach the database. Campaign truth model must ensure all events are reliably recorded."
+    },
+    {
+      "id": "F-005",
+      "severity": "major",
+      "summary": "No per-aggregate event ordering in RuntimeEventStore",
+      "details": "runtime_events table has no sequence number. Events are ordered by ts (string) with no primary-key ordering guarantees. The sync system's event table has seq per aggregate_id — proper event sourcing.",
+      "impact": "Cannot guarantee deterministic replay order for campaign/lane events using RuntimeEventStore alone"
+    },
+    {
+      "id": "F-006",
+      "severity": "medium",
+      "summary": "EventName registry is advisory — no enforcement",
+      "details": "event-names.ts defines canonical event names but (a) BusEvent.define() only warns on unregistered names, (b) RuntimeEvent.eventType is Schema.String (allows any string), (c) no compile-time check links event producers to registry.",
+      "impact": "Campaign events need a stricter event type discipline — either discriminated union or compile-time enforced registry"
+    },
+    {
+      "id": "F-007",
+      "severity": "medium",
+      "summary": "Checkpoints not integrated with event system or coordination",
+      "details": "Checkpoint tool creates a file but does not emit a bus event, record a runtime event, or update coordination state. No way to query checkpoints across lanes/campaigns.",
+      "impact": "Campaign truth model should treat checkpoint creation as a first-class event"
+    },
+    {
+      "id": "F-008",
+      "severity": "medium",
+      "summary": "No campaign analytics dimensions in DuckDB queries",
+      "details": "event-queries.ts queries failure hotspots, slow tools, file contention — no campaign/lane/state-transition analytics. No views exist for campaign performance, lane timing, or phase duration.",
+      "impact": "Analytics layer needs campaign-aware views"
+    },
+    {
+      "id": "F-009",
+      "severity": "low",
+      "summary": "Campaign defined own RuntimeEvent type duplicating event/RuntimeEvent",
+      "details": "campaign/types.ts defines RuntimeEvent = { type: string, timestamp: number, data?: Record<string, unknown> }. event/runtime-event.ts defines RuntimeEvent = { id, sessionId, runId, actor, eventType, ... }. These are completely different types with the same name in different scopes.",
+      "impact": "Minor naming clash — campaign's event type is simpler and predates event/runtime-event.ts"
+    },
+    {
+      "id": "F-010",
+      "severity": "info",
+      "summary": "Predicate engine in predicates.ts consumes RuntimeEvent directly",
+      "details": "campaign/predicates.ts imports RuntimeEvent from event/runtime-event.ts — this is the only bridge between campaign/ and the wired event system. It reads RuntimeEvent arrays to evaluate state machine transitions (event_exists, latest_validation_passed, etc.).",
+      "impact": "Good foundation — the predicate engine is already wired to consume real RuntimeEvents"
+    }
+  ],
+  "smokingGuns": [
+    "campaign/ module (2600+ lines) has ZERO production imports — it's a design artifact, not running code",
+    "EventBridge layer is defined but NOT provided to any runtime — runtime event persistence is unreliable",
+    "No campaignId or laneId exists on any wired table — sessions, claims, checkpoints, events all reference sessionId only",
+    "Two parallel event stores (RuntimeEventStore flat vs SyncEvent sourced) with no integration strategy",
+    "reduceCampaignState is pure but never called — state machine is defined but not driven by actual events",
+    "Secretary and CampaignIntegrator layers are defined with @opencode/ tags but never provided"
+  ],
+  "recommendedApproach": "Phase 1: Wire the existing campaign module into production. Phase 2: Add campaignId/laneId to coordination claims table. Phase 3: Build true event sourcing on top of the existing SyncEvent system (not RuntimeEventStore). Phase 4: Create campaign-aware analytics views in DuckDB. Phase 5: Wire EventBridge to ensure all bus events reach durable storage."
+}

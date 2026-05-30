@@ -1,0 +1,32 @@
+{
+  "schema_version": "v1",
+  "profile": "planning",
+  "entries": [
+    {
+      "finding": "PgPool class already exists in pg-pool.ts with pool, retry, health check, close. Imported and re-exported by db.pg.ts but never actually instantiated/used anywhere.",
+      "confidence": 1,
+      "added_at": "2026-05-30T10:38:55.252Z"
+    },
+    {
+      "finding": "database-config.ts reads pool config from env vars (poolSize/poolMin/connectionTimeout/idleTimeout/poolRetryMax) but these are NOT passed to initPg() in makePgAdapter() call — only url+ssl forwarded",
+      "confidence": 1,
+      "added_at": "2026-05-30T10:38:55.252Z"
+    },
+    {
+      "finding": "defaultLayer in adapter.ts has graceful degradation: probes PG with SELECT 1, falls back to SQLite on failure",
+      "confidence": 1,
+      "added_at": "2026-05-30T10:38:55.252Z"
+    },
+    {
+      "finding": "/global/health endpoint exists but always returns {healthy: true} — does not check PG status",
+      "confidence": 1,
+      "added_at": "2026-05-30T10:38:55.252Z"
+    },
+    {
+      "finding": "No tests exist for pg-pool.ts anywhere in the test directory",
+      "confidence": 1,
+      "added_at": "2026-05-30T10:38:55.252Z"
+    }
+  ],
+  "curated_at": "2026-05-30T10:38:55.252Z"
+}

@@ -1,0 +1,20 @@
+{
+  "schema_version": "v1",
+  "plan_id": "packages-app-src-context-inspector-tsx-inspector-components",
+  "plan_revision": 1,
+  "title": "Session Inspector Timeline UI",
+  "boundary": "packages/app/src/context/inspector.tsx + inspector components",
+  "consumer_purpose": "Replace terminal scrollback with an inspectable runtime event ledger showing all bus events in structured, filterable, correlated form",
+  "claim_atoms": [
+    "InspectorContext stores ALL events (not just active session-relevant)",
+    "TimelineTable renders virtual-scrolling event rows",
+    "TimelineFilters provide category/status/tool/file filtering",
+    "EventDetailDrawer shows full event payload with parent/child navigation",
+    "new /:dir/inspector route added",
+    "no existing components modified"
+  ],
+  "content": "## Plan: Session Inspector Timeline UI\n\n### Files to create:\n\n1. **`packages/app/src/context/inspector.tsx`** — Inspector context provider\n   - Normalized event store with 10K cap\n   - Filtering (by event category, status, tool, file, phase, actor, time)\n   - Event correlation (parent/child by callID)\n   - Stats aggregation\n   - Subscription to SDK event stream via `useServerSDK().event.on()`\n\n2. **`packages/app/src/components/inspector/inspector-page.tsx`** — Page layout composing all components\n   - Three-panel layout: sidebar (session list), main (timeline table), right drawer (detail)\n   - Empty states, error boundaries\n\n3. **`packages/app/src/components/inspector/timeline-table.tsx`** — Main virtual-scrolling event table\n   - Columns: timestamp, event type, actor, phase, tool, file, status, duration, error\n   - Sortable by timestamp (default desc)\n   - Click row to select and open detail drawer\n   - Color-coded status badges\n   - Virtual scrolling via scroll container\n\n4. **`packages/app/src/components/inspector/timeline-filters.tsx`** — Filter bar\n   - Event category filter (grouped: tool.*, file.*, permission.*, lifecycle.*, agent.*, mcp.*, errors, coordination.*, session.*, system.*)\n   - Status filter (all/started/succeeded/failed/denied)\n   - Tool name search\n   - File path search\n   - Quick filters: errors only, tool calls only, file edits only\n   - Actor filter\n\n5. **`packages/app/src/components/inspector/event-detail-drawer.tsx`** — Detail slide-out panel\n   - Human-readable summary header\n   - Structured fields display\n   - Raw JSON tab\n   - Parent event link\n   - Child events list\n\n6. **`packages/app/src/components/inspector/session-list.tsx`** — Session list sidebar\n   - Shows sessions with metadata\n   - Click to filter inspector for that session\n\n### Files to modify:\n\n7. **`packages/app/src/app.tsx`** — Add InspectorProvider wrapper and /:dir/inspector route\n\n### Types:\n\n- RuntimeEvent: normalized event with id, type, category, timestamp, sessionID, status, tool, file, actor, phase, duration, error, raw payload, callID (for correlation), parentID\n- InspectorFilters: eventCategories[], status[], toolQuery, fileQuery, sessionID, actor, timeRange, showErrorsOnly, showToolCallsOnly, showFileEditsOnly\n\n### Event category mapping:\n- tool.* → Tool Calls\n- file.* → Files\n- permission.* → Permissions  \n- lifecycle.*/phase.* → Lifecycle\n- session.next.* → Agent (includes tool calls, steps, text, reasoning)\n- mcp.* → MCP\n- coordination.* → Coordination\n- session.* → Session\n- server.*/pty.* → System\n- Errors: any with error/status=failed\n\n### Event correlation:\n- session.next.tool.called → session.next.tool.success/failed via callID\n- session.next.step.started → session.next.step.ended via sessionID\n- permission.asked → permission.replied via callID (from properties)\n",
+  "status": "proposed",
+  "created_at": "2026-05-30T11:26:33.510Z",
+  "modified_at": "2026-05-30T11:26:33.510Z"
+}

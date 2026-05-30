@@ -1,0 +1,18 @@
+{
+  "schema_version": "v1",
+  "plan_id": "packages-app-src-test-utils-dialog-harness-ts-3-dialog-component-tests",
+  "plan_revision": 1,
+  "title": "Dialog Component Test Harness",
+  "boundary": "packages/app/src/test-utils/dialog-harness.ts + 3 dialog component tests",
+  "consumer_purpose": "Enable SolidJS dialog component tests for the desktop app",
+  "claim_atoms": [
+    "Harness provides mountDialog()",
+    "clickButton()",
+    "assertDialogVisible/Hidden()",
+    "assertCallbackFired(); 3 dialog tests using harness; all tests run with existing bun test setup"
+  ],
+  "content": "# Dialog Component Test Harness Plan (DT-001)\n\n## Problem\nPhase 2 added 54 IPC tests but zero dialog component tests. The 22 dialog components cannot be tested because:\n1. No SolidJS component rendering test infrastructure exists\n2. Dialog components depend on SolidJS context providers (DialogProvider, LanguageProvider, etc.)\n3. No testing-library is installed\n\n## Solution\nBuild a lightweight SolidJS dialog test harness that:\n1. Mounts SolidJS components using solid-js/web's `render()` inside happy-dom\n2. Wraps them in DialogProvider\n3. Provides query and assertion helpers\n\n## Files To Create\n\n### 1. Harness: `packages/app/src/test-utils/dialog-harness.ts`\nMounting utilities using solid-js/web render():\n- `mountDialog(component)` → mounts dialog in container, returns handle\n- `clickButton(text)` → finds/clicks button by visible text\n- `assertDialogVisible()` / `assertDialogHidden()` → checks dialog DOM presence\n- `assertCallbackFired(fn)` → asserts mock was called\n- Pairs with `mock.module()` for context provider mocking\n\n### 2. Test: `dialog-usage-exceeded.test.tsx` (3 test cases)\nTests DialogUsageExceeded:\n- Renders with title and buttons\n- Action button fires callbacks (onClose, platform.openLink)\n- Dismiss button fires onClose with dontShowAgain=true\n\n### 3. Test: `dialog-release-notes.test.tsx` (3 test cases)\nTests DialogReleaseNotes:\n- Renders with highlight content\n- Clicking \"Next\" navigates between highlights\n- \"Get Started\" button appears on last page and calls dialog.close\n\n### 4. Test: `dialog-onboarding.test.tsx` (3 test cases)\nTests DialogOnboarding:\n- Renders with onboarding steps\n- Navigation between steps works\n- Finish button triggers settings update\n\n## Dependencies\nNo new npm packages needed — uses:\n- `solid-js/web` (render) — already installed\n- `@kobalte/core/dialog` — already installed\n- `@opencode-ai/ui/context/dialog` — workspace package\n- `bun:test` with `mock.module()` — built into bun\n- `@happy-dom/global-registrator` — already installed (happydom.ts preload)\n\n## Test Pattern\nEach test file follows the established mock.module() pattern:\n1. `mock.module()` all non-DialogProvider context imports\n2. Use harness `mountDialog()` to render component in DialogProvider\n3. Use harness helpers to interact and assert\n\n## Out of Scope\n- IPC tests (already done)\n- E2E tests\n- Non-dialog components\n- Dialog component implementation changes\n- Installing new npm packages",
+  "status": "proposed",
+  "created_at": "2026-05-30T09:45:57.891Z",
+  "modified_at": "2026-05-30T09:45:57.891Z"
+}

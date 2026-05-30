@@ -1,0 +1,350 @@
+{
+  "schema": "rig.relay.learning_artifact.v1",
+  "agent_profile": "cartography",
+  "generated_at": "2026-05-30T04:30:00Z",
+  "wave": 1,
+  "summary": "Comprehensive mapping of PGlite and DuckDB initialization patterns across the codebase",
+  "sections": {
+    "pglite_initialization": {
+      "summary": "PGlite (@electric-sql/pglite) is the embedded Postgres engine for desktop/local deployment. It runs in-process via WASM, requiring no Docker or system Postgres.",
+      "import_alias": "#db → packages/opencode/src/storage/db.pg.ts",
+      "alias_config": {
+        "file": "packages/opencode/package.json",
+        "line": 29,
+        "definition": {
+          "#db": {
+            "bun": "./src/storage/db.pg.ts",
+            "node": "./src/storage/db.pg.ts",
+            "default": "./src/storage/db.pg.ts"
+          }
+        }
+      },
+      "entry_points": {
+        "init_function": {
+          "file": "packages/opencode/src/storage/db.pg.ts",
+          "line": 24,
+          "signature": "init(connectionStringOrOpts: string | InitOptions, ssl?: boolean): PgClient",
+          "behavior": {
+            "detection": "Lines 27: Checks if connectionString is ':memory:', starts with '/', or starts with 'file:'",
+            "pglite_path": "Line 31: new PGlite(dataDir) — PGlite constructor called with optional dataDir (undefined for :memory:)",
+            "drizzle_pglite": "Line 32: drizzle({ client }) as PgliteDatabase — wraps in Drizzle ORM",
+            "node_postgres_path": "Lines 34-45: Falls through to new Pool({...}) for production Postgres connections",
+            "output_type": "PgClient = PgliteDatabase | NodePgDatabase (line 11)"
+          }
+        },
+        "direct_init_in_db_ts": {
+          "file": "packages/opencode/src/storage/db.ts",
+          "line": 42,
+          "behavior": "Legacy global singleton pattern. Client = ReturnType<typeof init>. Lazily inits on first call via Object.assign function with .reset/.loaded methods.",
+          "path_detection": "Line 33-36: Flag.OPENCODE_DB can be ':memory:', absolute path, or relative name (joined to Global.Path.data)"
+        },
+        "migration_entry": {
+          "file": "packages/opencode/src/storage/migrate.ts",
+          "line": 32,
+          "behavior": "runMigrations() uses detectDialect() which checks OPENCODE_DATABASE_URL env var",
+          "dialect_detection": "Line 19: detectDialect() — OPENCODE_DATABASE_URL → 'pg', else 'sqlite'"
+        }
+      },
+      "migration_runner": {
+        "applyMigrations": {
+          "file": "packages/opencode/src/storage/db.pg.ts",
+          "line": 53,
+          "signature": "applyMigrations(db: PgClient): Promise<void>",
+          "pglite_path": "Lines 57-65: Duck-type checks if $client.exec() exists. If yes, reads migration files manually via readMigrationFiles() and iterates SQL statements",
+          "node_postgres_path": "Lines 67-68: Uses drizzle-orm's built-in migrate() function for node-postgres",
+          "migration_folder": "Line 54: new URL('../../migration-pg', import.meta.url).pathname",
+          "error_handling": "None — no try/catch around migration execution. Failure propagates as unhandled rejection."
+        },
+        "runMigrations": {
+          "file": "packages/opencode/src/storage/migrate.ts",
+          "line": 32,
+          "sqlite_path": "Lines 34-42: Bun SQLite database + drizzle-orm/bun-sqlite migrator",
+          "pg_path": "Lines 44-59: Calls initPg(url, ssl) then applyMigrations(client). Closes underlying pool/client in finally block.",
+          "cleanup": "Line 57: Duck-type checks for $client.end() — PGlite has no end(), node-postgres Pool does",
+          "error_handling": "Line 48: Throws Error if url is missing for PG path. Lines 60-66: CLI catch handler logs and exits 1."
+        }
+      },
+      "error_handling": {
+        "pglite_init": "NO try/catch around new PGlite(dataDir). If PGlite fails to construct (WASM load failure, disk error), the error propagates as an unhandled rejection.",
+        "pool_init": "NO try/catch around new Pool(...) either. Both paths fail hard on initialization failure.",
+        "adapter_layer": "File: adapter.ts lines 183-188: makePgAdapter calls initPg(options) without try/catch at the construction site. Errors caught downstream by Effect.tryPromise wrapper (line 196)."
+      },
+      "fallback_behavior": {
+        "sqlite_fallback": "File: adapter.ts line 375-376: If config.url is None (no OPENCODE_DATABASE_URL), falls back to SQLiteAdapter — uses legacy Database from db.ts which uses Bun SQLite or PGlite via #db import.",
+        "pglite_init_failure": "NO retry or fallback — PGlite init failure at the direct Database.Client() path (db.ts) is fatal. The adapter layer wraps in Effect which catches the error, but doesn't retry.",
+        "migration_failure": "migrate.ts CLI entry: catches and exits 1. No automatic retry."
+      }
+    },
+    "duckdb_initialization": {
+      "summary": "DuckDB is an analytical sidecar — separate from the transactional database. It has 4+ independent initialization paths, all subprocess-based.",
+      "import_alias": "#db-duckdb → packages/opencode/src/storage/db.duckdb.ts",
+      "alias_config": {
+        "file": "packages/opencode/package.json",
+        "line": 35,
+        "definition": {
+          "#db-duckdb": {
+            "bun": "./src/storage/db.duckdb.ts",
+            "node": "./src/storage/db.duckdb.ts",
+            "default": "./src/storage/db.duckdb.ts"
+          }
+        }
+      },
+      "initialization_paths": {
+        "cli_client_with_pool": {
+          "file": "packages/opencode/src/storage/db.duckdb.ts",
+          "line": 140,
+          "function": "init() → createCLIClient()",
+          "behavior": "Creates a DuckDBConnectionPool that manages max 4 concurrent duckdb CLI subprocesses. Each query spawns 'duckdb [path] -readonly -json -c [sql]'.",
+          "readonly_guard": "Line 53: -readonly flag on subprocess args prevents writes at the OS level",
+          "exec_timeout": "Line 68: 30s execution timeout kills process and rejects",
+          "pool_config": "DEFAULT_MAX_CONNECTIONS=4, DEFAULT_QUEUE_TIMEOUT_MS=30000, DEFAULT_EXECUTION_TIMEOUT_MS=30000"
+        },
+        "wasm_client_future": {
+          "file": "packages/opencode/src/storage/db.duckdb.ts",
+          "line": 220,
+          "function": "createWASMClient()",
+          "behavior": "Returns null — deferred. WASM path is placeholder until end-to-end verified.",
+          "comment": "Line 226: 'Return null to use CLI fallback until the WASM integration is verified end-to-end.'"
+        },
+        "pipeline_subprocess": {
+          "file": "packages/opencode/src/storage/pipeline.ts",
+          "line": 113,
+          "function": "execDuckDB(dbPath, sql)",
+          "behavior": "Spawns duckdb [path] -json -c [sql] — NO -readonly flag. Pipeline needs write access to create tables.",
+          "timeout": "Line 123: 60s timeout kills process and rejects",
+          "note": "Bypasses DuckDB.Service completely — firewall is NOT applied here (pipeline is internal only, per line 110 comment)"
+        },
+        "write_pipe": {
+          "file": "packages/opencode/src/storage/duckdb-pipe.ts",
+          "line": 23,
+          "function": "execDuckDBWrite(dbPath, sql)",
+          "behavior": "Spawns duckdb [path] with SQL piped to stdin. NO -readonly, NO -json, NO -c flag. Full write access.",
+          "timeout": "Line 35: 60s timeout",
+          "status": "ORPHANED — imported zero times in the tool directory. Was designed for dual-backend writes that were never implemented."
+        },
+        "rig_jsonl_query": {
+          "file": "packages/opencode/src/tool/rig-jsonl-query.ts",
+          "line": 55,
+          "function": "execFileAsync('duckdb', ['-json', '-c', sql])",
+          "behavior": "Direct execFileAsync — no pool, no firewall, no read-only flag, no connection management.",
+          "note": "A fourth independent subprocess path with different security properties."
+        }
+      },
+      "effect_service_layer": {
+        "file": "packages/opencode/src/storage/db.duckdb.ts",
+        "line": 255,
+        "declaration": "export const layer: Layer.Layer<Service, never, DuckDBConfig.Service | DatabaseAdapter.Service>",
+        "behavior": "Creates CLI client synchronously, then forks pipeline in background if dbPath is set",
+        "pipeline_fork": "Line 262: yield* Effect.forkScoped(runPipeline(dbPath, adapter).pipe(Effect.ignore))",
+        "pipeline_condition": "Line 257: Only runs pipeline if dbPath is not undefined (i.e., not :memory:)",
+        "error_handling": "Pipeline errors are ignored via Effect.ignore. Client creation (createCLIClient) is synchronous and never fails — subprocess errors happen at query time."
+      },
+      "pipeline_init": {
+        "file": "packages/opencode/src/storage/pipeline.ts",
+        "line": 44,
+        "function": "runPipeline(dbPath, adapter)",
+        "steps": [
+          "Line 68: metaCheck — queries _pipeline_meta table, skips if schema_version >= 2",
+          "Line 74: Exports session data from Postgres via adapter.query",
+          "Line 82: Exports part data from Postgres via adapter.query",
+          "Line 91: Exports runtime_events from Postgres via adapter.query (catches DatabaseError gracefully - line 104)",
+          "Line 113: Creates _pipeline_meta table",
+          "Line 114: Creates _pipeline_session table from JSON via stdin",
+          "Line 115: Creates _pipeline_part table from JSON via stdin",
+          "Lines 116-118: Creates _pipeline_runtime_event table if events exist",
+          "Line 121: Creates analytical tables via initTablesSql()",
+          "Line 124: Creates analytical views via initViewsSql()",
+          "Line 127: Writes meta as LAST step — if anything above fails, meta not written (idempotency)",
+          "Line 130: Overall pipeline failure is caught and logged as non-fatal (Effect.catch → logError)"
+        ]
+      },
+      "error_handling": {
+        "subprocess_spawn_fail": "File: db.duckdb.ts line 106: 'Failed to spawn duckdb' → DuckDBError. The error propagates through the Effect layer.",
+        "caller_handling": "File: tool/duckdb-query.ts line 44: Checks error message for 'Failed to spawn duckdb' and returns a helpful user-facing message 'DuckDB binary is not installed or not found in PATH.' with install instructions.",
+        "firewall_errors": "File: duckdb-firewall.ts line 45: DuckDBFirewallError thrown for blocked functions (read_text, ATTACH, LOAD, etc.)",
+        "pipeline_errors": "File: pipeline.ts line 130: Non-fatal — pipeline failure is caught and logged, app continues without DuckDB analytics."
+      },
+      "graceful_degradation": {
+        "duckdb_missing": "File: tool/duckdb-query.ts line 44-55: Detects spawn failure, returns user-friendly error message. Tool remains registered but returns an error when called. No automatic fallback.",
+        "experimental_flag": "File: effect/runtime-flags.ts line 54: experimentalDuckDBQuery is gated behind OPENCODE_EXPERIMENTAL_DUCKDB_QUERY env var. File: tool/registry.ts line 476: duckdb_query tool is excluded from tool list when flag is false.",
+        "pipeline_failure": "File: pipeline.ts line 130: Non-fatal, app continues without analytical views",
+        "no_automatic_fallback": "There is NO automatic fallback to a non-DuckDB analytics path. If DuckDB fails, analytical features (failure hotspots, slow tools, file contention, etc.) are unavailable."
+      }
+    },
+    "storage_abstraction": {
+      "summary": "Two separate storage abstractions exist: DatabaseAdapter (transactional) and Storage (filesystem-based). DuckDB is a third path outside both.",
+      "database_adapter": {
+        "file": "packages/opencode/src/storage/adapter.ts",
+        "service_tag": "@opencode/DatabaseAdapter",
+        "line": 80,
+        "interface": {
+          "query": "(fn: (db: DrizzleLikeClient) => T | Promise<T>) => Effect<T, DatabaseError>",
+          "transaction": "(fn, options?) => Effect<T, DatabaseError>",
+          "afterCommit": "(fn) => Effect<void>"
+        },
+        "implementations": {
+          "SQLiteAdapter": "Line 86: makeSQLiteAdapter() — wraps legacy Database singleton with DrizzleLikeClient bridge. For post-Phase 1.7a migration, wraps PGlite raw .exec()/.query().",
+          "PgAdapter": "Line 183: makePgAdapter(options) — calls initPg(options) from #db. Has retry logic for serialization failures (40001). Uses sanitizePgError for error redaction.",
+          "DuckDBAdapter": "Line 283: makeDuckDBAdapter(client) — read-only. Drizzle select/insert/update/delete/transaction all throw errors. Only all/get/run work."
+        },
+        "mode_decision": "Line 371: Layer.effect reads DatabaseConfig. If config.url is Some → PgAdapter (Postgres via PGlite or node-postgres). Else → SQLiteAdapter.",
+        "retry_behavior": {
+          "serialization_retry": "Line 249: Retries serialization failures (code '40001') up to 3 times with exponential backoff",
+          "sqlite_retry": "Line 137: Transaction retry for SQLite (3 times, exponential)",
+          "pg_retry": "Line 240: Transaction uses Effect.retry with while filter for DatabaseError.isRetryable"
+        }
+      },
+      "legacy_database": {
+        "file": "packages/opencode/src/storage/db.ts",
+        "note": "'@deprecated use DatabaseAdapter.Service instead' in node.ts line 5",
+        "behavior": "Global singleton pattern. Calls init from #db (db.pg.ts) with path from getPath(). Returns Drizzle ORM client directly.",
+        "path_logic": "Lines 33-35: Flag.OPENCODE_DB → can be ':memory:' or absolute path. Otherwise getChannelPath() → 'opencode.db' or 'opencode-{channel}.db'",
+        "migration_skipping": "Line 20: RuntimeFlags service includes skipMigrations flag"
+      },
+      "duckdb_storage_relationship": {
+        "separate_infrastructure": "DuckDB does NOT route through DatabaseAdapter. It has its own service tag (@opencode/DuckDB), its own connection pool, its own CLI spawn pattern, its own config service, its own firewall, its own error types.",
+        "adapter_bridge_exists": "makeDuckDBAdapter() in adapter.ts wraps DuckDBRawClient into the DrizzleLikeClient interface, but this is NOT used in the DuckDB layer itself — it's an adapter FOR other code that wants to use DatabaseAdapter interface with DuckDB underneath.",
+        "known_orphans": {
+          "makeDuckDBAdapter": "File: adapter.ts line 283-350. Defined but references to it in adapter.ts line 355 show it's used by DuckDBAdapter Layer, but this Layer is not wired into the default layer pipeline.",
+          "execDuckDBWrite": "File: duckdb-pipe.ts line 23. Exported but imported zero times."
+        }
+      },
+      "storage_service": {
+        "file": "packages/opencode/src/storage/storage.ts",
+        "service_tag": "@opencode/Storage",
+        "line": 67,
+        "description": "Filesystem-based storage abstraction — not a database. Uses AppFileSystem and Git for file operations. Supports remove/read/update/write/list. Separate from both PGlite and DuckDB."
+      }
+    },
+    "error_patterns_and_retry": {
+      "error_types": {
+        "DatabaseError": {
+          "file": "adapter.ts",
+          "line": 10,
+          "fields": "message, cause (optional), isRetryable (boolean)"
+        },
+        "RetriableDatabaseError": {
+          "file": "adapter.ts",
+          "line": 16,
+          "fields": "message, cause (optional), isRetryable (boolean)"
+        },
+        "FatalDatabaseError": {
+          "file": "adapter.ts",
+          "line": 22,
+          "fields": "message, cause (optional)"
+        },
+        "DuckDBError": {
+          "file": "db.duckdb.ts",
+          "line": 24,
+          "fields": "message, _tag = 'DuckDBError'"
+        },
+        "DuckDBFirewallError": {
+          "file": "duckdb-firewall.ts",
+          "line": 20,
+          "fields": "message, _tag = 'DuckDBFirewallError'"
+        },
+        "DuckDBWriteError": {
+          "file": "duckdb-pipe.ts",
+          "line": 5,
+          "fields": "message, _tag = 'DuckDBWriteError'"
+        }
+      },
+      "retry_logic": {
+        "pg_transaction_serialization": "adapter.ts line 247: Retries 3 times, exponential backoff 100ms, only for error code '40001'",
+        "sqlite_transaction": "adapter.ts line 137: Retries 3 times, exponential backoff 100ms, all errors",
+        "pg_pool_connection": "pg-pool.ts line 132: Retries up to maxRetries times with exponential backoff, only for retryable errors (DNS/network/timeout vs auth/SSL)",
+        "duckdb_retry": "NONE — DuckDB queries are fire-and-forget. No retry logic."
+      },
+      "fallback_gaps": {
+        "pglite_init_failure": "No fallback. If PGlite WASM fails to load, the app crashes.",
+        "pglite_migration_failure": "No fallback. Migration failure is fatal in CLI mode (exit 1).",
+        "duckdb_missing_binary": "User-friendly error message but no automatic degradation — DuckDB-dependent features are simply unavailable.",
+        "duckdb_pipeline_failure": "Non-fatal. Pipeline failures are caught and logged, app continues without analytical views.",
+        "experimental_gating": "DuckDB query tool is gated behind OPENCODE_EXPERIMENTAL_DUCKDB_QUERY flag (off by default)."
+      }
+    },
+    "dependents": {
+      "depends_on_pglite_postgres": {
+        "direct_imports": [
+          "storage/db.ts — imports init from #db (line 11)",
+          "storage/adapter.ts — imports init as initPg from #db (line 4)",
+          "storage/migrate.ts — imports init and applyMigrations from #db (line 4)",
+          "test/storage/migration.pg.test.ts — imports init, applyMigrations from #db (line 2)"
+        ],
+        "scopes": "All transactional data: sessions, messages, parts, todos, permissions, accounts, projects, workspaces, shares, runtime events"
+      },
+      "depends_on_duckdb": {
+        "duckdb_query_tool": "tool/duckdb-query.ts — requires 'duckdb' CLI binary in PATH",
+        "rig_jsonl_query_tool": "tool/rig-jsonl-query.ts — requires 'duckdb' CLI binary in PATH",
+        "event_queries": "event/event-queries.ts — typed query functions for DuckDB analytical views. Takes DuckDBRawClient as parameter.",
+        "debug_export": "debug/debug-export.ts — includes 'duckdb-queries.json' in debug packet export (line 110)",
+        "pipeline": "storage/pipeline.ts — data pipeline that populates DuckDB analytical tables from Postgres data"
+      },
+      "depends_on_neither": {
+        "storage_service": "storage/storage.ts — file-based storage abstraction (AppFileSystem + Git). Independent.",
+        "app_startup_bootstrap": "cli/bootstrap.ts — app bootstrap logic"
+      }
+    }
+  },
+  "notable_gaps": [
+    {
+      "gap": "PGlite init has no error handling",
+      "file": "packages/opencode/src/storage/db.pg.ts",
+      "line": 31,
+      "detail": "new PGlite(dataDir) is called without try/catch. WASM initialization failure crashes the process.",
+      "severity": "medium"
+    },
+    {
+      "gap": "No PGlite fallback to SQLite on init failure",
+      "file": "packages/opencode/src/storage/db.pg.ts",
+      "line": 31,
+      "detail": "If PGlite fails during init, there is no automatic fallback to SQLite. The adapter layer's decision to use PgAdapter vs SQLiteAdapter is based on config (OPENCODE_DATABASE_URL presence), not on runtime availability.",
+      "severity": "medium"
+    },
+    {
+      "gap": "DuckDB has 4+ independent spawn paths with different security profiles",
+      "files": [
+        "db.duckdb.ts (pooled CLI, -readonly, firewall CHECKED)",
+        "pipeline.ts (no -readonly, NO firewall)",
+        "duckdb-pipe.ts (no -readonly, NO firewall, orphaned)",
+        "rig-jsonl-query.ts (execFileAsync, -json only, NO firewall, NO pool)"
+      ],
+      "detail": "Each path has different security properties. Only the primary path (db.duckdb.ts) enforces -readonly and firewall. The others are unrestricted.",
+      "severity": "high"
+    },
+    {
+      "gap": "DuckDBAdapter Layer is not wired into the default Layer pipeline",
+      "file": "packages/opencode/src/storage/adapter.ts",
+      "line": 353,
+      "detail": "DuckDBAdapter is exported but its layer is not composed into the default adapter layer. It appears to be unused infrastructure.",
+      "severity": "medium"
+    },
+    {
+      "gap": "duckdb-pipe.ts is orphaned infrastructure",
+      "file": "packages/opencode/src/storage/duckdb-pipe.ts",
+      "detail": "execDuckDBWrite is never imported. The dual-backend write pattern was planned but never implemented.",
+      "severity": "low"
+    },
+    {
+      "gap": "Data migration table is SQLite-only",
+      "file": "packages/opencode/src/data-migration.sql.ts",
+      "line": 1,
+      "detail": "DataMigrationTable uses drizzle-orm/sqlite-core. Data migrations only work on SQLite path. Would fail with 'table not found' on PostgreSQL.",
+      "severity": "medium"
+    },
+    {
+      "gap": "Pipeline DB adapter query uses hardcoded Postgres column references",
+      "file": "packages/opencode/src/storage/pipeline.ts",
+      "line": 74,
+      "detail": "The pipeline queries Postgres columns like 'CAST(model AS text)' which will fail against the SQLite adapter because SQLite adapter wraps PGlite raw .exec()/.query(), not full Drizzle ORM query building.",
+      "severity": "high"
+    },
+    {
+      "gap": "DuckDB schema_version is not checked with -readonly flag",
+      "file": "packages/opencode/src/storage/pipeline.ts",
+      "line": 193,
+      "detail": "metaCheck() spawns duckdb without -readonly flag, unlike the main client path. Minimal risk since it only queries _pipeline_meta, but inconsistent.",
+      "severity": "low"
+    }
+  ]
+}

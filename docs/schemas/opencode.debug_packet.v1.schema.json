@@ -1,0 +1,210 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "opencode.debug_packet.v1",
+  "title": "OpenCode Debug Packet",
+  "description": "Schema for a full session debug packet exported from OpenCode. Contains the session state, runtime events, tool calls, file edits, permissions, lifecycle transitions, MCP events, and normalized errors for diagnostics and replay.",
+  "type": "object",
+  "properties": {
+    "schemaVersion": {
+      "type": "string",
+      "description": "Version of the debug packet schema"
+    },
+    "generatedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp when this packet was generated"
+    },
+    "appVersion": {
+      "type": "string",
+      "description": "Version of the OpenCode application that generated this packet"
+    },
+    "dbSchemaVersion": {
+      "type": "string",
+      "description": "Version of the database schema in use"
+    },
+    "session": {
+      "type": "object",
+      "description": "Session snapshot containing all diagnostic data",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Session identifier"
+        },
+        "metadata": {
+          "type": "object",
+          "description": "Free-form session metadata",
+          "additionalProperties": true
+        },
+        "messages": {
+          "type": "array",
+          "description": "Session message history",
+          "items": {}
+        },
+        "runtimeEvents": {
+          "type": "array",
+          "description": "Runtime events for the session",
+          "items": {
+            "$ref": "./opencode.runtime_event.v1.schema.json"
+          }
+        },
+        "toolCallSummaries": {
+          "type": "array",
+          "description": "Summaries of tool calls made during the session",
+          "items": {
+            "$ref": "#/definitions/ToolCallSummary"
+          }
+        },
+        "fileEditSummaries": {
+          "type": "array",
+          "description": "Summaries of file edits made during the session",
+          "items": {
+            "$ref": "#/definitions/FileEditSummary"
+          }
+        },
+        "permissionDecisions": {
+          "type": "array",
+          "description": "Permission decisions recorded during the session",
+          "items": {
+            "$ref": "#/definitions/PermissionDecision"
+          }
+        },
+        "lifecycleTransitions": {
+          "type": "array",
+          "description": "Lifecycle state transitions for the session",
+          "items": {
+            "$ref": "#/definitions/LifecycleTransition"
+          }
+        },
+        "mcpEvents": {
+          "type": "array",
+          "description": "MCP (Model Context Protocol) events",
+          "items": {
+            "$ref": "#/definitions/McpEvent"
+          }
+        },
+        "errors": {
+          "type": "array",
+          "description": "Normalized error aggregates",
+          "items": {
+            "$ref": "#/definitions/NormalizedError"
+          }
+        }
+      },
+      "required": ["id", "metadata", "messages", "runtimeEvents", "toolCallSummaries", "fileEditSummaries", "permissionDecisions", "lifecycleTransitions", "mcpEvents", "errors"],
+      "additionalProperties": false
+    },
+    "duckDbQueries": {
+      "type": "object",
+      "description": "Optional DuckDB query results or configuration",
+      "additionalProperties": true
+    },
+    "gitDiff": {
+      "type": "string",
+      "description": "Optional Git diff output for the working tree at the time of capture"
+    },
+    "redactedConfig": {
+      "type": "object",
+      "description": "Application configuration with sensitive values redacted",
+      "additionalProperties": true
+    }
+  },
+  "required": ["schemaVersion", "generatedAt", "appVersion", "dbSchemaVersion", "session", "redactedConfig"],
+  "additionalProperties": false,
+  "definitions": {
+    "ToolCallSummary": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Tool call identifier" },
+        "toolName": { "type": "string", "description": "Name of the tool invoked" },
+        "status": { "type": "string", "description": "Outcome status of the tool call" },
+        "durationMs": { "type": "number", "description": "Duration in milliseconds" },
+        "errorCode": { "type": "string", "description": "Normalized error code if the call failed" },
+        "inputSummary": { "type": "string", "description": "Truncated or summarized tool input" },
+        "outputSummary": { "type": "string", "description": "Truncated or summarized tool output" },
+        "retryCount": { "type": "number", "description": "Number of retries attempted" },
+        "cacheable": { "type": "boolean", "description": "Whether the tool call result is cacheable" },
+        "ts": { "type": "string", "format": "date-time", "description": "ISO 8601 timestamp" }
+      },
+      "required": ["id", "toolName", "status", "ts"],
+      "additionalProperties": false
+    },
+    "FileEditSummary": {
+      "type": "object",
+      "properties": {
+        "filePath": { "type": "string", "description": "Path to the edited file" },
+        "action": {
+          "type": "string",
+          "enum": ["created", "modified", "deleted"],
+          "description": "Edit action performed"
+        },
+        "agentTurn": { "type": "string", "description": "Agent turn identifier" },
+        "toolCall": { "type": "string", "description": "Tool call identifier that produced this edit" },
+        "phase": { "type": "string", "description": "Phase during which the edit occurred" },
+        "linesAdded": { "type": "number", "description": "Number of lines added" },
+        "linesRemoved": { "type": "number", "description": "Number of lines removed" },
+        "ts": { "type": "string", "format": "date-time", "description": "ISO 8601 timestamp" }
+      },
+      "required": ["filePath", "action", "ts"],
+      "additionalProperties": false
+    },
+    "PermissionDecision": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Permission decision identifier" },
+        "toolName": { "type": "string", "description": "Name of the tool requiring permission" },
+        "allowed": { "type": "boolean", "description": "Whether permission was granted" },
+        "policy": { "type": "string", "description": "Policy that governed the decision" },
+        "reason": { "type": "string", "description": "Reason for the decision" },
+        "actor": { "type": "string", "description": "Actor that made or received the decision" },
+        "ts": { "type": "string", "format": "date-time", "description": "ISO 8601 timestamp" }
+      },
+      "required": ["id", "toolName", "allowed", "policy", "reason", "actor", "ts"],
+      "additionalProperties": false
+    },
+    "LifecycleTransition": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Transition identifier" },
+        "from": { "type": "string", "description": "Previous lifecycle state" },
+        "to": { "type": "string", "description": "New lifecycle state" },
+        "reason": { "type": "string", "description": "Reason for the transition" },
+        "ts": { "type": "string", "format": "date-time", "description": "ISO 8601 timestamp" }
+      },
+      "required": ["id", "from", "to", "reason", "ts"],
+      "additionalProperties": false
+    },
+    "McpEvent": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "MCP event identifier" },
+        "serverName": { "type": "string", "description": "Name of the MCP server" },
+        "eventType": {
+          "type": "string",
+          "enum": ["connected", "disconnected", "tools_changed", "tool_called", "tool_failed", "error"],
+          "description": "Type of MCP event"
+        },
+        "status": { "type": "string", "description": "Optional event status" },
+        "durationMs": { "type": "number", "description": "Duration in milliseconds" },
+        "errorCode": { "type": "string", "description": "Normalized error code" },
+        "ts": { "type": "string", "format": "date-time", "description": "ISO 8601 timestamp" }
+      },
+      "required": ["id", "serverName", "eventType", "ts"],
+      "additionalProperties": false
+    },
+    "NormalizedError": {
+      "type": "object",
+      "properties": {
+        "errorCode": { "type": "string", "description": "Normalized error code" },
+        "count": { "type": "number", "description": "Number of times this error occurred" },
+        "firstSeen": { "type": "string", "format": "date-time", "description": "ISO 8601 timestamp of first occurrence" },
+        "lastSeen": { "type": "string", "format": "date-time", "description": "ISO 8601 timestamp of last occurrence" },
+        "toolName": { "type": "string", "description": "Associated tool name, if applicable" },
+        "actor": { "type": "string", "description": "Associated actor, if applicable" },
+        "sampleMessage": { "type": "string", "description": "Example error message" },
+        "recoverable": { "type": "boolean", "description": "Whether this error is recoverable" }
+      },
+      "required": ["errorCode", "count", "firstSeen", "lastSeen"],
+      "additionalProperties": false
+    }
+  }
+}

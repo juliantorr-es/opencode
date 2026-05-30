@@ -1,0 +1,17 @@
+{
+  "schema_version": "v1",
+  "plan_id": "packages-app-src-components-dialog-test-ts",
+  "plan_revision": 1,
+  "title": "Dialog Component Tests (DT-002)",
+  "boundary": "packages/app/src/components/dialog-*.test.ts",
+  "consumer_purpose": "Verify all dialog components render, interact, and manage state correctly using the DT-001 harness",
+  "claim_atoms": [
+    "test all 22 dialog components with smoke",
+    "interaction",
+    "and state tests; extend dialog-mocks.ts with shared context mocks; create test files grouped by dependency profile"
+  ],
+  "content": "## Plan: DT-002 Dialog Component Tests\n\n### Overview\nWrite comprehensive tests for all 22 dialog components in packages/app/src/components/ using the mountDialog() harness from DT-001.\n\n### Step 1: Extend dialog-mocks.ts with shared context mocks\nAdd mock.module() calls for common @/context/* dependencies:\n- @/context/language → useLanguage returns { t: (key) => key }\n- @/context/platform → usePlatform returns mock Platform object\n- @/context/settings → useSettings returns mock Settings\n- @/context/local → useLocal returns mock local state\n- @/context/dialog (already exists)\n- @/hooks/use-providers → useProviders, popularProviders\n\n### Step 2: Create test files grouped by dependency profile\n\n**File 1: dialog-edit-mcp.test.ts** — Tests for DialogEditMcp\n- Smoke: renders with default props\n- Interaction: type name, toggle type, fill fields\n- State: form values persist, save callback fires\n- Reset: switching entries resets form\n\n**File 2: dialog-simple.test.ts** — Simple props-based dialogs:\n- DialogReleaseNotes (smoke + pagination)\n- DialogOnboarding (smoke + navigation)\n- DialogUsageExceeded (smoke + button click)\n- DialogEditProject (smoke + form interaction)\n\n**File 3: dialog-export-import.test.ts** — Export/Import/Fork:\n- DialogExport (smoke + export button)\n- DialogImport (smoke + import button)\n- DialogFork (smoke + message list)\n\n**File 4: dialog-manage.test.ts** — Management dialogs:\n- DialogManageAgents (smoke + agent list)\n- DialogManageModels (smoke + model list)\n- DialogSettings (smoke + tabs)\n\n**File 5: dialog-providers.test.ts** — Provider selection:\n- DialogSelectProvider (smoke + provider list)\n- DialogSelectModel (smoke)\n- DialogSelectModelUnpaid (smoke)\n- DialogCommandPalette (smoke)\n\n**File 6: dialog-select-mcp.test.ts** — MCP-related:\n- DialogSelectMcp (smoke + server list)\n- DialogEditMcp (already in file 1, but simplest cases)\n\n**File 7: dialog-complex.test.ts** — Complex/props-based:\n- DialogSelectDirectory (smoke + directory navigation)\n- DialogSelectFile (smoke + file selection)\n- DialogConnectProvider (smoke + auth flow basics)\n- DialogCustomProvider (smoke + form basics)\n- DialogEditAgent (smoke + form)\n\n### Step 3: Test structure for each dialog\nEach dialog test follows this pattern:\n1. beforeAll: mockAllDialogDeps() + dialog-specific context mocks\n2. Import dialog via dynamic import (after mocks are set up)\n3. Smoke: mountDialog + assertVisible\n4. Interaction: clickButton + verify callbacks\n5. State: verify rendered content/text\n6. Cleanup: dispose + assertHidden\n\n### Verification\n- Run `cd packages/app && bun test` to verify all tests pass\n- Each test file self-validates with assertVisible/assertHidden/assertCallbackFired\n",
+  "status": "proposed",
+  "created_at": "2026-05-30T10:09:13.164Z",
+  "modified_at": "2026-05-30T10:09:13.164Z"
+}

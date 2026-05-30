@@ -1,0 +1,17 @@
+{
+  "schema_version": "v1",
+  "plan_id": "drizzle-get-to-limit-one",
+  "plan_revision": 1,
+  "title": "Replace Drizzle .get() with .limit(1) in account, permission, projectors",
+  "boundary": "drizzle-get-to-limit-one",
+  "consumer_purpose": "Postgres compatibility — .get() is SQLite-only; .limit(1) works on all Drizzle drivers",
+  "claim_atoms": [
+    "5 .get() calls replaced across 3 files",
+    "typecheck passes",
+    "tests pass"
+  ],
+  "content": "## Plan: Replace Drizzle .get() with .limit(1)\n\n### Files and changes\n\n**1. packages/opencode/src/account/repo.ts — 3 changes**\n\nChange 1a (line 62, sync current() function):\n```\n- const state = db.select().from(AccountStateTable).where(eq(AccountStateTable.id, ACCOUNT_STATE_ID)).get()\n+ const [state] = db.select().from(AccountStateTable).where(eq(AccountStateTable.id, ACCOUNT_STATE_ID)).limit(1)\n```\n\nChange 1b (line 64, sync current() function):\n```\n- const account = db.select().from(AccountTable).where(eq(AccountTable.id, state.active_account_id)).get()\n+ const [account] = db.select().from(AccountTable).where(eq(AccountTable.id, state.active_account_id)).limit(1)\n```\n\nChange 1c (line 110-112, getRow Effect):\n```\n- query((db) => db.select().from(AccountTable).where(eq(AccountTable.id, accountID)).get()).pipe(\n-   Effect.map(Option.fromNullishOr),\n+ query((db) => db.select().from(AccountTable).where(eq(AccountTable.id, accountID)).limit(1)).pipe(\n+   Effect.map(rows => rows[0]),\n+   Effect.map(Option.fromNullishOr),\n```\n\n**2. packages/opencode/src/permission/index.ts — 1 change**\n\nChange 2 (line 151-155, adapter.query Effect):\n```\n- const row = yield* adapter\n-   .query((db) =>\n-     db.select().from(PermissionTable).where(eq(PermissionTable.project_id, ctx.project.id)).get(),\n-   )\n-   .pipe(Effect.orDie)\n+ const [row] = yield* adapter\n+   .query((db) =>\n+     db.select().from(PermissionTable).where(eq(PermissionTable.project_id, ctx.project.id)).limit(1),\n+   )\n+   .pipe(Effect.orDie)\n```\n\n**3. packages/opencode/src/server/projectors.ts — 1 change**\n\nChange 3 (line 14, sync Database.use):\n```\n- const row = Database.use((db) => db.select().from(SessionTable).where(eq(SessionTable.id, id)).get())\n+ const [row] = Database.use((db) => db.select().from(SessionTable).where(eq(SessionTable.id, id)).limit(1))\n```\n\n### Verification\n1. Run `bun typecheck` from packages/opencode\n2. Run relevant tests",
+  "status": "proposed",
+  "created_at": "2026-05-30T09:27:29.386Z",
+  "modified_at": "2026-05-30T09:27:29.386Z"
+}

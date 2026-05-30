@@ -54,12 +54,34 @@ export default tool({
       const count = content.split(edit.oldText).length - 1
 
       if (count === 0) {
+        // Try whitespace-normalized matching (tabs → spaces) as fallback
+        const normContent = content.replace(/\t/g, "  ")
+        const normOld = edit.oldText.replace(/\t/g, "  ")
+        const normCount = normContent.split(normOld).length - 1
+        if (normCount === 1) {
+          // Found with normalized whitespace — apply using original content with normalized replacement
+          const normNew = edit.newText.replace(/\t/g, "  ")
+          // We can't safely apply normalized text back, so tell the agent
+          return JSON.stringify({
+            status: "fail",
+            error: `Edit ${i + 1}/${edits.length}: oldText matched only after normalizing tabs to spaces. The file uses ${content.includes("\t") ? "tabs" : "spaces"} but your oldText used ${edit.oldText.includes("\t") ? "tabs" : "spaces"}.`,
+            hint: "Match the file's exact indentation style. Use read_source to see the actual whitespace characters.",
+            file_uses_tabs: content.includes("\t"),
+            oldtext_uses_tabs: edit.oldText.includes("\t"),
+            applied: i,
+            total: edits.length,
+          }, null, 2)
+        }
         const preview = edit.oldText.split("\n")[0]?.slice(0, 100) || "(empty)"
+        // Show file snippet to help debug
+        const fileLines = content.split("\n")
+        const fileSnippet = fileLines.slice(0, 10).map((l, j) => `  ${j + 1}: ${l.slice(0, 80)}`).join("\n")
         return JSON.stringify({
           status: "fail",
-          error: `Edit ${i + 1}: oldText not found in ${edit.file}`,
+          error: `Edit ${i + 1}/${edits.length}: oldText not found in ${edit.file}`,
           preview,
-          hint: "Check exact whitespace and line endings. Use read_source first to see exact file content.",
+          hint: "Check exact whitespace, indentation, and line endings. The file may have tabs vs spaces mismatch.",
+          file_first_10_lines: fileSnippet,
           applied: i,
           total: edits.length,
         }, null, 2)

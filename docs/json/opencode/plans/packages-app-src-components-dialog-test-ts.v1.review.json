@@ -1,0 +1,234 @@
+{
+  "schema_version": "v1",
+  "plan_id": "packages-app-src-components-dialog-test-ts",
+  "title": "Dialog Component Tests — Plan Review (Corrected)",
+  "reviewer": "plan-reviewer",
+  "reviewed_at": "2026-05-30T12:35:00.000Z",
+  "correction_note": "Initial review based on stale read of dialog-mocks.ts (104 lines). The actual file is 364 lines with comprehensive mock infrastructure already in place. This review reflects the current state.",
+  "verdict": "approve_with_conditions",
+  "summary": "The plan's foundational mock infrastructure is substantially already in place — dialog-mocks.ts provides 13 context mocks via mockAllContexts(), all 6 missing UI sub-modules in mockUiPrimitives(), and realistic stub defaults for every @/context/* module the 22 dialogs need. The remaining preconditions are: (1) add third-party mocks for @tanstack/solid-query, @solidjs/router, @opencode-ai/core/util/{path,encode}, @kobalte/core/popover, and fuzzysort; (2) add @/utils/* mocks; (3) document Bun 1.3.14's per-process mock.module() limitation (run with --isolate or per-file); (4) reclassify DialogEditProject from File 2 to File 7; (5) run POC tests for one simple and one complex dialog before creating all 7 files.",
+  "axes": {
+    "coupling": {
+      "score": 3,
+      "note": "Grouping by dependency profile reduces coupling between test files. The sibling dialog import cascades (6 static, 4 dynamic) are manageable because mockAllContexts() covers all transitive @/context/* deps. The circular dialog-custom-provider ↔ dialog-select-provider import works via ESM partial evaluation but requires @tanstack/solid-query mocked."
+    },
+    "debuggability": {
+      "score": 4,
+      "note": "Harness provides clear assertion helpers. clickButton errors list available buttons. Mock stubs return typed objects with realistic shapes."
+    },
+    "convergence": {
+      "score": 4,
+      "note": "Extends the proven DT-001 pattern (mountDialog + hyperscript). dialog-mocks.ts follows the existing module structure. No architectural deviation."
+    },
+    "surface_area": {
+      "score": 4,
+      "note": "Only adds new test files. No production dialog components modified. mockAllContexts() and mockUiPrimitives() are in test utilities."
+    },
+    "testability": {
+      "score": 3,
+      "note": "13 @/context/* modules are mocked. 20 UI sub-modules are mocked. Remaining gaps: @tanstack/solid-query (4 dialogs), @solidjs/router (5 dialogs), @opencode-ai/core/util/* (4 dialogs), @kobalte/core/popover (1 dialog), fuzzysort (1 dialog), @/utils/* (5 dialogs), and non-dialog sibling components. Bun 1.3.14 mock.module() is per-process — requires --isolate flag or per-file execution."
+    },
+    "error_clarity": {
+      "score": 3,
+      "note": "Identity t(key) translation will show i18n keys in assertions. getMockDefaults() provides realistic stub shapes. clickButton has helpful button enumeration in error messages."
+    },
+    "reversibility": {
+      "score": 4,
+      "note": "All changes are additive (new test files). No production code changes. Clean revert per test file."
+    }
+  },
+  "findings": {
+    "mock_infrastructure_already_in_place": {
+      "context_mocks": [
+        {"module": "@/context/language", "function": "mockLanguage()", "mock": "useLanguage: () => ({ t: (key) => key, locale: () => 'en' })"},
+        {"module": "@/context/platform", "function": "mockPlatform()", "mock": "usePlatform: () => ({ platform: 'web', fetch, openDirectoryPicker, openFilePicker, saveFilePicker })"},
+        {"module": "@/context/settings", "function": "mockSettings()", "mock": "useSettings: () => ({ settings: {}, update, releaseNotes, setReleaseNotes })"},
+        {"module": "@/context/local", "function": "mockLocal()", "mock": "useLocal: () => ({ local: () => ({}), setLocal })"},
+        {"module": "@/context/sync", "function": "mockSync()", "mock": "useSync: () => ({ data: () => ({}), session: () => ({ messages: () => [], optimistic: () => [] }) })"},
+        {"module": "@/context/sdk", "function": "mockSDK()", "mock": "useSDK: () => ({ client: null, directory, url, createClient })"},
+        {"module": "@/hooks/use-providers", "function": "mockProviders()", "mock": "useProviders, popularProviders: []"},
+        {"module": "@/context/server-sdk", "function": "mockServerContext()", "mock": "useServerSDK: () => ({ client: null })"},
+        {"module": "@/context/server-sync", "function": "mockServerContext()", "mock": "useServerSync: () => ({ child: () => ({}) })"},
+        {"module": "@/context/command", "function": "mockCommand()", "mock": "useCommand, dispatchAiCommand, formatKeybind"},
+        {"module": "@/context/prompt", "function": "mockPrompt()", "mock": "usePrompt: () => ({ current, set, reset, context, messages })"},
+        {"module": "@/context/layout", "function": "mockLayout()", "mock": "useLayout: () => ({ tabs, setTabs, handoff })"},
+        {"module": "@/context/server", "function": "mockServer()", "mock": "useServer, ServerConnection class"},
+        {"module": "@/context/file", "function": "mockFileContext()", "mock": "useFile: () => ({ tree, children, expanded, expand, collapse })"}
+      ],
+      "ui_module_mocks": [
+        "@opencode-ai/ui/dialog", "@opencode-ai/ui/button", "@opencode-ai/ui/icon-button",
+        "@opencode-ai/ui/icon", "@opencode-ai/ui/logo", "@opencode-ai/ui/spinner",
+        "@opencode-ai/ui/tooltip", "@opencode-ai/ui/tag", "@opencode-ai/ui/toast",
+        "@opencode-ai/ui/file-icon", "@opencode-ai/ui/list", "@opencode-ai/ui/select",
+        "@opencode-ai/ui/text-field", "@opencode-ai/ui/provider-icon",
+        "@opencode-ai/ui/switch", "@opencode-ai/ui/tabs", "@opencode-ai/ui/dropdown-menu",
+        "@opencode-ai/ui/keybind", "@opencode-ai/ui/avatar", "@opencode-ai/ui/hooks",
+        "@opencode-ai/ui/context/dialog"
+      ],
+      "convenience_functions": [
+        {"mockAllDialogDeps()": "calls mockUiPrimitives() + mockDialogContext() — 21 UI mocks"},
+        {"mockAllContexts()": "calls all 13 context mock functions — full @/context/* coverage"},
+        {"getMockDefaults()": "returns shared MockProviders interface with realistic stub values"}
+      ]
+    },
+    "remaining_gaps": {
+      "third_party_modules": [
+        {"module": "@tanstack/solid-query", "used_by": ["dialog-select-mcp", "dialog-custom-provider", "dialog-edit-project", "dialog-select-server"], "recommendation": "mock.module('@tanstack/solid-query', () => ({ useMutation: () => ({ mutate: async () => {}, mutateAsync: async () => {} }), useQueryClient: () => ({ invalidateQueries: () => {} }) }))"},
+        {"module": "@solidjs/router", "used_by": ["dialog-export", "dialog-fork", "dialog-import", "dialog-select-file", "dialog-select-server"], "recommendation": "mock.module('@solidjs/router', () => ({ useNavigate: () => () => {}, useParams: () => ({}) }))"},
+        {"module": "@opencode-ai/core/util/encode", "used_by": ["dialog-fork", "dialog-select-file"], "recommendation": "mock.module('@opencode-ai/core/util/encode', () => ({ base64Encode: (s) => btoa(s) }))"},
+        {"module": "@opencode-ai/core/util/path", "used_by": ["dialog-edit-project", "dialog-select-file", "dialog-select-directory"], "recommendation": "mock.module('@opencode-ai/core/util/path', () => ({ getFilename: (p) => p.split('/').pop(), getDirectory: (p) => p.split('/').slice(0,-1).join('/') }))"},
+        {"module": "@kobalte/core/popover", "used_by": ["dialog-select-model"], "recommendation": "mock.module('@kobalte/core/popover', () => ({ Popover: (p) => p.children || null }))"},
+        {"module": "fuzzysort", "used_by": ["dialog-select-directory"], "recommendation": "mock.module('fuzzysort', () => ({ default: { go: () => [] } }))"}
+      ],
+      "util_modules": [
+        {"module": "@/utils/path-key", "used_by": ["dialog-select-mcp"], "recommendation": "mock.module('@/utils/path-key', () => ({ pathKey: (s) => s.replace(/[/\\\\:@]/g, '-') }))"},
+        {"module": "@/utils/prompt (extractPromptFromParts)", "used_by": ["dialog-fork"], "recommendation": "mock.module('@/utils/prompt', () => ({ extractPromptFromParts: () => '' }))"},
+        {"module": "@/utils/base64 (decode64)", "used_by": ["dialog-select-file"], "recommendation": "mock.module('@/utils/base64', () => ({ decode64: (s) => s }))"},
+        {"module": "@/utils/time (getRelativeTime)", "used_by": ["dialog-select-file"], "recommendation": "mock.module('@/utils/time', () => ({ getRelativeTime: () => 'recently' }))"},
+        {"module": "@/utils/server-health", "used_by": ["dialog-select-server"], "recommendation": "mock.module('@/utils/server-health', () => ({ useCheckServerHealth: () => ({ data: null, refetch: () => {} }), ServerHealth: {} }))"}
+      ],
+      "non_dialog_sibling_components": [
+        {"importer": "dialog-settings", "imports": ["./settings-general", "./settings-keybinds", "./settings-providers", "./settings-models", "./settings-agents"]},
+        {"importer": "dialog-select-file", "imports": ["@/pages/session/session-layout (useSessionLayout)", "@/pages/session/helpers (createSessionTabs)"]},
+        {"importer": "dialog-edit-project", "imports": ["@/pages/layout/helpers (getProjectAvatarSource)"]},
+        {"importer": "dialog-select-server", "imports": ["@/components/server/server-row (ServerHealthIndicator, ServerRow)"]},
+        {"importer": "dialog-select-model / dialog-select-model-unpaid", "imports": ["./model-tooltip"]}
+      ]
+    },
+    "bun_version_concern": {
+      "version": "1.3.14",
+      "issue": "mock.module() mutates a per-process registry. Mocks set in one test file leak into another when run in the same bun test invocation.",
+      "workaround": "Use `bun test --isolate` flag or run each dialog test file individually (`bun test src/components/dialog-edit-mcp.test.ts`).",
+      "future_fix": "PR #31319 (merged 2026-05-24) adds per-file mock sweep — not in 1.3.14."
+    }
+  },
+  "objections": [
+    {
+      "id": "OBJ-001",
+      "axis": "Testability",
+      "severity": "major",
+      "evidence": "dialog-mocks.ts has mockAllContexts() but lacks mocks for @tanstack/solid-query, @solidjs/router, @opencode-ai/core/util/*, @kobalte/core/popover, fuzzysort, and @/utils/*",
+      "finding": "While the @/context/* mock infrastructure is complete (all 13 modules), 6 third-party modules, 5 @/utils/* modules, and 5+ non-dialog sibling components remain unmocked. These will block 8 of the 22 dialogs from importing.",
+      "details": {
+        "blocked_dialogs_by_severity": [
+          {"dialog": "dialog-select-mcp", "blockers": ["@tanstack/solid-query", "@/utils/path-key", "sibling: DialogEditMcp"], "severity": "HIGH"},
+          {"dialog": "dialog-select-file", "blockers": ["@solidjs/router", "@opencode-ai/core/util/encode", "@opencode-ai/core/util/path", "@/utils/base64", "@/utils/time", "sibling: useSessionLayout"], "severity": "HIGH"},
+          {"dialog": "dialog-select-server", "blockers": ["@tanstack/solid-query", "@solidjs/router", "@/utils/server-health", "sibling: ServerRow"], "severity": "HIGH"},
+          {"dialog": "dialog-select-directory", "blockers": ["@opencode-ai/core/util/path", "fuzzysort"], "severity": "HIGH"},
+          {"dialog": "dialog-fork", "blockers": ["@solidjs/router", "@opencode-ai/core/util/encode", "@/utils/prompt"], "severity": "HIGH"},
+          {"dialog": "dialog-connect-provider", "blockers": ["@opencode-ai/sdk/v2/client (type import)"], "severity": "MEDIUM"},
+          {"dialog": "dialog-edit-project", "blockers": ["@tanstack/solid-query", "@opencode-ai/core/util/path", "@/pages/layout/helpers"], "severity": "MEDIUM"},
+          {"dialog": "dialog-custom-provider", "blockers": ["@tanstack/solid-query"], "severity": "MEDIUM"},
+          {"dialog": "dialog-export", "blockers": ["@solidjs/router"], "severity": "LOW"},
+          {"dialog": "dialog-import", "blockers": ["@solidjs/router"], "severity": "LOW"},
+          {"dialog": "dialog-settings", "blockers": ["sibling: SettingsGeneral et al."], "severity": "MEDIUM"},
+          {"dialog": "dialog-select-model", "blockers": ["@kobalte/core/popover", "sibling: ModelTooltip"], "severity": "MEDIUM"},
+          {"dialog": "dialog-select-model-unpaid", "blockers": ["sibling: ModelTooltip"], "severity": "LOW"},
+          {"dialog": "dialog-manage-models", "blockers": ["sibling: DialogSelectProvider (cascade)"], "severity": "MEDIUM"},
+          {"dialog": "dialog-select-provider", "blockers": ["sibling: DialogConnectProvider, DialogCustomProvider (cascade)"], "severity": "MEDIUM"}
+        ]
+      }
+    },
+    {
+      "id": "OBJ-002",
+      "axis": "Testability",
+      "severity": "major",
+      "evidence": "bun --version = 1.3.14. Confirmed per mock.module() issue across Bun issues #12823, #25712, #31316.",
+      "finding": "Bun 1.3.14's mock.module() is per-process, not per-file. Running `bun test src/components/dialog-*.test.ts` in a single invocation will leak mocks between test files. A test file that does not call mockAllContexts() may still have those mocks active from a previous file. Per-file mock sweep (PR #31319) was merged May 24, 2026 but is not in 1.3.14.",
+      "workaround": "Use `bun test --isolate` flag to force per-file environment isolation, or run each test file individually."
+    },
+    {
+      "id": "OBJ-003",
+      "axis": "Testability",
+      "severity": "major",
+      "evidence": "Plan File 2 groups DialogEditProject with DialogReleaseNotes, DialogOnboarding, DialogUsageExceeded as 'simple props-based dialogs'.",
+      "finding": "DialogEditProject has 9+ imports including @tanstack/solid-query, @/context/server-sdk, @/context/server-sync, @/context/layout, @opencode-ai/core/util/path, and @/pages/layout/helpers. This is one of the most complex dialogs, not a simple one. It belongs in File 7 (dialog-complex.test.ts).",
+      "details": {
+        "actual_imports": [
+          { "module": "solid-js", "type": "solid-js"},
+          { "module": "@tanstack/solid-query", "type": "third_party"},
+          { "module": "@/context/server-sdk", "type": "context"},
+          { "module": "@/context/server-sync", "type": "context"},
+          { "module": "@/context/layout", "type": "context"},
+          { "module": "@/context/language", "type": "context"},
+          { "module": "@opencode-ai/core/util/path", "type": "third_party"},
+          { "module": "@/pages/layout/helpers", "type": "pages_cross_boundary"},
+          { "module": "@opencode-ai/ui/*", "type": "ui"}
+        ]
+      }
+    },
+    {
+      "id": "OBJ-004",
+      "axis": "Error Clarity",
+      "severity": "minor",
+      "evidence": "dialog-mocks.ts getMockDefaults().useLanguage returns t: (key) => key",
+      "finding": "Identity translation will show i18n keys (e.g., 'dialog.release-notes.title') in test assertions instead of human-readable text. This makes test output harder to read and debug. Developers should be aware that to assert on translated text they must override the mock."
+    },
+    {
+      "id": "OBJ-005",
+      "axis": "Coupling",
+      "severity": "minor",
+      "evidence": "dialog-settings imports 4 Settings* sub-components; dialog-select-file imports from @/pages/session/",
+      "finding": "Several dialogs import from outside the dialog component directory. dialog-settings imports SettingsGeneral, SettingsKeybinds, etc. dialog-select-file imports from @/pages/session/. These non-dialog siblings may have their own unmocked imports and add to the cascade."
+    }
+  ],
+  "conditions_for_approval": [
+    {
+      "id": "COND-001",
+      "requirement": "Add 6 third-party mocks to dialog-mocks.ts: @tanstack/solid-query, @solidjs/router, @opencode-ai/core/util/encode, @opencode-ai/core/util/path, @kobalte/core/popover, fuzzysort. These are used by 8 of 22 dialogs and currently unmocked.",
+      "evidence_required": "mockAllContexts() or equivalent calls these mock.module() statements; existing harness tests still pass"
+    },
+    {
+      "id": "COND-002",
+      "requirement": "Add 5 @/utils/* mocks to dialog-mocks.ts: @/utils/path-key, @/utils/prompt, @/utils/base64, @/utils/time, @/utils/server-health.",
+      "evidence_required": "mock.module() calls for all 5; existing harness tests pass"
+    },
+    {
+      "id": "COND-003",
+      "requirement": "Reclassify DialogEditProject from File 2 (dialog-simple.test.ts) into File 7 (dialog-complex.test.ts). DialogEditProject has 9+ imports spanning server-sdk, server-sync, layout, tanstack query, and @/pages/layout/helpers.",
+      "evidence_required": "Updated plan file listing"
+    },
+    {
+      "id": "COND-004",
+      "requirement": "Document the Bun 1.3.14 mock.module() per-process limitation in test setup comments. Tests must be run with `bun test --isolate` or one file at a time until Bun ships PR #31319's per-file sweep.",
+      "evidence_required": "Comment at top of happydom.ts or test-utils/dialog-harness.ts documenting the constraint"
+    },
+    {
+      "id": "COND-005",
+      "requirement": "Run a proof-of-concept for one simple dialog (DialoEditMcp or DialogUsageExceeded) and one dialog with sibling cascade (DialogSelectProvider or DialogManageModels) to validate the complete mock chain before creating all 7 test files.",
+      "evidence_required": "Two passing test files with bun test --isolate"
+    }
+  ],
+  "recommended_implementation_order": [
+    "1. Add third-party and @/utils/* mocks to dialog-mocks.ts (conditions 1-2)",
+    "2. Run POC: DialogEditMcp (simplest — only useLanguage dep)",
+    "3. Run POC: DialogSelectProvider (tests sibling cascade with existing mockAllContexts)",
+    "4. Fix any cascade failures found in step 3",
+    "5. Create test files 2 (simple), 3 (export/import), 4 (manage) — these have few remaining unmocked deps",
+    "6. Create test files 5 (providers), 6 (MCP) — more complex, build on cascade fix from step 3",
+    "7. Create test file 7 (complex) — requires all mocks including non-dialog sibling mocks",
+    "8. Run full suite with `bun test --isolate`"
+  ],
+  "follow_up_issues": [
+    {
+      "id": "FOLLOW-001",
+      "description": "The non-dialog sibling components (SettingsGeneral, ServerRow, ModelTooltip, useSessionLayout) are untested and may have their own unmocked imports. These should be audited and added to dialog-mocks.ts or tested separately."
+    },
+    {
+      "id": "FOLLOW-002",
+      "description": "DialogEditProject imports from @/pages/layout/helpers (getProjectAvatarSource) — a cross-boundary page import. Consider injecting as a prop to isolate the dialog from page-layer dependencies."
+    },
+    {
+      "id": "FOLLOW-003",
+      "description": "The @opencode-ai/sdk/v2/client type import in dialog-fork, dialog-select-mcp, dialog-connect-provider may resolve to a real SDK module. Verify whether bun treats type-only imports as resolvable (they typically don't require mocking in Bun, but should be verified with a trial run)."
+    },
+    {
+      "id": "FOLLOW-004",
+      "description": "Once Bun releases the per-file mock sweep (PR #31319), update the test runner configuration to remove the --isolate workaround."
+    }
+  ],
+  "applied_subagents": [
+    {"session": "ses_187a28d28ffe", "type": "coupling-auditor", "status": "completed", "contribution": "Confirmed dependency matrix; identified 19 context/hooks/utils modules across 22 dialogs"},
+    {"session": "ses_187a290f5ffe", "type": "isolation-tester", "status": "completed", "contribution": "Confirmed Bun 1.3.14 per-process mock.module(); verified sibling cascade resolves correctly; flagged @tanstack/solid-query gap"}
+  ]
+}

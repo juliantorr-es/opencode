@@ -1,0 +1,22 @@
+{
+  "schema_version": "v1",
+  "plan_id": "ci-004-roadmap-tools",
+  "plan_revision": 1,
+  "title": "Cross-session roadmap tools — complete blueprint + harden edge cases",
+  "boundary": "Roadmap tooling (blueprint + 5 tool files + audit trail)",
+  "consumer_purpose": "Sessions can read the full roadmap blueprint, track progress, query next actions, deprecate obsolete items, and reprioritize dynamically — all through audited tools.",
+  "claim_atoms": [
+    "blueprint file exists",
+    "roadmap_init falls back to active.v1.json if missing blueprint",
+    "roadmap_progress preserves existing completion_pct when omitted",
+    "roadmap_progress truncates notes at 500 chars",
+    "roadmap_next supports show_blocked",
+    "roadmap_deprecate extends TTL on re-deprecate",
+    "roadmap_prioritize auto-creates unknown phases",
+    "all 5 tools write to audit trail correctly"
+  ],
+  "content": "## Step 1: Create blueprint file\nCreate `docs/json/roadmaps/opencode-desktop-phase3-roadmap.v1.json` from active.v1.json items.\n- Strip session tracking arrays (reset to initial empty state)\n- Keep all phases, items, depends_on, effort, context_summary, next_step\n- Set all statuses to not_started (except completed ones stay completed for CI-001..003)\n- Schema: { schema_version: \"v1\", title, phases, items }\n\n## Step 2: roadmap_init — fallback to active.v1.json\n- If blueprint file doesn't exist, try reading active.v1.json instead\n- If neither exists, return empty roadmap with suggestion\n\n## Step 3: roadmap_progress — optional completion_pct + note truncation\n- completion_pct: change from `args.completion_pct ?? 0` to `args.completion_pct ?? item.completion_pct ?? 0`\n- notes > 500 chars: truncate with \"...\" marker\n\n## Step 4: roadmap_next — show_blocked parameter\n- Add `show_blocked` optional boolean arg\n- When true, include blocked items in results with their unmet_dependencies listed\n- When false (default), existing behavior unchanged\n\n## Step 5: roadmap_deprecate — re-deprecation + TTL extension\n- If item already deprecated, extend TTL (30 days from now)\n- Allow reason override when re-deprecating\n- Keep existing replacement unless new one provided\n\n## Step 6: roadmap_prioritize — auto-create phase\n- If phase arg given and doesn't exist in active.phases, create it automatically with warning\n- Include the phase name in changes output",
+  "status": "proposed",
+  "created_at": "2026-05-30T10:31:02.379Z",
+  "modified_at": "2026-05-30T10:31:02.379Z"
+}

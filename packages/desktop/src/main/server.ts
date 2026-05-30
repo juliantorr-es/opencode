@@ -6,6 +6,7 @@ import { DEFAULT_SERVER_URL_KEY, WSL_ENABLED_KEY } from "./constants"
 import { getUserShell, loadShellEnv } from "./shell-env"
 import { getStore } from "./store"
 import type { SqliteMigrationProgress } from "../preload/types"
+import { sanitizeEnv } from "./env-blocklist"
 
 export type WslConfig = { enabled: boolean }
 
@@ -15,7 +16,7 @@ type SidecarMessage =
   | { type: "sqlite"; progress: SqliteMigrationProgress }
   | { type: "ready" }
   | { type: "stopped" }
-  | { type: "error"; error: { message: string; stack?: string } }
+  | { type: "error"; error: { message: string; stack?: string }; component: string }
 
 export type SidecarListener = { stop: () => Promise<void> }
 
@@ -131,7 +132,10 @@ export async function spawnLocalServer(
         return
       }
       if (message.type === "error") {
-        fail(Object.assign(new Error(message.error.message), { stack: message.error.stack }))
+        const err = new Error(message.error.message)
+        ;(err as any).component = message.component ?? "unknown"
+        err.stack = message.error.stack
+        fail(err)
       }
     }
     const onExit = (code: number) => {
@@ -228,9 +232,7 @@ export async function checkHealth(url: string, password?: string | null): Promis
 }
 
 function createSidecarEnv(): Record<string, string> {
-  const env = Object.fromEntries(
-    Object.entries(process.env).flatMap(([key, value]) => (value === undefined ? [] : [[key, String(value)]])),
-  )
+  const env = sanitizeEnv(process.env)
   delete env.DEBUG
   if (process.platform === "linux") delete env.LD_PRELOAD
   return env

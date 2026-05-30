@@ -1,0 +1,185 @@
+{
+  "schema": "rig.opencode.learning_artifact.v1",
+  "artifact_id": "cartography-toolcache-deep-dive-v2",
+  "generated_at": "2026-05-30T11:00:00Z",
+  "profile": "cartography",
+  "mission_focus": "Deep-dive structural analysis of cache.ts — imports, types, flow, race condition, cleanup",
+  "sections": {
+    "1_imports_and_purpose": {
+      "summary": "Single import line from 'effect' — 8 symbols used",
+      "imports": [
+        {"symbol": "Clock", "purpose": "Clock.currentTimeMillis for TTL-based expiration (line 74)", "usage_lines": [74]},
+        {"symbol": "Context", "purpose": "Context.Service<Service, Interface>()('@opencode/ToolCache') — Effect DI tag", "usage_lines": [40]},
+        {"symbol": "Deferred", "purpose": "Inflight dedup: Deferred.make (line 110), Deferred.await (line 104), Deferred.done (line 124)", "usage_lines": [104, 110, 124]},
+        {"symbol": "Duration", "purpose": "Default TTL Duration.minutes(5) (line 75), Duration.toMillis conversion (line 76)", "usage_lines": [75, 76]},
+        {"symbol": "Effect", "purpose": "Effect.gen, Effect.exit, Effect.ensuring, Effect.annotateCurrentSpan, Effect.failCause, Effect.withSpan, Ref.make/update/set", "usage_lines": [60, 68, 82, 107, 115, 117, 124, 148, 166, 171]},
+        {"symbol": "Exit", "purpose": "Exit.isSuccess check after Effect.exit captures the compute result (line 126)", "usage_lines": [126]},
+        {"symbol": "Layer", "purpose": "Layer.effect(Service, ...) — build the cache layer (line 58)", "usage_lines": [58]},
+        {"symbol": "Ref", "purpose": "All mutable state: Ref.make (cache map, inflight map, 4 counters), Ref.get, Ref.update, Ref.set, Ref.modify", "usage_lines": [61, 62, 63, 64, 65, 66, 77, 84, 89, 99, 107, 119, 139, 148, 164, 181, 182, 183, 184, 185, 191, 200]},
+        {"note": "No imports from @opencode-ai/* — ToolCache is a leaf service with zero internal dependencies"}
+      ]
+    },
+    "2_interface_and_type_definitions": {
+      "private_types": [
+        {"name": "CacheKey", "kind": "type", "definition": "type CacheKey = string", "line": 3},
+        {"name": "CacheEntry", "kind": "interface", "definition": "interface CacheEntry { value: any; expiresAt: number; size: number }", "lines": "5-8",
+         "note": "Note: value type is 'any' — no generic parameter. Compile-time type safety erasure."}
+      ],
+      "exported_types": [
+        {"name": "CacheConfig", "kind": "interface", "definition": "interface CacheConfig { readonly maxEntries?: number; readonly ttl?: Duration.Duration; readonly maxEntrySize?: number }", "lines": "15-19",
+         "note": "All fields optional — defaults: maxEntries=1000, ttl=5min, maxEntrySize=1MB"},
+        {"name": "CacheStats", "kind": "interface", "definition": "interface CacheStats { readonly size: number; readonly hits: number; readonly misses: number; readonly evictions: number; readonly estimatedBytes: number }", "lines": "21-27"},
+        {"name": "Interface", "kind": "interface", "definition": "interface Interface { getOrCompute, invalidate, invalidateKey, stats }", "lines": "29-38",
+         "note": "getOrCompute R type param defaults to never — compute effect must have no requirements"},
+        {"name": "Service", "kind": "class", "definition": "class Service extends Context.Service<Service, Interface>()('@opencode/ToolCache') {}", "line": 40,
+         "note": "Effect DI tag — service name '@opencode/ToolCache'"},
+        {"name": "layer", "kind": "const", "definition": "Layer.effect(Service, Effect.gen(function* () { ... }))", "line": 58},
+        {"name": "defaultLayer", "kind": "const", "definition": "export const defaultLayer = layer", "line": 220}
+      ],
+      "private_helpers": [
+        {"name": "approximateSize", "kind": "function", "definition": "(value: unknown): number — TextEncoder + JSON.stringify byte length", "lines": "42-48"},
+        {"name": "recalcBytes", "kind": "function", "definition": "(m: Map<CacheKey, CacheEntry>): number — sum of all entry sizes", "lines": "50-55"}
+      ]
+    },
+    "3_getOrCompute_flow": {
+      "overall_shape": "Single Effect.gen block with yield* for all state access — no Monadic.do pipe chains",
+      "steps": [
+        {"step": 0,  "description": "Read current time via Clock.currentTimeMillis", "line": 74, "code": "const t = yield* Clock.currentTimeMillis"},
+        {"step": 1,  "description": "Resolve config: TTL (default 5min), maxEntries (default 1000), maxEntrySize (default 1MB)", "lines": "75-78", "code": "const maxEntries = config?.maxEntries ?? 1000"},
+        {"step": 2,  "description": "Read cache map from Ref, try cache hit", "lines": "80-81", "code": "const map = yield* Ref.get(cache)\nconst entry = map.get(key)",
+         "note": "Ref.get returns the underlying Map by reference — shared mutation risk"},
+        {"step": 3a, "description": "CACHE HIT: entry exists and not expired → promote to MRU (delete + re-insert), increment hits, return value", "lines": "82-88",
+         "code": "map.delete(key); map.set(key, entry); yield* Ref.update(hits, n => n+1); return entry.value"},
+        {"step": 3b, "description": "EXPIRED: entry exists but expired → delete, decrement estimatedBytes, increment evictions, fall through", "lines": "90-97",
+         "code": "map.delete(key); Ref.update(estimatedBytes, b => b - entry.size); Ref.update(evictions, n => n+1)"},
+        {"step": 4,  "description": "INFLIGHT DEDUP CHECK: read inflight map, check for existing Deferred by key", "lines": "99-105",
+         "code": "const pending = yield* Ref.get(inflight)\nconst existing = pending.get(key)\nif (existing) { yield* Deferred.await(existing); return ... }"},
+        {"step": 5,  "description": "NEW COMPUTATION: increment misses, create Deferred, store in local pending map", "lines": "107-111",
+         "code": "const d = yield* Deferred.make<any>()\npending.set(key, d)",
+         "danger": "pending.set modifies the LOCAL snapshot, NOT the Ref. The deferred IS reachable from the Ref's Map (shared JS reference), but the window between Ref.get and pending.set allows race."},
+        {"step": 6,  "description": "Run compute wrapped in Effect.exit to capture success/defect, with Effect.ensuring cleanup", "lines": "113-123",
+         "code": "const exit = yield* compute().pipe(Effect.exit, Effect.ensuring(Ref.update(inflight, m => { m.delete(key); return m })))"},
+        {"step": 7,  "description": "Resolve the Deferred with the exit — unblocks all concurrent awaiters", "line": 124,
+         "code": "yield* Deferred.done(d, exit as any)",
+         "note": "as any cast because Deferred type param doesn't match Exit type"},
+        {"step": 8a, "description": "SUCCESS: check maxEntrySize, evict expired+LRU, insert into cache, update bytes", "lines": "126-168",
+         "code": "if (Exit.isSuccess(exit)) { ... Ref.update(cache, m => { ... m.set(key, {value: result, expiresAt, size}); return m }) ... }"},
+        {"step": 8b, "description": "TOO LARGE: skip caching, annotate span", "lines": "169-175",
+         "code": "else { yield* Effect.annotateCurrentSpan({ 'cache.skipped': true, 'cache.reason': 'maxEntrySize', ... }) }"},
+        {"step": 9,  "description": "FAILURE: propagate cause to caller via Effect.failCause", "lines": "178-179",
+         "code": "return yield* Effect.failCause(exit.cause)"}
+      ]
+    },
+    "4_inflight_dedup_race_condition": {
+      "location": "lines 99-114",
+      "description": "A genuine TOCTOU (time-of-check-time-of-use) race between concurrent fibers calling getOrCompute with the same key.",
+      "sequence_diagram": [
+        {"tick": "T1", "fiber_A": "Ref.get(inflight) → Map = { }", "fiber_B": ""},
+        {"tick": "T2", "fiber_A": "",                                "fiber_B": "Ref.get(inflight) → Map = { }"},
+        {"tick": "T3", "fiber_A": "pending.get(key) → undefined",    "fiber_B": ""},
+        {"tick": "T4", "fiber_A": "",                                "fiber_B": "pending.get(key) → undefined"},
+        {"tick": "T5", "fiber_A": "Deferred.make → dA",              "fiber_B": ""},
+        {"tick": "T6", "fiber_A": "",                                "fiber_B": "Deferred.make → dB"},
+        {"tick": "T7", "fiber_A": "pending.set(key, dA) ← mutates shared Map", "fiber_B": ""},
+        {"tick": "T8", "fiber_A": "",                                "fiber_B": "pending.set(key, dB) ← overwrites dA!"},
+        {"tick": "T9", "fiber_A": "starts compute()",                "fiber_B": ""},
+        {"tick": "T10","fiber_A": "",                                "fiber_B": "starts compute() ← DUPLICATE!"},
+        {"tick": "T11","fiber_A": "Deferred.done(dA, exitA)",        "fiber_B": "Deferred.done(dB, exitB), or still computing"},
+        {"tick": "T12","fiber_A": "ensuring: m.delete(key)",         "fiber_B": "ensuring: m.delete(key) ← both clean"}
+      ],
+      "root_cause": "Three non-atomic operations between Ref.get and the actual compute: (1) check, (2) Deferred.make, (3) pending.set. In a concurrent Effect runtime, a fiber can yield at any yield* point. There are NO yield* points BETWEEN Deferred.make (line 110) and pending.set (line 111) in practice, but the gap between Ref.get (line 97) and those two is unbounded — Effect.gen yields at every yield*. A second fiber entering at T2 sees the same empty inflight map and proceeds to also create a Deferred and start compute().",
+      "consequence": "Duplicate computation for the same key. Both fibers compute() independently but share the same key. The last Deferred to be stored (pending.set overwrite) wins — first fiber's awaiters get resolved with exitA, but the second fiber overwrites the inflight entry with dB, so LATE arrivals after T8 will await dB (which may still be running). First fiber's dA is orphaned but already resolved, so its awaiters got the value. No crash, but wasted compute and non-deterministic cache population.",
+      "severity": "medium",
+      "conditions_to_trigger": "Two concurrent tool calls with identical arguments (same key), executing on the same key within the same microtask/scheduler tick. Likely in practice with batched LLM tool calls or parallel tool execution."
+    },
+    "5_non_atomic_Ref_get_plus_set_pattern": {
+      "location": "lines 97, 99, 107, 111",
+      "sequence": [
+        {"order": 1, "action": "const pending = yield* Ref.get(inflight)", "effect": "Reads the Ref's internal Map into local variable 'pending'", "atomic": "yes, but creates a window"},
+        {"order": 2, "action": "const existing = pending.get(key)",         "effect": "Checks local for existing deferred", "atomic": "local — no contention"},
+        {"order": 3, "action": "const d = yield* Deferred.make<any>()",    "effect": "Creates a new Deferred (yield* = fiber can switch here)", "atomic": "no — yield* creates interleave window"},
+        {"order": 4, "action": "pending.set(key, d)",                      "effect": "Mutates the shared Map REFERENCE directly (JS shared ref)", "atomic": "yes, but NOT via Ref — bypasses Ref entirely!"}
+      ],
+      "the_bug": "pending.set(key, d) DOES mutate the Ref's underlying Map because in JavaScript, Ref.get returns the actual object reference, not a clone. So the entry IS written to the Ref's map. BUT the mutation is not atomic with the read — another fiber can read the Ref between step 1 and step 3, get the stale empty map, and also create+a Deferred. The second fiber's pending.set(key, dB) then overwrites the first fiber's dA in the shared Map.",
+      "why_incorrect": "The canonical Effect pattern for atomic check-and-set is Ref.modify or Ref.modifyEffect, which combines read + write in a single atomic operation. The code uses Ref.get (read) + manual map mutation (write bypass) instead, which breaks atomicity.",
+      "fix": "Replace Ref.get + manual pending.set with Ref.modifyEffect that atomically checks for an existing deferred and only creates+stores one if absent:",
+      "pseudocode_fix": [
+        "const d = yield* Deferred.make<any>()",
+        "const existing = yield* Ref.modifyEffect(inflight, (m) => {",
+        "  const prev = m.get(key)",
+        "  if (prev) return Effect.succeed([prev, m] as const)",
+        "  m.set(key, d)",
+        "  return Effect.succeed([null, m] as const)",
+        "})",
+        "if (existing) return yield* Deferred.await(existing)"
+      ],
+      "related_issue": "The miss counter is also incremented BEFORE the inflight check (line 107), meaning if a fiber finds it IS a dedup case (line 103), it gets a miss count increment it shouldn't. Miss should only be incremented for truly-new computations."
+    },
+    "6_cleanup_path_via_Ensuring": {
+      "location": "lines 113-123",
+      "code": "const exit = yield* compute().pipe(\n  Effect.exit,\n  Effect.ensuring(\n    Ref.update(inflight, (m) => {\n      m.delete(key)\n      return m\n    }),\n  ),\n)",
+      "analysis": {
+        "when_it_runs": "After compute() completes (success, failure, or defect) but BEFORE the result handling code (lines 126-179). The cleanup is chained inside the .exit + .ensuring pipeline.",
+        "what_it_does": "Deletes the key from the inflight map. The Ref.update lambda receives the current map, deletes the key, returns the map. This is a proper Ref mutation.",
+        "ordering_vs_deferred_resolution": "Deferred.done(d, exit) is called AFTER the ensuring block has already run (line 124 is after lines 113-123 in sequential gen order). But in Effect execution, the ensuring runs when compute().pipe(Effect.exit) produces a value — the gen then continues to line 124. So the order is: compute() → exit → ensuring cleanup → gen resumes → Deferred.done(d, exit). This means: the inflight entry is deleted BEFORE awaiters receive their result. A late-arriving fiber that checks inflight AFTER cleanup but BEFORE the cache entry is inserted will start a NEW computation (wasting work).",
+        "correctness_concern": "There are TWO windows where an arriving fiber for the same key gets incorrect behavior:",
+        "window_1": "During compute() — the inflight entry exists, fiber awaits Deferred. CORRECT.",
+        "window_2": "After ensuring deletes from inflight but before the cache entry is inserted — a fiber arriving here sees no inflight entry AND no cache entry, so it starts ANOTHER compute(). WRONG — duplicate computation.",
+        "window_3": "After cache entry is inserted — fiber gets a cache hit. CORRECT.",
+        "window_2_length": "Approximately zero in practice (the code immediately after ensuring is just Deferred.done + Exit.isSuccess branch, which executes synchronously within a single gen step). But if Effect yields between ensuring and cache insertion, another fiber can slip in."
+      },
+      "convention_notes": {
+        "style": "pipe(Effect.ensuring(...)) — matches canonical codebase convention (4 other instances of this style)",
+        "appears_in": "Same pattern used in question/index.ts:174, permission/index.ts:208, cache.ts:117, proxy.ts:72, session/prompt.ts:573",
+        "key_difference_here": "Most other ensuring blocks use Effect.sync(() => map.delete(id)). This one uses Ref.update(inflight, m => { m.delete(key); return m }) — functionally equivalent but heavier (Ref.update does a CAS loop internally). Could be simplified to Effect.sync(() => inflight.unsafe?.delete(key)) but the Ref.update version is safer if Effect switches fibers."
+      }
+    },
+    "additional_findings": {
+      "dead_code_critical": {
+        "finding": "getOrCompute, invalidate, invalidateKey have ZERO external callers",
+        "detail": "Module-grapher traced every reference. The cache service is injected into registry.ts only for cache.stats(). No code in the codebase uses cache.getOrCompute, cache.invalidate, or cache.invalidateKey. The entire 170-line caching engine (TTL, LRU, inflight dedup, eviction) is dead code.",
+        "files_checked": ["tool/tool.ts (dead import)", "tool/registry.ts (stats only)", "effect/app-runtime.ts (layer only)"],
+        "evidence": "tool/tool.ts line 8 imports ToolCache but never references it anywhere in the file. The cacheable flag on 8 tools (read.ts, grep.ts, glob.ts, etc.) is passed through to the AI SDK descriptor but never routed through ToolCache.getOrCompute."
+      },
+      "test_coverage": {
+        "finding": "Zero test coverage for ToolCache module",
+        "detail": "No test files exist for cache.ts. The test/tool/ directory has 9 test files (registry, tool-define, project-tools, etc.) but none test caching behavior. Specifically untested: inflight dedup, TTL expiration, LRU eviction, maxEntrySize, invalidate/invalidateKey, stats, and the race condition.",
+        "impact": "The inflight dedup race condition (finding #4) is untestable in current form — no test would catch the concurrent interleaving."
+      },
+      "type_safety_erasure": {
+        "finding": "Deferred<any> and as any casts bypass type safety",
+        "location": "lines 110, 124",
+        "detail": "Deferred.make<any>() at line 110 and Deferred.done(d, exit as any) at line 124. The cache stores arbitrary values with type erased. The original 73-line version had the same issue. The <any> was a deliberate workaround for generic type mismatches with Tool.ExecuteResult."
+      },
+      "miss_counting_bug": {
+        "finding": "Miss counter incremented BEFORE dedup check result is used",
+        "location": "lines 107 vs 103",
+        "detail": "If a fiber reaches line 107 (miss increment) but then finds an existing inflight deferred at line 103 and returns via Deferred.await, the miss counter was already incremented. This produces an inflated misses count. The miss increment should be AFTER the dedup check."
+      },
+      "estimatedBytes_recalc": {
+        "finding": "estimatedBytes is recalculated from scratch on every insert instead of incrementally updated",
+        "location": "line 164",
+        "detail": "After cache mutation, recalcBytes iterates the entire map. For 1000 entries this is negligible, but it makes the O(n) operation visible in every getOrCompute call. An alternative would be to increment/decrement estimatedBytes atomically during each insert/delete."
+      }
+    },
+    "git_history": {
+      "commit": "b81b90068",
+      "author": "Julian Torres",
+      "date": "2026-05-30 00:57:27 -0700",
+      "message": "Phase 0: native tool framework upgrade + gap tools + 135 typecheck fixes",
+      "change_type": "created (220 lines, never modified since)",
+      "prior_version": "The file was a 73-line version before this commit (documented in cartography-toolcache-v1.json artifact). The gap between v1 (73 lines, Date.now(), no TTL, no LRU, no per-key invalidate) and v2 (221 lines, Clock, TTL, LRU, maxEntrySize, inflight dedup, per-key invalidate) represents the Phase 0 upgrade.",
+      "unmerged_changes": "None — current branch is dev"
+    }
+  },
+  "smoking_guns": [
+    {"id": "SG-1", "severity": "critical", "summary": "getOrCompute has zero external callers — entire caching engine is dead code", "file": "packages/opencode/src/tool/cache.ts", "lines": "68-179"},
+    {"id": "SG-2", "severity": "medium", "summary": "Inflight dedup race condition — TOCTOU between Ref.get and pending.set allows duplicate computation", "file": "packages/opencode/src/tool/cache.ts", "lines": "97-111"},
+    {"id": "SG-3", "severity": "medium", "summary": "Deferred cleanup via Effect.ensuring deletes inflight entry BEFORE cache insertion, creating a second window for duplicate computation", "file": "packages/opencode/src/tool/cache.ts", "lines": "117-122"},
+    {"id": "SG-4", "severity": "low", "summary": "Miss counter incremented before dedup check — false inflated misses when dedup resolves", "file": "packages/opencode/src/tool/cache.ts", "line": 107},
+    {"id": "SG-5", "severity": "low", "summary": "Deferred<any> and as any cast — compile-time type safety erasure", "file": "packages/opencode/src/tool/cache.ts", "lines": "110, 124"},
+    {"id": "SG-6", "severity": "critical", "summary": "Zero test coverage — no test exists for cache.ts; race condition cannot be caught", "file": "packages/opencode/test/tool/"},
+    {"id": "SG-7", "severity": "informational", "summary": "import * as ToolCache in tool.ts is dead — never referenced after import", "file": "packages/opencode/src/tool/tool.ts", "line": 8},
+    {"id": "SG-8", "severity": "informational", "summary": "ToolCache.defaultLayer is double-provided (both in app-runtime.ts and registry.ts) — redundant Layer.provide", "file": "packages/opencode/src/tool/registry.ts", "line": 572}
+  ]
+}

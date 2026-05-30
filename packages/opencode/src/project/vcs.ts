@@ -2,6 +2,7 @@ import { Effect, Layer, Context, Schema, Stream, Scope } from "effect"
 import { formatPatch, structuredPatch } from "diff"
 import { Bus } from "@/bus"
 import { BusEvent } from "@/bus/bus-event"
+import { EventName } from "@/event/event-names"
 import { InstanceState } from "@/effect/instance-state"
 import { FileWatcher } from "@/file/watcher"
 import { Git } from "@/git"
@@ -240,7 +241,7 @@ export type Mode = Schema.Schema.Type<typeof Mode>
 
 export const Event = {
   BranchUpdated: BusEvent.define(
-    "vcs.branch.updated",
+    EventName.VcsBranchUpdated,
     Schema.Struct({
       branch: Schema.optional(Schema.String),
     }),

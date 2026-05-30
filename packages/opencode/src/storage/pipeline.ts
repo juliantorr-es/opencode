@@ -3,11 +3,11 @@ import { Context, Effect, Layer, Option } from "effect"
 
 import { DatabaseAdapter } from "./adapter"
 import { DuckDBConfig } from "./duckdb-config"
-import { initTablesSql, initViewsSql } from "./schema.duckdb"
+import { buildContextProjections, initTablesSql, initViewsSql } from "./schema.duckdb"
 
 // ── Constants ───────────────────────────────────────────────
 
-const CURRENT_SCHEMA_VERSION = 1
+const CURRENT_SCHEMA_VERSION = 2
 
 const CREATE_META_TABLE = `
 CREATE TABLE IF NOT EXISTS _pipeline_meta (
@@ -27,6 +27,10 @@ SELECT * FROM read_json_auto('/dev/stdin')`
 
 const CREATE_PART_TABLE = `
 CREATE OR REPLACE TABLE _pipeline_part AS
+SELECT * FROM read_json_auto('/dev/stdin')`
+
+const CREATE_RUNTIME_EVENT_TABLE = `
+CREATE OR REPLACE TABLE _pipeline_runtime_event AS
 SELECT * FROM read_json_auto('/dev/stdin')`
 
 // ── Service ─────────────────────────────────────────────────
@@ -61,16 +65,38 @@ export function runPipeline(dbPath: string, adapter: DatabaseAdapter.Interface, 
       ),
     )
 
+    // 3b. Export runtime event data from SQLite/Postgres (if table exists)
+    const events: Array<Record<string, unknown>> = yield* adapter.query((db: any) =>
+      db.all(
+        `SELECT
+          id, session_id, run_id, parent_event_id, correlation_id,
+          ts, actor, event_type, phase, status, tool_name, file_path, model,
+          duration_ms, token_input, token_output,
+          error_code, error_message, recoverable,
+          CAST(payload_json AS text) AS payload_json
+        FROM runtime_events
+        ORDER BY ts DESC LIMIT 10000`,
+      ),
+    ).pipe(
+      Effect.catchTag("DatabaseError", () => Effect.succeed([])),
+    )
+
     // 4. Run DuckDB pipeline (spawn process for each step, no -readonly)
     yield* Effect.promise(() => execDuckDB(dbPath, CREATE_META_TABLE, signal))
     yield* Effect.promise(() => execDuckDBStdin(dbPath, CREATE_SESSION_TABLE, JSON.stringify(sessions), signal))
     yield* Effect.promise(() => execDuckDBStdin(dbPath, CREATE_PART_TABLE, JSON.stringify(parts), signal))
+    if (events.length > 0) {
+      yield* Effect.promise(() => execDuckDBStdin(dbPath, CREATE_RUNTIME_EVENT_TABLE, JSON.stringify(events), signal))
+    }
 
     // 4b. Create analytical tables
     yield* Effect.promise(() => execDuckDB(dbPath, initTablesSql(), signal))
 
     // 5. Create analytical views
     yield* Effect.promise(() => execDuckDB(dbPath, initViewsSql(), signal))
+
+    // 5b. Build context projection tables from runtime events
+    yield* buildContextProjections(dbPath, adapter, signal)
 
     // 6. Write meta as LAST step — if anything above fails, meta is not written
     yield* Effect.promise(() => execDuckDB(dbPath, WRITE_META, signal))

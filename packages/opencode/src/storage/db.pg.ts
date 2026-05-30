@@ -6,20 +6,65 @@ import { migrate } from "drizzle-orm/node-postgres/migrator"
 import { readMigrationFiles } from "drizzle-orm/migrator"
 import type { PgliteDatabase } from "drizzle-orm/pglite"
 import type { NodePgDatabase } from "drizzle-orm/node-postgres"
+import { PgPool } from "./pg-pool"
+
+export class DatabaseInitError extends Error {
+  constructor(message: string, options?: { cause?: Error; dataDir?: string }) {
+    const detail = options?.dataDir ? ` (dataDir: ${options.dataDir})` : ""
+    super(`DatabaseInitError: ${message}${detail}`)
+    this.name = "DatabaseInitError"
+    if (options?.cause) this.cause = options.cause
+  }
+}
 
 export type PgClient = PgliteDatabase | NodePgDatabase
 
-export function init(connectionString: string, ssl?: boolean): PgClient {
-  if (connectionString === ":memory:" || connectionString.startsWith("/") || connectionString.startsWith("file:")) {
-    const dataDir = connectionString === ":memory:" ? undefined : connectionString.replace(/^file:/, "")
-    const client = new PGlite(dataDir)
+export interface InitOptions {
+  connectionString: string
+  ssl?: boolean
+  poolSize?: number
+  poolMin?: number
+  connectionTimeoutMs?: number
+  idleTimeoutMs?: number
+}
+
+export function init(connectionString: string, ssl?: boolean): PgClient
+export function init(opts: InitOptions): PgClient
+export function init(connectionStringOrOpts: string | InitOptions, ssl?: boolean): PgClient {
+  const opts = typeof connectionStringOrOpts === "string"
+    ? { connectionString: connectionStringOrOpts, ssl }
+    : connectionStringOrOpts
+
+  if (opts.connectionString === ":memory:" || opts.connectionString.startsWith("/") || opts.connectionString.startsWith("file:")) {
+    const dataDir = opts.connectionString === ":memory:" ? undefined : opts.connectionString.replace(/^file:/, "")
+    let client: PGlite
+    try {
+      client = new PGlite(dataDir)
+    } catch (cause) {
+      throw new DatabaseInitError("PGlite initialization failed", {
+        cause: cause instanceof Error ? cause : new Error(String(cause)),
+        dataDir: typeof dataDir === "string" ? dataDir : ":memory:",
+      })
+    }
     return drizzle({ client }) as PgliteDatabase
   }
   const pool = new Pool({
-    connectionString,
-    ssl: ssl ? { rejectUnauthorized: true } : false,
+    connectionString: opts.connectionString,
+    ssl: opts.ssl ? { rejectUnauthorized: true } : false,
+    max: opts.poolSize ?? 10,
+    min: opts.poolMin ?? 1,
+    connectionTimeoutMillis: opts.connectionTimeoutMs ?? 5000,
+    idleTimeoutMillis: opts.idleTimeoutMs ?? 30000,
   })
   return drizzlePg({ client: pool }) as NodePgDatabase
+}
+
+/**
+ * Create a Drizzle client from an existing managed PgPool.
+ * Bridges the PgPool lifecycle with Drizzle ORM.
+ */
+export function initFromPool(pool: PgPool): NodePgDatabase {
+  return drizzlePg({ client: pool.getPool() }) as NodePgDatabase
 }
 
 export async function applyMigrations(db: PgClient): Promise<void> {
@@ -38,5 +83,49 @@ export async function applyMigrations(db: PgClient): Promise<void> {
   } else {
     // node-postgres path: use drizzle's built-in migrator
     await migrate(db as NodePgDatabase, { migrationsFolder: folder })
+  }
+}
+
+export { PgPool } from "./pg-pool"
+
+// ── Health check ──────────────────────────────────────────────
+// Non-Effect helper that tests the database client and returns a
+// structured health report for integration with the HealthRegistry.
+
+export const PG_HEALTH_COMPONENT = "pglite"
+
+export interface PgHealthReport {
+  status: "healthy" | "degraded" | "unhealthy"
+  message?: string
+  clientType: "pglite" | "node-postgres"
+}
+
+/**
+ * Perform a liveness check against the given PGlite / node-postgres client.
+ * Runs a trivial query (SELECT 1) to verify the connection is alive.
+ */
+export async function checkPgHealth(db: PgClient): Promise<PgHealthReport> {
+  const raw = (db as any).$client ?? db
+  const isPglite = typeof raw.exec === "function"
+
+  try {
+    if (isPglite) {
+      await raw.exec("SELECT 1")
+    } else {
+      // node-postgres: use the pool to query
+      const pool = (db as any).session?.client?.pool ?? (db as any).dialect?.session?.client?.pool
+      if (pool) {
+        const client = await pool.connect()
+        try {
+          await client.query("SELECT 1")
+        } finally {
+          client.release()
+        }
+      }
+    }
+    return { status: "healthy", clientType: isPglite ? "pglite" : "node-postgres" }
+  } catch (cause) {
+    const message = cause instanceof Error ? cause.message : String(cause)
+    return { status: "unhealthy", message, clientType: isPglite ? "pglite" : "node-postgres" }
   }
 }

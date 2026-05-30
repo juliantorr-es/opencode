@@ -1,8 +1,9 @@
 import { Schema } from "effect"
 import { BusEvent } from "@/bus/bus-event"
+import { EventName } from "@/event/event-names"
 
 export const SubagentPhaseChanged = BusEvent.define(
-  "coord.subagent.phase",
+  EventName.CoordSubagentPhase,
   Schema.Struct({
     session_id: Schema.String,
     tool_call_id: Schema.String,

@@ -1,4 +1,5 @@
 import { BusEvent } from "@/bus/bus-event"
+import { EventName } from "@/event/event-names"
 import { Bus } from "@/bus"
 import * as Session from "./session"
 import { SessionID, MessageID, PartID } from "./schema"
@@ -25,7 +26,7 @@ const log = Log.create({ service: "session.compaction" })
 
 export const Event = {
   Compacted: BusEvent.define(
-    "session.compacted",
+    EventName.SessionCompacted,
     Schema.Struct({
       sessionID: SessionID,
     }),

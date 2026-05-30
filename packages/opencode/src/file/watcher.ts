@@ -6,6 +6,7 @@ import { readdir, realpath } from "fs/promises"
 import path from "path"
 import { Bus } from "@/bus"
 import { BusEvent } from "@/bus/bus-event"
+import { EventName } from "@/event/event-names"
 import { EffectBridge } from "@/effect/bridge"
 import { InstanceState } from "@/effect/instance-state"
 import { Flag } from "@opencode-ai/core/flag/flag"
@@ -23,7 +24,7 @@ const SUBSCRIBE_TIMEOUT_MS = 10_000
 
 export const Event = {
   Updated: BusEvent.define(
-    "file.watcher.updated",
+    EventName.FileWatcherUpdated,
     Schema.Struct({
       file: Schema.String,
       event: Schema.Literals(["add", "change", "unlink"]),

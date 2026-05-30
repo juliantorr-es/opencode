@@ -47,30 +47,51 @@ export default tool({
     if (ctxLines > 0) cmd.push("-C", String(ctxLines))
     cmd.push(args.pattern, searchPath)
 
+    const startTime = Date.now()
     const result = spawnSync(cmd[0], cmd.slice(1), {
       cwd: context.worktree, encoding: "utf8", maxBuffer: 1024 * 1024 * 5, timeout: 30000,
     })
+    const elapsed = Date.now() - startTime
 
-    if (result.error || (result.status !== 0 && !result.stdout?.trim())) {
-      hb(context, "smart_grep", "failed", result.error?.message?.slice(0, 200) || "rg failed")
-      return JSON.stringify({ status: "fail", error: "rg not found or timed out", feedback_prompt: "Call tool_feedback to report this." }, null, 2)
+    const cmdStr = cmd.join(" ")
+
+    // rg exit 1 = no matches found (not an error)
+    // rg exit 2 = error (bad pattern, etc.)
+    if (result.error || result.status === 2 || (result.status !== 0 && result.status !== 1 && !result.stdout?.trim())) {
+      const errMsg = result.error?.message || result.stderr?.trim() || `rg exited with code ${result.status}`
+      hb(context, "smart_grep", "failed", errMsg.slice(0, 200))
+      return JSON.stringify({
+        status: "fail",
+        error: errMsg,
+        command: cmdStr,
+        hint: result.status === 2 ? "rg error — check pattern syntax (unescaped regex chars?)" : "rg not found or timed out",
+        elapsed_ms: elapsed,
+      }, null, 2)
     }
 
     const stdout = result.stdout?.trim() || ""
     if (!stdout) {
       analytics(context, "smart_grep", { pattern: args.pattern.slice(0, 100), path: (args.path || "").slice(0, 80) })
       hb(context, "smart_grep", "completed", (args.pattern || "").slice(0, 80))
-      return JSON.stringify({ matches: [], count: 0, pattern: args.pattern }, null, 2)
+      return JSON.stringify({
+        matches: [], count: 0, pattern: args.pattern,
+        command: cmdStr, elapsed_ms: elapsed,
+        hint: "No matches found. Pattern may need adjustment or the target path may not contain matching files.",
+      }, null, 2)
     }
 
-    const lines = stdout.split("\n")
+    const rawLines = stdout.split("\n")
     const matches: { file: string; line: number; col?: number; text: string }[] = []
     const fileCounts: Record<string, number> = {}
+    const unparsed: string[] = []
 
-    for (const line of lines) {
+    for (const line of rawLines) {
       if (!line.trim()) continue
       const m = line.match(/^(.+?):(\d+)(?::(\d+))?:(.+)$/)
-      if (!m) continue
+      if (!m) {
+        if (unparsed.length < 5) unparsed.push(line.slice(0, 150))
+        continue
+      }
       const file = m[1]!
       const lineNum = parseInt(m[2]!)
       const col = m[3] ? parseInt(m[3]) : undefined
@@ -83,11 +104,21 @@ export default tool({
     }
 
     const resultObj: Record<string, unknown> = {
+      status: "ok",
       pattern: args.pattern,
-      total_matches: lines.length,
+      command: cmdStr,
+      elapsed_ms: elapsed,
+      total_matches: rawLines.length,
       returned: matches.length,
       unique_files: Object.keys(fileCounts).length,
-      truncated: lines.length > maxResults,
+      truncated: rawLines.length > maxResults,
+      // Include raw sample so agents don't feel the need to bypass smart_grep with raw rg
+      raw_sample: stdout.slice(0, 500),
+    }
+
+    if (unparsed.length > 0) {
+      resultObj.unparsed_lines = unparsed
+      resultObj.unparsed_note = `${unparsed.length} lines could not be parsed as file:line:match. Raw sample above includes them.`
     }
 
     if (summaryOnly) {

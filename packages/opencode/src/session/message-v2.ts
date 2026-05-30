@@ -1,4 +1,5 @@
 import { BusEvent } from "@/bus/bus-event"
+import { EventName } from "@/event/event-names"
 import { SessionID, MessageID, PartID } from "./schema"
 import { NamedError } from "@opencode-ai/core/util/error"
 import { APICallError, convertToModelMessages, LoadAPIKeyError, type ModelMessage, type UIMessage } from "ai"
@@ -534,7 +535,7 @@ export const Event = {
     schema: PartUpdatedEventSchema,
   }),
   PartDelta: BusEvent.define(
-    "message.part.delta",
+    EventName.MessagePartDelta,
     Schema.Struct({
       sessionID: SessionID,
       messageID: MessageID,

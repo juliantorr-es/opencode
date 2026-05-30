@@ -24,6 +24,7 @@ import { McpOAuthCallback } from "./oauth-callback"
 import { McpAuth } from "./auth"
 import { BusEvent } from "../bus/bus-event"
 import { Bus } from "@/bus"
+import { EventName } from "@/event/event-names"
 const TuiEvent = {
   ToastShow: {
     type: "toast.show" as const,
@@ -41,6 +42,7 @@ import { EffectBridge } from "@/effect/bridge"
 import { InstanceState } from "@/effect/instance-state"
 import { ChildProcess, ChildProcessSpawner } from "effect/unstable/process"
 import { CrossSpawnSpawner } from "@opencode-ai/core/cross-spawn-spawner"
+import { HealthRegistry, HealthStatus } from "@/server/health"
 
 const log = Log.create({ service: "mcp" })
 const DEFAULT_TIMEOUT = 30_000
@@ -59,14 +61,14 @@ export const Resource = Schema.Struct({
 export type Resource = Schema.Schema.Type<typeof Resource>
 
 export const ToolsChanged = BusEvent.define(
-  "mcp.tools.changed",
+  EventName.McpToolsChanged,
   Schema.Struct({
     server: Schema.String,
   }),
 )
 
 export const BrowserOpenFailed = BusEvent.define(
-  "mcp.browser.open.failed",
+  EventName.McpBrowserOpenFailed,
   Schema.Struct({
     mcpName: Schema.String,
     url: Schema.String,
@@ -1003,6 +1005,15 @@ export const layer = Layer.effect(
       const expired = yield* auth.isTokenExpired(mcpName)
       return (expired ? "expired" : "authenticated") as AuthStatus
     })
+
+    // Report MCP health to optional HealthRegistry
+    const hr = yield* Effect.serviceOption(HealthRegistry)
+    if (Option.isSome(hr)) {
+      yield* hr.value.set("mcp", {
+        status: HealthStatus.Healthy,
+        updatedAt: Date.now(),
+      })
+    }
 
     return Service.of({
       status,

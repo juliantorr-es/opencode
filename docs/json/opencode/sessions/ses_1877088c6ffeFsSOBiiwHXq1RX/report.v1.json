@@ -1,0 +1,12 @@
+{
+  "schema_version": "v1",
+  "session_id": "ses_1877088c6ffeFsSOBiiwHXq1RX",
+  "summary": "Lane AH-CLEANUP: Successfully rewrote 3 overclaiming JSON artifacts identified by the AH-007 reporting honesty audit.\n\n## Files Modified\n\n### 1. docs/json/opencode/evidence/phase1_completion.v1.json\n- Added `status_summary` field: \"Phase 1 adapter hardening complete but with regressed typecheck (baseline 243 → final 280, +37), 5 defects deferred, C8 unmet, 1 repair cycle applied.\"\n- Updated `last_updated` to 2026-05-30\n- Bumped `plan_revision` 3→4\n- All existing fields preserved\n\n### 2. docs/json/opencode/plans/pg_backend_migration.v1.json\n- Phase 1.8 blocking_defects: \"production-proven\" → \"integration-tested — CI + local Pg service\"\n- Single targeted replacement, no other changes\n\n### 3. docs/json/opencode/evidence/adapter_consumer_complete.v1.json\n- `phase_name`: \"Adapter Consumer Wiring Completion\" → \"Adapter Consumer Wiring (Partial)\"\n- `summary`: Now accurately states \"8/8 consumers migrated to DatabaseAdapter.Service, 12 raw Database.* calls remain in 6 files — deferred to Phase 2\"\n- Acceptance criterion #2: status \"met\" → \"partial\", criterion text updated to reflect partial elimination, evidence updated\n- Added `deferred` field listing all 12 remaining calls across 6 files\n- `results`: Updated to match partial reality\n- Bumped `plan_revision` 1→2\n\n## Verification\n- All 3 files validated as valid JSON ✔️\n- Cross-reference verified: adapter_consumer_complete.deferred matches phase1_completion.known_defects_deferred[2] (12 calls across 6 files) ✔️\n- No source code files modified ✔️",
+  "stats": {
+    "edits": 13,
+    "findings": 0,
+    "feedback": 0,
+    "waves": []
+  },
+  "completed_at": "2026-05-30T11:10:29.956Z"
+}

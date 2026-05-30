@@ -1,0 +1,267 @@
+{
+  "schema": "rig.opencode.cartography.pg_pool_surface.v1",
+  "generated_at": "2026-05-30T00:00:00Z",
+  "claimed_boundary": "packages/opencode/src/storage/ pool lifecycle — creation, config, close, error handling, retry, degradation",
+  "consumer_purpose": "Understand how PG connections are created, configured, closed, and error-handled across all storage modules; identify gaps for reliability hardening",
+  "files_inspected": [
+    "packages/opencode/src/storage/db.pg.ts",
+    "packages/opencode/src/storage/adapter.ts",
+    "packages/opencode/src/storage/db.ts",
+    "packages/opencode/src/storage/migrate.ts",
+    "packages/opencode/src/storage/db.duckdb.ts",
+    "packages/opencode/src/effect/database-config.ts",
+    "packages/opencode/package.json"
+  ],
+
+  "findings": {
+    "(1)_pool_creation_sites": [
+      {
+        "file": "packages/opencode/src/storage/db.pg.ts",
+        "line": 18,
+        "code": "const pool = new Pool({\n  connectionString,\n  ssl: ssl ? { rejectUnauthorized: true } : false,\n})",
+        "context": "Primary PG Pool creation. This is the pg module's Pool (from 'pg' import at line 2). Only created when connectionString is NOT :memory:/file:/path — i.e. a real postgres:// URL. The PGlite branch (line 15) uses new PGlite(dataDir) instead, which is an in-process WASM-based embedded PG.",
+        "type": "new Pool() from pg module",
+        "duality": "PGlite at line 15 vs real Pool at line 18 — the init() function is a routing function, not a pure pool constructor"
+      },
+      {
+        "file": "packages/opencode/src/storage/db.duckdb.ts",
+        "line": 198,
+        "code": "const pool = new DuckDBConnectionPool(resolvedPath, maxConnections, queueTimeoutMs, executionTimeoutMs)",
+        "context": "Custom DuckDB subprocess-based pool. Not a pg Pool, but the same pattern — limited concurrent connections (default 4), queuing, timeout. Used for read-only analytical queries.",
+        "type": "custom DuckDBConnectionPool class (line 114)",
+        "reference": "class DuckDBConnectionPool at lines 114-186"
+      }
+    ],
+
+    "(2)_pool_config_options": [
+      {
+        "file": "packages/opencode/src/storage/db.pg.ts",
+        "line": 18,
+        "config": {
+          "connectionString": "raw string from function arg",
+          "ssl": "ssl ? { rejectUnauthorized: true } : false",
+          "note": "No poolSize, idleTimeout, max, min, or connectionTimeoutMillis passed. All pg.Pool defaults apply (default max=10, idleTimeoutMillis=10000, connectionTimeoutMillis=10000, etc.)"
+        }
+      },
+      {
+        "file": "packages/opencode/src/effect/database-config.ts",
+        "line": 7,
+        "config": {
+          "OPENCODE_DATABASE_URL": "Config.redacted(...) — connection string",
+          "OPENCODE_DATABASE_SSL": "Config.boolean(...) — default true",
+          "OPENCODE_DATABASE_POOL_SIZE": "Config.number(...) — default 10",
+          "note": "poolSize is declared in ConfigSchema (line 7) but NEVER wired into the Pool constructor in db.pg.ts. It's a dead config option — the init() function ignores it."
+        },
+        "finding": "DEAD CONFIG: OPENCODE_DATABASE_POOL_SIZE (env/default 10) is declared in database-config.ts line 7 but never passed to new Pool() in db.pg.ts line 18. Pool always uses pg's default max=10."
+      },
+      {
+        "file": "packages/opencode/src/storage/db.duckdb.ts",
+        "line": 191,
+        "config": {
+          "DEFAULT_MAX_CONNECTIONS": 4,
+          "DEFAULT_QUEUE_TIMEOUT_MS": 30000,
+          "DEFAULT_EXECUTION_TIMEOUT_MS": 30000
+        }
+      }
+    ],
+
+    "(3)_connection_lifecycle": [
+      {
+        "phase": "init",
+        "file": "packages/opencode/src/storage/db.pg.ts",
+        "line": 15-22,
+        "code": "const client = new PGlite(dataDir)\n// ... or ...\nconst pool = new Pool({ connectionString, ssl })\nreturn drizzlePg({ client: pool })",
+        "description": "Pool created but NOT connected at init time. pg.Pool is lazy — it establishes connections on first query. PGlite starts the WASM process eagerly."
+      },
+      {
+        "phase": "close (db.ts singleton)",
+        "file": "packages/opencode/src/storage/db.ts",
+        "line": 71,
+        "code": ";(Client() as any).$client.close()",
+        "description": "Calls $client.close() on the Drizzle-wrapped client. For PGlite this closes the WASM backend. For pg Pool this calls pool.close() which waits for idle clients to drain then closes the pool. Note: $client on a NodePgDatabase is the Pool itself — pool.close() is correct. But this is typed as 'any' cast — no compile-time safety."
+      },
+      {
+        "phase": "close (migrate.ts)",
+        "file": "packages/opencode/src/storage/migrate.ts",
+        "line": 57-61,
+        "code": "const underlying = (client as any).$client\nif (underlying && typeof underlying.end === \"function\") {\n  await underlying.end()\n}",
+        "description": "Uses .end() on the underlying Pool. Note: migrate.ts calls .end(), db.ts calls .close(). For pg.Pool, both exist: .end() drains + closes, .close() is an alias. For PGlite, .close() exists but .end() does not — hence the typeof check."
+      },
+      {
+        "phase": "close (duckdb adapter)",
+        "file": "packages/opencode/src/storage/db.duckdb.ts",
+        "line": 209-211,
+        "code": "close: async () => {\n  pool.close()\n}",
+        "description": "Custom pool close — sets closed flag, rejects queued requests, does NOT kill active subprocesses."
+      },
+      {
+        "phase": "close (none in adapter.ts)",
+        "file": "packages/opencode/src/storage/adapter.ts",
+        "line": 188-189",
+        "code": "function makePgAdapter(url: string, ssl: boolean): Interface {\n  const client = initPg(url, ssl)",
+        "description": "The Effect Service adapter creates the client but has NO close/shutdown mechanism. No Layer.finalizer, no Scope management. If the PgAdapter layer is replaced or the app shuts down, the Pool is never explicitly closed via the Effect layer."
+      }
+    ],
+
+    "(4)_error_paths": [
+      {
+        "scenario": "PG unavailable during query",
+        "file": "packages/opencode/src/storage/adapter.ts",
+        "line": 196-201,
+        "code": "const query = <T>(fn: (db: DrizzleLikeClient) => T | Promise<T>) =>\n  Effect.tryPromise({\n    try: () => { ... },\n    catch: (cause) => new DatabaseError({ message: \"Query failed\", cause: sanitizePgError(cause), isRetryable: false }),\n  })",
+        "finding": "Query errors are ALWAYS marked isRetryable: false — no retry on normal query failures, even if they're transient (network blip, pool timeout). Only transaction serialization errors get retried."
+      },
+      {
+        "scenario": "PG unavailable at init (connection string level)",
+        "file": "packages/opencode/src/storage/db.pg.ts",
+        "line": 18-21,
+        "code": "const pool = new Pool({ connectionString, ssl })\nreturn drizzlePg({ client: pool })",
+        "finding": "NO error handling at pool creation. pg.Pool constructor doesn't throw on bad connection strings (it's lazy). Errors surface on first query, but there's no connection validation at init. PGlite will throw synchronously if dataDir is invalid."
+      },
+      {
+        "scenario": "Transaction serialization failure",
+        "file": "packages/opencode/src/storage/adapter.ts",
+        "line": 234-243",
+        "code": "catch: (cause) => {\n  pendingAfterCommitHooks = []\n  const safeCause = sanitizePgError(cause)\n  const isRetryable =\n    safeCause !== null && typeof safeCause === \"object\" && (safeCause as any)?.code === \"40001\"\n  return new DatabaseError({ message: \"Transaction failed\", cause: safeCause, isRetryable })\n}",
+        "finding": "Only PG error code 40001 (serialization_failure) is considered retryable. No handling for 40P01 (deadlock_detected), 08000 (connection exception), 08001 (sqlclient_unable_to_establish_sqlconnection), or any other transient error."
+      },
+      {
+        "scenario": "Error sanitization",
+        "file": "packages/opencode/src/storage/adapter.ts",
+        "line": 167-184",
+        "code": "const PG_CONNECTION_STRING_RE = /(?:postgres(?:ql)?:\\/\\/)[^\\s]*/gi\nfunction sanitizePgError(cause: unknown): object { ... }",
+        "finding": "Redacts connection strings from error messages. Extracts message, code, hint, detail fields. Drops everything else. Good security practice."
+      }
+    ],
+
+    "(5)_retry_degradation_logic": [
+      {
+        "scope": "transaction serialization only",
+        "file": "packages/opencode/src/storage/adapter.ts",
+        "line": 246-250",
+        "code": "return baseEffect.pipe(\n  Effect.retry({\n    times: 3,\n    schedule: Schedule.exponential(\"100 millis\"),\n    while: (error) => error instanceof DatabaseError && error.isRetryable,\n  }),\n)",
+        "description": "Exponential backoff retry for serialization failures (code 40001). Starts at 100ms, doubles each attempt, up to 3 retries. Only applies to transactions, not single queries. No jitter."
+      },
+      {
+        "scope": "no retry on query",
+        "file": "packages/opencode/src/storage/adapter.ts",
+        "line": 199",
+        "code": "catch: (cause) => new DatabaseError({ message: \"Query failed\", cause: sanitizePgError(cause), isRetryable: false })",
+        "description": "isRetryable is hard-coded to false. Queries that hit connection errors, pool timeouts, or any non-serialization failure are NOT retried anywhere."
+      },
+      {
+        "scope": "no fallback mechanism",
+        "finding": "There is NO automatic fallback from PG to SQLite at runtime. The defaultLayer in adapter.ts (line 368-375) chooses at Layer construction time based on whether OPENCODE_DATABASE_URL is set. If PG is configured but unreachable at query time, the application crashes with DatabaseError — no circuit breaker, no health check, no fallback."
+      },
+      {
+        "scope": "DuckDB pool has queue timeout",
+        "file": "packages/opencode/src/storage/db.duckdb.ts",
+        "line": 139-148",
+        "code": "const timer = this.queueTimeoutMs > 0\n  ? setTimeout(() => {\n      const idx = this.queue.findIndex((r) => r.resolve === resolve)\n      ...reject(new DuckDBError(`DuckDB query queue timed out after ${this.queueTimeoutMs}ms`))\n    }, this.queueTimeoutMs)\n  : undefined",
+        "description": "DuckDB pool has queue timeout (30s default). PG pool has no equivalent — it relies on pg.Pool's internal connectionTimeoutMillis (default 10s) which is unconfigured."
+      }
+    ],
+
+    "(6)_dollar_client_access_patterns": [
+      {
+        "file": "packages/opencode/src/storage/migrate.ts",
+        "line": 58,
+        "code": "const underlying = (client as any).$client",
+        "context": "Migrate accesses $client to call .end() on the underlying pool. For PGlite, $client is the PGlite instance (has exec(), close()). For node-postgres, $client is the Pool instance (has end(), close()). Uses typeof check to distinguish."
+      },
+      {
+        "file": "packages/opencode/src/storage/db.pg.ts",
+        "line": 29,
+        "code": "const client = (db as any).$client",
+        "context": "applyMigrations uses $client to get the raw client for duck-type checking (typeof client.exec === 'function' → PGlite path vs node-postgres path)."
+      },
+      {
+        "file": "packages/opencode/src/storage/db.ts",
+        "line": 71,
+        "code": ";(Client() as any).$client.close()",
+        "context": "db.ts close() calls $client.close() on the singleton. This assumes $client has a .close() method. For PGlite it does. For pg.Pool, close() exists as alias for end()."
+      },
+      {
+        "file": "packages/opencode/src/storage/adapter.ts",
+        "line": 92,
+        "code": "const pg = raw.$client ?? raw",
+        "context": "Inside makeSQLiteAdapter, there's a reference to $client — but this is the SQLite adapter path, not PG. It uses a duck-type fallback pattern."
+      }
+    ]
+  },
+
+  "dependency_graph": {
+    "entry_points": {
+      "#db": "packages/opencode/package.json imports → ./src/storage/db.pg.ts (line 33 imports)",
+      "importers_of_#db": [
+        "packages/opencode/src/storage/db.ts (line 11) — uses init() for singleton client",
+        "packages/opencode/src/storage/adapter.ts (line 4) — uses init() for PgAdapter layer",
+        "packages/opencode/src/storage/migrate.ts (line 4) — uses init() + applyMigrations()",
+        "packages/opencode/test/storage/migration.pg.test.ts (line 2)"
+      ]
+    },
+    "singleton_flow": {
+      "db.ts → init() (from #db)": "Creates singleton pg client at module level (line 54). Exposed via Client() getter. close() calls $client.close() then resets singleton."
+    },
+    "effect_layer_flow": {
+      "adapter.ts → initPg (from #db)": "makePgAdapter calls initPg() inside Effect.sync. Pool created at layer construction time, not at app startup. No Layer.finalizer for pool cleanup."
+    },
+    "migration_flow": {
+      "migrate.ts → initPg + applyMigrations (from #db)": "Creates PG client, applies migrations, then closes underlying client via $client.end(). This is the ONLY path that consistently closes the pool."
+    }
+  },
+
+  "gaps_and_risks": [
+    {
+      "severity": "high",
+      "finding": "Pool size config is dead code",
+      "detail": "OPENCODE_DATABASE_POOL_SIZE declared in database-config.ts line 7, default 10, but never passed to new Pool() in db.pg.ts. pg.Pool defaults to 10 anyway by coincidence, but customizing it has no effect.",
+      "file": "packages/opencode/src/effect/database-config.ts:7 + packages/opencode/src/storage/db.pg.ts:18"
+    },
+    {
+      "severity": "high",
+      "finding": "No Layer.finalizer for Pool cleanup",
+      "detail": "PgAdapter (adapter.ts line 273) creates a Layer.effect with no finalizer. If the layer is replaced or the app shuts down via Effect scope, the underlying pg.Pool is never drained/closed. Only migrate.ts (line 60) and db.ts (line 71) close the pool, and they use different methods (.end() vs .close()).",
+      "file": "packages/opencode/src/storage/adapter.ts:273"
+    },
+    {
+      "severity": "medium",
+      "finding": "No retry on transient query errors",
+      "detail": "Single-query errors are always isRetryable: false (adapter.ts line 199). Network blips, pool timeouts, and deadlocks (code 40P01) will fail immediately. Only serialization failures (40001) on transactions get exponential backoff.",
+      "file": "packages/opencode/src/storage/adapter.ts:199"
+    },
+    {
+      "severity": "medium",
+      "finding": "Mismatched close methods",
+      "detail": "migrate.ts calls .end() on $client, db.ts calls .close(). Both work for pg.Pool (close is an alias for end) but PGlite has only .close(). The typeof check at migrate.ts:59 handles this, but db.ts:71 does not guard.",
+      "file": "packages/opencode/src/storage/migrate.ts:58-61 vs db.ts:71"
+    },
+    {
+      "severity": "medium",
+      "finding": "pg.Pool configured with no pool-level timeouts",
+      "detail": "new Pool({ connectionString, ssl }) does not set connectionTimeoutMillis, idleTimeoutMillis, max, or any pool sizing. pg defaults: 10 connections, 10s idle timeout, 10s connection timeout. All are implicit — none are explicit or configurable from env vars except via the dead poolSize config.",
+      "file": "packages/opencode/src/storage/db.pg.ts:18-20"
+    },
+    {
+      "severity": "low",
+      "finding": "$client access uses 'any' casts everywhere",
+      "detail": "Every call to $client uses (client as any).$client. This bypasses type safety. If the Drizzle API changes, these will silently break at runtime.",
+      "file": "packages/opencode/src/storage/db.ts:71, db.pg.ts:29, migrate.ts:58, adapter.ts:92"
+    },
+    {
+      "severity": "low",
+      "finding": "No connection health check / keepalive",
+      "detail": "No startup validation that PG is reachable, no pgBouncer mode, no statement timeout configuration, no health-check ping endpoint. Errors surface on first actual query.",
+      "file": "packages/opencode/src/storage/db.pg.ts:18-21"
+    }
+  ],
+
+  "recommended_actions": [
+    "Wire OPENCODE_DATABASE_POOL_SIZE into new Pool() constructor in db.pg.ts",
+    "Add Layer.finalizer to PgAdapter that calls pool.end() on layer shutdown",
+    "Expand retryable error codes to include 40P01 (deadlock_detected), 08000/08001 (connection failures)",
+    "Add configurable connectionTimeoutMillis and idleTimeoutMillis to Pool constructor via env vars",
+    "Add a startup health check that validates PG connectivity before declaring the app ready",
+    "Align close/end method usage — prefer .end() consistently and check for its existence"
+  ]
+}

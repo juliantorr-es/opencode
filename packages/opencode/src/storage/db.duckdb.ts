@@ -5,6 +5,7 @@ import { checkSQLFirewall } from "./duckdb-firewall"
 import { runPipeline } from "./pipeline"
 import { DatabaseAdapter } from "./adapter"
 import { DuckDBConfig } from "./duckdb-config"
+import { HealthRegistry, HealthStatus } from "@/server/health"
 
 // ── Client interface ──────────────────────────────────────
 
@@ -261,6 +262,15 @@ export const layer: Layer.Layer<Service, never, DuckDBConfig.Service | DatabaseA
       onSome: String,
     })
     const client = createCLIClient(dbPath)
+
+    // Report DuckDB health to optional HealthRegistry
+    const hr = yield* Effect.serviceOption(HealthRegistry)
+    if (Option.isSome(hr)) {
+      yield* hr.value.set("duckdb", {
+        status: HealthStatus.Healthy,
+        updatedAt: Date.now(),
+      })
+    }
 
     // Run pipeline in background if dbPath is set (not :memory:)
     if (dbPath) {

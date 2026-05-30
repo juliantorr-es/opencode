@@ -1,0 +1,18 @@
+{
+  "schema_version": "v1",
+  "plan_id": "packages-opencode-src-session-message-v2-todo-ts",
+  "plan_revision": 1,
+  "title": "Drizzle .all()/.run() → portable — session remainder",
+  "boundary": "packages/opencode/src/session/{message-v2,todo}.ts",
+  "consumer_purpose": "Eliminate SQLite-only Drizzle methods .all() and .run() from session files for PG compatibility",
+  "claim_atoms": [
+    "\"message-v2.ts: remove 2 .all() calls (hydrate function",
+    "page function)\"",
+    "\"todo.ts: replace 2 .run() with .execute() (delete + insert)\"",
+    "\"todo.ts: remove 1 .all() call (select query)\""
+  ],
+  "content": "## Changes\n\n### 1. packages/opencode/src/session/message-v2.ts (DIRTY — additive)\n**hydrate function (~line 608)**: Remove `.all()` from `db.select().from(PartTable).where(...).orderBy(...).all()`\n- Before: `db.select().from(PartTable).where(inArray(PartTable.message_id, ids)).orderBy(PartTable.message_id, PartTable.id).all()`\n- After: `db.select().from(PartTable).where(inArray(PartTable.message_id, ids)).orderBy(PartTable.message_id, PartTable.id)`\n\n**page function (~line 939)**: Remove `.all()` from `db.select().from(MessageTable).where(...).orderBy(...).limit(...).all()`\n- Before: `...orderBy(desc(MessageTable.time_created), desc(MessageTable.id)).limit(input.limit + 1).all()`\n- After: `...orderBy(desc(MessageTable.time_created), desc(MessageTable.id)).limit(input.limit + 1)`\n\n### 2. packages/opencode/src/session/todo.ts (clean)\n**Line 44**: Replace `.run()` with `.execute()` on delete\n- Before: `db.delete(TodoTable).where(eq(TodoTable.session_id, input.sessionID)).run()`\n- After: `db.delete(TodoTable).where(eq(TodoTable.session_id, input.sessionID)).execute()`\n\n**Line 56**: Replace `.run()` with `.execute()` on insert\n- Before: `.run()`\n- After: `.execute()`\n\n**Line 65**: Remove `.all()` from select\n- Before: `db.select().from(TodoTable).where(eq(TodoTable.session_id, sessionID)).orderBy(asc(TodoTable.position)).all()`\n- After: `db.select().from(TodoTable).where(eq(TodoTable.session_id, sessionID)).orderBy(asc(TodoTable.position))`\n\n### 3. Files with 0 Drizzle calls (no changes needed)\n- packages/opencode/src/session/prompt.ts — no Drizzle .all() or .run()\n- packages/opencode/src/session/llm.ts — no Drizzle imports or calls\n- packages/opencode/src/session/revert.ts — all `.run()` calls are `sync.run()` not Drizzle\n\n### Risk\n- message-v2.ts is a DIRTY file with prior session changes — edits must be additive and preserve existing modifications\n- All changes are syntactically mechanical — `select().from().all()` → `select().from()` works in Drizzle for all dialects; `.run()` → `.execute()` works for insert/delete in all dialects\n- TypeScript types will be verified with typecheck",
+  "status": "proposed",
+  "created_at": "2026-05-30T09:43:03.185Z",
+  "modified_at": "2026-05-30T09:43:03.185Z"
+}

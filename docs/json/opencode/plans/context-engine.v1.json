@@ -1,0 +1,85 @@
+{
+  "schema_version": "v1",
+  "plan_id": "context-engine",
+  "title": "Context Engine — Live Context Projections, Invalidation Bus, Background Workers",
+  "generated_at": "2026-05-30T11:55:00Z",
+  "status": "draft",
+  "description": "Third architectural layer: continuous context projections from the event stream. Tools emit structured events → EventStore → ContextInvalidationBus → background workers rebuild projections → agents get fresh layered context packets.",
+  "foundation": {
+    "existing": [
+      "RuntimeEvent schema + EventStore",
+      "EventStoreBridge (Bus→EventStore)",
+      "DuckDB analytics views (6)",
+      "Agent event queries (9 tools)",
+      "Authority contracts (6 modes)",
+      "Scratchpad (Ref-backed)",
+      "Agent operating picture",
+      "Typed tool results"
+    ]
+  },
+  "lanes": [
+    {
+      "lane_id": "CE-001",
+      "title": "ContextInvalidationBus — Event-driven invalidation",
+      "priority": 1,
+      "effort": "moderate",
+      "location": "packages/opencode/src/context/",
+      "description": "Every event type declares what it invalidates. file.edited → invalidates file summary, symbol outline, related test status. test.failed → invalidates validation clean state, PR readiness, hypothesis confidence. git.branch_changed → invalidates project map, claims, dirty files, working set. Workers subscribe to invalidation events and rebuild stale projections.",
+      "prompt": "Build ContextInvalidationBus at packages/opencode/src/context/invalidation-bus.ts.\n\nDefine an InvalidationScope type that enumerates what can be invalidated: file_summary, symbol_outline, module_summary, related_test_status, working_set_ranking, checkpoint_readiness, validation_clean_state, pr_readiness, hypothesis_confidence, project_map, claims, dirty_file_state, file_digests, plugin_capability_context, tool_registry_context, event_projections, duckdb_views.\n\nCreate a function registerInvalidation(eventType: string, scopes: InvalidationScope[]): void that maps event types to invalidation scopes. Create an Effect service ContextInvalidationBus with: notify(eventType): Effect<void> (broadcasts invalidation for the event type), subscribe(...): Stream<InvalidationScope> (workers subscribe).\n\nPre-register all known event types with their invalidation scopes. Export from packages/opencode/src/context/index.ts. Effect patterns."
+    },
+    {
+      "lane_id": "CE-002",
+      "title": "File Memory — Per-file digests, summaries, freshness, symbols",
+      "priority": 2,
+      "effort": "high",
+      "location": "packages/opencode/src/context/",
+      "description": "Maintains per-file context: latest digest, last read/edited time, who/what edited it, symbol outline (extracted), imports/exports, known tests, risk tags, claim status, generated/protected status, freshness state. Invalidated by file.edited events. Rebuilt by background worker.",
+      "prompt": "Build File Memory at packages/opencode/src/context/file-memory.ts.\n\nDefine FileContext type: path, digest, lastReadAt, lastEditedAt, lastEditor (actor), lastEditTool, lineCount, language, symbols (string[]), imports (string[]), exports (string[]), knownTests (string[]), riskTags (string[]), isGenerated, isProtected, freshness (fresh | stale | unknown), staleReason?, summary?\n\nCreate an Effect service FileMemory.Service with: get(path): Effect<Option<FileContext>>, set(path, ctx): Effect<void>, invalidate(path, reason): Effect<void>, refresh(path, content): Effect<FileContext>, getStale(maxAge): Effect<string[]>, search(query): Effect<FileContext[]>.\n\nStore in a Ref<Map<string, FileContext>> for session scope. The refresh() function reads the file, computes digest, extracts symbols/imports/exports via simple regex, updates freshness. Wire into the invalidation bus from CE-001."
+    },
+    {
+      "lane_id": "CE-003",
+      "title": "Project Map — Repo structure, boundaries, commands",
+      "priority": 3,
+      "effort": "moderate",
+      "location": "packages/opencode/src/context/",
+      "description": "Derived repo map: top-level packages, entrypoints, test commands, build commands, important config files, module boundaries, generated directories, known instructions files, MCP surfaces, desktop boundaries. Updates when package.json files change, git branch changes, or project scan runs. Invalidated by git.branch_changed and file.edited on manifest files.",
+      "prompt": "Build Project Map at packages/opencode/src/context/project-map.ts.\n\nDefine ProjectMap type: packages ({name, path, entrypoint, testCommand, buildCommand}[],), configFiles (string[]), generatedDirs (string[]), protectedPaths (string[]), boundaries ({from, to}[]), desktop ({main, preload, renderer} paths), mcpServers (string[]), instructions (string[]).\n\nCreate an Effect service with: get(): Effect<ProjectMap>, refresh(): Effect<ProjectMap> (scans repo to derive map), getPackage(path): Effect<Option<PackageInfo>>.\n\nThe refresh function reads package.json files, identifies test/build commands, discovers entrypoints (main/index files), identifies generated directories (node_modules, dist, .build, .opencode), reads AGENTS.md, PROJECT.md for known boundaries. Invalidated by git.branch_changed events or package.json changes."
+    },
+    {
+      "lane_id": "CE-004",
+      "title": "Context Packet Assembly — Layered agent context",
+      "priority": 4,
+      "effort": "moderate",
+      "location": "packages/opencode/src/context/",
+      "description": "Builds the layered context packet agents receive before each turn. Layer 1 (always): mission, phase, allowed tools, branch, dirty files, claims, latest validation, last error, stop conditions. Layer 2 (working set): files recently edited/read, files implicated by current failure, claims, likely tests. Layer 3 (on-demand): full file contents, raw test output, event history, DuckDB analytics. The packet is assembled from FileMemory, ProjectMap, Scratchpad, Authority, EventStore, and DuckDB views.",
+      "prompt": "Build Context Packet Assembly at packages/opencode/src/context/packet.ts.\n\nDefine ContextPacketL1, ContextPacketL2, ContextPacketL3 types matching the user's spec. Create an assembleL1(mission, phase, authority, workspace): Effect<ContextPacketL1> that builds from existing services. create assembleL2(fileMemory, workingSet): Effect<ContextPacketL2>. create assembleL3(eventStore, duckdb): Effect<ContextPacketL3>.\n\nCreate a function getCurrentPacket(sessionId): Effect<ContextPacketL1 & { packetVersion: number }> that returns the full layered packet. Include freshness indicators. Wire into the agent loop so agents receive this before each turn."
+    },
+    {
+      "lane_id": "CE-005",
+      "title": "Context Tools — Agent-facing context API",
+      "priority": 5,
+      "effort": "moderate",
+      "location": "packages/opencode/src/context/tools.ts",
+      "description": "Agent-facing tools for context: get_operating_picture (returns current mission/run state), get_project_map (repo structure), get_working_set (current files), get_file_context (summary, digest, symbols, recent edits, related tests, claims), get_related_context (related files/tests/events given a target), query_event_history (filtered recent events), get_validation_context (known commands, last results, failing tests), get_claim_context (path reservations and conflicts), update_scratchpad (store verified facts), mark_context_stale (flag stale summaries), request_context_refresh (trigger reindex).",
+      "prompt": "Build Context Tools at packages/opencode/src/context/tools.ts.\n\nCreate 11 registered tools wrapping the context services from CE-001 through CE-004:\n1. get_operating_picture → calls Authority + FileMemory + AgentOperatingPicture\n2. get_project_map → calls ProjectMap\n3. get_working_set → calls FileMemory for recently touched files\n4. get_file_context(path) → calls FileMemory.get + detailed context\n5. get_related_context(target) → queries EventStore for related events\n6. query_event_history(filter) → wraps EventAgentQueries\n7. get_validation_context → queries EventStore for test events\n8. get_claim_context → queries coordination events\n9. update_scratchpad(fields) → calls Scratchpad.update\n10. mark_context_stale(scope) → calls ContextInvalidationBus.\n11. request_context_refresh(target) → triggers background worker\n\nWire into the tool registry. Each tool returns structured JSON. Export from packages/opencode/src/context/index.ts."
+    },
+    {
+      "lane_id": "CE-006",
+      "title": "DuckDB Context Projections — Retrieval ranking tables",
+      "priority": 6,
+      "effort": "moderate",
+      "location": "packages/opencode/src/storage/schema.duckdb.ts",
+      "description": "DuckDB tables for context retrieval ranking: session_file_relevance (files ranked by recency, edit count, failure count, claims), file_cochange (files that frequently change together), recent_file_events (last 1000 file events), agent_read_heatmap (which files each agent reads most), error_file_sessions (files associated with normalized errors). These feed the context packet's recommended_next_context and working set ranking.",
+      "prompt": "Add DuckDB context projection tables to packages/opencode/src/storage/schema.duckdb.ts.\n\nCreate 5 new DuckDB tables/tables with CREATE OR REPLACE:\n1. _ctx_file_events — session_id, file_path, event_type, actor, tool_name, event_ts\n2. _ctx_file_relevance — file_path, session_id, recency_score, edit_count, failure_count, claim_count, last_ts\n3. _ctx_file_cochange — file_a, file_b, cochange_count, sessions_shared\n4. _ctx_agent_heatmap — agent_name, file_path, read_count, edit_count, last_access\n5. _ctx_error_files — error_code, file_path, occurrence_count, first_seen, last_seen\n\nAdd a function buildContextViews(duckdb, adapter): Effect<void> that pipes data from Postgres/SQLite. Add a function rankWorkingSet(sessionId, limit): Effect<string[]> that returns top-N files for current context. Wire into the pipeline."
+    },
+    {
+      "lane_id": "CE-007",
+      "title": "Background Workers — File index, summary, validation parser",
+      "priority": 7,
+      "effort": "high",
+      "location": "packages/opencode/src/context/workers/",
+      "description": "Background workers that rebuild stale projections: FileIndexWorker (triggers on file.edited, updates digests, symbol outlines, freshness), SummaryWorker (triggers on demand or after edits, produces file/session/diff summaries), ValidationParserWorker (triggers on test/tool output, extracts failures, error codes, file refs, durations), DuckDBProjectionWorker (triggers periodically, builds analytics views), CleanupWorker (maintains caps, archives old data). Workers subscribe to the invalidation bus, are interruptible, and rebuild projections asynchronously.",
+      "prompt": "Build Background Workers at packages/opencode/src/context/workers/.\n\nCreate 5 workers:\n1. file-index-worker.ts — subscribes to invalidation:file_summary, reads file content, computes digest+symbols+imports, updates FileMemory\n2. summary-worker.ts — subscribes to invalidation:file_summary, reads file and generates summary (using a heuristic or LLM call), stores in FileMemory\n3. validation-parser-worker.ts — subscribes to invalidation:validation_clean_state, parses test output events, normalizes failures, links to files\n4. duckdb-projection-worker.ts — triggered by invalidation:event_projections, calls DuckDB query to rebuild context projection tables\n5. cleanup-worker.ts — periodic, caps payload sizes, archives old raw output\n\nEach worker is a scoped fiber that runs Effect.forkScoped. Workers subscribe to the invalidation bus via Stream. Debounce: don't re-run for every event, batch within 500ms windows. Export all workers and a startAllWorkers(): Layer that forks them. Export from packages/opencode/src/context/index.ts."
+    }
+  ]
+}

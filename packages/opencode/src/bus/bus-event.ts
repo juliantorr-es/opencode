@@ -1,5 +1,6 @@
 import { Schema } from "effect"
 import { EventV2 } from "@opencode-ai/core/event"
+import { EventNameValues } from "@/event/event-names"
 
 export type Definition<Type extends string = string, Properties extends Schema.Top = Schema.Top> = {
   type: Type
@@ -14,6 +15,9 @@ export function define<Type extends string, Properties extends Schema.Top>(
 ): Definition<Type, Properties> {
   const result = { type, properties }
   registry.set(type, result)
+  if (!EventNameValues.includes(type as any)) {
+    console.warn('[BusEvent] Event type "' + type + '" is not registered in EventName. Add it to src/event/event-names.ts')
+  }
   return result
 }
 

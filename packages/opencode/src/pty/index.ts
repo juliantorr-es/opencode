@@ -1,4 +1,5 @@
 import { BusEvent } from "@/bus/bus-event"
+import { EventName } from "@/event/event-names"
 import { Bus } from "@/bus"
 import { Config } from "@/config/config"
 import { InstanceState } from "@/effect/instance-state"
@@ -92,10 +93,10 @@ export class NotFoundError extends Schema.TaggedErrorClass<NotFoundError>()("Pty
 }) {}
 
 export const Event = {
-  Created: BusEvent.define("pty.created", Schema.Struct({ info: Info })),
-  Updated: BusEvent.define("pty.updated", Schema.Struct({ info: Info })),
-  Exited: BusEvent.define("pty.exited", Schema.Struct({ id: PtyID, exitCode: NonNegativeInt })),
-  Deleted: BusEvent.define("pty.deleted", Schema.Struct({ id: PtyID })),
+  Created: BusEvent.define(EventName.PtyCreated, Schema.Struct({ info: Info })),
+  Updated: BusEvent.define(EventName.PtyUpdated, Schema.Struct({ info: Info })),
+  Exited: BusEvent.define(EventName.PtyExited, Schema.Struct({ id: PtyID, exitCode: NonNegativeInt })),
+  Deleted: BusEvent.define(EventName.PtyDeleted, Schema.Struct({ id: PtyID })),
 }
 
 export interface Interface {

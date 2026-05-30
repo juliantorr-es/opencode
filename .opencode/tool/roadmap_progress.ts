@@ -36,9 +36,10 @@ export default tool({
     const oldPct = item.completion_pct || 0
 
     item.status = args.status
-    item.completion_pct = args.completion_pct ?? 0
+    item.completion_pct = args.completion_pct ?? item.completion_pct ?? 0
     if (!item.sessions) item.sessions = []
-    item.sessions.push({ ref: args.session_ref || context.sessionID, note: args.note, pct: args.completion_pct ?? 0 })
+    const truncatedNote = args.note.length > 500 ? args.note.slice(0, 497) + "..." : args.note
+    item.sessions.push({ ref: args.session_ref || context.sessionID, note: truncatedNote, pct: args.completion_pct ?? 0 })
 
     writeFileSync(activePath, JSON.stringify(active, null, 2), "utf8")
 
@@ -46,7 +47,7 @@ export default tool({
     try { mkdirSync(resolvePath(context.worktree, "docs/json/roadmaps"), { recursive: true }) } catch (_) {}
     appendFileSync(progressPath, JSON.stringify({
       schema_version: "v1", item_id: args.item_id, status: args.status,
-      completion_pct: args.completion_pct ?? 0, note: args.note,
+      completion_pct: args.completion_pct ?? item.completion_pct ?? 0, note: truncatedNote,
       session_ref: args.session_ref || context.sessionID,
       recorded_at: new Date().toISOString(),
     }) + "\n", "utf8")

@@ -1,0 +1,18 @@
+{
+  "schema_version": "v1",
+  "plan_id": "d3-migrate-all-run-portable",
+  "plan_revision": 1,
+  "title": "D3: Migrate Drizzle .all()/.run() → portable patterns in storage/",
+  "boundary": "storage/ adapter + pipeline Drizzle method migration",
+  "consumer_purpose": "Eliminate SQLite-only Drizzle methods .all() by adding portable .execute() to DrizzleLikeClient interface",
+  "claim_atoms": [
+    "DrizzleLikeClient gains execute method",
+    "duckClient and SQLite adapter implement it",
+    "pipeline.ts uses it",
+    "typecheck passes"
+  ],
+  "content": "## Scope\n6 files surveyed — only 2 have Drizzle calls:\n- `storage/adapter.ts`: DrizzleLikeClient interface + implementations\n- `storage/pipeline.ts`: 2 x `db.all(sql)` calls\n\n## Changes\n\n### 1. adapter.ts — Add `execute` to DrizzleLikeClient\nAdd `execute: <T = any>(query: any) => { rows: T[] }` to the interface.\nThis mirrors Drizzle PG's `db.execute()` return shape.\n\n### 2. adapter.ts — Implement `execute` in DuckDB adapter\nIn `makeDuckDBAdapter`, the `duckClient` gets:\n```ts\nexecute: <T>(query: any) => {\n  const sql = String(query)\n  checkDuckDBSQLFirewall(sql)\n  return client.all<T>(sql).then(rows => ({ rows }))\n}\n```\n\n### 3. adapter.ts — Implement `execute` in SQLite adapter\nIn `makeSQLiteAdapter`, the wrapper client gets `execute`:\n```ts\nexecute: <T = any>(query: any) => {\n  const result = pg.query?.(String(query))\n  return Promise.resolve({ rows: (result?.rows as T[]) ?? [] })\n}\n```\n\n### 4. adapter.ts — Update error message\nLine 284: `\"DuckDB does not support Drizzle query builder — use db.all(sql) or db.get(sql) directly\"` → `\"use db.execute(sql) or db.get(sql) directly\"`\n\n### 5. pipeline.ts — Migrate `db.all()` to `db.execute()`\nTwo call sites. Change from:\n```ts\ndb.all(\"SELECT ...\")\n```\nto:\n```ts\ndb.execute(\"SELECT ...\").then(r => r.rows)\n```\n\nNote: `pipeline.ts` uses `db: any` inside the callback, so no type issues.\n\n### Files not modified\n- storage/storage.ts — git.run only, not Drizzle\n- lsp/lsp.ts — Promise.all only, not Drizzle\n- lsp/server.ts — Promise.all / Process.run, not Drizzle\n- lsp/client.ts — Promise.all, not Drizzle\n\n### Verification\n1. `bun typecheck` in packages/opencode — must pass\n2. Verify no `.all()` calls remain in pipeline.ts\n3. Verify interface has `execute` method\n",
+  "status": "proposed",
+  "created_at": "2026-05-30T09:44:17.671Z",
+  "modified_at": "2026-05-30T09:44:17.671Z"
+}

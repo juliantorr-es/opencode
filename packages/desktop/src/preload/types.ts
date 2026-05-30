@@ -1,6 +1,33 @@
 import type { DesktopMenuAction } from "@opencode-ai/app/desktop-menu"
 
-export type InitStep = { phase: "server_waiting" } | { phase: "sqlite_waiting" } | { phase: "done" }
+export type InitStep =
+  | { phase: "server_waiting" }
+  | { phase: "sqlite_waiting" }
+  | { phase: "safe_mode"; error: { message: string; component: string } }
+  | { phase: "degraded_mode" }
+  | { phase: "done" }
+
+export type SafeModeAction =
+  | "export_debug_logs"
+  | "open_logs"
+  | "repair_database"
+  | "disable_plugins"
+  | "disable_mcp"
+  | "clear_stale_locks"
+  | "reset_config"
+  | "copy_diagnostic_summary"
+  | "retry_normal_startup"
+
+export type SafeModeDiagnostics = {
+  error: { message: string; component: string }
+  systemInfo: {
+    platform: string
+    arch: string
+    version: string
+    userDataPath: string
+    logPath: string
+  }
+}
 
 export type ServerReadyData = {
   url: string
@@ -44,6 +71,9 @@ export type AgentDef = {
 export type McpLocalConfig = { type: "local"; command: string[]; environment?: Record<string, string>; timeout?: number; enabled?: boolean }
 export type McpRemoteConfig = { type: "remote"; url: string; enabled?: boolean }
 export type McpServerEntry = { name: string; config: McpLocalConfig | McpRemoteConfig }
+
+export type PluginTransportHandler = (channel: string, data: unknown) => void
+export type PluginTransportUnsub = () => void
 
 export type PluginConfigEntry = {
   name: string
@@ -93,7 +123,7 @@ export type ElectronAPI = {
   }) => Promise<string | string[] | null>
   saveFilePicker: (opts?: { title?: string; defaultPath?: string }) => Promise<string | null>
   openLink: (url: string) => void
-  openPath: (path: string, app?: string) => Promise<void>
+  openPath: (path: string, app?: string) => Promise<string | void>
   readClipboardImage: () => Promise<{ buffer: ArrayBuffer; width: number; height: number } | null>
   showNotification: (title: string, body?: string) => void
   getWindowFocused: () => Promise<boolean>
@@ -132,4 +162,7 @@ export type ElectronAPI = {
   sessionImportFile: (opts?: { title?: string; filters?: Array<{ name: string; extensions: string[] }> }) => Promise<string | { error: string } | null>
   setLocalePreference: (locale: string) => Promise<void>
   getLocalePreference: () => Promise<string | null>
+
+  getSafeModeDiagnostics: () => Promise<SafeModeDiagnostics>
+  safeModeAction: (action: SafeModeAction) => Promise<void>
 }

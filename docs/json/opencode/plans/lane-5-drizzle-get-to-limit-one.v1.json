@@ -1,0 +1,18 @@
+{
+  "schema_version": "v1",
+  "plan_id": "lane-5-drizzle-get-to-limit-one",
+  "plan_revision": 1,
+  "title": "Lane 5 — Replace Drizzle .get() with .limit(1).then() in 4 files",
+  "boundary": "drizzle-get-replacement",
+  "consumer_purpose": "Postgres compatibility — .get() is SQLite-only; replace with .limit(1).then() for PGlite",
+  "claim_atoms": [
+    "4 files modified",
+    "4 .get() calls replaced",
+    "typecheck passes",
+    "no semantic changes"
+  ],
+  "content": "## Lane 5 Plan — Drizzle .get() → .limit(1).then()\n\n### File 1: share-next.ts (lines 82, 237)\n- Change `db()` wrapper from `Effect.sync(() => Database.use(fn))` to `Effect.promise(() => Database.use(fn) as Promise<T>)` to handle async thenable queries\n- Replace `.get()` with `.limit(1).then(rows => rows[0])` at line 237\n\n### File 2: sync/index.ts (line 86)  \n- Replace `.get()),\\n` with `.limit(1)),\\n` inside the callback\n- Chain `.then(rows => rows[0])` outside the Database.use() call\n- The result is now a Promise; the calling code must handle it (this is expected for Postgres migration)\n\n### File 3: data-migration.ts (line 134)\n- Same pattern as sync/index.ts\n- Replace `.get()),\\n` with `.limit(1)),\\n` inside the callback\n- Chain `.then(rows => rows[0])` outside the Database.use() call\n\n### File 4: worktree/index.ts (line 482)\n- Replace `.get()),\\n` with `.limit(1)),\\n` inside the Database.use() callback\n- Chain `.then(rows => rows[0])` outside Database.use() but inside Effect.sync\n- Change `Effect.sync()` to `Effect.promise()` to handle the async result\n\n### Verification\n- Run `bun typecheck` from packages/opencode\n- Check exit_code === 0",
+  "status": "proposed",
+  "created_at": "2026-05-30T09:29:01.633Z",
+  "modified_at": "2026-05-30T09:29:01.633Z"
+}

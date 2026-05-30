@@ -1,0 +1,100 @@
+{
+  "$schema": "docs/schemas/rig.relay.cartography_artifact.v1.schema.json",
+  "analysis": "Drizzle .get() call site mapping across session.ts and workspace.ts",
+  "profile": "cartography",
+  "files_analyzed": [
+    "packages/opencode/src/v2/session.ts",
+    "packages/opencode/src/control-plane/workspace.ts"
+  ],
+  "total_drizzle_get_calls": 5,
+  "call_sites": [
+    {
+      "file": "packages/opencode/src/v2/session.ts",
+      "line": 195,
+      "context_type": "sync",
+      "context_detail": "Inside Database.use((db) => ...) synchronous wrapper, within Effect.fn generator",
+      "table": "SessionTable",
+      "has_limit_1": false,
+      "variable": "row",
+      "variable_type": "typeof SessionTable.$inferSelect | undefined",
+      "usage": "null check (if (!row) yield* NotFoundError), then returned via fromRow(row)",
+      "snippet": "const row = Database.use((db) => db.select().from(SessionTable).where(eq(SessionTable.id, sessionID)).get())",
+      "method_owner": "Service.get (V2Session.get)"
+    },
+    {
+      "file": "packages/opencode/src/v2/session.ts",
+      "line": 291,
+      "context_type": "sync",
+      "context_detail": "Inside Database.use((db) => { ... }) callback, inside Effect.fn generator for context method",
+      "table": "SessionMessageTable",
+      "has_limit_1": true,
+      "limit_1_line": 290,
+      "variable": "compaction",
+      "variable_type": "typeof SessionMessageTable.$inferSelect | undefined",
+      "usage": "Used as filter condition for a subsequent query — if compaction is truthy, its time_created and id are used in an or() clause to filter messages after the compaction point",
+      "snippet": "const compaction = db\n  .select()\n  .from(SessionMessageTable)\n  .where(and(eq(SessionMessageTable.session_id, sessionID), eq(SessionMessageTable.type, \"compaction\")))\n  .orderBy(desc(SessionMessageTable.time_created), desc(SessionMessageTable.id))\n  .limit(1)\n  .get()",
+      "method_owner": "Service.context (V2Session.context)"
+    },
+    {
+      "file": "packages/opencode/src/control-plane/workspace.ts",
+      "line": 611,
+      "context_type": "effect",
+      "context_detail": "Inside yield* db((db) => ...), within Effect.gen generator, inside sessionWarp method",
+      "table": "SessionTable",
+      "has_limit_1": false,
+      "variable": "current",
+      "variable_type": "{ workspaceID: string } | undefined",
+      "usage": "Optional chaining access (current?.workspaceID) to determine if session belongs to a workspace, then passed to get() for further processing",
+      "snippet": "const current = yield* db((db) =>\n  db\n    .select({ workspaceID: SessionTable.workspace_id })\n    .from(SessionTable)\n    .where(eq(SessionTable.id, input.sessionID))\n    .get()\n)",
+      "method_owner": "Service.sessionWarp"
+    },
+    {
+      "file": "packages/opencode/src/control-plane/workspace.ts",
+      "line": 899,
+      "context_type": "effect",
+      "context_detail": "Inside yield* db((db) => ...), within Effect.fn generator for get method",
+      "table": "WorkspaceTable",
+      "has_limit_1": false,
+      "variable": "row",
+      "variable_type": "typeof WorkspaceTable.$inferSelect | undefined",
+      "usage": "null check (if (!row) return), then returned via fromRow(row)",
+      "snippet": "const row = yield* db((db) => db.select().from(WorkspaceTable).where(eq(WorkspaceTable.id, id)).get())",
+      "method_owner": "Service.get (Workspace.get)"
+    },
+    {
+      "file": "packages/opencode/src/control-plane/workspace.ts",
+      "line": 920,
+      "context_type": "effect",
+      "context_detail": "Inside yield* db((db) => ...), within Effect.fn generator for remove method",
+      "table": "WorkspaceTable",
+      "has_limit_1": false,
+      "variable": "row",
+      "variable_type": "typeof WorkspaceTable.$inferSelect | undefined",
+      "usage": "null check (if (!row) return), then passed to fromRow(row) → info used for adapter removal + row.type logged on error",
+      "snippet": "const row = yield* db((db) => db.select().from(WorkspaceTable).where(eq(WorkspaceTable.id, id)).get())",
+      "method_owner": "Service.remove (Workspace.remove)"
+    }
+  ],
+  "excluded_non_drizzle_calls": [
+    {
+      "pattern": "service method .get()",
+      "description": "yield* result.get(sessionID) — calls the Effect service's own get method (which internally uses the line 195 Drizzle .get()). These appear at lines 241, 283, 316, 336, 357, 361 in session.ts. Not Drizzle query calls themselves.",
+      "lines_in_session_ts": [241, 283, 316, 336, 357, 361]
+    },
+    {
+      "pattern": "Map.get()",
+      "description": "connections.get(id) / connections.get(space.id) — standard Map access, not Drizzle. Lines 188, 504 in workspace.ts.",
+      "lines_in_workspace_ts": [188, 504]
+    },
+    {
+      "pattern": "HttpClientRequest.get()",
+      "description": "HttpClientRequest.get(url) — HTTP GET request builder, not Drizzle. Lines 208, 647 in workspace.ts.",
+      "lines_in_workspace_ts": [208, 647]
+    }
+  ],
+  "observations": {
+    "no_limit_1_on_single_row_lookups": "4 out of 5 calls lack .limit(1), which is fine since they query by unique id (primary key via eq()). Only the compaction lookup on SessionMessageTable uses .limit(1) because it's ordering by time_created/desc and wants the most recent compaction row.",
+    "sync_vs_effect_wrappers": "session.ts uses Database.use() (sync wrapper) for both calls, while workspace.ts uses yield* db(() => ...) (effect wrapper) for all 3 calls. This is a stylistic inconsistency between the two modules.",
+    "null_check_pattern": "All 5 calls check the result for null/undefined before using it — 4 use if (!row) return/yield* error, 1 uses optional chaining (current?.workspaceID)."
+  }
+}

@@ -1,0 +1,178 @@
+{
+  "schema_version": "v1",
+  "review_id": "desktop-doctor-design-critic-v1",
+  "target_plan_id": "desktop-doctor-design",
+  "target_plan_revision": 1,
+  "reviewer_agent": "critic",
+  "reviewed_at": "2026-05-30T12:00:00.000Z",
+  "verdict": "approve_with_conditions",
+  "revision_note": "Revised after evidence from background coupling-auditor task corrected initial assumption about Effect-TS convention. The packages/desktop/src/main/ directory has zero Effect Service/Layer usage — all 9 service modules with 18+ async functions are plain async/await. Effect is used only in index.ts as an entry point orchestration wrapper. The doctor using async/await with Promise.allSettled follows established convention.",
+  "axis_scores": {
+    "boundary": {
+      "score": 4,
+      "max": 5,
+      "rationale": "Well-scoped design artifact. Conflates 3 surfaces (CLI, IPC, headless) into one design — they have different risk profiles and deployment paths. The proposed CLI entry point `opencode doctor` doesn't exist in the desktop package (no `bin` entry in packages/desktop/package.json). Recommend: design the core engine once, surface-specific adapters separately."
+    },
+    "coupling": {
+      "score": 3,
+      "max": 5,
+      "rationale": "Intra-package coupling is fine. Blocker: DD-04 (PGlite) and DD-10 (MCP Servers) are designed as main-process checks but run in the sidecar process (utilityProcess.fork at packages/desktop/src/main/sidecar.ts). The main process cannot directly access PGlite or MCP server state — it must communicate via the sidecar's HTTP API (`GET /global/health`) or IPC message bus. The plan doesn't design this cross-process bridge."
+    },
+    "safety": {
+      "score": 3,
+      "max": 5,
+      "rationale": "Read-only checks are generally safe. But DD-04 could cause PGlite issues if main process attempts concurrent init with the running sidecar connection. DD-05 bypasses the DuckDB connection pool (max 4) by spawning independent CLI subprocess. DD-12 lacks a check-only vs. download guard — could trigger unintended auto-update download. DD-07 write test doesn't specify atomic test-key approach."
+    },
+    "reversibility": {
+      "score": 5,
+      "max": 5,
+      "rationale": "All changes are additive — new files in `src/main/doctor/` plus new IPC channel entries. No existing logic is modified. Full rollback: delete `doctor/` directory, revert IPC channel additions (ipc-channels.ts, ipc-contract.ts, preload/types.ts, preload/index.ts). The compile-time `_CoverageOk` assertion in ipc-contract.ts prevents dangling channels."
+    },
+    "surface_area": {
+      "score": 3,
+      "max": 5,
+      "rationale": "19 new files + 6 modified IPC/preload files is large for one feature. 14 individual check files is over-split — DD-07 (Config), DD-12 (Updater), DD-13 (Windows), DD-14 (Network) are ~5-line probes. The DoctorReport type becomes IPC contract surface, meaning schema changes cascade across ipc-contract.ts, preload/types.ts, and renderer."
+    },
+    "convention": {
+      "score": 5,
+      "max": 5,
+      "rationale": "Follows established convention. Investigation revealed that all 9 service modules (18 async functions) in packages/desktop/src/main/ are plain async/await — server.ts, updater.ts, logging.ts, sidecar.ts, github-ipc.ts, etc. Effect is used only in index.ts as an orchestration wrapper. Zero Service/Layer/Context.Tag usage exists in this package. The doctor runner using async/await with Promise.allSettled is consistent with all existing services. IPC channel naming (`opencode:run-doctor`) matches the existing `opencode:<kebab-case>` convention. Check pattern follows the existing WatcherCheck/CheckResult pattern from ambient.tsx."
+    },
+    "resilience": {
+      "score": 2,
+      "max": 5,
+      "rationale": "Major gap: 14 parallel checks with no concurrency limit cause resource starvation on low-memory machines. DD-03 (native module loading) can crash the Electron process if require() fails catastrophically — try/catch can't catch segfaults. Platform-specific checks (DD-02 Gatekeeper/macOS only, DD-14 external dependency) lack platform guards. No pre-flight verification phase. No caching/staleness model for health results."
+    }
+  },
+  "blocking_findings": [
+    {
+      "id": "COUPLING-001",
+      "axis": "coupling",
+      "summary": "DD-04 and DD-10 require cross-process bridge that isn't designed",
+      "detail": "DD-04 (PGlite connectivity) and DD-10 (MCP server connectivity) run in the sidecar process (forked via utilityProcess.fork at packages/desktop/src/main/sidecar.ts:32), not the main process. The plan designs them as local main-process checks, but the main process cannot directly access PGlite or MCP server internals. The existing sidecar health endpoint `GET /global/health` with 3s timeout (packages/desktop/src/main/server.ts:204) only returns a boolean liveness signal — no PGlite or MCP diagnostics. The plan must specify how the doctor obtains PGlite/MCP state from the sidecar.",
+      "remediation": "Add a design section specifying the cross-process bridge. Three options: (a) extend `/global/health` to return detailed diagnostics JSON, (b) add named IPC message types (e.g., `doctor-db-check`, `doctor-mcp-check`) to the sidecar message protocol in sidecar.ts, or (c) create a new HTTP route on the sidecar server dedicated to doctor probes."
+    },
+    {
+      "id": "SAFETY-001",
+      "axis": "safety",
+      "summary": "DD-04 PGlite check from main process is unsafe",
+      "detail": "PGlite (packages/opencode/src/storage/db.pg.ts) is an embedded Postgres via WASM that runs in the sidecar process' Node.js context. If the main process's doctor attempts to initialize a PGlite connection while the sidecar already has one active, this could cause WASM re-initialization, data corruption, or migration conflicts. The plan's statement 'PGlite initializes from OPENCODE_DB path or default data dir' assumes main-process init is possible, but PGlite's WASM runtime doesn't support cross-process connections.",
+      "remediation": "DD-04 must be performed via the sidecar process. The main process doctor should call the sidecar's `/global/health` endpoint (extended with deep diagnostics) or send a named IPC message that triggers a `SELECT 1` inside the sidecar's existing PGlite connection. Never init PGlite from the main process."
+    },
+    {
+      "id": "RESILIENCE-001",
+      "axis": "resilience",
+      "summary": "No concurrency limit on 14 parallel checks causes resource starvation risk",
+      "detail": "The runner design uses `Promise.allSettled(checks.map(...))` with no concurrency limit. On low-memory machines (e.g., 8 GB RAM, spinning disk), 14 concurrent operations doing native module loading (DD-03), DuckDB CLI spawn (DD-05), HTTP requests (DD-14), and filesystem probes simultaneously could cause OOM or resource starvation. The per-check timeout (10s default) prevents hangs but not concurrent resource contention.",
+      "remediation": "Add a concurrency semaphore defaulting to 4 concurrent checks. Group checks by resource domain (database, filesystem, network, native) and run each group sequentially within a semaphore slot. Consider using `p-limit` or a simple Promise-based semaphore."
+    },
+    {
+      "id": "SAFETY-002",
+      "axis": "safety",
+      "summary": "DD-03 native module loading can crash Electron process",
+      "detail": "Loading native modules via `require('@lydell/node-pty')` or `require('mac_window.node')` can crash the entire Electron process with a segfault or SIGABRT if the platform/arch/ABI doesn't match. JavaScript try/catch cannot catch process-level crashes from native module initialization. The plan's fallback to 'try/catch per check' is insufficient for DD-03.",
+      "remediation": "Use asynchronous `process.dlopen` or a subprocess-based approach for native module checks. As a heuristic fallback, check for file existence of the platform-specific .node binary (e.g., `@lydell/node-pty-darwin-arm64`) before attempting `require()`. On unsupported platforms, `skip` with a clear message rather than attempting to load."
+    },
+    {
+      "id": "RESILIENCE-002",
+      "axis": "resilience",
+      "summary": "Platform-specific checks need guards",
+      "detail": "DD-02 (Gatekeeper quarantine) uses `xattr`/`codesign` which only exists on macOS. DD-14 (Network) depends on external service `api.opencode.ai/health` that always fails in offline/CI mode — skewing the health score. `SystemInfo.loadAvg` doesn't exist on Windows. The plan doesn't specify platform-aware behavior — these checks should `skip` on unsupported platforms, not `fail`.",
+      "remediation": "Add `platforms?: NodeJS.Platform[]` to `HealthCheckMeta`. The runner should skip checks whose platform list doesn't include the current platform. Make DD-14's endpoint configurable with a fallback to loopback test when offline. Add an `--offline` flag for CI mode that skips network-dependent checks."
+    }
+  ],
+  "major_findings": [
+    {
+      "id": "BOUNDARY-001",
+      "axis": "boundary",
+      "summary": "Standalone CLI entry point doesn't exist in desktop package",
+      "detail": "The plan proposes `opencode doctor` and `opencode desktop-doctor` as CLI commands (Section 3). But packages/desktop/ has no `bin` entry in its package.json, no yargs/commander dependency, and no CLI entry point. The existing CLI lives in packages/opencode/ (a separate package). Adding a standalone CLI to the desktop package requires new infrastructure outside this design's scope.",
+      "remediation": "Remove standalone CLI from the design. Propose three real surfaces: (a) IPC channel triggered from renderer Settings panel, (b) Electron menu action registered in menu-action-registry.ts, and (c) Electron `--doctor` command-line argument passed at launch. Design a future CLI addition for packages/opencode if warranted."
+    },
+    {
+      "id": "SURFACE-001",
+      "axis": "surface_area",
+      "summary": "14 individual check files is over-split",
+      "detail": "Several proposed checks (DD-07 Config at ~5 lines, DD-12 Updater at ~5 lines, DD-13 Windows at ~3 lines, DD-14 Network at ~5 lines) don't merit their own files. One-file-per-minimal-check adds file-management overhead without architectural benefit.",
+      "remediation": "Consolidate into category files: `checks/bundle.ts` (DD-01/02), `checks/database.ts` (DD-04/05), `checks/runtime.ts` (DD-11/13), `checks/config.ts` (DD-07/08), `checks/services.ts` (DD-09/10/12), `checks/core.ts` (DD-03/06/14). Target 6-8 files instead of 14."
+    },
+    {
+      "id": "RESILIENCE-003",
+      "axis": "resilience",
+      "summary": "No caching/staleness model for health results",
+      "detail": "The UI sketch shows 'Last run: 2 minutes ago' but the plan doesn't specify how results are cached, when they're considered stale, or whether the renderer auto-refreshes. Stale results displayed without clear staleness markers could cause users to make decisions based on outdated health data.",
+      "remediation": "Add in-memory caching: results valid for 5 minutes, stale for 5-30 minutes (shown with warning), expired after 30 minutes (show 'Run doctor to check'). Do not persist to disk — fresh start should mean fresh check."
+    },
+    {
+      "id": "PRIVACY-001",
+      "axis": "resilience",
+      "summary": "No redaction strategy for exported reports",
+      "detail": "The DoctorReport collects system info (hostname, loadAvg, config paths), MCP server URLs, plugin registry state, and network endpoints. The existing Debug Packet system (packages/opencode/src/debug/debug-packet.ts) has a `redactConfig()` function — the doctor should reuse this pattern for exported reports.",
+      "remediation": "Add a `redactDoctorReport()` function that mirrors the debug packet's redaction pattern. Redact: MCP server URLs (could contain embedded tokens), hostname, config values, plugin paths. Mark for reuse from packages/opencode/src/debug/debug-packet.ts."
+    },
+    {
+      "id": "TESTABILITY-001",
+      "axis": "surface_area",
+      "summary": "No test strategy or mocking interfaces defined",
+      "detail": "The plan specifies check interfaces and types extensively but doesn't provide interfaces/abstractions for mocking heavy dependencies (PGlite, DuckDB binary, native modules, network endpoints). Without abstractions, tests require the full running desktop app.",
+      "remediation": "Add a `CheckDeps` interface that can be injected for testing — analogous to the `Deps` type pattern in ipc-init.ts. Define `HealthCheckFn<T> = (deps: CheckDeps) => Promise<CheckResult<T>>` so tests can inject fake PGlite, fake DuckDB, and fake fetch."
+    }
+  ],
+  "minor_findings": [
+    {
+      "id": "BOUNDARY-002",
+      "axis": "boundary",
+      "summary": "UI panel sketch premature at design phase",
+      "detail": "The plan includes a detailed UI panel sketch with specific layout, category groupings, and button placements (Section 4). At the design phase, only the data contract (DoctorReport schema) and IPC channel types need specification. UI rendering belongs in a separate renderer integration design.",
+      "remediation": "Move the UI sketch to an appendix. Keep only the DoctorReport schema, IPC channel types, and check categories visible to the renderer."
+    },
+    {
+      "id": "SAFETY-003",
+      "axis": "safety",
+      "summary": "DD-12 could trigger unintended download",
+      "detail": "The plan says 'update info fetchable' as the pass criterion for DD-12, but `electron-updater` APIs don't clearly distinguish 'check for update info' from 'download update'. Calling `checkForUpdates()` vs. `checkForUpdatesAndNotify()` have different side effects.",
+      "remediation": "Specify the exact API call: use `autoUpdater.checkForUpdates()` (check only, no download) and explicitly document that the doctor must never call `autoUpdater.downloadUpdate()`. Verify the API separates check from download."
+    },
+    {
+      "id": "RESILIENCE-004",
+      "axis": "resilience",
+      "summary": "Health summary score calculation is undefined",
+      "detail": "The plan defines `score: number (0-100)` and `health: 'healthy' | 'degraded' | 'unhealthy'` but doesn't specify the scoring formula. Is the score a simple percentage of passed checks? Are critical failures weighted more? How do skipped checks affect the score?",
+      "remediation": "Define the scoring formula: e.g., each check contributes (100/total) base points. Critical failed checks deduct 2x. Skipped checks are excluded from the denominator. Thresholds: healthy >= 90, degraded >= 60, unhealthy < 60."
+    }
+  ],
+  "pre_existing_conditions_noted": [
+    "packages/desktop/package.json has no `bin` entry — standalone CLI doesn't exist in this package.",
+    "packages/desktop/src/main/ipc-channels.ts has orphan channel `EVENT_EXPLAIN` (line 73) with no contract entry — IPC pattern has a known gap.",
+    "packages/desktop/electron-builder.config.ts has `gatekeeperAssess: false` and `verifyUpdateCodeSignature: false` — known gaps the doctor should flag.",
+    "PGlite migration from SQLite is in progress (packages/opencode/src/storage/) — DD-04 must handle both PGlite and SQLite paths.",
+    "DuckDB uses CLI subprocess, not WASM bindings — DD-05 must detect the binary before attempting queries."
+  ],
+  "conditions_for_approval": [
+    "1. ADD cross-process bridge design for DD-04 (PGlite) and DD-10 (MCP servers) — specify how the main process queries the sidecar for these checks (extend `/global/health`, add IPC messages, or create a doctor HTTP route).",
+    "2. ADD concurrency semaphore to runner — limit parallel checks to 4 by default with resource-domain grouping.",
+    "3. ADD process-level crash guard for DD-03 — use subprocess detection or file-existence heuristic for native modules instead of direct `require()`.",
+    "4. ADD platform guards to DD-02 (macOS only), DD-14 (offline-safe), and SystemInfo.loadAvg (Windows-safe).",
+    "5. REMOVE standalone CLI surface from design scope — replace with real surfaces: IPC channel, menu action, and `--doctor` Electron flag."
+  ],
+  "follow_up_issues": [
+    {
+      "id": "FOLLOWUP-001",
+      "summary": "Design sidecar doctor endpoint for DD-04/DD-10",
+      "detail": "Once the doctor engine is built for main-process checks, design and implement a sidecar-side doctor API that exposes PGlite and MCP diagnostics. This could be a new HTTP route or extended IPC message types in the sidecar protocol."
+    },
+    {
+      "id": "FOLLOWUP-002",
+      "summary": "Investigate isolated-subprocess pattern for native module checks",
+      "detail": "DD-03's crash risk suggests native module checks should run in an isolated Node.js subprocess (child_process.fork) rather than the main Electron process. Investigate whether this pattern is feasible for all target platforms."
+    },
+    {
+      "id": "FOLLOWUP-003",
+      "summary": "Port DoctorReport type to shared contract schema",
+      "detail": "If the DoctorReport type proves useful beyond the desktop, port it to a shared schema (similar to IPC contract pattern) for potential consumption by the CLI package (packages/opencode) in a future phase."
+    }
+  ],
+  "disposition": "prepublication_repair_required",
+  "consumer_purpose_verified": false,
+  "blocking_defects_inside_boundary": 5
+}

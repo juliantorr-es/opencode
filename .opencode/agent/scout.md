@@ -14,14 +14,22 @@ hidden: true
 description: Read the error, trace the failing module, map dependency edges
 
 permission:
+  tool_feedback: "allow"
   read: "deny"
+  friction: "allow"
   grep: "deny"
+  friction: "allow"
   glob: "deny"
+  friction: "allow"
   bash: "deny"
+  friction: "allow"
   task: "allow"
   edit: "deny"
+  friction: "allow"
   write: "deny"
+  friction: "allow"
   question: "deny"
+  friction: "allow"
   smart_edit: "allow"
   smart_write: "allow"
   smart_batch: "allow"

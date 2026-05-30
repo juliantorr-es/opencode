@@ -1,0 +1,20 @@
+{"at":"2026-05-30T10:11:00.896Z","session_id":"ses_187a26fe8ffe2EiXi0LnY9v2um","agent":"executor","tool":"smart_bash","phase":"started","detail":"Run command 1: search for t() calls with specific filters"}
+{"at":"2026-05-30T10:11:00.911Z","session_id":"ses_187a26fe8ffe2EiXi0LnY9v2um","agent":"executor","tool":"smart_bash","phase":"completed","detail":"echo exit=0"}
+{"at":"2026-05-30T10:11:03.804Z","session_id":"ses_187a26fe8ffe2EiXi0LnY9v2um","agent":"executor","tool":"smart_bash","phase":"started","detail":"Run command 1 with --pcre2 flag for lookbehind support"}
+{"at":"2026-05-30T10:11:03.821Z","session_id":"ses_187a26fe8ffe2EiXi0LnY9v2um","agent":"executor","tool":"smart_bash","phase":"completed","detail":"echo exit=0"}
+{"at":"2026-05-30T10:11:04.365Z","session_id":"ses_187a26fe8ffe2EiXi0LnY9v2um","agent":"executor","tool":"smart_bash","phase":"started","detail":"Run command 2: search for .t( backtick calls"}
+{"at":"2026-05-30T10:11:04.385Z","session_id":"ses_187a26fe8ffe2EiXi0LnY9v2um","agent":"executor","tool":"smart_bash","phase":"completed","detail":"echo exit=0"}
+{"at":"2026-05-30T10:11:05.093Z","session_id":"ses_187a26fe8ffe2EiXi0LnY9v2um","agent":"executor","tool":"smart_bash","phase":"started","detail":"Run command 3: search for bare t( backtick with lookbehind"}
+{"at":"2026-05-30T10:11:05.108Z","session_id":"ses_187a26fe8ffe2EiXi0LnY9v2um","agent":"executor","tool":"smart_bash","phase":"completed","detail":"echo exit=0"}
+{"at":"2026-05-30T10:11:05.875Z","session_id":"ses_187a26fe8ffe2EiXi0LnY9v2um","agent":"executor","tool":"smart_bash","phase":"started","detail":"Run command 4: search for .t( backtick with interpolation"}
+{"at":"2026-05-30T10:11:05.890Z","session_id":"ses_187a26fe8ffe2EiXi0LnY9v2um","agent":"executor","tool":"smart_bash","phase":"completed","detail":"echo exit=0"}
+{"at":"2026-05-30T10:11:07.275Z","session_id":"ses_187a26fe8ffe2EiXi0LnY9v2um","agent":"executor","tool":"smart_bash","phase":"started","detail":"Run command 5: count literal vs non-literal t() calls"}
+{"at":"2026-05-30T10:11:07.319Z","session_id":"ses_187a26fe8ffe2EiXi0LnY9v2um","agent":"executor","tool":"smart_bash","phase":"completed","detail":"echo exit=0"}
+{"at":"2026-05-30T10:11:11.259Z","session_id":"ses_187a26fe8ffe2EiXi0LnY9v2um","agent":"executor","tool":"smart_bash","phase":"started","detail":"Re-run command 1 with simplified grep pattern to avoid parenthesis balance issue"}
+{"at":"2026-05-30T10:11:11.277Z","session_id":"ses_187a26fe8ffe2EiXi0LnY9v2um","agent":"executor","tool":"smart_bash","phase":"completed","detail":"echo exit=0"}
+{"at":"2026-05-30T10:11:14.631Z","session_id":"ses_187a26fe8ffe2EiXi0LnY9v2um","agent":"executor","tool":"smart_bash","phase":"started","detail":"Use a temp script to avoid shell escaping issues with grep parentheses"}
+{"at":"2026-05-30T10:11:14.631Z","session_id":"ses_187a26fe8ffe2EiXi0LnY9v2um","agent":"executor","tool":"smart_bash","phase":"rerouted","detail":"→ read_source"}
+{"at":"2026-05-30T10:11:34.029Z","session_id":"ses_187a26fe8ffe2EiXi0LnY9v2um","agent":"executor","tool":"smart_bash","phase":"started","detail":"Execute temp script for command 1"}
+{"at":"2026-05-30T10:11:34.054Z","session_id":"ses_187a26fe8ffe2EiXi0LnY9v2um","agent":"executor","tool":"smart_bash","phase":"completed","detail":"bash exit=0"}
+{"at":"2026-05-30T10:11:37.337Z","session_id":"ses_187a26fe8ffe2EiXi0LnY9v2um","agent":"executor","tool":"smart_bash","phase":"started","detail":"Clean up temp script"}
+{"at":"2026-05-30T10:11:37.345Z","session_id":"ses_187a26fe8ffe2EiXi0LnY9v2um","agent":"executor","tool":"smart_bash","phase":"completed","detail":"rm exit=0"}

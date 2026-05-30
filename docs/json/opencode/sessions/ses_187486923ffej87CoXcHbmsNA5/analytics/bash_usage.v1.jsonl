@@ -1,0 +1,2 @@
+{"at":"2026-05-30T11:50:07.978Z","session_id":"ses_187486923ffej87CoXcHbmsNA5","agent":"historian","binary":"for","command":"for sha in 754951bbb 264070cb5 ca6150d6f 0448a3082 0115fa771; do echo \"--- $sha ---\"; git log -1 --format=\"%H %ai %s\" $sha; done","reason":"Get commit details for relevant commits","elapsed_ms":147,"exit_code":0}
+{"at":"2026-05-30T11:50:27.483Z","session_id":"ses_187486923ffej87CoXcHbmsNA5","agent":"historian","binary":"head","command":"head -20 .git/config","reason":"Read git config to find remote info","elapsed_ms":11,"exit_code":0}

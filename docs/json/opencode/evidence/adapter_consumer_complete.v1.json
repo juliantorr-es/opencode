@@ -4,7 +4,7 @@
   "phase_name": "Adapter Consumer Wiring (Partial)",
   "generated_at": "2026-05-29T01:00:00Z",
   "plan_generated_at": "2026-05-28T21:00:00.000000+00:00",
-  "plan_revision": 1,
+  "plan_revision": 2,
   "author": "builder",
   "status": "candidate_local",
   "summary": "8/8 consumers migrated to DatabaseAdapter.Service, 12 raw Database.* calls remain in 6 files (data-migration.ts, project.ts, workspace.ts, projectors.ts, fence.ts, sync/index.ts) \u2014 deferred to Phase 2",
@@ -65,7 +65,7 @@
       "evidence": "8 session/project/control-plane/server files migrated from raw Database.* to yield* DatabaseAdapter.Service patterns"
     },
     {
-      "criterion": "Direct Database.* calls eliminated from production code",
+      "criterion": "Direct Database.* calls partially eliminated from production code (12 raw calls remain in 6 files, documented in deferred field)",
       "status": "partial",
       "evidence": "8/8 consumers migrated but 12 raw Database.* calls remain in 6 production files (data-migration.ts, project.ts, workspace.ts, projectors.ts, fence.ts, sync/index.ts) \u2014 deferred to Phase 2 per plan"
     },

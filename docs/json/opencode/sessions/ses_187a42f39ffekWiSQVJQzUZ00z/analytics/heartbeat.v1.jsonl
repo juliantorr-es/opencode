@@ -1,0 +1,74 @@
+{"at":"2026-05-30T10:09:05.919Z","session_id":"ses_187a42f39ffekWiSQVJQzUZ00z","agent":"cartographer","tool":"smart_find","phase":"started","detail":"en.ts"}
+{"at":"2026-05-30T10:09:05.920Z","session_id":"ses_187a42f39ffekWiSQVJQzUZ00z","agent":"cartographer","tool":"smart_find","phase":"completed","detail":"en.ts"}
+{"at":"2026-05-30T10:09:08.658Z","session_id":"ses_187a42f39ffekWiSQVJQzUZ00z","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"\\.t\\("}
+{"at":"2026-05-30T10:09:08.690Z","session_id":"ses_187a42f39ffekWiSQVJQzUZ00z","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"\\.t\\("}
+{"at":"2026-05-30T10:09:08.966Z","session_id":"ses_187a42f39ffekWiSQVJQzUZ00z","agent":"cartographer","tool":"smart_find","phase":"started","detail":"*.{ts,tsx}"}
+{"at":"2026-05-30T10:09:08.967Z","session_id":"ses_187a42f39ffekWiSQVJQzUZ00z","agent":"cartographer","tool":"smart_find","phase":"completed","detail":"*.{ts,tsx}"}
+{"at":"2026-05-30T10:09:14.168Z","session_id":"ses_187a42f39ffekWiSQVJQzUZ00z","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Extract all language.t(\"key\") patterns from source files"}
+{"at":"2026-05-30T10:09:14.169Z","session_id":"ses_187a42f39ffekWiSQVJQzUZ00z","agent":"cartographer","tool":"smart_bash","phase":"rerouted","detail":"→ smart_grep"}
+{"at":"2026-05-30T10:09:14.699Z","session_id":"ses_187a42f39ffekWiSQVJQzUZ00z","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Find all variations of xxx.t(\"key\") calls"}
+{"at":"2026-05-30T10:09:14.699Z","session_id":"ses_187a42f39ffekWiSQVJQzUZ00z","agent":"cartographer","tool":"smart_bash","phase":"rerouted","detail":"→ smart_grep"}
+{"at":"2026-05-30T10:09:16.807Z","session_id":"ses_187a42f39ffekWiSQVJQzUZ00z","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Check what's in packages/app/src"}
+{"at":"2026-05-30T10:09:16.808Z","session_id":"ses_187a42f39ffekWiSQVJQzUZ00z","agent":"cartographer","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-30T10:09:19.045Z","session_id":"ses_187a42f39ffekWiSQVJQzUZ00z","agent":"cartographer","tool":"smart_find","phase":"started","detail":"*.ts*"}
+{"at":"2026-05-30T10:09:19.046Z","session_id":"ses_187a42f39ffekWiSQVJQzUZ00z","agent":"cartographer","tool":"smart_find","phase":"completed","detail":"*.ts*"}
+{"at":"2026-05-30T10:09:19.420Z","session_id":"ses_187a42f39ffekWiSQVJQzUZ00z","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"t\\(\"[^\"]+\"\\)"}
+{"at":"2026-05-30T10:09:19.431Z","session_id":"ses_187a42f39ffekWiSQVJQzUZ00z","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"t\\(\"[^\"]+\"\\)"}
+{"at":"2026-05-30T10:09:32.664Z","session_id":"ses_187a42f39ffekWiSQVJQzUZ00z","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"\\.t\\([^\"]"}
+{"at":"2026-05-30T10:09:32.674Z","session_id":"ses_187a42f39ffekWiSQVJQzUZ00z","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"\\.t\\([^\"]"}
+{"at":"2026-05-30T10:09:33.157Z","session_id":"ses_187a42f39ffekWiSQVJQzUZ00z","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"t\\(`"}
+{"at":"2026-05-30T10:09:33.167Z","session_id":"ses_187a42f39ffekWiSQVJQzUZ00z","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"t\\(`"}
+{"at":"2026-05-30T10:09:33.782Z","session_id":"ses_187a42f39ffekWiSQVJQzUZ00z","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"t\\([a-zA-Z_]"}
+{"at":"2026-05-30T10:09:33.794Z","session_id":"ses_187a42f39ffekWiSQVJQzUZ00z","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"t\\([a-zA-Z_]"}
+{"at":"2026-05-30T10:09:39.892Z","session_id":"ses_187a42f39ffekWiSQVJQzUZ00z","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"t\\([^\"\\'`]"}
+{"at":"2026-05-30T10:09:39.904Z","session_id":"ses_187a42f39ffekWiSQVJQzUZ00z","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"t\\([^\"\\'`]"}
+{"at":"2026-05-30T10:09:46.408Z","session_id":"ses_187a42f39ffekWiSQVJQzUZ00z","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"i18n\\.t\\("}
+{"at":"2026-05-30T10:09:46.418Z","session_id":"ses_187a42f39ffekWiSQVJQzUZ00z","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"i18n\\.t\\("}
+{"at":"2026-05-30T10:09:51.040Z","session_id":"ses_187a42f39ffekWiSQVJQzUZ00z","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"(?<![\\w.])t\\([^\"\\'`]"}
+{"at":"2026-05-30T10:09:51.045Z","session_id":"ses_187a42f39ffekWiSQVJQzUZ00z","agent":"cartographer","tool":"smart_grep","phase":"failed","detail":"rg: regex parse error:\n    (?:(?<![\\w.])t\\([^\"\\'`])\n       ^^^^\nerror: look-around, including look-ahead and look-behind, is not supported\n\nConsider enabling PCRE2 with the --pcre2 flag, which can han"}
+{"at":"2026-05-30T10:10:01.454Z","session_id":"ses_187a42f39ffekWiSQVJQzUZ00z","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Extract all dictionary keys from en.ts"}
+{"at":"2026-05-30T10:10:01.455Z","session_id":"ses_187a42f39ffekWiSQVJQzUZ00z","agent":"cartographer","tool":"smart_bash","phase":"rerouted","detail":"→ smart_grep"}
+{"at":"2026-05-30T10:10:03.732Z","session_id":"ses_187a42f39ffekWiSQVJQzUZ00z","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"\"[a-z].*\"\\s*:"}
+{"at":"2026-05-30T10:10:03.738Z","session_id":"ses_187a42f39ffekWiSQVJQzUZ00z","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"\"[a-z].*\"\\s*:"}
+{"at":"2026-05-30T10:10:06.939Z","session_id":"ses_187a42f39ffekWiSQVJQzUZ00z","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Extract all dict keys from en.ts using ripgrep"}
+{"at":"2026-05-30T10:10:06.940Z","session_id":"ses_187a42f39ffekWiSQVJQzUZ00z","agent":"cartographer","tool":"smart_bash","phase":"rerouted","detail":"→ smart_grep"}
+{"at":"2026-05-30T10:10:09.745Z","session_id":"ses_187a42f39ffekWiSQVJQzUZ00z","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Extract all dictionary keys from en.ts using python"}
+{"at":"2026-05-30T10:10:09.776Z","session_id":"ses_187a42f39ffekWiSQVJQzUZ00z","agent":"cartographer","tool":"smart_bash","phase":"completed","detail":"python3 exit=0"}
+{"at":"2026-05-30T10:10:13.733Z","session_id":"ses_187a42f39ffekWiSQVJQzUZ00z","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Extract all unique t() keys from code"}
+{"at":"2026-05-30T10:10:13.777Z","session_id":"ses_187a42f39ffekWiSQVJQzUZ00z","agent":"cartographer","tool":"smart_bash","phase":"completed","detail":"python3 exit=0"}
+{"at":"2026-05-30T10:10:17.841Z","session_id":"ses_187a42f39ffekWiSQVJQzUZ00z","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Extract all unique t() keys from code"}
+{"at":"2026-05-30T10:10:17.906Z","session_id":"ses_187a42f39ffekWiSQVJQzUZ00z","agent":"cartographer","tool":"smart_bash","phase":"completed","detail":"python3 exit=0"}
+{"at":"2026-05-30T10:10:24.141Z","session_id":"ses_187a42f39ffekWiSQVJQzUZ00z","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Extract unique t() keys with precise filtering"}
+{"at":"2026-05-30T10:10:24.199Z","session_id":"ses_187a42f39ffekWiSQVJQzUZ00z","agent":"cartographer","tool":"smart_bash","phase":"completed","detail":"python3 exit=0"}
+{"at":"2026-05-30T10:10:30.861Z","session_id":"ses_187a42f39ffekWiSQVJQzUZ00z","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Cross-reference keys in en.ts vs code"}
+{"at":"2026-05-30T10:10:30.919Z","session_id":"ses_187a42f39ffekWiSQVJQzUZ00z","agent":"cartographer","tool":"smart_bash","phase":"completed","detail":"python3 exit=0"}
+{"at":"2026-05-30T10:10:33.357Z","session_id":"ses_187a42f39ffekWiSQVJQzUZ00z","agent":"cartographer","tool":"smart_find","phase":"started","detail":"en.ts"}
+{"at":"2026-05-30T10:10:33.361Z","session_id":"ses_187a42f39ffekWiSQVJQzUZ00z","agent":"cartographer","tool":"smart_find","phase":"completed","detail":"en.ts"}
+{"at":"2026-05-30T10:10:49.030Z","session_id":"ses_187a42f39ffekWiSQVJQzUZ00z","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"opencode-ai/ui"}
+{"at":"2026-05-30T10:10:49.038Z","session_id":"ses_187a42f39ffekWiSQVJQzUZ00z","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"opencode-ai/ui"}
+{"at":"2026-05-30T10:10:56.821Z","session_id":"ses_187a42f39ffekWiSQVJQzUZ00z","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Count literal vs dynamic t() calls"}
+{"at":"2026-05-30T10:10:56.917Z","session_id":"ses_187a42f39ffekWiSQVJQzUZ00z","agent":"cartographer","tool":"smart_bash","phase":"completed","detail":"python3 exit=0"}
+{"at":"2026-05-30T10:11:03.441Z","session_id":"ses_187a42f39ffekWiSQVJQzUZ00z","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Cross-reference code keys with ui i18n"}
+{"at":"2026-05-30T10:11:03.507Z","session_id":"ses_187a42f39ffekWiSQVJQzUZ00z","agent":"cartographer","tool":"smart_bash","phase":"completed","detail":"python3 exit=0"}
+{"at":"2026-05-30T10:11:06.918Z","session_id":"ses_187a42f39ffekWiSQVJQzUZ00z","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Check if ui i18n file exists and has content"}
+{"at":"2026-05-30T10:11:06.926Z","session_id":"ses_187a42f39ffekWiSQVJQzUZ00z","agent":"cartographer","tool":"smart_bash","phase":"completed","detail":"wc exit=0"}
+{"at":"2026-05-30T10:11:11.488Z","session_id":"ses_187a42f39ffekWiSQVJQzUZ00z","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Check if missing keys actually exist in either dict"}
+{"at":"2026-05-30T10:11:11.541Z","session_id":"ses_187a42f39ffekWiSQVJQzUZ00z","agent":"cartographer","tool":"smart_bash","phase":"failed","detail":"python3 exit=1"}
+{"at":"2026-05-30T10:11:13.719Z","session_id":"ses_187a42f39ffekWiSQVJQzUZ00z","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"\"common\\.requestFailed\""}
+{"at":"2026-05-30T10:11:13.724Z","session_id":"ses_187a42f39ffekWiSQVJQzUZ00z","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"\"common\\.requestFailed\""}
+{"at":"2026-05-30T10:11:13.973Z","session_id":"ses_187a42f39ffekWiSQVJQzUZ00z","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"\"common\\.closeTab\""}
+{"at":"2026-05-30T10:11:13.977Z","session_id":"ses_187a42f39ffekWiSQVJQzUZ00z","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"\"common\\.closeTab\""}
+{"at":"2026-05-30T10:11:14.280Z","session_id":"ses_187a42f39ffekWiSQVJQzUZ00z","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"\"toast\\.file\\.loadFailed\""}
+{"at":"2026-05-30T10:11:14.284Z","session_id":"ses_187a42f39ffekWiSQVJQzUZ00z","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"\"toast\\.file\\.loadFailed\""}
+{"at":"2026-05-30T10:11:14.540Z","session_id":"ses_187a42f39ffekWiSQVJQzUZ00z","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"\"common\\.moreOptions\""}
+{"at":"2026-05-30T10:11:14.545Z","session_id":"ses_187a42f39ffekWiSQVJQzUZ00z","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"\"common\\.moreOptions\""}
+{"at":"2026-05-30T10:11:34.611Z","session_id":"ses_187a42f39ffekWiSQVJQzUZ00z","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Cross-reference with case-insensitive key matching"}
+{"at":"2026-05-30T10:11:34.679Z","session_id":"ses_187a42f39ffekWiSQVJQzUZ00z","agent":"cartographer","tool":"smart_bash","phase":"completed","detail":"python3 exit=0"}
+{"at":"2026-05-30T10:11:46.778Z","session_id":"ses_187a42f39ffekWiSQVJQzUZ00z","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"dialog\\.mcp\\.error"}
+{"at":"2026-05-30T10:11:46.798Z","session_id":"ses_187a42f39ffekWiSQVJQzUZ00z","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"dialog\\.mcp\\.error"}
+{"at":"2026-05-30T10:13:30.901Z","session_id":"ses_187a42f39ffekWiSQVJQzUZ00z","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"input\\.t\\("}
+{"at":"2026-05-30T10:13:30.912Z","session_id":"ses_187a42f39ffekWiSQVJQzUZ00z","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"input\\.t\\("}
+{"at":"2026-05-30T10:13:30.919Z","session_id":"ses_187a42f39ffekWiSQVJQzUZ00z","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"props\\.t\\("}
+{"at":"2026-05-30T10:13:30.929Z","session_id":"ses_187a42f39ffekWiSQVJQzUZ00z","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"props\\.t\\("}
+{"at":"2026-05-30T10:13:38.566Z","session_id":"ses_187a42f39ffekWiSQVJQzUZ00z","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"^[^/]*\\bt\\("}
+{"at":"2026-05-30T10:13:38.572Z","session_id":"ses_187a42f39ffekWiSQVJQzUZ00z","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"^[^/]*\\bt\\("}

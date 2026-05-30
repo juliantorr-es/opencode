@@ -1,6 +1,7 @@
 import { Context, Effect, Layer, Option, Redacted, Schema, Schedule } from "effect"
 import { Database } from "./db"
 import { DatabaseConfig } from "@/effect/database-config"
+import { HealthRegistry, HealthStatus } from "@/server/health"
 import { init as initPg } from "#db"
 
 import { checkSQLFirewall as checkDuckDBSQLFirewall } from "./duckdb-firewall"
@@ -180,8 +181,12 @@ function sanitizePgError(cause: unknown): object {
 
 // ── Postgres adapter ─────────────────────────────────────────
 
-function makePgAdapter(url: string, ssl: boolean): Interface {
-  const client = initPg(url, ssl)
+function makePgAdapter(options: {
+  connectionString: string
+  ssl?: boolean
+  poolSize?: number
+}): Interface {
+  const client = initPg(options)
   let pendingAfterCommitHooks: Array<() => void> = []
   let txDepth = 0
 
@@ -267,8 +272,29 @@ function makePgAdapter(url: string, ssl: boolean): Interface {
   return Service.of({ query, transaction, afterCommit })
 }
 
-export const PgAdapter: (url: string, ssl?: boolean) => Layer.Layer<Service> = (url, ssl = true) =>
-  Layer.effect(Service, Effect.sync(() => makePgAdapter(url, ssl)))
+export const PgAdapter: (options: {
+  connectionString: string
+  ssl?: boolean
+  poolSize?: number
+}) => Layer.Layer<Service> = (options) =>
+  Layer.effect(
+    Service,
+    Effect.gen(function* () {
+      const adapter = makePgAdapter(options)
+      // Report database health to optional HealthRegistry
+      const hr = yield* Effect.serviceOption(HealthRegistry)
+      if (Option.isSome(hr)) {
+        const healthy = yield* adapter.query(() => Promise.resolve(true)).pipe(
+          Effect.isSuccess,
+        )
+        yield* hr.value.set("pglite", {
+          status: healthy ? HealthStatus.Healthy : HealthStatus.Down,
+          updatedAt: Date.now(),
+        })
+      }
+      return adapter
+    }),
+  )
 
 // ── DuckDB adapter (read-only analytical sidecar) ────────────
 
@@ -361,7 +387,11 @@ export const defaultLayer: Layer.Layer<Service> = Layer.unwrap(
     const config = yield* DatabaseConfig.Service
     if (Option.isSome(config.url)) {
       const url = Redacted.value(config.url.value)
-      return PgAdapter(url, config.ssl)
+      return PgAdapter({
+        connectionString: url,
+        ssl: config.ssl,
+        poolSize: config.poolSize,
+      })
     }
     return SQLiteAdapter
   }),

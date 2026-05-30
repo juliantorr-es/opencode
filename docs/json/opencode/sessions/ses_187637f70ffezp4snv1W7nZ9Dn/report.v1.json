@@ -1,0 +1,12 @@
+{
+  "schema_version": "v1",
+  "session_id": "ses_187637f70ffezp4snv1W7nZ9Dn",
+  "summary": "Lane 3 complete. Wrapped all ipcMain.handle() handlers in github-ipc.ts (6 handlers) and plugin-transport-ipc.ts (1 handler) with withIcpResult() from ipc-contract.ts. Added imports to both files. Left ipcMain.on() fire-and-forget handlers untouched. Typecheck passes for both modified files — no new errors introduced. Pre-existing type errors in other files (ipc-fs.ts, ipc-store.ts, etc.) remain unaffected.",
+  "stats": {
+    "edits": 11,
+    "findings": 0,
+    "feedback": 0,
+    "waves": []
+  },
+  "completed_at": "2026-05-30T11:21:20.730Z"
+}

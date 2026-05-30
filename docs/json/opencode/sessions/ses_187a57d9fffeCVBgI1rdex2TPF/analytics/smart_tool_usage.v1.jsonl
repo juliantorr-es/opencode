@@ -1,0 +1,13 @@
+{"at":"2026-05-30T10:07:46.016Z","session_id":"ses_187a57d9fffeCVBgI1rdex2TPF","agent":"lane-owner","tool":"smart_find","pattern":"ipc*.ts","path":"packages/desktop/src/main"}
+{"at":"2026-05-30T10:07:51.464Z","session_id":"ses_187a57d9fffeCVBgI1rdex2TPF","agent":"lane-owner","tool":"smart_grep","pattern":"from ['\\\"]./ipc['\\\"]|from ['\\\"]./ipc\\.ts['\\\"]|require\\(['\\\"]./ipc['\\\"]","path":"packages/desktop/src/main"}
+{"at":"2026-05-30T10:07:51.892Z","session_id":"ses_187a57d9fffeCVBgI1rdex2TPF","agent":"lane-owner","tool":"smart_grep","pattern":"from ['\\\"]./ipc['\\\"]|from ['\\\"]./ipc\\.ts['\\\"]","path":"packages/desktop/src"}
+{"at":"2026-05-30T10:08:26.106Z","session_id":"ses_187a57d9fffeCVBgI1rdex2TPF","agent":"lane-owner","tool":"smart_grep","pattern":"registerIpcHandlers","path":"packages/desktop/src/main/index.ts"}
+{"at":"2026-05-30T10:08:26.464Z","session_id":"ses_187a57d9fffeCVBgI1rdex2TPF","agent":"lane-owner","tool":"smart_grep","pattern":"registerIpcHandlers","path":"packages/desktop/src/main"}
+{"at":"2026-05-30T10:08:41.298Z","session_id":"ses_187a57d9fffeCVBgI1rdex2TPF","agent":"lane-owner","tool":"smart_find","pattern":"*ipc*test*","path":"packages/desktop"}
+{"at":"2026-05-30T10:08:41.536Z","session_id":"ses_187a57d9fffeCVBgI1rdex2TPF","agent":"lane-owner","tool":"smart_find","pattern":"*test*ipc*","path":"packages/desktop"}
+{"at":"2026-05-30T10:08:42.014Z","session_id":"ses_187a57d9fffeCVBgI1rdex2TPF","agent":"lane-owner","tool":"smart_grep","pattern":"registerIpcHandlers|sendDeepLinks|sendMenuCommand|sendSqliteMigrationProgress","path":"packages/desktop"}
+{"at":"2026-05-30T10:08:56.174Z","session_id":"ses_187a57d9fffeCVBgI1rdex2TPF","agent":"lane-owner","tool":"smart_grep","pattern":"RECORD_FATAL|recordFatal","path":"packages/desktop/src/main/ipc.ts"}
+{"at":"2026-05-30T10:09:01.386Z","session_id":"ses_187a57d9fffeCVBgI1rdex2TPF","agent":"lane-owner","tool":"smart_bun","command":"typecheck","elapsed_ms":9,"exit_code":1}
+{"at":"2026-05-30T10:09:05.789Z","session_id":"ses_187a57d9fffeCVBgI1rdex2TPF","agent":"lane-owner","tool":"smart_bun","command":"run","elapsed_ms":696,"exit_code":2}
+{"at":"2026-05-30T10:10:23.386Z","session_id":"ses_187a57d9fffeCVBgI1rdex2TPF","agent":"lane-owner","tool":"smart_grep","pattern":"getStoredLocale","path":"packages/desktop/src"}
+{"at":"2026-05-30T10:10:57.304Z","session_id":"ses_187a57d9fffeCVBgI1rdex2TPF","agent":"lane-owner","tool":"smart_grep","pattern":"registerGithubIpcHandlers","path":"packages/desktop/src/main"}

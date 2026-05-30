@@ -1,0 +1,5 @@
+export { type CapabilityId, type CapabilityManifest, type TrustLevel, type PluginSecurityState, CapabilityId as CapabilityIdValues } from "./types"
+export { Registry, make as makeRegistry, make as makeCapabilityRegistry } from "./registry"
+export { HOOK_CAPABILITY_MAP, ALWAYS_ALLOWED_HOOKS } from "./hook-map"
+export { checkCapability, makeFallbackState, FALLBACK_MANIFEST } from "./enforcer"
+export { HookDispatchGuard, makeHookDispatchGuard } from "./hook-dispatch-guard"

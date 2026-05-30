@@ -3,6 +3,7 @@ import { serviceUse } from "@opencode-ai/core/effect/service-use"
 import path from "path"
 import { BackgroundJob } from "@/background/job"
 import { BusEvent } from "@/bus/bus-event"
+import { EventName } from "@/event/event-names"
 import { Bus } from "@/bus"
 import { Decimal } from "decimal.js"
 import type { ProviderMetadata, Usage } from "@opencode-ai/llm"
@@ -332,33 +333,33 @@ const UpdatedEventSchema = Schema.Struct({
 
 export const Event = {
   Created: SyncEvent.define({
-    type: "session.created",
+    type: EventName.SessionCreated,
     version: 1,
     aggregate: "sessionID",
     schema: CreatedEventSchema,
   }),
   Updated: SyncEvent.define({
-    type: "session.updated",
+    type: EventName.SessionUpdated,
     version: 1,
     aggregate: "sessionID",
     schema: UpdatedEventSchema,
     busSchema: CreatedEventSchema,
   }),
   Deleted: SyncEvent.define({
-    type: "session.deleted",
+    type: EventName.SessionDeleted,
     version: 1,
     aggregate: "sessionID",
     schema: CreatedEventSchema,
   }),
   Diff: BusEvent.define(
-    "session.diff",
+    EventName.SessionDiff,
     Schema.Struct({
       sessionID: SessionID,
       diff: Schema.Array(Snapshot.FileDiff),
     }),
   ),
   Error: BusEvent.define(
-    "session.error",
+    EventName.SessionError,
     Schema.Struct({
       sessionID: Schema.optional(SessionID),
       // Reuses MessageV2.Assistant.fields.error (already Schema.optional) so

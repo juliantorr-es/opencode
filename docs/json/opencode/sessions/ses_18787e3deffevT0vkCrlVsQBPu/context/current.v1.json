@@ -1,0 +1,14 @@
+{
+  "schema_version": "v1",
+  "profile": "architect",
+  "entries": [
+    {
+      "source": "cache.ts",
+      "finding": "Non-atomic inflight dedup registration at lines 100-114 uses Ref.get() + Map.set() + Ref.set() pattern",
+      "detail": "Two fibers can both call Ref.get(inflight), both see no pending key, and both start computing. The Deferred.done fix prevents hanging, but both fibers compute the same key.",
+      "convention": "Ref.modify pattern already used in codebase at acp-next/session.ts lines 119-131 for atomic Map operations with [returnValue, newState] as const",
+      "added_at": "2026-05-30T10:41:15.567Z"
+    }
+  ],
+  "curated_at": "2026-05-30T10:41:15.567Z"
+}

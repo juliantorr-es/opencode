@@ -1,0 +1,26 @@
+{"at":"2026-05-30T11:48:50.456Z","session_id":"ses_18748de67ffePikGDnCtROCuJq","agent":"lane-owner","tool":"smart_git","phase":"started","detail":"status"}
+{"at":"2026-05-30T11:48:50.650Z","session_id":"ses_18748de67ffePikGDnCtROCuJq","agent":"lane-owner","tool":"smart_git","phase":"completed","detail":"status exit=0"}
+{"at":"2026-05-30T11:48:53.502Z","session_id":"ses_18748de67ffePikGDnCtROCuJq","agent":"lane-owner","tool":"smart_find","phase":"started","detail":"*event*"}
+{"at":"2026-05-30T11:48:53.506Z","session_id":"ses_18748de67ffePikGDnCtROCuJq","agent":"lane-owner","tool":"smart_find","phase":"completed","detail":"*event*"}
+{"at":"2026-05-30T11:48:53.889Z","session_id":"ses_18748de67ffePikGDnCtROCuJq","agent":"lane-owner","tool":"smart_find","phase":"started","detail":"*runtime*event*"}
+{"at":"2026-05-30T11:48:53.964Z","session_id":"ses_18748de67ffePikGDnCtROCuJq","agent":"lane-owner","tool":"smart_find","phase":"completed","detail":"*runtime*event*"}
+{"at":"2026-05-30T11:48:54.277Z","session_id":"ses_18748de67ffePikGDnCtROCuJq","agent":"lane-owner","tool":"smart_grep","phase":"started","detail":"runtime.event|RuntimeEvent|runtime_event|open-code:event"}
+{"at":"2026-05-30T11:48:54.381Z","session_id":"ses_18748de67ffePikGDnCtROCuJq","agent":"lane-owner","tool":"smart_grep","phase":"completed","detail":"runtime.event|RuntimeEvent|runtime_event|open-code:event"}
+{"at":"2026-05-30T11:49:19.493Z","session_id":"ses_18748de67ffePikGDnCtROCuJq","agent":"lane-owner","tool":"smart_grep","phase":"started","detail":"bus\\.publish\\("}
+{"at":"2026-05-30T11:49:19.577Z","session_id":"ses_18748de67ffePikGDnCtROCuJq","agent":"lane-owner","tool":"smart_grep","phase":"completed","detail":"bus\\.publish\\("}
+{"at":"2026-05-30T11:49:19.601Z","session_id":"ses_18748de67ffePikGDnCtROCuJq","agent":"lane-owner","tool":"smart_grep","phase":"started","detail":"\\.emit\\([\"\\']"}
+{"at":"2026-05-30T11:49:19.671Z","session_id":"ses_18748de67ffePikGDnCtROCuJq","agent":"lane-owner","tool":"smart_grep","phase":"completed","detail":"\\.emit\\([\"\\']"}
+{"at":"2026-05-30T11:49:19.700Z","session_id":"ses_18748de67ffePikGDnCtROCuJq","agent":"lane-owner","tool":"smart_grep","phase":"started","detail":"EventV2\\.define|\\.define\\("}
+{"at":"2026-05-30T11:49:19.729Z","session_id":"ses_18748de67ffePikGDnCtROCuJq","agent":"lane-owner","tool":"smart_grep","phase":"completed","detail":"EventV2\\.define|\\.define\\("}
+{"at":"2026-05-30T11:49:19.746Z","session_id":"ses_18748de67ffePikGDnCtROCuJq","agent":"lane-owner","tool":"smart_grep","phase":"started","detail":"eventType:[\"\\']"}
+{"at":"2026-05-30T11:49:19.810Z","session_id":"ses_18748de67ffePikGDnCtROCuJq","agent":"lane-owner","tool":"smart_grep","phase":"completed","detail":"eventType:[\"\\']"}
+{"at":"2026-05-30T11:50:02.296Z","session_id":"ses_18748de67ffePikGDnCtROCuJq","agent":"lane-owner","tool":"smart_grep","phase":"started","detail":"BusEvent\\.define\\("}
+{"at":"2026-05-30T11:50:02.315Z","session_id":"ses_18748de67ffePikGDnCtROCuJq","agent":"lane-owner","tool":"smart_grep","phase":"completed","detail":"BusEvent\\.define\\("}
+{"at":"2026-05-30T11:50:37.835Z","session_id":"ses_18748de67ffePikGDnCtROCuJq","agent":"lane-owner","tool":"smart_grep","phase":"started","detail":"export const Event = \\{"}
+{"at":"2026-05-30T11:50:37.846Z","session_id":"ses_18748de67ffePikGDnCtROCuJq","agent":"lane-owner","tool":"smart_grep","phase":"completed","detail":"export const Event = \\{"}
+{"at":"2026-05-30T11:50:37.906Z","session_id":"ses_18748de67ffePikGDnCtROCuJq","agent":"lane-owner","tool":"smart_grep","phase":"started","detail":"BusEvent\\.define\\(\""}
+{"at":"2026-05-30T11:50:37.917Z","session_id":"ses_18748de67ffePikGDnCtROCuJq","agent":"lane-owner","tool":"smart_grep","phase":"completed","detail":"BusEvent\\.define\\(\""}
+{"at":"2026-05-30T11:50:54.158Z","session_id":"ses_18748de67ffePikGDnCtROCuJq","agent":"lane-owner","tool":"smart_grep","phase":"started","detail":"const Event =|export const Event|Event: |Session\\.Event|SyncEvent|BusEvent"}
+{"at":"2026-05-30T11:50:54.164Z","session_id":"ses_18748de67ffePikGDnCtROCuJq","agent":"lane-owner","tool":"smart_grep","phase":"completed","detail":"const Event =|export const Event|Event: |Session\\.Event|SyncEvent|BusEvent"}
+{"at":"2026-05-30T11:51:02.259Z","session_id":"ses_18748de67ffePikGDnCtROCuJq","agent":"lane-owner","tool":"smart_grep","phase":"started","detail":"Event\\.Created|Event\\.Updated|Event\\.Deleted|Event\\.Diff|Event\\.Error|Event\\.Com"}
+{"at":"2026-05-30T11:51:02.279Z","session_id":"ses_18748de67ffePikGDnCtROCuJq","agent":"lane-owner","tool":"smart_grep","phase":"completed","detail":"Event\\.Created|Event\\.Updated|Event\\.Deleted|Event\\.Diff|Event\\.Error|Event\\.Com"}

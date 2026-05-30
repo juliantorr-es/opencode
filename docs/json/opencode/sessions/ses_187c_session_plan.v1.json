@@ -1,0 +1,56 @@
+{
+  "schema_version": "rig.opencode.session_plan.v1",
+  "session_id": "ses_187c",
+  "generated_at": "2026-05-30T09:50:00Z",
+  "orchestrator": "orchestrator",
+  "status": "in_progress",
+  "relaunch_count": 1,
+  "relaunch_reason": "All 9 lane-owners interrupted on first launch",
+  "lanes": {
+    "completed": [
+      {
+        "id": "D2",
+        "title": ".all()/.run() migration — session remainder",
+        "task_id": "ses_187bd299affeZxHbjKid21qr2m",
+        "files_modified": ["session/message-v2.ts", "session/todo.ts"],
+        "edits": 6,
+        "typecheck": "pass",
+        "tests": "9/9 pass in message-v2.test.ts",
+        "verdict": "2 files had real Drizzle calls (3 .all() removed, 2 .run()→.execute()), 3 files were clean"
+      },
+      {
+        "id": "D4",
+        "title": ".all()/.run() migration — provider, config, snapshot, plugin, git",
+        "task_id": "ses_187bd193cffepbhfapuZ0KR00m",
+        "files_modified": [],
+        "typecheck": "n/a",
+        "verdict": "All 6 files had zero Drizzle calls — Effect service calls and Promise.all only"
+      },
+      {
+        "id": "D5",
+        "title": ".all()/.run() migration — server, share, reference, sync, event-bridge",
+        "task_id": "ses_187bd0b77ffej5GOKDtwBHifJA",
+        "files_modified": ["data-migration.ts", "share-next.ts", "sync/index.ts"],
+        "edits": 9,
+        "typecheck": "pass",
+        "verdict": "3 files had real Drizzle calls (migrated), 5 files were clean (Effect.all/sync.run only)"
+      }
+    ],
+    "still_running": [
+      {"id": "PG-002", "title": "Migration runner", "status": "architect phase (subagents: cartographer, critic complete)"},
+      {"id": "DC-001", "title": "Electron de-coupling", "status": "architect phase (reading windows.ts iconsDir)"},
+      {"id": "DT-001", "title": "Dialog test harness", "status": "cartography complete (dialog find)"},
+      {"id": "L10N-001", "title": "Locale fallback chain", "status": "running"},
+      {"id": "D1", "title": ".all()/.run() — session core", "status": "running"},
+      {"id": "D3", "title": ".all()/.run() — storage/lsp", "status": "running"}
+    ]
+  },
+  "drizzle_debt_migration_progress": {
+    "total_original_estimate": {"all": 38, "run": 45},
+    "actual_real_calls_found_so_far": {"all": 4, "run": 9},
+    "false_positive_rate_across_examined_files": "~70%",
+    "completed_lanes": 3,
+    "remaining_lanes": [{"D1": "session core (heaviest)"}, {"D3": "storage + lsp"}]
+  },
+  "pre_existing_dirty_files": "18 files in packages/opencode/src/ — all lane modifications were additive"
+}

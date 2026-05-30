@@ -1,0 +1,409 @@
+{
+  "schema_version": "rig.opencode.cartography.v1",
+  "lane_id": "IN-002-cart",
+  "title": "Review Compression System — Infrastructure Map",
+  "generated_at": "2026-05-30T12:30:00Z",
+  "mission": "Map existing plan, diff, validation, and governance infrastructure to design a review compression system that shows developers only what they actually need to review",
+  "systems_examined": [
+    "plan-structure-and-storage",
+    "diff-infrastructure",
+    "validation-records",
+    "historian-and-audit-system",
+    "checkpoint-and-publication",
+    "claims-and-files-touched",
+    "red-team-and-stress-findings",
+    "schemas-and-governance"
+  ],
+  "surface_map": {
+    "plans": {
+      "location": "docs/json/opencode/plans/",
+      "count": "~90+ plan files across ~50 plan IDs, many with revisions (v1/v2/v3)",
+      "companion_artifacts": {
+        "comments": "docs/json/opencode/plans/{plan_id}/comments.v1.jsonl — append-only JSONL per plan",
+        "critic_reviews": "docs/json/opencode/plans/{plan_id}/critics/critic-review.v1.json or reviews/{plan_id}.review.v1.json",
+        "prepublication_reviews": "docs/json/opencode/plans/reviews/{plan_id}.v1.review.json"
+      },
+      "schema": {
+        "envelope_fields": ["schema_version", "plan_id", "plan_revision", "title", "boundary", "consumer_purpose", "claim_atoms", "content", "status", "created_at", "modified_at"],
+        "schema_file": "NONE — no JSON Schema for the plan artifact itself exists",
+        "content_embedding": "Mixed: newer plans use envelope with Markdown in content; older/parallel plans embed JSON structured content"
+      },
+      "claim_atoms": {
+        "role": "Falsifiable claim per atom, used as verification oracle by critics",
+        "file_references": "Inconsistent — some claim_atoms reference specific files, others describe outcomes without file paths",
+        "enforcement": "Strict JSON array of strings in propose-plan.ts (native), tolerant multi-format in propose_plan.ts (plugin)"
+      }
+    },
+    "diffs": {
+      "git_diff": "Produced via git CLI in snapshot/index.ts (git diff, git numstat, git diff-tree)",
+      "session_diff_tool": "packages/opencode/src/tool/session-diff.ts — reads edit_log.v1.jsonl, groups edits by file, returns summary or full format",
+      "Snapshot.FileDiff": {
+        "schema": "packages/opencode/src/snapshot/index.ts:19-28",
+        "fields": ["file?: string", "patch?: string", "additions: number", "deletions: number", "status?: 'added' | 'deleted' | 'modified'"],
+        "sdk_type": "@opencode-ai/sdk/v2 types SnapshotFileDiff and VcsFileDiff (identical shape)"
+      },
+      "edit_log": {
+        "location": "docs/json/opencode/sessions/{sessionID}/edits/edit_log.v1.jsonl",
+        "format": "JSONL per edit operation with fields: schema_version, session_id, agent, file, reason, change_summary, plan_step, diff_snapshot, edited_at",
+        "writers": ["smart-write.ts", "smart-edit.ts", "smart-batch.ts", "replace-symbol.ts", "read-source.ts"]
+      },
+      "plan_vs_diff_comparison": "NONE — no automated comparison exists"
+    },
+    "validation": {
+      "schemas": {
+        "rig.relay.validation_report.v1": "docs/json/opencode/validation/plugin-transport-validation.v1.json — per-file checklist, no JSON Schema",
+        "rig.relay.qa.validation.v1": "docs/json/opencode/qa/tool_cache_validation.v1.json — criteria-based, no JSON Schema",
+        "rig.relay.validation_artifact.v1": "docs/json/opencode/sessions/lane6/validation_artifact.v1.json — claim-atom validation, no JSON Schema",
+        "rig.relay.qa.verification.v1": "docs/json/qa/verification_lane7_github_hardening.v1.json — per-claim verification, no JSON Schema",
+        "rig.relay.stress_report.v1": "docs/json/opencode/stress/phase1-remaining-stress-findings.v1.json — red-team findings, no JSON Schema"
+      },
+      "tools": {
+        "record_execution_wave": "Appends to waves/execution.v1.jsonl per session",
+        "record_stress_wave": "Appends to waves/stress.v1.jsonl per session",
+        "qa_observed_clean": "Appends to qa/observations.v1.jsonl per session"
+      },
+      "test_delta_comparison": "NONE — no automated regression comparison between validation runs"
+    },
+    "historian_and_audit": {
+      "historian_agent": ".opencode/agent/historian.md — git history, commit composition, PR crafting",
+      "role_contract": "packages/opencode/src/campaign/role-contracts.ts:416-468 — 22 allowed tools, 16 forbidden",
+      "state_machine_position": "red_team → historian → checkpointed → returned"
+    },
+    "checkpoints": {
+      "native_tool": "packages/opencode/src/tool/checkpoint.ts — stores via Storage.Service under ['checkpoint', sessionID, id]",
+      "plugin_tools": [".opencode/tool/prepare_checkpoint.ts", ".opencode/tool/publish_checkpoint.ts"],
+      "git_relationship": "Checkpoints are NOT git commits — stored in local storage layer. checkpoint_sha references the git SHA.",
+      "records": "docs/json/opencode/sessions/{sessionID}/checkpoints/checkpoints.v1.jsonl"
+    },
+    "publications": {
+      "ledger": "docs/json/opencode/publications/publications.v1.jsonl — 8 entries with checkpoint_sha, boundary, claim_atoms, changed_files",
+      "record_examples": "docs/json/opencode/publication_record.v1+v2.json — builder_publication_record format",
+      "missing_schemas": [
+        "docs/schemas/rig.relay.builder_publication_record.v1.schema.json",
+        "docs/schemas/rig.relay.verification_record.v1.schema.json",
+        "docs/schemas/rig.relay.prepublication_review_cycle.v1.schema.json"
+      ]
+    },
+    "prepublication": {
+      "tools": [
+        "packages/opencode/src/tool/prepublication-admitted.ts",
+        "packages/opencode/src/tool/prepublication-blocked.ts",
+        "packages/opencode/src/tool/prepublication-inconclusive.ts"
+      ],
+      "plugin_tools": [
+        ".opencode/tool/prepublication_admitted.ts",
+        ".opencode/tool/prepublication_blocked.ts",
+        ".opencode/tool/prepublication_inconclusive.ts"
+      ],
+      "adversary_agents": [
+        "claim-adversary", "evidence-adversary", "authority-adversary",
+        "security-adversary", "recovery-adversary", "production-proof-adversary",
+        "lane-collision-adversary", "publication-truth-adversary"
+      ]
+    },
+    "schemas": {
+      "total": 10,
+      "review_related": 4,
+      "missing_for_review_manifest": [
+        "review_manifest.v1",
+        "builder_publication_record.v1",
+        "verification_record.v1",
+        "prepublication_review_cycle.v1"
+      ]
+    }
+  },
+  "gaps": [
+    {
+      "id": "GAP-001",
+      "title": "No plan_vs_diff_comparison",
+      "description": "No automated comparison exists between plan claim_atoms/boundary and actual diff produced. Critic reviews do this manually per session.",
+      "impact": "Review compression cannot compute 'files touched outside touch set' or 'plan/diff deviations' without a comparison engine",
+      "blocks": ["plan-vs-diff-deviation", "files-outside-touch-set"],
+      "bridges": [
+        "Build diff parser that extracts files from Snapshot.FileDiff[]",
+        "Build extractor that maps claim_atoms to file patterns",
+        "Create comparison function: claimed files ∩ actual files = in-scope, actual \\ claimed = drift"
+      ]
+    },
+    {
+      "id": "GAP-002",
+      "title": "No files_touched field in plan artifacts",
+      "description": "claim_atoms are free-text strings, not structured file references. No plan schema field tracks 'this plan touches these files'.",
+      "impact": "Cannot programmatically compare planned touch set to actual diff without NLP or manual annotation",
+      "blocks": ["machine-readable-claim-to-file-mapping"],
+      "bridges": [
+        "Add optional 'files' field to plan schema (array of file patterns/globs)",
+        "Or extend claim_atoms to support structured atoms with file:line references",
+        "Use session_diff tool output as ground truth for actual files touched"
+      ]
+    },
+    {
+      "id": "GAP-003",
+      "title": "Validation results are fragmented across 5+ schemas",
+      "description": "4+ overlapping validation schemas with incompatible structures, 5 tools/appenders, no unified validation manifest format. No JSON Schema files for any validation format.",
+      "impact": "Review compression cannot produce a unified 'validation commands run and their results' section without data normalization",
+      "blocks": ["unified-validation-manifest"],
+      "bridges": [
+        "Define rig.relay.validation_manifest.v1 schema that unifies wave results, test counts, QA observations",
+        "Create aggregation layer that reads from all 5+ formats and normalizes",
+        "Reference the existing record_execution_wave, record_stress_wave, qa_observed_clean tools as data sources"
+      ]
+    },
+    {
+      "id": "GAP-004",
+      "title": "No test delta/comparison capability",
+      "description": "No tool or logic compares 'tests before' vs 'tests after' for a lane. Test results are point-in-time snapshots only.",
+      "impact": "Review compression cannot show 'test deltas with pass/fail summaries' without baseline comparison",
+      "blocks": ["test-delta-summary"],
+      "bridges": [
+        "Capture test baseline before execution (test counts, pass/fail by file)",
+        "Compare after execution to show deltas",
+        "Integrate with smart_bun test tool for structured test results"
+      ]
+    },
+    {
+      "id": "GAP-005",
+      "title": "No review_weight / risk_score / change_weight metrics",
+      "description": "Zero existing metrics for weighting changes. No concept of 'mechanical rename = low weight' vs 'security boundary = high weight'.",
+      "impact": "Core requirement of review compression ('weighted review manifest') requires new metric system from scratch",
+      "blocks": ["weighted-review-surface"],
+      "bridges": [
+        "Define risk scoring rubric: file path patterns, change type (add/delete/modify), dependency count, boundary proximity",
+        "Implement weight calculator as an Effect service",
+        "Integrate with Snapshot.FileDiff for per-file change type and with boundary declarations"
+      ]
+    },
+    {
+      "id": "GAP-006",
+      "title": "Prepublication review cycle lacks standalone schema",
+      "description": "Review cycles are embedded inline in builder_publication_record. No standalone prepublication_review_cycle schema exists.",
+      "impact": "Review compression cannot build 'red-team findings and resolutions' section without a machine-readable review cycle record",
+      "blocks": ["red-team-findings-resolution"],
+      "bridges": [
+        "Create rig.relay.prepublication_review_cycle.v1.schema.json (already listed as required in AGENTS.md)",
+        "Extract review cycle data from existing publication_record examples",
+        "Link to red_team_approval and repair_plan_approval schemas via finding IDs"
+      ]
+    },
+    {
+      "id": "GAP-007",
+      "title": "No review manifest format or schema exists",
+      "description": "The entire IN-002 deliverable — a review manifest — has no schema, no tool, no format definition, even as a proposal.",
+      "impact": "Everything below is greenfield: schema, data model, aggregation logic, presentation",
+      "blocks": ["all-review-compression-capabilities"],
+      "bridges": [
+        "Design rig.relay.review_manifest.v1 schema with sections for: plan vs diff comparison, deviation list, validation summary, test delta, red-team findings, residual risk, review weight",
+        "Build manifest generator tool that reads from existing infrastructure",
+        "Seed with real data from a recent completed lane"
+      ]
+    },
+    {
+      "id": "GAP-008",
+      "title": "Builder publication record and verification record schemas missing",
+      "description": "Two schemas required by AGENTS.md governance policy do not exist: builder_publication_record.v1 and verification_record.v1.",
+      "impact": "Review compression depends on publication records as upstream data; without schemas, data is ad-hoc and brittle",
+      "blocks": ["publication-as-review-input"],
+      "bridges": [
+        "Create rig.relay.builder_publication_record.v1.schema.json from existing record examples",
+        "Create rig.relay.verification_record.v1.schema.json",
+        "Align with publication_record.v1+v2.json examples and publications.v1.jsonl ledger"
+      ]
+    },
+    {
+      "id": "GAP-009",
+      "title": "Governance integrity gap — prepublication verdict fabrication",
+      "description": "Prepublication verdicts can be recorded before the reviewer has conducted their review (documented in out-of-scope-findings.jsonl).",
+      "impact": "Review compression would surface fabricated reviews as if they were genuine, undermining trust in the manifest",
+      "blocks": ["trusted-review-data"],
+      "bridges": [
+        "Add schema constraints preventing prepublication_verdict from being written as 'admitted' before reviewer tool records it",
+        "Include provenance metadata (tool_name, session_id, timestamp) in review manifest entries"
+      ]
+    },
+    {
+      "id": "GAP-010",
+      "title": "Session-scoped artifact fragmentation",
+      "description": "Validation, QA, stress, and checkpoint artifacts are spread across docs/json/opencode/sessions/{sessionID}/waves/, qa/, checkpoints/, and cross-session directories.",
+      "impact": "Review compression must aggregate across multiple directories per lane, increasing implementation complexity",
+      "blocks": ["artifact-discovery"],
+      "bridges": [
+        "Build a lane-scoped artifact index or aggregator",
+        "Leverage the existing coordination messages for lane-to-session mapping",
+        "Or mandate that review manifests be written to a single predictable path"
+      ]
+    }
+  ],
+  "existing_data_sources": {
+    "for_plan_analysis": [
+      { "source": "Plan artifacts", "path": "docs/json/opencode/plans/{plan_id}.v1.json", "fields": ["boundary", "claim_atoms", "content"], "quality": "High — structured, but claim_atoms lack file references" },
+      { "source": "Critic reviews", "path": "docs/json/opencode/plans/{plan_id}/critics/critic-review.v1.json or reviews/*.review.v1.json", "fields": ["axes scores", "objections", "claim_atom_verification"], "quality": "High — 7-axis scoring, per-atom verification" },
+      { "source": "Comments ledger", "path": "docs/json/opencode/plans/{plan_id}/comments.v1.jsonl", "fields": ["category", "severity", "finding", "repair_path"], "quality": "Medium — structured but free-text body" }
+    ],
+    "for_diff_analysis": [
+      { "source": "Snapshot.FileDiff[]", "path": "Computed by snapshot/index.ts diffFull(), stored in Storage under ['session_diff', sessionID]", "fields": ["file", "patch", "additions", "deletions", "status"], "quality": "High — structured, per-file counts, patch available" },
+      { "source": "Edit log", "path": "docs/json/opencode/sessions/{sessionID}/edits/edit_log.v1.jsonl", "fields": ["file", "agent", "reason", "change_summary", "plan_step"], "quality": "Medium — execution trace with reason, but no diff patch" },
+      { "source": "session_diff tool", "path": "packages/opencode/src/tool/session-diff.ts", "fields": ["files_changed", "edits_count", "agents", "reasons"], "quality": "Medium — aggregates edit_log, but from-scratch per session" }
+    ],
+    "for_validation": [
+      { "source": "Execution wave records", "path": "docs/json/opencode/sessions/{sessionID}/waves/execution.v1.jsonl", "fields": ["plan_id", "tests_run", "validation_passed"], "quality": "Low — boolean only, no test details" },
+      { "source": "Stress wave records", "path": "docs/json/opencode/sessions/{sessionID}/waves/stress.v1.jsonl", "fields": ["attacks_attempted", "findings", "verdict"], "quality": "Medium — structured findings when populated" },
+      { "source": "QA observations", "path": "docs/json/opencode/sessions/{sessionID}/qa/observations.v1.jsonl", "fields": ["plan_id", "boundary", "verdict", "tests_examined"], "quality": "Medium — structured but thin" },
+      { "source": "Validation artifacts (ad-hoc)", "path": "docs/json/opencode/validation/*.v1.json, docs/json/opencode/qa/*.v1.json, docs/json/qa/*.v1.json", "fields": ["criteria", "findings", "verdict"], "quality": "Variable — 4+ incompatible formats, no schemas" }
+    ],
+    "for_publication_and_review": [
+      { "source": "Publications ledger", "path": "docs/json/opencode/publications/publications.v1.jsonl", "fields": ["checkpoint_sha", "branch", "boundary", "consumer_purpose", "claim_atoms", "changed_files"], "quality": "High — structured with claim_atoms and changed_files arrays" },
+      { "source": "Checkpoint records", "path": "docs/json/opencode/sessions/{sessionID}/checkpoints/checkpoints.v1.jsonl", "fields": ["id", "published", "failures", "report"], "quality": "Low — failure tracking only, no diff or claim linkage" },
+      { "source": "Prepublication records", "path": "docs/json/opencode/approvals/prepublication_{admitted,blocked,inconclusive}.v1.json", "fields": ["candidate_packet_digest", "boundary", "reviewer_set", "review_round"], "quality": "Medium — structured but standalone, not linked to plan/diff" },
+      { "source": "Red team approvals", "path": "docs/json/opencode/approvals/red_team_approval.v1.json", "fields": ["candidate_boundary_identifier", "blocking_findings", "surviving_weakness"], "quality": "High — structured findings with severity" }
+    ],
+    "for_coordination": [
+      { "source": "Coordination messages", "path": "docs/json/opencode/coordination/messages.v1.jsonl", "fields": ["files_created", "files_modified", "claim_atoms_verified"], "quality": "Medium — ad-hoc, not all lanes populate these fields" }
+    ]
+  },
+  "schema_requirements_for_review_manifest": {
+    "new_schemas_needed": [
+      {
+        "name": "rig.relay.review_manifest.v1",
+        "purpose": "Top-level review manifest for a single lane, containing all compressed review data",
+        "proposed_sections": [
+          "manifest_id, lane_id, boundary, generated_at",
+          "plan_summary: plan_id, revision, claim_atoms, boundary",
+          "diff_summary: total_files, total_additions, total_deletions, per_file breakdown with Snapshot.FileDiff",
+          "plan_vs_diff_deviation: files_in_scope, files_outside_touch_set, untouchted_claim_atoms",
+          "validation_summary: commands_run, test_deltas, pass_fail_counts",
+          "red_team_summary: findings_found, findings_resolved, residual_risks",
+          "review_weight_map: per-file weight classification (mechanical/low/medium/high/critical) with rationale",
+          "residual_risks: surviving weaknesses, deferred seams, repair_debt",
+          "provenance: data_sources_used, tool_versions"
+        ]
+      },
+      {
+        "name": "rig.relay.builder_publication_record.v1",
+        "purpose": "Canonical schema for builder publication records (exists as ad-hoc records, missing schema file)",
+        "source_examples": ["docs/json/opencode/publication_record.v1.json", "docs/json/opencode/publication_record.v2.json"]
+      },
+      {
+        "name": "rig.relay.verification_record.v1",
+        "purpose": "Canonical schema for reviewer verification records (referenced by AGENTS.md, does not exist)",
+        "source_examples": ["docs/json/qa/verification_lane7_github_hardening.v1.json (uses qa.verification schema instead)"]
+      },
+      {
+        "name": "rig.relay.prepublication_review_cycle.v1",
+        "purpose": "Standalone schema for prepublication review cycles (currently embedded inline in publication records)",
+        "source_examples": ["Embedded in publication_record.v1+v2.json review_cycle fields"]
+      }
+    ],
+    "existing_schemas_to_extend": [
+      {
+        "schema": "rig.relay.plan_approval.v1",
+        "extension": "Add optional review_weight or risk_score fields for plan-level risk assessment"
+      },
+      {
+        "schema": "rig.relay.red_team_approval.v1",
+        "extension": "Add residual_risks and repair_debt fields for tracking surviving weaknesses"
+      }
+    ]
+  },
+  "key_files_for_review_compression": {
+    "to_read_for_data": [
+      "packages/opencode/src/snapshot/index.ts — FileDiff schema and diffFull implementation",
+      "packages/opencode/src/session/summary.ts — diff computation from session messages",
+      "packages/opencode/src/tool/session-diff.ts — edit_log aggregator",
+      "packages/opencode/src/tool/propose-plan.ts — claim_atoms parsing",
+      "packages/opencode/src/campaign/role-contracts.ts — role output schemas"
+    ],
+    "to_read_for_schema_design": [
+      "docs/schemas/rig.relay.plan_approval.v1.schema.json",
+      "docs/schemas/rig.relay.red_team_approval.v1.schema.json",
+      "docs/schemas/rig.relay.repair_plan_approval.v1.schema.json",
+      "docs/schemas/rig.relay.reporting_honesty_audit.v1.schema.json"
+    ],
+    "to_read_for_example_data": [
+      "docs/json/opencode/plans/ah-001-inflight-atomicity.v1.json",
+      "docs/json/opencode/plans/task-board-fleet-visibility.v1.json (has revision_notes)",
+      "docs/json/opencode/plans/desktop-mcp-management-ui/review.v1.json (critic review format)",
+      "docs/json/opencode/publication_record.v2.json",
+      "docs/json/opencode/publications/publications.v1.jsonl",
+      "docs/json/opencode/sessions/lane6/validation_artifact.v1.json"
+    ]
+  },
+  "smoking_guns": [
+    {
+      "id": "SG-001",
+      "severity": "high",
+      "finding": "Plan/diff comparison is entirely manual — critic reviews cross-reference claim_atoms against source code by hand. No automated diff parser compares planned files to actual changed files.",
+      "file": "packages/opencode/src/campaign/role-contracts.ts (critic output schema)",
+      "evidence": "No tool or service exists that reads both a plan artifact and a Snapshot.FileDiff[] and produces a deviation report"
+    },
+    {
+      "id": "SG-002",
+      "severity": "high",
+      "finding": "claim_atoms are free-text strings, not structured file references. Cannot programmatically determine 'files this plan claims to touch' from a plan artifact alone.",
+      "file": "docs/json/opencode/plans/ah-001-inflight-atomicity.v1.json (lines 8-12)",
+      "evidence": "Sampled 3+ plans — claim_atoms are prose statements ('The inflight registration...is currently non-atomic'), not file patterns"
+    },
+    {
+      "id": "SG-003",
+      "severity": "high",
+      "finding": "Five validation schema families coexist with zero unification. No JSON Schema files exist for any validation format. A review manifest cannot ingest these without normalization.",
+      "files": [
+        "docs/json/opencode/validation/plugin-transport-validation.v1.json",
+        "docs/json/opencode/qa/tool_cache_validation.v1.json",
+        "docs/json/opencode/sessions/lane6/validation_artifact.v1.json",
+        "docs/json/qa/verification_lane7_github_hardening.v1.json",
+        "docs/json/opencode/stress/phase1-remaining-stress-findings.v1.json"
+      ],
+      "evidence": "Each uses a different schema_version string: validation_report.v1, qa.validation.v1, validation_artifact.v1, qa.verification.v1, stress_report.v1"
+    },
+    {
+      "id": "SG-004",
+      "severity": "medium",
+      "finding": "No test delta mechanism exists — validation results are point-in-time snapshots with no before/after comparison. Review compression's 'test deltas with pass/fail summaries' requires new infrastructure.",
+      "evidence": "No compare_validation_runs tool, no regression comparison, no historical trend tracking in the entire codebase"
+    },
+    {
+      "id": "SG-005",
+      "severity": "medium",
+      "finding": "The builder_publication_record, verification_record, and prepublication_review_cycle schemas mandated by AGENTS.md governance policy do not exist as schema files. Publication records exist as ad-hoc JSON with no schema enforcement.",
+      "files": [
+        "docs/schemas/ (no builder_publication_record, verification_record, or prepublication_review_cycle schemas)",
+        "docs/json/opencode/publication_record.v1.json (ad-hoc format, no schema validation)"
+      ],
+      "evidence": "AGENTS.md requires these schemas but docs/schemas/ directory contains only 10 schemas, none matching these names"
+    },
+    {
+      "id": "SG-006",
+      "severity": "medium",
+      "finding": "Prepublication verdict fabrication is possible — verdicts can be recorded before review occurs (documented governance gap). Review compression would surface these as genuine.",
+      "file": "docs/findings/out-of-scope-findings.jsonl (line 9)",
+      "evidence": "Out-of-scope finding explicitly calls out 'prepublication review records listing a reviewer with a positive verdict before that reviewer has conducted their review'"
+    },
+    {
+      "id": "SG-007",
+      "severity": "low",
+      "finding": "Validation, QA, stress, and checkpoint artifacts are scattered across session-scoped and cross-session directories with no unified index. Review compression must aggregate across multiple discovery paths.",
+      "evidence": "Artifacts live in: sessions/{id}/waves/, sessions/{id}/qa/, sessions/{id}/checkpoints/, top-level stress/, top-level qa/, top-level validation/"
+    }
+  ],
+  "pre_existing_findings_incorporated": [
+    {
+      "type": "debt",
+      "summary": "Two tools in registry are placeholders (delegate.ts, session-diff.ts) — erodes trust in tool registry",
+      "file": "packages/opencode/src/tool/session-diff.ts",
+      "relevance": "session_diff tool is the primary diff aggregator; placeholder status means review compression may need to build diff aggregation from scratch"
+    },
+    {
+      "type": "debt",
+      "summary": "Event taxonomy is 90% consistent but eventType is freeform string — no global registry, 7 naming inconsistencies, 60% of canonical events don't exist yet",
+      "file": "docs/json/opencode/findings/event-taxonomy-audit.v1.json",
+      "relevance": "Validation events (validation.started, validation.passed, validation.failed) are undefined — review compression cannot subscribe to validation lifecycle events"
+    }
+  ],
+  "recommended_immediate_next": [
+    "1. Design rig.relay.review_manifest.v1 schema — defines the output contract for the review compression system",
+    "2. Create missing governance schemas: builder_publication_record.v1, verification_record.v1, prepublication_review_cycle.v1 — required upstream data fidelity",
+    "3. Build plan/diff comparison engine — reads plan boundary + claim_atoms, parses Snapshot.FileDiff[], produces deviation report",
+    "4. Design review weight rubric — classify changes by type (mechanical, config, logic, security), path pattern, dependency impact",
+    "5. Prototype manifest generator tool — Effect service that reads all data sources and produces rig.relay.review_manifest.v1 output"
+  ]
+}

@@ -1,4 +1,5 @@
 import { BusEvent } from "@/bus/bus-event"
+import { EventName } from "@/event/event-names"
 import { Bus } from "@/bus"
 import * as Log from "@opencode-ai/core/util/log"
 import * as LSPClient from "./client"
@@ -17,7 +18,7 @@ import { RuntimeFlags } from "@/effect/runtime-flags"
 const log = Log.create({ service: "lsp" })
 
 export const Event = {
-  Updated: BusEvent.define("lsp.updated", Schema.Struct({})),
+  Updated: BusEvent.define(EventName.LspUpdated, Schema.Struct({})),
 }
 
 const Position = Schema.Struct({

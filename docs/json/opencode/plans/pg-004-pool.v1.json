@@ -1,0 +1,33 @@
+{
+  "schema_version": "v1",
+  "plan_id": "pg-004-pool",
+  "plan_revision": 1,
+  "title": "Production Postgres connection pool and health checks",
+  "boundary": "pg-connection-pool",
+  "consumer_purpose": "Production-grade Postgres connection management with retry, health checking, and graceful degradation",
+  "claim_atoms": [
+    "ConnPool: pg.Pool wrapped in Effect service with configurable min/max/idle/connection-timeout",
+    "Retry: pool.acquireConnection retries with exponential backoff on connection failure (3 attempts)",
+    "HealthCheck: PgPool.healthCheck() runs SELECT 1 and returns true/false",
+    "Degradation: defaultLayer falls back to SQLite when PG unreachable, logs warning",
+    "Config: poolSize, poolMin, connectionTimeout, idleTimeout, retryMax configurable via env vars",
+    "PoolClose: PgPool.close() drains and ends the pg.Pool gracefully",
+    "Tests: pool creation, health check happy+unhappy, retry behavior, graceful degradation"
+  ],
+  "content": "# PG-004: Production Postgres Connection Pool\n\n## Summary\nWrap the `pg.Pool` in an Effect-managed service with proper configuration, connection retry with exponential backoff, health check via `SELECT 1`, and graceful degradation to SQLite when Postgres is unavailable.\n\n## Files to Create\n\n### 1. `packages/opencode/src/storage/pg-pool.ts` (NEW)\nEffect service wrapping `pg.Pool` with:\n- `PgPoolConfig`: url, ssl, min, max, connectionTimeoutMs, idleTimeoutMs, maxRetries\n- `PgPool` class with:\n  - `static create(config) → Effect<PgPool, Error>` — creates pool, retries initial connection with exponential backoff\n  - `healthCheck() → Promise<boolean>` — runs SELECT 1\n  - `getPool() → Pool` — exposes underlying pg.Pool\n  - `close() → Promise<void>` — drains and closes pool\n  - `isHealthy() → boolean` — cached health status\n- Retry: 3 attempts, exponential backoff (100ms, 200ms, 400ms) via Effect Schedule\n\n### 2. `packages/opencode/test/storage/pg-pool.pg.test.ts` (NEW)\nTests:\n- Pool creation with valid PGlite or real PG URL\n- healthCheck returns true when PG is reachable\n- healthCheck returns false with bad connection string (PGlite fallback)\n- Pool config from env vars\n- Graceful degradation in adapter layer\n\n## Files to Modify\n\n### 3. `packages/opencode/src/effect/database-config.ts`\nAdd config fields:\n- `poolMin`: Config.number(\"OPENCODE_DATABASE_POOL_MIN\").pipe(Config.withDefault(1))\n- `connectionTimeout`: Config.number(\"OPENCODE_DATABASE_CONNECTION_TIMEOUT\").pipe(Config.withDefault(5000))\n- `idleTimeout`: Config.number(\"OPENCODE_DATABASE_IDLE_TIMEOUT\").pipe(Config.withDefault(30000))\n- `poolRetryMax`: Config.number(\"OPENCODE_DATABASE_POOL_RETRIES\").pipe(Config.withDefault(3))\n\n### 4. `packages/opencode/src/storage/db.pg.ts`\nEnhance `init()` to:\n- Accept optional `Pool` instance from `pg-pool.ts`\n- When creating `Pool`, pass `max: config.poolSize`, `connectionTimeoutMillis: config.connectionTimeout`, `idleTimeoutMillis: config.idleTimeout`\n- Export `createPool(config) → Pool` for direct use\n- Keep backward compat with existing `init(connectionString, ssl)` signature\n\n### 5. `packages/opencode/src/storage/adapter.ts`\nAdd graceful degradation to `defaultLayer`:\n- Wrap PgAdapter creation in Effect that catches connection errors\n- On failure: log warning, fall back to SQLiteAdapter\n- Log the fallback so operators are aware\n\n## Out of Scope\n- New database schemas or migrations\n- i18n, plugins, IPC changes\n- DuckDB pool changes\n- HTTP server / /health endpoint (this lane adds the `healthCheck()` method; wiring it into an endpoint is deferred)\n",
+  "status": "proposed",
+  "created_at": "2026-05-30T10:31:20.349Z",
+  "modified_at": "2026-05-30T10:31:20.349Z",
+  "comments": [
+    {
+      "author": "lane-owner",
+      "comment": "Awaiting critic review. Checking for critic output...",
+      "at": "2026-05-30T10:31:40.669Z"
+    },
+    {
+      "author": "lane-owner",
+      "comment": "Checking for critic review output on the plan.",
+      "at": "2026-05-30T10:31:49.634Z"
+    }
+  ]
+}

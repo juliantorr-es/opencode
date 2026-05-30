@@ -1,0 +1,79 @@
+{"at":"2026-05-30T11:49:17.434Z","session_id":"ses_1874897d1ffeK2jLJU54XRmftE","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"EventV2\\.define"}
+{"at":"2026-05-30T11:49:17.570Z","session_id":"ses_1874897d1ffeK2jLJU54XRmftE","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"EventV2\\.define"}
+{"at":"2026-05-30T11:49:28.683Z","session_id":"ses_1874897d1ffeK2jLJU54XRmftE","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"EventV2"}
+{"at":"2026-05-30T11:49:28.832Z","session_id":"ses_1874897d1ffeK2jLJU54XRmftE","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"EventV2"}
+{"at":"2026-05-30T11:49:28.842Z","session_id":"ses_1874897d1ffeK2jLJU54XRmftE","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"registry\\.set\\("}
+{"at":"2026-05-30T11:49:28.857Z","session_id":"ses_1874897d1ffeK2jLJU54XRmftE","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"registry\\.set\\("}
+{"at":"2026-05-30T11:49:28.865Z","session_id":"ses_1874897d1ffeK2jLJU54XRmftE","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"eventTypes|events:"}
+{"at":"2026-05-30T11:49:28.877Z","session_id":"ses_1874897d1ffeK2jLJU54XRmftE","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"eventTypes|events:"}
+{"at":"2026-05-30T11:49:33.044Z","session_id":"ses_1874897d1ffeK2jLJU54XRmftE","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"\"session\\.|\"tool\\.|\"agent\\.|\"file\\.|\"permission\\.|\"server\\.|\"instance\\.|\"system\\"}
+{"at":"2026-05-30T11:49:33.055Z","session_id":"ses_1874897d1ffeK2jLJU54XRmftE","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"\"session\\.|\"tool\\.|\"agent\\.|\"file\\.|\"permission\\.|\"server\\.|\"instance\\.|\"system\\"}
+{"at":"2026-05-30T11:49:38.481Z","session_id":"ses_1874897d1ffeK2jLJU54XRmftE","agent":"cartographer","tool":"smart_find","phase":"started","detail":"event.ts"}
+{"at":"2026-05-30T11:49:38.482Z","session_id":"ses_1874897d1ffeK2jLJU54XRmftE","agent":"cartographer","tool":"smart_find","phase":"completed","detail":"event.ts"}
+{"at":"2026-05-30T11:49:43.073Z","session_id":"ses_1874897d1ffeK2jLJU54XRmftE","agent":"cartographer","tool":"smart_find","phase":"started","detail":"*.ts"}
+{"at":"2026-05-30T11:49:43.074Z","session_id":"ses_1874897d1ffeK2jLJU54XRmftE","agent":"cartographer","tool":"smart_find","phase":"failed","detail":"path not found"}
+{"at":"2026-05-30T11:49:55.616Z","session_id":"ses_1874897d1ffeK2jLJU54XRmftE","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Read full session-event.ts with line numbers to extract all event definitions"}
+{"at":"2026-05-30T11:49:55.616Z","session_id":"ses_1874897d1ffeK2jLJU54XRmftE","agent":"cartographer","tool":"smart_bash","phase":"rerouted","detail":"→ read_source"}
+{"at":"2026-05-30T11:50:01.065Z","session_id":"ses_1874897d1ffeK2jLJU54XRmftE","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Need line count to know how large the file is"}
+{"at":"2026-05-30T11:50:01.076Z","session_id":"ses_1874897d1ffeK2jLJU54XRmftE","agent":"cartographer","tool":"smart_bash","phase":"completed","detail":"wc exit=0"}
+{"at":"2026-05-30T11:50:07.162Z","session_id":"ses_1874897d1ffeK2jLJU54XRmftE","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Extract all type string lines from session-event.ts"}
+{"at":"2026-05-30T11:50:07.163Z","session_id":"ses_1874897d1ffeK2jLJU54XRmftE","agent":"cartographer","tool":"smart_bash","phase":"rerouted","detail":"→ smart_grep"}
+{"at":"2026-05-30T11:50:09.362Z","session_id":"ses_1874897d1ffeK2jLJU54XRmftE","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Extract version/aggregate annotations from session-event.ts"}
+{"at":"2026-05-30T11:50:09.363Z","session_id":"ses_1874897d1ffeK2jLJU54XRmftE","agent":"cartographer","tool":"smart_bash","phase":"rerouted","detail":"→ smart_grep"}
+{"at":"2026-05-30T11:50:09.382Z","session_id":"ses_1874897d1ffeK2jLJU54XRmftE","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Read first event definition (AgentSwitched) as sample"}
+{"at":"2026-05-30T11:50:17.629Z","session_id":"ses_1874897d1ffeK2jLJU54XRmftE","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"type: \""}
+{"at":"2026-05-30T11:50:17.643Z","session_id":"ses_1874897d1ffeK2jLJU54XRmftE","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"type: \""}
+{"at":"2026-05-30T11:50:17.665Z","session_id":"ses_1874897d1ffeK2jLJU54XRmftE","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"schema: {"}
+{"at":"2026-05-30T11:50:17.674Z","session_id":"ses_1874897d1ffeK2jLJU54XRmftE","agent":"cartographer","tool":"smart_grep","phase":"failed","detail":"rg: regex parse error:\n    (?:schema: {)\n                ^\nerror: repetition quantifier expects a valid decimal"}
+{"at":"2026-05-30T11:50:21.044Z","session_id":"ses_1874897d1ffeK2jLJU54XRmftE","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"export const"}
+{"at":"2026-05-30T11:50:21.051Z","session_id":"ses_1874897d1ffeK2jLJU54XRmftE","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"export const"}
+{"at":"2026-05-30T11:50:26.545Z","session_id":"ses_1874897d1ffeK2jLJU54XRmftE","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Extract EventV2.define blocks from session-event.ts"}
+{"at":"2026-05-30T11:50:26.558Z","session_id":"ses_1874897d1ffeK2jLJU54XRmftE","agent":"cartographer","tool":"smart_bash","phase":"completed","detail":"awk exit=0"}
+{"at":"2026-05-30T11:50:32.142Z","session_id":"ses_1874897d1ffeK2jLJU54XRmftE","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Extract first portion of EventV2.define blocks"}
+{"at":"2026-05-30T11:50:32.166Z","session_id":"ses_1874897d1ffeK2jLJU54XRmftE","agent":"cartographer","tool":"smart_bash","phase":"completed","detail":"awk exit=0"}
+{"at":"2026-05-30T11:50:44.094Z","session_id":"ses_1874897d1ffeK2jLJU54XRmftE","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Extract remaining EventV2.define blocks from session-event.ts"}
+{"at":"2026-05-30T11:50:44.112Z","session_id":"ses_1874897d1ffeK2jLJU54XRmftE","agent":"cartographer","tool":"smart_bash","phase":"completed","detail":"awk exit=0"}
+{"at":"2026-05-30T11:50:46.494Z","session_id":"ses_1874897d1ffeK2jLJU54XRmftE","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Extract the options spread definition"}
+{"at":"2026-05-30T11:50:46.506Z","session_id":"ses_1874897d1ffeK2jLJU54XRmftE","agent":"cartographer","tool":"smart_bash","phase":"completed","detail":"awk exit=0"}
+{"at":"2026-05-30T11:50:53.479Z","session_id":"ses_1874897d1ffeK2jLJU54XRmftE","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Extract the Base schema definition"}
+{"at":"2026-05-30T11:50:53.491Z","session_id":"ses_1874897d1ffeK2jLJU54XRmftE","agent":"cartographer","tool":"smart_bash","phase":"completed","detail":"awk exit=0"}
+{"at":"2026-05-30T11:50:53.509Z","session_id":"ses_1874897d1ffeK2jLJU54XRmftE","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Extract Event definitions from account.ts"}
+{"at":"2026-05-30T11:50:53.529Z","session_id":"ses_1874897d1ffeK2jLJU54XRmftE","agent":"cartographer","tool":"smart_bash","phase":"completed","detail":"awk exit=0"}
+{"at":"2026-05-30T11:50:53.543Z","session_id":"ses_1874897d1ffeK2jLJU54XRmftE","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Extract Event definitions from catalog.ts"}
+{"at":"2026-05-30T11:50:53.559Z","session_id":"ses_1874897d1ffeK2jLJU54XRmftE","agent":"cartographer","tool":"smart_bash","phase":"completed","detail":"awk exit=0"}
+{"at":"2026-05-30T11:50:53.577Z","session_id":"ses_1874897d1ffeK2jLJU54XRmftE","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Extract Event definitions from models-dev.ts"}
+{"at":"2026-05-30T11:50:53.605Z","session_id":"ses_1874897d1ffeK2jLJU54XRmftE","agent":"cartographer","tool":"smart_bash","phase":"completed","detail":"awk exit=0"}
+{"at":"2026-05-30T11:51:02.550Z","session_id":"ses_1874897d1ffeK2jLJU54XRmftE","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Extract test event definitions from event.test.ts"}
+{"at":"2026-05-30T11:51:02.591Z","session_id":"ses_1874897d1ffeK2jLJU54XRmftE","agent":"cartographer","tool":"smart_bash","phase":"completed","detail":"awk exit=0"}
+{"at":"2026-05-30T11:51:15.184Z","session_id":"ses_1874897d1ffeK2jLJU54XRmftE","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Extract all event definitions with their full schemas using python"}
+{"at":"2026-05-30T11:51:15.266Z","session_id":"ses_1874897d1ffeK2jLJU54XRmftE","agent":"cartographer","tool":"smart_bash","phase":"completed","detail":"awk exit=0"}
+{"at":"2026-05-30T11:51:21.892Z","session_id":"ses_1874897d1ffeK2jLJU54XRmftE","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Extract all EventV2.define blocks with proper brace matching"}
+{"at":"2026-05-30T11:51:21.982Z","session_id":"ses_1874897d1ffeK2jLJU54XRmftE","agent":"cartographer","tool":"smart_bash","phase":"completed","detail":"python3 exit=0"}
+{"at":"2026-05-30T11:51:26.892Z","session_id":"ses_1874897d1ffeK2jLJU54XRmftE","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Extract simplified event summary with type strings and schemas"}
+{"at":"2026-05-30T11:51:26.945Z","session_id":"ses_1874897d1ffeK2jLJU54XRmftE","agent":"cartographer","tool":"smart_bash","phase":"completed","detail":"python3 exit=0"}
+{"at":"2026-05-30T11:51:31.230Z","session_id":"ses_1874897d1ffeK2jLJU54XRmftE","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Print all event definitions with full bodies separated"}
+{"at":"2026-05-30T11:51:31.264Z","session_id":"ses_1874897d1ffeK2jLJU54XRmftE","agent":"cartographer","tool":"smart_bash","phase":"completed","detail":"python3 exit=0"}
+{"at":"2026-05-30T11:51:35.981Z","session_id":"ses_1874897d1ffeK2jLJU54XRmftE","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Write definitions to temp file and read back to avoid truncation"}
+{"at":"2026-05-30T11:51:36.065Z","session_id":"ses_1874897d1ffeK2jLJU54XRmftE","agent":"cartographer","tool":"smart_bash","phase":"completed","detail":"python3 exit=0"}
+{"at":"2026-05-30T11:51:40.545Z","session_id":"ses_1874897d1ffeK2jLJU54XRmftE","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Check total lines in temp file"}
+{"at":"2026-05-30T11:51:40.565Z","session_id":"ses_1874897d1ffeK2jLJU54XRmftE","agent":"cartographer","tool":"smart_bash","phase":"completed","detail":"wc exit=0"}
+{"at":"2026-05-30T11:51:44.389Z","session_id":"ses_1874897d1ffeK2jLJU54XRmftE","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"List all event definition headers found in the temp file"}
+{"at":"2026-05-30T11:51:44.447Z","session_id":"ses_1874897d1ffeK2jLJU54XRmftE","agent":"cartographer","tool":"smart_bash","phase":"completed","detail":"python3 exit=0"}
+{"at":"2026-05-30T11:51:49.509Z","session_id":"ses_1874897d1ffeK2jLJU54XRmftE","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Print remaining event definitions from Called onward"}
+{"at":"2026-05-30T11:51:49.549Z","session_id":"ses_1874897d1ffeK2jLJU54XRmftE","agent":"cartographer","tool":"smart_bash","phase":"completed","detail":"python3 exit=0"}
+{"at":"2026-05-30T11:51:53.074Z","session_id":"ses_1874897d1ffeK2jLJU54XRmftE","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Print Text and Reasoning and Tool.Input definitions"}
+{"at":"2026-05-30T11:51:53.126Z","session_id":"ses_1874897d1ffeK2jLJU54XRmftE","agent":"cartographer","tool":"smart_bash","phase":"completed","detail":"python3 exit=0"}
+{"at":"2026-05-30T11:51:55.927Z","session_id":"ses_1874897d1ffeK2jLJU54XRmftE","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Print Step definitions"}
+{"at":"2026-05-30T11:51:55.963Z","session_id":"ses_1874897d1ffeK2jLJU54XRmftE","agent":"cartographer","tool":"smart_bash","phase":"completed","detail":"python3 exit=0"}
+{"at":"2026-05-30T11:51:56.501Z","session_id":"ses_1874897d1ffeK2jLJU54XRmftE","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Print Shell definitions"}
+{"at":"2026-05-30T11:51:56.535Z","session_id":"ses_1874897d1ffeK2jLJU54XRmftE","agent":"cartographer","tool":"smart_bash","phase":"completed","detail":"python3 exit=0"}
+{"at":"2026-05-30T11:51:56.944Z","session_id":"ses_1874897d1ffeK2jLJU54XRmftE","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Print Reasoning definitions"}
+{"at":"2026-05-30T11:51:56.982Z","session_id":"ses_1874897d1ffeK2jLJU54XRmftE","agent":"cartographer","tool":"smart_bash","phase":"completed","detail":"python3 exit=0"}
+{"at":"2026-05-30T11:51:59.681Z","session_id":"ses_1874897d1ffeK2jLJU54XRmftE","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Print Progress, Success, Failed, Retried definitions"}
+{"at":"2026-05-30T11:51:59.720Z","session_id":"ses_1874897d1ffeK2jLJU54XRmftE","agent":"cartographer","tool":"smart_bash","phase":"completed","detail":"python3 exit=0"}
+{"at":"2026-05-30T11:52:02.784Z","session_id":"ses_1874897d1ffeK2jLJU54XRmftE","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Print Text.Ended, Prompted, Synthetic definitions"}
+{"at":"2026-05-30T11:52:02.824Z","session_id":"ses_1874897d1ffeK2jLJU54XRmftE","agent":"cartographer","tool":"smart_bash","phase":"completed","detail":"python3 exit=0"}
+{"at":"2026-05-30T11:52:05.950Z","session_id":"ses_1874897d1ffeK2jLJU54XRmftE","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Print Success definition fully"}
+{"at":"2026-05-30T11:52:05.982Z","session_id":"ses_1874897d1ffeK2jLJU54XRmftE","agent":"cartographer","tool":"smart_bash","phase":"completed","detail":"python3 exit=0"}
+{"at":"2026-05-30T11:52:08.996Z","session_id":"ses_1874897d1ffeK2jLJU54XRmftE","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Print Called event definition"}
+{"at":"2026-05-30T11:52:09.030Z","session_id":"ses_1874897d1ffeK2jLJU54XRmftE","agent":"cartographer","tool":"smart_bash","phase":"completed","detail":"python3 exit=0"}

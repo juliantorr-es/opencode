@@ -3,6 +3,7 @@ import { ipcMain, net, safeStorage, shell } from "electron"
 import { IPC } from "./ipc-channels"
 import { getGithubClientId } from "./app-config"
 import { getStore } from "./store"
+import { withIpcResult } from "./ipc-contract"
 
 const GITHUB_TOKEN_URL = "https://github.com/login/oauth/access_token"
 
@@ -78,31 +79,33 @@ export function registerGithubIpcHandlers() {
   })
 
   ipcMain.handle(IPC.handle.GITHUB_API_PROXY, async (_event, url: string, options?: { method?: string; headers?: Record<string, string>; body?: string }) => {
-    const raw = getStore("github-auth").get("token") as string | undefined
-    if (!raw) return { status: 401, body: "Not authenticated" }
-    let token: string
-    try {
-      token = safeStorage.decryptString(Buffer.from(raw, "base64"))
-    } catch {
-      return { status: 401, body: "Failed to decrypt token" }
-    }
+    return withIpcResult("github.apiProxy", async () => {
+      const raw = getStore("github-auth").get("token") as string | undefined
+      if (!raw) return { status: 401, body: "Not authenticated" }
+      let token: string
+      try {
+        token = safeStorage.decryptString(Buffer.from(raw, "base64"))
+      } catch {
+        return { status: 401, body: "Failed to decrypt token" }
+      }
 
-    const urlObj = new URL(url)
-    const allowed = ["api.github.com", "uploads.github.com"]
-    if (!allowed.includes(urlObj.hostname)) {
-      return { error: { type: "forbidden", hostname: urlObj.hostname, allowedHostnames: allowed } }
-    }
+      const urlObj = new URL(url)
+      const allowed = ["api.github.com", "uploads.github.com"]
+      if (!allowed.includes(urlObj.hostname)) {
+        return { error: { type: "forbidden", hostname: urlObj.hostname, allowedHostnames: allowed } }
+      }
 
-    const response = await net.fetch(url, {
-      method: options?.method ?? "GET",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        Accept: "application/vnd.github+json",
-        "User-Agent": "opencode-desktop",
-        ...options?.headers,
-      },
-      body: options?.body,
+      const response = await net.fetch(url, {
+        method: options?.method ?? "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: "application/vnd.github+json",
+          "User-Agent": "opencode-desktop",
+          ...options?.headers,
+        },
+        body: options?.body,
+      })
+      return { status: response.status, body: await response.text() }
     })
-    return { status: response.status, body: await response.text() }
   })
 }

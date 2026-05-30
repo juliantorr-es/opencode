@@ -1,6 +1,7 @@
 import { Deferred, Effect, Layer, Schema, Context } from "effect"
 import { Bus } from "@/bus"
 import { BusEvent } from "@/bus/bus-event"
+import { EventName } from "@/event/event-names"
 import { InstanceState } from "@/effect/instance-state"
 import { SessionID, MessageID } from "@/session/schema"
 import * as Log from "@opencode-ai/core/util/log"
@@ -87,9 +88,9 @@ const Rejected = Schema.Struct({
 }).annotate({ identifier: "QuestionRejected" })
 
 export const Event = {
-  Asked: BusEvent.define("question.asked", Request),
-  Replied: BusEvent.define("question.replied", Replied),
-  Rejected: BusEvent.define("question.rejected", Rejected),
+  Asked: BusEvent.define(EventName.QuestionAsked, Request),
+  Replied: BusEvent.define(EventName.QuestionReplied, Replied),
+  Rejected: BusEvent.define(EventName.QuestionRejected, Rejected),
 }
 
 export class RejectedError extends Schema.TaggedErrorClass<RejectedError>()("QuestionRejectedError", {}) {

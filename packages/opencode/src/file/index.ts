@@ -1,4 +1,5 @@
 import { BusEvent } from "@/bus/bus-event"
+import { EventName } from "@/event/event-names"
 import { serviceUse } from "@opencode-ai/core/effect/service-use"
 import { InstanceState } from "@/effect/instance-state"
 
@@ -63,7 +64,7 @@ export type Content = DeepMutable<Schema.Schema.Type<typeof Content>>
 
 export const Event = {
   Edited: BusEvent.define(
-    "file.edited",
+    EventName.FileEdited,
     Schema.Struct({
       file: Schema.String,
     }),
