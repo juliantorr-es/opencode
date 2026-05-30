@@ -491,6 +491,18 @@ export interface Interface {
     field: string
     delta: string
   }) => Effect.Effect<void>
+  readonly importCreate: (input: {
+    id?: SessionID
+    projectID: ProjectID
+    directory: string
+    title: string
+    path?: string
+    workspaceID?: WorkspaceID
+    agent?: string
+    model?: Schema.Schema.Type<typeof Model>
+    permission?: Permission.Ruleset
+    time?: { created: number }
+  }) => Effect.Effect<Info>
   /** Finds the first message matching the predicate, searching newest-first. */
   readonly findMessage: (
     sessionID: SessionID,
@@ -676,6 +688,52 @@ export const layer: Layer.Layer<
       })
     })
 
+    const importCreate = Effect.fn("Session.importCreate")(function* (input: {
+      id?: SessionID
+      projectID: ProjectID
+      directory: string
+      title: string
+      path?: string
+      workspaceID?: WorkspaceID
+      agent?: string
+      model?: Schema.Schema.Type<typeof Model>
+      permission?: Permission.Ruleset
+      time?: { created: number }
+    }) {
+      const now = Date.now()
+      const result: Info = {
+        id: SessionID.descending(input.id),
+        slug: Slug.create(),
+        version: InstallationVersion,
+        projectID: input.projectID,
+        directory: input.directory,
+        path: input.path,
+        workspaceID: input.workspaceID,
+        title: input.title,
+        agent: input.agent,
+        model: input.model,
+        permission: input.permission ? [...input.permission] : undefined,
+        cost: 0,
+        tokens: EmptyTokens,
+        time: {
+          created: input.time?.created ?? now,
+          updated: now,
+        },
+      }
+      log.info("imported", result)
+
+      yield* sync.run(Event.Created, { sessionID: result.id, info: result })
+
+      if (!flags.experimentalWorkspaces) {
+        yield* bus.publish(Event.Updated, {
+          sessionID: result.id,
+          info: result,
+        })
+      }
+
+      return result
+    })
+
     const fork = Effect.fn("Session.fork")(function* (input: { sessionID: SessionID; messageID?: MessageID }) {
       const ctx = yield* InstanceState.context
       const original = yield* get(input.sessionID)
@@ -839,6 +897,7 @@ export const layer: Layer.Layer<
     return Service.of({
       list,
       create,
+      importCreate,
       fork,
       touch,
       get,
@@ -983,7 +1042,7 @@ export function* listGlobal(input?: {
     return query.orderBy(desc(SessionTable.time_updated), desc(SessionTable.id)).limit(limit).all()
   })
 
-  const ids = [...new Set(rows.map((row) => row.project_id))]
+  const ids = [...new Set(rows.map((row: typeof SessionTable.$inferSelect) => row.project_id))]
   const projects = new Map<string, ProjectInfo>()
 
   if (ids.length > 0) {

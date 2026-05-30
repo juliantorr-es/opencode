@@ -111,6 +111,12 @@ export type Platform = {
   /** Export collected diagnostic logs (desktop only) */
   exportDebugLogs?(): Promise<string>
 
+  /** Export session data to a JSON file (desktop only) */
+  sessionExportData?(data: string, opts?: { title?: string; defaultPath?: string; filters?: Array<{ name: string; extensions: string[] }> }): Promise<string | { error: string } | null>
+
+  /** Import session data from a JSON file (desktop only) */
+  sessionImportFile?(opts?: { title?: string; filters?: Array<{ name: string; extensions: string[] }> }): Promise<string | { error: string } | null>
+
   /** Record a fatal renderer error in platform logs (desktop only) */
   recordFatalRendererError?(error: FatalRendererErrorLog): Promise<void>
 }

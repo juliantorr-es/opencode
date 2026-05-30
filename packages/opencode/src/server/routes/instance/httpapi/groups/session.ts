@@ -9,6 +9,7 @@ import { SessionStatus } from "@/session/status"
 import { SessionSummary } from "@/session/summary"
 import { Todo } from "@/session/todo"
 import { MessageID, PartID, SessionID } from "@/session/schema"
+import { ExportedSession } from "@/session/session-export"
 import { Snapshot } from "@/snapshot"
 import { Schema, Struct } from "effect"
 import { HttpApi, HttpApiEndpoint, HttpApiError, HttpApiGroup, HttpApiSchema, OpenApi } from "effect/unstable/httpapi"
@@ -19,7 +20,7 @@ import {
   WorkspaceRoutingQuery,
   WorkspaceRoutingQueryFields,
 } from "../middleware/workspace-routing"
-import { ApiNotFoundError, PermissionNotFoundError, SessionBusyError } from "../errors"
+import { ApiNotFoundError, InvalidRequestError, PermissionNotFoundError, SessionBusyError } from "../errors"
 import { described } from "./metadata"
 import { QueryBoolean } from "./query"
 
@@ -81,6 +82,7 @@ export const SessionPaths = {
   messages: `${root}/:sessionID/message`,
   message: `${root}/:sessionID/message/:messageID`,
   create: root,
+  import: `${root}/import`,
   remove: `${root}/:sessionID`,
   update: `${root}/:sessionID`,
   fork: `${root}/:sessionID/fork`,
@@ -206,6 +208,17 @@ export const SessionApi = HttpApi.make("session")
             identifier: "session.create",
             summary: "Create session",
             description: "Create a new OpenCode session for interacting with AI assistants and managing conversations.",
+          }),
+        ),
+        HttpApiEndpoint.post("import", SessionPaths.import, {
+          payload: ExportedSession,
+          success: described(Session.Info, "Imported session"),
+          error: [HttpApiError.BadRequest, InvalidRequestError],
+        }).annotateMerge(
+          OpenApi.annotations({
+            identifier: "session.import",
+            summary: "Import session",
+            description: "Import a session from a previously exported JSON file. The body must match the ExportedSession schema.",
           }),
         ),
         HttpApiEndpoint.delete("remove", SessionPaths.remove, {

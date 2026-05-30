@@ -352,6 +352,18 @@ export const useSessionCommands = (actions: SessionCommandContext) => {
     })
   }
 
+  const exportSession = () => {
+    void import("@/components/dialog-export").then((x) => {
+      dialog.show(() => <x.DialogExport />)
+    })
+  }
+
+  const importSession = () => {
+    void import("@/components/dialog-import").then((x) => {
+      dialog.show(() => <x.DialogImport />)
+    })
+  }
+
   const shareCmds = () => {
     if (sync.data.config.share === "disabled") return []
     return [
@@ -415,6 +427,22 @@ export const useSessionCommands = (actions: SessionCommandContext) => {
       slash: "fork",
       disabled: !params.id || visibleUserMessages().length === 0,
       onSelect: fork,
+    }),
+    sessionCommand({
+      id: "session.export",
+      title: language.t("command.session.export"),
+      description: language.t("command.session.export.description"),
+      slash: "export",
+      disabled: !params.id,
+      onSelect: exportSession,
+    }),
+    sessionCommand({
+      id: "session.import",
+      title: language.t("command.session.import"),
+      description: language.t("command.session.import.description"),
+      slash: "import",
+      disabled: false,
+      onSelect: importSession,
     }),
   ]
 

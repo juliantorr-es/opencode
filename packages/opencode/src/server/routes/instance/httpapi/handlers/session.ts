@@ -15,6 +15,7 @@ import { SessionSummary } from "@/session/summary"
 import { Todo } from "@/session/todo"
 import { MessageID, PartID, SessionID } from "@/session/schema"
 import { NamedError } from "@opencode-ai/core/util/error"
+import { ExportedSession, importSession } from "@/session/session-export"
 import { Cause, Effect, Option, Schema, Scope } from "effect"
 import * as Stream from "effect/Stream"
 import { HttpServerRequest, HttpServerResponse } from "effect/unstable/http"
@@ -34,7 +35,7 @@ import {
   SummarizePayload,
   UpdatePayload,
 } from "../groups/session"
-import { PermissionNotFoundError } from "../errors"
+import { InvalidRequestError, PermissionNotFoundError } from "../errors"
 import * as SessionError from "./session-errors"
 
 const tryParseJson = (text: string) =>
@@ -147,6 +148,23 @@ export const sessionHandlers = HttpApiBuilder.group(InstanceHttpApi, "session", 
       return yield* SessionError.mapStorageNotFound(
         MessageV2.get({ sessionID: ctx.params.sessionID, messageID: ctx.params.messageID }),
       )
+    })
+
+    const importRaw = Effect.fn("SessionHttpApi.import")(function* (ctx: {
+      request: HttpServerRequest.HttpServerRequest
+    }) {
+      const body = yield* Effect.orDie(ctx.request.text)
+      const json = yield* tryParseJson(body)
+      const data = yield* Schema.decodeUnknownEffect(ExportedSession)(json).pipe(
+        Effect.mapError(
+          (parseErr) =>
+            new InvalidRequestError({
+              message: `Invalid session file: ${parseErr.message}`,
+              kind: "schema_validation",
+            }),
+        ),
+      )
+      return yield* importSession(data as any)
     })
 
     const create = Effect.fn("SessionHttpApi.create")(function* (ctx: { payload?: Session.CreateInput }) {
@@ -413,6 +431,7 @@ export const sessionHandlers = HttpApiBuilder.group(InstanceHttpApi, "session", 
       .handle("messages", messages)
       .handle("message", message)
       .handleRaw("create", createRaw)
+      .handleRaw("import", importRaw)
       .handle("remove", remove)
       .handle("update", update)
       .handleRaw("fork", forkRaw)
