@@ -584,13 +584,16 @@ export const PromptInput: Component<PromptInputProps> = (props) => {
   const agentList = createMemo(() =>
     sync.data.agent
       .filter((agent) => !agent.hidden && agent.mode !== "primary")
-      .map((agent): AtOption => ({ type: "agent", name: agent.name, display: agent.name })),
+      .map((agent): AtOption =>
+        agent.mode === "subagent"
+          ? { type: "delegate", name: agent.name, display: agent.name, description: agent.description }
+          : { type: "agent", name: agent.name, display: agent.name }),
   )
   const agentNames = createMemo(() => local.agent.list().map((agent) => agent.name))
 
   const handleAtSelect = (option: AtOption | undefined) => {
     if (!option) return
-    if (option.type === "agent") {
+    if (option.type === "agent" || option.type === "delegate") {
       addPart({ type: "agent", name: option.name, content: "@" + option.name, start: 0, end: 0 })
     } else {
       addPart({ type: "file", path: option.path, content: "@" + option.path, start: 0, end: 0 })
@@ -599,6 +602,7 @@ export const PromptInput: Component<PromptInputProps> = (props) => {
 
   const atKey = (x: AtOption | undefined) => {
     if (!x) return ""
+    if (x.type === "delegate") return `delegate:${x.name}`
     return x.type === "agent" ? `agent:${x.name}` : `file:${x.path}`
   }
 
@@ -624,13 +628,14 @@ export const PromptInput: Component<PromptInputProps> = (props) => {
     key: atKey,
     filterKeys: ["display"],
     groupBy: (item) => {
+      if (item.type === "delegate") return "delegate"
       if (item.type === "agent") return "agent"
       if (item.recent) return "recent"
       return "file"
     },
     sortGroupsBy: (a, b) => {
       const rank = (category: string) => {
-        if (category === "agent") return 0
+        if (category === "delegate" || category === "agent") return 0
         if (category === "recent") return 1
         return 2
       }

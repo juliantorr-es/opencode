@@ -5,6 +5,7 @@ import { getDirectory, getFilename } from "@opencode-ai/core/util/path"
 
 export type AtOption =
   | { type: "agent"; name: string; display: string }
+  | { type: "delegate"; name: string; display: string; description?: string }
   | { type: "file"; path: string; display: string; recent?: boolean }
 
 export interface SlashCommand {
@@ -65,6 +66,23 @@ export const PromptPopover: Component<PromptPopoverProps> = (props) => {
                       >
                         <Icon name="brain" size="small" class="text-icon-info-active shrink-0" />
                         <span class="text-14-regular text-text-strong whitespace-nowrap">@{item.name}</span>
+                      </button>
+                    )
+                  }
+
+                  if (item.type === "delegate") {
+                    return (
+                      <button
+                        class="w-full flex items-center gap-x-2 rounded-md px-2 py-0.5"
+                        classList={{ "bg-surface-raised-base-hover": props.atActive === key }}
+                        onClick={() => props.onAtSelect(item)}
+                        onMouseEnter={() => props.setAtActive(key)}
+                      >
+                        <Icon name="share" size="small" class="text-icon-info-active shrink-0" />
+                        <span class="text-14-regular text-text-strong whitespace-nowrap">@{item.name}</span>
+                        <Show when={item.description}>
+                          <span class="text-12-regular text-text-weak truncate ml-1">{item.description}</span>
+                        </Show>
                       </button>
                     )
                   }
