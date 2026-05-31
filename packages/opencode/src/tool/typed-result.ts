@@ -1,6 +1,7 @@
 import { Context, Effect, Exit, Layer, Option, Schema } from "effect"
 import * as Tool from "./tool"
 import { PhaseGate } from "@/lifecycle/gate"
+import * as ToolGraph from "./tool-graph"
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -20,6 +21,8 @@ export interface NextAffordance {
   action: string
   target?: string
   command?: string
+  when?: string
+  args?: Record<string, unknown>
 }
 
 /**
@@ -40,6 +43,7 @@ export interface TypedToolResult<T = unknown> {
   failures?: ToolFailure[]
   suggestedNextTools: string[]
   nextAffordances: NextAffordance[]
+  next: NextAffordance[]
 }
 
 // ─── Schemas ──────────────────────────────────────────────────────────────────
@@ -55,6 +59,8 @@ export const NextAffordanceSchema = Schema.Struct({
   action: Schema.String,
   target: Schema.optional(Schema.String),
   command: Schema.optional(Schema.String),
+  when: Schema.optional(Schema.String),
+  args: Schema.optional(Schema.Unknown),
 }).annotate({ identifier: "NextAffordance" })
 
 export const TypedToolResultSchema = Schema.Struct({
@@ -67,19 +73,50 @@ export const TypedToolResultSchema = Schema.Struct({
   failures: Schema.optional(Schema.Array(ToolFailureSchema)),
   suggestedNextTools: Schema.Array(Schema.String),
   nextAffordances: Schema.Array(NextAffordanceSchema),
+  next: Schema.Array(NextAffordanceSchema),
 }).annotate({ identifier: "TypedToolResult" })
 
 // ─── Constructors ─────────────────────────────────────────────────────────────
 
+/**
+ * Serialize the next-tool suggestions into a unified NextAffordance[].
+ * Combines suggestedNextTools (from the graph) with nextAffordances (from affordance resolution),
+ * de-duplicating by target to produce a clean model-facing suggestion list.
+ *
+ * @internal — exported for test assertions
+ */
+export function serializeNext(suggestedTools: string[], affordances: NextAffordance[]): NextAffordance[] {
+  const seen = new Set<string>()
+  const result: NextAffordance[] = []
+
+  for (const tool of suggestedTools) {
+    seen.add(tool)
+    result.push({ action: `use_${tool}`, target: tool, command: tool })
+  }
+
+  for (const aff of affordances) {
+    // Skip generic "continue" affordances when we have concrete suggestions
+    if (aff.action === "continue" && result.length > 0) continue
+    if (aff.target && seen.has(aff.target)) continue
+    if (aff.target) seen.add(aff.target)
+    result.push(aff)
+  }
+
+  return result
+}
+
 export function makeSuccess<T>(tool: string, data: T, summary: string): TypedToolResult<T> {
+  const suggested = suggestedToolsAfterSuccess(tool)
+  const affordances = affordancesAfterSuccess(tool)
   return {
     tool,
     status: "succeeded",
     recoverable: true,
     summary,
     data,
-    suggestedNextTools: suggestedToolsAfterSuccess(tool),
-    nextAffordances: affordancesAfterSuccess(tool),
+    suggestedNextTools: suggested,
+    nextAffordances: affordances,
+    next: serializeNext(suggested, affordances),
   }
 }
 
@@ -91,6 +128,8 @@ export function makeFailure<T>(
   recoverable: boolean,
   failures?: ToolFailure[],
 ): TypedToolResult<T> {
+  const suggested = suggestedToolsFor(tool, "failed", errorKind)
+  const affordances = affordancesFor(tool, "failed", errorKind)
   return {
     tool,
     status: "failed",
@@ -99,12 +138,15 @@ export function makeFailure<T>(
     summary,
     data,
     failures,
-    suggestedNextTools: suggestedToolsFor(tool, "failed", errorKind),
-    nextAffordances: affordancesFor(tool, "failed", errorKind),
+    suggestedNextTools: suggested,
+    nextAffordances: affordances,
+    next: serializeNext(suggested, affordances),
   }
 }
 
 export function makeDenied<T>(tool: string, data: T, summary: string): TypedToolResult<T> {
+  const suggested = suggestedToolsFor(tool, "denied")
+  const affordances = affordancesFor(tool, "denied")
   return {
     tool,
     status: "denied",
@@ -112,12 +154,14 @@ export function makeDenied<T>(tool: string, data: T, summary: string): TypedTool
     recoverable: true,
     summary,
     data,
-    suggestedNextTools: suggestedToolsFor(tool, "denied"),
-    nextAffordances: affordancesFor(tool, "denied"),
+    suggestedNextTools: suggested,
+    nextAffordances: affordances,
+    next: serializeNext(suggested, affordances),
   }
 }
 
 export function makeCancelled<T>(tool: string, data: T, summary: string): TypedToolResult<T> {
+  const affordances = affordancesFor(tool, "cancelled")
   return {
     tool,
     status: "cancelled",
@@ -126,7 +170,8 @@ export function makeCancelled<T>(tool: string, data: T, summary: string): TypedT
     summary,
     data,
     suggestedNextTools: [],
-    nextAffordances: affordancesFor(tool, "cancelled"),
+    nextAffordances: affordances,
+    next: serializeNext([], affordances),
   }
 }
 
@@ -214,13 +259,17 @@ export function fromDefect(tool: string, defect: unknown): TypedToolResult<undef
     failures: defect instanceof Error ? [{ message: defect.message }] : undefined,
     suggestedNextTools: suggestedToolsFor(tool, status, errorKind),
     nextAffordances: affordancesFor(tool, status, errorKind),
+    next: serializeNext(suggestedToolsFor(tool, status, errorKind), affordancesFor(tool, status, errorKind)),
   }
 }
 
 // ─── Affordance Resolution ────────────────────────────────────────────────────
 
 /**
- * Known tool categories used for suggesting alternative tools.
+ * **Legacy fallback categories** — preserved as an independently-revertable safety net.
+ * When the tool graph is unavailable (not yet built, build failed), affordance resolution
+ * falls back to these string-match categories. This ensures the graph can be removed
+ * without breaking affordances — only graph calls need to be reverted.
  */
 const TOOL_CATEGORIES: Record<string, string[]> = {
   read: ["read", "grep", "glob", "lsp", "repo-overview"],
@@ -232,23 +281,44 @@ const TOOL_CATEGORIES: Record<string, string[]> = {
   diagnose: ["grep", "read", "bash", "task"],
 }
 
-function toolCategory(toolID: string): string {
+/** Legacy string-match category resolver. Only called when graph is null.
+ * @internal — exported for test assertions */
+export function toolCategory(toolID: string): string {
   if (toolID.includes("read") || toolID === "read") return "read"
   if (toolID.includes("write") || toolID === "write" || toolID.includes("edit")) return "write"
   if (toolID.includes("grep") || toolID.includes("search") || toolID.includes("find")) return "search"
   if (toolID.includes("bash") || toolID.includes("run") || toolID === "task") return "execute"
   if (toolID.includes("checkpoint") || toolID.includes("todo")) return "manage"
   if (toolID.includes("plan") || toolID.includes("question")) return "plan"
+  console.warn(`[typed-result] toolCategory fallback for unknown tool: ${toolID}`)
   return "diagnose"
 }
 
-function suggestedToolsAfterSuccess(toolID: string): string[] {
-  const cat = toolCategory(toolID)
-  const same = TOOL_CATEGORIES[cat] ?? []
-  return same.filter((t) => t !== toolID)
+/**
+ * Graph-based suggested tools after success.
+ * Returns downstream neighbors from the tool graph.
+ * Falls back to legacy TOOL_CATEGORIES when graph is null (independent revertability).
+ */
+/** @internal — exported for test assertions */
+export function suggestedToolsAfterSuccess(toolID: string): string[] {
+  const graph = ToolGraph.getToolGraph()
+  if (!graph) {
+    const cat = toolCategory(toolID)
+    const same = TOOL_CATEGORIES[cat] ?? []
+    return same.filter((t) => t !== toolID)
+  }
+  const immediate = graph.outgoing.get(toolID) ?? []
+  if (immediate.length > 0) return immediate
+  // No direct edges — try graph's suggestPipeline via Effect.runSync
+  try {
+    return Effect.runSync(ToolGraph.suggestPipeline(toolID, TOOL_CATEGORIES))
+  } catch {
+    return ToolGraph.DIAGNOSTIC_FALLBACK
+  }
 }
 
-function suggestedToolsFor(toolID: string, status: ToolStatus, errorKind?: string): string[] {
+/** @internal — exported for test assertions */
+export function suggestedToolsFor(toolID: string, status: ToolStatus, errorKind?: string): string[] {
   if (status === "succeeded") return suggestedToolsAfterSuccess(toolID)
   if (status === "cancelled") return []
 
@@ -266,38 +336,69 @@ function suggestedToolsFor(toolID: string, status: ToolStatus, errorKind?: strin
   return [...new Set(base)]
 }
 
-function affordancesAfterSuccess(toolID: string): NextAffordance[] {
-  const cat = toolCategory(toolID)
-  switch (cat) {
-    case "read":
-      return [
-        { action: "continue_reading", target: toolID, command: "read more lines or sibling files" },
-        { action: "search", target: "grep", command: "search for patterns in the read content" },
-      ]
-    case "write":
-      return [
-        { action: "verify", target: "read", command: "verify written content" },
-        { action: "run_tests", command: "run tests to verify changes" },
-      ]
-    case "search":
-      return [
-        { action: "refine_search", target: toolID, command: "narrow the search pattern" },
-        { action: "read", target: "read", command: "read a matching file" },
-      ]
-    case "execute":
-      return [
-        { action: "inspect_output", command: "review command output" },
-        { action: "rerun", target: toolID, command: "rerun with different parameters" },
-      ]
-    default:
-      return [
-        { action: "continue", command: "proceed with the result" },
-        { action: "retry", target: toolID, command: "run again if needed" },
-      ]
+/**
+ * Graph-aware affordances after success.
+ * Uses graph downstream edges to build richer affordances.
+ * Falls back to legacy switch/case when graph is null.
+ */
+/** @internal — exported for test assertions */
+export function affordancesAfterSuccess(toolID: string): NextAffordance[] {
+  const graph = ToolGraph.getToolGraph()
+  if (!graph) {
+    const cat = toolCategory(toolID)
+    switch (cat) {
+      case "read":
+        return [
+          { action: "continue_reading", target: toolID, command: "read more lines or sibling files" },
+          { action: "search", target: "grep", command: "search for patterns in the read content" },
+        ]
+      case "write":
+        return [
+          { action: "verify", target: "read", command: "verify written content" },
+          { action: "run_tests", command: "run tests to verify changes" },
+        ]
+      case "search":
+        return [
+          { action: "refine_search", target: toolID, command: "narrow the search pattern" },
+          { action: "read", target: "read", command: "read a matching file" },
+        ]
+      case "execute":
+        return [
+          { action: "inspect_output", command: "review command output" },
+          { action: "rerun", target: toolID, command: "rerun with different parameters" },
+        ]
+      default:
+        console.warn(`[typed-result] affordancesAfterSuccess fallback to default for category: ${cat}`)
+        return [
+          { action: "continue", command: "proceed with the result" },
+          { action: "retry", target: toolID, command: "run again if needed" },
+        ]
+    }
   }
+
+  // Graph is available — build affordances from downstream edges
+  const downstream = graph.outgoing.get(toolID) ?? []
+  const nodes = graph.nodes
+  const result: NextAffordance[] = []
+
+  // Generic continue/rerun always included
+  result.push({ action: "continue", command: "proceed with the result" })
+
+  for (const target of downstream.slice(0, 3)) {
+    const node = nodes.get(target)
+    const description = node?.description ?? "recommended next step"
+    result.push({ action: `use_${target}`, target, command: description })
+  }
+
+  if (downstream.length === 0 || result.length < 3) {
+    result.push({ action: "retry", target: toolID, command: "run again if needed" })
+  }
+
+  return result
 }
 
-function affordancesFor(toolID: string, status: ToolStatus, errorKind?: string): NextAffordance[] {
+/** @internal — exported for test assertions */
+export function affordancesFor(toolID: string, status: ToolStatus, errorKind?: string): NextAffordance[] {
   if (status === "succeeded") return affordancesAfterSuccess(toolID)
   if (status === "cancelled") return [{ action: "restart", command: "restart the session or tool call" }]
 
@@ -368,8 +469,14 @@ export function formatOutput(result: TypedToolResult): string {
     lines.push(`Suggested next tools: ${result.suggestedNextTools.join(", ")}`)
   }
 
-  for (const aff of result.nextAffordances) {
-    lines.push(`→ ${aff.action}${aff.target ? ` (${aff.target})` : ""}${aff.command ? `: ${aff.command}` : ""}`)
+  if (result.nextAffordances.length > 0) {
+    for (const aff of result.nextAffordances) {
+      lines.push(`→ ${aff.action}${aff.target ? ` (${aff.target})` : ""}${aff.command ? `: ${aff.command}` : ""}`)
+    }
+  }
+
+  if (result.next && result.next.length > 0) {
+    lines.push(`Next: ${JSON.stringify(result.next)}`)
   }
 
   lines.push(`${STRUCTURED_MARKER}${JSON.stringify(result)}`)
@@ -386,6 +493,7 @@ export function parseOutput(output: string): TypedToolResult | undefined {
   try {
     return JSON.parse(output.slice(idx + STRUCTURED_MARKER.length)) as TypedToolResult
   } catch {
+    console.warn(`[typed-result] parseOutput failed to parse structured marker`)
     return undefined
   }
 }

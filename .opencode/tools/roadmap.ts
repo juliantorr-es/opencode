@@ -98,7 +98,7 @@ export default tool({
         if (item.status === "in_progress") inProg.push(e); else ready.push(e)
       }
       const next = [...inProg, ...ready].slice(0, args.limit ?? 5)
-      return JSON.stringify({ action: "next", next, recommendation: next[0] ? `${next[0].id}: ${next[0].title}` : "Nothing ready" }, null, 2)
+      return JSON.stringify({ action: "next", items: next, next /* @deprecated — use items */, recommendation: next[0] ? `${next[0].id}: ${next[0].title}` : "Nothing ready" }, null, 2)
     }
 
     // ── PROGRESS ──
