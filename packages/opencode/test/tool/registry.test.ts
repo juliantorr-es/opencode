@@ -32,6 +32,7 @@ import { Reference } from "@/reference/reference"
 import { RepositoryCache } from "@/reference/repository-cache"
 import { ProviderID, ModelID } from "@/provider/schema"
 import { ToolJsonSchema } from "@/tool/json-schema"
+import * as ToolCache from "@/tool/cache"
 import { MessageID, SessionID } from "@/session/schema"
 import { RuntimeFlags } from "@/effect/runtime-flags"
 
@@ -68,6 +69,7 @@ const registryLayer = (opts: RegistryLayerOptions = {}) =>
       Layer.provide(node),
       Layer.provide(Ripgrep.defaultLayer),
       Layer.provide(Truncate.defaultLayer),
+      Layer.provide(ToolCache.defaultLayer),
     )
     .pipe(Layer.provide(RuntimeFlags.layer(opts.flags ?? {})))
 
@@ -556,6 +558,59 @@ describe("tool.registry", () => {
       const registry = yield* ToolRegistry.Service
       const ids = yield* registry.ids()
       expect(ids).toContain("cowsay")
+    }),
+  )
+
+  it.instance("modeDescriptions: tool description adapts to agent context", () =>
+    Effect.gen(function* () {
+      const test = yield* TestInstance
+      const opencode = path.join(test.directory, ".opencode")
+      const toolsDir = path.join(opencode, "tools")
+      yield* Effect.promise(() => fs.mkdir(toolsDir, { recursive: true }))
+      yield* Effect.promise(() =>
+        Bun.write(
+          path.join(toolsDir, "test-mode.ts"),
+          [
+            "import { tool } from '@opencode-ai/plugin'",
+            "",
+            "export const modeDescriptions = {",
+            "  build: 'BUILD-SPECIFIC: Context-adaptive test tool description for build agent',",
+            "  plan: 'PLAN-SPECIFIC: Context-adaptive test tool description for plan agent',",
+            "}",
+            "",
+            "export default tool({",
+            "  description: 'test mode tool',",
+            "  args: {},",
+            "  execute: async () => 'ok',",
+            "})",
+            "",
+          ].join("\n"),
+        ),
+      )
+      const registry = yield* ToolRegistry.Service
+      const agent = yield* Agent.Service
+
+      const build = yield* agent.get("build")
+      if (!build) throw new Error("build agent not found")
+      const buildTools = yield* registry.tools({
+        providerID: ProviderID.opencode,
+        modelID: ModelID.make("test"),
+        agent: build,
+      })
+      const modeTool = buildTools.find((t) => t.id === "test-mode")
+      expect(modeTool).toBeDefined()
+      expect(modeTool!.description).toContain("BUILD-SPECIFIC")
+
+      // Verify a different agent gets its own mode-specific text
+      const plan = yield* agent.get("plan")
+      if (!plan) throw new Error("plan agent not found")
+      const planTools = yield* registry.tools({
+        providerID: ProviderID.opencode,
+        modelID: ModelID.make("test"),
+        agent: plan,
+      })
+      const planModeTool = planTools.find((t) => t.id === "test-mode")
+      expect(planModeTool!.description).toContain("PLAN-SPECIFIC")
     }),
   )
 })

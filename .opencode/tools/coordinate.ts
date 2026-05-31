@@ -4,6 +4,11 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync, appendFileSync } fr
 
 function r(worktree: string, p: string): string { return resolve(worktree, p) }
 
+export const modeDescriptions = {
+  orchestrator: "Coordinate fleet-wide: fan out delegations, resolve lane conflicts, and publish checkpoints across the session lifecycle.",
+  "general-man-agent": "Send structured coordination messages to subagents and receive handoff summaries. Track lanes via the coordination ledger.",
+} as const
+
 export default tool({
   description: "Coordinate with the fleet — send messages or announce delegations. Both write to the coordination ledger so task_board shows them immediately.",
   args: {

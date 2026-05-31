@@ -13,6 +13,7 @@ import { WriteTool } from "./write"
 import { InvalidTool } from "./invalid"
 import { SkillTool } from "./skill"
 import * as Tool from "./tool"
+import * as ToolGraph from "./tool-graph"
 import { Config } from "@/config/config"
 import { type ToolContext as PluginToolContext, type ToolDefinition } from "@opencode-ai/plugin"
 import type { JSONSchema7, JSONSchema7Definition } from "@ai-sdk/provider"
@@ -165,6 +166,7 @@ type State = {
   builtin: Tool.Def[]
   task: TaskDef
   read: ReadDef
+  modeDescriptions: Map<string, Record<string, string>>
 }
 
 export interface Interface {
@@ -173,6 +175,8 @@ export interface Interface {
   readonly named: () => Effect.Effect<{ task: TaskDef; read: ReadDef }>
   readonly tools: (model: { providerID: ProviderID; modelID: ModelID; agent: Agent.Info }) => Effect.Effect<Tool.Def[]>
   readonly cacheStats: () => Effect.Effect<ToolCache.CacheStats>
+  /** Graph-based next-tool suggestion. Delegates to ToolGraph.suggestPipeline. */
+  readonly suggestNext: (toolId: string) => Effect.Effect<string[], never, never>
 }
 
 export class Service extends Context.Service<Service, Interface>()("@opencode/ToolRegistry") {}
@@ -296,6 +300,7 @@ export const layer = Layer.effect(
     const state = yield* InstanceState.make<State>(
       Effect.fn("ToolRegistry.state")(function* (ctx) {
         const custom: Tool.Def[] = []
+        const modeDescriptions = new Map<string, Record<string, string>>()
 
         const BUILTIN_TOOL_IDS = new Set<string>([
           "invalid", "shell", "read", "glob", "grep", "edit", "write", "task", "fetch",
@@ -405,6 +410,9 @@ export const layer = Layer.effect(
             const toolId = id === "default" ? namespace : `${namespace}_${id}`
             const safeToolId = BUILTIN_TOOL_IDS.has(toolId) ? `plugin_${toolId}` : toolId
             custom.push(fromPlugin(safeToolId, def))
+          }
+          if (mod.modeDescriptions !== null && typeof mod.modeDescriptions === "object") {
+            modeDescriptions.set(namespace, mod.modeDescriptions as Record<string, string>)
           }
         }
 
@@ -536,6 +544,7 @@ export const layer = Layer.effect(
 
         return {
           custom,
+          modeDescriptions,
           builtin: [
             tool.invalid,
             ...(questionEnabled ? [tool.question] : []),
@@ -691,6 +700,29 @@ export const layer = Layer.effect(
       return ["Available agent types and the tools they have access to:", description].join("\n")
     })
 
+    // describeTool dispatches to the correct description generator for a given tool ID and agent.
+    // For `task` and `skill`, it delegates to the existing dynamic list builders.
+    // For tools that export `modeDescriptions`, it looks up the agent-name key in the Map
+    // that was captured during dynamic import (see the mod.modeDescriptions guard above).
+    // Phase 1 will wire `DynamicDescription` (tool.ts:15) — a function `(agent) => Effect<string>`
+    // that tools can export instead of a static map for fully dynamic context adaptation.
+    const describeTool = Effect.fn("ToolRegistry.describeTool")(function* (toolId: string, agent: Agent.Info) {
+      if (toolId === TaskTool.id) return yield* describeTask(agent)
+      if (toolId === SkillTool.id) return yield* describeSkill(agent)
+
+      const s = yield* InstanceState.get(state)
+      const variants = s.modeDescriptions.get(toolId)
+      if (!variants) return ""
+
+      const text = variants[agent.name]
+      if (text !== undefined) return text
+
+      yield* Effect.logWarning(
+        `ToolRegistry.describeTool: tool "${toolId}" has modeDescriptions but no entry for agent "${agent.name}". Available keys: ${Object.keys(variants).join(", ")}`,
+      )
+      return ""
+    })
+
     const tools: Interface["tools"] = Effect.fn("ToolRegistry.tools")(function* (input) {
       const filtered = (yield* all()).filter((tool) => {
         if (tool.id === WebSearchTool.id) {
@@ -723,8 +755,7 @@ export const layer = Layer.effect(
             id: tool.id,
             description: [
               output.description,
-              tool.id === TaskTool.id ? yield* describeTask(input.agent) : undefined,
-              tool.id === SkillTool.id ? yield* describeSkill(input.agent) : undefined,
+              yield* describeTool(tool.id, input.agent),
             ]
               .filter(Boolean)
               .join("\n"),
@@ -748,7 +779,14 @@ export const layer = Layer.effect(
       return yield* cache.stats()
     })
 
-    return Service.of({ ids, all, named, tools, cacheStats })
+    const suggestNext: Interface["suggestNext"] = Effect.fn("ToolRegistry.suggestNext")(function* (toolId: string) {
+      return yield* ToolGraph.suggestPipeline(toolId)
+    })
+
+    // Build the cross-tool dependency graph after all tools are registered
+    yield* ToolGraph.buildGraph()
+
+    return Service.of({ ids, all, named, tools, cacheStats, suggestNext })
   }),
 )
 

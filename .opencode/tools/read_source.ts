@@ -53,6 +53,12 @@ function astFocus(source: string, name: string, filePath: string): { start: numb
   return result
 }
 
+export const modeDescriptions = {
+  explore: "Read source files to discover patterns, conventions, and entry points. Returns structured digests: imports, exports, key symbols.",
+  cartographer: "Map codebase structure: entry points, dependency graphs, conventions, and git history through parallel subagent decomposition.",
+  surveyor: "Survey project structure: aliases, package boundaries, dependency relationships, and canonical code patterns with file:line citations.",
+} as const
+
 export default tool({
   description: "Read a source file and return a structured digest — imports, exports, key symbols, and optional focus on a specific symbol.",
   args: {

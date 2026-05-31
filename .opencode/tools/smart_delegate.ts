@@ -83,6 +83,11 @@ function readLaneState(coordPath: string, laneId: string): { wave: string; repai
   return state
 }
 
+export const modeDescriptions = {
+  orchestrator: "Delegate work to subagents with lane tracking, lifecycle management, and spawn-permission enforcement.",
+  "general-man-agent": "Fan out independent subtasks to specialized subagents in parallel. Track results via the coordination ledger.",
+} as const
+
 export default tool({
   description: "Delegate work to agents or send coordination messages. Enforces spawn permissions, tracks lane lifecycle, generates structured task prompts, and logs everything to the coordination ledger. The single tool for all orchestration — never use bare task() or coordinate().",
   args: {
