@@ -1,5 +1,6 @@
 import type { Hooks, PluginInput } from "@opencode-ai/plugin"
 import * as Log from "@opencode-ai/core/util/log"
+import { Schema } from "effect"
 import { OAUTH_DUMMY_KEY } from "../auth"
 import { createServer } from "http"
 import { InstallationVersion } from "@opencode-ai/core/installation/version"
@@ -131,7 +132,8 @@ export function accessTokenIsExpiring(
     const claims = JSON.parse(Buffer.from(payload, "base64").toString("utf8"))
     if (typeof claims?.exp !== "number") return false
     return claims.exp * 1000 <= Date.now() + Math.max(0, skewMs)
-  } catch {
+  } catch (err) {
+    log.debug("failed to parse JWT claims", { error: err })
     return false
   }
 }
@@ -211,6 +213,15 @@ interface DeviceCodeResponse {
   interval?: number
 }
 
+const DeviceCodeResponseSchema = Schema.Struct({
+  device_code: Schema.String,
+  user_code: Schema.String,
+  verification_uri: Schema.String,
+  verification_uri_complete: Schema.optional(Schema.String),
+  expires_in: Schema.optional(Schema.Number),
+  interval: Schema.optional(Schema.Number),
+})
+
 interface DeviceTokenErrorBody {
   error?: string
   error_description?: string
@@ -229,11 +240,9 @@ export async function requestDeviceCode(options: XaiAuthPluginOptions = {}): Pro
     const detail = await response.text().catch(() => "")
     throw new Error(`xAI device code request failed (${response.status})${detail ? `: ${detail}` : ""}`)
   }
-  const json = (await response.json()) as DeviceCodeResponse
-  if (!json.device_code || !json.user_code || !json.verification_uri) {
-    throw new Error("xAI device code response is missing device_code / user_code / verification_uri")
-  }
-  return json
+  const json = await response.json()
+  const validated = Schema.decodeUnknownSync(DeviceCodeResponseSchema)(json)
+  return validated
 }
 
 // Default sleep used between device-code polls. Test-injectable so we can

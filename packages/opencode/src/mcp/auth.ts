@@ -32,6 +32,27 @@ export type Entry = Schema.Schema.Type<typeof Entry>
 const decodeAuthData = Schema.decodeUnknownOption(Schema.Record(Schema.String, Entry))
 type AuthData = Record<string, Entry>
 
+/**
+ * Decode auth data per-entry to prevent one corrupted entry from rejecting all others.
+ * Records entries: successful decodes land in valid, failed decodes land in corrupted
+ * with their SHA256 hash logged for forensic analysis.
+ */
+function decodeAuthDataPerEntry(raw: unknown): { valid: AuthData; corrupted: string[] } {
+  if (typeof raw !== "object" || raw === null) return { valid: {}, corrupted: [] }
+  const record = raw as Record<string, unknown>
+  const valid: AuthData = {}
+  const corrupted: string[] = []
+  for (const [key, value] of Object.entries(record)) {
+    const result = Schema.decodeUnknownOption(Entry)(value)
+    if (Option.isSome(result)) {
+      valid[key] = result.value
+    } else {
+      corrupted.push(key)
+    }
+  }
+  return { valid, corrupted }
+}
+
 const filepath = path.join(Global.Path.data, "mcp-auth.json")
 
 export interface Interface {
@@ -61,7 +82,22 @@ export const layer = Layer.effect(
 
     const all = Effect.fn("McpAuth.all")(function* () {
       return yield* fs.readJson(filepath).pipe(
-        Effect.map((data): AuthData => Option.getOrElse(decodeAuthData(data), () => ({}) as AuthData) as AuthData),
+        Effect.flatMap((data) => Effect.gen(function* () {
+          const { valid, corrupted } = decodeAuthDataPerEntry(data)
+          if (corrupted.length > 0) {
+            const timestamp = new Date().toISOString().replace(/[:.]/g, "-")
+            const backupPath = `${filepath}.corrupted.${timestamp}`
+            yield* fs.writeJson(backupPath, data, 0o600).pipe(
+              Effect.tap(() => Effect.logError("mcp-auth.json contained corrupted entries — backed up", {
+                backupPath,
+                corruptedKeys: corrupted,
+                timestamp,
+              })),
+              Effect.orDie,
+            )
+          }
+          return valid
+        })),
         Effect.catch(() => Effect.succeed({} as AuthData)),
       )
     })

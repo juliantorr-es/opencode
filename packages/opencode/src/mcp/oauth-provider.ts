@@ -108,7 +108,7 @@ export class McpOAuthProvider implements OAuthClientProvider {
     }
     log.info("saved dynamically registered client", {
       mcpName: this.mcpName,
-      clientId: info.client_id,
+      hasClientId: !!info.client_id,
     })
   }
 
