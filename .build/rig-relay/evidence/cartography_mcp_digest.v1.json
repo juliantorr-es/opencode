@@ -1,0 +1,370 @@
+{
+  "schema": "rig.relay.cartography_digest.v1",
+  "generated_at": "2026-05-31T00:00:00Z",
+  "files_mapped": [
+    {
+      "path": "packages/opencode/src/mcp/index.ts",
+      "lines": 1052,
+      "role": "MCP service definition — client lifecycle, tool conversion, OAuth, state",
+      "imports": {
+        "count": 28,
+        "breakdown": [
+          { "module": "ai", "symbols": ["dynamicTool", "Tool", "jsonSchema", "JSONSchema7"] },
+          { "module": "@opencode-ai/core/effect/service-use", "symbols": ["serviceUse"] },
+          { "module": "@modelcontextprotocol/sdk/client/index.js", "symbols": ["Client"] },
+          { "module": "@modelcontextprotocol/sdk/client/streamableHttp.js", "symbols": ["StreamableHTTPClientTransport"] },
+          { "module": "@modelcontextprotocol/sdk/client/sse.js", "symbols": ["SSEClientTransport"] },
+          { "module": "@modelcontextprotocol/sdk/client/stdio.js", "symbols": ["StdioClientTransport"] },
+          { "module": "@modelcontextprotocol/sdk/client/auth.js", "symbols": ["UnauthorizedError"] },
+          { "module": "@modelcontextprotocol/sdk/types.js", "symbols": ["CallToolResultSchema", "ListToolsResultSchema", "ToolSchema", "MCPToolDef", "ToolListChangedNotificationSchema"] },
+          { "module": "@/config/config", "symbols": ["Config"] },
+          { "module": "../config/mcp", "symbols": ["ConfigMCP"] },
+          { "module": "@opencode-ai/core/util/log", "symbols": ["Log"] },
+          { "module": "@opencode-ai/core/util/error", "symbols": ["NamedError"] },
+          { "module": "@opencode-ai/core/installation/version", "symbols": ["InstallationVersion"] },
+          { "module": "@/util/timeout", "symbols": ["withTimeout"] },
+          { "module": "@opencode-ai/core/filesystem", "symbols": ["AppFileSystem"] },
+          { "module": "./oauth-provider", "symbols": ["McpOAuthProvider", "OAUTH_CALLBACK_PATH"] },
+          { "module": "./oauth-callback", "symbols": ["McpOAuthCallback"] },
+          { "module": "./auth", "symbols": ["McpAuth"] },
+          { "module": "../bus/bus-event", "symbols": ["BusEvent"] },
+          { "module": "@/bus", "symbols": ["Bus"] },
+          { "module": "@/event/event-names", "symbols": ["EventName"] },
+          { "module": "open", "symbols": ["open"] },
+          { "module": "effect", "symbols": ["Effect", "Exit", "Layer", "Option", "Context", "Schema", "Stream", "Semaphore"] },
+          { "module": "@/effect/bridge", "symbols": ["EffectBridge"] },
+          { "module": "@/effect/instance-state", "symbols": ["InstanceState"] },
+          { "module": "effect/unstable/process", "symbols": ["ChildProcess", "ChildProcessSpawner"] },
+          { "module": "@opencode-ai/core/cross-spawn-spawner", "symbols": ["CrossSpawnSpawner"] },
+          { "module": "@/server/health", "symbols": ["HealthRegistry", "HealthStatus"] }
+        ]
+      },
+      "exports": [
+        { "line": 54, "symbol": "Resource", "kind": "const Schema.Struct" },
+        { "line": 61, "symbol": "Resource", "kind": "type" },
+        { "line": 63, "symbol": "ToolsChanged", "kind": "const BusEvent.define" },
+        { "line": 70, "symbol": "BrowserOpenFailed", "kind": "const BusEvent.define" },
+        { "line": 78, "symbol": "Failed", "kind": "NamedError.create" },
+        { "line": 82, "symbol": "NotFoundError", "kind": "class Schema.TaggedErrorClass" },
+        { "line": 105, "symbol": "Status", "kind": "const Schema.Union" },
+        { "line": 112, "symbol": "Status", "kind": "type" },
+        { "line": 255, "symbol": "Interface", "kind": "interface" },
+        { "line": 284, "symbol": "Service", "kind": "class Context.Service" },
+        { "line": 286, "symbol": "use", "kind": "const serviceUse(Service)" },
+        { "line": 288, "symbol": "layer", "kind": "const Layer.effect" },
+        { "line": 1040, "symbol": "AuthStatus", "kind": "type (union literal)" },
+        { "line": 1045, "symbol": "defaultLayer", "kind": "const (layer.pipe(...))" }
+      ],
+      "key_types": [
+        { "name": "State", "line": 248, "kind": "interface", "fields": ["config: Record<string, ConfigMCP.Info>", "status: Record<string, Status>", "clients: Record<string, MCPClient>", "defs: Record<string, MCPToolDef[]>"] },
+        { "name": "Interface", "line": 255, "kind": "interface", "methods": 20, "details": "status, clients, tools, prompts, resources, add, connect, disconnect, getPrompt, readResource, startAuth, authenticate, finishAuth, removeAuth, supportsOAuth, hasStoredTokens, getAuthStatus" },
+        { "name": "MCPClient", "line": 86, "kind": "type alias", "target": "Client (from MCP SDK)" },
+        { "name": "Transport", "line": 305, "kind": "type alias", "target": "StdioClientTransport | StreamableHTTPClientTransport | SSEClientTransport" },
+        { "name": "CreateResult", "line": 234, "kind": "interface", "fields": ["client?: MCPClient", "mcpClient?: MCPClient", "status: Status", "defs?: MCPToolDef[]"] },
+        { "name": "AuthResult", "line": 240, "kind": "interface", "fields": ["authorizationUrl?: string", "oauthState?: string", "client?: MCPClient"] }
+      ],
+      "top_level_symbols": [
+        { "name": "pendingOAuthTransports", "line": 116, "kind": "Map<string, TransportWithAuth>", "note": "module-level side-effect state — stores transports pending OAuth" },
+        { "name": "serverLocks", "line": 295, "kind": "Map<string, Semaphore>", "note": "initialized inside Layer.effect, scoped to service instance" },
+        { "name": "connectTransport", "line": 311, "kind": "const arrow fn", "pattern": "Effect.acquireUseRelease" },
+        { "name": "connectRemote", "line": 328, "kind": "Effect.fn", "note": "tries StreamableHTTP then SSE, handles OAuth" },
+        { "name": "connectLocal", "line": 441, "kind": "Effect.fn", "note": "StdioClientTransport, captures stderr" },
+        { "name": "create", "line": 479, "kind": "Effect.fn", "note": "dispatches connectRemote/connectLocal, fetches defs" },
+        { "name": "watch", "line": 531, "kind": "function", "note": "listens for ToolListChangedNotification" },
+        { "name": "closeClient", "line": 625, "kind": "function", "note": "closes client, deletes defs" },
+        { "name": "storeClient", "line": 632, "kind": "Effect.fnUntraced", "note": "stores client/defs in state, starts watch" },
+        { "name": "healthStatus", "line": 645, "kind": "Effect.fn", "note": "returns Status.Healthy/Unhealthy based on connected/disconnected ratio" },
+        { "name": "createAndStore", "line": 670, "kind": "Effect.fn", "note": "creates client, stores, with semaphore lock" },
+        { "name": "add", "line": 700, "kind": "Effect.fn", "note": "stores config, calls createAndStore" },
+        { "name": "connect", "line": 707, "kind": "Effect.fn", "note": "connects with enabled:true" },
+        { "name": "disconnect", "line": 711, "kind": "Effect.fn", "note": "closes client, sets status to disabled" },
+        { "name": "tools", "line": 735, "kind": "Effect.fn", "note": "returns converted tools from all connected clients" },
+        { "name": "status", "line": 648, "kind": "Effect.fn", "note": "returns Record<string, Status>" },
+        { "name": "prompts", "line": 781, "kind": "Effect.fn", "note": "collects prompts from all connected clients" },
+        { "name": "resources", "line": 786, "kind": "Effect.fn", "note": "collects resources from all connected clients" },
+        { "name": "startAuth", "line": 842, "kind": "Effect.fn", "note": "starts OAuth flow" },
+        { "name": "authenticate", "line": 905, "kind": "Effect.fn", "note": "completes OAuth, opens browser" },
+        { "name": "finishAuth", "line": 960, "kind": "Effect.fn", "note": "finishes OAuth with authorizationCode" },
+        { "name": "removeAuth", "line": 985, "kind": "Effect.fn", "note": "removes OAuth credentials" },
+        { "name": "getAuthStatus", "line": 1000, "kind": "Effect.fn", "note": "returns AuthStatus" }
+      ],
+      "state_management": {
+        "pattern": "InstanceState (not Ref)",
+        "initialization": { "line": 559, "note": "InstanceState.make<State>() — creates { config:{}, status:{}, clients:{}, defs:{} }" },
+        "reads": { "pattern": "yield* InstanceState.get(state)", "sites": "status (L649), add (L701), connect (L708), disconnect (L712), createAndStore (L677), tools (L749), prompts (L782), resources (L787), getMcpConfig (L816), authenticate (L918), finishAuth (L984)" },
+        "writes": [
+          { "line": 581, "mutation": "s.status[key] = { status: 'disabled' }" },
+          { "line": 588, "mutation": "s.status[key] = result.status" },
+          { "line": 590, "mutation": "s.clients[key] = result.mcpClient" },
+          { "line": 591, "mutation": "s.defs[key] = result.defs!" },
+          { "line": 545, "mutation": "s.defs[name] = listed (in watch)" },
+          { "line": 626, "mutation": "delete s.defs[name] (in closeClient)" },
+          { "line": 635, "mutation": "s.status[name] = { status: 'connected' }" },
+          { "line": 637, "mutation": "s.clients[name] = client" },
+          { "line": 638, "mutation": "s.defs[name] = listed" },
+          { "line": 682, "mutation": "delete s.clients[name] (createAndStore on failure)" },
+          { "line": 702, "mutation": "s.config[name] = mcp (add method)" }
+        ]
+      },
+      "effect_ignore_sites": [
+        {
+          "line": 322,
+          "context": "connectTransport acquireUseRelease",
+          "code": "(t, exit) => (Exit.isFailure(exit) ? Effect.tryPromise(() => t.close()).pipe(Effect.ignore) : Effect.void)",
+          "purpose": "Swallow close errors on transport failure — cleanup during acquireUseRelease release phase"
+        },
+        {
+          "line": 405,
+          "context": "connectRemote — auth error, needs_client_registration",
+          "code": ".pipe(Effect.ignore, Effect.as(undefined))",
+          "purpose": "Swallow bus.publish(ToastShow) result — fire-and-forget toast notification for client registration needed"
+        },
+        {
+          "line": 416,
+          "context": "connectRemote — auth error, needs_auth",
+          "code": ".pipe(Effect.ignore, Effect.as(undefined))",
+          "purpose": "Swallow bus.publish(ToastShow) result — fire-and-forget toast notification for auth required"
+        },
+        {
+          "line": 498,
+          "context": "create — defs fetch failed",
+          "code": "yield* Effect.tryPromise(() => mcpClient.close()).pipe(Effect.ignore)",
+          "purpose": "Swallow close error when cleaning up after defs fetch failure"
+        },
+        {
+          "line": 546,
+          "context": "watch — tool list changed notification handler",
+          "code": "yield* bus.publish(ToolsChanged, { server: name }).pipe(Effect.ignore)",
+          "purpose": "Fire-and-forget ToolsChanged event — don't fail the watch on publish error"
+        },
+        {
+          "line": 613,
+          "context": "Effect.addFinalizer — shutdown all clients",
+          "code": "yield* Effect.tryPromise(() => client.close()).pipe(Effect.ignore)",
+          "purpose": "Swallow individual client close errors during bulk shutdown finalizer"
+        },
+        {
+          "line": 629,
+          "context": "closeClient function",
+          "code": "return Effect.tryPromise(() => client.close()).pipe(Effect.ignore)",
+          "purpose": "closeClient always ignores close errors — caller never sees close failures"
+        },
+        {
+          "line": 909,
+          "context": "authenticate — requireMcpConfig fails",
+          "code": "Effect.tapError(() => Effect.tryPromise(() => client?.close() ?? Promise.resolve()).pipe(Effect.ignore))",
+          "purpose": "Clean up client on requireMcpConfig error during authentication — ignore close errors"
+        },
+        {
+          "line": 914,
+          "context": "authenticate — no client or no listed tools after auth",
+          "code": "yield* Effect.tryPromise(() => client?.close() ?? Promise.resolve()).pipe(Effect.ignore)",
+          "purpose": "Close client when authentication succeeds but tools are unavailable — ignore close errors"
+        },
+        {
+          "line": 945,
+          "context": "authenticate — browser open failed",
+          "code": "return bus.publish(BrowserOpenFailed, { mcpName, url: result.authorizationUrl }).pipe(Effect.ignore)",
+          "purpose": "Fire-and-forget BrowserOpenFailed event when browser launch fails"
+        }
+      ],
+      "close_sites": [
+        { "line": 322, "site": "connectTransport release", "target": "transport.close()", "condition": "on failure (Exit.isFailure)" },
+        { "line": 498, "site": "create", "target": "mcpClient.close()", "condition": "when defs() returns no tools" },
+        { "line": 604-613, "site": "Effect.addFinalizer", "target": "all clients via client.close()", "note": "bulk shutdown including SIGTERM for stdio children" },
+        { "line": 626-629, "site": "closeClient", "target": "client.close()", "note": "also deletes s.defs[name]" },
+        { "line": 682-684, "site": "createAndStore", "target": "closeClient(s, name) + delete s.clients[name]", "condition": "when create returns no client" },
+        { "line": 711, "site": "disconnect", "target": "client.close() (via closeClient + delete)" },
+        { "line": 909, "site": "authenticate tapError", "target": "client?.close()", "condition": "when requireMcpConfig fails" },
+        { "line": 914, "site": "authenticate", "target": "client?.close()", "condition": "when !client or !listed after auth" }
+      ],
+      "connect_sites": [
+        { "line": 311-322, "site": "connectTransport", "pattern": "Effect.acquireUseRelease", "note": "creates Client, calls client.connect(t) with timeout" },
+        { "line": 328-437, "site": "connectRemote", "note": "tries StreamableHTTPClientTransport → SSEClientTransport fallback" },
+        { "line": 441-476, "site": "connectLocal", "note": "StdioClientTransport with spawn args" },
+        { "line": 887-891, "site": "startAuth / OAuth connect", "note": "client.connect(transport) directly, separate from connectTransport helper" }
+      ],
+      "effect_gen_sites_count": "~15 Effect.gen blocks in large Effect.fn wrappers",
+      "layer_composition": {
+        "layer": { "line": 288, "kind": "Layer.effect(Service, Effect.gen(…))" },
+        "defaultLayer": {
+          "line": 1045,
+          "kind": "layer.pipe(Layer.provide(McpAuth.layer), Layer.provide(Bus.layer), Layer.provide(Config.defaultLayer), Layer.provide(CrossSpawnSpawner.defaultLayer), Layer.provide(AppFileSystem.defaultLayer))"
+        }
+      },
+      "semaphore_locks": [
+        { "site": "withServerLock", "lines": "296-303", "note": "per-server Semaphore(1), used by createAndStore and disconnect" },
+        { "site": "serverLocks", "line": 295, "note": "Map<string, Semaphore> — mutex per server name" }
+      ]
+    },
+    {
+      "path": "packages/opencode/src/config/mcp.ts",
+      "lines": 61,
+      "role": "MCP config schema — Local/Remote discriminated union",
+      "imports": [
+        { "module": "effect", "symbols": ["Schema"] },
+        { "module": "@opencode-ai/core/schema", "symbols": ["PositiveInt"] }
+      ],
+      "exports": [
+        { "line": 4, "symbol": "Local", "kind": "const Schema.Struct", "fields": ["type:'local'", "command:string[]", "environment?:Record<string,string>", "enabled?:boolean", "timeout?:PositiveInt"] },
+        { "line": 19, "symbol": "Local", "kind": "type" },
+        { "line": 21, "symbol": "OAuth", "kind": "const Schema.Struct", "fields": ["clientId?:string", "clientSecret?:string", "scope?:string", "callbackPort?:int", "redirectUri?:string"] },
+        { "line": 37, "symbol": "OAuth", "kind": "type" },
+        { "line": 39, "symbol": "Remote", "kind": "const Schema.Struct", "fields": ["type:'remote'", "url:string", "enabled?:boolean", "headers?:Record<string,string>", "oauth?:OAuth|false", "timeout?:PositiveInt"] },
+        { "line": 55, "symbol": "Remote", "kind": "type" },
+        { "line": 57, "symbol": "Info", "kind": "const Schema.Union([Local, Remote]).annotate({ discriminator: 'type' })" },
+        { "line": 58, "symbol": "Info", "kind": "type" }
+      ],
+      "note": "Exports ConfigMCP namespace at line 60 via `export * as ConfigMCP from './mcp'`"
+    },
+    {
+      "path": "packages/opencode/src/session/tools.ts",
+      "lines": 248,
+      "role": "Session tool resolution — resolves both builtin and MCP tools for AI model consumption",
+      "imports_relevant_to_mcp": [
+        { "line": 4, "text": "import { MCP } from \"@/mcp\"" },
+        { "line": 8, "text": "import { ToolRegistry } from \"@/tool/registry\"" }
+      ],
+      "mcp_usage": {
+        "line": 43, "note": "yield* MCP.Service — service acquisition",
+        "line": 158, "note": "for (const [key, item] of Object.entries(yield* mcp.tools())) — Iterates all MCP tools and wraps them as AI Tool objects. Each MCP tool gets: (1) input schema transformed via ProviderTransform, (2) execute wrapped with EffectBridge.run.promise + plugin triggers, (3) ask permission wrapper, (4) output truncation",
+        "line": 189, "note": "mcpStatus = (result as { isError?: boolean })?.isError ? 'failed' : 'succeeded' — MCP tool status tracking"
+      },
+      "effect_orDie_sites": [
+        { "line": 80, "code": ".pipe(Effect.orDie)", "context": "permission.ask() — permission check that must not fail, or'd to die" }
+      ],
+      "effect_ignore_sites": [],
+      "ref_sites": []
+    },
+    {
+      "path": "packages/opencode/src/tool/registry.ts",
+      "lines": 903,
+      "role": "Builtin tool registry — registers, lists, and filters tools",
+      "import_count": 131,
+      "exports": [
+        { "line": 157, "symbol": "webSearchEnabled", "kind": "function" },
+        { "line": 172, "symbol": "Interface", "kind": "interface", "methods": ["tools", "flatTools", "register"] },
+        { "line": 182, "symbol": "Service", "kind": "class Context.Service" },
+        { "line": 184, "symbol": "layer", "kind": "Layer.effect" },
+        { "line": 793, "symbol": "defaultLayer", "kind": "const (alias for layer)" }
+      ],
+      "relevant_to_mcp": "No MCP references inside ToolRegistry — MCP tools are resolved separately in session/tools.ts and merged at the session tool resolution level. ToolRegistry only handles builtin (shell, read, write, grep, glob, edit, task, etc.) and plugin tools.",
+      "effect_ignore_sites": [],
+      "ref_sites": [],
+      "state_management": "No Ref usage — uses Context.Tag for config/plugin services, transient collections in method bodies"
+    },
+    {
+      "path": "packages/opencode/src/event/index.ts",
+      "lines": 38,
+      "role": "Event module barrel — re-exports event store, runtime events, analytical queries",
+      "imports": [],
+      "exports": [
+        { "line": 12, "symbol": "RuntimeEvent", "kind": "namespace re-export", "from": "./runtime-event" },
+        { "line": 13, "symbol": "EventStore", "kind": "namespace re-export", "from": "./event-store" },
+        { "line": 13, "symbol": "EventStoreBridge", "kind": "namespace re-export", "from": "./event-bridge" },
+        { "line": 14, "symbol": "RuntimeEventTable", "kind": "object", "from": "./event.pg.sql" },
+        { "line": 15, "symbol": "EventName", "kind": "enum/const", "from": "./event-names" },
+        { "line": 15, "symbol": "EventNameValues", "kind": "array", "from": "./event-names" },
+        { "line": 18, "symbol": "EventAgentQueries", "kind": "namespace re-export", "from": "./agent-queries" },
+        { "line": 21-28, "symbol": "queryFailureHotspots, querySlowTools, queryFileContention, queryPhaseGateDenials, queryErrorSummary, querySessionTimeline", "kind": "functions", "from": "./event-queries" },
+        { "line": 30-37, "symbol": "FailureHotspot, SlowTool, FileContention, PhaseGateDenial, ErrorSummary, SessionEvent", "kind": "types", "from": "./event-queries" }
+      ],
+      "note": "No BusEvent type definitions here — BusEvent is imported from ../bus/bus-event in mcp/index.ts (line 25). This module only exports runtime event store primitives."
+    },
+    {
+      "path": "packages/desktop/src/main/ipc-config.ts",
+      "lines": 117,
+      "role": "Desktop Electron IPC handlers for configuration CRUD",
+      "imports": [
+        { "module": "electron", "symbols": ["ipcMain", "IpcMainInvokeEvent"] },
+        { "module": "./ipc-channels", "symbols": ["IPC"] },
+        { "module": "./ipc-contract", "symbols": ["withIpcResult"] },
+        { "module": "./ipc-helpers", "symbols": ["serializedWrite"] },
+        { "module": "./ipc-validation", "symbols": ["validateAndFilterAgents", "validateAndFilterMcpServers", "validateAndFilterPluginConfigs"] },
+        { "module": "./store", "symbols": ["getStore"] }
+      ],
+      "exports": [
+        { "line": 13, "symbol": "registerConfigIpcHandlers", "kind": "function" }
+      ],
+      "mcp_handlers": [
+        { "line": 66, "handler": "GET_DESKTOP_MCP_SERVERS", "note": "Reads MCP server configs from desktop-mcp-servers electron store, validates via validateAndFilterMcpServers, returns validated servers array" },
+        { "line": 80, "handler": "SET_DESKTOP_MCP_SERVERS", "note": "Validates and stores MCP server configs via serializedWrite to desktop-mcp-servers store" }
+      ],
+      "status_projection": {
+        "note": "No real-time MCP status projection in desktop IPC layer. This module only handles config persistence (get/set). Live MCP status (connected/disconnected/needs_auth) is communicated from the opencode process to the desktop renderer through a separate channel (likely WebSocket or IPC push events), not through these config handlers.",
+        "ipc_channels": {
+          "GET_DESKTOP_MCP_SERVERS": "opencode:get-desktop-mcp-servers",
+          "SET_DESKTOP_MCP_SERVERS": "opencode:set-desktop-mcp-servers"
+        }
+      }
+    }
+  ],
+  "tests": {
+    "directory": "packages/opencode/test/mcp",
+    "files": [
+      {
+        "path": "packages/opencode/test/mcp/lifecycle.test.ts",
+        "lines": 888,
+        "imports": ["bun:test (expect, mock, beforeEach)", "effect (Cause, Effect, Exit)", "../../src/mcp/index (type MCPNS)", "../lib/effect (testEffect)"],
+        "test_infrastructure": {
+          "framework": "bun:test",
+          "runner": "testEffect(MCP.defaultLayer) — custom Effect test harness at line 184",
+          "mocks": [
+            "MockStdioClientTransport (line 56) — mocks @modelcontextprotocol/sdk/client/stdio.js",
+            "MockStreamableHTTP (line 70) — mocks @modelcontextprotocol/sdk/client/streamableHttp.js",
+            "MockSSE (line 83) — mocks @modelcontextprotocol/sdk/client/sse.js",
+            "clientStates Map (line 23) — per-client mock state store for controlling mock behavior"
+          ]
+        },
+        "test_count_estimate": "~30+ it.instance() blocks covering: add/remove lifecycle, tool listing, prompt/resource collection, connect/disconnect, OAuth flows, timeouts, error states, connect failure/disabled, hanging servers, remote failures",
+        "key_patterns": [
+          "testEffect(MCP.defaultLayer) creates a layered Effect harness with all dependencies",
+          "Mock transports throw on start() by default, but clientStates controls mock behavior",
+          "getOrCreateClientState(name) returns per-server MockClientState for controlling listTools responses"
+        ]
+      },
+      {
+        "path": "packages/opencode/test/mcp/headers.test.ts",
+        "lines": 126,
+        "imports": ["bun:test (describe, expect, mock, beforeEach)", "effect (Effect)", "../lib/effect (testEffect)"],
+        "tests": 3,
+        "coverage": "Headers passed to transports when: OAuth enabled (default), OAuth explicitly disabled, no headers"
+      },
+      {
+        "path": "packages/opencode/test/mcp/oauth-callback.test.ts",
+        "lines": 34,
+        "imports": ["bun:test", "../../src/mcp/oauth-callback", "../../src/mcp/oauth-provider"],
+        "tests": 4,
+        "coverage": "parseRedirectUri defaults, custom URI parsing, invalid URI fallback, McpOAuthCallback.ensureRunning"
+      }
+    ]
+  },
+  "cross_file_import_graph": {
+    "mcp_index_imports_from": ["config/mcp (ConfigMCP)", "mcp/oauth-provider", "mcp/oauth-callback", "mcp/auth", "bus/bus-event", "bus (Bus)", "config/config (Config)", "effect/bridge", "effect/instance-state"],
+    "mcp_index_imported_by": ["session/tools (MCP.Service)", "test/mcp/lifecycle.test", "test/mcp/headers.test"],
+    "config_mcp_imports_from": ["effect (Schema)", "@opencode-ai/core/schema"],
+    "config_mcp_imported_by": ["mcp/index (ConfigMCP)"],
+    "session_tools_imports_from": ["mcp (MCP)", "tool/registry (ToolRegistry)", "permission (Permission)", "tool/tool (Tool)", "effect/bridge", "bus"],
+    "session_tools_imported_by": ["session processor"],
+    "tool_registry_imports_from": ["Every builtin tool module (plan, shell, read, write, grep, glob, edit, task, todo, websearch, skill, etc.)"],
+    "tool_registry_imported_by": ["session/tools"],
+    "event_index_imports_from": ["event/runtime-event", "event/event-store", "event/event-bridge", "event/agent-queries", "event/event-queries"],
+    "event_index_imported_by": ["session lifecycle"],
+    "desktop_ipc_config_imports_from": ["electron", "ipc-channels", "ipc-contract", "ipc-helpers", "ipc-validation", "store"],
+    "desktop_ipc_config_imported_by": ["desktop main process entry"],
+    "notable_missing_edges": [
+      "desktop does not import mcp/index directly — MCP status projection to desktop UI appears to go through a separate IPC/WebSocket channel (likely in packages/desktop/src/main/ or a shared bridge)",
+      "event/index does not export BusEvent — that type comes from bus/bus-event, imported directly by mcp/index"
+    ]
+  },
+  "effect_pattern_summary": {
+    "total_effect_ignore_sites": 10,
+    "all_in_mcp_index_ts": true,
+    "total_effect_orDie_sites": 1,
+    "in_session_tools_ts": true,
+    "state_mutation_pattern": "Mutable objects (not Ref) via InstanceState.get → direct mutation of s.clients/s.status/s.defs/s.config",
+    "concurrency_pattern": "Semaphore per server (withServerLock) — Sequence of 1 — used for createAndStore and disconnect",
+    "layer_pattern": "Layer.effect for construction, layer.pipe(Layer.provide(...)) for defaultLayer composition",
+    "service_pattern": "Context.Service + serviceUse for dependency injection"
+  }
+}

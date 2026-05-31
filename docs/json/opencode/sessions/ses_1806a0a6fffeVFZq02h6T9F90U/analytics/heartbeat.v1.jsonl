@@ -1,0 +1,84 @@
+{"at":"2026-05-31T19:50:07.353Z","session_id":"ses_1806a0a6fffeVFZq02h6T9F90U","agent":"precedent","tool":"smart_find","phase":"started","detail":"docs/json/opencode/plans/*mcp*"}
+{"at":"2026-05-31T19:50:07.382Z","session_id":"ses_1806a0a6fffeVFZq02h6T9F90U","agent":"precedent","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T19:50:07.823Z","session_id":"ses_1806a0a6fffeVFZq02h6T9F90U","agent":"precedent","tool":"smart_find","phase":"started","detail":"docs/json/opencode/plans/*"}
+{"at":"2026-05-31T19:50:07.851Z","session_id":"ses_1806a0a6fffeVFZq02h6T9F90U","agent":"precedent","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T19:50:08.718Z","session_id":"ses_1806a0a6fffeVFZq02h6T9F90U","agent":"precedent","tool":"smart_find","phase":"started","detail":"docs/adr/*"}
+{"at":"2026-05-31T19:50:08.744Z","session_id":"ses_1806a0a6fffeVFZq02h6T9F90U","agent":"precedent","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T19:50:22.299Z","session_id":"ses_1806a0a6fffeVFZq02h6T9F90U","agent":"precedent","tool":"smart_bash","phase":"started","detail":"List all plan files"}
+{"at":"2026-05-31T19:50:22.299Z","session_id":"ses_1806a0a6fffeVFZq02h6T9F90U","agent":"precedent","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T19:50:23.017Z","session_id":"ses_1806a0a6fffeVFZq02h6T9F90U","agent":"precedent","tool":"smart_bash","phase":"started","detail":"List all ADR files"}
+{"at":"2026-05-31T19:50:23.017Z","session_id":"ses_1806a0a6fffeVFZq02h6T9F90U","agent":"precedent","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T19:50:23.881Z","session_id":"ses_1806a0a6fffeVFZq02h6T9F90U","agent":"precedent","tool":"smart_grep","phase":"started","detail":"Schema\\.brand"}
+{"at":"2026-05-31T19:50:23.946Z","session_id":"ses_1806a0a6fffeVFZq02h6T9F90U","agent":"precedent","tool":"smart_grep","phase":"completed","detail":"Schema\\.brand"}
+{"at":"2026-05-31T19:50:24.636Z","session_id":"ses_1806a0a6fffeVFZq02h6T9F90U","agent":"precedent","tool":"smart_grep","phase":"started","detail":"Schema\\.Literal"}
+{"at":"2026-05-31T19:50:24.643Z","session_id":"ses_1806a0a6fffeVFZq02h6T9F90U","agent":"precedent","tool":"smart_grep","phase":"completed","detail":"Schema\\.Literal"}
+{"at":"2026-05-31T19:50:39.078Z","session_id":"ses_1806a0a6fffeVFZq02h6T9F90U","agent":"precedent","tool":"smart_bash","phase":"started","detail":"List plan files"}
+{"at":"2026-05-31T19:50:39.078Z","session_id":"ses_1806a0a6fffeVFZq02h6T9F90U","agent":"precedent","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T19:50:39.624Z","session_id":"ses_1806a0a6fffeVFZq02h6T9F90U","agent":"precedent","tool":"smart_bash","phase":"started","detail":"List ADR files"}
+{"at":"2026-05-31T19:50:39.624Z","session_id":"ses_1806a0a6fffeVFZq02h6T9F90U","agent":"precedent","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T19:50:40.650Z","session_id":"ses_1806a0a6fffeVFZq02h6T9F90U","agent":"precedent","tool":"smart_grep","phase":"started","detail":"CapabilityId"}
+{"at":"2026-05-31T19:50:40.664Z","session_id":"ses_1806a0a6fffeVFZq02h6T9F90U","agent":"precedent","tool":"smart_grep","phase":"completed","detail":"CapabilityId"}
+{"at":"2026-05-31T19:50:41.695Z","session_id":"ses_1806a0a6fffeVFZq02h6T9F90U","agent":"precedent","tool":"smart_grep","phase":"started","detail":"Schema\\.Literal.*Brand|Schema\\.brand.*Literal|Literal.*brand|brand.*Literal"}
+{"at":"2026-05-31T19:50:41.770Z","session_id":"ses_1806a0a6fffeVFZq02h6T9F90U","agent":"precedent","tool":"smart_grep","phase":"completed","detail":"Schema\\.Literal.*Brand|Schema\\.brand.*Literal|Literal.*brand|brand.*Literal"}
+{"at":"2026-05-31T19:51:04.255Z","session_id":"ses_1806a0a6fffeVFZq02h6T9F90U","agent":"precedent","tool":"smart_grep","phase":"started","detail":"mcp.truth|MCP.TRUTH|mcp-truth|MCP-TRUTH"}
+{"at":"2026-05-31T19:51:04.272Z","session_id":"ses_1806a0a6fffeVFZq02h6T9F90U","agent":"precedent","tool":"smart_grep","phase":"completed","detail":"mcp.truth|MCP.TRUTH|mcp-truth|MCP-TRUTH"}
+{"at":"2026-05-31T19:51:50.804Z","session_id":"ses_1806a0a6fffeVFZq02h6T9F90U","agent":"precedent","tool":"smart_bash","phase":"started","detail":"Extract fix groups from trust-boundary plan"}
+{"at":"2026-05-31T19:51:50.845Z","session_id":"ses_1806a0a6fffeVFZq02h6T9F90U","agent":"precedent","tool":"smart_bash","phase":"completed","detail":"python3 exit=0"}
+{"at":"2026-05-31T19:51:53.721Z","session_id":"ses_1806a0a6fffeVFZq02h6T9F90U","agent":"precedent","tool":"smart_bash","phase":"started","detail":"Extract key sections from trust-boundary plan"}
+{"at":"2026-05-31T19:51:53.780Z","session_id":"ses_1806a0a6fffeVFZq02h6T9F90U","agent":"precedent","tool":"smart_bash","phase":"completed","detail":"python3 exit=0"}
+{"at":"2026-05-31T19:51:56.863Z","session_id":"ses_1806a0a6fffeVFZq02h6T9F90U","agent":"precedent","tool":"smart_bash","phase":"started","detail":"Extract key sections from mcp-truth plan"}
+{"at":"2026-05-31T19:51:56.911Z","session_id":"ses_1806a0a6fffeVFZq02h6T9F90U","agent":"precedent","tool":"smart_bash","phase":"completed","detail":"python3 exit=0"}
+{"at":"2026-05-31T19:52:20.569Z","session_id":"ses_1806a0a6fffeVFZq02h6T9F90U","agent":"precedent","tool":"smart_bash","phase":"started","detail":"Get full fix_groups from trust-boundary plan"}
+{"at":"2026-05-31T19:52:20.601Z","session_id":"ses_1806a0a6fffeVFZq02h6T9F90U","agent":"precedent","tool":"smart_bash","phase":"completed","detail":"python3 exit=0"}
+{"at":"2026-05-31T19:52:24.138Z","session_id":"ses_1806a0a6fffeVFZq02h6T9F90U","agent":"precedent","tool":"smart_bash","phase":"started","detail":"Check coordination across all plans"}
+{"at":"2026-05-31T19:52:24.206Z","session_id":"ses_1806a0a6fffeVFZq02h6T9F90U","agent":"precedent","tool":"smart_bash","phase":"completed","detail":"python3 exit=0"}
+{"at":"2026-05-31T19:52:43.621Z","session_id":"ses_1806a0a6fffeVFZq02h6T9F90U","agent":"precedent","tool":"smart_bash","phase":"started","detail":"Debug the trust-boundary plan structure"}
+{"at":"2026-05-31T19:52:43.661Z","session_id":"ses_1806a0a6fffeVFZq02h6T9F90U","agent":"precedent","tool":"smart_bash","phase":"completed","detail":"python3 exit=0"}
+{"at":"2026-05-31T19:52:44.574Z","session_id":"ses_1806a0a6fffeVFZq02h6T9F90U","agent":"precedent","tool":"smart_grep","phase":"started","detail":"plugin.truth|PLUGIN.TRUTH|plugin-truth|PLUGIN-TRUTH"}
+{"at":"2026-05-31T19:52:44.591Z","session_id":"ses_1806a0a6fffeVFZq02h6T9F90U","agent":"precedent","tool":"smart_grep","phase":"completed","detail":"plugin.truth|PLUGIN.TRUTH|plugin-truth|PLUGIN-TRUTH"}
+{"at":"2026-05-31T19:53:06.462Z","session_id":"ses_1806a0a6fffeVFZq02h6T9F90U","agent":"precedent","tool":"smart_bash","phase":"started","detail":"Get fix details from trust-boundary plan"}
+{"at":"2026-05-31T19:53:06.673Z","session_id":"ses_1806a0a6fffeVFZq02h6T9F90U","agent":"precedent","tool":"smart_bash","phase":"failed","detail":"python3 exit=1"}
+{"at":"2026-05-31T19:53:08.524Z","session_id":"ses_1806a0a6fffeVFZq02h6T9F90U","agent":"precedent","tool":"smart_bash","phase":"started","detail":"Preview all ADR files"}
+{"at":"2026-05-31T19:53:08.541Z","session_id":"ses_1806a0a6fffeVFZq02h6T9F90U","agent":"precedent","tool":"smart_bash","phase":"completed","detail":"for exit=0"}
+{"at":"2026-05-31T19:53:26.957Z","session_id":"ses_1806a0a6fffeVFZq02h6T9F90U","agent":"precedent","tool":"smart_bash","phase":"started","detail":"Get fix-A before/after details"}
+{"at":"2026-05-31T19:53:27.019Z","session_id":"ses_1806a0a6fffeVFZq02h6T9F90U","agent":"precedent","tool":"smart_bash","phase":"completed","detail":"python3 exit=0"}
+{"at":"2026-05-31T19:53:27.600Z","session_id":"ses_1806a0a6fffeVFZq02h6T9F90U","agent":"precedent","tool":"smart_bash","phase":"started","detail":"List canonical ADR files"}
+{"at":"2026-05-31T19:53:27.600Z","session_id":"ses_1806a0a6fffeVFZq02h6T9F90U","agent":"precedent","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T19:53:47.029Z","session_id":"ses_1806a0a6fffeVFZq02h6T9F90U","agent":"precedent","tool":"smart_bash","phase":"started","detail":"Get fix details properly"}
+{"at":"2026-05-31T19:53:47.132Z","session_id":"ses_1806a0a6fffeVFZq02h6T9F90U","agent":"precedent","tool":"smart_bash","phase":"failed","detail":"python3 exit=1"}
+{"at":"2026-05-31T19:54:04.668Z","session_id":"ses_1806a0a6fffeVFZq02h6T9F90U","agent":"precedent","tool":"smart_bash","phase":"started","detail":"Get fix structure details"}
+{"at":"2026-05-31T19:54:04.711Z","session_id":"ses_1806a0a6fffeVFZq02h6T9F90U","agent":"precedent","tool":"smart_bash","phase":"completed","detail":"python3 exit=0"}
+{"at":"2026-05-31T19:54:05.751Z","session_id":"ses_1806a0a6fffeVFZq02h6T9F90U","agent":"precedent","tool":"smart_bash","phase":"started","detail":"Find ADR files"}
+{"at":"2026-05-31T19:54:05.751Z","session_id":"ses_1806a0a6fffeVFZq02h6T9F90U","agent":"precedent","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T19:54:29.144Z","session_id":"ses_1806a0a6fffeVFZq02h6T9F90U","agent":"precedent","tool":"smart_grep","phase":"started","detail":"Schema\\.Literal\\(.*\\)\\.pipe\\(Schema\\.brand"}
+{"at":"2026-05-31T19:54:29.280Z","session_id":"ses_1806a0a6fffeVFZq02h6T9F90U","agent":"precedent","tool":"smart_grep","phase":"completed","detail":"Schema\\.Literal\\(.*\\)\\.pipe\\(Schema\\.brand"}
+{"at":"2026-05-31T19:54:29.963Z","session_id":"ses_1806a0a6fffeVFZq02h6T9F90U","agent":"precedent","tool":"smart_grep","phase":"started","detail":"Schema\\.Literal"}
+{"at":"2026-05-31T19:54:30.039Z","session_id":"ses_1806a0a6fffeVFZq02h6T9F90U","agent":"precedent","tool":"smart_grep","phase":"completed","detail":"Schema\\.Literal"}
+{"at":"2026-05-31T19:54:31.015Z","session_id":"ses_1806a0a6fffeVFZq02h6T9F90U","agent":"precedent","tool":"smart_bash","phase":"started","detail":"Find canonical ADR JSON files"}
+{"at":"2026-05-31T19:54:31.067Z","session_id":"ses_1806a0a6fffeVFZq02h6T9F90U","agent":"precedent","tool":"smart_bash","phase":"completed","detail":"python3 exit=0"}
+{"at":"2026-05-31T19:54:31.739Z","session_id":"ses_1806a0a6fffeVFZq02h6T9F90U","agent":"precedent","tool":"smart_grep","phase":"started","detail":"CapabilityIdValues"}
+{"at":"2026-05-31T19:54:31.767Z","session_id":"ses_1806a0a6fffeVFZq02h6T9F90U","agent":"precedent","tool":"smart_grep","phase":"completed","detail":"CapabilityIdValues"}
+{"at":"2026-05-31T19:54:56.321Z","session_id":"ses_1806a0a6fffeVFZq02h6T9F90U","agent":"precedent","tool":"smart_grep","phase":"started","detail":"Schema\\.Literal\\(.*\\)\\n.*\\.pipe\\(Schema\\.brand"}
+{"at":"2026-05-31T19:54:56.420Z","session_id":"ses_1806a0a6fffeVFZq02h6T9F90U","agent":"precedent","tool":"smart_grep","phase":"failed","detail":"rg: the literal \"\\n\" is not allowed in a regex\n\nConsider enabling multiline mode with the --multiline flag (or -U for short).\nWhen multiline mode is enabled, new line characters can be matched."}
+{"at":"2026-05-31T19:54:57.048Z","session_id":"ses_1806a0a6fffeVFZq02h6T9F90U","agent":"precedent","tool":"smart_grep","phase":"started","detail":"\\.pipe\\(Schema\\.brand\\("}
+{"at":"2026-05-31T19:54:57.247Z","session_id":"ses_1806a0a6fffeVFZq02h6T9F90U","agent":"precedent","tool":"smart_grep","phase":"completed","detail":"\\.pipe\\(Schema\\.brand\\("}
+{"at":"2026-05-31T19:54:58.105Z","session_id":"ses_1806a0a6fffeVFZq02h6T9F90U","agent":"precedent","tool":"smart_grep","phase":"started","detail":"plugin.*security|capability.*brand|trust.*boundary"}
+{"at":"2026-05-31T19:54:58.430Z","session_id":"ses_1806a0a6fffeVFZq02h6T9F90U","agent":"precedent","tool":"smart_grep","phase":"completed","detail":"plugin.*security|capability.*brand|trust.*boundary"}
+{"at":"2026-05-31T19:55:35.008Z","session_id":"ses_1806a0a6fffeVFZq02h6T9F90U","agent":"precedent","tool":"smart_grep","phase":"started","detail":"pg-runtime|pg.runtime|pgruntime"}
+{"at":"2026-05-31T19:55:35.029Z","session_id":"ses_1806a0a6fffeVFZq02h6T9F90U","agent":"precedent","tool":"smart_grep","phase":"completed","detail":"pg-runtime|pg.runtime|pgruntime"}
+{"at":"2026-05-31T19:55:35.830Z","session_id":"ses_1806a0a6fffeVFZq02h6T9F90U","agent":"precedent","tool":"smart_grep","phase":"started","detail":"pg-runtime-wiring-layer"}
+{"at":"2026-05-31T19:55:36.153Z","session_id":"ses_1806a0a6fffeVFZq02h6T9F90U","agent":"precedent","tool":"smart_grep","phase":"completed","detail":"pg-runtime-wiring-layer"}
+{"at":"2026-05-31T19:55:37.818Z","session_id":"ses_1806a0a6fffeVFZq02h6T9F90U","agent":"precedent","tool":"smart_bash","phase":"started","detail":"Check MCP-TRUTH coordination"}
+{"at":"2026-05-31T19:55:37.864Z","session_id":"ses_1806a0a6fffeVFZq02h6T9F90U","agent":"precedent","tool":"smart_bash","phase":"completed","detail":"python3 exit=0"}
+{"at":"2026-05-31T19:55:40.598Z","session_id":"ses_1806a0a6fffeVFZq02h6T9F90U","agent":"precedent","tool":"smart_bash","phase":"started","detail":"Check rl-005 coordination with trust-boundary"}
+{"at":"2026-05-31T19:55:40.690Z","session_id":"ses_1806a0a6fffeVFZq02h6T9F90U","agent":"precedent","tool":"smart_bash","phase":"completed","detail":"python3 exit=0"}
+{"at":"2026-05-31T19:56:25.485Z","session_id":"ses_1806a0a6fffeVFZq02h6T9F90U","agent":"precedent","tool":"smart_bash","phase":"started","detail":"Get apply_order and root_causes from trust-boundary plan"}
+{"at":"2026-05-31T19:56:25.559Z","session_id":"ses_1806a0a6fffeVFZq02h6T9F90U","agent":"precedent","tool":"smart_bash","phase":"completed","detail":"python3 exit=0"}
+{"at":"2026-05-31T19:56:56.439Z","session_id":"ses_1806a0a6fffeVFZq02h6T9F90U","agent":"precedent","tool":"smart_bash","phase":"started","detail":"Read pg-runtime-wiring-layer-fix plan details"}
+{"at":"2026-05-31T19:56:56.511Z","session_id":"ses_1806a0a6fffeVFZq02h6T9F90U","agent":"precedent","tool":"smart_bash","phase":"completed","detail":"python3 exit=0"}
+{"at":"2026-05-31T19:57:24.149Z","session_id":"ses_1806a0a6fffeVFZq02h6T9F90U","agent":"precedent","tool":"smart_bash","phase":"started","detail":"Find all plans related to trust/plugin/security/MCP"}
+{"at":"2026-05-31T19:57:24.246Z","session_id":"ses_1806a0a6fffeVFZq02h6T9F90U","agent":"precedent","tool":"smart_bash","phase":"completed","detail":"python3 exit=0"}
+{"at":"2026-05-31T19:57:50.250Z","session_id":"ses_1806a0a6fffeVFZq02h6T9F90U","agent":"precedent","tool":"smart_bash","phase":"started","detail":"Check Phase 4 plan for trust references"}
+{"at":"2026-05-31T19:57:50.288Z","session_id":"ses_1806a0a6fffeVFZq02h6T9F90U","agent":"precedent","tool":"smart_bash","phase":"completed","detail":"python3 exit=0"}
+{"at":"2026-05-31T19:58:16.017Z","session_id":"ses_1806a0a6fffeVFZq02h6T9F90U","agent":"precedent","tool":"smart_grep","phase":"started","detail":"capability|trust.boundary|secret.redaction|auth|brand|Schema"}
+{"at":"2026-05-31T19:58:16.023Z","session_id":"ses_1806a0a6fffeVFZq02h6T9F90U","agent":"precedent","tool":"smart_grep","phase":"completed","detail":"capability|trust.boundary|secret.redaction|auth|brand|Schema"}

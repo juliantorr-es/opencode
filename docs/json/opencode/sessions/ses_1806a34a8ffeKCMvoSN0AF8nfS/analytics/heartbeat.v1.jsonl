@@ -1,0 +1,54 @@
+{"at":"2026-05-31T19:49:57.710Z","session_id":"ses_1806a34a8ffeKCMvoSN0AF8nfS","agent":"coroner","tool":"smart_find","phase":"started","detail":"*.ts"}
+{"at":"2026-05-31T19:49:57.754Z","session_id":"ses_1806a34a8ffeKCMvoSN0AF8nfS","agent":"coroner","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T19:49:58.483Z","session_id":"ses_1806a34a8ffeKCMvoSN0AF8nfS","agent":"coroner","tool":"smart_grep","phase":"started","detail":"CapabilityId"}
+{"at":"2026-05-31T19:49:58.731Z","session_id":"ses_1806a34a8ffeKCMvoSN0AF8nfS","agent":"coroner","tool":"smart_grep","phase":"completed","detail":"CapabilityId"}
+{"at":"2026-05-31T19:49:59.228Z","session_id":"ses_1806a34a8ffeKCMvoSN0AF8nfS","agent":"coroner","tool":"smart_grep","phase":"started","detail":"checkCapability"}
+{"at":"2026-05-31T19:49:59.578Z","session_id":"ses_1806a34a8ffeKCMvoSN0AF8nfS","agent":"coroner","tool":"smart_grep","phase":"completed","detail":"checkCapability"}
+{"at":"2026-05-31T19:50:30.253Z","session_id":"ses_1806a34a8ffeKCMvoSN0AF8nfS","agent":"coroner","tool":"smart_grep","phase":"started","detail":"\\.catch\\("}
+{"at":"2026-05-31T19:50:30.260Z","session_id":"ses_1806a34a8ffeKCMvoSN0AF8nfS","agent":"coroner","tool":"smart_grep","phase":"completed","detail":"\\.catch\\("}
+{"at":"2026-05-31T19:50:31.104Z","session_id":"ses_1806a34a8ffeKCMvoSN0AF8nfS","agent":"coroner","tool":"smart_grep","phase":"started","detail":"catch|token|secret|auth"}
+{"at":"2026-05-31T19:50:31.110Z","session_id":"ses_1806a34a8ffeKCMvoSN0AF8nfS","agent":"coroner","tool":"smart_grep","phase":"completed","detail":"catch|token|secret|auth"}
+{"at":"2026-05-31T19:50:31.660Z","session_id":"ses_1806a34a8ffeKCMvoSN0AF8nfS","agent":"coroner","tool":"smart_find","phase":"started","detail":"*auth*.ts"}
+{"at":"2026-05-31T19:50:31.694Z","session_id":"ses_1806a34a8ffeKCMvoSN0AF8nfS","agent":"coroner","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T19:51:14.572Z","session_id":"ses_1806a34a8ffeKCMvoSN0AF8nfS","agent":"coroner","tool":"smart_grep","phase":"started","detail":"Effect\\.catch\\(|\\.catch\\(\\(\\)|\\.catch\\(\\(err\\)|\\.catch\\(\\(error\\)|\\.catch\\(\\(e\\)"}
+{"at":"2026-05-31T19:51:14.590Z","session_id":"ses_1806a34a8ffeKCMvoSN0AF8nfS","agent":"coroner","tool":"smart_grep","phase":"completed","detail":"Effect\\.catch\\(|\\.catch\\(\\(\\)|\\.catch\\(\\(err\\)|\\.catch\\(\\(error\\)|\\.catch\\(\\(e\\)"}
+{"at":"2026-05-31T19:51:37.377Z","session_id":"ses_1806a34a8ffeKCMvoSN0AF8nfS","agent":"coroner","tool":"smart_grep","phase":"started","detail":"shared\\.ts"}
+{"at":"2026-05-31T19:51:37.387Z","session_id":"ses_1806a34a8ffeKCMvoSN0AF8nfS","agent":"coroner","tool":"smart_grep","phase":"completed","detail":"shared\\.ts"}
+{"at":"2026-05-31T19:51:38.869Z","session_id":"ses_1806a34a8ffeKCMvoSN0AF8nfS","agent":"coroner","tool":"smart_grep","phase":"started","detail":"authorize|plugin\\.shared|PluginShared"}
+{"at":"2026-05-31T19:51:38.879Z","session_id":"ses_1806a34a8ffeKCMvoSN0AF8nfS","agent":"coroner","tool":"smart_grep","phase":"completed","detail":"authorize|plugin\\.shared|PluginShared"}
+{"at":"2026-05-31T19:52:01.948Z","session_id":"ses_1806a34a8ffeKCMvoSN0AF8nfS","agent":"coroner","tool":"smart_grep","phase":"started","detail":"catch|error|\\.succeed\\(\\{\\}"}
+{"at":"2026-05-31T19:52:01.992Z","session_id":"ses_1806a34a8ffeKCMvoSN0AF8nfS","agent":"coroner","tool":"smart_grep","phase":"completed","detail":"catch|error|\\.succeed\\(\\{\\}"}
+{"at":"2026-05-31T19:52:02.867Z","session_id":"ses_1806a34a8ffeKCMvoSN0AF8nfS","agent":"coroner","tool":"smart_grep","phase":"started","detail":"Effect\\.catch|\\.catch\\("}
+{"at":"2026-05-31T19:52:02.873Z","session_id":"ses_1806a34a8ffeKCMvoSN0AF8nfS","agent":"coroner","tool":"smart_grep","phase":"completed","detail":"Effect\\.catch|\\.catch\\("}
+{"at":"2026-05-31T19:52:21.909Z","session_id":"ses_1806a34a8ffeKCMvoSN0AF8nfS","agent":"coroner","tool":"smart_bash","phase":"started","detail":"Read trigger function and catch blocks in plugin/index.ts"}
+{"at":"2026-05-31T19:52:21.909Z","session_id":"ses_1806a34a8ffeKCMvoSN0AF8nfS","agent":"coroner","tool":"smart_bash","phase":"rerouted","detail":"→ read_source"}
+{"at":"2026-05-31T19:52:22.592Z","session_id":"ses_1806a34a8ffeKCMvoSN0AF8nfS","agent":"coroner","tool":"smart_bash","phase":"started","detail":"Read catch blocks in mcp/index.ts"}
+{"at":"2026-05-31T19:52:22.592Z","session_id":"ses_1806a34a8ffeKCMvoSN0AF8nfS","agent":"coroner","tool":"smart_bash","phase":"rerouted","detail":"→ read_source"}
+{"at":"2026-05-31T19:52:23.412Z","session_id":"ses_1806a34a8ffeKCMvoSN0AF8nfS","agent":"coroner","tool":"smart_bash","phase":"started","detail":"Read auth corruption handling in mcp/auth.ts"}
+{"at":"2026-05-31T19:52:23.412Z","session_id":"ses_1806a34a8ffeKCMvoSN0AF8nfS","agent":"coroner","tool":"smart_bash","phase":"rerouted","detail":"→ read_source"}
+{"at":"2026-05-31T19:53:56.934Z","session_id":"ses_1806a34a8ffeKCMvoSN0AF8nfS","agent":"coroner","tool":"smart_bash","phase":"started","detail":"Find token/secret handling in plugin/index.ts"}
+{"at":"2026-05-31T19:53:56.934Z","session_id":"ses_1806a34a8ffeKCMvoSN0AF8nfS","agent":"coroner","tool":"smart_bash","phase":"rerouted","detail":"→ smart_grep"}
+{"at":"2026-05-31T19:53:58.139Z","session_id":"ses_1806a34a8ffeKCMvoSN0AF8nfS","agent":"coroner","tool":"smart_grep","phase":"started","detail":"Effect\\.catch|\\.catch\\(\\("}
+{"at":"2026-05-31T19:53:58.148Z","session_id":"ses_1806a34a8ffeKCMvoSN0AF8nfS","agent":"coroner","tool":"smart_grep","phase":"completed","detail":"Effect\\.catch|\\.catch\\(\\("}
+{"at":"2026-05-31T19:54:18.657Z","session_id":"ses_1806a34a8ffeKCMvoSN0AF8nfS","agent":"coroner","tool":"smart_bash","phase":"started","detail":"Read trigger function and catch blocks in plugin/index.ts (lines 271-435)"}
+{"at":"2026-05-31T19:54:18.699Z","session_id":"ses_1806a34a8ffeKCMvoSN0AF8nfS","agent":"coroner","tool":"smart_bash","phase":"completed","detail":"python3 exit=0"}
+{"at":"2026-05-31T19:54:36.585Z","session_id":"ses_1806a34a8ffeKCMvoSN0AF8nfS","agent":"coroner","tool":"smart_bash","phase":"started","detail":"Read the trigger function catch blocks lines 291-345"}
+{"at":"2026-05-31T19:54:36.622Z","session_id":"ses_1806a34a8ffeKCMvoSN0AF8nfS","agent":"coroner","tool":"smart_bash","phase":"completed","detail":"python3 exit=0"}
+{"at":"2026-05-31T19:54:37.659Z","session_id":"ses_1806a34a8ffeKCMvoSN0AF8nfS","agent":"coroner","tool":"smart_bash","phase":"started","detail":"Read trigger function lines 396-525"}
+{"at":"2026-05-31T19:54:37.712Z","session_id":"ses_1806a34a8ffeKCMvoSN0AF8nfS","agent":"coroner","tool":"smart_bash","phase":"completed","detail":"python3 exit=0"}
+{"at":"2026-05-31T19:54:55.985Z","session_id":"ses_1806a34a8ffeKCMvoSN0AF8nfS","agent":"coroner","tool":"smart_bash","phase":"started","detail":"Read trigger hook dispatch loop lines 436-475"}
+{"at":"2026-05-31T19:54:56.022Z","session_id":"ses_1806a34a8ffeKCMvoSN0AF8nfS","agent":"coroner","tool":"smart_bash","phase":"completed","detail":"python3 exit=0"}
+{"at":"2026-05-31T19:55:15.052Z","session_id":"ses_1806a34a8ffeKCMvoSN0AF8nfS","agent":"coroner","tool":"smart_bash","phase":"started","detail":"Read hasSecretKey, stripSecrets, and auth token handling"}
+{"at":"2026-05-31T19:55:15.087Z","session_id":"ses_1806a34a8ffeKCMvoSN0AF8nfS","agent":"coroner","tool":"smart_bash","phase":"completed","detail":"python3 exit=0"}
+{"at":"2026-05-31T19:55:16.100Z","session_id":"ses_1806a34a8ffeKCMvoSN0AF8nfS","agent":"coroner","tool":"smart_bash","phase":"started","detail":"Read auth flow with token logging"}
+{"at":"2026-05-31T19:55:16.148Z","session_id":"ses_1806a34a8ffeKCMvoSN0AF8nfS","agent":"coroner","tool":"smart_bash","phase":"completed","detail":"python3 exit=0"}
+{"at":"2026-05-31T19:55:39.915Z","session_id":"ses_1806a34a8ffeKCMvoSN0AF8nfS","agent":"coroner","tool":"smart_bash","phase":"started","detail":"Read OAuth connect/auth flow in mcp/index.ts"}
+{"at":"2026-05-31T19:55:39.954Z","session_id":"ses_1806a34a8ffeKCMvoSN0AF8nfS","agent":"coroner","tool":"smart_bash","phase":"completed","detail":"python3 exit=0"}
+{"at":"2026-05-31T19:56:02.328Z","session_id":"ses_1806a34a8ffeKCMvoSN0AF8nfS","agent":"coroner","tool":"smart_bash","phase":"started","detail":"Read finishAuth and auth status functions"}
+{"at":"2026-05-31T19:56:02.368Z","session_id":"ses_1806a34a8ffeKCMvoSN0AF8nfS","agent":"coroner","tool":"smart_bash","phase":"completed","detail":"python3 exit=0"}
+{"at":"2026-05-31T19:56:03.712Z","session_id":"ses_1806a34a8ffeKCMvoSN0AF8nfS","agent":"coroner","tool":"smart_bash","phase":"started","detail":"Read auth status and token expiration checking"}
+{"at":"2026-05-31T19:56:03.764Z","session_id":"ses_1806a34a8ffeKCMvoSN0AF8nfS","agent":"coroner","tool":"smart_bash","phase":"completed","detail":"python3 exit=0"}
+{"at":"2026-05-31T19:57:18.073Z","session_id":"ses_1806a34a8ffeKCMvoSN0AF8nfS","agent":"coroner","tool":"smart_bash","phase":"started","detail":"Read SECRET_PATTERNS definition"}
+{"at":"2026-05-31T19:57:18.134Z","session_id":"ses_1806a34a8ffeKCMvoSN0AF8nfS","agent":"coroner","tool":"smart_bash","phase":"completed","detail":"python3 exit=0"}
+{"at":"2026-05-31T19:57:19.208Z","session_id":"ses_1806a34a8ffeKCMvoSN0AF8nfS","agent":"coroner","tool":"smart_bash","phase":"started","detail":"Read finishAuth to see token flow after auth"}
+{"at":"2026-05-31T19:57:19.250Z","session_id":"ses_1806a34a8ffeKCMvoSN0AF8nfS","agent":"coroner","tool":"smart_bash","phase":"completed","detail":"python3 exit=0"}

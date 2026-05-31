@@ -1,0 +1,173 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Trust-Boundary Architecture Plan Review",
+  "generated_at": "2026-05-31T00:00:00Z",
+  "plan_reviewed": "trust-boundary-architecture.v1.json",
+  "verdict": "APPROVE WITH CONDITIONS",
+  "subagents_deployed": 7,
+  "subagents_returned": ["witness", "coroner", "precedent", "blast-radius", "appeal"],
+  "subagents_pending": ["reasonable-doubt", "exhibit-a"],
+  "axes": {
+    "coupling": {
+      "score": 3,
+      "note": "WITNESS: fix-A adds Schema to types.ts (precedented: 8 existing Schema.brand files). fix-B adds Schema to 4 auth plugins (contained: models.ts already imports Schema). fix-E needs careful Log vs Effect choice for shared.ts. Zero cross-domain coupling. BLAST-RADIUS: all changes confined to packages/opencode/."
+    },
+    "debuggability": {
+      "score": 2,
+      "note": "CORONER found 4 fatal design flaws: (1) fix-A Schema.brand provides ZERO runtime enforcement — all 5 checkCapability call sites use `as any` bypass, brand erased before comparison. (2) fix-C partial recovery impossible with Record-level Schema validation (all-or-nothing). (3) fix-C corrupted data overwritten before forensic investigation. (4) fix-E persistCrash/persistSuccess silently swallow I/O errors — quarantine broken. fix-G's `yield*` inside Effect.flatMap callback will not compile."
+    },
+    "convergence": {
+      "score": 4,
+      "note": "PRECEDENT: Schema.Literal+brand combo is a novel extension (no precedent), not a 'match' to account/schema.ts as plan claims. 1 phantom lane (PLUGIN-TRUTH doesn't exist). 1 one-sided coordination (MCP-TRUTH doesn't reciprocate). 1 void deferral (RL-004 has no plan artifact)."
+    },
+    "surface_area": {
+      "score": 3,
+      "note": "BLAST-RADIUS: 14 affected files (10 production, 4 test), all in packages/opencode/. CapabilityId: 0 external consumers. ListedPlugin: local/non-exported. OAuth guard: 2 sites in 1 file."
+    },
+    "testability": {
+      "score": 2,
+      "note": "2/7 fixes testable in isolation. Fix-A needs bun typecheck + decode boundary test. Fix-B testable with Schema.decodeUnknownSync. Fixes C, D, E need Effect runtime + filesystem + log capture."
+    },
+    "error_clarity": {
+      "score": 2,
+      "note": "CORONER: fix-A produces NO runtime error — Array.includes() identical before/after. fix-C silently drops corrupted entries + corruption permanently lost. fix-D boolean flags sufficient for 80% but JWT debugging impossible from logs. fix-E persistCrash silencing means quarantine NEVER triggers on I/O failures."
+    },
+    "reversibility": {
+      "score": 4,
+      "note": "APPEAL: Dependency graph is EMPTY — zero type-level dependencies between any two fixes. Every fix can be reverted independently and bun typecheck + tests still pass. Shared-file contention exists (3 fixes touch plugin/index.ts, 2 touch mcp/index.ts) but each pair modifies DIFFERENT code regions with zero overlap. Requirement: each fix needs its own checkpoint commit for safe independent reversion (naive `git revert` would incorrectly revert both fixes' changes). The plan's claim 'each fix independently revertible' is structurally correct but understates the surgical extraction needed for shared-file fixes."
+    }
+  },
+  "objections": [
+    {
+      "id": "OBJ-A-1",
+      "axis": "Debuggability",
+      "finding": "CORONER FATAL: Schema.brand provides ZERO runtime enforcement. CapabilityId branding is entirely compile-time and bypassed by all 5 existing `as any` call sites. Array.includes() does plain string comparison. Brand is erased before any comparison. Attacker-controlled manifests bypass completely.",
+      "file:line": "packages/opencode/src/plugin/capability/types.ts:1-17, enforcer.ts:20-31, hook-dispatch-guard.ts:53-58, plugin/index.ts:332,476"
+    },
+    {
+      "id": "OBJ-C-1",
+      "axis": "Debuggability",
+      "finding": "CORONER FATAL: Schema.Record validation is all-or-nothing, not per-entry. One corrupted entry rejects ALL entries. True partial recovery requires per-entry decoding (iterate Object.entries, decode each value individually). Plan says 'partial data is recovered' but naive implementation is identical to current silent-fallback behavior.",
+      "file:line": "packages/opencode/src/mcp/auth.ts:65"
+    },
+    {
+      "id": "OBJ-C-2",
+      "axis": "Debuggability",
+      "finding": "CORONER FATAL: Corrupted auth data overwritten before forensic investigation. Next saveTokens writes fresh data → original corruption permanently lost. No backup, no SHA256 log, no forensic artifacts.",
+      "file:line": "packages/opencode/src/mcp/auth.ts:63-65,87-88"
+    },
+    {
+      "id": "OBJ-E-1",
+      "axis": "Error clarity",
+      "finding": "CORONER FATAL: persistCrash/persistSuccess (lines 411,423) silently swallow ALL errors including disk failures. Crash counts never incremented → plugins NEVER auto-quarantined. Quarantine mechanism has silent failure mode with zero alerting.",
+      "file:line": "packages/opencode/src/plugin/index.ts:411,423"
+    },
+    {
+      "id": "OBJ-A-2",
+      "axis": "Testability",
+      "finding": "8 of 12 as-any casts in plugin/index.ts remain unaddressed (lines 332, 334, 338, 371, 379, 431, 440, 443). Plan claims to eliminate capability-related as-any casts but only covers 4 of 12. Line 332 ('secrets.access' as any) is a direct security bypass surviving fix-A.",
+      "file:line": "packages/opencode/src/plugin/index.ts:332,334,338,371,379,431,440,443"
+    },
+    {
+      "id": "OBJ-CONV-1",
+      "axis": "Convergence",
+      "finding": "PRECEDENT: coordinates_with lists PLUGIN-TRUTH (no plan exists) and MCP-TRUTH (doesn't reciprocate). stripSecrets enhancement deferred to RL-004 which has no plan artifact. 3 coordination gaps.",
+      "file:line": "trust-boundary-architecture.v1.json:8"
+    }
+  ],
+  "conditions_for_approval": [
+    {
+      "id": "C1",
+      "condition": "FIX-A MUST add runtime validation to CapabilityId. Schema.brand alone is cosmetic. Options: (a) Schema.decodeUnknownOption(CapabilityId) at manifest ingestion, (b) isValidCapabilityId runtime guard at each checkCapability call, or (c) tagged wrapper type with validation receipt. Without this, all 5 call sites bypass the brand via as-any.",
+      "must_add": true,
+      "source": "coroner FATAL-FIX-A-1"
+    },
+    {
+      "id": "C2",
+      "condition": "FIX-C MUST implement per-entry decoding (iterate Object.entries, decode each value with Schema.decodeUnknownOption(Entry)). Record-level validation rejects ALL entries when ANY are corrupted — identical to current behavior.",
+      "must_add": true,
+      "source": "coroner FATAL-FIX-C-1"
+    },
+    {
+      "id": "C3",
+      "condition": "FIX-C MUST preserve corrupted auth data before overwriting. At minimum: log SHA256 + affected entry keys. Ideally: write timestamped backup file. Without this, forensic investigation is impossible.",
+      "must_add": true,
+      "source": "coroner FATAL-FIX-C-2"
+    },
+    {
+      "id": "C4",
+      "condition": "FIX-E MUST add log.error() to persistCrash/persistSuccess catch blocks (lines 411,423). Include pluginId, operation name, error type. These silently swallow I/O errors, breaking the quarantine mechanism.",
+      "must_add": true,
+      "source": "coroner FATAL-FIX-E-1"
+    },
+    {
+      "id": "C5",
+      "condition": "FIX-G MUST refactor checkCapability from Effect.flatMap to Effect.gen before adding yield* Effect.logWarning. Current callback is a plain function — yield* inside it will not compile.",
+      "must_add": true,
+      "source": "reviewer code analysis: enforcer.ts:20-31"
+    },
+    {
+      "id": "C6",
+      "condition": "FIX-A MUST either (a) cover remaining 8 as-any casts in plugin/index.ts, or (b) add explicit deferred rationale. Line 332 ('secrets.access' as any) is a direct bypass. Appeal confirmed zero type-dependency preventing this.",
+      "must_add": true,
+      "source": "reviewer grep analysis + appeal dependency graph"
+    }
+  ],
+  "follow_up_issues": [
+    {
+      "id": "FUI1",
+      "issue": "Refactor enforcer.ts checkCapability from Effect.flatMap to Effect.gen (zoning-board convention violation)",
+      "linked_to": "fix-G",
+      "file": "packages/opencode/src/plugin/capability/enforcer.ts:20-31"
+    },
+    {
+      "id": "FUI2",
+      "issue": "Replace stripSecrets substring matching with env-blocklist suffix matching (currently matches 'key' in 'keyboard'). Deferred to RL-004 which does NOT exist — either create RL-004 or fold into fix-D.",
+      "linked_to": "fix-D",
+      "file": "packages/opencode/src/plugin/index.ts:181-190"
+    },
+    {
+      "id": "FUI3",
+      "issue": "PLUGIN-TRUTH listed in coordinates_with does not exist. Create plan or update to reference rl-005-plugin-security-manifest.",
+      "linked_to": "plan coordination",
+      "file": "trust-boundary-architecture.v1.json:8"
+    },
+    {
+      "id": "FUI4",
+      "issue": "MCP-TRUTH plan does not reciprocate coordination. Update its coordinates_with to include trust-boundary-architecture.",
+      "linked_to": "plan coordination",
+      "file": "docs/json/opencode/plans/mcp-subsystem-*.v1.json"
+    },
+    {
+      "id": "FUI5",
+      "issue": "debug-packet.ts SENSITIVE_PATTERNS missing refresh/access — fold into fix-D (3-line edit).",
+      "linked_to": "fix-D",
+      "file": "packages/opencode/src/mcp/debug-packet.ts"
+    },
+    {
+      "id": "FUI6",
+      "issue": "Document Schema.Literal+brand as extension, not match, to account/schema.ts pattern (no codebase precedent for this combo).",
+      "linked_to": "fix-A",
+      "file": "trust-boundary-architecture.v1.json:convention_compliance.branded_types"
+    }
+  ],
+  "deferred_assessment": {
+    "F01_env_leak": "Correctly deferred to MCP-TRUTH lane.",
+    "F06_dynamic_import_sandboxing": "Correctly deferred: platform-level change.",
+    "F36_F39_client_ids": "Correctly deferred: PKCE uses public client IDs by design.",
+    "F40_F42_plain_tokens": "Correctly deferred: requires key management infrastructure.",
+    "secrets_heuristic": "Deferred to RL-004 which does NOT exist. Should be folded into fix-D.",
+    "verdict": "4 of 5 deferrals legitimate. 1 (secrets heuristic) deferred into void."
+  },
+  "appeal_dependency_graph": {
+    "A": [],
+    "G": [],
+    "F": [],
+    "C": [],
+    "B": [],
+    "D": [],
+    "E": [],
+    "verdict": "EMPTY — all seven fixes are type-level independent. Any fix can be reverted independently and bun typecheck + tests still pass. Shared-file contention requires surgical extraction (not blanket git revert), but each pair modifies DIFFERENT code regions with zero overlap."
+  },
+  "review_summary": "The trust-boundary plan correctly identifies 7 fixes targeting real security gaps. The architecture is sound — zero type-level dependencies between fixes, all changes confined to packages/opencode/, and the apply order is correct. However, 4 coroner-confirmed fatal design flaws in fixes A, C, and E require the plan to be revised before execution: fix-A's Schema.brand provides zero runtime protection, fix-C's Record-level validation makes partial recovery impossible, fix-C loses forensic evidence, and fix-E's quarantine mechanism has a silent failure mode. Additionally, fix-G contains syntactically invalid code (yield* in a non-generator callback). Three coordination artifacts are missing or unreciprocated. With the 6 conditions above satisfied, the plan is APPROVED."
+}

@@ -17,6 +17,20 @@ export type SafeModeAction =
   | "copy_diagnostic_summary"
   | "retry_normal_startup"
 
+export type SidecarStartupFailure = {
+  phase: string
+  port: number | null
+  hostname: string | null
+  lastSuccessfulPhase: string
+  errorMessage: string
+  errorStack: string
+  exitCode: number
+  stderrTail: string
+  timestamp: string
+  platform: string
+  nodeVersion: string
+}
+
 export type SafeModeDiagnostics = {
   error: { message: string; component: string }
   systemInfo: {
@@ -26,6 +40,7 @@ export type SafeModeDiagnostics = {
     userDataPath: string
     logPath: string
   }
+  sidecarFailure?: SidecarStartupFailure | null
 }
 
 export type ServerReadyData = {

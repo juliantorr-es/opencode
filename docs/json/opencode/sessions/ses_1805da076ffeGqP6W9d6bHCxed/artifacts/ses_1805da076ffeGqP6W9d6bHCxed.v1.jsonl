@@ -1,0 +1,11 @@
+{"at":"2026-05-31T20:04:06.370Z","tool":"smart_bun","action":"ran","command":"typecheck","exit_code":2,"cwd":"packages/opencode"}
+{"at":"2026-05-31T20:04:29.384Z","tool":"smart_grep","action":"searched","pattern":"McpServerState|McpFailedError|ToolCollisionError|McpErrorCode|McpStatusChanged","results":8,"files":1}
+{"at":"2026-05-31T20:04:30.158Z","tool":"smart_grep","action":"searched","pattern":"HealthStatus","results":12,"files":5}
+{"at":"2026-05-31T20:04:31.228Z","tool":"smart_grep","action":"searched","pattern":"McpServerState|McpFailedError|ToolCollisionError|McpErrorCode|McpStatusChanged","results":8,"files":1}
+{"at":"2026-05-31T20:04:51.435Z","tool":"smart_grep","action":"searched","pattern":"MCP|Mcp","results":0,"files":0}
+{"at":"2026-05-31T20:05:39.088Z","tool":"smart_bun","action":"ran","command":"typecheck","exit_code":2,"cwd":"packages/opencode"}
+{"at":"2026-05-31T20:07:07.810Z","tool":"smart_bash","action":"bash","command":"head -n 140 src/mcp/index.ts | tail -n 60","exit_code":1}
+{"at":"2026-05-31T20:07:23.408Z","tool":"smart_grep","action":"searched","pattern":"McpErrorCode|McpServerState|McpStatusChanged","results":0,"files":0}
+{"at":"2026-05-31T20:07:37.330Z","tool":"smart_grep","action":"searched","pattern":"McpStatusChanged|BusEvent.define","results":0,"files":0}
+{"at":"2026-05-31T20:09:01.205Z","tool":"smart_grep","action":"searched","pattern":"const Status|Status = Schema","results":0,"files":0}
+{"at":"2026-05-31T20:09:31.621Z","tool":"smart_bash","action":"bash","command":"head -n 170 /Users/user/Developer/GitHub/opencode-desktop-dev/packages/opencode/src/mcp/index.ts | t","exit_code":0}

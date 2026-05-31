@@ -1,0 +1,11 @@
+{"at":"2026-05-31T18:51:40.651Z","session_id":"ses_180a064d9ffeUJTmwyP71l1DUU","agent":"exhibit-a","tool":"smart_grep","pattern":"sidecar-boot-failure","path":"packages/desktop/src"}
+{"at":"2026-05-31T18:51:41.584Z","session_id":"ses_180a064d9ffeUJTmwyP71l1DUU","agent":"exhibit-a","tool":"smart_grep","pattern":"safe.?mode|safemode|safeMode|safe_mode","path":"packages/desktop/src/main"}
+{"at":"2026-05-31T18:52:21.566Z","session_id":"ses_180a064d9ffeUJTmwyP71l1DUU","agent":"exhibit-a","tool":"smart_grep","pattern":"sidecar-startup-trace","path":"packages/desktop/src"}
+{"at":"2026-05-31T18:53:46.438Z","session_id":"ses_180a064d9ffeUJTmwyP71l1DUU","agent":"exhibit-a","tool":"smart_grep","pattern":"\"error\"|sidecar|child_process|fork|Worker","path":"packages/desktop/src/main/index.ts"}
+{"at":"2026-05-31T18:54:34.935Z","session_id":"ses_180a064d9ffeUJTmwyP71l1DUU","agent":"exhibit-a","tool":"smart_grep","pattern":"sidecar|Sidecar|error.*component|spawn|killSidecar|crashed|crash-detect","path":"packages/desktop/src/main"}
+{"at":"2026-05-31T18:55:20.443Z","session_id":"ses_180a064d9ffeUJTmwyP71l1DUU","agent":"exhibit-a","tool":"smart_grep","pattern":"spawnLocalServer","path":"packages/desktop/src"}
+{"at":"2026-05-31T18:56:19.998Z","session_id":"ses_180a064d9ffeUJTmwyP71l1DUU","agent":"exhibit-a","tool":"smart_grep","pattern":"safe-mode\\.html|safe\\.mode","path":"packages/desktop/src/renderer"}
+{"at":"2026-05-31T18:57:52.957Z","session_id":"ses_180a064d9ffeUJTmwyP71l1DUU","agent":"exhibit-a","tool":"smart_grep","pattern":"crashDetected|inSafeMode|GET_SAFE_MODE_DIAGNOSTICS|initStep|sendStep|InitStep","path":"packages/desktop/src/main"}
+{"at":"2026-05-31T18:58:45.217Z","session_id":"ses_180a064d9ffeUJTmwyP71l1DUU","agent":"exhibit-a","tool":"smart_grep","pattern":"SafeModeDiagnostics|safeModeDiagnostics|safe.mode.diagnostic","path":"packages/desktop/src"}
+{"at":"2026-05-31T18:59:54.145Z","session_id":"ses_180a064d9ffeUJTmwyP71l1DUU","agent":"exhibit-a","tool":"smart_grep","pattern":"crashLock|crash.lock|crash_lock","path":"packages/desktop/src/main/index.ts"}
+{"at":"2026-05-31T19:01:31.470Z","session_id":"ses_180a064d9ffeUJTmwyP71l1DUU","agent":"exhibit-a","tool":"smart_grep","pattern":"getSafeModeDiagnostics|sidecar-boot|readFileSync|sidecarFail","path":"packages/desktop/src/main/index.ts"}

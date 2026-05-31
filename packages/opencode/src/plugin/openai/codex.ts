@@ -57,7 +57,8 @@ export function parseJwtClaims(token: string): IdTokenClaims | undefined {
   if (parts.length !== 3) return undefined
   try {
     return JSON.parse(Buffer.from(parts[1], "base64url").toString())
-  } catch {
+  } catch (err) {
+    log.debug("failed to parse JWT claims", { error: err })
     return undefined
   }
 }

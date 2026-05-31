@@ -1,0 +1,18 @@
+{"at":"2026-05-31T18:43:48.830Z","session_id":"ses_180a7f53bffeifC8gE8Ty3Csck","agent":"cartographer","tool":"smart_grep","pattern":"\\\"main\\\"|\\\"bin\\\"|\\\"scripts\\\"","path":"packages/opencode"}
+{"at":"2026-05-31T18:44:11.392Z","session_id":"ses_180a7f53bffeifC8gE8Ty3Csck","agent":"cartographer","tool":"smart_grep","pattern":"server|entry|main|index","path":"packages/opencode/src"}
+{"at":"2026-05-31T18:44:46.093Z","session_id":"ses_180a7f53bffeifC8gE8Ty3Csck","agent":"cartographer","tool":"smart_grep","pattern":"\\.listen\\(|Bun\\.serve|Hono|hono|app\\.fetch","path":"packages/opencode/src"}
+{"at":"2026-05-31T18:44:47.411Z","session_id":"ses_180a7f53bffeifC8gE8Ty3Csck","agent":"cartographer","tool":"smart_grep","pattern":"pglite|PGlite|postgres|Postgres|Database","path":"packages/opencode/src"}
+{"at":"2026-05-31T18:44:48.346Z","session_id":"ses_180a7f53bffeifC8gE8Ty3Csck","agent":"cartographer","tool":"smart_grep","pattern":"duckdb|DuckDB|duck","path":"packages/opencode/src"}
+{"at":"2026-05-31T18:46:16.590Z","session_id":"ses_180a7f53bffeifC8gE8Ty3Csck","agent":"cartographer","tool":"smart_grep","pattern":"export.*function (init|start|main|run|bootstrap)","path":"packages/opencode/src"}
+{"at":"2026-05-31T18:50:17.623Z","session_id":"ses_180a7f53bffeifC8gE8Ty3Csck","agent":"cartographer","tool":"smart_grep","pattern":"Server\\.(listen|Default)|server\\.listen|import.*from.*\\\"\\.\\/server\\\"","path":"packages/opencode/src"}
+{"at":"2026-05-31T18:51:08.654Z","session_id":"ses_180a7f53bffeifC8gE8Ty3Csck","agent":"cartographer","tool":"smart_grep","pattern":"Server\\.listen\\(|Server\\.Default\\(\\)","path":"packages/opencode/src"}
+{"at":"2026-05-31T18:51:51.766Z","session_id":"ses_180a7f53bffeifC8gE8Ty3Csck","agent":"cartographer","tool":"smart_grep","pattern":"from.*\\\"\\.\\.\\/server\\/server\\\"|import.*Server.*from|\\\"sidecar\\\"","path":"packages/opencode/src"}
+{"at":"2026-05-31T18:52:40.940Z","session_id":"ses_180a7f53bffeifC8gE8Ty3Csck","agent":"cartographer","tool":"smart_grep","pattern":"Server\\.listen|Server\\.Default","path":"packages"}
+{"at":"2026-05-31T18:54:08.945Z","session_id":"ses_180a7f53bffeifC8gE8Ty3Csck","agent":"cartographer","tool":"smart_grep","pattern":"virtual:opencode-server","path":"packages/opencode/src"}
+{"at":"2026-05-31T18:55:08.910Z","session_id":"ses_180a7f53bffeifC8gE8Ty3Csck","agent":"cartographer","tool":"smart_grep","pattern":"virtual:opencode-server","path":"packages/desktop"}
+{"at":"2026-05-31T18:55:09.672Z","session_id":"ses_180a7f53bffeifC8gE8Ty3Csck","agent":"cartographer","tool":"smart_grep","pattern":"virtual:opencode-server","path":"packages"}
+{"at":"2026-05-31T18:55:10.583Z","session_id":"ses_180a7f53bffeifC8gE8Ty3Csck","agent":"cartographer","tool":"smart_grep","pattern":"Log\\.init|log\\.init|\\\"level\\\"","path":"packages/opencode/src"}
+{"at":"2026-05-31T18:55:57.717Z","session_id":"ses_180a7f53bffeifC8gE8Ty3Csck","agent":"cartographer","tool":"smart_grep","pattern":"node\\.js|server.*export|build.*entry","path":"packages/opencode/script"}
+{"at":"2026-05-31T18:55:58.306Z","session_id":"ses_180a7f53bffeifC8gE8Ty3Csck","agent":"cartographer","tool":"smart_grep","pattern":"OPENCODE_SERVER_DIST","path":"packages/opencode"}
+{"at":"2026-05-31T18:56:40.137Z","session_id":"ses_180a7f53bffeifC8gE8Ty3Csck","agent":"cartographer","tool":"smart_grep","pattern":"export.*Log|Log.*init","path":"packages/opencode/src"}
+{"at":"2026-05-31T18:58:07.336Z","session_id":"ses_180a7f53bffeifC8gE8Ty3Csck","agent":"cartographer","tool":"smart_grep","pattern":"Log\\.init|function init|log.*path|log.*file","path":"packages/core/src"}

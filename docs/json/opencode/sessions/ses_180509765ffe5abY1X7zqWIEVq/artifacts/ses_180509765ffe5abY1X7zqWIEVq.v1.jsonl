@@ -1,0 +1,9 @@
+{"at":"2026-05-31T20:17:50.856Z","tool":"smart_grep","action":"searched","pattern":"ALLOWED_MCP_ENV","results":2,"files":1}
+{"at":"2026-05-31T20:17:51.509Z","tool":"smart_grep","action":"searched","pattern":"sanitizeMcpEnv","results":3,"files":2}
+{"at":"2026-05-31T20:18:02.998Z","tool":"smart_grep","action":"searched","pattern":"McpFailedError|McpToolResult|McpServerState|ToolCollisionError|McpStatusChanged|","results":9,"files":2}
+{"at":"2026-05-31T20:18:43.753Z","tool":"smart_grep","action":"searched","pattern":"McpStatusChanged|connectLocal","results":0,"files":0}
+{"at":"2026-05-31T20:18:44.547Z","tool":"smart_grep","action":"searched","pattern":"OAuth|oauth","results":30,"files":6}
+{"at":"2026-05-31T20:19:09.928Z","tool":"smart_bun","action":"ran","command":"typecheck","exit_code":2,"cwd":"packages/opencode"}
+{"at":"2026-05-31T20:19:28.859Z","tool":"smart_bun","action":"ran","command":"test","exit_code":1,"cwd":"packages/opencode"}
+{"at":"2026-05-31T20:20:16.730Z","tool":"smart_grep","action":"searched","pattern":"test.*mcp|mcp.*test","results":14,"files":5}
+{"at":"2026-05-31T20:20:24.815Z","tool":"smart_bun","action":"ran","command":"test","exit_code":1,"cwd":"packages/opencode"}

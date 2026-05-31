@@ -1,0 +1,62 @@
+{"at":"2026-05-31T18:49:31.365Z","session_id":"ses_180a4427effeMFY4csnG92Qqli","agent":"cartographer","tool":"smart_find","phase":"started","detail":"*.ts"}
+{"at":"2026-05-31T18:49:31.403Z","session_id":"ses_180a4427effeMFY4csnG92Qqli","agent":"cartographer","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T18:49:31.735Z","session_id":"ses_180a4427effeMFY4csnG92Qqli","agent":"cartographer","tool":"smart_find","phase":"started","detail":"*.ts"}
+{"at":"2026-05-31T18:49:31.786Z","session_id":"ses_180a4427effeMFY4csnG92Qqli","agent":"cartographer","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T18:49:37.626Z","session_id":"ses_180a4427effeMFY4csnG92Qqli","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"List all plugin source files"}
+{"at":"2026-05-31T18:49:37.627Z","session_id":"ses_180a4427effeMFY4csnG92Qqli","agent":"cartographer","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T18:49:38.353Z","session_id":"ses_180a4427effeMFY4csnG92Qqli","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"List all plugin package source files"}
+{"at":"2026-05-31T18:49:38.354Z","session_id":"ses_180a4427effeMFY4csnG92Qqli","agent":"cartographer","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T18:51:01.757Z","session_id":"ses_180a4427effeMFY4csnG92Qqli","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"^"}
+{"at":"2026-05-31T18:51:01.772Z","session_id":"ses_180a4427effeMFY4csnG92Qqli","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"^"}
+{"at":"2026-05-31T18:51:02.433Z","session_id":"ses_180a4427effeMFY4csnG92Qqli","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"^"}
+{"at":"2026-05-31T18:51:02.446Z","session_id":"ses_180a4427effeMFY4csnG92Qqli","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"^"}
+{"at":"2026-05-31T18:52:29.432Z","session_id":"ses_180a4427effeMFY4csnG92Qqli","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"import|export|function|class|interface|type|const"}
+{"at":"2026-05-31T18:52:29.445Z","session_id":"ses_180a4427effeMFY4csnG92Qqli","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"import|export|function|class|interface|type|const"}
+{"at":"2026-05-31T18:52:30.587Z","session_id":"ses_180a4427effeMFY4csnG92Qqli","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"import|export|function|class|interface|type|const"}
+{"at":"2026-05-31T18:52:30.599Z","session_id":"ses_180a4427effeMFY4csnG92Qqli","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"import|export|function|class|interface|type|const"}
+{"at":"2026-05-31T18:54:10.784Z","session_id":"ses_180a4427effeMFY4csnG92Qqli","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"."}
+{"at":"2026-05-31T18:54:10.873Z","session_id":"ses_180a4427effeMFY4csnG92Qqli","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"."}
+{"at":"2026-05-31T18:54:11.660Z","session_id":"ses_180a4427effeMFY4csnG92Qqli","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"."}
+{"at":"2026-05-31T18:54:11.683Z","session_id":"ses_180a4427effeMFY4csnG92Qqli","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"."}
+{"at":"2026-05-31T18:54:12.560Z","session_id":"ses_180a4427effeMFY4csnG92Qqli","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"plugin"}
+{"at":"2026-05-31T18:54:12.572Z","session_id":"ses_180a4427effeMFY4csnG92Qqli","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"plugin"}
+{"at":"2026-05-31T18:59:31.988Z","session_id":"ses_180a4427effeMFY4csnG92Qqli","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"loadPlugin|initPlugin|PluginRegistry|pluginManager|plugin_instances|pluginOutput"}
+{"at":"2026-05-31T18:59:32.041Z","session_id":"ses_180a4427effeMFY4csnG92Qqli","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"loadPlugin|initPlugin|PluginRegistry|pluginManager|plugin_instances|pluginOutput"}
+{"at":"2026-05-31T18:59:33.007Z","session_id":"ses_180a4427effeMFY4csnG92Qqli","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"invokeHook|dispatchHook|callHook|hook.*execute|hook.*invoke|runHook"}
+{"at":"2026-05-31T18:59:33.032Z","session_id":"ses_180a4427effeMFY4csnG92Qqli","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"invokeHook|dispatchHook|callHook|hook.*execute|hook.*invoke|runHook"}
+{"at":"2026-05-31T18:59:33.808Z","session_id":"ses_180a4427effeMFY4csnG92Qqli","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"Capability|capability|grant.*plugin|plugin.*permission"}
+{"at":"2026-05-31T18:59:33.836Z","session_id":"ses_180a4427effeMFY4csnG92Qqli","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"Capability|capability|grant.*plugin|plugin.*permission"}
+{"at":"2026-05-31T19:01:27.550Z","session_id":"ses_180a4427effeMFY4csnG92Qqli","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"PluginLoader|Loaded"}
+{"at":"2026-05-31T19:01:27.562Z","session_id":"ses_180a4427effeMFY4csnG92Qqli","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"PluginLoader|Loaded"}
+{"at":"2026-05-31T19:01:28.855Z","session_id":"ses_180a4427effeMFY4csnG92Qqli","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"HOOK_CAPABILITY_MAP|ALWAYS_ALLOWED_HOOKS|checkCapability|makeCapabilityRegistry|"}
+{"at":"2026-05-31T19:01:28.867Z","session_id":"ses_180a4427effeMFY4csnG92Qqli","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"HOOK_CAPABILITY_MAP|ALWAYS_ALLOWED_HOOKS|checkCapability|makeCapabilityRegistry|"}
+{"at":"2026-05-31T19:01:30.104Z","session_id":"ses_180a4427effeMFY4csnG92Qqli","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"export|import"}
+{"at":"2026-05-31T19:01:30.119Z","session_id":"ses_180a4427effeMFY4csnG92Qqli","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"export|import"}
+{"at":"2026-05-31T19:07:21.912Z","session_id":"ses_180a4427effeMFY4csnG92Qqli","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"^type TriggerName|^type State|^async function applyPlugin|^function trigger|^asy"}
+{"at":"2026-05-31T19:07:21.922Z","session_id":"ses_180a4427effeMFY4csnG92Qqli","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"^type TriggerName|^type State|^async function applyPlugin|^function trigger|^asy"}
+{"at":"2026-05-31T19:08:17.206Z","session_id":"ses_180a4427effeMFY4csnG92Qqli","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"async function trigger|function trigger|trigger =|const trigger|publishPluginErr"}
+{"at":"2026-05-31T19:08:17.226Z","session_id":"ses_180a4427effeMFY4csnG92Qqli","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"async function trigger|function trigger|trigger =|const trigger|publishPluginErr"}
+{"at":"2026-05-31T19:09:07.691Z","session_id":"ses_180a4427effeMFY4csnG92Qqli","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Read plugin health structures and MAX_CRASHES"}
+{"at":"2026-05-31T19:09:08.407Z","session_id":"ses_180a4427effeMFY4csnG92Qqli","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Read applyPlugin, secrets, and init function"}
+{"at":"2026-05-31T19:10:42.457Z","session_id":"ses_180a4427effeMFY4csnG92Qqli","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Read hook dispatch loop and error handling section"}
+{"at":"2026-05-31T19:10:42.458Z","session_id":"ses_180a4427effeMFY4csnG92Qqli","agent":"cartographer","tool":"smart_bash","phase":"rerouted","detail":"→ read_source"}
+{"at":"2026-05-31T19:11:22.647Z","session_id":"ses_180a4427effeMFY4csnG92Qqli","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"publishPluginError"}
+{"at":"2026-05-31T19:11:22.655Z","session_id":"ses_180a4427effeMFY4csnG92Qqli","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"publishPluginError"}
+{"at":"2026-05-31T19:13:46.867Z","session_id":"ses_180a4427effeMFY4csnG92Qqli","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"capability.proxy|capabilityProxy|scopedClient|scopedShell"}
+{"at":"2026-05-31T19:13:46.907Z","session_id":"ses_180a4427effeMFY4csnG92Qqli","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"capability.proxy|capabilityProxy|scopedClient|scopedShell"}
+{"at":"2026-05-31T19:13:48.222Z","session_id":"ses_180a4427effeMFY4csnG92Qqli","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"mergePluginOrigins|resolveLoadedPlugins|plugin_origins|auto.*discover.*plugin"}
+{"at":"2026-05-31T19:13:48.231Z","session_id":"ses_180a4427effeMFY4csnG92Qqli","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"mergePluginOrigins|resolveLoadedPlugins|plugin_origins|auto.*discover.*plugin"}
+{"at":"2026-05-31T19:14:14.781Z","session_id":"ses_180a4427effeMFY4csnG92Qqli","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"createOpencodeClient|client.*workspace|workspace.*client"}
+{"at":"2026-05-31T19:14:14.788Z","session_id":"ses_180a4427effeMFY4csnG92Qqli","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"createOpencodeClient|client.*workspace|workspace.*client"}
+{"at":"2026-05-31T19:14:15.564Z","session_id":"ses_180a4427effeMFY4csnG92Qqli","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"PluginInput|workspace"}
+{"at":"2026-05-31T19:14:15.582Z","session_id":"ses_180a4427effeMFY4csnG92Qqli","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"PluginInput|workspace"}
+{"at":"2026-05-31T19:15:39.903Z","session_id":"ses_180a4427effeMFY4csnG92Qqli","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"const trigger = Effect.fn\\("}
+{"at":"2026-05-31T19:15:39.909Z","session_id":"ses_180a4427effeMFY4csnG92Qqli","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"const trigger = Effect.fn\\("}
+{"at":"2026-05-31T19:15:44.134Z","session_id":"ses_180a4427effeMFY4csnG92Qqli","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"trigger ="}
+{"at":"2026-05-31T19:15:44.141Z","session_id":"ses_180a4427effeMFY4csnG92Qqli","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"trigger ="}
+{"at":"2026-05-31T19:16:02.323Z","session_id":"ses_180a4427effeMFY4csnG92Qqli","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"trigger"}
+{"at":"2026-05-31T19:16:02.328Z","session_id":"ses_180a4427effeMFY4csnG92Qqli","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"trigger"}
+{"at":"2026-05-31T19:16:22.185Z","session_id":"ses_180a4427effeMFY4csnG92Qqli","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"const trigger: Interface"}
+{"at":"2026-05-31T19:16:22.212Z","session_id":"ses_180a4427effeMFY4csnG92Qqli","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"const trigger: Interface"}
+{"at":"2026-05-31T19:20:21.604Z","session_id":"ses_180a4427effeMFY4csnG92Qqli","agent":"cartographer","tool":"smart_write","phase":"started","detail":"docs/json/opencode/sessions/ses_180a31f09/cartography-plugin-lifecycle-terrain.v"}
+{"at":"2026-05-31T19:20:21.605Z","session_id":"ses_180a4427effeMFY4csnG92Qqli","agent":"cartographer","tool":"smart_write","phase":"completed","detail":"docs/json/opencode/sessions/ses_180a31f09/cartography-plugin-lifecycle-terrain.v"}

@@ -1,0 +1,267 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Sidecar Server Initialization Path — Complete Map",
+  "generated_at": "2026-05-31T00:00:00Z",
+  "methodology": "Traced via smart_grep, read_source on 20+ files, dependency graph analysis via compass subagent, direct inspection of desktop sidecar process",
+
+  "1_sidecar_entrypoint": {
+    "file": "packages/desktop/src/main/sidecar.ts",
+    "process_model": "Electron main process spawns sidecar.ts as a separate child process (Bun/Node). Communication is via process.parentPort IPC messages. The sidecar waits for a start command before initializing anything.",
+    "lines": {
+      "parent_port_setup": "lines 44-47: type ParentPort, getParentPort() reads process.parentPort",
+      "message_handler": "lines 50-58: parentPort.on('message', ...) dispatches start/stop commands",
+      "start_function": "lines 71-181: async function start(command) — the main init orchestrator with phased error handling",
+      "fail_function": "lines 74-116: const fail = (phase, error) — writes sidecar-boot-failure.json + IPC message, then process.exit(1)",
+      "stop_function": "lines 183-188: async function stop() — calls listener?.stop(), posts 'stopped', process.exit(0)"
+    },
+    "init_phases": [
+      { "phase": "env", "line": 118, "what": "prepareSidecarEnv — sets OPENCODE_SERVER_USERNAME/PASSWORD, XDG_STATE_HOME" },
+      { "phase": "loopback-proxy", "line": 126, "what": "ensureLoopbackNoProxy — appends 127.0.0.1/localhost/::1 to NO_PROXY" },
+      { "phase": "system-certs", "line": 133, "what": "useSystemCertificates — merges system CA certs into Node TLS defaults" },
+      { "phase": "env-proxy", "line": 140, "what": "useEnvProxy — calls http.setGlobalProxyFromEnv()" },
+      { "phase": "server-import", "lines": 144-153, "what": "Dynamic import('virtual:opencode-server') — triggers Effect runtime, DB init, config parse, native module loading"},
+      { "phase": "log-init", "lines": 156-161, "what": "Log.init({ level: 'WARN' }) — initializes file-based logging"},
+      { "phase": "server-listen", "lines": 164-172, "what": "Server.listen({ port, hostname, username, password, cors }) — starts HTTP server" }
+    ],
+    "server_module_resolution": {
+      "virtual_import": "virtual:opencode-server",
+      "vite_plugin": "packages/desktop/electron.vite.config.ts:57",
+      "resolves_to": "OPENCODE_SERVER_DIST/node.js = '../opencode/dist/node/node.js'",
+      "source": "packages/opencode/src/node.ts — barrel re-export of { Config, Server, bootstrap, Log, Database, applyMigrations }"
+    }
+  },
+
+  "2_config_load": {
+    "file": "packages/opencode/src/config/config.ts",
+    "service_key": "@opencode/Config",
+    "type": "Effect Service (NOT a module singleton)",
+    "layer_definition": "line 381: export const layer = Layer.effect(Service, Effect.gen(function* () { ... }))",
+    "config_files_checked": [
+      "Global config: ~/.config/opencode/opencode.json (or OPENCODE_CONFIG_DIR override) — line 339-347: globalConfigFile()",
+      "Directory-tree config: scans upward from working directory for openencode.json / openencode.jsonc — line 391-445: readConfigFile()",
+      "Instance config: per-directory config at .opencode/opencode.json"
+    ],
+    "config_merge_strategy": "line 51-53: mergeConfig uses remeda's mergeDeep for deep merging arrays concat via mergeConfigConcatArrays",
+    "config_parse_failure": {
+      "errors": "ConfigDirectoryTypoError (line 375-378), ConfigParseError (custom NamedError), $schema injection on write",
+      "handling": "readConfigFile catches parse errors and logs warnings. Invalid files are skipped. The config layer construction yields errors in Effect; callers must handle via Effect.catchTag.",
+      "schema_injection": "line 448: auto-injects $schema: 'https://opencode.ai/config.json' into JSONC files on save"
+    },
+    "config_subsystem_modules": [
+      "config/agent.ts", "config/attachment.ts", "config/command.ts", "config/formatter.ts",
+      "config/layout.ts", "config/lsp.ts", "config/managed.ts", "config/mcp.ts",
+      "config/model-id.ts", "config/parse.ts", "config/paths.ts", "config/permission.ts",
+      "config/plugin.ts", "config/provider.ts", "config/reference.ts", "config/server.ts",
+      "config/skills.ts", "config/variable.ts"
+    ],
+    "defaultLayer_dependencies": ["EffectFlock.defaultLayer", "AppFileSystem.defaultLayer", "Env.defaultLayer", "Auth.defaultLayer", "Account.defaultLayer", "Npm.defaultLayer", "FetchHttpClient.layer"],
+    "layer_construction": "line 917: export const defaultLayer = layer.pipe(Layer.provide(...))",
+    "load_order": "Config loads AFTER Auth (reads auth.json), Account, Env, AppFileSystem, Npm. No circular dependency."
+  },
+
+  "3_storage_db_init": {
+    "primary_adapter": "PGlite (local embedded Postgres) — @electric-sql/pglite ^0.2.16",
+    "fallback_adapter": "node-postgres (remote Postgres) via pg ^8.13.1",
+    "key_files": {
+      "db_pg_ts": {
+        "file": "packages/opencode/src/storage/db.pg.ts",
+        "role": "Database initialization module — imported as #db (per package.json imports)",
+        "init_function": "line 33-64: export function init(connectionStringOrOpts, ssl?) — creates PGlite or Pool",
+        "pglite_path": "line 39: :memory: or filesystem path (stripped of file: prefix)",
+        "postgres_path": "line 51-63: creates node-postgres Pool with configured poolSize, ssl, timeouts",
+        "error_handling": "line 11-17: DatabaseInitError class with cause + dataDir details. Catches PGlite init failures and wraps.",
+        "migrations": "line 70-108: applyMigrations(db) — idempotent via __drizzle_migrations tracking table for PGlite, built-in migrator for node-postgres"
+      },
+      "db_ts": {
+        "file": "packages/opencode/src/storage/db.ts",
+        "role": "Non-Effect singleton wrapper — lazy-creates drizzle client via Client() factory.",
+        "import_from": "#db → db.pg.ts",
+        "client_factory": "line 64-81: export const Client — lazy singleton, calls init(dbPath) on first access",
+        "db_path_resolution": "line 42-52: getPath() — checks Flag.OPENCODE_DB, then channel path, then Global.Path.data/opencode.db",
+        "transaction_context": "line 99-111: use() / transaction() propagate tx via LocalContext (AsyncLocalStorage v2)"
+      },
+      "adapter_ts": {
+        "file": "packages/opencode/src/storage/adapter.ts",
+        "role": "Effect Service — @opencode/DatabaseAdapter — wraps the legacy singleton",
+        "defaultLayer": "line 386-397: Layer.unwrap(Layer.effect(...)) — reads DatabaseConfig, selects PgAdapter or LocalPgAdapter",
+        "local_adapter": "line 86-163: makeLocalPgAdapter — wraps Database.use() (PGlite singleton) via Effect.tryPromise",
+        "pg_adapter": "line 185-305: makePgAdapter — creates node-postgres client, with retry (Schedule.forever), health checks, tx isolation",
+        "duckdb_adapter": "line 309-385: makeDuckDBAdapter — read-only DuckDB adapter (DYNAMICALLY loaded via import(), not in default path)",
+        "health_integration": "Registers database health with HealthRegistry via ping query"
+      },
+      "database_config_ts": {
+        "file": "packages/opencode/src/effect/database-config.ts",
+        "role": "Effect ConfigService — env-var-backed config",
+        "env_vars": ["OPENCODE_DATABASE_URL (Redacted, optional, for remote PG)", "OPENCODE_DATABASE_SSL (default: true)", "OPENCODE_DATABASE_POOL_SIZE (default: 10)"],
+        "layer": "line 14: Service.defaultLayer.pipe(Layer.orDie)"
+      }
+    },
+    "init_flow": "First call to Database.Client() → getPath() → resolve path → init(dbPath) from db.pg.ts → new PGlite(dataDir) → drizzle({ client })",
+    "init_failure": {
+      "pglite_failure": "db.pg.ts:46-49: throws DatabaseInitError with cause and dataDir info",
+      "migration_failure": "applyMigrations does not catch errors — bubbles up to caller. runMigrations in migrate.ts catches at CLI level (process.exit(1))",
+      "adapter_health": "adapter.ts: checkPgHealth() returns { status: 'unhealthy', message } on failure, registered with HealthRegistry"
+    },
+    "runtime_flags": {
+      "disable_channel_db": "Disables channel-specific DB path (uses plain opencode.db)",
+      "skip_migrations": "Skips migration step (flag read in db.ts:27-32)"
+    }
+  },
+
+  "4_duckdb_init": {
+    "file": "packages/opencode/src/storage/db.duckdb.ts",
+    "init_timing": "LAZILY initialized — NOT at startup in default path. Only when DuckDBAdapter is explicitly requested.",
+    "activation_paths": [
+      "tool/duckdb-query.ts (agent-exposed query tool)",
+      "tool/registry.ts (registers DuckDBQueryTool)",
+      "context/workers/duckdb-projection-worker.ts (background context projections)",
+      "context/packet.ts (working set heatmap ranking)"
+    ],
+    "client_creation": "Spawns `duckdb` CLI binary subprocess with -json flag. Falls back to WASM (@duckdb/duckdb-wasm). Read-only by default.",
+    "write_layer": "Separate DuckDBWrite service layer for DDL (no -readonly flag); used by pipeline.ts and schema.duckdb.ts",
+    "pipeline": "packages/opencode/src/storage/pipeline.ts — runPipeline(): 1. create tables, 2. bulk insert from adapter events, 3. create analytical views",
+    "subprocess_spawning": "packages/opencode/src/storage/duckdb-exec.ts — spawn('duckdb', [dbPath, '-json', '-c', sql]) with 60s timeout"
+  },
+
+  "5_plugin_initialization": {
+    "file": "packages/opencode/src/plugin/index.ts",
+    "service_key": "@opencode/Plugin",
+    "layer_definition": "line 197: export const layer = Layer.effect(Service, Effect.gen(function* () { ... }))",
+    "defaultLayer_dependencies": "line 515-519: Bus.layer → Config.defaultLayer → RuntimeFlags.defaultLayer",
+    "plugin_loading": [
+      "line 123-139: internalPlugins() — hardcoded internal plugins: Codex, Copilot, GitLab, Poe, Cloudflare, Azure, DigitalOcean, xAI",
+      "line 123-139: internalPlugins reads RuntimeFlags for feature flags",
+      "line 167-181: applyPlugin() — dynamic import + hook registration + auth setup",
+      "line 152-165: getLegacyPlugins() — scans module exports for legacy plugin patterns"
+    ],
+    "timing": "Plugin layer is merged into AppLayer (app-runtime.ts:72) BEFORE Config loads fully (Config.defaultLayer is provided independently). In sidecar boot: Plugin is initialized when the AppLayer is first used, which happens during server import (phase 5) when Server.listen creates the listener layer.",
+    "failure_handling": "publishPluginError (line 212) posts error to bus. Plugin crashes recorded in plugin-health store (loadPluginHealthStore / savePluginHealthStore). Backoff: 30s after first crash, 5min after second, 30min after, then 1hr max (quarantine)."
+  },
+
+  "6_mcp_initialization": {
+    "file": "packages/opencode/src/mcp/index.ts",
+    "service_key": "@opencode/MCP",
+    "layer_definition": "MCP Service layer (export const layer = Layer.effect(...), line ~1040)",
+    "defaultLayer_dependencies": "McpAuth.layer → Bus.layer → Config.defaultLayer → CrossSpawnSpawner.defaultLayer → AppFileSystem.defaultLayer",
+    "server_connection_timing": "MCP server connections are created LAZILY — when tools() / prompts() / resources() is first called, NOT at layer construction time.",
+    "transport_types": ["StdioClientTransport (subprocess spawn)", "StreamableHTTPClientTransport (HTTP)", "SSEClientTransport (SSE)"],
+    "oauth_flow": "OAuth auth happens on-demand via startAuth/authenticate/finishAuth. Supports StreamableHTTP with OAuth client credentials.",
+    "connection_guard": "Per-server semaphore (serverLocks Map) prevents concurrent connect/disconnect cycles.",
+    "timing_relative_to_plugins": "MCP layer is composed AFTER Plugin in AppLayer (line 74 for Plugin.defaultLayer, line 99 for MCP.defaultLayer), but both are lazy. Plugin hooks fire first during initialization, then MCP connections are established on first use."
+  },
+
+  "7_native_module_loading": {
+    "native_dependencies": [
+      { "pkg": "@parcel/watcher", "arch_specific": true, "platform_deps": ["@parcel/watcher-darwin-arm64", "@parcel/watcher-darwin-x64", "@parcel/watcher-linux-arm64-glibc", "@parcel/watcher-linux-arm64-musl", "@parcel/watcher-linux-x64-glibc", "@parcel/watcher-linux-x64-musl", "@parcel/watcher-win32-arm64", "@parcel/watcher-win32-x64"], "loaded_by": "packages/opencode/src/file/watcher.ts (FileWatcher service)", "loaded_at": "Layer construction time (AppLayer)" },
+      { "pkg": "@lydell/node-pty", "arch_specific": true, "note": "Platform-specific binary, externalized in electron.vite.config.ts", "loaded_by": "packages/opencode/src/pty/pty.node.ts (via #pty import)", "loaded_at": "Layer construction time (AppLayer)" },
+      { "pkg": "tree-sitter-bash", "note": "WASM parser loaded by web-tree-sitter", "loaded_by": "context/bash analysis", "loaded_at": "On-demand (first bash analysis)" },
+      { "pkg": "tree-sitter-powershell", "note": "WASM parser", "loaded_by": "context/powershell analysis", "loaded_at": "On-demand" },
+      { "pkg": "@silvia-odwyer/photon-node", "note": "Native image processing (Rust-based)", "loaded_by": "image processing paths", "loaded_at": "On-demand" },
+      { "pkg": "duckdb", "note": "CLI binary invoked via child_process.spawn", "loaded_by": "storage/db.duckdb.ts, context/duckdb-projection-worker.ts", "loaded_at": "On-demand (not at startup by default)" },
+      { "pkg": "bun-pty", "note": "Bun-native PTY (only used when Bun runtime)", "loaded_by": "packages/opencode/src/pty/pty.bun.ts (via #pty import)", "loaded_at": "Layer construction time" }
+    ],
+    "arch_detection": "packages/opencode/bin/opencode:76-147 — supportsAvx2() checks CPU features, findBinary() walks node_modules for platform-specific binary"
+  },
+
+  "8_http_server_start": {
+    "file": "packages/opencode/src/server/server.ts",
+    "listen_function": "line 75-80: export async function listen(opts: ListenOptions): Promise<Listener>",
+    "listen_effect": "line 85-97: const listenEffect = Effect.fn('Server.listen')(function* (opts) { ... })",
+    "port_resolution": {
+      "explicit_port": "line 122: if (opts.port !== 0) return startListener(opts, opts.port)",
+      "port_0_fallback": "line 125: prefers 4096 first, then 0 (any free port) via Effect.catch"
+    },
+    "layer_composition": "line 103-118: listenerLayer(opts, port) — HttpRouter.serve + WebSocketTracker.layer + serverLayer + ConfigProvider.layer (for fresh env reads)",
+    "server_creation": "line 192-218: function serverLayer(opts) — createServer() from node:http, wrapped in NodeHttpServer.layer with graceful shutdown (1 second)",
+    "mdns": "line 158-170: setupMdns — Bonjour/mDNS service discovery publishing (optional, only when not loopback)",
+    "web_handler": "packages/opencode/src/server/routes/instance/httpapi/server.ts:251-258: webHandler = lazy(() => HttpRouter.toWebHandler(routes, { memoMap, middleware: disposeMiddleware }))",
+    "api_context": "server.ts:99: export const context = Context.makeUnsafe<unknown>(new Map()) — shared context for all HTTP handlers",
+    "route_services_provided": "server.ts:197-245: createRoutes() provides ~50+ service layers (Account, Agent, Auth, Config, LSP, MCP, Plugin, Session, Workspace, etc.)"
+  },
+
+  "9_error_handling_during_init": {
+    "sidecar_level": {
+      "file": "packages/desktop/src/main/sidecar.ts",
+      "phased_error_handler": "lines 74-116: const fail = (phase, error) — writes sidecar-boot-failure.json to userDataPath + IPC error message + process.exit(1)",
+      "error_types": "Generic Error wrapped as-is (error instanceof Error ? error : new Error(String(error)))",
+      "durable_diagnostic": "line 79-100: writeFileSync to <userDataPath>/sidecar-boot-failure.json BEFORE IPC attempt — survives broken IPC",
+      "stderr_capture": "lines 60-68: Last 20 lines of process.stderr captured for diagnostic tail"
+    },
+    "startup_trace": {
+      "file": "packages/desktop/src/main/sidecar-startup-trace.ts",
+      "trace_file": "<userDataPath>/sidecar-startup.jsonl (JSONL format, append-only)",
+      "failure_codes": [
+        "sidecar.port_conflict", "sidecar.config_parse_failed", "sidecar.db_init_failed",
+        "sidecar.db_migration_failed", "sidecar.duckdb_init_failed", "sidecar.native_module_failed",
+        "sidecar.plugin_init_failed", "sidecar.mcp_init_failed", "sidecar.permission_denied",
+        "sidecar.path_missing", "sidecar.env_invalid", "sidecar.process_exited_before_ready",
+        "sidecar.timeout_before_ready", "sidecar.unknown_fatal"
+      ],
+      "classifier": "line 151-191: classifyError(error, phase) — regex-based classification of error messages into typed failure codes",
+      "secrets_redaction": "line 203-213: redactSecrets() — strips authorization, api_key, token, secret, password, Bearer, Basic, private keys"
+    },
+    "db_level": {
+      "db_pg_ts": "line 11-17: DatabaseInitError typed error class wrapping PGlite init failures",
+      "adapter_ts": "line 11-25: DatabaseError, RetriableDatabaseError, FatalDatabaseError — typed tagged errors",
+      "config_level": "Config layer yields Effect errors; DatabaseConfig uses Layer.orDie (panic on missing env)",
+      "migration_level": "applyMigrations does NOT catch errors — bubbles up. CLI-level migration script exits with code 1."
+    }
+  },
+
+  "10_log_file_paths": {
+    "log_module": "packages/core/src/util/log.ts",
+    "global_paths": "packages/core/src/global.ts: Path.log = xdgData + '/opencode/log'",
+    "init_function": "line 66-80: export async function init(options: Options) — sets logpath, truncates if not dev mode, creates write stream",
+    "log_file_pattern": {
+      "dev_mode": "dev.log (if options.dev is true)",
+      "production": "\"YYYY-MM-DDTHHMMSS.log\" (ISO timestamp with colons replaced, e.g. '2026-05-31T143022.log')",
+      "truncation": "Dev mode: only truncates on first init of a new OPENCODE_RUN_ID. Prod mode: always truncates.",
+      "retention": "Keeps last 10 log files. Older ones are deleted on init via cleanup() (line 89-101)."
+    },
+    "logger_level": "sidecar.ts:159: Log.init({ level: 'WARN' }) — WARN level in production",
+    "write_target": "File only (options.print=false from sidecar). Write stream via createWriteStream with 'a' flag.",
+    "output_format": "line 124-141: '[LEVEL] [timestamp] [+diff ms] [service=value extra=value ...] message\\n'",
+    "sidecar_stderr": "sidecar.ts:60-68: Last 20 lines of stderr captured in memory for diagnostic tail, written to sidecar-boot-failure.json on crash"
+  },
+
+  "runtime_layer_composition_summary": {
+    "BootstrapRuntime": {
+      "file": "packages/opencode/src/effect/bootstrap-runtime.ts",
+      "layers": ["Config → DatabaseAdapter → Plugin → ShareNext → Format → LSP → File → FileWatcher → Vcs → Snapshot → Bus → Observability"],
+      "purpose": "Lightweight runtime for early bootstrap before full app is ready"
+    },
+    "AppRuntime": {
+      "file": "packages/opencode/src/effect/app-runtime.ts",
+      "layers": "55 service layers merged + DatabaseConfig + InstanceLayer (dynamic import of InstanceBootstrap) + Observability + GitHubService",
+      "key_services": ["Npm", "AppFileSystem", "Bus", "Auth", "Account", "Config", "Git", "File", "FileWatcher", "Storage", "Snapshot", "Plugin", "ModelsDev", "Provider", "Agent", "Skill", "Permission", "Session (10 sub-services)", "LSP", "MCP", "McpAuth", "ToolRegistry", "Project", "Vcs", "Workspace", "Worktree", "Pty", "SyncEvent"],
+      "purpose": "Full application runtime for HTTP server, CLI, and ACP agents"
+    }
+  },
+
+  "init_sequence_diagram": [
+    "1. Desktop (Electron main) spawns sidecar process (Bun/Node) → sidecar.ts runs",
+    "2. sidecar.ts: parentPort.on('message') → parseCommand → start(command)",
+    "3. Phase 1 (line 118): prepareSidecarEnv — set OPENCODE_SERVER_USERNAME/PASSWORD, XDG_STATE_HOME",
+    "4. Phase 2 (line 126): ensureLoopbackNoProxy — NO_PROXY loopback entries",
+    "5. Phase 3 (line 133): useSystemCertificates — merge system CA certs",
+    "6. Phase 4 (line 140): useEnvProxy — http.setGlobalProxyFromEnv()",
+    "7. Phase 5 (line 144): dynamic import('virtual:opencode-server') → resolves to opencode/dist/node/node.js",
+    "    7a. Node module load triggers: import './init-projectors' → SyncEvent.init() with session projectors",
+    "    7b. AppRuntime.ManagedRuntime.make(AppLayer) — builds entire Effect dependency tree",
+    "    7c. AppLayer construction creates all 55+ service layers (Config, DB, Plugin, MCP, etc.)",
+    "    7d. Config.defaultLayer loads opencode.json from directory tree + global config",
+    "    7e. DatabaseAdapter.defaultLayer: checks OPENCODE_DATABASE_URL → PGlite or PG pool",
+    "    7f. Plugin.defaultLayer registers internal plugins, loads user plugins",
+    "    7g. MCP.defaultLayer sets up MCP infrastructure (connections are lazy)",
+    "8. Phase 6 (line 159): Log.init({ level: 'WARN' }) → create log file at XDG_DATA/opencode/log/",
+    "9. Phase 7 (line 164): Server.listen({ port, hostname, username, password, cors })",
+    "    9a. HttpApiApp.createRoutes(opts) → builds route tree with ~50 service layers",
+    "    9b. listenerLayer(opts, port) → HttpRouter.serve + WebSocketTracker + serverLayer",
+    "    9c. serverLayer creates http.createServer(), wraps in NodeHttpServer.layer",
+    "    9d. ConfigProvider.layer with fromEnv() — fresh env snapshot per listener",
+    "    9e. startWithPortFallback → startListener → Layer.buildWithMemoMap → effect runs",
+    "    9f. NodeHttpServer starts listening on port → TCP address resolved",
+    "    9g. Optional: mDNS/Bonjour service published",
+    "10. parentPort.postMessage({ type: 'ready' }) → desktop knows sidecar is alive"
+  ]
+}

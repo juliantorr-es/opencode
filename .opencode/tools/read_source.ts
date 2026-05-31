@@ -53,12 +53,6 @@ function astFocus(source: string, name: string, filePath: string): { start: numb
   return result
 }
 
-export const modeDescriptions = {
-  explore: "Read source files to discover patterns, conventions, and entry points. Returns structured digests: imports, exports, key symbols.",
-  cartographer: "Map codebase structure: entry points, dependency graphs, conventions, and git history through parallel subagent decomposition.",
-  surveyor: "Survey project structure: aliases, package boundaries, dependency relationships, and canonical code patterns with file:line citations.",
-} as const
-
 export default tool({
   description: "Read a source file and return a structured digest — imports, exports, key symbols, and optional focus on a specific symbol.",
   args: {
@@ -151,32 +145,27 @@ export default tool({
   }
 
     const output: Record<string, unknown> = {
-      status: "ok",
       file: args.file,
-      total_lines: lines.length,
-      import_count: imports.length,
-      export_count: exports.length,
-      symbol_count: symbols.length,
+      lines: lines.length,
     }
 
     if (args.summary_only) {
+      output.overview = `${lines.length} lines, ${imports.length} imports, ${exports.length} exports, ${symbols.length} top-level symbols`
       output.imports = imports.slice(0, 20).map(i => i.text)
-      output.exports = exports.slice(0, 10).map(e => `${e.line}: ${e.text}`)
+      output.exports = exports.slice(0, 10).map(e => e.text)
       output.symbols = symbols.slice(0, 15).map(s => `${s.kind} ${s.name} (line ${s.line})`)
     } else if (focusedSection) {
-      output.focused = args.focus
-      output.focus_method = focusMethod
+      output.focus = args.focus
       output.content = focusedSection.slice(0, 3000)
     } else {
-      output.imports = imports.slice(0, 20)
-      output.exports = exports.slice(0, 10)
-      output.symbols = symbols
+      output.overview = `${lines.length} lines, ${imports.length} imports, ${exports.length} exports`
+      output.imports = imports.slice(0, 20).map(i => i.text)
+      output.exports = exports.slice(0, 10).map(e => e.text)
+      output.symbols = symbols.slice(0, 20).map(s => ({ name: s.name, kind: s.kind, line: s.line }))
       if (lines.length <= maxLines) {
         output.content = content
       } else {
-        output.content_head = lines.slice(0, 20).join("\n")
-        output.content_tail = lines.slice(-20).join("\n")
-        output.content_truncated = lines.length
+        output.content = lines.slice(0, 25).join("\n") + `\n... (${lines.length - 50} lines omitted) ...\n` + lines.slice(-25).join("\n")
       }
     }
 

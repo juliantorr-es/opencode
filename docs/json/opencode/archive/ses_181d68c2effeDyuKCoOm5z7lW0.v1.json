@@ -2,12 +2,12 @@
   "schema": "v1",
   "session_id": "ses_181d68c2effeDyuKCoOm5z7lW0",
   "agent": "general-man-agent",
-  "archived_at": "2026-05-31T15:47:16.191Z",
-  "summary": "6 parallel lanes fanning through full wave lifecycle to make .opencode tools industry-leading. All lanes completed and locally committed. 44 files changed (+2832/-93). 6 commits on dev awaiting push. Pre-push cleanup needed: bad commit 06b81c6692 (mislabeled cache files) and cross-lane tool.ts:190-213 bug (nested Effect.gen + annotateCurrentSpan).",
+  "archived_at": "2026-05-31T20:44:50.863Z",
+  "summary": "Plugin+MCP lifecycle hardening session. 3 lanes executed in parallel: MCP-TRUTH (env sanitization P0 fix, typed errors, lock safety), TRUST-BOUNDARY (CapabilityId runtime guard, auth corruption fix, as any elimination, secret redaction), PLUGIN-TRUTH (RL-005 Phase 1.5+2 state refactor, TOCTOU fix, bus subscriber staleness fix). 48 trust boundary findings audited, 5 P0 addressed. 7 commits on dev awaiting push. Key deferred: MCP Phases 3-10, remaining auth providers, ~9 silent catch blocks.",
   "agents_involved": [
     "general-man-agent"
   ],
-  "tool_calls": 24,
+  "tool_calls": 28,
   "tool_failures": 3,
-  "handoffs": 201
+  "handoffs": 204
 }

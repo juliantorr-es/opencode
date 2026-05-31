@@ -177,6 +177,26 @@ export function makeCancelled<T>(tool: string, data: T, summary: string): TypedT
 
 // ─── Error Classification ─────────────────────────────────────────────────────
 
+/**
+ * Maps runtime errors to stable errorKind identifiers consumed by agents and the model.
+ *
+ * Covered error kinds:
+ *   invalid_arguments     — Schema decode failure (InvalidArgumentsError)
+ *   tool_error            — Recoverable tool failure (ToolError)
+ *   fatal_tool_error      — Non-recoverable tool failure (ToolError)
+ *   timeout               — Execution exceeded time limit (TimeoutError)
+ *   transient             — Temporary failure, retry may help (TransientError)
+ *   validation            — Field-level validation failure (ValidationError)
+ *   cancelled             — AbortSignal triggered (DOMException AbortError)
+ *   permission_denied     — User denied or rejected permission
+ *   unexpected            — Unknown error catch-all
+ *
+ * Intentionally deferred (not errors in this system):
+ *   output_too_large      — Handled as truncation metadata on success, not an error
+ *   cache_failed          — Cache failures are non-fatal, handled internally
+ *   dependency_missing    — Caught at registry/init time before execution
+ *   unavailable           — Caught at registry/init time before execution
+ */
 function classifyError(error: unknown): { errorKind: string; recoverable: boolean; summary: string } {
   if (error instanceof Tool.InvalidArgumentsError) {
     return {

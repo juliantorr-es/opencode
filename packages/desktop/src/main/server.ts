@@ -1,4 +1,5 @@
 import { dirname, join } from "node:path"
+import { existsSync, readFileSync } from "node:fs"
 import { fileURLToPath } from "node:url"
 import { app, utilityProcess } from "electron"
 import type { Details } from "electron"
@@ -135,11 +136,42 @@ export async function spawnLocalServer(
         const err = new Error(message.error.message)
         ;(err as any).component = message.component ?? "unknown"
         err.stack = message.error.stack
+        // Try to read startup trace for additional diagnostics
+        try {
+          const tracePath = join(options.userDataPath, "sidecar-startup.jsonl")
+          if (existsSync(tracePath)) {
+            const lines = readFileSync(tracePath, "utf8").trim().split("\n")
+            const lastLine = lines[lines.length - 1]
+            if (lastLine) {
+              const lastEntry = JSON.parse(lastLine)
+              ;(err as any).startupPhase = lastEntry.phase
+              ;(err as any).errorCode = lastEntry.errorCode
+              ;(err as any).startupTrace = tracePath
+            }
+          }
+        } catch {
+          // Trace read failure is non-fatal
+        }
         fail(err)
       }
     }
     const onExit = (code: number) => {
-      fail(new Error(`Sidecar exited before ready with code ${code}`))
+      // Try to read startup trace for exit diagnostics
+      let phaseInfo = ""
+      try {
+        const tracePath = join(options.userDataPath, "sidecar-startup.jsonl")
+        if (existsSync(tracePath)) {
+          const lines = readFileSync(tracePath, "utf8").trim().split("\n")
+          const lastLine = lines[lines.length - 1]
+          if (lastLine) {
+            const lastEntry = JSON.parse(lastLine)
+            phaseInfo = ` [last phase: ${lastEntry.phase}, errorCode: ${lastEntry.errorCode ?? "none"}]`
+          }
+        }
+      } catch {
+        // Trace read failure is non-fatal
+      }
+      fail(new Error(`Sidecar exited before ready with code ${code}${phaseInfo}`))
     }
     const cleanup = () => {
       clearTimeout(timeout)

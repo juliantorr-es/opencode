@@ -150,3 +150,46 @@
 {"at":"2026-05-31T13:31:11.696Z","session_id":"ses_182563adcffe7ZHvAOiXaT33PY","agent":"general-man-agent","tool":"smart_grep","phase":"completed","detail":"it\\.live\\("}
 {"at":"2026-05-31T13:31:41.555Z","session_id":"ses_182563adcffe7ZHvAOiXaT33PY","agent":"general-man-agent","tool":"smart_write","phase":"started","detail":"packages/opencode/test/campaign/service-lifecycle.test.ts"}
 {"at":"2026-05-31T13:31:41.590Z","session_id":"ses_182563adcffe7ZHvAOiXaT33PY","agent":"general-man-agent","tool":"smart_write","phase":"completed","detail":"packages/opencode/test/campaign/service-lifecycle.test.ts"}
+{"at":"2026-05-31T18:41:54.892Z","session_id":"ses_182563adcffe7ZHvAOiXaT33PY","agent":"general-man-agent","tool":"smart_git","phase":"started","detail":"status"}
+{"at":"2026-05-31T18:41:55.401Z","session_id":"ses_182563adcffe7ZHvAOiXaT33PY","agent":"general-man-agent","tool":"smart_git","phase":"completed","detail":"status exit=0"}
+{"at":"2026-05-31T18:41:55.416Z","session_id":"ses_182563adcffe7ZHvAOiXaT33PY","agent":"general-man-agent","tool":"smart_git","phase":"started","detail":"branch"}
+{"at":"2026-05-31T18:41:55.462Z","session_id":"ses_182563adcffe7ZHvAOiXaT33PY","agent":"general-man-agent","tool":"smart_git","phase":"completed","detail":"branch exit=0"}
+{"at":"2026-05-31T18:42:24.611Z","session_id":"ses_182563adcffe7ZHvAOiXaT33PY","agent":"general-man-agent","tool":"smart_find","phase":"started","detail":"*"}
+{"at":"2026-05-31T18:42:24.641Z","session_id":"ses_182563adcffe7ZHvAOiXaT33PY","agent":"general-man-agent","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T18:42:25.437Z","session_id":"ses_182563adcffe7ZHvAOiXaT33PY","agent":"general-man-agent","tool":"smart_grep","phase":"started","detail":"sidecar|spawn.*sidecar|child_process"}
+{"at":"2026-05-31T18:42:25.454Z","session_id":"ses_182563adcffe7ZHvAOiXaT33PY","agent":"general-man-agent","tool":"smart_grep","phase":"completed","detail":"sidecar|spawn.*sidecar|child_process"}
+{"at":"2026-05-31T18:42:53.663Z","session_id":"ses_182563adcffe7ZHvAOiXaT33PY","agent":"general-man-agent","tool":"smart_grep","phase":"started","detail":"sidecar\\.js|sidecar\\.ts"}
+{"at":"2026-05-31T18:42:53.691Z","session_id":"ses_182563adcffe7ZHvAOiXaT33PY","agent":"general-man-agent","tool":"smart_grep","phase":"completed","detail":"sidecar\\.js|sidecar\\.ts"}
+{"at":"2026-05-31T18:42:54.652Z","session_id":"ses_182563adcffe7ZHvAOiXaT33PY","agent":"general-man-agent","tool":"smart_grep","phase":"started","detail":"ready.*message|postMessage.*ready|type.*ready"}
+{"at":"2026-05-31T18:42:54.682Z","session_id":"ses_182563adcffe7ZHvAOiXaT33PY","agent":"general-man-agent","tool":"smart_grep","phase":"completed","detail":"ready.*message|postMessage.*ready|type.*ready"}
+{"at":"2026-05-31T18:43:47.290Z","session_id":"ses_182563adcffe7ZHvAOiXaT33PY","agent":"general-man-agent","tool":"smart_grep","phase":"started","detail":"virtual:opencode-server|opencode-server"}
+{"at":"2026-05-31T18:43:47.316Z","session_id":"ses_182563adcffe7ZHvAOiXaT33PY","agent":"general-man-agent","tool":"smart_grep","phase":"completed","detail":"virtual:opencode-server|opencode-server"}
+{"at":"2026-05-31T18:43:48.187Z","session_id":"ses_182563adcffe7ZHvAOiXaT33PY","agent":"general-man-agent","tool":"smart_grep","phase":"started","detail":"Server\\.listen|Log\\.init|Database.*init"}
+{"at":"2026-05-31T18:43:48.207Z","session_id":"ses_182563adcffe7ZHvAOiXaT33PY","agent":"general-man-agent","tool":"smart_grep","phase":"completed","detail":"Server\\.listen|Log\\.init|Database.*init"}
+{"at":"2026-05-31T18:45:48.434Z","session_id":"ses_182563adcffe7ZHvAOiXaT33PY","agent":"general-man-agent","tool":"smart_grep","phase":"started","detail":"OPENCODE_SERVER_DIST"}
+{"at":"2026-05-31T18:45:48.458Z","session_id":"ses_182563adcffe7ZHvAOiXaT33PY","agent":"general-man-agent","tool":"smart_grep","phase":"completed","detail":"OPENCODE_SERVER_DIST"}
+{"at":"2026-05-31T18:46:23.614Z","session_id":"ses_182563adcffe7ZHvAOiXaT33PY","agent":"general-man-agent","tool":"smart_grep","phase":"started","detail":"export.*Database.*Log.*Server|Database.*Log.*Server"}
+{"at":"2026-05-31T18:46:23.639Z","session_id":"ses_182563adcffe7ZHvAOiXaT33PY","agent":"general-man-agent","tool":"smart_grep","phase":"completed","detail":"export.*Database.*Log.*Server|Database.*Log.*Server"}
+{"at":"2026-05-31T18:46:24.369Z","session_id":"ses_182563adcffe7ZHvAOiXaT33PY","agent":"general-man-agent","tool":"smart_grep","phase":"started","detail":"node\\.ts|node-entry"}
+{"at":"2026-05-31T18:46:24.386Z","session_id":"ses_182563adcffe7ZHvAOiXaT33PY","agent":"general-man-agent","tool":"smart_grep","phase":"completed","detail":"node\\.ts|node-entry"}
+{"at":"2026-05-31T18:47:11.245Z","session_id":"ses_182563adcffe7ZHvAOiXaT33PY","agent":"general-man-agent","tool":"smart_grep","phase":"started","detail":"entry.*node|node.*entry|input.*node"}
+{"at":"2026-05-31T18:47:11.275Z","session_id":"ses_182563adcffe7ZHvAOiXaT33PY","agent":"general-man-agent","tool":"smart_grep","phase":"completed","detail":"entry.*node|node.*entry|input.*node"}
+{"at":"2026-05-31T18:47:12.398Z","session_id":"ses_182563adcffe7ZHvAOiXaT33PY","agent":"general-man-agent","tool":"smart_find","phase":"started","detail":"node*"}
+{"at":"2026-05-31T18:47:12.478Z","session_id":"ses_182563adcffe7ZHvAOiXaT33PY","agent":"general-man-agent","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T18:50:42.780Z","session_id":"ses_182563adcffe7ZHvAOiXaT33PY","agent":"general-man-agent","tool":"smart_write","phase":"started","detail":"packages/desktop/src/main/sidecar-startup-trace.ts"}
+{"at":"2026-05-31T18:50:42.780Z","session_id":"ses_182563adcffe7ZHvAOiXaT33PY","agent":"general-man-agent","tool":"smart_write","phase":"completed","detail":"packages/desktop/src/main/sidecar-startup-trace.ts"}
+{"at":"2026-05-31T18:50:53.385Z","session_id":"ses_182563adcffe7ZHvAOiXaT33PY","agent":"general-man-agent","tool":"smart_sd","phase":"completed","detail":"1 match in packages/desktop/src/main/sidecar.ts"}
+{"at":"2026-05-31T18:52:19.429Z","session_id":"ses_182563adcffe7ZHvAOiXaT33PY","agent":"general-man-agent","tool":"smart_grep","phase":"started","detail":"async function start\\(command"}
+{"at":"2026-05-31T18:52:19.436Z","session_id":"ses_182563adcffe7ZHvAOiXaT33PY","agent":"general-man-agent","tool":"smart_grep","phase":"completed","detail":"async function start\\(command"}
+{"at":"2026-05-31T18:53:07.993Z","session_id":"ses_182563adcffe7ZHvAOiXaT33PY","agent":"general-man-agent","tool":"smart_grep","phase":"started","detail":"async function start"}
+{"at":"2026-05-31T18:53:08.000Z","session_id":"ses_182563adcffe7ZHvAOiXaT33PY","agent":"general-man-agent","tool":"smart_grep","phase":"completed","detail":"async function start"}
+{"at":"2026-05-31T18:55:13.591Z","session_id":"ses_182563adcffe7ZHvAOiXaT33PY","agent":"general-man-agent","tool":"smart_sd","phase":"completed","detail":"1 match in packages/desktop/src/main/sidecar.ts"}
+{"at":"2026-05-31T18:55:22.596Z","session_id":"ses_182563adcffe7ZHvAOiXaT33PY","agent":"general-man-agent","tool":"smart_sd","phase":"completed","detail":"1 match in packages/desktop/src/main/sidecar.ts"}
+{"at":"2026-05-31T18:56:18.554Z","session_id":"ses_182563adcffe7ZHvAOiXaT33PY","agent":"general-man-agent","tool":"smart_sd","phase":"completed","detail":"1 match in packages/desktop/src/main/sidecar.ts"}
+{"at":"2026-05-31T18:57:07.517Z","session_id":"ses_182563adcffe7ZHvAOiXaT33PY","agent":"general-man-agent","tool":"smart_sd","phase":"completed","detail":"1 match in packages/desktop/src/main/sidecar.ts"}
+{"at":"2026-05-31T18:57:15.336Z","session_id":"ses_182563adcffe7ZHvAOiXaT33PY","agent":"general-man-agent","tool":"smart_sd","phase":"completed","detail":"1 match in packages/desktop/src/main/sidecar-startup-trace.ts"}
+{"at":"2026-05-31T18:57:57.105Z","session_id":"ses_182563adcffe7ZHvAOiXaT33PY","agent":"general-man-agent","tool":"smart_sd","phase":"completed","detail":"1 match in packages/desktop/src/main/server.ts"}
+{"at":"2026-05-31T18:58:47.814Z","session_id":"ses_182563adcffe7ZHvAOiXaT33PY","agent":"general-man-agent","tool":"smart_sd","phase":"completed","detail":"1 match in packages/desktop/src/main/server.ts"}
+{"at":"2026-05-31T18:59:29.277Z","session_id":"ses_182563adcffe7ZHvAOiXaT33PY","agent":"general-man-agent","tool":"smart_sd","phase":"completed","detail":"1 match in packages/desktop/src/main/server.ts"}
+{"at":"2026-05-31T19:00:28.244Z","session_id":"ses_182563adcffe7ZHvAOiXaT33PY","agent":"general-man-agent","tool":"smart_write","phase":"started","detail":"packages/desktop/test/sidecar-startup-truth.test.ts"}
+{"at":"2026-05-31T19:00:28.244Z","session_id":"ses_182563adcffe7ZHvAOiXaT33PY","agent":"general-man-agent","tool":"smart_write","phase":"completed","detail":"packages/desktop/test/sidecar-startup-truth.test.ts"}

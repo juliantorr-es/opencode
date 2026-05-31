@@ -1,0 +1,16 @@
+{"at":"2026-05-31T18:45:50.035Z","tool":"smart_grep","action":"searched","pattern":"campaign|lane|secretary|binder|lifecycle|state.?machine|predicate","results":30,"files":1}
+{"at":"2026-05-31T18:46:57.424Z","tool":"smart_grep","action":"searched","pattern":"^(import|export|describe|it\\(|test\\(|beforeEach)","results":100,"files":6}
+{"at":"2026-05-31T18:47:42.182Z","tool":"smart_grep","action":"searched","pattern":"import","results":200,"files":20}
+{"at":"2026-05-31T18:47:43.314Z","tool":"smart_grep","action":"searched","pattern":"import.*campaign|import.*lane|import.*secretary|import.*binder|import.*lifecycle","results":30,"files":11}
+{"at":"2026-05-31T18:48:24.979Z","tool":"smart_grep","action":"searched","pattern":"import.*campaign","results":2,"files":1}
+{"at":"2026-05-31T18:49:04.438Z","tool":"smart_grep","action":"searched","pattern":"^\\s*(describe|test|it)\\(","results":0,"files":0}
+{"at":"2026-05-31T18:49:05.129Z","tool":"smart_grep","action":"searched","pattern":"^\\s*(describe|test|it)\\(","results":0,"files":0}
+{"at":"2026-05-31T18:49:06.531Z","tool":"smart_grep","action":"searched","pattern":"import.*campaign|import.*secretary|import.*binder|import.*predicate|import.*stat","results":30,"files":12}
+{"at":"2026-05-31T18:49:07.514Z","tool":"smart_grep","action":"searched","pattern":"import.*from.*campaign","results":2,"files":1}
+{"at":"2026-05-31T18:49:48.110Z","tool":"smart_grep","action":"searched","pattern":"import.*\"@/campaign","results":2,"files":1}
+{"at":"2026-05-31T18:50:23.582Z","tool":"smart_grep","action":"searched","pattern":"^\\s*(describe|test)\\(.","results":0,"files":0}
+{"at":"2026-05-31T18:50:24.894Z","tool":"smart_grep","action":"searched","pattern":"it\\.(live|skip|only)|test\\(|describe\\(","results":50,"files":1}
+{"at":"2026-05-31T18:51:02.786Z","tool":"smart_bash","action":"bash","command":"wc -l packages/opencode/test/campaign/regression-proofs.test.ts packages/opencode/test/campaign/serv","exit_code":0}
+{"at":"2026-05-31T18:51:56.278Z","tool":"smart_grep","action":"searched","pattern":".","results":30,"files":1}
+{"at":"2026-05-31T18:51:57.149Z","tool":"smart_grep","action":"searched","pattern":"test","results":30,"files":1}
+{"at":"2026-05-31T18:53:06.577Z","tool":"smart_grep","action":"searched","pattern":"describe|test|it\\(","results":0,"files":0}

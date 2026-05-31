@@ -113,7 +113,7 @@ export const layer = Layer.effect(
 
     const record = Effect.fn("EventStore.record")(function* (event: RuntimeEvent) {
       const encoded = encodeForDb(event)
-      yield* adapter.query((db) => db.insert(RuntimeEventTable).values(encoded).run())
+      yield* adapter.query((db) => db.insert(RuntimeEventTable).values(encoded).execute())
       log.info("recorded", { id: event.id, type: event.eventType })
     })
 
@@ -128,7 +128,7 @@ export const layer = Layer.effect(
         if (where) q = q.where(where)
         q = q.orderBy(orderFn(RuntimeEventTable.ts))
         q = q.limit(limit).offset(offset)
-        return q.all() as Record<string, unknown>[]
+        return q.execute() as Promise<Record<string, unknown>[]>
       })
 
       return rows.map(decodeFromDb)

@@ -1,0 +1,60 @@
+{"at":"2026-05-31T18:48:21.125Z","session_id":"ses_180a3fe42ffeIbycKdvJUVI1zV","agent":"cartographer","tool":"smart_find","phase":"started","detail":"*plugin*"}
+{"at":"2026-05-31T18:48:21.188Z","session_id":"ses_180a3fe42ffeIbycKdvJUVI1zV","agent":"cartographer","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T18:48:21.957Z","session_id":"ses_180a3fe42ffeIbycKdvJUVI1zV","agent":"cartographer","tool":"smart_find","phase":"started","detail":"*mcp*"}
+{"at":"2026-05-31T18:48:22.024Z","session_id":"ses_180a3fe42ffeIbycKdvJUVI1zV","agent":"cartographer","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T18:49:21.949Z","session_id":"ses_180a3fe42ffeIbycKdvJUVI1zV","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Find plugin and MCP source files to understand project structure"}
+{"at":"2026-05-31T18:49:21.960Z","session_id":"ses_180a3fe42ffeIbycKdvJUVI1zV","agent":"cartographer","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T18:50:42.619Z","session_id":"ses_180a3fe42ffeIbycKdvJUVI1zV","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"plugin"}
+{"at":"2026-05-31T18:50:42.783Z","session_id":"ses_180a3fe42ffeIbycKdvJUVI1zV","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"plugin"}
+{"at":"2026-05-31T18:50:43.365Z","session_id":"ses_180a3fe42ffeIbycKdvJUVI1zV","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"mcp"}
+{"at":"2026-05-31T18:50:43.495Z","session_id":"ses_180a3fe42ffeIbycKdvJUVI1zV","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"mcp"}
+{"at":"2026-05-31T18:50:44.017Z","session_id":"ses_180a3fe42ffeIbycKdvJUVI1zV","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"plugin"}
+{"at":"2026-05-31T18:50:44.172Z","session_id":"ses_180a3fe42ffeIbycKdvJUVI1zV","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"plugin"}
+{"at":"2026-05-31T18:50:44.848Z","session_id":"ses_180a3fe42ffeIbycKdvJUVI1zV","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"mcp"}
+{"at":"2026-05-31T18:50:45.054Z","session_id":"ses_180a3fe42ffeIbycKdvJUVI1zV","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"mcp"}
+{"at":"2026-05-31T18:52:05.365Z","session_id":"ses_180a3fe42ffeIbycKdvJUVI1zV","agent":"cartographer","tool":"smart_grep","phase":"started","detail":".*"}
+{"at":"2026-05-31T18:52:05.376Z","session_id":"ses_180a3fe42ffeIbycKdvJUVI1zV","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":".*"}
+{"at":"2026-05-31T18:52:06.303Z","session_id":"ses_180a3fe42ffeIbycKdvJUVI1zV","agent":"cartographer","tool":"smart_grep","phase":"started","detail":".*"}
+{"at":"2026-05-31T18:52:06.313Z","session_id":"ses_180a3fe42ffeIbycKdvJUVI1zV","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":".*"}
+{"at":"2026-05-31T18:52:07.260Z","session_id":"ses_180a3fe42ffeIbycKdvJUVI1zV","agent":"cartographer","tool":"smart_grep","phase":"started","detail":".*"}
+{"at":"2026-05-31T18:52:07.276Z","session_id":"ses_180a3fe42ffeIbycKdvJUVI1zV","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":".*"}
+{"at":"2026-05-31T18:52:08.162Z","session_id":"ses_180a3fe42ffeIbycKdvJUVI1zV","agent":"cartographer","tool":"smart_grep","phase":"started","detail":".*"}
+{"at":"2026-05-31T18:52:08.176Z","session_id":"ses_180a3fe42ffeIbycKdvJUVI1zV","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":".*"}
+{"at":"2026-05-31T18:52:09.430Z","session_id":"ses_180a3fe42ffeIbycKdvJUVI1zV","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"List plugin and MCP source directories"}
+{"at":"2026-05-31T18:52:09.431Z","session_id":"ses_180a3fe42ffeIbycKdvJUVI1zV","agent":"cartographer","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T18:52:15.118Z","session_id":"ses_180a3fe42ffeIbycKdvJUVI1zV","agent":"cartographer","tool":"smart_grep","phase":"started","detail":".*"}
+{"at":"2026-05-31T18:52:15.155Z","session_id":"ses_180a3fe42ffeIbycKdvJUVI1zV","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":".*"}
+{"at":"2026-05-31T18:52:16.002Z","session_id":"ses_180a3fe42ffeIbycKdvJUVI1zV","agent":"cartographer","tool":"smart_grep","phase":"started","detail":".*"}
+{"at":"2026-05-31T18:52:16.018Z","session_id":"ses_180a3fe42ffeIbycKdvJUVI1zV","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":".*"}
+{"at":"2026-05-31T18:52:16.852Z","session_id":"ses_180a3fe42ffeIbycKdvJUVI1zV","agent":"cartographer","tool":"smart_grep","phase":"started","detail":".*"}
+{"at":"2026-05-31T18:52:17.015Z","session_id":"ses_180a3fe42ffeIbycKdvJUVI1zV","agent":"cartographer","tool":"smart_grep","phase":"failed","detail":"spawnSync rg ENOBUFS (stdout or stderr buffer reached maxBuffer size limit)"}
+{"at":"2026-05-31T18:53:54.438Z","session_id":"ses_180a3fe42ffeIbycKdvJUVI1zV","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"List all plugin source files"}
+{"at":"2026-05-31T18:53:54.439Z","session_id":"ses_180a3fe42ffeIbycKdvJUVI1zV","agent":"cartographer","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T18:53:55.045Z","session_id":"ses_180a3fe42ffeIbycKdvJUVI1zV","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"List all MCP source files"}
+{"at":"2026-05-31T18:53:55.045Z","session_id":"ses_180a3fe42ffeIbycKdvJUVI1zV","agent":"cartographer","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T18:53:55.804Z","session_id":"ses_180a3fe42ffeIbycKdvJUVI1zV","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"List plugin and MCP test files"}
+{"at":"2026-05-31T18:53:55.804Z","session_id":"ses_180a3fe42ffeIbycKdvJUVI1zV","agent":"cartographer","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T18:54:01.800Z","session_id":"ses_180a3fe42ffeIbycKdvJUVI1zV","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"List plugin and MCP source and test directories"}
+{"at":"2026-05-31T18:54:01.801Z","session_id":"ses_180a3fe42ffeIbycKdvJUVI1zV","agent":"cartographer","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T18:55:34.968Z","session_id":"ses_180a3fe42ffeIbycKdvJUVI1zV","agent":"cartographer","tool":"smart_find","phase":"started","detail":"*.ts"}
+{"at":"2026-05-31T18:55:35.052Z","session_id":"ses_180a3fe42ffeIbycKdvJUVI1zV","agent":"cartographer","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T18:55:35.606Z","session_id":"ses_180a3fe42ffeIbycKdvJUVI1zV","agent":"cartographer","tool":"smart_find","phase":"started","detail":"*.ts"}
+{"at":"2026-05-31T18:55:35.664Z","session_id":"ses_180a3fe42ffeIbycKdvJUVI1zV","agent":"cartographer","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T18:55:36.173Z","session_id":"ses_180a3fe42ffeIbycKdvJUVI1zV","agent":"cartographer","tool":"smart_find","phase":"started","detail":"*plugin*"}
+{"at":"2026-05-31T18:55:36.267Z","session_id":"ses_180a3fe42ffeIbycKdvJUVI1zV","agent":"cartographer","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T18:55:36.795Z","session_id":"ses_180a3fe42ffeIbycKdvJUVI1zV","agent":"cartographer","tool":"smart_find","phase":"started","detail":"*mcp*"}
+{"at":"2026-05-31T18:55:36.847Z","session_id":"ses_180a3fe42ffeIbycKdvJUVI1zV","agent":"cartographer","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T18:59:31.448Z","session_id":"ses_180a3fe42ffeIbycKdvJUVI1zV","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"plugin"}
+{"at":"2026-05-31T18:59:31.463Z","session_id":"ses_180a3fe42ffeIbycKdvJUVI1zV","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"plugin"}
+{"at":"2026-05-31T18:59:32.486Z","session_id":"ses_180a3fe42ffeIbycKdvJUVI1zV","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"plugin|mcp|Plugin|MCP"}
+{"at":"2026-05-31T18:59:32.509Z","session_id":"ses_180a3fe42ffeIbycKdvJUVI1zV","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"plugin|mcp|Plugin|MCP"}
+{"at":"2026-05-31T18:59:33.598Z","session_id":"ses_180a3fe42ffeIbycKdvJUVI1zV","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"plugin|mcp|Plugin|MCP"}
+{"at":"2026-05-31T18:59:33.663Z","session_id":"ses_180a3fe42ffeIbycKdvJUVI1zV","agent":"cartographer","tool":"smart_grep","phase":"failed","detail":"rg: /Users/user/Developer/GitHub/opencode-desktop-dev/packages/opencode/test/stubs: IO error for operation on /Users/user/Developer/GitHub/opencode-desktop-dev/packages/opencode/test/stubs: No such fi"}
+{"at":"2026-05-31T19:01:19.748Z","session_id":"ses_180a3fe42ffeIbycKdvJUVI1zV","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Count lines for plugin test files and fixture"}
+{"at":"2026-05-31T19:01:19.783Z","session_id":"ses_180a3fe42ffeIbycKdvJUVI1zV","agent":"cartographer","tool":"smart_bash","phase":"completed","detail":"wc exit=0"}
+{"at":"2026-05-31T19:08:27.932Z","session_id":"ses_180a3fe42ffeIbycKdvJUVI1zV","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Check if plugin config test is truly empty"}
+{"at":"2026-05-31T19:08:27.933Z","session_id":"ses_180a3fe42ffeIbycKdvJUVI1zV","agent":"cartographer","tool":"smart_bash","phase":"rerouted","detail":"→ read_source"}
+{"at":"2026-05-31T19:08:28.738Z","session_id":"ses_180a3fe42ffeIbycKdvJUVI1zV","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"^describe\\(|^test\\(|^it\\."}
+{"at":"2026-05-31T19:08:28.759Z","session_id":"ses_180a3fe42ffeIbycKdvJUVI1zV","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"^describe\\(|^test\\(|^it\\."}
+{"at":"2026-05-31T19:11:07.735Z","session_id":"ses_180a3fe42ffeIbycKdvJUVI1zV","agent":"cartographer","tool":"smart_write","phase":"started","detail":".build/rig-relay/artifacts/plugin-mcp-coverage-map.v1.json"}
+{"at":"2026-05-31T19:11:07.735Z","session_id":"ses_180a3fe42ffeIbycKdvJUVI1zV","agent":"cartographer","tool":"smart_write","phase":"completed","detail":".build/rig-relay/artifacts/plugin-mcp-coverage-map.v1.json"}

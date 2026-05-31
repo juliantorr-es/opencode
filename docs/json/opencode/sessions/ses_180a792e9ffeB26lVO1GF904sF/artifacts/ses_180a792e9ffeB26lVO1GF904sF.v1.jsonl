@@ -1,0 +1,25 @@
+{"at":"2026-05-31T18:42:51.918Z","tool":"smart_grep","action":"searched","pattern":"spawn|Bun\\.spawn|child_process","results":15,"files":7}
+{"at":"2026-05-31T18:42:52.727Z","tool":"smart_grep","action":"searched","pattern":"spawn|Bun\\.spawn|child_process","results":60,"files":18}
+{"at":"2026-05-31T18:43:28.841Z","tool":"smart_grep","action":"searched","pattern":"sidecar|SIDECAR","results":1,"files":1}
+{"at":"2026-05-31T18:43:31.140Z","tool":"smart_grep","action":"searched","pattern":"port|PORT","results":40,"files":3}
+{"at":"2026-05-31T18:43:32.463Z","tool":"smart_grep","action":"searched","pattern":"health|ready.*stdout|process\\.send.*ready","results":30,"files":7}
+{"at":"2026-05-31T18:43:55.322Z","tool":"smart_grep","action":"searched","pattern":"listen\\(|createServer|server.*start|app\\.listen","results":30,"files":9}
+{"at":"2026-05-31T18:43:56.594Z","tool":"smart_grep","action":"searched","pattern":"hostname.*port|port.*=|const port|let port|: port","results":30,"files":12}
+{"at":"2026-05-31T18:43:57.502Z","tool":"smart_grep","action":"searched","pattern":"global/health|/health","results":8,"files":8}
+{"at":"2026-05-31T18:45:07.631Z","tool":"smart_grep","action":"searched","pattern":"DEFAULT.*PORT|PORT.*DEFAULT|4096|port.*const|SERVER_PORT","results":20,"files":12}
+{"at":"2026-05-31T18:45:55.336Z","tool":"smart_grep","action":"searched","pattern":"const port|let port|port =|: port|hostname|127\\.0\\.0\\.1|localhost","results":20,"files":6}
+{"at":"2026-05-31T18:46:29.649Z","tool":"smart_grep","action":"searched","pattern":"const port = yield\\*","results":0,"files":0}
+{"at":"2026-05-31T18:48:08.610Z","tool":"smart_bash","action":"bash","command":"head -n 400 /Users/user/Developer/GitHub/opencode-desktop-dev/packages/desktop/src/main/index.ts | t","exit_code":0}
+{"at":"2026-05-31T18:49:01.695Z","tool":"smart_grep","action":"searched","pattern":"virtual.*opencode|opencode-server","results":2,"files":2}
+{"at":"2026-05-31T18:49:02.839Z","tool":"smart_grep","action":"searched","pattern":"virtual.*opencode|opencode-server|sidecar\\.js|sidecar_entry|build.*sidecar","results":4,"files":4}
+{"at":"2026-05-31T18:50:37.885Z","tool":"smart_grep","action":"searched","pattern":"node\\.ts|node\\.js|bootstrap.*server|Server\\.listen","results":2,"files":1}
+{"at":"2026-05-31T18:50:39.654Z","tool":"smart_grep","action":"searched","pattern":"killSidecar|exit.*code|process\\.exit|code.*\\d|exitCode","results":20,"files":3}
+{"at":"2026-05-31T18:51:24.277Z","tool":"smart_bash","action":"bash","command":"wc -l /Users/user/Developer/GitHub/opencode-desktop-dev/packages/desktop/src/main/sidecar.ts /Users/","exit_code":0}
+{"at":"2026-05-31T18:51:26.306Z","tool":"smart_grep","action":"searched","pattern":"SidecarCrash|lastSuccessful|stderrTail|crashLog","results":0,"files":0}
+{"at":"2026-05-31T18:51:32.031Z","tool":"smart_bash","action":"bash","command":"tail -n 100 /Users/user/Developer/GitHub/opencode-desktop-dev/packages/desktop/src/main/sidecar.ts","exit_code":0}
+{"at":"2026-05-31T18:52:50.408Z","tool":"smart_bash","action":"bash","command":"awk 'NR>=60 && NR<=265' /Users/user/Developer/GitHub/opencode-desktop-dev/packages/desktop/src/main/","exit_code":0}
+{"at":"2026-05-31T18:53:41.206Z","tool":"smart_bash","action":"bash","command":"awk 'NR>=60 && NR<=170' /Users/user/Developer/GitHub/opencode-desktop-dev/packages/desktop/src/main/","exit_code":0}
+{"at":"2026-05-31T18:53:42.294Z","tool":"smart_bash","action":"bash","command":"awk 'NR>=170 && NR<=265' /Users/user/Developer/GitHub/opencode-desktop-dev/packages/desktop/src/main","exit_code":0}
+{"at":"2026-05-31T18:53:47.605Z","tool":"smart_bash","action":"bash","command":"awk 'NR>=92 && NR<=100' /Users/user/Developer/GitHub/opencode-desktop-dev/packages/desktop/src/main/","exit_code":0}
+{"at":"2026-05-31T18:53:48.560Z","tool":"smart_bash","action":"bash","command":"awk 'NR>=330 && NR<=400' /Users/user/Developer/GitHub/opencode-desktop-dev/packages/desktop/src/main","exit_code":0}
+{"at":"2026-05-31T18:54:44.083Z","tool":"smart_bash","action":"bash","command":"awk 'NR>=340 && NR<=365' /Users/user/Developer/GitHub/opencode-desktop-dev/packages/desktop/src/main","exit_code":0}

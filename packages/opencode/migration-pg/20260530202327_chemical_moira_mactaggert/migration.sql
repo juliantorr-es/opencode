@@ -22,8 +22,8 @@ CREATE TABLE "runtime_events" (
 	"campaign_id" text,
 	"lane_id" text,
 	"role" text,
-	"time_created" integer NOT NULL,
-	"time_updated" integer NOT NULL
+	"time_created" bigint NOT NULL,
+	"time_updated" bigint NOT NULL
 );
 --> statement-breakpoint
 CREATE INDEX "runtime_events_session_idx" ON "runtime_events" ("session_id");--> statement-breakpoint

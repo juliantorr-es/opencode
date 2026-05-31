@@ -1,0 +1,25 @@
+{"at":"2026-05-31T19:29:10.261Z","tool":"smart_bash","action":"bash","command":"python3 -c \"\nimport json\nwith open('docs/json/audits/plugin_mcp_trust_boundary_audit.v1.json') as f:","exit_code":1}
+{"at":"2026-05-31T19:29:55.124Z","tool":"smart_bash","action":"bash","command":"python3 -c \"\nimport json\nwith open('docs/json/audits/plugin_mcp_trust_boundary_audit.v1.json') as f:","exit_code":0}
+{"at":"2026-05-31T19:30:35.890Z","tool":"smart_bash","action":"bash","command":"python3 -c \"\nimport json\nwith open('docs/json/audits/plugin_mcp_trust_boundary_audit.v1.json') as f:","exit_code":0}
+{"at":"2026-05-31T19:31:42.242Z","tool":"smart_grep","action":"searched","pattern":"CapabilityId","results":9,"files":5}
+{"at":"2026-05-31T19:31:43.127Z","tool":"smart_grep","action":"searched","pattern":"ListedPlugin","results":2,"files":1}
+{"at":"2026-05-31T19:31:43.940Z","tool":"smart_grep","action":"searched","pattern":"McpAuth","results":23,"files":4}
+{"at":"2026-05-31T19:32:14.841Z","tool":"smart_grep","action":"searched","pattern":"\"filesystem\\.read\"|\"network\\.request\"|\"filesystem\\.write\"|\"network\\.websocket\"|\"","results":33,"files":7}
+{"at":"2026-05-31T19:32:16.955Z","tool":"smart_grep","action":"searched","pattern":"access_token|refresh_token|client_secret|api_key|accessToken|refreshToken|client","results":80,"files":15}
+{"at":"2026-05-31T19:32:23.290Z","tool":"smart_grep","action":"searched","pattern":"github-copilot","results":19,"files":7}
+{"at":"2026-05-31T19:32:54.528Z","tool":"smart_grep","action":"searched","pattern":"\\ball\\(\\)","results":40,"files":17}
+{"at":"2026-05-31T19:32:55.420Z","tool":"smart_grep","action":"searched","pattern":"pluginId","results":40,"files":2}
+{"at":"2026-05-31T19:32:57.013Z","tool":"smart_grep","action":"searched","pattern":"log\\.(error|warn|info|debug).*(?:access_token|refresh_token|client_secret|api_ke","results":10,"files":5}
+{"at":"2026-05-31T19:34:10.447Z","tool":"smart_grep","action":"searched","pattern":"auth\\.all\\(\\)|Auth\\.all\\(\\)","results":2,"files":2}
+{"at":"2026-05-31T19:34:11.301Z","tool":"smart_grep","action":"searched","pattern":"authSvc\\.all\\(\\)","results":1,"files":1}
+{"at":"2026-05-31T19:34:48.005Z","tool":"smart_grep","action":"searched","pattern":"auth\\.","results":0,"files":0}
+{"at":"2026-05-31T19:35:21.755Z","tool":"smart_grep","action":"searched","pattern":"plugin.*test|mcp.*test|auth.*test|capability.*test|copilot.*test","results":30,"files":15}
+{"at":"2026-05-31T19:36:00.889Z","tool":"smart_grep","action":"searched","pattern":"plugin|capability|copilot","results":20,"files":6}
+{"at":"2026-05-31T19:36:01.823Z","tool":"smart_grep","action":"searched","pattern":"mcp|oauth|auth","results":20,"files":2}
+{"at":"2026-05-31T19:36:36.801Z","tool":"smart_bash","action":"bash","command":"python3 -c \"\nwith open('packages/opencode/src/plugin/github-copilot/copilot.ts') as f:\n    lines = f","exit_code":0}
+{"at":"2026-05-31T19:37:10.264Z","tool":"smart_bash","action":"bash","command":"python3 -c \"\nwith open('packages/opencode/src/debug/debug-packet.ts') as f:\n    lines = f.readlines(","exit_code":0}
+{"at":"2026-05-31T19:37:12.046Z","tool":"smart_bash","action":"bash","command":"python3 -c \"\nwith open('packages/opencode/src/config/config.ts') as f:\n    lines = f.readlines()\nfor","exit_code":0}
+{"at":"2026-05-31T19:37:57.817Z","tool":"smart_grep","action":"searched","pattern":"descendants|function watch","results":0,"files":0}
+{"at":"2026-05-31T19:38:27.181Z","tool":"smart_grep","action":"searched","pattern":"import.*from.*\\.\\./src/plugin|import.*from.*@/plugin|import.*from.*\\.\\/plugin","results":20,"files":19}
+{"at":"2026-05-31T19:41:27.181Z","tool":"smart_write","action":"created","file":"/tmp/downstream_trace_report.json","reason":"Write comprehensive downstream trace report"}
+{"at":"2026-05-31T19:41:56.780Z","tool":"smart_bash","action":"bash","command":"python3 -c \"\nimport json\nwith open('/tmp/downstream_trace_report.json') as f:\n    data = json.load(f","exit_code":1}

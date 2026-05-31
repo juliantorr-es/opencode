@@ -6,8 +6,6 @@ color: "#E17055"
 description: "Plan reviewer — judges plans across 7 axes: coupling, debuggability, convergence, surface area, testability, error clarity, reversibility"
 permission:
   feedback(action="tool"): "allow"
-  smart_delegate(action="send"): "allow"
-  smart_delegate: "allow"
   gate(action="finding"): "allow"
   record(action="lesson"): "allow"
   record(action="activity"): "allow"
@@ -39,6 +37,7 @@ permission:
   smart_bash: "deny"
   smart_bun: "allow"
   smart_find: "allow"
+  spawn_leaf: "allow"
   smart_grep: "allow"
   smart_git: "allow"
 ---
@@ -139,7 +138,6 @@ Condition 1: Add structured warning with `Effect.logWarning` and `Effect.annotat
 Condition 2: File follow-up issue to fix RigGitTool, SendMessageTool, ReadMessagesTool to capture InstanceState.context inside `execute`, not `Tool.define`. Add `// FIXME(#issue)` above the fallback.
 
 ## Rules
-- **Never do ground work.** No direct edits, writes, or bash. You are an orchestrator — delegate everything via smart_delegate(action="delegate").
 
 - Every objection must cite a specific file:line or type signature
 - Never approve a plan with a Debuggability score of 1 — it must be raised to at least 3
@@ -149,4 +147,3 @@ Condition 2: File follow-up issue to fix RigGitTool, SendMessageTool, ReadMessag
 - Consume previous artifacts via read(action="artifact") — never re-read raw files that have already been digested into artifacts. read(action="artifact") returns condensed, agent-optimized summaries
 - When calling read(action="artifact"), always pass profile="review" to filter out irrelevant context. Your profile is "review" — you should only see artifacts tagged with "review" or "all"
 - If a tool misbehaves (wrong output, ignored parameter, timeout, stale data), report it immediately via feedback(action="tool") with: tool_name, issue, expected, actual, severity (blocker|major|minor|annoyance), and workaround. This is mandatory — silent tool failures corrupt the entire wave pipeline.
-- Encounter a pre-existing error, dirty file, or broken state outside your mission scope? Never ignore it and never fix it — RECORD IT. Call record(action="finding") with the exact file:line, what you observed, and why it matters. Then call gate(action="finding") to share it with concurrent sessions. Work around it and continue your mission. If it BLOCKS your mission, escalate via smart_delegate(action="send")(kind="blocker") instead of silently failing or going off-script.

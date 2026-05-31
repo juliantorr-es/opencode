@@ -51,3 +51,15 @@
 {"at":"2026-05-31T13:31:04.141Z","tool":"smart_grep","action":"searched","pattern":"testEffect|it\\.live|it\\.instance","results":7,"files":2}
 {"at":"2026-05-31T13:31:11.696Z","tool":"smart_grep","action":"searched","pattern":"it\\.live\\(","results":3,"files":3}
 {"at":"2026-05-31T13:31:41.590Z","tool":"smart_write","action":"overwritten","file":"packages/opencode/test/campaign/service-lifecycle.test.ts","reason":"Adapt service-level tests to document implementation status without requiring DB"}
+{"at":"2026-05-31T18:41:55.401Z","tool":"smart_git","action":"git_op","operation":"status","exit_code":0}
+{"at":"2026-05-31T18:41:55.462Z","tool":"smart_git","action":"git_op","operation":"branch","exit_code":0}
+{"at":"2026-05-31T18:42:25.454Z","tool":"smart_grep","action":"searched","pattern":"sidecar|spawn.*sidecar|child_process","results":23,"files":12}
+{"at":"2026-05-31T18:42:53.691Z","tool":"smart_grep","action":"searched","pattern":"sidecar\\.js|sidecar\\.ts","results":2,"files":2}
+{"at":"2026-05-31T18:42:54.682Z","tool":"smart_grep","action":"searched","pattern":"ready.*message|postMessage.*ready|type.*ready","results":2,"files":1}
+{"at":"2026-05-31T18:43:47.316Z","tool":"smart_grep","action":"searched","pattern":"virtual:opencode-server|opencode-server","results":3,"files":3}
+{"at":"2026-05-31T18:43:48.207Z","tool":"smart_grep","action":"searched","pattern":"Server\\.listen|Log\\.init|Database.*init","results":4,"files":3}
+{"at":"2026-05-31T18:45:48.458Z","tool":"smart_grep","action":"searched","pattern":"OPENCODE_SERVER_DIST","results":4,"files":1}
+{"at":"2026-05-31T18:50:42.780Z","tool":"smart_write","action":"created","file":"packages/desktop/src/main/sidecar-startup-trace.ts","reason":"Minimal durable startup trace with typed failure taxonomy — survives exit(1)"}
+{"at":"2026-05-31T18:52:19.436Z","tool":"smart_grep","action":"searched","pattern":"async function start\\(command","results":0,"files":0}
+{"at":"2026-05-31T18:53:08.000Z","tool":"smart_grep","action":"searched","pattern":"async function start","results":0,"files":0}
+{"at":"2026-05-31T19:00:28.247Z","tool":"smart_write","action":"created","file":"packages/desktop/test/sidecar-startup-truth.test.ts","reason":"Regression tests for sidecar startup trace, failure classification, and secret redaction"}

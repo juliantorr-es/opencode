@@ -1,0 +1,182 @@
+{
+  "schema": "rig.relay.plan_artifact.v1",
+  "generated_at": "2026-05-31T00:00:00Z",
+  "session": "ses_current",
+  "lane": "TOOL-RUNTIME-CLOSURE",
+  "status": "candidate_local",
+  "subagent_contributions": {
+    "load-bearer": "Full downstream effects trace — 80+ call sites, 20+ test files, error hierarchy consumers",
+    "zoning-board": "Convention review — 2 deviations (as any, AppFileSystem pattern), 4 matches",
+    "blueprint": "Validation strategy — 12 existing pipeline-relevant tests, 12-gap matrix, bisect script",
+    "foundation": "Root cause analysis — 4 high-confidence hypotheses, cache type-lie confirmed, inflight safety verified",
+    "building-inspector": "10 risks enumerated — 3 critical bugs found (span ordering, inflight TOCTOU, cache-before-truncation)"
+  },
+  "plan": {
+    "summary": "Verify, fix, and complete the refactored tool execution pipeline (7 named stages) so it's boring, typed, and terminal-state safe.",
+    "building_inspector_critical_findings": [
+      {
+        "risk": "R9 — Span annotations misattributed to parent span",
+        "severity": "HIGH probability, MEDIUM impact",
+        "fix": "Move annotateToolSpan to be the OUTERMOST wrapper (wrap everything from stage 1 onward), not the innermost. Current order is backwards: annotations inside cache.ts and normalizeToolError all target the parent span because 'Tool.execute' span doesn't exist yet.",
+        "added_as_fix": "fix-I"
+      },
+      {
+        "risk": "R5 — Inflight removed before Deferred.done (TOCTOU gap)",
+        "severity": "MEDIUM probability, MEDIUM impact",
+        "fix": "In cache.ts:152-164, move Deferred.done(d, exit) BEFORE the Effect.ensuring(inflight.delete). This ensures the Deferred resolves while the inflight entry still exists, preventing concurrent callers from creating duplicate computations.",
+        "added_as_fix": "fix-J"
+      },
+      {
+        "risk": "R7 — Cache written before truncation (poisoned cache entry)",
+        "severity": "MEDIUM probability, MEDIUM impact",
+        "fix": "Move truncation inside the compute closure (before cache write in getOrCompute), or invalidate cache entry on truncation failure. Currently the full untruncated result is cached, and if truncation fails, the cache is poisoned.",
+        "added_as_fix": "fix-K"
+      },
+      {
+        "risk": "R3 — Raw Error throws bypass tapError (telemetry gap for defects)",
+        "severity": "MEDIUM probability, MEDIUM impact",
+        "fix": "Add Effect.tapDefect inside recordToolTelemetry that writes defect telemetry, or wrap compute() with Effect.catchAllDefect and convert defects to typed errors before telemetry.",
+        "note": "Deferred to fix-A (recordToolTelemetry overhaul covers this)"
+      }
+    ],
+    "root_causes": [
+      {
+        "id": "RC-1",
+        "hypothesis": "Pipeline stages have incompatible generic constraints causing type wall (28 `as any` casts)",
+        "confidence": "high",
+        "evidence": ["15% of all `as any` in codebase", "8 casts in wrap() pipeline wiring", "12 casts in recordToolTelemetry from serviceOption pattern"]
+      },
+      {
+        "id": "RC-2",
+        "hypothesis": "recordToolTelemetry uses serviceOption + Option.match instead of yield* AppFileSystem.Service — unique anti-pattern",
+        "confidence": "high",
+        "evidence": ["29 files use yield* AppFileSystem.Service — zero use serviceOption(AppFileSystem.Service)", "Forces 12 `as any` casts in one function"]
+      },
+      {
+        "id": "RC-3",
+        "hypothesis": "classifyError() covers only 5/10 required error kinds",
+        "confidence": "high",
+        "evidence": ["Missing: output_too_large, execution_failed, internal, unavailable, dependency_missing, cache_failed"]
+      },
+      {
+        "id": "RC-4",
+        "hypothesis": "P0 test gaps — timeout enforcement, retry, mutation tool caching all untested",
+        "confidence": "medium",
+        "evidence": ["Blueprint confirmed 12 existing tests but 3 P0 gaps"]
+      },
+      {
+        "id": "RC-5",
+        "hypothesis": "Span annotations misattributed — annotateToolSpan runs last, all inner annotations target parent span",
+        "confidence": "high",
+        "evidence": ["Stage 6 tapDefect annotates parent span, not 'Tool.execute'", "cache.ts annotations (lines 108-150) all target parent span", "Building-inspector Risk 9 confirmed"]
+      }
+    ],
+    "fixes": [
+      {
+        "id": "fix-A",
+        "description": "Clean recordToolTelemetry: serviceOption → yield* AppFileSystem.Service, tap → Effect.gen, add tapDefect for defect telemetry",
+        "priority": "P0",
+        "files": ["packages/opencode/src/tool/tool.ts (lines 346-447)"],
+        "eliminates_as_any": 12,
+        "also_fixes": "Building-inspector Risk 3 (defect telemetry gap), Risk 10 (silent AppFileSystem degradation)"
+      },
+      {
+        "id": "fix-B",
+        "description": "Clean applyTimeout, normalizeToolError, annotateToolSpan return types — remove `as any` on returns",
+        "priority": "P0",
+        "files": ["packages/opencode/src/tool/tool.ts (lines 311-334, 454-463, 466-492)"],
+        "eliminates_as_any": 6
+      },
+      {
+        "id": "fix-C",
+        "description": "Narrow executeWithCache types — surgical `as any` removal on execute, params, key, compute, result",
+        "priority": "P1",
+        "files": ["packages/opencode/src/tool/tool.ts (lines 241-310)"],
+        "eliminates_as_any": 5
+      },
+      {
+        "id": "fix-D",
+        "description": "Expand classifyError taxonomy — add output_too_large, execution_failed, internal, unavailable, dependency_missing, cache_failed",
+        "priority": "P0",
+        "files": ["packages/opencode/src/tool/typed-result.ts (lines 180-240)"],
+        "eliminates_as_any": 0
+      },
+      {
+        "id": "fix-E",
+        "description": "Add P0 test: external timeout enforcement (applyTimeout stage 3)",
+        "priority": "P0",
+        "files": ["packages/opencode/test/tool/tool-telemetry.test.ts (append)"]
+      },
+      {
+        "id": "fix-F",
+        "description": "Add P0 test: retry on transient errors (executeWithCache retry wrapping)",
+        "priority": "P0",
+        "files": ["packages/opencode/test/tool/cache-pipeline.test.ts (append)"]
+      },
+      {
+        "id": "fix-G",
+        "description": "Add P0 test: mutation tools (cacheable:false) bypass cache",
+        "priority": "P0",
+        "files": ["packages/opencode/test/tool/cache-pipeline.test.ts (append)"]
+      },
+      {
+        "id": "fix-H",
+        "description": "Update cache-analysis.json: mark stale remaining_debt entries, note getOrCompute resolution",
+        "priority": "P2",
+        "files": ["packages/opencode/src/tool/cache-analysis.json"]
+      },
+      {
+        "id": "fix-I",
+        "description": "**CRITICAL** Reorder span: move annotateToolSpan to outermost position (wrap stage 1, not stage 7). This ensures all inner annotations (cache hits, defects, telemetry) target the 'Tool.execute' span, not the parent span.",
+        "priority": "P0",
+        "files": ["packages/opencode/src/tool/tool.ts (wrap function, lines 183-207)"],
+        "before_pattern": "// Stage 6: normalizeToolError → Stage 7: annotateToolSpan (innermost)",
+        "after_pattern": "// Stage 0: annotateToolSpan wraps everything → stages 1-6 inside it",
+        "building_inspector_risk": "R9"
+      },
+      {
+        "id": "fix-J",
+        "description": "Fix inflight TOCTOU: move Deferred.done(d, exit) before Effect.ensuring(inflight.delete) in cache.ts getOrCompute",
+        "priority": "P1",
+        "files": ["packages/opencode/src/tool/cache.ts (lines 152-164)"],
+        "before_pattern": "compute().pipe(Effect.exit, Effect.ensuring(inflight.delete)).then(Deferred.done)",
+        "after_pattern": "compute().pipe(Effect.exit).then(exit => Deferred.done(d, exit) && ensuring(inflight.delete))",
+        "building_inspector_risk": "R5"
+      },
+      {
+        "id": "fix-K",
+        "description": "Fix cache-before-truncation ordering: invalidate cache entry on truncation failure, or move truncation into compute closure before cache write",
+        "priority": "P2",
+        "files": ["packages/opencode/src/tool/tool.ts (executeWithCache, lines 299-320)"],
+        "before_pattern": "getOrCompute caches full result → THEN truncation runs",
+        "after_pattern": "Either: truncate inside compute closure (before cache write), OR: catch truncation failure and invalidate cache key",
+        "building_inspector_risk": "R7"
+      }
+    ],
+    "apply_order": ["fix-I", "fix-A", "fix-B", "fix-J", "fix-D", "fix-C", "fix-K", "fix-E", "fix-F", "fix-G", "fix-H"],
+    "apply_order_rationale": "fix-I FIRST (span ordering bug — fixes all inner annotations). fix-A (biggest cleanup). fix-B (type narrowing). fix-J (inflight TOCTOU — independent of pipeline). fix-D (classifyError — pure function). fix-C (narrow types — may cascade, revert if needed). fix-K (truncation ordering). Then tests (E,F,G). Documentation last (H).",
+    "rollback_plan": "Revert in reverse order. Every fix independently reversible. fix-I is the riskiest structural change — if span reordering breaks existing span consumers, revert and document tradeoff.",
+    "validation_strategy": {
+      "step_1_compile": "cd packages/opencode && bun typecheck",
+      "step_2_bisect": "bun test test/tool/pipeline-bisect.test.ts --timeout 30000",
+      "step_3_existing": "bun test test/tool/tool-telemetry.test.ts test/tool/tool-define.test.ts test/tool/cache.test.ts test/tool/cache-pipeline.test.ts",
+      "step_4_full_suite": "bun test test/tool/ --timeout 30000",
+      "step_5_e2e": "bun test test/session/snapshot-tool-race.test.ts --timeout 60000"
+    },
+    "hard_invariant_verification": {
+      "1_terminal_state": "Verified",
+      "2_schema_validation_no_pending": "Verified",
+      "3_cache_no_stuck_inflight": "Verified + fix-J hardens",
+      "4_telemetry_no_break": "fix-A covers",
+      "5_span_no_break": "Verified — tap semantics safe",
+      "6_failed_not_success": "Verified",
+      "7_mutation_not_cached": "fix-G adds test",
+      "8_no_secrets": "Audit during fix-A"
+    },
+    "ancillary_decisions": {
+      "bad_commit_06b81c6692": "Document only",
+      "smart_find_fd": "No change needed",
+      "pre_existing_findings": "getOrCompute resolved, inflight mutation fixed, cache-analysis.json stale"
+    }
+  }
+}

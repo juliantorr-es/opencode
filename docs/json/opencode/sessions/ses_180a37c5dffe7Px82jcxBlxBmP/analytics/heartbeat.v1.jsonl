@@ -1,0 +1,84 @@
+{"at":"2026-05-31T18:47:31.728Z","session_id":"ses_180a37c5dffe7Px82jcxBlxBmP","agent":"logbook","tool":"smart_git","phase":"started","detail":"log"}
+{"at":"2026-05-31T18:47:31.762Z","session_id":"ses_180a37c5dffe7Px82jcxBlxBmP","agent":"logbook","tool":"smart_git","phase":"completed","detail":"log exit=0"}
+{"at":"2026-05-31T18:47:32.533Z","session_id":"ses_180a37c5dffe7Px82jcxBlxBmP","agent":"logbook","tool":"smart_git","phase":"started","detail":"log"}
+{"at":"2026-05-31T18:47:32.566Z","session_id":"ses_180a37c5dffe7Px82jcxBlxBmP","agent":"logbook","tool":"smart_git","phase":"completed","detail":"log exit=0"}
+{"at":"2026-05-31T18:47:33.629Z","session_id":"ses_180a37c5dffe7Px82jcxBlxBmP","agent":"logbook","tool":"smart_grep","phase":"started","detail":"TODO|FIXME|HACK|XXX"}
+{"at":"2026-05-31T18:47:33.639Z","session_id":"ses_180a37c5dffe7Px82jcxBlxBmP","agent":"logbook","tool":"smart_grep","phase":"completed","detail":"TODO|FIXME|HACK|XXX"}
+{"at":"2026-05-31T18:47:34.111Z","session_id":"ses_180a37c5dffe7Px82jcxBlxBmP","agent":"logbook","tool":"smart_find","phase":"started","detail":"*mcp*"}
+{"at":"2026-05-31T18:47:34.191Z","session_id":"ses_180a37c5dffe7Px82jcxBlxBmP","agent":"logbook","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T18:47:34.665Z","session_id":"ses_180a37c5dffe7Px82jcxBlxBmP","agent":"logbook","tool":"smart_find","phase":"started","detail":"*mcp*"}
+{"at":"2026-05-31T18:47:34.716Z","session_id":"ses_180a37c5dffe7Px82jcxBlxBmP","agent":"logbook","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T18:48:06.751Z","session_id":"ses_180a37c5dffe7Px82jcxBlxBmP","agent":"logbook","tool":"smart_bash","phase":"started","detail":"Find all MCP-related files in opencode src"}
+{"at":"2026-05-31T18:48:06.751Z","session_id":"ses_180a37c5dffe7Px82jcxBlxBmP","agent":"logbook","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T18:48:07.412Z","session_id":"ses_180a37c5dffe7Px82jcxBlxBmP","agent":"logbook","tool":"smart_bash","phase":"started","detail":"Find all MCP-related files in desktop src"}
+{"at":"2026-05-31T18:48:07.413Z","session_id":"ses_180a37c5dffe7Px82jcxBlxBmP","agent":"logbook","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T18:48:08.332Z","session_id":"ses_180a37c5dffe7Px82jcxBlxBmP","agent":"logbook","tool":"smart_git","phase":"started","detail":"diff"}
+{"at":"2026-05-31T18:48:08.395Z","session_id":"ses_180a37c5dffe7Px82jcxBlxBmP","agent":"logbook","tool":"smart_git","phase":"completed","detail":"diff exit=0"}
+{"at":"2026-05-31T18:48:08.953Z","session_id":"ses_180a37c5dffe7Px82jcxBlxBmP","agent":"logbook","tool":"smart_git","phase":"started","detail":"log"}
+{"at":"2026-05-31T18:48:08.997Z","session_id":"ses_180a37c5dffe7Px82jcxBlxBmP","agent":"logbook","tool":"smart_git","phase":"failed","detail":"log exit=128"}
+{"at":"2026-05-31T18:48:09.889Z","session_id":"ses_180a37c5dffe7Px82jcxBlxBmP","agent":"logbook","tool":"smart_grep","phase":"started","detail":"TODO|FIXME|HACK|XXX"}
+{"at":"2026-05-31T18:48:09.897Z","session_id":"ses_180a37c5dffe7Px82jcxBlxBmP","agent":"logbook","tool":"smart_grep","phase":"completed","detail":"TODO|FIXME|HACK|XXX"}
+{"at":"2026-05-31T18:49:12.569Z","session_id":"ses_180a37c5dffe7Px82jcxBlxBmP","agent":"logbook","tool":"smart_bash","phase":"started","detail":"List MCP directories directly"}
+{"at":"2026-05-31T18:49:12.570Z","session_id":"ses_180a37c5dffe7Px82jcxBlxBmP","agent":"logbook","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T18:49:13.722Z","session_id":"ses_180a37c5dffe7Px82jcxBlxBmP","agent":"logbook","tool":"smart_git","phase":"started","detail":"diff"}
+{"at":"2026-05-31T18:49:13.747Z","session_id":"ses_180a37c5dffe7Px82jcxBlxBmP","agent":"logbook","tool":"smart_git","phase":"completed","detail":"diff exit=0"}
+{"at":"2026-05-31T18:49:14.429Z","session_id":"ses_180a37c5dffe7Px82jcxBlxBmP","agent":"logbook","tool":"smart_git","phase":"started","detail":"log"}
+{"at":"2026-05-31T18:49:14.472Z","session_id":"ses_180a37c5dffe7Px82jcxBlxBmP","agent":"logbook","tool":"smart_git","phase":"completed","detail":"log exit=0"}
+{"at":"2026-05-31T18:49:15.119Z","session_id":"ses_180a37c5dffe7Px82jcxBlxBmP","agent":"logbook","tool":"smart_git","phase":"started","detail":"log"}
+{"at":"2026-05-31T18:49:15.164Z","session_id":"ses_180a37c5dffe7Px82jcxBlxBmP","agent":"logbook","tool":"smart_git","phase":"completed","detail":"log exit=0"}
+{"at":"2026-05-31T18:49:16.242Z","session_id":"ses_180a37c5dffe7Px82jcxBlxBmP","agent":"logbook","tool":"smart_grep","phase":"started","detail":"TODO|FIXME|HACK|XXX"}
+{"at":"2026-05-31T18:49:16.284Z","session_id":"ses_180a37c5dffe7Px82jcxBlxBmP","agent":"logbook","tool":"smart_grep","phase":"completed","detail":"TODO|FIXME|HACK|XXX"}
+{"at":"2026-05-31T18:50:35.551Z","session_id":"ses_180a37c5dffe7Px82jcxBlxBmP","agent":"logbook","tool":"smart_bash","phase":"started","detail":"List all MCP files"}
+{"at":"2026-05-31T18:50:35.551Z","session_id":"ses_180a37c5dffe7Px82jcxBlxBmP","agent":"logbook","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T18:50:36.634Z","session_id":"ses_180a37c5dffe7Px82jcxBlxBmP","agent":"logbook","tool":"smart_git","phase":"started","detail":"diff"}
+{"at":"2026-05-31T18:50:36.663Z","session_id":"ses_180a37c5dffe7Px82jcxBlxBmP","agent":"logbook","tool":"smart_git","phase":"completed","detail":"diff exit=0"}
+{"at":"2026-05-31T18:50:37.174Z","session_id":"ses_180a37c5dffe7Px82jcxBlxBmP","agent":"logbook","tool":"smart_git","phase":"started","detail":"log"}
+{"at":"2026-05-31T18:50:37.206Z","session_id":"ses_180a37c5dffe7Px82jcxBlxBmP","agent":"logbook","tool":"smart_git","phase":"completed","detail":"log exit=0"}
+{"at":"2026-05-31T18:50:37.967Z","session_id":"ses_180a37c5dffe7Px82jcxBlxBmP","agent":"logbook","tool":"smart_grep","phase":"started","detail":"TODO|FIXME|HACK|XXX"}
+{"at":"2026-05-31T18:50:37.984Z","session_id":"ses_180a37c5dffe7Px82jcxBlxBmP","agent":"logbook","tool":"smart_grep","phase":"completed","detail":"TODO|FIXME|HACK|XXX"}
+{"at":"2026-05-31T18:50:38.693Z","session_id":"ses_180a37c5dffe7Px82jcxBlxBmP","agent":"logbook","tool":"smart_git","phase":"started","detail":"log"}
+{"at":"2026-05-31T18:50:38.780Z","session_id":"ses_180a37c5dffe7Px82jcxBlxBmP","agent":"logbook","tool":"smart_git","phase":"completed","detail":"log exit=0"}
+{"at":"2026-05-31T18:52:03.487Z","session_id":"ses_180a37c5dffe7Px82jcxBlxBmP","agent":"logbook","tool":"smart_bash","phase":"started","detail":"List directory contents"}
+{"at":"2026-05-31T18:52:03.488Z","session_id":"ses_180a37c5dffe7Px82jcxBlxBmP","agent":"logbook","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T18:52:03.976Z","session_id":"ses_180a37c5dffe7Px82jcxBlxBmP","agent":"logbook","tool":"smart_git","phase":"started","detail":"rev-parse"}
+{"at":"2026-05-31T18:52:04.006Z","session_id":"ses_180a37c5dffe7Px82jcxBlxBmP","agent":"logbook","tool":"smart_git","phase":"completed","detail":"rev-parse exit=0"}
+{"at":"2026-05-31T18:52:04.835Z","session_id":"ses_180a37c5dffe7Px82jcxBlxBmP","agent":"logbook","tool":"smart_git","phase":"started","detail":"diff"}
+{"at":"2026-05-31T18:52:04.869Z","session_id":"ses_180a37c5dffe7Px82jcxBlxBmP","agent":"logbook","tool":"smart_git","phase":"completed","detail":"diff exit=0"}
+{"at":"2026-05-31T18:53:46.594Z","session_id":"ses_180a37c5dffe7Px82jcxBlxBmP","agent":"logbook","tool":"smart_bash","phase":"started","detail":"List MCP and ACP directory files"}
+{"at":"2026-05-31T18:53:46.670Z","session_id":"ses_180a37c5dffe7Px82jcxBlxBmP","agent":"logbook","tool":"smart_bash","phase":"completed","detail":"sh exit=0"}
+{"at":"2026-05-31T18:55:24.914Z","session_id":"ses_180a37c5dffe7Px82jcxBlxBmP","agent":"logbook","tool":"smart_git","phase":"started","detail":"diff"}
+{"at":"2026-05-31T18:55:24.948Z","session_id":"ses_180a37c5dffe7Px82jcxBlxBmP","agent":"logbook","tool":"smart_git","phase":"completed","detail":"diff exit=0"}
+{"at":"2026-05-31T18:55:25.558Z","session_id":"ses_180a37c5dffe7Px82jcxBlxBmP","agent":"logbook","tool":"smart_grep","phase":"started","detail":"mcp|MCP"}
+{"at":"2026-05-31T18:55:25.588Z","session_id":"ses_180a37c5dffe7Px82jcxBlxBmP","agent":"logbook","tool":"smart_grep","phase":"completed","detail":"mcp|MCP"}
+{"at":"2026-05-31T18:55:26.210Z","session_id":"ses_180a37c5dffe7Px82jcxBlxBmP","agent":"logbook","tool":"smart_git","phase":"started","detail":"show"}
+{"at":"2026-05-31T18:55:26.751Z","session_id":"ses_180a37c5dffe7Px82jcxBlxBmP","agent":"logbook","tool":"smart_git","phase":"completed","detail":"show exit=0"}
+{"at":"2026-05-31T18:55:26.768Z","session_id":"ses_180a37c5dffe7Px82jcxBlxBmP","agent":"logbook","tool":"smart_git","phase":"started","detail":"show"}
+{"at":"2026-05-31T18:55:26.997Z","session_id":"ses_180a37c5dffe7Px82jcxBlxBmP","agent":"logbook","tool":"smart_git","phase":"completed","detail":"show exit=0"}
+{"at":"2026-05-31T18:57:10.518Z","session_id":"ses_180a37c5dffe7Px82jcxBlxBmP","agent":"logbook","tool":"smart_git","phase":"started","detail":"show"}
+{"at":"2026-05-31T18:57:10.574Z","session_id":"ses_180a37c5dffe7Px82jcxBlxBmP","agent":"logbook","tool":"smart_git","phase":"completed","detail":"show exit=0"}
+{"at":"2026-05-31T18:57:10.931Z","session_id":"ses_180a37c5dffe7Px82jcxBlxBmP","agent":"logbook","tool":"smart_git","phase":"started","detail":"show"}
+{"at":"2026-05-31T18:57:10.955Z","session_id":"ses_180a37c5dffe7Px82jcxBlxBmP","agent":"logbook","tool":"smart_git","phase":"completed","detail":"show exit=0"}
+{"at":"2026-05-31T18:57:11.700Z","session_id":"ses_180a37c5dffe7Px82jcxBlxBmP","agent":"logbook","tool":"smart_git","phase":"started","detail":"show"}
+{"at":"2026-05-31T18:57:11.730Z","session_id":"ses_180a37c5dffe7Px82jcxBlxBmP","agent":"logbook","tool":"smart_git","phase":"completed","detail":"show exit=0"}
+{"at":"2026-05-31T18:57:12.402Z","session_id":"ses_180a37c5dffe7Px82jcxBlxBmP","agent":"logbook","tool":"smart_git","phase":"started","detail":"show"}
+{"at":"2026-05-31T18:57:12.553Z","session_id":"ses_180a37c5dffe7Px82jcxBlxBmP","agent":"logbook","tool":"smart_git","phase":"completed","detail":"show exit=0"}
+{"at":"2026-05-31T18:57:13.122Z","session_id":"ses_180a37c5dffe7Px82jcxBlxBmP","agent":"logbook","tool":"smart_git","phase":"started","detail":"show"}
+{"at":"2026-05-31T18:57:13.150Z","session_id":"ses_180a37c5dffe7Px82jcxBlxBmP","agent":"logbook","tool":"smart_git","phase":"completed","detail":"show exit=0"}
+{"at":"2026-05-31T18:57:14.073Z","session_id":"ses_180a37c5dffe7Px82jcxBlxBmP","agent":"logbook","tool":"smart_git","phase":"started","detail":"log"}
+{"at":"2026-05-31T18:57:14.165Z","session_id":"ses_180a37c5dffe7Px82jcxBlxBmP","agent":"logbook","tool":"smart_git","phase":"completed","detail":"log exit=0"}
+{"at":"2026-05-31T18:59:15.137Z","session_id":"ses_180a37c5dffe7Px82jcxBlxBmP","agent":"logbook","tool":"smart_git","phase":"started","detail":"diff"}
+{"at":"2026-05-31T18:59:15.175Z","session_id":"ses_180a37c5dffe7Px82jcxBlxBmP","agent":"logbook","tool":"smart_git","phase":"completed","detail":"diff exit=0"}
+{"at":"2026-05-31T18:59:15.960Z","session_id":"ses_180a37c5dffe7Px82jcxBlxBmP","agent":"logbook","tool":"smart_git","phase":"started","detail":"diff"}
+{"at":"2026-05-31T18:59:15.984Z","session_id":"ses_180a37c5dffe7Px82jcxBlxBmP","agent":"logbook","tool":"smart_git","phase":"completed","detail":"diff exit=0"}
+{"at":"2026-05-31T18:59:24.413Z","session_id":"ses_180a37c5dffe7Px82jcxBlxBmP","agent":"logbook","tool":"smart_git","phase":"started","detail":"log"}
+{"at":"2026-05-31T18:59:24.451Z","session_id":"ses_180a37c5dffe7Px82jcxBlxBmP","agent":"logbook","tool":"smart_git","phase":"completed","detail":"log exit=0"}
+{"at":"2026-05-31T18:59:25.459Z","session_id":"ses_180a37c5dffe7Px82jcxBlxBmP","agent":"logbook","tool":"smart_git","phase":"started","detail":"log"}
+{"at":"2026-05-31T18:59:25.488Z","session_id":"ses_180a37c5dffe7Px82jcxBlxBmP","agent":"logbook","tool":"smart_git","phase":"completed","detail":"log exit=0"}
+{"at":"2026-05-31T18:59:26.285Z","session_id":"ses_180a37c5dffe7Px82jcxBlxBmP","agent":"logbook","tool":"smart_git","phase":"started","detail":"diff"}
+{"at":"2026-05-31T18:59:26.321Z","session_id":"ses_180a37c5dffe7Px82jcxBlxBmP","agent":"logbook","tool":"smart_git","phase":"completed","detail":"diff exit=0"}
+{"at":"2026-05-31T19:01:15.146Z","session_id":"ses_180a37c5dffe7Px82jcxBlxBmP","agent":"logbook","tool":"smart_git","phase":"started","detail":"show"}
+{"at":"2026-05-31T19:01:15.183Z","session_id":"ses_180a37c5dffe7Px82jcxBlxBmP","agent":"logbook","tool":"smart_git","phase":"completed","detail":"show exit=0"}
+{"at":"2026-05-31T19:01:16.052Z","session_id":"ses_180a37c5dffe7Px82jcxBlxBmP","agent":"logbook","tool":"smart_grep","phase":"started","detail":"TODO|FIXME|HACK|XXX"}
+{"at":"2026-05-31T19:01:16.065Z","session_id":"ses_180a37c5dffe7Px82jcxBlxBmP","agent":"logbook","tool":"smart_grep","phase":"completed","detail":"TODO|FIXME|HACK|XXX"}
+{"at":"2026-05-31T19:01:16.864Z","session_id":"ses_180a37c5dffe7Px82jcxBlxBmP","agent":"logbook","tool":"smart_grep","phase":"started","detail":"TODO|FIXME|HACK|XXX"}
+{"at":"2026-05-31T19:01:16.883Z","session_id":"ses_180a37c5dffe7Px82jcxBlxBmP","agent":"logbook","tool":"smart_grep","phase":"completed","detail":"TODO|FIXME|HACK|XXX"}

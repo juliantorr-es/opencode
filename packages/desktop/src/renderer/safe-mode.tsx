@@ -72,6 +72,54 @@ render(() => {
             </div>
           )}
 
+          {diag?.sidecarFailure && (
+            <div class="flex flex-col gap-2 w-full max-w-md rounded-lg border border-warning-base bg-warning-weak p-4 mt-2">
+              <span class="text-12-semibold text-text-strong">Sidecar Startup Failure</span>
+              <span class="text-12-regular text-text-weak font-mono">
+                Failed at: {diag.sidecarFailure.phase} (last OK: {diag.sidecarFailure.lastSuccessfulPhase})
+              </span>
+              <span class="text-12-regular text-text-weak font-mono break-all">
+                {diag.sidecarFailure.errorMessage}
+              </span>
+              {diag.sidecarFailure.errorStack && (
+                <details>
+                  <summary class="text-12-regular text-text-weak cursor-pointer">Stack trace</summary>
+                  <pre class="text-10-regular text-text-weak font-mono whitespace-pre-wrap break-all max-h-40 overflow-auto mt-1">{diag.sidecarFailure.errorStack}</pre>
+                </details>
+              )}
+              {diag.sidecarFailure.stderrTail && (
+                <details>
+                  <summary class="text-12-regular text-text-weak cursor-pointer">stderr (last 20 lines)</summary>
+                  <pre class="text-10-regular text-text-weak font-mono whitespace-pre-wrap break-all max-h-40 overflow-auto mt-1">{diag.sidecarFailure.stderrTail}</pre>
+                </details>
+              )}
+            </div>
+          )}
+
+          {diag?.sidecarFailure && (
+            <div class="flex flex-col gap-2 w-full max-w-md rounded-lg border border-warning-base bg-warning-weak p-4 mt-2">
+              <span class="text-12-semibold text-text-strong">Sidecar Startup Failure</span>
+              <span class="text-12-regular text-text-weak font-mono">
+                Failed at: {diag.sidecarFailure.phase} (last OK: {diag.sidecarFailure.lastSuccessfulPhase})
+              </span>
+              <span class="text-12-regular text-text-weak font-mono break-all">
+                {diag.sidecarFailure.errorMessage}
+              </span>
+              {diag.sidecarFailure.errorStack && (
+                <details>
+                  <summary class="text-12-regular text-text-weak cursor-pointer">Stack trace</summary>
+                  <pre class="text-10-regular text-text-weak font-mono whitespace-pre-wrap break-all max-h-40 overflow-auto mt-1">{diag.sidecarFailure.errorStack}</pre>
+                </details>
+              )}
+              {diag.sidecarFailure.stderrTail && (
+                <details>
+                  <summary class="text-12-regular text-text-weak cursor-pointer">stderr (last 20 lines)</summary>
+                  <pre class="text-10-regular text-text-weak font-mono whitespace-pre-wrap break-all max-h-40 overflow-auto mt-1">{diag.sidecarFailure.stderrTail}</pre>
+                </details>
+              )}
+            </div>
+          )}
+
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full max-w-lg">
             <For each={ACTIONS}>
               {(card) => (

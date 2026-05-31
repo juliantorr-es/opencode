@@ -32,6 +32,7 @@
 import { Effect, Layer, Schedule } from "effect"
 import { DatabaseAdapter } from "@/storage/adapter"
 import { Flag } from "@opencode-ai/core/flag/flag"
+import { readMigrationFiles } from "drizzle-orm/migrator"
 
 // ── Counter for unique schema / instance IDs ──────────────────
 
@@ -44,6 +45,31 @@ async function createPGliteAdapter(): Promise<DatabaseAdapter.Interface> {
   const { drizzle } = await import("drizzle-orm/pglite")
   const client = new PGlite()
   const db = drizzle({ client })
+
+  // Apply all migrations so runtime_events and other tables exist
+  const folder = new URL("../../migration-pg", import.meta.url).pathname
+  const migrations = readMigrationFiles({ migrationsFolder: folder })
+  await client.exec(
+    `CREATE TABLE IF NOT EXISTS "__drizzle_migrations" (
+      "hash" text PRIMARY KEY,
+      "created_at" bigint
+    )`,
+  )
+  const result = await client.query("SELECT hash FROM \"__drizzle_migrations\"")
+  const applied = new Set(
+    (result.rows as Array<{ hash: string }>).map((r) => r.hash),
+  )
+  for (const migration of migrations) {
+    if (applied.has(migration.hash)) continue
+    for (const sql of migration.sql) {
+      await client.exec(sql)
+    }
+    await client.query(
+      'INSERT INTO "__drizzle_migrations" ("hash", "created_at") VALUES ($1, $2)',
+      [migration.hash, Date.now()],
+    )
+  }
+
   return makeAdapterFromClient(db as any)
 }
 

@@ -1,0 +1,23 @@
+{"at":"2026-05-31T18:43:22.301Z","session_id":"ses_180a73e42ffetyBw007GH2V391","agent":"architect","tool":"smart_grep","pattern":"getSafeModeDiagnostics","path":"packages/desktop/src/main/index.ts"}
+{"at":"2026-05-31T18:43:23.494Z","session_id":"ses_180a73e42ffetyBw007GH2V391","agent":"architect","tool":"smart_grep","pattern":"setInitStep|initEmitter|safe_mode|inSafeMode|crash.lock","path":"packages/desktop/src/main/index.ts"}
+{"at":"2026-05-31T18:43:24.737Z","session_id":"ses_180a73e42ffetyBw007GH2V391","agent":"architect","tool":"smart_grep","pattern":"import.*sidecar|sidecar.*fork|utilityProcess","path":"packages/desktop/src/main"}
+{"at":"2026-05-31T18:43:45.873Z","session_id":"ses_180a73e42ffetyBw007GH2V391","agent":"architect","tool":"smart_grep","pattern":"initError|inSafeMode|safe_mode|crash|getSafeModeDiagnostics|readFileSync|SidecarStartupFailure","path":"packages/desktop/src/main/index.ts"}
+{"at":"2026-05-31T18:43:55.288Z","session_id":"ses_180a73e42ffetyBw007GH2V391","agent":"architect","tool":"smart_grep","pattern":"initError","path":"packages/desktop/src/main/index.ts"}
+{"at":"2026-05-31T18:43:56.115Z","session_id":"ses_180a73e42ffetyBw007GH2V391","agent":"architect","tool":"smart_grep","pattern":"inSafeMode","path":"packages/desktop/src/main/index.ts"}
+{"at":"2026-05-31T18:44:06.020Z","session_id":"ses_180a73e42ffetyBw007GH2V391","agent":"architect","tool":"smart_grep","pattern":"transitionToSafeMode","path":"packages/desktop/src/main/index.ts"}
+{"at":"2026-05-31T18:45:51.356Z","session_id":"ses_180a73e42ffetyBw007GH2V391","agent":"architect","tool":"smart_grep","pattern":"transitionToSafeMode|getSafeModeDiagnostics|sidecarError","path":"packages/desktop/src/main/index.ts"}
+{"at":"2026-05-31T18:48:18.169Z","session_id":"ses_180a73e42ffetyBw007GH2V391","agent":"architect","tool":"smart_grep","pattern":"export function transitionToSafeMode","path":"packages/desktop/src/main"}
+{"at":"2026-05-31T18:48:19.011Z","session_id":"ses_180a73e42ffetyBw007GH2V391","agent":"architect","tool":"smart_grep","pattern":"type.*error|error.*sidecar|sidecarError|component.*:","path":"packages/desktop/src/main/server.ts"}
+{"at":"2026-05-31T18:48:40.703Z","session_id":"ses_180a73e42ffetyBw007GH2V391","agent":"architect","tool":"smart_grep","pattern":"case \\\"error\\\"|crash|exit|setInitStep.*safe_mode","path":"packages/desktop/src/main/server.ts"}
+{"at":"2026-05-31T18:49:43.749Z","session_id":"ses_180a73e42ffetyBw007GH2V391","agent":"architect","tool":"smart_grep","pattern":"spawnLocalServer","path":"packages/desktop/src/main/index.ts"}
+{"at":"2026-05-31T18:53:23.807Z","session_id":"ses_180a73e42ffetyBw007GH2V391","agent":"architect","tool":"smart_grep","pattern":"setInitStep|loadWindow|safe-mode","path":"packages/desktop/src/main/windows.ts"}
+{"at":"2026-05-31T18:54:06.947Z","session_id":"ses_180a73e42ffetyBw007GH2V391","agent":"architect","tool":"smart_grep","pattern":"setInitStep.*safe_mode|safe_mode.*setInitStep","path":"packages/desktop/src/main"}
+{"at":"2026-05-31T18:54:55.817Z","session_id":"ses_180a73e42ffetyBw007GH2V391","agent":"architect","tool":"smart_grep","pattern":"setInitStep","path":"packages/desktop/src/main"}
+{"at":"2026-05-31T18:56:39.676Z","session_id":"ses_180a73e42ffetyBw007GH2V391","agent":"architect","tool":"smart_grep","pattern":"sidecar","path":"packages/desktop"}
+{"at":"2026-05-31T18:56:40.447Z","session_id":"ses_180a73e42ffetyBw007GH2V391","agent":"architect","tool":"smart_grep","pattern":"sidecar","path":"packages/desktop"}
+{"at":"2026-05-31T19:04:38.535Z","session_id":"ses_180a73e42ffetyBw007GH2V391","agent":"architect","tool":"smart_bun","command":"typecheck","elapsed_ms":397,"exit_code":2}
+{"at":"2026-05-31T19:04:44.856Z","session_id":"ses_180a73e42ffetyBw007GH2V391","agent":"architect","tool":"smart_bun","command":"typecheck","elapsed_ms":1469,"exit_code":1}
+{"at":"2026-05-31T19:04:52.601Z","session_id":"ses_180a73e42ffetyBw007GH2V391","agent":"architect","tool":"smart_grep","pattern":"safe.?mode|SafeMode|sidecar.*failure|sidecar.*boot","path":"packages/desktop"}
+{"at":"2026-05-31T19:05:00.009Z","session_id":"ses_180a73e42ffetyBw007GH2V391","agent":"architect","tool":"smart_bun","command":"test","elapsed_ms":145,"exit_code":1}
+{"at":"2026-05-31T19:05:08.499Z","session_id":"ses_180a73e42ffetyBw007GH2V391","agent":"architect","tool":"smart_bun","command":"test","elapsed_ms":41,"exit_code":0}
+{"at":"2026-05-31T19:05:16.063Z","session_id":"ses_180a73e42ffetyBw007GH2V391","agent":"architect","tool":"smart_bun","command":"test","elapsed_ms":138,"exit_code":1}

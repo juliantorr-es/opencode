@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto"
 import { EventEmitter } from "node:events"
-import { existsSync, mkdirSync, rmSync, unlinkSync, writeFileSync } from "node:fs"
+import { existsSync, mkdirSync, readFileSync, rmSync, unlinkSync, writeFileSync } from "node:fs"
 import * as http from "node:http"
 import { createServer } from "node:net"
 import { homedir, tmpdir } from "node:os"
@@ -267,16 +267,28 @@ const main = Effect.gen(function* () {
     setBackgroundColor: (color) => setBackgroundColor(color),
     exportDebugLogs: () => exportDebugLogs(),
     recordFatalRendererError: (error) => writeLog("renderer", "fatal renderer error", { ...error }, "error"),
-    getSafeModeDiagnostics: async () => ({
-      error: { message: "No diagnostics available", component: "unknown" },
-      systemInfo: {
-        platform: process.platform,
-        arch: process.arch,
-        version: electronPlatformPaths.getVersion(),
-        userDataPath: electronPlatformPaths.getPath("userData"),
-        logPath: join(electronPlatformPaths.getPath("userData"), "logs"),
-      },
-    }),
+    getSafeModeDiagnostics: async () => {
+      let sidecarFailure = null
+      try {
+        const failurePath = join(electronPlatformPaths.getPath("userData"), "sidecar-boot-failure.json")
+        if (existsSync(failurePath)) {
+          sidecarFailure = JSON.parse(readFileSync(failurePath, "utf8"))
+        }
+      } catch {
+        // File missing or corrupt — not fatal
+      }
+      return {
+        error: { message: "No diagnostics available", component: "unknown" },
+        systemInfo: {
+          platform: process.platform,
+          arch: process.arch,
+          version: electronPlatformPaths.getVersion(),
+          userDataPath: electronPlatformPaths.getPath("userData"),
+          logPath: join(electronPlatformPaths.getPath("userData"), "logs"),
+        },
+        sidecarFailure,
+      }
+    },
     safeModeAction: async (action) => {
       switch (action) {
         case "retry_normal_startup":

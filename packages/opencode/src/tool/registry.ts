@@ -784,7 +784,7 @@ export const layer = Layer.effect(
     })
 
     // Build the cross-tool dependency graph after all tools are registered
-    yield* ToolGraph.buildGraph()
+    yield* ToolGraph.buildGraph
 
     return Service.of({ ids, all, named, tools, cacheStats, suggestNext })
   }),

@@ -138,10 +138,10 @@ describe("Tool.define", () => {
       expect(Exit.isFailure(exit)).toBe(true)
       if (!Exit.isFailure(exit)) return
 
-      // The wrap ends with Effect.orDie, so the failure lives in the cause as a
-      // defect. Recover the typed instance from there.
-      const die = exit.cause.reasons.find(Cause.isDieReason)
-      const error = die?.defect
+      // The wrap surfaces typed tool errors (not defects). Recover from the
+      // failure channel.
+      const fail = exit.cause.reasons.find(Cause.isFailReason)
+      const error = fail?.error
       expect(error).toBeInstanceOf(Tool.InvalidArgumentsError)
       const args = error as Tool.InvalidArgumentsError
       expect(args.tool).toBe("qtest")

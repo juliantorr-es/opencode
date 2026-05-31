@@ -1,10 +1,10 @@
-import { integer } from "drizzle-orm/pg-core"
+import { bigint } from "drizzle-orm/pg-core"
 
 export const TimestampsPg = {
-  time_created: integer()
+  time_created: bigint({ mode: "number" })
     .notNull()
     .$default(() => Date.now()),
-  time_updated: integer()
+  time_updated: bigint({ mode: "number" })
     .notNull()
     .$onUpdate(() => Date.now()),
 }

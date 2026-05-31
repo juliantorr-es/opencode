@@ -1,0 +1,77 @@
+{"at":"2026-05-31T19:44:08.213Z","session_id":"ses_1806fa2a7ffeF3AdtMWRrTMmsc","agent":"reasonable-doubt","tool":"smart_find","phase":"started","detail":"*mcp*"}
+{"at":"2026-05-31T19:44:08.251Z","session_id":"ses_1806fa2a7ffeF3AdtMWRrTMmsc","agent":"reasonable-doubt","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T19:44:08.732Z","session_id":"ses_1806fa2a7ffeF3AdtMWRrTMmsc","agent":"reasonable-doubt","tool":"smart_grep","phase":"started","detail":"testEffect"}
+{"at":"2026-05-31T19:44:08.779Z","session_id":"ses_1806fa2a7ffeF3AdtMWRrTMmsc","agent":"reasonable-doubt","tool":"smart_grep","phase":"completed","detail":"testEffect"}
+{"at":"2026-05-31T19:44:38.887Z","session_id":"ses_1806fa2a7ffeF3AdtMWRrTMmsc","agent":"reasonable-doubt","tool":"smart_bash","phase":"started","detail":"Read the MCP-TRUTH plan"}
+{"at":"2026-05-31T19:44:38.887Z","session_id":"ses_1806fa2a7ffeF3AdtMWRrTMmsc","agent":"reasonable-doubt","tool":"smart_bash","phase":"rerouted","detail":"→ read_source"}
+{"at":"2026-05-31T19:44:39.605Z","session_id":"ses_1806fa2a7ffeF3AdtMWRrTMmsc","agent":"reasonable-doubt","tool":"smart_grep","phase":"started","detail":"FakeStdioTransport|FakeHTTPTransport|FakeTransport"}
+{"at":"2026-05-31T19:44:39.636Z","session_id":"ses_1806fa2a7ffeF3AdtMWRrTMmsc","agent":"reasonable-doubt","tool":"smart_grep","phase":"completed","detail":"FakeStdioTransport|FakeHTTPTransport|FakeTransport"}
+{"at":"2026-05-31T19:45:03.204Z","session_id":"ses_1806fa2a7ffeF3AdtMWRrTMmsc","agent":"reasonable-doubt","tool":"smart_find","phase":"started","detail":"*mcp*"}
+{"at":"2026-05-31T19:45:03.239Z","session_id":"ses_1806fa2a7ffeF3AdtMWRrTMmsc","agent":"reasonable-doubt","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T19:45:04.123Z","session_id":"ses_1806fa2a7ffeF3AdtMWRrTMmsc","agent":"reasonable-doubt","tool":"smart_grep","phase":"started","detail":"Fake.*Transport|TestTransport|MockTransport|makeTest.*Transport"}
+{"at":"2026-05-31T19:45:04.160Z","session_id":"ses_1806fa2a7ffeF3AdtMWRrTMmsc","agent":"reasonable-doubt","tool":"smart_grep","phase":"completed","detail":"Fake.*Transport|TestTransport|MockTransport|makeTest.*Transport"}
+{"at":"2026-05-31T19:45:29.795Z","session_id":"ses_1806fa2a7ffeF3AdtMWRrTMmsc","agent":"reasonable-doubt","tool":"smart_bash","phase":"started","detail":"Extract phases from MCP plan"}
+{"at":"2026-05-31T19:45:29.861Z","session_id":"ses_1806fa2a7ffeF3AdtMWRrTMmsc","agent":"reasonable-doubt","tool":"smart_bash","phase":"completed","detail":"python3 exit=0"}
+{"at":"2026-05-31T19:45:31.074Z","session_id":"ses_1806fa2a7ffeF3AdtMWRrTMmsc","agent":"reasonable-doubt","tool":"smart_bash","phase":"started","detail":"Check for existing MCP test files"}
+{"at":"2026-05-31T19:45:31.075Z","session_id":"ses_1806fa2a7ffeF3AdtMWRrTMmsc","agent":"reasonable-doubt","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T19:45:32.417Z","session_id":"ses_1806fa2a7ffeF3AdtMWRrTMmsc","agent":"reasonable-doubt","tool":"smart_grep","phase":"started","detail":"transport|client|connect|stdin|stdio|spawn"}
+{"at":"2026-05-31T19:45:32.444Z","session_id":"ses_1806fa2a7ffeF3AdtMWRrTMmsc","agent":"reasonable-doubt","tool":"smart_grep","phase":"completed","detail":"transport|client|connect|stdin|stdio|spawn"}
+{"at":"2026-05-31T19:45:58.771Z","session_id":"ses_1806fa2a7ffeF3AdtMWRrTMmsc","agent":"reasonable-doubt","tool":"smart_bash","phase":"started","detail":"Get phase list with descriptions"}
+{"at":"2026-05-31T19:45:58.904Z","session_id":"ses_1806fa2a7ffeF3AdtMWRrTMmsc","agent":"reasonable-doubt","tool":"smart_bash","phase":"completed","detail":"node exit=0"}
+{"at":"2026-05-31T19:45:59.622Z","session_id":"ses_1806fa2a7ffeF3AdtMWRrTMmsc","agent":"reasonable-doubt","tool":"smart_find","phase":"started","detail":"*"}
+{"at":"2026-05-31T19:45:59.658Z","session_id":"ses_1806fa2a7ffeF3AdtMWRrTMmsc","agent":"reasonable-doubt","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T19:46:00.507Z","session_id":"ses_1806fa2a7ffeF3AdtMWRrTMmsc","agent":"reasonable-doubt","tool":"smart_grep","phase":"started","detail":"FakeStdioTransport|FakeHTTPTransport|TestStdioTransport|TestHTTPTransport"}
+{"at":"2026-05-31T19:46:00.678Z","session_id":"ses_1806fa2a7ffeF3AdtMWRrTMmsc","agent":"reasonable-doubt","tool":"smart_grep","phase":"completed","detail":"FakeStdioTransport|FakeHTTPTransport|TestStdioTransport|TestHTTPTransport"}
+{"at":"2026-05-31T19:46:30.388Z","session_id":"ses_1806fa2a7ffeF3AdtMWRrTMmsc","agent":"reasonable-doubt","tool":"smart_bash","phase":"started","detail":"Get phase 2 full details"}
+{"at":"2026-05-31T19:46:30.477Z","session_id":"ses_1806fa2a7ffeF3AdtMWRrTMmsc","agent":"reasonable-doubt","tool":"smart_bash","phase":"completed","detail":"node exit=0"}
+{"at":"2026-05-31T19:46:33.509Z","session_id":"ses_1806fa2a7ffeF3AdtMWRrTMmsc","agent":"reasonable-doubt","tool":"smart_bash","phase":"started","detail":"Get phases 3-6 details"}
+{"at":"2026-05-31T19:46:33.633Z","session_id":"ses_1806fa2a7ffeF3AdtMWRrTMmsc","agent":"reasonable-doubt","tool":"smart_bash","phase":"completed","detail":"node exit=0"}
+{"at":"2026-05-31T19:46:36.542Z","session_id":"ses_1806fa2a7ffeF3AdtMWRrTMmsc","agent":"reasonable-doubt","tool":"smart_bash","phase":"started","detail":"Get phases 7-10 details"}
+{"at":"2026-05-31T19:46:36.637Z","session_id":"ses_1806fa2a7ffeF3AdtMWRrTMmsc","agent":"reasonable-doubt","tool":"smart_bash","phase":"completed","detail":"node exit=0"}
+{"at":"2026-05-31T19:46:55.204Z","session_id":"ses_1806fa2a7ffeF3AdtMWRrTMmsc","agent":"reasonable-doubt","tool":"smart_grep","phase":"started","detail":"StdioClientTransport|ClientTransport|spawn.*process|child_process|Bun\\.spawn"}
+{"at":"2026-05-31T19:46:55.212Z","session_id":"ses_1806fa2a7ffeF3AdtMWRrTMmsc","agent":"reasonable-doubt","tool":"smart_grep","phase":"completed","detail":"StdioClientTransport|ClientTransport|spawn.*process|child_process|Bun\\.spawn"}
+{"at":"2026-05-31T19:46:56.511Z","session_id":"ses_1806fa2a7ffeF3AdtMWRrTMmsc","agent":"reasonable-doubt","tool":"smart_grep","phase":"started","detail":"Bun\\.spawn|child_process|spawnSync"}
+{"at":"2026-05-31T19:46:56.531Z","session_id":"ses_1806fa2a7ffeF3AdtMWRrTMmsc","agent":"reasonable-doubt","tool":"smart_grep","phase":"completed","detail":"Bun\\.spawn|child_process|spawnSync"}
+{"at":"2026-05-31T19:47:17.420Z","session_id":"ses_1806fa2a7ffeF3AdtMWRrTMmsc","agent":"reasonable-doubt","tool":"smart_grep","phase":"started","detail":"setNotificationHandler|notificationHandler|onnotification"}
+{"at":"2026-05-31T19:47:17.434Z","session_id":"ses_1806fa2a7ffeF3AdtMWRrTMmsc","agent":"reasonable-doubt","tool":"smart_grep","phase":"completed","detail":"setNotificationHandler|notificationHandler|onnotification"}
+{"at":"2026-05-31T19:47:18.360Z","session_id":"ses_1806fa2a7ffeF3AdtMWRrTMmsc","agent":"reasonable-doubt","tool":"smart_grep","phase":"started","detail":"testEffect|testEffectShared"}
+{"at":"2026-05-31T19:47:18.371Z","session_id":"ses_1806fa2a7ffeF3AdtMWRrTMmsc","agent":"reasonable-doubt","tool":"smart_grep","phase":"completed","detail":"testEffect|testEffectShared"}
+{"at":"2026-05-31T19:47:59.731Z","session_id":"ses_1806fa2a7ffeF3AdtMWRrTMmsc","agent":"reasonable-doubt","tool":"smart_bash","phase":"started","detail":"Read env sanitization section around line 456"}
+{"at":"2026-05-31T19:48:00.309Z","session_id":"ses_1806fa2a7ffeF3AdtMWRrTMmsc","agent":"reasonable-doubt","tool":"smart_bash","phase":"started","detail":"Read closeClient function"}
+{"at":"2026-05-31T19:48:01.272Z","session_id":"ses_1806fa2a7ffeF3AdtMWRrTMmsc","agent":"reasonable-doubt","tool":"smart_bash","phase":"started","detail":"Read top of MCP file for env/state structures"}
+{"at":"2026-05-31T19:48:20.660Z","session_id":"ses_1806fa2a7ffeF3AdtMWRrTMmsc","agent":"reasonable-doubt","tool":"smart_bash","phase":"started","detail":"Read env sanitization section around StdioClientTransport"}
+{"at":"2026-05-31T19:48:20.670Z","session_id":"ses_1806fa2a7ffeF3AdtMWRrTMmsc","agent":"reasonable-doubt","tool":"smart_bash","phase":"completed","detail":"head exit=0"}
+{"at":"2026-05-31T19:48:21.745Z","session_id":"ses_1806fa2a7ffeF3AdtMWRrTMmsc","agent":"reasonable-doubt","tool":"smart_bash","phase":"started","detail":"Read top of MCP file for state/error types"}
+{"at":"2026-05-31T19:48:21.755Z","session_id":"ses_1806fa2a7ffeF3AdtMWRrTMmsc","agent":"reasonable-doubt","tool":"smart_bash","phase":"completed","detail":"wc exit=0"}
+{"at":"2026-05-31T19:48:36.765Z","session_id":"ses_1806fa2a7ffeF3AdtMWRrTMmsc","agent":"reasonable-doubt","tool":"smart_bash","phase":"started","detail":"Read exact env line around line 456"}
+{"at":"2026-05-31T19:48:36.784Z","session_id":"ses_1806fa2a7ffeF3AdtMWRrTMmsc","agent":"reasonable-doubt","tool":"smart_bash","phase":"completed","detail":"head exit=0"}
+{"at":"2026-05-31T19:48:37.630Z","session_id":"ses_1806fa2a7ffeF3AdtMWRrTMmsc","agent":"reasonable-doubt","tool":"smart_grep","phase":"started","detail":"process\\.env"}
+{"at":"2026-05-31T19:48:37.636Z","session_id":"ses_1806fa2a7ffeF3AdtMWRrTMmsc","agent":"reasonable-doubt","tool":"smart_grep","phase":"completed","detail":"process\\.env"}
+{"at":"2026-05-31T19:48:55.489Z","session_id":"ses_1806fa2a7ffeF3AdtMWRrTMmsc","agent":"reasonable-doubt","tool":"smart_bash","phase":"started","detail":"Get test infrastructure and root causes from plan"}
+{"at":"2026-05-31T19:48:55.582Z","session_id":"ses_1806fa2a7ffeF3AdtMWRrTMmsc","agent":"reasonable-doubt","tool":"smart_bash","phase":"failed","detail":"node exit=1"}
+{"at":"2026-05-31T19:48:56.379Z","session_id":"ses_1806fa2a7ffeF3AdtMWRrTMmsc","agent":"reasonable-doubt","tool":"smart_grep","phase":"started","detail":"ToolRegistry|registry.*tools|tools\\(\\)"}
+{"at":"2026-05-31T19:48:56.385Z","session_id":"ses_1806fa2a7ffeF3AdtMWRrTMmsc","agent":"reasonable-doubt","tool":"smart_grep","phase":"completed","detail":"ToolRegistry|registry.*tools|tools\\(\\)"}
+{"at":"2026-05-31T19:48:57.425Z","session_id":"ses_1806fa2a7ffeF3AdtMWRrTMmsc","agent":"reasonable-doubt","tool":"smart_grep","phase":"started","detail":"MCP\\.tools|MCP.*tool|mcp.*tool"}
+{"at":"2026-05-31T19:48:57.432Z","session_id":"ses_1806fa2a7ffeF3AdtMWRrTMmsc","agent":"reasonable-doubt","tool":"smart_grep","phase":"completed","detail":"MCP\\.tools|MCP.*tool|mcp.*tool"}
+{"at":"2026-05-31T19:49:11.089Z","session_id":"ses_1806fa2a7ffeF3AdtMWRrTMmsc","agent":"reasonable-doubt","tool":"smart_bash","phase":"started","detail":"Check plan keys"}
+{"at":"2026-05-31T19:49:11.189Z","session_id":"ses_1806fa2a7ffeF3AdtMWRrTMmsc","agent":"reasonable-doubt","tool":"smart_bash","phase":"completed","detail":"node exit=0"}
+{"at":"2026-05-31T19:49:12.043Z","session_id":"ses_1806fa2a7ffeF3AdtMWRrTMmsc","agent":"reasonable-doubt","tool":"smart_grep","phase":"started","detail":"testEffect|testEffectShared"}
+{"at":"2026-05-31T19:49:12.060Z","session_id":"ses_1806fa2a7ffeF3AdtMWRrTMmsc","agent":"reasonable-doubt","tool":"smart_grep","phase":"completed","detail":"testEffect|testEffectShared"}
+{"at":"2026-05-31T19:49:13.089Z","session_id":"ses_1806fa2a7ffeF3AdtMWRrTMmsc","agent":"reasonable-doubt","tool":"smart_grep","phase":"started","detail":"Fake|TestStdio|TestTransport|InMemoryTransport"}
+{"at":"2026-05-31T19:49:13.096Z","session_id":"ses_1806fa2a7ffeF3AdtMWRrTMmsc","agent":"reasonable-doubt","tool":"smart_grep","phase":"completed","detail":"Fake|TestStdio|TestTransport|InMemoryTransport"}
+{"at":"2026-05-31T19:49:26.101Z","session_id":"ses_1806fa2a7ffeF3AdtMWRrTMmsc","agent":"reasonable-doubt","tool":"smart_bash","phase":"started","detail":"Get rollback plan and risk assessment"}
+{"at":"2026-05-31T19:49:26.202Z","session_id":"ses_1806fa2a7ffeF3AdtMWRrTMmsc","agent":"reasonable-doubt","tool":"smart_bash","phase":"completed","detail":"node exit=0"}
+{"at":"2026-05-31T19:49:27.347Z","session_id":"ses_1806fa2a7ffeF3AdtMWRrTMmsc","agent":"reasonable-doubt","tool":"smart_bash","phase":"started","detail":"Get full phase 10 test details"}
+{"at":"2026-05-31T19:49:27.424Z","session_id":"ses_1806fa2a7ffeF3AdtMWRrTMmsc","agent":"reasonable-doubt","tool":"smart_bash","phase":"completed","detail":"node exit=0"}
+{"at":"2026-05-31T19:49:37.208Z","session_id":"ses_1806fa2a7ffeF3AdtMWRrTMmsc","agent":"reasonable-doubt","tool":"smart_grep","phase":"started","detail":"TestClock|TestConsole"}
+{"at":"2026-05-31T19:49:37.244Z","session_id":"ses_1806fa2a7ffeF3AdtMWRrTMmsc","agent":"reasonable-doubt","tool":"smart_grep","phase":"completed","detail":"TestClock|TestConsole"}
+{"at":"2026-05-31T19:49:38.027Z","session_id":"ses_1806fa2a7ffeF3AdtMWRrTMmsc","agent":"reasonable-doubt","tool":"smart_grep","phase":"started","detail":"EADDRINUSE|port.*alloc|fallback.*port"}
+{"at":"2026-05-31T19:49:38.054Z","session_id":"ses_1806fa2a7ffeF3AdtMWRrTMmsc","agent":"reasonable-doubt","tool":"smart_grep","phase":"completed","detail":"EADDRINUSE|port.*alloc|fallback.*port"}
+{"at":"2026-05-31T19:49:39.505Z","session_id":"ses_1806fa2a7ffeF3AdtMWRrTMmsc","agent":"reasonable-doubt","tool":"smart_bash","phase":"started","detail":"Get full list of test cases from phase 10"}
+{"at":"2026-05-31T19:49:39.578Z","session_id":"ses_1806fa2a7ffeF3AdtMWRrTMmsc","agent":"reasonable-doubt","tool":"smart_bash","phase":"completed","detail":"node exit=0"}
+{"at":"2026-05-31T19:49:50.021Z","session_id":"ses_1806fa2a7ffeF3AdtMWRrTMmsc","agent":"reasonable-doubt","tool":"smart_grep","phase":"started","detail":"net\\.createServer|listen.*port"}
+{"at":"2026-05-31T19:49:50.041Z","session_id":"ses_1806fa2a7ffeF3AdtMWRrTMmsc","agent":"reasonable-doubt","tool":"smart_grep","phase":"completed","detail":"net\\.createServer|listen.*port"}
+{"at":"2026-05-31T19:50:34.091Z","session_id":"ses_1806fa2a7ffeF3AdtMWRrTMmsc","agent":"reasonable-doubt","tool":"smart_grep","phase":"started","detail":"InMemoryTransport"}
+{"at":"2026-05-31T19:50:34.117Z","session_id":"ses_1806fa2a7ffeF3AdtMWRrTMmsc","agent":"reasonable-doubt","tool":"smart_grep","phase":"completed","detail":"InMemoryTransport"}
+{"at":"2026-05-31T19:50:34.970Z","session_id":"ses_1806fa2a7ffeF3AdtMWRrTMmsc","agent":"reasonable-doubt","tool":"smart_grep","phase":"started","detail":"export.*Transport"}
+{"at":"2026-05-31T19:50:35.008Z","session_id":"ses_1806fa2a7ffeF3AdtMWRrTMmsc","agent":"reasonable-doubt","tool":"smart_grep","phase":"failed","detail":"rg: /Users/user/Developer/GitHub/opencode-desktop-dev/node_modules/@modelcontextprotocol: IO error for operation on /Users/user/Developer/GitHub/opencode-desktop-dev/node_modules/@modelcontextprotocol"}

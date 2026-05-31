@@ -1,0 +1,1 @@
+{"at":"2026-05-31T18:53:46.670Z","session_id":"ses_180a37c5dffe7Px82jcxBlxBmP","agent":"logbook","binary":"sh","command":"sh -c 'for d in packages/opencode/src/mcp packages/opencode/src/acp packages/opencode/src/acp-next; do echo \"=== $d ===\"; ls \"$d\" 2>/dev/null || echo \"(not found)\"; done'","reason":"List MCP and ACP directory files","elapsed_ms":75,"exit_code":0}

@@ -1,0 +1,18 @@
+{
+  "schema_version": "v1",
+  "plan_id": "packages-desktop-src-main-sidecar-ts-packages-desktop-src-preload-types-ts",
+  "plan_revision": 1,
+  "title": "Sidecar startup failure diagnostics — structured failure packet + durable boot log",
+  "boundary": "packages/desktop/src/main/sidecar.ts + packages/desktop/src/preload/types.ts",
+  "consumer_purpose": "When the opencode sidecar process crashes during startup (exit code 1), the desktop app can read a structured failure packet to display in safe mode, even if the parent process IPC was not yet established",
+  "claim_atoms": [
+    "1. SidecarStartupFailure type captures phase",
+    "port",
+    "errors",
+    "stderr tail; 2. Each of ~6 startup phases is individually guarded with phase-labeled try/catch; 3. Before process.exit(1)",
+    "the packet is written to {userDataPath}/sidecar-boot-failure.json; 4. The existing safe mode screen reads and displays this file if present"
+  ],
+  "status": "proposed",
+  "created_at": "2026-05-31T18:42:23.880Z",
+  "modified_at": "2026-05-31T18:42:23.880Z"
+}

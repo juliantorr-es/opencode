@@ -1,0 +1,49 @@
+{"at":"2026-05-31T19:51:04.797Z","session_id":"ses_1806941b3ffe52VFb3VKrHgrrK","agent":"appeal","tool":"smart_find","phase":"started","detail":"*TRUST*"}
+{"at":"2026-05-31T19:51:04.827Z","session_id":"ses_1806941b3ffe52VFb3VKrHgrrK","agent":"appeal","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T19:51:06.101Z","session_id":"ses_1806941b3ffe52VFb3VKrHgrrK","agent":"appeal","tool":"smart_grep","phase":"started","detail":"TRUST.BOUNDARY|trust.boundary|trust-boundary|trust_boundary"}
+{"at":"2026-05-31T19:51:06.237Z","session_id":"ses_1806941b3ffe52VFb3VKrHgrrK","agent":"appeal","tool":"smart_grep","phase":"completed","detail":"TRUST.BOUNDARY|trust.boundary|trust-boundary|trust_boundary"}
+{"at":"2026-05-31T19:51:27.844Z","session_id":"ses_1806941b3ffe52VFb3VKrHgrrK","agent":"appeal","tool":"smart_grep","phase":"started","detail":"Brand CapabilityId|pluginId required|Auth corruption|Auth response schema"}
+{"at":"2026-05-31T19:51:28.242Z","session_id":"ses_1806941b3ffe52VFb3VKrHgrrK","agent":"appeal","tool":"smart_grep","phase":"completed","detail":"Brand CapabilityId|pluginId required|Auth corruption|Auth response schema"}
+{"at":"2026-05-31T19:51:28.278Z","session_id":"ses_1806941b3ffe52VFb3VKrHgrrK","agent":"appeal","tool":"smart_find","phase":"started","detail":"*trust*boundary*"}
+{"at":"2026-05-31T19:51:28.317Z","session_id":"ses_1806941b3ffe52VFb3VKrHgrrK","agent":"appeal","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T19:52:28.845Z","session_id":"ses_1806941b3ffe52VFb3VKrHgrrK","agent":"appeal","tool":"smart_bash","phase":"started","detail":"Read full trust-boundary plan to understand all fixes"}
+{"at":"2026-05-31T19:52:28.845Z","session_id":"ses_1806941b3ffe52VFb3VKrHgrrK","agent":"appeal","tool":"smart_bash","phase":"rerouted","detail":"→ read_source"}
+{"at":"2026-05-31T19:53:07.121Z","session_id":"ses_1806941b3ffe52VFb3VKrHgrrK","agent":"appeal","tool":"smart_bash","phase":"started","detail":"Inspect plan structure to find fixes array"}
+{"at":"2026-05-31T19:53:07.169Z","session_id":"ses_1806941b3ffe52VFb3VKrHgrrK","agent":"appeal","tool":"smart_bash","phase":"completed","detail":"python3 exit=0"}
+{"at":"2026-05-31T19:53:25.485Z","session_id":"ses_1806941b3ffe52VFb3VKrHgrrK","agent":"appeal","tool":"smart_bash","phase":"started","detail":"Get full fix details, apply order, and rollback plan"}
+{"at":"2026-05-31T19:53:25.520Z","session_id":"ses_1806941b3ffe52VFb3VKrHgrrK","agent":"appeal","tool":"smart_bash","phase":"completed","detail":"python3 exit=0"}
+{"at":"2026-05-31T19:54:39.313Z","session_id":"ses_1806941b3ffe52VFb3VKrHgrrK","agent":"appeal","tool":"smart_bash","phase":"started","detail":"Read plugin dispatch region with capability checks"}
+{"at":"2026-05-31T19:54:59.320Z","session_id":"ses_1806941b3ffe52VFb3VKrHgrrK","agent":"appeal","tool":"smart_bash","phase":"started","detail":"Read plugin dispatch region lines 410-500"}
+{"at":"2026-05-31T19:54:59.353Z","session_id":"ses_1806941b3ffe52VFb3VKrHgrrK","agent":"appeal","tool":"smart_bash","phase":"completed","detail":"python3 exit=0"}
+{"at":"2026-05-31T19:55:18.619Z","session_id":"ses_1806941b3ffe52VFb3VKrHgrrK","agent":"appeal","tool":"smart_bash","phase":"started","detail":"Read trigger dispatch region lines 430-480"}
+{"at":"2026-05-31T19:55:18.660Z","session_id":"ses_1806941b3ffe52VFb3VKrHgrrK","agent":"appeal","tool":"smart_bash","phase":"completed","detail":"python3 exit=0"}
+{"at":"2026-05-31T19:55:46.343Z","session_id":"ses_1806941b3ffe52VFb3VKrHgrrK","agent":"appeal","tool":"smart_bash","phase":"started","detail":"Get complete fix descriptions with before/after snippets"}
+{"at":"2026-05-31T19:55:46.381Z","session_id":"ses_1806941b3ffe52VFb3VKrHgrrK","agent":"appeal","tool":"smart_bash","phase":"completed","detail":"python3 exit=0"}
+{"at":"2026-05-31T19:56:06.514Z","session_id":"ses_1806941b3ffe52VFb3VKrHgrrK","agent":"appeal","tool":"smart_bash","phase":"started","detail":"Get full fix details"}
+{"at":"2026-05-31T19:56:06.588Z","session_id":"ses_1806941b3ffe52VFb3VKrHgrrK","agent":"appeal","tool":"smart_bash","phase":"completed","detail":"python3 exit=0"}
+{"at":"2026-05-31T19:57:18.996Z","session_id":"ses_1806941b3ffe52VFb3VKrHgrrK","agent":"appeal","tool":"smart_bash","phase":"started","detail":"Find typeof oauth and catch blocks in mcp/index.ts"}
+{"at":"2026-05-31T19:57:19.039Z","session_id":"ses_1806941b3ffe52VFb3VKrHgrrK","agent":"appeal","tool":"smart_bash","phase":"completed","detail":"python3 exit=0"}
+{"at":"2026-05-31T19:57:45.859Z","session_id":"ses_1806941b3ffe52VFb3VKrHgrrK","agent":"appeal","tool":"smart_bash","phase":"started","detail":"Find silent catch blocks in copilot.ts, oauth-provider.ts, shared.ts"}
+{"at":"2026-05-31T19:57:45.931Z","session_id":"ses_1806941b3ffe52VFb3VKrHgrrK","agent":"appeal","tool":"smart_bash","phase":"completed","detail":"python3 exit=0"}
+{"at":"2026-05-31T19:58:10.500Z","session_id":"ses_1806941b3ffe52VFb3VKrHgrrK","agent":"appeal","tool":"smart_bash","phase":"started","detail":"Get rollback plan, deferred risks, convention compliance"}
+{"at":"2026-05-31T19:58:10.535Z","session_id":"ses_1806941b3ffe52VFb3VKrHgrrK","agent":"appeal","tool":"smart_bash","phase":"completed","detail":"python3 exit=0"}
+{"at":"2026-05-31T19:59:18.022Z","session_id":"ses_1806941b3ffe52VFb3VKrHgrrK","agent":"appeal","tool":"smart_bash","phase":"started","detail":"See full after section of Fix A"}
+{"at":"2026-05-31T19:59:18.071Z","session_id":"ses_1806941b3ffe52VFb3VKrHgrrK","agent":"appeal","tool":"smart_bash","phase":"completed","detail":"python3 exit=0"}
+{"at":"2026-05-31T20:00:47.581Z","session_id":"ses_1806941b3ffe52VFb3VKrHgrrK","agent":"appeal","tool":"smart_grep","phase":"started","detail":"CapabilityId|checkCapability|HookDispatchGuard|ListedPlugin|stripSecrets|hasSecr"}
+{"at":"2026-05-31T20:00:47.720Z","session_id":"ses_1806941b3ffe52VFb3VKrHgrrK","agent":"appeal","tool":"smart_grep","phase":"completed","detail":"CapabilityId|checkCapability|HookDispatchGuard|ListedPlugin|stripSecrets|hasSecr"}
+{"at":"2026-05-31T20:01:04.981Z","session_id":"ses_1806941b3ffe52VFb3VKrHgrrK","agent":"appeal","tool":"smart_grep","phase":"started","detail":"hook-dispatch-guard|HookDispatchGuard"}
+{"at":"2026-05-31T20:01:05.123Z","session_id":"ses_1806941b3ffe52VFb3VKrHgrrK","agent":"appeal","tool":"smart_grep","phase":"completed","detail":"hook-dispatch-guard|HookDispatchGuard"}
+{"at":"2026-05-31T20:01:22.492Z","session_id":"ses_1806941b3ffe52VFb3VKrHgrrK","agent":"appeal","tool":"smart_grep","phase":"started","detail":"import.*CapabilityId|from.*capability"}
+{"at":"2026-05-31T20:01:22.501Z","session_id":"ses_1806941b3ffe52VFb3VKrHgrrK","agent":"appeal","tool":"smart_grep","phase":"completed","detail":"import.*CapabilityId|from.*capability"}
+{"at":"2026-05-31T20:01:23.445Z","session_id":"ses_1806941b3ffe52VFb3VKrHgrrK","agent":"appeal","tool":"smart_grep","phase":"started","detail":"import.*CapabilityId|from.*capability"}
+{"at":"2026-05-31T20:01:23.460Z","session_id":"ses_1806941b3ffe52VFb3VKrHgrrK","agent":"appeal","tool":"smart_grep","phase":"completed","detail":"import.*CapabilityId|from.*capability"}
+{"at":"2026-05-31T20:01:24.277Z","session_id":"ses_1806941b3ffe52VFb3VKrHgrrK","agent":"appeal","tool":"smart_grep","phase":"started","detail":"import.*CapabilityId|from.*capability"}
+{"at":"2026-05-31T20:01:24.284Z","session_id":"ses_1806941b3ffe52VFb3VKrHgrrK","agent":"appeal","tool":"smart_grep","phase":"completed","detail":"import.*CapabilityId|from.*capability"}
+{"at":"2026-05-31T20:01:25.210Z","session_id":"ses_1806941b3ffe52VFb3VKrHgrrK","agent":"appeal","tool":"smart_grep","phase":"started","detail":"import.*CapabilityId|from.*capability"}
+{"at":"2026-05-31T20:01:25.217Z","session_id":"ses_1806941b3ffe52VFb3VKrHgrrK","agent":"appeal","tool":"smart_grep","phase":"completed","detail":"import.*CapabilityId|from.*capability"}
+{"at":"2026-05-31T20:01:40.099Z","session_id":"ses_1806941b3ffe52VFb3VKrHgrrK","agent":"appeal","tool":"smart_grep","phase":"started","detail":"ConfigMCP"}
+{"at":"2026-05-31T20:01:40.106Z","session_id":"ses_1806941b3ffe52VFb3VKrHgrrK","agent":"appeal","tool":"smart_grep","phase":"completed","detail":"ConfigMCP"}
+{"at":"2026-05-31T20:02:15.044Z","session_id":"ses_1806941b3ffe52VFb3VKrHgrrK","agent":"appeal","tool":"smart_bash","phase":"started","detail":"Verify apply order and rollback plan claims"}
+{"at":"2026-05-31T20:02:15.080Z","session_id":"ses_1806941b3ffe52VFb3VKrHgrrK","agent":"appeal","tool":"smart_bash","phase":"completed","detail":"python3 exit=0"}
+{"at":"2026-05-31T20:02:31.115Z","session_id":"ses_1806941b3ffe52VFb3VKrHgrrK","agent":"appeal","tool":"smart_bash","phase":"started","detail":"Get Fix G full details for dependency check"}
+{"at":"2026-05-31T20:02:31.155Z","session_id":"ses_1806941b3ffe52VFb3VKrHgrrK","agent":"appeal","tool":"smart_bash","phase":"completed","detail":"python3 exit=0"}

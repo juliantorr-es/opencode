@@ -1,0 +1,109 @@
+{"at":"2026-05-31T18:47:20.469Z","session_id":"ses_180a392c1ffe4gvrnPeAotjLuL","agent":"soundings","tool":"smart_find","phase":"started","detail":"*mcp*"}
+{"at":"2026-05-31T18:47:20.552Z","session_id":"ses_180a392c1ffe4gvrnPeAotjLuL","agent":"soundings","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T18:47:21.267Z","session_id":"ses_180a392c1ffe4gvrnPeAotjLuL","agent":"soundings","tool":"smart_grep","phase":"started","detail":"(?i)\\bmcp\\b"}
+{"at":"2026-05-31T18:47:21.304Z","session_id":"ses_180a392c1ffe4gvrnPeAotjLuL","agent":"soundings","tool":"smart_grep","phase":"completed","detail":"(?i)\\bmcp\\b"}
+{"at":"2026-05-31T18:47:52.513Z","session_id":"ses_180a392c1ffe4gvrnPeAotjLuL","agent":"soundings","tool":"smart_bash","phase":"started","detail":"Find all MCP-related test files"}
+{"at":"2026-05-31T18:47:52.513Z","session_id":"ses_180a392c1ffe4gvrnPeAotjLuL","agent":"soundings","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T18:47:53.135Z","session_id":"ses_180a392c1ffe4gvrnPeAotjLuL","agent":"soundings","tool":"smart_bash","phase":"started","detail":"Find MCP test directories"}
+{"at":"2026-05-31T18:47:53.138Z","session_id":"ses_180a392c1ffe4gvrnPeAotjLuL","agent":"soundings","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T18:48:47.090Z","session_id":"ses_180a392c1ffe4gvrnPeAotjLuL","agent":"soundings","tool":"smart_grep","phase":"started","detail":"mcp"}
+{"at":"2026-05-31T18:48:47.108Z","session_id":"ses_180a392c1ffe4gvrnPeAotjLuL","agent":"soundings","tool":"smart_grep","phase":"completed","detail":"mcp"}
+{"at":"2026-05-31T18:51:27.817Z","session_id":"ses_180a392c1ffe4gvrnPeAotjLuL","agent":"soundings","tool":"smart_grep","phase":"started","detail":".*"}
+{"at":"2026-05-31T18:51:27.829Z","session_id":"ses_180a392c1ffe4gvrnPeAotjLuL","agent":"soundings","tool":"smart_grep","phase":"completed","detail":".*"}
+{"at":"2026-05-31T18:51:28.482Z","session_id":"ses_180a392c1ffe4gvrnPeAotjLuL","agent":"soundings","tool":"smart_bash","phase":"started","detail":"List MCP test directory contents"}
+{"at":"2026-05-31T18:51:28.482Z","session_id":"ses_180a392c1ffe4gvrnPeAotjLuL","agent":"soundings","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T18:52:53.141Z","session_id":"ses_180a392c1ffe4gvrnPeAotjLuL","agent":"soundings","tool":"smart_bash","phase":"started","detail":"Count lines in MCP lifecycle test"}
+{"at":"2026-05-31T18:52:53.155Z","session_id":"ses_180a392c1ffe4gvrnPeAotjLuL","agent":"soundings","tool":"smart_bash","phase":"completed","detail":"wc exit=0"}
+{"at":"2026-05-31T18:54:31.782Z","session_id":"ses_180a392c1ffe4gvrnPeAotjLuL","agent":"soundings","tool":"smart_bash","phase":"started","detail":"Read MCP lifecycle test lines 1-300"}
+{"at":"2026-05-31T18:56:02.360Z","session_id":"ses_180a392c1ffe4gvrnPeAotjLuL","agent":"soundings","tool":"smart_grep","phase":"started","detail":"."}
+{"at":"2026-05-31T18:56:02.372Z","session_id":"ses_180a392c1ffe4gvrnPeAotjLuL","agent":"soundings","tool":"smart_grep","phase":"completed","detail":"."}
+{"at":"2026-05-31T18:57:48.694Z","session_id":"ses_180a392c1ffe4gvrnPeAotjLuL","agent":"soundings","tool":"smart_bash","phase":"started","detail":"Read MCP lifecycle test lines 1-300"}
+{"at":"2026-05-31T18:57:48.810Z","session_id":"ses_180a392c1ffe4gvrnPeAotjLuL","agent":"soundings","tool":"smart_bash","phase":"completed","detail":"head exit=0"}
+{"at":"2026-05-31T18:59:44.436Z","session_id":"ses_180a392c1ffe4gvrnPeAotjLuL","agent":"soundings","tool":"smart_bash","phase":"started","detail":"Read MCP lifecycle test lines 301-600"}
+{"at":"2026-05-31T18:59:48.835Z","session_id":"ses_180a392c1ffe4gvrnPeAotjLuL","agent":"soundings","tool":"smart_bash","phase":"started","detail":"Read MCP lifecycle test lines 301-600"}
+{"at":"2026-05-31T18:59:48.855Z","session_id":"ses_180a392c1ffe4gvrnPeAotjLuL","agent":"soundings","tool":"smart_bash","phase":"completed","detail":"tail exit=0"}
+{"at":"2026-05-31T19:01:36.274Z","session_id":"ses_180a392c1ffe4gvrnPeAotjLuL","agent":"soundings","tool":"smart_bash","phase":"started","detail":"Read MCP lifecycle test lines 600-888"}
+{"at":"2026-05-31T19:01:36.307Z","session_id":"ses_180a392c1ffe4gvrnPeAotjLuL","agent":"soundings","tool":"smart_bash","phase":"completed","detail":"tail exit=0"}
+{"at":"2026-05-31T19:03:03.534Z","session_id":"ses_180a392c1ffe4gvrnPeAotjLuL","agent":"soundings","tool":"smart_bash","phase":"started","detail":"Extract test structure from MCP lifecycle test"}
+{"at":"2026-05-31T19:03:03.535Z","session_id":"ses_180a392c1ffe4gvrnPeAotjLuL","agent":"soundings","tool":"smart_bash","phase":"rerouted","detail":"→ smart_grep"}
+{"at":"2026-05-31T19:03:04.626Z","session_id":"ses_180a392c1ffe4gvrnPeAotjLuL","agent":"soundings","tool":"smart_bash","phase":"started","detail":"Extract MCP-related test structure from regression proofs"}
+{"at":"2026-05-31T19:03:04.626Z","session_id":"ses_180a392c1ffe4gvrnPeAotjLuL","agent":"soundings","tool":"smart_bash","phase":"rerouted","detail":"→ smart_grep"}
+{"at":"2026-05-31T19:03:05.538Z","session_id":"ses_180a392c1ffe4gvrnPeAotjLuL","agent":"soundings","tool":"smart_bash","phase":"started","detail":"Extract test structure from ACP event subscription test"}
+{"at":"2026-05-31T19:03:05.538Z","session_id":"ses_180a392c1ffe4gvrnPeAotjLuL","agent":"soundings","tool":"smart_bash","phase":"rerouted","detail":"→ smart_grep"}
+{"at":"2026-05-31T19:03:06.300Z","session_id":"ses_180a392c1ffe4gvrnPeAotjLuL","agent":"soundings","tool":"smart_bash","phase":"started","detail":"Extract test structure from permission next test"}
+{"at":"2026-05-31T19:03:06.301Z","session_id":"ses_180a392c1ffe4gvrnPeAotjLuL","agent":"soundings","tool":"smart_bash","phase":"rerouted","detail":"→ smart_grep"}
+{"at":"2026-05-31T19:04:21.828Z","session_id":"ses_180a392c1ffe4gvrnPeAotjLuL","agent":"soundings","tool":"smart_grep","phase":"started","detail":"it\\.instance\\("}
+{"at":"2026-05-31T19:04:21.835Z","session_id":"ses_180a392c1ffe4gvrnPeAotjLuL","agent":"soundings","tool":"smart_grep","phase":"completed","detail":"it\\.instance\\("}
+{"at":"2026-05-31T19:04:22.519Z","session_id":"ses_180a392c1ffe4gvrnPeAotjLuL","agent":"soundings","tool":"smart_grep","phase":"started","detail":"it\\.\\("}
+{"at":"2026-05-31T19:04:22.529Z","session_id":"ses_180a392c1ffe4gvrnPeAotjLuL","agent":"soundings","tool":"smart_grep","phase":"completed","detail":"it\\.\\("}
+{"at":"2026-05-31T19:05:25.978Z","session_id":"ses_180a392c1ffe4gvrnPeAotjLuL","agent":"soundings","tool":"smart_grep","phase":"started","detail":"it\\.instance"}
+{"at":"2026-05-31T19:05:25.998Z","session_id":"ses_180a392c1ffe4gvrnPeAotjLuL","agent":"soundings","tool":"smart_grep","phase":"completed","detail":"it\\.instance"}
+{"at":"2026-05-31T19:06:28.594Z","session_id":"ses_180a392c1ffe4gvrnPeAotjLuL","agent":"soundings","tool":"smart_bash","phase":"started","detail":"Extract test names from MCP lifecycle test"}
+{"at":"2026-05-31T19:06:28.606Z","session_id":"ses_180a392c1ffe4gvrnPeAotjLuL","agent":"soundings","tool":"smart_bash","phase":"completed","detail":"awk exit=0"}
+{"at":"2026-05-31T19:07:23.971Z","session_id":"ses_180a392c1ffe4gvrnPeAotjLuL","agent":"soundings","tool":"smart_grep","phase":"started","detail":"(describe|test|it)\\(.*[Mm][Cc][Pp]"}
+{"at":"2026-05-31T19:07:23.977Z","session_id":"ses_180a392c1ffe4gvrnPeAotjLuL","agent":"soundings","tool":"smart_grep","phase":"completed","detail":"(describe|test|it)\\(.*[Mm][Cc][Pp]"}
+{"at":"2026-05-31T19:07:25.086Z","session_id":"ses_180a392c1ffe4gvrnPeAotjLuL","agent":"soundings","tool":"smart_grep","phase":"started","detail":"(describe|test|it)\\(.*"}
+{"at":"2026-05-31T19:07:25.100Z","session_id":"ses_180a392c1ffe4gvrnPeAotjLuL","agent":"soundings","tool":"smart_grep","phase":"completed","detail":"(describe|test|it)\\(.*"}
+{"at":"2026-05-31T19:07:26.019Z","session_id":"ses_180a392c1ffe4gvrnPeAotjLuL","agent":"soundings","tool":"smart_grep","phase":"started","detail":"(describe|test|it)\\(.*"}
+{"at":"2026-05-31T19:07:26.027Z","session_id":"ses_180a392c1ffe4gvrnPeAotjLuL","agent":"soundings","tool":"smart_grep","phase":"completed","detail":"(describe|test|it)\\(.*"}
+{"at":"2026-05-31T19:08:14.163Z","session_id":"ses_180a392c1ffe4gvrnPeAotjLuL","agent":"soundings","tool":"smart_bash","phase":"started","detail":"Read MCP regression proofs section"}
+{"at":"2026-05-31T19:09:05.987Z","session_id":"ses_180a392c1ffe4gvrnPeAotjLuL","agent":"soundings","tool":"smart_bash","phase":"started","detail":"Read regression-proofs MCP section lines 275-720"}
+{"at":"2026-05-31T19:09:06.007Z","session_id":"ses_180a392c1ffe4gvrnPeAotjLuL","agent":"soundings","tool":"smart_bash","phase":"completed","detail":"head exit=0"}
+{"at":"2026-05-31T19:09:42.358Z","session_id":"ses_180a392c1ffe4gvrnPeAotjLuL","agent":"soundings","tool":"smart_bash","phase":"started","detail":"Read regression-proofs MCP section lines 275-610"}
+{"at":"2026-05-31T19:09:42.370Z","session_id":"ses_180a392c1ffe4gvrnPeAotjLuL","agent":"soundings","tool":"smart_bash","phase":"completed","detail":"head exit=0"}
+{"at":"2026-05-31T19:10:37.911Z","session_id":"ses_180a392c1ffe4gvrnPeAotjLuL","agent":"soundings","tool":"smart_bash","phase":"started","detail":"Read snapshot-tool-race MCP setup"}
+{"at":"2026-05-31T19:10:37.923Z","session_id":"ses_180a392c1ffe4gvrnPeAotjLuL","agent":"soundings","tool":"smart_bash","phase":"completed","detail":"head exit=0"}
+{"at":"2026-05-31T19:10:38.601Z","session_id":"ses_180a392c1ffe4gvrnPeAotjLuL","agent":"soundings","tool":"smart_bash","phase":"started","detail":"Read prompt.test.ts MCP setup"}
+{"at":"2026-05-31T19:10:38.612Z","session_id":"ses_180a392c1ffe4gvrnPeAotjLuL","agent":"soundings","tool":"smart_bash","phase":"completed","detail":"head exit=0"}
+{"at":"2026-05-31T19:10:39.887Z","session_id":"ses_180a392c1ffe4gvrnPeAotjLuL","agent":"soundings","tool":"smart_bash","phase":"started","detail":"Count test blocks in snapshot-tool-race"}
+{"at":"2026-05-31T19:10:39.887Z","session_id":"ses_180a392c1ffe4gvrnPeAotjLuL","agent":"soundings","tool":"smart_bash","phase":"rerouted","detail":"→ smart_grep"}
+{"at":"2026-05-31T19:11:22.122Z","session_id":"ses_180a392c1ffe4gvrnPeAotjLuL","agent":"soundings","tool":"smart_bash","phase":"started","detail":"Read ACP event-subscription imports and setup"}
+{"at":"2026-05-31T19:11:22.133Z","session_id":"ses_180a392c1ffe4gvrnPeAotjLuL","agent":"soundings","tool":"smart_bash","phase":"completed","detail":"head exit=0"}
+{"at":"2026-05-31T19:11:22.829Z","session_id":"ses_180a392c1ffe4gvrnPeAotjLuL","agent":"soundings","tool":"smart_bash","phase":"started","detail":"Read permission next test imports and setup"}
+{"at":"2026-05-31T19:11:22.846Z","session_id":"ses_180a392c1ffe4gvrnPeAotjLuL","agent":"soundings","tool":"smart_bash","phase":"completed","detail":"head exit=0"}
+{"at":"2026-05-31T19:12:18.076Z","session_id":"ses_180a392c1ffe4gvrnPeAotjLuL","agent":"soundings","tool":"smart_bash","phase":"started","detail":"Read snapshot-tool-race test setup including MCP mock"}
+{"at":"2026-05-31T19:12:18.117Z","session_id":"ses_180a392c1ffe4gvrnPeAotjLuL","agent":"soundings","tool":"smart_bash","phase":"completed","detail":"head exit=0"}
+{"at":"2026-05-31T19:12:18.928Z","session_id":"ses_180a392c1ffe4gvrnPeAotjLuL","agent":"soundings","tool":"smart_bash","phase":"started","detail":"Read prompt test MCP setup details"}
+{"at":"2026-05-31T19:12:18.951Z","session_id":"ses_180a392c1ffe4gvrnPeAotjLuL","agent":"soundings","tool":"smart_bash","phase":"completed","detail":"head exit=0"}
+{"at":"2026-05-31T19:12:19.763Z","session_id":"ses_180a392c1ffe4gvrnPeAotjLuL","agent":"soundings","tool":"smart_bash","phase":"started","detail":"Find MCP references in ACP event-subscription test"}
+{"at":"2026-05-31T19:12:19.763Z","session_id":"ses_180a392c1ffe4gvrnPeAotjLuL","agent":"soundings","tool":"smart_bash","phase":"rerouted","detail":"→ smart_grep"}
+{"at":"2026-05-31T19:12:20.484Z","session_id":"ses_180a392c1ffe4gvrnPeAotjLuL","agent":"soundings","tool":"smart_bash","phase":"started","detail":"Find MCP references in permission next test"}
+{"at":"2026-05-31T19:12:20.485Z","session_id":"ses_180a392c1ffe4gvrnPeAotjLuL","agent":"soundings","tool":"smart_bash","phase":"rerouted","detail":"→ smart_grep"}
+{"at":"2026-05-31T19:13:05.153Z","session_id":"ses_180a392c1ffe4gvrnPeAotjLuL","agent":"soundings","tool":"smart_grep","phase":"started","detail":"mcp"}
+{"at":"2026-05-31T19:13:05.317Z","session_id":"ses_180a392c1ffe4gvrnPeAotjLuL","agent":"soundings","tool":"smart_grep","phase":"completed","detail":"mcp"}
+{"at":"2026-05-31T19:13:05.690Z","session_id":"ses_180a392c1ffe4gvrnPeAotjLuL","agent":"soundings","tool":"smart_grep","phase":"started","detail":"mcp"}
+{"at":"2026-05-31T19:13:05.727Z","session_id":"ses_180a392c1ffe4gvrnPeAotjLuL","agent":"soundings","tool":"smart_grep","phase":"completed","detail":"mcp"}
+{"at":"2026-05-31T19:13:49.355Z","session_id":"ses_180a392c1ffe4gvrnPeAotjLuL","agent":"soundings","tool":"smart_bash","phase":"started","detail":"Check MCP index file size"}
+{"at":"2026-05-31T19:13:49.369Z","session_id":"ses_180a392c1ffe4gvrnPeAotjLuL","agent":"soundings","tool":"smart_bash","phase":"completed","detail":"wc exit=0"}
+{"at":"2026-05-31T19:14:15.350Z","session_id":"ses_180a392c1ffe4gvrnPeAotjLuL","agent":"soundings","tool":"smart_bash","phase":"started","detail":"Read MCP Interface definition"}
+{"at":"2026-05-31T19:14:16.131Z","session_id":"ses_180a392c1ffe4gvrnPeAotjLuL","agent":"soundings","tool":"smart_bash","phase":"started","detail":"Read MCP types and status definition"}
+{"at":"2026-05-31T19:14:39.653Z","session_id":"ses_180a392c1ffe4gvrnPeAotjLuL","agent":"soundings","tool":"smart_bash","phase":"started","detail":"Read MCP Interface definition and types"}
+{"at":"2026-05-31T19:14:39.701Z","session_id":"ses_180a392c1ffe4gvrnPeAotjLuL","agent":"soundings","tool":"smart_bash","phase":"completed","detail":"head exit=0"}
+{"at":"2026-05-31T19:15:10.656Z","session_id":"ses_180a392c1ffe4gvrnPeAotjLuL","agent":"soundings","tool":"smart_bash","phase":"started","detail":"Read MCP Interface definition from line 190-270"}
+{"at":"2026-05-31T19:15:10.671Z","session_id":"ses_180a392c1ffe4gvrnPeAotjLuL","agent":"soundings","tool":"smart_bash","phase":"completed","detail":"head exit=0"}
+{"at":"2026-05-31T19:15:42.180Z","session_id":"ses_180a392c1ffe4gvrnPeAotjLuL","agent":"soundings","tool":"smart_bash","phase":"started","detail":"Find MCP layer and interface definitions"}
+{"at":"2026-05-31T19:15:42.180Z","session_id":"ses_180a392c1ffe4gvrnPeAotjLuL","agent":"soundings","tool":"smart_bash","phase":"rerouted","detail":"→ smart_grep"}
+{"at":"2026-05-31T19:15:43.147Z","session_id":"ses_180a392c1ffe4gvrnPeAotjLuL","agent":"soundings","tool":"smart_bash","phase":"started","detail":"Find MCP service class"}
+{"at":"2026-05-31T19:15:43.147Z","session_id":"ses_180a392c1ffe4gvrnPeAotjLuL","agent":"soundings","tool":"smart_bash","phase":"rerouted","detail":"→ smart_grep"}
+{"at":"2026-05-31T19:16:01.736Z","session_id":"ses_180a392c1ffe4gvrnPeAotjLuL","agent":"soundings","tool":"smart_grep","phase":"started","detail":"defaultLayer|class Service"}
+{"at":"2026-05-31T19:16:01.741Z","session_id":"ses_180a392c1ffe4gvrnPeAotjLuL","agent":"soundings","tool":"smart_grep","phase":"completed","detail":"defaultLayer|class Service"}
+{"at":"2026-05-31T19:16:20.654Z","session_id":"ses_180a392c1ffe4gvrnPeAotjLuL","agent":"soundings","tool":"smart_bash","phase":"started","detail":"Read MCP lifecycle test mock infrastructure"}
+{"at":"2026-05-31T19:16:20.686Z","session_id":"ses_180a392c1ffe4gvrnPeAotjLuL","agent":"soundings","tool":"smart_bash","phase":"completed","detail":"head exit=0"}
+{"at":"2026-05-31T19:16:27.620Z","session_id":"ses_180a392c1ffe4gvrnPeAotjLuL","agent":"soundings","tool":"smart_bash","phase":"started","detail":"Read snapshot-tool-race MCP mock"}
+{"at":"2026-05-31T19:16:28.261Z","session_id":"ses_180a392c1ffe4gvrnPeAotjLuL","agent":"soundings","tool":"smart_bash","phase":"started","detail":"Read prompt.test.ts MCP mock setup"}
+{"at":"2026-05-31T19:16:48.589Z","session_id":"ses_180a392c1ffe4gvrnPeAotjLuL","agent":"soundings","tool":"smart_bash","phase":"started","detail":"Read snapshot-tool-race MCP mock lines 55-130"}
+{"at":"2026-05-31T19:16:48.597Z","session_id":"ses_180a392c1ffe4gvrnPeAotjLuL","agent":"soundings","tool":"smart_bash","phase":"completed","detail":"head exit=0"}
+{"at":"2026-05-31T19:16:49.255Z","session_id":"ses_180a392c1ffe4gvrnPeAotjLuL","agent":"soundings","tool":"smart_bash","phase":"started","detail":"Read prompt.test.ts MCP mock details"}
+{"at":"2026-05-31T19:16:49.263Z","session_id":"ses_180a392c1ffe4gvrnPeAotjLuL","agent":"soundings","tool":"smart_bash","phase":"completed","detail":"head exit=0"}
+{"at":"2026-05-31T19:16:50.115Z","session_id":"ses_180a392c1ffe4gvrnPeAotjLuL","agent":"soundings","tool":"smart_bash","phase":"started","detail":"Read prompt.test.ts MCP setup lines 1-100"}
+{"at":"2026-05-31T19:16:50.123Z","session_id":"ses_180a392c1ffe4gvrnPeAotjLuL","agent":"soundings","tool":"smart_bash","phase":"completed","detail":"head exit=0"}
+{"at":"2026-05-31T19:17:05.436Z","session_id":"ses_180a392c1ffe4gvrnPeAotjLuL","agent":"soundings","tool":"smart_find","phase":"started","detail":"*"}
+{"at":"2026-05-31T19:17:05.530Z","session_id":"ses_180a392c1ffe4gvrnPeAotjLuL","agent":"soundings","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T19:17:06.416Z","session_id":"ses_180a392c1ffe4gvrnPeAotjLuL","agent":"soundings","tool":"smart_bash","phase":"started","detail":"List all test files"}
+{"at":"2026-05-31T19:17:06.416Z","session_id":"ses_180a392c1ffe4gvrnPeAotjLuL","agent":"soundings","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T19:17:25.134Z","session_id":"ses_180a392c1ffe4gvrnPeAotjLuL","agent":"soundings","tool":"smart_bash","phase":"started","detail":"List all MCP test directory files"}
+{"at":"2026-05-31T19:17:25.134Z","session_id":"ses_180a392c1ffe4gvrnPeAotjLuL","agent":"soundings","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T19:17:45.021Z","session_id":"ses_180a392c1ffe4gvrnPeAotjLuL","agent":"soundings","tool":"smart_grep","phase":"started","detail":"^"}
+{"at":"2026-05-31T19:17:45.034Z","session_id":"ses_180a392c1ffe4gvrnPeAotjLuL","agent":"soundings","tool":"smart_grep","phase":"completed","detail":"^"}
+{"at":"2026-05-31T19:17:45.874Z","session_id":"ses_180a392c1ffe4gvrnPeAotjLuL","agent":"soundings","tool":"smart_grep","phase":"started","detail":"^"}
+{"at":"2026-05-31T19:17:45.888Z","session_id":"ses_180a392c1ffe4gvrnPeAotjLuL","agent":"soundings","tool":"smart_grep","phase":"completed","detail":"^"}

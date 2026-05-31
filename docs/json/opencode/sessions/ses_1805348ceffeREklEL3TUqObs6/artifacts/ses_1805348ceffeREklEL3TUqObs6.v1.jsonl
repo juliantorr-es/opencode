@@ -1,0 +1,21 @@
+{"at":"2026-05-31T20:15:13.683Z","tool":"smart_grep","action":"searched","pattern":"CapabilityRegistry","results":5,"files":2}
+{"at":"2026-05-31T20:15:14.504Z","tool":"smart_grep","action":"searched","pattern":"RL-005","results":30,"files":7}
+{"at":"2026-05-31T20:15:43.673Z","tool":"smart_grep","action":"searched","pattern":"plugin-state-unification|CRITIC VERDICT|prepublication","results":11,"files":2}
+{"at":"2026-05-31T20:16:16.974Z","tool":"smart_bash","action":"bash","command":"wc -l packages/opencode/src/plugin/index.ts && sed -n '77,92p' packages/opencode/src/plugin/index.ts","exit_code":0}
+{"at":"2026-05-31T20:16:37.237Z","tool":"smart_bash","action":"bash","command":"head -n 260 packages/opencode/src/plugin/index.ts | tail -n 66","exit_code":0}
+{"at":"2026-05-31T20:16:37.571Z","tool":"smart_bash","action":"bash","command":"head -n 355 packages/opencode/src/plugin/index.ts | tail -n 46","exit_code":0}
+{"at":"2026-05-31T20:16:38.141Z","tool":"smart_bash","action":"bash","command":"head -n 400 packages/opencode/src/plugin/index.ts | tail -n 46","exit_code":0}
+{"at":"2026-05-31T20:16:45.665Z","tool":"smart_bash","action":"bash","command":"head -n 475 packages/opencode/src/plugin/index.ts | tail -n 76","exit_code":0}
+{"at":"2026-05-31T20:16:46.411Z","tool":"smart_bash","action":"bash","command":"tail -n 58 packages/opencode/src/plugin/index.ts","exit_code":0}
+{"at":"2026-05-31T20:17:00.170Z","tool":"smart_bash","action":"bash","command":"head -n 465 packages/opencode/src/plugin/index.ts | tail -n 30","exit_code":0}
+{"at":"2026-05-31T20:17:01.046Z","tool":"smart_grep","action":"searched","pattern":"log\\.warn.*plugin hook dispatch|Effect\\.logWarning","results":3,"files":2}
+{"at":"2026-05-31T20:17:02.358Z","tool":"smart_grep","action":"searched","pattern":"rl-005-plugin-security-manifest","results":4,"files":4}
+{"at":"2026-05-31T20:17:11.857Z","tool":"smart_bash","action":"bash","command":"head -n 475 packages/opencode/src/plugin/index.ts | tail -n 10","exit_code":0}
+{"at":"2026-05-31T20:17:12.777Z","tool":"smart_grep","action":"searched","pattern":"registrations","results":0,"files":0}
+{"at":"2026-05-31T20:17:13.721Z","tool":"smart_grep","action":"searched","pattern":"s\\.hooks|s\\.registrations","results":0,"files":0}
+{"at":"2026-05-31T20:17:22.338Z","tool":"smart_bash","action":"bash","command":"head -n 420 packages/opencode/src/plugin/index.ts | tail -n 25","exit_code":0}
+{"at":"2026-05-31T20:18:23.277Z","tool":"smart_bash","action":"bash","command":"head -n 435 packages/opencode/src/plugin/index.ts | tail -n 40","exit_code":0}
+{"at":"2026-05-31T20:18:30.808Z","tool":"smart_grep","action":"searched","pattern":"trigger\\.test|capability.*test","results":1,"files":1}
+{"at":"2026-05-31T20:18:43.543Z","tool":"smart_grep","action":"searched","pattern":"CRITIC VERDICT","results":2,"files":1}
+{"at":"2026-05-31T20:18:49.592Z","tool":"smart_bash","action":"bash","command":"python3 -c \"\nimport json\nwith open('docs/json/opencode/coordination/messages.v1.jsonl') as f:\n    fo","exit_code":0}
+{"at":"2026-05-31T20:19:59.693Z","tool":"smart_bash","action":"bash","command":"python3 -c \"\nimport json\nwith open('docs/json/opencode/coordination/messages.v1.jsonl') as f:\n    fo","exit_code":0}

@@ -6,7 +6,6 @@ color: "#9B59B6"
 description: Handy-agent — quick-fix specialist for narrow, well-scoped bugs. Spawned by General Man-agent for fast one-shot repairs. NOT part of the main lifecycle — the surgeon handles repair via its internal team (scalpel/vitals/etc.).
 permission:
   feedback(action="tool"): "allow"
-  smart_delegate(action="send"): "allow"
   gate(action="finding"): "allow"
   record(action="lesson"): "allow"
   record(action="activity"): "allow"
@@ -117,7 +116,6 @@ When you receive a failure report, decompose it into narrow, falsifiable questio
 - Consume previous artifacts via read(action="artifact") — never re-read raw files that have already been digested into artifacts. read(action="artifact") returns condensed, agent-optimized summaries
 - When calling read(action="artifact"), always pass profile="handy-agent" to filter out irrelevant context. Your profile is "handy-agent" — you should only see artifacts tagged with "handy-agent" or "all"
 - If a tool misbehaves (wrong output, ignored parameter, timeout, stale data), report it immediately via feedback(action="tool") with: tool_name, issue, expected, actual, severity (blocker|major|minor|annoyance), and workaround. This is mandatory — silent tool failures corrupt the entire wave pipeline.
-- Encounter a pre-existing error, dirty file, or broken state outside your mission scope? Never ignore it and never fix it — RECORD IT. Call record(action="finding") with the exact file:line, what you observed, and why it matters. Then call gate(action="finding") to share it with concurrent sessions. Work around it and continue your mission. If it BLOCKS your mission, escalate via smart_delegate(action="send")(kind="blocker") instead of silently failing or going off-script.
 - End every response with a structured handoff JSON. This is how the orchestrator routes your results without reading source files:
   {"status": "completed"|"failed"|"partial", "files_created": [...], "files_modified": [...], "verification": {"typecheck": "pass"|"fail"|"not_run", "tests": "pass"|"fail"|"not_run", "note": "..."}, "blockers": [...], "deferred": [...]}
 - After every file operation, call record(action="activity") with action (created|modified|discovered|blocked), target (file path), and details (pattern, services_used, note). The knowledge graph builds itself from your exhaust — other sessions depend on this.

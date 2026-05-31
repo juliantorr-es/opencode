@@ -1,5 +1,14 @@
+import { writeFileSync } from "node:fs"
+import { join } from "node:path"
 import * as http from "node:http"
 import * as tls from "node:tls"
+import {
+  initStartupTrace,
+  writePhase,
+  writeFailure,
+  classifyError,
+  redactSecrets,
+} from "./sidecar-startup-trace"
 
 type NodeHttpWithEnvProxy = typeof http & {
   setGlobalProxyFromEnv: () => void
@@ -50,15 +59,139 @@ parentPort.on("message", (event) => {
   void start(command)
 })
 
-async function start(command: StartCommand) {
-  try {
-    prepareSidecarEnv(command.password, command.userDataPath)
-    ensureLoopbackNoProxy()
-    useSystemCertificates()
-    useEnvProxy()
-    const { Database, Log, Server } = await import("virtual:opencode-server")
-    await Log.init({ level: "WARN" })
+// Capture last 20 lines of stderr for diagnostics
+const stderrLines: string[] = []
+let stderrTail = ""
+process.stderr.on("data", (chunk: Buffer) => {
+  const text = chunk.toString("utf8")
+  stderrLines.push(...text.split("\n"))
+  while (stderrLines.length > 20) stderrLines.shift()
+  stderrTail = stderrLines.join("\n")
+})
 
+async function start(command: StartCommand) {
+  initStartupTrace(command.userDataPath)
+  writePhase("sidecar.spawn.started", "started")
+  let lastSuccessfulPhase = "start"
+
+  const fail = (phase: string, error: unknown) => {
+    const err = error instanceof Error ? error : new Error(String(error))
+    const errorCode = classifyError(err, lastSuccessfulPhase as any)
+
+    // Write durable failure packet to disk FIRST
+    writeFailure(errorCode, err.message, {
+      port: command.port,
+      stderrTail,
+      ...(err.stack ? { stderrTail: (stderrTail + "\n" + err.stack).slice(0, 1000) } : {}),
+    })
+
+    // Also write the legacy boot-failure.json for backward compat
+    try {
+      writeFileSync(
+        join(command.userDataPath, "sidecar-boot-failure.json"),
+        JSON.stringify(
+          {
+            errorCode,
+            phase,
+            port: command.port,
+            hostname: command.hostname,
+            lastSuccessfulPhase,
+            errorMessage: err.message,
+            errorStack: redactSecrets(err.stack ?? ""),
+            exitCode: 1,
+            stderrTail: redactSecrets(stderrTail),
+            timestamp: new Date().toISOString(),
+            platform: process.platform,
+            nodeVersion: process.versions.node,
+          },
+          null,
+          2,
+        ),
+      )
+    } catch {
+      // Disk write failure is non-fatal
+    }
+
+    // IPC message as secondary
+    try {
+      parentPort.postMessage({
+        type: "error",
+        error: { message: `${errorCode}: ${err.message}`, stack: err.stack },
+        component: phase,
+      })
+    } catch {
+      // IPC failure non-fatal
+    }
+    setImmediate(() => process.exit(1))
+  }
+
+  // Phase 1: env
+  try {
+    writePhase("sidecar.env.prepare", "started")
+    prepareSidecarEnv(command.password, command.userDataPath)
+    lastSuccessfulPhase = "env"
+    writePhase("sidecar.env.prepare", "completed")
+  } catch (error) {
+    return fail("env", error)
+  }
+
+  // Phase 2: loopback-proxy
+  try {
+    writePhase("sidecar.env.prepare", "started")
+    ensureLoopbackNoProxy()
+    lastSuccessfulPhase = "loopback-proxy"
+    writePhase("sidecar.env.prepare", "completed")
+  } catch (error) {
+    return fail("loopback-proxy", error)
+  }
+
+  // Phase 3: system-certs
+  try {
+    writePhase("sidecar.env.prepare", "started")
+    useSystemCertificates()
+    lastSuccessfulPhase = "system-certs"
+    writePhase("sidecar.env.prepare", "completed")
+  } catch (error) {
+    return fail("system-certs", error)
+  }
+
+  // Phase 4: env-proxy
+  try {
+    writePhase("sidecar.env.prepare", "started")
+    useEnvProxy()
+    lastSuccessfulPhase = "env-proxy"
+    writePhase("sidecar.env.prepare", "completed")
+  } catch (error) {
+    return fail("env-proxy", error)
+  }
+
+  // Phase 5: server import
+  let Server: { listen: (opts: Record<string, unknown>) => Promise<{ stop: (close?: boolean) => void | Promise<void> }> }
+  let Log: { init: (opts: { level?: string }) => Promise<void> }
+  try {
+    writePhase("sidecar.config.load", "started")
+    const mod = await import("virtual:opencode-server")
+    Server = mod.Server
+    Log = mod.Log
+    lastSuccessfulPhase = "server-import"
+    writePhase("sidecar.config.load", "completed")
+  } catch (error) {
+    return fail("server-import", error)
+  }
+
+  // Phase 6: log init
+  try {
+    writePhase("sidecar.config.load", "started")
+    await Log.init({ level: "WARN" })
+    lastSuccessfulPhase = "log-init"
+    writePhase("sidecar.config.load", "completed")
+  } catch (error) {
+    return fail("log-init", error)
+  }
+
+  // Phase 7: server listen
+  try {
+    writePhase("sidecar.server.listen", "started")
     listener = await Server.listen({
       port: command.port,
       hostname: command.hostname,
@@ -66,17 +199,14 @@ async function start(command: StartCommand) {
       password: command.password,
       cors: ["oc://renderer"],
     })
-    parentPort.postMessage({ type: "ready" })
+    lastSuccessfulPhase = "server-listen"
+    writePhase("sidecar.server.listen", "completed")
   } catch (error) {
-    const err = error instanceof Error ? error : new Error(String(error))
-    const component = /PGlite|Database/i.test(err.message) ? "db"
-      : /migrat/i.test(err.message) ? "migration"
-      : /DuckDB/i.test(err.message) ? "duckdb"
-      : /listen|Server/i.test(err.message) ? "server"
-      : "unknown"
-    parentPort.postMessage({ type: "error", error: serializeError(err), component })
-    setImmediate(() => process.exit(1))
+    return fail("server-listen", error)
   }
+
+  writePhase("sidecar.ready", "completed")
+  parentPort.postMessage({ type: "ready" })
 }
 
 async function stop() {
@@ -156,10 +286,6 @@ function parseCommand(value: unknown): SidecarCommand | undefined {
   }
 }
 
-function serializeError(error: unknown) {
-  if (error instanceof Error) return { message: error.message, stack: error.stack }
-  return { message: String(error) }
-}
 
 function getParentPort() {
   const port = process.parentPort as ParentPort | undefined

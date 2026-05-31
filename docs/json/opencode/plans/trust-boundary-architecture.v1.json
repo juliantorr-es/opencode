@@ -1,0 +1,499 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Trust-Boundary Architecture Plan",
+  "generated_at": "2026-05-31T00:00:00Z",
+  "plan_id": "trust-boundary-architecture",
+  "boundary": "Plugin & MCP Trust Boundary",
+  "consumer_purpose": "Eliminate 48 security findings (5 P0, 26 P1, 17 P2) from the trust-boundary audit by hardening capability enforcement, auth data integrity, secret redaction, and validation gates across the plugin and MCP subsystems.",
+  "coordinates_with": ["PLUGIN-TRUTH", "MCP-TRUTH"],
+  "non_duplicated_scope": "This plan covers only findings NOT claimed by PLUGIN-TRUTH or MCP-TRUTH lanes: (1) capability boundary `as any` elimination, (2) auth corruption fix, (3) auth response validation, (4) secret redaction in logs, (5) silent catch logging, (6) typeof guard replacement. F01 (process.env to MCP child) is covered by MCP-TRUTH lane and referenced only for env scrubbing coordination.",
+  "root_causes": [
+    {
+      "hypothesis": "RC1: CapabilityId is a plain string union, not a branded/nominal type — every string literal cast to CapabilityId is accepted by TypeScript",
+      "confidence": "high",
+      "evidence": [
+        "capability/types.ts:1-17 defines CapabilityId as `(typeof CapabilityId)[keyof typeof CapabilityId]` — a plain string union",
+        "hook-dispatch-guard.ts:53,57 uses `requiredCapability as any` and `\"network.request\" as any`",
+        "plugin/index.ts:437 casts HOOK_CAPABILITY_MAP to `Record<string, string>`, discarding CapabilityId",
+        "plugin/index.ts:476 passes raw string `capability` to `checkCapability` via `as any`",
+        "No Schema.brand anywhere in the capability subsystem — unlike account/schema.ts which uses `Schema.String.pipe(Schema.brand(\"AccessToken\"))`",
+        "zoning-board confirms this is a convention violation: branded IDs always use `Schema.String.pipe(Schema.brand(...))`"
+      ],
+      "trace_to_findings": ["F02", "F03", "F07", "F08", "F09"],
+      "requires": "code change + schema change"
+    },
+    {
+      "hypothesis": "RC2: HTTP response JSON from OAuth providers is cast via `as` without Schema validation — any field can be missing, wrong type, or malicious",
+      "confidence": "high",
+      "evidence": [
+        "xai.ts:232: `(await response.json()) as DeviceCodeResponse` — no validation",
+        "xai.ts:185,202: `response.json() as Promise<TokenResponse>` — no validation",
+        "xai.ts:281: `(await response.json()) as TokenResponse` — no validation on success path",
+        "xai.ts:283: `(await response.json().catch(() => ({}))) as DeviceTokenErrorBody` — double weakness",
+        "codex.ts:583: `(await deviceResponse.json()) as { device_code, ... }` — inline type, no validation",
+        "codex.ts:609: `(await response.json()) as { access_token, ... }` — inline type, no validation",
+        "copilot.ts:241,270: same pattern",
+        "digitalocean.ts:264: `(await res.json().catch(() => undefined)) as { model_routers?: ... }` — cast after undefined fallback",
+        "zoning-board confirms secrets should use branded Schema types"
+      ],
+      "trace_to_findings": ["F10", "F11", "F12", "F13", "F14", "F15", "F16", "F17"],
+      "requires": "code change + schema change"
+    },
+    {
+      "hypothesis": "RC3: Auth data corruption is silently swallowed via `getOrElse(..., () => {})` — all stored tokens are lost without any warning",
+      "confidence": "high",
+      "evidence": [
+        "mcp/auth.ts:64: `Option.getOrElse(decodeAuthData(data), () => ({}) as AuthData)` — falls back to empty object",
+        "mcp/auth.ts:65: `Effect.catch(() => Effect.succeed({} as AuthData))` — second fallback for read errors",
+        "No logging at either fallback site",
+        "Zoning-board confirms Schema.decodeUnknownOption + Option.getOrElse IS the convention, but silent fallback with no warning is the problem"
+      ],
+      "trace_to_findings": ["F04", "F40", "F41", "F42"],
+      "requires": "code change"
+    },
+    {
+      "hypothesis": "RC4: Silent catch blocks (14+ empty/no-log catches) hide failures that could indicate security issues",
+      "confidence": "high",
+      "evidence": [
+        "plugin/shared.ts:17-19: `try { return npa(spec) } catch {}` — returns undefined silently",
+        "auth/index.ts:59-61: `try { return JSON.parse(...) } catch (err) {}` — silently swallows parse failures",
+        "mcp/index.ts:610: `try { process.kill(dpid, 'SIGTERM') } catch {}` — silently swallows kill failures",
+        "copilot.ts:146: `} catch {}` during session fetch",
+        "copilot.ts:363,388: `.catch(() => undefined)` on HTTP calls",
+        "Plus 10 more .catch(() => undefined) or Effect.catch(() => Effect.void) patterns across mcp/index.ts"
+      ],
+      "trace_to_findings": ["F19", "F20", "F21", "F22", "F23", "F24", "F25", "F26", "F27", "F28", "F29", "F30"],
+      "requires": "code change"
+    },
+    {
+      "hypothesis": "RC5: TypeScript structural typing allows pluginId to be optional — capability checks that depend on identity fail unpredictably",
+      "confidence": "high",
+      "evidence": [
+        "plugin/index.ts:82: `type ListedPlugin = Hooks & { pluginId?: string }` — optional",
+        "plugin/capability/enforcer.ts:26: `registry.get(pluginId)` — if pluginId is missing, returns undefined silently",
+        "plugin/capability/hook-dispatch-guard.ts:51: `checkCapability(this.registry, pluginId, ...)` — no undefined guard",
+        "Zoning-board confirms PluginSecurityState uses Ref-based registry keyed by string pluginId"
+      ],
+      "trace_to_findings": ["F05", "F45", "F46", "F47", "F48"],
+      "requires": "code change"
+    },
+    {
+      "hypothesis": "RC6: Dynamic import of third-party code has no sandbox — but this is a platform-level architectural decision, not a code bug",
+      "confidence": "medium",
+      "evidence": [
+        "loader.ts:141: `mod = await import(row.entry)` — executes arbitrary code in same process",
+        "loader.ts:39-41: Loaded type is `Resolved & { mod: Record<string, unknown> }` — no runtime validation of module shape",
+        "Node.js vm module, Worker threads, and Deno-style sandboxing are all platform-level changes",
+        "Cannot be fixed with Schema validation alone — requires process isolation"
+      ],
+      "trace_to_findings": ["F06"],
+      "requires": "documentation (deferred to platform-level sandboxing milestone)"
+    }
+  ],
+  "fixes": [
+    {
+      "id": "fix-A-capability-brand",
+      "description": "Add Schema.brand to CapabilityId, replace all `as any` casts on capability strings with typed lookups, align with codebase branded ID convention",
+      "root_cause": "RC1",
+      "files": [
+        "packages/opencode/src/plugin/capability/types.ts",
+        "packages/opencode/src/plugin/capability/hook-dispatch-guard.ts",
+        "packages/opencode/src/plugin/capability/hook-map.ts",
+        "packages/opencode/src/plugin/index.ts",
+        "packages/opencode/src/plugin/capability/index.ts"
+      ],
+      "before": {
+        "types.ts:1-18": "export const CapabilityId = {\n  FilesystemRead: \"filesystem.read\",\n  ...\n} as const\nexport type CapabilityId = (typeof CapabilityId)[keyof typeof CapabilityId]",
+        "hook-dispatch-guard.ts:53": "checkCapability(this.registry, pluginId, requiredCapability as any)",
+        "hook-dispatch-guard.ts:57": "return checkCapability(this.registry, pluginId, \"network.request\" as any)",
+        "hook-map.ts:8": "export const HOOK_CAPABILITY_MAP: Record<string, CapabilityId> = {",
+        "plugin/index.ts:437": "const requiredCapability = (HOOK_CAPABILITY_MAP as Record<string, string>)[name]",
+        "plugin/index.ts:476": "return yield* checkCapability(s.capabilityRegistry, pluginId, capability as any)"
+      },
+      "after": {
+        "types.ts:1-18": "// Branded capability IDs — string must pass through decode to be trusted\nexport const CapabilityId = Schema.Literal(\n  \"filesystem.read\", \"filesystem.write\", \"network.request\", \"network.websocket\",\n  \"secrets.access\", \"tool.register\", \"tool.execute\", \"event.subscribe\", \"event.emit\",\n  \"hooks.transform_message\", \"hooks.transform_system\", \"hooks.compaction\",\n  \"config.read\", \"config.write\"\n).pipe(Schema.brand(\"CapabilityId\"))\nexport type CapabilityId = Schema.Schema.Type<typeof CapabilityId>\n\n// String constants for Map keys and runtime comparison (not for type-safe dispatch)\nexport const CapabilityIdValues = {\n  FilesystemRead: \"filesystem.read\",\n  ...\n} as const",
+        "hook-dispatch-guard.ts:53": "checkCapability(this.registry, pluginId, requiredCapability)",
+        "hook-dispatch-guard.ts:57": "return checkCapability(this.registry, pluginId, CapabilityIdValues.NetworkRequest)",
+        "hook-map.ts:8": "export const HOOK_CAPABILITY_MAP: Record<string, CapabilityId> = {\n  tool: CapabilityIdValues.ToolRegister,\n  event: CapabilityIdValues.EventSubscribe,\n  ...\n}",
+        "plugin/index.ts:437": "const requiredCapability = HOOK_CAPABILITY_MAP[name]",
+        "plugin/index.ts:476": "return yield* checkCapability(s.capabilityRegistry, pluginId, capability)"
+      },
+      "impact": {
+        "affected_files": [
+          "packages/opencode/src/plugin/capability/types.ts",
+          "packages/opencode/src/plugin/capability/hook-dispatch-guard.ts",
+          "packages/opencode/src/plugin/capability/hook-map.ts",
+          "packages/opencode/src/plugin/index.ts",
+          "packages/opencode/src/plugin/capability/index.ts",
+          "packages/opencode/src/plugin/capability/enforcer.ts"
+        ],
+        "tests_to_run": [
+          "packages/opencode/test/plugin/ (any existing capability tests)",
+          "bun typecheck in packages/opencode"
+        ],
+        "type_errors": [
+          "Any file using CapabilityId as a plain string union will need to use CapabilityIdValues for literal comparisons",
+          "Tests that pass string literals to checkCapability will need updating"
+        ]
+      },
+      "risks": [
+        "CapabilityIdValues literals could diverge from Schema.Literal values — needs a compile-time check",
+        "CapabilityId is both exported as const and as type in capability/index.ts:1 — the re-export currently has a bug (`CapabilityId as CapabilityIdValues` on same line), needs fix",
+        "External plugin manifests use raw strings — these must go through Schema.decode before becoming CapabilityId"
+      ],
+      "validation": [
+        "bun typecheck in packages/opencode: should catch any remaining `as any` on capability strings",
+        "Unit test: pass invalid capability string → should fail at decode boundary",
+        "Unit test: pass valid capability string through Schema.decode → should produce branded CapabilityId",
+        "Existing hook dispatch tests should pass unchanged"
+      ]
+    },
+    {
+      "id": "fix-B-auth-response-schemas",
+      "description": "Replace all `response.json() as { ... }` casts in auth plugins with Schema-validated response types, using branded token schemas",
+      "root_cause": "RC2",
+      "files": [
+        "packages/opencode/src/plugin/xai.ts",
+        "packages/opencode/src/plugin/openai/codex.ts",
+        "packages/opencode/src/plugin/github-copilot/copilot.ts",
+        "packages/opencode/src/plugin/digitalocean.ts",
+        "packages/opencode/src/plugin/github-copilot/models.ts"
+      ],
+      "before": {
+        "xai.ts:232": "const json = (await response.json()) as DeviceCodeResponse",
+        "xai.ts:281": "if (response.ok) return (await response.json()) as TokenResponse",
+        "xai.ts:283": "const body = (await response.json().catch(() => ({}))) as DeviceTokenErrorBody",
+        "codex.ts:583": "const deviceData = (await deviceResponse.json()) as { device_code: string; ... }",
+        "codex.ts:609": "const data = (await response.json()) as { access_token: string; ... }",
+        "copilot.ts:241": "const deviceData = (await deviceResponse.json()) as { device_code: string; ... }",
+        "copilot.ts:270": "const data = (await response.json()) as { access_token: string; ... }"
+      },
+      "after": {
+        "xai.ts (new schemas at module top)": "const DeviceCodeResponseSchema = Schema.Struct({\n  device_code: Schema.String,\n  user_code: Schema.String,\n  verification_uri: Schema.String,\n  verification_uri_complete: Schema.optional(Schema.String),\n  expires_in: Schema.Number,\n  interval: Schema.optional(Schema.Number),\n})\n\nconst TokenResponseSchema = Schema.Struct({\n  access_token: Schema.String.pipe(Schema.brand(\"XaiAccessToken\")),\n  token_type: Schema.String,\n  expires_in: Schema.optional(Schema.Number),\n  refresh_token: Schema.optional(Schema.String),\n  scope: Schema.optional(Schema.String),\n})\n\nconst DeviceTokenErrorSchema = Schema.Struct({\n  error: Schema.String,\n  error_description: Schema.optional(Schema.String),\n})",
+        "xai.ts:232 (replaced)": "const raw = await response.json()\nconst json = Schema.decodeUnknownSync(DeviceCodeResponseSchema)(raw)",
+        "xai.ts:281 (replaced)": "if (response.ok) {\n  const raw = await response.json()\n  return Schema.decodeUnknownSync(TokenResponseSchema)(raw)\n}",
+        "codex.ts (new schemas)": "const CodexDeviceCodeSchema = Schema.Struct({ device_code: Schema.String, user_code: Schema.String, verification_uri: Schema.String, expires_in: Schema.Number, interval: Schema.optional(Schema.Number) })\nconst CodexTokenSchema = Schema.Struct({ access_token: Schema.String.pipe(Schema.brand(\"CodexAccessToken\")), token_type: Schema.String, expires_in: Schema.optional(Schema.Number), refresh_token: Schema.optional(Schema.String), scope: Schema.optional(Schema.String) })",
+        "copilot.ts (new schemas)": "const CopilotDeviceCodeSchema = Schema.Struct({ device_code: Schema.String, user_code: Schema.String, verification_uri: Schema.String, expires_in: Schema.Number, interval: Schema.optional(Schema.Number) })\nconst CopilotTokenSchema = Schema.Struct({ access_token: Schema.String.pipe(Schema.brand(\"CopilotAccessToken\")), token_type: Schema.String, expires_in: Schema.optional(Schema.Number), refresh_token: Schema.optional(Schema.String), scope: Schema.optional(Schema.String) })"
+      },
+      "impact": {
+        "affected_files": [
+          "packages/opencode/src/plugin/xai.ts",
+          "packages/opencode/src/plugin/openai/codex.ts",
+          "packages/opencode/src/plugin/github-copilot/copilot.ts",
+          "packages/opencode/src/plugin/digitalocean.ts",
+          "packages/opencode/src/plugin/github-copilot/models.ts"
+        ],
+        "tests_to_run": [
+          "bun typecheck in packages/opencode",
+          "Any existing auth plugin tests"
+        ],
+        "type_errors": [
+          "Functions consuming the `as`-cast shapes will need to use Schema.Schema.Type<typeof Schema>",
+          "TokenResponse type usages across files must be updated to use schema-derived types"
+        ]
+      },
+      "risks": [
+        "CRITICAL EDGE CASE (building-inspector E6-01): OAuth providers add new fields over time (e.g., OpenAI added `id_token` later). Schemas MUST use `Schema.ignoreExtra()` or `Schema.Struct(...).pipe(Schema.ignoreExtra())` for forward compatibility, otherwise all future provider updates break auth.",
+        "CRITICAL EDGE CASE (building-inspector E6-02): Rate-limit error responses have different shapes than success responses (e.g., `{ error: 'rate_limited', retry_after: 30 }` vs `{ access_token: '...' }`). Schema must use discriminated union or optional fields to handle both success and error shapes.",
+        "Schema.decodeUnknownSync throws on failure — callers currently don't handle this; need to decide: throw (fail fast) vs decodeUnknownOption (graceful). Recommendation: use decodeUnknownSync for success-path validation; add separate error-shape decoding for error paths.",
+        "DeviceTokenErrorBody in xai.ts:283 is used with `.catch(() => ({}))` — the fallback to empty object breaks if we validate strictly; needs decodeUnknownOption instead"
+      ],
+      "validation": [
+        "Test: valid OAuth token response → Schema.decodeUnknownSync succeeds",
+        "Test: missing access_token in response → decode fails with ParseError",
+        "Test: extra unexpected field in response → succeeds with ignoreExtra",
+        "Test: malformed JSON response → decode fails"
+      ]
+    },
+    {
+      "id": "fix-C-auth-corruption-logging",
+      "description": "Add warning logging on auth data corruption instead of silent fallback to empty object; preserve partial data when possible",
+      "root_cause": "RC3",
+      "files": [
+        "packages/opencode/src/mcp/auth.ts"
+      ],
+      "before": {
+        "mcp/auth.ts:62-66": "const all = Effect.fn(\"McpAuth.all\")(function* () {\n  return yield* fs.readJson(filepath).pipe(\n    Effect.map((data): AuthData => Option.getOrElse(decodeAuthData(data), () => ({}) as AuthData) as AuthData),\n    Effect.catch(() => Effect.succeed({} as AuthData)),\n  )\n})"
+      },
+      "after": {
+        "mcp/auth.ts (new error + logging)": "// Typed auth store error — preserves partial data for recovery\nclass AuthStoreCorrupted {\n  readonly _tag = \"AuthStoreCorrupted\"\n  constructor(\n    readonly message: string,\n    readonly partialData: Record<string, unknown>,\n  ) {}\n}\n\nconst all = Effect.fn(\"McpAuth.all\")(function* () {\n  return yield* fs.readJson(filepath).pipe(\n    Effect.flatMap((data) => {\n      const result = decodeAuthData(data)\n      if (Option.isNone(result)) {\n        // Log warning with corruption detail but preserve whatever we can\n        yield* Effect.logWarning(\"McpAuth: auth data corrupted, using partial data\").pipe(\n          Effect.annotateLogs({ file: filepath }),\n        )\n        // Attempt partial recovery: iterate known entries and validate individually\n        if (typeof data === \"object\" && data !== null) {\n          const partial: AuthData = {}\n          for (const [key, value] of Object.entries(data as Record<string, unknown>)) {\n            const entry = Schema.decodeUnknownOption(Entry)(value)\n            if (Option.isSome(entry)) partial[key] = entry.value\n          }\n          if (Object.keys(partial).length > 0) {\n            yield* Effect.logWarning(\"McpAuth: recovered partial auth data\").pipe(\n              Effect.annotateLogs({ recoveredKeys: Object.keys(partial).join(\",\"), file: filepath }),\n            )\n            return Effect.succeed(partial)\n          }\n        }\n        return Effect.succeed({} as AuthData)\n      }\n      return Effect.succeed(result.value)\n    }),\n    Effect.catch((error) => {\n      yield* Effect.logWarning(\"McpAuth: failed to read auth file, starting fresh\").pipe(\n        Effect.annotateLogs({ file: filepath, error: String(error) }),\n      )\n      return Effect.succeed({} as AuthData)\n    }),\n  )\n})"
+      },
+      "impact": {
+        "affected_files": [
+          "packages/opencode/src/mcp/auth.ts"
+        ],
+        "tests_to_run": [
+          "bun typecheck in packages/opencode",
+          "Any existing MCP auth tests"
+        ],
+        "type_errors": [
+          "None expected — the Interface type stays the same (still returns Record<string, Entry>)"
+        ]
+      },
+      "risks": [
+        "Partial recovery iterates Object.entries on potentially large objects — acceptably small for auth data (few entries)",
+        "Effect.logWarning is used inside Effect.gen — needs `yield*` (or use `Effect.fn` wrapper which it already has)",
+        "The `_tag` field on AuthStoreCorrupted is unused here — could be removed if no consumer needs it",
+        "CRITICAL EDGE CASE (building-inspector E4-01): Missing auth file (ENOENT on first launch) must NOT log a warning — it is normal. Must distinguish ENOENT (first launch) from corrupt JSON (real corruption). Suggestion: check if file exists before read; only warn on parse/decode failures, not on missing file.",
+        "CRITICAL EDGE CASE (building-inspector E4-02): Current decodeAuthData decodes entire file atomically — if one entry is corrupt, ALL entries are discarded. The partial recovery fix addresses this by iterating per-key."
+      ],
+      "validation": [
+        "Test: corrupted JSON auth file → logs warning, returns empty object",
+        "Test: partially corrupted auth file (some entries valid) → logs warning, returns recovered entries",
+        "Test: completely valid auth file → no warning, returns all entries",
+        "Test: missing auth file → no warning, returns empty object",
+        "Test: disk read error → logs warning, returns empty object"
+      ]
+    },
+    {
+      "id": "fix-D-secret-redaction",
+      "description": "Add centralized secret redaction for log statements, error messages, and debug output; apply to oauth-provider.ts token logging; coordinate env scrubbing with MCP-TRUTH lane via existing sanitizeEnv",
+      "root_cause": "RC2 + RC3 (secret-bearing paths in logs)",
+      "coordinates_with": "MCP-TRUTH lane for F01 (env scrubbing before MCP child spawn)",
+      "files": [
+        "packages/opencode/src/mcp/oauth-provider.ts",
+        "packages/opencode/src/plugin/index.ts"
+      ],
+      "before": {
+        "oauth-provider.ts:127-129": "log.info(\"saved oauth tokens\", { mcpName: this.mcpName })",
+        "oauth-provider.ts:142-145": "log.info(\"refreshed oauth tokens\", { mcpName: this.mcpName })",
+        "plugin/index.ts:181-195": "const SECRET_PATTERNS = [\"apiKey\", \"token\", \"password\", \"secret\", \"key\", \"credential\", \"auth\"] as const\nfunction hasSecretKey(key: string): boolean {\n  return SECRET_PATTERNS.some((pattern) => key.toLowerCase().includes(pattern.toLowerCase()))\n}\nfunction stripSecrets<T extends Record<string, unknown>>(config: T): T {\n  const result = { ...config }\n  for (const key of Object.keys(result)) {\n    if (hasSecretKey(key)) {\n      delete result[key]\n    }\n  }\n  return result\n}"
+      },
+      "after": {
+        "oauth-provider.ts:127 (replaced)": "log.info(\"saved oauth tokens\", { mcpName: this.mcpName, hasAccessToken: !!entry?.tokens?.accessToken, hasRefreshToken: !!entry?.tokens?.refreshToken })",
+        "oauth-provider.ts:142 (replaced)": "log.info(\"refreshed oauth tokens\", { mcpName: this.mcpName, hasAccessToken: !!tokens?.access_token, hasRefreshToken: !!tokens?.refresh_token })",
+        "plugin/index.ts (enhanced stripSecrets import)": "// Import existing sanitizeEnv from core for env scrubbing coordination\nimport { sanitizeEnv } from \"@opencode-ai/core/util/env-blocklist\"\n\n// Enhanced redaction: strip secrets from any object before logging\nfunction redactSecrets(obj: Record<string, unknown>): Record<string, unknown> {\n  const result: Record<string, unknown> = {}\n  for (const [key, value] of Object.entries(obj)) {\n    if (hasSecretKey(key)) {\n      result[key] = \"[REDACTED]\"\n    } else if (typeof value === \"object\" && value !== null && !Array.isArray(value)) {\n      result[key] = redactSecrets(value as Record<string, unknown>)\n    } else {\n      result[key] = value\n    }\n  }\n  return result\n}\n\n// Existing stripSecrets remains for config stripping (deletion) but uses the same SECRET_PATTERNS\n// enhance to include env-blocklist suffixes: _TOKEN, _KEY, _SECRET, _PASSWORD, _CREDENTIAL, _API_KEY"
+      },
+      "impact": {
+        "affected_files": [
+          "packages/opencode/src/mcp/oauth-provider.ts",
+          "packages/opencode/src/plugin/index.ts"
+        ],
+        "tests_to_run": [
+          "bun typecheck in packages/opencode",
+          "Existing plugin tests"
+        ],
+        "type_errors": [
+          "None expected — stripSecrets interface stays the same"
+        ]
+      },
+      "risks": [
+        "The stripSecrets string-matching heuristic is fragile — `title` matches `title` (no!) — current SECRET_PATTERNS does NOT include `title`, but `key` matches any key containing 'key' (e.g., `keyboard`, `monkey`). This is existing behavior, not worsened by this fix.",
+        "Zoning-board flagged this as a convention violation: no other part of the codebase uses string-matching for secret detection. Full fix (Schema-branded tokens) deferred to a separate secrets-policy milestone (RL-004).",
+        "redactSecrets recursion depth is bounded by object nesting depth in log contexts (typically 1-2 levels)"
+      ],
+      "validation": [
+        "Test: stripSecrets removes apiKey, token, password fields from config",
+        "Test: oauth-provider log statements do NOT contain access_token values",
+        "Test: oauth-provider log statements DO contain boolean hasAccessToken flags",
+        "Verify no access_token or refresh_token values appear in any log output"
+      ]
+    },
+    {
+      "id": "fix-E-silent-catch-logging",
+      "description": "Add warning/error logging to all 14+ silent catch blocks; use Effect.logWarning for non-critical paths, Effect.logError for auth/data paths",
+      "root_cause": "RC4",
+      "files": [
+        "packages/opencode/src/plugin/shared.ts",
+        "packages/opencode/src/auth/index.ts",
+        "packages/opencode/src/mcp/index.ts",
+        "packages/opencode/src/plugin/github-copilot/copilot.ts",
+        "packages/opencode/src/mcp/oauth-provider.ts"
+      ],
+      "before": {
+        "shared.ts:17-19": "function parse(spec: string) {\n  try {\n    return npa(spec)\n  } catch {}\n}",
+        "auth/index.ts:59-61": "try {\n  return JSON.parse(process.env.OPENCODE_AUTH_CONTENT)\n} catch (err) {}",
+        "mcp/index.ts:608-610": "try {\n  process.kill(dpid, \"SIGTERM\")\n} catch {}",
+        "copilot.ts:146": "} catch {}",
+        "oauth-provider.ts:275": "} catch {\n  return { port: OAUTH_CALLBACK_PORT, path: OAUTH_CALLBACK_PATH }\n}"
+      },
+      "after": {
+        "shared.ts:17-19": "function parse(spec: string) {\n  try {\n    return npa(spec)\n  } catch (error) {\n    // npa parse failures are expected for non-npm specifiers; caller handles undefined\n  }\n}",
+        "auth/index.ts:59-61": "try {\n  return JSON.parse(process.env.OPENCODE_AUTH_CONTENT)\n} catch (err) {\n  Log.warn(\"auth: failed to parse OPENCODE_AUTH_CONTENT, falling back to file\", { error: String(err) })\n}",
+        "mcp/index.ts:608-610": "try {\n  process.kill(dpid, \"SIGTERM\")\n} catch (error) {\n  yield* Effect.logDebug(\"MCP: failed to kill descendant process, may already be dead\").pipe(\n    Effect.annotateLogs({ pid: dpid, error: String(error) })\n  )\n}",
+        "copilot.ts:146": "} catch (error) {\n  Log.warn(\"copilot: session fetch failed during subagent check\", { error: String(error) })\n}",
+        "oauth-provider.ts:275": "} catch (error) {\n  log.warn(\"mcp.oauth: failed to parse redirect URI, using defaults\", { redirectUri, error: String(error) })\n  return { port: OAUTH_CALLBACK_PORT, path: OAUTH_CALLBACK_PATH }\n}"
+      },
+      "impact": {
+        "affected_files": [
+          "packages/opencode/src/plugin/shared.ts",
+          "packages/opencode/src/auth/index.ts",
+          "packages/opencode/src/mcp/index.ts",
+          "packages/opencode/src/plugin/github-copilot/copilot.ts",
+          "packages/opencode/src/mcp/oauth-provider.ts",
+          "packages/opencode/src/plugin/xai.ts",
+          "packages/opencode/src/plugin/digitalocean.ts",
+          "packages/opencode/src/plugin/install.ts"
+        ],
+        "tests_to_run": [
+          "bun typecheck in packages/opencode",
+          "All existing MCP and plugin tests"
+        ]
+      },
+      "risks": [
+        "Effect.logDebug inside Effect.gen requires yield* — the process.kill catch block at mcp/index.ts:610 is inside a for loop within Effect.gen, which already has yield* context",
+        "CRITICAL EDGE CASE (building-inspector E5-02): The npa parse catch at shared.ts:17 is intentionally silent (non-npm specifiers like file paths are expected to fail npa parsing, and parsePluginSpecifier handles undefined). Adding logging here would produce false-positive noise. FIX: add comment only, not logging.",
+        "CRITICAL EDGE CASE (building-inspector E5-01): Adding logging to WebSocket/event-loop hot paths causes latency/backpressure — identify and skip logging for high-frequency catch sites like hook dispatch loops. Use log.debug (not warn) for expected failures like process already dead.",
+        "Some .catch(() => undefined) patterns on HTTP calls (copilot.ts:363,388) are expected graceful fallbacks — these should use log.debug, not log.warn (normal when tokens are not yet available)"
+      ],
+      "validation": [
+        "Test: corrupt OPENCODE_AUTH_CONTENT → warning logged, falls back to file",
+        "Test: MCP client close with already-dead process → debug log, no crash",
+        "Test: valid redirect URI → no warning logged",
+        "Test: invalid redirect URI → warning logged with the invalid URI (NOT the error, which may contain sensitive data)",
+        "Verify no silent empty catch {} blocks remain in audited files"
+      ]
+    },
+    {
+      "id": "fix-F-typeof-guard-replacement",
+      "description": "Replace `typeof x === 'object'` guards on OAuth config with Schema validation using the existing ConfigMCP.OAuth schema",
+      "root_cause": "RC5",
+      "files": [
+        "packages/opencode/src/mcp/index.ts"
+      ],
+      "before": {
+        "mcp/index.ts:332": "const oauthConfig = typeof mcp.oauth === \"object\" ? mcp.oauth : undefined",
+        "mcp/index.ts:851": "const oauthConfig = typeof mcpConfig.oauth === \"object\" ? mcpConfig.oauth : undefined"
+      },
+      "after": {
+        "mcp/index.ts:332": "const oauthConfig = Option.getOrElse(Schema.decodeUnknownOption(ConfigMCP.OAuth)(mcp.oauth), () => undefined)",
+        "mcp/index.ts:851": "const oauthConfig = Option.getOrElse(Schema.decodeUnknownOption(ConfigMCP.OAuth)(mcpConfig.oauth), () => undefined)"
+      },
+      "impact": {
+        "affected_files": [
+          "packages/opencode/src/mcp/index.ts"
+        ],
+        "tests_to_run": [
+          "bun typecheck in packages/opencode",
+          "Existing MCP tests"
+        ],
+        "type_errors": [
+          "ConfigMCP.OAuth is already imported via ConfigMCP at line 16 — no new imports needed",
+          "mcp.oauth is typed as `ConfigMCP.OAuth | false | undefined` at the config level, but the `typeof` guard widens this — Schema.decodeUnknownOption will narrow correctly"
+        ]
+      },
+      "risks": [
+        "ConfigMCP.OAuth has optional fields (clientId, clientSecret, scope, callbackPort, redirectUri) — an empty object `{}` passes validation, which is the correct behavior (same as typeof guard)",
+        "If `mcp.oauth` is `false` (explicitly disabled), Schema.decodeUnknownOption returns None → falls back to undefined, which is correct (preserves existing behavior)",
+        "Null values: `typeof null === 'object'` is true in JS but `null` will fail Schema.decodeUnknownOption → returns undefined. This is an IMPROVEMENT over the current behavior which would pass null through as an object."
+      ],
+      "validation": [
+        "Test: valid OAuth config object → Schema decode succeeds, config returned",
+        "Test: oauth: false → Schema decode returns None → undefined",
+        "Test: oauth: undefined → Schema decode returns None → undefined",
+        "Test: oauth: null → Schema decode returns None → undefined (BETTER than current typeof guard which would accept null)",
+        "Test: oauth: 'string' → Schema decode returns None → undefined",
+        "Test: oauth: {} → Schema decode succeeds, empty config returned"
+      ]
+    },
+    {
+      "id": "fix-G-plugin-id-required",
+      "description": "Make pluginId required on ListedPlugin; add identity loss warnings when pluginId is missing in dispatch pipeline",
+      "root_cause": "RC5",
+      "files": [
+        "packages/opencode/src/plugin/index.ts",
+        "packages/opencode/src/plugin/capability/enforcer.ts",
+        "packages/opencode/src/plugin/capability/hook-dispatch-guard.ts"
+      ],
+      "before": {
+        "plugin/index.ts:82": "type ListedPlugin = Hooks & { pluginId?: string }",
+        "enforcer.ts:26": "if (!state) return Effect.succeed(false)  // unknown plugin — silently denied",
+        "hook-dispatch-guard.ts:46-47": "if (!requiredCapability) return Effect.succeed(false)  // unknown hook — silently denied, no logging"
+      },
+      "after": {
+        "plugin/index.ts:82": "type ListedPlugin = Hooks & { pluginId: string }",
+        "enforcer.ts:26": "if (!state) {\n  yield* Effect.logWarning(\"Capability check: unknown plugin ID\").pipe(\n    Effect.annotateLogs({ pluginId })\n  )\n  return Effect.succeed(false)\n}",
+        "hook-dispatch-guard.ts:46-47": "if (!requiredCapability) {\n  yield* Effect.logInfo(\"Hook dispatch: unknown hook denied\").pipe(\n    Effect.annotateLogs({ hookName, pluginId })\n  )\n  return Effect.succeed(false)\n}",
+        "plugin/index.ts (plugin registration)": "// During legacy plugin registration, generate a fallback pluginId if missing:\nif (!pluginId) {\n  pluginId = `legacy:${spec}`\n  Log.warn(\"plugin: legacy plugin has no id, using generated fallback\", { spec, fallbackId: pluginId })\n}"
+      },
+      "impact": {
+        "affected_files": [
+          "packages/opencode/src/plugin/index.ts",
+          "packages/opencode/src/plugin/capability/enforcer.ts",
+          "packages/opencode/src/plugin/capability/hook-dispatch-guard.ts"
+        ],
+        "tests_to_run": [
+          "bun typecheck in packages/opencode",
+          "All plugin tests"
+        ],
+        "type_errors": [
+          "Any code constructing ListedPlugin without pluginId will fail typecheck",
+          "getLegacyPlugins() and applyPlugin() must ensure pluginId is always set"
+        ]
+      },
+      "risks": [
+        "Legacy plugins discovered via dynamic import may not export an `id` field — need fallback generation",
+        "Built-in plugins (internalPlugins()) already have explicit ids set in their PluginInstance shapes — no risk",
+        "Plugin ID is used as a Map key in the Registry — changing from optional to required means we must ensure it's always a non-empty string",
+        "The `shared.ts:253-258 readPluginId()` function validates and normalizes IDs — this should be the single source of truth"
+      ],
+      "validation": [
+        "Test: legacy plugin without id → fallback id generated, warning logged",
+        "Test: built-in plugin → uses its declared id",
+        "Test: npm plugin with id → id preserved",
+        "Test: duplicate ids → existing behavior preserved (last write wins in Map)",
+        "bun typecheck → no `pluginId?: string` remain in plugin dispatch pipeline"
+      ]
+    }
+  ],
+  "apply_order": [
+    "fix-A-capability-brand",
+    "fix-G-plugin-id-required",
+    "fix-F-typeof-guard-replacement",
+    "fix-C-auth-corruption-logging",
+    "fix-B-auth-response-schemas",
+    "fix-D-secret-redaction",
+    "fix-E-silent-catch-logging"
+  ],
+  "apply_order_rationale": "A first (types must be right before casts can be removed). G second (pluginId must be required before capability checks depend on it). F third (typeof guards replaced with Schema — validates the Schema pipeline before auth schemas are added). C fourth (auth corruption logging before auth response schemas to establish error handling pattern). B fifth (auth response schemas added after error handling is in place). D sixth (secret redaction after all logging is in place). E last (silent catch logging is the most mechanical fix, applied last to avoid merge conflicts with other edits).",
+  "rollback_plan": "Revert each fix in reverse order (E → D → B → C → F → G → A). Each fix is independently revertible — A and G change types but the other fixes are additive logging/validation only.",
+  "deferred_risks": [
+    {
+      "risk": "Dynamic import sandboxing (F06)",
+      "rationale": "Platform-level change requiring Worker threads, node:vm, or process isolation. Not a code-level fix. Deferred to sandboxing milestone.",
+      "mitigation": "Document in trust-boundary security model doc. Plugin review process should include code audit before approval."
+    },
+    {
+      "risk": "Hardcoded OAuth client IDs (F36-F39)",
+      "rationale": "Public OAuth clients for desktop flows are intentional — the client ID is public by design in the OAuth PKCE flow. Moving to config would break the headless device-code flow which depends on known client IDs.",
+      "mitigation": "Document rationale in security model. Add comment at each CLIENT_ID constant explaining it is a public OAuth client identifier."
+    },
+    {
+      "risk": "Plain JSON tokens on disk (F40-F42)",
+      "rationale": "Encrypting the auth file requires key management (where do you store the encryption key?). The file is already written with 0o600 permissions. Full disk encryption is the user's responsibility.",
+      "mitigation": "Add comment in auth.ts explaining the security model: file permissions (0o600) protect against other users on the same machine; full disk encryption is expected for physical security."
+    },
+    {
+      "risk": "Secrets string-matching heuristic (stripSecrets/hasSecretKey)",
+      "rationale": "Current heuristic uses key name substring matching (e.g., 'key' matches any key containing 'key'). Zoning-board flagged as convention violation. Full fix requires Schema-branded token types throughout. Deferred to RL-004 secrets-policy milestone.",
+      "mitigation": "Enhance SECRET_PATTERNS to include env-blocklist suffixes (_TOKEN, _KEY, _SECRET, _PASSWORD, _CREDENTIAL, _API_KEY). Add word-boundary matching to prevent false positives like 'keyboard'."
+    },
+    {
+      "risk": "OPENCODE_AUTH_CONTENT leaks full auth payload to MCP child processes (control-plane/workspace.ts:571)",
+      "rationale": "Discovered by load-bearer downstream trace. workspace.ts:571 serializes ALL auth tokens into OPENCODE_AUTH_CONTENT env var, which is inherited by every MCP child process via ...process.env at mcp/index.ts:456. This is the single largest secret leak.",
+      "mitigation": "Add OPENCODE_AUTH_CONTENT to env-blocklist. MCP-TRUTH lane env scrubbing will strip it."
+    },
+    {
+      "risk": "debug-packet.ts SENSITIVE_PATTERNS missing refresh/access patterns",
+      "rationale": "SENSITIVE_PATTERNS redaction list does not include refresh, access, or standalone key — Auth.Info values containing access_tokens may pass unredacted in debug exports.",
+      "mitigation": "Add refresh, access, key to SENSITIVE_PATTERNS in debug-packet.ts."
+    },
+    {
+      "risk": "MCP-TRUTH lane coordination — env scrubbing before child spawn (F01)",
+      "rationale": "F01 (...process.env passed to every MCP child) is owned by MCP-TRUTH lane. This plan coordinates by ensuring the sanitizeEnv import path and redaction function are available for MCP-TRUTH to use.",
+      "mitigation": "Export redactSecrets from plugin/index.ts or a shared utility. MCP-TRUTH will use sanitizeEnv from @opencode-ai/core/util/env-blocklist for the actual env scrubbing at mcp/index.ts:456."
+    }
+  ],
+  "convention_compliance": {
+    "branded_types": "fix-A uses Schema.Literal(...).pipe(Schema.brand(\"CapabilityId\")) — matches account/schema.ts pattern",
+    "tagged_errors": "AuthStoreCorrupted in fix-C follows the _tag convention but is deliberately NOT a Schema.TaggedErrorClass (it's not thrown — it's used for logging context). This is intentional.",
+    "effect_logging": "fix-C and fix-G use Effect.logWarning/Effect.logInfo + Effect.annotateLogs — matches session/llm.ts pattern",
+    "schema_decode": "fix-F uses Schema.decodeUnknownOption + Option.getOrElse — matches mcp/auth.ts pattern",
+    "service_methods": "fix-G wraps checkCapability in Effect.gen (already done in plugin/index.ts:474). The standalone checkCapability in enforcer.ts remains a bare function (not a service method) — this is acceptable as a utility, not a service method, but zoning-board flagged it. Deferred to refactoring milestone."
+  },
+  "out_of_scope_findings_recorded": [
+    "capability/index.ts:1 re-export has duplicate key (CapabilityId as CapabilityIdValues on same line) — needs correction",
+    "enforcer.ts uses Effect.flatMap instead of Effect.gen — convention violation per zoning-board",
+    "stripSecrets string-matching heuristic is fragile (matches 'key' in 'keyboard') — deferred to RL-004"
+  ]
+}

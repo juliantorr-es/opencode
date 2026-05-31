@@ -12,3 +12,27 @@
 {"at":"2026-05-31T18:40:26.441Z","session_id":"ses_180ac5290ffeAfhTt5ytGvQu9V","agent":"secretary","tool":"smart_grep","pattern":"Server\\.listen|server\\.listen|listen\\(","path":"packages/opencode/src"}
 {"at":"2026-05-31T18:40:51.227Z","session_id":"ses_180ac5290ffeAfhTt5ytGvQu9V","agent":"secretary","tool":"smart_grep","pattern":"from.*\\\"\\.\\./server/server\\\"|from.*\\\"@/server/server\\\"|Server\\\\.listen|Server\\\\.Default|import.*Serv","path":"packages/opencode/src"}
 {"at":"2026-05-31T18:40:52.084Z","session_id":"ses_180ac5290ffeAfhTt5ytGvQu9V","agent":"secretary","tool":"smart_grep","pattern":"web|serve|desktop|bridge","path":"packages/opencode/src/cli"}
+{"at":"2026-05-31T18:41:11.577Z","session_id":"ses_180ac5290ffeAfhTt5ytGvQu9V","agent":"secretary","tool":"smart_grep","pattern":"\\\"serve\\\"|\\\"web\\\"|Server.*listen","path":"packages/opencode/script"}
+{"at":"2026-05-31T18:41:12.419Z","session_id":"ses_180ac5290ffeAfhTt5ytGvQu9V","agent":"secretary","tool":"smart_grep","pattern":"serve|web","path":"packages/opencode/src/temporary.ts"}
+{"at":"2026-05-31T18:41:31.477Z","session_id":"ses_180ac5290ffeAfhTt5ytGvQu9V","agent":"secretary","tool":"smart_grep","pattern":"spawn.*opencode|opencode.*serve|bridge|desktop-bridge|Server\\.listen","path":"packages/desktop/src"}
+{"at":"2026-05-31T18:41:32.399Z","session_id":"ses_180ac5290ffeAfhTt5ytGvQu9V","agent":"secretary","tool":"smart_grep","pattern":"opencode.*serve|spawn.*opencode|startServer|sidecar|bridge.*start","path":"packages/app/src"}
+{"at":"2026-05-31T18:41:33.441Z","session_id":"ses_180ac5290ffeAfhTt5ytGvQu9V","agent":"secretary","tool":"smart_grep","pattern":"effectCmd.*serve|\\\"serve\\\"|\\\"web\\\"","path":"packages/opencode/src"}
+{"at":"2026-05-31T18:47:43.030Z","session_id":"ses_180ac5290ffeAfhTt5ytGvQu9V","agent":"secretary","tool":"smart_grep","pattern":"import.*existsSync|import.*readFileSync|import.*from \\\"node:path\\\"","path":"packages/desktop/src/main/index.ts"}
+{"at":"2026-05-31T18:51:02.774Z","session_id":"ses_180ac5290ffeAfhTt5ytGvQu9V","agent":"secretary","tool":"smart_sd","file":"packages/desktop/src/main/index.ts"}
+{"at":"2026-05-31T18:52:50.906Z","session_id":"ses_180ac5290ffeAfhTt5ytGvQu9V","agent":"secretary","tool":"smart_grep","pattern":"getSafeModeDiagnostics","path":"packages/desktop/src/main/index.ts"}
+{"at":"2026-05-31T18:54:39.412Z","session_id":"ses_180ac5290ffeAfhTt5ytGvQu9V","agent":"secretary","tool":"smart_grep","pattern":"getSafeModeDiagnostics:","path":"packages/desktop/src/main/index.ts"}
+{"at":"2026-05-31T19:02:50.780Z","session_id":"ses_180ac5290ffeAfhTt5ytGvQu9V","agent":"secretary","tool":"smart_grep","pattern":"grid grid-cols","path":"packages/desktop/src/renderer/safe-mode.tsx"}
+{"at":"2026-05-31T19:03:13.959Z","session_id":"ses_180ac5290ffeAfhTt5ytGvQu9V","agent":"secretary","tool":"smart_sd","file":"packages/desktop/src/renderer/safe-mode.tsx"}
+{"at":"2026-05-31T19:03:32.623Z","session_id":"ses_180ac5290ffeAfhTt5ytGvQu9V","agent":"secretary","tool":"smart_grep","pattern":"SidecarStartupFailure","path":"packages/desktop/src/preload/types.ts"}
+{"at":"2026-05-31T19:03:53.355Z","session_id":"ses_180ac5290ffeAfhTt5ytGvQu9V","agent":"secretary","tool":"smart_bun","command":"typecheck","elapsed_ms":1212,"exit_code":1}
+{"at":"2026-05-31T19:04:12.713Z","session_id":"ses_180ac5290ffeAfhTt5ytGvQu9V","agent":"secretary","tool":"smart_grep","pattern":"^import .* from","path":"packages/desktop/src/main"}
+{"at":"2026-05-31T19:04:21.527Z","session_id":"ses_180ac5290ffeAfhTt5ytGvQu9V","agent":"secretary","tool":"smart_grep","pattern":"^import","path":"packages/desktop/src/main/sidecar.ts"}
+{"at":"2026-05-31T19:04:22.357Z","session_id":"ses_180ac5290ffeAfhTt5ytGvQu9V","agent":"secretary","tool":"smart_grep","pattern":"import.*SidecarStartupFailure|import.*types","path":"packages/desktop/src/renderer/safe-mode.tsx"}
+{"at":"2026-05-31T19:05:07.935Z","session_id":"ses_180ac5290ffeAfhTt5ytGvQu9V","agent":"secretary","tool":"smart_sd","file":"packages/desktop/src/main/sidecar.ts"}
+{"at":"2026-05-31T19:06:34.676Z","session_id":"ses_180ac5290ffeAfhTt5ytGvQu9V","agent":"secretary","tool":"smart_grep","pattern":"parentPort\\.postMessage","path":"packages/desktop/src/main/sidecar.ts"}
+{"at":"2026-05-31T19:07:39.578Z","session_id":"ses_180ac5290ffeAfhTt5ytGvQu9V","agent":"secretary","tool":"smart_grep","pattern":"initStartupTrace","path":"packages/desktop/src/main"}
+{"at":"2026-05-31T19:08:05.147Z","session_id":"ses_180ac5290ffeAfhTt5ytGvQu9V","agent":"secretary","tool":"smart_sd","file":"packages/desktop/src/main/sidecar.ts"}
+{"at":"2026-05-31T19:08:11.983Z","session_id":"ses_180ac5290ffeAfhTt5ytGvQu9V","agent":"secretary","tool":"smart_bun","command":"typecheck","elapsed_ms":1473,"exit_code":2}
+{"at":"2026-05-31T19:08:43.813Z","session_id":"ses_180ac5290ffeAfhTt5ytGvQu9V","agent":"secretary","tool":"smart_grep","pattern":"redactSecrets","path":"packages/desktop/src/main/sidecar-startup-trace.ts"}
+{"at":"2026-05-31T19:08:49.876Z","session_id":"ses_180ac5290ffeAfhTt5ytGvQu9V","agent":"secretary","tool":"smart_sd","file":"packages/desktop/src/main/sidecar.ts"}
+{"at":"2026-05-31T19:08:55.128Z","session_id":"ses_180ac5290ffeAfhTt5ytGvQu9V","agent":"secretary","tool":"smart_bun","command":"typecheck","elapsed_ms":1007,"exit_code":1}

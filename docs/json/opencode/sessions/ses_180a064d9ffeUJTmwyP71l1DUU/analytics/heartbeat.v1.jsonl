@@ -1,0 +1,32 @@
+{"at":"2026-05-31T18:51:39.991Z","session_id":"ses_180a064d9ffeUJTmwyP71l1DUU","agent":"exhibit-a","tool":"smart_find","phase":"started","detail":"sidecar-startup-trace*"}
+{"at":"2026-05-31T18:51:40.021Z","session_id":"ses_180a064d9ffeUJTmwyP71l1DUU","agent":"exhibit-a","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T18:51:40.639Z","session_id":"ses_180a064d9ffeUJTmwyP71l1DUU","agent":"exhibit-a","tool":"smart_grep","phase":"started","detail":"sidecar-boot-failure"}
+{"at":"2026-05-31T18:51:40.651Z","session_id":"ses_180a064d9ffeUJTmwyP71l1DUU","agent":"exhibit-a","tool":"smart_grep","phase":"completed","detail":"sidecar-boot-failure"}
+{"at":"2026-05-31T18:51:41.572Z","session_id":"ses_180a064d9ffeUJTmwyP71l1DUU","agent":"exhibit-a","tool":"smart_grep","phase":"started","detail":"safe.?mode|safemode|safeMode|safe_mode"}
+{"at":"2026-05-31T18:51:41.584Z","session_id":"ses_180a064d9ffeUJTmwyP71l1DUU","agent":"exhibit-a","tool":"smart_grep","phase":"completed","detail":"safe.?mode|safemode|safeMode|safe_mode"}
+{"at":"2026-05-31T18:52:21.545Z","session_id":"ses_180a064d9ffeUJTmwyP71l1DUU","agent":"exhibit-a","tool":"smart_grep","phase":"started","detail":"sidecar-startup-trace"}
+{"at":"2026-05-31T18:52:21.567Z","session_id":"ses_180a064d9ffeUJTmwyP71l1DUU","agent":"exhibit-a","tool":"smart_grep","phase":"completed","detail":"sidecar-startup-trace"}
+{"at":"2026-05-31T18:53:46.420Z","session_id":"ses_180a064d9ffeUJTmwyP71l1DUU","agent":"exhibit-a","tool":"smart_grep","phase":"started","detail":"\"error\"|sidecar|child_process|fork|Worker"}
+{"at":"2026-05-31T18:53:46.438Z","session_id":"ses_180a064d9ffeUJTmwyP71l1DUU","agent":"exhibit-a","tool":"smart_grep","phase":"completed","detail":"\"error\"|sidecar|child_process|fork|Worker"}
+{"at":"2026-05-31T18:54:34.907Z","session_id":"ses_180a064d9ffeUJTmwyP71l1DUU","agent":"exhibit-a","tool":"smart_grep","phase":"started","detail":"sidecar|Sidecar|error.*component|spawn|killSidecar|crashed|crash-detect"}
+{"at":"2026-05-31T18:54:34.935Z","session_id":"ses_180a064d9ffeUJTmwyP71l1DUU","agent":"exhibit-a","tool":"smart_grep","phase":"completed","detail":"sidecar|Sidecar|error.*component|spawn|killSidecar|crashed|crash-detect"}
+{"at":"2026-05-31T18:55:20.428Z","session_id":"ses_180a064d9ffeUJTmwyP71l1DUU","agent":"exhibit-a","tool":"smart_grep","phase":"started","detail":"spawnLocalServer"}
+{"at":"2026-05-31T18:55:20.444Z","session_id":"ses_180a064d9ffeUJTmwyP71l1DUU","agent":"exhibit-a","tool":"smart_grep","phase":"completed","detail":"spawnLocalServer"}
+{"at":"2026-05-31T18:56:19.987Z","session_id":"ses_180a064d9ffeUJTmwyP71l1DUU","agent":"exhibit-a","tool":"smart_grep","phase":"started","detail":"safe-mode\\.html|safe\\.mode"}
+{"at":"2026-05-31T18:56:19.998Z","session_id":"ses_180a064d9ffeUJTmwyP71l1DUU","agent":"exhibit-a","tool":"smart_grep","phase":"completed","detail":"safe-mode\\.html|safe\\.mode"}
+{"at":"2026-05-31T18:57:02.696Z","session_id":"ses_180a064d9ffeUJTmwyP71l1DUU","agent":"exhibit-a","tool":"smart_find","phase":"started","detail":"safe-mode*"}
+{"at":"2026-05-31T18:57:02.786Z","session_id":"ses_180a064d9ffeUJTmwyP71l1DUU","agent":"exhibit-a","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T18:57:52.922Z","session_id":"ses_180a064d9ffeUJTmwyP71l1DUU","agent":"exhibit-a","tool":"smart_grep","phase":"started","detail":"crashDetected|inSafeMode|GET_SAFE_MODE_DIAGNOSTICS|initStep|sendStep|InitStep"}
+{"at":"2026-05-31T18:57:52.957Z","session_id":"ses_180a064d9ffeUJTmwyP71l1DUU","agent":"exhibit-a","tool":"smart_grep","phase":"completed","detail":"crashDetected|inSafeMode|GET_SAFE_MODE_DIAGNOSTICS|initStep|sendStep|InitStep"}
+{"at":"2026-05-31T18:58:45.194Z","session_id":"ses_180a064d9ffeUJTmwyP71l1DUU","agent":"exhibit-a","tool":"smart_grep","phase":"started","detail":"SafeModeDiagnostics|safeModeDiagnostics|safe.mode.diagnostic"}
+{"at":"2026-05-31T18:58:45.217Z","session_id":"ses_180a064d9ffeUJTmwyP71l1DUU","agent":"exhibit-a","tool":"smart_grep","phase":"completed","detail":"SafeModeDiagnostics|safeModeDiagnostics|safe.mode.diagnostic"}
+{"at":"2026-05-31T18:59:54.135Z","session_id":"ses_180a064d9ffeUJTmwyP71l1DUU","agent":"exhibit-a","tool":"smart_grep","phase":"started","detail":"crashLock|crash.lock|crash_lock"}
+{"at":"2026-05-31T18:59:54.145Z","session_id":"ses_180a064d9ffeUJTmwyP71l1DUU","agent":"exhibit-a","tool":"smart_grep","phase":"completed","detail":"crashLock|crash.lock|crash_lock"}
+{"at":"2026-05-31T19:01:31.462Z","session_id":"ses_180a064d9ffeUJTmwyP71l1DUU","agent":"exhibit-a","tool":"smart_grep","phase":"started","detail":"getSafeModeDiagnostics|sidecar-boot|readFileSync|sidecarFail"}
+{"at":"2026-05-31T19:01:31.471Z","session_id":"ses_180a064d9ffeUJTmwyP71l1DUU","agent":"exhibit-a","tool":"smart_grep","phase":"completed","detail":"getSafeModeDiagnostics|sidecar-boot|readFileSync|sidecarFail"}
+{"at":"2026-05-31T19:02:41.928Z","session_id":"ses_180a064d9ffeUJTmwyP71l1DUU","agent":"exhibit-a","tool":"smart_bash","phase":"started","detail":"Read the getSafeModeDiagnostics implementation and crash detection code"}
+{"at":"2026-05-31T19:02:59.120Z","session_id":"ses_180a064d9ffeUJTmwyP71l1DUU","agent":"exhibit-a","tool":"smart_bash","phase":"started","detail":"Read lines 256-320 of index.ts to understand crash detection and getSafeModeDiagnostics"}
+{"at":"2026-05-31T19:02:59.132Z","session_id":"ses_180a064d9ffeUJTmwyP71l1DUU","agent":"exhibit-a","tool":"smart_bash","phase":"completed","detail":"head exit=0"}
+{"at":"2026-05-31T19:03:16.564Z","session_id":"ses_180a064d9ffeUJTmwyP71l1DUU","agent":"exhibit-a","tool":"smart_bash","phase":"started","detail":"Read getSafeModeDiagnostics full implementation"}
+{"at":"2026-05-31T19:03:30.937Z","session_id":"ses_180a064d9ffeUJTmwyP71l1DUU","agent":"exhibit-a","tool":"smart_bash","phase":"started","detail":"Read getSafeModeDiagnostics lines 270-290"}
+{"at":"2026-05-31T19:03:30.952Z","session_id":"ses_180a064d9ffeUJTmwyP71l1DUU","agent":"exhibit-a","tool":"smart_bash","phase":"completed","detail":"head exit=0"}

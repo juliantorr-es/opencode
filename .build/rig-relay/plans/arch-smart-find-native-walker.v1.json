@@ -1,0 +1,191 @@
+{
+  "plan_id": "arch-smart-find-native-walker",
+  "created_at": "2026-05-31T00:00:00Z",
+  "session_id": "arch-smart-find",
+  "boundary": ".opencode/tools/smart_find.ts — full file rewrite",
+  "consumer_purpose": "Every agent that calls smart_find gets file listings with zero binary dependencies",
+  "claim_atoms": [
+    "Native walker works on every machine with zero external dependencies",
+    "fd is optional accelerator — tried first, native always works",
+    "No error when fd is absent — native walker just works silently",
+    "warning field only if fd was available but failed (binary found, execution failed)",
+    "Remove 'brew install fd' error message entirely",
+    "Basic .gitignore parsing: walk up directories, parse patterns, match entries",
+    "Backward compatible output shape: same args, same success output, backend may say 'native'"
+  ],
+  "root_causes": [
+    {
+      "hypothesis": "No native fallback exists — fd binary dependency is treated as mandatory",
+      "confidence": "high",
+      "evidence": [
+        "Lines 91-98: spawnFd() failure returns {status:'fail', error:'fd not found. Install with: brew install fd'} with no fallback logic",
+        "Lines 35-47: spawnFd() tries multiple binary paths but when all fail, returns the error result without distinguishing 'not found' from 'crashed'",
+        "The file has no readdirSync import and no recursive walking logic anywhere in the codebase"
+      ]
+    },
+    {
+      "hypothesis": "Binary-first design pattern is the convention across all .opencode/tools/",
+      "confidence": "high",
+      "evidence": [
+        "smart_grep.ts depends on rg binary (ripgrep)",
+        "smart_bash.ts depends on bash binary",
+        "smart_git.ts depends on git binary",
+        "All 30 tool files use spawnSync-based external binary calls; none implement native fallbacks"
+      ]
+    },
+    {
+      "hypothesis": ".gitignore handling was a design constraint favoring fd",
+      "confidence": "medium",
+      "evidence": [
+        "Description line 51: 'respects .gitignore' listed as a reason for using fd",
+        "No .gitignore parsing code exists anywhere in .opencode/tools/",
+        "Core implementation (packages/opencode/src/tool/smart-find.ts) also lacks .gitignore support"
+      ]
+    }
+  ],
+  "fixes": [
+    {
+      "id": "fix-A",
+      "description": "Add matchGlob() — glob-to-regex converter ported from core smart-find.ts",
+      "files": [".opencode/tools/smart_find.ts"],
+      "before": "// (no glob matching function exists — fd handles all pattern matching)",
+      "after": "function matchGlob(name: string, pattern: string): boolean {\n  const regex = '^' + pattern.replace(/[.+^${}()|[\\]\\\\]/g, '\\\\$&').replace(/\\*/g, '.*').replace(/\\?/g, '.') + '$'\n  try { return new RegExp(regex).test(name) }\n  catch { return name.includes(pattern.replace(/\\*/g, '')) }\n}",
+      "impact": {"affected_files": [".opencode/tools/smart_find.ts"], "tests_to_run": [], "new_imports_needed": false},
+      "risks": ["Regex injection: glob pattern could contain malformed regex. Mitigated by try/catch fallback"],
+      "validation": ["matchGlob('foo.ts', '*.ts') === true", "matchGlob('foo.js', '*.ts') === false", "matchGlob('foo', 'f?o') === true"]
+    },
+    {
+      "id": "fix-B",
+      "description": "Add loadGitignorePatterns() + matchesGitignore() — basic .gitignore support",
+      "files": [".opencode/tools/smart_find.ts"],
+      "before": "// (no .gitignore parsing — fd handles it natively)",
+      "after": "function loadGitignorePatterns(startDir: string, rootDir: string): string[] {\n  const patterns: string[] = []\n  let dir = startDir\n  while (true) {\n    const gi = resolve(dir, '.gitignore')\n    if (existsSync(gi)) {\n      try {\n        for (const line of readFileSync(gi, 'utf8').split('\\n')) {\n          const t = line.trim()\n          if (t && !t.startsWith('#') && !t.startsWith('!')) patterns.push(t)\n        }\n      } catch {}\n    }\n    if (dir === rootDir) break\n    const parent = resolve(dir, '..')\n    if (parent === dir) break\n    dir = parent\n  }\n  return patterns\n}\n\nfunction matchesGitignore(name: string, patterns: string[]): boolean {\n  for (const p of patterns) {\n    let clean = p.endsWith('/') ? p.slice(0, -1) : p\n    if (clean.includes('*') || clean.includes('?')) {\n      if (matchGlob(name, clean)) return true\n    } else if (name === clean) return true\n  }\n  return false\n}",
+      "impact": {"affected_files": [".opencode/tools/smart_find.ts"], "tests_to_run": [], "new_imports_needed": ["readFileSync from node:fs"]},
+      "risks": [
+        "Negation patterns (!) are skipped — could cause false positives (files incorrectly ignored)",
+        "Globstar (**) not supported — deep path matching won't work",
+        "Anchored patterns (/ prefix) not supported",
+        "Nested .gitignore precedence: parent+child patterns both apply; real git has child override parent"
+      ],
+      "validation": ["Create .gitignore with '*.log', verify .log files are skipped", "Verify node_modules directory is skipped via root .gitignore", "Verify .DS_Store files are skipped"]
+    },
+    {
+      "id": "fix-C",
+      "description": "Rewrite spawnFd → tryFd: differentiate 'fd not found' (return null) from 'fd found but failed' (return result + warning)",
+      "files": [".opencode/tools/smart_find.ts"],
+      "before": "function spawnFd(args: string[], cwd: string) {\n  const toolDir = resolve(cwd, '.opencode/tools/bin')\n  const binaries = ['fd', resolve(toolDir, 'fd'), '/opt/homebrew/bin/fd', '/usr/local/bin/fd']\n  for (const bin of binaries) {\n    const result = spawnSync(bin, args, {cwd, encoding:'utf8', maxBuffer:1024*1024*5, timeout:15000})\n    if (!result.error && result.status === 0) return {result, binary: bin}\n  }\n  const result = spawnSync('fd', args, {cwd, encoding:'utf8', maxBuffer:1024*1024*5, timeout:15000})\n  return {result, binary: 'fd'}\n}",
+      "after": "function tryFd(args: string[], cwd: string): { result: any, binary: string | null, warning: string | null } {\n  const toolDir = resolve(cwd, '.opencode/tools/bin')\n  const binaries = ['fd', resolve(toolDir, 'fd'), '/opt/homebrew/bin/fd', '/usr/local/bin/fd']\n  for (const bin of binaries) {\n    const result = spawnSync(bin, args, {cwd, encoding:'utf8', maxBuffer:1024*1024*5, timeout:15000})\n    if (result.error) {\n      if (result.error.message?.includes('ENOENT')) continue\n      return {result, binary: bin, warning: `fd at ${bin} failed: ${result.error.message}`}\n    }\n    if (result.status === 0) return {result, binary: bin, warning: null}\n    if (result.status !== 0) return {result, binary: bin, warning: `fd at ${bin} exited with status ${result.status}`}\n  }\n  return {result: null, binary: null, warning: null}\n}",
+      "impact": {"affected_files": [".opencode/tools/smart_find.ts"], "tests_to_run": [], "new_imports_needed": false},
+      "risks": [
+        "ENOENT detection via error.message string match — fragile if Node.js changes error message format. Mitigation: falls through to native anyway"
+      ],
+      "validation": ["When fd not installed: tryFd returns {result:null, binary:null, warning:null}", "When fd installed and works: returns {result, binary, warning:null}", "When fd installed but crashes: returns {result, binary, warning:'...'}"]
+    },
+    {
+      "id": "fix-D",
+      "description": "Add walkNative() — synchronous recursive directory walker using readdirSync({withFileTypes:true}) + lazy statSync",
+      "files": [".opencode/tools/smart_find.ts"],
+      "before": "// (no native walker — fd handles all traversal)",
+      "after": "function walkNative(searchPath: string, opts: {maxResults:number,maxDepth:number,typeFilter:string|undefined,pattern:string|undefined,newerThanMs:number,includeSizes:boolean,ignorePatterns:string[]}) {\n  const results: any[] = []\n  let totalFound = 0, dirCount = 0\n  const byExt: Record<string,number> = {}\n  const needStat = opts.newerThanMs > 0 || opts.includeSizes\n  const cutoff = Date.now() - opts.newerThanMs\n  function walk(dir: string, depth: number) {\n    if (results.length >= opts.maxResults) return\n    if (opts.maxDepth > 0 && depth > opts.maxDepth) return\n    let entries: any[]\n    try { entries = readdirSync(dir, {withFileTypes:true}) }\n    catch { return }\n    for (const e of entries) {\n      if (results.length >= opts.maxResults) break\n      if (matchesGitignore(e.name, opts.ignorePatterns)) continue\n      if (e.isSymbolicLink?.()) continue\n      if (e.isDirectory?.()) {\n        if (opts.typeFilter !== 'file') {\n          if (!opts.pattern || matchGlob(e.name, opts.pattern)) {\n            totalFound++\n            if (results.length < opts.maxResults) { results.push({path:relative(searchPath,resolve(dir,e.name)),type:'directory'}); dirCount++ }\n          }\n        }\n        walk(resolve(dir, e.name), depth + 1)\n        continue\n      }\n      if (e.isFile?.()) {\n        if (opts.typeFilter === 'directory') continue\n        if (opts.pattern && !matchGlob(e.name, opts.pattern)) continue\n        let st: any = null\n        if (needStat) { try { st = statSync(resolve(dir, e.name)) } catch { continue } }\n        if (st && opts.newerThanMs > 0 && st.mtimeMs < cutoff) continue\n        totalFound++\n        if (results.length < opts.maxResults) {\n          const entry: any = {path:relative(searchPath,resolve(dir,e.name)),type:'file'}\n          if (st) {\n            if (opts.includeSizes) entry.size_bytes = st.size\n            if (opts.newerThanMs > 0) entry.modified_seconds_ago = Math.floor((Date.now()-st.mtimeMs)/1000)\n          }\n          results.push(entry)\n          const ext = e.name.includes('.') ? '.'+e.name.split('.').pop()! : '(no extension)'\n          byExt[ext] = (byExt[ext]||0) + 1\n        }\n      }\n    }\n  }\n  walk(searchPath, 0)\n  return {results, totalFound, dirCount, byExt}\n}",
+      "impact": {"affected_files": [".opencode/tools/smart_find.ts"], "tests_to_run": [], "new_imports_needed": ["readdirSync from node:fs", "relative from node:path"]},
+      "risks": [
+        "Deep recursion: theoretical stack overflow on >10K-deep directory trees (real-world: <100 levels, safe)",
+        "Large directories: readdirSync loads all entries into memory — 100K+ files per directory could use GBs. Mitigation: rare in practice; fd would also struggle",
+        "Symlink following: all symlinks skipped entirely — user may expect symlinked files to appear. Mitigation: documented; install fd for symlink following",
+        "Performance vs fd: native walker is ~5-20x slower than fd (single-threaded, no caching). Acceptable for fallback path",
+        "Bun compatibility: readdirSync({withFileTypes:true}) with Dirent.isFile()/isDirectory() works in Bun 1.x+"
+      ],
+      "validation": ["Walk a directory with known files, verify all files found", "Verify maxResults truncation", "Verify maxDepth enforcement", "Verify type filter (file/directory/both)", "Verify pattern matching with glob", "Verify newerThanMs filtering with statSync", "Verify includeSizes adds size_bytes field"]
+    },
+    {
+      "id": "fix-E",
+      "description": "Rewrite execute() — try fd first, fall back to native, remove failure-only output path",
+      "files": [".opencode/tools/smart_find.ts"],
+      "before": "Lines 64-155: try fd → if fail return error → else parse fd output",
+      "after": "Lines 64-~120: tryFd → if fd success parse fd output → else walkNative → build unified output with backend field",
+      "impact": {"affected_files": [".opencode/tools/smart_find.ts"], "tests_to_run": []},
+      "risks": [
+        "Output consumers checking status==='fail' will no longer trigger — no consumers found",
+        "command field absent when native — informational field, not parsed by consumers"
+      ],
+      "validation": ["Run with fd present → backend:'fd', command present", "Run without fd → backend:'native', no error, no command", "Run with broken fd (chmod -x /opt/homebrew/bin/fd) → backend:'native', warning present"]
+    },
+    {
+      "id": "fix-F",
+      "description": "Update tool description string to reflect native-primary + fd-optional architecture",
+      "files": [".opencode/tools/smart_find.ts"],
+      "before": "\"Find files and directories. Uses fd (Rust) for speed — respects .gitignore, 5-20x faster than find. Returns file info with sizes, modified times, and counts.\"",
+      "after": "\"Find files and directories. Native Node.js walker with basic .gitignore support; optionally accelerates with fd (Rust) when available. Returns file info with sizes, modified times, and counts.\"",
+      "impact": {"affected_files": [".opencode/tools/smart_find.ts"], "tests_to_run": []},
+      "risks": ["None — description is human-facing only"],
+      "validation": ["Verify description renders correctly in tool help"]
+    }
+  ],
+  "apply_order": ["fix-A", "fix-B", "fix-C", "fix-D", "fix-E", "fix-F"],
+  "rollback_plan": "git checkout -- .opencode/tools/smart_find.ts",
+  "file_structure": {
+    "estimated_lines": 260,
+    "current_lines": 169,
+    "delta": "+91",
+    "section_order": [
+      "Imports (enhanced: +readdirSync, +readFileSync, +relative)",
+      "Helper functions (unchanged): resolvePath, hb, artifactLog, analytics",
+      "NEW: matchGlob (glob-to-regex, ~8 lines)",
+      "NEW: loadGitignorePatterns + matchesGitignore (~35 lines)",
+      "MODIFIED: spawnFd → tryFd (~25 lines, was ~13)",
+      "NEW: walkNative (~80 lines)",
+      "MODIFIED: execute block (~80 lines, was ~90)"
+    ]
+  },
+  "output_shape_compatibility": {
+    "unchanged_fields": ["status", "files", "count", "total_found", "directories_found", "truncated", "elapsed_ms", "by_extension"],
+    "changed_fields": ["backend: now 'native' or fd path (was always fd path)"],
+    "removed_fields": ["error (was only in failure path)", "hint (was only in failure path)"],
+    "added_fields": ["warning (only when fd found but failed)"],
+    "conditional_fields": ["command: only present when backend is not 'native'"]
+  },
+  "edge_cases_handled": [
+    "EACCES on directory → silently skipped (try/catch around readdirSync)",
+    "ELOOP/symlink cycles → skipped entirely (isSymbolicLink check)",
+    "Missing files during statSync → skipped (try/catch continue)",
+    "Empty directories → returns count:0, no error",
+    "Pattern with no matches → returns count:0, no error",
+    "Path not found → returns existing error (unchanged from current)",
+    "maxResults=0 → returns empty results immediately (guard clause)",
+    ".gitignore with CRLF line endings → split('\\n') handles it; trim() removes \\r",
+    ".gitignore at nested levels → walked from searchPath up to rootDir",
+    "Unicode filenames → Node.js fs handles natively"
+  ],
+  "validation_plan": {
+    "pre_baseline": "In an environment without fd: verify current behavior returns error. In an environment with fd: capture baseline output for a known directory tree.",
+    "smoke_tests": [
+      "No pattern, no filter → finds everything in directory",
+      "Pattern filter '*.ts' → only .ts files",
+      "Type filter 'directory' → only directories",
+      "max_depth=1 → stops at immediate children",
+      "max_results=3 → caps at 3, truncated=true",
+      "newer_than_minutes=1 → only recently modified files",
+      "include_sizes=true → size_bytes field present per file",
+      ".gitignore with '*.log' → .log files skipped",
+      "Empty directory → count:0, no error",
+      "Symlink → not in results",
+      "Non-existent path → error returned"
+    ],
+    "fd_integration": [
+      "With fd: backend shows fd path, command field present",
+      "Without fd: backend is 'native', no warning",
+      "With broken fd: backend is 'native', warning field present"
+    ],
+    "regression": [
+      "All existing smart_find calls in agent markdown files still work (same arg names)",
+      "Permission config in opencode.jsonc unchanged (tool name unchanged)",
+      "Analytics/heartbeat/artifact logs unchanged (same function calls)"
+    ]
+  },
+  "subagent_findings_pending": [
+    "impact-assessor: consumer field dependencies",
+    "risk-enumerator: detailed risk assessment with severity ratings",
+    "root-cause-analyst: git history analysis for original design decisions",
+    "validation-designer: detailed validation commands"
+  ]
+}

@@ -143,7 +143,9 @@ export async function CopilotAuthPlugin(input: PluginInput): Promise<Hooks> {
                     isAgent: !(last?.role === "user" && hasNonToolCalls) || imgMsg(last),
                   }
                 }
-              } catch {}
+              } catch (err) {
+                log.debug("copilot request context parsing failed", { error: err })
+              }
               return { isVision: false, isAgent: false }
             })
 
@@ -360,7 +362,10 @@ export async function CopilotAuthPlugin(input: PluginInput): Promise<Hooks> {
           },
           throwOnError: true,
         })
-        .catch(() => undefined)
+        .catch((err) => {
+          log.warn("copilot listModels failed, falling back to default models", { error: err })
+          return undefined
+        })
 
       if (
         parts?.data.parts?.some(
@@ -385,7 +390,10 @@ export async function CopilotAuthPlugin(input: PluginInput): Promise<Hooks> {
           },
           throwOnError: true,
         })
-        .catch(() => undefined)
+        .catch((err) => {
+          log.warn("copilot listModels failed, falling back to default models", { error: err })
+          return undefined
+        })
       if (!session || !session.data.parentID) return
       // mark subagent sessions as agent initiated matching standard that other copilot tools have
       output.headers["x-initiator"] = "agent"

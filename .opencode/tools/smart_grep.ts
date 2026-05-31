@@ -1,11 +1,8 @@
 import { tool } from "@opencode-ai/plugin"
-import { spawnSync } from "node:child_process"
-import { resolve } from "node:path"
-import { appendFileSync, existsSync, mkdirSync } from "node:fs"
+import { resolve, relative } from "node:path"
+import { readdirSync, readFileSync, statSync, appendFileSync, existsSync, mkdirSync } from "node:fs"
 
-function resolvePath(worktree: string, p: string): string {
-  return resolve(worktree, p)
-}
+function r(worktree: string, p: string): string { return resolve(worktree, p) }
 
 function hb(context: any, tool: string, phase: string, detail: string) {
   try {
@@ -13,15 +10,6 @@ function hb(context: any, tool: string, phase: string, detail: string) {
     if (!existsSync(dir)) mkdirSync(dir, { recursive: true })
     appendFileSync(dir + "/heartbeat.v1.jsonl",
       JSON.stringify({ at: new Date().toISOString(), session_id: context.sessionID, agent: context.agent, tool, phase, detail: detail.slice(0, 200) }) + "\n", "utf8")
-  } catch (_) {}
-}
-
-function artifactLog(context: any, event: Record<string, unknown>) {
-  try {
-    const dir = resolve(context.worktree, `docs/json/opencode/sessions/${context.sessionID}/artifacts`)
-    if (!existsSync(dir)) mkdirSync(dir, { recursive: true })
-    appendFileSync(resolve(dir, `${context.sessionID}.v1.jsonl`),
-      JSON.stringify({ at: new Date().toISOString(), ...event }) + "\n", "utf8")
   } catch (_) {}
 }
 
@@ -34,135 +22,213 @@ function analytics(context: any, tool: string, extra: Record<string, unknown>) {
   } catch (_) {}
 }
 
-function spawnRg(args: string[], cwd: string) {
-  const toolDir = resolve(cwd, ".opencode/tools/bin")
-  const binaries = ["rg", resolve(toolDir, "rg"), "/opt/homebrew/bin/rg", "/usr/local/bin/rg"]
-  for (const bin of binaries) {
-    const result = spawnSync(bin, args, {
-      cwd, encoding: "utf8", maxBuffer: 1024 * 1024 * 5, timeout: 30000,
-    })
-    if (!result.error && (result.status === 0 || result.status === 1)) return { result, binary: bin }
+// ── .gitignore ─────────────────────────────────────────────
+function loadGitignore(worktree: string): { ignored: (p: string) => boolean } {
+  const patterns: { pattern: string; negate: boolean }[] = []
+  const giPath = r(worktree, ".gitignore")
+  if (existsSync(giPath)) {
+    try {
+      for (const line of readFileSync(giPath, "utf8").split("\n")) {
+        const trimmed = line.trim()
+        if (!trimmed || trimmed.startsWith("#")) continue
+        patterns.push({ pattern: trimmed.startsWith("!") ? trimmed.slice(1) : trimmed, negate: trimmed.startsWith("!") })
+      }
+    } catch {}
   }
-  const result = spawnSync("rg", args, {
-    cwd, encoding: "utf8", maxBuffer: 1024 * 1024 * 5, timeout: 30000,
-  })
-  return { result, binary: "rg" }
+  patterns.push({ pattern: ".git", negate: false })
+  return {
+    ignored(p: string): boolean {
+      let result = false
+      for (const { pattern, negate } of patterns) {
+        if (matchGitignore(pattern, p)) result = !negate
+      }
+      return result
+    }
+  }
+}
+
+function matchGitignore(pattern: string, path: string): boolean {
+  let re = pattern.replace(/\./g, "\\.").replace(/\*\*/g, "§§R§§").replace(/\*/g, "[^/]*").replace(/§§R§§/g, ".*").replace(/\?/g, ".")
+  if (!pattern.includes("/") && !pattern.startsWith("**/")) re = "(^|.*/)" + re + "$"
+  else {
+    if (re.startsWith("/")) re = "^" + re.slice(1); else re = "(^|.*/)" + re
+    if (!re.endsWith("$")) re += "(/.*)?$"
+  }
+  try { return new RegExp(re).test(path) } catch { return false }
+}
+
+// ── Glob match ─────────────────────────────────────────────
+function matchGlob(pattern: string, name: string): boolean {
+  let re = "^"
+  for (let i = 0; i < pattern.length; i++) {
+    if (pattern[i] === "*" && pattern[i+1] === "*") { re += ".*"; i++; continue }
+    if (pattern[i] === "*") { re += "[^/]*"; continue }
+    if (pattern[i] === "?") { re += "."; continue }
+    if (".+^${}()|[]\\".includes(pattern[i]!)) { re += "\\" + pattern[i]; continue }
+    re += pattern[i]
+  }
+  re += "$"
+  try { return new RegExp(re).test(name) } catch { return false }
+}
+
+// ── Collect files ──────────────────────────────────────────
+function collectFiles(
+  dir: string, base: string, ignored: (p: string) => boolean,
+  glob: string | undefined, maxResults: number, results: string[]
+): void {
+  if (results.length >= maxResults) return
+  let entries: string[]
+  try { entries = readdirSync(dir) } catch { return }
+  for (const name of entries) {
+    if (results.length >= maxResults) break
+    const full = resolve(dir, name)
+    const rel = relative(base, full)
+    if (ignored(rel) || ignored(rel + "/")) continue
+    try {
+      const st = statSync(full)
+      if (st.isDirectory()) {
+        collectFiles(full, base, ignored, glob, maxResults, results)
+      } else if (!glob || matchGlob(glob, name)) {
+        // Quick check: is this a text file? Skip binaries
+        if (st.size > 1024 * 1024) continue // skip files >1MB
+        results.push(full)
+      }
+    } catch {}
+  }
+}
+
+function isTextFile(path: string): boolean {
+  try {
+    const buf = readFileSync(path, { length: 512 })
+    // Check for null bytes (binary indicator)
+    for (let i = 0; i < buf.length; i++) {
+      if (buf[i] === 0) return false
+    }
+    return true
+  } catch { return false }
 }
 
 export default tool({
-  description: "Search for patterns in files and return structured results with file:line:match. Replaces rg/grep. Use this for all pattern searches — never raw bash.",
+  description: "Search for patterns in files. Pure TypeScript — no binary dependency. Returns structured file:line:match results. Respects .gitignore.",
   args: {
     pattern: tool.schema.string().describe("Pattern to search for (regex or literal)"),
-    path: tool.schema.string().optional().describe("Directory or file to search in. Defaults to workspace root."),
+    path: tool.schema.string().optional().describe("Directory or file to search. Defaults to workspace root."),
     glob: tool.schema.string().optional().describe("File glob pattern (e.g. '*.ts', '*.md')"),
     max_results: tool.schema.number().optional().describe("Max results (default 30)"),
     summary_only: tool.schema.boolean().optional().describe("Return only file paths + match counts, not individual matches"),
     context_lines: tool.schema.number().optional().describe("Lines of context around each match (default 0)"),
-    word_boundary: tool.schema.boolean().optional().describe("Match whole words only (adds \\b around pattern). Prevents Effect.all() matching Drizzle .all()."),
+    word_boundary: tool.schema.boolean().optional().describe("Match whole words only (adds \\b around pattern)"),
   },
   async execute(args, context) {
     hb(context, "smart_grep", "started", args.pattern?.slice(0, 80) || "")
-    const searchPath = args.path ? resolvePath(context.worktree, args.path) : context.worktree
+    const searchPath = args.path ? r(context.worktree, args.path) : context.worktree
     const maxResults = args.max_results ?? 30
-    const summaryOnly = args.summary_only ?? false
     const ctxLines = args.context_lines ?? 0
+    const summaryOnly = args.summary_only ?? false
 
-    const rgArgs = ["--no-heading", "--line-number", "--color", "never"]
-    const pattern = args.word_boundary ? `\\b${args.pattern}\\b` : args.pattern
-    if (args.glob) rgArgs.push("-g", args.glob)
-    if (ctxLines > 0) rgArgs.push("-C", String(ctxLines))
-    rgArgs.push(pattern, searchPath)
+    if (!existsSync(searchPath)) {
+      return JSON.stringify({ matches: [], count: 0, error: `Path not found: ${searchPath}` }, null, 2)
+    }
+
+    // Build regex
+    let regex: RegExp
+    try {
+      const p = args.word_boundary ? `\\b${args.pattern}\\b` : args.pattern
+      regex = new RegExp(p, "g")
+    } catch {
+      return JSON.stringify({ status: "error", error: `Invalid regex pattern: ${args.pattern}` }, null, 2)
+    }
+
+    // Collect files
+    const gitignore = loadGitignore(context.worktree)
+    const files: string[] = []
 
     const startTime = Date.now()
-    const { result, binary } = spawnRg(rgArgs, context.worktree)
-    const elapsed = Date.now() - startTime
-
-    const cmdStr = `${binary} ${rgArgs.join(" ")}`
-
-    // rg exit 1 = no matches found (not an error)
-    // rg exit 2 = error (bad pattern, etc.)
-    if (result.error || result.status === 2 || (result.status !== 0 && result.status !== 1 && !result.stdout?.trim())) {
-      const errMsg = result.error?.message || result.stderr?.trim() || `rg exited with code ${result.status}`
-      hb(context, "smart_grep", "failed", errMsg.slice(0, 200))
-      return JSON.stringify({
-        status: "fail",
-        error: errMsg,
-        command: cmdStr,
-        hint: result.status === 2 ? "rg error — check pattern syntax (unescaped regex chars?)" : "rg not found or timed out",
-        elapsed_ms: elapsed,
-      }, null, 2)
+    const st = statSync(searchPath)
+    if (st.isFile()) {
+      if (isTextFile(searchPath)) files.push(searchPath)
+    } else {
+      collectFiles(searchPath, searchPath, gitignore.ignored, args.glob, 500, files)
     }
 
-    const stdout = result.stdout?.trim() || ""
-    if (!stdout) {
-      analytics(context, "smart_grep", { pattern: args.pattern.slice(0, 100), path: (args.path || "").slice(0, 80) })
-      hb(context, "smart_grep", "completed", (args.pattern || "").slice(0, 80))
-      return JSON.stringify({
-        matches: [], count: 0, pattern: args.pattern,
-        command: cmdStr, elapsed_ms: elapsed,
-        hint: "No matches found. Pattern may need adjustment or the target path may not contain matching files.",
-      }, null, 2)
-    }
-
-    const rawLines = stdout.split("\n")
+    // Search files
     const matches: { file: string; line: number; col?: number; text: string }[] = []
     const fileCounts: Record<string, number> = {}
-    const unparsed: string[] = []
+    let totalHits = 0
+    let searchedFiles = 0
 
-    for (const line of rawLines) {
-      if (!line.trim()) continue
-      const m = line.match(/^(.+?):(\d+)(?::(\d+))?:(.+)$/)
-      if (!m) {
-        if (unparsed.length < 5) unparsed.push(line.slice(0, 150))
-        continue
+    for (const file of files) {
+      if (matches.length >= maxResults && !summaryOnly) break
+      if (!isTextFile(file)) continue
+      searchedFiles++
+
+      try {
+        const content = readFileSync(file, "utf8")
+        const lines = content.split("\n")
+        const relPath = relative(context.worktree, file)
+        let fileHits = 0
+
+        for (let i = 0; i < lines.length; i++) {
+          const line = lines[i]!
+          regex.lastIndex = 0
+          let m: RegExpExecArray | null
+          while ((m = regex.exec(line)) !== null) {
+            totalHits++
+            fileHits++
+            const text = line.slice(Math.max(0, m.index - 40), m.index + m[0].length + 40).trim()
+            if (!summaryOnly && matches.length < maxResults) {
+              matches.push({ file: relPath, line: i + 1, col: m.index + 1, text: text.slice(0, 200) })
+            }
+            if (matches.length >= maxResults && !summaryOnly) break
+          }
+          if (matches.length >= maxResults && !summaryOnly) break
+        }
+
+        if (fileHits > 0) fileCounts[relPath] = fileHits
+      } catch {}
+    }
+
+    const elapsed = Date.now() - startTime
+
+    // ── Build clean output ──
+    if (totalHits === 0) {
+      const result = {
+        status: "🔍 NO MATCHES",
+        pattern: args.pattern,
+        searched: `${searchedFiles} files`,
+        elapsed_ms: elapsed,
+        hint: "No files matched. Try a different pattern, check the path, or widen the glob.",
       }
-      const file = m[1]!
-      const lineNum = parseInt(m[2]!)
-      const col = m[3] ? parseInt(m[3]) : undefined
-      const text = m[4]!.trim().slice(0, 200)
-      const entry: any = { file, line: lineNum, text }
-      if (col) entry.col = col
-      matches.push(entry)
-      fileCounts[file] = (fileCounts[file] || 0) + 1
-      if (matches.length >= maxResults) break
-    }
-
-    const resultObj: Record<string, unknown> = {
-      status: "ok",
-      status: "ok",
-      pattern: args.pattern,
-      command: cmdStr,
-      elapsed_ms: elapsed,
-      total_matches: rawLines.length,
-      returned: matches.length,
-      unique_files: Object.keys(fileCounts).length,
-      truncated: rawLines.length > maxResults,
-      // Include raw sample so agents don't feel the need to bypass smart_grep with raw rg
-      raw_sample: stdout.slice(0, 500),
-    }
-
-    if (unparsed.length > 0) {
-      resultObj.unparsed_lines = unparsed
-      resultObj.unparsed_note = `${unparsed.length} lines could not be parsed as file:line:match. Raw sample above includes them.`
+      analytics(context, "smart_grep", { pattern: args.pattern.slice(0, 100), path: (args.path || "").slice(0, 80) })
+      hb(context, "smart_grep", "completed", `0 matches in ${searchedFiles} files`)
+      return JSON.stringify(result, null, 2)
     }
 
     if (summaryOnly) {
-      resultObj.files = Object.entries(fileCounts)
-        .sort(([, a], [, b]) => b - a)
-        .slice(0, 20)
-        .map(([file, cnt]) => ({ file, matches: cnt }))
-    } else {
-      resultObj.matches = matches
-      if (Object.keys(fileCounts).length <= 10) {
-        resultObj.files = Object.fromEntries(
-          Object.entries(fileCounts).sort(([, a], [, b]) => b - a)
-        )
+      const result = {
+        status: `✅ ${totalHits} matches in ${Object.keys(fileCounts).length} files`,
+        pattern: args.pattern,
+        elapsed_ms: elapsed,
+        files: Object.entries(fileCounts)
+          .sort(([, a], [, b]) => b - a)
+          .slice(0, 20)
+          .map(([file, cnt]) => `${file} (${cnt})`),
       }
+      analytics(context, "smart_grep", { pattern: args.pattern.slice(0, 100), path: (args.path || "").slice(0, 80) })
+      hb(context, "smart_grep", "completed", `${totalHits} matches in ${Object.keys(fileCounts).length} files`)
+      return JSON.stringify(result, null, 2)
+    }
+
+    const result = {
+      status: `✅ ${matches.length} matches shown (${totalHits} total in ${Object.keys(fileCounts).length} files)`,
+      pattern: args.pattern,
+      elapsed_ms: elapsed,
+      matches: matches.map(m => `${m.file}:${m.line} — ${m.text}`),
+      truncated: totalHits > maxResults ? `${totalHits - matches.length} more not shown` : undefined,
     }
 
     analytics(context, "smart_grep", { pattern: args.pattern.slice(0, 100), path: (args.path || "").slice(0, 80) })
-    hb(context, "smart_grep", "completed", (args.pattern || "").slice(0, 80))
-    artifactLog(context, { tool: "smart_grep", action: "searched", pattern: args.pattern.slice(0, 80), results: resultObj.returned, files: resultObj.unique_files })
-    return JSON.stringify(resultObj, null, 2)
+    hb(context, "smart_grep", totalHits > 0 ? "completed" : "completed", `${totalHits} matches in ${searchedFiles} files`)
+    return JSON.stringify(result, null, 2)
   },
 })

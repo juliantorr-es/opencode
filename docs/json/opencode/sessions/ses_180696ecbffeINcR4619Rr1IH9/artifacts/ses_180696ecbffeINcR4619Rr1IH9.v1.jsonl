@@ -1,0 +1,26 @@
+{"at":"2026-05-31T19:51:50.796Z","tool":"smart_grep","action":"searched","pattern":"trust-boundary","results":3,"files":1}
+{"at":"2026-05-31T19:52:49.824Z","tool":"smart_bash","action":"bash","command":"wc -l docs/json/opencode/plans/trust-boundary-architecture.v1.json","exit_code":0}
+{"at":"2026-05-31T19:53:08.219Z","tool":"smart_bash","action":"bash","command":"python3 -c \"import json; data=json.load(open('docs/json/opencode/plans/trust-boundary-architecture.v","exit_code":1}
+{"at":"2026-05-31T19:53:25.427Z","tool":"smart_bash","action":"bash","command":"python3 -c \"\nimport json\ndata = json.load(open('docs/json/opencode/plans/trust-boundary-architecture","exit_code":0}
+{"at":"2026-05-31T19:53:42.831Z","tool":"smart_bash","action":"bash","command":"python3 -c \"\nimport json\ndata = json.load(open('docs/json/opencode/plans/trust-boundary-architecture","exit_code":0}
+{"at":"2026-05-31T19:53:57.312Z","tool":"smart_bash","action":"bash","command":"python3 -c \"\nimport json\ndata = json.load(open('docs/json/opencode/plans/trust-boundary-architecture","exit_code":0}
+{"at":"2026-05-31T19:54:14.286Z","tool":"smart_bash","action":"bash","command":"python3 << 'PYEOF'\nimport json\ndata = json.load(open('docs/json/opencode/plans/trust-boundary-archit","exit_code":0}
+{"at":"2026-05-31T19:54:29.666Z","tool":"smart_bash","action":"bash","command":"python3 << 'PYEOF'\nimport json\ndata = json.load(open('docs/json/opencode/plans/trust-boundary-archit","exit_code":0}
+{"at":"2026-05-31T19:54:48.724Z","tool":"smart_bash","action":"bash","command":"python3 << 'PYEOF'\nimport json\ndata = json.load(open('docs/json/opencode/plans/trust-boundary-archit","exit_code":0}
+{"at":"2026-05-31T19:55:08.862Z","tool":"smart_bash","action":"bash","command":"python3 << 'PYEOF'\nimport json\ndata = json.load(open('docs/json/opencode/plans/trust-boundary-archit","exit_code":0}
+{"at":"2026-05-31T19:55:30.449Z","tool":"smart_bash","action":"bash","command":"python3 << 'PYEOF'\nimport json\ndata = json.load(open('docs/json/opencode/plans/trust-boundary-archit","exit_code":0}
+{"at":"2026-05-31T19:55:55.353Z","tool":"smart_bash","action":"bash","command":"python3 << 'PYEOF'\nimport json\ndata = json.load(open('docs/json/opencode/plans/trust-boundary-archit","exit_code":0}
+{"at":"2026-05-31T19:59:01.086Z","tool":"smart_bash","action":"bash","command":"python3 -c \"\nlines = open('packages/opencode/src/plugin/index.ts').readlines()\nfor i, line in enumer","exit_code":0}
+{"at":"2026-05-31T19:59:20.641Z","tool":"smart_bash","action":"bash","command":"python3 -c \"\nlines = open('packages/opencode/src/plugin/index.ts').readlines()\nfor i, line in enumer","exit_code":0}
+{"at":"2026-05-31T20:00:26.064Z","tool":"smart_bash","action":"bash","command":"python3 -c \"\nlines = open('packages/opencode/src/mcp/index.ts').readlines()\nfor i, line in enumerate","exit_code":0}
+{"at":"2026-05-31T20:00:40.353Z","tool":"smart_bash","action":"bash","command":"python3 -c \"\nlines = open('packages/opencode/src/mcp/index.ts').readlines()\nfor i, line in enumerate","exit_code":0}
+{"at":"2026-05-31T20:01:23.233Z","tool":"smart_bash","action":"bash","command":"python3 -c \"\nlines = open('packages/opencode/src/plugin/xai.ts').readlines()\nfor i, line in enumerat","exit_code":0}
+{"at":"2026-05-31T20:01:36.866Z","tool":"smart_bash","action":"bash","command":"python3 -c \"\nlines = open('packages/opencode/src/plugin/xai.ts').readlines()\nfor i, line in enumerat","exit_code":0}
+{"at":"2026-05-31T20:02:17.381Z","tool":"smart_grep","action":"searched","pattern":"Schema.brand","results":15,"files":8}
+{"at":"2026-05-31T20:02:48.461Z","tool":"smart_grep","action":"searched","pattern":"Ef\\.withSpan|Effect\\.withSpan|annotateCurrentSpan","results":30,"files":12}
+{"at":"2026-05-31T20:03:03.063Z","tool":"smart_grep","action":"searched","pattern":"Effect\\.logWarning","results":11,"files":9}
+{"at":"2026-05-31T20:03:17.551Z","tool":"smart_grep","action":"searched","pattern":"annotateLogs","results":22,"files":12}
+{"at":"2026-05-31T20:03:32.001Z","tool":"smart_bash","action":"bash","command":"python3 -c \"\nlines = open('packages/opencode/src/plugin/github-copilot/copilot.ts').readlines()\nfor ","exit_code":0}
+{"at":"2026-05-31T20:05:39.512Z","tool":"smart_bash","action":"bash","command":"python3 << 'PYEOF'\nimport json\ndata = json.load(open('docs/json/opencode/plans/trust-boundary-archit","exit_code":0}
+{"at":"2026-05-31T20:06:07.916Z","tool":"smart_bash","action":"bash","command":"python3 -c \"\nlines = open('packages/opencode/src/mcp/oauth-provider.ts').readlines()\nfor i, line in ","exit_code":0}
+{"at":"2026-05-31T20:07:40.697Z","tool":"smart_write","action":"created","file":"/tmp/exhibit-a-audit.json","reason":"Record EXHIBIT-A structured audit of Trust-Boundary plan error paths"}

@@ -2,17 +2,26 @@
 - The default branch in this repo is `dev`.
 - Local `main` ref may not exist; use `dev` or `origin/dev` for diffs.
 
+## Agent Index
+
+See [INDEX.md](INDEX.md) for the master agent index and spawn permissions.
+See [LEAFS.md](LEAFS.md) for the leaf agent directory organized by parent orchestrator.
+
 ## Multi-Lane Execution Model
 
 When the mission scope contains multiple independent features or work items, each item is a separate lane. All lanes progress through the wave sequence concurrently — not one at a time, not sequentially through the backlog.
 
-Wave 1 launches cartographers for every lane simultaneously. Wave 2 launches architects for every lane simultaneously (including parallel critic reviews). Wave 3 launches executors for every lane simultaneously. And so on through validation, stress, repair, and publication.
+Each lane follows the lifecycle: **cartographer → architect ⇄ critic (max 3 revisions) → surgeon → trial → journalist**, with a repair loop: trial issues → architect → critic → surgeon → trial (max 3 rounds).
 
-Each lane completes its full lifecycle independently of other lanes. The orchestrator coordinates the fan-out at each wave boundary and publishes all completed lanes at session end.
+The surgeon handles ALL edits via its internal team (scalpel → vitals → stress-test → second-opinion → tourniquet → monitor). The journalist prepares per-lane handoffs. At session end, a final journalist consolidates all lanes.
+
+**Independent lane advancement:** Each lane advances at its own pace. When lane A's cartographer hands off, immediately launch lane A's architect — do NOT wait for lane B's cartographer. Lanes are independent; the only synchronization point is session end.
+
+**Lane timing:** After spawning an agent, check for its handoff within 45 seconds. If no heartbeat, respawn. Completed agents hand off immediately — launch the next agent in that lane's lifecycle without delay.
 
 Zero-contention lanes (touching different files) need no special coordination. Contention on shared files is resolved via `produce_fragment` with a consolidator assembly step before checkpoints are created.
 
-The orchestrator must never serialize lanes. If 6 features remain, launch 6 cartographers in wave 1. The work is concurrent, not sequential.
+The orchestrator must never serialize lanes. If 6 features remain, launch 6 cartographers in wave 1. The work is concurrent, not sequential. Each lane completes independently.
 
 ## Commits and PR Titles
 

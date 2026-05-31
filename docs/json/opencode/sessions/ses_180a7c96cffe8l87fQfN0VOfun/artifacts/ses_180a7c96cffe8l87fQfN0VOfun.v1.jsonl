@@ -1,0 +1,29 @@
+{"at":"2026-05-31T18:42:50.302Z","tool":"smart_grep","action":"searched","pattern":"\"bin\"|\"scripts\"","results":0,"files":0}
+{"at":"2026-05-31T18:43:37.711Z","tool":"smart_grep","action":"searched","pattern":"(server|httpServer|Bun\\.serve|app\\.listen)","results":30,"files":9}
+{"at":"2026-05-31T18:43:38.718Z","tool":"smart_grep","action":"searched","pattern":"(init|initialize|bootstrap|start)","results":30,"files":5}
+{"at":"2026-05-31T18:43:59.159Z","tool":"smart_bash","action":"bash","command":"for d in packages/opencode/src/*/; do echo \"DIR: $d\"; ls \"$d\"/*.ts 2>/dev/null | head -5; done","exit_code":0}
+{"at":"2026-05-31T18:44:01.394Z","tool":"smart_grep","action":"searched","pattern":"pglite|PGlite|Postgres|postgres","results":20,"files":3}
+{"at":"2026-05-31T18:44:24.090Z","tool":"smart_grep","action":"searched","pattern":"export (const|function) (main|run|command|server|start|listen)","results":9,"files":9}
+{"at":"2026-05-31T18:44:25.376Z","tool":"smart_grep","action":"searched","pattern":"yargs|cli|command|argv","results":20,"files":2}
+{"at":"2026-05-31T18:45:56.998Z","tool":"smart_bash","action":"bash","command":"test -f packages/opencode/src/index.ts && echo \"EXISTS\" || echo \"NOT FOUND\"; ls packages/opencode/sr","exit_code":0}
+{"at":"2026-05-31T18:45:57.936Z","tool":"smart_grep","action":"searched","pattern":"FormatError|top.level|cleanup","results":14,"files":3}
+{"at":"2026-05-31T18:45:58.957Z","tool":"smart_grep","action":"searched","pattern":"AppRuntime|app.Runtime|app-runtime","results":2,"files":1}
+{"at":"2026-05-31T18:48:18.004Z","tool":"smart_grep","action":"searched","pattern":"InstanceBootstrap","results":15,"files":6}
+{"at":"2026-05-31T18:48:19.016Z","tool":"smart_grep","action":"searched","pattern":"DuckDB|duckdb|DuckDb","results":20,"files":2}
+{"at":"2026-05-31T18:48:20.276Z","tool":"smart_grep","action":"searched","pattern":"Plugin\\.init|plugin.*init|Plugin.*load","results":16,"files":5}
+{"at":"2026-05-31T18:50:48.557Z","tool":"smart_grep","action":"searched","pattern":"WebServer|serve.*command|web.*command|export.*serve|export.*web","results":30,"files":21}
+{"at":"2026-05-31T18:53:03.063Z","tool":"smart_grep","action":"searched","pattern":"get\\(\\)|readConfig|loadConfig|configPath","results":9,"files":1}
+{"at":"2026-05-31T18:53:04.494Z","tool":"smart_grep","action":"searched","pattern":"serve|web.*command|cmd\\(.*serve|cmd\\(.*web","results":20,"files":10}
+{"at":"2026-05-31T18:53:05.873Z","tool":"smart_grep","action":"searched","pattern":"log.*file|logPath|LOG_FILE|\\.log","results":15,"files":8}
+{"at":"2026-05-31T18:53:58.528Z","tool":"smart_grep","action":"searched","pattern":"LOG_FILE|logPath|logDir|openlog","results":20,"files":7}
+{"at":"2026-05-31T18:53:59.504Z","tool":"smart_grep","action":"searched","pattern":"command.*serve|command.*web|\\\"serve\\\"|\\\"web\\\"","results":3,"files":3}
+{"at":"2026-05-31T18:54:55.965Z","tool":"smart_grep","action":"searched","pattern":"logDir|logsDir|~/.opencode","results":15,"files":5}
+{"at":"2026-05-31T18:55:03.474Z","tool":"smart_grep","action":"searched","pattern":"\\.opencode/|\\.rig/|home\\(\\)|homedir","results":15,"files":8}
+{"at":"2026-05-31T18:55:49.068Z","tool":"smart_grep","action":"searched","pattern":"logsDir","results":2,"files":1}
+{"at":"2026-05-31T18:58:02.684Z","tool":"smart_grep","action":"searched","pattern":"globalDir|setGlobalDir|\\.opencode","results":2,"files":2}
+{"at":"2026-05-31T18:59:03.797Z","tool":"smart_grep","action":"searched","pattern":"OPENCODE_LOG|OPENCODE_HOME|\\.opencode/log","results":5,"files":2}
+{"at":"2026-05-31T19:01:08.626Z","tool":"smart_grep","action":"searched","pattern":"const get = |get\\(\\)|function get|readonly get","results":4,"files":1}
+{"at":"2026-05-31T19:01:09.924Z","tool":"smart_grep","action":"searched","pattern":"opencode.*configDir|directories\\(|configDir|\\.opencode","results":3,"files":1}
+{"at":"2026-05-31T19:01:43.226Z","tool":"smart_grep","action":"searched","pattern":"@parcel/watcher|@lydell/node-pty|bun-pty|photon|\\.node|native|NativeModule","results":15,"files":4}
+{"at":"2026-05-31T19:01:57.015Z","tool":"smart_grep","action":"searched","pattern":"parcel|node-pty|photon|tree-sitter|web-tree-sitter|duckdb","results":10,"files":3}
+{"at":"2026-05-31T19:01:58.505Z","tool":"smart_grep","action":"searched","pattern":"impliedNative|@parcel|@lydell|\\.node\\\"","results":6,"files":2}

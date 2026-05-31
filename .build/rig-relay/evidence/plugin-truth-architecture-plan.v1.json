@@ -1,0 +1,398 @@
+{
+  "plan": {
+    "title": "PLUGIN-TRUTH: Single PluginRegistration Source of Truth",
+    "boundary": "packages/opencode/src/plugin/ and packages/plugin/src/ — plugin identity, registration store, error hierarchy, hook dispatch, crash quarantine",
+    "consumer_purpose": "Eliminates split truth across parallel data structures (PluginHealthStore + CapabilityRegistry), makes pluginId non-optional, adds typed errors, hook timeouts, hook identity context, and immutable dispatch",
+    "sessions_inspected": ["current"],
+    "files_read": [
+      "packages/opencode/src/plugin/index.ts",
+      "packages/opencode/src/plugin/loader.ts",
+      "packages/opencode/src/plugin/shared.ts",
+      "packages/opencode/src/plugin/capability/types.ts",
+      "packages/opencode/src/plugin/capability/hook-map.ts",
+      "packages/opencode/src/plugin/capability/hook-dispatch-guard.ts",
+      "packages/opencode/src/plugin/capability/enforcer.ts",
+      "packages/opencode/src/plugin/capability/registry.ts",
+      "packages/opencode/src/plugin/capability/index.ts",
+      "packages/plugin/src/index.ts",
+      "packages/plugin/src/errors.ts",
+      "packages/core/src/util/error.ts"
+    ],
+    "root_causes": [
+      {
+        "hypothesis": "Plugin identity is split across optional pluginId (ListedPlugin), implicit index tracking (hooks[i] ↔ registrations[i]), and separate health/security stores that mutate independently",
+        "confidence": "high",
+        "evidence": [
+          "ListedPlugin type at index.ts:82 uses pluginId?: string",
+          "State holds parallel arrays: hooks: Hooks[], registrations: PluginRegistration[] — indexed by same i",
+          "Crash counter persisted to PluginHealthStore (JSON file) then synced to CapabilityRegistry (Ref<Map>) at lines 407-410",
+          "tool/registry.ts:421 accesses pluginId via `(p as any).pluginId` — type-unsafe"
+        ]
+      },
+      {
+        "hypothesis": "ALWAYS_ALLOWED_HOOKS grants config and auth hooks capability-free access, but these hooks receive full secrets/config objects — a privilege escalation risk",
+        "confidence": "high",
+        "evidence": [
+          "hook-map.ts:29-33: ALWAYS_ALLOWED_HOOKS = Set{dispose, config, auth, provider}",
+          "hook-dispatch-guard.ts:47: bypasses all checks for ALWAYS_ALLOWED_HOOKS",
+          "But config hook receives full config (including secrets) via `(hook as any).config?.(configForPlugin)` at line 338",
+          "auth hook receives full Provider hook context via provider/auth.ts:115-118"
+        ]
+      },
+      {
+        "hypothesis": "Crash quarantine reset on persistSuccess creates an oscillation vector where crash→succeed→crash→succeed evades the 3-crash threshold indefinitely",
+        "confidence": "high",
+        "evidence": [
+          "persistSuccess at lines 413-420 resets crashCount to 0 on any successful hook dispatch",
+          "MAX_CRASHES_BEFORE_QUARANTINE = 3 at line 75",
+          "A plugin that alternates crash/resume across 6 hooks will never quarantine"
+        ]
+      },
+      {
+        "hypothesis": "No hook timeout means a hung plugin hook (infinite loop, network stall) blocks all subsequent plugin hooks in the serial for-loop",
+        "confidence": "high",
+        "evidence": [
+          "trigger() at lines 425-460 iterates hooks sequentially in a for loop",
+          "Each fn(input, output) is called via Effect.tryPromise with no timeout mechanism",
+          "Effect.timeout is never applied to hook invocations"
+        ]
+      }
+    ],
+    "fixes": [
+      {
+        "id": "fix-A",
+        "description": "Make pluginId required — introduce PluginIdentity struct and remove Optional from ListedPlugin",
+        "files": [
+          "packages/plugin/src/index.ts",
+          "packages/opencode/src/plugin/index.ts",
+          "packages/opencode/src/plugin/capability/types.ts",
+          "packages/opencode/src/tool/registry.ts"
+        ],
+        "before": "packages/plugin/src/index.ts: add export type PluginIdentity = { id: string; source: 'npm' | 'file' | 'git' | 'url'; resolvedPath: string }\n\npackages/opencode/src/plugin/index.ts:82\ntype ListedPlugin = Hooks & { pluginId?: string }",
+        "after": "packages/plugin/src/index.ts: add\n/** Canonical plugin identity — non-optional, always present after load */\nexport type PluginIdentity = {\n  id: string\n  source: PluginSource  // re-export from shared\n  resolvedPath: string\n}\n\npackages/opencode/src/plugin/index.ts:82\ntype ListedPlugin = Hooks & { pluginId: string; identity: PluginIdentity }",
+        "impact": {
+          "affected_files": [
+            "packages/opencode/src/plugin/index.ts — ListedPlugin type, list() function, trigger() function",
+            "packages/opencode/src/tool/registry.ts:421 — remove `(p as any).pluginId`, use `p.pluginId` directly",
+            "packages/opencode/src/provider/auth.ts:115 — x.auth?.provider uses hooks from list(), no change needed",
+            "packages/opencode/src/provider/provider.ts:1254 — reads direct from hooks, no change needed",
+            "packages/opencode/test/plugin/trigger.test.ts — any existing tests mocks may need identity field"
+          ],
+          "tests_to_run": [
+            "packages/opencode/test/plugin/trigger.test.ts",
+            "packages/opencode/test/tool/registry.test.ts",
+            "packages/opencode/test/provider/provider.test.ts"
+          ]
+        },
+        "risks": [
+          "MINOR: Legacy plugins that don't export an `id` — already rejected by resolvePluginId() in shared.ts:304 which throws for file plugins without id",
+          "MINOR: The list() function currently does Object.assign(hook, {pluginId}) — needs to be changed to {pluginId, identity}",
+          "MINOR: External consumers of ListedPlugin type (from plugin package re-exports) need the new field"
+        ],
+        "validation": [
+          "Typecheck: bun typecheck from packages/opencode — ListedPlugin must always have pluginId: string",
+          "Test: Update trigger.test.ts with an identity asserted on listed plugins",
+          "Smoke: Full provider layer build — verify auth/config hook resolution still works"
+        ]
+      },
+      {
+        "id": "fix-B",
+        "description": "Unify PluginHealthStore (persisted JSON file) + CapabilityRegistry (Ref<Map>) into single PluginRegistration store. PluginRegistration becomes the merged truth. Persistence delegates to health store JSON file on write.",
+        "files": [
+          "packages/opencode/src/plugin/index.ts",
+          "packages/opencode/src/plugin/capability/registry.ts",
+          "packages/opencode/src/plugin/capability/types.ts"
+        ],
+        "before": "// index.ts:84-89 — State holds separate stores\ntype State = {\n  hooks: Hooks[]\n  registrations: PluginRegistration[]\n  capabilityRegistry: CapabilityRegistry\n  dispatchGuard: HookDispatchGuard\n}\n\n// index.ts:45-53 — separate persisted health store\ninterface PluginHealthEntry { crashCount: number; quarantined: boolean; lastCrashed?: string }\ninterface PluginHealthStore { plugins: Record<string, PluginHealthEntry> }\n\n// index.ts:77-80 — thin PluginRegistration\ntype PluginRegistration = {\n  pluginId: string\n  trust: TrustLevel\n}",
+        "after": "// capability/types.ts:31-46 — expand PluginSecurityState into full PluginRegistration\nexport interface PluginRegistration {\n  pluginId: string\n  identity: PluginIdentity\n  source: PluginSource\n  trustLevel: TrustLevel\n  declaredCapabilities: CapabilityId[]\n  grantedCapabilities: CapabilityId[]\n  status: 'loaded' | 'failed' | 'disabled' | 'quarantined'\n  loadError?: TypedPluginError\n  crashCount: number\n  quarantined: boolean\n  lastCrashed?: string\n  createdAt: number\n  updatedAt: number\n}\n\n// index.ts:84-89 — State holds unified store\ntype State = {\n  hooks: Hooks[]\n  registrations: PluginRegistration[]  // now the full record, indexed in parallel with hooks\n  dispatchGuard: HookDispatchGuard\n}\n\n// Remove PluginHealthEntry + PluginHealthStore interfaces entirely\n// Remove loadPluginHealthStore() + savePluginHealthStore() functions\n// Persistence now serializes registrations array directly",
+        "impact": {
+          "affected_files": [
+            "packages/opencode/src/plugin/index.ts — ~40 lines removed (health store), ~20 lines changed (State, persistCrash, persistSuccess, unquarantine, getCrashStatus)",
+            "packages/opencode/src/plugin/capability/registry.ts — setCrashCount() and setQuarantined() removed (now on PluginRegistration directly)",
+            "packages/opencode/src/plugin/capability/types.ts — PluginSecurityState import replaced with PluginRegistration",
+            "packages/opencode/src/plugin/capability/enforcer.ts — checkCapability uses registry.get() which now returns PluginRegistration",
+            "packages/opencode/src/plugin/capability/hook-dispatch-guard.ts — shouldDispatch() uses registry.get()"
+          ],
+          "tests_to_run": [
+            "packages/opencode/test/plugin/trigger.test.ts — crash counting behavior changes",
+            "packages/opencode/test/tool/registry.test.ts",
+            "All integration tests using Plugin.defaultLayer"
+          ]
+        },
+        "risks": [
+          "MAJOR: Removing setCrashCount/setQuarantined from Registry changes its public API — but grep confirms NO external callers exist outside index.ts (only internal sync at lines 407-410)",
+          "MEDIUM: The loadPluginHealthStore() JSON file path changes — old health store files become stale but harmless (new path writes PluginRegistration[])",
+          "MEDIUM: Effect Ref.update pattern for capability switching needs careful migration — Registry.get() currently returns PluginSecurityState, needs to return PluginRegistration or a compatibility shim",
+          "MINOR: Two internal callers use capabilityRegistry.setCrashCount/setQuarantined — replace with direct array mutation on registrations[i]"
+        ],
+        "validation": [
+          "Typecheck: bun typecheck from packages/opencode — all Registry references updated",
+          "Test: Verify crash counter increments in registrations[i].crashCount (not separate JSON store)",
+          "Test: Verify quarantine state is read from registrations[i].quarantined at load time",
+          "Smoke: Multiple plugin load → trigger crash → verify quarantine persisted across process restart"
+        ]
+      },
+      {
+        "id": "fix-C",
+        "description": "Add typed PluginError hierarchy extending NamedError. Five error classes: PluginLoadError, PluginHookError, PluginConfigError, PluginCapabilityDeniedError, PluginDisposeError.",
+        "files": [
+          "packages/opencode/src/plugin/errors.ts (NEW)",
+          "packages/opencode/src/plugin/index.ts",
+          "packages/opencode/src/plugin/loader.ts"
+        ],
+        "before": "// index.ts:17 — all plugin errors are NamedError.Unknown\nimport { NamedError } from \"@opencode-ai/core/util/error\"\n// ...\nnew NamedError.Unknown({ message }).toObject()  // line 213\n\n// loader.ts:135 — load result is { ok: false; error: unknown }\nexport async function load(row: Resolved): Promise<{ ok: true; value: Loaded } | { ok: false; error: unknown }>",
+        "after": "// NEW FILE: packages/opencode/src/plugin/errors.ts\nexport const PluginLoadError = NamedError.create(\"PluginLoadError\", {\n  pluginId: Schema.String,\n  stage: Schema.Literals([\"install\", \"entry\", \"compatibility\", \"load\"]),\n  cause: Schema.String,\n})\nexport const PluginHookError = NamedError.create(\"PluginHookError\", {\n  pluginId: Schema.String,\n  hook: Schema.String,\n  cause: Schema.String,\n})\nexport const PluginConfigError = NamedError.create(\"PluginConfigError\", {\n  pluginId: Schema.String,\n  cause: Schema.String,\n})\nexport const PluginCapabilityDeniedError = NamedError.create(\"PluginCapabilityDeniedError\", {\n  pluginId: Schema.String,\n  capability: Schema.String,\n  hook: Schema.optional(Schema.String),\n})\nexport const PluginDisposeError = NamedError.create(\"PluginDisposeError\", {\n  pluginId: Schema.String,\n  cause: Schema.String,\n})\nexport type TypedPluginError = PluginLoadError | PluginHookError | PluginConfigError | PluginCapabilityDeniedError | PluginDisposeError\n\n// loader.ts — narrow error from unknown to TypedPluginError\n// (only at call sites — load() return type stays unknown for backward compat, use try/catch + wrap)",
+        "impact": {
+          "affected_files": [
+            "packages/opencode/src/plugin/errors.ts — NEW file, 0 downstream breakage",
+            "packages/opencode/src/plugin/index.ts — change publishPluginError(), log.error calls, all catch blocks",
+            "packages/opencode/src/plugin/loader.ts — wrap load errors in PluginLoadError at call site (line 288-295 in index.ts)",
+            "packages/opencode/src/plugin/shared.ts — resolvePluginId() already throws TypeError; now can throw PluginLoadError"
+          ],
+          "tests_to_run": [
+            "packages/opencode/test/plugin/trigger.test.ts — verify error types on hook failure"
+          ]
+        },
+        "risks": [
+          "MINOR: Existing catch blocks pass `error: err` to log.error — changing to structured errors requires no log format change (they're JSON-serializable)",
+          "MINOR: loader.ts's public API keeps `error: unknown` for backward compat; wrapping happens at the consumer (index.ts)"
+        ],
+        "validation": [
+          "Typecheck: bun typecheck from packages/opencode",
+          "Test: Trigger a hook that throws → catch block produces PluginHookError",
+          "Test: Load a nonexistent plugin → PluginLoadError with stage='install'"
+        ]
+      },
+      {
+        "id": "fix-D",
+        "description": "Add hook timeout (default 30s) with per-hook override. Uses Effect.timeout on the fn(input, output) promise.",
+        "files": [
+          "packages/opencode/src/plugin/index.ts",
+          "packages/opencode/src/plugin/capability/hook-map.ts"
+        ],
+        "before": "// index.ts:445-453 — hook dispatch with no timeout\nyield* Effect.tryPromise({\n  try: () => fn(input, output),\n  catch: (err) => { ... },\n}).pipe(Effect.exit)",
+        "after": "// index.ts: add HOOK_TIMEOUT_MS constant and per-hook override map\nconst DEFAULT_HOOK_TIMEOUT_MS = 30_000\n// Optional per-hook overrides in hook-map.ts:\n// export const HOOK_TIMEOUT_OVERRIDES: Record<string, number> = {\n//   \"tool.execute.after\": 5_000,  // 5s for tool post-exec hooks\n// }\n\n// In trigger():\nconst timeoutMs = HOOK_TIMEOUT_OVERRIDES?.[name] ?? DEFAULT_HOOK_TIMEOUT_MS\nyield* Effect.tryPromise({\n  try: () => fn(input, output),\n  catch: (err) => { ... },\n}).pipe(\n  Effect.timeout(timeoutMs),\n  Effect.catchTag(\"TimeoutException\", (e) => {\n    log.warn(\"plugin hook timed out\", { pluginId, hook: name, timeoutMs })\n    return Effect.fail(new TimeoutException())\n  }),\n  Effect.exit\n)\n\n// Timeout counts as crash for quarantine purposes (result._tag === \"Failure\")",
+        "impact": {
+          "affected_files": [
+            "packages/opencode/src/plugin/index.ts — trigger() function (lines 425-460)",
+            "packages/opencode/src/plugin/capability/hook-map.ts — add HOOK_TIMEOUT_OVERRIDES (optional)"
+          ],
+          "tests_to_run": [
+            "packages/opencode/test/plugin/trigger.test.ts — add slow-hook timeout test"
+          ]
+        },
+        "risks": [
+          "MINOR: Long-running hooks (e.g., heavy config processing on startup) may need timeout overrides. The override map is the escape hatch.",
+          "MINOR: Test flakiness if timeout values are too tight — use generous values in tests (e.g., 500ms for test hooks, 30s default for real)"
+        ],
+        "validation": [
+          "Test: Plugin with hook that sleeps 40s → timeout → crash counted",
+          "Test: Plugin with hook overridden to 60s → 40s hook succeeds",
+          "Smoke: 30s default timeout does not fire on normal hooks"
+        ]
+      },
+      {
+        "id": "fix-E",
+        "description": "Add hook identity context — every hook dispatch carries (pluginId, hookName, capability) in log messages and errors.",
+        "files": [
+          "packages/opencode/src/plugin/index.ts"
+        ],
+        "before": "// index.ts:447-450 — log.error with inline pluginId\nlog.error(\"plugin hook error\", { pluginId, hook: name, error: err })",
+        "after": "// Define a HookInvocation context type\ninterface HookInvocation {\n  pluginId: string\n  hookName: string\n  requiredCapability?: CapabilityId\n}\n\n// In trigger(), construct context before dispatch:\nconst invocation: HookInvocation = {\n  pluginId,\n  hookName: name,\n  requiredCapability: HOOK_CAPABILITY_MAP[name] as CapabilityId | undefined,\n}\n// Pass to log calls and to PluginHookError constructor",
+        "impact": {
+          "affected_files": [
+            "packages/opencode/src/plugin/index.ts — trigger() function",
+            "packages/opencode/src/plugin/capability/hook-dispatch-guard.ts — shouldDispatch() already receives hookName+pluginId, no change"
+          ],
+          "tests_to_run": [
+            "packages/opencode/test/plugin/trigger.test.ts"
+          ]
+        },
+        "risks": [
+          "MINOR: HookInvocation type is internal-only, no external API change"
+        ],
+        "validation": [
+          "Test: Trigger a hook that fails — log output includes {pluginId, hookName, capability}",
+          "Typecheck: no external consumers affected"
+        ]
+      },
+      {
+        "id": "fix-F",
+        "description": "Narrow ALWAYS_ALLOWED_HOOKS from {dispose, config, auth, provider} to {dispose, provider}. Config and auth hooks must now pass through capability checks when dispatched via trigger().",
+        "files": [
+          "packages/opencode/src/plugin/capability/hook-map.ts",
+          "packages/opencode/src/plugin/capability/hook-dispatch-guard.ts"
+        ],
+        "before": "// hook-map.ts:29-33\nexport const ALWAYS_ALLOWED_HOOKS = new Set([\"dispose\", \"config\", \"auth\", \"provider\"])",
+        "after": "// hook-map.ts:29-31\nexport const ALWAYS_ALLOWED_HOOKS = new Set([\"dispose\", \"provider\"])\n// NOTE: config and auth hooks are NOT dispatched via trigger() and therefore\n// are unaffected by this change. The narrowing is a defense-in-depth measure\n// for any future code that might dispatch these hook names through trigger().\n//\n// Actual config dispatch: index.ts:338 — `(hook as any).config?.(configForPlugin)`\n// Actual auth dispatch: provider/auth.ts:115-118 — direct hook.auth access\n// Actual provider dispatch: provider/provider.ts — direct hook.provider access",
+        "impact": {
+          "affected_files": [
+            "packages/opencode/src/plugin/capability/hook-map.ts — 1 line change",
+            "packages/opencode/src/plugin/capability/hook-dispatch-guard.ts — no code change, just semantic change"
+          ],
+          "tests_to_run": [
+            "packages/opencode/test/plugin/trigger.test.ts"
+          ]
+        },
+        "risks": [
+          "LOW: No existing trigger('config') or trigger('auth') calls exist in codebase. Verified by grep across all 14 consumer files.",
+          "LOW: If a future test or plugin dispatches trigger('config', ...) it will be denied unless the plugin has config.read capability."
+        ],
+        "validation": [
+          "Test: Call trigger('dispose', ...) — still allowed (always-allowed)",
+          "Test: Call trigger('provider', ...) — still allowed (always-allowed)",
+          "Test: Call trigger('config', ...) with a plugin lacking config.read — denied",
+          "Test: Call trigger('auth', ...) with a plugin lacking secrets.access — denied",
+          "Smoke: Full integration test suite — no config/auth hooks break"
+        ]
+      },
+      {
+        "id": "fix-G",
+        "description": "Add explicit Plugin.dispose(id) API that calls a specific plugin's dispose hook and removes it from the hooks/registrations arrays.",
+        "files": [
+          "packages/opencode/src/plugin/index.ts"
+        ],
+        "before": "// index.ts: Interface — no dispose method\nexport interface Interface {\n  readonly trigger: ...\n  readonly list: ...\n  readonly init: ...\n  readonly checkCapability: ...\n  readonly getRegistry: ...\n  readonly unquarantine: ...\n  readonly getCrashStatus: ...\n}",
+        "after": "// Add to Interface:\n/** Call dispose hook and remove the plugin from the active set */\nreadonly dispose: (pluginId: string) => Effect.Effect<void>\n\n// Implementation in layer:\nconst disposePlugin = Effect.fn(\"Plugin.dispose\")(function* (pluginId: string) {\n  const s: any = yield* InstanceState.get(state)\n  const idx = s.registrations.findIndex((r: PluginRegistration) => r.pluginId === pluginId)\n  if (idx === -1) return\n  const hook = s.hooks[idx]\n  if (hook?.dispose) {\n    yield* Effect.tryPromise({\n      try: () => Promise.resolve(hook.dispose!()),\n      catch: (err) => { log.error(\"plugin dispose hook failed\", { pluginId, error: err }) },\n    }).pipe(Effect.ignore)\n  }\n  s.hooks.splice(idx, 1)\n  s.registrations.splice(idx, 1)\n})\n\n// Return in Service.of: { ..., dispose: disposePlugin }",
+        "impact": {
+          "affected_files": [
+            "packages/opencode/src/plugin/index.ts — Interface type, layer body"
+          ],
+          "tests_to_run": [
+            "packages/opencode/test/plugin/trigger.test.ts — add dispose test"
+          ]
+        },
+        "risks": [
+          "MEDIUM: Splice from parallel arrays (hooks, registrations) must stay synchronized — but we're in an Effect and the arrays are guarded by InstanceState already.",
+          "MINOR: If a hook is being dispatched in trigger() while dispose() is called, the for-loop's cached length may cause out-of-bounds access. Mitigation: dispose sets a tombstone (hook = null) instead of splicing.",
+          "MINOR: External callers holding references to ListedPlugin from list() will have stale references — this is pre-existing behavior."
+        ],
+        "validation": [
+          "Test: Load plugin, call dispose(id), verify hooks.length decreased by 1",
+          "Test: Call dispose on nonexistent pluginId — no-op",
+          "Test: Dispose plugin with failing dispose hook — hook still removed, error logged",
+          "Smoke: Full cleanup at scope exit via addFinalizer still works for remaining plugins"
+        ]
+      },
+      {
+        "id": "fix-H",
+        "description": "Fix crash quarantine — count persists across sessions, not reset on persistSuccess. Adds a separate crashWindow counter that resets on success but crashTotal persists.",
+        "files": [
+          "packages/opencode/src/plugin/index.ts"
+        ],
+        "before": "// index.ts:413-420 — persistSuccess resets crashCount to 0\nconst persistSuccess: (pluginId: string) => Effect.Effect<void> = (pluginId) =>\n  Effect.gen(function* () {\n    const entry = pluginHealthStore.plugins[pluginId]\n    if (entry && entry.crashCount > 0) {\n      entry.crashCount = 0  // BUG: resets accumulated crash count on success\n      ...\n    }\n  })",
+        "after": "// Use CrashWindow pattern: recent crashes within a window trigger quarantine,\n// but total crash count persists for diagnostics\n\n// In PluginRegistration (from fix-B):\ncrashCount: number       // total crashes across all sessions (never reset)\ncrashWindow: number       // recent crashes in current session\nquarantined: boolean\n\n// persistCrash: increment BOTH\nentry.crashCount++\nentry.crashWindow++\nif (entry.crashWindow >= MAX_CRASHES_BEFORE_QUARANTINE) {\n  entry.quarantined = true\n}\n\n// persistSuccess: reset crashWindow only, NOT crashCount\nentry.crashWindow = 0\n// entry.crashCount stays — provides diagnostic visibility\n\n// At load time: quarantine if crashCount >= MAX_CRASHES_BEFORE_QUARANTINE (cross-session)\n// OR crashWindow resets to 0 on each process start",
+        "impact": {
+          "affected_files": [
+            "packages/opencode/src/plugin/index.ts — persistCrash, persistSuccess, layer initialization"
+          ],
+          "tests_to_run": [
+            "packages/opencode/test/plugin/trigger.test.ts"
+          ]
+        },
+        "risks": [
+          "MINOR: Plugins with high crashCount from previous bugs will quarantine on first load after update — this is the intended behavior",
+          "MINOR: unquarantine() must reset both crashCount and crashWindow to 0"
+        ],
+        "validation": [
+          "Test: Plugin crashes 3 times → quarantined",
+          "Test: Plugin crashes 2 → succeeds 1 → crashes 2 more → quarantined (window is 4)",
+          "Test: Plugin crashes 5 times over 2 sessions → still quarantined on second session",
+          "Test: unquarantine() → crashCount=0, crashWindow=0, quarantined=false"
+        ]
+      },
+      {
+        "id": "fix-I",
+        "description": "Make hook output immutable per-plugin by shallow-cloning the output object before passing it to each hook. One plugin's mutation cannot corrupt the next plugin's input.",
+        "files": [
+          "packages/opencode/src/plugin/index.ts"
+        ],
+        "before": "// index.ts:447 — shared mutable output passed to all hooks\nconst fn = (s.hooks[i] as any)[name]\n// ...\nyield* Effect.tryPromise({ try: () => fn(input, output), ... })\n// output object is shared reference — plugin A can mutate it before plugin B sees it",
+        "after": "// Clone output before each hook dispatch\n// Shallow clone via spread for plain objects, structuredClone for complex\nconst clone = (val: any) => {\n  if (typeof val !== 'object' || val === null) return val\n  // Use structuredClone for arrays and plain objects to avoid shared references\n  if (Array.isArray(val) || val.constructor === Object) {\n    try { return structuredClone(val) } catch { return { ...val } }\n  }\n  return { ...val }\n}\n\n// In trigger():\nconst clonedOutput = clone(output)\nyield* Effect.tryPromise({ try: () => fn(input, clonedOutput), ... })",
+        "impact": {
+          "affected_files": [
+            "packages/opencode/src/plugin/index.ts — trigger() function"
+          ],
+          "tests_to_run": [
+            "packages/opencode/test/plugin/trigger.test.ts — add output-isolation test"
+          ]
+        },
+        "risks": [
+          "MINOR: structuredClone has overhead for large objects — but output objects in hooks are small ({args}, {output}, {messages}, {env})",
+          "MINOR: structuredClone may fail on objects with functions/circular refs — fallback to spread handles this",
+          "MINOR: Callers that rely on mutating output (e.g., hook sets output.enabled = true to signal state) will silently break. Mitigation: use the clonedOutput for dispatch but merge result back into original? NO — that's the bug. The ENTIRE output is passed to each hook independently; hooks should not rely on prior hook mutations. This is the fix."
+        ],
+        "validation": [
+          "Test: Plugin A mutates output.foo = 'corrupted', plugin B sees original output.foo",
+          "Test: structuredClone fallback works with circular references",
+          "Smoke: All existing trigger() callers — verify no hook depends on cross-plugin mutation"
+        ]
+      }
+    ],
+    "apply_order": ["fix-A", "fix-B", "fix-C", "fix-D", "fix-E", "fix-F", "fix-G", "fix-H", "fix-I"],
+    "rollback_plan": "Revert each fix in reverse order (I→A). Each fix is independently revertible since they target different code regions. Fix-B is the riskiest — if rollback needed, restore separate health store and Registry setCrashCount/setQuarantined methods.",
+    "migration_phases": [
+      {
+        "phase": 1,
+        "name": "Identity + Store Unification",
+        "fixes": ["fix-A", "fix-B"],
+        "rationale": "PluginIdentity and unified PluginRegistration are prerequisites for all other fixes. These change the core data model.",
+        "estimated_edit_locations": 12,
+        "risk": "medium"
+      },
+      {
+        "phase": 2,
+        "name": "Error Hierarchy + Hook Infrastructure",
+        "fixes": ["fix-C", "fix-D", "fix-E"],
+        "rationale": "Typed errors, timeouts, and hook identity build on the unified store but don't change behavior.",
+        "estimated_edit_locations": 8,
+        "risk": "low"
+      },
+      {
+        "phase": 3,
+        "name": "Security Hardening + Crash Fix + Immutability",
+        "fixes": ["fix-F", "fix-G", "fix-H", "fix-I"],
+        "rationale": "Behavioral changes that need the unified store in place for proper quarantine tracking.",
+        "estimated_edit_locations": 10,
+        "risk": "medium"
+      }
+    ],
+    "total_estimated_edit_locations": 30,
+    "files_created": ["packages/opencode/src/plugin/errors.ts"],
+    "files_deleted": [],
+    "key_decisions": [
+      {
+        "decision": "Keep hooks[] and registrations[] as parallel arrays instead of a single array of {hook, registration} objects",
+        "reason": "Minimizes edit surface — all existing code indexes hooks[i]/registrations[i] by position. Unifying into a single array would touch every loop in trigger(), list(), the config dispatch loop, the finalizer, and the event subscription setup. Assessment: defer to a future cleanup phase."
+      },
+      {
+        "decision": "Do NOT add config.read and secrets.access capabilities to HOOK_CAPABILITY_MAP for config/auth hooks",
+        "reason": "These hooks are NEVER dispatched through trigger() — they are called directly in the layer initialization code. Adding them to the map would be dead code. The narrowing of ALWAYS_ALLOWED_HOOKS is defense-in-depth for any future trigger() calls."
+      },
+      {
+        "decision": "crashWindow resets on process start (not persisted) while crashCount persists",
+        "reason": "Prevents a plugin with 100 historical crashes from being permanently unusable across updates. crashWindow = 0 on each start gives the plugin a fresh chance while crashCount provides diagnostics."
+      }
+    ],
+    "caller_impact_summary": {
+      "no_change": [
+        "packages/opencode/src/session/tools.ts (4 trigger calls)",
+        "packages/opencode/src/session/prompt.ts (6 trigger calls)",
+        "packages/opencode/src/session/compaction.ts (3 trigger calls)",
+        "packages/opencode/src/session/llm/request.ts (3 trigger calls)",
+        "packages/opencode/src/session/processor.ts (1 trigger call)",
+        "packages/opencode/src/agent/agent.ts (1 trigger call)",
+        "packages/opencode/src/pty/index.ts (1 trigger call)",
+        "packages/opencode/src/tool/shell.ts (1 trigger call)",
+        "packages/opencode/src/provider/auth.ts (uses plugin.list(), no trigger)",
+        "packages/opencode/src/provider/provider.ts (uses plugin.list(), no trigger)"
+      ],
+      "type_only_change": [
+        "packages/opencode/src/tool/registry.ts:421 — remove `(p as any).pluginId`, use typed `p.pluginId`"
+      ],
+      "api_change": [
+        "packages/opencode/src/plugin/index.ts — Interface type gains dispose() method"
+      ]
+    }
+  }
+}

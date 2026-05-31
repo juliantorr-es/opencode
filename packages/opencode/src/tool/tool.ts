@@ -160,7 +160,7 @@ function wrap<Parameters extends Schema.Decoder<unknown>, M extends Metadata>(
       const decode = Schema.decodeUnknownEffect(toolInfo.parameters)
       const execute = toolInfo.execute
 
-      // Layer 4: Per-tool semaphore for maxConcurrency control
+      // Per-tool semaphore for maxConcurrency control
       let semaphore: Semaphore.Semaphore | undefined
       if (toolInfo.maxConcurrency !== undefined && toolInfo.maxConcurrency > 0) {
         semaphore = yield* Semaphore.make(toolInfo.maxConcurrency)
@@ -176,226 +176,335 @@ function wrap<Parameters extends Schema.Decoder<unknown>, M extends Metadata>(
 
         const startTime = Date.now()
 
-        // Layer 1: Core pipeline — decode, execute, truncate
-        const core: Effect.Effect<ExecuteResult<M>, any, any> = Effect.gen(function* () {
-          const decoded = yield* decode(args).pipe(
-            Effect.mapError(
-              (error) =>
-                new InvalidArgumentsError({
-                  tool: id,
-                  detail: toolInfo.formatValidationError ? toolInfo.formatValidationError(error) : String(error),
-                }),
-            ),
-          )
-          // Cache-aware execution: try getOrCompute for cacheable tools
-          const rawResult = yield* Effect.gen(function* () {
-            const cache = yield* Effect.serviceOption(ToolCache.Service)
-            if (Option.isNone(cache)) {
-              yield* Effect.annotateCurrentSpan({ "cache.available": "false" })
-              return yield* execute(decoded as Schema.Schema.Type<Parameters>, ctx)
-            }
-            yield* Effect.annotateCurrentSpan({ "cache.available": "true" })
-            if (!toolInfo.cacheable) {
-              return yield* execute(decoded as Schema.Schema.Type<Parameters>, ctx)
-            }
-            const cacheConfig = typeof toolInfo.cacheable === "object" ? toolInfo.cacheable : {}
-            const key = yield* Effect.promise(() =>
-              CacheKey.derive({
-                toolID: id,
-                args: decoded,
-                sessionID: ctx.sessionID,
-                agent: ctx.agent,
-              }),
-            )
-            return yield* cache.value.getOrCompute(
-              key,
-              () => execute(decoded as Schema.Schema.Type<Parameters>, ctx),
-              {
-                ttl: cacheConfig.ttl ? Duration.fromInputUnsafe(cacheConfig.ttl) : undefined,
-                maxEntrySize: cacheConfig.maxSize,
-              },
-            )
-          })
-          if (rawResult.metadata.truncated !== undefined) {
-            return rawResult
-          }
-          const agent = yield* agents.get(ctx.agent)
-          const truncated = yield* truncate.output(rawResult.output, {}, agent)
-          return {
-            ...rawResult,
-            output: truncated.content,
-            metadata: {
-              ...rawResult.metadata,
-              truncated: truncated.truncated,
-              ...(truncated.truncated && { outputPath: truncated.outputPath }),
-            },
-          }
-        })
+        // Pipeline ordering rationale:
+        //
+        // 1. Decode first — malformed input must fail before any side effects.
+        // 2. Cache wrapping (with retry only on compute) — cache hit avoids work;
+        //    retry applies to raw execution only, not cache lookup.
+        //    Truncation runs inside cache so truncated output IS cached.
+        // 3. Timeout after cache — timeout counts compute time, not semaphore wait.
+        // 4. Semaphore outermost among execution gates — concurrency limit includes
+        //    timeout, so queued calls don't race the clock.
+        // 5. Telemetry as non-fatal tap — failures caught and logged, never propagated.
+        // 6. Normalize as tapDefect — defects are tagged for attribution only, not
+        //    converted to typed errors (that happens at the registry/typed-result layer).
+        // 7. Span annotation last — the span records the final outcome including all
+        //    upstream processing.
 
-        // Compose pipeline inside-out using explicit any-erased type
-        let pipeline: Effect.Effect<any, any, any> = core as any
+        // ── Stage 1: Decode tool arguments ──
+        const decoded = decodeToolArgs(decode, id, toolInfo.formatValidationError)(args)
 
-        // Layer 2: Retry with exponential backoff if retry is configured
-        if (toolInfo.retry !== undefined) {
-          const { times, backoff } = toolInfo.retry
-          pipeline = pipeline.pipe(
-            Effect.retry({ times, schedule: Schedule.exponential(backoff) }),
-          )
-        }
+        // ── Stage 2: Execute with cache + truncation (retry wraps compute only) ──
+        const executed = Effect.flatMap(decoded, (params) =>
+          executeWithCache(id, execute as any, { cacheable: toolInfo.cacheable, retry: toolInfo.retry } as any, params as Schema.Schema.Type<Parameters>, ctx, truncate, agents),
+        )
 
-        // Layer 3: Timeout envelope via Effect.timeoutOption
-        if (toolInfo.timeout !== undefined) {
-          const timeoutDuration = Duration.fromInputUnsafe(toolInfo.timeout)
-          const durationMs = Duration.toMillis(timeoutDuration)
-          pipeline = pipeline.pipe(
-            Effect.timeoutOption(timeoutDuration),
-            Effect.flatMap((option) => {
-              if (Option.isNone(option)) {
-                return Effect.fail(
-                  new TimeoutError({ tool: id, detail: "Tool execution timed out", durationMs }),
-                )
-              }
-              return Effect.succeed(option.value)
-            }),
-          )
-        }
+        // ── Stage 3: Apply timeout ──
+        const timed = applyTimeout(executed as any, toolInfo.timeout as any, id)
 
-        // Layer 4: Per-tool semaphore (wraps after retry + timeout)
-        if (semaphore !== undefined) {
-          pipeline = semaphore.withPermits(1)(pipeline)
-        }
+        // ── Stage 4: Apply concurrency (semaphore wraps entire execution) ──
+        const concurrent = applyConcurrency(timed, semaphore)
 
-        // Layer 5a: Tool invocation telemetry (tap success + tapError)
-        pipeline = (pipeline as any).pipe(
-          Effect.tap((result: ExecuteResult<M>) =>
-            Effect.gen(function* () {
-              const elapsed = Date.now() - startTime
-              const instance = yield* InstanceState.context
-              const fsOption = yield* Effect.serviceOption(AppFileSystem.Service)
-              yield* Option.match(fsOption, {
-                onNone: () =>
-                  Effect.logWarning("AppFileSystem not available for tool telemetry", {
-                    tool: id,
-                    sessionID: ctx.sessionID,
-                  }),
-                onSome: (fs: typeof AppFileSystem.Service) =>
-                  Effect.gen(function* () {
-                    const logDir = path.join(
-                      instance.directory,
-                      "docs",
-                      "json",
-                      "opencode",
-                      "sessions",
-                      ctx.sessionID,
-                      "analytics",
-                    )
-                    const record = JSON.stringify({
-                      at: new Date().toISOString(),
-                      tool: id,
-                      session_id: ctx.sessionID,
-                      message_id: ctx.messageID,
-                      elapsed_ms: elapsed,
-                      status: "success",
-                      ...(ctx.callID ? { call_id: ctx.callID } : {}),
-                    })
-                    yield* fs.ensureDir(logDir)
-                    yield* fs.appendLine(path.join(logDir, "tool_invocations.v1.jsonl"), record)
-                  }).pipe(
-                    Effect.catchAll((err) =>
-                      Effect.logWarning("Tool telemetry write failed", {
-                        tool: id,
-                        sessionID: ctx.sessionID,
-                        error: String(err),
-                      }),
-                    ),
-                  ),
-              })
-            }),
-          ),
-          Effect.tapError((error: unknown) =>
-            Effect.gen(function* () {
-              const elapsed = Date.now() - startTime
-              const errorTag = (error as any)?._tag ?? (error as any)?.constructor?.name ?? "unknown"
-              const errorDetail = error instanceof Error ? error.message : String(error)
-              const instance = yield* InstanceState.context
-              const fsOption = yield* Effect.serviceOption(AppFileSystem.Service)
-              yield* Option.match(fsOption, {
-                onNone: () =>
-                  Effect.logWarning("AppFileSystem not available for tool telemetry", {
-                    tool: id,
-                    sessionID: ctx.sessionID,
-                  }),
-                onSome: (fs: typeof AppFileSystem.Service) =>
-                  Effect.gen(function* () {
-                    const logDir = path.join(
-                      instance.directory,
-                      "docs",
-                      "json",
-                      "opencode",
-                      "sessions",
-                      ctx.sessionID,
-                      "analytics",
-                    )
-                    const record = JSON.stringify({
-                      at: new Date().toISOString(),
-                      tool: id,
-                      session_id: ctx.sessionID,
-                      message_id: ctx.messageID,
-                      elapsed_ms: elapsed,
-                      status: "error",
-                      error_tag: errorTag,
-                      error_detail: errorDetail,
-                      ...(ctx.callID ? { call_id: ctx.callID } : {}),
-                    })
-                    yield* fs.ensureDir(logDir)
-                    yield* fs.appendLine(path.join(logDir, "tool_invocations.v1.jsonl"), record)
-                  }).pipe(
-                    Effect.catchAll((err) =>
-                      Effect.logWarning("Tool telemetry write failed", {
-                        tool: id,
-                        sessionID: ctx.sessionID,
-                        error: String(err),
-                      }),
-                    ),
-                  ),
-              })
-              if (errorTag === "unknown" || errorTag === "UnknownError") {
-                yield* Effect.logWarning("UnknownError in tool invocation", {
-                  tool: id,
-                  sessionID: ctx.sessionID,
-                  error_tag: errorTag,
-                  error_detail: errorDetail,
-                })
-              }
-            }),
-          ),
-        ) as any
+        // ── Stage 5: Telemetry taps (non-fatal) ──
+        const telemetered = recordToolTelemetry(concurrent, id, ctx, startTime)
 
-        // Layer 5b: tapDefect for crash attribution before orDie
-        const orDied: Effect.Effect<ExecuteResult<M>> = (pipeline as Effect.Effect<ExecuteResult<M>, any, any>).pipe(
-          Effect.tapDefect((defect) =>
-            Effect.annotateCurrentSpan({
-              "cache.defect": true,
-              "cache.defect_type": String(defect),
-            }),
-          ),
-          Effect.orDie,
-        ) as any
-        return (orDied as any).pipe(
-          Effect.withSpan("Tool.execute", { attributes: attrs }),
-          Effect.annotateCurrentSpan({
-            "tool.cacheable": String(toolInfo.cacheable !== undefined),
-            ...(toolInfo.maxConcurrency !== undefined
-              ? { "tool.max_concurrency": toolInfo.maxConcurrency }
-              : {}),
-            ...(toolInfo.timeout !== undefined
-              ? { "tool.timeout_ms": Duration.toMillis(Duration.fromInputUnsafe(toolInfo.timeout)) }
-              : {}),
-          }),
-        ) as any
+        // ── Stage 6: Normalize tool errors (defect tap only — no orDie) ──
+        const normalized = normalizeToolError(telemetered)
+
+        // ── Stage 7: Span annotation ──
+        return annotateToolSpan(normalized, attrs, {
+          cacheable: toolInfo.cacheable,
+          maxConcurrency: toolInfo.maxConcurrency,
+          timeout: toolInfo.timeout as any,
+        }) as any
       }
       return toolInfo
     })
+}
+
+// ═══════════════════════════════════════════════════════════
+// Named pipeline stages — independently testable
+// ═══════════════════════════════════════════════════════════
+
+/** Stage 1: Decode raw LLM arguments through the tool's parameter schema. */
+function decodeToolArgs(
+  decode: ReturnType<typeof Schema.decodeUnknownEffect>,
+  id: string,
+  formatValidationError?: (error: unknown) => string,
+): (args: unknown) => Effect.Effect<unknown, InvalidArgumentsError, any> {
+  return (args: unknown) =>
+    decode(args).pipe(
+      Effect.mapError(
+        (error) =>
+          new InvalidArgumentsError({
+            tool: id,
+            detail: formatValidationError ? formatValidationError(error) : String(error),
+          }),
+      ),
+    )
+}
+
+/**
+ * Stage 2: Cache-aware tool execution with truncation.
+ *
+ * - If cache is available and the tool is cacheable, uses `getOrCompute`.
+ * - Otherwise runs `execute` directly.
+ * - Retry (when configured) is applied to the compute function only, not
+ *   to the cache lookup or truncation steps.
+ * - After execution, output is truncated via the truncation service.
+ */
+function executeWithCache<Parameters, M extends Metadata>(
+  id: string,
+  execute: (params: Parameters, ctx: Context<M>) => Effect.Effect<M, any, any>,
+  toolInfo: {
+    cacheable?: boolean | { ttl?: string; maxSize?: number }
+    retry?: { times: number; backoff: number | Duration.Duration }
+  },
+  params: Parameters,
+  ctx: Context<M>,
+  truncate: Truncate.Interface,
+  agents: Agent.Interface,
+): Effect.Effect<ExecuteResult<M>, ToolError | ValidationError | TransientError> {
+  return Effect.gen(function* () {
+    const cache = yield* Effect.serviceOption(ToolCache.Service)
+
+    // Compute function with optional retry wrapping only the execute call
+    const compute = (): Effect.Effect<M, any> => {
+      const raw = execute(params, ctx) as any
+      if (toolInfo.retry !== undefined) {
+        const { times, backoff } = toolInfo.retry
+        return (raw as any).pipe(Effect.retry({ times, schedule: Schedule.exponential(backoff as any) })) as any
+      }
+      return raw
+    }
+
+    let result: any
+    if (Option.isNone(cache) || !toolInfo.cacheable) {
+      yield* Effect.annotateCurrentSpan({
+        "cache.available": Option.isNone(cache) ? "false" : "true",
+      }).pipe(Effect.catchCause(() => Effect.void))
+      result = yield* compute()
+    } else {
+      yield* Effect.annotateCurrentSpan({ "cache.available": "true" }).pipe(
+        Effect.catchCause(() => Effect.void),
+      )
+      const cacheConfig =
+        typeof toolInfo.cacheable === "object" ? toolInfo.cacheable : {}
+      const key = yield* Effect.promise(() =>
+        CacheKey.derive({
+          toolID: id,
+          args: params,
+          sessionID: ctx.sessionID,
+          agent: ctx.agent,
+        }),
+      )
+      result = yield* cache.value.getOrCompute(key as any, compute as any, {
+        ttl: cacheConfig.ttl
+          ? Duration.fromInputUnsafe(cacheConfig.ttl as any)
+          : undefined,
+        maxEntrySize: cacheConfig.maxSize,
+      })
+    }
+
+    // Truncation: skip if already truncated upstream
+    if (result.metadata?.truncated !== undefined) {
+      return result as ExecuteResult<M>
+    }
+    const agent = yield* agents.get(ctx.agent)
+    const truncated = yield* truncate.output(result.output, {}, agent)
+    return {
+      ...result,
+      output: truncated.content,
+      metadata: {
+        ...result.metadata,
+        truncated: truncated.truncated,
+        ...(truncated.truncated && { outputPath: truncated.outputPath }),
+      },
+    } as ExecuteResult<M>
+  }) as any
+}
+
+/** Stage 3: Apply a timeout envelope around the effect. */
+function applyTimeout<A, E>(
+  effect: Effect.Effect<A, E>,
+  timeout?: number | string | Duration.Duration,
+  id?: string,
+): Effect.Effect<A, E | TimeoutError> {
+  if (timeout === undefined) return effect as any
+  const timeoutDuration = Duration.fromInputUnsafe(timeout as any)
+  const durationMs = Duration.toMillis(timeoutDuration)
+  return (effect as any).pipe(
+    Effect.timeoutOption(timeoutDuration),
+    Effect.flatMap((option: Option.Option<A>) => {
+      if (Option.isNone(option)) {
+        return Effect.fail(
+          new TimeoutError({
+            tool: id ?? "unknown",
+            detail: "Tool execution timed out",
+            durationMs,
+          }),
+        )
+      }
+      return Effect.succeed(option.value)
+    }),
+  ) as any
+}
+
+/** Stage 4: Gate execution through a semaphore for concurrency control. */
+function applyConcurrency<A, E, R>(
+  effect: Effect.Effect<A, E, R>,
+  semaphore?: Semaphore.Semaphore,
+): Effect.Effect<A, E, R> {
+  if (semaphore === undefined) return effect
+  return semaphore.withPermits(1)(effect)
+}
+
+/** Stage 5: Non-fatal telemetry taps — failures are caught and logged, never propagated. */
+function recordToolTelemetry<A, E>(
+  effect: Effect.Effect<A, E>,
+  id: string,
+  ctx: Context,
+  startTime: number,
+): Effect.Effect<A, E> {
+  return (effect as any).pipe(
+    Effect.tap((result: any) =>
+      Effect.serviceOption(AppFileSystem.Service).pipe(
+        Effect.flatMap((fsOpt: Option.Option<any>) =>
+          Option.match(fsOpt, {
+            onNone: () => Effect.void,
+            onSome: (fs: any) =>
+              Effect.gen(function* () {
+                const instance = yield* InstanceState.context as any
+                const elapsed = Date.now() - startTime
+                const isTruncated = result?.metadata?.truncated === true
+                const record = JSON.stringify({
+                  ts: new Date().toISOString(),
+                  tool: id,
+                  sessionID: ctx.sessionID,
+                  callID: ctx.callID,
+                  elapsed_ms: elapsed,
+                  truncated: isTruncated,
+                  instanceID: instance.instanceID,
+                })
+                const logDir = path.join(
+                  instance.directory,
+                  "docs", "json", "opencode",
+                  "sessions", ctx.sessionID, "analytics",
+                )
+                yield* fs.ensureDir(logDir) as any
+                yield* fs.appendLine(
+                  path.join(logDir, "tool_invocations.v1.jsonl"),
+                  record,
+                ) as any
+              }).pipe(
+                Effect.catch((err: any) =>
+                  Effect.logWarning("Tool telemetry write failed", {
+                    tool: id,
+                    sessionID: ctx.sessionID,
+                    error: String(err),
+                  }),
+                ),
+              ),
+          }),
+        ),
+      ),
+    ),
+    Effect.tapError((error: unknown) =>
+      Effect.serviceOption(AppFileSystem.Service).pipe(
+        Effect.flatMap((fsOpt: Option.Option<any>) =>
+          Option.match(fsOpt, {
+            onNone: () => Effect.void,
+            onSome: (fs: any) =>
+              Effect.gen(function* () {
+                const elapsed = Date.now() - startTime
+                const errorTag =
+                  (error as any)?._tag ??
+                  (error as any)?.constructor?.name ??
+                  "unknown"
+                const errorDetail =
+                  error instanceof Error ? error.message : String(error)
+                const instance = yield* InstanceState.context as any
+                const record = JSON.stringify({
+                  ts: new Date().toISOString(),
+                  tool: id,
+                  sessionID: ctx.sessionID,
+                  callID: ctx.callID,
+                  elapsed_ms: elapsed,
+                  error_tag: errorTag,
+                  error_detail: errorDetail.slice(0, 200),
+                })
+                const logDir = path.join(
+                  instance.directory,
+                  "docs", "json", "opencode",
+                  "sessions", ctx.sessionID, "analytics",
+                )
+                yield* fs.ensureDir(logDir) as any
+                yield* fs.appendLine(
+                  path.join(logDir, "tool_errors.v1.jsonl"),
+                  record,
+                ) as any
+                if (errorTag === "unknown" || errorTag === "UnknownError") {
+                  yield* Effect.logWarning("UnknownError in tool invocation", {
+                    tool: id,
+                    sessionID: ctx.sessionID,
+                    error_tag: errorTag,
+                    error_detail: errorDetail.slice(0, 200),
+                  })
+                }
+              }).pipe(
+                Effect.catch((err: any) =>
+                  Effect.logWarning("Tool telemetry write failed", {
+                    tool: id,
+                    sessionID: ctx.sessionID,
+                    error: String(err),
+                  }),
+                ),
+              ),
+          }),
+        ),
+      ),
+    ),
+  ) as any
+}
+
+function normalizeToolError<A, E>(effect: Effect.Effect<A, E>): Effect.Effect<A, E> {
+  return (effect as any).pipe(
+    Effect.tapDefect((defect: unknown) =>
+      Effect.annotateCurrentSpan({
+        "tool.defect": true,
+        "tool.defect_type": String(defect),
+      }),
+    ),
+  ) as any
+}
+
+/** Stage 7: Wrap with OpenTelemetry span and annotate with tool metadata. */
+function annotateToolSpan<A, E>(
+  effect: Effect.Effect<A, E>,
+  attrs: Record<string, string>,
+  toolInfo: {
+    cacheable?: unknown
+    maxConcurrency?: number
+    timeout?: number | string | Duration.Duration
+  },
+): Effect.Effect<A, E> {
+  const spanAnnotations: Record<string, unknown> = {
+    "tool.cacheable": String(toolInfo.cacheable !== undefined),
+    ...(toolInfo.maxConcurrency !== undefined
+      ? { "tool.max_concurrency": toolInfo.maxConcurrency }
+      : {}),
+    ...(toolInfo.timeout !== undefined
+      ? {
+          "tool.timeout_ms": Duration.toMillis(
+            Duration.fromInputUnsafe(toolInfo.timeout as any),
+          ),
+        }
+      : {}),
+  }
+  return (effect as any).pipe(
+    Effect.withSpan("Tool.execute", { attributes: attrs }),
+    Effect.tap(() => Effect.annotateCurrentSpan(spanAnnotations)),
+  ) as any
 }
 
 export function define<

@@ -1,0 +1,22 @@
+{"at":"2026-05-31T18:48:11.995Z","tool":"smart_grep","action":"searched","pattern":"Capability","results":30,"files":6}
+{"at":"2026-05-31T18:48:12.799Z","tool":"smart_grep","action":"searched","pattern":"Hook","results":30,"files":9}
+{"at":"2026-05-31T18:48:14.381Z","tool":"smart_grep","action":"searched","pattern":"grant|permission|capability","results":30,"files":4}
+{"at":"2026-05-31T18:51:53.804Z","tool":"smart_grep","action":"searched","pattern":"export (type |interface )?Hooks","results":2,"files":2}
+{"at":"2026-05-31T18:56:58.376Z","tool":"smart_grep","action":"searched","pattern":"trigger","results":0,"files":0}
+{"at":"2026-05-31T18:57:00.405Z","tool":"smart_grep","action":"searched","pattern":"^export interface Hooks|\\w+\\?\\:|dispose\\?|event\\?|tool\\?|auth\\?|provider\\?|chat\\","results":0,"files":0}
+{"at":"2026-05-31T19:00:46.673Z","tool":"smart_grep","action":"searched","pattern":"dispose|crash|quarantine|quarantine","results":0,"files":0}
+{"at":"2026-05-31T19:02:21.282Z","tool":"smart_bash","action":"bash","command":"head -522 packages/opencode/src/plugin/index.ts | tail -130","exit_code":0}
+{"at":"2026-05-31T19:04:51.241Z","tool":"smart_bash","action":"bash","command":"python3 -c \"\nwith open('packages/opencode/src/plugin/index.ts') as f:\n    lines = f.readlines()\n    ","exit_code":0}
+{"at":"2026-05-31T19:05:47.742Z","tool":"smart_bash","action":"bash","command":"python3 -c \"\nwith open('packages/opencode/src/plugin/index.ts') as f:\n    lines = f.readlines()\n    ","exit_code":0}
+{"at":"2026-05-31T19:06:50.620Z","tool":"smart_bash","action":"bash","command":"python3 -c \"\nwith open('packages/opencode/src/plugin/index.ts') as f:\n    lines = f.readlines()\n    ","exit_code":0}
+{"at":"2026-05-31T19:07:42.779Z","tool":"smart_bash","action":"bash","command":"python3 -c \"\nwith open('packages/opencode/src/plugin/index.ts') as f:\n    lines = f.readlines()\n    ","exit_code":0}
+{"at":"2026-05-31T19:07:49.301Z","tool":"smart_bash","action":"bash","command":"python3 -c \"\nwith open('packages/plugin/src/index.ts') as f:\n    lines = f.readlines()\n    for i, li","exit_code":0}
+{"at":"2026-05-31T19:08:45.123Z","tool":"smart_bash","action":"bash","command":"python3 -c \"\nwith open('packages/core/src/plugin.ts') as f:\n    lines = f.readlines()\n    for i, lin","exit_code":0}
+{"at":"2026-05-31T19:09:29.634Z","tool":"smart_bash","action":"bash","command":"python3 -c \"\nwith open('packages/core/src/plugin.ts') as f:\n    lines = f.readlines()\n    for i, lin","exit_code":0}
+{"at":"2026-05-31T19:10:15.304Z","tool":"smart_bash","action":"bash","command":"python3 -c \"\nwith open('packages/core/src/plugin.ts') as f:\n    lines = f.readlines()\n    for i, lin","exit_code":0}
+{"at":"2026-05-31T19:11:04.715Z","tool":"smart_bash","action":"bash","command":"python3 -c \"\nwith open('packages/core/src/plugin.ts') as f:\n    lines = f.readlines()\n    for i, lin","exit_code":0}
+{"at":"2026-05-31T19:12:03.463Z","tool":"smart_bash","action":"bash","command":"python3 -c \"\nwith open('packages/opencode/src/plugin/index.ts') as f:\n    lines = f.readlines()\n    ","exit_code":0}
+{"at":"2026-05-31T19:12:04.654Z","tool":"smart_grep","action":"searched","pattern":"timeout|abort|race","results":30,"files":5}
+{"at":"2026-05-31T19:12:33.817Z","tool":"smart_grep","action":"searched","pattern":"compaction","results":0,"files":0}
+{"at":"2026-05-31T19:12:34.379Z","tool":"smart_grep","action":"searched","pattern":"compaction","results":0,"files":0}
+{"at":"2026-05-31T19:13:32.993Z","tool":"smart_grep","action":"searched","pattern":"\"compaction\"","results":24,"files":8}

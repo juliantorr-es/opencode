@@ -1,0 +1,25 @@
+{"at":"2026-05-31T18:48:55.786Z","tool":"smart_grep","action":"searched","pattern":".*","results":200,"files":2}
+{"at":"2026-05-31T19:01:55.210Z","tool":"smart_bash","action":"bash","command":"wc -l packages/opencode/src/mcp/index.ts && cat -n packages/opencode/src/mcp/index.ts | sed -n '280,","exit_code":0}
+{"at":"2026-05-31T19:04:31.120Z","tool":"smart_grep","action":"searched","pattern":"connectTransport|const start|function start|const connect|function connect|healt","results":0,"files":0}
+{"at":"2026-05-31T19:05:32.614Z","tool":"smart_grep","action":"searched","pattern":"HealthRegistry|healthRegistry|health_status|HealthStatus|health\\.set|health\\.rem","results":0,"files":0}
+{"at":"2026-05-31T19:06:38.835Z","tool":"smart_bash","action":"bash","command":"head -330 packages/opencode/src/mcp/index.ts | tail -21","exit_code":0}
+{"at":"2026-05-31T19:08:30.914Z","tool":"smart_bash","action":"bash","command":"tail -n +330 packages/opencode/src/mcp/index.ts | head -320","exit_code":0}
+{"at":"2026-05-31T19:08:35.900Z","tool":"smart_bash","action":"bash","command":"tail -n +650 packages/opencode/src/mcp/index.ts | head -200","exit_code":0}
+{"at":"2026-05-31T19:09:23.488Z","tool":"smart_bash","action":"bash","command":"tail -n +850 packages/opencode/src/mcp/index.ts | head -203","exit_code":0}
+{"at":"2026-05-31T19:10:00.049Z","tool":"smart_grep","action":"searched","pattern":"addListener|subscribe|follow|reconnect|disconnect|close|\\.off\\(|\\.on\\(","results":23,"files":2}
+{"at":"2026-05-31T19:11:40.875Z","tool":"smart_grep","action":"searched","pattern":"const disconnect|readonly disconnect|disconnect","results":0,"files":0}
+{"at":"2026-05-31T19:14:01.645Z","tool":"smart_bash","action":"bash","command":"node -e \"const fs = require('fs'); const lines = fs.readFileSync('packages/opencode/src/mcp/index.ts","exit_code":0}
+{"at":"2026-05-31T19:14:24.884Z","tool":"smart_bash","action":"bash","command":"node -e \"const fs = require('fs'); const lines = fs.readFileSync('packages/opencode/src/mcp/index.ts","exit_code":0}
+{"at":"2026-05-31T19:14:52.895Z","tool":"smart_bash","action":"bash","command":"node -e \"const fs = require('fs'); const lines = fs.readFileSync('packages/opencode/src/mcp/index.ts","exit_code":0}
+{"at":"2026-05-31T19:15:30.072Z","tool":"smart_bash","action":"bash","command":"node -e \"const fs = require('fs'); const lines = fs.readFileSync('packages/opencode/src/mcp/index.ts","exit_code":0}
+{"at":"2026-05-31T19:15:53.155Z","tool":"smart_bash","action":"bash","command":"node -e \"const fs = require('fs'); const lines = fs.readFileSync('packages/opencode/src/mcp/index.ts","exit_code":0}
+{"at":"2026-05-31T19:16:08.722Z","tool":"smart_bash","action":"bash","command":"node -e \"const fs = require('fs'); const lines = fs.readFileSync('packages/opencode/src/mcp/index.ts","exit_code":0}
+{"at":"2026-05-31T19:16:31.444Z","tool":"smart_bash","action":"bash","command":"node -e \"const fs = require('fs'); const lines = fs.readFileSync('packages/opencode/src/mcp/index.ts","exit_code":0}
+{"at":"2026-05-31T19:16:52.733Z","tool":"smart_bash","action":"bash","command":"node -e \"const fs = require('fs'); const lines = fs.readFileSync('packages/opencode/src/mcp/index.ts","exit_code":0}
+{"at":"2026-05-31T19:17:08.757Z","tool":"smart_bash","action":"bash","command":"node -e \"const fs = require('fs'); const lines = fs.readFileSync('packages/opencode/src/mcp/index.ts","exit_code":0}
+{"at":"2026-05-31T19:17:32.588Z","tool":"smart_bash","action":"bash","command":"node -e \"const fs = require('fs'); const lines = fs.readFileSync('packages/opencode/src/mcp/index.ts","exit_code":0}
+{"at":"2026-05-31T19:17:38.712Z","tool":"smart_bash","action":"bash","command":"node -e \"const fs = require('fs'); const lines = fs.readFileSync('packages/opencode/src/mcp/index.ts","exit_code":0}
+{"at":"2026-05-31T19:17:54.092Z","tool":"smart_bash","action":"bash","command":"node -e \"const fs = require('fs'); const lines = fs.readFileSync('packages/opencode/src/mcp/index.ts","exit_code":0}
+{"at":"2026-05-31T19:18:12.196Z","tool":"smart_bash","action":"bash","command":"node -e \"const fs = require('fs'); const lines = fs.readFileSync('packages/opencode/src/mcp/index.ts","exit_code":0}
+{"at":"2026-05-31T19:18:39.027Z","tool":"smart_grep","action":"searched","pattern":"addFinalizer|onExit|acquireUseRelease","results":0,"files":0}
+{"at":"2026-05-31T19:19:01.140Z","tool":"smart_grep","action":"searched","pattern":"class EffectBridge|make\\b|Shape\\.(promise|run)|Bridge\\.close|Bridge\\.dispose","results":10,"files":6}

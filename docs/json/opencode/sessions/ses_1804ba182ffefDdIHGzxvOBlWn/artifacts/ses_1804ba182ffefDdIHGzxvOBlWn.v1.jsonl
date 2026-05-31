@@ -1,0 +1,26 @@
+{"at":"2026-05-31T20:23:54.472Z","tool":"smart_bun","action":"ran","command":"typecheck","exit_code":2,"cwd":"packages/opencode"}
+{"at":"2026-05-31T20:23:54.797Z","tool":"smart_grep","action":"searched","pattern":"isValidCapabilityId","results":4,"files":3}
+{"at":"2026-05-31T20:23:54.902Z","tool":"smart_grep","action":"searched","pattern":"decodeAuth|authBackup|corrupted.*auth|auth.*backup","results":5,"files":2}
+{"at":"2026-05-31T20:23:54.936Z","tool":"smart_grep","action":"searched","pattern":"persistCrash|persistSuccess","results":6,"files":1}
+{"at":"2026-05-31T20:23:54.959Z","tool":"smart_grep","action":"searched","pattern":"as any","results":0,"files":0}
+{"at":"2026-05-31T20:23:54.994Z","tool":"smart_grep","action":"searched","pattern":"as any","results":30,"files":11}
+{"at":"2026-05-31T20:23:55.158Z","tool":"smart_grep","action":"searched","pattern":"secrets\\.access|token.*secret|secret.*token|boolean.*flag|logToken|tokenLog","results":6,"files":5}
+{"at":"2026-05-31T20:24:25.769Z","tool":"smart_grep","action":"searched","pattern":"enforcer","results":2,"files":2}
+{"at":"2026-05-31T20:24:26.323Z","tool":"smart_grep","action":"searched","pattern":"xai","results":12,"files":2}
+{"at":"2026-05-31T20:24:27.188Z","tool":"smart_grep","action":"searched","pattern":"Schema\\.","results":8,"files":1}
+{"at":"2026-05-31T20:24:42.446Z","tool":"smart_grep","action":"searched","pattern":"persistCrash|persistSuccess","results":0,"files":0}
+{"at":"2026-05-31T20:24:43.192Z","tool":"smart_grep","action":"searched","pattern":"log\\.(info|error|warn)","results":0,"files":0}
+{"at":"2026-05-31T20:24:44.110Z","tool":"smart_grep","action":"searched","pattern":"logError|backupPath|corrupted","results":0,"files":0}
+{"at":"2026-05-31T20:25:03.839Z","tool":"smart_grep","action":"searched","pattern":"logError|Effect\\.logError","results":0,"files":0}
+{"at":"2026-05-31T20:25:11.066Z","tool":"smart_git","action":"git_op","operation":"diff","exit_code":0}
+{"at":"2026-05-31T20:25:12.610Z","tool":"smart_grep","action":"searched","pattern":"\\.catch","results":0,"files":0}
+{"at":"2026-05-31T20:25:19.827Z","tool":"smart_git","action":"git_op","operation":"diff","exit_code":0}
+{"at":"2026-05-31T20:25:20.301Z","tool":"smart_git","action":"git_op","operation":"diff","exit_code":0}
+{"at":"2026-05-31T20:25:21.007Z","tool":"smart_git","action":"git_op","operation":"diff","exit_code":0}
+{"at":"2026-05-31T20:25:21.362Z","tool":"smart_git","action":"git_op","operation":"diff","exit_code":0}
+{"at":"2026-05-31T20:25:21.879Z","tool":"smart_git","action":"git_op","operation":"diff","exit_code":0}
+{"at":"2026-05-31T20:25:22.394Z","tool":"smart_git","action":"git_op","operation":"diff","exit_code":0}
+{"at":"2026-05-31T20:25:22.819Z","tool":"smart_git","action":"git_op","operation":"diff","exit_code":0}
+{"at":"2026-05-31T20:26:39.268Z","tool":"smart_grep","action":"searched","pattern":"checkCapability.*as any","results":0,"files":0}
+{"at":"2026-05-31T20:26:46.803Z","tool":"smart_grep","action":"searched","pattern":"checkCapability.*string","results":0,"files":0}
+{"at":"2026-05-31T20:27:39.371Z","tool":"smart_write","action":"created","file":".build/rig-relay/evidence/trust-boundary-validation.v1.json","reason":"TRUST-BOUNDARY validation artifact — structured evidence from all 9 experiments"}

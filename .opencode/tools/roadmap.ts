@@ -1,5 +1,5 @@
 import { spawnSync } from "node:child_process"
-import { tool, makeError, ErrorCode } from "@opencode-ai/plugin"
+import { tool } from "@opencode-ai/plugin"
 import { resolve } from "node:path"
 import { existsSync, mkdirSync, readFileSync, writeFileSync, appendFileSync } from "node:fs"
 
@@ -65,7 +65,7 @@ export default tool({
     }
 
     const items = loadItems()
-    if (!Object.keys(items).length && args.action !== "init") return makeError(ErrorCode.NOT_FOUND, "No roadmap. Run roadmap(action='init') first.")
+    if (!Object.keys(items).length && args.action !== "init") return JSON.stringify({ error: "No roadmap. Run roadmap(action='init') first." }, null, 2)
 
     // ── INIT ──
     if (args.action === "init") {
@@ -98,12 +98,12 @@ export default tool({
         if (item.status === "in_progress") inProg.push(e); else ready.push(e)
       }
       const next = [...inProg, ...ready].slice(0, args.limit ?? 5)
-      return JSON.stringify({ action: "next", items: next, next /* @deprecated — use items */, recommendation: next[0] ? `${next[0].id}: ${next[0].title}` : "Nothing ready" }, null, 2)
+      return JSON.stringify({ action: "next", next, recommendation: next[0] ? `${next[0].id}: ${next[0].title}` : "Nothing ready" }, null, 2)
     }
 
     // ── PROGRESS ──
     if (args.action === "progress") {
-      if (!items[args.item_id!]) return makeError(ErrorCode.NOT_FOUND, `Item '${args.item_id}' not found`)
+      if (!items[args.item_id!]) return JSON.stringify({ error: `Item '${args.item_id}' not found` }, null, 2)
       const item = items[args.item_id!]
       const old = { status: item.status, pct: item.completion_pct || 0 }
       item.status = args.status || item.status
@@ -115,7 +115,7 @@ export default tool({
 
     // ── DEPRECATE ──
     if (args.action === "deprecate") {
-      if (!items[args.item_id!]) return makeError(ErrorCode.NOT_FOUND, `Item '${args.item_id}' not found`)
+      if (!items[args.item_id!]) return JSON.stringify({ error: `Item '${args.item_id}' not found` }, null, 2)
       const item = items[args.item_id!]
       item.status = "deprecated"; item.deprecation_reason = args.reason; item.deprecation_replacement = args.replacement
       item.deprecation_expires = new Date(Date.now() + 30 * 86400000).toISOString()
@@ -127,7 +127,7 @@ export default tool({
 
     // ── PRIORITIZE ──
     if (args.action === "prioritize") {
-      if (!items[args.item_id!]) return makeError(ErrorCode.NOT_FOUND, `Item '${args.item_id}' not found`)
+      if (!items[args.item_id!]) return JSON.stringify({ error: `Item '${args.item_id}' not found` }, null, 2)
       const item = items[args.item_id!]
       const changes: any = {}
       if (args.priority !== undefined) { changes.priority = { from: item.priority, to: args.priority }; item.priority = args.priority }
@@ -137,6 +137,6 @@ export default tool({
       return JSON.stringify({ action: "prioritize", item_id: args.item_id, changes }, null, 2)
     }
 
-    return makeError(ErrorCode.UNKNOWN_ACTION, `Unknown action: '${args.action}'`)
+    return JSON.stringify({ error: `Unknown action: '${args.action}'` }, null, 2)
   },
 })

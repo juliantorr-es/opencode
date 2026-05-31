@@ -125,6 +125,19 @@ export default tool({
       }
       const files = new Set(errors.map((e: any) => e.file))
       errorSummary = { files: files.size, total: errors.length }
+
+      // Log typecheck results to analytics
+      try {
+        const logDir = resolvePath(context.worktree, "docs/json/opencode/sessions/" + context.sessionID + "/analytics")
+        if (!existsSync(logDir)) mkdirSync(logDir, { recursive: true })
+        appendFileSync(logDir + "/typecheck_results.v1.jsonl",
+          JSON.stringify({
+            at: new Date().toISOString(), session_id: context.sessionID, agent: context.agent,
+            command: args.command, cwd: args.cwd || "root", elapsed_ms: elapsed,
+            exit_code: result.status, error_count: errors.length, file_count: files.size,
+            errors: errors.slice(0, 50),
+          }) + "\n", "utf8")
+      } catch (_) {}
     }
 
     // Parse test output — extract pass/fail counts AND test names
@@ -150,6 +163,19 @@ export default tool({
       }
       if (passed.length > 0) testSummary.passed_tests = passed.slice(0, 20)
       if (failed.length > 0) testSummary.failed_tests = failed.slice(0, 20)
+
+      // Log test results to analytics
+      try {
+        const logDir = resolvePath(context.worktree, "docs/json/opencode/sessions/" + context.sessionID + "/analytics")
+        if (!existsSync(logDir)) mkdirSync(logDir, { recursive: true })
+        appendFileSync(logDir + "/test_results.v1.jsonl",
+          JSON.stringify({
+            at: new Date().toISOString(), session_id: context.sessionID, agent: context.agent,
+            command: args.command, cwd: args.cwd || "root", elapsed_ms: elapsed,
+            pass: testSummary.pass || 0, fail: testSummary.fail || 0, total: testSummary.total || 0,
+            passed_tests: passed, failed_tests: failed,
+          }) + "\n", "utf8")
+      } catch (_) {}
     }
 
     // Fallback: if typecheck script not found, try bun x tsgo --noEmit directly
@@ -178,60 +204,54 @@ export default tool({
       }
     }
 
-    const output: Record<string, unknown> = {
-      command: shellMode ? `bun ${bunCmd} ${args.args}` : `bun ${cmdArgs.join(" ")}`,
-      cwd,
-      elapsed_ms: elapsed,
-      exit_code: result.status,
+    const output: Record<string, unknown> = {}
+
+    // ── Typecheck ──
+    if (args.command === "typecheck") {
+      if (result.status === 0) {
+        output.status = "✅ PASS"
+        output.message = "Typecheck passed. No errors. You're good."
+        output.elapsed_ms = elapsed
+      } else if (errors.length > 0) {
+        output.status = "❌ FAIL"
+        output.message = `${errors.length} type errors in ${errorSummary.files} files`
+        output.elapsed_ms = elapsed
+        output.errors = errors.slice(0, 15).map((e: any) => `${e.file}:${e.line}:${e.col} — ${e.message}`)
+        if (errors.length > 15) output.truncated = `${errors.length - 15} more errors not shown`
+        if (fallbackNote) output.note = fallbackNote
+      } else {
+        output.status = "💥 TOOL ERROR"
+        output.message = `Typecheck command failed (exit ${result.status}). The typecheck script may not exist in ${cwd}.`
+        output.hint = "Check package.json scripts or try: smart_bun(command=\"tsgo\", cwd=\"...\")"
+      }
     }
 
-    // Distinguish typecheck-found-errors (exit 1) from tool failure (exit 2+)
-    if (args.command === "typecheck" && result.status === 1 && errors.length > 0) {
-      output.status = "type_errors_found"
-      output.type_errors = errors.slice(0, 30)
-      output.error_summary = errorSummary
-      output.note = `Typecheck found ${errorSummary.total} errors in ${errorSummary.files} files. This is expected during development — fix these errors to get exit_code 0.`
-    } else if (args.command === "typecheck" && result.status === 0) {
-      output.status = "pass"
-      output.note = "Typecheck passed — no errors."
-    } else if (args.command === "run" && result.status === 2) {
-      output.status = "fail"
-      output.hint = `bun run failed with exit 2. The script may not exist, or no package.json with scripts was found in ${cwd}. Check available scripts with: smart_find(pattern="package.json") then read_source on the relevant file.`
-    } else if (result.status === 0) {
-      output.status = "pass"
-    } else {
-      output.status = "fail"
+    // ── Test ──
+    else if (args.command === "test") {
+      if (result.status === 0 && testSummary.fail === 0) {
+        output.status = "✅ PASS"
+        output.message = `All ${testSummary.total || testSummary.pass || "?"} tests passed`
+        output.elapsed_ms = elapsed
+      } else if (testSummary.fail > 0) {
+        output.status = "❌ FAIL"
+        output.message = `${testSummary.pass || 0} pass, ${testSummary.fail} fail, ${testSummary.total || "?"} total`
+        output.elapsed_ms = elapsed
+        if (testSummary.failed_tests) output.failed = testSummary.failed_tests
+      } else if (result.status !== 0) {
+        output.status = "💥 TOOL ERROR"
+        output.message = `Test command failed (exit ${result.status}). The test script may not exist.`
+        if (stderr) output.stderr = stderr.slice(0, 300)
+      }
     }
 
-    if (errors.length > 0) {
-      output.errors = errors.slice(0, 30)
-      output.error_summary = errorSummary
+    // ── Other commands (install, run) ──
+    else {
+      output.status = result.status === 0 ? "✅ OK" : "❌ FAIL"
+      output.message = result.status === 0 ? `Command completed in ${elapsed}ms` : `Command failed with exit ${result.status}`
+      output.elapsed_ms = elapsed
+      if (stdout) output.output = stdout.slice(0, 500)
+      if (stderr) output.stderr = stderr.slice(0, 300)
     }
-    if (warnings.length > 0) output.warnings = warnings.slice(0, 10)
-    if (Object.keys(testSummary).length > 0) output.test_summary = testSummary
-    
-    // Truncate output
-    const outLines = stdout.split("\n")
-    if (outLines.length > 50) {
-      output.stdout_head = outLines.slice(0, 30).join("\n")
-      output.stdout_tail = outLines.slice(-20).join("\n")
-      output.stdout_truncated = outLines.length
-    } else if (stdout) {
-      output.stdout = stdout
-    }
-    
-    if (stderr && !errors.length) {
-      const errLines = stderr.split("\n")
-      output.stderr = errLines.slice(0, 10).join("\n")
-      if (errLines.length > 10) output.stderr_truncated = errLines.length
-    }
-
-    if (result.error) {
-      output.status = "error"
-      output.error = result.error.message
-    }
-
-    if (fallbackNote) output.fallback_note = fallbackNote
 
     // Heartbeat: only mark as failed if tool itself broke, not if typecheck found errors
     const isToolFailure = result.error || (result.status !== 0 && !(args.command === "typecheck" && errors.length > 0))
@@ -246,6 +266,21 @@ export default tool({
     } catch (_) {}
 
     artifactLog(context, { tool: "smart_bun", action: "ran", command: args.command, exit_code: result.status, cwd: args.cwd || "root" })
+
+    // Final analytics: log typecheck and test results regardless of code path
+    try {
+      const logDir = resolvePath(context.worktree, "docs/json/opencode/sessions/" + context.sessionID + "/analytics")
+      if (!existsSync(logDir)) mkdirSync(logDir, { recursive: true })
+      if (args.command === "typecheck" && (errors.length > 0 || result.status === 0)) {
+        appendFileSync(logDir + "/typecheck_results.v1.jsonl",
+          JSON.stringify({ at: new Date().toISOString(), session_id: context.sessionID, agent: context.agent, exit_code: result.status, error_count: errors.length, file_count: errorSummary.files, elapsed_ms: elapsed, fallback: !!fallbackNote }) + "\n", "utf8")
+      }
+      if (args.command === "test" && Object.keys(testSummary).length > 0) {
+        appendFileSync(logDir + "/test_results.v1.jsonl",
+          JSON.stringify({ at: new Date().toISOString(), session_id: context.sessionID, agent: context.agent, cwd: args.cwd || "root", elapsed_ms: elapsed, pass: testSummary.pass || 0, fail: testSummary.fail || 0, total: testSummary.total || 0 }) + "\n", "utf8")
+      }
+    } catch (_) {}
+
     return JSON.stringify(output, null, 2)
   },
 })

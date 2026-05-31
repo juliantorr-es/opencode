@@ -1,0 +1,30 @@
+{"at":"2026-05-31T19:43:39.348Z","session_id":"ses_180701991ffe4qUgk0HI6A8so9","agent":"coroner","tool":"smart_find","phase":"started","detail":"*.ts"}
+{"at":"2026-05-31T19:43:39.393Z","session_id":"ses_180701991ffe4qUgk0HI6A8so9","agent":"coroner","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T19:44:03.041Z","session_id":"ses_180701991ffe4qUgk0HI6A8so9","agent":"coroner","tool":"smart_grep","phase":"started","detail":"export"}
+{"at":"2026-05-31T19:44:03.098Z","session_id":"ses_180701991ffe4qUgk0HI6A8so9","agent":"coroner","tool":"smart_grep","phase":"completed","detail":"export"}
+{"at":"2026-05-31T19:44:03.942Z","session_id":"ses_180701991ffe4qUgk0HI6A8so9","agent":"coroner","tool":"smart_bash","phase":"started","detail":"List bus directory contents to find files for reading"}
+{"at":"2026-05-31T19:44:03.943Z","session_id":"ses_180701991ffe4qUgk0HI6A8so9","agent":"coroner","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T19:44:58.072Z","session_id":"ses_180701991ffe4qUgk0HI6A8so9","agent":"coroner","tool":"smart_grep","phase":"started","detail":"interface State|const stateRef|add\\(|connect\\(|disconnect\\(|ToolsChanged|Error\\("}
+{"at":"2026-05-31T19:44:58.077Z","session_id":"ses_180701991ffe4qUgk0HI6A8so9","agent":"coroner","tool":"smart_grep","phase":"completed","detail":"interface State|const stateRef|add\\(|connect\\(|disconnect\\(|ToolsChanged|Error\\("}
+{"at":"2026-05-31T19:44:59.010Z","session_id":"ses_180701991ffe4qUgk0HI6A8so9","agent":"coroner","tool":"smart_grep","phase":"started","detail":"Effect\\.log|Log\\.|console\\.|logger\\."}
+{"at":"2026-05-31T19:44:59.014Z","session_id":"ses_180701991ffe4qUgk0HI6A8so9","agent":"coroner","tool":"smart_grep","phase":"completed","detail":"Effect\\.log|Log\\.|console\\.|logger\\."}
+{"at":"2026-05-31T19:45:21.704Z","session_id":"ses_180701991ffe4qUgk0HI6A8so9","agent":"coroner","tool":"smart_bash","phase":"started","detail":"Read State interface and Service definition"}
+{"at":"2026-05-31T19:45:22.399Z","session_id":"ses_180701991ffe4qUgk0HI6A8so9","agent":"coroner","tool":"smart_bash","phase":"started","detail":"Read serverLocks and connectTransport"}
+{"at":"2026-05-31T19:45:23.017Z","session_id":"ses_180701991ffe4qUgk0HI6A8so9","agent":"coroner","tool":"smart_bash","phase":"started","detail":"Read watch function with notification handler"}
+{"at":"2026-05-31T19:45:23.637Z","session_id":"ses_180701991ffe4qUgk0HI6A8so9","agent":"coroner","tool":"smart_bash","phase":"started","detail":"Read closeClient function"}
+{"at":"2026-05-31T19:45:24.351Z","session_id":"ses_180701991ffe4qUgk0HI6A8so9","agent":"coroner","tool":"smart_bash","phase":"started","detail":"Read BusEvent definitions and error types"}
+{"at":"2026-05-31T19:45:25.213Z","session_id":"ses_180701991ffe4qUgk0HI6A8so9","agent":"coroner","tool":"smart_bash","phase":"started","detail":"Read OAuth connect flow for port allocation context"}
+{"at":"2026-05-31T19:46:21.328Z","session_id":"ses_180701991ffe4qUgk0HI6A8so9","agent":"coroner","tool":"smart_grep","phase":"started","detail":"desktop-mcp-servers|GET_DESKTOP_MCP|McpStatusChanged|loadMcpQuery"}
+{"at":"2026-05-31T19:46:21.367Z","session_id":"ses_180701991ffe4qUgk0HI6A8so9","agent":"coroner","tool":"smart_grep","phase":"completed","detail":"desktop-mcp-servers|GET_DESKTOP_MCP|McpStatusChanged|loadMcpQuery"}
+{"at":"2026-05-31T19:46:22.365Z","session_id":"ses_180701991ffe4qUgk0HI6A8so9","agent":"coroner","tool":"smart_grep","phase":"started","detail":"McpFailedError|isError|ErrorCode|CONNECTION_FAILED"}
+{"at":"2026-05-31T19:46:22.374Z","session_id":"ses_180701991ffe4qUgk0HI6A8so9","agent":"coroner","tool":"smart_grep","phase":"completed","detail":"McpFailedError|isError|ErrorCode|CONNECTION_FAILED"}
+{"at":"2026-05-31T19:46:48.764Z","session_id":"ses_180701991ffe4qUgk0HI6A8so9","agent":"coroner","tool":"smart_grep","phase":"started","detail":"export interface Interface|register.*external|unregister|getExternal"}
+{"at":"2026-05-31T19:46:48.774Z","session_id":"ses_180701991ffe4qUgk0HI6A8so9","agent":"coroner","tool":"smart_grep","phase":"completed","detail":"export interface Interface|register.*external|unregister|getExternal"}
+{"at":"2026-05-31T19:46:49.801Z","session_id":"ses_180701991ffe4qUgk0HI6A8so9","agent":"coroner","tool":"smart_grep","phase":"started","detail":"Effect\\.log|Effect\\.annotateCurrentSpan|Effect\\.withSpan|log\\."}
+{"at":"2026-05-31T19:46:49.813Z","session_id":"ses_180701991ffe4qUgk0HI6A8so9","agent":"coroner","tool":"smart_grep","phase":"completed","detail":"Effect\\.log|Effect\\.annotateCurrentSpan|Effect\\.withSpan|log\\."}
+{"at":"2026-05-31T19:47:10.108Z","session_id":"ses_180701991ffe4qUgk0HI6A8so9","agent":"coroner","tool":"smart_grep","phase":"started","detail":"BusEvent|Published|Status|McpStatus"}
+{"at":"2026-05-31T19:47:10.117Z","session_id":"ses_180701991ffe4qUgk0HI6A8so9","agent":"coroner","tool":"smart_grep","phase":"completed","detail":"BusEvent|Published|Status|McpStatus"}
+{"at":"2026-05-31T19:47:28.753Z","session_id":"ses_180701991ffe4qUgk0HI6A8so9","agent":"coroner","tool":"smart_grep","phase":"started","detail":"McpStatus|McpTools"}
+{"at":"2026-05-31T19:47:28.758Z","session_id":"ses_180701991ffe4qUgk0HI6A8so9","agent":"coroner","tool":"smart_grep","phase":"completed","detail":"McpStatus|McpTools"}
+{"at":"2026-05-31T19:47:29.821Z","session_id":"ses_180701991ffe4qUgk0HI6A8so9","agent":"coroner","tool":"smart_grep","phase":"started","detail":"MCP\\.Status|mcp\\.status|mcpStatus"}
+{"at":"2026-05-31T19:47:29.830Z","session_id":"ses_180701991ffe4qUgk0HI6A8so9","agent":"coroner","tool":"smart_grep","phase":"completed","detail":"MCP\\.Status|mcp\\.status|mcpStatus"}
