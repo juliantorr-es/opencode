@@ -157,7 +157,7 @@ export const SmartGrepTool = Tool.define(
           // Analytics
           const logDir = `${instance.directory}/docs/json/opencode/sessions/${ctx.sessionID}/analytics`
           yield* fs.ensureDir(logDir)
-          yield* fs.writeFileString(
+          yield* fs.appendLine(
             `${logDir}/smart_tool_usage.v1.jsonl`,
             JSON.stringify({
               at: new Date().toISOString(),
@@ -166,8 +166,7 @@ export const SmartGrepTool = Tool.define(
               tool: "smart_grep",
               pattern: params.pattern.slice(0, 100),
               path: (params.path || "").slice(0, 80),
-            }) + "\n",
-            { flag: "a" },
+            }),
           )
 
           return {

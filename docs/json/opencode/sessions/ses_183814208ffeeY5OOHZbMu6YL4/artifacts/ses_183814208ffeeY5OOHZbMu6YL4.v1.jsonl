@@ -1,1 +1,3 @@
 {"at":"2026-05-31T05:26:30.021Z","tool":"smart_bun","action":"ran","command":"tsgo","exit_code":0,"cwd":"packages/opencode"}
+{"at":"2026-05-31T05:27:21.254Z","tool":"smart_bash","action":"bash","command":"./node_modules/.bin/tsgo --noEmit 2>&1 | head -500","exit_code":0}
+{"at":"2026-05-31T05:28:03.740Z","tool":"smart_bash","action":"bash","command":"./node_modules/.bin/tsgo --noEmit 2>&1 | head -5000 > /tmp/tsgo_errors.txt && wc -l /tmp/tsgo_errors","exit_code":0}

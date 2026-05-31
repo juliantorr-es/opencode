@@ -15,7 +15,12 @@ class GlobalBusEmitter extends EventEmitter<{
     if (event.payload && typeof event.payload === "object" && !("id" in event.payload)) {
       event.payload.id = event.payload.syncEvent?.id ?? Identifier.create("evt", "ascending")
     }
-    return super.emit(eventName, event)
+    try {
+      return super.emit(eventName, event)
+    } catch (error) {
+      console.error("[GlobalBus] subscriber error:", error)
+      return true
+    }
   }
 }
 

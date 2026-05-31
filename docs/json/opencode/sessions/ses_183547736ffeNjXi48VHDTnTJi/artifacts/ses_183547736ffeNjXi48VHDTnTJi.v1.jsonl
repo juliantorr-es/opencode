@@ -1,0 +1,32 @@
+{"at":"2026-05-31T06:16:09.706Z","tool":"smart_grep","action":"searched","pattern":"\\.on\\(.*error","results":30,"files":21}
+{"at":"2026-05-31T06:16:10.513Z","tool":"smart_grep","action":"searched","pattern":"entry|main|index","results":10,"files":4}
+{"at":"2026-05-31T06:16:43.344Z","tool":"smart_grep","action":"searched","pattern":"void result\\.then","results":1,"files":1}
+{"at":"2026-05-31T06:17:20.682Z","tool":"smart_grep","action":"searched","pattern":"index\\.ts","results":2,"files":1}
+{"at":"2026-05-31T06:17:54.237Z","tool":"smart_grep","action":"searched","pattern":"opencode","results":4,"files":1}
+{"at":"2026-05-31T06:17:57.471Z","tool":"smart_grep","action":"searched","pattern":"process\\.exit|process\\.on\\(|top.level|entry|startup|bootstrap","results":15,"files":10}
+{"at":"2026-05-31T06:17:57.885Z","tool":"smart_grep","action":"searched","pattern":"^export function |^async function main|^function main","results":10,"files":4}
+{"at":"2026-05-31T06:19:00.488Z","tool":"smart_grep","action":"searched","pattern":"#!/usr/bin/env|bun run|tsx|tsgo","results":10,"files":1}
+{"at":"2026-05-31T06:19:55.353Z","tool":"smart_grep","action":"searched","pattern":"hashbang|main\\(|app\\.whenReady|app\\.on\\(.*ready","results":3,"files":1}
+{"at":"2026-05-31T06:19:56.070Z","tool":"smart_grep","action":"searched","pattern":"runPromise|runSync|process\\.on\\(|Effect\\.run","results":10,"files":3}
+{"at":"2026-05-31T06:21:19.783Z","tool":"smart_grep","action":"searched","pattern":"socket\\.on\\(\"error\"|target\\.on\\(\"error\"","results":0,"files":0}
+{"at":"2026-05-31T06:21:20.520Z","tool":"smart_grep","action":"searched","pattern":"entry\\.socket\\.on\\(\"error\"|socket\\.on.*error.*\\{\\}","results":0,"files":0}
+{"at":"2026-05-31T06:21:51.823Z","tool":"smart_grep","action":"searched","pattern":"createRoot|render|mount","results":15,"files":6}
+{"at":"2026-05-31T06:21:54.932Z","tool":"smart_grep","action":"searched","pattern":"render\\(|hydrate\\(|mount\\(","results":4,"files":3}
+{"at":"2026-05-31T06:23:03.433Z","tool":"smart_grep","action":"searched","pattern":"import.*Log.*from|import \\* as Log","results":5,"files":5}
+{"at":"2026-05-31T06:24:13.855Z","tool":"smart_grep","action":"searched","pattern":"result\\.then","results":0,"files":0}
+{"at":"2026-05-31T06:25:21.555Z","tool":"smart_batch","action":"batch_edited","files":"packages/desktop/src/main/index.ts, packages/opencode/src/bus/global.ts, packages/opencode/src/sync/index.ts","edits":3}
+{"at":"2026-05-31T06:25:47.521Z","tool":"smart_batch","action":"batch_edited","files":"packages/opencode/src/plugin/openai/ws.ts, packages/opencode/src/plugin/openai/ws.ts, packages/opencode/src/plugin/openai/ws.ts, packages/opencode/src/plugin/openai/ws.ts, packages/opencode/src/plugin/openai/ws-pool.ts","edits":5}
+{"at":"2026-05-31T06:26:42.498Z","tool":"smart_bun","action":"ran","command":"typecheck","exit_code":2,"cwd":"packages/opencode"}
+{"at":"2026-05-31T06:26:43.191Z","tool":"smart_bun","action":"ran","command":"typecheck","exit_code":1,"cwd":"packages/desktop"}
+{"at":"2026-05-31T06:27:07.799Z","tool":"smart_grep","action":"searched","pattern":"src/sync/index|src/bus/global|src/plugin/openai/ws|src/plugin/openai/ws-pool","results":8,"files":7}
+{"at":"2026-05-31T06:27:08.067Z","tool":"smart_grep","action":"searched","pattern":"main/index\\.ts","results":2,"files":2}
+{"at":"2026-05-31T06:27:34.029Z","tool":"smart_bun","action":"ran","command":"typecheck","exit_code":0,"cwd":"packages/desktop"}
+{"at":"2026-05-31T06:28:00.289Z","tool":"smart_git","action":"git_op","operation":"diff","exit_code":0}
+{"at":"2026-05-31T06:28:00.555Z","tool":"smart_git","action":"git_op","operation":"diff","exit_code":0}
+{"at":"2026-05-31T06:28:22.496Z","tool":"smart_git","action":"git_op","operation":"diff","exit_code":0}
+{"at":"2026-05-31T06:28:22.848Z","tool":"smart_git","action":"git_op","operation":"diff","exit_code":0}
+{"at":"2026-05-31T06:28:23.137Z","tool":"smart_git","action":"git_op","operation":"diff","exit_code":0}
+{"at":"2026-05-31T06:28:46.685Z","tool":"smart_grep","action":"searched","pattern":"console\\.warn|socket\\.on\\(.*error","results":0,"files":0}
+{"at":"2026-05-31T06:30:19.834Z","tool":"smart_git","action":"git_op","operation":"diff","exit_code":0}
+{"at":"2026-05-31T06:30:53.690Z","tool":"smart_bun","action":"ran","command":"typecheck","exit_code":0,"cwd":"packages/opencode"}
+{"at":"2026-05-31T06:30:54.725Z","tool":"smart_bun","action":"ran","command":"typecheck","exit_code":0,"cwd":"packages/desktop"}

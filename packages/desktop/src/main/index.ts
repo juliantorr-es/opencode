@@ -9,6 +9,16 @@ import { getCACertificates, setDefaultCACertificates } from "node:tls"
 import type { Event } from "electron"
 import { app, BrowserWindow } from "electron"
 
+// Process-wide error handlers — crash fast on unhandled rejections/exceptions
+process.on("unhandledRejection", (reason) => {
+  console.error("[fatal] unhandled rejection:", reason)
+  process.exit(1)
+})
+process.on("uncaughtException", (error) => {
+  console.error("[fatal] uncaught exception:", error)
+  process.exit(1)
+})
+
 import contextMenu from "electron-context-menu"
 
 import type { InitStep, ServerReadyData, StorageMigrationProgress, WslConfig } from "../preload/types"

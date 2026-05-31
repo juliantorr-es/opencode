@@ -1,0 +1,30 @@
+{"at":"2026-05-31T05:50:27.807Z","tool":"smart_bash","action":"bash","command":"/bin/ls -la /Users/user/Developer/GitHub/opencode-desktop-dev/ | head -40","exit_code":0}
+{"at":"2026-05-31T05:51:38.197Z","tool":"smart_bash","action":"bash","command":"/bin/ls -la /Users/user/Developer/GitHub/opencode-desktop-dev/packages/","exit_code":0}
+{"at":"2026-05-31T05:51:38.685Z","tool":"smart_bash","action":"bash","command":"/bin/ls /Users/user/Developer/GitHub/opencode-desktop-dev/*.json /Users/user/Developer/GitHub/openco","exit_code":0}
+{"at":"2026-05-31T05:56:27.344Z","tool":"smart_bash","action":"bash","command":"/bin/ls -la /Users/user/Developer/GitHub/opencode-desktop-dev/packages/desktop/","exit_code":0}
+{"at":"2026-05-31T05:56:27.595Z","tool":"smart_bash","action":"bash","command":"/bin/ls -la /Users/user/Developer/GitHub/opencode-desktop-dev/packages/desktop/src/ 2>/dev/null","exit_code":0}
+{"at":"2026-05-31T05:56:28.005Z","tool":"smart_bash","action":"bash","command":"/bin/ls -la /Users/user/Developer/GitHub/opencode-desktop-dev/packages/app/src/ 2>/dev/null | head -","exit_code":0}
+{"at":"2026-05-31T05:57:24.692Z","tool":"smart_bash","action":"bash","command":"/bin/ls -la /Users/user/Developer/GitHub/opencode-desktop-dev/packages/desktop/src/main/","exit_code":0}
+{"at":"2026-05-31T05:57:25.143Z","tool":"smart_bash","action":"bash","command":"/bin/ls -la /Users/user/Developer/GitHub/opencode-desktop-dev/packages/desktop/src/preload/","exit_code":0}
+{"at":"2026-05-31T05:57:25.336Z","tool":"smart_bash","action":"bash","command":"/bin/ls -la /Users/user/Developer/GitHub/opencode-desktop-dev/packages/desktop/src/renderer/","exit_code":0}
+{"at":"2026-05-31T05:57:25.669Z","tool":"smart_bash","action":"bash","command":"/bin/ls -la /Users/user/Developer/GitHub/opencode-desktop-dev/packages/core/src/ 2>/dev/null","exit_code":0}
+{"at":"2026-05-31T05:57:25.992Z","tool":"smart_bash","action":"bash","command":"/bin/ls -la /Users/user/Developer/GitHub/opencode-desktop-dev/packages/ui/src/ 2>/dev/null | head -2","exit_code":0}
+{"at":"2026-05-31T06:01:02.050Z","tool":"smart_bash","action":"bash","command":"bash -c 'cat /Users/user/Developer/GitHub/opencode-desktop-dev/packages/desktop/tsconfig.json'","exit_code":0}
+{"at":"2026-05-31T06:01:02.608Z","tool":"smart_bash","action":"bash","command":"bash -c 'find /Users/user/Developer/GitHub/opencode-desktop-dev -maxdepth 3 -name tsconfig*.json -no","exit_code":0}
+{"at":"2026-05-31T06:01:56.819Z","tool":"smart_bash","action":"bash","command":"bash -c 'cat /Users/user/Developer/GitHub/opencode-desktop-dev/packages/app/tsconfig.json'","exit_code":0}
+{"at":"2026-05-31T06:01:57.120Z","tool":"smart_bash","action":"bash","command":"bash -c 'cat /Users/user/Developer/GitHub/opencode-desktop-dev/tsconfig.json'","exit_code":0}
+{"at":"2026-05-31T06:01:57.814Z","tool":"smart_bash","action":"bash","command":"bash -c 'find /Users/user/Developer/GitHub/opencode-desktop-dev -maxdepth 3 -name \"vite.config*\" -no","exit_code":0}
+{"at":"2026-05-31T06:02:02.990Z","tool":"smart_bash","action":"bash","command":"bash -c 'find /Users/user/Developer/GitHub/opencode-desktop-dev -name \"*.d.ts\" -not -path \"*/node_mo","exit_code":0}
+{"at":"2026-05-31T06:03:51.088Z","tool":"smart_bash","action":"bash","command":"bash -c 'cat /Users/user/Developer/GitHub/opencode-desktop-dev/packages/desktop/src/renderer/index.h","exit_code":0}
+{"at":"2026-05-31T06:04:47.411Z","tool":"smart_bash","action":"bash","command":"bash -c 'find /Users/user/Developer/GitHub/opencode-desktop-dev/packages/app -maxdepth 2 -name \"vite","exit_code":0}
+{"at":"2026-05-31T06:04:47.757Z","tool":"smart_bash","action":"bash","command":"bash -c 'cat /Users/user/Developer/GitHub/opencode-desktop-dev/packages/app/vite.config.ts'","exit_code":0}
+{"at":"2026-05-31T06:04:48.178Z","tool":"smart_bash","action":"bash","command":"bash -c 'ls /Users/user/Developer/GitHub/opencode-desktop-dev/packages/app/vite*'","exit_code":0}
+{"at":"2026-05-31T06:04:51.213Z","tool":"smart_bash","action":"bash","command":"bash -c 'cat /Users/user/Developer/GitHub/opencode-desktop-dev/packages/app/index.html'","exit_code":0}
+{"at":"2026-05-31T06:05:42.359Z","tool":"smart_bash","action":"bash","command":"bash -c 'json_query name < /Users/user/Developer/GitHub/opencode-desktop-dev/packages/containers/pac","exit_code":127}
+{"at":"2026-05-31T06:08:08.388Z","tool":"smart_bash","action":"bash","command":"bash -c 'ls /Users/user/Developer/GitHub/opencode-desktop-dev/packages/sdk/'","exit_code":0}
+{"at":"2026-05-31T06:08:08.667Z","tool":"smart_bash","action":"bash","command":"bash -c 'ls /Users/user/Developer/GitHub/opencode-desktop-dev/packages/console/'","exit_code":0}
+{"at":"2026-05-31T06:08:08.952Z","tool":"smart_bash","action":"bash","command":"bash -c 'ls /Users/user/Developer/GitHub/opencode-desktop-dev/packages/extensions/'","exit_code":0}
+{"at":"2026-05-31T06:08:09.285Z","tool":"smart_bash","action":"bash","command":"bash -c 'ls /Users/user/Developer/GitHub/opencode-desktop-dev/packages/stats/' 2>/dev/null || echo \"","exit_code":2}
+{"at":"2026-05-31T06:08:54.880Z","tool":"smart_bash","action":"bash","command":"bash -c 'cat /Users/user/Developer/GitHub/opencode-desktop-dev/packages/desktop/src/renderer/env.d.t","exit_code":0}
+{"at":"2026-05-31T06:08:55.225Z","tool":"smart_bash","action":"bash","command":"bash -c 'cat /Users/user/Developer/GitHub/opencode-desktop-dev/packages/desktop/src/main/env.d.ts'","exit_code":0}
+{"at":"2026-05-31T06:08:55.547Z","tool":"smart_bash","action":"bash","command":"bash -c 'cat /Users/user/Developer/GitHub/opencode-desktop-dev/packages/desktop/src/preload/types.ts","exit_code":0}

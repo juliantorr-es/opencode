@@ -1,3 +1,5 @@
 {"at":"2026-05-31T05:23:29.807Z","tool":"smart_bun","action":"ran","command":"typecheck","exit_code":2,"cwd":"/Users/user/Developer/GitHub/opencode-desktop-dev/packages/opencode"}
 {"at":"2026-05-31T05:24:44.805Z","tool":"smart_bun","action":"ran","command":"run","exit_code":2,"cwd":"/Users/user/Developer/GitHub/opencode-desktop-dev/packages/opencode"}
 {"at":"2026-05-31T05:26:08.664Z","tool":"smart_grep","action":"searched","pattern":"typecheck|tsgo","results":1,"files":1}
+{"at":"2026-05-31T05:28:26.253Z","tool":"smart_bash","action":"bash","command":"test -f /Users/user/Developer/GitHub/opencode-desktop-dev/packages/opencode/node_modules/.bin/tsgo &","exit_code":0}
+{"at":"2026-05-31T05:29:30.718Z","tool":"smart_bash","action":"bash","command":"/Users/user/Developer/GitHub/opencode-desktop-dev/packages/opencode/node_modules/.bin/tsgo --noEmit ","exit_code":0}

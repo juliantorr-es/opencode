@@ -244,7 +244,7 @@ async function socket(
 
 function invalidate(entry: PoolEntry) {
   if (entry.socket) {
-    entry.socket.on("error", () => {})
+    entry.socket.on("error", (err) => console.warn("[ws-pool] socket error during invalidate:", err))
     entry.socket.terminate()
     entry.socket = undefined
   }

@@ -74,7 +74,7 @@ export const ReplaceSymbolTool = Tool.define(
           }
 
           yield* fs.ensureDir(editsDir)
-          yield* fs.writeFileString(logPath, JSON.stringify(record) + "\n", { flag: "a" })
+          yield* fs.appendLine(logPath, JSON.stringify(record))
 
           const result = {
             status: "applied",

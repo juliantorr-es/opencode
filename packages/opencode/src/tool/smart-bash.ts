@@ -111,7 +111,7 @@ export const SmartBashTool = Tool.define(
             exit_code: result.status,
           })
           yield* fs.ensureDir(logDir)
-          yield* fs.writeFileString(path.join(logDir, "bash_usage.v1.jsonl"), logEntry + "\n", { flag: "a" })
+          yield* fs.appendLine(path.join(logDir, "bash_usage.v1.jsonl"), logEntry)
 
           const output: Record<string, unknown> = {
             status: result.status === 0 ? "pass" : "fail",

@@ -752,8 +752,7 @@ export const layer = Layer.effect(
   }),
 )
 
-export const defaultLayer = Layer.suspend(() =>
-  layer
+export const defaultLayer = layer
     .pipe(
       Layer.provide(Config.defaultLayer),
       Layer.provide(Plugin.defaultLayer),
@@ -785,8 +784,7 @@ export const defaultLayer = Layer.suspend(() =>
     .pipe(Layer.provide(RuntimeFlags.defaultLayer))
     .pipe(Layer.provide(EventStoreLayer))
     .pipe(Layer.provide(EventAgentQueriesLayer))
-    .pipe(Layer.provide(FileMemoryLayer)),
-)
+    .pipe(Layer.provide(FileMemoryLayer))
 
 function isZodType(value: unknown): value is z.ZodType {
   return typeof value === "object" && value !== null && "_zod" in value

@@ -123,7 +123,7 @@ export const SmartEditTool = Tool.define(
           }
 
           yield* fs.ensureDir(sessionDir)
-          yield* fs.writeFileString(logPath, JSON.stringify(record) + "\n", { flag: "a" })
+          yield* fs.appendLine(logPath, JSON.stringify(record))
 
           const result = {
             status: "applied",

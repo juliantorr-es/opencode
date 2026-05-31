@@ -1,4 +1,4 @@
-import { Schema } from "effect"
+import { Effect, Schema } from "effect"
 
 import { Identifier } from "@/id/id"
 import { withStatics } from "@opencode-ai/core/schema"
@@ -9,6 +9,6 @@ export type ToolID = typeof toolIdSchema.Type
 
 export const ToolID = toolIdSchema.pipe(
   withStatics((schema: typeof toolIdSchema) => ({
-    ascending: (id?: string) => schema.make(Identifier.ascending("tool", id)),
+    ascending: (id?: string) => schema.make(Effect.runSync(Identifier.ascending("tool", id))),
   })),
 )

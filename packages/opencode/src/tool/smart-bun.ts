@@ -167,7 +167,7 @@ export const SmartBunTool = Tool.define(
           // Analytics
           const logDir = `${instance.directory}/docs/json/opencode/sessions/${ctx.sessionID}/analytics`
           yield* fs.ensureDir(logDir)
-          yield* fs.writeFileString(
+          yield* fs.appendLine(
             path.join(logDir, "smart_tool_usage.v1.jsonl"),
             JSON.stringify({
               at: new Date().toISOString(),
@@ -177,8 +177,7 @@ export const SmartBunTool = Tool.define(
               command: params.command,
               elapsed_ms: elapsed,
               exit_code: exitCode,
-            }) + "\n",
-            { flag: "a" },
+            }),
           )
 
           return {

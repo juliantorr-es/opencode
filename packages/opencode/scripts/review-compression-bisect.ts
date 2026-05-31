@@ -119,7 +119,7 @@ await check("bun test weight-rubric.test.ts", async () => {
     .nothrow()
     .quiet()
   if (result.exitCode !== 0) {
-    const stderr = await new Response(result.stderr).text()
+    const stderr = result.stderr.toString()
     throw new Error(`Weight rubric tests failed (exit ${result.exitCode}):\n${stderr.slice(0, 500)}`)
   }
 })
@@ -133,7 +133,7 @@ await check("bun test comparison-engine.test.ts", async () => {
     .nothrow()
     .quiet()
   if (result.exitCode !== 0) {
-    const stderr = await new Response(result.stderr).text()
+    const stderr = result.stderr.toString()
     throw new Error(`Comparison engine tests failed (exit ${result.exitCode}):\n${stderr.slice(0, 500)}`)
   }
 })
@@ -147,7 +147,7 @@ await check("bun test schema-validate.test.ts", async () => {
     .nothrow()
     .quiet()
   if (result.exitCode !== 0) {
-    const stderr = await new Response(result.stderr).text()
+    const stderr = result.stderr.toString()
     throw new Error(`Schema validation tests failed (exit ${result.exitCode}):\n${stderr.slice(0, 500)}`)
   }
 })
@@ -161,7 +161,7 @@ await check("bun test manifest-integration.test.ts", async () => {
     .nothrow()
     .quiet()
   if (result.exitCode !== 0) {
-    const stderr = await new Response(result.stderr).text()
+    const stderr = result.stderr.toString()
     throw new Error(`Integration tests failed (exit ${result.exitCode}):\n${stderr.slice(0, 500)}`)
   }
 })

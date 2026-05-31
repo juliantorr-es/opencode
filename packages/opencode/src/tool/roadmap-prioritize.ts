@@ -84,7 +84,7 @@ export const RoadmapPrioritizeTool = Tool.define(
             session_ref: params.session_ref || ctx.sessionID,
             recorded_at: new Date().toISOString(),
           }
-          yield* fs.writeFileString(pp, JSON.stringify(progressEntry) + "\n", { flag: "a" })
+          yield* fs.appendLine(pp, JSON.stringify(progressEntry))
 
           // Quick next-up
           const completedIds = new Set(

@@ -66,3 +66,13 @@
 {"at":"2026-05-31T05:25:40.414Z","session_id":"ses_1838bfef5ffexpRoMthyAn2ZLt","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Read first 68 lines containing mock.module calls"}
 {"at":"2026-05-31T05:25:40.422Z","session_id":"ses_1838bfef5ffexpRoMthyAn2ZLt","agent":"cartographer","tool":"smart_bash","phase":"completed","detail":"head exit=0"}
 {"at":"2026-05-31T05:26:30.969Z","session_id":"ses_1838bfef5ffexpRoMthyAn2ZLt","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Read the mock.module blocks for electron and ipc-channels"}
+{"at":"2026-05-31T05:27:23.629Z","session_id":"ses_1838bfef5ffexpRoMthyAn2ZLt","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Read mock.module definitions for IPC channels"}
+{"at":"2026-05-31T05:27:23.679Z","session_id":"ses_1838bfef5ffexpRoMthyAn2ZLt","agent":"cartographer","tool":"smart_bash","phase":"completed","detail":"python3 exit=0"}
+{"at":"2026-05-31T05:28:04.524Z","session_id":"ses_1838bfef5ffexpRoMthyAn2ZLt","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Verify suite-dependent behavior"}
+{"at":"2026-05-31T05:28:04.571Z","session_id":"ses_1838bfef5ffexpRoMthyAn2ZLt","agent":"cartographer","tool":"smart_bash","phase":"completed","detail":"python3 exit=0"}
+{"at":"2026-05-31T05:28:32.883Z","session_id":"ses_1838bfef5ffexpRoMthyAn2ZLt","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"onSqliteMigration"}
+{"at":"2026-05-31T05:28:32.892Z","session_id":"ses_1838bfef5ffexpRoMthyAn2ZLt","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"onSqliteMigration"}
+{"at":"2026-05-31T05:28:33.220Z","session_id":"ses_1838bfef5ffexpRoMthyAn2ZLt","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"onSqliteMigration"}
+{"at":"2026-05-31T05:28:33.228Z","session_id":"ses_1838bfef5ffexpRoMthyAn2ZLt","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"onSqliteMigration"}
+{"at":"2026-05-31T05:28:33.522Z","session_id":"ses_1838bfef5ffexpRoMthyAn2ZLt","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"onStorageMigrationProgress"}
+{"at":"2026-05-31T05:28:33.535Z","session_id":"ses_1838bfef5ffexpRoMthyAn2ZLt","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"onStorageMigrationProgress"}

@@ -86,7 +86,7 @@ export const RoadmapDeprecateTool = Tool.define(
             session_ref: params.session_ref || ctx.sessionID,
             recorded_at: new Date().toISOString(),
           }
-          yield* fs.writeFileString(pp, JSON.stringify(progressEntry) + "\n", { flag: "a" })
+          yield* fs.appendLine(pp, JSON.stringify(progressEntry))
 
           const orphaned = Object.entries(items)
             .filter(([id, i]) => id !== params.item_id && (i.depends_on as string[] | undefined)?.includes(params.item_id))

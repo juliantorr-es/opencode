@@ -1,4 +1,4 @@
-import { chmod, mkdir, readFile, stat as statFile, writeFile } from "fs/promises"
+import { chmod, mkdir, readFile, rename, stat as statFile, unlink, writeFile } from "fs/promises"
 import { createWriteStream, existsSync, statSync } from "fs"
 import { realpathSync } from "fs"
 import { dirname, isAbsolute, join, relative, resolve as pathResolve, win32 } from "path"
@@ -74,6 +74,24 @@ export async function write(p: string, content: string | Buffer | Uint8Array, mo
       }
       return
     }
+    throw e
+  }
+}
+
+/** Atomic write: write to .tmp then rename.
+ * Prevents partial/corrupt writes from concurrent or interrupted operations. */
+export async function atomicWrite(p: string, content: string | Buffer | Uint8Array, mode?: number): Promise<void> {
+  const tmpPath = p + ".tmp"
+  try {
+    await mkdir(dirname(p), { recursive: true })
+    if (mode) {
+      await writeFile(tmpPath, content, { mode })
+    } else {
+      await writeFile(tmpPath, content)
+    }
+    await rename(tmpPath, p)
+  } catch (e) {
+    await unlink(tmpPath).catch(() => {})
     throw e
   }
 }

@@ -62,7 +62,7 @@ export const OutOfScopeFindingTool = Tool.define(
               recommended_slice: params.recommended_slice,
               session_id: ctx.sessionID, recorded_at: now,
             }
-            yield* fs.writeFileString(findingsPath, JSON.stringify(record) + "\n", { flag: "a" })
+            yield* fs.appendLine(findingsPath, JSON.stringify(record))
           }
 
           // Part 2: Publish to cross-session registry
@@ -98,7 +98,7 @@ export const OutOfScopeFindingTool = Tool.define(
               published_at: now,
               expires_at: new Date(Date.now() + thirtyDays * 1000).toISOString(),
             }
-            yield* fs.writeFileString(registryPath, JSON.stringify(regRecord) + "\n", { flag: "a" })
+            yield* fs.appendLine(registryPath, JSON.stringify(regRecord))
           }
 
           const result = {

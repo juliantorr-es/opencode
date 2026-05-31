@@ -1,0 +1,15 @@
+{"at":"2026-05-31T05:30:42.063Z","tool":"smart_grep","action":"searched","pattern":"Layer\\.suspend","results":9,"files":9}
+{"at":"2026-05-31T05:30:42.418Z","tool":"smart_grep","action":"searched","pattern":"Layer\\.effect","results":50,"files":49}
+{"at":"2026-05-31T05:30:42.778Z","tool":"smart_grep","action":"searched","pattern":"Server\\.listen","results":11,"files":4}
+{"at":"2026-05-31T05:30:43.189Z","tool":"smart_grep","action":"searched","pattern":"ToolRegistry","results":72,"files":17}
+{"at":"2026-05-31T05:31:27.125Z","tool":"smart_grep","action":"searched","pattern":"Layer\\.suspend","results":0,"files":0}
+{"at":"2026-05-31T05:31:27.499Z","tool":"smart_grep","action":"searched","pattern":"defaultLayer|layer\\.pipe|Layer\\.provide","results":0,"files":0}
+{"at":"2026-05-31T05:31:42.406Z","tool":"smart_grep","action":"searched","pattern":"export const layer|export const defaultLayer","results":0,"files":0}
+{"at":"2026-05-31T05:32:24.275Z","tool":"smart_grep","action":"searched","pattern":"Layer\\.suspend","results":0,"files":0}
+{"at":"2026-05-31T05:32:50.181Z","tool":"smart_bash","action":"bash","command":"awk 'NR>=180 && NR<=230' packages/opencode/src/tool/registry.ts","exit_code":0}
+{"at":"2026-05-31T05:32:50.465Z","tool":"smart_bash","action":"bash","command":"awk 'NR>=750 && NR<=780' packages/opencode/src/tool/registry.ts","exit_code":0}
+{"at":"2026-05-31T05:32:50.809Z","tool":"smart_bash","action":"bash","command":"awk 'NR>=1860 && NR<=1896' packages/opencode/src/provider/provider.ts","exit_code":0}
+{"at":"2026-05-31T05:32:53.970Z","tool":"smart_bash","action":"bash","command":"awk 'NR>=230 && NR<=310' packages/opencode/src/tool/registry.ts","exit_code":0}
+{"at":"2026-05-31T05:32:54.302Z","tool":"smart_bash","action":"bash","command":"awk 'NR>=146 && NR<=158' packages/opencode/src/tool/registry.ts","exit_code":0}
+{"at":"2026-05-31T05:33:36.321Z","tool":"smart_bash","action":"bash","command":"awk 'NR>=87 && NR<=130' packages/opencode/src/session/processor.ts","exit_code":0}
+{"at":"2026-05-31T05:33:36.672Z","tool":"smart_bash","action":"bash","command":"awk 'NR>=1640 && NR<=1680' packages/opencode/src/session/prompt.ts","exit_code":0}

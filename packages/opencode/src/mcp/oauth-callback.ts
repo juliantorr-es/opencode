@@ -5,10 +5,6 @@ import { OAUTH_CALLBACK_PORT, OAUTH_CALLBACK_PATH, parseRedirectUri } from "./oa
 
 const log = Log.create({ service: "mcp.oauth-callback" })
 
-// Current callback server configuration (may differ from defaults if custom redirectUri is used)
-let currentPort = OAUTH_CALLBACK_PORT
-let currentPath = OAUTH_CALLBACK_PATH
-
 const HTML_SUCCESS = `<!DOCTYPE html>
 <html>
 <head>
@@ -56,41 +52,54 @@ interface PendingAuth {
   timeout: ReturnType<typeof setTimeout>
 }
 
-let server: ReturnType<typeof createServer> | undefined
-const pendingAuths = new Map<string, PendingAuth>()
-// Reverse index: mcpName → oauthState, so cancelPending(mcpName) can
-// find the right entry in pendingAuths (which is keyed by oauthState).
-const mcpNameToState = new Map<string, string>()
+// Centralized state — not bare module-level variables.
+// Wrapping in a mutable container prevents accidental reassignment
+// and makes concurrent-access guards easier to reason about.
+const state: {
+  server: ReturnType<typeof createServer> | undefined
+  currentPort: number
+  currentPath: string
+  pendingAuths: Map<string, PendingAuth>
+  mcpNameToState: Map<string, string>
+  starting: Promise<void> | undefined
+} = {
+  server: undefined,
+  currentPort: OAUTH_CALLBACK_PORT,
+  currentPath: OAUTH_CALLBACK_PATH,
+  pendingAuths: new Map<string, PendingAuth>(),
+  mcpNameToState: new Map<string, string>(),
+  starting: undefined,
+}
 
 const CALLBACK_TIMEOUT_MS = 5 * 60 * 1000 // 5 minutes
 
 function cleanupStateIndex(oauthState: string) {
-  for (const [name, state] of mcpNameToState) {
-    if (state === oauthState) {
-      mcpNameToState.delete(name)
+  for (const [name, storedState] of state.mcpNameToState) {
+    if (storedState === oauthState) {
+      state.mcpNameToState.delete(name)
       break
     }
   }
 }
 
 function handleRequest(req: import("http").IncomingMessage, res: import("http").ServerResponse) {
-  const url = new URL(req.url || "/", `http://localhost:${currentPort}`)
+  const url = new URL(req.url || "/", `http://localhost:${state.currentPort}`)
 
-  if (url.pathname !== currentPath) {
+  if (url.pathname !== state.currentPath) {
     res.writeHead(404)
     res.end("Not found")
     return
   }
 
   const code = url.searchParams.get("code")
-  const state = url.searchParams.get("state")
+  const oauthState = url.searchParams.get("state")
   const error = url.searchParams.get("error")
   const errorDescription = url.searchParams.get("error_description")
 
-  log.info("received oauth callback", { hasCode: !!code, state, error })
+  log.info("received oauth callback", { hasCode: !!code, state: oauthState, error })
 
   // Enforce state parameter presence
-  if (!state) {
+  if (!oauthState) {
     const errorMsg = "Missing required state parameter - potential CSRF attack"
     log.error("oauth callback missing state parameter", { url: url.toString() })
     res.writeHead(400, { "Content-Type": "text/html" })
@@ -100,11 +109,11 @@ function handleRequest(req: import("http").IncomingMessage, res: import("http").
 
   if (error) {
     const errorMsg = errorDescription || error
-    if (pendingAuths.has(state)) {
-      const pending = pendingAuths.get(state)!
+    const pending = state.pendingAuths.get(oauthState)
+    if (pending) {
       clearTimeout(pending.timeout)
-      pendingAuths.delete(state)
-      cleanupStateIndex(state)
+      state.pendingAuths.delete(oauthState)
+      cleanupStateIndex(oauthState)
       pending.reject(new Error(errorMsg))
     }
     res.writeHead(200, { "Content-Type": "text/html" })
@@ -119,19 +128,19 @@ function handleRequest(req: import("http").IncomingMessage, res: import("http").
   }
 
   // Validate state parameter
-  if (!pendingAuths.has(state)) {
+  if (!state.pendingAuths.has(oauthState)) {
     const errorMsg = "Invalid or expired state parameter - potential CSRF attack"
-    log.error("oauth callback with invalid state", { state, pendingStates: Array.from(pendingAuths.keys()) })
+    log.error("oauth callback with invalid state", { state: oauthState, pendingStates: Array.from(state.pendingAuths.keys()) })
     res.writeHead(400, { "Content-Type": "text/html" })
     res.end(HTML_ERROR(errorMsg))
     return
   }
 
-  const pending = pendingAuths.get(state)!
+  const pending = state.pendingAuths.get(oauthState)!
 
   clearTimeout(pending.timeout)
-  pendingAuths.delete(state)
-  cleanupStateIndex(state)
+  state.pendingAuths.delete(oauthState)
+  cleanupStateIndex(oauthState)
   pending.resolve(code)
 
   res.writeHead(200, { "Content-Type": "text/html" })
@@ -143,56 +152,65 @@ export async function ensureRunning(redirectUri?: string): Promise<void> {
   const { port, path } = parseRedirectUri(redirectUri)
 
   // If server is running on a different port/path, stop it first
-  if (server && (currentPort !== port || currentPath !== path)) {
-    log.info("stopping oauth callback server to reconfigure", { oldPort: currentPort, newPort: port })
+  if (state.server && (state.currentPort !== port || state.currentPath !== path)) {
+    log.info("stopping oauth callback server to reconfigure", { oldPort: state.currentPort, newPort: port })
     await stop()
   }
 
-  if (server) return
+  if (state.server) return
 
-  const running = await isPortInUse(port)
-  if (running) {
-    log.info("oauth callback server already running on another instance", { port })
-    return
-  }
+  // Deduplicate concurrent ensureRunning() calls
+  if (state.starting) return state.starting
 
-  currentPort = port
-  currentPath = path
+  state.currentPort = port
+  state.currentPath = path
 
-  server = createServer(handleRequest)
-  await new Promise<void>((resolve, reject) => {
-    server!.listen(currentPort, () => {
-      log.info("oauth callback server started", { port: currentPort, path: currentPath })
+  const srv = createServer(handleRequest)
+
+  state.starting = new Promise<void>((resolve, reject) => {
+    srv.on("error", reject)
+    srv.listen(state.currentPort, () => {
+      log.info("oauth callback server started", { port: state.currentPort, path: state.currentPath })
       resolve()
     })
-    server!.on("error", reject)
   })
+
+  try {
+    await state.starting
+    state.server = srv
+  } catch (err) {
+    // Server failed to start — reset so future calls can retry
+    state.server = undefined
+    throw err
+  } finally {
+    state.starting = undefined
+  }
 }
 
 export function waitForCallback(oauthState: string, mcpName?: string): Promise<string> {
-  if (mcpName) mcpNameToState.set(mcpName, oauthState)
+  if (mcpName) state.mcpNameToState.set(mcpName, oauthState)
   return new Promise((resolve, reject) => {
     const timeout = setTimeout(() => {
-      if (pendingAuths.has(oauthState)) {
-        pendingAuths.delete(oauthState)
-        if (mcpName) mcpNameToState.delete(mcpName)
+      if (state.pendingAuths.has(oauthState)) {
+        state.pendingAuths.delete(oauthState)
+        if (mcpName) state.mcpNameToState.delete(mcpName)
         reject(new Error("OAuth callback timeout - authorization took too long"))
       }
     }, CALLBACK_TIMEOUT_MS)
 
-    pendingAuths.set(oauthState, { resolve, reject, timeout })
+    state.pendingAuths.set(oauthState, { resolve, reject, timeout })
   })
 }
 
 export function cancelPending(mcpName: string): void {
   // Look up the oauthState for this mcpName via the reverse index
-  const oauthState = mcpNameToState.get(mcpName)
+  const oauthState = state.mcpNameToState.get(mcpName)
   const key = oauthState ?? mcpName
-  const pending = pendingAuths.get(key)
+  const pending = state.pendingAuths.get(key)
   if (pending) {
     clearTimeout(pending.timeout)
-    pendingAuths.delete(key)
-    mcpNameToState.delete(mcpName)
+    state.pendingAuths.delete(key)
+    state.mcpNameToState.delete(mcpName)
     pending.reject(new Error("Authorization cancelled"))
   }
 }
@@ -211,22 +229,23 @@ export async function isPortInUse(port: number = OAUTH_CALLBACK_PORT): Promise<b
 }
 
 export async function stop(): Promise<void> {
-  if (server) {
-    await new Promise<void>((resolve) => server!.close(() => resolve()))
-    server = undefined
+  const srv = state.server
+  if (srv) {
+    await new Promise<void>((resolve) => srv.close(() => resolve()))
+    state.server = undefined
     log.info("oauth callback server stopped")
   }
 
-  for (const [_name, pending] of pendingAuths) {
+  for (const [_name, pending] of state.pendingAuths) {
     clearTimeout(pending.timeout)
     pending.reject(new Error("OAuth callback server stopped"))
   }
-  pendingAuths.clear()
-  mcpNameToState.clear()
+  state.pendingAuths.clear()
+  state.mcpNameToState.clear()
 }
 
 export function isRunning(): boolean {
-  return server !== undefined
+  return state.server !== undefined
 }
 
 export * as McpOAuthCallback from "./oauth-callback"

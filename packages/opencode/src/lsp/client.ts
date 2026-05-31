@@ -173,11 +173,13 @@ export async function create(input: {
     dedupeDiagnostics([...(pushDiagnostics.get(filePath) ?? []), ...(pullDiagnostics.get(filePath) ?? [])])
   const updatePushDiagnostics = (filePath: string, next: Diagnostic[]) => {
     pushDiagnostics.set(filePath, next)
-    void busRuntime.runPromise((svc) =>
+    busRuntime.runPromise((svc) =>
       svc
         .publish(Event.Diagnostics, { path: filePath, serverID: input.serverID })
         .pipe(Effect.provideService(InstanceRef, instance)),
-    )
+    ).catch((error) => {
+      log.error("failed to publish diagnostics", { error })
+    })
   }
   const updatePullDiagnostics = (filePath: string, next: Diagnostic[]) => {
     pullDiagnostics.set(filePath, next)

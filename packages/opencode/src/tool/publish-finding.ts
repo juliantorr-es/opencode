@@ -106,7 +106,7 @@ export const PublishFindingTool = Tool.define(
           }
 
           yield* fs.ensureDir(registryDir)
-          yield* fs.writeFileString(registryPath, JSON.stringify(record) + "\n", { flag: "a" })
+          yield* fs.appendLine(registryPath, JSON.stringify(record))
 
           return {
             title: "publish_finding",

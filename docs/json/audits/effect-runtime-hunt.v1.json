@@ -1,0 +1,327 @@
+{
+  "schema": "rig.relay.effect_runtime_hunt.v1",
+  "generated_at": "2026-05-30T00:00:00Z",
+  "session_type": "cartography",
+  "source": "packages/opencode/src",
+  "findings": {
+    "unhandled_run_errors": [
+      {
+        "file": "packages/opencode/src/storage/db.ts",
+        "line": 23,
+        "call": "Effect.runSync(RuntimeFlags.Service.useSync(...).pipe(Effect.provide(RuntimeFlags.defaultLayer)))",
+        "context": "Called eagerly at module-load time as default argument to getChannelPath()",
+        "has_error_handler": false,
+        "risk": "crash",
+        "note": "Module-load crash: if RuntimeFlags.defaultLayer fails to build or useSync throws, the entire db.ts module fails to load. Any import of this module crashes the process. The call is in a module-level const initializer (readRuntimeFlags), not guarded by try/catch."
+      },
+      {
+        "file": "packages/opencode/src/lsp/client.ts",
+        "line": 176,
+        "call": "void busRuntime.runPromise((svc) => svc.subscribeCallback(Event.Diagnostics, ...))",
+        "context": "Fire-and-forget inside create(). void discards the returned Promise.",
+        "has_error_handler": false,
+        "risk": "crash",
+        "note": "Unhandled promise rejection: if the subscription Effect fails, the Promise rejects with no catch handler. The 'void' keyword explicitly discards it. Node.js will emit 'unhandledRejection' and crash in future versions."
+      },
+      {
+        "file": "packages/opencode/src/lsp/client.ts",
+        "line": 528,
+        "call": "unsub = busRuntime.runSync((svc) => svc.subscribeCallback(...).pipe(Effect.provideService(InstanceRef, instance)))",
+        "context": "Inside new Promise() constructor callback in waitForFreshPush()",
+        "has_error_handler": false,
+        "risk": "minor",
+        "note": "runSync inside a Promise constructor. If it throws, the Promise rejects rather than crashing the process — so it's contained. However, any synchronous defect (missing service, bad layer) will cause waitForFreshPush to reject silently."
+      },
+      {
+        "file": "packages/opencode/src/mcp/oauth-provider.ts",
+        "line": 69,
+        "call": "await Effect.runPromise(this.auth.getForUrl(this.mcpName, this.serverUrl))",
+        "context": "14 runPromise calls in class methods (lines 69,87,107,122,143,147,155,159,171,177,184,188,192)",
+        "has_error_handler": false,
+        "risk": "crash",
+        "note": "Zero error handling on any of the 14 Effect.runPromise calls. These are in async methods implementing OAuthClientProvider. If any Effect fails (e.g., auth.get returns an error), the rejected promise propagates to the MCP SDK caller. If the SDK doesn't catch, it's an unhandled rejection crash."
+      },
+      {
+        "file": "packages/opencode/src/acp-next/event.ts",
+        "line": 114,
+        "call": "await Effect.runPromise(this.input.session.tryGet(sessionId))",
+        "context": "4 runPromise calls in Subscription class methods (lines 114,117,136,139,204)",
+        "has_error_handler": false,
+        "risk": "crash",
+        "note": "RunPromise calls in async methods of Subscription class. If session.tryGet fails (e.g., database error), it becomes unhandled promise rejection. No try/catch or .catch() visible."
+      },
+      {
+        "file": "packages/opencode/src/acp-next/permission.ts",
+        "line": 51,
+        "call": "await Effect.runPromise(this.input.session.tryGet(permission.sessionID))",
+        "context": "Single runPromise in permission handler",
+        "has_error_handler": false,
+        "risk": "crash",
+        "note": "No error handling on runPromise."
+      },
+      {
+        "file": "packages/opencode/src/acp-next/service.ts",
+        "line": 573,
+        "call": "ManagedRuntime.make(ACPNextSession.defaultLayer).runSync(ACPNextSession.Service.use(...))",
+        "context": "makeSessionService() called from synchronous make() function",
+        "has_error_handler": false,
+        "risk": "crash",
+        "note": "runSync at service construction time. If ACPNextSession.defaultLayer fails to build, this throws synchronously, crashing the ACP Next Agent constructor."
+      },
+      {
+        "file": "packages/opencode/src/acp-next/service.ts",
+        "line": 590,
+        "call": "ManagedRuntime.make(Directory.layer.pipe(Layer.provide(...))).runSync(Directory.Service.use(...))",
+        "context": "makeDirectoryService() called from synchronous make() function",
+        "has_error_handler": false,
+        "risk": "crash",
+        "note": "Same as makeSessionService — runSync at construction time. If Directory.layer fails to build, Agent constructor crashes."
+      },
+      {
+        "file": "packages/opencode/src/server/server.ts",
+        "line": 76,
+        "call": "await Effect.runPromise(listenEffect(opts))",
+        "context": "Top-level listen() async function",
+        "has_error_handler": false,
+        "risk": "crash",
+        "note": "Intended behavior (server startup failure should crash), but no error normalization. If listenEffect fails with a defect (not just an Effect error), the process gets an unhandled rejection."
+      },
+      {
+        "file": "packages/opencode/src/session/message-v2.ts",
+        "line": 921,
+        "call": "return Effect.runPromise(toModelMessagesEffect(...).pipe(Effect.provide(EffectLogger.layer)))",
+        "context": "In synchronous toModelMessages() function",
+        "has_error_handler": false,
+        "risk": "minor",
+        "note": "Returns a Promise — caller must handle rejection. No catch wrapping in this function."
+      },
+      {
+        "file": "packages/opencode/src/project/instance-runtime.ts",
+        "line": 9,
+        "call": "AppRuntime.runPromise(InstanceStore.Service.use((store) => store.load(input)))",
+        "context": "4 runPromise calls (lines 9,11,12,14) in exported functions",
+        "has_error_handler": false,
+        "risk": "minor",
+        "note": "Top-level exported functions load(), dispose(), disposeAllInstances(), reload(). Callers must add error handling."
+      },
+      {
+        "file": "packages/opencode/src/cli/effect-cmd.ts",
+        "line": 81,
+        "call": "await AppRuntime.runPromise(opts.handler(args))",
+        "context": "CLI command handler at top level of command execution",
+        "has_error_handler": false,
+        "risk": "crash",
+        "note": "If the CLI command's Effect fails, unhandled promise rejection crashes the CLI process. No error normalization to exit codes."
+      },
+      {
+        "file": "packages/opencode/src/installation/index.ts",
+        "line": 339,
+        "call": "export const latest = (...args) => runPromise((s) => s.latest(...args))",
+        "context": "3 exported functions wrapping runPromise (lines 339-341)",
+        "has_error_handler": false,
+        "risk": "minor",
+        "note": "Thin wrappers around runPromise. Callers must add error handling."
+      }
+    ],
+    "fiber_leaks": [
+      {
+        "file": "packages/opencode/src/context/packet.ts",
+        "line": 474,
+        "pattern": "Effect.forkDaemon(Effect.forever(...))",
+        "risk": "leak",
+        "note": "forkDaemon inside the packet service layer starts a background fiber that runs forever via Effect.forever. This fiber is NOT scoped — it will keep running even after the packet service is discarded, unless the Effect runtime is disposed. If the runtime is shared/reused across units of work, this fiber accumulates."
+      },
+      {
+        "file": "packages/opencode/src/server/server.ts",
+        "line": 105,
+        "pattern": "Scope.makeUnsafe() in startListener() — scope explicitly NOT closed on success path until stop()",
+        "risk": "leak",
+        "note": "startListener() calls Scope.makeUnsafe() and Layer.buildWithMemoMap() with that scope. On error, the scope is closed via Effect.onError; on success the scope lives until stop() is called. If stop() is never called (e.g., process kill), all scoped resources including fibers leak."
+      },
+      {
+        "file": "packages/opencode/src/bus/index.ts",
+        "line": 168,
+        "pattern": "bridge.fork(Scope.close(scope, Exit.void))",
+        "risk": "minor",
+        "note": "bridge.fork() is used in several places (pty, bus, event-bridge, sync, plugin) as fire-and-forget. If bridge.fork doesn't properly manage its fiber scope, these accumulate. The bridge.fork utility's internal scope handling needs verification."
+      }
+    ],
+    "ref_race_conditions": [
+      {
+        "file": "packages/opencode/src/tool/cache.ts",
+        "line": 119,
+        "pattern": "Ref.modify(inflight, (pending) => { ... pending.set(key, d); return [undefined, pending] })",
+        "risk": "none",
+        "note": "PREVIOUSLY FLAGGED but now CORRECT. The inflight dedup uses Ref.modify for atomic check-and-set. The previous finding (direct mutation bypassing Ref.update) was based on older code. Current implementation is correct: Ref.modify with Effect.ensuring cleanup."
+      },
+      {
+        "file": "packages/opencode/src/agent/authority.ts",
+        "line": 367,
+        "pattern": "Ref.get(contract) and Ref.set(contract, c) as separate exported operations",
+        "risk": "race",
+        "note": "getter and setter are separate Effect operations. If a caller does Ref.get then Ref.set, a concurrent caller could interleave between the read and write. This is an API design choice (callers own consistency), but violates the atomic expectation for a 'contract' concept."
+      },
+      {
+        "file": "packages/opencode/src/tool/cache.ts",
+        "line": 204,
+        "pattern": "Ref.set(cache, ...).pipe(Effect.andThen(Ref.set(hits, 0)), Effect.andThen(Ref.set(misses, 0)))",
+        "risk": "minor",
+        "note": "Three separate Ref.set() calls chained sequentially. Between the cache reset and the hits/misses reset, another fiber could observe inconsistent state (cache cleared but hits still nonzero). Low impact for a stats counter, but inconsistent."
+      }
+    ],
+    "layer_lifecycle_issues": [
+      {
+        "file": "packages/opencode/src/storage/adapter-dual-write.ts",
+        "line": 96,
+        "issue": "Layer.unwrap selects SQLite vs dual-write at layer-construction time, then Layer.effect(... Effect.sync(() => makeDualWriteAdapter(...))) — the Effect.sync wrapper means errors during adapter construction become defects in the runtime, not typed Effect errors.",
+        "risk": "minor"
+      },
+      {
+        "file": "packages/opencode/src/acp-next/service.ts",
+        "line": 572,
+        "issue": "makeSessionService() constructs a ManagedRuntime and immediately extracts the service via runSync. The ManagedRuntime is never stored/closed — its scope leaks if it has any scoped resources.",
+        "risk": "leak"
+      },
+      {
+        "file": "packages/opencode/src/acp-next/service.ts",
+        "line": 578,
+        "issue": "makeDirectoryService() has the same pattern as makeSessionService — ManagedRuntime made and immediately discarded.",
+        "risk": "leak"
+      }
+    ],
+    "schema_parse_issues": [
+      {
+        "file": "packages/opencode/src/session/projectors-next.ts",
+        "line": 13,
+        "code": "const decodeMessage = Schema.decodeUnknownSync(SessionMessage.Message)",
+        "risk": "crash",
+        "note": "Module-level decodeUnknownSync. If SessionMessage.Message schema receives invalid data at module init, this throws and crashes module load."
+      },
+      {
+        "file": "packages/opencode/src/provider/auth.ts",
+        "line": 129,
+        "code": "const decode = Schema.decodeUnknownSync(Methods)",
+        "risk": "crash",
+        "note": "decodeUnknownSync without error handling. If Methods schema fails to parse, throws synchronously."
+      },
+      {
+        "file": "packages/opencode/src/control-plane/adapters/worktree.ts",
+        "line": 10,
+        "code": "const decodeWorktreeConfig = Schema.decodeUnknownSync(WorktreeConfig)",
+        "risk": "crash",
+        "note": "Module-level decodeUnknownSync. Crashes on invalid config data at module load."
+      },
+      {
+        "file": "packages/opencode/src/account/repo.ts",
+        "line": 47,
+        "code": "const decode = Schema.decodeUnknownSync(Info)",
+        "risk": "crash",
+        "note": "decodeUnknownSync on Info schema without error handling."
+      },
+      {
+        "file": "packages/opencode/src/project/project.ts",
+        "line": 76,
+        "code": "vcs: row.vcs ? Schema.decodeUnknownSync(ProjectVcs)(row.vcs) : undefined",
+        "risk": "minor",
+        "note": "decodeUnknownSync on raw DB row data. If stored VCS config is corrupt, this throws in a data access path."
+      },
+      {
+        "file": "packages/opencode/src/project/project.ts",
+        "line": 177,
+        "code": "const fakeVcs = Schema.decodeUnknownSync(Schema.optional(ProjectVcs))(Flag.OPENCODE_FAKE_VCS)",
+        "risk": "minor",
+        "note": "decodeUnknownSync of optional VCS from env var. If env var is invalid, throws."
+      },
+      {
+        "file": "packages/opencode/src/server/routes/instance/httpapi/handlers/v2/message.ts",
+        "line": 18,
+        "code": "const decodeCursor = Schema.decodeUnknownSync(Cursor)",
+        "risk": "crash",
+        "note": "Module-level decodeUnknownSync. Module-load crash risk."
+      },
+      {
+        "file": "packages/opencode/src/server/routes/instance/httpapi/handlers/v2/session.ts",
+        "line": 30,
+        "code": "const decodeCursor = Schema.decodeUnknownSync(SessionCursor)",
+        "risk": "crash",
+        "note": "Module-level decodeUnknownSync. Module-load crash risk."
+      }
+    ],
+    "queue_pubsub_issues": [
+      {
+        "file": "packages/opencode/src/bus/index.ts",
+        "line": 68,
+        "pattern": "PubSub.unbounded() for all bus channels",
+        "risk": "oom",
+        "note": "ALL PubSub instances use unbounded channels. Wildcard and typed pubsubs are both unbounded. If subscribers fall behind (blocked fiber, slow consumer), messages accumulate in memory without limit. Under sustained high event rates, this causes OOM."
+      },
+      {
+        "file": "packages/opencode/src/context/invalidation-bus.ts",
+        "line": 24,
+        "pattern": "PubSub.unbounded() for invalidation events",
+        "risk": "oom",
+        "note": "Same unbounded pattern. Invalidation bus publishes per-scope and global channels as unbounded PubSub."
+      }
+    ],
+    "safe_patterns": [
+      {
+        "file": "packages/opencode/src/acp-next/agent.ts",
+        "line": 89,
+        "pattern": "Effect.runPromise(...).catch((defect) => { ... })",
+        "note": "Correctly handled — runPromise with .catch() that converts defects to RequestError."
+      },
+      {
+        "file": "packages/opencode/src/storage/adapter-dual-write.ts",
+        "line": 32,
+        "pattern": "Effect.runPromise(Effect.tryPromise({ try: ..., catch: ... }))",
+        "note": "Correctly handled — errors are caught by Effect.tryPromise and logged, not propagated as unhandled rejections."
+      },
+      {
+        "file": "packages/opencode/src/tool/cache.ts",
+        "line": 85,
+        "pattern": "Ref.modify for cache lookup (atomic check-and-mutate)",
+        "note": "Correct pattern for atomic read-modify-write. No race condition in cache.get path."
+      },
+      {
+        "file": "packages/opencode/src/tool/cache.ts",
+        "line": 119,
+        "pattern": "Ref.modify for inflight dedup (atomic check-and-insert) + Effect.ensuring for cleanup",
+        "note": "Correct — inflight dedup is atomic and cleanup is guaranteed via Effect.ensuring."
+      },
+      {
+        "file": "packages/opencode/src/acp-next/directory.ts",
+        "line": 145,
+        "pattern": "SynchronizedRef for snapshot cache",
+        "note": "Correct — SynchronizedRef provides safe concurrent access for Effect-producing operations."
+      },
+      {
+        "file": "packages/opencode/src/effect/runner.ts",
+        "line": 47,
+        "pattern": "SynchronizedRef for state machine",
+        "note": "Correct — SynchronizedRef with modify for atomic state transitions."
+      }
+    ]
+  },
+  "critical_issues": [
+    "CRITICAL [db.ts:23]: Effect.runSync at module load — crashes the entire module on RuntimeFlags initialization failure. This runs on any import of db.ts.",
+    "CRITICAL [lsp/client.ts:176]: void busRuntime.runPromise — fire-and-forget unhandled promise rejection on subscription failure. Node.js 'unhandledRejection' will crash the process.",
+    "CRITICAL [mcp/oauth-provider.ts:69-192]: 14 Effect.runPromise calls with zero error handling. Any auth Effect failure becomes an unhandled promise rejection.",
+    "CRITICAL [acp-next/service.ts:573+590]: runSync in Agent constructor from ManagedRuntime extraction — layer initialization failure crashes the Agent construction.",
+    "CRITICAL [acp-next/event.ts:114-139]: 5 Effect.runPromise calls in event subscription without error handling.",
+    "HIGH [acp-next/service.ts:572+578]: ManagedRuntime constructed and immediately discarded without storing/disposing — scoped resources leak.",
+    "HIGH [bus/index.ts:68]: All PubSub channels are unbounded — no backpressure on any event bus. Under high event load, causes OOM.",
+    "HIGH [schema module-level decodeUnknownSync]: 4 files use Schema.decodeUnknownSync at module scope. Invalid data at module init crashes the process."
+  ],
+  "summary": {
+    "files_scanned": 86,
+    "total_run_calls": 444,
+    "unhandled_calls_found": 13,
+    "fiber_leaks_found": 2,
+    "race_conditions_found": 1,
+    "schema_parse_issues": 8,
+    "layer_leaks": 2,
+    "queue_issues": 2,
+    "prev_findings_rechecked": 1,
+    "prev_finding_resolved": "Tool cache inflight dedup (adapter-dual-write: tool/cache.ts inflight dedup) — previously flagged as non-atomic, now CORRECTLY uses Ref.modify + Effect.ensuring"
+  }
+}

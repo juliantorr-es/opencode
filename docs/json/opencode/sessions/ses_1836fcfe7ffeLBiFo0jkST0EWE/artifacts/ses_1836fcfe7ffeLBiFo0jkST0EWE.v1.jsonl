@@ -1,0 +1,5 @@
+{"at":"2026-05-31T05:46:13.194Z","tool":"smart_grep","action":"searched","pattern":"race|race.condition|concurrency|data.corrupt|data.loss|check.then.act|read.modif","results":2,"files":1}
+{"at":"2026-05-31T05:46:13.639Z","tool":"smart_bash","action":"bash","command":"test -f docs/findings/out-of-scope-findings.jsonl && echo \"EXISTS\" || echo \"NOT_FOUND\"","exit_code":0}
+{"at":"2026-05-31T05:46:13.924Z","tool":"smart_bash","action":"bash","command":"test -d docs/json/opencode/sessions && echo \"EXISTS\" || echo \"NOT_FOUND\"","exit_code":0}
+{"at":"2026-05-31T05:47:08.846Z","tool":"smart_bash","action":"bash","command":"tail -20 docs/findings/out-of-scope-findings.jsonl","exit_code":0}
+{"at":"2026-05-31T05:49:23.124Z","tool":"smart_bash","action":"bash","command":"python3 -c \"\nimport json\nwith open('docs/findings/out-of-scope-findings.jsonl') as f:\n    lines = f.","exit_code":0}

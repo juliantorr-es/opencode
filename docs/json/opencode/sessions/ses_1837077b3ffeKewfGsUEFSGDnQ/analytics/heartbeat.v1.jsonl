@@ -1,0 +1,48 @@
+{"at":"2026-05-31T05:47:48.729Z","session_id":"ses_1837077b3ffeKewfGsUEFSGDnQ","agent":"cartographer","tool":"smart_find","phase":"started","detail":"drizzle.config*"}
+{"at":"2026-05-31T05:47:48.761Z","session_id":"ses_1837077b3ffeKewfGsUEFSGDnQ","agent":"cartographer","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T05:47:49.051Z","session_id":"ses_1837077b3ffeKewfGsUEFSGDnQ","agent":"cartographer","tool":"smart_find","phase":"started","detail":"*"}
+{"at":"2026-05-31T05:47:49.099Z","session_id":"ses_1837077b3ffeKewfGsUEFSGDnQ","agent":"cartographer","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T05:47:49.545Z","session_id":"ses_1837077b3ffeKewfGsUEFSGDnQ","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"drizzle-orm|@libsql|@neon|turso|postgres"}
+{"at":"2026-05-31T05:47:49.563Z","session_id":"ses_1837077b3ffeKewfGsUEFSGDnQ","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"drizzle-orm|@libsql|@neon|turso|postgres"}
+{"at":"2026-05-31T05:47:49.967Z","session_id":"ses_1837077b3ffeKewfGsUEFSGDnQ","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"sqliteTable|pgTable"}
+{"at":"2026-05-31T05:47:49.987Z","session_id":"ses_1837077b3ffeKewfGsUEFSGDnQ","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"sqliteTable|pgTable"}
+{"at":"2026-05-31T05:48:59.707Z","session_id":"ses_1837077b3ffeKewfGsUEFSGDnQ","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"sqliteTable"}
+{"at":"2026-05-31T05:48:59.765Z","session_id":"ses_1837077b3ffeKewfGsUEFSGDnQ","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"sqliteTable"}
+{"at":"2026-05-31T05:49:00.268Z","session_id":"ses_1837077b3ffeKewfGsUEFSGDnQ","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"@libsql|@neon|turso|postgres|pg\\b"}
+{"at":"2026-05-31T05:49:00.350Z","session_id":"ses_1837077b3ffeKewfGsUEFSGDnQ","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"@libsql|@neon|turso|postgres|pg\\b"}
+{"at":"2026-05-31T05:50:12.286Z","session_id":"ses_1837077b3ffeKewfGsUEFSGDnQ","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"drizzle\\.config"}
+{"at":"2026-05-31T05:50:12.366Z","session_id":"ses_1837077b3ffeKewfGsUEFSGDnQ","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"drizzle\\.config"}
+{"at":"2026-05-31T05:51:24.084Z","session_id":"ses_1837077b3ffeKewfGsUEFSGDnQ","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"drizzle"}
+{"at":"2026-05-31T05:51:24.106Z","session_id":"ses_1837077b3ffeKewfGsUEFSGDnQ","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"drizzle"}
+{"at":"2026-05-31T05:51:24.749Z","session_id":"ses_1837077b3ffeKewfGsUEFSGDnQ","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Find drizzle config files"}
+{"at":"2026-05-31T05:51:24.749Z","session_id":"ses_1837077b3ffeKewfGsUEFSGDnQ","agent":"cartographer","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T05:51:25.312Z","session_id":"ses_1837077b3ffeKewfGsUEFSGDnQ","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"List migration directories"}
+{"at":"2026-05-31T05:51:25.312Z","session_id":"ses_1837077b3ffeKewfGsUEFSGDnQ","agent":"cartographer","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T05:52:27.689Z","session_id":"ses_1837077b3ffeKewfGsUEFSGDnQ","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Find drizzle config and migration directories"}
+{"at":"2026-05-31T05:52:27.689Z","session_id":"ses_1837077b3ffeKewfGsUEFSGDnQ","agent":"cartographer","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T05:53:45.017Z","session_id":"ses_1837077b3ffeKewfGsUEFSGDnQ","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Find drizzle config and migration directories"}
+{"at":"2026-05-31T05:53:45.017Z","session_id":"ses_1837077b3ffeKewfGsUEFSGDnQ","agent":"cartographer","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T05:55:08.476Z","session_id":"ses_1837077b3ffeKewfGsUEFSGDnQ","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"List drizzle config and migration dirs"}
+{"at":"2026-05-31T05:55:08.477Z","session_id":"ses_1837077b3ffeKewfGsUEFSGDnQ","agent":"cartographer","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T05:56:12.593Z","session_id":"ses_1837077b3ffeKewfGsUEFSGDnQ","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"List drizzle config and migration dirs"}
+{"at":"2026-05-31T05:56:12.593Z","session_id":"ses_1837077b3ffeKewfGsUEFSGDnQ","agent":"cartographer","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T05:58:57.942Z","session_id":"ses_1837077b3ffeKewfGsUEFSGDnQ","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"\\$inferSelect|\\$inferInsert|InferSelectModel|InferInsertModel"}
+{"at":"2026-05-31T05:58:57.976Z","session_id":"ses_1837077b3ffeKewfGsUEFSGDnQ","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"\\$inferSelect|\\$inferInsert|InferSelectModel|InferInsertModel"}
+{"at":"2026-05-31T05:58:58.370Z","session_id":"ses_1837077b3ffeKewfGsUEFSGDnQ","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"#db"}
+{"at":"2026-05-31T05:58:58.390Z","session_id":"ses_1837077b3ffeKewfGsUEFSGDnQ","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"#db"}
+{"at":"2026-05-31T05:59:48.684Z","session_id":"ses_1837077b3ffeKewfGsUEFSGDnQ","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Read package.json exports and dependencies"}
+{"at":"2026-05-31T05:59:48.684Z","session_id":"ses_1837077b3ffeKewfGsUEFSGDnQ","agent":"cartographer","tool":"smart_bash","phase":"rerouted","detail":"→ read_source"}
+{"at":"2026-05-31T06:01:41.343Z","session_id":"ses_1837077b3ffeKewfGsUEFSGDnQ","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"import.*from.*session\\.pg|import.*from.*project\\.pg|import.*from.*event\\.pg|impo"}
+{"at":"2026-05-31T06:01:41.358Z","session_id":"ses_1837077b3ffeKewfGsUEFSGDnQ","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"import.*from.*session\\.pg|import.*from.*project\\.pg|import.*from.*event\\.pg|impo"}
+{"at":"2026-05-31T06:03:33.603Z","session_id":"ses_1837077b3ffeKewfGsUEFSGDnQ","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"\\.references\\("}
+{"at":"2026-05-31T06:03:33.619Z","session_id":"ses_1837077b3ffeKewfGsUEFSGDnQ","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"\\.references\\("}
+{"at":"2026-05-31T06:03:33.962Z","session_id":"ses_1837077b3ffeKewfGsUEFSGDnQ","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"index\\("}
+{"at":"2026-05-31T06:03:33.970Z","session_id":"ses_1837077b3ffeKewfGsUEFSGDnQ","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"index\\("}
+{"at":"2026-05-31T06:04:31.016Z","session_id":"ses_1837077b3ffeKewfGsUEFSGDnQ","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"transaction|txn|db\\.transaction"}
+{"at":"2026-05-31T06:04:31.025Z","session_id":"ses_1837077b3ffeKewfGsUEFSGDnQ","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"transaction|txn|db\\.transaction"}
+{"at":"2026-05-31T06:04:31.482Z","session_id":"ses_1837077b3ffeKewfGsUEFSGDnQ","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"transaction|\\.transaction"}
+{"at":"2026-05-31T06:04:31.492Z","session_id":"ses_1837077b3ffeKewfGsUEFSGDnQ","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"transaction|\\.transaction"}
+{"at":"2026-05-31T06:07:01.382Z","session_id":"ses_1837077b3ffeKewfGsUEFSGDnQ","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"OPENCODE_DATABASE_URL|DATABASE_URL|OPENCODE_DB"}
+{"at":"2026-05-31T06:07:01.398Z","session_id":"ses_1837077b3ffeKewfGsUEFSGDnQ","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"OPENCODE_DATABASE_URL|DATABASE_URL|OPENCODE_DB"}
+{"at":"2026-05-31T06:07:01.806Z","session_id":"ses_1837077b3ffeKewfGsUEFSGDnQ","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"\\.\\$onUpdate|\\.\\$default"}
+{"at":"2026-05-31T06:07:01.821Z","session_id":"ses_1837077b3ffeKewfGsUEFSGDnQ","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"\\.\\$onUpdate|\\.\\$default"}

@@ -36,8 +36,15 @@ interface RouterEntry {
   description?: string
 }
 
-let oauthServer: ReturnType<typeof createServer> | undefined
-let pendingOAuth: PendingOAuth | undefined
+const state: {
+  server: ReturnType<typeof createServer> | undefined
+  pendingOAuth: PendingOAuth | undefined
+  starting: Promise<void> | undefined
+} = {
+  server: undefined,
+  pendingOAuth: undefined,
+  starting: undefined,
+}
 
 function generateState(): string {
   const bytes = crypto.getRandomValues(new Uint8Array(32))
@@ -121,8 +128,11 @@ const HTML_CALLBACK = `<!doctype html>
 </html>`
 
 async function startOAuthServer(): Promise<void> {
-  if (oauthServer) return
-  oauthServer = createServer((req, res) => {
+  if (state.server) return
+
+  if (state.starting) return state.starting
+
+  const srv = createServer((req, res) => {
     const url = new URL(req.url || "/", `http://localhost:${OAUTH_PORT}`)
 
     if (req.method === "GET" && url.pathname === OAUTH_REDIRECT_PATH) {
@@ -142,40 +152,40 @@ async function startOAuthServer(): Promise<void> {
         } catch {
           body = {}
         }
-        if (!pendingOAuth) {
+        if (!state.pendingOAuth) {
           res.writeHead(409, { "Content-Type": "application/json" })
           res.end(JSON.stringify({ error: "no_pending_oauth" }))
           return
         }
         if (body.error) {
           const message = body.error_description || body.error || "OAuth error"
-          pendingOAuth.reject(new Error(String(message)))
-          pendingOAuth = undefined
+          state.pendingOAuth.reject(new Error(String(message)))
+          state.pendingOAuth = undefined
           res.writeHead(200, { "Content-Type": "application/json" })
           res.end(JSON.stringify({ ok: true }))
           return
         }
         if (!body.access_token) {
-          pendingOAuth.reject(new Error("Missing access_token in callback"))
-          pendingOAuth = undefined
+          state.pendingOAuth.reject(new Error("Missing access_token in callback"))
+          state.pendingOAuth = undefined
           res.writeHead(400, { "Content-Type": "application/json" })
           res.end(JSON.stringify({ error: "missing_access_token" }))
           return
         }
-        if (body.state !== pendingOAuth.state) {
-          pendingOAuth.reject(new Error("Invalid state - potential CSRF attack"))
-          pendingOAuth = undefined
+        if (body.state !== state.pendingOAuth.state) {
+          state.pendingOAuth.reject(new Error("Invalid state - potential CSRF attack"))
+          state.pendingOAuth = undefined
           res.writeHead(400, { "Content-Type": "application/json" })
           res.end(JSON.stringify({ error: "invalid_state" }))
           return
         }
         const expires = parseInt(body.expires_in || "0", 10)
-        pendingOAuth.resolve({
+        state.pendingOAuth.resolve({
           access_token: body.access_token,
           expires_in: Number.isFinite(expires) && expires > 0 ? expires : 60 * 60 * 24 * 30,
           state: body.state,
         })
-        pendingOAuth = undefined
+        state.pendingOAuth = undefined
         res.writeHead(200, { "Content-Type": "application/json" })
         res.end(JSON.stringify({ ok: true }))
       })
@@ -186,34 +196,46 @@ async function startOAuthServer(): Promise<void> {
     res.end("Not found")
   })
 
-  await new Promise<void>((resolve, reject) => {
-    oauthServer!.listen(OAUTH_PORT, () => {
+  state.starting = new Promise<void>((resolve, reject) => {
+    srv.on("error", reject)
+    srv.listen(OAUTH_PORT, () => {
       log.info("digitalocean oauth server started", { port: OAUTH_PORT })
       resolve()
     })
-    oauthServer!.on("error", reject)
   })
+
+  try {
+    await state.starting
+    state.server = srv
+  } catch (err) {
+    state.server = undefined
+    throw err
+  } finally {
+    state.starting = undefined
+  }
 }
 
 function stopOAuthServer() {
-  if (!oauthServer) return
-  oauthServer.close(() => log.info("digitalocean oauth server stopped"))
-  oauthServer = undefined
+  const srv = state.server
+  if (!srv) return
+  srv.close(() => log.info("digitalocean oauth server stopped"))
+  state.server = undefined
+  state.pendingOAuth = undefined
 }
 
-function waitForOAuthCallback(state: string): Promise<ImplicitTokenPayload> {
+function waitForOAuthCallback(oauthState: string): Promise<ImplicitTokenPayload> {
   return new Promise((resolve, reject) => {
     const timeout = setTimeout(
       () => {
-        if (pendingOAuth) {
-          pendingOAuth = undefined
+        if (state.pendingOAuth) {
+          state.pendingOAuth = undefined
           reject(new Error("OAuth callback timeout - authorization took too long"))
         }
       },
       5 * 60 * 1000,
     )
-    pendingOAuth = {
-      state,
+    state.pendingOAuth = {
+      state: oauthState,
       resolve: (tokens) => {
         clearTimeout(timeout)
         resolve(tokens)

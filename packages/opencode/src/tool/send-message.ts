@@ -161,10 +161,8 @@ export const SendMessageTool = Tool.define(
 
           // ── Append to JSONL ──
           const ledgerFile = `${messagesDir}/${params.recipient}.jsonl`
-          const messageLine = JSON.stringify(message) + "\n"
-
           yield* fs.ensureDir(messagesDir)
-          yield* fs.writeFileString(ledgerFile, messageLine, { flag: "a" })
+          yield* fs.appendLine(ledgerFile, JSON.stringify(message))
 
           // ── Formatted box output ──
           const boxLines: string[] = [

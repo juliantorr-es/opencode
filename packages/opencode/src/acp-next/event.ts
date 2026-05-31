@@ -111,21 +111,31 @@ export class Subscription {
   private async handlePartUpdated(event: EventMessagePartUpdated) {
     const part = event.properties.part
     const sessionId = part.sessionID || event.properties.sessionID
-    const session = await Effect.runPromise(this.input.session.tryGet(sessionId))
+    let session
+    try {
+      session = await Effect.runPromise(this.input.session.tryGet(sessionId))
+    } catch (error) {
+      log.error("handlePartUpdated: failed to get session", { error, sessionId })
+      return
+    }
     if (!session) return
 
-    await Effect.runPromise(
-      this.input.session.recordPartMetadata({
-        sessionId: session.id,
-        messageId: part.messageID,
-        partId: part.id,
-        partType: part.type,
-        role: part.type === "reasoning" ? "assistant" : undefined,
-        ignored: part.type === "text" ? part.ignored : undefined,
-        toolCallId: part.type === "tool" ? part.callID : undefined,
-        metadata: "metadata" in part ? part.metadata : undefined,
-      }),
-    )
+    try {
+      await Effect.runPromise(
+        this.input.session.recordPartMetadata({
+          sessionId: session.id,
+          messageId: part.messageID,
+          partId: part.id,
+          partType: part.type,
+          role: part.type === "reasoning" ? "assistant" : undefined,
+          ignored: part.type === "text" ? part.ignored : undefined,
+          toolCallId: part.type === "tool" ? part.callID : undefined,
+          metadata: "metadata" in part ? part.metadata : undefined,
+        }),
+      )
+    } catch (error) {
+      log.error("handlePartUpdated: failed to record part metadata", { error, sessionId })
+    }
     if (part.type === "tool") {
       await this.handleToolPart(session.id, part)
     }
@@ -133,16 +143,27 @@ export class Subscription {
 
   private async handlePartDelta(event: EventMessagePartDelta) {
     const props = event.properties
-    const session = await Effect.runPromise(this.input.session.tryGet(props.sessionID))
+    let session
+    try {
+      session = await Effect.runPromise(this.input.session.tryGet(props.sessionID))
+    } catch (error) {
+      log.error("handlePartDelta: failed to get session", { error, sessionId: props.sessionID })
+      return
+    }
     if (!session) return
 
-    const known = await Effect.runPromise(
-      this.input.session.tryGetPartMetadata({
-        sessionId: session.id,
-        messageId: props.messageID,
-        partId: props.partID,
-      }),
-    )
+    let known
+    try {
+      known = await Effect.runPromise(
+        this.input.session.tryGetPartMetadata({
+          sessionId: session.id,
+          messageId: props.messageID,
+          partId: props.partID,
+        }),
+      )
+    } catch (error) {
+      log.error("handlePartDelta: failed to get part metadata", { error, sessionId: props.sessionID })
+    }
     const metadata =
       known?.role && known.partType
         ? known
@@ -201,18 +222,22 @@ export class Subscription {
   }
 
   private async recordFetchedPart(sessionId: string, message: SessionMessageResponse, part: Part) {
-    return await Effect.runPromise(
-      this.input.session.recordPartMetadata({
-        sessionId,
-        messageId: part.messageID,
-        partId: part.id,
-        partType: part.type,
-        role: message.info.role,
-        ignored: part.type === "text" ? part.ignored : undefined,
-        toolCallId: part.type === "tool" ? part.callID : undefined,
-        metadata: "metadata" in part ? part.metadata : undefined,
-      }),
-    )
+    try {
+      return await Effect.runPromise(
+        this.input.session.recordPartMetadata({
+          sessionId,
+          messageId: part.messageID,
+          partId: part.id,
+          partType: part.type,
+          role: message.info.role,
+          ignored: part.type === "text" ? part.ignored : undefined,
+          toolCallId: part.type === "tool" ? part.callID : undefined,
+          metadata: "metadata" in part ? part.metadata : undefined,
+        }),
+      )
+    } catch (error) {
+      log.error("recordFetchedPart: failed to record part metadata", { error, sessionId })
+    }
   }
 
   private async handleToolPart(sessionId: string, part: ToolPart) {

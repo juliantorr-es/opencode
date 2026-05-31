@@ -128,7 +128,7 @@ export const ToolFeedbackTool = Tool.define(
           }
 
           yield* fs.ensureDir(sessionDir)
-          yield* fs.writeFileString(jsonlPath, JSON.stringify(record) + "\n", { flag: "a" })
+          yield* fs.appendLine(jsonlPath, JSON.stringify(record))
 
           const emoji = SEVERITY_EMOJI[params.severity] ?? "⚪"
           return {

@@ -182,7 +182,7 @@ function toStoreEvent(
   event: RuntimeEvent,
 ): StoreRuntimeEvent {
   return {
-    id: Identifier.ascending("event"),
+    id: Effect.runSync(Identifier.ascending("event")),
     sessionId: campaignId,
     runId: laneId,
     parentEventId: undefined,

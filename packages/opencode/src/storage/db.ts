@@ -19,8 +19,13 @@ const log = Log.create({ service: "db" })
 
 type DatabaseFlags = Pick<RuntimeFlags.Info, "disableChannelDb" | "skipMigrations">
 
-const readRuntimeFlags = () =>
-  Effect.runSync(RuntimeFlags.Service.useSync((flags) => flags).pipe(Effect.provide(RuntimeFlags.defaultLayer)))
+const readRuntimeFlags = () => {
+  try {
+    return Effect.runSync(RuntimeFlags.Service.useSync((flags) => flags).pipe(Effect.provide(RuntimeFlags.defaultLayer)))
+  } catch {
+    return { disableChannelDb: false, skipMigrations: false } as DatabaseFlags
+  }
+}
 
 export function getChannelPath(flags: Pick<DatabaseFlags, "disableChannelDb"> = readRuntimeFlags()) {
   if (["latest", "beta", "prod"].includes(InstallationChannel) || flags.disableChannelDb)

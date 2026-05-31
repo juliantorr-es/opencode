@@ -1,0 +1,47 @@
+{"at":"2026-05-31T05:43:14.165Z","tool":"smart_grep","action":"searched","pattern":"@ts-expect-error","results":52,"files":16}
+{"at":"2026-05-31T05:43:14.408Z","tool":"smart_grep","action":"searched","pattern":"@ts-ignore","results":17,"files":15}
+{"at":"2026-05-31T05:43:14.690Z","tool":"smart_grep","action":"searched","pattern":"as any","results":100,"files":6}
+{"at":"2026-05-31T05:43:14.932Z","tool":"smart_grep","action":"searched","pattern":"as unknown as","results":100,"files":48}
+{"at":"2026-05-31T05:43:15.199Z","tool":"smart_grep","action":"searched","pattern":"@ts-","results":70,"files":31}
+{"at":"2026-05-31T05:43:34.201Z","tool":"smart_bun","action":"ran","command":"typecheck","exit_code":0,"cwd":"packages/opencode"}
+{"at":"2026-05-31T05:43:34.633Z","tool":"smart_bun","action":"ran","command":"typecheck","exit_code":0,"cwd":"packages/sdk/js"}
+{"at":"2026-05-31T05:43:35.155Z","tool":"smart_bun","action":"ran","command":"typecheck","exit_code":0,"cwd":"packages/app"}
+{"at":"2026-05-31T05:43:35.841Z","tool":"smart_bun","action":"ran","command":"typecheck","exit_code":0,"cwd":"packages/desktop"}
+{"at":"2026-05-31T05:43:35.857Z","tool":"smart_bun","action":"ran","command":"typecheck","cwd":"packages/tui"}
+{"at":"2026-05-31T05:43:36.707Z","tool":"smart_bun","action":"ran","command":"typecheck","exit_code":0,"cwd":"packages/core"}
+{"at":"2026-05-31T05:43:36.997Z","tool":"smart_bun","action":"ran","command":"typecheck","exit_code":0,"cwd":"packages/plugin"}
+{"at":"2026-05-31T05:44:01.040Z","tool":"smart_bun","action":"ran","command":"typecheck","exit_code":2,"cwd":"packages/opencode"}
+{"at":"2026-05-31T05:44:02.405Z","tool":"smart_bun","action":"ran","command":"typecheck","exit_code":1,"cwd":"packages/app"}
+{"at":"2026-05-31T05:44:02.566Z","tool":"smart_grep","action":"searched","pattern":"@ts-nocheck","results":2,"files":2}
+{"at":"2026-05-31T05:44:02.915Z","tool":"smart_grep","action":"searched","pattern":"Cannot find module","results":20,"files":12}
+{"at":"2026-05-31T05:44:11.385Z","tool":"smart_bash","action":"bash","command":"bunx tsgo --noEmit 2>&1 | grep \"error TS\" | wc -l","exit_code":1}
+{"at":"2026-05-31T05:44:11.922Z","tool":"smart_bash","action":"bash","command":"bunx tsgo --noEmit 2>&1 | grep \"error TS\" | sed 's/.*\\(TS[0-9]*\\).*/\\1/' | sort | uniq -c | sort -rn","exit_code":1}
+{"at":"2026-05-31T05:44:12.467Z","tool":"smart_bash","action":"bash","command":"bunx tsgo --noEmit 2>&1 | grep \"error TS\" | grep -oP '(?<=^)[^:]+(?=\\()' | sort | uniq -c | sort -rn","exit_code":1}
+{"at":"2026-05-31T05:44:25.807Z","tool":"smart_bun","action":"ran","command":"typecheck","exit_code":1,"cwd":"packages/desktop"}
+{"at":"2026-05-31T05:44:44.152Z","tool":"smart_bash","action":"bash","command":"bunx tsgo --noEmit 2>&1 | grep \"error TS\" | wc -l","exit_code":0}
+{"at":"2026-05-31T05:45:02.471Z","tool":"smart_bash","action":"bash","command":"bunx tsgo --noEmit 2>&1 | grep \"error TS\" | sed 's/.*\\(TS[0-9]*\\).*/\\1/' | sort | uniq -c | sort -rn","exit_code":0}
+{"at":"2026-05-31T05:45:21.353Z","tool":"smart_bash","action":"bash","command":"bunx tsgo --noEmit 2>&1 | grep \"error TS\" | grep -oP '^[^(]+' | sort | uniq -c | sort -rn | head -30","exit_code":0}
+{"at":"2026-05-31T05:46:06.726Z","tool":"smart_bash","action":"bash","command":"bunx tsgo --noEmit 2>&1 | grep \"error TS\" | awk -F'(' '{print $1}' | sort | uniq -c | sort -rn | hea","exit_code":0}
+{"at":"2026-05-31T05:46:08.509Z","tool":"smart_bun","action":"ran","command":"typecheck","exit_code":0,"cwd":"packages/llm"}
+{"at":"2026-05-31T05:46:09.579Z","tool":"smart_bun","action":"ran","command":"typecheck","exit_code":0,"cwd":"packages/ui"}
+{"at":"2026-05-31T05:46:09.606Z","tool":"smart_bun","action":"ran","command":"typecheck","exit_code":1,"cwd":"packages/web"}
+{"at":"2026-05-31T05:46:09.625Z","tool":"smart_bun","action":"ran","command":"typecheck","exit_code":1,"cwd":"packages/storybook"}
+{"at":"2026-05-31T05:46:56.042Z","tool":"smart_bun","action":"ran","command":"typecheck","exit_code":0,"cwd":"packages/containers"}
+{"at":"2026-05-31T05:46:56.557Z","tool":"smart_bun","action":"ran","command":"typecheck","exit_code":0,"cwd":"packages/http-recorder"}
+{"at":"2026-05-31T05:46:56.621Z","tool":"smart_bun","action":"ran","command":"typecheck","exit_code":1,"cwd":"packages/script"}
+{"at":"2026-05-31T05:46:57.568Z","tool":"smart_bun","action":"ran","command":"typecheck","exit_code":0,"cwd":"packages/enterprise"}
+{"at":"2026-05-31T05:47:52.905Z","tool":"smart_bun","action":"ran","command":"typecheck","exit_code":1,"cwd":"packages/function"}
+{"at":"2026-05-31T05:47:53.998Z","tool":"smart_bun","action":"ran","command":"typecheck","exit_code":0,"cwd":"packages/slack"}
+{"at":"2026-05-31T05:49:04.010Z","tool":"smart_bun","action":"ran","command":"typecheck","exit_code":1,"cwd":"github"}
+{"at":"2026-05-31T05:49:04.349Z","tool":"smart_bun","action":"ran","command":"typecheck","exit_code":1,"cwd":"sdks/vscode"}
+{"at":"2026-05-31T05:49:05.389Z","tool":"smart_bun","action":"ran","command":"typecheck","exit_code":0,"cwd":"packages/stats/core"}
+{"at":"2026-05-31T05:49:06.059Z","tool":"smart_bun","action":"ran","command":"typecheck","exit_code":0,"cwd":"packages/stats/app"}
+{"at":"2026-05-31T05:49:06.617Z","tool":"smart_bun","action":"ran","command":"typecheck","exit_code":0,"cwd":"packages/stats/server"}
+{"at":"2026-05-31T05:50:13.266Z","tool":"smart_grep","action":"searched","pattern":"as any","results":50,"files":11}
+{"at":"2026-05-31T05:50:13.660Z","tool":"smart_grep","action":"searched","pattern":"as any","results":2,"files":2}
+{"at":"2026-05-31T05:50:14.063Z","tool":"smart_grep","action":"searched","pattern":"@ts-expect-error|@ts-ignore","results":14,"files":11}
+{"at":"2026-05-31T05:51:26.572Z","tool":"smart_grep","action":"searched","pattern":"as unknown as","results":19,"files":11}
+{"at":"2026-05-31T05:51:27.038Z","tool":"smart_grep","action":"searched","pattern":"@ts-expect-error|@ts-ignore","results":1,"files":1}
+{"at":"2026-05-31T05:51:27.563Z","tool":"smart_grep","action":"searched","pattern":"@ts-expect-error|@ts-ignore","results":4,"files":4}
+{"at":"2026-05-31T05:52:44.823Z","tool":"smart_bash","action":"bash","command":"bunx tsgo --noEmit 2>&1 | grep \"error TS\" | head -89","exit_code":0}
+{"at":"2026-05-31T05:54:07.969Z","tool":"smart_bash","action":"bash","command":"bunx tsgo --noEmit 2>&1 | grep -c \"error TS\"","exit_code":0}

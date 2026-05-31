@@ -87,7 +87,7 @@ export const RoadmapProgressTool = Tool.define(
             session_ref: params.session_ref || ctx.sessionID,
             recorded_at: new Date().toISOString(),
           }
-          yield* fs.writeFileString(progressPath, JSON.stringify(progressEntry) + "\n", { flag: "a" })
+          yield* fs.appendLine(progressPath, JSON.stringify(progressEntry))
 
           // Check newly unblocked
           const completedIds = new Set(

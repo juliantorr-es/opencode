@@ -243,27 +243,38 @@ interface PendingOAuth {
   reject: (error: Error) => void
 }
 
-let oauthServer: ReturnType<typeof createServer> | undefined
-let pendingOAuth: PendingOAuth | undefined
+const state: {
+  server: ReturnType<typeof createServer> | undefined
+  pendingOAuth: PendingOAuth | undefined
+  starting: Promise<void> | undefined
+} = {
+  server: undefined,
+  pendingOAuth: undefined,
+  starting: undefined,
+}
 
 async function startOAuthServer(): Promise<{ port: number; redirectUri: string }> {
-  if (oauthServer) {
+  if (state.server) {
     return { port: OAUTH_PORT, redirectUri: `http://localhost:${OAUTH_PORT}/auth/callback` }
   }
 
-  oauthServer = createServer((req, res) => {
+  if (state.starting) {
+    return state.starting.then(() => ({ port: OAUTH_PORT, redirectUri: `http://localhost:${OAUTH_PORT}/auth/callback` }))
+  }
+
+  const srv = createServer((req, res) => {
     const url = new URL(req.url || "/", `http://localhost:${OAUTH_PORT}`)
 
     if (url.pathname === "/auth/callback") {
       const code = url.searchParams.get("code")
-      const state = url.searchParams.get("state")
+      const oauthState = url.searchParams.get("state")
       const error = url.searchParams.get("error")
       const errorDescription = url.searchParams.get("error_description")
 
       if (error) {
         const errorMsg = errorDescription || error
-        pendingOAuth?.reject(new Error(errorMsg))
-        pendingOAuth = undefined
+        state.pendingOAuth?.reject(new Error(errorMsg))
+        state.pendingOAuth = undefined
         res.writeHead(200, { "Content-Type": "text/html" })
         res.end(HTML_ERROR(errorMsg))
         return
@@ -271,24 +282,24 @@ async function startOAuthServer(): Promise<{ port: number; redirectUri: string }
 
       if (!code) {
         const errorMsg = "Missing authorization code"
-        pendingOAuth?.reject(new Error(errorMsg))
-        pendingOAuth = undefined
+        state.pendingOAuth?.reject(new Error(errorMsg))
+        state.pendingOAuth = undefined
         res.writeHead(400, { "Content-Type": "text/html" })
         res.end(HTML_ERROR(errorMsg))
         return
       }
 
-      if (!pendingOAuth || state !== pendingOAuth.state) {
+      if (!state.pendingOAuth || oauthState !== state.pendingOAuth.state) {
         const errorMsg = "Invalid state - potential CSRF attack"
-        pendingOAuth?.reject(new Error(errorMsg))
-        pendingOAuth = undefined
+        state.pendingOAuth?.reject(new Error(errorMsg))
+        state.pendingOAuth = undefined
         res.writeHead(400, { "Content-Type": "text/html" })
         res.end(HTML_ERROR(errorMsg))
         return
       }
 
-      const current = pendingOAuth
-      pendingOAuth = undefined
+      const current = state.pendingOAuth
+      state.pendingOAuth = undefined
 
       exchangeCodeForTokens(code, `http://localhost:${OAUTH_PORT}/auth/callback`, current.pkce)
         .then((tokens) => current.resolve(tokens))
@@ -300,8 +311,8 @@ async function startOAuthServer(): Promise<{ port: number; redirectUri: string }
     }
 
     if (url.pathname === "/cancel") {
-      pendingOAuth?.reject(new Error("Login cancelled"))
-      pendingOAuth = undefined
+      state.pendingOAuth?.reject(new Error("Login cancelled"))
+      state.pendingOAuth = undefined
       res.writeHead(200)
       res.end("Login cancelled")
       return
@@ -311,41 +322,53 @@ async function startOAuthServer(): Promise<{ port: number; redirectUri: string }
     res.end("Not found")
   })
 
-  await new Promise<void>((resolve, reject) => {
-    oauthServer!.listen(OAUTH_PORT, () => {
+  state.starting = new Promise<void>((resolve, reject) => {
+    srv.on("error", reject)
+    srv.listen(OAUTH_PORT, () => {
       log.info("codex oauth server started", { port: OAUTH_PORT })
       resolve()
     })
-    oauthServer!.on("error", reject)
   })
+
+  try {
+    await state.starting
+    state.server = srv
+  } catch (err) {
+    state.server = undefined
+    throw err
+  } finally {
+    state.starting = undefined
+  }
 
   return { port: OAUTH_PORT, redirectUri: `http://localhost:${OAUTH_PORT}/auth/callback` }
 }
 
 function stopOAuthServer() {
-  if (oauthServer) {
-    oauthServer.close(() => {
+  const srv = state.server
+  if (srv) {
+    srv.close(() => {
       log.info("codex oauth server stopped")
     })
-    oauthServer = undefined
+    state.server = undefined
   }
+  state.pendingOAuth = undefined
 }
 
-function waitForOAuthCallback(pkce: PkceCodes, state: string): Promise<TokenResponse> {
+function waitForOAuthCallback(pkce: PkceCodes, oauthState: string): Promise<TokenResponse> {
   return new Promise((resolve, reject) => {
     const timeout = setTimeout(
       () => {
-        if (pendingOAuth) {
-          pendingOAuth = undefined
+        if (state.pendingOAuth) {
+          state.pendingOAuth = undefined
           reject(new Error("OAuth callback timeout - authorization took too long"))
         }
       },
       5 * 60 * 1000,
     ) // 5 minute timeout
 
-    pendingOAuth = {
+    state.pendingOAuth = {
       pkce,
-      state,
+      state: oauthState,
       resolve: (tokens) => {
         clearTimeout(timeout)
         resolve(tokens)

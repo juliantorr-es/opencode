@@ -66,7 +66,13 @@ export class McpOAuthProvider implements OAuthClientProvider {
 
     // Check stored client info (from dynamic registration)
     // Use getForUrl to validate credentials are for the current server URL
-    const entry = await Effect.runPromise(this.auth.getForUrl(this.mcpName, this.serverUrl))
+    let entry: McpAuth.Entry | undefined
+    try {
+      entry = await Effect.runPromise(this.auth.getForUrl(this.mcpName, this.serverUrl))
+    } catch (error) {
+      log.error("failed to get client info for mcp", { mcpName: this.mcpName, error })
+      return undefined
+    }
     if (entry?.clientInfo) {
       // Check if client secret has expired
       if (entry.clientInfo.clientSecretExpiresAt && entry.clientInfo.clientSecretExpiresAt < Date.now() / 1000) {
@@ -84,18 +90,22 @@ export class McpOAuthProvider implements OAuthClientProvider {
   }
 
   async saveClientInformation(info: OAuthClientInformationFull): Promise<void> {
-    await Effect.runPromise(
-      this.auth.updateClientInfo(
-        this.mcpName,
-        {
-          clientId: info.client_id,
-          clientSecret: info.client_secret,
-          clientIdIssuedAt: info.client_id_issued_at,
-          clientSecretExpiresAt: info.client_secret_expires_at,
-        },
-        this.serverUrl,
-      ),
-    )
+    try {
+      await Effect.runPromise(
+        this.auth.updateClientInfo(
+          this.mcpName,
+          {
+            clientId: info.client_id,
+            clientSecret: info.client_secret,
+            clientIdIssuedAt: info.client_id_issued_at,
+            clientSecretExpiresAt: info.client_secret_expires_at,
+          },
+          this.serverUrl,
+        ),
+      )
+    } catch (error) {
+      log.error("failed to save client information", { mcpName: this.mcpName, error })
+    }
     log.info("saved dynamically registered client", {
       mcpName: this.mcpName,
       clientId: info.client_id,
@@ -104,7 +114,13 @@ export class McpOAuthProvider implements OAuthClientProvider {
 
   async tokens(): Promise<OAuthTokens | undefined> {
     // Use getForUrl to validate tokens are for the current server URL
-    const entry = await Effect.runPromise(this.auth.getForUrl(this.mcpName, this.serverUrl))
+    let entry: McpAuth.Entry | undefined
+    try {
+      entry = await Effect.runPromise(this.auth.getForUrl(this.mcpName, this.serverUrl))
+    } catch (error) {
+      log.error("failed to get tokens entry", { mcpName: this.mcpName, error })
+      return undefined
+    }
     if (!entry?.tokens) return undefined
 
     return {
@@ -119,18 +135,22 @@ export class McpOAuthProvider implements OAuthClientProvider {
   }
 
   async saveTokens(tokens: OAuthTokens): Promise<void> {
-    await Effect.runPromise(
-      this.auth.updateTokens(
-        this.mcpName,
-        {
-          accessToken: tokens.access_token,
-          refreshToken: tokens.refresh_token,
-          expiresAt: tokens.expires_in ? Date.now() / 1000 + tokens.expires_in : undefined,
-          scope: tokens.scope,
-        },
-        this.serverUrl,
-      ),
-    )
+    try {
+      await Effect.runPromise(
+        this.auth.updateTokens(
+          this.mcpName,
+          {
+            accessToken: tokens.access_token,
+            refreshToken: tokens.refresh_token,
+            expiresAt: tokens.expires_in ? Date.now() / 1000 + tokens.expires_in : undefined,
+            scope: tokens.scope,
+          },
+          this.serverUrl,
+        ),
+      )
+    } catch (error) {
+      log.error("failed to save tokens", { mcpName: this.mcpName, error })
+    }
     log.info("saved oauth tokens", { mcpName: this.mcpName })
   }
 
@@ -140,11 +160,21 @@ export class McpOAuthProvider implements OAuthClientProvider {
   }
 
   async saveCodeVerifier(codeVerifier: string): Promise<void> {
-    await Effect.runPromise(this.auth.updateCodeVerifier(this.mcpName, codeVerifier))
+    try {
+      await Effect.runPromise(this.auth.updateCodeVerifier(this.mcpName, codeVerifier))
+    } catch (error) {
+      log.error("failed to save code verifier", { mcpName: this.mcpName, error })
+    }
   }
 
   async codeVerifier(): Promise<string> {
-    const entry = await Effect.runPromise(this.auth.get(this.mcpName))
+    let entry: McpAuth.Entry | undefined
+    try {
+      entry = await Effect.runPromise(this.auth.get(this.mcpName))
+    } catch (error) {
+      log.error("failed to get code verifier entry", { mcpName: this.mcpName, error })
+      throw new Error(`No code verifier saved for MCP server: ${this.mcpName}`)
+    }
     if (!entry?.codeVerifier) {
       throw new Error(`No code verifier saved for MCP server: ${this.mcpName}`)
     }
@@ -152,11 +182,20 @@ export class McpOAuthProvider implements OAuthClientProvider {
   }
 
   async saveState(state: string): Promise<void> {
-    await Effect.runPromise(this.auth.updateOAuthState(this.mcpName, state))
+    try {
+      await Effect.runPromise(this.auth.updateOAuthState(this.mcpName, state))
+    } catch (error) {
+      log.error("failed to save oauth state", { mcpName: this.mcpName, error })
+    }
   }
 
   async state(): Promise<string> {
-    const entry = await Effect.runPromise(this.auth.get(this.mcpName))
+    let entry: McpAuth.Entry | undefined
+    try {
+      entry = await Effect.runPromise(this.auth.get(this.mcpName))
+    } catch (error) {
+      log.error("failed to get oauth state", { mcpName: this.mcpName, error })
+    }
     if (entry?.oauthState) {
       return entry.oauthState
     }
@@ -168,28 +207,50 @@ export class McpOAuthProvider implements OAuthClientProvider {
     const newState = Array.from(crypto.getRandomValues(new Uint8Array(32)))
       .map((b) => b.toString(16).padStart(2, "0"))
       .join("")
-    await Effect.runPromise(this.auth.updateOAuthState(this.mcpName, newState))
+    try {
+      await Effect.runPromise(this.auth.updateOAuthState(this.mcpName, newState))
+    } catch (error) {
+      log.error("failed to save new oauth state", { mcpName: this.mcpName, error })
+    }
     return newState
   }
 
   async invalidateCredentials(type: "all" | "client" | "tokens"): Promise<void> {
     log.info("invalidating credentials", { mcpName: this.mcpName, type })
-    const entry = await Effect.runPromise(this.auth.get(this.mcpName))
+    let entry: McpAuth.Entry | undefined
+    try {
+      entry = await Effect.runPromise(this.auth.get(this.mcpName))
+    } catch (error) {
+      log.error("failed to get credentials entry for invalidation", { mcpName: this.mcpName, error })
+      return
+    }
     if (!entry) {
       return
     }
 
     switch (type) {
       case "all":
-        await Effect.runPromise(this.auth.remove(this.mcpName))
+        try {
+          await Effect.runPromise(this.auth.remove(this.mcpName))
+        } catch (error) {
+          log.error("failed to remove credentials", { mcpName: this.mcpName, error })
+        }
         break
       case "client":
         delete entry.clientInfo
-        await Effect.runPromise(this.auth.set(this.mcpName, entry))
+        try {
+          await Effect.runPromise(this.auth.set(this.mcpName, entry))
+        } catch (error) {
+          log.error("failed to save credentials after client removal", { mcpName: this.mcpName, error })
+        }
         break
       case "tokens":
         delete entry.tokens
-        await Effect.runPromise(this.auth.set(this.mcpName, entry))
+        try {
+          await Effect.runPromise(this.auth.set(this.mcpName, entry))
+        } catch (error) {
+          log.error("failed to save credentials after token removal", { mcpName: this.mcpName, error })
+        }
         break
     }
   }

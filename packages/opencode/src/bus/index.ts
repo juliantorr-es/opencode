@@ -65,7 +65,7 @@ export const layer = Layer.effect(
   Effect.gen(function* () {
     const state = yield* InstanceState.make<State>(
       Effect.fn("Bus.state")(function* (ctx) {
-        const wildcard = yield* PubSub.unbounded<Payload>()
+        const wildcard = yield* PubSub.sliding<Payload>(1000)
         const typed = new Map<string, PubSub.PubSub<Payload>>()
 
         yield* Effect.addFinalizer(() =>
@@ -91,7 +91,7 @@ export const layer = Layer.effect(
       return Effect.gen(function* () {
         let ps = state.typed.get(def.type)
         if (!ps) {
-          ps = yield* PubSub.unbounded<Payload>()
+          ps = yield* PubSub.sliding<Payload>(1000)
           state.typed.set(def.type, ps)
         }
         return ps as unknown as PubSub.PubSub<Payload<D>>
@@ -192,10 +192,8 @@ export const defaultLayer = layer
 
 const { runPromise, runSync } = makeRuntime(Service, layer)
 
-// runSync is safe here because the subscribe chain (InstanceState.get, PubSub.subscribe,
-// Scope.make, Effect.forkScoped) is entirely synchronous. If any step becomes async, this will throw.
 export function createID() {
-  return Identifier.create("evt", "ascending")
+  return Effect.runSync(Identifier.create("evt", "ascending"))
 }
 
 export async function publish<D extends BusEvent.Definition>(

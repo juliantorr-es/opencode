@@ -144,18 +144,6 @@ async function resolvePluginEntrypoint(spec: string, target: string, kind: Plugi
 
   const dir = await resolveTargetDirectory(target)
 
-  if (kind === "tui") {
-    if (source === "file" && dir) {
-      const index = await resolveDirectoryIndex(dir)
-      if (index) return pathToFileURL(index).href
-    }
-
-    if (source === "npm") return
-    if (dir) return
-
-    return target
-  }
-
   if (dir && isRecord(hit.json.exports)) {
     if (source === "file") {
       const index = await resolveDirectoryIndex(dir)
@@ -299,9 +287,6 @@ export function readV1Plugin(
   }
   if (kind === "server" && server === undefined) {
     throw new TypeError(`Plugin ${spec} must default export an object with server()`)
-  }
-  if (kind === "tui" && tui === undefined) {
-    throw new TypeError(`Plugin ${spec} must default export an object with tui()`)
   }
   if (kind === "desktop" && desktop === undefined) {
     throw new TypeError(`Plugin ${spec} must default export an object with desktop()`)

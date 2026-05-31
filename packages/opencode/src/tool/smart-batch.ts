@@ -162,7 +162,7 @@ export const SmartBatchTool = Tool.define(
               plan_step: params.plan_step ?? null,
               edited_at: new Date().toISOString(),
             }
-            yield* fs.writeFileString(logPath, JSON.stringify(record) + "\n", { flag: "a" })
+            yield* fs.appendLine(logPath, JSON.stringify(record))
           }
 
           const result = {

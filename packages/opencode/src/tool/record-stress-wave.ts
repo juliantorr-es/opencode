@@ -63,7 +63,7 @@ export const RecordStressWaveTool = Tool.define(
           }
 
           yield* fs.ensureDir(dir)
-          yield* fs.writeFileString(file, JSON.stringify(record) + "\n", { flag: "a" })
+          yield* fs.appendLine(file, JSON.stringify(record))
 
           const result = {
             status: "ok",

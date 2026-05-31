@@ -569,25 +569,42 @@ export function make(input: {
   }
 }
 
+// Managed runtime registry for proper cleanup on shutdown
+const runtimes: ManagedRuntime.ManagedRuntime<any, any>[] = []
+
 function makeSessionService() {
-  return ManagedRuntime.make(ACPNextSession.defaultLayer).runSync(
-    ACPNextSession.Service.use((service) => Effect.succeed(service)),
-  )
+  try {
+    const runtime = ManagedRuntime.make(ACPNextSession.defaultLayer)
+    runtimes.push(runtime)
+    return runtime.runSync(
+      ACPNextSession.Service.use((service) => Effect.succeed(service)),
+    )
+  } catch (error) {
+    log.error("failed to create session service", { error })
+    throw error
+  }
 }
 
 function makeDirectoryService(sdk: OpencodeClient) {
-  return ManagedRuntime.make(
-    Directory.layer.pipe(
-      Layer.provide(
-        Layer.succeed(
-          Directory.Loader,
-          Directory.Loader.of({
-            load: (directory) => request(() => loadDirectorySnapshot(sdk, directory), "directory"),
-          }),
+  try {
+    const runtime = ManagedRuntime.make(
+      Directory.layer.pipe(
+        Layer.provide(
+          Layer.succeed(
+            Directory.Loader,
+            Directory.Loader.of({
+              load: (directory) => request(() => loadDirectorySnapshot(sdk, directory), "directory"),
+            }),
+          ),
         ),
       ),
-    ),
-  ).runSync(Directory.Service.use((service) => Effect.succeed(service)))
+    )
+    runtimes.push(runtime)
+    return runtime.runSync(Directory.Service.use((service) => Effect.succeed(service)))
+  } catch (error) {
+    log.error("failed to create directory service", { error })
+    throw error
+  }
 }
 
 function makeUsageService(sdk: OpencodeClient) {

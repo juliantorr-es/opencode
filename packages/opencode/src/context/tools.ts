@@ -15,6 +15,7 @@ import * as FileMemory from "./file-memory"
 import * as ProjectMap from "./project-map"
 import { ContextInvalidationBus } from "./invalidation-bus"
 import type { InvalidationScope } from "./invalidation-registry"
+import { Coordination } from "@/tool/coordination"
 
 // ── Shared helpers ────────────────────────────────────────
 
@@ -414,6 +415,10 @@ export const GetValidationContextTool = Tool.define(
 
 // ── Tool 8: get_claim_context ───────────────────────────
 
+function extractFilePaths(events: readonly { readonly filePath?: string }[]): string[] {
+  return [...new Set(events.map((e) => e.filePath).filter((f): f is string => !!f))]
+}
+
 const GetClaimContextParameters = Schema.Struct({})
 
 export const GetClaimContextTool = Tool.define(
@@ -423,32 +428,26 @@ export const GetClaimContextTool = Tool.define(
 
     return {
       description:
-        "Returns current path reservations and conflicts from coordination " +
-        "events. Queries the EventStore for coordination.path.claimed and " +
-        "coordination.path.released events to build a picture of active claims.",
+        "Returns current path reservations from coordination. " +
+        "Primary: queries Coordination.getSessionReservations. " +
+        "Fallback: queries EventStore for recent events with file paths.",
       parameters: GetClaimContextParameters,
       execute: (_params: Record<string, never>, ctx: Tool.Context) =>
         Effect.gen(function* () {
-          const claims = yield* eventStore.query({
-            eventType: "coordination.path.claimed",
-            sessionId: ctx.sessionID,
-            limit: 50,
-          })
-          const releases = yield* eventStore.query({
-            eventType: "coordination.path.released",
-            sessionId: ctx.sessionID,
-            limit: 50,
-          })
-          const claimPaths = new Set(claims.map((e) => e.filePath).filter((p): p is string => !!p))
-          const releasePaths = new Set(releases.map((e) => e.filePath).filter((p): p is string => !!p))
-          const activePaths = [...claimPaths].filter((p) => !releasePaths.has(p))
+          const activeReservations = yield* Coordination.getSessionReservations(ctx.sessionID)
+          let activePaths: string[]
+
+          if (activeReservations.length > 0) {
+            activePaths = activeReservations.map((r) => r.path)
+          } else {
+            const recentEvents = yield* eventStore.query({ sessionId: ctx.sessionID, limit: 100, order: "desc" })
+            activePaths = extractFilePaths(recentEvents)
+          }
 
           return formatResult("Claim Context", {
             session_id: ctx.sessionID,
-            active_claims: activePaths,
-            total_claims: claims.length,
-            total_releases: releases.length,
-            recent_claims: claims.slice(-5).map(formatEventBrief),
+            claim_count: activePaths.length,
+            claims: activePaths,
           })
         }).pipe(Effect.orDie),
     }

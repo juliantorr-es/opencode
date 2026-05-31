@@ -36,6 +36,8 @@ export namespace AppFileSystem {
     readonly globUp: (pattern: string, start: string, stop?: string) => Effect.Effect<string[], Error>
     readonly glob: (pattern: string, options?: Glob.Options) => Effect.Effect<string[], Error>
     readonly globMatch: (pattern: string, filepath: string) => boolean
+    /** Append a line to a file, serializing concurrent writes per file path */
+    readonly appendLine: (path: string, line: string) => Effect.Effect<void, Error>
   }
 
   export class Service extends Context.Service<Service, Interface>()("@opencode/FileSystem") {}
@@ -170,6 +172,21 @@ export namespace AppFileSystem {
         return result
       })
 
+      // Per-file append queue to serialize concurrent JSONL writes
+      const appendQueues = new Map<string, Promise<void>>()
+
+      const appendLine = Effect.fn("FileSystem.appendLine")(function* (filePath: string, line: string) {
+        yield* Effect.tryPromise({
+          try: () => {
+            const prev = appendQueues.get(filePath) ?? Promise.resolve()
+            const next = prev.then(() => NFS.appendFile(filePath, line + "\n", "utf-8"))
+            appendQueues.set(filePath, next)
+            return next
+          },
+          catch: (cause) => new FileSystemError({ method: "appendLine", cause }),
+        })
+      })
+
       return Service.of({
         ...fs,
         existsSafe,
@@ -186,6 +203,7 @@ export namespace AppFileSystem {
         globUp,
         glob,
         globMatch: Glob.match,
+        appendLine,
       })
     }),
   )

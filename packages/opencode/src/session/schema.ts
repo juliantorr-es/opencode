@@ -1,4 +1,4 @@
-import { Schema } from "effect"
+import { Effect, Schema } from "effect"
 
 import { Identifier } from "@/id/id"
 import { Session as CoreSession } from "@opencode-ai/core/session"
@@ -10,7 +10,7 @@ export type SessionID = Schema.Schema.Type<typeof SessionID>
 export const MessageID = Schema.String.check(Schema.isStartsWith("msg")).pipe(
   Schema.brand("MessageID"),
   withStatics((s) => ({
-    ascending: (id?: string) => s.make(Identifier.ascending("message", id)),
+    ascending: (id?: string) => s.make(Effect.runSync(Identifier.ascending("message", id))),
   })),
 )
 
@@ -19,7 +19,7 @@ export type MessageID = Schema.Schema.Type<typeof MessageID>
 export const PartID = Schema.String.check(Schema.isStartsWith("prt")).pipe(
   Schema.brand("PartID"),
   withStatics((s) => ({
-    ascending: (id?: string) => s.make(Identifier.ascending("part", id)),
+    ascending: (id?: string) => s.make(Effect.runSync(Identifier.ascending("part", id))),
   })),
 )
 

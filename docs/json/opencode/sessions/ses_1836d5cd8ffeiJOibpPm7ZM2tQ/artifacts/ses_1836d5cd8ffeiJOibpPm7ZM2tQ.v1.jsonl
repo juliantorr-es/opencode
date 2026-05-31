@@ -1,0 +1,30 @@
+{"at":"2026-05-31T05:48:25.733Z","tool":"smart_grep","action":"searched","pattern":"export (const|function|class|interface|type|default|enum)","results":250,"files":22}
+{"at":"2026-05-31T05:48:26.065Z","tool":"smart_grep","action":"searched","pattern":"\"@opencode","results":40,"files":18}
+{"at":"2026-05-31T05:49:36.966Z","tool":"smart_grep","action":"searched","pattern":"(legacy|migration|v1|v2_?|old|deprecated|adapter)[^a-zA-Z]*\\.ts","results":1,"files":1}
+{"at":"2026-05-31T05:49:37.575Z","tool":"smart_grep","action":"searched","pattern":"legacy|v1|v2[^a-zA-Z]|old[^a-zA-Z]|deprecated|migration[^a-z]","results":50,"files":24}
+{"at":"2026-05-31T05:51:56.988Z","tool":"smart_bash","action":"bash","command":"test -f packages/desktop/package.json && echo \"EXISTS\" || echo \"NOT_FOUND\"","exit_code":0}
+{"at":"2026-05-31T05:59:27.827Z","tool":"smart_bash","action":"bash","command":"for f in \\","exit_code":1}
+{"at":"2026-05-31T06:00:22.536Z","tool":"smart_bash","action":"bash","command":"for f in agent/scratchpad.ts agent/authority.ts agent/machine.ts binary/manager.ts event/runtime-eve","exit_code":0}
+{"at":"2026-05-31T06:00:23.290Z","tool":"smart_bash","action":"bash","command":"for f in agent/machine/types.ts agent/machine/runtime.ts agent/machine/general-man.ts agent/machine/","exit_code":0}
+{"at":"2026-05-31T06:00:23.932Z","tool":"smart_bash","action":"bash","command":"for f in context/invalidation-registry.ts context/invalidation-bus.ts context/file-memory.ts context","exit_code":0}
+{"at":"2026-05-31T06:00:24.978Z","tool":"smart_bash","action":"bash","command":"for f in campaign/types.ts campaign/state-machine.ts campaign/orchestrator.ts campaign/role-contract","exit_code":0}
+{"at":"2026-05-31T06:01:18.062Z","tool":"smart_grep","action":"searched","pattern":"export \\* as \\w+ from \"\\.\"","results":20,"files":20}
+{"at":"2026-05-31T06:01:19.448Z","tool":"smart_bash","action":"bash","command":"echo \"=== agent/index.ts ===\" && rg -c \"^export\" agent/index.ts && echo \"=== agent/machine/index.ts ","exit_code":0}
+{"at":"2026-05-31T06:02:20.143Z","tool":"smart_grep","action":"searched","pattern":"from [\\\"']\\.\\./(review|projectors-next|env|ide)[\\\"']","results":2,"files":2}
+{"at":"2026-05-31T06:02:20.558Z","tool":"smart_grep","action":"searched","pattern":"@opencode-ai/plugin","results":3,"files":3}
+{"at":"2026-05-31T06:03:13.664Z","tool":"smart_grep","action":"searched","pattern":"from [\\\"']\\.\\./env[\\\"']","results":2,"files":2}
+{"at":"2026-05-31T06:03:14.336Z","tool":"smart_grep","action":"searched","pattern":"from \\\"\\.\\./(p|P)rojectors-next\\\"|from \\\"./projectors-next\\\"","results":1,"files":1}
+{"at":"2026-05-31T06:03:14.817Z","tool":"smart_grep","action":"searched","pattern":"projectors-next","results":10,"files":5}
+{"at":"2026-05-31T06:04:11.021Z","tool":"smart_grep","action":"searched","pattern":"from \\\"\\.\\./(sync|event-v2-bridge)\\\"","results":3,"files":3}
+{"at":"2026-05-31T06:05:07.232Z","tool":"smart_grep","action":"searched","pattern":"\"main\"|\"exports\"|\"types\"","results":1,"files":1}
+{"at":"2026-05-31T06:05:56.689Z","tool":"smart_bash","action":"bash","command":"test -f packages/llm/package.json && echo \"EXISTS\" || echo \"NOT_FOUND\"","exit_code":0}
+{"at":"2026-05-31T06:05:56.928Z","tool":"smart_bash","action":"bash","command":"test -f packages/sdk/js/package.json && echo \"EXISTS\" || echo \"NOT_FOUND\"","exit_code":0}
+{"at":"2026-05-31T06:05:57.443Z","tool":"smart_grep","action":"searched","pattern":"from \\\"@opencode-ai/core/(event|account|catalog|session-event)\\\"","results":12,"files":11}
+{"at":"2026-05-31T06:06:45.258Z","tool":"smart_bash","action":"bash","command":"test -f packages/core/src/event/index.ts && echo \"event: OK\" || echo \"event: MISSING\"; test -f packa","exit_code":0}
+{"at":"2026-05-31T06:06:45.588Z","tool":"smart_grep","action":"searched","pattern":"\"version\"","results":22,"files":22}
+{"at":"2026-05-31T06:07:31.335Z","tool":"smart_bash","action":"bash","command":"test -f packages/core/src/event.ts && echo \"event.ts: OK\" || echo \"event.ts: MISSING\"","exit_code":0}
+{"at":"2026-05-31T06:07:36.660Z","tool":"smart_grep","action":"searched","pattern":"from \\\"@opencode-ai/core/(effect|util|process|filesystem|global|npm-config|permi","results":50,"files":23}
+{"at":"2026-05-31T06:08:30.185Z","tool":"smart_bash","action":"bash","command":"echo \"=== agent/index.ts ===\" && rg \"^export\" agent/index.ts -c && echo \"=== agent/machine/index.ts ","exit_code":0}
+{"at":"2026-05-31T06:08:30.738Z","tool":"smart_bash","action":"bash","command":"wc -l < event/index.ts | tr -d ' ' && echo \"event/index.ts\" && wc -l < campaign/index.ts | tr -d ' '","exit_code":0}
+{"at":"2026-05-31T06:09:17.111Z","tool":"smart_grep","action":"searched","pattern":"import.*projectors","results":4,"files":4}
+{"at":"2026-05-31T06:11:05.350Z","tool":"smart_write","action":"wrote","file":"/tmp/barrel-analysis.json","detail":"Write the structured JSON analysis report"}

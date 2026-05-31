@@ -365,7 +365,9 @@ function process<Def extends Definition>(
           }),
         )
       if (result instanceof Promise) {
-        void result.then(publish)
+        result.then(publish).catch((e) => {
+          console.error("[sync] publish failed:", e)
+        })
       } else {
         publish(result)
       }

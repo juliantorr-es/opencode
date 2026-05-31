@@ -72,7 +72,7 @@ export const PrepareDelegationTool = Tool.define(
           }
 
           yield* fs.ensureDir(coordinationDir)
-          yield* fs.writeFileString(ledgerPath, JSON.stringify(record) + "\n", { flag: "a" })
+          yield* fs.appendLine(ledgerPath, JSON.stringify(record))
 
           return {
             title: "prepare_delegation",

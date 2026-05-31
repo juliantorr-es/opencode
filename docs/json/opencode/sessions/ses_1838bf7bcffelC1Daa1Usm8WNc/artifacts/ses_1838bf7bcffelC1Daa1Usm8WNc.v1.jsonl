@@ -18,3 +18,4 @@
 {"at":"2026-05-31T05:23:56.140Z","tool":"smart_grep","action":"searched","pattern":"tool\\.failed|claim\\.conflict|user\\.approval|lane\\.completed|lane\\.blocked","results":0,"files":0}
 {"at":"2026-05-31T05:23:56.525Z","tool":"smart_grep","action":"searched","pattern":"tool\\.failed","results":0,"files":0}
 {"at":"2026-05-31T05:24:55.109Z","tool":"smart_grep","action":"searched","pattern":"type.*Event.*=|eventType|\\.type ===","results":0,"files":0}
+{"at":"2026-05-31T05:29:47.095Z","tool":"smart_bash","action":"bash","command":"test -f docs/findings/out-of-scope-findings.jsonl && echo \"EXISTS\" || echo \"NOT_FOUND\"","exit_code":0}

@@ -130,7 +130,7 @@ export const layer = Layer.effect(
       return yield* Effect.uninterruptibleMask((restore) =>
         Effect.gen(function* () {
           const s = yield* InstanceState.get(state)
-          const id = input.id ?? Identifier.ascending("job")
+          const id = input.id ?? (yield* Identifier.ascending("job"))
           const started_at = yield* Clock.currentTimeMillis
           const done = yield* Deferred.make<Info>()
           return yield* SynchronizedRef.modifyEffect(

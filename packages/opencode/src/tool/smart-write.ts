@@ -58,7 +58,7 @@ export const SmartWriteTool = Tool.define(
           }
 
           yield* fs.ensureDir(editsDir)
-          yield* fs.writeFileString(logPath, JSON.stringify(record) + "\n", { flag: "a" })
+          yield* fs.appendLine(logPath, JSON.stringify(record))
 
           return {
             title: "smart_write",

@@ -121,12 +121,12 @@ export const SmartSdTool = Tool.define(
             change_summary: "literal replacement",
             edited_at: new Date().toISOString(),
           })
-          yield* fs.writeFileString(`${editsDir}/edit_log.v1.jsonl`, logLine + "\n", { flag: "a" })
+          yield* fs.appendLine(`${editsDir}/edit_log.v1.jsonl`, logLine)
 
           // Analytics
           const logDir = `${instance.directory}/docs/json/opencode/sessions/${ctx.sessionID}/analytics`
           yield* fs.ensureDir(logDir)
-          yield* fs.writeFileString(
+          yield* fs.appendLine(
             `${logDir}/smart_tool_usage.v1.jsonl`,
             JSON.stringify({
               at: new Date().toISOString(),
@@ -134,8 +134,7 @@ export const SmartSdTool = Tool.define(
               agent: ctx.agent,
               tool: "smart_sd",
               file: params.file.slice(0, 120),
-            }) + "\n",
-            { flag: "a" },
+            }),
           )
 
           return {

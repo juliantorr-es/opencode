@@ -190,7 +190,7 @@ export const SmartGitTool = Tool.define(
           // Analytics
           const logDir = `${instance.directory}/docs/json/opencode/sessions/${ctx.sessionID}/analytics`
           yield* fs.ensureDir(logDir)
-          yield* fs.writeFileString(
+          yield* fs.appendLine(
             path.join(logDir, "smart_tool_usage.v1.jsonl"),
             JSON.stringify({
               at: new Date().toISOString(),
@@ -199,8 +199,7 @@ export const SmartGitTool = Tool.define(
               tool: "smart_git",
               operation: params.operation,
               exit_code: exitCode,
-            }) + "\n",
-            { flag: "a" },
+            }),
           )
 
           return {

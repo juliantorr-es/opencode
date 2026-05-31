@@ -51,7 +51,7 @@ export const ProduceFragmentTool = Tool.define(
           }
 
           yield* fs.ensureDir(dir)
-          yield* fs.writeFileString(fragmentPath, JSON.stringify(fragment) + "\n", { flag: "a" })
+          yield* fs.appendLine(fragmentPath, JSON.stringify(fragment))
 
           return {
             title: "produce_fragment",

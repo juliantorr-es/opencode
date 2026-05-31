@@ -79,7 +79,7 @@ export const LessonRegisterTool = Tool.define(
             }
 
             yield* fs.ensureDir(lessonsDir)
-            yield* fs.writeFileString(lessonsPath, JSON.stringify(lesson) + "\n", { flag: "a" })
+            yield* fs.appendLine(lessonsPath, JSON.stringify(lesson))
 
             return {
               title: "lesson_register",

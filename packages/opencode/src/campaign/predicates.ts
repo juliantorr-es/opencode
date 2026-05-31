@@ -129,7 +129,7 @@ function resolveEventExists(
     }
   }
 
-  return { satisfied: true, evidence: { id: matching[0]!.id, type: "event" } }
+  return { satisfied: true, evidence: { id: matching.at(0)?.id ?? "ev-missing", type: "event" } }
 }
 
 function resolveLatestValidationPassed(
@@ -211,7 +211,7 @@ function resolveHasClaimConflict(
   return {
     satisfied: true,
     evidence: {
-      id: conflictEvents[0]!.id,
+      id: conflictEvents.at(0)?.id ?? "ev-missing",
       type: "event",
       detail: `${conflictEvents.length} conflict(s)`,
     },
@@ -299,7 +299,7 @@ function resolveUserApprovalGranted(
   return {
     satisfied: true,
     evidence: {
-      id: approvals[0]!.id,
+      id: approvals.at(0)?.id ?? "ev-missing",
       type: "event",
       detail: `approvalType=${approvalType}`,
     },
@@ -359,8 +359,8 @@ function resolveScopeUnsafe(
     satisfied: true,
     evidence:
       denials.length > 0
-        ? { id: denials[0]!.id, type: "event", detail: `${denials.length} denial(s)` }
-        : { id: protectedAccesses[0]!.id, type: "event", detail: "protected path access" },
+        ? { id: denials.at(0)?.id ?? "ev-missing", type: "event", detail: `${denials.length} denial(s)` }
+        : { id: protectedAccesses.at(0)?.id ?? "ev-missing", type: "event", detail: "protected path access" },
     reason: `${denials.length} denial(s), ${protectedAccesses.length} protected path access(es)`,
   }
 }
@@ -375,7 +375,7 @@ function resolveEditApplied(
   }
   return {
     satisfied: true,
-    evidence: { id: edits[0]!.id, type: "event", detail: `${edits.length} edit(s)` },
+    evidence: { id: edits.at(0)?.id ?? "ev-missing", type: "event", detail: `${edits.length} edit(s)` },
   }
 }
 
@@ -473,7 +473,7 @@ function resolveNoBlockingFindings(
   if (blocking.length > 0) {
     return {
       satisfied: false,
-      evidence: { id: blocking[0]!.id, type: "event" },
+      evidence: { id: blocking.at(0)?.id ?? "ev-missing", type: "event" },
       reason: `${blocking.length} blocking redteam finding(s)`,
     }
   }
@@ -491,7 +491,7 @@ function resolveFindingConfirmed(
   }
   return {
     satisfied: true,
-    evidence: { id: findings[0]!.id, type: "event" },
+    evidence: { id: findings.at(0)?.id ?? "ev-missing", type: "event" },
   }
 }
 
@@ -510,7 +510,7 @@ function resolvePlanProduced(
   }
   return {
     satisfied: true,
-    evidence: { id: planEvents[0]!.id, type: "event" },
+    evidence: { id: planEvents.at(0)?.id ?? "ev-missing", type: "event" },
   }
 }
 
@@ -532,7 +532,7 @@ function resolvePlanApproved(
   }
   return {
     satisfied: true,
-    evidence: { id: approved[0]!.id, type: "event", detail: "verdict=approved" },
+    evidence: { id: approved.at(0)?.id ?? "ev-missing", type: "event", detail: "verdict=approved" },
   }
 }
 
@@ -554,7 +554,7 @@ function resolvePlanRejected(
   }
   return {
     satisfied: true,
-    evidence: { id: rejected[0]!.id, type: "event", detail: "verdict=rejected" },
+    evidence: { id: rejected.at(0)?.id ?? "ev-missing", type: "event", detail: "verdict=rejected" },
   }
 }
 
@@ -601,7 +601,7 @@ function resolveAllChildrenComplete(
   }
   return {
     satisfied: true,
-    evidence: { id: completeEvents[0]!.id, type: "event" },
+    evidence: { id: completeEvents.at(0)?.id ?? "ev-missing", type: "event" },
   }
 }
 
@@ -620,7 +620,7 @@ function resolveChildBlocked(
   }
   return {
     satisfied: true,
-    evidence: { id: blocked[0]!.id, type: "event" },
+    evidence: { id: blocked.at(0)?.id ?? "ev-missing", type: "event" },
   }
 }
 
@@ -632,7 +632,7 @@ function resolveScoutCompleted(
   if (scoutEvents.length === 0) {
     return { satisfied: false, reason: "No scout.completed events" }
   }
-  return { satisfied: true, evidence: { id: scoutEvents[0]!.id, type: "event" } }
+  return { satisfied: true, evidence: { id: scoutEvents.at(0)?.id ?? "ev-missing", type: "event" } }
 }
 
 function resolveScopeSynthesized(
@@ -643,7 +643,7 @@ function resolveScopeSynthesized(
   if (scopeEvents.length === 0) {
     return { satisfied: false, reason: "No scope.synthesized events" }
   }
-  return { satisfied: true, evidence: { id: scopeEvents[0]!.id, type: "event" } }
+  return { satisfied: true, evidence: { id: scopeEvents.at(0)?.id ?? "ev-missing", type: "event" } }
 }
 
 // ── Resolver Map ─────────────────────────────────────────────

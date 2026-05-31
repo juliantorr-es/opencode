@@ -9,7 +9,7 @@
 // events, mirrored by the event name strings in EventName.
 // ──────────────────────────────────────────────────────────────
 
-import { Schema } from "effect"
+import { Effect, Schema } from "effect"
 import type { RuntimeEvent } from "../event/runtime-event"
 import { Identifier } from "../id/id"
 
@@ -58,7 +58,7 @@ export function toRuntimeEvent(
   event: Omit<CampaignEventPayload, "campaignId" | "ts">,
 ): RuntimeEvent {
   return {
-    id: Identifier.ascending("event"),
+    id: Effect.runSync(Identifier.ascending("event")),
     sessionId: campaignId,
     runId: event.laneId ?? campaignId,
     parentEventId: undefined,

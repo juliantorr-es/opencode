@@ -234,7 +234,7 @@ function recordBinderEvent(
 ): Effect.Effect<void> {
   return Effect.gen(function* () {
     yield* eventStore.record({
-      id: Identifier.ascending("event"),
+      id: Effect.runSync(Identifier.ascending("event")),
       sessionId: laneId,
       runId: laneId,
       ts: new Date().toISOString(),

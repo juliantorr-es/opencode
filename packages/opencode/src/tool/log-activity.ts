@@ -51,7 +51,7 @@ export const LogActivityTool = Tool.define(
           }
 
           yield* fs.ensureDir(dir)
-          yield* fs.writeFileString(logPath, JSON.stringify(record) + "\n", { flag: "a" })
+          yield* fs.appendLine(logPath, JSON.stringify(record))
 
           return {
             title: "log_activity",

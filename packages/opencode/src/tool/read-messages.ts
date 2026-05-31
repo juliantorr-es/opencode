@@ -203,11 +203,7 @@ export const ReadMessagesTool = Tool.define(
             sent_at: now.toISOString(),
           }
           yield* fs.ensureDir(messagesDir)
-          yield* fs.writeFileString(
-            heartbeatFile,
-            JSON.stringify(heartbeat) + "\n",
-            { flag: "a" },
-          )
+          yield* fs.appendLine(heartbeatFile, JSON.stringify(heartbeat))
 
           // ── Update read state ─────────────────────────────────────
           const readState: Record<string, string> = {}

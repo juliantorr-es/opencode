@@ -1,0 +1,61 @@
+{
+  "schema_version": "v1",
+  "artifact_kind": "plan_review",
+  "plan_id": "RUNTIME-FIX-CONCURRENCY",
+  "verdict": "APPROVE_WITH_CONDITIONS",
+  "axes": {
+    "coupling": { "score": 3, "note": "Fix 1 touches two packages; Fix 3 adds appendLine to AppFileSystem.Interface. No new cross-package import coupling." },
+    "debuggability": { "score": 2, "note": "Fix 1 Effect.dieSync loses error argument. Fix 3 queue silently swallows errors on prior failure. No Effect.logWarning in error paths." },
+    "convergence": { "score": 5, "note": "All fixes directly address root causes from concurrency audit: non-atomic ID counter (CRITICAL), non-atomic writes, non-atomic JSONL appends." },
+    "surface_area": { "score": 2, "note": "Fix 1 return type change affects ~18 files. Plan undercounts sync callers in withStatics. Fix 3 sites are 28, not 10+." },
+    "testability": { "score": 4, "note": "Each fix testable in isolation. Fix 1 needs fiber-racing test. Fix 2 needs crash-during-write test. Fix 3 needs concurrent-append test." },
+    "error_clarity": { "score": 2, "note": "No error path logging. Fix 3 queue error propagation unaddressed. Effect.dieSync loses caller stack." },
+    "reversibility": { "score": 4, "note": "Three fixes touch different files and are independently revertible." }
+  },
+  "objections": [
+    {
+      "axis": "surface_area",
+      "summary": "Fix 1 return type change contaminates 18+ callers, not ~10",
+      "evidence": "packages/core/src/event.ts:10, session.ts:10, account.ts:11/90/215 use Identifier inside withStatics callbacks at module evaluation time, requiring Effect.runSync wrapping"
+    },
+    {
+      "axis": "error_clarity",
+      "summary": "Fix 1 Effect.dieSync loses error argument",
+      "evidence": "packages/opencode/src/id/id.ts:74 uses Effect.dieSync instead of proper tagged error. Proposed identifier.ts replacement should not repeat this pattern."
+    },
+    {
+      "axis": "error_clarity",
+      "summary": "Fix 3 append queue silently swallows errors on prior failure",
+      "evidence": "Map<string, Promise<void>> chaining pattern poisons the queue on first rejection — subsequent appends silently fail. No error recovery mechanism."
+    },
+    {
+      "axis": "coupling",
+      "summary": "Fix 1 module-level Effect.runSync compounds existing CRITICAL finding",
+      "evidence": "Existing audit (effect-runtime-hunt.v1.json) flags module-level Effect.runSync as CRITICAL. id/id.ts:9 already uses it. identifier.ts proposal would add a second instance."
+    },
+    {
+      "axis": "surface_area",
+      "summary": "Fix 3 affects 28 tool sites, not 10+",
+      "evidence": "grep for flag:\"a\" returns 28 matches in 26 files under packages/opencode/src/tool/"
+    },
+    {
+      "axis": "convergence",
+      "summary": "tool-feedback.ts read-modify-write race not addressed",
+      "evidence": "packages/opencode/src/tool/tool-feedback.ts:87-131 does full JSONL read-parse-modify-write. Fix 3's appendLine queue doesn't solve this separate race class."
+    }
+  ],
+  "conditions": [
+    "Replace Effect.runSync(Ref.make(...)) at module scope with lazy initialization pattern in identifier.ts; file follow-up finding for the already-existing instance in id/id.ts:9",
+    "Add error recovery to Fix 3 append queue: reset per-file entry on failure, log structured warning with Effect.annotateCurrentSpan",
+    "Use proper Effect error type (tagged error or Effect.fail) instead of Effect.dieSync in identifier error paths",
+    "Explicitly list all 26+ tool-file sites for Fix 3; call out tool-feedback.ts read-modify-write as deferred separate lane",
+    "Specify test plan: fiber-racing ID uniqueness test, crash-during-atomic-write test, concurrent-append ordering test"
+  ],
+  "key_finding": "Fix 1 for packages/opencode/src/id/id.ts is already implemented (uses Effect, Ref, returns Effect.Effect<string>). The actual remaining work is packages/core/src/util/identifier.ts conversion + caller updates + Fixes 2 and 3 from scratch.",
+  "follow_up_issues": [
+    "Refactor id/id.ts module-level Effect.runSync to lazy initialization",
+    "File separate plan for tool-feedback.ts read-modify-write race",
+    "Add Map cleanup mechanism for Fix 3 append queue to prevent unbounded growth",
+    "Consider consolidating the two Identifier modules (opencode/src/id/id.ts and core/src/util/identifier.ts)"
+  ]
+}
