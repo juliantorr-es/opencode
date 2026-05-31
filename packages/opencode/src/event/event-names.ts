@@ -54,6 +54,7 @@ export const EventName = {
 
   // mcp.*
   McpToolsChanged: 'mcp.tools.changed',
+  McpStatusChanged: 'mcp.status.changed',
   McpBrowserOpenFailed: 'mcp.browser.open.failed',
 
   // pty.*

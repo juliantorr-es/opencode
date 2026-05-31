@@ -57,4 +57,40 @@ export type Remote = Schema.Schema.Type<typeof Remote>
 export const Info = Schema.Union([Local, Remote]).annotate({ discriminator: "type" })
 export type Info = Schema.Schema.Type<typeof Info>
 
+/** Whitelist of environment variables passed to MCP child processes.
+    All other env vars are stripped to prevent secret leakage. */
+export const ALLOWED_MCP_ENV = new Set([
+  "HOME",
+  "PATH",
+  "USER",
+  "TMPDIR",
+  "TMP",
+  "TEMP",
+  "SHELL",
+  "LANG",
+  "LC_ALL",
+  "TERM",
+  "NODE_PATH",
+  "PYTHONPATH",
+  "GEM_HOME",
+  "GEM_PATH",
+  "npm_config_cache",
+  "XDG_CACHE_HOME",
+  "DOCKER_HOST",
+  "KUBECONFIG",
+])
+
+export function sanitizeMcpEnv(customEnv?: Record<string, string>): Record<string, string> {
+  const env: Record<string, string> = {}
+  for (const [key, value] of Object.entries(process.env)) {
+    if (ALLOWED_MCP_ENV.has(key) && value !== undefined) {
+      env[key] = value
+    }
+  }
+  if (customEnv) {
+    Object.assign(env, customEnv)
+  }
+  return env
+}
+
 export * as ConfigMCP from "./mcp"
