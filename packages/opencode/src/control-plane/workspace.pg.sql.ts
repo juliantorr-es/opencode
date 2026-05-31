@@ -1,4 +1,4 @@
-import { pgTable, text, integer, jsonb } from "drizzle-orm/pg-core"
+import { pgTable, text, integer, jsonb, index } from "drizzle-orm/pg-core"
 import { ProjectTable } from "../project/project.pg.sql"
 import type { ProjectID } from "../project/schema"
 import type { WorkspaceID } from "./schema"
@@ -17,4 +17,6 @@ export const WorkspaceTable = pgTable("workspace", {
   time_used: integer()
     .notNull()
     .$default(() => Date.now()),
-})
+}, (table) => ({
+  workspaceProjectIdx: index("workspace_project_idx").on(table.project_id),
+}))

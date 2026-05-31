@@ -1,0 +1,21 @@
+{"at":"2026-05-31T08:39:52.880Z","tool":"smart_grep","action":"searched","pattern":"campaign|binder|secretary|state-machine|predicates|ContextPacket|claim|ownership","results":30,"files":7}
+{"at":"2026-05-31T08:39:54.121Z","tool":"smart_grep","action":"searched","pattern":"testEffect|it\\.live|describe|makelayer|provideService","results":30,"files":13}
+{"at":"2026-05-31T08:39:59.837Z","tool":"smart_grep","action":"searched","pattern":"\\.test\\.ts$|\\.test\\.tsx$|\\.spec\\.ts$","results":2,"files":2}
+{"at":"2026-05-31T08:40:03.233Z","tool":"smart_grep","action":"searched","pattern":"it\\.live|testEffect|mklayer|provideService","results":30,"files":8}
+{"at":"2026-05-31T08:40:04.186Z","tool":"smart_grep","action":"searched","pattern":"campaign|binder|secretary","results":30,"files":6}
+{"at":"2026-05-31T08:40:11.730Z","tool":"smart_grep","action":"searched","pattern":"campaign|binder|secretary|stateMachine|state-machine|predicates|ContextPacket","results":30,"files":1}
+{"at":"2026-05-31T08:40:42.288Z","tool":"smart_bash","action":"bash","command":"printf '%s\\n' packages/opencode/test/*/","exit_code":0}
+{"at":"2026-05-31T08:40:43.794Z","tool":"smart_grep","action":"searched","pattern":"^","results":30,"files":1}
+{"at":"2026-05-31T08:40:55.392Z","tool":"smart_bash","action":"bash","command":"printf '%s\\n' packages/opencode/test/campaign/*","exit_code":0}
+{"at":"2026-05-31T08:40:55.971Z","tool":"smart_bash","action":"bash","command":"printf '%s\\n' packages/opencode/src/campaign/*","exit_code":0}
+{"at":"2026-05-31T08:40:57.223Z","tool":"smart_bash","action":"bash","command":"printf '%s\\n' packages/opencode/test/lib/*","exit_code":0}
+{"at":"2026-05-31T08:40:57.788Z","tool":"smart_bash","action":"bash","command":"printf '%s\\n' packages/opencode/test/fixture/*","exit_code":0}
+{"at":"2026-05-31T08:41:08.583Z","tool":"smart_bash","action":"bash","command":"printf '%s\\n' packages/opencode/test/*.ts","exit_code":0}
+{"at":"2026-05-31T08:41:23.617Z","tool":"smart_grep","action":"searched","pattern":"campaign|binder|secretary|stateMachine|predicates|ContextPacket|lane|lifecycle","results":30,"files":16}
+{"at":"2026-05-31T08:41:39.568Z","tool":"smart_grep","action":"searched","pattern":"\\.test\\.ts$","results":3,"files":3}
+{"at":"2026-05-31T08:41:50.000Z","tool":"smart_bash","action":"bash","command":"shopt -s globstar; printf '%s\\n' packages/*/test/**/*.test.ts packages/*/test/**/*.test.tsx packages","exit_code":0}
+{"at":"2026-05-31T08:42:10.893Z","tool":"smart_grep","action":"searched","pattern":"coordination|coordinate","results":14,"files":1}
+{"at":"2026-05-31T08:42:28.957Z","tool":"smart_bash","action":"bash","command":"printf '%s\\n' packages/opencode/test/*.test.ts packages/opencode/test/*/*.test.ts packages/opencode/","exit_code":0}
+{"at":"2026-05-31T08:42:44.732Z","tool":"smart_bash","action":"bash","command":"printf '%s\\n' packages/opencode/test/*.test.ts packages/opencode/test/*/*.test.ts 2>/dev/null | sort","exit_code":0}
+{"at":"2026-05-31T08:42:45.967Z","tool":"smart_bash","action":"bash","command":"printf '%s\\n' packages/*/src/**/*.test.ts packages/*/test/**/*.test.ts 2>/dev/null | sort -u | wc -l","exit_code":0}
+{"at":"2026-05-31T08:42:46.716Z","tool":"smart_bash","action":"bash","command":"wc -l packages/opencode/src/campaign/*.ts","exit_code":0}

@@ -70,7 +70,7 @@ export const IPC = {
     GET_LOCALE_PREFERENCE: "opencode:get-locale-preference",
     PLUGIN_INVOKE: "opencode:plugin:invoke",
     GET_CAPABILITIES: "opencode:get-capabilities",
-    EVENT_EXPLAIN: "opencode:event:explain",
+    GET_GIT_STATUS: "opencode:get-git-status",
     GET_SAFE_MODE_DIAGNOSTICS: "opencode:get-safe-mode-diagnostics",
     SAFE_MODE_ACTION: "opencode:safe-mode-action",
   } as const,

@@ -6,8 +6,7 @@ function r(worktree: string, p: string): string { return resolve(worktree, p) }
 
 // Each orchestrator's allowed spawn targets
 const SPAWN_RULES: Record<string, string[]> = {
-  "general-man-agent": ["cartographer", "secretary", "journalist"],
-  "secretary": ["cartographer", "architect", "critic", "surgeon", "trial", "journalist", "handy-agent"],
+  "general-man-agent": ["cartographer", "architect", "critic", "surgeon", "trial", "journalist", "handy-agent"],
   "cartographer": ["surveyor", "diff-historian", "module-grapher", "test-reader"],
   "architect": ["architecture-reviewer", "impact-assessor", "risk-enumerator", "root-cause-analyst", "validation-designer"],
   "critic": ["convergence-checker", "coupling-auditor", "debuggability-forecaster", "error-trace-auditor", "isolation-tester", "reversibility-checker", "surface-area-mapper"],

@@ -47,7 +47,9 @@ export type Explanation = Schema.Schema.Type<typeof Explanation>
 
 // ── Cache ──────────────────────────────────────────────────
 
-const cache = new Map<string, Explanation>()
+const CACHE_TTL = 300_000
+const CACHE_MAX = 500
+const cache = new Map<string, { value: Explanation; ts: number }>()
 
 // ── Helpers ────────────────────────────────────────────────
 
@@ -103,11 +105,15 @@ function hasTestType(eventType: string): boolean {
 
 export function explainEvent(
   eventId: string,
+  sessionId: string,
 ): Effect.Effect<Explanation, ExplanationError, EventStore.Service> {
   return Effect.fn("explainEvent")(function* () {
     // Check cache first
-    const cached = cache.get(eventId)
-    if (cached) return cached
+    const cached = cache.get(`${sessionId}:${eventId}`)
+    if (cached) {
+      if (Date.now() - cached.ts < CACHE_TTL) return cached.value
+      cache.delete(`${sessionId}:${eventId}`)
+    }
 
     const store = yield* EventStore.Service
 
@@ -226,7 +232,11 @@ export function explainEvent(
     }
 
     // Cache
-    cache.set(eventId, explanation)
+    if (cache.size >= CACHE_MAX) {
+      const oldest = Array.from(cache.entries()).reduce((a, b) => (a[1].ts < b[1].ts ? a : b))
+      cache.delete(oldest[0])
+    }
+    cache.set(`${sessionId}:${eventId}`, { value: explanation, ts: Date.now() })
 
     return explanation
   })
@@ -235,6 +245,8 @@ export function explainEvent(
 /**
  * Clear the in-memory explanation cache.
  * Useful when new events arrive and cached explanations may be stale.
+ *
+ * @deprecated No callers found in codebase. Remove if still unused after next audit.
  */
 export function clearExplanationCache(): Effect.Effect<void> {
   return Effect.sync(() => cache.clear())
@@ -242,6 +254,8 @@ export function clearExplanationCache(): Effect.Effect<void> {
 
 /**
  * Invalidate a single cached explanation.
+ *
+ * @deprecated No callers found in codebase. Remove if still unused after next audit.
  */
 export function invalidateExplanation(eventId: string): Effect.Effect<void> {
   return Effect.sync(() => cache.delete(eventId))

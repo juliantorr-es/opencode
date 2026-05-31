@@ -102,6 +102,7 @@ export interface Binder {
 
   // Execution
   executionEvents: EventRef[]
+  transitionEvents: EventRef[]
   diffSummary?: DiffSummary
 
   // Validation
@@ -178,6 +179,7 @@ function computeDigest(binder: Binder): string {
     criticReviews: binder.criticReviews,
     approvedPlan: binder.approvedPlan,
     executionEvents: binder.executionEvents,
+    transitionEvents: binder.transitionEvents,
     diffSummary: binder.diffSummary,
     validationResults: binder.validationResults,
     redTeamFindings: binder.redTeamFindings,
@@ -214,6 +216,7 @@ function createInitialBinder(
     scoutReports: [],
     criticReviews: [],
     executionEvents: [],
+    transitionEvents: [],
     validationResults: [],
     redTeamFindings: [],
     repairHistory: [],
@@ -330,6 +333,9 @@ const make = Effect.gen(function* () {
         break
       case "executionEvents":
         updated.executionEvents = [...binder.executionEvents, artifact as EventRef]
+        break
+      case "transitionEvents":
+        updated.transitionEvents = [...binder.transitionEvents, artifact as EventRef]
         break
       case "diffSummary":
         updated.diffSummary = artifact as unknown as DiffSummary

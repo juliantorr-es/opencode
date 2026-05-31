@@ -56,4 +56,11 @@ export function start() {
   timer.unref?.()
 }
 
+export function stop() {
+  if (timer) {
+    clearInterval(timer)
+    timer = undefined
+  }
+}
+
 export * as Heap from "./heap"

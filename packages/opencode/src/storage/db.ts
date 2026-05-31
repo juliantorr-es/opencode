@@ -1,3 +1,8 @@
+// ── Convenience re-export ──────────────────────────────────
+// Re-exports all of drizzle-orm so consumers can do:
+//   import { eq, and, desc, sql } from "@/storage/db"
+// instead of reaching into the dependency directly.
+// 21 files import from this path — do not remove.
 export * from "drizzle-orm"
 import { RuntimeFlags } from "@/effect/runtime-flags"
 import { LocalContext } from "@/util/local-context"
@@ -42,6 +47,13 @@ export const getPath = (flags?: Pick<DatabaseFlags, "disableChannelDb">) => {
   return getChannelPath(flags)
 }
 
+/**
+ * @deprecated `any` type provides no type safety.
+ * Use the concrete drizzle transaction type from the active adapter instead.
+ * If this is still `any` after next audit, replace with a proper union:
+ *   `PgliteTransaction | NodePgTransaction` (or similar from `drizzle-orm/pglite` / `drizzle-orm/node-postgres`).
+ * Note: `TxOrDb` depends on this type — coordinate removal.
+ */
 export type Transaction = any
 
 type Client = ReturnType<typeof init>

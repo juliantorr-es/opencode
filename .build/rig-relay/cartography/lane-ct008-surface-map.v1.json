@@ -1,0 +1,249 @@
+{
+  "schema_version": "1.0",
+  "lane_id": "CT-008",
+  "title": "Classify and handle TUI/SQLite legacy references — Surface Area Map",
+  "generated_at": "2026-05-31",
+  "session_id": "current",
+  "summary": "Lane CT-008 targets two legacy domains: (1) the 'tui' member of PluginKind in plugin/shared.ts and all its consumers, (2) the sqlite() function in projectors-next.ts (now renamed to project(), but SQLiteTransactionOptions and snapshot refs remain). Key finding: the sqlite→project rename has already been executed by a concurrent lane — only SQLiteTransactionOptions deprecation and the snapshot 'sqlite3' string remain as active cleanup targets for the SQLite side. The TUI side is larger: PluginKind still carries 'tui' as a union member with @deprecated JSDoc, ~51 test files reference tui concepts, and 35+ production lines in plugin/shared.ts, install.ts, config.ts, and loader.ts handle tui as a plugin kind.",
+
+  "findings": {
+    "1_plugin_kind_tui_definition": {
+      "location": "packages/opencode/src/plugin/shared.ts",
+      "definition_line": 38,
+      "deprecated_line": 37,
+      "definition": "export type PluginKind = \"server\" | \"tui\" | \"desktop\"",
+      "deprecated_jsdoc": "/** @deprecated \"tui\" kind is legacy — use \"server\" or \"desktop\" instead. Kept for backward compatibility with existing plugin install/detection logic. */",
+      "type": "string_literal_union (not enum)",
+      "note": "No dot-notation access like PluginKind.tui exists — all consumers use bare string literal \"tui\""
+    },
+
+    "2_projectors_next_sqlite_function": {
+      "location": "packages/opencode/src/session/projectors-next.ts",
+      "previous_name": "sqlite",
+      "current_name": "project",
+      "definition_line": 29,
+      "call_site_line": 119,
+      "definition": "function project(db: Database.TxOrDb, sessionID: SessionID): SessionMessageUpdater.Adapter<void>",
+      "call_site": "SessionMessageUpdater.update(project(db, event.data.sessionID), event)",
+      "status": "RENAMED (by concurrent lane) — no 'sqlite' references remain in this file",
+      "import_chain": [
+        "projectors-next.ts (defines project())",
+        "→ projectors.ts:11 — import nextProjectors from \"./projectors-next\"",
+        "→ server/projectors.ts:1 — import sessionProjectors from \"../session/projectors\"",
+        "→ server/init-projectors.ts:1 — import { initProjectors } from \"./projectors\"",
+        "→ test/sync/index.test.ts:12 — import { initProjectors } from \"../../src/server/projectors\""
+      ],
+      "callers_of_sqlite": "NONE — all references renamed to project()"
+    },
+
+    "3_sqlite_transaction_options": {
+      "location": "packages/opencode/src/storage/adapter.ts",
+      "definition_lines": "53-56",
+      "deprecated_line": 52,
+      "deprecated_jsdoc": "/** @deprecated Use PostgresTransactionOptions instead. SQLite transaction behavior is legacy. */",
+      "definition": "export type SQLiteTransactionOptions = { _tag: \"sqlite\"; behavior?: \"deferred\" | \"immediate\" | \"exclusive\" }",
+      "union_member_line": 65,
+      "union": "export type TransactionOptions = | SQLiteTransactionOptions | PostgresTransactionOptions | { behavior?: ... }",
+      "namespace_reexport_line": 415,
+      "namespace_reexport": "export * as DatabaseAdapter from \"./adapter\"",
+      "imports_by_other_files": "NONE — only used internally within adapter.ts (lines 53, 65, 123, 125, 132)",
+      "runtime_usage_lines": [123, 125, 132],
+      "related_sqlite_refs_in_adapter": [
+        "line 387: comment '// ── Default layer (selects SQLite or Postgres)'",
+        "line 409: type _SQLiteSatisfiesDLC (structural type assertion comment)"
+      ]
+    },
+
+    "4_snapshot_sqlite3_reference": {
+      "location": "packages/opencode/test/cli/help/__snapshots__/help-snapshots.test.ts.snap",
+      "line": 399,
+      "content": "opencode db [query]     open an interactive sqlite3 shell or run a query                 [default]",
+      "note": "This is a CLI help-text snapshot. The 'sqlite3' string in the 'opencode db' command description would need to change if the db command help text is updated to say 'Postgres' instead of 'sqlite3'."
+    },
+
+    "5_upgrade_opentui_script": {
+      "location": "/Users/user/Developer/GitHub/opencode-desktop-dev/script/upgrade-opentui.ts",
+      "exists": true,
+      "total_lines": 193,
+      "package_json_reference": "package.json:17 — \"upgrade-opentui\": \"bun run script/upgrade-opentui.ts\"",
+      "purpose": "Upgrades @opentui/core, @opentui/keymap, @opentui/solid package versions across all package.json files and bun.lock",
+      "note": "This script upgrades the opentui (SolidJS TUI framework) packages — distinct from the 'tui' PluginKind concept but shares the 'tui'/opentui naming space."
+    },
+
+    "6_tui_plugin_source_files": {
+      "location": "packages/opencode/src/plugin/",
+      "dedicated_tui_files": "NONE — no files with 'tui' in filename under src/plugin/",
+      "files_referencing_tui_kind": [
+        {
+          "file": "packages/opencode/src/plugin/shared.ts",
+          "lines": [37, 38, 271, 274, 279, 280, 285, 286],
+          "role": "Defines PluginKind type with 'tui' member; reads tui export from plugin manifest; validates tui export type"
+        },
+        {
+          "file": "packages/opencode/src/plugin/install.ts",
+          "lines": [19, 34, 156, 157, 158, 161, 162, 340, 342],
+          "role": "Local Kind type ('server' | 'tui'); extracts tui export target; pushes tui targets; patchName() maps kind→'tui'"
+        },
+        {
+          "file": "packages/opencode/src/plugin/loader.ts",
+          "lines": [102, 168],
+          "role": "Comments only — 'server/tui entrypoint', 'tui plugin package that has no code entrypoint'"
+        }
+      ],
+      "additional_production_references": [
+        {
+          "file": "packages/opencode/src/config/config.ts",
+          "lines": [66, 70],
+          "role": "Legacy config migration: detects 'tui' key in copy, deletes copy.tui, warns about deprecation"
+        }
+      ]
+    },
+
+    "7_tui_test_fixtures_and_directories": {
+      "test_directories": [
+        {
+          "path": "packages/opencode/test/cli/tui/",
+          "file_count": 23,
+          "files": [
+            "plugin-loader.test.ts", "use-event.test.tsx", "plugin-toggle.test.ts",
+            "revert-diff.test.ts", "diff-viewer.test.tsx", "theme-store.test.ts",
+            "plugin-install.test.ts", "dialog-prompt.test.tsx", "app-lifecycle.test.ts",
+            "plugin-loader-entrypoint.test.ts", "transcript.test.ts", "plugin-add.test.ts",
+            "diff-viewer-file-tree.test.tsx", "diff-viewer-file-tree-utils.test.ts",
+            "plugin-loader-pure.test.ts", "plugin-lifecycle.test.ts", "thread.test.ts",
+            "thinking.test.ts", "keymap.test.tsx", "editor-context.test.tsx",
+            "editor-context-zed.test.ts", "prompt-submit-race.test.ts", "slot-replace.test.tsx"
+          ]
+        },
+        {
+          "path": "packages/opencode/test/cli/cmd/tui/",
+          "file_count": 11,
+          "files": [
+            "notifications.test.ts", "attention.test.ts", "sync-fixture.tsx",
+            "provider-options.test.ts", "prompt-traits.test.ts", "prompt-part.test.ts",
+            "prompt-history.test.ts", "dialog-workspace-create.test.ts",
+            "aggregate-failures.test.ts", "sync-undefined-messages.test.tsx", "sync.test.tsx"
+          ]
+        }
+      ],
+      "fixture_files": [
+        "packages/opencode/test/fixture/tui-runtime.ts",
+        "packages/opencode/test/fixture/tui-plugin.ts",
+        "packages/opencode/test/fixture/tui-sdk.ts"
+      ],
+      "other_test_files_referencing_tui": [
+        "test/config/tui.test.ts (92+ tui references)",
+        "test/config/config.test.ts:433,440,446",
+        "test/cli/run/scrollback.surface.test.ts (imports @opentui/core/testing)",
+        "test/cli/run/runtime.boot.test.ts (imports tui-runtime fixture)",
+        "test/cli/run/theme.test.ts (imports @opentui/core)",
+        "test/plugin/loader-shared.test.ts (tui in test names and kind params)",
+        "test/plugin/install.test.ts (extensive tui config tests — lines 72-550+)",
+        "test/plugin/install-concurrency.test.ts (tui concurrency tests)",
+        "test/server/httpapi-sdk.test.ts:810-823 (sdk.tui.* method calls)",
+        "test/server/session-select.test.ts (tui.selectSession endpoint)",
+        "test/server/httpapi-exercise/runtime.ts (Tui shared module)",
+        "test/server/httpapi-exercise/types.ts (tuiRequest)",
+        "test/server/httpapi-exercise/runner.ts (tuiRequest)",
+        "test/server/httpapi-exercise/index.ts (lines 1260-1310, /tui/* route exercises)"
+      ],
+      "total_unique_test_files_touching_tui": 51
+    },
+
+    "8_other_plugin_kind_tui_references": {
+      "dot_notation_references": "NONE — PluginKind is a string literal union, not an enum. No PluginKind.tui or PluginKind.Tui patterns exist.",
+      "string_literal_tui_in_production": [
+        "plugin/shared.ts:38 — type member",
+        "plugin/shared.ts:271 — detection guard",
+        "plugin/shared.ts:274 — export extraction",
+        "plugin/shared.ts:279-286 — validation",
+        "plugin/install.ts:19 — local Kind type",
+        "plugin/install.ts:34 — PatchDeps type",
+        "plugin/install.ts:156-162 — target extraction and push",
+        "plugin/install.ts:340-342 — patchName() mapping",
+        "config/config.ts:66 — legacy key detection",
+        "config/config.ts:70 — legacy key deletion"
+      ]
+    },
+
+    "9_sqlite_callers_across_codebase": {
+      "callers_of_sqlite_from_projectors_next": "NONE — function renamed to project(), all call sites updated",
+      "sqlite_references_in_storage": [
+        "storage/adapter.ts:52-56,65,123,125,132,387,409 — SQLiteTransactionOptions and comments",
+        "storage/adapter-dual-write.ts:4,25,28,57,58,73,74,85,92,115 — SQLite-primary dual-write adapter",
+        "storage/schema.duckdb.ts:110,193,409 — comments referencing SQLite/Postgres",
+        "storage/pipeline.ts:69 — comment referencing 'SQLite/Postgres'"
+      ],
+      "sqlite_references_in_sessions": [
+        "session/projectors.ts:18 — SQLITE_CONSTRAINT_FOREIGNKEY error code check (legacy Drizzle SQLite error code)"
+      ],
+      "sqlite_references_in_tests": [
+        "test/cli/help/__snapshots__/help-snapshots.test.ts.snap:399 — 'sqlite3 shell' in CLI help text"
+      ]
+    }
+  },
+
+  "smoking_guns": [
+    {
+      "severity": "high",
+      "finding": "projectors-next.ts sqlite→project rename already executed by concurrent lane",
+      "detail": "The function at line 29 was sqlite() in earlier grep but is now project(). Call site at line 119 also updated. CT-008 should check if this lane's work is already done or if there are remaining references elsewhere.",
+      "files": ["packages/opencode/src/session/projectors-next.ts:29,119"]
+    },
+    {
+      "severity": "high",
+      "finding": "PluginKind still carries 'tui' as union member despite @deprecated JSDoc",
+      "detail": "51 test files, 3 production files, and ~35+ lines of production code still handle 'tui' as a first-class plugin kind. The @deprecated JSDoc (line 37) is a soft signal — removal requires updating all consumers.",
+      "files": [
+        "packages/opencode/src/plugin/shared.ts:37-38",
+        "packages/opencode/src/plugin/install.ts:19,156-162",
+        "packages/opencode/src/config/config.ts:66,70"
+      ]
+    },
+    {
+      "severity": "medium",
+      "finding": "SQLiteTransactionOptions is @deprecated but still exported and used internally",
+      "detail": "Defined at adapter.ts:53-56 with deprecation JSDoc. Used at lines 123-132 in the local SQLite adapter. Part of TransactionOptions union (line 65). Namespace re-export at line 415 makes it available externally. No external consumers found.",
+      "files": ["packages/opencode/src/storage/adapter.ts:52-56,65,123-132,415"]
+    },
+    {
+      "severity": "medium",
+      "finding": "Snapshot file contains 'sqlite3' in CLI help text for 'opencode db' command",
+      "detail": "help-snapshots.test.ts.snap:399: 'open an interactive sqlite3 shell or run a query'. If the db backend is now Postgres-only, this help text is misleading.",
+      "files": ["packages/opencode/test/cli/help/__snapshots__/help-snapshots.test.ts.snap:399"]
+    },
+    {
+      "severity": "low",
+      "finding": "projectors.ts uses SQLITE_CONSTRAINT_FOREIGNKEY error code (Drizzle SQLite-specific)",
+      "detail": "At line 18: foreign() checks err.code === 'SQLITE_CONSTRAINT_FOREIGNKEY'. This is a Drizzle SQLite error code that won't match Postgres errors. Should be updated to Postgres error codes.",
+      "files": ["packages/opencode/src/session/projectors.ts:18"]
+    },
+    {
+      "severity": "low",
+      "finding": "opentui upgrade script and package dependencies are separate from PluginKind.tui",
+      "detail": "The opentui ecosystem (@opentui/core, keymap, solid) is the SolidJS TUI rendering framework — distinct from the 'tui' PluginKind concept. The upgrade-opentui.ts script manages framework version bumps. These are not legacy and should not be removed.",
+      "files": ["script/upgrade-opentui.ts", "package.json:17,40-42,53,134-136"]
+    }
+  ],
+
+  "classification": {
+    "clearly_legacy_and_removable": [
+      "SQLiteTransactionOptions type (adapter.ts:53-56) — only used internally, already @deprecated",
+      "SQLITE_CONSTRAINT_FOREIGNKEY error code check (projectors.ts:18) — should use Postgres error codes",
+      "Snapshot 'sqlite3' text (help-snapshots.test.ts.snap:399) — CLI help text"
+    ],
+    "legacy_but_with_active_consumers": [
+      "PluginKind 'tui' member (shared.ts:38) — 51 test files + 3 production files consume this",
+      "install.ts tui target logic (lines 156-162, 340-342) — active plugin install path",
+      "config.ts tui migration logic (lines 66,70) — still guards against legacy config keys"
+    ],
+    "already_addressed_by_concurrent_lane": [
+      "projectors-next.ts sqlite→project rename (lines 29,119) — already done"
+    ],
+    "not_legacy_do_not_touch": [
+      "opentui framework (@opentui/* packages) — active SolidJS TUI rendering framework",
+      "upgrade-opentui.ts script — active version management tool",
+      "test/cli/tui/ and test/cli/cmd/tui/ test directories — active TUI application tests"
+    ]
+  }
+}

@@ -77,6 +77,22 @@ export type McpServerEntry = { name: string; config: McpLocalConfig | McpRemoteC
 export type PluginTransportHandler = (channel: string, data: unknown) => void
 export type PluginTransportUnsub = () => void
 
+export type GitCheck = {
+  uncommitted: number
+  unpushed: number
+  mergeConflicts: number
+  branch: string | null
+}
+
+export interface DesktopCapabilities {
+  github: boolean
+  plugins: boolean
+  mcp: boolean
+  shellOpen: boolean
+  clipboardImage: boolean
+  notifications: boolean
+}
+
 export type PluginConfigEntry = {
   name: string
   path: string
@@ -165,6 +181,8 @@ export type ElectronAPI = {
   setLocalePreference: (locale: string) => Promise<void>
   getLocalePreference: () => Promise<string | null>
 
+  getGitStatus: () => Promise<GitCheck | null>
+  getCapabilities: () => Promise<DesktopCapabilities>
   getSafeModeDiagnostics: () => Promise<SafeModeDiagnostics>
   safeModeAction: (action: SafeModeAction) => Promise<void>
 

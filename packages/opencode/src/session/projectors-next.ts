@@ -26,7 +26,7 @@ function encodeMessageData(value: unknown): SessionMessageData {
   return encodeDateTimes(value) as SessionMessageData
 }
 
-function sqlite(db: Database.TxOrDb, sessionID: SessionID): SessionMessageUpdater.Adapter<void> {
+function project(db: Database.TxOrDb, sessionID: SessionID): SessionMessageUpdater.Adapter<void> {
   return {
     getCurrentAssistant() {
       return db
@@ -116,7 +116,7 @@ function sqlite(db: Database.TxOrDb, sessionID: SessionID): SessionMessageUpdate
 }
 
 function update(db: Database.TxOrDb, event: SessionEvent.Event) {
-  SessionMessageUpdater.update(sqlite(db, event.data.sessionID), event)
+  SessionMessageUpdater.update(project(db, event.data.sessionID), event)
 }
 
 export default [

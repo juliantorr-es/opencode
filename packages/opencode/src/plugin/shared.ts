@@ -34,6 +34,7 @@ export function parsePluginSpecifier(spec: string) {
 }
 
 export type PluginSource = "file" | "npm"
+/** @deprecated "tui" kind is legacy — use "server" or "desktop" instead. Kept for backward compatibility with existing plugin install/detection logic. */
 export type PluginKind = "server" | "tui" | "desktop"
 type PluginMode = "strict" | "detect"
 

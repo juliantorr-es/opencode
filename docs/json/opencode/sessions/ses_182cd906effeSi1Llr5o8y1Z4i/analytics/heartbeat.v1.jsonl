@@ -1,0 +1,22 @@
+{"at":"2026-05-31T08:43:41.244Z","session_id":"ses_182cd906effeSi1Llr5o8y1Z4i","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"\"main\""}
+{"at":"2026-05-31T08:43:41.249Z","session_id":"ses_182cd906effeSi1Llr5o8y1Z4i","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"\"main\""}
+{"at":"2026-05-31T08:43:42.086Z","session_id":"ses_182cd906effeSi1Llr5o8y1Z4i","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"\"main\\|\"entry\\|\"browser\\|\"exports\""}
+{"at":"2026-05-31T08:43:42.092Z","session_id":"ses_182cd906effeSi1Llr5o8y1Z4i","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"\"main\\|\"entry\\|\"browser\\|\"exports\""}
+{"at":"2026-05-31T08:43:43.138Z","session_id":"ses_182cd906effeSi1Llr5o8y1Z4i","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"\"sidecar\\|\\\"externalBin\""}
+{"at":"2026-05-31T08:43:43.151Z","session_id":"ses_182cd906effeSi1Llr5o8y1Z4i","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"\"sidecar\\|\\\"externalBin\""}
+{"at":"2026-05-31T08:43:43.718Z","session_id":"ses_182cd906effeSi1Llr5o8y1Z4i","agent":"cartographer","tool":"smart_find","phase":"started","detail":"tauri.conf.*"}
+{"at":"2026-05-31T08:43:43.741Z","session_id":"ses_182cd906effeSi1Llr5o8y1Z4i","agent":"cartographer","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T08:43:44.487Z","session_id":"ses_182cd906effeSi1Llr5o8y1Z4i","agent":"cartographer","tool":"smart_find","phase":"started","detail":"src-tauri"}
+{"at":"2026-05-31T08:43:44.510Z","session_id":"ses_182cd906effeSi1Llr5o8y1Z4i","agent":"cartographer","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T08:44:32.709Z","session_id":"ses_182cd906effeSi1Llr5o8y1Z4i","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Find tauri/config files for process entry point mapping"}
+{"at":"2026-05-31T08:44:32.722Z","session_id":"ses_182cd906effeSi1Llr5o8y1Z4i","agent":"cartographer","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T08:44:33.601Z","session_id":"ses_182cd906effeSi1Llr5o8y1Z4i","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Map top-level source structure"}
+{"at":"2026-05-31T08:44:33.602Z","session_id":"ses_182cd906effeSi1Llr5o8y1Z4i","agent":"cartographer","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T08:44:34.318Z","session_id":"ses_182cd906effeSi1Llr5o8y1Z4i","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Read desktop package.json for entry points"}
+{"at":"2026-05-31T08:44:34.318Z","session_id":"ses_182cd906effeSi1Llr5o8y1Z4i","agent":"cartographer","tool":"smart_bash","phase":"rerouted","detail":"→ read_source"}
+{"at":"2026-05-31T08:44:35.035Z","session_id":"ses_182cd906effeSi1Llr5o8y1Z4i","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Read app package.json for entry points"}
+{"at":"2026-05-31T08:44:35.035Z","session_id":"ses_182cd906effeSi1Llr5o8y1Z4i","agent":"cartographer","tool":"smart_bash","phase":"rerouted","detail":"→ read_source"}
+{"at":"2026-05-31T08:45:31.504Z","session_id":"ses_182cd906effeSi1Llr5o8y1Z4i","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"tauri\\.conf"}
+{"at":"2026-05-31T08:45:31.519Z","session_id":"ses_182cd906effeSi1Llr5o8y1Z4i","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"tauri\\.conf"}
+{"at":"2026-05-31T08:45:32.101Z","session_id":"ses_182cd906effeSi1Llr5o8y1Z4i","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"Cargo\\.toml"}
+{"at":"2026-05-31T08:45:32.112Z","session_id":"ses_182cd906effeSi1Llr5o8y1Z4i","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"Cargo\\.toml"}

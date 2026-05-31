@@ -1,0 +1,34 @@
+{"at":"2026-05-31T07:42:36.478Z","session_id":"ses_18303f7f0ffelf1876SGUYdriE","agent":"secretary","tool":"smart_grep","phase":"started","detail":"Effect\\.fork[^D]|Effect\\.forkDaemon|Effect\\.forkScoped|Effect\\.forkIn"}
+{"at":"2026-05-31T07:42:36.591Z","session_id":"ses_18303f7f0ffelf1876SGUYdriE","agent":"secretary","tool":"smart_grep","phase":"completed","detail":"Effect\\.fork[^D]|Effect\\.forkDaemon|Effect\\.forkScoped|Effect\\.forkIn"}
+{"at":"2026-05-31T07:42:36.983Z","session_id":"ses_18303f7f0ffelf1876SGUYdriE","agent":"secretary","tool":"smart_grep","phase":"started","detail":"Layer\\.effect|Layer\\.scoped|Layer\\.build|Layer\\.launch|Layer\\.effectDiscard"}
+{"at":"2026-05-31T07:42:37.006Z","session_id":"ses_18303f7f0ffelf1876SGUYdriE","agent":"secretary","tool":"smart_grep","phase":"completed","detail":"Layer\\.effect|Layer\\.scoped|Layer\\.build|Layer\\.launch|Layer\\.effectDiscard"}
+{"at":"2026-05-31T07:42:37.191Z","session_id":"ses_18303f7f0ffelf1876SGUYdriE","agent":"secretary","tool":"smart_grep","phase":"started","detail":"Ref\\.make|Ref\\.get|Ref\\.set|Ref\\.update|Ref\\.modify"}
+{"at":"2026-05-31T07:42:37.219Z","session_id":"ses_18303f7f0ffelf1876SGUYdriE","agent":"secretary","tool":"smart_grep","phase":"completed","detail":"Ref\\.make|Ref\\.get|Ref\\.set|Ref\\.update|Ref\\.modify"}
+{"at":"2026-05-31T07:42:37.538Z","session_id":"ses_18303f7f0ffelf1876SGUYdriE","agent":"secretary","tool":"smart_grep","phase":"started","detail":"Effect\\.interruptible|Effect\\.uninterruptible|Effect\\.interrupt\\b"}
+{"at":"2026-05-31T07:42:37.560Z","session_id":"ses_18303f7f0ffelf1876SGUYdriE","agent":"secretary","tool":"smart_grep","phase":"completed","detail":"Effect\\.interruptible|Effect\\.uninterruptible|Effect\\.interrupt\\b"}
+{"at":"2026-05-31T07:43:54.705Z","session_id":"ses_18303f7f0ffelf1876SGUYdriE","agent":"secretary","tool":"smart_grep","phase":"started","detail":"forkDaemon"}
+{"at":"2026-05-31T07:43:54.748Z","session_id":"ses_18303f7f0ffelf1876SGUYdriE","agent":"secretary","tool":"smart_grep","phase":"completed","detail":"forkDaemon"}
+{"at":"2026-05-31T07:44:38.341Z","session_id":"ses_18303f7f0ffelf1876SGUYdriE","agent":"secretary","tool":"smart_grep","phase":"started","detail":"Layer\\.effectDiscard"}
+{"at":"2026-05-31T07:44:38.364Z","session_id":"ses_18303f7f0ffelf1876SGUYdriE","agent":"secretary","tool":"smart_grep","phase":"completed","detail":"Layer\\.effectDiscard"}
+{"at":"2026-05-31T07:45:41.547Z","session_id":"ses_18303f7f0ffelf1876SGUYdriE","agent":"secretary","tool":"smart_grep","phase":"started","detail":"uninterruptibleMask|uninterruptible\\b"}
+{"at":"2026-05-31T07:45:41.553Z","session_id":"ses_18303f7f0ffelf1876SGUYdriE","agent":"secretary","tool":"smart_grep","phase":"completed","detail":"uninterruptibleMask|uninterruptible\\b"}
+{"at":"2026-05-31T07:46:06.462Z","session_id":"ses_18303f7f0ffelf1876SGUYdriE","agent":"secretary","tool":"smart_grep","phase":"started","detail":"uninterruptibleMask"}
+{"at":"2026-05-31T07:46:06.467Z","session_id":"ses_18303f7f0ffelf1876SGUYdriE","agent":"secretary","tool":"smart_grep","phase":"completed","detail":"uninterruptibleMask"}
+{"at":"2026-05-31T07:48:05.337Z","session_id":"ses_18303f7f0ffelf1876SGUYdriE","agent":"secretary","tool":"smart_grep","phase":"started","detail":"forkDaemon|forkScoped|ContextInvalidationBus"}
+{"at":"2026-05-31T07:48:05.345Z","session_id":"ses_18303f7f0ffelf1876SGUYdriE","agent":"secretary","tool":"smart_grep","phase":"completed","detail":"forkDaemon|forkScoped|ContextInvalidationBus"}
+{"at":"2026-05-31T07:48:32.407Z","session_id":"ses_18303f7f0ffelf1876SGUYdriE","agent":"secretary","tool":"smart_sd","phase":"completed","detail":"1 match in packages/opencode/src/context/packet.ts"}
+{"at":"2026-05-31T07:49:22.574Z","session_id":"ses_18303f7f0ffelf1876SGUYdriE","agent":"secretary","tool":"smart_grep","phase":"started","detail":"forkDaemon"}
+{"at":"2026-05-31T07:49:22.601Z","session_id":"ses_18303f7f0ffelf1876SGUYdriE","agent":"secretary","tool":"smart_grep","phase":"completed","detail":"forkDaemon"}
+{"at":"2026-05-31T07:50:21.097Z","session_id":"ses_18303f7f0ffelf1876SGUYdriE","agent":"secretary","tool":"smart_sd","phase":"completed","detail":"1 match in packages/opencode/src/context/packet.ts"}
+{"at":"2026-05-31T07:50:49.249Z","session_id":"ses_18303f7f0ffelf1876SGUYdriE","agent":"secretary","tool":"smart_bun","phase":"started","detail":"typecheck"}
+{"at":"2026-05-31T07:51:05.649Z","session_id":"ses_18303f7f0ffelf1876SGUYdriE","agent":"secretary","tool":"smart_bun","phase":"failed","detail":"typecheck exit=2"}
+{"at":"2026-05-31T07:52:54.185Z","session_id":"ses_18303f7f0ffelf1876SGUYdriE","agent":"secretary","tool":"smart_grep","phase":"started","detail":"uninterruptibleMask"}
+{"at":"2026-05-31T07:52:54.190Z","session_id":"ses_18303f7f0ffelf1876SGUYdriE","agent":"secretary","tool":"smart_grep","phase":"completed","detail":"uninterruptibleMask"}
+{"at":"2026-05-31T07:53:31.370Z","session_id":"ses_18303f7f0ffelf1876SGUYdriE","agent":"secretary","tool":"smart_bun","phase":"started","detail":"typecheck"}
+{"at":"2026-05-31T07:53:48.808Z","session_id":"ses_18303f7f0ffelf1876SGUYdriE","agent":"secretary","tool":"smart_bun","phase":"failed","detail":"typecheck exit=2"}
+{"at":"2026-05-31T07:54:22.112Z","session_id":"ses_18303f7f0ffelf1876SGUYdriE","agent":"secretary","tool":"smart_grep","phase":"started","detail":"Effect\\.fork|Effect\\.forkDaemon|Effect\\.forkScoped|Effect\\.forkIn"}
+{"at":"2026-05-31T07:54:22.124Z","session_id":"ses_18303f7f0ffelf1876SGUYdriE","agent":"secretary","tool":"smart_grep","phase":"completed","detail":"Effect\\.fork|Effect\\.forkDaemon|Effect\\.forkScoped|Effect\\.forkIn"}
+{"at":"2026-05-31T07:54:22.375Z","session_id":"ses_18303f7f0ffelf1876SGUYdriE","agent":"secretary","tool":"smart_grep","phase":"started","detail":"Layer\\.effect|Layer\\.scoped|Layer\\.effectDiscard"}
+{"at":"2026-05-31T07:54:22.384Z","session_id":"ses_18303f7f0ffelf1876SGUYdriE","agent":"secretary","tool":"smart_grep","phase":"completed","detail":"Layer\\.effect|Layer\\.scoped|Layer\\.effectDiscard"}
+{"at":"2026-05-31T07:55:19.784Z","session_id":"ses_18303f7f0ffelf1876SGUYdriE","agent":"secretary","tool":"smart_git","phase":"started","detail":"diff"}
+{"at":"2026-05-31T07:55:19.900Z","session_id":"ses_18303f7f0ffelf1876SGUYdriE","agent":"secretary","tool":"smart_git","phase":"completed","detail":"diff exit=0"}

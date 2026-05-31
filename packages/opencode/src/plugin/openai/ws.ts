@@ -76,7 +76,7 @@ export function connectResponsesWebSocket(options: ConnectResponsesWebSocketOpti
     const timeout = options.timeout
       ? setTimeout(() => {
           cleanup()
-          socket.on("error", (err) => console.warn("[ws] socket error after timeout:", err))
+          socket.once("error", (err) => console.warn("[ws] socket error after timeout:", err))
           socket.terminate()
           reject(new Error("WebSocket connect timed out"))
         }, options.timeout)
@@ -96,7 +96,7 @@ export function connectResponsesWebSocket(options: ConnectResponsesWebSocketOpti
     }
 
     function onError(error: unknown) {
-      socket.on("error", (err) => console.warn("[ws] socket error during cleanup:", err))
+      socket.once("error", (err) => console.warn("[ws] socket error during cleanup:", err))
       cleanup()
       reject(error instanceof Error ? error : new Error(errorMessage(error), { cause: error }))
     }
@@ -108,7 +108,7 @@ export function connectResponsesWebSocket(options: ConnectResponsesWebSocketOpti
 
     function onAbort() {
       cleanup()
-      socket.on("error", (err) => console.warn("[ws] socket error after abort:", err))
+      socket.once("error", (err) => console.warn("[ws] socket error after abort:", err))
       socket.terminate()
       reject(abortError(options.signal))
     }
@@ -137,7 +137,7 @@ export function streamResponsesWebSocket(options: StreamResponsesWebSocketOption
   }
 
   function terminateSocket(target = socket) {
-    target.on("error", (err) => console.warn("[ws] socket error during terminate:", err))
+    target.once("error", (err) => console.warn("[ws] socket error during terminate:", err))
     target.terminate()
   }
 

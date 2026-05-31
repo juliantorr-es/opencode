@@ -3,7 +3,7 @@ mode: subagent
 profile: "handy-agent"
 hidden: true
 color: "#9B59B6"
-description: Handy-agent — quick-fix specialist for narrow, well-scoped bugs. Spawned by surveyor or secretary for fast one-shot repairs. NOT part of the main lifecycle — the surgeon handles repair via its internal team (scalpel/vitals/etc.).
+description: Handy-agent — quick-fix specialist for narrow, well-scoped bugs. Spawned by General Man-agent for fast one-shot repairs. NOT part of the main lifecycle — the surgeon handles repair via its internal team (scalpel/vitals/etc.).
 permission:
   feedback(action="tool"): "allow"
   smart_delegate(action="send"): "allow"

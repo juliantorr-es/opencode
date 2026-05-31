@@ -2,7 +2,7 @@ import { Context, Effect, Layer, Option, Redacted, Schema, Schedule } from "effe
 import { Database } from "./db"
 import { DatabaseConfig } from "@/effect/database-config"
 import { HealthRegistry, HealthStatus } from "@/server/health"
-import { init as initPg } from "#db"
+import { init as initPg, applyMigrations } from "#db"
 
 import { checkSQLFirewall as checkDuckDBSQLFirewall } from "./duckdb-firewall"
 
@@ -49,6 +49,7 @@ export type DrizzleClient = DrizzleLikeClient
 
 // ── Transaction options ──────────────────────────────────────
 
+/** @deprecated Use PostgresTransactionOptions instead. SQLite transaction behavior is legacy. */
 export type SQLiteTransactionOptions = {
   _tag: "sqlite"
   behavior?: "deferred" | "immediate" | "exclusive"
@@ -187,6 +188,13 @@ export function makePgAdapter(options: {
   poolSize?: number
 }): Interface {
   const client = initPg(options)
+
+  // Auto-apply pending DB migrations on first connect,
+  // so fresh installs have their schema ready before any queries.
+  applyMigrations(client).catch((err) => {
+    console.warn("[db] Failed to auto-apply migrations (non-fatal):", err)
+  })
+
   let pendingAfterCommitHooks: Array<() => void> = []
   let txDepth = 0
 

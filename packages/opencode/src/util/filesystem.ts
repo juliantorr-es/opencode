@@ -41,7 +41,12 @@ export async function readText(p: string): Promise<string> {
 }
 
 export async function readJson<T = unknown>(p: string): Promise<T> {
-  return JSON.parse(await readFile(p, "utf-8"))
+  const content = await readFile(p, "utf-8")
+  try {
+    return JSON.parse(content)
+  } catch (cause) {
+    throw new Error(`Failed to parse JSON from ${p}: ${(cause as Error).message}`)
+  }
 }
 
 export async function readBytes(p: string): Promise<Buffer> {

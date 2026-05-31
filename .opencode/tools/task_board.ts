@@ -5,20 +5,20 @@ import { existsSync, readdirSync, readFileSync } from "node:fs"
 function resolvePath(worktree: string, p: string): string { return resolve(worktree, p) }
 
 export default tool({
-  description: "Fleet dashboard — running tasks, heartbeat phase timelines, artifact summaries, and alerts. Auto-scoped: secretary sees their subagents, orchestrator sees all lanes.",
+  description: "Fleet dashboard — running tasks, heartbeat phase timelines, artifact summaries, and alerts. Auto-scoped: lifecycle agents see their own lane, GM sees all lanes.",
   args: {
     scope: tool.schema.string().optional().describe("'lane' (only my session), 'all' (everything), or omit for auto-detect based on caller"),
+    max_age_minutes: tool.schema.number().optional().describe("Only show sessions active within the last N minutes. 0 = show all (default)."),
   },
   async execute(args, context) {
     const sessionsBase = resolvePath(context.worktree, "docs/json/opencode/sessions")
     const coordPath = resolvePath(context.worktree, "docs/json/opencode/coordination/messages.v1.jsonl")
     const now = Date.now()
 
-    // Determine scope: secretary = lane, orchestrator = all
-    const maxAge = args.max_age_minutes ?? (context.agent === "secretary" ? 60 : 0)
-    const isSecretary = context.agent === "secretary"
-    const isOrchestrator = context.agent === "orchestrator"
-    const scope = args.scope || (isSecretary ? "lane" : "all")
+    // Determine scope: GM sees all, lifecycle agents see their own session
+    const isGM = context.agent === "general-man-agent" || context.agent === "orchestrator"
+    const scope = args.scope || (isGM ? "all" : "lane")
+    const maxAge = args.max_age_minutes ?? 0
 
     // Read heartbeats grouped by session
     const sessions: Record<string, { agent: string; phases: any[]; artifacts: any }> = {}
@@ -87,7 +87,7 @@ export default tool({
       const elapsed = firstAt ? Math.floor((now - new Date(firstAt).getTime()) / 1000) : 0
       const isRunning = !["completed", "failed"].includes(last?.phase)
       const lastHbAgo = lastAt ? Math.floor((now - new Date(lastAt).getTime()) / 1000) : 999
-      const stale = isRunning && lastHbAgo > 60
+      const stale = isRunning && lastHbAgo > 180
 
       if (stale) alerts.push({ severity: "warning", session: sid.slice(0, 16), agent: data.agent, message: `No heartbeat for ${lastHbAgo}s` })
       if (isRunning && elapsed > 120 && !stale) alerts.push({ severity: "info", session: sid.slice(0, 16), agent: data.agent, message: `Active for ${elapsed}s` })
@@ -118,14 +118,14 @@ export default tool({
             if (msg.kind === "handoff") {
               const body = typeof msg.body === "string" ? (() => { try { return JSON.parse(msg.body) } catch { return {} } })() : msg.body
               const laneId = body?.lane_id || "unknown"
-              if (!lanes[laneId]) lanes[laneId] = { secretaries: [], handoffs: 0 }
+              if (!lanes[laneId]) lanes[laneId] = { agents: [], handoffs: 0 }
               lanes[laneId].handoffs++
             }
-            if (msg.kind === "delegation" && msg.agent === "secretary") {
+            if (msg.kind === "delegation") {
               const body = typeof msg.body === "string" ? (() => { try { return JSON.parse(msg.body) } catch { return {} } })() : msg.body
               const laneId = body?.lane_id || msg.subject?.match(/Lane (\S+)/)?.[1] || "unknown"
-              if (!lanes[laneId]) lanes[laneId] = { secretaries: [], handoffs: 0 }
-              lanes[laneId].secretaries.push(msg.session_id?.slice(0, 16) || "?")
+              if (!lanes[laneId]) lanes[laneId] = { agents: [], handoffs: 0 }
+              lanes[laneId].agents.push({ agent: msg.recipient, session: msg.session_id?.slice(0, 16) || "?" })
             }
           } catch {}
         }
@@ -178,21 +178,17 @@ export default tool({
       alerts.push({ severity: "info", session: sid.slice(0, 16), message: "Delegation abandoned — task() was never called." })
     }
 
-    if (isOrchestrator && Object.keys(lanes).length > 0) {
+    if (isGM && Object.keys(lanes).length > 0) {
       result.lanes = Object.entries(lanes).map(([id, l]) => ({
         lane_id: id,
-        secretaries: l.secretaries.length,
+        agents: l.agents.length,
         handoffs: l.handoffs,
         status: l.handoffs > 0 ? "completed" : "running",
       }))
     }
 
-    if (isSecretary && running.length === 0 && done.length > 0) {
-      result.hint = "All your subagents are done. Time to verify and hand off to the orchestrator."
-    } else if (isSecretary && staleList.length > 0) {
-      result.hint = `${staleList.length} subagent(s) appear stalled. Consider respawning them.`
-    } else if (isOrchestrator && staleList.length > 0) {
-      result.hint = `${staleList.length} session(s) with no recent heartbeat. Check if secretaries are still alive.`
+    if (staleList.length > 0) {
+      result.hint = `${staleList.length} session(s) with no recent heartbeat. Check if agents are still alive. Consider respawning.`
     }
 
     return JSON.stringify(result, null, 2)

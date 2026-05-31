@@ -1,0 +1,28 @@
+{"at":"2026-05-31T08:43:12.501Z","session_id":"ses_182ccd42affemF0EKPR51bwzbm","agent":"cartographer","tool":"smart_find","phase":"started","detail":"turbo.json"}
+{"at":"2026-05-31T08:43:12.523Z","session_id":"ses_182ccd42affemF0EKPR51bwzbm","agent":"cartographer","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T08:43:13.277Z","session_id":"ses_182ccd42affemF0EKPR51bwzbm","agent":"cartographer","tool":"smart_find","phase":"started","detail":"*.yml"}
+{"at":"2026-05-31T08:43:13.301Z","session_id":"ses_182ccd42affemF0EKPR51bwzbm","agent":"cartographer","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T08:44:03.754Z","session_id":"ses_182ccd42affemF0EKPR51bwzbm","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Find build config files across the repo"}
+{"at":"2026-05-31T08:44:03.754Z","session_id":"ses_182ccd42affemF0EKPR51bwzbm","agent":"cartographer","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T08:44:04.716Z","session_id":"ses_182ccd42affemF0EKPR51bwzbm","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Find GitHub Actions workflows"}
+{"at":"2026-05-31T08:44:04.717Z","session_id":"ses_182ccd42affemF0EKPR51bwzbm","agent":"cartographer","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T08:44:05.554Z","session_id":"ses_182ccd42affemF0EKPR51bwzbm","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Find all package.json files for build scripts"}
+{"at":"2026-05-31T08:44:05.554Z","session_id":"ses_182ccd42affemF0EKPR51bwzbm","agent":"cartographer","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T08:44:59.556Z","session_id":"ses_182ccd42affemF0EKPR51bwzbm","agent":"cartographer","tool":"smart_find","phase":"started","detail":"turbo.json"}
+{"at":"2026-05-31T08:44:59.585Z","session_id":"ses_182ccd42affemF0EKPR51bwzbm","agent":"cartographer","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T08:45:00.268Z","session_id":"ses_182ccd42affemF0EKPR51bwzbm","agent":"cartographer","tool":"smart_find","phase":"started","detail":"*.yml"}
+{"at":"2026-05-31T08:45:00.289Z","session_id":"ses_182ccd42affemF0EKPR51bwzbm","agent":"cartographer","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T08:45:01.117Z","session_id":"ses_182ccd42affemF0EKPR51bwzbm","agent":"cartographer","tool":"smart_find","phase":"started","detail":"package.json"}
+{"at":"2026-05-31T08:45:01.143Z","session_id":"ses_182ccd42affemF0EKPR51bwzbm","agent":"cartographer","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T08:45:02.077Z","session_id":"ses_182ccd42affemF0EKPR51bwzbm","agent":"cartographer","tool":"smart_find","phase":"started","detail":"vite.config.*"}
+{"at":"2026-05-31T08:45:02.096Z","session_id":"ses_182ccd42affemF0EKPR51bwzbm","agent":"cartographer","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T08:46:01.675Z","session_id":"ses_182ccd42affemF0EKPR51bwzbm","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Check root build configs exist"}
+{"at":"2026-05-31T08:46:01.675Z","session_id":"ses_182ccd42affemF0EKPR51bwzbm","agent":"cartographer","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T08:46:02.457Z","session_id":"ses_182ccd42affemF0EKPR51bwzbm","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"List CI workflow files"}
+{"at":"2026-05-31T08:46:02.458Z","session_id":"ses_182ccd42affemF0EKPR51bwzbm","agent":"cartographer","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T08:46:03.286Z","session_id":"ses_182ccd42affemF0EKPR51bwzbm","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"List all package.json files"}
+{"at":"2026-05-31T08:46:03.286Z","session_id":"ses_182ccd42affemF0EKPR51bwzbm","agent":"cartographer","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T08:46:04.113Z","session_id":"ses_182ccd42affemF0EKPR51bwzbm","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"List docs directory"}
+{"at":"2026-05-31T08:46:04.113Z","session_id":"ses_182ccd42affemF0EKPR51bwzbm","agent":"cartographer","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T08:46:04.889Z","session_id":"ses_182ccd42affemF0EKPR51bwzbm","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"List scripts directory"}
+{"at":"2026-05-31T08:46:04.925Z","session_id":"ses_182ccd42affemF0EKPR51bwzbm","agent":"cartographer","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}

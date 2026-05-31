@@ -1,4 +1,4 @@
-import { Context, Duration, Effect, Layer, Ref, Stream } from "effect"
+import { Context, Duration, Effect, Fiber, Layer, Ref, Scope, Stream } from "effect"
 import { serviceUse } from "@opencode-ai/core/effect/service-use"
 import { Authority } from "@/agent"
 import { Scratchpad } from "@/agent"
@@ -471,16 +471,13 @@ export const layer = Layer.effect(
     const invalidationBus = yield* ContextInvalidationBus
 
     // ── Working set ranking invalidation subscription ─────
-    yield* Effect.forkDaemon(
-      Effect.scoped(
-        Effect.gen(function* () {
-          const invalidationStream = yield* invalidationBus.subscribe("working_set_ranking")
-          yield* Stream.runForEach(invalidationStream, () =>
-            Effect.sync(() => log.debug("working set ranking invalidated — next assembleL2 will re-query DuckDB")),
-          )
-        }),
-      ),
-    )
+    const scope = yield* Scope.Scope
+    yield* (Effect.gen(function* () {
+      const invalidationStream = yield* invalidationBus.subscribe("working_set_ranking")
+      yield* Stream.runForEach(invalidationStream, () =>
+        Effect.sync(() => log.debug("working set ranking invalidated — next assembleL2 will re-query DuckDB")),
+      )
+    })).pipe(Effect.forkIn(scope))
 
     return Service.of({
       assembleL1,

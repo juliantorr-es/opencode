@@ -2,6 +2,7 @@ import { Effect, Schema } from "effect"
 import * as Tool from "./tool"
 import { AppFileSystem } from "@opencode-ai/core/filesystem"
 import { InstanceState } from "@/effect/instance-state"
+import path from "path"
 import DESCRIPTION from "./read-messages.txt"
 
 const Parameters = Schema.Struct({
@@ -76,7 +77,7 @@ export const ReadMessagesTool = Tool.define(
       ) =>
         Effect.gen(function* () {
           const instance = yield* InstanceState.context
-          const messagesDir = `${instance.directory}/.rig/messages`
+          const messagesDir = path.join(instance.directory, ".rig", "messages")
           const ledgerFile = `${messagesDir}/${params.recipient}.jsonl`
           const readStateFile = `${messagesDir}/.read_state.json`
           const heartbeatFile = `${messagesDir}/${String(ctx.sessionID)}.jsonl`

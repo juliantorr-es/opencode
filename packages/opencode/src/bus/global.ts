@@ -15,12 +15,17 @@ class GlobalBusEmitter extends EventEmitter<{
     if (event.payload && typeof event.payload === "object" && !("id" in event.payload)) {
       event.payload.id = event.payload.syncEvent?.id ?? Identifier.create("evt", "ascending")
     }
-    try {
-      return super.emit(eventName, event)
-    } catch (error) {
-      console.error("[GlobalBus] subscriber error:", error)
-      return true
+    // Invoke each listener individually so one throw doesn't kill remaining listeners
+    const listeners = this.rawListeners(eventName) as Array<(event: GlobalEvent) => void>
+    if (listeners.length === 0) return false
+    for (const listener of listeners) {
+      try {
+        listener(event)
+      } catch (error) {
+        console.error("[GlobalBus] subscriber error:", error)
+      }
     }
+    return true
   }
 }
 

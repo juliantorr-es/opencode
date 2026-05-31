@@ -1,0 +1,30 @@
+{"at":"2026-05-31T08:42:50.018Z","session_id":"ses_182cd8467ffeJcBsWcsj7ao4Mo","agent":"surveyor","tool":"smart_find","phase":"started","detail":"*plugin*"}
+{"at":"2026-05-31T08:42:50.051Z","session_id":"ses_182cd8467ffeJcBsWcsj7ao4Mo","agent":"surveyor","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T08:42:50.997Z","session_id":"ses_182cd8467ffeJcBsWcsj7ao4Mo","agent":"surveyor","tool":"smart_find","phase":"started","detail":"*mcp*"}
+{"at":"2026-05-31T08:42:51.042Z","session_id":"ses_182cd8467ffeJcBsWcsj7ao4Mo","agent":"surveyor","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T08:42:51.713Z","session_id":"ses_182cd8467ffeJcBsWcsj7ao4Mo","agent":"surveyor","tool":"smart_find","phase":"started","detail":"*manifest*"}
+{"at":"2026-05-31T08:42:51.764Z","session_id":"ses_182cd8467ffeJcBsWcsj7ao4Mo","agent":"surveyor","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T08:42:52.410Z","session_id":"ses_182cd8467ffeJcBsWcsj7ao4Mo","agent":"surveyor","tool":"smart_find","phase":"started","detail":"*capability*"}
+{"at":"2026-05-31T08:42:52.436Z","session_id":"ses_182cd8467ffeJcBsWcsj7ao4Mo","agent":"surveyor","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T08:42:53.234Z","session_id":"ses_182cd8467ffeJcBsWcsj7ao4Mo","agent":"surveyor","tool":"smart_find","phase":"started","detail":"*permission*"}
+{"at":"2026-05-31T08:42:53.264Z","session_id":"ses_182cd8467ffeJcBsWcsj7ao4Mo","agent":"surveyor","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T08:43:25.226Z","session_id":"ses_182cd8467ffeJcBsWcsj7ao4Mo","agent":"surveyor","tool":"smart_grep","phase":"started","detail":"plugin"}
+{"at":"2026-05-31T08:43:25.256Z","session_id":"ses_182cd8467ffeJcBsWcsj7ao4Mo","agent":"surveyor","tool":"smart_grep","phase":"completed","detail":"plugin"}
+{"at":"2026-05-31T08:43:25.934Z","session_id":"ses_182cd8467ffeJcBsWcsj7ao4Mo","agent":"surveyor","tool":"smart_bash","phase":"started","detail":"List all plugin source files"}
+{"at":"2026-05-31T08:43:25.935Z","session_id":"ses_182cd8467ffeJcBsWcsj7ao4Mo","agent":"surveyor","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T08:43:26.664Z","session_id":"ses_182cd8467ffeJcBsWcsj7ao4Mo","agent":"surveyor","tool":"smart_bash","phase":"started","detail":"Find MCP-related files"}
+{"at":"2026-05-31T08:43:26.664Z","session_id":"ses_182cd8467ffeJcBsWcsj7ao4Mo","agent":"surveyor","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T08:43:27.904Z","session_id":"ses_182cd8467ffeJcBsWcsj7ao4Mo","agent":"surveyor","tool":"smart_bash","phase":"started","detail":"Find manifest, capability, permission files"}
+{"at":"2026-05-31T08:43:27.905Z","session_id":"ses_182cd8467ffeJcBsWcsj7ao4Mo","agent":"surveyor","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T08:43:28.744Z","session_id":"ses_182cd8467ffeJcBsWcsj7ao4Mo","agent":"surveyor","tool":"smart_bash","phase":"started","detail":"List SDK source files"}
+{"at":"2026-05-31T08:43:28.744Z","session_id":"ses_182cd8467ffeJcBsWcsj7ao4Mo","agent":"surveyor","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T08:44:15.039Z","session_id":"ses_182cd8467ffeJcBsWcsj7ao4Mo","agent":"surveyor","tool":"smart_grep","phase":"started","detail":"."}
+{"at":"2026-05-31T08:44:15.050Z","session_id":"ses_182cd8467ffeJcBsWcsj7ao4Mo","agent":"surveyor","tool":"smart_grep","phase":"completed","detail":"."}
+{"at":"2026-05-31T08:44:16.011Z","session_id":"ses_182cd8467ffeJcBsWcsj7ao4Mo","agent":"surveyor","tool":"smart_grep","phase":"started","detail":"."}
+{"at":"2026-05-31T08:44:16.017Z","session_id":"ses_182cd8467ffeJcBsWcsj7ao4Mo","agent":"surveyor","tool":"smart_grep","phase":"completed","detail":"."}
+{"at":"2026-05-31T08:44:17.260Z","session_id":"ses_182cd8467ffeJcBsWcsj7ao4Mo","agent":"surveyor","tool":"smart_grep","phase":"started","detail":"plugin"}
+{"at":"2026-05-31T08:44:17.280Z","session_id":"ses_182cd8467ffeJcBsWcsj7ao4Mo","agent":"surveyor","tool":"smart_grep","phase":"completed","detail":"plugin"}
+{"at":"2026-05-31T08:44:17.965Z","session_id":"ses_182cd8467ffeJcBsWcsj7ao4Mo","agent":"surveyor","tool":"smart_grep","phase":"started","detail":"plugin"}
+{"at":"2026-05-31T08:44:17.972Z","session_id":"ses_182cd8467ffeJcBsWcsj7ao4Mo","agent":"surveyor","tool":"smart_grep","phase":"completed","detail":"plugin"}
+{"at":"2026-05-31T08:44:18.824Z","session_id":"ses_182cd8467ffeJcBsWcsj7ao4Mo","agent":"surveyor","tool":"smart_grep","phase":"started","detail":"permission|capability|sandbox|allowlist|blocklist"}
+{"at":"2026-05-31T08:44:18.884Z","session_id":"ses_182cd8467ffeJcBsWcsj7ao4Mo","agent":"surveyor","tool":"smart_grep","phase":"completed","detail":"permission|capability|sandbox|allowlist|blocklist"}

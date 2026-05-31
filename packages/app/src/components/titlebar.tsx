@@ -78,7 +78,7 @@ export function Titlebar(props: { update?: TitlebarUpdate }) {
 
   const mac = createMemo(() => platform.platform === "desktop" && platform.os === "macos")
   const windows = createMemo(() => platform.platform === "desktop" && platform.os === "windows")
-  const electronWindows = createMemo(() => windows() && !tauriApi())
+  const desktopWindows = createMemo(() => windows() && !tauriApi())
   const linux = createMemo(() => platform.platform === "desktop" && platform.os === "linux")
   const web = createMemo(() => platform.platform === "web")
   const zoom = () => platform.webviewZoom?.() ?? 1
@@ -228,11 +228,11 @@ export function Titlebar(props: { update?: TitlebarUpdate }) {
       style={{
         "min-height": minHeight(),
         "padding-left": mac() ? `${84 / zoom()}px` : 0,
-        width: electronWindows() ? `env(titlebar-area-width, calc(100vw - ${windowsControlsWidth()}))` : undefined,
-        "max-width": electronWindows()
+        width: desktopWindows() ? `env(titlebar-area-width, calc(100vw - ${windowsControlsWidth()}))` : undefined,
+        "max-width": desktopWindows()
           ? `env(titlebar-area-width, calc(100vw - ${windowsControlsWidth()}))`
           : undefined,
-        "align-self": electronWindows() ? "flex-start" : undefined,
+        "align-self": desktopWindows() ? "flex-start" : undefined,
       }}
       data-tauri-drag-region
       onMouseDown={drag}
@@ -519,7 +519,7 @@ export function Titlebar(props: { update?: TitlebarUpdate }) {
                   <div class="min-w-0 flex-1" />
                 </div>
                 <TitlebarV2Right state={v2RightState()} />
-                <Show when={windows() && !electronWindows()}>
+                <Show when={windows() && !desktopWindows()}>
                   <div data-tauri-decorum-tb class="flex flex-row" />
                 </Show>
               </div>

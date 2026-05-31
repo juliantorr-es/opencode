@@ -24,6 +24,7 @@ const PLATFORM_KEY = `${process.platform}-${process.arch}`
   .replace("darwin-arm64", "arm64-darwin")
   .replace("darwin-x64", "x64-darwin")
   .replace("linux-x64", "x64-linux")
+  .replace("linux-arm64", "arm64-linux")
   .replace("win32-x64", "x64-windows")
   .replace("win32-arm64", "arm64-windows")
 
@@ -36,6 +37,7 @@ const BINARIES: BinaryDescriptor[] = [
     platforms: {
       "arm64-darwin": { artifact: "ripgrep-15.1.0-aarch64-apple-darwin.tar.gz", binaryPath: `ripgrep-15.1.0-aarch64-apple-darwin/rg` },
       "x64-darwin": { artifact: "ripgrep-15.1.0-x86_64-apple-darwin.tar.gz", binaryPath: `ripgrep-15.1.0-x86_64-apple-darwin/rg` },
+      "arm64-linux": { artifact: "ripgrep-15.1.0-aarch64-unknown-linux-gnu.tar.gz", binaryPath: `ripgrep-15.1.0-aarch64-unknown-linux-gnu/rg` },
       "x64-linux": { artifact: "ripgrep-15.1.0-x86_64-unknown-linux-gnu.tar.gz", binaryPath: `ripgrep-15.1.0-x86_64-unknown-linux-gnu/rg` },
       "x64-windows": { artifact: "ripgrep-15.1.0-x86_64-pc-windows-msvc.tar.gz", binaryPath: `ripgrep-15.1.0-x86_64-pc-windows-msvc/rg.exe` },
     },
@@ -48,6 +50,7 @@ const BINARIES: BinaryDescriptor[] = [
     platforms: {
       "arm64-darwin": { artifact: "fd-v10.2.0-aarch64-apple-darwin.tar.gz", binaryPath: `fd-v10.2.0-aarch64-apple-darwin/fd` },
       "x64-darwin": { artifact: "fd-v10.2.0-x86_64-apple-darwin.tar.gz", binaryPath: `fd-v10.2.0-x86_64-apple-darwin/fd` },
+      "arm64-linux": { artifact: "fd-v10.2.0-aarch64-unknown-linux-gnu.tar.gz", binaryPath: `fd-v10.2.0-aarch64-unknown-linux-gnu/fd` },
       "x64-linux": { artifact: "fd-v10.2.0-x86_64-unknown-linux-gnu.tar.gz", binaryPath: `fd-v10.2.0-x86_64-unknown-linux-gnu/fd` },
       "x64-windows": { artifact: "fd-v10.2.0-x86_64-pc-windows-msvc.zip", binaryPath: `fd.exe` },
     },
@@ -60,6 +63,7 @@ const BINARIES: BinaryDescriptor[] = [
     platforms: {
       "arm64-darwin": { artifact: "bat-v0.25.0-aarch64-apple-darwin.tar.gz", binaryPath: `bat-v0.25.0-aarch64-apple-darwin/bat` },
       "x64-darwin": { artifact: "bat-v0.25.0-x86_64-apple-darwin.tar.gz", binaryPath: `bat-v0.25.0-x86_64-apple-darwin/bat` },
+      "arm64-linux": { artifact: "bat-v0.25.0-aarch64-unknown-linux-gnu.tar.gz", binaryPath: `bat-v0.25.0-aarch64-unknown-linux-gnu/bat` },
       "x64-linux": { artifact: "bat-v0.25.0-x86_64-unknown-linux-gnu.tar.gz", binaryPath: `bat-v0.25.0-x86_64-unknown-linux-gnu/bat` },
       "x64-windows": { artifact: "bat-v0.25.0-x86_64-pc-windows-msvc.zip", binaryPath: `bat.exe` },
     },
@@ -72,7 +76,9 @@ const BINARIES: BinaryDescriptor[] = [
     platforms: {
       "arm64-darwin": { artifact: "delta-0.18.2-aarch64-apple-darwin.tar.gz", binaryPath: `delta-0.18.2-aarch64-apple-darwin/delta` },
       "x64-darwin": { artifact: "delta-0.18.2-x86_64-apple-darwin.tar.gz", binaryPath: `delta-0.18.2-x86_64-apple-darwin/delta` },
+      "arm64-linux": { artifact: "delta-0.18.2-aarch64-unknown-linux-gnu.tar.gz", binaryPath: `delta-0.18.2-aarch64-unknown-linux-gnu/delta` },
       "x64-linux": { artifact: "delta-0.18.2-x86_64-unknown-linux-gnu.tar.gz", binaryPath: `delta-0.18.2-x86_64-unknown-linux-gnu/delta` },
+      "x64-windows": { artifact: "delta-0.18.2-x86_64-pc-windows-msvc.tar.gz", binaryPath: `delta.exe` },
     },
   },
   {
@@ -83,7 +89,9 @@ const BINARIES: BinaryDescriptor[] = [
     platforms: {
       "arm64-darwin": { artifact: "difft-aarch64-apple-darwin.tar.gz", binaryPath: `difft` },
       "x64-darwin": { artifact: "difft-x86_64-apple-darwin.tar.gz", binaryPath: `difft` },
+      "arm64-linux": { artifact: "difft-aarch64-unknown-linux-gnu.tar.gz", binaryPath: `difft` },
       "x64-linux": { artifact: "difft-x86_64-unknown-linux-gnu.tar.gz", binaryPath: `difft` },
+      "x64-windows": { artifact: "difft-x86_64-pc-windows-msvc.tar.gz", binaryPath: `difft.exe` },
     },
   },
   {
@@ -94,6 +102,7 @@ const BINARIES: BinaryDescriptor[] = [
     platforms: {
       "arm64-darwin": { artifact: "eza_aarch64-apple-darwin.tar.gz", binaryPath: `eza` },
       "x64-darwin": { artifact: "eza_x86_64-apple-darwin.tar.gz", binaryPath: `eza` },
+      "arm64-linux": { artifact: "eza_aarch64-unknown-linux-gnu.tar.gz", binaryPath: `eza` },
       "x64-linux": { artifact: "eza_x86_64-unknown-linux-gnu.tar.gz", binaryPath: `eza` },
     },
   },

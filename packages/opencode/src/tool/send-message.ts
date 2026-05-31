@@ -3,6 +3,7 @@ import * as Tool from "./tool"
 import { AppFileSystem } from "@opencode-ai/core/filesystem"
 import { InstanceState } from "@/effect/instance-state"
 import { MessageID } from "@/session/schema"
+import path from "path"
 import DESCRIPTION from "./send-message.txt"
 
 const MessageType = Schema.Union([
@@ -108,7 +109,7 @@ export const SendMessageTool = Tool.define(
           }
 
           const instance = yield* InstanceState.context
-          const messagesDir = instance.directory + "/.rig/messages"
+          const messagesDir = path.join(instance.directory, ".rig", "messages")
           const messageID = MessageID.ascending()
 
           // Attempt JSON parse for structured body/payload

@@ -223,6 +223,7 @@ export async function isPortInUse(port: number = OAUTH_CALLBACK_PORT): Promise<b
       resolve(true)
     })
     socket.on("error", () => {
+      socket.destroy()
       resolve(false)
     })
   })

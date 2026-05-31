@@ -14,6 +14,7 @@ const log = Log.create({ service: "session.projector" })
 
 function foreign(err: unknown) {
   if (typeof err !== "object" || err === null) return false
+  /** @deprecated SQLITE_CONSTRAINT_FOREIGNKEY is a Drizzle SQLite error code — kept for backward compatibility. Postgres uses the message text check below. */
   if ("code" in err && err.code === "SQLITE_CONSTRAINT_FOREIGNKEY") return true
   return "message" in err && typeof err.message === "string" && err.message.includes("FOREIGN KEY constraint failed")
 }

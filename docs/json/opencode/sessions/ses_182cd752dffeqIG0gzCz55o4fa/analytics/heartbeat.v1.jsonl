@@ -1,0 +1,12 @@
+{"at":"2026-05-31T08:44:16.816Z","session_id":"ses_182cd752dffeqIG0gzCz55o4fa","agent":"cartographer","tool":"smart_find","phase":"started","detail":"*.sql"}
+{"at":"2026-05-31T08:44:16.816Z","session_id":"ses_182cd752dffeqIG0gzCz55o4fa","agent":"cartographer","tool":"smart_find","phase":"failed","detail":"path not found"}
+{"at":"2026-05-31T08:44:17.304Z","session_id":"ses_182cd752dffeqIG0gzCz55o4fa","agent":"cartographer","tool":"smart_find","phase":"started","detail":"*.sql"}
+{"at":"2026-05-31T08:44:17.325Z","session_id":"ses_182cd752dffeqIG0gzCz55o4fa","agent":"cartographer","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T08:44:17.940Z","session_id":"ses_182cd752dffeqIG0gzCz55o4fa","agent":"cartographer","tool":"smart_find","phase":"started","detail":"drizzle.config*"}
+{"at":"2026-05-31T08:44:17.958Z","session_id":"ses_182cd752dffeqIG0gzCz55o4fa","agent":"cartographer","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T08:45:10.725Z","session_id":"ses_182cd752dffeqIG0gzCz55o4fa","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Find all migration directories under opencode package"}
+{"at":"2026-05-31T08:45:10.725Z","session_id":"ses_182cd752dffeqIG0gzCz55o4fa","agent":"cartographer","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T08:45:10.985Z","session_id":"ses_182cd752dffeqIG0gzCz55o4fa","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Find drizzle config files"}
+{"at":"2026-05-31T08:45:10.986Z","session_id":"ses_182cd752dffeqIG0gzCz55o4fa","agent":"cartographer","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T08:45:11.603Z","session_id":"ses_182cd752dffeqIG0gzCz55o4fa","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"migration"}
+{"at":"2026-05-31T08:45:11.609Z","session_id":"ses_182cd752dffeqIG0gzCz55o4fa","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"migration"}

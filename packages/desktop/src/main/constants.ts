@@ -10,6 +10,9 @@ export const DEFAULT_SERVER_URL_KEY = "defaultServerUrl"
 export const WSL_ENABLED_KEY = "wslEnabled"
 export const PINCH_ZOOM_ENABLED_KEY = "pinchZoomEnabled"
 export function getUpdaterEnabled(): boolean {
+  if (process.env.OPENCODE_FORCE_UPDATER === "1" || process.env.OPENCODE_FORCE_UPDATER === "true") {
+    return true
+  }
   return app.isPackaged && CHANNEL !== "dev"
 }
 

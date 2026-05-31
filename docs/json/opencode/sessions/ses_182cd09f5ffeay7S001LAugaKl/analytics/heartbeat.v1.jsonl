@@ -1,0 +1,20 @@
+{"at":"2026-05-31T08:42:58.216Z","session_id":"ses_182cd09f5ffeay7S001LAugaKl","agent":"cartographer","tool":"smart_find","phase":"started","detail":"*"}
+{"at":"2026-05-31T08:42:58.311Z","session_id":"ses_182cd09f5ffeay7S001LAugaKl","agent":"cartographer","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T08:42:58.313Z","session_id":"ses_182cd09f5ffeay7S001LAugaKl","agent":"cartographer","tool":"smart_git","phase":"started","detail":"rev-parse"}
+{"at":"2026-05-31T08:42:58.326Z","session_id":"ses_182cd09f5ffeay7S001LAugaKl","agent":"cartographer","tool":"smart_git","phase":"completed","detail":"rev-parse exit=0"}
+{"at":"2026-05-31T08:43:20.888Z","session_id":"ses_182cd09f5ffeay7S001LAugaKl","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"List top-level source directories in opencode package"}
+{"at":"2026-05-31T08:43:20.889Z","session_id":"ses_182cd09f5ffeay7S001LAugaKl","agent":"cartographer","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T08:43:21.706Z","session_id":"ses_182cd09f5ffeay7S001LAugaKl","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Recursive directory listing of opencode source tree"}
+{"at":"2026-05-31T08:43:21.706Z","session_id":"ses_182cd09f5ffeay7S001LAugaKl","agent":"cartographer","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T08:44:09.805Z","session_id":"ses_182cd09f5ffeay7S001LAugaKl","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"List source directories (max depth 2) in opencode package"}
+{"at":"2026-05-31T08:44:09.806Z","session_id":"ses_182cd09f5ffeay7S001LAugaKl","agent":"cartographer","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T08:44:10.805Z","session_id":"ses_182cd09f5ffeay7S001LAugaKl","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Count total TypeScript source files in opencode"}
+{"at":"2026-05-31T08:44:10.805Z","session_id":"ses_182cd09f5ffeay7S001LAugaKl","agent":"cartographer","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T08:44:11.740Z","session_id":"ses_182cd09f5ffeay7S001LAugaKl","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"List test directories in opencode package"}
+{"at":"2026-05-31T08:44:11.740Z","session_id":"ses_182cd09f5ffeay7S001LAugaKl","agent":"cartographer","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T08:45:06.073Z","session_id":"ses_182cd09f5ffeay7S001LAugaKl","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"List source directories using absolute paths to avoid rerouting"}
+{"at":"2026-05-31T08:45:06.092Z","session_id":"ses_182cd09f5ffeay7S001LAugaKl","agent":"cartographer","tool":"smart_bash","phase":"completed","detail":"/usr/bin/find exit=0"}
+{"at":"2026-05-31T08:45:07.042Z","session_id":"ses_182cd09f5ffeay7S001LAugaKl","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Count TypeScript files using absolute paths"}
+{"at":"2026-05-31T08:45:07.059Z","session_id":"ses_182cd09f5ffeay7S001LAugaKl","agent":"cartographer","tool":"smart_bash","phase":"completed","detail":"/usr/bin/find exit=0"}
+{"at":"2026-05-31T08:45:07.843Z","session_id":"ses_182cd09f5ffeay7S001LAugaKl","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"List test directories"}
+{"at":"2026-05-31T08:45:07.857Z","session_id":"ses_182cd09f5ffeay7S001LAugaKl","agent":"cartographer","tool":"smart_bash","phase":"completed","detail":"/usr/bin/find exit=0"}

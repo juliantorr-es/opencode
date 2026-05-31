@@ -31,7 +31,13 @@ export type RuntimeEvent =
   | { readonly _tag: "RepairFailed"; readonly error: string }
   | { readonly _tag: "Blocked"; readonly reason: string }
   | { readonly _tag: "Unblocked" }
-  | { readonly _tag: "RoleComplete"; readonly role: string; readonly output: string }
+  | { readonly _tag: "ScoutComplete"; readonly artifacts: readonly string[] }
+  | { readonly _tag: "ArchitectComplete" }
+  | { readonly _tag: "CriticComplete"; readonly verdict: "approved" | "rejected"; readonly reason?: string }
+  | { readonly _tag: "ExecutorComplete"; readonly files: readonly string[] }
+  | { readonly _tag: "ValidatorComplete"; readonly passed: boolean; readonly issues: readonly string[] }
+  | { readonly _tag: "RedTeamComplete"; readonly findings: readonly string[] }
+  | { readonly _tag: "HistorianComplete"; readonly checkpointCreated: boolean }
   | { readonly _tag: "Failed"; readonly error: string }
 
 // ── Transition Record ────────────────────────────────────────
@@ -147,8 +153,28 @@ function toSMEvent(event: RuntimeEvent): SMRuntimeEvent {
       return { type: "child.blocked", timestamp: ts, payload: { reason: event.reason } }
     case "Unblocked":
       return { type: "context.sufficient", timestamp: ts, payload: {} }
-    case "RoleComplete":
-      return { type: "edit.applied", timestamp: ts, payload: { role: event.role, output: event.output } }
+    case "ScoutComplete":
+      return { type: "scout.completed", timestamp: ts, payload: { artifacts: [...event.artifacts] } }
+    case "ArchitectComplete":
+      return { type: "plan.produced", timestamp: ts, payload: {} }
+    case "CriticComplete":
+      return event.verdict === "approved"
+        ? { type: "plan.approved", timestamp: ts, payload: {} }
+        : { type: "plan.rejected", timestamp: ts, payload: { reason: event.reason } }
+    case "ExecutorComplete":
+      return event.files.length > 0
+        ? { type: "edit.applied", timestamp: ts, payload: { files: [...event.files] } }
+        : { type: "edit.applied", timestamp: ts, payload: {} }
+    case "ValidatorComplete":
+      return event.passed
+        ? { type: "validation.completed", timestamp: ts, payload: { status: "pass" } }
+        : { type: "validation.failure", timestamp: ts, payload: { isNew: true, issues: [...event.issues] } }
+    case "RedTeamComplete":
+      return { type: "redteam.finding", timestamp: ts, payload: { findings: [...event.findings] } }
+    case "HistorianComplete":
+      return event.checkpointCreated
+        ? { type: "campaign.checkpoint.created", timestamp: ts, payload: {} }
+        : { type: "lane.returned", timestamp: ts, payload: {} }
     case "Failed":
       return { type: "permission.denied", timestamp: ts, payload: { error: event.error } }
   }
@@ -172,7 +198,13 @@ const EVENT_NAME_MAP: Record<string, string> = {
   RepairFailed: EventName.ValidationFailure,
   Blocked: EventName.ChildBlocked,
   Unblocked: EventName.ContextSufficient,
-  RoleComplete: EventName.EditApplied,
+  ScoutComplete: EventName.ScoutCompleted,
+  ArchitectComplete: EventName.PlanProduced,
+  CriticComplete: EventName.PlanApproved,
+  ExecutorComplete: EventName.EditApplied,
+  ValidatorComplete: EventName.ValidationCompleted,
+  RedTeamComplete: EventName.RedteamFinding,
+  HistorianComplete: EventName.CampaignCheckpointCreated,
   Failed: EventName.PermissionDenied,
 }
 
@@ -459,7 +491,7 @@ const make = Effect.gen(function* () {
         for (const t of lane.transitions) {
           yield* binderService.addEvidence(
             laneId,
-            "transition",
+            "transitionEvents",
             {
               eventId: `${laneId}:${t.event}:${t.timestamp}`,
               eventType: t.event,
@@ -470,7 +502,7 @@ const make = Effect.gen(function* () {
         }
         yield* binderService.addEvidence(
           laneId,
-          "event",
+          "executionEvents",
           {
             eventId: `${laneId}:${event._tag}:${now()}`,
             eventType: event._tag,
@@ -501,15 +533,45 @@ const make = Effect.gen(function* () {
       })
     })
 
+function roleOutputToEvent(output: RoleOutput): RuntimeEvent {
+  if (output.status === "success") {
+    switch (output.role) {
+      case "cartographer":
+      case "scout":
+        return { _tag: "ScoutComplete", artifacts: output.artifacts }
+      case "architect":
+        return { _tag: "ArchitectComplete" }
+      case "critic":
+        return { _tag: "CriticComplete", verdict: "approved" }
+      case "executor":
+        return { _tag: "ExecutorComplete", files: output.artifacts }
+      case "validator":
+        return { _tag: "ValidatorComplete", passed: true, issues: [] }
+      case "redteam":
+        return { _tag: "RedTeamComplete", findings: output.artifacts }
+      case "historian":
+        return { _tag: "HistorianComplete", checkpointCreated: true }
+      default:
+        return { _tag: "Failed", error: `unknown role: ${output.role}` }
+    }
+  }
+  if (output.status === "blocked") {
+    if (output.role === "critic") {
+      return { _tag: "CriticComplete", verdict: "rejected", reason: output.message }
+    }
+    return { _tag: "Blocked", reason: output.message }
+  }
+  if (output.role === "critic") {
+    return { _tag: "CriticComplete", verdict: "rejected", reason: output.message }
+  }
+  return { _tag: "Failed", error: output.message }
+}
+
   const handleRoleOutput: Interface["handleRoleOutput"] = (laneId, output) =>
     Effect.gen(function* () {
       const lane = yield* ensureLane(laneId)
 
-      const event: RuntimeEvent = output.status === "success"
-        ? { _tag: "RoleComplete", role: output.role, output: output.message }
-        : output.status === "blocked"
-          ? { _tag: "Blocked", reason: output.message }
-          : { _tag: "Failed", error: output.message }
+      const event = roleOutputToEvent(output)
 
       yield* processEvent(laneId, event)
     })

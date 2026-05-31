@@ -173,6 +173,9 @@ export const layer = Layer.effect(
       ) {
         const match = yield* readToolCall(toolCallID)
         if (!match) return // already settled — first writer wins
+        // Re-check inputEnded flag after yield point — concurrent fiber may have completed it
+        if (match.call.inputEnded) return
+        match.call.inputEnded = true
         // Narrow from ToolState union: only running calls can be finished
         if (match.part.state.status !== "running") return
         if (outcome.status === "completed") {

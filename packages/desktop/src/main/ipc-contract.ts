@@ -239,9 +239,9 @@ export interface IpcHandleContract {
   [IPC.handle.GET_LOCALE_PREFERENCE]: { params: []; returns: Promise<string | null> }
   [IPC.handle.PLUGIN_INVOKE]: { params: [channel: string, data?: unknown]; returns: Promise<unknown> }
   [IPC.handle.GET_CAPABILITIES]: { params: []; returns: Promise<DesktopCapabilities> }
+  [IPC.handle.GET_GIT_STATUS]: { params: []; returns: Promise<{ uncommitted: number; unpushed: number; mergeConflicts: number; branch: string | null } | null> }
   [IPC.handle.GET_SAFE_MODE_DIAGNOSTICS]: { params: []; returns: Promise<SafeModeDiagnostics> }
   [IPC.handle.SAFE_MODE_ACTION]: { params: [action: SafeModeAction]; returns: Promise<void> }
-  [IPC.handle.EVENT_EXPLAIN]: { params: [event: string]; returns: Promise<string> }
 }
 
 // ──────────────────────────────────────────────────────────────
@@ -307,27 +307,7 @@ export function typedSend<C extends keyof IpcSendContract & string>(
   ipcRenderer.send(channel, ...(args as unknown[]))
 }
 
-/**
- * Safe invoke — wraps typedInvoke with IpcResult degradation.
- * If the IPC call throws (e.g. channel not registered, main process not ready),
- * returns an IpcErr instead of a rejected promise.
- *
- * Use this in preload/index.ts for every external-facing API method.
- */
-export async function safeInvoke<C extends keyof IpcHandleContract & string>(
-  channel: C,
-  ...args: IpcHandleContract[C]["params"]
-): Promise<IpcResult<IpcHandleContract[C]["returns"]>> {
-  try {
-    const value = await typedInvoke(channel, ...args)
-    return { ok: true, value }
-  } catch (error) {
-    return {
-      ok: false,
-      error: normalizeIpcError(channel, error),
-    }
-  }
-}
+
 
 // ──────────────────────────────────────────────────────────────
 //  Bridge Method Mapping — maps friendly bridge method names
@@ -393,6 +373,8 @@ interface BridgeHandleMap {
   sessionImportFile: typeof IPC.handle.SESSION_IMPORT_FILE
   setLocalePreference: typeof IPC.handle.SET_LOCALE_PREFERENCE
   getLocalePreference: typeof IPC.handle.GET_LOCALE_PREFERENCE
+  getGitStatus: typeof IPC.handle.GET_GIT_STATUS
+  getCapabilities: typeof IPC.handle.GET_CAPABILITIES
 }
 
 /** @internal — Bridge send-method → IPC send channel constant mapping */
@@ -449,7 +431,6 @@ export interface ComplexAPIMethods {
  */
 export type DerivedElectronAPI = DerivedInvokeAPI & DerivedSendAPI & ComplexAPIMethods
 
-// --- lane-8 ---
 /**
  * Plugin transport send — typed wrapper for the dynamic PLUGIN_SEND channel.
  * Uses typedSend under the hood so the channel type is checked against IpcSendContract.
@@ -475,27 +456,3 @@ export function pluginInvoke(channel: string, data?: unknown): Promise<unknown> 
   return typedInvoke(IPC.handle.PLUGIN_INVOKE, channel, data)
 }
 
-// --- lane-8 ---
-// --- Change import line 4: remove safeInvoke dead code, add pluginSend/pluginInvoke ---
-// OLD: import { typedInvoke, typedSend, safeInvoke } from "../main/ipc-contract"
-// NEW: import { typedInvoke, typedSend, pluginSend, pluginInvoke } from "../main/ipc-contract"
-
-// --- Replace pluginSend method body (line ~124) ---
-// OLD:
-//   pluginSend: (channel: string, data?: unknown) => {
-//     ipcRenderer.send(IPC.send.PLUGIN_SEND, channel, data)
-//   },
-// NEW:
-//   pluginSend: (channel: string, data?: unknown) => {
-//     pluginSend(channel, data)
-//   },
-
-// --- Replace pluginInvoke method body (line ~137) ---
-// OLD:
-//   pluginInvoke: (channel: string, data?: unknown) => {
-//     return ipcRenderer.invoke(IPC.handle.PLUGIN_INVOKE, channel, data)
-//   },
-// NEW:
-//   pluginInvoke: (channel: string, data?: unknown) => {
-//     return pluginInvoke(channel, data)
-//   },

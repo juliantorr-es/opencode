@@ -1,0 +1,13 @@
+{
+  "schema": "v1",
+  "session_id": "ses_18303a4d6fferMTtvgtno5kg6W",
+  "agent": "secretary",
+  "archived_at": "2026-05-31T08:16:11.484Z",
+  "summary": "Lane DEEP-DEAD-CODE complete. Findings: clearExplanationCache/invalidateExplanation deprecated (0 callers), safeInvoke removed (0 callers), db.ts drizzle-orm re-export documented, Transaction=any deprecated. 4 artifacts verified actively used (applyMigrations, projectors-next, event-v2-bridge, delegate.ts, session-diff.ts). 2 self-export pattern analyzed as intentional (188 consumers). Typecheck: pass (pre-existing errors unchanged).",
+  "agents_involved": [
+    "secretary"
+  ],
+  "tool_calls": 94,
+  "tool_failures": 3,
+  "handoffs": 110
+}

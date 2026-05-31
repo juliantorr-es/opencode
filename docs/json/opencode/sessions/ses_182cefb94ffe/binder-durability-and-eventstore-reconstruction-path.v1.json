@@ -1,0 +1,505 @@
+{
+  "schema": "docs/schemas/rig.relay.cartography_report.v1.schema.json",
+  "report_id": "binder-durability-and-eventstore-reconstruction-path",
+  "generated_at": "2026-05-31T00:00:00.000Z",
+  "generated_by": "cartographer",
+  "session_id": "ses_182cefb94ffe",
+  "mission": "Map the binder durability and EventStore reconstruction path",
+
+  "surface_map": {
+    "campaign_directory": {
+      "path": "packages/opencode/src/campaign/",
+      "key_files": [
+        "binder.ts",
+        "secretary.ts",
+        "integrator.ts",
+        "auditor.ts",
+        "types.ts",
+        "state-machine.ts"
+      ]
+    },
+    "event_directory": {
+      "path": "packages/opencode/src/event/",
+      "key_files": [
+        "event-store.ts",
+        "event.pg.sql.ts",
+        "runtime-event.ts",
+        "event-bridge.ts",
+        "agent-queries.ts",
+        "event-names.ts",
+        "explanation.ts",
+        "index.ts"
+      ]
+    }
+  },
+
+  "binder_type": {
+    "file": "packages/opencode/src/campaign/binder.ts",
+    "definition_lines": "84-123",
+    "fields": {
+      "schemaVersion": "string (line 85)",
+      "binderVersion": "number (line 86)",
+      "laneId": "string (line 87)",
+      "campaignId": "string (line 88)",
+      "status": "LaneState (line 89)",
+      "missionObjective": "string (line 92)",
+      "laneScope": "string (line 93)",
+      "claimedFiles": "string[] (line 94)",
+      "dependencyLaneIds": "string[] (line 95)",
+      "scoutReports": "ArtifactRef[] (line 98)",
+      "architecturePlan": "ArtifactRef? (line 99)",
+      "criticReviews": "ArtifactRef[] (line 100)",
+      "approvedPlan": "ArtifactRef? (line 101)",
+      "executionEvents": "EventRef[] (line 104)",
+      "transitionEvents": "EventRef[] (line 105)",
+      "diffSummary": "DiffSummary? (line 106)",
+      "validationResults": "ValidationResult[] (line 109)",
+      "redTeamFindings": "RedTeamFinding[] (line 110)",
+      "repairHistory": "RepairCycle[] (line 111)",
+      "checkpointCommit": "string? (line 114)",
+      "residualRisks": "string[] (line 115)",
+      "handoffSummary": "string? (line 116)",
+      "terminalStatus": "TerminalStatus? (line 117)",
+      "createdAt": "string (line 120)",
+      "completedAt": "string? (line 121)",
+      "artifactDigest": "string (line 122)"
+    }
+  },
+
+  "binder_sub_types": {
+    "LaneState": {
+      "file": "packages/opencode/src/campaign/binder.ts",
+      "definition_lines": "17-30",
+      "values": [
+        "created", "scouting", "scoped", "planning", "critic_review",
+        "approved", "executing", "validating", "red_team", "repairing",
+        "historian", "checkpointed", "returned"
+      ]
+    },
+    "TerminalStatus": {
+      "file": "packages/opencode/src/campaign/binder.ts",
+      "definition_lines": "32-38",
+      "values": ["success", "failure", "blocked", "cancelled", "frozen"]
+    },
+    "ArtifactRef": {
+      "file": "packages/opencode/src/campaign/binder.ts",
+      "definition_lines": "39-44",
+      "fields": {
+        "type": "string",
+        "path": "string",
+        "summary": "string",
+        "contentDigest": "string"
+      }
+    },
+    "EventRef": {
+      "file": "packages/opencode/src/campaign/binder.ts",
+      "definition_lines": "46-51",
+      "fields": {
+        "eventId": "string",
+        "eventType": "string",
+        "timestamp": "number",
+        "summary": "string"
+      }
+    },
+    "DiffSummary": {
+      "file": "packages/opencode/src/campaign/binder.ts",
+      "definition_lines": "53-59",
+      "fields": {
+        "filesChanged": "number",
+        "linesAdded": "number",
+        "linesRemoved": "number",
+        "sharedFilesModified": "number"
+      }
+    },
+    "ValidationResult": {
+      "file": "packages/opencode/src/campaign/binder.ts",
+      "definition_lines": "61-67",
+      "fields": {
+        "validator": "string",
+        "verdict": "string",
+        "findings": "number",
+        "summary": "string"
+      }
+    },
+    "RedTeamFinding": {
+      "file": "packages/opencode/src/campaign/binder.ts",
+      "definition_lines": "69-75",
+      "fields": {
+        "category": "string",
+        "severity": "string",
+        "description": "string",
+        "mitigated": "boolean"
+      }
+    },
+    "RepairCycle": {
+      "file": "packages/opencode/src/campaign/binder.ts",
+      "definition_lines": "77-82",
+      "fields": {
+        "cycle": "number",
+        "findingsAddressed": "number",
+        "findingsRemaining": "number"
+      }
+    }
+  },
+
+  "binder_service": {
+    "file": "packages/opencode/src/campaign/binder.ts",
+    "service_class_line": 168,
+    "interface_definition_lines": "137-164",
+    "identifier": "@opencode/BinderService",
+    "methods": {
+      "createBinder": {
+        "signature": "(laneId: string, campaignId: string, mission: string, scope: string) => Effect.Effect<string>",
+        "interface_line": 138,
+        "implementation_lines": "270-293",
+        "behavior": "Creates initial Binder via createInitialBinder(), stores in Ref<Map>, emits binder.created event to EventStore"
+      },
+      "getBinder": {
+        "signature": "(laneId: string) => Effect.Effect<Option.Option<Binder>>",
+        "interface_line": 145,
+        "implementation_lines": "295-300",
+        "behavior": "Reads from in-memory Ref<Map>. Returns Option.none if not found. NO EventStore query. NO reconstruction."
+      },
+      "getBindersByCampaignId": {
+        "signature": "(campaignId: string) => Effect.Effect<Binder[]>",
+        "interface_line": 147,
+        "implementation_lines": "302-306",
+        "behavior": "Filters all binders from Ref<Map> by campaignId. In-memory only."
+      },
+      "addEvidence": {
+        "signature": "(laneId: string, section: string, artifact: ArtifactRef | EventRef) => Effect.Effect<void, BinderError>",
+        "interface_line": 149,
+        "implementation_lines": "308-377",
+        "behavior": "Shallow-copies binder, appends artifact to named section array via switch-case (lines 322-367), recomputes artifactDigest, stores in Ref, emits binder.evidence_added event"
+      },
+      "updateStatus": {
+        "signature": "(laneId: string, status: LaneState, terminalStatus?: TerminalStatus) => Effect.Effect<void, BinderError>",
+        "interface_line": 155,
+        "implementation_lines": "379-410",
+        "behavior": "Updates status + optional terminalStatus. Sets completedAt on checkpointed/returned. Recomputes digest. Stores in Ref. Emits binder.status_changed event."
+      },
+      "finalizeBinder": {
+        "signature": "(laneId: string) => Effect.Effect<Binder, BinderError>",
+        "interface_line": 162,
+        "implementation_lines": "412-436",
+        "behavior": "Returns finalized Binder with artifactDigest. Stores updated binder in Ref. Emits binder.finalized event. Returns the Binder."
+      },
+      "getBinderDigest": {
+        "signature": "(laneId: string) => Effect.Effect<string, BinderError>",
+        "interface_line": 164,
+        "implementation_lines": "438-445",
+        "behavior": "Returns artifactDigest from in-memory Ref. Fails with BinderError if not found."
+      }
+    }
+  },
+
+  "binder_store": {
+    "type": "Ref<Map<string, Binder>>",
+    "file": "packages/opencode/src/campaign/binder.ts",
+    "line": 267,
+    "code": "const store = yield* Ref.make<Map<string, Binder>>(new Map())",
+    "persistence": "NONE — purely in-memory. Lost on process restart.",
+    "reconstruction": "NONE — no reconstruction from EventStore or database. getBinder() only reads from the Ref."
+  },
+
+  "event_store": {
+    "file": "packages/opencode/src/event/event-store.ts",
+    "service_class_line": 30,
+    "identifier": "@opencode/EventStore",
+    "interface": {
+      "definition_lines": "25-28",
+      "methods": {
+        "record": {
+          "signature": "(event: RuntimeEvent) => Effect.Effect<void>",
+          "implementation_lines": "108-112",
+          "behavior": "Encodes RuntimeEvent via encodeForDb(), inserts into RuntimeEventTable via DatabaseAdapter.query()"
+        },
+        "query": {
+          "signature": "(filters?: QueryFilters) => Effect.Effect<RuntimeEvent[], DatabaseAdapter.DatabaseError>",
+          "implementation_lines": "114-134",
+          "behavior": "Builds WHERE clause from QueryFilters, queries RuntimeEventTable via adapter, maps results through decodeFromDb()"
+        }
+      }
+    },
+    "filters": {
+      "file": "packages/opencode/src/event/event-store.ts",
+      "definition_lines": "11-22",
+      "fields": {
+        "sessionId": "string?",
+        "runId": "string?",
+        "eventType": "string?",
+        "actor": "string?",
+        "status": "string?",
+        "parentEventId": "string?",
+        "fromTs": "string?",
+        "toTs": "string?",
+        "limit": "number? (default 100)",
+        "offset": "number? (default 0)",
+        "order": "'asc' | 'desc'?"
+      }
+    },
+    "database_table": "runtime_events (Drizzle: RuntimeEventTable)",
+    "database_file": "packages/opencode/src/event/event.pg.sql.ts",
+    "table_columns": {
+      "id": "text PRIMARY KEY (line 7)",
+      "session_id": "text NOT NULL (line 8)",
+      "run_id": "text NOT NULL (line 9)",
+      "parent_event_id": "text (line 10)",
+      "correlation_id": "text (line 11)",
+      "ts": "text NOT NULL (line 12)",
+      "actor": "text NOT NULL (line 13)",
+      "event_type": "text NOT NULL (line 14)",
+      "phase": "text (line 15)",
+      "status": "text (line 16)",
+      "tool_name": "text (line 17)",
+      "file_path": "text (line 18)",
+      "model": "text (line 19)",
+      "duration_ms": "integer (line 20)",
+      "token_input": "integer (line 21)",
+      "token_output": "integer (line 22)",
+      "error_code": "text (line 23)",
+      "error_message": "text (line 24)",
+      "recoverable": "boolean (line 25)",
+      "payload_json": "jsonb (line 26)",
+      "campaign_id": "text (line 27)",
+      "lane_id": "text (line 28)",
+      "role": "text (line 29)"
+    },
+    "indexes": [
+      "runtime_events_session_idx ON session_id",
+      "runtime_events_event_type_idx ON event_type",
+      "runtime_events_ts_idx ON ts",
+      "runtime_events_actor_idx ON actor",
+      "runtime_events_run_id_idx ON run_id",
+      "runtime_events_session_ts_idx ON (session_id, ts)",
+      "runtime_events_campaign_id_idx ON campaign_id",
+      "runtime_events_lane_id_idx ON lane_id"
+    ],
+    "replay_api": {
+      "exists": true,
+      "method": "query(filters)",
+      "notes": "Can filter by laneId, campaignId, eventType, etc. BUT: BinderService NEVER calls this. query() is used by agent-queries.ts and operating-picture.ts for analytics, NOT for Binder reconstruction."
+    }
+  },
+
+  "runtime_event_type": {
+    "file": "packages/opencode/src/event/runtime-event.ts",
+    "definition_lines": "10-34",
+    "fields": {
+      "id": "string",
+      "sessionId": "string",
+      "runId": "string",
+      "parentEventId": "string?",
+      "correlationId": "string?",
+      "ts": "string",
+      "actor": "ActorType (user|assistant|tool|system|lifecycle)",
+      "eventType": "EventNameValues",
+      "phase": "string?",
+      "status": "EventStatus? (started|succeeded|failed|denied|cancelled|recovered)",
+      "toolName": "string?",
+      "filePath": "string?",
+      "model": "string?",
+      "durationMs": "number?",
+      "tokenInput": "number?",
+      "tokenOutput": "number?",
+      "errorCode": "string?",
+      "errorMessage": "string?",
+      "recoverable": "boolean?",
+      "payloadJson": "unknown?",
+      "campaignId": "string?",
+      "laneId": "string?"
+    }
+  },
+
+  "binder_events_written_to_eventstore": {
+    "file": "packages/opencode/src/campaign/binder.ts",
+    "function": "recordBinderEvent",
+    "definition_lines": "232-262",
+    "event_types_emitted": [
+      { "type": "binder.created", "trigger": "createBinder() at line 287", "payload": "{ laneId, campaignId }" },
+      { "type": "binder.evidence_added", "trigger": "addEvidence() at line 376", "payload": "{ laneId, section }" },
+      { "type": "binder.status_changed", "trigger": "updateStatus() at line 405", "payload": "{ laneId, status, terminalStatus }" },
+      { "type": "binder.finalized", "trigger": "finalizeBinder() at line 430", "payload": "{ laneId, digest }" }
+    ],
+    "event_attributes": {
+      "actor": "\"system\"",
+      "phase": "\"campaign\"",
+      "toolName": "\"binder\"",
+      "sessionId": "laneId (reused)",
+      "runId": "laneId (reused)"
+    },
+    "key_observation": "events are WRITTEN to EventStore but NEVER read back by any BinderService method"
+  },
+
+  "event_bridge": {
+    "file": "packages/opencode/src/event/event-bridge.ts",
+    "purpose": "Subscribes to all Bus events and records them into EventStore via Layer.effectDiscard (line 81)",
+    "layer_deps": "Bus.Service, EventStore.Service (line 81)",
+    "relationship_to_binder": "UNRELATED — EventBridge records runtime tool/llm/session events, not Binder lifecycle events"
+  },
+
+  "database_schema_search": {
+    "result": "NO Drizzle table definitions for binders or campaign evidence",
+    "searched": [
+      "packages/opencode/src/campaign/ (all files — no .sql.ts)",
+      "packages/opencode/src/event/event.pg.sql.ts (RuntimeEventTable only — has campaign_id + lane_id columns but is generic)",
+      "packages/opencode/src/sync/event.pg.sql.ts (EventTable + EventSequenceTable — for sync, not campaign)",
+      "packages/opencode/src/tool/coordination.pg.sql.ts (coordination claims/reservations — not campaign)",
+      "packages/opencode/src/storage/schema.ts (re-exports all tables — no binder table exists)"
+    ],
+    "RuntimeEventTable_campaign_columns": {
+      "campaign_id": "text (line 27 of event.pg.sql.ts)",
+      "lane_id": "text (line 28 of event.pg.sql.ts)",
+      "index": "runtime_events_campaign_id_idx, runtime_events_lane_id_idx"
+    },
+    "negative_finding": "No binder-specific Drizzle table anywhere in the codebase. No campaign evidence table. Binder state is NOT persisted to any database."
+  },
+
+  "layer_dependency_graph": {
+    "BinderService.layer": {
+      "file": "packages/opencode/src/campaign/binder.ts",
+      "line": 461,
+      "type": "Layer.Layer<Service, never, EventStore.Service>",
+      "depends_on": ["EventStore.Service"],
+      "provides": "BinderService.Service"
+    },
+    "BinderService.defaultLayer": {
+      "file": "packages/opencode/src/campaign/binder.ts",
+      "lines": "463-465",
+      "type": "Layer.Layer<Service>",
+      "provision": "layer.pipe(Layer.provide(EventStore.layer))"
+    },
+    "Secretary.layer": {
+      "file": "packages/opencode/src/campaign/secretary.ts",
+      "tail": "layer.pipe(Layer.provide(BinderLayer))",
+      "depends_on": ["EventStore.Service", "BinderService.Service"]
+    },
+    "Integrator.defaultLayer": {
+      "file": "packages/opencode/src/campaign/integrator.ts",
+      "tail": "layer.pipe(Layer.provide(BinderService.defaultLayer))",
+      "depends_on": ["BinderService.Service"]
+    }
+  },
+
+  "consumer_usage_patterns": {
+    "secretary": {
+      "file": "packages/opencode/src/campaign/secretary.ts",
+      "binder_usage": {
+        "createBinder": "Line 490 — called ONLY when lane reaches terminal state (isTerminal(newState)). Binder is created as a FINALIZATION SNAPSHOT, not incrementally during lane execution.",
+        "addEvidence": "Lines 492-512 — adds transitionEvents and executionEvents artifacts only after createBinder at terminal state.",
+        "getBinder": "getLaneBinder() (interface line 249) — delegates to binderService.getBinder(). Returns Binder | error.",
+        "in_memory_state": "Line 297: secretary has its own Ref<Map<string, LaneState>> for active campaign lanes — entirely separate from Binder's Ref<Map>."
+      }
+    },
+    "integrator": {
+      "file": "packages/opencode/src/campaign/integrator.ts",
+      "binder_usage": {
+        "read": "Calls binderService.getBindersByCampaignId() to get all binders for a campaign for topological sort (line 251) and merge planning (line 319).",
+        "write": "NONE — integrator only reads Binder data. Never calls createBinder, addEvidence, or updateStatus."
+      }
+    }
+  },
+
+  "smoking_guns": [
+    {
+      "id": "SG-1",
+      "severity": "critical",
+      "title": "Binder state is entirely in-memory — no persistence, no durability",
+      "file": "packages/opencode/src/campaign/binder.ts",
+      "lines": [267, 295, 302, 313, 384, 413, 439],
+      "evidence": "The store is Ref<Map<string, Binder>> (line 267). Every method (getBinder, addEvidence, updateStatus, finalizeBinder, getBinderDigest) reads from this Ref. There is no write to any database table. No serialization to disk. No FileSystem sync.",
+      "impact": "All Binder data is lost on process restart. Finalized campaign evidence — scout reports, architecture plans, critic reviews, validation results, diff summaries — vanishes when the process exits."
+    },
+    {
+      "id": "SG-2",
+      "severity": "critical",
+      "title": "No Binder reconstruction from EventStore — write-ahead log is never replayed",
+      "file": "packages/opencode/src/campaign/binder.ts",
+      "lines": [145, 295],
+      "evidence": "getBinder() at line 295 does Ref.get(store) → map.get(laneId). It never queries EventStore. There is no reconstructBinder() method anywhere. The EventStore has: (a) RuntimeEventTable with campaign_id + lane_id columns and indexes (event.pg.sql.ts:27-28, 38-39), (b) query() API with laneId filtering (event-store.ts:114), (c) binder events written by recordBinderEvent() (binder.ts:232-262). All the infrastructure exists but NO code consumes it for reconstruction.",
+      "impact": "Even if EventStore events survive, Binder state cannot be rebuilt from them because the replay logic doesn't exist."
+    },
+    {
+      "id": "SG-3",
+      "severity": "high",
+      "title": "No Drizzle table for Binder or campaign evidence",
+      "file": "packages/opencode/src/storage/schema.ts",
+      "lines": [1, 9],
+      "evidence": "storage/schema.ts re-exports tables from 9 domains (account, project, session, share, workspace, runtime_events, data_migration, sync_events, coordination). No binder, campaign, or evidence table exists. RuntimeEventTable has campaign_id/lane_id columns but stores raw events, not structured Binder state.",
+      "impact": "There is no structured storage for Binder data. The only persistent record of Binder activity is the raw RuntimeEvent rows, which contain flat event fields but not the full Binder object graph (artifact arrays, review chains, validation results)."
+    },
+    {
+      "id": "SG-4",
+      "severity": "high",
+      "title": "Binder is created only at terminal state — no incremental build-up",
+      "file": "packages/opencode/src/campaign/secretary.ts",
+      "line": 490,
+      "evidence": "createBinder is called only when isTerminal(newState) is true. The secretary builds the Binder as a snapshot at lane completion time, feeding transitionEvents and executionEvents from the secretary's own in-memory LaneState. The Binder does not accumulate evidence incrementally as the lane progresses through states.",
+      "impact": "A crash mid-lane loses all evidence collected so far. The Binder is a post-mortem snapshot, not a living document."
+    },
+    {
+      "id": "SG-5",
+      "severity": "medium",
+      "title": "Secretary and BinderService each have their own Ref<Map> — dual in-memory state",
+      "file": "packages/opencode/src/campaign/secretary.ts",
+      "lines": [297],
+      "evidence": "Secretary has Ref<Map<string, LaneState>> at line 297, while BinderService has Ref<Map<string, Binder>> at binder.ts:267. These are completely separate. Secretary's LaneState holds transitions, sm state, role outputs. Binder holds the finalized campaign evidence.",
+      "impact": "Two independent in-memory stores with no cross-reference or synchronization. Both are lost on restart. No single source of truth."
+    }
+  ],
+
+  "pre_existing_findings": [
+    {
+      "finding_id": "ses_187bc95c",
+      "type": "debt",
+      "summary": "applyMigrations defined at db.pg.ts:25 but never called anywhere in runtime",
+      "relevance": "Even if Binder had a table, PG migrations aren't being applied — so persistence infrastructure itself is gapped."
+    },
+    {
+      "finding_id": "ses_187bc95c",
+      "type": "debt",
+      "summary": "migration-pg/ has 1 migration vs migration/ has 20 — massive gap",
+      "relevance": "Any new Binder table would need a migration, and the PG migration gap means that pipeline is incomplete."
+    }
+  ],
+
+  "out_of_scope_findings": [
+    {
+      "file": "packages/opencode/src/campaign/binder.ts",
+      "lines": "266-267",
+      "finding": "BinderService.make() captures eventStore from Effect.Service but only uses it for writes (recordBinderEvent). The read path (getBinder, getBindersByCampaignId) never touches EventStore.",
+      "recommendation": "Either remove the EventStore dependency from BinderService (if in-memory is acceptable) or add a reconstructBinder() method that replays binder.* events from EventStore via query({eventType: 'binder.*', laneId})."
+    },
+    {
+      "file": "packages/opencode/src/campaign/binder.ts",
+      "lines": "295-299",
+      "finding": "getBinder() returns Option.none for missing binders — no attempt to reconstruct from persisted events.",
+      "recommendation": "Implement reconstructBinder(laneId): reads all binder.* events for that lane from EventStore, replays them into a Binder object via a reducer, stores the result in the Ref, and returns it."
+    },
+    {
+      "file": "packages/opencode/src/event/event.pg.sql.ts",
+      "lines": "27-28",
+      "finding": "RuntimeEventTable has campaign_id and lane_id columns with indexes, but no Binder code queries by these columns.",
+      "recommendation": "Use EventStore.query({laneId}) as the source for a Binder replay function that reconstructs Binder state from the event log."
+    }
+  ],
+
+  "reconstruction_path_gap_summary": {
+    "what_exists": [
+      "EventStore with query() API supporting laneId/campaignId/eventType filters (event-store.ts:114-134)",
+      "RuntimeEventTable with campaign_id + lane_id columns and indexes (event.pg.sql.ts:4-43)",
+      "recordBinderEvent() writes structured binder lifecycle events with eventType prefix 'binder.' (binder.ts:232-262)",
+      "4 event types: binder.created, binder.evidence_added, binder.status_changed, binder.finalized",
+      "computeDigest() produces content-addressed hashes for tamper detection (binder.ts:174-195)"
+    ],
+    "what_is_missing": [
+      "NO reconstruction function — no method that reads from EventStore and builds a Binder",
+      "NO database table for Binder objects — no Drizzle table for binders",
+      "NO incremental persistence — Binder only exists in an in-memory Ref<Map>",
+      "NO startup hydration — make() never queries EventStore on startup to rebuild binders",
+      "NO serialization — Binder is a plain TypeScript object in memory, never written to disk or DB",
+      "NO migration path — no binder-related migration exists in migration/ or migration-pg/"
+    ],
+    "critical_path": "To make Binder durable, one must: (1) add a reconstructBinder(laneId) method that queries EventStore for binder.* events and replays them, (2) call reconstruction at BinderService startup, (3) optionally add a binder table for snapshot persistence to avoid full replay on every restart."
+  }
+}

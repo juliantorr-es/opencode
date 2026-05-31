@@ -12,6 +12,7 @@ import type { Deps as InitDeps } from "./ipc-init"
 import { registerGithubIpcHandlers } from "./github-ipc"
 import { registerPluginTransportIpcHandlers } from "./plugin-transport-ipc"
 import { registerCapabilitiesIpcHandlers } from "./ipc-capabilities"
+import { registerGitIpcHandlers } from "./ipc-git"
 
 let registered = false
 
@@ -29,6 +30,7 @@ export function registerIpcHandlers(deps: InitDeps) {
   registerGithubIpcHandlers()
   registerPluginTransportIpcHandlers()
   registerCapabilitiesIpcHandlers()
+  registerGitIpcHandlers()
 
   // Direct relaunch — renderer sends this to trigger app restart
   ipcMain.on(IPC.send.RELAUNCH, () => {

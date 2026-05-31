@@ -2,11 +2,20 @@ type Definition = {
   [method: string]: (input: any) => any
 }
 
+function safeJsonParse(text: string): unknown {
+  try {
+    return JSON.parse(text)
+  } catch {
+    return undefined
+  }
+}
+
 export function listen(rpc: Definition) {
   onmessage = async (evt) => {
-    const parsed = JSON.parse(evt.data)
+    const parsed = safeJsonParse(evt.data) as Record<string, unknown> | undefined
+    if (!parsed) return
     if (parsed.type === "rpc.request") {
-      const result = await rpc[parsed.method](parsed.input)
+      const result = await rpc[parsed.method as string](parsed.input)
       postMessage(JSON.stringify({ type: "rpc.result", result, id: parsed.id }))
     }
   }
@@ -24,16 +33,17 @@ export function client<T extends Definition>(target: {
   const listeners = new Map<string, Set<(data: any) => void>>()
   let id = 0
   target.onmessage = async (evt) => {
-    const parsed = JSON.parse(evt.data)
+    const parsed = safeJsonParse(evt.data) as Record<string, unknown> | undefined
+    if (!parsed) return
     if (parsed.type === "rpc.result") {
-      const resolve = pending.get(parsed.id)
+      const resolve = pending.get(parsed.id as number)
       if (resolve) {
         resolve(parsed.result)
-        pending.delete(parsed.id)
+        pending.delete(parsed.id as number)
       }
     }
     if (parsed.type === "rpc.event") {
-      const handlers = listeners.get(parsed.event)
+      const handlers = listeners.get(parsed.event as string)
       if (handlers) {
         for (const handler of handlers) {
           handler(parsed.data)

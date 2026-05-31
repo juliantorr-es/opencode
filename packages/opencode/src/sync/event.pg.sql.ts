@@ -1,4 +1,4 @@
-import { pgTable, text, integer, jsonb } from "drizzle-orm/pg-core"
+import { pgTable, text, integer, jsonb, index } from "drizzle-orm/pg-core"
 
 export const EventSequenceTable = pgTable("event_sequence", {
   aggregate_id: text().notNull().primaryKey(),
@@ -14,4 +14,6 @@ export const EventTable = pgTable("event", {
   seq: integer().notNull(),
   type: text().notNull(),
   data: jsonb().$type<Record<string, unknown>>().notNull(),
-})
+}, (table) => ({
+  eventAggregateIdx: index("event_aggregate_idx").on(table.aggregate_id),
+}))

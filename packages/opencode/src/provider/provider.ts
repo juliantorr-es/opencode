@@ -1542,6 +1542,21 @@ export const layer = Layer.effect(
 
     const list = Effect.fn("Provider.list")(() => InstanceState.use(state, (s) => s.providers))
 
+    const LRU_MAX = 100
+    const sdkOrder: string[] = []
+    const modelOrder: string[] = []
+    function lruSet<T>(map: Map<string, T>, order: string[], key: string, value: T) {
+      const idx = order.indexOf(key)
+      if (idx >= 0) order.splice(idx, 1)
+      order.push(key)
+      map.set(key, value)
+      while (order.length > LRU_MAX) {
+        const oldest = order.shift()!
+        map.delete(oldest)
+        log.debug("evicted from LRU cache", { key: oldest, mapSize: map.size })
+      }
+    }
+
     async function resolveSDK(model: Model, s: State, envs: Record<string, string | undefined>) {
       try {
         using _ = log.time("getSDK", {
@@ -1654,7 +1669,10 @@ export const layer = Layer.effect(
             ...opts,
             // @ts-ignore see here: https://github.com/oven-sh/bun/issues/16682
             timeout: false,
-          }).finally(() => headerTimeoutCtl?.clear())
+          }).finally(() => {
+            headerTimeoutCtl?.clear()
+            chunkAbortCtl?.abort()
+          })
 
           if (!chunkAbortCtl) return res
           return wrapSSE(res, chunkTimeout, chunkAbortCtl)
@@ -1671,7 +1689,7 @@ export const layer = Layer.effect(
             name: model.providerID,
             ...options,
           })
-          s.sdk.set(key, loaded)
+          lruSet(s.sdk, sdkOrder, key, loaded)
           return loaded as SDK
         }
 
@@ -1695,7 +1713,7 @@ export const layer = Layer.effect(
           name: model.providerID,
           ...options,
         })
-        s.sdk.set(key, loaded)
+        lruSet(s.sdk, sdkOrder, key, loaded)
         return loaded as SDK
       } catch (e) {
         throw new InitError({ providerID: model.providerID, cause: e })
@@ -1746,7 +1764,7 @@ export const layer = Layer.effect(
                 ...model.options,
               })
             : sdk.languageModel(model.api.id)
-          s.models.set(key, language)
+          lruSet(s.models, modelOrder, key, language)
           return language
         },
         (cause) =>

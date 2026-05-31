@@ -388,7 +388,13 @@ export const layer = Layer.effect(
     const npmSvc = yield* Npm.Service
     const http = yield* HttpClient.HttpClient
 
-    const readConfigFile = (filepath: string) => fs.readFileStringSafe(filepath).pipe(Effect.orDie)
+    const readConfigFile = (filepath: string) =>
+      fs.readFileStringSafe(filepath).pipe(
+        Effect.catch((error) => {
+          log.warn("failed to read config file", { filepath, error: String(error) })
+          return Effect.succeed(null as unknown as never)
+        }),
+      )
 
     const fetchRemoteJson = Effect.fnUntraced(function* <S extends Schema.Top>(
       url: string,
@@ -420,8 +426,20 @@ export const layer = Layer.effect(
             : { text, type: "virtual", ...options, env },
         ),
       )
-      const parsed = ConfigParse.jsonc(expanded, source)
-      const data = ConfigParse.schema(Info, normalizeLoadedConfig(parsed, source), source)
+      let parsed: unknown
+      try {
+        parsed = ConfigParse.jsonc(expanded, source)
+      } catch (error) {
+        log.warn("failed to parse JSONC config", { source, error: String(error) })
+        return {} as Info
+      }
+      let data: Info
+      try {
+        data = ConfigParse.schema(Info, normalizeLoadedConfig(parsed, source), source)
+      } catch (error) {
+        log.warn("failed to validate config schema", { source, error: String(error) })
+        return {} as Info
+      }
       if (!("path" in options)) return data
 
       yield* Effect.promise(() => resolveLoadedPlugins(data, options.path))
@@ -841,7 +859,20 @@ export const layer = Layer.effect(
       let next: Info
       let changed: boolean
       if (!file.endsWith(".jsonc")) {
-        const existing = ConfigParse.schema(Info, ConfigParse.jsonc(before, file), file)
+        let parsed: unknown
+        try {
+          parsed = ConfigParse.jsonc(before, file)
+        } catch (error) {
+          log.warn("failed to parse existing JSONC config", { file, error: String(error) })
+          parsed = {}
+        }
+        let existing: Info
+        try {
+          existing = ConfigParse.schema(Info, parsed, file)
+        } catch (error) {
+          log.warn("failed to validate existing config schema", { file, error: String(error) })
+          existing = {} as Info
+        }
         const merged = mergeDeep(writable(existing), patch)
         const serialized = JSON.stringify(merged, null, 2)
         changed = serialized !== before
@@ -849,7 +880,19 @@ export const layer = Layer.effect(
         next = merged
       } else {
         const updated = patchJsonc(before, patch)
-        next = ConfigParse.schema(Info, ConfigParse.jsonc(updated, file), file)
+        let parsed: unknown
+        try {
+          parsed = ConfigParse.jsonc(updated, file)
+        } catch (error) {
+          log.warn("failed to parse updated JSONC config", { file, error: String(error) })
+          parsed = {}
+        }
+        try {
+          next = ConfigParse.schema(Info, parsed, file)
+        } catch (error) {
+          log.warn("failed to validate updated config schema", { file, error: String(error) })
+          next = {} as Info
+        }
         changed = updated !== before
         if (changed) yield* fs.writeFileString(file, updated).pipe(Effect.orDie)
       }

@@ -1,0 +1,5 @@
+{"at":"2026-05-31T08:08:15.966Z","tool":"smart_grep","action":"searched","pattern":"safeInvoke","results":0,"files":0}
+{"at":"2026-05-31T08:08:35.665Z","tool":"smart_grep","action":"searched","pattern":"safeInvoke|Safe invoke|normalizeIpcError","results":0,"files":0}
+{"at":"2026-05-31T08:09:30.067Z","tool":"smart_bash","action":"bash","command":"awk 'NR>=308 && NR<=338' packages/desktop/src/main/ipc-contract.ts","exit_code":0}
+{"at":"2026-05-31T08:09:57.044Z","tool":"smart_edit","action":"edited","file":"packages/desktop/src/main/ipc-contract.ts","detail":"Remove dead export safeInvoke with 0 callers"}
+{"at":"2026-05-31T08:10:52.558Z","tool":"smart_bash","action":"bash","command":"awk 'NR>=308 && NR<=320' packages/desktop/src/main/ipc-contract.ts","exit_code":0}

@@ -1,0 +1,286 @@
+{
+  "schema_version": "v1",
+  "lane_id": "CT-007",
+  "title": "Binder projection durability — reconstruction from EventStore",
+  "generated_at": "2026-05-31T00:00:00.000Z",
+  "callers": {
+    "all_binderservice_usages": [
+      {
+        "file": "packages/opencode/src/campaign/binder.ts",
+        "line": 11,
+        "role": "definition",
+        "symbol": "Service",
+        "note": "Self-definition — BinderService Context tag"
+      },
+      {
+        "file": "packages/opencode/src/campaign/binder.ts",
+        "line": 167,
+        "role": "definition",
+        "symbol": "Service class",
+        "note": "export class Service extends Context.Service<Service, Interface>()(\"@opencode/BinderService\") {}"
+      },
+      {
+        "file": "packages/opencode/src/campaign/secretary.ts",
+        "line": 11,
+        "role": "import",
+        "note": "import { Service as BinderService, type Binder as CanonicalBinder, layer as BinderLayer, BinderError, type LaneState as BinderLaneState } from \"./binder\""
+      },
+      {
+        "file": "packages/opencode/src/campaign/secretary.ts",
+        "line": 267,
+        "role": "yield* dependency injection",
+        "note": "const binderService = yield* BinderService"
+      },
+      {
+        "file": "packages/opencode/src/campaign/secretary.ts",
+        "line": 458,
+        "role": "caller: createBinder",
+        "note": "yield* binderService.createBinder(laneId, lane.campaignId, lane.scope, lane.scope)"
+      },
+      {
+        "file": "packages/opencode/src/campaign/secretary.ts",
+        "line": 460,
+        "role": "caller: addEvidence",
+        "note": "section=\"transition\" — adds transition events as evidence"
+      },
+      {
+        "file": "packages/opencode/src/campaign/secretary.ts",
+        "line": 471,
+        "role": "caller: addEvidence",
+        "note": "section=\"event\" — adds the triggering event as evidence"
+      },
+      {
+        "file": "packages/opencode/src/campaign/secretary.ts",
+        "line": 481,
+        "role": "caller: updateStatus",
+        "note": "yield* binderService.updateStatus(laneId, newState as BinderLaneState)"
+      },
+      {
+        "file": "packages/opencode/src/campaign/secretary.ts",
+        "line": 482,
+        "role": "caller: finalizeBinder",
+        "note": "binder = yield* binderService.finalizeBinder(laneId)"
+      },
+      {
+        "file": "packages/opencode/src/campaign/auditor.ts",
+        "line": 431,
+        "role": "caller: getBinder",
+        "note": "const binderOpt = yield* binderService.getBinder(laneId) — used to assemble LaneAuditData"
+      }
+    ],
+    "methods_called_externally": {
+      "createBinder": [
+        "packages/opencode/src/campaign/secretary.ts:458"
+      ],
+      "getBinder": [
+        "packages/opencode/src/campaign/auditor.ts:431"
+      ],
+      "getBindersByCampaignId": [],
+      "addEvidence": [
+        "packages/opencode/src/campaign/secretary.ts:460",
+        "packages/opencode/src/campaign/secretary.ts:471"
+      ],
+      "updateStatus": [
+        "packages/opencode/src/campaign/secretary.ts:481"
+      ],
+      "finalizeBinder": [
+        "packages/opencode/src/campaign/secretary.ts:482"
+      ],
+      "getBinderDigest": []
+    }
+  },
+  "recordBinderEvent": {
+    "definition_lines": "229-259",
+    "full_content": "function recordBinderEvent(\n  eventStore: EventStore.Interface,\n  eventType: string,\n  laneId: string,\n  payload: Record<string, unknown>,\n): Effect.Effect<void> {\n  return Effect.gen(function* () {\n    yield* eventStore.record({\n      id: Effect.runSync(Identifier.ascending(\"event\")),\n      sessionId: laneId,\n      runId: laneId,\n      ts: new Date().toISOString(),\n      actor: \"system\" as const,\n      eventType,\n      phase: \"campaign\",\n      toolName: \"binder\",\n      filePath: undefined,\n      model: undefined,\n      durationMs: undefined,\n      tokenInput: undefined,\n      tokenOutput: undefined,\n      errorCode: undefined,\n      errorMessage: undefined,\n      recoverable: undefined,\n      parentEventId: undefined,\n      correlationId: undefined,\n      status: undefined,\n      payloadJson: payload,\n    })\n  })\n}",
+    "call_sites": [
+      {
+        "line": 284,
+        "event_type": "binder.created",
+        "payload": "{ laneId, campaignId }",
+        "note": "BARE — only laneId + campaignId, no binder fields. Insufficient for reconstruction."
+      },
+      {
+        "line": 370,
+        "event_type": "binder.evidence_added",
+        "payload": "{ laneId, section }",
+        "note": "BARE — only laneId + section name. Cannot reconstruct which artifact was added."
+      },
+      {
+        "line": 399,
+        "event_type": "binder.status_changed",
+        "payload": "{ laneId, status, terminalStatus }",
+        "note": "STATUS ONLY — has new state but no prior state snapshot."
+      },
+      {
+        "line": 424,
+        "event_type": "binder.finalized",
+        "payload": "{ laneId, digest: updated.artifactDigest }",
+        "note": "FINAL — has digest but no full binder snapshot."
+      }
+    ],
+    "reconstruction_gap": "ALL payloads are sparse. binder.created omits mission/scope. binder.evidence_added omits the artifact itself. binder.status_changed omits the previous status. binder.finalized omits the full binder state. None of the events carry enough payload to reconstruct a Binder object deterministically."
+  },
+  "binder_interface": {
+    "lines": "84-125",
+    "full_content": "export interface Binder {\n  schemaVersion: string\n  binderVersion: number\n  laneId: string\n  campaignId: string\n  status: LaneState\n\n  // Mission\n  missionObjective: string\n  laneScope: string\n  claimedFiles: string[]\n  dependencyLaneIds: string[]\n\n  // Evidence chain\n  scoutReports: ArtifactRef[]\n  architecturePlan?: ArtifactRef\n  criticReviews: ArtifactRef[]\n  approvedPlan?: ArtifactRef\n\n  // Execution\n  executionEvents: EventRef[]\n  diffSummary?: DiffSummary\n\n  // Validation\n  validationResults: ValidationResult[]\n  redTeamFindings: RedTeamFinding[]\n  repairHistory: RepairCycle[]\n\n  // Closure\n  checkpointCommit?: string\n  residualRisks: string[]\n  handoffSummary?: string\n  terminalStatus?: TerminalStatus\n\n  // Metadata\n  createdAt: string\n  completedAt?: string\n  artifactDigest: string\n}"
+  },
+  "binder_interface_service": {
+    "lines": "136-165",
+    "full_content": "export interface Interface {\n  readonly createBinder: (\n    laneId: string,\n    campaignId: string,\n    mission: string,\n    scope: string,\n  ) => Effect.Effect<string>\n\n  readonly getBinder: (laneId: string) => Effect.Effect<Option.Option<Binder>>\n\n  readonly getBindersByCampaignId: (campaignId: string) => Effect.Effect<Binder[]>\n\n  readonly addEvidence: (\n    laneId: string,\n    section: string,\n    artifact: ArtifactRef | EventRef,\n  ) => Effect.Effect<void, BinderError>\n\n  readonly updateStatus: (\n    laneId: string,\n    status: LaneState,\n    terminalStatus?: TerminalStatus,\n  ) => Effect.Effect<void, BinderError>\n\n  readonly finalizeBinder: (laneId: string) => Effect.Effect<Binder, BinderError>\n\n  readonly getBinderDigest: (laneId: string) => Effect.Effect<string, BinderError>\n}"
+  },
+  "make_function_full": {
+    "lines": "263-451",
+    "full_content": "const make = Effect.gen(function* () {\n  const store = yield* Ref.make<Map<string, Binder>>(new Map())\n  const eventStore = yield* EventStore.Service\n\n  const createBinder = Effect.fn(\"Binder.createBinder\")(function* (\n    laneId: string,\n    campaignId: string,\n    mission: string,\n    scope: string,\n  ) {\n    const existing = yield* Ref.get(store)\n    if (existing.has(laneId)) {\n      log.warn(\"binder already exists\", { laneId })\n      return laneId\n    }\n\n    const binder = createInitialBinder(laneId, campaignId, mission, scope)\n    yield* Ref.update(store, (map) => {\n      map.set(laneId, binder)\n      return map\n    })\n    yield* recordBinderEvent(eventStore, \"binder.created\", laneId, {\n      laneId,\n      campaignId,\n    })\n    log.info(\"created binder\", { laneId })\n    return laneId\n  })\n\n  const getBinder = Effect.fn(\"Binder.getBinder\")(function* (laneId: string) {\n    const map = yield* Ref.get(store)\n    const binder = map.get(laneId)\n    if (binder) return Option.some(binder)\n    return Option.none<Binder>()\n  })\n\n  const getBindersByCampaignId = Effect.fn(\"Binder.getBindersByCampaignId\")(function* (campaignId: string) {\n    const map = yield* Ref.get(store)\n    const all = Array.from(map.values())\n    return all.filter((b) => b.campaignId === campaignId)\n  })\n\n  const addEvidence = Effect.fn(\"Binder.addEvidence\")(function* (\n    laneId: string,\n    section: string,\n    artifact: ArtifactRef | EventRef,\n  ) {\n    const map = yield* Ref.get(store)\n    const binder = map.get(laneId)\n    if (!binder) {\n      return yield* Effect.fail(new BinderError(`Binder not found for lane: ${laneId}`))\n    }\n\n    const updated: Binder = { ...binder }\n\n    switch (section) {\n      case \"scoutReports\":\n        updated.scoutReports = [...binder.scoutReports, artifact as ArtifactRef]\n        break\n      case \"architecturePlan\":\n        updated.architecturePlan = artifact as ArtifactRef\n        break\n      case \"criticReviews\":\n        updated.criticReviews = [...binder.criticReviews, artifact as ArtifactRef]\n        break\n      case \"approvedPlan\":\n        updated.approvedPlan = artifact as ArtifactRef\n        break\n      case \"executionEvents\":\n        updated.executionEvents = [...binder.executionEvents, artifact as EventRef]\n        break\n      case \"diffSummary\":\n        updated.diffSummary = artifact as unknown as DiffSummary\n        break\n      case \"validationResults\":\n        updated.validationResults = [\n          ...binder.validationResults,\n          artifact as unknown as ValidationResult,\n        ]\n        break\n      case \"redTeamFindings\":\n        updated.redTeamFindings = [\n          ...binder.redTeamFindings,\n          artifact as unknown as RedTeamFinding,\n        ]\n        break\n      case \"repairHistory\":\n        updated.repairHistory = [...binder.repairHistory, artifact as unknown as RepairCycle]\n        break\n      case \"residualRisks\": {\n        const riskSummary = \"summary\" in artifact ? artifact.summary : JSON.stringify(artifact)\n        updated.residualRisks = [...binder.residualRisks, riskSummary]\n        break\n      }\n      case \"handoffSummary\":\n        updated.handoffSummary = \"summary\" in artifact ? artifact.summary : JSON.stringify(artifact)\n        break\n      default:\n        return yield* Effect.fail(new BinderError(`Unknown evidence section: ${section}`))\n    }\n\n    updated.artifactDigest = computeDigest(updated)\n\n    yield* Ref.update(store, (map) => {\n      map.set(laneId, updated)\n      return map\n    })\n    yield* recordBinderEvent(eventStore, \"binder.evidence_added\", laneId, { laneId, section })\n  })\n\n  const updateStatus = Effect.fn(\"Binder.updateStatus\")(function* (\n    laneId: string,\n    status: LaneState,\n    terminalStatus?: TerminalStatus,\n  ) {\n    const map = yield* Ref.get(store)\n    const binder = map.get(laneId)\n    if (!binder) {\n      return yield* Effect.fail(new BinderError(`Binder not found for lane: ${laneId}`))\n    }\n\n    const now = new Date().toISOString()\n    const updated: Binder = {\n      ...binder,\n      status,\n      ...(terminalStatus !== undefined ? { terminalStatus } : {}),\n      ...(status === \"checkpointed\" || status === \"returned\"\n        ? { completedAt: now }\n        : {}),\n    }\n    updated.artifactDigest = computeDigest(updated)\n\n    yield* Ref.update(store, (map) => {\n      map.set(laneId, updated)\n      return map\n    })\n    yield* recordBinderEvent(eventStore, \"binder.status_changed\", laneId, {\n      laneId,\n      status,\n      terminalStatus,\n    })\n  })\n\n  const finalizeBinder = Effect.fn(\"Binder.finalizeBinder\")(function* (laneId: string) {\n    const map = yield* Ref.get(store)\n    const binder = map.get(laneId)\n    if (!binder) {\n      return yield* Effect.fail(new BinderError(`Binder not found for lane: ${laneId}`))\n    }\n\n    const now = new Date().toISOString()\n    const updated: Binder = {\n      ...binder,\n      completedAt: now,\n    }\n    updated.artifactDigest = computeDigest(updated)\n\n    yield* Ref.update(store, (map) => {\n      map.set(laneId, updated)\n      return map\n    })\n    yield* recordBinderEvent(eventStore, \"binder.finalized\", laneId, {\n      laneId,\n      digest: updated.artifactDigest,\n    })\n    log.info(\"finalized binder\", { laneId, digest: updated.artifactDigest })\n    return updated\n  })\n\n  const getBinderDigest = Effect.fn(\"Binder.getBinderDigest\")(function* (laneId: string) {\n    const map = yield* Ref.get(store)\n    const binder = map.get(laneId)\n    if (!binder) {\n      return yield* Effect.fail(new BinderError(`Binder not found for lane: ${laneId}`))\n    }\n    return binder.artifactDigest\n  })\n\n  const service: Interface = {\n    createBinder,\n    getBinder,\n    getBindersByCampaignId,\n    addEvidence,\n    updateStatus,\n    finalizeBinder,\n    getBinderDigest,\n  }\n  return service\n})"
+  },
+  "event_store": {
+    "file": "packages/opencode/src/event/event-store.ts",
+    "lines": 136,
+    "interface": {
+      "line": "25-29",
+      "content": "export interface Interface {\n  readonly record: (event: RuntimeEvent) => Effect.Effect<void>\n  readonly query: (filters?: QueryFilters) => Effect.Effect<RuntimeEvent[], DatabaseAdapter.DatabaseError>\n}"
+    },
+    "query_filters": {
+      "line": "11-24",
+      "content": "export interface QueryFilters {\n  sessionId?: string\n  runId?: string\n  eventType?: string\n  actor?: string\n  status?: string\n  parentEventId?: string\n  fromTs?: string\n  toTs?: string\n  limit?: number\n  offset?: number\n  order?: \"asc\" | \"desc\"\n}"
+    },
+    "note": "QueryFilters does NOT support filtering by toolName or laneId directly. To query binder events, you must filter by eventType (e.g. \"binder.created\") or use runId (which in binder events equals laneId). The buildWhere function only checks sessionId, runId, eventType, actor, status, parentEventId, fromTs, toTs."
+  },
+  "runtime_event": {
+    "file": "packages/opencode/src/event/runtime-event.ts",
+    "lines": 36,
+    "schema_fields": [
+      "id: string",
+      "sessionId: string",
+      "runId: string",
+      "parentEventId?: string",
+      "correlationId?: string",
+      "ts: string",
+      "actor: ActorType (\"user\"|\"assistant\"|\"tool\"|\"system\"|\"lifecycle\")",
+      "eventType: string (from EventNameValues)",
+      "phase?: string",
+      "status?: EventStatus (\"started\"|\"succeeded\"|\"failed\"|\"denied\"|\"cancelled\"|\"recovered\")",
+      "toolName?: string",
+      "filePath?: string",
+      "model?: string",
+      "durationMs?: number",
+      "tokenInput?: number",
+      "tokenOutput?: number",
+      "errorCode?: string",
+      "errorMessage?: string",
+      "recoverable?: boolean",
+      "payloadJson?: unknown",
+      "campaignId?: string",
+      "laneId?: string",
+      "role?: string"
+    ]
+  },
+  "existing_reconstruction_patterns": {
+    "secretary_init_replay": {
+      "file": "packages/opencode/src/campaign/secretary.ts",
+      "lines": "306-353",
+      "description": "The secretary's init() function already demonstrates event replay from EventStore. It queries by runId=laneId, filters by payloadJson._tag, converts stored events to SMRuntimeEvent, and replays through reduceCampaignState. This is the closest analog for binder reconstruction.",
+      "content": "/** Replay lane events from EventStore to reconstruct state. */\n  const init: (laneId: string) => Effect.Effect<void> = (laneId) =>\n    Effect.gen(function* () {\n      const existing = yield* Ref.get(activeLanes)\n      const lane = existing.get(laneId)\n      if (!lane) return\n\n      // Load events from store for this lane\n      const stored = yield* eventStore.query({\n        runId: laneId,\n        order: \"asc\",\n        limit: 10_000,\n      })\n\n      if (stored.length === 0) return\n\n      // Convert to secretary events and SM events\n      const events: RuntimeEvent[] = []\n      const smEvents: SMRuntimeEvent[] = []\n\n      for (const se of stored) {\n        // Reconstitute secretary event from stored eventType\n        if (se.payloadJson && typeof se.payloadJson === \"object\" && \"_tag\" in (se.payloadJson as Record<string, unknown>)) {\n          events.push(se.payloadJson as RuntimeEvent)\n          smEvents.push(toSMEvent(se.payloadJson as RuntimeEvent))\n        }\n      }\n\n      if (smEvents.length === 0) return\n\n      // Apply SM reducer\n      const nextSM = reduceCampaignState(lane.smState, smEvents, LANE_STATE_MACHINE)\n\n      const updated: LaneState = {\n        ...lane,\n        currentState: nextSM.currentState as StateTag,\n        previousState: lane.currentState === nextSM.currentState ? lane.previousState : lane.currentState,\n        eventStream: events as readonly RuntimeEvent[],\n        smState: nextSM,\n      }\n\n      yield* Ref.update(activeLanes, (map) => {\n        const next = new Map(map)\n        next.set(laneId, updated)\n        return next\n      })\n    })"
+    },
+    "explanation_engine": {
+      "file": "packages/opencode/src/event/explanation.ts",
+      "lines": "1-249",
+      "description": "The explanation engine traces the EventStore ledger to reconstruct WHY something happened, querying by parentEventId and traversing the event tree. Uses in-memory caching for repeated lookups."
+    }
+  },
+  "existing_tests": {
+    "binder_tests": "NONE — no test files matching *binder* in packages/opencode/test/",
+    "event_store_tests": "NONE — no test files matching *event-store* or *event_store* in packages/opencode/test/",
+    "related_tests": "No references to binder, event-store, or event_store found in any test file under packages/opencode/test/"
+  },
+  "binder_layer_provisioning": {
+    "binder_layer": "Layer.Layer<Service, never, EventStore.Service> = Layer.effect(Service, make)",
+    "default_layer": "Layer.Layer<Service> = layer.pipe(Layer.provide(EventStore.layer))",
+    "secretary_layer": "Layer.effect(Service, make).pipe(Layer.provide(BinderLayer))",
+    "note": "BinderService depends on EventStore for event persistence. Secretary's layer provides both BinderLayer and EventStore's layer."
+  },
+  "smoking_guns": [
+    {
+      "id": "SG-001",
+      "severity": "critical",
+      "title": "recordBinderEvent payloads are too sparse for reconstruction",
+      "description": "All four event types write minimal payloads — laneId only or laneId+status — missing the binder data that was actually created/modified. A reconstructBinder function replaying these events would produce an empty shell, not a useful Binder object.",
+      "evidence": [
+        "binder.created (line 284): payload is { laneId, campaignId } — missing missionObjective, laneScope, full binder",
+        "binder.evidence_added (line 370): payload is { laneId, section } — missing the actual artifact that was added",
+        "binder.status_changed (line 399): payload is { laneId, status, terminalStatus } — has new state but not the full binder",
+        "binder.finalized (line 424): payload is { laneId, digest } — has digest but not the full binder object"
+      ]
+    },
+    {
+      "id": "SG-002",
+      "severity": "major",
+      "title": "getBinder reads from in-memory Ref only — no fallback to EventStore",
+      "description": "The getBinder function (line 292) only does Ref.get(store). If the process restarted, the Ref is empty and getBinder returns Option.none. It never queries EventStore.",
+      "evidence": [
+        "binder.ts:292-298: getBinder reads Ref only, returns Option.none if not found",
+        "binder.ts:299-303: getBindersByCampaignId also reads Ref only",
+        "binder.ts:432-440: getBinderDigest reads Ref only, fails with BinderError if not found"
+      ],
+      "impact": "After restart, auditor.ts:431 and any other getBinder() consumer see no binder data even though events are persisted."
+    },
+    {
+      "id": "SG-003",
+      "severity": "major",
+      "title": "EventStore QueryFilters lacks toolName filter — must query by eventType prefix or use runId",
+      "description": "The EventStore's QueryFilters interface has no toolName field and no laneId field. Binder events set toolName=\"binder\" and sessionId=runId=laneId. To query binder events, you must filter by eventType (matching \"binder.*\" prefix) or filter by runId=laneId (which conflates session/run/lane IDs).",
+      "evidence": [
+        "event-store.ts:11-24: QueryFilters has sessionId, runId, eventType, actor, status, parentEventId, fromTs, toTs, limit, offset, order — no toolName, no laneId",
+        "event-store.ts:90-101: buildWhere only checks sessionId, runId, eventType, actor, status, parentEventId, fromTs, toTs"
+      ]
+    },
+    {
+      "id": "SG-004",
+      "severity": "moderate",
+      "title": "No existing tests for binder or event-store",
+      "description": "There are zero test files covering either binder.ts or event-store.ts. Any reconstruction logic will be added to untested code.",
+      "evidence": [
+        "No files matching *binder* in packages/opencode/test/",
+        "No files matching *event-store* or *event_store* in packages/opencode/test/",
+        "No references to binder or event-store in any test file"
+      ]
+    },
+    {
+      "id": "SG-005",
+      "severity": "moderate",
+      "title": "duplicate-addEvidence hazard: addEvidence has idempotency risk",
+      "description": "addEvidence appends to arrays (scoutReports, criticReviews, etc.) with no duplicate detection. If a reconstructed binder replays events that were also added during the same lifetime, evidence sections will double. The reconstruction needs either an idempotency guard (eventId tracking) or a different replay strategy (full snapshot on finalize).",
+      "evidence": [
+        "binder.ts:319-348: all switch cases use spread [...] append — no duplicate check",
+        "binder.ts:370: recordBinderEvent does not store the artifact in the event payload — even event replay cannot dedupe"
+      ]
+    },
+    {
+      "id": "SG-006",
+      "severity": "moderate",
+      "title": "Reconstruction strategy precedent exists in secretary init",
+      "description": "The secretary's init() function (secretary.ts:306-353) already demonstrates the Exact Right Pattern: query EventStore by runId=laneId in ascending ts order, filter/transform events by payloadJson content, and replay through a reducer. This is the blueprint for reconstructBinder — but the payloads need to carry enough data first.",
+      "evidence": [
+        "secretary.ts:314-317: eventStore.query({ runId: laneId, order: 'asc', limit: 10_000 })",
+        "secretary.ts:329-332: se.payloadJson && typeof se.payloadJson === 'object' && '_tag' in se.payloadJson → reconstruction filter",
+        "secretary.ts:337-338: reduceCampaignState(lane.smState, smEvents, LANE_STATE_MACHINE) — reducer replay pattern"
+      ]
+    }
+  ],
+  "design_constraints": [
+    {
+      "id": "DC-001",
+      "title": "ToolName in event-store does NOT map 1:1 to binder events uniquely",
+      "description": "EventStore's buildWhere cannot filter by toolName. The only way to isolate binder events is eventType prefix match (\"binder.*\") or runId=laneId. Since sessionId=runId=laneId in binder events, filtering by runId works but pulls in all events for that laneId, not just binder events."
+    },
+    {
+      "id": "DC-002",
+      "title": "Binder is large — full-snapshot-on-every-event would be expensive",
+      "description": "Binder contains arrays (scoutReports, criticReviews, executionEvents, validationResults, redTeamFindings, repairHistory) that grow over time. Writing the full Binder as payloadJson on every event would be wasteful. A better strategy: sparse delta events (like now) PLUS a full snapshot on binder.finalized."
+    },
+    {
+      "id": "DC-003",
+      "title": "Reconstruction needs ordered event replay — asc by ts",
+      "description": "Since evidence is appended to arrays, replay must be in insertion order (ascending ts). The EventStore query supports order: 'asc', which matches the secretary init pattern."
+    }
+  ]
+}

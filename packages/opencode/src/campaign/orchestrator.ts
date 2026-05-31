@@ -12,7 +12,7 @@
 // The orchestrator maintains an in-memory store of all active
 // campaign run states keyed by campaign ID.
 
-import { Context, Effect, Layer, Ref } from "effect"
+import { Context, Effect, Layer, SynchronizedRef } from "effect"
 import * as Log from "@opencode-ai/core/util/log"
 import { Secretary } from "./secretary"
 import {
@@ -215,11 +215,11 @@ export const layer = Layer.effect(
     const secretary = yield* Secretary.Service
 
     // ── In-memory campaign store ────────────────────────────
-    const store = yield* Ref.make<Map<string, OrchestratorCampaignState>>(new Map())
+    const store = yield* SynchronizedRef.make<Map<string, OrchestratorCampaignState>>(new Map())
 
     function getState(campaignId: string): Effect.Effect<OrchestratorCampaignState, CampaignNotFound> {
       return Effect.fnUntraced(function* () {
-        const map = yield* Ref.get(store)
+        const map = yield* SynchronizedRef.get(store)
         const state = map.get(campaignId)
         if (!state) return yield* Effect.fail(new CampaignNotFound(campaignId))
         return state
@@ -231,7 +231,7 @@ export const layer = Layer.effect(
       fn: (s: OrchestratorCampaignState) => OrchestratorCampaignState,
     ): Effect.Effect<void> {
       return Effect.fnUntraced(function* () {
-        yield* Ref.update(store, (map) => {
+        yield* SynchronizedRef.update(store, (map) => {
           const existing = map.get(campaignId)
           if (!existing) return map
           const next = new Map(map)
@@ -265,7 +265,7 @@ export const layer = Layer.effect(
         blockers: [],
         createdAt: now,
       }
-      yield* Ref.update(store, (map) => {
+      yield* SynchronizedRef.update(store, (map) => {
         const next = new Map(map)
         next.set(id, initialState)
         return next

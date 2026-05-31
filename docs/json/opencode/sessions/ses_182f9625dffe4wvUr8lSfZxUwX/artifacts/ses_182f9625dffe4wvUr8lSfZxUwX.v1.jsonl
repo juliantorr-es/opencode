@@ -1,0 +1,40 @@
+{"at":"2026-05-31T07:55:04.982Z","tool":"smart_grep","action":"searched","pattern":"addEvidence","results":0,"files":0}
+{"at":"2026-05-31T07:55:05.872Z","tool":"smart_grep","action":"searched","pattern":"addEvidence|\"event\"|\"transition\"","results":0,"files":0}
+{"at":"2026-05-31T07:55:22.062Z","tool":"smart_grep","action":"searched","pattern":"const addEvidence","results":0,"files":0}
+{"at":"2026-05-31T07:55:23.056Z","tool":"smart_grep","action":"searched","pattern":"binderService\\.addEvidence","results":0,"files":0}
+{"at":"2026-05-31T07:55:41.369Z","tool":"smart_grep","action":"searched","pattern":"case \"executionEvents\"","results":0,"files":0}
+{"at":"2026-05-31T07:55:42.205Z","tool":"smart_grep","action":"searched","pattern":"switch \\(section\\)","results":0,"files":0}
+{"at":"2026-05-31T07:55:52.668Z","tool":"smart_grep","action":"searched","pattern":"case \"(scoutReports|architecturePlan|criticReviews|approvedPlan|executionEvents|","results":0,"files":0}
+{"at":"2026-05-31T07:55:53.581Z","tool":"smart_grep","action":"searched","pattern":"isTerminal\\(newState\\)","results":0,"files":0}
+{"at":"2026-05-31T07:56:10.339Z","tool":"smart_grep","action":"searched","pattern":"case \"redTeamFindings\"","results":0,"files":0}
+{"at":"2026-05-31T07:56:11.367Z","tool":"smart_grep","action":"searched","pattern":"yield\\* binderService\\.createBinder","results":0,"files":0}
+{"at":"2026-05-31T07:56:36.672Z","tool":"smart_grep","action":"searched","pattern":"case \"handoffSummary\"|default:|throw.*BinderError","results":0,"files":0}
+{"at":"2026-05-31T07:56:37.841Z","tool":"smart_grep","action":"searched","pattern":"yield\\* binderService\\.(addEvidence|createBinder)","results":0,"files":0}
+{"at":"2026-05-31T07:56:58.978Z","tool":"smart_grep","action":"searched","pattern":"case \"diffSummary\"|case \"validationResults\"|case \"redTeamFindings\"|case \"repairH","results":0,"files":0}
+{"at":"2026-05-31T07:56:59.828Z","tool":"smart_grep","action":"searched","pattern":"let binder: Binder \\| null","results":0,"files":0}
+{"at":"2026-05-31T07:57:35.813Z","tool":"smart_grep","action":"searched","pattern":"\"transition\"|\"event\"","results":0,"files":0}
+{"at":"2026-05-31T07:58:05.783Z","tool":"smart_grep","action":"searched","pattern":"\\\"transition\\\"","results":0,"files":0}
+{"at":"2026-05-31T07:58:30.373Z","tool":"smart_grep","action":"searched","pattern":"let binder: Binder","results":0,"files":0}
+{"at":"2026-05-31T07:59:03.856Z","tool":"smart_grep","action":"searched","pattern":"binderService\\.(createBinder|addEvidence|finalizeBinder)","results":0,"files":0}
+{"at":"2026-05-31T07:59:49.812Z","tool":"smart_grep","action":"searched","pattern":"binder = yield|binderService\\.finalizeBinder","results":0,"files":0}
+{"at":"2026-05-31T08:00:27.986Z","tool":"smart_grep","action":"searched","pattern":"\\\"transition\\\"|addEvidence.*laneId|addEvidence.*\\\"event\\\"","results":0,"files":0}
+{"at":"2026-05-31T08:01:07.487Z","tool":"smart_grep","action":"searched","pattern":"eventType: t\\.event","results":0,"files":0}
+{"at":"2026-05-31T08:01:08.638Z","tool":"smart_grep","action":"searched","pattern":"line 473|\\\"event\\\"","results":0,"files":0}
+{"at":"2026-05-31T08:01:49.042Z","tool":"smart_grep","action":"searched","pattern":"\\\"event\\\",","results":0,"files":0}
+{"at":"2026-05-31T08:02:33.382Z","tool":"smart_grep","action":"searched","pattern":"event\\._tag","results":0,"files":0}
+{"at":"2026-05-31T08:03:28.336Z","tool":"smart_grep","action":"searched","pattern":"binderService\\.finalizeBinder","results":0,"files":0}
+{"at":"2026-05-31T08:06:46.310Z","tool":"smart_git","action":"git_op","operation":"status","exit_code":0}
+{"at":"2026-05-31T08:06:47.179Z","tool":"smart_git","action":"git_op","operation":"log","exit_code":0}
+{"at":"2026-05-31T08:16:26.173Z","tool":"smart_grep","action":"searched","pattern":"\\.addEvidence\\(","results":2,"files":1}
+{"at":"2026-05-31T08:17:24.478Z","tool":"smart_grep","action":"searched","pattern":"from.*binder|import.*Binder","results":6,"files":3}
+{"at":"2026-05-31T08:18:19.521Z","tool":"smart_grep","action":"searched","pattern":"executionEvents|transitionEvents|addEvidence","results":0,"files":0}
+{"at":"2026-05-31T08:18:20.264Z","tool":"smart_grep","action":"searched","pattern":"executionEvents|transitionEvents|addEvidence","results":0,"files":0}
+{"at":"2026-05-31T08:24:14.165Z","tool":"smart_grep","action":"searched","pattern":"\\\"transition\\\"|\\\"event\\\"","results":0,"files":0}
+{"at":"2026-05-31T08:26:22.621Z","tool":"smart_grep","action":"searched","pattern":"executionEvents: EventRef","results":0,"files":0}
+{"at":"2026-05-31T08:26:23.371Z","tool":"smart_grep","action":"searched","pattern":"case \\\"executionEvents\\\"","results":0,"files":0}
+{"at":"2026-05-31T08:26:24.226Z","tool":"smart_grep","action":"searched","pattern":"executionEvents: \\[\\]","results":0,"files":0}
+{"at":"2026-05-31T08:26:25.262Z","tool":"smart_grep","action":"searched","pattern":"executionEvents: binder\\.executionEvents","results":0,"files":0}
+{"at":"2026-05-31T08:26:58.986Z","tool":"smart_grep","action":"searched","pattern":"transitionEvents","results":0,"files":0}
+{"at":"2026-05-31T08:27:35.576Z","tool":"smart_git","action":"git_op","operation":"diff","exit_code":0}
+{"at":"2026-05-31T08:27:36.157Z","tool":"smart_git","action":"git_op","operation":"diff","exit_code":0}
+{"at":"2026-05-31T08:28:20.281Z","tool":"smart_grep","action":"searched","pattern":"\\\"transition\\\"","results":0,"files":0}

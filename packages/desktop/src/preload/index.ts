@@ -63,6 +63,8 @@ const api: ElectronAPI = {
   setLocalePreference: (locale) => typedInvoke(IPC.handle.SET_LOCALE_PREFERENCE, locale),
   getLocalePreference: () => typedInvoke(IPC.handle.GET_LOCALE_PREFERENCE),
 
+  getGitStatus: () => typedInvoke(IPC.handle.GET_GIT_STATUS),
+  getCapabilities: () => typedInvoke(IPC.handle.GET_CAPABILITIES),
   getSafeModeDiagnostics: () => typedInvoke(IPC.handle.GET_SAFE_MODE_DIAGNOSTICS),
   safeModeAction: (action: SafeModeAction) => typedInvoke(IPC.handle.SAFE_MODE_ACTION, action),
 

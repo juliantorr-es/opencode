@@ -6,8 +6,9 @@
 //
 // reduceCampaignState is a pure deterministic function: same
 // events + spec always produces the same output state.
-// Predicate evaluation is heuristic (SM-003 will make it
-// rigorous with a proper predicate engine).
+// SM-003: predicate evaluation now uses typed evidence predicates
+
+import { checkPredicate } from "./predicates"
 
 // ── Entry Action Executor ─────────────────────────────────
 

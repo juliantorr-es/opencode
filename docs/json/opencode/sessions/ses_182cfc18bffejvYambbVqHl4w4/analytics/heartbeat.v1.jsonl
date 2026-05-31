@@ -1,0 +1,46 @@
+{"at":"2026-05-31T08:39:53.668Z","session_id":"ses_182cfc18bffejvYambbVqHl4w4","agent":"cartographer","tool":"smart_find","phase":"started","detail":"*.test.ts"}
+{"at":"2026-05-31T08:39:53.689Z","session_id":"ses_182cfc18bffejvYambbVqHl4w4","agent":"cartographer","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T08:39:54.839Z","session_id":"ses_182cfc18bffejvYambbVqHl4w4","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"testEffect|it\\.live"}
+{"at":"2026-05-31T08:39:54.853Z","session_id":"ses_182cfc18bffejvYambbVqHl4w4","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"testEffect|it\\.live"}
+{"at":"2026-05-31T08:40:01.664Z","session_id":"ses_182cfc18bffejvYambbVqHl4w4","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"campaign|binder|secretary|state.?machine|predicates"}
+{"at":"2026-05-31T08:40:01.676Z","session_id":"ses_182cfc18bffejvYambbVqHl4w4","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"campaign|binder|secretary|state.?machine|predicates"}
+{"at":"2026-05-31T08:40:02.897Z","session_id":"ses_182cfc18bffejvYambbVqHl4w4","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"ContextPacket|Claim|ownership|lane.*lifecycle|EventStore"}
+{"at":"2026-05-31T08:40:02.912Z","session_id":"ses_182cfc18bffejvYambbVqHl4w4","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"ContextPacket|Claim|ownership|lane.*lifecycle|EventStore"}
+{"at":"2026-05-31T08:40:04.142Z","session_id":"ses_182cfc18bffejvYambbVqHl4w4","agent":"cartographer","tool":"smart_find","phase":"started","detail":"*"}
+{"at":"2026-05-31T08:40:04.164Z","session_id":"ses_182cfc18bffejvYambbVqHl4w4","agent":"cartographer","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T08:40:05.328Z","session_id":"ses_182cfc18bffejvYambbVqHl4w4","agent":"cartographer","tool":"smart_find","phase":"started","detail":"*.test.ts"}
+{"at":"2026-05-31T08:40:05.348Z","session_id":"ses_182cfc18bffejvYambbVqHl4w4","agent":"cartographer","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T08:40:06.432Z","session_id":"ses_182cfc18bffejvYambbVqHl4w4","agent":"cartographer","tool":"smart_find","phase":"started","detail":"*.ts"}
+{"at":"2026-05-31T08:40:06.453Z","session_id":"ses_182cfc18bffejvYambbVqHl4w4","agent":"cartographer","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T08:40:14.242Z","session_id":"ses_182cfc18bffejvYambbVqHl4w4","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Get test directory structure since fd is not installed"}
+{"at":"2026-05-31T08:40:14.243Z","session_id":"ses_182cfc18bffejvYambbVqHl4w4","agent":"cartographer","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T08:40:15.091Z","session_id":"ses_182cfc18bffejvYambbVqHl4w4","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"List all test files since fd not available"}
+{"at":"2026-05-31T08:40:15.091Z","session_id":"ses_182cfc18bffejvYambbVqHl4w4","agent":"cartographer","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T08:40:16.511Z","session_id":"ses_182cfc18bffejvYambbVqHl4w4","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Find campaign/lane/context source directories"}
+{"at":"2026-05-31T08:40:16.511Z","session_id":"ses_182cfc18bffejvYambbVqHl4w4","agent":"cartographer","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T08:40:17.789Z","session_id":"ses_182cfc18bffejvYambbVqHl4w4","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Find test helper library files"}
+{"at":"2026-05-31T08:40:17.789Z","session_id":"ses_182cfc18bffejvYambbVqHl4w4","agent":"cartographer","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T08:40:25.761Z","session_id":"ses_182cfc18bffejvYambbVqHl4w4","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Get test directory tree structure"}
+{"at":"2026-05-31T08:40:25.794Z","session_id":"ses_182cfc18bffejvYambbVqHl4w4","agent":"cartographer","tool":"smart_bash","phase":"completed","detail":"eza exit=0"}
+{"at":"2026-05-31T08:40:26.994Z","session_id":"ses_182cfc18bffejvYambbVqHl4w4","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Find campaign and context source directories"}
+{"at":"2026-05-31T08:40:27.055Z","session_id":"ses_182cfc18bffejvYambbVqHl4w4","agent":"cartographer","tool":"smart_bash","phase":"completed","detail":"eza exit=0"}
+{"at":"2026-05-31T08:40:27.869Z","session_id":"ses_182cfc18bffejvYambbVqHl4w4","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Read test helper library"}
+{"at":"2026-05-31T08:40:27.869Z","session_id":"ses_182cfc18bffejvYambbVqHl4w4","agent":"cartographer","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T08:40:38.410Z","session_id":"ses_182cfc18bffejvYambbVqHl4w4","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"from.*campaign|import.*campaign"}
+{"at":"2026-05-31T08:40:38.423Z","session_id":"ses_182cfc18bffejvYambbVqHl4w4","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"from.*campaign|import.*campaign"}
+{"at":"2026-05-31T08:40:39.460Z","session_id":"ses_182cfc18bffejvYambbVqHl4w4","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Get full test directory tree not truncated"}
+{"at":"2026-05-31T08:40:39.482Z","session_id":"ses_182cfc18bffejvYambbVqHl4w4","agent":"cartographer","tool":"smart_bash","phase":"completed","detail":"eza exit=0"}
+{"at":"2026-05-31T08:40:41.051Z","session_id":"ses_182cfc18bffejvYambbVqHl4w4","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"testEffect|testLayer|describe|it\\.live"}
+{"at":"2026-05-31T08:40:41.066Z","session_id":"ses_182cfc18bffejvYambbVqHl4w4","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"testEffect|testLayer|describe|it\\.live"}
+{"at":"2026-05-31T08:41:04.099Z","session_id":"ses_182cfc18bffejvYambbVqHl4w4","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Get rest of test directory tree"}
+{"at":"2026-05-31T08:41:04.122Z","session_id":"ses_182cfc18bffejvYambbVqHl4w4","agent":"cartographer","tool":"smart_bash","phase":"completed","detail":"eza exit=0"}
+{"at":"2026-05-31T08:41:18.311Z","session_id":"ses_182cfc18bffejvYambbVqHl4w4","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Get test fixture directory structure"}
+{"at":"2026-05-31T08:41:18.338Z","session_id":"ses_182cfc18bffejvYambbVqHl4w4","agent":"cartographer","tool":"smart_bash","phase":"completed","detail":"eza exit=0"}
+{"at":"2026-05-31T08:41:19.810Z","session_id":"ses_182cfc18bffejvYambbVqHl4w4","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"describe\\(|beforeEach\\(|afterEach\\("}
+{"at":"2026-05-31T08:41:19.825Z","session_id":"ses_182cfc18bffejvYambbVqHl4w4","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"describe\\(|beforeEach\\(|afterEach\\("}
+{"at":"2026-05-31T08:41:47.557Z","session_id":"ses_182cfc18bffejvYambbVqHl4w4","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Check fixture test file"}
+{"at":"2026-05-31T08:41:47.569Z","session_id":"ses_182cfc18bffejvYambbVqHl4w4","agent":"cartographer","tool":"smart_bash","phase":"completed","detail":"wc exit=0"}
+{"at":"2026-05-31T08:44:31.514Z","session_id":"ses_182cfc18bffejvYambbVqHl4w4","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Verify the placeholder test file the surveyor found"}
+{"at":"2026-05-31T08:44:31.514Z","session_id":"ses_182cfc18bffejvYambbVqHl4w4","agent":"cartographer","tool":"smart_bash","phase":"rerouted","detail":"→ read_source"}
+{"at":"2026-05-31T08:44:41.938Z","session_id":"ses_182cfc18bffejvYambbVqHl4w4","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"List campaign test directory contents"}
+{"at":"2026-05-31T08:44:41.977Z","session_id":"ses_182cfc18bffejvYambbVqHl4w4","agent":"cartographer","tool":"smart_bash","phase":"completed","detail":"eza exit=0"}

@@ -152,12 +152,15 @@ const live: Layer.Layer<
         })
 
         const bridge = yield* EffectBridge.make()
-        const approvedToolsForSession = new Set<string>()
+        // Key tool approvals by sessionID to prevent cross-session leaks.
+        // Each session gets its own approval set, cleared when the session ends.
+        const approvedToolsBySession = new Map<string, Set<string>>()
         workflowModel.approvalHandler = bridge.bind(async (approvalTools) => {
           const uniqueNames = [...new Set(approvalTools.map((t: { name: string }) => t.name))] as string[]
           // Auto-approve tools that were already approved in this session
           // (prevents infinite approval loops for server-side MCP tools)
-          if (uniqueNames.every((name) => approvedToolsForSession.has(name))) {
+          const sessionApprovals = approvedToolsBySession.get(input.sessionID) ?? new Set<string>()
+          if (uniqueNames.every((name) => sessionApprovals.has(name))) {
             return { approved: true }
           }
 
@@ -188,7 +191,11 @@ const live: Layer.Layer<
                 ruleset: [],
               }),
             )
-            for (const name of uniqueNames) approvedToolsForSession.add(name)
+            for (const name of uniqueNames) {
+              const set = approvedToolsBySession.get(input.sessionID) ?? new Set<string>()
+              set.add(name)
+              approvedToolsBySession.set(input.sessionID, set)
+            }
             workflowModel.sessionPreapprovedTools = [...(workflowModel.sessionPreapprovedTools ?? []), ...uniqueNames]
             return { approved: true }
           } catch {

@@ -7,6 +7,4 @@ export async function resetDatabase() {
   Database.close()
   const dbPath = Database.getPath()
   await rm(dbPath, { force: true }).catch(() => undefined)
-  await rm(`${dbPath}-wal`, { force: true }).catch(() => undefined)
-  await rm(`${dbPath}-shm`, { force: true }).catch(() => undefined)
 }

@@ -1,0 +1,12 @@
+{"at":"2026-05-31T08:42:56.228Z","session_id":"ses_182cd09bcffe4Xy3BFA2tudPMn","agent":"cartographer","tool":"smart_find","phase":"started","detail":"packages/app/**"}
+{"at":"2026-05-31T08:42:56.248Z","session_id":"ses_182cd09bcffe4Xy3BFA2tudPMn","agent":"cartographer","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T08:42:58.361Z","session_id":"ses_182cd09bcffe4Xy3BFA2tudPMn","agent":"cartographer","tool":"smart_find","phase":"started","detail":"packages/ui/**"}
+{"at":"2026-05-31T08:42:58.379Z","session_id":"ses_182cd09bcffe4Xy3BFA2tudPMn","agent":"cartographer","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T08:43:37.137Z","session_id":"ses_182cd09bcffe4Xy3BFA2tudPMn","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"List all packages in the monorepo"}
+{"at":"2026-05-31T08:43:37.137Z","session_id":"ses_182cd09bcffe4Xy3BFA2tudPMn","agent":"cartographer","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T08:43:38.065Z","session_id":"ses_182cd09bcffe4Xy3BFA2tudPMn","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"List contents of app and ui packages"}
+{"at":"2026-05-31T08:43:38.066Z","session_id":"ses_182cd09bcffe4Xy3BFA2tudPMn","agent":"cartographer","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T08:44:26.763Z","session_id":"ses_182cd09bcffe4Xy3BFA2tudPMn","agent":"cartographer","tool":"smart_find","phase":"started","detail":"*"}
+{"at":"2026-05-31T08:44:26.788Z","session_id":"ses_182cd09bcffe4Xy3BFA2tudPMn","agent":"cartographer","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T08:44:29.278Z","session_id":"ses_182cd09bcffe4Xy3BFA2tudPMn","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"\"name\""}
+{"at":"2026-05-31T08:44:29.297Z","session_id":"ses_182cd09bcffe4Xy3BFA2tudPMn","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"\"name\""}

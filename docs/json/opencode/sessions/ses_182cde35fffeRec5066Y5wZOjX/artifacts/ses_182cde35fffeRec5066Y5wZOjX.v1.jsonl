@@ -1,0 +1,9 @@
+{"at":"2026-05-31T08:41:45.259Z","tool":"smart_git","action":"git_op","operation":"log","exit_code":0}
+{"at":"2026-05-31T08:41:45.821Z","tool":"smart_grep","action":"searched","pattern":"verifyUpdateCodeSignature","results":1,"files":1}
+{"at":"2026-05-31T08:41:46.687Z","tool":"smart_grep","action":"searched","pattern":"code.?sign|signing|certificate|winSign|csc","results":4,"files":3}
+{"at":"2026-05-31T08:42:04.737Z","tool":"smart_grep","action":"searched","pattern":"CSC_LINK|CSC_KEY_PASSWORD|WIN_CSC|AZURE_KEY_VAULT","results":1,"files":1}
+{"at":"2026-05-31T08:42:39.446Z","tool":"smart_grep","action":"searched","pattern":"verifyUpdateCodeSignature","results":10,"files":6}
+{"at":"2026-05-31T08:43:55.151Z","tool":"smart_grep","action":"searched","pattern":"verifyUpdateCodeSignature","results":1,"files":1}
+{"at":"2026-05-31T08:44:52.958Z","tool":"smart_bash","action":"bash","command":"for f in /Users/user/Developer/GitHub/opencode-desktop-dev/script/*; do echo \"$f\"; done","exit_code":0}
+{"at":"2026-05-31T08:44:53.801Z","tool":"smart_bash","action":"bash","command":"for f in /Users/user/Developer/GitHub/opencode-desktop-dev/.github/workflows/*; do echo \"$f\"; done","exit_code":0}
+{"at":"2026-05-31T08:45:57.297Z","tool":"smart_grep","action":"searched","pattern":"sign|signing|azure.*key.*vault|CSC|certificate","results":16,"files":2}

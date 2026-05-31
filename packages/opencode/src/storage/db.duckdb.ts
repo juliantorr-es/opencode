@@ -78,6 +78,7 @@ function execSQL<T>(
 
     const onAbort = signal
       ? () => {
+          cleanup()
           proc.kill()
           reject(new DuckDBError("DuckDB query aborted via signal"))
         }
