@@ -1,0 +1,183 @@
+{
+  "report": "test_infrastructure_soundings",
+  "package": "packages/opencode",
+  "generated_at": "2026-05-31",
+
+  "test_runner": {
+    "runner": "bun test",
+    "script": "bun test --timeout 30000",
+    "config_files": {
+      "bunfig.toml": {
+        "preload": ["@opentui/solid/preload"],
+        "test_preload": ["@opentui/solid/preload", "./test/preload.ts"],
+        "note": "timeout is set via --timeout CLI flag, not bunfig.toml (bun issue #7789)"
+      }
+    },
+    "preload": "./test/preload.ts",
+    "preload_behavior": {
+      "env_isolation": "sets XDG_* env vars to temp dirs scoped by PID",
+      "home_isolation": "sets OPENCODE_TEST_HOME to prevent pickup of ~/.claude/skills",
+      "auth_isolation": "deletes 20+ provider API key env vars (ANTHROPIC_API_KEY, OPENAI_API_KEY, etc.)",
+      "db_mode": "in-memory SQLite via OPENCODE_DB=:memory:",
+      "teardown": "afterAll handler closes Database, force-GCs, retries rm up to 30x with 100ms backoff (handles EBUSY on Windows SQLite WAL)",
+      "feature_flags": "sets OPENCODE_EXPERIMENTAL_EVENT_SYSTEM=true, OPENCODE_EXPERIMENTAL_WORKSPACES=true",
+      "log_init": "initializes Log (print=false, dev=true, level=DEBUG) and initProjectors()"
+    },
+    "framework": "bun:test",
+    "import_pattern": "import { describe, expect, test } from \"bun:test\""
+  },
+
+  "test_file_inventory": {
+    "total_test_files": 280,
+    "total_source_files": 506,
+    "test_to_source_ratio": "0.55",
+    "non_test_helper_files": 43,
+    "breakdown_by_subsystem": {
+      "cli": 58,
+      "server": 46,
+      "tool": 27,
+      "session": 18,
+      "util": 14,
+      "plugin": 13,
+      "storage": 11,
+      "acp-next": 10,
+      "provider": 8,
+      "project": 7,
+      "config": 7,
+      "mcp": 6,
+      "file": 6,
+      "effect": 6,
+      "lsp": 5,
+      "pty": 4,
+      "bus": 3,
+      "agent": 3,
+      "skill": 2,
+      "permission": 2,
+      "acp": 2,
+      "account": 2,
+      "v2": 1,
+      "sync": 1,
+      "snapshot": 1,
+      "shell": 1,
+      "share": 1,
+      "reference": 1,
+      "question": 1,
+      "patch": 1,
+      "installation": 1,
+      "image": 1,
+      "ide": 1,
+      "git": 1,
+      "format": 1,
+      "fixture": 1,
+      "filesystem": 1,
+      "background": 1,
+      "auth": 1,
+      "permission-task.test.ts (root)": 1
+    }
+  },
+
+  "test_patterns": {
+    "primary_pattern": {
+      "name": "Effect-based layer injection",
+      "description": "Most tests for core services use Effect layers. A custom `testEffect()` / `it` wrapper merges test layers (TestClock, TestConsole) with service layers.",
+      "bun_test_wrapper": "test/lib/effect.ts exports `it = { effect, live, instance }` — a wrapper around bun:test that builds Effect layers via `Layer.buildWithMemoMap` and runs scoped effects.",
+      "standard_imports": "`import { describe, expect } from \"bun:test\"`, `import { Effect, Exit, Layer } from \"effect\"`, `import { testEffect, it } from \"../lib/effect\"`, `import { tmpdirScoped, TestInstance } from \"../fixture/fixture\"`",
+      "lifecycle": "Effect.scoped manages resource lifecycle; no beforeEach/afterEach needed for DB/filesystem — scoped layers handle teardown"
+    },
+    "secondary_pattern": {
+      "name": "Pure bun:test (TUI/CLI unit tests)",
+      "description": "CLI/TUI tests (under test/cli/) use plain bun:test `describe`/`test` blocks without Effect layers. These test pure functions: formatters, parsers, prompt logic, diff viewer.",
+      "imports": "`import { describe, expect, test } from \"bun:test\"` only"
+    },
+    "test_structure": {
+      "describe_usage": "Used for grouping test suites; test() is the standard block.",
+      "mocking": "No manual mock()/mock.module() observed. Effect's Layer system provides dependency injection — tests inject fake/stub layers instead of mocking modules.",
+      "no_conftest": "No conftest.py/conftest.ts. The preload.ts file is the global setup."
+    }
+  },
+
+  "fixtures_and_helpers": {
+    "core_fixture": "test/fixture/fixture.ts",
+    "exports": ["tmpdir", "tmpdirScoped", "TestInstance", "provideTestInstance", "withTestInstance", "reloadTestInstance", "disposeAllInstances", "provideInstance", "provideInstanceEffect"],
+    "key_helpers": {
+      "effect_runner": "test/lib/effect.ts — `it`, `testEffect`, `testEffectShared`, `awaitWithTimeout`, `pollWithTimeout`",
+      "db_reset": "test/fixture/db.ts — `resetDatabase`",
+      "config_fixtures": "test/fixture/config.ts",
+      "workspace_fixture": "test/fixture/workspace.ts — `workspaceLayerWithRuntimeFlags`",
+      "llm_server": "test/lib/llm-server.ts — TestLLMServer for mock LLM responses",
+      "websocket_helper": "test/lib/websocket.ts",
+      "test_provider": "test/lib/test-provider.ts",
+      "snapshot_helper": "test/lib/snapshot.ts",
+      "filesystem_helper": "test/lib/filesystem.ts",
+      "cli_process": "test/lib/cli-process.ts — spawns opencode CLI as subprocess",
+      "acp_test_client": "test/cli/acp/acp-test-client.ts",
+      "acp_next_helpers": "test/cli/acp-next/helpers.ts"
+    },
+    "fake_services": "test/fake/ — account.ts, auth.ts, npm.ts, provider.ts, skill.ts (stub Layers for test injection)",
+    "static_fixtures": {
+      "tool_fixtures": "test/tool/fixtures/ — models-api.json, etc.",
+      "image_fixtures": "test/image/fixtures/",
+      "config_fixtures": "test/config/fixtures/",
+      "root_fixtures": "test/fixtures/ (root-level static data)"
+    },
+    "server_integration_harness": "test/server/httpapi-exercise/ — full DSL/runtime for HTTP API testing: assertions.ts, backend.ts, dsl.ts, environment.ts, report.ts, routing.ts, runner.ts, runtime.ts, types.ts"
+  },
+
+  "coverage_gaps": {
+    "no_test_directory": [
+      {"dir": "src/binary", "source_files": 3},
+      {"dir": "src/command", "source_files": 1},
+      {"dir": "src/context", "source_files": 15},
+      {"dir": "src/coordination", "source_files": 1},
+      {"dir": "src/debug", "source_files": 4},
+      {"dir": "src/env", "source_files": 1},
+      {"dir": "src/event", "source_files": 9},
+      {"dir": "src/id", "source_files": 1},
+      {"dir": "src/lifecycle", "source_files": 6},
+      {"dir": "src/review", "source_files": 5},
+      {"dir": "src/worktree", "source_files": 1}
+    ],
+    "thin_coverage_1_test": [
+      "auth", "background", "format", "image", "question", "reference", "share", "shell", "snapshot", "sync", "v2"
+    ],
+    "no_test_files_but_dir_exists": ["campaign (1 non-test file, 0 test files, 16 src files)"],
+    "major_untested_subsystems": [
+      "context (15 src files) — likely compiler/symbol indexing",
+      "event (9 src files) — event system",
+      "lifecycle (6 src files) — session lifecycle",
+      "review (5 src files) — code review subsystem",
+      "debug (4 src files) — debug utilities",
+      "binary (3 src files) — binary detection/file handling"
+    ]
+  },
+
+  "snapshot_tests": {
+    "snapshot_directories": [
+      {"path": "test/cli/help/__snapshots__", "files": 1, "purpose": "CLI help output snapshots"},
+      {"path": "test/tool/__snapshots__", "files": 2, "purpose": "Tool output snapshots"}
+    ],
+    "total_snapshot_files": 3,
+    "snapshot_approach": "limited — only 3 snapshot files across 280 test files. Most tests use explicit assertions."
+  },
+
+  "integration_e2e_tests": {
+    "spawn_related": [
+      "test/cli/run/run-process.test.ts",
+      "test/cli/serve/serve-process.test.ts",
+      "test/cli/acp/acp-process.test.ts"
+    ],
+    "named_integration": [
+      "test/bus/bus-integration.test.ts",
+      "test/provider/cf-ai-gateway-e2e.test.ts"
+    ],
+    "real_db": ["test/storage/pg-pool.pg.test.ts (PostgreSQL pool)"],
+    "server_httpapi_exercise": "test/server/httpapi-exercise/ — 10-file DSL-based integration test harness for HTTP API endpoints",
+    "spawn_pattern": "CLI process tests spawn opencode as a subprocess via test/lib/cli-process.ts"
+  },
+
+  "db_handling": {
+    "default": "in-memory SQLite (OPENCODE_DB=:memory:) set in preload.ts",
+    "pg_test": "test/storage/pg-pool.pg.test.ts uses real PostgreSQL pool",
+    "reset": "test/fixture/db.ts provides resetDatabase() helper"
+  }
+}

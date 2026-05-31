@@ -1,0 +1,36 @@
+{"at":"2026-05-31T09:14:55.984Z","tool":"smart_grep","action":"searched","pattern":"EventName","results":30,"files":11}
+{"at":"2026-05-31T09:14:56.973Z","tool":"smart_grep","action":"searched","pattern":"event.*type|type.*event|Event\\s*=","results":30,"files":8}
+{"at":"2026-05-31T09:14:57.651Z","tool":"smart_grep","action":"searched","pattern":"from.*context/packet|from.*context/","results":3,"files":2}
+{"at":"2026-05-31T09:15:06.505Z","tool":"smart_bash","action":"bash","command":"wc -l packages/opencode/src/context/packet.ts && cat -n packages/opencode/src/context/packet.ts","exit_code":0}
+{"at":"2026-05-31T09:16:11.991Z","tool":"smart_grep","action":"searched","pattern":"TEST_FILE_RE|eventType|toolName|validation|typecheck|test|dirty|reservation|conf","results":0,"files":0}
+{"at":"2026-05-31T09:16:12.957Z","tool":"smart_grep","action":"searched","pattern":"EventName\\.","results":0,"files":0}
+{"at":"2026-05-31T09:17:01.037Z","tool":"smart_grep","action":"searched","pattern":"eventType === EventName","results":0,"files":0}
+{"at":"2026-05-31T09:17:02.108Z","tool":"smart_grep","action":"searched","pattern":"validation|typecheck|dirty|reservation","results":0,"files":0}
+{"at":"2026-05-31T09:17:03.341Z","tool":"smart_grep","action":"searched","pattern":"claim|Claim|coordination|Coordination|reservation|Reservation","results":0,"files":0}
+{"at":"2026-05-31T09:17:41.989Z","tool":"smart_bash","action":"bash","command":"awk 'NR>=106 && NR<=280' packages/opencode/src/context/packet.ts","exit_code":0}
+{"at":"2026-05-31T09:17:42.804Z","tool":"smart_bash","action":"bash","command":"awk 'NR>=280 && NR<=445' packages/opencode/src/context/packet.ts","exit_code":0}
+{"at":"2026-05-31T09:17:43.560Z","tool":"smart_bash","action":"bash","command":"awk 'NR>=445 && NR<=506' packages/opencode/src/context/packet.ts","exit_code":0}
+{"at":"2026-05-31T09:18:21.102Z","tool":"smart_bash","action":"bash","command":"awk 'NR>=106 && NR<=138' packages/opencode/src/context/packet.ts","exit_code":0}
+{"at":"2026-05-31T09:18:22.165Z","tool":"smart_bash","action":"bash","command":"awk 'NR>=139 && NR<=200' packages/opencode/src/context/packet.ts","exit_code":0}
+{"at":"2026-05-31T09:18:22.996Z","tool":"smart_bash","action":"bash","command":"awk 'NR>=192 && NR<=280' packages/opencode/src/context/packet.ts","exit_code":0}
+{"at":"2026-05-31T09:18:24.116Z","tool":"smart_bash","action":"bash","command":"awk 'NR>=326 && NR<=445' packages/opencode/src/context/packet.ts","exit_code":0}
+{"at":"2026-05-31T09:18:55.962Z","tool":"smart_bash","action":"bash","command":"awk 'NR>=196 && NR<=260' packages/opencode/src/context/packet.ts","exit_code":0}
+{"at":"2026-05-31T09:18:56.963Z","tool":"smart_bash","action":"bash","command":"awk 'NR>=340 && NR<=400' packages/opencode/src/context/packet.ts","exit_code":0}
+{"at":"2026-05-31T09:18:57.791Z","tool":"smart_bash","action":"bash","command":"awk 'NR>=460 && NR<=506' packages/opencode/src/context/packet.ts","exit_code":0}
+{"at":"2026-05-31T09:18:58.681Z","tool":"smart_grep","action":"searched","pattern":"getCurrentPacket","results":0,"files":0}
+{"at":"2026-05-31T09:19:24.849Z","tool":"smart_bash","action":"bash","command":"awk 'NR>=210 && NR<=245' packages/opencode/src/context/packet.ts","exit_code":0}
+{"at":"2026-05-31T09:19:25.400Z","tool":"smart_bash","action":"bash","command":"awk 'NR>=355 && NR<=385' packages/opencode/src/context/packet.ts","exit_code":0}
+{"at":"2026-05-31T09:19:26.467Z","tool":"smart_bash","action":"bash","command":"awk 'NR>=400 && NR<=430' packages/opencode/src/context/packet.ts","exit_code":0}
+{"at":"2026-05-31T09:20:01.674Z","tool":"smart_bash","action":"bash","command":"awk 'NR>=19 && NR<=105' packages/opencode/src/context/packet.ts","exit_code":0}
+{"at":"2026-05-31T09:20:02.522Z","tool":"smart_bash","action":"bash","command":"awk 'NR>=474 && NR<=500' packages/opencode/src/context/packet.ts","exit_code":0}
+{"at":"2026-05-31T09:20:03.859Z","tool":"smart_grep","action":"searched","pattern":"EventName\\.","results":0,"files":0}
+{"at":"2026-05-31T09:20:34.412Z","tool":"smart_bash","action":"bash","command":"/bin/ls -1 packages/opencode/src/context/","exit_code":0}
+{"at":"2026-05-31T09:20:35.795Z","tool":"smart_grep","action":"searched","pattern":"FileMemory\\.|fileMemory\\.|\\.fileCount|\\.contentFresh|\\.stalePaths","results":0,"files":0}
+{"at":"2026-05-31T09:20:36.775Z","tool":"smart_grep","action":"searched","pattern":"FileEdited|FileConflict","results":0,"files":0}
+{"at":"2026-05-31T09:21:13.736Z","tool":"smart_bash","action":"bash","command":"awk 'NR>=262 && NR<=335' packages/opencode/src/context/packet.ts","exit_code":0}
+{"at":"2026-05-31T09:21:14.697Z","tool":"smart_bash","action":"bash","command":"awk 'NR>=385 && NR<=404' packages/opencode/src/context/packet.ts","exit_code":0}
+{"at":"2026-05-31T09:21:44.179Z","tool":"smart_grep","action":"searched","pattern":"type:\\s*[\"'](session\\.|file\\.|tool\\.|child\\.|context\\.|validation\\.|claim\\.|lane","results":30,"files":3}
+{"at":"2026-05-31T09:21:52.416Z","tool":"smart_grep","action":"searched","pattern":"type:\\s*[\"'](child\\.|lane\\.|claim\\.|context\\.|validation\\.)","results":0,"files":0}
+{"at":"2026-05-31T09:22:11.920Z","tool":"smart_grep","action":"searched","pattern":"getSessionReservations|checkPathReserved","results":0,"files":0}
+{"at":"2026-05-31T09:22:12.821Z","tool":"smart_grep","action":"searched","pattern":"export const getSessionReservations|export const checkPathReserved","results":0,"files":0}
+{"at":"2026-05-31T09:22:37.834Z","tool":"smart_grep","action":"searched","pattern":"type: [\"']","results":0,"files":0}

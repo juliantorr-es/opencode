@@ -18,6 +18,7 @@ export const EventName = {
   SessionStatus: 'session.status',
   SessionIdle: 'session.idle', // # deprecated — remove in Phase 4
   SessionCompacted: 'session.compacted',
+  SessionCheckpoint: 'session.checkpoint',
   MessagePartDelta: 'message.part.delta',
   MessageUpdated: 'message.updated',
   MessageRemoved: 'message.removed',
@@ -95,7 +96,7 @@ export const EventName = {
 
   // campaign.*
   CampaignCreated: 'campaign.created',
-  CampaignLaneCreated: 'lane.created',
+  CampaignLaneCreated: 'campaign.lane.created',
   CampaignLaneAssigned: 'campaign.lane.assigned',
   CampaignLaneCompleted: 'campaign.lane.completed',
   CampaignGateActivated: 'campaign.gate.activated',
@@ -113,6 +114,7 @@ export const EventName = {
   CampaignPublicationAdmitted: 'campaign.publication.admitted',
   CampaignPublicationBlocked: 'campaign.publication.blocked',
   CampaignCheckpointCreated: 'campaign.checkpoint.created',
+  GatesAllPassed: 'gates.all_passed',
 
   // context.*
   ContextSufficient: 'context.sufficient',
@@ -137,16 +139,23 @@ export const EventName = {
 
   // scope.*
   ScopeSynthesized: 'scope.synthesized',
+  ScopeUnsafe: 'scope.unsafe',
 
   // child.*
   ChildBlocked: 'child.blocked',
   ChildCompleted: 'child.completed',
+  ChildrenAllComplete: 'children.all_complete',
   LaneCompleted: 'lane.completed',
   LaneBlocked: 'lane.blocked',
+  LaneReturned: 'lane.returned',
   ClaimConflict: 'claim.conflict',
+  ClaimsAcquired: 'claims.acquired',
   ToolFailed: 'tool.failed',
   UserApproval: 'user.approval',
+  RedteamCompleted: 'redteam.completed',
   RedteamFinding: 'redteam.finding',
+  FindingBlocking: 'finding.blocking',
+  FindingConfirmed: 'finding.confirmed',
 } as const
 
 /** Union type of all canonical event type strings. */

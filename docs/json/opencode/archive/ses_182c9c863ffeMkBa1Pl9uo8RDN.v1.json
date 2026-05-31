@@ -1,0 +1,13 @@
+{
+  "schema": "v1",
+  "session_id": "ses_182c9c863ffeMkBa1Pl9uo8RDN",
+  "agent": "secretary",
+  "archived_at": "2026-05-31T09:15:03.307Z",
+  "summary": "CT-005: Consolidated dual PredicateSpec — added 2 missing variants to predicates.ts, removed 25-line duplicate from state-machine.ts (now imports from predicates.ts). Renamed state-machine.ts TransitionSpec→TransitionRule (field when→predicate), AgentStateMachineSpec→AgentMachineSpec to avoid collisions. Updated all 29 transition objects. Added stub resolvers with logging. Zero new type errors. Deferred: evaluatePredicate/unify evaluation engines.",
+  "agents_involved": [
+    "secretary"
+  ],
+  "tool_calls": 157,
+  "tool_failures": 1,
+  "handoffs": 125
+}

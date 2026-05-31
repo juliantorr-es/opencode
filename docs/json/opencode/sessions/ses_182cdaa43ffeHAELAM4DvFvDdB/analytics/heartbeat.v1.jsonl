@@ -12,3 +12,37 @@
 {"at":"2026-05-31T08:44:50.244Z","session_id":"ses_182cdaa43ffeHAELAM4DvFvDdB","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"OPENCODE_AUTH"}
 {"at":"2026-05-31T08:44:50.790Z","session_id":"ses_182cdaa43ffeHAELAM4DvFvDdB","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"sanitizedProcessEnv|sanitizeProcessEnv|sanitized_process_env"}
 {"at":"2026-05-31T08:44:51.029Z","session_id":"ses_182cdaa43ffeHAELAM4DvFvDdB","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"sanitizedProcessEnv|sanitizeProcessEnv|sanitized_process_env"}
+{"at":"2026-05-31T08:47:05.183Z","session_id":"ses_182cdaa43ffeHAELAM4DvFvDdB","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"output.*scrub|scrub.*output|redact|mask.*secret|secret.*mask"}
+{"at":"2026-05-31T08:47:05.315Z","session_id":"ses_182cdaa43ffeHAELAM4DvFvDdB","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"output.*scrub|scrub.*output|redact|mask.*secret|secret.*mask"}
+{"at":"2026-05-31T08:47:06.347Z","session_id":"ses_182cdaa43ffeHAELAM4DvFvDdB","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"BashTool|bash.*tool|dangerous.*bash|bash.*dangerous"}
+{"at":"2026-05-31T08:47:06.449Z","session_id":"ses_182cdaa43ffeHAELAM4DvFvDdB","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"BashTool|bash.*tool|dangerous.*bash|bash.*dangerous"}
+{"at":"2026-05-31T08:47:07.720Z","session_id":"ses_182cdaa43ffeHAELAM4DvFvDdB","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"process\\.env|process\\.env\\["}
+{"at":"2026-05-31T08:47:07.733Z","session_id":"ses_182cdaa43ffeHAELAM4DvFvDdB","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"process\\.env|process\\.env\\["}
+{"at":"2026-05-31T08:48:24.484Z","session_id":"ses_182cdaa43ffeHAELAM4DvFvDdB","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"createSidecarEnv|sidecar.*env"}
+{"at":"2026-05-31T08:48:24.616Z","session_id":"ses_182cdaa43ffeHAELAM4DvFvDdB","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"createSidecarEnv|sidecar.*env"}
+{"at":"2026-05-31T08:48:25.574Z","session_id":"ses_182cdaa43ffeHAELAM4DvFvDdB","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"utilityProcess\\.fork|child_process\\.spawn|Bun\\.spawn|spawn\\("}
+{"at":"2026-05-31T08:48:25.721Z","session_id":"ses_182cdaa43ffeHAELAM4DvFvDdB","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"utilityProcess\\.fork|child_process\\.spawn|Bun\\.spawn|spawn\\("}
+{"at":"2026-05-31T08:51:26.390Z","session_id":"ses_182cdaa43ffeHAELAM4DvFvDdB","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"OPENCODE_AUTH_CONTENT"}
+{"at":"2026-05-31T08:51:26.415Z","session_id":"ses_182cdaa43ffeHAELAM4DvFvDdB","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"OPENCODE_AUTH_CONTENT"}
+{"at":"2026-05-31T08:51:27.435Z","session_id":"ses_182cdaa43ffeHAELAM4DvFvDdB","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"OPENCODE_AUTH_CONTENT"}
+{"at":"2026-05-31T08:51:27.445Z","session_id":"ses_182cdaa43ffeHAELAM4DvFvDdB","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"OPENCODE_AUTH_CONTENT"}
+{"at":"2026-05-31T08:53:29.746Z","session_id":"ses_182cdaa43ffeHAELAM4DvFvDdB","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"OPENCODE_STORAGE_SECRET|OPENCODE_DATABASE"}
+{"at":"2026-05-31T08:53:29.856Z","session_id":"ses_182cdaa43ffeHAELAM4DvFvDdB","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"OPENCODE_STORAGE_SECRET|OPENCODE_DATABASE"}
+{"at":"2026-05-31T08:55:13.954Z","session_id":"ses_182cdaa43ffeHAELAM4DvFvDdB","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"OPENCODE_AUTH_CONTENT"}
+{"at":"2026-05-31T08:55:13.963Z","session_id":"ses_182cdaa43ffeHAELAM4DvFvDdB","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"OPENCODE_AUTH_CONTENT"}
+{"at":"2026-05-31T08:59:50.024Z","session_id":"ses_182cdaa43ffeHAELAM4DvFvDdB","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"spawnSync\\(|Bun\\.spawn\\(|spawn\\(params\\.command"}
+{"at":"2026-05-31T08:59:50.077Z","session_id":"ses_182cdaa43ffeHAELAM4DvFvDdB","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"spawnSync\\(|Bun\\.spawn\\(|spawn\\(params\\.command"}
+{"at":"2026-05-31T08:59:51.038Z","session_id":"ses_182cdaa43ffeHAELAM4DvFvDdB","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"process\\.env"}
+{"at":"2026-05-31T08:59:51.042Z","session_id":"ses_182cdaa43ffeHAELAM4DvFvDdB","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"process\\.env"}
+{"at":"2026-05-31T08:59:52.544Z","session_id":"ses_182cdaa43ffeHAELAM4DvFvDdB","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"bash_usage|logEntry|observability|telemetry"}
+{"at":"2026-05-31T08:59:52.549Z","session_id":"ses_182cdaa43ffeHAELAM4DvFvDdB","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"bash_usage|logEntry|observability|telemetry"}
+{"at":"2026-05-31T09:08:08.207Z","session_id":"ses_182cdaa43ffeHAELAM4DvFvDdB","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"spawnSync\\(.*\\[\\]"}
+{"at":"2026-05-31T09:08:08.225Z","session_id":"ses_182cdaa43ffeHAELAM4DvFvDdB","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"spawnSync\\(.*\\[\\]"}
+{"at":"2026-05-31T09:08:09.349Z","session_id":"ses_182cdaa43ffeHAELAM4DvFvDdB","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"process\\.env\\.\\w+"}
+{"at":"2026-05-31T09:08:09.360Z","session_id":"ses_182cdaa43ffeHAELAM4DvFvDdB","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"process\\.env\\.\\w+"}
+{"at":"2026-05-31T09:10:36.996Z","session_id":"ses_182cdaa43ffeHAELAM4DvFvDdB","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Ensure output directory exists for the artifact"}
+{"at":"2026-05-31T09:10:37.019Z","session_id":"ses_182cdaa43ffeHAELAM4DvFvDdB","agent":"cartographer","tool":"smart_bash","phase":"completed","detail":"mkdir exit=0"}
+{"at":"2026-05-31T09:24:29.897Z","session_id":"ses_182cdaa43ffeHAELAM4DvFvDdB","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"OPENCODE_AUTH_CONTENT"}
+{"at":"2026-05-31T09:24:29.912Z","session_id":"ses_182cdaa43ffeHAELAM4DvFvDdB","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"OPENCODE_AUTH_CONTENT"}
+{"at":"2026-05-31T09:24:30.868Z","session_id":"ses_182cdaa43ffeHAELAM4DvFvDdB","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"OPENCODE_AUTH_CONTENT"}
+{"at":"2026-05-31T09:24:30.958Z","session_id":"ses_182cdaa43ffeHAELAM4DvFvDdB","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"OPENCODE_AUTH_CONTENT"}

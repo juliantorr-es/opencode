@@ -1,0 +1,13 @@
+{"at":"2026-05-31T08:59:59.397Z","session_id":"ses_182bdb125ffesA1nPor0gHHtwD","agent":"critic","tool":"smart_grep","pattern":"from \"\\.\\/state-machine\"","path":"packages/opencode/src"}
+{"at":"2026-05-31T09:01:07.183Z","session_id":"ses_182bdb125ffesA1nPor0gHHtwD","agent":"critic","tool":"smart_grep","pattern":"readonly kind: \"","path":"packages/opencode/src/campaign/predicates.ts"}
+{"at":"2026-05-31T09:01:07.701Z","session_id":"ses_182bdb125ffesA1nPor0gHHtwD","agent":"critic","tool":"smart_grep","pattern":"readonly kind: \"","path":"packages/opencode/src/campaign/state-machine.ts"}
+{"at":"2026-05-31T09:01:26.798Z","session_id":"ses_182bdb125ffesA1nPor0gHHtwD","agent":"critic","tool":"smart_grep","pattern":"kind:","path":"packages/opencode/src/campaign/predicates.ts"}
+{"at":"2026-05-31T09:01:27.862Z","session_id":"ses_182bdb125ffesA1nPor0gHHtwD","agent":"critic","tool":"smart_grep","pattern":"kind:","path":"packages/opencode/src/campaign/state-machine.ts"}
+{"at":"2026-05-31T09:03:53.328Z","session_id":"ses_182bdb125ffesA1nPor0gHHtwD","agent":"critic","tool":"smart_grep","pattern":"checkPredicate","path":"packages/opencode/src/campaign/state-machine.ts"}
+{"at":"2026-05-31T09:05:35.075Z","session_id":"ses_182bdb125ffesA1nPor0gHHtwD","agent":"critic","tool":"smart_grep","pattern":"TransitionSpec|AgentStateMachineSpec|AgentMachineSpec|StateTransition","path":"packages/opencode/src"}
+{"at":"2026-05-31T09:05:35.212Z","session_id":"ses_182bdb125ffesA1nPor0gHHtwD","agent":"critic","tool":"smart_grep","pattern":"from.*campaign.*TransitionSpec|from.*campaign.*AgentStateMachineSpec","path":"packages"}
+{"at":"2026-05-31T09:05:51.703Z","session_id":"ses_182bdb125ffesA1nPor0gHHtwD","agent":"critic","tool":"smart_grep","pattern":"retry_budget_remaining|repair_budget_exhausted|all_gates_pass","path":"packages/opencode/src/campaign/state-machine.ts"}
+{"at":"2026-05-31T09:06:08.636Z","session_id":"ses_182bdb125ffesA1nPor0gHHtwD","agent":"critic","tool":"smart_grep","pattern":"\"when:|predicate:\"","path":"packages/opencode/src/campaign/state-machine.ts"}
+{"at":"2026-05-31T09:06:16.693Z","session_id":"ses_182bdb125ffesA1nPor0gHHtwD","agent":"critic","tool":"smart_grep","pattern":"(when|predicate):","path":"packages/opencode/src/campaign/state-machine.ts"}
+{"at":"2026-05-31T09:07:11.534Z","session_id":"ses_182bdb125ffesA1nPor0gHHtwD","agent":"critic","tool":"smart_bun","command":"typecheck","elapsed_ms":28382,"exit_code":2}
+{"at":"2026-05-31T09:07:56.564Z","session_id":"ses_182bdb125ffesA1nPor0gHHtwD","agent":"critic","tool":"smart_grep","pattern":"\\.when","path":"packages/opencode/src/campaign/state-machine.ts"}

@@ -1,0 +1,18 @@
+{"at":"2026-05-31T09:23:51.995Z","session_id":"ses_182a75a4fffeaU7eA2cyVnfwbk","agent":"secretary","tool":"smart_grep","pattern":"RedteamCompleted|PlanApproved|PlanRejected|EditApplied|RepairEvidence|FindingBlocking","path":"packages/opencode/src"}
+{"at":"2026-05-31T09:24:30.038Z","session_id":"ses_182a75a4fffeaU7eA2cyVnfwbk","agent":"secretary","tool":"smart_grep","pattern":"repair_budget_exhausted","path":"packages/opencode/src"}
+{"at":"2026-05-31T09:24:31.151Z","session_id":"ses_182a75a4fffeaU7eA2cyVnfwbk","agent":"secretary","tool":"smart_grep","pattern":"repair\\.evidence|RepairEvidence","path":"packages/opencode/src"}
+{"at":"2026-05-31T09:24:56.627Z","session_id":"ses_182a75a4fffeaU7eA2cyVnfwbk","agent":"secretary","tool":"smart_grep","pattern":"no_blocking_findings|plan_approved|plan_rejected|repair_budget_exhausted|retry_budget_remaining","path":"packages/opencode/src/campaign/state-machine.ts"}
+{"at":"2026-05-31T09:25:17.334Z","session_id":"ses_182a75a4fffeaU7eA2cyVnfwbk","agent":"secretary","tool":"smart_grep","pattern":"case \"no_blocking_findings\"","path":"packages/opencode/src/campaign/state-machine.ts"}
+{"at":"2026-05-31T09:25:18.485Z","session_id":"ses_182a75a4fffeaU7eA2cyVnfwbk","agent":"secretary","tool":"smart_grep","pattern":"case \"repair_budget_exhausted\"","path":"packages/opencode/src/campaign/state-machine.ts"}
+{"at":"2026-05-31T09:25:19.292Z","session_id":"ses_182a75a4fffeaU7eA2cyVnfwbk","agent":"secretary","tool":"smart_grep","pattern":"case \"plan_approved\"","path":"packages/opencode/src/campaign/state-machine.ts"}
+{"at":"2026-05-31T09:26:55.593Z","session_id":"ses_182a75a4fffeaU7eA2cyVnfwbk","agent":"secretary","tool":"smart_grep","pattern":"resolveNoBlockingFindings","path":"packages/opencode/src/campaign"}
+{"at":"2026-05-31T09:26:57.019Z","session_id":"ses_182a75a4fffeaU7eA2cyVnfwbk","agent":"secretary","tool":"smart_grep","pattern":"resolvePlanApproved","path":"packages/opencode/src/campaign"}
+{"at":"2026-05-31T09:26:58.306Z","session_id":"ses_182a75a4fffeaU7eA2cyVnfwbk","agent":"secretary","tool":"smart_grep","pattern":"repair_budget_exhausted.*stub|stub.*repair_budget","path":"packages/opencode/src/campaign"}
+{"at":"2026-05-31T09:28:37.665Z","session_id":"ses_182a75a4fffeaU7eA2cyVnfwbk","agent":"secretary","tool":"smart_sd","file":"packages/opencode/src/campaign/predicates.ts"}
+{"at":"2026-05-31T09:28:41.770Z","session_id":"ses_182a75a4fffeaU7eA2cyVnfwbk","agent":"secretary","tool":"smart_sd","file":"packages/opencode/src/campaign/predicates.ts"}
+{"at":"2026-05-31T09:29:53.548Z","session_id":"ses_182a75a4fffeaU7eA2cyVnfwbk","agent":"secretary","tool":"smart_sd","file":"packages/opencode/src/campaign/state-machine.ts"}
+{"at":"2026-05-31T09:30:23.635Z","session_id":"ses_182a75a4fffeaU7eA2cyVnfwbk","agent":"secretary","tool":"smart_sd","file":"packages/opencode/src/campaign/predicates.ts"}
+{"at":"2026-05-31T09:30:35.487Z","session_id":"ses_182a75a4fffeaU7eA2cyVnfwbk","agent":"secretary","tool":"smart_grep","pattern":"no_blocking_findings","path":"packages/opencode/src/campaign/state-machine.ts"}
+{"at":"2026-05-31T09:31:20.109Z","session_id":"ses_182a75a4fffeaU7eA2cyVnfwbk","agent":"secretary","tool":"smart_bun","command":"typecheck","elapsed_ms":32752,"exit_code":2}
+{"at":"2026-05-31T09:31:34.850Z","session_id":"ses_182a75a4fffeaU7eA2cyVnfwbk","agent":"secretary","tool":"smart_grep","pattern":"src/campaign/predicates\\.ts|src/campaign/state-machine\\.ts","path":"packages/opencode"}
+{"at":"2026-05-31T09:32:13.303Z","session_id":"ses_182a75a4fffeaU7eA2cyVnfwbk","agent":"secretary","tool":"smart_grep","pattern":"no_blocking_findings","path":"packages/opencode/src/campaign/state-machine.ts"}

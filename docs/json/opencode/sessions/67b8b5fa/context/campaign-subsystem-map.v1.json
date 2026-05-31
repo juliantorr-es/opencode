@@ -1,0 +1,639 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "artifact_kind": "learning_artifact",
+  "scope": "campaign subsystem map",
+  "generated_at": "2026-05-31",
+  "generated_by": "cartographer",
+  "files_mapped": [
+    "packages/opencode/src/campaign/secretary.ts",
+    "packages/opencode/src/campaign/binder.ts",
+    "packages/opencode/src/campaign/integrator.ts",
+    "packages/opencode/src/campaign/predicates.ts",
+    "packages/opencode/src/campaign/state-machine.ts",
+    "packages/opencode/src/campaign/types.ts",
+    "packages/opencode/src/event/event-names.ts"
+  ],
+  "surface_map": {
+    "secretary": {
+      "file": "packages/opencode/src/campaign/secretary.ts",
+      "lines": 677,
+      "role": "Lane lifecycle coordinator — processes events, launches roles, maintains Ref<Map<string,LaneState>> (activeLanes). The single authority for mutating lane state.",
+      "effect_service": "@opencode/Secretary",
+      "layer": "Layer.effect(Service, make).pipe(Layer.provide(BinderLayer))",
+      "dependencies": ["EventStore.Service", "BinderService", "state-machine (reduceCampaignState, LANE_STATE_MACHINE)", "types (LaneState)"],
+      "interface_methods": ["createLane", "processEvent", "getLaneState", "getLaneBinder", "launchRole", "handleRoleOutput", "returnLane", "init"],
+      "state_storage": "Ref<Map<string, LaneState>> — in-memory, no durable persistence beyond EventStore write-through",
+      "runtime_event_type": {
+        "definition_line": 20,
+        "variants": [
+          "LaneCreated",
+          "StartLearning",
+          "LearningComplete (artifacts: readonly string[])",
+          "PlanReady",
+          "ReviewApproved",
+          "ReviewRejected (reason: string)",
+          "ExecutionComplete",
+          "ValidationPassed",
+          "ValidationFailed (issues: readonly string[])",
+          "RepairComplete",
+          "RepairFailed (error: string)",
+          "Blocked (reason: string)",
+          "Unblocked",
+          "ScoutComplete (artifacts: readonly string[])",
+          "ArchitectComplete",
+          "CriticComplete (verdict: 'approved'|'rejected', reason?: string)",
+          "ExecutorComplete (files: readonly string[])",
+          "ValidatorComplete (passed: boolean, issues: readonly string[])",
+          "RedTeamComplete (findings: readonly string[])",
+          "RedTeamCompleted (blockingFindings: number, totalFindings: number)",
+          "HistorianComplete (checkpointCreated: boolean)",
+          "ScopeSynthesized (summary: string)",
+          "ClaimsAcquired (files: readonly string[], claimIds: readonly string[])",
+          "CheckpointCreated (sha: string, message: string)",
+          "LaneReturned (binderDigest: string)",
+          "Failed (error: string)"
+        ]
+      },
+      "event_name_map": {
+        "definition_line": 209,
+        "description": "Maps secretary RuntimeEvent tags to canonical EventName constants for EventStore write-through",
+        "mappings": {
+          "LaneCreated": "EventName.CampaignLaneCreated ('campaign.lane.created')",
+          "StartLearning": "EventName.ContextSufficient ('context.sufficient')",
+          "LearningComplete": "EventName.ScoutCompleted ('scout.completed')",
+          "PlanReady": "EventName.PlanProduced ('plan.produced')",
+          "ReviewApproved": "EventName.PlanApproved ('plan.approved')",
+          "ReviewRejected": "EventName.PlanRejected ('plan.rejected')",
+          "ExecutionComplete": "EventName.EditApplied ('edit.applied')",
+          "ValidationPassed": "EventName.ValidationCompleted ('validation.completed')",
+          "ValidationFailed": "EventName.ValidationFailure ('validation.failure')",
+          "RepairComplete": "EventName.EditApplied ('edit.applied')",
+          "RepairFailed": "EventName.ValidationFailure ('validation.failure')",
+          "Blocked": "EventName.ChildBlocked ('child.blocked')",
+          "Unblocked": "EventName.ContextSufficient ('context.sufficient')",
+          "ScoutComplete": "EventName.ScoutCompleted ('scout.completed')",
+          "ArchitectComplete": "EventName.PlanProduced ('plan.produced')",
+          "ExecutorComplete": "EventName.EditApplied ('edit.applied')",
+          "ValidatorComplete": "EventName.ValidationCompleted ('validation.completed')",
+          "RedTeamComplete": "EventName.RedteamFinding ('redteam.finding')",
+          "HistorianComplete": "EventName.SessionCheckpoint ('session.checkpoint')",
+          "ScopeSynthesized": "EventName.ScopeSynthesized ('scope.synthesized')",
+          "ClaimsAcquired": "EventName.ClaimsAcquired ('claims.acquired')",
+          "CheckpointCreated": "EventName.SessionCheckpoint ('session.checkpoint')",
+          "LaneReturned": "EventName.LaneReturned ('lane.returned')",
+          "RedTeamCompleted": "EventName.RedteamCompleted ('redteam.completed')",
+          "Failed": "EventName.PermissionDenied ('permission.denied')"
+        }
+      },
+      "state_role_mapping": {
+        "definition_line": 291,
+        "description": "Maps lane states to the role type that should be launched",
+        "mappings": {
+          "scouting": "cartographer",
+          "scoped": "cartographer",
+          "planning": "architect",
+          "critic_review": "critic",
+          "approved": "executor",
+          "executing": "executor",
+          "validating": "validator",
+          "red_team": "redteam",
+          "repairing": "repair",
+          "historian": "historian",
+          "checkpointed": null,
+          "returned": null,
+          "blocked": null,
+          "failed": null
+        }
+      },
+      "role_output_to_event": {
+        "definition_line": 569,
+        "description": "Maps role completion to RuntimeEvent. For success status, dispatches by role. For blocked/critic-rejected, returns Blocked or CriticComplete(rejected). For failures, returns Failed.",
+        "role_mappings": {
+          "cartographer/scout (success)": "ScoutComplete",
+          "architect (success)": "ArchitectComplete",
+          "critic (success)": "CriticComplete(approved)",
+          "executor (success)": "ExecutorComplete",
+          "validator (success)": "ValidatorComplete(passed=true)",
+          "redteam (success)": "RedTeamComplete (NOT RedTeamCompleted)",
+          "historian (success)": "HistorianComplete(checkpointCreated=true)",
+          "critic (blocked)": "CriticComplete(rejected)",
+          "other (blocked)": "Blocked",
+          "critic (non-success, non-blocked)": "CriticComplete(rejected)",
+          "other (non-success, non-blocked)": "Failed"
+        },
+        "note": "RedTeamCompleted is NEVER emitted by roleOutputToEvent. It must come from a separate code path."
+      },
+      "to_smevent": {
+        "definition_line": 132,
+        "description": "Maps secretary RuntimeEvent to state-machine RuntimeEvent (SMRuntimeEvent). Each variant maps to a {type, timestamp, payload} object.",
+        "critical_mappings": {
+          "LearningComplete": "\"scout.completed\" (same as ScoutComplete) — dual-path to scoped state",
+          "ScoutComplete": "\"scout.completed\" (same as LearningComplete)",
+          "ArchitectComplete": "\"plan.produced\" (same as PlanReady)",
+          "CriticComplete(approved)": "\"plan.approved\"",
+          "CriticComplete(rejected)": "\"plan.rejected\"",
+          "RedTeamComplete": "\"redteam.finding\" (RAW STRING, not EventName constant!)",
+          "RedTeamCompleted": "EventName.RedteamCompleted",
+          "RepairComplete": "\"edit.applied\" (same as ExecutionComplete)",
+          "Blocked": "\"child.blocked\"",
+          "Failed": "\"permission.denied\"",
+          "CheckpointCreated": "\"session.checkpoint\" (same as HistorianComplete)"
+        },
+        "concern": "toSMEvent uses RAW STRINGS like \"scout.completed\", \"plan.produced\", \"redteam.finding\" instead of EventName constants. evaluatePredicate uses EventName.* constants. They match by string value but are not type-linked."
+      },
+      "processEvent_flow": {
+        "description": "1. lookup lane via ensureLane. 2. write-through to EventStore via toStoreEvent. 3. convert to SMRuntimeEvent via toSMEvent. 4. call reduceCampaignState(smState, [smEvent], LANE_STATE_MACHINE). 5. If SM transitioned → use smTarget as newState. If not → handle Blocked→blocked, Failed→failed, Unblocked→restore previous. 6. Add transition record + evidence to binder. 7. Update binder status. 8. Update activeLanes Ref."
+      },
+      "handleRoleOutput_flow": {
+        "description": "1. Converts RoleOutput to RuntimeEvent via roleOutputToEvent. 2. Delegates to processEvent. This is the bridge between role execution and lane state."
+      },
+      "returnLane_flow": {
+        "description": "At terminal time (checkpointed state): 1. Checks lane is terminal via isTerminal(). 2. Emits LaneReturned event. 3. Calls binderService.finalizeBinder(). 4. Returns the finalized binder."
+      }
+    },
+    "binder": {
+      "file": "packages/opencode/src/campaign/binder.ts",
+      "lines": 537,
+      "role": "Persistent evidence ledger per lane. Stores all artifacts, events, validation results, red team findings, repair history. Supports EventStore reconstruction.",
+      "effect_service": "@opencode/BinderService",
+      "layer": "Layer.effect(Service, make).pipe(Layer.provide(EventStore.layer))",
+      "canonical_binder_interface": {
+        "definition_line": 84,
+        "fields": {
+          "schemaVersion": "string ('v1')",
+          "binderVersion": "number (1)",
+          "laneId": "string",
+          "campaignId": "string",
+          "status": "LaneState (union literal)",
+          "missionObjective": "string",
+          "laneScope": "string",
+          "claimedFiles": "string[]",
+          "dependencyLaneIds": "string[]",
+          "scoutReports": "ArtifactRef[]",
+          "architecturePlan": "ArtifactRef?",
+          "criticReviews": "ArtifactRef[]",
+          "approvedPlan": "ArtifactRef?",
+          "executionEvents": "EventRef[]",
+          "transitionEvents": "EventRef[]",
+          "diffSummary": "DiffSummary?",
+          "validationResults": "ValidationResult[]",
+          "redTeamFindings": "RedTeamFinding[]",
+          "repairHistory": "RepairCycle[]",
+          "checkpointCommit": "string?",
+          "residualRisks": "string[]",
+          "handoffSummary": "string?",
+          "terminalStatus": "TerminalStatus?",
+          "createdAt": "string (ISO)",
+          "completedAt": "string? (ISO)",
+          "artifactDigest": "string (SHA256 of evidence payload)"
+        },
+        "sub_types": {
+          "ArtifactRef": "{ id, type, path, digest, producedAt }",
+          "EventRef": "{ eventId, eventType, ts, summary }",
+          "DiffSummary": "{ additions, deletions, modifiedFiles, raw }",
+          "ValidationResult": "{ id, passed, issues, evidenceDigest, runAt }",
+          "RedTeamFinding": "{ id, severity, description, file, line }",
+          "RepairCycle": "{ attempt, findingId, repairEventId, validationEventId, success }",
+          "TerminalStatus": "'completed_validated'|'completed_unvalidated'|'completed_with_warnings'|'blocked_needs_user'|'blocked_scope_conflict'|'blocked_tool_unavailable'|'failed_internal_error'|'stopped_by_user'|'superseded'"
+        }
+      },
+      "service_interface": {
+        "definition_line": 137,
+        "methods": {
+          "createBinder": "(laneId, campaignId, mission, scope) → Effect<string> — initializes in Ref<Map<string,Binder>> and records binder.created event",
+          "getBinder": "(laneId) → Effect<Option<Binder>> — reads from in-memory Ref, falls back to EventStore reconstruction",
+          "getBindersByCampaignId": "(campaignId) → Effect<Binder[]> — filters all binders by campaign",
+          "addEvidence": "(laneId, section, artifact) → Effect<void,BinderError> — mutates binder in Ref and records binder.evidence event",
+          "updateStatus": "(laneId, status, terminalStatus?) → Effect<void,BinderError> — mutates binder.status in Ref and records binder.status event",
+          "finalizeBinder": "(laneId) → Effect<Binder,BinderError> — sets completedAt, computes artifactDigest, records binder.finalized event",
+          "getBinderDigest": "(laneId) → Effect<string,BinderError>",
+          "reconstructBinder": "(laneId) → Effect<Option<Binder>> — replays binder.* events from EventStore to rebuild binder from scratch"
+        }
+      },
+      "persistence_mechanism": {
+        "primary_store": "Ref<Map<string, Binder>> — in-memory Map, mutated on every operation",
+        "durability": "EventStore write-through for reconstruction. Every mutation also records a binder.created / binder.evidence / binder.status / binder.finalized event.",
+        "reconstruction": "reconstructBinder() queries EventStore for all binder.* events for a laneId, then replays them: binder.created initializes fields, binder.status mutates status, binder.evidence appends to sections, binder.finalized sets completedAt + artifactDigest.",
+        "cache_miss": "getBinder() checks Ref first. On miss, calls reconstructBinder() then caches result in Ref."
+      },
+      "event_types_recorded": {
+        "binder.created": "on createBinder — stores laneId, campaignId, mission, scope",
+        "binder.evidence": "on addEvidence — stores section + artifact/event ref",
+        "binder.status": "on updateStatus — stores new status + optional terminalStatus",
+        "binder.finalized": "on finalizeBinder — stores completedAt + artifactDigest"
+      }
+    },
+    "integrator": {
+      "file": "packages/opencode/src/campaign/integrator.ts",
+      "lines": 444,
+      "role": "Multi-lane integration coordinator — merges binders after all lanes complete, detects conflicts, assigns merge strategies.",
+      "effect_service": "@opencode/CampaignIntegrator",
+      "own_binder_interface": {
+        "definition_line": 36,
+        "fields": {
+          "laneId": "string",
+          "filesCreated": "string[]",
+          "filesModified": "string[]",
+          "filesDeleted": "string[]",
+          "exportedTypes": "Record<string,string>",
+          "executionEvents": "EventRef[]",
+          "dependsOn": "string[]",
+          "diff": "DiffSummary?"
+        },
+        "conversion": "toIntegratorBinder() at line 199 converts canonical Binder → integrator Binder by extracting files from executionEvents, diff from diffSummary, dependsOn from dependencyLaneIds"
+      },
+      "comparison_with_canonical_binder": {
+        "integrator_focus": "File-level changes (created/modified/deleted), type exports, dependency graph. Minimal subset for merge algorithms.",
+        "canonical_focus": "Full evidence chain: scout reports, architecture plans, critic reviews, validation results, red team findings, repair history. Complete artifact ledger.",
+        "missing_from_integrator": "scoutReports, architecturePlan, criticReviews, approvedPlan, validationResults, redTeamFindings, repairHistory, checkpointCommit, residualRisks, handoffSummary, terminalStatus — integrator only needs file-level diff + dependency info.",
+        "shared_fields": "laneId, executionEvents (via EventRef), dependsOn (= dependencyLaneIds), diff (via DiffSummary)"
+      },
+      "key_functions": {
+        "topologicalSort": "line 115 — Kahn's algorithm for dependency ordering, detects cycles",
+        "collectSharedFiles": "line 153 — identifies files touched by multiple lanes",
+        "detectConflicts": "line 166 — flags lanes that modify the same file",
+        "assignMergeStrategy": "line 175 — returns 'sequential_checkpoints'|'rebase'|'replay' based on shared file count",
+        "constructContextPacket": "line ~230 — builds the context fed to the integrator agent",
+        "mergeLaneCheckpoints": "line ~300 — executes git merge of all lane checkpoint SHAs",
+        "detectContractDrift": "line ~340 — compares exported API surfaces between lanes"
+      }
+    },
+    "predicates": {
+      "file": "packages/opencode/src/campaign/predicates.ts",
+      "lines": 763,
+      "role": "Typed transition predicate engine — evaluates PredicateSpecs against runtime event ledgers, file memory, and claims.",
+      "predicate_spec_union": {
+        "definition_line": 35,
+        "kinds": [
+          "event_exists (eventType: string, after?: string)",
+          "latest_validation_passed (afterLastEdit?: boolean)",
+          "claims_acquired (paths: readonly string[])",
+          "has_claim_conflict",
+          "permission_denied (tool: string)",
+          "retry_budget_remaining (key: string, limit: number)",
+          "user_approval_granted (approvalType: string)",
+          "context_sufficient",
+          "scope_unsafe",
+          "edit_applied",
+          "new_validation_failure",
+          "failures_existed_before_edit",
+          "no_blocking_findings",
+          "finding_confirmed",
+          "plan_produced",
+          "plan_approved",
+          "plan_rejected",
+          "scout_completed",
+          "scope_synthesized",
+          "all_children_complete (children?: readonly string[])",
+          "child_blocked",
+          "repair_budget_exhausted",
+          "all_gates_pass"
+        ]
+      },
+      "predicate_resolvers": {
+        "definition_line": 655,
+        "description": "Record<string, PredicateResolver> mapping kind → resolver function. Used by checkPredicate/checkTransitions.",
+        "resolvers": {
+          "event_exists": "resolveEventExists",
+          "latest_validation_passed": "resolveLatestValidationPassed",
+          "claims_acquired": "resolveClaimsAcquired",
+          "has_claim_conflict": "resolveHasClaimConflict",
+          "permission_denied": "resolvePermissionDenied",
+          "retry_budget_remaining": "resolveRetryBudgetRemaining",
+          "user_approval_granted": "resolveUserApprovalGranted",
+          "context_sufficient": "resolveContextSufficient",
+          "scope_unsafe": "resolveScopeUnsafe",
+          "edit_applied": "resolveEditApplied",
+          "new_validation_failure": "resolveNewValidationFailure",
+          "failures_existed_before_edit": "resolveFailuresExistedBeforeEdit",
+          "no_blocking_findings": "resolveNoBlockingFindings",
+          "finding_confirmed": "resolveFindingConfirmed",
+          "plan_produced": "resolvePlanProduced",
+          "plan_approved": "resolvePlanApproved",
+          "plan_rejected": "resolvePlanRejected",
+          "scout_completed": "resolveScoutCompleted",
+          "scope_synthesized": "resolveScopeSynthesized",
+          "all_children_complete": "resolveAllChildrenComplete",
+          "child_blocked": "resolveChildBlocked",
+          "repair_budget_exhausted": "STUB — console.warn + returns {satisfied:false}",
+          "missing": ["finding_blocking", "redteam_completed", "all_gates_pass"]
+        }
+      },
+      "check_transitions": {
+        "definition_line": 708,
+        "description": "Given an AgentStateMachineSpec and current state, evaluates all outgoing transitions in priority order. Returns first satisfied transition or null."
+      },
+      "predicate_context": {
+        "definition_line": 27,
+        "fields": {
+          "events": "readonly RuntimeEvent[]",
+          "claims": "readonly string[]",
+          "sessionId": "string",
+          "fileMemory": "FileContext (Map<string, ...>)",
+          "childLaneIds": "readonly string[]"
+        }
+      }
+    },
+    "state_machine": {
+      "file": "packages/opencode/src/campaign/state-machine.ts",
+      "lines": 478,
+      "role": "Declarative state machine spec + deterministic reducer. Two machines: LANE_STATE_MACHINE and CAMPAIGN_STATE_MACHINE.",
+      "key_types": {
+        "ActionSpec": "{ kind: 'decrement_repair_budget' }",
+        "RetryPolicy": "{ maxRetries: number, backoffMs: number }",
+        "TransitionRule": "{ to: string, predicate: PredicateSpec, priority?: number }",
+        "AgentStateSpec": "{ allowedTools: string[], transitions: TransitionRule[], entryActions?: ActionSpec[], retryPolicy?: RetryPolicy }",
+        "AgentMachineSpec": "{ id: string, initial: string, version: string, states: Record<string,AgentStateSpec> }",
+        "RuntimeEvent": "{ type: string, timestamp: string?, payload?: Record<string,unknown> }",
+        "CampaignState": "{ currentState: string, events: RuntimeEvent[], transitionCount: number, stateHistory: StateTransition[], metadata: Record<string,unknown>, retryBudgets: Record<string,number> }"
+      },
+      "lane_state_machine": {
+        "definition_line": 94,
+        "id": "lane",
+        "initial": "created",
+        "version": "1.0.0",
+        "states": {
+          "created": {
+            "transitions": ["→ scouting (context_sufficient)"]
+          },
+          "scouting": {
+            "transitions": ["→ scoped (scout_completed)"]
+          },
+          "scoped": {
+            "transitions": ["→ planning (scope_synthesized)"]
+          },
+          "planning": {
+            "transitions": ["→ planning (plan_rejected, priority:5)", "→ critic_review (plan_produced)"]
+          },
+          "critic_review": {
+            "transitions": ["→ planning (plan_rejected, priority:5)", "→ approved (plan_approved, priority:10)"]
+          },
+          "approved": {
+            "transitions": ["→ executing (plan_approved, priority:10)"],
+            "note": "Uses plan_approved predicate — same event type that got us here may also trigger transition out"
+          },
+          "executing": {
+            "transitions": ["→ validating (edit_applied)"]
+          },
+          "validating": {
+            "transitions": ["→ repairing (new_validation_failure, priority:5)", "→ red_team (latest_validation_passed+afterLastEdit, priority:10)"]
+          },
+          "red_team": {
+            "transitions": [
+              "→ repairing (finding_confirmed, priority:5)",
+              "→ repairing (finding_blocking, priority:6)",
+              "→ historian (redteam_completed, priority:10)"
+            ]
+          },
+          "repairing": {
+            "transitions": ["→ executing (retry_budget_remaining, priority:5)", "→ blocked (repair_budget_exhausted, priority:10)"],
+            "entryActions": ["decrement_repair_budget"],
+            "retryPolicy": { "maxRetries": 3, "backoffMs": 1000 }
+          },
+          "historian": {
+            "transitions": ["→ checkpointed (event_exists, eventType: EventName.SessionCheckpoint)"]
+          },
+          "checkpointed": {
+            "transitions": ["→ returned (event_exists, eventType: EventName.LaneReturned)"]
+          },
+          "returned": {
+            "transitions": []
+          },
+          "blocked": {
+            "transitions": []
+          },
+          "failed": {
+            "transitions": [],
+            "note": "Not defined in LANE_STATE_MACHINE — handled by secretary's processEvent fallback"
+          },
+          "scoping": {
+            "transitions": ["→ scoped (context_sufficient)"],
+            "note": "Extra state not in types.ts LaneState literals"
+          }
+        }
+      },
+      "full_state_paths": {
+        "happy_path": "created → scouting → scoped → planning → critic_review → approved → executing → validating → red_team → historian → checkpointed → returned",
+        "repair_loop": "executing → validating → red_team → repairing → executing (retry_budget_remaining) OR blocked (repair_budget_exhausted)",
+        "planning_loop": "planning → critic_review → planning (plan_rejected loop, max unbounded)"
+      },
+      "evaluate_predicate": {
+        "definition_line": 285,
+        "description": "Heuristic pure-function predicate evaluator used by reduceCampaignState. Takes (PredicateSpec, RuntimeEvent[], CampaignState) → boolean. Handles all predicate kinds including those missing from predicateResolvers.",
+        "handled_kinds": [
+          "event_exists", "latest_validation_passed", "claims_acquired", "has_claim_conflict",
+          "permission_denied", "retry_budget_remaining", "repair_budget_exhausted",
+          "user_approval_granted", "context_sufficient", "scope_unsafe", "edit_applied",
+          "new_validation_failure", "failures_existed_before_edit",
+          "no_blocking_findings", "finding_confirmed", "finding_blocking", "redteam_completed",
+          "plan_produced", "plan_approved", "plan_rejected",
+          "scout_completed", "scope_synthesized",
+          "all_children_complete", "child_blocked", "all_gates_pass"
+        ],
+        "note": "This is the SECOND predicate evaluation system. The typed resolvers in predicates.ts are the 'canonical' ones (with evidence), but reduceCampaignState uses this heuristic evaluator."
+      },
+      "reduce_campaign_state": {
+        "definition_line": 402,
+        "description": "Pure deterministic reducer. Walks events in order, for each event checks all transitions from current state by priority, transitions on first satisfied predicate. Executes entry actions after each transition."
+      },
+      "campaign_state_machine": {
+        "definition_line": 201,
+        "id": "campaign",
+        "initial": "created",
+        "states": "created, scouting, scope_synthesis, lane_decomposition, lane_dispatch, waiting_for_lanes, integration_review, final_validation, push_ready, pushed, blocked, failed",
+        "blocked_transitions": "shared function returns [has_claim_conflict→blocked, child_blocked→blocked, scope_unsafe→blocked] prepended to every state"
+      }
+    }
+  },
+  "mismatches_and_concerns": [
+    {
+      "id": "MIS-001",
+      "severity": "major",
+      "title": "find_blocking predicate kind missing from PredicateSpec",
+      "description": "LANE_STATE_MACHINE red_team → repairing transition uses predicate kind \"finding_blocking\" (line 153). This kind is NOT in the PredicateSpec type union in predicates.ts. evaluatePredicate in state-machine.ts handles it (line 379: case \"finding_blocking\": return events.some(e => e.type === EventName.FindingBlocking)), but the typed predicateResolvers map has NO entry for it. Calling checkPredicate() or checkTransitions() with this kind would throw at runtime.",
+      "file_lines": [
+        "state-machine.ts:153",
+        "predicates.ts:35-58 (PredicateSpec — missing)",
+        "predicates.ts:655-690 (predicateResolvers — missing)",
+        "state-machine.ts:379-380 (evaluatePredicate — handled)"
+      ],
+      "impact": "If checkTransitions() from predicates.ts replaces evaluatePredicate, red_team → repairing transition breaks."
+    },
+    {
+      "id": "MIS-002",
+      "severity": "major",
+      "title": "redteam_completed predicate kind missing from PredicateSpec",
+      "description": "LANE_STATE_MACHINE red_team → historian transition uses predicate kind \"redteam_completed\" (line 154). NOT in PredicateSpec. evaluatePredicate handles it (lines 381-384: filters for EventName.RedteamCompleted, checks blockingFindings===0 in payload). predicateResolvers has NO entry — would throw.",
+      "file_lines": [
+        "state-machine.ts:154",
+        "predicates.ts:35-58 (PredicateSpec — missing)",
+        "predicates.ts:655-690 (predicateResolvers — missing)",
+        "state-machine.ts:381-384 (evaluatePredicate — handled)"
+      ],
+      "impact": "If checkTransitions() replaces evaluatePredicate, red_team → historian transition breaks."
+    },
+    {
+      "id": "MIS-003",
+      "severity": "major",
+      "title": "all_gates_pass predicate kind missing from predicateResolvers",
+      "description": "all_gates_pass is defined in PredicateSpec (line 58) but has NO entry in predicateResolvers map. evaluatePredicate handles it (checks EventName.GatesAllPassed). checkPredicate would throw.",
+      "file_lines": [
+        "predicates.ts:58",
+        "state-machine.ts:385-386 (evaluatePredicate)",
+        "predicates.ts:655-690 (predicateResolvers — missing)"
+      ]
+    },
+    {
+      "id": "MIS-004",
+      "severity": "moderate",
+      "title": "repair_budget_exhausted has STUB resolver in predicateResolvers",
+      "description": "The predicateResolvers entry for repair_budget_exhausted is a stub: (_spec, _ctx) => { console.warn('stub resolver'); return { satisfied: false } }. evaluatePredicate handles it correctly by checking state.retryBudgets. If code switches to checkPredicate, repairing → blocked transition will never fire.",
+      "file_lines": [
+        "predicates.ts:~688 (stub resolver)",
+        "state-machine.ts:341-343 (evaluatePredicate)"
+      ]
+    },
+    {
+      "id": "MIS-005",
+      "severity": "moderate",
+      "title": "Two predicate evaluation systems with diverging coverage",
+      "description": "evaluatePredicate (state-machine.ts:285) and checkPredicate/predicateResolvers (predicates.ts:696) are TWO SEPARATE predicate evaluators. evaluatePredicate is a heuristic pure-function used by reduceCampaignState. predicateResolvers is the 'typed evidence' engine used by checkPredicate/checkTransitions. They have different capability coverage and different code paths. The claim 'predicate evaluation uses typed evidence predicates' (state-machine.ts comment line 9: SM-003) is only partially true — reduceCampaignState uses the heuristic evaluator, not the typed one.",
+      "file_lines": [
+        "state-machine.ts:9 (SM-003 claim)",
+        "state-machine.ts:285-386 (evaluatePredicate)",
+        "predicates.ts:655-690 (predicateResolvers)",
+        "state-machine.ts:402 (reduceCampaignState calls evaluatePredicate, not checkPredicate)"
+      ]
+    },
+    {
+      "id": "MIS-006",
+      "severity": "moderate",
+      "title": "toSMEvent uses raw strings instead of EventName constants",
+      "description": "The toSMEvent function in secretary.ts maps RuntimeEvent tags to raw strings like \"scout.completed\", \"plan.produced\", \"redteam.finding\". evaluatePredicate in state-machine.ts checks EventName.ScoutCompleted, EventName.PlanProduced, etc. They match by string value only — there's no type-level assurance that the strings emitted by toSMEvent are the same strings checked by evaluatePredicate. A typo in toSMEvent would silently break transitions.",
+      "file_lines": [
+        "secretary.ts:132-198 (toSMEvent — raw strings)",
+        "state-machine.ts:285-386 (evaluatePredicate — EventName.* constants)"
+      ],
+      "example": "toSMEvent emits 'redteam.finding' (literal string) while evaluatePredicate uses EventName.RedteamFinding which is 'redteam.finding' — they match, but only by coincidence."
+    },
+    {
+      "id": "MIS-007",
+      "severity": "moderate",
+      "title": "RedTeamCompleted never emitted by roleOutputToEvent",
+      "description": "roleOutputToEvent maps the 'redteam' role to RedTeamComplete (which toSMEvent maps to 'redteam.finding'). The LANE_STATE_MACHINE red_team → historian transition needs redteam_completed predicate which checks for EventName.RedteamCompleted ('redteam.completed'). The secretary type defines a RedTeamCompleted event with blockingFindings/totalFindings, but roleOutputToEvent NEVER emits it. This event must be emitted by a different code path (possibly the orchestrator or a post-red-team aggregation step). If that external code path is missing, the red_team → historian transition will never fire.",
+      "file_lines": [
+        "secretary.ts:46 (RedTeamCompleted type)",
+        "secretary.ts:226 (EVENT_NAME_MAP: RedTeamCompleted → EventName.RedteamCompleted)",
+        "secretary.ts:569-584 (roleOutputToEvent — only emits RedTeamComplete)",
+        "state-machine.ts:154 (redteam_completed predicate)",
+        "state-machine.ts:381-384 (evaluatePredicate checks EventName.RedteamCompleted)"
+      ]
+    },
+    {
+      "id": "MIS-008",
+      "severity": "minor",
+      "title": "Approved → executing transition uses plan_approved (self-loop risk)",
+      "description": "The approved state transitions to executing on plan_approved predicate (line 133). But the transition into approved was ALSO triggered by plan_approved. This means the same event batch that moves the lane from critic_review → approved could also immediately move it to executing. The reduceCampaignState processes one event at a time and restarts the transition scan per event, so this should work — but it depends on the event stream having the right ordering.",
+      "file_lines": [
+        "state-machine.ts:127 (critic_review→approved, plan_approved, priority:10)",
+        "state-machine.ts:133 (approved→executing, plan_approved)"
+      ]
+    },
+    {
+      "id": "MIS-009",
+      "severity": "minor",
+      "title": "Scoping state not in types.ts LaneState literals",
+      "description": "LANE_STATE_MACHINE defines a 'scoping' state (line ~165) with transitions, but the official LaneState schema in types.ts (line 7-22) does not include 'scoping'. This means secretary.processEvent would use a state that fails schema validation.",
+      "file_lines": [
+        "state-machine.ts:~165 (scoping state)",
+        "types.ts:7-22 (LaneState literals: created,scouting,scoped,planning,critic_review,approved,executing,validating,red_team,repairing,historian,checkpointed,returned,blocked,failed)"
+      ]
+    },
+    {
+      "id": "MIS-010",
+      "severity": "minor",
+      "title": "Failed state not in LANE_STATE_MACHINE — handled by secretary fallback",
+      "description": "LANE_STATE_MACHINE does NOT define a 'failed' state. The secretary's processEvent has special fallback handling: case Blocked → 'blocked', case Failed → 'failed', case Unblocked → restore previous. The 'failed' state exists only as a secretary-side override, not as a first-class state machine state.",
+      "file_lines": [
+        "secretary.ts:461-473 (processEvent fallback for Blocked/Failed/Unblocked)",
+        "state-machine.ts:94-188 (LANE_STATE_MACHINE — no 'failed' state)"
+      ]
+    },
+    {
+      "id": "MIS-011",
+      "severity": "info",
+      "title": "HistorianComplete and CheckpointCreated both map to SessionCheckpoint",
+      "description": "EVENT_NAME_MAP maps both HistorianComplete and CheckpointCreated to EventName.SessionCheckpoint ('session.checkpoint'). The historian → checkpointed transition uses event_exists with EventName.SessionCheckpoint. This means EITHER event triggers the same transition. Potentially redundant.",
+      "file_lines": [
+        "secretary.ts:224 (HistorianComplete → SessionCheckpoint)",
+        "secretary.ts:228 (CheckpointCreated → SessionCheckpoint)",
+        "state-machine.ts:175 (historian→checkpointed, event_exists EventName.SessionCheckpoint)"
+      ]
+    },
+    {
+      "id": "MIS-012",
+      "severity": "info",
+      "title": "LearningComplete and ScoutComplete both map to scout.completed",
+      "description": "Both LearningComplete and ScoutComplete map to 'scout.completed' in toSMEvent. The scouting → scoped transition checks scout_completed predicate. This is a deliberate dual-entry path for backward compatibility with 'Learning' terminology vs 'Scout' terminology.",
+      "file_lines": [
+        "secretary.ts:139-140 (LearningComplete → scout.completed)",
+        "secretary.ts:159-160 (ScoutComplete → scout.completed)",
+        "state-machine.ts:108 (scouting→scoped, scout_completed)"
+      ]
+    }
+  ],
+  "dependency_graph": {
+    "nodes": {
+      "secretary": { "imports_from": ["state-machine", "binder", "types", "event/EventStore", "event/runtime-event", "id/id", "effect"] },
+      "binder": { "imports_from": ["event/EventStore", "id/id", "effect", "node:crypto", "@opencode-ai/core/util/log", "@opencode-ai/core/effect/service-use"] },
+      "integrator": { "imports_from": ["binder", "effect", "@opencode-ai/core/util/log", "@opencode-ai/core/effect/service-use"] },
+      "predicates": { "imports_from": ["event/event-names", "event/runtime-event (type)", "context/file-memory (type)", "effect"] },
+      "state-machine": { "imports_from": ["predicates (type)", "event/event-names"] },
+      "types": { "imports_from": ["effect"] }
+    },
+    "key_edges": {
+      "secretary → state-machine": "imports reduceCampaignState, LANE_STATE_MACHINE, types CampaignState/RuntimeEvent",
+      "secretary → binder": "imports BinderService, Binder (type), BinderLayer, BinderError, BinderLaneState",
+      "secretary → types": "imports LaneState (type only)",
+      "state-machine → predicates": "imports PredicateSpec (type only)",
+      "integrator → binder": "imports BinderService, Binder (type)",
+      "predicates → event-names": "imports EventName"
+    }
+  },
+  "event_trace_for_happy_path": {
+    "description": "The sequence of secretary RuntimeEvent emissions and their effect on the state machine for a successful lane",
+    "steps": [
+      { "from": "created", "event": "LaneCreated", "sm_type": "campaign.lane.created", "to": "created (no transition)", "note": "Lane creation, no SM transition yet" },
+      { "from": "created", "event": "StartLearning", "sm_type": "context.sufficient", "to": "scouting", "predicate": "context_sufficient" },
+      { "from": "scouting", "event": "LearningComplete (or ScoutComplete)", "sm_type": "scout.completed", "to": "scoped", "predicate": "scout_completed" },
+      { "from": "scoped", "event": "ScopeSynthesized", "sm_type": "scope.synthesized", "to": "planning", "predicate": "scope_synthesized" },
+      { "from": "planning", "event": "ArchitectComplete (or PlanReady)", "sm_type": "plan.produced", "to": "critic_review", "predicate": "plan_produced" },
+      { "from": "critic_review", "event": "CriticComplete(approved)", "sm_type": "plan.approved", "to": "approved", "predicate": "plan_approved" },
+      { "from": "approved", "event": "(next event batch — plan_approved already fired)", "sm_type": "plan.approved", "to": "executing", "predicate": "plan_approved" },
+      { "from": "executing", "event": "ExecutorComplete (or ExecutionComplete)", "sm_type": "edit.applied", "to": "validating", "predicate": "edit_applied" },
+      { "from": "validating", "event": "ValidatorComplete(passed=true)", "sm_type": "validation.completed (status:pass)", "to": "red_team", "predicate": "latest_validation_passed (afterLastEdit)" },
+      { "from": "red_team", "event": "RedTeamCompleted (blockingFindings=0)", "sm_type": "redteam.completed", "to": "historian", "predicate": "redteam_completed", "note": "RedTeamCompleted NOT emitted by roleOutputToEvent — must come from external code" },
+      { "from": "historian", "event": "HistorianComplete (checkpointCreated=true)", "sm_type": "session.checkpoint", "to": "checkpointed", "predicate": "event_exists(SessionCheckpoint)" },
+      { "from": "checkpointed", "event": "LaneReturned", "sm_type": "lane.returned", "to": "returned", "predicate": "event_exists(LaneReturned)" }
+    ]
+  },
+  "event_trace_for_repair_loop": {
+    "description": "The red_team → repairing → executing feedback loop",
+    "steps": [
+      { "from": "red_team", "event": "RedTeamComplete (has blocking findings)", "sm_type": "redteam.finding", "to": "repairing", "predicate": "finding_confirmed OR finding_blocking" },
+      { "from": "repairing", "action": "decrement_repair_budget (entry action)" },
+      { "from": "repairing", "event": "RepairComplete", "sm_type": "edit.applied", "to": "executing", "predicate": "retry_budget_remaining(key=repair, limit>0)" },
+      { "from": "executing", "event": "ExecutorComplete", "sm_type": "edit.applied", "to": "validating", "predicate": "edit_applied" },
+      { "from": "repairing (if budget exhausted)", "predicate": "repair_budget_exhausted", "to": "blocked" }
+    ]
+  },
+  "event_trace_for_blocking_paths": {
+    "description": "Paths where the lane can be blocked",
+    "entries": [
+      { "trigger": "CriticComplete(verdict=rejected)", "event": "CriticComplete(rejected) → plan.rejected", "effect": "planning → planning (loop, not blocked). roleOutputToEvent for blocked critic returns CriticComplete(rejected), NOT Blocked." },
+      { "trigger": "Non-critic role blocked", "event": "Blocked → child.blocked", "effect": "secretary fallback: newState='blocked'. SM doesn't handle Blocked directly." },
+      { "trigger": "repair_budget_exhausted", "event": "N/A (state machine transition)", "effect": "repairing → blocked" },
+      { "trigger": "has_claim_conflict / child_blocked / scope_unsafe", "event": "N/A (Campaign-level)", "effect": "Campaign state → blocked via blockedTransitions()" }
+    ]
+  }
+}

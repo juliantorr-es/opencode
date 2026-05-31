@@ -33,6 +33,9 @@ const getBase = (): Configuration => ({
     buildResources: "resources",
   },
   files: ["out/**/*", "resources/**/*"],
+  // Native titlebar addon — requires prebuilt artifacts in native/.
+  // Build native modules (mac_window.node, swift-bridge) before packaging
+  // or the bundled app will lack native titlebar/window features.
   extraResources: [
     {
       from: "native/",
@@ -63,6 +66,12 @@ const getBase = (): Configuration => ({
       sign: signWindows,
     },
     target: ["nsis"],
+    // Azure Artifact Signing for Windows (#15201) uses ephemeral certificates
+    // managed by Azure, which are incompatible with electron-builder's
+    // verifyUpdateCodeSignature check. The installer is still signed at build
+    // time, but auto-update signature verification must be disabled until a
+    // stable publisher certificate is available or electron-builder supports
+    // dynamic certificate verification for Azure-signed binaries.
     verifyUpdateCodeSignature: false,
   },
   nsis: {

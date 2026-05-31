@@ -1,136 +1,71 @@
 import { tool } from "@opencode-ai/plugin"
 import { resolve } from "node:path"
-import { appendFileSync, existsSync, mkdirSync } from "node:fs"
+import { existsSync, mkdirSync, appendFileSync } from "node:fs"
 
 function r(worktree: string, p: string): string { return resolve(worktree, p) }
 
-// ── Schemas ──
-const BASE = (ctx: any) => ({
-  schema: "v1",
-  recorded_at: new Date().toISOString(),
-  session_id: ctx.sessionID,
-  agent: ctx.agent,
-})
-
 export default tool({
-  description: "Record anything — activity, finding, review, comment, QA observation. All records follow a consistent schema with session and agent attribution.",
+  description: "Record structured observations — lessons learned, activity logs, and pre-existing findings. All records feed into the cross-session knowledge base for future sessions.",
   args: {
-    action: tool.schema.string().describe("activity | finding | review | comment | qa | lesson | wave | checkpoint"),
-    // activity
-    activity_action: tool.schema.string().optional().describe("created | modified | discovered | blocked (for activity)"),
-    target: tool.schema.string().optional().describe("File path, artifact path, or plan ID"),
-    details: tool.schema.string().optional().describe("JSON details object (for activity)"),
-    // finding
-    finding_type: tool.schema.string().optional().describe("bug | debt | risk | opportunity (for finding)"),
-    summary: tool.schema.string().optional().describe("One-line summary (for finding/QA)"),
-    file: tool.schema.string().optional().describe("File:line reference (for finding)"),
-    // review
-    axis: tool.schema.string().optional().describe("boundary | coupling | safety | reversibility | surface_area | convention | resilience (for review)"),
-    finding: tool.schema.string().optional().describe("Review finding text (for review)"),
-    verdict: tool.schema.string().optional().describe("approved | rejected | informational (for review)"),
-    // comment
-    comment: tool.schema.string().optional().describe("Comment text (for comment)"),
-    // qa
-    test_file: tool.schema.string().optional().describe("Test file path (for qa)"),
-    boundary: tool.schema.string().optional().describe("Production boundary tested (for qa)"),
-    observation: tool.schema.string().optional().describe("QA observation (for qa)"),
+    action: tool.schema.string().describe("'lesson' for cross-session patterns, 'activity' for what you just did, 'finding' for pre-existing issues discovered"),
+    summary: tool.schema.string().optional().describe("One-sentence summary of the lesson or finding"),
+    detail: tool.schema.string().optional().describe("Full description (for lessons and findings)"),
+    file_path: tool.schema.string().optional().describe("File that was modified or where finding was discovered (for activity/finding)"),
+    action_type: tool.schema.string().optional().describe("created | modified | discovered | blocked (for activity)"),
+    severity: tool.schema.string().optional().describe("blocker | major | minor | info (for findings)"),
+    category: tool.schema.string().optional().describe("Tag for categorization: permissions, tools, agents, workflow, config, debug"),
   },
   async execute(args, context) {
-    const base = `docs/json/opencode/sessions/${context.sessionID}`
-    let dir: string, path: string, record: any
+    const sessionBase = `docs/json/opencode/sessions/${context.sessionID}`
 
-    // ── ACTIVITY ──
+    if (args.action === "lesson") {
+      const dir = r(context.worktree, "docs/json/opencode/knowledge")
+      const path = r(context.worktree, "docs/json/opencode/knowledge/lessons.v1.jsonl")
+      try { if (!existsSync(dir)) mkdirSync(dir, { recursive: true }) } catch (_) {}
+      const entry = {
+        schema_version: "v2",
+        summary: args.summary, detail: args.detail, category: args.category,
+        recorded_by: context.agent, session_id: context.sessionID,
+        recorded_at: new Date().toISOString(),
+      }
+      try { appendFileSync(path, JSON.stringify(entry) + "\n", "utf8") } catch (_) {}
+      return JSON.stringify({ action: "lesson", status: "recorded", summary: args.summary?.slice(0, 80) }, null, 2)
+    }
+
     if (args.action === "activity") {
-      dir = r(context.worktree, `docs/json/opencode/knowledge/sessions/${context.sessionID}`)
-      path = r(context.worktree, `docs/json/opencode/knowledge/sessions/${context.sessionID}/activities.v1.jsonl`)
-      let details: any = {}
-      if (args.details) { try { details = JSON.parse(args.details) } catch { details = { note: args.details } } }
-      record = {
-        ...BASE(context),
-        type: "activity",
-        action: args.activity_action || "discovered",
-        target: args.target || "",
-        details,
+      const dir = r(context.worktree, `${sessionBase}/analytics`)
+      const path = r(context.worktree, `${sessionBase}/analytics/activity.v1.jsonl`)
+      try { if (!existsSync(dir)) mkdirSync(dir, { recursive: true }) } catch (_) {}
+      const entry = {
+        schema_version: "v2",
+        action: args.action_type, target: args.file_path, summary: args.summary,
+        agent: context.agent, session_id: context.sessionID,
+        recorded_at: new Date().toISOString(),
       }
+      try { appendFileSync(path, JSON.stringify(entry) + "\n", "utf8") } catch (_) {}
+      return JSON.stringify({ action: "activity", status: "recorded", activity: args.action_type, target: args.file_path }, null, 2)
     }
 
-    // ── FINDING ──
-    else if (args.action === "finding") {
-      dir = r(context.worktree, `${base}/findings`)
-      path = r(context.worktree, `${base}/findings/out_of_scope.v1.jsonl`)
-      record = {
-        ...BASE(context),
-        type: "finding",
-        finding_type: args.finding_type || "debt",
-        summary: args.summary || "",
-        file: args.file || null,
-        details: args.details || null,
+    if (args.action === "finding") {
+      const dir = r(context.worktree, `${sessionBase}/findings`)
+      const path = r(context.worktree, `${sessionBase}/findings/findings.v1.jsonl`)
+      try { if (!existsSync(dir)) mkdirSync(dir, { recursive: true }) } catch (_) {}
+      const entry = {
+        schema_version: "v2",
+        summary: args.summary, detail: args.detail, file_path: args.file_path,
+        severity: args.severity || "info", category: args.category,
+        discovered_by: context.agent, session_id: context.sessionID,
+        recorded_at: new Date().toISOString(),
       }
+      try { appendFileSync(path, JSON.stringify(entry) + "\n", "utf8") } catch (_) {}
+      return JSON.stringify({
+        action: "finding", status: "recorded", severity: args.severity,
+        hint: args.severity === "blocker"
+          ? "Blocker finding — consider escalating to General Man-agent via smart_delegate(action=\"send\", kind=\"blocker\")."
+          : "Finding recorded. Continue working around it.",
+      }, null, 2)
     }
 
-    // ── REVIEW ──
-    else if (args.action === "review") {
-      dir = r(context.worktree, `${base}/reviews`)
-      path = r(context.worktree, `${base}/reviews/criticism.v1.jsonl`)
-      record = {
-        ...BASE(context),
-        type: "review",
-        target: args.target || "",
-        axis: args.axis || "boundary",
-        finding: args.finding || "",
-        verdict: args.verdict || "informational",
-      }
-    }
-
-    // ── COMMENT ──
-    else if (args.action === "comment") {
-      dir = r(context.worktree, "docs/json/opencode/plans")
-      path = r(context.worktree, `docs/json/opencode/plans/${args.target}.v1.json`)
-      if (!existsSync(path)) return JSON.stringify({ error: `Plan not found: ${args.target}` }, null, 2)
-      const plan = JSON.parse(require("fs").readFileSync(path, "utf8"))
-      if (!plan.comments) plan.comments = []
-      plan.comments.push({ author: context.agent, comment: args.comment, at: new Date().toISOString() })
-      require("fs").writeFileSync(path, JSON.stringify(plan, null, 2), "utf8")
-      return JSON.stringify({ action: "comment", plan_id: args.target, comments: plan.comments.length }, null, 2)
-    }
-
-    // ── QA ──
-    else if (args.action === "qa") {
-      dir = r(context.worktree, `${base}/qa`)
-      path = r(context.worktree, `${base}/qa/observations.v1.jsonl`)
-      record = {
-        ...BASE(context),
-        type: "qa",
-        test_file: args.test_file || "",
-        boundary: args.boundary || "",
-        observation: args.observation || args.summary || "",
-      }
-    }
-
-    else if (args.action === "wave") {
-      dir = r(context.worktree, `docs/json/opencode/sessions/${context.sessionID}/waves`);
-      const wfile = args.finding_type === "stress" ? "stress.v1.jsonl" : "execution.v1.jsonl";
-      path = r(dir, wfile);
-      record = Object.assign(BASE(context), { type: "wave", wave: args.finding_type || "execution", lane_id: args.target || "", result: args.summary || "", status: args.comment || "pass" });
-    }
-    else if (args.action === "checkpoint") {
-      dir = r(context.worktree, `docs/json/opencode/sessions/${context.sessionID}/checkpoints`);
-      path = r(dir, "checkpoints.v1.jsonl");
-      let files = []; try { if (args.details) files = JSON.parse(args.details); } catch {}
-      record = Object.assign(BASE(context), { type: "checkpoint", checkpoint_id: args.target || "", description: args.summary || "", files });
-    }
-    else if (args.action === "lesson") {
-      dir = r(context.worktree, "docs/json/opencode/knowledge");
-      path = r(context.worktree, "docs/json/opencode/knowledge/lessons.v1.jsonl");
-      record = Object.assign(BASE(context), { type: "lesson", pattern: args.summary || "", lesson: args.details || args.comment || "", category: args.finding_type || null, confidence: 0.8, context: args.target || null });
-    }
-    else {
-      return JSON.stringify({ error: `Unknown action: '${args.action}'. Valid: activity, finding, review, comment, qa.` }, null, 2)
-    }
-
-    // Write
-    try { if (!existsSync(dir)) mkdirSync(dir, { recursive: true }) } catch (_) {}
-    try { appendFileSync(path, JSON.stringify(record) + "\n", "utf8") } catch (_) {}
-    return JSON.stringify({ action: args.action, status: "recorded", schema: record.type }, null, 2)
+    return JSON.stringify({ error: `Unknown action: '${args.action}'. Valid: lesson, activity, finding.` }, null, 2)
   },
 })

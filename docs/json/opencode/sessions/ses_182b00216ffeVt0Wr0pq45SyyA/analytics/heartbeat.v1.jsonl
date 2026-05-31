@@ -1,0 +1,115 @@
+{"at":"2026-05-31T09:14:52.309Z","session_id":"ses_182b00216ffeVt0Wr0pq45SyyA","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"export type PredicateSpec"}
+{"at":"2026-05-31T09:14:52.316Z","session_id":"ses_182b00216ffeVt0Wr0pq45SyyA","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"export type PredicateSpec"}
+{"at":"2026-05-31T09:14:53.074Z","session_id":"ses_182b00216ffeVt0Wr0pq45SyyA","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"export type PredicateSpec"}
+{"at":"2026-05-31T09:14:53.079Z","session_id":"ses_182b00216ffeVt0Wr0pq45SyyA","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"export type PredicateSpec"}
+{"at":"2026-05-31T09:14:55.699Z","session_id":"ses_182b00216ffeVt0Wr0pq45SyyA","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"EventName\\."}
+{"at":"2026-05-31T09:14:55.729Z","session_id":"ses_182b00216ffeVt0Wr0pq45SyyA","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"EventName\\."}
+{"at":"2026-05-31T09:15:06.132Z","session_id":"ses_182b00216ffeVt0Wr0pq45SyyA","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Get full PredicateSpec type union and predicateResolvers map"}
+{"at":"2026-05-31T09:15:06.910Z","session_id":"ses_182b00216ffeVt0Wr0pq45SyyA","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Get types + LANE_STATE_MACHINE definition"}
+{"at":"2026-05-31T09:15:07.594Z","session_id":"ses_182b00216ffeVt0Wr0pq45SyyA","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Get full toSMEvent function"}
+{"at":"2026-05-31T09:15:08.298Z","session_id":"ses_182b00216ffeVt0Wr0pq45SyyA","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Get BinderService implementation"}
+{"at":"2026-05-31T09:15:09.038Z","session_id":"ses_182b00216ffeVt0Wr0pq45SyyA","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Get toStoreEvent and handleRoleOutput"}
+{"at":"2026-05-31T09:15:10.062Z","session_id":"ses_182b00216ffeVt0Wr0pq45SyyA","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Get roleOutputToEvent and handleRoleOutput+suffix"}
+{"at":"2026-05-31T09:15:25.051Z","session_id":"ses_182b00216ffeVt0Wr0pq45SyyA","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Count lines"}
+{"at":"2026-05-31T09:15:25.080Z","session_id":"ses_182b00216ffeVt0Wr0pq45SyyA","agent":"cartographer","tool":"smart_bash","phase":"completed","detail":"wc exit=0"}
+{"at":"2026-05-31T09:15:42.163Z","session_id":"ses_182b00216ffeVt0Wr0pq45SyyA","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Read full predicates file"}
+{"at":"2026-05-31T09:15:42.163Z","session_id":"ses_182b00216ffeVt0Wr0pq45SyyA","agent":"cartographer","tool":"smart_bash","phase":"rerouted","detail":"→ read_source"}
+{"at":"2026-05-31T09:15:42.884Z","session_id":"ses_182b00216ffeVt0Wr0pq45SyyA","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Read full state machine file"}
+{"at":"2026-05-31T09:15:42.885Z","session_id":"ses_182b00216ffeVt0Wr0pq45SyyA","agent":"cartographer","tool":"smart_bash","phase":"rerouted","detail":"→ read_source"}
+{"at":"2026-05-31T09:15:43.498Z","session_id":"ses_182b00216ffeVt0Wr0pq45SyyA","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Read full secretary file"}
+{"at":"2026-05-31T09:15:43.498Z","session_id":"ses_182b00216ffeVt0Wr0pq45SyyA","agent":"cartographer","tool":"smart_bash","phase":"rerouted","detail":"→ read_source"}
+{"at":"2026-05-31T09:15:44.255Z","session_id":"ses_182b00216ffeVt0Wr0pq45SyyA","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Read full binder file"}
+{"at":"2026-05-31T09:15:44.255Z","session_id":"ses_182b00216ffeVt0Wr0pq45SyyA","agent":"cartographer","tool":"smart_bash","phase":"rerouted","detail":"→ read_source"}
+{"at":"2026-05-31T09:15:44.977Z","session_id":"ses_182b00216ffeVt0Wr0pq45SyyA","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Read full integrator file"}
+{"at":"2026-05-31T09:15:44.977Z","session_id":"ses_182b00216ffeVt0Wr0pq45SyyA","agent":"cartographer","tool":"smart_bash","phase":"rerouted","detail":"→ read_source"}
+{"at":"2026-05-31T09:16:37.428Z","session_id":"ses_182b00216ffeVt0Wr0pq45SyyA","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Read state machine types + LANE_STATE_MACHINE"}
+{"at":"2026-05-31T09:16:37.441Z","session_id":"ses_182b00216ffeVt0Wr0pq45SyyA","agent":"cartographer","tool":"smart_bash","phase":"completed","detail":"tail exit=0"}
+{"at":"2026-05-31T09:16:38.167Z","session_id":"ses_182b00216ffeVt0Wr0pq45SyyA","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Read PredicateSpec type union"}
+{"at":"2026-05-31T09:16:38.180Z","session_id":"ses_182b00216ffeVt0Wr0pq45SyyA","agent":"cartographer","tool":"smart_bash","phase":"completed","detail":"tail exit=0"}
+{"at":"2026-05-31T09:16:39.217Z","session_id":"ses_182b00216ffeVt0Wr0pq45SyyA","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Read CAMPAIGN_STATE_MACHINE + evaluatePredicate + reduceCampaignState"}
+{"at":"2026-05-31T09:16:39.245Z","session_id":"ses_182b00216ffeVt0Wr0pq45SyyA","agent":"cartographer","tool":"smart_bash","phase":"completed","detail":"tail exit=0"}
+{"at":"2026-05-31T09:16:40.347Z","session_id":"ses_182b00216ffeVt0Wr0pq45SyyA","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Read toStoreEvent, LaneState, Interface, processEvent"}
+{"at":"2026-05-31T09:16:40.356Z","session_id":"ses_182b00216ffeVt0Wr0pq45SyyA","agent":"cartographer","tool":"smart_bash","phase":"completed","detail":"tail exit=0"}
+{"at":"2026-05-31T09:16:41.344Z","session_id":"ses_182b00216ffeVt0Wr0pq45SyyA","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Read predicate resolver helper functions"}
+{"at":"2026-05-31T09:16:41.365Z","session_id":"ses_182b00216ffeVt0Wr0pq45SyyA","agent":"cartographer","tool":"smart_bash","phase":"completed","detail":"tail exit=0"}
+{"at":"2026-05-31T09:17:11.528Z","session_id":"ses_182b00216ffeVt0Wr0pq45SyyA","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Get LANE_STATE_MACHINE full definition"}
+{"at":"2026-05-31T09:17:11.567Z","session_id":"ses_182b00216ffeVt0Wr0pq45SyyA","agent":"cartographer","tool":"smart_bash","phase":"completed","detail":"tail exit=0"}
+{"at":"2026-05-31T09:17:12.253Z","session_id":"ses_182b00216ffeVt0Wr0pq45SyyA","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Get processEvent + handleRoleOutput + make"}
+{"at":"2026-05-31T09:17:12.272Z","session_id":"ses_182b00216ffeVt0Wr0pq45SyyA","agent":"cartographer","tool":"smart_bash","phase":"completed","detail":"tail exit=0"}
+{"at":"2026-05-31T09:17:13.059Z","session_id":"ses_182b00216ffeVt0Wr0pq45SyyA","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Get all resolve functions"}
+{"at":"2026-05-31T09:17:13.084Z","session_id":"ses_182b00216ffeVt0Wr0pq45SyyA","agent":"cartographer","tool":"smart_bash","phase":"completed","detail":"tail exit=0"}
+{"at":"2026-05-31T09:17:13.798Z","session_id":"ses_182b00216ffeVt0Wr0pq45SyyA","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Get remaining resolve functions"}
+{"at":"2026-05-31T09:17:13.840Z","session_id":"ses_182b00216ffeVt0Wr0pq45SyyA","agent":"cartographer","tool":"smart_bash","phase":"completed","detail":"tail exit=0"}
+{"at":"2026-05-31T09:17:14.539Z","session_id":"ses_182b00216ffeVt0Wr0pq45SyyA","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Get final resolve functions + map"}
+{"at":"2026-05-31T09:17:14.559Z","session_id":"ses_182b00216ffeVt0Wr0pq45SyyA","agent":"cartographer","tool":"smart_bash","phase":"completed","detail":"tail exit=0"}
+{"at":"2026-05-31T09:17:52.937Z","session_id":"ses_182b00216ffeVt0Wr0pq45SyyA","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"LANE_STATE_MACHINE scoping+planning+approved states"}
+{"at":"2026-05-31T09:17:52.970Z","session_id":"ses_182b00216ffeVt0Wr0pq45SyyA","agent":"cartographer","tool":"smart_bash","phase":"completed","detail":"tail exit=0"}
+{"at":"2026-05-31T09:17:53.988Z","session_id":"ses_182b00216ffeVt0Wr0pq45SyyA","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"LANE_STATE_MACHINE red_team+repairing+historian+checkpointed states"}
+{"at":"2026-05-31T09:17:54.001Z","session_id":"ses_182b00216ffeVt0Wr0pq45SyyA","agent":"cartographer","tool":"smart_bash","phase":"completed","detail":"tail exit=0"}
+{"at":"2026-05-31T09:17:55.007Z","session_id":"ses_182b00216ffeVt0Wr0pq45SyyA","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"predicateResolvers map + checkPredicate + checkTransitions"}
+{"at":"2026-05-31T09:17:55.043Z","session_id":"ses_182b00216ffeVt0Wr0pq45SyyA","agent":"cartographer","tool":"smart_bash","phase":"completed","detail":"tail exit=0"}
+{"at":"2026-05-31T09:17:55.716Z","session_id":"ses_182b00216ffeVt0Wr0pq45SyyA","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"evaluatePredicate function"}
+{"at":"2026-05-31T09:17:55.727Z","session_id":"ses_182b00216ffeVt0Wr0pq45SyyA","agent":"cartographer","tool":"smart_bash","phase":"completed","detail":"tail exit=0"}
+{"at":"2026-05-31T09:17:56.572Z","session_id":"ses_182b00216ffeVt0Wr0pq45SyyA","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"toStoreEvent function"}
+{"at":"2026-05-31T09:17:56.585Z","session_id":"ses_182b00216ffeVt0Wr0pq45SyyA","agent":"cartographer","tool":"smart_bash","phase":"completed","detail":"tail exit=0"}
+{"at":"2026-05-31T09:18:34.878Z","session_id":"ses_182b00216ffeVt0Wr0pq45SyyA","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Full EVENT_NAME_MAP"}
+{"at":"2026-05-31T09:18:34.893Z","session_id":"ses_182b00216ffeVt0Wr0pq45SyyA","agent":"cartographer","tool":"smart_bash","phase":"completed","detail":"tail exit=0"}
+{"at":"2026-05-31T09:18:35.758Z","session_id":"ses_182b00216ffeVt0Wr0pq45SyyA","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Full evaluatePredicate"}
+{"at":"2026-05-31T09:18:35.772Z","session_id":"ses_182b00216ffeVt0Wr0pq45SyyA","agent":"cartographer","tool":"smart_bash","phase":"completed","detail":"tail exit=0"}
+{"at":"2026-05-31T09:18:36.524Z","session_id":"ses_182b00216ffeVt0Wr0pq45SyyA","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"checkPredicate + checkTransitions functions"}
+{"at":"2026-05-31T09:18:36.538Z","session_id":"ses_182b00216ffeVt0Wr0pq45SyyA","agent":"cartographer","tool":"smart_bash","phase":"completed","detail":"tail exit=0"}
+{"at":"2026-05-31T09:18:37.290Z","session_id":"ses_182b00216ffeVt0Wr0pq45SyyA","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"processEvent function"}
+{"at":"2026-05-31T09:18:37.316Z","session_id":"ses_182b00216ffeVt0Wr0pq45SyyA","agent":"cartographer","tool":"smart_bash","phase":"completed","detail":"tail exit=0"}
+{"at":"2026-05-31T09:18:38.215Z","session_id":"ses_182b00216ffeVt0Wr0pq45SyyA","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"handleRoleOutput implementation"}
+{"at":"2026-05-31T09:18:38.228Z","session_id":"ses_182b00216ffeVt0Wr0pq45SyyA","agent":"cartographer","tool":"smart_bash","phase":"completed","detail":"tail exit=0"}
+{"at":"2026-05-31T09:19:27.997Z","session_id":"ses_182b00216ffeVt0Wr0pq45SyyA","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Find missing predicates in evaluatePredicate"}
+{"at":"2026-05-31T09:19:27.998Z","session_id":"ses_182b00216ffeVt0Wr0pq45SyyA","agent":"cartographer","tool":"smart_bash","phase":"rerouted","detail":"→ smart_grep"}
+{"at":"2026-05-31T09:19:29.381Z","session_id":"ses_182b00216ffeVt0Wr0pq45SyyA","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Find which predicates have resolve functions in predicates.ts"}
+{"at":"2026-05-31T09:19:29.381Z","session_id":"ses_182b00216ffeVt0Wr0pq45SyyA","agent":"cartographer","tool":"smart_bash","phase":"rerouted","detail":"→ smart_grep"}
+{"at":"2026-05-31T09:19:30.324Z","session_id":"ses_182b00216ffeVt0Wr0pq45SyyA","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"processEvent + handleRoleOutput"}
+{"at":"2026-05-31T09:19:30.335Z","session_id":"ses_182b00216ffeVt0Wr0pq45SyyA","agent":"cartographer","tool":"smart_bash","phase":"completed","detail":"tail exit=0"}
+{"at":"2026-05-31T09:19:31.212Z","session_id":"ses_182b00216ffeVt0Wr0pq45SyyA","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"BinderService implementation"}
+{"at":"2026-05-31T09:19:31.240Z","session_id":"ses_182b00216ffeVt0Wr0pq45SyyA","agent":"cartographer","tool":"smart_bash","phase":"completed","detail":"tail exit=0"}
+{"at":"2026-05-31T09:19:32.231Z","session_id":"ses_182b00216ffeVt0Wr0pq45SyyA","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Binder reconstruction + updateStatus + finalizeBinder"}
+{"at":"2026-05-31T09:19:32.248Z","session_id":"ses_182b00216ffeVt0Wr0pq45SyyA","agent":"cartographer","tool":"smart_bash","phase":"completed","detail":"tail exit=0"}
+{"at":"2026-05-31T09:20:08.172Z","session_id":"ses_182b00216ffeVt0Wr0pq45SyyA","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"kind: \"redteam"}
+{"at":"2026-05-31T09:20:08.182Z","session_id":"ses_182b00216ffeVt0Wr0pq45SyyA","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"kind: \"redteam"}
+{"at":"2026-05-31T09:20:08.907Z","session_id":"ses_182b00216ffeVt0Wr0pq45SyyA","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"kind: \"finding"}
+{"at":"2026-05-31T09:20:08.918Z","session_id":"ses_182b00216ffeVt0Wr0pq45SyyA","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"kind: \"finding"}
+{"at":"2026-05-31T09:20:09.751Z","session_id":"ses_182b00216ffeVt0Wr0pq45SyyA","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"case \"redteam"}
+{"at":"2026-05-31T09:20:09.762Z","session_id":"ses_182b00216ffeVt0Wr0pq45SyyA","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"case \"redteam"}
+{"at":"2026-05-31T09:20:10.884Z","session_id":"ses_182b00216ffeVt0Wr0pq45SyyA","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"case \"(finding|child_blocked|repair_budget|all_children|redteam)\""}
+{"at":"2026-05-31T09:20:10.896Z","session_id":"ses_182b00216ffeVt0Wr0pq45SyyA","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"case \"(finding|child_blocked|repair_budget|all_children|redteam)\""}
+{"at":"2026-05-31T09:20:56.996Z","session_id":"ses_182b00216ffeVt0Wr0pq45SyyA","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"case \"RedTeam|case \"Claim|case \"Scope|case \"Checkpoint|case \"LaneReturn|case \"Fa"}
+{"at":"2026-05-31T09:20:57.066Z","session_id":"ses_182b00216ffeVt0Wr0pq45SyyA","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"case \"RedTeam|case \"Claim|case \"Scope|case \"Checkpoint|case \"LaneReturn|case \"Fa"}
+{"at":"2026-05-31T09:20:58.523Z","session_id":"ses_182b00216ffeVt0Wr0pq45SyyA","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"case \"(finding_blocking|redteam_completed|finding_confirmed|repair_budget_exhaus"}
+{"at":"2026-05-31T09:20:58.539Z","session_id":"ses_182b00216ffeVt0Wr0pq45SyyA","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"case \"(finding_blocking|redteam_completed|finding_confirmed|repair_budget_exhaus"}
+{"at":"2026-05-31T09:20:59.798Z","session_id":"ses_182b00216ffeVt0Wr0pq45SyyA","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Find all predicate kinds used in state-machine.ts"}
+{"at":"2026-05-31T09:20:59.798Z","session_id":"ses_182b00216ffeVt0Wr0pq45SyyA","agent":"cartographer","tool":"smart_bash","phase":"rerouted","detail":"→ smart_grep"}
+{"at":"2026-05-31T09:21:33.119Z","session_id":"ses_182b00216ffeVt0Wr0pq45SyyA","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"kind: \""}
+{"at":"2026-05-31T09:21:33.132Z","session_id":"ses_182b00216ffeVt0Wr0pq45SyyA","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"kind: \""}
+{"at":"2026-05-31T09:21:33.980Z","session_id":"ses_182b00216ffeVt0Wr0pq45SyyA","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"kind: \""}
+{"at":"2026-05-31T09:21:33.992Z","session_id":"ses_182b00216ffeVt0Wr0pq45SyyA","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"kind: \""}
+{"at":"2026-05-31T09:21:35.260Z","session_id":"ses_182b00216ffeVt0Wr0pq45SyyA","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Extract unique predicate kinds from state-machine"}
+{"at":"2026-05-31T09:21:35.260Z","session_id":"ses_182b00216ffeVt0Wr0pq45SyyA","agent":"cartographer","tool":"smart_bash","phase":"rerouted","detail":"→ smart_grep"}
+{"at":"2026-05-31T09:21:36.260Z","session_id":"ses_182b00216ffeVt0Wr0pq45SyyA","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Extract all evaluatePredicate case strings"}
+{"at":"2026-05-31T09:21:36.260Z","session_id":"ses_182b00216ffeVt0Wr0pq45SyyA","agent":"cartographer","tool":"smart_bash","phase":"rerouted","detail":"→ smart_grep"}
+{"at":"2026-05-31T09:22:03.744Z","session_id":"ses_182b00216ffeVt0Wr0pq45SyyA","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"kind: \""}
+{"at":"2026-05-31T09:22:03.748Z","session_id":"ses_182b00216ffeVt0Wr0pq45SyyA","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"kind: \""}
+{"at":"2026-05-31T09:22:04.826Z","session_id":"ses_182b00216ffeVt0Wr0pq45SyyA","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"kind: \""}
+{"at":"2026-05-31T09:22:04.833Z","session_id":"ses_182b00216ffeVt0Wr0pq45SyyA","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"kind: \""}
+{"at":"2026-05-31T09:22:05.916Z","session_id":"ses_182b00216ffeVt0Wr0pq45SyyA","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Extract unique predicate kinds from state machine"}
+{"at":"2026-05-31T09:22:05.916Z","session_id":"ses_182b00216ffeVt0Wr0pq45SyyA","agent":"cartographer","tool":"smart_bash","phase":"rerouted","detail":"→ smart_grep"}
+{"at":"2026-05-31T09:22:06.927Z","session_id":"ses_182b00216ffeVt0Wr0pq45SyyA","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Extract evaluatePredicate case values"}
+{"at":"2026-05-31T09:22:06.927Z","session_id":"ses_182b00216ffeVt0Wr0pq45SyyA","agent":"cartographer","tool":"smart_bash","phase":"rerouted","detail":"→ smart_grep"}
+{"at":"2026-05-31T09:22:50.708Z","session_id":"ses_182b00216ffeVt0Wr0pq45SyyA","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"getRoleForState|STATE_ROLE|stateToRole"}
+{"at":"2026-05-31T09:22:50.715Z","session_id":"ses_182b00216ffeVt0Wr0pq45SyyA","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"getRoleForState|STATE_ROLE|stateToRole"}
+{"at":"2026-05-31T09:22:51.754Z","session_id":"ses_182b00216ffeVt0Wr0pq45SyyA","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Get all evaluatePredicate case values"}
+{"at":"2026-05-31T09:22:51.755Z","session_id":"ses_182b00216ffeVt0Wr0pq45SyyA","agent":"cartographer","tool":"smart_bash","phase":"rerouted","detail":"→ smart_grep"}
+{"at":"2026-05-31T09:22:52.480Z","session_id":"ses_182b00216ffeVt0Wr0pq45SyyA","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"getRoleForState function"}
+{"at":"2026-05-31T09:22:52.502Z","session_id":"ses_182b00216ffeVt0Wr0pq45SyyA","agent":"cartographer","tool":"smart_bash","phase":"completed","detail":"tail exit=0"}
+{"at":"2026-05-31T09:23:08.781Z","session_id":"ses_182b00216ffeVt0Wr0pq45SyyA","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Full STATE_ROLE mapping"}
+{"at":"2026-05-31T09:23:09.823Z","session_id":"ses_182b00216ffeVt0Wr0pq45SyyA","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"evaluatePredicate cases around finding_confirmed/finding_blocking"}
+{"at":"2026-05-31T09:23:10.713Z","session_id":"ses_182b00216ffeVt0Wr0pq45SyyA","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"predicateResolvers map entries"}
+{"at":"2026-05-31T09:27:13.623Z","session_id":"ses_182b00216ffeVt0Wr0pq45SyyA","agent":"cartographer","tool":"smart_write","phase":"started","detail":"/Users/user/Developer/GitHub/opencode-desktop-dev/docs/json/opencode/sessions/67"}
+{"at":"2026-05-31T09:27:13.624Z","session_id":"ses_182b00216ffeVt0Wr0pq45SyyA","agent":"cartographer","tool":"smart_write","phase":"completed","detail":"/Users/user/Developer/GitHub/opencode-desktop-dev/docs/json/opencode/sessions/67"}

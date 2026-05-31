@@ -1,10 +1,17 @@
 import { tool } from "@opencode-ai/plugin"
+import { readFileSync, writeFileSync, appendFileSync, existsSync, mkdirSync } from "node:fs"
+import { resolve, dirname } from "node:path"
 import { spawnSync } from "node:child_process"
-import { resolve } from "node:path"
-import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs"
 
-function resolvePath(worktree: string, p: string): string {
-  return resolve(worktree, p)
+function r(worktree: string, p: string): string { return resolve(worktree, p) }
+
+function hb(context: any, tool: string, phase: string, detail: string) {
+  try {
+    const dir = resolve(context.worktree, "docs/json/opencode/sessions/" + context.sessionID + "/analytics")
+    if (!existsSync(dir)) mkdirSync(dir, { recursive: true })
+    appendFileSync(dir + "/heartbeat.v1.jsonl",
+      JSON.stringify({ at: new Date().toISOString(), session_id: context.sessionID, agent: context.agent, tool, phase, detail: detail.slice(0, 200) }) + "\n", "utf8")
+  } catch (_) {}
 }
 
 function artifactLog(context: any, event: Record<string, unknown>) {
@@ -16,166 +23,119 @@ function artifactLog(context: any, event: Record<string, unknown>) {
   } catch (_) {}
 }
 
-interface BatchEdit {
-  file: string
-  oldText: string
-  newText: string
-  reason: string
-}
-
 export default tool({
-  description: "Apply multiple edits atomically. Accepts an array of {file, oldText, newText, reason} objects. All edits are validated before any are applied — if any fails, none are applied. Post-write verification on every file.",
+  description: "Atomic batch editor — apply multiple edits across multiple files as a single atomic operation. All edits are validated before any are applied. If any edit fails validation, none are applied. Returns a consolidated diff.",
   args: {
-    edits: tool.schema.string().describe("JSON array of edit objects: [{\"file\":\"...\",\"oldText\":\"...\",\"newText\":\"...\",\"reason\":\"...\"}]"),
-    plan_step: tool.schema.string().optional().describe("Which plan step these edits correspond to"),
+    edits: tool.schema.string().describe("JSON array of {file, oldText, newText, reason} objects. All edits validated before any are applied."),
   },
   async execute(args, context) {
-    const editDir = resolvePath(context.worktree, `docs/json/opencode/sessions/${context.sessionID}/edits`)
-    const logPath = resolvePath(context.worktree, `docs/json/opencode/sessions/${context.sessionID}/edits/edit_log.v1.jsonl`)
+    hb(context, "smart_batch", "started", `batch edit`)
+    
+    let edits: { file: string; oldText: string; newText: string; reason?: string }[]
+    try { edits = JSON.parse(args.edits) } catch {
+      return JSON.stringify({ status: "error", error: "Invalid JSON for 'edits'. Must be a JSON array of {file, oldText, newText, reason} objects." }, null, 2)
+    }
 
-    // Parse edits
-    let edits: BatchEdit[]
-    try {
-      edits = JSON.parse(args.edits)
-      if (!Array.isArray(edits) || edits.length === 0) {
-        return JSON.stringify({ status: "fail", error: "edits must be a non-empty JSON array" }, null, 2)
-      }
-    } catch {
-      return JSON.stringify({ status: "fail", error: "edits is not valid JSON" }, null, 2)
+    if (!Array.isArray(edits) || edits.length === 0) {
+      return JSON.stringify({ status: "error", error: "'edits' must be a non-empty JSON array." }, null, 2)
     }
 
     // Phase 1: Validate all edits
-    const snapshots: { edit: BatchEdit; path: string; original: string }[] = []
+    const validation: any[] = []
+    let valid = true
+
     for (let i = 0; i < edits.length; i++) {
       const edit = edits[i]!
-      const filePath = resolvePath(context.worktree, edit.file)
-
-      if (!existsSync(filePath)) {
-        return JSON.stringify({
-          status: "fail",
-          error: `Edit ${i + 1}: file not found: ${edit.file}`,
-          applied: i,
-          total: edits.length,
-        }, null, 2)
+      if (!edit.file || edit.oldText === undefined || edit.newText === undefined) {
+        validation.push({ index: i, file: edit.file || "?", status: "invalid", error: "Missing required fields: file, oldText, newText" })
+        valid = false
+        continue
       }
 
-      const content = readFileSync(filePath, "utf8")
-      const count = content.split(edit.oldText).length - 1
-
-      if (count === 0) {
-        // Try whitespace-normalized matching (tabs → spaces) as fallback
-        const normContent = content.replace(/\t/g, "  ")
-        const normOld = edit.oldText.replace(/\t/g, "  ")
-        const normCount = normContent.split(normOld).length - 1
-        if (normCount === 1) {
-          // Found with normalized whitespace — apply using original content with normalized replacement
-          const normNew = edit.newText.replace(/\t/g, "  ")
-          // We can't safely apply normalized text back, so tell the agent
-          return JSON.stringify({
-            status: "fail",
-            error: `Edit ${i + 1}/${edits.length}: oldText matched only after normalizing tabs to spaces. The file uses ${content.includes("\t") ? "tabs" : "spaces"} but your oldText used ${edit.oldText.includes("\t") ? "tabs" : "spaces"}.`,
-            hint: "Match the file's exact indentation style. Use read_source to see the actual whitespace characters.",
-            file_uses_tabs: content.includes("\t"),
-            oldtext_uses_tabs: edit.oldText.includes("\t"),
-            applied: i,
-            total: edits.length,
-          }, null, 2)
-        }
-        const preview = edit.oldText.split("\n")[0]?.slice(0, 100) || "(empty)"
-        // Show file snippet to help debug
-        const fileLines = content.split("\n")
-        const fileSnippet = fileLines.slice(0, 10).map((l, j) => `  ${j + 1}: ${l.slice(0, 80)}`).join("\n")
-        return JSON.stringify({
-          status: "fail",
-          error: `Edit ${i + 1}/${edits.length}: oldText not found in ${edit.file}`,
-          preview,
-          hint: "Check exact whitespace, indentation, and line endings. The file may have tabs vs spaces mismatch.",
-          file_first_10_lines: fileSnippet,
-          applied: i,
-          total: edits.length,
-        }, null, 2)
+      const fullPath = r(context.worktree, edit.file)
+      if (!existsSync(fullPath)) {
+        validation.push({ index: i, file: edit.file, status: "invalid", error: "File not found" })
+        valid = false
+        continue
       }
 
-      if (count > 1) {
-        return JSON.stringify({
-          status: "fail",
-          error: `Edit ${i + 1}: oldText matches ${count} times in ${edit.file} — must be unique`,
-          hint: "Include more surrounding context to make the match unique.",
-          applied: i,
-          total: edits.length,
-        }, null, 2)
+      let content: string
+      try { content = readFileSync(fullPath, "utf8") } catch (e: any) {
+        validation.push({ index: i, file: edit.file, status: "invalid", error: `Cannot read: ${e.message}` })
+        valid = false
+        continue
       }
 
-      snapshots.push({ edit, path: filePath, original: content })
+      const occurrences = content.split(edit.oldText).length - 1
+      if (occurrences === 0) {
+        validation.push({ index: i, file: edit.file, status: "invalid", error: "oldText not found in file" })
+        valid = false
+      } else if (occurrences > 1) {
+        validation.push({ index: i, file: edit.file, status: "ambiguous", error: `Found ${occurrences} times — need more specific oldText`, occurrences })
+        valid = false
+      } else {
+        validation.push({ index: i, file: edit.file, status: "valid" })
+      }
+    }
+
+    if (!valid) {
+      hb(context, "smart_batch", "failed", `validation failed: ${validation.filter(v => v.status !== "valid").length}/${edits.length}`)
+      return JSON.stringify({
+        status: "rejected",
+        message: `${validation.filter(v => v.status !== "valid").length} of ${edits.length} edits failed validation. No files were modified.`,
+        validation,
+        hint: "Fix the invalid edits and retry. All edits must pass validation before any are applied.",
+      }, null, 2)
     }
 
     // Phase 2: Apply all edits
-    try { mkdirSync(editDir, { recursive: true }) } catch (_) {}
-    const results: string[] = []
-    const now = new Date().toISOString()
-
-    for (let i = 0; i < snapshots.length; i++) {
-      const snap = snapshots[i]!
-      const modified = snap.original.replace(snap.edit.oldText, snap.edit.newText)
-      writeFileSync(snap.path, modified, "utf8")
-
-      // Post-write verification
-      if (!existsSync(snap.path)) {
-        return JSON.stringify({
-          status: "fail",
-          error: `Edit ${i + 1}: write verification failed — file does not exist after write: ${snap.edit.file}`,
-          applied: i,
-          total: edits.length,
-        }, null, 2)
-      }
-      const verify = readFileSync(snap.path, "utf8")
-      if (!verify.includes(snap.edit.newText)) {
-        return JSON.stringify({
-          status: "fail",
-          error: `Edit ${i + 1}: write verification failed — new text not found in file after write. Another process may have modified the file.`,
-          applied: i,
-          total: edits.length,
-        }, null, 2)
-      }
-
-      // Git diff
-      let diffText = ""
-      const relPath = snap.path.startsWith(context.worktree) ? snap.path.slice(context.worktree.length + 1) : snap.edit.file
-      try {
-        const diffResult = spawnSync("git", ["-C", context.worktree, "diff", "--", relPath], {
-          encoding: "utf8", timeout: 5000,
-        })
-        if (diffResult.stdout?.trim()) {
-          diffText = diffResult.stdout.trim().split("\n").slice(0, 10).join("\n")
+    const results: any[] = []
+    for (let i = 0; i < edits.length; i++) {
+      const edit = edits[i]!
+      const fullPath = r(context.worktree, edit.file)
+      const content = readFileSync(fullPath, "utf8")
+      const newContent = content.replace(edit.oldText, edit.newText)
+      
+      try { writeFileSync(fullPath, newContent, "utf8") } catch (e: any) {
+        // Rollback! Re-apply previous edits in reverse
+        for (let j = results.length - 1; j >= 0; j--) {
+          try {
+            const prev = edits[j]!
+            const prevPath = r(context.worktree, prev.file)
+            const prevContent = readFileSync(prevPath, "utf8")
+            writeFileSync(prevPath, prevContent.replace(prev.newText, prev.oldText), "utf8")
+          } catch {}
         }
-      } catch (_) {}
-
-      // Record metadata
-      const record = {
-        schema_version: "v1",
-        session_id: context.sessionID,
-        agent: context.agent,
-        file: snap.edit.file,
-        reason: snap.edit.reason,
-        change_summary: `batch edit ${i + 1}/${edits.length}`,
-        plan_step: args.plan_step || null,
-        diff_snapshot: diffText.slice(0, 500),
-        edited_at: now,
+        hb(context, "smart_batch", "failed", `write failed at edit ${i}, rolled back`)
+        return JSON.stringify({
+          status: "error",
+          error: `Write failed at edit ${i} (${edit.file}): ${e.message}. All changes rolled back.`,
+        }, null, 2)
       }
-      try {
-        appendFileSync(logPath, JSON.stringify(record) + "\n", "utf8")
-      } catch (_) {}
 
-      results.push(snap.edit.file)
+      // Create parent dirs if needed for new files
+      try { mkdirSync(dirname(fullPath), { recursive: true }) } catch (_) {}
+      
+      results.push({ index: i, file: edit.file, status: "applied", reason: edit.reason || "" })
     }
 
-    artifactLog(context, { tool: "smart_batch", action: "batch_edited", files: results.join(", "), edits: results.length })
+    // Phase 3: Generate consolidated diff
+    const changedFiles = [...new Set(edits.map(e => e.file))]
+    const diffResult = spawnSync("git", ["-C", context.worktree, "diff", "--", ...changedFiles], {
+      encoding: "utf8", maxBuffer: 1024 * 1024 * 2, timeout: 5000,
+    })
+    const diff = diffResult.stdout?.trim() || ""
+
+    hb(context, "smart_batch", "completed", `${edits.length} edits across ${changedFiles.length} files`)
+    artifactLog(context, { tool: "smart_batch", action: "batch_edit", files: changedFiles.length, edits: edits.length })
+
     return JSON.stringify({
       status: "applied",
-      edits_applied: results.length,
-      total: edits.length,
-      files: results,
-      metadata_recorded: true,
+      edits_applied: edits.length,
+      files_changed: changedFiles.length,
+      results,
+      diff: diff.slice(0, 4000),
+      hint: "All edits applied atomically. Run verification (typecheck, tests) to confirm correctness.",
     }, null, 2)
   },
 })

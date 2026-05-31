@@ -1,0 +1,92 @@
+{"at":"2026-05-31T09:14:55.948Z","session_id":"ses_182af79a1ffeJIjD1bGne14Vbs","agent":"surveyor","tool":"smart_grep","phase":"started","detail":"EventName"}
+{"at":"2026-05-31T09:14:55.983Z","session_id":"ses_182af79a1ffeJIjD1bGne14Vbs","agent":"surveyor","tool":"smart_grep","phase":"completed","detail":"EventName"}
+{"at":"2026-05-31T09:14:56.950Z","session_id":"ses_182af79a1ffeJIjD1bGne14Vbs","agent":"surveyor","tool":"smart_grep","phase":"started","detail":"event.*type|type.*event|Event\\s*="}
+{"at":"2026-05-31T09:14:56.973Z","session_id":"ses_182af79a1ffeJIjD1bGne14Vbs","agent":"surveyor","tool":"smart_grep","phase":"completed","detail":"event.*type|type.*event|Event\\s*="}
+{"at":"2026-05-31T09:14:57.619Z","session_id":"ses_182af79a1ffeJIjD1bGne14Vbs","agent":"surveyor","tool":"smart_grep","phase":"started","detail":"from.*context/packet|from.*context/"}
+{"at":"2026-05-31T09:14:57.651Z","session_id":"ses_182af79a1ffeJIjD1bGne14Vbs","agent":"surveyor","tool":"smart_grep","phase":"completed","detail":"from.*context/packet|from.*context/"}
+{"at":"2026-05-31T09:15:06.466Z","session_id":"ses_182af79a1ffeJIjD1bGne14Vbs","agent":"surveyor","tool":"smart_bash","phase":"started","detail":"Read full context/packet.ts end to end"}
+{"at":"2026-05-31T09:15:06.505Z","session_id":"ses_182af79a1ffeJIjD1bGne14Vbs","agent":"surveyor","tool":"smart_bash","phase":"completed","detail":"wc exit=0"}
+{"at":"2026-05-31T09:15:39.206Z","session_id":"ses_182af79a1ffeJIjD1bGne14Vbs","agent":"surveyor","tool":"smart_bash","phase":"started","detail":"Read lines 106-155: types + test regex + assembleL1 start"}
+{"at":"2026-05-31T09:15:39.207Z","session_id":"ses_182af79a1ffeJIjD1bGne14Vbs","agent":"surveyor","tool":"smart_bash","phase":"rerouted","detail":"→ read_source"}
+{"at":"2026-05-31T09:15:40.112Z","session_id":"ses_182af79a1ffeJIjD1bGne14Vbs","agent":"surveyor","tool":"smart_bash","phase":"started","detail":"Read lines 155-260: assembleL1 body"}
+{"at":"2026-05-31T09:15:40.112Z","session_id":"ses_182af79a1ffeJIjD1bGne14Vbs","agent":"surveyor","tool":"smart_bash","phase":"rerouted","detail":"→ read_source"}
+{"at":"2026-05-31T09:15:41.180Z","session_id":"ses_182af79a1ffeJIjD1bGne14Vbs","agent":"surveyor","tool":"smart_bash","phase":"started","detail":"Read lines 260-370: freshness + assembleL2 start"}
+{"at":"2026-05-31T09:15:41.181Z","session_id":"ses_182af79a1ffeJIjD1bGne14Vbs","agent":"surveyor","tool":"smart_bash","phase":"rerouted","detail":"→ read_source"}
+{"at":"2026-05-31T09:15:42.087Z","session_id":"ses_182af79a1ffeJIjD1bGne14Vbs","agent":"surveyor","tool":"smart_bash","phase":"started","detail":"Read lines 370-506: assembleL2 body + getCurrentPacket + layer"}
+{"at":"2026-05-31T09:15:42.088Z","session_id":"ses_182af79a1ffeJIjD1bGne14Vbs","agent":"surveyor","tool":"smart_bash","phase":"rerouted","detail":"→ read_source"}
+{"at":"2026-05-31T09:16:11.982Z","session_id":"ses_182af79a1ffeJIjD1bGne14Vbs","agent":"surveyor","tool":"smart_grep","phase":"started","detail":"TEST_FILE_RE|eventType|toolName|validation|typecheck|test|dirty|reservation|conf"}
+{"at":"2026-05-31T09:16:11.991Z","session_id":"ses_182af79a1ffeJIjD1bGne14Vbs","agent":"surveyor","tool":"smart_grep","phase":"completed","detail":"TEST_FILE_RE|eventType|toolName|validation|typecheck|test|dirty|reservation|conf"}
+{"at":"2026-05-31T09:16:12.952Z","session_id":"ses_182af79a1ffeJIjD1bGne14Vbs","agent":"surveyor","tool":"smart_grep","phase":"started","detail":"EventName\\."}
+{"at":"2026-05-31T09:16:12.957Z","session_id":"ses_182af79a1ffeJIjD1bGne14Vbs","agent":"surveyor","tool":"smart_grep","phase":"completed","detail":"EventName\\."}
+{"at":"2026-05-31T09:16:13.314Z","session_id":"ses_182af79a1ffeJIjD1bGne14Vbs","agent":"surveyor","tool":"smart_find","phase":"started","detail":"*.ts"}
+{"at":"2026-05-31T09:16:13.348Z","session_id":"ses_182af79a1ffeJIjD1bGne14Vbs","agent":"surveyor","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T09:16:34.787Z","session_id":"ses_182af79a1ffeJIjD1bGne14Vbs","agent":"surveyor","tool":"smart_bash","phase":"started","detail":"Read full packet.ts file"}
+{"at":"2026-05-31T09:16:34.787Z","session_id":"ses_182af79a1ffeJIjD1bGne14Vbs","agent":"surveyor","tool":"smart_bash","phase":"rerouted","detail":"→ read_source"}
+{"at":"2026-05-31T09:16:36.024Z","session_id":"ses_182af79a1ffeJIjD1bGne14Vbs","agent":"surveyor","tool":"smart_grep","phase":"started","detail":"\\\\.eventType\\s*===|eventType:"}
+{"at":"2026-05-31T09:16:36.034Z","session_id":"ses_182af79a1ffeJIjD1bGne14Vbs","agent":"surveyor","tool":"smart_grep","phase":"completed","detail":"\\\\.eventType\\s*===|eventType:"}
+{"at":"2026-05-31T09:17:01.001Z","session_id":"ses_182af79a1ffeJIjD1bGne14Vbs","agent":"surveyor","tool":"smart_grep","phase":"started","detail":"eventType === EventName"}
+{"at":"2026-05-31T09:17:01.032Z","session_id":"ses_182af79a1ffeJIjD1bGne14Vbs","agent":"surveyor","tool":"smart_grep","phase":"completed","detail":"eventType === EventName"}
+{"at":"2026-05-31T09:17:02.079Z","session_id":"ses_182af79a1ffeJIjD1bGne14Vbs","agent":"surveyor","tool":"smart_grep","phase":"started","detail":"validation|typecheck|dirty|reservation"}
+{"at":"2026-05-31T09:17:02.108Z","session_id":"ses_182af79a1ffeJIjD1bGne14Vbs","agent":"surveyor","tool":"smart_grep","phase":"completed","detail":"validation|typecheck|dirty|reservation"}
+{"at":"2026-05-31T09:17:03.331Z","session_id":"ses_182af79a1ffeJIjD1bGne14Vbs","agent":"surveyor","tool":"smart_grep","phase":"started","detail":"claim|Claim|coordination|Coordination|reservation|Reservation"}
+{"at":"2026-05-31T09:17:03.341Z","session_id":"ses_182af79a1ffeJIjD1bGne14Vbs","agent":"surveyor","tool":"smart_grep","phase":"completed","detail":"claim|Claim|coordination|Coordination|reservation|Reservation"}
+{"at":"2026-05-31T09:17:41.969Z","session_id":"ses_182af79a1ffeJIjD1bGne14Vbs","agent":"surveyor","tool":"smart_bash","phase":"started","detail":"Read lines 106-280 of packet.ts"}
+{"at":"2026-05-31T09:17:41.989Z","session_id":"ses_182af79a1ffeJIjD1bGne14Vbs","agent":"surveyor","tool":"smart_bash","phase":"completed","detail":"awk exit=0"}
+{"at":"2026-05-31T09:17:42.781Z","session_id":"ses_182af79a1ffeJIjD1bGne14Vbs","agent":"surveyor","tool":"smart_bash","phase":"started","detail":"Read lines 280-445 of packet.ts"}
+{"at":"2026-05-31T09:17:42.803Z","session_id":"ses_182af79a1ffeJIjD1bGne14Vbs","agent":"surveyor","tool":"smart_bash","phase":"completed","detail":"awk exit=0"}
+{"at":"2026-05-31T09:17:43.543Z","session_id":"ses_182af79a1ffeJIjD1bGne14Vbs","agent":"surveyor","tool":"smart_bash","phase":"started","detail":"Read lines 445-506 of packet.ts"}
+{"at":"2026-05-31T09:17:43.560Z","session_id":"ses_182af79a1ffeJIjD1bGne14Vbs","agent":"surveyor","tool":"smart_bash","phase":"completed","detail":"awk exit=0"}
+{"at":"2026-05-31T09:18:21.071Z","session_id":"ses_182af79a1ffeJIjD1bGne14Vbs","agent":"surveyor","tool":"smart_bash","phase":"started","detail":"constants + helpers"}
+{"at":"2026-05-31T09:18:21.102Z","session_id":"ses_182af79a1ffeJIjD1bGne14Vbs","agent":"surveyor","tool":"smart_bash","phase":"completed","detail":"awk exit=0"}
+{"at":"2026-05-31T09:18:22.140Z","session_id":"ses_182af79a1ffeJIjD1bGne14Vbs","agent":"surveyor","tool":"smart_bash","phase":"started","detail":"assembleL1 start through git status + dirty files"}
+{"at":"2026-05-31T09:18:22.164Z","session_id":"ses_182af79a1ffeJIjD1bGne14Vbs","agent":"surveyor","tool":"smart_bash","phase":"completed","detail":"awk exit=0"}
+{"at":"2026-05-31T09:18:22.980Z","session_id":"ses_182af79a1ffeJIjD1bGne14Vbs","agent":"surveyor","tool":"smart_bash","phase":"started","detail":"claims section through validation"}
+{"at":"2026-05-31T09:18:22.996Z","session_id":"ses_182af79a1ffeJIjD1bGne14Vbs","agent":"surveyor","tool":"smart_bash","phase":"completed","detail":"awk exit=0"}
+{"at":"2026-05-31T09:18:24.093Z","session_id":"ses_182af79a1ffeJIjD1bGne14Vbs","agent":"surveyor","tool":"smart_bash","phase":"started","detail":"assembleL2: test paths, file memory, conflicts, coordination"}
+{"at":"2026-05-31T09:18:24.116Z","session_id":"ses_182af79a1ffeJIjD1bGne14Vbs","agent":"surveyor","tool":"smart_bash","phase":"completed","detail":"awk exit=0"}
+{"at":"2026-05-31T09:18:55.953Z","session_id":"ses_182af79a1ffeJIjD1bGne14Vbs","agent":"surveyor","tool":"smart_bash","phase":"started","detail":"Claims, conflicts, file memory, and validation sections"}
+{"at":"2026-05-31T09:18:55.962Z","session_id":"ses_182af79a1ffeJIjD1bGne14Vbs","agent":"surveyor","tool":"smart_bash","phase":"completed","detail":"awk exit=0"}
+{"at":"2026-05-31T09:18:56.933Z","session_id":"ses_182af79a1ffeJIjD1bGne14Vbs","agent":"surveyor","tool":"smart_bash","phase":"started","detail":"assembleL2: test paths + from file memory + coordination/conflicts"}
+{"at":"2026-05-31T09:18:56.963Z","session_id":"ses_182af79a1ffeJIjD1bGne14Vbs","agent":"surveyor","tool":"smart_bash","phase":"completed","detail":"awk exit=0"}
+{"at":"2026-05-31T09:18:57.777Z","session_id":"ses_182af79a1ffeJIjD1bGne14Vbs","agent":"surveyor","tool":"smart_bash","phase":"started","detail":"getCurrentPacket + layer tail"}
+{"at":"2026-05-31T09:18:57.791Z","session_id":"ses_182af79a1ffeJIjD1bGne14Vbs","agent":"surveyor","tool":"smart_bash","phase":"completed","detail":"awk exit=0"}
+{"at":"2026-05-31T09:18:58.675Z","session_id":"ses_182af79a1ffeJIjD1bGne14Vbs","agent":"surveyor","tool":"smart_grep","phase":"started","detail":"getCurrentPacket"}
+{"at":"2026-05-31T09:18:58.681Z","session_id":"ses_182af79a1ffeJIjD1bGne14Vbs","agent":"surveyor","tool":"smart_grep","phase":"completed","detail":"getCurrentPacket"}
+{"at":"2026-05-31T09:19:24.815Z","session_id":"ses_182af79a1ffeJIjD1bGne14Vbs","agent":"surveyor","tool":"smart_bash","phase":"started","detail":"Conflict detection logic"}
+{"at":"2026-05-31T09:19:24.848Z","session_id":"ses_182af79a1ffeJIjD1bGne14Vbs","agent":"surveyor","tool":"smart_bash","phase":"completed","detail":"awk exit=0"}
+{"at":"2026-05-31T09:19:25.382Z","session_id":"ses_182af79a1ffeJIjD1bGne14Vbs","agent":"surveyor","tool":"smart_bash","phase":"started","detail":"Test path collection in assembleL2"}
+{"at":"2026-05-31T09:19:25.400Z","session_id":"ses_182af79a1ffeJIjD1bGne14Vbs","agent":"surveyor","tool":"smart_bash","phase":"completed","detail":"awk exit=0"}
+{"at":"2026-05-31T09:19:26.423Z","session_id":"ses_182af79a1ffeJIjD1bGne14Vbs","agent":"surveyor","tool":"smart_bash","phase":"started","detail":"file memory rating + related tests + conflicts in assembleL2"}
+{"at":"2026-05-31T09:19:26.467Z","session_id":"ses_182af79a1ffeJIjD1bGne14Vbs","agent":"surveyor","tool":"smart_bash","phase":"completed","detail":"awk exit=0"}
+{"at":"2026-05-31T09:19:27.103Z","session_id":"ses_182af79a1ffeJIjD1bGne14Vbs","agent":"surveyor","tool":"smart_bash","phase":"started","detail":"List all files in context directory"}
+{"at":"2026-05-31T09:19:27.103Z","session_id":"ses_182af79a1ffeJIjD1bGne14Vbs","agent":"surveyor","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T09:20:00.549Z","session_id":"ses_182af79a1ffeJIjD1bGne14Vbs","agent":"surveyor","tool":"smart_bash","phase":"started","detail":"List all files in context/"}
+{"at":"2026-05-31T09:20:00.551Z","session_id":"ses_182af79a1ffeJIjD1bGne14Vbs","agent":"surveyor","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T09:20:01.657Z","session_id":"ses_182af79a1ffeJIjD1bGne14Vbs","agent":"surveyor","tool":"smart_bash","phase":"started","detail":"Type interfaces: Freshness, ContextPacketL1, L2, ContextPacket, Interface"}
+{"at":"2026-05-31T09:20:01.674Z","session_id":"ses_182af79a1ffeJIjD1bGne14Vbs","agent":"surveyor","tool":"smart_bash","phase":"completed","detail":"awk exit=0"}
+{"at":"2026-05-31T09:20:02.494Z","session_id":"ses_182af79a1ffeJIjD1bGne14Vbs","agent":"surveyor","tool":"smart_bash","phase":"started","detail":"getCurrentPacket full body"}
+{"at":"2026-05-31T09:20:02.522Z","session_id":"ses_182af79a1ffeJIjD1bGne14Vbs","agent":"surveyor","tool":"smart_bash","phase":"completed","detail":"awk exit=0"}
+{"at":"2026-05-31T09:20:03.853Z","session_id":"ses_182af79a1ffeJIjD1bGne14Vbs","agent":"surveyor","tool":"smart_grep","phase":"started","detail":"EventName\\."}
+{"at":"2026-05-31T09:20:03.859Z","session_id":"ses_182af79a1ffeJIjD1bGne14Vbs","agent":"surveyor","tool":"smart_grep","phase":"completed","detail":"EventName\\."}
+{"at":"2026-05-31T09:20:34.386Z","session_id":"ses_182af79a1ffeJIjD1bGne14Vbs","agent":"surveyor","tool":"smart_bash","phase":"started","detail":"List context/ files"}
+{"at":"2026-05-31T09:20:34.412Z","session_id":"ses_182af79a1ffeJIjD1bGne14Vbs","agent":"surveyor","tool":"smart_bash","phase":"completed","detail":"/bin/ls exit=0"}
+{"at":"2026-05-31T09:20:35.775Z","session_id":"ses_182af79a1ffeJIjD1bGne14Vbs","agent":"surveyor","tool":"smart_grep","phase":"started","detail":"FileMemory\\.|fileMemory\\.|\\.fileCount|\\.contentFresh|\\.stalePaths"}
+{"at":"2026-05-31T09:20:35.795Z","session_id":"ses_182af79a1ffeJIjD1bGne14Vbs","agent":"surveyor","tool":"smart_grep","phase":"completed","detail":"FileMemory\\.|fileMemory\\.|\\.fileCount|\\.contentFresh|\\.stalePaths"}
+{"at":"2026-05-31T09:20:36.768Z","session_id":"ses_182af79a1ffeJIjD1bGne14Vbs","agent":"surveyor","tool":"smart_grep","phase":"started","detail":"FileEdited|FileConflict"}
+{"at":"2026-05-31T09:20:36.775Z","session_id":"ses_182af79a1ffeJIjD1bGne14Vbs","agent":"surveyor","tool":"smart_grep","phase":"completed","detail":"FileEdited|FileConflict"}
+{"at":"2026-05-31T09:21:13.606Z","session_id":"ses_182af79a1ffeJIjD1bGne14Vbs","agent":"surveyor","tool":"smart_bash","phase":"started","detail":"Freshness, file memory section, last edit"}
+{"at":"2026-05-31T09:21:13.736Z","session_id":"ses_182af79a1ffeJIjD1bGne14Vbs","agent":"surveyor","tool":"smart_bash","phase":"completed","detail":"awk exit=0"}
+{"at":"2026-05-31T09:21:14.655Z","session_id":"ses_182af79a1ffeJIjD1bGne14Vbs","agent":"surveyor","tool":"smart_bash","phase":"started","detail":"Test paths end + relatedTests + conflicts in assembleL2"}
+{"at":"2026-05-31T09:21:14.697Z","session_id":"ses_182af79a1ffeJIjD1bGne14Vbs","agent":"surveyor","tool":"smart_bash","phase":"completed","detail":"awk exit=0"}
+{"at":"2026-05-31T09:21:44.146Z","session_id":"ses_182af79a1ffeJIjD1bGne14Vbs","agent":"surveyor","tool":"smart_grep","phase":"started","detail":"type:\\s*[\"'](session\\.|file\\.|tool\\.|child\\.|context\\.|validation\\.|claim\\.|lane"}
+{"at":"2026-05-31T09:21:44.179Z","session_id":"ses_182af79a1ffeJIjD1bGne14Vbs","agent":"surveyor","tool":"smart_grep","phase":"completed","detail":"type:\\s*[\"'](session\\.|file\\.|tool\\.|child\\.|context\\.|validation\\.|claim\\.|lane"}
+{"at":"2026-05-31T09:21:52.406Z","session_id":"ses_182af79a1ffeJIjD1bGne14Vbs","agent":"surveyor","tool":"smart_grep","phase":"started","detail":"type:\\s*[\"'](child\\.|lane\\.|claim\\.|context\\.|validation\\.)"}
+{"at":"2026-05-31T09:21:52.415Z","session_id":"ses_182af79a1ffeJIjD1bGne14Vbs","agent":"surveyor","tool":"smart_grep","phase":"completed","detail":"type:\\s*[\"'](child\\.|lane\\.|claim\\.|context\\.|validation\\.)"}
+{"at":"2026-05-31T09:22:11.907Z","session_id":"ses_182af79a1ffeJIjD1bGne14Vbs","agent":"surveyor","tool":"smart_grep","phase":"started","detail":"getSessionReservations|checkPathReserved"}
+{"at":"2026-05-31T09:22:11.920Z","session_id":"ses_182af79a1ffeJIjD1bGne14Vbs","agent":"surveyor","tool":"smart_grep","phase":"completed","detail":"getSessionReservations|checkPathReserved"}
+{"at":"2026-05-31T09:22:12.809Z","session_id":"ses_182af79a1ffeJIjD1bGne14Vbs","agent":"surveyor","tool":"smart_grep","phase":"started","detail":"export const getSessionReservations|export const checkPathReserved"}
+{"at":"2026-05-31T09:22:12.821Z","session_id":"ses_182af79a1ffeJIjD1bGne14Vbs","agent":"surveyor","tool":"smart_grep","phase":"completed","detail":"export const getSessionReservations|export const checkPathReserved"}
+{"at":"2026-05-31T09:22:36.741Z","session_id":"ses_182af79a1ffeJIjD1bGne14Vbs","agent":"surveyor","tool":"smart_grep","phase":"started","detail":"import.*EventName"}
+{"at":"2026-05-31T09:22:36.746Z","session_id":"ses_182af79a1ffeJIjD1bGne14Vbs","agent":"surveyor","tool":"smart_grep","phase":"completed","detail":"import.*EventName"}
+{"at":"2026-05-31T09:22:37.825Z","session_id":"ses_182af79a1ffeJIjD1bGne14Vbs","agent":"surveyor","tool":"smart_grep","phase":"started","detail":"type: [\"']"}
+{"at":"2026-05-31T09:22:37.834Z","session_id":"ses_182af79a1ffeJIjD1bGne14Vbs","agent":"surveyor","tool":"smart_grep","phase":"completed","detail":"type: [\"']"}

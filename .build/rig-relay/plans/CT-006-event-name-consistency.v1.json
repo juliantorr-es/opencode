@@ -1,0 +1,178 @@
+{
+  "schema": "rig.relay.plan_artifact.v1",
+  "plan_id": "CT-006-event-name-consistency",
+  "title": "Fix canonical event name consistency issues",
+  "boundary": "event-names.ts, state-machine.ts, secretary.ts",
+  "consumer_purpose": "Eliminate hardcoded event type strings in state-machine.ts in favor of canonical EventName constants; fix SG-004 prefix violation; register 8 missing event names in the canonical EventName registry.",
+  "claim_atoms": [
+    "All 21 hardcoded event type strings in state-machine.ts replaced with EventName constants",
+    "8 missing event name constants added to event-names.ts registry",
+    "SG-004 CampaignLaneCreated prefix fixed to campaign.* (pre-existing dirty fix — already applied)",
+    "secretary.ts line 131 uses EventName.CampaignLaneCreated",
+    "bun typecheck passes in packages/opencode"
+  ],
+  "status": {
+    "event-names.ts": "dirty — SG-004 and GatesAllPassed already applied by prior lane",
+    "state-machine.ts": "dirty — partial EventName conversion without import (broken state)",
+    "secretary.ts": "clean"
+  },
+  "root_causes": [
+    {
+      "id": "SG-004",
+      "hypothesis": "CampaignLaneCreated was defined as 'lane.created' instead of 'campaign.lane.created', breaking the campaign.* prefix convention followed by all other campaign events",
+      "confidence": "high",
+      "evidence": [
+        "All 11 other campaign.* constants use 'campaign.' prefix",
+        "Only CampaignLaneCreated used bare 'lane.created'",
+        "Already fixed in dirty file (line 98 now: 'campaign.lane.created')"
+      ],
+      "status": "already_fixed_by_prior_lane"
+    },
+    {
+      "id": "SG-006",
+      "hypothesis": "state-machine.ts evaluatePredicate and transition specs use 21 hardcoded event type strings instead of EventName constants. 8 of those strings had no corresponding constant in EventName registry. This creates a fragile single-source-of-truth violation.",
+      "confidence": "high",
+      "evidence": [
+        "21 unique hardcoded strings found via grep: session.checkpoint, lane.returned, edit.applied (x2), validation.completed (x2), claims.acquired (x2), claim.conflict, permission.denied, user.approval, context.sufficient, scope.unsafe, validation.failure (x2), children.all_complete, child.blocked, finding.blocking, finding.confirmed, plan.produced, plan.approved, plan.rejected, scout.completed, scope.synthesized, gates.all_passed",
+        "13 of these have existing EventName constants",
+        "8 are missing: session.checkpoint, lane.returned, claims.acquired, scope.unsafe, children.all_complete, finding.blocking, finding.confirmed, gates.all_passed (last one already added by prior lane)"
+      ]
+    }
+  ],
+  "edits": [
+    {
+      "step": 1,
+      "file": "packages/opencode/src/event/event-names.ts",
+      "description": "Add 7 missing constants (GatesAllPassed already added by prior lane)",
+      "operations": [
+        {
+          "id": "1a",
+          "location": "after line 27 (TodoUpdated)",
+          "action": "insert",
+          "before_context": "  TodoUpdated: 'todo.updated',\n\n  // permission.*",
+          "after_context": "  TodoUpdated: 'todo.updated',\n  SessionCheckpoint: 'session.checkpoint',\n\n  // permission.*"
+        },
+        {
+          "id": "1b",
+          "location": "after line 77 (CoordSubagentPhase)",
+          "action": "insert",
+          "before_context": "  CoordSubagentPhase: 'coord.subagent.phase',\n\n  // session.next.*",
+          "after_context": "  CoordSubagentPhase: 'coord.subagent.phase',\n  ClaimsAcquired: 'claims.acquired',\n\n  // session.next.*"
+        },
+        {
+          "id": "1c",
+          "location": "after ScopeSynthesized in scope.* section",
+          "action": "insert",
+          "before_context": "  ScopeSynthesized: 'scope.synthesized',\n\n  // child.*",
+          "after_context": "  ScopeSynthesized: 'scope.synthesized',\n  ScopeUnsafe: 'scope.unsafe',\n\n  // child.*"
+        },
+        {
+          "id": "1d",
+          "location": "in child.* section (after ChildCompleted, around LaneCompleted/LaneBlocked)",
+          "action": "insert_and_reorder",
+          "before_context": "  ChildBlocked: 'child.blocked',\n  ChildCompleted: 'child.completed',\n  LaneCompleted: 'lane.completed',\n  LaneBlocked: 'lane.blocked',\n  ClaimConflict: 'claim.conflict',",
+          "after_context": "  ChildBlocked: 'child.blocked',\n  ChildCompleted: 'child.completed',\n  ChildrenAllComplete: 'children.all_complete',\n  LaneCompleted: 'lane.completed',\n  LaneBlocked: 'lane.blocked',\n  LaneReturned: 'lane.returned',\n  ClaimConflict: 'claim.conflict',"
+        },
+        {
+          "id": "1e",
+          "location": "after RedteamFinding, before } as const",
+          "action": "insert",
+          "before_context": "  RedteamFinding: 'redteam.finding',\n} as const",
+          "after_context": "  RedteamFinding: 'redteam.finding',\n\n  // finding.*\n  FindingBlocking: 'finding.blocking',\n  FindingConfirmed: 'finding.confirmed',\n} as const"
+        }
+      ]
+    },
+    {
+      "step": 2,
+      "file": "packages/opencode/src/campaign/state-machine.ts",
+      "description": "Add EventName import",
+      "operations": [
+        {
+          "id": "2a",
+          "location": "line 11, after existing import",
+          "action": "insert",
+          "before_context": "import { checkPredicate } from \"./predicates\"",
+          "after_context": "import { checkPredicate } from \"./predicates\"\nimport { EventName } from \"../event\""
+        }
+      ]
+    },
+    {
+      "step": 3,
+      "file": "packages/opencode/src/campaign/state-machine.ts",
+      "description": "Replace all remaining hardcoded event type strings with EventName constants. Existing conversions (ValidationCompleted, ValidationFailure, ScopeSynthesized) left as-is.",
+      "operations": [
+        {"line": 199, "old": "\"session.checkpoint\"", "new": "EventName.SessionCheckpoint"},
+        {"line": 205, "old": "\"lane.returned\"", "new": "EventName.LaneReturned"},
+        {"line": 326, "old": "\"edit.applied\"", "new": "EventName.EditApplied"},
+        {"line": 344, "old": "\"claims.acquired\"", "new": "EventName.ClaimsAcquired"},
+        {"line": 348, "old": "\"claims.acquired\"", "new": "EventName.ClaimsAcquired"},
+        {"line": 353, "old": "\"claim.conflict\"", "new": "EventName.ClaimConflict"},
+        {"line": 357, "old": "\"permission.denied\"", "new": "EventName.PermissionDenied"},
+        {"line": 371, "old": "\"user.approval\"", "new": "EventName.UserApproval"},
+        {"line": 375, "old": "\"context.sufficient\"", "new": "EventName.ContextSufficient"},
+        {"line": 377, "old": "\"scope.unsafe\"", "new": "EventName.ScopeUnsafe"},
+        {"line": 379, "old": "\"edit.applied\"", "new": "EventName.EditApplied"},
+        {"line": 393, "old": "\"children.all_complete\"", "new": "EventName.ChildrenAllComplete"},
+        {"line": 395, "old": "\"child.blocked\"", "new": "EventName.ChildBlocked"},
+        {"line": 397, "old": "\"finding.blocking\"", "new": "EventName.FindingBlocking"},
+        {"line": 399, "old": "\"finding.confirmed\"", "new": "EventName.FindingConfirmed"},
+        {"line": 401, "old": "\"plan.produced\"", "new": "EventName.PlanProduced"},
+        {"line": 403, "old": "\"plan.approved\"", "new": "EventName.PlanApproved"},
+        {"line": 405, "old": "\"plan.rejected\"", "new": "EventName.PlanRejected"},
+        {"line": 407, "old": "\"scout.completed\"", "new": "EventName.ScoutCompleted"},
+        {"line": 411, "old": "\"gates.all_passed\"", "new": "EventName.GatesAllPassed"}
+      ]
+    },
+    {
+      "step": 4,
+      "file": "packages/opencode/src/campaign/secretary.ts",
+      "description": "Use canonical EventName.CampaignLaneCreated instead of hardcoded string",
+      "operations": [
+        {
+          "id": "4a",
+          "line": 131,
+          "old": "\"lane.created\"",
+          "new": "EventName.CampaignLaneCreated"
+        }
+      ]
+    }
+  ],
+  "risks": [
+    {
+      "id": "R1",
+      "description": "CampaignLaneCreated value change from 'lane.created' to 'campaign.lane.created' affects runtime event type. Any code matching on 'lane.created' would break.",
+      "severity": "low",
+      "mitigation": "Grep confirmed only 2 references: event-names.ts (the constant) and secretary.ts line 131 (being updated). No other consumers exist.",
+      "status": "mitigated"
+    },
+    {
+      "id": "R2",
+      "description": "state-machine.ts currently broken — uses EventName.* without import. Adding the import fixes the break but may expose other type errors.",
+      "severity": "medium",
+      "mitigation": "Run bun typecheck after all edits. If type errors surface, they were pre-existing and not caused by this change.",
+      "status": "needs_verification"
+    },
+    {
+      "id": "R3",
+      "description": "Prior lane's partial work could have unintended side effects or missing pieces.",
+      "severity": "low",
+      "mitigation": "Diff shows only additive string changes and predicate kind reordering. No logic changes. Verify with git diff post-edit.",
+      "status": "monitored"
+    }
+  ],
+  "validation": [
+    "bun typecheck from packages/opencode (must pass with zero errors)",
+    "rg 'e\\.type === \"' packages/opencode/src/campaign/state-machine.ts (should return zero results)",
+    "rg 'import.*EventName' packages/opencode/src/campaign/state-machine.ts (should find one import)",
+    "node -e on event-names.ts to confirm all 8 new constants exist",
+    "Verify CampaignLaneCreated value is 'campaign.lane.created' not 'lane.created'",
+    "Verify secretary.ts line 131 uses EventName.CampaignLaneCreated"
+  ],
+  "observations": [
+    "secretary.ts toSMEvent function (lines 133-179) has ~23 hardcoded event type strings that should be converted to EventName constants in a follow-up lane",
+    "secretary.ts line 177 uses hardcoded 'lane.returned' — should use EventName.LaneReturned after this mission adds it",
+    "event-names.ts 'SessionIdle' constant (line 19) is marked # deprecated — remove in Phase 4"
+  ],
+  "rollback": "Revert each edit in reverse order: secretary.ts → state-machine.ts string replacements → state-machine.ts import → event-names.ts constant additions",
+  "apply_order": [1, 2, 3, 4]
+}

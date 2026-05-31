@@ -17,6 +17,8 @@ export interface QueryFilters {
   parentEventId?: string
   fromTs?: string
   toTs?: string
+  toolName?: string
+  laneId?: string
   limit?: number
   offset?: number
   order?: "asc" | "desc"
@@ -98,6 +100,8 @@ function buildWhere(filters: QueryFilters) {
   if (filters.parentEventId) conditions.push(eq(RuntimeEventTable.parent_event_id, filters.parentEventId))
   if (filters.fromTs) conditions.push(gte(RuntimeEventTable.ts, filters.fromTs))
   if (filters.toTs) conditions.push(lte(RuntimeEventTable.ts, filters.toTs))
+  if (filters.toolName) conditions.push(eq(RuntimeEventTable.tool_name, filters.toolName))
+  if (filters.laneId) conditions.push(eq(RuntimeEventTable.lane_id, filters.laneId))
 
   return conditions.length > 0 ? and(...conditions) : undefined
 }

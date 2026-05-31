@@ -46,6 +46,7 @@ export type PathReservation = {
   sessionId: string
   status: "reserved" | "released" | "conflicted"
   createdAt: number
+  expiresAt?: number
 }
 
 export type FanOutGroup = {
@@ -90,6 +91,14 @@ export const ensureCoordinationTables = Effect.fn("Coordination.ensureCoordinati
   } catch (_) {
     // Column already exists — silently ignore
   }
+  // Migrate existing tables: add expires_at for coordination_reservation TTL support
+  try {
+    yield* adapter.query((db) =>
+      db.run(`ALTER TABLE coordination_reservation ADD COLUMN expires_at INTEGER`),
+    )
+  } catch (_) {
+    // Column already exists — silently ignore
+  }
   yield* adapter.query((db) =>
     db.run(
       `CREATE TABLE IF NOT EXISTS coordination_reservation (
@@ -97,7 +106,8 @@ export const ensureCoordinationTables = Effect.fn("Coordination.ensureCoordinati
         task_id TEXT NOT NULL,
         session_id TEXT NOT NULL,
         status TEXT NOT NULL,
-        created_at INTEGER NOT NULL
+        created_at INTEGER NOT NULL,
+        expires_at INTEGER
       )`,
     ),
   )
@@ -155,6 +165,7 @@ function reservationRowToType(row: {
   session_id: string
   status: "reserved" | "released" | "conflicted"
   created_at: number
+  expires_at: number | null
 }): PathReservation {
   return {
     path: row.path,
@@ -162,6 +173,7 @@ function reservationRowToType(row: {
     sessionId: row.session_id,
     status: row.status,
     createdAt: row.created_at,
+    expiresAt: row.expires_at ?? undefined,
   }
 }
 
@@ -272,6 +284,7 @@ export const releaseTask = Effect.fn("Coordination.releaseTask")(function* (
       .limit(1)
     if (rows.length === 0) return
     const claim = rows[0]
+    if (claim.status === "released" || claim.status === "failed") return
     await tx
       .update(CoordinationClaimTable)
       .set({
@@ -311,6 +324,7 @@ export const failTask = Effect.fn("Coordination.failTask")(function* (
       .limit(1)
     if (rows.length === 0) return
     const claim = rows[0]
+    if (claim.status === "released" || claim.status === "failed") return
     await tx
       .update(CoordinationClaimTable)
       .set({
@@ -355,6 +369,22 @@ export const getClaim = Effect.fn("Coordination.getClaim")(function* (taskId: st
         .set({ status: "failed", error: "Claim expired (TTL)" })
         .where(eq(CoordinationClaimTable.task_id, taskId)),
     )
+    if (claim.wave > 0 && claim.waveType) {
+      yield* adapter.query((db) =>
+        db
+          .update(CoordinationFanOutTable)
+          .set({
+            complete_count: sql`${CoordinationFanOutTable.complete_count} + 1`,
+          })
+          .where(
+            and(
+              eq(CoordinationFanOutTable.session_id, claim.sessionId),
+              eq(CoordinationFanOutTable.wave, claim.wave),
+              eq(CoordinationFanOutTable.wave_type, claim.waveType),
+            ),
+          ),
+      )
+    }
     const refreshed = yield* adapter.query((db) =>
       db
         .select()
@@ -386,6 +416,22 @@ export const getSessionClaims = Effect.fn("Coordination.getSessionClaims")(funct
           .set({ status: "failed", error: "Claim expired (TTL)" })
           .where(eq(CoordinationClaimTable.task_id, claim.taskId)),
       )
+      if (claim.wave > 0 && claim.waveType) {
+        yield* adapter.query((db) =>
+          db
+            .update(CoordinationFanOutTable)
+            .set({
+              complete_count: sql`${CoordinationFanOutTable.complete_count} + 1`,
+            })
+            .where(
+              and(
+                eq(CoordinationFanOutTable.session_id, claim.sessionId),
+                eq(CoordinationFanOutTable.wave, claim.wave),
+                eq(CoordinationFanOutTable.wave_type, claim.waveType),
+              ),
+            ),
+        )
+      }
       result.push({ ...claim, status: "failed" as const, error: "Claim expired (TTL)" })
     } else {
       result.push(claim)
@@ -435,7 +481,7 @@ export const reservePath = Effect.fn("Coordination.reservePath")(function* (
       )
       .limit(1)
     if (existing.length > 0 && existing[0].task_id !== taskId) {
-      const isStale = Date.now() - existing[0].created_at > 300_000
+      const isStale = existing[0].expires_at != null && existing[0].expires_at < Date.now()
       if (isStale) {
         // Release stale reservation so the new claim can proceed
         await tx.update(CoordinationReservationTable)
@@ -453,6 +499,7 @@ export const reservePath = Effect.fn("Coordination.reservePath")(function* (
         session_id: sessionId,
         status: "reserved" as const,
         created_at: Date.now(),
+        expires_at: Date.now() + 1_800_000,
       })
       .onConflictDoUpdate({
         target: CoordinationReservationTable.path,
@@ -461,6 +508,7 @@ export const reservePath = Effect.fn("Coordination.reservePath")(function* (
           session_id: sessionId,
           status: "reserved",
           created_at: Date.now(),
+          expires_at: Date.now() + 1_800_000,
         },
       })
     return { success: true as const }
@@ -648,7 +696,7 @@ export const CoordinationTool = Tool.define(
               db.select().from(CoordinationReservationTable)
                 .where(eq(CoordinationReservationTable.status, "reserved")),
             )
-            const cutoff = Date.now() - 300_000
+            const cutoff = Date.now() - 1_800_000
             const nonStale = active.filter((r: { created_at: number }) => r.created_at > cutoff)
             // Auto-release stale reservations for next time
             if (active.length > nonStale.length) {

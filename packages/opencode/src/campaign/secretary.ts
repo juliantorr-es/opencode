@@ -37,7 +37,12 @@ export type RuntimeEvent =
   | { readonly _tag: "ExecutorComplete"; readonly files: readonly string[] }
   | { readonly _tag: "ValidatorComplete"; readonly passed: boolean; readonly issues: readonly string[] }
   | { readonly _tag: "RedTeamComplete"; readonly findings: readonly string[] }
+  | { readonly _tag: "RedTeamCompleted"; readonly blockingFindings: number; readonly totalFindings: number }
   | { readonly _tag: "HistorianComplete"; readonly checkpointCreated: boolean }
+  | { readonly _tag: "ScopeSynthesized"; readonly summary: string }
+  | { readonly _tag: "ClaimsAcquired"; readonly files: readonly string[]; readonly claimIds: readonly string[] }
+  | { readonly _tag: "CheckpointCreated"; readonly sha: string; readonly message: string }
+  | { readonly _tag: "LaneReturned"; readonly binderDigest: string }
   | { readonly _tag: "Failed"; readonly error: string }
 
 // ── Transition Record ────────────────────────────────────────
@@ -128,7 +133,7 @@ function toSMEvent(event: RuntimeEvent): SMRuntimeEvent {
   const ts = new Date().toISOString()
   switch (event._tag) {
     case "LaneCreated":
-      return { type: "lane.created", timestamp: ts, payload: {} }
+      return { type: EventName.CampaignLaneCreated, timestamp: ts, payload: {} }
     case "StartLearning":
       return { type: "context.sufficient", timestamp: ts, payload: {} }
     case "LearningComplete":
@@ -171,10 +176,24 @@ function toSMEvent(event: RuntimeEvent): SMRuntimeEvent {
         : { type: "validation.failure", timestamp: ts, payload: { isNew: true, issues: [...event.issues] } }
     case "RedTeamComplete":
       return { type: "redteam.finding", timestamp: ts, payload: { findings: [...event.findings] } }
-    case "HistorianComplete":
-      return event.checkpointCreated
-        ? { type: "campaign.checkpoint.created", timestamp: ts, payload: {} }
-        : { type: "lane.returned", timestamp: ts, payload: {} }
+    case "RedTeamCompleted":
+      return { type: "redteam.completed", timestamp: ts, payload: { blockingFindings: event.blockingFindings, totalFindings: event.totalFindings } }
+    case "HistorianComplete": {
+      if (event.checkpointCreated) {
+        return { type: EventName.SessionCheckpoint, timestamp: ts, payload: { sha: "", message: "" } }
+      }
+      return { type: EventName.LaneReturned, timestamp: ts, payload: { binderDigest: "" } }
+    }
+    case "ScopeSynthesized":
+      return { type: "scope.synthesized", timestamp: ts, payload: { summary: event.summary } }
+    case "ClaimsAcquired":
+      return { type: "claims.acquired", timestamp: ts, payload: { files: [...event.files], claimIds: [...event.claimIds] } }
+    case "CheckpointCreated":
+      return { type: "session.checkpoint", timestamp: ts, payload: { sha: event.sha, message: event.message } }
+    case "LaneReturned":
+      return { type: "lane.returned", timestamp: ts, payload: { binderDigest: event.binderDigest } }
+    case "RedTeamCompleted":
+      return { type: "redteam.completed", timestamp: ts, payload: { blockingFindings: event.blockingFindings, totalFindings: event.totalFindings } }
     case "Failed":
       return { type: "permission.denied", timestamp: ts, payload: { error: event.error } }
   }
@@ -187,7 +206,7 @@ function toSMEvent(event: RuntimeEvent): SMRuntimeEvent {
 const EVENT_NAME_MAP: Record<string, string> = {
   LaneCreated: EventName.CampaignLaneCreated,
   StartLearning: EventName.ContextSufficient,
-  LearningComplete: EventName.PlanProduced,
+  LearningComplete: EventName.ScoutCompleted,
   PlanReady: EventName.PlanProduced,
   ReviewApproved: EventName.PlanApproved,
   ReviewRejected: EventName.PlanRejected,
@@ -200,11 +219,15 @@ const EVENT_NAME_MAP: Record<string, string> = {
   Unblocked: EventName.ContextSufficient,
   ScoutComplete: EventName.ScoutCompleted,
   ArchitectComplete: EventName.PlanProduced,
-  CriticComplete: EventName.PlanApproved,
   ExecutorComplete: EventName.EditApplied,
   ValidatorComplete: EventName.ValidationCompleted,
   RedTeamComplete: EventName.RedteamFinding,
-  HistorianComplete: EventName.CampaignCheckpointCreated,
+  HistorianComplete: EventName.SessionCheckpoint,
+  ScopeSynthesized: EventName.ScopeSynthesized,
+  ClaimsAcquired: EventName.ClaimsAcquired,
+  CheckpointCreated: EventName.SessionCheckpoint,
+  LaneReturned: EventName.LaneReturned,
+  RedTeamCompleted: EventName.RedteamCompleted,
   Failed: EventName.PermissionDenied,
 }
 
@@ -213,6 +236,7 @@ function toStoreEvent(
   campaignId: string,
   event: RuntimeEvent,
 ): StoreRuntimeEvent {
+  const status = resolveStatus(event)
   return {
     id: Effect.runSync(Identifier.ascending("event")),
     sessionId: campaignId,
@@ -221,9 +245,11 @@ function toStoreEvent(
     correlationId: undefined,
     ts: new Date().toISOString(),
     actor: "lifecycle",
-    eventType: EVENT_NAME_MAP[event._tag] ?? event._tag,
+    eventType: (event._tag === "CriticComplete"
+      ? (event.verdict === "approved" ? EventName.PlanApproved : EventName.PlanRejected)
+      : (EVENT_NAME_MAP[event._tag] ?? event._tag)) as EventName,
     phase: "campaign",
-    status: undefined,
+    status,
     toolName: undefined,
     filePath: undefined,
     model: undefined,
@@ -237,6 +263,41 @@ function toStoreEvent(
     campaignId,
     laneId,
     role: undefined,
+  }
+}
+
+function resolveStatus(event: RuntimeEvent) {
+  switch (event._tag) {
+    case "StartLearning":
+      return "started"
+    case "LaneCreated":
+    case "LearningComplete":
+    case "PlanReady":
+    case "ReviewApproved":
+    case "ExecutionComplete":
+    case "RepairComplete":
+    case "Unblocked":
+    case "ScoutComplete":
+    case "ArchitectComplete":
+    case "ExecutorComplete":
+    case "RedTeamComplete":
+    case "RedTeamCompleted":
+    case "HistorianComplete":
+    case "LaneReturned":
+    case "ValidationPassed":
+      return "succeeded"
+    case "ValidationFailed":
+    case "ReviewRejected":
+    case "RepairFailed":
+    case "Failed":
+    case "Blocked":
+      return "failed"
+    case "CriticComplete":
+      return event.verdict === "approved" ? "succeeded" : "failed"
+    case "ValidatorComplete":
+      return event.passed ? "succeeded" : "failed"
+    default:
+      return undefined
   }
 }
 
@@ -260,16 +321,25 @@ export class Service extends Context.Service<Service, Interface>()("@opencode/Se
 // ── Helpers ──────────────────────────────────────────────────
 
 function isTerminal(state: StateTag): boolean {
-  return state === "checkpointed" || state === "failed" || state === "blocked" || state === "returned"
+  return state === "returned" || state === "failed" || state === "blocked"
 }
 
-const STATE_ROLE: Record<string, string> = {
-  learning: "cartographer",
+const STATE_ROLE: Record<string, string | null> = {
+  scouting: "cartographer",
+  scoped: "cartographer",
   planning: "architect",
-  reviewing: "critic",
+  critic_review: "critic",
+  approved: "executor",
   executing: "executor",
   validating: "validator",
-  repairing: "repairer",
+  red_team: "redteam",
+  repairing: "repair",
+  historian: "historian",
+  created: null,
+  checkpointed: null,
+  returned: null,
+  blocked: null,
+  failed: null,
 }
 
 function getRoleForState(state: StateTag): string | null {
@@ -488,7 +558,7 @@ const make = Effect.gen(function* () {
       let binder: Binder | null = null
       if (isTerminal(newState)) {
         yield* binderService.createBinder(laneId, lane.campaignId, lane.scope, lane.scope)
-        for (const t of lane.transitions) {
+        for (const t of updatedTransitions) {
           yield* binderService.addEvidence(
             laneId,
             "transitionEvents",
@@ -547,10 +617,12 @@ function roleOutputToEvent(output: RoleOutput): RuntimeEvent {
         return { _tag: "ExecutorComplete", files: output.artifacts }
       case "validator":
         return { _tag: "ValidatorComplete", passed: true, issues: [] }
-      case "redteam":
-        return { _tag: "RedTeamComplete", findings: output.artifacts }
+      case "redteam": {
+        const blockingFindings = output.artifacts.filter(a => a.includes("blocking")).length
+        return { _tag: "RedTeamCompleted", blockingFindings, totalFindings: output.artifacts.length }
+      }
       case "historian":
-        return { _tag: "HistorianComplete", checkpointCreated: true }
+        return { _tag: "CheckpointCreated", sha: output.artifacts[0] ?? "", message: output.artifacts[1] ?? "" }
       default:
         return { _tag: "Failed", error: `unknown role: ${output.role}` }
     }
@@ -567,13 +639,71 @@ function roleOutputToEvent(output: RoleOutput): RuntimeEvent {
   return { _tag: "Failed", error: output.message }
 }
 
+  function addRoleEvidence(laneId: string, output: RoleOutput): Effect.Effect<void, BinderError | LaneNotFoundError> {
+    return Effect.gen(function* () {
+      const lane = yield* ensureLane(laneId)
+      const existingBinder = yield* binderService.getBinder(laneId)
+      if (Option.isNone(existingBinder)) {
+        yield* binderService.createBinder(laneId, lane.campaignId, lane.scope, lane.scope)
+      }
+      const section = (() => {
+        switch (output.role) {
+          case "scout": case "cartographer": return "scoutReports"
+          case "architect": return "architecturePlan"
+          case "critic": return "criticReviews"
+          case "executor": return "executionEvents"
+          case "validator": return "validationResults"
+          case "redteam": return "redTeamFindings"
+          case "historian": return "handoffSummary"
+          default: return "roleOutput"
+        }
+      })()
+      if (output.status === "success" || output.role === "critic") {
+        yield* binderService.addEvidence(laneId, section, {
+          eventId: `${laneId}:${output.role}:${now()}`,
+          eventType: output.role,
+          ts: new Date().toISOString(),
+          summary: `${output.role} ${output.status === "success" ? "completed" : "rejected"}`,
+        })
+        if (output.role === "critic" && output.status === "success") {
+          yield* binderService.addEvidence(laneId, "approvedPlan", {
+            eventId: `${laneId}:critic:approved:${now()}`,
+            eventType: "critic",
+            ts: new Date().toISOString(),
+            summary: "Plan approved by critic review",
+          })
+        }
+      }
+    })
+  }
+
   const handleRoleOutput: Interface["handleRoleOutput"] = (laneId, output) =>
     Effect.gen(function* () {
       const lane = yield* ensureLane(laneId)
 
-      const event = roleOutputToEvent(output)
+      // Redteam: emit individual findings before completion event
+      if (output.role === "redteam" && output.status === "success") {
+        const blockingFindings = output.artifacts.filter(a => a.includes("blocking"))
+        for (const finding of blockingFindings) {
+          yield* processEvent(laneId, { _tag: "RedTeamComplete", findings: [finding] })
+        }
+        yield* processEvent(laneId, {
+          _tag: "RedTeamCompleted",
+          blockingFindings: blockingFindings.length,
+          totalFindings: output.artifacts.length,
+        })
+      } else {
+        const event = roleOutputToEvent(output)
+        yield* processEvent(laneId, event)
+      }
 
-      yield* processEvent(laneId, event)
+      // Historian: after checkpointed, emit LaneReturned to reach terminal
+      const updatedLane = yield* ensureLane(laneId)
+      if (output.role === "historian" && output.status === "success" && updatedLane.currentState === "checkpointed") {
+        yield* processEvent(laneId, { _tag: "LaneReturned", binderDigest: "" })
+      }
+
+      yield* addRoleEvidence(laneId, output)
     })
 
   const getLaneState: Interface["getLaneState"] = (laneId) =>

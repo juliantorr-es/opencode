@@ -1,0 +1,281 @@
+{
+  "schema": "rig.relay.supply_chain_risk.v1",
+  "analyzed_at": "2026-05-31T12:00:00Z",
+  "lane": "INV-005",
+  "package": "@pierre/diffs",
+  "version_pinned": "1.1.0-beta.18",
+  "version_latest": "1.2.5",
+  "versions_published": 70,
+
+  "supply_chain_risk": {
+    "overall": "LOW",
+    "summary": "Despite the initial suspicion of being a single-maintainer package, @pierre/diffs has 5 maintainers including well-known individuals (mdo=Mark Otto of Bootstrap/GitHub, slexaxton=Alex Sexton, amadeusdemarzi=Amadeus Demarzi). The package is actively maintained with 70 versions published since Dec 2025, latest release yesterday (2026-05-30). The primary risk is that the project pins an old beta version (1.1.0-beta.18) rather than a stable release.",
+    "maintainers": [
+      { "name": "fat", "email": "jacobthornton@gmail.com" },
+      { "name": "imownbey", "email": "imownbey@gmail.com" },
+      { "name": "mdo", "email": "markdotto@gmail.com", "note": "Mark Otto — Bootstrap co-creator, formerly GitHub" },
+      { "name": "slexaxton", "email": "alexsexton@gmail.com", "note": "Alex Sexton — well-known JS community figure" },
+      { "name": "amadeusdemarzi", "email": "amadeusdemarzi@gmail.com", "note": "Amadeus Demarzi" }
+    ],
+    "bus_factor": 5,
+    "license": "Apache-2.0",
+    "is_single_maintainer": false,
+    "first_published": "2025-12-10",
+    "last_published": "2026-05-30",
+    "days_since_last_publish": 1,
+    "active_maintenance": true,
+    "npm_keywords": [],
+    "notes": [
+      "Version 1.1.0-beta.18 is significantly behind latest (1.2.5). Recommend upgrading to stable.",
+      "No public repository or description listed on npm — the package lives in a private/obscured repo.",
+      "No npm keywords or homepage listed, but given the maintainer roster this is likely intentional private enterprise usage."
+    ]
+  },
+
+  "usage_locations": [
+    {
+      "file": "packages/ui/src/components/file.tsx",
+      "line": 2,
+      "import_path": "@pierre/diffs",
+      "symbols": [
+        "areFilesEqual", "areOptionsEqual", "DEFAULT_VIRTUAL_FILE_METRICS",
+        "DiffLineAnnotation (type)", "FileContents (type)", "FileDiffMetadata (type)",
+        "File", "FileDiffOptions (type)", "FileDiff", "FileOptions (type)",
+        "LineAnnotation (type)", "SelectedLineRange (type)", "VirtualFileMetrics (type)",
+        "VirtualizedFile", "VirtualizedFileDiff", "Virtualizer"
+      ],
+      "usage_category": "core_rendering"
+    },
+    {
+      "file": "packages/ui/src/components/file.tsx",
+      "line": 20,
+      "import_path": "@pierre/diffs/ssr",
+      "symbols": ["PreloadFileDiffResult (type)", "PreloadMultiFileDiffResult (type)"],
+      "usage_category": "ssr_types"
+    },
+    {
+      "file": "packages/ui/src/components/session-diff.ts",
+      "line": 1,
+      "import_path": "@pierre/diffs",
+      "symbols": ["parseDiffFromFile", "parsePatchFiles", "FileDiffMetadata (type)"],
+      "usage_category": "diff_parsing"
+    },
+    {
+      "file": "packages/ui/src/components/file-ssr.tsx",
+      "line": 1,
+      "import_path": "@pierre/diffs",
+      "symbols": ["DIFFS_TAG_NAME", "FileDiff", "VirtualizedFileDiff"],
+      "usage_category": "core_rendering"
+    },
+    {
+      "file": "packages/ui/src/components/file-ssr.tsx",
+      "line": 2,
+      "import_path": "@pierre/diffs/ssr",
+      "symbols": ["PreloadFileDiffResult (type)", "PreloadMultiFileDiffResult (type)"],
+      "usage_category": "ssr_types"
+    },
+    {
+      "file": "packages/ui/src/components/session-review.tsx",
+      "line": 19,
+      "import_path": "@pierre/diffs/ssr",
+      "symbols": ["PreloadMultiFileDiffResult (type)"],
+      "usage_category": "ssr_types"
+    },
+    {
+      "file": "packages/ui/src/components/session-review.tsx",
+      "line": 20,
+      "import_path": "@pierre/diffs",
+      "symbols": ["SelectedLineRange (type)"],
+      "usage_category": "types"
+    },
+    {
+      "file": "packages/ui/src/components/line-comment-annotations.tsx",
+      "line": 1,
+      "import_path": "@pierre/diffs",
+      "symbols": ["DiffLineAnnotation (type)", "SelectedLineRange (type)"],
+      "usage_category": "types"
+    },
+    {
+      "file": "packages/ui/src/custom-elements.d.ts",
+      "line": 1,
+      "import_path": "@pierre/diffs",
+      "symbols": ["DIFFS_TAG_NAME"],
+      "usage_category": "web_component_declaration"
+    },
+    {
+      "file": "packages/ui/src/pierre/worker.ts",
+      "line": 1,
+      "import_path": "@pierre/diffs/worker",
+      "symbols": ["WorkerPoolManager"],
+      "usage_category": "worker_pool"
+    },
+    {
+      "file": "packages/ui/src/pierre/worker.ts",
+      "line": 2,
+      "import_path": "@pierre/diffs/worker/worker.js?worker&url",
+      "symbols": ["ShikiWorkerUrl"],
+      "usage_category": "worker_asset"
+    },
+    {
+      "file": "packages/ui/src/pierre/file-selection.ts",
+      "line": 1,
+      "import_path": "@pierre/diffs",
+      "symbols": ["SelectedLineRange (type)"],
+      "usage_category": "types"
+    },
+    {
+      "file": "packages/ui/src/pierre/index.ts",
+      "line": 1,
+      "import_path": "@pierre/diffs",
+      "symbols": ["DiffLineAnnotation (type)", "FileContents (type)", "FileDiffOptions (type)", "SelectedLineRange (type)"],
+      "usage_category": "types"
+    },
+    {
+      "file": "packages/ui/src/pierre/commented-lines.ts",
+      "line": 1,
+      "import_path": "@pierre/diffs",
+      "symbols": ["SelectedLineRange (type)"],
+      "usage_category": "types"
+    },
+    {
+      "file": "packages/ui/src/pierre/diff-selection.ts",
+      "line": 1,
+      "import_path": "@pierre/diffs",
+      "symbols": ["SelectedLineRange (type)"],
+      "usage_category": "types"
+    },
+    {
+      "file": "packages/ui/src/pierre/virtualizer.ts",
+      "line": 1,
+      "import_path": "@pierre/diffs",
+      "symbols": ["VirtualFileMetrics (type)", "Virtualizer"],
+      "usage_category": "virtual_scrolling"
+    },
+    {
+      "file": "packages/ui/src/pierre/selection-bridge.ts",
+      "line": 1,
+      "import_path": "@pierre/diffs",
+      "symbols": ["SelectedLineRange (type)"],
+      "usage_category": "types"
+    },
+    {
+      "file": "packages/ui/src/context/marked.tsx",
+      "line": 7,
+      "import_path": "@pierre/diffs",
+      "symbols": ["getSharedHighlighter", "registerCustomTheme", "ThemeRegistrationResolved (type)"],
+      "usage_category": "syntax_highlighting"
+    },
+    {
+      "file": "packages/ui/src/context/data.tsx",
+      "line": 3,
+      "import_path": "@pierre/diffs/ssr",
+      "symbols": ["PreloadMultiFileDiffResult (type)"],
+      "usage_category": "ssr_types"
+    },
+    {
+      "file": "packages/ui/src/context/worker-pool.tsx",
+      "line": 1,
+      "import_path": "@pierre/diffs/worker",
+      "symbols": ["WorkerPoolManager (type)"],
+      "usage_category": "worker_pool"
+    }
+  ],
+
+  "dependency_entries": [
+    {
+      "file": "package.json",
+      "line": 52,
+      "version": "1.1.0-beta.18",
+      "type": "catalog_entry_root",
+      "note": "Root workspace catalog defines the pinned version"
+    },
+    {
+      "file": "packages/ui/package.json",
+      "line": 52,
+      "version": "catalog:",
+      "type": "direct_dependency",
+      "note": "Primary consumer — all 16 source files importing @pierre/diffs are in this package"
+    },
+    {
+      "file": "packages/enterprise/package.json",
+      "line": 19,
+      "version": "catalog:",
+      "type": "direct_dependency",
+      "note": "Listed as dependency but NO source files import @pierre/diffs. Likely inherited transitively or dead dep."
+    },
+    {
+      "file": "packages/opencode/package.json",
+      "line": 138,
+      "version": "catalog:",
+      "type": "direct_dependency",
+      "note": "Listed as dependency but NO source files import @pierre/diffs. Likely inherited transitively or dead dep."
+    }
+  ],
+
+  "api_surface_used": {
+    "main_entrypoint": {
+      "components": ["File", "FileDiff", "VirtualizedFile", "VirtualizedFileDiff"],
+      "classes": ["Virtualizer"],
+      "functions": ["parseDiffFromFile", "parsePatchFiles", "areFilesEqual", "areOptionsEqual", "getSharedHighlighter", "registerCustomTheme"],
+      "constants": ["DIFFS_TAG_NAME", "DEFAULT_VIRTUAL_FILE_METRICS"],
+      "types": ["FileContents", "FileDiffMetadata", "FileDiffOptions", "FileOptions", "DiffLineAnnotation", "LineAnnotation", "SelectedLineRange", "VirtualFileMetrics", "ThemeRegistrationResolved"]
+    },
+    "ssr_entrypoint": {
+      "types": ["PreloadFileDiffResult", "PreloadMultiFileDiffResult"]
+    },
+    "worker_entrypoint": {
+      "classes": ["WorkerPoolManager"],
+      "assets": ["worker.js (web worker URL)"]
+    }
+  },
+
+  "replacement_feasibility": {
+    "replaceable_with_diff_library": false,
+    "reason": "@pierre/diffs and jsdiff serve fundamentally different purposes. jsdiff is a text-level diff computation library (parsePatch, createPatch, applyPatch). @pierre/diffs is a full-stack diff rendering framework that provides: (1) SolidJS web components for diff/file visualization, (2) Web-worker-based Shiki syntax highlighting, (3) Virtual scrolling, (4) CSS theming system, (5) SSR preloading support. The two libraries complement each other and are used side-by-side.",
+    "diff_library_overlap": "Only parseDiffFromFile and parsePatchFiles from @pierre/diffs have conceptual overlap with jsdiff, but they return @pierre/diffs-specific FileDiffMetadata types used throughout the rendering pipeline. Replacing these two functions would require rewriting the FileDiffMetadata type system and all consumers.",
+    "effort_to_replace": "MAJOR — would require either: (a) Building a custom diff rendering, syntax highlighting, and virtual scrolling solution from scratch (weeks), (b) Finding and integrating an alternative diff rendering library like Monaco diff editor (moderate effort but different UI), or (c) Accepting the dependency and keeping it updated.",
+    "recommendation": "DO NOT REPLACE. Instead: (1) Upgrade from 1.1.0-beta.18 to latest stable 1.2.5, (2) Optionally vendor the package if supply-chain risk is a concern, though the 5-maintainer roster makes this low-risk, (3) Remove the dependency from packages/enterprise and packages/opencode since they don't import from it."
+  },
+
+  "replacement_plan": {
+    "recommended_action": "maintain_not_replace",
+    "steps": [
+      {
+        "step": 1,
+        "action": "Upgrade to latest stable",
+        "detail": "Bump @pierre/diffs from 1.1.0-beta.18 to 1.2.5 in root package.json catalog. Run full typecheck + test suite.",
+        "risk": "LOW — 1.2.x has been stable since May 20, 2026. Minor API changes may exist between beta.18 and stable."
+      },
+      {
+        "step": 2,
+        "action": "Remove dead dependencies",
+        "detail": "Remove @pierre/diffs from packages/enterprise/package.json and packages/opencode/package.json since neither package imports from it. Run typecheck to confirm no hidden transitive usage.",
+        "risk": "LOW — confirmed zero imports in both packages."
+      },
+      {
+        "step": 3,
+        "action": "Consider vendoring (optional)",
+        "detail": "If supply-chain paranoia persists despite the 5-maintainer roster, vendor @pierre/diffs source into packages/ui/vendor/. However, this adds maintenance burden for updates and is not recommended given the active maintenance.",
+        "risk": "MODERATE — vendoring increases maintenance burden significantly."
+      },
+      {
+        "step": 4,
+        "action": "Monitor upstream",
+        "detail": "Set up Dependabot/Renovate to track @pierre/diffs releases. Given 70 versions in 6 months (avg 11.7/month), the package evolves rapidly and staying current matters more than replacing it.",
+        "risk": "NONE"
+      }
+    ]
+  },
+
+  "existing_findings": [
+    {
+      "finding_id": "out_of_scope.v1:2",
+      "source": "docs/json/opencode/sessions/ses_18370d366ffeg5g0AOgUXjm0gy/findings/out_of_scope.v1.jsonl",
+      "recorded_at": "2026-05-31T05:48:22.103Z",
+      "summary": "@pierre/diffs in dependencies — appears to be a personal npm package, not a widely-known diff library. Risk of supply-chain if maintainer account is compromised or package is unpublished.",
+      "assessment": "PARTIALLY INCORRECT — the finding assumed single maintainer ('personal npm package') but the package has 5 maintainers including well-known individuals. The supply-chain risk is LOW, not the implied HIGH. The conclusion about risk was correct in principle but based on incorrect facts."
+    }
+  ],
+
+  "conclusion": "The @pierre/diffs supply-chain risk is LOW. The initial concern (single maintainer, personal package) was based on incorrect assumptions — the package has 5 maintainers including notable community members, is actively maintained (70 releases in 6 months, latest yesterday), and provides capabilities far beyond what the `diff` library offers. The package cannot be replaced with `diff` — they serve complementary roles. The primary actionable insight is: (1) upgrade from the pinned beta to latest stable, (2) remove the dependency from packages that don't use it (enterprise, opencode)."
+}

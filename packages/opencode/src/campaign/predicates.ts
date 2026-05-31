@@ -52,8 +52,12 @@ export type PredicateSpec =
   | { readonly kind: "plan_rejected" }
   | { readonly kind: "scout_completed" }
   | { readonly kind: "scope_synthesized" }
+  | { readonly kind: "finding_blocking" }
+  | { readonly kind: "redteam_completed" }
   | { readonly kind: "all_children_complete"; readonly children?: readonly string[] }
   | { readonly kind: "child_blocked" }
+  | { readonly kind: "repair_budget_exhausted" }
+  | { readonly kind: "all_gates_pass" }
 
 export type PredicateResolver = (
   spec: PredicateSpec,
@@ -464,12 +468,29 @@ function resolveNoBlockingFindings(
   _spec: PredicateSpec,
   ctx: PredicateContext,
 ): PredicateResult {
+  const completed = ctx.events.filter(
+    (e) => e.eventType === EventName.RedteamCompleted,
+  )
+  if (completed.length === 0) {
+    return {
+      satisfied: false,
+      reason: "No redteam.completed event — cannot confirm absence of blocking findings",
+    }
+  }
+  const latest = completed[completed.length - 1]!
+  const blockingFindings = payload(latest)?.blockingFindings
+  if (blockingFindings !== 0) {
+    return {
+      satisfied: false,
+      evidence: { id: latest.id, type: "event" },
+      reason: `Latest redteam.completed has ${blockingFindings ?? "unknown"} blocking finding(s)`,
+    }
+  }
   const blocking = ctx.events.filter(
     (e) =>
       e.eventType === EventName.RedteamFinding &&
       payload(e)?.severity === "blocking",
   )
-
   if (blocking.length > 0) {
     return {
       satisfied: false,
@@ -477,7 +498,6 @@ function resolveNoBlockingFindings(
       reason: `${blocking.length} blocking redteam finding(s)`,
     }
   }
-
   return { satisfied: true }
 }
 
@@ -492,6 +512,31 @@ function resolveFindingConfirmed(
   return {
     satisfied: true,
     evidence: { id: findings.at(0)?.id ?? "ev-missing", type: "event" },
+  }
+}
+
+function resolveFindingBlocking(
+  _spec: PredicateSpec,
+  ctx: PredicateContext,
+): PredicateResult {
+  const blocking = ctx.events.filter((e) => e.eventType === EventName.FindingBlocking)
+  return {
+    satisfied: blocking.length > 0,
+    evidence: blocking.length > 0 ? { id: blocking[0]!.id, type: "event" as const, detail: "finding_blocking" } : undefined,
+  }
+}
+
+function resolveRedteamCompleted(
+  _spec: PredicateSpec,
+  ctx: PredicateContext,
+): PredicateResult {
+  const completed = ctx.events.filter((e) => e.eventType === EventName.RedteamCompleted)
+  if (completed.length === 0) return { satisfied: false }
+  const last = completed[completed.length - 1]!
+  const blockingFindings = (last.payloadJson as Record<string, number> | undefined)?.blockingFindings
+  return {
+    satisfied: blockingFindings === 0,
+    evidence: { id: last.id, type: "event" as const, detail: "redteam_completed" },
   }
 }
 
@@ -519,20 +564,17 @@ function resolvePlanApproved(
   ctx: PredicateContext,
 ): PredicateResult {
   const approved = ctx.events.filter(
-    (e) =>
-      e.eventType === EventName.CriticReview &&
-      (payload(e)?.verdict === "approved" ||
-        e.status === "succeeded"),
+    (e) => e.eventType === EventName.PlanApproved,
   )
   if (approved.length === 0) {
     return {
       satisfied: false,
-      reason: "No critic.review event with approved verdict",
+      reason: "No plan.approved event",
     }
   }
   return {
     satisfied: true,
-    evidence: { id: approved.at(0)?.id ?? "ev-missing", type: "event", detail: "verdict=approved" },
+    evidence: { id: approved.at(0)?.id ?? "ev-missing", type: "event", detail: "plan.approved" },
   }
 }
 
@@ -666,6 +708,8 @@ export const predicateResolvers: Record<
   failures_existed_before_edit: resolveFailuresExistedBeforeEdit,
   no_blocking_findings: resolveNoBlockingFindings,
   finding_confirmed: resolveFindingConfirmed,
+  finding_blocking: resolveFindingBlocking,
+  redteam_completed: resolveRedteamCompleted,
   plan_produced: resolvePlanProduced,
   plan_approved: resolvePlanApproved,
   plan_rejected: resolvePlanRejected,
@@ -673,6 +717,30 @@ export const predicateResolvers: Record<
   scope_synthesized: resolveScopeSynthesized,
   all_children_complete: resolveAllChildrenComplete,
   child_blocked: resolveChildBlocked,
+  // TODO(TRUTH-2): This resolver uses a local heuristic (counting EditApplied
+  // events) instead of consulting the CampaignState.retryBudgets map managed by
+  // reduceCampaignState. The PredicateContext does not carry retryBudgets, so
+  // this predicate only works accurately inside the local evaluatePredicate()
+  // helper in state-machine.ts. To fix: either pass retryBudgets through
+  // PredicateContext or add a post-reduction validation pass that reconciles
+  // the budget against the event ledger.
+  repair_budget_exhausted: (_spec, ctx) => {
+    const MAX_REPAIR_CYCLES = 3
+    const editCount = ctx.events.filter(
+      (e) => e.eventType === EventName.EditApplied,
+    ).length
+    const exhausted = editCount >= MAX_REPAIR_CYCLES
+    return {
+      satisfied: exhausted,
+      reason: exhausted
+        ? `Repair budget exhausted (${editCount} edit batches, max ${MAX_REPAIR_CYCLES})`
+        : `${MAX_REPAIR_CYCLES - editCount} repair cycles remaining`,
+    }
+  },
+  all_gates_pass: (_spec, _ctx) => {
+    console.warn("[predicates] stub resolver for all_gates_pass — no evidence engine integration yet")
+    return { satisfied: false, reason: "resolver not implemented" }
+  },
 }
 
 // ── Public API ───────────────────────────────────────────────

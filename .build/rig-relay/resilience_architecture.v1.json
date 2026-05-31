@@ -1,0 +1,448 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "schema_version": "v1",
+  "title": "OpenCode Desktop Resilience Architecture Map",
+  "generated_at": "2026-05-31T00:00:00Z",
+  "lane": "INV-003",
+  "scope": "Map resilience architecture for safe/degraded mode",
+  "method": "research-only, no code changes",
+  "failure_points": [
+    {
+      "component": "process_main",
+      "failure_mode": "Unhandled rejection or uncaught exception in Electron main process",
+      "current_behavior": "Logs [fatal] to console and calls process.exit(1). No recovery attempted.",
+      "crash_radius": "Entire application terminates. Renderer windows close. Sidecar is orphaned (utilityProcess may be killed by OS).",
+      "file": "packages/desktop/src/main/index.ts:12-18",
+      "recovery": false
+    },
+    {
+      "component": "sidecar_startup",
+      "failure_mode": "Sidecar process fails to become ready within 60 seconds",
+      "current_behavior": "Rejects spawn promise with error. No automatic retry. The main process does NOT restart the sidecar.",
+      "crash_radius": "App sits at loading screen indefinitely. User must restart manually.",
+      "file": "packages/desktop/src/main/server.ts:77-115",
+      "recovery": false
+    },
+    {
+      "component": "sidecar_runtime_crash",
+      "failure_mode": "Sidecar crashes after successful startup (while serving requests)",
+      "current_behavior": "No automatic restart. Health check polling (every 100ms) detects unhealthy state. Exit promise resolves; app continues but is non-functional.",
+      "crash_radius": "All server-dependent functionality dead. Renderer continues to poll health but never recovers. No user-facing error beyond stale UI.",
+      "file": "packages/desktop/src/main/server.ts:166-177",
+      "recovery": false
+    },
+    {
+      "component": "sidecar_stop",
+      "failure_mode": "Sidecar does not respond to stop message within 6 seconds",
+      "current_behavior": "Force-kills the utilityProcess via child.kill(). No fallback if kill also fails.",
+      "crash_radius": "Process may linger. On relaunch, port may be occupied. Second launch may fail silently.",
+      "file": "packages/desktop/src/main/server.ts:188-197",
+      "recovery": false
+    },
+    {
+      "component": "pglite_init",
+      "failure_mode": "PGlite constructor throws during database initialization (corrupt files, permissions, disk full)",
+      "current_behavior": "Caught by try/catch, wrapped in DatabaseInitError. Propagated up as unhandled rejection in sidecar. No repair attempt.",
+      "crash_radius": "Sidecar cannot start. App enters crash-detected safe mode on next launch (via .crash_lock file).",
+      "file": "packages/opencode/src/storage/db.pg.ts:42-47",
+      "recovery": false
+    },
+    {
+      "component": "pglite_health_check_failure",
+      "failure_mode": "PGlite SELECT 1 fails at runtime (corruption, disk error, memory exhaustion for :memory: mode)",
+      "current_behavior": "checkPgHealth() returns { status: 'unhealthy', message }. HealthRegistry.set() updates component status. No automatic repair.",
+      "crash_radius": "Global health endpoint (/global/health) reports unhealthy. Desktop health check sees false. App UI shows blocked server. No fallback mode triggered.",
+      "file": "packages/opencode/src/storage/db.pg.ts:107-130",
+      "recovery": false
+    },
+    {
+      "component": "migration_failure",
+      "failure_mode": "A migration SQL statement fails during applyMigrations()",
+      "current_behavior": "No per-statement error handling. Error propagates uncaught. Sidecar exits. Only 1 migration in migration-pg/ folder vs 20 in legacy migration/ folder — schema may be incomplete.",
+      "crash_radius": "Sidecar startup fails. Database may be left in inconsistent state (partial migration applied).",
+      "file": "packages/opencode/src/storage/db.pg.ts:70-87",
+      "recovery": false
+    },
+    {
+      "component": "migration_folder_mismatch",
+      "failure_mode": "migration-pg/ has only 1 migration file but migration/ has 20 — schema gap",
+      "current_behavior": "Database schema may be incomplete. Tables expected by application code may not exist, causing runtime query failures.",
+      "crash_radius": "Gradual runtime failures in any code path that queries missing tables.",
+      "file": "packages/opencode/migration-pg/ (1 file) vs packages/opencode/migration/ (20 files)",
+      "recovery": false,
+      "existing_finding": "ses_187bc95c"
+    },
+    {
+      "component": "migration_unused",
+      "failure_mode": "applyMigrations() is defined at db.pg.ts:70 but never called in any runtime code path",
+      "current_behavior": "Migrations are never applied automatically. Database schema may be empty/outdated. Only called from migrate.ts CLI script, not from sidecar startup.",
+      "crash_radius": "All queries fail if required tables don't exist. App is non-functional.",
+      "file": "packages/opencode/src/storage/db.pg.ts:70 (definition), never called at runtime",
+      "recovery": false,
+      "existing_finding": "ses_187bc95c"
+    },
+    {
+      "component": "ipc_bridge",
+      "failure_mode": "Electron IPC message delivery failure (ipcRenderer.invoke / ipcMain.handle)",
+      "current_behavior": "typedInvoke() wraps calls with .catch() returning structured error. If IPC is truly broken, the Electron process is already dying — no separate recovery.",
+      "crash_radius": "If main process crashes, entire app terminates. If renderer crashes, main process continues but UI is gone.",
+      "file": "packages/desktop/src/main/ipc-helpers.ts:15",
+      "recovery": false
+    },
+    {
+      "component": "renderer_unresponsive",
+      "failure_mode": "Renderer JS thread blocked for 15+ seconds (infinite loop, heavy computation)",
+      "current_behavior": "createUnresponsiveSampler() detects and logs call stacks. No automatic recovery. User must manually force-quit or wait. Electron shows native 'not responding' dialog.",
+      "crash_radius": "UI frozen. Sidecar continues serving. Data may be lost if user force-quits.",
+      "file": "packages/desktop/src/main/unresponsive.ts:7-67",
+      "recovery": false
+    },
+    {
+      "component": "renderer_fatal_error",
+      "failure_mode": "Uncaught error in renderer that escapes ErrorBoundary (e.g., in event handler outside component tree)",
+      "current_behavior": "AppErrorBoundary catches tree errors — renders ErrorPage with Sentry.captureException. recordFatalRendererError IPC logs to main process log file. Platform.restart() reloads window.",
+      "crash_radius": "Route-level isolation via AppErrorBoundary per route. Non-component errors may cause white screen or partial UI breakage.",
+      "file": "packages/app/src/components/error-boundary.tsx:9-18",
+      "recovery": true
+    },
+    {
+      "component": "plugin_crash",
+      "failure_mode": "Plugin process crashes repeatedly",
+      "current_behavior": "MAX_CRASHES_BEFORE_QUARANTINE = 3. After 3 crashes, plugin is auto-quarantined. Quarantine persisted to JSON. Manual unquarantine available.",
+      "crash_radius": "Only the offending plugin is disabled. Other plugins and core app continue normally.",
+      "file": "packages/opencode/src/plugin/index.ts:41-110",
+      "recovery": true
+    },
+    {
+      "component": "pg_pool_connect_failure",
+      "failure_mode": "Postgres connection pool fails to connect (DNS resolution, network, auth)",
+      "current_behavior": "PgPool.create() retries up to maxRetries (default 3) with exponential backoff (100ms base). Classifies errors: auth failures (28P01) → non-retryable; network errors (ECONNREFUSED, ENOTFOUND) → retryable.",
+      "crash_radius": "Node-postgres mode only. If pool creation fails after all retries, the sidecar cannot start.",
+      "file": "packages/opencode/src/storage/pg-pool.ts:42-104",
+      "recovery": true
+    },
+    {
+      "component": "server_health_check_network",
+      "failure_mode": "HTTP health check to sidecar /global/health fails (network, timeout, sidecar down)",
+      "current_behavior": "checkServerHealth() retries up to 2 times with progressive delay. Timeout 3s. Returns { healthy: false } if exhausted. UI shows server as blocked/offline.",
+      "crash_radius": "UI shows disconnected state. User can switch servers or retry. No automatic sidecar restart.",
+      "file": "packages/app/src/utils/server-health.ts:71-98",
+      "recovery": true
+    },
+    {
+      "component": "crash_detection",
+      "failure_mode": "Application exits abnormally, leaving .crash_lock file",
+      "current_behavior": "On next launch, crashDetected = existsSync(crashLock) → enters safe mode. Safe mode renders safe-mode.html with 8 diagnostic/recovery actions.",
+      "crash_radius": "User gets diagnostic UI instead of normal app. Can attempt repair actions or retry normal startup.",
+      "file": "packages/desktop/src/main/index.ts:295-305",
+      "recovery": true
+    },
+    {
+      "component": "pglite_layer_init",
+      "failure_mode": "DatabaseInitError thrown from PGlite init() propagates through Effect Layer construction in makeLocalPgAdapter()",
+      "current_behavior": "makeLocalPgAdapter() calls initPg() which throws DatabaseInitError. No catch in adaptor layer. Error propagates through Layer.effect/Effect.sync unhandled, causing ManagedRuntime.make(AppLayer) to fail with a Layer defect. Entire application crashes — not just DB.",
+      "crash_radius": "Application-wide crash. Effect's built-in defect reporting may print to console but no user-facing error or safe mode entry. Sidecar process dies.",
+      "file": "packages/opencode/src/storage/db.pg.ts:44 (throw) → packages/opencode/src/storage/adapter.ts:157 (no catch) → packages/opencode/src/effect/app-runtime.ts:127 (Layer defect)",
+      "recovery": false
+    },
+    {
+      "component": "nodepg_pool_init",
+      "failure_mode": "new Pool() in init(node-postgres branch) throws — no try/catch wrapping",
+      "current_behavior": "Unlike the PGlite path (which wraps in DatabaseInitError), the node-postgres path at db.pg.ts:51-56 has NO error handler. Error propagates uncaught through caller chain.",
+      "crash_radius": "Same as PGlite but without even the DatabaseInitError wrapper — raw Error propagation. App-wide crash.",
+      "file": "packages/opencode/src/storage/db.pg.ts:51-56",
+      "recovery": false
+    },
+    {
+      "component": "auto_migration_silent_failure",
+      "failure_mode": "applyMigrations() fails during auto-apply in adapter layer, but .catch() silently swallows the error",
+      "current_behavior": "console.warn('[db] Failed to auto-apply migrations (non-fatal):', err). App continues with partial or empty schema. Subsequent queries against missing tables fail at runtime.",
+      "crash_radius": "Gradual cascading failures. No safe mode or degraded UI. User sees runtime errors in session/tool operations.",
+      "file": "packages/opencode/src/storage/adapter.ts:194-195",
+      "recovery": false
+    },
+    {
+      "component": "loading_screen_hang",
+      "failure_mode": "Sidecar fails to become ready — startup promise rejects via awaitInitialization",
+      "current_behavior": "awaitInitialization() returns { ok: false, error } via withIpcResult. But loading.tsx:27 calls .catch(() => undefined) — error is swallowed. Loading screen shows indefinitely with no error UI. No timeout at the renderer level for the init step.",
+      "crash_radius": "User sees a 'Just a moment...' screen forever. No error message, no retry option, no safe mode transition. User must force-quit the app.",
+      "file": "packages/desktop/src/renderer/loading.tsx:27",
+      "recovery": false
+    },
+    {
+      "component": "ipc_timeout_dead_code",
+      "failure_mode": "ipc.timeout error code exists in IpcErr type union but is never produced by any code path",
+      "current_behavior": "No IPC call has a timeout. All timeouts are domain-specific (sidecar 60s, git 5s, health 3s). If the Electron main process hangs during an IPC handler, the renderer's invoke promise hangs indefinitely.",
+      "crash_radius": "UI freezes waiting for IPC response that will never arrive. No circuit breaker, no fallback.",
+      "file": "packages/desktop/src/main/ipc-contract.ts:51 (code defined), zero uses",
+      "recovery": false
+    },
+    {
+      "component": "renderer_silent_error_swallow",
+      "failure_mode": "IPC calls in renderer use .catch(() => undefined) or .catch(err => console.error(...)) — errors are silently discarded",
+      "current_behavior": "When IPC fails (sidecar dead, network error, permission denied), the caller receives a structured IpcResult error but the renderer code at the call site discards it. No toast, no degraded UI, no retry.",
+      "crash_radius": "User sees stale or empty UI with no indication of failure. Features silently stop working.",
+      "file": "packages/desktop/src/renderer/index.tsx:71,89,94,100,102,210,216,312,368; packages/app/src/app.tsx:178",
+      "recovery": false
+    },
+    {
+      "component": "skipMigrations_dead_flag",
+      "failure_mode": "Runtime flag OPENCODE_SKIP_MIGRATIONS is defined but NEVER consumed by any migration or adapter code",
+      "current_behavior": "Flag reads from env (skipMigrations: bool) but is dead — no code path checks it. Migrations always attempt to run regardless.",
+      "crash_radius": "No crash, but the flag is misleading — users can't disable migrations even with the env var set.",
+      "file": "packages/opencode/src/effect/runtime-flags.ts:24, packages/opencode/src/storage/db.ts:25",
+      "recovery": false
+    }
+  ],
+  "retry_mechanisms": [
+    {
+      "name": "sidecar_health_polling",
+      "location": "packages/desktop/src/main/server.ts:166-177",
+      "strategy": "Poll /global/health every 100ms until healthy or sidecar exits. No max attempts — polls indefinitely until timeout or exit.",
+      "scope": "Startup only"
+    },
+    {
+      "name": "pg_pool_connect_retry",
+      "location": "packages/opencode/src/storage/pg-pool.ts:90-100",
+      "strategy": "Effect.retry with exponential backoff (100ms base), maxRetries (default 3), isRetryableError classification",
+      "scope": "Pool creation"
+    },
+    {
+      "name": "llm_session_retry",
+      "location": "packages/opencode/src/session/retry.ts",
+      "strategy": "Exponential backoff (2s initial, 2x factor, 30s max). Reads retry-after headers. Classifies 429/503/500 errors. Free tier upsell message on exhaustion.",
+      "scope": "Per LLM request"
+    },
+    {
+      "name": "tool_execution_retry",
+      "location": "packages/opencode/src/tool/tool.ts:204-208",
+      "strategy": "Configurable per-tool: retry { times, backoff, onError }. Uses Schedule.exponential.",
+      "scope": "Per tool invocation"
+    },
+    {
+      "name": "server_health_retry",
+      "location": "packages/app/src/utils/server-health.ts:63-98",
+      "strategy": "Retry up to 2 times with progressive delay. retryable() filter excludes AbortError, TimeoutError. Falls back to { healthy: false }.",
+      "scope": "Per health check"
+    },
+    {
+      "name": "database_transaction_retry",
+      "location": "packages/opencode/src/storage/adapter.ts:256-266",
+      "strategy": "Effect.retry({ while: (error) => error.isRetryable }) for serialization/deadlock errors",
+      "scope": "Per transaction"
+    },
+    {
+      "name": "plugin_crash_quarantine",
+      "location": "packages/opencode/src/plugin/index.ts:41-110",
+      "strategy": "Crash counter per plugin. After 3 crashes, auto-quarantine. Persistent state in JSON.",
+      "scope": "Per plugin lifecycle"
+    },
+    {
+      "name": "websocket_to_http_fallback",
+      "location": "packages/opencode/src/plugin/openai/ws-pool.ts:124-175",
+      "strategy": "After streamFailures > streamRetries, switches to HTTP fallback for AI model communication",
+      "scope": "Per model stream"
+    }
+  ],
+  "graceful_degradation_status": "partial",
+  "graceful_degradation_detail": {
+    "safe_mode": {
+      "status": "implemented",
+      "description": "Crash lock file detection + --safe-mode CLI flag. Renders safe-mode.html with 8 diagnostic/recovery actions: export_debug_logs, open_logs, repair_database, disable_plugins, disable_mcp, clear_stale_locks, reset_config, copy_diagnostic_summary, retry_normal_startup.",
+      "files": [
+        "packages/desktop/src/main/index.ts:295-305",
+        "packages/desktop/src/main/windows.ts:185-192",
+        "packages/desktop/src/renderer/safe-mode.tsx",
+        "packages/desktop/src/renderer/components/safe-mode-card.tsx"
+      ],
+      "gaps": [
+        "SafeModeAction handlers are stubs — most actions log 'safe mode action: <name>' without implementing the actual repair (e.g., repair_database has no implementation).",
+        "Only retry_normal_startup actually works (app.relaunch + app.exit).",
+        "InitStep { phase: 'safe_mode' } type exists but is never emitted; safe mode is detected via window load (safe-mode.html) rather than init step protocol."
+      ]
+    },
+    "degraded_mode": {
+      "status": "declared_only",
+      "description": "InitStep type includes { phase: 'degraded_mode' } but this phase is never emitted by the main process. No degraded mode implementation exists.",
+      "files": [
+        "packages/desktop/src/preload/types.ts:6"
+      ],
+      "gaps": [
+        "Type declared but zero emit sites.",
+        "HealthRegistry supports 'degraded' status but health check results don't trigger degraded mode UI.",
+        "No partial-functionality path when individual components fail (e.g., DB down but file browsing still works)."
+      ]
+    },
+    "health_registry": {
+      "status": "implemented",
+      "description": "Effect-based HealthRegistry tracks component health (Healthy, Degraded, Down, Unknown). checkPgHealth() reports database status. /global/health endpoint returns component states.",
+      "files": [
+        "packages/opencode/src/server/health.ts",
+        "packages/opencode/src/storage/db.pg.ts:95-130",
+        "packages/opencode/src/server/routes/instance/httpapi/handlers/global.ts:83-86"
+      ],
+      "gaps": [
+        "Health registry data is not consumed by the desktop main process or renderer to trigger degraded mode.",
+        "Only database component registered. No sidecar process health, no LSP health, no file watcher health."
+      ]
+    },
+    "error_boundary": {
+      "status": "implemented",
+      "description": "AppErrorBoundary wraps every route and major component. Captures to Sentry. Renders ErrorPage with 9+ formatted error types and recovery actions.",
+      "files": [
+        "packages/app/src/components/error-boundary.tsx",
+        "packages/app/src/pages/error.tsx",
+        "packages/app/src/app.tsx:183-348"
+      ]
+    },
+    "sidecar_restart": {
+      "status": "not_implemented",
+      "description": "No automatic sidecar restart exists. If sidecar crashes after successful startup, the app is permanently degraded. Health check polling detects the failure but takes no recovery action."
+    },
+    "offline_mode": {
+      "status": "not_implemented",
+      "description": "No offline mode exists. All functionality requires a running sidecar/server."
+    }
+  },
+  "recovery_paths": [
+    {
+      "name": "safe_mode_retry",
+      "description": "User can choose 'Retry Normal Startup' from safe mode UI. Removes .crash_lock file, calls app.relaunch() + app.exit(0).",
+      "trigger": "Crash detected on startup OR --safe-mode flag",
+      "effectiveness": "Works for transient failures (port conflicts, race conditions). Does NOT fix persistent issues (corrupt DB, bad config)."
+    },
+    {
+      "name": "error_page_restart",
+      "description": "ErrorPage includes 'Restart' button that calls platform.restart() — window.location.reload() in browser, app.relaunch() in desktop.",
+      "trigger": "Render error caught by ErrorBoundary",
+      "effectiveness": "Works for transient renderer errors. Does NOT fix main process or sidecar failures."
+    },
+    {
+      "name": "error_page_export_logs",
+      "description": "ErrorPage includes 'Export Logs' button that calls exportDebugLogs() → file save dialog. Collects logs, crash dumps, net logs.",
+      "trigger": "User action from error page",
+      "effectiveness": "Diagnostic only. Useful for support but no automatic repair."
+    },
+    {
+      "name": "plugin_quarantine",
+      "description": "Auto-quarantines plugins after 3 crashes. Plugin disabled on next startup. Can be manually unquarantined.",
+      "trigger": "Plugin crash count >= 3",
+      "effectiveness": "Prevents crash loops from bad plugins. Requires manual intervention to restore."
+    },
+    {
+      "name": "update_restart",
+      "description": "Updater kills sidecar, installs update, relaunches app.",
+      "trigger": "User-initiated update check",
+      "effectiveness": "Can resolve version-specific bugs but requires manual trigger."
+    },
+    {
+      "name": "app_menu_restart",
+      "description": "Menu bar 'Restart' command → app.relaunch()",
+      "trigger": "User action from menu",
+      "effectiveness": "Full app restart. Loses unsaved state."
+    }
+  ],
+  "recommended_architecture": {
+    "summary": "Introduce a 3-tier resilience model: Safe Mode (existing) → Degraded Mode (new) → Full Mode. Each component independently reports health. Degraded mode gates non-essential features when components are unhealthy. Add sidecar watchdog with automatic restart.",
+    "tiers": [
+      {
+        "name": "safe_mode",
+        "description": "Existing. Triggered by crash detection or --safe-mode flag. No sidecar running. Diagnostic/recovery UI only.",
+        "entry_condition": "crashDetected || safeModeRequested",
+        "capabilities": ["diagnostic_actions", "export_logs", "repair_database", "retry_startup"]
+      },
+      {
+        "name": "degraded_mode",
+        "description": "NEW. Triggered when sidecar is running but critical components report unhealthy (DB down, file watcher broken, LSP unavailable). App launches normally but non-functional features are gated.",
+        "entry_condition": "server healthy BUT (DB unhealthy OR other critical component unhealthy)",
+        "capabilities": ["file_browsing", "config_editing", "settings", "health_dashboard", "retry_component"],
+        "gated_features": ["session_create", "model_inference", "tool_execution", "context_indexing"]
+      },
+      {
+        "name": "full_mode",
+        "description": "Existing normal operation. All components healthy.",
+        "entry_condition": "server healthy AND DB healthy AND all critical components healthy",
+        "capabilities": ["all"]
+      }
+    ],
+    "key_additions": [
+      {
+        "name": "sidecar_watchdog",
+        "description": "Monitor sidecar process and automatically restart on crash with exponential backoff (3 attempts, 1s/2s/4s). After 3 consecutive crashes, escalate to safe mode.",
+        "files_to_create": [
+          "packages/desktop/src/main/sidecar-watchdog.ts"
+        ]
+      },
+      {
+        "name": "degraded_mode_ui",
+        "description": "Render degraded-mode.html (or extend safe-mode.tsx) when in degraded state. Show which components are unhealthy and offer retry/ignore options.",
+        "files_to_create": [
+          "packages/desktop/src/renderer/degraded-mode.tsx",
+          "packages/desktop/src/renderer/degraded-mode.html"
+        ]
+      },
+      {
+        "name": "component_health_registration",
+        "description": "Extend HealthRegistry to track all critical components: PGlite, DuckDB, file watcher, LSP manager, MCP bridge. Report health via /global/health endpoint.",
+        "files_to_modify": [
+          "packages/opencode/src/server/health.ts",
+          "packages/opencode/src/server/routes/instance/httpapi/handlers/global.ts"
+        ]
+      },
+      {
+        "name": "init_step_degraded_emit",
+        "description": "Emit InitStep { phase: 'degraded_mode' } when server is healthy but components are not. Renderer transitions to degraded UI.",
+        "files_to_modify": [
+          "packages/desktop/src/main/index.ts"
+        ]
+      },
+      {
+        "name": "safe_mode_action_implementations",
+        "description": "Implement the stub safe mode actions: repair_database (run VACUUM/REINDEX), disable_plugins (write quarantine state), disable_mcp (write MCP disable state), clear_stale_locks, reset_config.",
+        "files_to_modify": [
+          "packages/desktop/src/main/index.ts:280-290"
+        ]
+      },
+      {
+        "name": "migration_auto_apply",
+        "description": "Call applyMigrations() during sidecar startup (currently defined but never invoked at runtime). Ensure migration-pg/ folder is populated with all required migrations.",
+        "files_to_modify": [
+          "packages/opencode/src/storage/db.pg.ts",
+          "packages/opencode/src/node.ts"
+        ]
+      }
+    ]
+  },
+  "existing_findings_referenced": [
+    {
+      "id": "ses_187bc95c",
+      "summary": "applyMigrations defined at db.pg.ts:25 but never called anywhere in runtime",
+      "relevance": "Directly blocks DB schema initialization. If migrations aren't applied, tables don't exist → runtime failures."
+    },
+    {
+      "id": "ses_187bc95c",
+      "summary": "migration-pg/ has 1 migration vs migration/ has 20 — massive gap",
+      "relevance": "Even if migrations were applied, only 1/20th of the schema would be created."
+    }
+  ],
+  "evidence_sources": [
+    "packages/desktop/src/main/index.ts:12-445 (main process lifecycle)",
+    "packages/desktop/src/main/server.ts:70-208 (sidecar spawn, health check, stop)",
+    "packages/desktop/src/main/windows.ts:185-192 (transitionToSafeMode)",
+    "packages/desktop/src/main/unresponsive.ts:7-67 (unresponsive detection)",
+    "packages/desktop/src/main/ipc-init.ts:47-121 (IPC handler registration)",
+    "packages/desktop/src/preload/index.ts:1-143 (contextBridge API)",
+    "packages/desktop/src/preload/types.ts:3-187 (InitStep, SafeModeAction, SafeModeDiagnostics)",
+    "packages/desktop/src/renderer/safe-mode.tsx:1-98 (safe mode UI)",
+    "packages/desktop/src/renderer/components/safe-mode-card.tsx:1-28 (action card)",
+    "packages/opencode/src/storage/db.pg.ts:1-132 (PGlite init, health check, migrations)",
+    "packages/opencode/src/storage/migrate.ts:1-44 (migration runner)",
+    "packages/opencode/src/storage/pg-pool.ts:1-166 (PG pool with retry)",
+    "packages/opencode/src/server/health.ts:1-48 (HealthRegistry)",
+    "packages/opencode/src/server/routes/instance/httpapi/handlers/global.ts:83-86 (health endpoint)",
+    "packages/opencode/src/plugin/index.ts:41-110 (plugin crash quarantine)",
+    "packages/app/src/utils/server-health.ts:1-153 (client health check with retry)",
+    "packages/app/src/components/error-boundary.tsx:1-19 (AppErrorBoundary)",
+    "packages/app/src/pages/error.tsx:1-371 (ErrorPage)"
+  ]
+}

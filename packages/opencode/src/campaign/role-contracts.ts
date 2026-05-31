@@ -1,5 +1,6 @@
 import { Wildcard } from "@/util/wildcard"
 import type { AuthorityContract, AuthorityMode, StopCondition } from "@/agent/authority"
+import type { LaneState as CanonicalLaneState } from "./types"
 
 // ─── Role Types ─────────────────────────────────────────────────────────────
 
@@ -31,20 +32,9 @@ export interface RoleContract {
   readonly mustNot: readonly string[]
 }
 
-// ─── Lane State (state machine) ─────────────────────────────────────────────
+// ─── Lane State (from canonical types) ──────────────────────────────────────
 
-export type LaneState =
-  | "idle"
-  | "cartography"
-  | "planning"
-  | "reviewing"
-  | "executing"
-  | "validating"
-  | "repairing"
-  | "reporting"
-  | "completed"
-  | "failed"
-  | "blocked"
+export type LaneState = CanonicalLaneState
 
 // ─── Role Contracts Map ─────────────────────────────────────────────────────
 
@@ -649,10 +639,10 @@ export function getAuthorizedScope(roleType: RoleType): AuthorityContract {
 
 export function deriveAllowedTools(state: LaneState): string[] {
   switch (state) {
-    case "idle":
+    case "created":
       return ["read_messages", "task_board", "discover_findings", "read_artifact"]
 
-    case "cartography":
+    case "scouting":
       return [
         "read_source",
         "smart_grep",
@@ -663,6 +653,18 @@ export function deriveAllowedTools(state: LaneState): string[] {
         "task_board",
         "discover_findings",
         "curate_context",
+      ]
+
+    case "scoped":
+      return [
+        "read_source",
+        "smart_grep",
+        "smart_find",
+        "read_artifact",
+        "read_messages",
+        "discover_findings",
+        "curate_context",
+        "json_query",
       ]
 
     case "planning":
@@ -680,7 +682,7 @@ export function deriveAllowedTools(state: LaneState): string[] {
         "json_query",
       ]
 
-    case "reviewing":
+    case "critic_review":
       return [
         "read_source",
         "smart_grep",
@@ -689,6 +691,18 @@ export function deriveAllowedTools(state: LaneState): string[] {
         "read_messages",
         "review_criticism",
         "discover_findings",
+        "json_query",
+      ]
+
+    case "approved":
+      return [
+        "read_artifact",
+        "read_messages",
+        "task_board",
+        "discover_findings",
+        "read_source",
+        "smart_grep",
+        "smart_find",
         "json_query",
       ]
 
@@ -731,6 +745,20 @@ export function deriveAllowedTools(state: LaneState): string[] {
         "task_board",
       ]
 
+    case "red_team":
+      return [
+        "read_source",
+        "smart_grep",
+        "smart_find",
+        "smart_bun",
+        "smart_bash",
+        "read_artifact",
+        "read_messages",
+        "discover_findings",
+        "task_board",
+        "json_query",
+      ]
+
     case "repairing":
       return [
         "read_source",
@@ -754,7 +782,10 @@ export function deriveAllowedTools(state: LaneState): string[] {
         "out_of_scope_finding",
       ]
 
-    case "reporting":
+    case "checkpointed":
+      return ["read_messages", "send_message", "read_artifact", "task_board"]
+
+    case "historian":
       return [
         "read_artifact",
         "read_messages",
@@ -767,9 +798,12 @@ export function deriveAllowedTools(state: LaneState): string[] {
         "task_board",
       ]
 
-    case "completed":
+    case "returned":
     case "failed":
     case "blocked":
       return ["read_messages", "send_message"]
+
+    default:
+      return []
   }
 }

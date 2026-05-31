@@ -7,6 +7,7 @@ import { Schema } from "effect"
 export const LaneState = Schema.Literals([
   "created",
   "scouting",
+  "scoping",
   "scoped",
   "planning",
   "critic_review",

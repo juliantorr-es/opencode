@@ -3,7 +3,7 @@ import { serviceUse } from "@opencode-ai/core/effect/service-use"
 import { Authority } from "@/agent"
 import { Scratchpad } from "@/agent"
 import { Git } from "@/git"
-import { EventStore } from "@/event"
+import { EventStore, EventName } from "@/event"
 import { InstanceState } from "@/effect/instance-state"
 import type { RuntimeEvent as RuntimeEventType } from "@/event/runtime-event"
 import * as FileMemory from "./file-memory"
@@ -47,7 +47,7 @@ export interface ContextPacketL1 {
     agentChangesDetected: boolean
   }
   claims: {
-    owned: string[]
+    claimed: string[]
     conflicts: string[]
   }
   latestValidation?: {
@@ -108,7 +108,7 @@ export const use = serviceUse(Service)
 const PACKET_VERSION = 1
 const DEFAULT_BRANCH = "unknown"
 const DEFAULT_DIRTY: string[] = []
-const DEFAULT_CLAIMS: string[] = []
+
 
 // ── Helpers ────────────────────────────────────────────────
 
@@ -190,28 +190,48 @@ export const layer = Layer.effect(
         }
 
         // ── Claims ───────────────────────────────────────
-        let ownedFiles = DEFAULT_CLAIMS
+        let claimedFiles: string[] = []
+        let recentFilePaths: string[] = []
         let conflictFiles: string[] = []
         try {
           const activeReservations = yield* Coordination.getSessionReservations(sessionId)
           if (activeReservations.length > 0) {
-            ownedFiles = activeReservations.map((r) => r.path)
-          } else {
-            // Fallback: derive owned files from recent events
+            claimedFiles = activeReservations.map((r: { path: string }) => r.path)
+          }
+          // Extract event-derived paths for informational context (not authority)
+          try {
             const recentEvents = yield* eventStore.query({
               sessionId,
               limit: 100,
               order: "desc",
             })
-            ownedFiles = extractFilePaths(recentEvents)
+            recentFilePaths = extractFilePaths(recentEvents)
+          } catch {
+            // Non-critical fallback
           }
-          conflictFiles = ownedFiles.filter((f) => dirtyFiles.includes(f))
+          // Cross-session conflict detection via claim-ledger
+          //
+          // TODO(truth-closure): Conflict detection is session-level only. Files externally
+          // modified under this agent's reservation are not detected. Needs digest-based
+          // claim verification: for each reserved file, compute SHA-256 and compare against
+          // the claim's base digest. If mismatch without an agent edit event, flag as external change.
+          if (dirtyFiles.length > 0) {
+            const reservations = yield* Effect.forEach(
+              dirtyFiles,
+              (f) => Coordination.checkPathReserved(f),
+              { concurrency: "unbounded" },
+            )
+            conflictFiles = dirtyFiles.filter((_, i) => {
+              const res = reservations[i]
+              return res !== null && res.sessionId !== sessionId
+            })
+          }
         } catch (e) {
-          log.warn("could not query claims for owned files", { error: String(e) })
+          log.warn("could not query coordination for claims", { error: String(e) })
         }
 
-        const agentEdits = dirtyFiles.filter((f) => ownedFiles.includes(f))
-        const externalEdits = dirtyFiles.filter((f) => !ownedFiles.includes(f))
+        const agentEdits = dirtyFiles.filter((f) => claimedFiles.includes(f))
+        const externalEdits = dirtyFiles.filter((f) => !claimedFiles.includes(f))
         const workspace: ContextPacketL1["workspace"] = {
           branch,
           dirtyFiles,
@@ -220,7 +240,7 @@ export const layer = Layer.effect(
         }
 
         const claims: ContextPacketL1["claims"] = {
-          owned: ownedFiles,
+          claimed: claimedFiles,
           conflicts: conflictFiles,
         }
 
@@ -239,12 +259,25 @@ export const layer = Layer.effect(
             limit: 5,
             order: "desc",
           })
+          // Only consider validation events that occurred after the latest edit
+          let lastEditTs: string | undefined
+          try {
+            const editEvents = yield* eventStore.query({
+              sessionId,
+              limit: 20,
+              order: "desc",
+            })
+            lastEditTs = editEvents.find(
+              (e) => e.eventType === EventName.FileEdited,
+            )?.ts
+          } catch {
+            lastEditTs = undefined
+          }
           const candidates = [...succeededEvents, ...failedEvents].filter(
             (e) =>
-              e.eventType === "validation" ||
-              e.toolName === "smart_bun" ||
-              e.eventType === "typecheck" ||
-              e.eventType === "test",
+              (e.eventType === EventName.ValidationCompleted ||
+               e.eventType === EventName.ValidationFailure) &&
+              (!lastEditTs || e.ts > lastEditTs),
           )
           const best = candidates.sort((a, b) => b.ts.localeCompare(a.ts))[0]
           if (best) {

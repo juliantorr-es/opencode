@@ -1,0 +1,146 @@
+{
+  "schema_version": "1.0",
+  "generated_at": "2026-05-31",
+  "mission": "INV-004: Map PG migration gap",
+  "sqlite_migrations": [],
+  "sqlite_status": "FULLY_REMOVED",
+  "sqlite_removal_evidence": [
+    "packages/opencode/migration/ directory does not exist",
+    "No drizzle.config.ts (SQLite dialect config) exists",
+    "No .sql.ts schema files exist — only .pg.sql.ts files",
+    "Zero imports from drizzle-orm/sqlite in packages/opencode/src/",
+    "AGENTS.md line 3: 'SQLite schemas have been deleted'",
+    "AGENTS.md line 2: 'Dialect: PostgreSQL'",
+    "package.json #db alias resolves all targets (bun/node/default) to ./src/storage/db.pg.ts"
+  ],
+  "pg_migrations": [
+    {
+      "directory": "20260529023435_yellow_molly_hayes",
+      "date": "2026-05-29",
+      "type": "initial_schema_dump",
+      "tables_created": [
+        "account_state", "account", "control_account", "workspace",
+        "data_migration", "project", "message", "part", "permission",
+        "session_message", "session", "todo", "session_share",
+        "event_sequence", "event"
+      ],
+      "description": "Initial full schema dump. Creates 15 tables with all columns, indexes (10), and foreign keys (10)."
+    },
+    {
+      "directory": "20260530202327_chemical_moira_mactaggert",
+      "date": "2026-05-30",
+      "type": "add_table",
+      "tables_created": ["runtime_events"],
+      "description": "Adds runtime_events table (24 columns) + 8 indexes covering session, event_type, ts, actor, run_id, session+ts, campaign_id, lane_id."
+    },
+    {
+      "directory": "20260531003644_swift_gravity",
+      "date": "2026-05-31",
+      "type": "add_tables",
+      "tables_created": ["coordination_claim", "coordination_fan_out", "coordination_reservation"],
+      "description": "Adds 3 coordination tables for cross-session coordination."
+    },
+    {
+      "directory": "20260531003656_blushing_zuras",
+      "date": "2026-05-31",
+      "type": "alter_column",
+      "tables_created": [],
+      "description": "Alters coordination_fan_out.task_ids column type to jsonb."
+    }
+  ],
+  "pg_migration_total_count": 4,
+  "migration_runner": {
+    "file": "packages/opencode/src/storage/db.pg.ts",
+    "function": "applyMigrations",
+    "line": 70,
+    "mechanism": "For PGlite: reads migration files via readMigrationFiles(), iterates, calls client.exec(sql). For node-postgres: uses drizzle-orm/node-postgres/migrator migrate(). Migration folder resolved as new URL('../../migration-pg', import.meta.url).pathname.",
+    "callers": [
+      { "file": "packages/opencode/src/storage/adapter.ts", "line": 194, "context": "makePgAdapter() — fire-and-forget at adapter construction. Errors logged, not propagated." },
+      { "file": "packages/opencode/src/storage/migrate.ts", "line": 20, "context": "runMigrations() — CLI db:migrate command. Awaits completion." },
+      { "file": "packages/opencode/src/node.ts", "line": 8, "context": "Re-exported as public API" }
+    ],
+    "called_at_startup": true,
+    "called_at_startup_detail": "makePgAdapter() in adapter.ts calls applyMigrations(client).catch(...) — runs every time adapter is constructed (app startup). No idempotency guard beyond Drizzle's internal mechanism.",
+    "pre_existing_finding_staleness": "Finding ses_187bc95c claiming 'applyMigrations defined at db.pg.ts:25 but never called' is STALE — it IS called at adapter.ts:194 and migrate.ts:20"
+  },
+  "dialect_detection": {
+    "mechanism": "Single dialect: PostgreSQL always. SQLite removed entirely.",
+    "backend_selection": {
+      "file": "packages/opencode/src/storage/db.pg.ts",
+      "line": 38,
+      "logic": "If connectionString is ':memory:', starts with '/', or starts with 'file:' → PGlite (embedded PG in WASM). Otherwise → node-postgres (real PG server via pg Pool).",
+      "env_var": "OPENCODE_DATABASE_URL (in migrate.ts line 9, falls back to ':memory:')",
+      "ssl_env_var": "OPENCODE_DATABASE_SSL (in migrate.ts line 18, defaults to true unless explicitly 'false')"
+    },
+    "db_init_chain": "db.ts Database.init() → import {init} from '#db' → db.pg.ts init() → PGlite or node-postgres",
+    "alias_resolution": "package.json imports.#db → ./src/storage/db.pg.ts (all targets: bun, node, default)"
+  },
+  "gap_analysis": {
+    "verdict": "NO GAP — SQLite is intentionally fully removed, PG has 4 migrations covering all tables",
+    "evidence": [
+      "All 19 tables across 4 PG migrations match the 10 .pg.sql.ts schema files",
+      "Schema barrel (schema.ts) only re-exports from .pg.sql.ts files",
+      "drizzle.config.pg.ts scans ./src/**/*.pg.sql.ts — the canonical schema source",
+      "No SQLite schema files, configs, or migration directories remain",
+      "Migration runner is active and called at startup + CLI",
+      "Test file test/storage/migration.pg.test.ts verifies applyMigrations works end-to-end with PGlite"
+    ],
+    "schemas_mapped": [
+      { "pg_sql_file": "src/account/account.pg.sql.ts", "tables": ["AccountTable", "AccountStateTable", "ControlAccountTable"], "in_migration": "yellow_molly_hayes" },
+      { "pg_sql_file": "src/project/project.pg.sql.ts", "tables": ["ProjectTable"], "in_migration": "yellow_molly_hayes" },
+      { "pg_sql_file": "src/session/session.pg.sql.ts", "tables": ["SessionTable", "MessageTable", "PartTable", "TodoTable", "SessionMessageTable", "PermissionTable"], "in_migration": "yellow_molly_hayes" },
+      { "pg_sql_file": "src/share/share.pg.sql.ts", "tables": ["SessionShareTable"], "in_migration": "yellow_molly_hayes" },
+      { "pg_sql_file": "src/control-plane/workspace.pg.sql.ts", "tables": ["WorkspaceTable"], "in_migration": "yellow_molly_hayes" },
+      { "pg_sql_file": "src/sync/event.pg.sql.ts", "tables": ["EventTable", "EventSequenceTable"], "in_migration": "yellow_molly_hayes" },
+      { "pg_sql_file": "src/data-migration.pg.sql.ts", "tables": ["DataMigrationTable"], "in_migration": "yellow_molly_hayes" },
+      { "pg_sql_file": "src/event/event.pg.sql.ts", "tables": ["RuntimeEventTable"], "in_migration": "chemical_moira_mactaggert" },
+      { "pg_sql_file": "src/tool/coordination.pg.sql.ts", "tables": ["CoordinationClaimTable", "CoordinationReservationTable", "CoordinationFanOutTable"], "in_migration": "swift_gravity + blushing_zuras" },
+      { "pg_sql_file": "src/storage/schema.pg.sql.ts", "tables": ["TimestampsPg (helper, not a table)"], "in_migration": "N/A" }
+    ]
+  },
+  "dead_code_and_debt": [
+    {
+      "file": "packages/opencode/script/build.ts",
+      "line": 21,
+      "issue": "Reads from path.join(dir, 'migration') — a directory that no longer exists. This code path would throw at build time if reached.",
+      "severity": "HIGH",
+      "recommendation": "Remove the dead migration-loading code or point it at migration-pg/ instead."
+    },
+    {
+      "file": "packages/opencode/script/build-node.ts",
+      "line": "similar",
+      "issue": "Likely has the same dead reference to the deleted migration/ directory.",
+      "severity": "HIGH",
+      "recommendation": "Audit and fix."
+    },
+    {
+      "file": "packages/opencode/src/storage/adapter-dual-write.ts",
+      "line": "throughout",
+      "issue": "Variable names still use 'sqlite' terminology (sqliteAdapter, sqliteDb, sqliteTx) but the actual implementation wraps PGlite + remote PG.",
+      "severity": "MEDIUM",
+      "recommendation": "Rename to localAdapter/localDb/localTx to reflect PG reality."
+    },
+    {
+      "file": "packages/opencode/src/storage/adapter.ts",
+      "line": 53,
+      "issue": "Type exported as SQLiteTransactionOptions with _tag: 'sqlite' — but it's actually used with PGlite (Postgres dialect).",
+      "severity": "MEDIUM",
+      "recommendation": "Rename to LocalTransactionOptions or PgliteTransactionOptions."
+    },
+    {
+      "file": "packages/opencode/src/storage/db.ts",
+      "line": 40,
+      "issue": "getChannelPath returns 'opencode.db' filename — legacy SQLite convention. Content is PGlite.",
+      "severity": "LOW",
+      "recommendation": "Consider renaming to opencode.pg or similar. Low priority since .db is just a file extension convention."
+    },
+    {
+      "file": "packages/opencode/src/storage/db.ts",
+      "line": 25,
+      "issue": "DatabaseFlags type includes skipMigrations but the flag is never wired through to applyMigrations. The flag is read but ignored.",
+      "severity": "MEDIUM",
+      "recommendation": "Either wire skipMigrations to gate applyMigrations in adapter.ts or remove the unused flag."
+    }
+  ],
+  "recommendation": "No migration gap exists — the original finding of '20 SQLite vs 1 PG' is outdated. SQLite has been fully removed. There are 4 PG migrations covering all 19 tables across all 10 schema files. However, 6 pieces of dead code referencing SQLite conventions remain and should be cleaned up: build scripts reading from deleted migration/, misleading 'sqlite' variable names in adapter-dual-write.ts, unused skipMigrations flag, and legacy .db file extension naming."
+}

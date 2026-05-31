@@ -1,1 +1,19 @@
 {"at":"2026-05-31T08:45:11.609Z","tool":"smart_grep","action":"searched","pattern":"migration","results":18,"files":5}
+{"at":"2026-05-31T08:47:36.866Z","tool":"smart_grep","action":"searched","pattern":"\"#db\"","results":1,"files":1}
+{"at":"2026-05-31T08:47:37.558Z","tool":"smart_grep","action":"searched","pattern":"\\.pg\\.sql","results":20,"files":10}
+{"at":"2026-05-31T08:47:38.218Z","tool":"smart_grep","action":"searched","pattern":"migration-pg","results":4,"files":3}
+{"at":"2026-05-31T08:50:30.549Z","tool":"smart_grep","action":"searched","pattern":"applyMigrations","results":6,"files":4}
+{"at":"2026-05-31T08:52:25.583Z","tool":"smart_grep","action":"searched","pattern":"migration","results":30,"files":8}
+{"at":"2026-05-31T08:56:13.718Z","tool":"smart_grep","action":"searched","pattern":"migration","results":1,"files":1}
+{"at":"2026-05-31T08:58:40.709Z","tool":"smart_grep","action":"searched","pattern":"pg\\.sql","results":20,"files":10}
+{"at":"2026-05-31T08:58:41.119Z","tool":"smart_grep","action":"searched","pattern":"from.*pg\\.sql","results":20,"files":10}
+{"at":"2026-05-31T09:00:41.997Z","tool":"smart_grep","action":"searched","pattern":"sqliteTable|sqlite","results":11,"files":3}
+{"at":"2026-05-31T09:00:43.626Z","tool":"smart_grep","action":"searched","pattern":"from.*drizzle-orm/pg","results":13,"files":12}
+{"at":"2026-05-31T09:02:23.792Z","tool":"smart_git","action":"git_op","operation":"status","exit_code":0}
+{"at":"2026-05-31T09:02:25.485Z","tool":"smart_grep","action":"searched","pattern":"^","results":30,"files":1}
+{"at":"2026-05-31T09:04:27.115Z","tool":"smart_grep","action":"searched","pattern":"^","results":30,"files":1}
+{"at":"2026-05-31T09:06:33.459Z","tool":"smart_git","action":"git_op","operation":"log","exit_code":0}
+{"at":"2026-05-31T09:06:34.178Z","tool":"smart_git","action":"git_op","operation":"show","exit_code":0}
+{"at":"2026-05-31T09:11:26.935Z","tool":"smart_grep","action":"searched","pattern":"sqlite","results":10,"files":2}
+{"at":"2026-05-31T09:11:28.157Z","tool":"smart_grep","action":"searched","pattern":"runtime_events|coordination_claim|coordination_fan_out|coordination_reservation","results":21,"files":6}
+{"at":"2026-05-31T09:12:24.715Z","tool":"smart_write","action":"wrote","file":".build/rig-relay/pg_migration_gap.v1.json","detail":"Produce INV-004 PG migration gap analysis artifact"}

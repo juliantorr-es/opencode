@@ -398,7 +398,7 @@ database tools
 Commands:
   opencode db [query]     open an interactive database shell or run a query                 [default]
   opencode db path        print the database path
-  opencode db migrate     migrate JSON data to SQLite (merges with existing data)
+  opencode db migrate     migrate legacy JSON data to the database
 
 Positionals:
   query  SQL query to execute                                                               [string]

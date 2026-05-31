@@ -142,6 +142,13 @@ export interface Interface {
     scope: string,
   ) => Effect.Effect<string>
 
+  readonly ensureBinder: (
+    laneId: string,
+    campaignId: string,
+    mission: string,
+    scope: string,
+  ) => Effect.Effect<Binder>
+
   readonly getBinder: (laneId: string) => Effect.Effect<Option.Option<Binder>>
 
   readonly getBindersByCampaignId: (campaignId: string) => Effect.Effect<Binder[]>
@@ -161,6 +168,8 @@ export interface Interface {
   readonly finalizeBinder: (laneId: string) => Effect.Effect<Binder, BinderError>
 
   readonly getBinderDigest: (laneId: string) => Effect.Effect<string, BinderError>
+
+  readonly reconstructBinder: (laneId: string) => Effect.Effect<Option.Option<Binder>>
 }
 
 // ── Service Tag ───────────────────────────────────────────
@@ -229,6 +238,59 @@ function createInitialBinder(
   return binder
 }
 
+function applyEvidenceToBinder(binder: Binder, section: string, artifact: unknown): Binder {
+  const updated: Binder = { ...binder }
+  switch (section) {
+    case "scoutReports":
+      updated.scoutReports = [...binder.scoutReports, artifact as ArtifactRef]
+      break
+    case "architecturePlan":
+      updated.architecturePlan = artifact as ArtifactRef
+      break
+    case "criticReviews":
+      updated.criticReviews = [...binder.criticReviews, artifact as ArtifactRef]
+      break
+    case "approvedPlan":
+      updated.approvedPlan = artifact as ArtifactRef
+      break
+    case "executionEvents":
+      updated.executionEvents = [...binder.executionEvents, artifact as EventRef]
+      break
+    case "transitionEvents":
+      updated.transitionEvents = [...binder.transitionEvents, artifact as EventRef]
+      break
+    case "diffSummary":
+      updated.diffSummary = artifact as unknown as DiffSummary
+      break
+    case "validationResults":
+      updated.validationResults = [
+        ...binder.validationResults,
+        artifact as unknown as ValidationResult,
+      ]
+      break
+    case "redTeamFindings":
+      updated.redTeamFindings = [
+        ...binder.redTeamFindings,
+        artifact as unknown as RedTeamFinding,
+      ]
+      break
+    case "repairHistory":
+      updated.repairHistory = [...binder.repairHistory, artifact as unknown as RepairCycle]
+      break
+    case "residualRisks": {
+      const riskSummary = "summary" in (artifact as Record<string, unknown>) ? (artifact as ArtifactRef).summary : JSON.stringify(artifact)
+      updated.residualRisks = [...binder.residualRisks, riskSummary]
+      break
+    }
+    case "handoffSummary":
+      updated.handoffSummary = "summary" in (artifact as Record<string, unknown>) ? (artifact as ArtifactRef).summary : JSON.stringify(artifact)
+      break
+    default:
+      break
+  }
+  return updated
+}
+
 function recordBinderEvent(
   eventStore: EventStore.Interface,
   eventType: string,
@@ -267,6 +329,73 @@ const make = Effect.gen(function* () {
   const store = yield* Ref.make<Map<string, Binder>>(new Map())
   const eventStore = yield* EventStore.Service
 
+  const reconstructBinder = Effect.fn("Binder.reconstructBinder")(function* (laneId: string) {
+    const queryResult = yield* eventStore.query({
+      sessionId: laneId,
+      toolName: "binder",
+      order: "asc",
+      limit: 500,
+    }).pipe(Effect.catchTag("DatabaseError", () => Effect.succeed([])))
+
+    if (queryResult.length === 0) return Option.none<Binder>()
+
+    const createdEvent = queryResult[0]
+    if ((createdEvent.eventType as string) !== "binder.created") {
+      log.warn("reconstructBinder: first event is not binder.created", {
+        laneId,
+        eventType: createdEvent.eventType,
+      })
+      return Option.none<Binder>()
+    }
+
+    const payload = (createdEvent.payloadJson ?? {}) as Record<string, unknown>
+    const campaignId = (payload.campaignId as string) ?? ""
+    const mission = (payload.mission as string) ?? ""
+    const scope = (payload.scope as string) ?? ""
+
+    let binder = createInitialBinder(laneId, campaignId, mission, scope)
+    binder = { ...binder, createdAt: createdEvent.ts }
+
+    for (let i = 1; i < queryResult.length; i++) {
+      const evt = queryResult[i]
+      const p = (evt.payloadJson ?? {}) as Record<string, unknown>
+
+      if ((evt.eventType as string) === "binder.status_changed") {
+        const status = (p.status as LaneState) ?? binder.status
+        const terminalStatus = p.terminalStatus as TerminalStatus | undefined
+        binder = {
+          ...binder,
+          status,
+          ...(terminalStatus !== undefined ? { terminalStatus } : {}),
+          ...(status === "checkpointed" || status === "returned"
+            ? { completedAt: evt.ts }
+            : {}),
+        }
+      }
+
+      if ((evt.eventType as string) === "binder.finalized") {
+        binder = { ...binder, completedAt: evt.ts }
+      }
+
+      if ((evt.eventType as string) === "binder.evidence_added") {
+        const section = p.section as string
+        const artifact = p.artifact
+        if (section && artifact !== undefined) {
+          binder = applyEvidenceToBinder(binder, section, artifact)
+        }
+      }
+    }
+
+    binder.artifactDigest = computeDigest(binder)
+
+    log.info("reconstructed binder from EventStore", {
+      laneId,
+      eventCount: queryResult.length,
+      status: binder.status,
+    })
+    return Option.some(binder)
+  })
+
   const createBinder = Effect.fn("Binder.createBinder")(function* (
     laneId: string,
     campaignId: string,
@@ -287,22 +416,75 @@ const make = Effect.gen(function* () {
     yield* recordBinderEvent(eventStore, "binder.created", laneId, {
       laneId,
       campaignId,
+      mission,
+      scope,
     })
     log.info("created binder", { laneId })
     return laneId
   })
 
+  const ensureBinder = Effect.fn("Binder.ensureBinder")(function* (
+    laneId: string,
+    campaignId: string,
+    mission: string,
+    scope: string,
+  ) {
+    const map = yield* Ref.get(store)
+    const existing = map.get(laneId)
+    if (existing) return existing
+
+    const binder = createInitialBinder(laneId, campaignId, mission, scope)
+    yield* Ref.update(store, (map) => {
+      map.set(laneId, binder)
+      return map
+    })
+    yield* recordBinderEvent(eventStore, "binder.created", laneId, {
+      laneId,
+      campaignId,
+      mission,
+      scope,
+    })
+    return binder
+  })
+
   const getBinder = Effect.fn("Binder.getBinder")(function* (laneId: string) {
     const map = yield* Ref.get(store)
-    const binder = map.get(laneId)
-    if (binder) return Option.some(binder)
-    return Option.none<Binder>()
+    const existing = map.get(laneId)
+    if (existing) return Option.some(existing)
+
+    log.warn("binder not in cache, attempting EventStore reconstruction", { laneId })
+    const reconstructed = yield* reconstructBinder(laneId)
+    if (Option.isSome(reconstructed)) {
+      yield* Ref.update(store, (map) => {
+        map.set(laneId, reconstructed.value)
+        return map
+      })
+    }
+    return reconstructed
   })
 
   const getBindersByCampaignId = Effect.fn("Binder.getBindersByCampaignId")(function* (campaignId: string) {
     const map = yield* Ref.get(store)
-    const all = Array.from(map.values())
-    return all.filter((b) => b.campaignId === campaignId)
+    const cached = Array.from(map.values()).filter((b) => b.campaignId === campaignId)
+    if (cached.length > 0) return cached
+
+    const createdEvents = yield* eventStore.query({
+      toolName: "binder",
+      eventType: "binder.created",
+      limit: 1000,
+      order: "asc",
+    }).pipe(Effect.catchTag("DatabaseError", () => Effect.succeed([])))
+
+    const results: Binder[] = []
+    for (const evt of createdEvents) {
+      const p = (evt.payloadJson ?? {}) as Record<string, unknown>
+      if ((p.campaignId as string) !== campaignId) continue
+      const opt = yield* reconstructBinder(evt.sessionId)
+      if (Option.isSome(opt)) {
+        results.push(opt.value)
+      }
+    }
+    return results
   })
 
   const addEvidence = Effect.fn("Binder.addEvidence")(function* (
@@ -316,56 +498,16 @@ const make = Effect.gen(function* () {
       return yield* Effect.fail(new BinderError(`Binder not found for lane: ${laneId}`))
     }
 
-    const updated: Binder = { ...binder }
-
-    switch (section) {
-      case "scoutReports":
-        updated.scoutReports = [...binder.scoutReports, artifact as ArtifactRef]
-        break
-      case "architecturePlan":
-        updated.architecturePlan = artifact as ArtifactRef
-        break
-      case "criticReviews":
-        updated.criticReviews = [...binder.criticReviews, artifact as ArtifactRef]
-        break
-      case "approvedPlan":
-        updated.approvedPlan = artifact as ArtifactRef
-        break
-      case "executionEvents":
-        updated.executionEvents = [...binder.executionEvents, artifact as EventRef]
-        break
-      case "transitionEvents":
-        updated.transitionEvents = [...binder.transitionEvents, artifact as EventRef]
-        break
-      case "diffSummary":
-        updated.diffSummary = artifact as unknown as DiffSummary
-        break
-      case "validationResults":
-        updated.validationResults = [
-          ...binder.validationResults,
-          artifact as unknown as ValidationResult,
-        ]
-        break
-      case "redTeamFindings":
-        updated.redTeamFindings = [
-          ...binder.redTeamFindings,
-          artifact as unknown as RedTeamFinding,
-        ]
-        break
-      case "repairHistory":
-        updated.repairHistory = [...binder.repairHistory, artifact as unknown as RepairCycle]
-        break
-      case "residualRisks": {
-        const riskSummary = "summary" in artifact ? artifact.summary : JSON.stringify(artifact)
-        updated.residualRisks = [...binder.residualRisks, riskSummary]
-        break
-      }
-      case "handoffSummary":
-        updated.handoffSummary = "summary" in artifact ? artifact.summary : JSON.stringify(artifact)
-        break
-      default:
-        return yield* Effect.fail(new BinderError(`Unknown evidence section: ${section}`))
+    const knownSections = new Set([
+      "scoutReports", "architecturePlan", "criticReviews", "approvedPlan",
+      "executionEvents", "transitionEvents", "diffSummary", "validationResults",
+      "redTeamFindings", "repairHistory", "residualRisks", "handoffSummary",
+    ])
+    if (!knownSections.has(section)) {
+      return yield* Effect.fail(new BinderError(`Unknown evidence section: ${section}`))
     }
+
+    const updated = applyEvidenceToBinder(binder, section, artifact)
 
     updated.artifactDigest = computeDigest(updated)
 
@@ -373,7 +515,7 @@ const make = Effect.gen(function* () {
       map.set(laneId, updated)
       return map
     })
-    yield* recordBinderEvent(eventStore, "binder.evidence_added", laneId, { laneId, section })
+    yield* recordBinderEvent(eventStore, "binder.evidence_added", laneId, { laneId, section, artifact })
   })
 
   const updateStatus = Effect.fn("Binder.updateStatus")(function* (
@@ -446,12 +588,14 @@ const make = Effect.gen(function* () {
 
   const service: Interface = {
     createBinder,
+    ensureBinder,
     getBinder,
     getBindersByCampaignId,
     addEvidence,
     updateStatus,
     finalizeBinder,
     getBinderDigest,
+    reconstructBinder,
   }
   return service
 })

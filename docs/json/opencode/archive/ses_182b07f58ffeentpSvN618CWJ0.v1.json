@@ -1,0 +1,13 @@
+{
+  "schema": "v1",
+  "session_id": "ses_182b07f58ffeentpSvN618CWJ0",
+  "agent": "general-man-agent",
+  "archived_at": "2026-05-31T09:46:26.100Z",
+  "summary": "Truth Closure v2: 18 of 20 audit issues addressed across 11 production files. Prior session TRUTH-CLOSURE-V2 applied 16 fixes (secretary events, EVENT_NAME_MAP, STATE_ROLE, state machine transitions, PredicateSpec). This session extended with role-contracts canonical LaneState import, releaseTask idempotency guard, resolveStatus for campaign events, resolveNoBlockingFindings evidence-positive, repair_budget_exhausted resolver, applyEvidenceToBinder, and scoping added to LaneState. Remaining: zero campaign tests, two predicate engines (acknowledged migration debt), integrator lossy Binder consumption (deferred to integration milestone).",
+  "agents_involved": [
+    "general-man-agent"
+  ],
+  "tool_calls": 104,
+  "tool_failures": 2,
+  "handoffs": 146
+}

@@ -1,0 +1,25 @@
+{"at":"2026-05-31T08:56:51.328Z","tool":"smart_bash","action":"bash","command":"/bin/ls packages/","exit_code":0}
+{"at":"2026-05-31T08:59:19.891Z","tool":"smart_bash","action":"bash","command":"/bin/ls packages/console/ 2>/dev/null; /bin/ls packages/sdk/ 2>/dev/null; /bin/ls packages/function/","exit_code":0}
+{"at":"2026-05-31T09:03:37.401Z","tool":"smart_git","action":"git_op","operation":"log","exit_code":0}
+{"at":"2026-05-31T09:03:38.450Z","tool":"smart_grep","action":"searched","pattern":"packages/slack|packages/http-recorder|packages/containers|packages/enterprise|pa","results":30,"files":5}
+{"at":"2026-05-31T09:05:49.714Z","tool":"smart_grep","action":"searched","pattern":"\"name\"","results":6,"files":6}
+{"at":"2026-05-31T09:08:05.983Z","tool":"smart_grep","action":"searched","pattern":"@opencode-ai/(slack|http-recorder|containers|enterprise|script|web)","results":100,"files":47}
+{"at":"2026-05-31T09:08:06.562Z","tool":"smart_grep","action":"searched","pattern":"@opencode-ai/slack","results":8,"files":7}
+{"at":"2026-05-31T09:10:31.494Z","tool":"smart_grep","action":"searched","pattern":"@opencode-ai/(containers|http-recorder|enterprise|script)","results":5,"files":4}
+{"at":"2026-05-31T09:10:32.174Z","tool":"smart_grep","action":"searched","pattern":"@opencode-ai/(containers|http-recorder|enterprise|script|web)","results":4,"files":1}
+{"at":"2026-05-31T09:13:49.282Z","tool":"smart_bash","action":"bash","command":"/bin/ls -la packages/containers/","exit_code":0}
+{"at":"2026-05-31T09:16:28.368Z","tool":"smart_bash","action":"bash","command":"/bin/ls -R packages/containers/script/ 2>/dev/null","exit_code":0}
+{"at":"2026-05-31T09:16:29.089Z","tool":"smart_bash","action":"bash","command":"/bin/ls packages/slack/src/ 2>/dev/null","exit_code":0}
+{"at":"2026-05-31T09:16:29.868Z","tool":"smart_bash","action":"bash","command":"/bin/ls packages/enterprise/src/ 2>/dev/null","exit_code":0}
+{"at":"2026-05-31T09:16:30.657Z","tool":"smart_bash","action":"bash","command":"/bin/ls packages/web/src/ 2>/dev/null","exit_code":0}
+{"at":"2026-05-31T09:16:31.311Z","tool":"smart_bash","action":"bash","command":"/bin/ls packages/script/src/ 2>/dev/null","exit_code":0}
+{"at":"2026-05-31T09:16:32.059Z","tool":"smart_bash","action":"bash","command":"/bin/ls packages/http-recorder/src/ 2>/dev/null","exit_code":0}
+{"at":"2026-05-31T09:23:26.496Z","tool":"smart_bash","action":"bash","command":"/bin/ls -R packages/enterprise/src/core/ 2>/dev/null","exit_code":0}
+{"at":"2026-05-31T09:23:27.167Z","tool":"smart_bash","action":"bash","command":"/bin/ls -R packages/enterprise/src/routes/ 2>/dev/null","exit_code":0}
+{"at":"2026-05-31T09:27:50.407Z","tool":"smart_bash","action":"bash","command":"/bin/ls packages/console/app/ packages/console/core/ packages/console/function/ packages/console/mai","exit_code":0}
+{"at":"2026-05-31T09:27:51.073Z","tool":"smart_bash","action":"bash","command":"/bin/ls packages/function/src/ 2>/dev/null","exit_code":0}
+{"at":"2026-05-31T09:30:36.537Z","tool":"smart_bash","action":"bash","command":"/bin/ls -R packages/containers/base/ packages/containers/publish/ packages/containers/rust/ packages","exit_code":0}
+{"at":"2026-05-31T09:35:33.939Z","tool":"smart_bash","action":"bash","command":"/bin/ls packages/web/src/components/ packages/web/src/pages/ packages/web/src/middleware.ts","exit_code":0}
+{"at":"2026-05-31T09:38:39.866Z","tool":"smart_bash","action":"bash","command":"/bin/ls packages/console/app/src/ 2>/dev/null","exit_code":0}
+{"at":"2026-05-31T09:40:21.772Z","tool":"smart_bash","action":"bash","command":"/bin/ls packages/slack/test/ packages/slack/tests/ 2>/dev/null; /bin/ls packages/http-recorder/test/","exit_code":0}
+{"at":"2026-05-31T09:42:18.645Z","tool":"smart_grep","action":"searched","pattern":"SLACK_BOT_TOKEN|SLACK_SIGNING_SECRET|SLACK_APP_TOKEN|process\\.env\\.OPENCODE_STOR","results":20,"files":5}

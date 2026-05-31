@@ -1,0 +1,15 @@
+{
+  "schema_version": "v1",
+  "plan_id": "binder-reconstruction-getbinder-cache-miss-fallback",
+  "plan_revision": 1,
+  "title": "Make BinderService durable via EventStore reconstruction",
+  "boundary": "binder reconstruction + getBinder cache-miss fallback",
+  "consumer_purpose": "On restart, getBinder() survives process death by replaying binder events from EventStore",
+  "claim_atoms": [
+    "1. reconstructBinder replays binder.* events from EventStore to rebuild Binder; 2. getBinder falls back to reconstruction on cache miss; 3. QueryFilters extended with toolName + laneId for targeted queries"
+  ],
+  "content": "## Changes\n\n### A. event-store.ts — Add toolName + laneId to QueryFilters\n- Add `toolName?: string` and `laneId?: string` to `QueryFilters` interface\n- Add corresponding conditions in `buildWhere()` using existing table columns `tool_name` and `lane_id`\n\n### B. binder.ts — Add reconstructBinder + update getBinder\n\n**New function `reconstructBinder` (inside `make`):**\n1. Query EventStore for `{ sessionId: laneId, toolName: \"binder\", order: \"asc\" }`\n2. If empty → `Effect.succeed(Option.none())`\n3. Find `binder.created` event → extract `laneId`, `campaignId`, `mission`, `scope` from payload\n4. Create initial binder via `createInitialBinder` with extracted params (fallback `mission=\"\"`, `scope=\"\"` if not in payload)\n5. Replay subsequent events in timestamp order:\n   - `binder.status_changed` → update `status` and `terminalStatus`\n   - `binder.finalized` → set `completedAt`, `terminalStatus`\n6. Compute digest → return `Option.some(binder)`\n\n**Updated `getBinder`:**\n- Check memory cache (Ref) → return if hit\n- On miss → call `reconstructBinder(laneId)`\n- If reconstructed → `Ref.update` to cache it → return `Option.some`\n- Otherwise → `Option.none()`\n\n**Enriched event payloads (future-proofing):**\n- `binder.created`: add `mission` and `scope` to payload\n- `binder.evidence_added`: add `artifact` to payload\n\n**Interface addition:**\n- `readonly reconstructBinder: (laneId: string) => Effect.Effect<Option.Option<Binder>>`\n\n### Files touched:\n- `packages/opencode/src/event/event-store.ts` — QueryFilters + buildWhere\n- `packages/opencode/src/campaign/binder.ts` — Interface, reconstructBinder, getBinder, event payloads\n\n### Verification:\n- `bun typecheck` in packages/opencode must pass",
+  "status": "proposed",
+  "created_at": "2026-05-31T08:51:51.296Z",
+  "modified_at": "2026-05-31T08:51:51.296Z"
+}

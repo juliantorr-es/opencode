@@ -6,9 +6,10 @@
 //
 // reduceCampaignState is a pure deterministic function: same
 // events + spec always produces the same output state.
-// SM-003: predicate evaluation now uses typed evidence predicates
+// SM-003: predicate evaluation uses local heuristic predicates. Migration to typed campaign/predicates.ts pending.
 
-import { checkPredicate } from "./predicates"
+import type { PredicateSpec } from "./predicates"
+import { EventName } from "../event/event-names"
 
 // ── Entry Action Executor ─────────────────────────────────
 
@@ -44,34 +45,9 @@ export interface RetryPolicy {
   readonly backoffMs: number
 }
 
-export type PredicateSpec =
-  | { readonly kind: "event_exists"; readonly eventType: string; readonly after?: string }
-  | { readonly kind: "latest_validation_passed"; readonly afterLastEdit: boolean }
-  | { readonly kind: "claims_acquired"; readonly paths: readonly string[] }
-  | { readonly kind: "has_claim_conflict" }
-  | { readonly kind: "permission_denied"; readonly tool: string }
-  | { readonly kind: "retry_budget_remaining"; readonly key: string }
-  | { readonly kind: "user_approval_granted"; readonly approvalType: string }
-  | { readonly kind: "context_sufficient" }
-  | { readonly kind: "scope_unsafe" }
-  | { readonly kind: "edit_applied" }
-  | { readonly kind: "new_validation_failure" }
-  | { readonly kind: "failures_existed_before_edit" }
-  | { readonly kind: "repair_budget_exhausted" }
-  | { readonly kind: "all_children_complete" }
-  | { readonly kind: "child_blocked" }
-  | { readonly kind: "no_blocking_findings" }
-  | { readonly kind: "finding_confirmed" }
-  | { readonly kind: "plan_produced" }
-  | { readonly kind: "plan_approved" }
-  | { readonly kind: "plan_rejected" }
-  | { readonly kind: "scout_completed" }
-  | { readonly kind: "scope_synthesized" }
-  | { readonly kind: "all_gates_pass" }
-
-export interface TransitionSpec {
+export interface TransitionRule {
   readonly to: string
-  readonly when: PredicateSpec
+  readonly predicate: PredicateSpec
   readonly priority?: number
   readonly actions?: readonly ActionSpec[]
 }
@@ -79,12 +55,12 @@ export interface TransitionSpec {
 export interface AgentStateSpec {
   readonly allowedTools: readonly string[]
   readonly entryActions?: readonly ActionSpec[]
-  readonly transitions: readonly TransitionSpec[]
+  readonly transitions: readonly TransitionRule[]
   readonly exitCriteria?: readonly PredicateSpec[]
   readonly retryPolicy?: RetryPolicy
 }
 
-export interface AgentStateMachineSpec {
+export interface AgentMachineSpec {
   readonly id: string
   readonly initial: string
   readonly states: Readonly<Record<string, AgentStateSpec>>
@@ -115,7 +91,7 @@ export interface CampaignState {
 
 // ── Lane State Machine ─────────────────────────────────────
 
-export const LANE_STATE_MACHINE: AgentStateMachineSpec = {
+export const LANE_STATE_MACHINE: AgentMachineSpec = {
   id: "lane",
   initial: "created",
   version: "1.0.0",
@@ -123,66 +99,67 @@ export const LANE_STATE_MACHINE: AgentStateMachineSpec = {
     created: {
       allowedTools: [],
       transitions: [
-        { to: "scouting", when: { kind: "context_sufficient" } },
+        { to: "scouting", predicate: { kind: "context_sufficient" } },
       ],
     },
     scouting: {
       allowedTools: [],
       transitions: [
-        { to: "scoped", when: { kind: "plan_produced" } },
+        { to: "scoped", predicate: { kind: "scout_completed" } },
       ],
     },
     scoped: {
       allowedTools: [],
       transitions: [
-        { to: "planning", when: { kind: "plan_produced" } },
+        { to: "planning", predicate: { kind: "scope_synthesized" } },
       ],
     },
     planning: {
       allowedTools: [],
       transitions: [
-        { to: "critic_review", when: { kind: "plan_produced" } },
+        { to: "critic_review", predicate: { kind: "plan_produced" } },
       ],
     },
     critic_review: {
       allowedTools: [],
       transitions: [
-        { to: "planning", when: { kind: "plan_rejected" }, priority: 5 },
-        { to: "approved", when: { kind: "plan_approved" }, priority: 10 },
+        { to: "planning", predicate: { kind: "plan_rejected" }, priority: 5 },
+        { to: "approved", predicate: { kind: "plan_approved" }, priority: 10 },
       ],
     },
     approved: {
       allowedTools: [],
       transitions: [
-        { to: "executing", when: { kind: "claims_acquired", paths: [] } },
+        { to: "executing", predicate: { kind: "claims_acquired", paths: [] } },
       ],
     },
     executing: {
       allowedTools: [],
       transitions: [
-        { to: "validating", when: { kind: "edit_applied" } },
+        { to: "validating", predicate: { kind: "edit_applied" } },
       ],
     },
     validating: {
       allowedTools: [],
       transitions: [
-        { to: "repairing", when: { kind: "new_validation_failure" }, priority: 5 },
-        { to: "red_team", when: { kind: "latest_validation_passed", afterLastEdit: true }, priority: 10 },
+        { to: "repairing", predicate: { kind: "new_validation_failure" }, priority: 5 },
+        { to: "red_team", predicate: { kind: "latest_validation_passed", afterLastEdit: true }, priority: 10 },
       ],
     },
     red_team: {
       allowedTools: [],
       transitions: [
-        { to: "repairing", when: { kind: "finding_confirmed" }, priority: 5 },
-        { to: "historian", when: { kind: "no_blocking_findings" }, priority: 10 },
+        { to: "repairing", predicate: { kind: "finding_confirmed" }, priority: 5 },
+        { to: "repairing", predicate: { kind: "finding_blocking" }, priority: 6 },
+        { to: "historian", predicate: { kind: "redteam_completed" }, priority: 10 },
       ],
     },
     repairing: {
       allowedTools: [],
       entryActions: [{ kind: "decrement_repair_budget" }],
       transitions: [
-        { to: "scoping", when: { kind: "retry_budget_remaining", key: "repair" }, priority: 5 },
-        { to: "blocked", when: { kind: "repair_budget_exhausted" }, priority: 10 },
+        { to: "executing", predicate: { kind: "retry_budget_remaining", key: "repair", limit: 3 }, priority: 5 },
+        { to: "blocked", predicate: { kind: "repair_budget_exhausted" }, priority: 10 },
       ],
       retryPolicy: { maxRetries: 3, backoffMs: 1000 },
     },
@@ -190,19 +167,19 @@ export const LANE_STATE_MACHINE: AgentStateMachineSpec = {
       allowedTools: [],
       entryActions: [],
       transitions: [
-        { to: "scoped", when: { kind: "context_sufficient" } },
+        { to: "scoped", predicate: { kind: "context_sufficient" } },
       ],
     },
     historian: {
       allowedTools: [],
       transitions: [
-        { to: "checkpointed", when: { kind: "event_exists", eventType: "session.checkpoint" } },
+        { to: "checkpointed", predicate: { kind: "event_exists", eventType: EventName.SessionCheckpoint } },
       ],
     },
     checkpointed: {
       allowedTools: [],
       transitions: [
-        { to: "returned", when: { kind: "event_exists", eventType: "lane.returned" } },
+        { to: "returned", predicate: { kind: "event_exists", eventType: EventName.LaneReturned } },
       ],
     },
     blocked: {
@@ -214,15 +191,15 @@ export const LANE_STATE_MACHINE: AgentStateMachineSpec = {
 
 // ── Campaign State Machine ────────────────────────────────
 
-function blockedTransitions(): readonly TransitionSpec[] {
+function blockedTransitions(): readonly TransitionRule[] {
   return [
-    { to: "blocked", when: { kind: "has_claim_conflict" }, priority: 0 },
-    { to: "blocked", when: { kind: "child_blocked" }, priority: 1 },
-    { to: "blocked", when: { kind: "scope_unsafe" }, priority: 2 },
+    { to: "blocked", predicate: { kind: "has_claim_conflict" }, priority: 0 },
+    { to: "blocked", predicate: { kind: "child_blocked" }, priority: 1 },
+    { to: "blocked", predicate: { kind: "scope_unsafe" }, priority: 2 },
   ] as const
 }
 
-export const CAMPAIGN_STATE_MACHINE: AgentStateMachineSpec = {
+export const CAMPAIGN_STATE_MACHINE: AgentMachineSpec = {
   id: "campaign",
   initial: "created",
   version: "1.0.0",
@@ -231,63 +208,63 @@ export const CAMPAIGN_STATE_MACHINE: AgentStateMachineSpec = {
       allowedTools: [],
       transitions: [
         ...blockedTransitions(),
-        { to: "scouting", when: { kind: "context_sufficient" }, priority: 10 },
+        { to: "scouting", predicate: { kind: "context_sufficient" }, priority: 10 },
       ],
     },
     scouting: {
       allowedTools: [],
       transitions: [
         ...blockedTransitions(),
-        { to: "scope_synthesis", when: { kind: "scout_completed" }, priority: 10 },
+        { to: "scope_synthesis", predicate: { kind: "scout_completed" }, priority: 10 },
       ],
     },
     scope_synthesis: {
       allowedTools: [],
       transitions: [
         ...blockedTransitions(),
-        { to: "lane_decomposition", when: { kind: "scope_synthesized" }, priority: 10 },
+        { to: "lane_decomposition", predicate: { kind: "scope_synthesized" }, priority: 10 },
       ],
     },
     lane_decomposition: {
       allowedTools: [],
       transitions: [
         ...blockedTransitions(),
-        { to: "lane_dispatch", when: { kind: "claims_acquired", paths: [] }, priority: 10 },
+        { to: "lane_dispatch", predicate: { kind: "claims_acquired", paths: [] }, priority: 10 },
       ],
     },
     lane_dispatch: {
       allowedTools: [],
       transitions: [
         ...blockedTransitions(),
-        { to: "waiting_for_lanes", when: { kind: "all_children_complete" }, priority: 10 },
+        { to: "waiting_for_lanes", predicate: { kind: "all_children_complete" }, priority: 10 },
       ],
     },
     waiting_for_lanes: {
       allowedTools: [],
       transitions: [
         ...blockedTransitions(),
-        { to: "integration_review", when: { kind: "all_children_complete" }, priority: 10 },
+        { to: "integration_review", predicate: { kind: "all_children_complete" }, priority: 10 },
       ],
     },
     integration_review: {
       allowedTools: [],
       transitions: [
         ...blockedTransitions(),
-        { to: "final_validation", when: { kind: "no_blocking_findings" }, priority: 10 },
+        { to: "final_validation", predicate: { kind: "no_blocking_findings" }, priority: 10 },
       ],
     },
     final_validation: {
       allowedTools: [],
       transitions: [
         ...blockedTransitions(),
-        { to: "push_ready", when: { kind: "latest_validation_passed", afterLastEdit: false }, priority: 10 },
+        { to: "push_ready", predicate: { kind: "latest_validation_passed", afterLastEdit: false }, priority: 10 },
       ],
     },
     push_ready: {
       allowedTools: [],
       transitions: [
         ...blockedTransitions(),
-        { to: "pushed", when: { kind: "all_gates_pass" }, priority: 10 },
+        { to: "pushed", predicate: { kind: "all_gates_pass" }, priority: 10 },
       ],
     },
     pushed: {
@@ -323,38 +300,40 @@ function evaluatePredicate(
     }
     case "latest_validation_passed": {
       if (predicate.afterLastEdit) {
-        const editEvents = events.filter(e => e.type === "edit.applied")
+        const editEvents = events.filter(e => e.type === EventName.EditApplied)
         if (editEvents.length > 0) {
           const lastEdit = editEvents[editEvents.length - 1]!
           return events.some(
             e =>
-              e.type === "validation.completed" &&
+              e.type === EventName.ValidationCompleted &&
               e.payload?.status === "pass" &&
               (lastEdit.timestamp == null ||
                 (e.timestamp != null && e.timestamp >= lastEdit.timestamp)),
           )
         }
       }
-      const validationEvents = events.filter(e => e.type === "validation.completed")
+      const validationEvents = events.filter(e => e.type === EventName.ValidationCompleted)
       if (validationEvents.length === 0) return false
       return validationEvents[validationEvents.length - 1]!.payload?.status === "pass"
     }
     case "claims_acquired": {
       if (predicate.paths.length === 0) {
-        return events.some(e => e.type === "claims.acquired")
+        return events.some(e => e.type === EventName.ClaimsAcquired)
       }
       return (predicate.paths as readonly string[]).every(path =>
-        events.some(
-          e => e.type === "claims.acquired" && (e.payload as Record<string, unknown> | undefined)?.path === path,
-        ),
+        events.some(e => {
+          if (e.type !== EventName.ClaimsAcquired) return false
+          const acquiredFiles: string[] = (e.payload as Record<string, unknown> | undefined)?.files as string[] ?? []
+          return acquiredFiles.includes(path)
+        }),
       )
     }
     case "has_claim_conflict":
-      return events.some(e => e.type === "claim.conflict")
+      return events.some(e => e.type === EventName.ClaimConflict)
     case "permission_denied":
       return events.some(
         e =>
-          e.type === "permission.denied" &&
+          e.type === EventName.PermissionDenied &&
           (e.payload as Record<string, unknown> | undefined)?.tool === predicate.tool,
       )
     case "retry_budget_remaining": {
@@ -368,47 +347,61 @@ function evaluatePredicate(
     case "user_approval_granted":
       return events.some(
         e =>
-          e.type === "user.approval" &&
+          e.type === EventName.UserApproval &&
           (e.payload as Record<string, unknown> | undefined)?.approvalType === predicate.approvalType,
       )
     case "context_sufficient":
-      return events.some(e => e.type === "context.sufficient")
+      return events.some(e => e.type === EventName.ContextSufficient)
     case "scope_unsafe":
-      return events.some(e => e.type === "scope.unsafe")
+      return events.some(e => e.type === EventName.ScopeUnsafe)
     case "edit_applied":
-      return events.some(e => e.type === "edit.applied")
+      return events.some(e => e.type === EventName.EditApplied)
     case "new_validation_failure":
       return events.some(
         e =>
-          e.type === "validation.failure" &&
+          e.type === EventName.ValidationFailure &&
           (e.payload as Record<string, unknown> | undefined)?.isNew === true,
       )
     case "failures_existed_before_edit":
       return events.some(
         e =>
-          e.type === "validation.failure" &&
+          e.type === EventName.ValidationFailure &&
           (e.payload as Record<string, unknown> | undefined)?.isNew !== true,
       )
     case "all_children_complete":
-      return events.some(e => e.type === "children.all_complete")
+      return events.some(e => e.type === EventName.ChildrenAllComplete)
     case "child_blocked":
-      return events.some(e => e.type === "child.blocked")
-    case "no_blocking_findings":
-      return !events.some(e => e.type === "finding.blocking")
+      return events.some(e => e.type === EventName.ChildBlocked)
+    case "no_blocking_findings": {
+      const completed = events.filter(e => e.type === EventName.RedteamCompleted)
+      if (completed.length === 0) return false
+      const last = completed[completed.length - 1]!
+      const blockingFindings = (last.payload as Record<string, number> | undefined)?.blockingFindings
+      if (blockingFindings !== 0) return false
+      return !events.some(e => e.type === EventName.FindingBlocking)
+    }
     case "finding_confirmed":
-      return events.some(e => e.type === "finding.confirmed")
+      return events.some(e => e.type === EventName.FindingConfirmed)
+    case "finding_blocking":
+      return events.some(e => e.type === EventName.FindingBlocking)
+    case "redteam_completed": {
+      const completed = events.filter(e => e.type === EventName.RedteamCompleted)
+      if (completed.length === 0) return false
+      const last = completed[completed.length - 1]!
+      return (last.payload as Record<string, number> | undefined)?.blockingFindings === 0
+    }
     case "plan_produced":
-      return events.some(e => e.type === "plan.produced")
+      return events.some(e => e.type === EventName.PlanProduced)
     case "plan_approved":
-      return events.some(e => e.type === "plan.approved")
+      return events.some(e => e.type === EventName.PlanApproved)
     case "plan_rejected":
-      return events.some(e => e.type === "plan.rejected")
+      return events.some(e => e.type === EventName.PlanRejected)
     case "scout_completed":
-      return events.some(e => e.type === "scout.completed")
+      return events.some(e => e.type === EventName.ScoutCompleted)
     case "scope_synthesized":
-      return events.some(e => e.type === "scope.synthesized")
+      return events.some(e => e.type === EventName.ScopeSynthesized)
     case "all_gates_pass":
-      return events.some(e => e.type === "gates.all_passed")
+      return events.some(e => e.type === EventName.GatesAllPassed)
   }
   return false
 }
@@ -426,7 +419,7 @@ function evaluatePredicate(
 export function reduceCampaignState(
   previous: CampaignState,
   events: readonly RuntimeEvent[],
-  spec: AgentStateMachineSpec,
+  spec: AgentMachineSpec,
 ): CampaignState {
   if (events.length === 0) return previous
 

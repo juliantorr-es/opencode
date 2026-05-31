@@ -21,6 +21,7 @@ export const CoordinationReservationTable = pgTable("coordination_reservation", 
   session_id: text().notNull(),
   status: text().notNull().$type<"reserved" | "released" | "conflicted">(),
   created_at: integer().notNull(),
+  expires_at: integer(),
 })
 
 export const CoordinationFanOutTable = pgTable(

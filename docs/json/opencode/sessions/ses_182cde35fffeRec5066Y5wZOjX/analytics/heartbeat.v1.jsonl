@@ -32,3 +32,29 @@
 {"at":"2026-05-31T08:44:53.801Z","session_id":"ses_182cde35fffeRec5066Y5wZOjX","agent":"secretary","tool":"smart_bash","phase":"completed","detail":"for exit=0"}
 {"at":"2026-05-31T08:45:57.288Z","session_id":"ses_182cde35fffeRec5066Y5wZOjX","agent":"secretary","tool":"smart_grep","phase":"started","detail":"sign|signing|azure.*key.*vault|CSC|certificate"}
 {"at":"2026-05-31T08:45:57.297Z","session_id":"ses_182cde35fffeRec5066Y5wZOjX","agent":"secretary","tool":"smart_grep","phase":"completed","detail":"sign|signing|azure.*key.*vault|CSC|certificate"}
+{"at":"2026-05-31T08:47:20.257Z","session_id":"ses_182cde35fffeRec5066Y5wZOjX","agent":"secretary","tool":"smart_grep","phase":"started","detail":"desktop|AZURE_TRUSTED_SIGNING|sign-cli|signWindows|artifact-signing"}
+{"at":"2026-05-31T08:47:20.267Z","session_id":"ses_182cde35fffeRec5066Y5wZOjX","agent":"secretary","tool":"smart_grep","phase":"completed","detail":"desktop|AZURE_TRUSTED_SIGNING|sign-cli|signWindows|artifact-signing"}
+{"at":"2026-05-31T08:51:37.401Z","session_id":"ses_182cde35fffeRec5066Y5wZOjX","agent":"secretary","tool":"smart_grep","phase":"started","detail":"^  [a-z].*desktop|^  build-desktop|^  publish-desktop|^  sign-desktop|AZURE_TRUS"}
+{"at":"2026-05-31T08:51:37.415Z","session_id":"ses_182cde35fffeRec5066Y5wZOjX","agent":"secretary","tool":"smart_grep","phase":"completed","detail":"^  [a-z].*desktop|^  build-desktop|^  publish-desktop|^  sign-desktop|AZURE_TRUS"}
+{"at":"2026-05-31T08:51:38.797Z","session_id":"ses_182cde35fffeRec5066Y5wZOjX","agent":"secretary","tool":"smart_grep","phase":"started","detail":"electron-builder|electron.build|packages/desktop|bun run.*desktop"}
+{"at":"2026-05-31T08:51:38.805Z","session_id":"ses_182cde35fffeRec5066Y5wZOjX","agent":"secretary","tool":"smart_grep","phase":"completed","detail":"electron-builder|electron.build|packages/desktop|bun run.*desktop"}
+{"at":"2026-05-31T08:53:38.282Z","session_id":"ses_182cde35fffeRec5066Y5wZOjX","agent":"secretary","tool":"smart_bash","phase":"started","detail":"Read sign-cli-windows job from publish workflow"}
+{"at":"2026-05-31T08:53:38.282Z","session_id":"ses_182cde35fffeRec5066Y5wZOjX","agent":"secretary","tool":"smart_bash","phase":"rerouted","detail":"→ read_source"}
+{"at":"2026-05-31T08:53:39.124Z","session_id":"ses_182cde35fffeRec5066Y5wZOjX","agent":"secretary","tool":"smart_bash","phase":"started","detail":"Read desktop build job from publish workflow"}
+{"at":"2026-05-31T08:53:39.124Z","session_id":"ses_182cde35fffeRec5066Y5wZOjX","agent":"secretary","tool":"smart_bash","phase":"rerouted","detail":"→ read_source"}
+{"at":"2026-05-31T08:55:27.962Z","session_id":"ses_182cde35fffeRec5066Y5wZOjX","agent":"secretary","tool":"smart_bash","phase":"started","detail":"Read sign-cli-windows job section"}
+{"at":"2026-05-31T08:55:28.914Z","session_id":"ses_182cde35fffeRec5066Y5wZOjX","agent":"secretary","tool":"smart_bash","phase":"started","detail":"Read desktop build job section"}
+{"at":"2026-05-31T08:57:41.793Z","session_id":"ses_182cde35fffeRec5066Y5wZOjX","agent":"secretary","tool":"smart_bash","phase":"started","detail":"Read sign-cli-windows job"}
+{"at":"2026-05-31T08:57:41.811Z","session_id":"ses_182cde35fffeRec5066Y5wZOjX","agent":"secretary","tool":"smart_bash","phase":"completed","detail":"awk exit=0"}
+{"at":"2026-05-31T08:57:42.754Z","session_id":"ses_182cde35fffeRec5066Y5wZOjX","agent":"secretary","tool":"smart_bash","phase":"started","detail":"Read desktop build/publish job"}
+{"at":"2026-05-31T08:57:42.821Z","session_id":"ses_182cde35fffeRec5066Y5wZOjX","agent":"secretary","tool":"smart_bash","phase":"completed","detail":"awk exit=0"}
+{"at":"2026-05-31T09:00:13.919Z","session_id":"ses_182cde35fffeRec5066Y5wZOjX","agent":"secretary","tool":"smart_bash","phase":"started","detail":"Read desktop build job env and setup"}
+{"at":"2026-05-31T09:00:13.928Z","session_id":"ses_182cde35fffeRec5066Y5wZOjX","agent":"secretary","tool":"smart_bash","phase":"completed","detail":"awk exit=0"}
+{"at":"2026-05-31T09:00:14.891Z","session_id":"ses_182cde35fffeRec5066Y5wZOjX","agent":"secretary","tool":"smart_bash","phase":"started","detail":"Read post-build signing and verification steps"}
+{"at":"2026-05-31T09:00:14.900Z","session_id":"ses_182cde35fffeRec5066Y5wZOjX","agent":"secretary","tool":"smart_bash","phase":"completed","detail":"awk exit=0"}
+{"at":"2026-05-31T09:02:06.436Z","session_id":"ses_182cde35fffeRec5066Y5wZOjX","agent":"secretary","tool":"smart_bash","phase":"started","detail":"Read desktop build job header with env vars"}
+{"at":"2026-05-31T09:02:06.449Z","session_id":"ses_182cde35fffeRec5066Y5wZOjX","agent":"secretary","tool":"smart_bash","phase":"completed","detail":"awk exit=0"}
+{"at":"2026-05-31T09:02:07.425Z","session_id":"ses_182cde35fffeRec5066Y5wZOjX","agent":"secretary","tool":"smart_bash","phase":"started","detail":"Read desktop build steps with signing verification"}
+{"at":"2026-05-31T09:02:07.440Z","session_id":"ses_182cde35fffeRec5066Y5wZOjX","agent":"secretary","tool":"smart_bash","phase":"completed","detail":"awk exit=0"}
+{"at":"2026-05-31T09:09:07.905Z","session_id":"ses_182cde35fffeRec5066Y5wZOjX","agent":"secretary","tool":"smart_bun","phase":"started","detail":"typecheck"}
+{"at":"2026-05-31T09:09:08.899Z","session_id":"ses_182cde35fffeRec5066Y5wZOjX","agent":"secretary","tool":"smart_bun","phase":"failed","detail":"typecheck exit=1"}

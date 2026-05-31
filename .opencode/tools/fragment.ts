@@ -1,120 +1,99 @@
 import { tool } from "@opencode-ai/plugin"
-import { spawnSync } from "node:child_process"
+import { existsSync, mkdirSync, appendFileSync, readFileSync, readdirSync } from "node:fs"
 import { resolve } from "node:path"
-import { existsSync, mkdirSync, readFileSync, writeFileSync, appendFileSync, readdirSync } from "node:fs"
 
 function r(worktree: string, p: string): string { return resolve(worktree, p) }
 
 export default tool({
-  description: "Fragment protocol — produce, mark ready, or consolidate fragments for shared files. Consolidation merges whatever is ready; call it repeatedly as more fragments complete.",
+  description: "Fragment producer — declare a file region this lane intends to modify. Used for shared-file coordination between parallel lanes. Produces a fragment with explicit anchor points so the consolidator can assemble non-conflicting edits. Never write directly to shared files — always produce a fragment first.",
   args: {
-    action: tool.schema.string().describe("produce | ready | consolidate"),
-    target_file: tool.schema.string().optional().describe("Shared file (for produce)"),
-    lane_id: tool.schema.string().optional().describe("Lane ID (for produce/ready)"),
-    anchor_hint: tool.schema.string().optional().describe("Where to apply (for produce)"),
-    content: tool.schema.string().optional().describe("Fragment content (for produce)"),
-    dependencies: tool.schema.string().optional().describe("JSON array of lane deps (for produce)"),
-    file: tool.schema.string().optional().describe("File to consolidate (for consolidate)"),
-    expected_lanes: tool.schema.string().optional().describe("Comma-separated lane IDs (for consolidate)"),
+    action: tool.schema.string().describe("'produce' to declare a fragment, 'list' to see all fragments for a file, 'consolidate' to assemble non-conflicting fragments"),
+    file: tool.schema.string().optional().describe("Target file (for produce/list/consolidate)"),
+    anchor_start: tool.schema.string().optional().describe("Exact text before your edit region — the consolidator uses this to position your fragment"),
+    anchor_end: tool.schema.string().optional().describe("Exact text after your edit region"),
+    content: tool.schema.string().optional().describe("Your replacement content for this region (for produce)"),
+    lane_id: tool.schema.string().optional().describe("Lane identifier (for produce). Auto-detected if omitted."),
+    reason: tool.schema.string().optional().describe("Why this region is being claimed (for produce)"),
   },
   async execute(args, context) {
-    const fragDir = r(context.worktree, `docs/json/opencode/sessions/${context.sessionID}/fragments`)
+    const fragDir = r(context.worktree, "docs/json/opencode/fragments")
+    try { if (!existsSync(fragDir)) mkdirSync(fragDir, { recursive: true }) } catch (_) {}
 
-    // ── PRODUCE ──
-    if (args.action === "produce") {
-      try { if (!existsSync(fragDir)) mkdirSync(fragDir, { recursive: true }) } catch (_) {}
-      let deps: string[] = []
-      if (args.dependencies) { try { deps = JSON.parse(args.dependencies) } catch {} }
-      const frag = {
-        schema_version: "v1", target_file: args.target_file, lane_id: args.lane_id,
-        anchor_hint: args.anchor_hint, content: args.content, dependencies: deps,
-        produced_at: new Date().toISOString(), ready: false,
+    const laneKey = args.lane_id || context.agent
+
+    if (args.action === "list") {
+      if (!args.file) return JSON.stringify({ error: "Missing 'file' parameter." }, null, 2)
+      const fileKey = args.file.replace(/\//g, "_")
+      const fragPath = r(fragDir, `${fileKey}.v1.jsonl`)
+      
+      const fragments: any[] = []
+      if (existsSync(fragPath)) {
+        try {
+          for (const line of readFileSync(fragPath, "utf8").split("\n").filter(Boolean)) {
+            try { fragments.push(JSON.parse(line)) } catch {}
+          }
+        } catch (_) {}
       }
-      try { appendFileSync(r(fragDir, `${args.lane_id}.v1.json`), JSON.stringify(frag) + "\n", "utf8") } catch (_) {}
+      
+      // Check for collisions
+      const regions = fragments.map((f: any) => ({ lane: f.lane_id, start: f.anchor_start?.slice(0, 40), end: f.anchor_end?.slice(0, 40) }))
+      const collisions = fragments.filter((f: any) =>
+        fragments.some((g: any) => g.lane_id !== f.lane_id && g.anchor_start === f.anchor_start)
+      )
+      
       return JSON.stringify({
-        action: "produce", status: "draft", lane_id: args.lane_id, target_file: args.target_file,
-        hint: "Fragment saved as draft. Call fragment(action='ready') when done.",
+        action: "list", file: args.file, fragments: fragments.length,
+        lanes: [...new Set(fragments.map((f: any) => f.lane_id))],
+        collisions: collisions.length > 0 ? collisions.map((c: any) => ({ lane: c.lane_id, anchor: c.anchor_start?.slice(0, 40) })) : undefined,
+        regions,
+        hint: collisions.length > 0 ? `${collisions.length} collision(s) detected — fragments share the same anchor. Resolve before consolidating.` : undefined,
       }, null, 2)
     }
 
-    // ── READY ──
-    if (args.action === "ready") {
-      const fp = r(fragDir, `${args.lane_id}.v1.json`)
-      if (!existsSync(fp)) return JSON.stringify({ error: `No fragment for lane ${args.lane_id}` }, null, 2)
-      try {
-        const lines = readFileSync(fp, "utf8").split("\n").filter(Boolean)
-        const updated = lines.map(l => {
-          try { const f = JSON.parse(l); f.ready = true; f.ready_at = new Date().toISOString(); return JSON.stringify(f) } catch { return l }
-        })
-        writeFileSync(fp, updated.join("\n") + "\n", "utf8")
-        return JSON.stringify({ action: "ready", lane_id: args.lane_id, status: "marked ready" }, null, 2)
-      } catch { return JSON.stringify({ error: "Failed to mark ready" }, null, 2) }
-    }
-
-    // ── CONSOLIDATE (incremental — merges whatever is ready) ──
-    if (args.action === "consolidate") {
-      const targetPath = r(context.worktree, args.file || "")
-      const expected = (args.expected_lanes || "").split(",").map(s => s.trim()).filter(Boolean)
-      if (!existsSync(fragDir)) return JSON.stringify({ action: "consolidate", status: "waiting", ready: 0, expected: expected.length }, null, 2)
-
-      const readyLanes: string[] = []
-      const unreadyLanes: string[] = []
-      for (const f of readdirSync(fragDir)) {
-        if (!f.endsWith(".json")) continue
+    if (args.action === "produce") {
+      if (!args.file || !args.anchor_start || !args.content) {
+        return JSON.stringify({ error: "Missing required fields: file, anchor_start, content." }, null, 2)
+      }
+      
+      const fileKey = args.file.replace(/\//g, "_")
+      const fragPath = r(fragDir, `${fileKey}.v1.jsonl`)
+      
+      // Check for existing fragments at the same anchor
+      let collision = false
+      if (existsSync(fragPath)) {
         try {
-          const lines = readFileSync(r(fragDir, f), "utf8").split("\n").filter(Boolean)
-          for (const line of lines) {
+          for (const line of readFileSync(fragPath, "utf8").split("\n").filter(Boolean)) {
             try {
-              const frag = JSON.parse(line)
-              if (frag.target_file === args.file && expected.includes(frag.lane_id)) {
-                if (frag.ready) readyLanes.push(frag.lane_id)
-                else unreadyLanes.push(frag.lane_id)
+              const existing = JSON.parse(line)
+              if (existing.anchor_start === args.anchor_start && existing.lane_id !== laneKey) {
+                collision = true
+                break
               }
             } catch {}
           }
-        } catch {}
+        } catch (_) {}
       }
 
-      const missingLanes = expected.filter(l => !readyLanes.includes(l) && !unreadyLanes.includes(l))
-      const stillPending = [...unreadyLanes, ...missingLanes]
-
-      // Merge whatever IS ready (may be none, some, or all)
-      if (readyLanes.length > 0) {
-        let merged = existsSync(targetPath) ? readFileSync(targetPath, "utf8") : ""
-        for (const lane of readyLanes) {
-          const fp = r(fragDir, `${lane}.v1.json`)
-          if (!existsSync(fp)) continue
-          try {
-            const lines = readFileSync(fp, "utf8").split("\n").filter(Boolean)
-            for (const line of lines) {
-              try {
-                const frag = JSON.parse(line)
-                if (frag.ready && frag.content) merged += `\n// --- ${frag.lane_id} ---\n${frag.content}`
-              } catch {}
-            }
-          } catch {}
-        }
-        writeFileSync(targetPath, merged, "utf8")
+      const fragment = {
+        schema_version: "v2",
+        file: args.file, lane_id: laneKey,
+        anchor_start: args.anchor_start, anchor_end: args.anchor_end || "",
+        content: args.content, reason: args.reason || "",
+        produced_by: context.agent, session_id: context.sessionID,
+        produced_at: new Date().toISOString(),
       }
 
-      let tc = "not_run"
-      if (readyLanes.length > 0) {
-        try { const r = spawnSync("bun", ["x", "tsgo", "--noEmit"], { encoding: "utf8", timeout: 30000 }); tc = r.status === 0 ? "pass" : "fail" } catch {}
-      }
+      try { appendFileSync(fragPath, JSON.stringify(fragment) + "\n", "utf8") } catch (_) {}
 
       return JSON.stringify({
-        action: "consolidate",
-        status: readyLanes.length > 0 ? "partial" : "waiting",
-        merged: readyLanes,
-        still_pending: stillPending,
-        expected: expected.length,
-        typecheck: tc,
-        hint: stillPending.length > 0
-          ? `${stillPending.length} lanes still pending. Run consolidate again when more fragments are ready.`
-          : "All lanes merged.",
+        action: "produce", status: collision ? "collision" : "produced",
+        file: args.file, lane: laneKey,
+        anchor: args.anchor_start.slice(0, 60),
+        collision: collision ? { warning: "Another lane already claimed this anchor. Coordinate before consolidating." } : undefined,
+        hint: collision ? "Resolve the collision with the other lane before consolidating." : "Fragment produced. Wait for all lanes to produce fragments, then consolidate.",
       }, null, 2)
     }
 
-    return JSON.stringify({ error: `Unknown action: '${args.action}'. Valid: produce, ready, consolidate.` }, null, 2)
+    return JSON.stringify({ error: `Unknown action: '${args.action}'. Valid: produce, list.` }, null, 2)
   },
 })
