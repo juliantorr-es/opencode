@@ -1,0 +1,28 @@
+{"at":"2026-05-31T14:16:20.406Z","tool":"smart_grep","action":"searched","pattern":"NextAffordance","results":79,"files":28}
+{"at":"2026-05-31T14:16:20.884Z","tool":"smart_grep","action":"searched","pattern":"NextAffordanceSchema","results":11,"files":7}
+{"at":"2026-05-31T14:16:21.392Z","tool":"smart_grep","action":"searched","pattern":"nextAffordances","results":84,"files":26}
+{"at":"2026-05-31T14:16:42.997Z","tool":"smart_grep","action":"searched","pattern":"from \".*typed-result\"","results":1,"files":1}
+{"at":"2026-05-31T14:16:44.024Z","tool":"smart_grep","action":"searched","pattern":"formatOutput|parseOutput|wrapExecute|affordancesAfterSuccess|affordancesFor","results":17,"files":2}
+{"at":"2026-05-31T14:17:13.003Z","tool":"smart_grep","action":"searched","pattern":"suggestedNextTools","results":11,"files":1}
+{"at":"2026-05-31T14:17:14.380Z","tool":"smart_grep","action":"searched","pattern":"typed.result|typed-result|TypedResult|TypedToolResult","results":34,"files":3}
+{"at":"2026-05-31T14:17:48.457Z","tool":"smart_grep","action":"searched","pattern":"nextAffordances|suggestedNextTools|\\.next\\b","results":50,"files":4}
+{"at":"2026-05-31T14:17:50.242Z","tool":"smart_grep","action":"searched","pattern":"\"next\"","results":2,"files":1}
+{"at":"2026-05-31T14:18:33.964Z","tool":"smart_grep","action":"searched","pattern":"typed.result|TypedResult|nextAffordances|NextAffordance","results":0,"files":0}
+{"at":"2026-05-31T14:19:19.003Z","tool":"smart_grep","action":"searched","pattern":"nextAffordances|suggestedNextTools","results":19,"files":1}
+{"at":"2026-05-31T14:19:20.266Z","tool":"smart_grep","action":"searched","pattern":"import.*from.*tool/typed-result|from.*typed.result","results":1,"files":1}
+{"at":"2026-05-31T14:20:02.399Z","tool":"smart_grep","action":"searched","pattern":"toolCategory","results":3,"files":1}
+{"at":"2026-05-31T14:21:37.957Z","tool":"smart_grep","action":"searched","pattern":"^","results":100,"files":2}
+{"at":"2026-05-31T14:21:40.846Z","tool":"smart_grep","action":"searched","pattern":"affordance|nextAffordances|suggestedNextTools|NextAffordance","results":1,"files":1}
+{"at":"2026-05-31T14:23:21.564Z","tool":"smart_grep","action":"searched","pattern":"import","results":132,"files":30}
+{"at":"2026-05-31T14:23:59.168Z","tool":"smart_grep","action":"searched","pattern":"export default","results":30,"files":30}
+{"at":"2026-05-31T14:26:07.752Z","tool":"smart_grep","action":"searched","pattern":"from","results":100,"files":25}
+{"at":"2026-05-31T14:27:33.468Z","tool":"smart_grep","action":"searched","pattern":"TypedResult\\.","results":0,"files":0}
+{"at":"2026-05-31T14:27:34.342Z","tool":"smart_grep","action":"searched","pattern":"JSON\\.stringify","results":50,"files":8}
+{"at":"2026-05-31T14:28:34.774Z","tool":"smart_grep","action":"searched","pattern":"export","results":20,"files":2}
+{"at":"2026-05-31T14:28:35.710Z","tool":"smart_grep","action":"searched","pattern":"^import","results":100,"files":30}
+{"at":"2026-05-31T14:29:15.169Z","tool":"smart_grep","action":"searched","pattern":"fromPlugin","results":0,"files":0}
+{"at":"2026-05-31T14:29:16.363Z","tool":"smart_grep","action":"searched","pattern":"return","results":100,"files":9}
+{"at":"2026-05-31T14:31:06.120Z","tool":"smart_bash","action":"bash","command":"head -380 packages/opencode/src/tool/registry.ts | tail -80","exit_code":0}
+{"at":"2026-05-31T14:32:38.695Z","tool":"smart_grep","action":"searched","pattern":"import \\{ tool \\}","results":29,"files":29}
+{"at":"2026-05-31T14:33:17.978Z","tool":"smart_grep","action":"searched","pattern":"typedResult|TypedResult|NextAffordance|TypedToolResult|formatOutput|parseOutput","results":1,"files":1}
+{"at":"2026-05-31T14:33:52.460Z","tool":"smart_bash","action":"bash","command":"echo .opencode/tools/*.ts | tr ' ' '\\n' | wc -l && echo .opencode/tools/*.ts | tr ' ' '\\n'","exit_code":0}

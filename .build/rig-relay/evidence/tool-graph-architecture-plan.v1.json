@@ -1,0 +1,142 @@
+{
+  "schema": "rig.relay.architecture_plan.v1",
+  "plan_id": "tool-graph-cross-tool-dependency-graph-as-an-effect-service-external-to-tool-def",
+  "generated_at": "2026-05-31T00:00:00Z",
+  "boundary": "Cross-tool dependency graph as an Effect Context.Service, external to Tool.Def, replacing string-matching toolCategory() with data-flow-aware pipeline suggestions for all 80 tools",
+  "consumer_purpose": "The LLM receives pipeline-aware next-tool suggestions after every tool call. After smart_find it sees read_source/read (data-flow consumers), not same-category search tools.",
+  "claim_atoms": [
+    "NEW tool-graph.ts Effect service (Interface + Service + layer + defaultLayer) with ToolGraph class, auto-node generation, 28 seeded edges, BFS traversal",
+    "MODIFY typed-result.ts: delete TOOL_CATEGORIES/toolCategory(), use graph via setToolGraph() injection. External signatures preserved",
+    "MODIFY registry.ts: add suggestNext() + suggestPipeline() to Interface, build graph after tool init in layer",
+    "NEW test/tool/tool-graph.test.ts: 10 test cases covering construction, traversal, edge cases, integration"
+  ],
+  "root_causes": [
+    {
+      "hypothesis": "No graph data structure — Tool.Def has zero metadata about produces/consumes. Affordances hardcoded per category in switch/case",
+      "confidence": "high",
+      "evidence": ["tool.ts:93-109", "typed-result.ts:269-298", "typed-result.ts:245-248"]
+    },
+    {
+      "hypothesis": "String-matching category assignment (toolID.includes()) misclassifies 62/80 tools to 'diagnose' fallback. Static map unreachable for mismatched IDs",
+      "confidence": "high",
+      "evidence": ["typed-result.ts:235-243", "coordination ∈ TOOL_CATEGORIES['manage'] but toolCategory('coordination') → 'diagnose'"]
+    },
+    {
+      "hypothesis": "TOOL_CATEGORIES covers 18/80 tools (22.5%). Must be manually updated per new tool",
+      "confidence": "high",
+      "evidence": ["typed-result.ts:225-233", "80 Tool.define calls confirmed"]
+    },
+    {
+      "hypothesis": "Same-category-only suggestions can't express cross-category pipelines (search→read, delegation→monitoring, discovery→publication)",
+      "confidence": "high",
+      "evidence": ["typed-result.ts:245-248", "smart_find→read_source invisible (search→read categories)"]
+    }
+  ],
+  "fixes": [
+    {
+      "id": "fix-A",
+      "file": "packages/opencode/src/tool/tool-graph.ts (NEW)",
+      "description": "Create Effect Context.Service module with ToolGraph class, buildGraph() factory, 28 seeded edges, BFS traversal",
+      "conventions": "Follows truncate.ts:48 pattern: Interface → Service extends Context.Service → Layer.effect → defaultLayer → export * as ToolGraph",
+      "lines": "~280",
+      "key_exports": ["Interface", "Service", "layer", "defaultLayer", "ToolGraph", "buildGraph", "findDownstream", "findUpstream", "suggestPipeline", "getNode"],
+      "seeded_edges": 28,
+      "tool_categories": 14
+    },
+    {
+      "id": "fix-B",
+      "file": "packages/opencode/src/tool/typed-result.ts (MODIFY)",
+      "description": "Delete TOOL_CATEGORIES (L225-233) and toolCategory() (L235-243). Add setToolGraph() injection. Rewrite suggestion/affordance functions to use graph lookups",
+      "changes": "Delete ~30 lines, add ~35 lines. Net change: ~5 lines. External signatures unchanged.",
+      "signature_preservation": "makeSuccess, makeFailure, makeDenied, makeCancelled, fromDefect, wrapExecute — all external signatures unchanged"
+    },
+    {
+      "id": "fix-C",
+      "file": "packages/opencode/src/tool/registry.ts (MODIFY)",
+      "description": "Add suggestNext(fromId) and suggestPipeline(fromId, goalKind) to Interface. Build graph during layer construction after all Tool.init() calls resolve. Call setToolGraph()",
+      "changes": "Add ~15 lines to Interface + layer body",
+      "new_interface_methods": ["suggestNext(fromId: string): Effect.Effect<string[]>", "suggestPipeline(fromId: string, goalKind: string): Effect.Effect<string[]>"]
+    },
+    {
+      "id": "fix-D",
+      "file": "packages/opencode/test/tool/tool-graph.test.ts (NEW)",
+      "description": "10 test cases: graph construction, traversal, pipeline suggestion, edge cases, integration with typed-result and registry",
+      "lines": "~200",
+      "test_count": 10
+    }
+  ],
+  "apply_order": ["fix-A", "fix-D", "fix-B", "fix-C"],
+  "rollback_plan": "Revert 2 new files + 2 modified files. No migration data. No DB changes. No plugin API changes.",
+  "blast_radius": {
+    "external_consumers_affected": 0,
+    "plugin_impact": "NONE",
+    "interface_additions": 2,
+    "existing_tests_to_rerun": [
+      "packages/opencode/test/tool/checkpoint-tools.test.ts",
+      "packages/opencode/test/tool/failure-tools.test.ts",
+      "packages/opencode/test/tool/project-tools.test.ts",
+      "packages/opencode/test/tool/skill.test.ts",
+      "packages/opencode/test/campaign/regression-proofs.test.ts"
+    ]
+  },
+  "graph_schema": {
+    "ToolNode": {"id": "string", "file": "string", "category": "14 categories", "produces": "OutputShape[]", "consumes": "InputShape[]", "description": "string"},
+    "ToolEdge": {"from": "string", "to": "string", "kind": "feeds|alternatives|composes|guards|heuristic", "confidence": "high|medium|low", "description": "string"},
+    "PipelineSpec": {"name": "string", "description": "string", "steps": "string[]", "category": "string"},
+    "ToolGraph_class": {"nodes": "Map<string,ToolNode>", "edges": "ToolEdge[]", "pipelines": "PipelineSpec[]", "methods": ["findDownstream", "findUpstream", "suggestPipeline", "getNode"]}
+  },
+  "edge_inventory": [
+    {"from": "smart_find", "to": "read_source", "kind": "feeds", "confidence": "high"},
+    {"from": "smart_find", "to": "read", "kind": "feeds", "confidence": "high"},
+    {"from": "smart_grep", "to": "read_source", "kind": "feeds", "confidence": "high"},
+    {"from": "smart_grep", "to": "read", "kind": "feeds", "confidence": "high"},
+    {"from": "grep", "to": "read_source", "kind": "feeds", "confidence": "high"},
+    {"from": "grep", "to": "read", "kind": "feeds", "confidence": "high"},
+    {"from": "produce_fragment", "to": "smart_batch", "kind": "feeds", "confidence": "medium"},
+    {"from": "delegate", "to": "task_board", "kind": "feeds", "confidence": "high"},
+    {"from": "smart_session", "to": "task_board", "kind": "feeds", "confidence": "medium"},
+    {"from": "roadmap_init", "to": "roadmap_prioritize", "kind": "feeds", "confidence": "high"},
+    {"from": "roadmap_prioritize", "to": "delegate", "kind": "feeds", "confidence": "high"},
+    {"from": "json_query", "to": "smart_write", "kind": "feeds", "confidence": "medium"},
+    {"from": "smart_bash", "to": "read", "kind": "feeds", "confidence": "high"},
+    {"from": "checkpoint", "to": "publish_checkpoint", "kind": "composes", "confidence": "high"},
+    {"from": "discover_findings", "to": "publish_finding", "kind": "composes", "confidence": "high"},
+    {"from": "rig_schema_validate", "to": "smart_write", "kind": "feeds", "confidence": "medium"},
+    {"from": "smart_edit", "to": "smart_bun", "kind": "feeds", "confidence": "high"},
+    {"from": "smart_write", "to": "smart_bun", "kind": "feeds", "confidence": "high"},
+    {"from": "smart_edit", "to": "smart_git", "kind": "feeds", "confidence": "medium"},
+    {"from": "preflight_check", "to": "smart_edit", "kind": "guards", "confidence": "medium"},
+    {"from": "file_lock", "to": "smart_edit", "kind": "guards", "confidence": "high"},
+    {"from": "tool_failure", "to": "tool_feedback", "kind": "feeds", "confidence": "high"},
+    {"from": "read_source", "to": "smart_edit", "kind": "feeds", "confidence": "high"},
+    {"from": "read_source", "to": "smart_grep", "kind": "feeds", "confidence": "medium"},
+    {"from": "smart_find", "to": "read_artifact", "kind": "feeds", "confidence": "medium"},
+    {"from": "roadmap_init", "to": "smart_write", "kind": "feeds", "confidence": "medium"},
+    {"from": "propose_plan", "to": "comment_plan", "kind": "feeds", "confidence": "high"},
+    {"from": "propose_plan", "to": "revise_plan", "kind": "feeds", "confidence": "high"}
+  ],
+  "pipelines": [
+    {"name": "find-read-edit", "steps": ["smart_find", "read_source", "smart_edit"]},
+    {"name": "grep-read-edit", "steps": ["smart_grep", "read_source", "smart_edit"]},
+    {"name": "roadmap-to-delegation", "steps": ["roadmap_init", "roadmap_prioritize", "delegate"]},
+    {"name": "discovery-to-publication", "steps": ["discover_findings", "publish_finding"]},
+    {"name": "edit-test-commit", "steps": ["smart_edit", "smart_bun", "smart_git"]},
+    {"name": "fragment-to-batch", "steps": ["produce_fragment", "smart_batch"]},
+    {"name": "checkpoint-publish", "steps": ["checkpoint", "publish_checkpoint"]},
+    {"name": "bash-read", "steps": ["smart_bash", "read"]}
+  ],
+  "subagent_report": {
+    "foundation": {
+      "root_causes_found": 4,
+      "key_finding": "coordination ∈ TOOL_CATEGORIES['manage'] but toolCategory('coordination') → 'diagnose' — static map unreachable for mismatched IDs. 62/80 tools collapse to diagnose."
+    },
+    "load_bearer": {
+      "affected_files": 13,
+      "key_finding": "ZERO external consumers of suggestedNextTools/nextAffordances outside typed-result.ts. Data reaches LLM via formatOutput() serialization only. No plugin impact."
+    },
+    "zoning_board": {
+      "convention_violations": 5,
+      "key_finding": "Must use Context.Service pattern, not plain class. Test dir is test/ not tests/. File named tool-graph.ts (no underscore)."
+    }
+  }
+}

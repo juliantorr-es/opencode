@@ -49,6 +49,9 @@ export const EventName = {
   ProjectUpdated: 'project.updated',
   VcsBranchUpdated: 'vcs.branch.updated',
 
+  // project_map.*
+  ProjectMapInvalidated: 'project_map.invalidated',
+
   // mcp.*
   McpToolsChanged: 'mcp.tools.changed',
   McpBrowserOpenFailed: 'mcp.browser.open.failed',
@@ -84,6 +87,28 @@ export const EventName = {
   SessionNextModelSwitched: 'session.next.model.switched',
   SessionNextPrompted: 'session.next.prompted',
   SessionNextSynthetic: 'session.next.synthetic',
+  SessionNextShellStarted: 'session.next.shell.started',
+  SessionNextShellEnded: 'session.next.shell.ended',
+  SessionNextStepStarted: 'session.next.step.started',
+  SessionNextStepEnded: 'session.next.step.ended',
+  SessionNextStepFailed: 'session.next.step.failed',
+  SessionNextTextStarted: 'session.next.text.started',
+  SessionNextTextDelta: 'session.next.text.delta',
+  SessionNextTextEnded: 'session.next.text.ended',
+  SessionNextReasoningStarted: 'session.next.reasoning.started',
+  SessionNextReasoningDelta: 'session.next.reasoning.delta',
+  SessionNextReasoningEnded: 'session.next.reasoning.ended',
+  SessionNextToolInputStarted: 'session.next.tool.input.started',
+  SessionNextToolInputDelta: 'session.next.tool.input.delta',
+  SessionNextToolInputEnded: 'session.next.tool.input.ended',
+  SessionNextToolCalled: 'session.next.tool.called',
+  SessionNextToolProgress: 'session.next.tool.progress',
+  SessionNextToolSuccess: 'session.next.tool.success',
+  SessionNextToolFailed: 'session.next.tool.failed',
+  SessionNextRetried: 'session.next.retried',
+  SessionNextCompactionStarted: 'session.next.compaction.started',
+  SessionNextCompactionDelta: 'session.next.compaction.delta',
+  SessionNextCompactionEnded: 'session.next.compaction.ended',
 
   // workspace.*
   WorkspaceReady: 'workspace.ready',

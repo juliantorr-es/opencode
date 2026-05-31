@@ -1,0 +1,76 @@
+{"at":"2026-05-31T12:47:45.854Z","session_id":"ses_181ecab13ffeb9165mSXl8QNV7","agent":"cartographer","tool":"smart_find","phase":"started","detail":"*.ts"}
+{"at":"2026-05-31T12:47:45.916Z","session_id":"ses_181ecab13ffeb9165mSXl8QNV7","agent":"cartographer","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T12:47:46.405Z","session_id":"ses_181ecab13ffeb9165mSXl8QNV7","agent":"cartographer","tool":"smart_find","phase":"started","detail":"*.ts"}
+{"at":"2026-05-31T12:47:46.445Z","session_id":"ses_181ecab13ffeb9165mSXl8QNV7","agent":"cartographer","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T12:47:46.950Z","session_id":"ses_181ecab13ffeb9165mSXl8QNV7","agent":"cartographer","tool":"smart_find","phase":"started","detail":"*.ts"}
+{"at":"2026-05-31T12:47:46.950Z","session_id":"ses_181ecab13ffeb9165mSXl8QNV7","agent":"cartographer","tool":"smart_find","phase":"failed","detail":"path not found"}
+{"at":"2026-05-31T12:47:55.741Z","session_id":"ses_181ecab13ffeb9165mSXl8QNV7","agent":"cartographer","tool":"smart_grep","phase":"started","detail":".*"}
+{"at":"2026-05-31T12:47:55.750Z","session_id":"ses_181ecab13ffeb9165mSXl8QNV7","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":".*"}
+{"at":"2026-05-31T12:47:56.722Z","session_id":"ses_181ecab13ffeb9165mSXl8QNV7","agent":"cartographer","tool":"smart_grep","phase":"started","detail":".*"}
+{"at":"2026-05-31T12:47:56.741Z","session_id":"ses_181ecab13ffeb9165mSXl8QNV7","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":".*"}
+{"at":"2026-05-31T12:47:57.747Z","session_id":"ses_181ecab13ffeb9165mSXl8QNV7","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Find MCP, plugin, and sidecar directories"}
+{"at":"2026-05-31T12:47:57.747Z","session_id":"ses_181ecab13ffeb9165mSXl8QNV7","agent":"cartographer","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T12:47:59.497Z","session_id":"ses_181ecab13ffeb9165mSXl8QNV7","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Find all MCP, plugin, and sidecar TypeScript files"}
+{"at":"2026-05-31T12:47:59.497Z","session_id":"ses_181ecab13ffeb9165mSXl8QNV7","agent":"cartographer","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T12:48:05.706Z","session_id":"ses_181ecab13ffeb9165mSXl8QNV7","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"List MCP directory contents"}
+{"at":"2026-05-31T12:48:05.707Z","session_id":"ses_181ecab13ffeb9165mSXl8QNV7","agent":"cartographer","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T12:48:06.316Z","session_id":"ses_181ecab13ffeb9165mSXl8QNV7","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"List plugin directory contents"}
+{"at":"2026-05-31T12:48:06.316Z","session_id":"ses_181ecab13ffeb9165mSXl8QNV7","agent":"cartographer","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T12:48:07.587Z","session_id":"ses_181ecab13ffeb9165mSXl8QNV7","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Find all relevant directories"}
+{"at":"2026-05-31T12:48:07.588Z","session_id":"ses_181ecab13ffeb9165mSXl8QNV7","agent":"cartographer","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T12:48:09.007Z","session_id":"ses_181ecab13ffeb9165mSXl8QNV7","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Find MCP and sidecar TypeScript files across project"}
+{"at":"2026-05-31T12:48:09.008Z","session_id":"ses_181ecab13ffeb9165mSXl8QNV7","agent":"cartographer","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T12:48:19.889Z","session_id":"ses_181ecab13ffeb9165mSXl8QNV7","agent":"cartographer","tool":"smart_find","phase":"started","detail":"*.ts"}
+{"at":"2026-05-31T12:48:19.921Z","session_id":"ses_181ecab13ffeb9165mSXl8QNV7","agent":"cartographer","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T12:48:20.656Z","session_id":"ses_181ecab13ffeb9165mSXl8QNV7","agent":"cartographer","tool":"smart_find","phase":"started","detail":"*.ts"}
+{"at":"2026-05-31T12:48:20.691Z","session_id":"ses_181ecab13ffeb9165mSXl8QNV7","agent":"cartographer","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T12:48:21.562Z","session_id":"ses_181ecab13ffeb9165mSXl8QNV7","agent":"cartographer","tool":"smart_find","phase":"started","detail":"*agent*"}
+{"at":"2026-05-31T12:48:21.610Z","session_id":"ses_181ecab13ffeb9165mSXl8QNV7","agent":"cartographer","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T12:48:22.739Z","session_id":"ses_181ecab13ffeb9165mSXl8QNV7","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"sidecar|capability.*broker|capability.*manifest"}
+{"at":"2026-05-31T12:48:22.836Z","session_id":"ses_181ecab13ffeb9165mSXl8QNV7","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"sidecar|capability.*broker|capability.*manifest"}
+{"at":"2026-05-31T12:48:45.316Z","session_id":"ses_181ecab13ffeb9165mSXl8QNV7","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"export|class|interface|type|enum|const"}
+{"at":"2026-05-31T12:48:45.335Z","session_id":"ses_181ecab13ffeb9165mSXl8QNV7","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"export|class|interface|type|enum|const"}
+{"at":"2026-05-31T12:48:46.642Z","session_id":"ses_181ecab13ffeb9165mSXl8QNV7","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"export|class|interface|type|enum|const"}
+{"at":"2026-05-31T12:48:46.653Z","session_id":"ses_181ecab13ffeb9165mSXl8QNV7","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"export|class|interface|type|enum|const"}
+{"at":"2026-05-31T12:48:47.668Z","session_id":"ses_181ecab13ffeb9165mSXl8QNV7","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"mcp|MCP|McpServer"}
+{"at":"2026-05-31T12:48:47.687Z","session_id":"ses_181ecab13ffeb9165mSXl8QNV7","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"mcp|MCP|McpServer"}
+{"at":"2026-05-31T12:49:11.467Z","session_id":"ses_181ecab13ffeb9165mSXl8QNV7","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"from \\\"@/mcp\\\"|from \\\"@/mcp/"}
+{"at":"2026-05-31T12:49:11.493Z","session_id":"ses_181ecab13ffeb9165mSXl8QNV7","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"from \\\"@/mcp\\\"|from \\\"@/mcp/"}
+{"at":"2026-05-31T12:49:12.657Z","session_id":"ses_181ecab13ffeb9165mSXl8QNV7","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"MCP\\.Service|MCP\\.Status|MCP\\b"}
+{"at":"2026-05-31T12:49:12.706Z","session_id":"ses_181ecab13ffeb9165mSXl8QNV7","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"MCP\\.Service|MCP\\.Status|MCP\\b"}
+{"at":"2026-05-31T12:50:29.540Z","session_id":"ses_181ecab13ffeb9165mSXl8QNV7","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"McpServerStatus|McpServerInfo|McpStatus|McpConnectionType"}
+{"at":"2026-05-31T12:50:29.563Z","session_id":"ses_181ecab13ffeb9165mSXl8QNV7","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"McpServerStatus|McpServerInfo|McpStatus|McpConnectionType"}
+{"at":"2026-05-31T12:51:07.734Z","session_id":"ses_181ecab13ffeb9165mSXl8QNV7","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"mcp.*Schema|McpConfig|McpServer.*Schema|MCP_SERVER"}
+{"at":"2026-05-31T12:51:07.785Z","session_id":"ses_181ecab13ffeb9165mSXl8QNV7","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"mcp.*Schema|McpConfig|McpServer.*Schema|MCP_SERVER"}
+{"at":"2026-05-31T12:51:09.026Z","session_id":"ses_181ecab13ffeb9165mSXl8QNV7","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"export.*from.*mcp|export.*MCP|\\\"@/mcp\\\""}
+{"at":"2026-05-31T12:51:09.101Z","session_id":"ses_181ecab13ffeb9165mSXl8QNV7","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"export.*from.*mcp|export.*MCP|\\\"@/mcp\\\""}
+{"at":"2026-05-31T12:52:30.379Z","session_id":"ses_181ecab13ffeb9165mSXl8QNV7","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"export|Schema|type|interface"}
+{"at":"2026-05-31T12:52:30.417Z","session_id":"ses_181ecab13ffeb9165mSXl8QNV7","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"export|Schema|type|interface"}
+{"at":"2026-05-31T12:54:08.812Z","session_id":"ses_181ecab13ffeb9165mSXl8QNV7","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"describe|it\\(|test\\("}
+{"at":"2026-05-31T12:54:09.050Z","session_id":"ses_181ecab13ffeb9165mSXl8QNV7","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"describe|it\\(|test\\("}
+{"at":"2026-05-31T12:55:42.087Z","session_id":"ses_181ecab13ffeb9165mSXl8QNV7","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"Schema\\.Struct\\({|Schema\\.Literal\\(|_tag"}
+{"at":"2026-05-31T12:55:42.122Z","session_id":"ses_181ecab13ffeb9165mSXl8QNV7","agent":"cartographer","tool":"smart_grep","phase":"failed","detail":"rg: regex parse error:\n    (?:Schema\\.Struct\\({|Schema\\.Literal\\(|_tag)\n                        ^\nerror: repetition quantifier expects a valid decimal"}
+{"at":"2026-05-31T12:55:43.460Z","session_id":"ses_181ecab13ffeb9165mSXl8QNV7","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"McpStatusConnected|McpStatusDisabled|McpStatusFailed|McpStatusNeedsAuth|McpStatu"}
+{"at":"2026-05-31T12:55:43.480Z","session_id":"ses_181ecab13ffeb9165mSXl8QNV7","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"McpStatusConnected|McpStatusDisabled|McpStatusFailed|McpStatusNeedsAuth|McpStatu"}
+{"at":"2026-05-31T12:55:44.530Z","session_id":"ses_181ecab13ffeb9165mSXl8QNV7","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"oauth-provider|oauth-callback"}
+{"at":"2026-05-31T12:55:44.543Z","session_id":"ses_181ecab13ffeb9165mSXl8QNV7","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"oauth-provider|oauth-callback"}
+{"at":"2026-05-31T12:56:30.715Z","session_id":"ses_181ecab13ffeb9165mSXl8QNV7","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"Schema.Struct"}
+{"at":"2026-05-31T12:56:30.723Z","session_id":"ses_181ecab13ffeb9165mSXl8QNV7","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"Schema.Struct"}
+{"at":"2026-05-31T12:57:15.628Z","session_id":"ses_181ecab13ffeb9165mSXl8QNV7","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Read MCP Status schema definition"}
+{"at":"2026-05-31T12:57:16.586Z","session_id":"ses_181ecab13ffeb9165mSXl8QNV7","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Read MCP Interface definition"}
+{"at":"2026-05-31T12:57:53.919Z","session_id":"ses_181ecab13ffeb9165mSXl8QNV7","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"connected|disabled|failed|needs_auth|needs_client|loading|starting"}
+{"at":"2026-05-31T12:57:53.933Z","session_id":"ses_181ecab13ffeb9165mSXl8QNV7","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"connected|disabled|failed|needs_auth|needs_client|loading|starting"}
+{"at":"2026-05-31T12:59:26.315Z","session_id":"ses_181ecab13ffeb9165mSXl8QNV7","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"GET_DESKTOP_MCP_SERVERS|SET_DESKTOP_MCP_SERVERS|MCP_SERVERS"}
+{"at":"2026-05-31T12:59:26.338Z","session_id":"ses_181ecab13ffeb9165mSXl8QNV7","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"GET_DESKTOP_MCP_SERVERS|SET_DESKTOP_MCP_SERVERS|MCP_SERVERS"}
+{"at":"2026-05-31T12:59:27.387Z","session_id":"ses_181ecab13ffeb9165mSXl8QNV7","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"capability|CapabilityBroker|HOOK_CAPABILITY"}
+{"at":"2026-05-31T12:59:27.402Z","session_id":"ses_181ecab13ffeb9165mSXl8QNV7","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"capability|CapabilityBroker|HOOK_CAPABILITY"}
+{"at":"2026-05-31T13:00:12.635Z","session_id":"ses_181ecab13ffeb9165mSXl8QNV7","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"sidecar\\.js|sidecar\\.ts|sidecar protocol"}
+{"at":"2026-05-31T13:00:12.867Z","session_id":"ses_181ecab13ffeb9165mSXl8QNV7","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"sidecar\\.js|sidecar\\.ts|sidecar protocol"}
+{"at":"2026-05-31T13:01:02.074Z","session_id":"ses_181ecab13ffeb9165mSXl8QNV7","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"export.*Registry|makeCapabilityRegistry|checkCapability"}
+{"at":"2026-05-31T13:01:02.111Z","session_id":"ses_181ecab13ffeb9165mSXl8QNV7","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"export.*Registry|makeCapabilityRegistry|checkCapability"}
+{"at":"2026-05-31T13:01:02.925Z","session_id":"ses_181ecab13ffeb9165mSXl8QNV7","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"List plugin directory files"}
+{"at":"2026-05-31T13:01:02.925Z","session_id":"ses_181ecab13ffeb9165mSXl8QNV7","agent":"cartographer","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T13:03:11.790Z","session_id":"ses_181ecab13ffeb9165mSXl8QNV7","agent":"cartographer","tool":"smart_write","phase":"started","detail":"/Users/user/Developer/GitHub/opencode-desktop-dev/docs/json/opencode/maps/mcp-si"}
+{"at":"2026-05-31T13:03:11.790Z","session_id":"ses_181ecab13ffeb9165mSXl8QNV7","agent":"cartographer","tool":"smart_write","phase":"completed","detail":"/Users/user/Developer/GitHub/opencode-desktop-dev/docs/json/opencode/maps/mcp-si"}
+{"at":"2026-05-31T13:11:20.955Z","session_id":"ses_181ecab13ffeb9165mSXl8QNV7","agent":"cartographer","tool":"smart_edit","phase":"started","detail":"/Users/user/Developer/GitHub/opencode-desktop-dev/docs/json/opencode/maps/mcp-si"}
+{"at":"2026-05-31T13:11:20.973Z","session_id":"ses_181ecab13ffeb9165mSXl8QNV7","agent":"cartographer","tool":"smart_edit","phase":"completed","detail":"/Users/user/Developer/GitHub/opencode-desktop-dev/docs/json/opencode/maps/mcp-si"}

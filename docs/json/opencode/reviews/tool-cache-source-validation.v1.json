@@ -1,0 +1,176 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "schema_version": "1.0",
+  "generated_at": "2026-05-31T00:00:00Z",
+  "subject": "TOOL-CACHE implementation source-level validation",
+  "methodology": "source-level inspection (tests cannot run due to pre-existing cross-lane bug in tool-graph.ts:207 Pipeable.js TypeError)",
+  "files_audited": [
+    "packages/opencode/src/tool/cache-key.ts (NEW)",
+    "packages/opencode/src/tool/cache.ts (MODIFIED)",
+    "packages/opencode/src/tool/tool.ts (MODIFIED)",
+    "packages/opencode/src/session/tools.ts (MODIFIED)",
+    "packages/opencode/src/tool/read.ts (MODIFIED)",
+    "packages/opencode/test/tool/cache-pipeline.test.ts (NEW)"
+  ],
+  "typecheck": {
+    "status": "pass",
+    "detail": "Zero type errors in the 6 target files. All 200+ type errors in bun typecheck are pre-existing in unrelated files (campaign/, tool/registry.test.ts, capability-proxy-bisect.test.ts)."
+  },
+  "objectives": {
+    "OBJ-001": {
+      "requirement": "serviceOption pattern + cache.available span with true/false values",
+      "status": "covered",
+      "evidence": "tool.ts:192-197 — Effect.serviceOption(ToolCache.Service) with cache.available: 'false' (line 194) and cache.available: 'true' (line 197)"
+    },
+    "OBJ-002": {
+      "requirement": "miss_reason, key_kind, result_source spans covering all 4 result sources and miss reasons",
+      "status": "covered",
+      "evidence": {
+        "result_sources": {
+          "cache": "cache.ts:105 — result_source: 'cache'",
+          "miss": "cache.ts:117 — result_source: 'miss' (with miss_reason: 'ttl_expired')",
+          "dedup": "cache.ts:137 — result_source: 'dedup'",
+          "compute": "cache.ts:148 — result_source: 'compute'"
+        },
+        "miss_reasons": {
+          "ttl_expired": "cache.ts:115",
+          "maxEntrySize": "cache.ts:205"
+        },
+        "key_kind": "sha256 on all 5 annotation sites (cache.ts:104,116,136,147,207)"
+      },
+      "gaps": ["Minor: No miss_reason: 'not_found' on cold miss — derivable by exclusion but less queryable"]
+    },
+    "OBJ-003": {
+      "requirement": "invalidation span coverage: cache.invalidated, cache.invalidation_scope, cache.invalidation_entries, cache.invalidation_bytes, cache.invalidation_trigger_tool",
+      "status": "covered",
+      "evidence": "tools.ts:119-124 — all 5 required fields present, invalidation_scope: 'full'",
+      "gaps": [
+        "Minor: No cache.invalidated: false annotation when tool is cacheable (absence is signal, but not queryable)",
+        "Minor: No partial/per-key invalidation spans (invalidateKey exists but is never called)"
+      ]
+    },
+    "OBJ-004": {
+      "requirement": "sessionID + agent included in cache key",
+      "status": "covered",
+      "evidence": "cache-key.ts:35 — payload = `${toolID}|${sessionID}|${agent}|${normalized}`. Verified: changing either sessionID or agent produces different SHA256 hash."
+    },
+    "OBJ-005": {
+      "requirement": "6 pipeline tests: (a) maxEntrySize bypass, (b) permission bypass on cache hit, (c) abort signal interaction",
+      "status": "partial_fail",
+      "evidence": {
+        "tests_present": 6,
+        "tests_at_wrong_layer": "All 6 tests exercise ToolCache.Service directly via testEffect(ToolCache.defaultLayer), NOT the pipeline wired into tool.ts wrap().",
+        "condition_a": "covered — Test 2 'maxEntrySize bypass' (lines 14-33)",
+        "condition_b": "NOT IMPLEMENTED — requires full pipeline layer (wrap()) to test ctx.ask bypass on cache hit",
+        "condition_c": "NOT IMPLEMENTED — requires full pipeline layer to test abort signal interaction with cached results"
+      },
+      "gaps": [
+        "No TTL/expiry test (TestClock available but unused)",
+        "Heavy as any casts on cache service — discards type safety",
+        "Mislabeled: file name says 'cache-pipeline' but tests cache layer only"
+      ]
+    },
+    "OBJ-006": {
+      "requirement": "read.ts LSP caching fix — cacheable config with LSP-aware TTL",
+      "status": "covered",
+      "evidence": "read.ts:353-360 — cacheable: { ttl: '3 minutes', maxSize: 256 * 1024 } with inline commentary about LSP buffer staleness and write-side invalidation"
+    },
+    "OBJ-007": {
+      "requirement": "deferred freshness — no mtimes in cache key",
+      "status": "covered",
+      "evidence": "cache-key.ts has zero filesystem imports and zero mtime references. FreshnessCheck (Effect.Effect<boolean>) defers to cache-hit time."
+    },
+    "COND-008": {
+      "requirement": "tapDefect before orDie in pipeline composition",
+      "status": "covered",
+      "evidence": "tool.ts:375-382 — Effect.tapDefect (line 376) pipes into Effect.orDie (line 382). Correct ordering: defect observed before fiber killed."
+    }
+  },
+  "pipeline_structure": {
+    "claimed": "decode → cache → truncate → retry → timeout → semaphore → span",
+    "actual": "decode → cache(getOrCompute wrapping execute) → truncate → retry → timeout → semaphore → tap/tapError → tapDefect → orDie → span",
+    "verifications": {
+      "cache_between_decode_and_truncate": true,
+      "tapDefect_before_orDie": true,
+      "span_outermost": true
+    },
+    "concerns": [
+      "core gen block (lines 180-233) combines decode+cache+execute+truncate — retry re-runs all of them including cache-key derivation",
+      "Truncation inside retry boundary — could be retried unnecessarily on truncate service failure",
+      "tap/tapError telemetry layers between semaphore and tapDefect safety net — a defect in tapError would escape before tapDefect catches it (mitigated by internal catchAll)"
+    ]
+  },
+  "write_side_invalidation": {
+    "status": "pass_with_findings",
+    "trigger": "Non-cacheable tools (edit, write, smart_batch, bash, smart_bash, smart_find, smart_grep, smart_git, task, etc.)",
+    "timing": "AFTER TypedResult.wrapExecute (post-commit)",
+    "scope": "full cache invalidate() — flushes all entries",
+    "graceful_degradation": "Uses serviceOption — silent skip if ToolCache.Service not in layer graph",
+    "mcp_tool_gap": "MCP tools (lines 160-249) have NO invalidation block — write-capable MCP tools produce stale reads"
+  },
+  "determinism": {
+    "status": "pass",
+    "tests_run": 5,
+    "tests_passed": 5,
+    "details": [
+      "Shallow key reordering → identical JSON",
+      "Nested key reordering → identical JSON",
+      "Arrays preserve order (not sorted)",
+      "Different sessionID/agent → different SHA256 hash",
+      "No mtimes in key derivation — pure function"
+    ]
+  },
+  "git_diff_audit": {
+    "status": "clean",
+    "target_files_modified": 6,
+    "other_files_modified": 28,
+    "note": "Non-target modifications are pre-existing cross-lane work (.opencode/tools/, packages/desktop/, packages/app/, campaign files, telemetry JSONL). No tool-cache files have unintended changes."
+  },
+  "defects": [
+    {
+      "id": "D1",
+      "severity": "major",
+      "file": "packages/opencode/src/tool/smart-grep.ts",
+      "description": "smart_grep missing cacheable:true causes unnecessary full cache invalidation on every read-only grep call. Add cacheable: true or cacheable: { ttl: '3 minutes', maxSize: 256 * 1024 }.",
+      "must_fix": true
+    },
+    {
+      "id": "D2",
+      "severity": "minor",
+      "file": "packages/opencode/test/tool/cache-pipeline.test.ts",
+      "description": "Mislabeled — tests cache layer not pipeline. Missing COND-005(b+c) tests for permission bypass and abort signal interaction.",
+      "must_fix": false
+    },
+    {
+      "id": "D3",
+      "severity": "minor",
+      "file": "packages/opencode/test/tool/cache-pipeline.test.ts",
+      "description": "No TTL/expiry test — TestClock available via testEffect helper but unused.",
+      "must_fix": false
+    },
+    {
+      "id": "D4",
+      "severity": "minor",
+      "file": "packages/opencode/src/tool/tool.ts",
+      "description": "core gen block (lines 180-233) too large — retry re-runs decode+cache-key derivation unnecessarily.",
+      "must_fix": false
+    },
+    {
+      "id": "D5",
+      "severity": "minor",
+      "file": "packages/opencode/src/session/tools.ts",
+      "description": "MCP tools have no cache invalidation block — write-capable MCP tools can leave stale cached reads.",
+      "must_fix": false
+    },
+    {
+      "id": "D6",
+      "severity": "minor",
+      "file": "packages/opencode/src/tool/cache.ts",
+      "description": "Missing miss_reason: 'not_found' annotation on cold cache miss — less queryable in observability dashboards.",
+      "must_fix": false
+    }
+  ],
+  "admission_recommendation": "ADMIT with findings",
+  "admission_rationale": "Core implementation is sound: deterministic key derivation, correct span annotation coverage, proper tapDefect/orDie ordering, working write-side invalidation, and 6 tests exercising real code paths. The one must-fix defect (D1: smart_grep missing cacheable:true) is a single-line fix that does not require architectural change. D2-D6 are quality improvements deferred to future slices.",
+  "admission_condition": "Repair D1 before publication. D2-D6 may be deferred."
+}

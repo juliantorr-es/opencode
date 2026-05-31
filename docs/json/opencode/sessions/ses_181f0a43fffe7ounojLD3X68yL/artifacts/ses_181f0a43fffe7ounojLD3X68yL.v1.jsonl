@@ -1,0 +1,46 @@
+{"at":"2026-05-31T12:43:28.761Z","tool":"smart_grep","action":"searched","pattern":"^(describe|it|test)\\(","results":0,"files":0}
+{"at":"2026-05-31T12:43:29.617Z","tool":"smart_grep","action":"searched","pattern":"^function |^const \\w+ = \\(","results":0,"files":0}
+{"at":"2026-05-31T12:43:30.452Z","tool":"smart_grep","action":"searched","pattern":"Effect\\.runPromise|Effect\\.provide|\\.pipe\\(","results":0,"files":0}
+{"at":"2026-05-31T12:43:38.327Z","tool":"smart_grep","action":"searched","pattern":"^  describe\\(|^  it\\(|^  test\\(","results":0,"files":0}
+{"at":"2026-05-31T12:43:38.981Z","tool":"smart_grep","action":"searched","pattern":"describe\\(","results":0,"files":0}
+{"at":"2026-05-31T12:43:39.884Z","tool":"smart_grep","action":"searched","pattern":"\\.secretary\\.|Secretary\\.","results":0,"files":0}
+{"at":"2026-05-31T12:43:45.674Z","tool":"smart_grep","action":"searched","pattern":"^describe\\(|^  describe\\(","results":0,"files":0}
+{"at":"2026-05-31T12:43:46.698Z","tool":"smart_grep","action":"searched","pattern":"^\\s*(test|it)\\(","results":0,"files":0}
+{"at":"2026-05-31T12:43:59.813Z","tool":"smart_bash","action":"bash","command":"awk '/^\\s*(describe|test|it)\\(/ {printf \"%d:%s\\n\", NR, $0}' packages/opencode/src/campaign/truth-clo","exit_code":0}
+{"at":"2026-05-31T12:44:06.206Z","tool":"smart_bash","action":"bash","command":"awk '/^\\s*(test|it)\\(/ {printf \"%d: %s\\n\", NR, $0}' packages/opencode/src/campaign/truth-closure.tes","exit_code":0}
+{"at":"2026-05-31T12:44:13.154Z","tool":"smart_bash","action":"bash","command":"awk '/test\\(|it\\(/ && !/from/ && !/import/ && !/expect/ {printf \"%d: %s\\n\", NR, $0}' packages/openco","exit_code":0}
+{"at":"2026-05-31T12:44:35.519Z","tool":"smart_bash","action":"bash","command":"head -n 1370 packages/opencode/src/campaign/truth-closure.test.ts | tail -n 161","exit_code":0}
+{"at":"2026-05-31T12:44:36.406Z","tool":"smart_bash","action":"bash","command":"head -n 1522 packages/opencode/src/campaign/truth-closure.test.ts | tail -n 153","exit_code":0}
+{"at":"2026-05-31T12:44:37.361Z","tool":"smart_bash","action":"bash","command":"head -n 1698 packages/opencode/src/campaign/truth-closure.test.ts | tail -n 177","exit_code":0}
+{"at":"2026-05-31T12:44:45.428Z","tool":"smart_bash","action":"bash","command":"head -n 1377 packages/opencode/src/campaign/truth-closure.test.ts | tail -n 160","exit_code":0}
+{"at":"2026-05-31T12:44:46.473Z","tool":"smart_bash","action":"bash","command":"head -n 1432 packages/opencode/src/campaign/truth-closure.test.ts | tail -n 56","exit_code":0}
+{"at":"2026-05-31T12:44:47.395Z","tool":"smart_bash","action":"bash","command":"head -n 1522 packages/opencode/src/campaign/truth-closure.test.ts | tail -n 91","exit_code":0}
+{"at":"2026-05-31T12:44:53.735Z","tool":"smart_bash","action":"bash","command":"head -n 1698 packages/opencode/src/campaign/truth-closure.test.ts | tail -n 177","exit_code":0}
+{"at":"2026-05-31T12:44:54.557Z","tool":"smart_bash","action":"bash","command":"tail -n 92 packages/opencode/src/campaign/truth-closure.test.ts","exit_code":0}
+{"at":"2026-05-31T12:44:55.191Z","tool":"smart_bash","action":"bash","command":"head -n 128 packages/opencode/src/campaign/truth-closure.test.ts","exit_code":0}
+{"at":"2026-05-31T12:45:11.473Z","tool":"smart_bash","action":"bash","command":"awk 'NR>=1223 && NR<=1377 {print NR \": \" $0}' packages/opencode/src/campaign/truth-closure.test.ts","exit_code":0}
+{"at":"2026-05-31T12:45:12.335Z","tool":"smart_bash","action":"bash","command":"awk 'NR>=1523 && NR<=1607 {print NR \": \" $0}' packages/opencode/src/campaign/truth-closure.test.ts","exit_code":0}
+{"at":"2026-05-31T12:45:13.120Z","tool":"smart_bash","action":"bash","command":"awk 'NR>=1607 && NR<=1698 {print NR \": \" $0}' packages/opencode/src/campaign/truth-closure.test.ts","exit_code":0}
+{"at":"2026-05-31T12:45:20.296Z","tool":"smart_bash","action":"bash","command":"awk 'NR>=1542 && NR<=1588 {print NR \": \" $0}' packages/opencode/src/campaign/truth-closure.test.ts","exit_code":0}
+{"at":"2026-05-31T12:45:21.257Z","tool":"smart_bash","action":"bash","command":"awk 'NR>=1626 && NR<=1679 {print NR \": \" $0}' packages/opencode/src/campaign/truth-closure.test.ts","exit_code":0}
+{"at":"2026-05-31T12:45:33.774Z","tool":"smart_bash","action":"bash","command":"awk '/binder\\./ {printf \"%d: %s\\n\", NR, $0}' packages/opencode/src/campaign/truth-closure.test.ts","exit_code":0}
+{"at":"2026-05-31T12:45:35.427Z","tool":"smart_bash","action":"bash","command":"awk '/secretary\\./ && !/import/ && !/Secretary\\./ && !/testLayer/ {printf \"%d: %s\\n\", NR, $0}' packa","exit_code":0}
+{"at":"2026-05-31T12:45:36.610Z","tool":"smart_bash","action":"bash","command":"awk '/Effect\\.runPromise|Effect\\.provide|secretaryTestLayer|program\\.pipe/ {printf \"%d: %s\\n\", NR, $","exit_code":0}
+{"at":"2026-05-31T12:45:43.290Z","tool":"smart_bash","action":"bash","command":"awk 'NR>=54 && NR<=128 {printf \"%d: %s\\n\", NR, $0}' packages/opencode/src/campaign/truth-closure.tes","exit_code":0}
+{"at":"2026-05-31T12:45:44.483Z","tool":"smart_bash","action":"bash","command":"awk 'NR>=1699 && NR<=1757 {printf \"%d: %s\\n\", NR, $0}' packages/opencode/src/campaign/truth-closure.","exit_code":0}
+{"at":"2026-05-31T12:45:45.840Z","tool":"smart_bash","action":"bash","command":"awk '/Secretary\\./ {printf \"%d: %s\\n\", NR, $0}' packages/opencode/src/campaign/truth-closure.test.ts","exit_code":0}
+{"at":"2026-05-31T12:45:54.759Z","tool":"smart_bash","action":"bash","command":"awk 'NR>=1242 && NR<=1358 {printf \"%d: %s\\n\", NR, $0}' packages/opencode/src/campaign/truth-closure.","exit_code":0}
+{"at":"2026-05-31T12:45:55.928Z","tool":"smart_bash","action":"bash","command":"awk 'NR>=1377 && NR<=1428 {printf \"%d: %s\\n\", NR, $0}' packages/opencode/src/campaign/truth-closure.","exit_code":0}
+{"at":"2026-05-31T12:45:57.156Z","tool":"smart_bash","action":"bash","command":"awk 'NR>=1432 && NR<=1515 {printf \"%d: %s\\n\", NR, $0}' packages/opencode/src/campaign/truth-closure.","exit_code":0}
+{"at":"2026-05-31T12:46:08.265Z","tool":"smart_bash","action":"bash","command":"awk 'NR>=1449 && NR<=1497 {printf \"%d: %s\\n\", NR, $0}' packages/opencode/src/campaign/truth-closure.","exit_code":0}
+{"at":"2026-05-31T12:46:09.619Z","tool":"smart_bash","action":"bash","command":"awk 'NR>=1718 && NR<=1790 {printf \"%d: %s\\n\", NR, $0}' packages/opencode/src/campaign/truth-closure.","exit_code":0}
+{"at":"2026-05-31T12:46:11.021Z","tool":"smart_bash","action":"bash","command":"awk 'NR>=1261 && NR<=1345 {printf \"%d: %s\\n\", NR, $0}' packages/opencode/src/campaign/truth-closure.","exit_code":0}
+{"at":"2026-05-31T12:46:20.328Z","tool":"smart_bash","action":"bash","command":"awk 'NR>=1280 && NR<=1345 {printf \"%d: %s\\n\", NR, $0}' packages/opencode/src/campaign/truth-closure.","exit_code":0}
+{"at":"2026-05-31T12:46:21.628Z","tool":"smart_bash","action":"bash","command":"awk 'NR>=1467 && NR<=1480 {printf \"%d: %s\\n\", NR, $0}' packages/opencode/src/campaign/truth-closure.","exit_code":0}
+{"at":"2026-05-31T12:46:22.843Z","tool":"smart_bash","action":"bash","command":"awk 'NR>=1537 && NR<=1556 {printf \"%d: %s\\n\", NR, $0}' packages/opencode/src/campaign/truth-closure.","exit_code":0}
+{"at":"2026-05-31T12:46:30.152Z","tool":"smart_bash","action":"bash","command":"awk 'NR>=1640 && NR<=1666 {printf \"%d: %s\\n\", NR, $0}' packages/opencode/src/campaign/truth-closure.","exit_code":0}
+{"at":"2026-05-31T12:46:31.480Z","tool":"smart_bash","action":"bash","command":"awk 'NR>=1300 && NR<=1328 {printf \"%d: %s\\n\", NR, $0}' packages/opencode/src/campaign/truth-closure.","exit_code":0}
+{"at":"2026-05-31T12:46:32.943Z","tool":"smart_bash","action":"bash","command":"awk 'NR>=26 && NR<=41 {printf \"%d: %s\\n\", NR, $0}' packages/opencode/src/campaign/truth-closure.test","exit_code":0}
+{"at":"2026-05-31T12:46:42.449Z","tool":"smart_bash","action":"bash","command":"awk 'NR>=1396 && NR<=1411 {printf \"%d: %s\\n\", NR, $0}' packages/opencode/src/campaign/truth-closure.","exit_code":0}
+{"at":"2026-05-31T12:46:43.642Z","tool":"smart_bash","action":"bash","command":"awk 'NR>=1557 && NR<=1585 {printf \"%d: %s\\n\", NR, $0}' packages/opencode/src/campaign/truth-closure.","exit_code":0}
+{"at":"2026-05-31T12:46:44.966Z","tool":"smart_bash","action":"bash","command":"awk 'NR>=1636 && NR<=1646 {printf \"%d: %s\\n\", NR, $0}' packages/opencode/src/campaign/truth-closure.","exit_code":0}

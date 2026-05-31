@@ -1,0 +1,368 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "schema_version": "v1",
+  "review_id": "tool-telemetry-review-001",
+  "subject_plan": "TOOL-TELEMETRY",
+  "subject_plan_id": "tool-telemetry",
+  "subject_plan_revision": 1,
+  "reviewed_at": "2026-05-31T15:00:00Z",
+  "reviewer": "critic",
+  "review_wave": "plan",
+  "verdict": "APPROVE_WITH_CONDITIONS",
+  "prepublication_verdict": "blocked",
+  "conditions_count": 6,
+  "follow_ups_count": 4,
+  "blocking_findings_count": 2,
+  "subagents_deployed": ["precedent", "blast-radius", "reasonable-doubt"],
+  "recommended_resubmit_revision": 2,
+
+  "seven_axes": {
+    "coupling": {
+      "score": 2,
+      "max": 5,
+      "findings": [
+        {
+          "id": "C01",
+          "severity": "blocker",
+          "title": "Effect.catchAll does not catch missing-service ConfigErrors",
+          "evidence": [
+            "tool.ts:240-249: pipeline terminates with Effect.orDie + as any casts",
+            "catchAllDefect/catchAllCause used 0 times in codebase",
+            "Effect.serviceOption used 12 times across 10 files as established optional-service pattern",
+            "If AppFileSystem.Service is yield*'d in outer gen or tap effect, missing service produces ConfigError (defect channel) not caught by catchAll (failure channel)"
+          ],
+          "correction": "Replace catchAll pattern with Effect.serviceOption(AppFileSystem.Service) + Option.match guard. This explicitly handles both missing-service (returns early) and I/O failures (Effect.catchAll after service resolution)."
+        },
+        {
+          "id": "C02",
+          "severity": "major",
+          "title": "CatchAll on telemetry too broad — swallows real bugs if it catches defects",
+          "evidence": [
+            "precedent agent: catchAll may catch all causes including defects in effect-smol",
+            "If catchAll swallows all defects, null-pointer errors, type coercion failures, and logic bugs in telemetry code would be invisible",
+            "Effect.serviceOption is more targeted — only handles the missing-service case, lets real defects propagate"
+          ]
+        }
+      ]
+    },
+    "debuggability": {
+      "score": 1,
+      "max": 5,
+      "findings": [
+        {
+          "id": "D01",
+          "severity": "blocker",
+          "title": "Zero observability for telemetry failures — documented anti-pattern",
+          "evidence": [
+            "lessons.v1.jsonl #47: 'background-injection-silent-drop' — silent failure swallowing is a known anti-pattern",
+            "Existing analytics in smart-bash.ts:114-116, smart-bun.ts:169-173 propagate errors (no catchAll)",
+            "Plan provides: no Effect.logWarning, no console.warn, no sentinel, no error_count metric, no structured log entry",
+            "Three failure modes produce identical invisible output: I/O error, missing service, JSON encoding failure"
+          ],
+          "correction": "Add Effect.logWarning in catchAll handler with tool name, session ID, and error detail. Add a 'telemetry' metric to analytics tool so operators can detect systemic telemetry failures. Document at tool.ts that telemetry is fire-and-forget with logged failure modes."
+        },
+        {
+          "id": "D02",
+          "severity": "major",
+          "title": "UnknownError fallback invisible — no mechanism to discover unclassified errors",
+          "evidence": [
+            "Plan maps 5 tagged errors via instanceof checks with UnknownError fallback",
+            "No _tag or constructor.name captured in error_detail for UnknownError",
+            "No log warning when novel error type discovered",
+            "Future tool with 6th tagged error class silently misclassified for months"
+          ],
+          "correction": "When UnknownError is emitted, include error._tag or constructor.name in error_detail, and call Effect.logWarning to surface the gap."
+        }
+      ]
+    },
+    "convergence": {
+      "score": 3,
+      "max": 5,
+      "findings": [
+        {
+          "id": "V01",
+          "severity": "major",
+          "title": "InstanceState access at define-time risks process.cwd() fallback",
+          "evidence": [
+            "implementation-plan line 134: 'Add fs: AppFileSystem.Service and instance: InstanceState access to the outer Effect.gen'",
+            "instance-state.ts:22: State.context falls back to process.cwd() when InstanceRef not set",
+            "Tools initialized during layer construction (before InstanceRef provided) would capture fallback",
+            "Existing pattern in smart-bash.ts:38, smart-bun.ts:44 accesses InstanceState inside execute (invocation-time)"
+          ],
+          "correction": "Access InstanceState.context inside the tap callback (execute pipeline, invocation-time), not in the outer gen. Follow existing smart-bash pattern."
+        },
+        {
+          "id": "V02",
+          "severity": "info",
+          "title": "startTime placement correct — after retry/timeout/semaphore",
+          "evidence": [
+            "Plan places tap after Layer 4 (semaphore), before Layer 5 (orDie + withSpan)",
+            "This captures wall time users observe, excluding retry overhead",
+            "tool.ts:210-245 shows pipeline composition order: core → retry → timeout → semaphore → orDie → span"
+          ],
+          "correction": "None needed. Placement is architecturally correct."
+        }
+      ]
+    },
+    "surface_area": {
+      "score": 2,
+      "max": 5,
+      "findings": [
+        {
+          "id": "S01",
+          "severity": "major",
+          "title": "97 importing files but type-level containment relies on as any casts",
+          "evidence": [
+            "blast-radius: 97 files import from tool/tool (80 tool files + 17 other files)",
+            "tool-define.test.ts layer is Layer.mergeAll(Truncate.defaultLayer, Agent.defaultLayer) — no AppFileSystem",
+            "tool.ts:240-249: pipeline terminated with (as any) casts — this is why no type changes needed",
+            "as any is documented liability, not a feature"
+          ],
+          "correction": "If using serviceOption, no type changes needed — the tap's requirements stay optional. If yield* AppFileSystem, add AppFileSystem.defaultLayer to tool-define.test.ts layer. Document the as any reliance as intentional."
+        },
+        {
+          "id": "S02",
+          "severity": "info",
+          "title": "No cross-package consumers — contained to packages/opencode",
+          "evidence": [
+            "blast-radius: 0 imports in packages/app, packages/sdk, packages/core"
+          ]
+        }
+      ]
+    },
+    "testability": {
+      "score": 2,
+      "max": 5,
+      "findings": [
+        {
+          "id": "T01",
+          "severity": "major",
+          "title": "Fix-A requires 30 lines of layer setup, not ≤10-line bun -e script",
+          "evidence": [
+            "reasonable-doubt: requires AppFileSystem.defaultLayer + Truncate.defaultLayer + Agent.defaultLayer + InstanceState setup",
+            "Telemetry-failure test requires ~20 lines of fake AppFileSystem (35-method interface)",
+            "No existing analytics test file to prove read-back pattern end-to-end"
+          ],
+          "correction": "Acceptable within it.instance() framework. Create a shared test helper (makeToolTelemetryLayer) to reduce per-test boilerplate. Document the layer composition requirement."
+        },
+        {
+          "id": "T02",
+          "severity": "major",
+          "title": "Missing coverage: concurrent invocations and large output_bytes",
+          "evidence": [
+            "reasonable-doubt: untested at 80x concurrency — appendLine serialization untested at scale",
+            "reasonable-doubt: 10MB tool output → 10MB JSONL line — violates JSONL conventions and causes memory pressure",
+            "No output_bytes truncation in plan"
+          ],
+          "correction": "Add output_bytes truncation at 10KB in telemetry payload. Add at least 1 concurrency test (≤10 concurrent tool invocations). Document appendLine serialization guarantee."
+        },
+        {
+          "id": "T03",
+          "severity": "info",
+          "title": "Fixture infrastructure (it.instance) already provides InstanceState — excellent",
+          "evidence": [
+            "reasonable-doubt: 0 additional lines needed for InstanceState setup",
+            "checkpoint-tools.test.ts proves the pattern works"
+          ]
+        }
+      ]
+    },
+    "error_clarity": {
+      "score": 2,
+      "max": 5,
+      "findings": [
+        {
+          "id": "E01",
+          "severity": "blocker",
+          "title": "CatchAll may catch all defects — swallowing real bugs alongside telemetry errors",
+          "evidence": [
+            "precedent agent: catchAll catches all causes in effect-smol",
+            "If telemetry code has null-pointer or type coercion bug, defect is silently swallowed",
+            "No differentiation between 'telemetry I/O failed' vs 'telemetry code has a bug'"
+          ],
+          "correction": "Use Effect.serviceOption for missing service. Use narrow Effect.catchTag for known error types (FileSystemError) to avoid swallowing unexpected defects. Log unexpected errors."
+        },
+        {
+          "id": "E02",
+          "severity": "major",
+          "title": "Existing span annotations don't cover telemetry layer",
+          "evidence": [
+            "tool.ts:246: Effect.withSpan('Tool.execute', { attributes: attrs }) exists",
+            "No telemetry-specific span (e.g., 'Tool.telemetry.write')",
+            "Span attrs include tool.name and session.id — sufficient for correlation but not for debugging telemetry failures"
+          ],
+          "correction": "Add Effect.withSpan('Tool.telemetry.write') inside the tap callback so telemetry failures get their own span context."
+        }
+      ]
+    },
+    "reversibility": {
+      "score": 3,
+      "max": 5,
+      "findings": [
+        {
+          "id": "R01",
+          "severity": "minor",
+          "title": "Group A (tap) and Group B (analytics) are independent at data layer",
+          "evidence": [
+            "JSONL file is fire-and-forget — reverting tap stops writes, analytics returns 0 counts (safe)",
+            "analytics.ts already uses existsSafe + try/catch for missing files",
+            "No circular dependency: analytics.ts imports tool.ts only for Tool.define, not for telemetry"
+          ]
+        },
+        {
+          "id": "R02",
+          "severity": "major",
+          "title": "Type-level coupling: as any casts make revert invisible to TypeScript",
+          "evidence": [
+            "If define()'s type signature implicitly grows due to unwritten R union changes, reverting the tap code but not the type change creates a 'phantom requirement'",
+            "This would compile cleanly but fail at runtime with ConfigError",
+            "Mitigation: using serviceOption avoids any R union expansion entirely"
+          ]
+        }
+      ]
+    }
+  },
+
+  "blocking_conditions": [
+    {
+      "id": "BC-001",
+      "axis": "coupling + error_clarity",
+      "condition": "Replace Effect.catchAll(() => Effect.void) with Effect.serviceOption(AppFileSystem.Service) + Option.match guard pattern. This explicitly handles missing-service (returns early without error) and narrows the catch scope to I/O failures only. Evidence: 12 existing serviceOption usages in codebase; 0 catchAllDefect usages.",
+      "files": ["packages/opencode/src/tool/tool.ts:240-249"]
+    },
+    {
+      "id": "BC-002",
+      "axis": "debuggability",
+      "condition": "Add Effect.logWarning in the telemetry error handler with tool name, session ID, and error summary. Add a 'telemetry' metric to analytics tool so operators can detect systemic telemetry failures. Document the fire-and-forget semantics at tool.ts.",
+      "files": ["packages/opencode/src/tool/tool.ts:240-249", "packages/opencode/src/tool/analytics.ts"]
+    },
+    {
+      "id": "BC-003",
+      "axis": "convergence",
+      "condition": "Move InstanceState.context access from outer Effect.gen (define-time) to inside the tap callback (invocation-time). Follow existing pattern from smart-bash.ts:38.",
+      "files": ["packages/opencode/src/tool/tool.ts:150-160"]
+    },
+    {
+      "id": "BC-004",
+      "axis": "debuggability",
+      "condition": "When UnknownError is emitted, include error._tag or constructor.name in error_detail and log via Effect.logWarning. This makes unclassified errors discoverable.",
+      "files": ["packages/opencode/src/tool/tool.ts:240-249"]
+    },
+    {
+      "id": "BC-005",
+      "axis": "testability",
+      "condition": "Add output_bytes truncation at 10KB in the telemetry payload. 10MB tool outputs must not produce 10MB JSONL lines.",
+      "files": ["packages/opencode/src/tool/tool.ts:240-249"]
+    },
+    {
+      "id": "BC-006",
+      "axis": "testability",
+      "condition": "Add at least 1 test for concurrent tool invocations (≤10 concurrent) exercising the per-file append queue to verify no record interleaving. Add at least 1 test for large output_bytes truncation.",
+      "files": ["packages/opencode/test/tool/tool-telemetry.test.ts"]
+    }
+  ],
+
+  "non_blocking_findings": [
+    {
+      "id": "NB-001",
+      "axis": "surface_area",
+      "finding": "tool-define.test.ts layer must add AppFileSystem.defaultLayer if yield* AppFileSystem used. Not needed if serviceOption pattern adopted.",
+      "severity": "minor"
+    },
+    {
+      "id": "NB-002",
+      "axis": "error_clarity",
+      "finding": "Consider adding Effect.withSpan('Tool.telemetry.write') inside tap callback for OTel trace correlation.",
+      "severity": "minor"
+    },
+    {
+      "id": "NB-003",
+      "axis": "testability",
+      "finding": "No existing analytics test file exists. The plan should include creating the first one to prove the it.instance() + read-back pattern.",
+      "severity": "minor"
+    }
+  ],
+
+  "follow_up_issues": [
+    {
+      "id": "FU-001",
+      "title": "Replace as any casts in wrap() pipeline with properly typed Effect composition",
+      "file": "packages/opencode/src/tool/tool.ts:240-249",
+      "reason": "The as any type erasure masks runtime dependency requirements from TypeScript. If future refactors remove these casts, 97 files break. The casts should be replaced with typed composition so that missing-service errors are caught at compile time."
+    },
+    {
+      "id": "FU-002",
+      "title": "Decide whether to retroactively apply fire-and-forget pattern to existing analytics writes",
+      "file": "packages/opencode/src/tool/smart-bash.ts:114-116",
+      "reason": "Existing analytics writes in smart-bash, smart-bun, smart-sd, smart-grep, smart-find, smart-git propagate errors (no catchAll). The centralized tap uses catchAll. Inconsistency between the two approaches may confuse developers. Decide and document the intended pattern."
+    },
+    {
+      "id": "FU-003",
+      "title": "Create JSON schema for tool_invocations.v1.jsonl record type",
+      "file": "docs/schemas/opencode.tool_invocations.v1.schema.json",
+      "reason": "AGENTS.md requires new artifact types to have schemas. Define: { tool_id, session_id, message_id, call_id, agent, start_time, elapsed_ms, outcome (success|failure), error_kind (6 values), error_detail, output_bytes, cache_hit, timestamp }."
+    },
+    {
+      "id": "FU-004",
+      "title": "Add 'telemetry' metric to analytics tool for closed-loop observability",
+      "file": "packages/opencode/src/tool/analytics.ts",
+      "reason": "Operators need to answer: 'Is tool telemetry working?' A 'telemetry.error_count' or dedicated metric would close the observability loop and detect systemic failures."
+    },
+    {
+      "id": "FU-005",
+      "title": "Audit and fix systemic silent error swallowing across codebase",
+      "file": "packages/opencode/src/tool/smart-bash.ts:114-116",
+      "reason": "Coroner identified 6+ instances of Effect.ignore / Effect.catch(() => Effect.void) without logging: plugin/index.ts:72,342,354,411,423; context/packet.ts:277. The existing smart tools' analytics writes are in the critical path (before return) and crash tools on disk-full via three-stage cascade: appendLine → orDie → catchDefect → opaque error text. This lane's catchAll is a partial fix — the broader anti-pattern needs a dedicated audit lane."
+    }
+  ],
+
+  "review_methodology": {
+    "direct_analysis": {
+      "files_read": [
+        "packages/opencode/src/tool/tool.ts",
+        "packages/opencode/src/tool/analytics.ts",
+        "packages/opencode/src/tool/smart-bash.ts",
+        "packages/opencode/src/tool/smart-bun.ts",
+        "packages/opencode/src/tool/smart-sd.ts",
+        "packages/core/src/filesystem.ts",
+        "packages/opencode/src/effect/instance-state.ts",
+        "packages/opencode/test/tool/tool-define.test.ts",
+        "packages/opencode/test/lib/effect.ts"
+      ],
+      "artifacts_read": [
+        "docs/json/opencode/plans/tool-telemetry.v1.json",
+        "docs/json/opencode/plans/tool-telemetry-implementation-plan.v1.json",
+        "docs/json/opencode/knowledge/lessons.v1.jsonl"
+      ]
+    },
+    "subagents": {
+      "precedent": "STRONGLY_ALIGNED — confirmed tap+tapError pattern, wrap() choke point, fire-and-forget consistency. Deviations: silent failure (lesson #47 anti-pattern), missing JSON schema.",
+      "blast-radius": "97 importing files, zero type-level breakage due to as any casts. 1 test file at risk. 6 execute call sites safe. No cross-package consumers.",
+      "reasonable-doubt": "Fix-A testable but requires 30-line layer setup. Fix-B pure copy-paste. Fix-C covers error taxonomy well but misses concurrency and large-output edge cases. Telemetry-failure test possible but requires 20-line fake, not 10-line."
+    },
+    "subagents": {
+      "precedent": "STRONGLY_ALIGNED — confirmed tap+tapError pattern, wrap() choke point, fire-and-forget consistency. Deviations: silent failure (lesson #47 anti-pattern), missing JSON schema.",
+      "blast-radius": "97 importing files, zero type-level breakage due to as any casts. 1 test file at risk. 6 execute call sites safe. No cross-package consumers.",
+      "reasonable-doubt": "Fix-A testable but requires 30-line layer setup. Fix-B pure copy-paste. Fix-C covers error taxonomy well but misses concurrency and large-output edge cases. Telemetry-failure test possible but requires 20-line fake, not 10-line.",
+      "witness": "CONFIRMED: AppFileSystem.Service completely absent from tool/tool.ts (zero imports/yields). R propagation would cascade to all 97 consumers. InstanceState fallback to process.cwd() confirmed at instance-state.ts:22. tool-define.test.ts would crash with ConfigError — NOT silently skip. Fix would add cross-package import to @opencode-ai/core/filesystem. Existing tools use AppFileSystem at define-time (closure) but InstanceState at invocation-time — plan conflating both at define-time is inconsistent.",
+      "coroner": "CRITICAL FINDINGS: (1) Existing smart tools put analytics writes BEFORE return — disk-full crashes the tool with opaque defect caught by TypedResult.wrapExecute. The plan's catchAll actually FIXES this regression but creates silent failure. (2) Missing AppFileSystem.Service → ConfigError at fiber construction → NOT caught by catchDefect → fiber crash with cryptic error. (3) All 7 smart tools + tool.ts + filesystem.ts + typed-result.ts have ZERO logging — the observability gap is systemic, not just a plan concern. (4) 6+ other silent error swallowing instances across codebase (plugin, context, etc.) — this is an endemic anti-pattern. Debuggability score: 1/5. Estimated debug time for a developer 6 months from now: 45-90 minutes.",
+      "exhibit-a": "pending",
+      "appeal": "CONFIRMED: Groups A/B independent at data layer. Critical finding: define() type signature change is mechanically coupled to tap implementation — reverting one without the other causes 100+ cascading type errors. BC-001 (serviceOption) prevents this coupling entirely by keeping AppFileSystem requirement optional. Schema-level coupling risk: A and B independently define JSONL field names — rename in A silently breaks B. Recommendation: extract shared Schema.Struct."
+    }
+  },
+
+  "admission": {
+    "recommendation": "RESUBMIT_AFTER_REPAIR",
+    "resubmit_revision": 2,
+    "repair_required": [
+      "BC-001: serviceOption pattern (was: catchAll)",
+      "BC-002: Effect.logWarning + telemetry metric (was: silent)",
+      "BC-003: InstanceState at invocation-time (was: define-time)",
+      "BC-004: UnknownError _tag logging (was: invisible)",
+      "BC-005: output_bytes 10KB truncation (was: unlimited)",
+      "BC-006: concurrency + truncation tests (was: missing)"
+    ],
+    "estimated_repair_effort": "~18 lines of code changes + ~15 lines of test additions",
+    "risk_of_repair": "LOW — all 6 conditions are localized to tool.ts:wrap() (~12 lines) and the new test file (~15 lines). Analytics.ts change is unaffected."
+  }
+}

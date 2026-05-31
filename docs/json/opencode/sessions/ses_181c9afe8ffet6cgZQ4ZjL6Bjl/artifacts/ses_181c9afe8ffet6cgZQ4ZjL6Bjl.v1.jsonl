@@ -1,0 +1,11 @@
+{"at":"2026-05-31T13:25:54.229Z","tool":"smart_bun","action":"ran","command":"test","exit_code":1,"cwd":"packages/opencode"}
+{"at":"2026-05-31T13:26:04.095Z","tool":"smart_bun","action":"ran","command":"test","exit_code":1,"cwd":"packages/opencode"}
+{"at":"2026-05-31T13:26:48.827Z","tool":"smart_grep","action":"searched","pattern":"BusEvent.*not registered","results":1,"files":1}
+{"at":"2026-05-31T13:26:49.560Z","tool":"smart_grep","action":"searched","pattern":"is not registered in EventName","results":1,"files":1}
+{"at":"2026-05-31T13:27:07.100Z","tool":"smart_bash","action":"bash","command":"/Users/user/.bun/bin/bun test test/campaign/service-lifecycle.test.ts 2>&1 | tail -40","exit_code":1}
+{"at":"2026-05-31T13:27:13.881Z","tool":"smart_bash","action":"bash","command":"/Users/user/.bun/bin/bun test test/campaign/service-lifecycle.test.ts 2>&1 | tail -40","exit_code":0}
+{"at":"2026-05-31T13:27:23.831Z","tool":"smart_bash","action":"bash","command":"/Users/user/.bun/bin/bun test test/campaign/service-lifecycle.test.ts 2>&1 | grep -E '\\(fail\\)|pass|","exit_code":0}
+{"at":"2026-05-31T13:27:32.147Z","tool":"smart_bash","action":"bash","command":"/Users/user/.bun/bin/bun test test/campaign/service-lifecycle.test.ts 2>&1 | head -120","exit_code":0}
+{"at":"2026-05-31T13:27:41.505Z","tool":"smart_bash","action":"bash","command":"/Users/user/.bun/bin/bun test test/campaign/service-lifecycle.test.ts 2>&1 | grep -A4 '\\(fail\\) Secr","exit_code":1}
+{"at":"2026-05-31T13:27:47.947Z","tool":"smart_bash","action":"bash","command":"/Users/user/.bun/bin/bun test test/campaign/service-lifecycle.test.ts 2>&1 | grep -A4 'fail.*Secreta","exit_code":0}
+{"at":"2026-05-31T13:27:54.660Z","tool":"smart_bash","action":"bash","command":"/Users/user/.bun/bin/bun test test/campaign/service-lifecycle.test.ts 2>&1 | grep -E 'error:'","exit_code":0}

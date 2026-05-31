@@ -1,0 +1,42 @@
+{"at":"2026-05-31T15:02:39.636Z","session_id":"ses_181714bb9ffe67lIl0GJYdQKM1","agent":"type-guard","tool":"smart_bun","phase":"started","detail":"typecheck"}
+{"at":"2026-05-31T15:02:53.683Z","session_id":"ses_181714bb9ffe67lIl0GJYdQKM1","agent":"type-guard","tool":"smart_bun","phase":"failed","detail":"typecheck exit=2"}
+{"at":"2026-05-31T15:02:53.996Z","session_id":"ses_181714bb9ffe67lIl0GJYdQKM1","agent":"type-guard","tool":"smart_git","phase":"started","detail":"diff"}
+{"at":"2026-05-31T15:02:54.058Z","session_id":"ses_181714bb9ffe67lIl0GJYdQKM1","agent":"type-guard","tool":"smart_git","phase":"completed","detail":"diff exit=0"}
+{"at":"2026-05-31T15:02:54.066Z","session_id":"ses_181714bb9ffe67lIl0GJYdQKM1","agent":"type-guard","tool":"smart_find","phase":"started","detail":"*.ts"}
+{"at":"2026-05-31T15:02:54.066Z","session_id":"ses_181714bb9ffe67lIl0GJYdQKM1","agent":"type-guard","tool":"smart_find","phase":"failed","detail":"path not found"}
+{"at":"2026-05-31T15:02:54.074Z","session_id":"ses_181714bb9ffe67lIl0GJYdQKM1","agent":"type-guard","tool":"smart_grep","phase":"started","detail":"modeDescriptions"}
+{"at":"2026-05-31T15:02:54.097Z","session_id":"ses_181714bb9ffe67lIl0GJYdQKM1","agent":"type-guard","tool":"smart_grep","phase":"failed","detail":"rg: /Users/user/Developer/GitHub/opencode-desktop-dev/packages/opencode/.opencode/tools: IO error for operation on /Users/user/Developer/GitHub/opencode-desktop-dev/packages/opencode/.opencode/tools: "}
+{"at":"2026-05-31T15:02:54.108Z","session_id":"ses_181714bb9ffe67lIl0GJYdQKM1","agent":"type-guard","tool":"smart_grep","phase":"started","detail":"DynamicDescription"}
+{"at":"2026-05-31T15:02:54.140Z","session_id":"ses_181714bb9ffe67lIl0GJYdQKM1","agent":"type-guard","tool":"smart_grep","phase":"completed","detail":"DynamicDescription"}
+{"at":"2026-05-31T15:03:25.171Z","session_id":"ses_181714bb9ffe67lIl0GJYdQKM1","agent":"type-guard","tool":"smart_find","phase":"started","detail":"plan.ts"}
+{"at":"2026-05-31T15:03:25.202Z","session_id":"ses_181714bb9ffe67lIl0GJYdQKM1","agent":"type-guard","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T15:03:25.211Z","session_id":"ses_181714bb9ffe67lIl0GJYdQKM1","agent":"type-guard","tool":"smart_find","phase":"started","detail":"*.ts"}
+{"at":"2026-05-31T15:03:25.233Z","session_id":"ses_181714bb9ffe67lIl0GJYdQKM1","agent":"type-guard","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T15:03:25.240Z","session_id":"ses_181714bb9ffe67lIl0GJYdQKM1","agent":"type-guard","tool":"smart_grep","phase":"started","detail":"modeDescriptions"}
+{"at":"2026-05-31T15:03:25.258Z","session_id":"ses_181714bb9ffe67lIl0GJYdQKM1","agent":"type-guard","tool":"smart_grep","phase":"completed","detail":"modeDescriptions"}
+{"at":"2026-05-31T15:03:25.265Z","session_id":"ses_181714bb9ffe67lIl0GJYdQKM1","agent":"type-guard","tool":"smart_git","phase":"started","detail":"diff"}
+{"at":"2026-05-31T15:03:25.305Z","session_id":"ses_181714bb9ffe67lIl0GJYdQKM1","agent":"type-guard","tool":"smart_git","phase":"completed","detail":"diff exit=0"}
+{"at":"2026-05-31T15:03:25.313Z","session_id":"ses_181714bb9ffe67lIl0GJYdQKM1","agent":"type-guard","tool":"smart_git","phase":"started","detail":"diff"}
+{"at":"2026-05-31T15:03:25.350Z","session_id":"ses_181714bb9ffe67lIl0GJYdQKM1","agent":"type-guard","tool":"smart_git","phase":"completed","detail":"diff exit=0"}
+{"at":"2026-05-31T15:03:51.338Z","session_id":"ses_181714bb9ffe67lIl0GJYdQKM1","agent":"type-guard","tool":"smart_bash","phase":"started","detail":"List all tool files to find which ones are missing modeDescriptions"}
+{"at":"2026-05-31T15:03:51.338Z","session_id":"ses_181714bb9ffe67lIl0GJYdQKM1","agent":"type-guard","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T15:04:13.991Z","session_id":"ses_181714bb9ffe67lIl0GJYdQKM1","agent":"type-guard","tool":"smart_bash","phase":"started","detail":"List all tool files to find which ones are missing modeDescriptions"}
+{"at":"2026-05-31T15:04:13.991Z","session_id":"ses_181714bb9ffe67lIl0GJYdQKM1","agent":"type-guard","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T15:04:16.023Z","session_id":"ses_181714bb9ffe67lIl0GJYdQKM1","agent":"type-guard","tool":"smart_grep","phase":"started","detail":"modeDescriptions"}
+{"at":"2026-05-31T15:04:16.041Z","session_id":"ses_181714bb9ffe67lIl0GJYdQKM1","agent":"type-guard","tool":"smart_grep","phase":"completed","detail":"modeDescriptions"}
+{"at":"2026-05-31T15:04:16.304Z","session_id":"ses_181714bb9ffe67lIl0GJYdQKM1","agent":"type-guard","tool":"smart_grep","phase":"started","detail":"DynamicDescription"}
+{"at":"2026-05-31T15:04:16.318Z","session_id":"ses_181714bb9ffe67lIl0GJYdQKM1","agent":"type-guard","tool":"smart_grep","phase":"completed","detail":"DynamicDescription"}
+{"at":"2026-05-31T15:04:29.702Z","session_id":"ses_181714bb9ffe67lIl0GJYdQKM1","agent":"type-guard","tool":"smart_bash","phase":"started","detail":"List all tool files in .opencode/tools to identify which ones are missing modeDescriptions"}
+{"at":"2026-05-31T15:04:29.702Z","session_id":"ses_181714bb9ffe67lIl0GJYdQKM1","agent":"type-guard","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T15:04:42.545Z","session_id":"ses_181714bb9ffe67lIl0GJYdQKM1","agent":"type-guard","tool":"smart_bash","phase":"started","detail":"List all tool files in .opencode/tools directory"}
+{"at":"2026-05-31T15:04:42.546Z","session_id":"ses_181714bb9ffe67lIl0GJYdQKM1","agent":"type-guard","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T15:05:11.863Z","session_id":"ses_181714bb9ffe67lIl0GJYdQKM1","agent":"type-guard","tool":"smart_bash","phase":"started","detail":"List all .opencode/tools files without smart rerouting"}
+{"at":"2026-05-31T15:05:11.874Z","session_id":"ses_181714bb9ffe67lIl0GJYdQKM1","agent":"type-guard","tool":"smart_bash","phase":"completed","detail":"sh exit=0"}
+{"at":"2026-05-31T15:05:12.651Z","session_id":"ses_181714bb9ffe67lIl0GJYdQKM1","agent":"type-guard","tool":"smart_grep","phase":"started","detail":"modeDescriptions"}
+{"at":"2026-05-31T15:05:12.656Z","session_id":"ses_181714bb9ffe67lIl0GJYdQKM1","agent":"type-guard","tool":"smart_grep","phase":"completed","detail":"modeDescriptions"}
+{"at":"2026-05-31T15:05:13.374Z","session_id":"ses_181714bb9ffe67lIl0GJYdQKM1","agent":"type-guard","tool":"smart_git","phase":"started","detail":"diff"}
+{"at":"2026-05-31T15:05:13.394Z","session_id":"ses_181714bb9ffe67lIl0GJYdQKM1","agent":"type-guard","tool":"smart_git","phase":"completed","detail":"diff exit=0"}
+{"at":"2026-05-31T15:06:03.814Z","session_id":"ses_181714bb9ffe67lIl0GJYdQKM1","agent":"type-guard","tool":"smart_git","phase":"started","detail":"diff"}
+{"at":"2026-05-31T15:06:03.834Z","session_id":"ses_181714bb9ffe67lIl0GJYdQKM1","agent":"type-guard","tool":"smart_git","phase":"completed","detail":"diff exit=0"}
+{"at":"2026-05-31T15:06:04.661Z","session_id":"ses_181714bb9ffe67lIl0GJYdQKM1","agent":"type-guard","tool":"smart_git","phase":"started","detail":"diff"}
+{"at":"2026-05-31T15:06:04.679Z","session_id":"ses_181714bb9ffe67lIl0GJYdQKM1","agent":"type-guard","tool":"smart_git","phase":"completed","detail":"diff exit=0"}

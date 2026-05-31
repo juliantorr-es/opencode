@@ -1,0 +1,25 @@
+{"at":"2026-05-31T14:45:32.578Z","tool":"smart_git","action":"git_op","operation":"diff","exit_code":0}
+{"at":"2026-05-31T14:45:33.123Z","tool":"smart_git","action":"git_op","operation":"diff","exit_code":0}
+{"at":"2026-05-31T14:45:33.722Z","tool":"smart_git","action":"git_op","operation":"diff","exit_code":0}
+{"at":"2026-05-31T14:45:56.694Z","tool":"smart_bun","action":"ran","command":"test","exit_code":0,"cwd":"packages/plugin"}
+{"at":"2026-05-31T14:46:09.944Z","tool":"smart_bun","action":"ran","command":"typecheck","exit_code":2,"cwd":"packages/opencode"}
+{"at":"2026-05-31T14:46:24.204Z","tool":"smart_git","action":"git_op","operation":"status","exit_code":0}
+{"at":"2026-05-31T14:46:51.126Z","tool":"smart_git","action":"git_op","operation":"diff","exit_code":0}
+{"at":"2026-05-31T14:46:52.159Z","tool":"smart_grep","action":"searched","pattern":"makeError|ErrorCode|parseToolError|isSuccess|isError|errors","results":19,"files":2}
+{"at":"2026-05-31T14:47:33.886Z","tool":"smart_grep","action":"searched","pattern":"result\\.error|result\\?.error|\\.error\\b","results":30,"files":7}
+{"at":"2026-05-31T14:47:58.559Z","tool":"smart_write","action":"created","file":"/tmp/test_tool_errors.ts","reason":"Write comprehensive falsification test script"}
+{"at":"2026-05-31T14:48:07.928Z","tool":"smart_bun","action":"ran","command":"run","exit_code":0,"cwd":"packages/plugin"}
+{"at":"2026-05-31T14:48:26.758Z","tool":"smart_grep","action":"searched","pattern":"tool.*output|tool.*result|toolOutput|tool_result","results":22,"files":8}
+{"at":"2026-05-31T14:48:26.792Z","tool":"smart_grep","action":"searched","pattern":"JSON\\.parse.*error|\\.error\\b.*tool|tool.*\\.error","results":12,"files":4}
+{"at":"2026-05-31T14:49:14.833Z","tool":"smart_grep","action":"searched","pattern":"parseToolError|isSuccess|isError","results":30,"files":14}
+{"at":"2026-05-31T14:49:15.744Z","tool":"smart_grep","action":"searched","pattern":"\"error_code\"|error_code","results":30,"files":4}
+{"at":"2026-05-31T14:49:22.773Z","tool":"smart_grep","action":"searched","pattern":"error_code","results":0,"files":0}
+{"at":"2026-05-31T14:49:45.945Z","tool":"smart_bash","action":"bash","command":"/bin/sh -c 'cd /Users/user/Developer/GitHub/opencode-desktop-dev/packages/plugin && bun test 2>&1' |","exit_code":0}
+{"at":"2026-05-31T14:50:04.597Z","tool":"smart_git","action":"git_op","operation":"status","exit_code":0}
+{"at":"2026-05-31T14:50:28.856Z","tool":"smart_bash","action":"bash","command":"python3 -c \"import os; files = os.listdir('/Users/user/Developer/GitHub/opencode-desktop-dev/package","exit_code":0}
+{"at":"2026-05-31T14:50:43.453Z","tool":"smart_grep","action":"searched","pattern":"from \\\"bun:test\\\"","results":2,"files":2}
+{"at":"2026-05-31T14:51:04.286Z","tool":"smart_grep","action":"searched","pattern":"^test\\(","results":0,"files":0}
+{"at":"2026-05-31T14:51:25.855Z","tool":"smart_bun","action":"ran","command":"typecheck","exit_code":0,"cwd":"packages/plugin"}
+{"at":"2026-05-31T14:51:25.877Z","tool":"smart_grep","action":"searched","pattern":"^test\\(","results":0,"files":0}
+{"at":"2026-05-31T14:52:15.282Z","tool":"smart_write","action":"created","file":"/tmp/test_edge_cases.ts","reason":"Test edge cases not covered by existing tests"}
+{"at":"2026-05-31T14:52:37.906Z","tool":"smart_bun","action":"ran","command":"run","exit_code":0,"cwd":"packages/plugin"}

@@ -1,0 +1,442 @@
+{
+  "artifact": "truth-closure-test-patterns",
+  "schema": "rig.relay.cartography.v1",
+  "generated_at": "2026-05-31T00:00:00Z",
+  "file_mapped": "packages/opencode/src/campaign/truth-closure.test.ts",
+  "file_stats": {
+    "total_lines": 1790,
+    "import_count": 9,
+    "helper_functions": 7,
+    "describe_blocks": 14,
+    "test_count": 57
+  },
+
+  "helpers": {
+    "makeMockStoreEvent": {
+      "line": 42,
+      "signature": "function makeMockStoreEvent(overrides: Partial<StoreRuntimeEvent> = {}): StoreRuntimeEvent",
+      "description": "Creates a mock StoreRuntimeEvent with defaults (id: 'evt_test_001', sessionId: 'ses_test', runId: 'lane_test_01', actor: 'lifecycle', eventType: 'plan.produced')"
+    },
+    "makeMockPredicateContext": {
+      "line": 54,
+      "signature": "function makeMockPredicateContext(overrides: Partial<PredicateContext> = {}): PredicateContext",
+      "description": "Creates a mock PredicateContext with defaults for testing predicate evaluation"
+    },
+    "makeInitialCampaignState": {
+      "line": 67,
+      "signature": "function makeInitialCampaignState(overrides: Partial<SMCampaignState> = {}): SMCampaignState",
+      "description": "Creates a mock CampaignState with defaults (currentState: 'created', laneId: 'lane-1', campaignId: 'camp-1')"
+    },
+    "makeMockBinder": {
+      "line": 81,
+      "signature": "function makeMockBinder(overrides: Partial<Binder> = {}): Binder",
+      "description": "Creates a full mock Binder with ALL 24 fields populated: schemaVersion, binderVersion, laneId, campaignId, status, missionObjective, laneScope, claimedFiles, dependencyLaneIds, scoutReports, criticReviews, executionEvents, transitionEvents, validationResults, redTeamFindings, repairHistory, residualRisks, createdAt, artifactDigest",
+      "fields_covered": ["schemaVersion", "binderVersion", "laneId", "campaignId", "status", "missionObjective", "laneScope", "claimedFiles", "dependencyLaneIds", "scoutReports", "criticReviews", "executionEvents", "transitionEvents", "validationResults", "redTeamFindings", "repairHistory", "residualRisks", "createdAt", "artifactDigest"],
+      "fields_not_covered": ["architecturePlan", "approvedPlan", "diffSummary", "checkpointCommit", "handoffSummary", "terminalStatus", "completedAt"]
+    },
+    "makeMockArtifactRef": {
+      "line": 106,
+      "signature": "function makeMockArtifactRef(overrides: Partial<ArtifactRef> = {}): ArtifactRef",
+      "description": "Creates mock ArtifactRef with defaults (refType: 'scout', artifactSha: 'sha256-mock', producedBy: 'test-scout', producedAt: ISO timestamp, description: 'mock artifact')"
+    },
+    "makeMockEventRef": {
+      "line": 116,
+      "signature": "function makeMockEventRef(overrides: Partial<EventRef> = {}): EventRef",
+      "description": "Creates mock EventRef with defaults (eventId: 'evt-test-001', eventType: 'test.event', ts: '2024-01-01T00:00:00Z', summary: 'test event')"
+    },
+    "makeMockEventStoreService": {
+      "line": 1191,
+      "signature": "function makeMockEventStoreService() — returns Effect<EventStore.Service>",
+      "description": "Creates a Ref<StoreRuntimeEvent[]> backed in-memory EventStore. Implements EventStore.Interface with record() (appends to Ref) and query() (filters by runId, laneId, eventType, limit). Returns EventStore.Service.of({ record, query })",
+      "record_method": "Ref.update(events, (es) => [...es, event]) — pure append",
+      "query_method": "Ref.get(events).pipe(Effect.map(...)) — filters by runId, laneId, eventType, limit"
+    },
+    "secretaryTestLayer": {
+      "line": 1212,
+      "construction": "const mockEventStoreLayer = Layer.effect(EventStore.Service, makeMockEventStoreService)\nconst secretaryTestLayer = Secretary.layer.pipe(Layer.provide(mockEventStoreLayer))",
+      "description": "Provides Secretary.layer with the mock EventStore layer, replacing the real DB-backed EventStore. Does NOT mock Binder — uses the real BinderLayer under Secretary.layer."
+    }
+  },
+
+  "effect_patterns": {
+    "effect_runPromise": {
+      "description": "Every async test wraps an Effect.gen program with await Effect.runPromise(program.pipe(Effect.provide(secretaryTestLayer)))",
+      "examples": [
+        { "line": 1363, "pattern": "const result = await Effect.runPromise(program.pipe(Effect.provide(secretaryTestLayer)))" },
+        { "line": 1426, "pattern": "const result = await Effect.runPromise(program.pipe(Effect.provide(secretaryTestLayer)))" },
+        { "line": 1511, "pattern": "const result = await Effect.runPromise(program.pipe(Effect.provide(secretaryTestLayer)))" },
+        { "line": 1601, "pattern": "const result = await Effect.runPromise(program.pipe(Effect.provide(secretaryTestLayer)))" },
+        { "line": 1688, "pattern": "const result = await Effect.runPromise(program.pipe(Effect.provide(secretaryTestLayer)))" }
+      ]
+    },
+    "effect_gen_test_construction": {
+      "description": "Tests define a `program = Effect.gen(function* () { ... })` block, yield* secretary methods, return result values, then run via Effect.runPromise",
+      "pattern": "const program = Effect.gen(function* () {\n  const secretary = yield* Secretary.Service\n  // ... secretary method calls ...\n  return { field1, field2 }\n})\nconst result = await Effect.runPromise(program.pipe(Effect.provide(secretaryTestLayer)))"
+    },
+    "layer_provide": {
+      "description": "Layer.provide is used in two places: (1) constructing secretaryTestLayer via .pipe(Layer.provide(mockEventStoreLayer)) at line 1212, (2) providing secretaryTestLayer to program via .pipe(Effect.provide(secretaryTestLayer)) in each test"
+    }
+  },
+
+  "secretary_interface": {
+    "source_file": "packages/opencode/src/campaign/secretary.ts",
+    "definition_lines": "343-353",
+    "service_class_line": 357,
+    "service_tag": "@opencode/Secretary",
+    "methods": {
+      "createLane": {
+        "signature": "(campaignId: string, scope: string, dependencies: string[]) => Effect.Effect<string>",
+        "used_in_tests": true,
+        "test_lines": [1224, 1397, 1435, 1535, 1620, 1701]
+      },
+      "processEvent": {
+        "signature": "(laneId: string, event: RuntimeEvent) => Effect.Effect<void, Error>",
+        "used_in_tests": true,
+        "test_lines": [1229, 1244, 1401, 1439, 1537, 1624, 1705],
+        "events_used_in_tests": ["StartLearning", "ScopeSynthesized", "ClaimsAcquired", "CheckpointCreated", "LaneReturned"]
+      },
+      "getLaneState": {
+        "signature": "(laneId: string) => Effect.Effect<LaneReadState, LaneNotFoundError>",
+        "used_in_tests": true,
+        "test_lines": [1230, 1240, 1307, 1452, 1485, 1709]
+      },
+      "getLaneBinder": {
+        "signature": "(laneId: string) => Effect.Effect<Binder, LaneNotFoundError | LaneNotTerminalError>",
+        "used_in_tests": true,
+        "test_lines": [1320, 1410, 1415, 1505, 1570, 1581, 1650, 1726],
+        "fields_asserted": ["artifactDigest", "scoutReports.length", "criticReviews.length", "validationResults.length", "redTeamFindings.length", "status", "terminalStatus"]
+      },
+      "launchRole": {
+        "signature": "(laneId: string, roleType: string) => Effect.Effect<void, Error>",
+        "used_in_tests": false,
+        "test_lines": []
+      },
+      "handleRoleOutput": {
+        "signature": "(laneId: string, output: RoleOutput) => Effect.Effect<void, Error>",
+        "used_in_tests": true,
+        "test_lines": [1234, 1405, 1445, 1540, 1628, 1640],
+        "roles_used": ["scout", "architect", "critic", "executor", "validator", "redteam"]
+      },
+      "returnLane": {
+        "signature": "(laneId: string) => Effect.Effect<Binder, Error>",
+        "used_in_tests": true,
+        "test_lines": [1315, 1576, 1654]
+      },
+      "loadLane": {
+        "signature": "(laneId: string) => Effect.Effect<LaneState, LaneNotFoundError>",
+        "used_in_tests": false,
+        "test_lines": []
+      },
+      "init": {
+        "signature": "(laneId: string) => Effect.Effect<void, LaneNotFoundError>",
+        "used_in_tests": true,
+        "test_lines": [1417, 1716],
+        "description": "Used to simulate process restart — reconstructs state from EventStore"
+      }
+    },
+    "methods_not_tested": ["launchRole", "loadLane"]
+  },
+
+  "binder_fields": {
+    "source_file": "packages/opencode/src/campaign/binder.ts",
+    "definition_lines": "84-123",
+    "all_fields": {
+      "schemaVersion": { "type": "string", "asserted_in_tests": false },
+      "binderVersion": { "type": "number", "asserted_in_tests": false },
+      "laneId": { "type": "string", "asserted_in_tests": false },
+      "campaignId": { "type": "string", "asserted_in_tests": false },
+      "status": { "type": "LaneState", "asserted_in_tests": true, "test_lines": [1327, 1508, 1574] },
+      "missionObjective": { "type": "string", "asserted_in_tests": false },
+      "laneScope": { "type": "string", "asserted_in_tests": false },
+      "claimedFiles": { "type": "string[]", "asserted_in_tests": false },
+      "dependencyLaneIds": { "type": "string[]", "asserted_in_tests": false },
+      "scoutReports": { "type": "ArtifactRef[]", "asserted_in_tests": true, "test_lines": [1413, 1420, 1584, 1665] },
+      "architecturePlan": { "type": "ArtifactRef", "optional": true, "asserted_in_tests": false },
+      "criticReviews": { "type": "ArtifactRef[]", "asserted_in_tests": true, "test_lines": [1414, 1421, 1585, 1666] },
+      "approvedPlan": { "type": "ArtifactRef", "optional": true, "asserted_in_tests": false },
+      "executionEvents": { "type": "EventRef[]", "asserted_in_tests": true, "test_lines": [1586, 1667] },
+      "transitionEvents": { "type": "EventRef[]", "asserted_in_tests": true, "test_lines": [1587, 1668] },
+      "diffSummary": { "type": "DiffSummary", "optional": true, "asserted_in_tests": false },
+      "validationResults": { "type": "ValidationResult[]", "asserted_in_tests": true, "test_lines": [1412, 1588, 1669] },
+      "redTeamFindings": { "type": "RedTeamFinding[]", "asserted_in_tests": true, "test_lines": [1318, 1589, 1670] },
+      "repairHistory": { "type": "RepairCycle[]", "asserted_in_tests": true, "test_lines": [1590, 1671] },
+      "checkpointCommit": { "type": "string", "optional": true, "asserted_in_tests": false },
+      "residualRisks": { "type": "string[]", "asserted_in_tests": true, "test_lines": [1591, 1672] },
+      "handoffSummary": { "type": "string", "optional": true, "asserted_in_tests": false },
+      "terminalStatus": { "type": "TerminalStatus", "optional": true, "asserted_in_tests": true, "test_lines": [937, 1333, 1575] },
+      "createdAt": { "type": "string", "asserted_in_tests": false },
+      "completedAt": { "type": "string", "optional": true, "asserted_in_tests": false },
+      "artifactDigest": { "type": "string", "asserted_in_tests": true, "test_lines": [936, 1321, 1411, 1419, 1571, 1582, 1648, 1727] }
+    },
+    "fields_asserted_in_g15_g16": ["status", "scoutReports", "criticReviews", "executionEvents", "transitionEvents", "validationResults", "redTeamFindings", "repairHistory", "residualRisks", "terminalStatus", "artifactDigest"],
+    "fields_never_asserted_in_any_test": ["schemaVersion", "binderVersion", "laneId", "campaignId", "missionObjective", "laneScope", "claimedFiles", "dependencyLaneIds", "architecturePlan", "approvedPlan", "diffSummary", "checkpointCommit", "handoffSummary", "completedAt"]
+  },
+
+  "test_structure": {
+    "describe_blocks": [
+      {
+        "name": "toStoreEvent: CriticComplete verdict-aware",
+        "lines": "130-191",
+        "test_count": 6,
+        "category": "unit",
+        "covers": "toStoreEvent mapping for CriticComplete(rejected/approved), payloadJson, laneId/campaignId, and other RuntimeEvent types (RedTeamCompleted, CheckpointCreated)"
+      },
+      {
+        "name": "STATE_ROLE and getRoleForState: canonical state names",
+        "lines": "193-245",
+        "test_count": 8,
+        "category": "unit",
+        "covers": "getRoleForState for all state tags (scouting, critic_review, red_team, historian, returned, created, failed, blocked), STATE_ROLE key completeness"
+      },
+      {
+        "name": "RuntimeEvent types per role: correct SM and store mapping",
+        "lines": "247-358",
+        "test_count": 10,
+        "category": "unit",
+        "covers": "RedTeamCompleted (blocking/non-blocking), Blocked, Failed, ScoutComplete, ArchitectComplete, CheckpointCreated, CriticComplete (approved/rejected), ExecutorComplete, ValidatorComplete (passed/failed) — both toSMEvent and toStoreEvent"
+      },
+      {
+        "name": "toSMEvent: checkpoint and lane-returned paths",
+        "lines": "359-400",
+        "test_count": 4,
+        "category": "unit",
+        "covers": "CheckpointCreated → session.checkpoint mapping, LaneReturned → lane.returned mapping, CriticComplete paths in toSMEvent"
+      },
+      {
+        "name": "deriveAllowedTools: canonical LaneState coverage",
+        "lines": "402-449",
+        "test_count": 7,
+        "category": "unit",
+        "covers": "deriveAllowedTools for scouting, critic_review, red_team, historian, executing, validating, and terminal states"
+      },
+      {
+        "name": "Full happy-path: pure function chain across lifecycle",
+        "lines": "451-635",
+        "test_count": 4,
+        "category": "unit/integration",
+        "covers": "toStoreEvent and toSMEvent mapping for every lifecycle tag, round-trip between toStoreEvent and toSMEvent, full spine through all lifecycle events"
+      },
+      {
+        "name": "Red-team blocking prevents progression",
+        "lines": "636-683",
+        "test_count": 5,
+        "category": "unit",
+        "covers": "Blocked event SM/store mapping, blocking findings in RedTeamCompleted, reason/error payload persistence"
+      },
+      {
+        "name": "Binder reconstruction: pure function consistency",
+        "lines": "685-917",
+        "test_count": 5,
+        "category": "unit",
+        "covers": "Structural equivalence of toStoreEvent/toSMEvent for identical inputs, validation fail/pass event types, required StoreRuntimeEvent fields"
+      },
+      {
+        "name": "Terminal finalization preserves evidence",
+        "lines": "919-953",
+        "test_count": 2,
+        "category": "unit",
+        "covers": "Binder evidence preservation after terminalStatus set, non-empty artifactDigest"
+      },
+      {
+        "name": "Red-team blocking prevents historian transition",
+        "lines": "955-1003",
+        "test_count": 2,
+        "category": "unit",
+        "covers": "State transitions: redteam_completed with no blockers → historian, with blockers → repairing"
+      },
+      {
+        "name": "Deterministic replay",
+        "lines": "1004-1215",
+        "test_count": 2,
+        "category": "unit",
+        "covers": "reduceCampaignState determinism (same inputs → same output), identity for empty events"
+      },
+      {
+        "name": "Service-level integration (G15)",
+        "lines": "1216-1526",
+        "test_count": 3,
+        "category": "integration",
+        "tests": [
+          {
+            "name": "service: create lane → process full lifecycle → binder has evidence",
+            "line": 1217,
+            "lifecycle_steps": ["createLane", "processEvent(StartLearning)", "handleRoleOutput(scout)", "processEvent(ScopeSynthesized)", "handleRoleOutput(architect)", "handleRoleOutput(critic)", "processEvent(ClaimsAcquired)", "handleRoleOutput(executor)", "handleRoleOutput(validator)", "handleRoleOutput(redteam)", "returnLane"],
+            "verifies": ["laneId is string", "state transitions (scouting, scoped, designing, criticizing, executing, validating, red_team, historian, returned)", "binder.status === 'returned'", "binder.terminalStatus is defined", "binder.redTeamFindings.length > 0 for blocking finding", "binder has scoutReports, criticReviews, validationResults > 0", "binder.artifactDigest is non-empty"]
+          },
+          {
+            "name": "service: restart recovery preserves binder evidence",
+            "line": 1395,
+            "lifecycle_steps": ["createLane", "processEvent(StartLearning)", "handleRoleOutput(scout)", "processEvent(ScopeSynthesized)", "handleRoleOutput(architect)", "handleRoleOutput(critic)", "getLaneBinder(before)", "init() — simulates restart", "getLaneBinder(after)"],
+            "verifies": ["artifactDigest matches before/after init", "scoutReports.length matches", "criticReviews.length matches"]
+          },
+          {
+            "name": "service: red-team blocking finding prevents historian",
+            "line": 1431,
+            "lifecycle_steps": ["createLane → scout → architect → critic → executor → validator → redteam(blocking finding)", "getLaneState → verify hasBlocking"],
+            "verifies": ["blocking finding prevents progression to historian", "state.hasBlocking is true"]
+          }
+        ]
+      },
+      {
+        "name": "Binder finalization idempotency (G16)",
+        "lines": "1528-1697",
+        "test_count": 2,
+        "category": "integration",
+        "tests": [
+          {
+            "name": "finalizeBinder is idempotent — calling twice returns same binder",
+            "line": 1530,
+            "lifecycle_steps": ["createLane → scout → architect → critic → executor → redteam → returnLane (auto-finalizes)", "getLaneBinder × 2"],
+            "verifies": ["same artifactDigest on both calls", "scoutReports.length equal", "criticReviews.length equal", "executionEvents.length equal", "transitionEvents.length equal", "validationResults.length equal", "redTeamFindings.length equal", "repairHistory.length equal", "residualRisks.length equal", "status === 'returned'", "terminalStatus is defined", "digest is non-empty"]
+          },
+          {
+            "name": "terminal finalization does not erase accumulated evidence",
+            "line": 1614,
+            "lifecycle_steps": ["createLane → scout → architect → critic → executor → redteam → returnLane", "getLaneBinder"],
+            "verifies": ["artifactDigest non-empty", "scoutReports, criticReviews, executionEvents, transitionEvents, validationResults, redTeamFindings, repairHistory, residualRisks all present", "terminalStatus defined"]
+          }
+        ]
+      },
+      {
+        "name": "Deterministic replay from EventStore",
+        "lines": "1698-1790",
+        "test_count": 2,
+        "category": "integration",
+        "tests": [
+          {
+            "name": "service: init replay produces same state as live progression",
+            "line": 1700,
+            "covers": "Full lifecycle progression, then init() to replay from EventStore, verifying same state"
+          },
+          {
+            "name": "service: reduceCampaignState — same events → same state",
+            "line": 1745,
+            "covers": "reduceCampaignState determinism with multiple event sequences"
+          }
+        ]
+      }
+    ]
+  },
+
+  "g15_lifecycle_coverage": {
+    "description": "G15 service-level integration tests (lines 1216-1526) cover the full lane lifecycle from creation through return",
+    "states_covered": ["created", "scouting", "scoped", "designing", "criticizing", "executing", "validating", "red_team", "historian", "returned"],
+    "states_not_covered": ["repairing", "blocked", "failed", "claims_gate"],
+    "role_outputs_covered": ["scout", "architect", "critic", "executor", "validator", "redteam"],
+    "role_outputs_not_covered": [],
+    "events_covered": ["StartLearning", "ScopeSynthesized", "ClaimsAcquired", "CheckpointCreated", "LaneReturned"],
+    "events_not_covered": [],
+    "secretary_methods_covered": ["createLane", "processEvent", "getLaneState", "getLaneBinder", "handleRoleOutput", "returnLane", "init"],
+    "secretary_methods_not_covered": ["launchRole", "loadLane"],
+    "binder_evidence_asserted": ["scoutReports.length", "criticReviews.length", "validationResults.length", "redTeamFindings.length", "artifactDigest", "status", "terminalStatus"],
+    "binder_evidence_not_asserted": ["executionEvents", "transitionEvents", "repairHistory", "residualRisks", "architecturePlan", "approvedPlan", "diffSummary", "checkpointCommit", "handoffSummary"]
+  },
+
+  "g16_coverage": {
+    "description": "G16 binder finalization tests (lines 1528-1697) verify idempotency and evidence preservation after finalization",
+    "asserts_all_evidence_categories": true,
+    "evidence_fields_asserted": ["scoutReports.length", "criticReviews.length", "executionEvents.length", "transitionEvents.length", "validationResults.length", "redTeamFindings.length", "repairHistory.length", "residualRisks.length", "artifactDigest", "terminalStatus", "status"],
+    "identical_fields_between_calls": ["artifactDigest", "scoutReports.length", "criticReviews.length", "executionEvents.length", "transitionEvents.length", "validationResults.length", "redTeamFindings.length", "repairHistory.length", "residualRisks.length"]
+  },
+
+  "spine_test_gaps": {
+    "description": "What a comprehensive spine test needs to cover that existing tests do not",
+    "untested_secretary_methods": [
+      {
+        "method": "launchRole",
+        "signature": "(laneId: string, roleType: string) => Effect.Effect<void, Error>",
+        "importance": "Medium — triggers role dispatch; needed for real agent workflow"
+      },
+      {
+        "method": "loadLane",
+        "signature": "(laneId: string) => Effect.Effect<LaneState, LaneNotFoundError>",
+        "importance": "Medium — reconstructs lane from EventStore; needed for persistence boundaries"
+      }
+    ],
+    "untested_binder_fields": [
+      "schemaVersion — never verified that it's set to 'v1'",
+      "binderVersion — never verified that it increments or is set",
+      "laneId — never verified that it matches the created lane ID",
+      "campaignId — never verified that it matches the createLane campaignId",
+      "missionObjective — never verified that it's populated from createLane or processEvent",
+      "laneScope — never verified that it matches the createLane scope param",
+      "claimedFiles — never verified that ClaimsAcquired files persist",
+      "dependencyLaneIds — never verified that createLane dependencies persist",
+      "architecturePlan — never verified that architect RoleOutput planRef persists",
+      "approvedPlan — never verified that approved plan ref persists",
+      "diffSummary — never verified for executor output",
+      "checkpointCommit — never verified for CheckpointCreated persistence",
+      "handoffSummary — never verified for handoff event persistence",
+      "completedAt — never verified as set on finalization"
+    ],
+    "untested_error_paths": [
+      "LaneNotFoundError — getLaneState/getLaneBinder/init on non-existent lane",
+      "InvalidEventError — processEvent with invalid event for current state",
+      "LaneNotTerminalError — getLaneBinder before lane is terminal",
+      "BinderError — Binder sub-operations failing (e.g., addScoutReport on missing binder)"
+    ],
+    "untested_lifecycle_states": [
+      "repairing — no test exercises the redteam → repairing → redteam loop",
+      "blocked — Blocked state tests are pure-function only (not service-level)",
+      "failed — Failed state tests are pure-function only (not service-level)",
+      "claims_gate — no service-level test for claims_gate transition"
+    ],
+    "untested_concurrency": [
+      "Same lane processed from two concurrent fibers",
+      "EventStore record → query consistency under parallel operations"
+    ],
+    "untested_edge_cases": [
+      "Processing event before createLane",
+      "Returning a lane twice",
+      "handleRoleOutput with empty artifacts/findings",
+      "handleRoleOutput with unknown role",
+      "processEvent on a terminal (returned) lane",
+      "init on a lane with 0 events in EventStore"
+    ],
+    "missing_round_trip": [
+      "No test verifies that toStoreEvent(→ EventStore.record) → EventStore.query → reconstruct produces identical LaneState/Binder"
+    ],
+    "structural_gaps": [
+      "No test verifies the full event log content (just counts/lengths, not actual payload content)",
+      "No test verifies artifactDigest stability across process restarts (only same session init)",
+      "No test verifies that the mock EventStore actually records ALL events (no count check)",
+      "No test uses the real EventStore.query filtering capabilities (runId, laneId, eventType, limit)"
+    ]
+  },
+
+  "smoking_guns": {
+    "description": "Key observations from the pattern analysis",
+    "findings": [
+      {
+        "severity": "info",
+        "finding": "makeMockBinder covers 19 of 24 Binder fields but 7 optional/structural fields are never populated in the mock (architecturePlan, approvedPlan, diffSummary, checkpointCommit, handoffSummary, terminalStatus, completedAt) — these same 7 fields are also NEVER asserted in any test",
+        "implication": "When the production path sets these fields, tests have zero coverage"
+      },
+      {
+        "severity": "warning",
+        "finding": "The Secretary methods launchRole and loadLane have ZERO test coverage — no test in the 1790-line file calls them",
+        "implication": "If these methods have bugs, they will only be discovered in integration"
+      },
+      {
+        "severity": "warning",
+        "finding": "Error paths (LaneNotFoundError, InvalidEventError, LaneNotTerminalError, BinderError) have zero test coverage — all service-level tests run the happy path only",
+        "implication": "Production error handling is completely untested"
+      },
+      {
+        "severity": "info",
+        "finding": "G15/G16 tests verify binder evidence by checking array lengths, not actual content — no test checks that scoutReports[0].artifactSha contains the expected value",
+        "implication": "A bug that records empty/corrupt artifacts would still pass all tests"
+      },
+      {
+        "severity": "info",
+        "finding": "The mock EventStore does not validate event structure; it blindly appends anything. The production EventStore goes through Drizzle ORM with schema validation.",
+        "implication": "Mock-store tests could pass with malformed events that the real store would reject"
+      },
+      {
+        "severity": "info",
+        "finding": "secretaryTestLayer uses the real BinderLayer (not mocked), meaning binder.ts bugs would surface in these tests — but binder internal state is tested indirectly through Secretary",
+        "implication": "No isolated Binder.Interface tests exist anywhere in the codebase"
+      }
+    ]
+  }
+}

@@ -1,0 +1,210 @@
+{
+  "schema_version": "3.0",
+  "generated_at": "2026-05-31T00:00:00Z",
+  "mission": "Lane TOOL-GRAPH: Scope cross-tool dependency graph implementation",
+  "status": "research_complete",
+
+  "verdict": "NOT GREENFIELD. The tool system already has significant pipeline infrastructure spread across three layers: (1) typed-result.ts formal framework, (2) tool .txt description files with ad-hoc prose pipelines, (3) system prompts with sequential tool usage guidance. The graph codifies these existing informal patterns into a structured, queryable, single-source-of-truth format.",
+
+  "subagent_contributions": [
+    {"agent": "surveyor", "finding": "104 tools across 3 directories, BUILTIN_TOOL_IDS structure, cross-cutting patterns"},
+    {"agent": "compass", "finding": "Acyclic DAG, 15 external consumers, 6 Effect services, cross-tool import edges"},
+    {"agent": "explore (registry)", "finding": "95+ BUILTIN_TOOL_IDS, 15 conditional flags, dynamic description enrichment, no structured relationships, LLM sees only name+desc+schema"},
+    {"agent": "explore (pipelines)", "finding": "20+ documented pipeline patterns across typed-result.ts, .txt files, system prompts, and code. NOT greenfield — codifying existing ad-hoc patterns."}
+  ],
+
+  "existing_pipeline_infrastructure": {
+    "layer_1_typed_result_framework": {
+      "file": "packages/opencode/src/tool/typed-result.ts",
+      "description": "Formal, structured pipeline framework — the graph's natural integration point",
+      "key_components": [
+        {"component": "TypedToolResult<T>", "line": 33, "contains": ["suggestedNextTools: string[]", "nextAffordances: NextAffordance[]"]},
+        {"component": "suggestedToolsAfterSuccess(toolID)", "line": 245, "mechanism": "Same-category heuristic (TOOL_CATEGORIES). Wrong for data-flow — suggests grep after smart_find instead of read_source."},
+        {"component": "suggestedToolsFor(toolID, status, errorKind)", "line": 251, "mechanism": "On failure: retry self, fallback to diagnose tools. On denied: exclude self."},
+        {"component": "affordancesAfterSuccess(toolID)", "line": 269, "mechanism": "Structured {action, target, command} hints for the model."},
+        {"component": "wrapExecute(toolID, execute)", "line": 425, "mechanism": "Wraps every tool execution in the TypedResult pipeline — the PRODUCTION BOUNDARY."},
+        {"component": "formatOutput(result)", "line": 353, "mechanism": "Formats pipeline hints as human-readable text with [OK]/[FAILED] markers."},
+        {"component": "STRUCTURED_MARKER", "line": 345, "value": "\"[[typed-result]]\"", "mechanism": "JSON marker embedded in output text — not currently parsed by any downstream code."},
+        {"component": "fromOutput(output)", "line": 380, "status": "EXISTS BUT NEVER CALLED — structural parser for typed results is built but unused."}
+      ]
+    },
+    "layer_2_tool_prose_documentation": {
+      "description": "Every tool's .txt file documents its pipelines in ad-hoc natural language. These are the graph's seed data.",
+      "discovered_patterns": [
+        {"direction": "read → write", "source": "write.txt:5", "text": "'you MUST use the Read tool first to read the file's contents. This tool will fail if you did not read the file first.'"},
+        {"direction": "read → edit", "source": "edit.txt:4", "text": "'You must use your Read tool at least once in the conversation before editing.'"},
+        {"direction": "glob → read", "source": "read.txt:9", "text": "'If you are unsure of the correct file path, use the glob tool to look up filenames by glob pattern.'"},
+        {"direction": "grep → task", "source": "grep.txt:8", "text": "'When you are doing an open-ended search... use the Task tool instead'"},
+        {"direction": "glob → task", "source": "glob.txt:5", "text": "'...use the Task tool instead'"},
+        {"direction": "shell → smart_*", "source": "shell/shell.txt:9", "text": "'DO NOT use it for file operations... use the specialized tools instead.'"},
+        {"direction": "smart_bash → smart_*", "source": "smart-bash.txt:1", "text": "'Prefer smart_bun, smart_git, smart_grep, smart_find, smart_sd, read_source...'"},
+        {"direction": "task → read/glob/grep", "source": "task.txt:6-9", "text": "'If you want to read a specific file path, use the Read or Glob tool instead...'"},
+        {"direction": "curate_context → read_artifact", "source": "curate-context.txt:1", "text": "'Agents use read_artifact(context) to get the latest curated view.'"},
+        {"direction": "discover_findings → read_artifact", "source": "discover-findings.txt:1", "text": "'use read_artifact on the source_artifact path to pull the full context...'"},
+        {"direction": "smart_write → read_source", "source": "smart-write.txt:1", "text": "'Other agents see this via read_source.'"},
+        {"direction": "smart_edit → read_source", "source": "smart-edit.txt:1", "text": "'Other agents see this via read_source.'"},
+        {"direction": "prepare_delegation → task", "source": "prepare-delegation.txt:1-2", "text": "'Record a delegation... before calling task.'"},
+        {"direction": "truncation → task(grep+read)", "source": "truncate.ts:131", "text": "'Use the Task tool to have explore agent process this file with Grep and Read...'"},
+        {"direction": "smart_bash → secret_scanner", "source": "smart-bash.ts:140-142", "text": "scanToolOutput() post-processes stdout for secrets"},
+        {"direction": "tool_failure → tool_feedback", "source": "tool-feedback.txt:1", "text": "'Report a tool that isn't working as intended... aggregated into a feedback artifact.'"},
+        {"direction": "produce_fragment → consolidator", "source": "produce-fragment.txt:1", "text": "'The consolidator assembles all fragments for a file.'"},
+        {"direction": "curated_context → generate_report", "source": "generate-report.txt:1", "text": "'Produce the final session report by consuming ALL artifacts from the curated context.'"},
+        {"direction": "task output → task_id reuse", "source": "task.txt:14", "text": "'The output includes a task_id you can reuse later to continue the same subagent session.'"}
+      ]
+    },
+    "layer_3_system_prompts": {
+      "description": "System prompts teach the LLM pipeline patterns at the meta level",
+      "patterns": [
+        {"source": "anthropic.txt:83", "text": "'If some tool calls depend on previous calls... do NOT call these tools in parallel and instead call them sequentially.'"},
+        {"source": "anthropic.txt:85", "text": "'Use specialized tools instead of bash commands when possible... Read for reading instead of cat/head/tail, Edit for editing instead of sed/awk...'"},
+        {"source": "trinity.txt:86", "text": "'Use the result to take the next step (e.g. pick one match, read that file, then act); do not search again in a loop.' — explicit grep→read chain"},
+        {"source": "gpt.txt:6", "text": "'Parallelize tool calls whenever possible - especially file reads.'"},
+        {"source": "kimi.txt:15", "text": "'You must determine your next action based on the tool call results'"},
+        {"source": "default.txt", "text": "'When doing file search, prefer to use the Task tool in order to reduce context usage.'"}
+      ]
+    }
+  },
+
+  "gap_analysis": {
+    "what_exists": [
+      "TypedResult pipeline framework (wrapExecute, formatOutput, suggestedNextTools)",
+      "TOOL_CATEGORIES (7 categories, 18 tools — coarse but functional)",
+      "NextAffordance structured hints ({action, target, command})",
+      "STRUCTURED_MARKER for output parsing (built but unused)",
+      "20+ ad-hoc prose pipelines in .txt files",
+      "System prompt pipeline guidance",
+      "Pre-execution PhaseGate filtering",
+      "Read/write semaphore gating (10/3 permits)",
+      "Dynamic description enrichment (describeTask, describeSkill)"
+    ],
+    "what_is_missing": [
+      "Structured data-flow edges (fromTool output shape → toTool input shape)",
+      "Tool output shape classification (what kind of data does each tool produce?)",
+      "Tool input shape classification (what kind of data does each tool consume?)",
+      "Category assignment for 86+ tools (only 18 categorized)",
+      "Single-source-of-truth graph (edges scattered across prose, system prompts, and TypedResult)",
+      "Queryable graph (getDownstream, getUpstream, shortestPath)",
+      "Graph-aware tool filtering (replace flag-based gating with graph-based subsets)",
+      "Graph-wired suggestions (replace same-category heuristic with data-flow edges)",
+      "Automated documentation (current pipelines are hand-written prose)"
+    ]
+  },
+
+  "graph_schema_design": {
+    "location": "packages/opencode/src/tool/tool-graph.ts (types) + tool-graph-data.ts (data)",
+    "seed_from_existing": [
+      {"source": "TOOL_CATEGORIES (typed-result.ts:225)", "maps_to": "alternatives edges + category field on nodes"},
+      {"source": "Tool .txt files (20+ prose pipelines)", "maps_to": "feeds edges with description + example fields"},
+      {"source": "System prompts (anthropic.txt, trinity.txt, etc.)", "maps_to": "Pipeline guidance injected into model-facing descriptions"},
+      {"source": "BUILTIN_TOOL_IDS (registry.ts:300)", "maps_to": "Node inventory (every ID gets a node)"},
+      {"source": "Conditional flags (registry.ts:539-644)", "maps_to": "flag_gating map on graph"}
+    ],
+    "proposed_schema": {
+      "ToolGraph": {
+        "nodes": "ToolGraphNode[] — ~100 entries",
+        "edges": "ToolGraphEdge[] — ~70 entries (20 prose-documented + ~20 inferred + ~30 alternatives)",
+        "flag_gating": "Record<string, string[]> — maps feature flag to gated tool IDs"
+      },
+      "ToolGraphNode": {
+        "id": "string",
+        "source": "tool | context | event",
+        "category": "enum: 17 values",
+        "produces": "OutputShape[]",
+        "consumes": "InputShape[]",
+        "parameters": "JSONSchema7",
+        "description": "string",
+        "gated_by": "string[]",
+        "effect_services": "string[]"
+      },
+      "ToolGraphEdge": {
+        "from": "string", "to": "string",
+        "kind": "feeds | alternatives | composes | guards | imports",
+        "description": "string — human-readable explanation",
+        "example": "string — concrete pipeline invocation",
+        "source": "prose_doc | system_prompt | typed_result | inferred | manual"
+      },
+      "OutputShape": {
+        "kind": "file_paths | file_contents | json | diff | coordination_claim | plan_id | checkpoint_id | finding_entry | validation_result | stdout | search_results | lsp_locations | context_snapshot | event_stream",
+        "schema_ref": "string (optional)"
+      },
+      "InputShape": {
+        "kind": "file_path | glob_pattern | regex | command | session_id | plan_id | json_document | url | event_filter | invalidation_scope",
+        "accepts_from": "string[] (OutputShape.kind values that can feed this)"
+      }
+    }
+  },
+
+  "what_the_graph_enables": [
+    {"capability": "Single-source-of-truth for pipelines", "detail": "Replace 20+ scattered prose patterns in .txt files + TypedResult + system prompts with one queryable graph. Tools auto-document their pipelines."},
+    {"capability": "Graph-wired TypedResult suggestions", "detail": "Replace same-category heuristic (typed-result.ts:245) with getDownstream(toolId). After smart_find → suggest read_source. After task → suggest task_board."},
+    {"capability": "Structured output parsing", "detail": "Wire fromOutput() (typed-result.ts:380, currently unused) to parse STRUCTURED_MARKER from tool output. Enable programmatic pipeline chaining."},
+    {"capability": "Description enrichment", "detail": "Inject graph-derived 'After this tool, consider:' into each tool's description during registry.ts tools() resolution. Replaces manual prose in .txt files."},
+    {"capability": "Flag-aware tool subsets", "detail": "Graph's flag_gating map replaces hardcoded conditional inclusions in registry.ts:539-644."},
+    {"capability": "Focused LLM tool lists", "detail": "Category-based filtering reduces 100+ tools to 15-25 context-relevant tools per agent phase."},
+    {"capability": "Pipeline generation", "detail": "BFS/DFS across produces→consumes edges. 'find and fix all type errors' → grep → read_source → smart_edit → bun."},
+    {"capability": "Prefetching", "detail": "Middleware reads downstream edges after each tool execution."},
+    {"capability": "Cycle detection", "detail": "Tool history vs graph."},
+    {"capability": "Documentation generation", "detail": "Graph traversal → auto-generated per-tool docs with 'Common pipelines', 'Feeds into', 'Fed by'."}
+  ],
+
+  "integration_plan": {
+    "phase_1_graph_types_and_data": {
+      "action": "Define tool-graph.ts (types) + tool-graph-data.ts (data). Populate from existing: TOOL_CATEGORIES → nodes+alternatives, .txt files → feeds edges, BUILTIN_TOOL_IDS → node inventory, registry flags → flag_gating.",
+      "files": ["packages/opencode/src/tool/tool-graph.ts", "packages/opencode/src/tool/tool-graph-data.ts"],
+      "existing_file_changes": 0
+    },
+    "phase_2_wire_typed_result": {
+      "action": "Replace same-category heuristic in suggestedToolsAfterSuccess (typed-result.ts:245) with graph.getDownstream(toolId). Wire fromOutput() (line 380) to actually parse STRUCTURED_MARKER.",
+      "files": ["packages/opencode/src/tool/typed-result.ts:245, 380"]
+    },
+    "phase_3_description_enrichment": {
+      "action": "Add describeGraphSuggestions(toolId) to registry.ts tools() method. Inject 'After this tool succeeds, consider: ...' into each tool's description. Replaces the need for hand-written prose in .txt files.",
+      "files": ["packages/opencode/src/tool/registry.ts:694"]
+    },
+    "phase_4_flag_aware_subsets": {
+      "action": "Use graph.flag_gating in registry.ts builtin array instead of hardcoded conditionals.",
+      "files": ["packages/opencode/src/tool/registry.ts:539-644"]
+    },
+    "phase_5_expose_service": {
+      "action": "Expose ToolGraph.Service Effect service. Add to app-runtime.ts.",
+      "files": ["packages/opencode/src/tool/tool-graph.ts", "packages/opencode/src/effect/app-runtime.ts"]
+    }
+  },
+
+  "smoking_guns": [
+    {
+      "id": "sg-1",
+      "title": "This is NOT greenfield — 20+ pipeline patterns already exist in prose, system prompts, and TypedResult",
+      "detail": "Every tool's .txt file already documents its pipelines in natural language. write.txt says 'use Read first', curate-context.txt says 'agents use read_artifact', truncate.ts says 'Use the Task tool'. System prompts teach sequential tool usage. TypedResult has suggestNextTools/nextAffordances. The graph codifies this scattered prose into a structured, queryable format.",
+      "files": ["tool/*.txt (20+ files)", "session/prompt/*.txt", "tool/typed-result.ts"]
+    },
+    {
+      "id": "sg-2",
+      "title": "fromOutput() at typed-result.ts:380 exists but is never called — structured parsing is built but unused",
+      "detail": "The TypedResult framework embeds a STRUCTURED_MARKER in tool output and has a parser (fromOutput) to read it back. But nothing calls fromOutput(). Wiring this up would enable programmatic pipeline chaining — tool B parses tool A's output to auto-fill its parameters.",
+      "file": "packages/opencode/src/tool/typed-result.ts:380"
+    },
+    {
+      "id": "sg-3",
+      "title": "TOOL_CATEGORIES covers only 18/104 tools — but the .txt files document pipelines for many more",
+      "detail": "TOOL_CATEGORIES has 7 categories with 18 tools. But every tool's .txt file documents at least one pipeline relationship. The graph can auto-seed from .txt file analysis (regex 'use X tool', 'see via Y', 'before calling Z') to cover far more than 18 tools.",
+      "files": ["tool/typed-result.ts:225", "tool/*.txt"]
+    },
+    {
+      "id": "sg-4",
+      "title": "The description enrichment point already exists at registry.ts:694 — minimal change for maximum impact",
+      "detail": "describeTask() and describeSkill() already dynamically enrich tool descriptions during tools() resolution. Adding describeGraphSuggestions(toolId) here injects graph data into every tool's LLM-facing description with minimal code change and zero changes to Tool.Def.",
+      "file": "packages/opencode/src/tool/registry.ts:694"
+    },
+    {
+      "id": "sg-5",
+      "title": "15 conditional flags gate tool availability — graph must be the single-source-of-truth for this",
+      "detail": "The builtin array in registry.ts:539-644 has 15+ conditional inclusions. The graph's flag_gating map can replace these hardcoded conditionals, making tool subsets data-driven instead of code-driven.",
+      "file": "packages/opencode/src/tool/registry.ts:539-644"
+    }
+  ],
+
+  "dirty_files": {
+    "assessment": "No dirty files in the tool system, context/tools.ts, event/agent-queries.ts, or session/tools.ts. Safe greenfield."
+  }
+}

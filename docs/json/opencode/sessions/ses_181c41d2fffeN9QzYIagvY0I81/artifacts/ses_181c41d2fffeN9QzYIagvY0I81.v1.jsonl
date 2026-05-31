@@ -1,0 +1,28 @@
+{"at":"2026-05-31T13:32:00.632Z","tool":"smart_grep","action":"searched","pattern":"deepLink|deep.link|deepLink|consume.*initial.*deep|consumeInitialDeepLinks","results":17,"files":8}
+{"at":"2026-05-31T13:32:01.377Z","tool":"smart_grep","action":"searched","pattern":"BrowserWindow|webPreferences","results":50,"files":11}
+{"at":"2026-05-31T13:32:33.576Z","tool":"smart_grep","action":"searched","pattern":"pendingDeepLinks|emitDeepLinks|second-instance|open-url","results":0,"files":0}
+{"at":"2026-05-31T13:32:34.729Z","tool":"smart_grep","action":"searched","pattern":"emitDeepLinks|listenForDeepLinks|consumeInitialDeepLinks|\\.filter","results":0,"files":0}
+{"at":"2026-05-31T13:32:35.949Z","tool":"smart_grep","action":"searched","pattern":"documentPolicyHeader|jsCallStacksDocumentPolicy|Document-Policy","results":0,"files":0}
+{"at":"2026-05-31T13:32:37.017Z","tool":"smart_grep","action":"searched","pattern":"registerRendererProtocol","results":0,"files":0}
+{"at":"2026-05-31T13:32:58.294Z","tool":"smart_grep","action":"searched","pattern":"pendingDeepLinks|emitDeepLinks|second-instance|open-url","results":0,"files":0}
+{"at":"2026-05-31T13:32:59.344Z","tool":"smart_grep","action":"searched","pattern":"emitDeepLinks|listenForDeepLinks|consumeInitialDeepLinks|deepLinkEvent","results":0,"files":0}
+{"at":"2026-05-31T13:33:00.922Z","tool":"smart_grep","action":"searched","pattern":"documentPolicyHeader|jsCallStacksDocumentPolicy|addDocumentPolicy|addRendererHea","results":0,"files":0}
+{"at":"2026-05-31T13:33:06.850Z","tool":"smart_bash","action":"bash","command":"head -n 85 packages/desktop/src/main/index.ts | tail -n 30","exit_code":0}
+{"at":"2026-05-31T13:33:07.828Z","tool":"smart_bash","action":"bash","command":"head -n 260 packages/desktop/src/main/index.ts | tail -n 95","exit_code":0}
+{"at":"2026-05-31T13:33:08.793Z","tool":"smart_bash","action":"bash","command":"head -n 75 packages/desktop/src/renderer/index.tsx | tail -n 25","exit_code":0}
+{"at":"2026-05-31T13:33:09.855Z","tool":"smart_bash","action":"bash","command":"head -n 400 packages/desktop/src/main/windows.ts | tail -n 40","exit_code":0}
+{"at":"2026-05-31T13:33:18.754Z","tool":"smart_bash","action":"bash","command":"head -n 200 packages/desktop/src/main/index.ts | tail -n 35","exit_code":0}
+{"at":"2026-05-31T13:33:19.708Z","tool":"smart_bash","action":"bash","command":"head -n 430 packages/desktop/src/main/windows.ts | tail -n 40","exit_code":0}
+{"at":"2026-05-31T13:33:20.553Z","tool":"smart_bash","action":"bash","command":"head -n 270 packages/desktop/src/main/windows.ts | tail -n 45","exit_code":0}
+{"at":"2026-05-31T13:33:26.422Z","tool":"smart_grep","action":"searched","pattern":"Content-Security-Policy|X-Frame-Options|X-Content-Type-Options","results":13,"files":9}
+{"at":"2026-05-31T13:33:34.705Z","tool":"smart_grep","action":"searched","pattern":"\\.html","results":6,"files":2}
+{"at":"2026-05-31T13:33:41.191Z","tool":"smart_grep","action":"searched","pattern":"index\\.html|loading\\.html|safe-mode\\.html","results":6,"files":3}
+{"at":"2026-05-31T13:34:04.359Z","tool":"smart_bash","action":"bash","command":"head -n 280 packages/desktop/src/main/index.ts | tail -n 125","exit_code":0}
+{"at":"2026-05-31T13:34:05.405Z","tool":"smart_bash","action":"bash","command":"head -n 160 packages/desktop/src/main/index.ts | tail -n 30","exit_code":0}
+{"at":"2026-05-31T13:34:10.519Z","tool":"smart_bash","action":"bash","command":"awk '/app\\.on\\(\"second-instance\"/,/^  \\}\\)/' packages/desktop/src/main/index.ts","exit_code":0}
+{"at":"2026-05-31T13:34:11.237Z","tool":"smart_bash","action":"bash","command":"awk '/app\\.on\\(\"open-url\"/,/^  \\}\\)/' packages/desktop/src/main/index.ts","exit_code":0}
+{"at":"2026-05-31T13:34:22.821Z","tool":"smart_bash","action":"bash","command":"head -n 800 docs/json/opencode/bug-hunt-report.v1.json | grep -n \"deep\\|CSP\\|argv\\|undefined\"","exit_code":0}
+{"at":"2026-05-31T13:34:58.969Z","tool":"smart_grep","action":"searched","pattern":"onDeepLink","results":2,"files":2}
+{"at":"2026-05-31T13:34:59.943Z","tool":"smart_grep","action":"searched","pattern":"deepLink|DEEP_LINK","results":3,"files":1}
+{"at":"2026-05-31T13:35:05.064Z","tool":"smart_bash","action":"bash","command":"head -n 100 packages/desktop/src/preload/index.ts | tail -n 12","exit_code":0}
+{"at":"2026-05-31T13:35:24.616Z","tool":"smart_grep","action":"searched","pattern":"deepLink.*filter|urls.*filter|\\.filter.*deep","results":4,"files":3}

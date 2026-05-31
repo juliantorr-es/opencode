@@ -1,0 +1,42 @@
+{"at":"2026-05-31T15:03:38.963Z","tool":"smart_grep","action":"searched","pattern":"describeTool","results":0,"files":0}
+{"at":"2026-05-31T15:03:39.479Z","tool":"smart_grep","action":"searched","pattern":"modeDescriptions","results":0,"files":0}
+{"at":"2026-05-31T15:03:41.094Z","tool":"smart_grep","action":"searched","pattern":"modeDescriptions","results":2,"files":1}
+{"at":"2026-05-31T15:04:34.997Z","tool":"smart_grep","action":"searched","pattern":"describeTool|.opencode/tools|dynamic.*import|mod\\.modeDescriptions|Plugin\\.tool","results":0,"files":0}
+{"at":"2026-05-31T15:05:02.050Z","tool":"smart_bash","action":"bash","command":"wc -l packages/opencode/src/tool/registry.ts && head -c 1000 < packages/opencode/src/tool/registry.t","exit_code":0}
+{"at":"2026-05-31T15:05:12.794Z","tool":"smart_grep","action":"searched","pattern":"Glob\\.scanSync|\\\\.opencode|opencode.*tools","results":0,"files":0}
+{"at":"2026-05-31T15:05:13.859Z","tool":"smart_grep","action":"searched","pattern":"mod\\.modeDescriptions|modeDescriptions\\.set","results":0,"files":0}
+{"at":"2026-05-31T15:05:27.019Z","tool":"smart_bash","action":"bash","command":"tail -n +395 packages/opencode/src/tool/registry.ts | head -n 60","exit_code":0}
+{"at":"2026-05-31T15:05:27.798Z","tool":"smart_bash","action":"bash","command":"tail -n +700 packages/opencode/src/tool/registry.ts | head -n 90","exit_code":0}
+{"at":"2026-05-31T15:05:36.138Z","tool":"smart_bash","action":"bash","command":"tail -n +715 packages/opencode/src/tool/registry.ts | head -n 45","exit_code":0}
+{"at":"2026-05-31T15:05:37.042Z","tool":"smart_bash","action":"bash","command":"tail -n +410 packages/opencode/src/tool/registry.ts | head -n 10","exit_code":0}
+{"at":"2026-05-31T15:05:46.010Z","tool":"smart_bash","action":"bash","command":"tail -n +540 packages/opencode/test/tool/registry.test.ts","exit_code":0}
+{"at":"2026-05-31T15:05:46.891Z","tool":"smart_grep","action":"searched","pattern":"describeTool|modeDescriptions","results":12,"files":1}
+{"at":"2026-05-31T15:05:47.858Z","tool":"smart_grep","action":"searched","pattern":"\\.opencode/tools","results":1,"files":1}
+{"at":"2026-05-31T15:05:56.500Z","tool":"smart_bash","action":"bash","command":"tail -n +260 packages/opencode/test/tool/registry.test.ts | head -n 120","exit_code":0}
+{"at":"2026-05-31T15:05:57.289Z","tool":"smart_grep","action":"searched","pattern":"InstanceState","results":0,"files":0}
+{"at":"2026-05-31T15:06:06.342Z","tool":"smart_bash","action":"bash","command":"tail -n +555 packages/opencode/test/tool/registry.test.ts","exit_code":0}
+{"at":"2026-05-31T15:06:07.803Z","tool":"smart_grep","action":"searched","pattern":"modeDescriptions","results":5,"files":5}
+{"at":"2026-05-31T15:06:18.774Z","tool":"smart_bash","action":"bash","command":"tail -n +564 packages/opencode/test/tool/registry.test.ts | head -n 55","exit_code":0}
+{"at":"2026-05-31T15:06:19.764Z","tool":"smart_bash","action":"bash","command":"tail -n +49 packages/opencode/test/tool/registry.test.ts | head -n 55","exit_code":0}
+{"at":"2026-05-31T15:06:26.387Z","tool":"smart_grep","action":"searched","pattern":"describeTool","results":4,"files":1}
+{"at":"2026-05-31T15:06:27.177Z","tool":"smart_grep","action":"searched","pattern":"modeDescriptions","results":9,"files":1}
+{"at":"2026-05-31T15:06:34.060Z","tool":"smart_bash","action":"bash","command":"tail -n +155 packages/opencode/src/tool/registry.ts | head -n 30","exit_code":0}
+{"at":"2026-05-31T15:06:34.975Z","tool":"smart_bash","action":"bash","command":"tail -n +725 packages/opencode/src/tool/registry.ts | head -n 40","exit_code":0}
+{"at":"2026-05-31T15:06:35.850Z","tool":"smart_bash","action":"bash","command":"tail -n +535 packages/opencode/src/tool/registry.ts | head -n 20","exit_code":0}
+{"at":"2026-05-31T15:06:41.385Z","tool":"smart_grep","action":"searched","pattern":"InstanceState\\.set|InstanceState\\.get|InstanceState","results":0,"files":0}
+{"at":"2026-05-31T15:06:51.461Z","tool":"smart_bash","action":"bash","command":"tail -n +297 packages/opencode/src/tool/registry.ts | head -n 10","exit_code":0}
+{"at":"2026-05-31T15:06:52.325Z","tool":"smart_grep","action":"searched","pattern":"instance-state","results":50,"files":50}
+{"at":"2026-05-31T15:07:00.100Z","tool":"smart_grep","action":"searched","pattern":"DynamicDescription","results":2,"files":2}
+{"at":"2026-05-31T15:07:01.361Z","tool":"smart_grep","action":"searched","pattern":"\\.opencode/tool|opencode.*tool.*test|tool.*integration","results":4,"files":2}
+{"at":"2026-05-31T15:07:02.614Z","tool":"smart_grep","action":"searched","pattern":"test.*\\.opencode|opencode.*dynamic.*tool|load.*\\.opencode","results":30,"files":3}
+{"at":"2026-05-31T15:07:11.654Z","tool":"smart_bash","action":"bash","command":"tail -n +564 packages/opencode/test/tool/registry.test.ts | head -n 60","exit_code":0}
+{"at":"2026-05-31T15:07:36.165Z","tool":"smart_bash","action":"bash","command":"tail -n +30 packages/opencode/test/tool/registry.test.ts | head -n 15","exit_code":0}
+{"at":"2026-05-31T15:07:37.207Z","tool":"smart_bash","action":"bash","command":"tail -n +102 packages/opencode/test/tool/registry.test.ts | head -n 58","exit_code":0}
+{"at":"2026-05-31T15:07:48.986Z","tool":"smart_bash","action":"bash","command":"tail -n +266 packages/opencode/test/tool/registry.test.ts | head -n 85","exit_code":0}
+{"at":"2026-05-31T15:07:49.773Z","tool":"smart_bash","action":"bash","command":"tail -n +161 packages/opencode/test/tool/registry.test.ts | head -n 50","exit_code":0}
+{"at":"2026-05-31T15:08:06.802Z","tool":"smart_grep","action":"searched","pattern":"describeTool|\\.tools\\(|registry\\.tools","results":0,"files":0}
+{"at":"2026-05-31T15:08:07.613Z","tool":"smart_grep","action":"searched","pattern":"registry\\.tools\\(","results":12,"files":7}
+{"at":"2026-05-31T15:08:26.493Z","tool":"smart_grep","action":"searched","pattern":"warn|fallback|no entry|not found.*mode|agent.*not.*mode","results":0,"files":0}
+{"at":"2026-05-31T15:08:28.317Z","tool":"smart_bash","action":"bash","command":"tail -n +582 packages/opencode/test/tool/registry.test.ts | head -n 35","exit_code":0}
+{"at":"2026-05-31T15:09:15.321Z","tool":"smart_grep","action":"searched","pattern":"modeDescriptions","results":5,"files":5}
+{"at":"2026-05-31T15:09:15.333Z","tool":"smart_grep","action":"searched","pattern":"describeTask|describeSkill","results":0,"files":0}

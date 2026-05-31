@@ -1,0 +1,18 @@
+{"at":"2026-05-31T12:43:40.814Z","tool":"smart_grep","action":"searched","pattern":"describe\\(","results":0,"files":0}
+{"at":"2026-05-31T12:43:41.553Z","tool":"smart_grep","action":"searched","pattern":"test\\(|it\\(","results":0,"files":0}
+{"at":"2026-05-31T12:43:55.340Z","tool":"smart_grep","action":"searched","pattern":"Effect\\.runPromise|Effect\\.provide|\\.pipe\\(","results":0,"files":0}
+{"at":"2026-05-31T12:44:21.735Z","tool":"smart_bash","action":"bash","command":"head -130 packages/opencode/src/campaign/truth-closure.test.ts | tail -105","exit_code":0}
+{"at":"2026-05-31T12:44:23.203Z","tool":"smart_bash","action":"bash","command":"head -1530 packages/opencode/src/campaign/truth-closure.test.ts | tail -341","exit_code":0}
+{"at":"2026-05-31T12:44:24.451Z","tool":"smart_bash","action":"bash","command":"head -1790 packages/opencode/src/campaign/truth-closure.test.ts | tail -261","exit_code":0}
+{"at":"2026-05-31T12:44:32.675Z","tool":"smart_bash","action":"bash","command":"head -1417 packages/opencode/src/campaign/truth-closure.test.ts | tail -228","exit_code":0}
+{"at":"2026-05-31T12:44:40.880Z","tool":"smart_bash","action":"bash","command":"awk '/^describe\\(/ || /^  test\\(/ || /^  it\\(/' packages/opencode/src/campaign/truth-closure.test.ts","exit_code":0}
+{"at":"2026-05-31T12:44:42.290Z","tool":"smart_bash","action":"bash","command":"tail -n +1417 packages/opencode/src/campaign/truth-closure.test.ts | head -115","exit_code":0}
+{"at":"2026-05-31T12:44:43.329Z","tool":"smart_bash","action":"bash","command":"tail -n +1532 packages/opencode/src/campaign/truth-closure.test.ts | head -260","exit_code":0}
+{"at":"2026-05-31T12:44:50.057Z","tool":"smart_bash","action":"bash","command":"awk '/^describe\\(/ || /^  test\\(/ || /^  it\\(/' packages/opencode/src/campaign/truth-closure.test.ts","exit_code":0}
+{"at":"2026-05-31T12:44:57.953Z","tool":"smart_bash","action":"bash","command":"tail -n +1290 packages/opencode/src/campaign/truth-closure.test.ts | head -128","exit_code":0}
+{"at":"2026-05-31T12:45:12.410Z","tool":"smart_grep","action":"searched","pattern":"binder\\.","results":0,"files":0}
+{"at":"2026-05-31T12:45:13.291Z","tool":"smart_grep","action":"searched","pattern":"secretary\\.","results":0,"files":0}
+{"at":"2026-05-31T12:45:33.143Z","tool":"smart_bash","action":"bash","command":"tail -n +1222 packages/opencode/src/campaign/truth-closure.test.ts | head -200","exit_code":0}
+{"at":"2026-05-31T12:45:38.566Z","tool":"smart_bash","action":"bash","command":"tail -n +1222 packages/opencode/src/campaign/truth-closure.test.ts | head -250","exit_code":0}
+{"at":"2026-05-31T12:45:44.985Z","tool":"smart_bash","action":"bash","command":"tail -n +1472 packages/opencode/src/campaign/truth-closure.test.ts | head -65","exit_code":0}
+{"at":"2026-05-31T12:48:11.993Z","tool":"smart_write","action":"created","file":".build/rig-relay/cartography/truth-closure-test-patterns.v1.json","reason":"Cartography artifact: structured summary of truth-closure.test.ts test patterns, helper functions, effect patterns, Secretary/Binder interfaces, test coverage gaps, and smoking guns"}

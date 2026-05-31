@@ -26,6 +26,9 @@ const oc2Background = {
 }
 const documentPolicyHeader = "Document-Policy"
 const jsCallStacksDocumentPolicy = "include-js-call-stacks-in-crash-reports"
+const cspHeader = "Content-Security-Policy"
+const cspValue =
+  "default-src 'self' oc:; script-src 'self' oc: 'unsafe-eval' 'wasm-unsafe-eval'; style-src 'self' oc: 'unsafe-inline'; img-src 'self' oc: data: https:; font-src 'self' oc: data:; media-src 'self' oc: data:; connect-src * data: ws://localhost:* wss://localhost:*"
 
 protocol.registerSchemesAsPrivileged([
   {
@@ -395,6 +398,7 @@ function addDocumentPolicy(response: Response, file: string) {
   if (!file.toLowerCase().endsWith(".html")) return response
   const headers = new Headers(response.headers)
   headers.set(documentPolicyHeader, jsCallStacksDocumentPolicy)
+  headers.set(cspHeader, cspValue)
   return new Response(response.body, { status: response.status, statusText: response.statusText, headers })
 }
 

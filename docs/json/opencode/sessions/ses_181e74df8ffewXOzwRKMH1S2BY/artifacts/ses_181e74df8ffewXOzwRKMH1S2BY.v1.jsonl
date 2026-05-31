@@ -1,0 +1,6 @@
+{"at":"2026-05-31T12:54:13.530Z","tool":"smart_bun","action":"ran","command":"test","exit_code":0,"cwd":"packages/opencode"}
+{"at":"2026-05-31T12:55:02.425Z","tool":"smart_bun","action":"ran","command":"test","exit_code":1,"cwd":"packages/opencode"}
+{"at":"2026-05-31T12:55:47.455Z","tool":"smart_bun","action":"ran","command":"test","exit_code":0,"cwd":"packages/opencode"}
+{"at":"2026-05-31T12:58:38.221Z","tool":"smart_grep","action":"searched","pattern":"^\\s*(test|describe)\\(","results":0,"files":0}
+{"at":"2026-05-31T12:59:24.578Z","tool":"smart_grep","action":"searched","pattern":"^\\s*test\\(","results":0,"files":0}
+{"at":"2026-05-31T13:00:56.146Z","tool":"smart_bash","action":"bash","command":"/bin/bash -c 'cd packages/opencode && bun test test/campaign/regression-proofs.test.ts 2>&1 | tail -","exit_code":0}

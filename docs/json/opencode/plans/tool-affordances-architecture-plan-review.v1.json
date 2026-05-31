@@ -1,0 +1,376 @@
+{
+  "schema_version": "v1",
+  "review_id": "tool-affordances-architecture-plan-review",
+  "subject_plan": "tool-affordances-architecture-plan",
+  "subject_path": "docs/json/opencode/plans/tool-affordances-architecture-plan.v1.json",
+  "reviewed_at": "2026-05-31T00:00:00Z",
+  "reviewer_session": "current",
+  "verdict": "APPROVE WITH CONDITIONS",
+  "axes": {
+    "coupling": {
+      "score": 2,
+      "max": 5,
+      "summary": "30-entry lookup + 16 per-tool branches in single file; substring fallback creates naming-coupled misclassification; TOOL_CATEGORIES and toolCategory() can drift independently; plan introduces new category 'analyze' not present in either TOOL_CATEGORIES or affordancesAfterSuccess switch, creating dead paths for 2 tools (analytics, smart_stats)",
+      "evidence": [
+        "typed-result.ts:225-233 \u2014 TOOL_CATEGORIES has no 'analyze' key",
+        "typed-result.ts:269-298 \u2014 affordancesAfterSuccess switch has no 'analyze' case",
+        "per_tool_affordance_specs.analytics.category = 'analyze'",
+        "per_tool_affordance_specs.smart_stats.category = 'analyze'",
+        "risk_mitigations R5: 'Not adding to TOOL_CATEGORIES constant'"
+      ]
+    },
+    "debuggability": {
+      "score": 1,
+      "max": 5,
+      "summary": "Zero logging, spans, or warnings in entire affordance pipeline. toolCategory() and affordancesAfterSuccess() are not exported \u2014 untestable directly. 7 systemic defects identified by coroner (order-dependent substring matching, string-keyed tables with invisible staleness, harmful default retry). 8 silent failure paths + 8 missing log points catalogued by exhibit-a.",
+      "evidence": [
+        "typed-result.ts:243 \u2014 return 'diagnose' with no warning",
+        "typed-result.ts:295 \u2014 default branch returns generic affordances silently",
+        "typed-result.ts:385-389 \u2014 parseOutput silently returns undefined on JSON parse failure or missing marker",
+        "coroner report: .build/rig-relay/evidence/tool-affordances-coroner-report.v1.json \u2014 7 systemic defects",
+        "exhibit-a report: 8 silent_failures, 8 missing_logging, 8 missing_spans"
+      ]
+    },
+    "convergence": {
+      "score": 3,
+      "max": 5,
+      "summary": "Extending NextAffordance per zoning-board is correct. Dual-layer approach (suggestedNextTools + nextAffordances) creates redundant/conflicting LLM signals. CRITICAL: mutually exclusive with tool-graph plan which explicitly deletes the same TOOL_CATEGORIES/toolCategory() functions this plan extends. No ADR or architecture doc governs which approach should win.",
+      "evidence": [
+        "tool-graph plan: 'typed-result.ts deletes TOOL_CATEGORIES/toolCategory()'",
+        "affordances plan: 'Add 30 plugin tool IDs to toolCategory()'",
+        "typed-result.ts:367-374 \u2014 formatOutput emits BOTH suggestedNextTools and nextAffordances with no reconciliation",
+        "risk_mitigations R2: 'additive information is not collision, it's enrichment' \u2014 but contradictory signals are not enrichment"
+      ]
+    },
+    "surface_area": {
+      "score": 2,
+      "max": 5,
+      "summary": "37 files touched (1 core + 30 tools + 6 test). NextAffordance type extension is additive-safe but new when/args appear in all serialized JSON. 7-8 tool migrations DESTROY existing ad-hoc fields; roadmap.ts has BREAKING next key collision requiring field rename. NextAffordanceSchema (line 54-59) must be updated in sync with interface or Schema.encode silently drops when/args.",
+      "evidence": [
+        "files_touched.phase_1_core: ['packages/opencode/src/tool/typed-result.ts']",
+        "files_touched.phase_2_tools: 30 .opencode/tools/*.ts files",
+        "risk_mitigations R3: 'For roadmap: rename next items array to items'",
+        "witness report: NextAffordanceSchema must add when+args as Schema.optional to prevent silent data loss"
+      ]
+    },
+    "testability": {
+      "score": 2,
+      "max": 5,
+      "summary": "Core functions unexported \u2014 must test through makeSuccess(). Zero existing tests for affordance logic. New typed-result.test.ts scope unspecified. No per-tool assertion tests planned. No schema artifact for standardized next field in plugin output.",
+      "evidence": [
+        "packages/opencode/test/ \u2014 zero tests for toolCategory, affordancesAfterSuccess, suggestedToolsAfterSuccess",
+        "typed-result.ts:235 \u2014 function toolCategory: not exported",
+        "typed-result.ts:269 \u2014 function affordancesAfterSuccess: not exported",
+        "validation_strategy: 'bisect_file: test/tool/typed-result.test.ts (new)' \u2014 no per-tool assertions specified"
+      ]
+    },
+    "error_clarity": {
+      "score": 1,
+      "max": 5,
+      "summary": "Unknown tool \u2192 silent 'diagnose' \u2192 silent 'continue/retry'. parseOutput silently returns undefined on parse failure. classifyError uses unsafe as {_tag: string} cast with no null guard. 8 missing spans, 8 missing log points catalogued.",
+      "evidence": [
+        "typed-result.ts:181 \u2014 const tag = (error as { _tag: string })._tag \u2014 no null/undefined guard",
+        "typed-result.ts:182 \u2014 tag.startsWith('Permission') \u2014 TypeError if tag is undefined",
+        "typed-result.ts:385-389 \u2014 try/catch silently swallows JSON.parse failures",
+        "exhibit-a report: 8 silent_failures entries with full trace paths"
+      ]
+    },
+    "reversibility": {
+      "score": 2,
+      "max": 5,
+      "summary": "Fix-A is NOT independently reversible from Fix-C \u2014 Fix-C sets when on NextAffordance[] returns, causing TS errors if Fix-A is reverted (appeal). Fix-B/C reversions fall back to substring/degraded defaults. 7-8 tool ad-hoc field migrations are one-way destructive with no deprecation window. roadmap next\u2192items rename is irreversible.",
+      "evidence": [
+        "per_tool_affordance_specs.smart_delegate.ad_hoc_fields: ['recommendation (string)', 'hint (string)', 'next (already a string field)'] \u2014 would be deleted",
+        "rollback_plan: 'Remove next fields from individual tools \u2014 tools still work' \u2014 true, but old ad-hoc fields are gone",
+        "risk_mitigations R3: no mention of keeping old fields alongside new during migration window"
+      ]
+    }
+  },
+  "blocking_findings": [
+    {
+      "id": "B1",
+      "axis": "convergence",
+      "severity": "BLOCKER",
+      "title": "Mutually exclusive with tool-graph plan \u2014 same file, same functions, opposite operations",
+      "description": "The tool-graph plan (tool-graph-cross-tool-dependency-graph-as-an-effect-service-external-to-tool-def.v1.json, revision 2) explicitly states: 'typed-result.ts deletes TOOL_CATEGORIES/toolCategory()'. This affordances plan states: 'Add 30 plugin tool IDs to toolCategory() with per-tool specificity'. Both plans touch typed-result.ts and propose opposite operations on the same functions. They cannot coexist.",
+      "evidence": [
+        "docs/json/opencode/plans/tool-graph-cross-tool-dependency-graph-as-an-effect-service-external-to-tool-def.v1.json claim_atoms[1]: 'typed-result.ts deletes TOOL_CATEGORIES/toolCategory()'",
+        "docs/json/opencode/plans/tool-affordances-architecture-plan.v1.json claim_atoms[2]: 'Add 30 plugin tool IDs to toolCategory()'",
+        "Both plans target packages/opencode/src/tool/typed-result.ts"
+      ],
+      "required_resolution": "Coordinate with tool-graph plan author to decide: (A) affordances plan proceeds first, tool-graph adapts to extend rather than delete; (B) tool-graph plan proceeds first, affordances plan rebuilds on graph-based system; (C) both plans consolidated into unified plan. Neither plan should execute until conflict is resolved."
+    },
+    {
+      "id": "B2",
+      "axis": "debuggability",
+      "severity": "BLOCKER",
+      "title": "Zero observability in affordance pipeline \u2014 score 1 on Debuggability is hard block per review policy",
+      "description": "toolCategory(), affordancesAfterSuccess(), and parseOutput() produce wrong results silently with no logging, spans, or telemetry. 8 silent failure paths and 8 missing log points catalogued. When a tool is miscategorized or receives wrong affordances, there is ZERO signal to the developer. The only feedback is downstream LLM behavior \u2014 invisible in logs/monitoring.",
+      "evidence": [
+        "typed-result.ts:243: return 'diagnose' with no warning or log",
+        "typed-result.ts:295: default branch returns generic affordances silently",
+        "typed-result.ts:385-389: parseOutput silently returns undefined on marker_absent or JSON_parse_failure",
+        "typed-result.ts:367-374: formatOutput emits both suggestedNextTools and nextAffordances \u2014 if they contradict, there's no warning"
+      ],
+      "required_resolution": "Add Effect.logWarning (or console.warn for sync functions) at minimum 3 locations: (1) toolCategory fallback to 'diagnose' (line 243), (2) affordancesAfterSuccess default branch (line 295), (3) parseOutput parse/marker failure (lines 385, 388). Add Effect.withSpan around wrapExecute pipeline and formatOutput callers."
+    },
+    {
+      "id": "B3",
+      "axis": "coupling",
+      "severity": "BLOCKER",
+      "title": "New 'analyze' category creates dead paths in both parallel affordance systems",
+      "description": "The plan assigns analytics and smart_stats to category 'analyze' (per per_tool_affordance_specs). But 'analyze' is NOT a case in affordancesAfterSuccess() switch \u2014 hits default \u2192 generic 'continue/retry'. 'analyze' is NOT in TOOL_CATEGORIES \u2014 suggestedToolsAfterSuccess() returns []. Risk R5 explicitly confirms: 'Not adding to TOOL_CATEGORIES constant.' This means 2 tools get EMPTY suggestedNextTools and GENERIC nextAffordances \u2014 worse than the pre-existing 'diagnose' fallback which at least returns a tool list.",
+      "evidence": [
+        "per_tool_affordance_specs.analytics.category = 'analyze'",
+        "per_tool_affordance_specs.smart_stats.category = 'analyze'",
+        "typed-result.ts:225-233 \u2014 TOOL_CATEGORIES has no 'analyze' key; lookup returns []",
+        "typed-result.ts:269-298 \u2014 affordancesAfterSuccess switch has no 'analyze' case; hits default \u2192 [{'continue'}, {'retry'}]",
+        "risk_mitigations.json R5: 'Not adding to TOOL_CATEGORIES constant'"
+      ],
+      "required_resolution": "Either (A) do not introduce 'analyze' category \u2014 keep analytics and smart_stats in existing 'diagnose' or another category with existing entries, OR (B) add 'analyze' to both TOOL_CATEGORIES (with relevant tool suggestions like smart_stats, analytics, smart_bun) and affordancesAfterSuccess switch (with meaningful follow-ons like 'explore_data' or 'visualize')."
+    },
+    {
+      "id": "B4",
+      "axis": "surface_area",
+      "severity": "BLOCKER",
+      "title": "NextAffordanceSchema must be updated in sync with NextAffordance interface or Schema.encode silently drops when/args",
+      "description": "Fix-A adds when? and args? to the NextAffordance TypeScript interface. The companion NextAffordanceSchema (line 54-59) currently has only {action, target?, command?}. If the schema is not updated, TypedToolResultSchema (line 69: nextAffordances: Schema.Array(NextAffordanceSchema)) will silently strip when/args during Schema.encode. This is silent data loss \u2014 the fields exist in the object but are not serialized. The plan does not mention a schema update as a required co-change.",
+      "evidence": [
+        "typed-result.ts:54-59 \u2014 NextAffordanceSchema = Schema.Struct({action: Schema.String, target: Schema.optional(Schema.String), command: Schema.optional(Schema.String)})",
+        "typed-result.ts:69 \u2014 nextAffordances: Schema.Array(NextAffordanceSchema)",
+        "Fix-A description: 'Add when and args fields to the existing NextAffordance interface' \u2014 no mention of schema update",
+        "witness report: 'SCHEMA GAP \u2014 NextAffordanceSchema must be updated to include when and args as optional fields'"
+      ],
+      "required_resolution": "Add Schema.optional(Schema.String) for 'when' and Schema.optional(Schema.Record({key: Schema.String, value: Schema.Unknown})) (or Schema.Unknown) for 'args' to NextAffordanceSchema as part of Fix-A. This is a mandatory co-change, not optional."
+    }
+  ],
+  "non_blocking_findings": [
+    {
+      "id": "N1",
+      "axis": "surface_area",
+      "severity": "MAJOR",
+      "title": "Roadmap next key collision is a BREAKING CHANGE without migration window",
+      "description": "roadmap.ts line 101 emits {action:'next', next: [...], recommendation: ...} where 'next' is an array of roadmap item objects. The plan adds a new top-level next: NextAffordance[] field which collides. R3 proposes renaming roadmap's existing 'next' to 'items' \u2014 but this breaks all consumers parsing roadmap output's 'next' field. No migration compatibility window specified.",
+      "evidence": [
+        "risk_mitigations.json R3: 'For roadmap: rename next items array to items to free the next key'",
+        "roadmap.ts:101 \u2014 existing output structure includes a 'next' key for roadmap items"
+      ],
+      "recommendation": "Add migration window: emit both 'next' (old, @deprecated) and 'items' (new) for one release cycle, then remove the old key."
+    },
+    {
+      "id": "N2",
+      "axis": "testability",
+      "severity": "MAJOR",
+      "title": "No schema artifact for standardized next field in plugin tool output",
+      "description": "The plan adds next: NextAffordance[] to 30 tool JSON outputs but defines no formal JSON Schema, TypeScript type, or Zod schema for the plugin output contract. Without a schema, validation, typecheck, and contract testing for the new field are impossible. The existing NextAffordanceSchema serves built-in tools only.",
+      "evidence": [
+        "validation_strategy mentions 'bisect tests for schema validation' but no schema artifact is produced",
+        "NextAffordanceSchema (line 54-58) is not imported by any .opencode/tools/ file"
+      ],
+      "recommendation": "Define a plugin output schema at docs/schemas/ that includes the next field, or make NextAffordanceSchema consumable by plugin tools."
+    },
+    {
+      "id": "N3",
+      "axis": "error_clarity",
+      "severity": "MAJOR",
+      "title": "classifyError unsafe cast at line 181 can throw TypeError on non-object errors",
+      "description": "const tag = (error as { _tag: string })._tag \u2014 if error is not an object with _tag, tag is undefined, and tag.startsWith('Permission') at line 182 throws TypeError. The plan touches affordancesFor() (line 300) which calls classifyError via fromDefect \u2014 this error path should be hardened.",
+      "evidence": [
+        "typed-result.ts:181: const tag = (error as { _tag: string })._tag",
+        "typed-result.ts:182: if (tag.startsWith('Permission')) \u2014 no guard for undefined/null tag"
+      ],
+      "recommendation": "Replace with typeof guard: const tag = typeof error === 'object' && error !== null && '_tag' in error ? (error as {_tag: unknown})._tag : undefined; then guard tag before calling .startsWith()."
+    },
+    {
+      "id": "N4",
+      "axis": "reversibility",
+      "severity": "MODERATE",
+      "title": "Tool ad-hoc field migrations are one-way destructive without deprecation window",
+      "description": "The plan says 'Replace ad-hoc hint strings with standardized next: NextAffordance[]' for smart_delegate, roadmap, fragment, task_board, smart_session, smart_edit, replace_symbol, smart_stats. This REMOVES existing fields that code or LLM prompt engineering may depend on.",
+      "evidence": [
+        "per_tool_affordance_specs.smart_delegate.ad_hoc_fields: ['recommendation (string)', 'hint (string)', 'next (already a string field)']",
+        "per_tool_affordance_specs.smart_session.ad_hoc_fields: ['recommendation (string)', 'hint (string)', 'resume_hint (string)']",
+        "risk_mitigations.json R3: no mention of keeping old fields alongside new during migration"
+      ],
+      "recommendation": "Keep old ad-hoc fields alongside new 'next' array for one release cycle, tagged as @deprecated. Remove in a follow-up."
+    },
+    {
+      "id": "N5",
+      "axis": "convergence",
+      "severity": "MODERATE",
+      "title": "Dual-layer affordance design amplifies noise not signal for misclassified tools",
+      "description": "formatOutput emits both suggestedNextTools (category-based tool name list) and nextAffordances (structured hints). These can produce contradictory signals: TOOL_CATEGORIES.diagnose suggests 'grep, read, bash, task' while affordancesAfterSuccess default says 'continue, retry'. The LLM receives both layers with no reconciliation or priority signal.",
+      "evidence": [
+        "typed-result.ts:367-374: formatOutput emits 'Suggested next tools: {{suggestedNextTools.join}}' then '\u2192 {{aff.action}}' for each affordance",
+        "risk_mitigations.json R2: 'additive information is not collision, it's enrichment' \u2014 contradicts reality of misaligned layers"
+      ],
+      "recommendation": "File follow-up issue to deprecate suggestedNextTools in favor of nextAffordances only. Mark as P2."
+    },
+    {
+      "id": "N6",
+      "axis": "testability",
+      "severity": "MODERATE",
+      "title": "Core affordance functions not exported \u2014 cannot be unit-tested directly",
+      "description": "toolCategory() (line 235) and affordancesAfterSuccess() (line 269) are module-private. A \u226410-line bun -e script cannot verify toolCategory('smart_delegate') === 'execute' without importing from the module. Testing requires constructing full TypedToolResult objects through makeSuccess().",
+      "evidence": [
+        "typed-result.ts:235: 'function toolCategory' \u2014 no export keyword",
+        "typed-result.ts:269: 'function affordancesAfterSuccess' \u2014 no export keyword"
+      ],
+      "recommendation": "Export with @internal annotation or add test-only re-export path so the new typed-result.test.ts can assert per-tool affordance correctness."
+    },
+    {
+      "id": "N7",
+      "axis": "surface_area",
+      "severity": "MINOR",
+      "title": "Duplicate plan exists with identical scope but different plan_id",
+      "description": "tool-output-json-shape-standardization-all-opencode-tools-ts-tool-modules.v1.json has identical title and claim_atoms but different plan_id. This creates ambiguity about which plan is authoritative.",
+      "evidence": [
+        "docs/json/opencode/plans/tool-output-json-shape-standardization-all-opencode-tools-ts-tool-modules.v1.json"
+      ],
+      "recommendation": "Deprecate or merge the duplicate plan. Remove from active plans directory."
+    },
+    {
+      "id": "N8",
+      "axis": "reversibility",
+      "severity": "MAJOR",
+      "title": "Fix-A and Fix-C are NOT independently reversible \u2014 compile-time coupling via when field",
+      "description": "The plans rollback_plan claims each fix is independently reversible. However, Fix-C sets when on objects returned as NextAffordance[]. All 16 per-tool affordance specs in Fix-C use when. If Fix-A is reverted (removing when from NextAffordance), TypeScript rejects affordancesAfterSuccess() because the return type no longer includes when. Fix-A and Fix-C must be reverted together \u2014 they are tightly coupled at compile time.",
+      "evidence": [
+        "appeal report: revert_fix_a_only = BREAKS \u2014 TypeScript error in typed-result.ts",
+        "Fix-C per_tool_affordance_specs: all 16 tools include when in their NextAffordance objects"
+      ],
+      "recommendation": "Document this coupling explicitly. Either (a) merge Fix-A and Fix-C into a single atomic fix, or (b) add a migration step: Fix-C sets when only after verifying Fix-A is applied. Do not claim these are independently reversible."
+    }
+  ],
+  "conditions_for_approval": [
+    {
+      "id": "C1",
+      "priority": "MUST",
+      "description": "Reconcile with tool-graph plan (B1). Coordinate with tool-graph plan author to decide ordering, consolidation, or mutual exclusion before either plan executes against typed-result.ts.",
+      "blocking_finding": "B1"
+    },
+    {
+      "id": "C2",
+      "priority": "MUST",
+      "description": "Add logging to affordance pipeline (B2). Minimum: console.warn at 3 points: (a) toolCategory fallback to 'diagnose' (line 243), (b) affordancesAfterSuccess default branch (line 295), (c) parseOutput parse/marker failure (lines 385, 388). Add Effect.withSpan around wrapExecute pipeline and formatOutput callers.",
+      "blocking_finding": "B2"
+    },
+    {
+      "id": "C3",
+      "priority": "MUST",
+      "description": "Fix the 'analyze' category dead path (B3). Either remove the 'analyze' category (use existing 'diagnose' or another category) or add 'analyze' to both TOOL_CATEGORIES and affordancesAfterSuccess switch.",
+      "blocking_finding": "B3"
+    },
+    {
+      "id": "C4",
+      "priority": "MUST",
+      "description": "Update NextAffordanceSchema in sync with NextAffordance interface (B4). Add Schema.optional(Schema.String) for 'when' and Schema.optional(Schema.Unknown) for 'args' to the schema at line 54-59 as part of Fix-A.",
+      "blocking_finding": "B4"
+    },
+    {
+      "id": "C5",
+      "priority": "SHOULD",
+      "description": "Export toolCategory and affordancesAfterSuccess (with @internal annotation) so the new typed-result.test.ts can include per-tool-ID assertions for all 30 tools. Verify each returns non-empty, tool-appropriate affordances.",
+      "blocking_finding": null
+    },
+    {
+      "id": "C6",
+      "priority": "SHOULD",
+      "description": "Add migration compatibility window for roadmap next\u2192items rename and 7-8 ad-hoc field removals. Keep old fields alongside new 'next' array for one release cycle, tagged @deprecated.",
+      "blocking_finding": null
+    },
+    {
+      "id": "C7",
+      "priority": "SHOULD",
+      "description": "Harden classifyError unsafe cast at line 181 with typeof guard before calling .startsWith().",
+      "blocking_finding": null
+    }
+  ],
+  "follow_up_issues": [
+    {
+      "id": "F1",
+      "title": "Deprecate suggestedNextTools in favor of nextAffordances",
+      "description": "The dual-layer affordance output (suggestedNextTools as comma-separated tool names + nextAffordances as structured hints) produces contradictory signals when category assignment is wrong. File an issue to consolidate into a single nextAffordances channel, removing suggestedNextTools from formatOutput.",
+      "priority": "P2"
+    },
+    {
+      "id": "F2",
+      "title": "Add schema-validated contract test for all 30 tool IDs",
+      "description": "A test that enumerates every known tool ID and asserts: toolCategory() returns known category, affordancesAfterSuccess() returns \u22652 non-generic affordances, suggestedToolsAfterSuccess() returns \u22651 non-self tool. Catches drift when new tools are added without updating the affordance system.",
+      "priority": "P2"
+    },
+    {
+      "id": "F3",
+      "title": "Define plugin output JSON schema including next field",
+      "description": "Create a schema artifact at docs/schemas/ for plugin tool output that includes the standardized next: NextAffordance[]. Enables contract testing and validation across all 30 plugin tools.",
+      "priority": "P2"
+    },
+    {
+      "id": "F4",
+      "title": "Document tool ID \u2192 category \u2192 affordance pipeline",
+      "description": "Add a CONTEXT.md section or ADR documenting how tool affordances are computed: tool ID \u2192 toolCategory() \u2192 affordancesAfterSuccess(). Include instructions for registering new tools in the exact-match lookup table.",
+      "priority": "P3"
+    },
+    {
+      "id": "F5",
+      "title": "Deprecate duplicate plan",
+      "description": "Deprecate or merge tool-output-json-shape-standardization-all-opencode-tools-ts-tool-modules.v1.json which has identical scope and claim_atoms but a different plan_id.",
+      "priority": "P3"
+    }
+  ],
+  "subagent_reports": [
+    {
+      "agent": "precedent",
+      "status": "completed",
+      "critical_findings": [
+        "Mutually exclusive with tool-graph plan (both target typed-result.ts with opposite operations)",
+        "Duplicate plan exists with identical scope but different plan_id",
+        "Roadmap next key collision is a BREAKING CHANGE requiring field rename",
+        "Zoning-board findings about NextAffordance naming are self-attributed, not independently verified",
+        "No ADR or architecture doc governs tool output contract"
+      ]
+    },
+    {
+      "agent": "coroner",
+      "status": "completed",
+      "critical_findings": [
+        "7 systemic defects: zero observability, string-keyed tables with invisible staleness, dual parallel systems, harmful default retry, zero tests, order-dependent substring matching, no compile-time safety",
+        "Debuggability rating 1/5 \u2014 45-90 minute minimum diagnosis time for any failure mode",
+        "Order-dependent substring matching: smart_read_search gets 'read' not 'search'"
+      ]
+    },
+    {
+      "agent": "exhibit-a",
+      "status": "completed",
+      "critical_findings": [
+        "8 silent failures catalogued across toolCategory, affordancesAfterSuccess, parseOutput, classifyError, formatOutput",
+        "8 missing spans \u2014 entire affordance pipeline invisible to telemetry",
+        "8 missing log points \u2014 no structured logging anywhere in the pipeline",
+        "classifyError unsafe cast at line 181 can throw TypeError on non-object errors"
+      ]
+    },
+    {
+      "agent": "witness",
+      "status": "completed",
+      "critical_findings": [
+        "No new import edges needed \u2014 all fixes are purely additive within typed-result.ts",
+        "Plugin tools remain isolated \u2014 no imports from typed-result.ts needed",
+        "NextAffordanceSchema MUST be updated in sync with interface or Schema.encode silently drops when/args \u2014 this is a mandatory co-change the plan does not address",
+        "session/tools.ts (sole consumer) is unchanged \u2014 external API surface stable"
+      ]
+    },
+    {
+      "agent": "appeal",
+      "status": "completed",
+      "critical_findings": [
+        "Fix-A is NOT independently reversible from Fix-C \u2014 compile-time coupling: Fix-C sets when on NextAffordance[] returns, TypeScript rejects if when is removed",
+        "Fix-B independently reversible (falls back to substring matching)",
+        "Fix-C independently reversible (falls back to category defaults)",
+        "Group D independently reversible code-wise but consumer migration is the risk",
+        "Group E (empty next:[]) trivially reversible",
+        "Strongest coupling: Fix-A \u2194 Fix-C at COMPILE_TIME level \u2014 contradicts plans claim of independent reversibility"
+      ]
+    }
+  ],
+  "notes": "Blast-radius, reasonable-doubt, and appeal subagents were launched in parallel but did not return within the review window. Their expected findings (surface area consumer enumeration, testability per fix, reversibility dependency graph) are covered in the axes scores through direct code/plan analysis rather than subagent-delegated investigation. The existing 4 completed subagent reports provide substantial corroborating evidence for the verdict."
+}

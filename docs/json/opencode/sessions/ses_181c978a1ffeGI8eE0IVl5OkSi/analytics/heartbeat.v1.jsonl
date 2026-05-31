@@ -1,0 +1,38 @@
+{"at":"2026-05-31T13:26:08.792Z","session_id":"ses_181c978a1ffeGI8eE0IVl5OkSi","agent":"cartographer","tool":"smart_find","phase":"started","detail":"*.ts"}
+{"at":"2026-05-31T13:26:08.820Z","session_id":"ses_181c978a1ffeGI8eE0IVl5OkSi","agent":"cartographer","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T13:26:14.677Z","session_id":"ses_181c978a1ffeGI8eE0IVl5OkSi","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"^"}
+{"at":"2026-05-31T13:26:14.688Z","session_id":"ses_181c978a1ffeGI8eE0IVl5OkSi","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"^"}
+{"at":"2026-05-31T13:26:15.414Z","session_id":"ses_181c978a1ffeGI8eE0IVl5OkSi","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"\\.opencode/tools/"}
+{"at":"2026-05-31T13:26:15.723Z","session_id":"ses_181c978a1ffeGI8eE0IVl5OkSi","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"\\.opencode/tools/"}
+{"at":"2026-05-31T13:26:22.951Z","session_id":"ses_181c978a1ffeGI8eE0IVl5OkSi","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"import.*from.*tool"}
+{"at":"2026-05-31T13:26:22.961Z","session_id":"ses_181c978a1ffeGI8eE0IVl5OkSi","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"import.*from.*tool"}
+{"at":"2026-05-31T13:26:23.998Z","session_id":"ses_181c978a1ffeGI8eE0IVl5OkSi","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"List all files in .opencode/tools/ directory"}
+{"at":"2026-05-31T13:26:23.999Z","session_id":"ses_181c978a1ffeGI8eE0IVl5OkSi","agent":"cartographer","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T13:26:29.081Z","session_id":"ses_181c978a1ffeGI8eE0IVl5OkSi","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Look for opencode tool files in the config directory"}
+{"at":"2026-05-31T13:26:29.082Z","session_id":"ses_181c978a1ffeGI8eE0IVl5OkSi","agent":"cartographer","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T13:26:30.292Z","session_id":"ses_181c978a1ffeGI8eE0IVl5OkSi","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Find all .ts files under .opencode/"}
+{"at":"2026-05-31T13:26:30.293Z","session_id":"ses_181c978a1ffeGI8eE0IVl5OkSi","agent":"cartographer","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T13:26:31.554Z","session_id":"ses_181c978a1ffeGI8eE0IVl5OkSi","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Find tool-related TypeScript files across the repo"}
+{"at":"2026-05-31T13:26:31.555Z","session_id":"ses_181c978a1ffeGI8eE0IVl5OkSi","agent":"cartographer","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T13:26:37.223Z","session_id":"ses_181c978a1ffeGI8eE0IVl5OkSi","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"^"}
+{"at":"2026-05-31T13:26:37.235Z","session_id":"ses_181c978a1ffeGI8eE0IVl5OkSi","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"^"}
+{"at":"2026-05-31T13:26:38.204Z","session_id":"ses_181c978a1ffeGI8eE0IVl5OkSi","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"^"}
+{"at":"2026-05-31T13:26:38.220Z","session_id":"ses_181c978a1ffeGI8eE0IVl5OkSi","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"^"}
+{"at":"2026-05-31T13:26:48.279Z","session_id":"ses_181c978a1ffeGI8eE0IVl5OkSi","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"List .opencode/tools/ directory in workspace"}
+{"at":"2026-05-31T13:26:48.279Z","session_id":"ses_181c978a1ffeGI8eE0IVl5OkSi","agent":"cartographer","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T13:26:49.208Z","session_id":"ses_181c978a1ffeGI8eE0IVl5OkSi","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"List all tool files in packages"}
+{"at":"2026-05-31T13:26:49.208Z","session_id":"ses_181c978a1ffeGI8eE0IVl5OkSi","agent":"cartographer","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T13:26:59.881Z","session_id":"ses_181c978a1ffeGI8eE0IVl5OkSi","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"export "}
+{"at":"2026-05-31T13:26:59.893Z","session_id":"ses_181c978a1ffeGI8eE0IVl5OkSi","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"export "}
+{"at":"2026-05-31T13:27:19.928Z","session_id":"ses_181c978a1ffeGI8eE0IVl5OkSi","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Enumerate all files in both tool config directories"}
+{"at":"2026-05-31T13:27:19.953Z","session_id":"ses_181c978a1ffeGI8eE0IVl5OkSi","agent":"cartographer","tool":"smart_bash","phase":"completed","detail":"for exit=0"}
+{"at":"2026-05-31T13:27:21.494Z","session_id":"ses_181c978a1ffeGI8eE0IVl5OkSi","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Find all .ts files in opencode config directories"}
+{"at":"2026-05-31T13:27:21.594Z","session_id":"ses_181c978a1ffeGI8eE0IVl5OkSi","agent":"cartographer","tool":"smart_bash","phase":"completed","detail":"for exit=0"}
+{"at":"2026-05-31T13:34:35.983Z","session_id":"ses_181c978a1ffeGI8eE0IVl5OkSi","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"error|Error"}
+{"at":"2026-05-31T13:34:35.991Z","session_id":"ses_181c978a1ffeGI8eE0IVl5OkSi","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"error|Error"}
+{"at":"2026-05-31T13:35:24.683Z","session_id":"ses_181c978a1ffeGI8eE0IVl5OkSi","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"error|Error|tool"}
+{"at":"2026-05-31T13:35:24.695Z","session_id":"ses_181c978a1ffeGI8eE0IVl5OkSi","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"error|Error|tool"}
+{"at":"2026-05-31T13:35:25.750Z","session_id":"ses_181c978a1ffeGI8eE0IVl5OkSi","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Find plugin SDK type definitions"}
+{"at":"2026-05-31T13:35:25.751Z","session_id":"ses_181c978a1ffeGI8eE0IVl5OkSi","agent":"cartographer","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T13:44:13.435Z","session_id":"ses_181c978a1ffeGI8eE0IVl5OkSi","agent":"cartographer","tool":"smart_write","phase":"started","detail":"docs/json/opencode/cartography/tool-errors-taxonomy-scope.v1.json"}
+{"at":"2026-05-31T13:44:13.435Z","session_id":"ses_181c978a1ffeGI8eE0IVl5OkSi","agent":"cartographer","tool":"smart_write","phase":"completed","detail":"docs/json/opencode/cartography/tool-errors-taxonomy-scope.v1.json"}

@@ -667,21 +667,21 @@ function resolvePlanRejected(
   _spec: PredicateSpec,
   ctx: PredicateContext,
 ): PredicateResult {
+  // toSMEvent emits "plan.rejected" (EventName.PlanRejected) for CriticComplete(rejected),
+  // NOT "critic.review" (EventName.CriticReview). The PlanRejected event's existence
+  // is sufficient evidence — it's only emitted on rejection.
   const rejected = ctx.events.filter(
-    (e) =>
-      e.eventType === EventName.CriticReview &&
-      (payload(e)?.verdict === "rejected" ||
-        e.status === "failed"),
+    (e) => e.eventType === EventName.PlanRejected,
   )
   if (rejected.length === 0) {
     return {
       satisfied: false,
-      reason: "No critic.review event with rejected verdict",
+      reason: "No plan.rejected event",
     }
   }
   return {
     satisfied: true,
-    evidence: { id: rejected.at(0)?.id ?? "ev-missing", type: "event", detail: "verdict=rejected" },
+    evidence: { id: rejected.at(0)?.id ?? "ev-missing", type: "event", detail: "PlanRejected" },
   }
 }
 

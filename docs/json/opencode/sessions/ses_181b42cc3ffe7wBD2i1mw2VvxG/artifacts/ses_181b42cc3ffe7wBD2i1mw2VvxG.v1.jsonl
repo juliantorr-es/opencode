@@ -1,0 +1,18 @@
+{"at":"2026-05-31T13:49:48.219Z","tool":"smart_grep","action":"searched","pattern":"typed-result","results":2,"files":2}
+{"at":"2026-05-31T13:49:49.376Z","tool":"smart_grep","action":"searched","pattern":"TypedToolResult","results":23,"files":1}
+{"at":"2026-05-31T13:49:50.700Z","tool":"smart_grep","action":"searched","pattern":"formatOutput|parseOutput|affordancesAfterSuccess","results":7,"files":1}
+{"at":"2026-05-31T13:50:29.866Z","tool":"smart_grep","action":"searched","pattern":"plugin.*tool|tool.*plugin","results":14,"files":2}
+{"at":"2026-05-31T13:50:31.594Z","tool":"smart_grep","action":"searched","pattern":"export.*Tool.*=|defineTool|pluginTools|toolPlugins","results":30,"files":30}
+{"at":"2026-05-31T13:50:32.790Z","tool":"smart_grep","action":"searched","pattern":"snapshot|toMatchSnapshot","results":30,"files":7}
+{"at":"2026-05-31T13:51:52.473Z","tool":"smart_grep","action":"searched","pattern":".*","results":30,"files":1}
+{"at":"2026-05-31T13:53:12.033Z","tool":"smart_grep","action":"searched","pattern":"plugin.*tool|ToolPlugin|PluginTool|loadTools|tool.*registry","results":20,"files":10}
+{"at":"2026-05-31T13:56:00.968Z","tool":"smart_grep","action":"searched","pattern":"WrapTypedResult|typedResult|typed_result","results":2,"files":1}
+{"at":"2026-05-31T13:56:44.628Z","tool":"smart_grep","action":"searched","pattern":"wrapExecute|wrapDef","results":7,"files":2}
+{"at":"2026-05-31T13:58:24.577Z","tool":"smart_grep","action":"searched","pattern":"tool.*output|output.*snap|executeResult|execute.*result","results":30,"files":9}
+{"at":"2026-05-31T14:00:35.201Z","tool":"smart_bash","action":"bash","command":"awk '/^function fromPlugin/,/^function [^ ]/ {print NR\": \"$0}' /Users/user/Developer/GitHub/opencode","exit_code":0}
+{"at":"2026-05-31T14:00:42.872Z","tool":"smart_grep","action":"searched","pattern":"\"test\"","results":1,"files":1}
+{"at":"2026-05-31T14:00:44.312Z","tool":"smart_grep","action":"searched","pattern":"import.*from.*bun:test|import.*from.*vitest","results":30,"files":30}
+{"at":"2026-05-31T14:01:32.185Z","tool":"smart_grep","action":"searched","pattern":"from \\\"@opencode-ai/plugin\\\"","results":10,"files":10}
+{"at":"2026-05-31T14:02:15.180Z","tool":"smart_grep","action":"searched","pattern":"ToolDefinition|SuggestedAction","results":3,"files":2}
+{"at":"2026-05-31T14:03:50.720Z","tool":"smart_grep","action":"searched","pattern":"bun test|bun typecheck|typed-result","results":1,"files":1}
+{"at":"2026-05-31T14:03:52.030Z","tool":"smart_grep","action":"searched","pattern":"\"typecheck\"|\"test:.*\"|\"check\"","results":8,"files":1}

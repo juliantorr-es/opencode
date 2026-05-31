@@ -1,0 +1,50 @@
+{"at":"2026-05-31T13:26:52.839Z","session_id":"ses_181c8d6c6ffeUjpxUGWPSPThyi","agent":"surveyor","tool":"smart_find","phase":"started","detail":"*.ts"}
+{"at":"2026-05-31T13:26:52.903Z","session_id":"ses_181c8d6c6ffeUjpxUGWPSPThyi","agent":"surveyor","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T13:26:54.223Z","session_id":"ses_181c8d6c6ffeUjpxUGWPSPThyi","agent":"surveyor","tool":"smart_grep","phase":"started","detail":"artifactLog|edit_log|heartbeat|telemetry|observability"}
+{"at":"2026-05-31T13:26:54.251Z","session_id":"ses_181c8d6c6ffeUjpxUGWPSPThyi","agent":"surveyor","tool":"smart_grep","phase":"completed","detail":"artifactLog|edit_log|heartbeat|telemetry|observability"}
+{"at":"2026-05-31T13:26:54.809Z","session_id":"ses_181c8d6c6ffeUjpxUGWPSPThyi","agent":"surveyor","tool":"smart_find","phase":"started","detail":"*.json"}
+{"at":"2026-05-31T13:26:54.850Z","session_id":"ses_181c8d6c6ffeUjpxUGWPSPThyi","agent":"surveyor","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T13:26:55.569Z","session_id":"ses_181c8d6c6ffeUjpxUGWPSPThyi","agent":"surveyor","tool":"smart_find","phase":"started","detail":"*"}
+{"at":"2026-05-31T13:26:55.569Z","session_id":"ses_181c8d6c6ffeUjpxUGWPSPThyi","agent":"surveyor","tool":"smart_find","phase":"failed","detail":"path not found"}
+{"at":"2026-05-31T13:26:56.163Z","session_id":"ses_181c8d6c6ffeUjpxUGWPSPThyi","agent":"surveyor","tool":"smart_grep","phase":"started","detail":"heartbeat"}
+{"at":"2026-05-31T13:26:56.194Z","session_id":"ses_181c8d6c6ffeUjpxUGWPSPThyi","agent":"surveyor","tool":"smart_grep","phase":"completed","detail":"heartbeat"}
+{"at":"2026-05-31T13:27:08.380Z","session_id":"ses_181c8d6c6ffeUjpxUGWPSPThyi","agent":"surveyor","tool":"smart_grep","phase":"started","detail":"^"}
+{"at":"2026-05-31T13:27:08.416Z","session_id":"ses_181c8d6c6ffeUjpxUGWPSPThyi","agent":"surveyor","tool":"smart_grep","phase":"completed","detail":"^"}
+{"at":"2026-05-31T13:27:10.287Z","session_id":"ses_181c8d6c6ffeUjpxUGWPSPThyi","agent":"surveyor","tool":"smart_bash","phase":"started","detail":"Find session artifacts and telemetry directory structure"}
+{"at":"2026-05-31T13:27:10.287Z","session_id":"ses_181c8d6c6ffeUjpxUGWPSPThyi","agent":"surveyor","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T13:27:30.709Z","session_id":"ses_181c8d6c6ffeUjpxUGWPSPThyi","agent":"surveyor","tool":"smart_bash","phase":"started","detail":"Count and list all .ts files in tool directory"}
+{"at":"2026-05-31T13:27:30.710Z","session_id":"ses_181c8d6c6ffeUjpxUGWPSPThyi","agent":"surveyor","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T13:27:32.349Z","session_id":"ses_181c8d6c6ffeUjpxUGWPSPThyi","agent":"surveyor","tool":"smart_bash","phase":"started","detail":"List all files under docs/json/opencode/"}
+{"at":"2026-05-31T13:27:32.349Z","session_id":"ses_181c8d6c6ffeUjpxUGWPSPThyi","agent":"surveyor","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T13:27:33.052Z","session_id":"ses_181c8d6c6ffeUjpxUGWPSPThyi","agent":"surveyor","tool":"smart_bash","phase":"started","detail":"Read effect skill to understand tool patterns"}
+{"at":"2026-05-31T13:27:33.052Z","session_id":"ses_181c8d6c6ffeUjpxUGWPSPThyi","agent":"surveyor","tool":"smart_bash","phase":"rerouted","detail":"→ read_source"}
+{"at":"2026-05-31T13:28:04.473Z","session_id":"ses_181c8d6c6ffeUjpxUGWPSPThyi","agent":"surveyor","tool":"smart_bash","phase":"started","detail":"List all TypeScript files in tool directory"}
+{"at":"2026-05-31T13:28:04.474Z","session_id":"ses_181c8d6c6ffeUjpxUGWPSPThyi","agent":"surveyor","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T13:28:05.289Z","session_id":"ses_181c8d6c6ffeUjpxUGWPSPThyi","agent":"surveyor","tool":"smart_bash","phase":"started","detail":"List all files under docs/json/opencode"}
+{"at":"2026-05-31T13:28:05.290Z","session_id":"ses_181c8d6c6ffeUjpxUGWPSPThyi","agent":"surveyor","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T13:28:40.931Z","session_id":"ses_181c8d6c6ffeUjpxUGWPSPThyi","agent":"surveyor","tool":"smart_bash","phase":"started","detail":"List all files in tool directory (using command prefix to avoid reroute)"}
+{"at":"2026-05-31T13:28:40.941Z","session_id":"ses_181c8d6c6ffeUjpxUGWPSPThyi","agent":"surveyor","tool":"smart_bash","phase":"completed","detail":"command exit=0"}
+{"at":"2026-05-31T13:28:41.818Z","session_id":"ses_181c8d6c6ffeUjpxUGWPSPThyi","agent":"surveyor","tool":"smart_bash","phase":"started","detail":"List all files under docs/json/opencode"}
+{"at":"2026-05-31T13:28:42.103Z","session_id":"ses_181c8d6c6ffeUjpxUGWPSPThyi","agent":"surveyor","tool":"smart_bash","phase":"completed","detail":"command exit=0"}
+{"at":"2026-05-31T13:29:17.745Z","session_id":"ses_181c8d6c6ffeUjpxUGWPSPThyi","agent":"surveyor","tool":"smart_bash","phase":"started","detail":"Count and list only .ts files"}
+{"at":"2026-05-31T13:29:17.766Z","session_id":"ses_181c8d6c6ffeUjpxUGWPSPThyi","agent":"surveyor","tool":"smart_bash","phase":"completed","detail":"command exit=0"}
+{"at":"2026-05-31T13:29:18.961Z","session_id":"ses_181c8d6c6ffeUjpxUGWPSPThyi","agent":"surveyor","tool":"smart_bash","phase":"started","detail":"Check coordination and checkpoints directories for telemetry-like artifacts"}
+{"at":"2026-05-31T13:29:18.969Z","session_id":"ses_181c8d6c6ffeUjpxUGWPSPThyi","agent":"surveyor","tool":"smart_bash","phase":"completed","detail":"command exit=0"}
+{"at":"2026-05-31T13:31:45.558Z","session_id":"ses_181c8d6c6ffeUjpxUGWPSPThyi","agent":"surveyor","tool":"smart_grep","phase":"started","detail":"smart_bash|smart.bash|smartBash"}
+{"at":"2026-05-31T13:31:45.579Z","session_id":"ses_181c8d6c6ffeUjpxUGWPSPThyi","agent":"surveyor","tool":"smart_grep","phase":"completed","detail":"smart_bash|smart.bash|smartBash"}
+{"at":"2026-05-31T13:31:46.278Z","session_id":"ses_181c8d6c6ffeUjpxUGWPSPThyi","agent":"surveyor","tool":"smart_bash","phase":"started","detail":"Find smart tool files"}
+{"at":"2026-05-31T13:31:46.297Z","session_id":"ses_181c8d6c6ffeUjpxUGWPSPThyi","agent":"surveyor","tool":"smart_bash","phase":"completed","detail":"command exit=0"}
+{"at":"2026-05-31T13:31:47.075Z","session_id":"ses_181c8d6c6ffeUjpxUGWPSPThyi","agent":"surveyor","tool":"smart_bash","phase":"started","detail":"List subdirectories under docs/json/opencode"}
+{"at":"2026-05-31T13:31:47.088Z","session_id":"ses_181c8d6c6ffeUjpxUGWPSPThyi","agent":"surveyor","tool":"smart_bash","phase":"completed","detail":"command exit=0"}
+{"at":"2026-05-31T13:32:53.567Z","session_id":"ses_181c8d6c6ffeUjpxUGWPSPThyi","agent":"surveyor","tool":"smart_bash","phase":"started","detail":"Check sessions, feedback, and evidence directories for telemetry artifacts"}
+{"at":"2026-05-31T13:32:53.608Z","session_id":"ses_181c8d6c6ffeUjpxUGWPSPThyi","agent":"surveyor","tool":"smart_bash","phase":"completed","detail":"command exit=0"}
+{"at":"2026-05-31T13:33:54.389Z","session_id":"ses_181c8d6c6ffeUjpxUGWPSPThyi","agent":"surveyor","tool":"smart_bash","phase":"started","detail":"Check coordination/feedback/checkpoints telemetry files size and sample"}
+{"at":"2026-05-31T13:33:54.402Z","session_id":"ses_181c8d6c6ffeUjpxUGWPSPThyi","agent":"surveyor","tool":"smart_bash","phase":"completed","detail":"command exit=0"}
+{"at":"2026-05-31T13:33:55.249Z","session_id":"ses_181c8d6c6ffeUjpxUGWPSPThyi","agent":"surveyor","tool":"smart_grep","phase":"started","detail":"observability|telemetry"}
+{"at":"2026-05-31T13:33:55.257Z","session_id":"ses_181c8d6c6ffeUjpxUGWPSPThyi","agent":"surveyor","tool":"smart_grep","phase":"completed","detail":"observability|telemetry"}
+{"at":"2026-05-31T13:34:45.623Z","session_id":"ses_181c8d6c6ffeUjpxUGWPSPThyi","agent":"surveyor","tool":"smart_bash","phase":"started","detail":"Get full sorted list of all 101 .ts files"}
+{"at":"2026-05-31T13:34:45.643Z","session_id":"ses_181c8d6c6ffeUjpxUGWPSPThyi","agent":"surveyor","tool":"smart_bash","phase":"completed","detail":"command exit=0"}
+{"at":"2026-05-31T13:35:46.305Z","session_id":"ses_181c8d6c6ffeUjpxUGWPSPThyi","agent":"surveyor","tool":"smart_bash","phase":"started","detail":"Check the shell subdirectory"}
+{"at":"2026-05-31T13:35:46.317Z","session_id":"ses_181c8d6c6ffeUjpxUGWPSPThyi","agent":"surveyor","tool":"smart_bash","phase":"completed","detail":"command exit=0"}
+{"at":"2026-05-31T13:37:36.168Z","session_id":"ses_181c8d6c6ffeUjpxUGWPSPThyi","agent":"surveyor","tool":"smart_grep","phase":"started","detail":"from \\\"\\.\\/tool\\\""}
+{"at":"2026-05-31T13:37:36.177Z","session_id":"ses_181c8d6c6ffeUjpxUGWPSPThyi","agent":"surveyor","tool":"smart_grep","phase":"completed","detail":"from \\\"\\.\\/tool\\\""}

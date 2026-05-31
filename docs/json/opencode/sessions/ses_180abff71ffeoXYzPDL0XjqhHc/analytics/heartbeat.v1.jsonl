@@ -1,0 +1,40 @@
+{"at":"2026-05-31T18:37:56.436Z","session_id":"ses_180abff71ffeoXYzPDL0XjqhHc","agent":"soundings","tool":"smart_find","phase":"started","detail":"*sidecar*"}
+{"at":"2026-05-31T18:37:56.469Z","session_id":"ses_180abff71ffeoXYzPDL0XjqhHc","agent":"soundings","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T18:37:57.229Z","session_id":"ses_180abff71ffeoXYzPDL0XjqhHc","agent":"soundings","tool":"smart_find","phase":"started","detail":"*entry*"}
+{"at":"2026-05-31T18:37:57.247Z","session_id":"ses_180abff71ffeoXYzPDL0XjqhHc","agent":"soundings","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T18:37:58.186Z","session_id":"ses_180abff71ffeoXYzPDL0XjqhHc","agent":"soundings","tool":"smart_find","phase":"started","detail":"*.ts"}
+{"at":"2026-05-31T18:37:58.205Z","session_id":"ses_180abff71ffeoXYzPDL0XjqhHc","agent":"soundings","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T18:38:02.347Z","session_id":"ses_180abff71ffeoXYzPDL0XjqhHc","agent":"soundings","tool":"smart_bash","phase":"started","detail":"List top-level TypeScript source files in opencode package"}
+{"at":"2026-05-31T18:38:02.348Z","session_id":"ses_180abff71ffeoXYzPDL0XjqhHc","agent":"soundings","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T18:38:03.366Z","session_id":"ses_180abff71ffeoXYzPDL0XjqhHc","agent":"soundings","tool":"smart_bash","phase":"started","detail":"Find Python CLI entry points"}
+{"at":"2026-05-31T18:38:03.366Z","session_id":"ses_180abff71ffeoXYzPDL0XjqhHc","agent":"soundings","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T18:38:04.521Z","session_id":"ses_180abff71ffeoXYzPDL0XjqhHc","agent":"soundings","tool":"smart_bash","phase":"started","detail":"Find all sidecar-related files"}
+{"at":"2026-05-31T18:38:04.522Z","session_id":"ses_180abff71ffeoXYzPDL0XjqhHc","agent":"soundings","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T18:38:09.006Z","session_id":"ses_180abff71ffeoXYzPDL0XjqhHc","agent":"soundings","tool":"smart_grep","phase":"started","detail":"sidecar"}
+{"at":"2026-05-31T18:38:09.020Z","session_id":"ses_180abff71ffeoXYzPDL0XjqhHc","agent":"soundings","tool":"smart_grep","phase":"completed","detail":"sidecar"}
+{"at":"2026-05-31T18:38:09.792Z","session_id":"ses_180abff71ffeoXYzPDL0XjqhHc","agent":"soundings","tool":"smart_bash","phase":"started","detail":"List top-level source directory"}
+{"at":"2026-05-31T18:38:09.792Z","session_id":"ses_180abff71ffeoXYzPDL0XjqhHc","agent":"soundings","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T18:38:10.569Z","session_id":"ses_180abff71ffeoXYzPDL0XjqhHc","agent":"soundings","tool":"smart_bash","phase":"started","detail":"List Python CLI directory"}
+{"at":"2026-05-31T18:38:10.571Z","session_id":"ses_180abff71ffeoXYzPDL0XjqhHc","agent":"soundings","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T18:38:16.601Z","session_id":"ses_180abff71ffeoXYzPDL0XjqhHc","agent":"soundings","tool":"smart_bash","phase":"started","detail":"List source directories to find entry points"}
+{"at":"2026-05-31T18:38:16.601Z","session_id":"ses_180abff71ffeoXYzPDL0XjqhHc","agent":"soundings","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T18:38:24.841Z","session_id":"ses_180abff71ffeoXYzPDL0XjqhHc","agent":"soundings","tool":"smart_grep","phase":"started","detail":"main\\b|entry.?point|startup|initialize|boot(strap)?"}
+{"at":"2026-05-31T18:38:24.855Z","session_id":"ses_180abff71ffeoXYzPDL0XjqhHc","agent":"soundings","tool":"smart_grep","phase":"completed","detail":"main\\b|entry.?point|startup|initialize|boot(strap)?"}
+{"at":"2026-05-31T18:39:13.613Z","session_id":"ses_180abff71ffeoXYzPDL0XjqhHc","agent":"soundings","tool":"smart_grep","phase":"started","detail":"process\\.on\\(|uncaughtException|unhandledRejection|exit|SIGTERM|SIGINT"}
+{"at":"2026-05-31T18:39:13.629Z","session_id":"ses_180abff71ffeoXYzPDL0XjqhHc","agent":"soundings","tool":"smart_grep","phase":"completed","detail":"process\\.on\\(|uncaughtException|unhandledRejection|exit|SIGTERM|SIGINT"}
+{"at":"2026-05-31T18:39:26.037Z","session_id":"ses_180abff71ffeoXYzPDL0XjqhHc","agent":"soundings","tool":"smart_bash","phase":"started","detail":"List CLI directory contents"}
+{"at":"2026-05-31T18:39:26.037Z","session_id":"ses_180abff71ffeoXYzPDL0XjqhHc","agent":"soundings","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T18:39:27.221Z","session_id":"ses_180abff71ffeoXYzPDL0XjqhHc","agent":"soundings","tool":"smart_grep","phase":"started","detail":"bootstrap"}
+{"at":"2026-05-31T18:39:27.227Z","session_id":"ses_180abff71ffeoXYzPDL0XjqhHc","agent":"soundings","tool":"smart_grep","phase":"completed","detail":"bootstrap"}
+{"at":"2026-05-31T18:39:53.105Z","session_id":"ses_180abff71ffeoXYzPDL0XjqhHc","agent":"soundings","tool":"smart_grep","phase":"started","detail":"^\\s*import|export"}
+{"at":"2026-05-31T18:39:53.114Z","session_id":"ses_180abff71ffeoXYzPDL0XjqhHc","agent":"soundings","tool":"smart_grep","phase":"completed","detail":"^\\s*import|export"}
+{"at":"2026-05-31T18:40:04.646Z","session_id":"ses_180abff71ffeoXYzPDL0XjqhHc","agent":"soundings","tool":"smart_bash","phase":"started","detail":"Get package entry points from package.json"}
+{"at":"2026-05-31T18:40:04.646Z","session_id":"ses_180abff71ffeoXYzPDL0XjqhHc","agent":"soundings","tool":"smart_bash","phase":"rerouted","detail":"→ read_source"}
+{"at":"2026-05-31T18:40:05.681Z","session_id":"ses_180abff71ffeoXYzPDL0XjqhHc","agent":"soundings","tool":"smart_grep","phase":"started","detail":"bootstrap\\(|effectCmd\\("}
+{"at":"2026-05-31T18:40:05.694Z","session_id":"ses_180abff71ffeoXYzPDL0XjqhHc","agent":"soundings","tool":"smart_grep","phase":"completed","detail":"bootstrap\\(|effectCmd\\("}
+{"at":"2026-05-31T18:40:27.949Z","session_id":"ses_180abff71ffeoXYzPDL0XjqhHc","agent":"soundings","tool":"smart_bash","phase":"started","detail":"Read the CLI entry point script"}
+{"at":"2026-05-31T18:40:27.949Z","session_id":"ses_180abff71ffeoXYzPDL0XjqhHc","agent":"soundings","tool":"smart_bash","phase":"rerouted","detail":"→ read_source"}
+{"at":"2026-05-31T18:40:41.172Z","session_id":"ses_180abff71ffeoXYzPDL0XjqhHc","agent":"soundings","tool":"smart_bash","phase":"started","detail":"Read the top of the CLI entry script"}
+{"at":"2026-05-31T18:40:41.207Z","session_id":"ses_180abff71ffeoXYzPDL0XjqhHc","agent":"soundings","tool":"smart_bash","phase":"completed","detail":"head exit=0"}
+{"at":"2026-05-31T18:40:53.454Z","session_id":"ses_180abff71ffeoXYzPDL0XjqhHc","agent":"soundings","tool":"smart_bash","phase":"started","detail":"Read full CLI entry script"}
+{"at":"2026-05-31T18:40:53.455Z","session_id":"ses_180abff71ffeoXYzPDL0XjqhHc","agent":"soundings","tool":"smart_bash","phase":"rerouted","detail":"→ read_source"}

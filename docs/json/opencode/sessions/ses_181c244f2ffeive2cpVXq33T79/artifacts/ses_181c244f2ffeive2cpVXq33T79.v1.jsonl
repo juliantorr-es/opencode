@@ -1,0 +1,8 @@
+{"at":"2026-05-31T13:37:31.280Z","tool":"smart_bash","action":"bash","command":"head -c 4000 < packages/opencode/src/tool/shell.ts | tail -c 3000","exit_code":0}
+{"at":"2026-05-31T13:37:32.218Z","tool":"smart_bash","action":"bash","command":"wc -l packages/opencode/src/tool/shell.ts packages/opencode/src/tool/apply_patch.ts packages/opencod","exit_code":0}
+{"at":"2026-05-31T13:39:26.811Z","tool":"smart_grep","action":"searched","pattern":"ctx\\.ask|ctx\\.sessionID|yield\\* fs\\.|yield\\* storage\\.|yield\\* bus\\.","results":0,"files":0}
+{"at":"2026-05-31T13:39:27.874Z","tool":"smart_grep","action":"searched","pattern":"ctx\\.ask|yield\\* fs\\.|yield\\* bus\\.|yield\\* format\\.|yield\\* lsp\\.|yield\\* Bom\\.","results":0,"files":0}
+{"at":"2026-05-31T13:39:29.149Z","tool":"smart_grep","action":"searched","pattern":"yield\\* fs\\.|yield\\* storage\\.|writeFileString|readFileString|ensureDir|appendLi","results":0,"files":0}
+{"at":"2026-05-31T13:40:19.112Z","tool":"smart_grep","action":"searched","pattern":"description:|DESCRIPTION|from \\\"\\.\\/[a-z].*\\.txt\\\"","results":0,"files":0}
+{"at":"2026-05-31T13:40:19.933Z","tool":"smart_grep","action":"searched","pattern":"function run|async function run|const run","results":0,"files":0}
+{"at":"2026-05-31T13:41:02.753Z","tool":"smart_bash","action":"bash","command":"head -1 packages/opencode/src/tool/rig-jsonl-query.txt packages/opencode/src/tool/shell.txt packages","exit_code":1}

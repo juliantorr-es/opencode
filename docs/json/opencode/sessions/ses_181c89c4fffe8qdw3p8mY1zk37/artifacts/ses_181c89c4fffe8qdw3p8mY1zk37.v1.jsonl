@@ -1,0 +1,26 @@
+{"at":"2026-05-31T13:29:19.470Z","tool":"smart_bash","action":"bash","command":"/bin/ls -1R .opencode/tools/","exit_code":0}
+{"at":"2026-05-31T13:29:20.185Z","tool":"smart_bash","action":"bash","command":"/bin/ls -1 packages/opencode/src/tool/","exit_code":0}
+{"at":"2026-05-31T13:33:41.937Z","tool":"smart_bash","action":"bash","command":"/bin/ls -1 packages/opencode/src/tool/","exit_code":0}
+{"at":"2026-05-31T13:35:20.629Z","tool":"smart_bash","action":"bash","command":"/bin/ls -1 packages/plugin/src/ 2>/dev/null; echo \"===\"; /bin/ls -1 packages/sdk/js/src/ 2>/dev/null","exit_code":0}
+{"at":"2026-05-31T13:37:01.638Z","tool":"smart_bash","action":"bash","command":"/bin/ls -1 packages/opencode/src/plugin/ 2>/dev/null","exit_code":0}
+{"at":"2026-05-31T13:39:47.260Z","tool":"smart_grep","action":"searched","pattern":"function fromPlugin","results":0,"files":0}
+{"at":"2026-05-31T13:39:48.185Z","tool":"smart_grep","action":"searched","pattern":"const BUILTIN_TOOL_IDS","results":0,"files":0}
+{"at":"2026-05-31T13:39:49.476Z","tool":"smart_grep","action":"searched","pattern":"tool\\.id.*description|description.*tool|toolInfo\\.description|\\.description","results":0,"files":0}
+{"at":"2026-05-31T13:39:50.819Z","tool":"smart_grep","action":"searched","pattern":"plugin.*tool|tool.*plugin|hooks\\.tool|\\.tool\\(|\"tool\"","results":0,"files":0}
+{"at":"2026-05-31T13:41:22.504Z","tool":"smart_bash","action":"bash","command":"head -n 410 packages/opencode/src/tool/registry.ts | tail -n 83","exit_code":0}
+{"at":"2026-05-31T13:41:56.273Z","tool":"smart_bash","action":"bash","command":"head -n 375 packages/opencode/src/tool/registry.ts | tail -n 48","exit_code":0}
+{"at":"2026-05-31T13:41:57.196Z","tool":"smart_bash","action":"bash","command":"head -n 350 packages/opencode/src/tool/registry.ts | tail -n 24","exit_code":0}
+{"at":"2026-05-31T13:41:58.152Z","tool":"smart_bash","action":"bash","command":"head -n 755 packages/opencode/src/tool/registry.ts | tail -n 110","exit_code":0}
+{"at":"2026-05-31T13:42:25.800Z","tool":"smart_bash","action":"bash","command":"head -n 700 packages/opencode/src/tool/registry.ts | tail -n 55","exit_code":0}
+{"at":"2026-05-31T13:42:26.737Z","tool":"smart_bash","action":"bash","command":"head -n 830 packages/opencode/src/tool/registry.ts | tail -n 36","exit_code":0}
+{"at":"2026-05-31T13:42:27.695Z","tool":"smart_bash","action":"bash","command":"head -n 235 packages/opencode/src/tool/registry.ts | tail -n 57","exit_code":0}
+{"at":"2026-05-31T13:42:32.746Z","tool":"smart_bash","action":"bash","command":"head -n 420 packages/opencode/src/tool/registry.ts | tail -n 50","exit_code":0}
+{"at":"2026-05-31T13:42:33.661Z","tool":"smart_bash","action":"bash","command":"head -n 460 packages/opencode/src/tool/registry.ts | tail -n 42","exit_code":0}
+{"at":"2026-05-31T13:42:58.435Z","tool":"smart_grep","action":"searched","pattern":"tool.*\\?:|tool\\b","results":0,"files":0}
+{"at":"2026-05-31T13:43:16.018Z","tool":"smart_bash","action":"bash","command":"head -n 280 packages/plugin/src/index.ts | tail -n 60","exit_code":0}
+{"at":"2026-05-31T13:43:33.052Z","tool":"smart_grep","action":"searched","pattern":"tool\\.definition","results":0,"files":0}
+{"at":"2026-05-31T13:43:34.091Z","tool":"smart_bash","action":"bash","command":"head -n 510 packages/opencode/src/tool/registry.ts | tail -n 52","exit_code":0}
+{"at":"2026-05-31T13:43:50.369Z","tool":"smart_bash","action":"bash","command":"head -n 720 packages/opencode/src/tool/registry.ts | tail -n 25","exit_code":0}
+{"at":"2026-05-31T13:43:51.486Z","tool":"smart_grep","action":"searched","pattern":"const tools.*Interface.*tools.*Effect.fn","results":0,"files":0}
+{"at":"2026-05-31T13:44:05.901Z","tool":"smart_bash","action":"bash","command":"head -n 736 packages/opencode/src/tool/registry.ts | tail -n 18","exit_code":0}
+{"at":"2026-05-31T13:44:06.790Z","tool":"smart_bash","action":"bash","command":"head -n 650 packages/opencode/src/tool/registry.ts | tail -n 35","exit_code":0}

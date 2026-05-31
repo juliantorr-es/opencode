@@ -1,0 +1,16 @@
+{"at":"2026-05-31T14:45:56.694Z","session_id":"ses_18180d175ffewkPjFDq9oqelN3","agent":"trial","tool":"smart_bun","command":"test","elapsed_ms":19,"exit_code":0}
+{"at":"2026-05-31T14:46:09.944Z","session_id":"ses_18180d175ffewkPjFDq9oqelN3","agent":"trial","tool":"smart_bun","command":"typecheck","elapsed_ms":12792,"exit_code":2}
+{"at":"2026-05-31T14:46:24.227Z","session_id":"ses_18180d175ffewkPjFDq9oqelN3","agent":"trial","tool":"smart_grep","pattern":"makeError|ErrorCode|parseToolError|isSuccess|isError","path":"packages/plugin/src"}
+{"at":"2026-05-31T14:46:52.158Z","session_id":"ses_18180d175ffewkPjFDq9oqelN3","agent":"trial","tool":"smart_grep","pattern":"makeError|ErrorCode|parseToolError|isSuccess|isError|errors","path":"packages/plugin/src"}
+{"at":"2026-05-31T14:47:33.886Z","session_id":"ses_18180d175ffewkPjFDq9oqelN3","agent":"trial","tool":"smart_grep","pattern":"result\\.error|result\\?.error|\\.error\\b","path":"packages/opencode/src"}
+{"at":"2026-05-31T14:48:07.928Z","session_id":"ses_18180d175ffewkPjFDq9oqelN3","agent":"trial","tool":"smart_bun","command":"run","elapsed_ms":18,"exit_code":0}
+{"at":"2026-05-31T14:48:26.758Z","session_id":"ses_18180d175ffewkPjFDq9oqelN3","agent":"trial","tool":"smart_grep","pattern":"tool.*output|tool.*result|toolOutput|tool_result","path":"packages/opencode/src/tool"}
+{"at":"2026-05-31T14:48:26.792Z","session_id":"ses_18180d175ffewkPjFDq9oqelN3","agent":"trial","tool":"smart_grep","pattern":"JSON\\.parse.*error|\\.error\\b.*tool|tool.*\\.error","path":"packages/opencode/src"}
+{"at":"2026-05-31T14:49:14.833Z","session_id":"ses_18180d175ffewkPjFDq9oqelN3","agent":"trial","tool":"smart_grep","pattern":"parseToolError|isSuccess|isError","path":"packages"}
+{"at":"2026-05-31T14:49:15.744Z","session_id":"ses_18180d175ffewkPjFDq9oqelN3","agent":"trial","tool":"smart_grep","pattern":"\"error_code\"|error_code","path":"packages"}
+{"at":"2026-05-31T14:49:22.773Z","session_id":"ses_18180d175ffewkPjFDq9oqelN3","agent":"trial","tool":"smart_grep","pattern":"error_code","path":"packages/opencode/src/storage/schema.duckdb.ts"}
+{"at":"2026-05-31T14:50:43.453Z","session_id":"ses_18180d175ffewkPjFDq9oqelN3","agent":"trial","tool":"smart_grep","pattern":"from \\\"bun:test\\\"","path":"packages/plugin"}
+{"at":"2026-05-31T14:51:04.286Z","session_id":"ses_18180d175ffewkPjFDq9oqelN3","agent":"trial","tool":"smart_grep","pattern":"^test\\(","path":"packages/plugin/test/errors.test.ts"}
+{"at":"2026-05-31T14:51:25.855Z","session_id":"ses_18180d175ffewkPjFDq9oqelN3","agent":"trial","tool":"smart_bun","command":"typecheck","elapsed_ms":240,"exit_code":0}
+{"at":"2026-05-31T14:51:25.877Z","session_id":"ses_18180d175ffewkPjFDq9oqelN3","agent":"trial","tool":"smart_grep","pattern":"^test\\(","path":"packages/plugin/test/errors.test.ts"}
+{"at":"2026-05-31T14:52:37.906Z","session_id":"ses_18180d175ffewkPjFDq9oqelN3","agent":"trial","tool":"smart_bun","command":"run","elapsed_ms":82,"exit_code":0}

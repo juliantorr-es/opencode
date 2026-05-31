@@ -1,0 +1,22 @@
+{"at":"2026-05-31T15:13:50.372Z","tool":"smart_git","action":"git_op","operation":"add","exit_code":0}
+{"at":"2026-05-31T15:13:56.718Z","tool":"smart_git","action":"git_op","operation":"diff","exit_code":0}
+{"at":"2026-05-31T15:14:10.092Z","tool":"smart_git","action":"git_op","operation":"commit","exit_code":1}
+{"at":"2026-05-31T15:14:28.488Z","tool":"smart_git","action":"git_op","operation":"log","exit_code":0}
+{"at":"2026-05-31T15:14:29.137Z","tool":"smart_git","action":"git_op","operation":"status","exit_code":0}
+{"at":"2026-05-31T15:14:41.043Z","tool":"smart_git","action":"git_op","operation":"diff","exit_code":0}
+{"at":"2026-05-31T15:15:00.040Z","tool":"smart_git","action":"git_op","operation":"status","exit_code":0}
+{"at":"2026-05-31T15:15:19.042Z","tool":"smart_git","action":"git_op","operation":"add","exit_code":0}
+{"at":"2026-05-31T15:15:19.780Z","tool":"smart_git","action":"git_op","operation":"add","exit_code":0}
+{"at":"2026-05-31T15:15:20.496Z","tool":"smart_git","action":"git_op","operation":"add","exit_code":0}
+{"at":"2026-05-31T15:15:25.830Z","tool":"smart_git","action":"git_op","operation":"status","exit_code":0}
+{"at":"2026-05-31T15:15:39.164Z","tool":"smart_git","action":"git_op","operation":"add","exit_code":0}
+{"at":"2026-05-31T15:15:47.105Z","tool":"smart_bash","action":"bash","command":"/usr/bin/git -C /Users/user/Developer/GitHub/opencode-desktop-dev add packages/opencode/src/tool/typ","exit_code":0}
+{"at":"2026-05-31T15:15:55.541Z","tool":"smart_bash","action":"bash","command":"/usr/bin/git -C /Users/user/Developer/GitHub/opencode-desktop-dev reset HEAD packages/opencode/src/t","exit_code":0}
+{"at":"2026-05-31T15:16:03.782Z","tool":"smart_bash","action":"bash","command":"/usr/bin/git -C /Users/user/Developer/GitHub/opencode-desktop-dev status --porcelain -- packages/ope","exit_code":0}
+{"at":"2026-05-31T15:16:13.993Z","tool":"smart_bash","action":"bash","command":"/usr/bin/git -C /Users/user/Developer/GitHub/opencode-desktop-dev commit -m 'feat(tool): add NextAff","exit_code":1}
+{"at":"2026-05-31T15:16:24.417Z","tool":"smart_bash","action":"bash","command":"/usr/bin/git -C /Users/user/Developer/GitHub/opencode-desktop-dev diff --cached --name-only","exit_code":0}
+{"at":"2026-05-31T15:16:37.576Z","tool":"smart_bash","action":"bash","command":"/usr/bin/git -C /Users/user/Developer/GitHub/opencode-desktop-dev reset HEAD .opencode/tools/coordin","exit_code":0}
+{"at":"2026-05-31T15:16:46.875Z","tool":"smart_bash","action":"bash","command":"/usr/bin/git -C /Users/user/Developer/GitHub/opencode-desktop-dev add packages/opencode/src/tool/typ","exit_code":0}
+{"at":"2026-05-31T15:16:56.374Z","tool":"smart_bash","action":"bash","command":"/usr/bin/git -C /Users/user/Developer/GitHub/opencode-desktop-dev commit -m \"feat(tool): add NextAff","exit_code":0}
+{"at":"2026-05-31T15:17:08.721Z","tool":"smart_git","action":"git_op","operation":"log","exit_code":0}
+{"at":"2026-05-31T15:17:53.469Z","tool":"smart_write","action":"created","file":"docs/json/opencode/publications/tool-affordances-lane-publication.v1.json","reason":"Create structured builder publication record for TOOL-AFFORDANCES lane"}

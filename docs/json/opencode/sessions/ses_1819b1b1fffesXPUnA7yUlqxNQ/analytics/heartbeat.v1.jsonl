@@ -1,0 +1,28 @@
+{"at":"2026-05-31T14:17:41.182Z","session_id":"ses_1819b1b1fffesXPUnA7yUlqxNQ","agent":"reasonable-doubt","tool":"smart_grep","phase":"started","detail":"AppFileSystem.*Service"}
+{"at":"2026-05-31T14:17:41.196Z","session_id":"ses_1819b1b1fffesXPUnA7yUlqxNQ","agent":"reasonable-doubt","tool":"smart_grep","phase":"completed","detail":"AppFileSystem.*Service"}
+{"at":"2026-05-31T14:18:18.871Z","session_id":"ses_1819b1b1fffesXPUnA7yUlqxNQ","agent":"reasonable-doubt","tool":"smart_grep","phase":"started","detail":"AppFileSystem"}
+{"at":"2026-05-31T14:18:18.889Z","session_id":"ses_1819b1b1fffesXPUnA7yUlqxNQ","agent":"reasonable-doubt","tool":"smart_grep","phase":"completed","detail":"AppFileSystem"}
+{"at":"2026-05-31T14:18:19.546Z","session_id":"ses_1819b1b1fffesXPUnA7yUlqxNQ","agent":"reasonable-doubt","tool":"smart_find","phase":"started","detail":"**/filesystem*"}
+{"at":"2026-05-31T14:18:19.579Z","session_id":"ses_1819b1b1fffesXPUnA7yUlqxNQ","agent":"reasonable-doubt","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T14:18:20.113Z","session_id":"ses_1819b1b1fffesXPUnA7yUlqxNQ","agent":"reasonable-doubt","tool":"smart_find","phase":"started","detail":"**/filesystem*"}
+{"at":"2026-05-31T14:18:20.136Z","session_id":"ses_1819b1b1fffesXPUnA7yUlqxNQ","agent":"reasonable-doubt","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T14:19:00.175Z","session_id":"ses_1819b1b1fffesXPUnA7yUlqxNQ","agent":"reasonable-doubt","tool":"smart_bash","phase":"started","detail":"Locate AppFileSystem definition in core package"}
+{"at":"2026-05-31T14:19:00.176Z","session_id":"ses_1819b1b1fffesXPUnA7yUlqxNQ","agent":"reasonable-doubt","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T14:19:40.053Z","session_id":"ses_1819b1b1fffesXPUnA7yUlqxNQ","agent":"reasonable-doubt","tool":"smart_grep","phase":"started","detail":"export namespace AppFileSystem"}
+{"at":"2026-05-31T14:19:40.063Z","session_id":"ses_1819b1b1fffesXPUnA7yUlqxNQ","agent":"reasonable-doubt","tool":"smart_grep","phase":"completed","detail":"export namespace AppFileSystem"}
+{"at":"2026-05-31T14:19:41.075Z","session_id":"ses_1819b1b1fffesXPUnA7yUlqxNQ","agent":"reasonable-doubt","tool":"smart_grep","phase":"started","detail":"^export.*AppFileSystem"}
+{"at":"2026-05-31T14:19:41.085Z","session_id":"ses_1819b1b1fffesXPUnA7yUlqxNQ","agent":"reasonable-doubt","tool":"smart_grep","phase":"completed","detail":"^export.*AppFileSystem"}
+{"at":"2026-05-31T14:21:08.862Z","session_id":"ses_1819b1b1fffesXPUnA7yUlqxNQ","agent":"reasonable-doubt","tool":"smart_find","phase":"started","detail":"**/tool/*.test.ts"}
+{"at":"2026-05-31T14:21:08.897Z","session_id":"ses_1819b1b1fffesXPUnA7yUlqxNQ","agent":"reasonable-doubt","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T14:21:10.074Z","session_id":"ses_1819b1b1fffesXPUnA7yUlqxNQ","agent":"reasonable-doubt","tool":"smart_grep","phase":"started","detail":"it\\.instance\\(|it\\.effect\\(|testEffect"}
+{"at":"2026-05-31T14:21:10.083Z","session_id":"ses_1819b1b1fffesXPUnA7yUlqxNQ","agent":"reasonable-doubt","tool":"smart_grep","phase":"completed","detail":"it\\.instance\\(|it\\.effect\\(|testEffect"}
+{"at":"2026-05-31T14:23:23.155Z","session_id":"ses_1819b1b1fffesXPUnA7yUlqxNQ","agent":"reasonable-doubt","tool":"smart_grep","phase":"started","detail":"tool_invocations"}
+{"at":"2026-05-31T14:23:23.174Z","session_id":"ses_1819b1b1fffesXPUnA7yUlqxNQ","agent":"reasonable-doubt","tool":"smart_grep","phase":"completed","detail":"tool_invocations"}
+{"at":"2026-05-31T14:23:24.109Z","session_id":"ses_1819b1b1fffesXPUnA7yUlqxNQ","agent":"reasonable-doubt","tool":"smart_grep","phase":"started","detail":"analytics.*test"}
+{"at":"2026-05-31T14:23:24.119Z","session_id":"ses_1819b1b1fffesXPUnA7yUlqxNQ","agent":"reasonable-doubt","tool":"smart_grep","phase":"completed","detail":"analytics.*test"}
+{"at":"2026-05-31T14:24:03.444Z","session_id":"ses_1819b1b1fffesXPUnA7yUlqxNQ","agent":"reasonable-doubt","tool":"smart_grep","phase":"started","detail":"Layer\\.succeed.*AppFileSystem|Layer\\.succeed.*FileSystem"}
+{"at":"2026-05-31T14:24:03.463Z","session_id":"ses_1819b1b1fffesXPUnA7yUlqxNQ","agent":"reasonable-doubt","tool":"smart_grep","phase":"completed","detail":"Layer\\.succeed.*AppFileSystem|Layer\\.succeed.*FileSystem"}
+{"at":"2026-05-31T14:24:04.163Z","session_id":"ses_1819b1b1fffesXPUnA7yUlqxNQ","agent":"reasonable-doubt","tool":"smart_grep","phase":"started","detail":"provideService.*AppFileSystem"}
+{"at":"2026-05-31T14:24:04.190Z","session_id":"ses_1819b1b1fffesXPUnA7yUlqxNQ","agent":"reasonable-doubt","tool":"smart_grep","phase":"completed","detail":"provideService.*AppFileSystem"}
+{"at":"2026-05-31T14:24:49.361Z","session_id":"ses_1819b1b1fffesXPUnA7yUlqxNQ","agent":"reasonable-doubt","tool":"smart_grep","phase":"started","detail":"sessions.*analytics"}
+{"at":"2026-05-31T14:24:49.377Z","session_id":"ses_1819b1b1fffesXPUnA7yUlqxNQ","agent":"reasonable-doubt","tool":"smart_grep","phase":"completed","detail":"sessions.*analytics"}

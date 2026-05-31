@@ -1,0 +1,16 @@
+{
+  "schema_version": "v1",
+  "plan_id": "tool-result-caching-for-read-only-tools-with-write-side-invalidation",
+  "plan_revision": 3,
+  "title": "Wire ToolCache into tool execution pipeline",
+  "boundary": "Tool result caching for read-only tools with write-side invalidation",
+  "consumer_purpose": "Reduce redundant tool executions within a session by caching results of cacheable read tools, expiring via TTL, and invalidating on writes",
+  "claim_atoms": [
+    "1. Tools with cacheable:true get cached results on repeated calls with same args within TTL window. 2. Write/modify tools clear the read cache on successful execution. 3. Cache misses are indistinguishable from bypass — no new error modes."
+  ],
+  "content": "Final plan with all subagent feedback incorporated. Key architectural decisions: (1) Effect.serviceOption avoids signature changes to wrap()/define(), (2) full cache clear on writes avoids metadata normalization complexity, (3) file_paths convention in ExecuteResult.metadata (not Context.metadata()).",
+  "status": "proposed",
+  "created_at": "2026-05-31T13:55:05.125Z",
+  "modified_at": "2026-05-31T14:01:54.342Z",
+  "revision_reason": "Incorporating load-bearer + blueprint findings: serviceOption for zero-sig-change, full cache clear for simplification, file_paths in result metadata not context"
+}

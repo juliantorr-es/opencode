@@ -1,0 +1,170 @@
+{
+  "schema": "rig.relay.plan_review.v1",
+  "plan_id": "tool-graph-cross-tool-dependency-graph-as-an-effect-service-external-to-tool-def",
+  "plan_revision": 2,
+  "reviewed_at": "2026-05-31T14:55:00.000Z",
+  "reviewed_by": "critic",
+  "verdict": "APPROVE_WITH_CONDITIONS",
+
+  "axes": {
+    "coupling": {
+      "score": 4,
+      "max": 5,
+      "note": "Graph external to Tool.Def (zero tool file changes). Clean unidirectional DAG confirmed by witness: tool.ts → tool-graph.ts → typed-result.ts ← registry.ts. setToolGraph() module-level injection is novel (no codebase precedent) but architecturally justified for synchronous lookup constraint (Blocker 2)."
+    },
+    "debuggability": {
+      "score": 3,
+      "max": 5,
+      "note": "ToolEdge has confidence (high/medium/low) and source fields — good diagnostic hooks. But coroner walkthrough shows zero logging, zero telemetry, zero Effect.annotateCurrentSpan for graph lookups. A wrong edge (e.g. new tool 'smart_csv') produces wrong LLM suggestions with 20-60 minute debug time and zero observability."
+    },
+    "convergence": {
+      "score": 4,
+      "max": 5,
+      "note": "Eliminates the string-match toolCategory() anti-pattern (62/80 tools collapsed to 'diagnose'). 28 edges from 8/18 documented pipelines — remaining 10 deferred honestly as Phase 2. But overlaps with tool-affordances-architecture-plan.v1.json without acknowledgment (both modify suggestedToolsAfterSuccess in typed-result.ts). 14 categories vs terrain map's 17 — unexplained reduction."
+    },
+    "surface_area": {
+      "score": 5,
+      "max": 5,
+      "note": "Blast-radius confirmed: TOOL_CATEGORIES and toolCategory() have zero external consumers (self-referential within typed-result.ts only). Interface additions are backward-compatible. No plugin, SDK, or desktop package impact. session/tools.ts is the only file that may need setToolGraph() wiring."
+    },
+    "testability": {
+      "score": 3,
+      "max": 5,
+      "note": "Reasonable-doubt agent confirms: 10 planned cases are insufficient (minimum 17-24 needed). setToolGraph() injection seam (the critical path) requires Effect test infrastructure (~40 lines), not bun -e script. No existing typed-result test infrastructure exists — this is first-ever test coverage for the module."
+    },
+    "error_clarity": {
+      "score": 2,
+      "max": 5,
+      "note": "Coroner confirms: findDownstream(unknownId) behavior is ambiguous (fallback? empty array? throw?). setToolGraph() never called: crash or silent wrong suggestions? suggestNext() returning Effect: succeed([]) or fail()? No Effect.withSpan anywhere. Blocker 6 covers missing-edge fallback but not missing-service fallback."
+    },
+    "reversibility": {
+      "score": 2,
+      "max": 5,
+      "note": "Groups A (tool-graph.ts), B (typed-result changes), C (registry changes) are tightly coupled. Revert A: typed-result imports missing module → compile error. Revert C: setToolGraph() never called → null graph at runtime. No fallback to old TOOL_CATEGORIES behavior exists. Deleting TOOL_CATEGORIES removes the only safety net."
+    }
+  },
+
+  "blocking_findings": [
+    {
+      "id": "BF-001",
+      "axis": "reversibility",
+      "severity": "major",
+      "title": "Deletion of TOOL_CATEGORIES removes the only fallback path",
+      "evidence": "TOOL_CATEGORIES (typed-result.ts:225-233) and toolCategory() (typed-result.ts:235-243) have zero external consumers (blast-radius confirmed). The plan deletes them entirely. If the graph fails to build, setToolGraph() is never called, or seeded edges are wrong in production, there is no reversion path short of a full git revert.",
+      "required_fix": "Preserve TOOL_CATEGORIES as a private constant (LEGACY_TOOL_CATEGORIES). Add null guard in suggestedToolsAfterSuccess(): if (!toolGraph) return LEGACY_TOOL_CATEGORIES[toolCategory(toolID)] ?? LEGACY_TOOL_CATEGORIES['diagnose']. This makes Groups A/B/C independently revertable."
+    },
+    {
+      "id": "BF-002",
+      "axis": "error_clarity",
+      "severity": "major",
+      "title": "Undefined behavior for unknown tool IDs, missing graph, and unset setToolGraph()",
+      "evidence": "wrapExecute() at typed-result.ts:425 calls makeSuccess() at line 446 which calls suggestedToolsAfterSuccess(). Coroner confirms findDownstream(unknownId) behavior is ambiguous (fallback? empty? throw?). SuggestedNextTools contract: string[] — but contents are undefined for edge cases.",
+      "required_fix": "Specify: (1) findDownstream(unknownId) → return diagnostic fallback ['grep','read','question'], (2) toolGraph === undefined → log warning + fall back to legacy categories, (3) suggestNext() → Effect.succeed([]) for unknown, never Effect.fail(), (4) Add Effect.annotateCurrentSpan to buildGraph()."
+    },
+    {
+      "id": "BF-003",
+      "axis": "convergence",
+      "severity": "major",
+      "title": "Plan overlaps with tool-affordances-architecture-plan.v1.json without acknowledgment",
+      "evidence": "Precedent agent found both plans modify suggestedToolsAfterSuccess() and toolCategory() in typed-result.ts. The tool-affordances plan extends toolCategory() with per-tool-ID branches; TOOL-GRAPH deletes it entirely. If tool-affordances executes first, TOOL-GRAPH must undo its changes.",
+      "required_fix": "Add to plan content: 'This plan structurally supersedes tool-affordances-architecture-plan.v1.json fix-C. The graph-based approach achieves richer affordances without per-tool-ID branching. If tool-affordances has already executed, its inline branches in suggestedToolsAfterSuccess() and affordancesAfterSuccess() must be reverted as part of this plan's fix-B.'"
+    },
+    {
+      "id": "BF-004",
+      "axis": "error_clarity",
+      "severity": "blocking",
+      "title": "No edge-to-node validation in buildGraph() — orphan edges are silent data bugs",
+      "evidence": "Exhibit-a agent confirmed: if a tool is renamed or removed, any seeded edge referencing that tool ID becomes orphaned. findDownstream('produce_fragment') returns ['smart_batch'] even if smart_batch doesn't exist in the node set. The LLM receives suggestions for nonexistent tools. The plan has zero edge-to-node validation. Every tool rename is a potential silent data corruption bug.",
+      "required_fix": "Add validation step to buildGraph(): filter out seeded edges where from OR to does not exist in the auto-generated node map. Emit structured log warning listing each orphan edge. This prevents 100% of silent-edge-corruption bugs."
+    }
+  ],
+
+  "non_blocking_findings": [
+    {
+      "id": "NBF-001",
+      "axis": "debuggability",
+      "severity": "minor",
+      "title": "No graph lookup telemetry",
+      "fix": "Add structured logging or telemetry events for findDownstream() and suggestPipeline() calls. When findDownstream('smart_find') returns ['read_source','read','read_artifact'], emit a telemetry event recording which edges contributed."
+    },
+    {
+      "id": "NBF-002",
+      "axis": "convergence",
+      "severity": "minor",
+      "title": "14 categories vs terrain map's 17 — unexplained reduction",
+      "fix": "List the 14 categories explicitly with per-category justification and tool-ID coverage. Align with terrain map's 17 if appropriate."
+    },
+    {
+      "id": "NBF-003",
+      "axis": "testability",
+      "severity": "major",
+      "title": "10 planned test cases insufficient — minimum 17-24 needed",
+      "fix": "Reasonable-doubt agent confirms: 6-8 for ToolGraph class, 3-4 for buildGraph(), 4-6 for setToolGraph() injection, 2-3 for suggestNext(), 2-3 for deletion regression. Bump test budget from 200 lines / 10 cases to ~400 lines / 18+ cases. Add Effect test infrastructure for setToolGraph() injection seam."
+    }
+  ],
+
+  "conditions_for_approval": [
+    "1. MUST-ADD (BF-001): Preserve TOOL_CATEGORIES and toolCategory() as legacy fallback with null guard in suggestedToolsAfterSuccess(). Adds 4 lines of guard code, 0 new imports, and enables independent group reversion.",
+    "2. MUST-ADD (BF-002): Specify error behavior contract — findDownstream(unknownId) → diagnostic fallback, null graph → diagnostic fallback + log warning, suggestNext() → succeed([]). Add Effect.annotateCurrentSpan to buildGraph().",
+    "3. MUST-ADD (BF-003): Acknowledge overlap with tool-affordances-architecture-plan.v1.json and state structural supersession in plan content.",
+    "4. MUST-ADD (BF-004): Add edge-to-node validation in buildGraph(). Filter out orphan edges where from or to doesn't exist in node map. Emit structured log warning per orphan edge.",
+    "5. SHOULD-ADD: Null-guard all suggestion functions (suggestedToolsAfterSuccess, suggestedToolsFor, affordancesAfterSuccess, affordancesFor) — if (!graph) return [] — per appeal agent hardening recommendation."
+  ],
+
+  "follow_up_issues": [
+    {
+      "title": "Deferred pipelines: seed edges for remaining 10 documented pipelines",
+      "details": "Terrain map found 18+ pipelines. Plan seeds 8 (28 edges). File issue for the remaining 10 pipelines with links to their source .txt files."
+    },
+    {
+      "title": "Phase 2 auto-discovery: parameter-shape heuristics for edge discovery",
+      "details": "Implement OutputShape/InputShape-based auto-edge detection using schemas from terrain map. Deferred by plan's Blocker 1 resolution."
+    },
+    {
+      "title": "TypedResult test coverage gap",
+      "details": "Zero test coverage for makeFailure(), makeDenied(), makeCancelled(), fromDefect(), suggestedToolsFor(), affordancesFor(). File issue for separate test lane."
+    },
+    {
+      "title": "Graph lookup telemetry",
+      "details": "Add structured logging or telemetry events for findDownstream() and suggestPipeline() calls as diagnostic hook for wrong-edge debugging."
+    }
+  ],
+
+  "subagent_contributions": [
+    {
+      "agent": "blast-radius",
+      "completed": true,
+      "key_finding": "Zero external consumers of TOOL_CATEGORIES/toolCategory(). Interface additions backward-compatible. No plugin/SDK/desktop impact."
+    },
+    {
+      "agent": "precedent",
+      "completed": true,
+      "key_finding": "Follows Context.Service convention exactly. setToolGraph() module-level injection has no codebase precedent. Overlaps with tool-affordances plan without acknowledgment."
+    },
+    {
+      "agent": "witness",
+      "completed": true,
+      "key_finding": "Clean DAG, zero circular dependencies. All 5 new edges are unidirectional. setToolGraph() injection decouples typed-result from registry."
+    },
+    {
+      "agent": "coroner",
+      "completed": true,
+      "key_finding": "20-60 minute debug time for wrong edge. 5 code paths to trace. findDownstream(unknownId) behavior ambiguous. Zero observability."
+    },
+    {
+      "agent": "reasonable-doubt",
+      "completed": true,
+      "key_finding": "10 test cases insufficient (minimum 17-24). setToolGraph() injection seam requires Effect test infrastructure, not bun -e script."
+    },
+    {
+      "agent": "exhibit-a",
+      "completed": true,
+      "key_finding": "Four blocking-severity error paths: (1) setToolGraph null — silent degradation or TypeError crash, (2) unknown tool IDs — ambiguous empty-array vs fallback behavior, (3) orphan edges referencing removed tools — no edge-to-node validation in buildGraph(), (4) suggestPipeline invalid goalKind — ambiguous succeed([]) vs fail(). Root cause: no error contract between synchronous graph and Effect service boundary."
+    },
+    {
+      "agent": "appeal",
+      "completed": true,
+      "key_finding": "Fragile reversibility: Group A removed → compile failure (expected for foundational module). Group B reverted → compile failure if setToolGraph() call is direct; builds if wiring uses optional pattern. Group C reverted → builds BUT crashes at runtime on first tool execution if null-guard missing. Recommends: (1) keep TOOL_CATEGORIES as fallback, (2) null-guard in all suggestion functions, (3) optional wiring via Effect.serviceOption."
+    }
+  ]
+}

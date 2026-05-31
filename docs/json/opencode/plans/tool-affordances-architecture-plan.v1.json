@@ -1,0 +1,455 @@
+{
+  "schema_version": "v1",
+  "plan_id": "tool-affordances-architecture-plan",
+  "title": "Standardize `next: NextAffordance[]` Affordance Hints Across All 30 .opencode/tools/",
+  "boundary": "All `.opencode/tools/*.ts` plugin tool output JSON, plus `packages/opencode/src/tool/typed-result.ts` affordance computation",
+  "consumer_purpose": "Model/TUI/auto-pilot consumers that read tool output JSON to suggest follow-on actions. The standardized `next` field makes tool output machine-actionable, replacing 10+ inconsistent ad-hoc affordance patterns (hint, next, recommendation) with one canonical contract.",
+  "claim_atoms": [
+    "Extend NextAffordance interface with `when` and `args` fields (typed-result.ts:19)",
+    "Add 30 plugin tool IDs to toolCategory() with per-tool specificity (typed-result.ts:235)",
+    "Add per-tool affordance specs in affordancesAfterSuccess() with tool-ID-specific branches (typed-result.ts:269)",
+    "Add standardized `next: NextAffordance[]` to all 30 plugin tool JSON.stringify() returns in .opencode/tools/",
+    "Migrate 10+ ad-hoc hint/next/recommendation fields to the standard `next` array",
+    "Add bisect tests for schema validation, formatOutput/parseOutput roundtrip, and per-category affordance conformance"
+  ],
+  "created_at": "2026-05-31T00:00:00Z",
+  "session_ref": "ses_181b4849dffedJ1VNxRqgIlpHB",
+
+  "architecture_findings": {
+    "system_disconnect": {
+      "severity": "architectural",
+      "description": "Two parallel affordance systems exist but are disconnected: (a) typed-result.ts has NextAffordance, affordancesAfterSuccess(), wrapExecute() — used by built-in tools. (b) Plugin tools (.opencode/tools/) return raw JSON.stringify() strings with ad-hoc hint/next/recommendation fields. The bridge between them is registry.ts:fromPlugin() which normalizes plugin results to Tool.ExecuteResult — but the fromPlugin path never pulls affordances from the plugin's structured output into TypedToolResult.nextAffordances.",
+      "evidence": [
+        "typed-result.ts:19-26 — NextAffordance interface exists",
+        "typed-result.ts:269-298 — affordancesAfterSuccess computes affordances centrally",
+        "typed-result.ts:425-449 — wrapExecute enriches Tool.ExecuteResult with typed results",
+        "session/tools.ts:108 — ALL tools (built-in + plugin) go through wrapExecute",
+        "registry.ts:328-362 — fromPlugin normalizes plugin ToolResult to Tool.ExecuteResult",
+        "registry.ts:358-360 — plugin output normalization: typeof result === 'string' ? result : result.output — discards extra fields",
+        "Zero .opencode/tools/*.ts files import from typed-result.ts or use wrapExecute",
+        "smart_delegate.ts:170-183 — ad-hoc 'next' string field",
+        "roadmap.ts:101 — ad-hoc 'recommendation' string field",
+        "fragment.ts:77-80 — ad-hoc 'hint' string fields",
+        "task_board.ts:251-256 — ad-hoc 'hint' string fields",
+        "smart_session.ts:74,160 — ad-hoc 'recommendation' string fields"
+      ]
+    },
+    "tool_category_blindness": {
+      "severity": "architectural",
+      "description": "toolCategory() in typed-result.ts:235 uses substring prefix matching that doesn't recognize plugin tool IDs like smart_delegate, fragment, json_query. All 30 plugin tools fall through to the 'diagnose' category, receiving generic affordances. The function needs exact-match dispatch for plugin tool IDs before falling through to substring matching.",
+      "evidence": [
+        "typed-result.ts:235-243 — toolCategory() only checks for 'read', 'write', 'edit', 'grep', 'search', 'find', 'bash', 'run', 'task', 'checkpoint', 'todo', 'plan', 'question'",
+        "Plugin tool IDs like 'smart_delegate', 'fragment', 'json_query', 'file_lock' match none of the above"
+      ]
+    },
+    "ad_hoc_pattern_proven": {
+      "severity": "informational",
+      "description": "10+ tools already include affordance-like fields in their output — proving the pattern is natural and needed. But each tool invents its own schema (hint, next, recommendation) with no centralized contract. Standardizing to next: NextAffordance[] is the natural consolidation.",
+      "affected_tools": ["smart_delegate", "roadmap", "fragment", "task_board", "smart_session", "smart_edit", "replace_symbol", "feedback", "smart_stats", "smart_batch"]
+    }
+  },
+
+  "root_causes": [
+    {
+      "hypothesis": "Plugin tool results bypass affordance enrichment because fromPlugin() in registry.ts:358 only extracts output and metadata but discards any next/affordance fields from the plugin's structured return",
+      "confidence": "high",
+      "evidence": [
+        "registry.ts:358-360 — const output = typeof result === 'string' ? result : result.output; const metadata = typeof result === 'string' ? {} : (result.metadata ?? {}); — only output, metadata, and attachments survive",
+        "typed-result.ts:74-82 — makeSuccess calls affordancesAfterSuccess but only based on tool ID, not plugin-provided data",
+        "typed-result.ts:397-414 — enrichExecuteResult writes toolStatus, toolErrorKind, toolRecoverable, suggestedNextTools into metadata — but no affordance from plugin output"
+      ]
+    },
+    {
+      "hypothesis": "toolCategory() cannot classify plugin tool IDs because it uses substring prefix matching designed for simple tool names (read, write, grep, bash), not compound plugin tool IDs (smart_delegate, json_query, fragment)",
+      "confidence": "high",
+      "evidence": [
+        "typed-result.ts:235-243 — substring matching only",
+        "All 30 plugin tools have compound names (smart_find, task_board, file_lock etc.) that don't match any substring pattern"
+      ]
+    },
+    {
+      "hypothesis": "There is no canonical SuggestedAction type in the plugin SDK — plugin tool authors have no way to return structured affordances, so each tool invented its own ad-hoc field",
+      "confidence": "medium",
+      "evidence": [
+        "packages/plugin/src/tool.ts:36-43 — ToolResult = string | { output, metadata?, attachments? } — no next field",
+        "10+ tools independently created hint/next/recommendation fields — same pattern, different names"
+      ]
+    }
+  ],
+
+  "design_decision": {
+    "approach": "dual-layer",
+    "layer_system": "Extend toolCategory() + affordancesAfterSuccess() in typed-result.ts to recognize plugin tool IDs. This gives every plugin tool category-based affordances automatically through the existing wrapExecute pipeline. No change needed in registry.ts or session/tools.ts.",
+    "layer_tool": "Add next: NextAffordance[] to each tool's JSON.stringify() output in .opencode/tools/. This puts tool-specific affordances directly in the visible output that the model and TUI read. These are additive to the system-level affordances.",
+    "rationale": "The system-level layer (wrapExecute) already works for all tools — it just needs tool ID recognition. The tool-level layer gives tool authors the ability to add context-specific suggestions (e.g., smart_find suggests reading specific found files). Both layers are advisory and consumers may ignore either or both."
+  },
+
+  "fixes": [
+    {
+      "id": "fix-A-extend-nextaffordance",
+      "phase": 1,
+      "description": "Add `when` and `args` fields to the existing NextAffordance interface in typed-result.ts. Do NOT create a new SuggestedAction type — extend the canonical type per zoning-board recommendation.",
+      "files": ["packages/opencode/src/tool/typed-result.ts"],
+      "before": "export interface NextAffordance {\n  action: string\n  target?: string\n  command?: string\n}",
+      "after": "export interface NextAffordance {\n  action: string\n  target?: string\n  command?: string\n  /** When this action is applicable — condition description for the consumer */\n  when?: string\n  /** Suggested args to pass if the consumer invokes this action */\n  args?: Record<string, unknown>\n}",
+      "impact": {
+        "affected_files": ["packages/opencode/src/tool/typed-result.ts"],
+        "tests_to_run": ["test/tool/typed-result.test.ts (new)"]
+      },
+      "risks": [
+        "Adding optional fields is safe — formatOutput only reads action/target/command; new fields are silently serialized in JSON.stringify but not rendered in the human-readable section",
+        "Need to also update NextAffordanceSchema (typed-result.ts:54) with the new optional fields"
+      ],
+      "validation": ["bun typecheck passes", "Existing tests pass unchanged", "New fields appear in formatOutput JSON trailer"]
+    },
+    {
+      "id": "fix-B-extend-toolcategory",
+      "phase": 1,
+      "description": "Extend `toolCategory()` with exact-match dispatch for all 30 plugin tool IDs, placed BEFORE the substring fallbacks. This ensures each plugin tool gets the correct category for affordance computation.",
+      "files": ["packages/opencode/src/tool/typed-result.ts"],
+      "before": "function toolCategory(toolID: string): string {\n  if (toolID.includes(\"read\") || toolID === \"read\") return \"read\"\n  ...\n  return \"diagnose\"\n}",
+      "after": "function toolCategory(toolID: string): string {\n  // Exact-match for plugin tool IDs (before substring fallbacks)\n  const exact: Record<string, string> = {\n    read_source: \"read\", smart_edit: \"write\", smart_write: \"write\", smart_batch: \"write\",\n    replace_symbol: \"write\", smart_sd: \"write\",\n    smart_grep: \"search\", smart_find: \"search\", json_query: \"search\",\n    smart_bash: \"execute\", smart_bun: \"execute\", smart_git: \"execute\",\n    smart_delegate: \"execute\", task_board: \"execute\",\n    smart_session: \"manage\", file_lock: \"manage\", fragment: \"manage\",\n    coordinate: \"manage\", smart_stats: \"analyze\", analytics: \"analyze\",\n    plan: \"plan\", roadmap: \"plan\",\n    verify: \"diagnose\", feedback: \"diagnose\", gate: \"manage\",\n    record: \"manage\", discover: \"search\", rig_schema_validate: \"diagnose\",\n    github: \"search\",\n  }\n  if (exact[toolID]) return exact[toolID]\n  // Substring fallbacks for built-in tools\n  if (toolID.includes(\"read\") || toolID === \"read\") return \"read\"\n  ...\n}",
+      "impact": {
+        "affected_files": ["packages/opencode/src/tool/typed-result.ts"],
+        "tests_to_run": ["test/tool/typed-result.test.ts (new)", "test/tool/registry.test.ts"]
+      },
+      "risks": [
+        "New tools added later won't be in the exact-match map — they'll fall through to substring matching, which may misclassify them (e.g., 'smart_coordinate' contains neither 'read' nor 'write' etc. → 'diagnose'). Mitigation: add a comment and a CI check.",
+        "Substring fallbacks remain unchanged — no risk to built-in tools"
+      ],
+      "validation": ["bun typecheck passes", "Existing tests pass", "smart_delegate → 'execute', fragment → 'manage', json_query → 'search'"]
+    },
+    {
+      "id": "fix-C-extend-affordances",
+      "phase": 1,
+      "description": "Add per-tool-ID affordance branches in `affordancesAfterSuccess()` and `affordancesFor()` for tools with rich follow-on chains. Category-based defaults handle the rest.",
+      "files": ["packages/opencode/src/tool/typed-result.ts"],
+      "before": "function affordancesAfterSuccess(toolID: string): NextAffordance[] {\n  const cat = toolCategory(toolID)\n  switch (cat) { ... }\n}",
+      "after": "function affordancesAfterSuccess(toolID: string): NextAffordance[] {\n  // Per-tool affordances (tool-specific chains)\n  const toolAffordances: Record<string, NextAffordance[]> = {\n    smart_find: [{ action: \"read_source\", command: \"Read a found file\", when: \"Found files worth inspecting\" }],\n    smart_grep: [{ action: \"read_source\", command: \"Read matching file\", when: \"Found matches worth inspecting\" }],\n    json_query: [{ action: \"smart_grep\", command: \"Search for patterns in query results\", when: \"Want to trace references\" }],\n    file_lock: [{ action: \"fragment\", command: \"Produce a fragment for editing\", when: \"Lock acquired — start editing\" }],\n    fragment: [{ action: \"smart_batch\", command: \"Consolidate and apply fragments\", when: \"All fragments produced\" }],\n    smart_delegate: [{ action: \"task_board\", command: \"Monitor fleet\", when: \"Want to see agent status\" }],\n    roadmap: [{ action: \"smart_delegate\", command: \"Delegate work\", when: \"Ready to start a task\" }],\n    smart_bash: [{ action: \"smart_bun\", command: \"Run bun for typecheck/tests\", when: \"Need verification\" }],\n    smart_bun: [{ action: \"smart_edit\", command: \"Fix compilation errors\", when: \"Typecheck or tests failed\" }],\n    smart_edit: [{ action: \"smart_bun\", command: \"Verify the edit\", when: \"Want to run typecheck/tests\" }],\n    smart_batch: [{ action: \"smart_bun\", command: \"Verify the batch edit\", when: \"Want to run typecheck/tests\" }],\n    smart_session: [{ action: \"smart_delegate\", command: \"Start next task\", when: \"Session initialized\" }],\n    task_board: [{ action: \"smart_delegate\", command: \"Launch next wave\", when: \"Agents are idle\" }],\n    gate: [{ action: \"smart_bun\", command: \"Run tests\", when: \"Checkpoint published\" }],\n    verify: [{ action: \"smart_edit\", command: \"Fix verification failure\", when: \"Verification failed\" }],\n    smart_git: [{ action: \"smart_bun\", command: \"Run typecheck\", when: \"After commit/push\" }],\n  }\n  if (toolAffordances[toolID]) return toolAffordances[toolID]\n  \n  const cat = toolCategory(toolID)\n  switch (cat) { ... }\n}",
+      "impact": {
+        "affected_files": ["packages/opencode/src/tool/typed-result.ts"],
+        "tests_to_run": ["test/tool/typed-result.test.ts (new)"]
+      },
+      "risks": [
+        "New tools need explicit mapping — without it they fall through to category defaults which may be too generic. Mitigation: CI test that verifies every known tool ID has non-empty affordances.",
+        "Some tool chains are speculative (smart_bash → smart_bun) — if wrong, the affordance is advisory; consumers can ignore it"
+      ],
+      "validation": ["bun typecheck passes", "smart_find → [read_source], smart_delegate → [task_board], fragment → [smart_batch]"]
+    }
+  ],
+
+  "per_tool_affordance_specs": {
+    "_note": "Each tool gets two layers of affordances: (A) system-level from affordancesAfterSuccess based on toolCategory, (B) tool-level next array in the JSON output. The specs below describe (B) — what goes in the tool's own JSON output. Layer (A) is handled by fix-C above.",
+    
+    "analytics": {
+      "category": "analyze",
+      "ad_hoc_fields": [],
+      "natural_next": [],
+      "next_output": [],
+      "migration": "No change — already no ad-hoc fields. Add next: []."
+    },
+    "coordinate": {
+      "category": "manage",
+      "ad_hoc_fields": [],
+      "natural_next": [{"action": "task_board", "when": "Want to see fleet status", "hint": "Monitor agents after coordination"}],
+      "next_output": [{"action": "task_board", "when": "Need fleet overview", "hint": "Check which agents are active"}],
+      "migration": "Add next array."
+    },
+    "discover": {
+      "category": "search",
+      "ad_hoc_fields": [],
+      "natural_next": [{"action": "read_source", "when": "Found findings worth inspecting", "hint": "Read the file containing the finding"}],
+      "next_output": [{"action": "read_source", "when": "Found relevant findings", "hint": "Inspect the source file"}],
+      "migration": "Add next array."
+    },
+    "feedback": {
+      "category": "diagnose",
+      "ad_hoc_fields": ["hint (severity-based condition)"],
+      "natural_next": [],
+      "next_output": [],
+      "migration": "Remove ad-hoc hint field, add next: [] (or next with smart_delegate if recoverable)."
+    },
+    "file_lock": {
+      "category": "manage",
+      "ad_hoc_fields": [],
+      "natural_next": [{"action": "fragment", "when": "Lock acquired — ready to edit", "hint": "Produce a fragment for the locked file"}, {"action": "smart_batch", "when": "All fragments produced", "hint": "Apply the consolidated changes"}],
+      "next_output": [{"action": "fragment", "when": "Lock acquired", "hint": "Declare edit region with fragment.produce"}],
+      "migration": "Add next array."
+    },
+    "fragment": {
+      "category": "manage",
+      "ad_hoc_fields": ["hint (per-action: list, produce)"],
+      "natural_next": [{"action": "fragment", "args": {"action": "list"}, "when": "Need to check for collisions", "hint": "List fragments to find collisions"}, {"action": "fragment", "args": {"action": "consolidate"}, "when": "All fragments ready", "hint": "Consolidate non-conflicting fragments"}],
+      "next_output": {
+        "produce": [{"action": "fragment", "args": {"action": "list"}, "when": "Other lanes may have fragments", "hint": "Check for fragment collisions"}],
+        "list": [{"action": "fragment", "args": {"action": "consolidate"}, "when": "No collisions detected", "hint": "Consolidate fragments into one edit"}],
+        "consolidate": [{"action": "smart_batch", "when": "Consolidation successful", "hint": "Apply the consolidated edit"}]
+      },
+      "migration": "Remove ad-hoc hint strings, add next array with action-specific variants."
+    },
+    "gate": {
+      "category": "manage",
+      "ad_hoc_fields": [],
+      "natural_next": [{"action": "smart_bun", "when": "Checkpoint published — verify", "hint": "Run typecheck and tests"}],
+      "next_output": [{"action": "smart_bun", "when": "Checkpoint published", "hint": "Verify with typecheck + tests"}],
+      "migration": "Add next array."
+    },
+    "github": {
+      "category": "search",
+      "ad_hoc_fields": [],
+      "natural_next": [{"action": "read_source", "when": "Found relevant PRs", "hint": "Read the PR details"}],
+      "next_output": [{"action": "read_source", "when": "Found matching issues/PRs", "hint": "Inspect relevant code"}],
+      "migration": "Add next array."
+    },
+    "json_query": {
+      "category": "search",
+      "ad_hoc_fields": [],
+      "natural_next": [{"action": "smart_grep", "when": "Want to trace references", "hint": "Search for references to queried keys"}, {"action": "read_source", "when": "Found result worth inspecting", "hint": "Read the source file"}],
+      "next_output": [{"action": "read_source", "when": "Query returned useful data", "hint": "Read the referenced file"}],
+      "migration": "Add next array."
+    },
+    "plan": {
+      "category": "plan",
+      "ad_hoc_fields": [],
+      "natural_next": [{"action": "smart_delegate", "when": "Plan created — start execution", "hint": "Delegate work to cartographer or architect"}],
+      "next_output": [{"action": "smart_delegate", "when": "Plan proposed", "hint": "Delegate to architect for plan design"}],
+      "migration": "Add next array."
+    },
+    "read": {
+      "category": "read",
+      "ad_hoc_fields": [],
+      "natural_next": [{"action": "smart_grep", "when": "Need to find references", "hint": "Search for usages of read symbols"}],
+      "next_output": [{"action": "smart_grep", "when": "Need to find related code", "hint": "Search for references to the read content"}],
+      "migration": "Add next array."
+    },
+    "read_source": {
+      "category": "read",
+      "ad_hoc_fields": [],
+      "natural_next": [{"action": "smart_grep", "when": "Need to trace references", "hint": "Search for usages of exported symbols"}, {"action": "lsp", "args": {"operation": "findReferences"}, "when": "Want to see all call sites", "hint": "Find all references with LSP"}],
+      "next_output": [{"action": "smart_grep", "when": "Need to find related code", "hint": "Search for references to exported symbols"}],
+      "migration": "Add next array."
+    },
+    "record": {
+      "category": "manage",
+      "ad_hoc_fields": [],
+      "natural_next": [],
+      "next_output": [],
+      "migration": "Add next: []."
+    },
+    "replace_symbol": {
+      "category": "write",
+      "ad_hoc_fields": ["hint (in error cases)"],
+      "natural_next": [{"action": "smart_bun", "when": "Symbol replaced — verify", "hint": "Run typecheck to catch compilation errors"}],
+      "next_output": [{"action": "smart_bun", "when": "Symbol renamed successfully", "hint": "Run typecheck to verify"}],
+      "migration": "Remove ad-hoc hint fields, add next array."
+    },
+    "rig_schema_validate": {
+      "category": "diagnose",
+      "ad_hoc_fields": [],
+      "natural_next": [{"action": "smart_edit", "when": "Validation failed — fix schema", "hint": "Edit the invalid schema file"}],
+      "next_output": [{"action": "smart_edit", "when": "Validation failed", "hint": "Fix the schema errors"}],
+      "migration": "Add next array."
+    },
+    "roadmap": {
+      "category": "plan",
+      "ad_hoc_fields": ["recommendation (string)", "next (array of items)"],
+      "natural_next": [{"action": "smart_delegate", "when": "Ready item found", "hint": "Delegate work to the appropriate agent"}],
+      "next_output": {
+        "init": [{"action": "roadmap", "args": {"action": "next"}, "when": "Want to see what's ready", "hint": "View next actionable items"}],
+        "next": [{"action": "smart_delegate", "when": "Found a ready item", "hint": "Delegate the next task"}],
+        "progress": [{"action": "roadmap", "args": {"action": "next"}, "when": "Want to see next tasks", "hint": "Check what's ready now"}],
+        "deprecate": [{"action": "roadmap", "args": {"action": "next"}, "when": "Want to continue", "hint": "Check remaining items"}],
+        "prioritize": [{"action": "roadmap", "args": {"action": "next"}, "when": "Want to continue", "hint": "Check reprioritized queue"}]
+      },
+      "migration": "Replace recommendation string and ad-hoc next array with standardized next: NextAffordance[]. The roadmap.next action already returns a 'next' field (the action name), so the affordance field should be next_action or the action key should be renamed. RECOMMENDATION: rename the roadmap action-level 'next' field to 'items' to avoid collision with the affordance 'next'."
+    },
+    "smart_bash": {
+      "category": "execute",
+      "ad_hoc_fields": [],
+      "natural_next": [{"action": "smart_bun", "when": "Command completed — verify", "hint": "Run typecheck or tests"}, {"action": "smart_git", "when": "Need to see diff", "hint": "Check git status"}],
+      "next_output": [{"action": "smart_bun", "when": "Need verification after command", "hint": "Run typecheck or tests to validate"}],
+      "migration": "Add next array."
+    },
+    "smart_batch": {
+      "category": "write",
+      "ad_hoc_fields": ["hint (diff/applied)"],
+      "natural_next": [{"action": "smart_bun", "when": "Batch applied — verify", "hint": "Run typecheck and tests"}],
+      "next_output": [{"action": "smart_bun", "when": "Batch edit applied", "hint": "Verify with typecheck + tests"}],
+      "migration": "Remove ad-hoc hint, add next array."
+    },
+    "smart_bun": {
+      "category": "execute",
+      "ad_hoc_fields": [],
+      "natural_next": [{"action": "smart_edit", "when": "Tests or typecheck failed", "hint": "Fix the failing code"}, {"action": "read_source", "when": "Need to inspect failure", "hint": "Read the failing file"}],
+      "next_output": [{"action": "smart_edit", "when": "Typecheck/test failed", "hint": "Fix compilation or test errors"}],
+      "migration": "Add next array."
+    },
+    "smart_delegate": {
+      "category": "execute",
+      "ad_hoc_fields": ["next (string hint)", "hint (action-specific)", "repair (warning)"],
+      "natural_next": [{"action": "task_board", "when": "Want to monitor fleet", "hint": "Check agent status and progress"}],
+      "next_output": {
+        "delegate": [{"action": "task_board", "when": "Agent spawned — monitor", "hint": "Check fleet dashboard to monitor progress"}],
+        "send": [{"action": "task_board", "when": "Message sent", "hint": "Check if recipient processed the message"}]
+      },
+      "migration": "Replace ad-hoc 'next' string and 'hint' strings with standardized next: NextAffordance[]. The existing 'next' field is a string hint (e.g., 'After cartographer completes, the next wave is architect') — preserve this text as the command/hint in the NextAffordance object."
+    },
+    "smart_edit": {
+      "category": "write",
+      "ad_hoc_fields": ["hint (status-specific)", "hint (in error cases)"],
+      "natural_next": [{"action": "smart_bun", "when": "Edit applied — verify", "hint": "Run typecheck and tests"}],
+      "next_output": [{"action": "smart_bun", "when": "Edit applied", "hint": "Run typecheck or tests to verify"}],
+      "migration": "Remove ad-hoc hint strings, add next array."
+    },
+    "smart_find": {
+      "category": "search",
+      "ad_hoc_fields": [],
+      "natural_next": [{"action": "read_source", "when": "Found files worth inspecting", "hint": "Read a found file"}],
+      "next_output": [{"action": "read_source", "when": "Found files matching pattern", "hint": "Read the contents of a found file"}],
+      "migration": "Add next array."
+    },
+    "smart_git": {
+      "category": "execute",
+      "ad_hoc_fields": [],
+      "natural_next": [{"action": "smart_bun", "when": "After commit/push — verify", "hint": "Run typecheck on clean state"}, {"action": "smart_delegate", "when": "Ready to push", "hint": "Delegate to journalist for PR"}],
+      "next_output": [{"action": "smart_bun", "when": "After git operation", "hint": "Verify state with typecheck"}],
+      "migration": "Add next array."
+    },
+    "smart_grep": {
+      "category": "search",
+      "ad_hoc_fields": [],
+      "natural_next": [{"action": "read_source", "when": "Found matches", "hint": "Read the matching file"}, {"action": "smart_grep", "when": "Need to narrow search", "hint": "Refine the search pattern"}],
+      "next_output": [{"action": "read_source", "when": "Found matching files", "hint": "Read the file containing matches"}],
+      "migration": "Add next array."
+    },
+    "smart_sd": {
+      "category": "write",
+      "ad_hoc_fields": [],
+      "natural_next": [{"action": "smart_bun", "when": "Replacement applied — verify", "hint": "Run typecheck"}],
+      "next_output": [{"action": "smart_bun", "when": "Text replaced", "hint": "Verify with typecheck or tests"}],
+      "migration": "Add next array."
+    },
+    "smart_session": {
+      "category": "manage",
+      "ad_hoc_fields": ["recommendation (string)", "hint (string)", "resume_hint (string)"],
+      "natural_next": [{"action": "smart_delegate", "when": "Ready item found", "hint": "Delegate the next task"}],
+      "next_output": {
+        "init": [{"action": "smart_delegate", "when": "Session initialized — start work", "hint": "Delegate to cartographer to map codebase"}],
+        "search": [{"action": "read_source", "when": "Found matching session", "hint": "Read session details"}],
+        "suggest": [{"action": "smart_delegate", "when": "Found actionable item", "hint": "Delegate the suggested task"}],
+        "end": [{"action": "smart_session", "args": {"action": "init"}, "when": "Want to start fresh", "hint": "Start a new session"}]
+      },
+      "migration": "Replace recommendation and hint strings with standardized next: NextAffordance[]."
+    },
+    "smart_stats": {
+      "category": "analyze",
+      "ad_hoc_fields": ["hint (describing tokei)"],
+      "natural_next": [{"action": "smart_find", "when": "Want to explore highlighted areas", "hint": "Find files in large language directories"}],
+      "next_output": [{"action": "smart_find", "when": "Want to explore a specific area", "hint": "Find files by pattern in large directories"}],
+      "migration": "Remove ad-hoc hint, add next array."
+    },
+    "smart_write": {
+      "category": "write",
+      "ad_hoc_fields": [],
+      "natural_next": [{"action": "smart_bun", "when": "File created — verify", "hint": "Run typecheck"}],
+      "next_output": [{"action": "smart_bun", "when": "File written", "hint": "Verify with typecheck"}],
+      "migration": "Add next array."
+    },
+    "task_board": {
+      "category": "execute",
+      "ad_hoc_fields": ["hint (dynamic: stale agents, all done, next wave)"],
+      "natural_next": [{"action": "smart_delegate", "when": "Agents idle — launch next wave", "hint": "Delegate work to wave agents"}],
+      "next_output": [{"action": "smart_delegate", "when": "Agents are idle or wave incomplete", "hint": "Launch the next wave of agents"}],
+      "migration": "Replace ad-hoc hint strings with action-specific next arrays."
+    },
+    "verify": {
+      "category": "diagnose",
+      "ad_hoc_fields": [],
+      "natural_next": [],
+      "next_output": [],
+      "migration": "Add next: []."
+    }
+  },
+
+  "apply_order": ["fix-A-extend-nextaffordance", "fix-B-extend-toolcategory", "fix-C-extend-affordances", "phase-2-tool-standardization", "phase-3-migration-cleanup"],
+  
+  "rollback_plan": "Revert each fix in reverse order. Each phase is independently reversible: (1) Remove next fields from individual tools — tools still work. (2) Remove per-tool affordances from affordancesAfterSuccess() — falls back to category defaults. (3) Remove toolCategory() exact-match map — falls back to substring matching. (4) Remove new NextAffordance fields — they were optional additions; formatOutput ignores them.",
+
+  "risks_assessment": {
+    "backward_compatibility": "LOW. Adding optional fields to NextAffordance is safe. Adding next: NextAffordance[] to plugin tool JSON outputs is safe — fromPlugin() in registry.ts:358 only extracts output and metadata, and even if next appears at the top level, it's included in the string output which wrapExecute passes through as the TypedToolResult.data field.",
+    "field_name_collision": "MEDIUM. roadmap.ts already uses 'next' as an action name returning a 'next' field containing items. The roadmap/next action returns {action: 'next', next: [...items], recommendation: '...'}. The 'next' key at the output level is the list of roadmap items. Adding 'next' as affordances would collide. RECOMMENDATION: rename roadmap's items field to 'items' (not 'next') to free the 'next' key for affordances, OR use 'next_actions' as the affordance key in roadmap outputs.",
+    "tool_category_fallback_accuracy": "LOW. Plugin tools with novel IDs added later will fall through to 'diagnose' category, which provides generic affordances. Acceptable: affordances are advisory.",
+    "merge_conflict_risk": "LOW. All changes are within a single file (typed-result.ts phase 1) or isolated per-file (.opencode/tools/* phase 2). Parallel lane edits to the same tool file would need fragment coordination.",
+    "performance": "NEGLIGIBLE. Adding 1-3 NextAffordance objects to each tool output adds ~200-500 bytes of JSON. No measurable impact."
+  },
+
+  "validation_strategy": {
+    "bisect_file": "test/tool/typed-result.test.ts (new)",
+    "bisect_command": "bun test --timeout 30000 --filter 'typed-result' test/tool/typed-result.test.ts",
+    "regression_command": "bun test --timeout 30000 test/tool/registry.test.ts test/session/prompt.test.ts test/session/message-v2.test.ts test/session/compaction.test.ts",
+    "typecheck_command": "cd packages/opencode && bun typecheck",
+    "smoke_steps": [
+      "1. bun typecheck — zero errors",
+      "2. bun test test/tool/typed-result.test.ts — all new tests pass",
+      "3. bun test test/tool/registry.test.ts — existing tests pass unchanged",
+      "4. bun test test/session/prompt.test.ts — output assertions still pass",
+      "5. bun test — full suite green",
+      "6. Manual: invoke smart_find tool, verify next field in output",
+      "7. Manual: invoke smart_delegate tool, verify next field replaces ad-hoc next string"
+    ]
+  },
+
+  "files_touched": {
+    "phase_1_core": ["packages/opencode/src/tool/typed-result.ts"],
+    "phase_2_tools": [
+      ".opencode/tools/analytics.ts",
+      ".opencode/tools/coordinate.ts",
+      ".opencode/tools/discover.ts",
+      ".opencode/tools/feedback.ts",
+      ".opencode/tools/file_lock.ts",
+      ".opencode/tools/fragment.ts",
+      ".opencode/tools/gate.ts",
+      ".opencode/tools/github.ts",
+      ".opencode/tools/json_query.ts",
+      ".opencode/tools/plan.ts",
+      ".opencode/tools/read.ts",
+      ".opencode/tools/read_source.ts",
+      ".opencode/tools/record.ts",
+      ".opencode/tools/replace_symbol.ts",
+      ".opencode/tools/rig_schema_validate.ts",
+      ".opencode/tools/roadmap.ts",
+      ".opencode/tools/smart_bash.ts",
+      ".opencode/tools/smart_batch.ts",
+      ".opencode/tools/smart_bun.ts",
+      ".opencode/tools/smart_delegate.ts",
+      ".opencode/tools/smart_edit.ts",
+      ".opencode/tools/smart_find.ts",
+      ".opencode/tools/smart_git.ts",
+      ".opencode/tools/smart_grep.ts",
+      ".opencode/tools/smart_sd.ts",
+      ".opencode/tools/smart_session.ts",
+      ".opencode/tools/smart_stats.ts",
+      ".opencode/tools/smart_write.ts",
+      ".opencode/tools/task_board.ts",
+      ".opencode/tools/verify.ts"
+    ],
+    "phase_3_tests": ["test/tool/typed-result.test.ts (new)"]
+  },
+  
+  "convention_compliance": {
+    "zoning_board_findings_addressed": [
+      {
+        "finding": "SuggestedAction diverges from NextAffordance naming",
+        "resolution": "Extended NextAffordance (not a new type). Added when and args to the existing canonical interface."
+      },
+      {
+        "finding": "No .opencode/tools/ shared utility file precedent",
+        "resolution": "No affordances.ts shared module created. Each tool adds next inline. Centralized affordance logic stays in typed-result.ts."
+      },
+      {
+        "finding": "Affordance computation is centralized",
+        "resolution": "Fix-C extends affordancesAfterSuccess() with per-tool-ID branches following the existing pattern."
+      }
+    ]
+  }
+}

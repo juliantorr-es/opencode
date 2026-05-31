@@ -1,0 +1,23 @@
+{"at":"2026-05-31T14:20:49.142Z","tool":"smart_grep","action":"searched","pattern":"tool-graph","results":30,"files":10}
+{"at":"2026-05-31T14:20:49.480Z","tool":"smart_grep","action":"searched","pattern":"TOOL.GRAPH","results":9,"files":7}
+{"at":"2026-05-31T14:20:49.885Z","tool":"smart_grep","action":"searched","pattern":"ToolGraph|toolCategory|suggestNext|suggestPipeline","results":3,"files":1}
+{"at":"2026-05-31T14:25:10.466Z","tool":"smart_grep","action":"searched","pattern":"TOOL_CATEGORIES","results":3,"files":1}
+{"at":"2026-05-31T14:25:11.628Z","tool":"smart_grep","action":"searched","pattern":"suggestedNextTools|suggestedTools|affordancesAfter|enrichExecuteResult","results":0,"files":0}
+{"at":"2026-05-31T14:25:12.842Z","tool":"smart_grep","action":"searched","pattern":"import.*tool|from.*tool","results":50,"files":30}
+{"at":"2026-05-31T14:25:57.778Z","tool":"smart_grep","action":"searched","pattern":"TOOL_CATEGORIES|toolCategory","results":6,"files":1}
+{"at":"2026-05-31T14:26:40.520Z","tool":"smart_grep","action":"searched","pattern":"^const TOOL_CATEGORIES|^\\s+(read|write|search|execute|manage|plan|diagnose).*\\[","results":0,"files":0}
+{"at":"2026-05-31T14:26:42.109Z","tool":"smart_grep","action":"searched","pattern":"suggestedToolsAfterSuccess|suggestedToolsFor|affordancesAfterSuccess|affordances","results":18,"files":1}
+{"at":"2026-05-31T14:27:23.739Z","tool":"smart_grep","action":"searched","pattern":"TOOL_CATEGORIES","results":0,"files":0}
+{"at":"2026-05-31T14:28:43.447Z","tool":"smart_bash","action":"bash","command":"head -n 234 packages/opencode/src/tool/typed-result.ts | tail -n 15","exit_code":0}
+{"at":"2026-05-31T14:29:54.385Z","tool":"smart_grep","action":"searched","pattern":"^import","results":30,"files":5}
+{"at":"2026-05-31T14:30:30.417Z","tool":"smart_grep","action":"searched","pattern":"^import|^describe","results":30,"files":2}
+{"at":"2026-05-31T14:30:31.477Z","tool":"smart_grep","action":"searched","pattern":"typed-result|TypedResult|toolCategory","results":1,"files":1}
+{"at":"2026-05-31T14:31:51.855Z","tool":"smart_grep","action":"searched","pattern":"extends Context\\.Service","results":30,"files":29}
+{"at":"2026-05-31T14:34:35.637Z","tool":"smart_grep","action":"searched","pattern":"ses_18195f4ccffe|ses_18195d2fdffe|ses_18195b7adffe|ses_1819575aeffe|ses_18195543","results":2,"files":2}
+{"at":"2026-05-31T14:38:42.831Z","tool":"smart_grep","action":"searched","pattern":"\"recipient\":\"critic\"","results":1,"files":1}
+{"at":"2026-05-31T14:44:46.661Z","tool":"smart_grep","action":"searched","pattern":"ses_18195d2fdffe|ses_18195543effe|ses_181953119ffe","results":5,"files":4}
+{"at":"2026-05-31T14:45:03.705Z","tool":"smart_grep","action":"searched","pattern":"ses_18195543effe|ses_181953119ffe","results":6,"files":3}
+{"at":"2026-05-31T14:46:23.933Z","tool":"smart_write","action":"created","file":".build/rig-relay/evidence/tool-graph-critic-review.v1.json","reason":"Persist the canonical critic review artifact for the TOOL-GRAPH architecture plan"}
+{"at":"2026-05-31T14:46:53.118Z","tool":"smart_edit","action":"edited","file":".build/rig-relay/evidence/tool-graph-critic-review.v1.json","reason":"Incorporate exhibit-a and appeal agent findings into the review artifact","occurrences":1}
+{"at":"2026-05-31T14:47:11.108Z","tool":"smart_edit","action":"edited","file":".build/rig-relay/evidence/tool-graph-critic-review.v1.json","reason":"Add orphan edge validation finding from exhibit-a and hardening recommendations from appeal","occurrences":1}
+{"at":"2026-05-31T14:47:28.232Z","tool":"smart_edit","action":"edited","file":".build/rig-relay/evidence/tool-graph-critic-review.v1.json","reason":"Update conditions to include BF-004 (orphan edge validation) and appeal hardening recommendation","occurrences":1}

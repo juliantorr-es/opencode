@@ -60,10 +60,10 @@ void initI18n()
 const deepLinkEvent = "opencode:deep-link"
 
 const emitDeepLinks = (urls: string[]) => {
-  if (urls.length === 0) return
+  if (!urls || urls.length === 0) return
   window.__OPENCODE__ ??= {}
   const pending = window.__OPENCODE__.deepLinks ?? []
-  window.__OPENCODE__.deepLinks = [...pending, ...urls]
+  window.__OPENCODE__.deepLinks = [...pending, ...(urls ?? [])]
   window.dispatchEvent(new CustomEvent(deepLinkEvent, { detail: { urls } }))
 }
 

@@ -1,0 +1,60 @@
+{"at":"2026-05-31T14:09:06.240Z","session_id":"ses_181a2e18dffe45fuND3uvzEsqR","agent":"critic","tool":"smart_find","phase":"started","detail":"*.json"}
+{"at":"2026-05-31T14:09:06.267Z","session_id":"ses_181a2e18dffe45fuND3uvzEsqR","agent":"critic","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T14:09:07.104Z","session_id":"ses_181a2e18dffe45fuND3uvzEsqR","agent":"critic","tool":"smart_find","phase":"started","detail":"*.json"}
+{"at":"2026-05-31T14:09:07.126Z","session_id":"ses_181a2e18dffe45fuND3uvzEsqR","agent":"critic","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T14:09:31.737Z","session_id":"ses_181a2e18dffe45fuND3uvzEsqR","agent":"critic","tool":"smart_grep","phase":"started","detail":"AppFileSystem"}
+{"at":"2026-05-31T14:09:31.765Z","session_id":"ses_181a2e18dffe45fuND3uvzEsqR","agent":"critic","tool":"smart_grep","phase":"completed","detail":"AppFileSystem"}
+{"at":"2026-05-31T14:09:32.708Z","session_id":"ses_181a2e18dffe45fuND3uvzEsqR","agent":"critic","tool":"smart_grep","phase":"started","detail":"plan.*telemetry|telemetry.*plan|TOOL-TELEMETRY"}
+{"at":"2026-05-31T14:09:33.003Z","session_id":"ses_181a2e18dffe45fuND3uvzEsqR","agent":"critic","tool":"smart_grep","phase":"completed","detail":"plan.*telemetry|telemetry.*plan|TOOL-TELEMETRY"}
+{"at":"2026-05-31T14:09:33.650Z","session_id":"ses_181a2e18dffe45fuND3uvzEsqR","agent":"critic","tool":"smart_grep","phase":"started","detail":"tool_invocation|toolInvocation"}
+{"at":"2026-05-31T14:09:33.668Z","session_id":"ses_181a2e18dffe45fuND3uvzEsqR","agent":"critic","tool":"smart_grep","phase":"completed","detail":"tool_invocation|toolInvocation"}
+{"at":"2026-05-31T14:09:58.128Z","session_id":"ses_181a2e18dffe45fuND3uvzEsqR","agent":"critic","tool":"smart_grep","phase":"started","detail":"export.*AppFileSystem|class AppFileSystem|AppFileSystem\\.Service|AppFileSystem\\."}
+{"at":"2026-05-31T14:09:58.147Z","session_id":"ses_181a2e18dffe45fuND3uvzEsqR","agent":"critic","tool":"smart_grep","phase":"completed","detail":"export.*AppFileSystem|class AppFileSystem|AppFileSystem\\.Service|AppFileSystem\\."}
+{"at":"2026-05-31T14:10:16.662Z","session_id":"ses_181a2e18dffe45fuND3uvzEsqR","agent":"critic","tool":"smart_find","phase":"started","detail":"analytics*"}
+{"at":"2026-05-31T14:10:16.697Z","session_id":"ses_181a2e18dffe45fuND3uvzEsqR","agent":"critic","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T14:10:35.520Z","session_id":"ses_181a2e18dffe45fuND3uvzEsqR","agent":"critic","tool":"smart_grep","phase":"started","detail":"analytics"}
+{"at":"2026-05-31T14:10:35.530Z","session_id":"ses_181a2e18dffe45fuND3uvzEsqR","agent":"critic","tool":"smart_grep","phase":"completed","detail":"analytics"}
+{"at":"2026-05-31T14:10:36.982Z","session_id":"ses_181a2e18dffe45fuND3uvzEsqR","agent":"critic","tool":"smart_grep","phase":"started","detail":"smart_tool_usage|heartbeat\\.v1|analytics.*query|appendLine.*jsonl"}
+{"at":"2026-05-31T14:10:37.001Z","session_id":"ses_181a2e18dffe45fuND3uvzEsqR","agent":"critic","tool":"smart_grep","phase":"completed","detail":"smart_tool_usage|heartbeat\\.v1|analytics.*query|appendLine.*jsonl"}
+{"at":"2026-05-31T14:10:59.055Z","session_id":"ses_181a2e18dffe45fuND3uvzEsqR","agent":"critic","tool":"smart_grep","phase":"started","detail":"tapBoth|tapError.*catchAll"}
+{"at":"2026-05-31T14:10:59.088Z","session_id":"ses_181a2e18dffe45fuND3uvzEsqR","agent":"critic","tool":"smart_grep","phase":"completed","detail":"tapBoth|tapError.*catchAll"}
+{"at":"2026-05-31T14:11:00.265Z","session_id":"ses_181a2e18dffe45fuND3uvzEsqR","agent":"critic","tool":"smart_grep","phase":"started","detail":"InstanceRef|instance\\\\.directory|worktree.*directory"}
+{"at":"2026-05-31T14:11:00.277Z","session_id":"ses_181a2e18dffe45fuND3uvzEsqR","agent":"critic","tool":"smart_grep","phase":"completed","detail":"InstanceRef|instance\\\\.directory|worktree.*directory"}
+{"at":"2026-05-31T14:11:19.241Z","session_id":"ses_181a2e18dffe45fuND3uvzEsqR","agent":"critic","tool":"smart_grep","phase":"started","detail":"InstanceState"}
+{"at":"2026-05-31T14:11:19.254Z","session_id":"ses_181a2e18dffe45fuND3uvzEsqR","agent":"critic","tool":"smart_grep","phase":"completed","detail":"InstanceState"}
+{"at":"2026-05-31T14:11:19.848Z","session_id":"ses_181a2e18dffe45fuND3uvzEsqR","agent":"critic","tool":"smart_find","phase":"started","detail":"*tool*"}
+{"at":"2026-05-31T14:11:19.883Z","session_id":"ses_181a2e18dffe45fuND3uvzEsqR","agent":"critic","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T14:11:35.940Z","session_id":"ses_181a2e18dffe45fuND3uvzEsqR","agent":"critic","tool":"smart_grep","phase":"started","detail":"tool.*test|test.*tool"}
+{"at":"2026-05-31T14:11:35.957Z","session_id":"ses_181a2e18dffe45fuND3uvzEsqR","agent":"critic","tool":"smart_grep","phase":"completed","detail":"tool.*test|test.*tool"}
+{"at":"2026-05-31T14:11:37.284Z","session_id":"ses_181a2e18dffe45fuND3uvzEsqR","agent":"critic","tool":"smart_grep","phase":"started","detail":"AppFileSystem.*Service|provideService.*AppFileSystem|defaultLayer.*AppFileSystem"}
+{"at":"2026-05-31T14:11:37.300Z","session_id":"ses_181a2e18dffe45fuND3uvzEsqR","agent":"critic","tool":"smart_grep","phase":"completed","detail":"AppFileSystem.*Service|provideService.*AppFileSystem|defaultLayer.*AppFileSystem"}
+{"at":"2026-05-31T14:11:54.420Z","session_id":"ses_181a2e18dffe45fuND3uvzEsqR","agent":"critic","tool":"smart_grep","phase":"started","detail":"export.*testEffect|function testEffect"}
+{"at":"2026-05-31T14:11:54.451Z","session_id":"ses_181a2e18dffe45fuND3uvzEsqR","agent":"critic","tool":"smart_grep","phase":"completed","detail":"export.*testEffect|function testEffect"}
+{"at":"2026-05-31T14:12:11.198Z","session_id":"ses_181a2e18dffe45fuND3uvzEsqR","agent":"critic","tool":"smart_grep","phase":"started","detail":"tool\\.test\\.ts|tool/test"}
+{"at":"2026-05-31T14:12:11.216Z","session_id":"ses_181a2e18dffe45fuND3uvzEsqR","agent":"critic","tool":"smart_grep","phase":"completed","detail":"tool\\.test\\.ts|tool/test"}
+{"at":"2026-05-31T14:12:27.037Z","session_id":"ses_181a2e18dffe45fuND3uvzEsqR","agent":"critic","tool":"smart_grep","phase":"started","detail":"from.*\\\"[./]*tool/tool\\\"|from.*\\\"@/tool/tool\\\""}
+{"at":"2026-05-31T14:12:27.049Z","session_id":"ses_181a2e18dffe45fuND3uvzEsqR","agent":"critic","tool":"smart_grep","phase":"completed","detail":"from.*\\\"[./]*tool/tool\\\"|from.*\\\"@/tool/tool\\\""}
+{"at":"2026-05-31T14:12:28.349Z","session_id":"ses_181a2e18dffe45fuND3uvzEsqR","agent":"critic","tool":"smart_grep","phase":"started","detail":"from.*\\\"\\.\\\\/tool\\\"|Tool\\.define.*test"}
+{"at":"2026-05-31T14:12:28.370Z","session_id":"ses_181a2e18dffe45fuND3uvzEsqR","agent":"critic","tool":"smart_grep","phase":"completed","detail":"from.*\\\"\\.\\\\/tool\\\"|Tool\\.define.*test"}
+{"at":"2026-05-31T14:12:57.163Z","session_id":"ses_181a2e18dffe45fuND3uvzEsqR","agent":"critic","tool":"smart_grep","phase":"started","detail":"heartbeat|smart_tool_usage|bash_usage"}
+{"at":"2026-05-31T14:12:57.186Z","session_id":"ses_181a2e18dffe45fuND3uvzEsqR","agent":"critic","tool":"smart_grep","phase":"completed","detail":"heartbeat|smart_tool_usage|bash_usage"}
+{"at":"2026-05-31T14:13:23.819Z","session_id":"ses_181a2e18dffe45fuND3uvzEsqR","agent":"critic","tool":"smart_grep","phase":"started","detail":"fix-A|fix-B|fix-C|tap\\(\\|tapError|startTime|AppFileSystem\\.Service|catchAll|anal"}
+{"at":"2026-05-31T14:13:23.828Z","session_id":"ses_181a2e18dffe45fuND3uvzEsqR","agent":"critic","tool":"smart_grep","phase":"completed","detail":"fix-A|fix-B|fix-C|tap\\(\\|tapError|startTime|AppFileSystem\\.Service|catchAll|anal"}
+{"at":"2026-05-31T14:17:45.746Z","session_id":"ses_181a2e18dffe45fuND3uvzEsqR","agent":"critic","tool":"smart_grep","phase":"started","detail":"catchAll.*defect|catchAllDefect|ConfigError"}
+{"at":"2026-05-31T14:17:45.773Z","session_id":"ses_181a2e18dffe45fuND3uvzEsqR","agent":"critic","tool":"smart_grep","phase":"failed","detail":"rg: /Users/user/Developer/GitHub/opencode-desktop-dev/.opencode/references/effect-smol: IO error for operation on /Users/user/Developer/GitHub/opencode-desktop-dev/.opencode/references/effect-smol: No"}
+{"at":"2026-05-31T14:17:46.746Z","session_id":"ses_181a2e18dffe45fuND3uvzEsqR","agent":"critic","tool":"smart_grep","phase":"started","detail":"Effect\\.serviceOption|serviceOption"}
+{"at":"2026-05-31T14:17:46.790Z","session_id":"ses_181a2e18dffe45fuND3uvzEsqR","agent":"critic","tool":"smart_grep","phase":"completed","detail":"Effect\\.serviceOption|serviceOption"}
+{"at":"2026-05-31T14:17:47.541Z","session_id":"ses_181a2e18dffe45fuND3uvzEsqR","agent":"critic","tool":"smart_grep","phase":"started","detail":"catchAllDefect|catchAllCause"}
+{"at":"2026-05-31T14:17:47.578Z","session_id":"ses_181a2e18dffe45fuND3uvzEsqR","agent":"critic","tool":"smart_grep","phase":"completed","detail":"catchAllDefect|catchAllCause"}
+{"at":"2026-05-31T14:18:30.718Z","session_id":"ses_181a2e18dffe45fuND3uvzEsqR","agent":"critic","tool":"smart_grep","phase":"started","detail":"appendLine|ensureDir|logDir|analytics"}
+{"at":"2026-05-31T14:18:30.723Z","session_id":"ses_181a2e18dffe45fuND3uvzEsqR","agent":"critic","tool":"smart_grep","phase":"completed","detail":"appendLine|ensureDir|logDir|analytics"}
+{"at":"2026-05-31T14:30:00.863Z","session_id":"ses_181a2e18dffe45fuND3uvzEsqR","agent":"critic","tool":"smart_write","phase":"started","detail":"docs/json/opencode/plans/tool-telemetry-review.v1.json"}
+{"at":"2026-05-31T14:30:00.864Z","session_id":"ses_181a2e18dffe45fuND3uvzEsqR","agent":"critic","tool":"smart_write","phase":"completed","detail":"docs/json/opencode/plans/tool-telemetry-review.v1.json"}
+{"at":"2026-05-31T14:31:44.129Z","session_id":"ses_181a2e18dffe45fuND3uvzEsqR","agent":"critic","tool":"smart_edit","phase":"started","detail":"docs/json/opencode/plans/tool-telemetry-review.v1.json"}
+{"at":"2026-05-31T14:31:44.147Z","session_id":"ses_181a2e18dffe45fuND3uvzEsqR","agent":"critic","tool":"smart_edit","phase":"completed","detail":"docs/json/opencode/plans/tool-telemetry-review.v1.json"}
+{"at":"2026-05-31T14:33:05.673Z","session_id":"ses_181a2e18dffe45fuND3uvzEsqR","agent":"critic","tool":"smart_edit","phase":"started","detail":"docs/json/opencode/plans/tool-telemetry-review.v1.json"}
+{"at":"2026-05-31T14:33:05.696Z","session_id":"ses_181a2e18dffe45fuND3uvzEsqR","agent":"critic","tool":"smart_edit","phase":"completed","detail":"docs/json/opencode/plans/tool-telemetry-review.v1.json"}
+{"at":"2026-05-31T14:45:17.645Z","session_id":"ses_181a2e18dffe45fuND3uvzEsqR","agent":"critic","tool":"smart_edit","phase":"started","detail":"docs/json/opencode/plans/tool-telemetry-review.v1.json"}
+{"at":"2026-05-31T14:45:17.660Z","session_id":"ses_181a2e18dffe45fuND3uvzEsqR","agent":"critic","tool":"smart_edit","phase":"completed","detail":"docs/json/opencode/plans/tool-telemetry-review.v1.json"}
+{"at":"2026-05-31T14:45:33.327Z","session_id":"ses_181a2e18dffe45fuND3uvzEsqR","agent":"critic","tool":"smart_edit","phase":"started","detail":"docs/json/opencode/plans/tool-telemetry-review.v1.json"}
+{"at":"2026-05-31T14:45:33.342Z","session_id":"ses_181a2e18dffe45fuND3uvzEsqR","agent":"critic","tool":"smart_edit","phase":"completed","detail":"docs/json/opencode/plans/tool-telemetry-review.v1.json"}

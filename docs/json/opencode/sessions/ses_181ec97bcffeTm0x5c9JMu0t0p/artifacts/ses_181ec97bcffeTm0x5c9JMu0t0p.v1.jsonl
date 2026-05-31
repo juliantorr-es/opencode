@@ -1,0 +1,34 @@
+{"at":"2026-05-31T12:49:18.231Z","tool":"smart_grep","action":"searched","pattern":"export.*class|export.*function|export.*const.*=.*async","results":19,"files":9}
+{"at":"2026-05-31T12:49:19.182Z","tool":"smart_grep","action":"searched","pattern":"export.*class|export.*function|export.*const.*=.*async","results":53,"files":24}
+{"at":"2026-05-31T12:49:20.207Z","tool":"smart_grep","action":"searched","pattern":"export.*class|export.*function|export.*const.*=.*async","results":13,"files":4}
+{"at":"2026-05-31T12:50:20.532Z","tool":"smart_grep","action":"searched","pattern":"loop|while|for.*\\(|break|exit|return.*continue|return.*stop|return.*compact","results":0,"files":0}
+{"at":"2026-05-31T12:50:21.858Z","tool":"smart_grep","action":"searched","pattern":"loop|while|for.*\\(|break|MAX_STEPS|maxSteps|max_step|max-step","results":0,"files":0}
+{"at":"2026-05-31T12:51:32.902Z","tool":"smart_grep","action":"searched","pattern":"for\\s*\\(","results":0,"files":0}
+{"at":"2026-05-31T12:52:17.320Z","tool":"smart_grep","action":"searched","pattern":"function.*process|stream.*=|IsStream|toolCall|ToolCall","results":0,"files":0}
+{"at":"2026-05-31T12:52:18.872Z","tool":"smart_grep","action":"searched","pattern":"function.*loop|function.*run|function.*start|function.*prompt|MAX_STEPS|stopReas","results":0,"files":0}
+{"at":"2026-05-31T12:53:03.987Z","tool":"smart_grep","action":"searched","pattern":"maxSteps","results":0,"files":0}
+{"at":"2026-05-31T12:53:55.292Z","tool":"smart_grep","action":"searched","pattern":"const loop","results":0,"files":0}
+{"at":"2026-05-31T12:54:48.190Z","tool":"smart_grep","action":"searched","pattern":"const loop.*LoopInput","results":0,"files":0}
+{"at":"2026-05-31T12:54:49.117Z","tool":"smart_grep","action":"searched","pattern":"process.*streamInput","results":0,"files":0}
+{"at":"2026-05-31T12:57:16.293Z","tool":"smart_grep","action":"searched","pattern":"function\\* \\(|const.*=.*Effect","results":0,"files":0}
+{"at":"2026-05-31T12:57:17.082Z","tool":"smart_grep","action":"searched","pattern":"function\\* \\(|const.*=.*Effect","results":0,"files":0}
+{"at":"2026-05-31T12:58:49.607Z","tool":"smart_grep","action":"searched","pattern":"export","results":30,"files":3}
+{"at":"2026-05-31T12:59:35.350Z","tool":"smart_grep","action":"searched","pattern":"\\.","results":30,"files":1}
+{"at":"2026-05-31T13:00:24.783Z","tool":"smart_grep","action":"searched","pattern":"orchestrat|state-machine|binder|secretary|push-gate|predicates|role-contracts|au","results":50,"files":7}
+{"at":"2026-05-31T13:01:56.613Z","tool":"smart_grep","action":"searched","pattern":"continue|break","results":0,"files":0}
+{"at":"2026-05-31T13:01:57.906Z","tool":"smart_grep","action":"searched","pattern":"return.*stop|return.*continue|return.*compact|return.*break","results":0,"files":0}
+{"at":"2026-05-31T13:02:33.280Z","tool":"smart_grep","action":"searched","pattern":"needsCompaction|blocked|assistantMessage\\.error|finishReason","results":0,"files":0}
+{"at":"2026-05-31T13:02:34.677Z","tool":"smart_grep","action":"searched","pattern":"while.*true|do.*\\{|for.*\\(.*;.*;|loop:","results":0,"files":0}
+{"at":"2026-05-31T13:03:21.585Z","tool":"smart_grep","action":"searched","pattern":"outcome.*break|isLastStep|aborted|finishReason.*tool-calls|finishReason.*stop","results":0,"files":0}
+{"at":"2026-05-31T13:03:55.559Z","tool":"smart_grep","action":"searched","pattern":"outcome.*break.*continue","results":0,"files":0}
+{"at":"2026-05-31T13:03:56.322Z","tool":"smart_grep","action":"searched","pattern":"needsCompaction|shouldBreak|blocked","results":0,"files":0}
+{"at":"2026-05-31T13:04:31.476Z","tool":"smart_grep","action":"searched","pattern":"finishReason|tool-calls|tool-result|unknown|stop","results":0,"files":0}
+{"at":"2026-05-31T13:04:54.095Z","tool":"smart_grep","action":"searched","pattern":"FinishReason","results":9,"files":2}
+{"at":"2026-05-31T13:12:50.589Z","tool":"smart_write","action":"created","file":".build/rig-relay/cartography/agent-loop-session-lifecycle-map.v1.json","reason":"Structured cartographic map artifact for agent loop and session lifecycle analysis"}
+{"at":"2026-05-31T13:20:12.142Z","tool":"smart_grep","action":"searched","pattern":"DOOM_LOOP|doom_loop|doomLoop","results":0,"files":0}
+{"at":"2026-05-31T13:20:19.416Z","tool":"smart_grep","action":"searched","pattern":"DOOM|doom|identical|repeating|detect|threshold","results":0,"files":0}
+{"at":"2026-05-31T13:20:20.323Z","tool":"smart_grep","action":"searched","pattern":"tool.*call.*identical|repeat.*tool|loop.*detect|doom.*loop","results":0,"files":0}
+{"at":"2026-05-31T13:20:24.744Z","tool":"smart_grep","action":"searched","pattern":"DOOM_LOOP_THRESHOLD","results":0,"files":0}
+{"at":"2026-05-31T13:20:29.674Z","tool":"smart_grep","action":"searched","pattern":"DOOM_LOOP_THRESHOLD|recentParts|doom_loop","results":0,"files":0}
+{"at":"2026-05-31T13:20:35.506Z","tool":"smart_grep","action":"searched","pattern":"recentParts","results":0,"files":0}
+{"at":"2026-05-31T13:21:21.485Z","tool":"smart_write","action":"overwritten","file":".build/rig-relay/cartography/agent-loop-session-lifecycle-map.v1.json","reason":"Updated artifact with DOOM_LOOP_THRESHOLD correction and distributed orchestration finding from completed subagents"}

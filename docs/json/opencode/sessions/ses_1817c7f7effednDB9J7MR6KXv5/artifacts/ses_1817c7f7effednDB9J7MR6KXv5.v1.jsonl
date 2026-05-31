@@ -1,0 +1,6 @@
+{"at":"2026-05-31T14:50:27.173Z","tool":"smart_bun","action":"ran","command":"typecheck","exit_code":2,"cwd":"/Users/user/Developer/GitHub/opencode-desktop-dev/packages/opencode"}
+{"at":"2026-05-31T14:50:41.892Z","tool":"smart_grep","action":"searched","pattern":"tool-graph|typed-result","results":7,"files":3}
+{"at":"2026-05-31T14:51:45.539Z","tool":"smart_bash","action":"bash","command":"npx tsgo --noEmit 2>&1 | grep -iE 'tool-graph|typed-result' || echo \"NO MATCHES FOUND\"","exit_code":0}
+{"at":"2026-05-31T14:52:09.649Z","tool":"smart_bash","action":"bash","command":"npx tsgo --noEmit 2>&1 | grep -A2 'tool/tool-graph.ts'","exit_code":0}
+{"at":"2026-05-31T14:52:37.565Z","tool":"smart_bash","action":"bash","command":"npx tsgo --noEmit 2>&1 | grep -iE 'typed-result' || echo \"NO typed-result ERRORS\"","exit_code":0}
+{"at":"2026-05-31T14:52:57.876Z","tool":"smart_bash","action":"bash","command":"npx tsgo --noEmit 2>&1 | grep -B0 -A3 'tool-graph'","exit_code":0}

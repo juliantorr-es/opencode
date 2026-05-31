@@ -1,0 +1,28 @@
+{"at":"2026-05-31T13:25:52.540Z","session_id":"ses_181c9afe8ffet6cgZQ4ZjL6Bjl","agent":"general","tool":"smart_bun","phase":"started","detail":"test"}
+{"at":"2026-05-31T13:25:54.228Z","session_id":"ses_181c9afe8ffet6cgZQ4ZjL6Bjl","agent":"general","tool":"smart_bun","phase":"failed","detail":"test exit=1"}
+{"at":"2026-05-31T13:26:04.074Z","session_id":"ses_181c9afe8ffet6cgZQ4ZjL6Bjl","agent":"general","tool":"smart_bun","phase":"started","detail":"test"}
+{"at":"2026-05-31T13:26:04.094Z","session_id":"ses_181c9afe8ffet6cgZQ4ZjL6Bjl","agent":"general","tool":"smart_bun","phase":"failed","detail":"test exit=1"}
+{"at":"2026-05-31T13:26:09.125Z","session_id":"ses_181c9afe8ffet6cgZQ4ZjL6Bjl","agent":"general","tool":"smart_bash","phase":"started","detail":"Run the test with full stderr/stdout capture"}
+{"at":"2026-05-31T13:26:09.126Z","session_id":"ses_181c9afe8ffet6cgZQ4ZjL6Bjl","agent":"general","tool":"smart_bash","phase":"rerouted","detail":"→ smart_bun"}
+{"at":"2026-05-31T13:26:17.257Z","session_id":"ses_181c9afe8ffet6cgZQ4ZjL6Bjl","agent":"general","tool":"smart_bash","phase":"started","detail":"Capture full stderr to a file"}
+{"at":"2026-05-31T13:26:17.257Z","session_id":"ses_181c9afe8ffet6cgZQ4ZjL6Bjl","agent":"general","tool":"smart_bash","phase":"rerouted","detail":"→ smart_bun"}
+{"at":"2026-05-31T13:26:30.627Z","session_id":"ses_181c9afe8ffet6cgZQ4ZjL6Bjl","agent":"general","tool":"smart_bash","phase":"started","detail":"Capture full output including test results"}
+{"at":"2026-05-31T13:26:30.635Z","session_id":"ses_181c9afe8ffet6cgZQ4ZjL6Bjl","agent":"general","tool":"smart_bash","phase":"rerouted","detail":"→ smart_bun"}
+{"at":"2026-05-31T13:26:48.805Z","session_id":"ses_181c9afe8ffet6cgZQ4ZjL6Bjl","agent":"general","tool":"smart_grep","phase":"started","detail":"BusEvent.*not registered"}
+{"at":"2026-05-31T13:26:48.827Z","session_id":"ses_181c9afe8ffet6cgZQ4ZjL6Bjl","agent":"general","tool":"smart_grep","phase":"completed","detail":"BusEvent.*not registered"}
+{"at":"2026-05-31T13:26:49.543Z","session_id":"ses_181c9afe8ffet6cgZQ4ZjL6Bjl","agent":"general","tool":"smart_grep","phase":"started","detail":"is not registered in EventName"}
+{"at":"2026-05-31T13:26:49.560Z","session_id":"ses_181c9afe8ffet6cgZQ4ZjL6Bjl","agent":"general","tool":"smart_grep","phase":"completed","detail":"is not registered in EventName"}
+{"at":"2026-05-31T13:27:07.094Z","session_id":"ses_181c9afe8ffet6cgZQ4ZjL6Bjl","agent":"general","tool":"smart_bash","phase":"started","detail":"Get the end of the test output"}
+{"at":"2026-05-31T13:27:07.100Z","session_id":"ses_181c9afe8ffet6cgZQ4ZjL6Bjl","agent":"general","tool":"smart_bash","phase":"failed","detail":"/Users/user/.bun/bin/bun exit=1"}
+{"at":"2026-05-31T13:27:12.045Z","session_id":"ses_181c9afe8ffet6cgZQ4ZjL6Bjl","agent":"general","tool":"smart_bash","phase":"started","detail":"Full path to get tail of output"}
+{"at":"2026-05-31T13:27:13.880Z","session_id":"ses_181c9afe8ffet6cgZQ4ZjL6Bjl","agent":"general","tool":"smart_bash","phase":"completed","detail":"/Users/user/.bun/bin/bun exit=0"}
+{"at":"2026-05-31T13:27:22.213Z","session_id":"ses_181c9afe8ffet6cgZQ4ZjL6Bjl","agent":"general","tool":"smart_bash","phase":"started","detail":"Get all test result lines"}
+{"at":"2026-05-31T13:27:23.831Z","session_id":"ses_181c9afe8ffet6cgZQ4ZjL6Bjl","agent":"general","tool":"smart_bash","phase":"completed","detail":"/Users/user/.bun/bin/bun exit=0"}
+{"at":"2026-05-31T13:27:30.626Z","session_id":"ses_181c9afe8ffet6cgZQ4ZjL6Bjl","agent":"general","tool":"smart_bash","phase":"started","detail":"Get the first 4 error messages"}
+{"at":"2026-05-31T13:27:32.146Z","session_id":"ses_181c9afe8ffet6cgZQ4ZjL6Bjl","agent":"general","tool":"smart_bash","phase":"completed","detail":"/Users/user/.bun/bin/bun exit=0"}
+{"at":"2026-05-31T13:27:40.240Z","session_id":"ses_181c9afe8ffet6cgZQ4ZjL6Bjl","agent":"general","tool":"smart_bash","phase":"started","detail":"Get failure details for Secretary lifecycle group"}
+{"at":"2026-05-31T13:27:41.505Z","session_id":"ses_181c9afe8ffet6cgZQ4ZjL6Bjl","agent":"general","tool":"smart_bash","phase":"failed","detail":"/Users/user/.bun/bin/bun exit=1"}
+{"at":"2026-05-31T13:27:46.331Z","session_id":"ses_181c9afe8ffet6cgZQ4ZjL6Bjl","agent":"general","tool":"smart_bash","phase":"started","detail":"Get Secretary group failures"}
+{"at":"2026-05-31T13:27:47.947Z","session_id":"ses_181c9afe8ffet6cgZQ4ZjL6Bjl","agent":"general","tool":"smart_bash","phase":"completed","detail":"/Users/user/.bun/bin/bun exit=0"}
+{"at":"2026-05-31T13:27:53.463Z","session_id":"ses_181c9afe8ffet6cgZQ4ZjL6Bjl","agent":"general","tool":"smart_bash","phase":"started","detail":"Get the actual error messages"}
+{"at":"2026-05-31T13:27:54.660Z","session_id":"ses_181c9afe8ffet6cgZQ4ZjL6Bjl","agent":"general","tool":"smart_bash","phase":"completed","detail":"/Users/user/.bun/bin/bun exit=0"}

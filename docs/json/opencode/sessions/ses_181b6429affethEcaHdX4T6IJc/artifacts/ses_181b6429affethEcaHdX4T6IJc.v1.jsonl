@@ -1,0 +1,16 @@
+{"at":"2026-05-31T13:49:57.921Z","tool":"smart_grep","action":"searched","pattern":"JSON\\.stringify","results":50,"files":8}
+{"at":"2026-05-31T13:51:16.487Z","tool":"smart_grep","action":"searched","pattern":"from \"@opencode-ai/plugin\"","results":30,"files":30}
+{"at":"2026-05-31T13:51:17.469Z","tool":"smart_grep","action":"searched","pattern":"export function tool|export const tool","results":9,"files":9}
+{"at":"2026-05-31T13:52:41.948Z","tool":"smart_grep","action":"searched","pattern":"export default tool\\(","results":30,"files":30}
+{"at":"2026-05-31T13:52:42.678Z","tool":"smart_grep","action":"searched","pattern":"(hint|next|recommendation)","results":30,"files":7}
+{"at":"2026-05-31T13:54:05.777Z","tool":"smart_grep","action":"searched","pattern":"suggestedNextTools|nextAffordances","results":19,"files":1}
+{"at":"2026-05-31T13:56:13.920Z","tool":"smart_grep","action":"searched","pattern":"ToolResult|tool_result|tool result","results":20,"files":3}
+{"at":"2026-05-31T13:56:59.110Z","tool":"smart_grep","action":"searched","pattern":"plugin.*execute|execute.*plugin|\\.opencode/tools","results":1,"files":1}
+{"at":"2026-05-31T13:59:47.942Z","tool":"smart_grep","action":"searched","pattern":"function fromPlugin","results":0,"files":0}
+{"at":"2026-05-31T14:00:28.930Z","tool":"smart_bash","action":"bash","command":"head -n 380 packages/opencode/src/tool/registry.ts | tail -n 55","exit_code":0}
+{"at":"2026-05-31T14:03:17.190Z","tool":"smart_grep","action":"searched","pattern":"import \\{ tool \\} from","results":30,"files":30}
+{"at":"2026-05-31T14:05:29.473Z","tool":"smart_grep","action":"searched","pattern":"export default tool\\(","results":30,"files":30}
+{"at":"2026-05-31T14:09:52.335Z","tool":"smart_write","action":"created","file":"docs/json/opencode/plans/tool-affordances-architecture-plan.v1.json","reason":"Complete architecture plan artifact for tool affordance standardization"}
+{"at":"2026-05-31T14:10:42.314Z","tool":"smart_write","action":"created","file":"docs/json/opencode/plans/tool-affordances-risk-mitigations.v1.json","reason":"Risk mitigation responses addressing building-inspector findings"}
+{"at":"2026-05-31T14:14:09.741Z","tool":"smart_git","action":"git_op","operation":"status","exit_code":0}
+{"at":"2026-05-31T14:14:21.124Z","tool":"smart_grep","action":"searched","pattern":"opencode","results":4,"files":2}

@@ -1,0 +1,85 @@
+{
+  "schema_version": "v1",
+  "plan_id": "tool-affordances-architecture-plan",
+  "related": "docs/json/opencode/plans/tool-affordances-architecture-plan.v1.json",
+  "risk_responses": [
+    {
+      "risk_id": "R1",
+      "risk": "Interface change breaks formatOutput, parseOutput, NextAffordanceSchema",
+      "severity": "BLOCKER",
+      "resolution": "EXTEND NextAffordance (add when, args as OPTIONAL fields). Do NOT rename or remove action, target, command. The interface becomes additive-only. formatOutput (L371-373) continues to read action, target, command — unchanged. New when and args are serialized in JSON.stringify (L375) automatically and round-tripped by parseOutput.",
+      "status": "mitigated"
+    },
+    {
+      "risk_id": "R2",
+      "risk": "suggestedNextTools and nextAffordances collision in formatOutput",
+      "severity": "BLOCKER",
+      "resolution": "Keep both streams as complementary layers: suggestedNextTools = category-based simple list, nextAffordances = tool-specific structured guidance. The LLM receives both; they target different reasoning modes (quick suggestions vs detailed chains). No consolidation needed — additive information is not collision, it's enrichment.",
+      "status": "mitigated"
+    },
+    {
+      "risk_id": "R3",
+      "risk": "Ad-hoc next/hint fields in 7 tools collide with standardized next",
+      "severity": "MAJOR",
+      "resolution": "Phase 3 explicitly migrates each ad-hoc field. For roadmap: rename 'next' items array to 'items' to free the 'next' key. For smart_delegate: replace ad-hoc 'next' string and 'hint' strings with standardized next array. For fragment, task_board, smart_session, replace_ symbol, smart_edit, smart_stats, smart_batch: replace ad-hoc hint/next/recommendation strings with standard next: NextAffordance[].",
+      "status": "mitigated"
+    },
+    {
+      "risk_id": "R4",
+      "risk": "toolCategory() miscategorizes 8+ tools as 'diagnose'",
+      "severity": "MAJOR",
+      "resolution": "Fix-B adds exact-match lookup table as first dispatch in toolCategory(), before substring fallbacks. All 30 tools get explicit categories. The diagnostic fallback remains for future unknown tool IDs.",
+      "status": "mitigated"
+    },
+    {
+      "risk_id": "R5",
+      "risk": "TOOL_CATEGORIES merge-conflict hotspot",
+      "severity": "MAJOR",
+      "resolution": "Not adding to TOOL_CATEGORIES constant. Per-tool affordances live in affordancesAfterSuccess() as a local Record, not in the shared constant. TOOL_CATEGORIES remains category-level only.",
+      "status": "mitigated"
+    },
+    {
+      "risk_id": "R6",
+      "risk": "formatOutput token bloat",
+      "severity": "MINOR",
+      "resolution": "Cap per-tool nextAffordances at 3 entries max. Use short command strings (<80 chars). Per-tool affordances in affordancesAfterSuccess replace category defaults for recognized tools — no doubling.",
+      "status": "accepted"
+    },
+    {
+      "risk_id": "R7",
+      "risk": "parseOutput silent failure on schema mismatch",
+      "severity": "MINOR",
+      "resolution": "Since we're extending (not renaming) fields, old-format JSON still parses: NextAffordance objects with only {action, target?, command?} parse fine because when/args are optional. parseOutput's JSON.parse produces an object where undefined optional fields are absent — safe. No migration needed.",
+      "status": "mitigated"
+    },
+    {
+      "risk_id": "R8",
+      "risk": "Circular LLM recommendation loops",
+      "severity": "MINOR",
+      "resolution": "Per-tool affordance specs avoid self-recommending loops. No tool recommends itself except explicit 'retry'. Tool chain graphs are acyclic (smart_find → read_source → smart_grep → read_source — this is a standard search loop, not a pathological cycle).",
+      "status": "accepted"
+    },
+    {
+      "risk_id": "R9",
+      "risk": "Phantom tool references in affordances",
+      "severity": "MINOR",
+      "resolution": "All affordance action/target values use tool IDs that exist in the 30-tool set: read_source, smart_grep, smart_find, smart_edit, smart_bun, smart_batch, smart_delegate, task_board, fragment, smart_session, roadmap, lsp. No phantom references. If a tool is disabled by permissions, the LLM naturally filters unavailable tools.",
+      "status": "accepted"
+    },
+    {
+      "risk_id": "R10",
+      "risk": "Module circular imports for affordances.ts",
+      "severity": "MINOR",
+      "resolution": "No shared affordances.ts module created. Per-tool affordances are inline in each tool's execute() function. Centralized affordances live in typed-result.ts which is imported by session/tools.ts — no new import edges.",
+      "status": "mitigated"
+    },
+    {
+      "risk_id": "R11",
+      "risk": "Empty next:[] vs 'not configured' ambiguity",
+      "severity": "MINOR",
+      "resolution": "Tools that have no natural next actions (verify, feedback, record, analytics) explicitly emit next: []. Tools not yet migrated would have no next field at all. Consumers can distinguish: absent = not yet implemented (use system defaults), empty [] = explicitly no suggestions (trust it).",
+      "status": "accepted"
+    }
+  ],
+  "generated_at": "2026-05-31T00:00:00Z"
+}

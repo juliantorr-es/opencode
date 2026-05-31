@@ -1,0 +1,71 @@
+{"at":"2026-05-31T13:29:08.852Z","session_id":"ses_181c727a3ffe0Bq5EsCyIE4Q9v","agent":"surveyor","tool":"smart_find","phase":"started","detail":"*.ts"}
+{"at":"2026-05-31T13:29:08.877Z","session_id":"ses_181c727a3ffe0Bq5EsCyIE4Q9v","agent":"surveyor","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T13:29:50.483Z","session_id":"ses_181c727a3ffe0Bq5EsCyIE4Q9v","agent":"surveyor","tool":"smart_bash","phase":"started","detail":"List all tool files in the tool directory"}
+{"at":"2026-05-31T13:29:50.483Z","session_id":"ses_181c727a3ffe0Bq5EsCyIE4Q9v","agent":"surveyor","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T13:30:34.427Z","session_id":"ses_181c727a3ffe0Bq5EsCyIE4Q9v","agent":"surveyor","tool":"smart_bash","phase":"started","detail":"List all files in tool directory recursively"}
+{"at":"2026-05-31T13:30:34.428Z","session_id":"ses_181c727a3ffe0Bq5EsCyIE4Q9v","agent":"surveyor","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T13:31:19.416Z","session_id":"ses_181c727a3ffe0Bq5EsCyIE4Q9v","agent":"surveyor","tool":"smart_grep","phase":"started","detail":"export const \\w+Tool = Tool\\.define"}
+{"at":"2026-05-31T13:31:19.433Z","session_id":"ses_181c727a3ffe0Bq5EsCyIE4Q9v","agent":"surveyor","tool":"smart_grep","phase":"completed","detail":"export const \\w+Tool = Tool\\.define"}
+{"at":"2026-05-31T13:31:20.764Z","session_id":"ses_181c727a3ffe0Bq5EsCyIE4Q9v","agent":"surveyor","tool":"smart_grep","phase":"started","detail":"^"}
+{"at":"2026-05-31T13:31:20.777Z","session_id":"ses_181c727a3ffe0Bq5EsCyIE4Q9v","agent":"surveyor","tool":"smart_grep","phase":"completed","detail":"^"}
+{"at":"2026-05-31T13:32:25.414Z","session_id":"ses_181c727a3ffe0Bq5EsCyIE4Q9v","agent":"surveyor","tool":"smart_grep","phase":"started","detail":"Tool\\.define"}
+{"at":"2026-05-31T13:32:25.428Z","session_id":"ses_181c727a3ffe0Bq5EsCyIE4Q9v","agent":"surveyor","tool":"smart_grep","phase":"completed","detail":"Tool\\.define"}
+{"at":"2026-05-31T13:32:26.302Z","session_id":"ses_181c727a3ffe0Bq5EsCyIE4Q9v","agent":"surveyor","tool":"smart_grep","phase":"started","detail":"Tool\\.define"}
+{"at":"2026-05-31T13:32:26.331Z","session_id":"ses_181c727a3ffe0Bq5EsCyIE4Q9v","agent":"surveyor","tool":"smart_grep","phase":"failed","detail":"rg: /Users/user/Developer/GitHub/opencode-desktop-dev/packages/opencode/src/tool/lsp: IO error for operation on /Users/user/Developer/GitHub/opencode-desktop-dev/packages/opencode/src/tool/lsp: No suc"}
+{"at":"2026-05-31T13:32:27.395Z","session_id":"ses_181c727a3ffe0Bq5EsCyIE4Q9v","agent":"surveyor","tool":"smart_bash","phase":"started","detail":"Check subdirectories under tool/"}
+{"at":"2026-05-31T13:32:27.395Z","session_id":"ses_181c727a3ffe0Bq5EsCyIE4Q9v","agent":"surveyor","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T13:34:44.719Z","session_id":"ses_181c727a3ffe0Bq5EsCyIE4Q9v","agent":"surveyor","tool":"smart_grep","phase":"started","detail":"BUILTIN_TOOL_IDS"}
+{"at":"2026-05-31T13:34:44.725Z","session_id":"ses_181c727a3ffe0Bq5EsCyIE4Q9v","agent":"surveyor","tool":"smart_grep","phase":"completed","detail":"BUILTIN_TOOL_IDS"}
+{"at":"2026-05-31T13:36:29.439Z","session_id":"ses_181c727a3ffe0Bq5EsCyIE4Q9v","agent":"surveyor","tool":"smart_bash","phase":"started","detail":"Read BUILTIN_TOOL_IDS and fromPlugin sections"}
+{"at":"2026-05-31T13:36:30.227Z","session_id":"ses_181c727a3ffe0Bq5EsCyIE4Q9v","agent":"surveyor","tool":"smart_bash","phase":"started","detail":"Read Interface definition"}
+{"at":"2026-05-31T13:36:31.034Z","session_id":"ses_181c727a3ffe0Bq5EsCyIE4Q9v","agent":"surveyor","tool":"smart_bash","phase":"started","detail":"Read items/filtered methods"}
+{"at":"2026-05-31T13:38:07.437Z","session_id":"ses_181c727a3ffe0Bq5EsCyIE4Q9v","agent":"surveyor","tool":"smart_bash","phase":"started","detail":"Read lines 161-210 of registry.ts"}
+{"at":"2026-05-31T13:38:07.466Z","session_id":"ses_181c727a3ffe0Bq5EsCyIE4Q9v","agent":"surveyor","tool":"smart_bash","phase":"completed","detail":"wc exit=0"}
+{"at":"2026-05-31T13:39:01.223Z","session_id":"ses_181c727a3ffe0Bq5EsCyIE4Q9v","agent":"surveyor","tool":"smart_bash","phase":"started","detail":"Read BUILTIN_TOOL_IDS section around line 300"}
+{"at":"2026-05-31T13:39:01.234Z","session_id":"ses_181c727a3ffe0Bq5EsCyIE4Q9v","agent":"surveyor","tool":"smart_bash","phase":"completed","detail":"head exit=0"}
+{"at":"2026-05-31T13:39:02.160Z","session_id":"ses_181c727a3ffe0Bq5EsCyIE4Q9v","agent":"surveyor","tool":"smart_bash","phase":"started","detail":"Read fromPlugin function"}
+{"at":"2026-05-31T13:39:02.861Z","session_id":"ses_181c727a3ffe0Bq5EsCyIE4Q9v","agent":"surveyor","tool":"smart_bash","phase":"started","detail":"Read items/filtered/all methods"}
+{"at":"2026-05-31T13:39:55.114Z","session_id":"ses_181c727a3ffe0Bq5EsCyIE4Q9v","agent":"surveyor","tool":"smart_bash","phase":"started","detail":"Read fromPlugin function (lines 328-440)"}
+{"at":"2026-05-31T13:39:55.121Z","session_id":"ses_181c727a3ffe0Bq5EsCyIE4Q9v","agent":"surveyor","tool":"smart_bash","phase":"completed","detail":"awk exit=0"}
+{"at":"2026-05-31T13:39:55.972Z","session_id":"ses_181c727a3ffe0Bq5EsCyIE4Q9v","agent":"surveyor","tool":"smart_bash","phase":"started","detail":"Read items/filtered methods (lines 630-750)"}
+{"at":"2026-05-31T13:39:55.981Z","session_id":"ses_181c727a3ffe0Bq5EsCyIE4Q9v","agent":"surveyor","tool":"smart_bash","phase":"completed","detail":"awk exit=0"}
+{"at":"2026-05-31T13:40:39.030Z","session_id":"ses_181c727a3ffe0Bq5EsCyIE4Q9v","agent":"surveyor","tool":"smart_bash","phase":"started","detail":"Read items function around line 680"}
+{"at":"2026-05-31T13:40:39.037Z","session_id":"ses_181c727a3ffe0Bq5EsCyIE4Q9v","agent":"surveyor","tool":"smart_bash","phase":"completed","detail":"awk exit=0"}
+{"at":"2026-05-31T13:40:40.063Z","session_id":"ses_181c727a3ffe0Bq5EsCyIE4Q9v","agent":"surveyor","tool":"smart_bash","phase":"started","detail":"Read layer initialization around line 240-305"}
+{"at":"2026-05-31T13:40:40.076Z","session_id":"ses_181c727a3ffe0Bq5EsCyIE4Q9v","agent":"surveyor","tool":"smart_bash","phase":"completed","detail":"awk exit=0"}
+{"at":"2026-05-31T13:41:20.576Z","session_id":"ses_181c727a3ffe0Bq5EsCyIE4Q9v","agent":"surveyor","tool":"smart_grep","phase":"started","detail":"query_events_for_file|get_operating_picture|get_project_map|get_working_set|get_"}
+{"at":"2026-05-31T13:41:20.585Z","session_id":"ses_181c727a3ffe0Bq5EsCyIE4Q9v","agent":"surveyor","tool":"smart_grep","phase":"completed","detail":"query_events_for_file|get_operating_picture|get_project_map|get_working_set|get_"}
+{"at":"2026-05-31T13:41:21.637Z","session_id":"ses_181c727a3ffe0Bq5EsCyIE4Q9v","agent":"surveyor","tool":"smart_bash","phase":"started","detail":"Read fromPlugin completion and builtin tool init section"}
+{"at":"2026-05-31T13:41:21.649Z","session_id":"ses_181c727a3ffe0Bq5EsCyIE4Q9v","agent":"surveyor","tool":"smart_bash","phase":"completed","detail":"awk exit=0"}
+{"at":"2026-05-31T13:41:55.063Z","session_id":"ses_181c727a3ffe0Bq5EsCyIE4Q9v","agent":"surveyor","tool":"smart_bash","phase":"started","detail":"Read remaining imports in registry.ts (around lines 40-95)"}
+{"at":"2026-05-31T13:41:55.073Z","session_id":"ses_181c727a3ffe0Bq5EsCyIE4Q9v","agent":"surveyor","tool":"smart_bash","phase":"completed","detail":"awk exit=0"}
+{"at":"2026-05-31T13:42:23.684Z","session_id":"ses_181c727a3ffe0Bq5EsCyIE4Q9v","agent":"surveyor","tool":"smart_bash","phase":"started","detail":"Read remaining imports around lines 95-155"}
+{"at":"2026-05-31T13:42:23.691Z","session_id":"ses_181c727a3ffe0Bq5EsCyIE4Q9v","agent":"surveyor","tool":"smart_bash","phase":"completed","detail":"awk exit=0"}
+{"at":"2026-05-31T13:42:49.372Z","session_id":"ses_181c727a3ffe0Bq5EsCyIE4Q9v","agent":"surveyor","tool":"smart_bash","phase":"started","detail":"Read remaining imports around lines 125-165 for remaining context/event tools"}
+{"at":"2026-05-31T13:42:49.380Z","session_id":"ses_181c727a3ffe0Bq5EsCyIE4Q9v","agent":"surveyor","tool":"smart_bash","phase":"completed","detail":"awk exit=0"}
+{"at":"2026-05-31T13:42:50.275Z","session_id":"ses_181c727a3ffe0Bq5EsCyIE4Q9v","agent":"surveyor","tool":"smart_grep","phase":"started","detail":"ReviewManifestTool"}
+{"at":"2026-05-31T13:42:50.289Z","session_id":"ses_181c727a3ffe0Bq5EsCyIE4Q9v","agent":"surveyor","tool":"smart_grep","phase":"completed","detail":"ReviewManifestTool"}
+{"at":"2026-05-31T13:43:13.453Z","session_id":"ses_181c727a3ffe0Bq5EsCyIE4Q9v","agent":"surveyor","tool":"smart_grep","phase":"started","detail":"Tool\\.define"}
+{"at":"2026-05-31T13:43:13.457Z","session_id":"ses_181c727a3ffe0Bq5EsCyIE4Q9v","agent":"surveyor","tool":"smart_grep","phase":"completed","detail":"Tool\\.define"}
+{"at":"2026-05-31T13:43:14.397Z","session_id":"ses_181c727a3ffe0Bq5EsCyIE4Q9v","agent":"surveyor","tool":"smart_grep","phase":"started","detail":"Tool\\.define"}
+{"at":"2026-05-31T13:43:14.402Z","session_id":"ses_181c727a3ffe0Bq5EsCyIE4Q9v","agent":"surveyor","tool":"smart_grep","phase":"completed","detail":"Tool\\.define"}
+{"at":"2026-05-31T13:43:37.508Z","session_id":"ses_181c727a3ffe0Bq5EsCyIE4Q9v","agent":"surveyor","tool":"smart_grep","phase":"started","detail":"Tool\\.define"}
+{"at":"2026-05-31T13:43:37.526Z","session_id":"ses_181c727a3ffe0Bq5EsCyIE4Q9v","agent":"surveyor","tool":"smart_grep","phase":"completed","detail":"Tool\\.define"}
+{"at":"2026-05-31T13:44:43.508Z","session_id":"ses_181c727a3ffe0Bq5EsCyIE4Q9v","agent":"surveyor","tool":"smart_bash","phase":"started","detail":"Read preflight-check tool"}
+{"at":"2026-05-31T13:44:43.508Z","session_id":"ses_181c727a3ffe0Bq5EsCyIE4Q9v","agent":"surveyor","tool":"smart_bash","phase":"rerouted","detail":"→ read_source"}
+{"at":"2026-05-31T13:44:44.215Z","session_id":"ses_181c727a3ffe0Bq5EsCyIE4Q9v","agent":"surveyor","tool":"smart_bash","phase":"started","detail":"Read roadmap-next tool"}
+{"at":"2026-05-31T13:44:44.215Z","session_id":"ses_181c727a3ffe0Bq5EsCyIE4Q9v","agent":"surveyor","tool":"smart_bash","phase":"rerouted","detail":"→ read_source"}
+{"at":"2026-05-31T13:44:44.879Z","session_id":"ses_181c727a3ffe0Bq5EsCyIE4Q9v","agent":"surveyor","tool":"smart_bash","phase":"started","detail":"Read smart-grep tool"}
+{"at":"2026-05-31T13:44:44.879Z","session_id":"ses_181c727a3ffe0Bq5EsCyIE4Q9v","agent":"surveyor","tool":"smart_bash","phase":"rerouted","detail":"→ read_source"}
+{"at":"2026-05-31T13:47:42.112Z","session_id":"ses_181c727a3ffe0Bq5EsCyIE4Q9v","agent":"surveyor","tool":"smart_bash","phase":"started","detail":"Read GetOperatingPictureTool definition"}
+{"at":"2026-05-31T13:47:42.123Z","session_id":"ses_181c727a3ffe0Bq5EsCyIE4Q9v","agent":"surveyor","tool":"smart_bash","phase":"completed","detail":"awk exit=0"}
+{"at":"2026-05-31T13:47:42.865Z","session_id":"ses_181c727a3ffe0Bq5EsCyIE4Q9v","agent":"surveyor","tool":"smart_bash","phase":"started","detail":"Read MarkContextStale and RequestContextRefresh tools"}
+{"at":"2026-05-31T13:47:42.873Z","session_id":"ses_181c727a3ffe0Bq5EsCyIE4Q9v","agent":"surveyor","tool":"smart_bash","phase":"completed","detail":"awk exit=0"}
+{"at":"2026-05-31T13:47:43.806Z","session_id":"ses_181c727a3ffe0Bq5EsCyIE4Q9v","agent":"surveyor","tool":"smart_bash","phase":"started","detail":"Read LastFailedToolsTool and following tools"}
+{"at":"2026-05-31T13:47:43.813Z","session_id":"ses_181c727a3ffe0Bq5EsCyIE4Q9v","agent":"surveyor","tool":"smart_bash","phase":"completed","detail":"awk exit=0"}
+{"at":"2026-05-31T13:48:01.440Z","session_id":"ses_181c727a3ffe0Bq5EsCyIE4Q9v","agent":"surveyor","tool":"smart_bash","phase":"started","detail":"Read EventsForFileTool, EventsForErrorCodeTool, EventsSinceCheckpointTool"}
+{"at":"2026-05-31T13:48:01.448Z","session_id":"ses_181c727a3ffe0Bq5EsCyIE4Q9v","agent":"surveyor","tool":"smart_bash","phase":"completed","detail":"awk exit=0"}
+{"at":"2026-05-31T13:48:19.996Z","session_id":"ses_181c727a3ffe0Bq5EsCyIE4Q9v","agent":"surveyor","tool":"smart_bash","phase":"started","detail":"Read parameter schemas for context tools"}
+{"at":"2026-05-31T13:48:20.003Z","session_id":"ses_181c727a3ffe0Bq5EsCyIE4Q9v","agent":"surveyor","tool":"smart_bash","phase":"completed","detail":"awk exit=0"}
+{"at":"2026-05-31T13:48:45.562Z","session_id":"ses_181c727a3ffe0Bq5EsCyIE4Q9v","agent":"surveyor","tool":"smart_bash","phase":"started","detail":"Count tool files"}
+{"at":"2026-05-31T13:48:45.562Z","session_id":"ses_181c727a3ffe0Bq5EsCyIE4Q9v","agent":"surveyor","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}

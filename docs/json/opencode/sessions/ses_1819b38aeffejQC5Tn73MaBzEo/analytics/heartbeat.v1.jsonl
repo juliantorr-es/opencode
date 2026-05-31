@@ -1,0 +1,33 @@
+{"at":"2026-05-31T14:17:30.472Z","session_id":"ses_1819b38aeffejQC5Tn73MaBzEo","agent":"exhibit-a","tool":"smart_grep","phase":"started","detail":"Fix-B|Fix-C|30-entry|exact.match|per-tool"}
+{"at":"2026-05-31T14:17:30.483Z","session_id":"ses_1819b38aeffejQC5Tn73MaBzEo","agent":"exhibit-a","tool":"smart_grep","phase":"completed","detail":"Fix-B|Fix-C|30-entry|exact.match|per-tool"}
+{"at":"2026-05-31T14:18:17.301Z","session_id":"ses_1819b38aeffejQC5Tn73MaBzEo","agent":"exhibit-a","tool":"smart_grep","phase":"started","detail":"Effect\\.(log|logWarning|logError|logDebug|logInfo|withSpan|annotateCurrentSpan|a"}
+{"at":"2026-05-31T14:18:17.305Z","session_id":"ses_1819b38aeffejQC5Tn73MaBzEo","agent":"exhibit-a","tool":"smart_grep","phase":"completed","detail":"Effect\\.(log|logWarning|logError|logDebug|logInfo|withSpan|annotateCurrentSpan|a"}
+{"at":"2026-05-31T14:18:59.221Z","session_id":"ses_1819b38aeffejQC5Tn73MaBzEo","agent":"exhibit-a","tool":"smart_grep","phase":"started","detail":"falls|fall through|guard|#31|diagnose|misclassify|unrecognized|unknown tool|exac"}
+{"at":"2026-05-31T14:18:59.226Z","session_id":"ses_1819b38aeffejQC5Tn73MaBzEo","agent":"exhibit-a","tool":"smart_grep","phase":"completed","detail":"falls|fall through|guard|#31|diagnose|misclassify|unrecognized|unknown tool|exac"}
+{"at":"2026-05-31T14:19:00.312Z","session_id":"ses_1819b38aeffejQC5Tn73MaBzEo","agent":"exhibit-a","tool":"smart_grep","phase":"started","detail":"Effect\\.(logWarning|withSpan|annotateCurrentSpan|annotateLogs)"}
+{"at":"2026-05-31T14:19:00.327Z","session_id":"ses_1819b38aeffejQC5Tn73MaBzEo","agent":"exhibit-a","tool":"smart_grep","phase":"completed","detail":"Effect\\.(logWarning|withSpan|annotateCurrentSpan|annotateLogs)"}
+{"at":"2026-05-31T14:19:44.224Z","session_id":"ses_1819b38aeffejQC5Tn73MaBzEo","agent":"exhibit-a","tool":"smart_grep","phase":"started","detail":"TOOL_CATEGORIES|STRUCTURED_MARKER"}
+{"at":"2026-05-31T14:19:44.228Z","session_id":"ses_1819b38aeffejQC5Tn73MaBzEo","agent":"exhibit-a","tool":"smart_grep","phase":"completed","detail":"TOOL_CATEGORIES|STRUCTURED_MARKER"}
+{"at":"2026-05-31T14:20:27.650Z","session_id":"ses_1819b38aeffejQC5Tn73MaBzEo","agent":"exhibit-a","tool":"smart_grep","phase":"started","detail":"before|after|New tools added later|guard|won't be in"}
+{"at":"2026-05-31T14:20:27.654Z","session_id":"ses_1819b38aeffejQC5Tn73MaBzEo","agent":"exhibit-a","tool":"smart_grep","phase":"completed","detail":"before|after|New tools added later|guard|won't be in"}
+{"at":"2026-05-31T14:21:16.465Z","session_id":"ses_1819b38aeffejQC5Tn73MaBzEo","agent":"exhibit-a","tool":"smart_bash","phase":"started","detail":"Extract Fix-B and Fix-C details from plan JSON"}
+{"at":"2026-05-31T14:21:16.639Z","session_id":"ses_1819b38aeffejQC5Tn73MaBzEo","agent":"exhibit-a","tool":"smart_bash","phase":"completed","detail":"uv exit=0"}
+{"at":"2026-05-31T14:21:54.693Z","session_id":"ses_1819b38aeffejQC5Tn73MaBzEo","agent":"exhibit-a","tool":"smart_bash","phase":"started","detail":"Discover JSON structure"}
+{"at":"2026-05-31T14:21:54.737Z","session_id":"ses_1819b38aeffejQC5Tn73MaBzEo","agent":"exhibit-a","tool":"smart_bash","phase":"completed","detail":"python3 exit=0"}
+{"at":"2026-05-31T14:22:31.936Z","session_id":"ses_1819b38aeffejQC5Tn73MaBzEo","agent":"exhibit-a","tool":"smart_bash","phase":"started","detail":"Extract all fix details from plan"}
+{"at":"2026-05-31T14:22:32.009Z","session_id":"ses_1819b38aeffejQC5Tn73MaBzEo","agent":"exhibit-a","tool":"smart_bash","phase":"failed","detail":"python3 exit=1"}
+{"at":"2026-05-31T14:23:05.476Z","session_id":"ses_1819b38aeffejQC5Tn73MaBzEo","agent":"exhibit-a","tool":"smart_bash","phase":"started","detail":"Extract fix details from plan - fixes is a list"}
+{"at":"2026-05-31T14:23:05.515Z","session_id":"ses_1819b38aeffejQC5Tn73MaBzEo","agent":"exhibit-a","tool":"smart_bash","phase":"completed","detail":"python3 exit=0"}
+{"at":"2026-05-31T14:23:40.740Z","session_id":"ses_1819b38aeffejQC5Tn73MaBzEo","agent":"exhibit-a","tool":"smart_bash","phase":"started","detail":"Get risks and per-tool specs"}
+{"at":"2026-05-31T14:23:40.775Z","session_id":"ses_1819b38aeffejQC5Tn73MaBzEo","agent":"exhibit-a","tool":"smart_bash","phase":"completed","detail":"python3 exit=0"}
+{"at":"2026-05-31T14:24:21.298Z","session_id":"ses_1819b38aeffejQC5Tn73MaBzEo","agent":"exhibit-a","tool":"smart_bash","phase":"started","detail":"Check apply order and validation strategy"}
+{"at":"2026-05-31T14:24:21.362Z","session_id":"ses_1819b38aeffejQC5Tn73MaBzEo","agent":"exhibit-a","tool":"smart_bash","phase":"completed","detail":"python3 exit=0"}
+{"at":"2026-05-31T14:25:50.195Z","session_id":"ses_1819b38aeffejQC5Tn73MaBzEo","agent":"exhibit-a","tool":"smart_bash","phase":"started","detail":"Read TOOL_CATEGORIES and the full toolCategory + suggestedTools functions"}
+{"at":"2026-05-31T14:26:32.934Z","session_id":"ses_1819b38aeffejQC5Tn73MaBzEo","agent":"exhibit-a","tool":"smart_grep","phase":"started","detail":"TOOL_CATEGORIES"}
+{"at":"2026-05-31T14:26:32.938Z","session_id":"ses_1819b38aeffejQC5Tn73MaBzEo","agent":"exhibit-a","tool":"smart_grep","phase":"completed","detail":"TOOL_CATEGORIES"}
+{"at":"2026-05-31T14:27:12.917Z","session_id":"ses_1819b38aeffejQC5Tn73MaBzEo","agent":"exhibit-a","tool":"smart_bash","phase":"started","detail":"Read TOOL_CATEGORIES definition and toolCategory function"}
+{"at":"2026-05-31T14:27:12.926Z","session_id":"ses_1819b38aeffejQC5Tn73MaBzEo","agent":"exhibit-a","tool":"smart_bash","phase":"completed","detail":"head exit=0"}
+{"at":"2026-05-31T14:28:17.154Z","session_id":"ses_1819b38aeffejQC5Tn73MaBzEo","agent":"exhibit-a","tool":"smart_grep","phase":"started","detail":"parseOutput|formatOutput"}
+{"at":"2026-05-31T14:28:17.171Z","session_id":"ses_1819b38aeffejQC5Tn73MaBzEo","agent":"exhibit-a","tool":"smart_grep","phase":"completed","detail":"parseOutput|formatOutput"}
+{"at":"2026-05-31T14:28:52.226Z","session_id":"ses_1819b38aeffejQC5Tn73MaBzEo","agent":"exhibit-a","tool":"smart_grep","phase":"started","detail":"parseOutput"}
+{"at":"2026-05-31T14:28:52.247Z","session_id":"ses_1819b38aeffejQC5Tn73MaBzEo","agent":"exhibit-a","tool":"smart_grep","phase":"completed","detail":"parseOutput"}

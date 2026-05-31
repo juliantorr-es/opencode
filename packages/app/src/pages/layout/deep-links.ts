@@ -41,10 +41,10 @@ export const parseGitHubOAuthCallback = (input: string) => {
 }
 
 export const collectOpenProjectDeepLinks = (urls: string[]) =>
-  urls.map(parseDeepLink).filter((directory): directory is string => !!directory)
+  (urls ?? []).map(parseDeepLink).filter((directory): directory is string => !!directory)
 
 export const collectNewSessionDeepLinks = (urls: string[]) =>
-  urls.map(parseNewSessionDeepLink).filter((link): link is { directory: string; prompt?: string } => !!link)
+  (urls ?? []).map(parseNewSessionDeepLink).filter((link): link is { directory: string; prompt?: string } => !!link)
 
 type OpenCodeWindow = Window & {
   __OPENCODE__?: {

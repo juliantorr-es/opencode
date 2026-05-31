@@ -1,0 +1,955 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "OpenCode Tool System Dependency Graph",
+  "description": "Complete import/export dependency graph for packages/opencode/src/tool/ — 84 tool definitions + infrastructure.",
+  "generated_at": "2026-05-31T00:00:00Z",
+  "tool_count": 84,
+  "infrastructure_file_count": 17,
+  "total_files": 101,
+
+  "clusters": [
+    {
+      "id": "infra",
+      "label": "Core Tool Infrastructure",
+      "description": "Framework: Tool.define(), registry, caching, truncation, error handling, JSON Schema. These are not LLM-callable tools — they are the substrate every tool runs on.",
+      "files": [
+        "tool.ts",
+        "registry.ts",
+        "json-schema.ts",
+        "execution.ts",
+        "typed-result.ts",
+        "cache.ts",
+        "truncate.ts",
+        "truncation-dir.ts",
+        "schema.ts",
+        "secret-scanner.ts",
+        "external-directory.ts",
+        "file-lock.ts",
+        "tool-failure.ts",
+        "failure-tools.ts",
+        "checkpoint-tools.ts",
+        "invalid.ts"
+      ]
+    },
+    {
+      "id": "file_io",
+      "label": "File I/O",
+      "description": "Read, write, edit, search, and patch files on disk.",
+      "files": [
+        "read.ts",
+        "write.ts",
+        "edit.ts",
+        "smart-write.ts",
+        "smart-edit.ts",
+        "smart-batch.ts",
+        "search_replace.ts",
+        "apply_patch.ts",
+        "glob.ts",
+        "grep.ts",
+        "read-source.ts",
+        "read-lib.ts",
+        "read-artifact.ts",
+        "smart-find.ts",
+        "smart-grep.ts",
+        "replace-symbol.ts",
+        "binary-info.ts"
+      ]
+    },
+    {
+      "id": "shell",
+      "label": "Shell & Subprocess Execution",
+      "description": "Run bash, bun, git, sd, rig-git, tests, validation in subprocesses.",
+      "files": [
+        "shell.ts",
+        "shell/id.ts",
+        "smart-bash.ts",
+        "smart-bun.ts",
+        "smart-git.ts",
+        "smart-sd.ts",
+        "project-command.ts",
+        "test.ts",
+        "validate.ts",
+        "rig-git.ts"
+      ]
+    },
+    {
+      "id": "agent_control",
+      "label": "Agent Control (Task/Delegation)",
+      "description": "Subagent spawning, delegation, preflight checks, skills, and TODO management.",
+      "files": [
+        "task.ts",
+        "delegate.ts",
+        "prepare-delegation.ts",
+        "preflight-check.ts",
+        "skill.ts",
+        "todo.ts"
+      ]
+    },
+    {
+      "id": "coordination",
+      "label": "Multi-Agent Coordination",
+      "description": "Claims, reservations, fan-out, file locks, task boards, messages between agents.",
+      "files": [
+        "coordination.ts",
+        "coordination.pg.sql.ts",
+        "file-lock.ts",
+        "send-message.ts",
+        "read-messages.ts",
+        "task-board.ts"
+      ]
+    },
+    {
+      "id": "planning",
+      "label": "Planning & Roadmap Lifecycle",
+      "description": "Plan propose/revise/comment/exit, roadmap CRUD, question tool.",
+      "files": [
+        "plan.ts",
+        "propose-plan.ts",
+        "revise-plan.ts",
+        "comment-plan.ts",
+        "roadmap-init.ts",
+        "roadmap-next.ts",
+        "roadmap-progress.ts",
+        "roadmap-deprecate.ts",
+        "roadmap-prioritize.ts",
+        "question.ts"
+      ]
+    },
+    {
+      "id": "review_publication",
+      "label": "Review & Publication Gate",
+      "description": "Prepublication gates, QA, review criticism, verification, manifest validation, checkpoint publishing.",
+      "files": [
+        "review-criticism.ts",
+        "review-manifest.ts",
+        "qa-observed-clean.ts",
+        "prepublication-admitted.ts",
+        "prepublication-blocked.ts",
+        "prepublication-inconclusive.ts",
+        "verify-handoff.ts",
+        "checkpoint.ts",
+        "checkpoint-tools.ts",
+        "prepare_checkpoint.ts",
+        "publish_checkpoint.ts",
+        "generate_published_checkpoint_report.ts",
+        "publish-finding.ts"
+      ]
+    },
+    {
+      "id": "observation",
+      "label": "Observation & Failure Recording",
+      "description": "Session introspection, failure analysis, logging, stress/execution wave recording, curating context.",
+      "files": [
+        "discover-findings.ts",
+        "inspect_failure.ts",
+        "log-activity.ts",
+        "tool-feedback.ts",
+        "curate-context.ts",
+        "session-diff.ts",
+        "record-stress-wave.ts",
+        "record-execution-wave.ts",
+        "out-of-scope-finding.ts",
+        "lesson-register.ts",
+        "report.ts",
+        "generate-report.ts",
+        "analytics.ts",
+        "failure-tools.ts",
+        "tool-failure.ts"
+      ]
+    },
+    {
+      "id": "query",
+      "label": "Structured Query & Validation",
+      "description": "JSON query (jql), DuckDB queries, JSONL query, JSON Schema validation.",
+      "files": [
+        "json-query.ts",
+        "duckdb-query.ts",
+        "rig-jsonl-query.ts",
+        "rig-schema-validate.ts"
+      ]
+    },
+    {
+      "id": "external",
+      "label": "External Resources",
+      "description": "Web fetch, web search, GitHub PR search/triage, repo clone/overview.",
+      "files": [
+        "webfetch.ts",
+        "websearch.ts",
+        "github-pr-search.ts",
+        "github-triage.ts",
+        "repo_clone.ts",
+        "repo_overview.ts"
+      ]
+    },
+    {
+      "id": "lsp",
+      "label": "Language Server Protocol",
+      "description": "LSP operations: goToDefinition, findReferences, hover, documentSymbol, workspaceSymbol.",
+      "files": ["lsp.ts"]
+    },
+    {
+      "id": "fragment",
+      "label": "Fragment Production",
+      "description": "Produce fragments for shared-file coordination between parallel lanes.",
+      "files": ["produce-fragment.ts"]
+    }
+  ],
+
+  "cross_tool_imports": [
+    {
+      "from": "write.ts",
+      "to": "edit.ts",
+      "imports": ["trimDiff"],
+      "relationship": "imports",
+      "note": "Write tool reuses Edit's diff-trimming helper for consistency"
+    },
+    {
+      "from": "apply_patch.ts",
+      "to": "edit.ts",
+      "imports": ["trimDiff"],
+      "relationship": "imports",
+      "note": "ApplyPatch reuses Edit's diff-trimming helper"
+    },
+    {
+      "from": "search_replace.ts",
+      "to": "diff",
+      "imports": ["createTwoFilesPatch"],
+      "relationship": "imports",
+      "note": "Uses same diff library as edit/write/apply_patch"
+    },
+    {
+      "from": "edit.ts",
+      "to": "file-lock.ts",
+      "imports": ["FileLock.lock"],
+      "relationship": "calls",
+      "note": "Edit acquires per-file semaphore before mutation"
+    },
+    {
+      "from": "edit.ts",
+      "to": "coordination.ts",
+      "imports": ["Coordination"],
+      "relationship": "calls",
+      "note": "Edit publishes coordination events on file changes"
+    },
+    {
+      "from": "write.ts",
+      "to": "coordination.ts",
+      "imports": ["Coordination"],
+      "relationship": "calls",
+      "note": "Write publishes coordination events"
+    },
+    {
+      "from": "task.ts",
+      "to": "coordination.ts",
+      "imports": ["Coordination"],
+      "relationship": "calls",
+      "note": "Task tool creates coordination claims for subagent work"
+    },
+    {
+      "from": "delegate.ts",
+      "to": "coordination.ts",
+      "imports": ["Coordination"],
+      "relationship": "calls",
+      "note": "Delegate tool manages coordination state"
+    },
+    {
+      "from": "checkpoint.ts",
+      "to": "checkpoint-tools.ts",
+      "imports": ["createCheckpointRecord", "formatCheckpointRecord"],
+      "relationship": "calls",
+      "note": "Checkpoint tool delegates to shared helpers"
+    },
+    {
+      "from": "inspect_failure.ts",
+      "to": "failure-tools.ts",
+      "imports": ["collectFailures", "formatFailureReport"],
+      "relationship": "calls",
+      "note": "InspectFailure reuses failure collection/logic"
+    },
+    {
+      "from": "smart-bash.ts",
+      "to": "secret-scanner.ts",
+      "imports": ["scanToolOutput"],
+      "relationship": "calls",
+      "note": "SmartBash scans subprocess output for secrets"
+    },
+    {
+      "from": "read.ts",
+      "to": "external-directory.ts",
+      "imports": ["assertExternalDirectoryEffect"],
+      "relationship": "calls",
+      "note": "Read tool asserts file is within workspace or allowed external dir"
+    },
+    {
+      "from": "glob.ts",
+      "to": "external-directory.ts",
+      "imports": ["assertExternalDirectoryEffect"],
+      "relationship": "calls"
+    },
+    {
+      "from": "grep.ts",
+      "to": "external-directory.ts",
+      "imports": ["assertExternalDirectoryEffect"],
+      "relationship": "calls"
+    },
+    {
+      "from": "write.ts",
+      "to": "external-directory.ts",
+      "imports": ["assertExternalDirectoryEffect"],
+      "relationship": "calls"
+    },
+    {
+      "from": "edit.ts",
+      "to": "external-directory.ts",
+      "imports": ["assertExternalDirectoryEffect"],
+      "relationship": "calls"
+    },
+    {
+      "from": "apply_patch.ts",
+      "to": "external-directory.ts",
+      "imports": ["assertExternalDirectoryEffect"],
+      "relationship": "calls"
+    },
+    {
+      "from": "repo_overview.ts",
+      "to": "external-directory.ts",
+      "imports": ["assertExternalDirectoryEffect"],
+      "relationship": "calls"
+    },
+    {
+      "from": "search_replace.ts",
+      "to": "external-directory.ts",
+      "imports": ["assertExternalDirectoryEffect"],
+      "relationship": "calls"
+    },
+    {
+      "from": "truncate.ts",
+      "to": "schema.ts",
+      "imports": ["ToolID"],
+      "relationship": "imports",
+      "note": "Truncate uses ToolID for truncation file naming"
+    },
+    {
+      "from": "truncate.ts",
+      "to": "truncation-dir.ts",
+      "imports": ["TRUNCATION_DIR"],
+      "relationship": "imports"
+    },
+    {
+      "from": "shell.ts",
+      "to": "shell/id.ts",
+      "imports": ["ShellID"],
+      "relationship": "imports"
+    },
+    {
+      "from": "shell.ts",
+      "to": "truncate.ts",
+      "imports": ["Truncate.Service"],
+      "relationship": "effect_service",
+      "note": "Shell tool uses Truncate Effect service for output truncation"
+    },
+    {
+      "from": "tool.ts",
+      "to": "truncate.ts",
+      "imports": ["Truncate.Service"],
+      "relationship": "effect_service",
+      "note": "Tool.define() wraps every execute() with Truncate.output"
+    },
+    {
+      "from": "tool.ts",
+      "to": "cache.ts",
+      "imports": ["ToolCache"],
+      "relationship": "imports"
+    },
+    {
+      "from": "json-schema.ts",
+      "to": "tool.ts",
+      "imports": ["type Tool"],
+      "relationship": "type_import",
+      "note": "Type-only import for Tool.Def parameter"
+    }
+  ],
+
+  "registry_imports": {
+    "description": "registry.ts is the central hub — it imports and registers all ~63 tool definitions into a single Effect Layer.",
+    "count": 63,
+    "tools": [
+      "plan.ts (PlanExitTool)",
+      "question.ts (QuestionTool)",
+      "shell.ts (ShellTool)",
+      "edit.ts (EditTool)",
+      "glob.ts (GlobTool)",
+      "grep.ts (GrepTool)",
+      "read.ts (ReadTool)",
+      "task.ts (TaskTool)",
+      "todo.ts (TodoWriteTool)",
+      "webfetch.ts (WebFetchTool)",
+      "write.ts (WriteTool)",
+      "invalid.ts (InvalidTool)",
+      "skill.ts (SkillTool)",
+      "websearch.ts (WebSearchTool)",
+      "repo_clone.ts (RepoCloneTool)",
+      "repo_overview.ts (RepoOverviewTool)",
+      "lsp.ts (LspTool)",
+      "apply_patch.ts (ApplyPatchTool)",
+      "validate.ts (ValidateTool)",
+      "test.ts (TestTool)",
+      "inspect_failure.ts (InspectFailureTool)",
+      "report.ts (ReportTool)",
+      "search_replace.ts (SearchReplaceTool)",
+      "prepare_checkpoint.ts (PrepareCheckpointTool)",
+      "checkpoint.ts (CheckpointTool)",
+      "publish_checkpoint.ts (PublishCheckpointTool)",
+      "generate_published_checkpoint_report.ts (GeneratePublishedCheckpointReportTool)",
+      "coordination.ts (CoordinationTool)",
+      "rig-git.ts (RigGitTool)",
+      "send-message.ts (SendMessageTool)",
+      "read-messages.ts (ReadMessagesTool)",
+      "tool-failure.ts (ToolFailureTool)",
+      "tool-feedback.ts (ToolFeedbackTool)",
+      "propose-plan.ts (ProposePlanTool)",
+      "revise-plan.ts (RevisePlanTool)",
+      "comment-plan.ts (CommentPlanTool)",
+      "review-criticism.ts (ReviewCriticismTool)",
+      "qa-observed-clean.ts (QaObservedCleanTool)",
+      "publish-finding.ts (PublishFindingTool)",
+      "discover-findings.ts (DiscoverFindingsTool)",
+      "curate-context.ts (CurateContextTool)",
+      "read-artifact.ts (ReadArtifactTool)",
+      "read-source.ts (ReadSourceTool)",
+      "read-lib.ts (ReadLibTool)",
+      "smart-edit.ts (SmartEditTool)",
+      "smart-write.ts (SmartWriteTool)",
+      "smart-batch.ts (SmartBatchTool)",
+      "replace-symbol.ts (ReplaceSymbolTool)",
+      "rig-jsonl-query.ts (RigJsonlQueryTool)",
+      "rig-schema-validate.ts (RigSchemaValidateTool)",
+      "smart-bash.ts (SmartBashTool)",
+      "smart-bun.ts (SmartBunTool)",
+      "smart-git.ts (SmartGitTool)",
+      "smart-grep.ts (SmartGrepTool)",
+      "smart-find.ts (SmartFindTool)",
+      "smart-sd.ts (SmartSdTool)",
+      "roadmap-init.ts (RoadmapInitTool)",
+      "roadmap-next.ts (RoadmapNextTool)",
+      "roadmap-progress.ts (RoadmapProgressTool)",
+      "roadmap-deprecate.ts (RoadmapDeprecateTool)",
+      "roadmap-prioritize.ts (RoadmapPrioritizeTool)",
+      "task-board.ts (TaskBoardTool)",
+      "session-diff.ts (SessionDiffTool)",
+      "preflight-check.ts (PreflightCheckTool)",
+      "binary-info.ts (BinaryInfoTool)",
+      "github-pr-search.ts (GithubPrSearchTool)",
+      "github-triage.ts (GithubTriageTool)",
+      "json-query.ts (JSONQueryTool)",
+      "duckdb-query.ts (DuckDBQueryTool)",
+      "delegate.ts (DelegateTool)",
+      "prepare-delegation.ts (PrepareDelegationTool)",
+      "produce-fragment.ts (ProduceFragmentTool)",
+      "analytics.ts (AnalyticsTool)",
+      "prepublication-admitted.ts (PrepublicationAdmittedTool)",
+      "prepublication-blocked.ts (PrepublicationBlockedTool)",
+      "prepublication-inconclusive.ts (PrepublicationInconclusiveTool)",
+      "verify-handoff.ts (VerifyHandoffTool)",
+      "record-stress-wave.ts (RecordStressWaveTool)",
+      "record-execution-wave.ts (RecordExecutionWaveTool)",
+      "log-activity.ts (LogActivityTool)",
+      "lesson-register.ts (LessonRegisterTool)",
+      "generate-report.ts (GenerateReportTool)",
+      "out-of-scope-finding.ts (OutOfScopeFindingTool)",
+      "review-manifest.ts (ReviewManifestTool)",
+      "project-command.ts (ProjectCommandTool)"
+    ]
+  },
+
+  "effect_tag_services": [
+    {
+      "service": "ToolRegistry.Service",
+      "tag": "@opencode/ToolRegistry",
+      "file": "registry.ts",
+      "interface": "Interface { all, get, register, unregister, jsonSchemas }",
+      "layer": "registry.ts:layer → provides Truncate, TaskTool, Agent, Session, Plugin, Config, AppFileSystem",
+      "consumers": [
+        "session/tools.ts",
+        "session/prompt.ts",
+        "effect/app-runtime.ts",
+        "server/routes/instance/httpapi/handlers/experimental.ts",
+        "server/routes/instance/httpapi/server.ts"
+      ]
+    },
+    {
+      "service": "Truncate.Service",
+      "tag": "@opencode/Truncate",
+      "file": "truncate.ts",
+      "interface": "Interface { cleanup, write, output, limits }",
+      "layer": "truncate.ts:layer → provides AppFileSystem, NodePath",
+      "consumers": [
+        "tool.ts (Tool.define wraps every execute() with Truncate.output)",
+        "session/prompt.ts",
+        "session/tools.ts",
+        "agent/agent.ts",
+        "effect/app-runtime.ts"
+      ]
+    },
+    {
+      "service": "ToolCache.Service",
+      "tag": "@opencode/ToolCache",
+      "file": "cache.ts",
+      "interface": "Interface { getOrCompute, invalidate, invalidateKey, stats }",
+      "layer": "cache.ts:layer (no deps)",
+      "consumers": [
+        "tool.ts (imported but deprecated — not currently wired to consumers)",
+        "effect/app-runtime.ts"
+      ]
+    },
+    {
+      "service": "TypedResult.Service",
+      "tag": "@opencode/TypedResult",
+      "file": "typed-result.ts",
+      "interface": "Interface { ... }",
+      "layer": "typed-result.ts",
+      "consumers": ["session/tools.ts"]
+    }
+  ],
+
+  "tool_context_type": {
+    "source": "tool.ts",
+    "type": "Tool.Context<M extends Metadata>",
+    "description": "Every tool's execute() receives this context. It is the canonical boundary between the agent runtime and tool implementations.",
+    "fields": {
+      "sessionID": { "type": "SessionID", "description": "Current session identifier" },
+      "messageID": { "type": "MessageID", "description": "Current message identifier" },
+      "agent": { "type": "string", "description": "Agent name" },
+      "abort": { "type": "AbortSignal", "description": "Cancellation signal" },
+      "callID": { "type": "string | undefined", "description": "Tool call identifier for correlation" },
+      "extra": { "type": "{ [key: string]: unknown }", "description": "Extension point for runtime metadata" },
+      "messages": { "type": "MessageV2.WithParts[]", "description": "Full message history for introspection tools" },
+      "metadata": { "type": "(input) => Effect<void>", "description": "Set metadata on the tool result" },
+      "ask": { "type": "(input) => Effect<void>", "description": "Request user permission" }
+    }
+  },
+
+  "external_npm_dependencies": {
+    "effect": {
+      "description": "Core Effect-TS runtime. Every tool uses it.",
+      "imports_from": [
+        "Effect, Schema, Context, Layer, Option, Duration, Schedule, Semaphore, Stream, Ref, Clock, Deferred, Exit"
+      ],
+      "used_by": "all 84 tools + all infrastructure files"
+    },
+    "@ai-sdk/provider": {
+      "description": "JSONSchema7 type for AI SDK provider interface",
+      "files": ["tool.ts", "registry.ts", "json-schema.ts"]
+    },
+    "@opencode-ai/core": {
+      "description": "OpenCode shared core libraries",
+      "sub_packages": {
+        "filesystem": "AppFileSystem — used by 50+ tools for file I/O",
+        "util/log": "Log.create — structured logging (truncate, shell, registry)",
+        "util/opencode-process": "sanitizedProcessEnv — env scrubbing (smart-bash, smart-bun, smart-git, smart-grep)",
+        "util/glob": "Glob utility (registry)",
+        "schema": "NonNegativeInt, withStatics (read.ts, schema.ts)",
+        "global": "Global path constants (truncation-dir.ts)",
+        "effect/logger": "EffectLogger (external-directory.ts)",
+        "cross-spawn-spawner": "CrossSpawnSpawner (registry)"
+      }
+    },
+    "@opencode-ai/plugin": {
+      "description": "Plugin system — ToolContext, ToolDefinition types",
+      "files": ["registry.ts"]
+    },
+    "@effect/platform-node": {
+      "description": "NodePath for file path operations",
+      "files": ["truncate.ts"]
+    },
+    "zod": {
+      "description": "Schema validation for plugin tools and legacy JSON schema conversion",
+      "files": ["registry.ts"]
+    },
+    "diff": {
+      "description": "createTwoFilesPatch, diffLines — used by edit, write, apply_patch, search_replace",
+      "files": ["edit.ts", "write.ts", "apply_patch.ts", "search_replace.ts"]
+    },
+    "web-tree-sitter": {
+      "description": "Shell command parsing via tree-sitter (Language, Node types)",
+      "files": ["shell.ts"]
+    },
+    "drizzle-orm": {
+      "description": "SQL ORM for coordination tables (eq, and, sql, inArray)",
+      "files": ["coordination.ts"]
+    },
+    "drizzle-orm/pg-core": {
+      "description": "PostgreSQL table definitions for coordination tables",
+      "files": ["coordination.pg.sql.ts"]
+    },
+    "htmlparser2": {
+      "description": "HTML parsing for webfetch",
+      "files": ["webfetch.ts"]
+    },
+    "turndown": {
+      "description": "HTML → Markdown conversion for webfetch",
+      "files": ["webfetch.ts"]
+    },
+    "node:fs": {
+      "description": "createWriteStream for shell output capture",
+      "files": ["shell.ts"]
+    },
+    "node:crypto": {
+      "description": "createHash for SHA256 hashing of findings/feedback",
+      "files": ["tool-feedback.ts", "out-of-scope-finding.ts", "publish-finding.ts"]
+    },
+    "node:url": {
+      "description": "fileURLToPath, pathToFileURL (shell, skill, read)",
+      "files": ["shell.ts", "skill.ts", "read.ts"]
+    },
+    "node:child_process": {
+      "description": "spawnSync for smart-bash, smart-bun, smart-git, smart-grep",
+      "files": ["smart-bash.ts", "smart-bun.ts", "smart-git.ts", "smart-grep.ts", "smart-find.ts", "smart-sd.ts"]
+    },
+    "node:os": {
+      "description": "os for shell tool platform detection",
+      "files": ["shell.ts"]
+    },
+    "node:path": {
+      "description": "Standard path module — used by 40+ tools"
+    }
+  },
+
+  "outside_the_tool_dir_importers": {
+    "description": "Code outside packages/opencode/src/tool that imports from the tool directory.",
+    "importers": [
+      {
+        "file": "session/tools.ts",
+        "imports": ["Tool", "ToolJsonSchema", "ToolRegistry", "Truncate", "TypedResult", "TaskPromptOps", "Execution"],
+        "description": "Session-layer tool orchestration — wraps tool execution with permission checks, typed results, output formatting"
+      },
+      {
+        "file": "session/prompt.ts",
+        "imports": ["ToolRegistry", "Tool", "ShellID", "Truncate", "TaskTool", "TaskPromptOps"],
+        "description": "System prompt construction — needs tool list for prompt generation"
+      },
+      {
+        "file": "effect/app-runtime.ts",
+        "imports": ["Truncate", "ToolCache", "ToolRegistry"],
+        "description": "Application runtime layer — provides Truncate, ToolCache, ToolRegistry as Effect services"
+      },
+      {
+        "file": "agent/agent.ts",
+        "imports": ["Truncate"],
+        "description": "Agent info type used by Tool.DynamicDescription"
+      },
+      {
+        "file": "agent/authority.ts",
+        "imports": ["Tool"],
+        "description": "Permission authority — needs Tool type for tool permission definitions"
+      },
+      {
+        "file": "agent/operating-picture.ts",
+        "imports": ["CoordinationReservationTable"],
+        "description": "Operating picture — reads coordination reservation state"
+      },
+      {
+        "file": "lifecycle/gate.ts",
+        "imports": ["Tool"],
+        "description": "Phase gate — restricts tool access during specific lifecycle phases"
+      },
+      {
+        "file": "context/tools.ts",
+        "imports": ["Tool", "Coordination"],
+        "description": "Context compilation — generates tool descriptions for LLM context"
+      },
+      {
+        "file": "context/packet.ts",
+        "imports": ["Coordination"],
+        "description": "Context packet — includes coordination state in compiled context"
+      },
+      {
+        "file": "server/routes/instance/httpapi/handlers/experimental.ts",
+        "imports": ["ToolJsonSchema", "ToolRegistry"],
+        "description": "HTTP API handlers — exposes tool JSON schemas via REST"
+      },
+      {
+        "file": "server/routes/instance/httpapi/handlers/claims.ts",
+        "imports": ["CoordinationClaimTable", "CoordinationReservationTable"],
+        "description": "HTTP API — reads coordination claims for API consumers"
+      },
+      {
+        "file": "server/routes/instance/httpapi/server.ts",
+        "imports": ["ToolRegistry"],
+        "description": "HTTP API server setup"
+      },
+      {
+        "file": "acp/agent.ts",
+        "imports": ["ShellID"],
+        "description": "ACP agent integration — needs shell ID for compatibility"
+      },
+      {
+        "file": "event/agent-queries.ts",
+        "imports": ["Tool"],
+        "description": "Event queries — uses Tool type for event serialization"
+      },
+      {
+        "file": "storage/schema.ts",
+        "imports": ["CoordinationClaimTable", "CoordinationReservationTable", "CoordinationFanOutTable"],
+        "description": "Storage schema — re-exports coordination table definitions"
+      }
+    ]
+  },
+
+  "tool_hierarchy": {
+    "meta_tools": {
+      "description": "Tools that manage or orchestrate other tools — the 'manager' layer.",
+      "tools": [
+        {
+          "tool": "task.ts (TaskTool)",
+          "description": "Spawns subagent sessions that receive their own tool set. The primary meta-tool — delegates work to explore agents.",
+          "manages": "All tools — subagent receives filtered ToolRegistry"
+        },
+        {
+          "tool": "delegate.ts (DelegateTool)",
+          "description": "Explicit subagent delegation with lane ID tracking. Similar to task but with coordination integration.",
+          "manages": "Same as task — spawns subagent sessions"
+        },
+        {
+          "tool": "prepare-delegation.ts (PrepareDelegationTool)",
+          "description": "Prepares a delegation manifest before spawning. Part of the delegation pipeline.",
+          "produces_data_for": "delegate.ts"
+        },
+        {
+          "tool": "preflight-check.ts (PreflightCheckTool)",
+          "description": "Validates preconditions before tool execution. Gate-keeping tool.",
+          "controls": "All tools — runs before other tool execution"
+        },
+        {
+          "tool": "invalid.ts (InvalidTool)",
+          "description": "Sentinel tool — catches invalid/unknown tool calls from the LLM. Does not manage but represents the tool boundary."
+        }
+      ]
+    },
+    "worker_tools": {
+      "description": "Tools that do actual work — the 'doer' layer. All other ~78 tools.",
+      "subcategories": {
+        "file_mutators": ["edit", "write", "smart-write", "smart-edit", "smart-batch", "search_replace", "apply_patch", "replace-symbol"],
+        "file_readers": ["read", "read-source", "read-lib", "read-artifact", "glob", "grep", "smart-find", "smart-grep", "smart-sd"],
+        "shell_runners": ["shell", "smart-bash", "smart-bun", "smart-git", "project-command", "test", "validate", "rig-git", "binary-info"],
+        "coordination": ["coordination", "send-message", "read-messages", "task-board"],
+        "planners": ["plan", "propose-plan", "revise-plan", "comment-plan", "roadmap-*"],
+        "reviewers": ["review-criticism", "review-manifest", "qa-observed-clean", "verify-handoff", "prepublication-*"],
+        "observers": ["discover-findings", "inspect_failure", "log-activity", "tool-feedback", "curate-context", "session-diff", "record-*-wave", "analytics"],
+        "queries": ["json-query", "duckdb-query", "rig-jsonl-query", "rig-schema-validate"],
+        "external": ["webfetch", "websearch", "github-pr-search", "github-triage", "repo_clone", "repo_overview"],
+        "stateful": ["skill", "todo", "question", "checkpoint", "publish_checkpoint", "publish-finding", "out-of-scope-finding", "lesson-register", "report", "generate-report", "produce-fragment", "lsp"]
+      }
+    }
+  },
+
+  "natural_pipelines": [
+    {
+      "name": "Search → Read pipeline",
+      "description": "Agent discovers files, then reads them.",
+      "steps": ["glob → glob results", "grep → grep results", "smart-find → find results", "smart-grep → grep results", "read / read-source with discovered paths"],
+      "data_flow": "File paths from search → File path input to read tools"
+    },
+    {
+      "name": "Read → Edit pipeline",
+      "description": "Agent reads content, then modifies it.",
+      "steps": ["read (inspect current state)", "edit / write / smart-batch (apply changes)"],
+      "data_flow": "File content from read → Code understanding → Edit diff"
+    },
+    {
+      "name": "Shell output → Read pipeline",
+      "description": "Shell produces output that may be truncated; agent reads the truncation file.",
+      "steps": ["shell / smart-bash (large output)", "Truncate writes full output to file", "read (with offset/limit on truncation file)"],
+      "data_flow": "Shell output → truncation file path → Read offset/limit"
+    },
+    {
+      "name": "ProduceFragment → Consolidation pipeline",
+      "description": "Parallel lanes produce fragments; consolidator assembles them.",
+      "steps": ["produce-fragment (lane declares region)", "... (other lanes produce)", "consolidate (manual tool chain or coordinator)"],
+      "data_flow": "Fragment declarations → Consolidated file edits"
+    },
+    {
+      "name": "Task → Subagent pipeline",
+      "description": "Primary agent delegates to explore subagent via Task tool.",
+      "steps": ["task (spawn subagent)", "subagent runs own tool chain (read/grep/edit/shell)", "task returns subagent results"],
+      "data_flow": "Task description → Subagent session → Subagent tool results → Task output"
+    },
+    {
+      "name": "Delegate → Coordination pipeline",
+      "description": "Delegation creates coordination claims for multi-agent orchestration.",
+      "steps": ["prepare-delegation (prep manifest)", "delegate (spawn + claim lane)", "coordination (read claims, manage fan-out)"],
+      "data_flow": "Delegation manifest → Coordination claim → Lane tracking"
+    },
+    {
+      "name": "Checkpoint → Publication pipeline",
+      "description": "Agent creates checkpoints, then publishes them through review gates.",
+      "steps": ["prepare_checkpoint", "checkpoint", "publish_checkpoint", "generate_published_checkpoint_report"],
+      "data_flow": "Prepared data → Checkpoint record → Published record → Report"
+    },
+    {
+      "name": "QA → Prepublication pipeline",
+      "description": "Review tools validate, then admit/block the candidate.",
+      "steps": ["qa-observed-clean / review-criticism / review-manifest / verify-handoff", "prepublication-admitted / prepublication-blocked / prepublication-inconclusive"],
+      "data_flow": "QA findings → Prepublication verdict"
+    },
+    {
+      "name": "Plan → Execute pipeline",
+      "description": "Agent proposes a plan, revises through review, then exits to execution.",
+      "steps": ["propose-plan", "revise-plan / comment-plan / review-criticism", "plan (PlanExitTool)"],
+      "data_flow": "Plan proposal → Revisions → Exit to execution"
+    },
+    {
+      "name": "Roadmap lifecycle",
+      "description": "Full roadmap CRUD across named phases.",
+      "steps": ["roadmap-init", "roadmap-next → roadmap-progress → roadmap-deprecate → roadmap-prioritize"],
+      "data_flow": "Phase artifacts → Roadmap items → Status transitions"
+    },
+    {
+      "name": "Failure recording pipeline",
+      "description": "Tool failures are collected, inspected, and fed back into context.",
+      "steps": ["tool-failure (tool records its own failure)", "inspect_failure (reads failure records)", "failure-tools (shared helpers)", "tool-feedback (agent reports friction)"],
+      "data_flow": "Tool execution errors → Failure records → Inspection → Feedback"
+    }
+  ],
+
+  "circular_dependencies": {
+    "within_tool_dir": {
+      "status": "none_found",
+      "details": "No circular imports between tool files. All cross-tool imports are acyclic (e.g., write → edit, but edit does not import write). The registry imports all tools, but no tool imports the registry.",
+      "self_referential_exports": [
+        "tool.ts: export * as Tool from './tool' — namespace re-export, not circular",
+        "Most tool files: export * as Foo from './foo' — namespace re-export for consumer convenience"
+      ]
+    },
+    "with_outside_code": {
+      "status": "none_found",
+      "details": "session/tools.ts imports from tool/ but tool/ files do not import from session/tools.ts. The dependency is one-way: outside → tool."
+    }
+  },
+
+  "service_dependencies_by_domain": {
+    "description": "Which tools import services from which external domains.",
+    "session": {
+      "imports": ["Session (session/session)", "MessageV2, WithParts, FilePart (session/message-v2)", "SessionID, MessageID, PartID (session/schema)", "Instruction (session/instruction)", "Todo (session/todo)", "SessionPrompt (session/prompt)"],
+      "used_by": ["tool.ts", "registry.ts", "task.ts", "plan.ts", "todo.ts", "read.ts"]
+    },
+    "storage": {
+      "imports": ["DatabaseAdapter (storage/adapter)", "Storage (storage/storage)"],
+      "used_by": ["coordination.ts", "checkpoint.ts"]
+    },
+    "permission": {
+      "imports": ["Permission (permission)", "evaluate (permission/evaluate)"],
+      "used_by": ["tool.ts", "truncate.ts"]
+    },
+    "config": {
+      "imports": ["Config (config/config)"],
+      "used_by": ["registry.ts", "truncate.ts", "task.ts", "shell.ts"]
+    },
+    "provider": {
+      "imports": ["Provider (provider/provider)", "ProviderID, ModelID (provider/schema)"],
+      "used_by": ["registry.ts", "plan.ts"]
+    },
+    "agent": {
+      "imports": ["Agent, Agent.Info, Agent.Service (agent/agent)", "deriveSubagentSessionPermission (agent/subagent-permissions)"],
+      "used_by": ["tool.ts", "truncate.ts", "task.ts"]
+    },
+    "lsp": {
+      "imports": ["LSP (lsp/lsp)", "SymbolContext (lsp/symbol-context)"],
+      "used_by": ["read.ts", "edit.ts", "write.ts", "apply_patch.ts"]
+    },
+    "plugin": {
+      "imports": ["Plugin (plugin)", "ToolContext, ToolDefinition (@opencode-ai/plugin)"],
+      "used_by": ["registry.ts", "shell.ts"]
+    },
+    "bus": {
+      "imports": ["Bus (bus)"],
+      "used_by": ["execution.ts", "edit.ts", "write.ts", "apply_patch.ts"]
+    },
+    "coordination": {
+      "imports": ["CoordEvents (coordination/coord-events)"],
+      "used_by": ["execution.ts"]
+    },
+    "file": {
+      "imports": ["File (file)", "FileWatcher (file/watcher)", "Ripgrep (file/ripgrep)"],
+      "used_by": ["edit.ts", "write.ts", "apply_patch.ts", "glob.ts", "grep.ts", "skill.ts"]
+    },
+    "format": {
+      "imports": ["Format (format)"],
+      "used_by": ["edit.ts", "write.ts", "apply_patch.ts"]
+    },
+    "snapshot": {
+      "imports": ["Snapshot (snapshot)"],
+      "used_by": ["edit.ts"]
+    },
+    "reference": {
+      "imports": ["Reference (reference/reference)", "RepositoryCache (reference/repository-cache)"],
+      "used_by": ["read.ts", "glob.ts", "grep.ts", "registry.ts"]
+    },
+    "background": {
+      "imports": ["BackgroundJob (background/job)"],
+      "used_by": ["task.ts"]
+    },
+    "shell": {
+      "imports": ["Shell (shell/shell)"],
+      "used_by": ["shell.ts"]
+    },
+    "skill": {
+      "imports": ["Skill (skill)"],
+      "used_by": ["skill.ts"]
+    },
+    "question": {
+      "imports": ["Question (question)"],
+      "used_by": ["question.ts", "plan.ts"]
+    },
+    "binary": {
+      "imports": ["BinaryManager (binary/manager)"],
+      "used_by": ["smart-grep.ts", "binary-info.ts"]
+    },
+    "effect": {
+      "imports": ["InstanceState (effect/instance-state)", "RuntimeFlags (effect/runtime-flags)", "EffectBridge (effect/bridge)"],
+      "used_by": ["tool-failure.ts", "shell.ts", "read.ts", "edit.ts", "write.ts", "smart-bash.ts", "smart-bun.ts", "smart-git.ts", "smart-grep.ts", "smart-write.ts", "glob.ts", "grep.ts", "task.ts", "analytics.ts", "prepare-delegation.ts", "produce-fragment.ts", "...many more"]
+    },
+    "lifecycle": {
+      "imports": ["PhaseGate (lifecycle/gate)"],
+      "used_by": ["typed-result.ts"]
+    },
+    "util": {
+      "imports": ["Bom (util/bom)", "lazy (util/lazy)", "media (util/media)"],
+      "used_by": ["edit.ts", "write.ts", "apply_patch.ts", "shell.ts", "read.ts", "webfetch.ts"]
+    },
+    "project": {
+      "imports": ["containsPath, InstanceContext (project/instance-context)"],
+      "used_by": ["shell.ts", "external-directory.ts"]
+    },
+    "patch": {
+      "imports": ["Patch (patch)"],
+      "used_by": ["apply_patch.ts"]
+    }
+  },
+
+  "file_summary": {
+    "total_tool_files": 101,
+    "tool_definitions": 84,
+    "infrastructure_files": 17,
+    "txt_prompt_files": "~80 .txt files (one per tool for DESCRIPTION imports)",
+    "largest_files": [
+      "coordination.ts (841 lines)",
+      "registry.ts (866 lines)",
+      "edit.ts (722 lines)",
+      "shell.ts (648 lines)",
+      "typed-result.ts (514 lines)",
+      "read.ts (359 lines)",
+      "task.ts (337 lines)",
+      "apply_patch.ts (314 lines)",
+      "tool.ts (288 lines)",
+      "cache.ts (239 lines)"
+    ],
+    "smallest_files": [
+      "invalid.ts (22 lines)",
+      "file-lock.ts (20 lines)",
+      "shell/id.ts (20 lines)",
+      "schema.ts (15 lines)",
+      "truncation-dir.ts (4 lines)"
+    ]
+  }
+}

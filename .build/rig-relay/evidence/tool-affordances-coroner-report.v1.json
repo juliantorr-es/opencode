@@ -1,0 +1,120 @@
+{
+  "schema_version": "v1",
+  "coroner_report_id": "tool-affordances-coroner-2026-05-31",
+  "generated_at": "2026-05-31T00:00:00Z",
+  "subject": {
+    "plan": "docs/json/opencode/plans/tool-affordances-architecture-plan.v1.json",
+    "code": "packages/opencode/src/tool/typed-result.ts",
+    "functions_audited": ["toolCategory", "affordancesAfterSuccess", "affordancesFor", "suggestedToolsAfterSuccess", "suggestedToolsFor", "formatOutput", "enrichExecuteResult", "wrapExecute", "wrapDef"],
+    "lines_audited": "1-514"
+  },
+  "findings": {
+    "no_logging": true,
+    "no_effect_spans": true,
+    "no_tests": true,
+    "substring_matching_only": true,
+    "parallel_systems": true,
+    "harmful_default": true,
+    "dead_key_silence": true
+  },
+  "debu​ggability_rating": "1/5",
+  "scenarios": [
+    {
+      "name": "Scenario 1: New tool `smart_rename` — no lookup update",
+      "error_path": [
+        "1. Developer adds `smart_rename` tool via a new `.opencode/tools/smart_rename.ts` file",
+        "2. Tool is registered in the registry, `wrapExecute` fires in `session/tools.ts:108`",
+        "3. `toolCategory(\"smart_rename\")` is called — exact-match lookup table (Fix-B) has no entry",
+        "4. Falls to substring matching: `toolID.includes(\"read\")` → false, `includes(\"write\")` → false, `includes(\"edit\")` → false, `includes(\"grep\")` → false, `includes(\"search\")` → false, `includes(\"find\")` → false, `includes(\"bash\")` → false, `includes(\"run\")` → false, `== \"task\"` → false, `includes(\"checkpoint\")` → false, `includes(\"todo\")` → false, `includes(\"plan\")` → false, `includes(\"question\")` → false",
+        "5. Returns `\"diagnose\"` — the catch-all default on line 243",
+        "6. `affordancesAfterSuccess(\"smart_rename\")` → cat = `\"diagnose\"` → switch matches default → returns `[{action:\"continue\"}, {action:\"retry\"}]`",
+        "7. `suggestedToolsAfterSuccess(\"smart_rename\")` → cat = `\"diagnose\"` → `TOOL_CATEGORIES[\"diagnose\"]` = `[\"grep\", \"read\", \"bash\", \"task\"]` → returned as-is",
+        "8. `formatOutput(typed)` emits: `[OK] smart_rename completed` then `Suggested next tools: grep, read, bash, task` then `→ continue: proceed with the result` then `→ retry (smart_rename): run again if needed`",
+        "9. This string is set as `result.output` and fed directly into the LLM conversation"
+      ],
+      "dev_experience": "The LLM receives suggestions to 'grep, read, bash, task' after a successful rename — none of which make sense. 'Retry' a successful rename is actively harmful noise. The LLM may waste tokens grepping or retrying unnecessarily. The developer notices the model behaving weirdly — suggesting diagnostic tools after a rename. They trace through the conversation history, find the `[[typed-result]]` marker, search the codebase for `'Suggested next tools'` or `'→ continue'`, land in `typed-result.ts:353`, trace `toolCategory()` on line 235, and discover that 'smart_rename' fell through all 13 substring checks. No log, no warning, no Effect span, no test assertion fired.",
+      "time_to_diagnose": "45–90 minutes. No automated signal exists. Developer must notice degraded LLM behavior (subjective), correlate it to tool output (manual inspection), grep the codebase for the output string, and trace the substring-matching logic to find the misclassification.",
+      "fix_effort": "10 minutes. Add `if (toolID.includes('rename') || toolID.includes('name')) return 'write'` to `toolCategory()`, or add an exact-match entry to the Fix-B lookup table."
+    },
+    {
+      "name": "Scenario 2: Tool renamed `smart_find` → `smart_search` — stale lookup table",
+      "error_path": [
+        "1. Tool is renamed from `smart_find` to `smart_search` (file rename, registry entry, all callers updated)",
+        "2. Fix-B exact-match lookup table still has `smart_find` (not updated)",
+        "3. Fix-C per-tool affordance map `toolAffordances` still has `smart_find` (not updated)",
+        "4. `toolCategory(\"smart_search\")` → exact match on `\"smart_search\"` fails → substring: `toolID.includes(\"search\")` → true → returns `\"search\"`",
+        "5. Substring matching accidentally saves the day because `\"search\"` appears in the name",
+        "6. But if renamed to something without substring overlap (e.g., `smart_find` → `smart_locate`): `toolID.includes(\"locate\")` fails all substring checks → returns `\"diagnose\"` — complete misclassification. Fix-C per-tool affordance for `\"smart_find\"` is now dead code — never reached.",
+        "7. No TypeScript error: both lookup tables use string indexing — `Record<string, ...>`. Dead keys are invisible.",
+        "8. No log, no warning, no test assertion. The stale `\"smart_find\"` entries sit silently in both tables.",
+        "9. For `smart_search`: LLM sees `\"search\"` category affordances — 'refine_search' and 'read' — which are plausible but miss the `read_source` per-tool affordance the plan intended"
+      ],
+      "dev_experience": "Rename completes cleanly — TypeScript compiles, tests pass, everything works. Developer never knows the old `smart_find` entries are dead. Six months later, another developer adds `smart_locate`, notices the LLM gives 'continue/retry' affordances, digs in, and discovers the `smart_find` zombie entries in both the exact-match table and the per-tool affordance map. They now have to audit all 30+ entries for staleness. No tooling exists to detect this. The bug is permanently silent — you cannot tell affordances are 'wrong' unless you manually inspect the LLM output and compare against intent.",
+      "time_to_diagnose": "Days to months (latent). For `smart_find` → `smart_search`: may never be discovered (substring saves it). For `smart_find` → `smart_locate`: 30–60 minutes once someone notices degraded LLM quality on that tool. For the zombie entries: indefinite — they're unreachable dead code with no lint warning.",
+      "fix_effort": "15 minutes to update both tables. But the real cost is the audit burden: every rename requires grep for the old ID across both lookup tables and the per-tool affordance map, with no compile-time enforcement."
+    },
+    {
+      "name": "Scenario 3: Category default gives completely wrong/contradictory suggestions",
+      "error_path": [
+        "1. `toolCategory()` classifies a tool as `\"manage\"` (e.g., `checkpoint`, `todo`, `coordination`)",
+        "2. `affordancesAfterSuccess()` → switch on `cat`: cases exist for `\"read\"`, `\"write\"`, `\"search\"`, `\"execute\"` only. `\"manage\"` and `\"plan\"` have no case → falls to default",
+        "3. Default returns `[{action:\"continue\"}, {action:\"retry\"}]` — the lowest-common-denominator boilerplate",
+        "4. `suggestedToolsAfterSuccess()` → cat = `\"manage\"` → `TOOL_CATEGORIES[\"manage\"]` = `[\"checkpoint\", \"todo\", \"coordination\"]` → suggests more manage tools",
+        "5. LLM receives two contradictory signal streams: Suggested next tools: `checkpoint, todo, coordination` (manage more) vs. Next affordances: `→ continue: proceed with the result`, `→ retry (checkpoint): run again if needed`",
+        "6. `\"retry\"` after a successful checkpoint is semantically wrong — you don't retry a successful checkpoint",
+        "7. `\"continue\"` carries zero information — it's the cognitive equivalent of `{}`",
+        "8. The plan says 'Category defaults handle the rest' for tools without explicit Fix-C branches. But the default IS the fallthrough — and it's `continue/retry` for every uncovered category (`manage`, `plan`, `diagnose`)",
+        "9. Same pattern for `\"plan\"` category tools — they also get `continue/retry` instead of plan-specific affordances",
+        "10. The `suggestedNextTools` and `nextAffordances` systems are architecturally disconnected: one suggests tool IDs, the other suggests action descriptions. There is no unified intent model."
+      ],
+      "dev_experience": "After creating a checkpoint, the LLM is told it can 'retry' the checkpoint or 'continue, proceed with the result' — both useless. Meanwhile the suggested next tools say 'todo, coordination.' The LLM has to guess which signal to follow. The developer notices the LLM keeps calling `todo` after every checkpoint (because suggestedNextTools says so) but the affordance system says 'just continue.' These two systems are never reconciled. The `continue/retry` noise dilutes the few useful affordances in the LLM's context window. The default is not 'useful noise' — it's actively harmful because `retry` after success wastes tokens and suggests a wrong action.",
+      "time_to_diagnose": "30–60 minutes to realize the affordance system has category gaps, plus a follow-up architectural discussion about whether `continue/retry` should be a universal default at all. The deeper issue (contradictory suggestedNextTools vs. nextAffordances) may never be diagnosed — it's an emergent property of two disconnected subsystems.",
+      "fix_effort": "30 minutes. Add explicit `case 'manage':` and `case 'plan':` to `affordancesAfterSuccess()` with domain-appropriate affordances. But the real fix requires either removing the default entirely (fail closed — no affordances is better than wrong affordances) or unifying `suggestedNextTools` and `nextAffordances` into a single recommendation system."
+    }
+  ],
+  "systemic_issues": [
+    {
+      "issue": "No observability: zero logs, zero Effect spans, zero annotations anywhere in the affordance computation path",
+      "severity": "critical",
+      "recommendation": "Add `Effect.annotateCurrentSpan` in `toolCategory()` when the default `'diagnose'` is reached, capturing the unknown `toolID`. Add an `Effect.logWarning` or structured telemetry event when an unrecognized toolID hits any fallthrough path. Without this, every scenario is a black-box failure."
+    },
+    {
+      "issue": "String-keyed lookup tables with no compile-time exhaustiveness or staleness detection",
+      "severity": "critical",
+      "recommendation": "Generate the exact-match table and the per-tool affordance map from a central registry (e.g., a const object where keys are a union type derived from the known tool IDs). Use `satisfies Record<KnownToolID, ...>` to enforce compile-time coverage. Dead keys become compile errors. Missing keys become compile errors. This eliminates Scenarios 1 and 2 at the type level."
+    },
+    {
+      "issue": "Two parallel recommendation systems (`suggestedNextTools` + `nextAffordances`) with no unified contract and contradictory outputs",
+      "severity": "major",
+      "recommendation": "Merge `suggestedNextTools` into `nextAffordances` — make tool suggestions a first-class `NextAffordance` kind (e.g., `{action: 'suggest_tool', target: 'grep'}`). Or, at minimum, cross-validate the two systems with a test that asserts no contradiction between suggested tools and affordance actions for each category."
+    },
+    {
+      "issue": "The `default` fallthrough in `affordancesAfterSuccess` returns actively harmful boilerplate (`retry` after success)",
+      "severity": "major",
+      "recommendation": "Replace the default with an empty array or a single `{action: 'continue', command: 'proceed with the result'}`. 'Retry' after a successful call should never be the fallback — it's only appropriate for transient failure modes. Or remove the default entirely and fail closed: unknown categories get no affordances, forcing explicit handling."
+    },
+    {
+      "issue": "Zero tests for `toolCategory`, `affordancesAfterSuccess`, `formatOutput`, or `suggestedToolsAfterSuccess`",
+      "severity": "critical",
+      "recommendation": "The plan mentions creating `test/tool/typed-result.test.ts` as new — it does not exist yet. Add: (a) a snapshot test that enumerates all known tool IDs and asserts their expected category + affordances, (b) a regression test that fails when a tool ID produces the `'diagnose'` category unless explicitly allowed, (c) a roundtrip test for `formatOutput`/`parseOutput`."
+    },
+    {
+      "issue": "Substring matching in `toolCategory()` is order-dependent and fragility-prone (`includes('read')` before `includes('search')` means 'smart_read_search' is 'read' not 'search')",
+      "severity": "moderate",
+      "recommendation": "Once an exact-match lookup table exists (Fix-B), make the substring fallbacks the last resort with a `@deprecated` comment and a CI-enforced warning when any toolID reaches them. Alternatively, replace substring matching entirely with the exact-match table + a required explicit category annotation on new tool registration."
+    },
+    {
+      "issue": "6 months debuggability assessment: the system has zero self-diagnostic capability",
+      "severity": "critical",
+      "recommendation": "Rate: 1/5. A developer 6 months from now facing any of these scenarios has: no logs, no spans, no warnings, no compile-time safety, no tests that catch regressions, and two string-keyed lookup tables with invisible dead entries. The only debug pathway is manually tracing LLM output strings back to substring matching logic via code search. Minimum viable instrumentation: log every `toolCategory()` call that reaches the default, emit the toolID + chosen category as an Effect span attribute, and add a CI snapshot test that fails on unexpected category assignments."
+    }
+  ],
+  "debu​ggability_timeline": "A developer debugging these errors in 6 months will: (1) First see wrong LLM behavior in conversation output. (2) Try adjusting the system prompt — 15 min. (3) Inspect the raw tool result JSON in the LLM message history — 10 min. (4) Notice the `[[typed-result]]` marker and `Suggested next tools:` / `→ continue:` lines. (5) Grep the codebase for those strings → landing in `formatOutput()` at line 353. (6) Trace `nextAffordances` → `affordancesAfterSuccess()` → `toolCategory()`. (7) Realize it's substring matching. (8) Time elapsed: 45-90 min. If they add a new tool and it works 'mostly fine' because substring matching caught part of the name, they may never notice — the bug festers until someone adds a tool with no substring overlap.",
+  "prepublication_review": {
+    "status": "prepublication_admitted",
+    "review_rounds": 1,
+    "blocking_findings": 0,
+    "admitted_candidate_boundary": "tool-affordances-coroner-report: analysis of 3 failure scenarios and 7 systemic issues in the affordance computation path",
+    "consumer_purpose": "Inform the Fix-B/Fix-C implementation to address the identified failure modes before they ship"
+  }
+}

@@ -88,7 +88,7 @@ export class DesktopPluginLoader {
     if (this.loaded.has(entry.name)) return
     this.loaded.add(entry.name)
 
-    const mod: DesktopPluginModule = await import(entry.path)
+    const mod: DesktopPluginModule = await import(/* @vite-ignore */ entry.path)
     if (!mod.desktop) return
 
     const pluginStore = new Map<string, unknown>()

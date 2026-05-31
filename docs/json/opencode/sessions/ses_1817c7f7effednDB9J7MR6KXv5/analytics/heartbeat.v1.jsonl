@@ -1,0 +1,16 @@
+{"at":"2026-05-31T14:50:13.688Z","session_id":"ses_1817c7f7effednDB9J7MR6KXv5","agent":"vitals","tool":"smart_bun","phase":"started","detail":"typecheck"}
+{"at":"2026-05-31T14:50:27.172Z","session_id":"ses_1817c7f7effednDB9J7MR6KXv5","agent":"vitals","tool":"smart_bun","phase":"failed","detail":"typecheck exit=2"}
+{"at":"2026-05-31T14:50:41.830Z","session_id":"ses_1817c7f7effednDB9J7MR6KXv5","agent":"vitals","tool":"smart_grep","phase":"started","detail":"tool-graph|typed-result"}
+{"at":"2026-05-31T14:50:41.892Z","session_id":"ses_1817c7f7effednDB9J7MR6KXv5","agent":"vitals","tool":"smart_grep","phase":"completed","detail":"tool-graph|typed-result"}
+{"at":"2026-05-31T14:50:59.114Z","session_id":"ses_1817c7f7effednDB9J7MR6KXv5","agent":"vitals","tool":"smart_bash","phase":"started","detail":"Run typecheck and filter for tool-graph or typed-result errors"}
+{"at":"2026-05-31T14:50:59.115Z","session_id":"ses_1817c7f7effednDB9J7MR6KXv5","agent":"vitals","tool":"smart_bash","phase":"rerouted","detail":"→ smart_bun"}
+{"at":"2026-05-31T14:51:13.750Z","session_id":"ses_1817c7f7effednDB9J7MR6KXv5","agent":"vitals","tool":"smart_bash","phase":"started","detail":"Run typecheck, save full output and filter for tool-graph/typed-result"}
+{"at":"2026-05-31T14:51:13.750Z","session_id":"ses_1817c7f7effednDB9J7MR6KXv5","agent":"vitals","tool":"smart_bash","phase":"rerouted","detail":"→ smart_bun"}
+{"at":"2026-05-31T14:51:33.267Z","session_id":"ses_1817c7f7effednDB9J7MR6KXv5","agent":"vitals","tool":"smart_bash","phase":"started","detail":"Run tsgo directly and filter for tool-graph/typed-result errors"}
+{"at":"2026-05-31T14:51:45.539Z","session_id":"ses_1817c7f7effednDB9J7MR6KXv5","agent":"vitals","tool":"smart_bash","phase":"completed","detail":"npx exit=0"}
+{"at":"2026-05-31T14:51:56.696Z","session_id":"ses_1817c7f7effednDB9J7MR6KXv5","agent":"vitals","tool":"smart_bash","phase":"started","detail":"Get full error messages for tool-graph.ts"}
+{"at":"2026-05-31T14:52:09.649Z","session_id":"ses_1817c7f7effednDB9J7MR6KXv5","agent":"vitals","tool":"smart_bash","phase":"completed","detail":"npx exit=0"}
+{"at":"2026-05-31T14:52:24.671Z","session_id":"ses_1817c7f7effednDB9J7MR6KXv5","agent":"vitals","tool":"smart_bash","phase":"started","detail":"Verify no typed-result errors exist"}
+{"at":"2026-05-31T14:52:37.565Z","session_id":"ses_1817c7f7effednDB9J7MR6KXv5","agent":"vitals","tool":"smart_bash","phase":"completed","detail":"npx exit=0"}
+{"at":"2026-05-31T14:52:46.319Z","session_id":"ses_1817c7f7effednDB9J7MR6KXv5","agent":"vitals","tool":"smart_bash","phase":"started","detail":"Get full context for tool-graph errors"}
+{"at":"2026-05-31T14:52:57.876Z","session_id":"ses_1817c7f7effednDB9J7MR6KXv5","agent":"vitals","tool":"smart_bash","phase":"completed","detail":"npx exit=0"}

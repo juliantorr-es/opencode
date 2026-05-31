@@ -1,0 +1,15 @@
+{"at":"2026-05-31T13:49:52.376Z","tool":"smart_git","action":"git_op","operation":"status","exit_code":0}
+{"at":"2026-05-31T13:50:31.294Z","tool":"smart_grep","action":"searched","pattern":"error_code|ErrorCode|makeError|parseToolError|isSuccess","results":30,"files":11}
+{"at":"2026-05-31T13:50:32.139Z","tool":"smart_grep","action":"searched","pattern":"JSON\\.stringify.*error","results":9,"files":6}
+{"at":"2026-05-31T13:50:33.267Z","tool":"smart_grep","action":"searched","pattern":"\"error\"|error.*message","results":30,"files":15}
+{"at":"2026-05-31T13:52:28.846Z","tool":"smart_grep","action":"searched","pattern":"JSON\\.stringify\\(\\{.*error","results":9,"files":6}
+{"at":"2026-05-31T13:53:05.918Z","tool":"smart_grep","action":"searched","pattern":"\\.opencode/tools","results":1,"files":1}
+{"at":"2026-05-31T13:53:06.858Z","tool":"smart_grep","action":"searched","pattern":"test.*tool|tool.*test","results":30,"files":6}
+{"at":"2026-05-31T13:53:43.242Z","tool":"smart_git","action":"git_op","operation":"log","exit_code":0}
+{"at":"2026-05-31T13:53:45.521Z","tool":"smart_grep","action":"searched","pattern":"STRUCTURED_MARKER|makeSuccess|makeFailure|fromDefect","results":10,"files":1}
+{"at":"2026-05-31T13:55:49.293Z","tool":"smart_grep","action":"searched","pattern":"describe.*tool|it.*tool","results":30,"files":10}
+{"at":"2026-05-31T13:57:59.921Z","tool":"smart_grep","action":"searched","pattern":"opencode/tools.*plural|\\.opencode.*tools","results":0,"files":0}
+{"at":"2026-05-31T13:58:00.810Z","tool":"smart_grep","action":"searched","pattern":"\\.opencode","results":0,"files":0}
+{"at":"2026-05-31T13:58:58.145Z","tool":"smart_grep","action":"searched","pattern":"from .*errors|import.*errors|export.*errorCode|export.*ErrorCode","results":30,"files":29}
+{"at":"2026-05-31T14:01:09.907Z","tool":"smart_grep","action":"searched","pattern":"errorCodePatterns","results":0,"files":0}
+{"at":"2026-05-31T14:02:41.932Z","tool":"smart_grep","action":"searched","pattern":"code: \"","results":0,"files":0}

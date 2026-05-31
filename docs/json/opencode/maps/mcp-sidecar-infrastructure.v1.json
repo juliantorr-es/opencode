@@ -1,0 +1,357 @@
+{
+  "schema_version": "1.0.0",
+  "generated_at": "2026-05-31T00:00:00Z",
+  "map_kind": "infrastructure_map",
+  "subject": "MCP and Sidecar Infrastructure",
+  "sections": {
+    "1_mcp_configuration": {
+      "where_servers_are_configured": {
+        "schema_file": "packages/opencode/src/config/mcp.ts",
+        "top_level_key": "mcp",
+        "config_root": "packages/opencode/src/config/config.ts:223",
+        "description": "MCP servers are configured under the `mcp` key in opencode.json, validated by Schema.optional(Schema.Record(Schema.String, ConfigMCP.Info))"
+      },
+      "server_types": {
+        "ConfigMCP.Local": {
+          "file": "packages/opencode/src/config/mcp.ts:4-18",
+          "type": "local",
+          "fields": ["command (string[])", "environment? (Record<string,string>)", "enabled? (boolean)", "timeout? (PositiveInt)"],
+          "transport": "StdioClientTransport — spawns a child process"
+        },
+        "ConfigMCP.Remote": {
+          "file": "packages/opencode/src/config/mcp.ts:39-56",
+          "type": "remote",
+          "fields": ["url (string)", "headers? (Record<string,string>)", "oauth? (OAuth | false)", "enabled? (boolean)", "timeout? (PositiveInt)"],
+          "transport": "StreamableHTTPClientTransport or SSEClientTransport"
+        },
+        "ConfigMCP.OAuth": {
+          "file": "packages/opencode/src/config/mcp.ts:21-37",
+          "fields": ["clientId?", "clientSecret?", "scope?", "callbackPort? (Int 1-65535)", "redirectUri?"],
+          "description": "Nested inside Remote; set to false to disable OAuth auto-detection"
+        },
+        "discriminated_union": "ConfigMCP.Info = Local | Remote, discriminated on 'type'"
+      },
+      "global_timeout": "config.ts:301 — mcp_timeout: Schema.optional(PositiveInt)"
+    },
+
+    "2_mcp_service_and_lifecycle": {
+      "module": "packages/opencode/src/mcp/index.ts (1053 lines)",
+      "effect_service": {
+        "class": "MCP.Service extends Context.Service (line 284)",
+        "tag": "@opencode/MCP"
+      },
+      "interface_methods": {
+        "status": "() => Effect<Record<string, Status>> — returns status of all configured servers",
+        "clients": "() => Effect<Record<string, MCPClient>> — returns raw MCP SDK client instances",
+        "tools": "() => Effect<Record<string, Tool>> — returns all tools from all connected servers",
+        "prompts": "() => Effect<Record<string, PromptInfo & {client}> — all prompts from MCP servers",
+        "resources": "() => Effect<Record<string, ResourceInfo & {client}> — all resources from MCP servers",
+        "add": "(name, ConfigMCP.Info) => Effect<{status: Record}> — dynamically add/update a server",
+        "connect": "(name) => Effect<void, NotFoundError> — connect a specific server",
+        "disconnect": "(name) => Effect<void, NotFoundError> — disconnect a specific server",
+        "getPrompt": "(clientName, name, args?) => Effect<Prompt>",
+        "readResource": "(clientName, resourceUri) => Effect<Resource>",
+        "startAuth": "(mcpName) => Effect<{authorizationUrl, oauthState}, NotFoundError>",
+        "authenticate": "(mcpName) => Effect<Status, NotFoundError> — full OAuth flow (opens browser + waits)",
+        "finishAuth": "(mcpName, authorizationCode) => Effect<Status, NotFoundError>",
+        "removeAuth": "(mcpName) => Effect<void>"
+      },
+      "status_model": {
+        "file": "packages/opencode/src/mcp/index.ts:88-112",
+        "variants": [
+          { "status": "connected", "type": "StatusConnected", "description": "Server is connected and healthy" },
+          { "status": "disabled", "type": "StatusDisabled", "description": "Server exists in config but enabled=false" },
+          { "status": "failed", "type": "StatusFailed", "fields": ["error: string"], "description": "Connection failed (after 4 retries)" },
+          { "status": "needs_auth", "type": "StatusNeedsAuth", "description": "Server requires OAuth authentication" },
+          { "status": "needs_client_registration", "type": "StatusNeedsClientRegistration", "fields": ["error: string"], "description": "Dynamic client registration required/failed" }
+        ]
+      },
+      "auth_status": {
+        "file": "packages/opencode/src/mcp/index.ts:1040",
+        "type": "AuthStatus = 'authenticated' | 'expired' | 'not_authenticated'"
+      },
+      "connection_lifecycle": {
+        "startup": "All enabled servers are connected on init with retry({times: 4}) and 5s delay",
+        "retry_logic": "UnauthorizedError → sets 'needs_auth' status, stops retrying. needs_client_registration → stops retrying. After 4 failures → 'failed'",
+        "watch": "Each connected client registers a ToolListChangedNotificationSchema handler via watch() (line 531) — re-lists tools on change, emits EventName.MCP.ToolsChanged bus event",
+        "close": "closeClient() (line 625) closes the transport and disposes the client",
+        "concurrency": "serverLocks Map<string, Semaphore> (line 295) — prevents concurrent connect/disconnect on same server name",
+        "tool_conversion": "convertMcpTool() (line 170) wraps MCP SDK Tool into ai-sdk Tool with dynamicTool(). defs() lists tools from client and converts them"
+      },
+      "transport_types": {
+        "StdioClientTransport": "For 'local' type — spawns process via command array",
+        "StreamableHTTPClientTransport": "For 'remote' type with OAuth — uses McpOAuthProvider",
+        "SSEClientTransport": "For 'remote' type (SSE)"
+      }
+    },
+
+    "3_mcp_auth_and_oauth": {
+      "modules": [
+        {
+          "file": "packages/opencode/src/mcp/auth.ts",
+          "service": "McpAuth.Service (@opencode/McpAuth)",
+          "description": "Persistent storage for MCP OAuth tokens, client info, code verifier, OAuth state. Stored in ~/.vibe/data/mcp-auth.json",
+          "interface_methods": ["all", "get", "getForUrl", "set", "remove", "updateTokens", "updateClientInfo", "updateCodeVerifier", "clearCodeVerifier", "updateOAuthState", "getOAuthState", "clearOAuthState", "isTokenExpired"]
+        },
+        {
+          "file": "packages/opencode/src/mcp/oauth-provider.ts",
+          "description": "Implements OAuthClientProvider from @modelcontextprotocol/sdk/client/auth.js — handles dynamic client registration, token storage, code verifier management"
+        },
+        {
+          "file": "packages/opencode/src/mcp/oauth-callback.ts",
+          "description": "Local HTTP callback server for OAuth redirect flow. Default port 19876, path /mcp/oauth/callback"
+        }
+      ]
+    },
+
+    "4_mcp_error_types": {
+      "errors": [
+        { "class": "NotFoundError", "tag": "MCP.NotFoundError", "file": "packages/opencode/src/mcp/index.ts:82", "fields": ["name: string"] },
+        { "const": "Failed", "file": "packages/opencode/src/mcp/index.ts:78", "kind": "NamedError", "fields": ["name: string"] },
+        { "class": "McpServerNotFoundError", "tag": "McpServerNotFoundError", "file": "packages/opencode/src/server/routes/instance/httpapi/errors.ts:143", "http_status": 404 },
+        { "class": "UnsupportedOAuthError", "tag": "McpUnsupportedOAuthError", "file": "packages/opencode/src/server/routes/instance/httpapi/groups/mcp.ts:27", "http_status": 400 }
+      ]
+    },
+
+    "5_mcp_http_api": {
+      "route_group": "packages/opencode/src/server/routes/instance/httpapi/groups/mcp.ts",
+      "handlers": "packages/opencode/src/server/routes/instance/httpapi/handlers/mcp.ts",
+      "endpoints": [
+        { "method": "GET", "path": "/mcp", "name": "status", "description": "Get all MCP server statuses" },
+        { "method": "POST", "path": "/mcp", "name": "add", "description": "Add/update an MCP server dynamically" },
+        { "method": "POST", "path": "/mcp/:name/connect", "name": "connect", "description": "Connect a server" },
+        { "method": "POST", "path": "/mcp/:name/disconnect", "name": "disconnect", "description": "Disconnect a server" },
+        { "method": "POST", "path": "/mcp/:name/auth", "name": "authStart", "description": "Start OAuth flow" },
+        { "method": "POST", "path": "/mcp/:name/auth/callback", "name": "authCallback", "description": "OAuth code exchange" },
+        { "method": "POST", "path": "/mcp/:name/auth/authenticate", "name": "authAuthenticate", "description": "Full OAuth (start + browser + callback)" },
+        { "method": "DELETE", "path": "/mcp/:name/auth", "name": "authRemove", "description": "Remove OAuth credentials" }
+      ],
+      "middleware": ["InstanceContextMiddleware", "WorkspaceRoutingMiddleware", "Authorization"]
+    },
+
+    "6_mcp_agent_integration": {
+      "tool_resolution": {
+        "file": "packages/opencode/src/session/tools.ts",
+        "flow": "SessionTools.resolve() yields MCP.Service, calls mcp.tools(), wraps each MCP tool via ai-sdk tool(). Tool execution goes through EffectBridge, emits 'tool.execute.before' and 'tool.execute.after' plugin hooks with 'tool.type': 'mcp'.",
+        "key_lines": [43, 143, 173],
+        "permission_handling": "MCP tools call ctx.ask() for each execution with patterns: ['*'], always: ['*']. MCP tools are excluded from infinite-approval loops in llm.ts:162."
+      },
+      "prompt_context": {
+        "file": "packages/opencode/src/session/prompt.ts",
+        "flow": "SessionPrompt.build() yields MCP.Service to read MCP resources (line 808) and get MCP prompts. Resources are injected as context blocks; errors render as text blocks.",
+        "layer_provision": "MCP.defaultLayer provided at line 1649, MCP.Service in context scope at line 1399"
+      },
+      "acp_integration": {
+        "file": "packages/opencode/src/acp-next/service.ts",
+        "flow": "ACP sessions register MCP servers via registerMcpServers() (line 932). Called during newSession, loadSession, forkSession, resumeSession. Converts ACP McpServer type to internal config via mcpConfig() helper (line 987)."
+      }
+    },
+
+    "7_mcp_desktop_ipc_and_ui": {
+      "desktop_ipc": {
+        "channels": {
+          "GET_DESKTOP_MCP_SERVERS": {
+            "channel": "opencode:get-desktop-mcp-servers",
+            "file": "packages/desktop/src/main/ipc-channels.ts:59",
+            "handler": "packages/desktop/src/main/ipc-config.ts:58",
+            "returns": "McpServerEntry[]"
+          },
+          "SET_DESKTOP_MCP_SERVERS": {
+            "channel": "opencode:set-desktop-mcp-servers",
+            "file": "packages/desktop/src/main/ipc-channels.ts:60",
+            "handler": "packages/desktop/src/main/ipc-config.ts:71",
+            "returns": "{ servers: McpServerEntry[], dropped: number }"
+          }
+        },
+        "store_key": "desktop-mcp-servers (electron-store, reserved in ipc-store.ts:9)",
+        "preload_bridge": "packages/desktop/src/preload/index.ts:53-54 — getMcpServers(), setMcpServers()",
+        "validation": "packages/desktop/src/main/ipc-validation.ts — validateAndFilterMcpServers()",
+        "capabilities": "packages/desktop/src/main/ipc-capabilities.ts — mcp: true (desktop always has MCP support)"
+      },
+      "renderer_data_layer": {
+        "server_sync_query": "packages/app/src/context/server-sync.tsx:49-69 — loadMcpQuery() uses useQuery with key [directory, 'mcp'], calls sdk.mcp.status()",
+        "global_sync_store": "packages/app/src/context/global-sync/types.ts — State.mcp, State.mcp_ready",
+        "child_store": "packages/app/src/context/global-sync/child-store.ts:177-223 — populates mcp/mcp_ready from query result",
+        "types": "packages/app/src/types/mcp.ts — McpServerEntry, McpServerConfig, McpLocalConfig, McpRemoteConfig"
+      },
+      "ui_components": [
+        {
+          "file": "packages/app/src/components/dialog-select-mcp.tsx",
+          "description": "Main MCP management dialog — list mode (server list with colored status dots: green=connected, red=failed, yellow=needs_auth/needs_client_registration, gray=disabled), add/edit form mode, enable/disable toggle, connect/disconnect, auth button, CRUD via sdk.client.mcp.*"
+        },
+        {
+          "file": "packages/app/src/components/dialog-edit-mcp.tsx",
+          "description": "Form fragment rendered inside DialogSelectMcp — Name, Type (local/remote radio), Command, URL, Timeout fields; signal-based form state"
+        },
+        {
+          "file": "packages/app/src/components/status-popover.tsx",
+          "description": "Titlebar health indicator dot — mcpIssue() evaluates MCP status: critical (failed/needs_client_registration→red), warning (needs_auth→yellow), healthy (green); factors into overall health"
+        },
+        {
+          "file": "packages/app/src/components/status-popover-body.tsx",
+          "description": "MCP tab in status popover dropdown — lists all servers from sync.data.mcp, shows status dot + connect/disconnect toggle + auth button; mcpConnected() count in tab label"
+        },
+        {
+          "file": "packages/app/src/pages/session/use-session-commands.tsx",
+          "description": "Slash command /mcp → 'Toggle MCPs' → opens DialogSelectMcp; category MCP"
+        },
+        {
+          "file": "packages/app/src/context/inspector.tsx",
+          "description": "EventCategory 'mcp' with icon 🔌 — events with type starting 'mcp.' auto-classified"
+        },
+        {
+          "file": "packages/app/src/pages/error.tsx",
+          "description": "Handles 'MCPFailed' init error with message: MCP server '{name}' failed"
+        },
+        {
+          "file": "packages/app/src/components/dialog-settings.tsx",
+          "description": "MCP settings tab planned but UNIMPLEMENTED — i18n keys exist in all 17 locales but no settings component"
+        },
+        {
+          "file": "packages/app/src/components/prompt-input/slash-popover.tsx",
+          "description": "Shows 'mcp' badge label for commands with source === 'mcp'"
+        },
+        {
+          "file": "packages/app/src/components/key-hint-overlay.tsx",
+          "description": "Shows MCP key binding label"
+        }
+      ],
+      "browser_api": {
+        "file": "packages/app/src/browser-api.ts",
+        "description": "getMcpServers()/setMcpServers() — pass-through to desktop IPC, no-op in browser mode"
+      },
+      "i18n": "All 17 locales in packages/app/src/i18n/ contain MCP strings: command.category.mcp, mcp.status.{connected,failed,needs_auth,needs_client_registration,disabled}, dialog.mcp.*, settings.mcp.*, status.popover.tab.mcp",
+      "electron_api_type": "packages/app/src/app.tsx:84-85 — ElectronAPI.getMcpServers, ElectronAPI.setMcpServers"
+    },
+
+    "8_mcp_debug_events": {
+      "file": "packages/opencode/src/debug/debug-packet.ts:64-70",
+      "type": "McpEvent = { serverName: string, eventType: 'request'|'response'|'error', toolName?: string, timestamp: string, durationMs?: number }",
+      "export": "Included in DebugPacketSession.mcpEvents[], exported as mcp-events.json in debug export (debug-export.ts:99)"
+    },
+
+    "9_mcp_sdk": {
+      "sdk_package": "@modelcontextprotocol/sdk",
+      "imports_in_mcp_index": [
+        "Client from @modelcontextprotocol/sdk/client/index.js",
+        "StreamableHTTPClientTransport from @modelcontextprotocol/sdk/client/streamableHttp.js",
+        "SSEClientTransport from @modelcontextprotocol/sdk/client/sse.js",
+        "StdioClientTransport from @modelcontextprotocol/sdk/client/stdio.js",
+        "UnauthorizedError from @modelcontextprotocol/sdk/client/auth.js",
+        "CallToolResultSchema, ListToolsResultSchema, ToolSchema, ToolListChangedNotificationSchema from @modelcontextprotocol/sdk/types.js"
+      ],
+      "tool_wrapping": "Uses ai-sdk's dynamicTool(), jsonSchema(), and asSchema() to convert MCP tools to Vercel AI SDK Tool format"
+    },
+
+    "10_plugin_and_capability_registry": {
+      "plugin_service": {
+        "file": "packages/opencode/src/plugin/index.ts (522 lines)",
+        "service": "Plugin.Service (@opencode/Plugin)",
+        "interface_methods": ["trigger (hook dispatch)", "list (list plugins)", "init (initialize)", "checkCapability", "getRegistry", "unquarantine", "getCrashStatus"]
+      },
+      "capability_registry": {
+        "files": [
+          "packages/opencode/src/plugin/capability/index.ts",
+          "packages/opencode/src/plugin/capability/registry.ts",
+          "packages/opencode/src/plugin/capability/hook-dispatch-guard.ts",
+          "packages/opencode/src/plugin/capability/enforcer.ts"
+        ],
+        "key_exports": ["Registry (as CapabilityRegistry)", "makeCapabilityRegistry", "checkCapability", "HOOK_CAPABILITY_MAP", "ALWAYS_ALLOWED_HOOKS", "makeFallbackState", "makeHookDispatchGuard", "HookDispatchGuard", "TrustLevel"],
+        "description": "Capability registry maps hooks to required capabilities. Hook dispatch guard checks trust levels and capability grants before allowing hook execution. Plugins declare capabilities; the registry enforces them."
+      },
+      "plugin_health": {
+        "mechanism": "PluginHealthStore (line 51) tracks crash counts. After 3 crashes within 30 minutes, plugin is quarantined. unquarantine() resets. HealthRegistry integration at line 45."
+      },
+      "mcp_relationship": "The plugin system does NOT directly manage MCP servers. MCP tools are surfaced separately via MCP.Service → SessionTools.resolve(). Plugins provide auth hooks (tool.execute.before/after) that wrap MCP tool execution. The capability registry governs which hooks each plugin can register."
+    },
+
+    "11_sidecar_ipc": {
+      "sidecar_process": {
+        "file": "packages/desktop/src/main/sidecar.ts",
+        "description": "Electron utilityProcess that runs the opencode backend server. Forked via utilityProcess.fork at line 32. The sidecar runs the HTTP API server on an available port.",
+        "entry_point": "packages/desktop/src/main/server.ts:76 — const sidecar = join(dirname(fileURLToPath(import.meta.url)), 'sidecar.js')"
+      },
+      "ipc_channels": {
+        "file": "packages/desktop/src/main/ipc-channels.ts",
+        "all_channels_summary": "Defines ~40+ IPC channels covering: config (get/set), accounts (CRUD), auth (OAuth flows), MCP servers, custom agents, desktop state, workspace, CLI install, auto-update, doctor, sessions, logs, permissions, GitHub OAuth, and more.",
+        "mcp_specific": ["GET_DESKTOP_MCP_SERVERS", "SET_DESKTOP_MCP_SERVERS", "DESKTOP_MCP_SERVERS (store key)"] 
+      },
+      "ipc_contract": {
+        "file": "packages/desktop/src/main/ipc-contract.ts",
+        "description": "Type-safe IPC contract defining parameter types, return types, and channel strings for all ~40+ IPC handlers",
+        "mcp_entries": {
+          "getMcpServers": "() => Promise<McpServerEntry[]>",
+          "setMcpServers": "(servers: McpServerEntry[]) => Promise<{ servers: McpServerEntry[], dropped: number }>"
+        }
+      },
+      "ipc_config_handler": {
+        "file": "packages/desktop/src/main/ipc-config.ts",
+        "mcp_functions": ["validateAndFilterMcpServers() — validates server entries, filters out invalid ones, returns {servers, dropped}"]
+      },
+      "preload_bridge": {
+        "file": "packages/desktop/src/preload/index.ts",
+        "exposed_functions": ["getMcpServers: () => typedInvoke(IPC.handle.GET_DESKTOP_MCP_SERVERS)", "setMcpServers: (servers) => typedInvoke(IPC.handle.SET_DESKTOP_MCP_SERVERS, servers)"]
+      },
+      "known_issues": [
+        "sidecar.ts uses Object.assign(process.env, {...}) to pass credentials — affects all subsequent code (rl-004-secrets-policy)",
+        "Desktop doctor checks (PGlite, MCP) run in sidecar, not main process — cross-process bridge needed (desktop-doctor-design-critic)"
+      ]
+    },
+
+    "12_tests": {
+      "mcp_tests": [
+        {
+          "file": "packages/opencode/test/server/httpapi-mcp.test.ts",
+          "summary": "HTTP API integration tests: status endpoint, add/connect/disconnect flow, OAuth endpoints (unsupported errors), typed NotFoundError responses. Uses testEffect with TestInstance fixture.",
+          "test_count": "6 test cases (describe block)"
+        },
+        {
+          "file": "packages/opencode/test/server/httpapi-mcp-oauth.test.ts",
+          "summary": "OAuth HTTP API integration test with mocked handlers. Verifies oauthState preservation during startAuth.",
+          "test_count": "1 test case"
+        },
+        {
+          "file": "packages/app/src/components/dialog-edit-mcp.test.ts",
+          "summary": "UI component tests for DialogEditMcp form: renders in add/edit mode, Cancel button, save for remote config, save button not disabled. Uses mountDialog harness.",
+          "test_count": "6 test cases"
+        },
+        {
+          "file": "packages/app/src/components/dialog-mcp.test.ts",
+          "summary": "UI component tests for DialogSelectMcp: renders, dispose, empty state, Add MCP Server button.",
+          "test_count": "4 test cases"
+        },
+        {
+          "file": "packages/desktop/tests/ipc-validation.test.ts",
+          "summary": "IPC validation tests including validateAndFilterMcpServers() for valid, invalid, empty, null, and filter-enabled-only inputs."
+        }
+      ],
+      "no_tests_for": [
+        "MCP.Service core logic (index.ts) — no direct unit tests for connect, disconnect, tool listing, watch, OAuth flow, reconnection/retry",
+        "MCP tool conversion (convertMcpTool)",
+        "MCP resource/prompt retrieval",
+        "McpAuth.Service — no direct unit tests",
+        "McpOAuthProvider — no direct unit tests",
+        "McpOAuthCallback — no direct unit tests",
+        "Capability registry — no direct unit tests found",
+        "Plugin health/quarantine — no direct unit tests found"
+      ],
+      "coverage_summary": "MCP has only HTTP API integration tests (end-to-end via HTTP) and UI component tests. No unit tests for the core MCP Service, auth, OAuth provider, or capability registry."
+    },
+
+    "13_mcp_lifecycle_summary": {
+      "lifecycle": [
+        "1. CONFIGURATION: MCP servers defined in opencode.json under 'mcp' key → validated by ConfigMCP schema (Local | Remote discriminated union)",
+        "2. REGISTRATION: Config.Info loads MCP entries → MCP.Service.init() reads config, filters enabled servers",
+        "3. CONNECTION: Each enabled server: create transport (Stdio/HTTP/SSE) → new Client({name:'opencode', version}) → transport.start() with retry({times:4})",
+        "4. AUTH (if needed): detect OAuth metadata → McpOAuthProvider handles flow → callback server on port 19876 → tokens stored in mcp-auth.json",
+        "5. DISCOVERY: client.listTools() → convertMcpTool() wraps each as ai-sdk Tool → stored in State.tools[name]",
+        "6. WATCH: ToolListChangedNotificationSchema handler → re-lists tools on change → emits ToolsChanged bus event",
+        "7. AGENT USAGE: SessionTools.resolve() yields MCP.Service → mcp.tools() returns all tools → each MCP tool wrapped with ask() permission, EffectBridge async bridge, plugin hooks, span tracing",
+        "8. STATUS REPORTING: MCP.Service.status() → reported via HTTP API (/mcp) → surfaced to UI via IPC bridge → DialogSelectMcp shows health indicators",
+        "9. DISCONNECTION: closeClient() → transport.close() → client.close() → removes from State.clients",
+        "10. DYNAMIC ADD/REMOVE: MCP.Service.add() → stores in config → connects → MCP.Service.removeAuth() → removes from config + auth storage"
+      ],
+      "layer_composition": "MCP.defaultLayer = layer.pipe(Layer.provide(McpAuth.layer), Layer.provide(Bus.layer), Layer.provide(Config.defaultLayer), Layer.provide(CrossSpawnSpawner.defaultLayer), Layer.provide(AppFileSystem.defaultLayer)) — wired into AppLayer in app-runtime.ts:42"
+    }
+  }
+}

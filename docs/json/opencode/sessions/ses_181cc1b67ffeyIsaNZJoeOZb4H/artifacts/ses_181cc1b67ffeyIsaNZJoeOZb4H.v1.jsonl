@@ -1,0 +1,4 @@
+{"at":"2026-05-31T13:23:15.004Z","tool":"smart_bun","action":"ran","command":"test","exit_code":1,"cwd":"packages/opencode"}
+{"at":"2026-05-31T13:23:23.423Z","tool":"smart_bun","action":"ran","command":"test","exit_code":1,"cwd":"packages/opencode"}
+{"at":"2026-05-31T13:23:43.226Z","tool":"smart_bash","action":"bash","command":"exec bun test packages/opencode/test/campaign/service-lifecycle.test.ts 2>&1; echo \"EXIT:$?\"","exit_code":1}
+{"at":"2026-05-31T13:23:49.325Z","tool":"smart_bash","action":"bash","command":"exec bun test test/campaign/service-lifecycle.test.ts 2>&1; echo \"EXIT:$?\"","exit_code":1}
