@@ -7,7 +7,7 @@ import DESCRIPTION from "./analytics.txt"
 
 const Parameters = Schema.Struct({
   metric: Schema.optional(Schema.String).annotate({
-    description: "bash | smart | heartbeat | feedback | all",
+    description: "bash | smart | heartbeat | feedback | tool_invocations | all",
   }),
   limit: Schema.optional(Schema.Number).annotate({
     description: "Max sessions to scan (default 50)",
@@ -49,6 +49,7 @@ export const AnalyticsTool = Tool.define(
             smart_calls: 0,
             heartbeats: 0,
             feedback: 0,
+            tool_invocations: 0,
           }
 
           for (const sessionDir of dirs) {
@@ -94,6 +95,17 @@ export const AnalyticsTool = Tool.define(
                 try {
                   const content = yield* fs.readFileString(fp)
                   summary.feedback! += content.split("\n").filter(Boolean).length
+                } catch { /* skip */ }
+              }
+            }
+
+            if (metric === "all" || metric === "tool_invocations") {
+              const tp = path.join(analyticsDir, "tool_invocations.v1.jsonl")
+              const tpExists = yield* fs.existsSafe(tp)
+              if (tpExists) {
+                try {
+                  const content = yield* fs.readFileString(tp)
+                  summary.tool_invocations! += content.split("\n").filter(Boolean).length
                 } catch { /* skip */ }
               }
             }
