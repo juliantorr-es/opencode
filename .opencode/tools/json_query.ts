@@ -1,28 +1,77 @@
 import { tool } from "@opencode-ai/plugin"
+import { spawnSync } from "node:child_process"
 import { resolve } from "node:path"
-import { existsSync, readFileSync } from "node:fs"
-
-function resolvePath(worktree: string, p: string): string { return resolve(worktree, p) }
+import { existsSync } from "node:fs"
 
 export default tool({
-  description: "Query a JSON file with a jq-style path expression. Returns the matched value.",
+  description: "Query JSON files using jql (Rust) — 20x faster than jq. Returns structured results. Use for roadmap queries, config inspection, artifact analysis, and any JSON exploration.",
   args: {
-    file: tool.schema.string().describe("JSON file to query"),
-    query: tool.schema.string().describe("Dot-separated path: 'scripts.typecheck' or 'dependencies.effect'"),
+    query: tool.schema.string().describe("jql query expression. Examples: 'items[].status', '.agent.general-man-agent.permission.task', '.[] | select(.status==\"ready\")'"),
+    file: tool.schema.string().optional().describe("JSON file to query (relative to project root). If omitted, query is applied to the provided 'json' string."),
+    json: tool.schema.string().optional().describe("Inline JSON string to query. Use this instead of 'file' for small/piped JSON."),
+    max_results: tool.schema.number().optional().describe("Max results to return (default 100)"),
   },
   async execute(args, context) {
-    const path = resolvePath(context.worktree, args.file)
-    if (!existsSync(path)) return JSON.stringify({ status: "fail", error: `File not found: ${args.file}` }, null, 2)
+    const maxResults = args.max_results ?? 100
+    const jqlBinaries = ["jql", "/opt/homebrew/bin/jql", "/usr/local/bin/jql"]
 
-    let data: any
-    try { data = JSON.parse(readFileSync(path, "utf8")) } catch { return JSON.stringify({ status: "fail", error: "Invalid JSON" }, null, 2) }
-
-    const keys = args.query.split(".")
-    let current = data
-    for (const key of keys) {
-      if (current && typeof current === "object" && key in current) current = current[key]
-      else { current = undefined; break }
+    let input: string
+    if (args.json) {
+      input = args.json
+    } else if (args.file) {
+      const fullPath = resolve(context.worktree, args.file)
+      if (!existsSync(fullPath)) {
+        return JSON.stringify({ status: "error", error: `File not found: ${args.file}` }, null, 2)
+      }
+      // Read file and pipe to jql
+      const result = spawnSync("cat", [fullPath], { encoding: "utf8", maxBuffer: 1024 * 1024 * 5, timeout: 10000 })
+      if (result.error) return JSON.stringify({ status: "error", error: result.error.message }, null, 2)
+      input = result.stdout
+    } else {
+      return JSON.stringify({ error: "Provide either 'file' or 'json' parameter." }, null, 2)
     }
-    return JSON.stringify({ file: args.file, query: args.query, value: current }, null, 2)
+
+    // Try jql binaries
+    let stdout = ""
+    let stderr = ""
+    let used = ""
+    for (const bin of jqlBinaries) {
+      const result = spawnSync(bin, [args.query], {
+        input, encoding: "utf8", maxBuffer: 1024 * 1024 * 5, timeout: 15000,
+      })
+      if (!result.error && result.status === 0) {
+        stdout = result.stdout?.trim() || ""
+        stderr = result.stderr?.trim() || ""
+        used = bin
+        break
+      }
+    }
+
+    if (!used) {
+      return JSON.stringify({
+        status: "error",
+        error: "jql not found. Install with: brew install jql",
+        hint: "jql is a fast JSON query tool (Rust, 20x faster than jq).",
+      }, null, 2)
+    }
+
+    let parsed: any = stdout
+    try { parsed = JSON.parse(stdout) } catch {}
+
+    // Truncate large results
+    let truncated = false
+    if (Array.isArray(parsed) && parsed.length > maxResults) {
+      parsed = parsed.slice(0, maxResults)
+      truncated = true
+    }
+
+    return JSON.stringify({
+      status: "ok",
+      query: args.query,
+      backend: used,
+      results: parsed,
+      count: Array.isArray(parsed) ? parsed.length : 1,
+      truncated,
+    }, null, 2)
   },
 })

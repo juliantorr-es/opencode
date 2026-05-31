@@ -1,0 +1,12 @@
+{"at":"2026-05-31T10:15:11.444Z","tool":"smart_bash","action":"bash","command":"for f in .github/workflows/*.yml .github/workflows/*.yaml; do if [ -f \"$f\" ]; then basename \"$f\"; fi","exit_code":0}
+{"at":"2026-05-31T10:15:11.863Z","tool":"smart_bash","action":"bash","command":"for d in packages/*/; do echo \"$d\"; done","exit_code":0}
+{"at":"2026-05-31T10:24:31.797Z","tool":"smart_grep","action":"searched","pattern":"vite\\.config","results":30,"files":19}
+{"at":"2026-05-31T10:24:32.311Z","tool":"smart_grep","action":"searched","pattern":"esbuild","results":5,"files":2}
+{"at":"2026-05-31T10:28:20.367Z","tool":"smart_grep","action":"searched","pattern":"astr(o|al)","results":12,"files":1}
+{"at":"2026-05-31T10:28:21.170Z","tool":"smart_grep","action":"searched","pattern":"electron-vite|electron\\.vite","results":4,"files":1}
+{"at":"2026-05-31T10:28:21.944Z","tool":"smart_grep","action":"searched","pattern":"storybook","results":11,"files":2}
+{"at":"2026-05-31T10:37:16.222Z","tool":"smart_grep","action":"searched","pattern":"\"build\"","results":0,"files":0}
+{"at":"2026-05-31T10:37:20.885Z","tool":"smart_grep","action":"searched","pattern":"vite\\.config\\.(ts|js|mjs)","results":20,"files":11}
+{"at":"2026-05-31T10:41:41.238Z","tool":"smart_bash","action":"bash","command":"for f in packages/*/vite.config.* packages/*/*/vite.config.* packages/*/*/*/vite.config.* sdks/*/vit","exit_code":0}
+{"at":"2026-05-31T10:41:44.728Z","tool":"smart_bash","action":"bash","command":"for pkg in packages/enterprise packages/console/core packages/console/app packages/stats/core; do ec","exit_code":0}
+{"at":"2026-05-31T10:41:55.954Z","tool":"smart_grep","action":"searched","pattern":"\"build\"","results":10,"files":10}

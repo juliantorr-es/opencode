@@ -1,0 +1,48 @@
+{"at":"2026-05-31T10:48:56.093Z","session_id":"ses_1825d18c0ffeg7VS5wdAbNZoGV","agent":"exhibit-a","tool":"smart_find","phase":"started","detail":"*plugin*security*"}
+{"at":"2026-05-31T10:48:56.126Z","session_id":"ses_1825d18c0ffeg7VS5wdAbNZoGV","agent":"exhibit-a","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T10:48:56.876Z","session_id":"ses_1825d18c0ffeg7VS5wdAbNZoGV","agent":"exhibit-a","tool":"smart_find","phase":"started","detail":"*plugin*manifest*"}
+{"at":"2026-05-31T10:48:56.913Z","session_id":"ses_1825d18c0ffeg7VS5wdAbNZoGV","agent":"exhibit-a","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T10:52:24.023Z","session_id":"ses_1825d18c0ffeg7VS5wdAbNZoGV","agent":"exhibit-a","tool":"smart_find","phase":"started","detail":"*.ts"}
+{"at":"2026-05-31T10:52:24.137Z","session_id":"ses_1825d18c0ffeg7VS5wdAbNZoGV","agent":"exhibit-a","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T10:52:24.727Z","session_id":"ses_1825d18c0ffeg7VS5wdAbNZoGV","agent":"exhibit-a","tool":"smart_find","phase":"started","detail":"registry.ts"}
+{"at":"2026-05-31T10:52:24.769Z","session_id":"ses_1825d18c0ffeg7VS5wdAbNZoGV","agent":"exhibit-a","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T10:52:25.595Z","session_id":"ses_1825d18c0ffeg7VS5wdAbNZoGV","agent":"exhibit-a","tool":"smart_grep","phase":"started","detail":"redactConfig"}
+{"at":"2026-05-31T10:52:25.635Z","session_id":"ses_1825d18c0ffeg7VS5wdAbNZoGV","agent":"exhibit-a","tool":"smart_grep","phase":"completed","detail":"redactConfig"}
+{"at":"2026-05-31T10:56:23.642Z","session_id":"ses_1825d18c0ffeg7VS5wdAbNZoGV","agent":"exhibit-a","tool":"smart_bash","phase":"started","detail":"List plugin directory contents"}
+{"at":"2026-05-31T10:56:23.643Z","session_id":"ses_1825d18c0ffeg7VS5wdAbNZoGV","agent":"exhibit-a","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T10:56:24.305Z","session_id":"ses_1825d18c0ffeg7VS5wdAbNZoGV","agent":"exhibit-a","tool":"smart_bash","phase":"started","detail":"List tool directory contents"}
+{"at":"2026-05-31T10:56:24.305Z","session_id":"ses_1825d18c0ffeg7VS5wdAbNZoGV","agent":"exhibit-a","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T11:06:14.189Z","session_id":"ses_1825d18c0ffeg7VS5wdAbNZoGV","agent":"exhibit-a","tool":"smart_bash","phase":"started","detail":"Read trigger function and surrounding code"}
+{"at":"2026-05-31T11:06:14.189Z","session_id":"ses_1825d18c0ffeg7VS5wdAbNZoGV","agent":"exhibit-a","tool":"smart_bash","phase":"rerouted","detail":"→ read_source"}
+{"at":"2026-05-31T11:06:17.847Z","session_id":"ses_1825d18c0ffeg7VS5wdAbNZoGV","agent":"exhibit-a","tool":"smart_bash","phase":"started","detail":"Read top of plugin/index.ts for state type"}
+{"at":"2026-05-31T11:06:17.847Z","session_id":"ses_1825d18c0ffeg7VS5wdAbNZoGV","agent":"exhibit-a","tool":"smart_bash","phase":"rerouted","detail":"→ read_source"}
+{"at":"2026-05-31T11:09:16.362Z","session_id":"ses_1825d18c0ffeg7VS5wdAbNZoGV","agent":"exhibit-a","tool":"smart_bash","phase":"started","detail":"Read entire plugin/index.ts to inspect all error paths"}
+{"at":"2026-05-31T11:09:16.362Z","session_id":"ses_1825d18c0ffeg7VS5wdAbNZoGV","agent":"exhibit-a","tool":"smart_bash","phase":"rerouted","detail":"→ read_source"}
+{"at":"2026-05-31T11:09:21.883Z","session_id":"ses_1825d18c0ffeg7VS5wdAbNZoGV","agent":"exhibit-a","tool":"smart_grep","phase":"started","detail":"const trigger"}
+{"at":"2026-05-31T11:09:21.948Z","session_id":"ses_1825d18c0ffeg7VS5wdAbNZoGV","agent":"exhibit-a","tool":"smart_grep","phase":"completed","detail":"const trigger"}
+{"at":"2026-05-31T11:09:22.833Z","session_id":"ses_1825d18c0ffeg7VS5wdAbNZoGV","agent":"exhibit-a","tool":"smart_grep","phase":"started","detail":"SECRET_PATTERNS"}
+{"at":"2026-05-31T11:09:22.853Z","session_id":"ses_1825d18c0ffeg7VS5wdAbNZoGV","agent":"exhibit-a","tool":"smart_grep","phase":"completed","detail":"SECRET_PATTERNS"}
+{"at":"2026-05-31T11:09:23.695Z","session_id":"ses_1825d18c0ffeg7VS5wdAbNZoGV","agent":"exhibit-a","tool":"smart_grep","phase":"started","detail":"HOOK_CAPABILITY_MAP"}
+{"at":"2026-05-31T11:09:23.701Z","session_id":"ses_1825d18c0ffeg7VS5wdAbNZoGV","agent":"exhibit-a","tool":"smart_grep","phase":"completed","detail":"HOOK_CAPABILITY_MAP"}
+{"at":"2026-05-31T11:12:32.049Z","session_id":"ses_1825d18c0ffeg7VS5wdAbNZoGV","agent":"exhibit-a","tool":"smart_bash","phase":"started","detail":"Read first 200 lines of plugin/index.ts"}
+{"at":"2026-05-31T11:12:32.127Z","session_id":"ses_1825d18c0ffeg7VS5wdAbNZoGV","agent":"exhibit-a","tool":"smart_bash","phase":"completed","detail":"head exit=0"}
+{"at":"2026-05-31T11:14:54.148Z","session_id":"ses_1825d18c0ffeg7VS5wdAbNZoGV","agent":"exhibit-a","tool":"smart_bash","phase":"started","detail":"Read remaining lines of plugin/index.ts"}
+{"at":"2026-05-31T11:17:11.889Z","session_id":"ses_1825d18c0ffeg7VS5wdAbNZoGV","agent":"exhibit-a","tool":"smart_bash","phase":"started","detail":"Read lines 200+ of plugin/index.ts"}
+{"at":"2026-05-31T11:17:11.938Z","session_id":"ses_1825d18c0ffeg7VS5wdAbNZoGV","agent":"exhibit-a","tool":"smart_bash","phase":"completed","detail":"tail exit=0"}
+{"at":"2026-05-31T11:20:06.955Z","session_id":"ses_1825d18c0ffeg7VS5wdAbNZoGV","agent":"exhibit-a","tool":"smart_bash","phase":"started","detail":"Read trigger function from line 420 onward"}
+{"at":"2026-05-31T11:20:06.978Z","session_id":"ses_1825d18c0ffeg7VS5wdAbNZoGV","agent":"exhibit-a","tool":"smart_bash","phase":"completed","detail":"tail exit=0"}
+{"at":"2026-05-31T11:22:33.709Z","session_id":"ses_1825d18c0ffeg7VS5wdAbNZoGV","agent":"exhibit-a","tool":"smart_bash","phase":"started","detail":"Read trigger function from line 440 onward"}
+{"at":"2026-05-31T11:22:33.736Z","session_id":"ses_1825d18c0ffeg7VS5wdAbNZoGV","agent":"exhibit-a","tool":"smart_bash","phase":"completed","detail":"tail exit=0"}
+{"at":"2026-05-31T11:25:19.441Z","session_id":"ses_1825d18c0ffeg7VS5wdAbNZoGV","agent":"exhibit-a","tool":"smart_bash","phase":"started","detail":"List capability directory contents"}
+{"at":"2026-05-31T11:25:19.441Z","session_id":"ses_1825d18c0ffeg7VS5wdAbNZoGV","agent":"exhibit-a","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T11:25:20.355Z","session_id":"ses_1825d18c0ffeg7VS5wdAbNZoGV","agent":"exhibit-a","tool":"smart_grep","phase":"started","detail":"SENSITIVE_PATTERNS"}
+{"at":"2026-05-31T11:25:20.398Z","session_id":"ses_1825d18c0ffeg7VS5wdAbNZoGV","agent":"exhibit-a","tool":"smart_grep","phase":"completed","detail":"SENSITIVE_PATTERNS"}
+{"at":"2026-05-31T11:28:13.182Z","session_id":"ses_1825d18c0ffeg7VS5wdAbNZoGV","agent":"exhibit-a","tool":"smart_bash","phase":"started","detail":"List capability module files"}
+{"at":"2026-05-31T11:28:13.182Z","session_id":"ses_1825d18c0ffeg7VS5wdAbNZoGV","agent":"exhibit-a","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T11:28:14.116Z","session_id":"ses_1825d18c0ffeg7VS5wdAbNZoGV","agent":"exhibit-a","tool":"smart_bash","phase":"started","detail":"Read SENSITIVE_PATTERNS and redactConfig functions"}
+{"at":"2026-05-31T11:28:14.117Z","session_id":"ses_1825d18c0ffeg7VS5wdAbNZoGV","agent":"exhibit-a","tool":"smart_bash","phase":"rerouted","detail":"→ read_source"}
+{"at":"2026-05-31T11:30:58.864Z","session_id":"ses_1825d18c0ffeg7VS5wdAbNZoGV","agent":"exhibit-a","tool":"smart_bash","phase":"started","detail":"Read redactConfig functions"}
+{"at":"2026-05-31T11:30:59.912Z","session_id":"ses_1825d18c0ffeg7VS5wdAbNZoGV","agent":"exhibit-a","tool":"smart_bash","phase":"started","detail":"List capability files with fallback"}
+{"at":"2026-05-31T11:30:59.912Z","session_id":"ses_1825d18c0ffeg7VS5wdAbNZoGV","agent":"exhibit-a","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T11:34:26.158Z","session_id":"ses_1825d18c0ffeg7VS5wdAbNZoGV","agent":"exhibit-a","tool":"smart_bash","phase":"started","detail":"Find capability files"}
+{"at":"2026-05-31T11:34:26.158Z","session_id":"ses_1825d18c0ffeg7VS5wdAbNZoGV","agent":"exhibit-a","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}

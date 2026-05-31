@@ -36,3 +36,63 @@
 {"at":"2026-05-31T10:09:50.256Z","session_id":"ses_182828d52ffeVAP8vfZW5pOHkO","agent":"load-bearer","tool":"smart_find","phase":"failed","detail":"fd not available"}
 {"at":"2026-05-31T10:09:50.817Z","session_id":"ses_182828d52ffeVAP8vfZW5pOHkO","agent":"load-bearer","tool":"smart_find","phase":"started","detail":"package.json"}
 {"at":"2026-05-31T10:09:50.874Z","session_id":"ses_182828d52ffeVAP8vfZW5pOHkO","agent":"load-bearer","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T10:12:10.391Z","session_id":"ses_182828d52ffeVAP8vfZW5pOHkO","agent":"load-bearer","tool":"smart_bash","phase":"started","detail":"list workflow files"}
+{"at":"2026-05-31T10:12:10.391Z","session_id":"ses_182828d52ffeVAP8vfZW5pOHkO","agent":"load-bearer","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T10:12:11.157Z","session_id":"ses_182828d52ffeVAP8vfZW5pOHkO","agent":"load-bearer","tool":"smart_bash","phase":"started","detail":"list packages"}
+{"at":"2026-05-31T10:12:11.157Z","session_id":"ses_182828d52ffeVAP8vfZW5pOHkO","agent":"load-bearer","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T10:12:12.181Z","session_id":"ses_182828d52ffeVAP8vfZW5pOHkO","agent":"load-bearer","tool":"smart_bash","phase":"started","detail":"root package.json scripts"}
+{"at":"2026-05-31T10:12:12.181Z","session_id":"ses_182828d52ffeVAP8vfZW5pOHkO","agent":"load-bearer","tool":"smart_bash","phase":"rerouted","detail":"→ read_source"}
+{"at":"2026-05-31T10:12:13.163Z","session_id":"ses_182828d52ffeVAP8vfZW5pOHkO","agent":"load-bearer","tool":"smart_bash","phase":"started","detail":"check AGENTS.md ADR reference"}
+{"at":"2026-05-31T10:12:13.164Z","session_id":"ses_182828d52ffeVAP8vfZW5pOHkO","agent":"load-bearer","tool":"smart_bash","phase":"rerouted","detail":"→ read_source"}
+{"at":"2026-05-31T10:15:11.070Z","session_id":"ses_182828d52ffeVAP8vfZW5pOHkO","agent":"load-bearer","tool":"smart_bash","phase":"started","detail":"list workflow yml files by iterating glob"}
+{"at":"2026-05-31T10:15:11.443Z","session_id":"ses_182828d52ffeVAP8vfZW5pOHkO","agent":"load-bearer","tool":"smart_bash","phase":"completed","detail":"for exit=0"}
+{"at":"2026-05-31T10:15:11.844Z","session_id":"ses_182828d52ffeVAP8vfZW5pOHkO","agent":"load-bearer","tool":"smart_bash","phase":"started","detail":"list packages directories via glob iteration"}
+{"at":"2026-05-31T10:15:11.863Z","session_id":"ses_182828d52ffeVAP8vfZW5pOHkO","agent":"load-bearer","tool":"smart_bash","phase":"completed","detail":"for exit=0"}
+{"at":"2026-05-31T10:24:31.327Z","session_id":"ses_182828d52ffeVAP8vfZW5pOHkO","agent":"load-bearer","tool":"smart_grep","phase":"started","detail":"vite\\.config"}
+{"at":"2026-05-31T10:24:31.796Z","session_id":"ses_182828d52ffeVAP8vfZW5pOHkO","agent":"load-bearer","tool":"smart_grep","phase":"completed","detail":"vite\\.config"}
+{"at":"2026-05-31T10:24:32.192Z","session_id":"ses_182828d52ffeVAP8vfZW5pOHkO","agent":"load-bearer","tool":"smart_grep","phase":"started","detail":"esbuild"}
+{"at":"2026-05-31T10:24:32.310Z","session_id":"ses_182828d52ffeVAP8vfZW5pOHkO","agent":"load-bearer","tool":"smart_grep","phase":"completed","detail":"esbuild"}
+{"at":"2026-05-31T10:24:33.117Z","session_id":"ses_182828d52ffeVAP8vfZW5pOHkO","agent":"load-bearer","tool":"smart_grep","phase":"started","detail":"bun_build|bun\\.build"}
+{"at":"2026-05-31T10:24:33.348Z","session_id":"ses_182828d52ffeVAP8vfZW5pOHkO","agent":"load-bearer","tool":"smart_grep","phase":"completed","detail":"bun_build|bun\\.build"}
+{"at":"2026-05-31T10:28:20.203Z","session_id":"ses_182828d52ffeVAP8vfZW5pOHkO","agent":"load-bearer","tool":"smart_grep","phase":"started","detail":"astr(o|al)"}
+{"at":"2026-05-31T10:28:20.367Z","session_id":"ses_182828d52ffeVAP8vfZW5pOHkO","agent":"load-bearer","tool":"smart_grep","phase":"completed","detail":"astr(o|al)"}
+{"at":"2026-05-31T10:28:21.051Z","session_id":"ses_182828d52ffeVAP8vfZW5pOHkO","agent":"load-bearer","tool":"smart_grep","phase":"started","detail":"electron-vite|electron\\.vite"}
+{"at":"2026-05-31T10:28:21.170Z","session_id":"ses_182828d52ffeVAP8vfZW5pOHkO","agent":"load-bearer","tool":"smart_grep","phase":"completed","detail":"electron-vite|electron\\.vite"}
+{"at":"2026-05-31T10:28:21.816Z","session_id":"ses_182828d52ffeVAP8vfZW5pOHkO","agent":"load-bearer","tool":"smart_grep","phase":"started","detail":"storybook"}
+{"at":"2026-05-31T10:28:21.944Z","session_id":"ses_182828d52ffeVAP8vfZW5pOHkO","agent":"load-bearer","tool":"smart_grep","phase":"completed","detail":"storybook"}
+{"at":"2026-05-31T10:28:22.643Z","session_id":"ses_182828d52ffeVAP8vfZW5pOHkO","agent":"load-bearer","tool":"smart_grep","phase":"started","detail":"docker|buildx"}
+{"at":"2026-05-31T10:28:22.796Z","session_id":"ses_182828d52ffeVAP8vfZW5pOHkO","agent":"load-bearer","tool":"smart_grep","phase":"completed","detail":"docker|buildx"}
+{"at":"2026-05-31T10:28:23.339Z","session_id":"ses_182828d52ffeVAP8vfZW5pOHkO","agent":"load-bearer","tool":"smart_grep","phase":"started","detail":"ADR|adr"}
+{"at":"2026-05-31T10:28:23.350Z","session_id":"ses_182828d52ffeVAP8vfZW5pOHkO","agent":"load-bearer","tool":"smart_grep","phase":"completed","detail":"ADR|adr"}
+{"at":"2026-05-31T10:33:03.574Z","session_id":"ses_182828d52ffeVAP8vfZW5pOHkO","agent":"load-bearer","tool":"smart_bash","phase":"started","detail":"list extensions and sdks directories"}
+{"at":"2026-05-31T10:33:03.575Z","session_id":"ses_182828d52ffeVAP8vfZW5pOHkO","agent":"load-bearer","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T10:33:04.265Z","session_id":"ses_182828d52ffeVAP8vfZW5pOHkO","agent":"load-bearer","tool":"smart_grep","phase":"started","detail":"\"test\""}
+{"at":"2026-05-31T10:33:04.278Z","session_id":"ses_182828d52ffeVAP8vfZW5pOHkO","agent":"load-bearer","tool":"smart_grep","phase":"completed","detail":"\"test\""}
+{"at":"2026-05-31T10:33:05.169Z","session_id":"ses_182828d52ffeVAP8vfZW5pOHkO","agent":"load-bearer","tool":"smart_grep","phase":"started","detail":"\"test\""}
+{"at":"2026-05-31T10:33:05.175Z","session_id":"ses_182828d52ffeVAP8vfZW5pOHkO","agent":"load-bearer","tool":"smart_grep","phase":"completed","detail":"\"test\""}
+{"at":"2026-05-31T10:33:05.948Z","session_id":"ses_182828d52ffeVAP8vfZW5pOHkO","agent":"load-bearer","tool":"smart_grep","phase":"started","detail":"\"test\""}
+{"at":"2026-05-31T10:33:05.957Z","session_id":"ses_182828d52ffeVAP8vfZW5pOHkO","agent":"load-bearer","tool":"smart_grep","phase":"completed","detail":"\"test\""}
+{"at":"2026-05-31T10:33:06.820Z","session_id":"ses_182828d52ffeVAP8vfZW5pOHkO","agent":"load-bearer","tool":"smart_grep","phase":"started","detail":"\"test\""}
+{"at":"2026-05-31T10:33:06.838Z","session_id":"ses_182828d52ffeVAP8vfZW5pOHkO","agent":"load-bearer","tool":"smart_grep","phase":"completed","detail":"\"test\""}
+{"at":"2026-05-31T10:37:16.216Z","session_id":"ses_182828d52ffeVAP8vfZW5pOHkO","agent":"load-bearer","tool":"smart_grep","phase":"started","detail":"\"build\""}
+{"at":"2026-05-31T10:37:16.222Z","session_id":"ses_182828d52ffeVAP8vfZW5pOHkO","agent":"load-bearer","tool":"smart_grep","phase":"completed","detail":"\"build\""}
+{"at":"2026-05-31T10:37:17.428Z","session_id":"ses_182828d52ffeVAP8vfZW5pOHkO","agent":"load-bearer","tool":"smart_grep","phase":"started","detail":"\\.test\\.|\\.spec\\."}
+{"at":"2026-05-31T10:37:17.442Z","session_id":"ses_182828d52ffeVAP8vfZW5pOHkO","agent":"load-bearer","tool":"smart_grep","phase":"completed","detail":"\\.test\\.|\\.spec\\."}
+{"at":"2026-05-31T10:37:18.478Z","session_id":"ses_182828d52ffeVAP8vfZW5pOHkO","agent":"load-bearer","tool":"smart_grep","phase":"started","detail":"\\.test\\.|\\.spec\\."}
+{"at":"2026-05-31T10:37:18.548Z","session_id":"ses_182828d52ffeVAP8vfZW5pOHkO","agent":"load-bearer","tool":"smart_grep","phase":"completed","detail":"\\.test\\.|\\.spec\\."}
+{"at":"2026-05-31T10:37:19.340Z","session_id":"ses_182828d52ffeVAP8vfZW5pOHkO","agent":"load-bearer","tool":"smart_grep","phase":"started","detail":"\\.test\\.|\\.spec\\."}
+{"at":"2026-05-31T10:37:19.352Z","session_id":"ses_182828d52ffeVAP8vfZW5pOHkO","agent":"load-bearer","tool":"smart_grep","phase":"completed","detail":"\\.test\\.|\\.spec\\."}
+{"at":"2026-05-31T10:37:20.408Z","session_id":"ses_182828d52ffeVAP8vfZW5pOHkO","agent":"load-bearer","tool":"smart_grep","phase":"started","detail":"vite\\.config\\.(ts|js|mjs)"}
+{"at":"2026-05-31T10:37:20.885Z","session_id":"ses_182828d52ffeVAP8vfZW5pOHkO","agent":"load-bearer","tool":"smart_grep","phase":"completed","detail":"vite\\.config\\.(ts|js|mjs)"}
+{"at":"2026-05-31T10:41:41.159Z","session_id":"ses_182828d52ffeVAP8vfZW5pOHkO","agent":"load-bearer","tool":"smart_bash","phase":"started","detail":"find all vite config and esbuild config files"}
+{"at":"2026-05-31T10:41:41.238Z","session_id":"ses_182828d52ffeVAP8vfZW5pOHkO","agent":"load-bearer","tool":"smart_bash","phase":"completed","detail":"for exit=0"}
+{"at":"2026-05-31T10:41:42.591Z","session_id":"ses_182828d52ffeVAP8vfZW5pOHkO","agent":"load-bearer","tool":"smart_bash","phase":"started","detail":"list sdks directory"}
+{"at":"2026-05-31T10:41:42.591Z","session_id":"ses_182828d52ffeVAP8vfZW5pOHkO","agent":"load-bearer","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T10:41:44.693Z","session_id":"ses_182828d52ffeVAP8vfZW5pOHkO","agent":"load-bearer","tool":"smart_bash","phase":"started","detail":"find test files in orphaned packages"}
+{"at":"2026-05-31T10:41:44.728Z","session_id":"ses_182828d52ffeVAP8vfZW5pOHkO","agent":"load-bearer","tool":"smart_bash","phase":"completed","detail":"for exit=0"}
+{"at":"2026-05-31T10:41:55.839Z","session_id":"ses_182828d52ffeVAP8vfZW5pOHkO","agent":"load-bearer","tool":"smart_grep","phase":"started","detail":"\"build\""}
+{"at":"2026-05-31T10:41:55.954Z","session_id":"ses_182828d52ffeVAP8vfZW5pOHkO","agent":"load-bearer","tool":"smart_grep","phase":"completed","detail":"\"build\""}
+{"at":"2026-05-31T10:41:57.471Z","session_id":"ses_182828d52ffeVAP8vfZW5pOHkO","agent":"load-bearer","tool":"smart_bash","phase":"started","detail":"check plugin and sdk build configs"}
+{"at":"2026-05-31T10:41:57.472Z","session_id":"ses_182828d52ffeVAP8vfZW5pOHkO","agent":"load-bearer","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T10:41:58.764Z","session_id":"ses_182828d52ffeVAP8vfZW5pOHkO","agent":"load-bearer","tool":"smart_bash","phase":"started","detail":"check vscode extension build config"}
+{"at":"2026-05-31T10:41:58.764Z","session_id":"ses_182828d52ffeVAP8vfZW5pOHkO","agent":"load-bearer","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}

@@ -1,0 +1,29 @@
+{"at":"2026-05-31T10:25:28.883Z","session_id":"ses_1826ee7edffepQ3ozr2udLO3jZ","agent":"coroner","tool":"smart_find","phase":"started","detail":"runtime-event.ts"}
+{"at":"2026-05-31T10:25:28.940Z","session_id":"ses_1826ee7edffepQ3ozr2udLO3jZ","agent":"coroner","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T10:26:13.779Z","session_id":"ses_1826ee7edffepQ3ozr2udLO3jZ","agent":"coroner","tool":"smart_grep","phase":"started","detail":"runtime-event"}
+{"at":"2026-05-31T10:26:13.798Z","session_id":"ses_1826ee7edffepQ3ozr2udLO3jZ","agent":"coroner","tool":"smart_grep","phase":"completed","detail":"runtime-event"}
+{"at":"2026-05-31T10:26:13.812Z","session_id":"ses_1826ee7edffepQ3ozr2udLO3jZ","agent":"coroner","tool":"smart_grep","phase":"started","detail":"augmentEvent"}
+{"at":"2026-05-31T10:26:13.838Z","session_id":"ses_1826ee7edffepQ3ozr2udLO3jZ","agent":"coroner","tool":"smart_grep","phase":"completed","detail":"augmentEvent"}
+{"at":"2026-05-31T10:27:19.705Z","session_id":"ses_1826ee7edffepQ3ozr2udLO3jZ","agent":"coroner","tool":"smart_grep","phase":"started","detail":"retryBudgets"}
+{"at":"2026-05-31T10:27:19.751Z","session_id":"ses_1826ee7edffepQ3ozr2udLO3jZ","agent":"coroner","tool":"smart_grep","phase":"completed","detail":"retryBudgets"}
+{"at":"2026-05-31T10:27:53.621Z","session_id":"ses_1826ee7edffepQ3ozr2udLO3jZ","agent":"coroner","tool":"smart_grep","phase":"started","detail":"PredicateContext"}
+{"at":"2026-05-31T10:27:53.633Z","session_id":"ses_1826ee7edffepQ3ozr2udLO3jZ","agent":"coroner","tool":"smart_grep","phase":"completed","detail":"PredicateContext"}
+{"at":"2026-05-31T10:27:54.534Z","session_id":"ses_1826ee7edffepQ3ozr2udLO3jZ","agent":"coroner","tool":"smart_grep","phase":"started","detail":"PredicateResult"}
+{"at":"2026-05-31T10:27:54.542Z","session_id":"ses_1826ee7edffepQ3ozr2udLO3jZ","agent":"coroner","tool":"smart_grep","phase":"completed","detail":"PredicateResult"}
+{"at":"2026-05-31T10:27:55.388Z","session_id":"ses_1826ee7edffepQ3ozr2udLO3jZ","agent":"coroner","tool":"smart_grep","phase":"started","detail":"PredicateSpec"}
+{"at":"2026-05-31T10:27:55.397Z","session_id":"ses_1826ee7edffepQ3ozr2udLO3jZ","agent":"coroner","tool":"smart_grep","phase":"completed","detail":"PredicateSpec"}
+{"at":"2026-05-31T10:28:29.440Z","session_id":"ses_1826ee7edffepQ3ozr2udLO3jZ","agent":"coroner","tool":"smart_grep","phase":"started","detail":"export interface (PredicateResult|PredicateContext|PredicateSpec)"}
+{"at":"2026-05-31T10:28:29.448Z","session_id":"ses_1826ee7edffepQ3ozr2udLO3jZ","agent":"coroner","tool":"smart_grep","phase":"completed","detail":"export interface (PredicateResult|PredicateContext|PredicateSpec)"}
+{"at":"2026-05-31T10:28:54.640Z","session_id":"ses_1826ee7edffepQ3ozr2udLO3jZ","agent":"coroner","tool":"smart_grep","phase":"started","detail":"export type PredicateSpec\""}
+{"at":"2026-05-31T10:28:54.646Z","session_id":"ses_1826ee7edffepQ3ozr2udLO3jZ","agent":"coroner","tool":"smart_grep","phase":"completed","detail":"export type PredicateSpec\""}
+{"at":"2026-05-31T10:29:21.460Z","session_id":"ses_1826ee7edffepQ3ozr2udLO3jZ","agent":"coroner","tool":"smart_grep","phase":"started","detail":"export type PredicateSpec"}
+{"at":"2026-05-31T10:29:21.470Z","session_id":"ses_1826ee7edffepQ3ozr2udLO3jZ","agent":"coroner","tool":"smart_grep","phase":"completed","detail":"export type PredicateSpec"}
+{"at":"2026-05-31T10:29:57.715Z","session_id":"ses_1826ee7edffepQ3ozr2udLO3jZ","agent":"coroner","tool":"smart_bash","phase":"started","detail":"Read the core type definitions including PredicateSpec discriminated union"}
+{"at":"2026-05-31T10:29:57.747Z","session_id":"ses_1826ee7edffepQ3ozr2udLO3jZ","agent":"coroner","tool":"smart_bash","phase":"completed","detail":"head exit=0"}
+{"at":"2026-05-31T10:30:23.815Z","session_id":"ses_1826ee7edffepQ3ozr2udLO3jZ","agent":"coroner","tool":"smart_bash","phase":"started","detail":"Read the PredicateResult, PredicateContext, and PredicateSpec type definitions"}
+{"at":"2026-05-31T10:32:37.682Z","session_id":"ses_1826ee7edffepQ3ozr2udLO3jZ","agent":"coroner","tool":"smart_bash","phase":"started","detail":"Read the PredicateResult, PredicateContext, and PredicateSpec type definitions"}
+{"at":"2026-05-31T10:32:37.693Z","session_id":"ses_1826ee7edffepQ3ozr2udLO3jZ","agent":"coroner","tool":"smart_bash","phase":"completed","detail":"awk exit=0"}
+{"at":"2026-05-31T10:33:12.239Z","session_id":"ses_1826ee7edffepQ3ozr2udLO3jZ","agent":"coroner","tool":"smart_bash","phase":"started","detail":"Read the full PredicateSpec discriminated union"}
+{"at":"2026-05-31T10:33:12.261Z","session_id":"ses_1826ee7edffepQ3ozr2udLO3jZ","agent":"coroner","tool":"smart_bash","phase":"completed","detail":"awk exit=0"}
+{"at":"2026-05-31T10:34:47.063Z","session_id":"ses_1826ee7edffepQ3ozr2udLO3jZ","agent":"coroner","tool":"smart_bash","phase":"started","detail":"Read the type definitions at the top of state-machine.ts"}
+{"at":"2026-05-31T10:34:47.129Z","session_id":"ses_1826ee7edffepQ3ozr2udLO3jZ","agent":"coroner","tool":"smart_bash","phase":"completed","detail":"awk exit=0"}

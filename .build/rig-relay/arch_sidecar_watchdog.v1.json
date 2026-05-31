@@ -281,6 +281,13 @@
   "apply_order": ["fix-B", "fix-C", "fix-D", "fix-A"],
   "apply_order_rationale": "B first (migration is prerequisite for database health signals), then C (SystemHealth service needed by D and A), then D (mode UI depends on health signals), then A last (watchdog is most complex and depends on mode transition infrastructure from C/D).",
   "rollback_plan": "Revert each fix in reverse order (A → D → C → B). Fix-A is purely additive — removing the watchdog wrapper and falling back to spawnLocalServer directly restores original behavior. Fix-D has new files that must be deleted on rollback.",
+  "subagent_findings": {
+    "foundation": "Confirmed Gap-1 (no restart), Gap-2 (fire-and-forget migrations). Gap-3 is FALSE POSITIVE — migration/ does not exist. CRITICAL: makeLocalPgAdapter() never calls applyMigrations() at all.",
+    "zoning_board": "1 BLOCKER (ZB-001): DatabaseInitError is plain Error, not Schema.TaggedErrorClass. 8 non-blocking findings: sidecar error type safety, duplicate SidecarMessage type, stale proposal docs. 5 positive patterns confirmed.",
+    "building_inspector": "3 BLOCKERS for fix-A: R-001 (process.exit kills app during restart), R-002 (no re-entrancy guard), R-003 (forkChild must be interrupted). 6 major risks, 5 minor risks identified.",
+    "load_bearer": "Zero breaking type changes for fix-D (degraded_mode already in InitStep union). Fix-C health endpoint extension backward-compatible. Fix-B makePgAdapter async ripple needs care.",
+    "blueprint": "4 bisect scripts designed, 10 existing tests to preserve, 38 new test cases across 6 suites. Test isolation via mocked utilityProcess, dependency injection for backoff, Effect test helpers for health gating."
+  },
   "out_of_scope": [
     "Live health monitoring dashboard in renderer (future enhancement)",
     "Automatic repair actions (e.g., auto-rebuild corrupt DB) — Safe Mode actions today are user-initiated",

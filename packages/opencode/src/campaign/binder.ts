@@ -153,10 +153,18 @@ export interface Interface {
 
   readonly getBindersByCampaignId: (campaignId: string) => Effect.Effect<Binder[]>
 
+  readonly addScoutReport: (laneId: string, ref: ArtifactRef) => Effect.Effect<void, BinderError>
+  readonly setArchitecturePlan: (laneId: string, ref: ArtifactRef) => Effect.Effect<void, BinderError>
+  readonly addCriticReview: (laneId: string, ref: ArtifactRef) => Effect.Effect<void, BinderError>
+  readonly addExecutionEvent: (laneId: string, ref: EventRef) => Effect.Effect<void, BinderError>
+  readonly addValidationResult: (laneId: string, result: ValidationResult) => Effect.Effect<void, BinderError>
+  readonly addRedTeamFinding: (laneId: string, finding: RedTeamFinding) => Effect.Effect<void, BinderError>
+  readonly setHandoffSummary: (laneId: string, summary: string) => Effect.Effect<void, BinderError>
+
   readonly addEvidence: (
     laneId: string,
     section: string,
-    artifact: ArtifactRef | EventRef,
+    artifact: unknown,
   ) => Effect.Effect<void, BinderError>
 
   readonly updateStatus: (
@@ -367,7 +375,7 @@ const make = Effect.gen(function* () {
           ...binder,
           status,
           ...(terminalStatus !== undefined ? { terminalStatus } : {}),
-          ...(status === "checkpointed" || status === "returned"
+          ...(status === "returned"
             ? { completedAt: evt.ts }
             : {}),
         }
@@ -509,7 +517,7 @@ const make = Effect.gen(function* () {
   const addEvidence = Effect.fn("Binder.addEvidence")(function* (
     laneId: string,
     section: string,
-    artifact: ArtifactRef | EventRef,
+    artifact: unknown,
   ) {
     const map = yield* Ref.get(store)
     const binder = map.get(laneId)
@@ -537,6 +545,28 @@ const make = Effect.gen(function* () {
     yield* recordBinderEvent(eventStore, "binder.evidence_added", laneId, { laneId, section, artifact })
   })
 
+  const addScoutReport = Effect.fn("Binder.addScoutReport")(function* (laneId: string, ref: ArtifactRef) {
+    return yield* addEvidence(laneId, "scoutReports", ref)
+  })
+  const setArchitecturePlan = Effect.fn("Binder.setArchitecturePlan")(function* (laneId: string, ref: ArtifactRef) {
+    return yield* addEvidence(laneId, "architecturePlan", ref)
+  })
+  const addCriticReview = Effect.fn("Binder.addCriticReview")(function* (laneId: string, ref: ArtifactRef) {
+    return yield* addEvidence(laneId, "criticReviews", ref)
+  })
+  const addExecutionEvent = Effect.fn("Binder.addExecutionEvent")(function* (laneId: string, ref: EventRef) {
+    return yield* addEvidence(laneId, "executionEvents", ref)
+  })
+  const addValidationResult = Effect.fn("Binder.addValidationResult")(function* (laneId: string, result: ValidationResult) {
+    return yield* addEvidence(laneId, "validationResults", result)
+  })
+  const addRedTeamFinding = Effect.fn("Binder.addRedTeamFinding")(function* (laneId: string, finding: RedTeamFinding) {
+    return yield* addEvidence(laneId, "redTeamFindings", finding)
+  })
+  const setHandoffSummary = Effect.fn("Binder.setHandoffSummary")(function* (laneId: string, summary: string) {
+    return yield* addEvidence(laneId, "handoffSummary", { type: "historian", path: `lane:${laneId}:historian`, summary, contentDigest: "" } satisfies ArtifactRef)
+  })
+
   const updateStatus = Effect.fn("Binder.updateStatus")(function* (
     laneId: string,
     status: LaneState,
@@ -553,7 +583,7 @@ const make = Effect.gen(function* () {
       ...binder,
       status,
       ...(terminalStatus !== undefined ? { terminalStatus } : {}),
-      ...(status === "checkpointed" || status === "returned"
+      ...(status === "returned" || terminalStatus !== undefined
         ? { completedAt: now }
         : {}),
     }
@@ -609,6 +639,13 @@ const make = Effect.gen(function* () {
     ensureBinder,
     getBinder,
     getBindersByCampaignId,
+    addScoutReport,
+    setArchitecturePlan,
+    addCriticReview,
+    addExecutionEvent,
+    addValidationResult,
+    addRedTeamFinding,
+    setHandoffSummary,
     addEvidence,
     updateStatus,
     finalizeBinder,

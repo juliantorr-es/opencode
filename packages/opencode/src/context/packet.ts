@@ -13,6 +13,7 @@ import { ContextInvalidationBus } from "./invalidation-bus"
 import { queryAgentHeatmap, rankWorkingSetFull } from "./duckdb-rank"
 import type { AgentHeatmapEntry, RankedFile } from "./duckdb-rank"
 import { Coordination } from "@/tool/coordination"
+import { createHash } from "node:crypto"
 
 const log = Log.create({ service: "context-packet" })
 
@@ -43,8 +44,13 @@ export interface ContextPacketL1 {
   workspace: {
     branch: string
     dirtyFiles: string[]
-    externalChangesDetected: boolean
-    agentChangesDetected: boolean
+    dirtyBreakdown: {
+      agentEdits: string[]
+      externalEdits: string[]
+      preExistingDirty: string[]
+      generatedFiles: string[]
+      snapshotUpdates: string[]
+    }
   }
   claims: {
     claimed: string[]
@@ -134,6 +140,41 @@ function isTestPath(p: string): boolean {
   return TEST_FILE_RE.test(p)
 }
 
+// ── Dirty file classification ─────────────────────────────
+
+const GENERATED_FILE_PATTERNS = [
+  "node_modules/",
+  "/dist/",
+  "/.build/",
+  ".generated.",
+]
+
+function isGeneratedFile(path: string): boolean {
+  return GENERATED_FILE_PATTERNS.some((p) => path.includes(p))
+}
+
+function isSnapshotFile(path: string): boolean {
+  return (
+    path.endsWith(".snap") ||
+    path.endsWith(".lock") ||
+    path.endsWith("pnpm-lock.yaml") ||
+    path.endsWith("bun.lockb")
+  )
+}
+
+type DirtyCategory = "agentEdits" | "externalEdits" | "preExistingDirty" | "generatedFiles" | "snapshotUpdates"
+
+function classifyDirtyFile(
+  path: string,
+  context: { claimedFiles: string[]; recentFilePaths: string[] },
+): DirtyCategory {
+  if (context.claimedFiles.includes(path)) return "agentEdits"
+  if (isGeneratedFile(path)) return "generatedFiles"
+  if (isSnapshotFile(path)) return "snapshotUpdates"
+  if (context.recentFilePaths.includes(path)) return "externalEdits"
+  return "preExistingDirty"
+}
+
 // ── Layer ──────────────────────────────────────────────────
 
 export const layer = Layer.effect(
@@ -209,12 +250,7 @@ export const layer = Layer.effect(
           } catch {
             // Non-critical fallback
           }
-          // Cross-session conflict detection via claim-ledger
-          //
-          // TODO(truth-closure): Conflict detection is session-level only. Files externally
-          // modified under this agent's reservation are not detected. Needs digest-based
-          // claim verification: for each reserved file, compute SHA-256 and compare against
-          // the claim's base digest. If mismatch without an agent edit event, flag as external change.
+          // Cross-session conflict detection via claim-ledger with digest-backed verification
           if (dirtyFiles.length > 0) {
             const reservations = yield* Effect.forEach(
               dirtyFiles,
@@ -225,18 +261,41 @@ export const layer = Layer.effect(
               const res = reservations[i]
               return res !== null && res.sessionId !== sessionId
             })
+            // Digest-backed external change detection for this session's reservations.
+            // For each reserved file with a baseDigest, compute current SHA-256 and
+            // compare. A mismatch without an agent edit event means external tampering.
+            for (const res of reservations) {
+              if (!res || res.sessionId !== sessionId || !res.baseDigest) continue
+              yield* Effect.tryPromise(async () => {
+                const file = Bun.file(res.path!)
+                if (!(await file.exists())) return
+                const content = await file.text()
+                const currentDigest = createHash("sha256").update(content).digest("hex")
+                if (currentDigest !== res.baseDigest && !recentFilePaths.includes(res.path!)) {
+                  conflictFiles.push(res.path!)
+                }
+              }).pipe(Effect.catchAll(() => Effect.void))
+            }
           }
         } catch (e) {
           log.warn("could not query coordination for claims", { error: String(e) })
         }
 
-        const agentEdits = dirtyFiles.filter((f) => claimedFiles.includes(f))
-        const externalEdits = dirtyFiles.filter((f) => !claimedFiles.includes(f))
+        const dirtyBreakdown = {
+          agentEdits: [] as string[],
+          externalEdits: [] as string[],
+          preExistingDirty: [] as string[],
+          generatedFiles: [] as string[],
+          snapshotUpdates: [] as string[],
+        }
+        for (const f of dirtyFiles) {
+          const cat = classifyDirtyFile(f, { claimedFiles, recentFilePaths })
+          dirtyBreakdown[cat].push(f)
+        }
         const workspace: ContextPacketL1["workspace"] = {
           branch,
           dirtyFiles,
-          externalChangesDetected: externalEdits.length > 0,
-          agentChangesDetected: agentEdits.length > 0,
+          dirtyBreakdown,
         }
 
         const claims: ContextPacketL1["claims"] = {

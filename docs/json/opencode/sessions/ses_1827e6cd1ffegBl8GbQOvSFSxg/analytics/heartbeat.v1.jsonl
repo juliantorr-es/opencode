@@ -1,0 +1,41 @@
+{"at":"2026-05-31T10:10:13.721Z","session_id":"ses_1827e6cd1ffegBl8GbQOvSFSxg","agent":"blueprint","tool":"smart_find","phase":"started","detail":"*.ts"}
+{"at":"2026-05-31T10:10:13.748Z","session_id":"ses_1827e6cd1ffegBl8GbQOvSFSxg","agent":"blueprint","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T10:10:14.494Z","session_id":"ses_1827e6cd1ffegBl8GbQOvSFSxg","agent":"blueprint","tool":"smart_find","phase":"started","detail":"*.test.ts"}
+{"at":"2026-05-31T10:10:14.514Z","session_id":"ses_1827e6cd1ffegBl8GbQOvSFSxg","agent":"blueprint","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T10:10:15.186Z","session_id":"ses_1827e6cd1ffegBl8GbQOvSFSxg","agent":"blueprint","tool":"smart_find","phase":"started","detail":"*.ts"}
+{"at":"2026-05-31T10:10:15.212Z","session_id":"ses_1827e6cd1ffegBl8GbQOvSFSxg","agent":"blueprint","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T10:12:26.569Z","session_id":"ses_1827e6cd1ffegBl8GbQOvSFSxg","agent":"blueprint","tool":"smart_bash","phase":"started","detail":"List plugin source files"}
+{"at":"2026-05-31T10:12:26.569Z","session_id":"ses_1827e6cd1ffegBl8GbQOvSFSxg","agent":"blueprint","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T10:12:27.368Z","session_id":"ses_1827e6cd1ffegBl8GbQOvSFSxg","agent":"blueprint","tool":"smart_bash","phase":"started","detail":"List existing test files"}
+{"at":"2026-05-31T10:12:27.370Z","session_id":"ses_1827e6cd1ffegBl8GbQOvSFSxg","agent":"blueprint","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T10:12:28.032Z","session_id":"ses_1827e6cd1ffegBl8GbQOvSFSxg","agent":"blueprint","tool":"smart_bash","phase":"started","detail":"List plugin package source files"}
+{"at":"2026-05-31T10:12:28.032Z","session_id":"ses_1827e6cd1ffegBl8GbQOvSFSxg","agent":"blueprint","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T10:12:28.891Z","session_id":"ses_1827e6cd1ffegBl8GbQOvSFSxg","agent":"blueprint","tool":"smart_bash","phase":"started","detail":"List capability files"}
+{"at":"2026-05-31T10:12:28.891Z","session_id":"ses_1827e6cd1ffegBl8GbQOvSFSxg","agent":"blueprint","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T10:15:32.097Z","session_id":"ses_1827e6cd1ffegBl8GbQOvSFSxg","agent":"blueprint","tool":"smart_bash","phase":"started","detail":"List plugin directory structure"}
+{"at":"2026-05-31T10:15:32.098Z","session_id":"ses_1827e6cd1ffegBl8GbQOvSFSxg","agent":"blueprint","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T10:18:22.178Z","session_id":"ses_1827e6cd1ffegBl8GbQOvSFSxg","agent":"blueprint","tool":"smart_find","phase":"started","detail":"*"}
+{"at":"2026-05-31T10:18:22.326Z","session_id":"ses_1827e6cd1ffegBl8GbQOvSFSxg","agent":"blueprint","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T10:18:23.111Z","session_id":"ses_1827e6cd1ffegBl8GbQOvSFSxg","agent":"blueprint","tool":"smart_find","phase":"started","detail":"*.test.ts"}
+{"at":"2026-05-31T10:18:23.226Z","session_id":"ses_1827e6cd1ffegBl8GbQOvSFSxg","agent":"blueprint","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T10:18:23.935Z","session_id":"ses_1827e6cd1ffegBl8GbQOvSFSxg","agent":"blueprint","tool":"smart_find","phase":"started","detail":"*"}
+{"at":"2026-05-31T10:18:24.095Z","session_id":"ses_1827e6cd1ffegBl8GbQOvSFSxg","agent":"blueprint","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T10:21:35.947Z","session_id":"ses_1827e6cd1ffegBl8GbQOvSFSxg","agent":"blueprint","tool":"smart_bash","phase":"started","detail":"List plugin source directory"}
+{"at":"2026-05-31T10:21:35.961Z","session_id":"ses_1827e6cd1ffegBl8GbQOvSFSxg","agent":"blueprint","tool":"smart_bash","phase":"completed","detail":"/bin/ls exit=0"}
+{"at":"2026-05-31T10:24:57.333Z","session_id":"ses_1827e6cd1ffegBl8GbQOvSFSxg","agent":"blueprint","tool":"smart_bash","phase":"started","detail":"List capability directory"}
+{"at":"2026-05-31T10:24:57.461Z","session_id":"ses_1827e6cd1ffegBl8GbQOvSFSxg","agent":"blueprint","tool":"smart_bash","phase":"completed","detail":"/bin/ls exit=0"}
+{"at":"2026-05-31T10:24:58.022Z","session_id":"ses_1827e6cd1ffegBl8GbQOvSFSxg","agent":"blueprint","tool":"smart_bash","phase":"started","detail":"List test directory"}
+{"at":"2026-05-31T10:24:58.041Z","session_id":"ses_1827e6cd1ffegBl8GbQOvSFSxg","agent":"blueprint","tool":"smart_bash","phase":"completed","detail":"/bin/ls exit=0"}
+{"at":"2026-05-31T10:24:59.102Z","session_id":"ses_1827e6cd1ffegBl8GbQOvSFSxg","agent":"blueprint","tool":"smart_bash","phase":"started","detail":"List plugin package source"}
+{"at":"2026-05-31T10:24:59.120Z","session_id":"ses_1827e6cd1ffegBl8GbQOvSFSxg","agent":"blueprint","tool":"smart_bash","phase":"completed","detail":"/bin/ls exit=0"}
+{"at":"2026-05-31T10:28:40.801Z","session_id":"ses_1827e6cd1ffegBl8GbQOvSFSxg","agent":"blueprint","tool":"smart_bash","phase":"started","detail":"List plugin test directory"}
+{"at":"2026-05-31T10:28:40.815Z","session_id":"ses_1827e6cd1ffegBl8GbQOvSFSxg","agent":"blueprint","tool":"smart_bash","phase":"completed","detail":"/bin/ls exit=0"}
+{"at":"2026-05-31T10:28:41.500Z","session_id":"ses_1827e6cd1ffegBl8GbQOvSFSxg","agent":"blueprint","tool":"smart_bash","phase":"started","detail":"List plugin package tests"}
+{"at":"2026-05-31T10:28:41.510Z","session_id":"ses_1827e6cd1ffegBl8GbQOvSFSxg","agent":"blueprint","tool":"smart_bash","phase":"completed","detail":"/bin/ls exit=0"}
+{"at":"2026-05-31T11:21:39.433Z","session_id":"ses_1827e6cd1ffegBl8GbQOvSFSxg","agent":"blueprint","tool":"smart_bash","phase":"started","detail":"Read PluginInput construction and layer factory"}
+{"at":"2026-05-31T11:27:28.947Z","session_id":"ses_1827e6cd1ffegBl8GbQOvSFSxg","agent":"blueprint","tool":"smart_bash","phase":"started","detail":"Read PluginInput construction lines"}
+{"at":"2026-05-31T11:27:28.966Z","session_id":"ses_1827e6cd1ffegBl8GbQOvSFSxg","agent":"blueprint","tool":"smart_bash","phase":"completed","detail":"awk exit=0"}
+{"at":"2026-05-31T11:30:24.865Z","session_id":"ses_1827e6cd1ffegBl8GbQOvSFSxg","agent":"blueprint","tool":"smart_bash","phase":"started","detail":"Read more of the layer factory "}
+{"at":"2026-05-31T11:30:24.886Z","session_id":"ses_1827e6cd1ffegBl8GbQOvSFSxg","agent":"blueprint","tool":"smart_bash","phase":"completed","detail":"awk exit=0"}
+{"at":"2026-05-31T11:33:10.653Z","session_id":"ses_1827e6cd1ffegBl8GbQOvSFSxg","agent":"blueprint","tool":"smart_grep","phase":"started","detail":"\"\\\\$\":|\\\\$:|input\\.\\\\$"}
+{"at":"2026-05-31T11:33:10.694Z","session_id":"ses_1827e6cd1ffegBl8GbQOvSFSxg","agent":"blueprint","tool":"smart_grep","phase":"completed","detail":"\"\\\\$\":|\\\\$:|input\\.\\\\$"}

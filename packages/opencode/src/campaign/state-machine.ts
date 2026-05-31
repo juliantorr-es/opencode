@@ -6,9 +6,10 @@
 //
 // reduceCampaignState is a pure deterministic function: same
 // events + spec always produces the same output state.
-// SM-003: predicate evaluation uses local heuristic predicates. Migration to typed campaign/predicates.ts pending.
+// SM-003: predicate evaluation delegates to typed campaign/predicates.ts (checkPredicate).
 
-import type { PredicateSpec } from "./predicates"
+import { checkPredicate, type PredicateSpec, type PredicateContext } from "./predicates"
+import type { RuntimeEvent as PredicateRuntimeEvent } from "../event/runtime-event"
 import { EventName } from "../event/event-names"
 
 // ── Entry Action Executor ─────────────────────────────────
@@ -280,130 +281,46 @@ export const CAMPAIGN_STATE_MACHINE: AgentMachineSpec = {
   },
 }
 
-// ── Predicate Evaluator (Heuristic) ───────────────────────
+// ── Predicate Evaluator (Adapter) ──────────────────────────
 
+/**
+ * Augment a simplified SMRuntimeEvent with fields needed by the
+ * typed predicate engine (predicates.ts). SMRuntimeEvent has only
+ * `type`, `timestamp`, and `payload`; the typed engine expects
+ * `eventType`, `ts`, `payloadJson`, `status`, `toolName`, `id`, etc.
+ */
+function augmentEvent(e: RuntimeEvent): PredicateRuntimeEvent {
+  const payload = e.payload as Record<string, unknown> | undefined
+  return {
+    type: e.type,
+    eventType: e.type,
+    timestamp: e.timestamp,
+    ts: e.timestamp ?? "",
+    id: e.timestamp ?? "",
+    sessionId: "",
+    runId: "",
+    actor: "system",
+    payload: e.payload,
+    payloadJson: e.payload,
+    status: payload?.status,
+    toolName: payload?.tool,
+  } as unknown as PredicateRuntimeEvent
+}
+
+// Adapter: delegates to typed predicate engine (predicates.ts)
 function evaluatePredicate(
   predicate: PredicateSpec,
   events: readonly RuntimeEvent[],
   state: CampaignState,
 ): boolean {
-  switch (predicate.kind) {
-    case "event_exists": {
-      const match = events.some(e => e.type === predicate.eventType)
-      if (!match) return false
-      if (predicate.after !== undefined) {
-        return events.some(
-          e => e.type === predicate.eventType && e.timestamp != null && e.timestamp >= predicate.after!,
-        )
-      }
-      return true
-    }
-    case "latest_validation_passed": {
-      if (predicate.afterLastEdit) {
-        const editEvents = events.filter(e => e.type === EventName.EditApplied)
-        if (editEvents.length > 0) {
-          const lastEdit = editEvents[editEvents.length - 1]!
-          return events.some(
-            e =>
-              e.type === EventName.ValidationCompleted &&
-              e.payload?.status === "pass" &&
-              (lastEdit.timestamp == null ||
-                (e.timestamp != null && e.timestamp >= lastEdit.timestamp)),
-          )
-        }
-      }
-      const validationEvents = events.filter(e => e.type === EventName.ValidationCompleted)
-      if (validationEvents.length === 0) return false
-      return validationEvents[validationEvents.length - 1]!.payload?.status === "pass"
-    }
-    case "claims_acquired": {
-      if (predicate.paths.length === 0) {
-        return events.some(e => e.type === EventName.ClaimsAcquired)
-      }
-      return (predicate.paths as readonly string[]).every(path =>
-        events.some(e => {
-          if (e.type !== EventName.ClaimsAcquired) return false
-          const acquiredFiles: string[] = (e.payload as Record<string, unknown> | undefined)?.files as string[] ?? []
-          return acquiredFiles.includes(path)
-        }),
-      )
-    }
-    case "has_claim_conflict":
-      return events.some(e => e.type === EventName.ClaimConflict)
-    case "permission_denied":
-      return events.some(
-        e =>
-          e.type === EventName.PermissionDenied &&
-          (e.payload as Record<string, unknown> | undefined)?.tool === predicate.tool,
-      )
-    case "retry_budget_remaining": {
-      const budget = state.retryBudgets[predicate.key] as number | undefined
-      return (budget ?? 0) > 0
-    }
-    case "repair_budget_exhausted": {
-      const budget = state.retryBudgets["repair"] as number | undefined
-      return (budget ?? 0) <= 0
-    }
-    case "user_approval_granted":
-      return events.some(
-        e =>
-          e.type === EventName.UserApproval &&
-          (e.payload as Record<string, unknown> | undefined)?.approvalType === predicate.approvalType,
-      )
-    case "context_sufficient":
-      return events.some(e => e.type === EventName.ContextSufficient)
-    case "scope_unsafe":
-      return events.some(e => e.type === EventName.ScopeUnsafe)
-    case "edit_applied":
-      return events.some(e => e.type === EventName.EditApplied)
-    case "new_validation_failure":
-      return events.some(
-        e =>
-          e.type === EventName.ValidationFailure &&
-          (e.payload as Record<string, unknown> | undefined)?.isNew === true,
-      )
-    case "failures_existed_before_edit":
-      return events.some(
-        e =>
-          e.type === EventName.ValidationFailure &&
-          (e.payload as Record<string, unknown> | undefined)?.isNew !== true,
-      )
-    case "all_children_complete":
-      return events.some(e => e.type === EventName.ChildrenAllComplete)
-    case "child_blocked":
-      return events.some(e => e.type === EventName.ChildBlocked)
-    case "no_blocking_findings": {
-      const completed = events.filter(e => e.type === EventName.RedteamCompleted)
-      if (completed.length === 0) return false
-      const last = completed[completed.length - 1]!
-      const blockingFindings = (last.payload as Record<string, number> | undefined)?.blockingFindings
-      if (blockingFindings !== 0) return false
-      return !events.some(e => e.type === EventName.FindingBlocking)
-    }
-    case "finding_confirmed":
-      return events.some(e => e.type === EventName.FindingConfirmed)
-    case "finding_blocking":
-      return events.some(e => e.type === EventName.FindingBlocking)
-    case "redteam_completed": {
-      const completed = events.filter(e => e.type === EventName.RedteamCompleted)
-      if (completed.length === 0) return false
-      const last = completed[completed.length - 1]!
-      return (last.payload as Record<string, number> | undefined)?.blockingFindings === 0
-    }
-    case "plan_produced":
-      return events.some(e => e.type === EventName.PlanProduced)
-    case "plan_approved":
-      return events.some(e => e.type === EventName.PlanApproved)
-    case "plan_rejected":
-      return events.some(e => e.type === EventName.PlanRejected)
-    case "scout_completed":
-      return events.some(e => e.type === EventName.ScoutCompleted)
-    case "scope_synthesized":
-      return events.some(e => e.type === EventName.ScopeSynthesized)
-    case "all_gates_pass":
-      return events.some(e => e.type === EventName.GatesAllPassed)
+  const ctx: PredicateContext = {
+    events: events.map(augmentEvent),
+    fileMemory: new Map(),
+    claims: [],
+    sessionId: "",
+    retryBudgets: state.retryBudgets,
   }
-  return false
+  return checkPredicate(predicate, ctx).satisfied
 }
 
 // ── Deterministic Reducer ─────────────────────────────────
@@ -449,7 +366,7 @@ export function reduceCampaignState(
         currentState,
         retryBudgets: workingRetryBudgets,
       }
-      if (evaluatePredicate(transition.when, allEvents, evalState)) {
+      if (evaluatePredicate(transition.predicate, allEvents, evalState)) {
         stateHistory.push({
           from: currentState,
           to: transition.to,

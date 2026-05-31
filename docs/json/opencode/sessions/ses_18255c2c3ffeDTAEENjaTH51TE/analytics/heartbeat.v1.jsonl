@@ -1,0 +1,28 @@
+{"at":"2026-05-31T10:55:54.300Z","session_id":"ses_18255c2c3ffeDTAEENjaTH51TE","agent":"cartographer","tool":"smart_find","phase":"started","detail":"*"}
+{"at":"2026-05-31T10:55:54.865Z","session_id":"ses_18255c2c3ffeDTAEENjaTH51TE","agent":"cartographer","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T10:55:55.350Z","session_id":"ses_18255c2c3ffeDTAEENjaTH51TE","agent":"cartographer","tool":"smart_find","phase":"started","detail":"*"}
+{"at":"2026-05-31T10:55:55.416Z","session_id":"ses_18255c2c3ffeDTAEENjaTH51TE","agent":"cartographer","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T10:56:24.905Z","session_id":"ses_18255c2c3ffeDTAEENjaTH51TE","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"List top-level directories in opencode src"}
+{"at":"2026-05-31T10:56:24.906Z","session_id":"ses_18255c2c3ffeDTAEENjaTH51TE","agent":"cartographer","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T10:56:25.707Z","session_id":"ses_18255c2c3ffeDTAEENjaTH51TE","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Find top-level files in opencode src"}
+{"at":"2026-05-31T10:56:25.708Z","session_id":"ses_18255c2c3ffeDTAEENjaTH51TE","agent":"cartographer","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T10:57:13.946Z","session_id":"ses_18255c2c3ffeDTAEENjaTH51TE","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"List top-level directories in opencode src - using absolute path to avoid rerouting"}
+{"at":"2026-05-31T10:57:13.964Z","session_id":"ses_18255c2c3ffeDTAEENjaTH51TE","agent":"cartographer","tool":"smart_bash","phase":"completed","detail":"/bin/ls exit=0"}
+{"at":"2026-05-31T10:57:48.108Z","session_id":"ses_18255c2c3ffeDTAEENjaTH51TE","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Full listing of top-level dirs in opencode src"}
+{"at":"2026-05-31T10:57:48.120Z","session_id":"ses_18255c2c3ffeDTAEENjaTH51TE","agent":"cartographer","tool":"smart_bash","phase":"completed","detail":"/bin/ls exit=0"}
+{"at":"2026-05-31T10:58:23.671Z","session_id":"ses_18255c2c3ffeDTAEENjaTH51TE","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"List all files in campaign directory"}
+{"at":"2026-05-31T10:58:23.706Z","session_id":"ses_18255c2c3ffeDTAEENjaTH51TE","agent":"cartographer","tool":"smart_bash","phase":"completed","detail":"/bin/ls exit=0"}
+{"at":"2026-05-31T10:58:24.389Z","session_id":"ses_18255c2c3ffeDTAEENjaTH51TE","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"List all files in coordination directory"}
+{"at":"2026-05-31T10:58:24.402Z","session_id":"ses_18255c2c3ffeDTAEENjaTH51TE","agent":"cartographer","tool":"smart_bash","phase":"completed","detail":"/bin/ls exit=0"}
+{"at":"2026-05-31T10:58:24.983Z","session_id":"ses_18255c2c3ffeDTAEENjaTH51TE","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"List all files in control-plane directory"}
+{"at":"2026-05-31T10:58:24.993Z","session_id":"ses_18255c2c3ffeDTAEENjaTH51TE","agent":"cartographer","tool":"smart_bash","phase":"completed","detail":"/bin/ls exit=0"}
+{"at":"2026-05-31T10:58:25.545Z","session_id":"ses_18255c2c3ffeDTAEENjaTH51TE","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"List all files in review directory"}
+{"at":"2026-05-31T10:58:25.574Z","session_id":"ses_18255c2c3ffeDTAEENjaTH51TE","agent":"cartographer","tool":"smart_bash","phase":"completed","detail":"/bin/ls exit=0"}
+{"at":"2026-05-31T11:00:27.917Z","session_id":"ses_18255c2c3ffeDTAEENjaTH51TE","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"from.*campaign|import.*campaign|from.*secretary|import.*secretary"}
+{"at":"2026-05-31T11:00:27.955Z","session_id":"ses_18255c2c3ffeDTAEENjaTH51TE","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"from.*campaign|import.*campaign|from.*secretary|import.*secretary"}
+{"at":"2026-05-31T11:00:29.509Z","session_id":"ses_18255c2c3ffeDTAEENjaTH51TE","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"RoleOutput|BinderService|addEvidence|HistorianComplete|roleOutputToEvent|toSMEve"}
+{"at":"2026-05-31T11:00:29.552Z","session_id":"ses_18255c2c3ffeDTAEENjaTH51TE","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"RoleOutput|BinderService|addEvidence|HistorianComplete|roleOutputToEvent|toSMEve"}
+{"at":"2026-05-31T11:01:28.518Z","session_id":"ses_18255c2c3ffeDTAEENjaTH51TE","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"SessionCheckpoint|LaneReturned|RedteamCompleted|ScoutCompleted|PlanProduced|Plan"}
+{"at":"2026-05-31T11:01:28.552Z","session_id":"ses_18255c2c3ffeDTAEENjaTH51TE","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"SessionCheckpoint|LaneReturned|RedteamCompleted|ScoutCompleted|PlanProduced|Plan"}
+{"at":"2026-05-31T11:05:20.795Z","session_id":"ses_18255c2c3ffeDTAEENjaTH51TE","agent":"cartographer","tool":"smart_write","phase":"started","detail":"docs/json/opencode/cartography/coordination-lane-subsystem-map.v1.json"}
+{"at":"2026-05-31T11:05:20.796Z","session_id":"ses_18255c2c3ffeDTAEENjaTH51TE","agent":"cartographer","tool":"smart_write","phase":"completed","detail":"docs/json/opencode/cartography/coordination-lane-subsystem-map.v1.json"}

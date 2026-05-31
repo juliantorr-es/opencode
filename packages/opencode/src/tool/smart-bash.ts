@@ -105,7 +105,6 @@ export const SmartBashTool = Tool.define(
             session_id: ctx.sessionID,
             agent: ctx.agent,
             binary,
-            command: cmd.slice(0, 200),
             reason: params.reason,
             elapsed_ms: elapsed,
             exit_code: result.status,

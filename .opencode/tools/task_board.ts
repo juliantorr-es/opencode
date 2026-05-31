@@ -1,8 +1,25 @@
 import { tool } from "@opencode-ai/plugin"
 import { resolve } from "node:path"
 import { existsSync, readdirSync, readFileSync } from "node:fs"
+import { spawnSync } from "node:child_process"
 
 function r(worktree: string, p: string): string { return resolve(worktree, p) }
+
+// jql-powered JSON query — faster than manual parsing for large files
+function jqlQuery(worktree: string, filePath: string, query: string): any {
+  const fullPath = r(worktree, filePath)
+  if (!existsSync(fullPath)) return null
+  const binaries = ["jql", "/opt/homebrew/bin/jql", "/usr/local/bin/jql"]
+  for (const bin of binaries) {
+    const result = spawnSync(bin, [query, fullPath], {
+      encoding: "utf8", maxBuffer: 1024 * 1024 * 5, timeout: 15000,
+    })
+    if (!result.error && result.status === 0 && result.stdout?.trim()) {
+      try { return JSON.parse(result.stdout.trim()) } catch { return null }
+    }
+  }
+  return null
+}
 
 const LIFECYCLE = ["cartography", "plan", "review", "execution", "validation", "publication"]
 
@@ -36,31 +53,57 @@ export default tool({
     const maxAge = args.max_age_minutes ?? 0
     const isGM = context.agent === "general-man-agent" || context.agent === "orchestrator"
 
-    // ── Parse coordination messages ──────────────────────
+    // ── Parse coordination messages (jql-optimized for large files) ──
     const delegations: Record<string, { parent: string; agent: string; task: string; wave: string }> = {}
     const handoffs: Record<string, { sender: string; body: any }> = {}
     if (existsSync(coordPath)) {
-      try {
-        for (const line of readFileSync(coordPath, "utf8").split("\n").filter(Boolean)) {
-          try {
-            const msg = JSON.parse(line)
-            if (msg.kind === "delegation") {
-              const body = typeof msg.body === "string" ? (() => { try { return JSON.parse(msg.body) } catch { return {} } })() : (msg.body || {})
-              const sessionId = msg.session_id || body.session_id || "?"
-              delegations[sessionId] = {
-                parent: msg.sender,
-                agent: msg.recipient || body.agent || "?",
-                task: (msg.subject || body.task || "").slice(0, 60),
-                wave: waveFor(msg.recipient || body.agent || "?"),
-              }
-            }
-            if (msg.kind === "handoff") {
-              const body = typeof msg.body === "string" ? (() => { try { return JSON.parse(msg.body) } catch { return {} } })() : (msg.body || {})
-              handoffs[msg.sender] = { sender: msg.sender, body }
-            }
-          } catch {}
+      // Try jql first for speed
+      const jqlDelegations = jqlQuery(context.worktree, "docs/json/opencode/coordination/messages.v1.jsonl", "[.[] | select(.kind==\"delegation\")]")
+      const jqlHandoffs = jqlQuery(context.worktree, "docs/json/opencode/coordination/messages.v1.jsonl", "[.[] | select(.kind==\"handoff\")]")
+      
+      if (jqlDelegations && Array.isArray(jqlDelegations)) {
+        for (const msg of jqlDelegations) {
+          const body = typeof msg.body === "string" ? (() => { try { return JSON.parse(msg.body) } catch { return {} } })() : (msg.body || {})
+          const sessionId = msg.session_id || body.session_id || "?"
+          delegations[sessionId] = {
+            parent: msg.sender, agent: msg.recipient || body.agent || "?",
+            task: (msg.subject || body.task || "").slice(0, 60),
+            wave: waveFor(msg.recipient || body.agent || "?"),
+          }
         }
-      } catch (_) {}
+      }
+      if (jqlHandoffs && Array.isArray(jqlHandoffs)) {
+        for (const msg of jqlHandoffs) {
+          const body = typeof msg.body === "string" ? (() => { try { return JSON.parse(msg.body) } catch { return {} } })() : (msg.body || {})
+          handoffs[msg.sender] = { sender: msg.sender, body }
+        }
+      }
+      
+      // Fallback: manual parse if jql failed
+      if (!jqlDelegations || !jqlHandoffs) {
+        try {
+          for (const line of readFileSync(coordPath, "utf8").split("\n").filter(Boolean)) {
+            try {
+              const msg = JSON.parse(line)
+              if (msg.kind === "delegation") {
+                const body = typeof msg.body === "string" ? (() => { try { return JSON.parse(msg.body) } catch { return {} } })() : (msg.body || {})
+                const sessionId = msg.session_id || body.session_id || "?"
+                if (!delegations[sessionId]) {
+                  delegations[sessionId] = {
+                    parent: msg.sender, agent: msg.recipient || body.agent || "?",
+                    task: (msg.subject || body.task || "").slice(0, 60),
+                    wave: waveFor(msg.recipient || body.agent || "?"),
+                  }
+                }
+              }
+              if (msg.kind === "handoff") {
+                const body = typeof msg.body === "string" ? (() => { try { return JSON.parse(msg.body) } catch { return {} } })() : (msg.body || {})
+                if (!handoffs[msg.sender]) handoffs[msg.sender] = { sender: msg.sender, body }
+              }
+            } catch {}
+          }
+        } catch (_) {}
+      }
     }
 
     // ── Read sessions ────────────────────────────────────

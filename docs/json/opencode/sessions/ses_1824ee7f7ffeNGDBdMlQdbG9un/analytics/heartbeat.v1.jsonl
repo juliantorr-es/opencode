@@ -1,0 +1,28 @@
+{"at":"2026-05-31T11:07:03.597Z","session_id":"ses_1824ee7f7ffeNGDBdMlQdbG9un","agent":"exhibit-a","tool":"smart_bash","phase":"started","detail":"Read the full architecture plan for audit"}
+{"at":"2026-05-31T11:07:03.597Z","session_id":"ses_1824ee7f7ffeNGDBdMlQdbG9un","agent":"exhibit-a","tool":"smart_bash","phase":"rerouted","detail":"→ read_source"}
+{"at":"2026-05-31T11:10:26.184Z","session_id":"ses_1824ee7f7ffeNGDBdMlQdbG9un","agent":"exhibit-a","tool":"smart_grep","phase":"started","detail":"VALUE_SECRET_PATTERNS"}
+{"at":"2026-05-31T11:10:26.194Z","session_id":"ses_1824ee7f7ffeNGDBdMlQdbG9un","agent":"exhibit-a","tool":"smart_grep","phase":"completed","detail":"VALUE_SECRET_PATTERNS"}
+{"at":"2026-05-31T11:10:27.605Z","session_id":"ses_1824ee7f7ffeNGDBdMlQdbG9un","agent":"exhibit-a","tool":"smart_grep","phase":"started","detail":"sanitizedProcessEnv|sanitizeEnv"}
+{"at":"2026-05-31T11:10:27.628Z","session_id":"ses_1824ee7f7ffeNGDBdMlQdbG9un","agent":"exhibit-a","tool":"smart_grep","phase":"completed","detail":"sanitizedProcessEnv|sanitizeEnv"}
+{"at":"2026-05-31T11:13:19.994Z","session_id":"ses_1824ee7f7ffeNGDBdMlQdbG9un","agent":"exhibit-a","tool":"smart_grep","phase":"started","detail":"sanitizedProcessEnv"}
+{"at":"2026-05-31T11:13:20.169Z","session_id":"ses_1824ee7f7ffeNGDBdMlQdbG9un","agent":"exhibit-a","tool":"smart_grep","phase":"completed","detail":"sanitizedProcessEnv"}
+{"at":"2026-05-31T11:13:20.582Z","session_id":"ses_1824ee7f7ffeNGDBdMlQdbG9un","agent":"exhibit-a","tool":"smart_grep","phase":"started","detail":"_API_KEY"}
+{"at":"2026-05-31T11:13:20.588Z","session_id":"ses_1824ee7f7ffeNGDBdMlQdbG9un","agent":"exhibit-a","tool":"smart_grep","phase":"completed","detail":"_API_KEY"}
+{"at":"2026-05-31T11:13:21.971Z","session_id":"ses_1824ee7f7ffeNGDBdMlQdbG9un","agent":"exhibit-a","tool":"smart_grep","phase":"started","detail":"OPENAUTH|OAUTH_TOKEN|export.*env"}
+{"at":"2026-05-31T11:13:22.029Z","session_id":"ses_1824ee7f7ffeNGDBdMlQdbG9un","agent":"exhibit-a","tool":"smart_grep","phase":"completed","detail":"OPENAUTH|OAUTH_TOKEN|export.*env"}
+{"at":"2026-05-31T11:15:41.353Z","session_id":"ses_1824ee7f7ffeNGDBdMlQdbG9un","agent":"exhibit-a","tool":"smart_grep","phase":"started","detail":"plan_files|files_modified|changes"}
+{"at":"2026-05-31T11:15:41.358Z","session_id":"ses_1824ee7f7ffeNGDBdMlQdbG9un","agent":"exhibit-a","tool":"smart_grep","phase":"completed","detail":"plan_files|files_modified|changes"}
+{"at":"2026-05-31T11:18:29.091Z","session_id":"ses_1824ee7f7ffeNGDBdMlQdbG9un","agent":"exhibit-a","tool":"smart_bun","phase":"started","detail":"run"}
+{"at":"2026-05-31T11:18:29.121Z","session_id":"ses_1824ee7f7ffeNGDBdMlQdbG9un","agent":"exhibit-a","tool":"smart_bun","phase":"completed","detail":"run exit=0"}
+{"at":"2026-05-31T11:21:14.443Z","session_id":"ses_1824ee7f7ffeNGDBdMlQdbG9un","agent":"exhibit-a","tool":"smart_bash","phase":"started","detail":"Extract structured work items from the plan for audit"}
+{"at":"2026-05-31T11:21:14.534Z","session_id":"ses_1824ee7f7ffeNGDBdMlQdbG9un","agent":"exhibit-a","tool":"smart_bash","phase":"failed","detail":"node exit=1"}
+{"at":"2026-05-31T11:23:54.720Z","session_id":"ses_1824ee7f7ffeNGDBdMlQdbG9un","agent":"exhibit-a","tool":"smart_bash","phase":"started","detail":"Inspect plan structure keys"}
+{"at":"2026-05-31T11:23:54.915Z","session_id":"ses_1824ee7f7ffeNGDBdMlQdbG9un","agent":"exhibit-a","tool":"smart_bash","phase":"completed","detail":"node exit=0"}
+{"at":"2026-05-31T11:26:46.177Z","session_id":"ses_1824ee7f7ffeNGDBdMlQdbG9un","agent":"exhibit-a","tool":"smart_bash","phase":"started","detail":"Extract fixes with changes from plan"}
+{"at":"2026-05-31T11:26:46.296Z","session_id":"ses_1824ee7f7ffeNGDBdMlQdbG9un","agent":"exhibit-a","tool":"smart_bash","phase":"completed","detail":"node exit=0"}
+{"at":"2026-05-31T11:29:48.804Z","session_id":"ses_1824ee7f7ffeNGDBdMlQdbG9un","agent":"exhibit-a","tool":"smart_bash","phase":"started","detail":"Extract all fix details from plan"}
+{"at":"2026-05-31T11:29:48.899Z","session_id":"ses_1824ee7f7ffeNGDBdMlQdbG9un","agent":"exhibit-a","tool":"smart_bash","phase":"completed","detail":"node exit=0"}
+{"at":"2026-05-31T11:32:26.799Z","session_id":"ses_1824ee7f7ffeNGDBdMlQdbG9un","agent":"exhibit-a","tool":"smart_bash","phase":"started","detail":"Full extraction of plan design decisions and fixes with complete before/after"}
+{"at":"2026-05-31T11:32:26.889Z","session_id":"ses_1824ee7f7ffeNGDBdMlQdbG9un","agent":"exhibit-a","tool":"smart_bash","phase":"failed","detail":"python3 exit=1"}
+{"at":"2026-05-31T11:36:33.025Z","session_id":"ses_1824ee7f7ffeNGDBdMlQdbG9un","agent":"exhibit-a","tool":"smart_bash","phase":"started","detail":"Debug plan structure"}
+{"at":"2026-05-31T11:36:33.112Z","session_id":"ses_1824ee7f7ffeNGDBdMlQdbG9un","agent":"exhibit-a","tool":"smart_bash","phase":"completed","detail":"python3 exit=0"}

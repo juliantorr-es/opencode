@@ -1,0 +1,16 @@
+{"at":"2026-05-31T11:12:08.822Z","session_id":"ses_182497ecfffeVsrizGrWlMY9UI","agent":"coroner","tool":"smart_bash","phase":"started","detail":"Read the full plan file"}
+{"at":"2026-05-31T11:12:08.822Z","session_id":"ses_182497ecfffeVsrizGrWlMY9UI","agent":"coroner","tool":"smart_bash","phase":"rerouted","detail":"→ read_source"}
+{"at":"2026-05-31T11:17:01.393Z","session_id":"ses_182497ecfffeVsrizGrWlMY9UI","agent":"coroner","tool":"smart_bash","phase":"started","detail":"Look for batch changes in the plan"}
+{"at":"2026-05-31T11:17:01.424Z","session_id":"ses_182497ecfffeVsrizGrWlMY9UI","agent":"coroner","tool":"smart_bash","phase":"completed","detail":"jq exit=0"}
+{"at":"2026-05-31T11:19:58.431Z","session_id":"ses_182497ecfffeVsrizGrWlMY9UI","agent":"coroner","tool":"smart_bash","phase":"started","detail":"Get file-level changes from the plan"}
+{"at":"2026-05-31T11:19:58.445Z","session_id":"ses_182497ecfffeVsrizGrWlMY9UI","agent":"coroner","tool":"smart_bash","phase":"completed","detail":"jq exit=0"}
+{"at":"2026-05-31T11:22:26.975Z","session_id":"ses_182497ecfffeVsrizGrWlMY9UI","agent":"coroner","tool":"smart_bash","phase":"started","detail":"Get specific file changes for the 4 scenarios"}
+{"at":"2026-05-31T11:22:26.990Z","session_id":"ses_182497ecfffeVsrizGrWlMY9UI","agent":"coroner","tool":"smart_bash","phase":"completed","detail":"jq exit=0"}
+{"at":"2026-05-31T11:25:08.772Z","session_id":"ses_182497ecfffeVsrizGrWlMY9UI","agent":"coroner","tool":"smart_bash","phase":"started","detail":"Get full claims.ts changes"}
+{"at":"2026-05-31T11:25:08.824Z","session_id":"ses_182497ecfffeVsrizGrWlMY9UI","agent":"coroner","tool":"smart_bash","phase":"completed","detail":"jq exit=0"}
+{"at":"2026-05-31T11:25:14.086Z","session_id":"ses_182497ecfffeVsrizGrWlMY9UI","agent":"coroner","tool":"smart_bash","phase":"started","detail":"Get full mcp/index.ts changes"}
+{"at":"2026-05-31T11:25:14.105Z","session_id":"ses_182497ecfffeVsrizGrWlMY9UI","agent":"coroner","tool":"smart_bash","phase":"completed","detail":"jq exit=0"}
+{"at":"2026-05-31T11:28:08.556Z","session_id":"ses_182497ecfffeVsrizGrWlMY9UI","agent":"coroner","tool":"smart_bash","phase":"started","detail":"Get coordination.ts L639 change"}
+{"at":"2026-05-31T11:28:08.572Z","session_id":"ses_182497ecfffeVsrizGrWlMY9UI","agent":"coroner","tool":"smart_bash","phase":"completed","detail":"jq exit=0"}
+{"at":"2026-05-31T11:30:56.241Z","session_id":"ses_182497ecfffeVsrizGrWlMY9UI","agent":"coroner","tool":"smart_bash","phase":"started","detail":"Get full validation-parser-worker.ts changes"}
+{"at":"2026-05-31T11:30:56.253Z","session_id":"ses_182497ecfffeVsrizGrWlMY9UI","agent":"coroner","tool":"smart_bash","phase":"completed","detail":"jq exit=0"}

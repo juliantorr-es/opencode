@@ -1,0 +1,9 @@
+{"at":"2026-05-31T10:52:25.635Z","tool":"smart_grep","action":"searched","pattern":"redactConfig","results":4,"files":1}
+{"at":"2026-05-31T11:09:21.948Z","tool":"smart_grep","action":"searched","pattern":"const trigger","results":0,"files":0}
+{"at":"2026-05-31T11:09:22.853Z","tool":"smart_grep","action":"searched","pattern":"SECRET_PATTERNS","results":0,"files":0}
+{"at":"2026-05-31T11:09:23.701Z","tool":"smart_grep","action":"searched","pattern":"HOOK_CAPABILITY_MAP","results":0,"files":0}
+{"at":"2026-05-31T11:12:32.127Z","tool":"smart_bash","action":"bash","command":"head -n 200 packages/opencode/src/plugin/index.ts","exit_code":0}
+{"at":"2026-05-31T11:17:11.938Z","tool":"smart_bash","action":"bash","command":"tail -n +200 packages/opencode/src/plugin/index.ts | head -n 400","exit_code":0}
+{"at":"2026-05-31T11:20:06.978Z","tool":"smart_bash","action":"bash","command":"tail -n +420 packages/opencode/src/plugin/index.ts | head -n 100","exit_code":0}
+{"at":"2026-05-31T11:22:33.736Z","tool":"smart_bash","action":"bash","command":"tail -n +440 packages/opencode/src/plugin/index.ts | head -n 40","exit_code":0}
+{"at":"2026-05-31T11:25:20.398Z","tool":"smart_grep","action":"searched","pattern":"SENSITIVE_PATTERNS","results":0,"files":0}

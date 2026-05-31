@@ -36,3 +36,23 @@
 {"at":"2026-05-31T10:07:42.617Z","session_id":"ses_182854e8effenFwuh2RREReZxA","agent":"building-inspector","tool":"smart_grep","phase":"completed","detail":"sidecar"}
 {"at":"2026-05-31T10:09:21.486Z","session_id":"ses_182854e8effenFwuh2RREReZxA","agent":"building-inspector","tool":"smart_grep","phase":"started","detail":"electron\\.vite|sidecar"}
 {"at":"2026-05-31T10:09:21.492Z","session_id":"ses_182854e8effenFwuh2RREReZxA","agent":"building-inspector","tool":"smart_grep","phase":"completed","detail":"electron\\.vite|sidecar"}
+{"at":"2026-05-31T10:13:50.456Z","session_id":"ses_182854e8effenFwuh2RREReZxA","agent":"building-inspector","tool":"smart_grep","phase":"started","detail":"applyMigrations"}
+{"at":"2026-05-31T10:13:50.500Z","session_id":"ses_182854e8effenFwuh2RREReZxA","agent":"building-inspector","tool":"smart_grep","phase":"completed","detail":"applyMigrations"}
+{"at":"2026-05-31T10:16:56.189Z","session_id":"ses_182854e8effenFwuh2RREReZxA","agent":"building-inspector","tool":"smart_grep","phase":"started","detail":"inSafeMode|crash_lock|const main"}
+{"at":"2026-05-31T10:16:56.196Z","session_id":"ses_182854e8effenFwuh2RREReZxA","agent":"building-inspector","tool":"smart_grep","phase":"completed","detail":"inSafeMode|crash_lock|const main"}
+{"at":"2026-05-31T10:23:29.314Z","session_id":"ses_182854e8effenFwuh2RREReZxA","agent":"building-inspector","tool":"smart_bash","phase":"started","detail":"Read the spawn/safe-mode/stress flow region of main/index.ts"}
+{"at":"2026-05-31T10:27:03.730Z","session_id":"ses_182854e8effenFwuh2RREReZxA","agent":"building-inspector","tool":"smart_bash","phase":"started","detail":"Read the spawn/safe-mode region of the main index.ts file"}
+{"at":"2026-05-31T10:31:52.917Z","session_id":"ses_182854e8effenFwuh2RREReZxA","agent":"building-inspector","tool":"smart_bash","phase":"started","detail":"Read critical lines 280-445 of main/index.ts showing spawn, safe mode, crash_lock flow"}
+{"at":"2026-05-31T10:31:52.945Z","session_id":"ses_182854e8effenFwuh2RREReZxA","agent":"building-inspector","tool":"smart_bash","phase":"completed","detail":"awk exit=0"}
+{"at":"2026-05-31T10:36:19.099Z","session_id":"ses_182854e8effenFwuh2RREReZxA","agent":"building-inspector","tool":"smart_bash","phase":"started","detail":"Read safe mode detection and crash_lock handling lines"}
+{"at":"2026-05-31T10:36:19.130Z","session_id":"ses_182854e8effenFwuh2RREReZxA","agent":"building-inspector","tool":"smart_bash","phase":"completed","detail":"awk exit=0"}
+{"at":"2026-05-31T10:36:20.334Z","session_id":"ses_182854e8effenFwuh2RREReZxA","agent":"building-inspector","tool":"smart_bash","phase":"started","detail":"Read spawnLocalServer and loading tasks lines"}
+{"at":"2026-05-31T10:36:20.352Z","session_id":"ses_182854e8effenFwuh2RREReZxA","agent":"building-inspector","tool":"smart_bash","phase":"completed","detail":"awk exit=0"}
+{"at":"2026-05-31T10:40:29.876Z","session_id":"ses_182854e8effenFwuh2RREReZxA","agent":"building-inspector","tool":"smart_bash","phase":"started","detail":"Read the spawnLocalServer call area and loading task"}
+{"at":"2026-05-31T10:40:29.897Z","session_id":"ses_182854e8effenFwuh2RREReZxA","agent":"building-inspector","tool":"smart_bash","phase":"completed","detail":"awk exit=0"}
+{"at":"2026-05-31T10:40:31.219Z","session_id":"ses_182854e8effenFwuh2RREReZxA","agent":"building-inspector","tool":"smart_bash","phase":"started","detail":"Read the main Effect definition start and electronPlatformPaths import"}
+{"at":"2026-05-31T10:40:31.239Z","session_id":"ses_182854e8effenFwuh2RREReZxA","agent":"building-inspector","tool":"smart_bash","phase":"completed","detail":"awk exit=0"}
+{"at":"2026-05-31T10:44:06.405Z","session_id":"ses_182854e8effenFwuh2RREReZxA","agent":"building-inspector","tool":"smart_grep","phase":"started","detail":"health.*ss|subscribe|sse|event"}
+{"at":"2026-05-31T10:44:06.434Z","session_id":"ses_182854e8effenFwuh2RREReZxA","agent":"building-inspector","tool":"smart_grep","phase":"completed","detail":"health.*ss|subscribe|sse|event"}
+{"at":"2026-05-31T10:44:07.518Z","session_id":"ses_182854e8effenFwuh2RREReZxA","agent":"building-inspector","tool":"smart_grep","phase":"started","detail":"InitStep|init-step|safe.mode|loading"}
+{"at":"2026-05-31T10:44:07.530Z","session_id":"ses_182854e8effenFwuh2RREReZxA","agent":"building-inspector","tool":"smart_grep","phase":"completed","detail":"InitStep|init-step|safe.mode|loading"}

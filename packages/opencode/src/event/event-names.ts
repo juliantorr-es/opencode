@@ -154,6 +154,7 @@ export const EventName = {
   UserApproval: 'user.approval',
   RedteamCompleted: 'redteam.completed',
   RedteamFinding: 'redteam.finding',
+  RedteamFindingRecorded: 'redteam.finding.recorded',
   FindingBlocking: 'finding.blocking',
   FindingConfirmed: 'finding.confirmed',
 } as const

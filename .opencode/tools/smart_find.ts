@@ -33,7 +33,8 @@ function analytics(context: any, tool: string, extra: Record<string, unknown>) {
 }
 
 function spawnFd(args: string[], cwd: string) {
-  const binaries = ["fd", "/opt/homebrew/bin/fd", "/usr/local/bin/fd"]
+  const toolDir = resolve(cwd, ".opencode/tools/bin")
+  const binaries = ["fd", resolve(toolDir, "fd"), "/opt/homebrew/bin/fd", "/usr/local/bin/fd"]
   for (const bin of binaries) {
     const result = spawnSync(bin, args, {
       cwd, encoding: "utf8", maxBuffer: 1024 * 1024 * 5, timeout: 15000,

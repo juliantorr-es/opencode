@@ -41,6 +41,19 @@ function spawnDelta(input: string) {
   })
 }
 
+function spawnDifft(input: string) {
+  const binaries = ["difft", "/opt/homebrew/bin/difft", "/usr/local/bin/difft"]
+  for (const bin of binaries) {
+    const result = spawnSync(bin, [], {
+      input, encoding: "utf8", maxBuffer: 1024 * 1024 * 2, timeout: 10000,
+    })
+    if (!result.error && result.status === 0) return result
+  }
+  return spawnSync("difft", [], {
+    input, encoding: "utf8", maxBuffer: 1024 * 1024 * 2, timeout: 10000,
+  })
+}
+
 export default tool({
   description: "Run git operations (status, diff, add, commit, push, log, branch) with structured output. Replaces all git bash commands.",
   args: {
@@ -49,7 +62,7 @@ export default tool({
     path: tool.schema.string().optional().describe("Limit to a specific file or directory (appended as '-- <path>'). Use this to filter status/diff/log to one file instead of the whole repo."),
     files: tool.schema.string().optional().describe("JSON array of file paths for add/checkout operations"),
     message: tool.schema.string().optional().describe("Commit message (for commit operation)"),
-    style: tool.schema.string().optional().describe("Output style for diff: 'delta' (syntax-highlighted, default), 'raw' (plain git diff)"),
+    style: tool.schema.string().optional().describe("Output style for diff: 'auto' (tries difftastic then delta, default), 'difftastic' (structural AST-aware diff), 'delta' (syntax-highlighted), 'raw' (plain git diff)"),
   },
   async execute(args, context) {
     hb(context, "smart_git", "started", args.operation?.slice(0, 80) || "")
@@ -118,12 +131,25 @@ export default tool({
     const stdout = result.stdout?.trim() || ""
     const stderr = result.stderr?.trim() || ""
 
-    // Post-process diff output through delta for syntax highlighting
+    // Post-process diff output through delta or difftastic for syntax highlighting
     let styledDiff = ""
-    if (["diff", "diff-stat", "show"].includes(args.operation) && stdout && (args.style ?? "delta") !== "raw") {
-      const deltaResult = spawnDelta(stdout)
-      if (deltaResult.status === 0 && deltaResult.stdout?.trim()) {
-        styledDiff = deltaResult.stdout.trim()
+    let diffStyle = ""
+    if (["diff", "diff-stat", "show"].includes(args.operation) && stdout && (args.style ?? "auto") !== "raw") {
+      // Try difftastic first (structural, AST-aware)
+      if (args.style === "difftastic" || args.style === "auto") {
+        const difftResult = spawnDifft(stdout)
+        if (difftResult.status === 0 && difftResult.stdout?.trim()) {
+          styledDiff = difftResult.stdout.trim()
+          diffStyle = "difftastic"
+        }
+      }
+      // Fall back to delta (syntax highlighting)
+      if (!styledDiff && (args.style === "delta" || args.style === "auto")) {
+        const deltaResult = spawnDelta(stdout)
+        if (deltaResult.status === 0 && deltaResult.stdout?.trim()) {
+          styledDiff = deltaResult.stdout.trim()
+          diffStyle = "delta"
+        }
       }
     }
 
@@ -175,7 +201,7 @@ export default tool({
       }
     }
 
-    if (styledDiff) output.styled_diff = styledDiff.slice(0, 3000)
+    if (styledDiff) { output.styled_diff = styledDiff.slice(0, 5000); output.diff_style = diffStyle }
     if (stderr) output.stderr = stderr
     if (result.error) { hb(context, "smart_git", "failed", result.error.message); output.status = "error"; output.error = result.error.message }
     else { hb(context, "smart_git", result.status === 0 ? "completed" : "failed", `${args.operation} exit=${result.status}`); output.status = result.status === 0 ? "success" : "error" }

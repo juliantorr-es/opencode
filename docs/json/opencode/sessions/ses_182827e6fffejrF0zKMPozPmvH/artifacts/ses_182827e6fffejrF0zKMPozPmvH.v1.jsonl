@@ -4,3 +4,16 @@
 {"at":"2026-05-31T10:06:36.438Z","tool":"smart_grep","action":"searched","pattern":"sst\\.config","results":1,"files":1}
 {"at":"2026-05-31T10:08:11.478Z","tool":"smart_bash","action":"bash","command":"for d in packages/*/; do echo \"$d\"; done","exit_code":0}
 {"at":"2026-05-31T10:08:13.450Z","tool":"smart_grep","action":"searched","pattern":"@opencode-ai/(slack|enterprise|http-recorder|identity|script)","results":30,"files":22}
+{"at":"2026-05-31T10:09:59.187Z","tool":"smart_grep","action":"searched","pattern":"@opencode-ai/script","results":9,"files":9}
+{"at":"2026-05-31T10:09:59.873Z","tool":"smart_grep","action":"searched","pattern":"@opencode-ai/slack","results":1,"files":1}
+{"at":"2026-05-31T10:10:01.015Z","tool":"smart_grep","action":"searched","pattern":"@opencode-ai/http-recorder","results":9,"files":9}
+{"at":"2026-05-31T10:18:15.261Z","tool":"smart_bash","action":"bash","command":"for d in packages/*/; do echo \"=== $d ===\" && ls \"$d/src/\" 2>/dev/null || echo \"  (no src)\"; done","exit_code":0}
+{"at":"2026-05-31T10:18:17.050Z","tool":"smart_grep","action":"searched","pattern":"import.*Script.*from.*script|from.*@opencode-ai/script","results":8,"files":8}
+{"at":"2026-05-31T10:24:54.831Z","tool":"smart_grep","action":"searched","pattern":"enterprise|slack|http-recorder|script|identity","results":30,"files":10}
+{"at":"2026-05-31T10:33:28.662Z","tool":"smart_grep","action":"searched","pattern":".","results":30,"files":1}
+{"at":"2026-05-31T10:33:29.561Z","tool":"smart_grep","action":"searched","pattern":".","results":30,"files":1}
+{"at":"2026-05-31T10:33:30.499Z","tool":"smart_grep","action":"searched","pattern":".","results":30,"files":1}
+{"at":"2026-05-31T10:33:31.463Z","tool":"smart_grep","action":"searched","pattern":".","results":30,"files":1}
+{"at":"2026-05-31T10:42:04.624Z","tool":"smart_grep","action":"searched","pattern":"cors|x-forwarded|auth|bearer|secret|encrypt","results":21,"files":3}
+{"at":"2026-05-31T10:42:05.669Z","tool":"smart_grep","action":"searched","pattern":".","results":30,"files":1}
+{"at":"2026-05-31T10:42:06.658Z","tool":"smart_grep","action":"searched","pattern":".","results":30,"files":1}

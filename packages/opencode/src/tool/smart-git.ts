@@ -113,6 +113,7 @@ export const SmartGitTool = Tool.define(
               try {
                 const proc = spawnSync(cmd[0], cmd.slice(1), {
                   cwd: instance.directory,
+                  env: sanitizedProcessEnv(),
                   encoding: "utf8" as const,
                   maxBuffer: 1024 * 1024 * 2,
                   timeout: 30000,

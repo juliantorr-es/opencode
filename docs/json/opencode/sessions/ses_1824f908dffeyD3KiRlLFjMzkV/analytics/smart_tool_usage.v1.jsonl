@@ -1,0 +1,10 @@
+{"at":"2026-05-31T11:00:01.740Z","session_id":"ses_1824f908dffeyD3KiRlLFjMzkV","agent":"secretary","tool":"smart_grep","pattern":"export (type|interface|const) (ArtifactRef|EventRef|ValidationResult|RedTeamFinding)","path":"packages/opencode/src/campaign"}
+{"at":"2026-05-31T11:00:29.191Z","session_id":"ses_1824f908dffeyD3KiRlLFjMzkV","agent":"secretary","tool":"smart_grep","pattern":"addEvidence","path":"packages/opencode/src/campaign"}
+{"at":"2026-05-31T11:01:49.226Z","session_id":"ses_1824f908dffeyD3KiRlLFjMzkV","agent":"secretary","tool":"smart_grep","pattern":"addEvidence|knownSections|applyEvidenceToBinder|const make","path":"packages/opencode/src/campaign/binder.ts"}
+{"at":"2026-05-31T11:04:05.008Z","session_id":"ses_1824f908dffeyD3KiRlLFjMzkV","agent":"secretary","tool":"smart_sd","file":"packages/opencode/src/campaign/binder.ts"}
+{"at":"2026-05-31T11:04:16.790Z","session_id":"ses_1824f908dffeyD3KiRlLFjMzkV","agent":"secretary","tool":"smart_sd","file":"packages/opencode/src/campaign/binder.ts"}
+{"at":"2026-05-31T11:04:23.100Z","session_id":"ses_1824f908dffeyD3KiRlLFjMzkV","agent":"secretary","tool":"smart_sd","file":"packages/opencode/src/campaign/binder.ts"}
+{"at":"2026-05-31T11:04:39.874Z","session_id":"ses_1824f908dffeyD3KiRlLFjMzkV","agent":"secretary","tool":"smart_grep","pattern":"const addScoutReport|const setArchitecturePlan|const addCriticReview|const addExecutionEvent|const a","path":"packages/opencode/src/campaign/binder.ts"}
+{"at":"2026-05-31T11:05:20.448Z","session_id":"ses_1824f908dffeyD3KiRlLFjMzkV","agent":"secretary","tool":"smart_bun","command":"typecheck","elapsed_ms":33104,"exit_code":2}
+{"at":"2026-05-31T11:05:44.299Z","session_id":"ses_1824f908dffeyD3KiRlLFjMzkV","agent":"secretary","tool":"smart_grep","pattern":"addScoutReport|setArchitecturePlan|addCriticReview|addExecutionEvent|addValidationResult|addRedTeamF","path":"packages/opencode/src/campaign/binder.ts"}
+{"at":"2026-05-31T11:05:54.612Z","session_id":"ses_1824f908dffeyD3KiRlLFjMzkV","agent":"secretary","tool":"smart_grep","pattern":"binder\\.ts","path":"packages/opencode"}

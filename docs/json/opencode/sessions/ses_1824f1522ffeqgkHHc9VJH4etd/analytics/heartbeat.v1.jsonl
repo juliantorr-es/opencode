@@ -1,0 +1,39 @@
+{"at":"2026-05-31T11:06:42.553Z","session_id":"ses_1824f1522ffeqgkHHc9VJH4etd","agent":"coroner","tool":"smart_grep","phase":"started","detail":"VALUE_SECRET_PATTERNS"}
+{"at":"2026-05-31T11:06:42.629Z","session_id":"ses_1824f1522ffeqgkHHc9VJH4etd","agent":"coroner","tool":"smart_grep","phase":"completed","detail":"VALUE_SECRET_PATTERNS"}
+{"at":"2026-05-31T11:06:43.871Z","session_id":"ses_1824f1522ffeqgkHHc9VJH4etd","agent":"coroner","tool":"smart_find","phase":"started","detail":"*secret-scanner*"}
+{"at":"2026-05-31T11:06:43.923Z","session_id":"ses_1824f1522ffeqgkHHc9VJH4etd","agent":"coroner","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T11:06:44.339Z","session_id":"ses_1824f1522ffeqgkHHc9VJH4etd","agent":"coroner","tool":"smart_find","phase":"started","detail":"*secret*"}
+{"at":"2026-05-31T11:06:44.432Z","session_id":"ses_1824f1522ffeqgkHHc9VJH4etd","agent":"coroner","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T11:09:59.727Z","session_id":"ses_1824f1522ffeqgkHHc9VJH4etd","agent":"coroner","tool":"smart_grep","phase":"started","detail":"SecretScanner|secret.*scanner|secret-scanner"}
+{"at":"2026-05-31T11:09:59.875Z","session_id":"ses_1824f1522ffeqgkHHc9VJH4etd","agent":"coroner","tool":"smart_grep","phase":"completed","detail":"SecretScanner|secret.*scanner|secret-scanner"}
+{"at":"2026-05-31T11:10:09.768Z","session_id":"ses_1824f1522ffeqgkHHc9VJH4etd","agent":"coroner","tool":"smart_grep","phase":"started","detail":"VALUE_SECRET_PATTERNS|10.*KB|MAX_OUTPUT|maxBuffer|1024|truncat"}
+{"at":"2026-05-31T11:10:09.817Z","session_id":"ses_1824f1522ffeqgkHHc9VJH4etd","agent":"coroner","tool":"smart_grep","phase":"completed","detail":"VALUE_SECRET_PATTERNS|10.*KB|MAX_OUTPUT|maxBuffer|1024|truncat"}
+{"at":"2026-05-31T11:10:10.312Z","session_id":"ses_1824f1522ffeqgkHHc9VJH4etd","agent":"coroner","tool":"smart_grep","phase":"started","detail":"sanitizedProcessEnv|sanitizeEnv"}
+{"at":"2026-05-31T11:10:10.494Z","session_id":"ses_1824f1522ffeqgkHHc9VJH4etd","agent":"coroner","tool":"smart_grep","phase":"completed","detail":"sanitizedProcessEnv|sanitizeEnv"}
+{"at":"2026-05-31T11:13:14.780Z","session_id":"ses_1824f1522ffeqgkHHc9VJH4etd","agent":"coroner","tool":"smart_grep","phase":"started","detail":"spawnSync|Bun\\.spawn"}
+{"at":"2026-05-31T11:13:14.802Z","session_id":"ses_1824f1522ffeqgkHHc9VJH4etd","agent":"coroner","tool":"smart_grep","phase":"completed","detail":"spawnSync|Bun\\.spawn"}
+{"at":"2026-05-31T11:15:38.233Z","session_id":"ses_1824f1522ffeqgkHHc9VJH4etd","agent":"coroner","tool":"smart_bash","phase":"started","detail":"Read the VALUE_SECRET_PATTERNS and redactValues section of debug-packet.ts"}
+{"at":"2026-05-31T11:15:39.066Z","session_id":"ses_1824f1522ffeqgkHHc9VJH4etd","agent":"coroner","tool":"smart_bash","phase":"started","detail":"Read the spawnSync call in smart-bash.ts"}
+{"at":"2026-05-31T11:15:39.973Z","session_id":"ses_1824f1522ffeqgkHHc9VJH4etd","agent":"coroner","tool":"smart_bash","phase":"started","detail":"Read the spawnSync call in smart-grep.ts"}
+{"at":"2026-05-31T11:21:12.346Z","session_id":"ses_1824f1522ffeqgkHHc9VJH4etd","agent":"coroner","tool":"smart_grep","phase":"started","detail":"env.*blocklist|sanitizeEnv|sanitizedProcessEnv|secret.*scanner|VALUE_SECRET"}
+{"at":"2026-05-31T11:21:12.386Z","session_id":"ses_1824f1522ffeqgkHHc9VJH4etd","agent":"coroner","tool":"smart_grep","phase":"failed","detail":"rg: /Users/user/Developer/GitHub/opencode-desktop-dev/tests: IO error for operation on /Users/user/Developer/GitHub/opencode-desktop-dev/tests: No such file or directory (os error 2)"}
+{"at":"2026-05-31T11:21:13.023Z","session_id":"ses_1824f1522ffeqgkHHc9VJH4etd","agent":"coroner","tool":"smart_grep","phase":"started","detail":"isBlocklistedEnvVar|ENV_BLOCKLIST"}
+{"at":"2026-05-31T11:21:13.038Z","session_id":"ses_1824f1522ffeqgkHHc9VJH4etd","agent":"coroner","tool":"smart_grep","phase":"failed","detail":"rg: /Users/user/Developer/GitHub/opencode-desktop-dev/tests: IO error for operation on /Users/user/Developer/GitHub/opencode-desktop-dev/tests: No such file or directory (os error 2)"}
+{"at":"2026-05-31T11:23:51.800Z","session_id":"ses_1824f1522ffeqgkHHc9VJH4etd","agent":"coroner","tool":"smart_find","phase":"started","detail":"*test*"}
+{"at":"2026-05-31T11:23:51.825Z","session_id":"ses_1824f1522ffeqgkHHc9VJH4etd","agent":"coroner","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T11:23:52.657Z","session_id":"ses_1824f1522ffeqgkHHc9VJH4etd","agent":"coroner","tool":"smart_grep","phase":"started","detail":"isBlocklistedEnvVar|ENV_BLOCKLIST|sanitizeEnv"}
+{"at":"2026-05-31T11:23:52.680Z","session_id":"ses_1824f1522ffeqgkHHc9VJH4etd","agent":"coroner","tool":"smart_grep","phase":"completed","detail":"isBlocklistedEnvVar|ENV_BLOCKLIST|sanitizeEnv"}
+{"at":"2026-05-31T11:23:53.531Z","session_id":"ses_1824f1522ffeqgkHHc9VJH4etd","agent":"coroner","tool":"smart_grep","phase":"started","detail":"secret.*scanner|VALUE_SECRET_PATTERNS|scanToolOutput|hasSecrets"}
+{"at":"2026-05-31T11:23:53.675Z","session_id":"ses_1824f1522ffeqgkHHc9VJH4etd","agent":"coroner","tool":"smart_grep","phase":"completed","detail":"secret.*scanner|VALUE_SECRET_PATTERNS|scanToolOutput|hasSecrets"}
+{"at":"2026-05-31T11:26:52.108Z","session_id":"ses_1824f1522ffeqgkHHc9VJH4etd","agent":"coroner","tool":"smart_bash","phase":"started","detail":"Get the full VALUE_SECRET_PATTERNS array from debug-packet.ts"}
+{"at":"2026-05-31T11:26:52.108Z","session_id":"ses_1824f1522ffeqgkHHc9VJH4etd","agent":"coroner","tool":"smart_bash","phase":"rerouted","detail":"→ read_source"}
+{"at":"2026-05-31T11:26:53.374Z","session_id":"ses_1824f1522ffeqgkHHc9VJH4etd","agent":"coroner","tool":"smart_bash","phase":"started","detail":"Get full env-blocklist with line numbers"}
+{"at":"2026-05-31T11:26:53.374Z","session_id":"ses_1824f1522ffeqgkHHc9VJH4etd","agent":"coroner","tool":"smart_bash","phase":"rerouted","detail":"→ read_source"}
+{"at":"2026-05-31T11:29:54.385Z","session_id":"ses_1824f1522ffeqgkHHc9VJH4etd","agent":"coroner","tool":"smart_bash","phase":"started","detail":"Get VALUE_SECRET_PATTERNS array from debug-packet.ts lines 145-180"}
+{"at":"2026-05-31T11:29:54.400Z","session_id":"ses_1824f1522ffeqgkHHc9VJH4etd","agent":"coroner","tool":"smart_bash","phase":"completed","detail":"awk exit=0"}
+{"at":"2026-05-31T11:29:55.802Z","session_id":"ses_1824f1522ffeqgkHHc9VJH4etd","agent":"coroner","tool":"smart_grep","phase":"started","detail":"isBlocklistedEnvVar|sanitizeEnv|env.blocklist|VALUE_SECRET|secret.*scanner"}
+{"at":"2026-05-31T11:29:55.841Z","session_id":"ses_1824f1522ffeqgkHHc9VJH4etd","agent":"coroner","tool":"smart_grep","phase":"completed","detail":"isBlocklistedEnvVar|sanitizeEnv|env.blocklist|VALUE_SECRET|secret.*scanner"}
+{"at":"2026-05-31T11:32:28.319Z","session_id":"ses_1824f1522ffeqgkHHc9VJH4etd","agent":"coroner","tool":"smart_grep","phase":"started","detail":"isBlocklistedEnvVar|sanitizeEnv|sanitizedProcessEnv|VALUE_SECRET_PATTERNS"}
+{"at":"2026-05-31T11:32:28.505Z","session_id":"ses_1824f1522ffeqgkHHc9VJH4etd","agent":"coroner","tool":"smart_grep","phase":"completed","detail":"isBlocklistedEnvVar|sanitizeEnv|sanitizedProcessEnv|VALUE_SECRET_PATTERNS"}
+{"at":"2026-05-31T11:32:29.114Z","session_id":"ses_1824f1522ffeqgkHHc9VJH4etd","agent":"coroner","tool":"smart_grep","phase":"started","detail":"isBlocklistedEnvVar|sanitizeEnv|sanitizedProcessEnv|VALUE_SECRET_PATTERNS"}
+{"at":"2026-05-31T11:32:29.223Z","session_id":"ses_1824f1522ffeqgkHHc9VJH4etd","agent":"coroner","tool":"smart_grep","phase":"completed","detail":"isBlocklistedEnvVar|sanitizeEnv|sanitizedProcessEnv|VALUE_SECRET_PATTERNS"}

@@ -1,0 +1,5 @@
+{"at":"2026-05-31T11:07:23.724Z","session_id":"ses_1824e417fffexSfp5EneJms8Y9","agent":"appeal","tool":"smart_grep","pattern":"fix-[A-H]","path":".build/rig-relay/arch_tool_secrets_layer.v1.json"}
+{"at":"2026-05-31T11:16:15.666Z","session_id":"ses_1824e417fffexSfp5EneJms8Y9","agent":"appeal","tool":"smart_grep","pattern":"import \\{ sanitizedProcessEnv","path":"packages/opencode/src/tool"}
+{"at":"2026-05-31T11:16:20.354Z","session_id":"ses_1824e417fffexSfp5EneJms8Y9","agent":"appeal","tool":"smart_grep","pattern":"sanitizedProcessEnv","path":"packages"}
+{"at":"2026-05-31T11:22:40.726Z","session_id":"ses_1824e417fffexSfp5EneJms8Y9","agent":"appeal","tool":"smart_grep","pattern":"AWS_BEARER_TOKEN_BEDROCK|OPENCODE_STORAGE_ACCESS_KEY_ID","path":"packages/core/src/util/env-blocklist.ts"}
+{"at":"2026-05-31T11:28:44.330Z","session_id":"ses_1824e417fffexSfp5EneJms8Y9","agent":"appeal","tool":"smart_grep","pattern":"spawnSync","path":"packages/opencode/src/tool/smart-bash.ts"}

@@ -1,4 +1,4 @@
-import { Context, Effect, Layer, Option, Schema } from "effect"
+import { Context, Effect, Exit, Layer, Option, Schema } from "effect"
 import * as Tool from "./tool"
 import { PhaseGate } from "@/lifecycle/gate"
 
@@ -502,7 +502,7 @@ export function checkPhaseGate(
     Effect.flatMap((phaseGate: Option.Option<any>) => {
       if (Option.isNone(phaseGate)) return Effect.succeed(Option.none<TypedToolResult>()) as Effect.Effect<Option.Option<TypedToolResult>, never, any>
       return Effect.exit(phaseGate.value.checkAllowed(toolID)).pipe(
-        Effect.map((exit: any) => {
+        Effect.map((exit: Exit.Exit<unknown, never>) => {
           if (exit._tag === "Success") return Option.none<TypedToolResult>()
           const typed = fromDefect(toolID, exit.cause)
           return Option.some(typed)

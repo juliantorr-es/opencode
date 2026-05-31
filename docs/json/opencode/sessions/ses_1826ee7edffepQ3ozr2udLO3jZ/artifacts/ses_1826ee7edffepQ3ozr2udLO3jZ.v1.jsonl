@@ -1,0 +1,12 @@
+{"at":"2026-05-31T10:26:13.799Z","tool":"smart_grep","action":"searched","pattern":"runtime-event","results":4,"files":4}
+{"at":"2026-05-31T10:26:13.838Z","tool":"smart_grep","action":"searched","pattern":"augmentEvent","results":2,"files":1}
+{"at":"2026-05-31T10:27:19.752Z","tool":"smart_grep","action":"searched","pattern":"retryBudgets","results":16,"files":5}
+{"at":"2026-05-31T10:27:53.633Z","tool":"smart_grep","action":"searched","pattern":"PredicateContext","results":0,"files":0}
+{"at":"2026-05-31T10:27:54.542Z","tool":"smart_grep","action":"searched","pattern":"PredicateResult","results":0,"files":0}
+{"at":"2026-05-31T10:27:55.397Z","tool":"smart_grep","action":"searched","pattern":"PredicateSpec","results":0,"files":0}
+{"at":"2026-05-31T10:28:29.448Z","tool":"smart_grep","action":"searched","pattern":"export interface (PredicateResult|PredicateContext|PredicateSpec)","results":0,"files":0}
+{"at":"2026-05-31T10:29:21.470Z","tool":"smart_grep","action":"searched","pattern":"export type PredicateSpec","results":0,"files":0}
+{"at":"2026-05-31T10:29:57.747Z","tool":"smart_bash","action":"bash","command":"head -80 packages/opencode/src/campaign/predicates.ts","exit_code":0}
+{"at":"2026-05-31T10:32:37.693Z","tool":"smart_bash","action":"bash","command":"awk 'NR>=20 && NR<=75' packages/opencode/src/campaign/predicates.ts","exit_code":0}
+{"at":"2026-05-31T10:33:12.261Z","tool":"smart_bash","action":"bash","command":"awk 'NR>=37 && NR<=62' packages/opencode/src/campaign/predicates.ts","exit_code":0}
+{"at":"2026-05-31T10:34:47.130Z","tool":"smart_bash","action":"bash","command":"awk 'NR>=1 && NR<=95' packages/opencode/src/campaign/state-machine.ts","exit_code":0}

@@ -16,3 +16,5 @@
 {"at":"2026-05-31T10:02:25.629Z","tool":"smart_grep","action":"searched","pattern":"server-health|ServerHealth|health.*status","results":30,"files":5}
 {"at":"2026-05-31T10:05:00.186Z","tool":"smart_bash","action":"bash","command":"awk 'NR>=160 && NR<=195' packages/desktop/src/main/ipc-contract.ts","exit_code":0}
 {"at":"2026-05-31T10:09:25.312Z","tool":"smart_write","action":"wrote","file":".build/rig-relay/arch_sidecar_watchdog.v1.json","detail":"Write architecture plan for sidecar watchdog + degraded mode"}
+{"at":"2026-05-31T10:11:40.909Z","tool":"smart_bash","action":"bash","command":"python3 -c \"\nimport json\nwith open('.build/rig-relay/arch_sidecar_watchdog.v1.json') as f:\n    data ","exit_code":0}
+{"at":"2026-05-31T11:18:42.078Z","tool":"smart_edit","action":"edited","file":".build/rig-relay/arch_sidecar_watchdog.v1.json","detail":"Add subagent findings summary to plan"}

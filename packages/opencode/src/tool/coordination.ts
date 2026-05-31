@@ -47,6 +47,7 @@ export type PathReservation = {
   status: "reserved" | "released" | "conflicted"
   createdAt: number
   expiresAt?: number
+  baseDigest?: string
 }
 
 export type FanOutGroup = {
@@ -99,6 +100,14 @@ export const ensureCoordinationTables = Effect.fn("Coordination.ensureCoordinati
   } catch (_) {
     // Column already exists — silently ignore
   }
+  // Migrate existing tables: add base_digest for digest-backed conflict detection
+  try {
+    yield* adapter.query((db) =>
+      db.run(`ALTER TABLE coordination_reservation ADD COLUMN base_digest TEXT`),
+    )
+  } catch (_) {
+    // Column already exists — silently ignore
+  }
   yield* adapter.query((db) =>
     db.run(
       `CREATE TABLE IF NOT EXISTS coordination_reservation (
@@ -107,7 +116,8 @@ export const ensureCoordinationTables = Effect.fn("Coordination.ensureCoordinati
         session_id TEXT NOT NULL,
         status TEXT NOT NULL,
         created_at INTEGER NOT NULL,
-        expires_at INTEGER
+        expires_at INTEGER,
+        base_digest TEXT
       )`,
     ),
   )
@@ -166,6 +176,7 @@ function reservationRowToType(row: {
   status: "reserved" | "released" | "conflicted"
   created_at: number
   expires_at: number | null
+  base_digest: string | null
 }): PathReservation {
   return {
     path: row.path,
@@ -174,6 +185,7 @@ function reservationRowToType(row: {
     status: row.status,
     createdAt: row.created_at,
     expiresAt: row.expires_at ?? undefined,
+    baseDigest: row.base_digest ?? undefined,
   }
 }
 
@@ -467,6 +479,7 @@ export const reservePath = Effect.fn("Coordination.reservePath")(function* (
   path: string,
   taskId: string,
   sessionId: string,
+  baseDigest?: string,
 ) {
   const adapter = yield* DatabaseAdapter.Service
   const conflict = yield* adapter.transaction(async (tx) => {
@@ -500,6 +513,7 @@ export const reservePath = Effect.fn("Coordination.reservePath")(function* (
         status: "reserved" as const,
         created_at: Date.now(),
         expires_at: Date.now() + 1_800_000,
+        base_digest: baseDigest ?? null,
       })
       .onConflictDoUpdate({
         target: CoordinationReservationTable.path,
@@ -529,6 +543,40 @@ export const releasePath = Effect.fn("Coordination.releasePath")(function* (path
         ),
       ),
   )
+})
+
+export const renewPathLease = Effect.fn("Coordination.renewPathLease")(function* (
+  path: string,
+  taskId: string,
+) {
+  const adapter = yield* DatabaseAdapter.Service
+  const result = yield* adapter.transaction(async (tx) => {
+    const existing = await tx
+      .select()
+      .from(CoordinationReservationTable)
+      .where(
+        and(
+          eq(CoordinationReservationTable.path, path),
+          eq(CoordinationReservationTable.task_id, taskId),
+          eq(CoordinationReservationTable.status, "reserved"),
+        ),
+      )
+      .limit(1)
+    if (existing.length === 0) {
+      return { success: false as const, reason: "No active reservation found for this task" }
+    }
+    await tx
+      .update(CoordinationReservationTable)
+      .set({ expires_at: Date.now() + 1_800_000 })
+      .where(
+        and(
+          eq(CoordinationReservationTable.path, path),
+          eq(CoordinationReservationTable.task_id, taskId),
+        ),
+      )
+    return { success: true as const }
+  })
+  return result
 })
 
 export const checkPathReserved = Effect.fn("Coordination.checkPathReserved")(function* (path: string) {

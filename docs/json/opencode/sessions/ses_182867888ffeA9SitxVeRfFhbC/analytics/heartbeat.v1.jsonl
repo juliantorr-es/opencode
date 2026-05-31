@@ -18,3 +18,39 @@
 {"at":"2026-05-31T10:09:04.476Z","session_id":"ses_182867888ffeA9SitxVeRfFhbC","agent":"risk-enumerator","tool":"smart_grep","phase":"completed","detail":"\"#db\""}
 {"at":"2026-05-31T10:09:05.116Z","session_id":"ses_182867888ffeA9SitxVeRfFhbC","agent":"risk-enumerator","tool":"smart_grep","phase":"started","detail":"OPENCODE_MIGRATIONS"}
 {"at":"2026-05-31T10:09:05.149Z","session_id":"ses_182867888ffeA9SitxVeRfFhbC","agent":"risk-enumerator","tool":"smart_grep","phase":"completed","detail":"OPENCODE_MIGRATIONS"}
+{"at":"2026-05-31T10:11:18.852Z","session_id":"ses_182867888ffeA9SitxVeRfFhbC","agent":"risk-enumerator","tool":"smart_git","phase":"started","detail":"status"}
+{"at":"2026-05-31T10:11:18.875Z","session_id":"ses_182867888ffeA9SitxVeRfFhbC","agent":"risk-enumerator","tool":"smart_git","phase":"completed","detail":"status exit=0"}
+{"at":"2026-05-31T10:11:20.210Z","session_id":"ses_182867888ffeA9SitxVeRfFhbC","agent":"risk-enumerator","tool":"smart_grep","phase":"started","detail":"import.*from.*\"\\./db\"|Database\\.use|Database\\.transaction|Database\\.effect|Datab"}
+{"at":"2026-05-31T10:11:20.232Z","session_id":"ses_182867888ffeA9SitxVeRfFhbC","agent":"risk-enumerator","tool":"smart_grep","phase":"completed","detail":"import.*from.*\"\\./db\"|Database\\.use|Database\\.transaction|Database\\.effect|Datab"}
+{"at":"2026-05-31T10:13:26.565Z","session_id":"ses_182867888ffeA9SitxVeRfFhbC","agent":"risk-enumerator","tool":"smart_git","phase":"started","detail":"show"}
+{"at":"2026-05-31T10:13:26.612Z","session_id":"ses_182867888ffeA9SitxVeRfFhbC","agent":"risk-enumerator","tool":"smart_git","phase":"failed","detail":"show exit=128"}
+{"at":"2026-05-31T10:13:27.088Z","session_id":"ses_182867888ffeA9SitxVeRfFhbC","agent":"risk-enumerator","tool":"smart_grep","phase":"started","detail":"SQLiteTransactionOptions"}
+{"at":"2026-05-31T10:13:27.146Z","session_id":"ses_182867888ffeA9SitxVeRfFhbC","agent":"risk-enumerator","tool":"smart_grep","phase":"completed","detail":"SQLiteTransactionOptions"}
+{"at":"2026-05-31T10:13:27.722Z","session_id":"ses_182867888ffeA9SitxVeRfFhbC","agent":"risk-enumerator","tool":"smart_grep","phase":"started","detail":"_tag.*sqlite|_tag.*pglite"}
+{"at":"2026-05-31T10:13:27.761Z","session_id":"ses_182867888ffeA9SitxVeRfFhbC","agent":"risk-enumerator","tool":"smart_grep","phase":"completed","detail":"_tag.*sqlite|_tag.*pglite"}
+{"at":"2026-05-31T10:16:39.254Z","session_id":"ses_182867888ffeA9SitxVeRfFhbC","agent":"risk-enumerator","tool":"smart_grep","phase":"started","detail":"SQLiteTransactionOptions|sqlite.*_tag|_tag.*sqlite"}
+{"at":"2026-05-31T10:16:39.295Z","session_id":"ses_182867888ffeA9SitxVeRfFhbC","agent":"risk-enumerator","tool":"smart_grep","phase":"completed","detail":"SQLiteTransactionOptions|sqlite.*_tag|_tag.*sqlite"}
+{"at":"2026-05-31T10:19:51.465Z","session_id":"ses_182867888ffeA9SitxVeRfFhbC","agent":"risk-enumerator","tool":"smart_grep","phase":"started","detail":"DatabaseAdapter\\.SQLiteTransactionOptions|import.*SQLiteTransactionOptions"}
+{"at":"2026-05-31T10:19:51.533Z","session_id":"ses_182867888ffeA9SitxVeRfFhbC","agent":"risk-enumerator","tool":"smart_grep","phase":"completed","detail":"DatabaseAdapter\\.SQLiteTransactionOptions|import.*SQLiteTransactionOptions"}
+{"at":"2026-05-31T10:19:52.232Z","session_id":"ses_182867888ffeA9SitxVeRfFhbC","agent":"risk-enumerator","tool":"smart_grep","phase":"started","detail":"from.*\\\"@/storage/adapter\\\"|from.*\\\"\\./adapter\\\""}
+{"at":"2026-05-31T10:19:52.262Z","session_id":"ses_182867888ffeA9SitxVeRfFhbC","agent":"risk-enumerator","tool":"smart_grep","phase":"completed","detail":"from.*\\\"@/storage/adapter\\\"|from.*\\\"\\./adapter\\\""}
+{"at":"2026-05-31T10:19:52.987Z","session_id":"ses_182867888ffeA9SitxVeRfFhbC","agent":"risk-enumerator","tool":"smart_grep","phase":"started","detail":"migration-pg"}
+{"at":"2026-05-31T10:19:53.031Z","session_id":"ses_182867888ffeA9SitxVeRfFhbC","agent":"risk-enumerator","tool":"smart_grep","phase":"completed","detail":"migration-pg"}
+{"at":"2026-05-31T10:26:53.890Z","session_id":"ses_182867888ffeA9SitxVeRfFhbC","agent":"risk-enumerator","tool":"smart_grep","phase":"started","detail":"export const |Layer\\.unwrap|Layer\\.effect|Layer\\.provide"}
+{"at":"2026-05-31T10:26:53.910Z","session_id":"ses_182867888ffeA9SitxVeRfFhbC","agent":"risk-enumerator","tool":"smart_grep","phase":"completed","detail":"export const |Layer\\.unwrap|Layer\\.effect|Layer\\.provide"}
+{"at":"2026-05-31T10:31:29.708Z","session_id":"ses_182867888ffeA9SitxVeRfFhbC","agent":"risk-enumerator","tool":"smart_grep","phase":"started","detail":"export const|Layer\\.unwrap|defaultLayer|DatabaseConfig"}
+{"at":"2026-05-31T10:31:29.798Z","session_id":"ses_182867888ffeA9SitxVeRfFhbC","agent":"risk-enumerator","tool":"smart_grep","phase":"completed","detail":"export const|Layer\\.unwrap|defaultLayer|DatabaseConfig"}
+{"at":"2026-05-31T10:36:07.077Z","session_id":"ses_182867888ffeA9SitxVeRfFhbC","agent":"risk-enumerator","tool":"smart_grep","phase":"started","detail":".*"}
+{"at":"2026-05-31T10:36:07.085Z","session_id":"ses_182867888ffeA9SitxVeRfFhbC","agent":"risk-enumerator","tool":"smart_grep","phase":"completed","detail":".*"}
+{"at":"2026-05-31T10:40:18.340Z","session_id":"ses_182867888ffeA9SitxVeRfFhbC","agent":"risk-enumerator","tool":"smart_grep","phase":"started","detail":"OPENCODE_MIGRATIONS"}
+{"at":"2026-05-31T10:40:18.423Z","session_id":"ses_182867888ffeA9SitxVeRfFhbC","agent":"risk-enumerator","tool":"smart_grep","phase":"completed","detail":"OPENCODE_MIGRATIONS"}
+{"at":"2026-05-31T10:40:18.935Z","session_id":"ses_182867888ffeA9SitxVeRfFhbC","agent":"risk-enumerator","tool":"smart_grep","phase":"started","detail":"OPENCODE_MIGRATIONS"}
+{"at":"2026-05-31T10:40:18.961Z","session_id":"ses_182867888ffeA9SitxVeRfFhbC","agent":"risk-enumerator","tool":"smart_grep","phase":"completed","detail":"OPENCODE_MIGRATIONS"}
+{"at":"2026-05-31T10:43:56.115Z","session_id":"ses_182867888ffeA9SitxVeRfFhbC","agent":"risk-enumerator","tool":"smart_grep","phase":"started","detail":"DatabaseAdapter\\.defaultLayer|DatabaseAdapter\\.layer"}
+{"at":"2026-05-31T10:43:56.160Z","session_id":"ses_182867888ffeA9SitxVeRfFhbC","agent":"risk-enumerator","tool":"smart_grep","phase":"completed","detail":"DatabaseAdapter\\.defaultLayer|DatabaseAdapter\\.layer"}
+{"at":"2026-05-31T10:45:21.376Z","session_id":"ses_182867888ffeA9SitxVeRfFhbC","agent":"risk-enumerator","tool":"smart_grep","phase":"started","detail":"OPENCODE_SKIP_MIGRATIONS"}
+{"at":"2026-05-31T10:45:21.435Z","session_id":"ses_182867888ffeA9SitxVeRfFhbC","agent":"risk-enumerator","tool":"smart_grep","phase":"completed","detail":"OPENCODE_SKIP_MIGRATIONS"}
+{"at":"2026-05-31T10:45:22.204Z","session_id":"ses_182867888ffeA9SitxVeRfFhbC","agent":"risk-enumerator","tool":"smart_grep","phase":"started","detail":"migration/(?!pg)"}
+{"at":"2026-05-31T10:45:22.220Z","session_id":"ses_182867888ffeA9SitxVeRfFhbC","agent":"risk-enumerator","tool":"smart_grep","phase":"failed","detail":"rg: regex parse error:\n    (?:migration/(?!pg))\n                 ^^^\nerror: look-around, including look-ahead and look-behind, is not supported\n\nConsider enabling PCRE2 with the --pcre2 flag, which ca"}
+{"at":"2026-05-31T10:45:23.199Z","session_id":"ses_182867888ffeA9SitxVeRfFhbC","agent":"risk-enumerator","tool":"smart_grep","phase":"started","detail":"TransactionOptions"}
+{"at":"2026-05-31T10:45:23.214Z","session_id":"ses_182867888ffeA9SitxVeRfFhbC","agent":"risk-enumerator","tool":"smart_grep","phase":"completed","detail":"TransactionOptions"}

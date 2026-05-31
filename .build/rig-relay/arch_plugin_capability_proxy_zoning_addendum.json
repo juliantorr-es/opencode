@@ -1,0 +1,37 @@
+{
+  "zoning_board_review": {
+    "incorporated": true,
+    "reviewed_by": "zoning-board (ses_1827e4838ffelQRXoKTbF4uDfz)",
+    "review_target": "arch_plugin_capability_proxy.v1.json",
+    "verdict": "Structurally sound. Proxy + sync cache pattern is canonically validated (service-use.ts:18). Main risk: new code introducing `as any` casts.",
+    "findings_integrated": [
+      {
+        "finding": "Use mapped type for proxy return, not `as any`",
+        "action": "Define `CapabilityScopedClient` as a mapped type over OpencodeClient property keys. Cast at export boundary only. Follows service-use.ts:43 pattern.",
+        "revision_to_fix_C": "makeScopedClient returns `CapabilityScopedClient` (mapped type), not Proxy<Record<string, any>>"
+      },
+      {
+        "finding": "No try/catch in capability module files",
+        "action": "Proxy traps use guard clauses + early returns. Error handling at the Effect boundary only.",
+        "revision_to_fix_C": "Already satisfied — proxy.ts uses synchronous guard clauses"
+      },
+      {
+        "finding": "Synchronous Map cache is accepted boundary pattern",
+        "action": "Follows service-use.ts:18 precedent exactly. Document the boundary.",
+        "revision": "No change — design already aligns"
+      },
+      {
+        "finding": "Use CapabilityId enum values in maps, not raw string literals",
+        "action": "SDK_CAPABILITY_MAP values must reference `CapabilityId.NetworkRequest` not literal `\"network.request\"`.",
+        "revision_to_fix_B": "Import CapabilityId from types.ts; use enum member references"
+      },
+      {
+        "finding": "Pre-existing HOOK_CAPABILITY_MAP type gap (Record vs Partial)",
+        "action": "Out-of-scope but documented. Should be `Partial<Record<string, CapabilityId>>` to eliminate `as any` at hook-dispatch-guard.ts:53,57.",
+        "deferred_cleanup": true
+      }
+    ],
+    "canonical_proxy_pattern": "packages/core/src/effect/service-use.ts:18-43",
+    "import_convention_confirmed": "Relative intra-directory imports (`./types`), bare specifiers for packages, `@/` for cross-module"
+  }
+}

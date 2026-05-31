@@ -1,8 +1,24 @@
+import { spawnSync } from "node:child_process"
 import { tool } from "@opencode-ai/plugin"
 import { resolve } from "node:path"
 import { existsSync, mkdirSync, readFileSync, writeFileSync, appendFileSync } from "node:fs"
 
 function r(worktree: string, p: string): string { return resolve(worktree, p) }
+
+function jqlQuery(worktree: string, filePath: string, query: string): any {
+  const fullPath = r(worktree, filePath)
+  if (!existsSync(fullPath)) return null
+  const binaries = ["jql", "/opt/homebrew/bin/jql", "/usr/local/bin/jql"]
+  for (const bin of binaries) {
+    const result = spawnSync(bin, [query, fullPath], {
+      encoding: "utf8", maxBuffer: 1024 * 1024 * 5, timeout: 15000,
+    })
+    if (!result.error && result.status === 0 && result.stdout?.trim()) {
+      try { return JSON.parse(result.stdout.trim()) } catch { return null }
+    }
+  }
+  return null
+}
 
 export default tool({
   description: "Roadmap lifecycle — init, next, progress, deprecate, prioritize. One tool for the cross-session control plane.",

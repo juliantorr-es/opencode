@@ -1,0 +1,34 @@
+{"at":"2026-05-31T11:04:16.640Z","session_id":"ses_1824e7157ffeShI57aBz4O42BK","agent":"reasonable-doubt","tool":"smart_find","phase":"started","detail":"*smart*bash*test*"}
+{"at":"2026-05-31T11:04:16.669Z","session_id":"ses_1824e7157ffeShI57aBz4O42BK","agent":"reasonable-doubt","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T11:04:17.389Z","session_id":"ses_1824e7157ffeShI57aBz4O42BK","agent":"reasonable-doubt","tool":"smart_find","phase":"started","detail":"*secret*"}
+{"at":"2026-05-31T11:04:17.443Z","session_id":"ses_1824e7157ffeShI57aBz4O42BK","agent":"reasonable-doubt","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T11:04:18.110Z","session_id":"ses_1824e7157ffeShI57aBz4O42BK","agent":"reasonable-doubt","tool":"smart_find","phase":"started","detail":"test/lib/*.ts"}
+{"at":"2026-05-31T11:04:18.175Z","session_id":"ses_1824e7157ffeShI57aBz4O42BK","agent":"reasonable-doubt","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T11:07:18.696Z","session_id":"ses_1824e7157ffeShI57aBz4O42BK","agent":"reasonable-doubt","tool":"smart_grep","phase":"started","detail":"smart.bash.*test|test.*smart.bash"}
+{"at":"2026-05-31T11:07:18.723Z","session_id":"ses_1824e7157ffeShI57aBz4O42BK","agent":"reasonable-doubt","tool":"smart_grep","phase":"completed","detail":"smart.bash.*test|test.*smart.bash"}
+{"at":"2026-05-31T11:07:20.050Z","session_id":"ses_1824e7157ffeShI57aBz4O42BK","agent":"reasonable-doubt","tool":"smart_grep","phase":"started","detail":"sanitizedProcessEnv|sanitize.*env"}
+{"at":"2026-05-31T11:07:20.118Z","session_id":"ses_1824e7157ffeShI57aBz4O42BK","agent":"reasonable-doubt","tool":"smart_grep","phase":"completed","detail":"sanitizedProcessEnv|sanitize.*env"}
+{"at":"2026-05-31T11:07:21.168Z","session_id":"ses_1824e7157ffeShI57aBz4O42BK","agent":"reasonable-doubt","tool":"smart_grep","phase":"started","detail":"isBlocklistedEnvVar|ENV_BLOCKLIST"}
+{"at":"2026-05-31T11:07:21.211Z","session_id":"ses_1824e7157ffeShI57aBz4O42BK","agent":"reasonable-doubt","tool":"smart_grep","phase":"completed","detail":"isBlocklistedEnvVar|ENV_BLOCKLIST"}
+{"at":"2026-05-31T11:07:22.529Z","session_id":"ses_1824e7157ffeShI57aBz4O42BK","agent":"reasonable-doubt","tool":"smart_grep","phase":"started","detail":"VALUE_SECRET_PATTERNS|scanToolOutput|hasSecrets|SecretScanner"}
+{"at":"2026-05-31T11:07:22.581Z","session_id":"ses_1824e7157ffeShI57aBz4O42BK","agent":"reasonable-doubt","tool":"smart_grep","phase":"completed","detail":"VALUE_SECRET_PATTERNS|scanToolOutput|hasSecrets|SecretScanner"}
+{"at":"2026-05-31T11:13:45.948Z","session_id":"ses_1824e7157ffeShI57aBz4O42BK","agent":"reasonable-doubt","tool":"smart_grep","phase":"started","detail":"spawnSync|Bun\\.spawn|ChildProcess\\.spawn"}
+{"at":"2026-05-31T11:13:45.969Z","session_id":"ses_1824e7157ffeShI57aBz4O42BK","agent":"reasonable-doubt","tool":"smart_grep","phase":"completed","detail":"spawnSync|Bun\\.spawn|ChildProcess\\.spawn"}
+{"at":"2026-05-31T11:13:47.189Z","session_id":"ses_1824e7157ffeShI57aBz4O42BK","agent":"reasonable-doubt","tool":"smart_grep","phase":"started","detail":"Tool\\.define|Tool\\.provide|tool\\.ts|ToolService|toolService"}
+{"at":"2026-05-31T11:13:47.206Z","session_id":"ses_1824e7157ffeShI57aBz4O42BK","agent":"reasonable-doubt","tool":"smart_grep","phase":"completed","detail":"Tool\\.define|Tool\\.provide|tool\\.ts|ToolService|toolService"}
+{"at":"2026-05-31T11:13:48.284Z","session_id":"ses_1824e7157ffeShI57aBz4O42BK","agent":"reasonable-doubt","tool":"smart_grep","phase":"started","detail":"testEffect|effectTest|Effect\\.run"}
+{"at":"2026-05-31T11:13:48.299Z","session_id":"ses_1824e7157ffeShI57aBz4O42BK","agent":"reasonable-doubt","tool":"smart_grep","phase":"completed","detail":"testEffect|effectTest|Effect\\.run"}
+{"at":"2026-05-31T11:24:26.432Z","session_id":"ses_1824e7157ffeShI57aBz4O42BK","agent":"reasonable-doubt","tool":"smart_grep","phase":"started","detail":"spawnSync|Bun\\.spawn|mock.*spawn"}
+{"at":"2026-05-31T11:24:26.468Z","session_id":"ses_1824e7157ffeShI57aBz4O42BK","agent":"reasonable-doubt","tool":"smart_grep","phase":"completed","detail":"spawnSync|Bun\\.spawn|mock.*spawn"}
+{"at":"2026-05-31T11:24:27.511Z","session_id":"ses_1824e7157ffeShI57aBz4O42BK","agent":"reasonable-doubt","tool":"smart_grep","phase":"started","detail":"."}
+{"at":"2026-05-31T11:24:27.527Z","session_id":"ses_1824e7157ffeShI57aBz4O42BK","agent":"reasonable-doubt","tool":"smart_grep","phase":"completed","detail":"."}
+{"at":"2026-05-31T11:24:32.244Z","session_id":"ses_1824e7157ffeShI57aBz4O42BK","agent":"reasonable-doubt","tool":"smart_bash","phase":"started","detail":"List all tool test files"}
+{"at":"2026-05-31T11:24:32.245Z","session_id":"ses_1824e7157ffeShI57aBz4O42BK","agent":"reasonable-doubt","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T11:27:29.860Z","session_id":"ses_1824e7157ffeShI57aBz4O42BK","agent":"reasonable-doubt","tool":"smart_bash","phase":"started","detail":"List tool test directory"}
+{"at":"2026-05-31T11:27:29.860Z","session_id":"ses_1824e7157ffeShI57aBz4O42BK","agent":"reasonable-doubt","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T11:27:30.789Z","session_id":"ses_1824e7157ffeShI57aBz4O42BK","agent":"reasonable-doubt","tool":"smart_grep","phase":"started","detail":"^"}
+{"at":"2026-05-31T11:27:30.802Z","session_id":"ses_1824e7157ffeShI57aBz4O42BK","agent":"reasonable-doubt","tool":"smart_grep","phase":"completed","detail":"^"}
+{"at":"2026-05-31T11:30:24.655Z","session_id":"ses_1824e7157ffeShI57aBz4O42BK","agent":"reasonable-doubt","tool":"smart_bash","phase":"started","detail":"Find all tool test files"}
+{"at":"2026-05-31T11:30:24.656Z","session_id":"ses_1824e7157ffeShI57aBz4O42BK","agent":"reasonable-doubt","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T11:33:07.019Z","session_id":"ses_1824e7157ffeShI57aBz4O42BK","agent":"reasonable-doubt","tool":"smart_bash","phase":"started","detail":"List tool test files"}
+{"at":"2026-05-31T11:33:07.020Z","session_id":"ses_1824e7157ffeShI57aBz4O42BK","agent":"reasonable-doubt","tool":"smart_bash","phase":"rerouted","detail":"→ smart_grep"}

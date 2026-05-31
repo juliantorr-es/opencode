@@ -1,0 +1,36 @@
+{"at":"2026-05-31T10:15:29.778Z","session_id":"ses_1827ab261ffeGcYztsH3g327p6","agent":"load-bearer","tool":"smart_grep","phase":"started","detail":"spawnLocalServer"}
+{"at":"2026-05-31T10:15:29.793Z","session_id":"ses_1827ab261ffeGcYztsH3g327p6","agent":"load-bearer","tool":"smart_grep","phase":"completed","detail":"spawnLocalServer"}
+{"at":"2026-05-31T10:15:30.364Z","session_id":"ses_1827ab261ffeGcYztsH3g327p6","agent":"load-bearer","tool":"smart_grep","phase":"started","detail":"SidecarListener"}
+{"at":"2026-05-31T10:15:30.385Z","session_id":"ses_1827ab261ffeGcYztsH3g327p6","agent":"load-bearer","tool":"smart_grep","phase":"completed","detail":"SidecarListener"}
+{"at":"2026-05-31T10:15:30.921Z","session_id":"ses_1827ab261ffeGcYztsH3g327p6","agent":"load-bearer","tool":"smart_grep","phase":"started","detail":"checkHealth"}
+{"at":"2026-05-31T10:15:30.938Z","session_id":"ses_1827ab261ffeGcYztsH3g327p6","agent":"load-bearer","tool":"smart_grep","phase":"completed","detail":"checkHealth"}
+{"at":"2026-05-31T10:18:22.391Z","session_id":"ses_1827ab261ffeGcYztsH3g327p6","agent":"load-bearer","tool":"smart_find","phase":"started","detail":"*test*server*"}
+{"at":"2026-05-31T10:18:22.481Z","session_id":"ses_1827ab261ffeGcYztsH3g327p6","agent":"load-bearer","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T10:18:22.957Z","session_id":"ses_1827ab261ffeGcYztsH3g327p6","agent":"load-bearer","tool":"smart_find","phase":"started","detail":"*server*.test*"}
+{"at":"2026-05-31T10:18:23.089Z","session_id":"ses_1827ab261ffeGcYztsH3g327p6","agent":"load-bearer","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T10:18:23.784Z","session_id":"ses_1827ab261ffeGcYztsH3g327p6","agent":"load-bearer","tool":"smart_find","phase":"started","detail":"*.test.ts"}
+{"at":"2026-05-31T10:18:23.875Z","session_id":"ses_1827ab261ffeGcYztsH3g327p6","agent":"load-bearer","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T10:21:33.853Z","session_id":"ses_1827ab261ffeGcYztsH3g327p6","agent":"load-bearer","tool":"smart_grep","phase":"started","detail":"server|spawnLocalServer|SidecarListener|HealthCheck|checkHealth"}
+{"at":"2026-05-31T10:21:33.865Z","session_id":"ses_1827ab261ffeGcYztsH3g327p6","agent":"load-bearer","tool":"smart_grep","phase":"completed","detail":"server|spawnLocalServer|SidecarListener|HealthCheck|checkHealth"}
+{"at":"2026-05-31T10:21:34.899Z","session_id":"ses_1827ab261ffeGcYztsH3g327p6","agent":"load-bearer","tool":"smart_grep","phase":"started","detail":"server|spawnLocalServer|SidecarListener|HealthCheck|checkHealth"}
+{"at":"2026-05-31T10:21:34.911Z","session_id":"ses_1827ab261ffeGcYztsH3g327p6","agent":"load-bearer","tool":"smart_grep","phase":"completed","detail":"server|spawnLocalServer|SidecarListener|HealthCheck|checkHealth"}
+{"at":"2026-05-31T10:21:35.978Z","session_id":"ses_1827ab261ffeGcYztsH3g327p6","agent":"load-bearer","tool":"smart_grep","phase":"started","detail":"from.*server|import.*server"}
+{"at":"2026-05-31T10:21:35.995Z","session_id":"ses_1827ab261ffeGcYztsH3g327p6","agent":"load-bearer","tool":"smart_grep","phase":"completed","detail":"from.*server|import.*server"}
+{"at":"2026-05-31T10:25:00.987Z","session_id":"ses_1827ab261ffeGcYztsH3g327p6","agent":"load-bearer","tool":"smart_grep","phase":"started","detail":"onProcessGone|child-process-gone"}
+{"at":"2026-05-31T10:25:01.002Z","session_id":"ses_1827ab261ffeGcYztsH3g327p6","agent":"load-bearer","tool":"smart_grep","phase":"completed","detail":"onProcessGone|child-process-gone"}
+{"at":"2026-05-31T10:25:07.624Z","session_id":"ses_1827ab261ffeGcYztsH3g327p6","agent":"load-bearer","tool":"smart_grep","phase":"started","detail":"import.*from.*server|from \\\"\\./server\\\""}
+{"at":"2026-05-31T10:25:07.636Z","session_id":"ses_1827ab261ffeGcYztsH3g327p6","agent":"load-bearer","tool":"smart_grep","phase":"completed","detail":"import.*from.*server|from \\\"\\./server\\\""}
+{"at":"2026-05-31T10:25:08.385Z","session_id":"ses_1827ab261ffeGcYztsH3g327p6","agent":"load-bearer","tool":"smart_grep","phase":"started","detail":"\\.health|\\.listener|HealthCheck"}
+{"at":"2026-05-31T10:25:08.399Z","session_id":"ses_1827ab261ffeGcYztsH3g327p6","agent":"load-bearer","tool":"smart_grep","phase":"completed","detail":"\\.health|\\.listener|HealthCheck"}
+{"at":"2026-05-31T10:38:01.996Z","session_id":"ses_1827ab261ffeGcYztsH3g327p6","agent":"load-bearer","tool":"smart_grep","phase":"started","detail":"import.*spawnLocalServer|import.*checkHealth|from.*server"}
+{"at":"2026-05-31T10:38:02.025Z","session_id":"ses_1827ab261ffeGcYztsH3g327p6","agent":"load-bearer","tool":"smart_grep","phase":"completed","detail":"import.*spawnLocalServer|import.*checkHealth|from.*server"}
+{"at":"2026-05-31T10:38:02.654Z","session_id":"ses_1827ab261ffeGcYztsH3g327p6","agent":"load-bearer","tool":"smart_grep","phase":"started","detail":"spawnLocalServer\\("}
+{"at":"2026-05-31T10:38:02.665Z","session_id":"ses_1827ab261ffeGcYztsH3g327p6","agent":"load-bearer","tool":"smart_grep","phase":"completed","detail":"spawnLocalServer\\("}
+{"at":"2026-05-31T10:38:03.500Z","session_id":"ses_1827ab261ffeGcYztsH3g327p6","agent":"load-bearer","tool":"smart_grep","phase":"started","detail":"server\\b.*="}
+{"at":"2026-05-31T10:38:03.514Z","session_id":"ses_1827ab261ffeGcYztsH3g327p6","agent":"load-bearer","tool":"smart_grep","phase":"completed","detail":"server\\b.*="}
+{"at":"2026-05-31T10:42:11.898Z","session_id":"ses_1827ab261ffeGcYztsH3g327p6","agent":"load-bearer","tool":"smart_bash","phase":"started","detail":"Read import block and server variable declaration"}
+{"at":"2026-05-31T10:42:11.898Z","session_id":"ses_1827ab261ffeGcYztsH3g327p6","agent":"load-bearer","tool":"smart_bash","phase":"rerouted","detail":"→ read_source"}
+{"at":"2026-05-31T10:42:12.809Z","session_id":"ses_1827ab261ffeGcYztsH3g327p6","agent":"load-bearer","tool":"smart_bash","phase":"started","detail":"Read spawnLocalServer call site and result usage"}
+{"at":"2026-05-31T10:42:12.809Z","session_id":"ses_1827ab261ffeGcYztsH3g327p6","agent":"load-bearer","tool":"smart_bash","phase":"rerouted","detail":"→ read_source"}
+{"at":"2026-05-31T10:42:13.563Z","session_id":"ses_1827ab261ffeGcYztsH3g327p6","agent":"load-bearer","tool":"smart_bash","phase":"started","detail":"Find all test files in desktop package"}
+{"at":"2026-05-31T10:42:13.563Z","session_id":"ses_1827ab261ffeGcYztsH3g327p6","agent":"load-bearer","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}

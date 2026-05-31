@@ -1,453 +1,227 @@
 {
   "schema_version": "v1",
   "generated_at": "2026-05-31T00:00:00Z",
-  "mission": "Map TypeScript type conventions and patterns across the codebase",
-  "scope": "All packages (opencode, core, console, desktop, function, app, sdks, extensions), all tsconfigs",
+  "mission": "Map TypeScript type conventions and patterns — FINAL with all 5 subagents integrated",
+  "scope": "28 packages, all tsconfigs, all linter configs, .opencode/tools, sdks/vscode",
 
   "1_catch_clause_patterns": {
     "strict_mode": {
-      "verdict": "All 12 tsconfig.json files use `strict: true`, which implies `useUnknownInCatchVariables: true` — unannotated catch variables default to `unknown`.",
-      "files": [
-        "packages/opencode/tsconfig.json:15",
-        "packages/app/tsconfig.json:15",
-        "packages/desktop/tsconfig.json:13",
-        "packages/console/support/tsconfig.json:13",
-        "packages/console/app/tsconfig.json:13",
-        "packages/enterprise/tsconfig.json:13",
-        "packages/ui/tsconfig.json:18",
-        "packages/storybook/tsconfig.json:12",
-        "packages/stats/server/tsconfig.json:7",
-        "packages/stats/app/tsconfig.json:13",
-        "packages/stats/core/tsconfig.json:7",
-        "github/tsconfig.json:18",
-        "sdks/vscode/tsconfig.json:9"
-      ]
-    },
-    "explicit_unknown": {
-      "count": 3,
-      "description": "Only 3 explicit `catch (e: unknown)` annotations in the entire codebase. Extremely rare pattern — most developers rely on the `strict` default.",
-      "examples": [
-        "packages/opencode/src/tool/propose-plan.ts:61 — `catch (e: unknown)` → re-wraps in `new Error(...)` with context",
-        "packages/opencode/src/tool/rig-jsonl-query.ts:64 — `catch (err: unknown)` → handles parse failure",
-        "docs/json/opencode/archive/.../github.ts:1374 — archive file, not production"
-      ]
-    },
-    "explicit_any_ANTIPATTERN": {
-      "count": 14,
-      "description": "14 instances of `catch (e: any)` — this is an anti-pattern under strict mode. Should be `unknown` with narrowing.",
-      "examples": [
-        "packages/opencode/src/session/llm.ts:143 — `catch (e: any)` — LLM streaming error handler. Extracts `e.data?.text` — would benefit from `isRecord` narrowing",
-        "packages/core/src/filesystem.ts:241 — `catch (e: any)` — filesystem operation",
-        "packages/function/src/api.ts:351 — `catch (e: any)` — API handler",
-        "packages/console/app/src/routes/zen/util/handler.ts:373 — `catch (error: any)` — HTTP handler",
-        "packages/console/core/src/billing.ts:121,402 — `catch (e: any)` — billing operations",
-        "packages/console/app/src/routes/auth/[...callback].ts:37 — `catch (e: any)` — auth callback",
-        "packages/opencode/test/debug-bisect.ts:74 — `catch (err: any)` — test utility (lower priority)",
-        "packages/opencode/test/debug-db-adapter.ts:47 — `catch (err: any)` — test utility",
-        "packages/opencode/test/storage/pg-pool.pg.test.ts:30 — `catch (e: any)` — test",
-        "github/index.ts:211 — `catch (e: any)` — GitHub integration"
-      ]
-    },
-    "unannotated_defaults_to_unknown": {
-      "count": 207,
-      "description": "207 total catch clauses across the codebase. Most are unannotated `catch (e)` or `catch (error)` — these default to `unknown` under strict mode. This is the de facto convention, though not explicitly enforced by lint rules.",
-      "representative_samples": [
-        "packages/desktop/src/main/ipc-config.ts:19,33,51,64,80,93,110 — `catch (e)` — IPC config loading, silent return/fallback",
-        "packages/desktop/src/main/ipc-contract.ts:64,444 — `catch (error)` — IPC message handling",
-        "packages/desktop/src/main/sidecar.ts:70,126,134 — `catch (error)` — sidecar process management",
-        "packages/desktop/src/main/index.ts:75,159 — `catch (error)` — app lifecycle",
-        "packages/console/core/src/drizzle/index.ts:40,73 — `catch (err)` — DB connection",
-        "packages/console/core/src/user.ts:155 — `catch (e)` — user operations",
-        "packages/opencode/src/storage/db.ts:32 — `catch { return defaultFlags }` — silent default pattern",
-        "packages/sdk/js/src/v2/gen/client/client.gen.ts:92 — `catch (error)` — generated SDK code"
-      ]
-    },
-    "post_catch_narrowing_patterns": [
-      {
-        "pattern": "instanceof narrowing",
-        "example": "packages/opencode/src/storage/db.ts:105 — `if (err instanceof LocalContext.NotFound)`",
-        "frequency": "common"
-      },
-      {
-        "pattern": "isRecord narrowing",
-        "example": "packages/opencode/src/session/retry.ts:125 — `const msg = isRecord(error.data) ? error.data.message : undefined`",
-        "frequency": "common"
-      },
-      {
-        "pattern": "Schema.is narrowing",
-        "example": "packages/opencode/src/session/processor.ts:291 — `const isFilePart = (value: unknown): value is MessageV2.FilePart => Schema.is(MessageV2.FilePart)(value)`",
-        "frequency": "moderate"
-      },
-      {
-        "pattern": "Silent swallowing with default",
-        "example": "packages/opencode/src/storage/db.ts:32 — `catch { return { disableChannelDb: false, skipMigrations: false } }`",
-        "frequency": "common"
-      },
-      {
-        "pattern": "Re-wrap with context",
-        "example": "packages/opencode/src/tool/propose-plan.ts:61 — `catch (e: unknown) { throw new Error(`claim_atoms is not valid...`) }`",
-        "frequency": "rare"
-      },
-      {
-        "pattern": "Effect.catchTag (Effect-native)",
-        "example": "packages/opencode/src/storage/schema.duckdb.ts:439 — `Effect.catchTag(\"DatabaseError\", () => Effect.succeed([]))`",
-        "frequency": "common (52 instances)"
+      "verdict": "All 28 packages use `strict: true` (12 explicit, 16 via @tsconfig/bun or @tsconfig/node22). `useUnknownInCatchVariables` defaults to true — unannotated catch vars are `unknown`.",
+      "base_configs": {
+        "@tsconfig/bun": "strict: true, target: ESNext, module: ESNext, moduleResolution: bundler, lib: [ESNext]. Used by: opencode, core, llm, slack, script, http-recorder, containers.",
+        "@tsconfig/node22": "strict: true, target: ES2022, module: Node16, lib: [ES2022]. Used by: plugin, sdk/js, function, console/core, console/function, console/resource, stats/core, stats/server, ui, storybook."
       }
-    ]
+    },
+    "explicit_unknown_correct": { "count": 8, "pattern": "5 app/src instances use identical `err instanceof Error ? err.message : String(err)` + toast. 2 opencode instances re-wrap in new Error with context." },
+    "explicit_any_ANTIPATTERN": {
+      "count": 16,
+      "high_risk": ["console/app/src/routes/auth/[...callback].ts:37 — `catch (e: any) { e.message }` UNSAFE", "console/core/src/billing.ts:121,402 — direct .message on any", "opencode/src/session/llm.ts:143 — wraps at line 367 but uses any"],
+      "low_risk": [".opencode/tools/ — 7 instances swallow file I/O"]
+    },
+    "unannotated_defaults_to_unknown": { "total": "~235", "subdivided": { "catch_error": "~60", "catch_err": "~40", "catch_e": "~50", "catch_cause": "3", "catch_underscore": "~73" } },
+    "post_catch_narrowing": {
+      "dominant": "`error instanceof Error ? error.message : String(error)` — 170+ instances",
+      "utilities": [
+        "opencode/src/util/error.ts:4 — errorFormat(error: unknown): string",
+        "opencode/src/util/error.ts:32 — errorMessage(error: unknown): string",
+        "opencode/src/util/filesystem.ts:63 — isEnoent(e: unknown): e is { code: 'ENOENT' }",
+        "opencode/src/background/job.ts:71 — errorText(error: unknown): string"
+      ],
+      "unsafe_casts": ["opencode/src/util/filesystem.ts:48 — (cause as Error).message", "opencode/scripts/review-compression-bisect.ts:42 — (e as Error).message"],
+      "effect_alternatives": { "catchTag": 52, "tryPromise": "80+", "try": "sync in Effect fibers", "catchAll": "0 production (1 archive only)" }
+    }
   },
 
   "2_callback_parameter_types": {
     "bus_event_system": {
-      "description": "The bus/event system uses typed callbacks with `Payload<D>` for specific events and `any` for the wildcard subscribeAll path.",
       "examples": [
-        "packages/opencode/src/bus/index.ts:54 — `callback: (event: Payload<D>) => unknown` — typed callback with generic payload",
-        "packages/opencode/src/bus/index.ts:56 — `subscribeAllCallback: (callback: (event: any) => unknown) => Effect.Effect<() => void>` — wildcard callback uses `any` (debt)",
-        "packages/opencode/src/bus/index.ts:145 — `function on<T>(pubsub, type, callback: (event: T) => unknown)` — generic callback",
-        "packages/opencode/src/bus/index.ts:182 — `callback: (event: any) => unknown` — Effect.fn wildcard, uses `any`",
-        "packages/opencode/src/bus/index.ts:208 — `subscribe<D>(def, callback: (event: Payload<D>) => unknown)` — typed public API",
-        "packages/opencode/src/bus/index.ts:212 — `subscribeAll(callback: (event: any) => unknown)` — wildcard public API, uses `any`"
+        "bus/index.ts:54 — `callback: (event: Payload<D>) => unknown` — typed generic",
+        "bus/index.ts:56 — `subscribeAllCallback: (callback: (event: any) => unknown)` — wildcard uses any",
+        "bus/global.ts:11 — EventEmitter<{ event: [GlobalEvent] }> with typed listener array"
+      ]
+    },
+    "agent_machine": {
+      "examples": [
+        "agent/machine/types.ts:168 — `spawn: (machineId, laneId, mission: any) => Effect.Effect<string>` — mission uses any",
+        "agent/machine/runtime.ts:168 — `onComplete: (state: MachineState) => Effect.Effect<void>`",
+        "agent/authority.ts:108-119 — Authority contract callbacks: `() => Effect.Effect<AuthorityContract>`, `(condition) => Effect.Effect<void, StopConditionTriggeredError>`"
       ]
     },
     "storage_transaction": {
-      "description": "Database transaction callbacks use `TxOrDb` as the parameter type, but `Transaction` itself is typed as `any` (documented debt).",
       "examples": [
-        "packages/opencode/src/storage/db.ts:99 — `export function use<T>(callback: (trx: TxOrDb) => T): T` — LocalContext-wrapped transaction",
-        "packages/opencode/src/storage/db.ts:124-125 — `callback: (tx: TxOrDb) => NotPromise<T>` — synchronous-only transaction callback"
+        "storage/db.ts:99 — `callback: (trx: TxOrDb) => T` — where Transaction = any (debt)",
+        "storage/adapter.ts:41 — `transaction: <T>(fn: (tx: DrizzleLikeClient) => T | Promise<T>, options?) => Promise<T>`",
+        "storage/adapter.ts:73 — Effect adapter: `fn: (client: any) => Effect.Effect<T, any, any>` — client uses any",
+        "storage/storage.ts:55 — `update: <T>(key, fn: (draft: T) => void) => Effect.Effect<T, Error>` — mutable draft"
       ]
     },
-    "provider_auth": {
-      "description": "Provider auth callbacks use Effect-based signatures with structured input.",
+    "provider_streaming": {
       "examples": [
-        "packages/opencode/src/provider/auth.ts:96 — `callback: (input: { providerID: ProviderID } & CallbackInput) => Effect.Effect<void, Error>`"
+        "provider/auth.ts:96 — `callback: (input: { providerID: ProviderID } & CallbackInput) => Effect.Effect<void, Error>`",
+        "plugin/openai/ws.ts:22-27 — WebSocket stream: `onFirstEvent?: () => void`, `onComplete?: (event: Record<string, unknown>) => void`, `onRetryableTerminal?: (event) => Promise<WebSocket | undefined>`",
+        "provider/provider.ts:49 — SSE: `new Promise<Awaited<ReturnType<typeof reader.read>>>((resolve, reject) => ...)`",
+        "session/llm/ai-sdk.ts:6-7 — AI SDK event type: `type AISDKEvent = Result['fullStream'] extends AsyncIterable<infer T> ? T : never`"
       ]
     },
-    "pty": {
-      "description": "PTY event listeners use typed callbacks with specific event types.",
+    "pty_rpc": {
       "examples": [
-        "packages/opencode/src/pty/pty.ts:20 — `onData(listener: (data: string) => void): Disp`",
-        "packages/opencode/src/pty/pty.ts:21 — `onExit(listener: (event: Exit) => void): Disp`"
+        "pty/pty.ts:20 — `onData(listener: (data: string) => void): Disp`",
+        "pty/pty.ts:21 — `onExit(listener: (event: Exit) => void): Disp`",
+        "util/rpc.ts:62 — `on<Data>(event: string, handler: (data: Data) => void)`"
       ]
     },
-    "rpc": {
-      "description": "RPC handler uses generic parameter.",
+    "infrastructure": {
       "examples": [
-        "packages/opencode/src/util/rpc.ts:62 — `on<Data>(event: string, handler: (data: Data) => void)`"
+        "effect/bridge.ts:13 — `bind: <Args extends readonly unknown[], Result>(fn: (...args: Args) => Result) => (...args: Args) => Result`",
+        "file/watcher.ts:99 — `const cb: ParcelWatcher.SubscribeCallback = bridge.bind((err, evts) => ...)`",
+        "cli/effect-cmd.ts:50 — `handler: (args: WithDoubleDash<Args>) => Effect.Effect<A, CliError, AppServices | InstanceStore.Service>`"
       ]
     },
-    "cli_commands": {
-      "description": "CLI commands use `any` for handler args (debt).",
-      "examples": [
-        "packages/opencode/src/cli/effect-cmd.ts:6 — `handler: (...args: any[]) => any; type WithArgs = any` — acknowledged with `builder?: any`"
-      ]
-    },
-    "agent_lifecycle": {
-      "description": "Agent callbacks are simple void callbacks.",
-      "examples": [
-        "packages/opencode/src/agent/agent.ts:449 — `onError: () => {}` — simple void callback with inline no-op default"
-      ]
-    },
-    "general_pattern": {
-      "return_types": "Most callbacks return `void`, `unknown`, or `Effect.Effect<T, E, R>`. `unknown` is preferred over `void` for callbacks that may return a value that is intentionally discarded.",
-      "parameter_types": "Callback parameters are almost always explicitly typed. Only test utilities, CLI handlers, and wildcard bus callbacks use `any`.",
-      "effect_callbacks": "Effect-based callbacks (provider auth, bus internals) use `Effect.fn` or `Effect.gen` with proper `yield*` typing. The `EffectBridge` pattern bridges synchronous callbacks into the Effect runtime."
+    "general_conventions": {
+      "return_type": "`unknown` preferred over `void` for discarded values. `Effect.Effect<A, E, R>` for effectful callbacks.",
+      "any_usage": "Only wildcard bus, CLI handlers, machine spawn (mission: any), adapter client (client: any), and test utilities.",
+      "renaming": "`Tool as AITool` (4 files) for Vercel AI SDK vs opencode Tool conflict."
     }
   },
 
   "3_drizzle_type_patterns": {
-    "backend": {
-      "opencode": "Uses `pgTable()` from `drizzle-orm/pg-core` backed by PGlite (local) or node-postgres (remote). Schema files suffixed `.pg.sql.ts`.",
-      "console": "Uses `mysqlTable()` from drizzle-orm/mysql-core. Separate package, separate concern.",
-      "duckdb": "Has a parallel DuckDB analytics backend (`#db-duckdb` alias → `db.duckdb.ts`)."
+    "backends": {
+      "opencode_postgres": "16 pgTable() tables via drizzle-orm/pg-core. Drivers: PGlite (in-process) or node-postgres (server). `.pg.sql.ts` suffix.",
+      "console_mysql": "26 mysqlTable() tables via drizzle-orm/mysql-core. Driver: planetscale-serverless.",
+      "stats_mysql": "mysqlTable() tables via drizzle-orm/mysql-core. Driver: planetscale-serverless.",
+      "duckdb": "Parallel analytics backend via #db-duckdb alias → db.duckdb.ts."
     },
-    "branded_types": {
-      "description": "Uses `.$type<BrandedType>()` on column definitions for semantic typing. This is the primary convention for type-safe IDs and domain types.",
+    "branded_column_types": {
+      "usage": "41 `.$type<Brand>()` usages on text, jsonb, and json columns for semantic IDs and domain types.",
       "examples": [
-        "packages/opencode/src/session/session.pg.sql.ts:19 — `id: text().$type<SessionID>().primaryKey()`",
-        "packages/opencode/src/session/session.pg.sql.ts:21 — `project_id: text().$type<ProjectID>().notNull()`",
-        "packages/opencode/src/session/session.pg.sql.ts:34 — `summary_diffs: jsonb().$type<Snapshot.FileDiff[]>()`",
-        "packages/opencode/src/session/session.pg.sql.ts:43 — `model: jsonb().$type<{ id: string; providerID: string; variant?: string }>()` — inline type"
+        "session.pg.sql.ts:19 — `id: text().$type<SessionID>().primaryKey()`",
+        "session.pg.sql.ts:34 — `summary_diffs: jsonb().$type<Snapshot.FileDiff[]>()`",
+        "session.pg.sql.ts:42 — `revert: jsonb().$type<{ messageID: MessageID; partID?: PartID }>()` — inline object type",
+        "coordination.pg.sql.ts:10 — `status: text().notNull().$type<'claimed' | 'released' | 'failed'>()` — literal union"
       ]
     },
+    "defaults_and_updates": {
+      "postgres": "`integer().notNull().$default(() => Date.now())` + `.$onUpdate(() => Date.now())` via TimestampsPg spread mixin.",
+      "mysql": "`varchar(...).notNull().defaultNow()` + `sql\`CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3)\`` via timestamps object spread."
+    },
+    "custom_column_factories_console": [
+      "console/core/src/drizzle/types.ts:1 — `ulid = (name) => varchar(name, { length: 30 })`",
+      "console/core/src/drizzle/types.ts:4 — `utc = (name) => timestamp(name, { fsp: 3 })`",
+      "console/core/src/drizzle/types.ts:5 — `currency = (name) => bigint(name, { mode: 'number' })`",
+      "console/core/src/drizzle/types.ts:7-10 — `workspaceColumns = { id: ulid('id'), workspaceID: ulid('workspace_id') }`"
+    ],
+    "index_patterns": "21+ PG indexes, 20+ MySQL indexes. Single-column, composite (onSession+timeCreated+id), and uniqueIndex patterns used. compound primaryKey() via builder function for join tables (AccountState, ControlAccount, CoordinationFanOut).",
+    "foreign_keys": "12 `.references(() => Table.id, { onDelete: 'cascade' | 'set null' })` — no relations()/one()/many() patterns used. FK-only approach.",
     "type_inference": {
-      "description": "Two access patterns used for `$inferSelect` and `$inferInsert` — dot access (`.$inferSelect`) and bracket access (`['$inferSelect']`). Dot access is more common.",
-      "examples": [
-        "packages/opencode/src/session/session.ts:59 — `type SessionRow = typeof SessionTable.$inferSelect` — dot access",
-        "packages/opencode/src/account/repo.ts:10 — `export type AccountRow = (typeof AccountTable)['$inferSelect']` — bracket access",
-        "packages/opencode/src/session/projectors-next.ts:14 — `type SessionMessageData = NonNullable<(typeof SessionMessageTable.$inferInsert)['data']>` — insert type + NonNullable",
-        "packages/opencode/src/session/message-v2.ts:581 — `const info = (row: typeof MessageTable.$inferSelect) => ...` — inline function parameter type",
-        "packages/opencode/src/session/message-v2.ts:599 — `function hydrate(rows: (typeof MessageTable.$inferSelect)[])` — array of inferred rows",
-        "packages/opencode/src/control-plane/workspace.ts:65 — `function fromRow(row: typeof WorkspaceTable.$inferSelect): Info` — fromRow pattern",
-        "packages/opencode/src/data-migration.ts:50 — `sessions.map((session: typeof SessionTable.$inferSelect) => ...)` — inline map callback"
+      "convention": "Dot-access `typeof Table.$inferSelect` (28 of 32). Bracket `['$inferSelect']` rare.",
+      "patterns": [
+        "fromRow(row: typeof T.$inferSelect): DomainType — transformation pattern",
+        "decode(row: typeof T.$inferSelect) => DomainType — session message decode pattern",
+        "hydrate(rows: (typeof T.$inferSelect)[]) — batch transformation",
+        "rows.map((row: typeof T.$inferSelect) => ...) — inline map",
+        "NonNullable<(typeof T.$inferInsert)['data']> — insert type with unwrap"
       ]
     },
-    "transaction_pattern": {
-      "description": "Custom transaction wrapper around LocalContext. The `Transaction` type is `any` (documented debt). Uses `TxOrDb = Transaction | Client` union.",
-      "examples": [
-        "packages/opencode/src/storage/db.ts:57 — `export type Transaction = any` — DEPRECATED, has embedded comment acknowledging the debt",
-        "packages/opencode/src/storage/db.ts:92 — `export type TxOrDb = Transaction | Client`",
-        "packages/opencode/src/storage/db.ts:136 — `(Client() as any).transaction(txCallback, ...)` — `as any` cast to bypass type issues"
-      ]
+    "upsert_patterns": [
+      "onConflictDoUpdate with sql`excluded.column` for atomic increments",
+      "onConflictDoNothing for idempotent inserts",
+      "MySQL-only `.ignore()` for INSERT IGNORE equivalent"
+    ],
+    "re_export_hub": "storage/db.ts:5 — `export * from 'drizzle-orm'` — 21+ files import eq/and/desc/sql from @/storage/db",
+    "schema_aggregation": "storage/schema.ts re-exports from 8 .pg.sql files",
+    "transaction_patterns": {
+      "opencode_sync": "Database.transaction((db) => { ... }) — synchronous, NotPromise<T> enforced",
+      "effect_adapter": "adapter.transaction(async (tx) => ...) — returns Effect, typed errors (DatabaseError, RetriableDatabaseError, FatalDatabaseError), exponential backoff",
+      "console_nested": "Database.use() auto-detects TransactionContext — nests within parent tx or creates standalone",
+      "transaction_type_debt": "Transaction = any at db.ts:57 (deprecated). TxOrDb = Transaction | Client."
     },
-    "re_export": {
-      "description": "`storage/db.ts` re-exports all of `drizzle-orm` via `export * from 'drizzle-orm'`. 21 files import from this convenience path.",
-      "example": "packages/opencode/src/storage/db.ts:5 — `export * from 'drizzle-orm'`"
+    "migration_configs": {
+      "opencode": "drizzle.config.pg.ts — dialect: postgresql, schema: ./src/**/*.pg.sql.ts, out: ./migration-pg",
+      "console": "drizzle.config.ts — dialect: mysql, schema: ./src/**/*.sql.ts, out: ./migrations/",
+      "stats": "drizzle.config.ts — dialect: mysql, schema: ./src/**/*.sql.ts"
     },
-    "schema_aggregation": {
-      "description": "All pg table exports are aggregated in `storage/schema.ts` via re-exports.",
-      "example": "packages/opencode/src/storage/schema.ts:1-9 — re-exports from 8 separate .pg.sql files"
-    },
-    "timestamps_mixin": {
-      "description": "`schema.pg.sql.ts` exports a `TimestampsPg` object (with `time_created`, `time_updated`, `time_deleted` integer columns) that is spread into table definitions with `...TimestampsPg`.",
-      "example": "packages/opencode/src/session/session.pg.sql.ts:10 — `import { TimestampsPg } from '../storage/schema.pg.sql'`"
-    }
+    "effect_database_adapter": "storage/adapter.ts — Context.Service, Layer.effect, DatabaseAdapter with tagged errors, retry/backoff, auto-migration. Abstracts over SQLite/PG/DuckDB via DrizzleLikeClient interface. Pattern: Context.Service + Schema.TaggedErrorClass for error hierarchy."
   },
 
   "4_third_party_library_types": {
-    "vercel_ai_sdk": {
-      "description": "The Vercel AI SDK (`ai`) is the primary LLM abstraction. Types are imported both at runtime and as types.",
-      "examples": [
-        "packages/opencode/src/session/llm.ts:6 — `streamText, wrapLanguageModel, type ModelMessage, type Tool` — mixed runtime/type import",
-        "packages/opencode/src/session/tools.ts:14 — `type Tool as AITool, tool, jsonSchema, type ToolExecutionOptions, asSchema` — renamed import to avoid naming conflict",
-        "packages/opencode/src/session/message-v2.ts:5 — `APICallError, convertToModelMessages, LoadAPIKeyError, type ModelMessage, type UIMessage` — both error classes and types",
-        "packages/opencode/src/provider/provider.ts:5 — `NoSuchModelError, type Provider as SDK` — error class + renamed type import",
-        "packages/opencode/src/provider/provider.ts:11 — `type LanguageModelV3 from '@ai-sdk/provider'` — sub-package import",
-        "packages/opencode/src/provider/error.ts:1 — `import { APICallError } from 'ai'` — error class used as base"
-      ]
-    },
-    "effect": {
-      "description": "Effect is the foundational runtime library. 510+ imports in opencode/src. Used pervasively for schema validation, service definitions, error handling, and concurrency.",
-      "patterns": [
-        "Service: `class Service extends Context.Service<Service, Interface>()('@opencode/Tag') {}`",
-        "Layer: `Layer.effect(Service, Effect.gen(function* () { ... }))` and `Layer.suspend(() => layer.pipe(Layer.provide(...)))`",
-        "Error: `Schema.TaggedErrorClass<MyError>()('Tag', { fields })` — 120 instances — the canonical error pattern in Effect",
-        "Schema: `Schema.Struct({...})`, `Schema.decodeUnknownOption(schema)`, `Schema.is(schema)(value)` — 15 uses of decodeUnknownOption, 1107+ Schema.Struct uses",
-        "Stream: `* as Stream from 'effect/Stream'` — path import convention",
-        "Catch: `Effect.catchTag('Tag', handler)`, `Effect.catchAll(handler)` — 52 instances"
-      ]
-    },
-    "vscode": {
-      "description": "VSCode types are used only in the extension SDK (not in opencode core).",
-      "examples": [
-        "sdks/vscode/src/extension.ts:4 — `import * as vscode from 'vscode'` — only vscode import in the entire repo"
-      ]
-    },
-    "opencode_internal": {
-      "description": "Internal packages are imported through workspace references. Types are shared through the SDK and core packages.",
-      "examples": [
-        "`@opencode-ai/core` — `NamedError`, `SessionMessage`, `Global`, `Flag`, `InstallationChannel`, `AppFileSystem`, service utilities",
-        "`@opencode-ai/llm` — `LLMEvent`, `LLMClient`, `RequestExecutor`, `WebSocketExecutor`",
-        "`@opencode-ai/sdk/v2` — `Model`",
-        "`@opencode-ai/plugin` — plugin types",
-        "`@opencode-ai/ui` — UI component types"
-      ]
-    },
-    "other_sdks": {
-      "examples": [
-        "`@agentclientprotocol/sdk` — ACP protocol types",
-        "`@modelcontextprotocol/sdk` — MCP protocol types",
-        "`gitlab-ai-provider` — `GitLabWorkflowLanguageModel` — direct runtime import",
-        "`@electric-sql/pglite` — `PGlite` — database engine, imported at runtime",
-        "`pg` — `Pool` — PostgreSQL connection pool",
-        "`@duckdb/duckdb-wasm`, `duckdb` — DuckDB analytical database"
-      ]
-    }
+    "vercel_ai_sdk": "Mixed runtime/type imports. `Tool as AITool` (4 files). Event type inference: `Result['fullStream'] extends AsyncIterable<infer T> ? T : never`. `LanguageModelV3` from @ai-sdk/provider sub-package.",
+    "effect": "304+ imports. 120 Schema.TaggedErrorClass. 52 Effect.catchTag. 80+ Effect.tryPromise. Zero production catchAll. 3462+ .pipe(). Context.Service pattern. Layer.effect + Layer.suspend. Schema.Struct/Schema.Brand/Schema.Literals/Schema.decodeUnknownOption.",
+    "zod": "v3: console core (13 files with fn(schema, handler)), plugin (tool arg inference), enterprise. v4 beta: GitHub Copilot integration.",
+    "vscode": "Single `import * as vscode` in sdks/vscode/src/extension.ts:4. Completely isolated. @types/vscode ^1.94.0.",
+    "module_augmentation": "solid-js JSX (Directives, IntrinsicElements), virtual:opencode-server (desktop bridge), @solid-primitives/i18n (fix), asset files (.sql/.md/.wav/.mp3/.wasm/.txt), Cloudflare/SST runtime types.",
+    "types_packages": "67 @types/* devDependencies. Key packages catalog-managed."
   },
 
   "5_existing_utility_types": {
-    "unknown_to_typed_narrowing": [
-      {
-        "name": "isRecord",
-        "location": "packages/opencode/src/util/record.ts:1",
-        "signature": "export function isRecord(value: unknown): value is Record<string, unknown>",
-        "usage": "Heavily used across 8+ files for narrowing unknown values to record objects after catch blocks, JSON parsing, or API responses",
-        "examples": [
-          "packages/opencode/src/session/processor.ts:296 — `if (isRecord(value.result.value) && typeof value.result.value.output === 'string')`",
-          "packages/opencode/src/session/retry.ts:125 — `const msg = isRecord(error.data) ? error.data.message : undefined`",
-          "packages/opencode/src/session/llm/native-request.ts:38 — `if (!isRecord(value)) return undefined`",
-          "packages/stats/server/src/ingest.ts:52 — `if (!isRecord(event)) continue`"
-        ]
-      },
-      {
-        "name": "Schema.is",
-        "location": "effect library — used throughout",
-        "signature": "Schema.is(Schema)(value: unknown): value is Type",
-        "usage": "Used 15+ times for Effect Schema-based runtime type guards",
-        "examples": [
-          "packages/opencode/src/session/processor.ts:291 — `const isFilePart = (value: unknown): value is MessageV2.FilePart => Schema.is(MessageV2.FilePart)(value)`",
-          "packages/opencode/src/session/llm/ai-sdk.ts:21 — `return Schema.is(FinishReason)(value) ? value : 'unknown'`"
-        ]
-      },
-      {
-        "name": "Schema.decodeUnknownOption",
-        "location": "effect library — used throughout",
-        "signature": "Schema.decodeUnknownOption(Schema)(unknown) => Option<Type>",
-        "usage": "Safe JSON-to-typed decoding from unknown inputs. Used 15 times for config parsing, auth data, query params, manifest validation.",
-        "examples": [
-          "packages/opencode/src/storage/storage.ts:54-57 — `Schema.decodeUnknownOption(RootFile)`, `Schema.decodeUnknownOption(SessionFile)`, etc.",
-          "packages/opencode/src/auth/index.ts:55 — `const decode = Schema.decodeUnknownOption(Info)`"
-        ]
-      }
-    ],
+    "branded_schema_types": "31 Effect Schema.brand() types — the canonical branding mechanism. No standalone Brand<T> helper. Registry: AbsolutePath, RelativePath, SessionID, ProviderV2.ID, Project.ID, ModelV2.ID, VariantID, Family, AgentV2.ID, Event.ID, AccountV2.ID, ServiceID, Plugin.ID, MessageID, PartID, ProviderID, ModelID, ProjectID, WorkspaceID, ToolID, PtyID, EventID, AccountID, AccessToken, RefreshToken, DeviceCode, UserCode, LLM.ModelID, LLM.ProviderID, DatabaseUrl.",
+    "constrained_integers": ["PositiveInt (Schema.Int + isGreaterThan(0))", "NonNegativeInt (Schema.Int + isGreaterThanOrEqualTo(0))"],
+    "unknown_to_typed_narrowing": {
+      "canonical": ["isRecord(value: unknown): value is Record<string, unknown> — util/record.ts:1 — imported by 8+ files", "NamedError.isInstance(error, name): boolean — core/util/error.ts:12"],
+      "local_isRecord_variants": "12 local reimplementations across desktop, app, opencode, stats. Convergence opportunity.",
+      "schema_based": ["isFilePart (Schema.is)", "isJsonSchema", "isZodType", "isPluginTool", "isJsonSchemaDefinition", "isJsonSchemaObject", "isServerPlugin", "isSdkResponse", "isKind", "isSummaryDiff", "isBuffer", "diff", "object"]
+    },
     "common_type_utilities": [
-      {
-        "name": "DeepPartial<T>",
-        "location": "packages/opencode/src/session/projectors.ts:22",
-        "signature": "export type DeepPartial<T> = T extends object ? { [K in keyof T]?: DeepPartial<T[K]> | null } : T",
-        "usage": "Used for partial session updates (toPartialRow)"
-      },
-      {
-        "name": "DeepMutable<T>",
-        "location": "packages/core/src/schema.ts:49",
-        "signature": "export type DeepMutable<T> = T extends string | number | boolean | bigint | symbol | Function ...",
-        "usage": "Wraps Schema.Schema.Type to strip readonly modifiers from Effect Schema-derived types",
-        "examples": [
-          "packages/opencode/src/session/session.ts:228 — `export type Info = Types.DeepMutable<Schema.Schema.Type<typeof Info>>`"
-        ]
-      },
-      {
-        "name": "NotPromise<T>",
-        "location": "packages/opencode/src/storage/db.ts:122",
-        "signature": "type NotPromise<T> = T extends Promise<any> ? never : T",
-        "usage": "Enforces synchronous-only return values in transaction callbacks"
-      },
-      {
-        "name": "NonNullable<T>",
-        "location": "Built-in TypeScript utility — used extensively",
-        "usage": "19+ instances. Primary pattern: extracting types from deeply nested optional/union types. Example: `packages/opencode/src/session/projectors-next.ts:14` — `NonNullable<(typeof SessionMessageTable.$inferInsert)['data']>`",
-        "convention": "Widely used for unwrapping optional fields from API response types and config types"
-      },
-      {
-        "name": "Schema.Schema.Type<typeof Schema>",
-        "location": "Pattern used across session/, storage/, and tool/ modules",
-        "signature": "Extracts the TypeScript type from an Effect Schema definition",
-        "usage": "Standard pattern for deriving TS types from Effect Schemas. Example: `packages/opencode/src/session/message.ts:16` — `export type ToolCall = Schema.Schema.Type<typeof ToolCall>`"
-      }
+      "DeepPartial<T> — projectors.ts:22 — T extends object ? { [K in keyof T]?: DeepPartial<T[K]> | null } : T",
+      "DeepMutable<T> — core/schema.ts:49 — strips readonly recursively, Function bailout",
+      "optionalOmitUndefined<S> — core/schema.ts:23 — Schema transform omitting undefined optionals",
+      "NotPromise<T> — db.ts:122 — T extends Promise<any> ? never : T — enforces sync transaction callbacks",
+      "Schema.Schema.Type<typeof S> + Types.DeepMutable — standard Schema→TS derivation pattern"
     ],
-    "error_types": [
-      {
-        "name": "NamedError.create",
-        "location": "packages/core/src/util/error.ts (imported as `@opencode-ai/core/util/error`)",
-        "usage": "29 instances. The canonical error factory for non-Effect errors.",
-        "examples": [
-          "packages/opencode/src/storage/db.ts:19 — `export const NotFoundError = NamedError.create('NotFoundError', { message: Schema.String })`",
-          "packages/opencode/src/session/message-error.ts:4 — `export const OutputLengthError = NamedError.create('MessageOutputLengthError', {})`",
-          "packages/opencode/src/config/error.ts:14 — `export const JsonError = NamedError.create('ConfigJsonError', { ... })`"
-        ]
-      },
-      {
-        "name": "Schema.TaggedErrorClass",
-        "location": "effect library — 120 instances",
-        "usage": "The canonical Effect error pattern. Each error has a string tag, can be caught with Effect.catchTag.",
-        "examples": [
-          "packages/opencode/src/tool/tool.ts:23 — `export class InvalidArgumentsError extends Schema.TaggedErrorClass<InvalidArgumentsError>()('Tool.InvalidArgumentsError', {...})`",
-          "packages/opencode/src/control-plane/workspace.ts:99 — `export class SyncHttpError extends Schema.TaggedErrorClass<SyncHttpError>()('WorkspaceSyncHttpError', {...})`"
-        ]
-      },
-      {
-        "name": "RetryReason union with (string & {})",
-        "location": "packages/opencode/src/session/retry.ts:11",
-        "signature": "export type RetryReason = 'free_tier_limit' | 'account_rate_limit' | (string & {})",
-        "usage": "Discriminated union that allows literal matching while preserving autocomplete. The `(string & {})` is a TypeScript trick to allow any string while keeping specific literals in IDE autocomplete."
-      }
-    ]
+    "result_either_types": [
+      "IpcResult<T> = IpcOk<T> | IpcErr — desktop IPC contract",
+      "Ok<T> / Err<C, T> + InstallResult, ManifestResult, PatchResult — plugin installation",
+      "TypedToolResult<T> with status: ToolStatus and errorKind? — tool execution result",
+      "ExecuteResult<M> — Effect-wrapped tool result",
+      "RequestResult<TData, TError> — auto-generated SDK"
+    ],
+    "error_types": {
+      "tagged_error_classes": "168 Schema.TaggedErrorClass instances — canonical Effect errors with string tags. Caught via Effect.catchTag(). Key files: tool/tool.ts (5), provider/provider.ts (5), authority.ts (4 + union), workspace.ts (6), repository-cache.ts (6), storage/adapter.ts (3), campaign/secretary.ts (2).",
+      "named_errors": "29 NamedError.create instances — non-Effect factory. Supports NamedError.isInstance() type guard. Key files: session/message-v2.ts (3), session/message-error.ts (2), config/error.ts (2), db.ts (1), markdown.ts (1).",
+      "plain_error_classes": "7 plain extends Error classes: DuckDBError, DatabaseInitError, DuckDBWriteError, DuckDBFirewallError, BinderError, RunFailedError, NotFound.",
+      "discriminated_unions": "5 error union types: AuthorityError, DefaultModelError, AccountError, LockError, Shared (message errors)."
+    }
   },
 
   "6_tsconfig_strictness": {
-    "summary": "All 12 tsconfig.json files use `'strict': true`. This is the universal convention.",
-    "explicit_overrides": {
-      "noUncheckedIndexedAccess": "false — explicitly set in packages/opencode/tsconfig.json (defaults to false under strict)",
-      "types": "[] — explicitly empty in packages/opencode/tsconfig.json to avoid global type pollution",
-      "customConditions": "['browser'] — set in packages/opencode/tsconfig.json for bun runtime",
-      "jsx": "'preserve' with jsxImportSource '@opentui/solid' — in opencode, app, console packages"
-    },
-    "implicit_from_strict": [
-      "strictNullChecks: true",
-      "strictFunctionTypes: true",
-      "noImplicitAny: true",
-      "useUnknownInCatchVariables: true",
-      "strictBindCallApply: true",
-      "strictPropertyInitialization: true",
-      "noImplicitThis: true",
-      "alwaysStrict: true"
-    ],
-    "path_aliases": {
-      "opencode": {
-        "@/*": "./src/*",
-        "@test/*": "./test/*"
-      },
-      "package_imports": {
-        "#db": "bun/node → ./src/storage/db.pg.ts",
-        "#db-duckdb": "bun/node → ./src/storage/db.duckdb.ts",
-        "#pty": "bun → ./src/pty/pty.bun.ts, node → ./src/pty/pty.node.ts"
-      }
-    },
-    "lint_rules": {
-      "eslint": "No ESLint TypeScript-specific rules found (no @typescript-eslint/no-explicit-any, strict-boolean-expressions, or switch-exhaustiveness-check). The project uses `tsgo` (TypeScript native preview) for type checking rather than ESLint type-aware rules.",
-      "biome": "Not used.",
-      "prettier": "Listed in devDependencies of opencode package."
-    }
+    "summary": "28 packages: all strict: true. 12 explicit, 16 inherited from @tsconfig/bun (ESNext) or @tsconfig/node22 (ES2022). Only github/ sets noUncheckedIndexedAccess: true. 7 packages explicitly set false. useUnknownInCatchVariables: defaults to true everywhere (never explicitly set).",
+    "opencode_overrides": { "noUncheckedIndexedAccess": false, "types": [], "customConditions": ["browser"] },
+    "path_aliases": { "opencode": "@/* → src/*, @test/* → test/*", "app": "@/* → src/*", "enterprise+console": "~/* → src/*" },
+    "package_imports": { "#db": "bun/node → db.pg.ts", "#db-duckdb": "→ db.duckdb.ts", "#pty": "platform-specific" },
+    "lint_rules": "Only 1 ESLint config in entire repo: sdks/vscode/eslint.config.mjs. Minimal rules (naming-convention, curly, eqeqeq, no-throw-literal, semi). NO rules for no-explicit-any, strict-boolean-expressions, switch-exhaustiveness-check, no-floating-promises, consistent-type-imports. Project uses tsgo --noEmit for type checking."
   },
 
   "7_smoking_guns_and_debt": [
-    {
-      "severity": "high",
-      "finding": "Transaction = any is documented debt with a deprecation comment",
-      "file": "packages/opencode/src/storage/db.ts:57",
-      "impact": "`TxOrDb` type depends on this. Type safety is lost throughout the entire database access layer. All transaction callbacks receive untyped transaction objects.",
-      "note": "Comment suggests replacing with `PgliteTransaction | NodePgTransaction` union when the audit arrives."
-    },
-    {
-      "severity": "medium",
-      "finding": "14 instances of catch (e: any) antipattern",
-      "files": [
-        "packages/opencode/src/session/llm.ts:143",
-        "packages/core/src/filesystem.ts:241",
-        "packages/function/src/api.ts:351",
-        "packages/console/app/src/routes/zen/util/handler.ts:373",
-        "packages/console/core/src/billing.ts:121,402",
-        "github/index.ts:211"
-      ],
-      "impact": "Loses type safety on error objects. These should use `unknown` with narrowing (isRecord, Schema.is, or instanceof)."
-    },
-    {
-      "severity": "medium",
-      "finding": "Bus wildcard callbacks use `any`",
-      "files": [
-        "packages/opencode/src/bus/index.ts:56 — `subscribeAllCallback: (callback: (event: any) => unknown)`",
-        "packages/opencode/src/bus/index.ts:182 — `callback: (event: any) => unknown`",
-        "packages/opencode/src/bus/index.ts:212 — `subscribeAll(callback: (event: any) => unknown)`"
-      ],
-      "impact": "Wildcard subscribers lose type safety. The wildcard bus is the primary mechanism for global event observation."
-    },
-    {
-      "severity": "low",
-      "finding": "CLI command builder uses `any` for handler args",
-      "file": "packages/opencode/src/cli/effect-cmd.ts:6",
-      "impact": "Type safety is lost at the CLI boundary. Commands that use this builder receive untyped arguments."
-    },
-    {
-      "severity": "low",
-      "finding": "No lint rule enforces `unknown` in catch clauses or bans `any`",
-      "impact": "The codebase relies on developer discipline and `strict: true` defaults. Adding `@typescript-eslint/no-explicit-any` and `@typescript-eslint/use-unknown-in-catch-callback-variable` rules would provide guardrails."
-    },
-    {
-      "severity": "info",
-      "finding": "Only 3 explicit `catch (e: unknown)` annotations exist — the codebase relies on the strict default",
-      "impact": "While technically correct (strict mode makes unannotated catch variables `unknown`), explicit annotations would improve readability and make the intent clearer to developers not familiar with the strict mode behavior."
-    },
-    {
-      "severity": "info",
-      "finding": "`noUncheckedIndexedAccess` is explicitly `false`",
-      "file": "packages/opencode/tsconfig.json:15",
-      "impact": "Array and object index access does not include `| undefined` in the type. Common in codebases that use `NonNullable` extensively to work around optional types."
-    }
+    { "severity": "high", "finding": "Transaction = any is documented debt — affects entire DB layer", "file": "storage/db.ts:57" },
+    { "severity": "high", "finding": "Storage adapter uses (client: any) in transaction type — double any with Transaction = any", "file": "storage/adapter.ts:73" },
+    { "severity": "medium", "finding": "16 catch (e: any) — 2 in console/ unsafely access .message on any", "files": ["console/app/src/routes/auth/[...callback].ts:37", "console/core/src/billing.ts:121"] },
+    { "severity": "medium", "finding": "2 unsafe as Error casts without instanceof guard", "files": ["util/filesystem.ts:48", "scripts/review-compression-bisect.ts:42"] },
+    { "severity": "medium", "finding": "Machine spawn uses mission: any — untyped mission propagation", "file": "agent/machine/types.ts:170" },
+    { "severity": "low", "finding": "Bus wildcard callbacks use any (3 locations)", "file": "bus/index.ts" },
+    { "severity": "low", "finding": "12 local isRecord reimplementations — converge on util/record.ts", "count": 12 },
+    { "severity": "info", "finding": "No lint guardrails — only 1 ESLint config (sdks/vscode) with minimal rules" }
   ],
 
   "8_convention_verdicts": {
-    "catch_clauses": "Convention is unannotated `catch (e)` relying on strict mode to make it `unknown`. Explicit `unknown` annotations are rare (3 instances). Explicit `any` annotations are debt (14 instances). Post-catch narrowing uses instanceof, isRecord(), Schema.is(), or silent swallowing with defaults.",
-    "callbacks": "Callbacks are almost always explicitly typed with their parameter types. `unknown` is preferred over `void` for return types (signals 'value intentionally ignored'). `any` appears only in wildcard bus subscriptions, CLI handlers, and test utilities.",
-    "drizzle": "pgTable() with .$type<>() for branded IDs. Dot-access `.$inferSelect` is the convention. Schema aggregation via re-export barrel files. Transaction type is acknowledged debt (typed as `any`).",
-    "third_party": "Vercel AI SDK types imported with `type` keyword. Effect Schema used as canonical schema layer. vscode types isolated to extension SDK. Renamed imports used to avoid naming conflicts (e.g., `type Tool as AITool`).",
-    "utility_types": "`isRecord` is the primary unknown-to-Record narrowing. `DeepMutable` strips readonly from Schema-derived types. `NonNullable` used extensively for unwrapping optional fields. Effect `Schema.is` and `Schema.decodeUnknownOption` are the preferred runtime validation patterns for unknown inputs."
+    "catch_clauses": "Unannotated `catch (e)` → unknown via strict. Narrow with instanceof Error (170+). Centralized: errorFormat/errorMessage. Effect: catchTag (52x), tryPromise (80+), zero catchAll.",
+    "callbacks": "Explicitly typed params. unknown > void for returns. any only in wildcard bus, CLI, machine spawn, adapter client. Rename: Tool as AITool. Effect.fn/EffectBridge for Effect callbacks.",
+    "drizzle": "pgTable()/mysqlTable() with .$type<>() (41x). Dot-access .$inferSelect. fromRow()/decode()/hydrate() patterns. TimestampsPg/Timestamps spread mixin. Transaction = any debt (2 locations). EffectDatabaseAdapter with tagged errors/retry. No relations() — FK-only via references().",
+    "branding": "Schema.brand('Name') in Effect (31 types). .$type<Brand>() in Drizzle (41 usages). No standalone Brand<T>.",
+    "error_creation": "Dual: Schema.TaggedErrorClass (168x, Effect) + NamedError.create (29x, non-Effect). Both produce discriminated/taggable errors. 5 error union types.",
+    "unknown_narrowing": "isRecord (canonical + 12 local). Schema.is for Effect types. NamedError.isInstance for factory errors. 14+ specialized type guards (isJsonSchema, isZodType, isPluginTool, etc.).",
+    "type_derivation": "Schema.Schema.Type<typeof S> + Types.DeepMutable → TS types. NonNullable for optionals. fromRow/decode for Drizzle→domain.",
+    "effect_vs_native": "Effect in opencode src/ (services, schemas, errors, effects). Native try/catch in desktop/console. EffectBridge bridges the boundary (bind, fork, runtime)."
+  },
+
+  "9_quick_reference_by_need": {
+    "type_catch_variable_safely": "Omit annotation (strict→unknown). Narrow: instanceof Error, errorFormat(), errorMessage(), isRecord(), Schema.is(). NEVER (e as Error).message without instanceof.",
+    "define_drizzle_table": "pgTable()/mysqlTable(). .$type<Brand>() for IDs. ...TimestampsPg or ...timestamps mixin. .pg.sql.ts/.sql.ts suffix. Re-export from schema barrel.",
+    "extract_drizzle_types": "typeof Table.$inferSelect (dot access). fromRow() for transformation. decode() for messages. NonNullable for nested optionals.",
+    "create_effect_service": "interface Interface { ... }. class Service extends Context.Service<Service, Interface>()('tag') {}. Layer.effect(Service, Effect.gen(...)). Layer.suspend(() => layer.pipe(Layer.provide(...))).",
+    "define_typed_error": "Effect: Schema.TaggedErrorClass<Name>()('tag', {fields}). Non-Effect: NamedError.create('Name', {fields}). Catch: Effect.catchTag('tag', handler) | NamedError.isInstance(e, name).",
+    "narrow_unknown_value": "isRecord(value) for Record. Schema.is(Schema)(value) for Effect types. Schema.decodeUnknownOption(Schema)(value) for safe parsing to Option. NamedError.isInstance(error, name) for NamedError.",
+    "brand_an_id": "Effect: Schema.String.pipe(Schema.brand('IDName')). Drizzle: text().$type<IDName>().",
+    "pass_callback": "Explicitly type param. Return unknown (not void) for discarded. Return Effect.Effect for effectful. Rename conflicts: Tool as AITool, Provider as SDK. Bridge sync→Effect: EffectBridge.bind(fn).",
+    "run_transaction": "Sync: Database.transaction((db) => { ... }). Effect: adapter.transaction(async (tx) => ...). Effect adapter provides retry/backoff + DatabaseError/RetriableDatabaseError/FatalDatabaseError tagging. Console: Database.use nests automatically.",
+    "handle_db_migration": "opencode: drizzle.config.pg.ts → ./migration-pg. console: drizzle.config.ts → ./migrations/. stats: drizzle.config.ts → ./migrations/. Runtime: adapter auto-migrates on init. PGlite runs SQL via client.query()."
   }
 }

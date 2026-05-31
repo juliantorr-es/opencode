@@ -1,0 +1,8 @@
+{"at":"2026-05-31T11:29:18.819Z","session_id":"ses_18236ff9cffeOrE1mZTNrNi7oo","agent":"surgeon","tool":"smart_grep","phase":"started","detail":"adapter-dual-write"}
+{"at":"2026-05-31T11:29:19.037Z","session_id":"ses_18236ff9cffeOrE1mZTNrNi7oo","agent":"surgeon","tool":"smart_grep","phase":"completed","detail":"adapter-dual-write"}
+{"at":"2026-05-31T11:29:19.523Z","session_id":"ses_18236ff9cffeOrE1mZTNrNi7oo","agent":"surgeon","tool":"smart_find","phase":"started","detail":"adapter-dual-write.ts"}
+{"at":"2026-05-31T11:29:19.552Z","session_id":"ses_18236ff9cffeOrE1mZTNrNi7oo","agent":"surgeon","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T11:31:38.381Z","session_id":"ses_18236ff9cffeOrE1mZTNrNi7oo","agent":"surgeon","tool":"smart_bash","phase":"started","detail":"Verify the file exists before deletion"}
+{"at":"2026-05-31T11:31:38.381Z","session_id":"ses_18236ff9cffeOrE1mZTNrNi7oo","agent":"surgeon","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T11:35:10.720Z","session_id":"ses_18236ff9cffeOrE1mZTNrNi7oo","agent":"surgeon","tool":"smart_bash","phase":"started","detail":"Delete dead adapter-dual-write.ts — zero consumers confirmed"}
+{"at":"2026-05-31T11:35:10.768Z","session_id":"ses_18236ff9cffeOrE1mZTNrNi7oo","agent":"surgeon","tool":"smart_bash","phase":"completed","detail":"rm exit=0"}

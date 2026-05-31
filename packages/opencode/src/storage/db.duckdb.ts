@@ -118,7 +118,7 @@ function execSQL<T>(
 
 // ── Safe parameter binding ──────────────────────────────────
 
-function safeBind(sql: string, params: any[]): string {
+function safeBind(sql: string, params: unknown[]): string {
   let idx = 0
   return sql.replace(/\?/g, () => {
     const val = params[idx++]

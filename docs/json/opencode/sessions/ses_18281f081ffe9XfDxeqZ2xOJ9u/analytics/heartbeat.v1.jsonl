@@ -32,3 +32,25 @@
 {"at":"2026-05-31T10:09:21.913Z","session_id":"ses_18281f081ffe9XfDxeqZ2xOJ9u","agent":"zoning-board","tool":"smart_grep","phase":"completed","detail":"export\\s+(type|interface)\\s+\\w+Input\\b"}
 {"at":"2026-05-31T10:09:23.376Z","session_id":"ses_18281f081ffe9XfDxeqZ2xOJ9u","agent":"zoning-board","tool":"smart_grep","phase":"started","detail":"Effect\\.fn\\(.*\\)\\(function\\*.*\\):\\s*any\\b"}
 {"at":"2026-05-31T10:09:23.393Z","session_id":"ses_18281f081ffe9XfDxeqZ2xOJ9u","agent":"zoning-board","tool":"smart_grep","phase":"completed","detail":"Effect\\.fn\\(.*\\)\\(function\\*.*\\):\\s*any\\b"}
+{"at":"2026-05-31T10:11:37.746Z","session_id":"ses_18281f081ffe9XfDxeqZ2xOJ9u","agent":"zoning-board","tool":"smart_grep","phase":"started","detail":"function\\*.*\\):\\s*(any|void|Effect)"}
+{"at":"2026-05-31T10:11:37.762Z","session_id":"ses_18281f081ffe9XfDxeqZ2xOJ9u","agent":"zoning-board","tool":"smart_grep","phase":"completed","detail":"function\\*.*\\):\\s*(any|void|Effect)"}
+{"at":"2026-05-31T10:11:38.926Z","session_id":"ses_18281f081ffe9XfDxeqZ2xOJ9u","agent":"zoning-board","tool":"smart_grep","phase":"started","detail":"\\bunknown\\b.*error|error.*\\bunknown\\b"}
+{"at":"2026-05-31T10:11:38.943Z","session_id":"ses_18281f081ffe9XfDxeqZ2xOJ9u","agent":"zoning-board","tool":"smart_grep","phase":"completed","detail":"\\bunknown\\b.*error|error.*\\bunknown\\b"}
+{"at":"2026-05-31T10:11:40.315Z","session_id":"ses_18281f081ffe9XfDxeqZ2xOJ9u","agent":"zoning-board","tool":"smart_grep","phase":"started","detail":": \\(.*\\) =>.*\\{"}
+{"at":"2026-05-31T10:11:40.330Z","session_id":"ses_18281f081ffe9XfDxeqZ2xOJ9u","agent":"zoning-board","tool":"smart_grep","phase":"completed","detail":": \\(.*\\) =>.*\\{"}
+{"at":"2026-05-31T10:14:27.807Z","session_id":"ses_18281f081ffe9XfDxeqZ2xOJ9u","agent":"zoning-board","tool":"smart_grep","phase":"started","detail":"any type provides no type safety"}
+{"at":"2026-05-31T10:14:27.813Z","session_id":"ses_18281f081ffe9XfDxeqZ2xOJ9u","agent":"zoning-board","tool":"smart_grep","phase":"completed","detail":"any type provides no type safety"}
+{"at":"2026-05-31T10:14:28.995Z","session_id":"ses_18281f081ffe9XfDxeqZ2xOJ9u","agent":"zoning-board","tool":"smart_grep","phase":"started","detail":"Effect\\.fn\\(.*\\)\\(function\\*"}
+{"at":"2026-05-31T10:14:29.022Z","session_id":"ses_18281f081ffe9XfDxeqZ2xOJ9u","agent":"zoning-board","tool":"smart_grep","phase":"completed","detail":"Effect\\.fn\\(.*\\)\\(function\\*"}
+{"at":"2026-05-31T10:14:30.340Z","session_id":"ses_18281f081ffe9XfDxeqZ2xOJ9u","agent":"zoning-board","tool":"smart_grep","phase":"started","detail":"export interface \\w+.*Params\\b"}
+{"at":"2026-05-31T10:14:30.381Z","session_id":"ses_18281f081ffe9XfDxeqZ2xOJ9u","agent":"zoning-board","tool":"smart_grep","phase":"completed","detail":"export interface \\w+.*Params\\b"}
+{"at":"2026-05-31T10:14:31.917Z","session_id":"ses_18281f081ffe9XfDxeqZ2xOJ9u","agent":"zoning-board","tool":"smart_grep","phase":"started","detail":"type.*\\bHandler\\b.*=|interface.*\\bHandler\\b"}
+{"at":"2026-05-31T10:14:31.957Z","session_id":"ses_18281f081ffe9XfDxeqZ2xOJ9u","agent":"zoning-board","tool":"smart_grep","phase":"completed","detail":"type.*\\bHandler\\b.*=|interface.*\\bHandler\\b"}
+{"at":"2026-05-31T10:17:08.108Z","session_id":"ses_18281f081ffe9XfDxeqZ2xOJ9u","agent":"zoning-board","tool":"smart_grep","phase":"started","detail":"@deprecated.*any"}
+{"at":"2026-05-31T10:17:08.131Z","session_id":"ses_18281f081ffe9XfDxeqZ2xOJ9u","agent":"zoning-board","tool":"smart_grep","phase":"completed","detail":"@deprecated.*any"}
+{"at":"2026-05-31T10:17:09.271Z","session_id":"ses_18281f081ffe9XfDxeqZ2xOJ9u","agent":"zoning-board","tool":"smart_grep","phase":"started","detail":"// TODO.*any|// FIXME.*any|// HACK.*any"}
+{"at":"2026-05-31T10:17:09.302Z","session_id":"ses_18281f081ffe9XfDxeqZ2xOJ9u","agent":"zoning-board","tool":"smart_grep","phase":"completed","detail":"// TODO.*any|// FIXME.*any|// HACK.*any"}
+{"at":"2026-05-31T10:23:45.596Z","session_id":"ses_18281f081ffe9XfDxeqZ2xOJ9u","agent":"zoning-board","tool":"smart_grep","phase":"started","detail":"\\)\\s*:\\s*any\\s*\\{"}
+{"at":"2026-05-31T10:23:45.623Z","session_id":"ses_18281f081ffe9XfDxeqZ2xOJ9u","agent":"zoning-board","tool":"smart_grep","phase":"completed","detail":"\\)\\s*:\\s*any\\s*\\{"}
+{"at":"2026-05-31T10:23:47.056Z","session_id":"ses_18281f081ffe9XfDxeqZ2xOJ9u","agent":"zoning-board","tool":"smart_grep","phase":"started","detail":"\\)\\s*:\\s*any\\b"}
+{"at":"2026-05-31T10:23:47.086Z","session_id":"ses_18281f081ffe9XfDxeqZ2xOJ9u","agent":"zoning-board","tool":"smart_grep","phase":"completed","detail":"\\)\\s*:\\s*any\\b"}

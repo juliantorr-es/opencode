@@ -1,0 +1,7 @@
+{"at":"2026-05-31T11:06:42.629Z","tool":"smart_grep","action":"searched","pattern":"VALUE_SECRET_PATTERNS","results":2,"files":1}
+{"at":"2026-05-31T11:10:09.817Z","tool":"smart_grep","action":"searched","pattern":"VALUE_SECRET_PATTERNS|10.*KB|MAX_OUTPUT|maxBuffer|1024|truncat","results":30,"files":15}
+{"at":"2026-05-31T11:10:10.494Z","tool":"smart_grep","action":"searched","pattern":"sanitizedProcessEnv|sanitizeEnv","results":11,"files":6}
+{"at":"2026-05-31T11:13:14.802Z","tool":"smart_grep","action":"searched","pattern":"spawnSync|Bun\\.spawn","results":9,"files":5}
+{"at":"2026-05-31T11:23:52.680Z","tool":"smart_grep","action":"searched","pattern":"isBlocklistedEnvVar|ENV_BLOCKLIST|sanitizeEnv","results":9,"files":3}
+{"at":"2026-05-31T11:23:53.675Z","tool":"smart_grep","action":"searched","pattern":"secret.*scanner|VALUE_SECRET_PATTERNS|scanToolOutput|hasSecrets","results":4,"files":2}
+{"at":"2026-05-31T11:29:54.400Z","tool":"smart_bash","action":"bash","command":"awk 'NR>=145 && NR<=180' packages/opencode/src/debug/debug-packet.ts","exit_code":0}

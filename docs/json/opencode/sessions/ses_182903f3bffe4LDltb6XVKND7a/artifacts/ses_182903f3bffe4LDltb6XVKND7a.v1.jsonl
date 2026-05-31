@@ -12,3 +12,5 @@
 {"at":"2026-05-31T10:02:46.409Z","tool":"smart_grep","action":"searched","pattern":"exit: any","results":0,"files":0}
 {"at":"2026-05-31T10:04:05.014Z","tool":"smart_grep","action":"searched","pattern":"walkDirectory","results":0,"files":0}
 {"at":"2026-05-31T10:07:38.745Z","tool":"smart_write","action":"wrote","file":".build/rig-relay/arch_any_cleanup_phase1.v1.json","detail":"Write Phase 1 any-cleanup architecture plan artifact"}
+{"at":"2026-05-31T10:38:00.297Z","tool":"smart_bash","action":"bash","command":"python3 -c \"\nimport json\nwith open('.build/rig-relay/arch_any_cleanup_phase1.v1.json') as f:\n    pla","exit_code":1}
+{"at":"2026-05-31T10:42:10.061Z","tool":"smart_bash","action":"bash","command":"python3 -c \"\nimport json\nwith open('.build/rig-relay/arch_any_cleanup_phase1.v1.json') as f:\n    pla","exit_code":0}

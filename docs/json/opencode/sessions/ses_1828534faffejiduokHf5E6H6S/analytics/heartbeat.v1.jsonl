@@ -26,3 +26,21 @@
 {"at":"2026-05-31T10:09:17.237Z","session_id":"ses_1828534faffejiduokHf5E6H6S","agent":"blueprint","tool":"smart_grep","phase":"completed","detail":"server|watchdog|health|sidecar|degraded|migrat"}
 {"at":"2026-05-31T10:09:18.264Z","session_id":"ses_1828534faffejiduokHf5E6H6S","agent":"blueprint","tool":"smart_grep","phase":"started","detail":"migrat|adapter|database"}
 {"at":"2026-05-31T10:09:18.274Z","session_id":"ses_1828534faffejiduokHf5E6H6S","agent":"blueprint","tool":"smart_grep","phase":"completed","detail":"migrat|adapter|database"}
+{"at":"2026-05-31T10:13:40.302Z","session_id":"ses_1828534faffejiduokHf5E6H6S","agent":"blueprint","tool":"smart_grep","phase":"started","detail":"spawnSidecar|startSidecar|killSidecar|sidecar.*pid"}
+{"at":"2026-05-31T10:13:40.329Z","session_id":"ses_1828534faffejiduokHf5E6H6S","agent":"blueprint","tool":"smart_grep","phase":"completed","detail":"spawnSidecar|startSidecar|killSidecar|sidecar.*pid"}
+{"at":"2026-05-31T10:16:45.629Z","session_id":"ses_1828534faffejiduokHf5E6H6S","agent":"blueprint","tool":"smart_grep","phase":"started","detail":"server\\.ts"}
+{"at":"2026-05-31T10:16:45.649Z","session_id":"ses_1828534faffejiduokHf5E6H6S","agent":"blueprint","tool":"smart_grep","phase":"completed","detail":"server\\.ts"}
+{"at":"2026-05-31T10:16:46.857Z","session_id":"ses_1828534faffejiduokHf5E6H6S","agent":"blueprint","tool":"smart_bash","phase":"started","detail":"Find server.ts and related files in desktop main"}
+{"at":"2026-05-31T10:16:46.857Z","session_id":"ses_1828534faffejiduokHf5E6H6S","agent":"blueprint","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T10:19:57.717Z","session_id":"ses_1828534faffejiduokHf5E6H6S","agent":"blueprint","tool":"smart_grep","phase":"started","detail":"import.*from.*server"}
+{"at":"2026-05-31T10:19:57.726Z","session_id":"ses_1828534faffejiduokHf5E6H6S","agent":"blueprint","tool":"smart_grep","phase":"completed","detail":"import.*from.*server"}
+{"at":"2026-05-31T10:19:58.653Z","session_id":"ses_1828534faffejiduokHf5E6H6S","agent":"blueprint","tool":"smart_grep","phase":"started","detail":"health|HealthRegistry|HealthStatus"}
+{"at":"2026-05-31T10:19:58.666Z","session_id":"ses_1828534faffejiduokHf5E6H6S","agent":"blueprint","tool":"smart_grep","phase":"completed","detail":"health|HealthRegistry|HealthStatus"}
+{"at":"2026-05-31T10:26:44.978Z","session_id":"ses_1828534faffejiduokHf5E6H6S","agent":"blueprint","tool":"smart_grep","phase":"started","detail":"server|health|migrat"}
+{"at":"2026-05-31T10:26:44.989Z","session_id":"ses_1828534faffejiduokHf5E6H6S","agent":"blueprint","tool":"smart_grep","phase":"completed","detail":"server|health|migrat"}
+{"at":"2026-05-31T10:26:46.344Z","session_id":"ses_1828534faffejiduokHf5E6H6S","agent":"blueprint","tool":"smart_grep","phase":"started","detail":"migrat|adapter|health|degraded"}
+{"at":"2026-05-31T10:26:46.367Z","session_id":"ses_1828534faffejiduokHf5E6H6S","agent":"blueprint","tool":"smart_grep","phase":"completed","detail":"migrat|adapter|health|degraded"}
+{"at":"2026-05-31T10:35:55.828Z","session_id":"ses_1828534faffejiduokHf5E6H6S","agent":"blueprint","tool":"smart_grep","phase":"started","detail":"sidecar|SidecarListener|watchdog|health|killSidecar|degraded"}
+{"at":"2026-05-31T10:35:55.850Z","session_id":"ses_1828534faffejiduokHf5E6H6S","agent":"blueprint","tool":"smart_grep","phase":"completed","detail":"sidecar|SidecarListener|watchdog|health|killSidecar|degraded"}
+{"at":"2026-05-31T10:35:56.943Z","session_id":"ses_1828534faffejiduokHf5E6H6S","agent":"blueprint","tool":"smart_grep","phase":"started","detail":"health|HealthRegistry|degraded"}
+{"at":"2026-05-31T10:35:56.955Z","session_id":"ses_1828534faffejiduokHf5E6H6S","agent":"blueprint","tool":"smart_grep","phase":"completed","detail":"health|HealthRegistry|degraded"}

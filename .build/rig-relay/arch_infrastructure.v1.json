@@ -1,0 +1,644 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "schema_version": "v1",
+  "generated_at": "2026-05-31T10:30:00Z",
+  "generated_by": "architect",
+  "lane_id": "INFRA-001",
+  "title": "Infrastructure Standardization Architecture Plan",
+  "description": "Six-pronged infrastructure standardization: fd installation, build tool consolidation, test coverage, ADR process, script centralization, dead test wiring",
+  "boundary": "Monorepo infrastructure tooling — CI/CD, build system, test infrastructure, developer tooling, scripts, documentation process",
+  "consumer_purpose": "Reduce infrastructure entropy, establish repeatable patterns, and wire existing but disconnected test assets",
+
+  "root_causes": [
+    {
+      "id": "RC-01",
+      "area": "fd-missing",
+      "hypothesis": "fd is documented in the user's global AGENTS.md as a preferred CLI tool but was never installed locally or added to the repo's development environment (flake.nix, setup scripts, or repo-level AGENTS.md)",
+      "confidence": "high",
+      "evidence": [
+        "smart_find tool fails with 'fd not found. Install with: brew install fd'",
+        "AGENTS.md (repo) does not mention fd or any CLI tool preferences",
+        "flake.nix has no fd or ripgrep packages",
+        "Multiple sessions show 'fd not available' errors",
+        "User's global AGENTS.md at ~/.config/opencode/AGENTS.md lists fd as preferred tool"
+      ]
+    },
+    {
+      "id": "RC-02",
+      "area": "build-tool-fragmentation",
+      "hypothesis": "Build tool diversity is architectural necessity driven by heterogeneous output targets, not accidental fragmentation. Each tool is the idiomatic choice for its target: vite for SolidJS web apps, electron-vite for the Electron desktop shell, astro for static docs, storybook for component catalog, tsc for pure-TypeScript library, bun_build for the CLI core. No two tools serve the same purpose.",
+      "confidence": "high",
+      "evidence": [
+        "vite (6 packages): app, ui, enterprise, console-app, console-support, stats-app — all SolidJS web apps",
+        "electron-vite (1 package): desktop — requires electron-vite for main/preload/renderer bundling",
+        "astro (1 package): web — static site generator, cannot be replaced by vite",
+        "storybook (1 package): builds a component catalog with storybook-specific tooling",
+        "tsc (2 packages): plugin, sdk/js — pure TypeScript libraries needing only declaration emit",
+        "bun_build (1 package): opencode — CLI core with complex bundling (migrations, web UI, model data)"
+      ],
+      "note": "Root cause is NOT tool count. The real problem is absence of a shared build convention layer: no common tsconfig base, no shared vite plugin preset, no build script standardization. Each package independently configures its tooling.",
+      "root_cause": false
+    },
+    {
+      "id": "RC-02b",
+      "area": "build-tool-fragmentation",
+      "hypothesis": "The real fragmentation problem is the absence of a shared build convention layer: there is no common TypeScript config base, no shared vite plugin preset, and no `build` script standardization. Every package independently configures its tooling, creating onboarding friction and making cross-package build changes risky.",
+      "confidence": "medium",
+      "evidence": [
+        "turbo.json only registers 'build' as a task with 'dist/**' outputs — no shared config, no env passthrough, no caching strategy beyond defaults",
+        "No root-level tsconfig.base.json shared across packages — each package manages its own tsconfig",
+        "vite.config.ts files in console/support/ and enterprise/ have no shared base — each independently imports @solidjs/start or tailwind",
+        "Only 10 out of ~25 packages have a build script; 11 are source-only consumed via workspace:*",
+        "No prebuild/postbuild hooks standardized — desktop has predev/prebuild, others don't"
+      ],
+      "root_cause": true
+    },
+    {
+      "id": "RC-03",
+      "area": "test-coverage",
+      "hypothesis": "Coverage was never set up because bun's coverage support was historically immature, bun test adoption was incremental, and the CI pipeline focused on pass/fail gating rather than quality metrics",
+      "confidence": "medium",
+      "evidence": [
+        "bun test --coverage exists and desktop package has a test:coverage script (proves it works)",
+        "No coverage configuration in any CI workflow",
+        "turbo.json has no coverage pipeline entries",
+        "Root bunfig.toml has no coverage settings",
+        "CI focuses on binary pass/fail (bun turbo test:ci) with JUnit XML output only"
+      ]
+    },
+    {
+      "id": "RC-04",
+      "area": "dead-test-wiring",
+      "hypothesis": "Four packages (enterprise, console-app, stats-core, plugin) have test files that were written but never connected to package.json scripts or CI. The enterprise tests were auto-generated in a 'chore: generate' commit (caf2451da) with no corresponding test script. The plugin test was similarly committed in isolation. These are orphaned artifacts from code generation or scaffolding, not intentionally disconnected.",
+      "confidence": "high",
+      "evidence": [
+        "enterprise: 2 test files (test/core/storage.test.ts, test/core/share.test.ts) — no 'test' script; auto-generated in commit caf2451da",
+        "console-app: 2 test files (test/rateLimiter.test.ts, test/providerUsage.test.ts) — no 'test' script",
+        "stats-core: 1 test file (src/domain/inference.test.ts) — colocated test, no 'test' script",
+        "plugin: 1 test file (src/__tests__/plugin-transport.test.ts, 24 test assertions) — no 'test' script",
+        "console/core: NO test files (surface map incorrectly identified script files as tests — expect() matches from scripts, not tests)",
+        "turbo.json only defines test pipelines for opencode, app, and ui — none of the 4 orphaned packages have turbo test entries",
+        "All 4 packages have bun:test imports — tests were written for bun but never invoked"
+      ]
+    },
+    {
+      "id": "RC-05",
+      "area": "no-adrs",
+      "hypothesis": "The docs/adr/ directory was referenced in AGENTS.md as a desired practice but never created. The repo uses docs/json/ for structured artifacts but no ADR schema or template exists, leaving a gap between the stated convention and the actual directory structure.",
+      "confidence": "high",
+      "evidence": [
+        "AGENTS.md (user global) references 'docs/adr/' for architecture decisions",
+        "docs/adr/ does not exist",
+        "No ADR schema exists in docs/schemas/",
+        "docs/json/ is well-structured but no ADR subdirectory",
+        "Build tool choices and test patterns have no documented rationale"
+      ]
+    },
+    {
+      "id": "RC-06",
+      "area": "script-dispersal",
+      "hypothesis": "Scripts accumulated organically in each package's directory as features were added. No convention or justfile existed to centralize cross-cutting scripts, so each package duplicated infrastructure scripting.",
+      "confidence": "high",
+      "evidence": [
+        "28 scripts across 4 locations: opencode/script/ (14), desktop/scripts/ (8), sdk/js/script/ (2), app/scripts/ (1)",
+        "No root scripts/ directory",
+        "No justfile at root",
+        "Cross-cutting concerns (publishing, CI validation, setup) span multiple package directories",
+        "Several scripts are CI-only (httpapi-exercise.ts, check-migrations.ts) but live in package dirs"
+      ]
+    },
+    {
+      "id": "RC-07",
+      "area": "env-var-sprawl",
+      "hypothesis": "Environment variables grew without a registry because the Effect Config layered system provides runtime validation, creating a false sense that documentation was unnecessary. The ~100 vars are split across three layers: CI workflow YAML, turbo.json passThroughEnv, and runtime-flags.ts Config definitions, with no single source of truth.",
+      "confidence": "medium",
+      "evidence": [
+        "~100 env vars, no registry document",
+        "9 CI workflow files reference OPENCODE_ vars",
+        "turbo.json uses passThroughEnv: ['*'] for test tasks (all vars pass through)",
+        "runtime-flags.ts uses Effect Config for structured env var definitions (32 runtime flags)",
+        "No single document listing all env vars, their defaults, and their consumers"
+      ]
+    }
+  ],
+
+  "fixes": [
+    {
+      "id": "fix-A",
+      "title": "Install fd and add CLI tool documentation to repo AGENTS.md",
+      "description": "Install the fd (fd-find) tool and document all preferred CLI tools in the repository's AGENTS.md. fd is already listed in the user's global AGENTS.md but is not installed and not documented in the repo-level AGENTS.md.",
+      "priority": "P0 — immediate quick win",
+      "files": [
+        "AGENTS.md",
+        "flake.nix (add fd, rg to devShell packages)"
+      ],
+      "before": "AGENTS.md has no CLI tool preferences section. fd not installed. flake.nix has no fd or ripgrep.",
+      "after": "AGENTS.md includes a 'CLI tools' section listing rg, fd, sd, sg, bat, jq, yq, hyperfine, difft, watchexec, just, eza. flake.nix devShell includes fd and ripgrep packages. Developers can install via brew install fd or nix develop.",
+      "impact": {
+        "affected_files": ["AGENTS.md", "flake.nix"],
+        "tests_to_run": ["nix flake check (if Nix is used)"],
+        "ci_workflow_changes": ["none — fd is a local dev tool, not a CI dependency"],
+        "breaking_changes": "none"
+      },
+      "risks": [
+        "fd binary name conflict: on some Linux distros, 'fd' is a different package. Use 'fd-find' package name in flake.nix",
+        "Nix flake may need lockfile update (nix flake update)",
+        "Windows developers using WSL need separate install instructions"
+      ],
+      "validation": [
+        "which fd → returns path",
+        "fd --version → returns version",
+        "smart_find in opencode no longer fails with 'fd not found'",
+        "nix develop → fd works inside nix shell"
+      ],
+      "dependencies": [],
+      "estimated_effort": "15 minutes"
+    },
+    {
+      "id": "fix-B",
+      "title": "Shared build convention layer — tsconfig base, vite preset, build script standardization",
+      "description": "Rather than reducing build tool count (each tool serves a distinct purpose), add a shared build convention layer that reduces per-package configuration duplication and onboarding friction. Create a root tsconfig.base.json shared across all packages, a shared vite preset for the 6 vite-based packages, and standardize build scripts across the monorepo. Keep all existing build tools — they are architecturally necessary for their targets.",
+      "priority": "P1 — foundational build hygiene",
+      "files": [
+        "tsconfig.base.json (new — root-level base TypeScript config)",
+        "packages/opencode/tsconfig.json (extend base)",
+        "packages/core/tsconfig.json (extend base)",
+        "packages/app/tsconfig.json (extend base)",
+        "packages/ui/tsconfig.json (extend base)",
+        "packages/desktop/tsconfig.json (extend base)",
+        "packages/plugin/tsconfig.json (extend base)",
+        "packages/sdk/js/tsconfig.json (extend base)",
+        "packages/shared-vite-config/ (new package — shared vite preset for SolidJS web apps)",
+        "packages/shared-vite-config/vite-base.ts (or .js — shared vite config factory)",
+        "packages/app/vite.config.ts (migrate to shared base)",
+        "packages/ui/vite.config.ts (migrate to shared base)",
+        "packages/enterprise/vite.config.ts (migrate to shared base)",
+        "packages/console/app/vite.config.ts (migrate to shared base)",
+        "packages/console/support/vite.config.ts (migrate to shared base)",
+        "packages/stats/app/vite.config.ts (migrate to shared base)",
+        "turbo.json (verify build caching strategy per-package)"
+      ],
+      "before": "No shared tsconfig base — each of ~25 packages has its own independent tsconfig. No shared vite preset — 6 SolidJS vite configs independently configure solidjs plugins, tailwind, aliases. 10 packages have build scripts but no standardized pattern.",
+      "after": "Root tsconfig.base.json with shared compiler settings (moduleResolution: bundler, strict: true, jsx: preserve for solid, paths: {} with workspace mapping). All package tsconfigs extend base. Shared vite preset handles solidjs plugin, tailwind, environment variables, and path aliases. Per-package configs override only what's unique (entry point, output name, env-specific).",
+      "impact": {
+        "affected_files": [
+          "tsconfig.base.json (new)",
+          "~15 tsconfig.json files (add extends)",
+          "packages/shared-vite-config/ (new package)",
+          "6 vite.config.ts files (migrate to shared factory)",
+          "turbo.json (verify build pipeline)"
+        ],
+        "tests_to_run": [
+          "bun turbo typecheck (verify no regressions — all packages still typecheck)",
+          "bun turbo build (verify all packages build)",
+          "bun turbo test:ci (verify tests pass)",
+          "CI: full pipeline on Linux + Windows"
+        ],
+        "ci_workflow_changes": [
+          "test.yml: existing turbo-based pipeline handles this; no workflow changes needed",
+          "typecheck.yml: tsgo handles extends chains natively"
+        ],
+        "breaking_changes": [
+          "tsconfig extends changes could surface latent type errors if base is stricter than per-package configs",
+          "tsgo may resolve @/* paths differently when base tsconfig has paths"
+        ]
+      },
+      "risks": [
+        "tsconfig.base.json must be loose enough to work for all packages — electron (desktop), browser (app), node (opencode), and bundle-less (core). Different `lib` and `types` across packages complicate a shared base.",
+        "6 vite configs currently vary — enterprise uses @solidjs/start config, console uses different nitro presets. A shared base must handle 3 distinct vite variants (solidjs/start, vanilla solidjs, nitro).",
+        "tsgo (the TypeScript native preview) may handle `extends` chains differently from tsc — test both",
+        "Turbo cache: changing tsconfig extends invalidates all typecheck caches"
+      ],
+      "validation": [
+        "bun turbo typecheck → all packages pass",
+        "bun turbo build → all buildable packages succeed",
+        "bun turbo test:ci → all tests pass",
+        "Diff tsconfig files: verify only 'extends' lines changed, no option drift introduced",
+        "Vite dev for app, ui, enterprise → hot reload works"
+      ],
+      "dependencies": ["fix-E (ADR documenting the convention layer decision)"],
+      "estimated_effort": "2-4 hours"
+    },
+    {
+      "id": "fix-C",
+      "title": "Test coverage infrastructure with bun --coverage",
+      "description": "Add bun test --coverage to CI pipeline with a 0% informational baseline, ramping to 50% over 90 days. Add per-package coverage scripts and a turbo coverage pipeline. Generate Cobertura XML for CI integration.",
+      "priority": "P1 — foundational quality metric",
+      "files": [
+        "turbo.json (add coverage pipeline entries)",
+        ".github/workflows/test.yml (add coverage job)",
+        "packages/opencode/package.json (add coverage script)",
+        "packages/core/package.json (add coverage script)",
+        "packages/app/package.json (add coverage script)",
+        "packages/ui/package.json (add coverage script)",
+        "packages/desktop/package.json (already has test:coverage — standardize name)",
+        "packages/llm/package.json (add coverage script)",
+        "packages/http-recorder/package.json (add coverage script)",
+        "packages/plugin/package.json (add coverage script)",
+        ".github/codecov.yml (new — coverage configuration)",
+        "bunfig.toml (root: add coverage thresholds)",
+        "docs/json/infrastructure/coverage_thresholds.v1.json (new — threshold tracking)"
+      ],
+      "before": "Zero coverage collection. Desktop package has a test:coverage script but it's not wired to CI. No turbo coverage pipeline. No codecov integration.",
+      "after": "All 8 packages with tests have `coverage` and `coverage:ci` scripts. turbo coverage:ci runs all. CI collects Cobertura XML. Baseline 0% threshold with 90-day ramp plan to 50%. Coverage reports uploaded as CI artifacts.",
+      "impact": {
+        "affected_files": [
+          "turbo.json",
+          ".github/workflows/test.yml",
+          "8 package.json files",
+          "bunfig.toml",
+          ".github/codecov.yml (new)"
+        ],
+        "tests_to_run": [
+          "bun turbo coverage:ci (verify coverage collection works)",
+          "bun test --coverage in packages/opencode (verify Cobertura output)",
+          "Verify CI artifacts contain coverage XML"
+        ],
+        "ci_workflow_changes": [
+          "test.yml: add coverage job that runs after unit tests",
+          "Coverage job: bun turbo coverage:ci → upload Cobertura XML as artifact",
+          "Optional: codecov-action integration"
+        ],
+        "breaking_changes": "none — coverage is additive, not blocking"
+      },
+      "risks": [
+        "bun test --coverage may be slow for large packages (opencode has ~150 test files)",
+        "Cobertura XML format may differ from bun's output — needs format verification",
+        "Coverage collection in CI adds build time (estimate: 30-60s per package)",
+        "Threshold enforcement at 0% is safe; higher thresholds need per-package tuning"
+      ],
+      "validation": [
+        "bun test --coverage in packages/opencode → generates coverage report",
+        "bun turbo coverage:ci → all packages produce coverage XML",
+        "Coverage XML file exists at expected output paths",
+        "CI workflow runs without failure (0% threshold is always met)",
+        "coverage artifact appears in CI run summary"
+      ],
+      "dependencies": ["fix-D (dead test wiring — ensures all testable packages have scripts)"],
+      "estimated_effort": "1-2 hours"
+    },
+    {
+      "id": "fix-D",
+      "title": "Dead test wiring — connect 4 orphaned test packages to CI",
+      "description": "Add test, test:ci, and coverage scripts to the 4 packages that have test files but no package.json scripts. Wire them into turbo.json and CI workflows. Enterprise, console-app, stats-core, and plugin have test files that were written but never integrated — enterprise tests were auto-generated (commit caf2451da), plugin test was committed in isolation.",
+      "priority": "P1 — recover existing test investment",
+      "files": [
+        "packages/enterprise/package.json (add test, test:ci, coverage scripts)",
+        "packages/console/app/package.json (add test, test:ci, coverage scripts)",
+        "packages/stats/core/package.json (add test, test:ci, coverage scripts)",
+        "packages/plugin/package.json (add test, test:ci, coverage scripts)",
+        "turbo.json (add test and test:ci pipeline entries for all 4 packages)",
+        ".github/workflows/test.yml (verify these packages' junit XML outputs are collected)"
+      ],
+      "before": {
+        "enterprise": "2 test files (test/core/storage.test.ts, test/core/share.test.ts); no 'test' script; auto-generated in commit caf2451da",
+        "console-app": "2 test files (test/rateLimiter.test.ts, test/providerUsage.test.ts); no 'test' script",
+        "stats-core": "1 colocated test file (src/domain/inference.test.ts); no 'test' script",
+        "plugin": "1 test file (src/__tests__/plugin-transport.test.ts, 24 assertions); no 'test' script"
+      },
+      "after": "All 4 packages have test, test:ci, and coverage scripts. turbo.json includes test:ci entries for each. CI junit report collects their outputs. Console-app tests depend on console-core build (turbo ^build dependency).",
+      "impact": {
+        "affected_files": [
+          "4 package.json files",
+          "turbo.json",
+          ".github/workflows/test.yml",
+          "packages/enterprise/test/ (verify tests pass)",
+          "packages/console/app/test/ (verify tests pass)",
+          "packages/stats/core/src/domain/inference.test.ts (verify test passes)",
+          "packages/plugin/src/__tests__/plugin-transport.test.ts (verify test passes)"
+        ],
+        "tests_to_run": [
+          "cd packages/enterprise && bun test (verify tests pass)",
+          "cd packages/console/app && bun test (verify tests pass)",
+          "cd packages/stats/core && bun test (verify tests pass)",
+          "cd packages/plugin && bun test (verify tests pass)",
+          "bun turbo test:ci (verify new packages work in turbo pipeline)"
+        ],
+        "ci_workflow_changes": [
+          "test.yml: verify junit report_paths glob picks up 4 new packages",
+          "Console-app tests need console-core build: add turbo ^build dependency"
+        ],
+        "breaking_changes": "none — tests are additive, but may fail if tests are stale"
+      },
+      "risks": [
+        "Enterprise tests may be stale (auto-generated, never run) — imports may not resolve",
+        "Console-app test imports from @opencode-ai/console-core/model.js — needs console-core build output; add turbo ^build dependency",
+        "Plugin test uses self-referential import (@opencode-ai/plugin/desktop) — may fail due to workspace resolution edge cases",
+        "Stats-core test (inference.test.ts) has co-located test at src/domain/ — unusual pattern but bun test handles it",
+        "Enterprise tests write to storage backend — may need CI credentials or mocking",
+        "JUnit output path (../../.artifacts/) assumes running from package dir — verify relative path for each package"
+      ],
+      "validation": [
+        "Step 1: cd packages/enterprise && bun test → tests run (pass or fail — document)",
+        "Step 2: cd packages/console/app && bun test → tests run",
+        "Step 3: cd packages/stats/core && bun test → tests run",
+        "Step 4: cd packages/plugin && bun test → tests run",
+        "Step 5: bun turbo test:ci --filter=@opencode-ai/enterprise → works in pipeline",
+        "Step 6: bun turbo test:ci → all 4 new packages contribute",
+        "Step 7: CI workflow collects junit XML from all 4 new packages"
+      ],
+      "dependencies": [],
+      "estimated_effort": "30-60 min (scripts) + variable test debugging time"
+    },
+    {
+      "id": "fix-E",
+      "title": "ADR process — template, directory, and schema",
+      "description": "Create docs/adr/ directory with a conventional ADR template, a README superseded-by index, and a JSON schema for structured ADR artifacts. Document the ADR process in AGENTS.md. This provides a decision record for build tool choices, test strategies, and infrastructure decisions.",
+      "priority": "P1 — governance foundation",
+      "files": [
+        "docs/adr/0000-template.md (new — conventional ADR template)",
+        "docs/adr/README.md (new — superseded-by index with status table)",
+        "docs/schemas/rig.relay.adr.v1.schema.json (new — JSON schema for structured ADRs)",
+        "docs/json/adrs/adr_index.v1.json (new — machine-readable ADR index)",
+        "AGENTS.md (update: add ADR process documentation)"
+      ],
+      "before": "docs/adr/ does not exist. AGENTS.md references ADRs but no process or template exists. Build tool choices, test strategies, and architectural decisions have no documented rationale.",
+      "after": "docs/adr/ exists with template and index. JSON schema validates ADR structure. AGENTS.md documents the ADR process: when to write one, what format, where they live. First ADRs: 0001-build-tool-consolidation.md (from fix-B), 0002-test-coverage-strategy.md (from fix-C).",
+      "impact": {
+        "affected_files": [
+          "docs/adr/0000-template.md (new)",
+          "docs/adr/README.md (new)",
+          "docs/schemas/rig.relay.adr.v1.schema.json (new)",
+          "docs/json/adrs/adr_index.v1.json (new)",
+          "AGENTS.md"
+        ],
+        "tests_to_run": [
+          "uv run python scripts/rig_relay_validate_schemas.py (if using Python) or manual JSON schema validation"
+        ],
+        "ci_workflow_changes": ["none — documentation-only change"],
+        "breaking_changes": "none"
+      },
+      "risks": [
+        "ADR template format must align with repo's convention of JSON-first artifacts, not pure Markdown — consider JSON ADR format with optional Markdown rendering",
+        "AGENTS.md already has a 'Documentation Policy' section that mandates canonical JSON artifacts — ADRs may need to follow this convention",
+        "Risk of template becoming stale if not maintained"
+      ],
+      "validation": [
+        "docs/adr/0000-template.md exists and follows conventional ADR format",
+        "docs/adr/README.md has superseded-by index",
+        "docs/schemas/rig.relay.adr.v1.schema.json validates as JSON Schema",
+        "AGENTS.md references docs/adr/ directory"
+      ],
+      "dependencies": [],
+      "estimated_effort": "1 hour"
+    },
+    {
+      "id": "fix-F",
+      "title": "Script centralization with justfile",
+      "description": "Create root scripts/ directory organized by purpose (build, ci, dev, publish, db) and a root justfile with common recipes. Migrate cross-cutting scripts from package directories to root. Package-specific scripts (like generate-sitemap.ts) stay in their packages. Install just tool and document in AGENTS.md.",
+      "priority": "P2 — developer experience improvement",
+      "files": [
+        "scripts/build/ (new directory)",
+        "scripts/ci/ (new directory)",
+        "scripts/dev/ (new directory)",
+        "scripts/publish/ (new directory)",
+        "scripts/db/ (new directory)",
+        "justfile (new — root)",
+        "AGENTS.md (add justfile documentation)",
+        "packages/opencode/script/ (14 files — migrate cross-cutting, keep package-specific)",
+        "packages/desktop/scripts/ (8 files — migrate cross-cutting, keep package-specific)",
+        "packages/sdk/js/script/ (2 files — migrate cross-cutting)",
+        "packages/app/scripts/ (1 file — keep package-specific)"
+      ],
+      "script_classification": {
+        "cross_cutting_to_migrate": [
+          "packages/opencode/script/httpapi-exercise.ts → scripts/ci/httpapi-exercise.ts (CI gate)",
+          "packages/opencode/script/check-migrations.ts → scripts/ci/check-migrations.ts (CI gate)",
+          "packages/opencode/script/publish.ts → scripts/publish/opencode.ts (publishing)",
+          "packages/opencode/script/trace-imports.ts → scripts/dev/trace-imports.ts (dev tool)",
+          "packages/opencode/script/profile-test-files.ts → scripts/dev/profile-test-files.ts (dev tool)",
+          "packages/opencode/script/bench-test-suite.ts → scripts/dev/bench-test-suite.ts (dev tool)",
+          "packages/desktop/scripts/finalize-latest-json.ts → scripts/publish/finalize-latest-json.ts (publishing)",
+          "packages/desktop/scripts/finalize-latest-yml.ts → scripts/publish/finalize-latest-yml.ts (publishing)",
+          "packages/desktop/scripts/validate-ipc-migration.ts → scripts/ci/validate-ipc-migration.ts (CI gate)",
+          "packages/sdk/js/script/publish.ts → scripts/publish/sdk.ts (publishing)"
+        ],
+        "package_specific_to_keep": [
+          "packages/opencode/script/build.ts (core build — stays)",
+          "packages/opencode/script/build-node.ts (core build — stays)",
+          "packages/opencode/script/generate.ts (model data fetch — stays)",
+          "packages/opencode/script/schema.ts (config schema gen — stays)",
+          "packages/opencode/script/time.ts (module timing — stays)",
+          "packages/opencode/script/fix-node-pty.ts (platform fix — stays)",
+          "packages/opencode/script/postinstall.mjs (NPM lifecycle — stays)",
+          "packages/desktop/scripts/predev.ts (desktop pre-dev — stays)",
+          "packages/desktop/scripts/prebuild.ts (desktop pre-build — stays)",
+          "packages/sdk/js/script/build.ts (SDK codegen — stays)",
+          "packages/ui/script/tailwind.ts (UI generation — stays)",
+          "packages/app/scripts/generate-locale-stubs.ts (app-specific — stays)",
+          "packages/console/app/script/generate-sitemap.ts (app-specific — stays)"
+        ]
+      },
+      "justfile_recipes": [
+        "typecheck → bun turbo typecheck",
+        "test → bun turbo test:ci",
+        "build → bun turbo build",
+        "coverage → bun turbo coverage:ci",
+        "lint → bun turbo lint (future)",
+        "fmt → bunx prettier --write .",
+        "clean → rm -rf packages/*/dist packages/*/.turbo",
+        "setup → just clean && bun install && just build",
+        "db-generate → cd packages/opencode && bun db:generate:pg",
+        "publish-sdk → bun run scripts/publish/sdk.ts",
+        "check-migrations → bun run scripts/ci/check-migrations.ts"
+      ],
+      "before": "No root scripts/ directory. No justfile. 28 scripts across 4 package directories. Cross-cutting scripts (CI gates, publishing) mixed with package-specific scripts.",
+      "after": "Root scripts/ directory with 5 subdirectories. justfile at root with 11+ recipes. 10 cross-cutting scripts migrated to root. 13 package-specific scripts remain in place. just installed and documented.",
+      "impact": {
+        "affected_files": [
+          "scripts/ (new directory with 10 migrated scripts)",
+          "justfile (new)",
+          "AGENTS.md",
+          "10 script files moved from package dirs to scripts/",
+          ".github/workflows/test.yml (update script paths)",
+          ".github/workflows/publish.yml (update script paths)",
+          ".github/workflows/generate.yml (update script paths)",
+          "turbo.json (if scripts are referenced in pipeline)",
+          "package.json files (if scripts reference moved files)"
+        ],
+        "tests_to_run": [
+          "just typecheck → passes",
+          "just test → passes",
+          "just check-migrations → runs",
+          "bun turbo build → passes with updated script references",
+          "CI workflows → run successfully with new paths"
+        ],
+        "ci_workflow_changes": [
+          "test.yml: httpapi-exercise.ts path changes from packages/opencode/script/ to scripts/ci/",
+          "test.yml: check-migrations.ts path changes",
+          "publish.yml: publish.ts path changes",
+          "generate.yml: generate.ts path changes"
+        ],
+        "breaking_changes": [
+          "Script paths change — all references (CI workflows, package.json scripts, turbo.json) must be updated atomically",
+          "Relative imports within migrated scripts may break — must audit import paths",
+          "just must be installed for developers (brew install just or add to flake.nix)"
+        ]
+      },
+      "risks": [
+        "Script migration could break CI if paths are not updated everywhere simultaneously",
+        "Scripts may have relative imports to their package — moving to root scripts/ requires import path changes",
+        "justfile is a new dependency — developers must install just",
+        "Package-specific scripts with cross-package imports create ambiguity about where they belong",
+        "Turbo caching may be affected by changed script paths"
+      ],
+      "validation": [
+        "just --list → shows all recipes",
+        "just typecheck → same result as bun turbo typecheck",
+        "Migrated scripts run from root scripts/ → same output as before",
+        "CI workflows pass with updated paths",
+        "All old script paths are no longer referenced anywhere (rg for dead paths)"
+      ],
+      "dependencies": ["fix-A (just is a CLI tool that needs to be installed)"],
+      "estimated_effort": "3-5 hours (migration + justfile + CI updates)"
+    },
+    {
+      "id": "fix-G",
+      "title": "Environment variable registry",
+      "description": "Create a centralized environment variable registry as a structured JSON document documenting all ~100 env vars: name, purpose, default, consumers, and whether it's a CI secret or local config. This is documentation-only — no code changes.",
+      "priority": "P2 — documentation",
+      "files": [
+        "docs/json/infrastructure/env_var_registry.v1.json (new)",
+        "docs/schemas/rig.relay.env_var_registry.v1.schema.json (new)"
+      ],
+      "before": "~100 env vars scattered across 9 CI workflow files, turbo.json, runtime-flags.ts, and source code. No single document lists them all.",
+      "after": "Single registry document with all env vars categorized by domain (CI secrets, runtime flags, build vars, deployment vars). Schema validates structure.",
+      "impact": {
+        "affected_files": [
+          "docs/json/infrastructure/env_var_registry.v1.json (new)",
+          "docs/schemas/rig.relay.env_var_registry.v1.schema.json (new)"
+        ],
+        "tests_to_run": ["JSON schema validation"],
+        "ci_workflow_changes": ["none"],
+        "breaking_changes": "none"
+      },
+      "risks": [
+        "Registry may become stale if not kept in sync with code",
+        "CI secrets should NOT be documented with values, only names and purposes"
+      ],
+      "validation": [
+        "Schema validates",
+        "All OPENCODE_ env vars from CI workflows are listed",
+        "All runtime-flags.ts Config entries are listed",
+        "CI secrets are listed by name only (no values)"
+      ],
+      "dependencies": [],
+      "estimated_effort": "2-3 hours (auditing all env vars)"
+    }
+  ],
+
+  "apply_order": [
+    "fix-A (fd install + AGENTS.md — immediate quick win, no dependencies)",
+    "fix-E (ADR process — governance foundation, needed before build tool decision)",
+    "fix-D (dead test wiring — recover existing test investment, validate tests pass)",
+    "fix-B (build tool consolidation — requires ADR documentation, Phase 2)",
+    "fix-C (test coverage — requires dead test wiring to be complete)",
+    "fix-F (script centralization — depends on fd/just being installed)",
+    "fix-G (env var registry — documentation, can be done anytime)"
+  ],
+
+  "phase_plan": {
+    "phase_1_immediate": {
+      "description": "Quick wins that establish infrastructure foundations. Ship within 1 week.",
+      "fixes": ["fix-A", "fix-E", "fix-D"],
+      "gates": [
+        "fd installed and documented",
+        "docs/adr/ directory exists with template",
+        "3 dead test packages have scripts and tests pass",
+        "bun turbo test:ci still passes"
+      ]
+    },
+    "phase_2_consolidation": {
+      "description": "Build tool alignment and coverage infrastructure. Ship within 4 weeks.",
+      "fixes": ["fix-B", "fix-C"],
+      "gates": [
+        "ADR 0001 documents build tool consolidation decision",
+        "vite builds for plugin and sdk produce identical outputs",
+        "All downstream consumers build successfully",
+        "Coverage reports generated in CI",
+        "0% baseline threshold enforced"
+      ]
+    },
+    "phase_3_developer_experience": {
+      "description": "Script centralization and env var registry. Ship within 6 weeks.",
+      "fixes": ["fix-F", "fix-G"],
+      "gates": [
+        "All CI workflows use root scripts/ paths",
+        "justfile recipes all work",
+        "Env var registry is comprehensive and schema-validated"
+      ]
+    }
+  },
+
+  "rollback_plan": {
+    "strategy": "Each fix is independently reversible. Revert in reverse order of application.",
+    "per_fix": {
+      "fix-A": "Remove fd from flake.nix devShell, revert AGENTS.md changes",
+      "fix-E": "Delete docs/adr/ directory, revert AGENTS.md (no code impact)",
+      "fix-D": "Remove test scripts from 3 package.json files, revert turbo.json additions",
+      "fix-B": "Revert plugin and sdk/js package.json to tsc builds, delete vite.config.ts files",
+      "fix-C": "Remove coverage scripts, revert turbo.json coverage pipeline, revert CI workflow coverage job",
+      "fix-F": "Move scripts back to package directories, delete root scripts/, delete justfile, revert CI paths",
+      "fix-G": "Delete env_var_registry.v1.json and schema (no code impact)"
+    }
+  },
+
+  "convention_compliance": {
+    "fix-A": {
+      "matches_convention": true,
+      "note": "AGENTS.md already is the canonical instruction file. Adding CLI tool preferences is consistent. flake.nix already defines devShell packages — adding fd and rg follows existing pattern."
+    },
+    "fix-E": {
+      "matches_convention": "partial",
+      "note": "AGENTS.md Documentation Policy mandates canonical JSON artifacts, not Markdown. ADR template should be a JSON schema-backed artifact (docs/json/adrs/) with optional rendered representation. The conventional ADR format (Markdown) conflicts with the repo's JSON-first documentation policy. Consider: docs/json/adrs/ for the canonical ADR + docs/adr/ for rendered view."
+    },
+    "fix-D": {
+      "matches_convention": true,
+      "note": "Adding scripts to package.json follows the existing pattern. turbo.json pipeline entries match existing test:ci patterns exactly."
+    },
+    "fix-B": {
+      "matches_convention": true,
+      "note": "6 packages already use vite — migrating 2 more aligns with the dominant pattern. Vite config files follow the existing pattern in app, ui, enterprise, etc."
+    },
+    "fix-C": {
+      "matches_convention": true,
+      "note": "Desktop package already has a test:coverage script. Adding coverage scripts to other packages standardizes this pattern."
+    },
+    "fix-F": {
+      "matches_convention": "partial",
+      "note": "Surface map shows 'no_root_scripts_directory: true'. Creating one is a new convention, but justfile is listed as a preferred CLI tool in user's AGENTS.md. The pattern does not currently exist — it would establish a new convention."
+    }
+  },
+
+  "out_of_scope": [
+    "dependabot.yml — documented as missing but not in scope for this plan (separate slice)",
+    "Typecheck workflow improvement (no caching, no matrix) — documented but not in scope",
+    "Nix flake comprehensive dev tooling beyond fd and rg — future slice",
+    "Test directory pattern standardization (test/, __tests__/, colocated) — separate consistency slice",
+    "CI workflow consolidation (27 workflows) — separate optimization slice",
+    "Script language standardization (TypeScript + bun vs Node.js) — separate slice",
+    "Turbo remote caching setup — future slice",
+    "Console/core tests — surface map was wrong; this package has no test files"
+  ],
+
+  "recorded_findings": [
+    {
+      "id": "INFRA-FINDING-001",
+      "severity": "low",
+      "file": ".build/rig-relay/infrastructure_surface_map.v1.json",
+      "finding": "Surface map incorrectly reports 4 packages with dead tests. console/core has no test files — the 'expect(' matches came from script files (lookup-user.ts, credit-workspace.ts, billing.ts) not test files. Actual count is 3 packages."
+    },
+    {
+      "id": "INFRA-FINDING-002",
+      "severity": "low",
+      "file": "AGENTS.md",
+      "finding": "Repo AGENTS.md has no CLI tool preferences section. The user's global AGENTS.md at ~/.config/opencode/AGENTS.md lists preferred tools (rg, fd, sd, sg, bat, jq, yq, hyperfine, difft, watchexec, just, eza) but the repo-level instruction file does not."
+    },
+    {
+      "id": "INFRA-FINDING-003",
+      "severity": "medium",
+      "file": "turbo.json",
+      "finding": "Turbo test pipelines use 'passThroughEnv: [\"*\"]' for test tasks, passing all ~100 env vars to every test. This is overly broad and makes env var dependencies invisible. Should be narrowed to specific vars."
+    }
+  ]
+}

@@ -227,7 +227,7 @@ export function makePgAdapter(options: {
         ? (options as PostgresTransactionOptions)
         : undefined
 
-    const txFn = async (tx: any) => {
+    const txFn = async (tx: DrizzleLikeClient) => {
       txDepth++
       try {
         const result = await fn(tx as unknown as DrizzleLikeClient)

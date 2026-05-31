@@ -22,3 +22,20 @@
 {"at":"2026-05-31T10:04:20.512Z","session_id":"ses_1828cf9a9ffeE3q2yel7uad1Ok","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"drizzle\\.config|drizzle-kit"}
 {"at":"2026-05-31T10:08:42.759Z","session_id":"ses_1828cf9a9ffeE3q2yel7uad1Ok","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"DatabaseAdapter\\.(LocalPgAdapter|PgAdapter|defaultLayer|Service)"}
 {"at":"2026-05-31T10:08:43.214Z","session_id":"ses_1828cf9a9ffeE3q2yel7uad1Ok","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"DatabaseAdapter\\.(LocalPgAdapter|PgAdapter|defaultLayer|Service)"}
+{"at":"2026-05-31T10:10:44.607Z","session_id":"ses_1828cf9a9ffeE3q2yel7uad1Ok","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"import.*DatabaseAdapter|from.*adapter"}
+{"at":"2026-05-31T10:10:44.748Z","session_id":"ses_1828cf9a9ffeE3q2yel7uad1Ok","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"import.*DatabaseAdapter|from.*adapter"}
+{"at":"2026-05-31T10:12:49.396Z","session_id":"ses_1828cf9a9ffeE3q2yel7uad1Ok","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"LocalPgAdapter|PgAdapter|defaultLayer|Layer\\.unwrap|Layer\\.suspend"}
+{"at":"2026-05-31T10:12:49.402Z","session_id":"ses_1828cf9a9ffeE3q2yel7uad1Ok","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"LocalPgAdapter|PgAdapter|defaultLayer|Layer\\.unwrap|Layer\\.suspend"}
+{"at":"2026-05-31T10:12:50.436Z","session_id":"ses_1828cf9a9ffeE3q2yel7uad1Ok","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"sqlite|better-sqlite3|bun:sqlite"}
+{"at":"2026-05-31T10:12:50.459Z","session_id":"ses_1828cf9a9ffeE3q2yel7uad1Ok","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"sqlite|better-sqlite3|bun:sqlite"}
+{"at":"2026-05-31T10:19:12.092Z","session_id":"ses_1828cf9a9ffeE3q2yel7uad1Ok","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Read the Layer definitions at bottom of adapter.ts"}
+{"at":"2026-05-31T10:22:21.965Z","session_id":"ses_1828cf9a9ffeE3q2yel7uad1Ok","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"sqlite|SQLite"}
+{"at":"2026-05-31T10:22:21.993Z","session_id":"ses_1828cf9a9ffeE3q2yel7uad1Ok","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"sqlite|SQLite"}
+{"at":"2026-05-31T10:25:54.143Z","session_id":"ses_1828cf9a9ffeE3q2yel7uad1Ok","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"InstanceBootstrap"}
+{"at":"2026-05-31T10:25:54.169Z","session_id":"ses_1828cf9a9ffeE3q2yel7uad1Ok","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"InstanceBootstrap"}
+{"at":"2026-05-31T10:25:55.043Z","session_id":"ses_1828cf9a9ffeE3q2yel7uad1Ok","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"DatabaseAdapter\\.(defaultLayer|LocalPgAdapter)"}
+{"at":"2026-05-31T10:25:55.070Z","session_id":"ses_1828cf9a9ffeE3q2yel7uad1Ok","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"DatabaseAdapter\\.(defaultLayer|LocalPgAdapter)"}
+{"at":"2026-05-31T10:42:44.278Z","session_id":"ses_1828cf9a9ffeE3q2yel7uad1Ok","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Read the Layer definitions at the bottom of adapter.ts"}
+{"at":"2026-05-31T10:42:44.278Z","session_id":"ses_1828cf9a9ffeE3q2yel7uad1Ok","agent":"cartographer","tool":"smart_bash","phase":"rerouted","detail":"→ read_source"}
+{"at":"2026-05-31T10:42:44.922Z","session_id":"ses_1828cf9a9ffeE3q2yel7uad1Ok","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"List all PG migration directories"}
+{"at":"2026-05-31T10:42:44.922Z","session_id":"ses_1828cf9a9ffeE3q2yel7uad1Ok","agent":"cartographer","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}

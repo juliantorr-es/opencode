@@ -5,3 +5,27 @@
 {"at":"2026-05-31T10:05:37.383Z","session_id":"ses_1828229dcffeRFanl13GNX37XZ","agent":"zoning-board","tool":"smart_grep","pattern":"deprecated|DEPRECATED|legacy|archive","path":""}
 {"at":"2026-05-31T10:07:05.536Z","session_id":"ses_1828229dcffeRFanl13GNX37XZ","agent":"zoning-board","tool":"smart_grep","pattern":"http-recorder|HttpRecorder","path":"packages"}
 {"at":"2026-05-31T10:07:06.958Z","session_id":"ses_1828229dcffeRFanl13GNX37XZ","agent":"zoning-board","tool":"smart_grep","pattern":"Layer\\.|\\.layer\\b|provide\\b|make\\b","path":"packages/enterprise"}
+{"at":"2026-05-31T10:10:53.792Z","session_id":"ses_1828229dcffeRFanl13GNX37XZ","agent":"zoning-board","tool":"smart_grep","pattern":".*","path":"packages/slack/src"}
+{"at":"2026-05-31T10:10:54.988Z","session_id":"ses_1828229dcffeRFanl13GNX37XZ","agent":"zoning-board","tool":"smart_grep","pattern":".*","path":"packages/enterprise/src"}
+{"at":"2026-05-31T10:10:56.105Z","session_id":"ses_1828229dcffeRFanl13GNX37XZ","agent":"zoning-board","tool":"smart_grep","pattern":".*","path":"packages/http-recorder/src"}
+{"at":"2026-05-31T10:10:57.159Z","session_id":"ses_1828229dcffeRFanl13GNX37XZ","agent":"zoning-board","tool":"smart_grep","pattern":".*","path":"packages/http-recorder/test"}
+{"at":"2026-05-31T10:16:14.977Z","session_id":"ses_1828229dcffeRFanl13GNX37XZ","agent":"zoning-board","tool":"smart_grep","pattern":"testEffect|it\\.live|it\\.instance|it\\.scoped|testLib|testUtils","path":"packages/opencode/src"}
+{"at":"2026-05-31T10:16:16.201Z","session_id":"ses_1828229dcffeRFanl13GNX37XZ","agent":"zoning-board","tool":"smart_grep","pattern":"testEffect|testLib|test.*helper","path":"packages/opencode/test"}
+{"at":"2026-05-31T10:16:18.254Z","session_id":"ses_1828229dcffeRFanl13GNX37XZ","agent":"zoning-board","tool":"smart_grep","pattern":"\"identity\"|\"@opencode-ai/identity\"|\"@opencode-ai/slack\"|\"@opencode-ai/enterprise\"","path":"packages"}
+{"at":"2026-05-31T10:16:19.121Z","session_id":"ses_1828229dcffeRFanl13GNX37XZ","agent":"zoning-board","tool":"smart_grep","pattern":".*","path":"packages/enterprise/test"}
+{"at":"2026-05-31T10:19:24.159Z","session_id":"ses_1828229dcffeRFanl13GNX37XZ","agent":"zoning-board","tool":"smart_grep","pattern":".*","path":"packages/opencode/test/lib"}
+{"at":"2026-05-31T10:19:26.620Z","session_id":"ses_1828229dcffeRFanl13GNX37XZ","agent":"zoning-board","tool":"smart_grep","pattern":"Context\\.Service|\\.Service\\b|Layer\\.effect|Layer\\.service|TaggedErrorClass","path":"packages"}
+{"at":"2026-05-31T10:19:28.769Z","session_id":"ses_1828229dcffeRFanl13GNX37XZ","agent":"zoning-board","tool":"smart_grep","pattern":".*","path":"packages/app/src/test-utils"}
+{"at":"2026-05-31T10:19:29.936Z","session_id":"ses_1828229dcffeRFanl13GNX37XZ","agent":"zoning-board","tool":"smart_grep","pattern":".*","path":"packages/desktop/src/test-utils"}
+{"at":"2026-05-31T10:22:45.727Z","session_id":"ses_1828229dcffeRFanl13GNX37XZ","agent":"zoning-board","tool":"smart_grep","pattern":"\"private\": true","path":"packages"}
+{"at":"2026-05-31T10:22:47.098Z","session_id":"ses_1828229dcffeRFanl13GNX37XZ","agent":"zoning-board","tool":"smart_grep","pattern":"Context\\.Reference|Context\\.Tag|Effect\\.gen|\\.pipe\\(","path":"packages/enterprise/src"}
+{"at":"2026-05-31T10:22:48.534Z","session_id":"ses_1828229dcffeRFanl13GNX37XZ","agent":"zoning-board","tool":"smart_grep","pattern":".*","path":"packages/desktop/src/test-utils"}
+{"at":"2026-05-31T10:26:25.113Z","session_id":"ses_1828229dcffeRFanl13GNX37XZ","agent":"zoning-board","tool":"smart_grep","pattern":"\"private\"","path":"packages/slack"}
+{"at":"2026-05-31T10:26:26.069Z","session_id":"ses_1828229dcffeRFanl13GNX37XZ","agent":"zoning-board","tool":"smart_grep","pattern":".*","path":"packages/identity"}
+{"at":"2026-05-31T10:26:27.319Z","session_id":"ses_1828229dcffeRFanl13GNX37XZ","agent":"zoning-board","tool":"smart_grep","pattern":"\"@opencode-ai/slack\"","path":""}
+{"at":"2026-05-31T10:26:27.713Z","session_id":"ses_1828229dcffeRFanl13GNX37XZ","agent":"zoning-board","tool":"smart_grep","pattern":"\"@opencode-ai/identity\"","path":""}
+{"at":"2026-05-31T10:30:35.658Z","session_id":"ses_1828229dcffeRFanl13GNX37XZ","agent":"zoning-board","tool":"smart_grep","pattern":"core/share|@opencode-ai/core|hono","path":"packages/enterprise/src"}
+{"at":"2026-05-31T10:30:37.106Z","session_id":"ses_1828229dcffeRFanl13GNX37XZ","agent":"zoning-board","tool":"smart_grep","pattern":"x-forwarded-proto|x-forwarded-host|samesite|secure","path":"packages"}
+{"at":"2026-05-31T10:30:39.693Z","session_id":"ses_1828229dcffeRFanl13GNX37XZ","agent":"zoning-board","tool":"smart_grep","pattern":"import.*test-utils|import.*TestUtils|import.*testUtils","path":"packages/app/src"}
+{"at":"2026-05-31T10:35:42.245Z","session_id":"ses_1828229dcffeRFanl13GNX37XZ","agent":"zoning-board","tool":"smart_grep","pattern":"\"@opencode-ai/slack\".*import|import.*@opencode-ai/slack","path":"packages"}
+{"at":"2026-05-31T10:35:43.075Z","session_id":"ses_1828229dcffeRFanl13GNX37XZ","agent":"zoning-board","tool":"smart_grep","pattern":"cors|CorsConfig","path":"packages/opencode/src/server"}

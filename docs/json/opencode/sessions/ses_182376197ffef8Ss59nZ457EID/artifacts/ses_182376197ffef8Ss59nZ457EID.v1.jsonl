@@ -1,0 +1,26 @@
+{"at":"2026-05-31T11:26:05.641Z","tool":"smart_grep","action":"searched","pattern":"binderService\\.addEvidence","results":4,"files":1}
+{"at":"2026-05-31T11:26:06.341Z","tool":"smart_grep","action":"searched","pattern":"binderService\\.createBinder","results":3,"files":1}
+{"at":"2026-05-31T11:26:07.912Z","tool":"smart_grep","action":"searched","pattern":"binderService\\.finalizeBinder","results":1,"files":1}
+{"at":"2026-05-31T11:26:08.677Z","tool":"smart_grep","action":"searched","pattern":"binderService\\.updateStatus","results":1,"files":1}
+{"at":"2026-05-31T11:26:09.472Z","tool":"smart_grep","action":"searched","pattern":"lane\\.binder","results":3,"files":1}
+{"at":"2026-05-31T11:26:44.578Z","tool":"smart_grep","action":"searched","pattern":"addEvidence","results":7,"files":2}
+{"at":"2026-05-31T11:26:45.536Z","tool":"smart_grep","action":"searched","pattern":"addEvidence|createBinder|finalizeBinder|updateStatus","results":0,"files":0}
+{"at":"2026-05-31T11:27:03.137Z","tool":"smart_grep","action":"searched","pattern":"yield\\* binderService\\.addEvidence","results":0,"files":0}
+{"at":"2026-05-31T11:27:41.524Z","tool":"smart_bash","action":"bash","command":"awk '/addEvidence|createBinder|finalizeBinder|updateStatus|lane\\.binder/ {print NR\": \"$0}' packages/","exit_code":0}
+{"at":"2026-05-31T11:27:42.877Z","tool":"smart_bash","action":"bash","command":"awk '/addEvidence|createBinder|finalizeBinder|updateStatus|ensureBinder|getBinder|Interface \\{/ {pri","exit_code":0}
+{"at":"2026-05-31T11:28:56.415Z","tool":"smart_bash","action":"bash","command":"head -n 660 packages/opencode/src/campaign/secretary.ts | tail -n 40","exit_code":0}
+{"at":"2026-05-31T11:28:57.442Z","tool":"smart_bash","action":"bash","command":"head -n 770 packages/opencode/src/campaign/secretary.ts | tail -n 110","exit_code":0}
+{"at":"2026-05-31T11:28:58.125Z","tool":"smart_bash","action":"bash","command":"head -n 460 packages/opencode/src/campaign/secretary.ts | tail -n 30","exit_code":0}
+{"at":"2026-05-31T11:29:16.303Z","tool":"smart_bash","action":"bash","command":"tail -n 100 packages/opencode/src/campaign/secretary.ts | head -n 100","exit_code":0}
+{"at":"2026-05-31T11:29:17.155Z","tool":"smart_bash","action":"bash","command":"head -n 170 packages/opencode/src/campaign/binder.ts","exit_code":0}
+{"at":"2026-05-31T11:33:02.689Z","tool":"smart_bash","action":"bash","command":"head -n 130 packages/opencode/src/campaign/binder.ts | tail -n 120","exit_code":0}
+{"at":"2026-05-31T11:33:03.680Z","tool":"smart_bash","action":"bash","command":"head -n 620 packages/opencode/src/campaign/binder.ts | tail -n 120","exit_code":0}
+{"at":"2026-05-31T11:33:04.188Z","tool":"smart_bash","action":"bash","command":"head -n 862 packages/opencode/src/campaign/secretary.ts | tail -n 80","exit_code":0}
+{"at":"2026-05-31T11:33:29.723Z","tool":"smart_bash","action":"bash","command":"head -n 15 packages/opencode/test/campaign/secretary.test.ts","exit_code":1}
+{"at":"2026-05-31T11:33:53.778Z","tool":"smart_bash","action":"bash","command":"awk 'NR>=40 && NR<=130' packages/opencode/src/campaign/binder.ts","exit_code":0}
+{"at":"2026-05-31T11:34:32.298Z","tool":"smart_bash","action":"bash","command":"awk 'NR>=50 && NR<=75' packages/opencode/src/campaign/binder.ts","exit_code":0}
+{"at":"2026-05-31T11:34:51.201Z","tool":"smart_bash","action":"bash","command":"awk 'NR>=75 && NR<=130' packages/opencode/src/campaign/binder.ts","exit_code":0}
+{"at":"2026-05-31T11:34:52.034Z","tool":"smart_bash","action":"bash","command":"awk 'NR>=1 && NR<=40' packages/opencode/src/campaign/binder.ts","exit_code":0}
+{"at":"2026-05-31T11:35:12.277Z","tool":"smart_bash","action":"bash","command":"awk 'NR>=79 && NR<=125' packages/opencode/src/campaign/binder.ts","exit_code":0}
+{"at":"2026-05-31T11:35:33.700Z","tool":"smart_bash","action":"bash","command":"awk 'NR>=92 && NR<=115' packages/opencode/src/campaign/binder.ts","exit_code":0}
+{"at":"2026-05-31T11:35:52.296Z","tool":"smart_bash","action":"bash","command":"awk 'NR>=509 && NR<=540' packages/opencode/src/campaign/binder.ts","exit_code":0}

@@ -35,7 +35,8 @@ function analytics(context: any, tool: string, extra: Record<string, unknown>) {
 }
 
 function spawnRg(args: string[], cwd: string) {
-  const binaries = ["rg", "/opt/homebrew/bin/rg", "/usr/local/bin/rg"]
+  const toolDir = resolve(cwd, ".opencode/tools/bin")
+  const binaries = ["rg", resolve(toolDir, "rg"), "/opt/homebrew/bin/rg", "/usr/local/bin/rg"]
   for (const bin of binaries) {
     const result = spawnSync(bin, args, {
       cwd, encoding: "utf8", maxBuffer: 1024 * 1024 * 5, timeout: 30000,

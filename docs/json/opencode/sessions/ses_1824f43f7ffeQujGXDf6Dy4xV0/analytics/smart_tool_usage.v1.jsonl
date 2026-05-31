@@ -1,0 +1,10 @@
+{"at":"2026-05-31T11:09:44.632Z","session_id":"ses_1824f43f7ffeQujGXDf6Dy4xV0","agent":"witness","tool":"smart_grep","pattern":"sanitizedProcessEnv","path":"packages/opencode/src/tool"}
+{"at":"2026-05-31T11:09:45.641Z","session_id":"ses_1824f43f7ffeQujGXDf6Dy4xV0","agent":"witness","tool":"smart_grep","pattern":"sanitizedProcessEnv","path":"packages"}
+{"at":"2026-05-31T11:12:47.415Z","session_id":"ses_1824f43f7ffeQujGXDf6Dy4xV0","agent":"witness","tool":"smart_grep","pattern":"sanitizeEnv|sanitizedProcessEnv","path":"packages"}
+{"at":"2026-05-31T11:17:59.246Z","session_id":"ses_1824f43f7ffeQujGXDf6Dy4xV0","agent":"witness","tool":"smart_grep","pattern":"VALUE_SECRET_PATTERNS|SENSITIVE_PATTERNS","path":"packages/opencode/src/debug/debug-packet.ts"}
+{"at":"2026-05-31T11:18:04.734Z","session_id":"ses_1824f43f7ffeQujGXDf6Dy4xV0","agent":"witness","tool":"smart_grep","pattern":"AWS_BEARER_TOKEN_BEDROCK|OPENCODE_STORAGE_ACCESS_KEY_ID","path":"packages"}
+{"at":"2026-05-31T11:26:16.136Z","session_id":"ses_1824f43f7ffeQujGXDf6Dy4xV0","agent":"witness","tool":"smart_grep","pattern":"VALUE_SECRET","path":"packages/opencode/src/debug/debug-packet.ts"}
+{"at":"2026-05-31T11:26:17.059Z","session_id":"ses_1824f43f7ffeQujGXDf6Dy4xV0","agent":"witness","tool":"smart_grep","pattern":"redactValues","path":"packages/opencode/src/debug/debug-packet.ts"}
+{"at":"2026-05-31T11:32:30.155Z","session_id":"ses_1824f43f7ffeQujGXDf6Dy4xV0","agent":"witness","tool":"smart_grep","pattern":"import.*env-blocklist","path":"packages"}
+{"at":"2026-05-31T11:32:30.452Z","session_id":"ses_1824f43f7ffeQujGXDf6Dy4xV0","agent":"witness","tool":"smart_grep","pattern":"scanToolOutput|secret-scanner","path":"packages"}
+{"at":"2026-05-31T11:32:30.938Z","session_id":"ses_1824f43f7ffeQujGXDf6Dy4xV0","agent":"witness","tool":"smart_grep","pattern":"import.*opencode-process","path":"packages/opencode/src/tool"}

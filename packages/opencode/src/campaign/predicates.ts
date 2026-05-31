@@ -29,6 +29,7 @@ export interface PredicateContext {
   readonly fileMemory: Map<string, FileContext>
   readonly claims: readonly string[]
   readonly sessionId: string
+  readonly retryBudgets: Readonly<Record<string, number>>
   readonly duckDbRanked?: readonly string[]
 }
 
@@ -113,7 +114,9 @@ function resolveEventExists(
     kind: "event_exists"
   }
 
-  let matching = ctx.events.filter((e) => e.eventType === eventType)
+  let matching = ctx.events.filter(
+    (e: any) => (e.eventType ?? e.type) === eventType,
+  )
 
   if (after !== undefined) {
     const refEvent = ctx.events.find((e) => e.id === after)
@@ -123,7 +126,9 @@ function resolveEventExists(
         reason: `Reference event "${after}" not found in ledger`,
       }
     }
-    matching = matching.filter((e) => e.ts > refEvent.ts)
+    matching = matching.filter(
+      (e: any) => (e.ts ?? e.timestamp ?? "") > ((refEvent as any).ts ?? (refEvent as any).timestamp ?? ""),
+    )
   }
 
   if (matching.length === 0) {
@@ -153,19 +158,20 @@ function resolveLatestValidationPassed(
     return { satisfied: false, reason: "No validation.completed events found" }
   }
 
-  const passed = succeeded(latest.status)
+  const status = ((latest as any).status ?? (latest as any).payloadJson?.status) as string | undefined
+  const passed = status === "succeeded" || status === "pass"
 
   if (afterLastEdit && passed) {
     const editEvents = ctx.events.filter((e) => e.eventType === EventName.FileEdited)
     const latestEdit = latestByTs(editEvents)
-    if (latestEdit && latest.ts <= latestEdit.ts) {
+    if (latestEdit && ((latest as any).ts ?? (latest as any).timestamp ?? "") <= ((latestEdit as any).ts ?? (latestEdit as any).timestamp ?? "")) {
       return {
         satisfied: false,
         reason: "Latest validation predates the latest edit",
         evidence: {
           id: latest.id,
           type: "event",
-          detail: `validation=${latest.ts}, edit=${latestEdit.ts}`,
+          detail: `validation=${(latest as any).ts ?? (latest as any).timestamp}, edit=${(latestEdit as any).ts ?? (latestEdit as any).timestamp}`,
         },
       }
     }
@@ -174,9 +180,9 @@ function resolveLatestValidationPassed(
   return {
     satisfied: passed,
     evidence: passed
-      ? { id: latest.id, type: "event", detail: `status=${latest.status ?? "unknown"}` }
+      ? { id: (latest as any).id ?? "ev-missing", type: "event", detail: `status=${status}` }
       : undefined,
-    reason: passed ? undefined : `Latest validation status: "${latest.status ?? "unknown"}"`,
+    reason: passed ? undefined : `Latest validation status: "${status}"`,
   }
 }
 
@@ -228,14 +234,16 @@ function resolvePermissionDenied(
 ): PredicateResult {
   const { tool } = spec as PredicateSpec & { kind: "permission_denied" }
 
-  const toolEvents = ctx.events.filter((e) => e.toolName === tool)
-  const latest = latestByTs(toolEvents)
+  const toolEvents = ctx.events.filter(
+    (e: any) => (e.toolName ?? e.payloadJson?.tool) === tool,
+  )
+  const latest: any = latestByTs(toolEvents as any)
 
   if (!latest) {
     return { satisfied: false, reason: `No events for tool "${tool}"` }
   }
 
-  const denied = latest.status === "denied"
+  const denied = (latest.status ?? latest.payloadJson?.status) === "denied"
   return {
     satisfied: denied,
     evidence: denied
@@ -251,21 +259,15 @@ function resolveRetryBudgetRemaining(
   spec: PredicateSpec,
   ctx: PredicateContext,
 ): PredicateResult {
-  const { key, limit } = spec as PredicateSpec & {
+  const { key } = spec as PredicateSpec & {
     kind: "retry_budget_remaining"
   }
 
-  const failedCount = ctx.events.filter(
-    (e) =>
-      e.eventType === EventName.ToolFailed &&
-      (e.errorCode === key || e.toolName === key),
-  ).length
-
-  const remaining = limit - failedCount
+  const remaining = ctx.retryBudgets[key] ?? 0
   if (remaining <= 0) {
     return {
       satisfied: false,
-      reason: `Retry budget exhausted: ${failedCount}/${limit} for "${key}"`,
+      reason: `Retry budget exhausted for "${key}"`,
     }
   }
 
@@ -314,6 +316,24 @@ function resolveContextSufficient(
   _spec: PredicateSpec,
   ctx: PredicateContext,
 ): PredicateResult {
+  // Explicit context.sufficient event is authoritative — always check first
+  const contextEvents = ctx.events.filter(
+    (e: any) => (e.eventType ?? e.type) === "context.sufficient",
+  )
+  if (contextEvents.length > 0) {
+    return {
+      satisfied: true,
+      evidence: { id: contextEvents[0]?.id ?? "ev-missing", type: "event", detail: "context.sufficient event emitted" },
+    }
+  }
+
+  // Fallback: when running with simplified events (no fileMemory/claims/sessionId),
+  // return unsatisfied if no context is populated at all
+  const hasContext = ctx.fileMemory.size > 0 || ctx.claims.length > 0 || ctx.sessionId.length > 0
+  if (!hasContext) {
+    return { satisfied: false, reason: "No context.sufficient event and no context populated" }
+  }
+
   const minEvents = 5
   const hasEnoughEvents = ctx.events.length >= minEvents
   const hasFileMemory = ctx.fileMemory.size > 0
@@ -344,10 +364,22 @@ function resolveScopeUnsafe(
   _spec: PredicateSpec,
   ctx: PredicateContext,
 ): PredicateResult {
-  const denials = ctx.events.filter((e) => e.status === "denied")
+  // Backward-compat: simplified events carry ScopeUnsafe as an event type
+  const scopeUnsafeEvents = ctx.events.filter(
+    (e: any) => (e.eventType ?? e.type) === "scope.unsafe",
+  )
+  if (scopeUnsafeEvents.length > 0) {
+    return {
+      satisfied: true,
+      evidence: { id: scopeUnsafeEvents[0]?.id ?? "ev-missing", type: "event", detail: "scope.unsafe event emitted" },
+      reason: `Scope marked unsafe: ${scopeUnsafeEvents.length} event(s)`,
+    }
+  }
+
+  const denials = ctx.events.filter((e) => (e as any).status === "denied")
   const protectedAccesses = ctx.events.filter(
-    (e) =>
-      e.eventType === EventName.FileRead &&
+    (e: any) =>
+      (e.eventType ?? e.type) === "file.read" &&
       e.filePath !== undefined &&
       (e.filePath.includes("node_modules") ||
         e.filePath.includes(".git/") ||
@@ -468,6 +500,27 @@ function resolveNoBlockingFindings(
   _spec: PredicateSpec,
   ctx: PredicateContext,
 ): PredicateResult {
+  // Campaign-level: require positive integration review completion evidence
+  const reviewCompleted = ctx.events.filter(
+    (e) => e.eventType === EventName.CampaignReviewCompleted,
+  )
+  if (reviewCompleted.length === 0) {
+    return {
+      satisfied: false,
+      reason: "awaiting integration review completion",
+    }
+  }
+  const latestReview = reviewCompleted[reviewCompleted.length - 1]!
+  const unresolvedBlockingFindings = payload(latestReview)?.unresolvedBlockingFindings
+  if (unresolvedBlockingFindings !== 0) {
+    return {
+      satisfied: false,
+      reason: `Integration review has ${unresolvedBlockingFindings} unresolved blocking findings`,
+      evidence: { id: latestReview.id, type: "event" },
+    }
+  }
+
+  // Secondary: check RedteamCompleted events
   const completed = ctx.events.filter(
     (e) => e.eventType === EventName.RedteamCompleted,
   )
@@ -477,13 +530,15 @@ function resolveNoBlockingFindings(
       reason: "No redteam.completed event — cannot confirm absence of blocking findings",
     }
   }
-  const latest = completed[completed.length - 1]!
-  const blockingFindings = payload(latest)?.blockingFindings
-  if (blockingFindings !== 0) {
+  const anyBlocking = completed.some((e) => {
+    const bf = payload(e)?.blockingFindings
+    return bf !== 0
+  })
+  if (anyBlocking) {
     return {
       satisfied: false,
-      evidence: { id: latest.id, type: "event" },
-      reason: `Latest redteam.completed has ${blockingFindings ?? "unknown"} blocking finding(s)`,
+      evidence: { id: completed.at(0)?.id ?? "ev-missing", type: "event" },
+      reason: `One or more redteam.completed events have blocking findings`,
     }
   }
   const blocking = ctx.events.filter(
@@ -717,29 +772,24 @@ export const predicateResolvers: Record<
   scope_synthesized: resolveScopeSynthesized,
   all_children_complete: resolveAllChildrenComplete,
   child_blocked: resolveChildBlocked,
-  // TODO(TRUTH-2): This resolver uses a local heuristic (counting EditApplied
-  // events) instead of consulting the CampaignState.retryBudgets map managed by
-  // reduceCampaignState. The PredicateContext does not carry retryBudgets, so
-  // this predicate only works accurately inside the local evaluatePredicate()
-  // helper in state-machine.ts. To fix: either pass retryBudgets through
-  // PredicateContext or add a post-reduction validation pass that reconciles
-  // the budget against the event ledger.
   repair_budget_exhausted: (_spec, ctx) => {
-    const MAX_REPAIR_CYCLES = 3
-    const editCount = ctx.events.filter(
-      (e) => e.eventType === EventName.EditApplied,
-    ).length
-    const exhausted = editCount >= MAX_REPAIR_CYCLES
+    const budget = ctx.retryBudgets["repair"] ?? 0
+    const exhausted = budget <= 0
     return {
       satisfied: exhausted,
       reason: exhausted
-        ? `Repair budget exhausted (${editCount} edit batches, max ${MAX_REPAIR_CYCLES})`
-        : `${MAX_REPAIR_CYCLES - editCount} repair cycles remaining`,
+        ? "Repair budget exhausted"
+        : `${budget} repair cycles remaining`,
     }
   },
-  all_gates_pass: (_spec, _ctx) => {
-    console.warn("[predicates] stub resolver for all_gates_pass — no evidence engine integration yet")
-    return { satisfied: false, reason: "resolver not implemented" }
+  all_gates_pass: (_spec, ctx) => {
+    const hasAllPassed = ctx.events.some(
+      (e: any) => (e.eventType ?? e.type) === "gates.all_passed",
+    )
+    return {
+      satisfied: hasAllPassed,
+      reason: hasAllPassed ? undefined : "No gates.all_passed event found",
+    }
   },
 }
 

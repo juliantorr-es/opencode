@@ -5,3 +5,11 @@
 {"at":"2026-05-31T10:09:16.153Z","session_id":"ses_1828534faffejiduokHf5E6H6S","agent":"blueprint","tool":"smart_grep","pattern":"server|watchdog|health|sidecar|degraded|migrat","path":"packages/desktop/src/main"}
 {"at":"2026-05-31T10:09:17.236Z","session_id":"ses_1828534faffejiduokHf5E6H6S","agent":"blueprint","tool":"smart_grep","pattern":"server|watchdog|health|sidecar|degraded|migrat","path":"packages/app/src"}
 {"at":"2026-05-31T10:09:18.274Z","session_id":"ses_1828534faffejiduokHf5E6H6S","agent":"blueprint","tool":"smart_grep","pattern":"migrat|adapter|database","path":"packages/opencode/src/storage"}
+{"at":"2026-05-31T10:13:40.329Z","session_id":"ses_1828534faffejiduokHf5E6H6S","agent":"blueprint","tool":"smart_grep","pattern":"spawnSidecar|startSidecar|killSidecar|sidecar.*pid","path":"packages/desktop/src/main"}
+{"at":"2026-05-31T10:16:45.649Z","session_id":"ses_1828534faffejiduokHf5E6H6S","agent":"blueprint","tool":"smart_grep","pattern":"server\\.ts","path":"packages/desktop/src/main"}
+{"at":"2026-05-31T10:19:57.726Z","session_id":"ses_1828534faffejiduokHf5E6H6S","agent":"blueprint","tool":"smart_grep","pattern":"import.*from.*server","path":"packages/desktop/src/main/index.ts"}
+{"at":"2026-05-31T10:19:58.666Z","session_id":"ses_1828534faffejiduokHf5E6H6S","agent":"blueprint","tool":"smart_grep","pattern":"health|HealthRegistry|HealthStatus","path":"packages/opencode/src/server"}
+{"at":"2026-05-31T10:26:44.988Z","session_id":"ses_1828534faffejiduokHf5E6H6S","agent":"blueprint","tool":"smart_grep","pattern":"server|health|migrat","path":"packages/app/src/utils"}
+{"at":"2026-05-31T10:26:46.367Z","session_id":"ses_1828534faffejiduokHf5E6H6S","agent":"blueprint","tool":"smart_grep","pattern":"migrat|adapter|health|degraded","path":"packages/opencode/test"}
+{"at":"2026-05-31T10:35:55.850Z","session_id":"ses_1828534faffejiduokHf5E6H6S","agent":"blueprint","tool":"smart_grep","pattern":"sidecar|SidecarListener|watchdog|health|killSidecar|degraded","path":"packages/desktop"}
+{"at":"2026-05-31T10:35:56.954Z","session_id":"ses_1828534faffejiduokHf5E6H6S","agent":"blueprint","tool":"smart_grep","pattern":"health|HealthRegistry|degraded","path":"packages/opencode/test/server"}

@@ -16,3 +16,13 @@
 {"at":"2026-05-31T10:05:34.372Z","tool":"smart_grep","action":"searched","pattern":"DatabaseAdapter\\.(defaultLayer|LocalPgAdapter|PgAdapter|Service)","results":27,"files":10}
 {"at":"2026-05-31T10:05:35.229Z","tool":"smart_grep","action":"searched","pattern":"provide\\(DatabaseAdapter|provide.*adapter","results":3,"files":3}
 {"at":"2026-05-31T10:06:57.395Z","tool":"smart_grep","action":"searched","pattern":"SQLiteTransactionOptions","results":2,"files":1}
+{"at":"2026-05-31T10:10:25.937Z","tool":"smart_grep","action":"searched","pattern":"migration.*test|migrate.*test","results":4,"files":4}
+{"at":"2026-05-31T10:15:43.974Z","tool":"smart_bash","action":"bash","command":"bash -c 'find packages/opencode/test -name \"*migration*\" -o -name \"*migrate*\" | head -10'","exit_code":0}
+{"at":"2026-05-31T10:22:20.734Z","tool":"smart_bash","action":"bash","command":"bash -c 'cat packages/opencode/migration-pg/20260531003656_blushing_zuras/migration.sql'","exit_code":0}
+{"at":"2026-05-31T10:25:53.459Z","tool":"smart_grep","action":"searched","pattern":"dual-write|dualWrite|DualWrite","results":26,"files":3}
+{"at":"2026-05-31T10:31:31.487Z","tool":"smart_write","action":"wrote","file":".build/rig-relay/arch_pg_migration_strategy.v1.json","detail":"Write the PG migration strategy architecture artifact"}
+{"at":"2026-05-31T10:36:10.834Z","tool":"smart_bash","action":"bash","command":"bash -c 'python3 -c \"import json; json.load(open(\\\".build/rig-relay/arch_pg_migration_strategy.v1.js","exit_code":0}
+{"at":"2026-05-31T10:40:19.991Z","tool":"smart_bash","action":"bash","command":"bash -c 'rg -l \"migration/\" packages/opencode/script/'","exit_code":1}
+{"at":"2026-05-31T11:19:47.038Z","tool":"smart_bash","action":"bash","command":"python3 .build/rig-relay/_update_strategy.py","exit_code":0}
+{"at":"2026-05-31T11:22:16.721Z","tool":"smart_bash","action":"bash","command":"python3 -c \"import json; d=json.load(open('.build/rig-relay/arch_pg_migration_strategy.v1.json')); p","exit_code":0}
+{"at":"2026-05-31T11:22:17.201Z","tool":"smart_bash","action":"bash","command":"rm .build/rig-relay/_update_strategy.py","exit_code":0}

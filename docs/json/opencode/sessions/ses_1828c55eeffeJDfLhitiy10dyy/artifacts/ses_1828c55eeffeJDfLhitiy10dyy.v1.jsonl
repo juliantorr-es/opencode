@@ -11,3 +11,4 @@
 {"at":"2026-05-31T10:05:55.336Z","tool":"smart_git","action":"git_op","operation":"status","exit_code":0}
 {"at":"2026-05-31T10:05:55.921Z","tool":"smart_git","action":"git_op","operation":"diff","exit_code":0}
 {"at":"2026-05-31T10:07:27.702Z","tool":"smart_bash","action":"bash","command":"awk 'NR>=670 && NR<=760' packages/opencode/src/tool/coordination.ts | awk '{printf \"%d: %s\\n\", NR+66","exit_code":0}
+{"at":"2026-05-31T10:11:22.083Z","tool":"smart_grep","action":"searched","pattern":"CoordinationClaimTable|CoordinationReservationTable|CoordinationFanOutTable","results":3,"files":1}

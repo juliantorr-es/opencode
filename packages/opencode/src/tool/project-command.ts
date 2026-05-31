@@ -72,6 +72,7 @@ export const runCommand = Effect.fn("ToolProjectCommand.runCommand")(function* (
       : [input.command, ...input.args]
     const proc = Bun.spawn(command, {
       cwd: input.cwd,
+      env: sanitizedProcessEnv(),
       stdout: "pipe",
       stderr: "pipe",
       stdin: "ignore",

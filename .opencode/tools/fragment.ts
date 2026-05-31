@@ -1,8 +1,24 @@
+import { spawnSync } from "node:child_process"
 import { tool } from "@opencode-ai/plugin"
 import { existsSync, mkdirSync, appendFileSync, readFileSync, readdirSync } from "node:fs"
 import { resolve } from "node:path"
 
 function r(worktree: string, p: string): string { return resolve(worktree, p) }
+
+function jqlQuery(worktree: string, filePath: string, query: string): any {
+  const fullPath = r(worktree, filePath)
+  if (!existsSync(fullPath)) return null
+  const binaries = ["jql", "/opt/homebrew/bin/jql", "/usr/local/bin/jql"]
+  for (const bin of binaries) {
+    const result = spawnSync(bin, [query, fullPath], {
+      encoding: "utf8", maxBuffer: 1024 * 1024 * 5, timeout: 15000,
+    })
+    if (!result.error && result.status === 0 && result.stdout?.trim()) {
+      try { return JSON.parse(result.stdout.trim()) } catch { return null }
+    }
+  }
+  return null
+}
 
 export default tool({
   description: "Fragment producer — declare a file region this lane intends to modify. Used for shared-file coordination between parallel lanes. Produces a fragment with explicit anchor points so the consolidator can assemble non-conflicting edits. Never write directly to shared files — always produce a fragment first.",

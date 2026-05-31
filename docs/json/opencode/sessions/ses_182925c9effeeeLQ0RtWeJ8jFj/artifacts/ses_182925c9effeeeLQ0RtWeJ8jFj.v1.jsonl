@@ -13,3 +13,14 @@
 {"at":"2026-05-31T10:02:36.169Z","tool":"smart_bash","action":"bash","command":"awk 'NR>=430 && NR<=522' packages/opencode/src/plugin/index.ts","exit_code":0}
 {"at":"2026-05-31T10:03:55.239Z","tool":"smart_grep","action":"searched","pattern":"capabilityRegistry\\.register|registrations\\.push|trust.*external","results":0,"files":0}
 {"at":"2026-05-31T10:05:05.164Z","tool":"smart_bash","action":"bash","command":"awk 'NR>=295 && NR<=335' packages/opencode/src/plugin/index.ts","exit_code":0}
+{"at":"2026-05-31T10:10:32.311Z","tool":"smart_grep","action":"searched","pattern":"class.*\\{.*client.*_client|new \\w+\\(\\{ client","results":0,"files":0}
+{"at":"2026-05-31T10:12:41.179Z","tool":"smart_grep","action":"searched","pattern":"plugin","results":30,"files":11}
+{"at":"2026-05-31T10:15:53.327Z","tool":"smart_bash","action":"bash","command":"awk '/public [a-z][a-zA-Z]* = new|^\\s+[a-z][a-zA-Z]* = new/ {print $0}' packages/sdk/js/src/gen/sdk.","exit_code":0}
+{"at":"2026-05-31T10:15:54.318Z","tool":"smart_grep","action":"searched","pattern":"import.*Plugin|plugin.*test|capability.*test","results":30,"files":28}
+{"at":"2026-05-31T10:25:30.158Z","tool":"smart_bash","action":"bash","command":"awk 'NR>=100 && NR<=200' .build/rig-relay/plugin_security_surface.v1.json","exit_code":0}
+{"at":"2026-05-31T10:34:09.638Z","tool":"smart_bash","action":"bash","command":"awk 'NR>=450 && NR<=514' packages/opencode/src/plugin/index.ts","exit_code":0}
+{"at":"2026-05-31T10:34:17.498Z","tool":"smart_grep","action":"searched","pattern":"^export class","results":0,"files":0}
+{"at":"2026-05-31T10:34:24.523Z","tool":"smart_grep","action":"searched","pattern":"^class (Global|Project|Session|Tool|Config|Auth|File)","results":0,"files":0}
+{"at":"2026-05-31T10:41:15.724Z","tool":"smart_write","action":"wrote","file":".build/rig-relay/arch_plugin_capability_proxy.v1.json","detail":"Write the complete architecture plan for plugin capability proxy"}
+{"at":"2026-05-31T11:17:35.270Z","tool":"smart_write","action":"wrote","file":".build/rig-relay/arch_plugin_capability_proxy_zoning_addendum.json","detail":"Write zoning-board review addendum for the capability proxy plan"}
+{"at":"2026-05-31T11:32:53.203Z","tool":"smart_write","action":"wrote","file":".build/rig-relay/arch_plugin_capability_proxy_loadbearer_addendum.json","detail":"Write load-bearer review addendum confirming plan correctness"}

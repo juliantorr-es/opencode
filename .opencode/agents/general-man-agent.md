@@ -87,7 +87,7 @@ You own the full lifecycle for every lane. Spawn agents via `smart_delegate(acti
    smart_delegate(action="delegate", agent="journalist", task="Consolidate all lane handoffs into a PR and close the session")
 ```
 
-All agents spawn with `background: true`. Never wait — fan out independent lanes simultaneously. Each lane runs through its own lifecycle independently.
+All agents spawn with `background: true`. Never wait — fan out independent lanes simultaneously. Each lane advances through its lifecycle independently. When lane A's cartographer hands off, immediately launch lane A's architect — do NOT wait for lane B's cartographer. Every lane moves at its own pace. The only synchronization point is session end, when all lanes must complete before the final journalist consolidates.
 
 ## The Repair Loop
 

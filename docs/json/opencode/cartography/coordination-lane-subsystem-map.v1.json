@@ -1,0 +1,256 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "schema_version": "v1",
+  "generated_at": "2026-05-31T00:00:00Z",
+  "mission": "Scope the coordination/lane subsystem — complete map of files, exports, symbol traces, and test coverage",
+  "pre_existing_findings": [
+    {
+      "session": "ses_182cfc18",
+      "summary": "Campaign layer (16 files, ~4000+ lines) has zero test coverage — no test directory, no imports from @/campaign in any test file",
+      "file": "packages/opencode/src/campaign/"
+    }
+  ],
+  "top_level_structure": {
+    "total_directories": 47,
+    "coordination_directories": {
+      "campaign": "Primary: state machines, predicates, lane/campaign lifecycle, binder, auditor, push gates, role contracts, projections, integration (16 source + 1 test)",
+      "coordination": "Light: single cross-session coordination event definition (SubagentPhaseChanged)",
+      "control-plane": "Supporting: workspace management, adapters",
+      "review": "Supporting: review manifest, weight rubric, comparison"
+    },
+    "note": "No lane/, binder/, or role/ directories exist — these concepts live inside campaign/"
+  },
+
+  "complete_file_listing": {
+    "campaign_source_files": {
+      "campaign/index.ts": {
+        "exports": ["barrel re-exports from types, state-machine, orchestrator, role-contracts, predicates, auditor, push-gate, process-auditor, push-record"],
+        "lines": 87
+      },
+      "campaign/types.ts": {
+        "exports": ["LaneState (16 literals, Effect Schema)", "CampaignState (12 literals)", "TerminalStatus (9 literals)", "RoleType (10 literals)", "ProposedBy (4 literals)", "EvidenceRef", "RuntimeEvent", "Transition", "Role", "Binder", "Lane", "Campaign"],
+        "lines": 181
+      },
+      "campaign/state-machine.ts": {
+        "exports": ["LANE_STATE_MACHINE", "CAMPAIGN_STATE_MACHINE", "reduceCampaignState", "ActionSpec", "RetryPolicy", "TransitionRule", "AgentStateSpec", "AgentMachineSpec", "RuntimeEvent", "StateTransition", "CampaignState"],
+        "lines": 410
+      },
+      "campaign/predicates.ts": {
+        "exports": ["PredicateSpec (22-variant tagged union)", "PredicateResolver", "checkPredicate", "checkTransitions", "checkPredicateEffect", "checkTransitionsEffect", "predicateResolvers", "EvidenceRef", "PredicateResult", "PredicateContext", "TransitionSpec", "AgentStateMachineSpec"],
+        "lines": 846
+      },
+      "campaign/secretary.ts": {
+        "exports": ["RoleOutput (8-variant tagged union)", "RuntimeEvent (tagged union)", "toSMEvent", "toStoreEvent", "roleOutputToEvent", "STATE_ROLE", "getRoleForState", "Interface", "Service (@opencode/Secretary)", "layer", "defaultLayer", "LaneNotFoundError", "InvalidEventError", "LaneNotTerminalError", "StateTag", "TransitionRecord", "Binder", "LaneState", "LaneReadState", "Secretary namespace"],
+        "lines": 858
+      },
+      "campaign/binder.ts": {
+        "exports": ["Service (@opencode/BinderService)", "Interface (has addEvidence)", "Binder", "BinderError", "LaneState", "TerminalStatus", "ArtifactRef", "EventRef", "DiffSummary", "ValidationResult", "RedTeamFinding", "RepairCycle", "layer", "defaultLayer"],
+        "lines": 628
+      },
+      "campaign/orchestrator.ts": {
+        "exports": ["OrchestratorService", "OrchestratorInterface", "LaneDependencyGraph", "LaneInput", "LaneMeta", "OrchestratorCampaignState", "CampaignNotFound", "layer"],
+        "lines": 413
+      },
+      "campaign/integrator.ts": {
+        "exports": ["Service (@opencode/CampaignIntegrator)", "IntegrationPlan", "ContractDrift", "IntegrationResult", "CampaignNotFoundError", "NoBindersError", "CyclicDependencyError", "MergeConflictError", "EventRef", "DiffSummary", "ValidationResult", "Binder", "layer", "defaultLayer"],
+        "lines": 445
+      },
+      "campaign/auditor.ts": {
+        "exports": ["Service (@opencode/CampaignAuditor)", "AuditCheck", "AuditFinding", "AuditReport", "EventRef", "LaneAuditData", "CampaignAuditData", "CampaignNotFoundError", "CampaignLoader", "layer"],
+        "lines": 483
+      },
+      "campaign/push-gate.ts": {
+        "exports": ["Service (@opencode/PushGateService)", "GateResult", "PushGate", "PushGateContext", "layer"],
+        "lines": 199
+      },
+      "campaign/push-record.ts": {
+        "exports": ["Service (@opencode/PushRecordService)", "GateEval", "PushRecord", "PushStatus", "CreatePushRecordInput", "PushRecordError", "layer"],
+        "lines": 213
+      },
+      "campaign/process-auditor.ts": {
+        "exports": ["ProcessAuditorService", "ProcessAuditorInterface", "AuditFinding", "AuditResult", "AuditError", "layer"],
+        "lines": 123
+      },
+      "campaign/role-contracts.ts": {
+        "exports": ["RoleType", "RoleContract", "ROLE_CONTRACTS", "getContract", "validateToolAllowed", "validateFileScope", "getAuthorizedScope", "deriveAllowedTools"],
+        "lines": 810
+      },
+      "campaign/projector.ts": {
+        "exports": ["CampaignProjector", "ProjectedLane", "CampaignStateProjection", "layer"],
+        "lines": 159
+      },
+      "campaign/campaign-event.ts": {
+        "exports": ["CampaignEventType", "CampaignEventPayload", "toRuntimeEvent", "fromRuntimeEvent"],
+        "lines": 105
+      },
+      "campaign/context-packet.ts": {
+        "exports": ["ActiveGate", "LaneContext", "CampaignContextPacket", "buildContextPacket", "formatPacketForLLM"],
+        "lines": 139
+      },
+      "campaign/truth-closure.test.ts": {
+        "exports": [],
+        "lines": 628,
+        "note": "Test file — exercises toStoreEvent, toSMEvent, getRoleForState, STATE_ROLE, deriveAllowedTools, checkPredicate"
+      }
+    },
+    "coordination_source_files": {
+      "coordination/coord-events.ts": {
+        "exports": ["SubagentPhaseChanged (BusEvent)", "CoordEvents namespace"],
+        "lines": 18
+      }
+    },
+    "coordination_tool_files": {
+      "tool/coordination.ts": {
+        "exports": ["TaskClaim", "PathReservation", "FanOutGroup", "WaveType", "claimTask", "releaseTask", "failTask", "getClaim", "getSessionClaims", "getWaveClaims", "reservePath", "releasePath", "renewPathLease", "checkPathReserved", "getSessionReservations", "getFanOutGroup", "ensureCoordinationTables", "formatStructuredResult", "CoordinationTool"],
+        "lines": 841
+      },
+      "tool/coordination.pg.sql.ts": {
+        "exports": ["CoordinationClaimTable", "CoordinationReservationTable", "CoordinationFanOutTable (Drizzle schemas)"],
+        "lines": null
+      }
+    },
+    "checkpoint_tool_files": {
+      "tool/checkpoint.ts": { "exports": ["CheckpointTool", "Parameters"], "lines": null },
+      "tool/checkpoint-tools.ts": { "exports": ["CheckpointRecord", "createCheckpointRecord", "formatCheckpointRecord"], "lines": null },
+      "tool/prepare_checkpoint.ts": { "exports": ["PrepareCheckpointTool", "Parameters"], "lines": null },
+      "tool/publish_checkpoint.ts": { "exports": ["PublishCheckpointTool", "Parameters"], "lines": null },
+      "tool/generate_published_checkpoint_report.ts": { "exports": ["GeneratePublishedCheckpointReportTool", "Parameters"], "lines": null },
+      "tool/verify-handoff.ts": { "exports": ["VerifyHandoffTool"], "lines": null }
+    },
+    "supporting_files": {
+      "agent/machine/types.ts": "Agent worker MachineDef, MachineState, Phase, MachineRunner (separate simpler state machine, 39 machine types)",
+      "agent/machine/runtime.ts": "MachineRunnerLayer, MachineRegistryLayer",
+      "agent/machine/bootstrap.ts": "bootstrapAllMachines — registers 39 machine defs",
+      "agent/machine/stubs.ts": "31 stub machine definitions for all sub-agent crews",
+      "event/event-names.ts": "EventName constants (SessionCheckpoint, LaneReturned, RedteamCompleted, etc.)",
+      "effect/runner.ts": "Runner — concurrency primitive with shell→run handoff",
+      "review/types.ts": "ReviewSubject, ReviewArtifact, ReviewVerdict, ReviewManifest",
+      "review/weight.ts": "Weight rubric builder",
+      "review/comparison.ts": "Diff/structural/semantic comparison",
+      "review/manifest.ts": "Manifest generation and validation"
+    }
+  },
+
+  "symbol_traces": {
+    "RoleOutput": {
+      "defined_at": "campaign/secretary.ts:60-68",
+      "discriminator": "role field",
+      "variants": 8,
+      "variant_names": ["cartographer|scout", "architect", "critic", "executor", "validator", "redteam", "historian", "repairer|repair"],
+      "all_references": [
+        { "file": "campaign/secretary.ts", "line": 60, "kind": "definition" },
+        { "file": "campaign/secretary.ts", "line": 315, "kind": "type_annotation (Interface.handleRoleOutput param)" },
+        { "file": "campaign/secretary.ts", "line": 636, "kind": "type_annotation (roleOutputToEvent param)" },
+        { "file": "campaign/secretary.ts", "line": 672, "kind": "type_annotation (addRoleEvidence param)" },
+        { "file": "campaign/secretary.ts", "line": 758, "kind": "type_annotation (handleRoleOutput impl)" },
+        { "file": "campaign/truth-closure.test.ts", "line": 26, "kind": "type import" }
+      ]
+    },
+    "roleOutputToEvent": {
+      "defined_at": "campaign/secretary.ts:636",
+      "exported": true,
+      "export_note": "Exported as a standalone function, but NOT re-exported from campaign/index.ts barrel",
+      "all_references": [
+        { "file": "campaign/secretary.ts", "line": 636, "kind": "definition" },
+        { "file": "campaign/secretary.ts", "line": 774, "kind": "call (handleRoleOutput success path)" },
+        { "file": "campaign/secretary.ts", "line": 777, "kind": "call (handleRoleOutput failure/blocked path)" },
+        { "file": "campaign/truth-closure.test.ts", "line": 6, "kind": "stale comment: 'NOTE: roleOutputToEvent is currently MODULE-PRIVATE'" },
+        { "file": "campaign/truth-closure.test.ts", "line": 185, "kind": "stale comment: 'BLOCKED: not exported'" },
+        { "file": "campaign/truth-closure.test.ts", "line": 190, "kind": "test.skip" },
+        { "file": "campaign/truth-closure.test.ts", "line": 418, "kind": "test.skip" },
+        { "file": "campaign/truth-closure.test.ts", "line": 419, "kind": "test.skip" }
+      ],
+      "debt": "Test file has stale skip annotations claiming roleOutputToEvent is not exported. It IS exported from secretary.ts:636. Tests should be unskipped and re-enabled."
+    },
+    "addEvidence": {
+      "defined_at": "campaign/binder.ts:509 (implementation), 156 (interface)",
+      "all_call_sites": [
+        { "file": "campaign/secretary.ts", "line": 593, "context": "scoping evidence recording" },
+        { "file": "campaign/secretary.ts", "line": 604, "context": "planning evidence recording" },
+        { "file": "campaign/secretary.ts", "line": 672, "context": "inside addRoleEvidence wrapper" },
+        { "file": "campaign/secretary.ts", "line": 745, "context": "handleRoleOutput per-role evidence" },
+        { "file": "campaign/secretary.ts", "line": 748, "context": "approved plan evidence" },
+        { "file": "campaign/secretary.ts", "line": 782, "context": "addRoleEvidence wrapper call" }
+      ],
+      "note": "Sole write path for lane evidence. Everything flows through binderService.addEvidence."
+    },
+    "BinderService": {
+      "defined_at": "campaign/binder.ts:177",
+      "effect_tag": "@opencode/BinderService",
+      "consumers": [
+        { "file": "campaign/secretary.ts", "lines": [11, 372, 588, 593, 604, 710, 713, 745, 748], "role": "primary consumer — per-lane lifecycle" },
+        { "file": "campaign/integrator.ts", "lines": [5, 230, 237, 441], "role": "cross-lane merge/detection" },
+        { "file": "campaign/auditor.ts", "lines": [4, 412, 431], "role": "lane audit data loading" }
+      ]
+    },
+    "HistorianComplete": {
+      "defined_at": "campaign/secretary.ts:41",
+      "type": "RuntimeEvent variant: { _tag: 'HistorianComplete', checkpointCreated: boolean }",
+      "all_references": [
+        { "file": "campaign/secretary.ts", "line": 41, "kind": "type definition" },
+        { "file": "campaign/secretary.ts", "line": 184, "kind": "pattern match in toSMEvent" },
+        { "file": "campaign/truth-closure.test.ts", "lines": [107, 109, 210, 211, 216, 217, 242, 243, 244, 323, 346, 487, 488, 489, 496, 501, 503, 510, 512], "kind": "extensive test coverage" }
+      ],
+      "semantics": "checkpointCreated=true → SessionCheckpoint event; false → LaneReturned event"
+    }
+  },
+
+  "test_coverage": {
+    "test_files": [
+      { "path": "campaign/truth-closure.test.ts", "coverage": "toStoreEvent, toSMEvent, getRoleForState, STATE_ROLE, deriveAllowedTools, checkPredicate, HistorianComplete distinction, RedTeamCompleted blocking counts, round-trips" },
+      { "path": "test/tool/coordination.test.ts", "coverage": "path reservations, task claims, fan-out groups, wave claims, XML formatting" },
+      { "path": "test/tool/checkpoint-tools.test.ts", "coverage": "checkpoint tool registry, prepare checkpoint from messages" },
+      { "path": "test/campaign/test_state_machine.ts", "coverage": "PLACEHOLDER — zero tests" },
+      { "path": "test/effect/instance-state.test.ts", "coverage": "Instance state (foundational for lane isolation)" },
+      { "path": "test/effect/runner.test.ts", "coverage": "Runner concurrency (shell→run handoff pattern)" },
+      { "path": "test/bus/bus-effect.test.ts", "coverage": "Bus (inter-lane event transport)" }
+    ],
+    "gaps": [
+      "No test for campaign/state-machine.ts directly (test_state_machine.ts is a placeholder)",
+      "No test for campaign/binder.ts directly",
+      "No test for campaign/secretary.ts directly",
+      "No test for campaign/role-contracts.ts directly",
+      "No test for campaign/integrator.ts directly",
+      "No test for campaign/orchestrator.ts directly",
+      "No test for campaign/auditor.ts directly",
+      "No test for campaign/push-gate.ts directly",
+      "No test for campaign/push-record.ts directly",
+      "Predicate tests embedded in truth-closure.test.ts only (2 test cases for finding_blocking and redteam_completed)"
+    ]
+  },
+
+  "architecture_summary": {
+    "two_state_machine_systems": {
+      "campaign_lane": {
+        "file": "campaign/state-machine.ts",
+        "style": "declarative, data-driven, predicate-gated",
+        "reducer": "reduceCampaignState(state, events, spec) — pure deterministic",
+        "states_lane": 16,
+        "states_campaign": 12
+      },
+      "agent_worker": {
+        "file": "agent/machine/types.ts",
+        "style": "imperative, simpler",
+        "transition": "MachineState.transition(phase, data) — mutable",
+        "machine_types": 39,
+        "phases": 11
+      }
+    },
+    "data_flow": "OrchestratorService → Secretary (per-lane) → toSMEvent/toStoreEvent → EventStore; RoleOutput → roleOutputToEvent → RuntimeEvent → addEvidence → BinderService",
+    "effect_services": [
+      "@opencode/BinderService (binder.ts)",
+      "@opencode/Secretary (secretary.ts)",
+      "@opencode/CampaignAuditor (auditor.ts)",
+      "@opencode/PushGateService (push-gate.ts)",
+      "@opencode/PushRecordService (push-record.ts)",
+      "@opencode/CampaignIntegrator (integrator.ts)"
+    ],
+    "key_observations": [
+      "roleOutputToEvent IS exported from secretary.ts (line 636 has export keyword) but test file has stale skip annotations claiming otherwise",
+      "PredicateSpec uses string 'kind' discriminator — different convention from RoleOutput/RuntimeEvent which use '_tag'",
+      "BinderService.addEvidence is the sole write path for lane evidence",
+      "ALL coordination/lane logic lives in campaign/ — no separate lane/, binder/, or role/ directories",
+      "CampaignContextPacket (context-packet.ts) is the LLM-facing projection — buildContextPacket + formatPacketForLLM"
+    ]
+  }
+}

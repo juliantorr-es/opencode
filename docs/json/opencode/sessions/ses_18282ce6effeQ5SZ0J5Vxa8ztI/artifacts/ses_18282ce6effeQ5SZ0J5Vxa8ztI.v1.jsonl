@@ -3,3 +3,15 @@
 {"at":"2026-05-31T10:06:21.307Z","tool":"smart_grep","action":"searched","pattern":"\"test\":","results":9,"files":9}
 {"at":"2026-05-31T10:07:52.537Z","tool":"smart_grep","action":"searched","pattern":"\"test\":","results":9,"files":9}
 {"at":"2026-05-31T10:09:33.287Z","tool":"smart_grep","action":"searched","pattern":"\"scripts\"","results":1,"files":1}
+{"at":"2026-05-31T10:11:53.275Z","tool":"smart_grep","action":"searched","pattern":"\"scripts\"","results":0,"files":0}
+{"at":"2026-05-31T10:14:48.191Z","tool":"smart_grep","action":"searched","pattern":".","results":30,"files":1}
+{"at":"2026-05-31T10:14:50.598Z","tool":"smart_bash","action":"bash","command":"for d in packages/*/; do echo \"=== $d ===\"; cat \"$d/package.json\" 2>/dev/null | python3 -c \"import s","exit_code":0}
+{"at":"2026-05-31T10:17:37.120Z","tool":"smart_grep","action":"searched","pattern":"dependabot","results":12,"files":8}
+{"at":"2026-05-31T10:20:49.412Z","tool":"smart_grep","action":"searched","pattern":".","results":30,"files":2}
+{"at":"2026-05-31T10:20:50.470Z","tool":"smart_grep","action":"searched","pattern":"\"build\":","results":10,"files":10}
+{"at":"2026-05-31T10:24:08.285Z","tool":"smart_grep","action":"searched","pattern":".","results":30,"files":1}
+{"at":"2026-05-31T10:32:28.421Z","tool":"smart_grep","action":"searched","pattern":"process\\.env\\.","results":30,"files":13}
+{"at":"2026-05-31T10:36:48.275Z","tool":"smart_bash","action":"bash","command":"test -d docs/adr && echo \"ADRs EXIST\" || echo \"ADRs MISSING\"","exit_code":0}
+{"at":"2026-05-31T10:41:05.899Z","tool":"smart_grep","action":"searched","pattern":"runtime-flags|env.*registry|env.*catalog","results":30,"files":24}
+{"at":"2026-05-31T10:44:30.892Z","tool":"smart_git","action":"git_op","operation":"log","exit_code":0}
+{"at":"2026-05-31T10:44:33.182Z","tool":"smart_grep","action":"searched","pattern":"process\\.env\\.","results":30,"files":10}

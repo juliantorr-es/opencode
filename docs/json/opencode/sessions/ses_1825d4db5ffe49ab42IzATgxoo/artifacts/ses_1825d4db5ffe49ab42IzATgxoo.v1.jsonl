@@ -1,0 +1,10 @@
+{"at":"2026-05-31T10:52:06.359Z","tool":"smart_grep","action":"searched","pattern":"test","results":30,"files":3}
+{"at":"2026-05-31T10:59:32.746Z","tool":"smart_grep","action":"searched","pattern":"import","results":30,"files":3}
+{"at":"2026-05-31T11:14:37.544Z","tool":"smart_bash","action":"bash","command":"wc -l packages/opencode/src/plugin/index.ts","exit_code":0}
+{"at":"2026-05-31T11:19:54.044Z","tool":"smart_bash","action":"bash","command":"awk 'NR>=75 && NR<=220 {printf \"%4d: %s\\n\", NR, $0}' packages/opencode/src/plugin/index.ts","exit_code":0}
+{"at":"2026-05-31T11:19:55.105Z","tool":"smart_bash","action":"bash","command":"awk 'NR>=220 && NR<=450 {printf \"%4d: %s\\n\", NR, $0}' packages/opencode/src/plugin/index.ts","exit_code":0}
+{"at":"2026-05-31T11:22:25.336Z","tool":"smart_bash","action":"bash","command":"awk 'NR>=95 && NR<=118 {printf \"%4d: %s\\n\", NR, $0}' packages/opencode/src/plugin/index.ts","exit_code":0}
+{"at":"2026-05-31T11:22:26.171Z","tool":"smart_bash","action":"bash","command":"awk 'NR>=183 && NR<=200 {printf \"%4d: %s\\n\", NR, $0}' packages/opencode/src/plugin/index.ts","exit_code":0}
+{"at":"2026-05-31T11:22:26.962Z","tool":"smart_bash","action":"bash","command":"awk 'NR>=410 && NR<=452 {printf \"%4d: %s\\n\", NR, $0}' packages/opencode/src/plugin/index.ts","exit_code":0}
+{"at":"2026-05-31T11:25:08.053Z","tool":"smart_grep","action":"searched","pattern":"SECRET_PATTERNS|HOOK_CAPABILITY_MAP|ALWAYS_ALLOWED_HOOKS|CapabilityRegistry|capa","results":30,"files":6}
+{"at":"2026-05-31T11:30:52.054Z","tool":"smart_grep","action":"searched","pattern":".","results":30,"files":1}

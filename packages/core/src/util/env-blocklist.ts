@@ -3,6 +3,7 @@ const ENV_BLOCKLIST = new Set([
   'GITHUB_TOKEN', 'GITHUB_ACCESS_TOKEN', 'GIT_ASKPASS',
   'NPM_TOKEN', 'NPM_AUTH_TOKEN', 'NPM_CONFIG__AUTH',
   'AWS_ACCESS_KEY_ID', 'AWS_SECRET_ACCESS_KEY', 'AWS_SESSION_TOKEN',
+  'AWS_BEARER_TOKEN_BEDROCK', 'OPENCODE_STORAGE_ACCESS_KEY_ID',
   'OPENAI_API_KEY', 'ANTHROPIC_API_KEY', 'GOOGLE_API_KEY',
   'HUGGINGFACE_API_KEY', 'REPLICATE_API_KEY', 'TOGETHER_API_KEY',
   'GROQ_API_KEY', 'OPENROUTER_API_KEY', 'AZURE_OPENAI_KEY',
@@ -15,7 +16,7 @@ const ENV_BLOCKLIST = new Set([
 export function isBlocklistedEnvVar(name: string): boolean {
   if (ENV_BLOCKLIST.has(name)) return true
   const upper = name.toUpperCase()
-  if (upper.endsWith('_TOKEN') || upper.endsWith('_KEY') || upper.endsWith('_SECRET') || upper.endsWith('_PASSWORD') || upper.endsWith('_CREDENTIAL')) return true
+  if (upper.endsWith('_TOKEN') || upper.endsWith('_KEY') || upper.endsWith('_SECRET') || upper.endsWith('_PASSWORD') || upper.endsWith('_CREDENTIAL') || upper.endsWith('_API_KEY')) return true
   return false
 }
 

@@ -46,3 +46,21 @@
 {"at":"2026-05-31T10:07:20.786Z","session_id":"ses_1828cc67dffeUz2hqPkbc4perW","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"interface.*Adapter|AdapterInterface"}
 {"at":"2026-05-31T10:07:21.718Z","session_id":"ses_1828cc67dffeUz2hqPkbc4perW","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"execution-context|InstanceBootstrap|InstanceLayer"}
 {"at":"2026-05-31T10:07:21.732Z","session_id":"ses_1828cc67dffeUz2hqPkbc4perW","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"execution-context|InstanceBootstrap|InstanceLayer"}
+{"at":"2026-05-31T10:11:15.672Z","session_id":"ses_1828cc67dffeUz2hqPkbc4perW","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"_SQLiteSatisfiesDLC"}
+{"at":"2026-05-31T10:11:15.694Z","session_id":"ses_1828cc67dffeUz2hqPkbc4perW","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"_SQLiteSatisfiesDLC"}
+{"at":"2026-05-31T10:11:16.065Z","session_id":"ses_1828cc67dffeUz2hqPkbc4perW","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"adapter-dual-write"}
+{"at":"2026-05-31T10:11:16.083Z","session_id":"ses_1828cc67dffeUz2hqPkbc4perW","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"adapter-dual-write"}
+{"at":"2026-05-31T10:13:31.348Z","session_id":"ses_1828cc67dffeUz2hqPkbc4perW","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"dualWrite|dual-write|DualWrite"}
+{"at":"2026-05-31T10:13:31.398Z","session_id":"ses_1828cc67dffeUz2hqPkbc4perW","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"dualWrite|dual-write|DualWrite"}
+{"at":"2026-05-31T10:13:32.520Z","session_id":"ses_1828cc67dffeUz2hqPkbc4perW","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"export.*from.*storage|export.*from.*\\\"\\.\\/storage\\\""}
+{"at":"2026-05-31T10:13:32.548Z","session_id":"ses_1828cc67dffeUz2hqPkbc4perW","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"export.*from.*storage|export.*from.*\\\"\\.\\/storage\\\""}
+{"at":"2026-05-31T10:16:44.355Z","session_id":"ses_1828cc67dffeUz2hqPkbc4perW","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"migration-pg"}
+{"at":"2026-05-31T10:16:44.393Z","session_id":"ses_1828cc67dffeUz2hqPkbc4perW","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"migration-pg"}
+{"at":"2026-05-31T10:20:06.125Z","session_id":"ses_1828cc67dffeUz2hqPkbc4perW","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"drizzle.config"}
+{"at":"2026-05-31T10:20:06.198Z","session_id":"ses_1828cc67dffeUz2hqPkbc4perW","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"drizzle.config"}
+{"at":"2026-05-31T10:20:07.331Z","session_id":"ses_1828cc67dffeUz2hqPkbc4perW","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"sqlite"}
+{"at":"2026-05-31T10:20:07.338Z","session_id":"ses_1828cc67dffeUz2hqPkbc4perW","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"sqlite"}
+{"at":"2026-05-31T10:23:22.753Z","session_id":"ses_1828cc67dffeUz2hqPkbc4perW","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"sqlite|SQLite"}
+{"at":"2026-05-31T10:23:22.781Z","session_id":"ses_1828cc67dffeUz2hqPkbc4perW","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"sqlite|SQLite"}
+{"at":"2026-05-31T10:23:23.787Z","session_id":"ses_1828cc67dffeUz2hqPkbc4perW","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"List migration files to see if any SQLite leftovers"}
+{"at":"2026-05-31T10:23:23.787Z","session_id":"ses_1828cc67dffeUz2hqPkbc4perW","agent":"cartographer","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}

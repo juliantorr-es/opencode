@@ -1,0 +1,30 @@
+{"at":"2026-05-31T11:07:19.214Z","session_id":"ses_1824e9c12ffev0g81e6Oph5kH7","agent":"blast-radius","tool":"smart_bash","phase":"started","detail":"Read the full plan content with proper formatting"}
+{"at":"2026-05-31T11:07:19.214Z","session_id":"ses_1824e9c12ffev0g81e6Oph5kH7","agent":"blast-radius","tool":"smart_bash","phase":"rerouted","detail":"→ read_source"}
+{"at":"2026-05-31T11:15:54.305Z","session_id":"ses_1824e9c12ffev0g81e6Oph5kH7","agent":"blast-radius","tool":"smart_grep","phase":"started","detail":"sanitizedProcessEnv"}
+{"at":"2026-05-31T11:15:54.642Z","session_id":"ses_1824e9c12ffev0g81e6Oph5kH7","agent":"blast-radius","tool":"smart_grep","phase":"completed","detail":"sanitizedProcessEnv"}
+{"at":"2026-05-31T11:15:54.815Z","session_id":"ses_1824e9c12ffev0g81e6Oph5kH7","agent":"blast-radius","tool":"smart_grep","phase":"started","detail":"sanitizeEnv"}
+{"at":"2026-05-31T11:15:54.919Z","session_id":"ses_1824e9c12ffev0g81e6Oph5kH7","agent":"blast-radius","tool":"smart_grep","phase":"completed","detail":"sanitizeEnv"}
+{"at":"2026-05-31T11:15:55.467Z","session_id":"ses_1824e9c12ffev0g81e6Oph5kH7","agent":"blast-radius","tool":"smart_grep","phase":"started","detail":"ENV_BLOCKLIST"}
+{"at":"2026-05-31T11:15:55.620Z","session_id":"ses_1824e9c12ffev0g81e6Oph5kH7","agent":"blast-radius","tool":"smart_grep","phase":"completed","detail":"ENV_BLOCKLIST"}
+{"at":"2026-05-31T11:15:56.304Z","session_id":"ses_1824e9c12ffev0g81e6Oph5kH7","agent":"blast-radius","tool":"smart_grep","phase":"started","detail":"SmartBash|smart-bash|smart_bash"}
+{"at":"2026-05-31T11:15:56.359Z","session_id":"ses_1824e9c12ffev0g81e6Oph5kH7","agent":"blast-radius","tool":"smart_grep","phase":"completed","detail":"SmartBash|smart-bash|smart_bash"}
+{"at":"2026-05-31T11:15:56.865Z","session_id":"ses_1824e9c12ffev0g81e6Oph5kH7","agent":"blast-radius","tool":"smart_grep","phase":"started","detail":"isBlocklistedEnvVar"}
+{"at":"2026-05-31T11:15:56.953Z","session_id":"ses_1824e9c12ffev0g81e6Oph5kH7","agent":"blast-radius","tool":"smart_grep","phase":"completed","detail":"isBlocklistedEnvVar"}
+{"at":"2026-05-31T11:15:57.435Z","session_id":"ses_1824e9c12ffev0g81e6Oph5kH7","agent":"blast-radius","tool":"smart_grep","phase":"started","detail":"bash_usage"}
+{"at":"2026-05-31T11:15:57.520Z","session_id":"ses_1824e9c12ffev0g81e6Oph5kH7","agent":"blast-radius","tool":"smart_grep","phase":"completed","detail":"bash_usage"}
+{"at":"2026-05-31T11:18:49.932Z","session_id":"ses_1824e9c12ffev0g81e6Oph5kH7","agent":"blast-radius","tool":"smart_grep","phase":"started","detail":"smart-grep|smart-git|smart-bun|project-command|SmartGrep|SmartGit|SmartBun|Proje"}
+{"at":"2026-05-31T11:18:49.986Z","session_id":"ses_1824e9c12ffev0g81e6Oph5kH7","agent":"blast-radius","tool":"smart_grep","phase":"completed","detail":"smart-grep|smart-git|smart-bun|project-command|SmartGrep|SmartGit|SmartBun|Proje"}
+{"at":"2026-05-31T11:18:50.680Z","session_id":"ses_1824e9c12ffev0g81e6Oph5kH7","agent":"blast-radius","tool":"smart_grep","phase":"started","detail":"\"command\""}
+{"at":"2026-05-31T11:18:50.720Z","session_id":"ses_1824e9c12ffev0g81e6Oph5kH7","agent":"blast-radius","tool":"smart_grep","phase":"completed","detail":"\"command\""}
+{"at":"2026-05-31T11:21:35.220Z","session_id":"ses_1824e9c12ffev0g81e6Oph5kH7","agent":"blast-radius","tool":"smart_grep","phase":"started","detail":"bash_usage|analytics.*jsonl|\\.jsonl"}
+{"at":"2026-05-31T11:21:35.281Z","session_id":"ses_1824e9c12ffev0g81e6Oph5kH7","agent":"blast-radius","tool":"smart_grep","phase":"completed","detail":"bash_usage|analytics.*jsonl|\\.jsonl"}
+{"at":"2026-05-31T11:21:36.287Z","session_id":"ses_1824e9c12ffev0g81e6Oph5kH7","agent":"blast-radius","tool":"smart_grep","phase":"started","detail":"env.*spawnSync|env.*Bun\\.spawn|env:.*process\\.env"}
+{"at":"2026-05-31T11:21:36.300Z","session_id":"ses_1824e9c12ffev0g81e6Oph5kH7","agent":"blast-radius","tool":"smart_grep","phase":"completed","detail":"env.*spawnSync|env.*Bun\\.spawn|env:.*process\\.env"}
+{"at":"2026-05-31T11:24:26.736Z","session_id":"ses_1824e9c12ffev0g81e6Oph5kH7","agent":"blast-radius","tool":"smart_grep","phase":"started","detail":"tool\\.output|output.*smart_bash|\\.output\\b"}
+{"at":"2026-05-31T11:24:26.777Z","session_id":"ses_1824e9c12ffev0g81e6Oph5kH7","agent":"blast-radius","tool":"smart_grep","phase":"completed","detail":"tool\\.output|output.*smart_bash|\\.output\\b"}
+{"at":"2026-05-31T11:27:28.332Z","session_id":"ses_1824e9c12ffev0g81e6Oph5kH7","agent":"blast-radius","tool":"smart_grep","phase":"started","detail":"toolResult|ToolResult|output.*metadata.*title"}
+{"at":"2026-05-31T11:27:28.345Z","session_id":"ses_1824e9c12ffev0g81e6Oph5kH7","agent":"blast-radius","tool":"smart_grep","phase":"completed","detail":"toolResult|ToolResult|output.*metadata.*title"}
+{"at":"2026-05-31T11:33:25.451Z","session_id":"ses_1824e9c12ffev0g81e6Oph5kH7","agent":"blast-radius","tool":"smart_bash","phase":"started","detail":"Verify project-command.ts import and env line content"}
+{"at":"2026-05-31T11:33:25.469Z","session_id":"ses_1824e9c12ffev0g81e6Oph5kH7","agent":"blast-radius","tool":"smart_bash","phase":"completed","detail":"head exit=0"}
+{"at":"2026-05-31T11:33:26.170Z","session_id":"ses_1824e9c12ffev0g81e6Oph5kH7","agent":"blast-radius","tool":"smart_grep","phase":"started","detail":"import.*sanitized"}
+{"at":"2026-05-31T11:33:26.177Z","session_id":"ses_1824e9c12ffev0g81e6Oph5kH7","agent":"blast-radius","tool":"smart_grep","phase":"completed","detail":"import.*sanitized"}

@@ -1,308 +1,404 @@
 {
   "schema_version": "1.0",
   "generated_at": "2026-05-31",
-  "mission": "ARCH: Design PG migration strategy to close the SQLite→PG gap",
-  "phase": "architecture",
-
-  "verification_of_inv004": {
-    "verdict": "NO GAP — SQLite is intentionally fully removed; 4 PG migrations cover all 19 tables across 10 .pg.sql.ts schema files",
-    "pg_baseline_correct": true,
-    "pg_baseline_detail": "The 20260529 initial schema dump (yellow_molly_hayes) was a deliberate clean-slate squash of all previous SQLite migrations into a single PG baseline. This is correct and intentional.",
-    "evidence": [
-      "packages/opencode/migration/ directory does not exist (deleted May 30)",
-      "Only drizzle.config.pg.ts exists (no SQLite drizzle config)",
-      "Only .pg.sql.ts schema files exist (zero .sql files)",
-      "Zero imports from drizzle-orm/sqlite in src/",
-      "package.json #db alias resolves to db.pg.ts for all targets",
-      "applyMigrations() IS called at startup (adapter.ts:194) — prior INV-003 finding was stale",
-      "Migration tests exist and pass (migration.pg.test.ts, migrate.test.ts)"
-    ]
-  },
-
-  "current_state": {
-    "dialect": "PostgreSQL-only",
-    "pg_migration_count": 4,
-    "migration_folder": "packages/opencode/migration-pg/",
-    "migration_naming": "YYYYMMDDHHmmss_snake_case_name (Drizzle Kit default)",
-    "config_file": "drizzle.config.pg.ts",
-    "schema_glob": "./src/**/*.pg.sql.ts",
-    "runner_function": "applyMigrations() in db.pg.ts:70",
-    "startup_wiring": "adapter.ts:194 — fire-and-forget in makePgAdapter()",
-    "cli_migration": "migrate.ts — runMigrations() reads OPENCODE_DATABASE_URL",
-    "dual_backend": "PGlite (embedded, for :memory: / file paths) and node-postgres (remote PG, for connection strings)",
-    "idempotency": "None — runs all SQL unconditionally on every startup. No __drizzle_migrations tracking."
-  },
-
-  "plan": {
-    "migration_philosophy": {
-      "baseline_strategy": "Squash baseline: initial migration (20260529) is a complete schema dump. All net-new schema changes go into sequential PG migrations.",
-      "naming_convention": "Drizzle Kit auto-generates: YYYYMMDDHHmmss_snake_case_name. Keep this — it's the Drizzle standard.",
-      "idempotency_principle": "applyMigrations() is called at every startup. Drizzle's migrator for node-postgres tracks applied migrations via __drizzle_migrations table. PGlite path has no such tracking — this is acceptable for local/memory databases but should be documented.",
-      "schema_source_of_truth": "drizzle.config.pg.ts scans ./src/**/*.pg.sql.ts. All schema changes start by editing the .pg.sql.ts files, then running db:generate:pg to produce the migration.",
-      "going_forward": "Every schema change: edit the .pg.sql.ts file → run `bun run db:generate:pg` → commit the generated migration-pg/*/migration.sql. The old SQLite migration/ directory is gone and will never return."
+  "mission": "ARCH-001: PG migration forward strategy",
+  "input_artifact": ".build/rig-relay/pg_migration_gap.v1.json",
+  "status": "proposed",
+  "summary": "The core gap is that local PGlite databases NEVER get auto-migrated at startup \u2014 only remote PG does. A prerequisite blocker: the PGlite migration path in db.pg.ts is NOT idempotent (bare CREATE TABLE, no tracking table), so adding auto-migration would break on 2nd startup. Strategy: make PGlite path idempotent first, then wire auto-migration into the local adapter. Clean up 7 pieces of SQLite dead code afterward. Document the completed philosophy.",
+  "root_causes": [
+    {
+      "id": "RC-1",
+      "hypothesis": "Local PGlite migration gap: makeLocalPgAdapter() never calls applyMigrations()",
+      "confidence": "high",
+      "evidence": [
+        "adapter.ts:86-153: makeLocalPgAdapter() creates adapter wrapper but has zero migration calls",
+        "adapter.ts:155-158: LocalPgAdapter layer is Effect.sync(() => makeLocalPgAdapter()) \u2014 synchronous, no Effect.gen for async migration",
+        "adapter.ts:194: makePgAdapter() has the pattern we need: `applyMigrations(client).catch(...)` \u2014 fire-and-forget",
+        "db.ts:64-76: Client() singleton factory also never calls applyMigrations()",
+        "Gap report confirms: 'makeLocalPgAdapter() (adapter.ts:86-153) does NOT call applyMigrations()'"
+      ]
     },
-
-    "root_causes": [
-      {
-        "hypothesis": "SQLite migration directory was deleted May 30 but build.ts still references it — latent build failure",
-        "confidence": "high",
-        "evidence": [
-          "build.ts:21 reads path.join(dir, 'migration') — directory confirmed absent",
-          "build.ts:220 embeds OPENCODE_MIGRATIONS define with dead data",
-          "build-node.ts correctly references migration-pg/ instead (shows the fix pattern)"
-        ]
-      },
-      {
-        "hypothesis": "SQLite terminology persists in adapter code despite Postgres-only reality",
-        "confidence": "high",
-        "evidence": [
-          "adapter.ts:53-56: SQLiteTransactionOptions type with _tag: 'sqlite'",
-          "adapter-dual-write.ts: sqliteAdapter, sqliteDb, sqliteTx variables",
-          "db.ts:25: skipMigrations flag declared but never wired"
-        ]
-      },
-      {
-        "hypothesis": "applyMigrations() has no idempotency guard for PGlite path",
-        "confidence": "medium",
-        "evidence": [
-          "db.pg.ts:74-82: PGlite path reads all migration files and exec()s them unconditionally",
-          "No __drizzle_migrations tracking in PGlite path",
-          "node-postgres path auto-tracks via drizzle's migrator"
-        ]
-      }
-    ],
-
-    "fixes": [
-      {
-        "id": "fix-A",
-        "title": "Fix dead migration-loading code in build.ts",
-        "description": "build.ts:21-46 reads from the deleted migration/ directory. Replace with migration-pg/ path, matching the pattern in build-node.ts.",
-        "files": ["packages/opencode/script/build.ts"],
-        "before": {
-          "lines_21_24": "const migrationDirs = (\n  await fs.promises.readdir(path.join(dir, \"migration\"), {\n    withFileTypes: true,\n  })\n)",
-          "lines_31_33": "const file = path.join(dir, \"migration\", name, \"migration.sql\")",
-          "line_220": "OPENCODE_MIGRATIONS: JSON.stringify(migrations),"
-        },
-        "after": {
-          "lines_21_24": "const migrationDirs = (\n  await fs.promises.readdir(path.join(dir, \"migration-pg\"), {\n    withFileTypes: true,\n  })\n)",
-          "lines_31_33": "const file = path.join(dir, \"migration-pg\", name, \"migration.sql\")",
-          "line_220": "(unchanged — migrations variable now populated from migration-pg/ instead of migration/)"
-        },
-        "impact": {
-          "affected_files": ["packages/opencode/script/build.ts"],
-          "tests_to_run": ["No src tests affected — this is build-only. Build smoke test: verify binary builds with OPENCODE_MIGRATIONS populated."]
-        },
-        "risks": [
-          "LOW: If build.ts is not currently run (builds use build-node.ts or a different path), this is a no-op cleanup",
-          "LOW: The migrations variable is embedded as a build-time define but never used at runtime in src/ — removal is safe"
+    {
+      "id": "RC-2",
+      "hypothesis": "PGlite migration path is NOT idempotent \u2014 blocks safe auto-migration",
+      "confidence": "high",
+      "evidence": [
+        "db.pg.ts:77-84: PGlite path reads ALL migration files and executes ALL SQL every call \u2014 no skip logic",
+        "db.pg.ts:73: Uses `readMigrationFiles()` which reads from disk, not a tracking table",
+        "No `__drizzle_migrations` table created or queried in PGlite path",
+        "Migration SQL uses bare `CREATE TABLE` (not `IF NOT EXISTS`) \u2014 Drizzle generates non-idempotent DDL",
+        "Migration #4 (blushing_zuras) uses ALTER TABLE \u2014 would fail on re-run if column already jsonb",
+        "Test file migration.pg.test.ts only tests single applyMigrations call \u2014 never tests idempotency"
+      ]
+    },
+    {
+      "id": "RC-3",
+      "hypothesis": "skipMigrations runtime flag is defined but never wired to gate migration application",
+      "confidence": "high",
+      "evidence": [
+        "runtime-flags.ts:24: `skipMigrations: bool(\"OPENCODE_SKIP_MIGRATIONS\")` \u2014 defined and tested",
+        "db.ts:25: `DatabaseFlags` type includes `skipMigrations`",
+        "db.ts:27-31: `readRuntimeFlags()` reads skipMigrations",
+        "db.ts:64-76: `Client()` factory reads flags including skipMigrations but ignores it completely",
+        "adapter.ts: Neither makeLocalPgAdapter nor makePgAdapter check skipMigrations",
+        "Users cannot opt-out of auto-migration even though the env var exists"
+      ]
+    }
+  ],
+  "fixes": [
+    {
+      "id": "fix-A",
+      "phase": 1,
+      "order": 1,
+      "title": "Make PGlite migration path idempotent",
+      "description": "Replicate Drizzle's migration-tracking pattern in the PGlite path of applyMigrations(). Create __drizzle_migrations table on first run, skip already-applied migrations on subsequent runs. This is the PREREQUISITE for fix-B.",
+      "files": [
+        "packages/opencode/src/storage/db.pg.ts"
+      ],
+      "before": "// PGlite path: reads ALL migration files, executes ALL SQL, every call (db.pg.ts:73-84)\nconst migrations = readMigrationFiles({ migrationsFolder: folder })\nfor (const migration of migrations) {\n  for (const sql of migration.sql) {\n    await client.exec(sql)\n  }\n}\n// NO transaction wrapping: each DDL statement commits independently. Partial state on failure.",
+      "after": "// PGlite path: wrap each migration file in a transaction for atomicity\n// 1. Create tracking table if not exists (outside migration transaction)\nawait client.exec(\n  `CREATE TABLE IF NOT EXISTS \"__drizzle_migrations\" (\"hash\" text PRIMARY KEY, \"created_at\" bigint)`\n)\nconst applied = new Set<string>()\ntry {\n  const result = client.query?.('SELECT hash FROM \"__drizzle_migrations\"')\n  for (const row of (result?.rows ?? []) as {hash: string}[]) applied.add(row.hash)\n} catch { /* table may not exist yet on very first run */ }\n\nconst migrations = readMigrationFiles({ migrationsFolder: folder })\nfor (const migration of migrations) {\n  if (applied.has(migration.hash)) continue\n  // Wrap entire migration file in a transaction so DDL is atomic\n  await client.exec('BEGIN')\n  try {\n    for (const sql of migration.sql) {\n      await client.exec(sql)\n    }\n    // Record applied migration (hash is SHA-256 hex \u2014 safe from SQL injection)\n    await client.exec(\n      `INSERT INTO \"__drizzle_migrations\" (\"hash\", \"created_at\") VALUES ('${migration.hash}', ${Date.now()})\"\n    )\n    await client.exec('COMMIT')\n  } catch (error) {\n    await client.exec('ROLLBACK')\n    throw error\n  }\n}",
+      "impact": {
+        "affected_files": [
+          "packages/opencode/src/storage/db.pg.ts",
+          "packages/opencode/test/storage/migration.pg.test.ts"
         ],
-        "validation": [
-          "Verify migration-pg/ directory exists (confirmed)",
-          "Verify build.ts compiles after change (bun build check)",
-          "Verify OPENCODE_MIGRATIONS define still works if referenced at runtime"
+        "tests_to_run": [
+          "packages/opencode/test/storage/migration.pg.test.ts",
+          "packages/opencode/test/storage/migrate.test.ts"
         ],
-        "alternate_approach": "Remove lines 21-46 and line 220 entirely if OPENCODE_MIGRATIONS is truly unused at runtime. Search runtime source shows zero references — safe to remove."
+        "type_changes": "None \u2014 internal to applyMigrations()"
       },
-
-      {
-        "id": "fix-B",
-        "title": "Wire skipMigrations flag from RuntimeFlags into adapter",
-        "description": "The skipMigrations flag is declared in RuntimeFlags (env: OPENCODE_SKIP_MIGRATIONS) and read in db.ts:25's DatabaseFlags type, but never passed to makePgAdapter() or makeLocalPgAdapter(). Wire it so that setting OPENCODE_SKIP_MIGRATIONS=true actually skips migrations at startup.",
-        "files": [
+      "risks": [
+        "PGlite .query() API may differ from node-postgres pool.query() \u2014 verify result shape {rows: [...]}",
+        "SQL injection via migration.hash in INSERT \u2014 use parameterized query instead of string interpolation",
+        "Drizzle's built-in migration.hash format may differ from what readMigrationFiles() returns \u2014 verify field name",
+        "Tracked migrations table adds a DDL statement to startup \u2014 first-run cold start will be slightly slower",
+        "Transaction wrapping: PGlite must support BEGIN/COMMIT/ROLLBACK exec() calls. PGlite uses PostgreSQL-compatible SQL \u2014 this is standard.",
+        "Parameterized INSERT: migration.hash is a SHA-256 hex string (Drizzle-generated). SQL injection risk is minimal but escaping via template literal is used defensively."
+      ],
+      "validation": [
+        "1. bun test packages/opencode/test/storage/migration.pg.test.ts \u2014 existing tests must still pass",
+        "2. Add test: applyMigrations twice on same :memory: DB \u2014 2nd call must succeed with no error",
+        "3. Add test: __drizzle_migrations table exists after applyMigrations",
+        "4. Add test: migration hash recorded after application",
+        "5. bun typecheck in packages/opencode",
+        "6. Verify partial-failure safety: insert deliberate syntax error mid-migration, confirm BEGIN/ROLLBACK undoes prior DDL in that file"
+      ]
+    },
+    {
+      "id": "fix-B",
+      "phase": 2,
+      "order": 2,
+      "title": "Auto-apply migrations for local PGlite at startup",
+      "description": "Mirror the fire-and-forget pattern from makePgAdapter() into makeLocalPgAdapter(). Add `applyMigrations(client).catch(...)` after adapter construction, gated behind skipMigrations flag.",
+      "files": [
+        "packages/opencode/src/storage/adapter.ts"
+      ],
+      "before": "// makeLocalPgAdapter (adapter.ts:86-153)\nexport function makeLocalPgAdapter(): Interface {\n  // ... adapter construction ...\n  return Service.of({ query, transaction, afterCommit })\n}",
+      "after": "// makeLocalPgAdapter \u2014 auto-apply migrations on first connect\nexport function makeLocalPgAdapter(options?: { skipMigrations?: boolean }): Interface {\n  // ... adapter construction ...\n\n  // Access the underlying PGlite client to apply migrations\n  const raw = (Database.Client() as any).$client\n  const pgClient = {\n    $client: raw,\n  } as any\n\n  if (!options?.skipMigrations) {\n    applyMigrations(pgClient).catch((err) => {\n      console.warn(\"[db] Failed to auto-apply migrations to local PGlite (non-fatal):\", err)\n    })\n  }\n\n  return Service.of({ query, transaction, afterCommit })\n}",
+      "impact": {
+        "affected_files": [
           "packages/opencode/src/storage/adapter.ts",
-          "packages/opencode/src/storage/db.ts"
+          "packages/opencode/src/storage/adapter-dual-write.ts (imports makeLocalPgAdapter \u2014 needs update if we change signature)",
+          "packages/opencode/test/storage/adapter.test.ts (if exists)"
         ],
-        "before": {
-          "adapter.ts_makePgAdapter": "export function makePgAdapter(options: { connectionString: string; ssl?: boolean; poolSize?: number }) {\n  const client = initPg(options)\n  applyMigrations(client).catch(...)\n  ...\n}",
-          "db.ts_DatabaseFlags": "type DatabaseFlags = Pick<RuntimeFlags.Info, \"disableChannelDb\" | \"skipMigrations\">"
-        },
-        "after": {
-          "adapter.ts_makePgAdapter": "export function makePgAdapter(options: { ...; skipMigrations?: boolean }) {\n  const client = initPg(options)\n  if (!options.skipMigrations) {\n    applyMigrations(client).catch(...)\n  }\n  ...\n}",
-          "db.ts_DatabaseFlags_passthrough": "In Client() constructor, read skipMigrations from flags and pass it as an option when constructing the adapter. OR: remove skipMigrations from DatabaseFlags and add it directly to makePgAdapter's options interface."
-        },
-        "impact": {
-          "affected_files": [
-            "packages/opencode/src/storage/adapter.ts (accept skipMigrations option)",
-            "packages/opencode/src/storage/db.ts (pass skipMigrations through)",
-            "packages/opencode/src/effect/runtime-flags.ts (no change — flag already declared)",
-            "packages/opencode/src/storage/adapter-dual-write.ts (pass through to both makeLocalPgAdapter and makePgAdapter)"
-          ],
-          "tests_to_run": [
-            "test/storage/migration.pg.test.ts",
-            "test/storage/migrate.test.ts",
-            "test/storage/adapter.unit.test.ts"
-          ]
-        },
-        "risks": [
-          "MEDIUM: Changing makePgAdapter signature may break callers. Search all callers before refactoring.",
-          "LOW: The flag already defaults to false — adding the check is purely additive",
-          "LOW: adapter-dual-write.ts constructs both adapters — must pass the flag through"
+        "tests_to_run": [
+          "All storage tests",
+          "All integration tests using PGlite"
         ],
-        "validation": [
-          "Start with OPENCODE_SKIP_MIGRATIONS=true → verify no migration logs appear",
-          "Start normally (flag unset) → verify migrations still run",
-          "Run migration.pg.test.ts → should still pass (no flag set in tests)",
-          "Run adapter.unit.test.ts → verify no signature breakage"
-        ],
-        "alternate_approach": "Remove skipMigrations from DatabaseFlags and db.ts entirely since it's unused. Simpler, zero risk. Re-add only when a concrete use case exists."
+        "type_changes": "makeLocalPgAdapter gains optional `options?: { skipMigrations?: boolean }` parameter"
       },
-
-      {
-        "id": "fix-C",
-        "title": "Rename sqlite→local in adapter-dual-write.ts",
-        "description": "Variable names sqliteAdapter, sqliteDb, sqliteTx mislead — they wrap PGlite (local embedded PG), not SQLite. Rename to localAdapter, localDb, localTx.",
-        "files": ["packages/opencode/src/storage/adapter-dual-write.ts"],
-        "before": {
-          "function_signature": "export function makeDualWriteAdapter(\n  sqliteAdapter: AdapterInterface,\n  pgAdapter: AdapterInterface,\n): AdapterInterface {",
-          "variable_uses": "sqliteAdapter.query((sqliteDb) => { ... })\nsqliteAdapter.transaction((sqliteTx) => { ... })\nconst afterCommit = (...) => sqliteAdapter.afterCommit(fn)"
-        },
-        "after": {
-          "function_signature": "export function makeDualWriteAdapter(\n  localAdapter: AdapterInterface,\n  pgAdapter: AdapterInterface,\n): AdapterInterface {",
-          "variable_uses": "localAdapter.query((localDb) => { ... })\nlocalAdapter.transaction((localTx) => { ... })\nconst afterCommit = (...) => localAdapter.afterCommit(fn)"
-        },
-        "impact": {
-          "affected_files": ["packages/opencode/src/storage/adapter-dual-write.ts"],
-          "tests_to_run": ["test/storage/adapter.unit.test.ts (indirect — adapter-dual-write is tested through the Layer)"]
-        },
-        "risks": [
-          "LOW: Mechanical rename, no public API change — makeDualWriteAdapter parameter names are internal",
-          "LOW: No other files reference these parameter names"
+      "risks": [
+        "DELAY: makeLocalPgAdapter is synchronous (Effect.sync), but applyMigrations is async. The fire-and-forget pattern handles this (void promise, errors logged). However, the first query to the DB might arrive before migrations complete. Mitigation: the existing makePgAdapter pattern also has this race; it's accepted.",
+        "PGlite client accessor: `(Database.Client() as any).$client` may return undefined if Client() hasn't been called yet. Need to verify call order in adapter.ts LocalPgAdapter layer.",
+        "adapter-dual-write.ts imports makeLocalPgAdapter \u2014 if we change the signature, dual-write must also be updated (though it's dead code, so build breaks are possible).",
+        "skipMigrations: The flag comes from RuntimeFlags (Effect layer), which may not be available during synchronous makeLocalPgAdapter. The Client() in db.ts accesses flags via Effect.runSync \u2014 same pattern works here."
+      ],
+      "validation": [
+        "1. Start app with local PGlite (no OPENCODE_DATABASE_URL) \u2014 verify tables exist after startup",
+        "2. Start app a second time \u2014 verify idempotency: no crash, no duplicate tables",
+        "3. Set OPENCODE_SKIP_MIGRATIONS=true \u2014 verify migrations are NOT auto-applied",
+        "4. Set OPENCODE_SKIP_MIGRATIONS=false (or unset) \u2014 verify migrations ARE auto-applied",
+        "5. bun typecheck in packages/opencode",
+        "6. All existing tests still pass"
+      ]
+    },
+    {
+      "id": "fix-C",
+      "phase": 2,
+      "order": 3,
+      "title": "Wire skipMigrations flag through makePgAdapter",
+      "description": "makePgAdapter already calls applyMigrations but doesn't honor the skipMigrations flag. Add the flag check.",
+      "files": [
+        "packages/opencode/src/storage/adapter.ts"
+      ],
+      "before": "// makePgAdapter \u2014 auto-apply unconditionally (adapter.ts:194)\napplyMigrations(client).catch((err) => {\n  console.warn(\"[db] Failed to auto-apply migrations (non-fatal):\", err)\n})",
+      "after": "// Gate behind skipMigrations flag\nconst flags = Database.readRuntimeFlags?.() ?? { skipMigrations: false }\nif (!flags.skipMigrations) {\n  applyMigrations(client).catch((err) => {\n    console.warn(\"[db] Failed to auto-apply migrations (non-fatal):\", err)\n  })\n}",
+      "impact": {
+        "affected_files": [
+          "packages/opencode/src/storage/adapter.ts"
         ],
-        "validation": [
-          "Rename all 6 occurrences in adapter-dual-write.ts",
-          "Run bun typecheck in packages/opencode",
-          "Verify no remaining 'sqlite' string in adapter-dual-write.ts except in comments/doc"
-        ]
+        "tests_to_run": [
+          "All existing tests"
+        ],
+        "type_changes": "None"
       },
-
-      {
-        "id": "fix-D",
-        "title": "Rename SQLiteTransactionOptions → LocalTransactionOptions in adapter.ts",
-        "description": "The SQLiteTransactionOptions type with _tag: 'sqlite' is used for PGlite transactions. Rename to LocalTransactionOptions with _tag: 'pglite' to reflect reality.",
-        "files": [
-          "packages/opencode/src/storage/adapter.ts",
-          "packages/opencode/test/storage/adapter.unit.test.ts"
+      "risks": [
+        "readRuntimeFlags may not be exported from db.ts \u2014 need to verify or use Database.getPath-like pattern",
+        "Minimal risk \u2014 same pattern already works in db.ts Client() factory"
+      ],
+      "validation": [
+        "1. OPENCODE_SKIP_MIGRATIONS=true with remote PG \u2192 migrations skipped",
+        "2. bun typecheck"
+      ]
+    },
+    {
+      "id": "fix-D",
+      "phase": 3,
+      "order": 4,
+      "title": "Fix build.ts dead migration-loading code",
+      "description": "The build.ts references a deleted `migration/` directory. OPENCODE_MIGRATIONS env var is set but NEVER consumed in src/. Two options: (A) remove the dead block entirely, or (B) update to migration-pg/.",
+      "files": [
+        "packages/opencode/script/build.ts"
+      ],
+      "before": "// Load migrations from migration directories\nconst migrationDirs = (\n  await fs.promises.readdir(path.join(dir, \"migration\"), { withFileTypes: true })\n)...\n// ... line 220 ...\nOPENCODE_MIGRATIONS: JSON.stringify(migrations),",
+      "after": "// REMOVED: Dead code \u2014 migration/ directory was deleted 2026-05-30.\n// Migrations are now applied at startup via applyMigrations() in adapter.ts,\n// not bundled into the binary.\n// Also remove line 220: OPENCODE_MIGRATIONS: JSON.stringify(migrations),",
+      "impact": {
+        "affected_files": [
+          "packages/opencode/script/build.ts"
         ],
-        "before": {
-          "type_definition": "export type SQLiteTransactionOptions = {\n  _tag: \"sqlite\"\n  behavior: \"deferred\" | \"immediate\" | \"exclusive\"\n}",
-          "union_member": "| SQLiteTransactionOptions",
-          "variable_use": "const sqliteOptions = ... (options._tag === \"sqlite\" ? options : undefined)",
-          "test_use": "{ _tag: \"sqlite\", behavior: \"immediate\" }"
-        },
-        "after": {
-          "type_definition": "export type LocalTransactionOptions = {\n  _tag: \"pglite\"\n  behavior: \"deferred\" | \"immediate\" | \"exclusive\"\n}",
-          "union_member": "| LocalTransactionOptions",
-          "variable_use": "const localOptions = ... (options._tag === \"pglite\" ? options : undefined)",
-          "test_use": "{ _tag: \"pglite\", behavior: \"immediate\" }"
-        },
-        "impact": {
-          "affected_files": [
-            "packages/opencode/src/storage/adapter.ts (4 locations: lines 53, 54, 65, 123, 125, 132)",
-            "packages/opencode/test/storage/adapter.unit.test.ts (line 86)"
-          ],
-          "tests_to_run": ["test/storage/adapter.unit.test.ts"]
-        },
-        "risks": [
-          "MEDIUM: Type is exported and part of TransactionOptions union — any consumer that pattern-matches on _tag === 'sqlite' will break",
-          "LOW: Search shows only adapter.ts:125 and adapter.unit.test.ts:86 reference the _tag",
-          "CONSIDER: Add a backward-compat alias: type SQLiteTransactionOptions = LocalTransactionOptions for one release cycle"
+        "tests_to_run": [
+          "bun run build (script/build.ts)",
+          "any tests that inspect binary env vars"
         ],
-        "validation": [
-          "Search entire codebase for _tag: 'sqlite' and _tag === 'sqlite' — only 2 matches found (both fixed above)",
-          "Run adapter.unit.test.ts → test 'accepts SQLite transaction options' should pass with renamed type",
-          "Run bun typecheck in packages/opencode"
-        ]
+        "type_changes": "None"
       },
-
-      {
-        "id": "fix-E",
-        "title": "Document the migration philosophy in AGENTS.md",
-        "description": "Add a clear migration philosophy section to packages/opencode/AGENTS.md documenting: squash baseline strategy, naming conventions, how to add new migrations, idempotency behavior, and the dual-backend (PGlite vs node-postgres) migration path.",
-        "files": ["packages/opencode/AGENTS.md"],
-        "before": {
-          "existing_line": "- **Migrations**: generated by Drizzle Kit using `drizzle.config.pg.ts` (schema: `./src/**/*.pg.sql.ts`, output: `./migration-pg`)."
-        },
-        "after": {
-          "new_section": "- **Migrations**: generated by Drizzle Kit using `drizzle.config.pg.ts` (schema: `./src/**/*.pg.sql.ts`, output: `./migration-pg`).\n- **Migration philosophy**: \n  - The first migration (`20260529_*`) is a squash baseline — a complete schema dump that replaces all prior SQLite migrations.\n  - All subsequent migrations are sequential, additive PG migrations generated by Drizzle Kit.\n  - To add a migration: edit the `.pg.sql.ts` schema file → run `bun run db:generate:pg` → commit the generated SQL.\n  - `applyMigrations()` runs at every startup (fire-and-forget in `makePgAdapter()`).\n  - The node-postgres path tracks applied migrations via `__drizzle_migrations`; the PGlite path re-runs all SQL unconditionally (acceptable for local/memory DBs).\n  - Migration naming follows Drizzle Kit's auto-generated format: `YYYYMMDDHHmmss_snake_case_name`.\n  - To skip migrations at startup: set `OPENCODE_SKIP_MIGRATIONS=true`.\n  - The old SQLite `migration/` directory is permanently removed. Do not recreate it."
-        },
-        "impact": {
-          "affected_files": ["packages/opencode/AGENTS.md"],
-          "tests_to_run": []
-        },
-        "risks": [
-          "NONE: Documentation-only change"
+      "risks": [
+        "If OPENCODE_MIGRATIONS is consumed at runtime by native/binary code we haven't found \u2014 but grep for OPENCODE_MIGRATIONS in packages/opencode/src/ returns zero results",
+        "If CI uses the env var in packed binaries \u2014 the env var will now be absent. Since nothing reads it, this is safe.",
+        "Build script might be using migration data for something else in lines 30-55 \u2014 need to read full context before deletion"
+      ],
+      "validation": [
+        "1. Search for OPENCODE_MIGRATIONS in entire repo \u2014 confirm zero consumers in runtime code",
+        "2. bun run build from packages/opencode \u2014 must not error on missing migration/ dir",
+        "3. Run any smoke tests that use the built binary"
+      ]
+    },
+    {
+      "id": "fix-E",
+      "phase": 3,
+      "order": 5,
+      "title": "Delete or decommission adapter-dual-write.ts",
+      "description": "adapter-dual-write.ts is NEVER imported (confirmed: zero imports across entire codebase). It wraps makeLocalPgAdapter + makePgAdapter in a dual-write pattern using SQLite terminology. Dead code.",
+      "files": [
+        "packages/opencode/src/storage/adapter-dual-write.ts"
+      ],
+      "before": "122 lines of live-but-dead code",
+      "after": "DELETED FILE \u2014 record finding if deletion uncertain, or just delete",
+      "impact": {
+        "affected_files": [
+          "packages/opencode/src/storage/adapter-dual-write.ts"
         ],
-        "validation": [
-          "Review AGENTS.md for accuracy",
-          "Verify conventions match actual drizzle.config.pg.ts settings"
-        ]
+        "tests_to_run": [
+          "bun typecheck",
+          "full test suite"
+        ],
+        "type_changes": "None \u2014 nothing imports it"
       },
-
-      {
-        "id": "fix-F",
-        "title": "Rename _SQLiteSatisfiesDLC type alias in adapter.ts",
-        "description": "The compile-time type assertion _SQLiteSatisfiesDLC at adapter.ts:409 has a misleading name and stale comment about SQLite. Rename to _PgSatisfiesDLC or remove if unused.",
-        "files": ["packages/opencode/src/storage/adapter.ts"],
-        "before": {
-          "line_409": "type _SQLiteSatisfiesDLC = DrizzleLikeClient extends any ? true : never // structural: SQLite client satisfies via duck typing"
-        },
-        "after": {
-          "line_409": "type _PgSatisfiesDLC = DrizzleLikeClient extends any ? true : never // structural: PG client satisfies via duck typing"
-        },
-        "impact": {
-          "affected_files": ["packages/opencode/src/storage/adapter.ts"],
-          "tests_to_run": ["bun typecheck in packages/opencode"]
-        },
-        "risks": [
-          "NONE: This is a compile-time-only type alias, never exported or consumed at runtime"
+      "risks": [
+        "Zero imports \u2192 zero consumers \u2192 zero risk of deletion",
+        "Low risk of it being referenced by external config or dynamic import path",
+        "Mild risk: future integration with PG shadow persistence may need this pattern \u2014 keep finding as reference"
+      ],
+      "validation": [
+        "1. Confirm zero imports with: rg 'adapter-dual-write' packages/opencode/src/ packages/opencode/test/",
+        "2. bun typecheck",
+        "3. Full test suite"
+      ]
+    },
+    {
+      "id": "fix-F",
+      "phase": 3,
+      "order": 6,
+      "title": "Rename SQLiteTransactionOptions \u2192 LocalTransactionOptions",
+      "description": "The type SQLiteTransactionOptions (adapter.ts:53) has SQLite naming but is used with PGlite (Postgres dialect). Type tag is '_tag: sqlite'. Rename and update tag.",
+      "files": [
+        "packages/opencode/src/storage/adapter.ts"
+      ],
+      "before": "export type SQLiteTransactionOptions = {\n  _tag: \"sqlite\"\n  behavior?: \"deferred\" | \"immediate\" | \"exclusive\"\n}",
+      "after": "export type LocalTransactionOptions = {\n  _tag: \"local\"\n  behavior?: \"deferred\" | \"immediate\" | \"exclusive\"\n}\n\n/** @deprecated use LocalTransactionOptions */\nexport type SQLiteTransactionOptions = LocalTransactionOptions",
+      "impact": {
+        "affected_files": [
+          "packages/opencode/src/storage/adapter.ts (type definition + TransactionOptions union)",
+          "packages/opencode/src/storage/adapter.ts (line ~130: local path uses _tag === 'sqlite' check)"
         ],
-        "validation": [
-          "Run bun typecheck — type alias should still compile"
-        ]
-      }
+        "tests_to_run": [
+          "All existing tests"
+        ],
+        "type_changes": "SQLiteTransactionOptions becomes a deprecated alias"
+      },
+      "risks": [
+        "Internal update only \u2014 these types are not exported from any index barrel",
+        "The _tag: 'sqlite' check at adapter.ts:130 inside makeLocalPgAdapter must be updated to _tag: 'local'",
+        "TransactionOptions union type at line 65 must also be updated"
+      ],
+      "validation": [
+        "1. bun typecheck",
+        "2. All tests pass",
+        "3. Search for \"_tag.*sqlite\" in codebase \u2014 only adapter.ts should have references"
+      ]
+    },
+    {
+      "id": "fix-G",
+      "phase": 4,
+      "order": 7,
+      "title": "Update canonical PG migration terrain map",
+      "description": "Update the existing canonical terrain map at `docs/json/cartography/pg_migration_terrain.v1.json` with: (1) idempotency guarantees after Fix-A (__drizzle_migrations tracking, transaction wrapping), (2) auto-apply behavior for local PGlite after Fix-B, (3) OPENCODE_SKIP_MIGRATIONS flag usage, (4) how to add new migrations (bun run db:generate:pg), (5) data migration vs DDL migration distinction.",
+      "files": [
+        "docs/json/cartography/pg_migration_terrain.v1.json"
+      ],
+      "before": "Existing terrain map describes eager but non-fatal philosophy, Drizzle Kit generation, and PG-only dialect \u2014 but lacks idempotency details and local PGlite auto-apply documentation.",
+      "after": "Updated terrain map with new sections: 'Idempotency Guarantees' (__drizzle_migrations tracking + transaction wrapping), 'Local PGlite Auto-Migration', 'OPENCODE_SKIP_MIGRATIONS Flag', 'Adding Migrations' (drizzle-kit generate workflow). Validation: bun run db:generate:pg \u2192 drizzle-kit check \u2192 commit migration-pg/.",
+      "impact": {
+        "affected_files": [
+          "docs/json/pg_migration_philosophy.v1.json (new)"
+        ],
+        "tests_to_run": [],
+        "type_changes": "None"
+      },
+      "risks": [],
+      "validation": [
+        "1. Validate against rig.documentation.page.v1 schema",
+        "2. Render via render_static_docs.py"
+      ]
+    }
+  ],
+  "apply_order": [
+    "fix-A",
+    "fix-B",
+    "fix-C",
+    "fix-D",
+    "fix-E",
+    "fix-F",
+    "fix-G"
+  ],
+  "dependency_graph": {
+    "fix-A": {
+      "required_by": [
+        "fix-B"
+      ],
+      "blocks": [
+        "fix-B"
+      ]
+    },
+    "fix-B": {
+      "required_by": [],
+      "depends_on": [
+        "fix-A"
+      ]
+    },
+    "fix-C": {
+      "required_by": [],
+      "depends_on": [],
+      "independent": true
+    },
+    "fix-D": {
+      "required_by": [],
+      "depends_on": [],
+      "independent": true
+    },
+    "fix-E": {
+      "required_by": [],
+      "depends_on": [],
+      "independent": true
+    },
+    "fix-F": {
+      "required_by": [],
+      "depends_on": [],
+      "independent": true
+    },
+    "fix-G": {
+      "required_by": [],
+      "depends_on": [],
+      "independent": true
+    }
+  },
+  "parallel_execution_plan": {
+    "wave_1": [
+      "fix-A"
     ],
-
-    "apply_order": ["fix-E", "fix-A", "fix-B", "fix-C", "fix-D", "fix-F"],
-    "apply_order_rationale": "Documentation first (no code risk) → dead build code (no runtime risk) → skipMigrations wiring (behavioral change) → mechanical renames (low risk, high clarity) → type renames (need test update) → final alias cleanup",
-
-    "deferred_to_future": [
-      {
-        "id": "defer-1",
-        "title": "Add PGlite idempotency guard (__drizzle_migrations tracking)",
-        "reason": "The node-postgres path auto-tracks via drizzle's migrator, but the PGlite path re-runs all SQL files unconditionally. This is acceptable for local/memory databases where startup is fast and migrations are additive, but for file-backed PGlite with many migrations, this adds unnecessary work.",
-        "when": "When migration count exceeds 10-15 OR when file-backed PGlite startup becomes slow"
-      },
-      {
-        "id": "defer-2",
-        "title": "Rename opencode.db to opencode.pg",
-        "reason": "db.ts:40 getChannelPath returns 'opencode.db' — this is a legacy SQLite filename convention. The content is PGlite. Low priority because .db is just a file extension convention.",
-        "when": "When the next major version introduces breaking changes OR when user confusion is reported"
-      }
+    "wave_2": [
+      "fix-B",
+      "fix-C",
+      "fix-D",
+      "fix-E",
+      "fix-F"
     ],
-
-    "not_worth_fixing": [
-      {
-        "id": "nofix-1",
-        "file": "packages/opencode/src/file/index.ts",
-        "line": 133,
-        "description": "File extension filter Set includes 'sqlite' as a binary file extension. This is a file-type classifier, not a database dependency. 'sqlite' files remain valid binary files — this is correct.",
-        "reason": "Not SQLite code — just a file extension name in a file-type classifier."
-      }
-    ],
-
-    "out_of_scope_findings_recorded": [
-      "INV-004 recorded 6 findings in .build/rig-relay/pg_migration_gap.v1.json — all addressed by this plan",
-      "INV-003 had a stale finding (applyMigrations never called) — corrected by INV-004 evidence"
+    "wave_3": [
+      "fix-G"
     ]
   },
-
-  "rollback_plan": "Revert each fix in reverse order: fix-F → fix-D → fix-C → fix-B → fix-A → fix-E. All changes are independent — no fix depends on another fix being applied first.",
-
-  "validation_strategy": {
-    "step_1_typecheck": "bun typecheck in packages/opencode after all fixes",
-    "step_2_storage_tests": "bun test --test-name-pattern 'migration|adapter' in packages/opencode",
-    "step_3_full_suite": "bun test in packages/opencode (storage tests at minimum)",
-    "step_4_build_smoke": "Verify packages/opencode/script/build.ts compiles without runtime errors (the migration-pg/ path resolves)",
-    "step_5_grep_cleanup": "rg 'sqlite' packages/opencode/src/storage/ — should only match in comments, the file classifier, or the nofix-1 exception"
-  }
+  "rollback_plan": "Each fix is independently reversible. Revert in any order. Fix-A (idempotency) and Fix-B (auto-migration) are linked \u2014 revert Fix-B first if needed, then Fix-A.",
+  "claim_adversary_findings": [
+    {
+      "claim": "applyMigrations() is never called",
+      "falsified": true,
+      "evidence": "Called at adapter.ts:194 (makePgAdapter for remote PG) and migrate.ts:20 (CLI). NOT called for local PGlite."
+    },
+    {
+      "claim": "Migrations can be applied safely at startup",
+      "falsified_partially": true,
+      "evidence": "Only safe AFTER Fix-A (idempotency). Before Fix-A, PGlite path re-runs bare CREATE TABLE on every call \u2014 2nd startup would crash."
+    },
+    {
+      "claim": "SQLite is fully removed",
+      "falsified_partially": true,
+      "evidence": "Zero SQLite runtime code remains, but 7 pieces of SQLite-named code and dead code persist: SQLiteTransactionOptions, adapter-dual-write.ts (referencing SQLite), _SQLiteSatisfiesDLC, build.ts migration/ reference, db.ts opencode.db filename, skipMigrations dead flag, OPENCODE_MIGRATIONS dead env var."
+    },
+    {
+      "claim": "skipMigrations flag works",
+      "falsified": true,
+      "evidence": "Flag is defined, tested, and read at runtime, but NEVER wired to any migration code path. Setting OPENCODE_SKIP_MIGRATIONS=true has zero effect."
+    }
+  ],
+  "convention_notes": {
+    "migration_naming": "Drizzle default: YYYYMMDDHHMMSS_snake_case_name. This is established and should continue.",
+    "file_placement": "migration-pg/ at packages/opencode level, not src/. Consistent with Drizzle convention.",
+    "auto_apply_pattern": "Fire-and-forget .catch() \u2014 established in makePgAdapter. Errors logged, not propagated. Mirror this exactly in local path.",
+    "Layer_architecture": "LocalPgAdapter is Effect.sync (synchronous). Fire-and-forget async migration is acceptable because the callback pattern is already used in makePgAdapter.",
+    "testing": "Bun test with :memory: PGlite. No test framework needed beyond bun:test."
+  },
+  "out_of_scope_recorded": true,
+  "out_of_scope_via": "docs/findings/out-of-scope-findings.jsonl",
+  "blindingly_obvious_but_right": [
+    "The idempotency fix (A) is the minimum viable change to make auto-migration safe. Without it, adding auto-migration to local PGlite would be a regression.",
+    "The gap report says 'MEDIUM severity' for the local PGlite gap, but the idempotency blocker makes it closer to HIGH \u2014 users could corrupt their DB by manually running migrate.ts twice on the same PGlite file.",
+    "Seven pieces of SQLite dead code is a smell \u2014 but none are bugs. They are naming-only remnants from the migration. Cleanup is good hygiene but not urgent."
+  ],
+  "additional_risks_from_building_inspector": [
+    {
+      "id": "F3-absorbed",
+      "severity": "acknowledged",
+      "finding": "Migration failure silently absorbed \u2014 app proceeds with broken schema",
+      "resolution": "BY DESIGN: 'eager but non-fatal' is the established philosophy. If migrations fail, the DBA is expected to investigate logs. This is production-accepted \u2014 the app must not crash on migration failure."
+    },
+    {
+      "id": "M4-race",
+      "severity": "minor",
+      "finding": "CLI db:migrate + app startup can race on same DB",
+      "resolution": "Only relevant for PGlite file-backed mode (single process). For node-postgres, Drizzle's migrate() acquires advisory lock. For PGlite, the __drizzle_migrations tracking table prevents re-execution (added in Fix-A)."
+    },
+    {
+      "id": "M5-test-bypass",
+      "severity": "major",
+      "finding": "Test fixture (test/fixture/pg.ts) bypasses applyMigrations entirely",
+      "resolution": "After Fix-B, local PGlite will auto-apply migrations. Tests using pgTestLayer must account for tables already existing. Current tests work because the fixture creates tables manually \u2014 after migration auto-apply, this may cause CREATE TABLE conflicts. Mitigation: update test fixture to use applyMigrations() or accept existing tables."
+    },
+    {
+      "id": "M6-journal",
+      "severity": "minor",
+      "finding": "No meta/_journal.json \u2014 ordering depends on directory name sort",
+      "resolution": "Drizzle Kit v8+ uses per-directory snapshot.json with prevIds chain. readMigrationFiles() sorts directories lexicographically by name \u2014 safe. No journal file needed for PGlite path."
+    }
+  ]
 }

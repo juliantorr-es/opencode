@@ -68,6 +68,7 @@ export const SmartBunTool = Tool.define(
               try {
                 const proc = spawnSync("bun", cmdArgs, {
                   cwd,
+                  env: sanitizedProcessEnv(),
                   encoding: "utf8" as const,
                   maxBuffer: 1024 * 1024 * 5,
                   timeout,

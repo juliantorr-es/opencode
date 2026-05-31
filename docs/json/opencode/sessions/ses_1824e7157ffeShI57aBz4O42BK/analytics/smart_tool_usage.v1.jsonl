@@ -1,0 +1,10 @@
+{"at":"2026-05-31T11:07:18.723Z","session_id":"ses_1824e7157ffeShI57aBz4O42BK","agent":"reasonable-doubt","tool":"smart_grep","pattern":"smart.bash.*test|test.*smart.bash","path":"packages/opencode/test"}
+{"at":"2026-05-31T11:07:20.117Z","session_id":"ses_1824e7157ffeShI57aBz4O42BK","agent":"reasonable-doubt","tool":"smart_grep","pattern":"sanitizedProcessEnv|sanitize.*env","path":"packages"}
+{"at":"2026-05-31T11:07:21.211Z","session_id":"ses_1824e7157ffeShI57aBz4O42BK","agent":"reasonable-doubt","tool":"smart_grep","pattern":"isBlocklistedEnvVar|ENV_BLOCKLIST","path":"packages"}
+{"at":"2026-05-31T11:07:22.581Z","session_id":"ses_1824e7157ffeShI57aBz4O42BK","agent":"reasonable-doubt","tool":"smart_grep","pattern":"VALUE_SECRET_PATTERNS|scanToolOutput|hasSecrets|SecretScanner","path":"packages"}
+{"at":"2026-05-31T11:13:45.969Z","session_id":"ses_1824e7157ffeShI57aBz4O42BK","agent":"reasonable-doubt","tool":"smart_grep","pattern":"spawnSync|Bun\\.spawn|ChildProcess\\.spawn","path":"packages/opencode/src"}
+{"at":"2026-05-31T11:13:47.206Z","session_id":"ses_1824e7157ffeShI57aBz4O42BK","agent":"reasonable-doubt","tool":"smart_grep","pattern":"Tool\\.define|Tool\\.provide|tool\\.ts|ToolService|toolService","path":"packages/opencode/test"}
+{"at":"2026-05-31T11:13:48.299Z","session_id":"ses_1824e7157ffeShI57aBz4O42BK","agent":"reasonable-doubt","tool":"smart_grep","pattern":"testEffect|effectTest|Effect\\.run","path":"packages/opencode/test"}
+{"at":"2026-05-31T11:24:26.468Z","session_id":"ses_1824e7157ffeShI57aBz4O42BK","agent":"reasonable-doubt","tool":"smart_grep","pattern":"spawnSync|Bun\\.spawn|mock.*spawn","path":"packages/opencode/test"}
+{"at":"2026-05-31T11:24:27.527Z","session_id":"ses_1824e7157ffeShI57aBz4O42BK","agent":"reasonable-doubt","tool":"smart_grep","pattern":".","path":"packages/opencode/test/tool"}
+{"at":"2026-05-31T11:27:30.801Z","session_id":"ses_1824e7157ffeShI57aBz4O42BK","agent":"reasonable-doubt","tool":"smart_grep","pattern":"^","path":"packages/opencode/test/tool"}

@@ -8,3 +8,59 @@
 {"at":"2026-05-31T10:09:40.597Z","session_id":"ses_1827eca32ffe89UshTIh3ap7i2","agent":"load-bearer","tool":"smart_grep","phase":"completed","detail":"import.*\\$.*from"}
 {"at":"2026-05-31T10:09:41.401Z","session_id":"ses_1827eca32ffe89UshTIh3ap7i2","agent":"load-bearer","tool":"smart_grep","phase":"started","detail":"capability"}
 {"at":"2026-05-31T10:09:41.409Z","session_id":"ses_1827eca32ffe89UshTIh3ap7i2","agent":"load-bearer","tool":"smart_grep","phase":"completed","detail":"capability"}
+{"at":"2026-05-31T10:12:04.058Z","session_id":"ses_1827eca32ffe89UshTIh3ap7i2","agent":"load-bearer","tool":"smart_find","phase":"started","detail":"*.ts"}
+{"at":"2026-05-31T10:12:04.105Z","session_id":"ses_1827eca32ffe89UshTIh3ap7i2","agent":"load-bearer","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T10:14:56.299Z","session_id":"ses_1827eca32ffe89UshTIh3ap7i2","agent":"load-bearer","tool":"smart_grep","phase":"started","detail":"something"}
+{"at":"2026-05-31T10:14:56.309Z","session_id":"ses_1827eca32ffe89UshTIh3ap7i2","agent":"load-bearer","tool":"smart_grep","phase":"completed","detail":"something"}
+{"at":"2026-05-31T10:14:57.079Z","session_id":"ses_1827eca32ffe89UshTIh3ap7i2","agent":"load-bearer","tool":"smart_bash","phase":"started","detail":"List capability directory files"}
+{"at":"2026-05-31T10:14:57.080Z","session_id":"ses_1827eca32ffe89UshTIh3ap7i2","agent":"load-bearer","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T10:17:45.768Z","session_id":"ses_1827eca32ffe89UshTIh3ap7i2","agent":"load-bearer","tool":"smart_bash","phase":"started","detail":"Read PluginInput construction area"}
+{"at":"2026-05-31T10:17:45.768Z","session_id":"ses_1827eca32ffe89UshTIh3ap7i2","agent":"load-bearer","tool":"smart_bash","phase":"rerouted","detail":"→ read_source"}
+{"at":"2026-05-31T10:17:46.451Z","session_id":"ses_1827eca32ffe89UshTIh3ap7i2","agent":"load-bearer","tool":"smart_bash","phase":"started","detail":"List capability directory"}
+{"at":"2026-05-31T10:17:46.451Z","session_id":"ses_1827eca32ffe89UshTIh3ap7i2","agent":"load-bearer","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T10:17:47.362Z","session_id":"ses_1827eca32ffe89UshTIh3ap7i2","agent":"load-bearer","tool":"smart_bash","phase":"started","detail":"Read exact PluginInput type definition"}
+{"at":"2026-05-31T10:17:47.362Z","session_id":"ses_1827eca32ffe89UshTIh3ap7i2","agent":"load-bearer","tool":"smart_bash","phase":"rerouted","detail":"→ read_source"}
+{"at":"2026-05-31T10:17:48.445Z","session_id":"ses_1827eca32ffe89UshTIh3ap7i2","agent":"load-bearer","tool":"smart_grep","phase":"started","detail":"\\$\\.|input\\.\\$|\\.\\$\\(|\\.\\$\\."}
+{"at":"2026-05-31T10:17:48.458Z","session_id":"ses_1827eca32ffe89UshTIh3ap7i2","agent":"load-bearer","tool":"smart_grep","phase":"completed","detail":"\\$\\.|input\\.\\$|\\.\\$\\(|\\.\\$\\."}
+{"at":"2026-05-31T10:17:49.481Z","session_id":"ses_1827eca32ffe89UshTIh3ap7i2","agent":"load-bearer","tool":"smart_grep","phase":"started","detail":"fetch\\(|\\.fetch\\b"}
+{"at":"2026-05-31T10:17:49.495Z","session_id":"ses_1827eca32ffe89UshTIh3ap7i2","agent":"load-bearer","tool":"smart_grep","phase":"completed","detail":"fetch\\(|\\.fetch\\b"}
+{"at":"2026-05-31T10:21:03.679Z","session_id":"ses_1827eca32ffe89UshTIh3ap7i2","agent":"load-bearer","tool":"smart_bash","phase":"started","detail":"Read PluginInput construction + applyPlugin area"}
+{"at":"2026-05-31T10:21:04.634Z","session_id":"ses_1827eca32ffe89UshTIh3ap7i2","agent":"load-bearer","tool":"smart_bash","phase":"started","detail":"PluginInput type + BunShell import"}
+{"at":"2026-05-31T10:21:05.350Z","session_id":"ses_1827eca32ffe89UshTIh3ap7i2","agent":"load-bearer","tool":"smart_bash","phase":"started","detail":"List capability directory"}
+{"at":"2026-05-31T10:21:05.351Z","session_id":"ses_1827eca32ffe89UshTIh3ap7i2","agent":"load-bearer","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T10:21:06.591Z","session_id":"ses_1827eca32ffe89UshTIh3ap7i2","agent":"load-bearer","tool":"smart_grep","phase":"started","detail":"input\\.\\$|\\.\\$\\("}
+{"at":"2026-05-31T10:21:06.610Z","session_id":"ses_1827eca32ffe89UshTIh3ap7i2","agent":"load-bearer","tool":"smart_grep","phase":"completed","detail":"input\\.\\$|\\.\\$\\("}
+{"at":"2026-05-31T10:24:23.968Z","session_id":"ses_1827eca32ffe89UshTIh3ap7i2","agent":"load-bearer","tool":"smart_grep","phase":"started","detail":"\\\\$\\(`|\\.\\$\\(`"}
+{"at":"2026-05-31T10:24:23.978Z","session_id":"ses_1827eca32ffe89UshTIh3ap7i2","agent":"load-bearer","tool":"smart_grep","phase":"completed","detail":"\\\\$\\(`|\\.\\$\\(`"}
+{"at":"2026-05-31T10:24:24.832Z","session_id":"ses_1827eca32ffe89UshTIh3ap7i2","agent":"load-bearer","tool":"smart_grep","phase":"started","detail":"\"capability\""}
+{"at":"2026-05-31T10:24:24.848Z","session_id":"ses_1827eca32ffe89UshTIh3ap7i2","agent":"load-bearer","tool":"smart_grep","phase":"completed","detail":"\"capability\""}
+{"at":"2026-05-31T10:28:16.523Z","session_id":"ses_1827eca32ffe89UshTIh3ap7i2","agent":"load-bearer","tool":"smart_bash","phase":"started","detail":"List capability directory files"}
+{"at":"2026-05-31T10:28:16.523Z","session_id":"ses_1827eca32ffe89UshTIh3ap7i2","agent":"load-bearer","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T10:28:18.099Z","session_id":"ses_1827eca32ffe89UshTIh3ap7i2","agent":"load-bearer","tool":"smart_bash","phase":"started","detail":"Find $ shell usage in all plugins"}
+{"at":"2026-05-31T10:28:18.100Z","session_id":"ses_1827eca32ffe89UshTIh3ap7i2","agent":"load-bearer","tool":"smart_bash","phase":"rerouted","detail":"→ smart_grep"}
+{"at":"2026-05-31T10:32:48.869Z","session_id":"ses_1827eca32ffe89UshTIh3ap7i2","agent":"load-bearer","tool":"smart_bash","phase":"started","detail":"Find all capability files"}
+{"at":"2026-05-31T10:32:48.869Z","session_id":"ses_1827eca32ffe89UshTIh3ap7i2","agent":"load-bearer","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T10:32:49.921Z","session_id":"ses_1827eca32ffe89UshTIh3ap7i2","agent":"load-bearer","tool":"smart_grep","phase":"started","detail":"input\\."}
+{"at":"2026-05-31T10:32:49.950Z","session_id":"ses_1827eca32ffe89UshTIh3ap7i2","agent":"load-bearer","tool":"smart_grep","phase":"completed","detail":"input\\."}
+{"at":"2026-05-31T10:32:51.039Z","session_id":"ses_1827eca32ffe89UshTIh3ap7i2","agent":"load-bearer","tool":"smart_grep","phase":"started","detail":"process\\.env"}
+{"at":"2026-05-31T10:32:51.051Z","session_id":"ses_1827eca32ffe89UshTIh3ap7i2","agent":"load-bearer","tool":"smart_grep","phase":"completed","detail":"process\\.env"}
+{"at":"2026-05-31T10:32:55.910Z","session_id":"ses_1827eca32ffe89UshTIh3ap7i2","agent":"load-bearer","tool":"smart_bash","phase":"started","detail":"List capability directory"}
+{"at":"2026-05-31T10:32:55.911Z","session_id":"ses_1827eca32ffe89UshTIh3ap7i2","agent":"load-bearer","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T10:37:12.973Z","session_id":"ses_1827eca32ffe89UshTIh3ap7i2","agent":"load-bearer","tool":"smart_bash","phase":"started","detail":"Read PluginInput construction exactly"}
+{"at":"2026-05-31T10:37:12.973Z","session_id":"ses_1827eca32ffe89UshTIh3ap7i2","agent":"load-bearer","tool":"smart_bash","phase":"rerouted","detail":"→ read_source"}
+{"at":"2026-05-31T10:37:13.633Z","session_id":"ses_1827eca32ffe89UshTIh3ap7i2","agent":"load-bearer","tool":"smart_grep","phase":"started","detail":"plugin.*test|test.*plugin"}
+{"at":"2026-05-31T10:37:13.863Z","session_id":"ses_1827eca32ffe89UshTIh3ap7i2","agent":"load-bearer","tool":"smart_grep","phase":"completed","detail":"plugin.*test|test.*plugin"}
+{"at":"2026-05-31T10:37:14.510Z","session_id":"ses_1827eca32ffe89UshTIh3ap7i2","agent":"load-bearer","tool":"smart_grep","phase":"started","detail":"import.*opencode-ai/plugin"}
+{"at":"2026-05-31T10:37:14.569Z","session_id":"ses_1827eca32ffe89UshTIh3ap7i2","agent":"load-bearer","tool":"smart_grep","phase":"completed","detail":"import.*opencode-ai/plugin"}
+{"at":"2026-05-31T10:44:50.128Z","session_id":"ses_1827eca32ffe89UshTIh3ap7i2","agent":"load-bearer","tool":"smart_bash","phase":"started","detail":"Read PluginInput construction site (lines 215-280)"}
+{"at":"2026-05-31T10:44:50.149Z","session_id":"ses_1827eca32ffe89UshTIh3ap7i2","agent":"load-bearer","tool":"smart_bash","phase":"completed","detail":"awk exit=0"}
+{"at":"2026-05-31T10:44:51.155Z","session_id":"ses_1827eca32ffe89UshTIh3ap7i2","agent":"load-bearer","tool":"smart_bash","phase":"started","detail":"Read applyPlugin setup and secrets filtering area"}
+{"at":"2026-05-31T10:44:51.172Z","session_id":"ses_1827eca32ffe89UshTIh3ap7i2","agent":"load-bearer","tool":"smart_bash","phase":"completed","detail":"awk exit=0"}
+{"at":"2026-05-31T11:18:44.294Z","session_id":"ses_1827eca32ffe89UshTIh3ap7i2","agent":"load-bearer","tool":"smart_bash","phase":"started","detail":"Find plugin test files"}
+{"at":"2026-05-31T11:18:44.294Z","session_id":"ses_1827eca32ffe89UshTIh3ap7i2","agent":"load-bearer","tool":"smart_bash","phase":"rerouted","detail":"→ smart_grep"}
+{"at":"2026-05-31T11:18:45.022Z","session_id":"ses_1827eca32ffe89UshTIh3ap7i2","agent":"load-bearer","tool":"smart_grep","phase":"started","detail":"PluginLayer|plugin.*layer|makePluginLayer"}
+{"at":"2026-05-31T11:18:45.480Z","session_id":"ses_1827eca32ffe89UshTIh3ap7i2","agent":"load-bearer","tool":"smart_grep","phase":"completed","detail":"PluginLayer|plugin.*layer|makePluginLayer"}
+{"at":"2026-05-31T11:21:23.263Z","session_id":"ses_1827eca32ffe89UshTIh3ap7i2","agent":"load-bearer","tool":"smart_bash","phase":"started","detail":"Find plugin test files definitively"}
+{"at":"2026-05-31T11:21:23.264Z","session_id":"ses_1827eca32ffe89UshTIh3ap7i2","agent":"load-bearer","tool":"smart_bash","phase":"rerouted","detail":"→ smart_grep"}
+{"at":"2026-05-31T11:24:07.839Z","session_id":"ses_1827eca32ffe89UshTIh3ap7i2","agent":"load-bearer","tool":"smart_bash","phase":"started","detail":"Find plugin test files with grep"}
+{"at":"2026-05-31T11:24:07.920Z","session_id":"ses_1827eca32ffe89UshTIh3ap7i2","agent":"load-bearer","tool":"smart_bash","phase":"completed","detail":"bash exit=0"}
