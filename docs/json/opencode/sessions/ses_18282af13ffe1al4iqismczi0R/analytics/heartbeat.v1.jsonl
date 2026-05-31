@@ -1,0 +1,20 @@
+{"at":"2026-05-31T10:04:52.961Z","session_id":"ses_18282af13ffe1al4iqismczi0R","agent":"load-bearer","tool":"smart_git","phase":"started","detail":"rev-parse"}
+{"at":"2026-05-31T10:04:52.986Z","session_id":"ses_18282af13ffe1al4iqismczi0R","agent":"load-bearer","tool":"smart_git","phase":"completed","detail":"rev-parse exit=0"}
+{"at":"2026-05-31T10:04:53.658Z","session_id":"ses_18282af13ffe1al4iqismczi0R","agent":"load-bearer","tool":"smart_find","phase":"started","detail":"*"}
+{"at":"2026-05-31T10:04:53.681Z","session_id":"ses_18282af13ffe1al4iqismczi0R","agent":"load-bearer","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T10:06:16.990Z","session_id":"ses_18282af13ffe1al4iqismczi0R","agent":"load-bearer","tool":"smart_bash","phase":"started","detail":"List all packages in the repo"}
+{"at":"2026-05-31T10:06:16.990Z","session_id":"ses_18282af13ffe1al4iqismczi0R","agent":"load-bearer","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T10:06:18.481Z","session_id":"ses_18282af13ffe1al4iqismczi0R","agent":"load-bearer","tool":"smart_bash","phase":"started","detail":"Check if target packages exist"}
+{"at":"2026-05-31T10:06:18.481Z","session_id":"ses_18282af13ffe1al4iqismczi0R","agent":"load-bearer","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T10:07:44.727Z","session_id":"ses_18282af13ffe1al4iqismczi0R","agent":"load-bearer","tool":"smart_bash","phase":"started","detail":"List all packages"}
+{"at":"2026-05-31T10:07:44.727Z","session_id":"ses_18282af13ffe1al4iqismczi0R","agent":"load-bearer","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T10:07:46.163Z","session_id":"ses_18282af13ffe1al4iqismczi0R","agent":"load-bearer","tool":"smart_bash","phase":"started","detail":"Check existence of target packages"}
+{"at":"2026-05-31T10:07:46.170Z","session_id":"ses_18282af13ffe1al4iqismczi0R","agent":"load-bearer","tool":"smart_bash","phase":"completed","detail":"test exit=0"}
+{"at":"2026-05-31T10:09:24.387Z","session_id":"ses_18282af13ffe1al4iqismczi0R","agent":"load-bearer","tool":"smart_grep","phase":"started","detail":"@opencode-ai/slack"}
+{"at":"2026-05-31T10:09:24.837Z","session_id":"ses_18282af13ffe1al4iqismczi0R","agent":"load-bearer","tool":"smart_grep","phase":"completed","detail":"@opencode-ai/slack"}
+{"at":"2026-05-31T10:09:25.036Z","session_id":"ses_18282af13ffe1al4iqismczi0R","agent":"load-bearer","tool":"smart_grep","phase":"started","detail":"@opencode-ai/enterprise"}
+{"at":"2026-05-31T10:09:25.286Z","session_id":"ses_18282af13ffe1al4iqismczi0R","agent":"load-bearer","tool":"smart_grep","phase":"completed","detail":"@opencode-ai/enterprise"}
+{"at":"2026-05-31T10:09:25.581Z","session_id":"ses_18282af13ffe1al4iqismczi0R","agent":"load-bearer","tool":"smart_grep","phase":"started","detail":"@opencode-ai/identity"}
+{"at":"2026-05-31T10:09:25.811Z","session_id":"ses_18282af13ffe1al4iqismczi0R","agent":"load-bearer","tool":"smart_grep","phase":"completed","detail":"@opencode-ai/identity"}
+{"at":"2026-05-31T10:09:26.167Z","session_id":"ses_18282af13ffe1al4iqismczi0R","agent":"load-bearer","tool":"smart_grep","phase":"started","detail":"@opencode-ai/script"}
+{"at":"2026-05-31T10:09:26.660Z","session_id":"ses_18282af13ffe1al4iqismczi0R","agent":"load-bearer","tool":"smart_grep","phase":"completed","detail":"@opencode-ai/script"}

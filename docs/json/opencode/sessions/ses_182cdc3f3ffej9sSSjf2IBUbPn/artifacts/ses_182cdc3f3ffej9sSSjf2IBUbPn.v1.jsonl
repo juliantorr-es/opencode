@@ -16,3 +16,7 @@
 {"at":"2026-05-31T09:11:52.521Z","tool":"smart_bash","action":"bash","command":"/usr/bin/find packages/plugin/src -name '*.ts' -type f 2>/dev/null | head -20","exit_code":0}
 {"at":"2026-05-31T09:15:02.264Z","tool":"smart_grep","action":"searched","pattern":"export.*Permission","results":26,"files":14}
 {"at":"2026-05-31T09:26:52.216Z","tool":"smart_write","action":"wrote","file":".build/rig-relay/plugin_security_surface.v1.json","detail":"Produce structured JSON artifact mapping plugin security surface for Lane INV-00"}
+{"at":"2026-05-31T09:47:36.369Z","tool":"smart_edit","action":"edited","file":".build/rig-relay/plugin_security_surface.v1.json","detail":"Add MCP-specific vulnerabilities uncovered by explore subagent"}
+{"at":"2026-05-31T09:48:35.726Z","tool":"smart_edit","action":"edited","file":".build/rig-relay/plugin_security_surface.v1.json","detail":"Add MCP-specific mitigations from explore subagent findings"}
+{"at":"2026-05-31T09:49:25.455Z","tool":"smart_edit","action":"edited","file":".build/rig-relay/plugin_security_surface.v1.json","detail":"Expand MCP security analysis with additional gaps from explore subagent"}
+{"at":"2026-05-31T09:51:54.741Z","tool":"smart_edit","action":"edited","file":".build/rig-relay/plugin_security_surface.v1.json","detail":"Add MCP-specific files to the files_touched array, with unique surrounding conte"}

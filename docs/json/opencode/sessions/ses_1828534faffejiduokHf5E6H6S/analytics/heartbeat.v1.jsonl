@@ -1,0 +1,28 @@
+{"at":"2026-05-31T10:02:14.252Z","session_id":"ses_1828534faffejiduokHf5E6H6S","agent":"blueprint","tool":"smart_find","phase":"started","detail":"*.test.*"}
+{"at":"2026-05-31T10:02:14.252Z","session_id":"ses_1828534faffejiduokHf5E6H6S","agent":"blueprint","tool":"smart_find","phase":"failed","detail":"path not found"}
+{"at":"2026-05-31T10:02:15.079Z","session_id":"ses_1828534faffejiduokHf5E6H6S","agent":"blueprint","tool":"smart_find","phase":"started","detail":"*.test.*"}
+{"at":"2026-05-31T10:02:15.098Z","session_id":"ses_1828534faffejiduokHf5E6H6S","agent":"blueprint","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T10:02:15.804Z","session_id":"ses_1828534faffejiduokHf5E6H6S","agent":"blueprint","tool":"smart_find","phase":"started","detail":"*.test.*"}
+{"at":"2026-05-31T10:02:15.805Z","session_id":"ses_1828534faffejiduokHf5E6H6S","agent":"blueprint","tool":"smart_find","phase":"failed","detail":"path not found"}
+{"at":"2026-05-31T10:03:35.294Z","session_id":"ses_1828534faffejiduokHf5E6H6S","agent":"blueprint","tool":"smart_grep","phase":"started","detail":"\\.test\\."}
+{"at":"2026-05-31T10:03:35.325Z","session_id":"ses_1828534faffejiduokHf5E6H6S","agent":"blueprint","tool":"smart_grep","phase":"completed","detail":"\\.test\\."}
+{"at":"2026-05-31T10:03:36.454Z","session_id":"ses_1828534faffejiduokHf5E6H6S","agent":"blueprint","tool":"smart_grep","phase":"started","detail":"\\.test\\."}
+{"at":"2026-05-31T10:03:36.485Z","session_id":"ses_1828534faffejiduokHf5E6H6S","agent":"blueprint","tool":"smart_grep","phase":"completed","detail":"\\.test\\."}
+{"at":"2026-05-31T10:04:46.105Z","session_id":"ses_1828534faffejiduokHf5E6H6S","agent":"blueprint","tool":"smart_bash","phase":"started","detail":"Find test directories across packages"}
+{"at":"2026-05-31T10:04:46.105Z","session_id":"ses_1828534faffejiduokHf5E6H6S","agent":"blueprint","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T10:04:46.978Z","session_id":"ses_1828534faffejiduokHf5E6H6S","agent":"blueprint","tool":"smart_bash","phase":"started","detail":"Find all test files across all packages"}
+{"at":"2026-05-31T10:04:46.978Z","session_id":"ses_1828534faffejiduokHf5E6H6S","agent":"blueprint","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T10:06:10.013Z","session_id":"ses_1828534faffejiduokHf5E6H6S","agent":"blueprint","tool":"smart_bash","phase":"started","detail":"List all test directories"}
+{"at":"2026-05-31T10:06:10.013Z","session_id":"ses_1828534faffejiduokHf5E6H6S","agent":"blueprint","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T10:06:10.914Z","session_id":"ses_1828534faffejiduokHf5E6H6S","agent":"blueprint","tool":"smart_bash","phase":"started","detail":"Find all test files across all packages"}
+{"at":"2026-05-31T10:06:10.914Z","session_id":"ses_1828534faffejiduokHf5E6H6S","agent":"blueprint","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T10:07:36.212Z","session_id":"ses_1828534faffejiduokHf5E6H6S","agent":"blueprint","tool":"smart_grep","phase":"started","detail":"from \"bun:test\""}
+{"at":"2026-05-31T10:07:36.259Z","session_id":"ses_1828534faffejiduokHf5E6H6S","agent":"blueprint","tool":"smart_grep","phase":"completed","detail":"from \"bun:test\""}
+{"at":"2026-05-31T10:07:37.366Z","session_id":"ses_1828534faffejiduokHf5E6H6S","agent":"blueprint","tool":"smart_grep","phase":"started","detail":"^import.*from \"bun:test\""}
+{"at":"2026-05-31T10:07:37.407Z","session_id":"ses_1828534faffejiduokHf5E6H6S","agent":"blueprint","tool":"smart_grep","phase":"completed","detail":"^import.*from \"bun:test\""}
+{"at":"2026-05-31T10:09:16.125Z","session_id":"ses_1828534faffejiduokHf5E6H6S","agent":"blueprint","tool":"smart_grep","phase":"started","detail":"server|watchdog|health|sidecar|degraded|migrat"}
+{"at":"2026-05-31T10:09:16.153Z","session_id":"ses_1828534faffejiduokHf5E6H6S","agent":"blueprint","tool":"smart_grep","phase":"completed","detail":"server|watchdog|health|sidecar|degraded|migrat"}
+{"at":"2026-05-31T10:09:17.223Z","session_id":"ses_1828534faffejiduokHf5E6H6S","agent":"blueprint","tool":"smart_grep","phase":"started","detail":"server|watchdog|health|sidecar|degraded|migrat"}
+{"at":"2026-05-31T10:09:17.237Z","session_id":"ses_1828534faffejiduokHf5E6H6S","agent":"blueprint","tool":"smart_grep","phase":"completed","detail":"server|watchdog|health|sidecar|degraded|migrat"}
+{"at":"2026-05-31T10:09:18.264Z","session_id":"ses_1828534faffejiduokHf5E6H6S","agent":"blueprint","tool":"smart_grep","phase":"started","detail":"migrat|adapter|database"}
+{"at":"2026-05-31T10:09:18.274Z","session_id":"ses_1828534faffejiduokHf5E6H6S","agent":"blueprint","tool":"smart_grep","phase":"completed","detail":"migrat|adapter|database"}

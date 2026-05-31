@@ -1,0 +1,24 @@
+{"at":"2026-05-31T10:04:56.640Z","session_id":"ses_18282ce6effeQ5SZ0J5Vxa8ztI","agent":"foundation","tool":"smart_grep","phase":"started","detail":"coverage"}
+{"at":"2026-05-31T10:04:56.779Z","session_id":"ses_18282ce6effeQ5SZ0J5Vxa8ztI","agent":"foundation","tool":"smart_grep","phase":"completed","detail":"coverage"}
+{"at":"2026-05-31T10:04:57.271Z","session_id":"ses_18282ce6effeQ5SZ0J5Vxa8ztI","agent":"foundation","tool":"smart_grep","phase":"started","detail":"bun test --coverage"}
+{"at":"2026-05-31T10:04:57.670Z","session_id":"ses_18282ce6effeQ5SZ0J5Vxa8ztI","agent":"foundation","tool":"smart_grep","phase":"completed","detail":"bun test --coverage"}
+{"at":"2026-05-31T10:04:57.847Z","session_id":"ses_18282ce6effeQ5SZ0J5Vxa8ztI","agent":"foundation","tool":"smart_find","phase":"started","detail":"dependabot*"}
+{"at":"2026-05-31T10:04:57.885Z","session_id":"ses_18282ce6effeQ5SZ0J5Vxa8ztI","agent":"foundation","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T10:04:58.494Z","session_id":"ses_18282ce6effeQ5SZ0J5Vxa8ztI","agent":"foundation","tool":"smart_find","phase":"started","detail":"*.test.ts"}
+{"at":"2026-05-31T10:04:58.513Z","session_id":"ses_18282ce6effeQ5SZ0J5Vxa8ztI","agent":"foundation","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T10:06:21.225Z","session_id":"ses_18282ce6effeQ5SZ0J5Vxa8ztI","agent":"foundation","tool":"smart_grep","phase":"started","detail":"\"test\":"}
+{"at":"2026-05-31T10:06:21.307Z","session_id":"ses_18282ce6effeQ5SZ0J5Vxa8ztI","agent":"foundation","tool":"smart_grep","phase":"completed","detail":"\"test\":"}
+{"at":"2026-05-31T10:06:22.244Z","session_id":"ses_18282ce6effeQ5SZ0J5Vxa8ztI","agent":"foundation","tool":"smart_bash","phase":"started","detail":"Find test files in enterprise package"}
+{"at":"2026-05-31T10:06:22.244Z","session_id":"ses_18282ce6effeQ5SZ0J5Vxa8ztI","agent":"foundation","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T10:06:23.434Z","session_id":"ses_18282ce6effeQ5SZ0J5Vxa8ztI","agent":"foundation","tool":"smart_bash","phase":"started","detail":"Find all test files to verify dead test claims"}
+{"at":"2026-05-31T10:06:23.434Z","session_id":"ses_18282ce6effeQ5SZ0J5Vxa8ztI","agent":"foundation","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T10:07:51.519Z","session_id":"ses_18282ce6effeQ5SZ0J5Vxa8ztI","agent":"foundation","tool":"smart_grep","phase":"started","detail":"."}
+{"at":"2026-05-31T10:07:51.638Z","session_id":"ses_18282ce6effeQ5SZ0J5Vxa8ztI","agent":"foundation","tool":"smart_grep","phase":"failed","detail":"spawnSync rg ENOBUFS (stdout or stderr buffer reached maxBuffer size limit)"}
+{"at":"2026-05-31T10:07:52.278Z","session_id":"ses_18282ce6effeQ5SZ0J5Vxa8ztI","agent":"foundation","tool":"smart_grep","phase":"started","detail":"\"test\":"}
+{"at":"2026-05-31T10:07:52.537Z","session_id":"ses_18282ce6effeQ5SZ0J5Vxa8ztI","agent":"foundation","tool":"smart_grep","phase":"completed","detail":"\"test\":"}
+{"at":"2026-05-31T10:07:53.303Z","session_id":"ses_18282ce6effeQ5SZ0J5Vxa8ztI","agent":"foundation","tool":"smart_bash","phase":"started","detail":"Check if docs/adr directory exists"}
+{"at":"2026-05-31T10:07:53.303Z","session_id":"ses_18282ce6effeQ5SZ0J5Vxa8ztI","agent":"foundation","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T10:09:33.273Z","session_id":"ses_18282ce6effeQ5SZ0J5Vxa8ztI","agent":"foundation","tool":"smart_grep","phase":"started","detail":"\"scripts\""}
+{"at":"2026-05-31T10:09:33.286Z","session_id":"ses_18282ce6effeQ5SZ0J5Vxa8ztI","agent":"foundation","tool":"smart_grep","phase":"completed","detail":"\"scripts\""}
+{"at":"2026-05-31T10:09:34.066Z","session_id":"ses_18282ce6effeQ5SZ0J5Vxa8ztI","agent":"foundation","tool":"smart_bash","phase":"started","detail":"List all packages in the monorepo"}
+{"at":"2026-05-31T10:09:34.066Z","session_id":"ses_18282ce6effeQ5SZ0J5Vxa8ztI","agent":"foundation","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}

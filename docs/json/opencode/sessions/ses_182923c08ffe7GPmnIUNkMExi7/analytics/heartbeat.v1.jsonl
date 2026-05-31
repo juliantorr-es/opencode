@@ -1,0 +1,20 @@
+{"at":"2026-05-31T09:57:02.588Z","session_id":"ses_182923c08ffe7GPmnIUNkMExi7","agent":"architect","tool":"smart_find","phase":"started","detail":"env-blocklist.ts"}
+{"at":"2026-05-31T09:57:02.632Z","session_id":"ses_182923c08ffe7GPmnIUNkMExi7","agent":"architect","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T09:57:03.132Z","session_id":"ses_182923c08ffe7GPmnIUNkMExi7","agent":"architect","tool":"smart_find","phase":"started","detail":"opencode-process.ts"}
+{"at":"2026-05-31T09:57:03.154Z","session_id":"ses_182923c08ffe7GPmnIUNkMExi7","agent":"architect","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T09:57:03.887Z","session_id":"ses_182923c08ffe7GPmnIUNkMExi7","agent":"architect","tool":"smart_find","phase":"started","detail":"debug-packet.ts"}
+{"at":"2026-05-31T09:57:03.959Z","session_id":"ses_182923c08ffe7GPmnIUNkMExi7","agent":"architect","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T09:58:27.026Z","session_id":"ses_182923c08ffe7GPmnIUNkMExi7","agent":"architect","tool":"smart_grep","phase":"started","detail":"env-blocklist\\.ts|env_blocklist\\.ts"}
+{"at":"2026-05-31T09:58:27.072Z","session_id":"ses_182923c08ffe7GPmnIUNkMExi7","agent":"architect","tool":"smart_grep","phase":"completed","detail":"env-blocklist\\.ts|env_blocklist\\.ts"}
+{"at":"2026-05-31T09:58:28.057Z","session_id":"ses_182923c08ffe7GPmnIUNkMExi7","agent":"architect","tool":"smart_grep","phase":"started","detail":"sanitizedProcessEnv"}
+{"at":"2026-05-31T09:58:28.066Z","session_id":"ses_182923c08ffe7GPmnIUNkMExi7","agent":"architect","tool":"smart_grep","phase":"completed","detail":"sanitizedProcessEnv"}
+{"at":"2026-05-31T09:58:29.097Z","session_id":"ses_182923c08ffe7GPmnIUNkMExi7","agent":"architect","tool":"smart_grep","phase":"started","detail":"redactValues"}
+{"at":"2026-05-31T09:58:29.105Z","session_id":"ses_182923c08ffe7GPmnIUNkMExi7","agent":"architect","tool":"smart_grep","phase":"completed","detail":"redactValues"}
+{"at":"2026-05-31T10:03:34.575Z","session_id":"ses_182923c08ffe7GPmnIUNkMExi7","agent":"architect","tool":"smart_grep","phase":"started","detail":"SENSITIVE_PATTERNS|VALUE_SECRET_PATTERNS"}
+{"at":"2026-05-31T10:03:34.580Z","session_id":"ses_182923c08ffe7GPmnIUNkMExi7","agent":"architect","tool":"smart_grep","phase":"completed","detail":"SENSITIVE_PATTERNS|VALUE_SECRET_PATTERNS"}
+{"at":"2026-05-31T10:04:42.766Z","session_id":"ses_182923c08ffe7GPmnIUNkMExi7","agent":"architect","tool":"smart_grep","phase":"started","detail":"VALUE_SECRET"}
+{"at":"2026-05-31T10:04:42.771Z","session_id":"ses_182923c08ffe7GPmnIUNkMExi7","agent":"architect","tool":"smart_grep","phase":"completed","detail":"VALUE_SECRET"}
+{"at":"2026-05-31T10:06:04.613Z","session_id":"ses_182923c08ffe7GPmnIUNkMExi7","agent":"architect","tool":"smart_grep","phase":"started","detail":"VALUE_SECRET_PATTERNS"}
+{"at":"2026-05-31T10:06:04.619Z","session_id":"ses_182923c08ffe7GPmnIUNkMExi7","agent":"architect","tool":"smart_grep","phase":"completed","detail":"VALUE_SECRET_PATTERNS"}
+{"at":"2026-05-31T10:09:09.836Z","session_id":"ses_182923c08ffe7GPmnIUNkMExi7","agent":"architect","tool":"smart_bash","phase":"started","detail":"Read VALUE_SECRET_PATTERNS array from debug-packet.ts"}
+{"at":"2026-05-31T10:09:09.846Z","session_id":"ses_182923c08ffe7GPmnIUNkMExi7","agent":"architect","tool":"smart_bash","phase":"completed","detail":"head exit=0"}

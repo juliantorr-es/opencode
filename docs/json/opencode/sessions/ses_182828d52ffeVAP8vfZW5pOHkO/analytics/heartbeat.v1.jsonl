@@ -1,0 +1,38 @@
+{"at":"2026-05-31T10:05:04.837Z","session_id":"ses_182828d52ffeVAP8vfZW5pOHkO","agent":"load-bearer","tool":"smart_find","phase":"started","detail":"*.yml"}
+{"at":"2026-05-31T10:05:04.856Z","session_id":"ses_182828d52ffeVAP8vfZW5pOHkO","agent":"load-bearer","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T10:05:05.548Z","session_id":"ses_182828d52ffeVAP8vfZW5pOHkO","agent":"load-bearer","tool":"smart_find","phase":"started","detail":"package.json"}
+{"at":"2026-05-31T10:05:05.678Z","session_id":"ses_182828d52ffeVAP8vfZW5pOHkO","agent":"load-bearer","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T10:05:06.261Z","session_id":"ses_182828d52ffeVAP8vfZW5pOHkO","agent":"load-bearer","tool":"smart_find","phase":"started","detail":"justfile*"}
+{"at":"2026-05-31T10:05:06.282Z","session_id":"ses_182828d52ffeVAP8vfZW5pOHkO","agent":"load-bearer","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T10:05:06.904Z","session_id":"ses_182828d52ffeVAP8vfZW5pOHkO","agent":"load-bearer","tool":"smart_find","phase":"started","detail":"adr"}
+{"at":"2026-05-31T10:05:06.921Z","session_id":"ses_182828d52ffeVAP8vfZW5pOHkO","agent":"load-bearer","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T10:05:07.600Z","session_id":"ses_182828d52ffeVAP8vfZW5pOHkO","agent":"load-bearer","tool":"smart_find","phase":"started","detail":"scripts"}
+{"at":"2026-05-31T10:05:07.618Z","session_id":"ses_182828d52ffeVAP8vfZW5pOHkO","agent":"load-bearer","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T10:06:31.007Z","session_id":"ses_182828d52ffeVAP8vfZW5pOHkO","agent":"load-bearer","tool":"smart_bash","phase":"started","detail":"find CI workflow files"}
+{"at":"2026-05-31T10:06:31.007Z","session_id":"ses_182828d52ffeVAP8vfZW5pOHkO","agent":"load-bearer","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T10:06:32.181Z","session_id":"ses_182828d52ffeVAP8vfZW5pOHkO","agent":"load-bearer","tool":"smart_bash","phase":"started","detail":"find all package.json files"}
+{"at":"2026-05-31T10:06:32.181Z","session_id":"ses_182828d52ffeVAP8vfZW5pOHkO","agent":"load-bearer","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T10:06:33.396Z","session_id":"ses_182828d52ffeVAP8vfZW5pOHkO","agent":"load-bearer","tool":"smart_bash","phase":"started","detail":"find justfiles"}
+{"at":"2026-05-31T10:06:33.396Z","session_id":"ses_182828d52ffeVAP8vfZW5pOHkO","agent":"load-bearer","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T10:06:34.513Z","session_id":"ses_182828d52ffeVAP8vfZW5pOHkO","agent":"load-bearer","tool":"smart_bash","phase":"started","detail":"find ADR directory"}
+{"at":"2026-05-31T10:06:34.513Z","session_id":"ses_182828d52ffeVAP8vfZW5pOHkO","agent":"load-bearer","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T10:06:36.233Z","session_id":"ses_182828d52ffeVAP8vfZW5pOHkO","agent":"load-bearer","tool":"smart_bash","phase":"started","detail":"find scripts directories"}
+{"at":"2026-05-31T10:06:36.234Z","session_id":"ses_182828d52ffeVAP8vfZW5pOHkO","agent":"load-bearer","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T10:08:07.449Z","session_id":"ses_182828d52ffeVAP8vfZW5pOHkO","agent":"load-bearer","tool":"smart_bash","phase":"started","detail":"list CI workflow files"}
+{"at":"2026-05-31T10:08:07.449Z","session_id":"ses_182828d52ffeVAP8vfZW5pOHkO","agent":"load-bearer","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T10:08:08.305Z","session_id":"ses_182828d52ffeVAP8vfZW5pOHkO","agent":"load-bearer","tool":"smart_bash","phase":"started","detail":"list .github contents"}
+{"at":"2026-05-31T10:08:08.305Z","session_id":"ses_182828d52ffeVAP8vfZW5pOHkO","agent":"load-bearer","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T10:08:09.100Z","session_id":"ses_182828d52ffeVAP8vfZW5pOHkO","agent":"load-bearer","tool":"smart_bash","phase":"started","detail":"list packages"}
+{"at":"2026-05-31T10:08:09.101Z","session_id":"ses_182828d52ffeVAP8vfZW5pOHkO","agent":"load-bearer","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T10:08:10.449Z","session_id":"ses_182828d52ffeVAP8vfZW5pOHkO","agent":"load-bearer","tool":"smart_bash","phase":"started","detail":"find all package.json locations"}
+{"at":"2026-05-31T10:08:10.449Z","session_id":"ses_182828d52ffeVAP8vfZW5pOHkO","agent":"load-bearer","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T10:08:11.244Z","session_id":"ses_182828d52ffeVAP8vfZW5pOHkO","agent":"load-bearer","tool":"smart_bash","phase":"started","detail":"list top-level directories"}
+{"at":"2026-05-31T10:08:11.245Z","session_id":"ses_182828d52ffeVAP8vfZW5pOHkO","agent":"load-bearer","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T10:09:48.792Z","session_id":"ses_182828d52ffeVAP8vfZW5pOHkO","agent":"load-bearer","tool":"smart_find","phase":"started","detail":"*.yml"}
+{"at":"2026-05-31T10:09:48.908Z","session_id":"ses_182828d52ffeVAP8vfZW5pOHkO","agent":"load-bearer","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T10:09:49.511Z","session_id":"ses_182828d52ffeVAP8vfZW5pOHkO","agent":"load-bearer","tool":"smart_find","phase":"started","detail":"*"}
+{"at":"2026-05-31T10:09:49.552Z","session_id":"ses_182828d52ffeVAP8vfZW5pOHkO","agent":"load-bearer","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T10:09:50.211Z","session_id":"ses_182828d52ffeVAP8vfZW5pOHkO","agent":"load-bearer","tool":"smart_find","phase":"started","detail":"*"}
+{"at":"2026-05-31T10:09:50.256Z","session_id":"ses_182828d52ffeVAP8vfZW5pOHkO","agent":"load-bearer","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T10:09:50.817Z","session_id":"ses_182828d52ffeVAP8vfZW5pOHkO","agent":"load-bearer","tool":"smart_find","phase":"started","detail":"package.json"}
+{"at":"2026-05-31T10:09:50.874Z","session_id":"ses_182828d52ffeVAP8vfZW5pOHkO","agent":"load-bearer","tool":"smart_find","phase":"failed","detail":"fd not available"}

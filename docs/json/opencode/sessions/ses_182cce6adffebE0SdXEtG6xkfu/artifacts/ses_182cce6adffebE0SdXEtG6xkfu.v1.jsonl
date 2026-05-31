@@ -23,3 +23,4 @@
 {"at":"2026-05-31T09:38:39.866Z","tool":"smart_bash","action":"bash","command":"/bin/ls packages/console/app/src/ 2>/dev/null","exit_code":0}
 {"at":"2026-05-31T09:40:21.772Z","tool":"smart_bash","action":"bash","command":"/bin/ls packages/slack/test/ packages/slack/tests/ 2>/dev/null; /bin/ls packages/http-recorder/test/","exit_code":0}
 {"at":"2026-05-31T09:42:18.645Z","tool":"smart_grep","action":"searched","pattern":"SLACK_BOT_TOKEN|SLACK_SIGNING_SECRET|SLACK_APP_TOKEN|process\\.env\\.OPENCODE_STOR","results":20,"files":5}
+{"at":"2026-05-31T09:47:35.132Z","tool":"smart_write","action":"wrote","file":".build/rig-relay/integrations_surface_map.v1.json","detail":"Write integration surface map artifact for Lane MAP-005"}

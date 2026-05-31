@@ -1,0 +1,18 @@
+{"at":"2026-05-31T09:56:38.911Z","tool":"smart_grep","action":"searched","pattern":"export const (LocalPgAdapter|PgAdapter|Adapter)","results":0,"files":0}
+{"at":"2026-05-31T09:56:40.568Z","tool":"smart_grep","action":"searched","pattern":"export.*Layer","results":0,"files":0}
+{"at":"2026-05-31T09:56:41.633Z","tool":"smart_grep","action":"searched","pattern":"import.*adapter|import.*Adapter|import.*DatabaseAdapter","results":20,"files":16}
+{"at":"2026-05-31T09:58:08.984Z","tool":"smart_grep","action":"searched","pattern":"migration","results":0,"files":0}
+{"at":"2026-05-31T09:58:09.596Z","tool":"smart_grep","action":"searched","pattern":"migration|skipMigrations","results":2,"files":2}
+{"at":"2026-05-31T09:59:18.208Z","tool":"smart_bash","action":"bash","command":"bash -c 'ls -R packages/opencode/migration-pg/'","exit_code":0}
+{"at":"2026-05-31T09:59:19.267Z","tool":"smart_bash","action":"bash","command":"bash -c 'sed -n \"155,168p\" packages/opencode/src/storage/adapter.ts'","exit_code":0}
+{"at":"2026-05-31T09:59:19.970Z","tool":"smart_bash","action":"bash","command":"bash -c 'sed -n \"283,305p\" packages/opencode/src/storage/adapter.ts'","exit_code":0}
+{"at":"2026-05-31T09:59:20.834Z","tool":"smart_bash","action":"bash","command":"bash -c 'sed -n \"390,411p\" packages/opencode/src/storage/adapter.ts'","exit_code":0}
+{"at":"2026-05-31T09:59:21.761Z","tool":"smart_bash","action":"bash","command":"bash -c 'sed -n \"15,55p\" packages/opencode/script/build.ts'","exit_code":0}
+{"at":"2026-05-31T10:01:05.539Z","tool":"smart_grep","action":"searched","pattern":"OPENCODE_MIGRATIONS","results":1,"files":1}
+{"at":"2026-05-31T10:01:07.703Z","tool":"smart_bash","action":"bash","command":"bash -c 'head -5 packages/opencode/migration-pg/20260529023435_yellow_molly_hayes/migration.sql; ech","exit_code":0}
+{"at":"2026-05-31T10:01:09.262Z","tool":"smart_grep","action":"searched","pattern":"OPENCODE_SKIP_MIGRATIONS","results":5,"files":2}
+{"at":"2026-05-31T10:04:15.750Z","tool":"smart_grep","action":"searched","pattern":"adapter-dual-write|dual-write|dualWrite","results":24,"files":3}
+{"at":"2026-05-31T10:04:16.772Z","tool":"smart_bash","action":"bash","command":"bash -c 'wc -l packages/opencode/migration-pg/*/migration.sql'","exit_code":0}
+{"at":"2026-05-31T10:05:34.372Z","tool":"smart_grep","action":"searched","pattern":"DatabaseAdapter\\.(defaultLayer|LocalPgAdapter|PgAdapter|Service)","results":27,"files":10}
+{"at":"2026-05-31T10:05:35.229Z","tool":"smart_grep","action":"searched","pattern":"provide\\(DatabaseAdapter|provide.*adapter","results":3,"files":3}
+{"at":"2026-05-31T10:06:57.395Z","tool":"smart_grep","action":"searched","pattern":"SQLiteTransactionOptions","results":2,"files":1}

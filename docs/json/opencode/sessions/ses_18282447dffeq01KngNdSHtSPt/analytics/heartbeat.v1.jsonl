@@ -1,0 +1,18 @@
+{"at":"2026-05-31T10:05:24.029Z","session_id":"ses_18282447dffeq01KngNdSHtSPt","agent":"blueprint","tool":"smart_find","phase":"started","detail":"*.yml"}
+{"at":"2026-05-31T10:05:24.046Z","session_id":"ses_18282447dffeq01KngNdSHtSPt","agent":"blueprint","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T10:05:24.604Z","session_id":"ses_18282447dffeq01KngNdSHtSPt","agent":"blueprint","tool":"smart_find","phase":"started","detail":"justfile*"}
+{"at":"2026-05-31T10:05:24.620Z","session_id":"ses_18282447dffeq01KngNdSHtSPt","agent":"blueprint","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T10:05:25.255Z","session_id":"ses_18282447dffeq01KngNdSHtSPt","agent":"blueprint","tool":"smart_find","phase":"started","detail":"*.test.ts"}
+{"at":"2026-05-31T10:05:25.273Z","session_id":"ses_18282447dffeq01KngNdSHtSPt","agent":"blueprint","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T10:06:47.295Z","session_id":"ses_18282447dffeq01KngNdSHtSPt","agent":"blueprint","tool":"smart_bash","phase":"started","detail":"Discover CI workflow files for validation strategy"}
+{"at":"2026-05-31T10:06:47.296Z","session_id":"ses_18282447dffeq01KngNdSHtSPt","agent":"blueprint","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T10:06:48.419Z","session_id":"ses_18282447dffeq01KngNdSHtSPt","agent":"blueprint","tool":"smart_bash","phase":"started","detail":"Locate justfile(s) for script centralization validation"}
+{"at":"2026-05-31T10:06:48.419Z","session_id":"ses_18282447dffeq01KngNdSHtSPt","agent":"blueprint","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T10:06:49.651Z","session_id":"ses_18282447dffeq01KngNdSHtSPt","agent":"blueprint","tool":"smart_bash","phase":"started","detail":"Map existing test files for dead test wiring validation"}
+{"at":"2026-05-31T10:06:49.651Z","session_id":"ses_18282447dffeq01KngNdSHtSPt","agent":"blueprint","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T10:08:24.552Z","session_id":"ses_18282447dffeq01KngNdSHtSPt","agent":"blueprint","tool":"smart_bash","phase":"started","detail":"List all CI workflow files"}
+{"at":"2026-05-31T10:08:24.552Z","session_id":"ses_18282447dffeq01KngNdSHtSPt","agent":"blueprint","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T10:08:25.456Z","session_id":"ses_18282447dffeq01KngNdSHtSPt","agent":"blueprint","tool":"smart_bash","phase":"started","detail":"Locate justfile and package manifests"}
+{"at":"2026-05-31T10:08:25.456Z","session_id":"ses_18282447dffeq01KngNdSHtSPt","agent":"blueprint","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T10:08:26.648Z","session_id":"ses_18282447dffeq01KngNdSHtSPt","agent":"blueprint","tool":"smart_bash","phase":"started","detail":"Check for existing ADR structure"}
+{"at":"2026-05-31T10:08:26.648Z","session_id":"ses_18282447dffeq01KngNdSHtSPt","agent":"blueprint","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}

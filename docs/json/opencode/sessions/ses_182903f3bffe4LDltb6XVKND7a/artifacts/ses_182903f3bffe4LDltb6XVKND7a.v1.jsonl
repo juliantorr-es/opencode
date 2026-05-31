@@ -1,0 +1,14 @@
+{"at":"2026-05-31T09:51:17.664Z","tool":"smart_bash","action":"bash","command":"python3 -c \"\nimport json\nwith open('.build/rig-relay/any_type_inventory.v1.json') as f:\n    data = j","exit_code":0}
+{"at":"2026-05-31T09:52:14.974Z","tool":"smart_bash","action":"bash","command":"python3 -c \"\nimport json\nwith open('.build/rig-relay/any_type_inventory.v1.json') as f:\n    data = j","exit_code":0}
+{"at":"2026-05-31T09:53:12.668Z","tool":"smart_bash","action":"bash","command":"python3 -c \"\nimport json\nwith open('.build/rig-relay/any_type_inventory.v1.json') as f:\n    data = j","exit_code":0}
+{"at":"2026-05-31T09:54:12.586Z","tool":"smart_bash","action":"bash","command":"python3 -c \"\nimport json\nwith open('.build/rig-relay/any_type_inventory.v1.json') as f:\n    data = j","exit_code":0}
+{"at":"2026-05-31T09:55:21.894Z","tool":"smart_bash","action":"bash","command":"python3 -c \"\nimport json\nwith open('.build/rig-relay/any_type_inventory.v1.json') as f:\n    data = j","exit_code":0}
+{"at":"2026-05-31T10:02:42.149Z","tool":"smart_grep","action":"searched","pattern":"e: any","results":0,"files":0}
+{"at":"2026-05-31T10:02:42.871Z","tool":"smart_grep","action":"searched","pattern":"catch.*e: any","results":0,"files":0}
+{"at":"2026-05-31T10:02:43.543Z","tool":"smart_grep","action":"searched","pattern":"a: any","results":0,"files":0}
+{"at":"2026-05-31T10:02:44.247Z","tool":"smart_grep","action":"searched","pattern":"input: any","results":0,"files":0}
+{"at":"2026-05-31T10:02:44.966Z","tool":"smart_grep","action":"searched","pattern":"part.*any.*text","results":0,"files":0}
+{"at":"2026-05-31T10:02:45.659Z","tool":"smart_grep","action":"searched","pattern":"field.*any.*properties","results":0,"files":0}
+{"at":"2026-05-31T10:02:46.409Z","tool":"smart_grep","action":"searched","pattern":"exit: any","results":0,"files":0}
+{"at":"2026-05-31T10:04:05.014Z","tool":"smart_grep","action":"searched","pattern":"walkDirectory","results":0,"files":0}
+{"at":"2026-05-31T10:07:38.745Z","tool":"smart_write","action":"wrote","file":".build/rig-relay/arch_any_cleanup_phase1.v1.json","detail":"Write Phase 1 any-cleanup architecture plan artifact"}

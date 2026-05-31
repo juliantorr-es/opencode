@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "artifact": "llm_plugin_function_surface_map",
-  "version": "1.0",
+  "version": "1.2",
   "generated_at": "2026-05-31T00:00:00Z",
   "session_id": "ses_182c657a8ffea1DZdEgDi6Ef6x",
   "scope": "MAP-004",
@@ -20,508 +20,240 @@
       "provider.ts": { "path": "src/provider/provider.ts", "lines": 1916, "purpose": "Provider Service, model catalog, SDK resolution, default model selection" },
       "transform.ts": { "path": "src/provider/transform.ts", "lines": 1390, "purpose": "Message transformation, temperature/topP/topK normalization, caching, reasoning conversion" },
       "auth.ts": { "path": "src/provider/auth.ts", "lines": 229, "purpose": "Provider OAuth authorization flow via plugin hooks" },
-      "error.ts": { "path": "src/provider/error.ts", "lines": 232, "purpose": "Provider-specific error classes" },
+      "error.ts": { "path": "src/provider/error.ts", "lines": 232, "purpose": "Provider-specific error classes, overflow detection (18 regex patterns)" },
       "schema.ts": { "path": "src/provider/schema.ts", "lines": 31, "purpose": "ProviderID and ModelID branded schemas" },
-      "model-status.ts": { "path": "src/provider/model-status.ts", "lines": 10, "purpose": "ModelStatus enum (experimental, stable, deprecated)" }
+      "model-status.ts": { "path": "src/provider/model-status.ts", "lines": 10, "purpose": "ModelStatus: alpha|beta|deprecated|active" }
     },
-
     "bundled_sdks": {
-      "description": "23 SDK packages lazy-loaded via dynamic imports, keyed by npm package name. Each provides a factory that returns { languageModel(id) }.",
       "count": 23,
+      "note": "Lazy-loaded via dynamic imports, LRU-cached (max 256 entries). SDKs and model instances cached separately.",
       "providers": [
-        { "npm": "@ai-sdk/openai", "factory": "createOpenAI", "models_dev_id": "openai" },
-        { "npm": "@ai-sdk/anthropic", "factory": "createAnthropic", "models_dev_id": "anthropic" },
-        { "npm": "@ai-sdk/google", "factory": "createGoogleGenerativeAI", "models_dev_id": "google" },
-        { "npm": "@ai-sdk/google-vertex", "factory": "createVertex", "models_dev_id": "google-vertex" },
-        { "npm": "@ai-sdk/google-vertex/anthropic", "factory": "createVertexAnthropic", "models_dev_id": "google-vertex" },
-        { "npm": "@ai-sdk/amazon-bedrock", "factory": "createAmazonBedrock", "models_dev_id": "amazon-bedrock" },
-        { "npm": "@ai-sdk/azure", "factory": "createAzure", "models_dev_id": "azure" },
-        { "npm": "@ai-sdk/openai-compatible", "factory": "createOpenAICompatible", "models_dev_id": "*" },
-        { "npm": "@ai-sdk/xai", "factory": "createXai", "models_dev_id": "xai" },
-        { "npm": "@ai-sdk/mistral", "factory": "createMistral", "models_dev_id": "mistral" },
-        { "npm": "@ai-sdk/groq", "factory": "createGroq", "models_dev_id": "groq" },
-        { "npm": "@ai-sdk/deepinfra", "factory": "createDeepInfra", "models_dev_id": "deepinfra" },
-        { "npm": "@ai-sdk/cerebras", "factory": "createCerebras", "models_dev_id": "cerebras" },
-        { "npm": "@ai-sdk/cohere", "factory": "createCohere", "models_dev_id": "cohere" },
-        { "npm": "@ai-sdk/togetherai", "factory": "createTogetherAI", "models_dev_id": "togetherai" },
-        { "npm": "@ai-sdk/perplexity", "factory": "createPerplexity", "models_dev_id": "perplexity" },
-        { "npm": "@ai-sdk/vercel", "factory": "createVercel", "models_dev_id": "vercel" },
-        { "npm": "@ai-sdk/alibaba", "factory": "createAlibaba", "models_dev_id": "alibaba" },
-        { "npm": "@ai-sdk/gateway", "factory": "createGateway", "models_dev_id": "ai-gateway" },
-        { "npm": "@openrouter/ai-sdk-provider", "factory": "createOpenRouter", "models_dev_id": "openrouter" },
-        { "npm": "gitlab-ai-provider", "factory": "createGitLab", "models_dev_id": "gitlab" },
-        { "npm": "venice-ai-sdk-provider", "factory": "createVenice", "models_dev_id": "venice" },
-        { "npm": "@ai-sdk/github-copilot", "factory": "createOpenaiCompatible", "models_dev_id": "github-copilot", "note": "Delegates to @opencode-ai/core/github-copilot/copilot-provider" }
+        "@ai-sdk/openai", "@ai-sdk/anthropic", "@ai-sdk/google", "@ai-sdk/google-vertex",
+        "@ai-sdk/google-vertex/anthropic", "@ai-sdk/amazon-bedrock", "@ai-sdk/azure",
+        "@ai-sdk/openai-compatible", "@ai-sdk/xai", "@ai-sdk/mistral", "@ai-sdk/groq",
+        "@ai-sdk/deepinfra", "@ai-sdk/cerebras", "@ai-sdk/cohere", "@ai-sdk/togetherai",
+        "@ai-sdk/perplexity", "@ai-sdk/vercel", "@ai-sdk/alibaba", "@ai-sdk/gateway",
+        "@ai-sdk/github-copilot", "@openrouter/ai-sdk-provider", "gitlab-ai-provider",
+        "venice-ai-sdk-provider"
       ]
     },
-
-    "custom_providers": {
-      "description": "Custom loader function `custom(dep: CustomDep)` registers provider-specific initialization logic. Each custom loader receives the provider Info and returns autoload flag + optional model loader, vars loader, options, and model discovery.",
-      "custom_dep_shape": {
-        "config": "Effect.Effect<Config.Info>",
-        "env": "Effect.Effect<Record<string, string | undefined>>",
-        "auth": "(providerID: ProviderID) => Effect.Effect<Auth.Result | undefined>",
-        "get": "(key: string) => Effect.Effect<string | undefined>",
-        "sdk": "Record<string, BundledSDK>"
-      },
-      "registered_custom_loaders": [
-        "openai-codex (openai-compatible + codex-specific auth)",
-        "github-copilot (built-in models with tokens)",
-        "azure (requires AZURE_RESOURCE_NAME)",
-        "azure-cognitive-services (requires AZURE_COGNITIVE_SERVICES_RESOURCE_NAME)",
-        "amazon-bedrock (AWS credential resolution from env/config/profile)",
-        "google-vertex (project/location resolution + Anthropic base URL)",
-        "google-vertex-anthropic (continetal multi-region routing)",
-        "gitlab (instanceUrl + token + workflow support)",
-        "ai-gateway (steward_url + headers)"
-      ]
+    "custom_loaders": {
+      "count": 16,
+      "note": "700 lines of loader logic in custom() function. Handles auth, config injection, model discovery.",
+      "loaders": ["anthropic", "opencode", "openai", "xai", "github-copilot", "azure", "azure-cognitive-services", "amazon-bedrock", "llmgateway", "openrouter", "vercel", "google-vertex", "google-vertex-anthropic", "gitlab", "cloudflare-ai-gateway", "cerebras"]
     },
-
-    "model_catalog": {
-      "source": "@opencode-ai/core/models-dev (ModelsDev package)",
-      "model_shape": {
-        "id": "ModelID (branded string)",
-        "providerID": "ProviderID (branded string)",
-        "api": "{ npm: string, id: string } (SDK package + model ID)",
-        "name": "string",
-        "family": "string (optional)",
-        "capabilities": "ProviderCapabilities",
-        "cost": "ProviderCost ({ input, output, cacheRead, cacheWrite })",
-        "limit": "ProviderLimit ({ input, output })",
-        "status": "ModelStatus (experimental|stable|deprecated)",
-        "options": "Record<string, any>",
-        "headers": "Record<string, string>",
-        "release_date": "string",
-        "variants": "Record<string, Record<string, any>> (optional)"
-      },
-      "provider_info_shape": {
-        "id": "ProviderID",
-        "name": "string",
-        "source": "'env' | 'config' | 'custom' | 'api'",
-        "env": "string[] (env var names for API keys)",
-        "key": "string (optional, active API key)",
-        "options": "Record<string, any>",
-        "models": "Record<string, Model>"
-      }
-    },
-
-    "provider_configuration": {
-      "config_source": "Config.Info (from @/config/config)",
-      "allow_list": "enabled_providers (Set<string>) — if set, only these are allowed",
-      "deny_list": "disabled_providers (Set<string>)",
-      "provider_options": "provider.{id}.options for per-provider config overrides",
-      "model_variants": "provider.{id}.models.{modelID}.variants for per-model config",
-      "api_keys": "Resolved from env vars (provider.env list) or plugin auth hooks",
-      "authentication": [
-        { "mechanism": "API key via env var", "example": "OPENAI_API_KEY" },
-        { "mechanism": "Google Cloud auth (google-auth-library)", "for": "google-vertex" },
-        { "mechanism": "AWS credential chain (env, config, profile, SSO, IMDS)", "for": "amazon-bedrock" },
-        { "mechanism": "OAuth via plugin hooks", "for": "github-copilot, gitlab, openai-codex, azure, cloudflare, digitalocean, xai, poe" },
-        { "mechanism": "Custom headers via provider.cfg.headers", "for": "all" },
-        { "mechanism": "Custom fetch (timeout, proxy)", "for": "all" }
-      ]
-    },
-
     "streaming": {
-      "architecture": "AI SDK v3 LanguageModelV3 interface handles streaming natively",
-      "ssr_wrapper": "wrapSSE(response, ms, ctl) — wraps Response body into ReadableStream with SSE timeout",
-      "timeouts": {
-        "header_timeout": "Aborts if response headers don't arrive within ms",
-        "chunk_timeout": "Aborts if no SSE chunk within ms (per AbortController)",
-        "provider_options": "headerTimeout, chunkTimeout in provider.options"
-      },
-      "sdk_routing": {
-        "useLanguageModel": "function to detect languageModel-only SDKs (no chat/responses)",
-        "copilot_responses": "shouldUseCopilotResponsesApi() — uses sdk.responses() for gpt-* and o* models in github-copilot"
-      },
-      "transform_pipeline": "ProviderTransform.message() normalizes messages per provider before streaming"
+      "architecture": "Dual-path: AI SDK v5 adapter + native runtime (OpenAI/Anthropic only)",
+      "timeouts": "Header timeout (default 10s) + SSE chunk timeout via wrapSSE() + signal aggregation via AbortSignal.any()"
     },
-
-    "provider_service_interface": {
-      "service_name": "@opencode/Provider",
-      "methods": [
-        "list() → Effect<Record<ProviderID, Info>>",
-        "getProvider(providerID) → Effect<Info>",
-        "getModel(providerID, modelID) → Effect<Model, ModelNotFoundError>",
-        "getLanguage(model) → Effect<LanguageModelV3, ModelNotFoundError>",
-        "closest(providerID, query[]) → Effect<{providerID, modelID} | undefined>",
-        "getSmallModel(providerID) → Effect<Model | undefined>",
-        "defaultModel() → Effect<{providerID, modelID}, DefaultModelError>"
-      ]
-    },
-
-    "code_smells_and_risks": [
-      {
-        "severity": "high",
-        "issue": "Monolithic provider.ts (1916 lines)",
-        "file:line": "src/provider/provider.ts:1-1916",
-        "description": "SDK resolution, model catalog loading, custom loaders, and the Service implementation all live in one file. Hard to test in isolation, high coupling."
-      },
-      {
-        "severity": "medium",
-        "issue": "any types in SDK resolution",
-        "file:line": "src/provider/provider.ts:155",
-        "description": "useLanguageModel(sdk: any) and CustomModelLoader(sdk: any) use `any` for SDK objects, losing type safety at the provider SDK boundary."
-      },
-      {
-        "severity": "medium",
-        "issue": "Non-null assertion in LRU eviction",
-        "file:line": "src/provider/provider.ts:1554",
-        "description": "const oldest = order.shift()! uses `!` — if order is empty, this crashes at runtime."
-      },
-      {
-        "severity": "low",
-        "issue": "Provider sorting by hardcoded priority",
-        "file:line": "src/provider/provider.ts:1898-1905",
-        "description": "const priority = ['gpt-5', 'claude-sonnet-4', 'big-pickle', 'gemini-3-pro'] — hardcoded priority string list, not configurable."
-      },
-      {
-        "severity": "low",
-        "issue": "Circular import risk",
-        "file:line": "src/provider/provider.ts:1914",
-        "description": "export * as Provider from './provider' — self-referencing re-export at the end of the file."
-      }
+    "code_smells": [
+      { "severity": "critical", "issue": "1916-line monolith with parallel registries between BUNDLED_PROVIDERS and transform.sdkKey()" },
+      { "severity": "high", "issue": "any-typed SDK boundaries (useLanguageModel, CustomModelLoader)" },
+      { "severity": "medium", "issue": "Non-null assertion in LRU eviction (order.shift()!)" },
+      { "severity": "medium", "issue": "process.env bypass in amazon-bedrock, google-vertex loaders" },
+      { "severity": "medium", "issue": "toPublicInfo() secret stripping is blacklist-based (apiKey, API_KEY only)" }
     ]
   },
 
   "2_plugin_architecture": {
     "source_files": {
-      "index.ts": { "path": "src/plugin/index.ts", "lines": 522, "purpose": "Plugin Service, internal plugins, hook execution, auth plugin integration" },
-      "loader.ts": { "path": "src/plugin/loader.ts", "lines": 237, "purpose": "Plugin discovery, resolution, loading from npm/local/url sources" },
-      "install.ts": { "path": "src/plugin/install.ts", "lines": 54, "purpose": "Plugin installation" },
-      "shared.ts": { "path": "src/plugin/shared.ts", "lines": 23, "purpose": "Shared plugin utilities" },
-      "azure.ts": { "path": "src/plugin/azure.ts", "lines": 21, "purpose": "Azure auth plugin" },
-      "cloudflare.ts": { "path": "src/plugin/cloudflare.ts", "lines": 68, "purpose": "Cloudflare AI Gateway + Workers auth plugins" },
-      "digitalocean.ts": { "path": "src/plugin/digitalocean.ts", "lines": 392, "purpose": "DigitalOcean auth plugin" },
-      "github-copilot/": { "path": "src/plugin/github-copilot/", "purpose": "GitHub Copilot auth plugin (copilot.ts, device-code.ts, oauth.ts)" },
-      "openai/": { "path": "src/plugin/openai/", "purpose": "OpenAI Codex auth plugin (codex.ts)" },
-      "capability/": { "path": "src/plugin/capability/", "purpose": "Plugin capability declarations and checking" },
-      "xai.ts": { "path": "src/plugin/xai.ts", "lines": 28, "purpose": "xAI auth plugin" }
+      "index.ts": { "lines": 522, "purpose": "Plugin Service, lifecycle, hooks, health/quarantine, auth registration" },
+      "loader.ts": { "lines": 237, "purpose": "Plugin discovery → resolution → loading pipeline" },
+      "shared.ts": { "lines": 266, "purpose": "Plugin ID resolution, npm parsing, semver checks, entrypoint discovery" },
+      "install.ts": { "lines": 284, "purpose": "Plugin install/uninstall/patch via jsonc-parser" },
+      "capability/types.ts": { "purpose": "15 capability IDs, CapabilityManifest, TrustLevel (built-in|verified|external)" },
+      "capability/registry.ts": { "purpose": "Effect.Ref-based security state registry" },
+      "capability/enforcer.ts": { "purpose": "checkCapability() — quarantine check, trust-level check, manifest check" },
+      "capability/hook-map.ts": { "purpose": "HOOK_CAPABILITY_MAP (14 entries), ALWAYS_ALLOWED_HOOKS (4 entries)" },
+      "capability/hook-dispatch-guard.ts": { "purpose": "15 network-gated hooks require additional network.request capability" },
+      "openai/codex.ts": { "purpose": "OpenAI Codex OAuth PKCE auth plugin" },
+      "openai/ws.ts": { "purpose": "OpenAI Responses WebSocket protocol (responses_websockets=2026-02-06)" },
+      "openai/ws-pool.ts": { "purpose": "WebSocket session pool with connection reuse, idle timeout, retry budget" },
+      "github-copilot/copilot.ts": { "purpose": "GitHub device OAuth auth plugin" },
+      "github-copilot/models.ts": { "purpose": "Copilot model schema + decoding" }
     },
 
-    "plugin_lifecycle": {
-      "discovery": "PluginLoader.loadExternal() discovers plugins from config sources (npm packages, local paths, URLs)",
-      "resolution": "PluginLoader.resolve() resolves plugin identifiers to packages and loads package.json",
-      "loading": "PluginLoader.load() loads the plugin module and extracts hooks",
-      "application": "applyPlugin() registers hooks, tools, and auth handlers from loaded plugins",
-      "health": "PluginHealthStore tracks plugin crash/error counts with quarantine after threshold",
-      "quarantine": "Plugins are automatically quarantined after repeated crashes, can be unquarantined manually",
-      "cleanup": "No explicit dispose — plugins live for the session lifetime"
+    "lifecycle": {
+      "stages": [
+        "1. DISCOVERY — Config scan (Glob) + npm resolution",
+        "2. RESOLUTION — Install → entrypoint discovery → compatibility check (retry on failure)",
+        "3. LOAD — Dynamic import(entry) → extract hooks",
+        "4. ACTIVATE — Register with capability registry → call config hook → subscribe to event bus",
+        "5. RUNTIME — Hook dispatch with capability gating, crash tracking, quarantine",
+        "6. DISPOSE — dispose hook on all plugins, health store saved"
+      ],
+      "missing": "No explicit deactivate/reload per plugin. No per-plugin lifecycle isolation."
     },
 
-    "plugin_types": {
-      "internal": "Built-in plugins for auth providers (copilot, codex, gitlab, poe, cloudflare, azure, digitalocean, xai)",
-      "external": "npm-installed plugins following @opencode-ai/plugin interface",
-      "hooks_interface": {
-        "auth": "Authenticate with providers (OAuth, device code, API key)",
-        "tool.register": "Register custom tools (checked via capability system)",
-        "pre.query": "Modify LLM query before sending",
-        "post.response": "Process LLM response",
-        "session.init": "Session initialization hooks"
+    "capabilities": {
+      "total": 15,
+      "ids": ["filesystem.read", "filesystem.write", "network.request", "network.websocket", "secrets.access", "tool.register", "tool.execute", "event.subscribe", "event.emit", "hooks.transform_message", "hooks.transform_system", "hooks.compaction", "config.read", "config.write"],
+      "trust_levels": {
+        "built-in": "All capabilities auto-granted (9 internal auth plugins)",
+        "verified": "Defined but not used in runtime — no verification mechanism exists",
+        "external": "Capability checks enforced. Default fallback grants only tool.register"
       }
     },
 
-    "plugin_registry": {
-      "service_name": "@opencode/Plugin",
-      "state": "{ plugins: PluginRegistration[], hooks: Hooks[], health: PluginHealthStore }",
-      "methods": [
-        "list() → Effect<PluginInstance[]>",
-        "trigger(name, event) → Effect<void> (invoke all hooks for an event)",
-        "init() → Effect<void> (initialize auth plugins only)",
-        "checkCapability(pluginId, capability) → Effect<boolean>",
-        "getRegistry() → PluginRegistration[]",
-        "unquarantine(pluginId) → Effect<void>",
-        "getCrashStatus(pluginId) → {crashed, crashCount, quarantineExpiresAt}"
-      ]
+    "hooks": {
+      "total": 23,
+      "categories": {
+        "always_allowed": ["dispose", "config", "auth", "provider"],
+        "capability_gated": "14 hooks via HOOK_CAPABILITY_MAP",
+        "network_gated": "15 hooks additionally require network.request",
+        "broken": ["experimental.text.complete (network-gated but missing from HOOK_CAPABILITY_MAP → always denied)"]
+      }
     },
 
-    "capability_system": {
-      "description": "Plugin capabilities are checked via checkCapability(pluginId, 'tool.register'). HOOK_CAPABILITY_MAP maps hook names to required capabilities.",
-      "example": "tool.register → requires capability check before external plugins can register tools"
+    "plugin_types": {
+      "internal": 9,
+      "list": ["CodexAuthPlugin", "CopilotAuthPlugin", "GitlabAuthPlugin (npm)", "PoeAuthPlugin (npm)", "CloudflareWorkersAuthPlugin", "CloudflareAIGatewayAuthPlugin", "AzureAuthPlugin", "DigitalOceanAuthPlugin", "XaiAuthPlugin"],
+      "external": "npm-installed plugins via @opencode-ai/plugin interface"
     },
 
-    "auth_plugin_integration": {
-      "description": "Auth plugins (CopilotAuthPlugin, CodexAuthPlugin, GitlabAuthPlugin, etc.) are initialized during Plugin.init() and registered as Auth providers. The Provider.auth service resolves API keys and OAuth tokens via these plugins.",
-      "flow": "Plugin.init() → internalPlugins() → register auth hooks → Provider.auth queries hooks → returns API key / token"
-    },
-
-    "experimental_features": {
-      "websocket": "experimentalWebSocketsEnabled() — enables WebSocket bridge for plugin communication"
-    },
-
-    "code_smells_and_risks": [
+    "critical_gaps": [
       {
-        "severity": "medium",
-        "issue": "No sandboxing for external plugins",
-        "file:line": "src/plugin/index.ts:167-178",
-        "description": "applyPlugin() loads and executes external plugin code in the same process with full access. No isolation, no resource limits."
+        "severity": "critical",
+        "id": "S-001",
+        "issue": "network.request capability NOT enforced at runtime — no fetch proxy",
+        "description": "The capability is defined and checked for network-gated hooks, but there is no fetch/HTTP proxy. Any plugin can call fetch() directly to exfiltrate data, bypassing the capability system entirely. Explicitly acknowledged in design docs."
+      },
+      {
+        "severity": "critical",
+        "id": "S-002",
+        "issue": "filesystem.read and filesystem.write capabilities entirely unenforced",
+        "description": "Defined in types.ts but NEVER checked anywhere in the codebase. No entries in HOOK_CAPABILITY_MAP. Plugins have unrestricted filesystem access through Node.js built-ins."
+      },
+      {
+        "severity": "critical",
+        "id": "S-003",
+        "issue": "No OS-level sandboxing — plugins run in-process with full Node.js API access",
+        "description": "A malicious plugin can access fs, fetch, require, child_process, process.env directly. Capability system is check-box security that assumes cooperative plugins."
+      },
+      {
+        "severity": "high",
+        "id": "S-004",
+        "issue": "TOCTOU race in trigger() — snapshot of registrations captured but capability check uses live Ref state",
+        "description": "Between the shouldDispatch check and the hook call, another effect could mutate plugin security state."
+      },
+      {
+        "severity": "high",
+        "id": "S-005",
+        "issue": "Stale hook closures in event bus subscriber",
+        "description": "Event subscriber created at init time captures hooks via closure. If hooks are updated (re-init), old subscriber fires stale hooks."
+      },
+      {
+        "severity": "high",
+        "id": "S-006",
+        "issue": "experimental.text.complete hook is always denied",
+        "description": "It's listed in NETWORK_GATED_HOOKS but absent from HOOK_CAPABILITY_MAP. shouldDispatch returns false for unknown hooks."
       },
       {
         "severity": "medium",
-        "issue": "Weak capability enforcement",
-        "file:line": "src/plugin/index.ts:437-440",
-        "description": "HOOK_CAPABILITY_MAP is a string-keyed record. No typed capabilities enum. Tool registration checks capability but there's no authorization for syscalls or network access."
-      },
-      {
-        "severity": "low",
-        "issue": "No plugin version compatibility check",
-        "file:line": "src/plugin/loader.ts:135-168",
-        "description": "Plugin loading doesn't verify version compatibility between the plugin and the host. Missing semver range check."
-      },
-      {
-        "severity": "low",
-        "issue": "Health store is filesystem-based but not validated on read",
-        "file:line": "src/plugin/index.ts:57-66",
-        "description": "loadPluginHealthStore reads from disk without schema validation."
+        "id": "S-007",
+        "issue": "any type casts throughout capability system",
+        "description": "checkCapability(registry, pluginId, 'secrets.access' as any), double unsafe casts via (s.dispatchGuard as HookDispatchGuard).shouldDispatch(...) as any"
       }
     ]
   },
 
   "3_tool_function_execution": {
     "source_files": {
-      "tool.ts": { "path": "src/tool/tool.ts", "lines": 288, "purpose": "Core Tool.Def interface, execution context, error classes, metadata types" },
-      "registry.ts": { "path": "src/tool/registry.ts", "lines": 866, "purpose": "ToolRegistry Service — built-in tool registration, plugin tool integration, schema conversion" },
-      "execution.ts": { "path": "src/tool/execution.ts", "lines": 54, "purpose": "Tool execution event publishing (started, completed, failed)" },
-      "truncate.ts": { "path": "src/tool/truncate.ts", "lines": 92, "purpose": "Output truncation for tool results" },
-      "cache.ts": { "path": "src/tool/cache.ts", "lines": 58, "purpose": "Tool output caching" },
-      "validation.ts": { "path": "src/tool/validate.ts", "lines": 68, "purpose": "Tool parameter validation" },
-      "typed-result.ts": { "path": "src/tool/typed-result.ts", "lines": 32, "purpose": "Typed result helper for tool outputs" },
-      "coordination.ts": { "path": "src/tool/coordination.ts", "lines": 689, "purpose": "Cross-session coordination tools" },
-      "shell/": { "path": "src/tool/shell/", "purpose": "Shell tool implementation" }
+      "tool.ts": { "lines": 288, "purpose": "Core Tool.Def, Context, error classes, Tool.define() factory" },
+      "registry.ts": { "lines": 866, "purpose": "ToolRegistry Service — 60+ tool imports, plugin/MCP integration, schema conversion" },
+      "execution.ts": { "lines": 54, "purpose": "Execution event publishing (started/completed/failed via Bus)" },
+      "truncate.ts": { "lines": 92, "purpose": "Output truncation: 2000 lines/50KB cap" },
+      "cache.ts": { "lines": 58, "purpose": "Tool cache — @deprecated, not wired to any consumer" },
+      "coordination.ts": { "lines": 689, "purpose": "Cross-session coordination: claims, reservations, fan-out, 8 wave types" }
     },
-
-    "tool_definition_interface": {
-      "tool_def": {
-        "id": "string (unique tool identifier)",
-        "description": "string | DynamicDescription",
-        "parameters": "Schema (Effect Schema for input validation)",
-        "execute": "(ctx: Context, input: InferredParams) → Effect<ExecuteResult | void>",
-        "init": "(ctx: Init) → Effect<Def> (optional, runs on registration)",
-        "metadata": "Metadata type parameter (optional)",
-        "truncate": "number (max output bytes before truncation)",
-        "cache": "Duration (optional, cache TTL)",
-        "retry": "Schedule (optional, retry schedule)"
+    "tool_count": "~80 unique tool IDs across 15 categories",
+    "dual_system": {
+      "description": "Two parallel tool systems coexist with different safety guarantees",
+      "primary": "Effect-based, permission-gated, file-locked, truncation, typed results",
+      "smart_": "spawnSync-based, naive substring filtering, NO permissions, NO truncation, NO locks, NO typed results"
+    },
+    "execution_pipeline": [
+      "1. ASSEMBLY — ToolRegistry.resolveTools() → filter by agent permission",
+      "2. WRAPPING — Permission/truncation/semaphore (read=10, write=3)",
+      "3. CONVERSION — Effect Schema → JSONSchema7 → AI SDK tool()",
+      "4. STREAM — processor detects tool-call → resolve Tool.Def → fork execution",
+      "5. EXECUTION — permission check → external dir check → path reservation → file lock → core logic → post-write diagnostics",
+      "6. POST — TypedResult.wrap() → Truncate.output() → publish Bus events",
+      "7. DELIVERY — tool-result stream part → LLM next turn",
+      "8. DOOM_LOOP — 3+ identical calls → compact/retry"
+    ],
+    "critical_findings": [
+      {
+        "severity": "critical",
+        "issue": "smart_bash shell injection — spawnSync(command, [], { shell: true }) with naive substring blocking",
+        "bypass": "rm\\ -rf, rm --recursive --force easily bypass cmd.includes('rm -rf')"
       },
-      "execution_context": {
-        "sessionID": "SessionID",
-        "messageID": "MessageID",
-        "tool_call_id": "string",
-        "agent": "Agent.Info",
-        "permission": "Permission.Service",
-        "params": "Record<string, any>"
+      {
+        "severity": "critical",
+        "issue": "smart_bun, smart_grep, smart_find, smart_git also use spawnSync with shell-style construction — injection risk",
+        "note": "Any tool constructing command strings passed to shell execution is vulnerable"
       },
-      "error_classes": [
-        "InvalidArgumentsError — bad tool input",
-        "ToolError — generic tool failure",
-        "TimeoutError — tool timed out",
-        "TransientError — retryable failure",
-        "ValidationError — schema validation failure"
-      ]
-    },
-
-    "builtin_tools": {
-      "count": "80+ unique tool IDs",
-      "categories": {
-        "file_operations": ["read", "write", "edit", "glob", "patch", "apply_patch", "smart_write", "smart_edit", "replace_symbol"],
-        "search": ["grep", "smart_grep", "smart_find", "search", "websearch", "webfetch"],
-        "shell_execution": ["shell", "smart_bash", "smart_bun"],
-        "git": ["smart_git", "checkpoint"],
-        "task_management": ["task", "todo", "question", "skill", "delegate"],
-        "coordination": ["coordination", "send_message", "read_messages", "produce_fragment"],
-        "session": ["plan", "propose_plan", "revise_plan", "comment_plan", "read_source", "read_lib", "read_artifact"],
-        "analytics": ["analytics", "duckdb_query", "json_query", "rig_jsonl_query"],
-        "review": ["review_criticism", "review_manifest", "prepublication_admitted", "prepublication_blocked", "prepublication_inconclusive"],
-        "findings": ["discover_findings", "publish_finding", "out_of_scope_finding", "generate_report"],
-        "validation": ["validate", "verify_handoff", "rig_schema_validate", "test", "inspect_failure"],
-        "context": ["curate_context", "read_artifact", "preflight_check"],
-        "roadmap": ["roadmap_init", "roadmap_next", "roadmap_progress", "roadmap_prioritize", "roadmap_deprecate"],
-        "coordination_query": ["query_last_failed_tools", "query_last_edited_files", "query_permission_denials", "query_phase_transitions", "query_last_checkpoint", "query_last_successful_test", "query_events_for_file", "query_events_for_error", "query_events_since_checkpoint"],
-        "context_queries": ["get_operating_picture", "get_project_map", "get_working_set", "get_file_context", "get_related_context", "query_event_history", "get_validation_context", "get_claim_context", "update_scratchpad", "mark_context_stale", "request_context_refresh"],
-        "other": ["task_board", "invalid", "report", "lsp", "repo_clone", "repo_overview", "generate_published_checkpoint_report", "tool_failure", "tool_feedback", "record_stress_wave", "record_execution_wave", "github_triage", "github_pr_search", "session_diff", "checkpoint", "prepare_checkpoint", "publish_checkpoint", "binary-info", "file-lock", "external-directory", "generate-report", "log_activity", "lesson_register"]
-      }
-    },
-
-    "tool_registry_service": {
-      "service_name": "@opencode/ToolRegistry",
-      "methods": [
-        "all() → Effect<Tool.Def[]>",
-        "ids() → Effect<Record<string, string[]>>",
-        "tools(sessionID) → Effect<Tool.Def[]>",
-        "byId(id) → Effect<Tool.Def | undefined>",
-        "register(def) → Effect<void>",
-        "registerAll(defs) → Effect<void>"
-      ],
-      "plugin_integration": "fromPlugin(id, def) converts @opencode-ai/plugin ToolDefinition to Tool.Def. Plugin tools prefixed with 'plugin_' when colliding with built-in IDs."
-    },
-
-    "tool_execution_pipeline": {
-      "flow": [
-        "1. SessionProcessor calls SessionTools.resolve()",
-        "2. resolve() loads ToolRegistry, Plugin, MCP services",
-        "3. Tool definitions merged from: built-in + plugin tools + MCP tools",
-        "4. Each tool converted to AI SDK tool format (tool() from 'ai')",
-        "5. Optional permission check via Permission.Service",
-        "6. Tool executed via execute() wrapper with semaphore and timeout",
-        "7. Output truncated by Truncate.truncate()",
-        "8. Execution events published (publishStarted, publishCompleted, publishFailed)"
-      ],
-      "semaphore": "toolSemaphore (default concurrency limit per tool type)",
-      "schema_conversion": "Zod → JSONSchema7 conversion for plugin tools using zod.toJSONSchema()"
-    },
-
-    "session_tool_resolution": {
-      "file": "src/session/tools.ts",
-      "description": "resolve() function combines tool definitions from ToolRegistry, Plugin tools, and MCP tools into AI SDK-compatible tool objects. Handles parameter schema conversion, execution wrapping, and permission integration."
-    },
-
-    "code_smells_and_risks": [
       {
         "severity": "high",
-        "issue": "80+ tool IDs — discovery/boundary bloat",
-        "file:line": "src/tool/registry.ts:300-330",
-        "description": "BUILTIN_TOOL_IDS has 80+ entries. Many tools overlap in functionality (smart_bash vs shell, smart_grep vs grep). Tool sprawl makes security auditing and testing difficult."
+        "issue": "search_replace & replace_symbol bypass FileLock and coordination checks",
+        "note": "Modify files with fewer guards than write/edit"
       },
       {
-        "severity": "medium",
-        "issue": "Plugin tool naming collision protection is weak",
-        "file:line": "src/tool/registry.ts:405-406",
-        "description": "Plugin tools with built-in names get 'plugin_' prefix, but no dedup for multiple plugins with the same name."
-      },
-      {
-        "severity": "medium",
-        "issue": "Schema conversion: Zod → JSONSchema7 is lossy",
-        "file:line": "src/tool/registry.ts:812-815",
-        "description": "zodJsonSchema() uses zod.toJSONSchema() which can lose metadata and validation refinements."
-      },
-      {
-        "severity": "low",
-        "issue": "No tool execution sandboxing for plugin tools",
-        "file:line": "src/tool/registry.ts:328-420",
-        "description": "Plugin tools execute in the same Effect runtime as built-in tools with no resource isolation."
+        "severity": "high",
+        "issue": "Placeholder tools (github_pr_search, github_triage) in production registry"
       }
     ]
   },
 
   "4_mcp_architecture": {
     "source_files": {
-      "index.ts": { "path": "src/mcp/index.ts", "lines": 1053, "purpose": "MCP Service — server connection, tool discovery, tool conversion, OAuth flow" },
-      "auth.ts": { "path": "src/mcp/auth.ts", "lines": 132, "purpose": "MCP OAuth token storage and management" },
-      "oauth-provider.ts": { "path": "src/mcp/oauth-provider.ts", "lines": 110, "purpose": "MCP OAuth provider implementation" },
-      "oauth-callback.ts": { "path": "src/mcp/oauth-callback.ts", "lines": 67, "purpose": "MCP OAuth callback handler"
-      }
+      "index.ts": { "lines": 1053, "purpose": "MCP Service — connection, tool discovery, conversion, OAuth" },
+      "auth.ts": { "lines": 132, "purpose": "OAuth token storage/management" },
+      "oauth-provider.ts": { "purpose": "MCP OAuth provider (SSE + streamable HTTP)" },
+      "oauth-callback.ts": { "purpose": "OAuth callback handler" }
     },
-
-    "transport_support": {
-      "types": [
-        { "type": "stdio", "class": "StdioClientTransport", "sdk_package": "@modelcontextprotocol/sdk/client/stdio.js" },
-        { "type": "sse", "class": "SSEClientTransport", "sdk_package": "@modelcontextprotocol/sdk/client/sse.js" },
-        { "type": "streamable_http", "class": "StreamableHTTPClientTransport", "sdk_package": "@modelcontextprotocol/sdk/client/streamableHttp.js" }
-      ],
-      "oauth_support": "StreamableHTTPClientTransport and SSEClientTransport support OAuth via authProvider. Stdio does not."
-    },
-
-    "mcp_server_configuration": {
-      "config_source": "Config.Info.mcp (Record<string, ConfigMCP.Info>)",
-      "config_shape": {
-        "type": "'stdio' | 'sse' | 'http'",
-        "command": "string (for stdio)",
-        "args": "string[] (for stdio)",
-        "env": "Record<string, string> (for stdio)",
-        "url": "string (for sse/http)",
-        "timeout": "number (ms, default from cfg.experimental.mcp_timeout)",
-        "oauth": "OAuth configuration object (optional)"
-      }
-    },
-
-    "mcp_service_interface": {
-      "service_name": "@opencode/MCP",
-      "methods": [
-        "tools() → Effect<Record<string, Record<string, Tool>>>",
-        "resources() → Effect<Record<string, Resource[]>>",
-        "prompts() → Effect<Record<string, PromptInfo[]>>",
-        "status() → Effect<Record<string, Status>>",
-        "disconnect(name) → Effect<void>",
-        "connect(name, transport, timeout?) → Effect<MCPClient>",
-        "connectStreamableHTTP(name, url, timeout?) → Effect<MCPClient>",
-        "hasStoredTokens(name) → Effect<boolean>",
-        "getAuthStatus(name) → Effect<AuthStatus>"
-      ]
-    },
-
-    "mcp_tool_integration": {
-      "flow": [
-        "1. MCP Service connects to configured servers on startup",
-        "2. listTools() discovers tools from each server",
-        "3. convertMcpTool() converts MCP Tool → AI SDK Tool format",
-        "4. SessionTools.resolve() merges MCP tools with built-in and plugin tools",
-        "5. MCP tools are namespaced as 'mcp_{serverName}_{toolName}'",
-        "6. Tool execution calls mcpClient.callTool() via the appropriate transport",
-        "7. MCP tools auto-disconnect on server crash with health watching"
-      ],
-      "tool_conversion": "convertMcpTool() wraps MCP tool schema in dynamicTool() from AI SDK. Handles outputSchema validation with error detection.",
-      "health_watching": "Each MCP server is watched for tool list changes (ToolListChangedNotificationSchema). Servers are reconnected on disconnect."
-    },
-
-    "code_smells_and_risks": [
-      {
-        "severity": "high",
-        "issue": "No MCP tool tool_use_id mapping verification",
-        "file:line": "src/mcp/index.ts:140-170",
-        "description": "MCP tool execution doesn't verify that tool responses correspond to the correct request IDs. Could lead to response confusion if multiple concurrent calls."
-      },
-      {
-        "severity": "medium",
-        "issue": "Stdio process management — PID tracking but no cleanup on abnormal exit",
-        "file:line": "src/mcp/index.ts:604",
-        "description": "const pid = client.transport.pid tracks the PID but there's no explicit child process cleanup. Relies on GC."
-      },
-      {
-        "severity": "medium",
-        "issue": "OAuth token storage in plaintext",
-        "file:line": "src/mcp/auth.ts",
-        "description": "Token storage doesn't mention encryption. If tokens are stored on disk, they should be encrypted."
-      },
-      {
-        "severity": "low",
-        "issue": "No MCP tool rate limiting",
-        "file:line": "src/mcp/index.ts:170-200",
-        "description": "No rate limiting on MCP tool calls. A misbehaving server or prompt could flood the MCP server."
-      }
+    "transports": ["stdio (StdioClientTransport)", "sse (SSEClientTransport + OAuth)", "streamable_http (StreamableHTTPClientTransport + OAuth)"],
+    "sdk": "@modelcontextprotocol/sdk 1.27.1",
+    "tool_namespace": "mcp_{serverName}_{toolName}",
+    "security_findings": [
+      { "severity": "high", "issue": "No MCP tool_use_id response verification (concurrent call confusion)" },
+      { "severity": "medium", "issue": "Stdio process PID tracked but no cleanup on abnormal exit (GC-dependent)" },
+      { "severity": "medium", "issue": "OAuth token storage — encryption status unclear" },
+      { "severity": "medium", "issue": "No MCP tool rate limiting" }
     ]
   },
 
-  "5_cross_cutting_observations": {
-    "architecture_pattern": "Effect v4 service layers with Context.Tag-style dependency injection. All major subsystems are Effect Services with Layer-based composition.",
-    "layer_composition": "Services compose via Layer.provide() chain. Bootstrap runtime wires all layers.",
-    "dependency_graph": {
-      "Provider": ["Config", "Plugin", "Auth", "Env", "ModelsDev"],
-      "Plugin": ["Config", "Bus", "Session", "Auth providers"],
-      "ToolRegistry": ["Config", "Session", "Tool definitions", "Plugin"],
-      "MCP": ["Config", "Bus", "CrossSpawnSpawner", "McpAuth", "McpOAuthProvider", "McpOAuthCallback"],
-      "SessionTools": ["Provider", "ToolRegistry", "MCP", "Plugin", "Permission", "Agent"]
-    },
-    "common_weaknesses": [
-      "No resource sandboxing for external plugin or MCP tools",
-      "Large monolithic files (provider.ts 1916 lines, mcp/index.ts 1053 lines, registry.ts 866 lines)",
-      "Type safety gaps at SDK boundaries (any types in provider SDK resolution)",
-      "No encryption for stored OAuth tokens",
-      "Missing version compatibility checks for plugins",
-      "Hardcoded prioritization lists not configurable"
-    ],
-    "security_posture": {
-      "auth": "Multi-provider OAuth + API key support via plugin hooks. Google Cloud and AWS credential chains supported.",
-      "tools": "Permission.Service provides action-based tool authorization (allow/ask/deny). Per-session permission rules.",
-      "mcp": "OAuth for streamable HTTP and SSE transports. Stdio transport has no auth.",
-      "plugins": "Capability-based checks for tool registration. No runtime sandboxing for external plugins.",
-      "environment": "API keys sourced from env vars, config, or auth plugins. No key logging detected."
-    }
+  "5_permission_model": {
+    "service": "Permission.Service (Effect, SQLite-backed via Drizzle ORM)",
+    "actions": ["allow", "deny", "ask"],
+    "matching": "Wildcard patterns via @opencode-ai/core/wildcard",
+    "bash_arity": "~150 command prefixes mapped to token counts for permission extraction",
+    "flow": "Tool.ask() → evaluate rules → auto-allow if matched → else prompt user → store rule in SQLite → proceed/reject"
+  },
+
+  "6_cross_cutting_findings": {
+    "architecture": "Effect v4 services with Layer.provide() DI. Bootstrap runtime wires all layers.",
+    "total_findings_recorded": 13,
+    "top_10_risks_ranked": [
+      "1. [CRITICAL] No plugin sandboxing — in-process execution with full Node.js API (fetch, fs, child_process, process.env)",
+      "2. [CRITICAL] network.request capability not enforced — no fetch proxy, any plugin can exfiltrate data",
+      "3. [CRITICAL] filesystem.read/write capabilities entirely unenforced — never checked anywhere",
+      "4. [CRITICAL] smart_bash shell injection via spawnSync(shell:true) with naive substring filtering",
+      "5. [HIGH] Dual tool system (primary vs smart_) with inconsistent safety guarantees — LLMs can call either",
+      "6. [HIGH] Placeholder tools (github_pr_search, github_triage) in production registry",
+      "7. [HIGH] search_replace & replace_symbol bypass FileLock and coordination checks",
+      "8. [HIGH] TOCTOU race in plugin trigger() — snapshot vs live Ref mismatch",
+      "9. [HIGH] No MCP tool_use_id response verification",
+      "10. [HIGH] experimental.text.complete hook always denied (capability mapping bug)"
+    ]
   },
 
   "file_inventory": {
     "provider": ["provider.ts (1916L)", "transform.ts (1390L)", "auth.ts (229L)", "error.ts (232L)", "schema.ts (31L)", "model-status.ts (10L)"],
-    "plugin": ["index.ts (522L)", "loader.ts (237L)", "install.ts (54L)", "shared.ts (23L)", "azure.ts (21L)", "cloudflare.ts (68L)", "digitalocean.ts (392L)", "xai.ts (28L)", "github-copilot/* (copilot, device-code, oauth)", "openai/* (codex)", "capability/*"],
-    "tool": ["tool.ts (288L)", "registry.ts (866L)", "execution.ts (54L)", "truncate.ts (92L)", "cache.ts (58L)", "validate.ts (68L)", "typed-result.ts (32L)", "coordination.ts (689L)", "shell/*", "~50+ individual tool implementation files"],
-    "mcp": ["index.ts (1053L)", "auth.ts (132L)", "oauth-provider.ts (110L)", "oauth-callback.ts (67L)"],
-    "session": ["tools.ts (233L)", "processor.ts (~900L)", "llm.ts (~300L)", "session.ts (~900L)", "prompt.ts (~1800L)"]
+    "plugin": ["index.ts (522L)", "loader.ts (237L)", "shared.ts (266L)", "install.ts (284L)", "capability/types.ts", "capability/registry.ts", "capability/enforcer.ts", "capability/hook-map.ts", "capability/hook-dispatch-guard.ts", "openai/codex.ts + ws.ts + ws-pool.ts", "github-copilot/copilot.ts + models.ts", "cloudflare.ts", "azure.ts", "digitalocean.ts (392L)", "xai.ts (696L)"],
+    "tool": ["tool.ts (288L)", "registry.ts (866L)", "execution.ts (54L)", "truncate.ts (92L)", "cache.ts (58L, deprecated)", "coordination.ts (689L)", "~50 individual tool files"],
+    "mcp": ["index.ts (1053L)", "auth.ts (132L)", "oauth-provider.ts", "oauth-callback.ts"],
+    "session": ["tools.ts (233L)", "processor.ts (~1000L)", "llm.ts (~400L)", "system.ts (~90L)", "prompt.ts (~1800L)"],
+    "permission": ["index.ts (317L)", "schema.ts", "arity.ts (~150 commands)", "evaluate.ts"]
   }
 }

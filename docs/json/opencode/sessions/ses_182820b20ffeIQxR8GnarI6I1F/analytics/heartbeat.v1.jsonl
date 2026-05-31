@@ -1,0 +1,24 @@
+{"at":"2026-05-31T10:05:44.113Z","session_id":"ses_182820b20ffeIQxR8GnarI6I1F","agent":"zoning-board","tool":"smart_grep","phase":"started","detail":"fd"}
+{"at":"2026-05-31T10:05:44.120Z","session_id":"ses_182820b20ffeIQxR8GnarI6I1F","agent":"zoning-board","tool":"smart_grep","phase":"completed","detail":"fd"}
+{"at":"2026-05-31T10:05:44.638Z","session_id":"ses_182820b20ffeIQxR8GnarI6I1F","agent":"zoning-board","tool":"smart_find","phase":"started","detail":"justfile"}
+{"at":"2026-05-31T10:05:44.663Z","session_id":"ses_182820b20ffeIQxR8GnarI6I1F","agent":"zoning-board","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T10:05:45.446Z","session_id":"ses_182820b20ffeIQxR8GnarI6I1F","agent":"zoning-board","tool":"smart_find","phase":"started","detail":"scripts/"}
+{"at":"2026-05-31T10:05:45.467Z","session_id":"ses_182820b20ffeIQxR8GnarI6I1F","agent":"zoning-board","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T10:05:46.214Z","session_id":"ses_182820b20ffeIQxR8GnarI6I1F","agent":"zoning-board","tool":"smart_find","phase":"started","detail":"*.md"}
+{"at":"2026-05-31T10:05:46.214Z","session_id":"ses_182820b20ffeIQxR8GnarI6I1F","agent":"zoning-board","tool":"smart_find","phase":"failed","detail":"path not found"}
+{"at":"2026-05-31T10:05:46.934Z","session_id":"ses_182820b20ffeIQxR8GnarI6I1F","agent":"zoning-board","tool":"smart_grep","phase":"started","detail":"bunfig"}
+{"at":"2026-05-31T10:05:47.082Z","session_id":"ses_182820b20ffeIQxR8GnarI6I1F","agent":"zoning-board","tool":"smart_grep","phase":"completed","detail":"bunfig"}
+{"at":"2026-05-31T10:07:12.197Z","session_id":"ses_182820b20ffeIQxR8GnarI6I1F","agent":"zoning-board","tool":"smart_grep","phase":"started","detail":"rg|fd|sd|sg|bat|jq|yq|hyperfine|difft|watchexec|just|eza"}
+{"at":"2026-05-31T10:07:12.201Z","session_id":"ses_182820b20ffeIQxR8GnarI6I1F","agent":"zoning-board","tool":"smart_grep","phase":"completed","detail":"rg|fd|sd|sg|bat|jq|yq|hyperfine|difft|watchexec|just|eza"}
+{"at":"2026-05-31T10:07:13.274Z","session_id":"ses_182820b20ffeIQxR8GnarI6I1F","agent":"zoning-board","tool":"smart_grep","phase":"started","detail":"build|esbuild|vite|tsc|turbo"}
+{"at":"2026-05-31T10:07:13.279Z","session_id":"ses_182820b20ffeIQxR8GnarI6I1F","agent":"zoning-board","tool":"smart_grep","phase":"completed","detail":"build|esbuild|vite|tsc|turbo"}
+{"at":"2026-05-31T10:07:13.962Z","session_id":"ses_182820b20ffeIQxR8GnarI6I1F","agent":"zoning-board","tool":"smart_grep","phase":"started","detail":"test|coverage"}
+{"at":"2026-05-31T10:07:13.966Z","session_id":"ses_182820b20ffeIQxR8GnarI6I1F","agent":"zoning-board","tool":"smart_grep","phase":"completed","detail":"test|coverage"}
+{"at":"2026-05-31T10:07:14.499Z","session_id":"ses_182820b20ffeIQxR8GnarI6I1F","agent":"zoning-board","tool":"smart_find","phase":"started","detail":"scripts/*"}
+{"at":"2026-05-31T10:07:14.517Z","session_id":"ses_182820b20ffeIQxR8GnarI6I1F","agent":"zoning-board","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T10:08:54.969Z","session_id":"ses_182820b20ffeIQxR8GnarI6I1F","agent":"zoning-board","tool":"smart_git","phase":"started","detail":"status"}
+{"at":"2026-05-31T10:08:55.192Z","session_id":"ses_182820b20ffeIQxR8GnarI6I1F","agent":"zoning-board","tool":"smart_git","phase":"completed","detail":"status exit=0"}
+{"at":"2026-05-31T10:08:55.871Z","session_id":"ses_182820b20ffeIQxR8GnarI6I1F","agent":"zoning-board","tool":"smart_bash","phase":"started","detail":"Check if root scripts directory exists"}
+{"at":"2026-05-31T10:08:55.871Z","session_id":"ses_182820b20ffeIQxR8GnarI6I1F","agent":"zoning-board","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T10:08:56.639Z","session_id":"ses_182820b20ffeIQxR8GnarI6I1F","agent":"zoning-board","tool":"smart_bash","phase":"started","detail":"Check if ADR directory exists"}
+{"at":"2026-05-31T10:08:56.639Z","session_id":"ses_182820b20ffeIQxR8GnarI6I1F","agent":"zoning-board","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}

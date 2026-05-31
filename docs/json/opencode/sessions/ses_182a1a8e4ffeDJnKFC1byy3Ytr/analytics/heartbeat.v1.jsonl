@@ -86,3 +86,19 @@
 {"at":"2026-05-31T09:46:15.255Z","session_id":"ses_182a1a8e4ffeDJnKFC1byy3Ytr","agent":"secretary","tool":"smart_grep","phase":"completed","detail":"reservePath|reservation|PathReservation"}
 {"at":"2026-05-31T09:46:26.114Z","session_id":"ses_182a1a8e4ffeDJnKFC1byy3Ytr","agent":"secretary","tool":"smart_bash","phase":"started","detail":"See which coordination tests pass/fail"}
 {"at":"2026-05-31T09:46:26.114Z","session_id":"ses_182a1a8e4ffeDJnKFC1byy3Ytr","agent":"secretary","tool":"smart_bash","phase":"rerouted","detail":"→ smart_bun"}
+{"at":"2026-05-31T09:47:31.780Z","session_id":"ses_182a1a8e4ffeDJnKFC1byy3Ytr","agent":"secretary","tool":"smart_bash","phase":"started","detail":"Run coordination tests to see full pass/fail output"}
+{"at":"2026-05-31T09:47:31.780Z","session_id":"ses_182a1a8e4ffeDJnKFC1byy3Ytr","agent":"secretary","tool":"smart_bash","phase":"rerouted","detail":"→ smart_bun"}
+{"at":"2026-05-31T09:51:01.437Z","session_id":"ses_182a1a8e4ffeDJnKFC1byy3Ytr","agent":"secretary","tool":"smart_grep","phase":"started","detail":"^\\s*(test|it|describe)\\("}
+{"at":"2026-05-31T09:51:01.444Z","session_id":"ses_182a1a8e4ffeDJnKFC1byy3Ytr","agent":"secretary","tool":"smart_grep","phase":"completed","detail":"^\\s*(test|it|describe)\\("}
+{"at":"2026-05-31T09:51:09.407Z","session_id":"ses_182a1a8e4ffeDJnKFC1byy3Ytr","agent":"secretary","tool":"smart_grep","phase":"started","detail":"test\\(|it\\(|describe\\("}
+{"at":"2026-05-31T09:51:09.412Z","session_id":"ses_182a1a8e4ffeDJnKFC1byy3Ytr","agent":"secretary","tool":"smart_grep","phase":"completed","detail":"test\\(|it\\(|describe\\("}
+{"at":"2026-05-31T09:51:35.841Z","session_id":"ses_182a1a8e4ffeDJnKFC1byy3Ytr","agent":"secretary","tool":"smart_bash","phase":"started","detail":"Verify PathReservation type has expiresAt"}
+{"at":"2026-05-31T09:51:35.877Z","session_id":"ses_182a1a8e4ffeDJnKFC1byy3Ytr","agent":"secretary","tool":"smart_bash","phase":"completed","detail":"awk exit=0"}
+{"at":"2026-05-31T09:51:36.795Z","session_id":"ses_182a1a8e4ffeDJnKFC1byy3Ytr","agent":"secretary","tool":"smart_bash","phase":"started","detail":"Verify getClaim TTL expiry with complete_count increment"}
+{"at":"2026-05-31T09:51:36.808Z","session_id":"ses_182a1a8e4ffeDJnKFC1byy3Ytr","agent":"secretary","tool":"smart_bash","phase":"completed","detail":"awk exit=0"}
+{"at":"2026-05-31T09:51:37.608Z","session_id":"ses_182a1a8e4ffeDJnKFC1byy3Ytr","agent":"secretary","tool":"smart_bash","phase":"started","detail":"Verify getSessionClaims TTL expiry with complete_count increment"}
+{"at":"2026-05-31T09:51:37.620Z","session_id":"ses_182a1a8e4ffeDJnKFC1byy3Ytr","agent":"secretary","tool":"smart_bash","phase":"completed","detail":"awk exit=0"}
+{"at":"2026-05-31T09:51:42.138Z","session_id":"ses_182a1a8e4ffeDJnKFC1byy3Ytr","agent":"secretary","tool":"smart_bash","phase":"started","detail":"Verify reservePath stale detection and expires_at insert"}
+{"at":"2026-05-31T09:51:42.145Z","session_id":"ses_182a1a8e4ffeDJnKFC1byy3Ytr","agent":"secretary","tool":"smart_bash","phase":"completed","detail":"awk exit=0"}
+{"at":"2026-05-31T09:51:46.805Z","session_id":"ses_182a1a8e4ffeDJnKFC1byy3Ytr","agent":"secretary","tool":"smart_bash","phase":"started","detail":"Verify reservePath insert values with expires_at"}
+{"at":"2026-05-31T09:51:46.816Z","session_id":"ses_182a1a8e4ffeDJnKFC1byy3Ytr","agent":"secretary","tool":"smart_bash","phase":"completed","detail":"awk exit=0"}

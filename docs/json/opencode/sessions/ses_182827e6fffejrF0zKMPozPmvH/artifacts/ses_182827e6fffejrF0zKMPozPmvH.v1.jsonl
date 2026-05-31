@@ -1,0 +1,6 @@
+{"at":"2026-05-31T10:05:10.627Z","tool":"smart_git","action":"git_op","operation":"log","exit_code":0}
+{"at":"2026-05-31T10:06:34.263Z","tool":"smart_git","action":"git_op","operation":"show","exit_code":0}
+{"at":"2026-05-31T10:06:35.630Z","tool":"smart_grep","action":"searched","pattern":"packages/(slack|enterprise|http-recorder|identity|script)","results":30,"files":6}
+{"at":"2026-05-31T10:06:36.438Z","tool":"smart_grep","action":"searched","pattern":"sst\\.config","results":1,"files":1}
+{"at":"2026-05-31T10:08:11.478Z","tool":"smart_bash","action":"bash","command":"for d in packages/*/; do echo \"$d\"; done","exit_code":0}
+{"at":"2026-05-31T10:08:13.450Z","tool":"smart_grep","action":"searched","pattern":"@opencode-ai/(slack|enterprise|http-recorder|identity|script)","results":30,"files":22}

@@ -129,7 +129,7 @@ export type Error = LaneNotFoundError | InvalidEventError | LaneNotTerminalError
  * RuntimeEvent format (type + payload). This bridges the secretary's
  * event model to the canonical predicate-based state machine.
  */
-function toSMEvent(event: RuntimeEvent): SMRuntimeEvent {
+export function toSMEvent(event: RuntimeEvent): SMRuntimeEvent {
   const ts = new Date().toISOString()
   switch (event._tag) {
     case "LaneCreated":
@@ -231,7 +231,7 @@ const EVENT_NAME_MAP: Record<string, string> = {
   Failed: EventName.PermissionDenied,
 }
 
-function toStoreEvent(
+export function toStoreEvent(
   laneId: string,
   campaignId: string,
   event: RuntimeEvent,
@@ -324,7 +324,7 @@ function isTerminal(state: StateTag): boolean {
   return state === "returned" || state === "failed" || state === "blocked"
 }
 
-const STATE_ROLE: Record<string, string | null> = {
+export const STATE_ROLE: Record<string, string | null> = {
   scouting: "cartographer",
   scoped: "cartographer",
   planning: "architect",
@@ -342,7 +342,7 @@ const STATE_ROLE: Record<string, string | null> = {
   failed: null,
 }
 
-function getRoleForState(state: StateTag): string | null {
+export function getRoleForState(state: StateTag): string | null {
   return STATE_ROLE[state] ?? null
 }
 
@@ -603,7 +603,7 @@ const make = Effect.gen(function* () {
       })
     })
 
-function roleOutputToEvent(output: RoleOutput): RuntimeEvent {
+export function roleOutputToEvent(output: RoleOutput): RuntimeEvent {
   if (output.status === "success") {
     switch (output.role) {
       case "cartographer":

@@ -1,0 +1,375 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Phase 1 Any-Cleanup Architecture Plan — packages/opencode/src",
+  "generated_at": "2026-05-31T00:00:00Z",
+  "source_inventory": ".build/rig-relay/any_type_inventory.v1.json",
+  "phase": 1,
+  "category": "EASY",
+  "total_changes": 34,
+  "files_touched": 17,
+  "summary": "Replace 34 `any` annotations with specific types: catch clauses → unknown, callback params → inline object types, local variables → inferred or concrete types.",
+
+  "root_causes": [
+    {
+      "hypothesis": "Lax catch clause typing — TypeScript 4.0+ allows `unknown` in catch but many catch blocks predate this convention",
+      "confidence": "high",
+      "evidence": ["7 catch-clause any annotations: session/llm.ts L143, mcp/index.ts L217, mcp/index.ts L804"]
+    },
+    {
+      "hypothesis": "Untyped callback parameters in filter/map chains — developers used `any` for convenience when the shape is knowable from surrounding code",
+      "confidence": "high",
+      "evidence": ["15+ callback any annotations: smart-git.ts L152-154, smart-bun.ts L105, task-board.ts L148, copilot.ts L107-140, transform.ts L316-317, etc."]
+    },
+    {
+      "hypothesis": "Untyped Drizzle query results — `any[]` used where Drizzle row types or local mapping types would suffice",
+      "confidence": "medium",
+      "evidence": ["coordination.ts L636, L639; claims.ts L126, L127, L177-178"]
+    },
+    {
+      "hypothesis": "Missing local interface definitions for worker event data",
+      "confidence": "medium",
+      "evidence": ["validation-parser-worker.ts L9, L23, L34, L90 — all use `event: any` where a TestEvent interface would work"]
+    }
+  ],
+
+  "fixes": [
+    {
+      "id": "fix-A-catch-clauses",
+      "description": "Replace `catch (e: any)` with `catch (e: unknown)` and add instanceof Error guards for .message access",
+      "files": ["session/llm.ts", "mcp/index.ts"],
+      "changes": [
+        {
+          "file": "session/llm.ts",
+          "line": 143,
+          "before": "} catch (e: any) {\n            return { result: \"\", error: e.message ?? String(e) }\n          }",
+          "after": "} catch (e: unknown) {\n            return { result: \"\", error: e instanceof Error ? e.message : String(e) }\n          }"
+        },
+        {
+          "file": "mcp/index.ts",
+          "line": 217,
+          "before": "    catch: (e: any) => {\n      log.error(`failed to get ${label}`, { clientName, error: e.message })\n      return e",
+          "after": "    catch: (e: unknown) => {\n      log.error(`failed to get ${label}`, { clientName, error: e instanceof Error ? e.message : String(e) })\n      return e"
+        },
+        {
+          "file": "mcp/index.ts",
+          "line": 804,
+          "before": "        catch: (e: any) => {\n          log.error(`failed to ${label}`, { clientName, ...meta, error: e?.message })\n          return e",
+          "after": "        catch: (e: unknown) => {\n          const errMsg = e instanceof Error ? e.message : undefined\n          log.error(`failed to ${label}`, { clientName, ...meta, error: errMsg })\n          return e"
+        }
+      ],
+      "impact": {
+        "affected_files": ["session/llm.ts", "mcp/index.ts"],
+        "tests_to_run": ["packages/opencode/test/session/llm.test.ts", "packages/opencode/test/mcp/"],
+        "imports_needed": []
+      },
+      "risks": [
+        {
+          "severity": "medium",
+          "detail": "mcp/index.ts L217 catch returns `e` directly — with `unknown` this may propagate unknown to callers of fetchFromClient"
+        },
+        {
+          "severity": "low",
+          "detail": "mcp/index.ts L804 uses optional chaining `e?.message` — with `unknown` this won't compile; replaced with explicit guard"
+        }
+      ],
+      "validation": ["bun typecheck from packages/opencode", "Verify no .message access on unknown slips through"]
+    },
+    {
+      "id": "fix-B-inline-callback-types",
+      "description": "Replace `any` callback params with inline object types matching the data shape from surrounding code",
+      "files": ["tool/smart-git.ts", "tool/smart-bun.ts", "tool/task-board.ts", "tool/coordination.ts", "provider/transform.ts", "plugin/github-copilot/copilot.ts", "lsp/server.ts"],
+      "changes": [
+        {
+          "file": "tool/smart-git.ts",
+          "line": 152,
+          "before": "output.staged_count = files.filter((f: any) => f.staged).length",
+          "after": "output.staged_count = files.filter((f: { staged: boolean; unstaged: boolean; status: string }) => f.staged).length"
+        },
+        {
+          "file": "tool/smart-git.ts",
+          "line": 153,
+          "before": "output.unstaged_count = files.filter((f: any) => f.unstaged).length",
+          "after": "output.unstaged_count = files.filter((f: { staged: boolean; unstaged: boolean; status: string }) => f.unstaged).length"
+        },
+        {
+          "file": "tool/smart-git.ts",
+          "line": 154,
+          "before": "output.untracked_count = files.filter((f: any) => f.status === \"??\").length",
+          "after": "output.untracked_count = files.filter((f: { staged: boolean; unstaged: boolean; status: string }) => f.status === \"??\").length"
+        },
+        {
+          "file": "tool/smart-bun.ts",
+          "line": 105,
+          "before": "const files = new Set(errors.map((e: any) => e.file))",
+          "after": "type TypecheckError = { file: string; line: number; col: number; level: string; code: string; message: string }\n            const files = new Set(errors.map((e: TypecheckError) => e.file))"
+        },
+        {
+          "file": "tool/task-board.ts",
+          "line": 148,
+          "before": "tool_count: new Set(phases.map((p: any) => p.tool)).size,",
+          "after": "tool_count: new Set(phases.map((p: { tool: string }) => p.tool)).size,"
+        },
+        {
+          "file": "tool/coordination.ts",
+          "line": 636,
+          "before": "sessionClaims.map((r: any) => formatStructuredResult(claimRowToType(r)))",
+          "after": "sessionClaims.map((r: Parameters<typeof claimRowToType>[0]) => formatStructuredResult(claimRowToType(r)))"
+        },
+        {
+          "file": "tool/coordination.ts",
+          "line": 706,
+          "before": "...runningClaims.map((c: any) => `    ${c.task_id}: ${c.description}`)",
+          "after": "...runningClaims.map((c: { task_id: string; description: string }) => `    ${c.task_id}: ${c.description}`)"
+        },
+        {
+          "file": "provider/transform.ts",
+          "line": 316,
+          "before": "const reasoningParts = msg.content.filter((part: any) => part.type === \"reasoning\")",
+          "after": "const reasoningParts = msg.content.filter((part: { type: string }) => part.type === \"reasoning\")"
+        },
+        {
+          "file": "provider/transform.ts",
+          "line": 317,
+          "before": "const reasoningText = reasoningParts.map((part: any) => part.text).join(\"\")",
+          "after": "const reasoningText = reasoningParts.map((part: { text: string }) => part.text).join(\"\")"
+        },
+        {
+          "file": "provider/transform.ts",
+          "line": 1361,
+          "before": "result.required = result.required.filter((field: any) => field in result.properties)",
+          "after": "result.required = result.required.filter((field: string) => field in result.properties)"
+        },
+        {
+          "file": "plugin/github-copilot/copilot.ts",
+          "line": 107,
+          "before": "msg.content.some((part: any) => part.type === \"image_url\")",
+          "after": "msg.content.some((part: { type: string }) => part.type === \"image_url\")"
+        },
+        {
+          "file": "plugin/github-copilot/copilot.ts",
+          "line": 119,
+          "before": "item.content.some((part: any) => part.type === \"input_image\")",
+          "after": "item.content.some((part: { type: string }) => part.type === \"input_image\")"
+        },
+        {
+          "file": "plugin/github-copilot/copilot.ts",
+          "line": 129,
+          "before": "last.content.some((part: any) => part?.type !== \"tool_result\")",
+          "after": "last.content.some((part: { type?: string }) => part?.type !== \"tool_result\")"
+        },
+        {
+          "file": "plugin/github-copilot/copilot.ts",
+          "line": 135,
+          "before": "(part: any) =>",
+          "after": "(part: { type: string; content?: unknown }) =>"
+        },
+        {
+          "file": "plugin/github-copilot/copilot.ts",
+          "line": 140,
+          "before": "part.content.some((nested: any) => nested?.type === \"image\")",
+          "after": "part.content.some((nested: { type?: string }) => nested?.type === \"image\")"
+        },
+        {
+          "file": "lsp/server.ts",
+          "line": 1482,
+          "before": "const asset = release.assets.find((a: any) => a.name === assetName)",
+          "after": "const asset = release.assets.find((a: { name: string }) => a.name === assetName)"
+        }
+      ],
+      "impact": {
+        "affected_files": ["tool/smart-git.ts", "tool/smart-bun.ts", "tool/task-board.ts", "tool/coordination.ts", "provider/transform.ts", "plugin/github-copilot/copilot.ts", "lsp/server.ts"],
+        "tests_to_run": [],
+        "imports_needed": []
+      },
+      "risks": [
+        {
+          "severity": "low",
+          "detail": "Inline types may be slightly wider/narrower than actual data shapes. These are pure filter/map closures — only accessed fields matter."
+        },
+        {
+          "severity": "low",
+          "detail": "coordination.ts L636 uses Parameters<> utility — requires claimRowToType import. Already imported locally, no change needed."
+        }
+      ],
+      "validation": ["bun typecheck from packages/opencode", "Manually verify filter callback types don't cause downstream assignment errors"]
+    },
+    {
+      "id": "fix-C-local-variable-types",
+      "description": "Replace `any` in local variable declarations and function signatures with concrete types",
+      "files": ["util/signal.ts", "storage/adapter.ts", "provider/provider.ts", "storage/db.duckdb.ts", "tool/read-lib.ts", "tool/typed-result.ts", "tool/coordination.ts"],
+      "changes": [
+        {
+          "file": "util/signal.ts",
+          "line": 2,
+          "before": "let resolve: any",
+          "after": "let resolve: () => void"
+        },
+        {
+          "file": "storage/adapter.ts",
+          "line": 230,
+          "before": "const txFn = async (tx: any) => {",
+          "after": "const txFn = async (tx: DrizzleLikeClient) => {"
+        },
+        {
+          "file": "provider/provider.ts",
+          "line": 1633,
+          "before": "options[\"fetch\"] = async (input: any, init?: BunFetchRequestInit) => {",
+          "after": "options[\"fetch\"] = async (input: RequestInfo | URL, init?: BunFetchRequestInit) => {"
+        },
+        {
+          "file": "storage/db.duckdb.ts",
+          "line": 121,
+          "before": "function safeBind(sql: string, params: any[]): string {",
+          "after": "function safeBind(sql: string, params: unknown[]): string {"
+        },
+        {
+          "file": "tool/read-lib.ts",
+          "line": 216,
+          "before": "): any {",
+          "after": "): Effect.Effect<void> {"
+        },
+        {
+          "file": "tool/typed-result.ts",
+          "line": 505,
+          "before": "Effect.map((exit: any) => {",
+          "after": "Effect.map((exit: Effect.Effect.Exit<unknown, unknown>) => {"
+        },
+        {
+          "file": "tool/coordination.ts",
+          "line": 639,
+          "before": "const allClaims: any[] = yield* adapter.query((db) =>",
+          "after": "const allClaims: Parameters<typeof claimRowToType>[0][] = yield* adapter.query((db) =>"
+        }
+      ],
+      "impact": {
+        "affected_files": ["util/signal.ts", "storage/adapter.ts", "provider/provider.ts", "storage/db.duckdb.ts", "tool/read-lib.ts", "tool/typed-result.ts", "tool/coordination.ts"],
+        "tests_to_run": [],
+        "imports_needed": []
+      },
+      "risks": [
+        {
+          "severity": "medium",
+          "detail": "provider/provider.ts L1633: RequestInfo | URL may not be available in all TS configs. `RequestInfo` is a lib.dom type. Alternative: use `string | URL` if DOM types aren't loaded."
+        },
+        {
+          "severity": "low",
+          "detail": "tool/typed-result.ts L505: Effect.Effect.Exit<unknown, unknown> is imprecise but safer than any. The function already has explicit type casts elsewhere; a more precise generic would require restructuring the function."
+        },
+        {
+          "severity": "low",
+          "detail": "tool/coordination.ts L639: Parameters<typeof claimRowToType>[0][] relies on claimRowToType being in scope (it is, defined at L132)."
+        },
+        {
+          "severity": "low",
+          "detail": "storage/db.duckdb.ts L121: changing any[] to unknown[] in safeBind — the function body accesses params via indexing and typeof checks, which work fine with unknown."
+        }
+      ],
+      "validation": ["bun typecheck from packages/opencode", "Check provider.ts for DOM type availability"]
+    },
+    {
+      "id": "fix-D-validation-parser-worker-types",
+      "description": "Define a local TestEvent interface and replace 4 `any` params in validation-parser-worker.ts",
+      "files": ["context/workers/validation-parser-worker.ts"],
+      "changes": [
+        {
+          "file": "context/workers/validation-parser-worker.ts",
+          "added_type": "interface TestEvent {\n  payloadJson?: Record<string, unknown>\n  errorMessage?: string\n  filePath?: string\n  eventType?: string\n  sessionId?: string\n  ts?: string\n}",
+          "before_lines": {
+            "9": "function extractTestName(event: any): string {",
+            "23": "function extractFilePath(event: any): string {",
+            "34": "function extractLine(event: any): number | undefined {",
+            "90": "const failures = events.map((e: any) => ({"
+          },
+          "after_lines": {
+            "9": "function extractTestName(event: TestEvent): string {",
+            "23": "function extractFilePath(event: TestEvent): string {",
+            "34": "function extractLine(event: TestEvent): number | undefined {",
+            "90": "const failures = events.map((e: TestEvent) => ({"
+          }
+        }
+      ],
+      "impact": {
+        "affected_files": ["context/workers/validation-parser-worker.ts"],
+        "tests_to_run": [],
+        "imports_needed": []
+      },
+      "risks": [
+        {
+          "severity": "low",
+          "detail": "New TestEvent interface is local-only (not exported). The functions access properties with optional chaining and typeof guards already, so adding the interface won't change runtime behavior."
+        },
+        {
+          "severity": "low",
+          "detail": "The events array comes from eventStore.query() which returns unknown shape — the TestEvent interface is a structural subset, not an exhaustive type."
+        }
+      ],
+      "validation": ["bun typecheck from packages/opencode"]
+    },
+    {
+      "id": "fix-E-claims-tree-node-types",
+      "description": "Define ClaimSummary and PathTreeNode types in claims.ts and replace 5 `any` annotations",
+      "files": ["server/routes/instance/httpapi/handlers/claims.ts"],
+      "changes": [
+        {
+          "file": "server/routes/instance/httpapi/handlers/claims.ts",
+          "added_type": "type ClaimRow = { task_id: string; session_id: string; wave: string; wave_type: string; description: string; status: string; created_at: string; released_at?: string }\ntype ClaimSummary = { taskId: string; sessionId: string; wave: string; waveType: string; subagentType: string; description: string; status: string; createdAt: string; releasedAt?: string }\ntype PathTreeNode = {\n  path: string\n  name: string\n  type: \"file\" | \"directory\"\n  status: string\n  claim?: ClaimSummary\n  children?: PathTreeNode[]\n}",
+          "before_lines": {
+            "120": "claim: any",
+            "126": "claim: any",
+            "127": "children?: any[]",
+            "177": "function convert(node: Record<string, any>, parentPath: string): any[] {",
+            "178": "const result: any[] = []"
+          },
+          "after_lines": {
+            "120": "claim: ClaimRow | null",
+            "126": "claim?: ClaimSummary",
+            "127": "children?: PathTreeNode[]",
+            "177": "function convert(node: Record<string, { file?: { path: string; name: string; type: \"file\"; status: string; claim?: ClaimSummary }; dir?: { children: Record<string, unknown>; claim?: ClaimRow; status?: string } }>, parentPath: string): PathTreeNode[] {",
+            "178": "const result: PathTreeNode[] = []"
+          }
+        }
+      ],
+      "impact": {
+        "affected_files": ["server/routes/instance/httpapi/handlers/claims.ts"],
+        "tests_to_run": [],
+        "imports_needed": []
+      },
+      "risks": [
+        {
+          "severity": "medium",
+          "detail": "The convert() function works with a recursive tree structure built dynamically. The proposed node type for the first param (Record<string, { file?, dir? }>) approximates the shape but may need refinement after typecheck. Consider a more precise recursive type."
+        },
+        {
+          "severity": "low",
+          "detail": "ClaimRow is a subset of the Drizzle row type — may need to derive from typeof CoordinationClaimTable for full accuracy in a later phase."
+        }
+      ],
+      "validation": ["bun typecheck from packages/opencode", "Verify tree endpoint still returns correct structure"]
+    }
+  ],
+
+  "apply_order": ["fix-A-catch-clauses", "fix-B-inline-callback-types", "fix-C-local-variable-types", "fix-D-validation-parser-worker-types", "fix-E-claims-tree-node-types"],
+
+  "rollback_plan": "Revert each fix in reverse order: E → D → C → B → A. Each fix touches non-overlapping files except coordination.ts (shared between B and C). For coordination.ts, revert the later fix first (C) then B.",
+
+  "validation_strategy": {
+    "pre_apply": ["bun typecheck from packages/opencode (baseline)"],
+    "post_apply": ["bun typecheck from packages/opencode (verify zero regressions)"],
+    "smoke_test": "bun test from packages/opencode — test-name-pattern for affected modules",
+    "bisect_strategy": "Apply fixes one file at a time, re-running typecheck after each"
+  },
+
+  "pending_subagent_results": {
+    "load_bearer": "ses_182822c95ffeVn3eTOCB691mx9",
+    "building_inspector": "ses_1828208c5ffedypJrNpLx24xh5",
+    "zoning_board": "ses_18281f081ffe9XfDxeqZ2xOJ9u",
+    "blueprint": "ses_18281db51ffeu45R6XqSkBDGwy"
+  },
+
+  "notes": {
+    "discrepancy": "Inventory overall count says 33 EASY but by_file scanning found 34 entries. The extra entry may be a counting artifact. All 34 are planned.",
+    "deferred_to_phase2": "The claims.ts `convert()` node param type may need a fully recursive type definition; the current plan uses a pragmatic one-level type. If typecheck fails, a recursive TreeNode = { [key: string]: FileNode | DirNode } is the fallback.",
+    "deferred_to_phase2": "tool/coordination.ts L639 uses Parameters<> utility which depends on a function signature. If claimRowToType's signature changes in a future phase, this will break at typecheck time — which is the desired behavior.",
+    "deferred_to_phase2": "provider/provider.ts L1633: if RequestInfo is not available, fall back to `string | URL`."
+  }
+}

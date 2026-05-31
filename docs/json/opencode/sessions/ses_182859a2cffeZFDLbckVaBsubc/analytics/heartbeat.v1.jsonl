@@ -1,0 +1,30 @@
+{"at":"2026-05-31T10:01:47.806Z","session_id":"ses_182859a2cffeZFDLbckVaBsubc","agent":"foundation","tool":"smart_find","phase":"started","detail":"migration*"}
+{"at":"2026-05-31T10:01:47.841Z","session_id":"ses_182859a2cffeZFDLbckVaBsubc","agent":"foundation","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T10:03:04.430Z","session_id":"ses_182859a2cffeZFDLbckVaBsubc","agent":"foundation","tool":"smart_grep","phase":"started","detail":"applyMigrations"}
+{"at":"2026-05-31T10:03:04.454Z","session_id":"ses_182859a2cffeZFDLbckVaBsubc","agent":"foundation","tool":"smart_grep","phase":"completed","detail":"applyMigrations"}
+{"at":"2026-05-31T10:03:06.100Z","session_id":"ses_182859a2cffeZFDLbckVaBsubc","agent":"foundation","tool":"smart_bash","phase":"started","detail":"Find all migration directories and SQL files under opencode package"}
+{"at":"2026-05-31T10:03:06.100Z","session_id":"ses_182859a2cffeZFDLbckVaBsubc","agent":"foundation","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T10:03:07.208Z","session_id":"ses_182859a2cffeZFDLbckVaBsubc","agent":"foundation","tool":"smart_bash","phase":"started","detail":"List all files in desktop main for sidecar-related code"}
+{"at":"2026-05-31T10:03:07.208Z","session_id":"ses_182859a2cffeZFDLbckVaBsubc","agent":"foundation","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T10:03:11.556Z","session_id":"ses_182859a2cffeZFDLbckVaBsubc","agent":"foundation","tool":"smart_bash","phase":"started","detail":"Find migration directories under opencode"}
+{"at":"2026-05-31T10:03:11.556Z","session_id":"ses_182859a2cffeZFDLbckVaBsubc","agent":"foundation","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T10:03:12.555Z","session_id":"ses_182859a2cffeZFDLbckVaBsubc","agent":"foundation","tool":"smart_bash","phase":"started","detail":"Find all migration SQL files"}
+{"at":"2026-05-31T10:03:12.555Z","session_id":"ses_182859a2cffeZFDLbckVaBsubc","agent":"foundation","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T10:04:27.400Z","session_id":"ses_182859a2cffeZFDLbckVaBsubc","agent":"foundation","tool":"smart_bash","phase":"started","detail":"List migration directories"}
+{"at":"2026-05-31T10:04:27.400Z","session_id":"ses_182859a2cffeZFDLbckVaBsubc","agent":"foundation","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T10:04:28.502Z","session_id":"ses_182859a2cffeZFDLbckVaBsubc","agent":"foundation","tool":"smart_grep","phase":"started","detail":"spawnLocalServer|SidecarListener|\\.listener|\\.health|server"}
+{"at":"2026-05-31T10:04:28.507Z","session_id":"ses_182859a2cffeZFDLbckVaBsubc","agent":"foundation","tool":"smart_grep","phase":"completed","detail":"spawnLocalServer|SidecarListener|\\.listener|\\.health|server"}
+{"at":"2026-05-31T10:04:28.905Z","session_id":"ses_182859a2cffeZFDLbckVaBsubc","agent":"foundation","tool":"smart_grep","phase":"started","detail":"SidecarListener|spawnLocalServer"}
+{"at":"2026-05-31T10:04:28.913Z","session_id":"ses_182859a2cffeZFDLbckVaBsubc","agent":"foundation","tool":"smart_grep","phase":"completed","detail":"SidecarListener|spawnLocalServer"}
+{"at":"2026-05-31T10:05:45.431Z","session_id":"ses_182859a2cffeZFDLbckVaBsubc","agent":"foundation","tool":"smart_bash","phase":"started","detail":"List migration-pg directory"}
+{"at":"2026-05-31T10:05:45.431Z","session_id":"ses_182859a2cffeZFDLbckVaBsubc","agent":"foundation","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T10:05:46.415Z","session_id":"ses_182859a2cffeZFDLbckVaBsubc","agent":"foundation","tool":"smart_bash","phase":"started","detail":"Read server variable declaration and killSidecar function"}
+{"at":"2026-05-31T10:05:47.283Z","session_id":"ses_182859a2cffeZFDLbckVaBsubc","agent":"foundation","tool":"smart_bash","phase":"started","detail":"Read server spawning section"}
+{"at":"2026-05-31T10:07:10.203Z","session_id":"ses_182859a2cffeZFDLbckVaBsubc","agent":"foundation","tool":"smart_grep","phase":"started","detail":"let server|killSidecar|spawnLocalServer"}
+{"at":"2026-05-31T10:07:10.209Z","session_id":"ses_182859a2cffeZFDLbckVaBsubc","agent":"foundation","tool":"smart_grep","phase":"completed","detail":"let server|killSidecar|spawnLocalServer"}
+{"at":"2026-05-31T10:07:10.853Z","session_id":"ses_182859a2cffeZFDLbckVaBsubc","agent":"foundation","tool":"smart_find","phase":"started","detail":"*.sql"}
+{"at":"2026-05-31T10:07:10.913Z","session_id":"ses_182859a2cffeZFDLbckVaBsubc","agent":"foundation","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T10:08:46.429Z","session_id":"ses_182859a2cffeZFDLbckVaBsubc","agent":"foundation","tool":"smart_bash","phase":"started","detail":"Find server lifecycle management code in index.ts"}
+{"at":"2026-05-31T10:08:46.429Z","session_id":"ses_182859a2cffeZFDLbckVaBsubc","agent":"foundation","tool":"smart_bash","phase":"rerouted","detail":"→ smart_grep"}
+{"at":"2026-05-31T10:08:47.191Z","session_id":"ses_182859a2cffeZFDLbckVaBsubc","agent":"foundation","tool":"smart_bash","phase":"started","detail":"List migration-pg SQL files"}
+{"at":"2026-05-31T10:08:47.191Z","session_id":"ses_182859a2cffeZFDLbckVaBsubc","agent":"foundation","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}

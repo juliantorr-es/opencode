@@ -1,0 +1,14 @@
+{"at":"2026-05-31T10:05:59.839Z","session_id":"ses_18281db51ffeu45R6XqSkBDGwy","agent":"blueprint","tool":"smart_find","phase":"started","detail":"*.ts"}
+{"at":"2026-05-31T10:05:59.866Z","session_id":"ses_18281db51ffeu45R6XqSkBDGwy","agent":"blueprint","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T10:06:00.566Z","session_id":"ses_18281db51ffeu45R6XqSkBDGwy","agent":"blueprint","tool":"smart_find","phase":"started","detail":"*.test.ts"}
+{"at":"2026-05-31T10:06:00.593Z","session_id":"ses_18281db51ffeu45R6XqSkBDGwy","agent":"blueprint","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T10:07:25.531Z","session_id":"ses_18281db51ffeu45R6XqSkBDGwy","agent":"blueprint","tool":"smart_bash","phase":"started","detail":"List source files in opencode package"}
+{"at":"2026-05-31T10:07:25.531Z","session_id":"ses_18281db51ffeu45R6XqSkBDGwy","agent":"blueprint","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T10:07:26.420Z","session_id":"ses_18281db51ffeu45R6XqSkBDGwy","agent":"blueprint","tool":"smart_bash","phase":"started","detail":"List test files in opencode package"}
+{"at":"2026-05-31T10:07:26.421Z","session_id":"ses_18281db51ffeu45R6XqSkBDGwy","agent":"blueprint","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T10:09:03.541Z","session_id":"ses_18281db51ffeu45R6XqSkBDGwy","agent":"blueprint","tool":"smart_find","phase":"started","detail":"*.ts"}
+{"at":"2026-05-31T10:09:03.567Z","session_id":"ses_18281db51ffeu45R6XqSkBDGwy","agent":"blueprint","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T10:09:04.088Z","session_id":"ses_18281db51ffeu45R6XqSkBDGwy","agent":"blueprint","tool":"smart_find","phase":"started","detail":"*.test.ts"}
+{"at":"2026-05-31T10:09:04.108Z","session_id":"ses_18281db51ffeu45R6XqSkBDGwy","agent":"blueprint","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T10:09:04.595Z","session_id":"ses_18281db51ffeu45R6XqSkBDGwy","agent":"blueprint","tool":"smart_git","phase":"started","detail":"diff"}
+{"at":"2026-05-31T10:09:04.674Z","session_id":"ses_18281db51ffeu45R6XqSkBDGwy","agent":"blueprint","tool":"smart_git","phase":"completed","detail":"diff exit=0"}

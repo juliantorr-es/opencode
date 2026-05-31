@@ -24,28 +24,28 @@
         "session_message", "session", "todo", "session_share",
         "event_sequence", "event"
       ],
-      "description": "Initial full schema dump. Creates 15 tables with all columns, indexes (10), and foreign keys (10)."
+      "description": "Initial full schema dump. Creates 15 tables with all columns, indexes (10), and foreign keys (10). Monolithic squash of final SQLite schema state."
     },
     {
       "directory": "20260530202327_chemical_moira_mactaggert",
       "date": "2026-05-30",
       "type": "add_table",
       "tables_created": ["runtime_events"],
-      "description": "Adds runtime_events table (24 columns) + 8 indexes covering session, event_type, ts, actor, run_id, session+ts, campaign_id, lane_id."
+      "description": "Adds runtime_events table (24 columns) + 8 indexes. Net-new schema — never existed in SQLite."
     },
     {
       "directory": "20260531003644_swift_gravity",
       "date": "2026-05-31",
       "type": "add_tables",
       "tables_created": ["coordination_claim", "coordination_fan_out", "coordination_reservation"],
-      "description": "Adds 3 coordination tables for cross-session coordination."
+      "description": "Adds 3 coordination tables for cross-session coordination. Net-new schema — never existed in SQLite."
     },
     {
       "directory": "20260531003656_blushing_zuras",
       "date": "2026-05-31",
       "type": "alter_column",
       "tables_created": [],
-      "description": "Alters coordination_fan_out.task_ids column type to jsonb."
+      "description": "Alters coordination_fan_out.task_ids column type from text to jsonb."
     }
   ],
   "pg_migration_total_count": 4,
@@ -55,13 +55,23 @@
     "line": 70,
     "mechanism": "For PGlite: reads migration files via readMigrationFiles(), iterates, calls client.exec(sql). For node-postgres: uses drizzle-orm/node-postgres/migrator migrate(). Migration folder resolved as new URL('../../migration-pg', import.meta.url).pathname.",
     "callers": [
-      { "file": "packages/opencode/src/storage/adapter.ts", "line": 194, "context": "makePgAdapter() — fire-and-forget at adapter construction. Errors logged, not propagated." },
-      { "file": "packages/opencode/src/storage/migrate.ts", "line": 20, "context": "runMigrations() — CLI db:migrate command. Awaits completion." },
+      { "file": "packages/opencode/src/storage/adapter.ts", "line": 194, "context": "makePgAdapter() — fire-and-forget at adapter construction. Only runs for remote PG path (OPENCODE_DATABASE_URL set). Errors logged, not propagated." },
+      { "file": "packages/opencode/src/storage/migrate.ts", "line": 20, "context": "runMigrations() — CLI db:migrate command. Awaits completion. Defaults to :memory: (PGlite)." },
       { "file": "packages/opencode/src/node.ts", "line": 8, "context": "Re-exported as public API" }
     ],
-    "called_at_startup": true,
-    "called_at_startup_detail": "makePgAdapter() in adapter.ts calls applyMigrations(client).catch(...) — runs every time adapter is constructed (app startup). No idempotency guard beyond Drizzle's internal mechanism.",
-    "pre_existing_finding_staleness": "Finding ses_187bc95c claiming 'applyMigrations defined at db.pg.ts:25 but never called' is STALE — it IS called at adapter.ts:194 and migrate.ts:20"
+    "called_at_startup_remote_pg": true,
+    "called_at_startup_local_pglite": false,
+    "local_pglite_gap_detail": "makeLocalPgAdapter() (adapter.ts:86-153) does NOT call applyMigrations(). The db.ts Client() factory (line 64-76) also does NOT call applyMigrations(). Local PGlite databases do not auto-apply migrations at startup — only the CLI migrate.ts script can apply them.",
+    "pre_existing_finding_staleness": "Finding ses_187bc95c claiming 'applyMigrations defined at db.pg.ts:25 but never called' is STALE — it IS called at adapter.ts:194 (remote PG) and migrate.ts:20 (CLI). However, it is NOT called for local PGlite."
+  },
+  "local_pglite_migration_gap": {
+    "severity": "MEDIUM",
+    "description": "Local PGlite databases do not get migrations auto-applied at startup. The makeLocalPgAdapter() function (adapter.ts:86) and db.ts Client() factory (line 64) both skip applyMigrations(). Only the remote PG path (makePgAdapter, adapter.ts:194) auto-applies migrations. Users running locally with PGlite must manually run 'bun run db:migrate' to apply schema changes.",
+    "affected_code_paths": [
+      { "file": "packages/opencode/src/storage/adapter.ts", "line": 86, "function": "makeLocalPgAdapter", "note": "No call to applyMigrations()" },
+      { "file": "packages/opencode/src/storage/db.ts", "line": 64, "function": "Client", "note": "No call to applyMigrations(); skipMigrations flag read but never used" }
+    ],
+    "workaround": "Run 'bun run db:migrate' from packages/opencode/ to manually apply PG migrations to local PGlite"
   },
   "dialect_detection": {
     "mechanism": "Single dialect: PostgreSQL always. SQLite removed entirely.",
@@ -69,22 +79,30 @@
       "file": "packages/opencode/src/storage/db.pg.ts",
       "line": 38,
       "logic": "If connectionString is ':memory:', starts with '/', or starts with 'file:' → PGlite (embedded PG in WASM). Otherwise → node-postgres (real PG server via pg Pool).",
-      "env_var": "OPENCODE_DATABASE_URL (in migrate.ts line 9, falls back to ':memory:')",
-      "ssl_env_var": "OPENCODE_DATABASE_SSL (in migrate.ts line 18, defaults to true unless explicitly 'false')"
+      "env_var_primary": "OPENCODE_DATABASE_URL (adapter.ts:396, database-config.ts:5) — the PRIMARY switch. When set, creates remote PG connection. When unset, uses local PGlite.",
+      "env_var_local_path": "OPENCODE_DB (flag.ts:47, db.ts:43-45) — controls local PGlite file path. Can be ':memory:', absolute path, or relative path.",
+      "ssl_env_var": "OPENCODE_DATABASE_SSL (database-config.ts:6, defaults to true)"
     },
     "db_init_chain": "db.ts Database.init() → import {init} from '#db' → db.pg.ts init() → PGlite or node-postgres",
     "alias_resolution": "package.json imports.#db → ./src/storage/db.pg.ts (all targets: bun, node, default)"
   },
   "gap_analysis": {
-    "verdict": "NO GAP — SQLite is intentionally fully removed, PG has 4 migrations covering all tables",
+    "verdict": "NO SCHEMA COVERAGE GAP — SQLite is intentionally fully removed, PG has 4 migrations covering all 19 tables across all 10 schema files. HOWEVER: local PGlite does not auto-apply migrations — see local_pglite_migration_gap.",
     "evidence": [
       "All 19 tables across 4 PG migrations match the 10 .pg.sql.ts schema files",
       "Schema barrel (schema.ts) only re-exports from .pg.sql.ts files",
       "drizzle.config.pg.ts scans ./src/**/*.pg.sql.ts — the canonical schema source",
       "No SQLite schema files, configs, or migration directories remain",
-      "Migration runner is active and called at startup + CLI",
+      "Migration runner is active for remote PG (called at startup) and CLI (manual)",
       "Test file test/storage/migration.pg.test.ts verifies applyMigrations works end-to-end with PGlite"
     ],
+    "git_timeline": {
+      "last_sqlite_migration": "2026-05-11 (data_migration_state)",
+      "first_pg_migration": "2026-05-29 (yellow_molly_hayes — monolithic baseline)",
+      "sqlite_deleted": "2026-05-30 (2 commits: 7f571d36e + e8f155c1e)",
+      "gap_days": 18,
+      "net_new_pg_only_tables": ["runtime_events", "coordination_claim", "coordination_fan_out", "coordination_reservation"]
+    },
     "schemas_mapped": [
       { "pg_sql_file": "src/account/account.pg.sql.ts", "tables": ["AccountTable", "AccountStateTable", "ControlAccountTable"], "in_migration": "yellow_molly_hayes" },
       { "pg_sql_file": "src/project/project.pg.sql.ts", "tables": ["ProjectTable"], "in_migration": "yellow_molly_hayes" },
@@ -102,7 +120,7 @@
     {
       "file": "packages/opencode/script/build.ts",
       "line": 21,
-      "issue": "Reads from path.join(dir, 'migration') — a directory that no longer exists. This code path would throw at build time if reached.",
+      "issue": "Reads from path.join(dir, 'migration') — a directory that no longer exists. Would throw at build time if reached.",
       "severity": "HIGH",
       "recommendation": "Remove the dead migration-loading code or point it at migration-pg/ instead."
     },
@@ -116,31 +134,31 @@
     {
       "file": "packages/opencode/src/storage/adapter-dual-write.ts",
       "line": "throughout",
-      "issue": "Variable names still use 'sqlite' terminology (sqliteAdapter, sqliteDb, sqliteTx) but the actual implementation wraps PGlite + remote PG.",
+      "issue": "Variable names still use 'sqlite' terminology (sqliteAdapter, sqliteDb, sqliteTx) but the actual implementation wraps PGlite + remote PG. Comment at line 3 says 'Wraps SQLite (primary) and Postgres (shadow)' — misleading.",
       "severity": "MEDIUM",
-      "recommendation": "Rename to localAdapter/localDb/localTx to reflect PG reality."
+      "recommendation": "Rename to localAdapter/localDb/localTx and update comments to reflect PG reality."
     },
     {
       "file": "packages/opencode/src/storage/adapter.ts",
       "line": 53,
-      "issue": "Type exported as SQLiteTransactionOptions with _tag: 'sqlite' — but it's actually used with PGlite (Postgres dialect).",
+      "issue": "Type exported as SQLiteTransactionOptions with _tag: 'sqlite' — but it's actually used with PGlite (Postgres dialect). Already marked @deprecated.",
       "severity": "MEDIUM",
-      "recommendation": "Rename to LocalTransactionOptions or PgliteTransactionOptions."
+      "recommendation": "Remove once all consumers migrated. Rename to LocalTransactionOptions."
+    },
+    {
+      "file": "packages/opencode/src/storage/db.ts",
+      "line": 25,
+      "issue": "DatabaseFlags type includes skipMigrations but the flag is read in readRuntimeFlags() (line 27-31) yet never wired through to gate applyMigrations. The Client() factory reads flags but ignores skipMigrations entirely.",
+      "severity": "MEDIUM",
+      "recommendation": "Either wire skipMigrations to gate applyMigrations in the local PGlite path or remove the unused flag."
     },
     {
       "file": "packages/opencode/src/storage/db.ts",
       "line": 40,
       "issue": "getChannelPath returns 'opencode.db' filename — legacy SQLite convention. Content is PGlite.",
       "severity": "LOW",
-      "recommendation": "Consider renaming to opencode.pg or similar. Low priority since .db is just a file extension convention."
-    },
-    {
-      "file": "packages/opencode/src/storage/db.ts",
-      "line": 25,
-      "issue": "DatabaseFlags type includes skipMigrations but the flag is never wired through to applyMigrations. The flag is read but ignored.",
-      "severity": "MEDIUM",
-      "recommendation": "Either wire skipMigrations to gate applyMigrations in adapter.ts or remove the unused flag."
+      "recommendation": "Consider renaming to opencode.pg. Low priority since .db is just a file extension convention."
     }
   ],
-  "recommendation": "No migration gap exists — the original finding of '20 SQLite vs 1 PG' is outdated. SQLite has been fully removed. There are 4 PG migrations covering all 19 tables across all 10 schema files. However, 6 pieces of dead code referencing SQLite conventions remain and should be cleaned up: build scripts reading from deleted migration/, misleading 'sqlite' variable names in adapter-dual-write.ts, unused skipMigrations flag, and legacy .db file extension naming."
+  "recommendation": "No schema migration gap exists — 4 PG migrations cover all 19 tables across all 10 PG schema files. SQLite is fully removed. However, there is a LOCAL PGLITE MIGRATION GAP: makeLocalPgAdapter() never calls applyMigrations(), so local PGlite databases don't auto-apply schema changes at startup. Users must run 'bun run db:migrate' manually. Additionally, 6 pieces of dead code referencing SQLite conventions remain and should be cleaned up."
 }

@@ -1,0 +1,6 @@
+{"at":"2026-05-31T10:04:52.986Z","tool":"smart_git","action":"git_op","operation":"rev-parse","exit_code":0}
+{"at":"2026-05-31T10:07:46.170Z","tool":"smart_bash","action":"bash","command":"test -d packages/slack && echo \"EXISTS\" || echo \"MISSING\"; test -d packages/enterprise && echo \"EXIS","exit_code":0}
+{"at":"2026-05-31T10:09:24.837Z","tool":"smart_grep","action":"searched","pattern":"@opencode-ai/slack","results":16,"files":13}
+{"at":"2026-05-31T10:09:25.286Z","tool":"smart_grep","action":"searched","pattern":"@opencode-ai/enterprise","results":7,"files":6}
+{"at":"2026-05-31T10:09:25.811Z","tool":"smart_grep","action":"searched","pattern":"@opencode-ai/identity","results":1,"files":1}
+{"at":"2026-05-31T10:09:26.660Z","tool":"smart_grep","action":"searched","pattern":"@opencode-ai/script","results":50,"files":32}

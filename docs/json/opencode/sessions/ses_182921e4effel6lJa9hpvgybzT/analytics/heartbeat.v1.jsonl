@@ -1,0 +1,60 @@
+{"at":"2026-05-31T09:47:45.769Z","session_id":"ses_182921e4effel6lJa9hpvgybzT","agent":"architect","tool":"smart_bash","phase":"started","detail":"Read the resilience architecture artifact"}
+{"at":"2026-05-31T09:47:45.770Z","session_id":"ses_182921e4effel6lJa9hpvgybzT","agent":"architect","tool":"smart_bash","phase":"rerouted","detail":"→ read_source"}
+{"at":"2026-05-31T09:48:31.431Z","session_id":"ses_182921e4effel6lJa9hpvgybzT","agent":"architect","tool":"smart_find","phase":"started","detail":"migration-pg/*.sql"}
+{"at":"2026-05-31T09:48:31.456Z","session_id":"ses_182921e4effel6lJa9hpvgybzT","agent":"architect","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T09:48:31.947Z","session_id":"ses_182921e4effel6lJa9hpvgybzT","agent":"architect","tool":"smart_find","phase":"started","detail":"migration/*.sql"}
+{"at":"2026-05-31T09:48:31.966Z","session_id":"ses_182921e4effel6lJa9hpvgybzT","agent":"architect","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T09:48:32.427Z","session_id":"ses_182921e4effel6lJa9hpvgybzT","agent":"architect","tool":"smart_grep","phase":"started","detail":"HealthRegistry"}
+{"at":"2026-05-31T09:48:32.447Z","session_id":"ses_182921e4effel6lJa9hpvgybzT","agent":"architect","tool":"smart_grep","phase":"completed","detail":"HealthRegistry"}
+{"at":"2026-05-31T09:48:32.996Z","session_id":"ses_182921e4effel6lJa9hpvgybzT","agent":"architect","tool":"smart_grep","phase":"started","detail":"applyMigrations"}
+{"at":"2026-05-31T09:48:33.016Z","session_id":"ses_182921e4effel6lJa9hpvgybzT","agent":"architect","tool":"smart_grep","phase":"completed","detail":"applyMigrations"}
+{"at":"2026-05-31T09:48:33.900Z","session_id":"ses_182921e4effel6lJa9hpvgybzT","agent":"architect","tool":"smart_grep","phase":"started","detail":"safe.?mode|SafeMode|safeMode|SAFE_MODE"}
+{"at":"2026-05-31T09:48:33.920Z","session_id":"ses_182921e4effel6lJa9hpvgybzT","agent":"architect","tool":"smart_grep","phase":"completed","detail":"safe.?mode|SafeMode|safeMode|SAFE_MODE"}
+{"at":"2026-05-31T09:48:34.721Z","session_id":"ses_182921e4effel6lJa9hpvgybzT","agent":"architect","tool":"smart_grep","phase":"started","detail":"safe.?mode|SafeMode|safeMode|SAFE_MODE"}
+{"at":"2026-05-31T09:48:34.731Z","session_id":"ses_182921e4effel6lJa9hpvgybzT","agent":"architect","tool":"smart_grep","phase":"completed","detail":"safe.?mode|SafeMode|safeMode|SAFE_MODE"}
+{"at":"2026-05-31T09:49:17.402Z","session_id":"ses_182921e4effel6lJa9hpvgybzT","agent":"architect","tool":"smart_bash","phase":"started","detail":"Count migration-pg SQL files"}
+{"at":"2026-05-31T09:49:17.402Z","session_id":"ses_182921e4effel6lJa9hpvgybzT","agent":"architect","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T09:49:17.875Z","session_id":"ses_182921e4effel6lJa9hpvgybzT","agent":"architect","tool":"smart_bash","phase":"started","detail":"Count migration SQL files"}
+{"at":"2026-05-31T09:49:17.875Z","session_id":"ses_182921e4effel6lJa9hpvgybzT","agent":"architect","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T09:49:24.945Z","session_id":"ses_182921e4effel6lJa9hpvgybzT","agent":"architect","tool":"smart_bash","phase":"started","detail":"Count migration SQL files in both directories"}
+{"at":"2026-05-31T09:49:24.966Z","session_id":"ses_182921e4effel6lJa9hpvgybzT","agent":"architect","tool":"smart_bash","phase":"failed","detail":"echo exit=2"}
+{"at":"2026-05-31T09:50:15.000Z","session_id":"ses_182921e4effel6lJa9hpvgybzT","agent":"architect","tool":"smart_grep","phase":"started","detail":"sidecar\\.js|sidecar\\.ts|entry.*sidecar"}
+{"at":"2026-05-31T09:50:15.029Z","session_id":"ses_182921e4effel6lJa9hpvgybzT","agent":"architect","tool":"smart_grep","phase":"completed","detail":"sidecar\\.js|sidecar\\.ts|entry.*sidecar"}
+{"at":"2026-05-31T09:50:15.715Z","session_id":"ses_182921e4effel6lJa9hpvgybzT","agent":"architect","tool":"smart_grep","phase":"started","detail":"spawnLocalServer|sidecar\\.js"}
+{"at":"2026-05-31T09:50:15.727Z","session_id":"ses_182921e4effel6lJa9hpvgybzT","agent":"architect","tool":"smart_grep","phase":"completed","detail":"spawnLocalServer|sidecar\\.js"}
+{"at":"2026-05-31T09:51:06.786Z","session_id":"ses_182921e4effel6lJa9hpvgybzT","agent":"architect","tool":"smart_grep","phase":"started","detail":"transitionToSafeMode|degraded"}
+{"at":"2026-05-31T09:51:06.794Z","session_id":"ses_182921e4effel6lJa9hpvgybzT","agent":"architect","tool":"smart_grep","phase":"completed","detail":"transitionToSafeMode|degraded"}
+{"at":"2026-05-31T09:52:03.274Z","session_id":"ses_182921e4effel6lJa9hpvgybzT","agent":"architect","tool":"smart_grep","phase":"started","detail":"applyMigrations|needsMigration"}
+{"at":"2026-05-31T09:52:03.279Z","session_id":"ses_182921e4effel6lJa9hpvgybzT","agent":"architect","tool":"smart_grep","phase":"completed","detail":"applyMigrations|needsMigration"}
+{"at":"2026-05-31T09:53:53.510Z","session_id":"ses_182921e4effel6lJa9hpvgybzT","agent":"architect","tool":"smart_bash","phase":"started","detail":"Read the main startup flow from line 238 to end"}
+{"at":"2026-05-31T09:53:53.511Z","session_id":"ses_182921e4effel6lJa9hpvgybzT","agent":"architect","tool":"smart_bash","phase":"rerouted","detail":"→ read_source"}
+{"at":"2026-05-31T09:53:54.526Z","session_id":"ses_182921e4effel6lJa9hpvgybzT","agent":"architect","tool":"smart_bash","phase":"started","detail":"Read the imports and setup section"}
+{"at":"2026-05-31T09:53:54.526Z","session_id":"ses_182921e4effel6lJa9hpvgybzT","agent":"architect","tool":"smart_bash","phase":"rerouted","detail":"→ read_source"}
+{"at":"2026-05-31T09:54:52.893Z","session_id":"ses_182921e4effel6lJa9hpvgybzT","agent":"architect","tool":"smart_grep","phase":"started","detail":".*"}
+{"at":"2026-05-31T09:54:52.899Z","session_id":"ses_182921e4effel6lJa9hpvgybzT","agent":"architect","tool":"smart_grep","phase":"completed","detail":".*"}
+{"at":"2026-05-31T09:56:06.522Z","session_id":"ses_182921e4effel6lJa9hpvgybzT","agent":"architect","tool":"smart_bash","phase":"started","detail":"Read safe mode transition area"}
+{"at":"2026-05-31T09:56:07.217Z","session_id":"ses_182921e4effel6lJa9hpvgybzT","agent":"architect","tool":"smart_bash","phase":"started","detail":"Read main startup flow"}
+{"at":"2026-05-31T09:56:11.799Z","session_id":"ses_182921e4effel6lJa9hpvgybzT","agent":"architect","tool":"smart_bash","phase":"started","detail":"Read setInitStep function area"}
+{"at":"2026-05-31T09:56:11.820Z","session_id":"ses_182921e4effel6lJa9hpvgybzT","agent":"architect","tool":"smart_bash","phase":"completed","detail":"awk exit=0"}
+{"at":"2026-05-31T09:56:12.273Z","session_id":"ses_182921e4effel6lJa9hpvgybzT","agent":"architect","tool":"smart_bash","phase":"started","detail":"Read main startup flow"}
+{"at":"2026-05-31T09:56:12.282Z","session_id":"ses_182921e4effel6lJa9hpvgybzT","agent":"architect","tool":"smart_bash","phase":"completed","detail":"awk exit=0"}
+{"at":"2026-05-31T09:57:39.101Z","session_id":"ses_182921e4effel6lJa9hpvgybzT","agent":"architect","tool":"smart_grep","phase":"started","detail":"degraded_mode|degraded"}
+{"at":"2026-05-31T09:57:39.110Z","session_id":"ses_182921e4effel6lJa9hpvgybzT","agent":"architect","tool":"smart_grep","phase":"completed","detail":"degraded_mode|degraded"}
+{"at":"2026-05-31T09:57:39.628Z","session_id":"ses_182921e4effel6lJa9hpvgybzT","agent":"architect","tool":"smart_grep","phase":"started","detail":"degraded_mode|degraded"}
+{"at":"2026-05-31T09:57:39.645Z","session_id":"ses_182921e4effel6lJa9hpvgybzT","agent":"architect","tool":"smart_grep","phase":"completed","detail":"degraded_mode|degraded"}
+{"at":"2026-05-31T09:57:40.390Z","session_id":"ses_182921e4effel6lJa9hpvgybzT","agent":"architect","tool":"smart_bash","phase":"started","detail":"Read sidecar spawn and health setup area"}
+{"at":"2026-05-31T09:57:40.399Z","session_id":"ses_182921e4effel6lJa9hpvgybzT","agent":"architect","tool":"smart_bash","phase":"completed","detail":"awk exit=0"}
+{"at":"2026-05-31T09:58:55.652Z","session_id":"ses_182921e4effel6lJa9hpvgybzT","agent":"architect","tool":"smart_bash","phase":"started","detail":"Read sidecar spawn and the rest of startup flow"}
+{"at":"2026-05-31T09:58:55.662Z","session_id":"ses_182921e4effel6lJa9hpvgybzT","agent":"architect","tool":"smart_bash","phase":"completed","detail":"awk exit=0"}
+{"at":"2026-05-31T09:58:56.574Z","session_id":"ses_182921e4effel6lJa9hpvgybzT","agent":"architect","tool":"smart_bash","phase":"started","detail":"Read full imports and initial setup"}
+{"at":"2026-05-31T09:58:56.592Z","session_id":"ses_182921e4effel6lJa9hpvgybzT","agent":"architect","tool":"smart_bash","phase":"completed","detail":"awk exit=0"}
+{"at":"2026-05-31T10:02:24.840Z","session_id":"ses_182921e4effel6lJa9hpvgybzT","agent":"architect","tool":"smart_bash","phase":"started","detail":"Read full failure_points from artifact"}
+{"at":"2026-05-31T10:02:24.914Z","session_id":"ses_182921e4effel6lJa9hpvgybzT","agent":"architect","tool":"smart_bash","phase":"completed","detail":"python3 exit=0"}
+{"at":"2026-05-31T10:02:25.611Z","session_id":"ses_182921e4effel6lJa9hpvgybzT","agent":"architect","tool":"smart_grep","phase":"started","detail":"server-health|ServerHealth|health.*status"}
+{"at":"2026-05-31T10:02:25.629Z","session_id":"ses_182921e4effel6lJa9hpvgybzT","agent":"architect","tool":"smart_grep","phase":"completed","detail":"server-health|ServerHealth|health.*status"}
+{"at":"2026-05-31T10:04:58.228Z","session_id":"ses_182921e4effel6lJa9hpvgybzT","agent":"architect","tool":"smart_grep","phase":"started","detail":"GET_HEALTH|HEALTH_STATUS|SYSTEM_MODE|component.*health"}
+{"at":"2026-05-31T10:04:58.236Z","session_id":"ses_182921e4effel6lJa9hpvgybzT","agent":"architect","tool":"smart_grep","phase":"completed","detail":"GET_HEALTH|HEALTH_STATUS|SYSTEM_MODE|component.*health"}
+{"at":"2026-05-31T10:04:59.210Z","session_id":"ses_182921e4effel6lJa9hpvgybzT","agent":"architect","tool":"smart_grep","phase":"started","detail":"GET_.*HEALTH|HEALTH_STATUS|systemMode|system_mode"}
+{"at":"2026-05-31T10:04:59.218Z","session_id":"ses_182921e4effel6lJa9hpvgybzT","agent":"architect","tool":"smart_grep","phase":"completed","detail":"GET_.*HEALTH|HEALTH_STATUS|systemMode|system_mode"}
+{"at":"2026-05-31T10:05:00.173Z","session_id":"ses_182921e4effel6lJa9hpvgybzT","agent":"architect","tool":"smart_bash","phase":"started","detail":"Read IpcHandleContract interface for existing health handlers"}
+{"at":"2026-05-31T10:05:00.186Z","session_id":"ses_182921e4effel6lJa9hpvgybzT","agent":"architect","tool":"smart_bash","phase":"completed","detail":"awk exit=0"}

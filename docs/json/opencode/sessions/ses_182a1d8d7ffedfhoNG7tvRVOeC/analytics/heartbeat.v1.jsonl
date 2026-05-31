@@ -64,3 +64,48 @@
 {"at":"2026-05-31T09:46:06.208Z","session_id":"ses_182a1d8d7ffedfhoNG7tvRVOeC","agent":"secretary","tool":"smart_bun","phase":"failed","detail":"tsc exit=1"}
 {"at":"2026-05-31T09:46:22.736Z","session_id":"ses_182a1d8d7ffedfhoNG7tvRVOeC","agent":"secretary","tool":"smart_sd","phase":"completed","detail":"1 match in packages/opencode/src/campaign/role-contracts.ts"}
 {"at":"2026-05-31T09:46:30.674Z","session_id":"ses_182a1d8d7ffedfhoNG7tvRVOeC","agent":"secretary","tool":"smart_bun","phase":"started","detail":"typecheck"}
+{"at":"2026-05-31T09:47:01.913Z","session_id":"ses_182a1d8d7ffedfhoNG7tvRVOeC","agent":"secretary","tool":"smart_bun","phase":"failed","detail":"typecheck exit=2"}
+{"at":"2026-05-31T09:47:56.603Z","session_id":"ses_182a1d8d7ffedfhoNG7tvRVOeC","agent":"secretary","tool":"smart_bun","phase":"started","detail":"test"}
+{"at":"2026-05-31T09:50:56.670Z","session_id":"ses_182a1d8d7ffedfhoNG7tvRVOeC","agent":"secretary","tool":"smart_bun","phase":"failed","detail":"test exit=null"}
+{"at":"2026-05-31T09:51:05.645Z","session_id":"ses_182a1d8d7ffedfhoNG7tvRVOeC","agent":"secretary","tool":"smart_find","phase":"started","detail":"*role-contracts*"}
+{"at":"2026-05-31T09:51:05.762Z","session_id":"ses_182a1d8d7ffedfhoNG7tvRVOeC","agent":"secretary","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T09:51:06.386Z","session_id":"ses_182a1d8d7ffedfhoNG7tvRVOeC","agent":"secretary","tool":"smart_find","phase":"started","detail":"*campaign*.test*"}
+{"at":"2026-05-31T09:51:06.416Z","session_id":"ses_182a1d8d7ffedfhoNG7tvRVOeC","agent":"secretary","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T09:51:14.255Z","session_id":"ses_182a1d8d7ffedfhoNG7tvRVOeC","agent":"secretary","tool":"smart_bash","phase":"started","detail":"Find role-contracts and campaign test files"}
+{"at":"2026-05-31T09:51:14.256Z","session_id":"ses_182a1d8d7ffedfhoNG7tvRVOeC","agent":"secretary","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T09:51:18.782Z","session_id":"ses_182a1d8d7ffedfhoNG7tvRVOeC","agent":"secretary","tool":"smart_grep","phase":"started","detail":"role-contracts"}
+{"at":"2026-05-31T09:51:18.800Z","session_id":"ses_182a1d8d7ffedfhoNG7tvRVOeC","agent":"secretary","tool":"smart_grep","phase":"completed","detail":"role-contracts"}
+{"at":"2026-05-31T09:51:19.809Z","session_id":"ses_182a1d8d7ffedfhoNG7tvRVOeC","agent":"secretary","tool":"smart_grep","phase":"started","detail":"deriveAllowedTools|LaneState|role-contracts"}
+{"at":"2026-05-31T09:51:19.822Z","session_id":"ses_182a1d8d7ffedfhoNG7tvRVOeC","agent":"secretary","tool":"smart_grep","phase":"completed","detail":"deriveAllowedTools|LaneState|role-contracts"}
+{"at":"2026-05-31T09:51:27.121Z","session_id":"ses_182a1d8d7ffedfhoNG7tvRVOeC","agent":"secretary","tool":"smart_grep","phase":"started","detail":"role-contracts"}
+{"at":"2026-05-31T09:51:27.140Z","session_id":"ses_182a1d8d7ffedfhoNG7tvRVOeC","agent":"secretary","tool":"smart_grep","phase":"completed","detail":"role-contracts"}
+{"at":"2026-05-31T09:51:39.170Z","session_id":"ses_182a1d8d7ffedfhoNG7tvRVOeC","agent":"secretary","tool":"smart_grep","phase":"started","detail":"deriveAllowedTools|RCLaneState|critic_review|scouting"}
+{"at":"2026-05-31T09:51:39.179Z","session_id":"ses_182a1d8d7ffedfhoNG7tvRVOeC","agent":"secretary","tool":"smart_grep","phase":"completed","detail":"deriveAllowedTools|RCLaneState|critic_review|scouting"}
+{"at":"2026-05-31T09:51:44.242Z","session_id":"ses_182a1d8d7ffedfhoNG7tvRVOeC","agent":"secretary","tool":"smart_bash","phase":"started","detail":"Read deriveAllowedTools tests in truth-closure"}
+{"at":"2026-05-31T09:51:44.251Z","session_id":"ses_182a1d8d7ffedfhoNG7tvRVOeC","agent":"secretary","tool":"smart_bash","phase":"completed","detail":"awk exit=0"}
+{"at":"2026-05-31T09:51:45.500Z","session_id":"ses_182a1d8d7ffedfhoNG7tvRVOeC","agent":"secretary","tool":"smart_bash","phase":"started","detail":"Read the role-contracts LaneState test at end"}
+{"at":"2026-05-31T09:51:45.514Z","session_id":"ses_182a1d8d7ffedfhoNG7tvRVOeC","agent":"secretary","tool":"smart_bash","phase":"completed","detail":"awk exit=0"}
+{"at":"2026-05-31T09:52:01.626Z","session_id":"ses_182a1d8d7ffedfhoNG7tvRVOeC","agent":"secretary","tool":"smart_bun","phase":"started","detail":"test"}
+{"at":"2026-05-31T09:52:06.021Z","session_id":"ses_182a1d8d7ffedfhoNG7tvRVOeC","agent":"secretary","tool":"smart_bun","phase":"completed","detail":"test exit=0"}
+{"at":"2026-05-31T09:52:12.231Z","session_id":"ses_182a1d8d7ffedfhoNG7tvRVOeC","agent":"secretary","tool":"smart_bun","phase":"started","detail":"test"}
+{"at":"2026-05-31T09:52:13.273Z","session_id":"ses_182a1d8d7ffedfhoNG7tvRVOeC","agent":"secretary","tool":"smart_bun","phase":"failed","detail":"test exit=1"}
+{"at":"2026-05-31T09:52:21.200Z","session_id":"ses_182a1d8d7ffedfhoNG7tvRVOeC","agent":"secretary","tool":"smart_bun","phase":"started","detail":"test"}
+{"at":"2026-05-31T09:52:22.303Z","session_id":"ses_182a1d8d7ffedfhoNG7tvRVOeC","agent":"secretary","tool":"smart_bun","phase":"completed","detail":"test exit=0"}
+{"at":"2026-05-31T09:52:32.201Z","session_id":"ses_182a1d8d7ffedfhoNG7tvRVOeC","agent":"secretary","tool":"smart_git","phase":"started","detail":"diff"}
+{"at":"2026-05-31T09:52:32.218Z","session_id":"ses_182a1d8d7ffedfhoNG7tvRVOeC","agent":"secretary","tool":"smart_git","phase":"completed","detail":"diff exit=0"}
+{"at":"2026-05-31T09:52:36.421Z","session_id":"ses_182a1d8d7ffedfhoNG7tvRVOeC","agent":"secretary","tool":"smart_git","phase":"started","detail":"status"}
+{"at":"2026-05-31T09:52:36.473Z","session_id":"ses_182a1d8d7ffedfhoNG7tvRVOeC","agent":"secretary","tool":"smart_git","phase":"completed","detail":"status exit=0"}
+{"at":"2026-05-31T09:52:43.137Z","session_id":"ses_182a1d8d7ffedfhoNG7tvRVOeC","agent":"secretary","tool":"smart_git","phase":"started","detail":"diff"}
+{"at":"2026-05-31T09:52:43.164Z","session_id":"ses_182a1d8d7ffedfhoNG7tvRVOeC","agent":"secretary","tool":"smart_git","phase":"completed","detail":"diff exit=0"}
+{"at":"2026-05-31T09:52:48.828Z","session_id":"ses_182a1d8d7ffedfhoNG7tvRVOeC","agent":"secretary","tool":"smart_grep","phase":"started","detail":"CanonicalLaneState|from canonical types|checkpointed"}
+{"at":"2026-05-31T09:52:48.834Z","session_id":"ses_182a1d8d7ffedfhoNG7tvRVOeC","agent":"secretary","tool":"smart_grep","phase":"completed","detail":"CanonicalLaneState|from canonical types|checkpointed"}
+{"at":"2026-05-31T09:52:57.435Z","session_id":"ses_182a1d8d7ffedfhoNG7tvRVOeC","agent":"secretary","tool":"smart_git","phase":"started","detail":"log"}
+{"at":"2026-05-31T09:52:57.473Z","session_id":"ses_182a1d8d7ffedfhoNG7tvRVOeC","agent":"secretary","tool":"smart_git","phase":"completed","detail":"log exit=0"}
+{"at":"2026-05-31T09:53:04.978Z","session_id":"ses_182a1d8d7ffedfhoNG7tvRVOeC","agent":"secretary","tool":"smart_bash","phase":"started","detail":"Verify git diff against HEAD"}
+{"at":"2026-05-31T09:53:04.979Z","session_id":"ses_182a1d8d7ffedfhoNG7tvRVOeC","agent":"secretary","tool":"smart_bash","phase":"rerouted","detail":"→ smart_git"}
+{"at":"2026-05-31T09:53:09.339Z","session_id":"ses_182a1d8d7ffedfhoNG7tvRVOeC","agent":"secretary","tool":"smart_git","phase":"started","detail":"show"}
+{"at":"2026-05-31T09:53:09.406Z","session_id":"ses_182a1d8d7ffedfhoNG7tvRVOeC","agent":"secretary","tool":"smart_git","phase":"completed","detail":"show exit=0"}
+{"at":"2026-05-31T09:53:32.477Z","session_id":"ses_182a1d8d7ffedfhoNG7tvRVOeC","agent":"secretary","tool":"smart_bash","phase":"started","detail":"Check if file is modified in working tree"}
+{"at":"2026-05-31T09:53:32.477Z","session_id":"ses_182a1d8d7ffedfhoNG7tvRVOeC","agent":"secretary","tool":"smart_bash","phase":"rerouted","detail":"→ smart_git"}
+{"at":"2026-05-31T09:53:39.480Z","session_id":"ses_182a1d8d7ffedfhoNG7tvRVOeC","agent":"secretary","tool":"smart_bash","phase":"started","detail":"Check diff between HEAD and working tree"}
+{"at":"2026-05-31T09:53:39.480Z","session_id":"ses_182a1d8d7ffedfhoNG7tvRVOeC","agent":"secretary","tool":"smart_bash","phase":"rerouted","detail":"→ smart_git"}

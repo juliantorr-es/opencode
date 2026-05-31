@@ -408,6 +408,16 @@ const make = Effect.gen(function* () {
       return laneId
     }
 
+    const reconstructed = yield* reconstructBinder(laneId)
+    if (Option.isSome(reconstructed)) {
+      yield* Ref.update(store, (map) => {
+        map.set(laneId, reconstructed.value)
+        return map
+      })
+      log.warn("binder already exists in EventStore, cached", { laneId })
+      return laneId
+    }
+
     const binder = createInitialBinder(laneId, campaignId, mission, scope)
     yield* Ref.update(store, (map) => {
       map.set(laneId, binder)
@@ -432,6 +442,15 @@ const make = Effect.gen(function* () {
     const map = yield* Ref.get(store)
     const existing = map.get(laneId)
     if (existing) return existing
+
+    const reconstructed = yield* reconstructBinder(laneId)
+    if (Option.isSome(reconstructed)) {
+      yield* Ref.update(store, (map) => {
+        map.set(laneId, reconstructed.value)
+        return map
+      })
+      return reconstructed.value
+    }
 
     const binder = createInitialBinder(laneId, campaignId, mission, scope)
     yield* Ref.update(store, (map) => {
@@ -578,12 +597,11 @@ const make = Effect.gen(function* () {
   })
 
   const getBinderDigest = Effect.fn("Binder.getBinderDigest")(function* (laneId: string) {
-    const map = yield* Ref.get(store)
-    const binder = map.get(laneId)
-    if (!binder) {
+    const binderOpt = yield* getBinder(laneId)
+    if (Option.isNone(binderOpt)) {
       return yield* Effect.fail(new BinderError(`Binder not found for lane: ${laneId}`))
     }
-    return binder.artifactDigest
+    return binderOpt.value.artifactDigest
   })
 
   const service: Interface = {
