@@ -6,6 +6,10 @@ import type { SessionID, MessageID } from "../session/schema"
 import * as Truncate from "./truncate"
 import { Agent } from "@/agent/agent"
 import * as ToolCache from "./cache"
+import * as CacheKey from "./cache-key"
+import { AppFileSystem } from "@opencode-ai/core/filesystem"
+import { InstanceState } from "@/effect/instance-state"
+import path from "path"
 
 interface Metadata {
   [key: string]: any
@@ -170,7 +174,9 @@ function wrap<Parameters extends Schema.Decoder<unknown>, M extends Metadata>(
           ...(ctx.callID ? { "tool.call_id": ctx.callID } : {}),
         }
 
-        // Layer 1: Core pipeline — decode, execute, truncate (unchanged logic)
+        const startTime = Date.now()
+
+        // Layer 1: Core pipeline — decode, execute, truncate
         const core: Effect.Effect<ExecuteResult<M>, any, any> = Effect.gen(function* () {
           const decoded = yield* decode(args).pipe(
             Effect.mapError(
@@ -181,17 +187,45 @@ function wrap<Parameters extends Schema.Decoder<unknown>, M extends Metadata>(
                 }),
             ),
           )
-          const result = yield* execute(decoded as Schema.Schema.Type<Parameters>, ctx)
-          if (result.metadata.truncated !== undefined) {
-            return result
+          // Cache-aware execution: try getOrCompute for cacheable tools
+          const rawResult = yield* Effect.gen(function* () {
+            const cache = yield* Effect.serviceOption(ToolCache.Service)
+            if (Option.isNone(cache)) {
+              yield* Effect.annotateCurrentSpan({ "cache.available": "false" })
+              return yield* execute(decoded as Schema.Schema.Type<Parameters>, ctx)
+            }
+            yield* Effect.annotateCurrentSpan({ "cache.available": "true" })
+            if (!toolInfo.cacheable) {
+              return yield* execute(decoded as Schema.Schema.Type<Parameters>, ctx)
+            }
+            const cacheConfig = typeof toolInfo.cacheable === "object" ? toolInfo.cacheable : {}
+            const key = yield* Effect.promise(() =>
+              CacheKey.derive({
+                toolID: id,
+                args: decoded,
+                sessionID: ctx.sessionID,
+                agent: ctx.agent,
+              }),
+            )
+            return yield* cache.value.getOrCompute(
+              key,
+              () => execute(decoded as Schema.Schema.Type<Parameters>, ctx),
+              {
+                ttl: cacheConfig.ttl ? Duration.fromInputUnsafe(cacheConfig.ttl) : undefined,
+                maxEntrySize: cacheConfig.maxSize,
+              },
+            )
+          })
+          if (rawResult.metadata.truncated !== undefined) {
+            return rawResult
           }
           const agent = yield* agents.get(ctx.agent)
-          const truncated = yield* truncate.output(result.output, {}, agent)
+          const truncated = yield* truncate.output(rawResult.output, {}, agent)
           return {
-            ...result,
+            ...rawResult,
             output: truncated.content,
             metadata: {
-              ...result.metadata,
+              ...rawResult.metadata,
               truncated: truncated.truncated,
               ...(truncated.truncated && { outputPath: truncated.outputPath }),
             },
@@ -231,9 +265,121 @@ function wrap<Parameters extends Schema.Decoder<unknown>, M extends Metadata>(
           pipeline = semaphore.withPermits(1)(pipeline)
         }
 
-        // Layer 5: Enriched span attributes
-        const orDied: Effect.Effect<ExecuteResult<M>> = Effect.orDie(
-          pipeline as Effect.Effect<ExecuteResult<M>, any, any>,
+        // Layer 5a: Tool invocation telemetry (tap success + tapError)
+        pipeline = (pipeline as any).pipe(
+          Effect.tap((result: ExecuteResult<M>) =>
+            Effect.gen(function* () {
+              const elapsed = Date.now() - startTime
+              const instance = yield* InstanceState.context
+              const fsOption = yield* Effect.serviceOption(AppFileSystem.Service)
+              yield* Option.match(fsOption, {
+                onNone: () =>
+                  Effect.logWarning("AppFileSystem not available for tool telemetry", {
+                    tool: id,
+                    sessionID: ctx.sessionID,
+                  }),
+                onSome: (fs: typeof AppFileSystem.Service) =>
+                  Effect.gen(function* () {
+                    const logDir = path.join(
+                      instance.directory,
+                      "docs",
+                      "json",
+                      "opencode",
+                      "sessions",
+                      ctx.sessionID,
+                      "analytics",
+                    )
+                    const record = JSON.stringify({
+                      at: new Date().toISOString(),
+                      tool: id,
+                      session_id: ctx.sessionID,
+                      message_id: ctx.messageID,
+                      elapsed_ms: elapsed,
+                      status: "success",
+                      ...(ctx.callID ? { call_id: ctx.callID } : {}),
+                    })
+                    yield* fs.ensureDir(logDir)
+                    yield* fs.appendLine(path.join(logDir, "tool_invocations.v1.jsonl"), record)
+                  }).pipe(
+                    Effect.catchAll((err) =>
+                      Effect.logWarning("Tool telemetry write failed", {
+                        tool: id,
+                        sessionID: ctx.sessionID,
+                        error: String(err),
+                      }),
+                    ),
+                  ),
+              })
+            }),
+          ),
+          Effect.tapError((error: unknown) =>
+            Effect.gen(function* () {
+              const elapsed = Date.now() - startTime
+              const errorTag = (error as any)?._tag ?? (error as any)?.constructor?.name ?? "unknown"
+              const errorDetail = error instanceof Error ? error.message : String(error)
+              const instance = yield* InstanceState.context
+              const fsOption = yield* Effect.serviceOption(AppFileSystem.Service)
+              yield* Option.match(fsOption, {
+                onNone: () =>
+                  Effect.logWarning("AppFileSystem not available for tool telemetry", {
+                    tool: id,
+                    sessionID: ctx.sessionID,
+                  }),
+                onSome: (fs: typeof AppFileSystem.Service) =>
+                  Effect.gen(function* () {
+                    const logDir = path.join(
+                      instance.directory,
+                      "docs",
+                      "json",
+                      "opencode",
+                      "sessions",
+                      ctx.sessionID,
+                      "analytics",
+                    )
+                    const record = JSON.stringify({
+                      at: new Date().toISOString(),
+                      tool: id,
+                      session_id: ctx.sessionID,
+                      message_id: ctx.messageID,
+                      elapsed_ms: elapsed,
+                      status: "error",
+                      error_tag: errorTag,
+                      error_detail: errorDetail,
+                      ...(ctx.callID ? { call_id: ctx.callID } : {}),
+                    })
+                    yield* fs.ensureDir(logDir)
+                    yield* fs.appendLine(path.join(logDir, "tool_invocations.v1.jsonl"), record)
+                  }).pipe(
+                    Effect.catchAll((err) =>
+                      Effect.logWarning("Tool telemetry write failed", {
+                        tool: id,
+                        sessionID: ctx.sessionID,
+                        error: String(err),
+                      }),
+                    ),
+                  ),
+              })
+              if (errorTag === "unknown" || errorTag === "UnknownError") {
+                yield* Effect.logWarning("UnknownError in tool invocation", {
+                  tool: id,
+                  sessionID: ctx.sessionID,
+                  error_tag: errorTag,
+                  error_detail: errorDetail,
+                })
+              }
+            }),
+          ),
+        ) as any
+
+        // Layer 5b: tapDefect for crash attribution before orDie
+        const orDied: Effect.Effect<ExecuteResult<M>> = (pipeline as Effect.Effect<ExecuteResult<M>, any, any>).pipe(
+          Effect.tapDefect((defect) =>
+            Effect.annotateCurrentSpan({
+              "cache.defect": true,
+              "cache.defect_type": String(defect),
+            }),
+          ),
+          Effect.orDie,
         ) as any
         return (orDied as any).pipe(
           Effect.withSpan("Tool.execute", { attributes: attrs }),

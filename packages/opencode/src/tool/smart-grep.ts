@@ -36,6 +36,7 @@ export const SmartGrepTool = Tool.define(
     return {
       description: DESCRIPTION,
       parameters: Parameters,
+      cacheable: true,
       execute: (params: Schema.Schema.Type<typeof Parameters>, ctx: Tool.Context) =>
         Effect.gen(function* () {
           const instance = yield* InstanceState.context

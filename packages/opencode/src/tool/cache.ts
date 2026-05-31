@@ -27,7 +27,6 @@ export interface CacheStats {
 }
 
 export interface Interface {
-  /** @deprecated Not currently wired to any consumer. Kept for future tool-level caching use. Remove if still unused after next audit. */
   readonly getOrCompute: <R = never>(
     key: CacheKey,
     compute: () => Effect.Effect<any, never, R>,
@@ -101,7 +100,11 @@ export const layer = Layer.effect(
 
         if (hitResult.kind === "hit") {
           yield* Ref.update(hits, (n) => n + 1)
-          yield* Effect.annotateCurrentSpan({ "cache.hit": true })
+          yield* Effect.annotateCurrentSpan({
+            "cache.hit": true,
+            "cache.key_kind": "sha256",
+            "cache.result_source": "cache",
+          })
           return hitResult.entry!.value
         }
 
@@ -110,7 +113,9 @@ export const layer = Layer.effect(
           yield* Effect.annotateCurrentSpan({
             "cache.evicted": true,
             "cache.reason": "expired",
-            "cache.key": key,
+            "cache.miss_reason": "ttl_expired",
+            "cache.key_kind": "sha256",
+            "cache.result_source": "miss",
           })
         }
 
@@ -126,13 +131,23 @@ export const layer = Layer.effect(
         })
         if (existing) {
           yield* Ref.update(misses, (n) => n + 1)
-          yield* Effect.annotateCurrentSpan({ "cache.hit": false, "cache.dedup": true })
+          yield* Effect.annotateCurrentSpan({
+            "cache.hit": false,
+            "cache.dedup": true,
+            "cache.key_kind": "sha256",
+            "cache.result_source": "dedup",
+          })
           return yield* Deferred.await(existing)
         }
 
         // 3. New computation
         yield* Ref.update(misses, (n) => n + 1)
-        yield* Effect.annotateCurrentSpan({ "cache.hit": false, "cache.dedup": false })
+        yield* Effect.annotateCurrentSpan({
+          "cache.hit": false,
+          "cache.dedup": false,
+          "cache.key_kind": "sha256",
+          "cache.result_source": "compute",
+        })
 
         // Capture the exit so the Deferred always resolves — even on defect
         const exit = yield* compute().pipe(
@@ -189,7 +204,9 @@ export const layer = Layer.effect(
             yield* Effect.annotateCurrentSpan({
               "cache.skipped": true,
               "cache.reason": "maxEntrySize",
+              "cache.miss_reason": "maxEntrySize",
               "cache.entry_size_bytes": size,
+              "cache.key_kind": "sha256",
             })
           }
 

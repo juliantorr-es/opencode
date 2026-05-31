@@ -349,7 +349,13 @@ export const ReadTool = Tool.define(
     return {
       description: DESCRIPTION,
       parameters: Parameters,
-      cacheable: true,
+      // Cached with a 3-minute TTL to balance LSP freshness with performance.
+      // LSP-derived astContext is inherently time-sensitive (depends on editor
+      // buffer state), but it's acceptable to serve slightly stale symbol info
+      // for a few minutes — the agent can re-read if precision matters.
+      // Write-side invalidation clears the full cache on any edit, so fresh
+      // reads immediately follow every mutation.
+      cacheable: { ttl: "3 minutes", maxSize: 256 * 1024 },
       execute: (params: Schema.Schema.Type<typeof Parameters>, ctx: Tool.Context) =>
         run(params, ctx).pipe(Effect.orDie),
     }

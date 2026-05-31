@@ -8,6 +8,7 @@ import { ToolJsonSchema } from "@/tool/json-schema"
 import { ToolRegistry } from "@/tool/registry"
 import { Truncate } from "@/tool/truncate"
 import * as TypedResult from "@/tool/typed-result"
+import * as ToolCache from "@/tool/cache"
 import { ModelID } from "@/provider/schema"
 import { Plugin } from "@/plugin"
 import type { TaskPromptOps } from "@/tool/task"
@@ -109,6 +110,21 @@ export const resolve = Effect.fn("SessionTools.resolve")(function* (input: {
                 item.id,
                 item.execute(args, ctx) as Effect.Effect<Tool.ExecuteResult, never, any>,
               )
+              // Invalidate read cache for write tools (non-cacheable tools mutate state)
+              if (!(item as any).cacheable) {
+                const cacheOption = yield* Effect.serviceOption(ToolCache.Service)
+                if (Option.isSome(cacheOption)) {
+                  const beforeStats = yield* cacheOption.value.stats()
+                  yield* cacheOption.value.invalidate()
+                  yield* Effect.annotateCurrentSpan({
+                    "cache.invalidated": true,
+                    "cache.invalidation_scope": "full",
+                    "cache.invalidation_entries": beforeStats.size,
+                    "cache.invalidation_bytes": beforeStats.estimatedBytes,
+                    "cache.invalidation_trigger_tool": item.id,
+                  })
+                }
+              }
               const output = {
                 ...result,
                 attachments: result.attachments?.map((attachment) => ({
