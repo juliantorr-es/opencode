@@ -34,7 +34,7 @@ import { registerAdapter } from "@/control-plane/adapters"
 import type { WorkspaceAdapter } from "@/control-plane/types"
 import { RuntimeFlags } from "@/effect/runtime-flags"
 import { InstallationChannel } from "@opencode-ai/core/installation/version"
-import { Registry as CapabilityRegistry, makeCapabilityRegistry, checkCapability, HOOK_CAPABILITY_MAP, ALWAYS_ALLOWED_HOOKS, makeFallbackState, makeHookDispatchGuard, HookDispatchGuard, type TrustLevel } from "./capability"
+import { Registry as CapabilityRegistry, makeCapabilityRegistry, checkCapability, HOOK_CAPABILITY_MAP, ALWAYS_ALLOWED_HOOKS, makeFallbackState, makeHookDispatchGuard, HookDispatchGuard, CapabilityId, type TrustLevel, isValidCapabilityId } from "./capability"
 
 const log = Log.create({ service: "plugin" })
 
@@ -77,13 +77,14 @@ const MAX_CRASHES_BEFORE_QUARANTINE = 3
 type PluginRegistration = {
   pluginId: string
   trust: TrustLevel
+  hooks?: Hooks
+  pluginName?: string
 }
 
-type ListedPlugin = Hooks & { pluginId?: string }
+type ListedPlugin = Hooks & { pluginId: string }
 
 type State = {
-  hooks: Hooks[]
-  registrations: PluginRegistration[]
+  plugins: PluginRegistration[]
   capabilityRegistry: CapabilityRegistry
   dispatchGuard: HookDispatchGuard
 }
@@ -322,16 +323,32 @@ export const layer = Layer.effect(
           }
         }
 
+        // Zip hooks and registrations into a single plugins array
+        if (hooks.length !== registrations.length) {
+          yield* Effect.logWarning("plugin arrays desynchronized", { hooksLen: hooks.length, regsLen: registrations.length })
+        }
+        const pluginList: PluginRegistration[] = []
+        for (let i = 0; i < hooks.length; i++) {
+          const reg = registrations[i]
+          pluginList.push({
+            pluginId: reg?.pluginId ?? `__unregistered_${i}`,
+            trust: reg?.trust ?? "external",
+            hooks: hooks[i],
+            pluginName: reg?.pluginId ?? `__unregistered_${i}`,
+          })
+        }
+
         // Notify plugins of current config
         // Filter secrets per-plugin based on capability manifest.
-        for (let i = 0; i < hooks.length; i++) {
-          const hook = hooks[i]
-          const pluginId = registrations[i]?.pluginId
+        for (const reg of pluginList) {
+          const hook = reg.hooks
+          if (!hook) continue
+          const pluginId = reg.pluginId
           let configForPlugin = cfg
           if (pluginId) {
-            const hasSecretsAccess: boolean = yield* checkCapability(capabilityRegistry, pluginId, "secrets.access" as any) as any
+            const hasSecretsAccess = yield* checkCapability(capabilityRegistry, pluginId, CapabilityId.SecretsAccess)
             if (!hasSecretsAccess) {
-              configForPlugin = stripSecrets(cfg as any) as any
+              configForPlugin = stripSecrets(cfg)
             }
           }
           yield* Effect.tryPromise({
@@ -344,10 +361,10 @@ export const layer = Layer.effect(
 
         yield* Effect.addFinalizer(() =>
           Effect.forEach(
-            hooks,
-            (hook) =>
+            pluginList,
+            (reg) =>
               Effect.tryPromise({
-                try: () => Promise.resolve(hook.dispose?.()),
+                try: () => Promise.resolve(reg.hooks?.dispose?.()),
                 catch: (error) => {
                   log.error("plugin dispose hook failed", { error })
                 },
@@ -360,35 +377,26 @@ export const layer = Layer.effect(
         // SAFETY: Each event dispatch checks the plugin's event.subscribe capability and network access gate.
         yield* (yield* bus.subscribeAll()).pipe(
           Stream.runForEach((input) =>
-            Effect.flatMap(
-              Effect.forEach(
-                hooks.map((_, i) => i),
-                (i) => {
-                  const fn = hooks[i]["event"]
-                  if (!fn) return Effect.succeed(undefined)
-                  const pluginId = registrations[i]?.pluginId
-                  if (!pluginId) {
-                    fn({ event: input as any })
-                    return Effect.succeed(undefined)
-                  }
-                  return Effect.flatMap(
-                    dispatchGuard.shouldDispatch("event", pluginId),
-                    (allowed) =>
-                      Effect.sync(() => {
-                        if (!allowed) return
-                        fn({ event: input as any })
-                      }),
-                  )
-                },
-                { discard: true },
-              ),
-              () => Effect.void,
-            ),
+            Effect.gen(function* () {
+              const s = yield* InstanceState.get(state)
+              for (const reg of s.plugins) {
+                const fn = reg.hooks?.["event"]
+                if (!fn) continue
+                const pluginId = reg.pluginId
+                if (!pluginId) {
+                  fn({ event: input as any })
+                  continue
+                }
+                const allowed = yield* dispatchGuard.shouldDispatch("event", pluginId)
+                if (!allowed) { yield* Effect.logWarning("plugin event denied", { pluginId: reg.pluginId, hook: "event" }); continue }
+                fn({ event: input as any })
+              }
+            }),
           ),
           Effect.forkScoped,
         )
 
-        return { hooks, registrations, capabilityRegistry, dispatchGuard }
+        return { plugins: pluginList, capabilityRegistry, dispatchGuard }
       }),
     )
 
@@ -408,7 +416,11 @@ export const layer = Layer.effect(
         const reg: any = yield* InstanceState.get(state)
         yield* reg?.capabilityRegistry?.setCrashCount?.(pluginId, entry.crashCount)
         yield* reg?.capabilityRegistry?.setQuarantined?.(pluginId, entry.quarantined)
-      }).pipe(Effect.catch(() => Effect.void))
+      }).pipe(
+        Effect.catch((error) =>
+          Effect.logError("persistCrash: failed to persist crash state", { pluginId, error, errorType: typeof error }),
+        ),
+      )
 
     const persistSuccess: (pluginId: string) => Effect.Effect<void> = (pluginId) =>
       Effect.gen(function* () {
@@ -420,31 +432,44 @@ export const layer = Layer.effect(
           const reg: any = yield* InstanceState.get(state)
           yield* reg?.capabilityRegistry?.setCrashCount?.(pluginId, 0)
         }
-      }).pipe(Effect.catch(() => Effect.void))
+      }).pipe(
+        Effect.catch((error) =>
+          Effect.logError("persistSuccess: failed to persist success state", { pluginId, error, errorType: typeof error }),
+        ),
+      )
 
     const trigger: Interface["trigger"] = function (name: any, input: any, output: any) {
       return Effect.gen(function* () {
         if (!name) return output
         const s: any = yield* InstanceState.get(state)
+        const plugins = s.plugins
         if ((ALWAYS_ALLOWED_HOOKS as Set<string>).has(name)) {
-          for (const hook of s.hooks) {
+          for (const reg of plugins) {
+            const hook = reg.hooks
+            if (!hook) continue
+            // Deferred: Hooks intersection type has no index signature for dynamic hook dispatch.
+            // Safe because hook[name] is validated to exist before calling. TypeScript limitation.
             const fn = (hook as any)[name]
             if (!fn) continue
-            yield* Effect.tryPromise({ try: () => fn(input, output), catch: (err) => { log.error("plugin hook error", { pluginId: "unknown", hook: name, error: err }) } })
+            yield* Effect.tryPromise({ try: () => fn(input, output), catch: (err) => { log.error("plugin hook error", { pluginId: reg.pluginId ?? "unknown", hook: name, error: err }) } })
           }
           return output
         }
-        const requiredCapability = (HOOK_CAPABILITY_MAP as Record<string, string>)[name]
+        const requiredCapability = HOOK_CAPABILITY_MAP[name]
         if (!requiredCapability) return output
-        for (let i = 0; i < s.hooks.length; i++) {
-          const fn = (s.hooks[i] as any)[name]
+        for (const reg of plugins) {
+          const hook = reg.hooks
+          if (!hook) continue
+          // Deferred: Hooks intersection type has no index signature for dynamic hook dispatch.
+          const fn = (hook as any)[name]
           if (!fn) continue
-          const pluginId = s.registrations[i]?.pluginId ?? "unknown"
-          const allowed: boolean = yield* (s.dispatchGuard as HookDispatchGuard).shouldDispatch(name, pluginId) as any
-          if (!allowed) { log.warn("plugin hook dispatch blocked by guard", { pluginId, hook: name }); continue }
+          const pluginId = reg.pluginId ?? "unknown"
+          const allowed = yield* (s.dispatchGuard as HookDispatchGuard).shouldDispatch(name, pluginId)
+          if (!allowed) { yield* Effect.logWarning("plugin hook dispatch blocked by guard", { pluginId, hook: name }); continue }
           const result = yield* Effect.tryPromise({
             try: () => fn(input, output),
             catch: (err) => {
+              // Note: catch handler runs outside generator context — cannot use yield* Effect.logError here
               log.error("plugin hook error", { pluginId, hook: name, error: err })
               return err
             },
@@ -461,8 +486,8 @@ export const layer = Layer.effect(
 
     const list = Effect.fn("Plugin.list")(function* () {
       const s = yield* InstanceState.get(state)
-      return s.hooks.map((hook, i) => {
-        const listed: ListedPlugin = Object.assign(hook, { pluginId: s.registrations[i]?.pluginId })
+      return s.plugins.map((reg) => {
+        const listed: ListedPlugin = Object.assign({}, reg.hooks ?? {}, { pluginId: reg.pluginId })
         return listed
       })
     })
@@ -472,8 +497,12 @@ export const layer = Layer.effect(
     })
 
     const checkCapabilityFn = Effect.fn("Plugin.checkCapability")(function* (pluginId: string, capability: string) {
+      if (!isValidCapabilityId(capability)) {
+        yield* Effect.logWarning("checkCapability: invalid capability ID", { pluginId, capability })
+        return false
+      }
       const s = yield* InstanceState.get(state)
-      return yield* checkCapability(s.capabilityRegistry, pluginId, capability as any)
+      return yield* checkCapability(s.capabilityRegistry, pluginId, capability)
     })
 
     const getRegistry = Effect.fn("Plugin.getRegistry")(function* () {

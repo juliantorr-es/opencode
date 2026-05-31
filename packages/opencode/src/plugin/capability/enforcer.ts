@@ -22,11 +22,19 @@ export function checkCapability(
   pluginId: string,
   requiredCapability: CapabilityId,
 ): Effect.Effect<boolean> {
-  return Effect.flatMap(registry.get(pluginId), (state) => {
-    if (!state) return Effect.succeed(false)
-    if (state.quarantined) return Effect.succeed(false)
-    if (state.trustLevel === "built-in") return Effect.succeed(true)
-    return Effect.succeed(state.manifest.capabilities.includes(requiredCapability))
+  return Effect.gen(function* () {
+    const state = yield* registry.get(pluginId)
+    if (!state) return false
+    if (state.quarantined) {
+      yield* Effect.logWarning(`Capability check denied: plugin quarantined`, { pluginId, requiredCapability })
+      return false
+    }
+    if (state.trustLevel === "built-in") return true
+    const hasCapability = state.manifest.capabilities.includes(requiredCapability)
+    if (!hasCapability) {
+      yield* Effect.logWarning(`Capability check denied: capability not granted`, { pluginId, requiredCapability })
+    }
+    return hasCapability
   })
 }
 

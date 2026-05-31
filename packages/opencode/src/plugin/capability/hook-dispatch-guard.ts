@@ -1,5 +1,5 @@
 import { Effect } from "effect"
-import type { CapabilityId } from "./types"
+import { CapabilityId, isValidCapabilityId } from "./types"
 import { HOOK_CAPABILITY_MAP, ALWAYS_ALLOWED_HOOKS } from "./hook-map"
 import { checkCapability } from "./enforcer"
 import { Registry } from "./registry"
@@ -49,16 +49,19 @@ export class HookDispatchGuard {
     const requiredCapability = HOOK_CAPABILITY_MAP[hookName]
     if (!requiredCapability) return Effect.succeed(false)
 
-    return Effect.flatMap(
-      checkCapability(this.registry, pluginId, requiredCapability as any),
-      (hasHookCapability) => {
-        if (!hasHookCapability) return Effect.succeed(false)
-        if (NETWORK_GATED_HOOKS.has(hookName)) {
-          return checkCapability(this.registry, pluginId, "network.request" as any)
-        }
-        return Effect.succeed(true)
-      },
-    )
+    if (!isValidCapabilityId(requiredCapability)) {
+      return Effect.succeed(false)
+    }
+
+    const registry = this.registry
+    return Effect.gen(function* () {
+      const hasHookCapability = yield* checkCapability(registry, pluginId, requiredCapability)
+      if (!hasHookCapability) return false
+      if (NETWORK_GATED_HOOKS.has(hookName)) {
+        return yield* checkCapability(registry, pluginId, CapabilityId.NetworkRequest)
+      }
+      return true
+    })
   }
 }
 
