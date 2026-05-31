@@ -1,0 +1,26 @@
+{"at":"2026-05-31T12:21:35.028Z","session_id":"ses_18204c103ffeC58Yx1cXEYeg0u","agent":"type-guard","tool":"smart_bun","phase":"started","detail":"typecheck"}
+{"at":"2026-05-31T12:21:50.760Z","session_id":"ses_18204c103ffeC58Yx1cXEYeg0u","agent":"type-guard","tool":"smart_bun","phase":"failed","detail":"typecheck exit=2"}
+{"at":"2026-05-31T12:21:50.798Z","session_id":"ses_18204c103ffeC58Yx1cXEYeg0u","agent":"type-guard","tool":"smart_grep","phase":"started","detail":"applyMigrations\\("}
+{"at":"2026-05-31T12:21:51.562Z","session_id":"ses_18204c103ffeC58Yx1cXEYeg0u","agent":"type-guard","tool":"smart_grep","phase":"completed","detail":"applyMigrations\\("}
+{"at":"2026-05-31T12:22:13.154Z","session_id":"ses_18204c103ffeC58Yx1cXEYeg0u","agent":"type-guard","tool":"smart_grep","phase":"started","detail":"applyMigrations\\("}
+{"at":"2026-05-31T12:22:13.301Z","session_id":"ses_18204c103ffeC58Yx1cXEYeg0u","agent":"type-guard","tool":"smart_grep","phase":"completed","detail":"applyMigrations\\("}
+{"at":"2026-05-31T12:22:14.497Z","session_id":"ses_18204c103ffeC58Yx1cXEYeg0u","agent":"type-guard","tool":"smart_grep","phase":"started","detail":"from.*db\\.pg|from.*\\\"#db\\\"|from.*storage/db"}
+{"at":"2026-05-31T12:22:14.630Z","session_id":"ses_18204c103ffeC58Yx1cXEYeg0u","agent":"type-guard","tool":"smart_grep","phase":"completed","detail":"from.*db\\.pg|from.*\\\"#db\\\"|from.*storage/db"}
+{"at":"2026-05-31T12:22:15.101Z","session_id":"ses_18204c103ffeC58Yx1cXEYeg0u","agent":"type-guard","tool":"smart_grep","phase":"started","detail":"checkPgHealth\\("}
+{"at":"2026-05-31T12:22:15.219Z","session_id":"ses_18204c103ffeC58Yx1cXEYeg0u","agent":"type-guard","tool":"smart_grep","phase":"completed","detail":"checkPgHealth\\("}
+{"at":"2026-05-31T12:23:07.275Z","session_id":"ses_18204c103ffeC58Yx1cXEYeg0u","agent":"type-guard","tool":"smart_grep","phase":"started","detail":"init\\(|initFromPool\\("}
+{"at":"2026-05-31T12:23:07.310Z","session_id":"ses_18204c103ffeC58Yx1cXEYeg0u","agent":"type-guard","tool":"smart_grep","phase":"completed","detail":"init\\(|initFromPool\\("}
+{"at":"2026-05-31T12:23:34.925Z","session_id":"ses_18204c103ffeC58Yx1cXEYeg0u","agent":"type-guard","tool":"smart_bash","phase":"started","detail":"Filter typecheck output for only db.pg-related errors"}
+{"at":"2026-05-31T12:23:34.925Z","session_id":"ses_18204c103ffeC58Yx1cXEYeg0u","agent":"type-guard","tool":"smart_bash","phase":"rerouted","detail":"→ smart_bun"}
+{"at":"2026-05-31T12:23:43.261Z","session_id":"ses_18204c103ffeC58Yx1cXEYeg0u","agent":"type-guard","tool":"smart_grep","phase":"started","detail":"import.*\\{[\\s\\S]*\\}.*from.*db\\.pg|from.*\\\"#db\\\""}
+{"at":"2026-05-31T12:23:43.631Z","session_id":"ses_18204c103ffeC58Yx1cXEYeg0u","agent":"type-guard","tool":"smart_grep","phase":"completed","detail":"import.*\\{[\\s\\S]*\\}.*from.*db\\.pg|from.*\\\"#db\\\""}
+{"at":"2026-05-31T12:24:07.753Z","session_id":"ses_18204c103ffeC58Yx1cXEYeg0u","agent":"type-guard","tool":"smart_bun","phase":"started","detail":"typecheck"}
+{"at":"2026-05-31T12:24:31.711Z","session_id":"ses_18204c103ffeC58Yx1cXEYeg0u","agent":"type-guard","tool":"smart_bun","phase":"completed","detail":"typecheck exit=0"}
+{"at":"2026-05-31T12:25:16.139Z","session_id":"ses_18204c103ffeC58Yx1cXEYeg0u","agent":"type-guard","tool":"smart_grep","phase":"started","detail":"checkPgHealth|PgHealthReport|PG_HEALTH_COMPONENT"}
+{"at":"2026-05-31T12:25:16.162Z","session_id":"ses_18204c103ffeC58Yx1cXEYeg0u","agent":"type-guard","tool":"smart_grep","phase":"completed","detail":"checkPgHealth|PgHealthReport|PG_HEALTH_COMPONENT"}
+{"at":"2026-05-31T12:25:16.179Z","session_id":"ses_18204c103ffeC58Yx1cXEYeg0u","agent":"type-guard","tool":"smart_grep","phase":"started","detail":"initFromPool"}
+{"at":"2026-05-31T12:25:16.192Z","session_id":"ses_18204c103ffeC58Yx1cXEYeg0u","agent":"type-guard","tool":"smart_grep","phase":"completed","detail":"initFromPool"}
+{"at":"2026-05-31T12:25:37.096Z","session_id":"ses_18204c103ffeC58Yx1cXEYeg0u","agent":"type-guard","tool":"smart_git","phase":"started","detail":"diff"}
+{"at":"2026-05-31T12:25:37.250Z","session_id":"ses_18204c103ffeC58Yx1cXEYeg0u","agent":"type-guard","tool":"smart_git","phase":"completed","detail":"diff exit=0"}
+{"at":"2026-05-31T12:25:37.719Z","session_id":"ses_18204c103ffeC58Yx1cXEYeg0u","agent":"type-guard","tool":"smart_git","phase":"started","detail":"log"}
+{"at":"2026-05-31T12:25:37.752Z","session_id":"ses_18204c103ffeC58Yx1cXEYeg0u","agent":"type-guard","tool":"smart_git","phase":"completed","detail":"log exit=0"}

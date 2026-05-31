@@ -26,3 +26,37 @@
 {"at":"2026-05-31T11:30:41.003Z","session_id":"ses_1825dc0d0ffetyJxbytWcHUhsg","agent":"coroner","tool":"smart_bash","phase":"completed","detail":"python3 exit=0"}
 {"at":"2026-05-31T11:33:35.648Z","session_id":"ses_1825dc0d0ffetyJxbytWcHUhsg","agent":"coroner","tool":"smart_bash","phase":"started","detail":"Read bus subscriber section (lines 335-425)"}
 {"at":"2026-05-31T11:33:35.932Z","session_id":"ses_1825dc0d0ffetyJxbytWcHUhsg","agent":"coroner","tool":"smart_bash","phase":"completed","detail":"python3 exit=0"}
+{"at":"2026-05-31T11:38:01.785Z","session_id":"ses_1825dc0d0ffetyJxbytWcHUhsg","agent":"coroner","tool":"smart_bash","phase":"started","detail":"Read bus subscriber block lines 355-395"}
+{"at":"2026-05-31T11:38:01.905Z","session_id":"ses_1825dc0d0ffetyJxbytWcHUhsg","agent":"coroner","tool":"smart_bash","phase":"completed","detail":"python3 exit=0"}
+{"at":"2026-05-31T11:41:38.491Z","session_id":"ses_1825dc0d0ffetyJxbytWcHUhsg","agent":"coroner","tool":"smart_grep","phase":"started","detail":"interface Hooks"}
+{"at":"2026-05-31T11:41:38.531Z","session_id":"ses_1825dc0d0ffetyJxbytWcHUhsg","agent":"coroner","tool":"smart_grep","phase":"completed","detail":"interface Hooks"}
+{"at":"2026-05-31T11:44:54.603Z","session_id":"ses_1825dc0d0ffetyJxbytWcHUhsg","agent":"coroner","tool":"smart_bash","phase":"started","detail":"Read lines 138-195 (internalPlugins, hasSecretKey, stripSecrets)"}
+{"at":"2026-05-31T11:44:54.677Z","session_id":"ses_1825dc0d0ffetyJxbytWcHUhsg","agent":"coroner","tool":"smart_bash","phase":"completed","detail":"python3 exit=0"}
+{"at":"2026-05-31T11:44:55.636Z","session_id":"ses_1825dc0d0ffetyJxbytWcHUhsg","agent":"coroner","tool":"smart_grep","phase":"started","detail":"interface Hooks"}
+{"at":"2026-05-31T11:44:55.646Z","session_id":"ses_1825dc0d0ffetyJxbytWcHUhsg","agent":"coroner","tool":"smart_grep","phase":"completed","detail":"interface Hooks"}
+{"at":"2026-05-31T11:48:26.766Z","session_id":"ses_1825dc0d0ffetyJxbytWcHUhsg","agent":"coroner","tool":"smart_grep","phase":"started","detail":"type Hooks|interface Hooks|Hooks ="}
+{"at":"2026-05-31T11:48:26.841Z","session_id":"ses_1825dc0d0ffetyJxbytWcHUhsg","agent":"coroner","tool":"smart_grep","phase":"completed","detail":"type Hooks|interface Hooks|Hooks ="}
+{"at":"2026-05-31T11:53:16.098Z","session_id":"ses_1825dc0d0ffetyJxbytWcHUhsg","agent":"coroner","tool":"smart_bash","phase":"started","detail":"Read Hooks interface from plugin SDK"}
+{"at":"2026-05-31T11:53:16.527Z","session_id":"ses_1825dc0d0ffetyJxbytWcHUhsg","agent":"coroner","tool":"smart_bash","phase":"completed","detail":"python3 exit=0"}
+{"at":"2026-05-31T11:54:49.057Z","session_id":"ses_1825dc0d0ffetyJxbytWcHUhsg","agent":"coroner","tool":"smart_bash","phase":"started","detail":"Read full Hooks interface"}
+{"at":"2026-05-31T11:54:49.138Z","session_id":"ses_1825dc0d0ffetyJxbytWcHUhsg","agent":"coroner","tool":"smart_bash","phase":"completed","detail":"python3 exit=0"}
+{"at":"2026-05-31T11:54:54.105Z","session_id":"ses_1825dc0d0ffetyJxbytWcHUhsg","agent":"coroner","tool":"smart_bash","phase":"started","detail":"Read full Hooks interface line by line"}
+{"at":"2026-05-31T11:54:54.161Z","session_id":"ses_1825dc0d0ffetyJxbytWcHUhsg","agent":"coroner","tool":"smart_bash","phase":"completed","detail":"python3 exit=0"}
+{"at":"2026-05-31T11:58:00.567Z","session_id":"ses_1825dc0d0ffetyJxbytWcHUhsg","agent":"coroner","tool":"smart_grep","phase":"started","detail":"^\\s+\\\"?[a-z]"}
+{"at":"2026-05-31T11:58:00.572Z","session_id":"ses_1825dc0d0ffetyJxbytWcHUhsg","agent":"coroner","tool":"smart_grep","phase":"completed","detail":"^\\s+\\\"?[a-z]"}
+{"at":"2026-05-31T11:58:07.448Z","session_id":"ses_1825dc0d0ffetyJxbytWcHUhsg","agent":"coroner","tool":"smart_bash","phase":"started","detail":"Extract all hook names from Hooks interface"}
+{"at":"2026-05-31T11:58:07.503Z","session_id":"ses_1825dc0d0ffetyJxbytWcHUhsg","agent":"coroner","tool":"smart_bash","phase":"completed","detail":"python3 exit=0"}
+{"at":"2026-05-31T12:00:50.983Z","session_id":"ses_1825dc0d0ffetyJxbytWcHUhsg","agent":"coroner","tool":"smart_bash","phase":"started","detail":"Read bus subscriber code precisely"}
+{"at":"2026-05-31T12:00:51.056Z","session_id":"ses_1825dc0d0ffetyJxbytWcHUhsg","agent":"coroner","tool":"smart_bash","phase":"completed","detail":"python3 exit=0"}
+{"at":"2026-05-31T12:00:52.593Z","session_id":"ses_1825dc0d0ffetyJxbytWcHUhsg","agent":"coroner","tool":"smart_bash","phase":"started","detail":"Read trigger function precisely"}
+{"at":"2026-05-31T12:00:52.634Z","session_id":"ses_1825dc0d0ffetyJxbytWcHUhsg","agent":"coroner","tool":"smart_bash","phase":"completed","detail":"python3 exit=0"}
+{"at":"2026-05-31T12:02:04.688Z","session_id":"ses_1825dc0d0ffetyJxbytWcHUhsg","agent":"coroner","tool":"smart_bash","phase":"started","detail":"See how plugins are registered and if State gets updated post-init"}
+{"at":"2026-05-31T12:02:04.765Z","session_id":"ses_1825dc0d0ffetyJxbytWcHUhsg","agent":"coroner","tool":"smart_bash","phase":"completed","detail":"python3 exit=0"}
+{"at":"2026-05-31T12:02:06.225Z","session_id":"ses_1825dc0d0ffetyJxbytWcHUhsg","agent":"coroner","tool":"smart_bash","phase":"started","detail":"Read applyPlugin to see how plugin registration adds hooks"}
+{"at":"2026-05-31T12:02:06.263Z","session_id":"ses_1825dc0d0ffetyJxbytWcHUhsg","agent":"coroner","tool":"smart_bash","phase":"completed","detail":"python3 exit=0"}
+{"at":"2026-05-31T12:03:56.327Z","session_id":"ses_1825dc0d0ffetyJxbytWcHUhsg","agent":"coroner","tool":"smart_grep","phase":"started","detail":"log\\.(warn|error|info).*plugin"}
+{"at":"2026-05-31T12:03:56.344Z","session_id":"ses_1825dc0d0ffetyJxbytWcHUhsg","agent":"coroner","tool":"smart_grep","phase":"completed","detail":"log\\.(warn|error|info).*plugin"}
+{"at":"2026-05-31T12:03:57.458Z","session_id":"ses_1825dc0d0ffetyJxbytWcHUhsg","agent":"coroner","tool":"smart_grep","phase":"started","detail":"export.*log|createLogger"}
+{"at":"2026-05-31T12:03:57.468Z","session_id":"ses_1825dc0d0ffetyJxbytWcHUhsg","agent":"coroner","tool":"smart_grep","phase":"completed","detail":"export.*log|createLogger"}
+{"at":"2026-05-31T12:04:02.161Z","session_id":"ses_1825dc0d0ffetyJxbytWcHUhsg","agent":"coroner","tool":"smart_grep","phase":"started","detail":"import.*Log|from.*util/log"}
+{"at":"2026-05-31T12:04:02.178Z","session_id":"ses_1825dc0d0ffetyJxbytWcHUhsg","agent":"coroner","tool":"smart_grep","phase":"completed","detail":"import.*Log|from.*util/log"}

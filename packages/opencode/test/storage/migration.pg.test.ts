@@ -46,4 +46,36 @@ describe("PG migrations", () => {
       }
     }
   })
+
+  test("applyMigrations is idempotent — calling twice does not error", async () => {
+    const client = init(":memory:")
+    try {
+      await applyMigrations(client)
+      const tablesFirst = await getTables(client)
+
+      await applyMigrations(client)
+      const tablesSecond = await getTables(client)
+
+      // Tables should be identical after both calls
+      expect(tablesSecond).toEqual(tablesFirst)
+      expect(tablesSecond).toContain("session")
+
+      // Tracking table should exist
+      expect(tablesSecond).toContain("__drizzle_migrations")
+
+      // Should have exactly 4 migration records
+      const underlying = (client as any).$client
+      const countResult = await underlying.query(
+        'SELECT COUNT(*) as cnt FROM "__drizzle_migrations"',
+      )
+      const rows = Array.isArray(countResult) ? countResult : countResult.rows ?? []
+      const cnt = Number(rows[0]?.cnt ?? 0)
+      expect(cnt).toBe(4)
+    } finally {
+      const underlying = (client as any).$client
+      if (underlying && typeof underlying.end === "function") {
+        await underlying.end()
+      }
+    }
+  })
 })

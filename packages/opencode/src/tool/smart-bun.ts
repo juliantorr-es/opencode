@@ -4,6 +4,7 @@ import { AppFileSystem } from "@opencode-ai/core/filesystem"
 import { InstanceState } from "@/effect/instance-state"
 import path from "path"
 import { spawnSync } from "child_process"
+import { sanitizedProcessEnv } from "@opencode-ai/core/util/opencode-process"
 import DESCRIPTION from "./smart-bun.txt"
 
 const VALID_COMMANDS: Record<string, string> = {
@@ -103,7 +104,7 @@ export const SmartBunTool = Tool.define(
                 errors.push({ file: m[1], line: parseInt(m[2]), col: parseInt(m[3]), level: m[4], code: m[5], message: m[6] })
               }
             }
-            const files = new Set(errors.map((e: any) => e.file))
+            const files = new Set(errors.map((e) => e.file))
             errorSummary = { files: files.size, total: errors.length }
           }
 

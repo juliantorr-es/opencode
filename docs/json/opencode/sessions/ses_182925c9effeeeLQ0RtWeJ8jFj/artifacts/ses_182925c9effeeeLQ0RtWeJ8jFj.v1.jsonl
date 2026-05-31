@@ -24,3 +24,7 @@
 {"at":"2026-05-31T10:41:15.724Z","tool":"smart_write","action":"wrote","file":".build/rig-relay/arch_plugin_capability_proxy.v1.json","detail":"Write the complete architecture plan for plugin capability proxy"}
 {"at":"2026-05-31T11:17:35.270Z","tool":"smart_write","action":"wrote","file":".build/rig-relay/arch_plugin_capability_proxy_zoning_addendum.json","detail":"Write zoning-board review addendum for the capability proxy plan"}
 {"at":"2026-05-31T11:32:53.203Z","tool":"smart_write","action":"wrote","file":".build/rig-relay/arch_plugin_capability_proxy_loadbearer_addendum.json","detail":"Write load-bearer review addendum confirming plan correctness"}
+{"at":"2026-05-31T11:37:51.879Z","tool":"smart_write","action":"wrote","file":".build/rig-relay/arch_plugin_capability_proxy_inspector_addendum.json","detail":"Write building-inspector review addendum with 4 critical plan adjustments"}
+{"at":"2026-05-31T11:41:30.342Z","tool":"smart_write","action":"wrote","file":".build/rig-relay/arch_plugin_capability_proxy_foundation_addendum.json","detail":"Write foundation review addendum confirming root causes and fix order"}
+{"at":"2026-05-31T11:45:09.155Z","tool":"smart_bash","action":"bash","command":"python3 << 'PYEOF'\nimport json\n\nwith open('.build/rig-relay/arch_plugin_capability_proxy.v1.json') a","exit_code":0}
+{"at":"2026-05-31T11:53:46.445Z","tool":"smart_write","action":"wrote","file":".build/rig-relay/arch_plugin_capability_proxy_blueprint_addendum.json","detail":"Write blueprint review addendum with test strategy"}

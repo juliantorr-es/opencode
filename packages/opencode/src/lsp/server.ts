@@ -1479,7 +1479,7 @@ export const LuaLS: Info = {
         return
       }
 
-      const asset = release.assets.find((a: any) => a.name === assetName)
+      const asset = release.assets.find((a: { name: string }) => a.name === assetName)
       if (!asset) {
         log.error(`Could not find asset ${assetName} in latest lua-language-server release`)
         return

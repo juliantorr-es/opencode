@@ -1,0 +1,18 @@
+{"at":"2026-05-31T11:49:42.483Z","session_id":"ses_18223edfcffekx9ENgkVjmJagr","agent":"handy-agent","tool":"smart_grep","phase":"started","detail":"adapter-dual-write"}
+{"at":"2026-05-31T11:49:42.582Z","session_id":"ses_18223edfcffekx9ENgkVjmJagr","agent":"handy-agent","tool":"smart_grep","phase":"completed","detail":"adapter-dual-write"}
+{"at":"2026-05-31T11:52:11.530Z","session_id":"ses_18223edfcffekx9ENgkVjmJagr","agent":"handy-agent","tool":"smart_grep","phase":"started","detail":"migration|MIGRATIONS"}
+{"at":"2026-05-31T11:52:11.540Z","session_id":"ses_18223edfcffekx9ENgkVjmJagr","agent":"handy-agent","tool":"smart_grep","phase":"completed","detail":"migration|MIGRATIONS"}
+{"at":"2026-05-31T11:52:12.142Z","session_id":"ses_18223edfcffekx9ENgkVjmJagr","agent":"handy-agent","tool":"smart_find","phase":"started","detail":"adapter-dual-write*"}
+{"at":"2026-05-31T11:52:12.176Z","session_id":"ses_18223edfcffekx9ENgkVjmJagr","agent":"handy-agent","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T11:54:14.738Z","session_id":"ses_18223edfcffekx9ENgkVjmJagr","agent":"handy-agent","tool":"smart_grep","phase":"started","detail":"adapter-dual-write"}
+{"at":"2026-05-31T11:54:14.767Z","session_id":"ses_18223edfcffekx9ENgkVjmJagr","agent":"handy-agent","tool":"smart_grep","phase":"completed","detail":"adapter-dual-write"}
+{"at":"2026-05-31T11:54:15.790Z","session_id":"ses_18223edfcffekx9ENgkVjmJagr","agent":"handy-agent","tool":"smart_bash","phase":"started","detail":"Check if adapter-dual-write.ts still exists on disk"}
+{"at":"2026-05-31T11:54:15.791Z","session_id":"ses_18223edfcffekx9ENgkVjmJagr","agent":"handy-agent","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T11:56:45.076Z","session_id":"ses_18223edfcffekx9ENgkVjmJagr","agent":"handy-agent","tool":"smart_git","phase":"started","detail":"status"}
+{"at":"2026-05-31T11:56:45.096Z","session_id":"ses_18223edfcffekx9ENgkVjmJagr","agent":"handy-agent","tool":"smart_git","phase":"completed","detail":"status exit=0"}
+{"at":"2026-05-31T11:56:46.075Z","session_id":"ses_18223edfcffekx9ENgkVjmJagr","agent":"handy-agent","tool":"smart_git","phase":"started","detail":"log"}
+{"at":"2026-05-31T11:56:46.103Z","session_id":"ses_18223edfcffekx9ENgkVjmJagr","agent":"handy-agent","tool":"smart_git","phase":"completed","detail":"log exit=0"}
+{"at":"2026-05-31T11:56:46.803Z","session_id":"ses_18223edfcffekx9ENgkVjmJagr","agent":"handy-agent","tool":"smart_bun","phase":"started","detail":"typecheck"}
+{"at":"2026-05-31T11:57:13.758Z","session_id":"ses_18223edfcffekx9ENgkVjmJagr","agent":"handy-agent","tool":"smart_bun","phase":"failed","detail":"typecheck exit=2"}
+{"at":"2026-05-31T11:59:12.603Z","session_id":"ses_18223edfcffekx9ENgkVjmJagr","agent":"handy-agent","tool":"smart_git","phase":"started","detail":"diff"}
+{"at":"2026-05-31T11:59:12.645Z","session_id":"ses_18223edfcffekx9ENgkVjmJagr","agent":"handy-agent","tool":"smart_git","phase":"completed","detail":"diff exit=0"}

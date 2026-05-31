@@ -213,7 +213,7 @@ const walkDirectory = Effect.fnUntraced(function* (
   results: string[],
   ext: string,
   maxDepth: number,
-): Effect.Effect<void> {
+): Generator<Effect.Effect<unknown, unknown, never>, void, unknown> {
   if (maxDepth <= 0) return
   try {
     const entries = yield* fs.readDirectory(dir)

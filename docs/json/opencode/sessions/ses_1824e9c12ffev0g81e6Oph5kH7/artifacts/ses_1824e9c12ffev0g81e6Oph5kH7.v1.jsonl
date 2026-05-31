@@ -10,3 +10,9 @@
 {"at":"2026-05-31T11:24:26.777Z","tool":"smart_grep","action":"searched","pattern":"tool\\.output|output.*smart_bash|\\.output\\b","results":30,"files":11}
 {"at":"2026-05-31T11:27:28.345Z","tool":"smart_grep","action":"searched","pattern":"toolResult|ToolResult|output.*metadata.*title","results":16,"files":5}
 {"at":"2026-05-31T11:33:25.469Z","tool":"smart_bash","action":"bash","command":"head -5 packages/opencode/src/tool/project-command.ts && echo \"---\" && sed -n '70,80p' packages/open","exit_code":0}
+{"at":"2026-05-31T11:41:21.351Z","tool":"smart_grep","action":"searched","pattern":"debug-packet|debugPacket","results":7,"files":3}
+{"at":"2026-05-31T11:44:58.032Z","tool":"smart_grep","action":"searched","pattern":"env.*spawnSync\\(|env.*spawn\\(|\\.env\\b.*=","results":30,"files":19}
+{"at":"2026-05-31T11:45:31.487Z","tool":"smart_grep","action":"searched","pattern":"\\\"command\\\".*bash|command.*analytics|bash_usage.*command","results":1,"files":1}
+{"at":"2026-05-31T11:45:32.356Z","tool":"smart_grep","action":"searched","pattern":"analytics|\\.jsonl.*read|readFileString.*jsonl","results":30,"files":15}
+{"at":"2026-05-31T11:55:13.224Z","tool":"smart_bash","action":"bash","command":"awk 'NR>=36 && NR<=53' packages/opencode/src/storage/schema.duckdb.ts","exit_code":0}
+{"at":"2026-05-31T11:58:18.881Z","tool":"smart_bash","action":"bash","command":"awk 'NR>=147 && NR<=160' packages/opencode/src/debug/debug-packet.ts","exit_code":0}

@@ -1,0 +1,25 @@
+{
+  "blueprint_review": {
+    "incorporated": true,
+    "reviewed_by": "blueprint (ses_1827e6cd1ffegBl8GbQOvSFSxg)",
+    "strategy": "checkpoint-gated bisect — 7 checkpoints + regression block, all describe.skip-gated",
+    "bisect_script": "packages/opencode/test/plugin/capability-proxy-bisect.test.ts (27 tests, all initially skipped)",
+    "checkpoints": [
+      "CP1: SDK_CAPABILITY_MAP exports + capability/index.ts re-exports",
+      "CP2: makeScopedClient — Proxy wrapping with namespace→capability gating",
+      "CP3: makeScopedShell — tagged template gate + method passthrough",
+      "CP4: makeScopedFetch — network.fetch gate + overload support",
+      "CP5: makeFilteredEnv — secret-pattern stripping + secrets.access gate",
+      "CP6: PluginInput scoping for external plugins (integration wiring)",
+      "CP7: Built-in plugins receive unscoped input (trust:built-in bypass)"
+    ],
+    "key_design_decisions": [
+      "CP1-CP5 use pure synchronous tests (Set<string> → mock objects); no Effect runtime needed",
+      "CP6-CP7 test the wiring contract; full Effect integration in regression suite",
+      "Cumulative checkpoints: prior CPs stay unskipped as regression guards",
+      "No require() — all dynamic await import() per Bun/Vite convention"
+    ],
+    "smoke_test_steps": "12-step linear progression: bisect CPs 1-7 → regression block → full plugin test suite → bun typecheck → SDK rebuild",
+    "regression_suite": "13 existing plugin test files + bun typecheck + sdk build"
+  }
+}

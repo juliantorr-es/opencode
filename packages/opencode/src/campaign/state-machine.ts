@@ -150,8 +150,7 @@ export const LANE_STATE_MACHINE: AgentMachineSpec = {
     red_team: {
       allowedTools: [],
       transitions: [
-        { to: "repairing", predicate: { kind: "finding_confirmed" }, priority: 5 },
-        { to: "repairing", predicate: { kind: "finding_blocking" }, priority: 6 },
+        { to: "repairing", predicate: { kind: "finding_blocking" }, priority: 5 },
         { to: "historian", predicate: { kind: "redteam_completed" }, priority: 10 },
       ],
     },

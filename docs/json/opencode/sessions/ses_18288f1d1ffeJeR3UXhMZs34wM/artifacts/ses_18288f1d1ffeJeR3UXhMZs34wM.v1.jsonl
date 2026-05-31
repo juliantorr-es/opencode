@@ -12,3 +12,8 @@
 {"at":"2026-05-31T11:27:07.391Z","tool":"smart_edit","action":"edited","file":".build/rig-relay/arch_infrastructure.v1.json","detail":"Foundation subagent found plugin also has an orphaned test file — 4 packages, no"}
 {"at":"2026-05-31T11:30:37.290Z","tool":"smart_edit","action":"edited","file":".build/rig-relay/arch_infrastructure.v1.json","detail":"Foundation identified tool diversity is architectural necessity; refocus fix-B o"}
 {"at":"2026-05-31T11:33:55.578Z","tool":"smart_edit","action":"edited","file":".build/rig-relay/arch_infrastructure.v1.json","detail":"Add plugin as 4th dead-test package, add console-app → console-core build depend"}
+{"at":"2026-05-31T11:38:52.117Z","tool":"smart_edit","action":"edited","file":".build/rig-relay/arch_infrastructure.v1.json","detail":"Building-inspector found root script/ already exists — consolidate INTO it, not "}
+{"at":"2026-05-31T11:43:25.960Z","tool":"smart_edit","action":"edited","file":".build/rig-relay/arch_infrastructure.v1.json","detail":"Zoning board: AGENTS.md prohibits new Markdown docs — ADRs must be JSON-schema-b"}
+{"at":"2026-05-31T11:47:19.236Z","tool":"smart_edit","action":"edited","file":".build/rig-relay/arch_infrastructure.v1.json","detail":"Update apply_order and phase_plan to reflect corrected fix-B (shared convention "}
+{"at":"2026-05-31T11:52:01.602Z","tool":"smart_grep","action":"searched","pattern":"\"id\": \"fix-A\"","results":0,"files":0}
+{"at":"2026-05-31T12:03:31.654Z","tool":"smart_bash","action":"bash","command":"python3 -c \"\nimport json\nwith open('.build/rig-relay/arch_infrastructure.v1.json') as f:\n    d = jso","exit_code":0}

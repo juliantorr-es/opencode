@@ -8,3 +8,6 @@
 {"at":"2026-05-31T11:32:30.155Z","session_id":"ses_1824f43f7ffeQujGXDf6Dy4xV0","agent":"witness","tool":"smart_grep","pattern":"import.*env-blocklist","path":"packages"}
 {"at":"2026-05-31T11:32:30.452Z","session_id":"ses_1824f43f7ffeQujGXDf6Dy4xV0","agent":"witness","tool":"smart_grep","pattern":"scanToolOutput|secret-scanner","path":"packages"}
 {"at":"2026-05-31T11:32:30.938Z","session_id":"ses_1824f43f7ffeQujGXDf6Dy4xV0","agent":"witness","tool":"smart_grep","pattern":"import.*opencode-process","path":"packages/opencode/src/tool"}
+{"at":"2026-05-31T11:58:37.902Z","session_id":"ses_1824f43f7ffeQujGXDf6Dy4xV0","agent":"witness","tool":"smart_grep","pattern":"scanToolOutput|hasSecrets","path":"packages/opencode/src/tool/smart-bash.ts"}
+{"at":"2026-05-31T11:58:38.574Z","session_id":"ses_1824f43f7ffeQujGXDf6Dy4xV0","agent":"witness","tool":"smart_grep","pattern":"process\\.env","path":"packages/opencode/src/tool/shell.ts"}
+{"at":"2026-05-31T11:58:39.363Z","session_id":"ses_1824f43f7ffeQujGXDf6Dy4xV0","agent":"witness","tool":"smart_grep","pattern":"AWS_BEARER_TOKEN_BEDROCK|OPENCODE_STORAGE_ACCESS_KEY_ID","path":"packages/desktop/src/main/env-blocklist.ts"}

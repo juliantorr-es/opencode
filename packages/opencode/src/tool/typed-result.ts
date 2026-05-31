@@ -502,7 +502,7 @@ export function checkPhaseGate(
     Effect.flatMap((phaseGate: Option.Option<any>) => {
       if (Option.isNone(phaseGate)) return Effect.succeed(Option.none<TypedToolResult>()) as Effect.Effect<Option.Option<TypedToolResult>, never, any>
       return Effect.exit(phaseGate.value.checkAllowed(toolID)).pipe(
-        Effect.map((exit: Exit.Exit<unknown, never>) => {
+        Effect.map((exit: Exit.Exit<unknown, unknown>) => {
           if (exit._tag === "Success") return Option.none<TypedToolResult>()
           const typed = fromDefect(toolID, exit.cause)
           return Option.some(typed)

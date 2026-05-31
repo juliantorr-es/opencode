@@ -116,17 +116,55 @@ export const claimsHandlers = HttpApiBuilder.group(InstanceHttpApi, "claims", (h
   }),
 )
 
-function buildPathTree(
-  pathStatus: Map<string, { status: string; claim: any }>,
-): Array<{
+type ClaimRow = {
+  task_id: string
+  session_id: string
+  wave: number
+  wave_type: string
+  subagent_type: string
+  description: string
+  status: string
+  result: string | null
+  error: string | null
+  created_at: number
+  expires_at: number | null
+  released_at: number | null
+}
+
+type ShapedClaim = {
+  taskId: string
+  sessionId: string
+  wave: number
+  waveType: string
+  subagentType: string
+  description: string
+  status: string
+  createdAt: number
+  releasedAt: number | undefined
+}
+
+type PathTreeNode = {
   path: string
   name: string
   type: "file" | "directory"
   status: string
-  claim: any
-  children?: any[]
-}> {
-  const root: Record<string, any> = {}
+  claim?: ShapedClaim
+  children?: PathTreeNode[]
+}
+
+type TreeNode = {
+  file?: PathTreeNode
+  dir?: {
+    children: Record<string, unknown>
+    claim?: ClaimRow | null
+    status?: string
+  }
+}
+
+function buildPathTree(
+  pathStatus: Map<string, { status: string; claim: ClaimRow | null }>,
+): PathTreeNode[] {
+  const root: Record<string, TreeNode> = {}
 
   for (const [filePath, info] of pathStatus) {
     const parts = filePath.split("/")
@@ -170,34 +208,35 @@ function buildPathTree(
         current[part].dir.status = info.status
       }
 
-      current = current[part]?.dir?.children ?? current[part] ?? {}
+      current = (current[part]?.dir?.children ?? current[part] ?? {}) as Record<string, TreeNode>
     }
   }
 
-  function convert(node: Record<string, any>, parentPath: string): any[] {
-    const result: any[] = []
+  function convert(node: Record<string, unknown>, parentPath: string): PathTreeNode[] {
+    const result: PathTreeNode[] = []
     for (const [name, value] of Object.entries(node)) {
-      if (value.file) {
-        result.push(value.file)
-      } else if (value.dir) {
+      const v = value as TreeNode
+      if (v.file) {
+        result.push(v.file)
+      } else if (v.dir) {
         const dirPath = parentPath ? `${parentPath}/${name}` : name
-        const children = value.dir.children ? convert(value.dir.children, dirPath) : []
+        const children = v.dir.children ? convert(v.dir.children as Record<string, unknown>, dirPath) : []
         result.push({
           path: dirPath,
           name,
           type: "directory" as const,
-          status: value.dir.status ?? "unclaimed",
-          claim: value.dir.claim
+          status: v.dir.status ?? "unclaimed",
+          claim: v.dir.claim
             ? {
-                taskId: value.dir.claim.task_id,
-                sessionId: value.dir.claim.session_id,
-                wave: value.dir.claim.wave,
-                waveType: value.dir.claim.wave_type,
-                subagentType: value.dir.claim.subagent_type,
-                description: value.dir.claim.description,
-                status: value.dir.claim.status,
-                createdAt: value.dir.claim.created_at,
-                releasedAt: value.dir.claim.released_at ?? undefined,
+                taskId: v.dir.claim.task_id,
+                sessionId: v.dir.claim.session_id,
+                wave: v.dir.claim.wave,
+                waveType: v.dir.claim.wave_type,
+                subagentType: v.dir.claim.subagent_type,
+                description: v.dir.claim.description,
+                status: v.dir.claim.status,
+                createdAt: v.dir.claim.created_at,
+                releasedAt: v.dir.claim.released_at ?? undefined,
               }
             : undefined,
           children,

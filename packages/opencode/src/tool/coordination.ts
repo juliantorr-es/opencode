@@ -729,14 +729,14 @@ export const CoordinationTool = Tool.define(
                   .where(eq(CoordinationClaimTable.session_id, params.sessionId as string)),
               )
               output = sessionClaims.length
-                ? sessionClaims.map((r: any) => formatStructuredResult(claimRowToType(r))).join("\n")
+                ? sessionClaims.map((r: typeof CoordinationClaimTable.$inferSelect) => formatStructuredResult(claimRowToType(r))).join("\n")
                 : `No claims for session ${params.sessionId}`
             } else {
-              const allClaims: any[] = yield* adapter.query((db) =>
+              const allClaims = yield* adapter.query((db) =>
                 db.select().from(CoordinationClaimTable),
               )
               output = allClaims.length
-                ? allClaims.map((r) => formatStructuredResult(claimRowToType(r))).join("\n")
+                ? allClaims.map((r: typeof CoordinationClaimTable.$inferSelect) => formatStructuredResult(claimRowToType(r))).join("\n")
                 : "No claims recorded"
             }
           } else if (params.operation === "reservations") {
@@ -799,7 +799,7 @@ export const CoordinationTool = Tool.define(
                   ...(runningClaims.length > 0
                     ? [
                         `  Tasks still running:`,
-                        ...runningClaims.map((c: any) => `    ${c.task_id}: ${c.description}`),
+                        ...runningClaims.map((c: { task_id: string; description: string }) => `    ${c.task_id}: ${c.description}`),
                       ]
                     : []),
                 ].join("\n")

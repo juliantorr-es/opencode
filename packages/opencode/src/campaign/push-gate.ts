@@ -26,13 +26,25 @@ export interface PushGateContext {
   readonly campaignStatus: string
   readonly laneCount: number
   readonly lanesTerminal: boolean
+  // TODO(F4): bindersFinalized should be derived from BinderService.finalizeBinder
+  // completion events on all lanes rather than passed as a raw boolean.
   readonly bindersFinalized: boolean
   readonly binderDigests: readonly string[]
   readonly evidenceHashes: readonly string[]
+  // TODO(F4): allTestsPassed should be derived from ValidatorComplete events
+  // across all lane binders rather than passed as a raw boolean.
   readonly allTestsPassed: boolean
+  // TODO(F4): prepublicationAdmitted should be derived from prepublication
+  // review cycle events in the binder evidence ledger.
   readonly prepublicationAdmitted: boolean
+  // TODO(F4): reviewerApproved should be derived from remote reviewer
+  // verification events in the binder evidence ledger.
   readonly reviewerApproved: boolean
+  // TODO(F4): noBlockingDefects should be derived from RedTeamCompleted
+  // events across all lane binders (blockingFindings === 0 on every lane).
   readonly noBlockingDefects: boolean
+  // TODO(F4): claimsVerified should be derived from claim-atom verification
+  // events in the binder evidence ledger, not passed as a raw boolean.
   readonly claimsVerified: boolean
 }
 
@@ -47,6 +59,11 @@ export interface Interface {
 export class Service extends Context.Service<Service, Interface>()("@opencode/PushGateService") {}
 
 // ── Gate Predicate Implementations ──────────────────────────
+
+// TODO(F4): allGatesPassPredicate currently uses raw booleans from PushGateContext.
+// Each boolean must be evidence-derived: bindersFinalized from lane binder finalization
+// events, allTestsPassed from validator events in binder evidence, etc.
+// See PushGateContext TODO annotations for per-field evidence sources.
 
 /** Gate 1: all_gates_pass — meta gate: all gates must pass */
 const allGatesPassPredicate: PushGate = {
@@ -92,6 +109,9 @@ const testsPassPredicate: PushGate = {
   tag: "tests_pass",
   name: "Tests Pass",
   description: "All integration and unit tests pass for the candidate boundary",
+  // TODO(F4): Derive passed from ValidatorComplete events across all lane binders
+  // rather than trusting ctx.allTestsPassed (a raw boolean from the caller).
+  // Evidence source: binder evidence section "validationResults" on each lane.
   check: (ctx) =>
     Effect.succeed({
       passed: ctx.allTestsPassed,
@@ -128,6 +148,10 @@ const noBlockingDefectsPredicate: PushGate = {
   tag: "no_blocking_defects",
   name: "No Blocking Defects",
   description: "No blocking defects exist in the candidate boundary",
+  // TODO(F4): Derive passed from RedTeamCompleted events across all lane binders.
+  // Requires: every lane has a RedTeamCompleted event AND every event has
+  // blockingFindings === 0. Evidence source: binder evidence section
+  // "redTeamFindings" and/or event stream RedTeamCompleted events.
   check: (ctx) =>
     Effect.succeed({
       passed: ctx.noBlockingDefects,
@@ -140,6 +164,9 @@ const claimsVerifiedPredicate: PushGate = {
   tag: "claims_verified",
   name: "Claims Verified",
   description: "All claim atoms for the boundary have been verified",
+  // TODO(F4): Derive passed from claim verification events in the binder
+  // evidence ledger. Evidence source: claim-atom schemas in binder evidence
+  // with verification receipts, not a raw caller boolean.
   check: (ctx) =>
     Effect.succeed({
       passed: ctx.claimsVerified,

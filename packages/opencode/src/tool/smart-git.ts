@@ -4,6 +4,7 @@ import { AppFileSystem } from "@opencode-ai/core/filesystem"
 import { InstanceState } from "@/effect/instance-state"
 import path from "path"
 import { spawnSync } from "child_process"
+import { sanitizedProcessEnv } from "@opencode-ai/core/util/opencode-process"
 import DESCRIPTION from "./smart-git.txt"
 
 const VALID_OPS: Record<string, string[]> = {
@@ -150,9 +151,9 @@ export const SmartGitTool = Tool.define(
               return { status: st, file, staged: l[0] !== " ", unstaged: l[1] !== " " }
             })
             output.files = files
-            output.staged_count = files.filter((f: any) => f.staged).length
-            output.unstaged_count = files.filter((f: any) => f.unstaged).length
-            output.untracked_count = files.filter((f: any) => f.status === "??").length
+            output.staged_count = files.filter((f) => f.staged).length
+            output.unstaged_count = files.filter((f) => f.unstaged).length
+            output.untracked_count = files.filter((f) => f.status === "??").length
           } else if (params.operation === "diff" && stdout) {
             const lines = stdout.split("\n")
             output.summary = `${lines.length} lines changed`

@@ -4,6 +4,7 @@ import { AppFileSystem } from "@opencode-ai/core/filesystem"
 import { InstanceState } from "@/effect/instance-state"
 import { Service as BinaryManager } from "@/binary/manager"
 import { spawnSync } from "child_process"
+import { sanitizedProcessEnv } from "@opencode-ai/core/util/opencode-process"
 import DESCRIPTION from "./smart-grep.txt"
 
 const Parameters = Schema.Struct({

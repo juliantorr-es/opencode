@@ -145,7 +145,7 @@ export const TaskBoardTool = Tool.define(
               detail: last?.detail || "",
               elapsed_s: elapsed,
               stale,
-              tool_count: new Set(phases.map((p: any) => p.tool)).size,
+              tool_count: new Set(phases.map((p) => p.tool)).size,
             })
           }
           fleet.sort((a, b) => (a.status === "running" ? -1 : 1) || ((b.elapsed_s as number) - (a.elapsed_s as number)))

@@ -11,21 +11,50 @@
   },
   "convention_note": "Zoning board audit: the codebase has 56+ bare catch(e) blocks (implicitly unknown under strict:true) and only 1 explicit catch(e:unknown). The plan aligns with the dominant bare catch convention — remove `: any` from catch clauses entirely rather than adding explicit `: unknown`.",
   "verification": {
-    "command": "cd packages/opencode && bun typecheck",
-    "expected": "Zero new type errors; any pre-existing errors unchanged",
-    "bisect": "Apply one file at a time, run typecheck. If a file breaks, revert that file and note the conflict.",
-    "test_suite": "cd packages/opencode && bun test",
-    "test_targets": [
-      "tests/tool/smart-git.test.ts",
-      "tests/mcp/index.test.ts",
-      "tests/provider/transform.test.ts",
-      "tests/tool/coordination.test.ts",
-      "tests/storage/adapter.test.ts",
-      "tests/server/routes/instance/httpapi/handlers/claims.test.ts"
-    ]
+    "mode": "5-gate pipeline: typecheck → targeted tests → full suite → lint → anti-regression audit",
+    "working_directory": "packages/opencode",
+    "gate_1_typecheck": {
+      "command": "bun typecheck",
+      "description": "Run after each batch. Expected: zero new errors. If a batch breaks, bisect within that batch by reverting individual files.",
+      "bisect_script": "packages/opencode/script/bisect-any-cleanup.sh"
+    },
+    "gate_2_targeted_tests": {
+      "command_prefix": "bun test --timeout 30000",
+      "targets_by_module": {
+        "mcp/index.ts": "test/mcp/",
+        "tool/smart-git.ts": "test/git/",
+        "provider/transform.ts": "test/provider/",
+        "provider/provider.ts": "test/provider/",
+        "tool/coordination.ts": "test/tool/",
+        "tool/smart-bun.ts": "test/tool/",
+        "tool/task-board.ts": "test/tool/",
+        "tool/typed-result.ts": "test/tool/",
+        "tool/read-lib.ts": "test/tool/",
+        "storage/adapter.ts": "test/storage/",
+        "storage/db.duckdb.ts": "test/storage/",
+        "session/llm.ts": "test/session/",
+        "context/workers/validation-parser-worker.ts": "test/context/",
+        "plugin/github-copilot/copilot.ts": "test/plugin/",
+        "lsp/server.ts": "test/lsp/",
+        "server/routes/instance/httpapi/handlers/claims.ts": "test/server/",
+        "util/signal.ts": "test/util/"
+      }
+    },
+    "gate_3_full_suite": {
+      "command": "bun test --timeout 30000",
+      "description": "Run after all batches complete. Expected: zero regressions."
+    },
+    "gate_4_lint": {
+      "command": "bun lint",
+      "description": "Runs oxlint. Expected: zero new lint violations."
+    },
+    "gate_5_anti_regression": {
+      "command": "git diff HEAD -- src/ | rg '^\\+.*\\bany\\b'",
+      "description": "Verify no new `: any` or `as any` was introduced accidentally. Output should be empty or show only unrelated pre-existing any usages."
+    }
   },
   "apply_order": [
-    "Batch A: Trivial removals — drop : any where TypeScript infers from array (9 items, zero-risk)",
+    "Batch A: Trivial removals — drop : any where TypeScript infers from array (18 items, zero-risk)",
     "Batch B: Catch clauses — remove : any annotation (bare catch is implicitly unknown under strict), add instanceof Error guard for .message access (3 items)",
     "Batch C: Simple type additions — replace : any with concrete types (5 items, low-risk)",
     "Batch D: Named type definitions — claims.ts type aliases + validation-parser RuntimeEvent import (6 items, medium-risk)"
@@ -69,7 +98,7 @@
           "after": "const files = new Set(errors.map((e) => e.file))"
         }
       ],
-      "risk": "none — errors is typed as Record<string, unknown>[] from the push pattern above"
+      "risk": "none — errors is typed from the push pattern above"
     },
     {
       "file": "packages/opencode/src/tool/task-board.ts",
@@ -123,7 +152,7 @@
           "after": "result.required.filter((field) => field in result.properties)"
         }
       ],
-      "risk": "none — msg.content elements come from the `ai` SDK ModelMessage type, which has typed content union"
+      "risk": "none — msg.content elements come from the `ai` SDK ModelMessage type"
     },
     {
       "file": "packages/opencode/src/plugin/github-copilot/copilot.ts",
@@ -135,7 +164,7 @@
           "kind": "remove_annotation",
           "before": "(part: any) =>",
           "after": "(part) =>",
-          "reason": "Bonus — same pattern. content array already guarded with Array.isArray above."
+          "note": "BONUS — same pattern as inventory items. content array already guarded with Array.isArray above."
         },
         {
           "line": 107,
@@ -162,7 +191,7 @@
           "after": "(part) =>\n                      part?.type === \"image\" ||\n                      (part?.type === \"tool_result\" &&\n                        Array.isArray(part?.content) &&\n                        part.content.some((nested) => nested?.type === \"image\"))"
         }
       ],
-      "risk": "low — all access paths guarded by Array.isArray and optional chaining. If typecheck complains about `msg` inference (line 107/119), add inline `{ content: unknown[] }` or `{ content?: unknown[] }`."
+      "risk": "low — all access paths guarded by Array.isArray and optional chaining. If typecheck complains about `msg` inference (body from JSON.parse may be too loose), add inline `{ content: unknown[] }`."
     },
     {
       "file": "packages/opencode/src/tool/coordination.ts",
@@ -188,7 +217,7 @@
           "after": "...runningClaims.map((c) => `    ${c.task_id}: ${c.description}`)"
         }
       ],
-      "risk": "low — Drizzle infers select result types from table schemas. If line 687 typecheck fails with inference issue, fall back to `(typeof CoordinationClaimTable.$inferSelect)[]` or wrap in an explicit generic parameter."
+      "risk": "low — Drizzle infers select result types. If line 687 inference fails, fall back to `(typeof CoordinationClaimTable.$inferSelect)[]`."
     },
     {
       "file": "packages/opencode/src/mcp/index.ts",
@@ -200,17 +229,17 @@
           "kind": "remove_annotation_add_guard",
           "before": "    catch: (e: any) => {\n      log.error(`failed to get ${label}`, { clientName, error: e.message })\n      return e\n    },",
           "after": "    catch: (e) => {\n      log.error(`failed to get ${label}`, { clientName, error: e instanceof Error ? e.message : String(e) })\n      return e\n    },",
-          "reason": "Remove : any to match dominant bare catch(e) convention. Add instanceof guard because e.message is accessed — also fixes latent bug where non-Error throw causes `error: undefined` in log."
+          "note": "Also fixes latent bug: non-Error thrown values previously logged `error: undefined` silently."
         },
         {
           "line": 807,
           "kind": "remove_annotation_add_guard",
           "before": "        catch: (e: any) => {\n          log.error(`failed to ${label}`, { clientName, ...meta, error: e?.message })\n          return e\n        },",
           "after": "        catch: (e) => {\n          log.error(`failed to ${label}`, { clientName, ...meta, error: e instanceof Error ? e.message : String(e) })\n          return e\n        },",
-          "reason": "Same pattern. Optional chaining on e?.message is removed in favor of instanceof guard (safer, catches non-Error thrown values explicitly)."
+          "note": "Optional chaining replaced by instanceof guard — safer for non-Error throw values."
         }
       ],
-      "risk": "low — behavior preserved. Non-Error thrown values now get String(e) in the log instead of undefined (improvement)."
+      "risk": "low — behavior preserved, non-Error throws now get String(e) in log instead of undefined (improvement)"
     },
     {
       "file": "packages/opencode/src/session/llm.ts",
@@ -222,7 +251,7 @@
           "kind": "remove_annotation_add_guard",
           "before": "          } catch (e: any) {\n            return { result: \"\", error: e.message ?? String(e) }\n          }",
           "after": "          } catch (e) {\n            const message = e instanceof Error ? e.message : String(e)\n            return { result: \"\", error: message }\n          }",
-          "reason": "Remove : any to match dominant bare catch convention. The original `e.message ?? String(e)` logic is preserved exactly — just with explicit instanceof guard."
+          "note": "Original e.message ?? String(e) logic preserved exactly — just with explicit instanceof guard."
         }
       ],
       "risk": "none — logic preserved exactly"
@@ -251,7 +280,7 @@
           "kind": "replace_type",
           "before": "): any {",
           "after": "): Effect.Effect<void> {",
-          "note": "Requires `Effect` in scope. Check imports — if not imported, add `import { Effect } from \"effect\"`."
+          "note": "Requires Effect in scope. Verify import — add `import { Effect } from \"effect\"` if missing."
         }
       ],
       "risk": "low — Effect is almost certainly already imported"
@@ -266,10 +295,10 @@
           "kind": "replace_type",
           "before": "const txFn = async (tx: any) => {",
           "after": "const txFn = async (tx: DrizzleLikeClient) => {",
-          "reason": "tx is cast to DrizzleLikeClient on line 233. DrizzleLikeClient is a structural interface defined in this file."
+          "note": "DrizzleLikeClient is a structural interface defined in this file. The fn parameter is cast to `tx as unknown as DrizzleLikeClient` internally."
         }
       ],
-      "risk": "low — DrizzleLikeClient is defined in the same file"
+      "risk": "low — type defined in same file"
     },
     {
       "file": "packages/opencode/src/storage/db.duckdb.ts",
@@ -287,7 +316,7 @@
     },
     {
       "file": "packages/opencode/src/provider/provider.ts",
-      "description": "Type fetch input parameter",
+      "description": "Type fetch input parameter as URL | RequestInfo",
       "batch": "C",
       "changes": [
         {
@@ -297,7 +326,7 @@
           "after": "options[\"fetch\"] = async (input: URL | RequestInfo, init?: BunFetchRequestInit) => {"
         }
       ],
-      "risk": "low — URL | RequestInfo is the standard TS fetch first arg type; Bun fetch accepts the same"
+      "risk": "low — URL | RequestInfo is the standard TS fetch first arg type"
     },
     {
       "file": "packages/opencode/src/tool/typed-result.ts",
@@ -309,7 +338,7 @@
           "kind": "replace_type",
           "before": "Effect.map((exit: any) => {",
           "after": "Effect.map((exit: Exit.Exit<unknown, never>) => {",
-          "note": "Requires `Exit` in scope from effect import. Check line 501 — Effect is imported; verify Exit is too."
+          "note": "Requires Exit in scope. Verify it's imported from 'effect'."
         }
       ],
       "risk": "low — Exit is a core Effect type"
@@ -345,11 +374,11 @@
           "after": "const failures = events.map((e: RuntimeEvent) => ({"
         }
       ],
-      "risk": "low — RuntimeEvent exists at event/runtime-event.ts:35 and is exactly the type returned by eventStore.query()"
+      "risk": "low — RuntimeEvent at event/runtime-event.ts:35 is exactly the type returned by eventStore.query()"
     },
     {
       "file": "packages/opencode/src/server/routes/instance/httpapi/handlers/claims.ts",
-      "description": "Define 3 local type aliases and replace 5 any usages — highest-complexity file in Phase 1",
+      "description": "Define 3 local type aliases (ClaimRow, ShapedClaim, PathTreeNode) and replace 5 any usages — highest-complexity file in Phase 1",
       "batch": "D",
       "preamble": "Add the following type aliases above the `buildPathTree` function (before line 119):",
       "add_types": "type ClaimRow = {\n  task_id: string\n  session_id: string\n  wave: number\n  wave_type: string\n  subagent_type: string\n  description: string\n  status: string\n  result: string | null\n  error: string | null\n  created_at: number\n  expires_at: number | null\n  released_at: number | null\n}\n\ntype ShapedClaim = {\n  taskId: string\n  sessionId: string\n  wave: number\n  waveType: string\n  subagentType: string\n  description: string\n  status: string\n  createdAt: number\n  releasedAt: number | undefined\n}\n\ntype PathTreeNode = {\n  path: string\n  name: string\n  type: \"file\" | \"directory\"\n  status: string\n  claim?: ShapedClaim\n  children?: PathTreeNode[]\n}",
@@ -371,7 +400,7 @@
           "kind": "replace_type",
           "before": "const root: Record<string, any> = {}",
           "after": "const root: Record<string, { file?: PathTreeNode; dir?: { children: Record<string, unknown>; claim?: ClaimRow | null; status?: string } }> = {}",
-          "fallback_if_typecheck_fails": "Use `Record<string, unknown>` and cast at property access points with `(current[part] as any).dir`."
+          "fallback_if_typecheck_fails": "Use `Record<string, unknown>` and cast at property access points in the tree-building loop (lines 130-175)."
         },
         {
           "line": 177,
@@ -386,18 +415,18 @@
           "after": "const result: PathTreeNode[] = []"
         }
       ],
-      "risk": "medium — the root Record at line 128 is a mutable intermediate tree with dynamic key access. If TypeScript rejects the complex structural type, fall back to Record<string, unknown> and add targeted casts in the tree-building loop (lines 130-175)."
+      "risk": "medium — the root Record at line 128 is a mutable intermediate tree with dynamic key access. If TypeScript rejects the complex structural type, fall back to Record<string, unknown> and add targeted casts in the tree-building loop."
     }
   ],
   "deferred_to_phase_2": [
     {
       "file": "packages/opencode/src/plugin/github-copilot/copilot.ts",
       "line": 32,
-      "reason": "imgMsg(msg: any) accesses msg.content extensively along multiple code paths (string, array, object) — needs a dedicated ContentPart type from the AI SDK, deferred to Phase 2 when SDK types are addressed"
+      "reason": "imgMsg(msg: any) accesses msg.content extensively along multiple code paths (string, array, object) — needs a dedicated ContentPart type from the AI SDK"
     }
   ],
   "deferred_as_any_casts": {
-    "note": "161 as any casts deferred to Phase 4. Zero as any casts targeted in Phase 1. They require Phase 2-3 structural work (DrizzleLikeClient interface, MachineState generics, Effect Fiber types) before safe removal.",
+    "note": "161 as any casts deferred to Phase 4. Zero as any casts targeted in Phase 1. They require Phase 2-3 structural work (DrizzleLikeClient, MachineState generics, Effect Fiber types) before safe removal.",
     "largest_clusters": [
       "agent/machine/secretary.ts (16) — HARD: state.transition() generics",
       "event/event-bridge.ts (13) — MEDIUM: RuntimeEvent payload typing",
@@ -409,33 +438,25 @@
   "risks": {
     "catch_clause_message_access": {
       "severity": "low",
-      "description": "All 3 catch clauses access .message on the caught value. After removing : any, bare catch(e) is implicitly unknown — the instanceof Error guard in the plan handles this. Additionally, the mcp/index.ts:217 change fixes a latent bug where non-Error throws silently log `error: undefined`.",
-      "affected": ["mcp/index.ts:217", "mcp/index.ts:807", "session/llm.ts:143"]
+      "mitigation": "All 3 catch clauses access .message. instanceof Error guard in plan handles this. mcp/index.ts:217 fix also resolves latent bug where non-Error throws log `error: undefined`."
     },
     "claims_tree_intermediate_type": {
       "severity": "medium",
-      "description": "The root Record has dynamic string keys and nested { file, dir } shapes. The proposed structural type may cause excess property errors when mutating current[part].dir.claim. Fallback: Record<string, unknown> with targeted casts.",
-      "affected": ["claims.ts:128"]
+      "mitigation": "Fall back to Record<string, unknown> with targeted casts if the structural type causes excess property errors on current[part].dir.claim mutations."
     },
     "coordination_drizzle_inference": {
       "severity": "low",
-      "description": "Line 687 drops : any[] from adapter.query() result. If Drizzle's return type inference fails in the Effect generator context, the typecheck will fail. Fallback: explicit type annotation.",
-      "affected": ["coordination.ts:687"]
+      "mitigation": "If Drizzle inference fails in Effect generator, add explicit type annotation."
     },
     "copilot_msg_inference": {
       "severity": "low",
-      "description": "Line 107 drops : any from msg parameter in body.messages.some(). If body type (from JSON.parse) is too loose, msg inference may fail. Fallback: add inline { content: unknown[] }.",
-      "affected": ["copilot.ts:107"]
-    },
-    "circular_dependency": {
-      "severity": "none",
-      "description": "No new cross-module imports introduced. RuntimeEvent import in validation-parser-worker.ts is within the same package boundary."
+      "mitigation": "If body type from JSON.parse is too loose for msg inference, add inline { content: unknown[] }."
     }
   },
   "rollback": {
-    "strategy": "Each batch is independently revertible. Changes are purely type-level with no runtime effect.",
+    "strategy": "Each batch independently revertible. Changes are purely type-level with no runtime effect.",
     "per_file": "git checkout -- <file>",
-    "per_batch": "Revert all files in the batch. Batches A and B are zero-risk; C and D have fallbacks."
+    "per_batch": "Revert all files in the batch"
   },
   "estimated_effort": {
     "execution": "1-2 hours for all 17 files across 4 batches",
@@ -444,12 +465,11 @@
   },
   "source_inventory": ".build/rig-relay/any_type_inventory.v1.json",
   "audit_trail": [
-    "inventory_analysis: 33 EASY items extracted from 264 total anomalies",
-    "source_verification: 100% of line numbers confirmed via grep of actual source files",
-    "convention_audit: zoning-board confirmed bare catch(e) is the dominant pattern (56+ instances) — plan aligned",
-    "risk_audit: building-inspector confirmed all 3 catch clauses access .message and need guards",
-    "type_audit: cartographer confirmed RuntimeEvent exists at event/runtime-event.ts:35 and is the exact type needed for validation-parser-worker",
-    "type_audit: claimRowToType already has explicit parameter type in coordination.ts — confirms coordination callback types",
-    "validation_audit: blueprint designed bisect strategy (one-file-at-a-time with bun typecheck)"
+    "inventory_analysis: 33 EASY items extracted from 264 total anomalies (JSON inventory query)",
+    "source_verification: 100% of line numbers confirmed via grep of actual source files (12 ripgrep commands across all 17 files)",
+    "convention_audit: zoning-board confirmed bare catch(e) is dominant pattern (56+ instances) — plan aligned to this convention",
+    "risk_audit: building-inspector confirmed all 3 catch clauses access .message and need instanceof Error guards; also identified latent bug at mcp/index.ts:217",
+    "type_audit: cartographer confirmed RuntimeEvent at event/runtime-event.ts:35 is exact type needed; claimRowToType in coordination.ts already has explicit parameter type",
+    "validation_audit: blueprint designed 5-gate pipeline (typecheck → targeted tests → full suite → lint → anti-regression) with bisect strategy"
   ]
 }

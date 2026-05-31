@@ -1,5 +1,6 @@
 import path from "path"
 import { Effect, Schema } from "effect"
+import { sanitizedProcessEnv } from "@opencode-ai/core/util/opencode-process"
 
 export type PackageManager = "bun" | "pnpm" | "yarn" | "npm"
 

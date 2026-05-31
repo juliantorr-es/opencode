@@ -42,3 +42,21 @@
 {"at":"2026-05-31T11:34:19.990Z","session_id":"ses_1827d91a7ffeldaJxPzusTCODG","agent":"critic","tool":"smart_grep","phase":"completed","detail":": any"}
 {"at":"2026-05-31T11:34:20.920Z","session_id":"ses_1827d91a7ffeldaJxPzusTCODG","agent":"critic","tool":"smart_grep","phase":"started","detail":": any"}
 {"at":"2026-05-31T11:34:20.928Z","session_id":"ses_1827d91a7ffeldaJxPzusTCODG","agent":"critic","tool":"smart_grep","phase":"completed","detail":": any"}
+{"at":"2026-05-31T11:43:11.086Z","session_id":"ses_1827d91a7ffeldaJxPzusTCODG","agent":"critic","tool":"smart_bash","phase":"started","detail":"Generate review JSON for handoff"}
+{"at":"2026-05-31T11:43:11.234Z","session_id":"ses_1827d91a7ffeldaJxPzusTCODG","agent":"critic","tool":"smart_bash","phase":"completed","detail":"python3 exit=0"}
+{"at":"2026-05-31T11:59:47.061Z","session_id":"ses_1827d91a7ffeldaJxPzusTCODG","agent":"critic","tool":"smart_grep","phase":"started","detail":"query.*Promise|query.*Effect|interface.*Service|readonly query"}
+{"at":"2026-05-31T11:59:47.107Z","session_id":"ses_1827d91a7ffeldaJxPzusTCODG","agent":"critic","tool":"smart_grep","phase":"completed","detail":"query.*Promise|query.*Effect|interface.*Service|readonly query"}
+{"at":"2026-05-31T12:01:35.692Z","session_id":"ses_1827d91a7ffeldaJxPzusTCODG","agent":"critic","tool":"smart_grep","phase":"started","detail":": any"}
+{"at":"2026-05-31T12:01:35.700Z","session_id":"ses_1827d91a7ffeldaJxPzusTCODG","agent":"critic","tool":"smart_grep","phase":"completed","detail":": any"}
+{"at":"2026-05-31T12:01:36.830Z","session_id":"ses_1827d91a7ffeldaJxPzusTCODG","agent":"critic","tool":"smart_grep","phase":"started","detail":": any"}
+{"at":"2026-05-31T12:01:36.836Z","session_id":"ses_1827d91a7ffeldaJxPzusTCODG","agent":"critic","tool":"smart_grep","phase":"completed","detail":": any"}
+{"at":"2026-05-31T12:02:44.180Z","session_id":"ses_1827d91a7ffeldaJxPzusTCODG","agent":"critic","tool":"smart_bash","phase":"started","detail":"Update review artifact with appeal findings"}
+{"at":"2026-05-31T12:02:44.260Z","session_id":"ses_1827d91a7ffeldaJxPzusTCODG","agent":"critic","tool":"smart_bash","phase":"completed","detail":"python3 exit=0"}
+{"at":"2026-05-31T12:04:45.179Z","session_id":"ses_1827d91a7ffeldaJxPzusTCODG","agent":"critic","tool":"smart_bash","phase":"started","detail":"Update review with reasonable-doubt critical findings"}
+{"at":"2026-05-31T12:04:45.235Z","session_id":"ses_1827d91a7ffeldaJxPzusTCODG","agent":"critic","tool":"smart_bash","phase":"completed","detail":"python3 exit=0"}
+{"at":"2026-05-31T12:14:59.335Z","session_id":"ses_1827d91a7ffeldaJxPzusTCODG","agent":"critic","tool":"smart_bash","phase":"started","detail":"Finalize review artifact with all subagent findings"}
+{"at":"2026-05-31T12:14:59.403Z","session_id":"ses_1827d91a7ffeldaJxPzusTCODG","agent":"critic","tool":"smart_bash","phase":"completed","detail":"python3 exit=0"}
+{"at":"2026-05-31T12:15:48.140Z","session_id":"ses_1827d91a7ffeldaJxPzusTCODG","agent":"critic","tool":"smart_bash","phase":"started","detail":"Final integration of all subagent results"}
+{"at":"2026-05-31T12:15:48.222Z","session_id":"ses_1827d91a7ffeldaJxPzusTCODG","agent":"critic","tool":"smart_bash","phase":"completed","detail":"python3 exit=0"}
+{"at":"2026-05-31T12:18:30.629Z","session_id":"ses_1827d91a7ffeldaJxPzusTCODG","agent":"critic","tool":"smart_bash","phase":"started","detail":"Integrate coroner findings into final review"}
+{"at":"2026-05-31T12:18:30.702Z","session_id":"ses_1827d91a7ffeldaJxPzusTCODG","agent":"critic","tool":"smart_bash","phase":"completed","detail":"python3 exit=0"}

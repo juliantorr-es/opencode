@@ -1,5 +1,5 @@
 export function signal() {
-  let resolve: () => void
+  let resolve: (value?: unknown) => void
   const promise = new Promise((r) => (resolve = r))
   return {
     trigger() {

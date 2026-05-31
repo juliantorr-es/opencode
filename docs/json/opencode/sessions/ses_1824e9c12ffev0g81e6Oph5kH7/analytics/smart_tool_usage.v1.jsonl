@@ -11,3 +11,16 @@
 {"at":"2026-05-31T11:24:26.776Z","session_id":"ses_1824e9c12ffev0g81e6Oph5kH7","agent":"blast-radius","tool":"smart_grep","pattern":"tool\\.output|output.*smart_bash|\\.output\\b","path":"packages/opencode/src"}
 {"at":"2026-05-31T11:27:28.345Z","session_id":"ses_1824e9c12ffev0g81e6Oph5kH7","agent":"blast-radius","tool":"smart_grep","pattern":"toolResult|ToolResult|output.*metadata.*title","path":"packages/opencode/src/session"}
 {"at":"2026-05-31T11:33:26.177Z","session_id":"ses_1824e9c12ffev0g81e6Oph5kH7","agent":"blast-radius","tool":"smart_grep","pattern":"import.*sanitized","path":"packages/opencode/src/tool/project-command.ts"}
+{"at":"2026-05-31T11:37:52.028Z","session_id":"ses_1824e9c12ffev0g81e6Oph5kH7","agent":"blast-radius","tool":"smart_grep","pattern":"smart_bash|smart-bash|SmartBash","path":"packages/sdk/js/src"}
+{"at":"2026-05-31T11:37:52.096Z","session_id":"ses_1824e9c12ffev0g81e6Oph5kH7","agent":"blast-radius","tool":"smart_grep","pattern":"tool\\.output.*JSON\\.parse|JSON\\.parse.*tool\\.output","path":"packages/opencode/src"}
+{"at":"2026-05-31T11:37:52.225Z","session_id":"ses_1824e9c12ffev0g81e6Oph5kH7","agent":"blast-radius","tool":"smart_grep","pattern":"status.*pass.*fail.*error|command.*elapsed_ms","path":"packages/opencode/src/session"}
+{"at":"2026-05-31T11:41:19.697Z","session_id":"ses_1824e9c12ffev0g81e6Oph5kH7","agent":"blast-radius","tool":"smart_grep","pattern":"smart_bash|tool.*output|bash_usage","path":"packages/opencode/src/debug"}
+{"at":"2026-05-31T11:41:20.312Z","session_id":"ses_1824e9c12ffev0g81e6Oph5kH7","agent":"blast-radius","tool":"smart_grep","pattern":"secret_finding","path":"packages/opencode/src"}
+{"at":"2026-05-31T11:41:21.350Z","session_id":"ses_1824e9c12ffev0g81e6Oph5kH7","agent":"blast-radius","tool":"smart_grep","pattern":"debug-packet|debugPacket","path":"packages/opencode/src"}
+{"at":"2026-05-31T11:41:33.123Z","session_id":"ses_1824e9c12ffev0g81e6Oph5kH7","agent":"blast-radius","tool":"smart_grep","pattern":"JSON\\.parse.*output|\\\"output\\\".*string","path":"packages/opencode/src/session"}
+{"at":"2026-05-31T11:44:56.563Z","session_id":"ses_1824e9c12ffev0g81e6Oph5kH7","agent":"blast-radius","tool":"smart_grep","pattern":"export.*ENV_BLOCKLIST","path":"packages/"}
+{"at":"2026-05-31T11:44:58.032Z","session_id":"ses_1824e9c12ffev0g81e6Oph5kH7","agent":"blast-radius","tool":"smart_grep","pattern":"env.*spawnSync\\(|env.*spawn\\(|\\.env\\b.*=","path":"packages/"}
+{"at":"2026-05-31T11:45:31.487Z","session_id":"ses_1824e9c12ffev0g81e6Oph5kH7","agent":"blast-radius","tool":"smart_grep","pattern":"\\\"command\\\".*bash|command.*analytics|bash_usage.*command","path":"packages/"}
+{"at":"2026-05-31T11:45:32.356Z","session_id":"ses_1824e9c12ffev0g81e6Oph5kH7","agent":"blast-radius","tool":"smart_grep","pattern":"analytics|\\.jsonl.*read|readFileString.*jsonl","path":"packages/opencode/src"}
+{"at":"2026-05-31T11:58:23.671Z","session_id":"ses_1824e9c12ffev0g81e6Oph5kH7","agent":"blast-radius","tool":"smart_grep","pattern":"secret-scanner|sanitizedProcessEnv|ENV_BLOCKLIST|sanitizeEnv|bash_usage","path":"packages/opencode/test"}
+{"at":"2026-05-31T11:58:24.333Z","session_id":"ses_1824e9c12ffev0g81e6Oph5kH7","agent":"blast-radius","tool":"smart_grep","pattern":"sanitizeEnv|ENV_BLOCKLIST|isBlocklisted","path":"packages/core/test"}

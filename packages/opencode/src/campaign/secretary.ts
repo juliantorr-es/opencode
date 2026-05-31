@@ -10,6 +10,7 @@ import {
 } from "./state-machine"
 import { Service as BinderService, type Binder as CanonicalBinder, layer as BinderLayer, BinderError, type LaneState as BinderLaneState } from "./binder"
 import type { LaneState as LaneStateName } from "./types"
+import { deriveAllowedTools } from "./role-contracts"
 
 // ── State Tags (canonical LaneState from types.ts) ───────────
 
@@ -75,7 +76,7 @@ export function roleOutputToEvent(output: RoleOutput): RuntimeEvent {
       case "architect":
         return { _tag: "ArchitectComplete" }
       case "critic":
-        return { _tag: "CriticComplete", verdict: "approved" }
+        return { _tag: "CriticComplete", verdict: output.verdict, reason: output.reason }
       case "executor":
         return { _tag: "ExecutorComplete", files: output.changedFiles }
       case "validator":
@@ -347,7 +348,8 @@ export interface Interface {
   readonly launchRole: (laneId: string, roleType: string) => Effect.Effect<void, Error>
   readonly handleRoleOutput: (laneId: string, output: RoleOutput) => Effect.Effect<void, Error>
   readonly returnLane: (laneId: string) => Effect.Effect<Binder, Error>
-  readonly init: (laneId: string) => Effect.Effect<void>
+  readonly loadLane: (laneId: string) => Effect.Effect<LaneState, LaneNotFoundError>
+  readonly init: (laneId: string) => Effect.Effect<void, LaneNotFoundError>
 }
 
 // ── Service ──────────────────────────────────────────────────
@@ -415,6 +417,85 @@ const make = Effect.gen(function* () {
     )
   }
 
+  /** Reconstruct a lane from EventStore without requiring it in activeLanes. */
+  const loadLane: Interface["loadLane"] = (laneId) =>
+    Effect.gen(function* () {
+      const existing = yield* Ref.get(activeLanes)
+      const existingLane = existing.get(laneId)
+      if (existingLane) return existingLane
+
+      const stored = yield* eventStore.query({
+        runId: laneId,
+        order: "asc",
+        limit: 10_000,
+      }).pipe(
+        Effect.catchTag("DatabaseError", () => Effect.succeed([])),
+      )
+
+      if (stored.length === 0) {
+        return yield* Effect.fail(new LaneNotFoundError({ laneId, message: `Lane ${laneId} not found in EventStore` }))
+      }
+
+      const campaignId = stored.find((e) => e.campaignId)?.campaignId ?? ""
+
+      const binderOpt = yield* binderService.getBinder(laneId)
+      const binder = Option.isSome(binderOpt) ? binderOpt.value : null
+
+      const initialSM = makeInitialSMState()
+      const events: RuntimeEvent[] = []
+      const smEvents: SMRuntimeEvent[] = []
+
+      for (const se of stored) {
+        if (se.payloadJson && typeof se.payloadJson === "object" && "_tag" in (se.payloadJson as Record<string, unknown>)) {
+          events.push(se.payloadJson as RuntimeEvent)
+          smEvents.push(toSMEvent(se.payloadJson as RuntimeEvent))
+        }
+      }
+
+      const nextSM = smEvents.length > 0
+        ? reduceCampaignState(initialSM, smEvents, LANE_STATE_MACHINE)
+        : initialSM
+
+      const transitions: TransitionRecord[] = nextSM.stateHistory.map((st) => ({
+        from: st.from as StateTag,
+        to: st.to as StateTag,
+        event: st.eventType,
+        evidence: `replayed: ${st.eventType}`,
+        timestamp: st.timestamp ? new Date(st.timestamp).getTime() : now(),
+      }))
+
+      const errorEvents = events.filter((e) => e._tag === "Failed" || e._tag === "RepairFailed")
+      const error: string | null = errorEvents.length > 0 ? errorEvents[errorEvents.length - 1]!.error : null
+
+      const state = nextSM.currentState as StateTag
+      const activeRole = getRoleForState(state)
+      const allowedTools: readonly string[] = deriveAllowedTools(state)
+
+      const lane: LaneState = {
+        id: laneId,
+        campaignId,
+        scope: "",
+        dependencies: [],
+        currentState: state,
+        previousState: null,
+        smState: nextSM,
+        eventStream: events as readonly RuntimeEvent[],
+        transitions,
+        allowedTools,
+        activeRole,
+        binder,
+        error,
+      }
+
+      yield* Ref.update(activeLanes, (map) => {
+        const next = new Map(map)
+        next.set(laneId, lane)
+        return next
+      })
+
+      return lane
+    })
+
   const createLane: Interface["createLane"] = (campaignId, scope, dependencies) =>
     Effect.gen(function* () {
       const id = `lane-${campaignId}-${now()}-${Math.random().toString(36).slice(2, 8)}`
@@ -439,22 +520,36 @@ const make = Effect.gen(function* () {
         return next
       })
       yield* binderService.createBinder(id, campaignId, scope, scope)
+      const freshBinder = yield* binderService.getBinder(id)
+      if (Option.isSome(freshBinder)) {
+        yield* Ref.update(activeLanes, (map) => {
+          const next = new Map(map)
+          const existing = next.get(id)
+          if (existing) next.set(id, { ...existing, binder: freshBinder.value })
+          return next
+        })
+      }
       return id
     })
 
   /** Replay lane events from EventStore to reconstruct state. */
-  const init: (laneId: string) => Effect.Effect<void> = (laneId) =>
+  const init: (laneId: string) => Effect.Effect<void, LaneNotFoundError> = (laneId) =>
     Effect.gen(function* () {
       const existing = yield* Ref.get(activeLanes)
       const lane = existing.get(laneId)
-      if (!lane) return
+      if (!lane) {
+        yield* loadLane(laneId)
+        return
+      }
 
       // Load events from store for this lane
       const stored = yield* eventStore.query({
         runId: laneId,
         order: "asc",
         limit: 10_000,
-      })
+      }).pipe(
+        Effect.catchTag("DatabaseError", () => Effect.succeed([])),
+      )
 
       if (stored.length === 0) return
 
@@ -494,8 +589,7 @@ const make = Effect.gen(function* () {
 
       const state = nextSM.currentState as StateTag
       const activeRole = getRoleForState(state)
-      const stateSpec = LANE_STATE_MACHINE.states[nextSM.currentState]
-      const allowedTools: readonly string[] = stateSpec?.allowedTools ?? []
+      const allowedTools: readonly string[] = deriveAllowedTools(state)
 
       const updated: LaneState = {
         ...lane,
@@ -607,7 +701,7 @@ const make = Effect.gen(function* () {
       }
 
       const updatedTransitions = [...lane.transitions, transition] as readonly TransitionRecord[]
-      const allowedTools: readonly string[] = []
+      const allowedTools: readonly string[] = deriveAllowedTools(newState)
       const role = getRoleForState(newState)
 
       // Collect artifacts from events if transitioning
@@ -621,11 +715,10 @@ const make = Effect.gen(function* () {
       // Build binder if terminal — using canonical BinderService
       let binder: Binder | null = null
       if (isTerminal(newState)) {
-        yield* binderService.createBinder(laneId, lane.campaignId, lane.scope, lane.scope)
+        binder = yield* binderService.ensureBinder(laneId, lane.campaignId, lane.scope, lane.scope)
         for (const t of updatedTransitions) {
-          yield* binderService.addEvidence(
+          yield* binderService.addTransitionEvidence(
             laneId,
-            "transitionEvents",
             {
               eventId: `${laneId}:${t.event}:${t.timestamp}`,
               eventType: t.event,
@@ -634,9 +727,8 @@ const make = Effect.gen(function* () {
             },
           )
         }
-        yield* binderService.addEvidence(
+        yield* binderService.addExecutionEvent(
           laneId,
-          "executionEvents",
           {
             eventId: `${laneId}:${event._tag}:${now()}`,
             eventType: event._tag,
@@ -677,79 +769,99 @@ const make = Effect.gen(function* () {
       // Only add evidence for success outputs
       if (output.status === "failure" || output.status === "blocked") return
 
-      const section = (() => {
-        switch (output.role) {
-          case "scout": case "cartographer": return "scoutReports"
-          case "architect": return "architecturePlan"
-          case "critic": return "criticReviews"
-          case "executor": return "executionEvents"
-          case "validator": return "validationResults"
-          case "redteam": return "redTeamFindings"
-          case "historian": return "handoffSummary"
-          default: return "roleOutput"
-        }
-      })()
+      // Use typed evidence methods directly instead of section string dispatch
+      const ts = new Date().toISOString()
 
       // Build correct payload type per section category
-      const evidencePayload = (() => {
-        switch (output.role) {
-          case "scout":
-          case "cartographer":
-          case "architect":
-          case "critic":
-            // ArtifactRef sections: scoutReports, architecturePlan, criticReviews
-            return {
-              type: output.role,
-              path: `lane:${laneId}:${output.role.toLowerCase()}:${now()}`,
-              summary: output.message,
+      switch (output.role) {
+        case "scout":
+        case "cartographer":
+          yield* binderService.addScoutReport(laneId, {
+            type: output.role,
+            path: `lane:${laneId}:${output.role.toLowerCase()}:${ts}`,
+            summary: output.message,
+            contentDigest: "",
+          })
+          break
+        case "architect":
+          yield* binderService.setArchitecturePlan(laneId, {
+            type: "architect",
+            path: `lane:${laneId}:architect:${ts}`,
+            summary: output.message,
+            contentDigest: "",
+          })
+          break
+        case "critic":
+          yield* binderService.addCriticReview(laneId, {
+            type: "critic",
+            path: `lane:${laneId}:critic:${ts}`,
+            summary: output.message,
+            contentDigest: "",
+          })
+          if (output.verdict === "approved") {
+            yield* binderService.setApprovedPlan(laneId, {
+              type: "critic:approved",
+              path: `lane:${laneId}:critic:approved:${ts}`,
+              summary: "Plan approved by critic review",
               contentDigest: "",
-            }
-          case "executor":
-            // EventRef section: executionEvents
-            return {
-              eventId: `${laneId}:executor:${now()}`,
-              eventType: "executor",
-              ts: new Date().toISOString(),
-              summary: output.message,
-            }
-          case "validator":
-            // ValidationResult section: validationResults
-            return {
-              tool: "validator",
-              status: output.passed ? "pass" : "fail",
-              failures: output.failedTests.map((i) => ({ name: i, message: i })),
-              durationMs: 0,
-              afterLastEdit: true,
-            }
-          case "redteam":
-            // EventRef section: redTeamFindings
-            return {
-              eventId: `${laneId}:redteam:${now()}`,
-              eventType: "redteam",
-              ts: new Date().toISOString(),
-              summary: `Red team: ${output.findings.length} findings`,
-            }
-          case "historian":
-            // string section: handoffSummary
-            return {
-              eventId: `${laneId}:historian:${now()}`,
-              eventType: "historian",
-              ts: new Date().toISOString(),
-              summary: `Checkpoint: ${output.checkpointSha}`,
-            }
-        }
-      })()
-      if (evidencePayload) {
-        yield* binderService.addEvidence(laneId, section, evidencePayload)
-      }
-      if (output.role === "critic" && output.verdict === "approved") {
-        yield* binderService.addEvidence(laneId, "approvedPlan", {
-          type: "critic:approved",
-          path: `lane:${laneId}:critic:approved:${now()}`,
-          summary: "Plan approved by critic review",
-          contentDigest: "",
-        })
-      }
+            })
+          }
+          break
+        case "executor":
+          yield* binderService.addExecutionEvent(laneId, {
+            eventId: `${laneId}:executor:${ts}`,
+            eventType: "executor",
+            ts: ts,
+            summary: output.message,
+          })
+          break
+        case "validator":
+          yield* binderService.addValidationResult(laneId, {
+            tool: "validator",
+            status: output.passed ? "pass" : "fail",
+            failures: output.failedTests.map((t) => ({ name: t, message: t })),
+            durationMs: 0,
+            afterLastEdit: false,
+          })
+          break
+        case "redteam":
+          for (const finding of output.findings) {
+            yield* binderService.addRedTeamFinding(laneId, {
+              severity: finding.severity as "blocking" | "high" | "medium" | "low" | "info",
+              summary: finding.summary,
+              evidence: {
+                eventId: `${laneId}:redteam:${ts}`,
+                eventType: "redteam",
+                ts: ts,
+                summary: finding.summary,
+              },
+              resolved: false,
+            })
+          }
+          break
+        case "historian":
+          yield* binderService.setHandoffSummary(laneId, output.checkpointSha ?? output.message)
+          break
+      }      // Evidence is now added directly via typed methods in the switch above
+    })
+  }
+
+
+  function finalizeLaneClosure(laneId: string, output: RoleOutput): Effect.Effect<void, Error> {
+    return Effect.gen(function* () {
+      const lane = yield* ensureLane(laneId)
+      if (lane.currentState !== "checkpointed") return
+
+      const sha = (output as { checkpointSha?: string }).checkpointSha ?? ""
+      yield* processEvent(laneId, { _tag: "LaneReturned", binderDigest: sha } satisfies RuntimeEvent)
+      const finalized = yield* binderService.finalizeBinder(laneId)
+
+      yield* Ref.update(activeLanes, (map) => {
+        const next = new Map(map)
+        const existing = next.get(laneId)
+        if (existing) next.set(laneId, { ...existing, binder: finalized })
+        return next
+      })
     })
   }
 
@@ -776,14 +888,10 @@ const make = Effect.gen(function* () {
         yield* processEvent(laneId, event)
       }
 
-      // Historian: explicit closure sequence — evidence added first, then finalize after LaneReturned
+      // Historian: centralized closure sequence via finalizeLaneClosure
       yield* addRoleEvidence(laneId, output)
       if (output.role === "historian") {
-        const updatedLane = yield* ensureLane(laneId)
-        if (updatedLane.currentState === "checkpointed") {
-          yield* processEvent(laneId, { _tag: "LaneReturned", binderDigest: output.checkpointSha ?? "" })
-          yield* binderService.finalizeBinder(laneId)
-        }
+        yield* finalizeLaneClosure(laneId, output)
       }
     })
 
@@ -843,6 +951,7 @@ const make = Effect.gen(function* () {
     launchRole,
     handleRoleOutput,
     returnLane,
+    loadLane,
     init,
   })
 })

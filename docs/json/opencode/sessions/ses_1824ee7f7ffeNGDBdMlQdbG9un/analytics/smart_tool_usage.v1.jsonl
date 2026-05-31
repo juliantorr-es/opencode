@@ -5,3 +5,5 @@
 {"at":"2026-05-31T11:13:22.029Z","session_id":"ses_1824ee7f7ffeNGDBdMlQdbG9un","agent":"exhibit-a","tool":"smart_grep","pattern":"OPENAUTH|OAUTH_TOKEN|export.*env","path":"packages"}
 {"at":"2026-05-31T11:15:41.358Z","session_id":"ses_1824ee7f7ffeNGDBdMlQdbG9un","agent":"exhibit-a","tool":"smart_grep","pattern":"plan_files|files_modified|changes","path":".build/rig-relay/arch_tool_secrets_layer.v1.json"}
 {"at":"2026-05-31T11:18:29.121Z","session_id":"ses_1824ee7f7ffeNGDBdMlQdbG9un","agent":"exhibit-a","tool":"smart_bun","command":"run","elapsed_ms":30,"exit_code":0}
+{"at":"2026-05-31T11:50:29.261Z","session_id":"ses_1824ee7f7ffeNGDBdMlQdbG9un","agent":"exhibit-a","tool":"smart_grep","pattern":"shell\\.ts|shellEnv","path":"packages/opencode/src/tool"}
+{"at":"2026-05-31T11:50:30.414Z","session_id":"ses_1824ee7f7ffeNGDBdMlQdbG9un","agent":"exhibit-a","tool":"smart_grep","pattern":"SECRET_FALSE_POSITIVE_WHITELIST|SECRET_WHITELIST|isSecretWhitelisted","path":"packages/opencode/src"}

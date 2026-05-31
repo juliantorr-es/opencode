@@ -28,3 +28,34 @@
 {"at":"2026-05-31T11:33:25.469Z","session_id":"ses_1824e9c12ffev0g81e6Oph5kH7","agent":"blast-radius","tool":"smart_bash","phase":"completed","detail":"head exit=0"}
 {"at":"2026-05-31T11:33:26.170Z","session_id":"ses_1824e9c12ffev0g81e6Oph5kH7","agent":"blast-radius","tool":"smart_grep","phase":"started","detail":"import.*sanitized"}
 {"at":"2026-05-31T11:33:26.177Z","session_id":"ses_1824e9c12ffev0g81e6Oph5kH7","agent":"blast-radius","tool":"smart_grep","phase":"completed","detail":"import.*sanitized"}
+{"at":"2026-05-31T11:37:52.015Z","session_id":"ses_1824e9c12ffev0g81e6Oph5kH7","agent":"blast-radius","tool":"smart_grep","phase":"started","detail":"smart_bash|smart-bash|SmartBash"}
+{"at":"2026-05-31T11:37:52.028Z","session_id":"ses_1824e9c12ffev0g81e6Oph5kH7","agent":"blast-radius","tool":"smart_grep","phase":"completed","detail":"smart_bash|smart-bash|SmartBash"}
+{"at":"2026-05-31T11:37:52.057Z","session_id":"ses_1824e9c12ffev0g81e6Oph5kH7","agent":"blast-radius","tool":"smart_grep","phase":"started","detail":"tool\\.output.*JSON\\.parse|JSON\\.parse.*tool\\.output"}
+{"at":"2026-05-31T11:37:52.096Z","session_id":"ses_1824e9c12ffev0g81e6Oph5kH7","agent":"blast-radius","tool":"smart_grep","phase":"completed","detail":"tool\\.output.*JSON\\.parse|JSON\\.parse.*tool\\.output"}
+{"at":"2026-05-31T11:37:52.210Z","session_id":"ses_1824e9c12ffev0g81e6Oph5kH7","agent":"blast-radius","tool":"smart_grep","phase":"started","detail":"status.*pass.*fail.*error|command.*elapsed_ms"}
+{"at":"2026-05-31T11:37:52.226Z","session_id":"ses_1824e9c12ffev0g81e6Oph5kH7","agent":"blast-radius","tool":"smart_grep","phase":"completed","detail":"status.*pass.*fail.*error|command.*elapsed_ms"}
+{"at":"2026-05-31T11:41:19.684Z","session_id":"ses_1824e9c12ffev0g81e6Oph5kH7","agent":"blast-radius","tool":"smart_grep","phase":"started","detail":"smart_bash|tool.*output|bash_usage"}
+{"at":"2026-05-31T11:41:19.697Z","session_id":"ses_1824e9c12ffev0g81e6Oph5kH7","agent":"blast-radius","tool":"smart_grep","phase":"completed","detail":"smart_bash|tool.*output|bash_usage"}
+{"at":"2026-05-31T11:41:20.264Z","session_id":"ses_1824e9c12ffev0g81e6Oph5kH7","agent":"blast-radius","tool":"smart_grep","phase":"started","detail":"secret_finding"}
+{"at":"2026-05-31T11:41:20.313Z","session_id":"ses_1824e9c12ffev0g81e6Oph5kH7","agent":"blast-radius","tool":"smart_grep","phase":"completed","detail":"secret_finding"}
+{"at":"2026-05-31T11:41:21.327Z","session_id":"ses_1824e9c12ffev0g81e6Oph5kH7","agent":"blast-radius","tool":"smart_grep","phase":"started","detail":"debug-packet|debugPacket"}
+{"at":"2026-05-31T11:41:21.350Z","session_id":"ses_1824e9c12ffev0g81e6Oph5kH7","agent":"blast-radius","tool":"smart_grep","phase":"completed","detail":"debug-packet|debugPacket"}
+{"at":"2026-05-31T11:41:33.097Z","session_id":"ses_1824e9c12ffev0g81e6Oph5kH7","agent":"blast-radius","tool":"smart_grep","phase":"started","detail":"JSON\\.parse.*output|\\\"output\\\".*string"}
+{"at":"2026-05-31T11:41:33.123Z","session_id":"ses_1824e9c12ffev0g81e6Oph5kH7","agent":"blast-radius","tool":"smart_grep","phase":"completed","detail":"JSON\\.parse.*output|\\\"output\\\".*string"}
+{"at":"2026-05-31T11:44:56.386Z","session_id":"ses_1824e9c12ffev0g81e6Oph5kH7","agent":"blast-radius","tool":"smart_grep","phase":"started","detail":"export.*ENV_BLOCKLIST"}
+{"at":"2026-05-31T11:44:56.563Z","session_id":"ses_1824e9c12ffev0g81e6Oph5kH7","agent":"blast-radius","tool":"smart_grep","phase":"completed","detail":"export.*ENV_BLOCKLIST"}
+{"at":"2026-05-31T11:44:57.926Z","session_id":"ses_1824e9c12ffev0g81e6Oph5kH7","agent":"blast-radius","tool":"smart_grep","phase":"started","detail":"env.*spawnSync\\(|env.*spawn\\(|\\.env\\b.*="}
+{"at":"2026-05-31T11:44:58.032Z","session_id":"ses_1824e9c12ffev0g81e6Oph5kH7","agent":"blast-radius","tool":"smart_grep","phase":"completed","detail":"env.*spawnSync\\(|env.*spawn\\(|\\.env\\b.*="}
+{"at":"2026-05-31T11:45:31.364Z","session_id":"ses_1824e9c12ffev0g81e6Oph5kH7","agent":"blast-radius","tool":"smart_grep","phase":"started","detail":"\\\"command\\\".*bash|command.*analytics|bash_usage.*command"}
+{"at":"2026-05-31T11:45:31.487Z","session_id":"ses_1824e9c12ffev0g81e6Oph5kH7","agent":"blast-radius","tool":"smart_grep","phase":"completed","detail":"\\\"command\\\".*bash|command.*analytics|bash_usage.*command"}
+{"at":"2026-05-31T11:45:32.338Z","session_id":"ses_1824e9c12ffev0g81e6Oph5kH7","agent":"blast-radius","tool":"smart_grep","phase":"started","detail":"analytics|\\.jsonl.*read|readFileString.*jsonl"}
+{"at":"2026-05-31T11:45:32.356Z","session_id":"ses_1824e9c12ffev0g81e6Oph5kH7","agent":"blast-radius","tool":"smart_grep","phase":"completed","detail":"analytics|\\.jsonl.*read|readFileString.*jsonl"}
+{"at":"2026-05-31T11:51:23.640Z","session_id":"ses_1824e9c12ffev0g81e6Oph5kH7","agent":"blast-radius","tool":"smart_bash","phase":"started","detail":"Read TOOL_USAGE_VIEW SQL definition"}
+{"at":"2026-05-31T11:55:13.201Z","session_id":"ses_1824e9c12ffev0g81e6Oph5kH7","agent":"blast-radius","tool":"smart_bash","phase":"started","detail":"Read TOOL_USAGE_VIEW SQL content"}
+{"at":"2026-05-31T11:55:13.224Z","session_id":"ses_1824e9c12ffev0g81e6Oph5kH7","agent":"blast-radius","tool":"smart_bash","phase":"completed","detail":"awk exit=0"}
+{"at":"2026-05-31T11:58:18.873Z","session_id":"ses_1824e9c12ffev0g81e6Oph5kH7","agent":"blast-radius","tool":"smart_bash","phase":"started","detail":"Read VALUE_SECRET_PATTERNS in debug-packet.ts"}
+{"at":"2026-05-31T11:58:18.880Z","session_id":"ses_1824e9c12ffev0g81e6Oph5kH7","agent":"blast-radius","tool":"smart_bash","phase":"completed","detail":"awk exit=0"}
+{"at":"2026-05-31T11:58:23.638Z","session_id":"ses_1824e9c12ffev0g81e6Oph5kH7","agent":"blast-radius","tool":"smart_grep","phase":"started","detail":"secret-scanner|sanitizedProcessEnv|ENV_BLOCKLIST|sanitizeEnv|bash_usage"}
+{"at":"2026-05-31T11:58:23.671Z","session_id":"ses_1824e9c12ffev0g81e6Oph5kH7","agent":"blast-radius","tool":"smart_grep","phase":"completed","detail":"secret-scanner|sanitizedProcessEnv|ENV_BLOCKLIST|sanitizeEnv|bash_usage"}
+{"at":"2026-05-31T11:58:24.321Z","session_id":"ses_1824e9c12ffev0g81e6Oph5kH7","agent":"blast-radius","tool":"smart_grep","phase":"started","detail":"sanitizeEnv|ENV_BLOCKLIST|isBlocklisted"}
+{"at":"2026-05-31T11:58:24.333Z","session_id":"ses_1824e9c12ffev0g81e6Oph5kH7","agent":"blast-radius","tool":"smart_grep","phase":"completed","detail":"sanitizeEnv|ENV_BLOCKLIST|isBlocklisted"}

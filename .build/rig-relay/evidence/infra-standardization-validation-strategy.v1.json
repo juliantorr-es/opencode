@@ -1,0 +1,221 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "kind": "validation_strategy",
+  "plan": "infrastructure_standardization",
+  "generated_at": "2026-05-31T00:00:00Z",
+  "repo_state": {
+    "fd_installed": false,
+    "justfile_exists": false,
+    "root_scripts_dir_exists": false,
+    "adr_dir_exists": false,
+    "coverage_infra_exists": false,
+    "ci_workflows": ["typecheck.yml", "test.yml", "containers.yml", "publish.yml", "generate.yml", "opencode.yml", "pr-standards.yml"],
+    "packages_with_test_tasks_in_turbo": ["opencode", "@opencode-ai/app", "@opencode-ai/ui"],
+    "packages_without_test_tasks_in_turbo": ["@opencode-ai/sdk"],
+    "typecheck_tool": "tsgo (bun turbo typecheck)",
+    "test_runner": "bun test"
+  },
+  "validation_by_fix": {
+    "fix-A--fd-installation": {
+      "description": "Verify fd is available system-wide and AGENTS.md references it correctly",
+      "bisect_script": "which fd && fd --version && fd --list-details && echo '---' && grep -c 'fd' AGENTS.md",
+      "bisect_expected_output": "fd path and version printed; AGENTS.md grep count > 0",
+      "existing_tests_to_run": [
+        "bun typecheck"
+      ],
+      "smoke_test_steps": [
+        "Run: fd -e ts -e tsx . packages/opencode/src | wc -l  (should find TypeScript files)",
+        "Run: fd -e json package.json packages | wc -l  (should find package.json files)",
+        "Run: 'grep fd AGENTS.md' to confirm fd is referenced in the agent instructions",
+        "Verify: 'fd --unrestricted' respects .gitignore by default"
+      ],
+      "rollback_verification": [
+        "brew uninstall fd (or equivalent)",
+        "which fd → should fail",
+        "grep fd AGENTS.md → verify reference removed or gated with check"
+      ],
+      "ci_gate_verification": [
+        "The fd check should be part of CI verification in the typecheck workflow: add a step that runs 'which fd' to confirm CI agents have it",
+        "PR check: verify AGENTS.md contains fd reference in the CLI tools section"
+      ]
+    },
+    "fix-B--build-tool-consolidation": {
+      "description": "Verify typecheck still passes for all 19 migrated packages after build tool changes (tsgo → consolidated toolchain)",
+      "bisect_script": "bun turbo typecheck --filter='./packages/*' 2>&1; echo 'EXIT_CODE:'$?",
+      "bisect_expected_output": "EXIT_CODE:0 (all packages pass typecheck)",
+      "existing_tests_to_run": [
+        "bun turbo typecheck",
+        "bun --cwd packages/opencode build",
+        "bun --cwd packages/sdk/js build",
+        "bun --cwd packages/app build"
+      ],
+      "smoke_test_steps": [
+        "1. Run: 'bun turbo typecheck' from repo root — must exit 0",
+        "2. Run individual package typechecks: 'bun --cwd packages/opencode typecheck' (use new consolidated command)",
+        "3. Verify build outputs: 'bun --cwd packages/opencode build' produces dist/",
+        "4. Verify CI workflow typecheck.yml still uses correct command (check .github/workflows/typecheck.yml)",
+        "5. Check all 19 package.json files have consistent typecheck script definitions",
+        "6. Verify husky pre-commit hook still works if typecheck is wired there"
+      ],
+      "rollback_verification": [
+        "Revert package.json scripts to tsgo --noEmit",
+        "Verify 'bun turbo typecheck' still passes with reverted config",
+        "Verify CI workflow typecheck.yml still passes on reverted config"
+      ],
+      "ci_gate_verification": [
+        "Push a branch with the changes and verify the typecheck CI workflow passes on the PR",
+        "Verify no package is accidentally excluded from the typecheck matrix",
+        "Check build artifacts exist for packages that depend on ^build (opencode, app, ui tests)"
+      ]
+    },
+    "fix-C--test-coverage": {
+      "description": "Verify coverage reports are generated, CI gate works, threshold enforcement",
+      "bisect_script": "bun --cwd packages/opencode test --coverage 2>&1 | tail -20; echo 'EXIT_CODE:'$?; ls -la packages/opencode/coverage/ 2>/dev/null || echo 'NO COVERAGE DIR'",
+      "bisect_expected_output": "coverage directory exists with lcov.info or similar; EXIT_CODE:0 (or 1 if below threshold)",
+      "existing_tests_to_run": [
+        "bun --cwd packages/opencode test",
+        "bun --cwd packages/app test",
+        "bun --cwd packages/ui test"
+      ],
+      "smoke_test_steps": [
+        "1. Run: 'bun --cwd packages/opencode test --coverage' — verify coverage report generated",
+        "2. Check artifacts: 'ls packages/opencode/coverage/' — must contain lcov.info or HTML report",
+        "3. Verify threshold: add a deliberate uncovered line, run coverage again — must fail if below threshold",
+        "4. Check CI: verify test.yml or a new coverage workflow uploads coverage artifacts",
+        "5. Check coverage gate: verify PRs below threshold show failing check",
+        "6. Check report format: junit.xml + coverage report both available in CI artifacts"
+      ],
+      "rollback_verification": [
+        "Remove --coverage flag from test scripts",
+        "Verify tests still pass without coverage overhead",
+        "Verify CI workflow doesn't break when coverage step is removed"
+      ],
+      "ci_gate_verification": [
+        "In CI: verify 'bun turbo test:ci' (or new coverage variant) produces coverage artifacts",
+        "Check junit report is uploaded: packages/*/.artifacts/unit/junit.xml",
+        "Verify coverage report is also uploaded as a CI artifact",
+        "If using a coverage threshold: push a branch that falls below it and verify the CI check fails",
+        "Push a branch that meets the threshold and verify the CI check passes"
+      ]
+    },
+    "fix-D--dead-test-wiring": {
+      "description": "Verify all 4 packages' tests actually run in CI. Currently opencode/app/ui have tests but sdk has none.",
+      "bisect_script": "bun turbo test:ci 2>&1; echo 'EXIT_CODE:'$?; echo '---JUNIT---'; find packages -name 'junit.xml' -path '*/.artifacts/*' 2>/dev/null | sort",
+      "bisect_expected_output": "EXIT_CODE:0; 3 or 4 junit.xml files found (opencode, app, ui; sdk is either added or explicitly excluded)",
+      "existing_tests_to_run": [
+        "bun turbo test:ci",
+        "bun --cwd packages/opencode test",
+        "bun --cwd packages/app test",
+        "bun --cwd packages/ui test"
+      ],
+      "smoke_test_steps": [
+        "1. Identify the 4 packages with turbo.json test tasks: opencode, @opencode-ai/app, @opencode-ai/ui, @opencode-ai/sdk",
+        "2. For @opencode-ai/sdk: verify if test script exists in packages/sdk/js/package.json (currently: NO)",
+        "3. Either add a test script to SDK package.json + test files, OR remove sdk from turbo.json test matrix",
+        "4. Run: 'bun turbo test:ci' — must exit 0 and NOT skip any package silently",
+        "5. Verify each package's .artifacts/unit/junit.xml is generated",
+        "6. Check CI test.yml: verify 'bun turbo test:ci' in unit job exercises all 4 packages",
+        "7. Verify PG, DuckDB, and E2E test jobs in CI still work (they use package-specific commands, not turbo)",
+        "8. Run individual package tests: 'bun --cwd packages/opencode test', 'bun --cwd packages/app test:unit', etc."
+      ],
+      "rollback_verification": [
+        "If sdk test script was added: remove it, verify turbo.json reverts to exclude sdk",
+        "If sdk was excluded from turbo.json: add it back, verify it fails cleanly (no silent skip)",
+        "Verify CI test.yml still runs all existing test matrix jobs"
+      ],
+      "ci_gate_verification": [
+        "Push a branch with fixed turbo.json + sdk test infrastructure",
+        "Verify CI test.yml unit job runs and junit reports show all 4 packages",
+        "Verify no package test is silently skipped (check CI logs for 'no task' or 'cache miss')",
+        "Verify the Publish Unit Reports step finds junit.xml from all packages"
+      ]
+    },
+    "fix-E--adr-template": {
+      "description": "Verify ADR template file structure and AGENTS.md cross-reference",
+      "bisect_script": "test -f docs/adr/template.md && echo 'template exists' || echo 'template MISSING'; echo '---'; grep -c 'adr' AGENTS.md 2>/dev/null; echo '---'; head -20 docs/adr/template.md 2>/dev/null || echo 'NO TEMPLATE'",
+      "bisect_expected_output": "template exists; AGENTS.md contains adr reference; template has expected sections",
+      "existing_tests_to_run": [
+        "bun typecheck"
+      ],
+      "smoke_test_steps": [
+        "1. Verify: 'ls docs/adr/template.md' — file exists",
+        "2. Check template structure: must include sections like Title, Status, Context, Decision, Consequences",
+        "3. Verify: 'grep adr AGENTS.md' — AGENTS.md cross-references the ADR process",
+        "4. Create a test ADR using the template: copy template → fill in fields → verify markdown lint passes",
+        "5. Verify README.md or CONTRIBUTING.md also references ADR process if applicable"
+      ],
+      "rollback_verification": [
+        "Remove docs/adr/template.md",
+        "Remove adr references from AGENTS.md",
+        "Verify no broken links remain"
+      ],
+      "ci_gate_verification": [
+        "Add a CI check (e.g., in pr-standards.yml or a new workflow) that verifies template.md exists and has required sections",
+        "Consider a markdown lint step for docs/adr/*.md files",
+        "Verify PR template includes ADR prompt for architectural decisions"
+      ]
+    },
+    "fix-F--script-centralization": {
+      "description": "Verify justfile recipes work, migrated scripts still function, no circular imports",
+      "bisect_script": "test -f justfile && echo 'justfile exists' || echo 'justfile MISSING'; echo '---'; just --list 2>&1; echo 'EXIT_CODE:'$?",
+      "bisect_expected_output": "justfile exists; just --list shows recipes; EXIT_CODE:0",
+      "existing_tests_to_run": [
+        "bun typecheck",
+        "bun --cwd packages/opencode build",
+        "bun --cwd packages/sdk/js build",
+        "bun --cwd packages/app build"
+      ],
+      "smoke_test_steps": [
+        "1. Verify: 'test -f justfile' — justfile exists at repo root",
+        "2. Run: 'just --list' — all expected recipes appear (typecheck, test, build, lint, etc.)",
+        "3. Run: 'just typecheck' — must exit 0 (equivalent to 'bun turbo typecheck')",
+        "4. Run: 'just test' — must exit 0 (equivalent to 'bun turbo test:ci')",
+        "5. Run: 'just build' — must produce all build artifacts",
+        "6. For each migrated script: verify the original script path works AND the just recipe works identically",
+        "7. Check for circular imports: 'just typecheck' must not hang or recurse",
+        "8. Verify existing scripts in packages/*/script/ still work independently (e.g., 'bun --cwd packages/opencode build' still works)",
+        "9. Check husky hooks: if pre-commit used direct script paths, verify they work through just"
+      ],
+      "rollback_verification": [
+        "Remove justfile",
+        "Run original commands directly (bun turbo typecheck, bun --cwd packages/opencode test, etc.)",
+        "Verify all original paths still work",
+        "Verify no CI workflow was modified to depend on just (unless intentional)"
+      ],
+      "ci_gate_verification": [
+        "Verify CI workflows use just recipes consistently (or a mix of just + direct commands if intentional)",
+        "Push a branch and verify CI still runs all jobs with the new just-based commands",
+        "If CI uses just: verify just is installed in the CI runner (add to setup-bun action or a separate step)",
+        "Check generate.yml: verify './script/generate.ts' either works via just or is kept as direct call"
+      ]
+    }
+  },
+  "cross_cutting_validations": {
+    "description": "Validations that span multiple fixes and must pass for the overall plan",
+    "full_ci_simulation": {
+      "command": "echo 'Simulating full CI pipeline locally...'; bun typecheck && echo 'typecheck OK' && bun --cwd packages/opencode test --timeout 30000 2>&1 | tail -5 && echo 'opencode test OK' && bun --cwd packages/app test:unit 2>&1 | tail -5 && echo 'app test OK' && bun --cwd packages/ui test 2>&1 | tail -5 && echo 'ui test OK'",
+      "expected": "All steps exit 0"
+    },
+    "parallel_lane_safety": {
+      "description": "Verify changes don't conflict across lanes (fix-A through fix-F are independent)",
+      "checks": [
+        "fix-A (fd install) and fix-D (test wiring) touch AGENTS.md — use fragment protocol if concurrent",
+        "fix-B (typecheck) and fix-C (coverage) may both modify package.json scripts — use fragment protocol",
+        "fix-F (justfile) may create scripts/ directory — ensure it doesn't collide with other lane outputs"
+      ]
+    },
+    "git_diff_verification": {
+      "command": "git diff --stat origin/dev...HEAD",
+      "expected_files": [
+        "AGENTS.md (for fd + ADR references)",
+        "turbo.json (for test task changes)",
+        "packages/*/package.json (for script standardization)",
+        ".github/workflows/typecheck.yml (for build tool consolidation)",
+        ".github/workflows/test.yml (for coverage + dead test wiring)",
+        "justfile (new file, for script centralization)",
+        "docs/adr/template.md (new file, for ADR template)",
+        "packages/sdk/js/package.json (if sdk test wiring added)"
+      ]
+    }
+  }
+}

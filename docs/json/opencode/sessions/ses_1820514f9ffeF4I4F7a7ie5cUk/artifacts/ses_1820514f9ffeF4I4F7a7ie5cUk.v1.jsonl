@@ -1,0 +1,14 @@
+{"at":"2026-05-31T12:23:07.025Z","tool":"smart_grep","action":"searched","pattern":"migration","results":25,"files":5}
+{"at":"2026-05-31T12:23:50.433Z","tool":"smart_grep","action":"searched","pattern":".*","results":30,"files":1}
+{"at":"2026-05-31T12:24:37.823Z","tool":"smart_grep","action":"searched","pattern":"\"#db\"","results":0,"files":0}
+{"at":"2026-05-31T12:24:56.313Z","tool":"smart_bash","action":"bash","command":"for d in packages/opencode/migration-pg/*/; do echo \"$d\"; done","exit_code":0}
+{"at":"2026-05-31T12:26:29.573Z","tool":"smart_grep","action":"searched","pattern":"CREATE TABLE","results":19,"files":3}
+{"at":"2026-05-31T12:27:03.907Z","tool":"smart_grep","action":"searched","pattern":".*","results":30,"files":2}
+{"at":"2026-05-31T12:30:13.728Z","tool":"smart_grep","action":"searched","pattern":"mock","results":30,"files":9}
+{"at":"2026-05-31T12:30:17.202Z","tool":"smart_grep","action":"searched","pattern":"mock\\.module","results":17,"files":5}
+{"at":"2026-05-31T12:33:11.785Z","tool":"smart_write","action":"wrote","file":"packages/opencode/test/storage/migration-pg-idempotency.test.ts","detail":"Create comprehensive idempotency test file for PGlite migration tracking table e"}
+{"at":"2026-05-31T12:33:23.780Z","tool":"smart_bun","action":"ran","command":"test","exit_code":0,"cwd":"packages/opencode"}
+{"at":"2026-05-31T12:33:29.097Z","tool":"smart_bun","action":"ran","command":"test","exit_code":1,"cwd":"packages/opencode"}
+{"at":"2026-05-31T12:33:35.688Z","tool":"smart_bun","action":"ran","command":"test","exit_code":1,"cwd":"packages/opencode"}
+{"at":"2026-05-31T12:33:47.919Z","tool":"smart_bun","action":"ran","command":"test","exit_code":0,"cwd":"packages/opencode"}
+{"at":"2026-05-31T12:34:11.176Z","tool":"smart_bun","action":"ran","command":"test","exit_code":0,"cwd":"packages/opencode"}

@@ -3,10 +3,11 @@ import * as Log from "@opencode-ai/core/util/log"
 import { ContextInvalidationBus } from "../invalidation-bus"
 import * as ValidationContext from "../validation-context"
 import { EventStore } from "../../event"
+import type { RuntimeEvent } from "../../event/runtime-event"
 
 const log = Log.create({ service: "validation-parser-worker" })
 
-function extractTestName(event: any): string {
+function extractTestName(event: RuntimeEvent): string {
   if (event.payloadJson) {
     const p = event.payloadJson as Record<string, unknown>
     if (typeof p.testName === "string") return p.testName
@@ -20,7 +21,7 @@ function extractTestName(event: any): string {
   return "unknown"
 }
 
-function extractFilePath(event: any): string {
+function extractFilePath(event: RuntimeEvent): string {
   if (event.filePath) return event.filePath
   if (event.payloadJson) {
     const p = event.payloadJson as Record<string, unknown>
@@ -31,7 +32,7 @@ function extractFilePath(event: any): string {
   return "unknown"
 }
 
-function extractLine(event: any): number | undefined {
+function extractLine(event: RuntimeEvent): number | undefined {
   if (event.payloadJson) {
     const p = event.payloadJson as Record<string, unknown>
     if (typeof p.line === "number") return p.line
@@ -87,7 +88,7 @@ const runBatch = Effect.gen(function* () {
     return
   }
 
-  const failures = events.map((e: any) => ({
+  const failures = events.map((e: RuntimeEvent) => ({
     testName: extractTestName(e),
     file: extractFilePath(e),
     line: extractLine(e),

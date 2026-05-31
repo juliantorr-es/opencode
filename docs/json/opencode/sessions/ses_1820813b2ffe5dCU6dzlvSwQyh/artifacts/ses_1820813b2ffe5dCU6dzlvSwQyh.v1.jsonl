@@ -1,0 +1,16 @@
+{"at":"2026-05-31T12:18:47.888Z","tool":"smart_grep","action":"searched","pattern":"__drizzle_migrations","results":3,"files":1}
+{"at":"2026-05-31T12:19:10.927Z","tool":"smart_grep","action":"searched","pattern":"migrat","results":26,"files":5}
+{"at":"2026-05-31T12:19:11.974Z","tool":"smart_git","action":"git_op","operation":"diff","exit_code":0}
+{"at":"2026-05-31T12:20:20.393Z","tool":"smart_git","action":"git_op","operation":"diff","exit_code":0}
+{"at":"2026-05-31T12:20:20.915Z","tool":"smart_git","action":"git_op","operation":"status","exit_code":0}
+{"at":"2026-05-31T12:20:21.730Z","tool":"smart_git","action":"git_op","operation":"log","exit_code":0}
+{"at":"2026-05-31T12:21:51.691Z","tool":"smart_grep","action":"searched","pattern":"applyMigrations\\(","results":3,"files":3}
+{"at":"2026-05-31T12:25:37.017Z","tool":"smart_git","action":"git_op","operation":"log","exit_code":0}
+{"at":"2026-05-31T12:25:57.920Z","tool":"smart_git","action":"git_op","operation":"stash","exit_code":0}
+{"at":"2026-05-31T12:26:40.218Z","tool":"smart_bun","action":"ran","command":"test","exit_code":1,"cwd":"packages/opencode"}
+{"at":"2026-05-31T12:27:09.214Z","tool":"smart_git","action":"git_op","operation":"stash","exit_code":0}
+{"at":"2026-05-31T12:28:44.043Z","tool":"smart_grep","action":"searched","pattern":"drizzle-orm","results":3,"files":1}
+{"at":"2026-05-31T12:31:10.465Z","tool":"smart_write","action":"wrote","file":".build/rig-relay/evidence/qa_verdict_pglite_migration_idempotency.v1.json","detail":"QA verdict artifact for PGlite migration idempotency fix validation"}
+{"at":"2026-05-31T12:34:38.675Z","tool":"smart_write","action":"wrote","file":".build/rig-relay/evidence/qa_verdict_pglite_migration_idempotency.v1.json","detail":"Updated QA verdict with security-adversary findings incorporated"}
+{"at":"2026-05-31T12:35:19.408Z","tool":"smart_write","action":"wrote","file":".build/rig-relay/evidence/qa_verdict_pglite_migration_idempotency.v1.json","detail":"Final QA verdict incorporating lab-rat test results and security-adversary findi"}
+{"at":"2026-05-31T12:36:39.564Z","tool":"smart_write","action":"wrote","file":".build/rig-relay/evidence/qa_verdict_pglite_migration_idempotency.v1.json","detail":"Final QA verdict with security-adversary dispute resolution documented"}

@@ -162,7 +162,7 @@ function resolveLatestValidationPassed(
   const passed = status === "succeeded" || status === "pass"
 
   if (afterLastEdit && passed) {
-    const editEvents = ctx.events.filter((e) => e.eventType === EventName.FileEdited)
+    const editEvents = ctx.events.filter((e) => e.eventType === EventName.FileEdited || e.eventType === EventName.EditApplied)
     const latestEdit = latestByTs(editEvents)
     if (latestEdit && ((latest as any).ts ?? (latest as any).timestamp ?? "") <= ((latestEdit as any).ts ?? (latestEdit as any).timestamp ?? "")) {
       return {
@@ -191,6 +191,17 @@ function resolveClaimsAcquired(
   ctx: PredicateContext,
 ): PredicateResult {
   const { paths } = spec as PredicateSpec & { kind: "claims_acquired" }
+
+  if (paths.length === 0) {
+    const claimEvents = ctx.events.filter((e) => e.eventType === EventName.ClaimsAcquired)
+    if (claimEvents.length === 0 && ctx.claims.length === 0) {
+      return { satisfied: false, reason: "No claims.acquired evidence" }
+    }
+    return {
+      satisfied: true,
+      evidence: { id: claimEvents[0]?.id ?? ctx.sessionId, type: "event", detail: `${claimEvents.length} claims.acquired events, ${ctx.claims.length} claims` },
+    }
+  }
 
   const missing = paths.filter((p) => !ctx.claims.includes(p))
   if (missing.length > 0) {
@@ -405,9 +416,11 @@ function resolveEditApplied(
   _spec: PredicateSpec,
   ctx: PredicateContext,
 ): PredicateResult {
-  const edits = ctx.events.filter((e) => e.eventType === EventName.FileEdited)
+  const edits = ctx.events.filter(
+    (e) => e.eventType === EventName.FileEdited || e.eventType === EventName.EditApplied,
+  )
   if (edits.length === 0) {
-    return { satisfied: false, reason: "No file.edited events found" }
+    return { satisfied: false, reason: "No file.edited or edit.applied events found" }
   }
   return {
     satisfied: true,
@@ -422,7 +435,9 @@ function resolveNewValidationFailure(
   const validations = ctx.events.filter(
     (e) => e.eventType === EventName.ValidationCompleted,
   )
-  const edits = ctx.events.filter((e) => e.eventType === EventName.FileEdited)
+  const edits = ctx.events.filter(
+    (e) => e.eventType === EventName.FileEdited || e.eventType === EventName.EditApplied,
+  )
 
   const lastSuccess = [...validations]
     .filter((e) => succeeded(e.status))
@@ -496,6 +511,11 @@ function resolveFailuresExistedBeforeEdit(
   }
 }
 
+// SM-010: resolveNoBlockingFindings is evidence-positive — it requires explicit
+// CampaignReviewCompleted AND RedteamCompleted events (not just absence of blocking
+// events). The CAMPAIGN_STATE_MACHINE flow ensures all_children_complete is
+// satisfied before this predicate runs, so per-lane redteam completeness is
+// guaranteed at the state-machine level.
 function resolveNoBlockingFindings(
   _spec: PredicateSpec,
   ctx: PredicateContext,
@@ -560,13 +580,15 @@ function resolveFindingConfirmed(
   _spec: PredicateSpec,
   ctx: PredicateContext,
 ): PredicateResult {
-  const findings = ctx.events.filter((e) => e.eventType === EventName.RedteamFinding)
+  const findings = ctx.events.filter(
+    (e) => e.eventType === EventName.RedteamFindingRecorded || e.eventType === EventName.RedteamFinding,
+  )
   if (findings.length === 0) {
-    return { satisfied: false, reason: "No redteam.finding events" }
+    return { satisfied: false, reason: "No redteam finding events" }
   }
   return {
     satisfied: true,
-    evidence: { id: findings.at(0)?.id ?? "ev-missing", type: "event" },
+    evidence: { id: findings.at(0)?.id ?? "ev-missing", type: "event", detail: `${findings.length} findings` },
   }
 }
 
@@ -574,10 +596,18 @@ function resolveFindingBlocking(
   _spec: PredicateSpec,
   ctx: PredicateContext,
 ): PredicateResult {
-  const blocking = ctx.events.filter((e) => e.eventType === EventName.FindingBlocking)
+  const blocking = ctx.events.filter(
+    (e) =>
+      e.eventType === EventName.FindingBlocking ||
+      (e.eventType === EventName.RedteamFindingRecorded && payload(e)?.severity === "blocking") ||
+      (e.eventType === EventName.RedteamFinding && payload(e)?.severity === "blocking"),
+  )
+  if (blocking.length === 0) {
+    return { satisfied: false, reason: "No blocking findings" }
+  }
   return {
-    satisfied: blocking.length > 0,
-    evidence: blocking.length > 0 ? { id: blocking[0]!.id, type: "event" as const, detail: "finding_blocking" } : undefined,
+    satisfied: true,
+    evidence: { id: blocking[0]!.id, type: "event" as const, detail: `${blocking.length} blocking finding(s)` },
   }
 }
 

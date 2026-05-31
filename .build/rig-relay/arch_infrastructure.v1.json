@@ -126,14 +126,14 @@
     {
       "id": "fix-A",
       "title": "Install fd and add CLI tool documentation to repo AGENTS.md",
-      "description": "Install the fd (fd-find) tool and document all preferred CLI tools in the repository's AGENTS.md. fd is already listed in the user's global AGENTS.md but is not installed and not documented in the repo-level AGENTS.md.",
+      "description": "Install the fd (fd-find) tool and document all preferred CLI tools in the repository's AGENTS.md. fd is listed in the user's global AGENTS.md (~/.config/opencode/AGENTS.md) as a preferred CLI tool but is NOT installed locally and NOT documented in the repo-level AGENTS.md. The smart_find tool depends on fd and currently fails in all agent sessions.",
       "priority": "P0 — immediate quick win",
       "files": [
-        "AGENTS.md",
-        "flake.nix (add fd, rg to devShell packages)"
+        "AGENTS.md (add 'Development Toolchain' section with CLI tools)",
+        "flake.nix (add fd, rg, just to devShell packages)"
       ],
-      "before": "AGENTS.md has no CLI tool preferences section. fd not installed. flake.nix has no fd or ripgrep.",
-      "after": "AGENTS.md includes a 'CLI tools' section listing rg, fd, sd, sg, bat, jq, yq, hyperfine, difft, watchexec, just, eza. flake.nix devShell includes fd and ripgrep packages. Developers can install via brew install fd or nix develop.",
+      "before": "AGENTS.md (146 lines) has NO CLI tool preferences section. fd not installed — smart_find fails with 'fd not found' on every invocation. flake.nix has no fd, ripgrep, or just packages in devShell.",
+      "after": "AGENTS.md includes a 'Development Toolchain' section listing fd, rg, sd, sg, bat, jq, yq, hyperfine, difft, watchexec, just, eza with per-platform install instructions. flake.nix devShell includes fd and ripgrep. smart_find works in all agent sessions.",
       "impact": {
         "affected_files": ["AGENTS.md", "flake.nix"],
         "tests_to_run": ["nix flake check (if Nix is used)"],
@@ -342,96 +342,65 @@
     },
     {
       "id": "fix-E",
-      "title": "ADR process — template, directory, and schema",
-      "description": "Create docs/adr/ directory with a conventional ADR template, a README superseded-by index, and a JSON schema for structured ADR artifacts. Document the ADR process in AGENTS.md. This provides a decision record for build tool choices, test strategies, and infrastructure decisions.",
+      "title": "ADR process — JSON-schema-backed template and registry",
+      "description": "Create docs/json/adrs/ directory with a JSON-schema-backed ADR template (NOT Markdown — the repo's AGENTS.md documentation policy prohibits new Markdown docs). Define the schema under docs/schemas/. Include an ADR index and AGENTS.md process documentation. Markdown rendering, if needed for human readers, is generated from JSON source via the static renderer.",
       "priority": "P1 — governance foundation",
       "files": [
-        "docs/adr/0000-template.md (new — conventional ADR template)",
-        "docs/adr/README.md (new — superseded-by index with status table)",
         "docs/schemas/rig.relay.adr.v1.schema.json (new — JSON schema for structured ADRs)",
-        "docs/json/adrs/adr_index.v1.json (new — machine-readable ADR index)",
-        "AGENTS.md (update: add ADR process documentation)"
+        "docs/json/adrs/adr_template.v1.json (new — template with title, status, context, decision, consequences, supersedes, superseded_by)",
+        "docs/json/adrs/adr_index.v1.json (new — machine-readable index: status, date, superseded_by links)",
+        "docs/json/adrs/0001-shared-build-convention-layer.v1.json (first ADR from fix-B)",
+        "docs/json/adrs/0002-test-coverage-strategy.v1.json (second ADR from fix-C)",
+        "AGENTS.md (update: add ADR process — when to write, JSON-first format, docs/json/adrs/ location)"
       ],
-      "before": "docs/adr/ does not exist. AGENTS.md references ADRs but no process or template exists. Build tool choices, test strategies, and architectural decisions have no documented rationale.",
-      "after": "docs/adr/ exists with template and index. JSON schema validates ADR structure. AGENTS.md documents the ADR process: when to write one, what format, where they live. First ADRs: 0001-build-tool-consolidation.md (from fix-B), 0002-test-coverage-strategy.md (from fix-C).",
+      "before": "docs/json/adrs/ does not exist. AGENTS.md Documentation Policy mandates canonical JSON artifacts but no ADR schema or template exists. Build tool choices, test strategies, and architectural decisions have no documented rationale.",
+      "after": "docs/schemas/rig.relay.adr.v1.schema.json defines the ADR structure (status enum: proposed|accepted|deprecated|superseded, title, context, decision, consequences, supersedes, superseded_by, date). docs/json/adrs/ contains the template and index. AGENTS.md documents the ADR workflow. Static renderer generates human-readable Markdown from JSON source.",
       "impact": {
         "affected_files": [
-          "docs/adr/0000-template.md (new)",
-          "docs/adr/README.md (new)",
           "docs/schemas/rig.relay.adr.v1.schema.json (new)",
+          "docs/json/adrs/adr_template.v1.json (new)",
           "docs/json/adrs/adr_index.v1.json (new)",
+          "docs/json/adrs/0001-shared-build-convention-layer.v1.json (new)",
+          "docs/json/adrs/0002-test-coverage-strategy.v1.json (new)",
           "AGENTS.md"
         ],
         "tests_to_run": [
-          "uv run python scripts/rig_relay_validate_schemas.py (if using Python) or manual JSON schema validation"
+          "uv run python scripts/rig_relay_validate_schemas.py (schema validation)",
+          "diff: verify index references both ADRs"
         ],
         "ci_workflow_changes": ["none — documentation-only change"],
         "breaking_changes": "none"
       },
       "risks": [
-        "ADR template format must align with repo's convention of JSON-first artifacts, not pure Markdown — consider JSON ADR format with optional Markdown rendering",
-        "AGENTS.md already has a 'Documentation Policy' section that mandates canonical JSON artifacts — ADRs may need to follow this convention",
-        "Risk of template becoming stale if not maintained"
+        "First ADRs in the monorepo — establish the pattern that all future decisions follow",
+        "Static renderer must be updated to handle ADR rendering from JSON (or use existing rig.documentation.page.v1 schema)"
       ],
       "validation": [
-        "docs/adr/0000-template.md exists and follows conventional ADR format",
-        "docs/adr/README.md has superseded-by index",
         "docs/schemas/rig.relay.adr.v1.schema.json validates as JSON Schema",
-        "AGENTS.md references docs/adr/ directory"
+        "docs/json/adrs/adr_template.v1.json validates against the schema",
+        "docs/json/adrs/adr_index.v1.json is valid JSON with correct links",
+        "AGENTS.md references docs/json/adrs/ and the ADR workflow",
+        "scripts/render_static_docs.py produces readable ADR pages (optional)"
       ],
       "dependencies": [],
       "estimated_effort": "1 hour"
     },
     {
       "id": "fix-F",
-      "title": "Script centralization with justfile",
-      "description": "Create root scripts/ directory organized by purpose (build, ci, dev, publish, db) and a root justfile with common recipes. Migrate cross-cutting scripts from package directories to root. Package-specific scripts (like generate-sitemap.ts) stay in their packages. Install just tool and document in AGENTS.md.",
+      "title": "Script organization — justfile for developer UX + cross-cutting CI scripts",
+      "description": "Add a root justfile with common recipes (build, test, typecheck, lint, dev, coverage). Consolidate cross-cutting operational scripts within the existing root script/ directory (NOT create a conflicting scripts/ directory — root script/ already exists with 15+ files). Add just to the toolchain. Package-specific scripts stay where they are — script dispersal is intentional monorepo design (foundation subagent confirmed this is correct).",
       "priority": "P2 — developer experience improvement",
       "files": [
-        "scripts/build/ (new directory)",
-        "scripts/ci/ (new directory)",
-        "scripts/dev/ (new directory)",
-        "scripts/publish/ (new directory)",
-        "scripts/db/ (new directory)",
-        "justfile (new — root)",
-        "AGENTS.md (add justfile documentation)",
-        "packages/opencode/script/ (14 files — migrate cross-cutting, keep package-specific)",
-        "packages/desktop/scripts/ (8 files — migrate cross-cutting, keep package-specific)",
-        "packages/sdk/js/script/ (2 files — migrate cross-cutting)",
-        "packages/app/scripts/ (1 file — keep package-specific)"
+        "justfile (new — root, thin wrappers around npm scripts)",
+        "AGENTS.md (add just and justfile documentation)",
+        "flake.nix (add just to devShell)",
+        "script/ (existing — reorganize subdirectories: ci/, dev/, publish/)"
       ],
-      "script_classification": {
-        "cross_cutting_to_migrate": [
-          "packages/opencode/script/httpapi-exercise.ts → scripts/ci/httpapi-exercise.ts (CI gate)",
-          "packages/opencode/script/check-migrations.ts → scripts/ci/check-migrations.ts (CI gate)",
-          "packages/opencode/script/publish.ts → scripts/publish/opencode.ts (publishing)",
-          "packages/opencode/script/trace-imports.ts → scripts/dev/trace-imports.ts (dev tool)",
-          "packages/opencode/script/profile-test-files.ts → scripts/dev/profile-test-files.ts (dev tool)",
-          "packages/opencode/script/bench-test-suite.ts → scripts/dev/bench-test-suite.ts (dev tool)",
-          "packages/desktop/scripts/finalize-latest-json.ts → scripts/publish/finalize-latest-json.ts (publishing)",
-          "packages/desktop/scripts/finalize-latest-yml.ts → scripts/publish/finalize-latest-yml.ts (publishing)",
-          "packages/desktop/scripts/validate-ipc-migration.ts → scripts/ci/validate-ipc-migration.ts (CI gate)",
-          "packages/sdk/js/script/publish.ts → scripts/publish/sdk.ts (publishing)"
-        ],
-        "package_specific_to_keep": [
-          "packages/opencode/script/build.ts (core build — stays)",
-          "packages/opencode/script/build-node.ts (core build — stays)",
-          "packages/opencode/script/generate.ts (model data fetch — stays)",
-          "packages/opencode/script/schema.ts (config schema gen — stays)",
-          "packages/opencode/script/time.ts (module timing — stays)",
-          "packages/opencode/script/fix-node-pty.ts (platform fix — stays)",
-          "packages/opencode/script/postinstall.mjs (NPM lifecycle — stays)",
-          "packages/desktop/scripts/predev.ts (desktop pre-dev — stays)",
-          "packages/desktop/scripts/prebuild.ts (desktop pre-build — stays)",
-          "packages/sdk/js/script/build.ts (SDK codegen — stays)",
-          "packages/ui/script/tailwind.ts (UI generation — stays)",
-          "packages/app/scripts/generate-locale-stubs.ts (app-specific — stays)",
-          "packages/console/app/script/generate-sitemap.ts (app-specific — stays)"
-        ]
-      },
       "justfile_recipes": [
+        "default → just --list",
         "typecheck → bun turbo typecheck",
         "test → bun turbo test:ci",
+        "test-pg → cd packages/opencode && bun test:pg",
         "build → bun turbo build",
         "coverage → bun turbo coverage:ci",
         "lint → bun turbo lint (future)",
@@ -439,58 +408,51 @@
         "clean → rm -rf packages/*/dist packages/*/.turbo",
         "setup → just clean && bun install && just build",
         "db-generate → cd packages/opencode && bun db:generate:pg",
-        "publish-sdk → bun run scripts/publish/sdk.ts",
-        "check-migrations → bun run scripts/ci/check-migrations.ts"
+        "dev → bun run --cwd packages/opencode --conditions=browser src/index.ts"
       ],
-      "before": "No root scripts/ directory. No justfile. 28 scripts across 4 package directories. Cross-cutting scripts (CI gates, publishing) mixed with package-specific scripts.",
-      "after": "Root scripts/ directory with 5 subdirectories. justfile at root with 11+ recipes. 10 cross-cutting scripts migrated to root. 13 package-specific scripts remain in place. just installed and documented.",
+      "before": "No justfile. Root script/ directory exists (15+ operational scripts: publish.ts, generate.ts, format.ts, beta.ts, changelog.ts, etc.) but no developer-facing recipe runner. Developers discover commands through package.json scripts or CI workflow files.",
+      "after": "Root justfile with 12 recipes — all thin wrappers around existing npm/turbo commands. just installed via brew/nix. AGENTS.md documents just as the entry point for common tasks. Root script/ gains ci/, dev/, publish/ subdirectories for better organization.",
       "impact": {
         "affected_files": [
-          "scripts/ (new directory with 10 migrated scripts)",
           "justfile (new)",
           "AGENTS.md",
-          "10 script files moved from package dirs to scripts/",
-          ".github/workflows/test.yml (update script paths)",
-          ".github/workflows/publish.yml (update script paths)",
-          ".github/workflows/generate.yml (update script paths)",
-          "turbo.json (if scripts are referenced in pipeline)",
-          "package.json files (if scripts reference moved files)"
+          "flake.nix",
+          "script/ (reorganization within existing directory)"
         ],
         "tests_to_run": [
           "just typecheck → passes",
           "just test → passes",
-          "just check-migrations → runs",
-          "bun turbo build → passes with updated script references",
-          "CI workflows → run successfully with new paths"
+          "just build → passes",
+          "just --list → shows all recipes",
+          "bun run script/publish.ts (verify still works after reorganization)"
         ],
         "ci_workflow_changes": [
-          "test.yml: httpapi-exercise.ts path changes from packages/opencode/script/ to scripts/ci/",
-          "test.yml: check-migrations.ts path changes",
-          "publish.yml: publish.ts path changes",
-          "generate.yml: generate.ts path changes"
+          "None required — CI workflows reference script/* paths which don't change",
+          "Optional: CI could use `just test` but not necessary"
         ],
         "breaking_changes": [
-          "Script paths change — all references (CI workflows, package.json scripts, turbo.json) must be updated atomically",
-          "Relative imports within migrated scripts may break — must audit import paths",
-          "just must be installed for developers (brew install just or add to flake.nix)"
+          "just must be installed by all developers",
+          "Root script/ reorganization must not break CI workflow references to script/*.ts files"
         ]
       },
       "risks": [
-        "Script migration could break CI if paths are not updated everywhere simultaneously",
-        "Scripts may have relative imports to their package — moving to root scripts/ requires import path changes",
-        "justfile is a new dependency — developers must install just",
-        "Package-specific scripts with cross-package imports create ambiguity about where they belong",
-        "Turbo caching may be affected by changed script paths"
+        "Root script/ ALREADY EXISTS (15+ files) — must consolidate INTO it, not create conflicting scripts/ directory",
+        "publish.yml (492 lines) references ./script/publish.ts — any reorganization must not break publish workflow",
+        "script/hooks/ directory has husky git hooks — do NOT move or rename",
+        "justfile creates a third task runner (alongside npm scripts and turbo.json) — risk of drift between just recipes and npm equivalents",
+        "justfile recipes must be thin wrappers: `test: bun turbo test:ci`. Do NOT duplicate logic.",
+        "Nix users get just via flake.nix — homebrew users use `brew install just` — document both"
       ],
       "validation": [
         "just --list → shows all recipes",
         "just typecheck → same result as bun turbo typecheck",
-        "Migrated scripts run from root scripts/ → same output as before",
-        "CI workflows pass with updated paths",
-        "All old script paths are no longer referenced anywhere (rg for dead paths)"
+        "just test → same result as bun turbo test:ci",
+        "CI workflows pass with unchanged script/ references",
+        "bun run script/publish.ts → still works (path unchanged)",
+        "script/hooks/ → husky git hooks still function"
       ],
-      "dependencies": ["fix-A (just is a CLI tool that needs to be installed)"],
-      "estimated_effort": "3-5 hours (migration + justfile + CI updates)"
+      "dependencies": ["fix-A (just is a CLI tool needing install documentation)"],
+      "estimated_effort": "1-2 hours"
     },
     {
       "id": "fix-G",
@@ -528,12 +490,12 @@
   ],
 
   "apply_order": [
-    "fix-A (fd install + AGENTS.md — immediate quick win, no dependencies)",
-    "fix-E (ADR process — governance foundation, needed before build tool decision)",
-    "fix-D (dead test wiring — recover existing test investment, validate tests pass)",
-    "fix-B (build tool consolidation — requires ADR documentation, Phase 2)",
-    "fix-C (test coverage — requires dead test wiring to be complete)",
-    "fix-F (script centralization — depends on fd/just being installed)",
+    "fix-A (fd install + AGENTS.md CLI tools — immediate quick win, no dependencies)",
+    "fix-E (ADR process — JSON-schema-backed governance foundation)",
+    "fix-D (dead test wiring — 4 orphaned test packages, validate tests pass)",
+    "fix-B (shared build convention layer — tsconfig base + vite preset, Phase 2)",
+    "fix-C (test coverage — bun --coverage + CI gate, requires dead test wiring complete)",
+    "fix-F (justfile developer UX + root script/ organization — depends on fd/just installed)",
     "fix-G (env var registry — documentation, can be done anytime)"
   ],
 
@@ -542,29 +504,31 @@
       "description": "Quick wins that establish infrastructure foundations. Ship within 1 week.",
       "fixes": ["fix-A", "fix-E", "fix-D"],
       "gates": [
-        "fd installed and documented",
-        "docs/adr/ directory exists with template",
-        "3 dead test packages have scripts and tests pass",
-        "bun turbo test:ci still passes"
+        "fd installed and documented in AGENTS.md",
+        "docs/json/adrs/ exists with schema-backed template",
+        "4 dead test packages have scripts and tests pass locally",
+        "bun turbo test:ci still passes with new packages",
+        "docs/schemas/rig.relay.adr.v1.schema.json validates"
       ]
     },
-    "phase_2_consolidation": {
-      "description": "Build tool alignment and coverage infrastructure. Ship within 4 weeks.",
+    "phase_2_conventions": {
+      "description": "Shared build conventions and coverage infrastructure. Ship within 3 weeks.",
       "fixes": ["fix-B", "fix-C"],
       "gates": [
-        "ADR 0001 documents build tool consolidation decision",
-        "vite builds for plugin and sdk produce identical outputs",
+        "ADR 0001 documents shared build convention layer decision",
+        "tsconfig.base.json works for all packages (tsgo --noEmit passes)",
+        "Shared vite preset doesn't break any of the 6 vite-based packages",
         "All downstream consumers build successfully",
-        "Coverage reports generated in CI",
-        "0% baseline threshold enforced"
+        "Coverage reports generated in CI for all test-bearing packages",
+        "0% baseline threshold enforced (informational — no failures)"
       ]
     },
     "phase_3_developer_experience": {
-      "description": "Script centralization and env var registry. Ship within 6 weeks.",
+      "description": "Developer tooling and documentation. Ship within 4 weeks.",
       "fixes": ["fix-F", "fix-G"],
       "gates": [
-        "All CI workflows use root scripts/ paths",
-        "justfile recipes all work",
+        "justfile recipes all work and are thin wrappers around npm scripts",
+        "Root script/ organization is backward-compatible with existing CI references",
         "Env var registry is comprehensive and schema-validated"
       ]
     }
@@ -585,12 +549,12 @@
 
   "convention_compliance": {
     "fix-A": {
-      "matches_convention": true,
-      "note": "AGENTS.md already is the canonical instruction file. Adding CLI tool preferences is consistent. flake.nix already defines devShell packages — adding fd and rg follows existing pattern."
+      "matches_convention": false,
+      "note": "AGENTS.md in this repo has NO CLI tool section — this fix CREATES the convention. The user's global AGENTS.md at ~/.config/opencode/AGENTS.md lists preferred tools but the repo-level instruction file (146 lines) does not. Adding a 'Development Toolchain' section is a new convention. flake.nix already defines devShell packages — adding fd/just follows that existing pattern."
     },
     "fix-E": {
-      "matches_convention": "partial",
-      "note": "AGENTS.md Documentation Policy mandates canonical JSON artifacts, not Markdown. ADR template should be a JSON schema-backed artifact (docs/json/adrs/) with optional rendered representation. The conventional ADR format (Markdown) conflicts with the repo's JSON-first documentation policy. Consider: docs/json/adrs/ for the canonical ADR + docs/adr/ for rendered view."
+      "matches_convention": true,
+      "note": "Using JSON-schema-backed format in docs/json/adrs/ follows the repo's Documentation Policy: 'New project documentation and persisted mission outputs must be written as canonical JSON artifacts.' Schema under docs/schemas/ matches existing 15 schemas. Static renderer generates Markdown from JSON source — consistent with docs/json/ → docs/pages/ pipeline."
     },
     "fix-D": {
       "matches_convention": true,
@@ -605,8 +569,8 @@
       "note": "Desktop package already has a test:coverage script. Adding coverage scripts to other packages standardizes this pattern."
     },
     "fix-F": {
-      "matches_convention": "partial",
-      "note": "Surface map shows 'no_root_scripts_directory: true'. Creating one is a new convention, but justfile is listed as a preferred CLI tool in user's AGENTS.md. The pattern does not currently exist — it would establish a new convention."
+      "matches_convention": false,
+      "note": "No root scripts/ directory precedent. No justfile exists anywhere in the repo. Root script/ already exists (singular, 15+ operational scripts) — this fix adds justfile and reorganizes within the existing directory. turbo.json and root package.json scripts are the existing orchestration surface. Justfile adds a third task runner — risk of drift. Recommended: justfile as thin wrappers only, no script migration from packages."
     }
   },
 

@@ -1,2 +1,4 @@
 {"at":"2026-05-31T11:20:27.187Z","tool":"smart_grep","action":"searched","pattern":"OPENCODE_MIGRATIONS","results":30,"files":14}
 {"at":"2026-05-31T11:23:01.373Z","tool":"smart_grep","action":"searched","pattern":"adapter-dual-write","results":30,"files":13}
+{"at":"2026-05-31T11:57:13.947Z","tool":"smart_bash","action":"bash","command":"test -f packages/opencode/src/storage/adapter-dual-write.ts && echo \"EXISTS\" || echo \"DELETED\"","exit_code":0}
+{"at":"2026-05-31T11:59:12.503Z","tool":"smart_bun","action":"ran","command":"typecheck","exit_code":2,"cwd":"packages/opencode"}

@@ -1,0 +1,13 @@
+{"at":"2026-05-31T12:23:07.024Z","session_id":"ses_1820514f9ffeF4I4F7a7ie5cUk","agent":"lab-rat","tool":"smart_grep","pattern":"migration","path":"packages/opencode/test/storage"}
+{"at":"2026-05-31T12:23:50.433Z","session_id":"ses_1820514f9ffeF4I4F7a7ie5cUk","agent":"lab-rat","tool":"smart_grep","pattern":".*","path":"packages/opencode/migration-pg"}
+{"at":"2026-05-31T12:24:37.823Z","session_id":"ses_1820514f9ffeF4I4F7a7ie5cUk","agent":"lab-rat","tool":"smart_grep","pattern":"\"#db\"","path":"packages/opencode/package.json"}
+{"at":"2026-05-31T12:26:29.573Z","session_id":"ses_1820514f9ffeF4I4F7a7ie5cUk","agent":"lab-rat","tool":"smart_grep","pattern":"CREATE TABLE","path":"packages/opencode/migration-pg"}
+{"at":"2026-05-31T12:27:03.907Z","session_id":"ses_1820514f9ffeF4I4F7a7ie5cUk","agent":"lab-rat","tool":"smart_grep","pattern":".*","path":"packages/opencode/migration-pg/20260531003656_blushing_zuras"}
+{"at":"2026-05-31T12:28:24.320Z","session_id":"ses_1820514f9ffeF4I4F7a7ie5cUk","agent":"lab-rat","tool":"smart_grep","pattern":"IF NOT EXISTS","path":"packages/opencode/migration-pg"}
+{"at":"2026-05-31T12:30:13.728Z","session_id":"ses_1820514f9ffeF4I4F7a7ie5cUk","agent":"lab-rat","tool":"smart_grep","pattern":"mock","path":"packages/opencode/test"}
+{"at":"2026-05-31T12:30:17.201Z","session_id":"ses_1820514f9ffeF4I4F7a7ie5cUk","agent":"lab-rat","tool":"smart_grep","pattern":"mock\\.module","path":"packages/opencode/test"}
+{"at":"2026-05-31T12:33:23.780Z","session_id":"ses_1820514f9ffeF4I4F7a7ie5cUk","agent":"lab-rat","tool":"smart_bun","command":"test","elapsed_ms":7106,"exit_code":0}
+{"at":"2026-05-31T12:33:29.096Z","session_id":"ses_1820514f9ffeF4I4F7a7ie5cUk","agent":"lab-rat","tool":"smart_bun","command":"test","elapsed_ms":32,"exit_code":1}
+{"at":"2026-05-31T12:33:35.688Z","session_id":"ses_1820514f9ffeF4I4F7a7ie5cUk","agent":"lab-rat","tool":"smart_bun","command":"test","elapsed_ms":1530,"exit_code":1}
+{"at":"2026-05-31T12:33:47.919Z","session_id":"ses_1820514f9ffeF4I4F7a7ie5cUk","agent":"lab-rat","tool":"smart_bun","command":"test","elapsed_ms":5732,"exit_code":0}
+{"at":"2026-05-31T12:34:11.175Z","session_id":"ses_1820514f9ffeF4I4F7a7ie5cUk","agent":"lab-rat","tool":"smart_bun","command":"test","elapsed_ms":7798,"exit_code":0}

@@ -73,12 +73,33 @@ export async function applyMigrations(db: PgClient): Promise<void> {
   // Duck-type check: PGlite exposes exec() on its raw client
   const client = (db as any).$client
   if (typeof client.exec === "function") {
-    // PGlite path: read migration files manually and execute each statement
+    // PGlite path: idempotent migration with tracking table
     const migrations = readMigrationFiles({ migrationsFolder: folder })
+
+    // Ensure tracking table exists
+    await client.exec(
+      `CREATE TABLE IF NOT EXISTS "__drizzle_migrations" (
+        "hash" text PRIMARY KEY,
+        "created_at" bigint
+      )`,
+    )
+
+    // Read already-applied migration hashes
+    const result = await client.query("SELECT hash FROM \"__drizzle_migrations\"")
+    const applied = new Set(
+      (result.rows as Array<{ hash: string }>).map((r) => r.hash),
+    )
+
+    // Apply only unapplied migrations
     for (const migration of migrations) {
+      if (applied.has(migration.hash)) continue
       for (const sql of migration.sql) {
         await client.exec(sql)
       }
+      await client.query(
+        'INSERT INTO "__drizzle_migrations" ("hash", "created_at") VALUES ($1, $2)',
+        [migration.hash, Date.now()],
+      )
     }
   } else {
     // node-postgres path: use drizzle's built-in migrator

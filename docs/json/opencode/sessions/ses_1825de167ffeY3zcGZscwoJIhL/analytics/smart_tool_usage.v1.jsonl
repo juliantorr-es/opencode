@@ -9,3 +9,10 @@
 {"at":"2026-05-31T11:11:40.919Z","session_id":"ses_1825de167ffeY3zcGZscwoJIhL","agent":"witness","tool":"smart_grep","pattern":"\".\"","path":"packages/opencode/src/plugin/capability/hook-dispatch-guard.ts"}
 {"at":"2026-05-31T11:11:42.932Z","session_id":"ses_1825de167ffeY3zcGZscwoJIhL","agent":"witness","tool":"smart_grep","pattern":"plugin\\.list\\(\\)|plugin.*tools|fromPlugin|pluginId.*plugin-","path":"packages/opencode/src/tool/registry.ts"}
 {"at":"2026-05-31T11:30:42.350Z","session_id":"ses_1825de167ffeY3zcGZscwoJIhL","agent":"witness","tool":"smart_grep","pattern":"const trigger|function trigger|trigger = ","path":"packages/opencode/src/plugin/index.ts"}
+{"at":"2026-05-31T11:41:39.599Z","session_id":"ses_1825de167ffeY3zcGZscwoJIhL","agent":"witness","tool":"smart_grep","pattern":"\"import\"","path":"packages/opencode/src/plugin/loader.ts"}
+{"at":"2026-05-31T11:41:40.310Z","session_id":"ses_1825de167ffeY3zcGZscwoJIhL","agent":"witness","tool":"smart_grep","pattern":"export","path":"packages/opencode/src/plugin/loader.ts"}
+{"at":"2026-05-31T11:56:22.912Z","session_id":"ses_1825de167ffeY3zcGZscwoJIhL","agent":"witness","tool":"smart_grep","pattern":"checkCapabilityFn","path":"packages/opencode/src/plugin/index.ts"}
+{"at":"2026-05-31T12:01:29.511Z","session_id":"ses_1825de167ffeY3zcGZscwoJIhL","agent":"witness","tool":"smart_grep","pattern":"from \"./shared\"|from \"../plugin|from \"@/plugin\"","path":"packages/opencode/src/tool/registry.ts"}
+{"at":"2026-05-31T12:01:30.190Z","session_id":"ses_1825de167ffeY3zcGZscwoJIhL","agent":"witness","tool":"smart_grep","pattern":"import.*Plugin|import.*plugin","path":"packages/opencode/src/tool/registry.ts"}
+{"at":"2026-05-31T12:02:43.977Z","session_id":"ses_1825de167ffeY3zcGZscwoJIhL","agent":"witness","tool":"smart_grep","pattern":"from \"./capability\"|from \"../capability\"","path":"packages/opencode/src"}
+{"at":"2026-05-31T12:02:44.003Z","session_id":"ses_1825de167ffeY3zcGZscwoJIhL","agent":"witness","tool":"smart_grep","pattern":"from \"\\./shared\"|from \"\\.\\./plugin/shared\"","path":"packages/opencode/src"}

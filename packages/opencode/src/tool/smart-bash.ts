@@ -4,6 +4,8 @@ import { AppFileSystem } from "@opencode-ai/core/filesystem"
 import { InstanceState } from "@/effect/instance-state"
 import path from "path"
 import { spawnSync } from "child_process"
+import { sanitizedProcessEnv } from "@opencode-ai/core/util/opencode-process"
+import { scanToolOutput } from "./secret-scanner"
 import DESCRIPTION from "./smart-bash.txt"
 
 const Parameters = Schema.Struct({
@@ -78,6 +80,7 @@ export const SmartBashTool = Tool.define(
               try {
                 const proc = spawnSync(params.command, [], {
                   cwd,
+                  env: sanitizedProcessEnv(),
                   encoding: "utf8" as const,
                   maxBuffer: 1024 * 1024 * 2,
                   timeout,
@@ -130,6 +133,14 @@ export const SmartBashTool = Tool.define(
           if (result.error) {
             output.status = "error"
             output.error = result.error.message
+          }
+
+          // Scan output for secrets
+          if (result.stdout || result.stderr) {
+            const scan = scanToolOutput([result.stdout, result.stderr].filter(Boolean).join("\n"))
+            if (scan.hadSecrets) {
+              output.secret_findings = scan.findings
+            }
           }
 
           return {

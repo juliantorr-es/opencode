@@ -1,0 +1,94 @@
+{
+  "schema_version": "1.0",
+  "generated_at": "2026-05-31T00:00:00Z",
+  "subject": "PGlite migration idempotency fix in packages/opencode/src/storage/db.pg.ts",
+  "verdict": "PASS",
+  "verdict_confidence": "very_high",
+
+  "executive_summary": "The idempotency fix is a strict improvement that adds migration tracking where none existed before. 27 tests pass (19 existing + 8 lab-rat). The security-adversary identified one finding they consider blocking (no transaction wrapping around per-migration DDL+INSERT), but this is a PRE-EXISTING architectural gap — the fix actually narrows the blast radius by skipping already-successful migrations on retry and only re-running the failed one. The TRUSTED SQL from drizzle-kit-generated migration files is committed to git; the risk of a multi-statement migration partially applying is identical before and after the fix.",
+
+  "disputed_finding": {
+    "security_adversary_claim": "BLOCKING — No transaction wrapping means partial DDL failure leaves database unrecoverable",
+    "qa_assessment": "NOT BLOCKING — This gap pre-exists the fix. Before the fix, ALL migrations re-ran on every call (including the partially-applied one). After the fix, ONLY the failed migration re-runs. The fix strictly reduces blast radius. Transaction wrapping is a valid follow-up improvement but not a regression.",
+    "resolution": "PASS with note. The idempotency fix is additive; the transaction-wrapping gap is a separate architectural slice."
+  },
+
+  "test_totals": {
+    "existing_passing": 19,
+    "new_lab_rat_tests": 8,
+    "pre_existing_failing": 1,
+    "total_passing": 27,
+    "total": 28
+  },
+
+  "checks": {
+    "source_code_review": { "result": "pass", "detail": "20 net lines added to PGlite branch. node-postgres else block untouched." },
+    "test_migration_pg": { "result": "pass", "detail": "3/3 pass — includes dedicated idempotency test with hash count verification." },
+    "test_migrate": { "result": "pass", "detail": "5/5 pass — all runMigrations paths." },
+    "test_lab_rat": { "result": "pass", "detail": "8/8 pass — partial failure, hash tracking, param safety, repeated calls, all-skipped loop." },
+    "test_bisect_skip": { "result": "pre_existing_failure", "detail": "skipMigrations:true not wired. Confirmed pre-existing via git stash baseline." },
+    "type_safety": { "result": "pass", "detail": "Zero type errors. All signatures unchanged. 5 callers compatible." },
+    "hash_collision": { "result": "pass", "detail": "SHA-256 hex. Collision probability ~2⁻¹²⁸." },
+    "sql_injection": { "result": "pass", "detail": "INSERT parameterized ($1,$2). hash is hex-only. Migration SQL from committed drizzle-kit files." },
+    "race_condition": { "result": "pass", "detail": "PGlite single-connection WASM. Sequential for...of with await." },
+    "folder_injection": { "result": "pass", "detail": "import.meta.url resolution — not user-controllable." },
+    "transaction_atomicity": { "result": "advisory", "detail": "Pre-existing gap. Fix improves situation by narrowing retry scope. Transaction wrapping recommended as follow-up." },
+    "table_namespace": { "result": "advisory", "detail": "public schema vs drizzle schema — cosmetic." },
+    "partial_failure_recovery": { "result": "pass", "detail": "Lab-rat test #3 proves: failed migration hash NOT recorded → retried on next call → succeeds after fix." }
+  },
+
+  "lab_rat_tests": [
+    { "name": "fresh database creates tracking table + applies all", "edge": "CREATE TABLE IF NOT EXISTS", "result": "pass" },
+    { "name": "second call is no-op, hash count stays at 4", "edge": "Double-apply", "result": "pass" },
+    { "name": "partial failure — hash not recorded, retried successfully", "edge": "Mid-migration failure", "result": "pass" },
+    { "name": "pre-existing empty tracking table — applies all", "edge": "Interrupted prior run", "result": "pass" },
+    { "name": "clear rows — skip depends on hash presence", "edge": "Hash as gate", "result": "pass" },
+    { "name": "parameterized INSERT — hashes round-trip", "edge": "SQL injection safety", "result": "pass" },
+    { "name": "three consecutive calls — tracking table survives", "edge": "Repeated calls", "result": "pass" },
+    { "name": "no migration files — empty-loop no crash", "edge": "Empty folder", "result": "pass" }
+  ],
+
+  "security_adversary_findings": [
+    { "id": "hash_collision", "severity": "none", "verdict": "PASS — SHA-256" },
+    { "id": "sql_injection_hash", "severity": "none", "verdict": "PASS — parameterized $1,$2" },
+    { "id": "sql_injection_migration", "severity": "low", "verdict": "Filesystem-compromise only" },
+    { "id": "race_select_insert", "severity": "low", "verdict": "Theoretical only; PGlite single-connection mitigates" },
+    { "id": "table_name_collision", "severity": "none", "verdict": "PASS — application owns schema" },
+    {
+      "id": "transaction_atomicity",
+      "severity": "medium",
+      "verdict": "ADVISORY — Pre-existing gap. Fix improves blast radius. Transaction wrapping recommended.",
+      "security_adversary_verdict": "BLOCKING",
+      "qa_verdict": "NOT BLOCKING",
+      "rationale": "The gap pre-exists the fix. Before: ALL migrations re-ran (including partially-applied). After: ONLY the failed migration re-runs. The fix is strictly better. Transaction wrapping is a separate architectural improvement."
+    },
+    { "id": "folder_injection", "severity": "none", "verdict": "PASS — import.meta.url" }
+  ],
+
+  "pre_existing_issues": [
+    { "id": "bisect-skip-migrations", "severity": "major", "file": "adapter.ts", "detail": "skipMigrations flag not wired" },
+    { "id": "checkPgHealth-no-pool", "severity": "minor", "file": "db.pg.ts:137", "detail": "Returns healthy when pool is undefined" },
+    { "id": "adapter-fire-and-forget", "severity": "medium", "file": "adapter.ts:194", "detail": ".catch() swallows migration errors" },
+    { "id": "no-transaction-wrapping", "severity": "medium", "file": "db.pg.ts:95-103", "detail": "applyMigrations lacks per-migration transaction boundary. Pre-existing; fix reduces retry blast radius." }
+  ],
+
+  "blockers": [],
+
+  "recommendations": [
+    "✅ The idempotency fix is correct and ready.",
+    "📋 Wrap per-migration DDL+INSERT in a transaction (BEGIN/COMMIT/ROLLBACK) — separate slice.",
+    "📋 Use INSERT ... ON CONFLICT DO NOTHING to simplify SELECT elimination — low priority.",
+    "📋 Move tracking table to drizzle.__drizzle_migrations — cosmetic.",
+    "🔧 Wire skipMigrations flag in makePgAdapter.",
+    "🔧 Fix checkPgHealth no-pool bug.",
+    "🔧 Await applyMigrations in adapter.ts instead of fire-and-forget."
+  ],
+
+  "reviewers": [
+    { "agent": "control-group", "result": "19 pass, 1 pre-existing fail" },
+    { "agent": "type-guard", "result": "no errors, all signatures unchanged" },
+    { "agent": "blind-spot", "result": "6/23 paths covered, gaps identified" },
+    { "agent": "lab-rat", "result": "8/8 new tests pass" },
+    { "agent": "security-adversary", "result": "3 advisories, 1 disputed blocker (pre-existing)" }
+  ]
+}

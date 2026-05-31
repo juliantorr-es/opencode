@@ -313,8 +313,8 @@ function normalizeMessages(
     const field = model.capabilities.interleaved.field
     return msgs.map((msg) => {
       if (msg.role === "assistant" && Array.isArray(msg.content)) {
-        const reasoningParts = msg.content.filter((part: any) => part.type === "reasoning")
-        const reasoningText = reasoningParts.map((part: any) => part.text).join("")
+        const reasoningParts = msg.content.filter((part) => part.type === "reasoning")
+        const reasoningText = reasoningParts.map((part) => part.text).join("")
 
         // Filter out reasoning parts from content
         const filteredContent = msg.content.filter((part: any) => part.type !== "reasoning")
@@ -1358,7 +1358,7 @@ export function schema(model: Provider.Model, schema: JSONSchema7): JSONSchema7 
 
       // Filter required array to only include fields that exist in properties
       if (result.type === "object" && result.properties && Array.isArray(result.required)) {
-        result.required = result.required.filter((field: any) => field in result.properties)
+        result.required = result.required.filter((field: string) => field in result.properties)
       }
 
       if (result.type === "array" && !hasCombiner(result)) {
