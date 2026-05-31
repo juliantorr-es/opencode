@@ -1,0 +1,10 @@
+{"at":"2026-05-31T05:18:30.654Z","tool":"smart_bun","action":"ran","command":"test","exit_code":1,"cwd":"packages/desktop"}
+{"at":"2026-05-31T05:19:41.085Z","tool":"smart_bash","action":"bash","command":"sh -c 'bun test 2>&1' | tee /tmp/desktop-test-output.txt; wc -c /tmp/desktop-test-output.txt","exit_code":0}
+{"at":"2026-05-31T05:20:23.734Z","tool":"smart_bash","action":"bash","command":"which bun && bun --version 2>&1","exit_code":0}
+{"at":"2026-05-31T05:20:40.012Z","tool":"smart_bash","action":"bash","command":"$SHELL -c 'bun test 2>&1 | head -40'","exit_code":0}
+{"at":"2026-05-31T05:20:42.688Z","tool":"smart_bash","action":"bash","command":"$SHELL -c 'bun test 2>&1 | sed -n \"40,100p\"'","exit_code":0}
+{"at":"2026-05-31T05:21:09.885Z","tool":"smart_bash","action":"bash","command":"$SHELL -c 'bun test 2>&1 | grep -n \"fail\\|FAIL\\|error\\|Error\\|FAILED\" | head -40'","exit_code":0}
+{"at":"2026-05-31T05:21:21.418Z","tool":"smart_bash","action":"bash","command":"$SHELL -c 'bun test 2>&1 | sed -n \"105,200p\"'","exit_code":0}
+{"at":"2026-05-31T05:21:49.002Z","tool":"smart_bash","action":"bash","command":"$SHELL -c 'bun test 2>&1 | sed -n \"195,310p\"'","exit_code":0}
+{"at":"2026-05-31T05:22:06.887Z","tool":"smart_bash","action":"bash","command":"$SHELL -c 'bun test 2>&1 | sed -n \"200,290p\"'","exit_code":0}
+{"at":"2026-05-31T05:22:23.731Z","tool":"smart_bash","action":"bash","command":"$SHELL -c 'bun test 2>&1 | sed -n \"100,175p\"'","exit_code":0}

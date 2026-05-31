@@ -1,2 +1,21 @@
 {"at":"2026-05-31T05:14:43.378Z","session_id":"ses_1838bfef5ffexpRoMthyAn2ZLt","agent":"cartographer","tool":"smart_grep","pattern":"ElectronAPI","path":"packages/desktop/src/preload"}
 {"at":"2026-05-31T05:15:33.395Z","session_id":"ses_1838bfef5ffexpRoMthyAn2ZLt","agent":"cartographer","tool":"smart_grep","pattern":"onSqliteMigrationProgress","path":"packages/desktop"}
+{"at":"2026-05-31T05:16:16.838Z","session_id":"ses_1838bfef5ffexpRoMthyAn2ZLt","agent":"cartographer","tool":"smart_grep","pattern":"onSqliteMigration|SqliteMigration","path":"packages/desktop/src/preload"}
+{"at":"2026-05-31T05:16:16.854Z","session_id":"ses_1838bfef5ffexpRoMthyAn2ZLt","agent":"cartographer","tool":"smart_grep","pattern":"safeInvoke","path":"packages/desktop/src/preload"}
+{"at":"2026-05-31T05:16:17.080Z","session_id":"ses_1838bfef5ffexpRoMthyAn2ZLt","agent":"cartographer","tool":"smart_bun","command":"test","elapsed_ms":217,"exit_code":1}
+{"at":"2026-05-31T05:16:24.197Z","session_id":"ses_1838bfef5ffexpRoMthyAn2ZLt","agent":"cartographer","tool":"smart_bun","command":"test","elapsed_ms":70,"exit_code":0}
+{"at":"2026-05-31T05:16:24.609Z","session_id":"ses_1838bfef5ffexpRoMthyAn2ZLt","agent":"cartographer","tool":"smart_bun","command":"test","elapsed_ms":36,"exit_code":0}
+{"at":"2026-05-31T05:16:24.899Z","session_id":"ses_1838bfef5ffexpRoMthyAn2ZLt","agent":"cartographer","tool":"smart_bun","command":"test","elapsed_ms":78,"exit_code":0}
+{"at":"2026-05-31T05:16:25.193Z","session_id":"ses_1838bfef5ffexpRoMthyAn2ZLt","agent":"cartographer","tool":"smart_bun","command":"test","elapsed_ms":70,"exit_code":1}
+{"at":"2026-05-31T05:17:11.443Z","session_id":"ses_1838bfef5ffexpRoMthyAn2ZLt","agent":"cartographer","tool":"smart_grep","pattern":"from \\\"electron\\\"|require\\(\\\"electron\\\"\\)","path":"packages/desktop/src/main/logging.ts"}
+{"at":"2026-05-31T05:17:11.855Z","session_id":"ses_1838bfef5ffexpRoMthyAn2ZLt","agent":"cartographer","tool":"smart_grep","pattern":"from ['\\\"]electron['\\\"]|require\\(['\\\"]electron['\\\"]\\)","path":"packages/desktop/src/main"}
+{"at":"2026-05-31T05:18:17.057Z","session_id":"ses_1838bfef5ffexpRoMthyAn2ZLt","agent":"cartographer","tool":"smart_bun","command":"test","elapsed_ms":284,"exit_code":0}
+{"at":"2026-05-31T05:18:26.158Z","session_id":"ses_1838bfef5ffexpRoMthyAn2ZLt","agent":"cartographer","tool":"smart_bun","command":"test","elapsed_ms":148,"exit_code":1}
+{"at":"2026-05-31T05:18:35.710Z","session_id":"ses_1838bfef5ffexpRoMthyAn2ZLt","agent":"cartographer","tool":"smart_bun","command":"test","elapsed_ms":40,"exit_code":0}
+{"at":"2026-05-31T05:18:36.325Z","session_id":"ses_1838bfef5ffexpRoMthyAn2ZLt","agent":"cartographer","tool":"smart_grep","pattern":"IPC handler registration","path":"packages/desktop"}
+{"at":"2026-05-31T05:19:18.252Z","session_id":"ses_1838bfef5ffexpRoMthyAn2ZLt","agent":"cartographer","tool":"smart_grep","pattern":"describe\\(","path":"packages/desktop/tests/github-ipc.test.ts"}
+{"at":"2026-05-31T05:19:18.299Z","session_id":"ses_1838bfef5ffexpRoMthyAn2ZLt","agent":"cartographer","tool":"smart_grep","pattern":"import.*IPC|from.*ipc-channels","path":"packages/desktop"}
+{"at":"2026-05-31T05:19:33.329Z","session_id":"ses_1838bfef5ffexpRoMthyAn2ZLt","agent":"cartographer","tool":"smart_grep","pattern":"electron-mock|electronMock","path":"packages/desktop"}
+{"at":"2026-05-31T05:22:17.145Z","session_id":"ses_1838bfef5ffexpRoMthyAn2ZLt","agent":"cartographer","tool":"smart_grep","pattern":"mock.module|registerGithubIpcHandlers|beforeAll","path":"packages/desktop/tests/github-ipc.test.ts"}
+{"at":"2026-05-31T05:22:48.596Z","session_id":"ses_1838bfef5ffexpRoMthyAn2ZLt","agent":"cartographer","tool":"smart_grep","pattern":"mock\\.module\\(","path":"packages/desktop/tests/github-ipc.test.ts"}
+{"at":"2026-05-31T05:22:48.770Z","session_id":"ses_1838bfef5ffexpRoMthyAn2ZLt","agent":"cartographer","tool":"smart_grep","pattern":"beforeAll\\(","path":"packages/desktop/tests/github-ipc.test.ts"}

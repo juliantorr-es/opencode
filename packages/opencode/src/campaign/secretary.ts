@@ -8,7 +8,7 @@ import {
   type CampaignState as SMCampaignState,
   type RuntimeEvent as SMRuntimeEvent,
 } from "./state-machine"
-import { Service as BinderService, type Binder as CanonicalBinder, layer as BinderLayer } from "./binder"
+import { Service as BinderService, type Binder as CanonicalBinder, layer as BinderLayer, BinderError, type LaneState as BinderLaneState } from "./binder"
 import type { LaneState as LaneStateName } from "./types"
 
 // ── State Tags (canonical LaneState from types.ts) ───────────
@@ -109,7 +109,7 @@ export class LaneNotTerminalError extends Schema.TaggedErrorClass<LaneNotTermina
   message: Schema.String,
 }) {}
 
-export type Error = LaneNotFoundError | InvalidEventError | LaneNotTerminalError
+export type Error = LaneNotFoundError | InvalidEventError | LaneNotTerminalError | BinderError
 
 // ── Event Mapping ────────────────────────────────────────────
 
@@ -478,7 +478,7 @@ const make = Effect.gen(function* () {
             summary: `Event: ${event._tag}`,
           },
         )
-        yield* binderService.updateStatus(laneId, newState)
+        yield* binderService.updateStatus(laneId, newState as BinderLaneState)
         binder = yield* binderService.finalizeBinder(laneId)
       }
 

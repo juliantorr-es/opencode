@@ -16,3 +16,53 @@
 {"at":"2026-05-31T05:15:33.345Z","session_id":"ses_1838bfef5ffexpRoMthyAn2ZLt","agent":"cartographer","tool":"smart_git","phase":"completed","detail":"diff exit=0"}
 {"at":"2026-05-31T05:15:33.368Z","session_id":"ses_1838bfef5ffexpRoMthyAn2ZLt","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"onSqliteMigrationProgress"}
 {"at":"2026-05-31T05:15:33.396Z","session_id":"ses_1838bfef5ffexpRoMthyAn2ZLt","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"onSqliteMigrationProgress"}
+{"at":"2026-05-31T05:16:16.741Z","session_id":"ses_1838bfef5ffexpRoMthyAn2ZLt","agent":"cartographer","tool":"smart_git","phase":"started","detail":"log"}
+{"at":"2026-05-31T05:16:16.812Z","session_id":"ses_1838bfef5ffexpRoMthyAn2ZLt","agent":"cartographer","tool":"smart_git","phase":"completed","detail":"log exit=0"}
+{"at":"2026-05-31T05:16:16.829Z","session_id":"ses_1838bfef5ffexpRoMthyAn2ZLt","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"onSqliteMigration|SqliteMigration"}
+{"at":"2026-05-31T05:16:16.838Z","session_id":"ses_1838bfef5ffexpRoMthyAn2ZLt","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"onSqliteMigration|SqliteMigration"}
+{"at":"2026-05-31T05:16:16.847Z","session_id":"ses_1838bfef5ffexpRoMthyAn2ZLt","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"safeInvoke"}
+{"at":"2026-05-31T05:16:16.854Z","session_id":"ses_1838bfef5ffexpRoMthyAn2ZLt","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"safeInvoke"}
+{"at":"2026-05-31T05:16:16.863Z","session_id":"ses_1838bfef5ffexpRoMthyAn2ZLt","agent":"cartographer","tool":"smart_bun","phase":"started","detail":"test"}
+{"at":"2026-05-31T05:16:17.080Z","session_id":"ses_1838bfef5ffexpRoMthyAn2ZLt","agent":"cartographer","tool":"smart_bun","phase":"failed","detail":"test exit=1"}
+{"at":"2026-05-31T05:16:24.127Z","session_id":"ses_1838bfef5ffexpRoMthyAn2ZLt","agent":"cartographer","tool":"smart_bun","phase":"started","detail":"test"}
+{"at":"2026-05-31T05:16:24.197Z","session_id":"ses_1838bfef5ffexpRoMthyAn2ZLt","agent":"cartographer","tool":"smart_bun","phase":"completed","detail":"test exit=0"}
+{"at":"2026-05-31T05:16:24.573Z","session_id":"ses_1838bfef5ffexpRoMthyAn2ZLt","agent":"cartographer","tool":"smart_bun","phase":"started","detail":"test"}
+{"at":"2026-05-31T05:16:24.609Z","session_id":"ses_1838bfef5ffexpRoMthyAn2ZLt","agent":"cartographer","tool":"smart_bun","phase":"completed","detail":"test exit=0"}
+{"at":"2026-05-31T05:16:24.821Z","session_id":"ses_1838bfef5ffexpRoMthyAn2ZLt","agent":"cartographer","tool":"smart_bun","phase":"started","detail":"test"}
+{"at":"2026-05-31T05:16:24.899Z","session_id":"ses_1838bfef5ffexpRoMthyAn2ZLt","agent":"cartographer","tool":"smart_bun","phase":"completed","detail":"test exit=0"}
+{"at":"2026-05-31T05:16:25.123Z","session_id":"ses_1838bfef5ffexpRoMthyAn2ZLt","agent":"cartographer","tool":"smart_bun","phase":"started","detail":"test"}
+{"at":"2026-05-31T05:16:25.193Z","session_id":"ses_1838bfef5ffexpRoMthyAn2ZLt","agent":"cartographer","tool":"smart_bun","phase":"failed","detail":"test exit=1"}
+{"at":"2026-05-31T05:17:11.436Z","session_id":"ses_1838bfef5ffexpRoMthyAn2ZLt","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"from \\\"electron\\\"|require\\(\\\"electron\\\"\\)"}
+{"at":"2026-05-31T05:17:11.443Z","session_id":"ses_1838bfef5ffexpRoMthyAn2ZLt","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"from \\\"electron\\\"|require\\(\\\"electron\\\"\\)"}
+{"at":"2026-05-31T05:17:11.845Z","session_id":"ses_1838bfef5ffexpRoMthyAn2ZLt","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"from ['\\\"]electron['\\\"]|require\\(['\\\"]electron['\\\"]\\)"}
+{"at":"2026-05-31T05:17:11.855Z","session_id":"ses_1838bfef5ffexpRoMthyAn2ZLt","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"from ['\\\"]electron['\\\"]|require\\(['\\\"]electron['\\\"]\\)"}
+{"at":"2026-05-31T05:18:07.446Z","session_id":"ses_1838bfef5ffexpRoMthyAn2ZLt","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Check Electron module structure"}
+{"at":"2026-05-31T05:18:07.446Z","session_id":"ses_1838bfef5ffexpRoMthyAn2ZLt","agent":"cartographer","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T05:18:16.772Z","session_id":"ses_1838bfef5ffexpRoMthyAn2ZLt","agent":"cartographer","tool":"smart_bun","phase":"started","detail":"test"}
+{"at":"2026-05-31T05:18:17.057Z","session_id":"ses_1838bfef5ffexpRoMthyAn2ZLt","agent":"cartographer","tool":"smart_bun","phase":"completed","detail":"test exit=0"}
+{"at":"2026-05-31T05:18:26.009Z","session_id":"ses_1838bfef5ffexpRoMthyAn2ZLt","agent":"cartographer","tool":"smart_bun","phase":"started","detail":"test"}
+{"at":"2026-05-31T05:18:26.158Z","session_id":"ses_1838bfef5ffexpRoMthyAn2ZLt","agent":"cartographer","tool":"smart_bun","phase":"failed","detail":"test exit=1"}
+{"at":"2026-05-31T05:18:35.669Z","session_id":"ses_1838bfef5ffexpRoMthyAn2ZLt","agent":"cartographer","tool":"smart_bun","phase":"started","detail":"test"}
+{"at":"2026-05-31T05:18:35.709Z","session_id":"ses_1838bfef5ffexpRoMthyAn2ZLt","agent":"cartographer","tool":"smart_bun","phase":"completed","detail":"test exit=0"}
+{"at":"2026-05-31T05:18:36.004Z","session_id":"ses_1838bfef5ffexpRoMthyAn2ZLt","agent":"cartographer","tool":"smart_find","phase":"started","detail":"*ipc*handler*"}
+{"at":"2026-05-31T05:18:36.030Z","session_id":"ses_1838bfef5ffexpRoMthyAn2ZLt","agent":"cartographer","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T05:18:36.239Z","session_id":"ses_1838bfef5ffexpRoMthyAn2ZLt","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"IPC handler registration"}
+{"at":"2026-05-31T05:18:36.325Z","session_id":"ses_1838bfef5ffexpRoMthyAn2ZLt","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"IPC handler registration"}
+{"at":"2026-05-31T05:19:18.237Z","session_id":"ses_1838bfef5ffexpRoMthyAn2ZLt","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"describe\\("}
+{"at":"2026-05-31T05:19:18.252Z","session_id":"ses_1838bfef5ffexpRoMthyAn2ZLt","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"describe\\("}
+{"at":"2026-05-31T05:19:18.289Z","session_id":"ses_1838bfef5ffexpRoMthyAn2ZLt","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"import.*IPC|from.*ipc-channels"}
+{"at":"2026-05-31T05:19:18.299Z","session_id":"ses_1838bfef5ffexpRoMthyAn2ZLt","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"import.*IPC|from.*ipc-channels"}
+{"at":"2026-05-31T05:19:33.322Z","session_id":"ses_1838bfef5ffexpRoMthyAn2ZLt","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"electron-mock|electronMock"}
+{"at":"2026-05-31T05:19:33.329Z","session_id":"ses_1838bfef5ffexpRoMthyAn2ZLt","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"electron-mock|electronMock"}
+{"at":"2026-05-31T05:21:14.587Z","session_id":"ses_1838bfef5ffexpRoMthyAn2ZLt","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Read the real-module handler registration section starting at line 542"}
+{"at":"2026-05-31T05:22:00.321Z","session_id":"ses_1838bfef5ffexpRoMthyAn2ZLt","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"View the mock.module section and IPC handler registration setup"}
+{"at":"2026-05-31T05:22:00.321Z","session_id":"ses_1838bfef5ffexpRoMthyAn2ZLt","agent":"cartographer","tool":"smart_bash","phase":"rerouted","detail":"→ read_source"}
+{"at":"2026-05-31T05:22:17.138Z","session_id":"ses_1838bfef5ffexpRoMthyAn2ZLt","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"mock.module|registerGithubIpcHandlers|beforeAll"}
+{"at":"2026-05-31T05:22:17.146Z","session_id":"ses_1838bfef5ffexpRoMthyAn2ZLt","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"mock.module|registerGithubIpcHandlers|beforeAll"}
+{"at":"2026-05-31T05:22:48.576Z","session_id":"ses_1838bfef5ffexpRoMthyAn2ZLt","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"mock\\.module\\("}
+{"at":"2026-05-31T05:22:48.596Z","session_id":"ses_1838bfef5ffexpRoMthyAn2ZLt","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"mock\\.module\\("}
+{"at":"2026-05-31T05:22:48.764Z","session_id":"ses_1838bfef5ffexpRoMthyAn2ZLt","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"beforeAll\\("}
+{"at":"2026-05-31T05:22:48.770Z","session_id":"ses_1838bfef5ffexpRoMthyAn2ZLt","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"beforeAll\\("}
+{"at":"2026-05-31T05:25:40.414Z","session_id":"ses_1838bfef5ffexpRoMthyAn2ZLt","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Read first 68 lines containing mock.module calls"}
+{"at":"2026-05-31T05:25:40.422Z","session_id":"ses_1838bfef5ffexpRoMthyAn2ZLt","agent":"cartographer","tool":"smart_bash","phase":"completed","detail":"head exit=0"}
+{"at":"2026-05-31T05:26:30.969Z","session_id":"ses_1838bfef5ffexpRoMthyAn2ZLt","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Read the mock.module blocks for electron and ipc-channels"}
