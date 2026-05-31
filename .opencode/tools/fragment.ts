@@ -1,5 +1,5 @@
 import { spawnSync } from "node:child_process"
-import { tool } from "@opencode-ai/plugin"
+import { tool, makeError, ErrorCode } from "@opencode-ai/plugin"
 import { existsSync, mkdirSync, appendFileSync, readFileSync, readdirSync } from "node:fs"
 import { resolve } from "node:path"
 
@@ -20,6 +20,11 @@ function jqlQuery(worktree: string, filePath: string, query: string): any {
   return null
 }
 
+export const modeDescriptions = {
+  surgeon: "Produce a fragment declaration before editing shared files to prevent merge conflicts with other lanes. Anchored edits are safe to consolidate.",
+  scalpel: "Declare edit regions via fragments with exact anchor points for safe consolidation of concurrent lane modifications.",
+} as const
+
 export default tool({
   description: "Fragment producer — declare a file region this lane intends to modify. Used for shared-file coordination between parallel lanes. Produces a fragment with explicit anchor points so the consolidator can assemble non-conflicting edits. Never write directly to shared files — always produce a fragment first.",
   args: {
@@ -38,7 +43,7 @@ export default tool({
     const laneKey = args.lane_id || context.agent
 
     if (args.action === "list") {
-      if (!args.file) return JSON.stringify({ error: "Missing 'file' parameter." }, null, 2)
+      if (!args.file) return makeError(ErrorCode.INVALID_ARGUMENTS, "Missing 'file' parameter.")
       const fileKey = args.file.replace(/\//g, "_")
       const fragPath = r(fragDir, `${fileKey}.v1.jsonl`)
       
@@ -68,7 +73,7 @@ export default tool({
 
     if (args.action === "produce") {
       if (!args.file || !args.anchor_start || !args.content) {
-        return JSON.stringify({ error: "Missing required fields: file, anchor_start, content." }, null, 2)
+        return makeError(ErrorCode.INVALID_ARGUMENTS, "Missing required fields: file, anchor_start, content.")
       }
       
       const fileKey = args.file.replace(/\//g, "_")
@@ -110,6 +115,6 @@ export default tool({
       }, null, 2)
     }
 
-    return JSON.stringify({ error: `Unknown action: '${args.action}'. Valid: produce, list.` }, null, 2)
+    return makeError(ErrorCode.UNKNOWN_ACTION, `Unknown action: '${args.action}'. Valid: produce, list.`)
   },
 })

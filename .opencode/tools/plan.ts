@@ -1,8 +1,13 @@
-import { tool } from "@opencode-ai/plugin"
+import { tool, makeError, ErrorCode } from "@opencode-ai/plugin"
 import { resolve } from "node:path"
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs"
 
 function r(worktree: string, p: string): string { return resolve(worktree, p) }
+
+export const modeDescriptions = {
+  architect: "Design lifecycle plans: propose new plans, revise existing ones, with boundary constraints and consumer-purpose anchoring. Validate against claim atoms before publication.",
+  "architecture-reviewer": "Review architectural plans for structural soundness, convention adherence, and consistency with existing patterns.",
+} as const
 
 export default tool({
   description: "Plan lifecycle — propose new plans or revise existing ones.",
@@ -30,13 +35,13 @@ export default tool({
         return null
       }
       const result = parseInput(raw)
-      if (!result || result.length === 0) return JSON.stringify({ error: "claim_atoms could not be parsed" }, null, 2)
+      if (!result || result.length === 0) return makeError(ErrorCode.INVALID_ARGUMENTS, "claim_atoms could not be parsed")
       atoms = result
 
       const pid = args.plan_id || (args.boundary || "plan").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")
       const dir = r(context.worktree, "docs/json/opencode/plans")
       const path = r(context.worktree, `docs/json/opencode/plans/${pid}.v1.json`)
-      if (existsSync(path)) return JSON.stringify({ error: `Plan ${pid} already exists. Use action='revise'.` }, null, 2)
+      if (existsSync(path)) return makeError(ErrorCode.CONFLICT, `Plan ${pid} already exists. Use action='revise'.`)
       if (args.dry_run) return JSON.stringify({ action: "propose", dry_run: true, plan_id: pid, preview: args.content?.slice(0, 300) }, null, 2)
       try { mkdirSync(dir, { recursive: true }) } catch (_) {}
       const now = new Date().toISOString()
@@ -46,7 +51,7 @@ export default tool({
 
     if (args.action === "revise") {
       const path = r(context.worktree, `docs/json/opencode/plans/${args.plan_id}.v1.json`)
-      if (!existsSync(path)) return JSON.stringify({ error: `Plan ${args.plan_id} not found` }, null, 2)
+      if (!existsSync(path)) return makeError(ErrorCode.NOT_FOUND, `Plan ${args.plan_id} not found`)
       const plan = JSON.parse(readFileSync(path, "utf8"))
       if (args.content) plan.content = args.content
       plan.plan_revision = (plan.plan_revision || 1) + 1
@@ -56,6 +61,6 @@ export default tool({
       return JSON.stringify({ action: "revise", plan_id: args.plan_id, revision: plan.plan_revision }, null, 2)
     }
 
-    return JSON.stringify({ error: `Unknown action: '${args.action}'` }, null, 2)
+    return makeError(ErrorCode.UNKNOWN_ACTION, `Unknown action: '${args.action}'`)
   },
 })
