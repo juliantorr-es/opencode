@@ -76,11 +76,11 @@ function createElectronPluginTransport(
 
     on(channel: string, handler: (data: unknown) => void): () => void {
       const unsub = api.pluginOn(prefix + channel, handler)
-      activeSubscriptions.add(unsub)
       const cleanup = () => {
         unsub()
         activeSubscriptions.delete(cleanup)
       }
+      activeSubscriptions.add(cleanup)
       return cleanup
     },
 

@@ -8,6 +8,7 @@
 import { Effect } from "effect"
 import type { FileContext } from "../context/file-memory"
 import type { RuntimeEvent } from "../event/runtime-event"
+import { EventName } from "../event/event-names"
 
 // ── Core Types ───────────────────────────────────────────────
 
@@ -49,6 +50,8 @@ export type PredicateSpec =
   | { readonly kind: "plan_produced" }
   | { readonly kind: "plan_approved" }
   | { readonly kind: "plan_rejected" }
+  | { readonly kind: "scout_completed" }
+  | { readonly kind: "scope_synthesized" }
   | { readonly kind: "all_children_complete"; readonly children?: readonly string[] }
   | { readonly kind: "child_blocked" }
 
@@ -138,7 +141,7 @@ function resolveLatestValidationPassed(
   }
 
   const validations = [...ctx.events]
-    .filter((e) => e.eventType === "validation.completed")
+    .filter((e) => e.eventType === EventName.ValidationCompleted)
     .sort((a, b) => b.ts.localeCompare(a.ts))
 
   const latest = validations[0]
@@ -149,7 +152,7 @@ function resolveLatestValidationPassed(
   const passed = succeeded(latest.status)
 
   if (afterLastEdit && passed) {
-    const editEvents = ctx.events.filter((e) => e.eventType === "file.edited")
+    const editEvents = ctx.events.filter((e) => e.eventType === EventName.FileEdited)
     const latestEdit = latestByTs(editEvents)
     if (latestEdit && latest.ts <= latestEdit.ts) {
       return {
@@ -196,9 +199,9 @@ function resolveHasClaimConflict(
 ): PredicateResult {
   const conflictEvents = ctx.events.filter(
     (e) =>
-      e.eventType === "file.conflict" ||
-      e.eventType === "claim.conflict" ||
-      (e.eventType === "file.edited" && e.actor === "system"),
+      e.eventType === EventName.FileConflict ||
+      e.eventType === EventName.ClaimConflict ||
+      (e.eventType === EventName.FileEdited && e.actor === "system"),
   )
 
   if (conflictEvents.length === 0) {
@@ -250,7 +253,7 @@ function resolveRetryBudgetRemaining(
 
   const failedCount = ctx.events.filter(
     (e) =>
-      e.eventType === "tool.failed" &&
+      e.eventType === EventName.ToolFailed &&
       (e.errorCode === key || e.toolName === key),
   ).length
 
@@ -282,7 +285,7 @@ function resolveUserApprovalGranted(
 
   const approvals = ctx.events.filter(
     (e) =>
-      (e.eventType === "user.approval" && e.phase === approvalType) ||
+      (e.eventType === EventName.UserApproval && e.phase === approvalType) ||
       e.eventType === `user.approval.${approvalType}`,
   )
 
@@ -340,7 +343,7 @@ function resolveScopeUnsafe(
   const denials = ctx.events.filter((e) => e.status === "denied")
   const protectedAccesses = ctx.events.filter(
     (e) =>
-      e.eventType === "file.read" &&
+      e.eventType === EventName.FileRead &&
       e.filePath !== undefined &&
       (e.filePath.includes("node_modules") ||
         e.filePath.includes(".git/") ||
@@ -366,7 +369,7 @@ function resolveEditApplied(
   _spec: PredicateSpec,
   ctx: PredicateContext,
 ): PredicateResult {
-  const edits = ctx.events.filter((e) => e.eventType === "file.edited")
+  const edits = ctx.events.filter((e) => e.eventType === EventName.FileEdited)
   if (edits.length === 0) {
     return { satisfied: false, reason: "No file.edited events found" }
   }
@@ -381,9 +384,9 @@ function resolveNewValidationFailure(
   ctx: PredicateContext,
 ): PredicateResult {
   const validations = ctx.events.filter(
-    (e) => e.eventType === "validation.completed",
+    (e) => e.eventType === EventName.ValidationCompleted,
   )
-  const edits = ctx.events.filter((e) => e.eventType === "file.edited")
+  const edits = ctx.events.filter((e) => e.eventType === EventName.FileEdited)
 
   const lastSuccess = [...validations]
     .filter((e) => succeeded(e.status))
@@ -426,7 +429,7 @@ function resolveFailuresExistedBeforeEdit(
   _spec: PredicateSpec,
   ctx: PredicateContext,
 ): PredicateResult {
-  const edits = ctx.events.filter((e) => e.eventType === "file.edited")
+  const edits = ctx.events.filter((e) => e.eventType === EventName.FileEdited)
   const latestEdit = latestByTs(edits)
 
   if (!latestEdit) {
@@ -435,7 +438,7 @@ function resolveFailuresExistedBeforeEdit(
 
   const preEditFailure = ctx.events.find(
     (e) =>
-      e.eventType === "validation.completed" &&
+      e.eventType === EventName.ValidationCompleted &&
       failed(e.status) &&
       e.ts < latestEdit.ts,
   )
@@ -463,7 +466,7 @@ function resolveNoBlockingFindings(
 ): PredicateResult {
   const blocking = ctx.events.filter(
     (e) =>
-      e.eventType === "redteam.finding" &&
+      e.eventType === EventName.RedteamFinding &&
       payload(e)?.severity === "blocking",
   )
 
@@ -482,7 +485,7 @@ function resolveFindingConfirmed(
   _spec: PredicateSpec,
   ctx: PredicateContext,
 ): PredicateResult {
-  const findings = ctx.events.filter((e) => e.eventType === "redteam.finding")
+  const findings = ctx.events.filter((e) => e.eventType === EventName.RedteamFinding)
   if (findings.length === 0) {
     return { satisfied: false, reason: "No redteam.finding events" }
   }
@@ -498,9 +501,9 @@ function resolvePlanProduced(
 ): PredicateResult {
   const planEvents = ctx.events.filter(
     (e) =>
-      e.eventType === "plan.produced" ||
-      e.eventType === "plan.created" ||
-      e.eventType === "artifact.plan",
+      e.eventType === EventName.PlanProduced ||
+      e.eventType === EventName.PlanCreated ||
+      e.eventType === EventName.ArtifactPlan,
   )
   if (planEvents.length === 0) {
     return { satisfied: false, reason: "No plan artifact events" }
@@ -517,7 +520,7 @@ function resolvePlanApproved(
 ): PredicateResult {
   const approved = ctx.events.filter(
     (e) =>
-      e.eventType === "critic.review" &&
+      e.eventType === EventName.CriticReview &&
       (payload(e)?.verdict === "approved" ||
         e.status === "succeeded"),
   )
@@ -539,7 +542,7 @@ function resolvePlanRejected(
 ): PredicateResult {
   const rejected = ctx.events.filter(
     (e) =>
-      e.eventType === "critic.review" &&
+      e.eventType === EventName.CriticReview &&
       (payload(e)?.verdict === "rejected" ||
         e.status === "failed"),
   )
@@ -568,8 +571,8 @@ function resolveAllChildrenComplete(
       (childId) =>
         !ctx.events.some(
           (e) =>
-            (e.eventType === "lane.completed" ||
-              e.eventType === "child.completed") &&
+            (e.eventType === EventName.LaneCompleted ||
+              e.eventType === EventName.ChildCompleted) &&
             (e.runId === childId || e.correlationId === childId),
         ),
     )
@@ -591,7 +594,7 @@ function resolveAllChildrenComplete(
 
   // Without an explicit list, check if any completion events exist at all.
   const completeEvents = ctx.events.filter(
-    (e) => e.eventType === "lane.completed" || e.eventType === "child.completed",
+    (e) => e.eventType === EventName.LaneCompleted || e.eventType === EventName.ChildCompleted,
   )
   if (completeEvents.length === 0) {
     return { satisfied: false, reason: "No child completion events" }
@@ -607,7 +610,7 @@ function resolveChildBlocked(
   ctx: PredicateContext,
 ): PredicateResult {
   const blocked = ctx.events.filter(
-    (e) => e.eventType === "lane.blocked" || e.eventType === "child.blocked",
+    (e) => e.eventType === EventName.LaneBlocked || e.eventType === EventName.ChildBlocked,
   )
   if (blocked.length === 0) {
     return {
@@ -619,6 +622,28 @@ function resolveChildBlocked(
     satisfied: true,
     evidence: { id: blocked[0]!.id, type: "event" },
   }
+}
+
+function resolveScoutCompleted(
+  _spec: PredicateSpec,
+  ctx: PredicateContext,
+): PredicateResult {
+  const scoutEvents = ctx.events.filter((e) => e.eventType === EventName.ScoutCompleted)
+  if (scoutEvents.length === 0) {
+    return { satisfied: false, reason: "No scout.completed events" }
+  }
+  return { satisfied: true, evidence: { id: scoutEvents[0]!.id, type: "event" } }
+}
+
+function resolveScopeSynthesized(
+  _spec: PredicateSpec,
+  ctx: PredicateContext,
+): PredicateResult {
+  const scopeEvents = ctx.events.filter((e) => e.eventType === EventName.ScopeSynthesized)
+  if (scopeEvents.length === 0) {
+    return { satisfied: false, reason: "No scope.synthesized events" }
+  }
+  return { satisfied: true, evidence: { id: scopeEvents[0]!.id, type: "event" } }
 }
 
 // ── Resolver Map ─────────────────────────────────────────────
@@ -644,6 +669,8 @@ export const predicateResolvers: Record<
   plan_produced: resolvePlanProduced,
   plan_approved: resolvePlanApproved,
   plan_rejected: resolvePlanRejected,
+  scout_completed: resolveScoutCompleted,
+  scope_synthesized: resolveScopeSynthesized,
   all_children_complete: resolveAllChildrenComplete,
   child_blocked: resolveChildBlocked,
 }

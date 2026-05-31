@@ -389,7 +389,7 @@ export const layer = Layer.effect(
         )
 
         return { hooks, registrations, capabilityRegistry, dispatchGuard }
-      }).pipe(Effect.orDie),
+      }),
     )
 
     const pluginHealthStore = yield* loadPluginHealthStore()

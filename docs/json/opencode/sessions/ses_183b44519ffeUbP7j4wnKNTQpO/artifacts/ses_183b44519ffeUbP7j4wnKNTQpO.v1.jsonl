@@ -1,0 +1,17 @@
+{"at":"2026-05-31T04:30:14.593Z","tool":"smart_grep","action":"searched","pattern":"from.*event-names","results":25,"files":25}
+{"at":"2026-05-31T04:30:14.730Z","tool":"smart_grep","action":"searched","pattern":"import.*EventName","results":25,"files":25}
+{"at":"2026-05-31T04:30:15.156Z","tool":"smart_grep","action":"searched","pattern":"EventName\\.","results":56,"files":25}
+{"at":"2026-05-31T04:30:15.345Z","tool":"smart_grep","action":"searched","pattern":"ValidationPassed|ReviewApproved|ExecutionComplete","results":14,"files":3}
+{"at":"2026-05-31T04:30:15.716Z","tool":"smart_grep","action":"searched","pattern":"\"validation\\.completed\"|\"edit\\.applied\"|\"plan\\.produced\"","results":15,"files":3}
+{"at":"2026-05-31T04:30:16.280Z","tool":"smart_grep","action":"searched","pattern":"\"validation\\.completed\"","results":6,"files":3}
+{"at":"2026-05-31T04:30:16.444Z","tool":"smart_grep","action":"searched","pattern":"status.*===.*\"pass\"","results":7,"files":4}
+{"at":"2026-05-31T04:30:16.574Z","tool":"smart_grep","action":"searched","pattern":"\"pass\".*status","results":1,"files":1}
+{"at":"2026-05-31T04:30:16.840Z","tool":"smart_grep","action":"searched","pattern":"eventType","results":30,"files":4}
+{"at":"2026-05-31T04:30:17.048Z","tool":"smart_grep","action":"searched","pattern":"payload\\.type","results":30,"files":14}
+{"at":"2026-05-31T04:30:17.444Z","tool":"smart_grep","action":"searched","pattern":"\"succeeded\"","results":14,"files":8}
+{"at":"2026-05-31T04:30:42.125Z","tool":"smart_grep","action":"searched","pattern":"\"started\"|\"failed\"|\"denied\"|\"cancelled\"|\"recovered\"","results":40,"files":11}
+{"at":"2026-05-31T04:30:42.428Z","tool":"smart_grep","action":"searched","pattern":"EventStatus","results":3,"files":1}
+{"at":"2026-05-31T04:30:42.643Z","tool":"smart_grep","action":"searched","pattern":"RuntimeEvent","results":30,"files":4}
+{"at":"2026-05-31T04:31:01.803Z","tool":"smart_grep","action":"searched","pattern":"e\\.type === ","results":23,"files":1}
+{"at":"2026-05-31T04:32:34.105Z","tool":"smart_bash","action":"bash","command":"/usr/bin/find packages/opencode/src/event -maxdepth 1 -type f | /usr/bin/sort","exit_code":0}
+{"at":"2026-05-31T04:33:22.937Z","tool":"smart_bash","action":"bash","command":"/usr/bin/du -h packages/opencode/src/event/*.ts | /usr/bin/sort -hr","exit_code":0}

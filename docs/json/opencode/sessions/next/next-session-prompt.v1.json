@@ -1,0 +1,60 @@
+{
+  "schema": "rig.orchestrator.next_session_prompt.v1",
+  "generated_at": "2026-05-30T23:52:00Z",
+  "from_session": "ses_next--phase-3-completion",
+  "opening_directive": "Phase 3 is 100% complete. Read the handoff at docs/json/opencode/handoffs/ses_next--phase-3-complete--handoff.v1.json first — it contains all context, dirty files, risk notes, and the remaining roadmap state.",
+  "phase_3_status": {
+    "3-0": "3/6 complete — CI-004/005/006 remaining (infrastructure tools)",
+    "3-1": "PG-001/003/004 complete. PG-002 not started. PG-001 app layer at 45%.",
+    "3-2": "100% complete — DC-001/DC-002/DC-003 finished this session",
+    "3-3": "100% complete — HC-004 Phase 1 finished this session",
+    "3-4": "100% complete — prior session",
+    "3-5": "100% complete — prior session"
+  },
+  "immediate_next_lanes": [
+    {
+      "priority": 1,
+      "id": "PG-002-execution",
+      "agent": "execution",
+      "background": true,
+      "description": "Migration runner with dual SQLite+Pg CI support",
+      "prompt": "MISSION: Implement the Postgres migration runner that can target either SQLite or Pg based on environment.\n\n## Context\nPhase 3-1 is the last incomplete phase. PG-001 schema definitions are complete (all 7 SQLite tables have Postgres equivalents). PG-003 CI pipeline with Postgres service container is validated. PG-004 connection pool is implemented. The missing piece is PG-002: the migration runner that creates/updates the schema at startup.\n\n## What's needed\n1. Read existing migration approach in packages/opencode/src/storage/\n2. Understand the current SQLite migration pattern (db.ts auto-apply, pipeline.ts schema creation)\n3. Implement a migration runner that:\n   - Detects which dialect to use (env var OPENCODE_DB=pg or sqlite)\n   - Applies schema for the detected dialect on startup\n   - Supports CI dual-run: SQLite (fast) + Pg (correctness)\n   - Handles both fresh install and existing database scenarios\n\n## Key files to study\n- packages/opencode/src/storage/db.ts (current migration entry point)\n- packages/opencode/src/storage/pipeline.ts (schema creation pipeline)\n- packages/opencode/src/storage/schema.ts / schema.duckdb.ts (existing schema defs)\n- packages/opencode/src/storage/adapter.ts (DB adapter abstraction)\n- packages/opencode/src/storage/adapter.pg.ts (Pg adapter)\n- .github/workflows/test.yml (CI config with Pg service)\n\n## Dependencies\nPG-003 (CI pipeline) and PG-004 (connection pool) are already complete — this lane depends on those being functional.\n\n## Verification\n- bun test from packages/opencode/ passes with both SQLite and Pg\n- bun typecheck from packages/opencode/ passes (no new errors)\n- CI workflow runs both SQLite and Pg test suites\n- Migration creates tables on fresh Postgres\n- Migration is idempotent (running twice is safe)\n\nReturn handoff JSON with lane_id='PG-002-execution', status, files_modified, verification (typecheck, test_results)."
+    },
+    {
+      "priority": 2,
+      "id": "CI-004-execution",
+      "agent": "execution",
+      "background": true,
+      "description": "Cross-session roadmap tools — 5 tools",
+      "prompt": "MISSION: Implement 5 roadmap lifecycle tools for cross-session coordination.\n\n## Context\nPhase 3-0 items CI-001 through CI-003 (telemetry, contention detection, secretary agent) are complete. The missing infrastructure tools are:\n- CI-004: Roadmap tools (roadmap_init, roadmap_progress, roadmap_next, roadmap_deprecate, roadmap_prioritize)\n- CI-005: Lessons register\n- CI-006: Session diff tool\n\n## Scope: CI-004 Only\n\n## What to build\n5 agent tools following the BaseTool pattern in packages/opencode/src/tool/:\n\n### roadmap_init\n- Injects roadmap blueprint at session startup\n- Reads docs/json/roadmaps/blueprint.v1.json\n- Creates/updates docs/json/roadmaps/active.v1.json\n- Returns current state + dependency-resolved next actions\n\n### roadmap_progress\n- Updates status and completion_pct for a roadmap item\n- Appends to docs/json/roadmaps/progress.v1.jsonl\n- Announces via coordination messages\n\n### roadmap_next\n- Reads current active roadmap\n- Builds dependency graph\n- Returns items whose dependencies are all met (ready to work)\n- Priority-sorted\n\n### roadmap_deprecate\n- Marks item as deprecated with reason\n- Replaces with replacement item if provided\n\n### roadmap_prioritize\n- Reorders items by setting new priority values\n\n## Data files\n- docs/json/roadmaps/blueprint.v1.json (rarely updated, authoritative plan)\n- docs/json/roadmaps/active.v1.json (frequently updated execution state)\n- docs/json/roadmaps/progress.v1.jsonl (append-only progress log)\n\n## Verification\n- bun typecheck passes\n- Each tool has a unit test (or tool interaction tests)\n- Try the tools end-to-end: roadmap_next returns DC-002 as next action (if imported from current state)\n\nReturn handoff JSON with lane_id='CI-004-execution', status, files_created/modified, verification."
+    },
+    {
+      "priority": 3,
+      "id": "CI-005-execution",
+      "agent": "execution",
+      "background": true,
+      "description": "Lessons register — cross-session pattern memory",
+      "prompt": "MISSION: Implement a lessons register tool for cross-session pattern memory.\n\n## Context\nCI-005 is a lightweight tool that records one-sentence insights to a lessons file. Future sessions read these at startup to avoid repeating same mistakes.\n\n## What to build\n1. BaseTool subclass (follow pattern from other tools in packages/opencode/src/tool/)\n2. Append to packages/opencode/src/tool/lessons.ts or a new file\n3. Categories: codebase, workflow, architecture, tool, timing, convention\n4. Record format:\n   - lesson_id (auto-generated)\n   - category\n   - insight (one sentence)\n   - context (what triggered it)\n   - source_session\n   - created_at\n5. Storage: .rig/lessons/lessons.v1.jsonl (append-only)\n6. Also add a lessons read tool that returns lessons by category or recency\n\n## Lessons to pre-seed from this session\n- claim-adversary-review-cycle: Submit each plan revision to a claim-adversary before proceeding; the review catches count/precision errors that self-review misses.\n- evidence-appendix-for-count-claims: When a plan claims a specific number of call sites, files, or errors, include the exact grep command and expected output as an evidence appendix.\n- circular-dependency-lazy-accessor-pattern: When breaking a circular import, replace module-level `const` with a lazy getter function (e.g. UPDATER_ENABLED -> getUpdaterEnabled()).\n- pluginOff-should-not-be-noop: A method declared in a public interface (PluginTransport.off) must not be a no-op unless documented and intentional.\n- activeSubscriptions-reference-matching: When storing cleanup functions in a Set, ensure the stored reference matches the reference the cleanup closure tries to delete.\n\n## Verification\n- bun typecheck passes\n- Can write a lesson and read it back\n- `cat .rig/lessons/lessons.v1.jsonl` shows the written record\n\nReturn handoff JSON with lane_id='CI-005-execution', status, files_created, lessons_seeded (list of 5 lessons)."
+    },
+    {
+      "priority": 3,
+      "id": "CI-006-execution",
+      "agent": "execution",
+      "background": true,
+      "description": "Session diff tool — consolidated change reporting",
+      "prompt": "MISSION: Implement a session diff tool for consolidated change reporting at session end.\n\n## Context\nCI-006 is a tool that aggregates edit_logs, runs git diff --stat, and produces per-package breakdown with file lists. Used for PR descriptions and handoffs.\n\n## What to build\n1. BaseTool subclass in packages/opencode/src/tool/ (follow existing tool pattern)\n2. Operations:\n   - session_diff: Read edit_log.v1.jsonl for current session\n   - git_diff: Run git diff --stat and -- packages/ for changed files\n   - summary: Per-package breakdown (insertions, deletions, file count)\n   - PR body: Generate a PR description from the diff + edit log\n3. Output format: structured JSON with sections:\n   - file_changes: [{package, files[], insertions, deletions, type (add/mod/del)}]\n   - edit_log_entries: recent edit records\n   - summary: total stats\n\n## Verification\n- bun typecheck passes\n- Running the tool produces valid JSON with meaningful stats\n- Can be used at session end to generate PR descriptions\n\nReturn handoff JSON with lane_id='CI-006-execution', status, files_created, verification."
+    }
+  ],
+  "spawn_cascade_rules": [
+    "PG-002 depends on PG-001 being functionally complete. If PG-001 app layer migration isn't done first, PG-002 may need to work with what exists.",
+    "CI-004, CI-005, and CI-006 have no cross-dependencies — can run simultaneously.",
+    "After ALL Phase 3 items are done (Phase 3 reaches true 100%), move to Phase 4 planning or the next priority.",
+    "Dirty files from this session (packages/app/src/entry.tsx, packages/desktop/src/preload/*, packages/plugin/src/desktop.ts, packages/opencode/src/plugin/xai.ts) must be preserved during any subsequent work."
+  ],
+  "known_typecheck_errors_to_ignore": [
+    "126 pre-existing errors in packages/opencode (src/agent/operating-picture.ts, src/campaign/, test/cli/tui/, test/plugin/).",
+    "33 pre-existing errors in packages/desktop (browser-api.test.ts, dialog test files, electron-mock.ts).",
+    "None of these are from this session's changes."
+  ],
+  "prefabrication_hint": "PG-002 is the most impactful next lane — it closes the last Phase 3-1 gap. CI-004/005/006 are lighter weight and can run in parallel with PG-002 planning."
+}

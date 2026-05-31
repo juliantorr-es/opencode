@@ -29,7 +29,7 @@ export const resolve = Effect.fn("SessionTools.resolve")(function* (input: {
   agent: Agent.Info
   model: Provider.Model
   session: Session.Info
-  processor: Pick<SessionProcessor.Handle, "message" | "updateToolCall" | "completeToolCall">
+  processor: Pick<SessionProcessor.Handle, "message" | "updateToolCall">
   bypassAgentCheck: boolean
   messages: MessageV2.WithParts[]
   promptOps: TaskPromptOps
@@ -120,12 +120,9 @@ export const resolve = Effect.fn("SessionTools.resolve")(function* (input: {
               }
               yield* plugin.trigger(
                 "tool.execute.after",
-                { tool: item.id, sessionID: ctx.sessionID, callID: ctx.callID, args },
+                { tool: item.id, sessionID: ctx.sessionID, callID: ctx.callID, args, status: (result as any).metadata?.toolStatus ?? "succeeded" },
                 output,
               )
-              if (options.abortSignal?.aborted) {
-                yield* input.processor.completeToolCall(options.toolCallId, output)
-              }
               return output
             }).pipe(
               Effect.withSpan("Tool.execute", {
@@ -173,9 +170,10 @@ export const resolve = Effect.fn("SessionTools.resolve")(function* (input: {
               },
             }),
           )
+          const mcpStatus = (result as { isError?: boolean })?.isError ? "failed" : "succeeded"
           yield* plugin.trigger(
             "tool.execute.after",
-            { tool: key, sessionID: ctx.sessionID, callID: opts.toolCallId, args },
+            { tool: key, sessionID: ctx.sessionID, callID: opts.toolCallId, args, status: mcpStatus },
             result,
           )
 
@@ -204,8 +202,8 @@ export const resolve = Effect.fn("SessionTools.resolve")(function* (input: {
           }
 
           const truncated = yield* truncate.output(textParts.join("\n\n"), {}, input.agent)
-          const metadata = {
-            ...result.metadata,
+          const metadata: Record<string, unknown> = {
+            toolStatus: mcpStatus,
             truncated: truncated.truncated,
             ...(truncated.truncated && { outputPath: truncated.outputPath }),
           }
@@ -221,9 +219,6 @@ export const resolve = Effect.fn("SessionTools.resolve")(function* (input: {
               messageID: input.processor.message.id,
             })),
             content: result.content,
-          }
-          if (opts.abortSignal?.aborted) {
-            yield* input.processor.completeToolCall(opts.toolCallId, output)
           }
           return output
         }),

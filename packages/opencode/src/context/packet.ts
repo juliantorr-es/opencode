@@ -1,4 +1,4 @@
-import { Context, Effect, Layer } from "effect"
+import { Context, Duration, Effect, Layer, Ref, Stream } from "effect"
 import { serviceUse } from "@opencode-ai/core/effect/service-use"
 import { Authority } from "@/agent"
 import { Scratchpad } from "@/agent"
@@ -6,7 +6,13 @@ import { Git } from "@/git"
 import { EventStore } from "@/event"
 import { InstanceState } from "@/effect/instance-state"
 import type { RuntimeEvent as RuntimeEventType } from "@/event/runtime-event"
+import * as FileMemory from "./file-memory"
 import * as Log from "@opencode-ai/core/util/log"
+import * as DuckDB from "../storage/db.duckdb"
+import { ContextInvalidationBus } from "./invalidation-bus"
+import { queryAgentHeatmap, rankWorkingSetFull } from "./duckdb-rank"
+import type { AgentHeatmapEntry, RankedFile } from "./duckdb-rank"
+import { Coordination } from "@/tool/coordination"
 
 const log = Log.create({ service: "context-packet" })
 
@@ -15,6 +21,9 @@ const log = Log.create({ service: "context-packet" })
 export interface Freshness {
   fetchedAt: string
   eventLagMs: number
+  contentFresh: boolean
+  fileCount: number
+  stalePaths: string[]
 }
 
 export interface ContextPacketL1 {
@@ -35,6 +44,7 @@ export interface ContextPacketL1 {
     branch: string
     dirtyFiles: string[]
     externalChangesDetected: boolean
+    agentChangesDetected: boolean
   }
   claims: {
     owned: string[]
@@ -62,6 +72,7 @@ export interface ContextPacketL2 {
     summary: string
   }>
   relatedTests: string[]
+  agentHeatmap: AgentHeatmapEntry[]
   recommendedNextContext: Array<{
     tool: string
     path: string
@@ -132,6 +143,8 @@ export const layer = Layer.effect(
     const eventStore = yield* EventStore.Service
     const git = yield* Git.Service
     const scratchpad = yield* Scratchpad.Service
+    const fileMemory = yield* FileMemory.Service
+    const duckdb = yield* DuckDB.Service
 
     // ── assembleL1 ─────────────────────────────────────────
     const assembleL1 = Effect.fn("ContextPacket.assembleL1")(
@@ -176,25 +189,34 @@ export const layer = Layer.effect(
           log.warn("could not read git status", { error: String(e) })
         }
 
-        const workspace: ContextPacketL1["workspace"] = {
-          branch,
-          dirtyFiles,
-          externalChangesDetected: dirtyFiles.length > 0,
-        }
-
-        // ── Claims (from coordination events) ─────────────
+        // ── Claims ───────────────────────────────────────
         let ownedFiles = DEFAULT_CLAIMS
         let conflictFiles: string[] = []
         try {
-          const recentEvents = yield* eventStore.query({
-            sessionId,
-            limit: 100,
-            order: "desc",
-          })
-          ownedFiles = extractFilePaths(recentEvents)
+          const activeReservations = yield* Coordination.getSessionReservations(sessionId)
+          if (activeReservations.length > 0) {
+            ownedFiles = activeReservations.map((r) => r.path)
+          } else {
+            // Fallback: derive owned files from recent events
+            const recentEvents = yield* eventStore.query({
+              sessionId,
+              limit: 100,
+              order: "desc",
+            })
+            ownedFiles = extractFilePaths(recentEvents)
+          }
           conflictFiles = ownedFiles.filter((f) => dirtyFiles.includes(f))
         } catch (e) {
-          log.warn("could not query events for claims", { error: String(e) })
+          log.warn("could not query claims for owned files", { error: String(e) })
+        }
+
+        const agentEdits = dirtyFiles.filter((f) => ownedFiles.includes(f))
+        const externalEdits = dirtyFiles.filter((f) => !ownedFiles.includes(f))
+        const workspace: ContextPacketL1["workspace"] = {
+          branch,
+          dirtyFiles,
+          externalChangesDetected: externalEdits.length > 0,
+          agentChangesDetected: agentEdits.length > 0,
         }
 
         const claims: ContextPacketL1["claims"] = {
@@ -258,6 +280,21 @@ export const layer = Layer.effect(
           log.warn("could not query error events", { error: String(e) })
         }
 
+        // ── Content-based freshness from FileMemory ────────
+        let contentFresh = true
+        let stalePaths: string[] = []
+        let fileCount = 0
+        try {
+          const allFiles = yield* fileMemory.getAll()
+          fileCount = allFiles.length
+          stalePaths = allFiles
+            .filter((f) => f.freshness !== "fresh")
+            .map((f) => f.path)
+          contentFresh = stalePaths.length === 0
+        } catch (e) {
+          log.warn("could not read file memory for freshness", { error: String(e) })
+        }
+
         return {
           mission,
           authority: authoritySection,
@@ -268,6 +305,9 @@ export const layer = Layer.effect(
           _freshness: {
             fetchedAt: new Date(fetchedAt).toISOString(),
             eventLagMs: Date.now() - fetchedAt,
+            contentFresh,
+            fileCount,
+            stalePaths,
           },
         }
       },
@@ -284,54 +324,102 @@ export const layer = Layer.effect(
         let workingSet: ContextPacketL2["workingSet"] = []
         let relatedTests: string[] = []
         try {
-          const fileEvents = yield* eventStore.query({
-            sessionId,
-            limit: 50,
-            order: "desc",
-          })
-          // Deduplicate by file path, keeping the latest event per file
-          const fileMap = new Map<
-            string,
-            { lastEvent: string; summary: string; ts: string }
-          >()
-          for (const ev of fileEvents) {
-            if (!ev.filePath) continue
-            const existing = fileMap.get(ev.filePath)
-            if (!existing || ev.ts > existing.ts) {
-              fileMap.set(ev.filePath, {
-                lastEvent: `${ev.eventType}${ev.status ? ` (${ev.status})` : ""}`,
-                summary: `${ev.actor}: ${ev.eventType}${ev.toolName ? ` via ${ev.toolName}` : ""}`,
-                ts: ev.ts,
-              })
+          // Try DuckDB-backed multi-factor ranking first
+          const ranked = yield* rankWorkingSetFull(duckdb, sessionId, 15).pipe(
+            Effect.catch(() => Effect.succeed(null as RankedFile[] | null)),
+          )
+
+          if (ranked && ranked.length > 0) {
+            // DuckDB ranking succeeded — use weighted multi-factor scores
+            workingSet = ranked.map((r) => ({
+              path: r.filePath,
+              freshness: r.lastAccess ?? new Date(fetchedAt).toISOString(),
+              lastEvent: `score: ${r.score.toFixed(2)}`,
+              summary: `recency=${r.recencyScore.toFixed(2)}, edits=${r.editCount}, failures=${r.failureCount}`,
+            }))
+
+            // Collect test paths from DuckDB working set
+            const testPaths = new Set<string>()
+            for (const r of ranked) {
+              if (isTestPath(r.filePath)) testPaths.add(r.filePath)
             }
-          }
-          // Rank by recency
-          const sorted = [...fileMap.entries()]
-            .sort(([, a], [, b]) => b.ts.localeCompare(a.ts))
-            .slice(0, 15)
-          workingSet = sorted.map(([path, info]) => ({
-            path,
-            freshness: info.ts,
-            lastEvent: info.lastEvent,
-            summary: info.summary,
-          }))
-          // Collect test paths from the working set
-          const testPaths = new Set<string>()
-          for (const [path] of sorted) {
-            if (isTestPath(path)) testPaths.add(path)
-          }
-          // Also scan git status for test files
-          try {
-            const status = yield* git.status(workDir)
-            for (const item of status) {
-              if (isTestPath(item.file)) testPaths.add(item.file)
+            try {
+              const status = yield* git.status(workDir)
+              for (const item of status) {
+                if (isTestPath(item.file)) testPaths.add(item.file)
+              }
+            } catch {
+              // non-fatal
             }
-          } catch {
-            // non-fatal
+            relatedTests = [...testPaths].slice(0, 10)
+          } else {
+            // Fallback to EventStore-only recency ranking when DuckDB not ready
+            const fileEvents = yield* eventStore.query({
+              sessionId,
+              limit: 50,
+              order: "desc",
+            })
+            // Deduplicate by file path, keeping the latest event per file
+            const fileMap = new Map<
+              string,
+              { lastEvent: string; summary: string; ts: string }
+            >()
+            for (const ev of fileEvents) {
+              if (!ev.filePath) continue
+              const existing = fileMap.get(ev.filePath)
+              if (!existing || ev.ts > existing.ts) {
+                fileMap.set(ev.filePath, {
+                  lastEvent: `${ev.eventType}${ev.status ? ` (${ev.status})` : ""}`,
+                  summary: `${ev.actor}: ${ev.eventType}${ev.toolName ? ` via ${ev.toolName}` : ""}`,
+                  ts: ev.ts,
+                })
+              }
+            }
+            // Rank by recency
+            const sorted = [...fileMap.entries()]
+              .sort(([, a], [, b]) => b.ts.localeCompare(a.ts))
+              .slice(0, 15)
+            workingSet = sorted.map(([path, info]) => ({
+              path,
+              freshness: info.ts,
+              lastEvent: info.lastEvent,
+              summary: info.summary,
+            }))
+            // Collect test paths from the working set
+            const testPaths = new Set<string>()
+            for (const [path] of sorted) {
+              if (isTestPath(path)) testPaths.add(path)
+            }
+            // Also scan git status for test files
+            try {
+              const status = yield* git.status(workDir)
+              for (const item of status) {
+                if (isTestPath(item.file)) testPaths.add(item.file)
+              }
+            } catch {
+              // non-fatal
+            }
+            relatedTests = [...testPaths].slice(0, 10)
           }
-          relatedTests = [...testPaths].slice(0, 10)
         } catch (e) {
           log.warn("could not build working set", { error: String(e) })
+        }
+
+        // ── Agent Heatmap ─────────────────────────────────
+        let agentHeatmap: AgentHeatmapEntry[] = []
+        if (workingSet.length > 0) {
+          const topFiles = workingSet.slice(0, 5).map((w) => w.path)
+          for (const fp of topFiles) {
+            const entries = yield* queryAgentHeatmap(duckdb, fp).pipe(
+              Effect.catch(() => Effect.succeed([] as AgentHeatmapEntry[])),
+            )
+            for (const entry of entries) {
+              const key = `${entry.agentName}:${entry.filePath}`
+              if (!agentHeatmap.some((e) => `${e.agentName}:${e.filePath}` === key)) {
+                agentHeatmap.push(entry)
+              }
+            }
+          }
         }
 
         // ── Recommended Next Context ──────────────────────
@@ -354,6 +442,7 @@ export const layer = Layer.effect(
         return {
           workingSet,
           relatedTests,
+          agentHeatmap,
           recommendedNextContext,
           _freshness: {
             fetchedAt: new Date(fetchedAt).toISOString(),
@@ -377,6 +466,20 @@ export const layer = Layer.effect(
           packetVersion: PACKET_VERSION,
         }
       },
+    )
+
+    const invalidationBus = yield* ContextInvalidationBus
+
+    // ── Working set ranking invalidation subscription ─────
+    yield* Effect.forkDaemon(
+      Effect.scoped(
+        Effect.gen(function* () {
+          const invalidationStream = yield* invalidationBus.subscribe("working_set_ranking")
+          yield* Stream.runForEach(invalidationStream, () =>
+            Effect.sync(() => log.debug("working set ranking invalidated — next assembleL2 will re-query DuckDB")),
+          )
+        }),
+      ),
     )
 
     return Service.of({

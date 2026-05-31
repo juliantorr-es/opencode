@@ -51,10 +51,7 @@ export interface Interface {
   readonly getProjection: (campaignId: string) => Effect.Effect<CampaignStateProjection>
 }
 
-export class CampaignProjector extends Context.Tag("CampaignProjector")<
-  CampaignProjector,
-  Interface
->() {}
+export class CampaignProjector extends Context.Service<CampaignProjector, Interface>()("CampaignProjector") {}
 
 // ── Implementation ─────────────────────────────────────────
 

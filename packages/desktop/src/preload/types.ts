@@ -2,7 +2,6 @@ import type { DesktopMenuAction } from "@opencode-ai/app/desktop-menu"
 
 export type InitStep =
   | { phase: "server_waiting" }
-  | { phase: "sqlite_waiting" }
   | { phase: "safe_mode"; error: { message: string; component: string } }
   | { phase: "degraded_mode" }
   | { phase: "done" }
@@ -35,7 +34,10 @@ export type ServerReadyData = {
   password: string | null
 }
 
-export type SqliteMigrationProgress = { type: "InProgress"; value: number } | { type: "Done" }
+export type StorageMigrationProgress = { type: "InProgress"; value: number } | { type: "Done" }
+
+/** @deprecated Use StorageMigrationProgress */
+export type SqliteMigrationProgress = StorageMigrationProgress
 
 export type WslConfig = { enabled: boolean }
 
@@ -105,7 +107,7 @@ export type ElectronAPI = {
   storeLength: (name: string) => Promise<number>
 
   getWindowCount: () => Promise<number>
-  onSqliteMigrationProgress: (cb: (progress: SqliteMigrationProgress) => void) => () => void
+  onStorageMigrationProgress: (cb: (progress: StorageMigrationProgress) => void) => () => void
   onMenuCommand: (cb: (id: string) => void) => () => void
   onDeepLink: (cb: (urls: string[]) => void) => () => void
 
@@ -165,4 +167,15 @@ export type ElectronAPI = {
 
   getSafeModeDiagnostics: () => Promise<SafeModeDiagnostics>
   safeModeAction: (action: SafeModeAction) => Promise<void>
+
+  /** Internal map for pluginOff() to look up the IPC listener by channel+handler key. */
+  _pluginListeners: Map<string, (event: unknown, payload: { channel: string; data: unknown }) => void>
+  /** Plugin transport — fire-and-forget message to main process */
+  pluginSend: (channel: string, data?: unknown) => void
+  /** Plugin transport — subscribe to push messages from main process */
+  pluginOn: (channel: string, handler: (data: unknown) => void) => () => void
+  /** Plugin transport — unsubscribe from push messages */
+  pluginOff: (channel: string, handler: (data: unknown) => void) => void
+  /** Plugin transport — request/response RPC to main process */
+  pluginInvoke: (channel: string, data?: unknown) => Promise<unknown>
 }

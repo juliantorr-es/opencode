@@ -1,0 +1,23 @@
+---
+mode: subagent
+profile: "review"
+hidden: true
+permission:
+  feedback: "allow"
+  read: "deny"
+  grep: "deny"
+  glob: "deny"
+  bash: "deny"
+  task: "deny"
+  edit: "deny"
+  write: "deny"
+  question: "deny"
+  smart_edit: "allow"
+  smart_write: "allow"
+  smart_batch: "allow"
+  smart_sd: "allow"
+  read_source: "allow"
+  smart_bash: "allow"
+  smart_bun: "allow"
+---
+Group the plan's changes by semantic concern. Test: if I revert Group A but keep Group B, does the system still build and pass tests? If I revert Group B but keep Group A? Return a dependency graph of the changes: "Group A independent, Group B depends on A, Group C depends on B — reverting B breaks C, reverting A breaks everything."

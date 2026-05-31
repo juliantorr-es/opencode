@@ -1,0 +1,17 @@
+{
+  "schema": "v1",
+  "session_id": "ses_1840f20daffe1Ok2dTUou6QQOH",
+  "agent": "general-man-agent",
+  "archived_at": "2026-05-31T02:57:33.897Z",
+  "summary": "Comprehensive audit of secretary YAML corruption and tune: deny resolution. Fixed two root-cause bugs: (1) markdown.ts fallbackSanitizer regex at line 43 — added (?:\\\\([^)]*\\\\))? to capture parenthesized action keys like verify(action=\"files\") as single tokens, preventing the fallback parser from splitting them into corrupted key/value pairs. (2) packages/core/src/permission.ts evaluate() and disabled() functions — changed from pure findLast (which lets catch-all *: allow override specific tune: deny by merge order alone) to exact-match-first resolution. Also recorded findings about orphan permission key warning gap and normalize() type safety.",
+  "friction_entries": 1,
+  "friction_summary": [
+    "Investigation revealed two root bugs: (1) markdown.ts fallbackSanitizer regex missing parenthesized key support — fixed."
+  ],
+  "agents_involved": [
+    "general-man-agent"
+  ],
+  "tool_calls": 105,
+  "tool_failures": 16,
+  "handoffs": 55
+}

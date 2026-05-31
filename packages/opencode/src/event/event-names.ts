@@ -19,11 +19,16 @@ export const EventName = {
   SessionIdle: 'session.idle', // # deprecated — remove in Phase 4
   SessionCompacted: 'session.compacted',
   MessagePartDelta: 'message.part.delta',
+  MessageUpdated: 'message.updated',
+  MessageRemoved: 'message.removed',
+  MessagePartUpdated: 'message.part.updated',
+  MessagePartRemoved: 'message.part.removed',
   TodoUpdated: 'todo.updated',
 
   // permission.*
   PermissionAsked: 'permission.asked',
   PermissionReplied: 'permission.replied',
+  PermissionDenied: 'permission.denied',
 
   // question.*
   QuestionAsked: 'question.asked',
@@ -35,6 +40,8 @@ export const EventName = {
 
   // file.*
   FileEdited: 'file.edited',
+  FileConflict: 'file.conflict',
+  FileRead: 'file.read',
   FileWatcherUpdated: 'file.watcher.updated',
 
   // project.*
@@ -53,11 +60,12 @@ export const EventName = {
 
   // lsp.*
   LspDiagnostics: 'lsp.diagnostics',
+  LspClientDiagnostics: 'lsp.client.diagnostics',
   LspUpdated: 'lsp.updated',
 
   // installation.*
   InstallationUpdated: 'installation.updated',
-  InstallationUpdateAvailable: 'installation.update_available',
+  InstallationUpdateAvailable: 'installation.update-available',
 
   // ide.*
   IdeInstalled: 'ide.installed',
@@ -70,6 +78,12 @@ export const EventName = {
   // coordination.*
   CoordSubagentPhase: 'coord.subagent.phase',
 
+  // session.next.*
+  SessionNextAgentSwitched: 'session.next.agent.switched',
+  SessionNextModelSwitched: 'session.next.model.switched',
+  SessionNextPrompted: 'session.next.prompted',
+  SessionNextSynthetic: 'session.next.synthetic',
+
   // workspace.*
   WorkspaceReady: 'workspace.ready',
   WorkspaceFailed: 'workspace.failed',
@@ -81,6 +95,7 @@ export const EventName = {
 
   // campaign.*
   CampaignCreated: 'campaign.created',
+  CampaignLaneCreated: 'lane.created',
   CampaignLaneAssigned: 'campaign.lane.assigned',
   CampaignLaneCompleted: 'campaign.lane.completed',
   CampaignGateActivated: 'campaign.gate.activated',
@@ -98,6 +113,40 @@ export const EventName = {
   CampaignPublicationAdmitted: 'campaign.publication.admitted',
   CampaignPublicationBlocked: 'campaign.publication.blocked',
   CampaignCheckpointCreated: 'campaign.checkpoint.created',
+
+  // context.*
+  ContextSufficient: 'context.sufficient',
+
+  // plan.*
+  PlanProduced: 'plan.produced',
+  PlanApproved: 'plan.approved',
+  PlanRejected: 'plan.rejected',
+  PlanCreated: 'plan.created',
+  ArtifactPlan: 'artifact.plan',
+  CriticReview: 'critic.review',
+
+  // edit.*
+  EditApplied: 'edit.applied',
+
+  // validation.*
+  ValidationCompleted: 'validation.completed',
+  ValidationFailure: 'validation.failure',
+
+  // scout.*
+  ScoutCompleted: 'scout.completed',
+
+  // scope.*
+  ScopeSynthesized: 'scope.synthesized',
+
+  // child.*
+  ChildBlocked: 'child.blocked',
+  ChildCompleted: 'child.completed',
+  LaneCompleted: 'lane.completed',
+  LaneBlocked: 'lane.blocked',
+  ClaimConflict: 'claim.conflict',
+  ToolFailed: 'tool.failed',
+  UserApproval: 'user.approval',
+  RedteamFinding: 'redteam.finding',
 } as const
 
 /** Union type of all canonical event type strings. */

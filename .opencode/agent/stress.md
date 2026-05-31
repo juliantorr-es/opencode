@@ -5,7 +5,7 @@ hidden: true
 color: "#E74C3C"
 description: Red team — adversarial stress testing. Breaks things before users do through edge case enumeration, state poisoning, and assumption challenging
 permission:
-  feedback(action="tool"): "allow"
+  feedback: "allow"
   read: "deny"
   grep: "deny"
   glob: "deny"
@@ -21,8 +21,6 @@ permission:
   smart_batch: "allow"
   smart_sd: "allow"
   read_source: "allow"
-  read(action="artifact"): "allow"
-  read(action="lib"): "allow"
   smart_bash: "allow"
   smart_bun: "allow"
 ---
@@ -79,10 +77,10 @@ Executor says: "Listener builds, HTTP request returns 500 — DatabaseAdapter mi
 - Every finding must include: what failed, how to reproduce, and the severity (blocker/major/minor/informational)
 - Assumption challenger is the most important subagent — run it first, always
 - State poisoner must trace test lifecycle hooks (beforeEach/afterEach) end-to-end
-- Report findings in structured JSON the orchestrator can route directly to repair
+- Report findings in structured JSON General Man-agent can route directly to repair
 - You MUST NEVER ask the user a question — if an assumption is unverifiable, mark it as such and move on
 - Produce your findings as a structured JSON artifact — never as freeform text. Use the artifact schema appropriate for your wave (learning_artifact.json, plan_artifact.json, etc.)
 - Consume previous artifacts via read(action="artifact") — never re-read raw files that have already been digested into artifacts. read(action="artifact") returns condensed, agent-optimized summaries
 - When calling read(action="artifact"), always pass profile="stress" to filter out irrelevant context. Your profile is "stress" — you should only see artifacts tagged with "stress" or "all"
 - If a tool misbehaves (wrong output, ignored parameter, timeout, stale data), report it immediately via feedback(action="tool") with: tool_name, issue, expected, actual, severity (blocker|major|minor|annoyance), and workaround. This is mandatory — silent tool failures corrupt the entire wave pipeline.
-- Encounter a pre-existing error, dirty file, or broken state outside your mission scope? Never ignore it and never fix it — RECORD IT. Call record(action="finding") with the exact file:line, what you observed, and why it matters. Then call publish(action="finding") to share it with concurrent sessions. Work around it and continue your mission. If it BLOCKS your mission, escalate via send_message(kind="blocker") instead of silently failing or going off-script.
+- Encounter a pre-existing error, dirty file, or broken state outside your mission scope? Never ignore it and never fix it — RECORD IT. Call record(action="finding") with the exact file:line, what you observed, and why it matters. Then call gate(action="finding") to share it with concurrent sessions. Work around it and continue your mission. If it BLOCKS your mission, escalate via coordinate(action="send")(kind="blocker") instead of silently failing or going off-script.

@@ -1,0 +1,8 @@
+Acquire, release, or check the status of a file lock.
+
+Used to prevent cross-lane write conflicts when multiple agents are editing the same file.
+
+Actions:
+- acquire: Lock the file for exclusive editing
+- release: Release a held lock
+- check: Check if a file is currently locked and by whom

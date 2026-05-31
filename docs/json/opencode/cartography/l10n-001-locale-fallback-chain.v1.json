@@ -1,0 +1,349 @@
+{
+  "schema_version": "v1",
+  "mission": "L10N-001: Locale fallback chain for the i18n system",
+  "generated_at": "2026-05-30T23:55:00Z",
+  "agent": "cartographer",
+  "sources_consulted": [
+    "packages/app/src/context/language.tsx",
+    "packages/app/src/i18n/en.ts",
+    "packages/app/src/i18n/zh.ts",
+    "packages/app/src/i18n/zht.ts",
+    "packages/app/src/i18n/ko.ts",
+    "packages/app/src/i18n/fallback.test.ts",
+    "packages/app/src/i18n/coverage.test.ts",
+    "packages/app/src/i18n/parity.test.ts",
+    "packages/app/src/i18n/format.ts",
+    "packages/app/src/i18n/plural.ts",
+    "packages/app/src/i18n.d.ts",
+    "packages/desktop/src/renderer/i18n/index.ts",
+    "packages/desktop/src/renderer/i18n/en.ts",
+    "packages/desktop/src/renderer/i18n/zh.ts",
+    "packages/console/app/src/context/i18n.tsx",
+    "packages/console/app/src/i18n/index.ts",
+    "packages/web/src/i18n/locales.ts"
+  ],
+
+  "surface_map": {
+    "i18n_subsystems": {
+      "app": {
+        "package": "packages/app",
+        "entry": "packages/app/src/context/language.tsx",
+        "t_function": "i18n.translator(() => dict() ?? base, i18n.resolveTemplate).t",
+        "locale_type": "Locale (18 locales: en, zh, zht, ko, de, es, fr, da, ja, pl, ru, uk, ar, no, br, th, bs, tr)",
+        "locale_files_dir": "packages/app/src/i18n/",
+        "key_resolution": "dynamic merge via createResource: merge(appDict, uiDict) returns { ...base, ...flatten(appDict), ...flatten(uiDict) }",
+        "include_ui_i18n": true,
+        "persistence": "localStorage via persisted() + document.cookie"
+      },
+      "desktop_renderer": {
+        "package": "packages/desktop",
+        "entry": "packages/desktop/src/renderer/i18n/index.ts",
+        "t_function": "export function t(key, params) { return translate(key, params) }; translate = i18n.translator(() => state.dict, i18n.resolveTemplate)",
+        "locale_type": "Locale (16 locales: en, zh, zht, ko, de, es, fr, da, ja, pl, ru, uk, ar, no, br, bs)",
+        "locale_files_dir": "packages/desktop/src/renderer/i18n/",
+        "key_resolution": "build() merges { ...base, ...flatten(appLocale), ...flatten(desktopLocale) } at init time",
+        "include_ui_i18n": false,
+        "persistence": "Electron store via window.api.storeGet"
+      },
+      "console_app": {
+        "package": "packages/console/app",
+        "entry": "packages/console/app/src/context/i18n.tsx",
+        "t_function": "resolve(dict()[key], params); resolve = text.replace(/{{(\\w+)}}/g, ...)",
+        "locale_type": "Locale (19 locales: en, zh, zht, ko, de, es, fr, it, da, ja, pl, ru, uk, ar, no, br, th, tr, bs)",
+        "locale_files_dir": "packages/console/app/src/i18n/",
+        "key_resolution": "i18n(locale) function returns { ...base, ...localeDict } via static imports but only defined for 18 non-en locales",
+        "include_ui_i18n": false,
+        "persistence": "Cookie via document.cookie"
+      },
+      "web": {
+        "package": "packages/web",
+        "entry": "packages/web/src/i18n/locales.ts",
+        "t_function": "N/A — uses JSON files loaded via content/",
+        "locale_type": "Locale (18 locales with localeAlias mapping)",
+        "locale_files_dir": "packages/web/src/content/i18n/",
+        "key_resolution": "JSON static files",
+        "include_ui_i18n": false,
+        "persistence": "N/A"
+      }
+    }
+  },
+
+  "locale_files": {
+    "app_i18n": [
+      { "locale": "en", "file": "packages/app/src/i18n/en.ts", "key_count": 945, "imports_en": false, "notes": "Base locale — source of truth" },
+      { "locale": "zh", "file": "packages/app/src/i18n/zh.ts", "key_count": 963, "imports_en": true, "notes": "Simplified Chinese; imports en for Keys type" },
+      { "locale": "zht", "file": "packages/app/src/i18n/zht.ts", "key_count": 962, "imports_en": true, "notes": "Traditional Chinese; parent=zh" },
+      { "locale": "ko", "file": "packages/app/src/i18n/ko.ts", "key_count": 950, "imports_en": false, "notes": "" },
+      { "locale": "de", "file": "packages/app/src/i18n/de.ts", "key_count": 933, "imports_en": false, "notes": "" },
+      { "locale": "es", "file": "packages/app/src/i18n/es.ts", "key_count": 937, "imports_en": false, "notes": "" },
+      { "locale": "fr", "file": "packages/app/src/i18n/fr.ts", "key_count": 930, "imports_en": false, "notes": "" },
+      { "locale": "da", "file": "packages/app/src/i18n/da.ts", "key_count": 945, "imports_en": false, "notes": "" },
+      { "locale": "ja", "file": "packages/app/src/i18n/ja.ts", "key_count": 946, "imports_en": false, "notes": "Has 13 github.* keys but all marked // TODO: translate" },
+      { "locale": "pl", "file": "packages/app/src/i18n/pl.ts", "key_count": 941, "imports_en": false, "notes": "Has 13 github.* keys" },
+      { "locale": "ru", "file": "packages/app/src/i18n/ru.ts", "key_count": 937, "imports_en": false, "notes": "" },
+      { "locale": "uk", "file": "packages/app/src/i18n/uk.ts", "key_count": 940, "imports_en": false, "notes": "" },
+      { "locale": "ar", "file": "packages/app/src/i18n/ar.ts", "key_count": 951, "imports_en": false, "notes": "" },
+      { "locale": "no", "file": "packages/app/src/i18n/no.ts", "key_count": 944, "imports_en": true, "notes": "Has 11 github.* keys; imports en for Keys type" },
+      { "locale": "br", "file": "packages/app/src/i18n/br.ts", "key_count": 940, "imports_en": false, "notes": "Portuguese (Brazil)" },
+      { "locale": "th", "file": "packages/app/src/i18n/th.ts", "key_count": 953, "imports_en": false, "notes": "NOT imported by desktop i18n" },
+      { "locale": "bs", "file": "packages/app/src/i18n/bs.ts", "key_count": 944, "imports_en": false, "notes": "" },
+      { "locale": "tr", "file": "packages/app/src/i18n/tr.ts", "key_count": 942, "imports_en": false, "notes": "NOT imported by desktop i18n" }
+    ],
+    "desktop_i18n": [
+      { "locale": "en", "file": "packages/desktop/src/renderer/i18n/en.ts", "key_count": 41, "notes": "Desktop-specific keys only" },
+      { "locale": "zh", "file": "packages/desktop/src/renderer/i18n/zh.ts", "key_count": 21, "notes": "" },
+      { "locale": "zht", "file": "packages/desktop/src/renderer/i18n/zht.ts", "key_count": 21, "notes": "" },
+      { "locale": "ko", "file": "packages/desktop/src/renderer/i18n/ko.ts", "key_count": 20, "notes": "" },
+      { "locale": "de", "file": "packages/desktop/src/renderer/i18n/de.ts", "key_count": 19, "notes": "" },
+      { "locale": "es", "file": "packages/desktop/src/renderer/i18n/es.ts", "key_count": 20, "notes": "" },
+      { "locale": "fr", "file": "packages/desktop/src/renderer/i18n/fr.ts", "key_count": 19, "notes": "" },
+      { "locale": "da", "file": "packages/desktop/src/renderer/i18n/da.ts", "key_count": 19, "notes": "" },
+      { "locale": "ja", "file": "packages/desktop/src/renderer/i18n/ja.ts", "key_count": 19, "notes": "" },
+      { "locale": "pl", "file": "packages/desktop/src/renderer/i18n/pl.ts", "key_count": 19, "notes": "" },
+      { "locale": "ru", "file": "packages/desktop/src/renderer/i18n/ru.ts", "key_count": 20, "notes": "" },
+      { "locale": "uk", "file": "packages/desktop/src/renderer/i18n/uk.ts", "key_count": 19, "notes": "" },
+      { "locale": "ar", "file": "packages/desktop/src/renderer/i18n/ar.ts", "key_count": 21, "notes": "" },
+      { "locale": "no", "file": "packages/desktop/src/renderer/i18n/no.ts", "key_count": 19, "notes": "" },
+      { "locale": "br", "file": "packages/desktop/src/renderer/i18n/br.ts", "key_count": 20, "notes": "" },
+      { "locale": "bs", "file": "packages/desktop/src/renderer/i18n/bs.ts", "key_count": 19, "notes": "" }
+    ],
+    "console_i18n": [
+      { "locale": "en", "file": "packages/console/app/src/i18n/en.ts", "notes": "Marketing/console keys (~500+ keys)" },
+      { "locale": "it", "file": "packages/console/app/src/i18n/it.ts", "notes": "Italian — unique to console, not in app/desktop/ui" },
+      { "locale": "th", "file": "packages/console/app/src/i18n/th.ts", "notes": "" },
+      { "locale": "tr", "file": "packages/console/app/src/i18n/tr.ts", "notes": "" }
+    ],
+    "ui_i18n": [
+      { "locale": "en", "file": "packages/ui/src/i18n/en.ts", "notes": "UI component keys (~140 keys)" }
+    ],
+    "test_files": [
+      { "file": "packages/app/src/i18n/fallback.test.ts", "purpose": "Tests resolveKey() with parent dict, base fallback, and template params. Defines the target fallback chain behavior." },
+      { "file": "packages/app/src/i18n/coverage.test.ts", "purpose": "Tests every locale resolves every key through parent→base→raw fallback chain. Coverage report in test output." },
+      { "file": "packages/app/src/i18n/parity.test.ts", "purpose": "Tests every locale has all keys present from en.ts." }
+    ],
+    "scripts": [
+      { "file": "packages/app/scripts/generate-locale-stubs.ts", "purpose": "Generates stub entries for missing keys per locale." }
+    ]
+  },
+
+  "current_key_resolution_logic": {
+    "app_context": {
+      "file": "packages/app/src/context/language.tsx",
+      "line": 219,
+      "pattern": "i18n.translator(() => dict() ?? base, i18n.resolveTemplate).t",
+      "description": "Uses @solid-primitives/i18n translator. dict is a createResource that loads via merge(). Merged dict always has { ...base, ...flatten(appDict), ...flatten(uiDict) }. English keys always present.",
+      "parent_fallback": false,
+      "missing_key_behavior": "Returns undefined if key not in merged dict (never happens due to base merge)"
+    },
+    "desktop_renderer": {
+      "file": "packages/desktop/src/renderer/i18n/index.ts",
+      "line": 172,
+      "pattern": "i18n.translator(() => state.dict, i18n.resolveTemplate)",
+      "description": "build() at line 145-162 merges { ...base, ...flatten(appLocale), ...flatten(desktopLocale) } at init. All English keys always present for any locale.",
+      "parent_fallback": false,
+      "missing_key_behavior": "Returns undefined if key not in merged dict (never happens due to base merge)"
+    },
+    "console_app": {
+      "file": "packages/console/app/src/i18n/index.ts",
+      "line": 26,
+      "pattern": "return { ...base, ...localeDict }",
+      "description": "i18n(locale) function returns spread merge of base + locale. All English keys always present.",
+      "parent_fallback": false,
+      "missing_key_behavior": "resolve(dict()[key], params) returns undefined if key missing (never happens due to base merge)"
+    }
+  },
+
+  "locale_detection_and_normalization": {
+    "app": {
+      "file": "packages/app/src/context/language.tsx",
+      "lines": 167-199,
+      "detectLocale": "Checks navigator.languages against localeMatchers array (line 155). Comprehensive: includes th, tr, handles zh-Hant, nb/nn/no, pt, etc.",
+      "normalizeLocale": "Returns value if in LOCALES array, else 'en' (line 181). No parent extraction from region codes."
+    },
+    "desktop": {
+      "file": "packages/desktop/src/renderer/i18n/index.ts",
+      "lines": 77-109,
+      "detectLocale": "Manual switch-style detection. Missing: th, tr locale entries. Handles zh-Hant → zht, nb/nn → no, pt → br.",
+      "normalizeLocale": "N/A — uses parseLocale() with LOCALES array."
+    },
+    "web": {
+      "file": "packages/web/src/i18n/locales.ts",
+      "lines": 88-117,
+      "matchLocale": "Most sophisticated. Handles localeAlias mapping (zh→zh-cn, zht→zh-tw, br→pt-br, nn→nb). Uses starts array for generic prefix matching.",
+      "exactLocale": "Direct lookup in localeAlias."
+    }
+  },
+
+  "parent_locale_extraction": {
+    "current_state": "No runtime parent locale extraction exists in app or desktop i18n systems. Only the test files define parent relationships (coverage.test.ts line 66: zht → zh).",
+    "parent_mapping_from_tests": {
+      "zht": { "parent": "zh", "reason": "Traditional Chinese → Simplified Chinese" }
+    },
+    "proposed_parent_mapping": {
+      "zht": { "parent": "zh", "reason": "Traditional Chinese → Simplified Chinese" },
+      "no": { "parent": null, "reason": "Norwegian Bokmål, no parent variant in our locale set" },
+      "br": { "parent": null, "reason": "Portuguese (Brazil), no pt variant in app locale set" },
+      "th": { "parent": null, "reason": "No parent" },
+      "tr": { "parent": null, "reason": "No parent" }
+    },
+    "region_code_extraction": {
+      "pattern": "For locale codes like zh-CN, zh-TW, pt-BR, nb-NO: extract primary language subtag (zh, pt, nb/nn, etc.) and map to our 2-letter codes.",
+      "existing_in_web": "packages/web/src/i18n/locales.ts lines 28-62 has localeAlias mapping zh-cn → zh-cn, zh-tw → zh-tw, zht → zh-tw, br → pt-br"
+    }
+  },
+
+  "t_function_current_behavior": {
+    "signature": "t(key: keyof Dictionary, params?: Record<string, string | number>) => string",
+    "uses_template": true,
+    "template_syntax": "{{ variableName }}",
+    "missing_key_at_translator_level": "Returns undefined (not the key name) when key not in dict. @solid-primitives/i18n translator doesn't provide built-in fallback.",
+    "missing_key_resolved": "Currently never happens because build()/merge() always includes all English keys via { ...base, ...localeDict } spread.",
+    "resolveTemplate": "Handles {{ param }} substitution. Called for every key lookup regardless of dict source."
+  },
+
+  "test_design_for_fallback": {
+    "resolveKey_function": {
+      "file": "packages/app/src/i18n/fallback.test.ts",
+      "lines": 4-17,
+      "signature": "resolveKey(key, dict, parentDict, base, params?) => string",
+      "chain": [
+        "1. if dict && key in dict: return resolveTemplate(dict[key], params)",
+        "2. if parentDict && key in parentDict: return resolveTemplate(parentDict[key], params)",
+        "3. if key in base: return resolveTemplate(base[key], params)",
+        "4. return key  (raw key as last resort)"
+      ]
+    },
+    "coverage_test_assertions": {
+      "file": "packages/app/src/i18n/coverage.test.ts",
+      "lines": 68-79,
+      "description": "For every locale, for every en key, resolves through chain and asserts result !== raw key and is non-empty string."
+    }
+  },
+
+  "github_key_coverage_gap": {
+    "evidence": {
+      "en": "Has 13 github.* keys (lines 590-604 in en.ts)",
+      "ja": "Has 13 github.* keys but ALL marked // TODO: translate (identical to English)",
+      "ko": "Has 13 github.* keys (likely Korean translations)",
+      "pl": "Has 13 github.* keys (likely Polish translations)",
+      "no": "Has 11 github.* keys (likely Norwegian translations)",
+      "zh": "NO github.* keys (falls through to English via base merge)",
+      "zht": "NO github.* keys",
+      "de": "NO github.* keys",
+      "es": "NO github.* keys",
+      "fr": "NO github.* keys",
+      "da": "NO github.* keys",
+      "ru": "NO github.* keys",
+      "uk": "NO github.* keys",
+      "ar": "NO github.* keys",
+      "br": "NO github.* keys",
+      "bs": "NO github.* keys",
+      "th": "NO github.* keys",
+      "tr": "NO github.* keys"
+    },
+    "current_behavior": "Due to { ...base, ...localeDict } merge, all keys are always present. Missing github.* keys fall through to English at the dict level, not the lookup level.",
+    "desired_behavior": "requested locale → parent locale (if available) → base (English) → raw key name"
+  },
+
+  "recommendation": {
+    "approach": "Implement resolveKey() as defined in fallback.test.ts and wire it into all three i18n subsystems",
+    "steps": [
+      {
+        "step": 1,
+        "action": "Add parent locale map to each i18n runtime module",
+        "files": [
+          "packages/app/src/context/language.tsx",
+          "packages/desktop/src/renderer/i18n/index.ts",
+          "packages/console/app/src/context/i18n.tsx"
+        ],
+        "detail": "Define a PARENTS record mapping locale → parent locale (e.g., zht → zh). Add as lookup table next to existing LOCALES or loaders arrays."
+      },
+      {
+        "step": 2,
+        "action": "Replace the flat build()/merge() functions with resolveKey-style lookup",
+        "files": [
+          "packages/app/src/context/language.tsx",
+          "packages/desktop/src/renderer/i18n/index.ts",
+          "packages/console/app/src/i18n/index.ts"
+        ],
+        "detail": "Instead of { ...base, ...localeDict }, keep dicts separate and chain lookups: t(key) → check locale dict → check parent dict → check base → return key. Use @solid-primitives/i18n's resolveTemplate for interpolation."
+      },
+      {
+        "step": 3,
+        "action": "Update locale detection to extract parent from region codes",
+        "files": [
+          "packages/app/src/context/language.tsx",
+          "packages/desktop/src/renderer/i18n/index.ts"
+        ],
+        "detail": "Add normalizeLocale() function that handles zh-CN → zh, zh-TW → zht, pt-BR → br, nb-NO → no. Leverage patterns from packages/web/src/i18n/locales.ts localeAlias and matchLocale()."
+      },
+      {
+        "step": 4,
+        "action": "Add th and tr to desktop locale list",
+        "files": [
+          "packages/desktop/src/renderer/i18n/index.ts"
+        ],
+        "detail": "Desktop LOCALES array and build() function are missing th and tr. Add them for parity with app locale set."
+      },
+      {
+        "step": 5,
+        "action": "Update tests to validate the new runtime behavior",
+        "files": [
+          "packages/app/src/i18n/coverage.test.ts",
+          "packages/app/src/i18n/fallback.test.ts"
+        ],
+        "detail": "Tests already define the contract. Minor updates may be needed after runtime changes."
+      }
+    ],
+    "effort": "medium",
+    "effort_breakdown": {
+      "core_logic_change": "2-3 hours: implement resolveKey and parent map in app/language.tsx",
+      "desktop_sync": "1-2 hours: replicate in desktop/renderer/i18n/index.ts + add th/tr",
+      "console_sync": "0.5-1 hour: replicate in console/app",
+      "locale_detection": "1-2 hours: add normalizeLocale with region code extraction",
+      "testing": "1 hour: update tests and verify coverage per locale",
+      "total_estimated_hours": "6-9 hours"
+    },
+    "key_files_to_modify": [
+      "packages/app/src/context/language.tsx",
+      "packages/desktop/src/renderer/i18n/index.ts",
+      "packages/console/app/src/i18n/index.ts",
+      "packages/console/app/src/context/i18n.tsx"
+    ],
+    "key_files_to_create": [],
+    "key_files_to_read_only": [
+      "packages/app/src/i18n/en.ts (source of truth, don't modify)",
+      "packages/app/src/i18n/fallback.test.ts (contract reference, don't modify)",
+      "packages/app/src/i18n/coverage.test.ts (contract reference, don't modify)"
+    ],
+    "existing_assets_leverage": {
+      "test_files": "packages/app/src/i18n/fallback.test.ts defines the exact resolveKey() function to implement",
+      "web_locale_alias": "packages/web/src/i18n/locales.ts has localeAlias mapping and matchLocale() for region code extraction"
+    }
+  },
+
+  "risks_and_edge_cases": [
+    {
+      "risk": "Performance regression from three-dict fallback (current → parent → base) vs single merged dict lookup",
+      "mitigation": "Cache resolved keys per locale+parent combination. Profile with existing test suite."
+    },
+    {
+      "risk": "Console/app and desktop use different i18n patterns (translator vs custom resolve)",
+      "mitigation": "Both can use the same resolveKey logic. For console, it's a simple key lookup without solid-primitives/i18n dependency."
+    },
+    {
+      "risk": "Missing key returns key name string instead of undefined — could break components that check falsy",
+      "mitigation": "Returning the key name is safer than undefined (reduces null renders). Test for this specifically."
+    },
+    {
+      "risk": "The { ...base, ...localeDict } merge currently makes ALL keys present. Changing to resolveKey approach could break components that rely on keys existing in the dict object (e.g., Object.keys iteration)",
+      "mitigation": "Audit for any code that iterates dict keys. Coverage test already checks that every key resolves successfully."
+    },
+    {
+      "risk": "Desktop uses static imports (all 16 locales loaded at bundle time). Dynamic resolveKey adds no extra cost here.",
+      "mitigation": "No change needed for desktop import pattern. resolveKey is just a lookup change."
+    }
+  ],
+
+  "conclusion": "The i18n system has three runtime implementations, all using the same { base + localeDict } merge pattern that ensures all English keys are always present. The roadmap asks for a proper parent-locale fallback chain (zht → zh → en) and region code normalization (zh-CN → zh). The exact desired behavior is already defined and tested in packages/app/src/i18n/fallback.test.ts and coverage.test.ts. Implementation just needs to wire resolveKey() into the three runtime subsystems."
+}

@@ -1,0 +1,25 @@
+{"at":"2026-05-31T02:43:29.050Z","session_id":"ses_18415f78fffej8IqLZZMTURlr6","agent":"surveyor","tool":"smart_grep","phase":"started","detail":"@/git"}
+{"at":"2026-05-31T02:43:29.068Z","session_id":"ses_18415f78fffej8IqLZZMTURlr6","agent":"surveyor","tool":"smart_grep","phase":"completed","detail":"@/git"}
+{"at":"2026-05-31T02:43:29.301Z","session_id":"ses_18415f78fffej8IqLZZMTURlr6","agent":"surveyor","tool":"smart_find","phase":"started","detail":"git/**/*.ts"}
+{"at":"2026-05-31T02:43:29.337Z","session_id":"ses_18415f78fffej8IqLZZMTURlr6","agent":"surveyor","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T02:43:44.811Z","session_id":"ses_18415f78fffej8IqLZZMTURlr6","agent":"surveyor","tool":"smart_find","phase":"started","detail":"git.ts"}
+{"at":"2026-05-31T02:43:44.829Z","session_id":"ses_18415f78fffej8IqLZZMTURlr6","agent":"surveyor","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T02:43:45.089Z","session_id":"ses_18415f78fffej8IqLZZMTURlr6","agent":"surveyor","tool":"smart_find","phase":"started","detail":"git/**"}
+{"at":"2026-05-31T02:43:45.105Z","session_id":"ses_18415f78fffej8IqLZZMTURlr6","agent":"surveyor","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T02:44:16.593Z","session_id":"ses_18415f78fffej8IqLZZMTURlr6","agent":"surveyor","tool":"smart_grep","phase":"started","detail":"Git\\.Service|Git\\.defaultLayer|class Git|interface Git"}
+{"at":"2026-05-31T02:44:16.615Z","session_id":"ses_18415f78fffej8IqLZZMTURlr6","agent":"surveyor","tool":"smart_grep","phase":"completed","detail":"Git\\.Service|Git\\.defaultLayer|class Git|interface Git"}
+{"at":"2026-05-31T02:44:16.941Z","session_id":"ses_18415f78fffej8IqLZZMTURlr6","agent":"surveyor","tool":"smart_bash","phase":"started","detail":"List git directory contents"}
+{"at":"2026-05-31T02:44:16.941Z","session_id":"ses_18415f78fffej8IqLZZMTURlr6","agent":"surveyor","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T02:45:45.927Z","session_id":"ses_18415f78fffej8IqLZZMTURlr6","agent":"surveyor","tool":"smart_bash","phase":"started","detail":"Read type definitions from lines 30-72"}
+{"at":"2026-05-31T02:45:55.752Z","session_id":"ses_18415f78fffej8IqLZZMTURlr6","agent":"surveyor","tool":"smart_bash","phase":"started","detail":"Read lines 1-100 of git/index.ts"}
+{"at":"2026-05-31T02:45:55.753Z","session_id":"ses_18415f78fffej8IqLZZMTURlr6","agent":"surveyor","tool":"smart_bash","phase":"rerouted","detail":"→ read_source"}
+{"at":"2026-05-31T02:45:58.768Z","session_id":"ses_18415f78fffej8IqLZZMTURlr6","agent":"surveyor","tool":"smart_bash","phase":"started","detail":"Read full git/index.ts file"}
+{"at":"2026-05-31T02:45:58.768Z","session_id":"ses_18415f78fffej8IqLZZMTURlr6","agent":"surveyor","tool":"smart_bash","phase":"rerouted","detail":"→ read_source"}
+{"at":"2026-05-31T02:46:11.059Z","session_id":"ses_18415f78fffej8IqLZZMTURlr6","agent":"surveyor","tool":"smart_bash","phase":"started","detail":"Read first 100 lines of git/index.ts"}
+{"at":"2026-05-31T02:46:11.059Z","session_id":"ses_18415f78fffej8IqLZZMTURlr6","agent":"surveyor","tool":"smart_bash","phase":"rerouted","detail":"→ smart_sd"}
+{"at":"2026-05-31T02:46:20.660Z","session_id":"ses_18415f78fffej8IqLZZMTURlr6","agent":"surveyor","tool":"smart_bash","phase":"started","detail":"Read lines 1-100 of git/index.ts"}
+{"at":"2026-05-31T02:46:20.685Z","session_id":"ses_18415f78fffej8IqLZZMTURlr6","agent":"surveyor","tool":"smart_bash","phase":"completed","detail":"perl exit=0"}
+{"at":"2026-05-31T02:46:29.932Z","session_id":"ses_18415f78fffej8IqLZZMTURlr6","agent":"surveyor","tool":"smart_bash","phase":"started","detail":"Read type definitions from lines 30-72"}
+{"at":"2026-05-31T02:46:29.940Z","session_id":"ses_18415f78fffej8IqLZZMTURlr6","agent":"surveyor","tool":"smart_bash","phase":"completed","detail":"perl exit=0"}
+{"at":"2026-05-31T02:46:33.144Z","session_id":"ses_18415f78fffej8IqLZZMTURlr6","agent":"surveyor","tool":"smart_bash","phase":"started","detail":"Read Patch type definition"}
+{"at":"2026-05-31T02:46:33.163Z","session_id":"ses_18415f78fffej8IqLZZMTURlr6","agent":"surveyor","tool":"smart_bash","phase":"completed","detail":"perl exit=0"}

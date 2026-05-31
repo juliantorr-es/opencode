@@ -2,6 +2,7 @@ import { Effect, Schema } from "effect"
 import * as Tool from "./tool"
 import { AppFileSystem } from "@opencode-ai/core/filesystem"
 import { InstanceState } from "@/effect/instance-state"
+import { Service as BinaryManager } from "@/binary/manager"
 import { spawnSync } from "child_process"
 import DESCRIPTION from "./smart-grep.txt"
 
@@ -28,6 +29,8 @@ export const SmartGrepTool = Tool.define(
   "smart_grep",
   Effect.gen(function* () {
     const fs = yield* AppFileSystem.Service
+    const binaryManager = yield* BinaryManager
+    const rgPath = yield* binaryManager.resolve("rg")
 
     return {
       description: DESCRIPTION,
@@ -42,7 +45,7 @@ export const SmartGrepTool = Tool.define(
           const summaryOnly = params.summary_only ?? false
           const ctxLines = params.context_lines ?? 0
 
-          const cmd = ["rg", "--no-heading", "--line-number", "--color", "never"]
+          const cmd = [rgPath, "--no-heading", "--line-number", "--color", "never"]
           if (params.glob) cmd.push("-g", params.glob)
           if (ctxLines > 0) cmd.push("-C", String(ctxLines))
           cmd.push(params.pattern, searchPath)

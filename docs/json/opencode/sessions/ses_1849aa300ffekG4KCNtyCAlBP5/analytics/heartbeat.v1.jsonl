@@ -1,0 +1,54 @@
+{"at":"2026-05-31T00:18:25.055Z","session_id":"ses_1849aa300ffekG4KCNtyCAlBP5","agent":"cartographer","tool":"smart_find","phase":"started","detail":"*.json"}
+{"at":"2026-05-31T00:18:25.061Z","session_id":"ses_1849aa300ffekG4KCNtyCAlBP5","agent":"cartographer","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T00:18:25.361Z","session_id":"ses_1849aa300ffekG4KCNtyCAlBP5","agent":"cartographer","tool":"smart_find","phase":"started","detail":"*roadmap*"}
+{"at":"2026-05-31T00:18:25.368Z","session_id":"ses_1849aa300ffekG4KCNtyCAlBP5","agent":"cartographer","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T00:18:25.688Z","session_id":"ses_1849aa300ffekG4KCNtyCAlBP5","agent":"cartographer","tool":"smart_find","phase":"started","detail":"*roadmap*"}
+{"at":"2026-05-31T00:18:25.694Z","session_id":"ses_1849aa300ffekG4KCNtyCAlBP5","agent":"cartographer","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T00:18:27.237Z","session_id":"ses_1849aa300ffekG4KCNtyCAlBP5","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"List roadmap files in docs/json/roadmaps/"}
+{"at":"2026-05-31T00:18:27.237Z","session_id":"ses_1849aa300ffekG4KCNtyCAlBP5","agent":"cartographer","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T00:18:27.524Z","session_id":"ses_1849aa300ffekG4KCNtyCAlBP5","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Find all roadmap files in docs/"}
+{"at":"2026-05-31T00:18:27.524Z","session_id":"ses_1849aa300ffekG4KCNtyCAlBP5","agent":"cartographer","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T00:18:27.877Z","session_id":"ses_1849aa300ffekG4KCNtyCAlBP5","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Find roadmap-related source files"}
+{"at":"2026-05-31T00:18:27.877Z","session_id":"ses_1849aa300ffekG4KCNtyCAlBP5","agent":"cartographer","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T00:18:29.573Z","session_id":"ses_1849aa300ffekG4KCNtyCAlBP5","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"List roadmap files"}
+{"at":"2026-05-31T00:18:29.590Z","session_id":"ses_1849aa300ffekG4KCNtyCAlBP5","agent":"cartographer","tool":"smart_bash","phase":"completed","detail":"eza exit=0"}
+{"at":"2026-05-31T00:18:29.959Z","session_id":"ses_1849aa300ffekG4KCNtyCAlBP5","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Explore docs/json structure"}
+{"at":"2026-05-31T00:18:29.979Z","session_id":"ses_1849aa300ffekG4KCNtyCAlBP5","agent":"cartographer","tool":"smart_bash","phase":"completed","detail":"eza exit=0"}
+{"at":"2026-05-31T00:18:38.308Z","session_id":"ses_1849aa300ffekG4KCNtyCAlBP5","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"List tool files in tool directory"}
+{"at":"2026-05-31T00:18:38.328Z","session_id":"ses_1849aa300ffekG4KCNtyCAlBP5","agent":"cartographer","tool":"smart_bash","phase":"completed","detail":"eza exit=0"}
+{"at":"2026-05-31T00:18:38.797Z","session_id":"ses_1849aa300ffekG4KCNtyCAlBP5","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"List schema files for roadmap/coordination"}
+{"at":"2026-05-31T00:18:38.824Z","session_id":"ses_1849aa300ffekG4KCNtyCAlBP5","agent":"cartographer","tool":"smart_bash","phase":"completed","detail":"eza exit=0"}
+{"at":"2026-05-31T00:18:46.438Z","session_id":"ses_1849aa300ffekG4KCNtyCAlBP5","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"List all roadmap items from active.v1.json"}
+{"at":"2026-05-31T00:18:46.438Z","session_id":"ses_1849aa300ffekG4KCNtyCAlBP5","agent":"cartographer","tool":"smart_bash","phase":"rerouted","detail":"→ read_source"}
+{"at":"2026-05-31T00:18:46.801Z","session_id":"ses_1849aa300ffekG4KCNtyCAlBP5","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Read progress audit trail"}
+{"at":"2026-05-31T00:18:46.821Z","session_id":"ses_1849aa300ffekG4KCNtyCAlBP5","agent":"cartographer","tool":"smart_bash","phase":"completed","detail":"wc exit=0"}
+{"at":"2026-05-31T00:18:47.413Z","session_id":"ses_1849aa300ffekG4KCNtyCAlBP5","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Find tool registry/registration pattern"}
+{"at":"2026-05-31T00:18:47.417Z","session_id":"ses_1849aa300ffekG4KCNtyCAlBP5","agent":"cartographer","tool":"smart_bash","phase":"rerouted","detail":"→ smart_grep"}
+{"at":"2026-05-31T00:18:50.115Z","session_id":"ses_1849aa300ffekG4KCNtyCAlBP5","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Check if roadmap tool files already exist"}
+{"at":"2026-05-31T00:18:50.115Z","session_id":"ses_1849aa300ffekG4KCNtyCAlBP5","agent":"cartographer","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T00:18:50.432Z","session_id":"ses_1849aa300ffekG4KCNtyCAlBP5","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"roadmap"}
+{"at":"2026-05-31T00:18:50.443Z","session_id":"ses_1849aa300ffekG4KCNtyCAlBP5","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"roadmap"}
+{"at":"2026-05-31T00:18:53.076Z","session_id":"ses_1849aa300ffekG4KCNtyCAlBP5","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Find all roadmap-related files in source"}
+{"at":"2026-05-31T00:18:53.076Z","session_id":"ses_1849aa300ffekG4KCNtyCAlBP5","agent":"cartographer","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T00:18:53.441Z","session_id":"ses_1849aa300ffekG4KCNtyCAlBP5","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"roadmap"}
+{"at":"2026-05-31T00:18:53.450Z","session_id":"ses_1849aa300ffekG4KCNtyCAlBP5","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"roadmap"}
+{"at":"2026-05-31T00:19:04.929Z","session_id":"ses_1849aa300ffekG4KCNtyCAlBP5","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Get full active.v1.json items list as JSON"}
+{"at":"2026-05-31T00:19:04.963Z","session_id":"ses_1849aa300ffekG4KCNtyCAlBP5","agent":"cartographer","tool":"smart_bash","phase":"completed","detail":"python3 exit=0"}
+{"at":"2026-05-31T00:19:05.010Z","session_id":"ses_1849aa300ffekG4KCNtyCAlBP5","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Get blueprint summary"}
+{"at":"2026-05-31T00:19:05.144Z","session_id":"ses_1849aa300ffekG4KCNtyCAlBP5","agent":"cartographer","tool":"smart_bash","phase":"completed","detail":"python3 exit=0"}
+{"at":"2026-05-31T00:19:05.168Z","session_id":"ses_1849aa300ffekG4KCNtyCAlBP5","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Check what schemas exist for roadmap"}
+{"at":"2026-05-31T00:19:05.224Z","session_id":"ses_1849aa300ffekG4KCNtyCAlBP5","agent":"cartographer","tool":"smart_bash","phase":"completed","detail":"eza exit=0"}
+{"at":"2026-05-31T00:19:09.154Z","session_id":"ses_1849aa300ffekG4KCNtyCAlBP5","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Get all active roadmap items as a table"}
+{"at":"2026-05-31T00:19:09.206Z","session_id":"ses_1849aa300ffekG4KCNtyCAlBP5","agent":"cartographer","tool":"smart_bash","phase":"completed","detail":"python3 exit=0"}
+{"at":"2026-05-31T00:19:09.397Z","session_id":"ses_1849aa300ffekG4KCNtyCAlBP5","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Count progress audit trail entries"}
+{"at":"2026-05-31T00:19:09.405Z","session_id":"ses_1849aa300ffekG4KCNtyCAlBP5","agent":"cartographer","tool":"smart_bash","phase":"completed","detail":"wc exit=0"}
+{"at":"2026-05-31T00:19:12.772Z","session_id":"ses_1849aa300ffekG4KCNtyCAlBP5","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Read latest progress entries"}
+{"at":"2026-05-31T00:19:12.897Z","session_id":"ses_1849aa300ffekG4KCNtyCAlBP5","agent":"cartographer","tool":"smart_bash","phase":"completed","detail":"python3 exit=0"}
+{"at":"2026-05-31T00:19:19.850Z","session_id":"ses_1849aa300ffekG4KCNtyCAlBP5","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Read the CI-004 plan files"}
+{"at":"2026-05-31T00:19:19.850Z","session_id":"ses_1849aa300ffekG4KCNtyCAlBP5","agent":"cartographer","tool":"smart_bash","phase":"rerouted","detail":"→ read_source"}
+{"at":"2026-05-31T00:19:21.922Z","session_id":"ses_1849aa300ffekG4KCNtyCAlBP5","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Check for CI-004 plan files"}
+{"at":"2026-05-31T00:19:21.922Z","session_id":"ses_1849aa300ffekG4KCNtyCAlBP5","agent":"cartographer","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T00:19:23.791Z","session_id":"ses_1849aa300ffekG4KCNtyCAlBP5","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Check for CI-004 plan files"}
+{"at":"2026-05-31T00:19:23.804Z","session_id":"ses_1849aa300ffekG4KCNtyCAlBP5","agent":"cartographer","tool":"smart_bash","phase":"completed","detail":"eza exit=0"}
+{"at":"2026-05-31T00:19:27.564Z","session_id":"ses_1849aa300ffekG4KCNtyCAlBP5","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Read full CI-004 plan file"}
+{"at":"2026-05-31T00:19:27.564Z","session_id":"ses_1849aa300ffekG4KCNtyCAlBP5","agent":"cartographer","tool":"smart_bash","phase":"rerouted","detail":"→ read_source"}

@@ -1,30 +1,20 @@
-  smart_edit: "allow"
-  smart_write: "allow"
-  smart_batch: "allow"
-  smart_sd: "allow"
-  read_source: "allow"
-  read(action="artifact"): "allow"
-  read(action="lib"): "allow"
-  smart_bun: "allow"
-  feedback(action="tool"): "allow"
 ---
-mode: primary
+mode: subagent
 hidden: true
 model: opencode/claude-haiku-4-5
 color: "#E67E22"
-tools:
-  "*": false
-  "github(action="pr-search")": true
+permission:
+  github: "allow"
   smart_edit: "allow"
   smart_write: "allow"
   smart_batch: "allow"
   smart_sd: "allow"
   read_source: "allow"
-  read(action="artifact"): "allow"
-  read(action="lib"): "allow"
+  read: "allow"
   smart_bash: "allow"
   smart_bun: "allow"
-  feedback(action="tool"): "allow"
+  feedback: "allow"
+  task: "deny"
 ---
 
 

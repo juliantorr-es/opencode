@@ -1,0 +1,13 @@
+{
+  "schema": "v1",
+  "session_id": "ses_183fda34fffeecaNC9YFitFKJh",
+  "agent": "secretary",
+  "archived_at": "2026-05-31T03:34:04.612Z",
+  "summary": "Lane 2: Fixed terminal lane states (isTerminal: added checkpointed), rebuilt processEvent to use SM as primary authority for state transitions, and rebuilt binder construction from 8-field stub to canonical 22-field Binder interface matching binder.ts. Typecheck passes clean for campaign/secretary/binder files.",
+  "agents_involved": [
+    "secretary"
+  ],
+  "tool_calls": 36,
+  "tool_failures": 5,
+  "handoffs": 66
+}

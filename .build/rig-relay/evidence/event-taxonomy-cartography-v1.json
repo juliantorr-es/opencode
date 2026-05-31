@@ -1,0 +1,320 @@
+{
+  "artifact": "event-taxonomy-cartography-v1",
+  "profile": "cartography",
+  "generated_at": "2026-05-30T00:00:00Z",
+  "mission": "Map current state of event-related files for truth closure resumption",
+  "files": {
+    "event-names.ts": {
+      "path": "packages/opencode/src/event/event-names.ts",
+      "total_lines": 119,
+      "key_types": {
+        "EventName (const)": "lines 11-112 — `as const` object with PascalCase keys, dot-notation string values",
+        "EventName (type)": "line 115 — `(typeof EventName)[keyof typeof EventName]` union",
+        "EventNameValues": "line 118 — `readonly EventName[]` array of all values"
+      },
+      "imports": "NONE — leaf module (correctly)",
+      "exports": ["EventName (const)", "EventName (type)", "EventNameValues"]
+    },
+    "event-store.ts": {
+      "path": "packages/opencode/src/event/event-store.ts",
+      "total_lines": 136,
+      "key_types": {
+        "QueryFilters": "lines 11-23",
+        "Interface": "lines 25-28 — record + query methods",
+        "Service": "line 30 — Context.Service tag \"@opencode/EventStore\""
+      },
+      "key_functions": {
+        "encodeForDb": "lines 34-58 — maps RuntimeEvent → DB row (snake_case columns)",
+        "decodeFromDb": "lines 62-86 — maps DB row → RuntimeEvent",
+        "buildWhere": "lines 90-103 — dynamic Drizzle WHERE builder",
+        "record (effect)": "lines 108-112 — inserts via adapter.query",
+        "query (effect)": "lines 114-130 — query with filters, pagination, ordering"
+      },
+      "layer": "line 105 — `Layer.effect(Service, ...)`",
+      "note": "No direct reference to EventName; stores whatever eventType string arrives. No toStoreEvent here — that lives in secretary.ts"
+    },
+    "runtime-event.ts": {
+      "path": "packages/opencode/src/event/runtime-event.ts",
+      "total_lines": 35,
+      "key_types": {
+        "ActorType": "line 3 — Schema.Literals([\"user\",\"assistant\",\"tool\",\"system\",\"lifecycle\"])",
+        "EventStatus": "line 6 — Schema.Literals([\"started\",\"succeeded\",\"failed\",\"denied\",\"cancelled\",\"recovered\"])",
+        "RuntimeEvent (Schema)": "lines 9-32 — Schema.Struct with 23 fields",
+        "RuntimeEvent (type)": "line 34 — derived type"
+      },
+      "fields": {
+        "id": "Schema.String",
+        "sessionId": "Schema.String",
+        "runId": "Schema.String",
+        "parentEventId": "optional String",
+        "correlationId": "optional String",
+        "ts": "Schema.String (ISO timestamp)",
+        "actor": "ActorType",
+        "eventType": "Schema.String (no constraint — accepts any string)",
+        "phase": "optional String",
+        "status": "optional EventStatus (Schema.Literals constrained)",
+        "toolName": "optional String",
+        "filePath": "optional String",
+        "model": "optional String",
+        "durationMs": "optional Number",
+        "tokenInput": "optional Number",
+        "tokenOutput": "optional Number",
+        "errorCode": "optional String",
+        "errorMessage": "optional String",
+        "recoverable": "optional Boolean",
+        "payloadJson": "optional Schema.Unknown",
+        "campaignId": "optional String",
+        "laneId": "optional String",
+        "role": "optional String"
+      },
+      "critical": {
+        "eventType has no schema constraint": "line 12 — Schema.String allows any arbitrary string, no reference to EventName or enum",
+        "status is optional": "line 19 — Schema.optional(EventStatus) — can be undefined"
+      }
+    },
+    "typed-result.ts": {
+      "path": "packages/opencode/src/tool/typed-result.ts",
+      "total_lines": 503,
+      "key_types": {
+        "ToolStatus": "line 7 — `\"succeeded\" | \"failed\" | \"denied\" | \"cancelled\"` (union type, NOT Schema.Literals)",
+        "ToolFailure": "lines 9-14 — test?, file?, line?, message",
+        "NextAffordance": "lines 16-19 — action, target?, command?",
+        "TypedToolResult<T>": "lines 30-40 — tool, status, errorKind?, recoverable, summary, data, failures?, suggestedNextTools, nextAffordances"
+      },
+      "key_schemas": {
+        "ToolFailureSchema": "lines 44-49 — Schema.Struct",
+        "NextAffordanceSchema": "lines 51-56",
+        "TypedToolResultSchema": "lines 61-73"
+      },
+      "constructors": {
+        "makeSuccess": "lines 75-85 — status: \"succeeded\"",
+        "makeFailure": "lines 87-106 — status: \"failed\", takes errorKind + recoverable + failures",
+        "makeDenied": "lines 108-119 — status: \"denied\", errorKind: \"permission_denied\"",
+        "makeCancelled": "lines 121-132 — status: \"cancelled\", errorKind: \"cancelled\""
+      },
+      "classifyError": {
+        "lines": "136-184",
+        "behaviors": {
+          "InvalidArgumentsError": "{ errorKind: \"invalid_arguments\", recoverable: true }",
+          "ToolError": "{ errorKind: error.recoverable ? \"tool_error\" : \"fatal_tool_error\", recoverable: error.recoverable }",
+          "TimeoutError": "{ errorKind: \"timeout\", recoverable: true }",
+          "TransientError": "{ errorKind: \"transient\", recoverable: true }",
+          "ValidationError": "{ errorKind: \"validation\", recoverable: true }",
+          "DOMException AbortError": "{ errorKind: \"cancelled\", recoverable: false }",
+          "fallback": "{ errorKind: \"unexpected\", recoverable: false }"
+        },
+        "note": "classifyError NEVER produces \"permission_denied\" — that errorKind is only set by makeDenied directly"
+      },
+      "fromDefect": {
+        "lines": "190-207",
+        "status_mapping": "errorKind === \"cancelled\" → \"cancelled\" | errorKind === \"permission_denied\" → \"denied\" | else → \"failed\"",
+        "dead_code": "The `errorKind === \"permission_denied\"` branch is unreachable via classifyError. Only makeDenied produces \"permission_denied\" but doesn't go through fromDefect."
+      },
+      "wrapExecute": "lines 414-438 — wraps tool execute Effect: catches defects → fromDefect, success → makeSuccess + enrichExecuteResult",
+      "enrichExecuteResult": "lines 386-403 — attaches typedResult, toolStatus, toolErrorKind, toolRecoverable, suggestedNextTools to ExecuteResult.metadata",
+      "formatOutput": "lines 342-366 — formats [OK]/[DENIED]/[CANCELLED]/[KIND] prefixes + structured JSON suffix"
+    },
+    "event-bridge.ts": {
+      "path": "packages/opencode/src/event/event-bridge.ts",
+      "total_lines": 104,
+      "key_functions": {
+        "inferActor": "lines 12-22 — infers from eventType prefix: session/server/instance→lifecycle, question/permission→user, tool/command/file→tool, llm/agent/session.next→assistant, else→system",
+        "extractStatus": "lines 33-49 — reads properties.phase or properties.status, case-insensitive, validates against EventStatus values (started/succeeded/failed/denied/cancelled/recovered)",
+        "toRuntimeEvent": "lines 51-79 — maps bus payload to RuntimeEvent. eventType = payload.type (bus dot-notation). status = extractStatus(props).",
+        "layer": "lines 81-103 — subscribes to bus.subscribeAll(), bridges each event to EventStore.record()"
+      }
+    },
+    "index.ts": {
+      "path": "packages/opencode/src/event/index.ts",
+      "total_lines": 37,
+      "re-exports": [
+        "RuntimeEvent (namespace, from ./runtime-event)",
+        "EventStore (namespace, from ./event-store)",
+        "EventStoreBridge (namespace, from ./event-bridge)",
+        "RuntimeEventTable (from ./event.pg.sql)",
+        "EventAgentQueries (namespace, from ./agent-queries)",
+        "query* functions (6 analytical queries from ./event-queries)",
+        "type* (5 analytical types from ./event-queries)"
+      ],
+      "missing": "EventName constants are NOT re-exported from the event module barrel"
+    },
+    "secretary.ts (toStoreEvent)": {
+      "path": "packages/opencode/src/campaign/secretary.ts",
+      "toStoreEvent": "lines 161-191",
+      "problem": "eventType: event._tag — stores PascalCase tags (\"LaneCreated\", \"Failed\", \"Blocked\") directly as the eventType string, bypassing EventName registry entirely",
+      "fields_set": {
+        "id": "Identifier.ascending(\"event\")",
+        "sessionId": "campaignId",
+        "runId": "laneId",
+        "actor": "\"lifecycle\"",
+        "eventType": "event._tag (PascalCase state machine tag)",
+        "phase": "\"campaign\"",
+        "status": "undefined (NEVER set)",
+        "payloadJson": "event (the full state machine event object)",
+        "campaignId": "campaignId",
+        "laneId": "laneId"
+      },
+      "toSMEvent": "lines 121-155 — maps RuntimeEvent._tag to bus event type string (dot-notation). E.g. \"LaneCreated\" → \"lane.created\", \"Failed\" → \"permission.denied\""
+    }
+  },
+  "event_naming_vocabularies": {
+    "summary": "5 distinct naming vocabularies coexist with no shared schema authority",
+    "vocabularies": [
+      {
+        "id": 1,
+        "name": "EventName constants",
+        "file": "event-names.ts",
+        "format": "PascalCase key = \"dot.notation.value\"",
+        "example": "SessionCreated: 'session.created'",
+        "authority": "Canonical registry, but NOT enforced — nothing requires eventType values to come from here",
+        "entries": 62
+      },
+      {
+        "id": 2,
+        "name": "Bus event type strings",
+        "file": "campaign/secretary.ts (toSMEvent), campaign/state-machine.ts, campaign/predicates.ts",
+        "format": "lowercase dot-notation string literals passed as `{ type: \"...\" }`",
+        "example": "\"lane.created\", \"plan.produced\", \"validation.completed\", \"edit.applied\", \"child.blocked\", \"context.sufficient\"",
+        "gap": "MANY types used here are NOT in EventName. Missing: plan.produced, plan.approved, plan.rejected, edit.applied, validation.completed, validation.failure, child.blocked, context.sufficient, lane.created, claim.conflict, file.conflict, user.approval, file.read, tool.failed, redteam.finding, critic.review, artifact.plan, plan.created, lane.completed, child.completed, file.conflict, user.approval.something, validation, typecheck, test, permission.denied"
+      },
+      {
+        "id": 3,
+        "name": "Secretary state machine _tag discriminator",
+        "file": "campaign/secretary.ts",
+        "format": "PascalCase discriminated union tags",
+        "example": "\"LaneCreated\", \"StartLearning\", \"LearningComplete\", \"Blocked\", \"Failed\"",
+        "gap": "These get stored directly as eventType by toStoreEvent() (PascalCase in DB)",
+        "entries": 16
+      },
+      {
+        "id": 4,
+        "name": "State machine `kind` field",
+        "file": "campaign/state-machine.ts, campaign/predicates.ts",
+        "format": "snake_case strings used in `when: { kind: \"...\" }` guards",
+        "example": "\"plan_produced\", \"event_exists\", \"latest_validation_passed\", \"claims_acquired\", \"has_claim_conflict\", \"permission_denied\", \"retry_budget_remaining\", \"user_approval_granted\"",
+        "gap": "Distinct format (snake_case) — different from both PascalCase and dot-notation"
+      },
+      {
+        "id": 5,
+        "name": "Flight recorder prefixes",
+        "file": "debug/flight-recorder.ts",
+        "format": "Prefix strings used for allowlist matching",
+        "example": "\"tool.started\", \"tool.completed\", \"tool.failed\", \"permission.\", \"lifecycle.\", \"session.status\"",
+        "gap": "References \"tool.started\" and \"tool.completed\" which exist in neither EventName nor schema-backed EventStatus"
+      }
+    ]
+  },
+  "status_taxonomies": {
+    "EventStatus_Schema": {
+      "file": "runtime-event.ts:6",
+      "values": ["started", "succeeded", "failed", "denied", "cancelled", "recovered"],
+      "backing": "Schema.Literals (enforced by Effect Schema at runtime)",
+      "optional_on_RuntimeEvent": true
+    },
+    "ToolStatus_type": {
+      "file": "typed-result.ts:7",
+      "values": ["succeeded", "failed", "denied", "cancelled"],
+      "backing": "TypeScript union type (no runtime enforcement)",
+      "missing_vs_EventStatus": ["started", "recovered"],
+      "overlap": ["succeeded", "failed", "denied", "cancelled"]
+    },
+    "FlightRecorderEvent_status": {
+      "file": "debug/flight-recorder.ts:56",
+      "definition": "status?: string",
+      "backing": "Optional untyped string (no enforcement at all)"
+    }
+  },
+  "tool_failure_to_status_mapping": {
+    "entry_point": "fromDefect (typed-result.ts:190-207)",
+    "flow": "error → classifyError(error) → { errorKind, recoverable, summary } → map to ToolStatus",
+    "mapping": {
+      "cancelled": "from DOMException AbortError only → ToolStatus: \"cancelled\"",
+      "permission_denied": "NEVER produced by classifyError (dead code branch) → ToolStatus: \"denied\"",
+      "invalid_arguments/tool_error/fatal_tool_error/timeout/transient/validation/unexpected": "all → ToolStatus: \"failed\""
+    },
+    "problem": "classifyError cannot produce \"permission_denied\" — the fromDefect branch is dead code. Permission denial can only come from the separate makeDenied() constructor.",
+    "recovered": "NEVER produced by fromDefect or any tool status constructor. Only EventStatus lists it.",
+    "started": "NEVER produced by any ToolStatus — not part of ToolStatus type. Only in EventStatus."
+  },
+  "gaps_and_smoking_guns": [
+    {
+      "id": "GAP-1",
+      "title": "EventName registry not enforced as constraint",
+      "files": ["runtime-event.ts:12", "event-names.ts"],
+      "detail": "RuntimeEvent.eventType is Schema.String with no enum constraint. Any string passes. EventName exists as a separate registry but nothing references it as a validator.",
+      "severity": "high"
+    },
+    {
+      "id": "GAP-2",
+      "title": "EventName not re-exported from index.ts",
+      "files": ["event/index.ts", "event/event-names.ts"],
+      "detail": "The barrel export (index.ts) does NOT export EventName, EventNameValues, or the EventName type. Consumers must import directly from ./event/event-names.",
+      "severity": "medium"
+    },
+    {
+      "id": "GAP-3",
+      "title": "toStoreEvent stores PascalCase tags as eventType",
+      "files": ["campaign/secretary.ts:161-191"],
+      "detail": "toStoreEvent() sets eventType: event._tag which passes PascalCase discriminator tags (\"LaneCreated\", \"Failed\", \"Blocked\") directly into the RuntimeEvent DB column. This contradicts the dot-notation convention used everywhere else.",
+      "severity": "high"
+    },
+    {
+      "id": "GAP-4",
+      "title": "20+ bus event types not registered in EventName",
+      "files": ["campaign/secretary.ts", "campaign/state-machine.ts", "campaign/predicates.ts"],
+      "detail": "The bus event type strings used in toSMEvent, state-machine guards, and predicates include many values with no EventName entry: plan.produced, plan.approved, plan.rejected, edit.applied, validation.completed, validation.failure, child.blocked, context.sufficient, lane.created, claim.conflict, file.conflict, user.approval, file.read, tool.failed, redteam.finding, critic.review, artifact.plan, plan.created, lane.completed, child.completed, permission.denied.",
+      "severity": "high"
+    },
+    {
+      "id": "GAP-5",
+      "title": "ToolStatus and EventStatus are desynchronized enums",
+      "files": ["runtime-event.ts:6", "typed-result.ts:7"],
+      "detail": "ToolStatus (\"succeeded\" | \"failed\" | \"denied\" | \"cancelled\") is missing \"started\" and \"recovered\" from EventStatus. ToolStatus is a raw TS union (no runtime enforcement). EventStatus is Schema.Literals (enforced). No shared authority.",
+      "severity": "high"
+    },
+    {
+      "id": "GAP-6",
+      "title": "fromDefect dead code: permission_denied unreachable",
+      "files": ["typed-result.ts:136-207"],
+      "detail": "classifyError (line 136) produces error kinds: invalid_arguments, tool_error, fatal_tool_error, timeout, transient, validation, cancelled, unexpected. It NEVER produces \"permission_denied\". The `errorKind === \"permission_denied\"` branch in fromDefect (line 193) is dead code.",
+      "severity": "medium"
+    },
+    {
+      "id": "GAP-7",
+      "title": "toStoreEvent sets status = undefined always",
+      "files": ["campaign/secretary.ts:175"],
+      "detail": "The toStoreEvent function hardcodes `status: undefined` despite the campaign lifecycle events having implicit statuses (e.g., a \"Failed\" event should map to status: \"failed\").",
+      "severity": "medium"
+    },
+    {
+      "id": "GAP-8",
+      "title": "State machine uses THREE different event naming conventions simultaneously",
+      "files": ["campaign/secretary.ts", "campaign/state-machine.ts", "campaign/predicates.ts"],
+      "detail": "Secretary uses PascalCase _tag + toSMEvent dot-notation. State-machine guard kinds use snake_case (\"plan_produced\"). Store eventType uses PascalCase _tag directly. Three conventions in one subsystem.",
+      "severity": "high"
+    },
+    {
+      "id": "GAP-9",
+      "title": "Flight recorder references event types not in any schema",
+      "files": ["debug/flight-recorder.ts:7-21"],
+      "detail": "RECORDED_EVENT_PREFIXES includes \"tool.started\" and \"tool.completed\" which exist in neither EventName registry nor EventStatus. ToolStatus has \"succeeded\" and \"failed\" but not \"started\".",
+      "severity": "medium"
+    }
+  ],
+  "required_changes": {
+    "unify_taxonomies": [
+      "Register missing bus event types in EventName (all ~20 missing values from predicates.ts, secretary.ts, state-machine.ts)",
+      "Re-export EventName from event/index.ts barrel",
+      "Consider making EventName the single authority: either (a) constrain RuntimeEvent.eventType to EventName via a Schema.transform or Schema.filter, or (b) generate EventName from a central definition",
+      "Align state-machine `kind` values with EventName dot-notation (e.g., \"plan_produced\" → \"plan.produced\") or keep them separate but document the mapping"
+    ],
+    "map_tool_failures_to_status": [
+      "Add \"started\" to ToolStatus or keep ToolStatus separate from EventStatus but make the relationship explicit",
+      "Fix fromDefect dead code: either make classifyError handle permission_denied, or remove the dead branch",
+      "Ensure toStoreEvent maps status meaningfully: extract status from the campaign event type (e.g., \"Failed\" → status: \"failed\", \"Blocked\" → status: \"denied\")",
+      "Consider deriving EventStatus from ToolStatus + extra states rather than maintaining two independent lists",
+      "Remove or standardize flight-recorder's \"tool.started\"/\"tool.completed\" against the unified vocabulary"
+    ]
+  },
+  "pre_existing_findings": []
+}

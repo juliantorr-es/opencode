@@ -11,11 +11,11 @@ import { app, BrowserWindow } from "electron"
 
 import contextMenu from "electron-context-menu"
 
-import type { InitStep, ServerReadyData, SqliteMigrationProgress, WslConfig } from "../preload/types"
+import type { InitStep, ServerReadyData, StorageMigrationProgress, WslConfig } from "../preload/types"
 import { checkAppExists, resolveAppPath, wslPath } from "./apps"
 import { APP_IDS, CHANNEL, getUpdaterEnabled } from "./constants"
 import { electronPlatformPaths } from "./platform-config"
-import { registerIpcHandlers, sendDeepLinks, sendMenuCommand, sendSqliteMigrationProgress } from "./ipc"
+import { registerIpcHandlers, sendDeepLinks, sendMenuCommand, sendStorageMigrationProgress } from "./ipc"
 import { exportDebugLogs, initCrashReporter, initLogging, startNetLog, write as writeLog } from "./logging"
 import { parseMarkdown } from "./markdown"
 import { createMenu } from "./menu"
@@ -311,6 +311,7 @@ const main = Effect.gen(function* () {
   const needsMigration = inSafeMode ? false : ((): boolean => {
     if (process.env.OPENCODE_DB === ":memory:") return false
 
+    // Checks for PGlite/WAL directory — detects if first-time setup is needed
     const xdg = process.env.XDG_DATA_HOME
     const base = xdg && xdg.length > 0 ? xdg : join(homedir(), ".local", "share")
     return !existsSync(join(base, "opencode", "opencode.db"))
@@ -349,10 +350,9 @@ const main = Effect.gen(function* () {
     loadingTask = yield* Effect.gen(function* () {
       logger.log("sidecar connection started", { url })
 
-    initEmitter.on("sqlite", (progress: SqliteMigrationProgress) => {
-      setInitStep({ phase: "sqlite_waiting" })
-      if (overlay) sendSqliteMigrationProgress(overlay, progress)
-      if (mainWindow) sendSqliteMigrationProgress(mainWindow, progress)
+    initEmitter.on("migration-progress", (progress: StorageMigrationProgress) => {
+      if (overlay) sendStorageMigrationProgress(overlay, progress)
+      if (mainWindow) sendStorageMigrationProgress(mainWindow, progress)
     })
 
     ensureLoopbackNoProxy()
@@ -363,7 +363,7 @@ const main = Effect.gen(function* () {
       spawnLocalServer(hostname, port, password, {
         needsMigration,
         userDataPath: electronPlatformPaths.getPath("userData"),
-        onSqliteProgress: (progress) => initEmitter.emit("sqlite", progress),
+        onMigrationProgress: (progress) => initEmitter.emit("migration-progress", progress),
         onStdout: (message) => writeLog("server", "stdout", { message }),
         onStderr: (message) => writeLog("server", "stderr", { message }, "warn"),
         onExit: (code) => writeLog("utility", "sidecar exited", { code }, "warn"),

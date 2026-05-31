@@ -9,6 +9,28 @@
 // Predicate evaluation is heuristic (SM-003 will make it
 // rigorous with a proper predicate engine).
 
+// ── Entry Action Executor ─────────────────────────────────
+
+/**
+ * Execute an entry action (e.g. decrement_repair_budget) against
+ * the mutable retryBudgets map during a reduction pass.
+ * Called by reduceCampaignState after each transition.
+ */
+function executeEntryAction(
+  action: ActionSpec,
+  retryBudgets: Record<string, number>,
+  stateSpec: AgentStateSpec,
+): void {
+  switch (action.kind) {
+    case "decrement_repair_budget": {
+      const current = retryBudgets["repair"]
+      const maxRetries = stateSpec.retryPolicy?.maxRetries ?? 3
+      retryBudgets["repair"] = current === undefined ? maxRetries - 1 : current - 1
+      break
+    }
+  }
+}
+
 // ── Types ─────────────────────────────────────────────────
 
 export interface ActionSpec {
@@ -42,6 +64,8 @@ export type PredicateSpec =
   | { readonly kind: "plan_produced" }
   | { readonly kind: "plan_approved" }
   | { readonly kind: "plan_rejected" }
+  | { readonly kind: "scout_completed" }
+  | { readonly kind: "scope_synthesized" }
   | { readonly kind: "all_gates_pass" }
 
 export interface TransitionSpec {
@@ -213,14 +237,14 @@ export const CAMPAIGN_STATE_MACHINE: AgentStateMachineSpec = {
       allowedTools: [],
       transitions: [
         ...blockedTransitions(),
-        { to: "scope_synthesis", when: { kind: "plan_produced" }, priority: 10 },
+        { to: "scope_synthesis", when: { kind: "scout_completed" }, priority: 10 },
       ],
     },
     scope_synthesis: {
       allowedTools: [],
       transitions: [
         ...blockedTransitions(),
-        { to: "lane_decomposition", when: { kind: "plan_produced" }, priority: 10 },
+        { to: "lane_decomposition", when: { kind: "scope_synthesized" }, priority: 10 },
       ],
     },
     lane_decomposition: {
@@ -378,6 +402,10 @@ function evaluatePredicate(
       return events.some(e => e.type === "plan.approved")
     case "plan_rejected":
       return events.some(e => e.type === "plan.rejected")
+    case "scout_completed":
+      return events.some(e => e.type === "scout.completed")
+    case "scope_synthesized":
+      return events.some(e => e.type === "scope.synthesized")
     case "all_gates_pass":
       return events.some(e => e.type === "gates.all_passed")
   }
@@ -406,6 +434,9 @@ export function reduceCampaignState(
   let transitionCount = previous.transitionCount
   const stateHistory: StateTransition[] = [...previous.stateHistory]
 
+  // Mutable budget accumulator — entry actions decrement this during the pass
+  const workingRetryBudgets: Record<string, number> = { ...previous.retryBudgets }
+
   for (const event of events) {
     const stateSpec = spec.states[currentState]
     if (stateSpec === undefined) break
@@ -415,7 +446,16 @@ export function reduceCampaignState(
     )
 
     for (const transition of candidates) {
-      if (evaluatePredicate(transition.when, allEvents, previous)) {
+      // Pass a snapshot with current (possibly mutated) retryBudgets
+      // instead of the frozen previous state — predicates like
+      // retry_budget_remaining and repair_budget_exhausted now
+      // see budgets mutated by entry actions in earlier transitions.
+      const evalState: CampaignState = {
+        ...previous,
+        currentState,
+        retryBudgets: workingRetryBudgets,
+      }
+      if (evaluatePredicate(transition.when, allEvents, evalState)) {
         stateHistory.push({
           from: currentState,
           to: transition.to,
@@ -424,6 +464,15 @@ export function reduceCampaignState(
         })
         currentState = transition.to
         transitionCount++
+
+        // Execute entry actions on the new state (e.g. decrement_repair_budget)
+        const targetSpec = spec.states[currentState]
+        if (targetSpec?.entryActions) {
+          for (const action of targetSpec.entryActions) {
+            executeEntryAction(action, workingRetryBudgets, targetSpec)
+          }
+        }
+
         break
       }
     }
@@ -435,6 +484,6 @@ export function reduceCampaignState(
     transitionCount,
     stateHistory,
     metadata: previous.metadata,
-    retryBudgets: previous.retryBudgets,
+    retryBudgets: workingRetryBudgets,
   } satisfies CampaignState
 }

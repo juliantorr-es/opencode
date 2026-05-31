@@ -1,0 +1,2 @@
+{"at":"2026-05-31T04:32:34.105Z","session_id":"ses_183b44519ffeUbP7j4wnKNTQpO","agent":"surveyor","binary":"/usr/bin/find","command":"/usr/bin/find packages/opencode/src/event -maxdepth 1 -type f | /usr/bin/sort","reason":"Use explicit absolute paths to avoid rerouting","elapsed_ms":10,"exit_code":0}
+{"at":"2026-05-31T04:33:22.937Z","session_id":"ses_183b44519ffeUbP7j4wnKNTQpO","agent":"surveyor","binary":"/usr/bin/du","command":"/usr/bin/du -h packages/opencode/src/event/*.ts | /usr/bin/sort -hr","reason":"Get file sizes for event directory","elapsed_ms":11,"exit_code":0}

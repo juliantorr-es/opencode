@@ -103,6 +103,7 @@ import { layer as EventAgentQueriesLayer } from "@/event/agent-queries"
 import { Storage } from "@/storage/storage"
 import { AnalyticsTool } from "./analytics"
 import { JSONQueryTool } from "./json-query"
+import { LessonRegisterTool } from "./lesson-register"
 import { LogActivityTool } from "./log-activity"
 import { PreflightCheckTool } from "./preflight-check"
 import { ProduceFragmentTool } from "./produce-fragment"
@@ -239,6 +240,7 @@ export const layer = Layer.effect(
     const smartBatch = yield* SmartBatchTool
     const analytics = yield* AnalyticsTool
     const jsonQuery = yield* JSONQueryTool
+    const lessonRegister = yield* LessonRegisterTool
     const logActivity = yield* LogActivityTool
     const preflightCheck = yield* PreflightCheckTool
     const produceFragment = yield* ProduceFragmentTool
@@ -294,6 +296,34 @@ export const layer = Layer.effect(
     const state = yield* InstanceState.make<State>(
       Effect.fn("ToolRegistry.state")(function* (ctx) {
         const custom: Tool.Def[] = []
+
+        const BUILTIN_TOOL_IDS = new Set<string>([
+          "invalid", "shell", "read", "glob", "grep", "edit", "write", "task", "fetch",
+          "todo", "search", "repo_clone", "repo_overview", "skill", "patch", "validate",
+          "test", "inspect_failure", "report", "search_replace", "prepare_checkpoint",
+          "checkpoint", "publish_checkpoint", "generate_published_checkpoint_report",
+          "question", "lsp", "plan", "coordination", "rig_git", "send_message",
+          "read_messages", "record_stress_wave", "record_execution_wave", "duckdb_query",
+          "tool_failure", "tool_feedback", "publish_finding", "discover_findings",
+          "curate_context", "read_artifact", "propose_plan", "revise_plan", "comment_plan",
+          "review_criticism", "qa_observed_clean", "read_source", "read_lib",
+          "smart_edit", "smart_write", "smart_batch", "analytics", "json_query",
+          "lesson_register", "log_activity", "preflight_check", "produce_fragment", "roadmap_deprecate",
+          "roadmap_init", "roadmap_next", "roadmap_prioritize", "roadmap_progress",
+          "smart_bash", "smart_bun", "smart_find", "smart_git", "smart_grep",
+          "smart_sd", "task_board", "verify_handoff", "replace_symbol",
+          "rig_jsonl_query", "rig_schema_validate", "generate_report",
+          "prepare_delegation", "prepublication_admitted", "prepublication_blocked",
+          "prepublication_inconclusive", "out_of_scope_finding", "delegate",
+          "session_diff", "github_triage", "github_pr_search",
+          "query_last_failed_tools", "query_last_edited_files", "query_permission_denials",
+          "query_phase_transitions", "query_last_checkpoint", "query_last_successful_test",
+          "query_events_for_file", "query_events_for_error", "query_events_since_checkpoint",
+          "get_operating_picture", "get_project_map", "get_working_set", "get_file_context",
+          "get_related_context", "query_event_history", "get_validation_context",
+          "get_claim_context", "update_scratchpad", "mark_context_stale",
+          "request_context_refresh", "review_manifest",
+        ])
 
         function fromPlugin(id: string, def: ToolDefinition): Tool.Def {
           // Plugin tools still expose Zod args publicly; keep that compatibility
@@ -372,7 +402,9 @@ export const layer = Layer.effect(
           const mod = yield* Effect.promise(() => import(pathToFileURL(match).href))
           for (const [id, def] of Object.entries(mod)) {
             if (!isPluginTool(def)) continue
-            custom.push(fromPlugin(id === "default" ? namespace : `${namespace}_${id}`, def))
+            const toolId = id === "default" ? namespace : `${namespace}_${id}`
+            const safeToolId = BUILTIN_TOOL_IDS.has(toolId) ? `plugin_${toolId}` : toolId
+            custom.push(fromPlugin(safeToolId, def))
           }
         }
 
@@ -388,7 +420,8 @@ export const layer = Layer.effect(
           }
           for (const [id, def] of Object.entries(p.tool ?? {})) {
             const safeId = pluginId ? `plugin-${pluginId.replace(/^@/, "").replace(/[/._]/g, "-").replace(/[^a-zA-Z0-9-]/g, "")}-${id}` : id
-            custom.push(fromPlugin(safeId, def))
+            const finalId = BUILTIN_TOOL_IDS.has(safeId) ? `${safeId}_plugin` : safeId
+            custom.push(fromPlugin(finalId, def))
           }
         }
 
@@ -448,6 +481,7 @@ export const layer = Layer.effect(
             smart_batch: Tool.init(smartBatch),
             analytics: Tool.init(analytics),
             json_query: Tool.init(jsonQuery),
+            lesson_register: Tool.init(lessonRegister),
             log_activity: Tool.init(logActivity),
             preflight_check: Tool.init(preflightCheck),
             produce_fragment: Tool.init(produceFragment),
@@ -534,6 +568,7 @@ export const layer = Layer.effect(
             tool.smart_batch,
             tool.analytics,
             tool.json_query,
+            tool.lesson_register,
             tool.log_activity,
             tool.preflight_check,
             tool.produce_fragment,

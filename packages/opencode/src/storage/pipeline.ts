@@ -4,6 +4,7 @@ import { Context, Effect, Layer, Option } from "effect"
 import { DatabaseAdapter } from "./adapter"
 import { DuckDBConfig } from "./duckdb-config"
 import { buildContextProjections, initTablesSql, initViewsSql } from "./schema.duckdb"
+import { execDuckDB, execDuckDBStdin } from "./duckdb-exec"
 
 // ── Constants ───────────────────────────────────────────────
 
@@ -78,7 +79,12 @@ export function runPipeline(dbPath: string, adapter: DatabaseAdapter.Interface, 
         ORDER BY ts DESC LIMIT 10000`,
       ),
     ).pipe(
-      Effect.catchTag("DatabaseError", () => Effect.succeed([])),
+      Effect.catchTag("DatabaseError", (err) =>
+        Effect.logInfo("runtime_events table not available, skipping").pipe(
+          Effect.annotateLogs("error", String(err)),
+          Effect.andThen(Effect.succeed([])),
+        ),
+      ),
     )
 
     // 4. Run DuckDB pipeline (spawn process for each step, no -readonly)
@@ -113,85 +119,8 @@ export function runPipeline(dbPath: string, adapter: DatabaseAdapter.Interface, 
 }
 
 /** Spawn duckdb (no -readonly, no firewall — pipeline internal only). */
-function execDuckDB(dbPath: string, sql: string, signal?: AbortSignal): Promise<void> {
-  return new Promise((resolve, reject) => {
-    const proc = spawn("duckdb", [dbPath, "-json", "-c", sql])
-    let stderr = ""
-    const timer = setTimeout(() => {
-      proc.kill()
-      reject(new Error("duckdb timeout after 60s"))
-    }, 60_000)
+// NOTE: execDuckDB and execDuckDBStdin moved to duckdb-exec.ts to eliminate duplication
 
-    const onAbort = signal
-      ? () => {
-          proc.kill()
-          reject(new Error("duckdb aborted via signal"))
-        }
-      : undefined
-
-    if (onAbort) signal!.addEventListener("abort", onAbort, { once: true })
-
-    const cleanup = () => {
-      clearTimeout(timer)
-      if (onAbort) signal?.removeEventListener("abort", onAbort)
-    }
-
-    proc.stderr?.on("data", (d: Buffer) => {
-      stderr += d.toString()
-    })
-    proc.stdout?.on("data", () => {}) // drain stdout
-    proc.on("close", (code) => {
-      cleanup()
-      if (code !== 0) reject(new Error(`duckdb failed: ${stderr}`))
-      else resolve()
-    })
-    proc.on("error", (err) => {
-      cleanup()
-      reject(err)
-    })
-  })
-}
-
-/** Spawn duckdb with stdin JSON data. */
-function execDuckDBStdin(dbPath: string, sql: string, data: string, signal?: AbortSignal): Promise<void> {
-  return new Promise((resolve, reject) => {
-    const proc = spawn("duckdb", [dbPath, "-json", "-c", sql])
-    let stderr = ""
-    const timer = setTimeout(() => {
-      proc.kill()
-      reject(new Error("duckdb timeout after 60s"))
-    }, 60_000)
-
-    const onAbort = signal
-      ? () => {
-          proc.kill()
-          reject(new Error("duckdb aborted via signal"))
-        }
-      : undefined
-
-    if (onAbort) signal!.addEventListener("abort", onAbort, { once: true })
-
-    const cleanup = () => {
-      clearTimeout(timer)
-      if (onAbort) signal?.removeEventListener("abort", onAbort)
-    }
-
-    proc.stderr?.on("data", (d: Buffer) => {
-      stderr += d.toString()
-    })
-    proc.stdout?.on("data", () => {}) // drain stdout
-    proc.on("close", (code) => {
-      cleanup()
-      if (code !== 0) reject(new Error(`duckdb failed: ${stderr}`))
-      else resolve()
-    })
-    proc.on("error", (err) => {
-      cleanup()
-      reject(err)
-    })
-    proc.stdin?.end(data)
-  })
-}
 /** Check the _pipeline_meta table for existing schema_version. */
 async function metaCheck(dbPath: string): Promise<number | null> {
   if (dbPath === ":memory:") {
@@ -243,7 +172,11 @@ export const layer = Layer.effect(
     yield* Effect.addFinalizer(() => Effect.sync(() => abortController.abort()))
     yield* Effect.forkScoped(
       runPipeline(dbPath, adapter, abortController.signal).pipe(
-        Effect.ignore,
+        Effect.catch((error: unknown) =>
+          Effect.logError("DuckDB pipeline background fiber failed").pipe(
+            Effect.annotateLogs("error", String(error)),
+          ),
+        ),
       ),
     )
 

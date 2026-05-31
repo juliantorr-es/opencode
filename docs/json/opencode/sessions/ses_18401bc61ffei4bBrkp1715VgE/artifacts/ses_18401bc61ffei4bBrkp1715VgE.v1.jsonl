@@ -1,0 +1,8 @@
+{"at":"2026-05-31T03:05:24.826Z","tool":"smart_grep","action":"searched","pattern":"duckdb|DuckDB|duck_db|duckdb","results":100,"files":9}
+{"at":"2026-05-31T03:05:25.112Z","tool":"smart_grep","action":"searched","pattern":"projection","results":31,"files":9}
+{"at":"2026-05-31T03:06:48.740Z","tool":"smart_grep","action":"searched","pattern":"ALL_TABLES|RUNTIME_EVENT_VIEWS|ALL_CTX_TABLES|CONTEXT_EVENTS_INSERT|CONTEXT_AGGR","results":0,"files":0}
+{"at":"2026-05-31T03:06:57.920Z","tool":"smart_bash","action":"bash","command":"awk '/^export const (ALL_CTX_TABLES|RUNTIME_EVENT_VIEWS|ALL_TABLES|CONTEXT_EVENTS_INSERT_SQL|CONTEXT","exit_code":0}
+{"at":"2026-05-31T03:07:04.986Z","tool":"smart_bash","action":"bash","command":"awk '/^\\]$|^`$/ && NR >= 181 && NR <= 360 { print NR\": \"$0 }' packages/opencode/src/storage/schema.d","exit_code":0}
+{"at":"2026-05-31T03:07:09.412Z","tool":"smart_bash","action":"bash","command":"awk 'NR>=181 && NR<=360 { if (/\\]/ && !/\\[/) print NR\": \"$0; if (/^`$/) print NR\": \"$0 }' packages/o","exit_code":0}
+{"at":"2026-05-31T03:07:13.261Z","tool":"smart_bash","action":"bash","command":"awk 'NR>=348 && NR<=365 { if (/^`$/) print NR\": \"$0 }' packages/opencode/src/storage/schema.duckdb.t","exit_code":0}
+{"at":"2026-05-31T03:07:19.041Z","tool":"smart_bash","action":"bash","command":"head -n 360 packages/opencode/src/storage/schema.duckdb.ts | tail -n 20","exit_code":0}

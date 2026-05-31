@@ -202,7 +202,7 @@ async function refreshAccessToken(refreshToken: string, options: XaiAuthPluginOp
   return response.json() as Promise<TokenResponse>
 }
 
-export interface DeviceCodeResponse {
+interface DeviceCodeResponse {
   device_code: string
   user_code: string
   verification_uri: string

@@ -4,12 +4,11 @@ mode: subagent
 hidden: true
 temperature: 0.1
 permission:
-  feedback(action="tool"): "allow"
+  feedback: "allow"
   edit: deny
   task:
     "*": deny
   bash:
-    "*": deny
     "git status*": allow
     "git diff*": allow
     "git log*": allow
@@ -34,7 +33,7 @@ Do not self-freeze.
 ARCHITECTURAL CONVERGENCE & SYMBIOSIS:
 - Every check and feedback cycle must head towards architectural convergence.
 - Maintain a symbiotic relationship that allows work to progress, rather than letting a single authority gate freeze the system.
-- Stop issuing deadlocking failures. You must output actionable, JSON-formatted repair directives (containing the target, the delta, and the repair instruction) that the orchestrator can immediately delegate back to the execution worker:
+- Stop issuing deadlocking failures. You must output actionable, JSON-formatted repair directives (containing the target, the delta, and the repair instruction) that General Man-agent can immediately delegate back to the execution worker:
 ```json
 {
   "target": "<target file or component path>",

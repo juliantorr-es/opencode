@@ -1,0 +1,16 @@
+{
+  "schema_version": "v1",
+  "plan_id": "duckdb-write-capable-client-extraction-and-projection-worker-fix",
+  "plan_revision": 2,
+  "title": "DuckDB read/write split",
+  "boundary": "DuckDB write-capable client extraction and projection worker fix",
+  "consumer_purpose": "Enable the DuckDB projection worker to write DDL to a persistent DuckDB database, eliminate table/view name collision, remove duplicate execDuckDB code, and log errors instead of swallowing them.",
+  "claim_atoms": [
+    "Projection worker DDL succeeds against persistent DuckDB databases; _ctx_file_relevance no longer names both a TABLE and a VIEW; No Effect.ignore chains remain in duckdb-projection-worker.ts; execDuckDB functions defined once in duckdb-exec.ts; DuckDB.Service remains read-only; All existing tests pass unchanged"
+  ],
+  "content": "{\"status\":\"exists\"}",
+  "status": "proposed",
+  "created_at": "2026-05-31T03:24:26.300Z",
+  "modified_at": "2026-05-31T03:24:49.592Z",
+  "revision_reason": "Check plan exists and is accessible"
+}

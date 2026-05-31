@@ -36,9 +36,9 @@ export class SyncServer extends DurableObject<Env> {
     })
   }
 
-  async webSocketMessage(_ws, _message) {}
+  async webSocketMessage(ws: WebSocket, message: string) {}
 
-  async webSocketClose(ws, code, _reason, _wasClean) {
+  async webSocketClose(ws: WebSocket, code: number, reason: string, wasClean: boolean) {
     ws.close(code, "Durable Object is closing WebSocket")
   }
 
@@ -174,12 +174,12 @@ export default new Hono<{ Bindings: Env }>()
   })
   .get("/share_data", async (c) => {
     const id = c.req.query("id")
-    console.log("share_data", id)
     if (!id) return c.text("Error: Share ID is required", { status: 400 })
-    const stub = c.env.SYNC_SERVER.get(c.env.SYNC_SERVER.idFromName(id))
-    const data = await stub.getData()
+    console.log("share_data", id)
+    const stub: any = c.env.SYNC_SERVER.get(c.env.SYNC_SERVER.idFromName(id))
+    const data: { key: string; content: any }[] = await stub.getData()
 
-    let info
+    let info: any
     const messages: Record<string, any> = {}
     data.forEach((d) => {
       const [root, type] = d.key.split("/")
@@ -276,6 +276,7 @@ export default new Hono<{ Bindings: Env }>()
         audience: EXPECTED_AUDIENCE,
       })
       const sub = payload.sub // e.g. 'repo:my-org/my-repo:ref:refs/heads/main'
+      if (!sub) throw new Error("Token payload missing 'sub' claim")
       const parts = sub.split(":")[1].split("/")
       owner = parts[0]
       repo = parts[1]
@@ -323,7 +324,7 @@ export default new Hono<{ Bindings: Env }>()
       // Verify permissions
       const userClient = new Octokit({ auth: token })
       const { data: repoData } = await userClient.repos.get({ owner, repo })
-      if (!repoData.permissions.admin && !repoData.permissions.push && !repoData.permissions.maintain)
+      if (!repoData.permissions?.admin && !repoData.permissions?.push && !repoData.permissions?.maintain)
         throw new Error("User does not have write permissions")
 
       // Get installation token
@@ -362,6 +363,7 @@ export default new Hono<{ Bindings: Env }>()
   .get("/get_github_app_installation", async (c) => {
     const owner = c.req.query("owner")
     const repo = c.req.query("repo")
+    if (!owner || !repo) return c.json({ error: "owner and repo are required" }, { status: 400 })
 
     const auth = createAppAuth({
       appId: Resource.GITHUB_APP_ID.value,
@@ -385,4 +387,4 @@ export default new Hono<{ Bindings: Env }>()
 
     return c.json({ installation })
   })
-  .all("*", (c) => c.text("Not Found"))
+  .all("*", (c) => c.text("Not Found")) as Hono<{ Bindings: Env }>

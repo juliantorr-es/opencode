@@ -10,6 +10,7 @@ export const CARTOGRAPHER_LIFECYCLE: LifecycleDefinition = {
       allowedTools: ["read", "grep", "find"],
       maxRetries: 1,
       escalation: "skip",
+      fanOut: false,
     },
     {
       id: "map",
@@ -18,6 +19,7 @@ export const CARTOGRAPHER_LIFECYCLE: LifecycleDefinition = {
       allowedTools: ["read", "grep", "find"],
       maxRetries: 1,
       escalation: "skip",
+      fanOut: false,
     },
     {
       id: "synthesize",
@@ -26,6 +28,7 @@ export const CARTOGRAPHER_LIFECYCLE: LifecycleDefinition = {
       allowedTools: ["read", "write"],
       maxRetries: 1,
       escalation: "blocker",
+      fanOut: false,
     },
   ],
   transitions: [
@@ -45,6 +48,7 @@ export const EXECUTOR_LIFECYCLE: LifecycleDefinition = {
       allowedTools: ["read", "grep"],
       maxRetries: 1,
       escalation: "blocker",
+      fanOut: false,
     },
     {
       id: "edit",
@@ -66,6 +70,7 @@ export const EXECUTOR_LIFECYCLE: LifecycleDefinition = {
       ],
       maxRetries: 2,
       escalation: "blocker",
+      fanOut: false,
     },
     {
       id: "verify",
@@ -74,6 +79,7 @@ export const EXECUTOR_LIFECYCLE: LifecycleDefinition = {
       allowedTools: ["read", "bun", "grep"],
       maxRetries: 2,
       escalation: "blocker",
+      fanOut: false,
     },
   ],
 }
@@ -88,6 +94,7 @@ export const CRITIC_LIFECYCLE: LifecycleDefinition = {
       allowedTools: ["read"],
       maxRetries: 0,
       escalation: "blocker",
+      fanOut: false,
     },
     {
       id: "analyze",
@@ -96,6 +103,7 @@ export const CRITIC_LIFECYCLE: LifecycleDefinition = {
       allowedTools: ["read", "grep", "find", "diff"],
       maxRetries: 1,
       escalation: "skip",
+      fanOut: false,
     },
     {
       id: "verdict",
@@ -104,6 +112,7 @@ export const CRITIC_LIFECYCLE: LifecycleDefinition = {
       allowedTools: ["read", "comment_plan"],
       maxRetries: 1,
       escalation: "blocker",
+      fanOut: false,
     },
   ],
   transitions: [
@@ -123,6 +132,7 @@ export const LANE_OWNER_LIFECYCLE: LifecycleDefinition = {
       allowedTools: ["read", "grep", "find", "task", "rg", "fd", "smart_grep", "smart_find"],
       maxRetries: 1,
       escalation: "blocker",
+      fanOut: false,
     },
     {
       id: "plan",
@@ -131,6 +141,7 @@ export const LANE_OWNER_LIFECYCLE: LifecycleDefinition = {
       allowedTools: ["read", "propose_plan", "revise_plan", "task"],
       maxRetries: 1,
       escalation: "blocker",
+      fanOut: false,
     },
     {
       id: "review",
@@ -139,6 +150,7 @@ export const LANE_OWNER_LIFECYCLE: LifecycleDefinition = {
       allowedTools: ["read", "review_criticism", "comment_plan", "task"],
       maxRetries: 2,
       escalation: "blocker",
+      fanOut: false,
     },
     {
       id: "execution",
@@ -165,6 +177,7 @@ export const LANE_OWNER_LIFECYCLE: LifecycleDefinition = {
       ],
       maxRetries: 2,
       escalation: "blocker",
+      fanOut: false,
     },
     {
       id: "validation",
@@ -173,6 +186,7 @@ export const LANE_OWNER_LIFECYCLE: LifecycleDefinition = {
       allowedTools: ["read", "bun", "smart_grep", "grep", "task"],
       maxRetries: 2,
       escalation: "blocker",
+      fanOut: false,
     },
   ],
 }

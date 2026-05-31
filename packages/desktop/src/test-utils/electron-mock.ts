@@ -4,6 +4,14 @@ import type { BrowserWindow, IpcMainInvokeEvent, IpcMainEvent, WebContents } fro
  * Create a minimal mock function that tracks calls.
  * Avoids importing bun:test or jest in the utils file.
  */
+type MockFn<T extends (...args: any[]) => any> = T & {
+  _impl?: T
+  mock: { calls: Array<{ args: any[]; this: any }> }
+  mockReturnValue: (val: ReturnType<T>) => MockFn<T>
+  mockImplementation: (impl: T) => MockFn<T>
+  mockReset: () => void
+}
+
 export function mockFn<T extends (...args: any[]) => any = (...args: any[]) => any>() {
   const calls: Array<{ args: any[]; this: any }> = []
   const fn = ((...args: any[]) => {
@@ -11,13 +19,7 @@ export function mockFn<T extends (...args: any[]) => any = (...args: any[]) => a
     calls.push(ctx)
     // @ts-ignore — default implementation returns undefined
     return fn._impl?.(...args)
-  }) as T & {
-    _impl?: T
-    mock: { calls: Array<{ args: any[]; this: any }> }
-    mockReturnValue: (val: ReturnType<T>) => T
-    mockImplementation: (impl: T) => T
-    mockReset: () => void
-  }
+  }) as MockFn<T>
 
   fn.mock = { calls }
   fn.mockReturnValue = (val: ReturnType<T>) => {

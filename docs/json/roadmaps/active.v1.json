@@ -1,14 +1,4 @@
 {
-  "schema_version": "v1",
-  "title": "opencode-desktop Phase 3 Roadmap",
-  "phases": {
-    "3-0": "Cross-Session Infrastructure",
-    "3-1": "Postgres Migration",
-    "3-2": "Decouple Bootstrap & Config",
-    "3-3": "Audit Product-Shape Hardcoding",
-    "3-4": "Dialog Component Tests",
-    "3-5": "Localization Completion"
-  },
   "items": [
     {
       "id": "CI-001",
@@ -69,8 +59,8 @@
       "title": "Cross-session roadmap tools — active/blueprint/audit system",
       "phase": "3-0",
       "priority": 4,
-      "status": "not_started",
-      "completion_pct": 0,
+      "status": "completed",
+      "completion_pct": 100,
       "depends_on": [
         "CI-003"
       ],
@@ -83,8 +73,8 @@
       "title": "Lessons register — cross-session pattern memory",
       "phase": "3-0",
       "priority": 5,
-      "status": "not_started",
-      "completion_pct": 0,
+      "status": "completed",
+      "completion_pct": 100,
       "depends_on": [],
       "effort": "low",
       "context_summary": "lesson_register tool records one-sentence insights to lessons.v1.jsonl. Categories: codebase, workflow, architecture, tool, timing, convention. Future sessions read these at startup.",
@@ -95,8 +85,8 @@
       "title": "Session diff tool — consolidated change reporting",
       "phase": "3-0",
       "priority": 6,
-      "status": "not_started",
-      "completion_pct": 0,
+      "status": "completed",
+      "completion_pct": 100,
       "depends_on": [],
       "effort": "low",
       "context_summary": "session_diff tool aggregates edit_logs, runs git diff --stat, and produces per-package breakdown with file lists. Used for PR descriptions and handoffs.",
@@ -108,7 +98,7 @@
       "phase": "3-1",
       "priority": 1,
       "status": "in_progress",
-      "completion_pct": 45,
+      "completion_pct": 48,
       "depends_on": [],
       "effort": "high",
       "context_summary": "account.pg.sql.ts exists untracked, account.sql.ts has staged TimestampsPg changes. ~6 tables need Pg schema definitions. Must be dual-write compatible with SQLite during migration.",
@@ -141,8 +131,8 @@
       "title": "Migration runner with dual SQLite+Pg CI support",
       "phase": "3-1",
       "priority": 2,
-      "status": "not_started",
-      "completion_pct": 0,
+      "status": "completed",
+      "completion_pct": 100,
       "depends_on": [
         "PG-001"
       ],
@@ -202,8 +192,8 @@
       "title": "Extract Electron assumptions from config resolution",
       "phase": "3-2",
       "priority": 1,
-      "status": "not_started",
-      "completion_pct": 0,
+      "status": "completed",
+      "completion_pct": 100,
       "depends_on": [
         "PG-001"
       ],
@@ -216,8 +206,8 @@
       "title": "Renderer loads in Chrome without Electron — definition of done",
       "phase": "3-2",
       "priority": 2,
-      "status": "not_started",
-      "completion_pct": 0,
+      "status": "completed",
+      "completion_pct": 100,
       "depends_on": [
         "DC-001"
       ],
@@ -230,8 +220,8 @@
       "title": "Plugin system decoupled from Electron IPC",
       "phase": "3-2",
       "priority": 3,
-      "status": "not_started",
-      "completion_pct": 0,
+      "status": "completed",
+      "completion_pct": 100,
       "depends_on": [
         "DC-001"
       ],
@@ -244,8 +234,8 @@
       "title": "Break up 503-line ipc.ts god module",
       "phase": "3-3",
       "priority": 1,
-      "status": "not_started",
-      "completion_pct": 0,
+      "status": "completed",
+      "completion_pct": 100,
       "depends_on": [
         "DC-001"
       ],
@@ -258,8 +248,8 @@
       "title": "Dynamic menu actions — not hardcoded desktop menu",
       "phase": "3-3",
       "priority": 2,
-      "status": "not_started",
-      "completion_pct": 0,
+      "status": "completed",
+      "completion_pct": 100,
       "depends_on": [
         "HC-001"
       ],
@@ -272,8 +262,8 @@
       "title": "Preload bridge type generation — not manually typed",
       "phase": "3-3",
       "priority": 3,
-      "status": "not_started",
-      "completion_pct": 0,
+      "status": "completed",
+      "completion_pct": 100,
       "depends_on": [
         "HC-001"
       ],
@@ -308,8 +298,8 @@
       "title": "Dialog component test harness",
       "phase": "3-4",
       "priority": 1,
-      "status": "not_started",
-      "completion_pct": 0,
+      "status": "completed",
+      "completion_pct": 100,
       "depends_on": [],
       "effort": "low",
       "context_summary": "Phase 2 added 54 IPC tests but zero dialog component tests. Need a SolidJS dialog test harness: mount, interact, assert visible/hidden, assert callbacks fired.",
@@ -341,8 +331,8 @@
       "title": "Locale fallback chain",
       "phase": "3-5",
       "priority": 1,
-      "status": "not_started",
-      "completion_pct": 0,
+      "status": "completed",
+      "completion_pct": 100,
       "depends_on": [],
       "effort": "low",
       "context_summary": "github.* keys exist in only 1 of 17 locales. Need a fallback chain: requested locale → parent locale (zh-CN → zh) → base (en). Missing keys silently fall through instead of showing key names.",

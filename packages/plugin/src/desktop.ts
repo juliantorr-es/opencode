@@ -20,8 +20,19 @@ export type DesktopSlotPlugin<Slots extends Record<string, object> = {}> = {
   }
 }
 
+/** Bidirectional communication channel for desktop plugins */
+export interface PluginTransport {
+  send(channel: string, data?: unknown): void
+  invoke(channel: string, data?: unknown): Promise<unknown>
+  on(channel: string, handler: (data: unknown) => void): () => void
+  off(channel: string, handler: (data: unknown) => void): void
+  destroy(): void
+}
+
 /** Lifecycle and API for a desktop plugin */
 export type DesktopPluginApi = {
+  /** Bidirectional plugin-to-plugin / plugin-to-host transport */
+  transport?: PluginTransport
   /** Register slot components at named positions. Returns unregister function. */
   slots: {
     register(slotPlugin: DesktopSlotPlugin): () => void

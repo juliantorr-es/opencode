@@ -85,7 +85,7 @@ export const IPC = {
 
   push: {
     INIT_STEP: "opencode:init-step",
-    SQLITE_MIGRATION_PROGRESS: "opencode:sqlite-migration-progress",
+    STORAGE_MIGRATION_PROGRESS: "opencode:storage-migration-progress",
     MENU_COMMAND: "opencode:menu-command",
     DEEP_LINK: "opencode:deep-link",
     PINCH_ZOOM_ENABLED_CHANGED: "opencode:pinch-zoom-enabled-changed",

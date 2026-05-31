@@ -1,9 +1,9 @@
 import { Context, Effect, Layer } from "effect"
 import { Database } from "./storage/db"
-import { DataMigrationTable } from "./data-migration.sql"
+import { DataMigrationTable } from "@/storage/schema"
 import * as Log from "@opencode-ai/core/util/log"
 import { and, asc, eq, gt, inArray, sql } from "drizzle-orm"
-import { MessageTable, SessionTable } from "./session/session.sql"
+import { MessageTable, SessionTable } from "@/storage/schema"
 import type { SessionID } from "./session/schema"
 
 export type Migration<R = never> = {

@@ -78,6 +78,10 @@ const INTL: Record<Locale, string> = {
   tr: "tr",
 }
 
+const PARENT_LOCALE: Partial<Record<Locale, Locale>> = {
+  zht: "zh",
+}
+
 const LABEL_KEY: Record<Locale, keyof Dictionary> = {
   en: "language.en",
   zh: "language.zh",
@@ -125,10 +129,24 @@ const loaders: Record<Exclude<Locale, "en">, () => Promise<Dictionary>> = {
   tr: () => merge(import("@/i18n/tr"), import("@opencode-ai/ui/i18n/tr")),
 }
 
-function loadDict(locale: Locale) {
+function loadDict(locale: Locale): Promise<Dictionary> {
   const hit = dicts.get(locale)
   if (hit) return Promise.resolve(hit)
   if (locale === "en") return Promise.resolve(base)
+
+  const parent = PARENT_LOCALE[locale]
+  if (parent) {
+    // Load parent first, then merge parent keys as fallback before locale overrides
+    return loadDict(parent).then((parentDict) => {
+      const load = loaders[locale]
+      return load().then((next: Dictionary) => {
+        const merged = { ...parentDict, ...next } as Dictionary
+        dicts.set(locale, merged)
+        return merged
+      })
+    })
+  }
+
   const load = loaders[locale]
   return load().then((next: Dictionary) => {
     dicts.set(locale, next)

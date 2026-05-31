@@ -1,0 +1,20 @@
+{"at":"2026-05-31T05:14:05.635Z","session_id":"ses_1838bef5effedOuQlzGrMVtSGP","agent":"cartographer","tool":"smart_bun","phase":"started","detail":"typecheck"}
+{"at":"2026-05-31T05:14:23.540Z","session_id":"ses_1838bef5effedOuQlzGrMVtSGP","agent":"cartographer","tool":"smart_bun","phase":"failed","detail":"typecheck exit=2"}
+{"at":"2026-05-31T05:14:46.766Z","session_id":"ses_1838bef5effedOuQlzGrMVtSGP","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Get full typecheck output (was truncated)"}
+{"at":"2026-05-31T05:14:46.766Z","session_id":"ses_1838bef5effedOuQlzGrMVtSGP","agent":"cartographer","tool":"smart_bash","phase":"rerouted","detail":"→ smart_bun"}
+{"at":"2026-05-31T05:15:01.586Z","session_id":"ses_1838bef5effedOuQlzGrMVtSGP","agent":"cartographer","tool":"smart_find","phase":"started","detail":"*engine*"}
+{"at":"2026-05-31T05:15:01.614Z","session_id":"ses_1838bef5effedOuQlzGrMVtSGP","agent":"cartographer","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T05:15:01.843Z","session_id":"ses_1838bef5effedOuQlzGrMVtSGP","agent":"cartographer","tool":"smart_find","phase":"started","detail":"*engine*"}
+{"at":"2026-05-31T05:15:01.866Z","session_id":"ses_1838bef5effedOuQlzGrMVtSGP","agent":"cartographer","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T05:15:02.322Z","session_id":"ses_1838bef5effedOuQlzGrMVtSGP","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Get the full typecheck errors at the end (tail)"}
+{"at":"2026-05-31T05:15:02.322Z","session_id":"ses_1838bef5effedOuQlzGrMVtSGP","agent":"cartographer","tool":"smart_bash","phase":"rerouted","detail":"→ smart_bun"}
+{"at":"2026-05-31T05:15:10.202Z","session_id":"ses_1838bef5effedOuQlzGrMVtSGP","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"engine"}
+{"at":"2026-05-31T05:15:10.258Z","session_id":"ses_1838bef5effedOuQlzGrMVtSGP","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"engine"}
+{"at":"2026-05-31T05:15:10.486Z","session_id":"ses_1838bef5effedOuQlzGrMVtSGP","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"List context directory contents"}
+{"at":"2026-05-31T05:15:10.487Z","session_id":"ses_1838bef5effedOuQlzGrMVtSGP","agent":"cartographer","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T05:15:10.786Z","session_id":"ses_1838bef5effedOuQlzGrMVtSGP","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"List lifecycle directory contents"}
+{"at":"2026-05-31T05:15:10.786Z","session_id":"ses_1838bef5effedOuQlzGrMVtSGP","agent":"cartographer","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T05:15:41.323Z","session_id":"ses_1838bef5effedOuQlzGrMVtSGP","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Find context directory files"}
+{"at":"2026-05-31T05:15:41.323Z","session_id":"ses_1838bef5effedOuQlzGrMVtSGP","agent":"cartographer","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T05:15:41.577Z","session_id":"ses_1838bef5effedOuQlzGrMVtSGP","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Find lifecycle directory files"}
+{"at":"2026-05-31T05:15:41.577Z","session_id":"ses_1838bef5effedOuQlzGrMVtSGP","agent":"cartographer","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}

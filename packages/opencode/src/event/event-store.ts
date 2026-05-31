@@ -1,7 +1,7 @@
 import { Context, Effect, Layer } from "effect"
 import { serviceUse } from "@opencode-ai/core/effect/service-use"
 import { DatabaseAdapter } from "../storage/adapter"
-import { RuntimeEventTable } from "./event.sql"
+import { RuntimeEventTable } from "@/storage/schema"
 import { eq, and, asc, desc, gte, lte } from "drizzle-orm"
 import type { RuntimeEvent } from "./runtime-event"
 import * as Log from "@opencode-ai/core/util/log"

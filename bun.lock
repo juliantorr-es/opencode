@@ -212,6 +212,14 @@
         "wrangler": "4.50.0",
       },
     },
+    "packages/containers": {
+      "name": "@opencode-ai/containers",
+      "version": "1.0.0",
+      "devDependencies": {
+        "@types/bun": "catalog:",
+        "@types/node": "catalog:",
+      },
+    },
     "packages/core": {
       "name": "@opencode-ai/core",
       "version": "1.15.12",
@@ -326,20 +334,6 @@
         "@parcel/watcher-linux-x64-musl": "2.5.1",
         "@parcel/watcher-win32-arm64": "2.5.1",
         "@parcel/watcher-win32-x64": "2.5.1",
-      },
-    },
-    "packages/effect-drizzle-sqlite": {
-      "name": "@opencode-ai/effect-drizzle-sqlite",
-      "version": "1.15.12",
-      "dependencies": {
-        "drizzle-orm": "catalog:",
-        "effect": "catalog:",
-      },
-      "devDependencies": {
-        "@effect/sql-sqlite-bun": "catalog:",
-        "@tsconfig/bun": "catalog:",
-        "@types/bun": "catalog:",
-        "@typescript/native-preview": "catalog:",
       },
     },
     "packages/enterprise": {
@@ -577,6 +571,7 @@
         "@opentui/keymap": "catalog:",
         "@opentui/solid": "catalog:",
         "@tsconfig/node22": "catalog:",
+        "@types/bun": "catalog:",
         "@types/node": "catalog:",
         "@typescript/native-preview": "catalog:",
         "typescript": "catalog:",
@@ -825,7 +820,6 @@
     "@cloudflare/workers-types": "4.20251008.0",
     "@effect/opentelemetry": "4.0.0-beta.66",
     "@effect/platform-node": "4.0.0-beta.66",
-    "@effect/sql-sqlite-bun": "4.0.0-beta.66",
     "@hono/zod-validator": "0.4.2",
     "@kobalte/core": "0.13.11",
     "@lydell/node-pty": "1.2.0-beta.10",
@@ -1233,8 +1227,6 @@
     "@effect/platform-node": ["@effect/platform-node@4.0.0-beta.66", "", { "dependencies": { "@effect/platform-node-shared": "^4.0.0-beta.66", "mime": "^4.1.0", "undici": "^8.0.2" }, "peerDependencies": { "effect": "^4.0.0-beta.66", "ioredis": "^5.7.0" } }, "sha512-s/0RgaQFuszzdorRnX1PwEQNnSOi+JgMJo3zEe9O2NR3sosMhTr0Uk+1AF6bUOI9uJ2CPT3KpTIIU7q5/TpOkg=="],
 
     "@effect/platform-node-shared": ["@effect/platform-node-shared@4.0.0-beta.66", "", { "dependencies": { "@types/ws": "^8.18.1", "ws": "^8.20.0" }, "peerDependencies": { "effect": "^4.0.0-beta.66" } }, "sha512-+ymrhBnESv/hmn5SKTe2//IY9Ox/hGPeoogEWhW47ZGyhFI5eMYFxdEUBa+3IAV05rrBzrxON9lynu68n0DM7w=="],
-
-    "@effect/sql-sqlite-bun": ["@effect/sql-sqlite-bun@4.0.0-beta.66", "", { "peerDependencies": { "effect": "^4.0.0-beta.66" } }, "sha512-UYsrAb/5T0ZRypeN9Kmv3/ZInibGCjM6dtoiAWtfG+xKyuq8N05wmuVCXB0+XgVmUBxDWjw/S1fu4ivS0vZVuw=="],
 
     "@electric-sql/pglite": ["@electric-sql/pglite@0.2.17", "", {}, "sha512-qEpKRT2oUaWDH6tjRxLHjdzMqRUGYDnGZlKrnL4dJ77JVMcP2Hpo3NYnOSPKdZdeec57B6QPprCUFg0picx5Pw=="],
 
@@ -1672,11 +1664,11 @@
 
     "@opencode-ai/console-support": ["@opencode-ai/console-support@workspace:packages/console/support"],
 
+    "@opencode-ai/containers": ["@opencode-ai/containers@workspace:packages/containers"],
+
     "@opencode-ai/core": ["@opencode-ai/core@workspace:packages/core"],
 
     "@opencode-ai/desktop": ["@opencode-ai/desktop@workspace:packages/desktop"],
-
-    "@opencode-ai/effect-drizzle-sqlite": ["@opencode-ai/effect-drizzle-sqlite@workspace:packages/effect-drizzle-sqlite"],
 
     "@opencode-ai/enterprise": ["@opencode-ai/enterprise@workspace:packages/enterprise"],
 

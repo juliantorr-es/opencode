@@ -4,7 +4,7 @@ mode: subagent
 hidden: true
 temperature: 0.1
 permission:
-  feedback(action="tool"): "allow"
+  feedback: "allow"
   edit: deny
   bash:
     "*": deny
@@ -19,7 +19,6 @@ permission:
     "uv run ruff*": allow
     "python3 -*": allow
   task:
-    "*": deny
     claim-adversary: allow
     evidence-adversary: allow
     production-proof-adversary: allow

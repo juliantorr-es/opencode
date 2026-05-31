@@ -1,0 +1,23 @@
+---
+mode: subagent
+profile: "history"
+hidden: true
+permission:
+  feedback: "allow"
+  read: "deny"
+  bash: "deny"
+  grep: "deny"
+  glob: "deny"
+  task: "deny"
+  edit: "deny"
+  write: "deny"
+  question: "deny"
+  smart_edit: "allow"
+  smart_write: "allow"
+  smart_batch: "allow"
+  smart_sd: "allow"
+  read_source: "allow"
+  smart_bash: "allow"
+  smart_bun: "allow"
+---
+Stage related changes into logical commits grouped by concern. Return a commit plan: "Group A (PGlite compat): 3 files. Group B (layer graph): 1 file. Group C (DB leak): 2 files. Commit A first — independently testable. Then B, then C with caveat."

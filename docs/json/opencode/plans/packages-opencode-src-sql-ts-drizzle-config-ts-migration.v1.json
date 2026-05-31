@@ -1,0 +1,15 @@
+{
+  "schema_version": "v1",
+  "plan_id": "packages-opencode-src-sql-ts-drizzle-config-ts-migration",
+  "plan_revision": 1,
+  "title": "Delete dead SQLite schema files, drizzle config, and migration directory",
+  "boundary": "packages/opencode/src/*.sql.ts, drizzle.config.ts, migration/",
+  "consumer_purpose": "Remove dead SQLite code from opencode package — none of these files are imported by runtime code, the barrel file (schema.ts) exports from .pg.sql.ts equivalents, and package.json scripts reference drizzle.config.pg.ts",
+  "claim_atoms": [
+    "1. All 8 SQLite schema files are dead — no imports reference them 2. drizzle.config.ts is dead — package.json scripts use drizzle.config.pg.ts 3. migration/ directory is dead — PG migrations live in migration-pg/ 4. Deleting these won't break typecheck or tests"
+  ],
+  "content": "## Plan: SQLite dead code removal (Lane SQL-001)\n\n### Phase 1: Delete 8 SQLite Drizzle schema files\nFiles to delete (confirmed no imports from runtime code):\n- `src/session/session.sql.ts`\n- `src/account/account.sql.ts`\n- `src/project/project.sql.ts`\n- `src/share/share.sql.ts`\n- `src/event/event.sql.ts`\n- `src/control-plane/workspace.sql.ts`\n- `src/sync/event.sql.ts`\n- `src/data-migration.sql.ts`\n\n### Phase 2: Delete SQLite drizzle config\n- `drizzle.config.ts` (PG config at `drizzle.config.pg.ts` is the active one)\n\n### Phase 3: Delete SQLite migration directory\n- `migration/` directory (20 subdirectories) — PG migrations live in `migration-pg/`\n\n### Phase 4: Verify\n- Run `bun typecheck` from packages/opencode — expect no new errors\n- Run `bun test test/storage/migration.pg.test.ts` — PG migration tests should pass\n- Run `bun test test/storage/migration.duckdb.test.ts` — DuckDB tests should pass\n- Confirm git diff shows only the deleted files\n\n### Risks\n- Low risk: No runtime code imports these files\n- Low risk: Barrel file (schema.ts) re-exports from .pg.sql.ts versions\n- Low risk: package.json scripts explicitly reference drizzle.config.pg.ts\n- Dirty file risk: None — these files are not modified in the working tree per git status",
+  "status": "proposed",
+  "created_at": "2026-05-31T03:35:32.929Z",
+  "modified_at": "2026-05-31T03:35:32.929Z"
+}

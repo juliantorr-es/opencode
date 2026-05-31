@@ -1,0 +1,72 @@
+{"at":"2026-05-31T03:05:51.610Z","session_id":"ses_18401507fffeapyds6AG0MLCpU","agent":"cartographer","tool":"smart_find","phase":"started","detail":"drizzle*"}
+{"at":"2026-05-31T03:05:51.633Z","session_id":"ses_18401507fffeapyds6AG0MLCpU","agent":"cartographer","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T03:05:51.860Z","session_id":"ses_18401507fffeapyds6AG0MLCpU","agent":"cartographer","tool":"smart_find","phase":"started","detail":"**/migrate*"}
+{"at":"2026-05-31T03:05:51.892Z","session_id":"ses_18401507fffeapyds6AG0MLCpU","agent":"cartographer","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T03:05:52.076Z","session_id":"ses_18401507fffeapyds6AG0MLCpU","agent":"cartographer","tool":"smart_find","phase":"started","detail":"**/storage/**"}
+{"at":"2026-05-31T03:05:52.112Z","session_id":"ses_18401507fffeapyds6AG0MLCpU","agent":"cartographer","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T03:05:54.606Z","session_id":"ses_18401507fffeapyds6AG0MLCpU","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Find storage directories"}
+{"at":"2026-05-31T03:05:54.606Z","session_id":"ses_18401507fffeapyds6AG0MLCpU","agent":"cartographer","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T03:05:55.013Z","session_id":"ses_18401507fffeapyds6AG0MLCpU","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Find all packages"}
+{"at":"2026-05-31T03:05:55.013Z","session_id":"ses_18401507fffeapyds6AG0MLCpU","agent":"cartographer","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T03:05:55.459Z","session_id":"ses_18401507fffeapyds6AG0MLCpU","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"migrate"}
+{"at":"2026-05-31T03:05:55.547Z","session_id":"ses_18401507fffeapyds6AG0MLCpU","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"migrate"}
+{"at":"2026-05-31T03:05:55.751Z","session_id":"ses_18401507fffeapyds6AG0MLCpU","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"drizzle"}
+{"at":"2026-05-31T03:05:55.936Z","session_id":"ses_18401507fffeapyds6AG0MLCpU","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"drizzle"}
+{"at":"2026-05-31T03:06:00.266Z","session_id":"ses_18401507fffeapyds6AG0MLCpU","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"List package directories"}
+{"at":"2026-05-31T03:06:00.266Z","session_id":"ses_18401507fffeapyds6AG0MLCpU","agent":"cartographer","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T03:06:00.734Z","session_id":"ses_18401507fffeapyds6AG0MLCpU","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"postgres|pg-core|pglite|@effect/sql-pg"}
+{"at":"2026-05-31T03:06:00.769Z","session_id":"ses_18401507fffeapyds6AG0MLCpU","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"postgres|pg-core|pglite|@effect/sql-pg"}
+{"at":"2026-05-31T03:06:01.220Z","session_id":"ses_18401507fffeapyds6AG0MLCpU","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"duckdb|duck_db|duckDb"}
+{"at":"2026-05-31T03:06:01.260Z","session_id":"ses_18401507fffeapyds6AG0MLCpU","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"duckdb|duck_db|duckDb"}
+{"at":"2026-05-31T03:06:05.305Z","session_id":"ses_18401507fffeapyds6AG0MLCpU","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"List CI workflow files"}
+{"at":"2026-05-31T03:06:05.305Z","session_id":"ses_18401507fffeapyds6AG0MLCpU","agent":"cartographer","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T03:06:05.750Z","session_id":"ses_18401507fffeapyds6AG0MLCpU","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"migrate|drizzle|postgres|duckdb|pglite"}
+{"at":"2026-05-31T03:06:05.758Z","session_id":"ses_18401507fffeapyds6AG0MLCpU","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"migrate|drizzle|postgres|duckdb|pglite"}
+{"at":"2026-05-31T03:06:10.848Z","session_id":"ses_18401507fffeapyds6AG0MLCpU","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Find all drizzle config files"}
+{"at":"2026-05-31T03:06:10.848Z","session_id":"ses_18401507fffeapyds6AG0MLCpU","agent":"cartographer","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T03:06:14.157Z","session_id":"ses_18401507fffeapyds6AG0MLCpU","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Find drizzle and migration configs and directories"}
+{"at":"2026-05-31T03:06:14.158Z","session_id":"ses_18401507fffeapyds6AG0MLCpU","agent":"cartographer","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T03:06:14.565Z","session_id":"ses_18401507fffeapyds6AG0MLCpU","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"List all storage source files"}
+{"at":"2026-05-31T03:06:14.566Z","session_id":"ses_18401507fffeapyds6AG0MLCpU","agent":"cartographer","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T03:06:14.951Z","session_id":"ses_18401507fffeapyds6AG0MLCpU","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Find all PG schema files"}
+{"at":"2026-05-31T03:06:14.951Z","session_id":"ses_18401507fffeapyds6AG0MLCpU","agent":"cartographer","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T03:06:18.007Z","session_id":"ses_18401507fffeapyds6AG0MLCpU","agent":"cartographer","tool":"smart_find","phase":"started","detail":"drizzle*"}
+{"at":"2026-05-31T03:06:18.060Z","session_id":"ses_18401507fffeapyds6AG0MLCpU","agent":"cartographer","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T03:06:18.393Z","session_id":"ses_18401507fffeapyds6AG0MLCpU","agent":"cartographer","tool":"smart_find","phase":"started","detail":"*"}
+{"at":"2026-05-31T03:06:18.422Z","session_id":"ses_18401507fffeapyds6AG0MLCpU","agent":"cartographer","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T03:06:18.714Z","session_id":"ses_18401507fffeapyds6AG0MLCpU","agent":"cartographer","tool":"smart_find","phase":"started","detail":"*.pg.sql.ts"}
+{"at":"2026-05-31T03:06:18.734Z","session_id":"ses_18401507fffeapyds6AG0MLCpU","agent":"cartographer","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T03:06:19.050Z","session_id":"ses_18401507fffeapyds6AG0MLCpU","agent":"cartographer","tool":"smart_find","phase":"started","detail":"migration*"}
+{"at":"2026-05-31T03:06:19.070Z","session_id":"ses_18401507fffeapyds6AG0MLCpU","agent":"cartographer","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T03:06:22.762Z","session_id":"ses_18401507fffeapyds6AG0MLCpU","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"List drizzle and migration files and directories"}
+{"at":"2026-05-31T03:06:22.762Z","session_id":"ses_18401507fffeapyds6AG0MLCpU","agent":"cartographer","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T03:06:23.096Z","session_id":"ses_18401507fffeapyds6AG0MLCpU","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"List all storage source files"}
+{"at":"2026-05-31T03:06:23.096Z","session_id":"ses_18401507fffeapyds6AG0MLCpU","agent":"cartographer","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T03:06:23.487Z","session_id":"ses_18401507fffeapyds6AG0MLCpU","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Find all PG SQL schema files"}
+{"at":"2026-05-31T03:06:23.487Z","session_id":"ses_18401507fffeapyds6AG0MLCpU","agent":"cartographer","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T03:06:27.150Z","session_id":"ses_18401507fffeapyds6AG0MLCpU","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"List all migration-related files and directories"}
+{"at":"2026-05-31T03:06:27.150Z","session_id":"ses_18401507fffeapyds6AG0MLCpU","agent":"cartographer","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T03:06:31.192Z","session_id":"ses_18401507fffeapyds6AG0MLCpU","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"drizzle\\.config|migration-folder|migration-pg|migration/sqlite"}
+{"at":"2026-05-31T03:06:31.215Z","session_id":"ses_18401507fffeapyds6AG0MLCpU","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"drizzle\\.config|migration-folder|migration-pg|migration/sqlite"}
+{"at":"2026-05-31T03:06:35.499Z","session_id":"ses_18401507fffeapyds6AG0MLCpU","agent":"cartographer","tool":"smart_git","phase":"started","detail":"log"}
+{"at":"2026-05-31T03:06:35.603Z","session_id":"ses_18401507fffeapyds6AG0MLCpU","agent":"cartographer","tool":"smart_git","phase":"completed","detail":"log exit=0"}
+{"at":"2026-05-31T03:06:40.610Z","session_id":"ses_18401507fffeapyds6AG0MLCpU","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"List migration directories and related"}
+{"at":"2026-05-31T03:06:40.803Z","session_id":"ses_18401507fffeapyds6AG0MLCpU","agent":"cartographer","tool":"smart_bash","phase":"completed","detail":"bash exit=0"}
+{"at":"2026-05-31T03:06:44.822Z","session_id":"ses_18401507fffeapyds6AG0MLCpU","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"List contents of migration directories"}
+{"at":"2026-05-31T03:06:44.888Z","session_id":"ses_18401507fffeapyds6AG0MLCpU","agent":"cartographer","tool":"smart_bash","phase":"failed","detail":"bash exit=2"}
+{"at":"2026-05-31T03:06:49.121Z","session_id":"ses_18401507fffeapyds6AG0MLCpU","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Read a PG migration SQL file"}
+{"at":"2026-05-31T03:06:49.140Z","session_id":"ses_18401507fffeapyds6AG0MLCpU","agent":"cartographer","tool":"smart_bash","phase":"completed","detail":"bash exit=0"}
+{"at":"2026-05-31T03:06:49.455Z","session_id":"ses_18401507fffeapyds6AG0MLCpU","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Read the first PG migration SQL"}
+{"at":"2026-05-31T03:06:49.476Z","session_id":"ses_18401507fffeapyds6AG0MLCpU","agent":"cartographer","tool":"smart_bash","phase":"completed","detail":"bash exit=0"}
+{"at":"2026-05-31T03:06:55.231Z","session_id":"ses_18401507fffeapyds6AG0MLCpU","agent":"cartographer","tool":"smart_git","phase":"started","detail":"log"}
+{"at":"2026-05-31T03:06:55.289Z","session_id":"ses_18401507fffeapyds6AG0MLCpU","agent":"cartographer","tool":"smart_git","phase":"completed","detail":"log exit=0"}
+{"at":"2026-05-31T03:06:59.414Z","session_id":"ses_18401507fffeapyds6AG0MLCpU","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Find all SQLite schema files"}
+{"at":"2026-05-31T03:06:59.442Z","session_id":"ses_18401507fffeapyds6AG0MLCpU","agent":"cartographer","tool":"smart_bash","phase":"completed","detail":"bash exit=0"}
+{"at":"2026-05-31T03:07:08.335Z","session_id":"ses_18401507fffeapyds6AG0MLCpU","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Compare SQLite vs PG schemas and check effect-drizzle source"}
+{"at":"2026-05-31T03:07:08.379Z","session_id":"ses_18401507fffeapyds6AG0MLCpU","agent":"cartographer","tool":"smart_bash","phase":"completed","detail":"bash exit=0"}
+{"at":"2026-05-31T03:07:12.727Z","session_id":"ses_18401507fffeapyds6AG0MLCpU","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Check for migration meta/journal files"}
+{"at":"2026-05-31T03:07:12.755Z","session_id":"ses_18401507fffeapyds6AG0MLCpU","agent":"cartographer","tool":"smart_bash","phase":"failed","detail":"bash exit=2"}
+{"at":"2026-05-31T03:07:23.726Z","session_id":"ses_18401507fffeapyds6AG0MLCpU","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"List all migration directories"}
+{"at":"2026-05-31T03:07:23.824Z","session_id":"ses_18401507fffeapyds6AG0MLCpU","agent":"cartographer","tool":"smart_bash","phase":"completed","detail":"bash exit=0"}
+{"at":"2026-05-31T03:08:10.196Z","session_id":"ses_18401507fffeapyds6AG0MLCpU","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Create directory for cartography report"}
+{"at":"2026-05-31T03:08:10.211Z","session_id":"ses_18401507fffeapyds6AG0MLCpU","agent":"cartographer","tool":"smart_bash","phase":"completed","detail":"mkdir exit=0"}

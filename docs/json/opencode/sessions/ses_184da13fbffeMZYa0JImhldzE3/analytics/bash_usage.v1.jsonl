@@ -1,0 +1,1 @@
+{"at":"2026-05-30T23:09:08.978Z","session_id":"ses_184da13fbffeMZYa0JImhldzE3","agent":"handy-agent","binary":"awk","command":"awk 'NR>=170 && NR<=202 {printf \"%d: %s\\n\", NR, $0}' packages/opencode/src/tool/coordination.ts","reason":"Read lines 170-202 with original line numbers prefixed","elapsed_ms":62,"exit_code":0}

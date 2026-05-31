@@ -1,0 +1,14 @@
+{"at":"2026-05-31T02:51:35.877Z","tool":"smart_grep","action":"searched","pattern":"onSqliteMigrationProgress|sendSqliteMigrationProgress|SqliteMigrationProgress","results":40,"files":17}
+{"at":"2026-05-31T02:51:50.702Z","tool":"smart_grep","action":"searched","pattern":"effect-drizzle-sqlite","results":30,"files":3}
+{"at":"2026-05-31T02:52:04.419Z","tool":"smart_grep","action":"searched","pattern":"upgrade-opentui","results":4,"files":4}
+{"at":"2026-05-31T02:52:57.933Z","tool":"smart_bash","action":"bash","command":"test -d packages/effect-drizzle-sqlite && echo \"EXISTS\" || echo \"NOT_FOUND\"","exit_code":0}
+{"at":"2026-05-31T02:53:11.476Z","tool":"smart_grep","action":"searched","pattern":"sendSqliteMigrationProgress","results":7,"files":3}
+{"at":"2026-05-31T02:53:24.282Z","tool":"smart_grep","action":"searched","pattern":"SqliteMigrationProgress","results":17,"files":6}
+{"at":"2026-05-31T02:54:35.222Z","tool":"smart_grep","action":"searched","pattern":"safeInvoke","results":2,"files":2}
+{"at":"2026-05-31T02:54:52.454Z","tool":"smart_grep","action":"searched","pattern":"context.*packet|packet\\.ts","results":3,"files":2}
+{"at":"2026-05-31T02:55:12.840Z","tool":"smart_grep","action":"searched","pattern":"__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED","results":1,"files":1}
+{"at":"2026-05-31T02:55:48.407Z","tool":"smart_bash","action":"bash","command":"head -400 packages/desktop/src/main/index.ts | tail -70","exit_code":0}
+{"at":"2026-05-31T02:56:03.273Z","tool":"smart_bash","action":"bash","command":"wc -l packages/desktop/src/main/index.ts","exit_code":0}
+{"at":"2026-05-31T02:56:16.367Z","tool":"smart_bash","action":"bash","command":"awk 'NR>=310 && NR<=370' packages/desktop/src/main/index.ts","exit_code":0}
+{"at":"2026-05-31T02:56:24.117Z","tool":"smart_grep","action":"searched","pattern":"applyMigrations","results":9,"files":4}
+{"at":"2026-05-31T02:57:01.422Z","tool":"smart_write","action":"wrote","file":"docs/json/opencode/cartography/truth-gap-mapping.v1.json","detail":"Persist complete cartography findings for three truth gaps"}

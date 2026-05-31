@@ -1,0 +1,6 @@
+{"at":"2026-05-31T03:36:25.345Z","tool":"smart_grep","action":"searched","pattern":"migrate","results":7,"files":5}
+{"at":"2026-05-31T03:36:50.638Z","tool":"smart_bash","action":"bash","command":"test -d packages/opencode/migration && echo \"EXISTS\" || echo \"NOT_FOUND\"","exit_code":0}
+{"at":"2026-05-31T03:36:50.968Z","tool":"smart_bash","action":"bash","command":"test -d packages/opencode/migration && find packages/opencode/migration -type f -o -type d | sort ||","exit_code":0}
+{"at":"2026-05-31T03:36:51.547Z","tool":"smart_bash","action":"bash","command":"test -d packages/opencode/migration/sqlite && ls -la packages/opencode/migration/sqlite/ || echo \"SQ","exit_code":0}
+{"at":"2026-05-31T03:38:47.959Z","tool":"smart_bash","action":"bash","command":"node -e \"const fs=require('fs'); const d=fs.readdirSync('packages/opencode/migration'); console.log(","exit_code":0}
+{"at":"2026-05-31T03:39:14.327Z","tool":"smart_grep","action":"searched","pattern":"MIGRATIONS_","results":2,"files":1}

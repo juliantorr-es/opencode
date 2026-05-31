@@ -38,7 +38,7 @@ export function fallbackSanitization(content: string): string {
     }
 
     // match key: value pattern
-    const kvMatch = line.match(/^([a-zA-Z_][a-zA-Z0-9_]*)\s*:\s*(.*)$/)
+    const kvMatch = line.match(/^([a-zA-Z_][a-zA-Z0-9_]*(?:\([^)]*\))?)\s*:\s*(.*)$/)
     if (!kvMatch) {
       result.push(line)
       continue

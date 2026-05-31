@@ -1,0 +1,13 @@
+Show the status of all managed Rust binary tools used by this project.
+
+Displays each binary's name, version, status (cached/system/downloadable/unsupported), and filesystem path.
+
+Managed binaries:
+- rg (ripgrep) — fast recursive text search, used by grep tools
+- fd — fast file finder, used by file discovery tools
+- bat — syntax-highlighted file viewer
+- delta — syntax-highlighted git diff viewer
+- difft (difftastic) — AST-aware diff tool
+- eza — modern ls replacement
+
+Resolution order: local cache → system PATH → auto-download from GitHub releases

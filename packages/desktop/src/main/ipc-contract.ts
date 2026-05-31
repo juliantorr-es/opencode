@@ -25,7 +25,7 @@ import type {
   ServerReadyData,
   SafeModeAction,
   SafeModeDiagnostics,
-  SqliteMigrationProgress,
+  StorageMigrationProgress,
   WslConfig,
   LinuxDisplayBackend,
   TitlebarTheme,
@@ -426,7 +426,7 @@ type DerivedSendAPI = {
  */
 export interface ComplexAPIMethods {
   awaitInitialization: (onStep: (step: InitStep) => void) => Promise<ServerReadyData>
-  onSqliteMigrationProgress: (cb: (progress: SqliteMigrationProgress) => void) => () => void
+  onStorageMigrationProgress: (cb: (progress: StorageMigrationProgress) => void) => () => void
   onMenuCommand: (cb: (id: string) => void) => () => void
   onDeepLink: (cb: (urls: string[]) => void) => () => void
   onPinchZoomEnabledChanged: (cb: (enabled: boolean) => void) => () => void
@@ -448,3 +448,54 @@ export interface ComplexAPIMethods {
  *   ComplexAPIMethods — methods with custom listener/plugin wiring
  */
 export type DerivedElectronAPI = DerivedInvokeAPI & DerivedSendAPI & ComplexAPIMethods
+
+// --- lane-8 ---
+/**
+ * Plugin transport send — typed wrapper for the dynamic PLUGIN_SEND channel.
+ * Uses typedSend under the hood so the channel type is checked against IpcSendContract.
+ * Plugin sub-channels are dynamic (runtime-defined by the plugin), but the outer IPC
+ * channel (PLUGIN_SEND) is statically typed. Includes error handling for the
+ * fire-and-forget send pattern.
+ */
+export function pluginSend(channel: string, data?: unknown): void {
+  try {
+    typedSend(IPC.send.PLUGIN_SEND, channel, data)
+  } catch (error) {
+    console.error(`[plugin] Failed to send on channel "${channel}":`, error)
+  }
+}
+
+/**
+ * Plugin transport invoke — typed wrapper for the dynamic PLUGIN_INVOKE channel.
+ * Uses typedInvoke under the hood so the channel type is checked against IpcHandleContract.
+ * Plugin sub-channels are dynamic (runtime-defined by the plugin), but the outer IPC
+ * channel (PLUGIN_INVOKE) is statically typed.
+ */
+export function pluginInvoke(channel: string, data?: unknown): Promise<unknown> {
+  return typedInvoke(IPC.handle.PLUGIN_INVOKE, channel, data)
+}
+
+// --- lane-8 ---
+// --- Change import line 4: remove safeInvoke dead code, add pluginSend/pluginInvoke ---
+// OLD: import { typedInvoke, typedSend, safeInvoke } from "../main/ipc-contract"
+// NEW: import { typedInvoke, typedSend, pluginSend, pluginInvoke } from "../main/ipc-contract"
+
+// --- Replace pluginSend method body (line ~124) ---
+// OLD:
+//   pluginSend: (channel: string, data?: unknown) => {
+//     ipcRenderer.send(IPC.send.PLUGIN_SEND, channel, data)
+//   },
+// NEW:
+//   pluginSend: (channel: string, data?: unknown) => {
+//     pluginSend(channel, data)
+//   },
+
+// --- Replace pluginInvoke method body (line ~137) ---
+// OLD:
+//   pluginInvoke: (channel: string, data?: unknown) => {
+//     return ipcRenderer.invoke(IPC.handle.PLUGIN_INVOKE, channel, data)
+//   },
+// NEW:
+//   pluginInvoke: (channel: string, data?: unknown) => {
+//     return pluginInvoke(channel, data)
+//   },

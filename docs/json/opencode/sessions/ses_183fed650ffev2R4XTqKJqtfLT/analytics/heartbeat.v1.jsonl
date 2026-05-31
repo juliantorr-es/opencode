@@ -1,0 +1,15 @@
+{"at":"2026-05-31T03:08:50.759Z","session_id":"ses_183fed650ffev2R4XTqKJqtfLT","agent":"secretary","tool":"smart_find","phase":"started","detail":"*pipeline*"}
+{"at":"2026-05-31T03:08:50.775Z","session_id":"ses_183fed650ffev2R4XTqKJqtfLT","agent":"secretary","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T03:08:50.985Z","session_id":"ses_183fed650ffev2R4XTqKJqtfLT","agent":"secretary","tool":"smart_grep","phase":"started","detail":"runPipeline"}
+{"at":"2026-05-31T03:08:51.010Z","session_id":"ses_183fed650ffev2R4XTqKJqtfLT","agent":"secretary","tool":"smart_grep","phase":"completed","detail":"runPipeline"}
+{"at":"2026-05-31T03:09:02.819Z","session_id":"ses_183fed650ffev2R4XTqKJqtfLT","agent":"secretary","tool":"smart_grep","phase":"started","detail":"Global\\.Path\\.data"}
+{"at":"2026-05-31T03:09:02.836Z","session_id":"ses_183fed650ffev2R4XTqKJqtfLT","agent":"secretary","tool":"smart_grep","phase":"completed","detail":"Global\\.Path\\.data"}
+{"at":"2026-05-31T03:09:05.608Z","session_id":"ses_183fed650ffev2R4XTqKJqtfLT","agent":"secretary","tool":"smart_grep","phase":"started","detail":"\\\"@/\\\""}
+{"at":"2026-05-31T03:09:05.614Z","session_id":"ses_183fed650ffev2R4XTqKJqtfLT","agent":"secretary","tool":"smart_grep","phase":"completed","detail":"\\\"@/\\\""}
+{"at":"2026-05-31T03:09:08.751Z","session_id":"ses_183fed650ffev2R4XTqKJqtfLT","agent":"secretary","tool":"smart_grep","phase":"started","detail":"@/|#db"}
+{"at":"2026-05-31T03:09:08.764Z","session_id":"ses_183fed650ffev2R4XTqKJqtfLT","agent":"secretary","tool":"smart_grep","phase":"completed","detail":"@/|#db"}
+{"at":"2026-05-31T03:09:35.188Z","session_id":"ses_183fed650ffev2R4XTqKJqtfLT","agent":"secretary","tool":"smart_sd","phase":"completed","detail":"1 match in packages/opencode/package.json"}
+{"at":"2026-05-31T03:09:40.380Z","session_id":"ses_183fed650ffev2R4XTqKJqtfLT","agent":"secretary","tool":"smart_bun","phase":"started","detail":"typecheck"}
+{"at":"2026-05-31T03:10:00.007Z","session_id":"ses_183fed650ffev2R4XTqKJqtfLT","agent":"secretary","tool":"smart_bun","phase":"failed","detail":"typecheck exit=2"}
+{"at":"2026-05-31T03:10:05.218Z","session_id":"ses_183fed650ffev2R4XTqKJqtfLT","agent":"secretary","tool":"smart_bun","phase":"started","detail":"run"}
+{"at":"2026-05-31T03:10:06.271Z","session_id":"ses_183fed650ffev2R4XTqKJqtfLT","agent":"secretary","tool":"smart_bun","phase":"failed","detail":"run exit=1"}

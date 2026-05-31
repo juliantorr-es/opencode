@@ -165,6 +165,47 @@ export const layer = Layer.effect(
         return part
       })
 
+      const finishToolCall = Effect.fn("SessionProcessor.finishToolCall")(function* (
+        toolCallID: string,
+        outcome:
+          | { status: "completed"; output: { title: string; metadata: Record<string, any>; output: string; attachments?: MessageV2.FilePart[] } }
+          | { status: "error"; error: unknown },
+      ) {
+        const match = yield* readToolCall(toolCallID)
+        if (!match) return // already settled — first writer wins
+        // Narrow from ToolState union: only running calls can be finished
+        if (match.part.state.status !== "running") return
+        if (outcome.status === "completed") {
+          yield* session.updatePart({
+            ...match.part,
+            state: {
+              status: "completed",
+              input: match.part.state.input,
+              output: outcome.output.output,
+              metadata: outcome.output.metadata,
+              title: outcome.output.title,
+              time: { start: match.part.state.time.start, end: Date.now() },
+              attachments: outcome.output.attachments,
+            },
+          })
+        } else {
+          yield* session.updatePart({
+            ...match.part,
+            state: {
+              status: "error",
+              input: match.part.state.input,
+              error: errorMessage(outcome.error),
+              time: { start: match.part.state.time.start, end: Date.now() },
+            },
+          })
+          if (outcome.error instanceof Permission.RejectedError || outcome.error instanceof Question.RejectedError) {
+            ctx.blocked = ctx.shouldBreak
+          }
+        }
+        yield* settleToolCall(toolCallID)
+      })
+
+      // Keep completeToolCall in Handle for backward compatibility
       const completeToolCall = Effect.fn("SessionProcessor.completeToolCall")(function* (
         toolCallID: string,
         output: {
@@ -174,40 +215,7 @@ export const layer = Layer.effect(
           attachments?: MessageV2.FilePart[]
         },
       ) {
-        const match = yield* readToolCall(toolCallID)
-        if (!match || match.part.state.status !== "running") return
-        yield* session.updatePart({
-          ...match.part,
-          state: {
-            status: "completed",
-            input: match.part.state.input,
-            output: output.output,
-            metadata: output.metadata,
-            title: output.title,
-            time: { start: match.part.state.time.start, end: Date.now() },
-            attachments: output.attachments,
-          },
-        })
-        yield* settleToolCall(toolCallID)
-      })
-
-      const failToolCall = Effect.fn("SessionProcessor.failToolCall")(function* (toolCallID: string, error: unknown) {
-        const match = yield* readToolCall(toolCallID)
-        if (!match || match.part.state.status !== "running") return false
-        yield* session.updatePart({
-          ...match.part,
-          state: {
-            status: "error",
-            input: match.part.state.input,
-            error: errorMessage(error),
-            time: { start: match.part.state.time.start, end: Date.now() },
-          },
-        })
-        if (error instanceof Permission.RejectedError || error instanceof Question.RejectedError) {
-          ctx.blocked = ctx.shouldBreak
-        }
-        yield* settleToolCall(toolCallID)
-        return true
+        return yield* finishToolCall(toolCallID, { status: "completed", output })
       })
 
       const finishReasoning = Effect.fn("SessionProcessor.finishReasoning")(function* (reasoningID: string) {
@@ -474,30 +482,47 @@ export const layer = Layer.effect(
               attachments: attachments.length ? attachments : undefined,
             }
             // TODO(v2): Temporary dual-write while migrating session messages to v2 events.
-            if (flags.experimentalEventSystem) {
-              yield* events.publish(SessionEvent.Tool.Success, {
-                sessionID: ctx.sessionID,
-                callID: value.id,
-                structured: output.metadata,
-                content: [
-                  {
-                    type: "text",
-                    text: output.output,
+            const toolStatus = (output.metadata as any)?.toolStatus
+            if (toolStatus && toolStatus !== "succeeded") {
+              // Tool was denied, cancelled, or failed — route to error path
+              if (flags.experimentalEventSystem) {
+                yield* events.publish(SessionEvent.Tool.Failed, {
+                  sessionID: ctx.sessionID,
+                  callID: value.id,
+                  error: { type: toolStatus, message: output.output },
+                  provider: {
+                    executed: value.providerExecuted === true || toolCall?.part.metadata?.providerExecuted === true,
                   },
-                  ...(output.attachments?.map((item: MessageV2.FilePart) => ({
-                    type: "file" as const,
-                    uri: item.url,
-                    mime: item.mime,
-                    name: item.filename,
-                  })) ?? []),
-                ],
-                provider: {
-                  executed: value.providerExecuted === true || toolCall?.part.metadata?.providerExecuted === true,
-                },
-                timestamp: DateTime.makeUnsafe(Date.now()),
-              })
+                  timestamp: DateTime.makeUnsafe(Date.now()),
+                })
+              }
+              yield* finishToolCall(value.id, { status: "error", error: new Error(`Tool ${value.name} ${toolStatus}: ${output.output}`) })
+            } else {
+              if (flags.experimentalEventSystem) {
+                yield* events.publish(SessionEvent.Tool.Success, {
+                  sessionID: ctx.sessionID,
+                  callID: value.id,
+                  structured: output.metadata,
+                  content: [
+                    {
+                      type: "text",
+                      text: output.output,
+                    },
+                    ...(output.attachments?.map((item: MessageV2.FilePart) => ({
+                      type: "file" as const,
+                      uri: item.url,
+                      mime: item.mime,
+                      name: item.filename,
+                    })) ?? []),
+                  ],
+                  provider: {
+                    executed: value.providerExecuted === true || toolCall?.part.metadata?.providerExecuted === true,
+                  },
+                  timestamp: DateTime.makeUnsafe(Date.now()),
+                })
+              }
+              yield* finishToolCall(value.id, { status: "completed", output })
             }
-            yield* completeToolCall(value.id, output)
             return
           }
 
@@ -518,7 +543,7 @@ export const layer = Layer.effect(
                 timestamp: DateTime.makeUnsafe(Date.now()),
               })
             }
-            yield* failToolCall(value.id, value.error ?? new Error(value.message))
+            yield* finishToolCall(value.id, { status: "error", error: value.error ?? new Error(value.message) })
             return
           }
 
@@ -881,3 +906,4 @@ export const defaultLayer = Layer.suspend(() =>
 )
 
 export * as SessionProcessor from "./processor"
+

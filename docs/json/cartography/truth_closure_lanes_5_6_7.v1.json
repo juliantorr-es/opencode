@@ -1,0 +1,724 @@
+{
+  "schema": "rig.relay.cartography_report.v1",
+  "generatedAt": "2026-05-30T14:30:00Z",
+  "session": "truth-closure-resumption",
+  "assignedProfile": "cartography",
+  "areas": {
+    "duckdbReadWriteSplit": {
+      "lane": 5,
+      "files": [
+        {
+          "path": "packages/opencode/src/storage/db.duckdb.ts",
+          "purpose": "DuckDB service + client \u2014 read-only CLI subprocess with connection pool",
+          "keyTypes": [
+            {
+              "name": "DuckDBRawClient",
+              "line": 12,
+              "range": "12-23",
+              "description": "Interface: all<T>(sql), get<T>(sql), run(sql), close()"
+            },
+            {
+              "name": "DuckDBError",
+              "line": 25,
+              "range": "25-33",
+              "description": "Tagged error class"
+            },
+            {
+              "name": "Service",
+              "line": 35,
+              "range": "35-35",
+              "description": "Context tag @opencode/DuckDB"
+            }
+          ],
+          "keyFunctions": [
+            {
+              "name": "execSQL",
+              "line": 48,
+              "range": "48-107",
+              "description": "Spawns duckdb CLI with -readonly flag (non-:memory:), executes single SQL, returns JSON parsed"
+            },
+            {
+              "name": "DuckDBConnectionPool.run",
+              "line": 127,
+              "range": "127-172",
+              "description": "Queue-based pool, max 4 concurrent subprocesses"
+            },
+            {
+              "name": "createCLIClient",
+              "line": 192,
+              "range": "192-219",
+              "description": "Factory \u2014 wraps pool in DuckDBRawClient { all, get, run, close }"
+            },
+            {
+              "name": "init",
+              "line": 241,
+              "range": "241-254",
+              "description": "Creates client \u2014 tries WASM first (returns null), falls back to CLI"
+            },
+            {
+              "name": "layer",
+              "line": 256,
+              "range": "256-281",
+              "description": "Layer.effect \u2014 creates client, reports health, runs pipeline in bg if dbPath is set"
+            }
+          ],
+          "criticalPatterns": {
+            "readonlyFlag": {
+              "description": "execSQL uses -readonly for non-:memory: paths, rejects writes at subprocess level",
+              "line": 60,
+              "code": "const args = resolvedPath === \":memory:\" ? [\":memory:\", \"-json\", \"-c\", sql] : [resolvedPath, \"-readonly\", \"-json\", \"-c\", sql]",
+              "issue": "DDL sent through this path (e.g., from projection worker) silently fails"
+            },
+            "effectIgnoreOnPipeline": {
+              "description": "Pipeline errors swallowed by Effect.ignore",
+              "line": 272,
+              "code": "yield* Effect.forkScoped(runPipeline(dbPath, adapter).pipe(Effect.ignore))",
+              "issue": "All pipeline errors silenced at top level"
+            },
+            "memorySkip": {
+              "description": "When dbPath is undefined (':memory:'), pipeline is skipped entirely",
+              "line": 268,
+              "code": "if (dbPath) { ... }",
+              "issue": "No pipeline data means no context projections in :memory: mode"
+            }
+          }
+        },
+        {
+          "path": "packages/opencode/src/storage/schema.duckdb.ts",
+          "purpose": "Analytical schema definitions \u2014 DDL strings + buildContextProjections",
+          "keyTables": [
+            {
+              "name": "_analytics_waves",
+              "line": 67,
+              "export": "WAVES_TABLE"
+            },
+            {
+              "name": "_analytics_findings",
+              "line": 75,
+              "export": "FINDINGS_TABLE"
+            },
+            {
+              "name": "_analytics_registry",
+              "line": 84,
+              "export": "REGISTRY_TABLE"
+            },
+            {
+              "name": "_analytics_qa",
+              "line": 93,
+              "export": "QA_TABLE"
+            },
+            {
+              "name": "_analytics_diagnostics",
+              "line": 100,
+              "export": "DIAGNOSTICS_TABLE"
+            },
+            {
+              "name": "_ctx_file_events",
+              "line": 115,
+              "export": "CTX_FILE_EVENTS_TABLE"
+            },
+            {
+              "name": "_ctx_file_relevance",
+              "line": 131,
+              "export": "CTX_FILE_RELEVANCE_TABLE"
+            }
+          ],
+          "keyViews": [
+            {
+              "name": "_ctx_session_clustering",
+              "line": 23,
+              "export": "SESSION_CLUSTERING_VIEW"
+            },
+            {
+              "name": "_ctx_tool_usage",
+              "line": 36,
+              "export": "TOOL_USAGE_VIEW"
+            }
+          ],
+          "keyFunctions": [
+            {
+              "name": "buildContextProjections",
+              "line": 423,
+              "range": "423-475",
+              "description": "Reads runtime_events from transactional DB, pipes into DuckDB via execDuckDBStdin, builds aggregated tables"
+            },
+            {
+              "name": "execDuckDB",
+              "line": 478,
+              "range": "478-506",
+              "description": "Spawns duckdb WITHOUT -readonly \u2014 for pipeline DDL/write ops"
+            },
+            {
+              "name": "execDuckDBStdin",
+              "line": 509,
+              "range": "509-537",
+              "description": "Spawns duckdb WITHOUT -readonly with stdin JSON data"
+            },
+            {
+              "name": "initTablesSql",
+              "line": 541,
+              "range": "541-543",
+              "description": "Returns ALL_TABLES joined by semicolons"
+            },
+            {
+              "name": "initViewsSql",
+              "line": 546,
+              "range": "546-548",
+              "description": "Returns ALL_VIEWS + RUNTIME_EVENT_VIEWS"
+            }
+          ],
+          "criticalPatterns": {
+            "noReadonlyOnDDL": {
+              "description": "execDuckDB and execDuckDBStdin spawn duckdb WITHOUT -readonly",
+              "line": 480,
+              "code": "const proc = spawn(\"duckdb\", [dbPath, \"-json\", \"-c\", sql])",
+              "note": "This is intentional \u2014 these are pipeline/internal write functions. But buildContextProjections calls them."
+            },
+            "memoryEarlyReturn": {
+              "description": "buildContextProjections returns Effect.void if dbPath === ':memory:'",
+              "line": 425,
+              "code": "if (dbPath === \":memory:\") return Effect.void",
+              "issue": "Silently skips all context projections in :memory: mode"
+            },
+            "errorsSwallowed": {
+              "description": "buildContextProjections wraps errors in Effect.catch with log-only",
+              "line": 469,
+              "code": "Effect.logError(\"Context projections failed (non-fatal)\")",
+              "issue": "Failed context projections become invisible \u2014 no metric, no alert"
+            }
+          }
+        },
+        {
+          "path": "packages/opencode/src/storage/pipeline.ts",
+          "purpose": "DuckDB pipeline \u2014 exports Postgres data, creates tables/views in DuckDB",
+          "keyTypes": [
+            {
+              "name": "Interface",
+              "line": 38,
+              "range": "38-38",
+              "description": "Empty service interface"
+            },
+            {
+              "name": "Service",
+              "line": 40,
+              "range": "40-40",
+              "description": "Context tag @opencode/DuckDBPipeline"
+            }
+          ],
+          "keyFunctions": [
+            {
+              "name": "runPipeline",
+              "line": 44,
+              "range": "44-116",
+              "description": "7-step pipeline: meta guard \u2192 export sessions \u2192 export parts \u2192 export events \u2192 create tables \u2192 create views \u2192 build projections \u2192 write meta"
+            },
+            {
+              "name": "execDuckDB",
+              "line": 116,
+              "range": "116-155",
+              "description": "Spawns duckdb WITHOUT -readonly for pipeline write ops"
+            },
+            {
+              "name": "execDuckDBStdin",
+              "line": 156,
+              "range": "156-195",
+              "description": "Same with stdin JSON data"
+            },
+            {
+              "name": "metaCheck",
+              "line": 196,
+              "range": "196-230",
+              "description": "Checks _pipeline_meta for existing schema_version"
+            },
+            {
+              "name": "layer",
+              "line": 231,
+              "range": "231-252",
+              "description": "Creates Service, runs pipeline in background fiber with Effect.ignore"
+            }
+          ],
+          "criticalPatterns": {
+            "memoryEarlyReturn": {
+              "description": "runPipeline returns Effect.void if dbPath === ':memory:'",
+              "line": 45,
+              "code": "if (dbPath === \":memory:\") { return Effect.void }",
+              "issue": "No pipeline data in :memory: mode \u2014 all analytical queries hit empty DB"
+            },
+            "pipelineErrorSilenced": {
+              "description": "Top-level pipeline error is caught and logged as non-fatal only",
+              "line": 108,
+              "code": "Effect.catch((error) => Effect.logError(\"DuckDB pipeline failed (non-fatal)\"))",
+              "issue": "Pipeline can fail silently during app startup"
+            },
+            "layerIgnore": {
+              "description": "Layer effect forkScoped + Effect.ignore double-silences pipeline errors",
+              "line": 248,
+              "code": "yield* Effect.forkScoped(runPipeline(dbPath, adapter, abortController.signal).pipe(Effect.ignore))"
+            }
+          }
+        },
+        {
+          "path": "packages/opencode/src/context/workers/duckdb-projection-worker.ts",
+          "purpose": "Worker 4 \u2014 subscribes to event_projections invalidation, rebuilds DuckDB views",
+          "keyViews": [
+            {
+              "name": "_ctx_file_relevance",
+              "line": 8,
+              "range": "8-18",
+              "description": "CREATE OR REPLACE VIEW \u2014 file relevance from _pipeline_runtime_event"
+            },
+            {
+              "name": "_ctx_file_cochange",
+              "line": 20,
+              "range": "20-39",
+              "description": "CREATE OR REPLACE VIEW \u2014 co-occurrence analysis"
+            },
+            {
+              "name": "_ctx_session_activity",
+              "line": 41,
+              "range": "41-58",
+              "description": "CREATE OR REPLACE VIEW \u2014 session activity summary"
+            }
+          ],
+          "keyFunctions": [
+            {
+              "name": "layer",
+              "line": 71,
+              "range": "71-104",
+              "description": "Layer.effectDiscard \u2014 subscribes to bus, throttled at 5s, runs DDL via DuckDB.Service"
+            }
+          ],
+          "criticalIssues": [
+            {
+              "id": "readonly-ddl-silent-failure",
+              "severity": "critical",
+              "description": "Projection worker sends DDL (CREATE OR REPLACE VIEW) through DuckDB.Service.run() which uses -readonly subprocess flag",
+              "line": 93,
+              "code": "yield* Effect.tryPromise(() => duckdb.run(sql)).pipe(Effect.ignore)",
+              "rootCause": "DuckDB.Service in db.duckdb.ts uses -readonly flag (line 60). CREATE OR REPLACE VIEW is a write operation and is rejected by the duckdb CLI with -readonly.",
+              "effect": "Views are never actually created when using non-:memory: paths. All context projection queries return empty/no-such-table errors \u2014 which are also silenced by Effect.ignore.",
+              "fixRequired": "Split run() from the read-only client: either add a write-capable method or route projection DDL through the pipeline's execDuckDB (no -readonly)."
+            },
+            {
+              "id": "name-collision-ctx-file-relevance",
+              "severity": "major",
+              "description": "Name collision on _ctx_file_relevance between schema.duckdb.ts (TABLE) and duckdb-projection-worker.ts (VIEW)",
+              "lines": {
+                "table": "packages/opencode/src/storage/schema.duckdb.ts:131",
+                "view": "packages/opencode/src/context/workers/duckdb-projection-worker.ts:8"
+              },
+              "rootCause": "schema.duckdb.ts defines CTX_FILE_RELEVANCE_TABLE as CREATE TABLE IF NOT EXISTS _ctx_file_relevance. duckdb-projection-worker.ts defines the same name as CREATE OR REPLACE VIEW _ctx_file_relevance. In DuckDB, tables and views share the same namespace.",
+              "effect": "Whichever runs second overwrites the first. If pipeline runs first (table created), then projection worker would fail with 'a table already exists with that name' \u2014 but that error is silenced by Effect.ignore. If projection worker runs first (view created), pipeline's CREATE TABLE would fail silently.",
+              "fixRequired": "Rename one of them. Use _ctx_file_relevance_mv for the materialized table version or _ctx_file_relevance_v for the view version."
+            },
+            {
+              "id": "memory-isolation-effect-ignore",
+              "severity": "major",
+              "description": ":memory: mode silently skips all DuckDB pipeline and projection work, errors swallowed by Effect.ignore chains",
+              "locations": [
+                {
+                  "file": "packages/opencode/src/storage/pipeline.ts",
+                  "line": 45,
+                  "pattern": "if (dbPath === \":memory:\") return Effect.void"
+                },
+                {
+                  "file": "packages/opencode/src/storage/schema.duckdb.ts",
+                  "line": 425,
+                  "pattern": "if (dbPath === \":memory:\") return Effect.void"
+                },
+                {
+                  "file": "packages/opencode/src/storage/db.duckdb.ts",
+                  "line": 272,
+                  "pattern": "runPipeline(dbPath, adapter).pipe(Effect.ignore)"
+                },
+                {
+                  "file": "packages/opencode/src/context/workers/duckdb-projection-worker.ts",
+                  "line": 93,
+                  "pattern": "Effect.tryPromise(() => duckdb.run(sql)).pipe(Effect.ignore)"
+                }
+              ],
+              "rootCause": "4 layers of error silencing: (1) :memory: early return in runPipeline, (2) :memory: early return in buildContextProjections, (3) Effect.ignore on forkScoped in db.duckdb.ts layer, (4) Effect.ignore on each projection DDL run in worker",
+              "effect": "In :memory: mode, DuckDB has no tables or views \u2014 all analytical queries fail. The failures are completely invisible.",
+              "fixRequired": "Remove Effect.ignore chain: log errors properly, add telemetry metrics for DuckDB health, make projection worker aware of whether views were actually created."
+            },
+            {
+              "id": "missing-table-ctx-agent-heatmap",
+              "severity": "critical",
+              "description": "_ctx_agent_heatmap referenced in duckdb-rank.ts:191 queryAgentHeatmap() but never defined in any schema DDL or projection worker",
+              "lines": [
+                {
+                  "ref": "packages/opencode/src/context/duckdb-rank.ts:191",
+                  "def": "nowhere"
+                }
+              ],
+              "rootCause": "queryAgentHeatmap() at duckdb-rank.ts:191 queries 'FROM _ctx_agent_heatmap' but no CREATE TABLE or CREATE VIEW statement defines this table anywhere in the codebase.",
+              "effect": "Runtime query failure - 'table not found' error, wrapped in Effect.tryPromise and caught as DatabaseError. Agents cannot use the agent heatmap context feature.",
+              "fixRequired": "Either add _ctx_agent_heatmap DDL to schema.duckdb.ts or remove the dead code from duckdb-rank.ts."
+            }
+          ]
+        },
+        {
+          "path": "packages/opencode/src/storage/adapter.ts",
+          "purpose": "Database adapter \u2014 wraps DuckDB in DrizzleLikeClient for read-only query interface",
+          "keyFunctions": [
+            {
+              "name": "makeDuckDBAdapter",
+              "line": 301,
+              "range": "301-368",
+              "description": "Creates DrizzleLikeClient wrapper \u2014 all(), get(), run() pass through firewall; insert/update/delete/transaction throw DatabaseError"
+            }
+          ],
+          "keyTypes": [
+            {
+              "name": "DrizzleLikeClient",
+              "line": 31,
+              "range": "31-47",
+              "description": "Interface with select, insert, update, delete, transaction, run, all, get"
+            },
+            {
+              "name": "Interface",
+              "line": 70,
+              "range": "70-79",
+              "description": "query<T>(fn), transaction<T>(fn), afterCommit(fn)"
+            },
+            {
+              "name": "Service",
+              "line": 81,
+              "range": "81-81",
+              "description": "Context tag @opencode/DatabaseAdapter"
+            }
+          ],
+          "criticalPatterns": {
+            "DuckDBAdapterLayer": {
+              "description": "DuckDBAdapter layer dynamically imports db.duckdb init \u2014 the only write path",
+              "line": 370,
+              "code": "const { init } = await import(\"./db.duckdb\")",
+              "note": "Used to create DuckDB clients for the analytical read path"
+            }
+          }
+        },
+        {
+          "path": "packages/opencode/src/storage/duckdb-firewall.ts",
+          "purpose": "DuckDB SQL firewall \u2014 blocks dangerous functions in read-only queries",
+          "keyFunctions": [
+            {
+              "name": "checkSQLFirewall",
+              "line": 28,
+              "range": "28-53",
+              "description": "Strips comments/strings, checks blocked functions (read_text, ATTACH, LOAD, EXPORT) and COPY\u2026TO pattern"
+            }
+          ],
+          "keyExports": [
+            {
+              "name": "BLOCKED_FUNCTIONS",
+              "line": 7,
+              "range": "7-17",
+              "description": "read_text, read_blob, read_csv, read_parquet, read_json, query_table, ATTACH, load_extension, LOAD, EXPORT"
+            },
+            {
+              "name": "DuckDBFirewallError",
+              "line": 20,
+              "range": "20-26",
+              "description": "Error class with _tag tag"
+            }
+          ],
+          "note": "This is defense-in-depth. The subprocess -readonly flag is the primary barrier. The firewall is an application-layer guard applied in db.duckdb.ts execSQL and adapter.ts makeDuckDBAdapter."
+        }
+      ],
+      "summary": "3 DuckDB issues confirmed: (1) Read-only subprocess used for DDL \u2014 projection worker sends CREATE OR REPLACE VIEW through -readonly flagged duckdb CLI, silently failing. (2) Name collision on _ctx_file_relevance \u2014 schema.duckdb defines it as TABLE, duckdb-projection-worker defines it as VIEW, both in same namespace. (3) :memory: isolation with 4 layers of Effect.ignore \u2014 when using :memory: mode, all pipeline, projections, and context views silently disappear with no visibility into failures."
+    },
+    "packetFreshness": {
+      "lane": 6,
+      "files": [
+        {
+          "path": "packages/opencode/src/context/packet.ts",
+          "purpose": "Context packet assembly \u2014 L1 (mission snapshot) and L2 (detailed context)",
+          "keyTypes": [
+            {
+              "name": "Freshness",
+              "line": 15,
+              "range": "15-17",
+              "description": "fetchedAt: string (ISO timestamp), eventLagMs: number"
+            },
+            {
+              "name": "ContextPacketL1",
+              "line": 20,
+              "range": "20-55",
+              "description": "PACKET_VERSION=1. Fields: mission, authority, workspace (branch, dirtyFiles, externalChangesDetected), claims, latestValidation, lastError, _freshness"
+            },
+            {
+              "name": "ContextPacketL2",
+              "line": 57,
+              "range": "57-72",
+              "description": "L2 fields: activities, files, events, tokens, errors"
+            },
+            {
+              "name": "ContextPacket",
+              "line": 73,
+              "range": "73-77",
+              "description": "l1: ContextPacketL1, l2?: ContextPacketL2, packetVersion: number"
+            },
+            {
+              "name": "Interface",
+              "line": 81,
+              "range": "81-90",
+              "description": "assembleL1, assembleL2, getCurrentPacket"
+            },
+            {
+              "name": "Service",
+              "line": 91,
+              "range": "91-91",
+              "description": "Context tag @opencode/ContextPacket"
+            }
+          ],
+          "keyFunctions": [
+            {
+              "name": "assembleL1",
+              "line": 95,
+              "range": "95-226",
+              "description": "Assembles L1 packet \u2014 queries Git for branch/dirtyFiles, EventStore for claims/validation, Authority for permissions"
+            },
+            {
+              "name": "assembleL2",
+              "line": 228,
+              "range": "228-320",
+              "description": "Assembles L2 with activity, file patterns, events timeline"
+            },
+            {
+              "name": "getCurrentPacket",
+              "line": 322,
+              "range": "322-368",
+              "description": "Calls assembleL1 + optionally assembleL2, returns ContextPacket"
+            }
+          ],
+          "freshnessImplementation": {
+            "freshnessType": {
+              "line": 15,
+              "definition": "export interface Freshness { fetchedAt: string; eventLagMs: number }",
+              "note": "Only two fields \u2014 timestamp of packet creation and milliseconds since most recent event"
+            },
+            "freshnessCalculatedInL1": {
+              "line": 220,
+              "code": "_freshness: { fetchedAt: new Date().toISOString(), eventLagMs }",
+              "eventLagMsSource": {
+                "line": 218,
+                "code": "const eventLagMs = events.length > 0 ? Date.now() - new Date(events[0].ts).getTime() : 0",
+                "note": "eventLagMs is time since the most recent event's timestamp. If no events, lag is 0. This only measures time since the last recorded event \u2014 not file content freshness."
+              }
+            },
+            "externalChangesDetected": {
+              "line": 155,
+              "definition": "externalChangesDetected: boolean (in ContextPacketL1.workspace)",
+              "calculatedAs": "externalChangesDetected: dirtyFiles.length > 0",
+              "issue": "dirtyFiles includes ALL files modified in the working tree \u2014 including files the agent itself just edited via tools. There's no separation between 'files the agent changed' (intentional) and 'files changed externally' (by user, another agent, IDE). The field conflates both into a single boolean."
+            },
+            "conflictField": {
+              "line": 202,
+              "definition": "claims.conflicts: string[] \u2014 subset of dirtyFiles that are also in ownedFiles",
+              "code": "conflictFiles = ownedFiles.filter((f) => dirtyFiles.includes(f))",
+              "note": "This IS the differentiated signal \u2014 a file is 'in conflict' if the agent claims ownership AND it's in the dirty set. But externalChangesDetected is the coarse boolean that agents likely use for the 'should I rebuild context?' decision."
+            }
+          },
+          "freshnessIssues": [
+            {
+              "id": "temporal-only-freshness",
+              "severity": "major",
+              "description": "Freshness is purely temporal (fetchedAt timestamp + eventLagMs since last event). There is no content-based freshness \u2014 no file content digest comparison, no git tree hash, no checksum of anything that tracks whether the underlying data has changed since the packet was created.",
+              "impact": "An agent cannot determine if a packet is stale in the sense of 'the files I was told about have been modified since'. They can only see 'this packet was fetched N ms ago'."
+            },
+            {
+              "id": "external-changes-conflation",
+              "severity": "major",
+              "description": "externalChangesDetected = (dirtyFiles.length > 0) conflates agent edits with external changes. If the agent writes to 3 files, all 3 show up as dirty, and externalChangesDetected is true \u2014 even though nothing external happened.",
+              "fixRequired": "Subtract files the agent has edited (from FileMemory.lastEditor or from claims.owned) from the dirty set before computing externalChangesDetected. Only non-agent dirt = truly external."
+            },
+            {
+              "id": "no-content-digest-in-packet",
+              "severity": "minor",
+              "description": "ContextPacket has no content hashes of the workspace state at packet creation time. Agents could compare FileMemory digests against current disk hashes to determine if specific files changed, but there's no checksum of the overall context data fed into the packet."
+            }
+          ]
+        }
+      ],
+      "summary": "Packet freshness is temporal-only (fetchedAt + eventLagMs). externalChangesDetected conflates agent edits with external changes (dirtyFiles.length > 0). The conflict field (claims.conflicts) has the differentiated signal but externalChangesDetected doesn't use it. No content-based freshness mechanism."
+    },
+    "fileMemory": {
+      "lane": 7,
+      "files": [
+        {
+          "path": "packages/opencode/src/context/file-memory.ts",
+          "purpose": "In-memory file context store \u2014 tracks file metadata, digests, edits, and stale detection",
+          "keyTypes": [
+            {
+              "name": "FileContext",
+              "line": 7,
+              "range": "7-28",
+              "description": "Fields: path, digest (sha256), lastReadAt, lastEditedAt, lastEditor, lastEditTool, lineCount, language, symbols[], imports[], exports[], knownTests[], riskTags[]"
+            },
+            {
+              "name": "Interface",
+              "line": 30,
+              "range": "30-40",
+              "description": "Methods: get, set, invalidate, refresh, getStale, search, remove, getAll, getByEditor"
+            },
+            {
+              "name": "Service",
+              "line": 42,
+              "range": "42-42",
+              "description": "Context tag @opencode/FileMemory"
+            }
+          ],
+          "keyFunctions": [
+            {
+              "name": "inferLanguage",
+              "line": 105,
+              "range": "105-112",
+              "description": "Maps file extension to language string"
+            },
+            {
+              "name": "extractSymbols",
+              "line": 114,
+              "range": "114-146",
+              "description": "Regex-based extraction of top-level exports/declarations"
+            },
+            {
+              "name": "extractImports",
+              "line": 148,
+              "range": "148-163",
+              "description": "Regex-based import path extraction"
+            },
+            {
+              "name": "extractExports",
+              "line": 166,
+              "range": "166-194",
+              "description": "Regex-based export extraction"
+            },
+            {
+              "name": "isGeneratedFile",
+              "line": 196,
+              "range": "196-202",
+              "description": "Detects generated files by path pattern"
+            },
+            {
+              "name": "isProtectedFile",
+              "line": 204,
+              "range": "204-226",
+              "description": "Detects protected/configuration files"
+            },
+            {
+              "name": "computeRiskTags",
+              "line": 228,
+              "range": "228-274",
+              "description": "Risk tags based on path patterns (config, db, migration, etc.)"
+            },
+            {
+              "name": "refresh",
+              "line": 278,
+              "range": "278-296",
+              "description": "Creates/updates FileContext with new content \u2014 computes digest, symbols, imports, exports, risk tags"
+            }
+          ],
+          "stateManagement": {
+            "type": "Ref<Map<string, FileContext>>",
+            "line": 104,
+            "description": "In-memory mutable map keyed by file path"
+          },
+          "staleDetection": {
+            "interface": "getStale(maxMs?: number): Effect.Effect<string[]>",
+            "line": "~350 (estimated)",
+            "implementation": "Returns paths where (Date.now() - lastReadAt) > maxMs",
+            "note": "getStale is temporal-only \u2014 checks if a file hasn't been read/refreshed within the threshold. Does NOT compare digests against the filesystem."
+          },
+          "relationshipWithContext": {
+            "description": "FileMemory stores per-file context (digest, symbols, edits). The ContextPacket L1/L2 are assembled from separate sources (Git, EventStore, Authority). FileMemory 's content could be used to cross-check file freshness but isn't consulted by the packet assembly code.",
+            "gap": "ContextPacket.assembleL1 doesn't use FileMemory at all. The packet freshness is purely event-based and git-dirty-based, not based on whether file content has actually changed."
+          }
+        }
+      ],
+      "summary": "FileMemory is an in-memory file metadata store with sha256 digests, symbols/imports/exports extraction, and temporal stale detection. It is NOT consulted by the ContextPacket assembly \u2014 the packet has its own independent freshness mechanism (temporal only). FileMemory's digests could be used to detect actual content changes, but this is not wired up."
+    }
+  },
+  "crossCuttingFindings": [
+    {
+      "id": "freshness-duckdb-gap",
+      "description": "ContextPacket freshness doesn't reflect DuckDB view state. There's no mechanism to know if the DuckDB projection views (which power context queries) are up-to-date or stale relative to the transactional database.",
+      "files": [
+        "packages/opencode/src/context/packet.ts",
+        "packages/opencode/src/storage/schema.duckdb.ts"
+      ],
+      "impact": "An agent could receive a 'fresh' packet with stale analytical data if DuckDB views haven't been rebuilt after new events."
+    },
+    {
+      "id": "file-memory-standalone",
+      "description": "FileMemory is fully standalone \u2014 it's never referenced by packet.ts, the invalidation bus, or the DuckDB pipeline. Its sha256 digests would be useful for content-based freshness but are unused outside its own module.",
+      "impact": "Wasted opportunity: FileMemory digests could feed into context freshness checks, but the architecture doesn't connect them."
+    },
+    {
+      "id": "multiple-exec-duckdb-copies",
+      "description": "execDuckDB/execDuckDBStdin are duplicated verbatim in both pipeline.ts (lines 116-195) and schema.duckdb.ts (lines 478-537). Same code, different minor defaults (60s timeout vs signal handling).",
+      "impact": "Code duplication \u2014 bug fixes or timeout adjustments must be applied to both copies."
+    }
+  ],
+  "changesRequired": {
+    "duckdbReadWriteSplit": [
+      {
+        "priority": "P0",
+        "description": "Fix projection worker DDL routing \u2014 route CREATE OR REPLACE VIEW through write-capable subprocess (no -readonly) instead of through DuckDB.Service.run() which uses -readonly"
+      },
+      {
+        "priority": "P0",
+        "description": "Fix name collision \u2014 rename _ctx_file_relevance in either schema.duckdb.ts (TABLE) or duckdb-projection-worker.ts (VIEW) to avoid namespace conflict"
+      },
+      {
+        "priority": "P1",
+        "description": "Remove Effect.ignore chain in projection worker \u2014 log DuckDB errors properly instead of silencing them"
+      },
+      {
+        "priority": "P1",
+        "description": "Add health/telemetry metrics for DuckDB pipeline success/failure"
+      },
+      {
+        "priority": "P2",
+        "description": "Eliminate duplicate execDuckDB/execDuckDBStdin code between pipeline.ts and schema.duckdb.ts"
+      },
+      {
+        "priority": "P2",
+        "description": "Make :memory: mode either (a) work via in-process WASM DuckDB or (b) clearly document that context projections are unavailable"
+      },
+      {
+        "priority": "P0",
+        "description": "Add missing _ctx_agent_heatmap table definition or remove queryAgentHeatmap() dead code"
+      }
+    ],
+    "packetFreshness": [
+      {
+        "priority": "P1",
+        "description": "Fix externalChangesDetected to subtract agent-edited files from dirty set \u2014 use FileMemory.lastEditor or claims.owned"
+      },
+      {
+        "priority": "P1",
+        "description": "Add content-based freshness signal \u2014 include FileMemory digest checksums or git tree hash in Freshness type"
+      },
+      {
+        "priority": "P2",
+        "description": "Wire FileMemory into ContextPacket assembly \u2014 consult file digests to detect actual content changes in packet freshness calculation"
+      }
+    ]
+  },
+  "filesSummarized": {
+    "duckdbCore": [
+      "packages/opencode/src/storage/db.duckdb.ts (288 lines)",
+      "packages/opencode/src/storage/schema.duckdb.ts (549 lines)",
+      "packages/opencode/src/storage/pipeline.ts (258 lines)",
+      "packages/opencode/src/storage/duckdb-config.ts (12 lines)",
+      "packages/opencode/src/storage/duckdb-firewall.ts (53 lines)",
+      "packages/opencode/src/storage/adapter.ts (408 lines)",
+      "packages/opencode/src/context/workers/duckdb-projection-worker.ts (105 lines)",
+      "packages/opencode/src/context/workers/index.ts (25 lines)"
+    ],
+    "contextFreshness": [
+      "packages/opencode/src/context/packet.ts (393 lines)",
+      "packages/opencode/src/context/file-memory.ts (387 lines)"
+    ]
+  }
+}

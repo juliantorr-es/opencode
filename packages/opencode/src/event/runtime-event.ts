@@ -1,4 +1,5 @@
 import { Schema } from "effect"
+import { EventNameValues } from "./event-names"
 
 export const ActorType = Schema.Literals(["user", "assistant", "tool", "system", "lifecycle"])
 export type ActorType = Schema.Schema.Type<typeof ActorType>
@@ -14,7 +15,7 @@ export const RuntimeEvent = Schema.Struct({
   correlationId: Schema.optional(Schema.String),
   ts: Schema.String,
   actor: ActorType,
-  eventType: Schema.String,
+  eventType: Schema.Literals(EventNameValues),
   phase: Schema.optional(Schema.String),
   status: Schema.optional(EventStatus),
   toolName: Schema.optional(Schema.String),

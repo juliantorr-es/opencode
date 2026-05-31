@@ -1,12 +1,12 @@
-import { Schema } from "effect"
+import { Effect, Schema } from "effect"
 
-export const LifecycleType = Schema.Literal("linear", "dag", "generic")
+export const LifecycleType = Schema.Literals(["linear", "dag", "generic"])
 export type LifecycleType = Schema.Schema.Type<typeof LifecycleType>
 
-export const EscalationStrategy = Schema.Literal("blocker", "skip", "abort")
+export const EscalationStrategy = Schema.Literals(["blocker", "skip", "abort"])
 export type EscalationStrategy = Schema.Schema.Type<typeof EscalationStrategy>
 
-export const TransitionCondition = Schema.Literal("success", "failure", "always", "timeout")
+export const TransitionCondition = Schema.Literals(["success", "failure", "always", "timeout"])
 export type TransitionCondition = Schema.Schema.Type<typeof TransitionCondition>
 
 export class PhaseDefinition extends Schema.Class<PhaseDefinition>("PhaseDefinition")({
@@ -14,9 +14,9 @@ export class PhaseDefinition extends Schema.Class<PhaseDefinition>("PhaseDefinit
   name: Schema.String,
   description: Schema.optional(Schema.String),
   allowedTools: Schema.optional(Schema.mutable(Schema.Array(Schema.String))),
-  maxRetries: Schema.optional(Schema.Number).pipe(Schema.withDefault(0)),
-  escalation: Schema.optional(EscalationStrategy).pipe(Schema.withDefault(() => "skip" as const)),
-  fanOut: Schema.optional(Schema.Boolean).pipe(Schema.withDefault(false)),
+  maxRetries: Schema.optional(Schema.Number).pipe(Schema.withDecodingDefault(Effect.sync(() => 0))),
+  escalation: Schema.optional(EscalationStrategy).pipe(Schema.withDecodingDefault(Effect.sync(() => "skip" as const))),
+  fanOut: Schema.optional(Schema.Boolean).pipe(Schema.withDecodingDefault(Effect.sync(() => false))),
   subagentTypes: Schema.optional(Schema.mutable(Schema.Array(Schema.String))),
 }) {}
 

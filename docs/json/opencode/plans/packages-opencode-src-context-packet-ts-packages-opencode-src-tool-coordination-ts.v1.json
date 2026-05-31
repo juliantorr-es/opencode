@@ -1,0 +1,20 @@
+{
+  "schema_version": "v1",
+  "plan_id": "packages-opencode-src-context-packet-ts-packages-opencode-src-tool-coordination-ts",
+  "plan_revision": 1,
+  "title": "Fix packet.ts compile errors and move to claim-ledger ownedFiles",
+  "boundary": "packages/opencode/src/context/packet.ts + packages/opencode/src/tool/coordination.ts",
+  "consumer_purpose": "Fix ownedFiles TDZ crash, invalidationBus undefined error, and migrate ownedFiles from event-store query to coordination claim-ledger",
+  "claim_atoms": [
+    "ownedFiles declared before filter usage (no TDZ)",
+    "invalidationBus properly yielded from ContextInvalidationBus service tag",
+    "ownedFiles derived from CoordinationReservationTable with event-store fallback",
+    "DEFAULT_CLAIMS empty array remains as fallback",
+    "bun typecheck passes in packages/opencode",
+    "Coordination.getSessionReservations exported from coordination.ts"
+  ],
+  "content": "## Changes\n\n### C1: coordination.ts — add getSessionReservations\nAdd exported function after `checkPathReserved` (line ~502):\n- Queries CoordinationReservationTable by session_id and status=\"reserved\"\n- Returns PathReservation[] via reservationRowToType mapper\n- Follows existing coordination function patterns (Effect.fn, DatabaseAdapter)\n\n### C2: packet.ts — add imports\nAdd imports for `Coordination` namespace and `DatabaseAdapter` to support Fix 3\n\n### C3: packet.ts — Fix 1 + Fix 3 (ownedFiles)\nReplace the ownedFiles block:\n- Remove `const ownedFiles = extractFilePaths([])` placeholder (line 190)\n- Remove `let ownedFiles = DEFAULT_CLAIMS` / event query at lines 201-213\n- Insert `let ownedFiles = DEFAULT_CLAIMS` before filter calls\n- Query Coordination.getSessionReservations(sessionId) first\n- Fall back to eventStore.query if no reservations found or query fails\n- Move workspace block (agentEdits/externalEdits) AFTER the claims block\n- conflictFiles from intersection of ownedFiles × dirtyFiles\n\n### C4: packet.ts — Fix 2 (invalidationBus)\nAdd `const invalidationBus = yield* ContextInvalidationBus` before the Effect.fork that uses it\n\n## Verification\n1. bun typecheck from packages/opencode/ — must pass\n2. Verify no duplicate identifier errors\n3. Verify invalidationBus variable is defined before use",
+  "status": "proposed",
+  "created_at": "2026-05-31T05:04:35.293Z",
+  "modified_at": "2026-05-31T05:04:35.293Z"
+}

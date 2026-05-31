@@ -1,0 +1,15 @@
+{
+  "schema_version": "v1",
+  "plan_id": "packages-opencode-src-storage-production-imports",
+  "plan_revision": 1,
+  "title": "PG-001: Postgres schema migration — app-layer import switching and dual-write",
+  "boundary": "packages/opencode/src/storage/ + production imports",
+  "consumer_purpose": "Enable production code to work with both SQLite and Postgres backends, with a dual-write adapter for migration safety",
+  "claim_atoms": [
+    "1. Create schema-pg.ts barrel exporting from .pg.sql.ts files; 2. Replace all production imports from .sql.ts to .pg.sql.ts via barrel; 3. Add makeDualWriteAdapter() that writes to both backends; 4. All typechecks pass; 5. All existing tests pass"
+  ],
+  "content": "## PG-001: Import Switch + Dual-Write Plan\n\n### Background\n- 7 SQLite tables have complete PG equivalents (.pg.sql.ts files)\n- Some .pg.sql.ts re-export from .sql.ts (shared schemas — identical column defs)\n- Some .pg.sql.ts have full pgTable implementations (dialect-specific types)\n- DB adapter layer already supports both SQLite and Postgres backends\n- All production code currently imports from .sql.ts (SQLite tables)\n\n### Step 1: Create storage/schema-pg.ts (PG schema barrel)\nNew barrel that exports all tables from .pg.sql.ts:\n- account → account.pg.sql.ts\n- project → project.pg.sql.ts\n- session → session.pg.sql.ts\n- share → share.pg.sql.ts\n- workspace → control-plane/workspace.pg.sql.ts\n- event → event/event.pg.sql.ts\n- data-migration → data-migration.pg.sql.ts\n- sync/event → sync/event.pg.sql.ts\n\n### Step 2: Create storage/schema-registry.ts (runtime-switchable barrel)\nFactory that returns either SQLite or PG schema set based on config:\n- getSchema(kind: \"sqlite\" | \"postgres\") → schema set\n- Default: SQLite (backward compatible)\n- When PG URL is configured: PG schema\n\n### Step 3: Add makeDualWriteAdapter() to adapter.ts\nNew adapter that wraps both SQLite and PG:\n- query: runs on PG, replicates to SQLite (dual-write)\n- transaction: PG primary, SQLite shadow\n- Graceful PG failure: SQLite fallback\n- Config: database.dualWrite boolean\n\n### Step 4: Switch production imports \nUpdate storage-related imports to go through schema-registry.\n\n### Step 5: Verify\n- bun typecheck in packages/opencode\n- bun test (if available)\n",
+  "status": "proposed",
+  "created_at": "2026-05-31T00:22:43.050Z",
+  "modified_at": "2026-05-31T00:22:43.050Z"
+}

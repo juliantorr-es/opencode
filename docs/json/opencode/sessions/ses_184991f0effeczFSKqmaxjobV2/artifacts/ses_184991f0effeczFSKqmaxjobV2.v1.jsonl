@@ -1,0 +1,22 @@
+{"at":"2026-05-31T00:20:07.375Z","tool":"smart_grep","action":"searched","pattern":"locale","results":27,"files":19}
+{"at":"2026-05-31T00:20:07.676Z","tool":"smart_grep","action":"searched","pattern":"locale","results":30,"files":8}
+{"at":"2026-05-31T00:20:08.091Z","tool":"smart_grep","action":"searched","pattern":"t\\(","results":20,"files":4}
+{"at":"2026-05-31T00:20:18.001Z","tool":"smart_grep","action":"searched","pattern":"locale","results":40,"files":9}
+{"at":"2026-05-31T00:20:18.350Z","tool":"smart_grep","action":"searched","pattern":"i18n","results":7,"files":4}
+{"at":"2026-05-31T00:20:28.291Z","tool":"smart_grep","action":"searched","pattern":"language","results":10,"files":2}
+{"at":"2026-05-31T00:20:28.635Z","tool":"smart_grep","action":"searched","pattern":"from.*i18n","results":8,"files":3}
+{"at":"2026-05-31T00:21:18.315Z","tool":"smart_grep","action":"searched","pattern":"resolveTemplate","results":6,"files":2}
+{"at":"2026-05-31T00:21:22.489Z","tool":"smart_grep","action":"searched","pattern":"github\\.","results":20,"files":2}
+{"at":"2026-05-31T00:21:24.401Z","tool":"smart_grep","action":"searched","pattern":"github\\.","results":0,"files":0}
+{"at":"2026-05-31T00:21:24.683Z","tool":"smart_grep","action":"searched","pattern":"github\\.","results":0,"files":0}
+{"at":"2026-05-31T00:21:24.976Z","tool":"smart_grep","action":"searched","pattern":"github\\.","results":0,"files":0}
+{"at":"2026-05-31T00:21:28.739Z","tool":"smart_bash","action":"bash","command":"diff <(grep '^\\s*\"[a-z]' packages/app/src/i18n/zh.ts | sed 's/:.*//' | sort) <(grep '^\\s*\"[a-z]' pac","exit_code":2}
+{"at":"2026-05-31T00:21:31.737Z","tool":"smart_bash","action":"bash","command":"python3 -c \"\nimport re\nzh = set()\nzht = set()\nwith open('packages/app/src/i18n/zh.ts') as f:\n    for","exit_code":0}
+{"at":"2026-05-31T00:21:34.652Z","tool":"smart_bash","action":"bash","command":"python3 -c \"\nimport re\nen = set()\nwith open('packages/app/src/i18n/en.ts') as f:\n    for line in f:\n","exit_code":0}
+{"at":"2026-05-31T00:21:45.504Z","tool":"smart_bash","action":"bash","command":"python3 -c \"\nimport re, json\n\ndef parse_locale(filepath):\n    result = {}\n    with open(filepath) as","exit_code":0}
+{"at":"2026-05-31T00:21:50.165Z","tool":"smart_bash","action":"bash","command":"python3 -c \"\nimport re\n\ndef parse_locale(filepath):\n    result = {}\n    with open(filepath) as f:\n  ","exit_code":0}
+{"at":"2026-05-31T00:22:00.085Z","tool":"smart_grep","action":"searched","pattern":"loadDict|loadLocaleDict|PARENT","results":6,"files":2}
+{"at":"2026-05-31T00:22:41.647Z","tool":"smart_bun","action":"ran","command":"typecheck","exit_code":1,"cwd":"packages/app"}
+{"at":"2026-05-31T00:22:44.478Z","tool":"smart_bun","action":"ran","command":"test","exit_code":0,"cwd":"packages/app"}
+{"at":"2026-05-31T00:22:48.530Z","tool":"smart_bun","action":"ran","command":"test","exit_code":1,"cwd":"packages/app"}
+{"at":"2026-05-31T00:22:51.579Z","tool":"smart_bun","action":"ran","command":"test","exit_code":1,"cwd":"packages/app"}

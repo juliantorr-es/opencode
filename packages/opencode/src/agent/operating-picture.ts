@@ -4,6 +4,7 @@ import { Git } from "@/git"
 import { EventStore } from "@/event"
 import { DatabaseAdapter } from "@/storage/adapter"
 import { InstanceState } from "@/effect/instance-state"
+import { CoordinationReservationTable } from "@/tool/coordination"
 import * as Log from "@opencode-ai/core/util/log"
 
 const log = Log.create({ service: "operating-picture" })
@@ -53,39 +54,22 @@ export const use = serviceUse(Service)
 // ── Helpers ────────────────────────────────────────────────
 
 /**
- * Query the coordination_claim table for active claims with file paths.
+ * Query the coordination_reservation table for active reservations with file paths.
  */
-function getClaimedFiles(): Effect.Effect<string[], DatabaseAdapter.DatabaseError> {
+function getClaimedFiles(): Effect.Effect<string[], DatabaseAdapter.DatabaseError, DatabaseAdapter.Service> {
   return Effect.gen(function* () {
     const adapter = yield* DatabaseAdapter.Service
-    const rows = yield* adapter.query((db) =>
+    const rows: Array<{ path: string | null }> = yield* adapter.query((db) =>
       db
         .select({
-          file_path: db.file_path ?? null,
-          task_id: db.task_id,
+          path: CoordinationReservationTable.path,
         })
-        .from(db)
+        .from(CoordinationReservationTable)
         .all()
     )
-    return (rows as Array<{ file_path: string | null }>)
-      .map((r) => r.file_path)
+    return rows
+      .map((r) => r.path)
       .filter((f): f is string => f !== null)
-  })
-
-  // Fallback: coordination claims aren't directly queryable via the
-  // exported API, so read coordination_claim rows through the adapter.
-  const CoordinationClaimTable = "coordination_claim"
-  return Effect.gen(function* () {
-    const adapter = yield* DatabaseAdapter.Service
-    const rows: Array<{ file_path: string | null }> = yield* adapter.query((db) =>
-      db
-        .select({
-          file_path: db.file_path ?? null,
-        })
-        .from(CoordinationClaimTable as any)
-        .all()
-    )
-    return rows.map((r) => r.file_path).filter((f): f is string => f !== null)
   })
 }
 
@@ -108,14 +92,14 @@ export const layer = Layer.effect(
       let branch = DEFAULT_BRANCH
       let dirtyFiles = DEFAULT_DIRTY
       try {
-        const branchResult = yield* git.branch()
-        branch = branchResult.current
+        const b = yield* git.branch(ctx.directory)
+        branch = b ?? DEFAULT_BRANCH
       } catch (e) {
         log.warn("could not read git branch", { error: String(e) })
       }
       try {
-        const status = yield* git.status()
-        dirtyFiles = status.files.map((f) => f.path)
+        const items = yield* git.status(ctx.directory)
+        dirtyFiles = items.map((f) => f.file)
       } catch (e) {
         log.warn("could not read git status", { error: String(e) })
       }
@@ -182,7 +166,7 @@ export const layer = Layer.effect(
 
 export const defaultLayer = layer.pipe(
   Layer.provide(Git.defaultLayer),
-  Layer.provide(EventStore.defaultLayer),
+  Layer.provide(EventStore.layer),
 )
 
 export * as OperatingPicture from "./operating-picture"

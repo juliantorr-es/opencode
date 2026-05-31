@@ -1,0 +1,16 @@
+{"at":"2026-05-31T05:14:26.602Z","session_id":"ses_1838be8faffeJ1Mbj4xXaNl0cw","agent":"cartographer","tool":"smart_bun","phase":"started","detail":"typecheck"}
+{"at":"2026-05-31T05:14:42.939Z","session_id":"ses_1838be8faffeJ1Mbj4xXaNl0cw","agent":"cartographer","tool":"smart_bun","phase":"failed","detail":"typecheck exit=2"}
+{"at":"2026-05-31T05:14:51.285Z","session_id":"ses_1838be8faffeJ1Mbj4xXaNl0cw","agent":"cartographer","tool":"smart_find","phase":"started","detail":"**/groups/claims.ts"}
+{"at":"2026-05-31T05:14:51.314Z","session_id":"ses_1838be8faffeJ1Mbj4xXaNl0cw","agent":"cartographer","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T05:14:51.454Z","session_id":"ses_1838be8faffeJ1Mbj4xXaNl0cw","agent":"cartographer","tool":"smart_find","phase":"started","detail":"**/registry.test.ts"}
+{"at":"2026-05-31T05:14:51.479Z","session_id":"ses_1838be8faffeJ1Mbj4xXaNl0cw","agent":"cartographer","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T05:14:51.626Z","session_id":"ses_1838be8faffeJ1Mbj4xXaNl0cw","agent":"cartographer","tool":"smart_find","phase":"started","detail":"**/plugin/index.ts"}
+{"at":"2026-05-31T05:14:51.651Z","session_id":"ses_1838be8faffeJ1Mbj4xXaNl0cw","agent":"cartographer","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T05:14:52.065Z","session_id":"ses_1838be8faffeJ1Mbj4xXaNl0cw","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Filter typecheck errors for the relevant files"}
+{"at":"2026-05-31T05:14:52.065Z","session_id":"ses_1838be8faffeJ1Mbj4xXaNl0cw","agent":"cartographer","tool":"smart_bash","phase":"rerouted","detail":"→ smart_bun"}
+{"at":"2026-05-31T05:15:07.006Z","session_id":"ses_1838be8faffeJ1Mbj4xXaNl0cw","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Find locations of registry.test.ts and claims.ts files"}
+{"at":"2026-05-31T05:15:07.007Z","session_id":"ses_1838be8faffeJ1Mbj4xXaNl0cw","agent":"cartographer","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}
+{"at":"2026-05-31T05:15:07.535Z","session_id":"ses_1838be8faffeJ1Mbj4xXaNl0cw","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Get type errors for our target files"}
+{"at":"2026-05-31T05:15:07.535Z","session_id":"ses_1838be8faffeJ1Mbj4xXaNl0cw","agent":"cartographer","tool":"smart_bash","phase":"rerouted","detail":"→ smart_bun"}
+{"at":"2026-05-31T05:15:33.493Z","session_id":"ses_1838be8faffeJ1Mbj4xXaNl0cw","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Find test and claims files with explicit path"}
+{"at":"2026-05-31T05:15:33.493Z","session_id":"ses_1838be8faffeJ1Mbj4xXaNl0cw","agent":"cartographer","tool":"smart_bash","phase":"rerouted","detail":"→ smart_find"}

@@ -5,7 +5,7 @@ import type { Details } from "electron"
 import { DEFAULT_SERVER_URL_KEY, WSL_ENABLED_KEY } from "./constants"
 import { getUserShell, loadShellEnv } from "./shell-env"
 import { getStore } from "./store"
-import type { SqliteMigrationProgress } from "../preload/types"
+import type { StorageMigrationProgress } from "../preload/types"
 import { sanitizeEnv } from "./env-blocklist"
 
 export type WslConfig = { enabled: boolean }
@@ -13,7 +13,7 @@ export type WslConfig = { enabled: boolean }
 export type HealthCheck = { wait: Promise<void> }
 
 type SidecarMessage =
-  | { type: "sqlite"; progress: SqliteMigrationProgress }
+  | { type: "migration-progress"; progress: StorageMigrationProgress }
   | { type: "ready" }
   | { type: "stopped" }
   | { type: "error"; error: { message: string; stack?: string }; component: string }
@@ -27,7 +27,7 @@ const SIDECAR_STOP_TIMEOUT = 6_000
 type SpawnLocalServerOptions = {
   needsMigration: boolean
   userDataPath: string
-  onSqliteProgress?: (progress: SqliteMigrationProgress) => void
+  onMigrationProgress?: (progress: StorageMigrationProgress) => void
   onStdout?: (message: string) => void
   onStderr?: (message: string) => void
   onExit?: (code: number) => void
@@ -119,9 +119,9 @@ export async function spawnLocalServer(
     }
 
     const onMessage = (message: SidecarMessage) => {
-      if (message.type === "sqlite") {
+      if (message.type === "migration-progress") {
         refreshTimeout()
-        options.onSqliteProgress?.(message.progress)
+        options.onMigrationProgress?.(message.progress)
         return
       }
       if (message.type === "ready") {

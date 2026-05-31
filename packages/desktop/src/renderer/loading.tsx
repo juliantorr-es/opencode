@@ -6,7 +6,7 @@ import { Splash } from "@opencode-ai/ui/logo"
 import { Progress } from "@opencode-ai/ui/progress"
 import "./styles.css"
 import { createEffect, createMemo, createSignal, onCleanup, onMount } from "solid-js"
-import type { InitStep, SqliteMigrationProgress } from "../preload/types"
+import type { InitStep, StorageMigrationProgress } from "../preload/types"
 
 const root = document.getElementById("root")!
 const lines = ["Just a moment...", "Migrating your database", "This may take a couple of minutes"]
@@ -32,7 +32,7 @@ render(() => {
 
     const timers = delays.map((ms, i) => setTimeout(() => setLine(i + 1), ms))
 
-    const listener = window.api.onSqliteMigrationProgress((progress: SqliteMigrationProgress) => {
+    const listener = window.api.onStorageMigrationProgress((progress: StorageMigrationProgress) => {
       if (progress.type === "InProgress") setPercent(Math.max(0, Math.min(100, progress.value)))
       if (progress.type === "Done") {
         setPercent(100)
@@ -55,7 +55,6 @@ render(() => {
 
   const status = createMemo(() => {
     if (phase() === "done") return "All done"
-    if (phase() === "sqlite_waiting") return lines[line()]
     return "Just a moment..."
   })
 

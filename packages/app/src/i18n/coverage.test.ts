@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test"
-import { resolveTemplate } from "@solid-primitives/i18n"
+import { resolveKey } from "./resolve"
 import { dict as en } from "./en"
 import { dict as ar } from "./ar"
 import { dict as br } from "./br"
@@ -18,22 +18,6 @@ import { dict as tr } from "./tr"
 import { dict as uk } from "./uk"
 import { dict as zh } from "./zh"
 import { dict as zht } from "./zht"
-
-/**
- * Mirror of the runtime resolveKey from context/language.tsx:
- *   currentDict -> parentDict -> base -> raw key
- */
-function resolveKey(
-  key: string,
-  dict: Record<string, string> | undefined,
-  parentDict: Record<string, string> | undefined,
-  base: Record<string, string>,
-): string {
-  if (dict && key in dict) return resolveTemplate(dict[key])
-  if (parentDict && key in parentDict) return resolveTemplate(parentDict[key])
-  if (key in base) return resolveTemplate(base[key])
-  return key
-}
 
 type Dict = Record<string, string>
 

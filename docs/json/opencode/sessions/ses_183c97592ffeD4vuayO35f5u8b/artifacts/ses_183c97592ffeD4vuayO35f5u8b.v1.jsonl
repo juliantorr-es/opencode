@@ -1,0 +1,7 @@
+{"at":"2026-05-31T04:07:22.049Z","tool":"smart_grep","action":"searched","pattern":".","results":1,"files":1}
+{"at":"2026-05-31T04:07:31.078Z","tool":"smart_bash","action":"bash","command":"eza --tree --git --icons /Users/user/Developer/GitHub/opencode-desktop-dev/.github/ 2>/dev/null | he","exit_code":0}
+{"at":"2026-05-31T04:08:46.443Z","tool":"smart_bash","action":"bash","command":"wc -l /Users/user/Developer/GitHub/opencode-desktop-dev/.github/workflows/publish.yml","exit_code":0}
+{"at":"2026-05-31T04:08:53.870Z","tool":"smart_grep","action":"searched","pattern":"^  \\w+:|^    \\w+:|name:|run:|uses:|on:|with:|^jobs:","results":0,"files":0}
+{"at":"2026-05-31T04:09:03.712Z","tool":"smart_bash","action":"bash","command":"head -n 150 /Users/user/Developer/GitHub/opencode-desktop-dev/.github/workflows/publish.yml","exit_code":0}
+{"at":"2026-05-31T04:09:09.262Z","tool":"smart_grep","action":"searched","pattern":"^  \\w+:|run: .+|name: .+|uses: .+|matrix:|strategy:","results":0,"files":0}
+{"at":"2026-05-31T04:09:54.398Z","tool":"smart_grep","action":"searched","pattern":"publish-python-sdk","results":1,"files":1}

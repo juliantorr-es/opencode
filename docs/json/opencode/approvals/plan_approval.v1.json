@@ -1,12 +1,19 @@
 {
-  "schema_version": "v1",
-  "plan_id": "desktop-phase1-remaining",
-  "plan_revision": 1,
-  "plan_path": "docs/json/opencode/plans/desktop-phase1-remaining.v1.json",
-  "status": "approved",
-  "approved_at": "2026-05-29T23:55:00.000Z",
-  "approved_by": "orchestrator",
-  "review_comments": 0,
-  "blocking_findings": 0,
-  "notes": "Plan approved for execution. Critic review running concurrently. Context display feature is 95% already implemented — executor should verify and only add compaction indicator + warning colors. All IPC modifications must be additive to dirty files."
+  "schema": "rig.relay.orchestrator_approval.v1",
+  "candidate_packet_digest": "plan_v4_phase-3-2-execution-hc004-phase1",
+  "candidate_boundary_identifier": "Phase 3-2 execution (DC-001/DC-002/DC-003) + HC-004 Phase 1 dead code sweep",
+  "plan_revision": 4,
+  "reviewer_set": [
+    "lane-collision-adversary (ses_184e9af94ffe)",
+    "claim-adversary (ses_184e77680ffe)"
+  ],
+  "decision": "approved",
+  "issued_at": "2026-05-30T23:00:00Z",
+  "notes": [
+    "All 5 blocking findings from v2 review resolved by v4.",
+    "DC-003 includes post-Gap-2 main-process handler verification and post-Gap-3 end-to-end verification.",
+    "DC-002 includes runtime proof (bun dev + localhost verification).",
+    "HC-004 is Phase 1 only (~331 lines). Phase 2 deferred.",
+    "platform-config.ts deletion gated on DC-001 completion."
+  ]
 }

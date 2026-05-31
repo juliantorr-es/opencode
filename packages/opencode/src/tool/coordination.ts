@@ -2,7 +2,12 @@ import { Effect, Schema } from "effect"
 import * as Tool from "./tool"
 import { DatabaseAdapter } from "@/storage/adapter"
 import { eq, and, sql, inArray } from "drizzle-orm"
-import { sqliteTable, text, integer, primaryKey } from "drizzle-orm/sqlite-core"
+import {
+  CoordinationClaimTable,
+  CoordinationReservationTable,
+  CoordinationFanOutTable,
+} from "./coordination.pg.sql"
+export { CoordinationClaimTable, CoordinationReservationTable, CoordinationFanOutTable }
 
 // ── Types ─────────────────────────────────────────────────
 
@@ -32,6 +37,7 @@ export type TaskClaim = {
   error?: string
   createdAt: number
   releasedAt?: number
+  expiresAt?: number
 }
 
 export type PathReservation = {
@@ -49,43 +55,7 @@ export type FanOutGroup = {
   completeCount: number
 }
 
-// ── SQLite table definitions ─────────────────────────────
 
-export const CoordinationClaimTable = sqliteTable("coordination_claim", {
-  task_id: text().primaryKey(),
-  session_id: text().notNull(),
-  wave: integer().notNull().default(0),
-  wave_type: text().notNull().default(""),
-  subagent_type: text().notNull(),
-  description: text().notNull(),
-  status: text().notNull().$type<"claimed" | "released" | "failed">(),
-  result: text(),
-  error: text(),
-  created_at: integer().notNull(),
-  released_at: integer(),
-})
-
-export const CoordinationReservationTable = sqliteTable("coordination_reservation", {
-  path: text().primaryKey(),
-  task_id: text().notNull(),
-  session_id: text().notNull(),
-  status: text().notNull().$type<"reserved" | "released" | "conflicted">(),
-  created_at: integer().notNull(),
-})
-
-export const CoordinationFanOutTable = sqliteTable(
-  "coordination_fan_out",
-  {
-    session_id: text().notNull(),
-    wave: integer().notNull(),
-    wave_type: text().notNull(),
-    task_ids: text({ mode: "json" }).notNull().$type<string[]>(),
-    complete_count: integer().notNull().default(0),
-  },
-  (table) => [
-    primaryKey({ columns: [table.session_id, table.wave, table.wave_type] }),
-  ],
-)
 
 // ── Table initialization ─────────────────────────────────
 
@@ -107,10 +77,19 @@ export const ensureCoordinationTables = Effect.fn("Coordination.ensureCoordinati
         result TEXT,
         error TEXT,
         created_at INTEGER NOT NULL,
+        expires_at INTEGER,
         released_at INTEGER
       )`,
     ),
   )
+  // Migrate existing tables: add expires_at for coordination_claim TTL support
+  try {
+    yield* adapter.query((db) =>
+      db.run(`ALTER TABLE coordination_claim ADD COLUMN expires_at INTEGER`),
+    )
+  } catch (_) {
+    // Column already exists — silently ignore
+  }
   yield* adapter.query((db) =>
     db.run(
       `CREATE TABLE IF NOT EXISTS coordination_reservation (
@@ -151,6 +130,7 @@ function claimRowToType(row: {
   result: string | null
   error: string | null
   created_at: number
+  expires_at: number | null
   released_at: number | null
 }): TaskClaim {
   return {
@@ -165,6 +145,7 @@ function claimRowToType(row: {
     error: row.error ?? undefined,
     createdAt: row.created_at,
     releasedAt: row.released_at ?? undefined,
+    expiresAt: row.expires_at ?? undefined,
   }
 }
 
@@ -222,6 +203,7 @@ export const claimTask = Effect.fn("Coordination.claimTask")(function* (
         description,
         status: "claimed" as const,
         created_at: Date.now(),
+        expires_at: Date.now() + 1_800_000,
       })
       .onConflictDoUpdate({
         target: CoordinationClaimTable.task_id,
@@ -233,6 +215,7 @@ export const claimTask = Effect.fn("Coordination.claimTask")(function* (
           description,
           status: "claimed",
           created_at: Date.now(),
+          expires_at: Date.now() + 1_800_000,
           result: null,
           error: null,
           released_at: null,
@@ -363,7 +346,25 @@ export const getClaim = Effect.fn("Coordination.getClaim")(function* (taskId: st
       .where(eq(CoordinationClaimTable.task_id, taskId))
       .limit(1),
   )
-  return rows.length > 0 ? claimRowToType(rows[0]) : null
+  if (rows.length === 0) return null
+  const claim = claimRowToType(rows[0])
+  if (claim.status === "claimed" && claim.expiresAt && claim.expiresAt < Date.now()) {
+    yield* adapter.query((db) =>
+      db
+        .update(CoordinationClaimTable)
+        .set({ status: "failed", error: "Claim expired (TTL)" })
+        .where(eq(CoordinationClaimTable.task_id, taskId)),
+    )
+    const refreshed = yield* adapter.query((db) =>
+      db
+        .select()
+        .from(CoordinationClaimTable)
+        .where(eq(CoordinationClaimTable.task_id, taskId))
+        .limit(1),
+    )
+    return refreshed.length > 0 ? claimRowToType(refreshed[0]) : null
+  }
+  return claim
 })
 
 export const getSessionClaims = Effect.fn("Coordination.getSessionClaims")(function* (sessionId: string) {
@@ -374,7 +375,23 @@ export const getSessionClaims = Effect.fn("Coordination.getSessionClaims")(funct
       .from(CoordinationClaimTable)
       .where(eq(CoordinationClaimTable.session_id, sessionId)),
   )
-  return rows.map(claimRowToType)
+  const claims = rows.map(claimRowToType)
+  const now = Date.now()
+  const result: TaskClaim[] = []
+  for (const claim of claims) {
+    if (claim.status === "claimed" && claim.expiresAt && claim.expiresAt < now) {
+      yield* adapter.query((db) =>
+        db
+          .update(CoordinationClaimTable)
+          .set({ status: "failed", error: "Claim expired (TTL)" })
+          .where(eq(CoordinationClaimTable.task_id, claim.taskId)),
+      )
+      result.push({ ...claim, status: "failed" as const, error: "Claim expired (TTL)" })
+    } else {
+      result.push(claim)
+    }
+  }
+  return result
 })
 
 export const getWaveClaims = Effect.fn("Coordination.getWaveClaims")(function* (
@@ -484,6 +501,22 @@ export const checkPathReserved = Effect.fn("Coordination.checkPathReserved")(fun
   return null
 })
 
+export const getSessionReservations = Effect.fn("Coordination.getSessionReservations")(function* (sessionId: string) {
+  const adapter = yield* DatabaseAdapter.Service
+  const rows = yield* adapter.query((db) =>
+    db
+      .select()
+      .from(CoordinationReservationTable)
+      .where(
+        and(
+          eq(CoordinationReservationTable.session_id, sessionId),
+          eq(CoordinationReservationTable.status, "reserved"),
+        ),
+      ),
+  )
+  return rows.map(reservationRowToType)
+})
+
 // ── Fan-out operations ───────────────────────────────────
 
 export const getFanOutGroup = Effect.fn("Coordination.getFanOutGroup")(function* (
@@ -526,7 +559,7 @@ export function formatStructuredResult(claim: TaskClaim): string {
     `  <subagent_type>${escapeXml(claim.subagentType)}</subagent_type>`,
   ]
   if (claim.wave > 0) {
-    lines.push(`  <wave>${claim.wave}</wave>`)
+    lines.push(`  <wave>${escapeXml(String(claim.wave))}</wave>`)
     if (claim.waveType) lines.push(`  <wave_type>${escapeXml(claim.waveType)}</wave_type>`)
   }
   if (claim.result) {
@@ -572,6 +605,19 @@ export const CoordinationTool = Tool.define(
           let output: string
 
           if (params.operation === "claims") {
+            // Auto-release stale claims
+            const now = Date.now()
+            yield* adapter.query((db) =>
+              db.update(CoordinationClaimTable)
+                .set({ status: "failed", error: "Claim expired (TTL)" })
+                .where(
+                  and(
+                    eq(CoordinationClaimTable.status, "claimed"),
+                    sql`${CoordinationClaimTable.expires_at} IS NOT NULL`,
+                    sql`${CoordinationClaimTable.expires_at} < ${now}`,
+                  ),
+                ),
+            )
             if (params.taskId) {
               const claim = yield* adapter.query((db) =>
                 db.select().from(CoordinationClaimTable)

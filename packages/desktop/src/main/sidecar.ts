@@ -1,4 +1,3 @@
-import { drizzle } from "drizzle-orm/node-sqlite/driver"
 import * as http from "node:http"
 import * as tls from "node:tls"
 
@@ -24,7 +23,7 @@ type StopCommand = { type: "stop" }
 type SidecarCommand = StartCommand | StopCommand
 
 type SidecarMessage =
-  | { type: "sqlite"; progress: { type: "InProgress"; value: number } | { type: "Done" } }
+  | { type: "migration-progress"; progress: { type: "InProgress"; value: number } | { type: "Done" } }
   | { type: "ready" }
   | { type: "stopped" }
   | { type: "error"; error: { message: string; stack?: string }; component: string }
@@ -57,23 +56,8 @@ async function start(command: StartCommand) {
     ensureLoopbackNoProxy()
     useSystemCertificates()
     useEnvProxy()
-    const { Database, JsonMigration, Log, Server } = await import("virtual:opencode-server")
+    const { Database, Log, Server } = await import("virtual:opencode-server")
     await Log.init({ level: "WARN" })
-
-    if (command.needsMigration) {
-      await JsonMigration.run(drizzle({ client: Database.Client().$client }), {
-        progress: (event: { current: number; total: number }) => {
-          parentPort.postMessage({
-            type: "sqlite",
-            progress: {
-              type: "InProgress",
-              value: event.total === 0 ? 100 : Math.round((event.current / event.total) * 100),
-            },
-          })
-        },
-      })
-      parentPort.postMessage({ type: "sqlite", progress: { type: "Done" } })
-    }
 
     listener = await Server.listen({
       port: command.port,

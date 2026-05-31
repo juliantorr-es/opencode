@@ -3,7 +3,7 @@ import { browserApi, installBrowserApi } from "./browser-api"
 
 beforeEach(() => {
   // Remove window.api before each test so the install is clean
-  delete (window as Record<string, unknown>).api
+  delete (window as unknown as Record<string, unknown>).api
 })
 
 describe("installBrowserApi", () => {
@@ -13,14 +13,14 @@ describe("installBrowserApi", () => {
 
   test("defines window.api after installation", () => {
     installBrowserApi()
-    expect((window as Record<string, unknown>).api).toBeDefined()
+    expect((window as unknown as Record<string, unknown>).api).toBeDefined()
   })
 
   test("does not override an existing api", () => {
     const sentinel = { __TEST__: true }
-    ;(window as Record<string, unknown>).api = sentinel
+    ;(window as unknown as Record<string, unknown>).api = sentinel
     installBrowserApi()
-    expect((window as Record<string, unknown>).api).toBe(sentinel)
+    expect((window as unknown as Record<string, unknown>).api).toBe(sentinel)
   })
 
   test("is idempotent — calling twice does not error", () => {
@@ -208,7 +208,7 @@ describe("session export/import", () => {
 describe("openLink", () => {
   test("calls window.open with _blank", () => {
     const original = globalThis.open
-    const mockOpen = mock<(url: string, target: string) => void>()
+    const mockOpen = mock<(url?: string | URL | undefined, target?: string | undefined, features?: string | undefined) => Window | null>()
     globalThis.open = mockOpen
 
     try {

@@ -1,7 +1,7 @@
 import { contextBridge, ipcRenderer } from "electron"
-import type { ElectronAPI, InitStep, SafeModeAction, SqliteMigrationProgress } from "./types"
+import type { ElectronAPI, InitStep, SafeModeAction, StorageMigrationProgress } from "./types"
 import { IPC } from "../main/ipc-channels"
-import { typedInvoke, typedSend, safeInvoke } from "../main/ipc-contract"
+import { typedInvoke, typedSend, pluginSend, pluginInvoke } from "../main/ipc-contract"
 
 const api: ElectronAPI = {
   // --- Simple invoke methods ---
@@ -80,10 +80,10 @@ const api: ElectronAPI = {
       ipcRenderer.removeListener(IPC.push.INIT_STEP, handler)
     })
   },
-  onSqliteMigrationProgress: (cb) => {
-    const handler = (_: unknown, progress: SqliteMigrationProgress) => cb(progress)
-    ipcRenderer.on(IPC.push.SQLITE_MIGRATION_PROGRESS, handler)
-    return () => ipcRenderer.removeListener(IPC.push.SQLITE_MIGRATION_PROGRESS, handler)
+  onStorageMigrationProgress: (cb) => {
+    const handler = (_: unknown, progress: StorageMigrationProgress) => cb(progress)
+    ipcRenderer.on(IPC.push.STORAGE_MIGRATION_PROGRESS, handler)
+    return () => ipcRenderer.removeListener(IPC.push.STORAGE_MIGRATION_PROGRESS, handler)
   },
   onMenuCommand: (cb) => {
     const handler = (_: unknown, id: string) => cb(id)
@@ -104,6 +104,36 @@ const api: ElectronAPI = {
     const handler = (_: unknown, factor: number) => cb(factor)
     ipcRenderer.on(IPC.push.ZOOM_FACTOR_CHANGED, handler)
     return () => ipcRenderer.removeListener(IPC.push.ZOOM_FACTOR_CHANGED, handler)
+  },
+
+  // --- Plugin transport ---
+  /** Map plugin channel+handler pairs to the IPC listener callback for off() cleanup. */
+  _pluginListeners: new Map<string, (...args: unknown[]) => void>(),
+  pluginSend: (channel: string, data?: unknown) => {
+    pluginSend(channel, data)
+  },
+  pluginOn: (channel: string, handler: (data: unknown) => void) => {
+    const listener = (_: unknown, payload: { channel: string; data: unknown }) => {
+      if (payload.channel === channel) handler(payload.data)
+    }
+    const key = `${channel}::${String(handler)}`
+    api._pluginListeners.set(key, listener)
+    ipcRenderer.on(IPC.push.PLUGIN_PUSH, listener)
+    return () => {
+      api._pluginListeners.delete(key)
+      ipcRenderer.removeListener(IPC.push.PLUGIN_PUSH, listener)
+    }
+  },
+  pluginOff: (channel: string, handler: (data: unknown) => void) => {
+    const key = `${channel}::${String(handler)}`
+    const listener = api._pluginListeners.get(key)
+    if (listener) {
+      api._pluginListeners.delete(key)
+      ipcRenderer.removeListener(IPC.push.PLUGIN_PUSH, listener)
+    }
+  },
+  pluginInvoke: (channel: string, data?: unknown) => {
+    return pluginInvoke(channel, data)
   },
 }
 

@@ -1,0 +1,101 @@
+{
+  "schema": "rig.relay.cartography.tool_cache.v1",
+  "generated_at": "2026-05-30T00:00:00Z",
+  "session": "ses_1841a1711ffe5VrfG46EQp3LBz",
+  "file": "packages/opencode/src/tool/cache.ts",
+  "dirty": false,
+  "total_lines": 226,
+  "head_sha": "fa4183375941ca85abb4d18f08a398f4d79544f3",
+  "branch": "dev",
+  "imports": ["Clock", "Context", "Deferred", "Duration", "Effect", "Exit", "Layer", "Ref"],
+  "exports": ["CacheConfig", "CacheStats", "Interface", "Service", "layer", "defaultLayer"],
+  "surface_map": {
+    "entry_points": ["packages/opencode/src/tool/cache.ts"],
+    "package": "packages/opencode",
+    "framework": "Effect v4",
+    "key_services": ["ToolCache", "CacheConfig", "CacheStats"],
+    "ref_count": 6
+  },
+  "git_history": [
+    {"sha": "b81b90068", "message": "Phase 0: native tool framework upgrade + gap tools + 135 typecheck fixes"},
+    {"sha": "61a7810d8", "message": "fix(core): architecture hardening — cache atomicity, coordination bugs, lifecycle gating, placeholder tools, reporting audit"},
+    {"sha": "de9af8e0f", "message": "WIP on dev: 4ce723230 Fix desktop app behavior across core flows", "note": "not in HEAD lineage"}
+  ],
+  "bug_report": {
+    "summary": "Tool cache inflight dedup non-atomic — Ref.get+mutate allows duplicate concurrent computation on same key",
+    "location": "packages/opencode/src/tool/cache.ts:100 (original version before commit 61a7810d8)",
+    "current_status": "FIXED in HEAD (commit 61a7810d8)",
+    "severity": "high",
+    "original_code_before_fix": {
+      "file_commit": "b81b90068",
+      "lines": "96-99 and 108 (approximately)",
+      "code": "// 2. Check inflight dedup\nconst pending = yield* Ref.get(inflight)\nconst existing = pending.get(key)\nif (existing) { ... }\n// ...\nconst d = yield* Deferred.make<any>()\npending.set(key, d)"
+    },
+    "race_condition": {
+      "scenario": "Two concurrent fibers for the same cache key both calling getOrCompute simultaneously",
+      "fiber_a": "Ref.get(inflight) → gets Map M → pending.get(key) → undefined",
+      "fiber_b": "Ref.get(inflight) → gets Map M (same reference) → pending.get(key) → undefined",
+      "overlap": "Both read 'no inflight entry' before either writes. Both fibers see no existing Deferred.",
+      "result": "Fiber A: pending.set(key, dA) → Fiber B: pending.set(key, dB) (overwrites A's!) → BOTH start compute()",
+      "root_cause": "Ref.get + mutation is non-atomic (TOCTOU race). Ref.get returns the same Map reference, but there's no locking between the read and the write."
+    },
+    "the_fix": {
+      "commit": "61a7810d8",
+      "changed_lines": "96-108",
+      "before": "const pending = yield* Ref.get(inflight); const existing = pending.get(key); ... pending.set(key, d)",
+      "after": "const existing = yield* Ref.modify(inflight, (pending) => { const existing = pending.get(key); if (existing) return [existing, pending] as const; pending.set(key, d); return [undefined, pending] as const })",
+      "why_it_works": "Ref.modify runs the callback atomically — the check (pending.get) and insert (pending.set) happen under a lock. No interleaving possible."
+    }
+  },
+  "remaining_debt": {
+    "cache_hit_promotion_non_atomic": {
+      "lines": "77-91",
+      "issue": "Ref.get(cache) + direct map.delete(key)/map.set(key, entry) without Ref.update. The hit promotion mutates the Map reference directly, but between Ref.get and the mutation, another fiber's Ref.update(cache, ...) (line ~144) could replace the stored Map. Mutations on the old Map are lost.",
+      "impact": "Lost LRU promotion (performance, not correctness). Stale entry may be evicted prematurely.",
+      "pre_existing_finding": "ses_1878690c — ToolCache.inflight map mutated via direct reference mutation bypassing Ref.update at cache.ts:108"
+    },
+    "expiry_eviction_non_atomic": {
+      "lines": "89-93",
+      "issue": "Same pattern — Ref.get(cache) + direct map.delete(key) for expired entries",
+      "impact": "Expired entry may not be removed from the canonical cache Map if another fiber replaced it via Ref.update concurrently."
+    },
+    "inflight_cleanup_mutates_in_place": {
+      "lines": "122-126",
+      "issue": "Ref.update(inflight, (m) => { m.delete(key); return m }) — mutates Map and returns same reference. While atomic (inside Ref.update), idiomatically should create a new Map.",
+      "impact": "Style debt only. Safe in practice due to Ref.update's atomicity."
+    },
+    "getOrCompute_dead_api": {
+      "lines": "29-32",
+      "issue": "ToolCache.getOrCompute is defined but never called anywhere in the codebase (pre-existing finding from ses_1878690c)",
+      "impact": "Dead API surface"
+    }
+  },
+  "codebase_context": {
+    "ref_patterns": {
+      "atomic_rmw": "Ref.modify — used correctly for inflight dedup at cache.ts:101",
+      "atomic_effectful": "SynchronizedRef.modifyEffect — used in effect/runner.ts, background/job.ts, acp-next/directory.ts",
+      "fire_and_forget": "Ref.update — ~30 uses across 13 files",
+      "non_atomic_read_write": "Ref.get + separate Ref.update — cache.ts:77→144 (benign due to inflight guard)",
+      "atomic_swap": "Ref.getAndSet — used in flight-recorder.ts for buffer drain"
+    },
+    "canonical_idiom": {
+      "modify": "Ref.modify(ref, (state): readonly [Return, typeof state] => { return [result, newState] as const })",
+      "clone_before_mutate": "new Map(state).set(key, value) — used in acp-next/session.ts:119",
+      "not": "mutating the Map reference obtained from Ref.get without creating a new Map"
+    }
+  },
+  "pre_existing_findings_applied": [
+    {
+      "finding": "ToolCache.inflight map mutated via direct reference mutation bypassing Ref.update",
+      "file_line": "packages/opencode/src/tool/cache.ts:108",
+      "session": "ses_1878690c",
+      "current_relevance": "Partly addressed by commit 61a7810d8 (inflight dedup now uses Ref.modify). Cleanup code at lines 122-126 still mutates in place inside Ref.update (atomic but not idiomatic)."
+    },
+    {
+      "finding": "ToolCache.getOrCompute is defined but never called — dead API surface",
+      "file_line": "packages/opencode/src/tool/cache.ts:30",
+      "session": "ses_1878690c",
+      "current_relevance": "Still true — getOrCompute on the Interface is what the layer implements, but the Interface itself may only be consumed indirectly via the Service tag."
+    }
+  ]
+}

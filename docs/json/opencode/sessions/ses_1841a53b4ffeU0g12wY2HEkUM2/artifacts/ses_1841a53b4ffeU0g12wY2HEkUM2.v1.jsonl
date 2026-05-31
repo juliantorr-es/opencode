@@ -1,0 +1,26 @@
+{"at":"2026-05-31T02:38:33.457Z","tool":"smart_grep","action":"searched","pattern":"lsp\\.client\\.diagnostics","results":1,"files":1}
+{"at":"2026-05-31T02:38:33.744Z","tool":"smart_grep","action":"searched","pattern":"message\\.updated","results":1,"files":1}
+{"at":"2026-05-31T02:38:34.088Z","tool":"smart_grep","action":"searched","pattern":"message\\.removed","results":1,"files":1}
+{"at":"2026-05-31T02:38:34.493Z","tool":"smart_grep","action":"searched","pattern":"message\\.part\\.updated","results":3,"files":3}
+{"at":"2026-05-31T02:38:34.766Z","tool":"smart_grep","action":"searched","pattern":"message\\.part\\.removed","results":1,"files":1}
+{"at":"2026-05-31T02:38:35.238Z","tool":"smart_grep","action":"searched","pattern":"session\\.next\\.agent\\.switched","results":1,"files":1}
+{"at":"2026-05-31T02:38:35.548Z","tool":"smart_grep","action":"searched","pattern":"session\\.next\\.model\\.switched","results":1,"files":1}
+{"at":"2026-05-31T02:38:35.892Z","tool":"smart_grep","action":"searched","pattern":"session\\.next\\.prompted","results":2,"files":2}
+{"at":"2026-05-31T02:38:36.265Z","tool":"smart_grep","action":"searched","pattern":"session\\.next\\.synthetic","results":1,"files":1}
+{"at":"2026-05-31T02:39:03.210Z","tool":"smart_grep","action":"searched","pattern":"SessionEvent\\b","results":10,"files":1}
+{"at":"2026-05-31T02:39:28.503Z","tool":"smart_grep","action":"searched","pattern":"AgentSwitched|ModelSwitched|Prompted|Synthetic","results":10,"files":3}
+{"at":"2026-05-31T02:40:07.556Z","tool":"smart_grep","action":"searched","pattern":"not registered in EventName","results":10,"files":10}
+{"at":"2026-05-31T02:40:43.714Z","tool":"smart_bash","action":"bash","command":"head -52 /Users/user/Developer/GitHub/opencode-desktop-dev/packages/opencode/src/lsp/client.ts | tai","exit_code":0}
+{"at":"2026-05-31T02:40:44.021Z","tool":"smart_bash","action":"bash","command":"head -555 /Users/user/Developer/GitHub/opencode-desktop-dev/packages/opencode/src/session/message-v2","exit_code":0}
+{"at":"2026-05-31T02:42:08.074Z","tool":"smart_grep","action":"searched","pattern":"EventNameValues|EventName","results":30,"files":11}
+{"at":"2026-05-31T02:42:08.399Z","tool":"smart_grep","action":"searched","pattern":"define","results":0,"files":0}
+{"at":"2026-05-31T02:42:27.805Z","tool":"smart_bash","action":"bash","command":"head -50 /Users/user/Developer/GitHub/opencode-desktop-dev/packages/opencode/src/sync/index.ts","exit_code":0}
+{"at":"2026-05-31T02:43:24.215Z","tool":"smart_grep","action":"searched","pattern":"function define","results":0,"files":0}
+{"at":"2026-05-31T02:43:42.359Z","tool":"smart_bash","action":"bash","command":"awk 'NR>=252 && NR<=290' /Users/user/Developer/GitHub/opencode-desktop-dev/packages/opencode/src/syn","exit_code":0}
+{"at":"2026-05-31T02:44:12.668Z","tool":"smart_bash","action":"bash","command":"awk 'NR>=285' /Users/user/Developer/GitHub/opencode-desktop-dev/packages/opencode/src/sync/index.ts","exit_code":0}
+{"at":"2026-05-31T02:44:31.654Z","tool":"smart_grep","action":"searched","pattern":"BusEvent\\.define\\(","results":41,"files":27}
+{"at":"2026-05-31T02:45:02.504Z","tool":"smart_bash","action":"bash","command":"awk 'NR>=210 && NR<=250' /Users/user/Developer/GitHub/opencode-desktop-dev/packages/opencode/src/syn","exit_code":0}
+{"at":"2026-05-31T02:46:40.437Z","tool":"smart_grep","action":"searched","pattern":"session-event","results":3,"files":3}
+{"at":"2026-05-31T02:46:40.883Z","tool":"smart_grep","action":"searched","pattern":"AgentSwitched","results":10,"files":2}
+{"at":"2026-05-31T02:46:51.493Z","tool":"smart_bash","action":"bash","command":"awk 'NR>=39 && NR<=80' /Users/user/Developer/GitHub/opencode-desktop-dev/packages/core/src/session-e","exit_code":0}
+{"at":"2026-05-31T02:47:12.946Z","tool":"smart_bash","action":"bash","command":"awk 'NR>=36 && NR<=62' /Users/user/Developer/GitHub/opencode-desktop-dev/packages/core/src/event.ts","exit_code":0}

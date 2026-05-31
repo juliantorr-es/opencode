@@ -15,7 +15,7 @@ const generated = await import("./generate.ts")
 
 // Load migrations from migration directories
 const migrationDirs = (
-  await fs.promises.readdir(path.join(dir, "migration"), {
+  await fs.promises.readdir(path.join(dir, "migration-pg"), {
     withFileTypes: true,
   })
 )
@@ -25,7 +25,7 @@ const migrationDirs = (
 
 const migrations = await Promise.all(
   migrationDirs.map(async (name) => {
-    const file = path.join(dir, "migration", name, "migration.sql")
+    const file = path.join(dir, "migration-pg", name, "migration.sql")
     const sql = await Bun.file(file).text()
     const match = /^(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})/.exec(name)
     const timestamp = match

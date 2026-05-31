@@ -1,0 +1,27 @@
+{
+  "schema_version": "v1",
+  "plan_id": "packages-opencode-src-storage-migrate-ts-test-package-json-scripts",
+  "plan_revision": 1,
+  "title": "SQL-002: Strip SQLite migration path from migrate.ts",
+  "boundary": "packages/opencode/src/storage/migrate.ts + test + package.json scripts",
+  "consumer_purpose": "Remove all vestiges of SQLite database support from the migration CLI entry point, since the app has fully migrated to PostgreSQL (PGlite for dev, PG for production).",
+  "claim_atoms": [
+    "1. migrate.ts only imports from #db (initPg",
+    "applyMigrations)",
+    "no bun:sqlite",
+    "drizzle-orm/bun-sqlite",
+    "Global",
+    "path 2. Dialect type removed 3. MigrateOptions stripped to only connectionString + ssl 4. runMigrations accepts optional connectionString string",
+    "no dialect/dbPath 5. resolveConnectionString defaults to :memory: 6. CLI only accepts --connection-string",
+    "no --pg",
+    "--sqlite",
+    "--db-path 7. package.json has db:migrate script",
+    "db:migrate:pg updated 8. test file updated: SQLite tests removed",
+    "PG tests simplified 9. bun typecheck passes",
+    "tests pass"
+  ],
+  "content": "## Files to modify\n\n### 1. `packages/opencode/src/storage/migrate.ts` — REWRITE\n- Strip SQLite imports: BunDatabase, drizzle(bun-sqlite), sqliteMigrate, Global, path, MIGRATIONS_SQLITE\n- Keep only: init as initPg, applyMigrations from #db\n- Remove Dialect type entirely\n- Simplify MigrateOptions: only connectionString?: string, ssl?: boolean\n- Remove detectDialect(), resolveDbPath()\n- Simplify runMigrations() to only handle PG with default :memory:\n- Simplify CLI to only accept --connection-string\n\n### 2. `packages/opencode/test/storage/migrate.test.ts` — REWRITE\n- Remove all SQLite-specific tests (4 tests gone)\n- Remove dialect override tests (3 tests gone)\n- Remove CLI --pg flag test (1 test gone)\n- Simplify remaining PG tests using new runMigrations(connectionString?) signature\n- Keep: in-memory PG test, env var auto-detect test, default to :memory: test\n\n### 3. `packages/opencode/package.json` — UPDATE scripts\n- Add: \"db:migrate\": \"bun run src/storage/migrate.ts\"\n- Update: \"db:migrate:pg\": \"bun run src/storage/migrate.ts\" (remove --pg flag)\n",
+  "status": "proposed",
+  "created_at": "2026-05-31T03:35:44.534Z",
+  "modified_at": "2026-05-31T03:35:44.534Z"
+}

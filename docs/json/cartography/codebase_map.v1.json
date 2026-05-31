@@ -1,0 +1,471 @@
+{
+  "schema": "rig.documentation.page.v1",
+  "title": "Codebase Cartography — opencode-desktop-dev",
+  "generated_at": "2026-05-30T20:49:00Z",
+  "generated_by": "cartographer",
+  "repository": "anomalyco/opencode",
+  "package_manager": "bun@1.3.14 (via bun workspaces)",
+  "build_system": {
+    "orchestrator": "turborepo@2.8.13",
+    "config": "turbo.json",
+    "tasks": ["typecheck", "build", "test", "test:ci"],
+    "package_scripts": "bun run scripts in individual packages"
+  },
+  "default_branch": "dev",
+  "monorepo_packages": [
+    {
+      "dir": "packages/opencode",
+      "npm_name": "opencode",
+      "purpose": "Main AI-powered development tool (TUI + CLI + agent loop). Entry point for the `opencode` binary. Self-hosted interactions, git integration, MCP server, storage (SQLite/PostgreSQL/DuckDB), sessions, shell, tool execution, config management.",
+      "version": "1.15.12",
+      "typecheck": "tsgo --noEmit",
+      "test": "bun test --timeout 30000",
+      "test_ci": "bun test --timeout 30000 --reporter=junit",
+      "test_pg": "bun test test/storage/adapter.pg.test.ts",
+      "test_duckdb": "bun test test/storage/migration.duckdb.test.ts",
+      "test_httpapi": "bun run script/httpapi-exercise.ts (coverage|auth|effect)",
+      "build": "bun run script/build.ts",
+      "dev": "bun run --conditions=browser ./src/index.ts",
+      "tsconfig": "extends @tsconfig/bun, jsx preserve, paths @/* @tui/* @test/*",
+      "key_deps": ["@opentui/core", "@opentui/solid", "effect", "zod", "solid-js", "drizzle-orm", "hono", "ai", "shiki"],
+      "db": ["drizzle-kit (generate/migrate)", "DuckDB", "PostgreSQL"],
+      "has_alias_imports": true,
+      "import_aliases": { "#db": "./src/storage/db.pg.ts", "#db-duckdb": "./src/storage/db.duckdb.ts", "#pty": "./src/pty/pty.{bun,node}.ts" },
+      "src_dirs": ["account", "acp", "acp-next", "agent", "auth", "background", "binary", "bus", "campaign", "cli", "command", "config", "context", "control-plane", "coordination", "debug", "effect", "env", "event", "file", "format", "git", "github", "id", "ide", "image", "installation", "lifecycle", "lsp", "mcp", "node.ts", "patch", "permission", "plugin", "project", "provider", "pty", "question", "reference", "review", "server", "session", "share", "shell", "skill", "snapshot", "storage", "sync", "tool", "util", "v2", "worktree"]
+    },
+    {
+      "dir": "packages/core",
+      "npm_name": "@opencode-ai/core",
+      "purpose": "Core SDK — AI SDK integrations, telemetry, LLM backends (OpenAI, Anthropic, Google, etc.), tool system. Shared library used by opencode and other packages.",
+      "version": "1.15.12",
+      "typecheck": "tsgo --noEmit",
+      "test": "bun test",
+      "test_ci": "bun test --timeout 30000 --reporter=junit",
+      "key_deps": ["@ai-sdk/openai", "@ai-sdk/anthropic", "@ai-sdk/google", "effect", "@effect/platform-node", "zod", "cross-spawn"],
+      "exports": "/* → ./src/*.ts"
+    },
+    {
+      "dir": "packages/app",
+      "npm_name": "@opencode-ai/app",
+      "purpose": "Web app — SolidJS + Vite frontend. The browser-based UI for OpenCode conversations, sessions, settings.",
+      "typecheck": "tsgo -b",
+      "dev": "vite",
+      "build": "vite build",
+      "test": "bun test --preload ./happydom.ts ./src --conditions=browser",
+      "test_ci": "bun test --preload ./happydom.ts ./src --conditions=browser --reporter=junit",
+      "test_e2e": "playwright (e2e/)",
+      "key_deps": ["solid-js", "@kobalte/core", "@solidjs/router", "@opencode-ai/ui", "@opencode-ai/core", "@opencode-ai/sdk", "vite", "vite-plugin-solid"],
+      "has_e2e_tests": true,
+      "e2e_tool": "playwright"
+    },
+    {
+      "dir": "packages/desktop",
+      "npm_name": "@opencode-ai/desktop",
+      "purpose": "Desktop app — Electron wrapper for the web app. Electron-vite build, electron-builder packaging.",
+      "typecheck": "tsgo -b",
+      "dev": "electron-vite dev",
+      "build": "electron-vite build",
+      "package": "electron-builder (mac/win/linux)",
+      "test": "bun test",
+      "key_deps": ["electron@41.2.1", "electron-vite", "electron-builder", "@opencode-ai/app", "@opencode-ai/ui", "@lydell/node-pty", "solid-js"],
+      "native_deps": "./native/"
+    },
+    {
+      "dir": "packages/ui",
+      "npm_name": "@opencode-ai/ui",
+      "purpose": "Shared UI component library — SolidJS components, icons, themes, i18n, styles. Used by app, desktop, enterprise, console, etc.",
+      "typecheck": "tsgo --noEmit",
+      "test": "bun test src",
+      "test_ci": "bun test src --reporter=junit",
+      "dev": "vite",
+      "key_deps": ["solid-js", "@kobalte/core", "@opencode-ai/sdk", "tailwindcss", "@tailwindcss/vite"],
+      "exports": {
+        "components": "./src/components/*.tsx",
+        "i18n": "./src/i18n/*.ts",
+        "hooks": "./src/hooks/index.ts",
+        "theme": "./src/theme/*.ts",
+        "styles": "./src/styles/*.css"
+      }
+    },
+    {
+      "dir": "packages/sdk/js",
+      "npm_name": "@opencode-ai/sdk",
+      "purpose": "TypeScript SDK — client/server for the OpenCode API. Auto-generated from OpenAPI spec. V2 client/server included.",
+      "version": "1.15.12",
+      "typecheck": "tsgo --noEmit",
+      "build": "bun ./script/build.ts",
+      "key_deps": ["@hey-api/openapi-ts (codegen)"],
+      "generated_from": "packages/sdk/openapi.json",
+      "exports": { ".": "./src/index.ts", "./client": "./src/client.ts", "./server": "./src/server.ts", "./v2/*": "./src/v2/*" }
+    },
+    {
+      "dir": "packages/llm",
+      "npm_name": "@opencode-ai/llm",
+      "purpose": "LLM providers and routing — provider integrations (Amazon Bedrock, Anthropic, Azure, Gemini, OpenAI), protocol implementations, streaming, recordings.",
+      "version": "1.15.12",
+      "typecheck": "tsgo --noEmit",
+      "test": "bun test --timeout 30000",
+      "key_deps": ["effect", "@smithy/eventstream-codec", "aws4fetch", "@opencode-ai/http-recorder"],
+      "exports": { ".": "./src/index.ts", "./route": "./src/route/index.ts", "./provider": "./src/provider.ts", "./protocols/*": "./src/protocols/*.ts" }
+    },
+    {
+      "dir": "packages/http-recorder",
+      "npm_name": "@opencode-ai/http-recorder",
+      "purpose": "HTTP request/response recorder for LLM provider calls. Enables test recording and replay.",
+      "version": "1.15.12",
+      "typecheck": "tsgo --noEmit",
+      "test": "bun test --timeout 30000",
+      "test_ci": "bun test --timeout 30000 --reporter=junit",
+      "key_deps": ["effect", "@effect/platform-node"]
+    },
+    {
+      "dir": "packages/plugin",
+      "npm_name": "@opencode-ai/plugin",
+      "purpose": "Plugin system — type definitions for OpenCode plugins. Provides exports for plugin, desktop, tool, and TUI plugin surfaces.",
+      "version": "1.15.12",
+      "typecheck": "tsgo --noEmit",
+      "build": "tsc",
+      "key_deps": ["@opentui/core (optional)", "@opentui/keymap (optional)", "@opentui/solid (optional)"]
+    },
+    {
+      "dir": "packages/enterprise",
+      "npm_name": "@opencode-ai/enterprise",
+      "purpose": "Enterprise deployment — Vite/SolidJS app with Cloudflare Workers support. Teams-focused.",
+      "version": "1.15.12",
+      "typecheck": "tsgo --noEmit",
+      "dev": "vite dev",
+      "build": "vite build",
+      "deploy_targets": ["cloudflare", "default"],
+      "key_deps": ["@opencode-ai/core", "@opencode-ai/ui", "hono", "solid-js", "nitro", "@solidjs/start"]
+    },
+    {
+      "dir": "packages/console/app",
+      "npm_name": "@opencode-ai/console-app",
+      "purpose": "Admin console — Vite/SolidJS app for managing OpenCode. Auth, billing (Stripe), charts, analytics.",
+      "version": "1.15.12",
+      "typecheck": "tsgo --noEmit",
+      "dev": "vite dev --host 0.0.0.0",
+      "build": "vite build (with sitemap generation)",
+      "key_deps": ["@openauthjs/openauth", "@stripe/stripe-js", "solid-js", "chart.js", "nitro", "@solidjs/start"],
+      "subpackages": ["console-core", "console-mail", "console-resource"]
+    },
+    {
+      "dir": "packages/web",
+      "npm_name": "@opencode-ai/web",
+      "purpose": "Documentation website — Astro + Starlight docs site. Contains product docs, quickstart guides, API reference.",
+      "version": "1.15.12",
+      "dev": "astro dev",
+      "build": "astro build",
+      "key_deps": ["astro@5.7.13", "@astrojs/starlight", "@astrojs/solid-js", "solid-js", "shiki", "marked"]
+    },
+    {
+      "dir": "packages/stats",
+      "npm_name": "(subpackages: @opencode-ai/stats-app, @opencode-ai/stats-core, stats-server)",
+      "purpose": "Stats dashboard — Telemetry/analytics visualization app. Deployed via SST on Cloudflare.",
+      "typecheck": "tsgo --noEmit",
+      "dev": "vite dev (via SST shell)",
+      "build": "vite build",
+      "key_deps": ["effect", "solid-js", "d3-scale", "@solidjs/start", "nitro", "vite"]
+    },
+    {
+      "dir": "packages/slack",
+      "npm_name": "@opencode-ai/slack",
+      "purpose": "Slack integration — connects OpenCode to Slack via Bolt framework.",
+      "version": "1.15.12",
+      "dev": "bun run src/index.ts",
+      "typecheck": "tsgo --noEmit",
+      "key_deps": ["@opencode-ai/sdk", "@slack/bolt"]
+    },
+    {
+      "dir": "packages/function",
+      "npm_name": "@opencode-ai/function",
+      "purpose": "Serverless functions (Cloudflare Workers) — GitHub auth, webhooks.",
+      "version": "1.15.12",
+      "key_deps": ["hono", "@octokit/rest", "@octokit/auth-app", "jose"]
+    },
+    {
+      "dir": "packages/identity",
+      "npm_name": "(no package.json found)",
+      "purpose": "Identity/Auth package — likely OAuth or auth-related helpers."
+    },
+    {
+      "dir": "packages/script",
+      "npm_name": "@opencode-ai/script",
+      "purpose": "Shared scripting utilities — used by root-level scripts (publish, changelog, etc.).",
+      "key_deps": ["semver"]
+    },
+    {
+      "dir": "packages/storybook",
+      "npm_name": "@opencode-ai/storybook",
+      "purpose": "Storybook UI component browser. Documents @opencode-ai/ui components.",
+      "dev": "storybook dev -p 6006",
+      "build": "storybook build",
+      "key_deps": ["storybook@^10.2.13", "storybook-solidjs-vite", "@opencode-ai/ui", "solid-js"]
+    },
+    {
+      "dir": "packages/containers",
+      "npm_name": "(no package.json — Docker container build scripts)",
+      "purpose": "Docker container definitions — base images, Bun images, Tauri Linux builder images, Rust toolchains. Build script at packages/containers/script/build.ts.",
+      "subdirs": ["base", "bun-node", "publish", "rust", "tauri-linux"]
+    },
+    {
+      "dir": "packages/docs",
+      "npm_name": "(no package.json — static documentation content)",
+      "purpose": "Documentation content — AI tools docs, dev guides, OpenAPI spec. Used by web (Astro) site.",
+      "contents": ["ai-tools/", "development.mdx", "essentials/", "quickstart.mdx", "openapi.json"]
+    },
+    {
+      "dir": "packages/extensions/zed",
+      "purpose": "Zed editor extension — extension.toml, icons for the OpenCode Zed extension.",
+      "notable": "extension.toml + icons"
+    }
+  ],
+  "root_scripts": {
+    "dev": "bun run --cwd packages/opencode --conditions=browser src/index.ts",
+    "dev:desktop": "bun --cwd packages/desktop dev",
+    "dev:web": "bun --cwd packages/app dev",
+    "dev:console": "bun run --cwd packages/console/app dev",
+    "dev:stats": "bun sst shell --stage=production -- bun run --cwd packages/stats/app dev",
+    "dev:storybook": "bun --cwd packages/storybook storybook",
+    "lint": "oxlint",
+    "typecheck": "bun turbo typecheck",
+    "test": "echo 'do not run tests from root' && exit 1",
+    "postinstall": "bun run --cwd packages/opencode fix-node-pty",
+    "prepare": "husky",
+    "sso": "aws sso login --sso-session=opencode --no-browser",
+    "upgrade-opentui": "bun run script/upgrade-opentui.ts"
+  },
+  "root_scripts_notable": {
+    "test_from_root": "BLOCKED — bunfig.toml [test].root = './do-not-run-tests-from-root'. Tests must be run from within package directories."
+  },
+  "root_configs": {
+    "tsconfig": { "extends": "@tsconfig/bun/tsconfig.json" },
+    "turbo": { "schema": "https://v2-8-13.turborepo.dev/schema.json", "globalEnv": ["CI", "OPENCODE_DISABLE_SHARE"] },
+    "lint": "oxlint@1.60.0 (type-aware, config in .oxlintrc.json)",
+    "formatter": "prettier@3.6.2 (semi: false, printWidth: 120)",
+    "git_hooks": "husky@9.1.7 (pre-push hook)",
+    "patches": ["@npmcli/agent", "@silvia-odwyer/photon-node", "solid-js", "virtua", "@ai-sdk/xai", "gcp-metadata"],
+    "workspaces": ["packages/*", "packages/console/*", "packages/stats/*", "packages/sdk/js", "packages/slack"]
+  },
+  "deployment": {
+    "tool": "sst@4.13.1",
+    "config": "sst.config.ts",
+    "home": "cloudflare",
+    "providers": ["aws@7.30.0", "stripe", "random", "planetscale", "honeycomb"],
+    "infra_dir": "infra/",
+    "infra_modules": ["stage.ts", "app.ts", "lake.ts", "stats.ts", "console.ts", "enterprise.ts", "monitoring.ts", "secret.ts"],
+    "stages": ["dev", "production"]
+  },
+  "ci_workflows": {
+    "total": 27,
+    "key_workflows": [
+      {
+        "file": ".github/workflows/test.yml",
+        "triggers": ["push on dev", "pull_request"],
+        "jobs": [
+          { "name": "unit (linux + windows)", "commands": "bun turbo test:ci (runs opencode#test:ci, @opencode-ai/app#test:ci, @opencode-ai/ui#test:ci)" },
+          { "name": "pg tests", "commands": "bun run test:pg:ci (packages/opencode)" },
+          { "name": "DuckDB tests", "commands": "bun run test:duckdb:ci (packages/opencode)" },
+          { "name": "HttpApi gates", "commands": "bun run test:httpapi (packages/opencode)" },
+          { "name": "e2e (linux + windows)", "commands": "bun --cwd packages/app test:e2e:local (playwright)" }
+        ],
+        "runners": "blacksmith-4vcpu-ubuntu-2404",
+        "setup": ["setup-node@v4 (Node 24)", "setup-bun", "cache turbo"],
+        "env": "CI=true + OPENCODE_DB vars, OPENCODE_DUCKDB_PATH=:memory:"
+      },
+      {
+        "file": ".github/workflows/typecheck.yml",
+        "triggers": ["push on dev", "pull_request on dev"],
+        "commands": ["bun typecheck (runs turbo typecheck)"],
+        "runner": "blacksmith-4vcpu-ubuntu-2404"
+      },
+      {
+        "file": ".github/workflows/deploy.yml",
+        "triggers": ["push on dev or production"],
+        "commands": ["bun sst deploy --stage=${{ github.ref_name }}"],
+        "env": ["CLOUDFLARE_API_TOKEN", "PLANETSCALE_*", "STRIPE_SECRET_KEY", "SENTRY_*", "VITE_SENTRY_*"]
+      },
+      {
+        "file": ".github/workflows/publish.yml",
+        "triggers": ["push on dev/beta/ci", "workflow_dispatch"],
+        "commands": ["./script/publish.ts (npm, homebrew, AUR, GitHub release)"],
+        "note": "Publishes the opencode CLI package to npm, Homebrew, AUR, and creates GitHub releases with Tauri signing."
+      },
+      {
+        "file": ".github/workflows/publish-vscode.yml",
+        "triggers": ["tag vscode-v*.*.*", "workflow_dispatch"],
+        "commands": ["bun install + ./script/publish in sdks/vscode"],
+        "note": "Publishes the VSCode extension to VS Code Marketplace and OpenVSX."
+      },
+      {
+        "file": ".github/workflows/storybook.yml",
+        "triggers": ["push/PR on dev when storybook/ or ui/ changes"],
+        "commands": ["bun --cwd packages/storybook build"],
+        "note": "Builds the Storybook component library."
+      },
+      {
+        "file": ".github/workflows/containers.yml",
+        "triggers": ["push on dev when containers/ changes"],
+        "commands": ["bun ./packages/containers/script/build.ts --push"],
+        "note": "Builds and pushes Docker containers to GHCR."
+      },
+      {
+        "file": ".github/workflows/stats.yml",
+        "triggers": ["daily cron (12:00 UTC)"],
+        "commands": ["bun script/stats.ts"],
+        "note": "Updates STATS.md daily."
+      },
+      {
+        "file": ".github/workflows/generate.yml",
+        "triggers": ["push on dev"],
+        "commands": ["bun script/generate.ts"],
+        "note": "Auto-generates code (likely SDK types from OpenAPI) and commits on dev."
+      },
+      {
+        "file": ".github/workflows/opencode.yml",
+        "triggers": ["issue_comment or PR review comment"],
+        "commands": ["uses anomalyco/opencode/github@latest"],
+        "note": "Runs OpenCode as a GitHub Action on triggered comments (/oc, /opencode)."
+      },
+      {
+        "file": ".github/workflows/review.yml",
+        "triggers": ["issue_comment with /review by owners/members"],
+        "note": "AI-powered PR review via OpenCode."
+      },
+      {
+        "file": ".github/workflows/pr-standards.yml",
+        "triggers": ["pull_request_target"],
+        "note": "Validates PR standards (title format, description, etc.) via GitHub Script."
+      },
+      {
+        "file": ".github/workflows/beta.yml",
+        "triggers": ["schedule (hourly)", "workflow_dispatch"],
+        "commands": ["bun script/beta.ts"],
+        "note": "Syncs beta branch."
+      },
+      {
+        "file": ".github/workflows/nix-eval.yml",
+        "triggers": ["push/PR on dev"],
+        "note": "Evaluates Nix flake derivations for all systems."
+      },
+      {
+        "file": ".github/workflows/sync-zed-extension.yml",
+        "triggers": ["release published", "workflow_dispatch"],
+        "commands": ["./script/sync-zed.ts"],
+        "note": "Syncs Zed extension to the Zed extension registry."
+      },
+      {
+        "file": ".github/workflows/docs-update.yml",
+        "triggers": ["schedule (every 12 hours)"],
+        "note": "Reviews recent commits and auto-updates documentation via OpenCode."
+      }
+    ],
+    "other_workflows": [
+      "close-issues.yml", "close-prs.yml", "compliance-close.yml",
+      "docs-locale-sync.yml", "duplicate-issues.yml",
+      "notify-discord.yml", "pr-management.yml",
+      "publish-github-action.yml", "release-github-action.yml",
+      "triage.yml"
+    ]
+  },
+  "std_commands_by_package": {
+    "root": {
+      "dev": "bun dev (starts CLI TUI)",
+      "dev:desktop": "bun dev:desktop",
+      "lint": "bun lint (oxlint)",
+      "typecheck": "bun typecheck (turbo typecheck)",
+      "test": "BLOCKED — run from package directories"
+    },
+    "packages/opencode": {
+      "typecheck": "bun typecheck",
+      "test": "bun test",
+      "test:ci": "bun run test:ci",
+      "test:pg": "bun run test:pg:ci",
+      "test:duckdb": "bun run test:duckdb:ci",
+      "test:httpapi": "bun run test:httpapi",
+      "build": "bun run build",
+      "dev": "bun dev"
+    },
+    "packages/core": {
+      "typecheck": "bun typecheck",
+      "test": "bun test",
+      "test:ci": "bun run test:ci"
+    },
+    "packages/app": {
+      "typecheck": "cd packages/app && bun typecheck",
+      "test": "cd packages/app && bun test",
+      "dev": "cd packages/app && bun dev",
+      "build": "cd packages/app && bun run build",
+      "e2e": "cd packages/app && bun run test:e2e:local"
+    },
+    "packages/desktop": {
+      "typecheck": "cd packages/desktop && bun typecheck",
+      "dev": "cd packages/desktop && bun dev",
+      "build": "cd packages/desktop && bun run build",
+      "package": "cd packages/desktop && bun run package[:mac|:win|:linux]"
+    },
+    "packages/ui": {
+      "typecheck": "cd packages/ui && bun typecheck",
+      "test": "cd packages/ui && bun test",
+      "dev": "cd packages/ui && bun dev"
+    },
+    "packages/llm": {
+      "typecheck": "cd packages/llm && bun typecheck",
+      "test": "cd packages/llm && bun test"
+    },
+    "packages/http-recorder": {
+      "typecheck": "cd packages/http-recorder && bun typecheck",
+      "test": "cd packages/http-recorder && bun test"
+    },
+    "packages/plugin": {
+      "typecheck": "cd packages/plugin && bun typecheck",
+      "build": "cd packages/plugin && bun run build (tsc)"
+    },
+    "packages/sdk/js": {
+      "typecheck": "cd packages/sdk/js && bun typecheck",
+      "build": "cd packages/sdk/js && bun run build"
+    },
+    "packages/web": {
+      "dev": "cd packages/web && bun dev",
+      "build": "cd packages/web && bun run build"
+    },
+    "packages/storybook": {
+      "dev": "cd packages/storybook && bun storybook",
+      "build": "cd packages/storybook && bun run build"
+    },
+    "packages/enterprise": {
+      "typecheck": "cd packages/enterprise && bun typecheck",
+      "dev": "cd packages/enterprise && bun dev",
+      "build": "cd packages/enterprise && bun run build"
+    }
+  },
+  "ci_green_state": {
+    "ci_env": "CI=true, OPENCODE_DB vars set by CI",
+    "required_checks": [
+      "typecheck (turbo typecheck — all packages)",
+      "unit tests (bun turbo test:ci — opencode, app, ui)",
+      "pg tests (packages/opencode with PostgreSQL)",
+      "DuckDB tests (packages/opencode with in-memory DuckDB)",
+      "HttpApi gates (packages/opencode — coverage, auth, effect modes)",
+      "e2e tests (packages/app — Playwright + Chromium)",
+      "lint (oxlint type-aware)",
+      "nix eval (when nix-related changes)",
+      "Docker containers (when containers/ changes)",
+      "Storybook build (when storybook/ or ui/ changes)"
+    ],
+    "runners": "blacksmith-4vcpu-ubuntu-2404 (primary), ubuntu-latest (deploy)",
+    "node_version": "24",
+    "bun_version": "latest (from setup-bun action)"
+  },
+  "notes": {
+    "test_restriction": "Tests cannot be run from root — bunfig.toml redirects to ./do-not-run-tests-from-root. Always cd to package dir first.",
+    "typecheck_tool": "Packages use tsgo (TypeScript Go) — a fast TypeScript typechecker replacement. Not tsc.",
+    "lint_tool": "oxlint (Rust-based linter) — not eslint. Type-aware mode enabled.",
+    "formatter": "prettier with no semicolons and 120 print width.",
+    "typecheck_command_for_packages_without_tsgo": "Only packages/plugin and packages/sdk/js use tsc for build. Everything else uses tsgo for typecheck.",
+    "major_framework_version": "solid-js 1.9.10, effect 4.0.0-beta.66, zod 4.1.8, drizzle-orm 1.0.0-rc.2, hono 4.10.7",
+    "has_bun_lock": true,
+    "has_patches_dir": true,
+    "sst_auto_gen": "sst-env.d.ts (Resource interface) is auto-generated by SST"
+  }
+}

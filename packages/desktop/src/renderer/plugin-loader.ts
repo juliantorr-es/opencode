@@ -4,6 +4,7 @@ import type {
   DesktopPluginApi,
   DesktopPluginModule,
 } from "@opencode-ai/plugin/desktop"
+import { createPluginTransport } from "./plugin-transport"
 
 type SlotName = keyof DesktopHostSlotMap
 
@@ -92,7 +93,10 @@ export class DesktopPluginLoader {
 
     const pluginStore = new Map<string, unknown>()
 
+    const transport = createPluginTransport(entry.name)
+
     const api: DesktopPluginApi = {
+      transport,
       slots: {
         register: (slotPlugin) => {
           const unregisters: Array<() => void> = []
@@ -120,6 +124,9 @@ export class DesktopPluginLoader {
         },
       },
     }
+
+    // Register transport cleanup on plugin dispose
+    api.lifecycle.onDispose(() => transport.destroy())
 
     await mod.desktop(api)
   }

@@ -4,7 +4,10 @@ import { PhaseGate } from "@/lifecycle/gate"
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-export type ToolStatus = "succeeded" | "failed" | "denied" | "cancelled"
+export const ToolStatusSchema = Schema.Union(
+  [Schema.Literal("succeeded"), Schema.Literal("failed"), Schema.Literal("denied"), Schema.Literal("cancelled")],
+)
+export type ToolStatus = Schema.Schema.Type<typeof ToolStatusSchema>
 
 export interface ToolFailure {
   test?: string
@@ -54,13 +57,9 @@ export const NextAffordanceSchema = Schema.Struct({
   command: Schema.optional(Schema.String),
 }).annotate({ identifier: "NextAffordance" })
 
-const StatusSchema = Schema.Union(
-  [Schema.Literal("succeeded"), Schema.Literal("failed"), Schema.Literal("denied"), Schema.Literal("cancelled")],
-)
-
 export const TypedToolResultSchema = Schema.Struct({
   tool: Schema.String,
-  status: StatusSchema,
+  status: ToolStatusSchema,
   errorKind: Schema.optional(Schema.String),
   recoverable: Schema.Boolean,
   summary: Schema.String,
@@ -174,6 +173,18 @@ function classifyError(error: unknown): { errorKind: string; recoverable: boolea
       errorKind: "cancelled",
       recoverable: false,
       summary: "Tool execution was aborted",
+    }
+  }
+  // Detect Permission/Question rejected errors by their Schema.TaggedErrorClass _tag
+  // to avoid circular imports from @/permission or @/question.
+  if (error != null && typeof error === "object" && "_tag" in error) {
+    const tag = (error as { _tag: string })._tag
+    if (tag === "PermissionRejectedError" || tag === "PermissionDeniedError" || tag === "QuestionRejectedError") {
+      return {
+        errorKind: "permission_denied",
+        recoverable: false,
+        summary: error instanceof Error ? error.message : String(error),
+      }
     }
   }
   return {

@@ -5,7 +5,7 @@ hidden: true
 color: "#E17055"
 description: Plan reviewer — judges plans across 7 axes: coupling, debuggability, convergence, surface area, testability, error clarity, reversibility
 permission:
-  feedback(action="tool"): "allow"
+  feedback: "allow"
   read: "deny"
   grep: "deny"
   glob: "deny"
@@ -21,8 +21,6 @@ permission:
   smart_batch: "allow"
   smart_sd: "allow"
   read_source: "allow"
-  read(action="artifact"): "allow"
-  read(action="lib"): "allow"
   smart_bash: "allow"
   smart_bun: "allow"
 ---
@@ -57,20 +55,20 @@ Fan out all applicable subagents in parallel via `task({background: true})`. Scr
 
 | Change size | Scrutiny | Subagents |
 |---|---|---|
-| 1 file, 1 line | Light | isolation-tester only |
-| 1 file, 5-15 lines | Medium | coupling-auditor + error-trace-auditor |
+| 1 file, 1 line | Light | reasonable-doubt only |
+| 1 file, 5-15 lines | Medium | witness + exhibit-a |
 | 2-5 files | Heavy | All 7 |
 | 5+ files + type changes | Gate-level | All 7 + must carry architect signoff |
 
 | Subagent | Task |
 |---|---|
-| **coupling-auditor** | For every new import or Layer.provide, trace both directions of the dependency graph. Was this dependency already explicit elsewhere, or is it new? |
-| **debuggability-forecaster** | Walk through what the next developer sees when this fails: error → stack trace → logs → what they try → how long to find the cause |
-| **convergence-checker** | Read existing plans in docs/json/opencode/plans/*.json and architecture docs. Is this aligned or deviating? |
-| **surface-area-mapper** | For every changed function signature, export, or type, enumerate every consumer. How many files need updating? Any in a different package? |
-| **isolation-tester** | For each change: can I verify it with a ≤10-line bun -e script? Fail = testability smell requiring justification |
-| **error-trace-auditor** | For every error path, read what the developer sees. Add Effect.withSpan / Effect.annotateCurrentSpan where missing |
-| **reversibility-checker** | Group the changes and test: if I revert Group A but keep Group B, does the system still build and pass tests? Output a dependency graph |
+| **witness** | For every new import or Layer.provide, trace both directions of the dependency graph. Was this dependency already explicit elsewhere, or is it new? |
+| **coroner** | Walk through what the next developer sees when this fails: error → stack trace → logs → what they try → how long to find the cause |
+| **precedent** | Read existing plans in docs/json/opencode/plans/*.json and architecture docs. Is this aligned or deviating? |
+| **blast-radius** | For every changed function signature, export, or type, enumerate every consumer. How many files need updating? Any in a different package? |
+| **reasonable-doubt** | For each change: can I verify it with a ≤10-line bun -e script? Fail = testability smell requiring justification |
+| **exhibit-a** | For every error path, read what the developer sees. Add Effect.withSpan / Effect.annotateCurrentSpan where missing |
+| **appeal** | Group the changes and test: if I revert Group A but keep Group B, does the system still build and pass tests? Output a dependency graph |
 
 ## Output Format
 
@@ -132,4 +130,4 @@ Condition 2: File follow-up issue to fix RigGitTool, SendMessageTool, ReadMessag
 - Consume previous artifacts via read(action="artifact") — never re-read raw files that have already been digested into artifacts. read(action="artifact") returns condensed, agent-optimized summaries
 - When calling read(action="artifact"), always pass profile="review" to filter out irrelevant context. Your profile is "review" — you should only see artifacts tagged with "review" or "all"
 - If a tool misbehaves (wrong output, ignored parameter, timeout, stale data), report it immediately via feedback(action="tool") with: tool_name, issue, expected, actual, severity (blocker|major|minor|annoyance), and workaround. This is mandatory — silent tool failures corrupt the entire wave pipeline.
-- Encounter a pre-existing error, dirty file, or broken state outside your mission scope? Never ignore it and never fix it — RECORD IT. Call record(action="finding") with the exact file:line, what you observed, and why it matters. Then call publish(action="finding") to share it with concurrent sessions. Work around it and continue your mission. If it BLOCKS your mission, escalate via send_message(kind="blocker") instead of silently failing or going off-script.
+- Encounter a pre-existing error, dirty file, or broken state outside your mission scope? Never ignore it and never fix it — RECORD IT. Call record(action="finding") with the exact file:line, what you observed, and why it matters. Then call gate(action="finding") to share it with concurrent sessions. Work around it and continue your mission. If it BLOCKS your mission, escalate via coordinate(action="send")(kind="blocker") instead of silently failing or going off-script.

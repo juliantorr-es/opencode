@@ -1,0 +1,1 @@
+ALTER TABLE "coordination_fan_out" ALTER COLUMN "task_ids" SET DATA TYPE jsonb USING "task_ids"::jsonb;

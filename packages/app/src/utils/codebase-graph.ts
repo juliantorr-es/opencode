@@ -36,7 +36,6 @@ const PACKAGE_COLORS: Record<string, string> = {
   slack: "#8BC34A",
   script: "#607D8B",
   "http-recorder": "#795548",
-  "effect-drizzle-sqlite": "#9C27B0",
   function: "#FF9800",
   storybook: "#673AB7",
 }
@@ -73,7 +72,6 @@ const WORKSPACE_PACKAGES = [
   { id: "console", label: "@opencode-ai/console", path: "packages/console/app" },
   { id: "web", label: "@opencode-ai/web", path: "packages/web" },
   { id: "slack", label: "@opencode-ai/slack", path: "packages/slack" },
-  { id: "effect-drizzle-sqlite", label: "@opencode-ai/effect-drizzle-sqlite", path: "packages/effect-drizzle-sqlite" },
   { id: "http-recorder", label: "@opencode-ai/http-recorder", path: "packages/http-recorder" },
   { id: "function", label: "@opencode-ai/function", path: "packages/function" },
   { id: "storybook", label: "Storybook", path: "packages/storybook" },
@@ -130,7 +128,7 @@ export function resolvePackage(path: string): string | null {
     desktop: "desktop", ui: "ui", llm: "llm",
     plugin: "plugin", sdk: "sdk", enterprise: "enterprise",
     web: "web", slack: "slack", script: "script",
-    "http-recorder": "http-recorder", "effect-drizzle-sqlite": "effect-drizzle-sqlite",
+    "http-recorder": "http-recorder",
     function: "function", storybook: "storybook",
     console: "console",
   }

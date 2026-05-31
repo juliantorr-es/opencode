@@ -1,0 +1,30 @@
+{"at":"2026-05-30T22:51:17.447Z","session_id":"ses_184ea5eb4ffeAljHp6Xj2s1wZ4","agent":"scout","tool":"smart_bash","phase":"started","detail":"User requested git status output exactly as-is"}
+{"at":"2026-05-30T22:51:17.447Z","session_id":"ses_184ea5eb4ffeAljHp6Xj2s1wZ4","agent":"scout","tool":"smart_bash","phase":"rerouted","detail":"→ smart_git"}
+{"at":"2026-05-30T22:51:19.025Z","session_id":"ses_184ea5eb4ffeAljHp6Xj2s1wZ4","agent":"scout","tool":"smart_git","phase":"started","detail":"status"}
+{"at":"2026-05-30T22:51:19.168Z","session_id":"ses_184ea5eb4ffeAljHp6Xj2s1wZ4","agent":"scout","tool":"smart_git","phase":"completed","detail":"status exit=0"}
+{"at":"2026-05-30T22:51:23.680Z","session_id":"ses_184ea5eb4ffeAljHp6Xj2s1wZ4","agent":"scout","tool":"smart_bash","phase":"started","detail":"Need raw porcelain output, not structured"}
+{"at":"2026-05-30T22:51:23.846Z","session_id":"ses_184ea5eb4ffeAljHp6Xj2s1wZ4","agent":"scout","tool":"smart_bash","phase":"completed","detail":"command exit=0"}
+{"at":"2026-05-30T22:51:26.038Z","session_id":"ses_184ea5eb4ffeAljHp6Xj2s1wZ4","agent":"scout","tool":"smart_bash","phase":"started","detail":"Capture full git status output to file"}
+{"at":"2026-05-30T22:51:26.185Z","session_id":"ses_184ea5eb4ffeAljHp6Xj2s1wZ4","agent":"scout","tool":"smart_bash","phase":"completed","detail":"command exit=0"}
+{"at":"2026-05-30T22:51:29.811Z","session_id":"ses_184ea5eb4ffeAljHp6Xj2s1wZ4","agent":"scout","tool":"smart_bash","phase":"started","detail":"Read the full git status output from temp file"}
+{"at":"2026-05-30T22:51:29.811Z","session_id":"ses_184ea5eb4ffeAljHp6Xj2s1wZ4","agent":"scout","tool":"smart_bash","phase":"rerouted","detail":"→ read_source"}
+{"at":"2026-05-30T22:51:32.193Z","session_id":"ses_184ea5eb4ffeAljHp6Xj2s1wZ4","agent":"scout","tool":"smart_bash","phase":"started","detail":"Print full git status output without truncation"}
+{"at":"2026-05-30T22:51:32.228Z","session_id":"ses_184ea5eb4ffeAljHp6Xj2s1wZ4","agent":"scout","tool":"smart_bash","phase":"completed","detail":"python3 exit=0"}
+{"at":"2026-05-30T22:51:34.301Z","session_id":"ses_184ea5eb4ffeAljHp6Xj2s1wZ4","agent":"scout","tool":"smart_bash","phase":"started","detail":"Print lines 1-55 of git status output"}
+{"at":"2026-05-30T22:51:35.891Z","session_id":"ses_184ea5eb4ffeAljHp6Xj2s1wZ4","agent":"scout","tool":"smart_bash","phase":"started","detail":"Print first 55 lines of git status output"}
+{"at":"2026-05-30T22:51:37.567Z","session_id":"ses_184ea5eb4ffeAljHp6Xj2s1wZ4","agent":"scout","tool":"smart_bash","phase":"started","detail":"Print first 55 lines of git status output"}
+{"at":"2026-05-30T22:51:37.576Z","session_id":"ses_184ea5eb4ffeAljHp6Xj2s1wZ4","agent":"scout","tool":"smart_bash","phase":"completed","detail":"awk exit=0"}
+{"at":"2026-05-30T22:51:39.795Z","session_id":"ses_184ea5eb4ffeAljHp6Xj2s1wZ4","agent":"scout","tool":"smart_bash","phase":"started","detail":"Test single line output"}
+{"at":"2026-05-30T22:51:39.801Z","session_id":"ses_184ea5eb4ffeAljHp6Xj2s1wZ4","agent":"scout","tool":"smart_bash","phase":"completed","detail":"awk exit=0"}
+{"at":"2026-05-30T22:51:41.608Z","session_id":"ses_184ea5eb4ffeAljHp6Xj2s1wZ4","agent":"scout","tool":"smart_bash","phase":"started","detail":"Print lines 1-40 of git status output"}
+{"at":"2026-05-30T22:51:41.615Z","session_id":"ses_184ea5eb4ffeAljHp6Xj2s1wZ4","agent":"scout","tool":"smart_bash","phase":"completed","detail":"awk exit=0"}
+{"at":"2026-05-30T22:51:43.000Z","session_id":"ses_184ea5eb4ffeAljHp6Xj2s1wZ4","agent":"scout","tool":"smart_bash","phase":"started","detail":"Print lines 41-80 of git status output"}
+{"at":"2026-05-30T22:51:43.010Z","session_id":"ses_184ea5eb4ffeAljHp6Xj2s1wZ4","agent":"scout","tool":"smart_bash","phase":"completed","detail":"awk exit=0"}
+{"at":"2026-05-30T22:51:44.502Z","session_id":"ses_184ea5eb4ffeAljHp6Xj2s1wZ4","agent":"scout","tool":"smart_bash","phase":"started","detail":"Print lines 81-120 of git status output"}
+{"at":"2026-05-30T22:51:44.509Z","session_id":"ses_184ea5eb4ffeAljHp6Xj2s1wZ4","agent":"scout","tool":"smart_bash","phase":"completed","detail":"awk exit=0"}
+{"at":"2026-05-30T22:51:46.084Z","session_id":"ses_184ea5eb4ffeAljHp6Xj2s1wZ4","agent":"scout","tool":"smart_bash","phase":"started","detail":"Print lines 121-161 of git status output"}
+{"at":"2026-05-30T22:51:46.092Z","session_id":"ses_184ea5eb4ffeAljHp6Xj2s1wZ4","agent":"scout","tool":"smart_bash","phase":"completed","detail":"awk exit=0"}
+{"at":"2026-05-30T22:51:47.645Z","session_id":"ses_184ea5eb4ffeAljHp6Xj2s1wZ4","agent":"scout","tool":"smart_bash","phase":"started","detail":"Print lines 121-141 of git status output"}
+{"at":"2026-05-30T22:51:47.652Z","session_id":"ses_184ea5eb4ffeAljHp6Xj2s1wZ4","agent":"scout","tool":"smart_bash","phase":"completed","detail":"awk exit=0"}
+{"at":"2026-05-30T22:51:47.969Z","session_id":"ses_184ea5eb4ffeAljHp6Xj2s1wZ4","agent":"scout","tool":"smart_bash","phase":"started","detail":"Print lines 142-161 of git status output"}
+{"at":"2026-05-30T22:51:47.977Z","session_id":"ses_184ea5eb4ffeAljHp6Xj2s1wZ4","agent":"scout","tool":"smart_bash","phase":"completed","detail":"awk exit=0"}

@@ -19,10 +19,15 @@ export type Ruleset = typeof Ruleset.Type
 const EDIT_TOOLS = ["edit", "write", "apply_patch"]
 
 export function evaluate(permission: string, pattern: string, ...rulesets: Ruleset[]): Rule {
+  const flat = rulesets.flat()
+  // Prefer exact permission match over wildcard match — a specific `tune: "deny"`
+  // rule must take priority over a catch-all `*: "allow"` rule regardless of merge order.
+  const exact = flat.findLast(
+    (rule) => rule.permission === permission && Wildcard.match(pattern, rule.pattern),
+  )
+  if (exact) return exact
   return (
-    rulesets
-      .flat()
-      .findLast((rule) => Wildcard.match(permission, rule.permission) && Wildcard.match(pattern, rule.pattern)) ?? {
+    flat.findLast((rule) => Wildcard.match(permission, rule.permission) && Wildcard.match(pattern, rule.pattern)) ?? {
       action: "ask",
       permission,
       pattern: "*",
@@ -38,7 +43,10 @@ export function disabled(tools: string[], ruleset: Ruleset): Set<string> {
   return new Set(
     tools.filter((tool) => {
       const permission = EDIT_TOOLS.includes(tool) ? "edit" : tool
-      const rule = ruleset.findLast((rule) => Wildcard.match(permission, rule.permission))
+      // Prefer exact permission match over wildcard — a specific `tune: "deny"`
+      // must not be overridden by a catch-all `*: "allow"` from a later merge.
+      const exact = ruleset.findLast((rule) => rule.permission === permission)
+      const rule = exact ?? ruleset.findLast((rule) => Wildcard.match(permission, rule.permission))
       return rule?.pattern === "*" && rule.action === "deny"
     }),
   )

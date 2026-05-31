@@ -4,7 +4,7 @@ mode: subagent
 hidden: true
 temperature: 0.1
 permission:
-  feedback(action="tool"): "allow"
+  feedback: "allow"
   edit: allow
   task: deny
   websearch: deny

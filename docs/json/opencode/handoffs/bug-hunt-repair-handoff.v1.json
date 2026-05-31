@@ -97,26 +97,8 @@
   ],
   "remaining_fixes": [
     {
-      "id": "FIX-07",
-      "priority": "P1",
-      "bug_id": "M12",
-      "summary": "Add try/catch around JSON.parse in comment-plan.ts",
-      "file": "packages/opencode/src/tool/comment-plan.ts",
-      "effort": "~5 lines",
-      "detail": "JSON.parse at lines 42-43 with no error handling — corrupt plans crash the tool"
-    },
-    {
-      "id": "FIX-08",
-      "priority": "P1",
-      "bug_id": "H22",
-      "summary": "Add sanitizeEnv() call in PTY spawn",
-      "file": "packages/opencode/src/pty/index.ts",
-      "effort": "1 line",
-      "detail": "pty/index.ts:198 spreads ...process.env without sanitizeEnv(). PTY leaks API keys to every terminal. Replace ...process.env with ...sanitizeEnv(process.env)."
-    },
-    {
       "id": "FIX-09",
-      "priority": "P1",
+      "priority": "P2",
       "bug_id": "H30",
       "summary": "Prevent plugin tools from colliding with built-in names",
       "file": "packages/opencode/src/tool/registry.ts",
@@ -125,30 +107,12 @@
     },
     {
       "id": "FIX-10",
-      "priority": "P2",
+      "priority": "P3",
       "bug_id": "H06",
       "summary": "Add TTL/lease to coordination claims",
       "file": "packages/opencode/src/tool/coordination.ts",
       "effort": "~20 lines",
       "detail": "CoordinationClaimTable has no expiry column. Crashed agents leave zombie claims. Add expires_at column, auto-release on stale read, periodic sweep."
-    },
-    {
-      "id": "FIX-11",
-      "priority": "P2",
-      "bug_id": "C04",
-      "summary": "Repair budget never initialized — retryBudgets always {}",
-      "file": "packages/opencode/src/campaign/state-machine.ts",
-      "effort": "1 line",
-      "detail": "Initialize retryBudgets: { repair: 3 } in makeInitialSMState()"
-    },
-    {
-      "id": "FIX-12",
-      "priority": "P2",
-      "bug_id": "H18",
-      "summary": "Wire Database.close() into shutdown sequence",
-      "file": "packages/opencode/src/storage/db.ts",
-      "effort": "~5 lines",
-      "detail": "close() exists but never called from lifecycle path. Register on process exit."
     }
   ],
   "deferred_high_risk_patterns": [
@@ -216,5 +180,5 @@
     "crash-lock-cleanup-quit: Desktop crash lock must be unlinked in will-quit handler — lock was written but never deleted.",
     "execution-agent-over-analysis: Execution subagents sometimes over-analyze and deviate from exact instructions in simple fixes."
   ],
-  "what_to_do_next": "Address the remaining P1 fixes (FIX-07 through FIX-09) then the P2 items (FIX-10 through FIX-12). The bug hunt report at docs/json/opencode/bug-hunt-report.v1.json has full evidence for every remaining item."
+  "what_to_do_next": "Execute ALL remaining P1, P2, and P3 fixes. The bug hunt report at docs/json/opencode/bug-hunt-report.v1.json has full evidence for every remaining item."
 }

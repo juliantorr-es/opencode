@@ -1,5 +1,5 @@
 import { app, BrowserWindow, ipcMain } from "electron"
-import type { SqliteMigrationProgress } from "../preload/types"
+import type { StorageMigrationProgress } from "../preload/types"
 import { IPC } from "./ipc-channels"
 import { registerConfigIpcHandlers } from "./ipc-config"
 import { registerStoreIpcHandlers } from "./ipc-store"
@@ -37,8 +37,8 @@ export function registerIpcHandlers(deps: InitDeps) {
   })
 }
 
-export function sendSqliteMigrationProgress(win: BrowserWindow, progress: SqliteMigrationProgress) {
-  win.webContents.send(IPC.push.SQLITE_MIGRATION_PROGRESS, progress)
+export function sendStorageMigrationProgress(win: BrowserWindow, progress: StorageMigrationProgress) {
+  win.webContents.send(IPC.push.STORAGE_MIGRATION_PROGRESS, progress)
 }
 
 export function sendMenuCommand(win: BrowserWindow, id: string) {

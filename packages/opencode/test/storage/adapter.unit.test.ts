@@ -17,7 +17,7 @@ const adapter = runtime.runSync(
 const run = <A, E>(effect: Effect.Effect<A, E>) =>
   runtime.runPromise(effect)
 
-describe("SQLiteAdapter", () => {
+describe("LocalPgAdapter", () => {
   beforeAll(async () => {
     await run(
       adapter.query((db: any) =>
@@ -190,7 +190,7 @@ describe("SQLiteAdapter", () => {
       expect(calls).toEqual(["immediate"])
     })
 
-    it("routes through SQLiteAdapter to Database.effect", async () => {
+    it("routes through LocalPgAdapter to Database.effect", async () => {
       // The adapter's afterCommit calls Database.effect internally.
       // Outside a transaction, Database.effect fires immediately.
       const calls: string[] = []

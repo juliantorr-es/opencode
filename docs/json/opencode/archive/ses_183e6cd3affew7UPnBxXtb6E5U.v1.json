@@ -1,0 +1,17 @@
+{
+  "schema": "v1",
+  "session_id": "ses_183e6cd3affew7UPnBxXtb6E5U",
+  "agent": "secretary",
+  "archived_at": "2026-05-31T03:47:35.610Z",
+  "summary": "SQL-003: Cleaned up SQLite-only test files (json-migration.test.ts, workspace-time-migration.test.ts), rewrote migrate.test.ts to use #db imports and test PG migration path. Filed findings for fixture/db.ts (SQLite WAL cleanup dead code) and adapter.unit.test.ts (SQLite tests failing against PG backend). All targeted tests pass.",
+  "friction_entries": 1,
+  "friction_summary": [
+    "bun test output for adapter.unit.test.ts is hidden behind BusEvent warnings. Cannot see failure details. smart_bun tool "
+  ],
+  "agents_involved": [
+    "secretary"
+  ],
+  "tool_calls": 73,
+  "tool_failures": 14,
+  "handoffs": 73
+}

@@ -1,0 +1,17 @@
+{"at":"2026-05-31T04:47:45.006Z","session_id":"ses_183a42bd4ffeVzVHKqAYux0ZUE","agent":"secretary","tool":"smart_find","phase":"started","detail":"import.*FileMemory"}
+{"at":"2026-05-31T04:47:45.033Z","session_id":"ses_183a42bd4ffeVzVHKqAYux0ZUE","agent":"secretary","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T04:47:45.343Z","session_id":"ses_183a42bd4ffeVzVHKqAYux0ZUE","agent":"secretary","tool":"smart_grep","phase":"started","detail":"FileMemory"}
+{"at":"2026-05-31T04:47:45.361Z","session_id":"ses_183a42bd4ffeVzVHKqAYux0ZUE","agent":"secretary","tool":"smart_grep","phase":"completed","detail":"FileMemory"}
+{"at":"2026-05-31T04:48:57.694Z","session_id":"ses_183a42bd4ffeVzVHKqAYux0ZUE","agent":"secretary","tool":"smart_bun","phase":"started","detail":"run"}
+{"at":"2026-05-31T04:48:57.807Z","session_id":"ses_183a42bd4ffeVzVHKqAYux0ZUE","agent":"secretary","tool":"smart_bun","phase":"completed","detail":"run exit=0"}
+{"at":"2026-05-31T05:00:10.542Z","session_id":"ses_183a42bd4ffeVzVHKqAYux0ZUE","agent":"secretary","tool":"smart_bun","phase":"started","detail":"run"}
+{"at":"2026-05-31T05:00:10.636Z","session_id":"ses_183a42bd4ffeVzVHKqAYux0ZUE","agent":"secretary","tool":"smart_bun","phase":"completed","detail":"run exit=0"}
+{"at":"2026-05-31T05:00:52.424Z","session_id":"ses_183a42bd4ffeVzVHKqAYux0ZUE","agent":"secretary","tool":"smart_sd","phase":"completed","detail":"1 match in packages/opencode/src/context/file-memory.ts"}
+{"at":"2026-05-31T05:00:59.197Z","session_id":"ses_183a42bd4ffeVzVHKqAYux0ZUE","agent":"secretary","tool":"smart_bun","phase":"started","detail":"typecheck"}
+{"at":"2026-05-31T05:01:17.901Z","session_id":"ses_183a42bd4ffeVzVHKqAYux0ZUE","agent":"secretary","tool":"smart_bun","phase":"failed","detail":"typecheck exit=2"}
+{"at":"2026-05-31T05:01:27.253Z","session_id":"ses_183a42bd4ffeVzVHKqAYux0ZUE","agent":"secretary","tool":"smart_grep","phase":"started","detail":"file-memory"}
+{"at":"2026-05-31T05:01:27.410Z","session_id":"ses_183a42bd4ffeVzVHKqAYux0ZUE","agent":"secretary","tool":"smart_grep","phase":"completed","detail":"file-memory"}
+{"at":"2026-05-31T05:01:47.910Z","session_id":"ses_183a42bd4ffeVzVHKqAYux0ZUE","agent":"secretary","tool":"smart_bun","phase":"started","detail":"typecheck"}
+{"at":"2026-05-31T05:02:03.299Z","session_id":"ses_183a42bd4ffeVzVHKqAYux0ZUE","agent":"secretary","tool":"smart_bun","phase":"completed","detail":"typecheck exit=0"}
+{"at":"2026-05-31T05:02:09.772Z","session_id":"ses_183a42bd4ffeVzVHKqAYux0ZUE","agent":"secretary","tool":"smart_git","phase":"started","detail":"diff"}
+{"at":"2026-05-31T05:02:09.792Z","session_id":"ses_183a42bd4ffeVzVHKqAYux0ZUE","agent":"secretary","tool":"smart_git","phase":"completed","detail":"diff exit=0"}

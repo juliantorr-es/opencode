@@ -1,0 +1,48 @@
+{"at":"2026-05-31T04:29:49.605Z","session_id":"ses_183b473ffffeO6YkiuXKthSxVv","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"reduceCampaignState"}
+{"at":"2026-05-31T04:29:49.624Z","session_id":"ses_183b473ffffeO6YkiuXKthSxVv","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"reduceCampaignState"}
+{"at":"2026-05-31T04:29:49.977Z","session_id":"ses_183b473ffffeO6YkiuXKthSxVv","agent":"cartographer","tool":"smart_find","phase":"started","detail":"*.ts"}
+{"at":"2026-05-31T04:29:50.019Z","session_id":"ses_183b473ffffeO6YkiuXKthSxVv","agent":"cartographer","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T04:30:19.943Z","session_id":"ses_183b473ffffeO6YkiuXKthSxVv","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"export type RuntimeEvent"}
+{"at":"2026-05-31T04:30:19.947Z","session_id":"ses_183b473ffffeO6YkiuXKthSxVv","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"export type RuntimeEvent"}
+{"at":"2026-05-31T04:30:42.439Z","session_id":"ses_183b473ffffeO6YkiuXKthSxVv","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"plan\\.produced"}
+{"at":"2026-05-31T04:30:42.451Z","session_id":"ses_183b473ffffeO6YkiuXKthSxVv","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"plan\\.produced"}
+{"at":"2026-05-31T04:31:00.915Z","session_id":"ses_183b473ffffeO6YkiuXKthSxVv","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"event-names"}
+{"at":"2026-05-31T04:31:00.921Z","session_id":"ses_183b473ffffeO6YkiuXKthSxVv","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"event-names"}
+{"at":"2026-05-31T04:31:20.277Z","session_id":"ses_183b473ffffeO6YkiuXKthSxVv","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Read the full LANE_STATE_MACHINE spec"}
+{"at":"2026-05-31T04:31:20.278Z","session_id":"ses_183b473ffffeO6YkiuXKthSxVv","agent":"cartographer","tool":"smart_bash","phase":"rerouted","detail":"→ read_source"}
+{"at":"2026-05-31T04:31:20.678Z","session_id":"ses_183b473ffffeO6YkiuXKthSxVv","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Read CAMPAIGN_STATE_MACHINE and blocked transitions"}
+{"at":"2026-05-31T04:31:20.678Z","session_id":"ses_183b473ffffeO6YkiuXKthSxVv","agent":"cartographer","tool":"smart_bash","phase":"rerouted","detail":"→ read_source"}
+{"at":"2026-05-31T04:32:00.620Z","session_id":"ses_183b473ffffeO6YkiuXKthSxVv","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Read LANE_STATE_MACHINE spec lines 115-210"}
+{"at":"2026-05-31T04:32:00.627Z","session_id":"ses_183b473ffffeO6YkiuXKthSxVv","agent":"cartographer","tool":"smart_bash","phase":"completed","detail":"awk exit=0"}
+{"at":"2026-05-31T04:32:01.043Z","session_id":"ses_183b473ffffeO6YkiuXKthSxVv","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Read blockedTransitions and CAMPAIGN_STATE_MACHINE lines 214-304"}
+{"at":"2026-05-31T04:32:01.049Z","session_id":"ses_183b473ffffeO6YkiuXKthSxVv","agent":"cartographer","tool":"smart_bash","phase":"completed","detail":"awk exit=0"}
+{"at":"2026-05-31T04:32:26.215Z","session_id":"ses_183b473ffffeO6YkiuXKthSxVv","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Read full LANE_STATE_MACHINE spec"}
+{"at":"2026-05-31T04:32:26.232Z","session_id":"ses_183b473ffffeO6YkiuXKthSxVv","agent":"cartographer","tool":"smart_bash","phase":"completed","detail":"awk exit=0"}
+{"at":"2026-05-31T04:32:26.541Z","session_id":"ses_183b473ffffeO6YkiuXKthSxVv","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Read full CAMPAIGN_STATE_MACHINE spec"}
+{"at":"2026-05-31T04:32:26.568Z","session_id":"ses_183b473ffffeO6YkiuXKthSxVv","agent":"cartographer","tool":"smart_bash","phase":"completed","detail":"awk exit=0"}
+{"at":"2026-05-31T04:33:13.313Z","session_id":"ses_183b473ffffeO6YkiuXKthSxVv","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Read LANE_STATE_MACHINE first half"}
+{"at":"2026-05-31T04:33:13.323Z","session_id":"ses_183b473ffffeO6YkiuXKthSxVv","agent":"cartographer","tool":"smart_bash","phase":"completed","detail":"awk exit=0"}
+{"at":"2026-05-31T04:33:13.616Z","session_id":"ses_183b473ffffeO6YkiuXKthSxVv","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Read LANE_STATE_MACHINE second half"}
+{"at":"2026-05-31T04:33:13.630Z","session_id":"ses_183b473ffffeO6YkiuXKthSxVv","agent":"cartographer","tool":"smart_bash","phase":"completed","detail":"awk exit=0"}
+{"at":"2026-05-31T04:33:13.931Z","session_id":"ses_183b473ffffeO6YkiuXKthSxVv","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Read CAMPAIGN_STATE_MACHINE states section"}
+{"at":"2026-05-31T04:33:13.958Z","session_id":"ses_183b473ffffeO6YkiuXKthSxVv","agent":"cartographer","tool":"smart_bash","phase":"completed","detail":"awk exit=0"}
+{"at":"2026-05-31T04:33:14.301Z","session_id":"ses_183b473ffffeO6YkiuXKthSxVv","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Read CAMPAIGN_STATE_MACHINE remaining states"}
+{"at":"2026-05-31T04:33:14.321Z","session_id":"ses_183b473ffffeO6YkiuXKthSxVv","agent":"cartographer","tool":"smart_bash","phase":"completed","detail":"awk exit=0"}
+{"at":"2026-05-31T04:33:47.064Z","session_id":"ses_183b473ffffeO6YkiuXKthSxVv","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Read remaining CAMPAIGN_STATE_MACHINE states"}
+{"at":"2026-05-31T04:33:47.076Z","session_id":"ses_183b473ffffeO6YkiuXKthSxVv","agent":"cartographer","tool":"smart_bash","phase":"completed","detail":"awk exit=0"}
+{"at":"2026-05-31T04:33:47.480Z","session_id":"ses_183b473ffffeO6YkiuXKthSxVv","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Read repairing section of LANE_STATE_MACHINE"}
+{"at":"2026-05-31T04:33:47.497Z","session_id":"ses_183b473ffffeO6YkiuXKthSxVv","agent":"cartographer","tool":"smart_bash","phase":"completed","detail":"awk exit=0"}
+{"at":"2026-05-31T04:34:26.460Z","session_id":"ses_183b473ffffeO6YkiuXKthSxVv","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Read repairing and remaining LANE_STATE_MACHINE states"}
+{"at":"2026-05-31T04:34:26.477Z","session_id":"ses_183b473ffffeO6YkiuXKthSxVv","agent":"cartographer","tool":"smart_bash","phase":"completed","detail":"awk exit=0"}
+{"at":"2026-05-31T04:34:54.928Z","session_id":"ses_183b473ffffeO6YkiuXKthSxVv","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Read scoping and remaining states in LANE_STATE_MACHINE"}
+{"at":"2026-05-31T04:34:54.938Z","session_id":"ses_183b473ffffeO6YkiuXKthSxVv","agent":"cartographer","tool":"smart_bash","phase":"completed","detail":"awk exit=0"}
+{"at":"2026-05-31T04:34:55.242Z","session_id":"ses_183b473ffffeO6YkiuXKthSxVv","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Read plan_produced predicate evaluator"}
+{"at":"2026-05-31T04:34:55.253Z","session_id":"ses_183b473ffffeO6YkiuXKthSxVv","agent":"cartographer","tool":"smart_bash","phase":"completed","detail":"awk exit=0"}
+{"at":"2026-05-31T04:35:13.747Z","session_id":"ses_183b473ffffeO6YkiuXKthSxVv","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Read final_validation and push_ready CAMPAIGN_STATE_MACHINE"}
+{"at":"2026-05-31T04:35:13.757Z","session_id":"ses_183b473ffffeO6YkiuXKthSxVv","agent":"cartographer","tool":"smart_bash","phase":"completed","detail":"awk exit=0"}
+{"at":"2026-05-31T04:35:34.442Z","session_id":"ses_183b473ffffeO6YkiuXKthSxVv","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Read full PredicateSpec type"}
+{"at":"2026-05-31T04:35:34.449Z","session_id":"ses_183b473ffffeO6YkiuXKthSxVv","agent":"cartographer","tool":"smart_bash","phase":"completed","detail":"awk exit=0"}
+{"at":"2026-05-31T04:35:34.698Z","session_id":"ses_183b473ffffeO6YkiuXKthSxVv","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Read predicateResolvers and checkPredicate/checkTransitions"}
+{"at":"2026-05-31T04:35:34.710Z","session_id":"ses_183b473ffffeO6YkiuXKthSxVv","agent":"cartographer","tool":"smart_bash","phase":"completed","detail":"awk exit=0"}
+{"at":"2026-05-31T04:35:35.033Z","session_id":"ses_183b473ffffeO6YkiuXKthSxVv","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Read TransitionSpec and AgentStateMachineSpec in predicates.ts"}
+{"at":"2026-05-31T04:35:35.049Z","session_id":"ses_183b473ffffeO6YkiuXKthSxVv","agent":"cartographer","tool":"smart_bash","phase":"completed","detail":"awk exit=0"}

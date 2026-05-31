@@ -1,0 +1,28 @@
+{"at":"2026-05-30T22:59:34.874Z","session_id":"ses_184e2cb36ffeUQYkT3N8fLs5ym","agent":"claim-adversary","tool":"smart_find","phase":"started","detail":"plan_approval*"}
+{"at":"2026-05-30T22:59:34.884Z","session_id":"ses_184e2cb36ffeUQYkT3N8fLs5ym","agent":"claim-adversary","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-30T22:59:35.197Z","session_id":"ses_184e2cb36ffeUQYkT3N8fLs5ym","agent":"claim-adversary","tool":"smart_find","phase":"started","detail":"*plan*v1*"}
+{"at":"2026-05-30T22:59:35.205Z","session_id":"ses_184e2cb36ffeUQYkT3N8fLs5ym","agent":"claim-adversary","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-30T22:59:35.550Z","session_id":"ses_184e2cb36ffeUQYkT3N8fLs5ym","agent":"claim-adversary","tool":"smart_grep","phase":"started","detail":"v3.*review|v3.*blocking|v3.*falsified"}
+{"at":"2026-05-30T22:59:35.638Z","session_id":"ses_184e2cb36ffeUQYkT3N8fLs5ym","agent":"claim-adversary","tool":"smart_grep","phase":"completed","detail":"v3.*review|v3.*blocking|v3.*falsified"}
+{"at":"2026-05-30T22:59:37.497Z","session_id":"ses_184e2cb36ffeUQYkT3N8fLs5ym","agent":"claim-adversary","tool":"smart_grep","phase":"started","detail":"DC-001|DC-002|DC-003|HC-004"}
+{"at":"2026-05-30T22:59:37.507Z","session_id":"ses_184e2cb36ffeUQYkT3N8fLs5ym","agent":"claim-adversary","tool":"smart_grep","phase":"completed","detail":"DC-001|DC-002|DC-003|HC-004"}
+{"at":"2026-05-30T22:59:40.556Z","session_id":"ses_184e2cb36ffeUQYkT3N8fLs5ym","agent":"claim-adversary","tool":"smart_grep","phase":"started","detail":"app\\.(getPath|isPackaged|setPath|getVersion|getName)"}
+{"at":"2026-05-30T22:59:40.569Z","session_id":"ses_184e2cb36ffeUQYkT3N8fLs5ym","agent":"claim-adversary","tool":"smart_grep","phase":"completed","detail":"app\\.(getPath|isPackaged|setPath|getVersion|getName)"}
+{"at":"2026-05-30T22:59:41.147Z","session_id":"ses_184e2cb36ffeUQYkT3N8fLs5ym","agent":"claim-adversary","tool":"smart_grep","phase":"started","detail":"PluginTransport|pluginSend|pluginOn|pluginOff|pluginInvoke|registerPluginTranspo"}
+{"at":"2026-05-30T22:59:41.251Z","session_id":"ses_184e2cb36ffeUQYkT3N8fLs5ym","agent":"claim-adversary","tool":"smart_grep","phase":"completed","detail":"PluginTransport|pluginSend|pluginOn|pluginOff|pluginInvoke|registerPluginTranspo"}
+{"at":"2026-05-30T23:00:16.010Z","session_id":"ses_184e2cb36ffeUQYkT3N8fLs5ym","agent":"claim-adversary","tool":"smart_grep","phase":"started","detail":"installBrowserApi"}
+{"at":"2026-05-30T23:00:16.110Z","session_id":"ses_184e2cb36ffeUQYkT3N8fLs5ym","agent":"claim-adversary","tool":"smart_grep","phase":"completed","detail":"installBrowserApi"}
+{"at":"2026-05-30T23:00:16.404Z","session_id":"ses_184e2cb36ffeUQYkT3N8fLs5ym","agent":"claim-adversary","tool":"smart_grep","phase":"started","detail":"export.*PluginTransport"}
+{"at":"2026-05-30T23:00:16.410Z","session_id":"ses_184e2cb36ffeUQYkT3N8fLs5ym","agent":"claim-adversary","tool":"smart_grep","phase":"completed","detail":"export.*PluginTransport"}
+{"at":"2026-05-30T23:00:40.589Z","session_id":"ses_184e2cb36ffeUQYkT3N8fLs5ym","agent":"claim-adversary","tool":"smart_grep","phase":"started","detail":"installBrowserApi"}
+{"at":"2026-05-30T23:00:40.594Z","session_id":"ses_184e2cb36ffeUQYkT3N8fLs5ym","agent":"claim-adversary","tool":"smart_grep","phase":"completed","detail":"installBrowserApi"}
+{"at":"2026-05-30T23:00:48.217Z","session_id":"ses_184e2cb36ffeUQYkT3N8fLs5ym","agent":"claim-adversary","tool":"smart_grep","phase":"started","detail":"PluginTransport"}
+{"at":"2026-05-30T23:00:48.235Z","session_id":"ses_184e2cb36ffeUQYkT3N8fLs5ym","agent":"claim-adversary","tool":"smart_grep","phase":"completed","detail":"PluginTransport"}
+{"at":"2026-05-30T23:00:48.545Z","session_id":"ses_184e2cb36ffeUQYkT3N8fLs5ym","agent":"claim-adversary","tool":"smart_grep","phase":"started","detail":"PluginTransport"}
+{"at":"2026-05-30T23:00:48.550Z","session_id":"ses_184e2cb36ffeUQYkT3N8fLs5ym","agent":"claim-adversary","tool":"smart_grep","phase":"failed","detail":"rg: /Users/user/Developer/GitHub/opencode-desktop-dev/packages/shared: IO error for operation on /Users/user/Developer/GitHub/opencode-desktop-dev/packages/shared: No such file or directory (os error "}
+{"at":"2026-05-30T23:00:51.721Z","session_id":"ses_184e2cb36ffeUQYkT3N8fLs5ym","agent":"claim-adversary","tool":"smart_grep","phase":"started","detail":"PluginTransport"}
+{"at":"2026-05-30T23:00:51.730Z","session_id":"ses_184e2cb36ffeUQYkT3N8fLs5ym","agent":"claim-adversary","tool":"smart_grep","phase":"completed","detail":"PluginTransport"}
+{"at":"2026-05-30T23:00:52.037Z","session_id":"ses_184e2cb36ffeUQYkT3N8fLs5ym","agent":"claim-adversary","tool":"smart_grep","phase":"started","detail":"PluginTransport"}
+{"at":"2026-05-30T23:00:52.068Z","session_id":"ses_184e2cb36ffeUQYkT3N8fLs5ym","agent":"claim-adversary","tool":"smart_grep","phase":"completed","detail":"PluginTransport"}
+{"at":"2026-05-30T23:00:59.725Z","session_id":"ses_184e2cb36ffeUQYkT3N8fLs5ym","agent":"claim-adversary","tool":"smart_grep","phase":"started","detail":"pluginSend|pluginOn|pluginOff|pluginInvoke"}
+{"at":"2026-05-30T23:00:59.732Z","session_id":"ses_184e2cb36ffeUQYkT3N8fLs5ym","agent":"claim-adversary","tool":"smart_grep","phase":"completed","detail":"pluginSend|pluginOn|pluginOff|pluginInvoke"}

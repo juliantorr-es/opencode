@@ -1,17 +1,9 @@
-  smart_edit: "allow"
-  smart_write: "allow"
-  smart_batch: "allow"
-  smart_sd: "allow"
-  read_source: "allow"
-  read(action="artifact"): "allow"
-  read(action="lib"): "allow"
-  smart_bun: "allow"
 ---
 mode: subagent
 profile: "stress"
 hidden: true
 permission:
-  feedback(action="tool"): "allow"
+  feedback: "allow"
   read: "deny"
   bash: "deny"
   grep: "deny"
@@ -25,8 +17,6 @@ permission:
   smart_batch: "allow"
   smart_sd: "allow"
   read_source: "allow"
-  read(action="artifact"): "allow"
-  read(action="lib"): "allow"
   smart_bash: "allow"
   smart_bun: "allow"
 ---

@@ -1,4 +1,5 @@
 import { Context, Effect, Layer, Option, Ref } from "effect"
+import path from "node:path"
 import { createHash } from "node:crypto"
 import { serviceUse } from "@opencode-ai/core/effect/service-use"
 
@@ -193,16 +194,19 @@ function extractExports(content: string): string[] {
 
 // ── Classification Helpers ─────────────────────────────────
 
-function isGeneratedFile(path: string): boolean {
-  if (path.includes("node_modules/")) return true
-  if (path.startsWith("dist/") || path.startsWith("out/") || path.startsWith(".build/")) return true
-  if (/\.gen\.(ts|js|tsx|jsx)$/.test(path)) return true
-  if (/\.generated\.(ts|js|tsx|jsx)$/.test(path)) return true
+function isGeneratedFile(filePath: string): boolean {
+  if (filePath.includes("node_modules/")) return true
+  const normalized = path.normalize(filePath)
+  if (normalized.startsWith("dist/") || normalized.startsWith("out/") || normalized.startsWith(".build/")) return true
+  if (normalized.includes("/dist/") || normalized.includes("/out/") || normalized.includes("/.build/")) return true
+  if (/\.gen\.(ts|js|tsx|jsx)$/.test(normalized)) return true
+  if (/\.generated\.(ts|js|tsx|jsx)$/.test(normalized)) return true
   return false
 }
 
-function isProtectedFile(path: string): boolean {
-  const basename = path.split("/").at(-1) ?? ""
+function isProtectedFile(filePath: string): boolean {
+  const normalized = path.normalize(filePath)
+  const basename = normalized.split("/").at(-1) ?? ""
 
   if (
     basename === "package-lock.json" ||
@@ -216,11 +220,16 @@ function isProtectedFile(path: string): boolean {
   if (basename === ".gitignore" || basename === ".editorconfig" || basename.startsWith(".env")) return true
   if (basename === "package.json" || basename === "tsconfig.json") return true
 
-  if (path.endsWith(".wasm")) return true
-  if (path.endsWith(".d.ts") || path.endsWith(".d.mts") || path.endsWith(".d.cts")) return true
+  if (normalized.endsWith(".wasm")) return true
+  if (normalized.endsWith(".d.ts") || normalized.endsWith(".d.mts") || normalized.endsWith(".d.cts")) return true
 
-  if (path.startsWith("node_modules/") || path.startsWith(".git/")) return true
-  if (path.startsWith(".build/") || path.startsWith("dist/") || path.startsWith("out/")) return true
+  // Relative root patterns
+  if (normalized.startsWith("node_modules/") || normalized.startsWith(".git/")) return true
+  if (normalized.startsWith(".build/") || normalized.startsWith("dist/") || normalized.startsWith("out/")) return true
+
+  // Absolute path variants
+  if (normalized.includes("/node_modules/") || normalized.includes("/.git/")) return true
+  if (normalized.includes("/.build/") || normalized.includes("/dist/") || normalized.includes("/out/")) return true
 
   return false
 }
@@ -257,41 +266,52 @@ function computeRiskTags(path: string, isGenerated: boolean): string[] {
   return tags
 }
 
+// ── Path Resolution Helper ────────────────────────────────
+
+function normalizeProjectPath(root: string, p: string): string {
+  if (path.isAbsolute(p)) return path.normalize(p)
+  return path.resolve(root, p)
+}
+
 // ── Service Implementation ─────────────────────────────────
 
 const make = Effect.gen(function* () {
+  const projectRoot = process.cwd()
+  const normalize = (p: string) => normalizeProjectPath(projectRoot, p)
   const state = yield* Ref.make(new Map<string, FileContext>())
 
-  const set: Interface["set"] = (path, ctx) =>
+  const set: Interface["set"] = (rawPath, ctx) =>
     Ref.update(state, (m) => {
-      m.set(path, ctx)
+      m.set(normalize(rawPath), ctx)
       return m
     })
 
-  const invalidate: Interface["invalidate"] = (path, reason) =>
+  const invalidate: Interface["invalidate"] = (rawPath, reason) =>
     Ref.update(state, (m) => {
-      const entry = m.get(path)
+      const key = normalize(rawPath)
+      const entry = m.get(key)
       if (entry) {
-        m.set(path, { ...entry, freshness: "stale" as const, staleReason: reason })
+        m.set(key, { ...entry, freshness: "stale" as const, staleReason: reason })
       }
       return m
     })
 
-  const refresh: Interface["refresh"] = (path, content) =>
+  const refresh: Interface["refresh"] = (rawPath, content) =>
     Effect.gen(function* () {
+      const key = normalize(rawPath)
       const digest = createHash("sha256").update(content).digest("hex")
       const now = Date.now()
-      const language = inferLanguage(path)
+      const language = inferLanguage(rawPath)
       const lineCount = content.split("\n").length
       const symbols = extractSymbols(content)
       const imports = extractImports(content)
       const exports = extractExports(content)
-      const isGenerated = isGeneratedFile(path)
-      const isProtected = isProtectedFile(path)
-      const riskTags = computeRiskTags(path, isGenerated)
+      const isGenerated = isGeneratedFile(rawPath)
+      const isProtected = isProtectedFile(rawPath)
+      const riskTags = computeRiskTags(rawPath, isGenerated)
 
       const ctx: FileContext = {
-        path,
+        path: rawPath,
         digest,
         lastReadAt: now,
         lineCount,
@@ -306,25 +326,26 @@ const make = Effect.gen(function* () {
         freshness: "fresh",
       }
 
-      yield* set(path, ctx)
+      yield* set(key, ctx)
       return ctx
     })
 
-  const get: Interface["get"] = (path) =>
+  const get: Interface["get"] = (rawPath) =>
     Effect.gen(function* () {
+      const key = normalize(rawPath)
       const map = yield* Ref.get(state)
-      const entry = map.get(path)
+      const entry = map.get(key)
       if (!entry) return Option.none()
 
       // Lazy refresh: for stale / unknown entries, try to read from disk
       if (entry.freshness !== "fresh") {
-        const content: string | undefined = yield* Effect.tryPromise(() => Bun.file(path).text()).pipe(
+        const content: string | undefined = yield* Effect.tryPromise(() => Bun.file(key).text()).pipe(
           Effect.catch(() => Effect.succeed(undefined as string | undefined)),
         )
         if (content !== undefined) {
-          yield* refresh(path, content)
+          yield* refresh(key, content)
           const updated = yield* Ref.get(state)
-          return Option.some(updated.get(path) ?? entry)
+          return Option.some(updated.get(key) ?? entry)
         }
       }
 
@@ -359,9 +380,9 @@ const make = Effect.gen(function* () {
       )
     })
 
-  const remove: Interface["remove"] = (path) =>
+  const remove: Interface["remove"] = (rawPath) =>
     Ref.update(state, (m) => {
-      m.delete(path)
+      m.delete(normalize(rawPath))
       return m
     })
 

@@ -1,0 +1,317 @@
+{
+  "schema_version": "v1",
+  "generated_at": "2026-05-30T12:00:00Z",
+  "mission": "truth-closure-resumption",
+  "areas": {
+    "ipc_contract": {
+      "file": "packages/desktop/src/main/ipc-contract.ts",
+      "total_lines": 451,
+      "key_functions": {
+        "IpcHandleContract": { "lines": "181-245", "description": "Typed contract for all 34 handle (ipcMain.handle) channels. Maps each channel string to {params, returns}. All IPC.handle entries in ipc-channels.ts have a corresponding entry." },
+        "IpcSendContract": { "lines": "253-259", "description": "Typed contract for all 5 send (fire-and-forget) channels. Params only (void return)." },
+        "typedInvoke": { "lines": "292-297", "description": "Type-safe ipcRenderer.invoke wrapper. Uses channel as type parameter, checks args/return against IpcHandleContract." },
+        "typedSend": { "lines": "303-310", "description": "Type-safe ipcRenderer.send wrapper. Checks args against IpcSendContract." },
+        "safeInvoke": { "lines": "317-330", "description": "DEAD CODE — wraps typedInvoke with try/catch returning IpcResult. Imported at preload/index.ts:4 but NEVER CALLED anywhere. Should be removed." },
+        "BridgeHandleMap": { "lines": "338-396", "description": "Maps JS method names to channel strings for the preload bridge type derivation." },
+        "BridgeSendMap": { "lines": "399-407", "description": "Maps JS method names to send channel strings for bridge type derivation." },
+        "ComplexAPIMethods": { "lines": "427-439", "description": "Methods that bypass the simple invoke/send pattern: awaitInitialization, onSqliteMigrationProgress, onMenuCommand, pluginSend/On/Off/Invoke." },
+        "DerivedElectronAPI": { "line": 450, "description": "Composed preload bridge type = DerivedInvokeAPI & DerivedSendAPI & ComplexAPIMethods." },
+        "_channelCoverage": { "lines": "260-280", "description": "Compile-time assertion. Type-level check: _AllHandleValues extends _ContractHandleKeys. If a channel exists in IPC.handle but not IpcHandleContract, assigns an error string instead of true, causing TS compile failure." },
+        "CHANNELS": { "lines": "85-171", "description": "Convenience grouping of channel references (config, store, fs, session, github, plugin, capabilities). Not the contract — just grouped access." },
+        "withIpcResult": { "lines": "60-68", "description": "Wraps async function in try/catch returning IpcResult<T>. Used by github-ipc.ts for GITHUB_API_PROXY." },
+        "normalizeIpcError": { "lines": "69-80", "description": "Normalizes any thrown error into structured IpcErr with message and optional stack." }
+      },
+      "raw_ipc_bypasses": [
+        {
+          "file": "packages/desktop/src/preload/index.ts",
+          "lines": "112-113",
+          "code": "ipcRenderer.send(IPC.send.PLUGIN_SEND, channel, data)",
+          "reason": "Plugin transport uses dynamic channel names — cannot be statically typed. This is an intentional design escape hatch, not a bypass."
+        },
+        {
+          "file": "packages/desktop/src/preload/index.ts",
+          "lines": "135-136",
+          "code": "return ipcRenderer.invoke(IPC.handle.PLUGIN_INVOKE, channel, data)",
+          "reason": "Same as above — plugin dynamic channel names. Intentional escape hatch declared in ComplexAPIMethods comment at line 438."
+        },
+        {
+          "file": "packages/desktop/src/main/github-ipc.ts",
+          "lines": "31,41,69,79,87,92",
+          "code": "ipcMain.handle(IPC.handle.GITHUB_*)",
+          "reason": "github-ipc.ts registers directly to ipcMain.handle() outside the central DI pattern in ipc.ts. Uses withIpcResult from contract but DI-inconsistent."
+        }
+      ],
+      "preload_wiring": {
+        "file": "packages/desktop/src/preload/index.ts",
+        "total_lines": 141,
+        "imports": [
+          { "line": 4, "symbol": "safeInvoke", "status": "dead_code", "detail": "Imported but never called anywhere. The preload uses typedInvoke exclusively." }
+        ],
+        "plugin_transport": {
+          "pluginSend": "line 112-113 — ipcRenderer.send(IPC.send.PLUGIN_SEND, channel, data) — raw IPC, intentional escape hatch",
+          "pluginOn": "lines 116-127 — Listens on IPC.push.PLUGIN_PUSH, routes by channel name — raw IPC, intentional escape hatch",
+          "pluginInvoke": "lines 135-136 — ipcRenderer.invoke(IPC.handle.PLUGIN_INVOKE, channel, data) — raw IPC, intentional escape hatch"
+        }
+      }
+    },
+    "ipc_channels": {
+      "file": "packages/desktop/src/main/ipc-channels.ts",
+      "total_lines": 109,
+      "channel_counts": {
+        "handle": 36,
+        "send": 5,
+        "push": 7,
+        "store": 5
+      },
+      "handle_channels": {
+        "lines": "11-104",
+        "entries": [
+          "KILL_SIDECAR", "AWAIT_INITIALIZATION", "GET_WINDOW_CONFIG", "CONSUME_INITIAL_DEEP_LINKS",
+          "GET_DEFAULT_SERVER_URL", "SET_DEFAULT_SERVER_URL", "GET_WSL_CONFIG", "SET_WSL_CONFIG",
+          "GET_DISPLAY_BACKEND", "SET_DISPLAY_BACKEND", "PARSE_MARKDOWN", "CHECK_APP_EXISTS",
+          "WSL_PATH", "RESOLVE_APP_PATH", "STORE_GET", "STORE_SET", "STORE_DELETE", "STORE_CLEAR",
+          "STORE_KEYS", "STORE_LENGTH", "OPEN_DIRECTORY_PICKER", "OPEN_FILE_PICKER", "SAVE_FILE_PICKER",
+          "OPEN_PATH", "READ_CLIPBOARD_IMAGE", "GET_WINDOW_COUNT", "GET_WINDOW_FOCUSED", "SET_WINDOW_FOCUS",
+          "SHOW_WINDOW", "GET_ZOOM_FACTOR", "SET_ZOOM_FACTOR", "GET_PINCH_ZOOM_ENABLED", "SET_PINCH_ZOOM_ENABLED",
+          "SET_TITLEBAR", "RUN_DESKTOP_MENU_ACTION", "RUN_UPDATER", "CHECK_UPDATE", "INSTALL_UPDATE",
+          "SET_BACKGROUND_COLOR", "EXPORT_DEBUG_LOGS", "RECORD_FATAL_RENDERER_ERROR",
+          "GET_DESKTOP_PLUGIN_CONFIG", "SET_DESKTOP_PLUGIN_CONFIG", "GET_DESKTOP_CUSTOM_AGENTS",
+          "SET_DESKTOP_CUSTOM_AGENTS", "DELETE_DESKTOP_CUSTOM_AGENT", "GET_DESKTOP_MCP_SERVERS",
+          "SET_DESKTOP_MCP_SERVERS", "GITHUB_OAUTH_START", "GITHUB_OAUTH_CALLBACK", "GITHUB_GET_TOKEN",
+          "GITHUB_SET_TOKEN", "GITHUB_CLEAR_TOKEN", "GITHUB_API_PROXY", "SESSION_EXPORT_DATA",
+          "SESSION_IMPORT_FILE", "SET_LOCALE_PREFERENCE", "GET_LOCALE_PREFERENCE", "PLUGIN_INVOKE",
+          "GET_CAPABILITIES", "EVENT_EXPLAIN", "GET_SAFE_MODE_DIAGNOSTICS", "SAFE_MODE_ACTION"
+        ]
+      },
+      "contract_coverage": "FULL — compile-time assertion _CoverageOk verifies every IPC.handle has a contract entry and every IPC.send has an entry. All 36 handle + 5 send channels are covered."
+    },
+    "sidecar_json_migration_crash": {
+      "file": "packages/desktop/src/main/sidecar.ts",
+      "total_lines": 185,
+      "json_migration": {
+        "destructure": { "line": 60, "code": "const { Database, JsonMigration, Log, Server } = await import(\"virtual:opencode-server\")", "bug": "CRITICAL: JsonMigration was removed from the virtual:opencode-server module but the destructure remains. On clean PG install (needsMigration=true), JsonMigration will be undefined, causing TypeError." },
+        "call": { "lines": "63-64", "code": "await JsonMigration.run(drizzle({ client: Database.Client().$client }), { progress: ... })", "bug": "Will crash with 'JsonMigration.run is not a function' TypeError when needsMigration is true." },
+        "env_dts": { "lines": "25-27", "bug": "packages/desktop/src/main/env.d.ts lines 25-27 still declare JsonMigration namespace with run function referencing removed dist/types. Points to removed module." },
+        "trigger_condition": "needsMigration: true — occurs when opencode.db does not exist (clean install, PG branch). The sidecar sends StartCommand with needsMigration from main process."
+      },
+      "sqlite_legacy_references": {
+        "count_estimate": "~30 references across 9 files",
+        "files": {
+          "packages/desktop/src/main/sidecar.ts": { "line": 1, "ref": "import { drizzle } from \"drizzle-orm/node-sqlite/driver\"", "status": "dead_sqlite_import" },
+          "packages/desktop/src/main/index.ts": { "matches": 7, "status": "sqlite migration progress wiring" },
+          "packages/desktop/src/main/server.ts": { "matches": 5, "status": "sqlite references" },
+          "packages/desktop/src/preload/index.ts": { "matches": 3, "status": "SqliteMigrationProgress type, onSqliteMigrationProgress listener" },
+          "packages/desktop/src/preload/types.ts": { "matches": 3, "status": "SqliteMigrationProgress type definition" },
+          "packages/desktop/src/renderer/loading.tsx": { "matches": 3, "status": "SQLITE_MIGRATION_PROGRESS push channel listener" },
+          "packages/desktop/src/main/ipc-contract.ts": { "matches": 2, "status": "onSqliteMigrationProgress in ComplexAPIMethods" },
+          "packages/desktop/src/main/ipc.ts": { "matches": 2, "status": "sqLite migration handler wiring" },
+          "packages/desktop/src/main/ipc-channels.ts": { "matches": 1, "status": "SQLITE_MIGRATION_PROGRESS push channel definition" }
+        }
+      },
+      "existing_finding": {
+        "source": "docs/json/opencode/knowledge/findings.v1.jsonl:28",
+        "summary": "JsonMigration removed from virtual:opencode-server but sidecar.ts still destructures it — TypeError at runtime if needsMigration is true (clean PG install)",
+        "file": "packages/desktop/src/main/sidecar.ts:60"
+      }
+    },
+    "broken_imports": {
+      "github_ipc": {
+        "status": "EXISTS",
+        "file": "packages/desktop/src/main/github-ipc.ts",
+        "total_lines": 112,
+        "imported_by": "packages/desktop/src/main/ipc.ts:12",
+        "called_at": "packages/desktop/src/main/ipc.ts:29",
+        "content": "OAuth handlers (GITHUB_OAUTH_START, GITHUB_OAUTH_CALLBACK, GITHUB_GET_TOKEN, GITHUB_SET_TOKEN, GITHUB_CLEAR_TOKEN, GITHUB_API_PROXY) registered directly to ipcMain.handle(). Uses withIpcResult from contract but does NOT participate in DI pattern (Deps object)."
+      },
+      "ipc_validation": {
+        "status": "DOES NOT EXIST",
+        "evidence": "grep for 'ipc-validation.ts' in packages/desktop/src/ returns 0 matches",
+        "references": {
+          "docs/json/opencode/audits/desktop-decoupling-audit.v1.json": "lines 166, 226 reference ipc-validation.ts as an extracted validation module",
+          "packages/desktop/scripts/validate-ipc-migration.ts": "does NOT reference ipc-validation.ts"
+        },
+        "note": "Referenced in auditing docs as a refactoring target that was never created on disk. Referenced in plans as a 'future extraction'."
+      },
+      "safeInvoke": {
+        "status": "DEAD CODE",
+        "imported_at": "packages/desktop/src/preload/index.ts:4",
+        "definition": "packages/desktop/src/main/ipc-contract.ts:317-330",
+        "calls": "ZERO — imported but never invoked anywhere in preload or elsewhere"
+      }
+    },
+    "tool_cache_inflight": {
+      "file": "packages/opencode/src/tool/cache.ts",
+      "total_lines": 226,
+      "inflight_dedup": {
+        "lines": "95-110",
+        "code_pattern": "Ref.modify(inflight, (pending) => { const existing = pending.get(key); if (existing) return [existing, pending]; pending.set(key, d); return [undefined, pending] })",
+        "assessment": "CORRECT — Uses Ref.modify which atomically transforms the Ref state. Returns [value, newState] tuple as required by Effect's Ref.modify.",
+        "bug": null
+      },
+      "direct_mutation_bug": {
+        "location": "lines 67-80",
+        "code": [
+          "const map = yield* Ref.get(cache)     // line 67 — gets Map reference",
+          "const entry = map.get(key)             // line 68",
+          "if (entry) {",
+          "  if (entry.expiresAt > t) {",
+          "    map.delete(key)                     // line 70 — DIRECT MUTATION",
+          "    map.set(key, entry)                 // line 71 — DIRECT MUTATION",
+          "    yield* Ref.update(hits, (n) => n + 1)",
+          "    return entry.value",
+          "  }",
+          "  map.delete(key)                       // line 79 — DIRECT MUTATION",
+          "  yield* Ref.update(estimatedBytes, (b) => b - entry.size)",
+          "}"
+        ],
+        "bug": "map.delete() and map.set() called directly on the Map reference obtained from Ref.get(), bypassing Ref.update(). While these mutations do affect the underlying Map object (same reference), this is an anti-pattern that: (1) bypasses Ref's atomicity, (2) makes the mutations invisible to Effect's managed context, (3) inconsistently mixes direct mutation (lines 70-71, 79) with Ref.update (lines 72, 73-74, 147-173). The Ref.update at lines 147-173 IS correct.",
+        "severity": "medium",
+        "existing_finding": {
+          "source": "discover findings output",
+          "summary": "ToolCache.inflight map mutated via direct reference mutation bypassing Ref.update",
+          "location": "packages/opencode/src/tool/cache.ts:108"
+        }
+      },
+      "dead_api": {
+        "location": "line 30 in Interface type",
+        "summary": "getOrCompute defined on Interface but never called externally — dead API surface",
+        "severity": "low"
+      }
+    },
+    "coordination": {
+      "file": "packages/opencode/src/tool/coordination.ts",
+      "total_lines": 761,
+      "formatStructuredResult": {
+        "lines": "571-589",
+        "description": "Builds XML string from TaskClaim. Uses escapeXml (lines 562-569) which escapes &, <, >, \", '.",
+        "prompt_injection_risk": {
+          "severity": "low_to_medium",
+          "analysis": "escapeXml escapes 5 XML-sensitive chars which prevents XML tag injection. However, this XML output is consumed by LLMs as tool result content, not parsed as XML by an XML parser. The XML structure is cosmetic (human/LLM-readable formatting), so XML injection would only matter if an XML parser ever consumes this. The actual risk is if claim.description, claim.result, or claim.error contain crafted text that tricks the LLM — but that's a general LLM prompt injection concern, not specific to this escaping.",
+          "escaped_chars": ["& → &amp;", "< → &lt;", "> → &gt;", "\" → &quot;", "' → &apos;"]
+        }
+      },
+      "wave_status_query": {
+        "lines": "685-715",
+        "description": "Queries fan-out progress for a specific wave. Gets fan-out group by sessionId/wave/waveType, then queries claims.",
+        "inArray_usage": {
+          "lines": "705-711",
+          "code": "inArray(CoordinationClaimTable.task_id, group.task_ids)",
+          "assessment": "CORRECT — Already uses inArray for AND across task_ids. The group.task_ids is a string[] stored as JSON text column."
+        },
+        "validation": {
+          "line": 687,
+          "code": "if (!params.sessionId || !params.wave || !params.waveType) { output = \"wave_status requires sessionId, wave, and waveType parameters\"",
+          "assessment": "Correct validation — all required params checked before query."
+        }
+      },
+      "sqlite_legacy": {
+        "line": 5,
+        "import": "import { sqliteTable, text, integer, primaryKey } from \"drizzle-orm/sqlite-core\"",
+        "status": "Still uses SQLite table definitions for coordination tables. If migrating to PG, these need to be changed to drizzle-orm/pg-core."
+      }
+    }
+  },
+  "smoking_guns": [
+    {
+      "id": "SG-1",
+      "severity": "CRITICAL",
+      "title": "JsonMigration crash on clean PG install",
+      "description": "packages/desktop/src/main/sidecar.ts:60 destructures JsonMigration from virtual:opencode-server which no longer exports it. When needsMigration=true (clean install), JsonMigration will be undefined → TypeError at line 63. The entire sidecar process will crash and exit(1).",
+      "files": ["packages/desktop/src/main/sidecar.ts:60", "packages/desktop/src/main/sidecar.ts:63", "packages/desktop/src/main/env.d.ts:25-27"],
+      "fix": "Remove JsonMigration destructure and call from sidecar.ts. Remove JsonMigration namespace from env.d.ts virtual module declaration."
+    },
+    {
+      "id": "SG-2",
+      "severity": "HIGH",
+      "title": "~30 dead SQLite legacy references across 9 desktop files",
+      "description": "The entire SQLite migration IPC chain (SqliteMigrationProgress type, onSqliteMigrationProgress push channel, loading.tsx handler, etc.) is still fully wired but JsonMigration producer was removed. The chain is dead code that will never fire, but still runs on every startup hooking listeners.",
+      "files": ["packages/desktop/src/preload/types.ts", "packages/desktop/src/preload/index.ts:83-86", "packages/desktop/src/renderer/loading.tsx", "packages/desktop/src/main/sidecar.ts:1", "packages/desktop/src/main/ipc-channels.ts:39", "packages/desktop/src/main/ipc-contract.ts:430", "packages/desktop/src/main/index.ts", "packages/desktop/src/main/server.ts"],
+      "fix": "Remove SqliteMigrationProgress type, SQLITE_MIGRATION_PROGRESS channel, onSqliteMigrationProgress listener, loading.tsx handler. Clean up drizzle-orm/node-sqlite import."
+    },
+    {
+      "id": "SG-3",
+      "severity": "MEDIUM",
+      "title": "ToolCache direct map mutation bypasses Ref.update",
+      "description": "cache.ts lines 70-71 and 79 directly mutate the Map returned by Ref.get() without using Ref.update(). While these mutations affect the underlying Map object (same reference in-memory), they inconsistently mix direct mutation with the Ref.update pattern used elsewhere (lines 147-173).",
+      "files": ["packages/opencode/src/tool/cache.ts:67-80"],
+      "fix": "Replace direct map.delete/set with Ref.update(cache, (m) => { ... }) pattern."
+    },
+    {
+      "id": "SG-4",
+      "severity": "MEDIUM",
+      "title": "github-ipc.ts bypasses central DI pattern",
+      "description": "packages/desktop/src/main/github-ipc.ts registers 6 handlers directly to ipcMain.handle() instead of using the DI pattern in ipc.ts (where handlers receive a typed Deps object with injected dependencies). Calls getStore() and getGithubClientId() directly instead of receiving injected deps.",
+      "files": ["packages/desktop/src/main/github-ipc.ts:26-108", "packages/desktop/src/main/ipc.ts:12,29"],
+      "fix": "Move GitHub handler registrations into ipc.ts registerIpcHandlers(deps) pattern so getStore and getGithubClientId are injected."
+    },
+    {
+      "id": "SG-5",
+      "severity": "LOW",
+      "title": "safeInvoke dead code import",
+      "description": "safeInvoke imported at preload/index.ts:4 from ipc-contract.ts but NEVER CALLED anywhere in the codebase. TypedInvoke is used exclusively.",
+      "files": ["packages/desktop/src/preload/index.ts:4", "packages/desktop/src/main/ipc-contract.ts:317-330"],
+      "fix": "Remove safeInvoke import from preload/index.ts. Consider removing the function entirely."
+    },
+    {
+      "id": "SG-6",
+      "severity": "MEDIUM",
+      "title": "coordination.ts still uses drizzle-orm/sqlite-core",
+      "description": "packages/opencode/src/tool/coordination.ts:5 imports sqliteTable, text, integer, primaryKey from drizzle-orm/sqlite-core. If the migration to PG is complete, these should use drizzle-orm/pg-core instead.",
+      "files": ["packages/opencode/src/tool/coordination.ts:5"],
+      "fix": "Replace sqliteCore imports with pgCore equivalents once coordination tables are migrated."
+    },
+    {
+      "id": "SG-7",
+      "severity": "MEDIUM",
+      "title": "ipc-validation.ts referenced in audits but never created",
+      "description": "desktop-decoupling-audit.v1.json and ipc-channels-registry plan reference ipc-validation.ts as an extracted validation module, but the file does not exist on disk in packages/desktop/src/. Referenced code was never separated.",
+      "files": ["docs/json/opencode/audits/desktop-decoupling-audit.v1.json:166,226", "docs/json/opencode/plans/ipc-channels-registry.v1.review.json"],
+      "fix": "Either create ipc-validation.ts with the described validation layer or update the audit/plan docs to reflect current reality."
+    },
+    {
+      "id": "SG-8",
+      "severity": "LOW",
+      "title": "ToolCache.getOrCompute defined but never called",
+      "description": "The getOrCompute method on the Interface is defined but has zero external callers. The entire cache layer is dead API surface.",
+      "files": ["packages/opencode/src/tool/cache.ts:30-35"],
+      "fix": "Verify if caching is needed. If not, remove the module. If yes, add callers."
+    }
+  ],
+  "dependencies": {
+    "sqlite_legacy_chain": {
+      "description": "Full dead IPC chain from renderer to main to sidecar",
+      "chain": [
+        "packages/desktop/src/main/ipc-channels.ts:39 — SQLITE_MIGRATION_PROGRESS push channel definition",
+        "packages/desktop/src/main/ipc-contract.ts:430 — onSqliteMigrationProgress in ComplexAPIMethods",
+        "packages/desktop/src/preload/types.ts — SqliteMigrationProgress type",
+        "packages/desktop/src/preload/index.ts:83-86 — onSqliteMigrationProgress listener",
+        "packages/desktop/src/renderer/loading.tsx — SQLITE_MIGRATION_PROGRESS handler",
+        "packages/desktop/src/main/index.ts — wiring",
+        "packages/desktop/src/main/server.ts — wiring",
+        "packages/desktop/src/main/sidecar.ts:60 — JsonMigration destructure (CRASH POINT)"
+      ]
+    }
+  },
+  "existing_findings_incorporated": [
+    {
+      "source": "docs/json/opencode/knowledge/findings.v1.jsonl:28",
+      "summary": "JsonMigration removed from virtual:opencode-server but sidecar.ts still destructures it — TypeError at runtime if needsMigration is true (clean PG install)",
+      "mapped_to": "SG-1"
+    },
+    {
+      "source": "docs/json/opencode/cartography/truth-gap-mapping.v1.json:117",
+      "summary": "34 dead-legacy instances, 6 internal-legacy, 1 user-visible-legacy. JSON-to-SQLite migration removed from server code but IPC chain still wired.",
+      "mapped_to": "SG-2"
+    },
+    {
+      "source": "discover findings: ToolCache.inflight map mutated via direct reference mutation bypassing Ref.update",
+      "summary": "cache.ts inflight dedup Ref.get returns reference, then mutated directly",
+      "mapped_to": "SG-3"
+    },
+    {
+      "source": "discover findings: safeInvoke imported at preload/index.ts:4 but never called",
+      "summary": "Dead code import",
+      "mapped_to": "SG-5"
+    }
+  ]
+}

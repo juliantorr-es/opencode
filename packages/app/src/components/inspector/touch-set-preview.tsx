@@ -111,7 +111,7 @@ export function TouchSetPreview(props: {
       }
       return next
     })
-    setSelectedPaths(new Set())
+    setSelectedPaths(new Set<string>())
   }
 
   function toggleSelect(path: string) {
@@ -249,7 +249,7 @@ export function TouchSetPreview(props: {
                 <div class="flex-1 min-w-0">
                   <div class="flex items-center gap-2">
                     <span class="text-xs font-medium text-text truncate">{file.path}</span>
-                    <Tag size="small" class={`text-[10px] ${RISK_COLORS[file.riskLevel]}`}>
+                    <Tag size="normal" class={`text-[10px] ${RISK_COLORS[file.riskLevel]}`}>
                       {file.riskLevel}
                     </Tag>
                     <span class="text-[10px] text-text-muted ml-auto shrink-0">{op.label}</span>
@@ -301,7 +301,7 @@ export function TouchSetPreview(props: {
                       class="w-6 h-6 rounded flex items-center justify-center text-text-muted hover:text-text hover:bg-background-element transition-colors"
                       title="Add path claim"
                     >
-                      <Icon name="lock" class="w-3 h-3" />
+                      <Icon name="code" class="w-3 h-3" />
                     </button>
                     <button
                       onClick={() => {

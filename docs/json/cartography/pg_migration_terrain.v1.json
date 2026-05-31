@@ -1,0 +1,476 @@
+{
+  "schema_version": "v1",
+  "generated_at": "2026-05-30T23:30:00Z",
+  "cartographer": "codebase-cartographer",
+  "title": "PostgreSQL Migration Terrain Map",
+  "summary": "Comprehensive map of the PG backend migration across packages/opencode. Schema definitions: 100% complete. Infrastructure: mostly wired. Remaining gaps: coordination tables missing PG equivalent, CI lacks PG service, drizzle.config.pg.ts untracked, app-layer imports still point to .sql.ts.",
+  "sections": {
+    "schema_files": {
+      "description": "All .pg.sql.ts (Postgres) and .sql.ts (SQLite) schema definition files",
+      "pg_schema_files": {
+        "count": 9,
+        "files": {
+          "account": {
+            "path": "packages/opencode/src/account/account.pg.sql.ts",
+            "tables": ["AccountTable", "AccountStateTable", "ControlAccountTable"],
+            "columns_total": 22
+          },
+          "project": {
+            "path": "packages/opencode/src/project/project.pg.sql.ts",
+            "tables": ["ProjectTable"],
+            "columns_total": 12
+          },
+          "session": {
+            "path": "packages/opencode/src/session/session.pg.sql.ts",
+            "tables": ["SessionTable", "MessageTable", "PartTable", "TodoTable", "SessionMessageTable", "PermissionTable"],
+            "columns_total": 46
+          },
+          "workspace": {
+            "path": "packages/opencode/src/control-plane/workspace.pg.sql.ts",
+            "tables": ["WorkspaceTable"],
+            "columns_total": 8
+          },
+          "share": {
+            "path": "packages/opencode/src/share/share.pg.sql.ts",
+            "tables": ["SessionShareTable"],
+            "columns_total": 5
+          },
+          "event_sync": {
+            "path": "packages/opencode/src/sync/event.pg.sql.ts",
+            "tables": ["EventSequenceTable", "EventTable"],
+            "columns_total": 8
+          },
+          "runtime_event": {
+            "path": "packages/opencode/src/event/event.pg.sql.ts",
+            "tables": ["RuntimeEventTable"],
+            "columns_total": 22
+          },
+          "data_migration": {
+            "path": "packages/opencode/src/data-migration.pg.sql.ts",
+            "tables": ["DataMigrationTable"],
+            "columns_total": 2
+          },
+          "timestamps_helper": {
+            "path": "packages/opencode/src/storage/schema.pg.sql.ts",
+            "tables": [],
+            "description": "Shared TimestampsPg {time_created, time_updated} helper — used by all schema files via spread operator",
+            "columns_total": 2
+          }
+        },
+        "total_tables": 17,
+        "total_columns": 127
+      },
+      "sqlite_schema_files": {
+        "description": "Legacy SQLite schema files that need Postgres equivalents — all except tool/coordination.ts already have them",
+        "count": 9,
+        "with_pg_equivalent": ["account.sql.ts", "project.sql.ts", "session.sql.ts", "workspace.sql.ts", "share.sql.ts", "event.sql.ts", "event.sql.ts (runtime)", "data-migration.sql.ts"],
+        "without_pg_equivalent": {
+          "file": "packages/opencode/src/tool/coordination.ts",
+          "tables": ["CoordinationClaimTable", "CoordinationReservationTable", "CoordinationFanOutTable"],
+          "columns_total": 23,
+          "note": "The archived coordination.pg.sql.ts existed in prior sessions but is MISSING from src/"
+        }
+      }
+    },
+    "infrastructure_files": {
+      "description": "All database infrastructure files in packages/opencode/src/storage/",
+      "count": 16,
+      "files": {
+        "db_pg": {
+          "path": "packages/opencode/src/storage/db.pg.ts",
+          "purpose": "PG database init — PGlite (embedded WASM) + node-postgres Pool. Has init(), applyMigrations(), checkPgHealth()",
+          "key_exports": ["init", "applyMigrations", "checkPgHealth", "PgClient", "InitOptions", "DatabaseInitError"],
+          "dialects": ["drizzle-orm/pglite", "drizzle-orm/node-postgres"],
+          "lines": 132
+        },
+        "migrate": {
+          "path": "packages/opencode/src/storage/migrate.ts",
+          "purpose": "Dual-dialect migration runner. Auto-detects SQLite vs PG via OPENCODE_DATABASE_URL. Runnable as CLI entry point",
+          "key_exports": ["runMigrations", "Dialect", "MigrateOptions"],
+          "cli_args": ["--pg", "--sqlite", "--db-path", "--conn-string"],
+          "lines": 88
+        },
+        "adapter": {
+          "path": "packages/opencode/src/storage/adapter.ts",
+          "purpose": "Effect DatabaseAdapter — wraps Drizzle client. Provides makeSQLiteAdapter() and makePgAdapter() with unified Interface",
+          "key_exports": ["makeSQLiteAdapter", "makePgAdapter", "Service", "Interface", "DrizzleLikeClient"],
+          "lines": 408
+        },
+        "adapter_dual_write": {
+          "path": "packages/opencode/src/storage/adapter-dual-write.ts",
+          "purpose": "PG-001: Dual-write adapter — SQLite primary + PG async shadow. Experimental — no transaction coordination",
+          "key_exports": ["makeDualWriteAdapter", "dualWriteAdapterLayer"],
+          "lines": 122
+        },
+        "pg_pool": {
+          "path": "packages/opencode/src/storage/pg-pool.ts",
+          "purpose": "PG-004: Production Postgres connection pool with retry (Effect Schedule), health checks, graceful teardown",
+          "key_exports": ["PgPool", "PgPoolConfig"],
+          "lines": 166
+        },
+        "db_ts": {
+          "path": "packages/opencode/src/storage/db.ts",
+          "purpose": "Main DB singleton. Creates client via #db import alias (points to db.pg.ts). Provides use(), transaction(), close()",
+          "key_exports": ["Client", "use", "transaction", "close", "getPath"],
+          "imports_from": "#db",
+          "lines": 128
+        },
+        "schema_ts": {
+          "path": "packages/opencode/src/storage/schema.ts",
+          "purpose": "PG schema barrel — re-exports all pgTable instances from .pg.sql.ts files",
+          "exports": "All 17 pgTable instances from 8 .pg.sql.ts files"
+        },
+        "schema_pg_ts": {
+          "path": "packages/opencode/src/storage/schema-pg.ts",
+          "purpose": "Identical to schema.ts — duplicate PG schema barrel (appears to be a migration artifact)",
+          "exports": "Same 17 pgTable instances as schema.ts"
+        },
+        "db_duckdb": {
+          "path": "packages/opencode/src/storage/db.duckdb.ts",
+          "purpose": "DuckDB database init for analytical queries",
+          "lines": 10288
+        },
+        "schema_duckdb": {
+          "path": "packages/opencode/src/storage/schema.duckdb.ts",
+          "purpose": "DuckDB analytical schema — views that read from PG-based parquet/exports",
+          "lines": 549
+        },
+        "storage_ts": {
+          "path": "packages/opencode/src/storage/storage.ts",
+          "purpose": "Data migration service (file-based JSON migrations, not Drizzle schema migrations)",
+          "lines": 11478
+        }
+      }
+    },
+    "drizzle_configs": {
+      "description": "Drizzle Kit configuration files",
+      "primary": {
+        "path": "packages/opencode/drizzle.config.ts",
+        "dialect": "sqlite",
+        "schema_glob": "./src/**/*.sql.ts",
+        "output": "./migration",
+        "committed": true
+      },
+      "postgres": {
+        "path": "packages/opencode/drizzle.config.pg.ts",
+        "dialect": "postgresql",
+        "schema_glob": "./src/**/*.pg.sql.ts",
+        "output": "./migration-pg",
+        "committed": false,
+        "note": "EXISTS ON DISK but NOT in git — needs to be committed"
+      }
+    },
+    "migration_directories": {
+      "description": "Generated DDL migration output directories",
+      "sqlite": {
+        "path": "packages/opencode/migration/",
+        "migration_count": 20,
+        "oldest": "20260127222353_familiar_lady_ursula",
+        "newest": "20260511000411_data_migration_state"
+      },
+      "postgres": {
+        "path": "packages/opencode/migration-pg/",
+        "migration_count": 2,
+        "migrations": [
+          {
+            "folder": "20260529023435_yellow_molly_hayes",
+            "description": "Initial PG schema (177 lines SQL)",
+            "likely_content": "Creates all 17 pgTable instances"
+          },
+          {
+            "folder": "20260530202327_chemical_moira_mactaggert",
+            "description": "Follow-up PG migration (35 lines SQL)",
+            "likely_content": "Minor schema adjustments"
+          }
+        ]
+      }
+    },
+    "import_alias": {
+      "description": "The #db import subpath in package.json that routes database imports",
+      "current": {
+        "bun": "./src/storage/db.pg.ts",
+        "node": "./src/storage/db.pg.ts",
+        "default": "./src/storage/db.pg.ts"
+      },
+      "note": "Now points to db.pg.ts for all platforms. Previously pointed to db.bun.ts (SQLite/BunSQLite)"
+    },
+    "env_vars": {
+      "OPENCODE_DATABASE_URL": {
+        "purpose": "Primary PG connection string. Set → node-postgres Pool path. Unset → PGlite embedded path",
+        "source_definition": "packages/core/src/flag/flag.ts:46",
+        "effect_config": "packages/opencode/src/effect/database-config.ts:5",
+        "test_usage": "packages/opencode/test/fixture/pg.ts:207",
+        "migration_detection": "packages/opencode/src/storage/migrate.ts:22"
+      },
+      "OPENCODE_DATABASE_SSL": {
+        "purpose": "TLS toggle for PG connections",
+        "effect_config": "packages/opencode/src/effect/database-config.ts:6"
+      },
+      "OPENCODE_DATABASE_POOL_SIZE": {
+        "purpose": "PG pool max size",
+        "effect_config": "packages/opencode/src/effect/database-config.ts:7"
+      }
+    },
+    "package_dependencies": {
+      "drizzle-orm": "catalog: (1.0.0-rc.2)",
+      "drizzle-kit": "catalog: (1.0.0-rc.2, devDependency)",
+      "pg": "^8.13.1",
+      "@electric-sql/pglite": "^0.2.16",
+      "@types/pg": "^8.11.10"
+    },
+    "npm_scripts": {
+      "db": "node ./node_modules/drizzle-kit/bin.cjs",
+      "test:pg": "bun test --timeout 30000 test/storage/adapter.pg.test.ts",
+      "test": "bun test --timeout 30000"
+    },
+    "pg_test_infrastructure": {
+      "test_fixture": {
+        "path": "packages/opencode/test/fixture/pg.ts",
+        "purpose": "PG test harness with schema-per-test isolation. PGlite in-memory by default, real PG via OPENCODE_DATABASE_URL",
+        "key_exports": ["makePGLayer", "makeRealPgLayer", "pgTestLayer"]
+      },
+      "pg_tests": {
+        "adapter_pg_test": {
+          "path": "packages/opencode/test/storage/adapter.pg.test.ts",
+          "purpose": "PG adapter integration tests using production PgAdapter with temporary PGlite data dir",
+          "lines": 476,
+          "tests_count": "~15 test cases covering query, transaction, error handling, DuckDB firewall"
+        },
+        "pg_pool_test": {
+          "path": "packages/opencode/test/storage/pg-pool.pg.test.ts",
+          "purpose": "PgPool tests"
+        },
+        "pg_integration_test": {
+          "path": "packages/opencode/test/storage/pg-integration.pg.test.ts",
+          "purpose": "PG integration tests"
+        },
+        "migrate_test": {
+          "path": "packages/opencode/test/storage/migrate.test.ts",
+          "purpose": "Migration runner tests"
+        }
+      }
+    },
+    "dual_dialect_patterns": {
+      "column_type_mappings": {
+        "text({ mode: 'json' })": "jsonb()",
+        "integer({ mode: 'boolean' })": "boolean()",
+        "real()": "real() (same)",
+        "text()": "text() (same)",
+        "integer()": "integer() (same)"
+      },
+      "schema_file_naming": {
+        "sqlite": "*.sql.ts",
+        "postgres": "*.pg.sql.ts"
+      },
+      "barrel_files": {
+        "sqlite": "storage/schema.ts (now re-exports .pg.sql.ts tables)",
+        "postgres": "storage/schema-pg.ts (identical to schema.ts)"
+      },
+      "migration_runners": {
+        "sqlite": "migrate.ts → drizzle-orm/bun-sqlite/migrator → migration/",
+        "postgres": "migrate.ts → db.pg.ts applyMigrations() → migration-pg/",
+        "pglite_path": "readMigrationFiles + client.exec() (manual SQL execution)",
+        "node_postgres_path": "drizzle-orm/node-postgres/migrator.migrate()"
+      }
+    },
+    "what_is_done": {
+      "description": "Completed work items for the PG backend migration",
+      "items": [
+        "All 8 core `.sql.ts` table files have complete `.pg.sql.ts` equivalents (17 pgTable instances total)",
+        "`drizzle.config.pg.ts` exists with `dialect: 'postgresql'` and correct schema glob",
+        "`migrate.ts` supports both SQLite and PG dialect with auto-detection via `OPENCODE_DATABASE_URL`",
+        "`db.pg.ts` has `applyMigrations()` working for both PGlite (manual SQL) and node-postgres (Drizzle migrator)",
+        "`pg-pool.ts` wraps `pg.Pool` with retry, health checks, and graceful shutdown",
+        "`adapter-dual-write.ts` provides SQLite-primary + PG-shadow dual-write pattern",
+        "`#db` import alias in package.json now points to `db.pg.ts` for all platforms",
+        "PG test fixture exists with schema-per-test isolation",
+        "PG adapter tests exist at `test/storage/adapter.pg.test.ts`",
+        "`test:pg` npm script exists",
+        "`migration-pg/` directory has 2 generated migration folders",
+        "`checkPgHealth()` provides structured health reporting",
+        "`DatabaseConfig` Effect service reads OPENCODE_DATABASE_URL, SSL, pool size"
+      ]
+    },
+    "what_is_missing": {
+      "description": "Remaining gaps for the PG backend migration",
+      "items": [
+        {
+          "id": "GAP-1",
+          "title": "coordination.pg.sql.ts missing from src/",
+          "component": "PG-001",
+          "description": "3 coordination tables (CoordinationClaimTable, CoordinationReservationTable, CoordinationFanOutTable) in tool/coordination.ts use sqliteTable with NO pgTable equivalent. An archived copy existed but was deleted.",
+          "impact": "drizzle-kit generate will skip coordination tables in PG output. These are critical for cross-session coordination.",
+          "action": "Create coordination.pg.sql.ts with pgTable equivalents for all 3 tables"
+        },
+        {
+          "id": "GAP-2",
+          "title": "drizzle.config.pg.ts not tracked in git",
+          "component": "PG-001 / PG-002",
+          "description": "drizzle.config.pg.ts exists on disk but is untracked/not committed. CI cannot regenerate migrations.",
+          "impact": "Build reproducibility failure. New clones can't generate PG DDL.",
+          "action": "Commit drizzle.config.pg.ts to git"
+        },
+        {
+          "id": "GAP-3",
+          "title": "CI has no Postgres service container",
+          "component": "PG-003",
+          "description": "26 workflow files in .github/workflows/ — NONE reference postgres, pg services, or OPENCODE_DATABASE_URL. PG tests can't run in CI.",
+          "impact": "PG migration tests never execute in CI. Regressions go undetected.",
+          "action": "Add PG job to test.yml with postgres service container and OPENCODE_DATABASE_URL env"
+        },
+        {
+          "id": "GAP-4",
+          "title": "App-layer imports still use .sql.ts paths",
+          "component": "PG-001",
+          "description": "~30+ domain files across src/ import from drizzle-orm directly and reference .sql.ts table names. The schema.ts barrel now re-exports from .pg.sql.ts, but production code still imports sqliteTable references through other paths.",
+          "impact": "Runtime actually uses PGlite/node-postgres Drizzle client now via #db alias, but query patterns using sqlite-specific types may fail.",
+          "action": "Audit all domain files for sqlite-specific imports and migrate to .pg.sql.ts paths"
+        },
+        {
+          "id": "GAP-5",
+          "title": "migration-pg/ may be stale",
+          "component": "PG-002",
+          "description": "2 migration folders exist in migration-pg/. Need to verify they represent the full current schema state. coordination tables are missing, hinting they were generated before those tables had .pg.sql.ts equivalents.",
+          "impact": "Applied migrations may be missing coordination tables.",
+          "action": "Re-run drizzle-kit generate against drizzle.config.pg.ts after filling GAP-1"
+        },
+        {
+          "id": "GAP-6",
+          "title": "schema.ts and schema-pg.ts are duplicates",
+          "component": "PG-001",
+          "description": "Both files export identical 8 re-exports from .pg.sql.ts files. One of them (schema.ts) historically exported from .sql.ts files. The duplicate should be resolved.",
+          "impact": "Confusion about which barrel to import from. Dead code risk.",
+          "action": "Consolidate to single schema.ts barrel, remove schema-pg.ts"
+        },
+        {
+          "id": "GAP-7",
+          "title": "No dual-dialect type safety",
+          "component": "Cross-cutting",
+          "description": "No compile-time check ensures .pg.sql.ts and .sql.ts equivalents stay in sync. Schema drift between dialects could cause silent data corruption.",
+          "impact": "Long-term maintenance risk as schemas evolve independently.",
+          "action": "Add a compile-time schema comparison script or adopt single-source-of-truth pattern"
+        }
+      ]
+    },
+    "migration_lanes_status": {
+      "description": "Status of each named PG migration lane from the roadmaps",
+      "lanes": {
+        "PG-001": {
+          "title": "Schema definitions + application-layer import switching",
+          "completion_pct": 60,
+          "schema_definitions": "100% complete (17 pgTable instances for 8 domains)",
+          "app_layer_switching": "0% — production imports still point to .sql.ts patterns",
+          "remaining": ["GAP-1: coordination.pg.sql.ts", "GAP-4: app-layer import audit", "GAP-6: duplicate barrel consolidation"]
+        },
+        "PG-002": {
+          "title": "Migration runner with dual dialect support",
+          "completion_pct": 75,
+          "migration_runner_exists": true,
+          "drizzle_config_pg_exists": true,
+          "migrations_generated": true,
+          "remaining": ["GAP-2: commit drizzle.config.pg.ts", "GAP-3: CI service container", "GAP-5: regenerate after GAP-1"]
+        },
+        "PG-003": {
+          "title": "CI integration for Postgres tests",
+          "completion_pct": 10,
+          "test_fixture_exists": true,
+          "test_file_exists": true,
+          "npm_script_exists": true,
+          "ci_workflow_configured": false,
+          "remaining": ["GAP-3: CI Postgres service container + workflow job"]
+        },
+        "PG-004": {
+          "title": "Production Postgres connection pool",
+          "completion_pct": 95,
+          "pg_pool_ts_exists": true,
+          "retry_logic": true,
+          "health_checks": true,
+          "graceful_shutdown": true,
+          "remaining": ["Integration with app startup lifecycle"]
+        }
+      }
+    },
+    "recommended_action_order": [
+      {
+        "priority": 1,
+        "action": "Create coordination.pg.sql.ts with pgTable equivalents for 3 coordination tables",
+        "files_touched": ["packages/opencode/src/coordination/coordination.pg.sql.ts (new)"],
+        "lane": "PG-001"
+      },
+      {
+        "priority": 2,
+        "action": "Run drizzle-kit generate against drizzle.config.pg.ts to regenerate fresh PG migration",
+        "command": "node ./node_modules/drizzle-kit/bin.cjs generate --config=drizzle.config.pg.ts",
+        "lane": "PG-002"
+      },
+      {
+        "priority": 3,
+        "action": "Commit drizzle.config.pg.ts to git",
+        "lane": "PG-002"
+      },
+      {
+        "priority": 4,
+        "action": "Consolidate schema.ts and schema-pg.ts into single barrel",
+        "files_touched": ["packages/opencode/src/storage/schema.ts", "packages/opencode/src/storage/schema-pg.ts (delete)"],
+        "lane": "PG-001"
+      },
+      {
+        "priority": 5,
+        "action": "Audit and switch app-layer imports from .sql.ts to .pg.sql.ts patterns across ~30 domain files",
+        "lane": "PG-001"
+      },
+      {
+        "priority": 6,
+        "action": "Add PG service container job to .github/workflows/test.yml for CI PG test execution",
+        "lane": "PG-003"
+      }
+    ]
+  },
+  "smoking_guns": [
+    {
+ "finding": "coordination.pg.sql.ts exists in session archives but NOT in src/ — 3 coordination tables have no Postgres equivalent",
+      "file": "packages/opencode/src/tool/coordination.ts",
+      "lines": "55, 70, 78",
+      "severity": "high",
+      "evidence": "Archived at docs/json/opencode/archive/ses_1884c8dd3ffeKV11LJ4SGTMwux/.../artifacts/coordination.pg.sql.ts — source copy deleted"
+    },
+    {
+      "finding": "drizzle.config.pg.ts is untracked — CI and fresh clones lack it",
+      "file": "packages/opencode/drizzle.config.pg.ts",
+      "severity": "high",
+      "evidence": "git status would show it as untracked; committed drizzle.config.ts still uses sqlite dialect"
+    },
+    {
+      "finding": "CI has zero Postgres references — PG tests never execute in pipeline",
+      "file": ".github/workflows/test.yml",
+      "severity": "high",
+      "evidence": "All 26 workflow files surveyed; none contain 'postgres', 'pg', or 'OPENCODE_DATABASE_URL'"
+    },
+    {
+      "finding": "schema.ts now re-exports from .pg.sql.ts but schema-pg.ts is an identical duplicate",
+      "file": "packages/opencode/src/storage/schema.ts",
+      "severity": "low",
+      "evidence": "Both files export identical 8 re-exports from .pg.sql.ts paths"
+    }
+  ],
+  "appendix": {
+    "drizzle_import_ecosystem": {
+      "sqlite_core": "9 files import from drizzle-orm/sqlite-core",
+      "pg_core": "9 files import from drizzle-orm/pg-core",
+      "pglite": "2 files (db.pg.ts, test/fixture/pg.ts)",
+      "node_postgres": "2 files (db.pg.ts, test/fixture/pg.ts)",
+      "bun_sqlite": "3 files (migrate.ts, test files)",
+      "migrator": "1 file (db.pg.ts imports readMigrationFiles)",
+      "general": "~30+ domain files import helpers (eq, and, sql, etc.) from drizzle-orm"
+    },
+    "env_var_blocklist": {
+      "decision": "DATABASE_URL is in the env blocklist for tool subprocesses (packages/core/src/util/env-blocklist.ts:12, packages/desktop/src/main/env-blocklist.ts:12)",
+      "note": "Tools spawned by the agent won't inherit DATABASE_URL — important for security but also means (non-OPENCODE_) env var won't leak"
+    },
+    "migration_runner_cli": {
+      "entry_point": "packages/opencode/src/storage/migrate.ts",
+      "usage": "bun run src/storage/migrate.ts --pg --conn-string postgresql://...",
+      "detection_logic": "OPENCODE_DATABASE_URL env var → 'pg' dialect, else 'sqlite'"
+    }
+  }
+}

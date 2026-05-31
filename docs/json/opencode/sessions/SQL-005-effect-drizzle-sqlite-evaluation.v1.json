@@ -1,0 +1,124 @@
+{
+  "$schema": "rig.relay.cartography_evaluation.v1",
+  "lane": "SQL-005",
+  "title": "Evaluate effect-drizzle-sqlite package for deletion",
+  "generated_at": "2026-05-30T18:00:00Z",
+  "package": {
+    "name": "@opencode-ai/effect-drizzle-sqlite",
+    "path": "packages/effect-drizzle-sqlite",
+    "version": "1.15.12",
+    "type": "module",
+    "private": true,
+    "total_source_files": 22,
+    "total_lines": 3228,
+    "dependencies": ["drizzle-orm", "effect"],
+    "devDependencies": ["@effect/sql-sqlite-bun", "@tsconfig/bun", "@types/bun", "@typescript/native-preview"],
+    "exports": {
+      ".": "./src/index.ts",
+      "./effect-sqlite": "./src/effect-sqlite/index.ts",
+      "./effect-sqlite/migrator": "./src/effect-sqlite/migrator.ts",
+      "./sqlite-core/effect": "./src/sqlite-core/effect/index.ts"
+    },
+    "purpose": "Vendored Drizzle Effect SQLite adapter — implements Drizzle's effect-sqlite driver shape (driver, session, migrator) plus sqlite-core/effect full CRUD layer (select, insert, update, delete, query, raw, count) wrapped as Effect values. No opencode-specific domain logic."
+  },
+  "consumers": {
+    "total": 0,
+    "actual_code_imports": {
+      "count": 0,
+      "note": "Zero import statements, zero require() calls, zero dynamic import() calls reference @opencode-ai/effect-drizzle-sqlite anywhere in the repo"
+    },
+    "dependency_references": {
+      "count": 0,
+      "note": "No package.json (outside the package itself) lists @opencode-ai/effect-drizzle-sqlite as a dependency or devDependency"
+    },
+    "test_references": {
+      "count": 0,
+      "note": "No test file imports the package. The package's own test (test/sqlite.test.ts) uses a tmpdir prefix string containing 'effect-drizzle-sqlite' but does not import from the package itself"
+    },
+    "codebase_graph_references": {
+      "count": 3,
+      "files": [
+        "packages/app/src/utils/codebase-graph.ts:76 — static graph node definition (cosmetic, color and path metadata)",
+        "packages/app/src/utils/codebase-graph.ts:39 — color mapping entry",
+        "packages/app/src/utils/codebase-graph.ts:133 — path-to-id resolver mapping"
+      ],
+      "note": "These are static visualization metadata entries, not runtime imports. Would be removed with the package."
+    },
+    "spec_and_audit_references": {
+      "files": [
+        "specs/storage/effect-sqlite-package.md — spec document defining the package (would become stale)",
+        "docs/json/database_migration_effect_drizzle_audit.v1.json — 19 file classification entries",
+        "docs/json/cartography/sqlite-audit-report.v1.json — 17 references across audit report",
+        "docs/json/migration_plan_pg_duckdb.v2.json — 2 references in migration plan",
+        "docs/json/opencode/plans/phase1_adapter_hardening.v1.json — 5 references",
+        "docs/json/opencode/plans/phase1_adapter_hardening.v2.json — 1 reference",
+        "docs/json/opencode/plans/phase1_adapter_hardening.v3.json — 1 reference",
+        "docs/json/opencode/plans/pg_backend_migration.v2.json — 1 reference",
+        "docs/json/opencode/plans/pg_backend_migration.v3.json — 1 reference",
+        "docs/json/opencode/cartography/truth-gap-mapping.v1.json — 4 references",
+        "docs/json/opencode/cartography/pg-duckdb-migration-report.v1.json — 1 reference"
+      ],
+      "note": "All reference the package as a historical artifact or past plan context. None depend on its continued existence."
+    }
+  },
+  "deletion_recommendation": {
+    "verdict": "safe_to_delete",
+    "confidence": "high",
+    "rationale": "The package has zero runtime consumers across the entire monorepo. No source file imports it, no package.json depends on it, and no test exercises it from outside. The spec document (specs/storage/effect-sqlite-package.md) defines step 4 as 'Add @opencode-ai/effect-drizzle-sqlite as a dependency of packages/opencode' — this step was never executed. The repo has since migrated toward PG backend (db.pg.ts), making this SQLite-only package even less relevant. The package exists solely as vendored infra that was never adopted.",
+    "pre_cleanup_required": [
+      "Remove 3 references in packages/app/src/utils/codebase-graph.ts (lines 39, 76, 133)",
+      "Optionally update specs/storage/effect-sqlite-package.md to note the package was deleted (or delete the spec)",
+      "bun.lock workspace resolution will auto-clean on next `bun install`"
+    ],
+    "files_to_delete": {
+      "root": [
+        "packages/effect-drizzle-sqlite/package.json",
+        "packages/effect-drizzle-sqlite/tsconfig.json",
+        "packages/effect-drizzle-sqlite/sst-env.d.ts",
+        "packages/effect-drizzle-sqlite/AGENTS.md"
+      ],
+      "examples": [
+        "packages/effect-drizzle-sqlite/examples/basic.ts",
+        "packages/effect-drizzle-sqlite/examples/migrations/20240101000000_create_users/migration.sql"
+      ],
+      "test": [
+        "packages/effect-drizzle-sqlite/test/sqlite.test.ts"
+      ],
+      "src/effect-sqlite": [
+        "packages/effect-drizzle-sqlite/src/effect-sqlite/index.ts",
+        "packages/effect-drizzle-sqlite/src/effect-sqlite/driver.ts",
+        "packages/effect-drizzle-sqlite/src/effect-sqlite/session.ts",
+        "packages/effect-drizzle-sqlite/src/effect-sqlite/migrator.ts"
+      ],
+      "src/sqlite-core/effect": [
+        "packages/effect-drizzle-sqlite/src/sqlite-core/effect/index.ts",
+        "packages/effect-drizzle-sqlite/src/sqlite-core/effect/db.ts",
+        "packages/effect-drizzle-sqlite/src/sqlite-core/effect/session.ts",
+        "packages/effect-drizzle-sqlite/src/sqlite-core/effect/select.ts",
+        "packages/effect-drizzle-sqlite/src/sqlite-core/effect/insert.ts",
+        "packages/effect-drizzle-sqlite/src/sqlite-core/effect/update.ts",
+        "packages/effect-drizzle-sqlite/src/sqlite-core/effect/delete.ts",
+        "packages/effect-drizzle-sqlite/src/sqlite-core/effect/query.ts",
+        "packages/effect-drizzle-sqlite/src/sqlite-core/effect/raw.ts",
+        "packages/effect-drizzle-sqlite/src/sqlite-core/effect/count.ts"
+      ],
+      "src/up-migrations": [
+        "packages/effect-drizzle-sqlite/src/up-migrations/effect-sqlite.ts",
+        "packages/effect-drizzle-sqlite/src/up-migrations/sqlite.ts",
+        "packages/effect-drizzle-sqlite/src/up-migrations/utils.ts"
+      ],
+      "src/internal": [
+        "packages/effect-drizzle-sqlite/src/internal/drizzle-utils.ts"
+      ]
+    }
+  },
+  "verification_method": {
+    "grep_pattern": "effect-drizzle-sqlite",
+    "matches_outside_package": 0,
+    "grep_pattern_exact_package_name": "@opencode-ai/effect-drizzle-sqlite",
+    "matches_outside_package_and_docs": 0,
+    "file_glob_searched": "*.{ts,tsx,mjs,cjs}",
+    "directories_searched": ["packages/", "tests/", "specs/"],
+    "note": "Only matches found are in docs/ JSON artifacts, the spec md file, the codebase-graph.ts (static graph data), and the bun.lock workspace registration — none of which constitute runtime consumption"
+  }
+}

@@ -1,0 +1,11 @@
+{"at":"2026-05-30T23:12:19.899Z","tool":"smart_batch","action":"batch_edited","files":"packages/opencode/src/tool/coordination.ts, packages/opencode/src/tool/coordination.ts, packages/opencode/src/tool/coordination.ts, packages/opencode/src/tool/coordination.ts, packages/opencode/src/tool/coordination.ts, packages/opencode/src/tool/coordination.ts, packages/opencode/src/tool/coordination.ts","edits":7}
+{"at":"2026-05-30T23:12:28.834Z","tool":"smart_edit","action":"edited","file":"packages/opencode/src/tool/coordination.ts","detail":"Add stale claim auto-release to execute claims operation"}
+{"at":"2026-05-30T23:12:32.207Z","tool":"smart_edit","action":"edited","file":"packages/opencode/src/tool/coordination.ts","detail":"Add stale claim auto-release to getClaim"}
+{"at":"2026-05-30T23:12:35.246Z","tool":"smart_edit","action":"edited","file":"packages/opencode/src/tool/coordination.ts","detail":"Add stale claim auto-release to getSessionClaims"}
+{"at":"2026-05-30T23:13:17.825Z","tool":"smart_edit","action":"edited","file":"packages/opencode/src/tool/coordination.ts","detail":"FIX-10: Add expiresAt to TaskClaim type"}
+{"at":"2026-05-30T23:13:18.353Z","tool":"smart_edit","action":"edited","file":"packages/opencode/src/tool/coordination.ts","detail":"FIX-10: Add expires_at column to CoordinationClaimTable"}
+{"at":"2026-05-30T23:13:19.013Z","tool":"smart_edit","action":"edited","file":"packages/opencode/src/tool/coordination.ts","detail":"FIX-10: Add expires_at to claimRowToType row parameter"}
+{"at":"2026-05-30T23:13:19.572Z","tool":"smart_edit","action":"edited","file":"packages/opencode/src/tool/coordination.ts","detail":"FIX-10: Map expires_at to expiresAt in claimRowToType return"}
+{"at":"2026-05-30T23:13:20.129Z","tool":"smart_edit","action":"edited","file":"packages/opencode/src/tool/coordination.ts","detail":"FIX-10: Add expires_at column to DDL"}
+{"at":"2026-05-30T23:13:20.744Z","tool":"smart_edit","action":"edited","file":"packages/opencode/src/tool/coordination.ts","detail":"FIX-10: Set expires_at (30 min TTL) in claimTask insert"}
+{"at":"2026-05-30T23:16:17.404Z","tool":"smart_git","action":"git_op","operation":"diff","exit_code":0}

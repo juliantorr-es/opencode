@@ -80,9 +80,9 @@ export interface Interface {
 
 export class Service extends Context.Service<Service, Interface>()("@opencode/DatabaseAdapter") {}
 
-// ── SQLite adapter ───────────────────────────────────────────
+// ── Local Pg adapter ─────────────────────────────────────────
 
-export function makeSQLiteAdapter(): Interface {
+export function makeLocalPgAdapter(): Interface {
   const query = <T>(fn: (db: DrizzleLikeClient) => T | Promise<T>) =>
     Effect.tryPromise({
       try: () => {
@@ -151,9 +151,9 @@ export function makeSQLiteAdapter(): Interface {
   return Service.of({ query, transaction, afterCommit })
 }
 
-export const SQLiteAdapter: Layer.Layer<Service> = Layer.effect(
+export const LocalPgAdapter: Layer.Layer<Service> = Layer.effect(
   Service,
-  Effect.sync(() => makeSQLiteAdapter()),
+  Effect.sync(() => makeLocalPgAdapter()),
 )
 
 // ── PG error sanitisation (F-006) ────────────────────────────
@@ -162,7 +162,7 @@ export const SQLiteAdapter: Layer.Layer<Service> = Layer.effect(
 
 const PG_CONNECTION_STRING_RE = /(?:postgres(?:ql)?:\/\/)[^\s]*/gi
 
-function sanitizePgError(cause: unknown): object {
+export function sanitizePgError(cause: unknown): object {
   if (cause === null || cause === undefined || typeof cause !== "object") {
     return { message: String(cause) }
   }
@@ -181,7 +181,7 @@ function sanitizePgError(cause: unknown): object {
 
 // ── Postgres adapter ─────────────────────────────────────────
 
-function makePgAdapter(options: {
+export function makePgAdapter(options: {
   connectionString: string
   ssl?: boolean
   poolSize?: number
@@ -393,7 +393,7 @@ export const defaultLayer: Layer.Layer<Service> = Layer.unwrap(
         poolSize: config.poolSize,
       })
     }
-    return SQLiteAdapter
+    return LocalPgAdapter
   }),
 ).pipe(Layer.provide(DatabaseConfig.defaultLayer))
 

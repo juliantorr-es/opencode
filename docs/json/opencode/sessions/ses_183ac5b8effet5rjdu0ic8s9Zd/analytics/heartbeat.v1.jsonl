@@ -1,0 +1,73 @@
+{"at":"2026-05-31T04:38:45.575Z","session_id":"ses_183ac5b8effet5rjdu0ic8s9Zd","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Run typecheck to capture all Effect 4.0 migration errors"}
+{"at":"2026-05-31T04:38:45.575Z","session_id":"ses_183ac5b8effet5rjdu0ic8s9Zd","agent":"cartographer","tool":"smart_bash","phase":"rerouted","detail":"→ smart_bun"}
+{"at":"2026-05-31T04:38:49.693Z","session_id":"ses_183ac5b8effet5rjdu0ic8s9Zd","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Check the installed Effect version"}
+{"at":"2026-05-31T04:38:56.976Z","session_id":"ses_183ac5b8effet5rjdu0ic8s9Zd","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Check the installed Effect version from package.json"}
+{"at":"2026-05-31T04:38:56.976Z","session_id":"ses_183ac5b8effet5rjdu0ic8s9Zd","agent":"cartographer","tool":"smart_bash","phase":"rerouted","detail":"→ read_source"}
+{"at":"2026-05-31T04:38:57.725Z","session_id":"ses_183ac5b8effet5rjdu0ic8s9Zd","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Run the full typecheck using npx tsc to capture all errors"}
+{"at":"2026-05-31T04:39:23.505Z","session_id":"ses_183ac5b8effet5rjdu0ic8s9Zd","agent":"cartographer","tool":"smart_bash","phase":"completed","detail":"npx exit=0"}
+{"at":"2026-05-31T04:39:34.886Z","session_id":"ses_183ac5b8effet5rjdu0ic8s9Zd","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Run bun typecheck from package/opencode directory to capture all errors"}
+{"at":"2026-05-31T04:39:34.887Z","session_id":"ses_183ac5b8effet5rjdu0ic8s9Zd","agent":"cartographer","tool":"smart_bash","phase":"rerouted","detail":"→ smart_bun"}
+{"at":"2026-05-31T04:39:45.831Z","session_id":"ses_183ac5b8effet5rjdu0ic8s9Zd","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Get Effect version from package.json"}
+{"at":"2026-05-31T04:39:45.929Z","session_id":"ses_183ac5b8effet5rjdu0ic8s9Zd","agent":"cartographer","tool":"smart_bash","phase":"completed","detail":"node exit=0"}
+{"at":"2026-05-31T04:39:46.435Z","session_id":"ses_183ac5b8effet5rjdu0ic8s9Zd","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Run bun typecheck, capture output to file"}
+{"at":"2026-05-31T04:39:46.435Z","session_id":"ses_183ac5b8effet5rjdu0ic8s9Zd","agent":"cartographer","tool":"smart_bash","phase":"rerouted","detail":"→ smart_bun"}
+{"at":"2026-05-31T04:39:55.683Z","session_id":"ses_183ac5b8effet5rjdu0ic8s9Zd","agent":"cartographer","tool":"smart_bun","phase":"started","detail":"typecheck"}
+{"at":"2026-05-31T04:40:12.780Z","session_id":"ses_183ac5b8effet5rjdu0ic8s9Zd","agent":"cartographer","tool":"smart_bun","phase":"failed","detail":"typecheck exit=2"}
+{"at":"2026-05-31T04:40:23.340Z","session_id":"ses_183ac5b8effet5rjdu0ic8s9Zd","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Run tsgo directly to capture full typecheck output to file"}
+{"at":"2026-05-31T04:40:38.968Z","session_id":"ses_183ac5b8effet5rjdu0ic8s9Zd","agent":"cartographer","tool":"smart_bash","phase":"completed","detail":"bunx exit=0"}
+{"at":"2026-05-31T04:40:47.490Z","session_id":"ses_183ac5b8effet5rjdu0ic8s9Zd","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Capture full typecheck stdout+stderr to file"}
+{"at":"2026-05-31T04:41:04.377Z","session_id":"ses_183ac5b8effet5rjdu0ic8s9Zd","agent":"cartographer","tool":"smart_bash","phase":"completed","detail":"bunx exit=0"}
+{"at":"2026-05-31T04:41:13.287Z","session_id":"ses_183ac5b8effet5rjdu0ic8s9Zd","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Read the full typecheck error output"}
+{"at":"2026-05-31T04:41:13.287Z","session_id":"ses_183ac5b8effet5rjdu0ic8s9Zd","agent":"cartographer","tool":"smart_bash","phase":"rerouted","detail":"→ read_source"}
+{"at":"2026-05-31T04:41:22.891Z","session_id":"ses_183ac5b8effet5rjdu0ic8s9Zd","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Read full typecheck error output"}
+{"at":"2026-05-31T04:41:22.891Z","session_id":"ses_183ac5b8effet5rjdu0ic8s9Zd","agent":"cartographer","tool":"smart_bash","phase":"rerouted","detail":"→ read_source"}
+{"at":"2026-05-31T04:41:57.894Z","session_id":"ses_183ac5b8effet5rjdu0ic8s9Zd","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Analyze and categorize all typecheck errors"}
+{"at":"2026-05-31T04:41:57.954Z","session_id":"ses_183ac5b8effet5rjdu0ic8s9Zd","agent":"cartographer","tool":"smart_bash","phase":"completed","detail":"echo exit=0"}
+{"at":"2026-05-31T04:42:05.066Z","session_id":"ses_183ac5b8effet5rjdu0ic8s9Zd","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"List unique files with errors"}
+{"at":"2026-05-31T04:42:05.066Z","session_id":"ses_183ac5b8effet5rjdu0ic8s9Zd","agent":"cartographer","tool":"smart_bash","phase":"rerouted","detail":"→ smart_grep"}
+{"at":"2026-05-31T04:42:05.416Z","session_id":"ses_183ac5b8effet5rjdu0ic8s9Zd","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Find Schema.annotations errors"}
+{"at":"2026-05-31T04:42:05.416Z","session_id":"ses_183ac5b8effet5rjdu0ic8s9Zd","agent":"cartographer","tool":"smart_bash","phase":"rerouted","detail":"→ smart_grep"}
+{"at":"2026-05-31T04:42:05.980Z","session_id":"ses_183ac5b8effet5rjdu0ic8s9Zd","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Find other Effect API migration errors"}
+{"at":"2026-05-31T04:42:05.980Z","session_id":"ses_183ac5b8effet5rjdu0ic8s9Zd","agent":"cartographer","tool":"smart_bash","phase":"rerouted","detail":"→ smart_grep"}
+{"at":"2026-05-31T04:42:06.772Z","session_id":"ses_183ac5b8effet5rjdu0ic8s9Zd","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Find remaining miscellaneous error codes"}
+{"at":"2026-05-31T04:42:06.773Z","session_id":"ses_183ac5b8effet5rjdu0ic8s9Zd","agent":"cartographer","tool":"smart_bash","phase":"rerouted","detail":"→ smart_grep"}
+{"at":"2026-05-31T04:42:10.009Z","session_id":"ses_183ac5b8effet5rjdu0ic8s9Zd","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Find all miscellaneous error codes"}
+{"at":"2026-05-31T04:42:10.009Z","session_id":"ses_183ac5b8effet5rjdu0ic8s9Zd","agent":"cartographer","tool":"smart_bash","phase":"rerouted","detail":"→ smart_grep"}
+{"at":"2026-05-31T04:42:10.652Z","session_id":"ses_183ac5b8effet5rjdu0ic8s9Zd","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Find TS2339 and TS2345 error details"}
+{"at":"2026-05-31T04:42:10.652Z","session_id":"ses_183ac5b8effet5rjdu0ic8s9Zd","agent":"cartographer","tool":"smart_bash","phase":"rerouted","detail":"→ smart_grep"}
+{"at":"2026-05-31T04:42:11.007Z","session_id":"ses_183ac5b8effet5rjdu0ic8s9Zd","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Find TS2322 error details"}
+{"at":"2026-05-31T04:42:11.008Z","session_id":"ses_183ac5b8effet5rjdu0ic8s9Zd","agent":"cartographer","tool":"smart_bash","phase":"rerouted","detail":"→ smart_grep"}
+{"at":"2026-05-31T04:42:11.496Z","session_id":"ses_183ac5b8effet5rjdu0ic8s9Zd","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Find TS2554 (wrong argument count) error details"}
+{"at":"2026-05-31T04:42:11.497Z","session_id":"ses_183ac5b8effet5rjdu0ic8s9Zd","agent":"cartographer","tool":"smart_bash","phase":"rerouted","detail":"→ smart_grep"}
+{"at":"2026-05-31T04:42:21.705Z","session_id":"ses_183ac5b8effet5rjdu0ic8s9Zd","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Analyze error patterns with Python"}
+{"at":"2026-05-31T04:42:21.747Z","session_id":"ses_183ac5b8effet5rjdu0ic8s9Zd","agent":"cartographer","tool":"smart_bash","phase":"completed","detail":"python3 exit=0"}
+{"at":"2026-05-31T04:42:43.221Z","session_id":"ses_183ac5b8effet5rjdu0ic8s9Zd","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Count errors per file"}
+{"at":"2026-05-31T04:42:43.259Z","session_id":"ses_183ac5b8effet5rjdu0ic8s9Zd","agent":"cartographer","tool":"smart_bash","phase":"completed","detail":"python3 exit=0"}
+{"at":"2026-05-31T04:42:44.539Z","session_id":"ses_183ac5b8effet5rjdu0ic8s9Zd","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Check Effect API exports for migration targets"}
+{"at":"2026-05-31T04:42:44.834Z","session_id":"ses_183ac5b8effet5rjdu0ic8s9Zd","agent":"cartographer","tool":"smart_bash","phase":"completed","detail":"node exit=0"}
+{"at":"2026-05-31T04:42:51.769Z","session_id":"ses_183ac5b8effet5rjdu0ic8s9Zd","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Find exact replacement APIs in Effect 4.0 beta.66"}
+{"at":"2026-05-31T04:42:52.000Z","session_id":"ses_183ac5b8effet5rjdu0ic8s9Zd","agent":"cartographer","tool":"smart_bash","phase":"completed","detail":"node exit=0"}
+{"at":"2026-05-31T04:42:52.279Z","session_id":"ses_183ac5b8effet5rjdu0ic8s9Zd","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"EventName"}
+{"at":"2026-05-31T04:42:52.321Z","session_id":"ses_183ac5b8effet5rjdu0ic8s9Zd","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"EventName"}
+{"at":"2026-05-31T04:42:56.821Z","session_id":"ses_183ac5b8effet5rjdu0ic8s9Zd","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"export.*EventName|type EventName"}
+{"at":"2026-05-31T04:42:56.841Z","session_id":"ses_183ac5b8effet5rjdu0ic8s9Zd","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"export.*EventName|type EventName"}
+{"at":"2026-05-31T04:42:57.371Z","session_id":"ses_183ac5b8effet5rjdu0ic8s9Zd","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"EventName"}
+{"at":"2026-05-31T04:42:57.380Z","session_id":"ses_183ac5b8effet5rjdu0ic8s9Zd","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"EventName"}
+{"at":"2026-05-31T04:43:10.819Z","session_id":"ses_183ac5b8effet5rjdu0ic8s9Zd","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Check Context exports for Tag replacement"}
+{"at":"2026-05-31T04:43:10.939Z","session_id":"ses_183ac5b8effet5rjdu0ic8s9Zd","agent":"cartographer","tool":"smart_bash","phase":"completed","detail":"node exit=0"}
+{"at":"2026-05-31T04:43:11.983Z","session_id":"ses_183ac5b8effet5rjdu0ic8s9Zd","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Check Schema.Literals vs Literal and withDecodingDefault API"}
+{"at":"2026-05-31T04:43:12.282Z","session_id":"ses_183ac5b8effet5rjdu0ic8s9Zd","agent":"cartographer","tool":"smart_bash","phase":"completed","detail":"node exit=0"}
+{"at":"2026-05-31T04:43:17.613Z","session_id":"ses_183ac5b8effet5rjdu0ic8s9Zd","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"Context\\.Service"}
+{"at":"2026-05-31T04:43:17.632Z","session_id":"ses_183ac5b8effet5rjdu0ic8s9Zd","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"Context\\.Service"}
+{"at":"2026-05-31T04:43:22.266Z","session_id":"ses_183ac5b8effet5rjdu0ic8s9Zd","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"Context\\.Tag\\("}
+{"at":"2026-05-31T04:43:22.285Z","session_id":"ses_183ac5b8effet5rjdu0ic8s9Zd","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"Context\\.Tag\\("}
+{"at":"2026-05-31T04:44:10.981Z","session_id":"ses_183ac5b8effet5rjdu0ic8s9Zd","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Generate comprehensive error categorization"}
+{"at":"2026-05-31T04:44:11.015Z","session_id":"ses_183ac5b8effet5rjdu0ic8s9Zd","agent":"cartographer","tool":"smart_bash","phase":"completed","detail":"python3 exit=0"}
+{"at":"2026-05-31T04:44:53.644Z","session_id":"ses_183ac5b8effet5rjdu0ic8s9Zd","agent":"cartographer","tool":"smart_find","phase":"started","detail":"tsconfig.json"}
+{"at":"2026-05-31T04:44:53.670Z","session_id":"ses_183ac5b8effet5rjdu0ic8s9Zd","agent":"cartographer","tool":"smart_find","phase":"failed","detail":"fd not available"}
+{"at":"2026-05-31T04:44:57.669Z","session_id":"ses_183ac5b8effet5rjdu0ic8s9Zd","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Check TypeScript configuration"}
+{"at":"2026-05-31T04:44:57.670Z","session_id":"ses_183ac5b8effet5rjdu0ic8s9Zd","agent":"cartographer","tool":"smart_bash","phase":"rerouted","detail":"→ read_source"}
+{"at":"2026-05-31T04:45:07.291Z","session_id":"ses_183ac5b8effet5rjdu0ic8s9Zd","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Check TypeScript config details"}
+{"at":"2026-05-31T04:45:07.334Z","session_id":"ses_183ac5b8effet5rjdu0ic8s9Zd","agent":"cartographer","tool":"smart_bash","phase":"completed","detail":"python3 exit=0"}
+{"at":"2026-05-31T04:45:11.989Z","session_id":"ses_183ac5b8effet5rjdu0ic8s9Zd","agent":"cartographer","tool":"smart_bash","phase":"started","detail":"Verify the JSON report is valid"}
+{"at":"2026-05-31T04:45:12.066Z","session_id":"ses_183ac5b8effet5rjdu0ic8s9Zd","agent":"cartographer","tool":"smart_bash","phase":"completed","detail":"python3 exit=0"}

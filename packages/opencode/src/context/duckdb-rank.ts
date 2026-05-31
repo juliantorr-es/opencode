@@ -169,6 +169,10 @@ export function queryCochange(
 /**
  * Query agent heatmap entries for a given file.
  *
+ * Tries the table first (`_ctx_agent_heatmap` — populated in persistent mode),
+ * then falls back to the view (`_ctx_agent_heatmap_v` — populated in :memory:
+ * mode by the projection worker).
+ *
  * @param db DuckDB read-only client
  * @param filePath File to get agent access data for
  */
@@ -177,7 +181,7 @@ export function queryAgentHeatmap(
   filePath: string,
 ): Effect.Effect<AgentHeatmapEntry[]> {
   const safe = filePath.replace(/'/g, "''")
-  return Effect.tryPromise(() =>
+  const queryFor = (source: string) =>
     db.all<{
       agent_name: string
       file_path: string
@@ -186,7 +190,7 @@ export function queryAgentHeatmap(
       last_access: string | null
     }>(
       `SELECT agent_name, file_path, read_count, edit_count, last_access
-       FROM _ctx_agent_heatmap
+       FROM ${source}
        WHERE file_path = '${safe}'
        ORDER BY last_access DESC`,
     ).then((rows) =>
@@ -197,7 +201,18 @@ export function queryAgentHeatmap(
         editCount: r.edit_count,
         lastAccess: r.last_access ?? null,
       })),
-    ),
+    )
+
+  const table = "_ctx_agent_heatmap"
+  const view = "_ctx_agent_heatmap_v"
+
+  return Effect.tryPromise(() =>
+    queryFor(table).then((rows) => {
+      if (rows.length > 0) return rows
+      return queryFor(view)
+    }),
+  ).pipe(
+    Effect.catch(() => Effect.tryPromise(() => queryFor(view))),
   )
 }
 
@@ -222,7 +237,8 @@ export function queryErrorFiles(
       `SELECT error_code, file_path, occurrence_count, first_seen, last_seen
        FROM _ctx_error_files
        ORDER BY occurrence_count DESC
-       LIMIT ${limit}`,
+       LIMIT $1`,
+      [limit],
     ).then((rows) =>
       rows.map((r) => ({
         errorCode: r.error_code,

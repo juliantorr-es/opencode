@@ -31,7 +31,7 @@ function extractToolName(properties: Record<string, unknown>): string | undefine
 }
 
 function extractStatus(properties: Record<string, unknown>): RuntimeEvent["status"] | undefined {
-  const phase = (properties as any).phase ?? (properties as any).status
+  const phase = (properties as any).phase ?? (properties as any).status ?? (properties as any).toolStatus
   if (phase && typeof phase === "string") {
     const lowered = phase.toLowerCase()
     if (

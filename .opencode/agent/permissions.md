@@ -1,23 +1,15 @@
-  smart_edit: "allow"
-  smart_write: "allow"
-  smart_batch: "allow"
-  smart_sd: "allow"
-  read_source: "allow"
-  read(action="artifact"): "allow"
-  read(action="lib"): "allow"
-  smart_bun: "allow"
 ---
 mode: subagent
 hidden: true
 color: "#A0A0A0"
 description: Permission doctrine — role-to-permission mapping, merge chain, and cross-cutting protections
+permission:
   smart_edit: "allow"
   smart_write: "allow"
   smart_batch: "allow"
   smart_sd: "allow"
   read_source: "allow"
-  read(action="artifact"): "allow"
-  read(action="lib"): "allow"
+  read: "allow"
   smart_bash: "allow"
   smart_bun: "allow"
 ---
@@ -141,32 +133,32 @@ enforcement (see `AGENTS.md` Git section).
 **Frontmatter:**
 ```yaml
 permission:
-  feedback(action="tool"): "allow"
-  feedback(action="tool"): "allow"
+  feedback: "allow"
+  feedback: "allow"
   "*": "deny"
   task: "allow"
   read: "allow"
   grep: "allow"
   glob: "allow"
   bash: "ask"
-  send_message: "allow"
-  read(action="messages"): "allow"
+  coordinate: "allow"
+  read: "allow"
 ```
 
-**Rationale:** The orchestrator is a pure delegation controller. It must never
+**Rationale:** General Man-agent is a pure delegation controller. It must never
 mutate files, validate output, or execute code directly. Everything is
 delegated to subagents. The `task` tool allows spawning subagents for waves.
 `read`/`grep`/`glob` allow inspecting the codebase for wave planning. `bash`
-is limited to `ask` so the orchestrator can perform lightweight git state
-checks but only with confirmation. `send_message` / `read(action="messages")` support
+is limited to `ask` so General Man-agent can perform lightweight git state
+checks but only with confirmation. `coordinate(action="send")` / `read(action="messages")` support
 the coordination protocol.
 
 **Notable denials:** `write`, `edit`, `search_replace`, `patch` — no mutation.
 `validate`, `test`, `discover(action="failures")` — validation is delegated. `checkpoint`,
-`publish(action="checkpoint")` — checkpointing is the executor's role.
+`gate(action="checkpoint")` — checkpointing is the executor's role.
 
-**AGENTS.md conventions enforced:** The orchestrator's own file (line 21 of
-orchestrator.md) lists `"You never inspect your own output, execute code, write
+**AGENTS.md conventions enforced:** General Man-agent's own file (line 21 of
+general-man-agent.md) lists `"You never inspect your own output, execute code, write
 files, or validate results."` This is directly enforced by the permission
 block.
 
@@ -177,7 +169,7 @@ block.
 **Frontmatter:**
 ```yaml
 permission:
-  feedback(action="tool"): "allow"
+  feedback: "allow"
   "*": "deny"
   read: "allow"
   grep: "allow"
@@ -195,8 +187,8 @@ boundary. `task` is allowed for sub-delegation of complex sub-tasks. `bash` is
 guarded at `ask` because shell execution should only happen after explicit
 approval (e.g. for running formatters or targeted tests).
 
-**Notable denials:** `checkpoint`, `publish(action="checkpoint")` — publication is the
-orchestrator's role. `validate`, `test`, `discover(action="failures")` — the executor
+**Notable denials:** `checkpoint`, `gate(action="checkpoint")` — publication is the
+General Man-agent's role. `validate`, `test`, `discover(action="failures")` — the executor
 self-validates inline but does not produce formal validation artifacts (that
 is the validator's job).
 
@@ -212,7 +204,7 @@ run without oversight.
 **Frontmatter:**
 ```yaml
 permission:
-  feedback(action="tool"): "allow"
+  feedback: "allow"
   "*": "deny"
   read: "allow"
   bash: "ask"
@@ -242,7 +234,7 @@ block enforces this by denying all write tools.
 **Frontmatter:**
 ```yaml
 permission:
-  feedback(action="tool"): "allow"
+  feedback: "allow"
   "*": "deny"
   read: "allow"
   grep: "allow"
@@ -274,7 +266,7 @@ from leaking unvalidated changes into the commit record.
 **Frontmatter:**
 ```yaml
 permission:
-  feedback(action="tool"): "allow"
+  feedback: "allow"
   "*": "deny"
   read: "allow"
   grep: "allow"
@@ -302,7 +294,7 @@ denying all mutation tools.
 **Frontmatter:**
 ```yaml
 permission:
-  feedback(action="tool"): "allow"
+  feedback: "allow"
   "*": "deny"
   read: "allow"
   grep: "allow"
@@ -336,7 +328,7 @@ patch, or bash (unless asked)" — the permission block denies bash entirely
 | "Prefer read-only git operations via bash" | Global `bash: { "git *": "allow" }` streamlines git inspection |
 | "Dirty-file preservation" | Instruction-only (no permission enforcement) |
 | "Prepublication review before final publication" | Permission separation: only orchestrator publishes |
-| "Cross-session coordination uses typed state" | `send_message`/`read(action="messages")` tools for coordination |
+| "Cross-session coordination uses typed state" | `coordinate(action="send")`/`read(action="messages")` tools for coordination |
 | "Never feed raw usage data back into agent prompts" | Instruction-only |
 | "Out-of-scope findings must not be fixed opportunistically" | Frontmatter `"*": "deny"` prevents unauthorized writes |
 

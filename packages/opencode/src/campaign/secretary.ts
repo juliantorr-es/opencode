@@ -1,5 +1,5 @@
-import { Context, Effect, Layer, Ref, Schema } from "effect"
-import { EventStore } from "../event"
+import { Context, Effect, Layer, Option, Ref, Schema } from "effect"
+import { EventStore, EventName } from "../event"
 import type { RuntimeEvent as StoreRuntimeEvent } from "../event/runtime-event"
 import { Identifier } from "../id/id"
 import {
@@ -8,6 +8,7 @@ import {
   type CampaignState as SMCampaignState,
   type RuntimeEvent as SMRuntimeEvent,
 } from "./state-machine"
+import { Service as BinderService, type Binder as CanonicalBinder, layer as BinderLayer } from "./binder"
 import type { LaneState as LaneStateName } from "./types"
 
 // ── State Tags (canonical LaneState from types.ts) ───────────
@@ -52,18 +53,9 @@ export interface RoleOutput {
   readonly message: string
 }
 
-// ── Lane Binder (SM-006) ─────────────────────────────────────
+// ── Lane Binder (SM-006) — re-exported from canonical binder.ts ───
 
-export interface Binder {
-  readonly laneId: string
-  readonly campaignId: string
-  readonly scope: string
-  readonly finalState: StateTag
-  readonly transitionCount: number
-  readonly eventsProcessed: number
-  readonly toolsUsed: readonly string[]
-  readonly artifacts: readonly string[]
-}
+export type Binder = CanonicalBinder
 
 // ── Active Lane State ────────────────────────────────────────
 
@@ -79,7 +71,7 @@ export interface LaneState {
   readonly transitions: readonly TransitionRecord[]
   readonly allowedTools: readonly string[]
   readonly activeRole: string | null
-  readonly binder: Binder | null
+  readonly binder: CanonicalBinder | null
   readonly error: string | null
 }
 
@@ -134,7 +126,7 @@ function toSMEvent(event: RuntimeEvent): SMRuntimeEvent {
     case "StartLearning":
       return { type: "context.sufficient", timestamp: ts, payload: {} }
     case "LearningComplete":
-      return { type: "plan.produced", timestamp: ts, payload: { artifacts: [...event.artifacts] } }
+      return { type: "scout.completed", timestamp: ts, payload: { artifacts: [...event.artifacts] } }
     case "PlanReady":
       return { type: "plan.produced", timestamp: ts, payload: {} }
     case "ReviewApproved":
@@ -166,6 +158,24 @@ function toSMEvent(event: RuntimeEvent): SMRuntimeEvent {
  * Map a secretary RuntimeEvent to an EventStore RuntimeEvent for
  * write-through durability.
  */
+const EVENT_NAME_MAP: Record<string, string> = {
+  LaneCreated: EventName.CampaignLaneCreated,
+  StartLearning: EventName.ContextSufficient,
+  LearningComplete: EventName.PlanProduced,
+  PlanReady: EventName.PlanProduced,
+  ReviewApproved: EventName.PlanApproved,
+  ReviewRejected: EventName.PlanRejected,
+  ExecutionComplete: EventName.EditApplied,
+  ValidationPassed: EventName.ValidationCompleted,
+  ValidationFailed: EventName.ValidationFailure,
+  RepairComplete: EventName.EditApplied,
+  RepairFailed: EventName.ValidationFailure,
+  Blocked: EventName.ChildBlocked,
+  Unblocked: EventName.ContextSufficient,
+  RoleComplete: EventName.EditApplied,
+  Failed: EventName.PermissionDenied,
+}
+
 function toStoreEvent(
   laneId: string,
   campaignId: string,
@@ -179,7 +189,7 @@ function toStoreEvent(
     correlationId: undefined,
     ts: new Date().toISOString(),
     actor: "lifecycle",
-    eventType: event._tag,
+    eventType: EVENT_NAME_MAP[event._tag] ?? event._tag,
     phase: "campaign",
     status: undefined,
     toolName: undefined,
@@ -218,7 +228,7 @@ export class Service extends Context.Service<Service, Interface>()("@opencode/Se
 // ── Helpers ──────────────────────────────────────────────────
 
 function isTerminal(state: StateTag): boolean {
-  return state === "failed" || state === "blocked"
+  return state === "checkpointed" || state === "failed" || state === "blocked" || state === "returned"
 }
 
 const STATE_ROLE: Record<string, string> = {
@@ -254,6 +264,7 @@ function makeInitialSMState(): SMCampaignState {
 const make = Effect.gen(function* () {
   const activeLanes = yield* Ref.make(new Map<string, LaneState>())
   const eventStore = yield* EventStore.Service
+  const binderService = yield* BinderService
 
   function ensureLane(laneId: string): Effect.Effect<LaneState, LaneNotFoundError> {
     return Ref.get(activeLanes).pipe(
@@ -376,42 +387,49 @@ const make = Effect.gen(function* () {
       const smEvent = toSMEvent(event)
       const nextSM = reduceCampaignState(lane.smState, [smEvent], LANE_STATE_MACHINE)
 
-      // Determine new state tag from SM result
+      // SM is the primary authority for state transitions
       let newState: StateTag
       let freshPrevious: StateTag | null
 
-      if (event._tag === "Blocked") {
-        newState = "blocked"
-        freshPrevious = lane.currentState
-      } else if (event._tag === "Failed" || nextSM.currentState === "failed" as string) {
-        newState = "failed"
-        freshPrevious = lane.previousState
-      } else if (lane.currentState === "blocked" && event._tag === "Unblocked") {
-        // Unblocked — restore previous state or default
-        newState = lane.previousState ?? "created"
-        freshPrevious = null
-      } else if (nextSM.currentState === lane.currentState && nextSM.currentState !== "blocked") {
-        // SM didn't transition — no state change, just update event stream
-        yield* Ref.update(activeLanes, (map) => {
-          const next = new Map(map)
-          const existing = next.get(laneId)
-          if (existing) {
-            next.set(laneId, {
-              ...existing,
-              eventStream: updatedStream,
-              smState: nextSM,
-            })
-          }
-          return next
-        })
-        return
-      } else {
-        // Normal SM transition
-        const smCurrent = nextSM.stateHistory.length > 0
+      if (nextSM.currentState !== lane.currentState) {
+        // SM transitioned — use its result
+        const smTarget = nextSM.stateHistory.length > 0
           ? nextSM.stateHistory[nextSM.stateHistory.length - 1]!.to
           : nextSM.currentState
-        newState = smCurrent as StateTag
-        freshPrevious = null
+        newState = smTarget as StateTag
+        freshPrevious = lane.currentState
+      } else {
+        // SM didn't transition — handle events the SM doesn't directly cover
+        switch (event._tag) {
+          case "Blocked":
+            newState = "blocked"
+            freshPrevious = lane.currentState
+            break
+          case "Failed":
+            newState = "failed"
+            freshPrevious = lane.currentState
+            break
+          case "Unblocked":
+            // Unblocked — restore previous state or default
+            newState = lane.previousState ?? "created"
+            freshPrevious = null
+            break
+          default:
+            // No state change — just update event stream and return
+            yield* Ref.update(activeLanes, (map) => {
+              const next = new Map(map)
+              const existing = next.get(laneId)
+              if (existing) {
+                next.set(laneId, {
+                  ...existing,
+                  eventStream: updatedStream,
+                  smState: nextSM,
+                })
+              }
+              return next
+            })
+            return
+        }
       }
 
       const transition: TransitionRecord = {
@@ -434,19 +452,35 @@ const make = Effect.gen(function* () {
         }
       }
 
-      // Build binder if terminal
-      const binder: Binder | null = isTerminal(newState)
-        ? {
+      // Build binder if terminal — using canonical BinderService
+      let binder: Binder | null = null
+      if (isTerminal(newState)) {
+        yield* binderService.createBinder(laneId, lane.campaignId, lane.scope, lane.scope)
+        for (const t of lane.transitions) {
+          yield* binderService.addEvidence(
             laneId,
-            campaignId: lane.campaignId,
-            scope: lane.scope,
-            finalState: newState,
-            transitionCount: updatedTransitions.length,
-            eventsProcessed: updatedStream.length,
-            toolsUsed: allowedTools,
-            artifacts,
-          }
-        : null
+            "transition",
+            {
+              eventId: `${laneId}:${t.event}:${t.timestamp}`,
+              eventType: t.event,
+              ts: new Date(t.timestamp).toISOString(),
+              summary: `Transition: ${t.from} → ${t.to}`,
+            },
+          )
+        }
+        yield* binderService.addEvidence(
+          laneId,
+          "event",
+          {
+            eventId: `${laneId}:${event._tag}:${now()}`,
+            eventType: event._tag,
+            ts: new Date().toISOString(),
+            summary: `Event: ${event._tag}`,
+          },
+        )
+        yield* binderService.updateStatus(laneId, newState)
+        binder = yield* binderService.finalizeBinder(laneId)
+      }
 
       const updated: LaneState = {
         ...lane,
@@ -537,7 +571,9 @@ const make = Effect.gen(function* () {
   })
 })
 
-export const layer: Layer.Layer<Service, never, EventStore.Service> = Layer.effect(Service, make)
+export const layer: Layer.Layer<Service, never, EventStore.Service> = Layer.effect(Service, make).pipe(
+  Layer.provide(BinderLayer),
+)
 export const defaultLayer = layer
 
 export const Secretary = { Service, layer, defaultLayer } as const

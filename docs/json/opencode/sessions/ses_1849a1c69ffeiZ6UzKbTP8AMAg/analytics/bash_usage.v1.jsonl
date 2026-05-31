@@ -1,0 +1,1 @@
+{"at":"2026-05-31T00:20:03.368Z","session_id":"ses_1849a1c69ffeiZ6UzKbTP8AMAg","agent":"logbook","binary":"eza","command":"eza --tree packages/opencode/src/storage/ 2>&1 || echo \"eza not found, trying alternative\" && find packages/opencode/src/storage -type f 2>/dev/null | sort","reason":"List storage files using available tools","elapsed_ms":18,"exit_code":0}

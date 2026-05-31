@@ -175,7 +175,7 @@ await check("bun test snapshot/snapshot.test.ts", async () => {
     .nothrow()
     .quiet()
   if (result.exitCode !== 0) {
-    const stderr = await new Response(result.stderr).text()
+    const stderr = result.stderr.toString()
     throw new Error(`Snapshot tests regressed (exit ${result.exitCode}):\n${stderr.slice(0, 500)}`)
   }
 })

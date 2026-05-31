@@ -1,0 +1,27 @@
+{"at":"2026-05-31T02:40:57.747Z","tool":"smart_grep","action":"searched","pattern":"diff-viewer","results":11,"files":5}
+{"at":"2026-05-31T02:40:57.909Z","tool":"smart_grep","action":"searched","pattern":"use-event","results":1,"files":1}
+{"at":"2026-05-31T02:40:58.117Z","tool":"smart_grep","action":"searched","pattern":"registry.test","results":1,"files":1}
+{"at":"2026-05-31T02:41:43.637Z","tool":"smart_grep","action":"searched","pattern":"registry.test","results":30,"files":18}
+{"at":"2026-05-31T02:41:51.521Z","tool":"smart_grep","action":"searched","pattern":"installation.update_available","results":13,"files":9}
+{"at":"2026-05-31T02:41:58.588Z","tool":"smart_grep","action":"searched","pattern":"installation.update-available","results":30,"files":19}
+{"at":"2026-05-31T02:42:44.969Z","tool":"smart_grep","action":"searched","pattern":"@opentui/keymap","results":6,"files":3}
+{"at":"2026-05-31T02:42:45.256Z","tool":"smart_grep","action":"searched","pattern":"unquarantine","results":3,"files":1}
+{"at":"2026-05-31T02:42:45.487Z","tool":"smart_grep","action":"searched","pattern":"getCrashStatus","results":3,"files":1}
+{"at":"2026-05-31T02:43:39.028Z","tool":"smart_grep","action":"searched","pattern":"Plugin\\.Service|Plugin\\.Interface","results":0,"files":0}
+{"at":"2026-05-31T02:44:26.733Z","tool":"smart_grep","action":"searched","pattern":"Fake Plugin|Plugin\\.Service\\.of|pluginLayer|withPlugin","results":0,"files":0}
+{"at":"2026-05-31T02:45:33.312Z","tool":"smart_grep","action":"searched","pattern":"brokenPluginLayer|Fake Plugin","results":0,"files":0}
+{"at":"2026-05-31T02:45:55.364Z","tool":"smart_bash","action":"bash","command":"python3 -c \"\nwith open('packages/opencode/test/tool/registry.test.ts') as f:\n    lines = f.readlines","exit_code":0}
+{"at":"2026-05-31T02:46:07.163Z","tool":"smart_bash","action":"bash","command":"python3 -c \"\nwith open('packages/opencode/test/tool/registry.test.ts') as f:\n    lines = f.readlines","exit_code":0}
+{"at":"2026-05-31T02:46:17.788Z","tool":"smart_bash","action":"bash","command":"python3 -c \"\nwith open('packages/opencode/test/tool/registry.test.ts') as f:\n    content = f.read()\n","exit_code":0}
+{"at":"2026-05-31T02:46:29.491Z","tool":"smart_bash","action":"bash","command":"python3 -c \"\nwith open('package.json') as f:\n    import json\n    data = json.load(f)\n    # Print the","exit_code":0}
+{"at":"2026-05-31T02:46:30.149Z","tool":"smart_bash","action":"bash","command":"python3 -c \"\nwith open('packages/opencode/package.json') as f:\n    import json\n    data = json.load(","exit_code":0}
+{"at":"2026-05-31T02:46:38.701Z","tool":"smart_bash","action":"bash","command":"python3 -c \"\nwith open('package.json') as f:\n    import json\n    data = json.load(f)\n    # Print the","exit_code":0}
+{"at":"2026-05-31T02:47:04.806Z","tool":"smart_bash","action":"bash","command":"python3 -c \"\nimport json\n# Read installation/index.ts and find BusEvent.define for update available\n","exit_code":0}
+{"at":"2026-05-31T02:47:04.864Z","tool":"smart_bash","action":"bash","command":"python3 -c \"\n# Check bun lockfile for @opentui/keymap versions\nimport json\ntry:\n    with open('bun.l","exit_code":0}
+{"at":"2026-05-31T02:47:04.878Z","tool":"smart_grep","action":"searched","pattern":"UpdateAvailable|update.available","results":0,"files":0}
+{"at":"2026-05-31T02:47:12.638Z","tool":"smart_bash","action":"bash","command":"python3 -c \"\n# Check if @opentui/keymap is installed and what version\nimport os\nimport json\n\n# Check","exit_code":0}
+{"at":"2026-05-31T02:47:12.956Z","tool":"smart_grep","action":"searched","pattern":"EventInstallationUpdateAvailable","results":0,"files":0}
+{"at":"2026-05-31T02:47:21.544Z","tool":"smart_bash","action":"bash","command":"python3 -c \"\nimport os, json\nimport subprocess\n# Search all package.json files at any level for @ope","exit_code":0}
+{"at":"2026-05-31T02:47:24.593Z","tool":"smart_bash","action":"bash","command":"python3 -c \"\nimport os, json\n# Check ALL @opentui/keymap/node_modules in the workspace tree\nfor root","exit_code":0}
+{"at":"2026-05-31T02:47:34.797Z","tool":"smart_bash","action":"bash","command":"python3 -c \"\nwith open('packages/sdk/js/src/v2/gen/types.gen.ts') as f:\n    lines = f.readlines()\n  ","exit_code":0}
+{"at":"2026-05-31T02:47:35.562Z","tool":"smart_bash","action":"bash","command":"python3 -c \"\nwith open('packages/sdk/js/src/v2/gen/types.gen.ts') as f:\n    lines = f.readlines()\n  ","exit_code":0}

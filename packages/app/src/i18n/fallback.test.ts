@@ -1,18 +1,5 @@
 import { describe, expect, test } from "bun:test"
-import { resolveTemplate } from "@solid-primitives/i18n"
-
-function resolveKey(
-  key: string,
-  dict: Record<string, string> | undefined,
-  parentDict: Record<string, string> | undefined,
-  base: Record<string, string>,
-  params?: Record<string, unknown>,
-): string {
-  if (dict && key in dict) return resolveTemplate(dict[key], params)
-  if (parentDict && key in parentDict) return resolveTemplate(parentDict[key], params)
-  if (key in base) return resolveTemplate(base[key], params)
-  return key
-}
+import { resolveKey } from "./resolve"
 
 const base = {
   "github.login": "Sign in with GitHub",

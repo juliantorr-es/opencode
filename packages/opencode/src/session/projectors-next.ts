@@ -6,7 +6,7 @@ import { SessionEvent } from "@opencode-ai/core/session-event"
 import * as DateTime from "effect/DateTime"
 import { SyncEvent } from "@/sync"
 import { EventV2Bridge } from "@/event-v2-bridge"
-import { SessionMessageTable, SessionTable } from "./session.sql"
+import { SessionMessageTable, SessionTable } from "@/storage/schema"
 import type { SessionID } from "./schema"
 import { Schema } from "effect"
 

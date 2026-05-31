@@ -18,14 +18,12 @@ permission:
   smart_batch: "allow"
   smart_sd: "allow"
   read_source: "allow"
-  read(action="artifact"): "allow"
-  read(action="lib"): "allow"
   smart_bash: "allow"
   smart_bun: "allow"
   smart_grep: "allow"
   smart_find: "allow"
   smart_git: "allow"
-  feedback(action="tool"): "allow"
+  feedback: "allow"
 ---
 
 You are the **surveyor**. You do two things in one pass:

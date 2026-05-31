@@ -1,0 +1,383 @@
+{
+  "schema": "rig.relay.cartography_artifact.v1",
+  "title": "Lane State Machine Event System — Complete Cartography",
+  "generated_at": "2026-05-30T00:00:00.000Z",
+  "source_files": [
+    "packages/opencode/src/event/event-names.ts",
+    "packages/opencode/src/event/runtime-event.ts",
+    "packages/opencode/src/campaign/state-machine.ts",
+    "packages/opencode/src/campaign/secretary.ts",
+    "packages/opencode/src/campaign/predicates.ts",
+    "packages/opencode/src/campaign/campaign-event.ts",
+    "packages/opencode/src/debug/debug-packet.ts"
+  ],
+  "sections": {
+    "four_event_dialects": {
+      "description": "There are 4 distinct event dialects in the codebase, each with its own type system, event naming, and purpose.",
+      "dialects": [
+        {
+          "name": "EventName (Canonical Enum)",
+          "file": "packages/opencode/src/event/event-names.ts:11-133",
+          "count": 72,
+          "type": "const object (as const)",
+          "usage": "BusEvent.define(), RuntimeEvent.eventType schema validation",
+          "values_by_domain": {
+            "session.*": ["session.created", "session.updated", "session.deleted", "session.diff", "session.error", "session.status", "session.idle (deprecated)", "session.compacted"],
+            "message.*": ["message.part.delta", "message.updated", "message.removed", "message.part.updated", "message.part.removed"],
+            "todo.*": ["todo.updated"],
+            "permission.*": ["permission.asked", "permission.replied", "permission.denied"],
+            "question.*": ["question.asked", "question.replied", "question.rejected"],
+            "command.*": ["command.executed"],
+            "file.*": ["file.edited", "file.watcher.updated"],
+            "project.*": ["project.updated", "vcs.branch.updated"],
+            "mcp.*": ["mcp.tools.changed", "mcp.browser.open.failed"],
+            "pty.*": ["pty.created", "pty.updated", "pty.exited", "pty.deleted"],
+            "lsp.*": ["lsp.diagnostics", "lsp.client.diagnostics", "lsp.updated"],
+            "installation.*": ["installation.updated", "installation.update-available"],
+            "ide.*": ["ide.installed"],
+            "server.*": ["server.connected", "global.disposed", "server.instance.disposed"],
+            "coordination.*": ["coord.subagent.phase"],
+            "session.next.*": ["session.next.agent.switched", "session.next.model.switched", "session.next.prompted", "session.next.synthetic"],
+            "workspace.*": ["workspace.ready", "workspace.failed", "workspace.status"],
+            "worktree.*": ["worktree.ready", "worktree.failed"],
+            "campaign.*": ["campaign.created", "lane.created", "campaign.lane.assigned", "campaign.lane.completed", "campaign.gate.activated", "campaign.gate.passed", "campaign.gate.failed", "campaign.artifact.produced", "campaign.review.initiated", "campaign.review.completed", "campaign.push.initiated", "campaign.push.completed", "campaign.push.failed", "campaign.push.evidence.collected", "campaign.push.evidence.missing", "campaign.publication.submitted", "campaign.publication.admitted", "campaign.publication.blocked", "campaign.checkpoint.created"],
+            "context.*": ["context.sufficient"],
+            "plan.*": ["plan.produced", "plan.approved", "plan.rejected"],
+            "edit.*": ["edit.applied"],
+            "validation.*": ["validation.completed", "validation.failure"],
+            "child.*": ["child.blocked"]
+          }
+        },
+        {
+          "name": "Store RuntimeEvent (Effect Schema)",
+          "file": "packages/opencode/src/event/runtime-event.ts:10-34",
+          "type": "Effect Schema.Struct",
+          "event_type_constraint": "Schema.Literal(...EventNameValues) — the 72 canonical values",
+          "status_values": ["started", "succeeded", "failed", "denied", "cancelled", "recovered"],
+          "actor_values": ["user", "assistant", "tool", "system", "lifecycle"],
+          "purpose": "Event store persistence, bus events, cross-service transport",
+          "fields": "id, sessionId, runId, parentEventId, correlationId, ts, actor, eventType, phase, status, toolName, filePath, model, durationMs, tokenInput, tokenOutput, errorCode, errorMessage, recoverable, payloadJson, campaignId, laneId, role"
+        },
+        {
+          "name": "Secretary RuntimeEvent (Tagged Union)",
+          "file": "packages/opencode/src/campaign/secretary.ts:20-39",
+          "type": "Tagged union (15 variants via _tag discriminator)",
+          "purpose": "Campaign lane progression — emitted by Secretary service, bridged to both state machine and store",
+          "variants": [
+            { "_tag": "LaneCreated", "bridge_sm_type": "lane.created" },
+            { "_tag": "StartLearning", "bridge_sm_type": "context.sufficient" },
+            { "_tag": "LearningComplete", "bridge_sm_type": "plan.produced", "payload": "artifacts" },
+            { "_tag": "PlanReady", "bridge_sm_type": "plan.produced" },
+            { "_tag": "ReviewApproved", "bridge_sm_type": "plan.approved" },
+            { "_tag": "ReviewRejected", "bridge_sm_type": "plan.rejected", "payload": "reason" },
+            { "_tag": "ExecutionComplete", "bridge_sm_type": "edit.applied" },
+            { "_tag": "ValidationPassed", "bridge_sm_type": "validation.completed" },
+            { "_tag": "ValidationFailed", "bridge_sm_type": "validation.failure", "payload": "issues" },
+            { "_tag": "RepairComplete", "bridge_sm_type": "edit.applied" },
+            { "_tag": "RepairFailed", "bridge_sm_type": "validation.failure", "payload": "error" },
+            { "_tag": "Blocked", "bridge_sm_type": "child.blocked", "payload": "reason" },
+            { "_tag": "Unblocked", "bridge_sm_type": "context.sufficient" },
+            { "_tag": "RoleComplete", "bridge_sm_type": "edit.applied", "payload": "role, output" },
+            { "_tag": "Failed", "bridge_sm_type": "permission.denied", "payload": "error" }
+          ],
+          "bridging": {
+            "to_state_machine": "toSMEvent() maps _tag → { type, timestamp, payload } (secretary.ts:121-152)",
+            "to_event_store": "toStoreEvent() uses EVENT_NAME_MAP to convert _tag → EventName.* (secretary.ts:161-177)",
+            "note": "LearningComplete and PlanReady BOTH map to plan.produced — two different secretary events produce the same state machine event type"
+          }
+        },
+        {
+          "name": "State Machine PredicateSpec (Discriminated Union)",
+          "file": "packages/opencode/src/campaign/state-machine.ts:46-68",
+          "type": "Discriminated union via kind field",
+          "purpose": "Determines state transitions inside the pure reducer",
+          "variants": [
+            "event_exists", "latest_validation_passed", "claims_acquired", "has_claim_conflict",
+            "permission_denied", "retry_budget_remaining", "user_approval_granted",
+            "context_sufficient", "scope_unsafe", "edit_applied", "new_validation_failure",
+            "failures_existed_before_edit", "repair_budget_exhausted", "all_children_complete",
+            "child_blocked", "no_blocking_findings", "finding_confirmed",
+            "plan_produced", "plan_approved", "plan_rejected", "all_gates_pass"
+          ],
+          "evaluation": "evaluatePredicate() switch/case on predicate.kind (state-machine.ts:305-417)"
+        },
+        {
+          "name": "Debug Packet RuntimeEvent",
+          "file": "packages/opencode/src/debug/debug-packet.ts:72-81",
+          "type": "Interface { id, type, timestamp, sessionId?, correlationId?, status?, errorCode?, summary }",
+          "purpose": "Debug packet payload for telemetry inspection",
+          "note": "Standalone type, not connected to the state machine or event store"
+        }
+      ]
+    },
+    "state_machines": {
+      "lane_state_machine": {
+        "file": "packages/opencode/src/campaign/state-machine.ts:115-210",
+        "id": "lane",
+        "initial": "created",
+        "version": "1.0.0",
+        "states_and_transitions": {
+          "created": {
+            "transitions": [
+              { "to": "scouting", "when": "context_sufficient" }
+            ]
+          },
+          "scouting": {
+            "transitions": [
+              { "to": "scoped", "when": "plan_produced" }
+            ]
+          },
+          "scoped": {
+            "transitions": [
+              { "to": "planning", "when": "plan_produced" }
+            ]
+          },
+          "planning": {
+            "transitions": [
+              { "to": "critic_review", "when": "plan_produced" }
+            ]
+          },
+          "critic_review": {
+            "transitions": [
+              { "to": "planning", "when": "plan_rejected", "priority": 5 },
+              { "to": "approved", "when": "plan_approved", "priority": 10 }
+            ]
+          },
+          "approved": {
+            "transitions": [
+              { "to": "executing", "when": "claims_acquired" }
+            ]
+          },
+          "executing": {
+            "transitions": [
+              { "to": "validating", "when": "edit_applied" }
+            ]
+          },
+          "validating": {
+            "transitions": [
+              { "to": "repairing", "when": "new_validation_failure", "priority": 5 },
+              { "to": "red_team", "when": "latest_validation_passed+afterLastEdit", "priority": 10 }
+            ]
+          },
+          "red_team": {
+            "transitions": [
+              { "to": "repairing", "when": "finding_confirmed", "priority": 5 },
+              { "to": "scoping", "when": "no_blocking_findings", "priority": 10 }
+            ]
+          },
+          "repairing": {
+            "transitions": [
+              { "to": "repairing", "when": "retry_budget_remaining", "note": "self-loop for retry" },
+              { "to": "scoping", "when": "edit_applied" },
+              { "to": "blocked", "when": "repair_budget_exhausted" }
+            ]
+          },
+          "scoping": {
+            "transitions": [
+              { "to": "scoped", "when": "context_sufficient" }
+            ]
+          },
+          "historian": {
+            "transitions": [
+              { "to": "checkpointed", "when": "event_exists:session.checkpoint" }
+            ]
+          },
+          "checkpointed": {
+            "transitions": [
+              { "to": "returned", "when": "event_exists:lane.returned" }
+            ]
+          },
+          "blocked": {
+            "transitions": []
+          }
+        },
+        "flow_summary": "created → scouting → scoped → planning → critic_review → approved → executing → validating → [repairing ↔ validting loop] → red_team → scoping → [re-scope loop] → historian → checkpointed → returned. Blocked is absorbable from any point via external transitions."
+      },
+      "campaign_state_machine": {
+        "file": "packages/opencode/src/campaign/state-machine.ts:222-301",
+        "id": "campaign",
+        "initial": "created",
+        "version": "1.0.0",
+        "common_blocked_transitions": "blockedTransitions() injects 3 'drain to blocked' transitions at priority 0-2: has_claim_conflict, child_blocked, scope_unsafe",
+        "states_and_transitions": {
+          "created": {
+            "transitions": [
+              { "to": "blocked", "when": "has_claim_conflict", "priority": 0 },
+              { "to": "blocked", "when": "child_blocked", "priority": 1 },
+              { "to": "blocked", "when": "scope_unsafe", "priority": 2 },
+              { "to": "scouting", "when": "context_sufficient", "priority": 10 }
+            ]
+          },
+          "scouting": {
+            "transitions": [
+              ...common_blocked + { "to": "scope_synthesis", "when": "plan_produced", "priority": 10 }
+            ]
+          },
+          "scope_synthesis": {
+            "transitions": [
+              ...common_blocked + { "to": "lane_decomposition", "when": "plan_produced", "priority": 10 }
+            ]
+          },
+          "lane_decomposition": {
+            "transitions": [
+              ...common_blocked + { "to": "lane_dispatch", "when": "claims_acquired", "priority": 10 }
+            ]
+          },
+          "lane_dispatch": {
+            "transitions": [
+              ...common_blocked + { "to": "waiting_for_lanes", "when": "all_children_complete", "priority": 10 }
+            ]
+          },
+          "waiting_for_lanes": {
+            "transitions": [
+              ...common_blocked + { "to": "integration_review", "when": "all_children_complete", "priority": 10 }
+            ]
+          },
+          "integration_review": {
+            "transitions": [
+              ...common_blocked + { "to": "final_validation", "when": "no_blocking_findings", "priority": 10 }
+            ]
+          },
+          "final_validation": {
+            "transitions": [
+              ...common_blocked + { "to": "push_ready", "when": "latest_validation_passed+afterLastEdit=false", "priority": 10 }
+            ]
+          },
+          "push_ready": {
+            "transitions": [
+              ...common_blocked + { "to": "pushed", "when": "all_gates_pass", "priority": 10 }
+            ]
+          },
+          "pushed": {
+            "transitions": [ ...common_blocked ]
+          },
+          "blocked": {
+            "transitions": []
+          }
+        },
+        "flow_summary": "created → scouting → scope_synthesis → lane_decomposition → lane_dispatch → waiting_for_lanes → integration_review → final_validation → push_ready → pushed. Any state can drain to blocked."
+      }
+    },
+    "plan_produced_cross_phase_usage": {
+      "description": "The `plan_produced` predicate (kind: 'plan_produced') triggers transitions in 5 different state contexts across both machines",
+      "usages": [
+        { "file": "state-machine.ts:129", "machine": "lane", "from": "scouting", "to": "scoped" },
+        { "file": "state-machine.ts:135", "machine": "lane", "from": "scoped", "to": "planning" },
+        { "file": "state-machine.ts:141", "machine": "lane", "from": "planning", "to": "critic_review" },
+        { "file": "state-machine.ts:238", "machine": "campaign", "from": "scouting", "to": "scope_synthesis" },
+        { "file": "state-machine.ts:245", "machine": "campaign", "from": "scope_synthesis", "to": "lane_decomposition" }
+      ],
+      "evaluation_logic": {
+        "state_machine_heuristic": "evaluatePredicate case 'plan_produced' (state-machine.ts:397-398): events.some(e => e.type === 'plan.produced')",
+        "predicates_ts_resolver": "resolvePlanProduced (predicates.ts:495-512): matches 'plan.produced' || 'plan.created' || 'artifact.plan' — broader matching than the state machine heuristic"
+      },
+      "secretary_to_sm_bridge": {
+        "mapping_note": "Both secretary LearningComplete and PlanReady map to 'plan.produced' in the state machine",
+        "secretary_events_mapped_to_plan_produced": [
+          { "_tag": "LearningComplete", "file": "secretary.ts:128-129" },
+          { "_tag": "PlanReady", "file": "secretary.ts:130-131" }
+        ]
+      }
+    },
+    "predicates_ts_event_checking": {
+      "file": "packages/opencode/src/campaign/predicates.ts",
+      "uses_canonical_EventName": false,
+      "uses_raw_strings": true,
+      "all_raw_event_strings_used": [
+        { "string": "validation.completed", "in_EventName": true, "key": "ValidationCompleted" },
+        { "string": "file.edited", "in_EventName": true, "key": "FileEdited" },
+        { "string": "file.conflict", "in_EventName": false },
+        { "string": "claim.conflict", "in_EventName": false },
+        { "string": "tool.failed", "in_EventName": false },
+        { "string": "user.approval", "in_EventName": false },
+        { "string": "user.approval.${type}", "in_EventName": false },
+        { "string": "file.read", "in_EventName": false },
+        { "string": "redteam.finding", "in_EventName": false },
+        { "string": "plan.produced", "in_EventName": true, "key": "PlanProduced" },
+        { "string": "plan.created", "in_EventName": false },
+        { "string": "artifact.plan", "in_EventName": false },
+        { "string": "critic.review", "in_EventName": false },
+        { "string": "lane.completed", "in_EventName": true, "key": "CampaignLaneCompleted" },
+        { "string": "child.completed", "in_EventName": false },
+        { "string": "lane.blocked", "in_EventName": false },
+        { "string": "child.blocked", "in_EventName": true, "key": "ChildBlocked" }
+      ],
+      "statistics": "17 unique raw event strings; 7 have EventName equivalents; 10 have NO canonical enum entry",
+      "status_strings_used": ["succeeded", "failed", "denied"],
+      "actor_strings_used": ["system"]
+    },
+    "predicate_resolvers_registry": {
+      "file": "packages/opencode/src/campaign/predicates.ts:626-655",
+      "description": "export const predicateResolvers: Record<string, PredicateResolver> — maps kind string to resolver function",
+      "all_resolvers": [
+        "event_exists", "latest_validation_passed", "claims_acquired",
+        "has_claim_conflict", "permission_denied", "retry_budget_remaining",
+        "user_approval_granted", "context_sufficient", "scope_unsafe",
+        "edit_applied", "new_validation_failure", "failures_existed_before_edit",
+        "no_blocking_findings", "finding_confirmed", "plan_produced",
+        "plan_approved", "plan_rejected", "all_children_complete", "child_blocked"
+      ],
+      "note": "predicates.ts resolvers are richer than the evaluatePredicate switch — e.g., plan_produced resolver checks 3 event types while state-machine heuristic checks 1"
+    },
+    "campaign_event_schema": {
+      "file": "packages/opencode/src/campaign/campaign-event.ts:18-38",
+      "count": 18,
+      "values": [
+        "campaign.created", "campaign.lane.assigned", "campaign.lane.completed",
+        "campaign.gate.activated", "campaign.gate.passed", "campaign.gate.failed",
+        "campaign.artifact.produced", "campaign.review.initiated", "campaign.review.completed",
+        "campaign.push.initiated", "campaign.push.completed", "campaign.push.failed",
+        "campaign.push.evidence.collected", "campaign.push.evidence.missing",
+        "campaign.publication.submitted", "campaign.publication.admitted",
+        "campaign.publication.blocked", "campaign.checkpoint.created"
+      ],
+      "note": "Subset of EventName campaign.* domain, with converters to/from store RuntimeEvent"
+    },
+    "reduceCampaignState": {
+      "file": "packages/opencode/src/campaign/state-machine.ts:419-483",
+      "signature": "export function reduceCampaignState(previous: CampaignState, machineSpec: AgentStateMachineSpec, newEvents: readonly RuntimeEvent[]): CampaignState",
+      "algorithm": [
+        "1. Clone retryBudgets into working map",
+        "2. Concatenate all events (previous.events + newEvents) into allEvents",
+        "3. Start with currentState from previous state",
+        "4. For each event in allEvents (in order):",
+        "   a. Look up AgentStateSpec for currentState",
+        "   b. Filter transitions where evaluatePredicate() returns true",
+        "   c. Sort by priority (lower number = higher priority, default 100)",
+        "   d. Take first matching transition (break after found)",
+        "   e. If transition found: update currentState, record StateTransition, exec entry actions",
+        "5. Return new CampaignState with updated currentState, stateHistory, transitionCount, events"
+      ]
+    },
+    "smoking_guns": [
+      {
+        "id": "SG-1",
+        "severity": "high",
+        "title": "predicates.ts uses raw strings, not EventName enum — 10 of 17 strings are unregistered",
+        "files": ["predicates.ts:141", "predicates.ts:152", "predicates.ts:199", "predicates.ts:285", "predicates.ts:343", "predicates.ts:466", "predicates.ts:501", "predicates.ts:520", "predicates.ts:571"],
+        "detail": "Half the event strings in predicates.ts (like 'file.conflict', 'tool.failed', 'user.approval', 'redteam.finding', 'critic.review', 'child.completed', 'lane.blocked', 'plan.created', 'artifact.plan') have no EventName entry. This means the canonical registry is incomplete AND predicates.ts will silently miss events stored with the canonical EventName value."
+      },
+      {
+        "id": "SG-2",
+        "severity": "medium",
+        "title": "Two secretary _tag values (LearningComplete, PlanReady) collapse to the same state machine event 'plan.produced'",
+        "files": ["secretary.ts:128-131"],
+        "detail": "Both LearningComplete and PlanReady map to { type: 'plan.produced', ... } in toSMEvent, meaning the state machine cannot distinguish between 'learning phase produced output' and 'plan is ready for review'. This forces the machine to rely on current state position alone for disambiguation."
+      },
+      {
+        "id": "SG-3",
+        "severity": "medium",
+        "title": "State machine evaluatePredicate is a simplified heuristic that diverges from predicates.ts resolvers",
+        "files": ["state-machine.ts:305-417", "predicates.ts:495-512"],
+        "detail": "evaluatePredicate case 'plan_produced' only checks 'plan.produced', but resolvePlanProduced in predicates.ts checks 'plan.produced' || 'plan.created' || 'artifact.plan'. The SM-003 comment at the top of state-machine.ts ('Predicate evaluation is heuristic — SM-003 will make it rigorous') acknowledges this. Until SM-003 lands, the state machine may fail to match events that predicates.ts would find."
+      },
+      {
+        "id": "SG-4",
+        "severity": "low",
+        "title": "_tag naming inconsistency in secretary events: some are past tense, others are not",
+        "files": ["secretary.ts:20-39"],
+        "detail": "LaneCreated (past), StartLearning (imperative), LearningComplete (past), PlanReady (adjective), ReviewApproved (past), ExecutionComplete (past), ValidationPassed/Failed (past), RepairComplete/Failed (past), Blocked/Unblocked (past), RoleComplete (past), Failed (past). Only StartLearning and PlanReady break the pattern — inconsistent naming makes the protocol harder to reason about."
+      }
+    ]
+  }
+}

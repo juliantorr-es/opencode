@@ -13,9 +13,9 @@
 //
 // Views are created lazily on first analytical query via `initViewsSql()`.
 
-import { spawn } from "child_process"
 import { Effect } from "effect"
 import { DatabaseAdapter } from "./adapter"
+import { execDuckDB, execDuckDBStdin } from "./duckdb-exec"
 
 // ── Analytical view helpers ───────────────────────────────
 
@@ -472,69 +472,6 @@ export function buildContextProjections(
     ),
     Effect.withSpan("ContextProjection.build"),
   )
-}
-
-/** Spawn duckdb (no -readonly) for pipeline/internal write operations. */
-function execDuckDB(dbPath: string, sql: string, signal?: AbortSignal): Promise<void> {
-  return new Promise((resolve, reject) => {
-    const proc = spawn("duckdb", [dbPath, "-json", "-c", sql])
-    let stderr = ""
-    const timer = setTimeout(() => {
-      proc.kill()
-      reject(new Error("duckdb timeout after 60s"))
-    }, 60_000)
-    const onAbort = signal
-      ? () => {
-          proc.kill()
-          reject(new Error("duckdb aborted via signal"))
-        }
-      : undefined
-    if (onAbort) signal!.addEventListener("abort", onAbort, { once: true })
-    const cleanup = () => {
-      clearTimeout(timer)
-      if (onAbort) signal?.removeEventListener("abort", onAbort)
-    }
-    proc.stderr?.on("data", (d: Buffer) => { stderr += d.toString() })
-    proc.stdout?.on("data", () => {})
-    proc.on("close", (code) => {
-      cleanup()
-      if (code !== 0) reject(new Error(`duckdb failed: ${stderr}`))
-      else resolve()
-    })
-    proc.on("error", (err) => { cleanup(); reject(err) })
-  })
-}
-
-/** Spawn duckdb with stdin JSON data for bulk inserts. */
-function execDuckDBStdin(dbPath: string, sql: string, data: string, signal?: AbortSignal): Promise<void> {
-  return new Promise((resolve, reject) => {
-    const proc = spawn("duckdb", [dbPath, "-json", "-c", sql])
-    let stderr = ""
-    const timer = setTimeout(() => {
-      proc.kill()
-      reject(new Error("duckdb timeout after 60s"))
-    }, 60_000)
-    const onAbort = signal
-      ? () => {
-          proc.kill()
-          reject(new Error("duckdb aborted via signal"))
-        }
-      : undefined
-    if (onAbort) signal!.addEventListener("abort", onAbort, { once: true })
-    const cleanup = () => {
-      clearTimeout(timer)
-      if (onAbort) signal?.removeEventListener("abort", onAbort)
-    }
-    proc.stderr?.on("data", (d: Buffer) => { stderr += d.toString() })
-    proc.stdout?.on("data", () => {})
-    proc.on("close", (code) => {
-      cleanup()
-      if (code !== 0) reject(new Error(`duckdb failed: ${stderr}`))
-      else resolve()
-    })
-    proc.on("error", (err) => { cleanup(); reject(err) })
-    proc.stdin?.end(data)
-  })
 }
 
 /** Create all analytical tables in the DuckDB session. Call before initViewsSql. */

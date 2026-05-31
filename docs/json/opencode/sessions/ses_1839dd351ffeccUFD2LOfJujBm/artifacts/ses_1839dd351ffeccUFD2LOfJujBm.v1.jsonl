@@ -1,0 +1,8 @@
+{"at":"2026-05-31T04:54:43.250Z","tool":"smart_grep","action":"searched","pattern":"Effect\\.catchAll","results":0,"files":0}
+{"at":"2026-05-31T04:54:43.833Z","tool":"smart_grep","action":"searched","pattern":"Effect\\.catchAll","results":0,"files":0}
+{"at":"2026-05-31T04:54:49.208Z","tool":"smart_bash","action":"bash","command":"which sd && sd --version","exit_code":0}
+{"at":"2026-05-31T04:54:56.011Z","tool":"smart_bash","action":"bash","command":"perl -i -pe 's/Effect\\.catchAll/Effect.catch/g' packages/opencode/src/event/agent-queries.ts","exit_code":0}
+{"at":"2026-05-31T04:54:56.359Z","tool":"smart_bash","action":"bash","command":"perl -i -pe 's/Effect\\.catchAll/Effect.catch/g' packages/opencode/src/context/packet.ts","exit_code":0}
+{"at":"2026-05-31T04:55:04.538Z","tool":"smart_grep","action":"searched","pattern":"Effect\\.catch[^A]","results":0,"files":0}
+{"at":"2026-05-31T04:55:04.827Z","tool":"smart_grep","action":"searched","pattern":"Effect\\.catch[^A]","results":0,"files":0}
+{"at":"2026-05-31T04:55:05.146Z","tool":"smart_grep","action":"searched","pattern":"Effect\\.catch[^A]","results":0,"files":0}

@@ -1,0 +1,133 @@
+{
+  "schema_version": "rig.relay.plan_review.v1",
+  "plan_id": "PG-001",
+  "plan_title": "Postgres schema migration — app-layer import switching and dual-write",
+  "reviewer": "critic",
+  "reviewed_at": "2026-05-30T12:00:00Z",
+  "verdict": "APPROVE WITH CONDITIONS",
+  "axes": {
+    "boundary": {
+      "score": 3,
+      "note": "Step 1 (PG schema barrel) and Step 4 (import switching) are correctly scoped. Step 3 (dual-write) is premature for PG-001 — it adds operational complexity, transaction coordination risk, and a silent PG-failure fallback that belongs in PG-002 when both backends are provisioned for production dual-write."
+    },
+    "coupling": {
+      "score": 2,
+      "note": "Step 2 (schema-registry) couples schema selection to runtime config, which is incompatible with how table objects are currently imported at module load time. The plan doesn't resolve how ~12 production modules that directly import from .sql.ts files would consume the registry. The registry also pulls drizzle-orm/pg-core into every import graph regardless of backend, bloating the SQLite-only path."
+    },
+    "surface_area": {
+      "score": 3,
+      "note": "The plan adds 2 new files (schema-pg.ts, schema-registry.ts) and modifies 2 existing files (schema.ts, adapter.ts). However, the actual blast radius for import switching is ~12 direct .sql.ts import sites (account/repo.ts, session/*.ts, data-migration.ts, sync/index.ts, etc.) that must be refactored to use the barrel — this work is not accounted for."
+    },
+    "testability": {
+      "score": 2,
+      "note": "Dual-write (Step 3) requires both SQLite and Postgres running simultaneously in tests. No test infrastructure for PG is mentioned. The schema-registry (Step 2) with env-var-based switching cannot be tested in parallel — it's a module-level singleton that's set once per process. No dual-path CI strategy is proposed."
+    },
+    "reversibility": {
+      "score": 3,
+      "note": "Steps 1-2 (barrel + registry) are independently reversible. Step 3 (dual-write adapter modification) is entangled with Step 4 (import switching), making mid-migration rollback risky. If dual-write is deployed and then reverted, SQLite may have stale/hidden rows written during the dual-write window."
+    },
+    "error_clarity": {
+      "score": 2,
+      "note": "The plan's 'Graceful PG failure: SQLite fallback' (Step 3) is a silent degradation pattern. A developer in 6 months sees stale SQLite data with no indication that PG writes were silently skipped. No error logging, span annotations, or health-check degradation is mentioned."
+    },
+    "convergence": {
+      "score": 4,
+      "note": "Steps 1 and 4 directly unblock PG-002 (PG query path) by providing a switchable schema set. Step 2 (schema-registry) may be obviated by PG-003 when SQLite is fully removed, but the barrel abstraction is future-proof. Step 3 (dual-write) is a blocker for PG-002 if left in PG-001, as it forces the PG-002 crew to inherit dual-write semantics they didn't design."
+    }
+  },
+  "findings": [
+    {
+      "axis": "boundary",
+      "severity": "critical",
+      "file": "plan Step 3",
+      "finding": "Dual-write is premature for PG-001. The current adapter already has separate makeSQLiteAdapter() and makePgAdapter() factory functions. Dual-write requires transaction coordination across two databases, silent-fallback semantics, and a staleness detection mechanism. None of these are designed in the plan. This should be deferred to PG-002 with its own dedicated design and test infrastructure."
+    },
+    {
+      "axis": "coupling",
+      "severity": "critical",
+      "file": "plan Step 2 :: schema-registry",
+      "finding": "The schema-registry with runtime config switching is architecturally incompatible with current module-level imports. All production modules import table constants at module load time (e.g., `import { AccountTable } from './account.sql'` at lines: account/repo.ts:6, session/session.ts:25, session/projectors.ts:9, session/todo.ts:9, session/prompt.ts:59, session/message-v2.ts:17, session/projectors-next.ts:9, data-migration.ts:3, sync/index.ts:10, project/project.ts:4). A runtime registry cannot change which table object these modules reference — the import is resolved at module parse time. The plan must specify whether all ~12 import sites will be rewritten to go through the barrel, or a compile-time alias mechanism (tsconfig paths / Bun aliases) is used instead."
+    },
+    {
+      "axis": "surface_area",
+      "severity": "major",
+      "file": "packages/opencode/src/storage/schema.ts",
+      "finding": "The current schema.ts barrel has zero detectable consumers. No module in the codebase imports from `storage/schema` (confirmed via grep). The plan assumes modifying schema.ts switches imports, but the real work is refactoring ~12 direct import sites across 6+ modules to use the barrel first. This refactoring is not called out in the plan steps."
+    },
+    {
+      "axis": "surface_area",
+      "severity": "minor",
+      "file": "packages/opencode/src/data-migration.sql.ts",
+      "finding": "DataMigrationTable, EventTable, and EventSequenceTable are not exported from the current storage/schema.ts barrel but HAVE pgTable equivalents (.pg.sql.ts). The plan should decide whether to add these to the barrel or leave them as direct imports. If left out, the barrel is incomplete for PG-002."
+    },
+    {
+      "axis": "testability",
+      "severity": "major",
+      "file": "plan Step 5 :: verification",
+      "finding": "Verification is limited to 'bun typecheck' and 'bun test'. With runtime-switchable schemas, both the SQLite path and PG path must be tested independently. The plan should add a CI step or smoke test that exercises the PG schema set with a PG URL, even if only against a test PG instance. Without this, PG import paths are dead code until PG-002."
+    },
+    {
+      "axis": "error_clarity",
+      "severity": "major",
+      "file": "plan Step 3 :: graceful PG failure",
+      "finding": "Silent PG→SQLite fallback will cause mysterious data inconsistencies. When PG writes fail and the system silently falls back to SQLite, subsequent reads from PG miss those writes. The developer sees 'PG is healthy' but data is stale. At minimum, the plan should require: (a) Effect.logWarning with annotations before every fallback, (b) a health metric tracking fallback count, (c) an exponential backoff that escalates to FatalDatabaseError after N consecutive failures."
+    },
+    {
+      "axis": "naming",
+      "severity": "minor",
+      "file": "packages/opencode/src/storage/schema.pg.sql.ts",
+      "finding": "The file `schema.pg.sql.ts` already exists (exports TimestampsPg, used by both SQLite and PG table definitions). The plan's proposed `schema-pg.ts` uses a hyphen separator, which is visually distinct from the existing dot-separated `schema.pg.sql.ts`. However, this adds cognitive load — developers must track whether the hyphen prefix means 'PG variant barrel' vs the dot-prefix meaning 'shared PG utility'. Recommend naming the new barrel `storage/schema.pg.ts` (dot-separated) for consistency, or clearly document the distinction."
+    },
+    {
+      "axis": "convergence",
+      "severity": "info",
+      "file": "plan Step 3 :: dual-write direction",
+      "finding": "The plan specifies PG as primary and SQLite as shadow ('query: runs on PG, replicates to SQLite'). For a desktop-first migration path, PG may not always be available. The direction implies PG is the future source of truth. If the product keeps SQLite as primary for offline-first scenarios, the dual-write direction should be reversed (SQLite primary, PG shadow). This architectural decision should be made explicit before implementing dual-write."
+    }
+  ],
+  "conditions": [
+    {
+      "id": "C1",
+      "severity": "required",
+      "description": "Move Step 3 (dual-write adapter) out of PG-001 and into a separate PG-002 work item. PG-001 scope should be limited to: (a) creating the PG schema barrel, (b) creating a compile-time switch mechanism (NOT a runtime registry — use tsconfig paths or Bun aliases), (c) refactoring all direct .sql.ts imports (~12 sites) to use the barrel, (d) updating importers to use the correct schema set based on a BUILD-TIME env var or path alias."
+    },
+    {
+      "id": "C2",
+      "severity": "required",
+      "description": "Replace Step 2 (runtime schema-registry) with a compile-time alias mechanism. Options: (a) tsconfig paths (`@/sql-tables` → `.sql.ts` or `.pg.sql.ts`), (b) Bun.build define/replace, or (c) a small `table-alias.ts` module that re-exports based on a static import-time env var read (single eval at module load, not a runtime factory). The critical constraint: table objects must be resolved at module parse time, not when getSchema() is first called."
+    },
+    {
+      "id": "C3",
+      "severity": "required",
+      "description": "Add a plan step to refactor all 12 direct .sql.ts import sites to import from the barrel instead. Document each site explicitly: account/repo.ts:6, session/session.ts:25, session/projectors.ts:9, session/todo.ts:9, session/prompt.ts:59, session/message-v2.ts:17, session/projectors-next.ts:9, data-migration.ts:3, sync/index.ts:10, project/project.ts:4, permission/index.ts:8 (already on .pg.sql but needs barrel)."
+    },
+    {
+      "id": "C4",
+      "severity": "recommended",
+      "description": "Add DataMigrationTable, EventTable, and EventSequenceTable to the PG schema barrel (and the switchable alias) so the barrel is complete. These tables already have pgTable .pg.sql.ts equivalents but are not exported from the current schema.ts barrel."
+    },
+    {
+      "id": "C5",
+      "severity": "recommended",
+      "description": "Add a CI verification step that runs a smoke test with OPENCODE_DATABASE_URL set to verify PG imports resolve correctly, even if no actual PG server is running. This at minimum proves the import graph and type system are sound for the PG path."
+    },
+    {
+      "id": "C6",
+      "severity": "info",
+      "description": "Rename the new barrel to `storage/schema.pg.ts` (dot instead of hyphen) for consistency with the existing `schema.pg.sql.ts` naming pattern, OR rename the existing `schema.pg.sql.ts` to `schema-shared.ts` to avoid collision. Either way, document the naming convention clearly."
+    }
+  ],
+  "follow_up_issues": [
+    {
+      "id": "FU-1",
+      "title": "Design dual-write adapter for PG-002",
+      "description": "Step 3 of this plan (dual-write) should be redesigned as PG-002 with: (a) explicit data direction (PG primary vs SQLite primary), (b) transaction coordination strategy (2PC, saga, or eventually-consistent), (c) fallback observability (logged warnings, health metrics, escalation to fatal), (d) test infrastructure with both SQLite and PG running in CI, (e) rollback plan for removing dual-write without data loss."
+    },
+    {
+      "id": "FU-2",
+      "title": "Evaluate whether schema-registry is needed at PG-003",
+      "description": "Once PG is the only backend (PG-003), the schema barrel and registry become unnecessary indirection. Add a phase in PG-003 to remove the barrel and switch back to direct pgTable imports. This prevents permanent architecture debt from the migration scaffolding."
+    }
+  ],
+  "recommendation": "Approve PG-001 with conditions C1-C3 (required) and consider C4-C5 (recommended). The core insight — create a PG schema barrel and switch imports — is correct and minimal. However, the dual-write (Step 3) and runtime registry (Step 2) add unacceptable risk, complexity, and untestability to the first migration milestone. Scoping PG-001 to compile-time alias switching creates a clean, reversible, and independently verifiable boundary that unblocks PG-002 without inheriting unsolved dual-write problems."
+}

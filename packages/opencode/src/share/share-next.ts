@@ -14,7 +14,7 @@ import { Database } from "@/storage/db"
 import { eq } from "drizzle-orm"
 import { Config } from "@/config/config"
 import * as Log from "@opencode-ai/core/util/log"
-import { SessionShareTable } from "./share.sql"
+import { SessionShareTable } from "@/storage/schema"
 
 const log = Log.create({ service: "share-next" })
 const disabled = process.env["OPENCODE_DISABLE_SHARE"] === "true" || process.env["OPENCODE_DISABLE_SHARE"] === "1"

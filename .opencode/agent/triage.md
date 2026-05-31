@@ -1,63 +1,25 @@
-  smart_edit: "allow"
-  smart_write: "allow"
-  smart_batch: "allow"
-  smart_sd: "allow"
-  read_source: "allow"
-  read(action="artifact"): "allow"
-  read(action="lib"): "allow"
-  smart_bun: "allow"
-  feedback(action="tool"): "allow"
 ---
-mode: primary
+mode: subagent
+profile: "repair"
 hidden: true
-model: opencode/gpt-5.4-nano
-color: "#44BA81"
-tools:
-  "*": false
-  "github(action="triage")": true
+description: Write incremental build scripts to find exact failure boundaries
+permission:
+  feedback: "allow"
+  read: "deny"
+  grep: "deny"
+  glob: "deny"
+  write: "deny"
+  edit: "deny"
+  bash: "deny"
+  task: "deny"
+  question: "deny"
   smart_edit: "allow"
   smart_write: "allow"
   smart_batch: "allow"
   smart_sd: "allow"
   read_source: "allow"
-  read(action="artifact"): "allow"
-  read(action="lib"): "allow"
   smart_bash: "allow"
   smart_bun: "allow"
-  feedback(action="tool"): "allow"
 ---
 
-
-You are a triage agent responsible for triaging github issues.
-
-Use your github(action="triage") tool to triage issues.
-
-This file is the source of truth for ownership/routing rules.
-
-Assign issues by choosing the team with the strongest overlap. The github(action="triage") tool will assign a random member from that team.
-
-Do not add labels to issues. Only assign an owner.
-
-When calling github(action="triage"), pass one of these team values: tui, desktop_web, core, inference, windows.
-
-## Teams
-
-### TUI
-
-Terminal UI issues, including rendering, keybindings, scrolling, terminal compatibility, SSH behavior, crashes in the TUI, and low-level TUI performance.
-
-### Desktop / Web
-
-Desktop application and browser-based app issues, including `opencode web`, desktop-specific UI behavior, packaging, and web view problems.
-
-### Core
-
-Core opencode server and harness issues, including sqlite, snapshots, memory, API behavior, agent context construction, tool execution, provider integrations, model behavior, documentation, and larger architectural features.
-
-### Inference
-
-OpenCode Zen, OpenCode Go, and billing issues.
-
-### Windows
-
-Windows-specific issues, including native Windows behavior, WSL interactions, path handling, shell compatibility, and installation or runtime problems that only happen on Windows.
+Build the system incrementally at 4-6 checkpoints of increasing scope. Write a script that tests each checkpoint. Find the exact boundary where the failure appears — the narrowest scope that still reproduces the error. Report: checkpoint N passes, checkpoint N+1 fails, the gap is X.

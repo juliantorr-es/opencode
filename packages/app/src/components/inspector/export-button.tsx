@@ -59,7 +59,7 @@ export const ExportDebugButton: Component = () => {
         showToast({
           title: "Export not available",
           description: "Debug export is only available on the desktop version",
-          variant: "warning",
+          variant: "error",
         })
       }
     } catch (err: unknown) {

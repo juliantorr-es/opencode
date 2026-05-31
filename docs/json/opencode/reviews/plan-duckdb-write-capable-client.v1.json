@@ -1,0 +1,112 @@
+{
+  "schema_version": "v1",
+  "review_id": "duckdb-write-capable-client-review-v1",
+  "plan_id": "duckdb-write-capable-client-extraction-and-projection-worker-fix",
+  "reviewer": "critic",
+  "reviewed_at": "2026-05-31T03:47:00.000Z",
+  "verdict": "REJECT",
+  "scores": {
+    "coupling": 2,
+    "debuggability": 2,
+    "convergence": 3,
+    "surface_area": 3,
+    "testability": 3,
+    "error_clarity": 2,
+    "reversibility": 4
+  },
+  "objections": [
+    {
+      "axis": "coupling",
+      "summary": "duckdb-pipe.ts collision — plan creates third write path instead of consolidating",
+      "evidence": {
+        "file": "packages/opencode/src/storage/duckdb-pipe.ts",
+        "line": 23,
+        "detail": "Existing write-capable execDuckDBWrite() with DuckDBWriteError. Committed at a1414d8c8. Not mentioned in plan. Post-plan coexistence of duckdb-pipe.ts + duckdb-exec.ts + (remnants in pipeline.ts/schema.duckdb.ts) creates up to 8 write-capable DuckDB execution paths."
+      }
+    },
+    {
+      "axis": "debuggability",
+      "summary": "Incomplete Effect.ignore removal — outer barrier persists",
+      "evidence": [
+        {
+          "file": "packages/opencode/src/context/workers/duckdb-projection-worker.ts",
+          "line": 96,
+          "detail": "Outer Effect.ignore wrapping entire forEach handler — NOT addressed by plan (only line 93 inner is covered)"
+        },
+        {
+          "file": "packages/opencode/src/storage/pipeline.ts",
+          "line": 246,
+          "detail": "Effect.ignore on runPipeline fiber guard — masks all pipeline errors"
+        },
+        {
+          "file": "packages/opencode/src/storage/pipeline.ts",
+          "line": 81,
+          "detail": "Effect.catchTag('DatabaseError', () => Effect.succeed([])) — silent swallow with no logging"
+        }
+      ]
+    },
+    {
+      "axis": "error_clarity",
+      "summary": "Fragmented error types with no discrimination path",
+      "evidence": {
+        "detail": "After plan: DuckDBError (read path, db.duckdb.ts), DuckDBWriteError (unaddressed duckdb-pipe.ts), generic Error (new duckdb-exec.ts). Callers cannot use Effect.catchTag to discriminate DuckDB write failures. Report recommends standardizing on DuckDBWriteError."
+      }
+    },
+    {
+      "axis": "surface_area",
+      "summary": "Missing layer composition updates",
+      "evidence": [
+        {
+          "file": "packages/opencode/src/context/workers/index.ts",
+          "line": 17,
+          "detail": "startAllWorkers merges DuckDBProjectionWorker.layer but doesn't specify how DuckDBWrite.Service is provided"
+        },
+        {
+          "file": "packages/opencode/src/tool/registry.ts",
+          "line": 783,
+          "detail": "Layer.provide(DuckDB.layer) at tool composition level — plan doesn't specify where writeLayer's DuckDBConfig dependency is satisfied"
+        }
+      ]
+    },
+    {
+      "axis": "debuggability",
+      "summary": "duckdb-rank.ts is dead code — plan should acknowledge or remove",
+      "evidence": {
+        "file": "packages/opencode/src/context/duckdb-rank.ts",
+        "detail": "All exports (rankWorkingSet, rankWorkingSetFull, queryCochange, queryAgentHeatmap, queryErrorFiles) have zero importers across src/ and test/. Plan's risk about 'duckdb-rank.ts must continue querying TABLE not VIEW' applies to dead code."
+      }
+    }
+  ],
+  "conditions_for_approval": [
+    "Consolidate duckdb-pipe.ts: either merge execDuckDBWrite into the new duckdb-exec.ts and remove duckdb-pipe.ts, or use duckdb-pipe.ts as the shared foundation instead of creating duckdb-exec.ts. Do not create three parallel write paths.",
+    "Remove all remaining Effect.ignore barriers: address the outer barrier at duckdb-projection-worker.ts:96 and the fiber-level guard at pipeline.ts:246-247. Add structured logging to pipeline.ts:81 silent catchTag.",
+    "Standardize error type in duckdb-exec.ts: reject with DuckDBWriteError (from duckdb-pipe.ts) not plain Error. Enable Effect.catchTag('DuckDBWriteError', ...) discrimination.",
+    "Specify layer composition explicitly: detail where writeLayer is provided and how DuckDBConfig.Service is satisfied. Show updated workers/index.ts or tool/registry.ts changes.",
+    "Acknowledge duckdb-rank.ts dead code: file a follow-up to remove it, or add a reservation comment."
+  ],
+  "follow_up_issues": [
+    {
+      "summary": "Dead code: packages/opencode/src/context/duckdb-rank.ts — 237 lines of exported functions with zero importers",
+      "file": "packages/opencode/src/context/duckdb-rank.ts"
+    },
+    {
+      "summary": "Error type audit: All DuckDB subprocess error paths use generic Error — consider DuckDBSubprocessError with _tag, exit code, stderr, and SQL fields",
+      "file": "packages/opencode/src/storage"
+    },
+    {
+      "summary": "Layer composition refactor: Consider making DuckDBWrite.Service dependency explicit at workers/index.ts level rather than embedding Layer.provide inside the worker layer",
+      "file": "packages/opencode/src/context/workers/index.ts"
+    }
+  ],
+  "reversibility_graph": {
+    "groups": {
+      "A": "View rename (_ctx_file_relevance_v)",
+      "B": "Remove duplicate exec functions from pipeline.ts and schema.duckdb.ts",
+      "C": "Create duckdb-exec.ts",
+      "D": "Projection worker changes (write client + error handling)",
+      "E": "DuckDBWrite.Service addition to db.duckdb.ts"
+    },
+    "dependencies": "C → B → (E or duckdb-pipe) → D → A. Fully serialized chain — no independent reordering possible.",
+    "narrowest_safe_revert": "Either [(C)+(B)] as a pair, or [(D)+(A)] as a pair. Single-group revert always leaves broken architecture or dangling infrastructure."
+  }
+}

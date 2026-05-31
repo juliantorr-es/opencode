@@ -59,6 +59,7 @@ describe("bootstrapDirectory", () => {
         permission: { list: async () => ({ data: [] }) },
         question: { list: async () => ({ data: [] }) },
         mcp: { status: async () => ({ data: {} }) },
+        path: { get: async () => ({ data: { directory: "/project", state: "", config: "", worktree: "/project", home: "/home" } }) },
         provider: { list: async () => ({ data: { all: [], connected: [], default: {} } }) },
       } as unknown as OpencodeClient,
       store,

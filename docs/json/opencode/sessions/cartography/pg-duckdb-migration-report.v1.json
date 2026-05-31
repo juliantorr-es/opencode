@@ -1,0 +1,384 @@
+{
+  "schema_version": "rig.relay.cartography_report.v1",
+  "report_id": "pg-duckdb-migration-cartography-2026-05-30",
+  "report_date": "2026-05-30T17:45:00Z",
+  "scope": "PostgreSQL and DuckDB migration infrastructure in opencode-desktop-dev monorepo",
+  "packages": [
+    { "name": "opencode", "path": "packages/opencode", "role": "main application package with storage layer" },
+    { "name": "@opencode-ai/effect-drizzle-sqlite", "path": "packages/effect-drizzle-sqlite", "role": "Effect + Drizzle SQLite bridge (no PG counterpart exists)" },
+    { "name": "desktop", "path": "packages/desktop", "role": "Desktop shell (Electron/Tauri), sidecar startup, preload" },
+    { "name": "app", "path": "packages/app", "role": "Frontend app" },
+    { "name": "console", "path": "packages/console", "role": "SST console (uses @opencode-ai/console-core/drizzle — separate schema set)" }
+  ],
+  "storage_layer": {
+    "directory": "packages/opencode/src/storage/",
+    "files": [
+      { "file": "db.ts", "description": "Original SQLite-first database client. Uses #db alias. Has getPath(), use(), transaction(), etc." },
+      { "file": "db.pg.ts", "description": "PostgreSQL database init. Supports PGlite (embedded) and node-postgres (remote). Exports init(), initFromPool(), applyMigrations(), PgPool." },
+      { "file": "db.duckdb.ts", "description": "DuckDB Effect service. CLI spawn-based + WASM client support. Connection pool, HealthRegistry integration." },
+      { "file": "adapter.ts", "description": "Dual-adapter: DatabaseAdapter Service with makeSQLiteAdapter() and makePgAdapter(). Switchable via _tag: \"sqlite\" | \"postgres\"." },
+      { "file": "pg-pool.ts", "description": "PgPool class with retry logic, Effect.schedule, sanitized URL logging." },
+      { "file": "duckdb-config.ts", "description": "Effect Config for DuckDB settings (path, file retention)." },
+      { "file": "duckdb-firewall.ts", "description": "SQL firewall: blocked functions, injection detection for DuckDB." },
+      { "file": "schema.pg.sql.ts", "description": "Shared TimestampsPg helper used by all pgTable definitions." },
+      { "file": "schema.duckdb.ts", "description": "DuckDB DDL: views (SESSION_CLUSTERING, TOOL_USAGE), tables (WAVES, FINDINGS, REGISTRY, QA, DIAGNOSTICS, CTX_FILE_EVENTS, CTX_FILE_RELEVANCE), init functions." },
+      { "file": "migrate.ts", "description": "Unified migration runner. Supports sqlite and pg dialects. Auto-detection via OPENCODE_DATABASE_DIALECT and OPENCODE_DATABASE_URL. CLI entry point with --pg / --sqlite flags." }
+    ]
+  },
+  "schema_files": {
+    "sqlite_schemas": [
+      "packages/opencode/src/account/account.sql.ts",
+      "packages/opencode/src/control-plane/workspace.sql.ts",
+      "packages/opencode/src/data-migration.sql.ts",
+      "packages/opencode/src/event/event.sql.ts",
+      "packages/opencode/src/project/project.sql.ts",
+      "packages/opencode/src/session/session.sql.ts",
+      "packages/opencode/src/share/share.sql.ts",
+      "packages/opencode/src/sync/event.sql.ts"
+    ],
+    "pg_schemas": [
+      "packages/opencode/src/account/account.pg.sql.ts",
+      "packages/opencode/src/control-plane/workspace.pg.sql.ts",
+      "packages/opencode/src/data-migration.pg.sql.ts",
+      "packages/opencode/src/event/event.pg.sql.ts",
+      "packages/opencode/src/project/project.pg.sql.ts",
+      "packages/opencode/src/session/session.pg.sql.ts",
+      "packages/opencode/src/share/share.pg.sql.ts",
+      "packages/opencode/src/sync/event.pg.sql.ts",
+      "packages/opencode/src/tool/coordination.pg.sql.ts",
+      "packages/opencode/src/storage/schema.pg.sql.ts"
+    ],
+    "coverage": "8/8 SQLite schemas have mirror PG schemas. coordination.pg.sql.ts is PG-only (no SQLite equivalent). schema.pg.sql.ts is a shared helper.",
+    "key_differences_sqlite_vs_pg": [
+      "sqlite: imports from drizzle-orm/sqlite-core -> pg: imports from drizzle-orm/pg-core",
+      "sqlite: uses sqliteTable() -> pg: uses pgTable()",
+      "sqlite: json stored as text({mode:'json'}) -> pg: uses jsonb()",
+      "sqlite: booleans via integer({mode:'boolean'}) -> pg: uses boolean()",
+      "PG adds foreign key REFERENCES clauses not present in SQLite schemas",
+      "PG adds indices that SQLite schemas may lack"
+    ]
+  },
+  "drizzle_configs": {
+    "files": [
+      {
+        "file": "packages/opencode/drizzle.config.pg.ts",
+        "dialect": "postgresql",
+        "schema_glob": "./src/**/*.pg.sql.ts",
+        "output_dir": "./migration-pg",
+        "status": "active"
+      }
+    ],
+    "sqlite_config": "No drizzle.config.sqlite.ts found. SQLite migrations were likely generated via drizzle-kit with default/inline config."
+  },
+  "migration_directories": {
+    "sqlite": {
+      "path": "packages/opencode/migration/",
+      "count": 20,
+      "date_range": "2026-01-27 to 2026-05-11",
+      "migrations": [
+        "20260127222353_familiar_lady_ursula",
+        "20260211171708_add_project_commands",
+        "20260213144116_wakeful_the_professor",
+        "20260225215848_workspace",
+        "20260227213759_add_session_workspace_id",
+        "20260228203230_blue_harpoon",
+        "20260303231226_add_workspace_fields",
+        "20260309230000_move_org_to_state",
+        "20260312043431_session_message_cursor",
+        "20260323234822_events",
+        "20260410174513_workspace-name",
+        "20260413175956_chief_energizer",
+        "20260423070820_add_icon_url_override",
+        "20260427172553_slow_nightmare",
+        "20260428004200_add_session_path",
+        "20260501142318_next_venus",
+        "20260504145000_add_sync_owner",
+        "20260507164347_add_workspace_time",
+        "20260510033149_session_usage",
+        "20260511000411_data_migration_state"
+      ],
+      "meta": "No meta/_journal.json found; journal is not present or was not committed."
+    },
+    "pg": {
+      "path": "packages/opencode/migration-pg/",
+      "count": 4,
+      "date_range": "2026-05-29 to 2026-05-30",
+      "migrations": [
+        "20260529023435_yellow_molly_hayes (initial schema - CREATE TABLE for all entities)",
+        "20260530202327_chemical_moira_mactaggert",
+        "20260531003644_swift_gravity (ALTER TABLE coordination_fan_out ALTER COLUMN task_ids -> jsonb)",
+        "20260531003656_blushing_zuras (ALTER TABLE coordination_fan_out ALTER COLUMN task_ids -> jsonb)"
+      ],
+      "meta": "No meta/_journal.json found. drizzle-kit should generate this - possibly not committed or generated from a different working directory."
+    }
+  },
+  "package_scripts": {
+    "file": "packages/opencode/package.json",
+    "migration_scripts": [
+      { "script": "db", "command": "node ./node_modules/drizzle-kit/bin.cjs", "purpose": "Generic drizzle-kit access" },
+      { "script": "db:generate:pg", "command": "node ./node_modules/drizzle-kit/bin.cjs generate --config drizzle.config.pg.ts", "purpose": "Generate PG migrations from pg schema files" },
+      { "script": "db:migrate:pg", "command": "bun run src/storage/migrate.ts --pg", "purpose": "Apply PG migrations" },
+      { "script": "test:pg", "command": "bun test test/storage/adapter.pg.test.ts", "purpose": "Run PG adapter tests" },
+      { "script": "test:pg:all", "command": "bun test test/storage/", "purpose": "Run all storage tests incl PG" },
+      { "script": "test:pg:ci", "command": "bun test test/storage/migration.pg.test.ts test/storage/adapter.pg.test.ts", "purpose": "CI PG test run" }
+    ]
+  },
+  "import_aliases": {
+    "#db": "packages/opencode/src/storage/db.pg.ts (one mapping for bun, node, and default)",
+    "#db-duckdb": "packages/opencode/src/storage/db.duckdb.ts (one mapping for bun, node, and default)"
+  },
+  "dependencies": {
+    "drizzle-orm": "catalog: (resolved to 1.0.0-rc.2 in bun.lock)",
+    "drizzle-kit": "catalog: (resolved to 1.0.0-rc.2 in bun.lock)",
+    "@electric-sql/pglite": "^0.2.16",
+    "pg": "^8.13.1",
+    "@types/pg": "^8.11.10",
+    "@effect/sql-pg": "not in dependencies (peer dep in drizzle-orm but not listed)",
+    "duckdb": "^1.2.1",
+    "@duckdb/duckdb-wasm": "^1.28.0"
+  },
+  "effect_drizzle_sqlite_package": {
+    "path": "packages/effect-drizzle-sqlite",
+    "exports": [
+      "./src/index.ts",
+      "./src/effect-sqlite/index.ts",
+      "./src/effect-sqlite/migrator.ts",
+      "./src/sqlite-core/effect/index.ts"
+    ],
+    "internal_structure_files": [
+      "effect-sqlite/driver.ts",
+      "effect-sqlite/index.ts",
+      "effect-sqlite/migrator.ts",
+      "effect-sqlite/session.ts",
+      "sqlite-core/effect/count.ts",
+      "sqlite-core/effect/db.ts",
+      "sqlite-core/effect/delete.ts",
+      "sqlite-core/effect/index.ts",
+      "sqlite-core/effect/insert.ts",
+      "sqlite-core/effect/query.ts",
+      "sqlite-core/effect/raw.ts",
+      "sqlite-core/effect/select.ts",
+      "sqlite-core/effect/session.ts",
+      "sqlite-core/effect/update.ts",
+      "up-migrations/effect-sqlite.ts",
+      "up-migrations/sqlite.ts",
+      "up-migrations/utils.ts"
+    ],
+    "pg_counterpart": "Does NOT exist. No packages/effect-drizzle-pg exists. The adapter.ts provides its own makePgAdapter implementation that bridges Drizzle PG client to Effect's DatabaseAdapter.Service."
+  },
+  "test_infrastructure": {
+    "pg_tests": [
+      {
+        "file": "packages/opencode/test/storage/migrate.test.ts",
+        "test_count": 8,
+        "description": "Tests runMigrations() with both SQLite and PG dialects, auto-detection, env var overrides, CLI flags, error handling",
+        "test_names": [
+          "runs SQLite migrations on :memory: with explicit dialect",
+          "runs PG migrations on in-memory PGlite",
+          "auto-detects PG when OPENCODE_DATABASE_URL is set",
+          "respects OPENCODE_DATABASE_DIALECT override",
+          "throws when PG mode has no connection string",
+          "detects sqlite from OPENCODE_DATABASE_DIALECT env var",
+          "defaults to sqlite when no env vars are set",
+          "CLI --pg flag forces PG mode",
+          "detects invalid dialect env var and falls through"
+        ]
+      },
+      { "file": "packages/opencode/test/storage/pg-integration.pg.test.ts", "lines": 249, "description": "PG-specific integration tests: CRUD via DatabaseAdapter with PG layer" },
+      { "file": "packages/opencode/test/storage/adapter.pg.test.ts", "lines": 476, "description": "Comprehensive adapter tests: transaction isolation, error sanitization, connection strings scrubbed from errors, PGlite vs real PG" },
+      { "file": "packages/opencode/test/storage/pg-pool.pg.test.ts", "lines": 111, "description": "PgPool tests: retry logic, connection failure handling" },
+      { "file": "packages/opencode/test/fixture/pg.ts", "lines": 214, "description": "Test fixture: makePGLayer() uses PGlite (in-memory), makeRealPgLayer() uses node-postgres with connection string" }
+    ],
+    "test_discoveries": [
+      "migration.pg.test.ts referenced in CI script but NOT found on disk - may have been renamed to migrate.test.ts",
+      "pg-integration.pg.test.ts and pg-pool.pg.test.ts are NOT run in CI (only migration + adapter)",
+      "adapter.pg.test.ts:476 lines is the most substantial PG test"
+    ]
+  },
+  "plan_documents": {
+    "discovered_plans": [
+      {
+        "file": "docs/json/opencode/plans/pg_backend_migration.v2.json",
+        "title": "Postgres Backend Migration",
+        "status": "completed (schema + adapter + runner implemented)",
+        "key_points": "8 SQLite schemas mirrored as PG, dual-dialect adapter, migration runner, CI configured"
+      },
+      {
+        "file": "docs/json/opencode/plans/phase1_adapter_hardening.v2.json",
+        "title": "Phase 1 Adapter Hardening",
+        "status": "completed (tests + fixtures implemented)",
+        "key_points": "PGlite integration, real PG test layer, adapter error handling, CI postgres service"
+      },
+      {
+        "file": "docs/json/opencode/plans/pg-runtime-wiring-layer-fix.v1.json",
+        "title": "Postgres Runtime Wiring - Layer.unwrap Fix & Desktop Startup Repair",
+        "status": "proposed - NOT YET IMPLEMENTED",
+        "claim_atoms": [
+          "InstanceLayer.layer no longer uses Layer.unwrap - uses static import",
+          "TypeScript build passes with database adapter layer composition after static import change",
+          "env.d.ts JsonMigration namespace removed, applyMigrations declaration added",
+          "Sidecar no longer destructures JsonMigration, imports node-sqlite driver, or has needsMigration block",
+          "applyMigrations() is called from sidecar startup after Log.init()",
+          "preload types renamed from SqliteMigrationProgress to MigrationProgress, IPC channel renamed",
+          "loading.tsx import and API usage updated to renamed types/channels"
+        ],
+        "phases": [
+          "A: Fix InstanceLayer.layer (static import)",
+          "B: Fix env.d.ts (remove JsonMigration namespace)",
+          "C: Repair Sidecar Boot (remove SQLite imports, add applyMigrations)",
+          "D1-D6: Clean up preload, IPC, main index, server, renderer naming",
+          "E: Wire OPENCODE_DATABASE_URL",
+          "F: Verification"
+        ]
+      }
+    ],
+    "review_documents": [
+      {
+        "file": "docs/json/opencode/reviews/pg-001-review.v1.json",
+        "note": "Schema selection coupled to runtime config is incompatible with module-load-time imports"
+      },
+      {
+        "file": "docs/json/opencode/plans/reviews/pg-002-migration-runner-review.v1.json",
+        "note": "All 6 files in scope, uses #db import pattern consistent with codebase, concurrent migration race concern identified"
+      }
+    ]
+  },
+  "ci_configuration": {
+    "file": ".github/workflows/test.yml",
+    "pg_job": {
+      "exists": true,
+      "name": "pg (${{ matrix.settings.name }})",
+      "runs_on": "blacksmith-4vcpu-ubuntu-2404",
+      "services": {
+        "postgres": {
+          "image": "postgres:17",
+          "env": { "POSTGRES_USER": "opencode", "POSTGRES_PASSWORD": "opencode", "POSTGRES_DB": "opencode_test" },
+          "ports": ["5432:5432"]
+        }
+      },
+      "test_command": "bun run test:pg:ci",
+      "env": { "OPENCODE_DATABASE_URL": "postgresql://opencode:opencode@localhost:5432/opencode_test" }
+    },
+    "notes": "CI only runs test:pg:ci (migration.pg.test.ts + adapter.pg.test.ts). Does NOT run test:pg:all. Linux only (no Windows)."
+  },
+  "git_history_timeline": {
+    "key_commits": [
+      { "sha": "7f571d36e", "message": "refactor(core): move database schema ownership (#29068)", "area": "schema ownership" },
+      { "sha": "b81b90068", "message": "Phase 0: native tool framework upgrade + gap tools + 135 typecheck fixes", "area": "broad infrastructure" },
+      { "sha": "a1414d8c8", "message": "feat(tools): convert 27 plugin tools to built-in Effect tools with DuckDB backend", "area": "tools + duckdb" },
+      { "sha": "db80e0055", "message": "feat(storage): DuckDB data pipeline with persistent analytics store", "area": "duckdb" },
+      { "sha": "469cebcc0", "message": "test: add Phase D DuckDB query + firewall tests", "area": "duckdb" },
+      { "sha": "dcbd244dd", "message": "refactor(v2): use effect sqlite session storage", "area": "sqlite" },
+      { "sha": "7cea32ee0", "message": "Add background code migration service (#26652)", "area": "migration" },
+      { "sha": "356f68418", "message": "refactor(flags): migrate skip migrations flag (#27705)", "area": "flags" },
+      { "sha": "6b7d434c3", "message": "fix(migration): unblock workspace.time_used add on populated tables", "area": "migration" },
+      { "sha": "57efec442", "message": "fix(storage): default workspace time migration (#26556)", "area": "migration" }
+    ]
+  },
+  "duckdb_assessment": {
+    "status": "fully operational, no migration framework needed",
+    "reason": "DuckDB uses raw SQL DDL (schema.duckdb.ts), not Drizzle ORM. Tables/views are created imperatively via initTablesSql()/initViewsSql(). No migration files, no drizzle integration.",
+    "components": [
+      "db.duckdb.ts - Effect Service with connection pool (CLI spawn + WASM)",
+      "schema.duckdb.ts - DDL for 7+ tables and 2+ views",
+      "duckdb-config.ts - Config layer",
+      "duckdb-firewall.ts - SQL injection protection",
+      "duckdb-query.ts - Tool for agent DuckDB queries",
+      "duckdb-projection-worker.ts - Background projection worker",
+      "duckdb-rank.ts - Context ranking"
+    ],
+    "consumers": [
+      "tool/registry.ts (DuckDBQueryTool)",
+      "tool/duckdb-query.ts",
+      "tool/rig-jsonl-query.ts",
+      "event/event-queries.ts",
+      "context/workers/",
+      "context/duckdb-rank.ts"
+    ]
+  },
+  "smoking_guns": {
+    "blocking_issues": [
+      {
+        "severity": "blocking",
+        "area": "runtime-wiring",
+        "description": "InstanceLayer.layer uses Layer.unwrap(Effect.promise(...)) which creates an opaque node in Effect's layer graph, hiding DatabaseAdapter dependency from compile-time resolver. This causes DatabaseAdapter.Service to be unresolved when createRoutes() composes the route graph.",
+        "file": "packages/opencode/src/project/instance-layer.ts",
+        "plan_ref": "docs/json/opencode/plans/pg-runtime-wiring-layer-fix.v1.json"
+      },
+      {
+        "severity": "blocking",
+        "area": "desktop-sidecar",
+        "description": "Desktop sidecar (sidecar.ts) still imports drizzle-orm/node-sqlite, destructures JsonMigration, has needsMigration block referencing SQLite. These need to be updated for PG-only runtime.",
+        "files": [
+          "packages/desktop/src/main/sidecar.ts",
+          "packages/desktop/src/main/env.d.ts",
+          "packages/desktop/src/main/server.ts",
+          "packages/desktop/src/main/ipc.ts",
+          "packages/desktop/src/main/index.ts",
+          "packages/desktop/src/preload/types.ts",
+          "packages/desktop/src/preload/index.ts",
+          "packages/desktop/src/renderer/loading.tsx"
+        ],
+        "plan_ref": "docs/json/opencode/plans/pg-runtime-wiring-layer-fix.v1.json (Phases B-D)"
+      },
+      {
+        "severity": "blocking",
+        "area": "preload-ipc-naming",
+        "description": "SqliteMigrationProgress type, 'sqlite_waiting' phase string, 'onSqliteMigrationProgress' IPC callback, 'sendSqliteMigrationProgress' function all reference SQLite. These need generic renaming for PG.",
+        "plan_ref": "docs/json/opencode/plans/pg-runtime-wiring-layer-fix.v1.json (Phases D1-D6)"
+      }
+    ],
+    "non_blocking_gaps": [
+      {
+        "severity": "minor",
+        "area": "migration-meta",
+        "description": "migration-pg/meta/_journal.json does not exist. drizzle-kit should generate this for tracking applied migrations.",
+        "files": ["packages/opencode/migration-pg/meta/"]
+      },
+      {
+        "severity": "minor",
+        "area": "migration-test-reference",
+        "description": "CI script references 'test/storage/migration.pg.test.ts' but file may not exist on disk. Current file is 'migrate.test.ts' (without .pg. suffix).",
+        "ci_file": ".github/workflows/test.yml"
+      },
+      {
+        "severity": "minor",
+        "area": "no-pg-bridge-package",
+        "description": "No packages/effect-drizzle-pg exists. The PG adapter in adapter.ts uses its own makePgAdapter implementation. This is intentional per the plan.",
+        "decision": "intentional - DrizzleLikeClient wrapper is the boundary"
+      },
+      {
+        "severity": "info",
+        "area": "effect-sql-pg",
+        "description": "@effect/sql-pg is NOT in dependencies (it's an optional peer dep of drizzle-orm@1.0.0-rc.2). The codebase uses @electric-sql/pglite and pg packages directly instead.",
+        "decision": "intentional - PGlite + node-postgres + drizzle-orm drivers are the chosen stack"
+      },
+      {
+        "severity": "info",
+        "area": "ci-coverage",
+        "description": "CI pg job only runs selected PG tests. Does NOT run pg-integration.pg.test.ts or pg-pool.pg.test.ts. Linux-only.",
+        "files": [".github/workflows/test.yml"]
+      }
+    ]
+  },
+  "summary": {
+    "postgresql_migration": {
+      "schema_complete": "Yes - 8/8 SQLite schemas have PG mirrors + 1 PG-only schema + 1 shared helper",
+      "migration_files_generated": "Yes - 4 PG migration SQL files exist",
+      "migration_runner_exists": "Yes - dual-dialect migration runner (src/storage/migrate.ts)",
+      "db_initialization": "Yes - db.pg.ts with PGlite + node-postgres support",
+      "adapter_layer": "Yes - DatabaseAdapter supports both SQLite and PG",
+      "drizzle_config": "Yes - drizzle.config.pg.ts configured",
+      "test_fixtures": "Yes - PGlite + real PG test layers in test/fixture/pg.ts",
+      "ci": "Yes - PG CI job with PostgreSQL 17 service",
+      "runtime_wiring": "BLOCKED - Layer.unwrap in InstanceLayer.layer hides DatabaseAdapter deps",
+      "desktop_integration": "BLOCKED - sidecar.ts still references SQLite-only imports and JsonMigration namespace",
+      "preload_naming": "BLOCKED - SqliteMigrationProgress, sqlite_waiting, sendSqliteMigrationProgress all need renaming"
+    },
+    "duckdb": {
+      "status": "Fully operational. No migration framework needed. Uses raw SQL DDL.",
+      "components": "Service, Config, Firewall, Query Tool, Projection Worker, Ranking, Schema DDL"
+    },
+    "total_engineering_blocks": "3 blocking issues remaining (all documented in pg-runtime-wiring-layer-fix plan)"
+  }
+}

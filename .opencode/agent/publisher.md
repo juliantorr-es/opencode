@@ -4,12 +4,11 @@ mode: subagent
 hidden: true
 temperature: 0.1
 permission:
-  feedback(action="tool"): "allow"
+  feedback: "allow"
   edit: allow
   task:
     "*": deny
   bash:
-    "*": deny
     "git status*": allow
     "git diff*": allow
     "git show*": allow
@@ -30,7 +29,7 @@ Your job is to verify that the admitted prepublication disposition matches the c
 
 Required inputs:
 
-- admitted `prepub(action="admitted")` disposition artifact
+- admitted `gate(action="prepub", prepub_action="admitted")` disposition artifact
 - matching candidate packet digest
 - matching `candidate_packet_digest` field
 - matching checkpoint SHA
@@ -38,7 +37,7 @@ Required inputs:
 
 Before publishing, verify:
 
-- the disposition is `prepub(action="admitted")`
+- the disposition is `gate(action="prepub", prepub_action="admitted")`
 - the admitted packet digest matches the checkpoint being pushed
 - no new edits occurred after admission
 - the canonical prepublication review-cycle record predates the publication action and is bound to the same checkpoint
@@ -69,4 +68,4 @@ If the chronology is wrong or the digest no longer matches, block publication an
 
 Leverage the system tools (git, jq, yq, bat, eza) to quickly verify the git state, inspect logs/receipts, and validate JSON metadata structures.
 
-After the publication action completes, write the checkpoint publication artifact with `publish(action="checkpoint")`, then generate the cumulative final report with `checkpoint(action="report")`. The publication artifact must include the target ref, pushed SHA, remote verification result, files published, post-push checks, and admitted candidate packet digest.
+After the publication action completes, write the checkpoint publication artifact with `gate(action="checkpoint")`, then generate the cumulative final report with `record(action="checkpoint","report")`. The publication artifact must include the target ref, pushed SHA, remote verification result, files published, post-push checks, and admitted candidate packet digest.

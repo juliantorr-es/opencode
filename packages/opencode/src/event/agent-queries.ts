@@ -65,7 +65,7 @@ export const layer: Layer.Layer<Service> = Layer.effect(
     ) =>
       store
         .query({ sessionId, status: "failed" as const, limit, order: "desc" as const })
-        .pipe(Effect.catchAll(() => Effect.succeed([])))
+        .pipe(Effect.catch(() => Effect.succeed([])))
 
     const lastEditedFiles: Interface["lastEditedFiles"] = (
       sessionId: string,
@@ -77,7 +77,7 @@ export const layer: Layer.Layer<Service> = Layer.effect(
           Effect.map((events) =>
             events.filter((e) => e.eventType.startsWith("file_")),
           ),
-          Effect.catchAll(() => Effect.succeed([])),
+          Effect.catch(() => Effect.succeed([])),
         )
 
     const lastPermissionDenials: Interface["lastPermissionDenials"] = (
@@ -86,7 +86,7 @@ export const layer: Layer.Layer<Service> = Layer.effect(
     ) =>
       store
         .query({ sessionId, status: "denied" as const, limit, order: "desc" as const })
-        .pipe(Effect.catchAll(() => Effect.succeed([])))
+        .pipe(Effect.catch(() => Effect.succeed([])))
 
     const lastPhaseTransitions: Interface["lastPhaseTransitions"] = (
       sessionId: string,
@@ -97,7 +97,7 @@ export const layer: Layer.Layer<Service> = Layer.effect(
           Effect.map((events) =>
             events.filter((e) => PHASE_EVENT_TYPES.has(e.eventType)),
           ),
-          Effect.catchAll(() => Effect.succeed([])),
+          Effect.catch(() => Effect.succeed([])),
         )
 
     const lastCheckpoint: Interface["lastCheckpoint"] = (sessionId: string) =>
@@ -108,7 +108,7 @@ export const layer: Layer.Layer<Service> = Layer.effect(
             (events) =>
               events.find((e) => e.eventType === "checkpoint") ?? null,
           ),
-          Effect.catchAll(() => Effect.succeed(null)),
+          Effect.catch(() => Effect.succeed(null)),
         )
 
     const lastSuccessfulTestRun: Interface["lastSuccessfulTestRun"] = (
@@ -124,7 +124,7 @@ export const layer: Layer.Layer<Service> = Layer.effect(
                   e.eventType === "test_run" && e.status === "succeeded",
               ) ?? null,
           ),
-          Effect.catchAll(() => Effect.succeed(null)),
+          Effect.catch(() => Effect.succeed(null)),
         )
 
     const eventsForFile: Interface["eventsForFile"] = (
@@ -141,7 +141,7 @@ export const layer: Layer.Layer<Service> = Layer.effect(
                 (e.filePath === filePath || e.filePath.includes(filePath)),
             ),
           ),
-          Effect.catchAll(() => Effect.succeed([])),
+          Effect.catch(() => Effect.succeed([])),
         )
 
     const eventsForErrorCode: Interface["eventsForErrorCode"] = (
@@ -154,7 +154,7 @@ export const layer: Layer.Layer<Service> = Layer.effect(
           Effect.map((events) =>
             events.filter((e) => e.errorCode === errorCode),
           ),
-          Effect.catchAll(() => Effect.succeed([])),
+          Effect.catch(() => Effect.succeed([])),
         )
 
     const eventsSinceCheckpoint: Interface["eventsSinceCheckpoint"] = (
@@ -165,7 +165,7 @@ export const layer: Layer.Layer<Service> = Layer.effect(
         if (!checkpoint) {
           return yield* store
             .query({ sessionId, limit: 200, order: "asc" as const })
-            .pipe(Effect.catchAll(() => Effect.succeed([])))
+            .pipe(Effect.catch(() => Effect.succeed([])))
         }
         return yield* store
           .query({
@@ -174,7 +174,7 @@ export const layer: Layer.Layer<Service> = Layer.effect(
             limit: 200,
             order: "asc" as const,
           })
-          .pipe(Effect.catchAll(() => Effect.succeed([])))
+          .pipe(Effect.catch(() => Effect.succeed([])))
       })
 
     return Service.of({
