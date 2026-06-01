@@ -82,4 +82,18 @@ export const defaultLayer = Service.defaultLayer.pipe(
   Layer.orDie,
 )
 
-export * as RuntimeFlags from "./runtime-flags"
+// RuntimeFlags namespace — provides Service, defaultLayer, layer, and Info type.
+// Uses explicit const + namespace merge instead of `export * as RuntimeFlags from "./runtime-flags"`
+// to avoid a self-circular module reference that breaks bundlers (electron-vite/rollup).
+export const RuntimeFlags = {
+  get Service() { return Service },
+  get defaultLayer() { return defaultLayer },
+  get layer() { return layer },
+} as const
+
+// eslint-disable-next-line @typescript-eslint/no-namespace
+export namespace RuntimeFlags {
+  export type Info = Info
+  // Re-export Service as a type (needed where RuntimeFlags.Service is used in type position)
+  export type Service = Service
+}
