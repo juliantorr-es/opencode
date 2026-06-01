@@ -4,7 +4,7 @@ import { WorkspaceContext } from "@/control-plane/workspace-context"
 import { InstanceRef } from "@/effect/instance-ref"
 import { disposeInstance as runDisposers } from "@/effect/instance-registry"
 import { AppFileSystem } from "@opencode-ai/core/filesystem"
-import { Context, Deferred, Duration, Effect, Exit, Layer, Option, Scope } from "effect"
+import { Context, Deferred, Duration, Effect, Exit, Fiber, Layer, Option } from "effect"
 import { InstanceTrace } from "./instance-trace"
 import { type InstanceContext } from "./instance-context"
 import { InstanceBootstrap } from "./bootstrap-service"
@@ -29,17 +29,23 @@ export class Service extends Context.Service<Service, Interface>()("@opencode/In
 
 export const use = serviceUse(Service)
 
+// Local tag matching InstanceRuntime.Service from instance-runtime.ts.
+// Defined here to break circular dependency (instance-runtime.ts imports from this module).
+export interface InstanceRuntimeInterface {
+  readonly fork: <A, E>(label: string, effect: Effect.Effect<A, E, never>) => Effect.Effect<Fiber.RuntimeFiber<A, E>>
+}
+export class InstanceRuntimeService extends Context.Service<InstanceRuntimeService, InstanceRuntimeInterface>()("@opencode/InstanceRuntime") {}
+
 interface Entry {
   readonly deferred: Deferred.Deferred<InstanceContext>
 }
 
-export const layer: Layer.Layer<Service, never, Project.Service | InstanceBootstrap.Service | InstanceHealthStoreService> = Layer.effect(
+export const layer: Layer.Layer<Service, never, Project.Service | InstanceBootstrap.Service | InstanceHealthStoreService | InstanceRuntimeService> = Layer.effect(
   Service,
   Effect.gen(function* () {
     const project = yield* Project.Service
     const bootstrap = yield* InstanceBootstrap.Service
     const health = yield* InstanceHealthStoreService
-    const scope = yield* Scope.Scope
     const cache = new Map<string, Entry>()
 
     const boot = (input: LoadInput & { directory: string }) =>
@@ -140,13 +146,17 @@ export const layer: Layer.Layer<Service, never, Project.Service | InstanceBootst
         Effect.gen(function* () {
           const existing = cache.get(directory)
           if (existing) return yield* restore(Deferred.await(existing.deferred))
-
           const entry: Entry = { deferred: Deferred.makeUnsafe<InstanceContext>() }
           cache.set(directory, entry)
-          yield* Effect.gen(function* () {
-            yield* Effect.logInfo("creating instance").pipe(Effect.annotateLogs("directory", directory))
-            yield* completeLoad(directory, input, entry)
-          }).pipe(Effect.forkIn(scope, { startImmediately: true }))
+          // Use InstanceRuntimeService.fork instead of raw forkIn for the fiber boundary
+          const runtime = yield* InstanceRuntimeService
+          yield* runtime.fork(
+            "instance.load",
+            Effect.gen(function* () {
+              yield* Effect.logInfo("creating instance").pipe(Effect.annotateLogs("directory", directory))
+              yield* completeLoad(directory, input, entry)
+            }),
+          )
           return yield* restore(Deferred.await(entry.deferred))
         }),
       ).pipe(Effect.withSpan("InstanceStore.load"))
@@ -159,17 +169,21 @@ export const layer: Layer.Layer<Service, never, Project.Service | InstanceBootst
           const previous = cache.get(directory)
           const entry: Entry = { deferred: Deferred.makeUnsafe<InstanceContext>() }
           cache.set(directory, entry)
-          yield* Effect.gen(function* () {
-            const trace = yield* Effect.serviceOption(InstanceTrace.Service)
-            if (Option.isSome(trace)) yield* trace.value.writePhase("instance.reloading", "started", directory)
-            yield* Effect.logInfo("reloading instance").pipe(Effect.annotateLogs("directory", directory))
-            if (previous) {
-              yield* Deferred.await(previous.deferred).pipe(Effect.ignore)
-              yield* Effect.promise(() => runDisposers(directory))
-              yield* emitDisposed({ directory, project: input.project?.id })
-            }
-            yield* completeLoad(directory, input, entry)
-          }).pipe(Effect.forkIn(scope, { startImmediately: true }))
+          const runtime = yield* InstanceRuntimeService
+          yield* runtime.fork(
+            "instance.reload",
+            Effect.gen(function* () {
+              const trace = yield* Effect.serviceOption(InstanceTrace.Service)
+              if (Option.isSome(trace)) yield* trace.value.writePhase("instance.reloading", "started", directory)
+              yield* Effect.logInfo("reloading instance").pipe(Effect.annotateLogs("directory", directory))
+              if (previous) {
+                yield* Deferred.await(previous.deferred).pipe(Effect.ignore)
+                yield* Effect.promise(() => runDisposers(directory))
+                yield* emitDisposed({ directory, project: input.project?.id })
+              }
+              yield* completeLoad(directory, input, entry)
+            }),
+          )
           return yield* restore(Deferred.await(entry.deferred))
         }),
       ).pipe(Effect.withSpan("InstanceStore.reload"))
