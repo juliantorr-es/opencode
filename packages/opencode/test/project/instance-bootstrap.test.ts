@@ -3,7 +3,9 @@ import { existsSync } from "node:fs"
 import path from "node:path"
 import { pathToFileURL } from "node:url"
 import { CrossSpawnSpawner } from "@opencode-ai/core/cross-spawn-spawner"
-import { Cause, Effect, Exit, Fiber, Layer } from "effect"
+import { Cause, Deferred, Effect, Exit, Fiber, Layer } from "effect"
+import { DatabaseAdapter } from "../../src/storage/adapter"
+import { EventStore } from "../../src/event"
 import { bootstrap as cliBootstrap } from "../../src/cli/bootstrap"
 import { InstanceLayer } from "../../src/project/instance-layer"
 import { InstanceStore } from "../../src/project/instance-store"
@@ -106,5 +108,28 @@ it.live("InstanceStore.reload runs InstanceBootstrap", () =>
     yield* store.reload({ directory: tmp.directory })
 
     expect(existsSync(tmp.marker)).toBe(true)
+  }),
+)
+
+it.live("forked bootstrap fiber resolves InstanceEnvironment services", () =>
+  Effect.gen(function* () {
+    const tmp = yield* bootstrapFixture
+    const store = yield* InstanceStore.Service
+    // Use Deferred to observe the child fiber result
+    const deferred = yield* Deferred.make<boolean>()
+    const scoped = Effect.gen(function* () {
+      yield* store.provide(
+        { directory: tmp.directory },
+        Effect.gen(function* () {
+          // Verify core services are accessible
+          const db = yield* Effect.serviceOption(DatabaseAdapter.Service)
+          const events = yield* Effect.serviceOption(EventStore.Service)
+          yield* Deferred.succeed(deferred, db._tag === "Some" && events._tag === "Some")
+        }),
+      )
+    })
+    yield* scoped.pipe(Effect.scoped)
+    const result = yield* Deferred.await(deferred)
+    expect(result).toBe(true)
   }),
 )

@@ -190,11 +190,13 @@ export const layer = Layer.effect(
       if (oldID === ProjectID.global) return
       if (oldID === newID) return
 
-      yield* Effect.sync(() =>
+      yield* Effect.promise(() =>
         Database.transaction(
-          (d) => {
-            const oldProject = d.select().from(ProjectTable).where(eq(ProjectTable.id, oldID)).get()
-            const newProject = d.select().from(ProjectTable).where(eq(ProjectTable.id, newID)).get()
+          async (d) => {
+            const oldRows = await d.select().from(ProjectTable).where(eq(ProjectTable.id, oldID)).limit(1)
+            const newRows = await d.select().from(ProjectTable).where(eq(ProjectTable.id, newID)).limit(1)
+            const oldProject = oldRows[0] ?? null
+            const newProject = newRows[0] ?? null
             if (oldProject && !newProject) {
               d.insert(ProjectTable)
                 .values({
@@ -205,8 +207,10 @@ export const layer = Layer.effect(
                 .execute()
             }
 
-            const oldPermission = d.select().from(PermissionTable).where(eq(PermissionTable.project_id, oldID)).get()
-            const newPermission = d.select().from(PermissionTable).where(eq(PermissionTable.project_id, newID)).get()
+            const oldPermRows = await d.select().from(PermissionTable).where(eq(PermissionTable.project_id, oldID)).limit(1)
+            const newPermRows = await d.select().from(PermissionTable).where(eq(PermissionTable.project_id, newID)).limit(1)
+            const oldPermission = oldPermRows[0] ?? null
+            const newPermission = newPermRows[0] ?? null
             if (oldPermission && newPermission) {
               d.update(PermissionTable)
                 .set({

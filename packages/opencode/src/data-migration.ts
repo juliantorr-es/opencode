@@ -131,7 +131,7 @@ export const layer = Layer.effect(
             .select({ name: DataMigrationTable.name })
             .from(DataMigrationTable)
             .where(eq(DataMigrationTable.name, migration.name))
-            .get(),
+            .limit(1).then(rows => rows[0]),
         )
         if (completed) continue
 

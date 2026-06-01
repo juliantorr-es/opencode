@@ -7,6 +7,9 @@ import { defaultLayer as BinaryManagerLayer } from "@/binary/manager"
 import { AppFileSystem } from "@opencode-ai/core/filesystem"
 import { layer as AuthorityLayer } from "@/agent/authority"
 import { defaultLayer as ScratchpadLayer } from "@/agent/scratchpad"
+import { defaultLayer as ProjectMapLayer } from "@/context/project-map"
+import { defaultLayer as BusLayer } from "@/bus"
+import { defaultLayer as ContextInvalidationBusLayer } from "@/context/invalidation-bus"
 
 // Core instance infrastructure — services required by instance-owned forked fibers.
 // Composed as self-contained units so no cross-dependencies remain at merge time.
@@ -36,6 +39,9 @@ export const layer = Layer.mergeAll(
   binaryWithFS,
   AuthorityLayer,
   ScratchpadLayer,
+  BusLayer,
+  ProjectMapLayer,
+  ContextInvalidationBusLayer,
 )
 
 export * as InstanceEnvironment from "./instance-environment"
