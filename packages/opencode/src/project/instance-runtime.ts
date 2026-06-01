@@ -13,50 +13,33 @@ export const disposeAllInstances = () => AppRuntime.runPromise(InstanceStore.Ser
 export const reloadInstance = (input: LoadInput) =>
   AppRuntime.runPromise(InstanceStore.Service.use((store) => store.reload(input)))
 
-import { Effect, Fiber, Layer, Scope, Context } from "effect"
-import { EventStore } from "@/event"
-import { DatabaseAdapter } from "@/storage/adapter"
+import { Effect, Fiber, Layer, Scope } from "effect"
+import { InstanceRuntimeInterface, InstanceRuntimeTag } from "./instance-runtime-contract"
 
-export interface Interface {
-  /** Fork instance work that has all its dependencies already provided.
-   * Only accepts Effect<A, E, never> — never an effect with unresolved R. */
-  readonly fork: <A, E>(
-    label: string,
-    effect: Effect.Effect<A, E, never>,
-  ) => Effect.Effect<Fiber.RuntimeFiber<A, E>>
-}
-
-export class Service extends Context.Service<Service, Interface>()("@opencode/InstanceRuntime") {}
+export type Interface = InstanceRuntimeInterface
+export { InstanceRuntimeTag as Service }
 
 export const layer: Layer.Layer<
-  Service,
+  InstanceRuntimeTag,
   never,
-  EventStore.Service | DatabaseAdapter.Service | Scope.Scope
+  Scope.Scope
 > = Layer.effect(
-  Service,
+  InstanceRuntimeTag,
   Effect.gen(function* () {
-    const eventStore = yield* EventStore.Service
-    const databaseAdapter = yield* DatabaseAdapter.Service
     const scope = yield* Scope.Scope
 
     const fork = <A, E>(label: string, effect: Effect.Effect<A, E, never>): Effect.Effect<Fiber.RuntimeFiber<A, E>> =>
       Effect.gen(function* () {
-        // Provide captured services into the forked work context so that
-        // any further forks inside svc.init() can still resolve them.
-        const provided = effect.pipe(
-          Effect.provideService(EventStore.Service, eventStore),
-          Effect.provideService(DatabaseAdapter.Service, databaseAdapter),
-        )
         yield* Effect.logDebug(`forking instance work`).pipe(
           Effect.annotateLogs("label", label),
         )
-        const fiber = yield* provided.pipe(
+        const fiber = yield* effect.pipe(
           Effect.forkIn(scope),
         )
         return fiber
       })
 
-    return Service.of({ fork })
+    return InstanceRuntimeTag.of({ fork })
   }),
 )
 export * as InstanceRuntime from "./instance-runtime"

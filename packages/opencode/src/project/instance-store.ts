@@ -4,12 +4,14 @@ import { WorkspaceContext } from "@/control-plane/workspace-context"
 import { InstanceRef } from "@/effect/instance-ref"
 import { disposeInstance as runDisposers } from "@/effect/instance-registry"
 import { AppFileSystem } from "@opencode-ai/core/filesystem"
-import { Context, Deferred, Duration, Effect, Exit, Fiber, Layer, Option } from "effect"
+import { Context, Deferred, Duration, Effect, Exit, Layer, Option } from "effect"
 import { InstanceTrace } from "./instance-trace"
 import { type InstanceContext } from "./instance-context"
 import { InstanceBootstrap } from "./bootstrap-service"
 import { Service as InstanceHealthStoreService } from "./instance-health"
 import * as Project from "./project"
+import { InstanceRuntimeTag } from "./instance-runtime-contract"
+import { InstanceEnvironment } from "./instance-environment"
 
 export interface LoadInput {
   directory: string
@@ -29,18 +31,12 @@ export class Service extends Context.Service<Service, Interface>()("@opencode/In
 
 export const use = serviceUse(Service)
 
-// Local tag matching InstanceRuntime.Service from instance-runtime.ts.
-// Defined here to break circular dependency (instance-runtime.ts imports from this module).
-export interface InstanceRuntimeInterface {
-  readonly fork: <A, E>(label: string, effect: Effect.Effect<A, E, never>) => Effect.Effect<Fiber.RuntimeFiber<A, E>>
-}
-export class InstanceRuntimeService extends Context.Service<InstanceRuntimeService, InstanceRuntimeInterface>()("@opencode/InstanceRuntime") {}
 
 interface Entry {
   readonly deferred: Deferred.Deferred<InstanceContext>
 }
 
-export const layer: Layer.Layer<Service, never, Project.Service | InstanceBootstrap.Service | InstanceHealthStoreService | InstanceRuntimeService> = Layer.effect(
+export const layer: Layer.Layer<Service, never, Project.Service | InstanceBootstrap.Service | InstanceHealthStoreService | InstanceRuntimeTag> = Layer.effect(
   Service,
   Effect.gen(function* () {
     const project = yield* Project.Service
@@ -148,8 +144,8 @@ export const layer: Layer.Layer<Service, never, Project.Service | InstanceBootst
           if (existing) return yield* restore(Deferred.await(existing.deferred))
           const entry: Entry = { deferred: Deferred.makeUnsafe<InstanceContext>() }
           cache.set(directory, entry)
-          // Use InstanceRuntimeService.fork instead of raw forkIn for the fiber boundary
-          const runtime = yield* InstanceRuntimeService
+          // Use InstanceRuntimeTag.fork instead of raw forkIn for the fiber boundary
+          const runtime = yield* InstanceRuntimeTag
           yield* runtime.fork(
             "instance.load",
             Effect.gen(function* () {
@@ -169,7 +165,7 @@ export const layer: Layer.Layer<Service, never, Project.Service | InstanceBootst
           const previous = cache.get(directory)
           const entry: Entry = { deferred: Deferred.makeUnsafe<InstanceContext>() }
           cache.set(directory, entry)
-          const runtime = yield* InstanceRuntimeService
+          const runtime = yield* InstanceRuntimeTag
           yield* runtime.fork(
             "instance.reload",
             Effect.gen(function* () {

@@ -94,7 +94,13 @@ export async function applyMigrations(db: PgClient): Promise<void> {
     for (const migration of migrations) {
       if (applied.has(migration.hash)) continue
       for (const sql of migration.sql) {
-        await client.exec(sql)
+        try {
+          await client.exec(sql)
+        } catch (e: any) {
+          // Skip idempotent migration failures (e.g. table already exists)
+          if (e?.message?.includes("already exists")) continue
+          throw e
+        }
       }
       await client.query(
         'INSERT INTO "__drizzle_migrations" ("hash", "created_at") VALUES ($1, $2)',
