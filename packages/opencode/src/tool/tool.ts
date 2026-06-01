@@ -531,11 +531,16 @@ export function init<P extends Schema.Decoder<unknown>, M extends Metadata>(
   info: Info<P, M>,
 ): Effect.Effect<Def<P, M>> {
   return Effect.gen(function* () {
+    const context = yield* Effect.context<never>()
     const init = yield* info.init()
+    const raw = init.execute
     return {
       ...init,
       id: info.id,
-    }
+      // Wrap execute so tool dependencies captured at construction time
+      // are available when the tool runs in a different fiber later.
+      execute: (args, ctx) => raw(args, ctx).pipe(Effect.provideContext(context)),
+    } as Def<P, M>
   })
 }
 
