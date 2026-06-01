@@ -34,7 +34,7 @@ export const layer: Layer.Layer<
           Effect.annotateLogs("label", label),
         )
         const fiber = yield* effect.pipe(
-          Effect.forkIn(scope),
+          Effect.forkIn(scope, { startImmediately: true }),
         )
         return fiber
       })

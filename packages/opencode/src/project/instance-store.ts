@@ -44,6 +44,17 @@ export const layer: Layer.Layer<Service, never, Project.Service | InstanceBootst
     const health = yield* InstanceHealthStoreService
     const cache = new Map<string, Entry>()
 
+
+    // Provide InstanceEnvironment before fork so forked svc.init() fibers
+    // can resolve DatabaseAdapter, EventStore, DuckDBConfig, etc.
+    const forkInstance = <A, E>(
+      label: string,
+      effect: Effect.Effect<A, E, never>,
+    ) =>
+      Effect.gen(function* () {
+        const runtime = yield* InstanceRuntimeTag
+        return yield* runtime.fork(label, effect)
+      })
     const boot = (input: LoadInput & { directory: string }) =>
       Effect.gen(function* () {
         const ctx: InstanceContext =
@@ -144,9 +155,7 @@ export const layer: Layer.Layer<Service, never, Project.Service | InstanceBootst
           if (existing) return yield* restore(Deferred.await(existing.deferred))
           const entry: Entry = { deferred: Deferred.makeUnsafe<InstanceContext>() }
           cache.set(directory, entry)
-          // Use InstanceRuntimeTag.fork instead of raw forkIn for the fiber boundary
-          const runtime = yield* InstanceRuntimeTag
-          yield* runtime.fork(
+          yield* forkInstance(
             "instance.load",
             Effect.gen(function* () {
               yield* Effect.logInfo("creating instance").pipe(Effect.annotateLogs("directory", directory))
@@ -165,8 +174,7 @@ export const layer: Layer.Layer<Service, never, Project.Service | InstanceBootst
           const previous = cache.get(directory)
           const entry: Entry = { deferred: Deferred.makeUnsafe<InstanceContext>() }
           cache.set(directory, entry)
-          const runtime = yield* InstanceRuntimeTag
-          yield* runtime.fork(
+          yield* forkInstance(
             "instance.reload",
             Effect.gen(function* () {
               const trace = yield* Effect.serviceOption(InstanceTrace.Service)

@@ -97,8 +97,8 @@ export async function applyMigrations(db: PgClient): Promise<void> {
         try {
           await client.exec(sql)
         } catch (e: any) {
-          // Skip idempotent migration failures (e.g. table already exists)
-          if (e?.message?.includes("already exists")) continue
+          // Skip idempotent migration failures (e.g. table/column already exists)
+          if (/already exists/.test(e?.message)) continue
           throw e
         }
       }
