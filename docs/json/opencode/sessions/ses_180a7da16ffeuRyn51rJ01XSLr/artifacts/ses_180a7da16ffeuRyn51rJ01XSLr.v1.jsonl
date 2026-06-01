@@ -1,7 +1,0 @@
-{"at":"2026-05-31T18:47:23.233Z","tool":"smart_write","action":"overwritten","file":".opencode/tools/smart_find.ts","reason":"Complete rewrite of smart_find.ts: native walker primary, fd optional accelerator. Adds gitignore parsing, matchGlob, walkNative, tryFd, buildFdArgs, parseFdOutput. Removes 'brew install fd' error, command field. Adds warning field."}
-{"at":"2026-05-31T18:48:05.204Z","tool":"smart_bun","action":"ran","command":"run","exit_code":1,"cwd":"root"}
-{"at":"2026-05-31T18:49:55.185Z","tool":"smart_bash","action":"bash","command":"node -e \"require('fs').readFileSync('.opencode/tools/smart_find.ts', 'utf8'); console.log('File read","exit_code":0}
-{"at":"2026-05-31T18:50:58.723Z","tool":"smart_write","action":"created","file":"/tmp/test_smart_find.ts","reason":"Temp script to verify smart_find.ts imports resolve"}
-{"at":"2026-05-31T18:51:26.348Z","tool":"smart_write","action":"created","file":"/Users/user/Developer/GitHub/opencode-desktop-dev/_verify_smart_find.ts","reason":"Temp script to verify smart_find.ts imports resolve from workspace root"}
-{"at":"2026-05-31T18:51:57.241Z","tool":"smart_bun","action":"ran","command":"run","exit_code":0,"cwd":"root"}
-{"at":"2026-05-31T18:52:41.915Z","tool":"smart_bash","action":"bash","command":"rm /Users/user/Developer/GitHub/opencode-desktop-dev/_verify_smart_find.ts /tmp/test_smart_find.ts 2","exit_code":0}

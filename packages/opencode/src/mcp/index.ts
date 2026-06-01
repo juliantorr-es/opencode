@@ -109,6 +109,13 @@ export type McpErrorCode =
   | "TOOL_COLLISION"
   | "UNKNOWN"
 
+function classifyErrorCode(error: unknown): McpErrorCode {
+  if (error instanceof UnauthorizedError) return "AUTH_FAILED"
+  const code = (error as any)?.code
+  if (code === "ECONNREFUSED" || code === "ETIMEDOUT") return "CONNECTION_FAILED"
+  return "UNKNOWN"
+}
+
 export interface McpServerState {
   client?: Client
   status: Status
@@ -521,8 +528,9 @@ export const layer = Layer.effect(
           status: { status: "connected" },
         })),
         Effect.catch((error): Effect.Effect<{ client: MCPClient | undefined; status: Status }> => {
+          const errorCode = classifyErrorCode(error)
           const msg = error instanceof Error ? error.message : String(error)
-          log.error("local mcp startup failed", { key, command: mcp.command, cwd, error: msg })
+          log.error("local mcp startup failed", { key, command: mcp.command, cwd, error: msg, errorCode })
           return Effect.succeed({ client: undefined, status: { status: "failed", error: msg } })
         }),
       )

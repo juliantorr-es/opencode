@@ -43,6 +43,7 @@ import { ConfigSkills } from "./skills"
 import { ConfigVariable } from "./variable"
 import { Npm } from "@opencode-ai/core/npm"
 import { withTransientReadRetry } from "@/util/effect-http-client"
+import { classifyError } from "@/diagnostic/instance-failure-codes"
 
 const log = Log.create({ service: "config" })
 
@@ -446,7 +447,12 @@ export const layer = Layer.effect(
       if (!data.$schema) {
         data.$schema = "https://opencode.ai/config.json"
         const updated = text.replace(/^\s*\{/, '{\n  "$schema": "https://opencode.ai/config.json",')
-        yield* fs.writeFileString(options.path, updated).pipe(Effect.catch(() => Effect.void))
+        yield* fs.writeFileString(options.path, updated).pipe(
+                      Effect.catch((err) => {
+                        log.warn("config write failed", classifyError(err, "instance.config.write"))
+                        return Effect.void
+                      }),
+                    )
       }
       return data
     })
@@ -467,7 +473,12 @@ export const layer = Layer.effect(
         if (!existsSync(file)) {
           yield* fs
             .writeWithDirs(file, JSON.stringify({ $schema: "https://opencode.ai/config.json" }, null, 2))
-            .pipe(Effect.catch(() => Effect.void))
+            .pipe(
+              Effect.catch((err) => {
+                log.warn("config bootstrap write failed", classifyError(err, "instance.config.bootstrap"))
+                return Effect.void
+              }),
+            )
         }
       }
       result = mergeConfig(result, yield* loadFile(path.join(Global.Path.config, "config.json"), env))
@@ -486,7 +497,9 @@ export const layer = Layer.effect(
               await fsNode.writeFile(path.join(Global.Path.config, "config.json"), JSON.stringify(result, null, 2))
               await fsNode.unlink(legacy)
             })
-            .catch(() => {}),
+            .catch((err) => {
+              log.warn("legacy config migration failed", classifyError(err, "instance.config.migrate"))
+            }),
         )
       }
 

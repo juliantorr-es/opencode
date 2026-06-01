@@ -1,1 +1,0 @@
-{"at":"2026-05-31T13:31:45.351Z","session_id":"ses_181c871b4ffepCuaERiGA89X0E","agent":"soundings","binary":"for","command":"for d in docs/json/opencode .build .opencode .cache; do echo \"=== $d ===\"; ls \"$d\" 2>/dev/null || echo \"  (not found)\"; done","reason":"List key directories","elapsed_ms":34,"exit_code":0}

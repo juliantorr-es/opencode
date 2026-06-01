@@ -5,6 +5,7 @@ import { HealthRegistry, HealthStatus } from "@/server/health"
 import { init as initPg, applyMigrations } from "#db"
 
 import { checkSQLFirewall as checkDuckDBSQLFirewall } from "./duckdb-firewall"
+import { classifyError } from "@/diagnostic/instance-failure-codes"
 
 // ── Error types ──────────────────────────────────────────────
 
@@ -192,7 +193,8 @@ export function makePgAdapter(options: {
   // Auto-apply pending DB migrations on first connect,
   // so fresh installs have their schema ready before any queries.
   applyMigrations(client).catch((err) => {
-    console.warn("[db] Failed to auto-apply migrations (non-fatal):", err)
+    const classified = classifyError(err, "instance.storage.init")
+    console.warn("[db] Failed to auto-apply migrations (non-fatal):", classified)
   })
 
   let pendingAfterCommitHooks: Array<() => void> = []

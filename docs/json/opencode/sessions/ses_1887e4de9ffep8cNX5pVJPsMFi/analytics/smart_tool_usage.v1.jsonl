@@ -1,7 +1,0 @@
-{"at":"2026-05-30T06:11:34.556Z","session_id":"ses_1887e4de9ffep8cNX5pVJPsMFi","agent":"safety-auditor","tool":"smart_grep","pattern":"ipcMain\\.(handle|on)\\(\"","path":"packages/desktop/src/main"}
-{"at":"2026-05-30T06:11:35.018Z","session_id":"ses_1887e4de9ffep8cNX5pVJPsMFi","agent":"safety-auditor","tool":"smart_grep","pattern":"ipcRenderer\\.(invoke|send|on)\\(\"","path":"packages/desktop/src/preload"}
-{"at":"2026-05-30T06:11:35.090Z","session_id":"ses_1887e4de9ffep8cNX5pVJPsMFi","agent":"safety-auditor","tool":"smart_grep","pattern":"webContents\\.send\\(\"","path":"packages/desktop/src/main"}
-{"at":"2026-05-30T06:11:38.356Z","session_id":"ses_1887e4de9ffep8cNX5pVJPsMFi","agent":"safety-auditor","tool":"smart_grep","pattern":"event\\.sender\\.send\\(\"","path":"packages/desktop/src/main/ipc.ts"}
-{"at":"2026-05-30T06:11:38.519Z","session_id":"ses_1887e4de9ffep8cNX5pVJPsMFi","agent":"safety-auditor","tool":"smart_grep","pattern":"win\\.webContents\\.send\\(\"","path":"packages/desktop/src/main/windows.ts"}
-{"at":"2026-05-30T06:11:38.760Z","session_id":"ses_1887e4de9ffep8cNX5pVJPsMFi","agent":"safety-auditor","tool":"smart_grep","pattern":"webContents\\.send\\(\"","path":"packages/desktop/src/main/ipc.ts"}
-{"at":"2026-05-30T06:11:39.079Z","session_id":"ses_1887e4de9ffep8cNX5pVJPsMFi","agent":"safety-auditor","tool":"smart_grep","pattern":"^\\s+win\\.webContents\\.send\\(\"","path":"packages/desktop/src/main"}

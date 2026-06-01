@@ -10,6 +10,7 @@ const GlobalHealth = Schema.Struct({
   healthy: Schema.Literal(true),
   version: Schema.String,
   components: Schema.optional(Schema.Record(Schema.String, Schema.Unknown)),
+  instance_healthy: Schema.optional(Schema.Boolean),
 })
 
 const GlobalEventSchema = Schema.Struct({

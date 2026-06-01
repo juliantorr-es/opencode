@@ -1,3 +1,4 @@
+import { init, heartbeat, logToolUsage } from "./db"
 import { tool } from "@opencode-ai/plugin"
 import { readFileSync, writeFileSync, appendFileSync, existsSync, mkdirSync } from "node:fs"
 import { resolve, dirname } from "node:path"
@@ -5,23 +6,7 @@ import { spawnSync } from "node:child_process"
 
 function r(worktree: string, p: string): string { return resolve(worktree, p) }
 
-function hb(context: any, tool: string, phase: string, detail: string) {
-  try {
-    const dir = resolve(context.worktree, "docs/json/opencode/sessions/" + context.sessionID + "/analytics")
-    if (!existsSync(dir)) mkdirSync(dir, { recursive: true })
-    appendFileSync(dir + "/heartbeat.v1.jsonl",
-      JSON.stringify({ at: new Date().toISOString(), session_id: context.sessionID, agent: context.agent, tool, phase, detail: detail.slice(0, 200) }) + "\n", "utf8")
-  } catch (_) {}
-}
 
-function artifactLog(context: any, event: Record<string, unknown>) {
-  try {
-    const dir = resolve(context.worktree, `docs/json/opencode/sessions/${context.sessionID}/artifacts`)
-    if (!existsSync(dir)) mkdirSync(dir, { recursive: true })
-    appendFileSync(resolve(dir, `${context.sessionID}.v1.jsonl`),
-      JSON.stringify({ at: new Date().toISOString(), ...event }) + "\n", "utf8")
-  } catch (_) {}
-}
 
 export default tool({
   description: "Atomic batch editor — apply multiple edits across multiple files as a single atomic operation. All edits are validated before any are applied. If any edit fails validation, none are applied. Returns a consolidated diff.",
@@ -29,7 +14,8 @@ export default tool({
     edits: tool.schema.string().describe("JSON array of {file, oldText, newText, reason} objects. All edits validated before any are applied."),
   },
   async execute(args, context) {
-    hb(context, "smart_batch", "started", `batch edit`)
+    const db = init(context.worktree)
+    heartbeat(db, context.sessionID, context.agent, "smart_batch", "started", `batch edit`)
     
     let edits: { file: string; oldText: string; newText: string; reason?: string }[]
     try { edits = JSON.parse(args.edits) } catch {
@@ -79,7 +65,7 @@ export default tool({
     }
 
     if (!valid) {
-      hb(context, "smart_batch", "failed", `validation failed: ${validation.filter(v => v.status !== "valid").length}/${edits.length}`)
+      heartbeat(db, context.sessionID, context.agent, "smart_batch", "failed", `validation failed: ${validation.filter(v => v.status !== "valid").length}/${edits.length}`)
       return JSON.stringify({
         status: "rejected",
         message: `${validation.filter(v => v.status !== "valid").length} of ${edits.length} edits failed validation. No files were modified.`,
@@ -106,7 +92,7 @@ export default tool({
             writeFileSync(prevPath, prevContent.replace(prev.newText, prev.oldText), "utf8")
           } catch {}
         }
-        hb(context, "smart_batch", "failed", `write failed at edit ${i}, rolled back`)
+        heartbeat(db, context.sessionID, context.agent, "smart_batch", "failed", `write failed at edit ${i}, rolled back`)
         return JSON.stringify({
           status: "error",
           error: `Write failed at edit ${i} (${edit.file}): ${e.message}. All changes rolled back.`,
@@ -126,8 +112,7 @@ export default tool({
     })
     const diff = diffResult.stdout?.trim() || ""
 
-    hb(context, "smart_batch", "completed", `${edits.length} edits across ${changedFiles.length} files`)
-    artifactLog(context, { tool: "smart_batch", action: "batch_edit", files: changedFiles.length, edits: edits.length })
+    heartbeat(db, context.sessionID, context.agent, "smart_batch", "completed", `${edits.length} edits across ${changedFiles.length} files`)
 
     return JSON.stringify({
       status: "applied",

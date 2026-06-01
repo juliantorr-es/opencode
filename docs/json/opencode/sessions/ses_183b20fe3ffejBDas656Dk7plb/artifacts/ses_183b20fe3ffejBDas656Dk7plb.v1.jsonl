@@ -1,6 +1,0 @@
-{"at":"2026-05-31T04:32:33.329Z","tool":"smart_bun","action":"ran","command":"tsgo","exit_code":2,"cwd":"packages/desktop"}
-{"at":"2026-05-31T04:32:42.473Z","tool":"smart_bash","action":"bash","command":"wc -l packages/desktop/src/renderer/index.tsx","exit_code":0}
-{"at":"2026-05-31T04:33:33.909Z","tool":"smart_bash","action":"bash","command":"head -180 packages/desktop/src/renderer/index.tsx","exit_code":0}
-{"at":"2026-05-31T04:33:34.257Z","tool":"smart_bash","action":"bash","command":"tail -n +180 packages/desktop/src/renderer/index.tsx","exit_code":0}
-{"at":"2026-05-31T04:33:47.051Z","tool":"smart_grep","action":"searched","pattern":"openPath","results":0,"files":0}
-{"at":"2026-05-31T04:33:47.486Z","tool":"smart_grep","action":"searched","pattern":"@solid-primitives/i18n","results":0,"files":0}

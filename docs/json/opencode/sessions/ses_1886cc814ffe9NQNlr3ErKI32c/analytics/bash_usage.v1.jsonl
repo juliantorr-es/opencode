@@ -1,1 +1,0 @@
-{"at":"2026-05-30T06:29:59.647Z","session_id":"ses_1886cc814ffe9NQNlr3ErKI32c","agent":"executor","binary":"echo","command":"echo \"--- en.ts keys missing from ko.ts (count):\"\ncomm -23 /tmp/en_sorted.txt /tmp/ko_sorted.txt | tee /tmp/missing_from_ko.txt | wc -l\necho \"--- List:\"\ncat /tmp/missing_from_ko.txt","elapsed_ms":12,"exit_code":0}

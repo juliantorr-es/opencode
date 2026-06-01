@@ -1,3 +1,4 @@
+import { init, heartbeat, logToolUsage } from "./db"
 import { tool } from "@opencode-ai/plugin"
 import { readFileSync, writeFileSync, appendFileSync, existsSync, mkdirSync } from "node:fs"
 import { resolve } from "node:path"
@@ -5,23 +6,7 @@ import { spawnSync } from "node:child_process"
 
 function r(worktree: string, p: string): string { return resolve(worktree, p) }
 
-function hb(context: any, tool: string, phase: string, detail: string) {
-  try {
-    const dir = resolve(context.worktree, "docs/json/opencode/sessions/" + context.sessionID + "/analytics")
-    if (!existsSync(dir)) mkdirSync(dir, { recursive: true })
-    appendFileSync(dir + "/heartbeat.v1.jsonl",
-      JSON.stringify({ at: new Date().toISOString(), session_id: context.sessionID, agent: context.agent, tool, phase, detail: detail.slice(0, 200) }) + "\n", "utf8")
-  } catch (_) {}
-}
 
-function artifactLog(context: any, event: Record<string, unknown>) {
-  try {
-    const dir = resolve(context.worktree, `docs/json/opencode/sessions/${context.sessionID}/artifacts`)
-    if (!existsSync(dir)) mkdirSync(dir, { recursive: true })
-    appendFileSync(resolve(dir, `${context.sessionID}.v1.jsonl`),
-      JSON.stringify({ at: new Date().toISOString(), ...event }) + "\n", "utf8")
-  } catch (_) {}
-}
 
 export default tool({
   description: "Edit files with exact text replacement. Every edit is validated before application. Returns before/after diffs for every change. Use smart_batch for multi-file atomic edits.",
@@ -33,11 +18,12 @@ export default tool({
     replace_all: tool.schema.boolean().optional().describe("Replace all occurrences (default: replace first only)"),
   },
   async execute(args, context) {
-    hb(context, "smart_edit", "started", args.file_path?.slice(0, 80) || "")
+    const db = init(context.worktree)
+    heartbeat(db, context.sessionID, context.agent, "smart_edit", "started", args.file_path?.slice(0, 80) || "")
     const fullPath = r(context.worktree, args.file_path)
 
     if (!existsSync(fullPath)) {
-      hb(context, "smart_edit", "failed", "file not found")
+      heartbeat(db, context.sessionID, context.agent, "smart_edit", "failed", "file not found")
       return JSON.stringify({ status: "error", error: `File not found: ${args.file_path}` }, null, 2)
     }
 
@@ -52,7 +38,7 @@ export default tool({
     // Validate old_text exists in file
     const occurrences = content.split(oldText).length - 1
     if (occurrences === 0) {
-      hb(context, "smart_edit", "failed", "text not found")
+      heartbeat(db, context.sessionID, context.agent, "smart_edit", "failed", "text not found")
       // Show surrounding context to help
       const lines = content.split("\n")
       const snippet = lines.slice(0, 10).join("\n")
@@ -86,8 +72,7 @@ export default tool({
     })
     const diff = diffResult.stdout?.trim() || "(no diff available)"
 
-    hb(context, "smart_edit", "completed", args.file_path?.slice(0, 80) || "")
-    artifactLog(context, { tool: "smart_edit", action: "edited", file: args.file_path, reason: args.reason, occurrences: args.replace_all ? occurrences : 1 })
+    heartbeat(db, context.sessionID, context.agent, "smart_edit", "completed", args.file_path?.slice(0, 80) || "")
 
     return JSON.stringify({
       status: "applied",

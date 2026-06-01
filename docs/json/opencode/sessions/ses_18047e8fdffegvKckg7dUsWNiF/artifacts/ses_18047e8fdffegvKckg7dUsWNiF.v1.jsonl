@@ -1,5 +1,0 @@
-{"at":"2026-05-31T20:27:36.012Z","tool":"smart_bun","action":"ran","command":"typecheck","exit_code":2,"cwd":"packages/opencode"}
-{"at":"2026-05-31T20:27:37.839Z","tool":"smart_bun","action":"ran","command":"test","exit_code":1,"cwd":"packages/opencode"}
-{"at":"2026-05-31T20:28:34.790Z","tool":"smart_bash","action":"bash","command":"npx tsgo --noEmit 2>&1 >/tmp/tsgo-full.txt; grep -nE '(src/mcp/auth|src/tool/registry\\.ts|src/tool/t","exit_code":0}
-{"at":"2026-05-31T20:28:41.338Z","tool":"smart_bash","action":"bash","command":"wc -l /tmp/tsgo-full.txt; echo \"---\"; grep -c \"error TS\" /tmp/tsgo-full.txt; echo \"---\"; grep -c -E ","exit_code":0}
-{"at":"2026-05-31T20:28:51.057Z","tool":"smart_grep","action":"searched","pattern":"(auth|registry|tool\\.ts|typed-result)","results":0,"files":0}

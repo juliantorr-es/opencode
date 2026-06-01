@@ -1,7 +1,0 @@
-{"at":"2026-05-31T12:43:38.854Z","tool":"smart_bash","action":"bash","command":"/bin/ls packages/opencode/src/campaign/","exit_code":0}
-{"at":"2026-05-31T12:43:39.689Z","tool":"smart_bash","action":"bash","command":"/bin/ls packages/opencode/test/campaign/ 2>/dev/null || echo \"DIR_NOT_FOUND\"","exit_code":0}
-{"at":"2026-05-31T12:44:12.035Z","tool":"smart_grep","action":"searched","pattern":"Effect\\.provide|Layer\\.provide|\\.pipe\\(Layer\\.provide","results":10,"files":4}
-{"at":"2026-05-31T12:44:13.064Z","tool":"smart_grep","action":"searched","pattern":"Effect\\.gen|Effect\\.fn","results":20,"files":3}
-{"at":"2026-05-31T12:44:19.612Z","tool":"smart_grep","action":"searched","pattern":"Context\\.Service|extends Context\\.Service","results":9,"files":9}
-{"at":"2026-05-31T12:44:25.557Z","tool":"smart_grep","action":"searched","pattern":"\"effect\"","results":0,"files":0}
-{"at":"2026-05-31T12:44:27.151Z","tool":"smart_grep","action":"searched","pattern":"export const layer","results":9,"files":9}

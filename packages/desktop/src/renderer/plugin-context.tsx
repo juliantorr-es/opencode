@@ -38,7 +38,6 @@ export function DesktopPluginProvider(props: { children: any }) {
     }
   }
 
-  // Load desktop plugins from IPC config on mount
   onMount(() => {
     const loader = new DesktopPluginLoader(registerSlot)
     loader.loadAll().catch(console.error)

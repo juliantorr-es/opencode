@@ -28,8 +28,6 @@ export const Entry = Schema.Struct({
   serverUrl: Schema.mutableKey(Schema.optional(Schema.String)),
 })
 export type Entry = Schema.Schema.Type<typeof Entry>
-
-const decodeAuthData = Schema.decodeUnknownOption(Schema.Record(Schema.String, Entry))
 type AuthData = Record<string, Entry>
 
 /**
@@ -93,7 +91,11 @@ export const layer = Layer.effect(
                 corruptedKeys: corrupted,
                 timestamp,
               })),
-              Effect.orDie,
+              Effect.catchAll((error) =>
+                Effect.logError("Failed to backup corrupted MCP auth entries", error).pipe(
+                  Effect.annotateLogs({ backupPath, corruptedKeys: corrupted }),
+                )
+              ),
             )
           }
           return valid

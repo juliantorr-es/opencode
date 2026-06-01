@@ -1,3 +1,0 @@
-{"at":"2026-05-31T03:39:45.622Z","tool":"smart_bash","action":"bash","command":"rm -r packages/opencode/migration","exit_code":0}
-{"at":"2026-05-31T03:40:08.699Z","tool":"smart_bash","action":"bash","command":"test -d packages/opencode/migration && echo \"EXISTS\" || echo \"GONE\"","exit_code":0}
-{"at":"2026-05-31T03:40:27.010Z","tool":"smart_bash","action":"bash","command":"test -d packages/opencode/migration-pg && echo \"PG_MIGRATIONS_EXIST\" || echo \"PG_MIGRATIONS_MISSING\"","exit_code":0}

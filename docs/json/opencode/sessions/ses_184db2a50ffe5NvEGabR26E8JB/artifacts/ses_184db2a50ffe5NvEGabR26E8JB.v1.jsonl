@@ -1,4 +1,0 @@
-{"at":"2026-05-30T23:08:00.004Z","tool":"smart_bash","action":"bash","command":"awk 'NR>=170 && NR<=202' /Users/user/Developer/GitHub/opencode-desktop-dev/packages/opencode/src/too","exit_code":0}
-{"at":"2026-05-30T23:08:03.455Z","tool":"smart_bash","action":"bash","command":"python3 -c \"\nimport subprocess\nresult = subprocess.run(['sed', '-n', '170,202p', '/Users/user/Develo","exit_code":0}
-{"at":"2026-05-30T23:08:06.645Z","tool":"smart_bash","action":"bash","command":"python3 -c \"\nimport subprocess, sys\nresult = subprocess.run(['sed', '-n', '170,202p', '/Users/user/D","exit_code":0}
-{"at":"2026-05-30T23:08:14.146Z","tool":"smart_bash","action":"bash","command":"bash -c 'sed -n '\\''170,202p'\\'' /Users/user/Developer/GitHub/opencode-desktop-dev/packages/opencode","exit_code":0}

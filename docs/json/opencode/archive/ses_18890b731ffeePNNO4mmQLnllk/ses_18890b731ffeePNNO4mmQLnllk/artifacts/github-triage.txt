@@ -1,9 +1,0 @@
-Assign a GitHub issue to a user. Uses GITHUB_TOKEN environment variable for authentication.
-
-PARAMETERS:
-- `owner` (required): Repository owner (user or organization)
-- `repo` (required): Repository name
-- `issue_number` (required): Issue number to assign
-- `assignee` (optional): GitHub username to assign. If omitted, assigns to the token owner.
-
-OUTPUT: Assignment result with assignee and issue URL.

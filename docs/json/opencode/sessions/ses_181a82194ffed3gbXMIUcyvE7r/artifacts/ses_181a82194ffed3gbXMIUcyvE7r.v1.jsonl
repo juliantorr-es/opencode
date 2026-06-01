@@ -1,9 +1,0 @@
-{"at":"2026-05-31T14:05:45.642Z","tool":"smart_grep","action":"searched","pattern":"TOOL_CATEGORIES","results":0,"files":0}
-{"at":"2026-05-31T14:06:21.501Z","tool":"smart_grep","action":"searched","pattern":"TOOL_CATEGORIES|const TOOL|affordancesAfterSuccess|affordancesFor|suggestedTools","results":0,"files":0}
-{"at":"2026-05-31T14:07:25.795Z","tool":"smart_bash","action":"bash","command":"head -n 360 packages/opencode/src/tool/typed-result.ts | tail -n 141","exit_code":0}
-{"at":"2026-05-31T14:08:55.174Z","tool":"smart_grep","action":"searched","pattern":"export.*define\\(","results":30,"files":30}
-{"at":"2026-05-31T14:09:22.489Z","tool":"smart_grep","action":"searched","pattern":"export.*define\\(","results":80,"files":80}
-{"at":"2026-05-31T14:09:47.925Z","tool":"smart_grep","action":"searched","pattern":"TOOL_CATEGORIES|includes\\(","results":0,"files":0}
-{"at":"2026-05-31T14:10:06.549Z","tool":"smart_bash","action":"bash","command":"awk '/^function affordancesAfterSuccess/,/^function affordancesFor/' packages/opencode/src/tool/type","exit_code":0}
-{"at":"2026-05-31T14:10:07.511Z","tool":"smart_bash","action":"bash","command":"awk '/^function affordancesFor/,/^const STRUCTURED_MARKER/' packages/opencode/src/tool/typed-result.","exit_code":0}
-{"at":"2026-05-31T14:11:42.400Z","tool":"smart_bash","action":"bash","command":"node -e '\nfunction toolCategory(id) {\n  if (id.includes(\"read\") || id === \"read\") return \"read\"\n  if","exit_code":0}

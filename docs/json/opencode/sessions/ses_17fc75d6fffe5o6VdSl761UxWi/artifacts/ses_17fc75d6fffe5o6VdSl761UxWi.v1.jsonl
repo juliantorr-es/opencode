@@ -1,8 +1,0 @@
-{"at":"2026-05-31T22:47:50.593Z","tool":"smart_bun","action":"ran","command":"test","exit_code":1,"cwd":"packages/opencode"}
-{"at":"2026-05-31T22:48:12.695Z","tool":"smart_bun","action":"ran","command":"test","exit_code":1,"cwd":"packages/opencode"}
-{"at":"2026-05-31T22:48:18.187Z","tool":"smart_bash","action":"bash","command":"/bin/bash -c 'cd packages/opencode && /opt/homebrew/bin/bun test test/campaign/pg-lifecycle-proof.te","exit_code":127}
-{"at":"2026-05-31T22:48:21.662Z","tool":"smart_bash","action":"bash","command":"which bun","exit_code":0}
-{"at":"2026-05-31T22:48:25.519Z","tool":"smart_bash","action":"bash","command":"/Users/user/.bun/bin/bun test test/campaign/pg-lifecycle-proof.test.ts 2>&1","exit_code":1}
-{"at":"2026-05-31T22:48:38.522Z","tool":"smart_bash","action":"bash","command":"/Users/user/.bun/bin/bun test test/campaign/pg-lifecycle-proof.test.ts 2>&1","exit_code":1}
-{"at":"2026-05-31T22:49:01.033Z","tool":"smart_bash","action":"bash","command":"/Users/user/.bun/bin/bun test test/campaign/pg-lifecycle-proof.test.ts 2>&1 | cat","exit_code":0}
-{"at":"2026-05-31T22:49:13.766Z","tool":"smart_bash","action":"bash","command":"/Users/user/.bun/bin/bun test test/campaign/pg-lifecycle-proof.test.ts > /tmp/pg-test-output.txt 2>&","exit_code":1}

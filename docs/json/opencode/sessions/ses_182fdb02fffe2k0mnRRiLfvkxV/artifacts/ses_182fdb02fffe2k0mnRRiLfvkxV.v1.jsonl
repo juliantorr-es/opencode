@@ -1,6 +1,0 @@
-{"at":"2026-05-31T07:52:11.594Z","tool":"smart_bash","action":"bash","command":"wc -l /Users/user/Developer/GitHub/opencode-desktop-dev/packages/opencode/src/plugin/openai/ws.ts","exit_code":0}
-{"at":"2026-05-31T07:53:19.503Z","tool":"smart_edit","action":"edited","file":"/Users/user/Developer/GitHub/opencode-desktop-dev/packages/opencode/src/plugin/openai/ws.ts","detail":"Fix 1a: use once() so error listener self-removes after firing in timeout handle"}
-{"at":"2026-05-31T07:53:20.313Z","tool":"smart_edit","action":"edited","file":"/Users/user/Developer/GitHub/opencode-desktop-dev/packages/opencode/src/plugin/openai/ws.ts","detail":"Fix 1b: use once() so error listener self-removes in onError"}
-{"at":"2026-05-31T07:53:21.026Z","tool":"smart_edit","action":"edited","file":"/Users/user/Developer/GitHub/opencode-desktop-dev/packages/opencode/src/plugin/openai/ws.ts","detail":"Fix 1c: use once() so error listener self-removes in onAbort"}
-{"at":"2026-05-31T07:53:21.928Z","tool":"smart_edit","action":"edited","file":"/Users/user/Developer/GitHub/opencode-desktop-dev/packages/opencode/src/plugin/openai/ws.ts","detail":"Fix 2: use once() so error listener self-removes in terminateSocket"}
-{"at":"2026-05-31T07:54:58.346Z","tool":"smart_bun","action":"ran","command":"typecheck","exit_code":2,"cwd":"packages/opencode"}

@@ -1,6 +1,7 @@
 import { tool } from "@opencode-ai/plugin"
 import { resolve } from "node:path"
 import { existsSync, readFileSync } from "node:fs"
+import { init, absorbArtifact, readArtifact, listArtifacts } from "./db"
 
 function r(worktree: string, p: string): string { return resolve(worktree, p) }
 
@@ -21,6 +22,13 @@ export default tool({
   async execute(args, context) {
     // ── ARTIFACT ──
     if (args.action === "artifact") {
+      const db = init(context.worktree)
+      // Try DB first
+      const dbResult = readArtifact(db, args.path || "")
+      if (dbResult) {
+        return JSON.stringify({ action: "artifact", status: "loaded", path: args.path, data: dbResult, source: "database" }, null, 2)
+      }
+      // Fall back to filesystem
       const fullPath = r(context.worktree, args.path || "")
       if (!existsSync(fullPath)) return JSON.stringify({ action: "artifact", status: "not_found", path: args.path }, null, 2)
       try {
@@ -63,35 +71,28 @@ export default tool({
 
     // ── MESSAGES ──
     if (args.action === "messages") {
-      const msgPath = r(context.worktree, "docs/json/opencode/coordination/messages.v1.jsonl")
-      if (!existsSync(msgPath)) return JSON.stringify({ action: "messages", messages: [], count: 0 }, null, 2)
-
-      let entries: any[] = []
-      try {
-        entries = readFileSync(msgPath, "utf8").split("\n").filter(Boolean).slice(-200)
-          .map(l => { try { return JSON.parse(l) } catch { return null } }).filter(Boolean)
-      } catch { return JSON.stringify({ action: "messages", error: "Parse error" }, null, 2) }
-
+      const db = init(context.worktree)
+      let query = `SELECT * FROM messages WHERE 1=1`
+      const params: any[] = []
+      if (args.kind) { query += ` AND kind = ?`; params.push(args.kind) }
+      if (args.recipient) { query += ` AND recipient = ?`; params.push(args.recipient) }
+      if (args.sender) { query += ` AND sender = ?`; params.push(args.sender) }
+      if (args.session_id) { query += ` AND session_id = ?`; params.push(args.session_id) }
+      if (args.lane_prefix) { query += ` AND lane_id LIKE ?`; params.push(args.lane_prefix + "%") }
+      query += ` ORDER BY sent_at DESC LIMIT ?`
       const limit = args.limit ?? 20
-      let filtered = entries.filter((e: any) => {
-        if (args.kind && e.kind !== args.kind) return false
-        if (args.recipient && e.recipient !== args.recipient) return false
-        if (args.sender && e.sender !== args.sender) return false
-        if (args.session_id && e.session_id !== args.session_id) return false
-        if (args.lane_prefix) {
-          const body = typeof e.body === "string" ? (() => { try { return JSON.parse(e.body) } catch { return {} } })() : (e.body || {})
-          const laneId = e.lane_id || body.lane_id || ""
-          if (!String(laneId).startsWith(args.lane_prefix!)) return false
-        }
-        return true
-      })
-      filtered.sort((a: any, b: any) => (b.sent_at || "").localeCompare(a.sent_at || ""))
-      const msgs = filtered.slice(0, limit).map((e: any) => ({
+      params.push(limit)
+
+      const rows = db.query(query).all(...params) as any[]
+      const msgs = rows.map((e: any) => ({
         message_id: e.message_id, kind: e.kind, sender: e.sender, recipient: e.recipient,
-        subject: e.subject, body: e.body?.slice(0, 2000), sent_at: e.sent_at,
+        lane_id: e.lane_id, subject: e.subject,
+        body: (e.body || "").slice(0, 2000), sent_at: e.sent_at,
       }))
 
-      return JSON.stringify({ action: "messages", messages: msgs, count: msgs.length, total_in_ledger: entries.length }, null, 2)
+      const totalRow = db.query(`SELECT COUNT(*) as cnt FROM messages`).get() as any
+      return JSON.stringify({ action: "messages", messages: msgs, count: msgs.length,
+        total_in_db: totalRow?.cnt || 0 }, null, 2)
     }
 
     return JSON.stringify({ error: `Unknown action: '${args.action}'` }, null, 2)

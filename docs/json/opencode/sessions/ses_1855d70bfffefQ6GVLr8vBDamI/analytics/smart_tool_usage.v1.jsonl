@@ -1,9 +1,0 @@
-{"at":"2026-05-30T20:46:17.185Z","session_id":"ses_1855d70bfffefQ6GVLr8vBDamI","agent":"claim-adversary","tool":"smart_grep","pattern":"afterCommit|transaction","path":"packages/opencode/src/storage"}
-{"at":"2026-05-30T20:46:26.358Z","session_id":"ses_1855d70bfffefQ6GVLr8vBDamI","agent":"claim-adversary","tool":"smart_grep","pattern":"export.*function init|export.*init","path":""}
-{"at":"2026-05-30T20:46:26.826Z","session_id":"ses_1855d70bfffefQ6GVLr8vBDamI","agent":"claim-adversary","tool":"smart_grep","pattern":"db\\.execute","path":"packages/opencode/src/storage"}
-{"at":"2026-05-30T20:49:11.782Z","session_id":"ses_1855d70bfffefQ6GVLr8vBDamI","agent":"claim-adversary","tool":"smart_grep","pattern":"execute|exec|query","path":"packages/opencode/node_modules"}
-{"at":"2026-05-30T20:49:12.527Z","session_id":"ses_1855d70bfffefQ6GVLr8vBDamI","agent":"claim-adversary","tool":"smart_grep","pattern":"class PgSession|class PgliteSession|execute\\(query","path":"packages/opencode/node_modules/drizzle-orm"}
-{"at":"2026-05-30T20:49:22.511Z","session_id":"ses_1855d70bfffefQ6GVLr8vBDamI","agent":"claim-adversary","tool":"smart_grep","pattern":"class PgAsyncSession|execute","path":"packages/opencode/node_modules/drizzle-orm"}
-{"at":"2026-05-30T20:49:30.843Z","session_id":"ses_1855d70bfffefQ6GVLr8vBDamI","agent":"claim-adversary","tool":"smart_grep","pattern":"class PgAsyncRaw|class.*Raw","path":"packages/opencode/node_modules/drizzle-orm/pg-core"}
-{"at":"2026-05-30T20:49:43.265Z","session_id":"ses_1855d70bfffefQ6GVLr8vBDamI","agent":"claim-adversary","tool":"smart_grep","pattern":"class QueryPromise","path":"packages/opencode/node_modules/drizzle-orm"}
-{"at":"2026-05-30T20:50:00.901Z","session_id":"ses_1855d70bfffefQ6GVLr8vBDamI","agent":"claim-adversary","tool":"smart_grep","pattern":"class QueryPromise|then|Symbol.asyncDispose","path":"packages/opencode/node_modules/drizzle-orm/query-promise.d.ts"}

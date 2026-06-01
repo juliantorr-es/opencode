@@ -1,3 +1,0 @@
-{"at":"2026-05-31T03:00:27.254Z","tool":"smart_bash","action":"bash","command":"wc -l packages/desktop/src/main/ipc-contract.ts","exit_code":0}
-{"at":"2026-05-31T03:02:02.439Z","tool":"smart_bash","action":"bash","command":"awk 'NR>=320' packages/desktop/src/main/ipc-contract.ts","exit_code":0}
-{"at":"2026-05-31T03:02:25.789Z","tool":"smart_bash","action":"bash","command":"awk 'NR>=308 && NR<=340' packages/desktop/src/main/ipc-contract.ts","exit_code":0}

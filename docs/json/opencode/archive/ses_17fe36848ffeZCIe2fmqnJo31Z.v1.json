@@ -1,8 +1,0 @@
-{
-  "schema": "v1",
-  "session_id": "ses_17fe36848ffeZCIe2fmqnJo31Z",
-  "agent": "general-man-agent",
-  "archived_at": "2026-05-31T22:23:49.076Z",
-  "summary": "Plugin/MCP Phase 3: Lifecycle Integration and Stale Tool Cleanup — planning session. Identified previous session ses_181d68c2effe (Plugin+MCP lifecycle hardening, 3 lanes: MCP-TRUTH, TRUST-BOUNDARY, +1). Three deferred failures: MCP Ref migration, listener cleanup, ToolRegistry integration. Plus ~9 silent catches and 8 auth providers needing validation. Produced complete Phase 3 plan: P0 ToolRegistry ownership metadata, P0 MCP deduplication, P0 stale tool cleanup, P1 listener lifecycle proofs, P1 silent catch classification, P2 auth provider schema validation, P3 narrow MCP Ref migration. Defined 17 test classes across 5 domains. Scoped boundaries: no compile closure, no instance trace, no campaign proofs. Agent execution backend not connected — all spawns registered to coordination ledger but not executed. Plan is complete and ready for next session with active execution backend.",
-  "handoffs": 204
-}

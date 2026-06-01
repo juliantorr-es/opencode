@@ -1,6 +1,0 @@
-{"at":"2026-05-31T13:37:34.466Z","tool":"smart_bash","action":"bash","command":"for f in generate-report test binary-info analytics grep task smart-batch glob prepublication-inconc","exit_code":0}
-{"at":"2026-05-31T13:38:29.329Z","tool":"smart_grep","action":"searched","pattern":"const Parameters|const BaseParameters|const BACKGROUND_DESCRIPTION","results":0,"files":0}
-{"at":"2026-05-31T13:38:30.513Z","tool":"smart_grep","action":"searched","pattern":"export const Parameters|function run\\(|yield\\*","results":0,"files":0}
-{"at":"2026-05-31T13:41:00.233Z","tool":"smart_bash","action":"bash","command":"head -c 2000 packages/opencode/src/tool/read.txt","exit_code":0}
-{"at":"2026-05-31T13:41:00.992Z","tool":"smart_bash","action":"bash","command":"head -c 2000 packages/opencode/src/tool/task.txt","exit_code":0}
-{"at":"2026-05-31T13:41:02.042Z","tool":"smart_bash","action":"bash","command":"wc -c packages/opencode/src/tool/*.txt | sort -rn","exit_code":0}

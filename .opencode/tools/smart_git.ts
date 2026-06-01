@@ -1,7 +1,7 @@
 import { tool } from "@opencode-ai/plugin"
 import { spawnSync } from "node:child_process"
 import { resolve } from "node:path"
-import { appendFileSync, existsSync, mkdirSync } from "node:fs"
+import { init, heartbeat, logToolUsage } from "./db"
 
 function resolvePath(worktree: string, p: string): string {
   return resolve(worktree, p)
@@ -10,23 +10,7 @@ function summarize(output: string): string {
   return output.trim() || "no output"
 }
 
-function hb(context: any, tool: string, phase: string, detail: string) {
-  try {
-    const dir = resolve(context.worktree, "docs/json/opencode/sessions/" + context.sessionID + "/analytics")
-    if (!existsSync(dir)) mkdirSync(dir, { recursive: true })
-    appendFileSync(dir + "/heartbeat.v1.jsonl",
-      JSON.stringify({ at: new Date().toISOString(), session_id: context.sessionID, agent: context.agent, tool, phase, detail: detail.slice(0, 200) }) + "\n", "utf8")
-  } catch (_) {}
-}
 
-function artifactLog(context: any, event: Record<string, unknown>) {
-  try {
-    const dir = resolve(context.worktree, `docs/json/opencode/sessions/${context.sessionID}/artifacts`)
-    if (!existsSync(dir)) mkdirSync(dir, { recursive: true })
-    appendFileSync(resolve(dir, `${context.sessionID}.v1.jsonl`),
-      JSON.stringify({ at: new Date().toISOString(), ...event }) + "\n", "utf8")
-  } catch (_) {}
-}
 
 function spawnDelta(input: string) {
   const binaries = ["delta", "/opt/homebrew/bin/delta", "/usr/local/bin/delta"]
@@ -54,14 +38,6 @@ function spawnDifft(input: string) {
   })
 }
 
-function logBinaryUsage(context: any, binary: string, success: boolean) {
-  try {
-    const dir = resolve(context.worktree, "docs/json/opencode/sessions/" + context.sessionID + "/analytics")
-    if (!existsSync(dir)) mkdirSync(dir, { recursive: true })
-    appendFileSync(dir + "/binary_usage.v1.jsonl",
-      JSON.stringify({ at: new Date().toISOString(), session_id: context.sessionID, agent: context.agent, binary, success }) + "\n", "utf8")
-  } catch (_) {}
-}
 
 function highlightDiff(diff: string): string {
   // Pure TS basic diff highlighting — adds ANSI color codes for +/- lines
@@ -85,7 +61,8 @@ export default tool({
     style: tool.schema.string().optional().describe("Output style for diff: 'auto' (tries difftastic then delta, default), 'difftastic' (structural AST-aware diff), 'delta' (syntax-highlighted), 'raw' (plain git diff)"),
   },
   async execute(args, context) {
-    hb(context, "smart_git", "started", args.operation?.slice(0, 80) || "")
+    const db = init(context.worktree)
+    heartbeat(db, context.sessionID, context.agent, "smart_git", "started", args.operation?.slice(0, 80) || "")
     const validOps: Record<string, string[]> = {
       status: ["status", "--porcelain"],
       diff: ["diff"],
@@ -102,7 +79,7 @@ export default tool({
     }
 
     if (!validOps[args.operation]) {
-      hb(context, "smart_git", "failed", `unknown op: ${args.operation}`)
+      heartbeat(db, context.sessionID, context.agent, "smart_git", "failed", `unknown op: ${args.operation}`)
       return JSON.stringify({ status: "error", error: `Unknown operation: '${args.operation}'`, valid: Object.keys(validOps) }, null, 2)
     }
 
@@ -115,7 +92,7 @@ export default tool({
     }
     if (blockedArgs[args.operation]) {
       const hasBlocked = blockedArgs[args.operation].some(a => (args.args || "").includes(a))
-      if (hasBlocked) { hb(context, "smart_git", "blocked", `${args.operation}: ${args.args}`); return JSON.stringify({ status: "blocked", error: `Destructive git ${args.operation} blocked`, blocked_args: blockedArgs[args.operation] }, null, 2) }
+      if (hasBlocked) { heartbeat(db, context.sessionID, context.agent, "smart_git", "blocked", `${args.operation}: ${args.args}`); return JSON.stringify({ status: "blocked", error: `Destructive git ${args.operation} blocked`, blocked_args: blockedArgs[args.operation] }, null, 2) }
     }
 
     const cmd = ["git", ...validOps[args.operation]]
@@ -234,10 +211,9 @@ export default tool({
 
     if (styledDiff) { output.styled_diff = styledDiff.slice(0, 5000); output.diff_style = diffStyle }
     if (stderr) output.stderr = stderr
-    if (result.error) { hb(context, "smart_git", "failed", result.error.message); output.status = "error"; output.error = result.error.message }
-    else { hb(context, "smart_git", result.status === 0 ? "completed" : "failed", `${args.operation} exit=${result.status}`); output.status = result.status === 0 ? "success" : "error" }
+    if (result.error) { heartbeat(db, context.sessionID, context.agent, "smart_git", "failed", result.error.message); output.status = "error"; output.error = result.error.message }
+    else { heartbeat(db, context.sessionID, context.agent, "smart_git", result.status === 0 ? "completed" : "failed", `${args.operation} exit=${result.status}`); output.status = result.status === 0 ? "success" : "error" }
 
-    artifactLog(context, { tool: "smart_git", action: "git_op", operation: args.operation, exit_code: result.status })
     return JSON.stringify(output, null, 2)
   },
 })

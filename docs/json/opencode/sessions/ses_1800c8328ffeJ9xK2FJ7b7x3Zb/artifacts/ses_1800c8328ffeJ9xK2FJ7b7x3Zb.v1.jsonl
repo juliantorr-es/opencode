@@ -1,5 +1,0 @@
-{"at":"2026-05-31T21:32:09.446Z","tool":"smart_bun","action":"ran","command":"test","exit_code":1,"cwd":"/Users/user/Developer/GitHub/opencode-desktop-dev/packages/opencode"}
-{"at":"2026-05-31T21:32:51.277Z","tool":"smart_bun","action":"ran","command":"test","exit_code":1,"cwd":"/Users/user/Developer/GitHub/opencode-desktop-dev/packages/opencode"}
-{"at":"2026-05-31T21:33:14.437Z","tool":"smart_write","action":"created","file":"/tmp/run-test.sh","reason":"Temporary script to run the test and capture full output"}
-{"at":"2026-05-31T21:33:51.331Z","tool":"smart_bash","action":"bash","command":"bash /tmp/run-test.sh","exit_code":1}
-{"at":"2026-05-31T21:34:21.401Z","tool":"smart_bash","action":"bash","command":"bash /tmp/run-test.sh > /tmp/test-full-output.txt 2>&1; wc -l /tmp/test-full-output.txt","exit_code":0}

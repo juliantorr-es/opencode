@@ -159,7 +159,10 @@ export async function ensureRunning(redirectUri?: string): Promise<void> {
 
   if (state.server) return
 
-  // Deduplicate concurrent ensureRunning() calls
+  // Deduplicate concurrent ensureRunning() calls.
+  // Safe: state.starting is set synchronously before the first await, so concurrent callers
+  // always observe the same Promise and wait on it rather than spawning a second server.
+  // The single server reference in state.server is assigned only after the Promise resolves.
   if (state.starting) return state.starting
 
   state.currentPort = port

@@ -1,4 +1,0 @@
-{"at":"2026-05-31T20:40:24.762Z","tool":"smart_grep","action":"searched","pattern":"import.*CapabilityId","results":0,"files":0}
-{"at":"2026-05-31T20:40:34.377Z","tool":"smart_grep","action":"searched","pattern":"CapabilityIdValues","results":3,"files":2}
-{"at":"2026-05-31T20:40:46.738Z","tool":"smart_edit","action":"edited","file":"packages/opencode/src/plugin/capability/index.ts","reason":"Change CapabilityId export from type-only to dual value+type so runtime consumers (plugin/index.ts) can access CapabilityId.SecretsAccess","occurrences":1}
-{"at":"2026-05-31T20:41:03.188Z","tool":"smart_bun","action":"ran","command":"typecheck","exit_code":2,"cwd":"packages/opencode"}

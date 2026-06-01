@@ -1,6 +1,0 @@
-{"at":"2026-05-31T00:18:59.825Z","tool":"smart_bash","action":"bash","command":"python3 -c \"\nimport os, fnmatch\nfor root, dirs, files in os.walk('packages'):\n    for f in files:\n  ","exit_code":0}
-{"at":"2026-05-31T00:19:00.267Z","tool":"smart_bash","action":"bash","command":"python3 -c \"\nimport os\nfor root, dirs, files in os.walk('packages'):\n    for f in files:\n        if ","exit_code":0}
-{"at":"2026-05-31T00:19:04.822Z","tool":"smart_bash","action":"bash","command":"python3 -c \"\nimport os\nfor root, dirs, files in os.walk('.'):\n    if 'node_modules' in root or '.git","exit_code":0}
-{"at":"2026-05-31T00:19:05.466Z","tool":"smart_bash","action":"bash","command":"python3 -c \"\nimport os\npath = 'packages/opencode/src/storage'\nfor f in sorted(os.listdir(path)):\n   ","exit_code":0}
-{"at":"2026-05-31T00:19:25.957Z","tool":"smart_bash","action":"bash","command":"python3 -c \"\nimport os\npath = 'packages/opencode/src/storage'\nfor root, dirs, files in os.walk(path)","exit_code":0}
-{"at":"2026-05-31T00:19:35.954Z","tool":"smart_bash","action":"bash","command":"python3 -c \"\nimport os\n# Check if migration directories exist\nfor d in ['packages/opencode/migration","exit_code":0}

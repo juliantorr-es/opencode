@@ -1,3 +1,0 @@
-{"at":"2026-05-30T11:32:14.545Z","session_id":"ses_1875e3232ffeELbb6CshI1CkES","agent":"lane-owner","binary":"tsgo","command":"tsgo --noEmit 2>&1 | tail -40","reason":"Run tsgo typechecker from packages/opencode","elapsed_ms":5,"exit_code":1}
-{"at":"2026-05-30T11:32:16.988Z","session_id":"ses_1875e3232ffeELbb6CshI1CkES","agent":"lane-owner","binary":"tsgo","command":"tsgo --noEmit 2>&1 | tail -60","reason":"Run tsgo typechecker from full path","elapsed_ms":11,"exit_code":0}
-{"at":"2026-05-30T11:35:20.678Z","session_id":"ses_1875e3232ffeELbb6CshI1CkES","agent":"lane-owner","binary":"tsgo","command":"tsgo --noEmit 2>&1 | grep \"src/debug/\" | head -20","reason":"Check if any type errors remain in my new debug files","elapsed_ms":10,"exit_code":0}

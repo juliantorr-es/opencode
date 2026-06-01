@@ -1,8 +1,0 @@
-{
-  "schema": "v1",
-  "session_id": "ses_17fbd41a8ffeofv1RRtLIuz0ur",
-  "agent": "general-man-agent",
-  "archived_at": "2026-05-31T23:20:53.575Z",
-  "summary": "Integration auditor session: ran cartography across repo (zero commit divergence, 349 dirty files from agent-system reorg), fixed 5 PG timestamp columns from integer→bigint across 4 schema files (Date.now() overflow prevention), verified CI Postgres already configured. Coordination query bug at coordination.ts:618 confirmed already fixed (inArray at line 789). 3 smoking guns reduced to 1 deferred (opencode.jsonc config drift). Two cross-session lessons recorded: Drizzle integer→bigint pattern and cartography drift on CI checks.",
-  "handoffs": 204
-}

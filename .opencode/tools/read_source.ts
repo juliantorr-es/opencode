@@ -1,3 +1,4 @@
+import { init, heartbeat, logToolUsage } from "./db"
 import { tool } from "@opencode-ai/plugin"
 import { resolve } from "node:path"
 import { existsSync, readFileSync } from "node:fs"
@@ -17,14 +18,6 @@ async function ensureTs(worktree: string) {
   tsReady = true
 }
 
-function artifactLog(context: any, event: Record<string, unknown>) {
-  try {
-    const dir = resolve(context.worktree, `docs/json/opencode/sessions/${context.sessionID}/artifacts`)
-    if (!existsSync(dir)) mkdirSync(dir, { recursive: true })
-    appendFileSync(resolve(dir, `${context.sessionID}.v1.jsonl`),
-      JSON.stringify({ at: new Date().toISOString(), ...event }) + "\n", "utf8")
-  } catch (_) {}
-}
 
 function astFocus(source: string, name: string, filePath: string): { start: number; end: number } | null {
   const lang = filePath.endsWith(".tsx") ? tsxLang : tsLang
@@ -62,6 +55,7 @@ export default tool({
     include_imports: tool.schema.boolean().optional().describe("Always include the import block at the top (default true)"),
   },
   async execute(args, context) {
+    const db = init(context.worktree)
     const path = resolvePath(context.worktree, args.file)
     if (!existsSync(path)) return JSON.stringify({ status: "not_found", path: args.file }, null, 2)
 
@@ -170,7 +164,6 @@ export default tool({
     }
 
     // Strip large raw content to avoid overwhelming
-    artifactLog(context, { tool: "read_source", action: "read", file: args.file, lines: lines.length })
     return JSON.stringify(output, null, 2)
   },
 })

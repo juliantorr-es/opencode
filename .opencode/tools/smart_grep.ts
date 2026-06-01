@@ -1,26 +1,11 @@
+import { init, heartbeat, logToolUsage } from "./db"
 import { tool } from "@opencode-ai/plugin"
 import { resolve, relative } from "node:path"
 import { readdirSync, readFileSync, statSync, appendFileSync, existsSync, mkdirSync } from "node:fs"
 
 function r(worktree: string, p: string): string { return resolve(worktree, p) }
 
-function hb(context: any, tool: string, phase: string, detail: string) {
-  try {
-    const dir = resolve(context.worktree, "docs/json/opencode/sessions/" + context.sessionID + "/analytics")
-    if (!existsSync(dir)) mkdirSync(dir, { recursive: true })
-    appendFileSync(dir + "/heartbeat.v1.jsonl",
-      JSON.stringify({ at: new Date().toISOString(), session_id: context.sessionID, agent: context.agent, tool, phase, detail: detail.slice(0, 200) }) + "\n", "utf8")
-  } catch (_) {}
-}
 
-function analytics(context: any, tool: string, extra: Record<string, unknown>) {
-  try {
-    const dir = resolve(context.worktree, "docs/json/opencode/sessions/" + context.sessionID + "/analytics")
-    if (!existsSync(dir)) mkdirSync(dir, { recursive: true })
-    appendFileSync(dir + "/smart_tool_usage.v1.jsonl",
-      JSON.stringify({ at: new Date().toISOString(), session_id: context.sessionID, agent: context.agent, tool, ...extra }) + "\n", "utf8")
-  } catch (_) {}
-}
 
 // ── .gitignore ─────────────────────────────────────────────
 function loadGitignore(worktree: string): { ignored: (p: string) => boolean } {
@@ -120,7 +105,8 @@ export default tool({
     word_boundary: tool.schema.boolean().optional().describe("Match whole words only (adds \\b around pattern)"),
   },
   async execute(args, context) {
-    hb(context, "smart_grep", "started", args.pattern?.slice(0, 80) || "")
+    const db = init(context.worktree)
+    heartbeat(db, context.sessionID, context.agent, "smart_grep", "started", args.pattern?.slice(0, 80) || "")
     const searchPath = args.path ? r(context.worktree, args.path) : context.worktree
     const maxResults = args.max_results ?? 30
     const ctxLines = args.context_lines ?? 0
@@ -200,7 +186,7 @@ export default tool({
         hint: "No files matched. Try a different pattern, check the path, or widen the glob.",
       }
       analytics(context, "smart_grep", { pattern: args.pattern.slice(0, 100), path: (args.path || "").slice(0, 80) })
-      hb(context, "smart_grep", "completed", `0 matches in ${searchedFiles} files`)
+      heartbeat(db, context.sessionID, context.agent, "smart_grep", "completed", `0 matches in ${searchedFiles} files`)
       return JSON.stringify(result, null, 2)
     }
 
@@ -215,7 +201,7 @@ export default tool({
           .map(([file, cnt]) => `${file} (${cnt})`),
       }
       analytics(context, "smart_grep", { pattern: args.pattern.slice(0, 100), path: (args.path || "").slice(0, 80) })
-      hb(context, "smart_grep", "completed", `${totalHits} matches in ${Object.keys(fileCounts).length} files`)
+      heartbeat(db, context.sessionID, context.agent, "smart_grep", "completed", `${totalHits} matches in ${Object.keys(fileCounts).length} files`)
       return JSON.stringify(result, null, 2)
     }
 
@@ -228,7 +214,7 @@ export default tool({
     }
 
     analytics(context, "smart_grep", { pattern: args.pattern.slice(0, 100), path: (args.path || "").slice(0, 80) })
-    hb(context, "smart_grep", totalHits > 0 ? "completed" : "completed", `${totalHits} matches in ${searchedFiles} files`)
+    heartbeat(db, context.sessionID, context.agent, "smart_grep", totalHits > 0 ? "completed" : "completed", `${totalHits} matches in ${searchedFiles} files`)
     return JSON.stringify(result, null, 2)
   },
 })

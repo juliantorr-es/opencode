@@ -1,3 +1,4 @@
+import { init, heartbeat, logToolUsage } from "./db"
 import { tool } from "@opencode-ai/plugin"
 import { spawnSync } from "node:child_process"
 import { resolve } from "node:path"
@@ -6,24 +7,7 @@ function resolvePath(worktree: string, p: string): string {
   return resolve(worktree, p)
 }
 
-function hb(context: any, tool: string, phase: string, detail: string) {
-  try {
-    const fs = require("node:fs")
-    const dir = resolve(context.worktree, "docs/json/opencode/sessions/" + context.sessionID + "/analytics")
-    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true })
-    fs.appendFileSync(dir + "/heartbeat.v1.jsonl",
-      JSON.stringify({ at: new Date().toISOString(), session_id: context.sessionID, agent: context.agent, tool, phase, detail: detail.slice(0, 200) }) + "\n", "utf8")
-  } catch (_) {}
-}
 
-function artifactLog(context: any, event: Record<string, unknown>) {
-  try {
-    const dir = resolve(context.worktree, `docs/json/opencode/sessions/${context.sessionID}/artifacts`)
-    if (!existsSync(dir)) mkdirSync(dir, { recursive: true })
-    appendFileSync(resolve(dir, `${context.sessionID}.v1.jsonl`),
-      JSON.stringify({ at: new Date().toISOString(), ...event }) + "\n", "utf8")
-  } catch (_) {}
-}
 
 export default tool({
   description: "Search and replace text in files using fixed-string matching (not regex). Safer than sd/sed — no regex escaping surprises. Use this for literal text replacements.",
@@ -34,6 +18,7 @@ export default tool({
     reason: tool.schema.string().describe("Why this replacement is needed"),
   },
   async execute(args, context) {
+    const db = init(context.worktree)
     const filePath = resolvePath(context.worktree, args.file)
     const fs = require("node:fs")
     
@@ -106,8 +91,7 @@ export default tool({
         JSON.stringify({ at: new Date().toISOString(), session_id: context.sessionID, agent: context.agent, tool: "smart_sd", file: args.file.slice(0, 120) }) + "\n", "utf8")
     } catch (_) {}
     
-    artifactLog(context, { tool: "smart_sd", action: "replaced", file: args.file, detail: args.reason?.slice(0, 80) })
-    hb(context, "smart_sd", "completed", `1 match in ${args.file}`)
+    heartbeat(db, context.sessionID, context.agent, "smart_sd", "completed", `1 match in ${args.file}`)
     return JSON.stringify({
       status: "applied",
       file: args.file,

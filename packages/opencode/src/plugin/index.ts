@@ -68,8 +68,7 @@ function loadPluginHealthStore(): Effect.Effect<PluginHealthStore> {
 function savePluginHealthStore(store: PluginHealthStore): Effect.Effect<void> {
   return Effect.tryPromise({
     try: () => fs.writeFile(PLUGIN_HEALTH_FILE, JSON.stringify(store, null, 2)),
-    catch: () => {},
-  }).pipe(Effect.ignore)
+  }).pipe(Effect.tapError((cause) => Effect.logError("plugin health save failed", cause)), Effect.ignore)
 }
 
 const MAX_CRASHES_BEFORE_QUARANTINE = 3
@@ -211,7 +210,11 @@ export const layer = Layer.effect(
         const dispatchGuard = makeHookDispatchGuard(capabilityRegistry)
 
         function publishPluginError(message: string) {
-          bridge.fork(bus.publish(Session.Event.Error, { error: new NamedError.Unknown({ message }).toObject() }))
+          try {
+            bridge.fork(bus.publish(Session.Event.Error, { error: new NamedError.Unknown({ message }).toObject() }))
+          } catch (err) {
+            console.error("plugin error publish failed", message, err)
+          }
         }
 
         const { Server } = yield* Effect.promise(() => import("../server/server"))

@@ -1,3 +1,4 @@
+import { init, heartbeat, logToolUsage } from "./db"
 import { tool } from "@opencode-ai/plugin"
 import { readFileSync, writeFileSync, appendFileSync, existsSync, mkdirSync } from "node:fs"
 import { resolve, dirname } from "node:path"
@@ -5,23 +6,7 @@ import { spawnSync } from "node:child_process"
 
 function r(worktree: string, p: string): string { return resolve(worktree, p) }
 
-function hb(context: any, tool: string, phase: string, detail: string) {
-  try {
-    const dir = resolve(context.worktree, "docs/json/opencode/sessions/" + context.sessionID + "/analytics")
-    if (!existsSync(dir)) mkdirSync(dir, { recursive: true })
-    appendFileSync(dir + "/heartbeat.v1.jsonl",
-      JSON.stringify({ at: new Date().toISOString(), session_id: context.sessionID, agent: context.agent, tool, phase, detail: detail.slice(0, 200) }) + "\n", "utf8")
-  } catch (_) {}
-}
 
-function artifactLog(context: any, event: Record<string, unknown>) {
-  try {
-    const dir = resolve(context.worktree, `docs/json/opencode/sessions/${context.sessionID}/artifacts`)
-    if (!existsSync(dir)) mkdirSync(dir, { recursive: true })
-    appendFileSync(resolve(dir, `${context.sessionID}.v1.jsonl`),
-      JSON.stringify({ at: new Date().toISOString(), ...event }) + "\n", "utf8")
-  } catch (_) {}
-}
 
 export default tool({
   description: "Create new files or overwrite existing ones. Automatically creates parent directories. Returns the diff if the file already existed. Use smart_edit for targeted in-place edits.",
@@ -32,7 +17,8 @@ export default tool({
     overwrite: tool.schema.boolean().optional().describe("Allow overwriting existing files (default: false, returns error if file exists)"),
   },
   async execute(args, context) {
-    hb(context, "smart_write", "started", args.file_path?.slice(0, 80) || "")
+    const db = init(context.worktree)
+    heartbeat(db, context.sessionID, context.agent, "smart_write", "started", args.file_path?.slice(0, 80) || "")
     const fullPath = r(context.worktree, args.file_path)
     const existed = existsSync(fullPath)
 
@@ -65,8 +51,7 @@ export default tool({
       diff = diffResult.stdout?.trim() || ""
     }
 
-    hb(context, "smart_write", "completed", args.file_path?.slice(0, 80) || "")
-    artifactLog(context, { tool: "smart_write", action: existed ? "overwritten" : "created", file: args.file_path, reason: args.reason })
+    heartbeat(db, context.sessionID, context.agent, "smart_write", "completed", args.file_path?.slice(0, 80) || "")
 
     return JSON.stringify({
       status: "created",

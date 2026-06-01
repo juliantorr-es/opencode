@@ -79,6 +79,10 @@ export const EventName = {
   ServerConnected: 'server.connected',
   GlobalDisposed: 'global.disposed',
   ServerInstanceDisposed: 'server.instance.disposed',
+  InstanceCreated: 'instance.created',
+  InstanceLoaded: 'instance.loaded',
+  InstanceDegraded: 'instance.degraded',
+  InstanceFailed: 'instance.failed',
 
   // coordination.*
   CoordSubagentPhase: 'coord.subagent.phase',

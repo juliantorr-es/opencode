@@ -5,6 +5,7 @@ import { Bus } from "@/bus"
 import { Installation } from "@/installation"
 import { disposeAllInstancesAndEmitGlobalDisposed } from "@/server/global-lifecycle"
 import { HealthRegistry } from "@/server/health"
+import { Service as InstanceHealthStoreService } from "@/project/instance-health"
 import { InstallationVersion } from "@opencode-ai/core/installation/version"
 import * as Log from "@opencode-ai/core/util/log"
 import { Effect, Option, Queue, Schema } from "effect"
@@ -76,7 +77,13 @@ export const globalHandlers = HttpApiBuilder.group(RootHttpApi, "global", (handl
     const health = Effect.fn("GlobalHttpApi.health")(function* () {
       const registry = yield* Effect.serviceOption(HealthRegistry)
       const components = Option.isSome(registry) ? yield* registry.value.getAll() : undefined
-      return { healthy: true as const, version: InstallationVersion, components }
+      const healthStore = yield* Effect.serviceOption(InstanceHealthStoreService)
+      let instance_healthy: boolean | undefined
+      if (Option.isSome(healthStore)) {
+        const all = yield* healthStore.value.getAll()
+        instance_healthy = all.size === 0 ? undefined : [...all.values()].every(h => h.status === "ready")
+      }
+      return { healthy: true as const, version: InstallationVersion, components, instance_healthy }
     })
 
     const event = Effect.fn("GlobalHttpApi.event")(function* () {

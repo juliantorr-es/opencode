@@ -1,2 +1,0 @@
-{"at":"2026-05-31T21:33:51.329Z","session_id":"ses_1800c8328ffeJ9xK2FJ7b7x3Zb","agent":"handy-agent","binary":"bash","command":"bash /tmp/run-test.sh","reason":"Execute temporary test script to capture full output","elapsed_ms":19245,"exit_code":1}
-{"at":"2026-05-31T21:34:21.401Z","session_id":"ses_1800c8328ffeJ9xK2FJ7b7x3Zb","agent":"handy-agent","binary":"bash","command":"bash /tmp/run-test.sh > /tmp/test-full-output.txt 2>&1; wc -l /tmp/test-full-output.txt","reason":"Capture full test output to file","elapsed_ms":16917,"exit_code":0}

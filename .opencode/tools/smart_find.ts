@@ -1,26 +1,11 @@
+import { init, heartbeat, logToolUsage } from "./db"
 import { tool } from "@opencode-ai/plugin"
 import { resolve, relative, basename } from "node:path"
 import { statSync, readdirSync, readFileSync, appendFileSync, existsSync, mkdirSync } from "node:fs"
 
 function r(worktree: string, p: string): string { return resolve(worktree, p) }
 
-function hb(context: any, tool: string, phase: string, detail: string) {
-  try {
-    const dir = resolve(context.worktree, "docs/json/opencode/sessions/" + context.sessionID + "/analytics")
-    if (!existsSync(dir)) mkdirSync(dir, { recursive: true })
-    appendFileSync(dir + "/heartbeat.v1.jsonl",
-      JSON.stringify({ at: new Date().toISOString(), session_id: context.sessionID, agent: context.agent, tool, phase, detail: detail.slice(0, 200) }) + "\n", "utf8")
-  } catch (_) {}
-}
 
-function analytics(context: any, tool: string, extra: Record<string, unknown>) {
-  try {
-    const dir = resolve(context.worktree, "docs/json/opencode/sessions/" + context.sessionID + "/analytics")
-    if (!existsSync(dir)) mkdirSync(dir, { recursive: true })
-    appendFileSync(dir + "/smart_tool_usage.v1.jsonl",
-      JSON.stringify({ at: new Date().toISOString(), session_id: context.sessionID, agent: context.agent, tool, ...extra }) + "\n", "utf8")
-  } catch (_) {}
-}
 
 // ── .gitignore parser ──────────────────────────────────────
 function loadGitignore(worktree: string): { ignored: (p: string) => boolean } {
@@ -162,7 +147,8 @@ export default tool({
     include_sizes: tool.schema.boolean().optional().describe("Include file sizes in bytes"),
   },
   async execute(args, context) {
-    hb(context, "smart_find", "started", (args.pattern || "*").slice(0, 80))
+    const db = init(context.worktree)
+    heartbeat(db, context.sessionID, context.agent, "smart_find", "started", (args.pattern || "*").slice(0, 80))
     const searchPath = args.path ? r(context.worktree, args.path) : context.worktree
     const maxResults = args.max_results ?? 50
     const maxDepth = args.max_depth ?? 0
@@ -170,7 +156,7 @@ export default tool({
     const includeSizes = args.include_sizes ?? false
 
     if (!existsSync(searchPath)) {
-      hb(context, "smart_find", "failed", "path not found")
+      heartbeat(db, context.sessionID, context.agent, "smart_find", "failed", "path not found")
       return JSON.stringify({ files: [], count: 0, error: `Path not found: ${searchPath}` }, null, 2)
     }
 
@@ -216,7 +202,7 @@ export default tool({
     }
 
     analytics(context, "smart_find", { pattern: (args.pattern || "*").slice(0, 80), path: (args.path || "").slice(0, 80) })
-    hb(context, "smart_find", "completed", (args.pattern || "*").slice(0, 80))
+    heartbeat(db, context.sessionID, context.agent, "smart_find", "completed", (args.pattern || "*").slice(0, 80))
     return JSON.stringify(output, null, 2)
   },
 })

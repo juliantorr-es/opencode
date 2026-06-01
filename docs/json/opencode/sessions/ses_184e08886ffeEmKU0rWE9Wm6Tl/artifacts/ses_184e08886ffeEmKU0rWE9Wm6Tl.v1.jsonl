@@ -1,7 +1,0 @@
-{"at":"2026-05-30T23:02:03.192Z","tool":"smart_git","action":"git_op","operation":"status","exit_code":0}
-{"at":"2026-05-30T23:02:15.960Z","tool":"smart_edit","action":"edited","file":"packages/app/src/entry.tsx","detail":"Import the browser API polyfill to prevent window.api crashes in Chrome"}
-{"at":"2026-05-30T23:02:18.385Z","tool":"smart_edit","action":"edited","file":"packages/app/src/entry.tsx","detail":"Call installBrowserApi after Sentry init, before render, to polyfill window.api "}
-{"at":"2026-05-30T23:02:25.524Z","tool":"smart_bun","action":"ran","command":"typecheck","exit_code":1,"cwd":"packages/app"}
-{"at":"2026-05-30T23:03:42.887Z","tool":"smart_git","action":"git_op","operation":"diff","exit_code":0}
-{"at":"2026-05-30T23:03:58.570Z","tool":"smart_git","action":"git_op","operation":"rev-parse","exit_code":0}
-{"at":"2026-05-30T23:03:58.743Z","tool":"smart_git","action":"git_op","operation":"rev-parse","exit_code":0}

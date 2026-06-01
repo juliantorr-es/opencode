@@ -1,8 +1,5 @@
 import { tool } from "@opencode-ai/plugin"
-import { resolve } from "node:path"
-import { existsSync, mkdirSync, appendFileSync, readFileSync } from "node:fs"
-
-function r(worktree: string, p: string): string { return resolve(worktree, p) }
+import { init } from "./db"
 
 const LEAF_RULES: Record<string, string[]> = {
   "cartographer": ["surveyor", "diff-historian", "module-grapher", "test-reader"],
@@ -26,60 +23,24 @@ function getPrerequisite(caller: string, agent: string): string | null {
   return order[idx - 1]!
 }
 
-// ── Unified state file ──
-function statePath(worktree: string): string {
-  return r(worktree, "docs/json/opencode/coordination/lane_state.v1.jsonl")
-}
-
-function readState(filePath: string): Map<string, { agent: string; status: string; delegated_at: string; completed_at?: string }> {
-  const state = new Map<string, { agent: string; status: string; delegated_at: string; completed_at?: string }>()
-  if (!existsSync(filePath)) return state
-  try {
-    const lines = readFileSync(filePath, "utf8").split("\n").filter(Boolean).slice(-1000)
-    for (const line of lines) {
-      try {
-        const entry = JSON.parse(line)
-        const key = `${entry.lane_id}::${entry.agent}`
-        state.set(key, entry)
-      } catch {}
-    }
-  } catch (_) {}
-  return state
-}
-
-function writeState(filePath: string, entry: Record<string, unknown>) {
-  try { mkdirSync(r(filePath, ".."), { recursive: true }) } catch (_) {}
-  try { appendFileSync(filePath, JSON.stringify(entry) + "\n", "utf8") } catch (_) {}
-}
-
 export default tool({
-  description: "ANNOUNCE a leaf agent BEFORE using task() to invoke it. Validates team membership. Auto-completes the previous leaf agent when advancing in ordered teams. Logs to the unified lane state file and coordination ledger. After calling this, you MUST call task() with background: true to actually spawn the leaf agent.",
+  description: "ANNOUNCE a leaf agent BEFORE using task() to invoke it. Validates team membership. Auto-completes previous leaf agents. Uses SQLite.",
   args: {
     agent: tool.schema.string().describe("Leaf agent to spawn — must be in your team"),
     task: tool.schema.string().describe("What the leaf agent should do"),
     lane_id: tool.schema.string().describe("Lane identifier — required."),
   },
   async execute(args, context) {
-    const sp = statePath(context.worktree)
-    const state = readState(sp)
+    const db = init(context.worktree)
+    const now = new Date().toISOString()
     const caller = context.agent
     const allowed = LEAF_RULES[caller]
 
     if (!allowed) {
-      return JSON.stringify({
-        status: "blocked",
-        error: `'${caller}' is not an orchestrator. Only lifecycle orchestrators spawn leaf agents.`,
-        hint: "GM uses announce_lane_before_using_task_to_invoke_the_subagent. Leaf agents don't spawn anything.",
-      }, null, 2)
+      return JSON.stringify({ status: "blocked", error: `'${caller}' is not an orchestrator.` }, null, 2)
     }
-
     if (!allowed.includes(args.agent)) {
-      return JSON.stringify({
-        status: "blocked",
-        error: `'${caller}' cannot spawn '${args.agent}'.`,
-        allowed,
-        hint: `Your team: ${allowed.join(", ")}.`,
-      }, null, 2)
+      return JSON.stringify({ status: "blocked", error: `'${caller}' cannot spawn '${args.agent}'.`, allowed }, null, 2)
     }
 
     const task = args.task.trim()
@@ -89,65 +50,49 @@ export default tool({
 
     const laneId = args.lane_id
 
-    // ── Auto-complete prerequisite when advancing ──
+    // ── Auto-complete prerequisite ──
     const prereq = getPrerequisite(caller, args.agent)
     if (prereq) {
-      const prereqKey = `${laneId}::${prereq}`
-      const prereqEntry = state.get(prereqKey)
-      if (prereqEntry && prereqEntry.status === "pending") {
-        writeState(sp, {
-          lane_id: laneId,
-          agent: prereq,
-          status: "completed",
-          delegated_by: prereqEntry.delegated_by,
-          delegated_at: prereqEntry.delegated_at,
-          completed_at: new Date().toISOString(),
-          auto_completed: true,
-          advanced_by: args.agent,
-        })
+      const row = db.query(`SELECT id, status FROM lane_agents WHERE lane_id = ? AND agent = ? ORDER BY id DESC LIMIT 1`)
+        .get(laneId, prereq) as any
+      if (row && row.status === "pending") {
+        db.run(`INSERT INTO lane_agents (lane_id, agent, status, delegated_by, delegated_at, completed_at, auto_completed, advanced_by)
+                VALUES (?, ?, 'completed', (SELECT delegated_by FROM lane_agents WHERE id = ?), (SELECT delegated_at FROM lane_agents WHERE id = ?), ?, 1, ?)`,
+          laneId, prereq, row.id, row.id, now, args.agent)
       }
     }
 
+    // ── Auto-complete stale agents ──
+    db.run(`INSERT INTO lane_agents (lane_id, agent, status, delegated_by, delegated_at, completed_at, auto_completed, stale_timeout, advanced_by)
+            SELECT lane_id, agent, 'stale', delegated_by, delegated_at, ?, 1, 1, ?
+            FROM lane_agents la WHERE la.id IN (SELECT MAX(id) FROM lane_agents GROUP BY lane_id, agent)
+              AND la.lane_id = ? AND la.status = 'pending' AND la.agent != ?
+              AND la.delegated_at < datetime('now', '-5 minutes')`,
+      now, args.agent, laneId, args.agent)
+
     // ── Write pending state ──
-    const now = new Date().toISOString()
-    writeState(sp, {
-      lane_id: laneId,
-      agent: args.agent,
-      status: "pending",
-      delegated_by: caller,
-      delegated_at: now,
-      task: task.slice(0, 200),
-    })
+    db.run(`INSERT INTO lane_agents (lane_id, agent, status, delegated_by, delegated_at, task)
+            VALUES (?, ?, 'pending', ?, ?, ?)`,
+      laneId, args.agent, caller, now, task.slice(0, 500))
 
-    // ── Wrap task with leaf_handoff instructions and write to coordination ledger ──
-    const logPath = r(context.worktree, "docs/json/opencode/coordination/messages.v1.jsonl")
-    try { mkdirSync(r(context.worktree, "docs/json/opencode/coordination"), { recursive: true }) } catch (_) {}
+    // ── Write to messages ──
     const mid = now.replace(/[-:T.]/g, "").slice(0, 15)
-    const wrappedTask = `START by calling leaf_handoff(action="started", lane_id="${laneId}"). After EVERY significant tool call (test runs, file reads, writes, searches), call session_journal(action="log", lane_id="${laneId}", tool_name="...", output_summary="...", output_full="...", files_touched="[...]") to record your output. This lets the orchestrator resume if the session crashes. To check for pings: ping(action="check", lane_id="${laneId}"). When COMPLETE, call leaf_handoff(action="handoff", lane_id="${laneId}", status="completed|failed|partial", summary="...", files_created="[...]", files_modified="[...]", findings="[...]", blockers="[...]", next_steps="..."). YOUR TASK: ${task}`
-    const escapedTask = wrappedTask.replace(/"/g, '\\"')
-    const msg = {
-      schema_version: "v1", message_id: `${mid}_announce_leaf`, kind: "delegation",
-      session_id: context.sessionID, sender: caller, recipient: args.agent,
-      lane_id: laneId,
-      subject: task.slice(0, 120),
-      body: JSON.stringify({ agent: args.agent, task: wrappedTask, lane_id: laneId, background: true, delegated_by: caller, delegated_at: now }),
-      sent_at: now,
-    }
-    try { appendFileSync(logPath, JSON.stringify(msg) + "\n", "utf8") } catch (_) {}
+    const wrappedTask = `START by calling leaf_handoff(action="started", lane_id="${laneId}"). After EVERY significant tool call, call session_journal(action="log", ...). To check for pings: ping(action="check", lane_id="${laneId}"). When COMPLETE, call leaf_handoff(action="handoff", ...). YOUR TASK: ${task}`
+    db.run(`INSERT INTO messages (message_id, kind, session_id, sender, recipient, lane_id, subject, body, sent_at)
+            VALUES (?, 'delegation', ?, ?, ?, ?, ?, ?, ?)`,
+      `${mid}_announce_leaf`, context.sessionID, caller, args.agent, laneId,
+      task.slice(0, 120), JSON.stringify({ agent: args.agent, task: wrappedTask, lane_id: laneId, background: true, delegated_by: caller, delegated_at: now }), now)
 
+    const escapedTask = wrappedTask.replace(/"/g, '\\"')
     const isOrdered = ORDERED_TEAMS[caller]
     const canParallel = !isOrdered || !isOrdered.includes(args.agent)
 
     return JSON.stringify({
-      status: "approved",
-      caller,
-      agent: args.agent,
-      lane_id: laneId,
+      status: "approved", caller, agent: args.agent, lane_id: laneId,
       task: task.slice(0, 200),
       execute: `task(agent="${args.agent}", description="${args.agent}", prompt="${escapedTask}", background: true)`,
       ordering: canParallel ? "parallel — announce + task() ALL remaining team members in this turn" : `sequential — after task() for ${args.agent}, wait for completion before announcing the next`,
-      hint: "Call task() with background: true for this agent. If parallel, announce ALL remaining team members now.",
-      logged_to: "lane_state + coordination ledger",
+      hint: "Call task() with background: true. If parallel, announce ALL remaining team members now.",
     }, null, 2)
   },
 })

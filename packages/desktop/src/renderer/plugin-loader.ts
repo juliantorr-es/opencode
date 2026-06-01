@@ -30,6 +30,7 @@ export class DesktopPluginLoader {
   private readonly disposeCallbacks: Array<() => void> = []
   private readonly loaded = new Set<string>()
   private configs: PluginConfigEntry[] = []
+  private disposed = false
 
   constructor(
     private readonly registerSlot: (name: SlotName, component: Component<{}>) => () => void,
@@ -71,6 +72,7 @@ export class DesktopPluginLoader {
    * slot registrations.
    */
   dispose(): void {
+    this.disposed = true
     for (const cb of this.disposeCallbacks) {
       cb()
     }
@@ -88,8 +90,11 @@ export class DesktopPluginLoader {
     if (this.loaded.has(entry.name)) return
     this.loaded.add(entry.name)
 
+    if (this.disposed) return
+
     const mod: DesktopPluginModule = await import(/* @vite-ignore */ entry.path)
     if (!mod.desktop) return
+    if (this.disposed) return
 
     const pluginStore = new Map<string, unknown>()
 
@@ -99,6 +104,7 @@ export class DesktopPluginLoader {
       transport,
       slots: {
         register: (slotPlugin) => {
+          if (this.disposed) return () => {}
           const unregisters: Array<() => void> = []
           for (const [name, component] of Object.entries(slotPlugin.slots)) {
             const unregister = this.registerSlot(name as SlotName, component as Component<{}>)
@@ -115,12 +121,12 @@ export class DesktopPluginLoader {
       store: {
         get: (key) => pluginStore.get(key),
         set: (key, value) => {
-          pluginStore.set(key, value)
+          if (!this.disposed) pluginStore.set(key, value)
         },
       },
       lifecycle: {
         onDispose: (fn) => {
-          this.disposeCallbacks.push(fn)
+          if (!this.disposed) this.disposeCallbacks.push(fn)
         },
       },
     }
@@ -128,6 +134,10 @@ export class DesktopPluginLoader {
     // Register transport cleanup on plugin dispose
     api.lifecycle.onDispose(() => transport.destroy())
 
+    if (this.disposed) {
+      transport.destroy()
+      return
+    }
     await mod.desktop(api)
   }
 }

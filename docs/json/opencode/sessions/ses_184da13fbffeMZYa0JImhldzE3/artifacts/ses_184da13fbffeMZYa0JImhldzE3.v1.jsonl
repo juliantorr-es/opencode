@@ -1,1 +1,0 @@
-{"at":"2026-05-30T23:09:08.978Z","tool":"smart_bash","action":"bash","command":"awk 'NR>=170 && NR<=202 {printf \"%d: %s\\n\", NR, $0}' packages/opencode/src/tool/coordination.ts","exit_code":0}

@@ -1,9 +1,0 @@
-{"at":"2026-05-31T13:08:56.660Z","session_id":"ses_181d94f5dffeKg9Iz8plTJOVoB","agent":"general","tool":"smart_bash","phase":"started","detail":"Read last 5 lines of the test file to confirm ending"}
-{"at":"2026-05-31T13:08:56.673Z","session_id":"ses_181d94f5dffeKg9Iz8plTJOVoB","agent":"general","tool":"smart_bash","phase":"completed","detail":"tail exit=0"}
-{"at":"2026-05-31T13:09:42.933Z","session_id":"ses_181d94f5dffeKg9Iz8plTJOVoB","agent":"general","tool":"smart_sd","phase":"completed","detail":"1 match in /Users/user/Developer/GitHub/opencode-desktop-dev/packages/opencode/src/campaign/truth-closure.test.ts"}
-{"at":"2026-05-31T13:09:48.365Z","session_id":"ses_181d94f5dffeKg9Iz8plTJOVoB","agent":"general","tool":"smart_bun","phase":"started","detail":"test"}
-{"at":"2026-05-31T13:09:49.738Z","session_id":"ses_181d94f5dffeKg9Iz8plTJOVoB","agent":"general","tool":"smart_bun","phase":"completed","detail":"test exit=0"}
-{"at":"2026-05-31T13:09:57.044Z","session_id":"ses_181d94f5dffeKg9Iz8plTJOVoB","agent":"general","tool":"smart_bash","phase":"started","detail":"Get the test summary line from bun test output"}
-{"at":"2026-05-31T13:09:57.045Z","session_id":"ses_181d94f5dffeKg9Iz8plTJOVoB","agent":"general","tool":"smart_bash","phase":"rerouted","detail":"→ smart_bun"}
-{"at":"2026-05-31T13:10:04.674Z","session_id":"ses_181d94f5dffeKg9Iz8plTJOVoB","agent":"general","tool":"smart_bash","phase":"started","detail":"Get full bun test output to see pass/fail counts"}
-{"at":"2026-05-31T13:10:04.674Z","session_id":"ses_181d94f5dffeKg9Iz8plTJOVoB","agent":"general","tool":"smart_bash","phase":"rerouted","detail":"→ smart_bun"}

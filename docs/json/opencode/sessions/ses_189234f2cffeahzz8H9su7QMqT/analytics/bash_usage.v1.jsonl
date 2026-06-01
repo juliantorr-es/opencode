@@ -1,1 +1,0 @@
-{"at":"2026-05-30T03:12:42.080Z","session_id":"ses_189234f2cffeahzz8H9su7QMqT","agent":"historian","binary":"for","command":"for sha in 8b9230e51 1abce7801 9e953e7be c8b69c473 069da3d78 caf2451da bb9b81aa3 b4147c8d0; do echo \"=== $sha ===\" && git log -1 --format=\"%h %ai %an\" \"$sha\"; done","reason":"Get dates and authors for key IPC commits","elapsed_ms":199,"exit_code":0}

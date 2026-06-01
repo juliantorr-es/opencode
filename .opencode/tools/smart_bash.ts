@@ -1,28 +1,10 @@
 import { tool } from "@opencode-ai/plugin"
 import { spawnSync } from "node:child_process"
 import { resolve } from "node:path"
-import { appendFileSync, existsSync, mkdirSync } from "node:fs"
+import { init, heartbeat, logBashUsage, logToolUsage } from "./db"
 
 function resolvePath(worktree: string, p: string): string {
   return resolve(worktree, p)
-}
-
-function hb(context: any, tool: string, phase: string, detail: string) {
-  try {
-    const dir = resolve(context.worktree, "docs/json/opencode/sessions/" + context.sessionID + "/analytics")
-    if (!existsSync(dir)) mkdirSync(dir, { recursive: true })
-    appendFileSync(dir + "/heartbeat.v1.jsonl",
-      JSON.stringify({ at: new Date().toISOString(), session_id: context.sessionID, agent: context.agent, tool, phase, detail: detail.slice(0, 200) }) + "\n", "utf8")
-  } catch (_) {}
-}
-
-function artifactLog(context: any, event: Record<string, unknown>) {
-  try {
-    const dir = resolve(context.worktree, `docs/json/opencode/sessions/${context.sessionID}/artifacts`)
-    if (!existsSync(dir)) mkdirSync(dir, { recursive: true })
-    appendFileSync(resolve(dir, `${context.sessionID}.v1.jsonl`),
-      JSON.stringify({ at: new Date().toISOString(), ...event }) + "\n", "utf8")
-  } catch (_) {}
 }
 
 export default tool({
@@ -34,14 +16,15 @@ export default tool({
     timeout_seconds: tool.schema.number().optional().describe("Max execution time (default 60)"),
   },
   async execute(args, context) {
-    hb(context, "smart_bash", "started", args.reason?.slice(0, 120) || "")
+    const db = init(context.worktree)
+    heartbeat(db, context.sessionID, context.agent, "smart_bash", "started", args.reason?.slice(0, 120) || "")
     let cwd = args.cwd ? resolvePath(context.worktree, args.cwd) : context.worktree
     let cmd = args.command.trim()
 
     // Block destructive commands entirely
     const destructive = ["rm -rf", "git push --force", "git reset --hard", "git clean -f", "git branch -D", ":(){ :|:& };:"]
     if (destructive.some(d => cmd.includes(d))) {
-      hb(context, "smart_bash", "blocked", `destructive: ${cmd.slice(0, 80)}`)
+      heartbeat(db, context.sessionID, context.agent, "smart_bash", "blocked", `destructive: ${cmd.slice(0, 80)}`)
       return JSON.stringify({ status: "blocked", error: "Destructive command blocked", command: cmd.slice(0, 100) }, null, 2)
     }
 
@@ -85,7 +68,7 @@ export default tool({
       const parts = cmd.split(/\s+/).slice(1)
       const params = r.extract(parts)
       if (params) {
-        hb(context, "smart_bash", "rerouted", `→ ${r.tool}`)
+        heartbeat(db, context.sessionID, context.agent, "smart_bash", "rerouted", `→ ${r.tool}`)
         return JSON.stringify({
           status: "rerouted",
           original: cmd.slice(0, 100),
@@ -120,10 +103,7 @@ export default tool({
     
     const logDir = resolvePath(context.worktree, "docs/json/opencode/sessions/" + context.sessionID + "/analytics")
     try { if (!existsSync(logDir)) mkdirSync(logDir, { recursive: true }) } catch (_) {}
-    try {
-      appendFileSync(logDir + "/bash_usage.v1.jsonl",
-        JSON.stringify({ at: new Date().toISOString(), session_id: context.sessionID, agent: context.agent, binary, command: cmd.slice(0,200), reason: args.reason, elapsed_ms: elapsed, exit_code: result.status }) + "\n", "utf8")
-    } catch (_) {}
+    logBashUsage(db, context.sessionID, context.agent, binary, cmd, args.reason, elapsed, result.status)
     
     const output: any = { status: result.status === 0 ? "pass" : "fail", command: actualCmd.slice(0,200), elapsed_ms: elapsed }
     const lines = stdout.split("\n")
@@ -131,8 +111,7 @@ export default tool({
     else if (stdout) output.stdout = stdout
     if (stderr) output.stderr = stderr.slice(0, 2000)
     if (result.error) { output.status = "error"; output.error = result.error.message }
-    hb(context, "smart_bash", result.status === 0 ? "completed" : "failed", `${binary} exit=${result.status}`)
-    artifactLog(context, { tool: "smart_bash", action: "bash", command: cmd.slice(0, 100), exit_code: result.status })
+    heartbeat(db, context.sessionID, context.agent, "smart_bash", result.status === 0 ? "completed" : "failed", `${binary} exit=${result.status}`)
     return JSON.stringify(output, null, 2)
   },
 })

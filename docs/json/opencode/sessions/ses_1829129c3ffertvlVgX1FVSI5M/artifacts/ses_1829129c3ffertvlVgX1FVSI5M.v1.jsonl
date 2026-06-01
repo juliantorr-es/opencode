@@ -1,9 +1,0 @@
-{"at":"2026-05-31T09:48:42.084Z","tool":"smart_grep","action":"searched","pattern":"applyMigrations","results":30,"files":10}
-{"at":"2026-05-31T09:48:42.891Z","tool":"smart_grep","action":"searched","pattern":"drizzle\\.config","results":30,"files":9}
-{"at":"2026-05-31T09:48:43.625Z","tool":"smart_grep","action":"searched","pattern":"sqlite","results":11,"files":3}
-{"at":"2026-05-31T09:52:13.356Z","tool":"smart_grep","action":"searched","pattern":"sqlite","results":10,"files":2}
-{"at":"2026-05-31T09:53:11.396Z","tool":"smart_grep","action":"searched","pattern":"^","results":30,"files":1}
-{"at":"2026-05-31T09:54:12.768Z","tool":"smart_bash","action":"bash","command":"echo \"--- migration-pg listing ---\" && ls packages/opencode/migration-pg/ && echo \"--- drizzle confi","exit_code":0}
-{"at":"2026-05-31T09:55:29.962Z","tool":"smart_bash","action":"bash","command":"for d in packages/opencode/migration-pg/*/; do echo \"=== $(basename \"$d\") ===\"; ls \"$d\"; echo; done","exit_code":0}
-{"at":"2026-05-31T09:59:36.967Z","tool":"smart_grep","action":"searched","pattern":"sqlite","results":0,"files":0}
-{"at":"2026-05-31T09:59:38.120Z","tool":"smart_grep","action":"searched","pattern":"SQLite","results":0,"files":0}

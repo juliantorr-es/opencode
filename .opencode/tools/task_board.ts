@@ -1,8 +1,5 @@
 import { tool } from "@opencode-ai/plugin"
-import { resolve } from "node:path"
-import { existsSync, readFileSync } from "node:fs"
-
-function r(worktree: string, p: string): string { return resolve(worktree, p) }
+import { init } from "./db"
 
 const LIFECYCLE = ["cartography", "plan", "review", "execution", "validation", "publication"]
 
@@ -17,97 +14,73 @@ function waveFor(agent: string): string {
 }
 
 export default tool({
-  description: "Fleet dashboard — reads the unified lane state file. Shows all agents: pending, completed, failed. Use lane_prefix or session_id to filter noisy multi-session environments.",
+  description: "Fleet dashboard — SQL-powered. Shows all agents: pending, completed, failed, stale. Use lane_prefix or session_id to filter.",
   args: {
     quick: tool.schema.boolean().optional().describe("Quick mode — compact output."),
-    lane_prefix: tool.schema.string().optional().describe("Only show lanes starting with this prefix (e.g. 'tc-' to filter to your session's lanes)."),
-    session_id: tool.schema.string().optional().describe("Only show agents delegated by this session."),
-    hide_stale: tool.schema.boolean().optional().describe("Hide stale agents (>5min pending) to declutter."),
+    lane_prefix: tool.schema.string().optional().describe("Only show lanes starting with this prefix."),
+    hide_stale: tool.schema.boolean().optional().describe("Hide stale agents (>5min pending)."),
   },
   async execute(args, context) {
-    const statePath = r(context.worktree, "docs/json/opencode/coordination/lane_state.v1.jsonl")
+    const db = init(context.worktree)
     const now = Date.now()
 
-    if (!existsSync(statePath)) {
+    // ── Get latest status per lane+agent (deduplicated) ──
+    let query = `
+      SELECT lane_id, agent, status, delegated_by, delegated_at, completed_at,
+             auto_completed, stale_timeout, advanced_by, task
+      FROM lane_agents
+      WHERE id IN (SELECT MAX(id) FROM lane_agents GROUP BY lane_id, agent)
+    `
+    const params: any[] = []
+    if (args.lane_prefix) {
+      query += ` AND lane_id LIKE ?`
+      params.push(args.lane_prefix + "%")
+    }
+    query += ` ORDER BY delegated_at DESC`
+
+    const rows = db.query(query).all(...params) as any[]
+
+    if (rows.length === 0) {
       return JSON.stringify({
-        summary: "0 running, 0 done — no lane state yet. Announce agents via announce_lane or announce_leaf first.",
+        summary: "0 agents in database. Announce agents first.",
         fleet: [],
         total: 0,
       }, null, 2)
-    }
-
-    // ── Read unified state file ──
-    const entries: any[] = []
-    try {
-      const content = readFileSync(statePath, "utf8")
-      const lines = content.split("\n").filter(Boolean)
-      for (const line of lines) {
-        try { entries.push(JSON.parse(line)) } catch {}
-      }
-    } catch {
-      return JSON.stringify({ error: "Cannot read lane state" }, null, 2)
-    }
-
-    if (entries.length === 0) {
-      return JSON.stringify({
-        summary: "0 entries in lane state.",
-        fleet: [],
-        total: 0,
-      }, null, 2)
-    }
-
-    // ── Deduplicate: keep latest status per lane+agent ──
-    const latest = new Map<string, any>()
-    for (const e of entries) {
-      const key = `${e.lane_id}::${e.agent}`
-      latest.set(key, e) // last write wins
     }
 
     // ── Build fleet ──
     const fleet: any[] = []
     const waves: Record<string, number> = {}
+    const nowMs = Date.now()
 
-    for (const [key, e] of latest) {
-      const wave = waveFor(e.agent)
-      const delegatedAt = e.delegated_at ? new Date(e.delegated_at).getTime() : 0
-      const completedAt = e.completed_at ? new Date(e.completed_at).getTime() : 0
-      const elapsed = delegatedAt ? Math.floor((now - delegatedAt) / 1000) : 0
-      const isRunning = e.status === "pending"
-      const stale = isRunning && elapsed > 180 // 3 minutes stale
+    for (const r of rows) {
+      const wave = waveFor(r.agent)
+      const delegatedAt = r.delegated_at ? new Date(r.delegated_at).getTime() : 0
+      const elapsed = delegatedAt ? Math.floor((nowMs - delegatedAt) / 1000) : 0
+      const isPending = r.status === "pending"
+      const isStaleStatus = r.status === "stale"
+      const stale = isPending && elapsed > 180
 
-      if (isRunning) waves[wave] = (waves[wave] || 0) + 1
+      if (args.hide_stale && (stale || isStaleStatus)) continue
+      if (isPending) waves[wave] = (waves[wave] || 0) + 1
 
       fleet.push({
-        agent: e.agent,
-        lane: String(e.lane_id || "").slice(0, 12),
+        agent: r.agent,
+        lane: String(r.lane_id || "").slice(0, 12),
         wave,
-        status: e.status,
-        delegated_by: e.delegated_by || "",
+        status: r.status,
+        delegated_by: r.delegated_by || "",
         elapsed_s: elapsed,
-        stale: isRunning && stale,
-        auto_completed: e.auto_completed || false,
+        stale: isPending && stale,
+        auto_completed: !!r.auto_completed,
       })
     }
-
-    // ── Apply filters ──
-    let filtered = fleet
-    if (args.lane_prefix) {
-      filtered = filtered.filter(f => String(f.lane).startsWith(args.lane_prefix!))
-    }
-    if (args.session_id) {
-      filtered = filtered.filter(f => f.delegated_by === args.session_id || f.delegated_by === context.agent)
-    }
-    if (args.hide_stale) {
-      filtered = filtered.filter(f => !f.stale)
-    }
-    const totalBeforeFilter = fleet.length
-    fleet = filtered
 
     fleet.sort((a, b) => (a.status === "pending" ? -1 : 1) || b.elapsed_s - a.elapsed_s)
 
     const pending = fleet.filter(f => f.status === "pending")
     const done = fleet.filter(f => f.status === "completed")
-    const failed = fleet.filter(f => f.status === "failed")
+    const failed = fleet.filter(f => f.status === "failed" || f.status === "stale")
     const staleList = fleet.filter(f => f.stale)
 
     const waveSummary = LIFECYCLE.map(w => {
@@ -125,7 +98,7 @@ export default tool({
         agent: f.agent.padEnd(20),
         lane: f.lane.padEnd(12),
         wave: f.wave.padEnd(10),
-        status: (f.stale ? "🟡" : f.status === "pending" ? "🔵" : f.status === "completed" ? "✅" : "❌") + " " + f.status + (f.auto_completed ? " (auto)" : ""),
+        status: (f.status === "stale" ? "💀" : f.stale ? "🟡" : f.status === "pending" ? "🔵" : f.status === "completed" ? "✅" : "❌") + " " + f.status + (f.auto_completed ? " (auto)" : ""),
         by: f.delegated_by.padEnd(16),
         elapsed: `${f.elapsed_s}s`,
       })),
@@ -134,7 +107,6 @@ export default tool({
     }
 
     if (!quick) {
-      // Group by lane
       const laneGroups = new Map<string, any[]>()
       for (const f of fleet) {
         const existing = laneGroups.get(f.lane) || []
@@ -142,20 +114,16 @@ export default tool({
         laneGroups.set(f.lane, existing)
       }
       if (laneGroups.size > 0) {
-        result.lanes = [...laneGroups.entries()].map(([lane, agents]) => ({
+        result.lanes = [...laneGroups.entries()].slice(0, 20).map(([lane, agents]) => ({
           lane: lane.padEnd(12),
           agents: agents.map(a => `${a.agent}(${a.status})`).join(" → "),
         }))
       }
     }
 
-    if (staleList.length > 0) {
-      result.hint = `${staleList.length} agent(s) stale (>3min pending). Consider respawning if stuck.`
-    } else if (pending.length === 0 && done.length > 0) {
-      result.hint = "All agents done. Review handoffs and advance lanes."
-    } else if (pending.length > 0) {
-      result.hint = `${pending.length} agent(s) running. Check messages for handoffs before advancing.`
-    }
+    if (staleList.length > 0) result.hint = `${staleList.length} agent(s) stale. Advance the lane to auto-complete them.`
+    else if (pending.length === 0 && done.length > 0) result.hint = "All agents done. Advance lanes."
+    else if (pending.length > 0) result.hint = `${pending.length} agent(s) running.`
 
     return JSON.stringify(result, null, 2)
   },

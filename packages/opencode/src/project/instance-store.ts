@@ -4,9 +4,11 @@ import { WorkspaceContext } from "@/control-plane/workspace-context"
 import { InstanceRef } from "@/effect/instance-ref"
 import { disposeInstance as runDisposers } from "@/effect/instance-registry"
 import { AppFileSystem } from "@opencode-ai/core/filesystem"
-import { Context, Deferred, Duration, Effect, Exit, Layer, Scope } from "effect"
+import { Context, Deferred, Duration, Effect, Exit, Layer, Option, Scope } from "effect"
+import { InstanceTrace } from "./instance-trace"
 import { type InstanceContext } from "./instance-context"
 import { InstanceBootstrap } from "./bootstrap-service"
+import { Service as InstanceHealthStoreService } from "./instance-health"
 import * as Project from "./project"
 
 export interface LoadInput {
@@ -31,11 +33,12 @@ interface Entry {
   readonly deferred: Deferred.Deferred<InstanceContext>
 }
 
-export const layer: Layer.Layer<Service, never, Project.Service | InstanceBootstrap.Service> = Layer.effect(
+export const layer: Layer.Layer<Service, never, Project.Service | InstanceBootstrap.Service | InstanceHealthStoreService> = Layer.effect(
   Service,
   Effect.gen(function* () {
     const project = yield* Project.Service
     const bootstrap = yield* InstanceBootstrap.Service
+    const health = yield* InstanceHealthStoreService
     const scope = yield* Scope.Scope
     const cache = new Map<string, Entry>()
 
@@ -55,7 +58,25 @@ export const layer: Layer.Layer<Service, never, Project.Service | InstanceBootst
                   project: result.project,
                 })),
               )
-        yield* bootstrap.run.pipe(Effect.provideService(InstanceRef, ctx))
+        yield* health.set(ctx.directory, { status: "booting", updatedAt: Date.now() })
+        const result = yield* bootstrap.run.pipe(Effect.provideService(InstanceRef, ctx))
+        yield* health.set(ctx.directory, {
+          status: result.status,
+          failedServices: result.failedServices,
+          updatedAt: Date.now(),
+        })
+        yield* Effect.sync(() =>
+          GlobalBus.emit("event", {
+            directory: ctx.directory,
+            project: ctx.project.id,
+            workspace: WorkspaceContext.workspaceID,
+            payload: result.status === "ready"
+              ? { type: "instance.loaded", properties: { directory: ctx.directory } }
+              : result.status === "degraded"
+                ? { type: "instance.degraded", properties: { directory: ctx.directory, failedServices: result.failedServices } }
+                : { type: "instance.failed", properties: { directory: ctx.directory, error: "All services failed to initialize" } },
+          }),
+        )
         return ctx
       }).pipe(Effect.withSpan("InstanceStore.boot"))
 
@@ -68,8 +89,15 @@ export const layer: Layer.Layer<Service, never, Project.Service | InstanceBootst
 
     const completeLoad = (directory: string, input: LoadInput, entry: Entry) =>
       Effect.gen(function* () {
+        const trace = yield* Effect.serviceOption(InstanceTrace.Service)
         const exit = yield* Effect.exit(boot({ ...input, directory }))
-        if (Exit.isFailure(exit)) yield* removeEntry(directory, entry)
+        if (Exit.isFailure(exit)) {
+          if (Option.isSome(trace)) yield* trace.value.writeFailure("instance.failed", "boot_failed", "Instance boot failed", exit.cause)
+          yield* removeEntry(directory, entry)
+          yield* health.remove(directory)
+        } else {
+          if (Option.isSome(trace)) yield* trace.value.writePhase("instance.ready", "completed", directory)
+        }
         yield* Deferred.done(entry.deferred, exit).pipe(Effect.asVoid)
       })
 
@@ -89,9 +117,13 @@ export const layer: Layer.Layer<Service, never, Project.Service | InstanceBootst
       )
 
     const disposeContext = Effect.fn("InstanceStore.disposeContext")(function* (ctx: InstanceContext) {
+      const trace = yield* Effect.serviceOption(InstanceTrace.Service)
+      if (Option.isSome(trace)) yield* trace.value.writePhase("instance.disposing", "started", ctx.directory)
       yield* Effect.logInfo("disposing instance").pipe(Effect.annotateLogs("directory", ctx.directory))
       yield* Effect.promise(() => runDisposers(ctx.directory))
       yield* emitDisposed({ directory: ctx.directory, project: ctx.project.id })
+      yield* health.remove(ctx.directory)
+      if (Option.isSome(trace)) yield* trace.value.writePhase("instance.disposed", "completed", ctx.directory)
     })
 
     const disposeEntry = Effect.fnUntraced(function* (directory: string, entry: Entry, ctx: InstanceContext) {
@@ -128,6 +160,8 @@ export const layer: Layer.Layer<Service, never, Project.Service | InstanceBootst
           const entry: Entry = { deferred: Deferred.makeUnsafe<InstanceContext>() }
           cache.set(directory, entry)
           yield* Effect.gen(function* () {
+            const trace = yield* Effect.serviceOption(InstanceTrace.Service)
+            if (Option.isSome(trace)) yield* trace.value.writePhase("instance.reloading", "started", directory)
             yield* Effect.logInfo("reloading instance").pipe(Effect.annotateLogs("directory", directory))
             if (previous) {
               yield* Deferred.await(previous.deferred).pipe(Effect.ignore)
@@ -163,6 +197,7 @@ export const layer: Layer.Layer<Service, never, Project.Service | InstanceBootst
                 Effect.annotateLogs({ key: item[0], cause: exit.cause }),
               )
               yield* removeEntry(item[0], item[1])
+              yield* health.remove(item[0])
               return
             }
             yield* disposeEntry(item[0], item[1], exit.value)

@@ -2,7 +2,7 @@ import { spawnSync } from "node:child_process"
 import { tool } from "@opencode-ai/plugin"
 import { resolve } from "node:path"
 import { existsSync, mkdirSync, readFileSync, writeFileSync, appendFileSync } from "node:fs"
-
+import { init, absorbArtifact } from "./db"
 function r(worktree: string, p: string): string { return resolve(worktree, p) }
 
 function jqlQuery(worktree: string, filePath: string, query: string): any {

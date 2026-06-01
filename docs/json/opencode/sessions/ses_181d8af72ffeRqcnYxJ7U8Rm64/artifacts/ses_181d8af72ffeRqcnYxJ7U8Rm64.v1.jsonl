@@ -1,4 +1,0 @@
-{"at":"2026-05-31T13:09:32.195Z","tool":"smart_bun","action":"ran","command":"test","exit_code":1,"cwd":"packages/opencode"}
-{"at":"2026-05-31T13:09:52.941Z","tool":"smart_bash","action":"bash","command":"timeout 30 bun test test/campaign/regression-proofs.test.ts 2>&1 || true","exit_code":0}
-{"at":"2026-05-31T13:10:10.895Z","tool":"smart_bun","action":"ran","command":"test","exit_code":1,"cwd":"packages/opencode"}
-{"at":"2026-05-31T13:10:30.000Z","tool":"smart_bash","action":"bash","command":"bash -c 'cd packages/opencode && bun test test/campaign/regression-proofs.test.ts' 2>&1","exit_code":1}

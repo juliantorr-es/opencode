@@ -1,2 +1,0 @@
-{"at":"2026-05-31T14:39:18.868Z","session_id":"ses_181939748ffeOGj1tgegA7Radm","agent":"surgeon","binary":"node","command":"node --import tsx ./packages/plugin/test/_verify-poc.ts 2>/dev/null || node -e '","reason":"Verify PoC tools produce valid JSON with error_code","elapsed_ms":408,"exit_code":1}
-{"at":"2026-05-31T14:41:17.955Z","session_id":"ses_181939748ffeOGj1tgegA7Radm","agent":"surgeon","binary":"rm","command":"rm /tmp/verify-poc.ts packages/plugin/test/_verify-poc.ts","reason":"Clean up temporary verification scripts","elapsed_ms":14,"exit_code":0}
