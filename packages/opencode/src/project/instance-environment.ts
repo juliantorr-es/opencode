@@ -6,6 +6,9 @@ import { DuckDBConfig } from "@/storage/duckdb-config"
 import { defaultLayer as BinaryManagerLayer } from "@/binary/manager"
 import { AppFileSystem } from "@opencode-ai/core/filesystem"
 import { layer as AuthorityLayer } from "@/agent/authority"
+import { defaultLayer as ScratchpadLayer } from "@/agent/scratchpad"
+import { defaultLayer as ProjectMapLayer } from "@/context/project-map"
+import { AppFileSystem } from "@opencode-ai/core/filesystem"
 
 // Compose dependent services as self-contained units before merging.
 // Each unit resolves its internal dependencies via provideMerge,
@@ -35,5 +38,6 @@ export const layer = Layer.mergeAll(
   duckWithConfig,
   binaryWithFS,
   AuthorityLayer,
+  ScratchpadLayer,
 )
 export * as InstanceEnvironment from "./instance-environment"
