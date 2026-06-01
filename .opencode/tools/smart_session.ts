@@ -324,8 +324,8 @@ export default tool({
     }
 
     if (args.action === "curate") {
-      const ctxDir = r(context.worktree, `docs/json/opencode/sessions/${context.sessionID}/context`);
-      const ctxPath = r(ctxDir, "current.v1.json");
+      const ctxDir = resolvePath(context.worktree, `docs/json/opencode/sessions/${context.sessionID}/context`);
+      const ctxPath = resolvePath(ctxDir, "current.v1.json");
       try { mkdirSync(ctxDir, { recursive: true }); } catch (_) {}
       let existing = { schema_version: "v1", entries: [], curated_at: null };
       if (existsSync(ctxPath)) { try { existing = JSON.parse(readFileSync(ctxPath, "utf8")); } catch {} }

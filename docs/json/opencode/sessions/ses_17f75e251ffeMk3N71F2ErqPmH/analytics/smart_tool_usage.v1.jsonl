@@ -2,3 +2,17 @@
 {"at":"2026-06-01T00:16:59.253Z","session_id":"ses_17f75e251ffeMk3N71F2ErqPmH","agent":"surveyor","tool":"smart_grep","pattern":"from.*mcp|import.*mcp|require.*mcp","path":"packages/opencode/src"}
 {"at":"2026-06-01T00:17:01.223Z","session_id":"ses_17f75e251ffeMk3N71F2ErqPmH","agent":"surveyor","tool":"smart_grep","pattern":"connectMcp|mcp.*connect|McpServer|MCP","path":"packages/opencode/src"}
 {"at":"2026-06-01T00:17:47.523Z","session_id":"ses_17f75e251ffeMk3N71F2ErqPmH","agent":"surveyor","tool":"smart_find","pattern":"*mcp*","path":"packages/opencode/src/mcp"}
+{"at":"2026-06-01T00:18:58.855Z","session_id":"ses_17f75e251ffeMk3N71F2ErqPmH","agent":"surveyor","tool":"smart_find","pattern":"*","path":"packages/opencode/src/mcp"}
+{"at":"2026-06-01T00:20:33.143Z","session_id":"ses_17f75e251ffeMk3N71F2ErqPmH","agent":"surveyor","tool":"smart_grep","pattern":"Effect\\.fn|Effect\\.gen|function\\*|Layer\\.effect|Layer\\.mergeAll","path":"packages/opencode/src/mcp/index.ts"}
+{"at":"2026-06-01T00:22:00.056Z","session_id":"ses_17f75e251ffeMk3N71F2ErqPmH","agent":"surveyor","tool":"smart_grep","pattern":"connectRemote|connectLocal|envInit|environment.*boot|initialize.*mcp|registerMcpServers|isMcpConfigu","path":"packages/opencode/src/mcp"}
+{"at":"2026-06-01T00:22:02.044Z","session_id":"ses_17f75e251ffeMk3N71F2ErqPmH","agent":"surveyor","tool":"smart_grep","pattern":"catchTag|catchAll|orDie|orElse|McpFailedError|McpFailed|cause.*mcp|MCP.*error|mcp.*fail","path":"packages/opencode/src/mcp/index.ts"}
+{"at":"2026-06-01T00:22:03.776Z","session_id":"ses_17f75e251ffeMk3N71F2ErqPmH","agent":"surveyor","tool":"smart_grep","pattern":"ToolRegistry|ToolCollision|tool_collision|tool.*registry|registry.*tool|toolsChanged|ToolsChanged","path":"packages/opencode/src"}
+{"at":"2026-06-01T00:22:41.962Z","session_id":"ses_17f75e251ffeMk3N71F2ErqPmH","agent":"surveyor","tool":"smart_grep","pattern":"^export const layer = Layer\\.effect","path":"packages/opencode/src/mcp/index.ts"}
+{"at":"2026-06-01T00:22:42.794Z","session_id":"ses_17f75e251ffeMk3N71F2ErqPmH","agent":"surveyor","tool":"smart_grep","pattern":"^const connectRemote =","path":"packages/opencode/src/mcp/index.ts"}
+{"at":"2026-06-01T00:22:43.622Z","session_id":"ses_17f75e251ffeMk3N71F2ErqPmH","agent":"surveyor","tool":"smart_grep","pattern":"^const connectLocal =","path":"packages/opencode/src/mcp/index.ts"}
+{"at":"2026-06-01T00:23:33.380Z","session_id":"ses_17f75e251ffeMk3N71F2ErqPmH","agent":"surveyor","tool":"smart_grep","pattern":"connectRemote = Effect\\.fn","path":"packages/opencode/src/mcp/index.ts"}
+{"at":"2026-06-01T00:23:34.226Z","session_id":"ses_17f75e251ffeMk3N71F2ErqPmH","agent":"surveyor","tool":"smart_grep","pattern":"connectLocal = Effect\\.fn","path":"packages/opencode/src/mcp/index.ts"}
+{"at":"2026-06-01T00:24:20.606Z","session_id":"ses_17f75e251ffeMk3N71F2ErqPmH","agent":"surveyor","tool":"smart_grep","pattern":"MCP\\.tools","path":"packages/opencode/src/mcp/index.ts"}
+{"at":"2026-06-01T00:24:21.582Z","session_id":"ses_17f75e251ffeMk3N71F2ErqPmH","agent":"surveyor","tool":"smart_grep","pattern":"envInit\"","path":"packages/opencode/src/mcp/index.ts"}
+{"at":"2026-06-01T00:24:22.646Z","session_id":"ses_17f75e251ffeMk3N71F2ErqPmH","agent":"surveyor","tool":"smart_grep","pattern":"Interface|MCP interfaces","path":"packages/opencode/src/mcp/index.ts"}
+{"at":"2026-06-01T00:25:27.995Z","session_id":"ses_17f75e251ffeMk3N71F2ErqPmH","agent":"surveyor","tool":"smart_grep","pattern":"const connectRemote","path":"packages/opencode/src/mcp/index.ts"}

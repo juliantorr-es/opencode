@@ -4,3 +4,21 @@
 {"at":"2026-06-01T00:17:23.145Z","session_id":"ses_17f75bc69ffeqBnprQyfR6VO23","agent":"module-grapher","tool":"smart_find","phase":"completed","detail":"**/instance/**"}
 {"at":"2026-06-01T00:17:23.715Z","session_id":"ses_17f75bc69ffeqBnprQyfR6VO23","agent":"module-grapher","tool":"smart_find","phase":"started","detail":"**/bootstrap/**"}
 {"at":"2026-06-01T00:17:23.830Z","session_id":"ses_17f75bc69ffeqBnprQyfR6VO23","agent":"module-grapher","tool":"smart_find","phase":"completed","detail":"**/bootstrap/**"}
+{"at":"2026-06-01T00:18:36.379Z","session_id":"ses_17f75bc69ffeqBnprQyfR6VO23","agent":"module-grapher","tool":"smart_find","phase":"started","detail":"**/index.ts"}
+{"at":"2026-06-01T00:18:36.446Z","session_id":"ses_17f75bc69ffeqBnprQyfR6VO23","agent":"module-grapher","tool":"smart_find","phase":"completed","detail":"**/index.ts"}
+{"at":"2026-06-01T00:18:37.650Z","session_id":"ses_17f75bc69ffeqBnprQyfR6VO23","agent":"module-grapher","tool":"smart_grep","phase":"started","detail":"bootstrap|init.*instance|createInstance|startInstance|sidecar"}
+{"at":"2026-06-01T00:18:37.817Z","session_id":"ses_17f75bc69ffeqBnprQyfR6VO23","agent":"module-grapher","tool":"smart_grep","phase":"completed","detail":"28 matches in 15 files"}
+{"at":"2026-06-01T00:18:39.229Z","session_id":"ses_17f75bc69ffeqBnprQyfR6VO23","agent":"module-grapher","tool":"smart_grep","phase":"started","detail":"Layer\\.|Ref\\.make|Runtime\\.|ManagedRuntime|Layer\\.launch"}
+{"at":"2026-06-01T00:18:39.344Z","session_id":"ses_17f75bc69ffeqBnprQyfR6VO23","agent":"module-grapher","tool":"smart_grep","phase":"completed","detail":"543 matches in 126 files"}
+{"at":"2026-06-01T00:21:45.009Z","session_id":"ses_17f75bc69ffeqBnprQyfR6VO23","agent":"module-grapher","tool":"smart_grep","phase":"started","detail":"export interface Interface"}
+{"at":"2026-06-01T00:21:45.009Z","session_id":"ses_17f75bc69ffeqBnprQyfR6VO23","agent":"module-grapher","tool":"smart_grep","phase":"completed","detail":"1 matches in 1 files"}
+{"at":"2026-06-01T00:21:45.859Z","session_id":"ses_17f75bc69ffeqBnprQyfR6VO23","agent":"module-grapher","tool":"smart_grep","phase":"started","detail":"const layer = Layer\\.effect|init|Interface"}
+{"at":"2026-06-01T00:21:45.860Z","session_id":"ses_17f75bc69ffeqBnprQyfR6VO23","agent":"module-grapher","tool":"smart_grep","phase":"completed","detail":"4 matches in 1 files"}
+{"at":"2026-06-01T00:21:46.855Z","session_id":"ses_17f75bc69ffeqBnprQyfR6VO23","agent":"module-grapher","tool":"smart_grep","phase":"started","detail":"init|readonly init|Interface"}
+{"at":"2026-06-01T00:21:46.856Z","session_id":"ses_17f75bc69ffeqBnprQyfR6VO23","agent":"module-grapher","tool":"smart_grep","phase":"completed","detail":"10 matches in 1 files"}
+{"at":"2026-06-01T00:21:47.499Z","session_id":"ses_17f75bc69ffeqBnprQyfR6VO23","agent":"module-grapher","tool":"smart_grep","phase":"started","detail":"init|Interface"}
+{"at":"2026-06-01T00:21:47.500Z","session_id":"ses_17f75bc69ffeqBnprQyfR6VO23","agent":"module-grapher","tool":"smart_grep","phase":"completed","detail":"24 matches in 1 files"}
+{"at":"2026-06-01T00:23:14.178Z","session_id":"ses_17f75bc69ffeqBnprQyfR6VO23","agent":"module-grapher","tool":"smart_grep","phase":"started","detail":"export const layer"}
+{"at":"2026-06-01T00:23:14.179Z","session_id":"ses_17f75bc69ffeqBnprQyfR6VO23","agent":"module-grapher","tool":"smart_grep","phase":"completed","detail":"1 matches in 1 files"}
+{"at":"2026-06-01T00:24:00.869Z","session_id":"ses_17f75bc69ffeqBnprQyfR6VO23","agent":"module-grapher","tool":"smart_find","phase":"started","detail":"instance-runtime*"}
+{"at":"2026-06-01T00:24:00.872Z","session_id":"ses_17f75bc69ffeqBnprQyfR6VO23","agent":"module-grapher","tool":"smart_find","phase":"completed","detail":"instance-runtime*"}

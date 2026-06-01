@@ -2,3 +2,12 @@
 {"at":"2026-06-01T00:16:53.594Z","session_id":"ses_17f75efaeffeL5N5IRwRdUF1s2","agent":"surveyor","tool":"smart_grep","pattern":"plugin","path":"packages/opencode/src"}
 {"at":"2026-06-01T00:17:37.876Z","session_id":"ses_17f75efaeffeL5N5IRwRdUF1s2","agent":"surveyor","tool":"smart_find","pattern":"*.ts","path":"packages/opencode/src/plugin"}
 {"at":"2026-06-01T00:17:39.077Z","session_id":"ses_17f75efaeffeL5N5IRwRdUF1s2","agent":"surveyor","tool":"smart_find","pattern":"*Plugin*","path":"packages/opencode/src"}
+{"at":"2026-06-01T00:19:40.846Z","session_id":"ses_17f75efaeffeL5N5IRwRdUF1s2","agent":"surveyor","tool":"smart_grep","pattern":"export const layer|export const defaultLayer|TriggerName|const init|function init|function trigger|f","path":"packages/opencode/src/plugin/index.ts"}
+{"at":"2026-06-01T00:19:41.728Z","session_id":"ses_17f75efaeffeL5N5IRwRdUF1s2","agent":"surveyor","tool":"smart_grep","pattern":"plugin","path":"packages/opencode/src/config/config.ts"}
+{"at":"2026-06-01T00:21:55.063Z","session_id":"ses_17f75efaeffeL5N5IRwRdUF1s2","agent":"surveyor","tool":"smart_grep","pattern":"Layer.effect\\(|const init|Effect\\.fn\\(|Effect\\.gen\\(|for.*plugin.*loaded.*external|for.*builtin|for.","path":"packages/opencode/src/plugin/index.ts"}
+{"at":"2026-06-01T00:23:21.753Z","session_id":"ses_17f75efaeffeL5N5IRwRdUF1s2","agent":"surveyor","tool":"smart_grep","pattern":".*","path":"packages/opencode/src/plugin/index.ts"}
+{"at":"2026-06-01T00:24:09.726Z","session_id":"ses_17f75efaeffeL5N5IRwRdUF1s2","agent":"surveyor","tool":"smart_grep","pattern":"export const layer = Layer\\.effect","path":"packages/opencode/src/plugin/index.ts"}
+{"at":"2026-06-01T00:25:13.276Z","session_id":"ses_17f75efaeffeL5N5IRwRdUF1s2","agent":"surveyor","tool":"smart_grep","pattern":"PluginHealthEntry","path":"packages/opencode/src/plugin/index.ts"}
+{"at":"2026-06-01T00:25:14.246Z","session_id":"ses_17f75efaeffeL5N5IRwRdUF1s2","agent":"surveyor","tool":"smart_grep","pattern":"loadPluginHealthStore|savePluginHealthStore","path":"packages/opencode/src/plugin/index.ts"}
+{"at":"2026-06-01T00:25:15.211Z","session_id":"ses_17f75efaeffeL5N5IRwRdUF1s2","agent":"surveyor","tool":"smart_grep","pattern":"interface PluginHealthEntry","path":"packages/opencode/src/plugin/index.ts"}
+{"at":"2026-06-01T00:25:16.337Z","session_id":"ses_17f75efaeffeL5N5IRwRdUF1s2","agent":"surveyor","tool":"smart_grep","pattern":"^type (PluginRegistration|ListedPlugin|State|TriggerName)","path":"packages/opencode/src/plugin/index.ts"}

@@ -1,3 +1,12 @@
 {"at":"2026-06-01T00:17:22.495Z","session_id":"ses_17f75bc69ffeqBnprQyfR6VO23","agent":"module-grapher","tool":"smart_find","pattern":"*","path":"packages/opencode/src"}
 {"at":"2026-06-01T00:17:23.145Z","session_id":"ses_17f75bc69ffeqBnprQyfR6VO23","agent":"module-grapher","tool":"smart_find","pattern":"**/instance/**","path":"packages/opencode/src"}
 {"at":"2026-06-01T00:17:23.830Z","session_id":"ses_17f75bc69ffeqBnprQyfR6VO23","agent":"module-grapher","tool":"smart_find","pattern":"**/bootstrap/**","path":"packages/opencode/src"}
+{"at":"2026-06-01T00:18:36.446Z","session_id":"ses_17f75bc69ffeqBnprQyfR6VO23","agent":"module-grapher","tool":"smart_find","pattern":"**/index.ts","path":"packages/opencode/src"}
+{"at":"2026-06-01T00:18:37.817Z","session_id":"ses_17f75bc69ffeqBnprQyfR6VO23","agent":"module-grapher","tool":"smart_grep","pattern":"bootstrap|init.*instance|createInstance|startInstance|sidecar","path":"packages/opencode/src"}
+{"at":"2026-06-01T00:18:39.344Z","session_id":"ses_17f75bc69ffeqBnprQyfR6VO23","agent":"module-grapher","tool":"smart_grep","pattern":"Layer\\.|Ref\\.make|Runtime\\.|ManagedRuntime|Layer\\.launch","path":"packages/opencode/src"}
+{"at":"2026-06-01T00:21:45.009Z","session_id":"ses_17f75bc69ffeqBnprQyfR6VO23","agent":"module-grapher","tool":"smart_grep","pattern":"export interface Interface","path":"packages/opencode/src/mcp/index.ts"}
+{"at":"2026-06-01T00:21:45.860Z","session_id":"ses_17f75bc69ffeqBnprQyfR6VO23","agent":"module-grapher","tool":"smart_grep","pattern":"const layer = Layer\\.effect|init|Interface","path":"packages/opencode/src/mcp/index.ts"}
+{"at":"2026-06-01T00:21:46.856Z","session_id":"ses_17f75bc69ffeqBnprQyfR6VO23","agent":"module-grapher","tool":"smart_grep","pattern":"init|readonly init|Interface","path":"packages/opencode/src/plugin/index.ts"}
+{"at":"2026-06-01T00:21:47.500Z","session_id":"ses_17f75bc69ffeqBnprQyfR6VO23","agent":"module-grapher","tool":"smart_grep","pattern":"init|Interface","path":"packages/opencode/src/provider/provider.ts"}
+{"at":"2026-06-01T00:23:14.179Z","session_id":"ses_17f75bc69ffeqBnprQyfR6VO23","agent":"module-grapher","tool":"smart_grep","pattern":"export const layer","path":"packages/opencode/src/tool/registry.ts"}
+{"at":"2026-06-01T00:24:00.872Z","session_id":"ses_17f75bc69ffeqBnprQyfR6VO23","agent":"module-grapher","tool":"smart_find","pattern":"instance-runtime*","path":"packages/opencode/src/project"}

@@ -6,3 +6,16 @@
 {"at":"2026-06-01T00:17:08.146Z","session_id":"ses_17f7627abffeuEa39INYLbKcrc","agent":"surveyor","tool":"smart_find","pattern":"*health*","path":"packages"}
 {"at":"2026-06-01T00:17:10.023Z","session_id":"ses_17f7627abffeuEa39INYLbKcrc","agent":"surveyor","tool":"smart_find","pattern":"*daemon*","path":"packages"}
 {"at":"2026-06-01T00:17:11.365Z","session_id":"ses_17f7627abffeuEa39INYLbKcrc","agent":"surveyor","tool":"smart_find","pattern":"*process*","path":"packages"}
+{"at":"2026-06-01T00:20:05.556Z","session_id":"ses_17f7627abffeuEa39INYLbKcrc","agent":"surveyor","tool":"smart_grep","pattern":"parentPort|ChildProcess|spawn|fork|exec","path":"packages/desktop/src"}
+{"at":"2026-06-01T00:20:06.730Z","session_id":"ses_17f7627abffeuEa39INYLbKcrc","agent":"surveyor","tool":"smart_grep","pattern":"sidecar\\.|sidecar-startup|sidecar_|boot-failure|ready","path":"packages/desktop/src"}
+{"at":"2026-06-01T00:20:07.912Z","session_id":"ses_17f7627abffeuEa39INYLbKcrc","agent":"surveyor","tool":"smart_grep","pattern":"Observability|observability|Tracer|makeTracer|withSpan","path":"packages/opencode/src"}
+{"at":"2026-06-01T00:20:46.267Z","session_id":"ses_17f7627abffeuEa39INYLbKcrc","agent":"surveyor","tool":"smart_grep","pattern":"class.*Service|Context\\.Service|Context\\.Tag","path":"packages/opencode/src/effect"}
+{"at":"2026-06-01T00:20:47.624Z","session_id":"ses_17f7627abffeuEa39INYLbKcrc","agent":"surveyor","tool":"smart_grep","pattern":"spawnLocalServer","path":"packages/desktop/src"}
+{"at":"2026-06-01T00:21:36.651Z","session_id":"ses_17f7627abffeuEa39INYLbKcrc","agent":"surveyor","tool":"smart_grep","pattern":"export.*\\bprocess\\b|spawn\\b|child.*process|Worker|Bun\\.spawn|NodeChildProcess","path":"packages/opencode/src"}
+{"at":"2026-06-01T00:22:14.297Z","session_id":"ses_17f7627abffeuEa39INYLbKcrc","agent":"surveyor","tool":"smart_grep","pattern":"utilityProcess|child\\.postMessage|child\\.on\\(.*message","path":"packages/desktop/src/main"}
+{"at":"2026-06-01T00:22:16.523Z","session_id":"ses_17f7627abffeuEa39INYLbKcrc","agent":"surveyor","tool":"smart_grep","pattern":"InitStep|ServerReadyData|server\\.ready|server\\.init","path":"packages/desktop/src"}
+{"at":"2026-06-01T00:22:59.479Z","session_id":"ses_17f7627abffeuEa39INYLbKcrc","agent":"surveyor","tool":"smart_grep","pattern":"observability","path":"packages/core/src"}
+{"at":"2026-06-01T00:23:00.820Z","session_id":"ses_17f7627abffeuEa39INYLbKcrc","agent":"surveyor","tool":"smart_grep","pattern":"logInfo|logWarning|logError|\\.pipe\\(Effect\\.log","path":"packages/opencode/src/project"}
+{"at":"2026-06-01T00:23:50.662Z","session_id":"ses_17f7627abffeuEa39INYLbKcrc","agent":"surveyor","tool":"smart_grep","pattern":"export.*const.*layer|export.*Layer.*=|defaultLayer","path":"packages/opencode/src"}
+{"at":"2026-06-01T00:23:51.762Z","session_id":"ses_17f7627abffeuEa39INYLbKcrc","agent":"surveyor","tool":"smart_grep","pattern":"server\\.instance\\.|instance\\.ready|instance\\.started|instance\\.loaded|instance\\.created","path":"packages/opencode/src"}
+{"at":"2026-06-01T00:24:46.060Z","session_id":"ses_17f7627abffeuEa39INYLbKcrc","agent":"surveyor","tool":"smart_grep","pattern":"boot-failure\\.json|sidecar-boot-failure","path":"packages/desktop"}

@@ -2,20 +2,25 @@
 
 This repository is my personal fork of OpenCode. It is not the upstream OpenCode project and is not affiliated with the OpenCode team.
 
-I use this fork as a working lab for AI coding-agent workflows, repo cartography, validation gates, review agents, tool wrappers, and multi-agent development patterns.
+I have deprecated the TUI-first approach in this fork. Current work centers on getting a v1 desktop executable ready for distribution on macOS, Linux, and Windows.
 
-### What I changed in this fork
+I use this fork as a working lab for AI coding-agent workflows, repo cartography, validation gates, review agents, tool wrappers, and multi-agent development patterns. The fork is meant to show not just agent prompts, but the surrounding engineering system that makes agent work repeatable and reviewable.
+
+### What makes this fork special
+
+The fork’s distinctive work falls into a few connected lanes:
 
 | Path | Purpose |
 | --- | --- |
-| `.opencode/` | Custom agent profiles, workflow tools, repo navigation helpers, review agents, and validation utilities. |
-| `docs/json/` | Structured audits, architecture notes, cartography outputs, and evidence records. |
-| `.build/rig-relay/` | Generated investigation artifacts, planning records, and implementation evidence from agent-assisted development sessions. |
-| `AGENTS.md`, `PROJECT.md`, `TOOL_GUIDE.md`, and related project files | Operating rules, workflow documentation, and repo-specific development guidance. |
+| Agent workflow stack | `.opencode/` contains custom agent profiles, workflow tools, repo navigation helpers, review agents, and validation utilities that shape how work gets done. |
+| Runtime and product changes | `packages/opencode/`, `packages/app/`, `packages/desktop/`, `packages/ui/`, `packages/core/`, `packages/plugin/`, and `packages/effect-drizzle-sqlite/` contain the runtime, desktop, UI, plugin, storage, and migration work that backs the workflow layer. |
+| Evidence and cartography | `docs/json/` is the largest body of fork-specific output, with structured audits, cartography, roadmaps, session records, and evidence artifacts. |
+| Generated investigation artifacts | `.build/rig-relay/` holds planning records, investigation outputs, and implementation evidence from agent-assisted development sessions. |
+| Repo rules and schemas | `docs/schemas/`, `AGENTS.md`, `PROJECT.md`, `TOOL_GUIDE.md`, and related project files define the operating rules, workflow documentation, and repo-specific guidance. |
 
 ### Why this fork matters
 
-This fork is meant to show applied work inside a real AI coding-agent codebase. The focus is not just prompting an agent, but building repeatable engineering workflows around agents: scoped tool use, evidence-backed review, structured findings, safer automation, and reproducible development lanes.
+This fork is meant to show applied work inside a real AI coding-agent codebase. The focus is not just prompting an agent, but building repeatable engineering workflows around agents: scoped tool use, evidence-backed review, structured findings, safer automation, reproducible development lanes, and the runtime changes needed to make those workflows real.
 
 ### Upstream project
 

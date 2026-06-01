@@ -6,3 +6,9 @@
 {"at":"2026-06-01T00:17:04.371Z","session_id":"ses_17f784913ffedSXVpcexu2ZPoW","agent":"cartographer","tool":"smart_find","phase":"completed","detail":"*Mcp*"}
 {"at":"2026-06-01T00:17:05.764Z","session_id":"ses_17f784913ffedSXVpcexu2ZPoW","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"from.*['\\\"]\\.\\.?/mcp|from.*['\\\"]@/mcp|from.*['\\\"]\\.\\.\\/mcp\\/|from.*['\\\"]\\.\\/mcp\\"}
 {"at":"2026-06-01T00:17:05.842Z","session_id":"ses_17f784913ffedSXVpcexu2ZPoW","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"11 matches in 10 files"}
+{"at":"2026-06-01T00:19:08.999Z","session_id":"ses_17f784913ffedSXVpcexu2ZPoW","agent":"cartographer","tool":"smart_find","phase":"started","detail":"*auth*"}
+{"at":"2026-06-01T00:19:09.056Z","session_id":"ses_17f784913ffedSXVpcexu2ZPoW","agent":"cartographer","tool":"smart_find","phase":"completed","detail":"*auth*"}
+{"at":"2026-06-01T00:19:10.179Z","session_id":"ses_17f784913ffedSXVpcexu2ZPoW","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"mcp.*auth|auth.*mcp|MCPAuth|OAuth.*mcp|mcp.*OAuth"}
+{"at":"2026-06-01T00:19:10.321Z","session_id":"ses_17f784913ffedSXVpcexu2ZPoW","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"78 matches in 8 files"}
+{"at":"2026-06-01T00:19:11.046Z","session_id":"ses_17f784913ffedSXVpcexu2ZPoW","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"yield|generator|function\\*"}
+{"at":"2026-06-01T00:19:11.046Z","session_id":"ses_17f784913ffedSXVpcexu2ZPoW","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"0 matches in 1 files"}

@@ -14,3 +14,29 @@
 {"at":"2026-06-01T00:17:10.024Z","session_id":"ses_17f7627abffeuEa39INYLbKcrc","agent":"surveyor","tool":"smart_find","phase":"completed","detail":"*daemon*"}
 {"at":"2026-06-01T00:17:10.084Z","session_id":"ses_17f7627abffeuEa39INYLbKcrc","agent":"surveyor","tool":"smart_find","phase":"started","detail":"*process*"}
 {"at":"2026-06-01T00:17:11.365Z","session_id":"ses_17f7627abffeuEa39INYLbKcrc","agent":"surveyor","tool":"smart_find","phase":"completed","detail":"*process*"}
+{"at":"2026-06-01T00:20:05.511Z","session_id":"ses_17f7627abffeuEa39INYLbKcrc","agent":"surveyor","tool":"smart_grep","phase":"started","detail":"parentPort|ChildProcess|spawn|fork|exec"}
+{"at":"2026-06-01T00:20:05.556Z","session_id":"ses_17f7627abffeuEa39INYLbKcrc","agent":"surveyor","tool":"smart_grep","phase":"completed","detail":"30 matches in 60 files"}
+{"at":"2026-06-01T00:20:06.708Z","session_id":"ses_17f7627abffeuEa39INYLbKcrc","agent":"surveyor","tool":"smart_grep","phase":"started","detail":"sidecar\\.|sidecar-startup|sidecar_|boot-failure|ready"}
+{"at":"2026-06-01T00:20:06.739Z","session_id":"ses_17f7627abffeuEa39INYLbKcrc","agent":"surveyor","tool":"smart_grep","phase":"completed","detail":"30 matches in 57 files"}
+{"at":"2026-06-01T00:20:07.757Z","session_id":"ses_17f7627abffeuEa39INYLbKcrc","agent":"surveyor","tool":"smart_grep","phase":"started","detail":"Observability|observability|Tracer|makeTracer|withSpan"}
+{"at":"2026-06-01T00:20:07.912Z","session_id":"ses_17f7627abffeuEa39INYLbKcrc","agent":"surveyor","tool":"smart_grep","phase":"completed","detail":"28 matches in 500 files"}
+{"at":"2026-06-01T00:20:46.263Z","session_id":"ses_17f7627abffeuEa39INYLbKcrc","agent":"surveyor","tool":"smart_grep","phase":"started","detail":"class.*Service|Context\\.Service|Context\\.Tag"}
+{"at":"2026-06-01T00:20:46.267Z","session_id":"ses_17f7627abffeuEa39INYLbKcrc","agent":"surveyor","tool":"smart_grep","phase":"completed","detail":"8 matches in 4 files"}
+{"at":"2026-06-01T00:20:47.602Z","session_id":"ses_17f7627abffeuEa39INYLbKcrc","agent":"surveyor","tool":"smart_grep","phase":"started","detail":"spawnLocalServer"}
+{"at":"2026-06-01T00:20:47.624Z","session_id":"ses_17f7627abffeuEa39INYLbKcrc","agent":"surveyor","tool":"smart_grep","phase":"completed","detail":"5 matches in 74 files"}
+{"at":"2026-06-01T00:21:36.511Z","session_id":"ses_17f7627abffeuEa39INYLbKcrc","agent":"surveyor","tool":"smart_grep","phase":"started","detail":"export.*\\bprocess\\b|spawn\\b|child.*process|Worker|Bun\\.spawn|NodeChildProcess"}
+{"at":"2026-06-01T00:21:36.651Z","session_id":"ses_17f7627abffeuEa39INYLbKcrc","agent":"surveyor","tool":"smart_grep","phase":"completed","detail":"194 matches in 41 files"}
+{"at":"2026-06-01T00:22:14.287Z","session_id":"ses_17f7627abffeuEa39INYLbKcrc","agent":"surveyor","tool":"smart_grep","phase":"started","detail":"utilityProcess|child\\.postMessage|child\\.on\\(.*message"}
+{"at":"2026-06-01T00:22:14.298Z","session_id":"ses_17f7627abffeuEa39INYLbKcrc","agent":"surveyor","tool":"smart_grep","phase":"completed","detail":"6 matches in 44 files"}
+{"at":"2026-06-01T00:22:16.512Z","session_id":"ses_17f7627abffeuEa39INYLbKcrc","agent":"surveyor","tool":"smart_grep","phase":"started","detail":"InitStep|ServerReadyData|server\\.ready|server\\.init"}
+{"at":"2026-06-01T00:22:16.523Z","session_id":"ses_17f7627abffeuEa39INYLbKcrc","agent":"surveyor","tool":"smart_grep","phase":"completed","detail":"24 matches in 5 files"}
+{"at":"2026-06-01T00:22:59.452Z","session_id":"ses_17f7627abffeuEa39INYLbKcrc","agent":"surveyor","tool":"smart_grep","phase":"started","detail":"observability"}
+{"at":"2026-06-01T00:22:59.479Z","session_id":"ses_17f7627abffeuEa39INYLbKcrc","agent":"surveyor","tool":"smart_grep","phase":"completed","detail":"2 matches in 2 files"}
+{"at":"2026-06-01T00:23:00.817Z","session_id":"ses_17f7627abffeuEa39INYLbKcrc","agent":"surveyor","tool":"smart_grep","phase":"started","detail":"logInfo|logWarning|logError|\\.pipe\\(Effect\\.log"}
+{"at":"2026-06-01T00:23:00.821Z","session_id":"ses_17f7627abffeuEa39INYLbKcrc","agent":"surveyor","tool":"smart_grep","phase":"completed","detail":"7 matches in 2 files"}
+{"at":"2026-06-01T00:23:50.580Z","session_id":"ses_17f7627abffeuEa39INYLbKcrc","agent":"surveyor","tool":"smart_grep","phase":"started","detail":"export.*const.*layer|export.*Layer.*=|defaultLayer"}
+{"at":"2026-06-01T00:23:50.662Z","session_id":"ses_17f7627abffeuEa39INYLbKcrc","agent":"surveyor","tool":"smart_grep","phase":"completed","detail":"25 matches in 2 files"}
+{"at":"2026-06-01T00:23:51.651Z","session_id":"ses_17f7627abffeuEa39INYLbKcrc","agent":"surveyor","tool":"smart_grep","phase":"started","detail":"server\\.instance\\.|instance\\.ready|instance\\.started|instance\\.loaded|instance\\."}
+{"at":"2026-06-01T00:23:51.762Z","session_id":"ses_17f7627abffeuEa39INYLbKcrc","agent":"surveyor","tool":"smart_grep","phase":"completed","detail":"4 matches in 500 files"}
+{"at":"2026-06-01T00:24:44.794Z","session_id":"ses_17f7627abffeuEa39INYLbKcrc","agent":"surveyor","tool":"smart_grep","phase":"started","detail":"boot-failure\\.json|sidecar-boot-failure"}
+{"at":"2026-06-01T00:24:46.060Z","session_id":"ses_17f7627abffeuEa39INYLbKcrc","agent":"surveyor","tool":"smart_grep","phase":"completed","detail":"0 matches in 454 files"}

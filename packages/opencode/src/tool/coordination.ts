@@ -779,21 +779,24 @@ export const CoordinationTool = Tool.define(
                 output = `No fan-out group for session ${params.sessionId}, wave ${params.wave}, ${params.waveType}`
               } else {
                 const group = groupRows[0]
-                const pending = group.task_ids.length - group.complete_count
+                const taskIds: string[] = Array.isArray(group.task_ids)
+                  ? group.task_ids
+                  : JSON.parse(group.task_ids)
+                const pending = taskIds.length - group.complete_count
                 const runningClaims = pending > 0
                   ? yield* adapter.query((db) =>
                       db.select().from(CoordinationClaimTable)
                         .where(
                           and(
                             eq(CoordinationClaimTable.status, "claimed"),
-                            inArray(CoordinationClaimTable.task_id, group.task_ids),
+                            inArray(CoordinationClaimTable.task_id, taskIds),
                           ),
                         ),
                     )
                   : []
                 output = [
                   `Wave ${group.wave} (${group.wave_type})`,
-                  `  Total tasks: ${group.task_ids.length}`,
+                  `  Total tasks: ${taskIds.length}`,
                   `  Complete: ${group.complete_count}`,
                   `  Pending: ${pending}`,
                   ...(runningClaims.length > 0

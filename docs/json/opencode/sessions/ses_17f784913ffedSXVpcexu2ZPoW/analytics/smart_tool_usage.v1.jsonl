@@ -2,3 +2,6 @@
 {"at":"2026-06-01T00:17:03.615Z","session_id":"ses_17f784913ffedSXVpcexu2ZPoW","agent":"cartographer","tool":"smart_find","pattern":"*MCP*","path":"packages/opencode/src"}
 {"at":"2026-06-01T00:17:04.371Z","session_id":"ses_17f784913ffedSXVpcexu2ZPoW","agent":"cartographer","tool":"smart_find","pattern":"*Mcp*","path":"packages/opencode/src"}
 {"at":"2026-06-01T00:17:05.841Z","session_id":"ses_17f784913ffedSXVpcexu2ZPoW","agent":"cartographer","tool":"smart_grep","pattern":"from.*['\\\"]\\.\\.?/mcp|from.*['\\\"]@/mcp|from.*['\\\"]\\.\\.\\/mcp\\/|from.*['\\\"]\\.\\/mcp\\/","path":"packages/opencode/src"}
+{"at":"2026-06-01T00:19:09.055Z","session_id":"ses_17f784913ffedSXVpcexu2ZPoW","agent":"cartographer","tool":"smart_find","pattern":"*auth*","path":"packages/opencode/src"}
+{"at":"2026-06-01T00:19:10.321Z","session_id":"ses_17f784913ffedSXVpcexu2ZPoW","agent":"cartographer","tool":"smart_grep","pattern":"mcp.*auth|auth.*mcp|MCPAuth|OAuth.*mcp|mcp.*OAuth","path":"packages/opencode/src"}
+{"at":"2026-06-01T00:19:11.046Z","session_id":"ses_17f784913ffedSXVpcexu2ZPoW","agent":"cartographer","tool":"smart_grep","pattern":"yield|generator|function\\*","path":"packages/opencode/src/config/mcp.ts"}
