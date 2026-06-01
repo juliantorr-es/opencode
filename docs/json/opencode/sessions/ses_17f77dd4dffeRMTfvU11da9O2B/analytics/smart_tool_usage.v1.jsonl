@@ -7,3 +7,18 @@
 {"at":"2026-06-01T00:23:51.324Z","session_id":"ses_17f77dd4dffeRMTfvU11da9O2B","agent":"cartographer","tool":"smart_find","pattern":"*","path":"packages/opencode/migration-pg"}
 {"at":"2026-06-01T00:23:51.591Z","session_id":"ses_17f77dd4dffeRMTfvU11da9O2B","agent":"cartographer","tool":"smart_grep","pattern":"from.*event-store|from.*EventStore|from.*event/store","path":"packages/opencode/src"}
 {"at":"2026-06-01T00:23:51.720Z","session_id":"ses_17f77dd4dffeRMTfvU11da9O2B","agent":"cartographer","tool":"smart_grep","pattern":"#db","path":"packages/opencode/src"}
+{"at":"2026-06-01T00:26:10.473Z","session_id":"ses_17f77dd4dffeRMTfvU11da9O2B","agent":"cartographer","tool":"smart_grep","pattern":"\\\"#db\\\"","path":"packages/opencode"}
+{"at":"2026-06-01T00:26:11.480Z","session_id":"ses_17f77dd4dffeRMTfvU11da9O2B","agent":"cartographer","tool":"smart_grep","pattern":"#db","path":"packages/opencode"}
+{"at":"2026-06-01T00:27:49.505Z","session_id":"ses_17f77dd4dffeRMTfvU11da9O2B","agent":"cartographer","tool":"smart_grep","pattern":"\"#db\"|'#db'","path":"packages/opencode"}
+{"at":"2026-06-01T00:29:03.542Z","session_id":"ses_17f77dd4dffeRMTfvU11da9O2B","agent":"cartographer","tool":"smart_grep","pattern":"from.*event.*index|from.*@/event[\"'\\s]|from.*\\.\\.\\/event[\"'\\s]","path":"packages/opencode/src"}
+{"at":"2026-06-01T00:30:32.601Z","session_id":"ses_17f77dd4dffeRMTfvU11da9O2B","agent":"cartographer","tool":"smart_grep","pattern":"sqliteTable","path":"packages/opencode/src"}
+{"at":"2026-06-01T00:31:41.564Z","session_id":"ses_17f77dd4dffeRMTfvU11da9O2B","agent":"cartographer","tool":"smart_find","pattern":"*.pg.test.ts","path":"packages/opencode/test"}
+{"at":"2026-06-01T00:31:42.217Z","session_id":"ses_17f77dd4dffeRMTfvU11da9O2B","agent":"cartographer","tool":"smart_find","pattern":"*event*test*","path":"packages/opencode/test"}
+{"at":"2026-06-01T00:31:42.881Z","session_id":"ses_17f77dd4dffeRMTfvU11da9O2B","agent":"cartographer","tool":"smart_find","pattern":"*db*.test*","path":"packages/opencode/test"}
+{"at":"2026-06-01T00:34:24.408Z","session_id":"ses_17f77dd4dffeRMTfvU11da9O2B","agent":"cartographer","tool":"smart_find","pattern":"drizzle.config*","path":"packages/opencode"}
+{"at":"2026-06-01T00:36:09.195Z","session_id":"ses_17f77dd4dffeRMTfvU11da9O2B","agent":"cartographer","tool":"smart_grep","pattern":"export (const|function|async function) (PgAdapter|LocalPgAdapter)","path":"packages/opencode/src/storage/adapter.ts"}
+{"at":"2026-06-01T00:36:10.549Z","session_id":"ses_17f77dd4dffeRMTfvU11da9O2B","agent":"cartographer","tool":"smart_grep","pattern":"^(export )?const (PgAdapter|LocalPgAdapter)","path":"packages/opencode/src/storage/adapter.ts"}
+{"at":"2026-06-01T00:41:36.462Z","session_id":"ses_17f77dd4dffeRMTfvU11da9O2B","agent":"cartographer","tool":"smart_grep","pattern":"makePgAdapter|PgAdapter|LocalPgAdapter","path":"packages/opencode/src/storage/adapter.ts"}
+{"at":"2026-06-01T00:42:26.448Z","session_id":"ses_17f77dd4dffeRMTfvU11da9O2B","agent":"cartographer","tool":"smart_grep","pattern":"better-sqlite3|sql\\.js|@libsql|turso","path":"packages/opencode/src"}
+{"at":"2026-06-01T00:42:27.345Z","session_id":"ses_17f77dd4dffeRMTfvU11da9O2B","agent":"cartographer","tool":"smart_grep","pattern":"better-sqlite3|sql\\.js","path":"packages/opencode"}
+{"at":"2026-06-01T00:45:19.370Z","session_id":"ses_17f77dd4dffeRMTfvU11da9O2B","agent":"cartographer","tool":"smart_find","pattern":"*","path":"docs/json/opencode/sessions"}

@@ -1,0 +1,24 @@
+{"at":"2026-06-01T00:32:29.628Z","session_id":"ses_17f685541ffeJjR3kgm0M2tQVw","agent":"isolation-tester","tool":"smart_find","phase":"started","detail":"packages/opencode/src/campaign/secretary/**/*.ts"}
+{"at":"2026-06-01T00:32:43.101Z","session_id":"ses_17f685541ffeJjR3kgm0M2tQVw","agent":"isolation-tester","tool":"smart_find","phase":"completed","detail":"packages/opencode/src/campaign/secretary/**/*.ts"}
+{"at":"2026-06-01T00:32:43.197Z","session_id":"ses_17f685541ffeJjR3kgm0M2tQVw","agent":"isolation-tester","tool":"smart_find","phase":"started","detail":"packages/opencode/test/fixture/pg*"}
+{"at":"2026-06-01T00:32:56.875Z","session_id":"ses_17f685541ffeJjR3kgm0M2tQVw","agent":"isolation-tester","tool":"smart_find","phase":"completed","detail":"packages/opencode/test/fixture/pg*"}
+{"at":"2026-06-01T00:33:25.826Z","session_id":"ses_17f685541ffeJjR3kgm0M2tQVw","agent":"isolation-tester","tool":"smart_find","phase":"started","detail":"packages/opencode/src/campaign/**/*.ts"}
+{"at":"2026-06-01T00:33:39.081Z","session_id":"ses_17f685541ffeJjR3kgm0M2tQVw","agent":"isolation-tester","tool":"smart_find","phase":"completed","detail":"packages/opencode/src/campaign/**/*.ts"}
+{"at":"2026-06-01T00:33:39.221Z","session_id":"ses_17f685541ffeJjR3kgm0M2tQVw","agent":"isolation-tester","tool":"smart_find","phase":"started","detail":"packages/opencode/src/event/**/*.ts"}
+{"at":"2026-06-01T00:33:55.386Z","session_id":"ses_17f685541ffeJjR3kgm0M2tQVw","agent":"isolation-tester","tool":"smart_find","phase":"completed","detail":"packages/opencode/src/event/**/*.ts"}
+{"at":"2026-06-01T00:33:55.435Z","session_id":"ses_17f685541ffeJjR3kgm0M2tQVw","agent":"isolation-tester","tool":"smart_grep","phase":"started","detail":"blockedEvent|failedEvent"}
+{"at":"2026-06-01T00:33:55.645Z","session_id":"ses_17f685541ffeJjR3kgm0M2tQVw","agent":"isolation-tester","tool":"smart_grep","phase":"completed","detail":"6 matches in 500 files"}
+{"at":"2026-06-01T00:36:01.120Z","session_id":"ses_17f685541ffeJjR3kgm0M2tQVw","agent":"isolation-tester","tool":"smart_grep","phase":"started","detail":"blockedEvent|failedEvent|Blocked|Failed|blocked|failed"}
+{"at":"2026-06-01T00:36:01.122Z","session_id":"ses_17f685541ffeJjR3kgm0M2tQVw","agent":"isolation-tester","tool":"smart_grep","phase":"completed","detail":"22 matches in 1 files"}
+{"at":"2026-06-01T00:36:02.151Z","session_id":"ses_17f685541ffeJjR3kgm0M2tQVw","agent":"isolation-tester","tool":"smart_grep","phase":"started","detail":"makeSecretaryLayer|beforeEach|Layer\\."}
+{"at":"2026-06-01T00:36:02.151Z","session_id":"ses_17f685541ffeJjR3kgm0M2tQVw","agent":"isolation-tester","tool":"smart_grep","phase":"completed","detail":"2 matches in 1 files"}
+{"at":"2026-06-01T00:36:03.398Z","session_id":"ses_17f685541ffeJjR3kgm0M2tQVw","agent":"isolation-tester","tool":"smart_grep","phase":"started","detail":"try|catch|\\.toBe\\(|expect|binder|toBeString|toBe\\(\""}
+{"at":"2026-06-01T00:36:03.398Z","session_id":"ses_17f685541ffeJjR3kgm0M2tQVw","agent":"isolation-tester","tool":"smart_grep","phase":"completed","detail":"30 matches in 1 files"}
+{"at":"2026-06-01T00:36:53.865Z","session_id":"ses_17f685541ffeJjR3kgm0M2tQVw","agent":"isolation-tester","tool":"smart_grep","phase":"started","detail":"function run|const run|makeSecretary|const testLayer|const layer"}
+{"at":"2026-06-01T00:36:53.867Z","session_id":"ses_17f685541ffeJjR3kgm0M2tQVw","agent":"isolation-tester","tool":"smart_grep","phase":"completed","detail":"1 matches in 1 files"}
+{"at":"2026-06-01T00:37:18.699Z","session_id":"ses_17f685541ffeJjR3kgm0M2tQVw","agent":"isolation-tester","tool":"smart_grep","phase":"started","detail":"function run"}
+{"at":"2026-06-01T00:37:18.700Z","session_id":"ses_17f685541ffeJjR3kgm0M2tQVw","agent":"isolation-tester","tool":"smart_grep","phase":"completed","detail":"1 matches in 1 files"}
+{"at":"2026-06-01T00:38:20.766Z","session_id":"ses_17f685541ffeJjR3kgm0M2tQVw","agent":"isolation-tester","tool":"smart_grep","phase":"started","detail":"pgTestLayer|EventStore\\.layer"}
+{"at":"2026-06-01T00:38:20.766Z","session_id":"ses_17f685541ffeJjR3kgm0M2tQVw","agent":"isolation-tester","tool":"smart_grep","phase":"completed","detail":"3 matches in 1 files"}
+{"at":"2026-06-01T00:38:45.061Z","session_id":"ses_17f685541ffeJjR3kgm0M2tQVw","agent":"isolation-tester","tool":"smart_grep","phase":"started","detail":"const testLayer"}
+{"at":"2026-06-01T00:38:45.062Z","session_id":"ses_17f685541ffeJjR3kgm0M2tQVw","agent":"isolation-tester","tool":"smart_grep","phase":"completed","detail":"0 matches in 1 files"}

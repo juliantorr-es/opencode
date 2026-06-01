@@ -17,9 +17,12 @@ function waveFor(agent: string): string {
 }
 
 export default tool({
-  description: "Fleet dashboard — reads the unified lane state file. Shows all agents: pending, completed, failed. Pure TypeScript, no binary dependency.",
+  description: "Fleet dashboard — reads the unified lane state file. Shows all agents: pending, completed, failed. Use lane_prefix or session_id to filter noisy multi-session environments.",
   args: {
     quick: tool.schema.boolean().optional().describe("Quick mode — compact output."),
+    lane_prefix: tool.schema.string().optional().describe("Only show lanes starting with this prefix (e.g. 'tc-' to filter to your session's lanes)."),
+    session_id: tool.schema.string().optional().describe("Only show agents delegated by this session."),
+    hide_stale: tool.schema.boolean().optional().describe("Hide stale agents (>5min pending) to declutter."),
   },
   async execute(args, context) {
     const statePath = r(context.worktree, "docs/json/opencode/coordination/lane_state.v1.jsonl")
@@ -85,6 +88,20 @@ export default tool({
         auto_completed: e.auto_completed || false,
       })
     }
+
+    // ── Apply filters ──
+    let filtered = fleet
+    if (args.lane_prefix) {
+      filtered = filtered.filter(f => String(f.lane).startsWith(args.lane_prefix!))
+    }
+    if (args.session_id) {
+      filtered = filtered.filter(f => f.delegated_by === args.session_id || f.delegated_by === context.agent)
+    }
+    if (args.hide_stale) {
+      filtered = filtered.filter(f => !f.stale)
+    }
+    const totalBeforeFilter = fleet.length
+    fleet = filtered
 
     fleet.sort((a, b) => (a.status === "pending" ? -1 : 1) || b.elapsed_s - a.elapsed_s)
 

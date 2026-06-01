@@ -30,3 +30,35 @@
 {"at":"2026-06-01T00:24:11.566Z","session_id":"ses_17f76549fffeYGJPUF2ovb7yIp","agent":"surveyor","tool":"smart_find","phase":"completed","detail":"**/*"}
 {"at":"2026-06-01T00:24:12.693Z","session_id":"ses_17f76549fffeYGJPUF2ovb7yIp","agent":"surveyor","tool":"smart_grep","phase":"started","detail":"from.*storage/|from.*event/|from.*event\\.pg|from.*db\\.pg|from.*db\\\"|from.*db\\'"}
 {"at":"2026-06-01T00:24:12.798Z","session_id":"ses_17f76549fffeYGJPUF2ovb7yIp","agent":"surveyor","tool":"smart_grep","phase":"completed","detail":"90 matches in 58 files"}
+{"at":"2026-06-01T00:28:01.933Z","session_id":"ses_17f76549fffeYGJPUF2ovb7yIp","agent":"surveyor","tool":"smart_grep","phase":"started","detail":"EventStore"}
+{"at":"2026-06-01T00:28:02.048Z","session_id":"ses_17f76549fffeYGJPUF2ovb7yIp","agent":"surveyor","tool":"smart_grep","phase":"completed","detail":"30 matches in 318 files"}
+{"at":"2026-06-01T00:29:40.496Z","session_id":"ses_17f76549fffeYGJPUF2ovb7yIp","agent":"surveyor","tool":"smart_grep","phase":"started","detail":"#db"}
+{"at":"2026-06-01T00:29:40.765Z","session_id":"ses_17f76549fffeYGJPUF2ovb7yIp","agent":"surveyor","tool":"smart_grep","phase":"completed","detail":"0 matches in 1 files"}
+{"at":"2026-06-01T00:29:41.680Z","session_id":"ses_17f76549fffeYGJPUF2ovb7yIp","agent":"surveyor","tool":"smart_grep","phase":"started","detail":"@/event|@/storage|@/effect"}
+{"at":"2026-06-01T00:29:41.823Z","session_id":"ses_17f76549fffeYGJPUF2ovb7yIp","agent":"surveyor","tool":"smart_grep","phase":"completed","detail":"0 matches in 1 files"}
+{"at":"2026-06-01T00:29:42.704Z","session_id":"ses_17f76549fffeYGJPUF2ovb7yIp","agent":"surveyor","tool":"smart_find","phase":"started","detail":"tsconfig*.json"}
+{"at":"2026-06-01T00:29:43.020Z","session_id":"ses_17f76549fffeYGJPUF2ovb7yIp","agent":"surveyor","tool":"smart_find","phase":"completed","detail":"tsconfig*.json"}
+{"at":"2026-06-01T00:33:36.923Z","session_id":"ses_17f76549fffeYGJPUF2ovb7yIp","agent":"surveyor","tool":"smart_grep","phase":"started","detail":"migration-pg|migration/"}
+{"at":"2026-06-01T00:33:37.079Z","session_id":"ses_17f76549fffeYGJPUF2ovb7yIp","agent":"surveyor","tool":"smart_grep","phase":"completed","detail":"0 matches in 4 files"}
+{"at":"2026-06-01T00:35:21.602Z","session_id":"ses_17f76549fffeYGJPUF2ovb7yIp","agent":"surveyor","tool":"smart_grep","phase":"started","detail":"\\.sql"}
+{"at":"2026-06-01T00:35:21.606Z","session_id":"ses_17f76549fffeYGJPUF2ovb7yIp","agent":"surveyor","tool":"smart_grep","phase":"completed","detail":"0 matches in 8 files"}
+{"at":"2026-06-01T00:35:22.495Z","session_id":"ses_17f76549fffeYGJPUF2ovb7yIp","agent":"surveyor","tool":"smart_find","phase":"started","detail":"migration*"}
+{"at":"2026-06-01T00:35:22.606Z","session_id":"ses_17f76549fffeYGJPUF2ovb7yIp","agent":"surveyor","tool":"smart_find","phase":"completed","detail":"migration*"}
+{"at":"2026-06-01T00:35:23.426Z","session_id":"ses_17f76549fffeYGJPUF2ovb7yIp","agent":"surveyor","tool":"smart_grep","phase":"started","detail":"\\.sql"}
+{"at":"2026-06-01T00:35:23.430Z","session_id":"ses_17f76549fffeYGJPUF2ovb7yIp","agent":"surveyor","tool":"smart_grep","phase":"completed","detail":"0 matches in 4 files"}
+{"at":"2026-06-01T00:37:38.314Z","session_id":"ses_17f76549fffeYGJPUF2ovb7yIp","agent":"surveyor","tool":"smart_grep","phase":"started","detail":"from.*[\"']@/event[\"']|from.*[\"']\\.\\./event[\"']|from.*[\"']\\.\\./\\.\\./event[\"']"}
+{"at":"2026-06-01T00:37:38.463Z","session_id":"ses_17f76549fffeYGJPUF2ovb7yIp","agent":"surveyor","tool":"smart_grep","phase":"completed","detail":"11 matches in 500 files"}
+{"at":"2026-06-01T00:37:39.440Z","session_id":"ses_17f76549fffeYGJPUF2ovb7yIp","agent":"surveyor","tool":"smart_grep","phase":"started","detail":"from.*[\"']@/storage/|from.*[\"']\\./storage/|from.*[\"']\\.\\./storage/"}
+{"at":"2026-06-01T00:37:39.803Z","session_id":"ses_17f76549fffeYGJPUF2ovb7yIp","agent":"surveyor","tool":"smart_grep","phase":"completed","detail":"30 matches in 347 files"}
+{"at":"2026-06-01T00:37:41.350Z","session_id":"ses_17f76549fffeYGJPUF2ovb7yIp","agent":"surveyor","tool":"smart_grep","phase":"started","detail":"#db"}
+{"at":"2026-06-01T00:37:41.469Z","session_id":"ses_17f76549fffeYGJPUF2ovb7yIp","agent":"surveyor","tool":"smart_grep","phase":"completed","detail":"2 matches in 1 files"}
+{"at":"2026-06-01T00:41:51.494Z","session_id":"ses_17f76549fffeYGJPUF2ovb7yIp","agent":"surveyor","tool":"smart_find","phase":"started","detail":"**/*.ts"}
+{"at":"2026-06-01T00:41:51.496Z","session_id":"ses_17f76549fffeYGJPUF2ovb7yIp","agent":"surveyor","tool":"smart_find","phase":"completed","detail":"**/*.ts"}
+{"at":"2026-06-01T00:41:52.441Z","session_id":"ses_17f76549fffeYGJPUF2ovb7yIp","agent":"surveyor","tool":"smart_find","phase":"started","detail":"**/*.ts"}
+{"at":"2026-06-01T00:41:52.442Z","session_id":"ses_17f76549fffeYGJPUF2ovb7yIp","agent":"surveyor","tool":"smart_find","phase":"completed","detail":"**/*.ts"}
+{"at":"2026-06-01T00:41:53.773Z","session_id":"ses_17f76549fffeYGJPUF2ovb7yIp","agent":"surveyor","tool":"smart_grep","phase":"started","detail":"Adapter|pg\\.sql|event\\.pg|coordination\\.pg"}
+{"at":"2026-06-01T00:41:53.776Z","session_id":"ses_17f76549fffeYGJPUF2ovb7yIp","agent":"surveyor","tool":"smart_grep","phase":"completed","detail":"34 matches in 6 files"}
+{"at":"2026-06-01T00:44:40.046Z","session_id":"ses_17f76549fffeYGJPUF2ovb7yIp","agent":"surveyor","tool":"smart_grep","phase":"started","detail":"duckdb"}
+{"at":"2026-06-01T00:44:40.052Z","session_id":"ses_17f76549fffeYGJPUF2ovb7yIp","agent":"surveyor","tool":"smart_grep","phase":"completed","detail":"46 matches in 8 files"}
+{"at":"2026-06-01T00:44:41.305Z","session_id":"ses_17f76549fffeYGJPUF2ovb7yIp","agent":"surveyor","tool":"smart_grep","phase":"started","detail":"from.*adapter|from.*schema|from.*pg\\.sql|from.*pg-pool"}
+{"at":"2026-06-01T00:44:41.399Z","session_id":"ses_17f76549fffeYGJPUF2ovb7yIp","agent":"surveyor","tool":"smart_grep","phase":"completed","detail":"219 matches in 130 files"}

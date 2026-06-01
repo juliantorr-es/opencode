@@ -1,0 +1,8 @@
+{"at":"2026-06-01T01:02:29.127Z","session_id":"ses_17f4d4846ffeAZI0jYyw76HOBX","agent":"reversibility-checker","tool":"smart_grep","phase":"started","detail":"OPN_NO_.*TRACE|INSTANCE_TRACE|instance-trace|instanceTrace|initInstanceTrace|wri"}
+{"at":"2026-06-01T01:02:29.280Z","session_id":"ses_17f4d4846ffeAZI0jYyw76HOBX","agent":"reversibility-checker","tool":"smart_grep","phase":"completed","detail":"0 matches in 500 files"}
+{"at":"2026-06-01T01:02:30.267Z","session_id":"ses_17f4d4846ffeAZI0jYyw76HOBX","agent":"reversibility-checker","tool":"smart_grep","phase":"started","detail":"appendFileSync|writeFileSync|try\\s*\\{"}
+{"at":"2026-06-01T01:02:30.267Z","session_id":"ses_17f4d4846ffeAZI0jYyw76HOBX","agent":"reversibility-checker","tool":"smart_grep","phase":"completed","detail":"3 matches in 1 files"}
+{"at":"2026-06-01T01:03:56.309Z","session_id":"ses_17f4d4846ffeAZI0jYyw76HOBX","agent":"reversibility-checker","tool":"smart_grep","phase":"started","detail":"OPN_NO_|OPN_DISABLE_|OPN_SKIP_|kill.?switch|feature.?flag"}
+{"at":"2026-06-01T01:03:56.429Z","session_id":"ses_17f4d4846ffeAZI0jYyw76HOBX","agent":"reversibility-checker","tool":"smart_grep","phase":"completed","detail":"2 matches in 500 files"}
+{"at":"2026-06-01T01:03:57.233Z","session_id":"ses_17f4d4846ffeAZI0jYyw76HOBX","agent":"reversibility-checker","tool":"smart_grep","phase":"started","detail":"guard|noop|no-op|silently|fail.*safe"}
+{"at":"2026-06-01T01:03:57.234Z","session_id":"ses_17f4d4846ffeAZI0jYyw76HOBX","agent":"reversibility-checker","tool":"smart_grep","phase":"completed","detail":"0 matches in 1 files"}

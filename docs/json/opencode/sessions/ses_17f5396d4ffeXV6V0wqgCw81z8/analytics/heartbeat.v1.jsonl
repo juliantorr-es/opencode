@@ -1,0 +1,66 @@
+{"at":"2026-06-01T00:58:42.113Z","session_id":"ses_17f5396d4ffeXV6V0wqgCw81z8","agent":"impact-assessor","tool":"smart_grep","phase":"started","detail":"from.*[\"']\\.\\/auth[\"']|from.*[\"'].*\\/mcp\\/auth[\"']"}
+{"at":"2026-06-01T00:58:42.257Z","session_id":"ses_17f5396d4ffeXV6V0wqgCw81z8","agent":"impact-assessor","tool":"smart_grep","phase":"completed","detail":"6 matches in 500 files"}
+{"at":"2026-06-01T00:58:43.079Z","session_id":"ses_17f5396d4ffeXV6V0wqgCw81z8","agent":"impact-assessor","tool":"smart_grep","phase":"started","detail":"from.*[\"']\\.\\/oauth-callback[\"']|from.*[\"'].*\\/mcp\\/oauth-callback[\"']"}
+{"at":"2026-06-01T00:58:43.158Z","session_id":"ses_17f5396d4ffeXV6V0wqgCw81z8","agent":"impact-assessor","tool":"smart_grep","phase":"completed","detail":"2 matches in 500 files"}
+{"at":"2026-06-01T00:58:44.126Z","session_id":"ses_17f5396d4ffeXV6V0wqgCw81z8","agent":"impact-assessor","tool":"smart_grep","phase":"started","detail":"McpAuth\\.|McpOAuthCallback\\."}
+{"at":"2026-06-01T00:58:44.218Z","session_id":"ses_17f5396d4ffeXV6V0wqgCw81z8","agent":"impact-assessor","tool":"smart_grep","phase":"completed","detail":"21 matches in 500 files"}
+{"at":"2026-06-01T01:00:54.418Z","session_id":"ses_17f5396d4ffeXV6V0wqgCw81z8","agent":"impact-assessor","tool":"smart_grep","phase":"started","detail":"auth\\.(all|get|set|remove|update|clear|getOAuthState|isTokenExpired)\\b"}
+{"at":"2026-06-01T01:00:54.616Z","session_id":"ses_17f5396d4ffeXV6V0wqgCw81z8","agent":"impact-assessor","tool":"smart_grep","phase":"completed","detail":"27 matches in 500 files"}
+{"at":"2026-06-01T01:00:55.923Z","session_id":"ses_17f5396d4ffeXV6V0wqgCw81z8","agent":"impact-assessor","tool":"smart_grep","phase":"started","detail":"\\.(all|set|remove|get|updateTokens|updateClientInfo|updateCodeVerifier|clearCode"}
+{"at":"2026-06-01T01:00:55.984Z","session_id":"ses_17f5396d4ffeXV6V0wqgCw81z8","agent":"impact-assessor","tool":"smart_grep","phase":"completed","detail":"0 matches in 0 files"}
+{"at":"2026-06-01T01:00:57.131Z","session_id":"ses_17f5396d4ffeXV6V0wqgCw81z8","agent":"impact-assessor","tool":"smart_grep","phase":"started","detail":"ensureRunning|waitForCallback|cancelPending|isPortInUse|McpOAuthCallback\\.(ensur"}
+{"at":"2026-06-01T01:00:57.247Z","session_id":"ses_17f5396d4ffeXV6V0wqgCw81z8","agent":"impact-assessor","tool":"smart_grep","phase":"completed","detail":"11 matches in 500 files"}
+{"at":"2026-06-01T01:03:46.520Z","session_id":"ses_17f5396d4ffeXV6V0wqgCw81z8","agent":"impact-assessor","tool":"smart_grep","phase":"started","detail":"import \\{.*McpAuth[,\\s}]|import \\* as McpAuth"}
+{"at":"2026-06-01T01:03:46.645Z","session_id":"ses_17f5396d4ffeXV6V0wqgCw81z8","agent":"impact-assessor","tool":"smart_grep","phase":"completed","detail":"3 matches in 500 files"}
+{"at":"2026-06-01T01:03:47.221Z","session_id":"ses_17f5396d4ffeXV6V0wqgCw81z8","agent":"impact-assessor","tool":"smart_grep","phase":"started","detail":"import \\{.*McpOAuthCallback[,\\s}]"}
+{"at":"2026-06-01T01:03:47.319Z","session_id":"ses_17f5396d4ffeXV6V0wqgCw81z8","agent":"impact-assessor","tool":"smart_grep","phase":"completed","detail":"1 matches in 500 files"}
+{"at":"2026-06-01T01:03:47.834Z","session_id":"ses_17f5396d4ffeXV6V0wqgCw81z8","agent":"impact-assessor","tool":"smart_find","phase":"started","detail":"*auth*.test.*"}
+{"at":"2026-06-01T01:03:48.052Z","session_id":"ses_17f5396d4ffeXV6V0wqgCw81z8","agent":"impact-assessor","tool":"smart_find","phase":"completed","detail":"*auth*.test.*"}
+{"at":"2026-06-01T01:03:48.296Z","session_id":"ses_17f5396d4ffeXV6V0wqgCw81z8","agent":"impact-assessor","tool":"smart_find","phase":"started","detail":"*oauth*.test.*"}
+{"at":"2026-06-01T01:03:48.424Z","session_id":"ses_17f5396d4ffeXV6V0wqgCw81z8","agent":"impact-assessor","tool":"smart_find","phase":"completed","detail":"*oauth*.test.*"}
+{"at":"2026-06-01T01:03:49.307Z","session_id":"ses_17f5396d4ffeXV6V0wqgCw81z8","agent":"impact-assessor","tool":"smart_grep","phase":"started","detail":"test.*auth|auth.*spec|auth.*test"}
+{"at":"2026-06-01T01:03:49.472Z","session_id":"ses_17f5396d4ffeXV6V0wqgCw81z8","agent":"impact-assessor","tool":"smart_grep","phase":"completed","detail":"30 matches in 97 files"}
+{"at":"2026-06-01T01:03:50.323Z","session_id":"ses_17f5396d4ffeXV6V0wqgCw81z8","agent":"impact-assessor","tool":"smart_grep","phase":"started","detail":"test.*oauth-callback|oauth.*callback.*test|callback.*test"}
+{"at":"2026-06-01T01:03:50.511Z","session_id":"ses_17f5396d4ffeXV6V0wqgCw81z8","agent":"impact-assessor","tool":"smart_grep","phase":"completed","detail":"0 matches in 294 files"}
+{"at":"2026-06-01T01:13:34.651Z","session_id":"ses_17f5396d4ffeXV6V0wqgCw81z8","agent":"impact-assessor","tool":"smart_grep","phase":"started","detail":"yield\\* (auth\\.|auth)\\(|\\bauth\\.(all|get|set|remove|update|clear|getOAuthState|i"}
+{"at":"2026-06-01T01:13:34.655Z","session_id":"ses_17f5396d4ffeXV6V0wqgCw81z8","agent":"impact-assessor","tool":"smart_grep","phase":"completed","detail":"13 matches in 4 files"}
+{"at":"2026-06-01T01:13:34.675Z","session_id":"ses_17f5396d4ffeXV6V0wqgCw81z8","agent":"impact-assessor","tool":"smart_grep","phase":"started","detail":"McpAuth\\.(layer|defaultLayer|Service|Entry|Interface)"}
+{"at":"2026-06-01T01:13:34.822Z","session_id":"ses_17f5396d4ffeXV6V0wqgCw81z8","agent":"impact-assessor","tool":"smart_grep","phase":"completed","detail":"9 matches in 500 files"}
+{"at":"2026-06-01T01:16:02.906Z","session_id":"ses_17f5396d4ffeXV6V0wqgCw81z8","agent":"impact-assessor","tool":"smart_grep","phase":"started","detail":"auth\\.get\\(|auth\\.set\\(|auth\\.remove\\(|auth\\.getOAuthState\\(|auth\\.isTokenExpire"}
+{"at":"2026-06-01T01:16:02.907Z","session_id":"ses_17f5396d4ffeXV6V0wqgCw81z8","agent":"impact-assessor","tool":"smart_grep","phase":"completed","detail":"8 matches in 1 files"}
+{"at":"2026-06-01T01:17:05.827Z","session_id":"ses_17f5396d4ffeXV6V0wqgCw81z8","agent":"impact-assessor","tool":"smart_grep","phase":"started","detail":"this\\.auth\\.(get|set|remove|update|clear|getForUrl|getOAuthState)"}
+{"at":"2026-06-01T01:17:05.828Z","session_id":"ses_17f5396d4ffeXV6V0wqgCw81z8","agent":"impact-assessor","tool":"smart_grep","phase":"completed","detail":"13 matches in 1 files"}
+{"at":"2026-06-01T01:17:06.952Z","session_id":"ses_17f5396d4ffeXV6V0wqgCw81z8","agent":"impact-assessor","tool":"smart_grep","phase":"started","detail":"decodeAuthData[^P]"}
+{"at":"2026-06-01T01:17:07.187Z","session_id":"ses_17f5396d4ffeXV6V0wqgCw81z8","agent":"impact-assessor","tool":"smart_grep","phase":"completed","detail":"0 matches in 500 files"}
+{"at":"2026-06-01T01:17:18.213Z","session_id":"ses_17f5396d4ffeXV6V0wqgCw81z8","agent":"impact-assessor","tool":"smart_grep","phase":"started","detail":"decodeUnknownOption"}
+{"at":"2026-06-01T01:17:18.214Z","session_id":"ses_17f5396d4ffeXV6V0wqgCw81z8","agent":"impact-assessor","tool":"smart_grep","phase":"completed","detail":"2 matches in 1 files"}
+{"at":"2026-06-01T01:18:13.673Z","session_id":"ses_17f5396d4ffeXV6V0wqgCw81z8","agent":"impact-assessor","tool":"smart_grep","phase":"started","detail":"from [\"']@/mcp[\"']|from [\"'].\\.\\/mcp[\"']|from [\"'].*\\/mcp\\/index"}
+{"at":"2026-06-01T01:18:13.820Z","session_id":"ses_17f5396d4ffeXV6V0wqgCw81z8","agent":"impact-assessor","tool":"smart_grep","phase":"completed","detail":"7 matches in 500 files"}
+{"at":"2026-06-01T01:18:16.252Z","session_id":"ses_17f5396d4ffeXV6V0wqgCw81z8","agent":"impact-assessor","tool":"smart_grep","phase":"started","detail":"startAuth|finishAuth|removeAuth|hasStoredTokens|getAuthStatus|supportsOAuth"}
+{"at":"2026-06-01T01:18:16.352Z","session_id":"ses_17f5396d4ffeXV6V0wqgCw81z8","agent":"impact-assessor","tool":"smart_grep","phase":"completed","detail":"30 matches in 260 files"}
+{"at":"2026-06-01T01:21:05.464Z","session_id":"ses_17f5396d4ffeXV6V0wqgCw81z8","agent":"impact-assessor","tool":"smart_grep","phase":"started","detail":"MCP\\.(startAuth|finishAuth|removeAuth|authenticate|hasStoredTokens|getAuthStatus"}
+{"at":"2026-06-01T01:21:05.465Z","session_id":"ses_17f5396d4ffeXV6V0wqgCw81z8","agent":"impact-assessor","tool":"smart_grep","phase":"completed","detail":"0 matches in 1 files"}
+{"at":"2026-06-01T01:21:06.437Z","session_id":"ses_17f5396d4ffeXV6V0wqgCw81z8","agent":"impact-assessor","tool":"smart_grep","phase":"started","detail":"MCP\\."}
+{"at":"2026-06-01T01:21:06.437Z","session_id":"ses_17f5396d4ffeXV6V0wqgCw81z8","agent":"impact-assessor","tool":"smart_grep","phase":"completed","detail":"1 matches in 1 files"}
+{"at":"2026-06-01T01:21:07.304Z","session_id":"ses_17f5396d4ffeXV6V0wqgCw81z8","agent":"impact-assessor","tool":"smart_grep","phase":"started","detail":"MCP\\."}
+{"at":"2026-06-01T01:21:07.305Z","session_id":"ses_17f5396d4ffeXV6V0wqgCw81z8","agent":"impact-assessor","tool":"smart_grep","phase":"completed","detail":"1 matches in 1 files"}
+{"at":"2026-06-01T01:22:39.822Z","session_id":"ses_17f5396d4ffeXV6V0wqgCw81z8","agent":"impact-assessor","tool":"smart_grep","phase":"started","detail":"from.*\\/mcp\\/auth[\"']|import.*McpAuth"}
+{"at":"2026-06-01T01:22:39.942Z","session_id":"ses_17f5396d4ffeXV6V0wqgCw81z8","agent":"impact-assessor","tool":"smart_grep","phase":"completed","detail":"2 matches in 365 files"}
+{"at":"2026-06-01T01:25:55.151Z","session_id":"ses_17f5396d4ffeXV6V0wqgCw81z8","agent":"impact-assessor","tool":"smart_grep","phase":"started","detail":"from.*\\/mcp\\/oauth-callback|import.*McpOAuthCallback"}
+{"at":"2026-06-01T01:25:55.291Z","session_id":"ses_17f5396d4ffeXV6V0wqgCw81z8","agent":"impact-assessor","tool":"smart_grep","phase":"completed","detail":"2 matches in 365 files"}
+{"at":"2026-06-01T01:25:56.042Z","session_id":"ses_17f5396d4ffeXV6V0wqgCw81z8","agent":"impact-assessor","tool":"smart_grep","phase":"started","detail":"from.*\\/mcp\\/oauth-provider|McpOAuthProvider"}
+{"at":"2026-06-01T01:25:56.166Z","session_id":"ses_17f5396d4ffeXV6V0wqgCw81z8","agent":"impact-assessor","tool":"smart_grep","phase":"completed","detail":"10 matches in 365 files"}
+{"at":"2026-06-01T01:27:53.924Z","session_id":"ses_17f5396d4ffeXV6V0wqgCw81z8","agent":"impact-assessor","tool":"smart_grep","phase":"started","detail":"mcp-auth\\.json"}
+{"at":"2026-06-01T01:27:54.114Z","session_id":"ses_17f5396d4ffeXV6V0wqgCw81z8","agent":"impact-assessor","tool":"smart_grep","phase":"completed","detail":"0 matches in 500 files"}
+{"at":"2026-06-01T01:27:55.085Z","session_id":"ses_17f5396d4ffeXV6V0wqgCw81z8","agent":"impact-assessor","tool":"smart_grep","phase":"started","detail":"Effect\\.orDie"}
+{"at":"2026-06-01T01:27:55.085Z","session_id":"ses_17f5396d4ffeXV6V0wqgCw81z8","agent":"impact-assessor","tool":"smart_grep","phase":"completed","detail":"3 matches in 1 files"}
+{"at":"2026-06-01T01:29:12.690Z","session_id":"ses_17f5396d4ffeXV6V0wqgCw81z8","agent":"impact-assessor","tool":"smart_grep","phase":"started","detail":"mcp-auth"}
+{"at":"2026-06-01T01:29:12.812Z","session_id":"ses_17f5396d4ffeXV6V0wqgCw81z8","agent":"impact-assessor","tool":"smart_grep","phase":"completed","detail":"0 matches in 500 files"}
+{"at":"2026-06-01T01:31:20.162Z","session_id":"ses_17f5396d4ffeXV6V0wqgCw81z8","agent":"impact-assessor","tool":"smart_grep","phase":"started","detail":"McpAuth|mcp-auth|mcp.*oauth.*auth"}
+{"at":"2026-06-01T01:31:20.306Z","session_id":"ses_17f5396d4ffeXV6V0wqgCw81z8","agent":"impact-assessor","tool":"smart_grep","phase":"completed","detail":"12 matches in 292 files"}
+{"at":"2026-06-01T01:32:35.908Z","session_id":"ses_17f5396d4ffeXV6V0wqgCw81z8","agent":"impact-assessor","tool":"smart_grep","phase":"started","detail":"McpAuth|McpOAuthCallback"}
+{"at":"2026-06-01T01:32:35.909Z","session_id":"ses_17f5396d4ffeXV6V0wqgCw81z8","agent":"impact-assessor","tool":"smart_grep","phase":"completed","detail":"4 matches in 1 files"}
+{"at":"2026-06-01T01:33:57.762Z","session_id":"ses_17f5396d4ffeXV6V0wqgCw81z8","agent":"impact-assessor","tool":"smart_grep","phase":"started","detail":"McpOAuthCallback\\."}
+{"at":"2026-06-01T01:33:57.763Z","session_id":"ses_17f5396d4ffeXV6V0wqgCw81z8","agent":"impact-assessor","tool":"smart_grep","phase":"completed","detail":"1 matches in 1 files"}
+{"at":"2026-06-01T01:35:28.204Z","session_id":"ses_17f5396d4ffeXV6V0wqgCw81z8","agent":"impact-assessor","tool":"smart_grep","phase":"started","detail":"MCP\\.Services|MCP\\.Service|mcp\\.(startAuth|finishAuth|removeAuth|authenticate|au"}
+{"at":"2026-06-01T01:35:28.204Z","session_id":"ses_17f5396d4ffeXV6V0wqgCw81z8","agent":"impact-assessor","tool":"smart_grep","phase":"completed","detail":"1 matches in 1 files"}

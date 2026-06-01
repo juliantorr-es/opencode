@@ -1,0 +1,10 @@
+{"at":"2026-06-01T00:36:57.047Z","session_id":"ses_17f64750bffeZMEaBWmJDiXl1y","agent":"trial","tool":"smart_grep","pattern":"wave_status","path":"packages/opencode/src/tool/coordination.ts"}
+{"at":"2026-06-01T00:37:28.392Z","session_id":"ses_17f64750bffeZMEaBWmJDiXl1y","agent":"trial","tool":"smart_bun","command":"test","elapsed_ms":3804,"exit_code":1}
+{"at":"2026-06-01T00:37:59.389Z","session_id":"ses_17f64750bffeZMEaBWmJDiXl1y","agent":"trial","tool":"smart_bun","command":"typecheck","elapsed_ms":30950,"exit_code":2}
+{"at":"2026-06-01T00:38:28.760Z","session_id":"ses_17f64750bffeZMEaBWmJDiXl1y","agent":"trial","tool":"smart_grep","pattern":"JSON\\.parse.*task_ids","path":"packages/opencode/src/tool/coordination.ts"}
+{"at":"2026-06-01T00:38:29.476Z","session_id":"ses_17f64750bffeZMEaBWmJDiXl1y","agent":"trial","tool":"smart_grep","pattern":"existing.*task_ids","path":"packages/opencode/src/tool/coordination.ts"}
+{"at":"2026-06-01T00:38:30.341Z","session_id":"ses_17f64750bffeZMEaBWmJDiXl1y","agent":"trial","tool":"smart_grep","pattern":"task_ids.*inArray|inArray.*task_ids","path":"packages/opencode/src/tool/coordination.ts"}
+{"at":"2026-06-01T00:38:58.238Z","session_id":"ses_17f64750bffeZMEaBWmJDiXl1y","agent":"trial","tool":"smart_grep","pattern":"JSON\\.parse.*group\\.task_ids","path":"packages/opencode/src/tool/coordination.ts"}
+{"at":"2026-06-01T00:39:03.560Z","session_id":"ses_17f64750bffeZMEaBWmJDiXl1y","agent":"trial","tool":"smart_bun","command":"test","elapsed_ms":4252,"exit_code":1}
+{"at":"2026-06-01T00:39:28.586Z","session_id":"ses_17f64750bffeZMEaBWmJDiXl1y","agent":"trial","tool":"smart_grep","pattern":"wave_status","path":"packages/opencode/src/tool/coordination.ts"}
+{"at":"2026-06-01T00:40:06.001Z","session_id":"ses_17f64750bffeZMEaBWmJDiXl1y","agent":"trial","tool":"smart_bun","command":"tsgo","elapsed_ms":36420,"exit_code":2}

@@ -193,13 +193,13 @@ function fanOutRowToType(row: {
   session_id: string
   wave: number
   wave_type: string
-  task_ids: string[]
+  task_ids: string[] | string
   complete_count: number
 }): FanOutGroup {
   return {
     wave: row.wave,
     waveType: row.wave_type as WaveType,
-    taskIds: row.task_ids,
+    taskIds: Array.isArray(row.task_ids) ? row.task_ids : JSON.parse(row.task_ids),
     completeCount: row.complete_count,
   }
 }
@@ -260,9 +260,12 @@ export const claimTask = Effect.fn("Coordination.claimTask")(function* (
         .limit(1)
       if (rows.length > 0) {
         const existing = rows[0]
+        const existingTaskIds: string[] = Array.isArray(existing.task_ids)
+          ? existing.task_ids
+          : JSON.parse(existing.task_ids)
         await tx
           .update(CoordinationFanOutTable)
-          .set({ task_ids: existing.task_ids.includes(taskId) ? existing.task_ids : [...existing.task_ids, taskId] })
+          .set({ task_ids: existingTaskIds.includes(taskId) ? existingTaskIds : [...existingTaskIds, taskId] })
           .where(
             and(
               eq(CoordinationFanOutTable.session_id, sessionId),

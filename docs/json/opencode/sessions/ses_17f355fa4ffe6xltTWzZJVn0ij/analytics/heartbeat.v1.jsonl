@@ -1,0 +1,30 @@
+{"at":"2026-06-01T01:30:45.429Z","session_id":"ses_17f355fa4ffe6xltTWzZJVn0ij","agent":"risk-enumerator","tool":"smart_grep","phase":"started","detail":"from.*[\"']\\.\\.\\/plugin|from.*[\"']@/plugin|from.*[\"'].\\/plugin"}
+{"at":"2026-06-01T01:30:45.446Z","session_id":"ses_17f355fa4ffe6xltTWzZJVn0ij","agent":"risk-enumerator","tool":"smart_grep","phase":"completed","detail":"1 matches in 79 files"}
+{"at":"2026-06-01T01:32:05.539Z","session_id":"ses_17f355fa4ffe6xltTWzZJVn0ij","agent":"risk-enumerator","tool":"smart_grep","phase":"started","detail":"import.*server|from.*[\"']@/server|from.*[\"']\\.\\.\\/server|from.*[\"']\\.\\/server"}
+{"at":"2026-06-01T01:32:05.551Z","session_id":"ses_17f355fa4ffe6xltTWzZJVn0ij","agent":"risk-enumerator","tool":"smart_grep","phase":"completed","detail":"3 matches in 20 files"}
+{"at":"2026-06-01T01:32:06.277Z","session_id":"ses_17f355fa4ffe6xltTWzZJVn0ij","agent":"risk-enumerator","tool":"smart_grep","phase":"started","detail":"InstanceState"}
+{"at":"2026-06-01T01:32:06.278Z","session_id":"ses_17f355fa4ffe6xltTWzZJVn0ij","agent":"risk-enumerator","tool":"smart_grep","phase":"completed","detail":"11 matches in 1 files"}
+{"at":"2026-06-01T01:32:07.204Z","session_id":"ses_17f355fa4ffe6xltTWzZJVn0ij","agent":"risk-enumerator","tool":"smart_grep","phase":"started","detail":"as any"}
+{"at":"2026-06-01T01:32:07.205Z","session_id":"ses_17f355fa4ffe6xltTWzZJVn0ij","agent":"risk-enumerator","tool":"smart_grep","phase":"completed","detail":"6 matches in 1 files"}
+{"at":"2026-06-01T01:32:08.510Z","session_id":"ses_17f355fa4ffe6xltTWzZJVn0ij","agent":"risk-enumerator","tool":"smart_grep","phase":"started","detail":"Effect\\.gen|function\\*|yield\\*"}
+{"at":"2026-06-01T01:32:08.511Z","session_id":"ses_17f355fa4ffe6xltTWzZJVn0ij","agent":"risk-enumerator","tool":"smart_grep","phase":"completed","detail":"69 matches in 1 files"}
+{"at":"2026-06-01T01:32:15.326Z","session_id":"ses_17f355fa4ffe6xltTWzZJVn0ij","agent":"risk-enumerator","tool":"smart_grep","phase":"started","detail":"const state = yield\\* InstanceState"}
+{"at":"2026-06-01T01:32:15.326Z","session_id":"ses_17f355fa4ffe6xltTWzZJVn0ij","agent":"risk-enumerator","tool":"smart_grep","phase":"completed","detail":"1 matches in 1 files"}
+{"at":"2026-06-01T01:32:16.280Z","session_id":"ses_17f355fa4ffe6xltTWzZJVn0ij","agent":"risk-enumerator","tool":"smart_grep","phase":"started","detail":"} as any"}
+{"at":"2026-06-01T01:32:16.281Z","session_id":"ses_17f355fa4ffe6xltTWzZJVn0ij","agent":"risk-enumerator","tool":"smart_grep","phase":"completed","detail":"1 matches in 1 files"}
+{"at":"2026-06-01T01:32:17.780Z","session_id":"ses_17f355fa4ffe6xltTWzZJVn0ij","agent":"risk-enumerator","tool":"smart_grep","phase":"started","detail":"publishPluginError"}
+{"at":"2026-06-01T01:32:17.780Z","session_id":"ses_17f355fa4ffe6xltTWzZJVn0ij","agent":"risk-enumerator","tool":"smart_grep","phase":"completed","detail":"5 matches in 1 files"}
+{"at":"2026-06-01T01:33:42.803Z","session_id":"ses_17f355fa4ffe6xltTWzZJVn0ij","agent":"risk-enumerator","tool":"smart_grep","phase":"started","detail":"ServerAuth|@/server/auth|@/server/health|HealthRegistry|RuntimeFlags"}
+{"at":"2026-06-01T01:33:42.806Z","session_id":"ses_17f355fa4ffe6xltTWzZJVn0ij","agent":"risk-enumerator","tool":"smart_grep","phase":"completed","detail":"11 matches in 1 files"}
+{"at":"2026-06-01T01:33:43.730Z","session_id":"ses_17f355fa4ffe6xltTWzZJVn0ij","agent":"risk-enumerator","tool":"smart_grep","phase":"started","detail":"import.*plugin|from.*plugin"}
+{"at":"2026-06-01T01:33:43.731Z","session_id":"ses_17f355fa4ffe6xltTWzZJVn0ij","agent":"risk-enumerator","tool":"smart_grep","phase":"completed","detail":"0 matches in 1 files"}
+{"at":"2026-06-01T01:33:44.682Z","session_id":"ses_17f355fa4ffe6xltTWzZJVn0ij","agent":"risk-enumerator","tool":"smart_grep","phase":"started","detail":"const trigger"}
+{"at":"2026-06-01T01:33:44.686Z","session_id":"ses_17f355fa4ffe6xltTWzZJVn0ij","agent":"risk-enumerator","tool":"smart_grep","phase":"completed","detail":"1 matches in 1 files"}
+{"at":"2026-06-01T01:35:18.103Z","session_id":"ses_17f355fa4ffe6xltTWzZJVn0ij","agent":"risk-enumerator","tool":"smart_grep","phase":"started","detail":"const trigger: Interface\\[\\\\\\\"trigger\\\\\\\"\\]"}
+{"at":"2026-06-01T01:35:18.103Z","session_id":"ses_17f355fa4ffe6xltTWzZJVn0ij","agent":"risk-enumerator","tool":"smart_grep","phase":"completed","detail":"0 matches in 1 files"}
+{"at":"2026-06-01T01:35:18.772Z","session_id":"ses_17f355fa4ffe6xltTWzZJVn0ij","agent":"risk-enumerator","tool":"smart_grep","phase":"started","detail":"Effect\\.fn\\(\\\"Plugin\\.state\\\"\\)"}
+{"at":"2026-06-01T01:35:18.773Z","session_id":"ses_17f355fa4ffe6xltTWzZJVn0ij","agent":"risk-enumerator","tool":"smart_grep","phase":"completed","detail":"1 matches in 1 files"}
+{"at":"2026-06-01T01:37:34.050Z","session_id":"ses_17f355fa4ffe6xltTWzZJVn0ij","agent":"risk-enumerator","tool":"smart_grep","phase":"started","detail":"Plugin.state"}
+{"at":"2026-06-01T01:37:34.051Z","session_id":"ses_17f355fa4ffe6xltTWzZJVn0ij","agent":"risk-enumerator","tool":"smart_grep","phase":"completed","detail":"1 matches in 1 files"}
+{"at":"2026-06-01T01:37:35.010Z","session_id":"ses_17f355fa4ffe6xltTWzZJVn0ij","agent":"risk-enumerator","tool":"smart_grep","phase":"started","detail":"trigger.*function"}
+{"at":"2026-06-01T01:37:35.011Z","session_id":"ses_17f355fa4ffe6xltTWzZJVn0ij","agent":"risk-enumerator","tool":"smart_grep","phase":"completed","detail":"1 matches in 1 files"}

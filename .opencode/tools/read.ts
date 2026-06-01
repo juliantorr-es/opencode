@@ -14,6 +14,8 @@ export default tool({
     kind: tool.schema.string().optional().describe("Message kind filter (for messages)"),
     recipient: tool.schema.string().optional().describe("Recipient filter (for messages)"),
     sender: tool.schema.string().optional().describe("Sender filter (for messages)"),
+    lane_prefix: tool.schema.string().optional().describe("Only show messages from lanes starting with this prefix (for messages, e.g. 'tc-')."),
+    session_id: tool.schema.string().optional().describe("Only show messages from this session (for messages)."),
     limit: tool.schema.number().optional().describe("Max results (for messages, default 20)"),
   },
   async execute(args, context) {
@@ -75,6 +77,12 @@ export default tool({
         if (args.kind && e.kind !== args.kind) return false
         if (args.recipient && e.recipient !== args.recipient) return false
         if (args.sender && e.sender !== args.sender) return false
+        if (args.session_id && e.session_id !== args.session_id) return false
+        if (args.lane_prefix) {
+          const body = typeof e.body === "string" ? (() => { try { return JSON.parse(e.body) } catch { return {} } })() : (e.body || {})
+          const laneId = e.lane_id || body.lane_id || ""
+          if (!String(laneId).startsWith(args.lane_prefix!)) return false
+        }
         return true
       })
       filtered.sort((a: any, b: any) => (b.sent_at || "").localeCompare(a.sent_at || ""))

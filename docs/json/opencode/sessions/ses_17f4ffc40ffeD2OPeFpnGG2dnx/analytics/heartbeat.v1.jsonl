@@ -1,0 +1,24 @@
+{"at":"2026-06-01T00:59:12.766Z","session_id":"ses_17f4ffc40ffeD2OPeFpnGG2dnx","agent":"critic","tool":"smart_find","phase":"started","detail":"*plan*"}
+{"at":"2026-06-01T00:59:21.930Z","session_id":"ses_17f4ffc40ffeD2OPeFpnGG2dnx","agent":"critic","tool":"smart_find","phase":"completed","detail":"*plan*"}
+{"at":"2026-06-01T00:59:22.049Z","session_id":"ses_17f4ffc40ffeD2OPeFpnGG2dnx","agent":"critic","tool":"smart_grep","phase":"started","detail":"instance-failure|failure-code|failure_taxonomy"}
+{"at":"2026-06-01T00:59:34.956Z","session_id":"ses_17f4ffc40ffeD2OPeFpnGG2dnx","agent":"critic","tool":"smart_grep","phase":"completed","detail":"0 matches in 0 files"}
+{"at":"2026-06-01T01:03:31.385Z","session_id":"ses_17f4ffc40ffeD2OPeFpnGG2dnx","agent":"critic","tool":"smart_grep","phase":"started","detail":"catchCause|catch\\(\\).*=>\\s*\\{|\\.catch\\(\\(\\)|console\\.warn|console\\.error|Effect\\"}
+{"at":"2026-06-01T01:03:31.386Z","session_id":"ses_17f4ffc40ffeD2OPeFpnGG2dnx","agent":"critic","tool":"smart_grep","phase":"completed","detail":"2 matches in 10 files"}
+{"at":"2026-06-01T01:03:32.454Z","session_id":"ses_17f4ffc40ffeD2OPeFpnGG2dnx","agent":"critic","tool":"smart_grep","phase":"started","detail":"catchCause|\\.catch\\(\\(\\)|console\\.warn|console\\.error"}
+{"at":"2026-06-01T01:03:32.457Z","session_id":"ses_17f4ffc40ffeD2OPeFpnGG2dnx","agent":"critic","tool":"smart_grep","phase":"completed","detail":"1 matches in 6 files"}
+{"at":"2026-06-01T01:05:04.153Z","session_id":"ses_17f4ffc40ffeD2OPeFpnGG2dnx","agent":"critic","tool":"smart_grep","phase":"started","detail":"catchCause|console\\.warn\\(|console\\.error\\(|\\.catch\\(\\(\\)\\s*=>"}
+{"at":"2026-06-01T01:05:04.265Z","session_id":"ses_17f4ffc40ffeD2OPeFpnGG2dnx","agent":"critic","tool":"smart_grep","phase":"completed","detail":"30 matches in 50 files"}
+{"at":"2026-06-01T01:05:04.287Z","session_id":"ses_17f4ffc40ffeD2OPeFpnGG2dnx","agent":"critic","tool":"smart_grep","phase":"started","detail":"Effect\\.die\\(\""}
+{"at":"2026-06-01T01:05:04.445Z","session_id":"ses_17f4ffc40ffeD2OPeFpnGG2dnx","agent":"critic","tool":"smart_grep","phase":"completed","detail":"1 matches in 500 files"}
+{"at":"2026-06-01T01:05:04.461Z","session_id":"ses_17f4ffc40ffeD2OPeFpnGG2dnx","agent":"critic","tool":"smart_find","phase":"started","detail":"*failure*"}
+{"at":"2026-06-01T01:05:04.509Z","session_id":"ses_17f4ffc40ffeD2OPeFpnGG2dnx","agent":"critic","tool":"smart_find","phase":"completed","detail":"*failure*"}
+{"at":"2026-06-01T01:07:00.120Z","session_id":"ses_17f4ffc40ffeD2OPeFpnGG2dnx","agent":"critic","tool":"smart_grep","phase":"started","detail":"console\\.(warn|error)|catchCause|\\.catch\\(\\(\\)"}
+{"at":"2026-06-01T01:07:00.125Z","session_id":"ses_17f4ffc40ffeD2OPeFpnGG2dnx","agent":"critic","tool":"smart_grep","phase":"completed","detail":"4 matches in 4 files"}
+{"at":"2026-06-01T01:07:56.739Z","session_id":"ses_17f4ffc40ffeD2OPeFpnGG2dnx","agent":"critic","tool":"smart_grep","phase":"started","detail":"\\.catch\\(\\(\\)\\s*=>"}
+{"at":"2026-06-01T01:07:56.743Z","session_id":"ses_17f4ffc40ffeD2OPeFpnGG2dnx","agent":"critic","tool":"smart_grep","phase":"completed","detail":"4 matches in 1 files"}
+{"at":"2026-06-01T01:21:33.090Z","session_id":"ses_17f4ffc40ffeD2OPeFpnGG2dnx","agent":"critic","tool":"smart_grep","phase":"started","detail":"GlobalBus\\.on|GlobalBus\\.addListener|globalBus\\.on"}
+{"at":"2026-06-01T01:21:33.289Z","session_id":"ses_17f4ffc40ffeD2OPeFpnGG2dnx","agent":"critic","tool":"smart_grep","phase":"completed","detail":"2 matches in 500 files"}
+{"at":"2026-06-01T01:25:21.249Z","session_id":"ses_17f4ffc40ffeD2OPeFpnGG2dnx","agent":"critic","tool":"smart_grep","phase":"started","detail":"\"paths\"|\"@/\"|\"#db\""}
+{"at":"2026-06-01T01:25:21.474Z","session_id":"ses_17f4ffc40ffeD2OPeFpnGG2dnx","agent":"critic","tool":"smart_grep","phase":"completed","detail":"1 matches in 1 files"}
+{"at":"2026-06-01T01:26:22.731Z","session_id":"ses_17f4ffc40ffeD2OPeFpnGG2dnx","agent":"critic","tool":"smart_grep","phase":"started","detail":"applyMigrations"}
+{"at":"2026-06-01T01:26:22.968Z","session_id":"ses_17f4ffc40ffeD2OPeFpnGG2dnx","agent":"critic","tool":"smart_grep","phase":"completed","detail":"6 matches in 500 files"}

@@ -10,3 +10,17 @@
 {"at":"2026-06-01T00:24:12.088Z","session_id":"ses_17f76543dffeYQiffk8wcduexG","agent":"module-grapher","tool":"smart_grep","pattern":"event.*store|eventStore","path":"packages/opencode/src"}
 {"at":"2026-06-01T00:24:13.531Z","session_id":"ses_17f76543dffeYQiffk8wcduexG","agent":"module-grapher","tool":"smart_grep","pattern":"drizzle|sqliteTable|pgTable|Drizzle|migrate|migration","path":"packages/opencode/src"}
 {"at":"2026-06-01T00:24:14.294Z","session_id":"ses_17f76543dffeYQiffk8wcduexG","agent":"module-grapher","tool":"smart_grep","pattern":"from.*db\\.ts|from.*db\\.|import.*db|Database|database","path":"packages/opencode/src"}
+{"at":"2026-06-01T00:32:12.130Z","session_id":"ses_17f76543dffeYQiffk8wcduexG","agent":"module-grapher","tool":"smart_grep","pattern":"from.*event-store|import.*EventStore","path":"packages/opencode/src"}
+{"at":"2026-06-01T00:32:13.054Z","session_id":"ses_17f76543dffeYQiffk8wcduexG","agent":"module-grapher","tool":"smart_grep","pattern":"from.*@/storage/schema|from.*storage/schema","path":"packages/opencode/src"}
+{"at":"2026-06-01T00:32:14.061Z","session_id":"ses_17f76543dffeYQiffk8wcduexG","agent":"module-grapher","tool":"smart_grep","pattern":"from.*@/storage/db\\\"|from.*storage/db\\\"","path":"packages/opencode/src"}
+{"at":"2026-06-01T00:32:15.423Z","session_id":"ses_17f76543dffeYQiffk8wcduexG","agent":"module-grapher","tool":"smart_grep","pattern":"from.*@/event\\\"|from.*event\\\"|from.*@/event/","path":"packages/opencode/src"}
+{"at":"2026-06-01T00:35:28.790Z","session_id":"ses_17f76543dffeYQiffk8wcduexG","agent":"module-grapher","tool":"smart_grep","pattern":"\\\"#db\\\"|'#db'","path":"packages/opencode/src"}
+{"at":"2026-06-01T00:35:29.852Z","session_id":"ses_17f76543dffeYQiffk8wcduexG","agent":"module-grapher","tool":"smart_grep","pattern":"DatabaseAdapter.*layer|DatabaseAdapter.*Service","path":"packages/opencode/src"}
+{"at":"2026-06-01T00:35:30.813Z","session_id":"ses_17f76543dffeYQiffk8wcduexG","agent":"module-grapher","tool":"smart_grep","pattern":"applyMigrations|init.*migration|migration.*init","path":"packages/opencode/src"}
+{"at":"2026-06-01T00:39:49.359Z","session_id":"ses_17f76543dffeYQiffk8wcduexG","agent":"module-grapher","tool":"smart_grep","pattern":"sqliteTable","path":"packages/opencode/src"}
+{"at":"2026-06-01T00:39:50.070Z","session_id":"ses_17f76543dffeYQiffk8wcduexG","agent":"module-grapher","tool":"smart_grep","pattern":"from.*@/tool/coordination|from.*coordination","path":"packages/opencode/src"}
+{"at":"2026-06-01T00:39:50.929Z","session_id":"ses_17f76543dffeYQiffk8wcduexG","agent":"module-grapher","tool":"smart_grep","pattern":"from.*session/session|SessionV2|V2Session","path":"packages/opencode/src"}
+{"at":"2026-06-01T00:41:55.961Z","session_id":"ses_17f76543dffeYQiffk8wcduexG","agent":"module-grapher","tool":"smart_find","pattern":"migration-pg","path":"packages/opencode"}
+{"at":"2026-06-01T00:42:54.384Z","session_id":"ses_17f76543dffeYQiffk8wcduexG","agent":"module-grapher","tool":"smart_find","pattern":"*","path":"packages/opencode/migration-pg"}
+{"at":"2026-06-01T00:43:48.433Z","session_id":"ses_17f76543dffeYQiffk8wcduexG","agent":"module-grapher","tool":"smart_grep","pattern":"import.*EventName","path":"packages/opencode/src"}
+{"at":"2026-06-01T00:43:48.569Z","session_id":"ses_17f76543dffeYQiffk8wcduexG","agent":"module-grapher","tool":"smart_grep","pattern":"from.*session/session\\\"","path":"packages/opencode/src"}

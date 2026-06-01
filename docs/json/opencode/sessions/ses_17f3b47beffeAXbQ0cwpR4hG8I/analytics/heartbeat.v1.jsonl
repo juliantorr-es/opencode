@@ -1,0 +1,16 @@
+{"at":"2026-06-01T01:22:02.936Z","session_id":"ses_17f3b47beffeAXbQ0cwpR4hG8I","agent":"architecture-reviewer","tool":"smart_find","phase":"started","detail":"**/event/event-names.ts"}
+{"at":"2026-06-01T01:22:16.986Z","session_id":"ses_17f3b47beffeAXbQ0cwpR4hG8I","agent":"architecture-reviewer","tool":"smart_find","phase":"completed","detail":"**/event/event-names.ts"}
+{"at":"2026-06-01T01:25:23.610Z","session_id":"ses_17f3b47beffeAXbQ0cwpR4hG8I","agent":"architecture-reviewer","tool":"smart_find","phase":"started","detail":"**/event/event-names*"}
+{"at":"2026-06-01T01:25:37.658Z","session_id":"ses_17f3b47beffeAXbQ0cwpR4hG8I","agent":"architecture-reviewer","tool":"smart_find","phase":"completed","detail":"**/event/event-names*"}
+{"at":"2026-06-01T01:25:37.755Z","session_id":"ses_17f3b47beffeAXbQ0cwpR4hG8I","agent":"architecture-reviewer","tool":"smart_find","phase":"started","detail":"**/event/*.ts"}
+{"at":"2026-06-01T01:25:37.757Z","session_id":"ses_17f3b47beffeAXbQ0cwpR4hG8I","agent":"architecture-reviewer","tool":"smart_find","phase":"completed","detail":"**/event/*.ts"}
+{"at":"2026-06-01T01:27:20.183Z","session_id":"ses_17f3b47beffeAXbQ0cwpR4hG8I","agent":"architecture-reviewer","tool":"smart_find","phase":"started","detail":"**/event*"}
+{"at":"2026-06-01T01:27:20.373Z","session_id":"ses_17f3b47beffeAXbQ0cwpR4hG8I","agent":"architecture-reviewer","tool":"smart_find","phase":"completed","detail":"**/event*"}
+{"at":"2026-06-01T01:27:21.233Z","session_id":"ses_17f3b47beffeAXbQ0cwpR4hG8I","agent":"architecture-reviewer","tool":"smart_grep","phase":"started","detail":"EventName"}
+{"at":"2026-06-01T01:27:21.606Z","session_id":"ses_17f3b47beffeAXbQ0cwpR4hG8I","agent":"architecture-reviewer","tool":"smart_grep","phase":"completed","detail":"239 matches in 28 files"}
+{"at":"2026-06-01T01:30:49.111Z","session_id":"ses_17f3b47beffeAXbQ0cwpR4hG8I","agent":"architecture-reviewer","tool":"smart_grep","phase":"started","detail":"EventName\\.\\w+\\b"}
+{"at":"2026-06-01T01:30:49.414Z","session_id":"ses_17f3b47beffeAXbQ0cwpR4hG8I","agent":"architecture-reviewer","tool":"smart_grep","phase":"completed","detail":"195 matches in 23 files"}
+{"at":"2026-06-01T01:33:25.821Z","session_id":"ses_17f3b47beffeAXbQ0cwpR4hG8I","agent":"architecture-reviewer","tool":"smart_grep","phase":"started","detail":"recordBinderEvent"}
+{"at":"2026-06-01T01:33:25.822Z","session_id":"ses_17f3b47beffeAXbQ0cwpR4hG8I","agent":"architecture-reviewer","tool":"smart_grep","phase":"completed","detail":"6 matches in 1 files"}
+{"at":"2026-06-01T01:33:26.764Z","session_id":"ses_17f3b47beffeAXbQ0cwpR4hG8I","agent":"architecture-reviewer","tool":"smart_grep","phase":"started","detail":"EventName\\.(Campaign|Binder|Validation|Push)"}
+{"at":"2026-06-01T01:33:26.771Z","session_id":"ses_17f3b47beffeAXbQ0cwpR4hG8I","agent":"architecture-reviewer","tool":"smart_grep","phase":"completed","detail":"19 matches in 19 files"}

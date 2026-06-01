@@ -1,0 +1,9 @@
+{"at":"2026-06-01T00:47:36.733Z","session_id":"ses_17f5a6495ffee92maFSD8459Am","agent":"root-cause-analyst","tool":"smart_grep","pattern":"HealthRegistry","path":"packages/opencode/src"}
+{"at":"2026-06-01T00:47:36.830Z","session_id":"ses_17f5a6495ffee92maFSD8459Am","agent":"root-cause-analyst","tool":"smart_grep","pattern":"GlobalBus\\.emit","path":"packages/opencode/src"}
+{"at":"2026-06-01T00:47:36.960Z","session_id":"ses_17f5a6495ffee92maFSD8459Am","agent":"root-cause-analyst","tool":"smart_grep","pattern":"BusEvent\\.define","path":"packages/opencode/src"}
+{"at":"2026-06-01T00:49:07.250Z","session_id":"ses_17f5a6495ffee92maFSD8459Am","agent":"root-cause-analyst","tool":"smart_grep","pattern":"server\\.instance\\.(created|loaded|failed|started|booted)","path":"packages/opencode/src"}
+{"at":"2026-06-01T00:49:07.899Z","session_id":"ses_17f5a6495ffee92maFSD8459Am","agent":"root-cause-analyst","tool":"smart_grep","pattern":"HealthRegistry\\.(set|get)\\b","path":"packages/opencode/src"}
+{"at":"2026-06-01T00:49:40.039Z","session_id":"ses_17f5a6495ffee92maFSD8459Am","agent":"root-cause-analyst","tool":"smart_grep","pattern":"\\.set\\(|\\.get\\(|\\.getAll\\(","path":"packages/opencode/src/server/health.ts"}
+{"at":"2026-06-01T00:49:41.145Z","session_id":"ses_17f5a6495ffee92maFSD8459Am","agent":"root-cause-analyst","tool":"smart_grep","pattern":"HealthRegistry.*\\.(set|get|getAll)\\b|registry\\.value\\.(set|get|getAll)","path":"packages/opencode/src"}
+{"at":"2026-06-01T00:51:41.694Z","session_id":"ses_17f5a6495ffee92maFSD8459Am","agent":"root-cause-analyst","tool":"smart_grep","pattern":"import.*Bus.*from.*@/bus\"","path":"packages/opencode/src/project/instance-store.ts"}
+{"at":"2026-06-01T00:52:19.603Z","session_id":"ses_17f5a6495ffee92maFSD8459Am","agent":"root-cause-analyst","tool":"smart_grep","pattern":"ServerInstanceDisposed","path":"packages/opencode/src"}

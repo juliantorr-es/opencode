@@ -1,0 +1,11 @@
+{"at":"2026-06-01T01:00:17.489Z","session_id":"ses_17f539694ffen6QdBwbsA2BT72","agent":"risk-enumerator","tool":"smart_grep","pattern":"decodeAuthData","path":"packages/opencode"}
+{"at":"2026-06-01T01:00:17.888Z","session_id":"ses_17f539694ffen6QdBwbsA2BT72","agent":"risk-enumerator","tool":"smart_grep","pattern":"orDie","path":"packages/opencode/src/mcp"}
+{"at":"2026-06-01T01:00:19.108Z","session_id":"ses_17f539694ffen6QdBwbsA2BT72","agent":"risk-enumerator","tool":"smart_grep","pattern":"McpAuth\\.all|McpAuth\\.layer|from.*auth","path":"packages/opencode/src"}
+{"at":"2026-06-01T01:02:49.573Z","session_id":"ses_17f539694ffen6QdBwbsA2BT72","agent":"risk-enumerator","tool":"smart_grep","pattern":"McpAuth","path":"packages/opencode/src"}
+{"at":"2026-06-01T01:02:50.914Z","session_id":"ses_17f539694ffen6QdBwbsA2BT72","agent":"risk-enumerator","tool":"smart_grep","pattern":"ensureRunning|waitForCallback|stop|OAuthCallback","path":"packages/opencode/src/mcp"}
+{"at":"2026-06-01T01:04:45.112Z","session_id":"ses_17f539694ffen6QdBwbsA2BT72","agent":"risk-enumerator","tool":"smart_grep","pattern":"decodeAuthData|McpAuth|oauth-callback|ensureRunning","path":"packages/opencode/test"}
+{"at":"2026-06-01T01:06:20.033Z","session_id":"ses_17f539694ffen6QdBwbsA2BT72","agent":"risk-enumerator","tool":"smart_grep","pattern":"ensureRunning","path":"packages/opencode/src/mcp"}
+{"at":"2026-06-01T01:08:23.682Z","session_id":"ses_17f539694ffen6QdBwbsA2BT72","agent":"risk-enumerator","tool":"smart_find","pattern":"*auth*test*","path":"packages/opencode/test"}
+{"at":"2026-06-01T01:08:23.730Z","session_id":"ses_17f539694ffen6QdBwbsA2BT72","agent":"risk-enumerator","tool":"smart_find","pattern":"*oauth*test*","path":"packages/opencode/test"}
+{"at":"2026-06-01T01:08:23.808Z","session_id":"ses_17f539694ffen6QdBwbsA2BT72","agent":"risk-enumerator","tool":"smart_find","pattern":"*mcp*test*","path":"packages/opencode/test"}
+{"at":"2026-06-01T01:10:39.989Z","session_id":"ses_17f539694ffen6QdBwbsA2BT72","agent":"risk-enumerator","tool":"smart_grep","pattern":"decodeAuthData|McpAuth","path":"packages/opencode/test/mcp"}

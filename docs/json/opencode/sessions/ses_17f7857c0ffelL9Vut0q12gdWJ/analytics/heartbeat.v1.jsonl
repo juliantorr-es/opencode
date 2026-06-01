@@ -20,3 +20,39 @@
 {"at":"2026-06-01T00:21:29.224Z","session_id":"ses_17f7857c0ffelL9Vut0q12gdWJ","agent":"cartographer","tool":"smart_find","phase":"completed","detail":"*capability*"}
 {"at":"2026-06-01T00:23:36.090Z","session_id":"ses_17f7857c0ffelL9Vut0q12gdWJ","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"CapabilityId"}
 {"at":"2026-06-01T00:23:36.276Z","session_id":"ses_17f7857c0ffelL9Vut0q12gdWJ","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"50 matches in 456 files"}
+{"at":"2026-06-01T00:25:59.551Z","session_id":"ses_17f7857c0ffelL9Vut0q12gdWJ","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"from.*\\\"@/auth\\\"|from.*\\\"\\.\\.\\/auth\\\"|from.*\\\"@/server/auth\\\"|ServerAuth"}
+{"at":"2026-06-01T00:25:59.614Z","session_id":"ses_17f7857c0ffelL9Vut0q12gdWJ","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"30 matches in 162 files"}
+{"at":"2026-06-01T00:26:00.350Z","session_id":"ses_17f7857c0ffelL9Vut0q12gdWJ","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"makeRegistry|makeCapabilityRegistry|Registry.*plugin"}
+{"at":"2026-06-01T00:26:00.441Z","session_id":"ses_17f7857c0ffelL9Vut0q12gdWJ","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"13 matches in 500 files"}
+{"at":"2026-06-01T00:28:55.953Z","session_id":"ses_17f7857c0ffelL9Vut0q12gdWJ","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"^"}
+{"at":"2026-06-01T00:28:55.954Z","session_id":"ses_17f7857c0ffelL9Vut0q12gdWJ","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"50 matches in 1 files"}
+{"at":"2026-06-01T00:30:22.556Z","session_id":"ses_17f7857c0ffelL9Vut0q12gdWJ","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"capability|checkCapability|makeCapability|Registry|CapabilityId|manifest|trustLe"}
+{"at":"2026-06-01T00:30:22.574Z","session_id":"ses_17f7857c0ffelL9Vut0q12gdWJ","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"30 matches in 1 files"}
+{"at":"2026-06-01T00:31:32.116Z","session_id":"ses_17f7857c0ffelL9Vut0q12gdWJ","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"export interface Interface|checkCapability|unquarantine|manifest\\.|trustLevel|tr"}
+{"at":"2026-06-01T00:31:32.116Z","session_id":"ses_17f7857c0ffelL9Vut0q12gdWJ","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"15 matches in 1 files"}
+{"at":"2026-06-01T00:31:33.733Z","session_id":"ses_17f7857c0ffelL9Vut0q12gdWJ","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"register.*manifest|readManifest|manifest.*capabilities|trust.*level|trustLevel|\\"}
+{"at":"2026-06-01T00:31:33.735Z","session_id":"ses_17f7857c0ffelL9Vut0q12gdWJ","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"5 matches in 1 files"}
+{"at":"2026-06-01T00:33:04.945Z","session_id":"ses_17f7857c0ffelL9Vut0q12gdWJ","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"readManifest|PluginSecurityState|CapabilityManifest|TrustLevel"}
+{"at":"2026-06-01T00:33:04.945Z","session_id":"ses_17f7857c0ffelL9Vut0q12gdWJ","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"2 matches in 1 files"}
+{"at":"2026-06-01T00:33:06.633Z","session_id":"ses_17f7857c0ffelL9Vut0q12gdWJ","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"registerToBus|registerHook|plugin\\.register|trigger|Bus\\.publish"}
+{"at":"2026-06-01T00:33:06.634Z","session_id":"ses_17f7857c0ffelL9Vut0q12gdWJ","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"5 matches in 1 files"}
+{"at":"2026-06-01T00:34:19.475Z","session_id":"ses_17f7857c0ffelL9Vut0q12gdWJ","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"OAUTH_DUMMY_KEY"}
+{"at":"2026-06-01T00:34:19.598Z","session_id":"ses_17f7857c0ffelL9Vut0q12gdWJ","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"5 matches in 500 files"}
+{"at":"2026-06-01T00:36:01.110Z","session_id":"ses_17f7857c0ffelL9Vut0q12gdWJ","agent":"cartographer","tool":"smart_find","phase":"started","detail":"*"}
+{"at":"2026-06-01T00:36:01.111Z","session_id":"ses_17f7857c0ffelL9Vut0q12gdWJ","agent":"cartographer","tool":"smart_find","phase":"failed","detail":"path not found"}
+{"at":"2026-06-01T00:37:08.753Z","session_id":"ses_17f7857c0ffelL9Vut0q12gdWJ","agent":"cartographer","tool":"smart_find","phase":"started","detail":"*auth*"}
+{"at":"2026-06-01T00:37:08.771Z","session_id":"ses_17f7857c0ffelL9Vut0q12gdWJ","agent":"cartographer","tool":"smart_find","phase":"completed","detail":"*auth*"}
+{"at":"2026-06-01T00:39:07.304Z","session_id":"ses_17f7857c0ffelL9Vut0q12gdWJ","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"import.*capability|import.*types|const types"}
+{"at":"2026-06-01T00:39:07.305Z","session_id":"ses_17f7857c0ffelL9Vut0q12gdWJ","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"15 matches in 1 files"}
+{"at":"2026-06-01T00:42:22.096Z","session_id":"ses_17f7857c0ffelL9Vut0q12gdWJ","agent":"cartographer","tool":"smart_find","phase":"started","detail":"*"}
+{"at":"2026-06-01T00:42:22.096Z","session_id":"ses_17f7857c0ffelL9Vut0q12gdWJ","agent":"cartographer","tool":"smart_find","phase":"completed","detail":"*"}
+{"at":"2026-06-01T00:42:22.945Z","session_id":"ses_17f7857c0ffelL9Vut0q12gdWJ","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"makeScopedClient|makeScopedShell|makeScopedFetch|makeFilteredEnv"}
+{"at":"2026-06-01T00:42:23.136Z","session_id":"ses_17f7857c0ffelL9Vut0q12gdWJ","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"0 matches in 500 files"}
+{"at":"2026-06-01T00:43:22.495Z","session_id":"ses_17f7857c0ffelL9Vut0q12gdWJ","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"import\\(|capability/map|capability/index|capability/|scoped|filtered"}
+{"at":"2026-06-01T00:43:22.496Z","session_id":"ses_17f7857c0ffelL9Vut0q12gdWJ","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"30 matches in 1 files"}
+{"at":"2026-06-01T00:44:16.499Z","session_id":"ses_17f7857c0ffelL9Vut0q12gdWJ","agent":"cartographer","tool":"smart_find","phase":"started","detail":"*"}
+{"at":"2026-06-01T00:44:16.500Z","session_id":"ses_17f7857c0ffelL9Vut0q12gdWJ","agent":"cartographer","tool":"smart_find","phase":"completed","detail":"*"}
+{"at":"2026-06-01T00:44:17.287Z","session_id":"ses_17f7857c0ffelL9Vut0q12gdWJ","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"from \\\"@opencode-ai/plugin\\\""}
+{"at":"2026-06-01T00:44:17.423Z","session_id":"ses_17f7857c0ffelL9Vut0q12gdWJ","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"10 matches in 500 files"}
+{"at":"2026-06-01T00:46:22.736Z","session_id":"ses_17f7857c0ffelL9Vut0q12gdWJ","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"SDK_CAPABILITY_MAP"}
+{"at":"2026-06-01T00:46:22.921Z","session_id":"ses_17f7857c0ffelL9Vut0q12gdWJ","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"8 matches in 500 files"}
