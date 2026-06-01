@@ -8,3 +8,9 @@ temporary-*.md
 .artifacts
 
 instance-startup.jsonl
+# Banks/MnemoPi local databases
+*.db
+*.db-wal
+*.db-shm
+# Temporary test scripts
+test_rf.ts

@@ -4,6 +4,7 @@ import path from "node:path"
 import { pathToFileURL } from "node:url"
 import { CrossSpawnSpawner } from "@opencode-ai/core/cross-spawn-spawner"
 import { Cause, Deferred, Effect, Exit, Fiber, Layer } from "effect"
+import { Database } from "../../src/storage/db"
 import { DatabaseAdapter } from "../../src/storage/adapter"
 import { EventStore } from "../../src/event"
 import { bootstrap as cliBootstrap } from "../../src/cli/bootstrap"
@@ -26,6 +27,8 @@ const it = testEffect(Layer.mergeAll(InstanceLayer.layer, CrossSpawnSpawner.defa
 afterEach(async () => {
   await disposeAllInstances()
 })
+
+const ACCOUNT_STATE_ID = 1
 
 const bootstrapFixture = Effect.gen(function* () {
   const dir = yield* tmpdirScoped({ git: true })
@@ -53,6 +56,31 @@ const bootstrapFixture = Effect.gen(function* () {
         plugin: [pathToFileURL(pluginFile).href],
       }),
     ),
+  )
+  // Seed an active account so Config.loadInstanceState can resolve AccountRepo.active
+  // without hitting a schema decode error on the empty/undefined row.
+  yield* Effect.promise(() =>
+    Database.use(async (db) => {
+      const { AccountTable, AccountStateTable } = await import("../../src/account/account.pg.sql.ts")
+      const now = Math.floor(Date.now() / 1000)
+      await db.insert(AccountTable).values({
+        id: "test-account",
+        email: "test@test.com",
+        url: "https://test.opencode.ai",
+        access_token: "test-access-token" as any,
+        refresh_token: "test-refresh-token" as any,
+        token_expiry: now + 3600,
+        time_created: now,
+      }).onConflictDoNothing().execute()
+      await db.insert(AccountStateTable).values({
+        id: ACCOUNT_STATE_ID,
+        active_account_id: "test-account",
+        active_org_id: null,
+      }).onConflictDoUpdate({
+        target: AccountStateTable.id,
+        set: { active_account_id: "test-account", active_org_id: null },
+      }).execute()
+    }),
   )
   return { directory: dir, marker }
 })
