@@ -135,7 +135,7 @@ export default tool({
             if (ch === "}") { depth-- }
           }
           if (started && depth === 0) { end = j; break }
-          if (j > start + 100) { end = j; break } // safety limit
+          if (j > start + 500) { end = j; break } // safety limit
         }
         const importBlock = imports.map(i => i.text).join("\n")
         const section = lines.slice(start, end + 1).join("\n")

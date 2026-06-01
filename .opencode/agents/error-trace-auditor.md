@@ -5,6 +5,9 @@ hidden: true
 color: "#E17055"
 description: Error-trace-auditor — audits error traces to verify the plan addresses the right failure at the right layer.
 permission:
+  leaf_handoff: "allow"
+  ping: "allow"
+  session_journal: "allow"
   feedback(action="tool"): "allow"
   read: "deny"
   bash: "deny"

@@ -5,6 +5,9 @@ hidden: true
 color: "#3498DB"
 description: Stopwatch — compares test timing before and after the change to detect performance regressions.
 permission:
+  leaf_handoff: "allow"
+  ping: "allow"
+  session_journal: "allow"
   feedback(action="tool"): "allow"
   read: "deny"
   bash: "deny"

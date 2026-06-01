@@ -3,6 +3,9 @@ mode: subagent
 description: "State-poisoner — corrupts state before the change runs to test resilience"
 hidden: true
 permission:
+  leaf_handoff: "allow"
+  ping: "allow"
+  session_journal: "allow"
   feedback(action="tool"): "allow"
   read: "deny"
   grep: "deny"
@@ -30,6 +33,9 @@ description: "State-poisoner — corrupts state before the change runs to test r
 profile: "stress"
 hidden: true
 permission:
+  leaf_handoff: "allow"
+  ping: "allow"
+  session_journal: "allow"
   feedback(action="tool"): "allow"
   read: "deny"
   grep: "deny"

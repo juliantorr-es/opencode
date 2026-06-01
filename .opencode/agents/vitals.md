@@ -5,6 +5,9 @@ hidden: true
 color: "#E17055"
 description: Vitals — runs typecheck after each edit batch. Returns compilation errors, type mismatches, and new warnings compared to baseline.
 permission:
+  leaf_handoff: "allow"
+  ping: "allow"
+  session_journal: "allow"
   feedback(action="tool"): "allow"
   read: "deny"
   bash: "deny"

@@ -5,6 +5,9 @@ hidden: true
 color: "#D63031"
 description: Authority-adversary — attacks authority bypasses, deprecated execution paths, and caller leaks.
 permission:
+  leaf_handoff: "allow"
+  ping: "allow"
+  session_journal: "allow"
   feedback(action="tool"): "allow"
   read: "deny"
   bash: "deny"

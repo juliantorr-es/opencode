@@ -5,6 +5,9 @@ hidden: true
 color: "#3498DB"
 description: Autopsy — reads framework internals to understand context flow through layers.
 permission:
+  leaf_handoff: "allow"
+  ping: "allow"
+  session_journal: "allow"
   feedback(action="tool"): "allow"
   read: "deny"
   bash: "deny"

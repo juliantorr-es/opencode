@@ -5,6 +5,9 @@ hidden: true
 color: "#A29BFE"
 description: Monitor — watches for new error messages, warnings, and side effects after each edit. Reports "after change X, a new error appeared in Y".
 permission:
+  leaf_handoff: "allow"
+  ping: "allow"
+  session_journal: "allow"
   feedback(action="tool"): "allow"
   read: "deny"
   bash: "deny"

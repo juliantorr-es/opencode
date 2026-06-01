@@ -5,6 +5,9 @@ hidden: true
 color: "#E17055"
 description: Debuggability-forecaster — predicts how debuggable the proposed changes will be after implementation.
 permission:
+  leaf_handoff: "allow"
+  ping: "allow"
+  session_journal: "allow"
   feedback(action="tool"): "allow"
   read: "deny"
   bash: "deny"

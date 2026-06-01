@@ -5,6 +5,9 @@ hidden: true
 color: "#D63031"
 description: Evidence-adversary — attacks canonical evidence, digest binding, placeholder SHAs, stale records.
 permission:
+  leaf_handoff: "allow"
+  ping: "allow"
+  session_journal: "allow"
   feedback(action="tool"): "allow"
   read: "deny"
   bash: "deny"

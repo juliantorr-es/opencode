@@ -1,0 +1,7 @@
+{"at":"2026-05-31T21:38:36.161Z","tool":"smart_bun","action":"ran","command":"typecheck","exit_code":2,"cwd":"packages/opencode"}
+{"at":"2026-05-31T21:39:22.076Z","tool":"smart_bun","action":"ran","command":"tsgo","exit_code":2,"cwd":"packages/opencode"}
+{"at":"2026-05-31T21:39:30.021Z","tool":"smart_bash","action":"bash","command":"/usr/local/bin/bun run typecheck 2>&1 | tee /tmp/full-typecheck.txt; echo \"EXIT: ${PIPESTATUS[0]}\"","exit_code":0}
+{"at":"2026-05-31T21:39:35.571Z","tool":"smart_bash","action":"bash","command":"which bun 2>&1; type bun 2>&1; command -v bun 2>&1","exit_code":0}
+{"at":"2026-05-31T21:40:05.588Z","tool":"smart_bash","action":"bash","command":"/Users/user/.bun/bin/bun run typecheck 2>&1 | tee /tmp/full-typecheck.txt; echo \"EXIT: ${PIPESTATUS[","exit_code":0}
+{"at":"2026-05-31T21:40:12.129Z","tool":"smart_bash","action":"bash","command":"wc -l /tmp/full-typecheck.txt","exit_code":0}
+{"at":"2026-05-31T21:40:45.255Z","tool":"smart_bash","action":"bash","command":"awk '/error TS[0-9]+/{match($0, /error TS[0-9]+/); print substr($0, RSTART, RLENGTH)}' /tmp/full-typ","exit_code":0}

@@ -1,0 +1,126 @@
+{"at":"2026-05-31T23:00:40.590Z","session_id":"ses_17fbbbc9fffeKGpJZYOZxSsz0z","agent":"diff-historian","tool":"smart_git","phase":"started","detail":"log"}
+{"at":"2026-05-31T23:00:40.658Z","session_id":"ses_17fbbbc9fffeKGpJZYOZxSsz0z","agent":"diff-historian","tool":"smart_git","phase":"completed","detail":"log exit=0"}
+{"at":"2026-05-31T23:00:40.669Z","session_id":"ses_17fbbbc9fffeKGpJZYOZxSsz0z","agent":"diff-historian","tool":"smart_git","phase":"started","detail":"rev-parse"}
+{"at":"2026-05-31T23:00:40.685Z","session_id":"ses_17fbbbc9fffeKGpJZYOZxSsz0z","agent":"diff-historian","tool":"smart_git","phase":"completed","detail":"rev-parse exit=0"}
+{"at":"2026-05-31T23:01:09.742Z","session_id":"ses_17fbbbc9fffeKGpJZYOZxSsz0z","agent":"diff-historian","tool":"smart_git","phase":"started","detail":"diff"}
+{"at":"2026-05-31T23:01:09.763Z","session_id":"ses_17fbbbc9fffeKGpJZYOZxSsz0z","agent":"diff-historian","tool":"smart_git","phase":"completed","detail":"diff exit=0"}
+{"at":"2026-05-31T23:01:10.606Z","session_id":"ses_17fbbbc9fffeKGpJZYOZxSsz0z","agent":"diff-historian","tool":"smart_grep","phase":"started","detail":"\\.env$|secret|credential|\\.pem$|\\.key$"}
+{"at":"2026-05-31T23:01:20.555Z","session_id":"ses_17fbbbc9fffeKGpJZYOZxSsz0z","agent":"diff-historian","tool":"smart_grep","phase":"completed","detail":"0 matches in 0 files"}
+{"at":"2026-05-31T23:01:28.061Z","session_id":"ses_17fbbbc9fffeKGpJZYOZxSsz0z","agent":"diff-historian","tool":"smart_git","phase":"started","detail":"show"}
+{"at":"2026-05-31T23:01:28.086Z","session_id":"ses_17fbbbc9fffeKGpJZYOZxSsz0z","agent":"diff-historian","tool":"smart_git","phase":"completed","detail":"show exit=0"}
+{"at":"2026-05-31T23:03:03.754Z","session_id":"ses_17fbbbc9fffeKGpJZYOZxSsz0z","agent":"diff-historian","tool":"smart_git","phase":"started","detail":"show"}
+{"at":"2026-05-31T23:03:03.786Z","session_id":"ses_17fbbbc9fffeKGpJZYOZxSsz0z","agent":"diff-historian","tool":"smart_git","phase":"completed","detail":"show exit=0"}
+{"at":"2026-05-31T23:03:03.804Z","session_id":"ses_17fbbbc9fffeKGpJZYOZxSsz0z","agent":"diff-historian","tool":"smart_git","phase":"started","detail":"show"}
+{"at":"2026-05-31T23:03:03.898Z","session_id":"ses_17fbbbc9fffeKGpJZYOZxSsz0z","agent":"diff-historian","tool":"smart_git","phase":"completed","detail":"show exit=0"}
+{"at":"2026-05-31T23:03:03.914Z","session_id":"ses_17fbbbc9fffeKGpJZYOZxSsz0z","agent":"diff-historian","tool":"smart_git","phase":"started","detail":"show"}
+{"at":"2026-05-31T23:03:03.939Z","session_id":"ses_17fbbbc9fffeKGpJZYOZxSsz0z","agent":"diff-historian","tool":"smart_git","phase":"completed","detail":"show exit=0"}
+{"at":"2026-05-31T23:03:03.959Z","session_id":"ses_17fbbbc9fffeKGpJZYOZxSsz0z","agent":"diff-historian","tool":"smart_grep","phase":"started","detail":"sk-[a-zA-Z0-9]{20,}|ghp_[a-zA-Z0-9]{36}|gho_[a-zA-Z0-9]{36}|xox[bpras]-[a-zA-Z0-"}
+{"at":"2026-05-31T23:03:04.214Z","session_id":"ses_17fbbbc9fffeKGpJZYOZxSsz0z","agent":"diff-historian","tool":"smart_grep","phase":"completed","detail":"2 matches in 492 files"}
+{"at":"2026-05-31T23:03:32.997Z","session_id":"ses_17fbbbc9fffeKGpJZYOZxSsz0z","agent":"diff-historian","tool":"smart_git","phase":"started","detail":"show"}
+{"at":"2026-05-31T23:03:33.024Z","session_id":"ses_17fbbbc9fffeKGpJZYOZxSsz0z","agent":"diff-historian","tool":"smart_git","phase":"completed","detail":"show exit=0"}
+{"at":"2026-05-31T23:03:34.085Z","session_id":"ses_17fbbbc9fffeKGpJZYOZxSsz0z","agent":"diff-historian","tool":"smart_grep","phase":"started","detail":"password\\s*[=:]\\s*[\"'][^\"'\\s]{8,}[\"']|secret\\s*[=:]\\s*[\"'][^\"'\\s]{8,}[\"']"}
+{"at":"2026-05-31T23:03:34.429Z","session_id":"ses_17fbbbc9fffeKGpJZYOZxSsz0z","agent":"diff-historian","tool":"smart_grep","phase":"completed","detail":"0 matches in 492 files"}
+{"at":"2026-05-31T23:03:34.940Z","session_id":"ses_17fbbbc9fffeKGpJZYOZxSsz0z","agent":"diff-historian","tool":"smart_grep","phase":"started","detail":"token\\s*[=:]\\s*[\"'][^\"'\\s]{12,}[\"']"}
+{"at":"2026-05-31T23:03:35.160Z","session_id":"ses_17fbbbc9fffeKGpJZYOZxSsz0z","agent":"diff-historian","tool":"smart_grep","phase":"completed","detail":"0 matches in 492 files"}
+{"at":"2026-05-31T23:03:35.670Z","session_id":"ses_17fbbbc9fffeKGpJZYOZxSsz0z","agent":"diff-historian","tool":"smart_find","phase":"started","detail":"*.env*"}
+{"at":"2026-05-31T23:03:45.407Z","session_id":"ses_17fbbbc9fffeKGpJZYOZxSsz0z","agent":"diff-historian","tool":"smart_find","phase":"completed","detail":"*.env*"}
+{"at":"2026-05-31T23:04:12.209Z","session_id":"ses_17fbbbc9fffeKGpJZYOZxSsz0z","agent":"diff-historian","tool":"smart_grep","phase":"started","detail":"[a-zA-Z0-9_]{32,}"}
+{"at":"2026-05-31T23:04:22.546Z","session_id":"ses_17fbbbc9fffeKGpJZYOZxSsz0z","agent":"diff-historian","tool":"smart_grep","phase":"completed","detail":"0 matches in 0 files"}
+{"at":"2026-05-31T23:04:23.189Z","session_id":"ses_17fbbbc9fffeKGpJZYOZxSsz0z","agent":"diff-historian","tool":"smart_find","phase":"started","detail":"*.{pem,key,p12,pfx,cert,crt}"}
+{"at":"2026-05-31T23:04:33.396Z","session_id":"ses_17fbbbc9fffeKGpJZYOZxSsz0z","agent":"diff-historian","tool":"smart_find","phase":"completed","detail":"*.{pem,key,p12,pfx,cert,crt}"}
+{"at":"2026-05-31T23:04:33.420Z","session_id":"ses_17fbbbc9fffeKGpJZYOZxSsz0z","agent":"diff-historian","tool":"smart_grep","phase":"started","detail":"(API_KEY|api_key|apiKey|apikey|apiSecret|api_secret|AUTH_TOKEN|authToken|auth_to"}
+{"at":"2026-05-31T23:04:33.701Z","session_id":"ses_17fbbbc9fffeKGpJZYOZxSsz0z","agent":"diff-historian","tool":"smart_grep","phase":"completed","detail":"0 matches in 492 files"}
+{"at":"2026-05-31T23:04:44.900Z","session_id":"ses_17fbbbc9fffeKGpJZYOZxSsz0z","agent":"diff-historian","tool":"smart_grep","phase":"started","detail":"oauth|auth.*token|client.secret|client_secret"}
+{"at":"2026-05-31T23:04:56.227Z","session_id":"ses_17fbbbc9fffeKGpJZYOZxSsz0z","agent":"diff-historian","tool":"smart_grep","phase":"completed","detail":"0 matches in 0 files"}
+{"at":"2026-05-31T23:04:57.942Z","session_id":"ses_17fbbbc9fffeKGpJZYOZxSsz0z","agent":"diff-historian","tool":"smart_grep","phase":"started","detail":"google.*key|aws.*key|stripe.*key|openai.*key|anthropic.*key"}
+{"at":"2026-05-31T23:04:58.388Z","session_id":"ses_17fbbbc9fffeKGpJZYOZxSsz0z","agent":"diff-historian","tool":"smart_grep","phase":"completed","detail":"6 matches in 5 files"}
+{"at":"2026-05-31T23:04:58.459Z","session_id":"ses_17fbbbc9fffeKGpJZYOZxSsz0z","agent":"diff-historian","tool":"smart_grep","phase":"started","detail":"EXPO_PUBLIC|REACT_APP_|NEXT_PUBLIC_|VITE_|PUBLIC_"}
+{"at":"2026-05-31T23:04:58.724Z","session_id":"ses_17fbbbc9fffeKGpJZYOZxSsz0z","agent":"diff-historian","tool":"smart_grep","phase":"completed","detail":"10 matches in 6 files"}
+{"at":"2026-05-31T23:05:08.423Z","session_id":"ses_17fbbbc9fffeKGpJZYOZxSsz0z","agent":"diff-historian","tool":"smart_grep","phase":"started","detail":"openai.*key|anthropic.*key"}
+{"at":"2026-05-31T23:05:08.427Z","session_id":"ses_17fbbbc9fffeKGpJZYOZxSsz0z","agent":"diff-historian","tool":"smart_grep","phase":"completed","detail":"0 matches in 1 files"}
+{"at":"2026-05-31T23:05:09.458Z","session_id":"ses_17fbbbc9fffeKGpJZYOZxSsz0z","agent":"diff-historian","tool":"smart_grep","phase":"started","detail":"EXPO_PUBLIC|REACT_APP_|NEXT_PUBLIC_"}
+{"at":"2026-05-31T23:05:09.458Z","session_id":"ses_17fbbbc9fffeKGpJZYOZxSsz0z","agent":"diff-historian","tool":"smart_grep","phase":"completed","detail":"0 matches in 1 files"}
+{"at":"2026-05-31T23:05:10.413Z","session_id":"ses_17fbbbc9fffeKGpJZYOZxSsz0z","agent":"diff-historian","tool":"smart_grep","phase":"started","detail":"VITE_"}
+{"at":"2026-05-31T23:05:10.413Z","session_id":"ses_17fbbbc9fffeKGpJZYOZxSsz0z","agent":"diff-historian","tool":"smart_grep","phase":"completed","detail":"1 matches in 1 files"}
+{"at":"2026-05-31T23:05:17.436Z","session_id":"ses_17fbbbc9fffeKGpJZYOZxSsz0z","agent":"diff-historian","tool":"smart_grep","phase":"started","detail":"google.*key|aws.*key|stripe.*key|openai.*key|anthropic.*key"}
+{"at":"2026-05-31T23:05:17.440Z","session_id":"ses_17fbbbc9fffeKGpJZYOZxSsz0z","agent":"diff-historian","tool":"smart_grep","phase":"completed","detail":"2 matches in 1 files"}
+{"at":"2026-05-31T23:05:18.585Z","session_id":"ses_17fbbbc9fffeKGpJZYOZxSsz0z","agent":"diff-historian","tool":"smart_grep","phase":"started","detail":"google.*key|aws.*key|stripe.*key"}
+{"at":"2026-05-31T23:05:18.586Z","session_id":"ses_17fbbbc9fffeKGpJZYOZxSsz0z","agent":"diff-historian","tool":"smart_grep","phase":"completed","detail":"1 matches in 1 files"}
+{"at":"2026-05-31T23:05:19.809Z","session_id":"ses_17fbbbc9fffeKGpJZYOZxSsz0z","agent":"diff-historian","tool":"smart_grep","phase":"started","detail":"PUBLIC_"}
+{"at":"2026-05-31T23:05:19.811Z","session_id":"ses_17fbbbc9fffeKGpJZYOZxSsz0z","agent":"diff-historian","tool":"smart_grep","phase":"completed","detail":"1 matches in 8 files"}
+{"at":"2026-05-31T23:05:28.476Z","session_id":"ses_17fbbbc9fffeKGpJZYOZxSsz0z","agent":"diff-historian","tool":"smart_grep","phase":"started","detail":"-----BEGIN"}
+{"at":"2026-05-31T23:05:29.048Z","session_id":"ses_17fbbbc9fffeKGpJZYOZxSsz0z","agent":"diff-historian","tool":"smart_grep","phase":"completed","detail":"1 matches in 492 files"}
+{"at":"2026-05-31T23:05:38.986Z","session_id":"ses_17fbbbc9fffeKGpJZYOZxSsz0z","agent":"diff-historian","tool":"smart_grep","phase":"started","detail":"https?://[a-zA-Z0-9._-]+@"}
+{"at":"2026-05-31T23:05:39.161Z","session_id":"ses_17fbbbc9fffeKGpJZYOZxSsz0z","agent":"diff-historian","tool":"smart_grep","phase":"completed","detail":"0 matches in 492 files"}
+{"at":"2026-05-31T23:05:39.945Z","session_id":"ses_17fbbbc9fffeKGpJZYOZxSsz0z","agent":"diff-historian","tool":"smart_grep","phase":"started","detail":"eyJ[a-zA-Z0-9_-]{20,}\\.[a-zA-Z0-9_-]{20,}\\.[a-zA-Z0-9_-]{10,}"}
+{"at":"2026-05-31T23:05:40.080Z","session_id":"ses_17fbbbc9fffeKGpJZYOZxSsz0z","agent":"diff-historian","tool":"smart_grep","phase":"completed","detail":"0 matches in 492 files"}
+{"at":"2026-05-31T23:05:40.837Z","session_id":"ses_17fbbbc9fffeKGpJZYOZxSsz0z","agent":"diff-historian","tool":"smart_git","phase":"started","detail":"show"}
+{"at":"2026-05-31T23:05:40.865Z","session_id":"ses_17fbbbc9fffeKGpJZYOZxSsz0z","agent":"diff-historian","tool":"smart_git","phase":"completed","detail":"show exit=0"}
+{"at":"2026-05-31T23:05:48.530Z","session_id":"ses_17fbbbc9fffeKGpJZYOZxSsz0z","agent":"diff-historian","tool":"smart_git","phase":"started","detail":"show"}
+{"at":"2026-05-31T23:05:48.551Z","session_id":"ses_17fbbbc9fffeKGpJZYOZxSsz0z","agent":"diff-historian","tool":"smart_git","phase":"completed","detail":"show exit=0"}
+{"at":"2026-05-31T23:05:49.936Z","session_id":"ses_17fbbbc9fffeKGpJZYOZxSsz0z","agent":"diff-historian","tool":"smart_grep","phase":"started","detail":"client_id.*[\"'][A-Za-z0-9_-]{16,}[\"']|client_secret.*[\"'][A-Za-z0-9_-]{16,}[\"']"}
+{"at":"2026-05-31T23:05:50.125Z","session_id":"ses_17fbbbc9fffeKGpJZYOZxSsz0z","agent":"diff-historian","tool":"smart_grep","phase":"completed","detail":"0 matches in 492 files"}
+{"at":"2026-05-31T23:05:51.237Z","session_id":"ses_17fbbbc9fffeKGpJZYOZxSsz0z","agent":"diff-historian","tool":"smart_grep","phase":"started","detail":"secret|redact|sanitize|mask|obfuscate"}
+{"at":"2026-05-31T23:06:00.214Z","session_id":"ses_17fbbbc9fffeKGpJZYOZxSsz0z","agent":"diff-historian","tool":"smart_grep","phase":"completed","detail":"0 matches in 0 files"}
+{"at":"2026-05-31T23:06:09.360Z","session_id":"ses_17fbbbc9fffeKGpJZYOZxSsz0z","agent":"diff-historian","tool":"smart_git","phase":"started","detail":"diff"}
+{"at":"2026-05-31T23:06:09.391Z","session_id":"ses_17fbbbc9fffeKGpJZYOZxSsz0z","agent":"diff-historian","tool":"smart_git","phase":"completed","detail":"diff exit=0"}
+{"at":"2026-05-31T23:06:10.110Z","session_id":"ses_17fbbbc9fffeKGpJZYOZxSsz0z","agent":"diff-historian","tool":"smart_git","phase":"started","detail":"diff"}
+{"at":"2026-05-31T23:06:10.135Z","session_id":"ses_17fbbbc9fffeKGpJZYOZxSsz0z","agent":"diff-historian","tool":"smart_git","phase":"completed","detail":"diff exit=0"}
+{"at":"2026-05-31T23:06:17.158Z","session_id":"ses_17fbbbc9fffeKGpJZYOZxSsz0z","agent":"diff-historian","tool":"smart_git","phase":"started","detail":"log"}
+{"at":"2026-05-31T23:06:26.906Z","session_id":"ses_17fbbbc9fffeKGpJZYOZxSsz0z","agent":"diff-historian","tool":"smart_git","phase":"completed","detail":"log exit=0"}
+{"at":"2026-05-31T23:06:27.068Z","session_id":"ses_17fbbbc9fffeKGpJZYOZxSsz0z","agent":"diff-historian","tool":"smart_git","phase":"started","detail":"log"}
+{"at":"2026-05-31T23:06:36.420Z","session_id":"ses_17fbbbc9fffeKGpJZYOZxSsz0z","agent":"diff-historian","tool":"smart_git","phase":"completed","detail":"log exit=0"}
+{"at":"2026-05-31T23:06:36.435Z","session_id":"ses_17fbbbc9fffeKGpJZYOZxSsz0z","agent":"diff-historian","tool":"smart_git","phase":"started","detail":"log"}
+{"at":"2026-05-31T23:06:44.531Z","session_id":"ses_17fbbbc9fffeKGpJZYOZxSsz0z","agent":"diff-historian","tool":"smart_git","phase":"completed","detail":"log exit=0"}
+{"at":"2026-05-31T23:06:44.545Z","session_id":"ses_17fbbbc9fffeKGpJZYOZxSsz0z","agent":"diff-historian","tool":"smart_git","phase":"started","detail":"log"}
+{"at":"2026-05-31T23:06:44.599Z","session_id":"ses_17fbbbc9fffeKGpJZYOZxSsz0z","agent":"diff-historian","tool":"smart_git","phase":"failed","detail":"log exit=128"}
+{"at":"2026-05-31T23:06:53.105Z","session_id":"ses_17fbbbc9fffeKGpJZYOZxSsz0z","agent":"diff-historian","tool":"smart_git","phase":"started","detail":"show"}
+{"at":"2026-05-31T23:06:53.134Z","session_id":"ses_17fbbbc9fffeKGpJZYOZxSsz0z","agent":"diff-historian","tool":"smart_git","phase":"completed","detail":"show exit=0"}
+{"at":"2026-05-31T23:06:53.965Z","session_id":"ses_17fbbbc9fffeKGpJZYOZxSsz0z","agent":"diff-historian","tool":"smart_git","phase":"started","detail":"show"}
+{"at":"2026-05-31T23:06:54.146Z","session_id":"ses_17fbbbc9fffeKGpJZYOZxSsz0z","agent":"diff-historian","tool":"smart_git","phase":"failed","detail":"spawnSync git ENOBUFS (stdout or stderr buffer reached maxBuffer size limit)"}
+{"at":"2026-05-31T23:06:54.744Z","session_id":"ses_17fbbbc9fffeKGpJZYOZxSsz0z","agent":"diff-historian","tool":"smart_git","phase":"started","detail":"show"}
+{"at":"2026-05-31T23:06:54.839Z","session_id":"ses_17fbbbc9fffeKGpJZYOZxSsz0z","agent":"diff-historian","tool":"smart_git","phase":"failed","detail":"spawnSync git ENOBUFS (stdout or stderr buffer reached maxBuffer size limit)"}
+{"at":"2026-05-31T23:07:02.994Z","session_id":"ses_17fbbbc9fffeKGpJZYOZxSsz0z","agent":"diff-historian","tool":"smart_git","phase":"started","detail":"show"}
+{"at":"2026-05-31T23:07:03.174Z","session_id":"ses_17fbbbc9fffeKGpJZYOZxSsz0z","agent":"diff-historian","tool":"smart_git","phase":"completed","detail":"show exit=0"}
+{"at":"2026-05-31T23:07:03.342Z","session_id":"ses_17fbbbc9fffeKGpJZYOZxSsz0z","agent":"diff-historian","tool":"smart_git","phase":"started","detail":"show"}
+{"at":"2026-05-31T23:07:03.611Z","session_id":"ses_17fbbbc9fffeKGpJZYOZxSsz0z","agent":"diff-historian","tool":"smart_git","phase":"completed","detail":"show exit=0"}
+{"at":"2026-05-31T23:07:14.234Z","session_id":"ses_17fbbbc9fffeKGpJZYOZxSsz0z","agent":"diff-historian","tool":"smart_git","phase":"started","detail":"show"}
+{"at":"2026-05-31T23:07:14.431Z","session_id":"ses_17fbbbc9fffeKGpJZYOZxSsz0z","agent":"diff-historian","tool":"smart_git","phase":"failed","detail":"spawnSync git ENOBUFS (stdout or stderr buffer reached maxBuffer size limit)"}
+{"at":"2026-05-31T23:07:24.997Z","session_id":"ses_17fbbbc9fffeKGpJZYOZxSsz0z","agent":"diff-historian","tool":"smart_git","phase":"started","detail":"show"}
+{"at":"2026-05-31T23:07:25.024Z","session_id":"ses_17fbbbc9fffeKGpJZYOZxSsz0z","agent":"diff-historian","tool":"smart_git","phase":"completed","detail":"show exit=0"}
+{"at":"2026-05-31T23:07:33.215Z","session_id":"ses_17fbbbc9fffeKGpJZYOZxSsz0z","agent":"diff-historian","tool":"smart_grep","phase":"started","detail":"ghp_"}
+{"at":"2026-05-31T23:07:34.192Z","session_id":"ses_17fbbbc9fffeKGpJZYOZxSsz0z","agent":"diff-historian","tool":"smart_grep","phase":"completed","detail":"8 matches in 500 files"}
+{"at":"2026-05-31T23:07:34.309Z","session_id":"ses_17fbbbc9fffeKGpJZYOZxSsz0z","agent":"diff-historian","tool":"smart_grep","phase":"started","detail":"ghp_"}
+{"at":"2026-05-31T23:07:34.382Z","session_id":"ses_17fbbbc9fffeKGpJZYOZxSsz0z","agent":"diff-historian","tool":"smart_grep","phase":"completed","detail":"1 matches in 71 files"}
+{"at":"2026-05-31T23:07:35.046Z","session_id":"ses_17fbbbc9fffeKGpJZYOZxSsz0z","agent":"diff-historian","tool":"smart_grep","phase":"started","detail":"ghp_"}
+{"at":"2026-05-31T23:07:35.260Z","session_id":"ses_17fbbbc9fffeKGpJZYOZxSsz0z","agent":"diff-historian","tool":"smart_grep","phase":"completed","detail":"1 matches in 492 files"}
+{"at":"2026-05-31T23:07:45.534Z","session_id":"ses_17fbbbc9fffeKGpJZYOZxSsz0z","agent":"diff-historian","tool":"smart_grep","phase":"started","detail":"sk-"}
+{"at":"2026-05-31T23:07:45.680Z","session_id":"ses_17fbbbc9fffeKGpJZYOZxSsz0z","agent":"diff-historian","tool":"smart_grep","phase":"completed","detail":"20 matches in 42 files"}
+{"at":"2026-05-31T23:07:53.941Z","session_id":"ses_17fbbbc9fffeKGpJZYOZxSsz0z","agent":"diff-historian","tool":"smart_grep","phase":"started","detail":"api.?key|api.?secret|bearer.*token|authorization.*[\"'][^\"']{10,}"}
+{"at":"2026-05-31T23:07:54.261Z","session_id":"ses_17fbbbc9fffeKGpJZYOZxSsz0z","agent":"diff-historian","tool":"smart_grep","phase":"completed","detail":"20 matches in 226 files"}
+{"at":"2026-05-31T23:08:01.261Z","session_id":"ses_17fbbbc9fffeKGpJZYOZxSsz0z","agent":"diff-historian","tool":"smart_grep","phase":"started","detail":"AKIA[0-9A-Z]{16}|ASIA[0-9A-Z]{16}"}
+{"at":"2026-05-31T23:08:01.491Z","session_id":"ses_17fbbbc9fffeKGpJZYOZxSsz0z","agent":"diff-historian","tool":"smart_grep","phase":"completed","detail":"0 matches in 492 files"}
+{"at":"2026-05-31T23:08:01.961Z","session_id":"ses_17fbbbc9fffeKGpJZYOZxSsz0z","agent":"diff-historian","tool":"smart_grep","phase":"started","detail":"AIza[0-9A-Za-z_-]{35}"}
+{"at":"2026-05-31T23:08:02.239Z","session_id":"ses_17fbbbc9fffeKGpJZYOZxSsz0z","agent":"diff-historian","tool":"smart_grep","phase":"completed","detail":"0 matches in 492 files"}
+{"at":"2026-05-31T23:08:02.895Z","session_id":"ses_17fbbbc9fffeKGpJZYOZxSsz0z","agent":"diff-historian","tool":"smart_grep","phase":"started","detail":"[a-z0-9]{32}\\.apps\\.googleusercontent\\.com"}
+{"at":"2026-05-31T23:08:03.076Z","session_id":"ses_17fbbbc9fffeKGpJZYOZxSsz0z","agent":"diff-historian","tool":"smart_grep","phase":"completed","detail":"0 matches in 492 files"}
+{"at":"2026-05-31T23:08:08.358Z","session_id":"ses_17fbbbc9fffeKGpJZYOZxSsz0z","agent":"diff-historian","tool":"smart_git","phase":"started","detail":"branch"}
+{"at":"2026-05-31T23:08:08.380Z","session_id":"ses_17fbbbc9fffeKGpJZYOZxSsz0z","agent":"diff-historian","tool":"smart_git","phase":"completed","detail":"branch exit=0"}
+{"at":"2026-05-31T23:08:09.036Z","session_id":"ses_17fbbbc9fffeKGpJZYOZxSsz0z","agent":"diff-historian","tool":"smart_find","phase":"started","detail":"*.pem"}
+{"at":"2026-05-31T23:08:20.917Z","session_id":"ses_17fbbbc9fffeKGpJZYOZxSsz0z","agent":"diff-historian","tool":"smart_find","phase":"completed","detail":"*.pem"}
+{"at":"2026-05-31T23:08:30.911Z","session_id":"ses_17fbbbc9fffeKGpJZYOZxSsz0z","agent":"diff-historian","tool":"smart_find","phase":"started","detail":"*.key"}
+{"at":"2026-05-31T23:08:40.520Z","session_id":"ses_17fbbbc9fffeKGpJZYOZxSsz0z","agent":"diff-historian","tool":"smart_find","phase":"completed","detail":"*.key"}
+{"at":"2026-05-31T23:08:54.954Z","session_id":"ses_17fbbbc9fffeKGpJZYOZxSsz0z","agent":"diff-historian","tool":"smart_grep","phase":"started","detail":"ssh-rsa|ssh-ed25519|ecdsa-sha2"}
+{"at":"2026-05-31T23:08:55.169Z","session_id":"ses_17fbbbc9fffeKGpJZYOZxSsz0z","agent":"diff-historian","tool":"smart_grep","phase":"completed","detail":"0 matches in 492 files"}
+{"at":"2026-05-31T23:08:55.182Z","session_id":"ses_17fbbbc9fffeKGpJZYOZxSsz0z","agent":"diff-historian","tool":"smart_grep","phase":"started","detail":"NODE_ENV|DATABASE_URL|REDIS_URL|MONGO_URI|POSTGRES"}
+{"at":"2026-05-31T23:08:55.575Z","session_id":"ses_17fbbbc9fffeKGpJZYOZxSsz0z","agent":"diff-historian","tool":"smart_grep","phase":"completed","detail":"20 matches in 386 files"}
+{"at":"2026-05-31T23:08:55.598Z","session_id":"ses_17fbbbc9fffeKGpJZYOZxSsz0z","agent":"diff-historian","tool":"smart_grep","phase":"started","detail":"\\.env"}
+{"at":"2026-05-31T23:08:55.789Z","session_id":"ses_17fbbbc9fffeKGpJZYOZxSsz0z","agent":"diff-historian","tool":"smart_grep","phase":"completed","detail":"10 matches in 34 files"}
+{"at":"2026-05-31T23:09:04.298Z","session_id":"ses_17fbbbc9fffeKGpJZYOZxSsz0z","agent":"diff-historian","tool":"smart_grep","phase":"started","detail":"DATABASE_URL|databaseUrl|database_url"}
+{"at":"2026-05-31T23:09:04.299Z","session_id":"ses_17fbbbc9fffeKGpJZYOZxSsz0z","agent":"diff-historian","tool":"smart_grep","phase":"completed","detail":"4 matches in 1 files"}
+{"at":"2026-05-31T23:09:05.375Z","session_id":"ses_17fbbbc9fffeKGpJZYOZxSsz0z","agent":"diff-historian","tool":"smart_grep","phase":"started","detail":"password|secret|token|key"}
+{"at":"2026-05-31T23:09:05.376Z","session_id":"ses_17fbbbc9fffeKGpJZYOZxSsz0z","agent":"diff-historian","tool":"smart_grep","phase":"completed","detail":"15 matches in 1 files"}
+{"at":"2026-05-31T23:09:20.177Z","session_id":"ses_17fbbbc9fffeKGpJZYOZxSsz0z","agent":"diff-historian","tool":"smart_grep","phase":"started","detail":"pat_|ghu_|gho_|ghr_|ghs_"}
+{"at":"2026-05-31T23:09:20.586Z","session_id":"ses_17fbbbc9fffeKGpJZYOZxSsz0z","agent":"diff-historian","tool":"smart_grep","phase":"completed","detail":"0 matches in 492 files"}
+{"at":"2026-05-31T23:09:21.036Z","session_id":"ses_17fbbbc9fffeKGpJZYOZxSsz0z","agent":"diff-historian","tool":"smart_grep","phase":"started","detail":"pk_live|sk_live|rk_live|whsec_"}
+{"at":"2026-05-31T23:09:21.592Z","session_id":"ses_17fbbbc9fffeKGpJZYOZxSsz0z","agent":"diff-historian","tool":"smart_grep","phase":"completed","detail":"0 matches in 492 files"}

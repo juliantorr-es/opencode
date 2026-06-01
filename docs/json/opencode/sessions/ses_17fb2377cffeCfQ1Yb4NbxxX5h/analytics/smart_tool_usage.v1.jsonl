@@ -1,0 +1,8 @@
+{"at":"2026-05-31T23:11:33.706Z","session_id":"ses_17fb2377cffeCfQ1Yb4NbxxX5h","agent":"module-grapher","tool":"smart_grep","pattern":"mcp","path":"packages/opencode/src"}
+{"at":"2026-05-31T23:11:34.651Z","session_id":"ses_17fb2377cffeCfQ1Yb4NbxxX5h","agent":"module-grapher","tool":"smart_find","pattern":"**/mcp*","path":"packages/opencode/src"}
+{"at":"2026-05-31T23:12:44.188Z","session_id":"ses_17fb2377cffeCfQ1Yb4NbxxX5h","agent":"module-grapher","tool":"smart_find","pattern":"*","path":"packages/opencode/src/mcp"}
+{"at":"2026-05-31T23:17:45.524Z","session_id":"ses_17fb2377cffeCfQ1Yb4NbxxX5h","agent":"module-grapher","tool":"smart_grep","pattern":"Ref\\.|Ref\\.get|Ref\\.set|Ref\\.modify|Ref\\.update|HashSet","path":"packages/opencode/src/mcp/index.ts"}
+{"at":"2026-05-31T23:17:46.665Z","session_id":"ses_17fb2377cffeCfQ1Yb4NbxxX5h","agent":"module-grapher","tool":"smart_grep","pattern":"(connect|disconnect|initialize|cleanup|close|status|listTools|getTools|isConnected|health)","path":"packages/opencode/src/mcp/index.ts"}
+{"at":"2026-05-31T23:17:47.576Z","session_id":"ses_17fb2377cffeCfQ1Yb4NbxxX5h","agent":"module-grapher","tool":"smart_grep","pattern":"state|connected|disconnected|initializing|error","path":"packages/opencode/src/mcp/index.ts"}
+{"at":"2026-05-31T23:20:01.923Z","session_id":"ses_17fb2377cffeCfQ1Yb4NbxxX5h","agent":"module-grapher","tool":"smart_grep","pattern":"InstanceState","path":"packages/opencode/src/effect"}
+{"at":"2026-05-31T23:20:03.022Z","session_id":"ses_17fb2377cffeCfQ1Yb4NbxxX5h","agent":"module-grapher","tool":"smart_find","pattern":"**/effect/instance-state*","path":"packages/opencode/src"}

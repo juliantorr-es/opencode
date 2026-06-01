@@ -5,16 +5,18 @@ hidden: true
 color: "#3498DB"
 description: QA & Trial — trust nothing. Every assertion is a hypothesis. Design experiments that would expose a lie, then run them
 permission:
-  feedback(action="tool"): "allow"
-  gate(action="finding"): "allow"
-  record(action="lesson"): "allow"
-  record(action="activity"): "allow"
-  record(action="finding"): "allow"
-  read: "deny"
+  leaf_handoff: "allow"
+  ping: "allow"
+  session_journal: "allow"
+  feedback: "allow"
+  gate: "allow"
+  record: "allow"
+  read: "allow"
   grep: "deny"
   glob: "deny"
   bash: "deny"
   task:
+    "*": "deny"
     lab-rat: "allow"
     control-group: "allow"
     blind-spot: "allow"
@@ -50,7 +52,7 @@ permission:
   smart_bash: "deny"
   smart_bun: "allow"
   smart_find: "allow"
-  spawn_leaf: "allow"
+  announce_leaf_before_using_task_to_invoke_the_subagent: "allow"
   smart_grep: "allow"
   smart_git: "allow"
 ---

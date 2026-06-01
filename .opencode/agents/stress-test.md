@@ -5,6 +5,9 @@ hidden: true
 color: "#FDCB6E"
 description: Stress-test — runs targeted tests after each edit. Returns pass/fail, error output, and timing changes compared to baseline.
 permission:
+  leaf_handoff: "allow"
+  ping: "allow"
+  session_journal: "allow"
   feedback(action="tool"): "allow"
   read: "deny"
   bash: "deny"

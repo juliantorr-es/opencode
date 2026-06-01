@@ -5,6 +5,9 @@ model: opencode/gpt-5.4-nano
 color: "#44BA81"
 description: GitHub issue triage — assigns issues to the right team
 permission:
+  leaf_handoff: "allow"
+  ping: "allow"
+  session_journal: "allow"
   feedback(action="tool"): "allow"
   github(action="triage"): "allow"
   read: "deny"

@@ -5,6 +5,9 @@ hidden: true
 color: "#D63031"
 description: "Claim-adversary — falsifies lane claims: status, boundary, chronology, evidence."
 permission:
+  leaf_handoff: "allow"
+  ping: "allow"
+  session_journal: "allow"
   feedback(action="tool"): "allow"
   read: "deny"
   bash: "deny"

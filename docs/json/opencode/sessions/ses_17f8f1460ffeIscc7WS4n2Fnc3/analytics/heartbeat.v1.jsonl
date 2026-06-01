@@ -1,0 +1,56 @@
+{"at":"2026-05-31T23:50:35.866Z","session_id":"ses_17f8f1460ffeIscc7WS4n2Fnc3","agent":"root-cause-analyst","tool":"smart_grep","phase":"started","detail":"instance\\."}
+{"at":"2026-05-31T23:50:35.867Z","session_id":"ses_17f8f1460ffeIscc7WS4n2Fnc3","agent":"root-cause-analyst","tool":"smart_grep","phase":"completed","detail":"1 matches in 1 files"}
+{"at":"2026-05-31T23:50:36.468Z","session_id":"ses_17f8f1460ffeIscc7WS4n2Fnc3","agent":"root-cause-analyst","tool":"smart_grep","phase":"started","detail":"bootstrap"}
+{"at":"2026-05-31T23:50:36.469Z","session_id":"ses_17f8f1460ffeIscc7WS4n2Fnc3","agent":"root-cause-analyst","tool":"smart_grep","phase":"completed","detail":"0 matches in 1 files"}
+{"at":"2026-05-31T23:50:37.024Z","session_id":"ses_17f8f1460ffeIscc7WS4n2Fnc3","agent":"root-cause-analyst","tool":"smart_grep","phase":"started","detail":"BusEvent\\.define\\("}
+{"at":"2026-05-31T23:50:37.156Z","session_id":"ses_17f8f1460ffeIscc7WS4n2Fnc3","agent":"root-cause-analyst","tool":"smart_grep","phase":"completed","detail":"30 matches in 356 files"}
+{"at":"2026-05-31T23:51:52.225Z","session_id":"ses_17f8f1460ffeIscc7WS4n2Fnc3","agent":"root-cause-analyst","tool":"smart_grep","phase":"started","detail":"Bus\\.publish\\(|Bus\\.use\\.publish\\("}
+{"at":"2026-05-31T23:51:52.363Z","session_id":"ses_17f8f1460ffeIscc7WS4n2Fnc3","agent":"root-cause-analyst","tool":"smart_grep","phase":"completed","detail":"8 matches in 500 files"}
+{"at":"2026-05-31T23:51:53.008Z","session_id":"ses_17f8f1460ffeIscc7WS4n2Fnc3","agent":"root-cause-analyst","tool":"smart_grep","phase":"started","detail":"InstanceDisposed"}
+{"at":"2026-05-31T23:51:53.118Z","session_id":"ses_17f8f1460ffeIscc7WS4n2Fnc3","agent":"root-cause-analyst","tool":"smart_grep","phase":"completed","detail":"6 matches in 500 files"}
+{"at":"2026-05-31T23:52:21.470Z","session_id":"ses_17f8f1460ffeIscc7WS4n2Fnc3","agent":"root-cause-analyst","tool":"smart_grep","phase":"started","detail":"use\\.publish\\("}
+{"at":"2026-05-31T23:52:21.562Z","session_id":"ses_17f8f1460ffeIscc7WS4n2Fnc3","agent":"root-cause-analyst","tool":"smart_grep","phase":"completed","detail":"0 matches in 500 files"}
+{"at":"2026-05-31T23:52:22.822Z","session_id":"ses_17f8f1460ffeIscc7WS4n2Fnc3","agent":"root-cause-analyst","tool":"smart_grep","phase":"started","detail":"yield\\* Bus\\.publish|yield\\* bus\\.publish|Bus\\.publish\\(.*Event\\."}
+{"at":"2026-05-31T23:52:22.906Z","session_id":"ses_17f8f1460ffeIscc7WS4n2Fnc3","agent":"root-cause-analyst","tool":"smart_grep","phase":"completed","detail":"22 matches in 500 files"}
+{"at":"2026-05-31T23:53:31.156Z","session_id":"ses_17f8f1460ffeIscc7WS4n2Fnc3","agent":"root-cause-analyst","tool":"smart_grep","phase":"started","detail":"export const Event = \\{"}
+{"at":"2026-05-31T23:53:31.157Z","session_id":"ses_17f8f1460ffeIscc7WS4n2Fnc3","agent":"root-cause-analyst","tool":"smart_grep","phase":"completed","detail":"1 matches in 1 files"}
+{"at":"2026-05-31T23:53:32.040Z","session_id":"ses_17f8f1460ffeIscc7WS4n2Fnc3","agent":"root-cause-analyst","tool":"smart_grep","phase":"started","detail":"yield\\* bus\\.publish"}
+{"at":"2026-05-31T23:53:32.042Z","session_id":"ses_17f8f1460ffeIscc7WS4n2Fnc3","agent":"root-cause-analyst","tool":"smart_grep","phase":"completed","detail":"3 matches in 1 files"}
+{"at":"2026-05-31T23:53:32.901Z","session_id":"ses_17f8f1460ffeIscc7WS4n2Fnc3","agent":"root-cause-analyst","tool":"smart_grep","phase":"started","detail":"yield\\* bus\\.publish"}
+{"at":"2026-05-31T23:53:32.901Z","session_id":"ses_17f8f1460ffeIscc7WS4n2Fnc3","agent":"root-cause-analyst","tool":"smart_grep","phase":"completed","detail":"1 matches in 1 files"}
+{"at":"2026-05-31T23:53:45.052Z","session_id":"ses_17f8f1460ffeIscc7WS4n2Fnc3","agent":"root-cause-analyst","tool":"smart_grep","phase":"started","detail":"export const Event = \\{"}
+{"at":"2026-05-31T23:53:45.053Z","session_id":"ses_17f8f1460ffeIscc7WS4n2Fnc3","agent":"root-cause-analyst","tool":"smart_grep","phase":"completed","detail":"1 matches in 1 files"}
+{"at":"2026-05-31T23:53:46.005Z","session_id":"ses_17f8f1460ffeIscc7WS4n2Fnc3","agent":"root-cause-analyst","tool":"smart_grep","phase":"started","detail":"yield\\* bus\\.publish\\(Event\\.Deleted"}
+{"at":"2026-05-31T23:53:46.005Z","session_id":"ses_17f8f1460ffeIscc7WS4n2Fnc3","agent":"root-cause-analyst","tool":"smart_grep","phase":"completed","detail":"1 matches in 1 files"}
+{"at":"2026-05-31T23:53:46.721Z","session_id":"ses_17f8f1460ffeIscc7WS4n2Fnc3","agent":"root-cause-analyst","tool":"smart_grep","phase":"started","detail":"yield\\* bus\\.publish\\(Event\\.Created"}
+{"at":"2026-05-31T23:53:46.721Z","session_id":"ses_17f8f1460ffeIscc7WS4n2Fnc3","agent":"root-cause-analyst","tool":"smart_grep","phase":"completed","detail":"1 matches in 1 files"}
+{"at":"2026-05-31T23:54:02.783Z","session_id":"ses_17f8f1460ffeIscc7WS4n2Fnc3","agent":"root-cause-analyst","tool":"smart_grep","phase":"started","detail":"BusEvent\\.define\\(EventName\\.PtyCreated"}
+{"at":"2026-05-31T23:54:02.784Z","session_id":"ses_17f8f1460ffeIscc7WS4n2Fnc3","agent":"root-cause-analyst","tool":"smart_grep","phase":"completed","detail":"1 matches in 1 files"}
+{"at":"2026-05-31T23:54:04.140Z","session_id":"ses_17f8f1460ffeIscc7WS4n2Fnc3","agent":"root-cause-analyst","tool":"smart_grep","phase":"started","detail":"const bus = yield\\* |const bus: |function.*layer|Effect\\.gen\\(function"}
+{"at":"2026-05-31T23:54:04.140Z","session_id":"ses_17f8f1460ffeIscc7WS4n2Fnc3","agent":"root-cause-analyst","tool":"smart_grep","phase":"completed","detail":"2 matches in 1 files"}
+{"at":"2026-05-31T23:54:18.704Z","session_id":"ses_17f8f1460ffeIscc7WS4n2Fnc3","agent":"root-cause-analyst","tool":"smart_grep","phase":"started","detail":"yield\\* Bus\\.Service"}
+{"at":"2026-05-31T23:54:18.704Z","session_id":"ses_17f8f1460ffeIscc7WS4n2Fnc3","agent":"root-cause-analyst","tool":"smart_grep","phase":"completed","detail":"1 matches in 1 files"}
+{"at":"2026-05-31T23:54:19.561Z","session_id":"ses_17f8f1460ffeIscc7WS4n2Fnc3","agent":"root-cause-analyst","tool":"smart_grep","phase":"started","detail":"yield\\* bus\\.publish\\(Event\\.Deleted"}
+{"at":"2026-05-31T23:54:19.562Z","session_id":"ses_17f8f1460ffeIscc7WS4n2Fnc3","agent":"root-cause-analyst","tool":"smart_grep","phase":"completed","detail":"1 matches in 1 files"}
+{"at":"2026-05-31T23:54:20.278Z","session_id":"ses_17f8f1460ffeIscc7WS4n2Fnc3","agent":"root-cause-analyst","tool":"smart_grep","phase":"started","detail":"yield\\* bus\\.publish\\(Event\\.Created"}
+{"at":"2026-05-31T23:54:20.279Z","session_id":"ses_17f8f1460ffeIscc7WS4n2Fnc3","agent":"root-cause-analyst","tool":"smart_grep","phase":"completed","detail":"1 matches in 1 files"}
+{"at":"2026-05-31T23:54:20.949Z","session_id":"ses_17f8f1460ffeIscc7WS4n2Fnc3","agent":"root-cause-analyst","tool":"smart_grep","phase":"started","detail":"yield\\* bus\\.publish"}
+{"at":"2026-05-31T23:54:20.950Z","session_id":"ses_17f8f1460ffeIscc7WS4n2Fnc3","agent":"root-cause-analyst","tool":"smart_grep","phase":"completed","detail":"1 matches in 1 files"}
+{"at":"2026-05-31T23:54:34.432Z","session_id":"ses_17f8f1460ffeIscc7WS4n2Fnc3","agent":"root-cause-analyst","tool":"smart_grep","phase":"started","detail":"export const Event = \\{"}
+{"at":"2026-05-31T23:54:34.433Z","session_id":"ses_17f8f1460ffeIscc7WS4n2Fnc3","agent":"root-cause-analyst","tool":"smart_grep","phase":"completed","detail":"1 matches in 1 files"}
+{"at":"2026-05-31T23:54:35.165Z","session_id":"ses_17f8f1460ffeIscc7WS4n2Fnc3","agent":"root-cause-analyst","tool":"smart_grep","phase":"started","detail":"const bus = yield\\* Bus"}
+{"at":"2026-05-31T23:54:35.166Z","session_id":"ses_17f8f1460ffeIscc7WS4n2Fnc3","agent":"root-cause-analyst","tool":"smart_grep","phase":"completed","detail":"1 matches in 1 files"}
+{"at":"2026-05-31T23:54:36.020Z","session_id":"ses_17f8f1460ffeIscc7WS4n2Fnc3","agent":"root-cause-analyst","tool":"smart_grep","phase":"started","detail":"yield\\* bus\\.publish\\(ToolsChanged"}
+{"at":"2026-05-31T23:54:36.021Z","session_id":"ses_17f8f1460ffeIscc7WS4n2Fnc3","agent":"root-cause-analyst","tool":"smart_grep","phase":"completed","detail":"1 matches in 1 files"}
+{"at":"2026-05-31T23:54:50.375Z","session_id":"ses_17f8f1460ffeIscc7WS4n2Fnc3","agent":"root-cause-analyst","tool":"smart_grep","phase":"started","detail":"export const Event = \\{"}
+{"at":"2026-05-31T23:54:50.376Z","session_id":"ses_17f8f1460ffeIscc7WS4n2Fnc3","agent":"root-cause-analyst","tool":"smart_grep","phase":"completed","detail":"1 matches in 1 files"}
+{"at":"2026-05-31T23:55:05.196Z","session_id":"ses_17f8f1460ffeIscc7WS4n2Fnc3","agent":"root-cause-analyst","tool":"smart_grep","phase":"started","detail":"export const Event = \\{"}
+{"at":"2026-05-31T23:55:05.196Z","session_id":"ses_17f8f1460ffeIscc7WS4n2Fnc3","agent":"root-cause-analyst","tool":"smart_grep","phase":"completed","detail":"1 matches in 1 files"}
+{"at":"2026-05-31T23:55:46.330Z","session_id":"ses_17f8f1460ffeIscc7WS4n2Fnc3","agent":"root-cause-analyst","tool":"smart_grep","phase":"started","detail":"BusEvent\\.define\\(EventName\\.Mcp"}
+{"at":"2026-05-31T23:55:46.331Z","session_id":"ses_17f8f1460ffeIscc7WS4n2Fnc3","agent":"root-cause-analyst","tool":"smart_grep","phase":"completed","detail":"0 matches in 1 files"}
+{"at":"2026-05-31T23:55:46.982Z","session_id":"ses_17f8f1460ffeIscc7WS4n2Fnc3","agent":"root-cause-analyst","tool":"smart_grep","phase":"started","detail":"BusEvent\\.define\\(EventName\\.Worktree"}
+{"at":"2026-05-31T23:55:46.983Z","session_id":"ses_17f8f1460ffeIscc7WS4n2Fnc3","agent":"root-cause-analyst","tool":"smart_grep","phase":"completed","detail":"0 matches in 1 files"}
+{"at":"2026-05-31T23:55:59.565Z","session_id":"ses_17f8f1460ffeIscc7WS4n2Fnc3","agent":"root-cause-analyst","tool":"smart_grep","phase":"started","detail":"BusEvent\\.define\\("}
+{"at":"2026-05-31T23:55:59.565Z","session_id":"ses_17f8f1460ffeIscc7WS4n2Fnc3","agent":"root-cause-analyst","tool":"smart_grep","phase":"completed","detail":"3 matches in 1 files"}
+{"at":"2026-05-31T23:56:00.428Z","session_id":"ses_17f8f1460ffeIscc7WS4n2Fnc3","agent":"root-cause-analyst","tool":"smart_grep","phase":"started","detail":"BusEvent\\.define\\("}
+{"at":"2026-05-31T23:56:00.429Z","session_id":"ses_17f8f1460ffeIscc7WS4n2Fnc3","agent":"root-cause-analyst","tool":"smart_grep","phase":"completed","detail":"2 matches in 1 files"}

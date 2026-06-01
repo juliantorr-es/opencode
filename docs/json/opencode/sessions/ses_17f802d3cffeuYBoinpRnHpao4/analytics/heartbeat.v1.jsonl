@@ -1,0 +1,24 @@
+{"at":"2026-06-01T00:05:45.303Z","session_id":"ses_17f802d3cffeuYBoinpRnHpao4","agent":"architecture-reviewer","tool":"smart_grep","phase":"started","detail":"Schema\\.decode"}
+{"at":"2026-06-01T00:05:45.411Z","session_id":"ses_17f802d3cffeuYBoinpRnHpao4","agent":"architecture-reviewer","tool":"smart_grep","phase":"completed","detail":"30 matches in 278 files"}
+{"at":"2026-06-01T00:05:45.923Z","session_id":"ses_17f802d3cffeuYBoinpRnHpao4","agent":"architecture-reviewer","tool":"smart_grep","phase":"started","detail":"RoleOutput"}
+{"at":"2026-06-01T00:05:45.927Z","session_id":"ses_17f802d3cffeuYBoinpRnHpao4","agent":"architecture-reviewer","tool":"smart_grep","phase":"completed","detail":"30 matches in 5 files"}
+{"at":"2026-06-01T00:09:24.005Z","session_id":"ses_17f802d3cffeuYBoinpRnHpao4","agent":"architecture-reviewer","tool":"smart_grep","phase":"started","detail":"type RoleOutput ="}
+{"at":"2026-06-01T00:09:24.015Z","session_id":"ses_17f802d3cffeuYBoinpRnHpao4","agent":"architecture-reviewer","tool":"smart_grep","phase":"completed","detail":"1 matches in 19 files"}
+{"at":"2026-06-01T00:09:24.724Z","session_id":"ses_17f802d3cffeuYBoinpRnHpao4","agent":"architecture-reviewer","tool":"smart_grep","phase":"started","detail":"Schema\\.decodeUnknownEffect"}
+{"at":"2026-06-01T00:09:24.893Z","session_id":"ses_17f802d3cffeuYBoinpRnHpao4","agent":"architecture-reviewer","tool":"smart_grep","phase":"completed","detail":"12 matches in 500 files"}
+{"at":"2026-06-01T00:10:03.576Z","session_id":"ses_17f802d3cffeuYBoinpRnHpao4","agent":"architecture-reviewer","tool":"smart_grep","phase":"started","detail":"export type RoleOutput"}
+{"at":"2026-06-01T00:10:03.578Z","session_id":"ses_17f802d3cffeuYBoinpRnHpao4","agent":"architecture-reviewer","tool":"smart_grep","phase":"completed","detail":"1 matches in 1 files"}
+{"at":"2026-06-01T00:12:01.796Z","session_id":"ses_17f802d3cffeuYBoinpRnHpao4","agent":"architecture-reviewer","tool":"smart_grep","phase":"started","detail":"export type RoleOutput"}
+{"at":"2026-06-01T00:12:01.796Z","session_id":"ses_17f802d3cffeuYBoinpRnHpao4","agent":"architecture-reviewer","tool":"smart_grep","phase":"completed","detail":"1 matches in 1 files"}
+{"at":"2026-06-01T00:12:02.654Z","session_id":"ses_17f802d3cffeuYBoinpRnHpao4","agent":"architecture-reviewer","tool":"smart_grep","phase":"started","detail":"handleRoleOutput.*Effect\\.gen|handleRoleOutput.*=.*\\("}
+{"at":"2026-06-01T00:12:02.655Z","session_id":"ses_17f802d3cffeuYBoinpRnHpao4","agent":"architecture-reviewer","tool":"smart_grep","phase":"completed","detail":"1 matches in 1 files"}
+{"at":"2026-06-01T00:12:03.367Z","session_id":"ses_17f802d3cffeuYBoinpRnHpao4","agent":"architecture-reviewer","tool":"smart_grep","phase":"started","detail":"criticOutput|scoutOutput|architectOutput|executorOutput|validatorOutput"}
+{"at":"2026-06-01T00:12:03.372Z","session_id":"ses_17f802d3cffeuYBoinpRnHpao4","agent":"architecture-reviewer","tool":"smart_grep","phase":"completed","detail":"0 matches in 19 files"}
+{"at":"2026-06-01T00:12:37.871Z","session_id":"ses_17f802d3cffeuYBoinpRnHpao4","agent":"architecture-reviewer","tool":"smart_find","phase":"started","detail":"*.test.ts"}
+{"at":"2026-06-01T00:12:37.873Z","session_id":"ses_17f802d3cffeuYBoinpRnHpao4","agent":"architecture-reviewer","tool":"smart_find","phase":"completed","detail":"*.test.ts"}
+{"at":"2026-06-01T00:12:38.823Z","session_id":"ses_17f802d3cffeuYBoinpRnHpao4","agent":"architecture-reviewer","tool":"smart_bun","phase":"started","detail":"tsgo"}
+{"at":"2026-06-01T00:12:39.042Z","session_id":"ses_17f802d3cffeuYBoinpRnHpao4","agent":"architecture-reviewer","tool":"smart_bun","phase":"failed","detail":"tsgo exit=2"}
+{"at":"2026-06-01T00:13:11.150Z","session_id":"ses_17f802d3cffeuYBoinpRnHpao4","agent":"architecture-reviewer","tool":"smart_bun","phase":"started","detail":"run"}
+{"at":"2026-06-01T00:13:11.308Z","session_id":"ses_17f802d3cffeuYBoinpRnHpao4","agent":"architecture-reviewer","tool":"smart_bun","phase":"completed","detail":"run exit=0"}
+{"at":"2026-06-01T00:13:12.073Z","session_id":"ses_17f802d3cffeuYBoinpRnHpao4","agent":"architecture-reviewer","tool":"smart_bun","phase":"started","detail":"run"}
+{"at":"2026-06-01T00:13:12.130Z","session_id":"ses_17f802d3cffeuYBoinpRnHpao4","agent":"architecture-reviewer","tool":"smart_bun","phase":"completed","detail":"run exit=0"}

@@ -1,0 +1,24 @@
+{"at":"2026-06-01T00:15:39.560Z","session_id":"ses_17f76ee10ffevdsWbSLp5u3QkU","agent":"cartographer","tool":"smart_find","phase":"started","detail":"*instance*"}
+{"at":"2026-06-01T00:15:39.833Z","session_id":"ses_17f76ee10ffevdsWbSLp5u3QkU","agent":"cartographer","tool":"smart_find","phase":"completed","detail":"*instance*"}
+{"at":"2026-06-01T00:15:40.205Z","session_id":"ses_17f76ee10ffevdsWbSLp5u3QkU","agent":"cartographer","tool":"smart_find","phase":"started","detail":"*bootstrap*"}
+{"at":"2026-06-01T00:15:40.435Z","session_id":"ses_17f76ee10ffevdsWbSLp5u3QkU","agent":"cartographer","tool":"smart_find","phase":"completed","detail":"*bootstrap*"}
+{"at":"2026-06-01T00:15:40.954Z","session_id":"ses_17f76ee10ffevdsWbSLp5u3QkU","agent":"cartographer","tool":"smart_find","phase":"started","detail":"*session*"}
+{"at":"2026-06-01T00:15:41.054Z","session_id":"ses_17f76ee10ffevdsWbSLp5u3QkU","agent":"cartographer","tool":"smart_find","phase":"completed","detail":"*session*"}
+{"at":"2026-06-01T00:16:06.347Z","session_id":"ses_17f76ee10ffevdsWbSLp5u3QkU","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"InstanceStore\\.load|instance-store.*load|InstanceRuntime\\.load"}
+{"at":"2026-06-01T00:16:06.635Z","session_id":"ses_17f76ee10ffevdsWbSLp5u3QkU","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"3 matches in 500 files"}
+{"at":"2026-06-01T00:16:07.033Z","session_id":"ses_17f76ee10ffevdsWbSLp5u3QkU","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"sidecar.*ready|bootstrap\\.run|InstanceBootstrap.*run"}
+{"at":"2026-06-01T00:16:07.244Z","session_id":"ses_17f76ee10ffevdsWbSLp5u3QkU","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"1 matches in 500 files"}
+{"at":"2026-06-01T00:16:36.529Z","session_id":"ses_17f76ee10ffevdsWbSLp5u3QkU","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"InstanceRuntime\\.(load|dispose)"}
+{"at":"2026-06-01T00:16:37.482Z","session_id":"ses_17f76ee10ffevdsWbSLp5u3QkU","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"0 matches in 500 files"}
+{"at":"2026-06-01T00:16:37.510Z","session_id":"ses_17f76ee10ffevdsWbSLp5u3QkU","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"StorageAdapter|DatabaseAdapter|storage.*init|adapter.*init"}
+{"at":"2026-06-01T00:16:37.521Z","session_id":"ses_17f76ee10ffevdsWbSLp5u3QkU","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"12 matches in 16 files"}
+{"at":"2026-06-01T00:16:39.024Z","session_id":"ses_17f76ee10ffevdsWbSLp5u3QkU","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"mcp.*connect|mcp.*resolve|mcp.*init|McpTool|mcp.*tool"}
+{"at":"2026-06-01T00:16:39.329Z","session_id":"ses_17f76ee10ffevdsWbSLp5u3QkU","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"11 matches in 500 files"}
+{"at":"2026-06-01T00:17:18.138Z","session_id":"ses_17f76ee10ffevdsWbSLp5u3QkU","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"InstanceRuntime\\.load|InstanceStore\\.load|instance.*load"}
+{"at":"2026-06-01T00:17:18.158Z","session_id":"ses_17f76ee10ffevdsWbSLp5u3QkU","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"0 matches in 74 files"}
+{"at":"2026-06-01T00:17:19.018Z","session_id":"ses_17f76ee10ffevdsWbSLp5u3QkU","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"project.*open|openProject|sidecar.*ready|bootstrap.*run"}
+{"at":"2026-06-01T00:17:19.094Z","session_id":"ses_17f76ee10ffevdsWbSLp5u3QkU","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"30 matches in 163 files"}
+{"at":"2026-06-01T00:18:29.592Z","session_id":"ses_17f76ee10ffevdsWbSLp5u3QkU","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"project\\.open|\"project\\.open\"|command.*project.*open"}
+{"at":"2026-06-01T00:18:29.691Z","session_id":"ses_17f76ee10ffevdsWbSLp5u3QkU","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"19 matches in 199 files"}
+{"at":"2026-06-01T00:18:30.503Z","session_id":"ses_17f76ee10ffevdsWbSLp5u3QkU","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"openProject|loadProject|instance.*open|openInstance"}
+{"at":"2026-06-01T00:18:30.529Z","session_id":"ses_17f76ee10ffevdsWbSLp5u3QkU","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"0 matches in 74 files"}

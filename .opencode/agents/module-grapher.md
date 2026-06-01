@@ -5,6 +5,9 @@ hidden: true
 color: "#00B894"
 description: Module-grapher — graphs dependency relationships. Finds circular imports, orphaned modules, and architectural boundaries.
 permission:
+  leaf_handoff: "allow"
+  ping: "allow"
+  session_journal: "allow"
   feedback(action="tool"): "allow"
   read: "deny"
   bash: "deny"

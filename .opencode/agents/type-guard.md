@@ -5,6 +5,9 @@ hidden: true
 color: "#3498DB"
 description: Type-guard — checks that type signatures haven't changed unintentionally.
 permission:
+  leaf_handoff: "allow"
+  ping: "allow"
+  session_journal: "allow"
   feedback(action="tool"): "allow"
   read: "deny"
   bash: "deny"

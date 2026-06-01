@@ -1,0 +1,18 @@
+{"at":"2026-05-31T21:33:37.459Z","session_id":"ses_1800b71fdffegfYikU9KNoueNw","agent":"first-responder","tool":"smart_bash","phase":"started","detail":"User requested typecheck output, first 200 lines"}
+{"at":"2026-05-31T21:33:37.460Z","session_id":"ses_1800b71fdffegfYikU9KNoueNw","agent":"first-responder","tool":"smart_bash","phase":"rerouted","detail":"→ smart_bun"}
+{"at":"2026-05-31T21:33:38.457Z","session_id":"ses_1800b71fdffegfYikU9KNoueNw","agent":"first-responder","tool":"smart_bash","phase":"started","detail":"User requested typecheck output line count"}
+{"at":"2026-05-31T21:33:38.457Z","session_id":"ses_1800b71fdffegfYikU9KNoueNw","agent":"first-responder","tool":"smart_bash","phase":"rerouted","detail":"→ smart_bun"}
+{"at":"2026-05-31T21:33:39.457Z","session_id":"ses_1800b71fdffegfYikU9KNoueNw","agent":"first-responder","tool":"smart_bash","phase":"started","detail":"User requested typecheck error count"}
+{"at":"2026-05-31T21:33:39.457Z","session_id":"ses_1800b71fdffegfYikU9KNoueNw","agent":"first-responder","tool":"smart_bash","phase":"rerouted","detail":"→ smart_bun"}
+{"at":"2026-05-31T21:33:46.763Z","session_id":"ses_1800b71fdffegfYikU9KNoueNw","agent":"first-responder","tool":"smart_bun","phase":"started","detail":"typecheck"}
+{"at":"2026-05-31T21:34:14.992Z","session_id":"ses_1800b71fdffegfYikU9KNoueNw","agent":"first-responder","tool":"smart_bun","phase":"failed","detail":"typecheck exit=2"}
+{"at":"2026-05-31T21:34:21.452Z","session_id":"ses_1800b71fdffegfYikU9KNoueNw","agent":"first-responder","tool":"smart_bun","phase":"started","detail":"tsgo"}
+{"at":"2026-05-31T21:34:51.698Z","session_id":"ses_1800b71fdffegfYikU9KNoueNw","agent":"first-responder","tool":"smart_bun","phase":"failed","detail":"tsgo exit=2"}
+{"at":"2026-05-31T21:35:05.222Z","session_id":"ses_1800b71fdffegfYikU9KNoueNw","agent":"first-responder","tool":"smart_bash","phase":"started","detail":"Run typecheck and capture full output without piping"}
+{"at":"2026-05-31T21:35:05.222Z","session_id":"ses_1800b71fdffegfYikU9KNoueNw","agent":"first-responder","tool":"smart_bash","phase":"rerouted","detail":"→ smart_bun"}
+{"at":"2026-05-31T21:35:17.167Z","session_id":"ses_1800b71fdffegfYikU9KNoueNw","agent":"first-responder","tool":"smart_bash","phase":"started","detail":"Bypass reroute to capture typecheck output"}
+{"at":"2026-05-31T21:35:44.388Z","session_id":"ses_1800b71fdffegfYikU9KNoueNw","agent":"first-responder","tool":"smart_bash","phase":"completed","detail":"bash exit=0"}
+{"at":"2026-05-31T21:35:51.267Z","session_id":"ses_1800b71fdffegfYikU9KNoueNw","agent":"first-responder","tool":"smart_bash","phase":"started","detail":"Count total lines of typecheck output"}
+{"at":"2026-05-31T21:36:20.659Z","session_id":"ses_1800b71fdffegfYikU9KNoueNw","agent":"first-responder","tool":"smart_bash","phase":"completed","detail":"bash exit=0"}
+{"at":"2026-05-31T21:36:20.703Z","session_id":"ses_1800b71fdffegfYikU9KNoueNw","agent":"first-responder","tool":"smart_bash","phase":"started","detail":"Count typecheck errors"}
+{"at":"2026-05-31T21:36:50.911Z","session_id":"ses_1800b71fdffegfYikU9KNoueNw","agent":"first-responder","tool":"smart_bash","phase":"completed","detail":"bash exit=0"}

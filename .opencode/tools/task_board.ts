@@ -1,6 +1,6 @@
 import { tool } from "@opencode-ai/plugin"
 import { resolve } from "node:path"
-import { existsSync, readdirSync, readFileSync, statSync } from "node:fs"
+import { existsSync, readFileSync } from "node:fs"
 
 function r(worktree: string, p: string): string { return resolve(worktree, p) }
 
@@ -17,146 +17,127 @@ function waveFor(agent: string): string {
 }
 
 export default tool({
-  description: "Fleet dashboard — shows running agents, stale sessions, lane progress, and alerts. Defaults to last 30 minutes. Pure TypeScript, no binary dependency.",
+  description: "Fleet dashboard — reads the unified lane state file. Shows all agents: pending, completed, failed. Pure TypeScript, no binary dependency.",
   args: {
-    max_age_minutes: tool.schema.number().optional().describe("Only show sessions from the last N minutes (default 30). 0 = all sessions."),
-    quick: tool.schema.boolean().optional().describe("Quick mode — only show running/stale agents, skip coordination parsing."),
+    quick: tool.schema.boolean().optional().describe("Quick mode — compact output."),
   },
   async execute(args, context) {
-    const sessionsBase = r(context.worktree, "docs/json/opencode/sessions")
-    const coordPath = r(context.worktree, "docs/json/opencode/coordination/messages.v1.jsonl")
+    const statePath = r(context.worktree, "docs/json/opencode/coordination/lane_state.v1.jsonl")
     const now = Date.now()
-    const maxAge = args.max_age_minutes ?? 30
-    const quick = args.quick ?? false
-    const isGM = context.agent === "general-man-agent" || context.agent === "orchestrator"
 
-    // ── Quick coordination parse (last 100 lines only) ──
-    const delegations: Record<string, { parent: string; agent: string }> = {}
-    if (!quick && existsSync(coordPath)) {
-      try {
-        const content = readFileSync(coordPath, "utf8")
-        const lines = content.split("\n").filter(Boolean)
-        const recent = lines.slice(-200) // Only last 200 lines
-        for (const line of recent) {
-          try {
-            const msg = JSON.parse(line)
-            if (msg.kind === "delegation") {
-              const body = typeof msg.body === "string" ? (() => { try { return JSON.parse(msg.body) } catch { return {} } })() : (msg.body || {})
-              delegations[msg.session_id || body.session_id || "?"] = {
-                parent: msg.sender,
-                agent: msg.recipient || body.agent || "?",
-              }
-            }
-          } catch {}
-        }
-      } catch (_) {}
+    if (!existsSync(statePath)) {
+      return JSON.stringify({
+        summary: "0 running, 0 done — no lane state yet. Announce agents via announce_lane or announce_leaf first.",
+        fleet: [],
+        total: 0,
+      }, null, 2)
     }
 
-    // ── Read recent sessions only ──
+    // ── Read unified state file ──
+    const entries: any[] = []
+    try {
+      const content = readFileSync(statePath, "utf8")
+      const lines = content.split("\n").filter(Boolean)
+      for (const line of lines) {
+        try { entries.push(JSON.parse(line)) } catch {}
+      }
+    } catch {
+      return JSON.stringify({ error: "Cannot read lane state" }, null, 2)
+    }
+
+    if (entries.length === 0) {
+      return JSON.stringify({
+        summary: "0 entries in lane state.",
+        fleet: [],
+        total: 0,
+      }, null, 2)
+    }
+
+    // ── Deduplicate: keep latest status per lane+agent ──
+    const latest = new Map<string, any>()
+    for (const e of entries) {
+      const key = `${e.lane_id}::${e.agent}`
+      latest.set(key, e) // last write wins
+    }
+
+    // ── Build fleet ──
     const fleet: any[] = []
-    const alerts: any[] = []
     const waves: Record<string, number> = {}
 
-    if (existsSync(sessionsBase)) {
-      let dirs: string[] = []
-      try { dirs = readdirSync(sessionsBase) } catch { return JSON.stringify({ error: "Cannot read sessions directory" }, null, 2) }
+    for (const [key, e] of latest) {
+      const wave = waveFor(e.agent)
+      const delegatedAt = e.delegated_at ? new Date(e.delegated_at).getTime() : 0
+      const completedAt = e.completed_at ? new Date(e.completed_at).getTime() : 0
+      const elapsed = delegatedAt ? Math.floor((now - delegatedAt) / 1000) : 0
+      const isRunning = e.status === "pending"
+      const stale = isRunning && elapsed > 180 // 3 minutes stale
 
-      for (const sid of dirs) {
-        // Quick age check via directory mtime
-        const hbPath = r(sessionsBase, sid, "analytics", "heartbeat.v1.jsonl")
-        if (!existsSync(hbPath)) continue
+      if (isRunning) waves[wave] = (waves[wave] || 0) + 1
 
-        // Check directory modification time for quick filtering
-        if (maxAge > 0) {
-          try {
-            const dirStat = statSync(r(sessionsBase, sid))
-            const dirAge = (now - dirStat.mtimeMs) / 60000
-            if (dirAge > maxAge * 2) continue // Skip obviously old dirs
-          } catch { continue }
-        }
-
-        // Read last heartbeat only (fast)
-        let lastHb: any = null
-        let agent = "?"
-        try {
-          const content = readFileSync(hbPath, "utf8")
-          const lines = content.split("\n").filter(Boolean)
-          if (lines.length === 0) continue
-          const lastLine = lines[lines.length - 1]!
-          try { lastHb = JSON.parse(lastLine); agent = lastHb.agent || agent } catch { continue }
-        } catch { continue }
-
-        if (!lastHb) continue
-
-        // Age filter on heartbeat timestamp
-        const hbAge = (now - new Date(lastHb.at).getTime()) / 60000
-        if (maxAge > 0 && hbAge > maxAge) continue
-
-        const elapsed = lastHb.at ? Math.floor((now - new Date(lastHb.at).getTime()) / 1000) : 0
-        const isRunning = lastHb.phase !== "completed" && lastHb.phase !== "failed"
-        const stale = isRunning && hbAge > 3 // 3 minutes stale
-        const wave = waveFor(agent)
-
-        if (isRunning) waves[wave] = (waves[wave] || 0) + 1
-
-        if (stale && isRunning) {
-          alerts.push({ agent, session: sid.slice(0, 12), message: `Stale — no heartbeat for ${Math.floor(hbAge)}m. Last: ${lastHb.tool}:${lastHb.phase}` })
-        }
-
-        const parent = Object.entries(delegations).find(([k]) => k.includes(sid))?.[1]?.parent || null
-
-        fleet.push({
-          session: sid.slice(0, 12),
-          agent,
-          wave,
-          status: isRunning ? "running" : lastHb.phase === "completed" ? "done" : lastHb.phase,
-          current: isRunning ? `${lastHb.tool}:${lastHb.phase}` : "—",
-          detail: (lastHb.detail || "").slice(0, 60),
-          elapsed_s: elapsed,
-          stale,
-          parent,
-        })
-      }
+      fleet.push({
+        agent: e.agent,
+        lane: String(e.lane_id || "").slice(0, 12),
+        wave,
+        status: e.status,
+        delegated_by: e.delegated_by || "",
+        elapsed_s: elapsed,
+        stale: isRunning && stale,
+        auto_completed: e.auto_completed || false,
+      })
     }
 
-    fleet.sort((a, b) => (a.status === "running" ? -1 : 1) || b.elapsed_s - a.elapsed_s)
+    fleet.sort((a, b) => (a.status === "pending" ? -1 : 1) || b.elapsed_s - a.elapsed_s)
 
-    // ── Build response ──
-    const running = fleet.filter(f => f.status === "running")
-    const done = fleet.filter(f => f.status === "done")
+    const pending = fleet.filter(f => f.status === "pending")
+    const done = fleet.filter(f => f.status === "completed")
     const failed = fleet.filter(f => f.status === "failed")
     const staleList = fleet.filter(f => f.stale)
 
     const waveSummary = LIFECYCLE.map(w => {
       const count = waves[w] || 0
       const bar = count > 0 ? "█".repeat(Math.min(count, 12)) : "·"
-      const label = w.padEnd(14)
-      return `${label} ${bar} ${count}`
+      return `${w.padEnd(14)} ${bar} ${count}`
     }).join("\n")
 
+    const quick = args.quick ?? false
+
     const result: any = {
-      summary: `${running.length} running, ${done.length} done, ${failed.length} failed, ${fleet.length} total${staleList.length ? `, ${staleList.length} stale ⚠️` : ""}`,
+      summary: `${pending.length} pending, ${done.length} done, ${failed.length} failed${staleList.length ? `, ${staleList.length} stale ⚠️` : ""}`,
       wave_summary: waveSummary,
-      fleet: fleet.slice(0, 30).map(f => ({
-        agent: f.agent.padEnd(16),
+      fleet: fleet.slice(0, 40).map(f => ({
+        agent: f.agent.padEnd(20),
+        lane: f.lane.padEnd(12),
         wave: f.wave.padEnd(10),
-        status: (f.stale ? "🟡" : f.status === "running" ? "🟢" : f.status === "done" ? "✅" : "❌") + " " + f.status,
-        current: f.current,
-        detail: f.detail,
+        status: (f.stale ? "🟡" : f.status === "pending" ? "🔵" : f.status === "completed" ? "✅" : "❌") + " " + f.status + (f.auto_completed ? " (auto)" : ""),
+        by: f.delegated_by.padEnd(16),
         elapsed: `${f.elapsed_s}s`,
-        parent: f.parent || "",
       })),
       total: fleet.length,
-      shown: Math.min(fleet.length, 30),
+      shown: Math.min(fleet.length, 40),
     }
 
-    if (alerts.length > 0) result.alerts = alerts.slice(0, 10)
+    if (!quick) {
+      // Group by lane
+      const laneGroups = new Map<string, any[]>()
+      for (const f of fleet) {
+        const existing = laneGroups.get(f.lane) || []
+        existing.push(f)
+        laneGroups.set(f.lane, existing)
+      }
+      if (laneGroups.size > 0) {
+        result.lanes = [...laneGroups.entries()].map(([lane, agents]) => ({
+          lane: lane.padEnd(12),
+          agents: agents.map(a => `${a.agent}(${a.status})`).join(" → "),
+        }))
+      }
+    }
 
-    // Hints
     if (staleList.length > 0) {
-      result.hint = `${staleList.length} agent(s) stale. Consider respawning if they're stuck.`
-    } else if (running.length === 0 && done.length > 0) {
-      result.hint = "All agents done. Review handoffs and move to next wave or close session."
+      result.hint = `${staleList.length} agent(s) stale (>3min pending). Consider respawning if stuck.`
+    } else if (pending.length === 0 && done.length > 0) {
+      result.hint = "All agents done. Review handoffs and advance lanes."
+    } else if (pending.length > 0) {
+      result.hint = `${pending.length} agent(s) running. Check messages for handoffs before advancing.`
     }
 
     return JSON.stringify(result, null, 2)

@@ -1,0 +1,22 @@
+{"at":"2026-05-31T23:57:49.655Z","session_id":"ses_17f89f334ffelBcqjQ0cZf7ppn","agent":"architect","tool":"smart_find","phase":"started","detail":"sanitizedProcessEnv*"}
+{"at":"2026-05-31T23:57:49.719Z","session_id":"ses_17f89f334ffelBcqjQ0cZf7ppn","agent":"architect","tool":"smart_find","phase":"completed","detail":"sanitizedProcessEnv*"}
+{"at":"2026-05-31T23:57:50.339Z","session_id":"ses_17f89f334ffelBcqjQ0cZf7ppn","agent":"architect","tool":"smart_find","phase":"started","detail":"ENV_BLOCKLIST*"}
+{"at":"2026-05-31T23:57:50.454Z","session_id":"ses_17f89f334ffelBcqjQ0cZf7ppn","agent":"architect","tool":"smart_find","phase":"completed","detail":"ENV_BLOCKLIST*"}
+{"at":"2026-06-01T00:00:32.106Z","session_id":"ses_17f89f334ffelBcqjQ0cZf7ppn","agent":"architect","tool":"smart_grep","phase":"started","detail":"sanitizedProcessEnv|sanitize.*env|env.*sanitize"}
+{"at":"2026-06-01T00:00:32.217Z","session_id":"ses_17f89f334ffelBcqjQ0cZf7ppn","agent":"architect","tool":"smart_grep","phase":"completed","detail":"13 matches in 7 files"}
+{"at":"2026-06-01T00:00:32.895Z","session_id":"ses_17f89f334ffelBcqjQ0cZf7ppn","agent":"architect","tool":"smart_grep","phase":"started","detail":"ENV_BLOCKLIST|env_blocklist|blocklist"}
+{"at":"2026-06-01T00:00:33.005Z","session_id":"ses_17f89f334ffelBcqjQ0cZf7ppn","agent":"architect","tool":"smart_grep","phase":"completed","detail":"0 matches in 500 files"}
+{"at":"2026-06-01T00:00:34.247Z","session_id":"ses_17f89f334ffelBcqjQ0cZf7ppn","agent":"architect","tool":"smart_grep","phase":"started","detail":"AWS_BEARER_TOKEN_BEDROCK|AICORE_SERVICE_KEY"}
+{"at":"2026-06-01T00:00:34.343Z","session_id":"ses_17f89f334ffelBcqjQ0cZf7ppn","agent":"architect","tool":"smart_grep","phase":"completed","detail":"4 matches in 1 files"}
+{"at":"2026-06-01T00:00:34.358Z","session_id":"ses_17f89f334ffelBcqjQ0cZf7ppn","agent":"architect","tool":"smart_find","phase":"started","detail":"*pt*"}
+{"at":"2026-06-01T00:00:34.421Z","session_id":"ses_17f89f334ffelBcqjQ0cZf7ppn","agent":"architect","tool":"smart_find","phase":"completed","detail":"*pt*"}
+{"at":"2026-06-01T00:03:22.311Z","session_id":"ses_17f89f334ffelBcqjQ0cZf7ppn","agent":"architect","tool":"smart_grep","phase":"started","detail":"function sanitizedProcessEnv|const sanitizedProcessEnv|sanitizedProcessEnv ="}
+{"at":"2026-06-01T00:03:22.617Z","session_id":"ses_17f89f334ffelBcqjQ0cZf7ppn","agent":"architect","tool":"smart_grep","phase":"completed","detail":"0 matches in 500 files"}
+{"at":"2026-06-01T00:06:28.203Z","session_id":"ses_17f89f334ffelBcqjQ0cZf7ppn","agent":"architect","tool":"smart_grep","phase":"started","detail":"sanitize.*Env|process\\.env"}
+{"at":"2026-06-01T00:06:28.336Z","session_id":"ses_17f89f334ffelBcqjQ0cZf7ppn","agent":"architect","tool":"smart_grep","phase":"completed","detail":"30 matches in 101 files"}
+{"at":"2026-06-01T00:10:52.955Z","session_id":"ses_17f89f334ffelBcqjQ0cZf7ppn","agent":"architect","tool":"smart_grep","phase":"started","detail":"export.*sanitizedProcessEnv|function sanitizedProcessEnv"}
+{"at":"2026-06-01T00:10:53.137Z","session_id":"ses_17f89f334ffelBcqjQ0cZf7ppn","agent":"architect","tool":"smart_grep","phase":"completed","detail":"0 matches in 500 files"}
+{"at":"2026-06-01T00:12:28.806Z","session_id":"ses_17f89f334ffelBcqjQ0cZf7ppn","agent":"architect","tool":"smart_grep","phase":"started","detail":"function sanitizedProcessEnv"}
+{"at":"2026-06-01T00:12:29.850Z","session_id":"ses_17f89f334ffelBcqjQ0cZf7ppn","agent":"architect","tool":"smart_grep","phase":"completed","detail":"1 matches in 500 files"}
+{"at":"2026-06-01T00:12:30.630Z","session_id":"ses_17f89f334ffelBcqjQ0cZf7ppn","agent":"architect","tool":"smart_grep","phase":"started","detail":"lsp.*spawn|spawn.*lsp|LSP.*spawn"}
+{"at":"2026-06-01T00:12:30.769Z","session_id":"ses_17f89f334ffelBcqjQ0cZf7ppn","agent":"architect","tool":"smart_grep","phase":"completed","detail":"9 matches in 500 files"}

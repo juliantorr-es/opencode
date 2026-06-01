@@ -5,6 +5,9 @@ hidden: true
 color: "#FDCB6E"
 description: Scoop — gathers raw material for the journalist. Diffs, handoffs, test results from every lane.
 permission:
+  leaf_handoff: "allow"
+  ping: "allow"
+  session_journal: "allow"
   feedback(action="tool"): "allow"
   read: "deny"
   bash: "deny"

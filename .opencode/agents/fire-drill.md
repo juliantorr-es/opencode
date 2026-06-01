@@ -5,6 +5,9 @@ hidden: true
 color: "#3498DB"
 description: Fire-drill — designs end-to-end scenarios a user would perform. Start server, make requests, verify behavior.
 permission:
+  leaf_handoff: "allow"
+  ping: "allow"
+  session_journal: "allow"
   feedback(action="tool"): "allow"
   read: "deny"
   bash: "deny"

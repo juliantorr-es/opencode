@@ -5,6 +5,9 @@ hidden: true
 color: "#00B894"
 description: Diff-historian — analyzes git history to reveal what changed, who touched it, and what patterns emerge.
 permission:
+  leaf_handoff: "allow"
+  ping: "allow"
+  session_journal: "allow"
   feedback(action="tool"): "allow"
   read: "deny"
   bash: "deny"

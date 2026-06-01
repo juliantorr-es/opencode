@@ -1,0 +1,41 @@
+{"at":"2026-05-31T23:25:52.972Z","session_id":"ses_17fa477ecffeTwAqhMwXltK4WA","agent":"module-grapher","tool":"smart_find","pattern":"*","path":"packages/opencode/src/campaign"}
+{"at":"2026-05-31T23:25:53.958Z","session_id":"ses_17fa477ecffeTwAqhMwXltK4WA","agent":"module-grapher","tool":"smart_grep","pattern":"Secretary","path":"packages/opencode/src"}
+{"at":"2026-05-31T23:25:54.664Z","session_id":"ses_17fa477ecffeTwAqhMwXltK4WA","agent":"module-grapher","tool":"smart_grep","pattern":"EventStore","path":"packages/opencode/src"}
+{"at":"2026-05-31T23:26:06.901Z","session_id":"ses_17fa477ecffeTwAqhMwXltK4WA","agent":"module-grapher","tool":"smart_grep","pattern":"db\\.pg","path":"packages/opencode/src"}
+{"at":"2026-05-31T23:26:08.041Z","session_id":"ses_17fa477ecffeTwAqhMwXltK4WA","agent":"module-grapher","tool":"smart_grep","pattern":"PGlite|pglite|@electric","path":"packages/opencode/src"}
+{"at":"2026-05-31T23:27:11.242Z","session_id":"ses_17fa477ecffeTwAqhMwXltK4WA","agent":"module-grapher","tool":"smart_find","pattern":"*","path":"packages/opencode/src/event"}
+{"at":"2026-05-31T23:27:12.509Z","session_id":"ses_17fa477ecffeTwAqhMwXltK4WA","agent":"module-grapher","tool":"smart_grep","pattern":"from.*\\\"@/storage/db\\\"","path":"packages/opencode/src"}
+{"at":"2026-05-31T23:27:35.340Z","session_id":"ses_17fa477ecffeTwAqhMwXltK4WA","agent":"module-grapher","tool":"smart_grep","pattern":"\\\"#db\\\"","path":"packages/opencode"}
+{"at":"2026-05-31T23:28:01.273Z","session_id":"ses_17fa477ecffeTwAqhMwXltK4WA","agent":"module-grapher","tool":"smart_grep","pattern":"\"#db\"","path":"packages/opencode"}
+{"at":"2026-05-31T23:28:02.210Z","session_id":"ses_17fa477ecffeTwAqhMwXltK4WA","agent":"module-grapher","tool":"smart_grep","pattern":"#db|#storage","path":"packages/opencode"}
+{"at":"2026-05-31T23:28:26.315Z","session_id":"ses_17fa477ecffeTwAqhMwXltK4WA","agent":"module-grapher","tool":"smart_grep","pattern":"DatabaseAdapter\\.layer|DatabaseAdapter\\.Service","path":"packages/opencode/src"}
+{"at":"2026-05-31T23:29:05.086Z","session_id":"ses_17fa477ecffeTwAqhMwXltK4WA","agent":"module-grapher","tool":"smart_grep","pattern":"\"#db\"","path":"packages/opencode"}
+{"at":"2026-05-31T23:29:06.724Z","session_id":"ses_17fa477ecffeTwAqhMwXltK4WA","agent":"module-grapher","tool":"smart_grep","pattern":"from.*\\\"../event\\\"|from.*\\\"@/event\\\"","path":"packages/opencode/src"}
+{"at":"2026-05-31T23:29:59.380Z","session_id":"ses_17fa477ecffeTwAqhMwXltK4WA","agent":"module-grapher","tool":"smart_grep","pattern":"^export const","path":"packages/opencode/src/storage/adapter.ts"}
+{"at":"2026-05-31T23:30:00.595Z","session_id":"ses_17fa477ecffeTwAqhMwXltK4WA","agent":"module-grapher","tool":"smart_grep","pattern":"PgAdapter|LocalPgAdapter|makePgAdapter|makeLocalPgAdapter","path":"packages/opencode/src/storage/adapter.ts"}
+{"at":"2026-05-31T23:30:49.187Z","session_id":"ses_17fa477ecffeTwAqhMwXltK4WA","agent":"module-grapher","tool":"smart_grep","pattern":"makeLocalPgAdapter|initPg\\(\\)|new PGlite","path":"packages/opencode/src/storage/adapter.ts"}
+{"at":"2026-05-31T23:30:50.107Z","session_id":"ses_17fa477ecffeTwAqhMwXltK4WA","agent":"module-grapher","tool":"smart_grep","pattern":"loadLane","path":"packages/opencode/src"}
+{"at":"2026-05-31T23:32:43.224Z","session_id":"ses_17fa477ecffeTwAqhMwXltK4WA","agent":"module-grapher","tool":"smart_grep","pattern":"export function makeLocalPgAdapter","path":"packages/opencode/src/storage/adapter.ts"}
+{"at":"2026-05-31T23:33:13.508Z","session_id":"ses_17fa477ecffeTwAqhMwXltK4WA","agent":"module-grapher","tool":"smart_grep","pattern":"makeLocalPgAdapter","path":"packages/opencode/src/storage/adapter.ts"}
+{"at":"2026-05-31T23:33:40.652Z","session_id":"ses_17fa477ecffeTwAqhMwXltK4WA","agent":"module-grapher","tool":"smart_grep","pattern":"initPg","path":"packages/opencode/src/storage/adapter.ts"}
+{"at":"2026-05-31T23:34:11.661Z","session_id":"ses_17fa477ecffeTwAqhMwXltK4WA","agent":"module-grapher","tool":"smart_grep","pattern":"LocalPgAdapter|PgAdapter\\(","path":"packages/opencode/src/storage/adapter.ts"}
+{"at":"2026-05-31T23:36:35.317Z","session_id":"ses_17fa477ecffeTwAqhMwXltK4WA","agent":"module-grapher","tool":"smart_grep","pattern":"const loadLane: Interface","path":"packages/opencode/src/campaign/secretary.ts"}
+{"at":"2026-05-31T23:37:50.197Z","session_id":"ses_17fa477ecffeTwAqhMwXltK4WA","agent":"module-grapher","tool":"smart_grep","pattern":"const loadLane","path":"packages/opencode/src/campaign/secretary.ts"}
+{"at":"2026-05-31T23:39:06.225Z","session_id":"ses_17fa477ecffeTwAqhMwXltK4WA","agent":"module-grapher","tool":"smart_grep","pattern":"from.*secretary|from.*auditor|from.*orchestrator","path":"packages/opencode/src/campaign/binder.ts"}
+{"at":"2026-05-31T23:39:07.091Z","session_id":"ses_17fa477ecffeTwAqhMwXltK4WA","agent":"module-grapher","tool":"smart_grep","pattern":"from.*secretary|from.*orchestrator","path":"packages/opencode/src/campaign/auditor.ts"}
+{"at":"2026-05-31T23:39:07.994Z","session_id":"ses_17fa477ecffeTwAqhMwXltK4WA","agent":"module-grapher","tool":"smart_grep","pattern":"import","path":"packages/opencode/src/campaign/orchestrator.ts"}
+{"at":"2026-05-31T23:39:51.613Z","session_id":"ses_17fa477ecffeTwAqhMwXltK4WA","agent":"module-grapher","tool":"smart_grep","pattern":"^import","path":"packages/opencode/src/campaign/orchestrator.ts"}
+{"at":"2026-05-31T23:39:52.558Z","session_id":"ses_17fa477ecffeTwAqhMwXltK4WA","agent":"module-grapher","tool":"smart_grep","pattern":"import.*from","path":"packages/opencode/src/campaign"}
+{"at":"2026-05-31T23:40:31.729Z","session_id":"ses_17fa477ecffeTwAqhMwXltK4WA","agent":"module-grapher","tool":"smart_grep","pattern":"^import","path":"packages/opencode/src/campaign"}
+{"at":"2026-05-31T23:41:09.429Z","session_id":"ses_17fa477ecffeTwAqhMwXltK4WA","agent":"module-grapher","tool":"smart_grep","pattern":"^import \\{","path":"packages/opencode/src/campaign/orchestrator.ts"}
+{"at":"2026-05-31T23:41:10.307Z","session_id":"ses_17fa477ecffeTwAqhMwXltK4WA","agent":"module-grapher","tool":"smart_grep","pattern":"^import","path":"packages/opencode/src/campaign/projector.ts"}
+{"at":"2026-05-31T23:41:50.669Z","session_id":"ses_17fa477ecffeTwAqhMwXltK4WA","agent":"module-grapher","tool":"smart_grep","pattern":"^import \\{","path":"packages/opencode/src/campaign/orchestrator.ts"}
+{"at":"2026-05-31T23:41:51.580Z","session_id":"ses_17fa477ecffeTwAqhMwXltK4WA","agent":"module-grapher","tool":"smart_grep","pattern":"^import","path":"packages/opencode/src/campaign/projector.ts"}
+{"at":"2026-05-31T23:42:21.186Z","session_id":"ses_17fa477ecffeTwAqhMwXltK4WA","agent":"module-grapher","tool":"smart_grep","pattern":"from.*\\\"@/campaign|from.*\\\"@/campaign/index\\\"","path":"packages/opencode/src"}
+{"at":"2026-05-31T23:43:46.550Z","session_id":"ses_17fa477ecffeTwAqhMwXltK4WA","agent":"module-grapher","tool":"smart_grep","pattern":"reduceCampaignState|state-machine","path":"packages/opencode/src/campaign/orchestrator.ts"}
+{"at":"2026-05-31T23:43:47.450Z","session_id":"ses_17fa477ecffeTwAqhMwXltK4WA","agent":"module-grapher","tool":"smart_grep","pattern":"reduceCampaignState|state-machine","path":"packages/opencode/src/campaign/projector.ts"}
+{"at":"2026-05-31T23:45:54.561Z","session_id":"ses_17fa477ecffeTwAqhMwXltK4WA","agent":"module-grapher","tool":"smart_grep","pattern":"from \\\"@/campaign","path":"packages/opencode/src"}
+{"at":"2026-05-31T23:45:55.307Z","session_id":"ses_17fa477ecffeTwAqhMwXltK4WA","agent":"module-grapher","tool":"smart_grep","pattern":"from.*campaign/index","path":"packages/opencode/src"}
+{"at":"2026-05-31T23:47:25.175Z","session_id":"ses_17fa477ecffeTwAqhMwXltK4WA","agent":"module-grapher","tool":"smart_grep","pattern":"from .*(campaign|\\\"@/campaign\\\")","path":"packages/opencode/src"}
+{"at":"2026-05-31T23:48:17.458Z","session_id":"ses_17fa477ecffeTwAqhMwXltK4WA","agent":"module-grapher","tool":"smart_grep","pattern":"from \\\"@/campaign/","path":"packages/opencode/src"}
+{"at":"2026-05-31T23:48:18.669Z","session_id":"ses_17fa477ecffeTwAqhMwXltK4WA","agent":"module-grapher","tool":"smart_grep","pattern":"import.*from.*\\\"\\.\\./campaign|import.*from.*\\\"\\.\\./\\.\\./campaign","path":"packages/opencode/src"}

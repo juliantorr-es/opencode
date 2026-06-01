@@ -1,0 +1,16 @@
+{"at":"2026-05-31T23:32:00.667Z","session_id":"ses_17fa04d93ffeCK62fMPvW1ilBC","agent":"surveyor","tool":"smart_find","phase":"started","detail":"packages/opencode/src/tool/coordination*"}
+{"at":"2026-05-31T23:32:19.140Z","session_id":"ses_17fa04d93ffeCK62fMPvW1ilBC","agent":"surveyor","tool":"smart_find","phase":"completed","detail":"packages/opencode/src/tool/coordination*"}
+{"at":"2026-05-31T23:36:27.924Z","session_id":"ses_17fa04d93ffeCK62fMPvW1ilBC","agent":"surveyor","tool":"smart_find","phase":"started","detail":"**/coordination*"}
+{"at":"2026-05-31T23:36:27.940Z","session_id":"ses_17fa04d93ffeCK62fMPvW1ilBC","agent":"surveyor","tool":"smart_find","phase":"completed","detail":"**/coordination*"}
+{"at":"2026-05-31T23:36:27.974Z","session_id":"ses_17fa04d93ffeCK62fMPvW1ilBC","agent":"surveyor","tool":"smart_grep","phase":"started","detail":"coordination"}
+{"at":"2026-05-31T23:36:28.092Z","session_id":"ses_17fa04d93ffeCK62fMPvW1ilBC","agent":"surveyor","tool":"smart_grep","phase":"completed","detail":"56 matches in 12 files"}
+{"at":"2026-05-31T23:39:41.932Z","session_id":"ses_17fa04d93ffeCK62fMPvW1ilBC","agent":"surveyor","tool":"smart_grep","phase":"started","detail":"coordination.*sql|coordination.*schema|CoordinationClaim|CoordinationReservation"}
+{"at":"2026-05-31T23:39:41.981Z","session_id":"ses_17fa04d93ffeCK62fMPvW1ilBC","agent":"surveyor","tool":"smart_grep","phase":"completed","detail":"117 matches in 2 files"}
+{"at":"2026-05-31T23:42:48.223Z","session_id":"ses_17fa04d93ffeCK62fMPvW1ilBC","agent":"surveyor","tool":"smart_find","phase":"started","detail":"packages/opencode/src/tool/coordination.sql*"}
+{"at":"2026-05-31T23:43:05.095Z","session_id":"ses_17fa04d93ffeCK62fMPvW1ilBC","agent":"surveyor","tool":"smart_find","phase":"completed","detail":"packages/opencode/src/tool/coordination.sql*"}
+{"at":"2026-05-31T23:43:05.186Z","session_id":"ses_17fa04d93ffeCK62fMPvW1ilBC","agent":"surveyor","tool":"smart_grep","phase":"started","detail":"coordination_claim|coordination_reservation|coordination_fan_out"}
+{"at":"2026-05-31T23:43:05.499Z","session_id":"ses_17fa04d93ffeCK62fMPvW1ilBC","agent":"surveyor","tool":"smart_grep","phase":"completed","detail":"8 matches in 3 files"}
+{"at":"2026-05-31T23:47:35.866Z","session_id":"ses_17fa04d93ffeCK62fMPvW1ilBC","agent":"surveyor","tool":"smart_grep","phase":"started","detail":"coordination.*sqlite|coordination.*pg|from.*coordination\""}
+{"at":"2026-05-31T23:47:36.130Z","session_id":"ses_17fa04d93ffeCK62fMPvW1ilBC","agent":"surveyor","tool":"smart_grep","phase":"completed","detail":"13 matches in 11 files"}
+{"at":"2026-05-31T23:47:36.371Z","session_id":"ses_17fa04d93ffeCK62fMPvW1ilBC","agent":"surveyor","tool":"smart_find","phase":"started","detail":"packages/opencode/migration-pg/*"}
+{"at":"2026-05-31T23:47:54.978Z","session_id":"ses_17fa04d93ffeCK62fMPvW1ilBC","agent":"surveyor","tool":"smart_find","phase":"completed","detail":"packages/opencode/migration-pg/*"}

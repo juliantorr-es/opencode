@@ -129,7 +129,7 @@ export default tool({
     const lines = stdout.split("\n")
     if (lines.length > 40) { output.head = lines.slice(0,20).join("\n"); output.tail = lines.slice(-20).join("\n"); output.truncated = lines.length }
     else if (stdout) output.stdout = stdout
-    if (stderr) output.stderr = stderr.slice(0, 500)
+    if (stderr) output.stderr = stderr.slice(0, 2000)
     if (result.error) { output.status = "error"; output.error = result.error.message }
     hb(context, "smart_bash", result.status === 0 ? "completed" : "failed", `${binary} exit=${result.status}`)
     artifactLog(context, { tool: "smart_bash", action: "bash", command: cmd.slice(0, 100), exit_code: result.status })

@@ -1,0 +1,12 @@
+{"at":"2026-06-01T00:02:51.780Z","session_id":"ses_17f82c425ffeGrZs584XYKNU4g","agent":"surveyor","tool":"smart_bun","command":"test","elapsed_ms":14401,"exit_code":1}
+{"at":"2026-06-01T00:03:07.008Z","session_id":"ses_17f82c425ffeGrZs584XYKNU4g","agent":"surveyor","tool":"smart_bun","command":"test","elapsed_ms":106,"exit_code":1}
+{"at":"2026-06-01T00:03:15.052Z","session_id":"ses_17f82c425ffeGrZs584XYKNU4g","agent":"surveyor","tool":"smart_find","pattern":"pg-lifecycle-proof*","path":"packages/opencode"}
+{"at":"2026-06-01T00:04:31.016Z","session_id":"ses_17f82c425ffeGrZs584XYKNU4g","agent":"surveyor","tool":"smart_bun","command":"test","elapsed_ms":17073,"exit_code":1}
+{"at":"2026-06-01T00:05:15.312Z","session_id":"ses_17f82c425ffeGrZs584XYKNU4g","agent":"surveyor","tool":"smart_bun","command":"tsgo","elapsed_ms":171,"exit_code":2}
+{"at":"2026-06-01T00:06:04.750Z","session_id":"ses_17f82c425ffeGrZs584XYKNU4g","agent":"surveyor","tool":"smart_grep","pattern":"criticOutput","path":"packages/opencode/test/campaign/pg-lifecycle-proof.test.ts"}
+{"at":"2026-06-01T00:06:20.478Z","session_id":"ses_17f82c425ffeGrZs584XYKNU4g","agent":"surveyor","tool":"smart_grep","pattern":"^test\\(|^describe\\(|^    test\\(\"","path":"packages/opencode/test/campaign/pg-lifecycle-proof.test.ts"}
+{"at":"2026-06-01T00:06:44.794Z","session_id":"ses_17f82c425ffeGrZs584XYKNU4g","agent":"surveyor","tool":"smart_grep","pattern":".*","path":"packages/opencode/test/campaign/pg-lifecycle-proof.test.ts"}
+{"at":"2026-06-01T00:07:30.063Z","session_id":"ses_17f82c425ffeGrZs584XYKNU4g","agent":"surveyor","tool":"smart_bun","command":"test","elapsed_ms":9685,"exit_code":1}
+{"at":"2026-06-01T00:08:07.823Z","session_id":"ses_17f82c425ffeGrZs584XYKNU4g","agent":"surveyor","tool":"smart_bun","command":"run","elapsed_ms":21,"exit_code":1}
+{"at":"2026-06-01T00:09:37.184Z","session_id":"ses_17f82c425ffeGrZs584XYKNU4g","agent":"surveyor","tool":"smart_bun","command":"run","elapsed_ms":26042,"exit_code":0}
+{"at":"2026-06-01T00:11:08.978Z","session_id":"ses_17f82c425ffeGrZs584XYKNU4g","agent":"surveyor","tool":"smart_sd","file":"packages/opencode/_runner.ts"}

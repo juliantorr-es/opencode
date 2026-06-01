@@ -1,0 +1,12 @@
+{"at":"2026-05-31T23:11:00.106Z","session_id":"ses_17fb24de9ffet7Zb27WMrKfeY1","agent":"surveyor","tool":"smart_grep","pattern":"EventName|event_name|typed.*error|ErrorEvent|FailureEvent","path":"packages/opencode/src"}
+{"at":"2026-05-31T23:11:00.748Z","session_id":"ses_17fb24de9ffet7Zb27WMrKfeY1","agent":"surveyor","tool":"smart_grep","pattern":"telemetry|emit.*event|logError","path":"packages/opencode/src"}
+{"at":"2026-05-31T23:11:01.474Z","session_id":"ses_17fb24de9ffet7Zb27WMrKfeY1","agent":"surveyor","tool":"smart_grep","pattern":"catch.*log|catch.*telemetry|handleError|onError","path":"packages/opencode/src"}
+{"at":"2026-05-31T23:11:10.856Z","session_id":"ses_17fb24de9ffet7Zb27WMrKfeY1","agent":"surveyor","tool":"smart_find","pattern":"*error*","path":"docs"}
+{"at":"2026-05-31T23:11:17.869Z","session_id":"ses_17fb24de9ffet7Zb27WMrKfeY1","agent":"surveyor","tool":"smart_find","pattern":"*telemetry*","path":"docs"}
+{"at":"2026-05-31T23:11:17.970Z","session_id":"ses_17fb24de9ffet7Zb27WMrKfeY1","agent":"surveyor","tool":"smart_grep","pattern":"safeInvoke|safe.*try","path":"packages/opencode/src"}
+{"at":"2026-05-31T23:15:45.003Z","session_id":"ses_17fb24de9ffet7Zb27WMrKfeY1","agent":"surveyor","tool":"smart_grep","pattern":"writeResult|writeFailure|tool.*telemetry|emitToolError","path":"packages/opencode/src"}
+{"at":"2026-05-31T23:17:23.571Z","session_id":"ses_17fb24de9ffet7Zb27WMrKfeY1","agent":"surveyor","tool":"smart_grep","pattern":"log\\.error|log\\.warn","path":"packages/opencode/src/mcp"}
+{"at":"2026-05-31T23:17:24.227Z","session_id":"ses_17fb24de9ffet7Zb27WMrKfeY1","agent":"surveyor","tool":"smart_grep","pattern":"GlobalBus\\.emit","path":"packages/opencode/src"}
+{"at":"2026-05-31T23:19:36.401Z","session_id":"ses_17fb24de9ffet7Zb27WMrKfeY1","agent":"surveyor","tool":"smart_grep","pattern":"writeResult\\|writeFailure\\|writeError\\|Stage 5\\|toolUsage|ToolUsage","path":"packages/opencode/src/tool"}
+{"at":"2026-05-31T23:19:39.082Z","session_id":"ses_17fb24de9ffet7Zb27WMrKfeY1","agent":"surveyor","tool":"smart_grep","pattern":"classifyError|errorKind|error_kind","path":"packages/opencode/src"}
+{"at":"2026-05-31T23:19:39.851Z","session_id":"ses_17fb24de9ffet7Zb27WMrKfeY1","agent":"surveyor","tool":"smart_grep","pattern":"typed-result|TypedResult|RuntimeEvent|runtime.event","path":"packages/opencode/src/event"}

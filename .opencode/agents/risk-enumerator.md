@@ -5,6 +5,9 @@ hidden: true
 color: "#6C5CE7"
 description: Risk-enumerator — enumerates every risk in the proposed plan with probability, impact, and mitigation.
 permission:
+  leaf_handoff: "allow"
+  ping: "allow"
+  session_journal: "allow"
   feedback(action="tool"): "allow"
   read: "deny"
   bash: "deny"

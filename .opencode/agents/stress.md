@@ -5,6 +5,9 @@ hidden: true
 color: "#D63031"
 description: Stress — pushes the system to its limits with load, concurrency, edge cases, and failure injection.
 permission:
+  leaf_handoff: "allow"
+  ping: "allow"
+  session_journal: "allow"
   feedback(action="tool"): "allow"
   read: "deny"
   bash: "deny"

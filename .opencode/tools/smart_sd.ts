@@ -50,8 +50,8 @@ export default tool({
       const oldFirstLine = args.old.split("\n")[0].trim()
       const matches: string[] = []
       for (let i = 0; i < lines.length; i++) {
-        if (lines[i].includes(oldFirstLine.slice(0, 20))) {
-          matches.push(`  line ${i+1}: ${lines[i].trim().slice(0, 120)}`)
+        if (lines[i].includes(oldFirstLine.slice(0, 40))) {
+          matches.push(`  line ${i+1}: ${lines[i].trim().slice(0, 200)}`)
         }
       }
       return JSON.stringify({

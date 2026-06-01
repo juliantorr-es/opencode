@@ -5,6 +5,9 @@ hidden: true
 color: "#3498DB"
 description: Discharge — assembles findings from all trial agents into root cause and fix options.
 permission:
+  leaf_handoff: "allow"
+  ping: "allow"
+  session_journal: "allow"
   feedback(action="tool"): "allow"
   read: "deny"
   bash: "deny"

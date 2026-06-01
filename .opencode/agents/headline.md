@@ -5,6 +5,9 @@ hidden: true
 color: "#FDCB6E"
 description: Headline — writes the PR title and release note headline following conventional format.
 permission:
+  leaf_handoff: "allow"
+  ping: "allow"
+  session_journal: "allow"
   feedback(action="tool"): "allow"
   read: "deny"
   bash: "deny"

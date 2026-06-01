@@ -5,6 +5,9 @@ hidden: true
 color: "#00B894"
 description: Surveyor — maps project structure and discovers canonical code patterns. Finds 5+ examples of every pattern.
 permission:
+  leaf_handoff: "allow"
+  ping: "allow"
+  session_journal: "allow"
   feedback(action="tool"): "allow"
   read: "deny"
   bash: "deny"

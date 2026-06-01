@@ -5,6 +5,9 @@ hidden: true
 color: "#6C5CE7"
 description: "Validation-designer — designs the validation strategy: what to test, how to verify, acceptance criteria."
 permission:
+  leaf_handoff: "allow"
+  ping: "allow"
+  session_journal: "allow"
   feedback(action="tool"): "allow"
   read: "deny"
   bash: "deny"

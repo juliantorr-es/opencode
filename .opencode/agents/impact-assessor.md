@@ -5,6 +5,9 @@ hidden: true
 color: "#6C5CE7"
 description: Impact-assessor — assesses blast radius and downstream impact of proposed changes.
 permission:
+  leaf_handoff: "allow"
+  ping: "allow"
+  session_journal: "allow"
   feedback(action="tool"): "allow"
   read: "deny"
   bash: "deny"

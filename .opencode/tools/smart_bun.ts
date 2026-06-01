@@ -150,19 +150,35 @@ export default tool({
       if (failMatch) testSummary.fail = parseInt(failMatch[1])
       if (totalMatch) testSummary.total = parseInt(totalMatch[1])
       
-      // Extract individual test names from output
+      // Extract individual test names AND failure details from output
       const testLines = stdout.split("\n")
       const passed: string[] = []
-      const failed: string[] = []
+      const failed: { name: string; details: string[] }[] = []
+      let currentFailure: { name: string; details: string[] } | null = null
       for (const line of testLines) {
         const pf = line.match(/^\s*(✓|✗)\s+(.+?)\s+\[([\d.]+)(m?s)\]/)
         if (pf) {
-          if (pf[1] === "✓") passed.push(pf[2]!.trim())
-          else failed.push(pf[2]!.trim())
+          if (currentFailure) failed.push(currentFailure)
+          currentFailure = null
+          if (pf[1] === "✓") {
+            passed.push(pf[2]!.trim())
+          } else {
+            currentFailure = { name: pf[2]!.trim(), details: [] }
+          }
+        } else if (currentFailure && line.trim()) {
+          currentFailure.details.push(line.trimEnd())
         }
       }
+      if (currentFailure) failed.push(currentFailure)
+
       if (passed.length > 0) testSummary.passed_tests = passed.slice(0, 20)
-      if (failed.length > 0) testSummary.failed_tests = failed.slice(0, 20)
+      if (failed.length > 0) {
+        testSummary.failed_tests = failed.map(f => f.name).slice(0, 20)
+        testSummary.failure_details = failed.slice(0, 10).map(f => ({
+          test: f.name,
+          error: f.details.slice(0, 8).join("\n").slice(0, 500),
+        }))
+      }
 
       // Log test results to analytics
       try {
@@ -173,7 +189,7 @@ export default tool({
             at: new Date().toISOString(), session_id: context.sessionID, agent: context.agent,
             command: args.command, cwd: args.cwd || "root", elapsed_ms: elapsed,
             pass: testSummary.pass || 0, fail: testSummary.fail || 0, total: testSummary.total || 0,
-            passed_tests: passed, failed_tests: failed,
+            passed_tests: passed, failed_tests: failed.map(f => f.name),
           }) + "\n", "utf8")
       } catch (_) {}
     }
@@ -237,6 +253,7 @@ export default tool({
         output.message = `${testSummary.pass || 0} pass, ${testSummary.fail} fail, ${testSummary.total || "?"} total`
         output.elapsed_ms = elapsed
         if (testSummary.failed_tests) output.failed = testSummary.failed_tests
+        if (testSummary.failure_details) output.failure_details = testSummary.failure_details
       } else if (result.status !== 0) {
         output.status = "💥 TOOL ERROR"
         output.message = `Test command failed (exit ${result.status}). The test script may not exist.`

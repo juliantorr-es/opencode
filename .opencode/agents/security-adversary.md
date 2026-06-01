@@ -5,6 +5,9 @@ hidden: true
 color: "#D63031"
 description: "Security-adversary — attacks from a security angle: injection, escaping, privilege escalation."
 permission:
+  leaf_handoff: "allow"
+  ping: "allow"
+  session_journal: "allow"
   feedback(action="tool"): "allow"
   read: "deny"
   bash: "deny"

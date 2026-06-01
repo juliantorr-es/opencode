@@ -1,4 +1,4 @@
-import { pgTable, text, integer, index, primaryKey, real, jsonb } from "drizzle-orm/pg-core"
+import { pgTable, text, integer, bigint, index, primaryKey, real, jsonb } from "drizzle-orm/pg-core"
 import { ProjectTable } from "../project/project.pg.sql"
 import type { MessageV2 } from "./message-v2"
 import type { SessionMessage } from "@opencode-ai/core/session-message"
@@ -48,8 +48,8 @@ export const SessionTable = pgTable(
       variant?: string
     }>(),
     ...TimestampsPg,
-    time_compacting: integer(),
-    time_archived: integer(),
+    time_compacting: bigint("time_compacting", { mode: "number" }),
+    time_archived: bigint("time_archived", { mode: "number" }),
   },
   (table) => [
     index("session_project_idx").on(table.project_id),

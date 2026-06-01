@@ -5,6 +5,9 @@ hidden: true
 color: "#D63031"
 description: Tourniquet — reverts edits that cause regressions. Returns clean revert confirmation plus an alternative approach suggestion.
 permission:
+  leaf_handoff: "allow"
+  ping: "allow"
+  session_journal: "allow"
   feedback(action="tool"): "allow"
   read: "deny"
   bash: "deny"

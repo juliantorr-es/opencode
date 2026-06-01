@@ -5,6 +5,9 @@ hidden: true
 color: "#E17055"
 description: Surface-area-mapper — maps the full surface area of the change to identify all affected code paths.
 permission:
+  leaf_handoff: "allow"
+  ping: "allow"
+  session_journal: "allow"
   feedback(action="tool"): "allow"
   read: "deny"
   bash: "deny"

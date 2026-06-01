@@ -1,0 +1,46 @@
+{"at":"2026-05-31T23:22:43.442Z","session_id":"ses_17fa75f58ffewx25VH6sjBCPuw","agent":"coupling-auditor","tool":"smart_grep","phase":"started","detail":"Observability"}
+{"at":"2026-05-31T23:22:43.544Z","session_id":"ses_17fa75f58ffewx25VH6sjBCPuw","agent":"coupling-auditor","tool":"smart_grep","phase":"completed","detail":"8 matches in 4 files"}
+{"at":"2026-05-31T23:22:44.481Z","session_id":"ses_17fa75f58ffewx25VH6sjBCPuw","agent":"coupling-auditor","tool":"smart_grep","phase":"started","detail":"import.*Schema.*from.*effect"}
+{"at":"2026-05-31T23:22:44.488Z","session_id":"ses_17fa75f58ffewx25VH6sjBCPuw","agent":"coupling-auditor","tool":"smart_grep","phase":"completed","detail":"3 matches in 3 files"}
+{"at":"2026-05-31T23:22:45.409Z","session_id":"ses_17fa75f58ffewx25VH6sjBCPuw","agent":"coupling-auditor","tool":"smart_grep","phase":"started","detail":"Schema\\.Class"}
+{"at":"2026-05-31T23:22:45.526Z","session_id":"ses_17fa75f58ffewx25VH6sjBCPuw","agent":"coupling-auditor","tool":"smart_grep","phase":"completed","detail":"31 matches in 11 files"}
+{"at":"2026-05-31T23:22:56.089Z","session_id":"ses_17fa75f58ffewx25VH6sjBCPuw","agent":"coupling-auditor","tool":"smart_find","phase":"started","detail":"**/observability*"}
+{"at":"2026-05-31T23:22:57.122Z","session_id":"ses_17fa75f58ffewx25VH6sjBCPuw","agent":"coupling-auditor","tool":"smart_find","phase":"completed","detail":"**/observability*"}
+{"at":"2026-05-31T23:22:57.283Z","session_id":"ses_17fa75f58ffewx25VH6sjBCPuw","agent":"coupling-auditor","tool":"smart_grep","phase":"started","detail":"annotateLogs|logInfo.*bootstrap"}
+{"at":"2026-05-31T23:22:57.395Z","session_id":"ses_17fa75f58ffewx25VH6sjBCPuw","agent":"coupling-auditor","tool":"smart_grep","phase":"completed","detail":"20 matches in 357 files"}
+{"at":"2026-05-31T23:23:02.113Z","session_id":"ses_17fa75f58ffewx25VH6sjBCPuw","agent":"coupling-auditor","tool":"smart_find","phase":"started","detail":"**/observability.ts"}
+{"at":"2026-05-31T23:23:04.289Z","session_id":"ses_17fa75f58ffewx25VH6sjBCPuw","agent":"coupling-auditor","tool":"smart_find","phase":"completed","detail":"**/observability.ts"}
+{"at":"2026-05-31T23:23:04.389Z","session_id":"ses_17fa75f58ffewx25VH6sjBCPuw","agent":"coupling-auditor","tool":"smart_grep","phase":"started","detail":"import.*Schema"}
+{"at":"2026-05-31T23:23:04.519Z","session_id":"ses_17fa75f58ffewx25VH6sjBCPuw","agent":"coupling-auditor","tool":"smart_grep","phase":"completed","detail":"265 matches in 243 files"}
+{"at":"2026-05-31T23:23:26.206Z","session_id":"ses_17fa75f58ffewx25VH6sjBCPuw","agent":"coupling-auditor","tool":"smart_grep","phase":"started","detail":"logInfo.*phase|bootstrap_phase|bootstrap_trace|trace.*bootstrap"}
+{"at":"2026-05-31T23:23:26.362Z","session_id":"ses_17fa75f58ffewx25VH6sjBCPuw","agent":"coupling-auditor","tool":"smart_grep","phase":"completed","detail":"0 matches in 500 files"}
+{"at":"2026-05-31T23:23:27.189Z","session_id":"ses_17fa75f58ffewx25VH6sjBCPuw","agent":"coupling-auditor","tool":"smart_grep","phase":"started","detail":"Effect\\.logInfo|Effect\\.logWarning|Effect\\.logError"}
+{"at":"2026-05-31T23:23:27.192Z","session_id":"ses_17fa75f58ffewx25VH6sjBCPuw","agent":"coupling-auditor","tool":"smart_grep","phase":"completed","detail":"7 matches in 10 files"}
+{"at":"2026-05-31T23:23:33.184Z","session_id":"ses_17fa75f58ffewx25VH6sjBCPuw","agent":"coupling-auditor","tool":"smart_grep","phase":"started","detail":"observability\\.layer|Observability\\.layer"}
+{"at":"2026-05-31T23:23:34.059Z","session_id":"ses_17fa75f58ffewx25VH6sjBCPuw","agent":"coupling-auditor","tool":"smart_grep","phase":"completed","detail":"1 matches in 500 files"}
+{"at":"2026-05-31T23:23:34.203Z","session_id":"ses_17fa75f58ffewx25VH6sjBCPuw","agent":"coupling-auditor","tool":"smart_grep","phase":"started","detail":"^import \""}
+{"at":"2026-05-31T23:23:34.205Z","session_id":"ses_17fa75f58ffewx25VH6sjBCPuw","agent":"coupling-auditor","tool":"smart_grep","phase":"completed","detail":"0 matches in 10 files"}
+{"at":"2026-05-31T23:23:56.644Z","session_id":"ses_17fa75f58ffewx25VH6sjBCPuw","agent":"coupling-auditor","tool":"smart_grep","phase":"started","detail":"^import \"\\.\\./"}
+{"at":"2026-05-31T23:23:56.791Z","session_id":"ses_17fa75f58ffewx25VH6sjBCPuw","agent":"coupling-auditor","tool":"smart_grep","phase":"completed","detail":"0 matches in 500 files"}
+{"at":"2026-05-31T23:24:40.930Z","session_id":"ses_17fa75f58ffewx25VH6sjBCPuw","agent":"coupling-auditor","tool":"smart_grep","phase":"started","detail":"Effect\\.gen.*yield\\*.*logInfo.*annotateLogs"}
+{"at":"2026-05-31T23:24:41.090Z","session_id":"ses_17fa75f58ffewx25VH6sjBCPuw","agent":"coupling-auditor","tool":"smart_grep","phase":"completed","detail":"0 matches in 500 files"}
+{"at":"2026-05-31T23:24:59.365Z","session_id":"ses_17fa75f58ffewx25VH6sjBCPuw","agent":"coupling-auditor","tool":"smart_grep","phase":"started","detail":"GlobalBus\\.emit"}
+{"at":"2026-05-31T23:24:59.371Z","session_id":"ses_17fa75f58ffewx25VH6sjBCPuw","agent":"coupling-auditor","tool":"smart_grep","phase":"completed","detail":"2 matches in 10 files"}
+{"at":"2026-05-31T23:25:00.411Z","session_id":"ses_17fa75f58ffewx25VH6sjBCPuw","agent":"coupling-auditor","tool":"smart_grep","phase":"started","detail":"server\\.instance\\.\""}
+{"at":"2026-05-31T23:25:00.565Z","session_id":"ses_17fa75f58ffewx25VH6sjBCPuw","agent":"coupling-auditor","tool":"smart_grep","phase":"completed","detail":"0 matches in 500 files"}
+{"at":"2026-05-31T23:25:16.653Z","session_id":"ses_17fa75f58ffewx25VH6sjBCPuw","agent":"coupling-auditor","tool":"smart_grep","phase":"started","detail":"server\\.instance\\."}
+{"at":"2026-05-31T23:25:16.782Z","session_id":"ses_17fa75f58ffewx25VH6sjBCPuw","agent":"coupling-auditor","tool":"smart_grep","phase":"completed","detail":"4 matches in 500 files"}
+{"at":"2026-05-31T23:25:17.599Z","session_id":"ses_17fa75f58ffewx25VH6sjBCPuw","agent":"coupling-auditor","tool":"smart_grep","phase":"started","detail":"EventName|event-names"}
+{"at":"2026-05-31T23:25:17.601Z","session_id":"ses_17fa75f58ffewx25VH6sjBCPuw","agent":"coupling-auditor","tool":"smart_grep","phase":"completed","detail":"6 matches in 10 files"}
+{"at":"2026-05-31T23:27:10.249Z","session_id":"ses_17fa75f58ffewx25VH6sjBCPuw","agent":"coupling-auditor","tool":"smart_grep","phase":"started","detail":"InstanceBootstrap|bootstrap\\.run"}
+{"at":"2026-05-31T23:27:10.251Z","session_id":"ses_17fa75f58ffewx25VH6sjBCPuw","agent":"coupling-auditor","tool":"smart_grep","phase":"completed","detail":"11 matches in 10 files"}
+{"at":"2026-05-31T23:27:11.218Z","session_id":"ses_17fa75f58ffewx25VH6sjBCPuw","agent":"coupling-auditor","tool":"smart_grep","phase":"started","detail":"bootstrap\\.run|InstanceBootstrap"}
+{"at":"2026-05-31T23:27:11.325Z","session_id":"ses_17fa75f58ffewx25VH6sjBCPuw","agent":"coupling-auditor","tool":"smart_grep","phase":"completed","detail":"16 matches in 500 files"}
+{"at":"2026-05-31T23:29:04.628Z","session_id":"ses_17fa75f58ffewx25VH6sjBCPuw","agent":"coupling-auditor","tool":"smart_grep","phase":"started","detail":"bot_ready|bot\\.ready|bot_degraded|instance\\.ready"}
+{"at":"2026-05-31T23:29:04.794Z","session_id":"ses_17fa75f58ffewx25VH6sjBCPuw","agent":"coupling-auditor","tool":"smart_grep","phase":"completed","detail":"0 matches in 500 files"}
+{"at":"2026-05-31T23:30:03.669Z","session_id":"ses_17fa75f58ffewx25VH6sjBCPuw","agent":"coupling-auditor","tool":"smart_grep","phase":"started","detail":"instance\\.ready|instance\\.failed|instance\\.degraded"}
+{"at":"2026-05-31T23:30:03.849Z","session_id":"ses_17fa75f58ffewx25VH6sjBCPuw","agent":"coupling-auditor","tool":"smart_grep","phase":"completed","detail":"0 matches in 500 files"}
+{"at":"2026-05-31T23:30:47.088Z","session_id":"ses_17fa75f58ffewx25VH6sjBCPuw","agent":"coupling-auditor","tool":"smart_grep","phase":"started","detail":"import.*from.*\"@/project/bootstrap\""}
+{"at":"2026-05-31T23:30:47.667Z","session_id":"ses_17fa75f58ffewx25VH6sjBCPuw","agent":"coupling-auditor","tool":"smart_grep","phase":"completed","detail":"1 matches in 500 files"}
+{"at":"2026-05-31T23:30:48.273Z","session_id":"ses_17fa75f58ffewx25VH6sjBCPuw","agent":"coupling-auditor","tool":"smart_grep","phase":"started","detail":"from \"\\.\\./bootstrap|from \"\\./bootstrap\""}
+{"at":"2026-05-31T23:30:48.667Z","session_id":"ses_17fa75f58ffewx25VH6sjBCPuw","agent":"coupling-auditor","tool":"smart_grep","phase":"completed","detail":"2 matches in 500 files"}

@@ -60,7 +60,7 @@ export default tool({
         status: "error",
         error: "old_text not found in file. The text must match exactly including whitespace and indentation.",
         hint: "Check for trailing whitespace, tabs vs spaces, or line ending differences.",
-        file_head: snippet.slice(0, 500),
+        file_head: snippet.slice(0, 2000),
       }, null, 2)
     }
     

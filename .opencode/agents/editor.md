@@ -5,6 +5,9 @@ hidden: true
 color: "#FDCB6E"
 description: Editor — reviews and polishes the journalist's output for clarity, correctness, and consistency.
 permission:
+  leaf_handoff: "allow"
+  ping: "allow"
+  session_journal: "allow"
   feedback(action="tool"): "allow"
   read: "deny"
   bash: "deny"

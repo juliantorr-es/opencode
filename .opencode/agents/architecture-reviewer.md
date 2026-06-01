@@ -5,6 +5,9 @@ hidden: true
 color: "#6C5CE7"
 description: Architecture-reviewer — reviews the plan for structural soundness, convention adherence, and consistency.
 permission:
+  leaf_handoff: "allow"
+  ping: "allow"
+  session_journal: "allow"
   feedback(action="tool"): "allow"
   read: "deny"
   bash: "deny"

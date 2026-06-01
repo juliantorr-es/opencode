@@ -5,6 +5,9 @@ hidden: true
 color: "#6C5CE7"
 description: Root-cause-analyst — traces failures through the layer graph to find where they originate, not where they surface.
 permission:
+  leaf_handoff: "allow"
+  ping: "allow"
+  session_journal: "allow"
   feedback(action="tool"): "allow"
   read: "deny"
   bash: "deny"

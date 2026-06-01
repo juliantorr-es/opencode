@@ -1,3 +1,28 @@
+## OpenCode Fork — Agent Workflow Lab
+
+This repository is my personal fork of OpenCode. It is not the upstream OpenCode project and is not affiliated with the OpenCode team.
+
+I use this fork as a working lab for AI coding-agent workflows, repo cartography, validation gates, review agents, tool wrappers, and multi-agent development patterns.
+
+### What I changed in this fork
+
+| Path | Purpose |
+| --- | --- |
+| `.opencode/` | Custom agent profiles, workflow tools, repo navigation helpers, review agents, and validation utilities. |
+| `docs/json/` | Structured audits, architecture notes, cartography outputs, and evidence records. |
+| `.build/rig-relay/` | Generated investigation artifacts, planning records, and implementation evidence from agent-assisted development sessions. |
+| `AGENTS.md`, `PROJECT.md`, `TOOL_GUIDE.md`, and related project files | Operating rules, workflow documentation, and repo-specific development guidance. |
+
+### Why this fork matters
+
+This fork is meant to show applied work inside a real AI coding-agent codebase. The focus is not just prompting an agent, but building repeatable engineering workflows around agents: scoped tool use, evidence-backed review, structured findings, safer automation, and reproducible development lanes.
+
+### Upstream project
+
+The original OpenCode README is preserved below for reference.
+
+---
+
 <p align="center">
   <a href="https://opencode.ai">
     <picture>

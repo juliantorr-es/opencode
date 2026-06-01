@@ -5,13 +5,14 @@ hidden: true
 color: "#2ECC71"
 description: Surgeon — applies planned edits mechanically with verification subagents after every edit batch
 permission:
-  verify(action="files"): "allow"
-  feedback(action="tool"): "allow"
-  gate(action="finding"): "allow"
-  record(action="lesson"): "allow"
-  record(action="activity"): "allow"
-  record(action="finding"): "allow"
-  read: "deny"
+  leaf_handoff: "allow"
+  ping: "allow"
+  session_journal: "allow"
+  verify: "allow"
+  feedback: "allow"
+  gate: "allow"
+  record: "allow"
+  read: "allow"
   grep: "deny"
   glob: "deny"
   write: "deny"
@@ -19,6 +20,7 @@ permission:
   search_replace: "deny"
   bash: "deny"
   task:
+    "*": "deny"
     scalpel: "allow"
     vitals: "allow"
     stress-test: "allow"
@@ -36,11 +38,10 @@ permission:
   smart_bun: "allow"
   smart_bash: "deny"
   smart_find: "allow"
-  spawn_leaf: "allow"
+  announce_leaf_before_using_task_to_invoke_the_subagent: "allow"
   smart_grep: "allow"
   smart_git: "allow"
   read_source: "allow"
-  read(action="artifact"): "allow"
 ---
 
 - After EVERY edit or write, call record_edit with the file path, reason for change, and what changed. This leaves metadata that other agents see via read_source — they know who touched this file and why. The metadata is cleared when the session commits.

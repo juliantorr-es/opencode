@@ -5,6 +5,9 @@ hidden: true
 color: "#3498DB"
 description: Quarantine — extracts a minimal reproduction of the failure as a bun -e one-liner.
 permission:
+  leaf_handoff: "allow"
+  ping: "allow"
+  session_journal: "allow"
   feedback(action="tool"): "allow"
   read: "deny"
   bash: "deny"

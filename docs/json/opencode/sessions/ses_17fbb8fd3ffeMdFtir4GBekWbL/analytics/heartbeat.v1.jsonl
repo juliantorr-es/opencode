@@ -1,0 +1,52 @@
+{"at":"2026-05-31T23:02:07.164Z","session_id":"ses_17fbb8fd3ffeMdFtir4GBekWbL","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"sidecar"}
+{"at":"2026-05-31T23:02:07.298Z","session_id":"ses_17fbb8fd3ffeMdFtir4GBekWbL","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"1 matches in 1 files"}
+{"at":"2026-05-31T23:02:07.621Z","session_id":"ses_17fbb8fd3ffeMdFtir4GBekWbL","agent":"cartographer","tool":"smart_find","phase":"started","detail":"*sidecar*"}
+{"at":"2026-05-31T23:02:07.699Z","session_id":"ses_17fbb8fd3ffeMdFtir4GBekWbL","agent":"cartographer","tool":"smart_find","phase":"completed","detail":"*sidecar*"}
+{"at":"2026-05-31T23:02:08.204Z","session_id":"ses_17fbb8fd3ffeMdFtir4GBekWbL","agent":"cartographer","tool":"smart_find","phase":"started","detail":"*instance*"}
+{"at":"2026-05-31T23:02:08.292Z","session_id":"ses_17fbb8fd3ffeMdFtir4GBekWbL","agent":"cartographer","tool":"smart_find","phase":"completed","detail":"*instance*"}
+{"at":"2026-05-31T23:02:08.562Z","session_id":"ses_17fbb8fd3ffeMdFtir4GBekWbL","agent":"cartographer","tool":"smart_find","phase":"started","detail":"*bootstrap*"}
+{"at":"2026-05-31T23:02:08.809Z","session_id":"ses_17fbb8fd3ffeMdFtir4GBekWbL","agent":"cartographer","tool":"smart_find","phase":"completed","detail":"*bootstrap*"}
+{"at":"2026-05-31T23:02:51.266Z","session_id":"ses_17fbb8fd3ffeMdFtir4GBekWbL","agent":"cartographer","tool":"smart_find","phase":"started","detail":"*lifecycle*"}
+{"at":"2026-05-31T23:02:51.307Z","session_id":"ses_17fbb8fd3ffeMdFtir4GBekWbL","agent":"cartographer","tool":"smart_find","phase":"completed","detail":"*lifecycle*"}
+{"at":"2026-05-31T23:02:52.507Z","session_id":"ses_17fbb8fd3ffeMdFtir4GBekWbL","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"trace|startup.*phase|Phase|opencode.*trace"}
+{"at":"2026-05-31T23:02:52.631Z","session_id":"ses_17fbb8fd3ffeMdFtir4GBekWbL","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"279 matches in 64 files"}
+{"at":"2026-05-31T23:02:53.164Z","session_id":"ses_17fbb8fd3ffeMdFtir4GBekWbL","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"lifecycle|Lifecycle|LIFECYCLE"}
+{"at":"2026-05-31T23:02:53.251Z","session_id":"ses_17fbb8fd3ffeMdFtir4GBekWbL","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"170 matches in 32 files"}
+{"at":"2026-05-31T23:02:54.095Z","session_id":"ses_17fbb8fd3ffeMdFtir4GBekWbL","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"degraded|DEGRADED|Degraded"}
+{"at":"2026-05-31T23:02:54.180Z","session_id":"ses_17fbb8fd3ffeMdFtir4GBekWbL","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"3 matches in 2 files"}
+{"at":"2026-05-31T23:03:23.750Z","session_id":"ses_17fbb8fd3ffeMdFtir4GBekWbL","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"ErrorClass|error.*class|class.*Error"}
+{"at":"2026-05-31T23:03:23.907Z","session_id":"ses_17fbb8fd3ffeMdFtir4GBekWbL","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"147 matches in 55 files"}
+{"at":"2026-05-31T23:03:24.959Z","session_id":"ses_17fbb8fd3ffeMdFtir4GBekWbL","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"opencode.*error|ErrorCode|FAILED|fail.*code"}
+{"at":"2026-05-31T23:03:25.051Z","session_id":"ses_17fbb8fd3ffeMdFtir4GBekWbL","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"60 matches in 32 files"}
+{"at":"2026-05-31T23:04:14.890Z","session_id":"ses_17fbb8fd3ffeMdFtir4GBekWbL","agent":"cartographer","tool":"smart_find","phase":"started","detail":"*cli*"}
+{"at":"2026-05-31T23:04:15.029Z","session_id":"ses_17fbb8fd3ffeMdFtir4GBekWbL","agent":"cartographer","tool":"smart_find","phase":"completed","detail":"*cli*"}
+{"at":"2026-05-31T23:04:27.921Z","session_id":"ses_17fbb8fd3ffeMdFtir4GBekWbL","agent":"cartographer","tool":"smart_find","phase":"started","detail":"*.ts"}
+{"at":"2026-05-31T23:04:27.923Z","session_id":"ses_17fbb8fd3ffeMdFtir4GBekWbL","agent":"cartographer","tool":"smart_find","phase":"completed","detail":"*.ts"}
+{"at":"2026-05-31T23:04:57.488Z","session_id":"ses_17fbb8fd3ffeMdFtir4GBekWbL","agent":"cartographer","tool":"smart_find","phase":"started","detail":"index.ts"}
+{"at":"2026-05-31T23:04:57.541Z","session_id":"ses_17fbb8fd3ffeMdFtir4GBekWbL","agent":"cartographer","tool":"smart_find","phase":"completed","detail":"index.ts"}
+{"at":"2026-05-31T23:04:58.533Z","session_id":"ses_17fbb8fd3ffeMdFtir4GBekWbL","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"Server\\.listen|import.*Server.*from.*server\""}
+{"at":"2026-05-31T23:04:58.640Z","session_id":"ses_17fbb8fd3ffeMdFtir4GBekWbL","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"6 matches in 5 files"}
+{"at":"2026-05-31T23:05:13.533Z","session_id":"ses_17fbb8fd3ffeMdFtir4GBekWbL","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"opencode.*command|effectCmd|server.*start|\\.command\\(\""}
+{"at":"2026-05-31T23:05:13.534Z","session_id":"ses_17fbb8fd3ffeMdFtir4GBekWbL","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"4 matches in 2 files"}
+{"at":"2026-05-31T23:05:14.543Z","session_id":"ses_17fbb8fd3ffeMdFtir4GBekWbL","agent":"cartographer","tool":"smart_find","phase":"started","detail":"*.ts"}
+{"at":"2026-05-31T23:05:14.559Z","session_id":"ses_17fbb8fd3ffeMdFtir4GBekWbL","agent":"cartographer","tool":"smart_find","phase":"completed","detail":"*.ts"}
+{"at":"2026-05-31T23:05:22.410Z","session_id":"ses_17fbb8fd3ffeMdFtir4GBekWbL","agent":"cartographer","tool":"smart_find","phase":"started","detail":"main.ts"}
+{"at":"2026-05-31T23:05:22.474Z","session_id":"ses_17fbb8fd3ffeMdFtir4GBekWbL","agent":"cartographer","tool":"smart_find","phase":"completed","detail":"main.ts"}
+{"at":"2026-05-31T23:05:36.035Z","session_id":"ses_17fbb8fd3ffeMdFtir4GBekWbL","agent":"cartographer","tool":"smart_find","phase":"started","detail":"index.ts"}
+{"at":"2026-05-31T23:05:36.048Z","session_id":"ses_17fbb8fd3ffeMdFtir4GBekWbL","agent":"cartographer","tool":"smart_find","phase":"completed","detail":"index.ts"}
+{"at":"2026-05-31T23:06:14.531Z","session_id":"ses_17fbb8fd3ffeMdFtir4GBekWbL","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"listen\\(|Server\\.listen"}
+{"at":"2026-05-31T23:06:14.534Z","session_id":"ses_17fbb8fd3ffeMdFtir4GBekWbL","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"0 matches in 9 files"}
+{"at":"2026-05-31T23:06:14.546Z","session_id":"ses_17fbb8fd3ffeMdFtir4GBekWbL","agent":"cartographer","tool":"smart_find","phase":"started","detail":"*.ts"}
+{"at":"2026-05-31T23:06:14.546Z","session_id":"ses_17fbb8fd3ffeMdFtir4GBekWbL","agent":"cartographer","tool":"smart_find","phase":"failed","detail":"path not found"}
+{"at":"2026-05-31T23:06:24.519Z","session_id":"ses_17fbb8fd3ffeMdFtir4GBekWbL","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"\"serve\"|\"web\"|server"}
+{"at":"2026-05-31T23:06:24.522Z","session_id":"ses_17fbb8fd3ffeMdFtir4GBekWbL","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"9 matches in 3 files"}
+{"at":"2026-05-31T23:06:25.319Z","session_id":"ses_17fbb8fd3ffeMdFtir4GBekWbL","agent":"cartographer","tool":"smart_find","phase":"started","detail":"*command*"}
+{"at":"2026-05-31T23:06:25.319Z","session_id":"ses_17fbb8fd3ffeMdFtir4GBekWbL","agent":"cartographer","tool":"smart_find","phase":"completed","detail":"*command*"}
+{"at":"2026-05-31T23:06:33.505Z","session_id":"ses_17fbb8fd3ffeMdFtir4GBekWbL","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"Server\\.listen|server\\.listen"}
+{"at":"2026-05-31T23:06:33.619Z","session_id":"ses_17fbb8fd3ffeMdFtir4GBekWbL","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"14 matches in 6 files"}
+{"at":"2026-05-31T23:06:34.281Z","session_id":"ses_17fbb8fd3ffeMdFtir4GBekWbL","agent":"cartographer","tool":"smart_find","phase":"started","detail":"serve*"}
+{"at":"2026-05-31T23:06:34.381Z","session_id":"ses_17fbb8fd3ffeMdFtir4GBekWbL","agent":"cartographer","tool":"smart_find","phase":"completed","detail":"serve*"}
+{"at":"2026-05-31T23:08:17.688Z","session_id":"ses_17fbb8fd3ffeMdFtir4GBekWbL","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"startup|bootstrap|instance.*init"}
+{"at":"2026-05-31T23:08:17.718Z","session_id":"ses_17fbb8fd3ffeMdFtir4GBekWbL","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"14 matches in 6 files"}
+{"at":"2026-05-31T23:08:18.648Z","session_id":"ses_17fbb8fd3ffeMdFtir4GBekWbL","agent":"cartographer","tool":"smart_grep","phase":"started","detail":"opencode|sidecar|spawn"}
+{"at":"2026-05-31T23:08:18.654Z","session_id":"ses_17fbb8fd3ffeMdFtir4GBekWbL","agent":"cartographer","tool":"smart_grep","phase":"completed","detail":"226 matches in 22 files"}

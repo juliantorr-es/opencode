@@ -1,0 +1,35 @@
+{
+  "artifact": "intended-lifecycle-spine",
+  "version": "v1",
+  "lane_id": "CAMPAIGN-LIFECYCLE-RECONCILIATION",
+  "generated_at": "2026-05-31T00:00:00Z",
+  "source_of_truth": "Mission spec Phase 0",
+  "lifecycle_order": [
+    { "step": 1, "label": "create lane", "description": "Lane is created via Secretary.createLane() or equivalent — persisted as a durable event" },
+    { "step": 2, "label": "binder exists immediately", "description": "After lane creation, binder state exists and is reconstructable" },
+    { "step": 3, "label": "scout completes", "description": "Cartographer/scout role produces scout report; results are persisted via handleRoleOutput" },
+    { "step": 4, "label": "scope is synthesized", "description": "Scope is synthesized from scout output and persisted" },
+    { "step": 5, "label": "architect produces plan", "description": "Architect role produces an architecture plan; persisted via handleRoleOutput" },
+    { "step": 6, "label": "critic approves or rejects", "description": "Critic role reviews the plan; approval advances to execution, rejection routes to repair" },
+    { "step": 7, "label": "claims are acquired before execution", "description": "Claims must be acquired (or explicitly waived) before executor can apply material work" },
+    { "step": 8, "label": "executor applies material work", "description": "Surgeon/executor role applies edits; file.edited and edit.applied events are persisted" },
+    { "step": 9, "label": "validator validates after latest edit", "description": "Validation must be proven to happen after the latest material edit" },
+    { "step": 10, "label": "red team records findings", "description": "Red team runs adversarial tests; findings (blocking and non-blocking) are persisted" },
+    { "step": 11, "label": "blocking findings route to repair", "description": "Blocking findings trigger architect→critic→surgeon→trial repair cycle" },
+    { "step": 12, "label": "non-blocking findings are preserved", "description": "Non-blocking findings are recorded but do not force repair; lane proceeds" },
+    { "step": 13, "label": "historian creates checkpoint", "description": "Checkpoint is created via CheckpointCreated event" },
+    { "step": 14, "label": "lane is returned", "description": "LaneReturned event emitted; lane enters terminal state" },
+    { "step": 15, "label": "binder finalizes after required evidence", "description": "Binder.finalized is the final mutation; no evidence added after" },
+    { "step": 16, "label": "terminal lane rejects later mutation", "description": "After returned, any further mutation or role output produces typed terminal-lane error; binder digest does not change" },
+    { "step": 17, "label": "loadLane reconstructs from durable events", "description": "Cold-start reconstruction: loadLane rebuilds state from durable events without relying on in-memory cache" }
+  ],
+  "critical_invariants": [
+    "Cold-start reconstruction must use same PGlite/EventStore data while recreating Secretary",
+    "Binder evidence must contain actual sections: scout report, architecture plan, critic review, execution events, validation results, red-team findings, checkpoint, handoff, terminal status, artifact digest",
+    "binder.finalized must be the final binder mutation event — no evidence added after finalization",
+    "After returned, any further mutation or role output must produce a typed terminal-lane error — binder digest must not change",
+    "An approved lane must only advance to executing after positive claim evidence exists; no-claim path must be explicitly represented",
+    "Validation must be proven to happen after the latest material edit (including both file.edited and edit.applied)",
+    "Blocking findings → repair. Non-blocking findings → recorded but lane proceeds if RedTeamCompleted says zero blocking findings"
+  ]
+}

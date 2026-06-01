@@ -1,0 +1,16 @@
+{"at":"2026-05-31T21:35:38.776Z","session_id":"ses_18009ccefffenI3XCFD99IuHJ1","agent":"trial","tool":"smart_bun","phase":"started","detail":"test"}
+{"at":"2026-05-31T21:36:02.236Z","session_id":"ses_18009ccefffenI3XCFD99IuHJ1","agent":"trial","tool":"smart_bun","phase":"failed","detail":"test exit=1"}
+{"at":"2026-05-31T21:36:11.886Z","session_id":"ses_18009ccefffenI3XCFD99IuHJ1","agent":"trial","tool":"smart_bash","phase":"started","detail":"Run the pg-lifecycle-proof test and capture complete raw stdout/stderr"}
+{"at":"2026-05-31T21:36:11.886Z","session_id":"ses_18009ccefffenI3XCFD99IuHJ1","agent":"trial","tool":"smart_bash","phase":"rerouted","detail":"→ smart_bun"}
+{"at":"2026-05-31T21:36:25.117Z","session_id":"ses_18009ccefffenI3XCFD99IuHJ1","agent":"trial","tool":"smart_bun","phase":"started","detail":"test"}
+{"at":"2026-05-31T21:36:46.659Z","session_id":"ses_18009ccefffenI3XCFD99IuHJ1","agent":"trial","tool":"smart_bun","phase":"failed","detail":"test exit=1"}
+{"at":"2026-05-31T21:37:15.074Z","session_id":"ses_18009ccefffenI3XCFD99IuHJ1","agent":"trial","tool":"smart_write","phase":"started","detail":"/Users/user/Developer/GitHub/opencode-desktop-dev/packages/opencode/run_test.sh"}
+{"at":"2026-05-31T21:37:15.075Z","session_id":"ses_18009ccefffenI3XCFD99IuHJ1","agent":"trial","tool":"smart_write","phase":"completed","detail":"/Users/user/Developer/GitHub/opencode-desktop-dev/packages/opencode/run_test.sh"}
+{"at":"2026-05-31T21:37:20.154Z","session_id":"ses_18009ccefffenI3XCFD99IuHJ1","agent":"trial","tool":"smart_bash","phase":"started","detail":"Run the test via a bash script to capture complete output"}
+{"at":"2026-05-31T21:37:34.850Z","session_id":"ses_18009ccefffenI3XCFD99IuHJ1","agent":"trial","tool":"smart_bash","phase":"failed","detail":"bash exit=1"}
+{"at":"2026-05-31T21:38:18.426Z","session_id":"ses_18009ccefffenI3XCFD99IuHJ1","agent":"trial","tool":"smart_write","phase":"started","detail":"/Users/user/Developer/GitHub/opencode-desktop-dev/packages/opencode/run_test.sh"}
+{"at":"2026-05-31T21:38:18.558Z","session_id":"ses_18009ccefffenI3XCFD99IuHJ1","agent":"trial","tool":"smart_write","phase":"completed","detail":"/Users/user/Developer/GitHub/opencode-desktop-dev/packages/opencode/run_test.sh"}
+{"at":"2026-05-31T21:39:27.674Z","session_id":"ses_18009ccefffenI3XCFD99IuHJ1","agent":"trial","tool":"smart_bash","phase":"started","detail":"Run test and capture full output to file"}
+{"at":"2026-05-31T21:39:50.078Z","session_id":"ses_18009ccefffenI3XCFD99IuHJ1","agent":"trial","tool":"smart_bash","phase":"completed","detail":"bash exit=0"}
+{"at":"2026-05-31T21:40:37.681Z","session_id":"ses_18009ccefffenI3XCFD99IuHJ1","agent":"trial","tool":"smart_bash","phase":"started","detail":"Clean up temporary test script and output file"}
+{"at":"2026-05-31T21:40:37.708Z","session_id":"ses_18009ccefffenI3XCFD99IuHJ1","agent":"trial","tool":"smart_bash","phase":"completed","detail":"rm exit=0"}

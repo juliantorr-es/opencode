@@ -5,6 +5,9 @@ hidden: true
 color: "#00B894"
 description: Test-reader — reads existing tests to understand conventions, patterns, and coverage gaps.
 permission:
+  leaf_handoff: "allow"
+  ping: "allow"
+  session_journal: "allow"
   feedback(action="tool"): "allow"
   read: "deny"
   bash: "deny"

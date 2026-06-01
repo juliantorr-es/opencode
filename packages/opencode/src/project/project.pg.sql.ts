@@ -1,4 +1,4 @@
-import { pgTable, text, integer, jsonb } from "drizzle-orm/pg-core"
+import { pgTable, text, bigint, jsonb } from "drizzle-orm/pg-core"
 import { TimestampsPg } from "../storage/schema.pg.sql"
 import type { ProjectID } from "./schema"
 
@@ -11,7 +11,7 @@ export const ProjectTable = pgTable("project", {
   icon_url_override: text(),
   icon_color: text(),
   ...TimestampsPg,
-  time_initialized: integer(),
+  time_initialized: bigint("time_initialized", { mode: "number" }),
   sandboxes: jsonb().notNull().$type<string[]>(),
   commands: jsonb().$type<{ start?: string }>(),
 })

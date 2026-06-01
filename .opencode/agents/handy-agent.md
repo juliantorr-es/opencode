@@ -5,6 +5,9 @@ hidden: true
 color: "#9B59B6"
 description: Handy-agent — quick-fix specialist for narrow, well-scoped bugs. Spawned by General Man-agent for fast one-shot repairs. NOT part of the main lifecycle — the surgeon handles repair via its internal team (scalpel/vitals/etc.).
 permission:
+  leaf_handoff: "allow"
+  ping: "allow"
+  session_journal: "allow"
   feedback(action="tool"): "allow"
   gate(action="finding"): "allow"
   record(action="lesson"): "allow"

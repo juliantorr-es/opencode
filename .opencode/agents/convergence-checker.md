@@ -5,6 +5,9 @@ hidden: true
 color: "#E17055"
 description: Convergence-checker — verifies the plan converges to the root cause without drifting into adjacent concerns.
 permission:
+  leaf_handoff: "allow"
+  ping: "allow"
+  session_journal: "allow"
   feedback(action="tool"): "allow"
   read: "deny"
   bash: "deny"

@@ -1,0 +1,12 @@
+{"at":"2026-06-01T00:15:39.832Z","session_id":"ses_17f76ee10ffevdsWbSLp5u3QkU","agent":"cartographer","tool":"smart_find","pattern":"*instance*","path":"packages/opencode/src"}
+{"at":"2026-06-01T00:15:40.435Z","session_id":"ses_17f76ee10ffevdsWbSLp5u3QkU","agent":"cartographer","tool":"smart_find","pattern":"*bootstrap*","path":"packages/opencode/src"}
+{"at":"2026-06-01T00:15:41.054Z","session_id":"ses_17f76ee10ffevdsWbSLp5u3QkU","agent":"cartographer","tool":"smart_find","pattern":"*session*","path":"packages/opencode/src"}
+{"at":"2026-06-01T00:16:06.635Z","session_id":"ses_17f76ee10ffevdsWbSLp5u3QkU","agent":"cartographer","tool":"smart_grep","pattern":"InstanceStore\\.load|instance-store.*load|InstanceRuntime\\.load","path":"packages/opencode/src"}
+{"at":"2026-06-01T00:16:07.243Z","session_id":"ses_17f76ee10ffevdsWbSLp5u3QkU","agent":"cartographer","tool":"smart_grep","pattern":"sidecar.*ready|bootstrap\\.run|InstanceBootstrap.*run","path":"packages/opencode/src"}
+{"at":"2026-06-01T00:16:37.481Z","session_id":"ses_17f76ee10ffevdsWbSLp5u3QkU","agent":"cartographer","tool":"smart_grep","pattern":"InstanceRuntime\\.(load|dispose)","path":"packages"}
+{"at":"2026-06-01T00:16:37.521Z","session_id":"ses_17f76ee10ffevdsWbSLp5u3QkU","agent":"cartographer","tool":"smart_grep","pattern":"StorageAdapter|DatabaseAdapter|storage.*init|adapter.*init","path":"packages/opencode/src/storage"}
+{"at":"2026-06-01T00:16:39.327Z","session_id":"ses_17f76ee10ffevdsWbSLp5u3QkU","agent":"cartographer","tool":"smart_grep","pattern":"mcp.*connect|mcp.*resolve|mcp.*init|McpTool|mcp.*tool","path":"packages/opencode/src"}
+{"at":"2026-06-01T00:17:18.158Z","session_id":"ses_17f76ee10ffevdsWbSLp5u3QkU","agent":"cartographer","tool":"smart_grep","pattern":"InstanceRuntime\\.load|InstanceStore\\.load|instance.*load","path":"packages/desktop/src"}
+{"at":"2026-06-01T00:17:19.094Z","session_id":"ses_17f76ee10ffevdsWbSLp5u3QkU","agent":"cartographer","tool":"smart_grep","pattern":"project.*open|openProject|sidecar.*ready|bootstrap.*run","path":"packages/app/src"}
+{"at":"2026-06-01T00:18:29.691Z","session_id":"ses_17f76ee10ffevdsWbSLp5u3QkU","agent":"cartographer","tool":"smart_grep","pattern":"project\\.open|\"project\\.open\"|command.*project.*open","path":"packages/app/src"}
+{"at":"2026-06-01T00:18:30.529Z","session_id":"ses_17f76ee10ffevdsWbSLp5u3QkU","agent":"cartographer","tool":"smart_grep","pattern":"openProject|loadProject|instance.*open|openInstance","path":"packages/desktop/src"}

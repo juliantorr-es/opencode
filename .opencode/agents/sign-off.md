@@ -5,6 +5,9 @@ hidden: true
 color: "#2ECC71"
 description: Sign-off — final checklist before declaring done. Aggregates from all validators.
 permission:
+  leaf_handoff: "allow"
+  ping: "allow"
+  session_journal: "allow"
   feedback(action="tool"): "allow"
   read: "deny"
   bash: "deny"

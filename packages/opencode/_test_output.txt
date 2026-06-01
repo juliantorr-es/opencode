@@ -1,0 +1,212 @@
+bun test v1.3.14 (0d9b296a)
+
+test/campaign/pg-lifecycle-proof.test.ts:
+146 |       yield* secretary.processEvent(lid, planProduced(lid, cid))
+147 |       expect(yield* stateOf(lid)).toBe("critic_review")
+148 | 
+149 |       // critic_review → approved
+150 |       yield* secretary.handleRoleOutput(lid, criticOutput("approved"))
+151 |       expect(yield* stateOf(lid)).toBe("approved")
+                                        ^
+error: expect(received).toBe(expected)
+
+Expected: "approved"
+Received: "planning"
+
+      at <anonymous> (/Users/user/Developer/GitHub/opencode-desktop-dev/packages/opencode/test/campaign/pg-lifecycle-proof.test.ts:151:35)
+      at ~effect/Effect/successCont (/Users/user/Developer/GitHub/opencode-desktop-dev/node_modules/.bun/effect@4.0.0-beta.66/node_modules/effect/dist/internal/effect.js:870:26)
+      at runLoop (/Users/user/Developer/GitHub/opencode-desktop-dev/node_modules/.bun/effect@4.0.0-beta.66/node_modules/effect/dist/internal/effect.js:444:98)
+      at evaluate (/Users/user/Developer/GitHub/opencode-desktop-dev/node_modules/.bun/effect@4.0.0-beta.66/node_modules/effect/dist/internal/effect.js:412:23)
+      at <anonymous> (/Users/user/Developer/GitHub/opencode-desktop-dev/node_modules/.bun/effect@4.0.0-beta.66/node_modules/effect/dist/internal/effect.js:723:15)
+(fail) PG Lifecycle: Full Happy Path > lane traverses created → returned through SM transitions [2299.62ms]
+188 |       const cid = "camp-return"
+189 |       const lid = yield* fastestHappyPath(cid)
+190 | 
+191 |       // State should be returned (terminal)
+192 |       const state = yield* stateOf(lid)
+193 |       expect(state).toBe("returned")
+                          ^
+error: expect(received).toBe(expected)
+
+Expected: "returned"
+Received: "scouting"
+
+      at <anonymous> (/Users/user/Developer/GitHub/opencode-desktop-dev/packages/opencode/test/campaign/pg-lifecycle-proof.test.ts:193:21)
+      at ~effect/Effect/successCont (/Users/user/Developer/GitHub/opencode-desktop-dev/node_modules/.bun/effect@4.0.0-beta.66/node_modules/effect/dist/internal/effect.js:870:26)
+      at runLoop (/Users/user/Developer/GitHub/opencode-desktop-dev/node_modules/.bun/effect@4.0.0-beta.66/node_modules/effect/dist/internal/effect.js:444:98)
+      at evaluate (/Users/user/Developer/GitHub/opencode-desktop-dev/node_modules/.bun/effect@4.0.0-beta.66/node_modules/effect/dist/internal/effect.js:412:23)
+      at <anonymous> (/Users/user/Developer/GitHub/opencode-desktop-dev/node_modules/.bun/effect@4.0.0-beta.66/node_modules/effect/dist/internal/effect.js:723:15)
+(fail) PG Lifecycle: Full Happy Path > returnLane finalizes binder after terminal state [1760.11ms]
+431 |       }).pipe(
+432 |         Effect.catchTag("DatabaseError", () => Effect.succeed([])),
+433 |       )
+434 | 
+435 |       if (stored.length === 0) {
+436 |         return yield* Effect.fail(new LaneNotFoundError({ laneId, message: `Lane ${laneId} not found in EventStore` }))
+                                        ^
+error: Lane lane-camp-cold-1780272613018-kelv02 not found in EventStore
+ laneId: "lane-camp-cold-1780272613018-kelv02",
+   _tag: "LaneNotFoundError",
+
+      at <anonymous> (/Users/user/Developer/GitHub/opencode-desktop-dev/packages/opencode/src/campaign/secretary.ts:436:35)
+      at ~effect/Effect/successCont (/Users/user/Developer/GitHub/opencode-desktop-dev/node_modules/.bun/effect@4.0.0-beta.66/node_modules/effect/dist/internal/effect.js:870:26)
+      at runLoop (/Users/user/Developer/GitHub/opencode-desktop-dev/node_modules/.bun/effect@4.0.0-beta.66/node_modules/effect/dist/internal/effect.js:444:98)
+      at evaluate (/Users/user/Developer/GitHub/opencode-desktop-dev/node_modules/.bun/effect@4.0.0-beta.66/node_modules/effect/dist/internal/effect.js:412:23)
+      at <anonymous> (/Users/user/Developer/GitHub/opencode-desktop-dev/node_modules/.bun/effect@4.0.0-beta.66/node_modules/effect/dist/internal/effect.js:723:15)
+(fail) PG Lifecycle: Cold-Start Reconstruction > loadLane reconstructs state from EventStore (not in-memory Ref) [3350.37ms]
+(pass) PG Lifecycle: Cold-Start Reconstruction > loadLane throws LaneNotFoundError for nonexistent lane [2855.45ms]
+256 |       const secretary = yield* Secretary.Service
+257 |       const cid = "camp-term"
+258 |       const lid = yield* fastestHappyPath(cid)
+259 | 
+260 |       const state = yield* stateOf(lid)
+261 |       expect(state).toBe("returned")
+                          ^
+error: expect(received).toBe(expected)
+
+Expected: "returned"
+Received: "scouting"
+
+      at <anonymous> (/Users/user/Developer/GitHub/opencode-desktop-dev/packages/opencode/test/campaign/pg-lifecycle-proof.test.ts:261:21)
+      at ~effect/Effect/successCont (/Users/user/Developer/GitHub/opencode-desktop-dev/node_modules/.bun/effect@4.0.0-beta.66/node_modules/effect/dist/internal/effect.js:870:26)
+      at runLoop (/Users/user/Developer/GitHub/opencode-desktop-dev/node_modules/.bun/effect@4.0.0-beta.66/node_modules/effect/dist/internal/effect.js:444:98)
+      at evaluate (/Users/user/Developer/GitHub/opencode-desktop-dev/node_modules/.bun/effect@4.0.0-beta.66/node_modules/effect/dist/internal/effect.js:412:23)
+      at <anonymous> (/Users/user/Developer/GitHub/opencode-desktop-dev/node_modules/.bun/effect@4.0.0-beta.66/node_modules/effect/dist/internal/effect.js:723:15)
+(fail) PG Lifecycle: Terminal State Rejects Mutation > processEvent on returned lane should be rejected [2241.11ms]
+295 | 
+296 |       const state = yield* stateOf(lid)
+297 |       // Rejected critic should NOT advance to approved
+298 |       expect(state).not.toBe("approved")
+299 |       // Should go back to planning
+300 |       expect(state).toBe("planning")
+                          ^
+error: expect(received).toBe(expected)
+
+Expected: "planning"
+Received: "scouting"
+
+      at <anonymous> (/Users/user/Developer/GitHub/opencode-desktop-dev/packages/opencode/test/campaign/pg-lifecycle-proof.test.ts:300:21)
+      at ~effect/Effect/successCont (/Users/user/Developer/GitHub/opencode-desktop-dev/node_modules/.bun/effect@4.0.0-beta.66/node_modules/effect/dist/internal/effect.js:870:26)
+      at runLoop (/Users/user/Developer/GitHub/opencode-desktop-dev/node_modules/.bun/effect@4.0.0-beta.66/node_modules/effect/dist/internal/effect.js:444:98)
+      at evaluate (/Users/user/Developer/GitHub/opencode-desktop-dev/node_modules/.bun/effect@4.0.0-beta.66/node_modules/effect/dist/internal/effect.js:412:23)
+      at <anonymous> (/Users/user/Developer/GitHub/opencode-desktop-dev/node_modules/.bun/effect@4.0.0-beta.66/node_modules/effect/dist/internal/effect.js:723:15)
+(fail) PG Lifecycle: Critic Rejection > rejected critic output does not produce approved state [1217.28ms]
+312 | 
+313 |       yield* secretary.processEvent(lid, contextSufficient(lid, cid))
+314 |       yield* secretary.processEvent(lid, scopeSynthesized(lid, cid))
+315 |       yield* secretary.processEvent(lid, planProduced(lid, cid))
+316 |       yield* secretary.handleRoleOutput(lid, criticOutput("rejected"))
+317 |       expect(yield* stateOf(lid)).toBe("planning")
+                                        ^
+error: expect(received).toBe(expected)
+
+Expected: "planning"
+Received: "scouting"
+
+      at <anonymous> (/Users/user/Developer/GitHub/opencode-desktop-dev/packages/opencode/test/campaign/pg-lifecycle-proof.test.ts:317:35)
+      at ~effect/Effect/successCont (/Users/user/Developer/GitHub/opencode-desktop-dev/node_modules/.bun/effect@4.0.0-beta.66/node_modules/effect/dist/internal/effect.js:870:26)
+      at runLoop (/Users/user/Developer/GitHub/opencode-desktop-dev/node_modules/.bun/effect@4.0.0-beta.66/node_modules/effect/dist/internal/effect.js:444:98)
+      at evaluate (/Users/user/Developer/GitHub/opencode-desktop-dev/node_modules/.bun/effect@4.0.0-beta.66/node_modules/effect/dist/internal/effect.js:412:23)
+      at <anonymous> (/Users/user/Developer/GitHub/opencode-desktop-dev/node_modules/.bun/effect@4.0.0-beta.66/node_modules/effect/dist/internal/effect.js:723:15)
+(fail) PG Lifecycle: Critic Rejection > after critic rejection, revised plan can be approved [1040.30ms]
+342 |       yield* secretary.processEvent(lid, scopeSynthesized(lid, cid))
+343 |       yield* secretary.processEvent(lid, planProduced(lid, cid))
+344 |       yield* secretary.handleRoleOutput(lid, criticOutput("approved"))
+345 | 
+346 |       yield* secretary.processEvent(lid, claimsAcquired(lid, cid, ["src/a.ts", "src/b.ts"]))
+347 |       expect(yield* stateOf(lid)).toBe("executing")
+                                        ^
+error: expect(received).toBe(expected)
+
+Expected: "executing"
+Received: "scouting"
+
+      at <anonymous> (/Users/user/Developer/GitHub/opencode-desktop-dev/packages/opencode/test/campaign/pg-lifecycle-proof.test.ts:347:35)
+      at ~effect/Effect/successCont (/Users/user/Developer/GitHub/opencode-desktop-dev/node_modules/.bun/effect@4.0.0-beta.66/node_modules/effect/dist/internal/effect.js:870:26)
+      at runLoop (/Users/user/Developer/GitHub/opencode-desktop-dev/node_modules/.bun/effect@4.0.0-beta.66/node_modules/effect/dist/internal/effect.js:444:98)
+      at evaluate (/Users/user/Developer/GitHub/opencode-desktop-dev/node_modules/.bun/effect@4.0.0-beta.66/node_modules/effect/dist/internal/effect.js:412:23)
+      at <anonymous> (/Users/user/Developer/GitHub/opencode-desktop-dev/node_modules/.bun/effect@4.0.0-beta.66/node_modules/effect/dist/internal/effect.js:723:15)
+(fail) PG Lifecycle: Claims Gate > claims_acquired with non-empty paths advances to executing [969.74ms]
+(pass) PG Lifecycle: Claims Gate > claims with empty files may not satisfy the gate [795.66ms]
+394 |       yield* secretary.processEvent(lid, editApplied(lid, cid))
+395 |       yield* secretary.handleRoleOutput(lid, executorOutput())
+396 |       yield* secretary.processEvent(lid, validationPassed(lid, cid))
+397 |       yield* secretary.handleRoleOutput(lid, validatorOutput())
+398 | 
+399 |       expect(yield* stateOf(lid)).toBe("red_team")
+                                        ^
+error: expect(received).toBe(expected)
+
+Expected: "red_team"
+Received: "scouting"
+
+      at <anonymous> (/Users/user/Developer/GitHub/opencode-desktop-dev/packages/opencode/test/campaign/pg-lifecycle-proof.test.ts:399:35)
+      at ~effect/Effect/successCont (/Users/user/Developer/GitHub/opencode-desktop-dev/node_modules/.bun/effect@4.0.0-beta.66/node_modules/effect/dist/internal/effect.js:870:26)
+      at runLoop (/Users/user/Developer/GitHub/opencode-desktop-dev/node_modules/.bun/effect@4.0.0-beta.66/node_modules/effect/dist/internal/effect.js:444:98)
+      at evaluate (/Users/user/Developer/GitHub/opencode-desktop-dev/node_modules/.bun/effect@4.0.0-beta.66/node_modules/effect/dist/internal/effect.js:412:23)
+      at <anonymous> (/Users/user/Developer/GitHub/opencode-desktop-dev/node_modules/.bun/effect@4.0.0-beta.66/node_modules/effect/dist/internal/effect.js:723:15)
+(fail) PG Lifecycle: Validation Freshness > validation after edit allows progression to red_team [821.61ms]
+422 |       yield* secretary.processEvent(lid, claimsAcquired(lid, cid))
+423 |       yield* secretary.processEvent(lid, editApplied(lid, cid))
+424 |       yield* secretary.handleRoleOutput(lid, executorOutput())
+425 |       yield* secretary.processEvent(lid, validationPassed(lid, cid))
+426 |       yield* secretary.handleRoleOutput(lid, validatorOutput())
+427 |       expect(yield* stateOf(lid)).toBe("red_team")
+                                        ^
+error: expect(received).toBe(expected)
+
+Expected: "red_team"
+Received: "scouting"
+
+      at <anonymous> (/Users/user/Developer/GitHub/opencode-desktop-dev/packages/opencode/test/campaign/pg-lifecycle-proof.test.ts:427:35)
+      at ~effect/Effect/successCont (/Users/user/Developer/GitHub/opencode-desktop-dev/node_modules/.bun/effect@4.0.0-beta.66/node_modules/effect/dist/internal/effect.js:870:26)
+      at runLoop (/Users/user/Developer/GitHub/opencode-desktop-dev/node_modules/.bun/effect@4.0.0-beta.66/node_modules/effect/dist/internal/effect.js:444:98)
+      at evaluate (/Users/user/Developer/GitHub/opencode-desktop-dev/node_modules/.bun/effect@4.0.0-beta.66/node_modules/effect/dist/internal/effect.js:412:23)
+      at <anonymous> (/Users/user/Developer/GitHub/opencode-desktop-dev/node_modules/.bun/effect@4.0.0-beta.66/node_modules/effect/dist/internal/effect.js:723:15)
+(fail) PG Lifecycle: Red-Team Blocking > blocking finding routes to repairing [1037.44ms]
+452 |       yield* secretary.processEvent(lid, claimsAcquired(lid, cid))
+453 |       yield* secretary.processEvent(lid, editApplied(lid, cid))
+454 |       yield* secretary.handleRoleOutput(lid, executorOutput())
+455 |       yield* secretary.processEvent(lid, validationPassed(lid, cid))
+456 |       yield* secretary.handleRoleOutput(lid, validatorOutput())
+457 |       expect(yield* stateOf(lid)).toBe("red_team")
+                                        ^
+error: expect(received).toBe(expected)
+
+Expected: "red_team"
+Received: "scouting"
+
+      at <anonymous> (/Users/user/Developer/GitHub/opencode-desktop-dev/packages/opencode/test/campaign/pg-lifecycle-proof.test.ts:457:35)
+      at ~effect/Effect/successCont (/Users/user/Developer/GitHub/opencode-desktop-dev/node_modules/.bun/effect@4.0.0-beta.66/node_modules/effect/dist/internal/effect.js:870:26)
+      at runLoop (/Users/user/Developer/GitHub/opencode-desktop-dev/node_modules/.bun/effect@4.0.0-beta.66/node_modules/effect/dist/internal/effect.js:444:98)
+      at evaluate (/Users/user/Developer/GitHub/opencode-desktop-dev/node_modules/.bun/effect@4.0.0-beta.66/node_modules/effect/dist/internal/effect.js:412:23)
+      at <anonymous> (/Users/user/Developer/GitHub/opencode-desktop-dev/node_modules/.bun/effect@4.0.0-beta.66/node_modules/effect/dist/internal/effect.js:723:15)
+(fail) PG Lifecycle: Red-Team Blocking > non-blocking warnings allow progression to historian [783.02ms]
+488 | 
+489 |       // Blocking finding → repair
+490 |       yield* secretary.handleRoleOutput(lid, redTeamOutput([
+491 |         { severity: "blocking", description: "Critical bug" },
+492 |       ]))
+493 |       expect(yield* stateOf(lid)).toBe("repairing")
+                                        ^
+error: expect(received).toBe(expected)
+
+Expected: "repairing"
+Received: "scouting"
+
+      at <anonymous> (/Users/user/Developer/GitHub/opencode-desktop-dev/packages/opencode/test/campaign/pg-lifecycle-proof.test.ts:493:35)
+      at ~effect/Effect/successCont (/Users/user/Developer/GitHub/opencode-desktop-dev/node_modules/.bun/effect@4.0.0-beta.66/node_modules/effect/dist/internal/effect.js:870:26)
+      at runLoop (/Users/user/Developer/GitHub/opencode-desktop-dev/node_modules/.bun/effect@4.0.0-beta.66/node_modules/effect/dist/internal/effect.js:444:98)
+      at evaluate (/Users/user/Developer/GitHub/opencode-desktop-dev/node_modules/.bun/effect@4.0.0-beta.66/node_modules/effect/dist/internal/effect.js:412:23)
+      at <anonymous> (/Users/user/Developer/GitHub/opencode-desktop-dev/node_modules/.bun/effect@4.0.0-beta.66/node_modules/effect/dist/internal/effect.js:723:15)
+(fail) PG Lifecycle: Red-Team Blocking > after repair, clean red-team allows progression [861.99ms]
+(pass) PG Lifecycle: Binder Finalization > returnLane produces binder with correct laneId [1078.06ms]
+(pass) PG Lifecycle: Binder Finalization > getLaneBinder returns binder for non-terminal lane [880.34ms]
+(pass) PG Lifecycle: Blocked and Failed States > lane can be set to blocked via event [1003.43ms]
+(pass) PG Lifecycle: Blocked and Failed States > lane can be set to failed via event [2209.00ms]
+
+ 6 pass
+ 11 fail
+ 26 expect() calls
+Ran 17 tests across 1 file. [27.44s]
+EXIT_CODE=1

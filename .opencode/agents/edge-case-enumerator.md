@@ -2,6 +2,9 @@
 mode: subagent
 hidden: true
 permission:
+  leaf_handoff: "allow"
+  ping: "allow"
+  session_journal: "allow"
   feedback(action="tool"): "allow"
   read: "deny"
   grep: "deny"
@@ -29,6 +32,9 @@ description: "Edge-case-enumerator — generates boundary cases: empty input, ma
 profile: "stress"
 hidden: true
 permission:
+  leaf_handoff: "allow"
+  ping: "allow"
+  session_journal: "allow"
   feedback(action="tool"): "allow"
   read: "deny"
   grep: "deny"

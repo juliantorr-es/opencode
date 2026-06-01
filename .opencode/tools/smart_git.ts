@@ -54,6 +54,26 @@ function spawnDifft(input: string) {
   })
 }
 
+function logBinaryUsage(context: any, binary: string, success: boolean) {
+  try {
+    const dir = resolve(context.worktree, "docs/json/opencode/sessions/" + context.sessionID + "/analytics")
+    if (!existsSync(dir)) mkdirSync(dir, { recursive: true })
+    appendFileSync(dir + "/binary_usage.v1.jsonl",
+      JSON.stringify({ at: new Date().toISOString(), session_id: context.sessionID, agent: context.agent, binary, success }) + "\n", "utf8")
+  } catch (_) {}
+}
+
+function highlightDiff(diff: string): string {
+  // Pure TS basic diff highlighting — adds ANSI color codes for +/- lines
+  const lines = diff.split("\n")
+  return lines.map(line => {
+    if (line.startsWith("+") && !line.startsWith("+++")) return `\x1b[32m${line}\x1b[0m`
+    if (line.startsWith("-") && !line.startsWith("---")) return `\x1b[31m${line}\x1b[0m`
+    if (line.startsWith("@@")) return `\x1b[36m${line}\x1b[0m`
+    return line
+  }).join("\n")
+}
+
 export default tool({
   description: "Run git operations (status, diff, add, commit, push, log, branch) with structured output. Replaces all git bash commands.",
   args: {
@@ -141,6 +161,9 @@ export default tool({
         if (difftResult.status === 0 && difftResult.stdout?.trim()) {
           styledDiff = difftResult.stdout.trim()
           diffStyle = "difftastic"
+          logBinaryUsage(context, "difft", true)
+        } else {
+          logBinaryUsage(context, "difft", false)
         }
       }
       // Fall back to delta (syntax highlighting)
@@ -149,7 +172,15 @@ export default tool({
         if (deltaResult.status === 0 && deltaResult.stdout?.trim()) {
           styledDiff = deltaResult.stdout.trim()
           diffStyle = "delta"
+          logBinaryUsage(context, "delta", true)
+        } else {
+          logBinaryUsage(context, "delta", false)
         }
+      }
+      // Pure TS fallback: basic syntax highlighting if no binary is available
+      if (!styledDiff) {
+        styledDiff = highlightDiff(stdout)
+        diffStyle = "typescript"
       }
     }
 

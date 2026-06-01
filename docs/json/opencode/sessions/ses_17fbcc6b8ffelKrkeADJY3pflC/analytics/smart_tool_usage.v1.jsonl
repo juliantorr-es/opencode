@@ -1,0 +1,11 @@
+{"at":"2026-05-31T22:59:25.306Z","session_id":"ses_17fbcc6b8ffelKrkeADJY3pflC","agent":"cartographer","tool":"smart_find","pattern":"packages/*/package.json","path":""}
+{"at":"2026-05-31T22:59:34.980Z","session_id":"ses_17fbcc6b8ffelKrkeADJY3pflC","agent":"cartographer","tool":"smart_find","pattern":"package.json","path":"packages"}
+{"at":"2026-05-31T22:59:35.679Z","session_id":"ses_17fbcc6b8ffelKrkeADJY3pflC","agent":"cartographer","tool":"smart_find","pattern":"tsconfig.json","path":"packages"}
+{"at":"2026-05-31T23:00:24.963Z","session_id":"ses_17fbcc6b8ffelKrkeADJY3pflC","agent":"cartographer","tool":"smart_bun","command":"typecheck","elapsed_ms":17793,"exit_code":2}
+{"at":"2026-05-31T23:02:25.475Z","session_id":"ses_17fbcc6b8ffelKrkeADJY3pflC","agent":"cartographer","tool":"smart_bun","command":"tsgo","elapsed_ms":21143,"exit_code":2}
+{"at":"2026-05-31T23:03:36.415Z","session_id":"ses_17fbcc6b8ffelKrkeADJY3pflC","agent":"cartographer","tool":"smart_bun","command":"run","elapsed_ms":22982,"exit_code":0}
+{"at":"2026-05-31T23:04:23.447Z","session_id":"ses_17fbcc6b8ffelKrkeADJY3pflC","agent":"cartographer","tool":"smart_bun","command":"run","elapsed_ms":16,"exit_code":1}
+{"at":"2026-05-31T23:05:14.662Z","session_id":"ses_17fbcc6b8ffelKrkeADJY3pflC","agent":"cartographer","tool":"smart_bun","command":"run","elapsed_ms":21982,"exit_code":0}
+{"at":"2026-05-31T23:07:04.004Z","session_id":"ses_17fbcc6b8ffelKrkeADJY3pflC","agent":"cartographer","tool":"smart_grep","pattern":"^src/campaign/truth-closure\\.test\\.ts|^test/campaign|^test/plugin|^test/server|^test/tool","path":"/tmp/ts-errors.txt"}
+{"at":"2026-05-31T23:07:04.727Z","session_id":"ses_17fbcc6b8ffelKrkeADJY3pflC","agent":"cartographer","tool":"smart_grep","pattern":"error TS","path":"/tmp/ts-errors.txt"}
+{"at":"2026-05-31T23:07:50.969Z","session_id":"ses_17fbcc6b8ffelKrkeADJY3pflC","agent":"cartographer","tool":"smart_grep","pattern":"error TS\\d+","path":"/tmp/ts-errors.txt"}

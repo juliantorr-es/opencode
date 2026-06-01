@@ -24,7 +24,7 @@ export default tool({
       try {
         const content = readFileSync(fullPath, "utf8")
         let data: any
-        try { data = JSON.parse(content) } catch { data = { raw: content.slice(0, 2000) } }
+        try { data = JSON.parse(content) } catch { data = { raw: content.slice(0, 50000) } }
         return JSON.stringify({ action: "artifact", status: "loaded", path: args.path, data, size_bytes: content.length }, null, 2)
       } catch { return JSON.stringify({ action: "artifact", status: "fail" }, null, 2) }
     }
@@ -56,7 +56,7 @@ export default tool({
         }
         return JSON.stringify({ action: "lib", status: "found", package: args.path, symbol: args.symbol, matches, count: matches.length }, null, 2)
       }
-      return JSON.stringify({ action: "lib", status: "loaded", package: args.path, preview: content.slice(0, 2000) }, null, 2)
+      return JSON.stringify({ action: "lib", status: "loaded", package: args.path, preview: content.slice(0, 10000) }, null, 2)
     }
 
     // ── MESSAGES ──
@@ -80,7 +80,7 @@ export default tool({
       filtered.sort((a: any, b: any) => (b.sent_at || "").localeCompare(a.sent_at || ""))
       const msgs = filtered.slice(0, limit).map((e: any) => ({
         message_id: e.message_id, kind: e.kind, sender: e.sender, recipient: e.recipient,
-        subject: e.subject, body: e.body?.slice(0, 500), sent_at: e.sent_at,
+        subject: e.subject, body: e.body?.slice(0, 2000), sent_at: e.sent_at,
       }))
 
       return JSON.stringify({ action: "messages", messages: msgs, count: msgs.length, total_in_ledger: entries.length }, null, 2)

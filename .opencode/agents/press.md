@@ -5,6 +5,9 @@ hidden: true
 color: "#FDCB6E"
 description: Press — formats and publishes the final output to the target medium (PR, release notes).
 permission:
+  leaf_handoff: "allow"
+  ping: "allow"
+  session_journal: "allow"
   feedback(action="tool"): "allow"
   read: "deny"
   bash: "deny"

@@ -1,0 +1,10 @@
+{"at":"2026-05-31T23:59:06.372Z","session_id":"ses_17f8969d7ffe8XQJ5CK8DcOtT7","agent":"root-cause-analyst","tool":"smart_find","pattern":"docs/json/opencode/sessions/current/cartography/database-schema-migration-report","path":""}
+{"at":"2026-06-01T00:01:55.288Z","session_id":"ses_17f8969d7ffe8XQJ5CK8DcOtT7","agent":"root-cause-analyst","tool":"smart_find","pattern":"*.sql","path":"packages/opencode"}
+{"at":"2026-06-01T00:01:55.934Z","session_id":"ses_17f8969d7ffe8XQJ5CK8DcOtT7","agent":"root-cause-analyst","tool":"smart_grep","pattern":"ALTER.*COLUMN.*TYPE.*bigint|ALTER.*integer.*bigint","path":"packages/opencode"}
+{"at":"2026-06-01T00:09:00.833Z","session_id":"ses_17f8969d7ffe8XQJ5CK8DcOtT7","agent":"root-cause-analyst","tool":"smart_find","pattern":"migration-pg/*/migration.sql","path":"packages/opencode"}
+{"at":"2026-06-01T00:09:01.046Z","session_id":"ses_17f8969d7ffe8XQJ5CK8DcOtT7","agent":"root-cause-analyst","tool":"smart_grep","pattern":"\\binteger\\b","path":"packages/opencode/migration-pg"}
+{"at":"2026-06-01T00:09:01.602Z","session_id":"ses_17f8969d7ffe8XQJ5CK8DcOtT7","agent":"root-cause-analyst","tool":"smart_find","pattern":"*.json","path":"packages/opencode/migration-pg"}
+{"at":"2026-06-01T00:09:02.712Z","session_id":"ses_17f8969d7ffe8XQJ5CK8DcOtT7","agent":"root-cause-analyst","tool":"smart_grep","pattern":"migration.*index|meta.*_journal|drizzle.*_migrations","path":"packages/opencode/migration-pg"}
+{"at":"2026-06-01T00:12:09.910Z","session_id":"ses_17f8969d7ffe8XQJ5CK8DcOtT7","agent":"root-cause-analyst","tool":"smart_find","pattern":"*","path":"packages/opencode/migration-pg"}
+{"at":"2026-06-01T00:12:10.638Z","session_id":"ses_17f8969d7ffe8XQJ5CK8DcOtT7","agent":"root-cause-analyst","tool":"smart_grep","pattern":"_journal","path":"packages/opencode/migration-pg"}
+{"at":"2026-06-01T00:12:11.814Z","session_id":"ses_17f8969d7ffe8XQJ5CK8DcOtT7","agent":"root-cause-analyst","tool":"smart_grep","pattern":"time_used|time_completed|time_initialized|time_compacting|time_archived","path":"packages/opencode/migration-pg/20260531003644_swift_gravity/snapshot.json"}

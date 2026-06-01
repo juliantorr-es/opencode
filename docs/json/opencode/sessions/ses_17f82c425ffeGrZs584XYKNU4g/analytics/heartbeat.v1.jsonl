@@ -1,0 +1,27 @@
+{"at":"2026-06-01T00:02:37.378Z","session_id":"ses_17f82c425ffeGrZs584XYKNU4g","agent":"surveyor","tool":"smart_bun","phase":"started","detail":"test"}
+{"at":"2026-06-01T00:02:51.780Z","session_id":"ses_17f82c425ffeGrZs584XYKNU4g","agent":"surveyor","tool":"smart_bun","phase":"failed","detail":"test exit=1"}
+{"at":"2026-06-01T00:03:06.901Z","session_id":"ses_17f82c425ffeGrZs584XYKNU4g","agent":"surveyor","tool":"smart_bun","phase":"started","detail":"test"}
+{"at":"2026-06-01T00:03:07.008Z","session_id":"ses_17f82c425ffeGrZs584XYKNU4g","agent":"surveyor","tool":"smart_bun","phase":"failed","detail":"test exit=1"}
+{"at":"2026-06-01T00:03:14.943Z","session_id":"ses_17f82c425ffeGrZs584XYKNU4g","agent":"surveyor","tool":"smart_find","phase":"started","detail":"pg-lifecycle-proof*"}
+{"at":"2026-06-01T00:03:15.053Z","session_id":"ses_17f82c425ffeGrZs584XYKNU4g","agent":"surveyor","tool":"smart_find","phase":"completed","detail":"pg-lifecycle-proof*"}
+{"at":"2026-06-01T00:04:13.942Z","session_id":"ses_17f82c425ffeGrZs584XYKNU4g","agent":"surveyor","tool":"smart_bun","phase":"started","detail":"test"}
+{"at":"2026-06-01T00:04:31.016Z","session_id":"ses_17f82c425ffeGrZs584XYKNU4g","agent":"surveyor","tool":"smart_bun","phase":"failed","detail":"test exit=1"}
+{"at":"2026-06-01T00:05:15.141Z","session_id":"ses_17f82c425ffeGrZs584XYKNU4g","agent":"surveyor","tool":"smart_bun","phase":"started","detail":"tsgo"}
+{"at":"2026-06-01T00:05:15.312Z","session_id":"ses_17f82c425ffeGrZs584XYKNU4g","agent":"surveyor","tool":"smart_bun","phase":"failed","detail":"tsgo exit=2"}
+{"at":"2026-06-01T00:06:04.749Z","session_id":"ses_17f82c425ffeGrZs584XYKNU4g","agent":"surveyor","tool":"smart_grep","phase":"started","detail":"criticOutput"}
+{"at":"2026-06-01T00:06:04.750Z","session_id":"ses_17f82c425ffeGrZs584XYKNU4g","agent":"surveyor","tool":"smart_grep","phase":"completed","detail":"13 matches in 1 files"}
+{"at":"2026-06-01T00:06:20.477Z","session_id":"ses_17f82c425ffeGrZs584XYKNU4g","agent":"surveyor","tool":"smart_grep","phase":"started","detail":"^test\\(|^describe\\(|^    test\\(\""}
+{"at":"2026-06-01T00:06:20.479Z","session_id":"ses_17f82c425ffeGrZs584XYKNU4g","agent":"surveyor","tool":"smart_grep","phase":"completed","detail":"9 matches in 1 files"}
+{"at":"2026-06-01T00:06:44.793Z","session_id":"ses_17f82c425ffeGrZs584XYKNU4g","agent":"surveyor","tool":"smart_grep","phase":"started","detail":".*"}
+{"at":"2026-06-01T00:06:44.794Z","session_id":"ses_17f82c425ffeGrZs584XYKNU4g","agent":"surveyor","tool":"smart_grep","phase":"completed","detail":"30 matches in 1 files"}
+{"at":"2026-06-01T00:07:20.378Z","session_id":"ses_17f82c425ffeGrZs584XYKNU4g","agent":"surveyor","tool":"smart_bun","phase":"started","detail":"test"}
+{"at":"2026-06-01T00:07:30.063Z","session_id":"ses_17f82c425ffeGrZs584XYKNU4g","agent":"surveyor","tool":"smart_bun","phase":"failed","detail":"test exit=1"}
+{"at":"2026-06-01T00:07:51.950Z","session_id":"ses_17f82c425ffeGrZs584XYKNU4g","agent":"surveyor","tool":"smart_write","phase":"started","detail":"packages/opencode/_run_test.sh"}
+{"at":"2026-06-01T00:07:52.010Z","session_id":"ses_17f82c425ffeGrZs584XYKNU4g","agent":"surveyor","tool":"smart_write","phase":"completed","detail":"packages/opencode/_run_test.sh"}
+{"at":"2026-06-01T00:08:07.802Z","session_id":"ses_17f82c425ffeGrZs584XYKNU4g","agent":"surveyor","tool":"smart_bun","phase":"started","detail":"run"}
+{"at":"2026-06-01T00:08:07.823Z","session_id":"ses_17f82c425ffeGrZs584XYKNU4g","agent":"surveyor","tool":"smart_bun","phase":"failed","detail":"run exit=1"}
+{"at":"2026-06-01T00:08:43.263Z","session_id":"ses_17f82c425ffeGrZs584XYKNU4g","agent":"surveyor","tool":"smart_write","phase":"started","detail":"packages/opencode/_runner.ts"}
+{"at":"2026-06-01T00:08:43.264Z","session_id":"ses_17f82c425ffeGrZs584XYKNU4g","agent":"surveyor","tool":"smart_write","phase":"completed","detail":"packages/opencode/_runner.ts"}
+{"at":"2026-06-01T00:09:11.142Z","session_id":"ses_17f82c425ffeGrZs584XYKNU4g","agent":"surveyor","tool":"smart_bun","phase":"started","detail":"run"}
+{"at":"2026-06-01T00:09:37.184Z","session_id":"ses_17f82c425ffeGrZs584XYKNU4g","agent":"surveyor","tool":"smart_bun","phase":"completed","detail":"run exit=0"}
+{"at":"2026-06-01T00:11:08.979Z","session_id":"ses_17f82c425ffeGrZs584XYKNU4g","agent":"surveyor","tool":"smart_sd","phase":"completed","detail":"1 match in packages/opencode/_runner.ts"}

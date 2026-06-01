@@ -5,6 +5,9 @@ hidden: true
 color: "#3498DB"
 description: Blind-spot — identifies code paths NOT exercised by existing tests.
 permission:
+  leaf_handoff: "allow"
+  ping: "allow"
+  session_journal: "allow"
   feedback(action="tool"): "allow"
   read: "deny"
   bash: "deny"

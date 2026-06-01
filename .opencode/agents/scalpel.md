@@ -5,6 +5,9 @@ hidden: true
 color: "#00B894"
 description: Scalpel — applies the planned edits with surgical precision. One edit, verified, then the next.
 permission:
+  leaf_handoff: "allow"
+  ping: "allow"
+  session_journal: "allow"
   feedback(action="tool"): "allow"
   read: "deny"
   grep: "deny"

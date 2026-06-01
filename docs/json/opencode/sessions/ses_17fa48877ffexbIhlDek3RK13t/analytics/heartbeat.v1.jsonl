@@ -1,0 +1,16 @@
+{"at":"2026-05-31T23:32:02.069Z","session_id":"ses_17fa48877ffexbIhlDek3RK13t","agent":"surveyor","tool":"smart_grep","phase":"started","detail":"new Client\\(|new StdioClientTransport\\(|new StreamableHTTPClientTransport\\(|new "}
+{"at":"2026-05-31T23:32:02.237Z","session_id":"ses_17fa48877ffexbIhlDek3RK13t","agent":"surveyor","tool":"smart_grep","phase":"completed","detail":"6 matches in 500 files"}
+{"at":"2026-05-31T23:32:03.381Z","session_id":"ses_17fa48877ffexbIhlDek3RK13t","agent":"surveyor","tool":"smart_grep","phase":"started","detail":"State\\b.*=.*\\{|clients\\s*[=:]|type State\\b|interface State\\b"}
+{"at":"2026-05-31T23:32:03.381Z","session_id":"ses_17fa48877ffexbIhlDek3RK13t","agent":"surveyor","tool":"smart_grep","phase":"completed","detail":"7 matches in 1 files"}
+{"at":"2026-05-31T23:32:04.687Z","session_id":"ses_17fa48877ffexbIhlDek3RK13t","agent":"surveyor","tool":"smart_grep","phase":"started","detail":"connect|disconnect|createAndStore|createClient|makeClient|clientFor|getOrCreate"}
+{"at":"2026-05-31T23:32:04.688Z","session_id":"ses_17fa48877ffexbIhlDek3RK13t","agent":"surveyor","tool":"smart_grep","phase":"completed","detail":"30 matches in 1 files"}
+{"at":"2026-05-31T23:32:05.754Z","session_id":"ses_17fa48877ffexbIhlDek3RK13t","agent":"surveyor","tool":"smart_grep","phase":"started","detail":"\\.has\\(|clients\\[|s\\.clients|\\.clients\\."}
+{"at":"2026-05-31T23:32:05.755Z","session_id":"ses_17fa48877ffexbIhlDek3RK13t","agent":"surveyor","tool":"smart_grep","phase":"completed","detail":"13 matches in 1 files"}
+{"at":"2026-05-31T23:33:39.338Z","session_id":"ses_17fa48877ffexbIhlDek3RK13t","agent":"surveyor","tool":"smart_grep","phase":"started","detail":"return s\\.clients"}
+{"at":"2026-05-31T23:33:39.339Z","session_id":"ses_17fa48877ffexbIhlDek3RK13t","agent":"surveyor","tool":"smart_grep","phase":"completed","detail":"1 matches in 1 files"}
+{"at":"2026-05-31T23:33:40.104Z","session_id":"ses_17fa48877ffexbIhlDek3RK13t","agent":"surveyor","tool":"smart_grep","phase":"started","detail":"const createAndStore = Effect"}
+{"at":"2026-05-31T23:33:40.105Z","session_id":"ses_17fa48877ffexbIhlDek3RK13t","agent":"surveyor","tool":"smart_grep","phase":"completed","detail":"1 matches in 1 files"}
+{"at":"2026-05-31T23:33:40.909Z","session_id":"ses_17fa48877ffexbIhlDek3RK13t","agent":"surveyor","tool":"smart_grep","phase":"started","detail":"const connect = Effect\\.fn\\(\\\"MCP\\.connect\\\"\\)"}
+{"at":"2026-05-31T23:33:40.910Z","session_id":"ses_17fa48877ffexbIhlDek3RK13t","agent":"surveyor","tool":"smart_grep","phase":"completed","detail":"1 matches in 1 files"}
+{"at":"2026-05-31T23:33:41.682Z","session_id":"ses_17fa48877ffexbIhlDek3RK13t","agent":"surveyor","tool":"smart_grep","phase":"started","detail":"const connectRemote = Effect"}
+{"at":"2026-05-31T23:33:41.684Z","session_id":"ses_17fa48877ffexbIhlDek3RK13t","agent":"surveyor","tool":"smart_grep","phase":"completed","detail":"1 matches in 1 files"}

@@ -3,6 +3,9 @@ mode: subagent
 description: "Dependency-saboteur — breaks a dependency the change relies on to test failure handling"
 hidden: true
 permission:
+  leaf_handoff: "allow"
+  ping: "allow"
+  session_journal: "allow"
   feedback(action="tool"): "allow"
   read: "deny"
   grep: "deny"
@@ -30,6 +33,9 @@ description: "Dependency-saboteur — breaks a dependency the change relies on t
 profile: "stress"
 hidden: true
 permission:
+  leaf_handoff: "allow"
+  ping: "allow"
+  session_journal: "allow"
   feedback(action="tool"): "allow"
   read: "deny"
   bash: "deny"

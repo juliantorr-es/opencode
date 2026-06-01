@@ -5,6 +5,9 @@ hidden: true
 color: "#FDCB6E"
 description: Retort — writes responses to PR review comments.
 permission:
+  leaf_handoff: "allow"
+  ping: "allow"
+  session_journal: "allow"
   feedback(action="tool"): "allow"
   read: "deny"
   bash: "deny"

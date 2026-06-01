@@ -1,0 +1,11 @@
+{"at":"2026-05-31T23:57:49.719Z","session_id":"ses_17f89f334ffelBcqjQ0cZf7ppn","agent":"architect","tool":"smart_find","pattern":"sanitizedProcessEnv*","path":"packages/opencode/src"}
+{"at":"2026-05-31T23:57:50.453Z","session_id":"ses_17f89f334ffelBcqjQ0cZf7ppn","agent":"architect","tool":"smart_find","pattern":"ENV_BLOCKLIST*","path":"packages/opencode/src"}
+{"at":"2026-06-01T00:00:32.217Z","session_id":"ses_17f89f334ffelBcqjQ0cZf7ppn","agent":"architect","tool":"smart_grep","pattern":"sanitizedProcessEnv|sanitize.*env|env.*sanitize","path":"packages/opencode/src"}
+{"at":"2026-06-01T00:00:33.004Z","session_id":"ses_17f89f334ffelBcqjQ0cZf7ppn","agent":"architect","tool":"smart_grep","pattern":"ENV_BLOCKLIST|env_blocklist|blocklist","path":"packages/opencode/src"}
+{"at":"2026-06-01T00:00:34.343Z","session_id":"ses_17f89f334ffelBcqjQ0cZf7ppn","agent":"architect","tool":"smart_grep","pattern":"AWS_BEARER_TOKEN_BEDROCK|AICORE_SERVICE_KEY","path":"packages/opencode/src"}
+{"at":"2026-06-01T00:00:34.421Z","session_id":"ses_17f89f334ffelBcqjQ0cZf7ppn","agent":"architect","tool":"smart_find","pattern":"*pt*","path":"packages/opencode/src"}
+{"at":"2026-06-01T00:03:22.612Z","session_id":"ses_17f89f334ffelBcqjQ0cZf7ppn","agent":"architect","tool":"smart_grep","pattern":"function sanitizedProcessEnv|const sanitizedProcessEnv|sanitizedProcessEnv =","path":"packages/opencode/src"}
+{"at":"2026-06-01T00:06:28.336Z","session_id":"ses_17f89f334ffelBcqjQ0cZf7ppn","agent":"architect","tool":"smart_grep","pattern":"sanitize.*Env|process\\.env","path":"packages/opencode/src"}
+{"at":"2026-06-01T00:10:53.137Z","session_id":"ses_17f89f334ffelBcqjQ0cZf7ppn","agent":"architect","tool":"smart_grep","pattern":"export.*sanitizedProcessEnv|function sanitizedProcessEnv","path":"packages/opencode"}
+{"at":"2026-06-01T00:12:29.849Z","session_id":"ses_17f89f334ffelBcqjQ0cZf7ppn","agent":"architect","tool":"smart_grep","pattern":"function sanitizedProcessEnv","path":"packages"}
+{"at":"2026-06-01T00:12:30.769Z","session_id":"ses_17f89f334ffelBcqjQ0cZf7ppn","agent":"architect","tool":"smart_grep","pattern":"lsp.*spawn|spawn.*lsp|LSP.*spawn","path":"packages/opencode/src"}

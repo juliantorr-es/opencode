@@ -5,6 +5,9 @@ hidden: true
 color: "#6C5CE7"
 description: Second-opinion — runs the bisect script at each checkpoint. Confirms whether the edit moved the failure boundary.
 permission:
+  leaf_handoff: "allow"
+  ping: "allow"
+  session_journal: "allow"
   feedback(action="tool"): "allow"
   read: "deny"
   bash: "deny"
