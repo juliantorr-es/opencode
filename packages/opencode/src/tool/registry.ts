@@ -296,6 +296,9 @@ export const layer = Layer.effect(
     const markContextStale = yield* MarkContextStaleTool
     const requestContextRefresh = yield* RequestContextRefreshTool
     const agent = yield* Agent.Service
+    // Capture the full construction-time context so tools can resolve
+    // their dependencies at runtime regardless of fiber boundaries.
+    const toolRuntime = yield* Effect.context<never>()
 
     const state = yield* InstanceState.make<State>(
       Effect.fn("ToolRegistry.state")(function* (ctx) {
@@ -376,6 +379,7 @@ export const layer = Layer.effect(
                   },
                 }
               }).pipe(
+               Effect.provideContext(toolRuntime),
                 Effect.catch((error: unknown) =>
                   Effect.succeed({
                     title: id,

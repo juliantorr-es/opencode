@@ -6,6 +6,7 @@ import { DuckDBConfig } from "@/storage/duckdb-config"
 import { defaultLayer as BinaryManagerLayer } from "@/binary/manager"
 import { AppFileSystem } from "@opencode-ai/core/filesystem"
 import { layer as AuthorityLayer } from "@/agent/authority"
+import { defaultLayer as ScratchpadLayer } from "@/agent/scratchpad"
 
 // Core instance infrastructure — services required by instance-owned forked fibers.
 // Composed as self-contained units so no cross-dependencies remain at merge time.
@@ -34,6 +35,7 @@ export const layer = Layer.mergeAll(
   duckWithConfig,
   binaryWithFS,
   AuthorityLayer,
+  ScratchpadLayer,
 )
 
 export * as InstanceEnvironment from "./instance-environment"
