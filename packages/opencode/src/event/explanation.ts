@@ -5,6 +5,7 @@
 // so repeated lookups on the same eventId are free.
 
 import { Context, Effect, Schema } from "effect"
+import { DatabaseAdapter } from "../storage/adapter"
 import { EventStore } from "."
 
 export class ExplanationError {
@@ -24,7 +25,7 @@ export const ExplanationEventLink = Schema.Struct({
 })
 export type ExplanationEventLink = Schema.Schema.Type<typeof ExplanationEventLink>
 
-export const ExplanationRisk = Schema.Literal("low", "medium", "high")
+export const ExplanationRisk = Schema.Literals(["low", "medium", "high"] as const)
 export type ExplanationRisk = Schema.Schema.Type<typeof ExplanationRisk>
 
 export const Explanation = Schema.Struct({
@@ -106,8 +107,8 @@ function hasTestType(eventType: string): boolean {
 export function explainEvent(
   eventId: string,
   sessionId: string,
-): Effect.Effect<Explanation, ExplanationError, EventStore.Service> {
-  return Effect.fn("explainEvent")(function* () {
+): Effect.Effect<Explanation, ExplanationError | DatabaseAdapter.DatabaseError, EventStore.Service> {
+  return Effect.gen(function* () {
     // Check cache first
     const cached = cache.get(`${sessionId}:${eventId}`)
     if (cached) {
@@ -119,12 +120,8 @@ export function explainEvent(
 
     // 1. Fetch the target event
     const events = yield* store.query({ parentEventId: eventId, limit: 1 })
-    const targetEvents = yield* store.query({ id: eventId, limit: 1 })
-    // Actually query by event id isn't directly supported by the store - we need to find it differently
-    // Let's query all events with this id
-    
-    // Re-query: the store doesn't have a direct "get by id" filter. We need to
-    // query by parentEventId to find children, and query broadly to find the event itself.
+    // The store doesn't have a direct "get by id" filter — we query
+    // by parentEventId to find children, and query broadly to find the event itself.
     // The simplest approach: query session events and filter.
     
     // Get the event by querying with generic filters and filtering client-side
@@ -191,12 +188,12 @@ export function explainEvent(
       }
     }
 
-    let whichPrompt: string | null = null
+    let whichPrompt: string | undefined = undefined
     if (promptEvent) {
       whichPrompt = promptEvent.eventType.replace(/^session\.next\./, "").replace(/^session\./, "")
     }
 
-    let whyThisFile: string | null = null
+    let whyThisFile: string | undefined = undefined
     if (event.filePath) {
       const fileTool = siblings.find((s) => s.toolName === event.toolName)
       whyThisFile = fileTool
@@ -204,9 +201,9 @@ export function explainEvent(
         : `File ${event.filePath} was referenced in ${event.eventType}`
     }
 
-    let whichTool: string | null = event.toolName ?? null
+    let whichTool: string | undefined = event.toolName ?? undefined
 
-    let testCoverage: string | null = null
+    let testCoverage: string | undefined = undefined
     if (testEvents.length > 0) {
       testCoverage = `${testEvents.length} test-related event${testEvents.length > 1 ? "s" : ""} found: ${testEvents.map((t) => t.eventType).join(", ")}`
     }

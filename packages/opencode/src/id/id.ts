@@ -51,7 +51,7 @@ function generateID(
   }
 
   if (!given.startsWith(prefixes[prefix])) {
-    return Effect.dieSync(new Error(`ID ${given} does not start with ${prefixes[prefix]}`))
+    return Effect.die(new Error(`ID ${given} does not start with ${prefixes[prefix]}`))
   }
   return Effect.succeed(given)
 }

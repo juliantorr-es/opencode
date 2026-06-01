@@ -801,7 +801,7 @@ describe("Status aggregation regression proofs", () => {
       { dir: "/proj/b", sessions: [{ id: "s2", status: "idle" }, { id: "s3", status: "busy" }] },
       { dir: "/proj/c", sessions: [] },
     ]
-    const aggregate = (workspaces: typeof workspaces) => {
+    const aggregate = (workspaces: Array<{ dir: string; sessions: Array<{ id: string; status: string }> }>) => {
       const allSessions = workspaces.flatMap((w) => w.sessions)
       return {
         total: allSessions.length,

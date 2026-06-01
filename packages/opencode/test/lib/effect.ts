@@ -1,5 +1,5 @@
 import { test, type TestOptions } from "bun:test"
-import { Cause, Duration, Effect, Exit, Layer } from "effect"
+import { Cause, Duration, Effect, Exit, Layer, ConfigProvider } from "effect"
 import * as Scope from "effect/Scope"
 import * as TestClock from "effect/testing/TestClock"
 import * as TestConsole from "effect/testing/TestConsole"
@@ -123,8 +123,11 @@ const make = <R, E, P>(testLayer: Layer.Layer<R, E, P>, liveLayer: Layer.Layer<R
 // Test environment with TestClock and TestConsole
 const testEnv = Layer.mergeAll(TestConsole.layer, TestClock.layer())
 
+// Shared ConfigProvider so ConfigService.Service tags can resolve during layer build.
+const configProviderLayer = ConfigProvider.layer(ConfigProvider.fromUnknown({}))
+
 // Live environment - uses real clock, but keeps TestConsole for output capture
-const liveEnv = TestConsole.layer
+const liveEnv = Layer.mergeAll(TestConsole.layer, configProviderLayer)
 
 export const it = make(testEnv, liveEnv)
 

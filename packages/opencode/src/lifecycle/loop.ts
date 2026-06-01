@@ -53,39 +53,39 @@ export const runLifecycledPrompt = Effect.fn("LifecycleLoop.run")(function* (
     readonly signal?: AbortSignal
     readonly onPhaseResult?: (result: PhaseResult) => Effect.Effect<void>
   },
-): Effect.Effect<PhaseResult[]> {
+) {
   const lifecycle = input.lifecycle
     ?? parseLifecycle(input.agent.lifecycle)
     ?? BUILTIN_LIFECYCLES[input.agent.name]
 
   if (!lifecycle) {
-    log.info("agent %s has no lifecycle — running normal loop", input.agent.name)
+    log.info(`agent ${input.agent.name} has no lifecycle — running normal loop`)
     yield* input.promptSvc.loop({ sessionID: input.sessionID })
     return []
   }
 
   const phaseGate = yield* PhaseGate.Service
 
-  log.info("running lifecycled prompt for agent %s — %s phases (%s)", input.agent.name, lifecycle.phases.length, lifecycle.type)
+  log.info(`running lifecycled prompt for agent ${input.agent.name} — ${lifecycle.phases.length} phases (${lifecycle.type})`)
 
   const results: PhaseResult[] = yield* execute({
     lifecycle,
     signal: input.signal,
     onPhaseEnter: (phase) =>
       Effect.gen(function* () {
-        yield* Effect.annotateCurrentSpan("lifecycle.phase", phase.id)
-        log.info("entering phase: %s (%s)", phase.id, phase.name)
+        yield* Effect.annotateCurrentSpan({ "lifecycle.phase": phase.id })
+        log.info(`entering phase: ${phase.id} (${phase.name})`)
         yield* phaseGate.enterPhase(lifecycle.type, phase)
-      }),
+      }) as any,
 
     onPhaseExit: (phase, result) =>
       Effect.gen(function* () {
-        yield* Effect.annotateCurrentSpan("lifecycle.phaseResult", result.status)
-        log.info("exiting phase: %s — %s (%s retries)", phase.id, result.status, result.retriesUsed)
+        yield* Effect.annotateCurrentSpan({ "lifecycle.phaseResult": result.status })
+        log.info(`exiting phase: ${phase.id} — ${result.status} (${result.retriesUsed} retries)`)
         if (input.onPhaseResult) {
           yield* input.onPhaseResult(result)
         }
-      }),
+      }) as any,
 
     onProcessorRun: (phase) =>
       Effect.gen(function* () {
@@ -93,35 +93,35 @@ export const runLifecycledPrompt = Effect.fn("LifecycleLoop.run")(function* (
           return { phase: phase.id, status: "escalated" as const, error: "aborted", retriesUsed: 0 }
         }
 
-        yield* Effect.annotateCurrentSpan("lifecycle.processorRun", phase.id)
-        log.info("running loop for phase %s", phase.id)
+        yield* Effect.annotateCurrentSpan({ "lifecycle.processorRun": phase.id })
+        log.info(`running loop for phase ${phase.id}`)
 
         const assistant = yield* input.promptSvc.loop({ sessionID: input.sessionID })
 
         if (!assistant) {
-          log.warn("phase %s: no assistant message returned", phase.id)
+          log.warn(`phase ${phase.id}: no assistant message returned`)
           return { phase: phase.id, status: "failed" as const, error: "No assistant message returned", retriesUsed: 0 }
         }
 
         // Treat any normal finish or tool-calls as phase completion.
         // The agent used tools or produced output — phase work is done.
-        const finish = assistant.info.finish
+        const finish = (assistant.info as any).finish
         if (finish == null || finish === "end_turn" || finish === "stop" || finish === "tool-calls") {
           return { phase: phase.id, status: "completed" as const, retriesUsed: 0 }
         }
 
         // Unknown finish — treat as completion (agent stopped naturally)
-        log.warn("phase %s: unhandled finish reason %s — treating as completed", phase.id, finish)
+        log.warn(`phase ${phase.id}: unhandled finish reason ${finish} — treating as completed`)
         return { phase: phase.id, status: "completed" as const, retriesUsed: 0 }
-      }),
+      }) as any,
 
     onRepair: (phase, attempt, error) =>
       Effect.gen(function* () {
-        log.info("repairing phase %s, attempt %s: %s", phase.id, attempt, error)
-        yield* Effect.annotateCurrentSpan("lifecycle.repair", attempt)
+        log.info(`repairing phase ${phase.id}, attempt ${attempt}: ${error}`)
+        yield* Effect.annotateCurrentSpan({ "lifecycle.repair": String(attempt) })
 
         const assistant = yield* input.promptSvc.loop({ sessionID: input.sessionID })
-        const finish = assistant?.info?.finish
+        const finish = (assistant?.info as any)?.finish
         if (finish == null || finish === "end_turn" || finish === "stop" || finish === "tool-calls") {
           return { phase: phase.id, status: "completed" as const, retriesUsed: attempt + 1 }
         }
@@ -131,12 +131,12 @@ export const runLifecycledPrompt = Effect.fn("LifecycleLoop.run")(function* (
           error: `Repair attempt ${attempt + 1} failed for phase ${phase.id}`,
           retriesUsed: attempt + 1,
         }
-      }),
+      }) as any,
   }).pipe(
     Effect.ensuring(phaseGate.exitPhase()),
   )
 
-  log.info("lifecycled prompt complete — %s phases executed", results.length)
+  log.info(`lifecycled prompt complete — ${results.length} phases executed`)
   return results
 })
 

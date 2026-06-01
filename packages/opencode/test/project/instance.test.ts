@@ -8,10 +8,11 @@ import { InstanceStore } from "../../src/project/instance-store"
 import { tmpdirScoped } from "../fixture/fixture"
 import { testEffect } from "../lib/effect"
 
-let bootstrapRun: Effect.Effect<void> = Effect.void
+let bootstrapRun: Effect.Effect<any> = Effect.void
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const noopBootstrap = Layer.succeed(
   InstanceBootstrap.Service,
-  InstanceBootstrap.Service.of({ run: Effect.suspend(() => bootstrapRun) }),
+  InstanceBootstrap.Service.of({ run: Effect.suspend(() => bootstrapRun) } as any),
 )
 
 const it = testEffect(

@@ -65,14 +65,14 @@ export const ClaimsApi = HttpApi.make("claims")
               Schema.Struct({
                 path: Schema.String,
                 name: Schema.String,
-                type: Schema.Literal("file", "directory"),
+                type: Schema.Literals(["file", "directory"] as const),
                 status: Schema.String,
                 claim: Schema.optional(ClaimInfo),
                 children: Schema.optional(
                   Schema.Array(Schema.Struct({
                     path: Schema.String,
                     name: Schema.String,
-                    type: Schema.Literal("file", "directory"),
+                    type: Schema.Literals(["file", "directory"] as const),
                     status: Schema.String,
                     claim: Schema.optional(ClaimInfo),
                   })),

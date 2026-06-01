@@ -30,7 +30,7 @@ export type RuntimeEvent =
   | { readonly _tag: "ValidationFailed"; readonly issues: readonly string[] }
   | { readonly _tag: "RepairComplete" }
   | { readonly _tag: "RepairFailed"; readonly error: string }
-  | { readonly _tag: "Blocked"; readonly reason: string }
+  | { readonly _tag: "Blocked"; readonly reason: string; readonly laneId?: string; readonly campaignId?: string; readonly ts?: string }
   | { readonly _tag: "Unblocked" }
   | { readonly _tag: "ScoutComplete"; readonly artifacts: readonly string[] }
   | { readonly _tag: "ArchitectComplete" }
@@ -43,7 +43,7 @@ export type RuntimeEvent =
   | { readonly _tag: "ClaimsAcquired"; readonly files: readonly string[]; readonly claimIds: readonly string[] }
   | { readonly _tag: "CheckpointCreated"; readonly sha: string; readonly message: string }
   | { readonly _tag: "LaneReturned"; readonly binderDigest: string }
-  | { readonly _tag: "Failed"; readonly error: string }
+  | { readonly _tag: "Failed"; readonly error: string; readonly laneId?: string; readonly campaignId?: string; readonly ts?: string; readonly reason?: string }
 
 // ── Transition Record ────────────────────────────────────────
 
@@ -60,7 +60,7 @@ export interface TransitionRecord {
 export type RoleOutput =
   | { readonly role: "cartographer" | "scout"; readonly status: "success" | "failure" | "blocked"; readonly artifacts: readonly string[]; readonly message: string }
   | { readonly role: "architect"; readonly status: "success" | "failure" | "blocked"; readonly planRef?: string; readonly message: string }
-  | { readonly role: "critic"; readonly status: "success" | "failure" | "blocked"; readonly verdict: "approved" | "rejected"; readonly reviewRef?: string; readonly reason?: string; readonly message: string }
+  | { readonly role: "critic"; readonly status: "success" | "failure" | "blocked"; readonly verdict: "approved" | "rejected"; readonly reviewRef?: string; readonly reviewId?: string; readonly reason?: string; readonly artifacts?: readonly string[]; readonly findings?: readonly { readonly id: string; readonly severity: string; readonly description: string; readonly file?: string }[]; readonly message: string }
   | { readonly role: "executor"; readonly status: "success" | "failure" | "blocked"; readonly changedFiles: readonly string[]; readonly diffSummary?: string; readonly message: string }
   | { readonly role: "validator"; readonly status: "success" | "failure" | "blocked"; readonly passed: boolean; readonly failedTests: readonly string[]; readonly message: string }
   | { readonly role: "redteam"; readonly status: "success" | "failure" | "blocked"; readonly findings: readonly { readonly severity: "blocking" | "high" | "medium" | "low" | "info"; readonly summary: string; readonly description?: string }[]; readonly message: string }
@@ -87,8 +87,10 @@ export function roleOutputToEvent(output: RoleOutput): RuntimeEvent {
       }
       case "historian":
         return { _tag: "CheckpointCreated", sha: output.checkpointSha ?? "", message: output.commitMessage ?? "" }
-      default:
-        return { _tag: "Failed", error: `unknown role: ${output.role}` }
+      default: {
+        const role = (output as { role: string }).role
+        return { _tag: "Failed", error: `unknown role: ${role}` }
+      }
     }
   }
   if (output.status === "blocked") {
@@ -465,7 +467,7 @@ const make = Effect.gen(function* () {
       }))
 
       const errorEvents = events.filter((e) => e._tag === "Failed" || e._tag === "RepairFailed")
-      const error: string | null = errorEvents.length > 0 ? errorEvents[errorEvents.length - 1]!.error : null
+      const error: string | null = errorEvents.length > 0 ? (errorEvents[errorEvents.length - 1]!.error ?? null) : null
 
       const state = nextSM.currentState as StateTag
       const activeRole = getRoleForState(state)
@@ -585,7 +587,7 @@ const make = Effect.gen(function* () {
 
       // Restore error state from replayed events
       const errorEvents = events.filter(e => e._tag === "Failed" || e._tag === "RepairFailed")
-      const error: string | null = errorEvents.length > 0 ? errorEvents[errorEvents.length - 1]!.error : null
+      const error: string | null = errorEvents.length > 0 ? (errorEvents[errorEvents.length - 1]!.error ?? null) : null
 
       const state = nextSM.currentState as StateTag
       const activeRole = getRoleForState(state)

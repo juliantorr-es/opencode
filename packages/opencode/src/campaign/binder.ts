@@ -1,7 +1,7 @@
 import { Context, Effect, Layer, Option, Ref } from "effect"
 import { createHash } from "node:crypto"
 import { serviceUse } from "@opencode-ai/core/effect/service-use"
-import { EventStore } from "@/event"
+import { EventStore, EventName } from "@/event"
 import { Identifier } from "@/id/id"
 import * as Log from "@opencode-ai/core/util/log"
 
@@ -297,7 +297,7 @@ function applyEvidenceToBinder(binder: Binder, section: string, artifact: unknow
 
 function recordBinderEvent(
   eventStore: EventStore.Interface,
-  eventType: string,
+  eventType: EventName,
   laneId: string,
   payload: Record<string, unknown>,
 ): Effect.Effect<void> {
@@ -670,6 +670,6 @@ const make = Effect.gen(function* () {
 
 export const layer: Layer.Layer<Service, never, EventStore.Service> = Layer.effect(Service, make)
 
-export const defaultLayer: Layer.Layer<Service> = layer.pipe(
+export const defaultLayer = layer.pipe(
   Layer.provide(EventStore.layer),
 )

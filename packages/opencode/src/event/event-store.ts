@@ -4,6 +4,7 @@ import { DatabaseAdapter } from "../storage/adapter"
 import { RuntimeEventTable } from "@/storage/schema"
 import { eq, and, asc, desc, gte, lte } from "drizzle-orm"
 import type { RuntimeEvent } from "./runtime-event"
+import { EventName } from "./event-names"
 import * as Log from "@opencode-ai/core/util/log"
 
 const log = Log.create({ service: "event-store" })
@@ -70,7 +71,7 @@ function decodeFromDb(row: Record<string, unknown>): RuntimeEvent {
     correlationId: (row.correlation_id as string) ?? undefined,
     ts: row.ts as string,
     actor: row.actor as RuntimeEvent["actor"],
-    eventType: row.event_type as string,
+    eventType: row.event_type as EventName,
     phase: (row.phase as string) ?? undefined,
     status: (row.status as RuntimeEvent["status"]) ?? undefined,
     toolName: (row.tool_name as string) ?? undefined,

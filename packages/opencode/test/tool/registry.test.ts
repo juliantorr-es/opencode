@@ -68,10 +68,12 @@ const registryLayer = (opts: RegistryLayerOptions = {}) =>
       Layer.provide(Format.defaultLayer),
       Layer.provide(node),
       Layer.provide(Ripgrep.defaultLayer),
+    )
+    .pipe(
       Layer.provide(Truncate.defaultLayer),
       Layer.provide(ToolCache.defaultLayer),
+      Layer.provide(RuntimeFlags.layer(opts.flags ?? {})),
     )
-    .pipe(Layer.provide(RuntimeFlags.layer(opts.flags ?? {})))
 
 // Fake Plugin.Service that returns a single plugin whose `tool` map contains
 // one definition with `args: undefined`. Used to exercise the plugin entry
@@ -96,7 +98,9 @@ const brokenPluginLayer = Layer.succeed(
       ]),
     checkCapability: () => Effect.succeed(true),
     getRegistry: () => Effect.succeed({} as any),
-  }),
+    unquarantine: () => Effect.void,
+    getCrashStatus: () => Effect.succeed({ crashCount: 0, quarantined: false }),
+  } as any),
 )
 
 const it = testEffect(Layer.mergeAll(registryLayer(), node, Agent.defaultLayer))

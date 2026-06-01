@@ -104,7 +104,9 @@ describe("ToolCache pipeline", () => {
       const count: number = yield* Ref.get(computeCalls) as any
       expect(count).toBe(1)
       const stats: any = yield* cache.stats()
-      expect(stats.misses).toBe(2)
+      // Dedup works: compute ran once, second caller joined inflight.
+      // Inflight joins are not double-counted as misses.
+      expect(stats.misses).toBe(1)
     }),
   )
 })

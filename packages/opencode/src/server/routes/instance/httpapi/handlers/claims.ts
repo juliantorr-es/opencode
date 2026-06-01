@@ -17,7 +17,7 @@ export const claimsHandlers = HttpApiBuilder.group(InstanceHttpApi, "claims", (h
             filters.push(eq(CoordinationClaimTable.session_id, ctx.query.sessionId))
           }
           if (ctx.query.status) {
-            filters.push(eq(CoordinationClaimTable.status, ctx.query.status))
+            filters.push(eq(CoordinationClaimTable.status, ctx.query.status as any))
           }
 
           const claimRows = Database.use((db) => {
@@ -37,7 +37,7 @@ export const claimsHandlers = HttpApiBuilder.group(InstanceHttpApi, "claims", (h
           })
 
           return {
-            claims: claimRows.map((row) => ({
+            claims: claimRows.map((row: Record<string, unknown>) => ({
               taskId: row.task_id,
               sessionId: row.session_id,
               wave: row.wave,
@@ -50,7 +50,7 @@ export const claimsHandlers = HttpApiBuilder.group(InstanceHttpApi, "claims", (h
               createdAt: row.created_at,
               releasedAt: row.released_at ?? undefined,
             })),
-            reservations: reservationRows.map((row) => ({
+            reservations: reservationRows.map((row: Record<string, unknown>) => ({
               path: row.path,
               taskId: row.task_id,
               sessionId: row.session_id,

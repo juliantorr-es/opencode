@@ -38,9 +38,10 @@ export const use = serviceUse(Service)
 
 // ── Shared Parameter Helper ───────────────────────────────
 
-const Params = (extra: Record<string, Schema.Schema<string, string, any>>) =>
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const Params = (extra: Record<string, any>) =>
   Schema.Struct({
-    sessionId: Schema.String.annotations({
+    sessionId: Schema.String.annotate({
       description: "Session ID to query events for",
     }),
     ...extra,
@@ -54,7 +55,7 @@ const PHASE_EVENT_TYPES = new Set([
   "phase_transition",
 ])
 
-export const layer: Layer.Layer<Service> = Layer.effect(
+export const layer = Layer.effect(
   Service,
   Effect.gen(function* () {
     const store = yield* EventStore.Service
@@ -382,10 +383,10 @@ export const EventsForFileTool = Tool.define(
   Effect.gen(function* () {
     const store = yield* Service
     const Parameters = Schema.Struct({
-      filePath: Schema.String.annotations({
+      filePath: Schema.String.annotate({
         description: "File path to filter events by (partial match)",
       }),
-      sessionId: Schema.String.annotations({
+      sessionId: Schema.String.annotate({
         description: "Session ID to query",
       }),
       limit: Schema.optional(Schema.Number).annotate({
@@ -421,10 +422,10 @@ export const EventsForErrorCodeTool = Tool.define(
   Effect.gen(function* () {
     const store = yield* Service
     const Parameters = Schema.Struct({
-      errorCode: Schema.String.annotations({
+      errorCode: Schema.String.annotate({
         description: "Error code to filter events by (exact match)",
       }),
-      sessionId: Schema.String.annotations({
+      sessionId: Schema.String.annotate({
         description: "Session ID to query",
       }),
       limit: Schema.optional(Schema.Number).annotate({

@@ -4,7 +4,7 @@ import { EventNameValues } from "./event-names"
 export const ActorType = Schema.Literals(["user", "assistant", "tool", "system", "lifecycle"])
 export type ActorType = Schema.Schema.Type<typeof ActorType>
 
-export const EventStatus = Schema.Literals(["started", "succeeded", "failed", "denied", "cancelled", "recovered"])
+export const EventStatus = Schema.Literals(["started", "succeeded", "failed", "denied", "cancelled", "recovered", "blocked", "pass"])
 export type EventStatus = Schema.Schema.Type<typeof EventStatus>
 
 export const RuntimeEvent = Schema.Struct({

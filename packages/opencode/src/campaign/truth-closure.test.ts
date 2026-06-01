@@ -1993,9 +1993,10 @@ describe("Claims required before executing", () => {
       { _tag: "CriticComplete", verdict: "approved" as const },
     ]
 
-    const smEvents = events.map((e) => toSMEvent(e))
+    // @ts-expect-error - campaign vs state-machine RuntimeEvent type mismatch
+    const smEvents = events.map((e) => toSMEvent(e)) as any[]
     const state = makeInitialCampaignState()
-    const result = reduceCampaignState(state, smEvents, LANE_STATE_MACHINE)
+    const result = reduceCampaignState(state, smEvents as any, LANE_STATE_MACHINE)
 
     expect(result.currentState).toBe("approved")
 
@@ -2022,9 +2023,10 @@ describe("Claims required before executing", () => {
       { _tag: "ClaimsAcquired", files: ["a.ts"], claimIds: ["c1"] } as const,
     ]
 
-    const smEvents = events.map((e) => toSMEvent(e))
+    // @ts-expect-error - campaign vs state-machine RuntimeEvent type mismatch
+    const smEvents = events.map((e) => toSMEvent(e)) as any[]
     const state = makeInitialCampaignState()
-    const result = reduceCampaignState(state, smEvents, LANE_STATE_MACHINE)
+    const result = reduceCampaignState(state, smEvents as any, LANE_STATE_MACHINE)
 
     expect(result.currentState).toBe("executing")
 

@@ -77,6 +77,9 @@ export const layer = (overrides: Partial<Info> = {}) =>
     }),
   ).pipe(Layer.provide(emptyConfigLayer))
 
-export const defaultLayer = Service.defaultLayer.pipe(Layer.orDie)
+export const defaultLayer = Service.defaultLayer.pipe(
+  Layer.provide(ConfigProvider.layer(ConfigProvider.fromUnknown({}))),
+  Layer.orDie,
+)
 
 export * as RuntimeFlags from "./runtime-flags"

@@ -596,6 +596,25 @@ function resolveFindingBlocking(
   _spec: PredicateSpec,
   ctx: PredicateContext,
 ): PredicateResult {
+  // If there are RedteamCompleted events, use the latest one as the
+  // authoritative signal. A prior run's blocking findings should not
+  // re-trigger repair after a clean re-evaluation.
+  const completed = ctx.events
+    .filter((e) => e.eventType === EventName.RedteamCompleted)
+    .sort((a, b) => b.ts.localeCompare(a.ts))
+  const latest = completed[0]
+  if (latest) {
+    const blockingFindings = (latest.payloadJson as Record<string, number> | undefined)?.blockingFindings ?? 0
+    if (blockingFindings === 0) {
+      return { satisfied: false, reason: "Latest redteam run had no blocking findings" }
+    }
+    return {
+      satisfied: true,
+      evidence: { id: latest.id, type: "event" as const, detail: `${blockingFindings} blocking finding(s)` },
+    }
+  }
+
+  // No completion events yet — check individual finding events (first red-team run)
   const blocking = ctx.events.filter(
     (e) =>
       e.eventType === EventName.FindingBlocking ||
@@ -648,18 +667,21 @@ function resolvePlanApproved(
   _spec: PredicateSpec,
   ctx: PredicateContext,
 ): PredicateResult {
-  const approved = ctx.events.filter(
-    (e) => e.eventType === EventName.PlanApproved,
-  )
-  if (approved.length === 0) {
-    return {
-      satisfied: false,
-      reason: "No plan.approved event",
-    }
+  // Find the latest plan.approved or plan.rejected event.
+  // A stale plan.rejected in history should not block a fresh approval.
+  const planEvents = ctx.events
+    .filter((e) => e.eventType === EventName.PlanApproved || e.eventType === EventName.PlanRejected)
+    .sort((a, b) => b.ts.localeCompare(a.ts))
+  const latest = planEvents[0]
+  if (!latest) {
+    return { satisfied: false, reason: "No plan.approved or plan.rejected event" }
+  }
+  if (latest.eventType !== EventName.PlanApproved) {
+    return { satisfied: false, reason: `Latest plan event is ${latest.eventType}, not ${EventName.PlanApproved}` }
   }
   return {
     satisfied: true,
-    evidence: { id: approved.at(0)?.id ?? "ev-missing", type: "event", detail: "plan.approved" },
+    evidence: { id: latest.id ?? "ev-missing", type: "event", detail: "plan.approved (latest)" },
   }
 }
 
@@ -667,21 +689,21 @@ function resolvePlanRejected(
   _spec: PredicateSpec,
   ctx: PredicateContext,
 ): PredicateResult {
-  // toSMEvent emits "plan.rejected" (EventName.PlanRejected) for CriticComplete(rejected),
-  // NOT "critic.review" (EventName.CriticReview). The PlanRejected event's existence
-  // is sufficient evidence — it's only emitted on rejection.
-  const rejected = ctx.events.filter(
-    (e) => e.eventType === EventName.PlanRejected,
-  )
-  if (rejected.length === 0) {
-    return {
-      satisfied: false,
-      reason: "No plan.rejected event",
-    }
+  // Check that the latest plan event is a rejection, not just any historical one.
+  // This prevents a stale rejection from re-triggering after a revised plan is approved.
+  const planEvents = ctx.events
+    .filter((e) => e.eventType === EventName.PlanApproved || e.eventType === EventName.PlanRejected)
+    .sort((a, b) => b.ts.localeCompare(a.ts))
+  const latest = planEvents[0]
+  if (!latest) {
+    return { satisfied: false, reason: "No plan.approved or plan.rejected event" }
+  }
+  if (latest.eventType !== EventName.PlanRejected) {
+    return { satisfied: false, reason: `Latest plan event is ${latest.eventType}, not ${EventName.PlanRejected}` }
   }
   return {
     satisfied: true,
-    evidence: { id: rejected.at(0)?.id ?? "ev-missing", type: "event", detail: "PlanRejected" },
+    evidence: { id: latest.id ?? "ev-missing", type: "event", detail: "PlanRejected (latest)" },
   }
 }
 

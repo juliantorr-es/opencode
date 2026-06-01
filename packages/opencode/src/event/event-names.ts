@@ -145,6 +145,16 @@ export const EventName = {
   CampaignPublicationBlocked: 'campaign.publication.blocked',
   CampaignCheckpointCreated: 'campaign.checkpoint.created',
   GatesAllPassed: 'gates.all_passed',
+  CampaignFinalValidation: 'campaign.final_validation',
+  CampaignValidation: 'campaign.validation',
+  CampaignPushed: 'campaign.pushed',
+  CampaignPush: 'campaign.push',
+  CampaignCheckpoint: 'checkpoint',
+  CampaignTestRun: 'test_run',
+  BinderCreated: 'binder.created',
+  BinderFinalized: 'binder.finalized',
+  BinderEvidenceAdded: 'binder.evidence_added',
+  BinderStatusChanged: 'binder.status_changed',
 
   // context.*
   ContextSufficient: 'context.sufficient',

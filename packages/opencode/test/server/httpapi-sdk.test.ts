@@ -25,7 +25,7 @@ import { disposeAllInstances, TestInstance, tmpdirScoped } from "../fixture/fixt
 import { awaitWithTimeout, testEffect } from "../lib/effect"
 import { testProviderConfig } from "../lib/test-provider"
 
-const noopBootstrap = Layer.succeed(InstanceBootstrap.Service, InstanceBootstrap.Service.of({ run: Effect.void }))
+const noopBootstrap = Layer.succeed(InstanceBootstrap.Service, InstanceBootstrap.Service.of({ run: Effect.succeed({ status: "ready" as const, failedServices: [] }) }))
 const it = testEffect(
   Layer.mergeAll(
     AppFileSystem.defaultLayer,

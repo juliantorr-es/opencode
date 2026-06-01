@@ -11,7 +11,7 @@ import { HealthRegistry, HealthStatus } from "@/server/health"
 
 export interface DuckDBRawClient {
   /** Run a SELECT / analytical query and return all rows. */
-  all<T = any>(sql: string): Promise<T[]>
+  all<T = any>(sql: string, params?: any[]): Promise<T[]>
   /** Run a SELECT / analytical query and return the first row only. */
   get<T = any>(sql: string): Promise<T | undefined>
   /** Run a DDL or utility statement (no result rows expected). */

@@ -3,6 +3,7 @@ import { Bus } from "../bus"
 import { EventStore } from "."
 import * as Log from "@opencode-ai/core/util/log"
 import type { RuntimeEvent } from "./runtime-event"
+import { EventName } from "./event-names"
 
 const log = Log.create({ service: "event-bridge" })
 
@@ -58,7 +59,7 @@ function toRuntimeEvent(payload: { id: string; type: string; properties: Record<
     correlationId: undefined,
     ts: new Date().toISOString(),
     actor: inferActor(payload.type),
-    eventType: payload.type,
+    eventType: payload.type as EventName,
     phase: (props as any).phase as string | undefined,
     status: extractStatus(props),
     toolName: extractToolName(props),

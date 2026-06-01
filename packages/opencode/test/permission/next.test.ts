@@ -12,7 +12,7 @@ import { testEffect } from "../lib/effect"
 import { MessageID, SessionID } from "../../src/session/schema"
 
 const bus = Bus.layer
-const noopBootstrap = Layer.succeed(InstanceBootstrap.Service, InstanceBootstrap.Service.of({ run: Effect.void }))
+const noopBootstrap = Layer.succeed(InstanceBootstrap.Service, InstanceBootstrap.Service.of({ run: Effect.succeed({ status: "ready" as const, failedServices: [] }) }))
 const env = Layer.mergeAll(
   Permission.layer.pipe(Layer.provide(bus)),
   bus,

@@ -11,7 +11,7 @@ import { ProjectID } from "./schema"
 import { Bus } from "@/bus"
 import { Command } from "@/command"
 import { InstanceState } from "@/effect/instance-state"
-import { Effect, Layer, Scope, Context, Stream, Types, Schema } from "effect"
+import { Effect, Layer, Scope, Context, Stream, Types, Schema, ConfigProvider } from "effect"
 import { ChildProcess, ChildProcessSpawner } from "effect/unstable/process"
 import { AppFileSystem } from "@opencode-ai/core/filesystem"
 import { AppProcess } from "@opencode-ai/core/process"
@@ -485,6 +485,7 @@ export const defaultLayer = layer.pipe(
   Layer.provide(CrossSpawnSpawner.defaultLayer),
   Layer.provide(AppFileSystem.defaultLayer),
   Layer.provide(RuntimeFlags.defaultLayer),
+  Layer.provide(ConfigProvider.layer(ConfigProvider.fromUnknown({}))),
 )
 
 export const use = serviceUse(Service)

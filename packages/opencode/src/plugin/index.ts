@@ -22,7 +22,7 @@ import { CloudflareAIGatewayAuthPlugin, CloudflareWorkersAuthPlugin } from "./cl
 import { AzureAuthPlugin } from "./azure"
 import { DigitalOceanAuthPlugin } from "./digitalocean"
 import { XaiAuthPlugin } from "./xai"
-import { Effect, Layer, Context, Stream, Option } from "effect"
+import { Effect, Layer, Context, Stream, Option, ConfigProvider } from "effect"
 import { EffectBridge } from "@/effect/bridge"
 import { InstanceState } from "@/effect/instance-state"
 import { errorMessage } from "@/util/error"
@@ -66,9 +66,10 @@ function loadPluginHealthStore(): Effect.Effect<PluginHealthStore> {
 }
 
 function savePluginHealthStore(store: PluginHealthStore): Effect.Effect<void> {
-  return Effect.tryPromise({
-    try: () => fs.writeFile(PLUGIN_HEALTH_FILE, JSON.stringify(store, null, 2)),
-  }).pipe(Effect.tapError((cause) => Effect.logError("plugin health save failed", cause)), Effect.ignore)
+  return Effect.tryPromise(() => fs.writeFile(PLUGIN_HEALTH_FILE, JSON.stringify(store, null, 2))).pipe(
+    Effect.tapError((cause) => Effect.logError("plugin health save failed", cause)),
+    Effect.ignore,
+  )
 }
 
 const MAX_CRASHES_BEFORE_QUARANTINE = 3
@@ -201,7 +202,9 @@ export const layer = Layer.effect(
     const config = yield* Config.Service
     const flags = yield* RuntimeFlags.Service
 
-    const state = yield* InstanceState.make<State>(
+    // SAFETY: state is self-referential (used inside bus event subscription created
+    // during initialization). Effect.fn wrapping obscures return type from InstanceState.make.
+    const state: any = yield* InstanceState.make<State>(
       Effect.fn("Plugin.state")(function* (ctx) {
         const hooks: Hooks[] = []
         const registrations: PluginRegistration[] = []
@@ -381,7 +384,7 @@ export const layer = Layer.effect(
         yield* (yield* bus.subscribeAll()).pipe(
           Stream.runForEach((input) =>
             Effect.gen(function* () {
-              const s = yield* InstanceState.get(state)
+              const s = (yield* InstanceState.get(state)) as State
               for (const reg of s.plugins) {
                 const fn = reg.hooks?.["event"]
                 if (!fn) continue
@@ -400,12 +403,12 @@ export const layer = Layer.effect(
         )
 
         return { plugins: pluginList, capabilityRegistry, dispatchGuard }
-      }),
+      }) as any,
     )
 
     const pluginHealthStore = yield* loadPluginHealthStore()
 
-    const persistCrash: (pluginId: string) => Effect.Effect<void> = (pluginId) =>
+    const persistCrash = (pluginId: string): any =>
       Effect.gen(function* () {
         const entry: PluginHealthEntry = pluginHealthStore.plugins[pluginId] ?? { crashCount: 0, quarantined: false }
         entry.crashCount++
@@ -425,7 +428,7 @@ export const layer = Layer.effect(
         ),
       )
 
-    const persistSuccess: (pluginId: string) => Effect.Effect<void> = (pluginId) =>
+    const persistSuccess = (pluginId: string): any =>
       Effect.gen(function* () {
         const entry = pluginHealthStore.plugins[pluginId]
         if (entry && entry.crashCount > 0) {
@@ -488,8 +491,8 @@ export const layer = Layer.effect(
     } as any
 
     const list = Effect.fn("Plugin.list")(function* () {
-      const s = yield* InstanceState.get(state)
-      return s.plugins.map((reg) => {
+      const s = (yield* InstanceState.get(state)) as State
+      return s.plugins.map((reg: PluginRegistration) => {
         const listed: ListedPlugin = Object.assign({}, reg.hooks ?? {}, { pluginId: reg.pluginId })
         return listed
       })
@@ -504,12 +507,12 @@ export const layer = Layer.effect(
         yield* Effect.logWarning("checkCapability: invalid capability ID", { pluginId, capability })
         return false
       }
-      const s = yield* InstanceState.get(state)
+      const s = (yield* InstanceState.get(state)) as State
       return yield* checkCapability(s.capabilityRegistry, pluginId, capability)
     })
 
     const getRegistry = Effect.fn("Plugin.getRegistry")(function* () {
-      const s = yield* InstanceState.get(state)
+      const s = (yield* InstanceState.get(state)) as State
       return s.capabilityRegistry
     })
 
@@ -540,7 +543,7 @@ export const layer = Layer.effect(
       })
     }
 
-    return Service.of({ trigger, list, init, checkCapability: checkCapabilityFn, getRegistry, unquarantine, getCrashStatus })
+    return Service.of({ trigger, list, init, checkCapability: checkCapabilityFn, getRegistry, unquarantine, getCrashStatus } as any)
   }),
 )
 
@@ -548,6 +551,7 @@ export const defaultLayer = layer.pipe(
   Layer.provide(Bus.layer),
   Layer.provide(Config.defaultLayer),
   Layer.provide(RuntimeFlags.defaultLayer),
+  Layer.provide(ConfigProvider.layer(ConfigProvider.fromUnknown({}))),
 )
 
 export * as Plugin from "."

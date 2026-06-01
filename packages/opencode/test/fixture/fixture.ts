@@ -3,7 +3,7 @@ import * as Observability from "@opencode-ai/core/effect/observability"
 import * as fs from "fs/promises"
 import os from "os"
 import path from "path"
-import { Effect, Context, Layer, ManagedRuntime } from "effect"
+import { Effect, Context, Layer, ManagedRuntime, ConfigProvider } from "effect"
 import type * as PlatformError from "effect/PlatformError"
 import type * as Scope from "effect/Scope"
 import { CrossSpawnSpawner } from "@opencode-ai/core/cross-spawn-spawner"
@@ -14,10 +14,15 @@ import { InstanceBootstrap } from "../../src/project/bootstrap-service"
 import type { InstanceContext } from "../../src/project/instance-context"
 import { InstanceRuntime } from "../../src/project/instance-runtime"
 import { InstanceStore } from "../../src/project/instance-store"
+import { layer as InstanceHealthStoreLayer } from "../../src/project/instance-health"
 import { TestLLMServer } from "../lib/llm-server"
 
-const noopBootstrap = Layer.succeed(InstanceBootstrap.Service, InstanceBootstrap.Service.of({ run: Effect.succeed({ status: "ready", failedServices: [] }) }))
-export const testInstanceStoreLayer = InstanceStore.defaultLayer.pipe(Layer.provide(noopBootstrap))
+const noopBootstrap = Layer.succeed(InstanceBootstrap.Service, InstanceBootstrap.Service.of({ run: Effect.succeed({ status: "ready", failedServices: [] }) })) as Layer.Layer<InstanceBootstrap.Service>
+export const testInstanceStoreLayer = InstanceStore.defaultLayer.pipe(
+  Layer.provide(noopBootstrap),
+  Layer.provide(InstanceHealthStoreLayer),
+  Layer.provide(ConfigProvider.layer(ConfigProvider.fromUnknown({}))),
+)
 const testInstanceRuntime = ManagedRuntime.make(testInstanceStoreLayer.pipe(Layer.provideMerge(Observability.layer)))
 
 const runTestInstanceStore = <A>(fn: (store: InstanceStore.Interface) => Effect.Effect<A>) =>

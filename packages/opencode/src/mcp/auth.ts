@@ -79,29 +79,27 @@ export const layer = Layer.effect(
     const fs = yield* AppFileSystem.Service
 
     const all = Effect.fn("McpAuth.all")(function* () {
-      return yield* fs.readJson(filepath).pipe(
-        Effect.flatMap((data) => Effect.gen(function* () {
-          const { valid, corrupted } = decodeAuthDataPerEntry(data)
-          if (corrupted.length > 0) {
-            const timestamp = new Date().toISOString().replace(/[:.]/g, "-")
-            const backupPath = `${filepath}.corrupted.${timestamp}`
-            yield* fs.writeJson(backupPath, data, 0o600).pipe(
-              Effect.tap(() => Effect.logError("mcp-auth.json contained corrupted entries — backed up", {
-                backupPath,
-                corruptedKeys: corrupted,
-                timestamp,
-              })),
-              Effect.catchAll((error) =>
-                Effect.logError("Failed to backup corrupted MCP auth entries", error).pipe(
-                  Effect.annotateLogs({ backupPath, corruptedKeys: corrupted }),
-                )
-              ),
-            )
-          }
-          return valid
-        })),
-        Effect.catch(() => Effect.succeed({} as AuthData)),
+      const raw = yield* fs.readJson(filepath).pipe(
+        Effect.catchCause(() => Effect.succeed({})),
       )
+      const { valid, corrupted } = decodeAuthDataPerEntry(raw)
+      if (corrupted.length > 0) {
+        const timestamp = new Date().toISOString().replace(/[:.]/g, "-")
+        const backupPath = `${filepath}.corrupted.${timestamp}`
+        yield* fs.writeJson(backupPath, raw, 0o600).pipe(
+          Effect.tap(() => Effect.logError("mcp-auth.json contained corrupted entries — backed up", {
+            backupPath,
+            corruptedKeys: corrupted,
+            timestamp,
+          })),
+          Effect.catchCause((cause) =>
+            Effect.logError("Failed to backup corrupted MCP auth entries", cause).pipe(
+              Effect.annotateLogs({ backupPath, corruptedKeys: corrupted }),
+            )
+          ),
+        )
+      }
+      return valid
     })
 
     const get = Effect.fn("McpAuth.get")(function* (mcpName: string) {

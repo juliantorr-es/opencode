@@ -104,7 +104,7 @@ export async function CopilotAuthPlugin(input: PluginInput): Promise<Hooks> {
                   return {
                     isVision: body.messages.some(
                       (msg: { content: unknown[] }) =>
-                        Array.isArray(msg.content) && msg.content.some((part: { type: string }) => part.type === "image_url"),
+                        Array.isArray(msg.content) && (msg.content as Array<{ type?: string }>).some((part) => part.type === "image_url"),
                     ),
                     isAgent: last?.role !== "user" || imgMsg(last),
                   }
@@ -137,7 +137,7 @@ export async function CopilotAuthPlugin(input: PluginInput): Promise<Hooks> {
                             // images can be nested inside tool_result content
                             (part?.type === "tool_result" &&
                               Array.isArray(part?.content) &&
-                              part.content.some((nested: { type?: string }) => nested?.type === "image")),
+                              (part.content as Array<{ type?: string }>).some((nested) => nested?.type === "image")),
                         ),
                     ),
                     isAgent: !(last?.role === "user" && hasNonToolCalls) || imgMsg(last),

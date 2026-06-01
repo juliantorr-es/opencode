@@ -42,7 +42,7 @@ const workspaceLayer = Workspace.defaultLayer.pipe(
 )
 const instanceStoreLayer = InstanceStore.defaultLayer.pipe(
   Layer.provide(
-    Layer.succeed(InstanceBootstrapService.Service, InstanceBootstrapService.Service.of({ run: Effect.void })),
+    Layer.succeed(InstanceBootstrapService.Service, InstanceBootstrapService.Service.of({ run: Effect.succeed({ status: "ready" as const, failedServices: [] }) })),
   ),
 )
 const it = testEffect(Layer.mergeAll(instanceStoreLayer, Project.defaultLayer, Session.defaultLayer, workspaceLayer))

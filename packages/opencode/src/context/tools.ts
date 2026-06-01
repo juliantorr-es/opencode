@@ -438,7 +438,7 @@ export const GetClaimContextTool = Tool.define(
           let activePaths: string[]
 
           if (activeReservations.length > 0) {
-            activePaths = activeReservations.map((r) => r.path)
+            activePaths = activeReservations.map((r: { path: string }) => r.path)
           } else {
             const recentEvents = yield* eventStore.query({ sessionId: ctx.sessionID, limit: 100, order: "desc" })
             activePaths = extractFilePaths(recentEvents)

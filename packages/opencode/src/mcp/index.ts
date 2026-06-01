@@ -920,7 +920,7 @@ export const layer = Layer.effect(
       if (!url) throw new Error(`Invalid MCP URL for "${mcpName}"`)
 
       // OAuth config is optional - if not provided, we'll use auto-discovery
-      const oauthConfig = mcpConfig.oauth !== false ? Option.getOrElse(Schema.decodeUnknownOption(ConfigMCP.OAuth)(mcpConfig.oauth), () => undefined) : undefined
+      const oauthConfig = Option.getOrElse(Schema.decodeUnknownOption(ConfigMCP.OAuth)(mcpConfig.oauth), () => undefined)
 
       // Resolve effective redirect URI: explicit redirectUri > callbackPort shorthand > default
       const effectiveRedirectUri =

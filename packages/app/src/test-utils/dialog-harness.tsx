@@ -51,7 +51,8 @@ export async function mountDialog(
   container.style.display = "none"
   document.body.appendChild(container)
 
-  const dispose = render(() => component(), container)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const dispose = (render as any)(() => component(), container) as () => void
 
   // Let SolidJS flush DOM updates
   await sleep(20)

@@ -55,7 +55,7 @@ export class PhaseFailureError {
  * Returns undefined if the value doesn't match the schema.
  */
 export function parseLifecycle(value: unknown): LifecycleDefinition | undefined {
-  const result = Schema.decodeOption(LifecycleDefinition)(value)
+  const result = Schema.decodeUnknownOption(LifecycleDefinition)(value)
   if (result._tag === "None") return undefined
   return result.value
 }

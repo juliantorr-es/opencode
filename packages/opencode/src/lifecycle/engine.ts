@@ -48,14 +48,14 @@ export const execute: Interface["execute"] = Effect.fn("LifecycleEngine.execute"
   let currentIndex = 0
   while (currentIndex < lifecycle.phases.length) {
     if (signal?.aborted) {
-      log.info("lifecycle aborted at phase index %s", currentIndex)
+      log.info(`lifecycle aborted at phase index ${currentIndex}`)
       break
     }
 
     const phase = lifecycle.phases[currentIndex]
     const maxRetries = phase.maxRetries ?? 0
 
-    yield* Effect.annotateCurrentSpan("lifecycle.phase", phase.id)
+    yield* Effect.annotateCurrentSpan({ "lifecycle.phase": phase.id })
     yield* onPhaseEnter(phase)
 
     let phaseResult: PhaseResult = { phase: phase.id, status: "failed", retriesUsed: 0 }
@@ -67,13 +67,13 @@ export const execute: Interface["execute"] = Effect.fn("LifecycleEngine.execute"
         break
       }
 
-      yield* Effect.annotateCurrentSpan("lifecycle.attempt", attempt)
+      yield* Effect.annotateCurrentSpan({ "lifecycle.attempt": String(attempt) })
 
       if (attempt > maxRetries) {
         // Escalation
         const escalation = phase.escalation ?? "skip"
-        yield* Effect.annotateCurrentSpan("lifecycle.escalation", escalation)
-        log.warn("phase %s max retries (%s) exceeded, escalating: %s", phase.id, maxRetries, escalation)
+        yield* Effect.annotateCurrentSpan({ "lifecycle.escalation": escalation })
+        log.warn(`phase ${phase.id} max retries (${maxRetries}) exceeded, escalating: ${escalation}`)
 
         if (escalation === "abort") {
           phaseResult = { phase: phase.id, status: "escalated", error: `Max retries (${maxRetries}) exceeded`, retriesUsed: attempt }
@@ -101,7 +101,7 @@ export const execute: Interface["execute"] = Effect.fn("LifecycleEngine.execute"
       if (result.status === "completed") break
 
       if (attempt < maxRetries) {
-        log.info("phase %s attempt %s failed, repairing", phase.id, attempt)
+        log.info(`phase ${phase.id} attempt ${attempt} failed, repairing`)
         const repairResult = yield* onRepair(phase, attempt, result.error ?? "unknown error")
         if (repairResult.status === "completed") {
           phaseResult = repairResult
@@ -110,7 +110,7 @@ export const execute: Interface["execute"] = Effect.fn("LifecycleEngine.execute"
       }
     }
 
-    yield*Effect.annotateCurrentSpan("lifecycle.phaseResult", phaseResult.status)
+    yield* Effect.annotateCurrentSpan({ "lifecycle.phaseResult": phaseResult.status })
     yield* onPhaseExit(phase, phaseResult)
     results.push(phaseResult)
 
@@ -120,7 +120,7 @@ export const execute: Interface["execute"] = Effect.fn("LifecycleEngine.execute"
       if (!nextPhaseId) break
       currentIndex = lifecycle.phases.findIndex((p) => p.id === nextPhaseId)
       if (currentIndex < 0) {
-        log.warn("next phase %s not found in lifecycle", nextPhaseId)
+        log.warn(`next phase ${nextPhaseId} not found in lifecycle`)
         break
       }
     } else {

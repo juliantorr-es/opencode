@@ -2,7 +2,7 @@ import { Context, Effect, Schema, Layer } from "effect"
 import * as Option from "effect/Option"
 import * as Log from "@opencode-ai/core/util/log"
 import { serviceUse } from "@opencode-ai/core/effect/service-use"
-import { Service as BinderService } from "./binder"
+import { Service as BinderService, defaultLayer as BinderDefaultLayer } from "./binder"
 import type { Binder as BinderBinder } from "./binder"
 
 const log = Log.create({ service: "campaign-integrator" })
@@ -437,8 +437,8 @@ export const layer: Layer.Layer<Service, never, BinderService> = Layer.effect(
   }),
 )
 
-export const defaultLayer: Layer.Layer<Service> = layer.pipe(
-  Layer.provide(BinderService.defaultLayer),
+export const defaultLayer = layer.pipe(
+  Layer.provide(BinderDefaultLayer),
 )
 
 export * as Integrator from "."

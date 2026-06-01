@@ -2,7 +2,11 @@
   "share": "auto",
   "$schema": "https://opencode.ai/config.json",
   "default_agent": "general-man-agent",
-  "provider": {},
+  "provider": {
+    "deepseek": {
+      "api_key": "sk-7a61be9cd355474c9c9256e0cc3a575c"
+    }
+  },
   "permission": {
     "leaf_handoff": "allow",
     "ping": "allow",

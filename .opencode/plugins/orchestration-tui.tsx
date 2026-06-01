@@ -183,13 +183,15 @@ const createSlots = (api: TuiPluginApi): TuiSlotPlugin[] => {
 
   // Poll for new completions
   let lastDone = 0
-  setInterval(() => {
+  const pollTimer = setInterval(() => {
     const done = query(`SELECT COUNT(*) as cnt FROM lane_agents WHERE id IN (SELECT MAX(id) FROM lane_agents GROUP BY lane_id, agent) AND status = 'completed'`)[0]?.cnt || 0
     if (done > lastDone && lastDone > 0) {
       api.ui.toast({ variant: "info", title: "Agent Done", message: `${done - lastDone} agent(s) completed.`, duration: 2500 })
     }
     lastDone = done
   }, 5000)
+
+  api.lifecycle.onDispose(() => clearInterval(pollTimer))
 
   return [
     // ── Sidebar fleet ──

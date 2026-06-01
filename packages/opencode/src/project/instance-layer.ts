@@ -1,4 +1,4 @@
-import { Effect, Layer } from "effect"
+import { Effect, Layer, ConfigProvider } from "effect"
 import { layer as InstanceHealthStoreLayer } from "./instance-health"
 import { InstanceStore } from "./instance-store"
 import { InstanceTrace } from "./instance-trace"
@@ -7,6 +7,7 @@ export const layer = Layer.unwrap(
   Effect.promise(async () => {
     const { InstanceBootstrap } = await import("./bootstrap")
     return InstanceStore.defaultLayer.pipe(
+      Layer.provide(ConfigProvider.layer(ConfigProvider.fromUnknown({}))),
       Layer.provide(InstanceBootstrap.defaultLayer),
       Layer.provide(InstanceTrace.layer),
       Layer.provide(InstanceHealthStoreLayer),

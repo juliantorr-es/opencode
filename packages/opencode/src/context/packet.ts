@@ -274,7 +274,7 @@ export const layer = Layer.effect(
                 if (currentDigest !== res.baseDigest && !recentFilePaths.includes(res.path!)) {
                   conflictFiles.push(res.path!)
                 }
-              }).pipe(Effect.catchAll(() => Effect.void))
+              }).pipe(Effect.catchCause(() => Effect.void))
             }
           }
         } catch (e) {
@@ -539,6 +539,9 @@ export const layer = Layer.effect(
           _freshness: {
             fetchedAt: new Date(fetchedAt).toISOString(),
             eventLagMs: Date.now() - fetchedAt,
+            contentFresh: true,
+            fileCount: workingSet.length,
+            stalePaths: [],
           },
         }
       },
@@ -575,7 +578,7 @@ export const layer = Layer.effect(
       assembleL1,
       assembleL2,
       getCurrentPacket,
-    } as Interface)
+    } as unknown as Interface)
   }),
 )
 

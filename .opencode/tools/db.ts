@@ -132,11 +132,11 @@ function ensureTables(db: Database) {
       blockers TEXT,
       next_steps TEXT,
       created_at TEXT DEFAULT (datetime('now'))
-    )
+    );
 
-    CREATE INDEX IF NOT EXISTS idx_lane_agents_lane ON lane_agents(lane_id)
-    CREATE INDEX IF NOT EXISTS idx_lane_agents_status ON lane_agents(status)
-    CREATE INDEX IF NOT EXISTS idx_lane_agents_agent ON lane_agents(agent)
+    CREATE INDEX IF NOT EXISTS idx_lane_agents_lane ON lane_agents(lane_id);
+    CREATE INDEX IF NOT EXISTS idx_lane_agents_status ON lane_agents(status);
+    CREATE INDEX IF NOT EXISTS idx_lane_agents_agent ON lane_agents(agent);
 
     CREATE TABLE IF NOT EXISTS messages (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -150,12 +150,12 @@ function ensureTables(db: Database) {
       body TEXT,
       sent_at TEXT,
       created_at TEXT DEFAULT (datetime('now'))
-    )
+    );
 
-    CREATE INDEX IF NOT EXISTS idx_messages_lane ON messages(lane_id)
-    CREATE INDEX IF NOT EXISTS idx_messages_kind ON messages(kind)
-    CREATE INDEX IF NOT EXISTS idx_messages_sender ON messages(sender)
-    CREATE INDEX IF NOT EXISTS idx_messages_recipient ON messages(recipient)
+    CREATE INDEX IF NOT EXISTS idx_messages_lane ON messages(lane_id);
+    CREATE INDEX IF NOT EXISTS idx_messages_kind ON messages(kind);
+    CREATE INDEX IF NOT EXISTS idx_messages_sender ON messages(sender);
+    CREATE INDEX IF NOT EXISTS idx_messages_recipient ON messages(recipient);
 
     CREATE TABLE IF NOT EXISTS journal (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -168,10 +168,10 @@ function ensureTables(db: Database) {
       output TEXT,
       files_touched TEXT,
       created_at TEXT DEFAULT (datetime('now'))
-    )
+    );
 
-    CREATE INDEX IF NOT EXISTS idx_journal_lane ON journal(lane_id)
-    CREATE INDEX IF NOT EXISTS idx_journal_agent ON journal(agent)
+    CREATE INDEX IF NOT EXISTS idx_journal_lane ON journal(lane_id);
+    CREATE INDEX IF NOT EXISTS idx_journal_agent ON journal(agent);
 
     -- Analytics tables
     CREATE TABLE IF NOT EXISTS heartbeats (
@@ -182,10 +182,10 @@ function ensureTables(db: Database) {
       phase TEXT NOT NULL,
       detail TEXT,
       at TEXT NOT NULL
-    )
-    CREATE INDEX IF NOT EXISTS idx_heartbeats_session ON heartbeats(session_id)
-    CREATE INDEX IF NOT EXISTS idx_heartbeats_agent ON heartbeats(agent)
-    CREATE INDEX IF NOT EXISTS idx_heartbeats_at ON heartbeats(at)
+    );
+    CREATE INDEX IF NOT EXISTS idx_heartbeats_session ON heartbeats(session_id);
+    CREATE INDEX IF NOT EXISTS idx_heartbeats_agent ON heartbeats(agent);
+    CREATE INDEX IF NOT EXISTS idx_heartbeats_at ON heartbeats(at);
 
     CREATE TABLE IF NOT EXISTS tool_usage (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -197,8 +197,8 @@ function ensureTables(db: Database) {
       exit_code INTEGER,
       cwd TEXT,
       at TEXT NOT NULL
-    )
-    CREATE INDEX IF NOT EXISTS idx_tool_usage_session ON tool_usage(session_id)
+    );
+    CREATE INDEX IF NOT EXISTS idx_tool_usage_session ON tool_usage(session_id);
 
     CREATE TABLE IF NOT EXISTS typecheck_results (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -210,8 +210,8 @@ function ensureTables(db: Database) {
       elapsed_ms INTEGER,
       fallback INTEGER DEFAULT 0,
       at TEXT NOT NULL
-    )
-    CREATE INDEX IF NOT EXISTS idx_typecheck_session ON typecheck_results(session_id)
+    );
+    CREATE INDEX IF NOT EXISTS idx_typecheck_session ON typecheck_results(session_id);
 
     CREATE TABLE IF NOT EXISTS test_results (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -223,8 +223,8 @@ function ensureTables(db: Database) {
       fail INTEGER DEFAULT 0,
       total INTEGER DEFAULT 0,
       at TEXT NOT NULL
-    )
-    CREATE INDEX IF NOT EXISTS idx_test_results_session ON test_results(session_id)
+    );
+    CREATE INDEX IF NOT EXISTS idx_test_results_session ON test_results(session_id);
 
     CREATE TABLE IF NOT EXISTS bash_usage (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -236,8 +236,8 @@ function ensureTables(db: Database) {
       elapsed_ms INTEGER,
       exit_code INTEGER,
       at TEXT NOT NULL
-    )
-    CREATE INDEX IF NOT EXISTS idx_bash_usage_session ON bash_usage(session_id)
+    );
+    CREATE INDEX IF NOT EXISTS idx_bash_usage_session ON bash_usage(session_id);
 
     -- ═══════════════════════════════════════════════════════
     -- CODEBASE KNOWLEDGE GRAPH — living map of the codebase
@@ -252,7 +252,7 @@ function ensureTables(db: Database) {
       last_indexed_at TEXT,
       last_modified_by TEXT,
       test_coverage TEXT
-    )
+    );
 
     CREATE TABLE IF NOT EXISTS symbols (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -264,10 +264,10 @@ function ensureTables(db: Database) {
       signature TEXT,
       doc_comment TEXT,
       indexed_at TEXT
-    )
-    CREATE INDEX IF NOT EXISTS idx_symbols_file ON symbols(file_path)
-    CREATE INDEX IF NOT EXISTS idx_symbols_name ON symbols(name)
-    CREATE INDEX IF NOT EXISTS idx_symbols_kind ON symbols(kind)
+    );
+    CREATE INDEX IF NOT EXISTS idx_symbols_file ON symbols(file_path);
+    CREATE INDEX IF NOT EXISTS idx_symbols_name ON symbols(name);
+    CREATE INDEX IF NOT EXISTS idx_symbols_kind ON symbols(kind);
 
     CREATE TABLE IF NOT EXISTS dependencies (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -276,9 +276,9 @@ function ensureTables(db: Database) {
       import_path TEXT,
       imported_symbols TEXT,
       indexed_at TEXT
-    )
-    CREATE INDEX IF NOT EXISTS idx_deps_from ON dependencies(from_file)
-    CREATE INDEX IF NOT EXISTS idx_deps_to ON dependencies(to_file)
+    );
+    CREATE INDEX IF NOT EXISTS idx_deps_from ON dependencies(from_file);
+    CREATE INDEX IF NOT EXISTS idx_deps_to ON dependencies(to_file);
 
     CREATE TABLE IF NOT EXISTS patterns (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -288,7 +288,7 @@ function ensureTables(db: Database) {
       example TEXT,
       found_by TEXT,
       found_at TEXT
-    )
+    );
 
     CREATE TABLE IF NOT EXISTS error_hotspots (
       file_path TEXT PRIMARY KEY,
@@ -296,7 +296,7 @@ function ensureTables(db: Database) {
       test_failures INTEGER DEFAULT 0,
       last_error_at TEXT,
       last_error_message TEXT
-    )
+    );
 
     CREATE TABLE IF NOT EXISTS conventions (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -305,21 +305,21 @@ function ensureTables(db: Database) {
       example TEXT,
       found_by TEXT,
       found_at TEXT
-    )
+    );
 
     CREATE TABLE IF NOT EXISTS artifacts (
       key TEXT PRIMARY KEY,
       data TEXT NOT NULL,
       source TEXT,
       updated_at TEXT
-    )
+    );
 
     -- FTS5 full-text search over journal, messages, and file purposes
     CREATE VIRTUAL TABLE IF NOT EXISTS search_idx USING fts5(
       source,
       content,
       tokenize='porter unicode61'
-    )
+    );
   `)
 }
 
@@ -330,14 +330,14 @@ export function heartbeat(db: Database, sessionID: string, agent: string, tool: 
     sessionID, agent, tool, phase, detail.slice(0, 200), new Date().toISOString())
 }
 
-export function logToolUsage(db: Database, sessionID: string, agent: string, tool: string, extra: Record<string, unknown>) {
+export function logToolUsage(db: Database, sessionID: string, agent: string, tool: string, extra?: Record<string, unknown>) {
   db.run(`INSERT INTO tool_usage (session_id, agent, tool, command, elapsed_ms, exit_code, cwd, at)
           VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
     sessionID, agent, tool,
-    (extra.command as string)?.slice(0, 200) || null,
-    (extra.elapsed_ms as number) || null,
-    (extra.exit_code as number) ?? null,
-    (extra.cwd as string)?.slice(0, 200) || null,
+    (extra?.command as string)?.slice(0, 200) || null,
+    (extra?.elapsed_ms as number) || null,
+    (extra?.exit_code as number) ?? null,
+    (extra?.cwd as string)?.slice(0, 200) || null,
     new Date().toISOString())
 }
 

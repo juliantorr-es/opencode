@@ -11,6 +11,7 @@
 
 import { Context, Effect, Layer, Ref } from "effect"
 import { EventStore } from "../event"
+import { DatabaseAdapter } from "../storage/adapter"
 import {
   reduceCampaignState,
   CAMPAIGN_STATE_MACHINE,
@@ -48,10 +49,10 @@ export interface Interface {
   ) => Effect.Effect<CampaignStateProjection>
 
   /** Get or build the projection for a campaign from EventStore. */
-  readonly getProjection: (campaignId: string) => Effect.Effect<CampaignStateProjection>
+  readonly getProjection: (campaignId: string) => Effect.Effect<CampaignStateProjection, DatabaseAdapter.DatabaseError>
 }
 
-export class CampaignProjector extends Context.Service<CampaignProjector, Interface>()("CampaignProjector") {}
+export class Service extends Context.Service<Service, Interface>()("CampaignProjector") {}
 
 // ── Implementation ─────────────────────────────────────────
 
@@ -150,8 +151,8 @@ const make = Effect.gen(function* () {
   return { project, getProjection } satisfies Interface
 })
 
-export const layer: Layer.Layer<CampaignProjector, never, EventStore.Service> = Layer.effect(
-  CampaignProjector,
+export const layer: Layer.Layer<Service, never, EventStore.Service> = Layer.effect(
+  Service,
   make,
 )
 
