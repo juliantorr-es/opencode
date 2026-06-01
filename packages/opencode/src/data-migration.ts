@@ -39,7 +39,7 @@ export const layer = Layer.effect(
                     .where(cursor ? gt(SessionTable.id, cursor) : undefined)
                     .orderBy(asc(SessionTable.id))
                     .limit(100)
-                    .all(),
+                    .execute(),
                 ),
               )
               if (sessions.length === 0) return
@@ -74,7 +74,7 @@ export const layer = Layer.effect(
                       ),
                     )
                     .groupBy(MessageTable.session_id)
-                    .all()) {
+                    .execute()) {
                     const current = usageBySession.get(row.session_id)
                     if (!current) continue
                     current.cost = row.cost
@@ -97,7 +97,7 @@ export const layer = Layer.effect(
                         time_updated: sql`${SessionTable.time_updated}`,
                       })
                       .where(eq(SessionTable.id, sessionID))
-                      .run()
+                      .execute()
                   }
                 }),
               )
@@ -142,7 +142,7 @@ export const layer = Layer.effect(
             .insert(DataMigrationTable)
             .values({ name: migration.name, time_completed: Date.now() })
             .onConflictDoNothing()
-            .run(),
+            .execute(),
         )
       }
     }).pipe(

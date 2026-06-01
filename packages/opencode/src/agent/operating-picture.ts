@@ -65,7 +65,7 @@ function getClaimedFiles(): Effect.Effect<string[], DatabaseAdapter.DatabaseErro
           path: CoordinationReservationTable.path,
         })
         .from(CoordinationReservationTable)
-        .all()
+        .execute()
     )
     return rows
       .map((r) => r.path)

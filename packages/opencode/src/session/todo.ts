@@ -42,7 +42,7 @@ export const layer = Layer.effect(
     const update = Effect.fn("Todo.update")(function* (input: { sessionID: SessionID; todos: Info[] }) {
       yield* Effect.sync(() =>
         Database.transaction((db) => {
-          db.delete(TodoTable).where(eq(TodoTable.session_id, input.sessionID)).run()
+          db.delete(TodoTable).where(eq(TodoTable.session_id, input.sessionID)).execute()
           if (input.todos.length === 0) return
           db.insert(TodoTable)
             .values(
@@ -54,7 +54,7 @@ export const layer = Layer.effect(
                 position,
               })),
             )
-            .run()
+            .execute()
         }),
       )
       yield* bus.publish(Event.Updated, input)
@@ -63,7 +63,7 @@ export const layer = Layer.effect(
     const get = Effect.fn("Todo.get")(function* (sessionID: SessionID) {
       const rows = yield* Effect.sync(() =>
         Database.use((db) =>
-          db.select().from(TodoTable).where(eq(TodoTable.session_id, sessionID)).orderBy(asc(TodoTable.position)).all(),
+          db.select().from(TodoTable).where(eq(TodoTable.session_id, sessionID)).orderBy(asc(TodoTable.position)).execute(),
         ),
       )
       return rows.map((row: typeof TodoTable.$inferSelect) => ({

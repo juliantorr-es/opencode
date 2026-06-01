@@ -8,6 +8,7 @@ import * as Session from "./session"
 import { MessageV2 } from "./message-v2"
 import { SessionTable, MessageTable, PartTable, WorkspaceTable } from "@/storage/schema"
 import { Log } from "@opencode-ai/core/util/log"
+import { one } from "@/storage/adapter"
 import nextProjectors from "./projectors-next"
 
 const log = Log.create({ service: "session.projector" })
@@ -41,7 +42,7 @@ function applyUsage(db: TxOrDb, sessionID: Session.Info["id"], value: Usage, sig
       time_updated: sql`${SessionTable.time_updated}`,
     })
     .where(eq(SessionTable.id, sessionID))
-    .run()
+    .execute()
 }
 
 function grab<T extends object, K1 extends keyof T, X>(
@@ -100,26 +101,27 @@ export default [
   SyncEvent.project(Session.Event.Created, (db, data) => {
     db.insert(SessionTable)
       .values(Session.toRow(data.info as Session.Info))
-      .run()
+      .execute()
 
     if (data.info.workspaceID) {
-      db.update(WorkspaceTable).set({ time_used: Date.now() }).where(eq(WorkspaceTable.id, data.info.workspaceID)).run()
+      db.update(WorkspaceTable).set({ time_used: Date.now() }).where(eq(WorkspaceTable.id, data.info.workspaceID)).execute()
     }
   }),
 
   SyncEvent.project(Session.Event.Updated, (db, data) => {
     const info = data.info
-    const row = db
-      .update(SessionTable)
-      .set({ time_updated: sql`${SessionTable.time_updated}`, ...toPartialRow(info as Session.Patch) })
-      .where(eq(SessionTable.id, data.sessionID))
-      .returning()
-      .get()
+    const row = one(
+      db
+        .update(SessionTable)
+        .set({ time_updated: sql`${SessionTable.time_updated}`, ...toPartialRow(info as Session.Patch) })
+        .where(eq(SessionTable.id, data.sessionID))
+        .returning()
+    )
     if (!row) throw new NotFoundError({ message: `Session not found: ${data.sessionID}` })
   }),
 
   SyncEvent.project(Session.Event.Deleted, (db, data) => {
-    db.delete(SessionTable).where(eq(SessionTable.id, data.sessionID)).run()
+    db.delete(SessionTable).where(eq(SessionTable.id, data.sessionID)).execute()
   }),
 
   SyncEvent.project(MessageV2.Event.Updated, (db, data) => {
@@ -135,7 +137,7 @@ export default [
           data: rest,
         })
         .onConflictDoUpdate({ target: MessageTable.id, set: { data: rest } })
-        .run()
+        .execute()
     } catch (err) {
       if (!foreign(err)) throw err
       log.warn("ignored late message update", { messageID: id, sessionID })
@@ -147,32 +149,33 @@ export default [
       .select()
       .from(PartTable)
       .where(and(eq(PartTable.message_id, data.messageID), eq(PartTable.session_id, data.sessionID)))
-      .all()) {
+      .execute()) {
       const previous = usage(row.data)
       if (previous) applyUsage(db, data.sessionID, previous, -1)
     }
     db.delete(MessageTable)
       .where(and(eq(MessageTable.id, data.messageID), eq(MessageTable.session_id, data.sessionID)))
-      .run()
+      .execute()
   }),
 
   SyncEvent.project(MessageV2.Event.PartRemoved, (db, data) => {
-    const row = db
-      .select()
-      .from(PartTable)
-      .where(and(eq(PartTable.id, data.partID), eq(PartTable.session_id, data.sessionID)))
-      .get()
+    const row = one(
+      db
+        .select()
+        .from(PartTable)
+        .where(and(eq(PartTable.id, data.partID), eq(PartTable.session_id, data.sessionID)))
+    )
     const previous = row && usage(row.data)
     if (previous) applyUsage(db, data.sessionID, previous, -1)
 
     db.delete(PartTable)
       .where(and(eq(PartTable.id, data.partID), eq(PartTable.session_id, data.sessionID)))
-      .run()
+      .execute()
   }),
 
   SyncEvent.project(MessageV2.Event.PartUpdated, (db, data) => {
     const { id, messageID, sessionID, ...rest } = data.part
-    const row = db.select().from(PartTable).where(eq(PartTable.id, id)).get()
+    const row = one(db.select().from(PartTable).where(eq(PartTable.id, id)))
 
     try {
       db.insert(PartTable)
@@ -184,7 +187,7 @@ export default [
           data: rest,
         })
         .onConflictDoUpdate({ target: PartTable.id, set: { data: rest } })
-        .run()
+        .execute()
       const previous = row && usage(row.data)
       const next = usage(data.part)
       if (previous) applyUsage(db, row.session_id, previous, -1)

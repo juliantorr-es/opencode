@@ -34,7 +34,7 @@ function project(db: Database.TxOrDb, sessionID: SessionID): SessionMessageUpdat
         .from(SessionMessageTable)
         .where(and(eq(SessionMessageTable.session_id, sessionID), eq(SessionMessageTable.type, "assistant")))
         .orderBy(desc(SessionMessageTable.id))
-        .all()
+        .execute()
         .map((row: typeof SessionMessageTable.$inferSelect) => decodeMessage({ ...row.data, id: row.id, type: row.type }))
         .find((message: SessionMessage.Message): message is SessionMessage.Assistant => message.type === "assistant" && !message.time.completed)
     },
@@ -44,7 +44,7 @@ function project(db: Database.TxOrDb, sessionID: SessionID): SessionMessageUpdat
         .from(SessionMessageTable)
         .where(and(eq(SessionMessageTable.session_id, sessionID), eq(SessionMessageTable.type, "compaction")))
         .orderBy(desc(SessionMessageTable.id))
-        .all()
+        .execute()
         .map((row: typeof SessionMessageTable.$inferSelect) => decodeMessage({ ...row.data, id: row.id, type: row.type }))
         .find((message: SessionMessage.Message): message is SessionMessage.Compaction => message.type === "compaction")
     },
@@ -54,7 +54,7 @@ function project(db: Database.TxOrDb, sessionID: SessionID): SessionMessageUpdat
         .from(SessionMessageTable)
         .where(and(eq(SessionMessageTable.session_id, sessionID), eq(SessionMessageTable.type, "shell")))
         .orderBy(desc(SessionMessageTable.id))
-        .all()
+        .execute()
         .map((row: typeof SessionMessageTable.$inferSelect) => decodeMessage({ ...row.data, id: row.id, type: row.type }))
         .find((message: SessionMessage.Message): message is SessionMessage.Shell => message.type === "shell" && message.callID === callID)
     },
@@ -69,7 +69,7 @@ function project(db: Database.TxOrDb, sessionID: SessionID): SessionMessageUpdat
             eq(SessionMessageTable.type, type),
           ),
         )
-        .run()
+        .execute()
     },
     updateCompaction(compaction) {
       const { id, type, ...data } = compaction
@@ -82,7 +82,7 @@ function project(db: Database.TxOrDb, sessionID: SessionID): SessionMessageUpdat
             eq(SessionMessageTable.type, type),
           ),
         )
-        .run()
+        .execute()
     },
     updateShell(shell) {
       const { id, type, ...data } = shell
@@ -95,7 +95,7 @@ function project(db: Database.TxOrDb, sessionID: SessionID): SessionMessageUpdat
             eq(SessionMessageTable.type, type),
           ),
         )
-        .run()
+        .execute()
     },
     appendMessage(message) {
       const { id, type, ...data } = message
@@ -109,7 +109,7 @@ function project(db: Database.TxOrDb, sessionID: SessionID): SessionMessageUpdat
             data: encodeMessageData(data),
           },
         ])
-        .run()
+        .execute()
     },
     finish() {},
   }
@@ -127,7 +127,7 @@ export default [
         time_updated: DateTime.toEpochMillis(data.timestamp),
       })
       .where(eq(SessionTable.id, data.sessionID))
-      .run()
+      .execute()
     update(db, { id: SessionMessage.ID.make(event.id), type: "session.next.agent.switched", data })
   }),
   SyncEvent.project(EventV2Bridge.toSyncDefinition(SessionEvent.ModelSwitched), (db, data, event) => {
@@ -137,7 +137,7 @@ export default [
         time_updated: DateTime.toEpochMillis(data.timestamp),
       })
       .where(eq(SessionTable.id, data.sessionID))
-      .run()
+      .execute()
     update(db, { id: SessionMessage.ID.make(event.id), type: "session.next.model.switched", data })
   }),
   SyncEvent.project(EventV2Bridge.toSyncDefinition(SessionEvent.Prompted), (db, data, event) => {

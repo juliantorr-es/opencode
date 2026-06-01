@@ -11,6 +11,7 @@ import { InstallationVersion } from "@opencode-ai/core/installation/version"
 
 import { Database } from "@/storage/db"
 import { NotFoundError } from "@/storage/storage"
+import { one } from "@/storage/adapter"
 import { eq } from "drizzle-orm"
 import { and } from "drizzle-orm"
 import { gte } from "drizzle-orm"
@@ -516,8 +517,11 @@ export const use = serviceUse(Service)
 
 export type Patch = Types.DeepMutable<SyncEvent.Event<typeof Event.Updated>["data"]["info"]>
 
-const db = <T>(fn: (d: Parameters<typeof Database.use>[0] extends (trx: infer D) => any ? D : never) => T) =>
-  Effect.sync(() => Database.use(fn))
+const db = <T>(fn: (d: Parameters<typeof Database.use>[0] extends (trx: infer D) => any ? D : never) => T | Promise<T>) =>
+  Effect.promise(() => {
+    const r = Database.use(fn)
+    return r instanceof Promise ? r : Promise.resolve(r)
+  })
 
 export const layer: Layer.Layer<
   Service,
@@ -581,7 +585,7 @@ export const layer: Layer.Layer<
     })
 
     const get = Effect.fn("Session.get")(function* (id: SessionID) {
-      const row = yield* db((d) => d.select().from(SessionTable).where(eq(SessionTable.id, id)).get())
+      const row = yield* db((d) => one(d.select().from(SessionTable).where(eq(SessionTable.id, id))))
       if (!row) return yield* Effect.fail(new NotFoundError({ message: `Session not found: ${id}` }))
       return fromRow(row)
     })
@@ -599,7 +603,7 @@ export const layer: Layer.Layer<
           .select()
           .from(SessionTable)
           .where(and(eq(SessionTable.parent_id, parentID)))
-          .all(),
+          .execute(),
       )
       return rows.map(fromRow)
     })
@@ -644,18 +648,19 @@ export const layer: Layer.Layer<
       }).pipe(Effect.withSpan("Session.updatePart"))
 
     const getPart: Interface["getPart"] = Effect.fn("Session.getPart")(function* (input) {
-      const row = Database.use((db) =>
-        db
-          .select()
-          .from(PartTable)
-          .where(
-            and(
-              eq(PartTable.session_id, input.sessionID),
-              eq(PartTable.message_id, input.messageID),
-              eq(PartTable.id, input.partID),
+      const row = yield* db((d) =>
+        one(
+          d
+            .select()
+            .from(PartTable)
+            .where(
+              and(
+                eq(PartTable.session_id, input.sessionID),
+                eq(PartTable.message_id, input.messageID),
+                eq(PartTable.id, input.partID),
+              ),
             ),
-          )
-          .get(),
+        ),
       )
       if (!row) return
       return {
@@ -992,7 +997,7 @@ function* listByProject(
       .where(and(...conditions))
       .orderBy(desc(SessionTable.time_updated))
       .limit(limit)
-      .all(),
+      .execute(),
   )
   for (const row of rows) {
     yield fromRow(row)
@@ -1039,7 +1044,7 @@ export function* listGlobal(input?: {
             .from(SessionTable)
             .where(and(...conditions))
         : db.select().from(SessionTable)
-    return query.orderBy(desc(SessionTable.time_updated), desc(SessionTable.id)).limit(limit).all()
+    return query.orderBy(desc(SessionTable.time_updated), desc(SessionTable.id)).limit(limit).execute()
   })
 
   const ids = [...new Set(rows.map((row: typeof SessionTable.$inferSelect) => row.project_id))]
@@ -1051,7 +1056,7 @@ export function* listGlobal(input?: {
         .select({ id: ProjectTable.id, name: ProjectTable.name, worktree: ProjectTable.worktree })
         .from(ProjectTable)
         .where(inArray(ProjectTable.id, ids as any))
-        .all(),
+        .execute(),
     )
     for (const item of items) {
       projects.set(item.id, {

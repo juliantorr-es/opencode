@@ -11,6 +11,7 @@ import { Session } from "@/session/session"
 import { MessageV2 } from "@/session/message-v2"
 import type { SessionID } from "@/session/schema"
 import { Database } from "@/storage/db"
+import { one } from "@/storage/adapter"
 import { eq } from "drizzle-orm"
 import { Config } from "@/config/config"
 import * as Log from "@opencode-ai/core/util/log"
@@ -79,8 +80,11 @@ export class Service extends Context.Service<Service, Interface>()("@opencode/Sh
 
 export const use = serviceUse(Service)
 
-const db = <T>(fn: (d: Parameters<typeof Database.use>[0] extends (trx: infer D) => any ? D : never) => T) =>
-  Effect.sync(() => Database.use(fn))
+const db = <T>(fn: (d: Parameters<typeof Database.use>[0] extends (trx: infer D) => any ? D : never) => T | Promise<T>) =>
+  Effect.promise(() => {
+    const r = Database.use(fn)
+    return r instanceof Promise ? r : Promise.resolve(r)
+  })
 
 function api(resource: string): Api {
   return {
@@ -234,7 +238,7 @@ export const layer = Layer.effect(
 
     const get = Effect.fnUntraced(function* (sessionID: SessionID) {
       const row = yield* db((db) =>
-        db.select().from(SessionShareTable).where(eq(SessionShareTable.session_id, sessionID)).get(),
+        one(db.select().from(SessionShareTable).where(eq(SessionShareTable.session_id, sessionID))),
       )
       if (!row) return
       return { id: row.id, secret: row.secret, url: row.url } satisfies Share
@@ -329,7 +333,7 @@ export const layer = Layer.effect(
             target: SessionShareTable.session_id,
             set: { id: result.id, secret: result.secret, url: result.url },
           })
-          .run(),
+          .execute(),
       )
       const s = yield* InstanceState.get(state)
       s.shared.set(sessionID, result)
@@ -362,7 +366,7 @@ export const layer = Layer.effect(
         Effect.flatMap((r) => httpOk.execute(r)),
       )
 
-      yield* db((db) => db.delete(SessionShareTable).where(eq(SessionShareTable.session_id, sessionID)).run())
+      yield* db((db) => db.delete(SessionShareTable).where(eq(SessionShareTable.session_id, sessionID)).execute())
       s.shared.delete(sessionID)
       s.queue.delete(sessionID)
     })

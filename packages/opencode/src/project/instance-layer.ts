@@ -1,4 +1,5 @@
 import { Effect, Layer, ConfigProvider } from "effect"
+import { RuntimeFlags } from "@/effect/runtime-flags"
 import { layer as InstanceHealthStoreLayer } from "./instance-health"
 import { InstanceStore } from "./instance-store"
 import { InstanceTrace } from "./instance-trace"
@@ -6,11 +7,18 @@ import { InstanceTrace } from "./instance-trace"
 export const layer = Layer.unwrap(
   Effect.promise(async () => {
     const { InstanceBootstrap } = await import("./bootstrap")
-    return InstanceStore.defaultLayer.pipe(
-      Layer.provide(ConfigProvider.layer(ConfigProvider.fromUnknown({}))),
-      Layer.provide(InstanceBootstrap.defaultLayer),
-      Layer.provide(InstanceTrace.layer),
-      Layer.provide(InstanceHealthStoreLayer),
+    const providers = Layer.mergeAll(
+      ConfigProvider.layer(ConfigProvider.fromUnknown({})),
+      InstanceBootstrap.defaultLayer,
+      InstanceHealthStoreLayer,
+      RuntimeFlags.defaultLayer,
+    )
+    return Layer.provideMerge(
+      Layer.mergeAll(
+        InstanceStore.defaultLayer,
+        InstanceTrace.layer,
+      ),
+      providers,
     )
   }),
 )

@@ -6,6 +6,8 @@ import * as TestConsole from "effect/testing/TestConsole"
 import { memoMap } from "@opencode-ai/core/effect/memo-map"
 import type { Config } from "@/config/config"
 import { TestInstance, withTmpdirInstance } from "../fixture/fixture"
+import { DatabaseAdapter } from "@/storage/adapter"
+import { layer as EventStoreLayer } from "@/event/event-store"
 
 type Body<A, E, R> = Effect.Effect<A, E, R> | (() => Effect.Effect<A, E, R>)
 type InstanceOptions = { git?: boolean; config?: Partial<Config.Info> | (() => Partial<Config.Info>) }
@@ -120,14 +122,23 @@ const make = <R, E, P>(testLayer: Layer.Layer<R, E, P>, liveLayer: Layer.Layer<R
   return { effect, live, instance }
 }
 
-// Test environment with TestClock and TestConsole
-const testEnv = Layer.mergeAll(TestConsole.layer, TestClock.layer())
-
 // Shared ConfigProvider so ConfigService.Service tags can resolve during layer build.
 const configProviderLayer = ConfigProvider.layer(ConfigProvider.fromUnknown({}))
 
+// EventStoreLayer requires DatabaseAdapter — chain them so dependency builds first
+const dbAndEvents: any = EventStoreLayer.pipe(
+  Layer.provideMerge(DatabaseAdapter.LocalPgAdapter),
+)
+
+// Test environment with TestClock and TestConsole
+const testEnv = Layer.mergeAll(TestConsole.layer, TestClock.layer()).pipe(
+  Layer.provideMerge(dbAndEvents),
+) as any
+
 // Live environment - uses real clock, but keeps TestConsole for output capture
-const liveEnv = Layer.mergeAll(TestConsole.layer, configProviderLayer)
+const liveEnv = Layer.mergeAll(TestConsole.layer, configProviderLayer).pipe(
+  Layer.provideMerge(dbAndEvents),
+) as any
 
 export const it = make(testEnv, liveEnv)
 

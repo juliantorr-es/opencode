@@ -13,10 +13,10 @@ const log = Log.create({ service: "fence" })
 export function load(ids?: string[]) {
   const rows = Database.use((db) => {
     if (!ids?.length) {
-      return db.select().from(EventSequenceTable).all()
+      return db.select().from(EventSequenceTable).execute()
     }
 
-    return db.select().from(EventSequenceTable).where(inArray(EventSequenceTable.aggregate_id, ids)).all()
+    return db.select().from(EventSequenceTable).where(inArray(EventSequenceTable.aggregate_id, ids)).execute()
   })
 
   return Object.fromEntries(rows.map((row: typeof EventSequenceTable.$inferSelect) => [row.aggregate_id, row.seq]))

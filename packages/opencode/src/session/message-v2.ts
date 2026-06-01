@@ -27,6 +27,7 @@ import { NonNegativeInt } from "@opencode-ai/core/schema"
 import * as EffectLogger from "@opencode-ai/core/effect/logger"
 import { MessageError } from "./message-error"
 import { AuthError, OutputLengthError } from "./message-error"
+import { one } from "@/storage/adapter"
 export { AuthError, OutputLengthError } from "./message-error"
 
 /** Error shape thrown by Bun's fetch() when gzip/br decompression fails mid-stream */
@@ -606,7 +607,7 @@ function hydrate(rows: (typeof MessageTable.$inferSelect)[]) {
         .from(PartTable)
         .where(inArray(PartTable.message_id, ids))
         .orderBy(PartTable.message_id, PartTable.id)
-        .all(),
+        .execute(),
     )
     for (const row of partRows) {
       const next = part(row)
@@ -937,11 +938,13 @@ export const page = Effect.fn("MessageV2.page")(function* (input: {
       .where(where)
       .orderBy(desc(MessageTable.time_created), desc(MessageTable.id))
       .limit(input.limit + 1)
-      .all(),
+      .execute(),
   )
   if (rows.length === 0) {
-    const row = Database.use((db) =>
-      db.select({ id: SessionTable.id }).from(SessionTable).where(eq(SessionTable.id, input.sessionID)).get(),
+    const row = yield* Effect.tryPromise(() =>
+      Database.use((db) =>
+        one(db.select({ id: SessionTable.id }).from(SessionTable).where(eq(SessionTable.id, input.sessionID)))
+      )
     )
     if (!row) return yield* new NotFoundError({ message: `Session not found: ${input.sessionID}` })
     return {
@@ -984,7 +987,7 @@ export function* stream(sessionID: SessionID) {
 
 export function parts(message_id: MessageID) {
   const rows = Database.use((db) =>
-    db.select().from(PartTable).where(eq(PartTable.message_id, message_id)).orderBy(PartTable.id).all(),
+    db.select().from(PartTable).where(eq(PartTable.message_id, message_id)).orderBy(PartTable.id).execute(),
   )
   return rows.map(
     (row: typeof PartTable.$inferSelect) =>
@@ -998,12 +1001,15 @@ export function parts(message_id: MessageID) {
 }
 
 export const get = Effect.fn("MessageV2.get")(function* (input: { sessionID: SessionID; messageID: MessageID }) {
-  const row = Database.use((db) =>
-    db
-      .select()
-      .from(MessageTable)
-      .where(and(eq(MessageTable.id, input.messageID), eq(MessageTable.session_id, input.sessionID)))
-      .get(),
+  const row = yield* Effect.tryPromise(() =>
+    Database.use((db) =>
+      one(
+        db
+          .select()
+          .from(MessageTable)
+          .where(and(eq(MessageTable.id, input.messageID), eq(MessageTable.session_id, input.sessionID)))
+      )
+    )
   )
   if (!row) return yield* new NotFoundError({ message: `Message not found: ${input.messageID}` })
   return {

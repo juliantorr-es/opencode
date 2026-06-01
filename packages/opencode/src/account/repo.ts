@@ -3,6 +3,7 @@ import { serviceUse } from "@opencode-ai/core/effect/service-use"
 import { Effect, Layer, Option, Schema, Context } from "effect"
 
 import { Database } from "@/storage/db"
+import { one } from "@/storage/adapter"
 import { AccountStateTable, AccountTable } from "@/storage/schema"
 import { AccessToken, AccountID, AccountRepoError, Info, OrgID, RefreshToken } from "./schema"
 import { normalizeServerUrl } from "./url"
@@ -58,10 +59,10 @@ export const layer: Layer.Layer<Service> = Layer.effect(
         catch: (cause) => new AccountRepoError({ message: "Database operation failed", cause }),
       })
 
-    const current = (db: DbClient) => {
-      const state = db.select().from(AccountStateTable).where(eq(AccountStateTable.id, ACCOUNT_STATE_ID)).get()
+    const current = async (db: DbClient) => {
+      const state = await one(db.select().from(AccountStateTable).where(eq(AccountStateTable.id, ACCOUNT_STATE_ID)))
       if (!state?.active_account_id) return
-      const account = db.select().from(AccountTable).where(eq(AccountTable.id, state.active_account_id)).get()
+      const account = await one(db.select().from(AccountTable).where(eq(AccountTable.id, state.active_account_id)))
       if (!account) return
       return { ...account, active_org_id: state.active_org_id ?? null }
     }
@@ -75,7 +76,7 @@ export const layer: Layer.Layer<Service> = Layer.effect(
           target: AccountStateTable.id,
           set: { active_account_id: accountID, active_org_id: id },
         })
-        .run()
+        .execute()
     }
 
     const active = Effect.fn("AccountRepo.active")(() =>
@@ -87,7 +88,7 @@ export const layer: Layer.Layer<Service> = Layer.effect(
         db
           .select()
           .from(AccountTable)
-          .all()
+          .execute()
           .map((row: AccountRow) => decode({ ...row, active_org_id: null })),
       ),
     )
@@ -97,8 +98,8 @@ export const layer: Layer.Layer<Service> = Layer.effect(
         db.update(AccountStateTable)
           .set({ active_account_id: null, active_org_id: null })
           .where(eq(AccountStateTable.active_account_id, accountID))
-          .run()
-        db.delete(AccountTable).where(eq(AccountTable.id, accountID)).run()
+          .execute()
+        db.delete(AccountTable).where(eq(AccountTable.id, accountID)).execute()
       }).pipe(Effect.asVoid),
     )
 
@@ -107,7 +108,7 @@ export const layer: Layer.Layer<Service> = Layer.effect(
     )
 
     const getRow = Effect.fn("AccountRepo.getRow")((accountID: AccountID) =>
-      query((db) => db.select().from(AccountTable).where(eq(AccountTable.id, accountID)).get()).pipe(
+      query((db) => one(db.select().from(AccountTable).where(eq(AccountTable.id, accountID)))).pipe(
         Effect.map(Option.fromNullishOr),
       ),
     )
@@ -122,7 +123,7 @@ export const layer: Layer.Layer<Service> = Layer.effect(
             token_expiry: Option.getOrNull(input.expiry),
           })
           .where(eq(AccountTable.id, input.accountID))
-          .run(),
+          .execute(),
       ).pipe(Effect.asVoid),
     )
 
@@ -149,7 +150,7 @@ export const layer: Layer.Layer<Service> = Layer.effect(
               token_expiry: input.expiry,
             },
           })
-          .run()
+          .execute()
         void state(db, input.id, input.orgID)
       }).pipe(Effect.asVoid),
     )

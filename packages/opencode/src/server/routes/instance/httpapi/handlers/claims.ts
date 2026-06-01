@@ -23,9 +23,9 @@ export const claimsHandlers = HttpApiBuilder.group(InstanceHttpApi, "claims", (h
           const claimRows = Database.use((db) => {
             const query = db.select().from(CoordinationClaimTable)
             if (filters.length > 0) {
-              return query.where(and(...filters)).orderBy(desc(CoordinationClaimTable.created_at)).all()
+              return query.where(and(...filters)).orderBy(desc(CoordinationClaimTable.created_at)).execute()
             }
-            return query.orderBy(desc(CoordinationClaimTable.created_at)).all()
+            return query.orderBy(desc(CoordinationClaimTable.created_at)).execute()
           })
 
           const reservationRows = Database.use((db) => {
@@ -33,7 +33,7 @@ export const claimsHandlers = HttpApiBuilder.group(InstanceHttpApi, "claims", (h
             if (ctx.query.sessionId) {
               query = query.where(eq(CoordinationReservationTable.session_id, ctx.query.sessionId))
             }
-            return query.orderBy(desc(CoordinationReservationTable.created_at)).all()
+            return query.orderBy(desc(CoordinationReservationTable.created_at)).execute()
           })
 
           return {
@@ -73,7 +73,7 @@ export const claimsHandlers = HttpApiBuilder.group(InstanceHttpApi, "claims", (h
             if (filters.length > 0) {
               query = (query as any).where(and(...filters))
             }
-            return query.orderBy(desc(CoordinationReservationTable.created_at)).all()
+            return query.orderBy(desc(CoordinationReservationTable.created_at)).execute()
           })
 
           const claimRows = Database.use((db) => {
@@ -81,7 +81,7 @@ export const claimsHandlers = HttpApiBuilder.group(InstanceHttpApi, "claims", (h
             if (ctx.query.sessionId) {
               query = query.where(eq(CoordinationClaimTable.session_id, ctx.query.sessionId))
             }
-            return query.orderBy(desc(CoordinationClaimTable.created_at)).all()
+            return query.orderBy(desc(CoordinationClaimTable.created_at)).execute()
           })
 
           // Build a lookup from session_id+task_id to claim info for reservation-to-claim linking

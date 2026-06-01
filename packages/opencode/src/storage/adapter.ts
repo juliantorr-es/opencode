@@ -7,6 +7,35 @@ import { init as initPg, applyMigrations } from "#db"
 import { checkSQLFirewall as checkDuckDBSQLFirewall } from "./duckdb-firewall"
 import { classifyError } from "@/diagnostic/instance-failure-codes"
 
+// ── Query adapter helpers ──────────────────────────────────────
+
+/** Return one optional row from a Drizzle query builder. */
+export function one<T>(query: { then(onfulfilled: (value: T[]) => any): any; limit?(n: number): any }): Promise<T | undefined> {
+  if (query && typeof query.limit === "function") {
+    return query.limit(1).then((rows: T[]) => rows[0])
+  }
+  return (query as any).then((rows: T[]) => {
+    return Array.isArray(rows) ? rows[0] : rows
+  })
+}
+
+/** Return all rows. */
+export function many<T>(query: { then(onfulfilled: (value: T[]) => any): any; execute?(): Promise<T[]> }): Promise<T[]> {
+  if (query && typeof query.execute === "function") {
+    return query.execute()
+  }
+  return (query as any)
+}
+
+/** Execute a mutation (INSERT/UPDATE/DELETE). */
+export function exec(query: { execute?(): Promise<any>; then?(onfulfilled: (value: any) => any): any }): Promise<void> {
+  const promise =
+    query && typeof query.execute === "function"
+      ? query.execute()
+      : (query as any)
+  return promise.then(() => {})
+}
+
 // ── Error types ──────────────────────────────────────────────
 
 export class DatabaseError extends Schema.TaggedErrorClass<DatabaseError>()("DatabaseError", {
@@ -155,7 +184,13 @@ export function makeLocalPgAdapter(): Interface {
 
 export const LocalPgAdapter: Layer.Layer<Service> = Layer.effect(
   Service,
-  Effect.sync(() => makeLocalPgAdapter()),
+  Effect.gen(function* () {
+    // Ensure the PGlite database is initialized and migrations are applied
+    // before any queries run. Client() is the module-level singleton.
+    const client = Database.Client()
+    yield* Effect.promise(() => applyMigrations(client))
+    return makeLocalPgAdapter()
+  }),
 )
 
 // ── PG error sanitisation (F-006) ────────────────────────────

@@ -6,6 +6,7 @@ import { Database } from "@/storage/db"
 import { eq } from "drizzle-orm"
 import { ProjectTable } from "@/storage/schema"
 import type { ProjectID } from "../project/schema"
+import { one } from "@/storage/adapter"
 import * as Log from "@opencode-ai/core/util/log"
 import { Slug } from "@opencode-ai/core/util/slug"
 import { errorMessage } from "../util/error"
@@ -479,8 +480,8 @@ export const layer: Layer.Layer<
       directory: string,
       input: { projectID: ProjectID; extra?: string },
     ) {
-      const row = yield* Effect.sync(() =>
-        Database.use((db) => db.select().from(ProjectTable).where(eq(ProjectTable.id, input.projectID)).get()),
+      const row = yield* Effect.promise(() =>
+        Database.use(async (db) => one(db.select().from(ProjectTable).where(eq(ProjectTable.id, input.projectID)))),
       )
       const project = row ? Project.fromRow(row) : undefined
       const startup = project?.commands?.start?.trim() ?? ""

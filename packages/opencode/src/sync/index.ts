@@ -3,6 +3,7 @@
 // in effectPayloads() so existing HTTP/SDK schema generation remains stable.
 // Remove that registry read when event schemas are generated from core directly.
 import { Database } from "@/storage/db"
+import { one } from "@/storage/adapter"
 import { eq } from "drizzle-orm"
 import { GlobalBus } from "@/bus/global"
 import { Bus as ProjectBus } from "@/bus"
@@ -78,12 +79,15 @@ export const layer = Layer.effect(Service)(
         throw new Error(`Unknown event type: ${event.type}`)
       }
 
-      const row = Database.use((db) =>
-        db
-          .select({ seq: EventSequenceTable.seq, ownerID: EventSequenceTable.owner_id })
-          .from(EventSequenceTable)
-          .where(eq(EventSequenceTable.aggregate_id, event.aggregateID))
-          .get(),
+      const row = yield* Effect.promise(() =>
+        Database.use((db) =>
+          one(
+            db
+              .select({ seq: EventSequenceTable.seq, ownerID: EventSequenceTable.owner_id })
+              .from(EventSequenceTable)
+              .where(eq(EventSequenceTable.aggregate_id, event.aggregateID)),
+          ),
+        ),
       )
 
       const latest = row?.seq ?? -1
@@ -154,11 +158,14 @@ export const layer = Layer.effect(Service)(
       Database.transaction(
         (tx) => {
           const id = EventID.ascending()
-          const row = tx
-            .select({ seq: EventSequenceTable.seq })
-            .from(EventSequenceTable)
-            .where(eq(EventSequenceTable.aggregate_id, agg))
-            .get()
+          const rows = [
+            ...tx
+              .select({ seq: EventSequenceTable.seq })
+              .from(EventSequenceTable)
+              .where(eq(EventSequenceTable.aggregate_id, agg))
+              .limit(1),
+          ]
+          const row = rows[0]
           const seq = row?.seq != null ? row.seq + 1 : 0
 
           const event = { id, seq, aggregateID: agg, data }
@@ -172,8 +179,8 @@ export const layer = Layer.effect(Service)(
 
     const remove: Interface["remove"] = Effect.fn("SyncEvent.remove")(function* (aggregateID) {
       Database.transaction((tx) => {
-        tx.delete(EventSequenceTable).where(eq(EventSequenceTable.aggregate_id, aggregateID)).run()
-        tx.delete(EventTable).where(eq(EventTable.aggregate_id, aggregateID)).run()
+        tx.delete(EventSequenceTable).where(eq(EventSequenceTable.aggregate_id, aggregateID)).execute()
+        tx.delete(EventTable).where(eq(EventTable.aggregate_id, aggregateID)).execute()
       })
     })
 
@@ -184,7 +191,7 @@ export const layer = Layer.effect(Service)(
             .update(EventSequenceTable)
             .set({ owner_id: ownerID })
             .where(eq(EventSequenceTable.aggregate_id, aggregateID))
-            .run(),
+            .execute(),
         ),
       ),
     )
@@ -325,7 +332,7 @@ function process<Def extends Definition>(
           target: EventSequenceTable.aggregate_id,
           set: { seq: event.seq },
         })
-        .run()
+        .execute()
       tx.insert(EventTable)
         .values({
           id: event.id,
@@ -334,7 +341,7 @@ function process<Def extends Definition>(
           type: versionedType(def.type, def.version),
           data: event.data as Record<string, unknown>,
         })
-        .run()
+        .execute()
     }
 
     Database.effect(() => {

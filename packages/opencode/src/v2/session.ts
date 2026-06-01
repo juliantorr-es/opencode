@@ -3,6 +3,7 @@ import { SessionID } from "@/session/schema"
 import { WorkspaceID } from "@/control-plane/schema"
 import { and, asc, desc, eq, gt, gte, isNull, like, lt, or, type SQL } from "@/storage/db"
 import * as Database from "@/storage/db"
+import { one } from "@/storage/adapter"
 import { Context, DateTime, Effect, Layer, Schema } from "effect"
 import { SessionMessage } from "@opencode-ai/core/session-message"
 import type { Prompt } from "@opencode-ai/core/session-prompt"
@@ -192,7 +193,9 @@ export const layer = Layer.effect(
         return {} as any
       }),
       get: Effect.fn("V2Session.get")(function* (sessionID) {
-        const row = Database.use((db) => db.select().from(SessionTable).where(eq(SessionTable.id, sessionID)).get())
+        const row = yield* Effect.promise(() =>
+          Database.use(async (db) => one(db.select().from(SessionTable).where(eq(SessionTable.id, sessionID)))),
+        )
         if (!row) return yield* new NotFoundError({ sessionID })
         return fromRow(row)
       }),
@@ -234,7 +237,7 @@ export const layer = Layer.effect(
             order === "asc" ? asc(SessionTable.id) : desc(SessionTable.id),
           )
 
-        const rows = input.limit === undefined ? (query as any).all() : (query as any).limit(input.limit).all()
+        const rows = input.limit === undefined ? (query as any).execute() : (query as any).limit(input.limit).execute()
         return (direction === "previous" ? rows.toReversed() : rows).map((row: typeof SessionTable.$inferSelect) => fromRow(row))
       }),
       messages: Effect.fn("V2Session.messages")(function* (input) {
@@ -274,42 +277,44 @@ export const layer = Layer.effect(
               order === "asc" ? asc(SessionMessageTable.time_created) : desc(SessionMessageTable.time_created),
               order === "asc" ? asc(SessionMessageTable.id) : desc(SessionMessageTable.id),
             )
-          const rows = input.limit === undefined ? query.all() : query.limit(input.limit).all()
+          const rows = input.limit === undefined ? query.execute() : query.limit(input.limit).execute()
           return direction === "previous" ? rows.toReversed() : rows
         })
         return yield* Effect.forEach(rows, (row) => decode(row as any))
       }),
       context: Effect.fn("V2Session.context")(function* (sessionID) {
         yield* result.get(sessionID)
-        const rows = Database.use((db) => {
-          const compaction = db
-            .select()
-            .from(SessionMessageTable)
-            .where(and(eq(SessionMessageTable.session_id, sessionID), eq(SessionMessageTable.type, "compaction")))
-            .orderBy(desc(SessionMessageTable.time_created), desc(SessionMessageTable.id))
-            .limit(1)
-            .get()
-
-          return db
-            .select()
-            .from(SessionMessageTable)
-            .where(
-              and(
-                eq(SessionMessageTable.session_id, sessionID),
-                compaction
-                  ? or(
-                      gt(SessionMessageTable.time_created, compaction.time_created),
-                      and(
-                        eq(SessionMessageTable.time_created, compaction.time_created),
-                        gte(SessionMessageTable.id, compaction.id),
-                      ),
-                    )
-                  : undefined,
-              ),
+        const rows = yield* Effect.promise(() =>
+          Database.use(async (db) => {
+            const compaction = await one(
+              db
+                .select()
+                .from(SessionMessageTable)
+                .where(and(eq(SessionMessageTable.session_id, sessionID), eq(SessionMessageTable.type, "compaction")))
+                .orderBy(desc(SessionMessageTable.time_created), desc(SessionMessageTable.id)),
             )
-            .orderBy(asc(SessionMessageTable.time_created), asc(SessionMessageTable.id))
-            .all()
-        })
+
+            return db
+              .select()
+              .from(SessionMessageTable)
+              .where(
+                and(
+                  eq(SessionMessageTable.session_id, sessionID),
+                  compaction
+                    ? or(
+                        gt(SessionMessageTable.time_created, compaction.time_created),
+                        and(
+                          eq(SessionMessageTable.time_created, compaction.time_created),
+                          gte(SessionMessageTable.id, compaction.id),
+                        ),
+                      )
+                    : undefined,
+                ),
+              )
+              .orderBy(asc(SessionMessageTable.time_created), asc(SessionMessageTable.id))
+              .execute()
+          }),
+        )
         return yield* Effect.forEach(rows, (row) => decode(row as any))
       }),
       prompt: Effect.fn("V2Session.prompt")(function* (input) {

@@ -57,6 +57,7 @@ import * as DateTime from "effect/DateTime"
 import { eq } from "@/storage/db"
 import * as Database from "@/storage/db"
 import { SessionTable } from "@/storage/schema"
+import { one } from "@/storage/adapter"
 import { referencePromptMetadata, referenceTextPart } from "./prompt/reference"
 import { SessionReminders } from "./reminders"
 import { SessionTools } from "./tools"
@@ -673,8 +674,10 @@ export const layer = Layer.effect(
     })
 
     const currentModel = Effect.fnUntraced(function* (sessionID: SessionID) {
-      const current = Database.use((db) =>
-        db.select({ model: SessionTable.model }).from(SessionTable).where(eq(SessionTable.id, sessionID)).get(),
+      const current = yield* Effect.tryPromise(() =>
+        Database.use((db) =>
+          one(db.select({ model: SessionTable.model }).from(SessionTable).where(eq(SessionTable.id, sessionID)))
+        )
       )
       if (current?.model) {
         return {
@@ -701,12 +704,15 @@ export const layer = Layer.effect(
         throw error
       }
 
-      const current = Database.use((db) =>
-        db
-          .select({ agent: SessionTable.agent, model: SessionTable.model })
-          .from(SessionTable)
-          .where(eq(SessionTable.id, input.sessionID))
-          .get(),
+      const current = yield* Effect.tryPromise(() =>
+        Database.use((db) =>
+          one(
+            db
+              .select({ agent: SessionTable.agent, model: SessionTable.model })
+              .from(SessionTable)
+              .where(eq(SessionTable.id, input.sessionID))
+          )
+        )
       )
       const model = input.model ?? ag.model ?? (yield* currentModel(input.sessionID))
       const same = ag.model && model.providerID === ag.model.providerID && model.modelID === ag.model.modelID

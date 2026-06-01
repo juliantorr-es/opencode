@@ -88,7 +88,7 @@ export const syncHandlers = HttpApiBuilder.group(InstanceHttpApi, "sync", (handl
               : undefined,
           )
           .orderBy(asc(EventTable.seq))
-          .all(),
+          .execute(),
       )
     })
 
