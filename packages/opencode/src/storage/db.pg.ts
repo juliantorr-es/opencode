@@ -97,8 +97,11 @@ export async function applyMigrations(db: PgClient): Promise<void> {
         try {
           await client.exec(sql)
         } catch (e: any) {
-          // Skip idempotent migration failures (e.g. table/column already exists)
-          if (/already exists/.test(e?.message)) continue
+          const msg = e?.message ?? ""
+          // Skip idempotent DDL: relation/column/constraint/index already exists
+          if (/already exists/.test(msg)) continue
+          // Skip idempotent DDL: does not exist (drop if not exists)
+          if (/does not exist/.test(msg)) continue
           throw e
         }
       }

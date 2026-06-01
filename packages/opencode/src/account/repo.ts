@@ -80,7 +80,16 @@ export const layer: Layer.Layer<Service> = Layer.effect(
     }
 
     const active = Effect.fn("AccountRepo.active")(() =>
-      query((db) => current(db)).pipe(Effect.map((row) => (row ? Option.some(decode(row)) : Option.none()))),
+      query((db) => current(db)).pipe(
+        Effect.map((row) => {
+          if (!row) return Option.none()
+          try {
+            return Option.some(decode(row))
+          } catch {
+            return Option.none()
+          }
+        }),
+      ),
     )
 
     const list = Effect.fn("AccountRepo.list")(() =>

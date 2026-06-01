@@ -9,7 +9,21 @@ import { classifyError } from "@/diagnostic/instance-failure-codes"
 
 // ── Query adapter helpers ──────────────────────────────────────
 
-/** Return one optional row from a Drizzle query builder. */
+/**
+ * Return one optional row from a Drizzle query builder.
+ *
+ * ## Type inference
+ * `T` is inferred from the `.then()` callback parameter type of the
+ * passed query builder. When Drizzle's query builder has complex generic
+ * overloads, TypeScript may fail to resolve `T` and default it to `{}`.
+ *
+ * If you see errors where properties of the expected row type don't exist
+ * on `{}`, annotate the call explicitly:
+ *
+ * ```ts
+ * const row = await one<AccountRow>(db.select().from(AccountTable).where(...))
+ * ```
+ */
 export function one<T>(query: { then(onfulfilled: (value: T[]) => any): any; limit?(n: number): any }): Promise<T | undefined> {
   if (query && typeof query.limit === "function") {
     return query.limit(1).then((rows: T[]) => rows[0])

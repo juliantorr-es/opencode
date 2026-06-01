@@ -57,19 +57,19 @@ const bootstrapFixture = Effect.gen(function* () {
       }),
     ),
   )
-  // Seed an active account so Config.loadInstanceState can resolve AccountRepo.active
-  // without hitting a schema decode error on the empty/undefined row.
+  // Seed an active account so Config.loadInstanceState can resolve AccountRepo.active.
+  // PGlite exec is only available on the raw client; drizzle queries are async.
   yield* Effect.promise(() =>
     Database.use(async (db) => {
       const { AccountTable, AccountStateTable } = await import("../../src/account/account.pg.sql.ts")
-      const now = Math.floor(Date.now() / 1000)
+      const now = Date.now()
       await db.insert(AccountTable).values({
         id: "test-account",
         email: "test@test.com",
         url: "https://test.opencode.ai",
         access_token: "test-access-token" as any,
         refresh_token: "test-refresh-token" as any,
-        token_expiry: now + 3600,
+        token_expiry: now + 3600000,
         time_created: now,
       }).onConflictDoNothing().execute()
       await db.insert(AccountStateTable).values({
@@ -97,6 +97,11 @@ it.live("InstanceStore.provide runs InstanceBootstrap before effect", () =>
     const tmp = yield* bootstrapFixture
     const store = yield* InstanceStore.Service
 
+    // This test also proves the fromPlugin tool execution boundary:
+    // plugin tools register via fromPlugin() which captures construction-time
+    // context (EffectBridge, agent, truncate). If context capture failed,
+    // the plugin config hook would trigger a tool invocation that dies with
+    // a missing-service error during bootstrap.
     yield* store.provide({ directory: tmp.directory }, Effect.succeed("ok"))
 
     expect(existsSync(tmp.marker)).toBe(true)
