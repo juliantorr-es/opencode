@@ -5,11 +5,13 @@ import {
   createResource,
   createSignal,
   For,
+  Match,
   on,
   onCleanup,
   onMount,
   ParentProps,
   Show,
+  Switch,
   untrack,
   type Accessor,
 } from "solid-js"
@@ -99,6 +101,14 @@ import { SidebarPanel } from "./layout/sidebar-panel"
 import { createProjectActivation, ProjectActivationProvider } from "@/context/project-activation"
 import { workspaceName as _workspaceName, setWorkspaceName as _setWorkspaceName, workspaceLabel as _workspaceLabel } from "./layout/workspace-labels"
 
+import { AgentExplorer } from "@/components/agent-explorer"
+import { AgentDiffViewer } from "@/components/agent-diff-viewer"
+import { AgentProblemsPanel } from "@/components/agent-problems-panel"
+import { AgentCodeViewer } from "@/components/agent-code-viewer"
+import { AgentGitPanel } from "@/components/agent-git-panel"
+import { AgentSymbolSearch } from "@/components/agent-symbol-search"
+import { AgentOutputPanel } from "@/components/agent-output-panel"
+
 export default function Layout(props: ParentProps) {
   const [store, setStore, , ready] = persisted(
     Persist.global("layout.page", ["layout.page.v1"]),
@@ -138,6 +148,11 @@ export default function Layout(props: ParentProps) {
 
   // ── Key hint overlay (modifier hold detection) ──
   const [showKeyHints, setShowKeyHints] = createSignal(false)
+
+  // ── Operator surface panels ──
+  const [bottomTab, setBottomTab] = createSignal<"output" | "problems" | "git" | "search">("output")
+  const [selectedFile, setSelectedFile] = createSignal<string | undefined>()
+  const [rightTab, setRightTab] = createSignal<"code" | "diff" | "explorer">("explorer")
   let modifierTimer: ReturnType<typeof setTimeout> | undefined
   const isMac = typeof navigator === "object" && /(Mac|iPod|iPhone|iPad)/.test(navigator.platform)
   const modKey = isMac ? "Meta" : "Control"
@@ -2331,8 +2346,43 @@ export default function Layout(props: ParentProps) {
               </div>
             </div>
           </div>
+
+          {/* Operator Surface — Right Panel (shown when file/diff is selected) */}
+          <Show when={selectedFile()}>
+            <div class="border-l border-surface-border bg-surface-base" style={{ width: "40vw", "min-width": "300px" }}>
+              <div class="flex items-center gap-1 px-3 py-1.5 border-b border-surface-border relative">
+                <button class="px-2 py-0.5 text-11-regular rounded" onClick={() => setRightTab("code")}>Code</button>
+                <button class="px-2 py-0.5 text-11-regular rounded" onClick={() => setRightTab("diff")}>Diff</button>
+                <button class="px-2 py-0.5 text-11-regular rounded" onClick={() => setRightTab("explorer")}>Files</button>
+                <button class="absolute right-3 text-11-regular text-text-weak hover:text-text-base px-2 py-0.5" onClick={() => setSelectedFile(undefined)}>×</button>
+              </div>
+              <Switch>
+                <Match when={rightTab() === "code"}><AgentCodeViewer fileName={selectedFile()!} /></Match>
+                <Match when={rightTab() === "diff"}><AgentDiffViewer fileName={selectedFile()!} /></Match>
+                <Match when={rightTab() === "explorer"}><AgentExplorer /></Match>
+              </Switch>
+            </div>
+          </Show>
           {import.meta.env.DEV && <DebugBar />}
         </div>
+
+        {/* Operator Surface — Bottom Dock */}
+        <Show when={activation.state().name === "project_ready" || activation.state().name === "session_ready"}>
+          <div class="border-t border-surface-border bg-surface-base" style={{ height: "30vh", "min-height": "160px" }}>
+            <div class="flex items-center gap-1 px-3 py-1.5 border-b border-surface-border bg-surface-raised">
+              <button class="px-2 py-0.5 text-11-regular rounded" onClick={() => setBottomTab("output")}>Output</button>
+              <button class="px-2 py-0.5 text-11-regular rounded" onClick={() => setBottomTab("problems")}>Problems</button>
+              <button class="px-2 py-0.5 text-11-regular rounded" onClick={() => setBottomTab("git")}>Git</button>
+              <button class="px-2 py-0.5 text-11-regular rounded" onClick={() => setBottomTab("search")}>Search</button>
+            </div>
+            <Switch>
+              <Match when={bottomTab() === "output"}><AgentOutputPanel /></Match>
+              <Match when={bottomTab() === "problems"}><AgentProblemsPanel /></Match>
+              <Match when={bottomTab() === "git"}><AgentGitPanel /></Match>
+              <Match when={bottomTab() === "search"}><AgentSymbolSearch /></Match>
+            </Switch>
+          </div>
+        </Show>
         <Toast.Region />
       </div>
     </Show>

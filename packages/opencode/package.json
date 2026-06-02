@@ -132,7 +132,6 @@
     "@opentelemetry/exporter-trace-otlp-http": "0.214.0",
     "@opentelemetry/sdk-trace-base": "2.6.1",
     "@opentelemetry/sdk-trace-node": "2.6.1",
-    "//": "Test-only (not imported in src/): @opentui/solid kept in deps for bunfig preload",
     "@opentui/solid": "catalog:",
     "@parcel/watcher": "2.5.1",
     "@pierre/diffs": "catalog:",
@@ -186,7 +185,8 @@
     "ws": "8.21.0",
     "xdg-basedir": "5.1.0",
     "yargs": "18.0.0",
-    "zod": "catalog:"
+    "zod": "catalog:",
+    "ioredis": "^5.6.0"
   },
   "overrides": {
     "drizzle-orm": "catalog:"

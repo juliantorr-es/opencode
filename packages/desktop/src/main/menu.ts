@@ -29,6 +29,24 @@ export function createMenu(deps: Deps) {
     }
   })
 
+  const helpIndex = template.findIndex(
+    (item) => !("role" in item) && "label" in item && item.label === "Help",
+  )
+  const runMenu: MenuItemConstructorOptions = {
+    label: "Run",
+    submenu: [
+      {
+        label: "Retry Project Activation",
+        click: () => deps.trigger("project.retry"),
+      },
+    ],
+  }
+  if (helpIndex >= 0) {
+    template.splice(helpIndex, 0, runMenu)
+  } else {
+    template.push(runMenu)
+  }
+
   Menu.setApplicationMenu(Menu.buildFromTemplate(template))
 }
 

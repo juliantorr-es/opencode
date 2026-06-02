@@ -200,6 +200,7 @@ export type ElectronAPI = {
   getCapabilities: () => Promise<DesktopCapabilities>
   getSafeModeDiagnostics: () => Promise<SafeModeDiagnostics>
   safeModeAction: (action: SafeModeAction) => Promise<void>
+  openProject: (directory: string) => Promise<string>
 
   /** Internal map for pluginOff() to look up the IPC listener by channel+handler key. */
   _pluginListeners: Map<string, (event: unknown, payload: { channel: string; data: unknown }) => void>

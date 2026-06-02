@@ -67,6 +67,7 @@ const api: ElectronAPI = {
   getCapabilities: () => typedInvoke(IPC.handle.GET_CAPABILITIES),
   getSafeModeDiagnostics: () => typedInvoke(IPC.handle.GET_SAFE_MODE_DIAGNOSTICS),
   safeModeAction: (action: SafeModeAction) => typedInvoke(IPC.handle.SAFE_MODE_ACTION, action),
+  openProject: (directory) => typedInvoke(IPC.handle.OPEN_PROJECT, directory),
 
   // --- Send methods (fire-and-forget) ---
   openLink: (url) => typedSend(IPC.send.OPEN_LINK, url),

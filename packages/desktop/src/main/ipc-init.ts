@@ -1,5 +1,7 @@
-import { ipcMain } from "electron"
+import { app, ipcMain } from "electron"
 import type { IpcMainInvokeEvent } from "electron"
+import * as path from "node:path"
+import { existsSync } from "node:fs"
 import { IPC } from "./ipc-channels"
 import { withIpcResult } from "./ipc-contract"
 import type {
@@ -116,5 +118,22 @@ export function registerInitIpcHandlers(deps: Deps) {
   })
   ipcMain.handle(IPC.handle.SAFE_MODE_ACTION, (_event: IpcMainInvokeEvent, action: SafeModeAction) => {
     return withIpcResult("init.safeModeAction", async () => deps.safeModeAction(action))
+  })
+
+  ipcMain.handle(IPC.handle.OPEN_PROJECT, async (_event: IpcMainInvokeEvent, directory: string) => {
+    return withIpcResult("project.open", async () => {
+      const resolved = path.resolve(directory)
+      if (!existsSync(resolved)) {
+        throw new Error(`Directory not found: ${resolved}`)
+      }
+      const userData = app.getPath("userData")
+      if (userData && (resolved === userData || resolved.startsWith(userData + path.sep))) {
+        console.warn(
+          `[project.open] Directory resolves inside app data directory (userData). ` +
+            `This may indicate the user selected the app-data directory instead of a project: ${resolved}`,
+        )
+      }
+      return resolved
+    })
   })
 }

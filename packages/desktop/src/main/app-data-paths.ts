@@ -29,6 +29,27 @@ export function ensureDesktopAppDataPaths(paths: AppDataPaths) {
   }
 }
 
+export const ensureDirectories = ensureDesktopAppDataPaths
+
+export function getDbPath(paths: AppDataPaths): string {
+  return paths.db
+}
+
+export function getLogPath(paths: AppDataPaths): string {
+  return paths.logs
+}
+
+export function report(paths: AppDataPaths) {
+  return {
+    userDataPath: paths.userData,
+    statePath: paths.state,
+    dbPath: paths.db,
+    configPath: paths.config,
+    cachePath: paths.cache,
+    logPath: paths.logs,
+  }
+}
+
 export function envForDesktopAppData(paths: AppDataPaths): Record<string, string> {
   return {
     OPENCODE_DESKTOP_USER_DATA: paths.userData,

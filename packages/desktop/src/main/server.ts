@@ -1,14 +1,14 @@
 import { dirname, join } from "node:path"
 import { existsSync, readFileSync } from "node:fs"
 import { fileURLToPath } from "node:url"
-import { app, utilityProcess } from "electron"
+import { app, ipcMain, utilityProcess } from "electron"
 import type { Details } from "electron"
 import { DEFAULT_SERVER_URL_KEY, WSL_ENABLED_KEY } from "./constants"
 import { getUserShell, loadShellEnv } from "./shell-env"
 import { getStore } from "./store"
 import type { StorageMigrationProgress } from "../preload/types"
 import { sanitizeEnv } from "./env-blocklist"
-import { resolveDesktopAppDataPaths, ensureDesktopAppDataPaths, envForDesktopAppData } from "./app-data-paths"
+import { resolveDesktopAppDataPaths, ensureDesktopAppDataPaths, ensureDirectories, envForDesktopAppData, report } from "./app-data-paths"
 
 export type WslConfig = { enabled: boolean }
 
@@ -21,6 +21,24 @@ type SidecarMessage =
   | { type: "error"; error: { message: string; stack?: string }; component: string }
 
 export type SidecarListener = { stop: () => Promise<void> }
+
+export interface SidecarState {
+  pid: number | null
+  url: string | null
+  startedAt: number | null
+  readyAt: number | null
+  lastExitCode: number | null
+  restartCount: number
+  startupPhases: { phase: string; status: string; timestamp: number }[]
+}
+
+let sidecarState: SidecarState = {
+  pid: null, url: null, startedAt: null, readyAt: null,
+  lastExitCode: null, restartCount: 0, startupPhases: [],
+}
+
+let currentSidecarChild: ReturnType<typeof utilityProcess.fork> | null = null
+let lastSpawnParams: { hostname: string; port: number; password: string; options: SpawnLocalServerOptions } | null = null
 
 const SIDECAR_SERVICE_NAME = "opencode server"
 const SIDECAR_START_STALL_TIMEOUT = 60_000
@@ -60,7 +78,7 @@ export function setWslConfig(config: WslConfig) {
 
 export function preferAppEnv(userDataPath: string) {
   const paths = resolveDesktopAppDataPaths(userDataPath)
-  ensureDesktopAppDataPaths(paths)
+  ensureDirectories(paths)
   const shell = process.platform === "win32" ? null : getUserShell()
   const shellEnv = shell ? loadShellEnv(shell) : {}
   Object.assign(process.env, {
@@ -85,6 +103,14 @@ export async function spawnLocalServer(
     serviceName: SIDECAR_SERVICE_NAME,
     stdio: "pipe",
   })
+  currentSidecarChild = child
+  lastSpawnParams = { hostname, port, password, options }
+  sidecarState.pid = child.pid ?? null
+  sidecarState.url = `http://${hostname}:${port}`
+  sidecarState.startedAt = Date.now()
+  sidecarState.readyAt = null
+  sidecarState.lastExitCode = null
+  sidecarState.startupPhases = [{ phase: "start", status: "sent", timestamp: Date.now() }]
   let exited = false
   const exit = defer<number>()
 
@@ -95,6 +121,7 @@ export async function spawnLocalServer(
 
   app.on("child-process-gone", onProcessGone)
   child.once("exit", (code) => {
+    sidecarState.lastExitCode = code
     exited = true
     app.off("child-process-gone", onProcessGone)
     options.onExit?.(code)
@@ -125,18 +152,22 @@ export async function spawnLocalServer(
 
     const onMessage = (message: SidecarMessage) => {
       if (message.type === "migration-progress") {
+        sidecarState.startupPhases.push({ phase: "migration-progress", status: message.progress.type, timestamp: Date.now() })
         refreshTimeout()
         options.onMigrationProgress?.(message.progress)
         return
       }
       if (message.type === "ready") {
         if (done) return
+        sidecarState.readyAt = Date.now()
+        sidecarState.startupPhases.push({ phase: "ready", status: "completed", timestamp: Date.now() })
         done = true
         cleanup()
         resolve()
         return
       }
       if (message.type === "error") {
+        sidecarState.startupPhases.push({ phase: "error", status: message.error.message, timestamp: Date.now() })
         const err = new Error(message.error.message)
         ;(err as any).component = message.component ?? "unknown"
         err.stack = message.error.stack
@@ -267,12 +298,19 @@ export async function checkHealth(url: string, password?: string | null): Promis
   }
 }
 
+// ── Secrets Boundary ────────────────────────────────────
+// Provider tokens, GitHub tokens, plugin auth, and model API
+// keys must not be stored as plain JSON in app-data config.
+// Storage target: Electron safeStorage or OS keychain (pending).
+// For now, secrets flow from main → sidecar env at spawn time
+// and are never persisted to disk by the desktop app.
 function createSidecarEnv(userDataPath: string): Record<string, string> {
   const paths = resolveDesktopAppDataPaths(userDataPath)
   const env = sanitizeEnv({
     ...process.env,
     ...envForDesktopAppData(paths),
     OPENCODE_CLIENT: "desktop-sidecar",
+    OPENCODE_DESKTOP_PATHS: JSON.stringify(report(paths)),
   })
   if (process.platform === "linux") delete env.LD_PRELOAD
   return env
@@ -296,3 +334,17 @@ function defer<T>() {
   })
   return { promise, resolve, reject }
 }
+
+ipcMain.handle("SIDECAR_STATUS", () => sidecarState)
+ipcMain.handle("RESTART_SIDECAR", async () => {
+  sidecarState.restartCount++
+  currentSidecarChild?.kill()
+  if (lastSpawnParams) {
+    await spawnLocalServer(
+      lastSpawnParams.hostname,
+      lastSpawnParams.port,
+      lastSpawnParams.password,
+      lastSpawnParams.options,
+    )
+  }
+})

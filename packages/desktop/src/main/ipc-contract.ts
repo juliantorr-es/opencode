@@ -151,6 +151,7 @@ export const CHANNELS = {
     setBackgroundColor: IPC.handle.SET_BACKGROUND_COLOR,
     exportDebugLogs: IPC.handle.EXPORT_DEBUG_LOGS,
     recordFatalRendererError: IPC.handle.RECORD_FATAL_RENDERER_ERROR,
+    openProject: IPC.handle.OPEN_PROJECT,
   },
   github: {
     startOAuth: IPC.handle.GITHUB_OAUTH_START,
@@ -242,6 +243,7 @@ export interface IpcHandleContract {
   [IPC.handle.GET_GIT_STATUS]: { params: []; returns: Promise<{ uncommitted: number; unpushed: number; mergeConflicts: number; branch: string | null } | null> }
   [IPC.handle.GET_SAFE_MODE_DIAGNOSTICS]: { params: []; returns: Promise<SafeModeDiagnostics> }
   [IPC.handle.SAFE_MODE_ACTION]: { params: [action: SafeModeAction]; returns: Promise<void> }
+  [IPC.handle.OPEN_PROJECT]: { params: [directory: string]; returns: Promise<string> }
 }
 
 // ──────────────────────────────────────────────────────────────
@@ -383,6 +385,7 @@ interface BridgeHandleMap {
   getLocalePreference: typeof IPC.handle.GET_LOCALE_PREFERENCE
   getGitStatus: typeof IPC.handle.GET_GIT_STATUS
   getCapabilities: typeof IPC.handle.GET_CAPABILITIES
+  openProject: typeof IPC.handle.OPEN_PROJECT
 }
 
 /** @internal — Bridge send-method → IPC send channel constant mapping */
@@ -462,4 +465,173 @@ export function pluginSend(channel: string, data?: unknown): void {
  */
 export function pluginInvoke(channel: string, data?: unknown): Promise<unknown> {
   return typedInvoke(IPC.handle.PLUGIN_INVOKE, channel, data)
+}
+
+
+// ── IPC Method Registry ──────────────────────────────────
+// Documents every ipcMain.handle method: its channel string,
+// handler return shape (after withIpcResult wrapping),
+// whether it uses withIpcResult, and what the renderer
+// receives after typedInvoke unwrapping.
+
+export const IPC_METHOD_REGISTRY: {
+  channel: string
+  usesIpcResult: boolean
+  returns: string // what ipcMain.handle returns over the wire
+  rendererSees: string // what typedInvoke returns to the renderer
+}[] = [
+  // ── Init ───────────────────────────────────────────────
+  { channel: IPC.handle.KILL_SIDECAR, usesIpcResult: true, returns: "IpcResult<void>", rendererSees: "void" },
+  { channel: IPC.handle.AWAIT_INITIALIZATION, usesIpcResult: true, returns: "IpcResult<ServerReadyData>", rendererSees: "ServerReadyData" },
+  { channel: IPC.handle.GET_WINDOW_CONFIG, usesIpcResult: true, returns: "IpcResult<WindowConfig>", rendererSees: "WindowConfig" },
+  { channel: IPC.handle.CONSUME_INITIAL_DEEP_LINKS, usesIpcResult: true, returns: "IpcResult<string[]>", rendererSees: "string[]" },
+  { channel: IPC.handle.GET_DEFAULT_SERVER_URL, usesIpcResult: true, returns: "IpcResult<string | null>", rendererSees: "string | null" },
+  { channel: IPC.handle.SET_DEFAULT_SERVER_URL, usesIpcResult: true, returns: "IpcResult<void>", rendererSees: "void" },
+  { channel: IPC.handle.GET_WSL_CONFIG, usesIpcResult: true, returns: "IpcResult<WslConfig>", rendererSees: "WslConfig" },
+  { channel: IPC.handle.SET_WSL_CONFIG, usesIpcResult: true, returns: "IpcResult<void>", rendererSees: "void" },
+  { channel: IPC.handle.GET_DISPLAY_BACKEND, usesIpcResult: true, returns: "IpcResult<LinuxDisplayBackend | null>", rendererSees: "LinuxDisplayBackend | null" },
+  { channel: IPC.handle.SET_DISPLAY_BACKEND, usesIpcResult: true, returns: "IpcResult<void>", rendererSees: "void" },
+  { channel: IPC.handle.PARSE_MARKDOWN, usesIpcResult: true, returns: "IpcResult<string>", rendererSees: "string" },
+  { channel: IPC.handle.CHECK_APP_EXISTS, usesIpcResult: true, returns: "IpcResult<boolean>", rendererSees: "boolean" },
+  { channel: IPC.handle.WSL_PATH, usesIpcResult: true, returns: "IpcResult<string>", rendererSees: "string" },
+  { channel: IPC.handle.RESOLVE_APP_PATH, usesIpcResult: true, returns: "IpcResult<string | null>", rendererSees: "string | null" },
+  { channel: IPC.handle.RUN_UPDATER, usesIpcResult: true, returns: "IpcResult<void>", rendererSees: "void" },
+  { channel: IPC.handle.CHECK_UPDATE, usesIpcResult: true, returns: "IpcResult<{ updateAvailable: boolean; version?: string }>", rendererSees: "{ updateAvailable: boolean; version?: string }" },
+  { channel: IPC.handle.INSTALL_UPDATE, usesIpcResult: true, returns: "IpcResult<void>", rendererSees: "void" },
+  { channel: IPC.handle.SET_BACKGROUND_COLOR, usesIpcResult: true, returns: "IpcResult<void>", rendererSees: "void" },
+  { channel: IPC.handle.EXPORT_DEBUG_LOGS, usesIpcResult: true, returns: "IpcResult<string>", rendererSees: "string" },
+  { channel: IPC.handle.RECORD_FATAL_RENDERER_ERROR, usesIpcResult: true, returns: "IpcResult<void>", rendererSees: "void" },
+  { channel: IPC.handle.GET_SAFE_MODE_DIAGNOSTICS, usesIpcResult: true, returns: "IpcResult<SafeModeDiagnostics>", rendererSees: "SafeModeDiagnostics" },
+  { channel: IPC.handle.SAFE_MODE_ACTION, usesIpcResult: true, returns: "IpcResult<void>", rendererSees: "void" },
+
+  // ── Store ──────────────────────────────────────────────
+  { channel: IPC.handle.STORE_GET, usesIpcResult: true, returns: "IpcResult<string | null>", rendererSees: "string | null" },
+  { channel: IPC.handle.STORE_SET, usesIpcResult: true, returns: "IpcResult<void>", rendererSees: "void" },
+  { channel: IPC.handle.STORE_DELETE, usesIpcResult: true, returns: "IpcResult<void>", rendererSees: "void" },
+  { channel: IPC.handle.STORE_CLEAR, usesIpcResult: true, returns: "IpcResult<void>", rendererSees: "void" },
+  { channel: IPC.handle.STORE_KEYS, usesIpcResult: true, returns: "IpcResult<string[]>", rendererSees: "string[]" },
+  { channel: IPC.handle.STORE_LENGTH, usesIpcResult: true, returns: "IpcResult<number>", rendererSees: "number" },
+
+  // ── Window ─────────────────────────────────────────────
+  { channel: IPC.handle.GET_WINDOW_COUNT, usesIpcResult: true, returns: "IpcResult<number>", rendererSees: "number" },
+  { channel: IPC.handle.GET_WINDOW_FOCUSED, usesIpcResult: true, returns: "IpcResult<boolean>", rendererSees: "boolean" },
+  { channel: IPC.handle.SET_WINDOW_FOCUS, usesIpcResult: true, returns: "IpcResult<void>", rendererSees: "void" },
+  { channel: IPC.handle.SHOW_WINDOW, usesIpcResult: true, returns: "IpcResult<void>", rendererSees: "void" },
+  { channel: IPC.handle.GET_ZOOM_FACTOR, usesIpcResult: true, returns: "IpcResult<number>", rendererSees: "number" },
+  { channel: IPC.handle.SET_ZOOM_FACTOR, usesIpcResult: true, returns: "IpcResult<void>", rendererSees: "void" },
+  { channel: IPC.handle.GET_PINCH_ZOOM_ENABLED, usesIpcResult: true, returns: "IpcResult<boolean>", rendererSees: "boolean" },
+  { channel: IPC.handle.SET_PINCH_ZOOM_ENABLED, usesIpcResult: true, returns: "IpcResult<void>", rendererSees: "void" },
+  { channel: IPC.handle.SET_TITLEBAR, usesIpcResult: true, returns: "IpcResult<void>", rendererSees: "void" },
+  { channel: IPC.handle.RUN_DESKTOP_MENU_ACTION, usesIpcResult: true, returns: "IpcResult<void>", rendererSees: "void" },
+
+  // ── FS ─────────────────────────────────────────────────
+  { channel: IPC.handle.OPEN_DIRECTORY_PICKER, usesIpcResult: true, returns: "IpcResult<string | string[] | null>", rendererSees: "string | string[] | null" },
+  { channel: IPC.handle.OPEN_FILE_PICKER, usesIpcResult: true, returns: "IpcResult<string | string[] | null>", rendererSees: "string | string[] | null" },
+  { channel: IPC.handle.SAVE_FILE_PICKER, usesIpcResult: true, returns: "IpcResult<string | null>", rendererSees: "string | null" },
+  { channel: IPC.handle.OPEN_PATH, usesIpcResult: true, returns: "IpcResult<string | void>", rendererSees: "string | void" },
+  { channel: IPC.handle.READ_CLIPBOARD_IMAGE, usesIpcResult: true, returns: "IpcResult<{ buffer: ArrayBuffer; width: number; height: number } | null>", rendererSees: "{ buffer: ArrayBuffer; width: number; height: number } | null" },
+
+  // ── Config ─────────────────────────────────────────────
+  { channel: IPC.handle.GET_DESKTOP_CUSTOM_AGENTS, usesIpcResult: true, returns: "IpcResult<AgentDef[]>", rendererSees: "AgentDef[]" },
+  { channel: IPC.handle.SET_DESKTOP_CUSTOM_AGENTS, usesIpcResult: true, returns: "IpcResult<void>", rendererSees: "void" },
+  { channel: IPC.handle.DELETE_DESKTOP_CUSTOM_AGENT, usesIpcResult: true, returns: "IpcResult<void>", rendererSees: "void" },
+  { channel: IPC.handle.GET_DESKTOP_MCP_SERVERS, usesIpcResult: true, returns: "IpcResult<McpServerEntry[]>", rendererSees: "McpServerEntry[]" },
+  { channel: IPC.handle.SET_DESKTOP_MCP_SERVERS, usesIpcResult: true, returns: "IpcResult<{ servers: McpServerEntry[]; dropped: number }>", rendererSees: "{ servers: McpServerEntry[]; dropped: number }" },
+  { channel: IPC.handle.GET_DESKTOP_PLUGIN_CONFIG, usesIpcResult: true, returns: "IpcResult<{ configs: PluginConfigEntry[]; dropped: number }>", rendererSees: "{ configs: PluginConfigEntry[]; dropped: number }" },
+  { channel: IPC.handle.SET_DESKTOP_PLUGIN_CONFIG, usesIpcResult: true, returns: "IpcResult<{ configs: PluginConfigEntry[]; dropped: number }>", rendererSees: "{ configs: PluginConfigEntry[]; dropped: number }" },
+
+  // ── Session ────────────────────────────────────────────
+  { channel: IPC.handle.SESSION_EXPORT_DATA, usesIpcResult: true, returns: "IpcResult<string | { error: string } | null>", rendererSees: "string | { error: string } | null" },
+  { channel: IPC.handle.SESSION_IMPORT_FILE, usesIpcResult: true, returns: "IpcResult<string | { error: string } | null>", rendererSees: "string | { error: string } | null" },
+
+  // ── Locale ─────────────────────────────────────────────
+  { channel: IPC.handle.SET_LOCALE_PREFERENCE, usesIpcResult: true, returns: "IpcResult<void>", rendererSees: "void" },
+  { channel: IPC.handle.GET_LOCALE_PREFERENCE, usesIpcResult: true, returns: "IpcResult<string | null>", rendererSees: "string | null" },
+
+  // ── GitHub ─────────────────────────────────────────────
+  { channel: IPC.handle.GITHUB_OAUTH_START, usesIpcResult: true, returns: "IpcResult<string>", rendererSees: "string" },
+  { channel: IPC.handle.GITHUB_OAUTH_CALLBACK, usesIpcResult: true, returns: "IpcResult<void>", rendererSees: "void" },
+  { channel: IPC.handle.GITHUB_GET_TOKEN, usesIpcResult: true, returns: "IpcResult<string | null>", rendererSees: "string | null" },
+  { channel: IPC.handle.GITHUB_SET_TOKEN, usesIpcResult: true, returns: "IpcResult<void>", rendererSees: "void" },
+  { channel: IPC.handle.GITHUB_CLEAR_TOKEN, usesIpcResult: true, returns: "IpcResult<void>", rendererSees: "void" },
+  { channel: IPC.handle.GITHUB_API_PROXY, usesIpcResult: true, returns: "IpcResult<{ status: number; body: string } | { error: { type: string; hostname: string | null; allowedHostnames: string[] } }>", rendererSees: "{ status: number; body: string } | { error: { type: string; hostname: string | null; allowedHostnames: string[] } }" },
+
+  // ── Plugin Transport ───────────────────────────────────
+  { channel: IPC.handle.PLUGIN_INVOKE, usesIpcResult: true, returns: "IpcResult<unknown>", rendererSees: "unknown" },
+
+  // ── Capabilities ───────────────────────────────────────
+  { channel: IPC.handle.GET_CAPABILITIES, usesIpcResult: true, returns: "IpcResult<DesktopCapabilities>", rendererSees: "DesktopCapabilities" },
+
+  // ── Git ────────────────────────────────────────────────
+  { channel: IPC.handle.GET_GIT_STATUS, usesIpcResult: true, returns: "IpcResult<GitCheck | null>", rendererSees: "GitCheck | null" },
+]
+
+// ── Runtime Validation ───────────────────────────────────
+
+/**
+ * Validates IPC_METHOD_REGISTRY against actual ipcMain.handle registrations.
+ * Only meaningful in the Electron main process.
+ *
+ * Checks:
+ *   1. Every registry entry has a corresponding ipcMain handler registered.
+ *   2. Every ipcMain.handle handler has a registry entry.
+ *
+ * @returns Array of issue descriptions; empty array means all clear.
+ */
+export function validateIpcMethodRegistry(): string[] {
+  const issues: string[] = []
+
+  // Access ipcMain — only available in Electron main process.
+  // Using a type-only import + dynamic require to keep this module
+  // safe in preload/renderer contexts.
+  let ipcMain: import("electron").IpcMain | undefined
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    ipcMain = require("electron").ipcMain
+  } catch {
+    return issues
+  }
+  if (!ipcMain) return issues
+
+  const registered = new Set<string>()
+  const evts = ipcMain.eventNames()
+  for (const evt of evts) {
+    registered.add(String(evt))
+  }
+
+  // All handle channels that SHOULD be registered
+  const allHandleChannels = new Set(Object.values(IPC.handle) as string[])
+
+  // 1. Registry → ipcMain: every registry entry must have a handler
+  for (const entry of IPC_METHOD_REGISTRY) {
+    if (!registered.has(entry.channel)) {
+      issues.push(`IPC_METHOD_REGISTRY entry "${entry.channel}" has no ipcMain.handle registration`)
+    }
+  }
+
+  // 2. ipcMain → Registry: every handle handler must have a registry entry
+  for (const ch of registered) {
+    if (!allHandleChannels.has(ch)) continue // skip send/push/internal channels
+    if (!IPC_METHOD_REGISTRY.some(e => e.channel === ch)) {
+      issues.push(`ipcMain.handle "${ch}" is not in IPC_METHOD_REGISTRY`)
+    }
+  }
+
+  return issues
+}
+
+// In development mode, validate the registry against actual handler
+// registrations at startup. Uses setImmediate so handlers have time to register.
+if (
+  typeof process !== "undefined" &&
+  (process as { type?: string }).type === "browser" &&
+  process.env.NODE_ENV === "development"
+) {
+  setImmediate(() => {
+    const issues = validateIpcMethodRegistry()
+    if (issues.length > 0) {
+      console.error("[IPC Registry] Mismatch between IPC_METHOD_REGISTRY and ipcMain handlers:")
+      for (const issue of issues) console.error(`  • ${issue}`)
+    }
+  })
 }

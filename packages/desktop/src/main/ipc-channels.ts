@@ -73,6 +73,7 @@ export const IPC = {
     GET_GIT_STATUS: "opencode:get-git-status",
     GET_SAFE_MODE_DIAGNOSTICS: "opencode:get-safe-mode-diagnostics",
     SAFE_MODE_ACTION: "opencode:safe-mode-action",
+    OPEN_PROJECT: "opencode:open-project",
   } as const,
 
   send: {

@@ -186,6 +186,16 @@ export const globalHandlers = HttpApiBuilder.group(RootHttpApi, "global", (handl
         logPath: process.env.OPENCODE_LOG_HOME ?? "unknown",
         client: process.env.OPENCODE_CLIENT ?? "unknown",
         warnings: [] as { code: string; message: string }[],
+        coordination: {
+          backend: "local",
+          valkeyReady: false,
+          url: null,
+          pid: null,
+          mode: "ephemeral",
+          persistence: "disabled",
+          lastError: null,
+          featureFlag: process.env.OPENCODE_COORDINATION_BACKEND ?? "local",
+        },
       }
     })
     return handlers

@@ -50,6 +50,7 @@ import {
 import { migrate } from "./migrate"
 import { checkUpdate, checkForUpdates, installUpdate, setupAutoUpdater } from "./updater"
 import { Deferred, Effect, Fiber } from "effect"
+import * as Sentry from "@sentry/electron"
 
 const APP_NAMES: Record<string, string> = {
   dev: "OpenCode Dev",
@@ -166,6 +167,14 @@ const main = Effect.gen(function* () {
     onboardingTest: Boolean(onboardingTestRoot),
   })
 
+  Sentry.setContext("electron", {
+    platform: process.platform,
+    arch: process.arch,
+    electronVersion: app.getVersion(),
+    userDataPath: app.getPath("userData"),
+    packaged: app.isPackaged,
+  })
+
   ensureLoopbackNoProxy()
   useEnvProxy()
   app.commandLine.appendSwitch("proxy-bypass-list", "<-loopback>")
@@ -173,12 +182,30 @@ const main = Effect.gen(function* () {
   app.commandLine.appendSwitch("enable-features", features ? `${jsCallStackFeature},${features}` : jsCallStackFeature)
   if (!electronPlatformPaths.isPackaged) app.commandLine.appendSwitch("remote-debugging-port", "9222")
 
+  // CSP warning: dev-only (unsafe-eval for Vite HMR).
+  // Packaged builds use stricter CSP. Tracked as TECH-DEBT-CSP.
+
   if (!app.requestSingleInstanceLock()) {
     app.quit()
     return
   }
 
   preferAppEnv(electronPlatformPaths.getPath("userData"))
+
+  // ── Valkey Sidecar ──────────────────────────────────────
+  const valkeyEnabled = process.env.OPENCODE_COORDINATION_BACKEND === "local-valkey" || process.env.OPENCODE_COORDINATION_BACKEND === "remote-valkey"
+  let valkeySupervisor: ReturnType<typeof createValkeySupervisor> | undefined
+  if (valkeyEnabled) {
+    const { createValkeySupervisor } = await import("./valkey-supervisor")
+    valkeySupervisor = createValkeySupervisor(electronPlatformPaths.getPath("userData"))
+    const valkeyStatus = await valkeySupervisor.start()
+    if (valkeyStatus.ready) {
+      process.env.OPENCODE_VALKEY_URL = valkeyStatus.url!
+      log.info("Valkey sidecar started", { url: valkeyStatus.url, pid: valkeyStatus.pid })
+    } else {
+      log.warn("Valkey failed to start — falling back to local coordination", { error: valkeyStatus.lastError })
+    }
+  }
 
   app.on("second-instance", (_event: Event, argv: string[]) => {
     const urls = (argv ?? []).filter((arg: string) => arg.startsWith("opencode://"))
@@ -203,6 +230,7 @@ const main = Effect.gen(function* () {
   })
 
   app.on("will-quit", () => {
+    valkeySupervisor?.stop()
     void killSidecar()
   })
 
