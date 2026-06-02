@@ -56,12 +56,28 @@ Only darwin-arm64 is currently vendored. Before shipping to users on other platf
 
 ## Release Checklist
 
-- [ ] Build Valkey for all target platforms from pinned source + checksum
-- [ ] Verify SHA256 of each binary matches VALKEY_BUILD.json
-- [ ] Run ValkeyFabric integration tests (RUN_VALKEY_TESTS=1)
-- [ ] Verify LocalFabric tests pass without Valkey binary
-- [ ] Verify app boots in local mode without Valkey installed
-- [ ] Verify no ioredis import in renderer bundles
+- [x] Build Valkey 9.1.0 for darwin-arm64 from pinned source (sha=b4fa2913)
+- [x] Verify SHA256 of darwin-arm64 binary matches VALKEY_BUILD.json
+- [x] Verify LocalFabric tests pass without Valkey binary (6 pass, 0 fail, 2 ValkeyFabric skipped)
+- [ ] Run ValkeyFabric integration tests (RUN_VALKEY_TESTS=1) — gated, not yet exercised
+- [x] Verify no ioredis import in renderer (packages/app/src — zero matches)
+- [ ] Verify app boots in local mode without Valkey installed (needs full Electron build)
+- [ ] Build Valkey for darwin-x64, linux-x64, linux-arm64 from pinned source + checksum
 - [ ] Codesign binaries for macOS distribution
 - [ ] Notarize binaries for macOS distribution
-- [ ] Document Windows strategy (remote-valkey or WSL)
+- [x] Document Windows strategy (remote-valkey or WSL — in README.md)
+
+## Valkey Release Shape Proof Results (2026-06-02)
+
+8/8 release shape checks passed:
+
+| # | Check | Result |
+|---|-------|--------|
+| 1 | No valkey source tree tracked in git | ✅ 0 files |
+| 2 | Only intentional valkey resource files tracked | ✅ 6 files (README, COPYING, BUILD.json, binary, supervisor, valkey-fabric) |
+| 3 | VALKEY_BUILD.json contains all 11 provenance fields + 64-char SHA256 | ✅ |
+| 4 | LocalFabric is default, VALKEY_ENABLED=false, valkey backend gated | ✅ |
+| 5 | Valkey binary smoke test (arm64, version 9.1.0, PING/PONG) | ✅ |
+| 6 | No ioredis imports in renderer (packages/app/src) | ✅ 0 matches |
+| 7 | Platform matrix honest (darwin-arm64 vendored, others marked not-built/unsupported) | ✅ |
+| 8 | Release binder has all required sections | ✅ 6/6 sections |

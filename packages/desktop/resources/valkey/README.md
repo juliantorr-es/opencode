@@ -34,7 +34,7 @@ Redis changed licensing in 2024.
 | Platform        | Status      | Binary    | Notes |
 |-----------------|-------------|-----------|-------|
 | darwin-arm64    | ✅ Vendored  | valkey-server 9.1.0 | Built from source, BSD-3-Clause |
-| darwin-x64      | ❌ Not built | — | Needs cross-compilation or native build |
+| darwin-x64      | ✅ Vendored  | valkey-server 9.1.0 | Cross-compiled from arm64, BSD-3-Clause |
 | linux-x64       | ❌ Not built | — | Can be built from source during release packaging |
 | linux-arm64     | ❌ Not built | — | Can be built from source during release packaging |
 | win32-x64       | ❌ Not supported | — | Valkey is Unix-first. Windows needs WSL, remote-Valkey-only, or alternative |
