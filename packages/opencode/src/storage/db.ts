@@ -34,15 +34,21 @@ const readRuntimeFlags = () => {
 
 export function getChannelPath(flags: Pick<DatabaseFlags, "disableChannelDb"> = readRuntimeFlags()) {
   if (["latest", "beta", "prod"].includes(InstallationChannel) || flags.disableChannelDb)
-    return path.join(Global.Path.data, "opencode.db")
+    return fallbackPath("opencode.db")
   const safe = InstallationChannel.replace(/[^a-zA-Z0-9._-]/g, "-")
-  return path.join(Global.Path.data, `opencode-${safe}.db`)
+  return fallbackPath(`opencode-${safe}.db`)
 }
+
+const fallbackPath = (file: string) =>
+  path.isAbsolute(Global.Path.data)
+    ? path.join(Global.Path.data, file)
+    : path.join(process.cwd(), ".opencode", file)
 
 export const getPath = (flags?: Pick<DatabaseFlags, "disableChannelDb">) => {
   if (Flag.OPENCODE_DB) {
-    if (Flag.OPENCODE_DB === ":memory:" || path.isAbsolute(Flag.OPENCODE_DB)) return Flag.OPENCODE_DB
-    return path.join(Global.Path.data, Flag.OPENCODE_DB)
+    if (Flag.OPENCODE_DB === ":memory:") return Flag.OPENCODE_DB
+    if (path.isAbsolute(Flag.OPENCODE_DB)) return Flag.OPENCODE_DB
+    return fallbackPath(Flag.OPENCODE_DB)
   }
   return getChannelPath(flags)
 }
