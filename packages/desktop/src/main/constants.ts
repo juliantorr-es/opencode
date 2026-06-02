@@ -17,7 +17,7 @@ export function getUpdaterEnabled(): boolean {
 }
 
 export const APP_IDS: Record<Channel, string> = {
-  dev: "ai.opencode.desktop.dev",
-  beta: "ai.opencode.desktop.beta",
-  prod: "ai.opencode.desktop",
+  dev: "dev.tribunus.desktop.dev",
+  beta: "dev.tribunus.desktop.beta",
+  prod: "dev.tribunus.desktop",
 }

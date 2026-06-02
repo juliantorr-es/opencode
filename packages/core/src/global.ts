@@ -6,12 +6,17 @@ import { Context, Effect, Layer } from "effect"
 import { Flock } from "./util/flock"
 import { Flag } from "./flag/flag"
 
-const app = "opencode"
+const app = "tribunus"
+const oldApp = "opencode"
 const data = path.join(xdgData!, app)
 const cache = path.join(xdgCache!, app)
 const config = path.join(xdgConfig!, app)
 const state = path.join(xdgState!, app)
 const tmp = path.join(os.tmpdir(), app)
+const oldData = path.join(xdgData!, oldApp)
+const oldCache = path.join(xdgCache!, oldApp)
+const oldConfig = path.join(xdgConfig!, oldApp)
+const oldState = path.join(xdgState!, oldApp)
 
 const paths = {
   get home() {
@@ -25,8 +30,12 @@ const paths = {
   config,
   state,
   tmp,
+  // Legacy paths for migration from "opencode" to "tribunus"
+  oldData,
+  oldCache,
+  oldConfig,
+  oldState,
 }
-
 export const Path = paths
 
 Flock.setGlobal({ state })

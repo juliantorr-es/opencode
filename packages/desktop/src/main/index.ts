@@ -53,9 +53,9 @@ import { Deferred, Effect, Fiber } from "effect"
 import * as Sentry from "@sentry/electron"
 
 const APP_NAMES: Record<string, string> = {
-  dev: "OpenCode Dev",
-  beta: "OpenCode Beta",
-  prod: "OpenCode",
+  dev: "Tribunus Dev",
+  beta: "Tribunus Beta",
+  prod: "Tribunus",
 }
 const TEST_ONBOARDING = process.env.OPENCODE_TEST_ONBOARDING === "1"
 const jsCallStackFeature = "DocumentPolicyIncludeJSCallStacksInCrashReports"
@@ -133,7 +133,7 @@ const main = Effect.gen(function* () {
   const onboardingTestRoot = ((): string | undefined => {
     if (!TEST_ONBOARDING) return
 
-    const root = join(tmpdir(), `opencode-onboarding-${randomUUID()}`)
+    const root = join(tmpdir(), `tribunus-onboarding-${randomUUID()}`)
     rmSync(root, { recursive: true, force: true })
     ;["data", "config", "cache", "state", "desktop", "session"].forEach((dir) =>
       mkdirSync(join(root, dir), { recursive: true }),
@@ -145,7 +145,7 @@ const main = Effect.gen(function* () {
     process.env.XDG_STATE_HOME = join(root, "state")
     return root
   })()
-  app.setName(electronPlatformPaths.isPackaged ? APP_NAMES[CHANNEL] : "OpenCode Dev")
+  app.setName(electronPlatformPaths.isPackaged ? APP_NAMES[CHANNEL] : "Tribunus Dev")
   app.setAppUserModelId(appId)
   electronPlatformPaths.setPath(
     "userData",
@@ -210,7 +210,7 @@ const main = Effect.gen(function* () {
   }
 
   app.on("second-instance", (_event: Event, argv: string[]) => {
-    const urls = (argv ?? []).filter((arg: string) => arg.startsWith("opencode://"))
+    const urls = (argv ?? []).filter((arg: string) => arg.startsWith("tribunus://"))
     if (urls.length) {
       logger.log("deep link received via second-instance", { urls })
       emitDeepLinks(urls)
@@ -348,7 +348,7 @@ const main = Effect.gen(function* () {
   }
 
   if (!TEST_ONBOARDING) migrate()
-  app.setAsDefaultProtocolClient("opencode")
+  app.setAsDefaultProtocolClient("tribunus")
   registerRendererProtocol()
   setDockIcon()
   setupAutoUpdater()
@@ -366,7 +366,7 @@ const main = Effect.gen(function* () {
     // Checks for PGlite/WAL directory — detects if first-time setup is needed
     const xdg = process.env.XDG_DATA_HOME
     const base = xdg && xdg.length > 0 ? xdg : join(homedir(), ".local", "share")
-    return !existsSync(join(base, "opencode", "opencode.db"))
+    return !existsSync(join(base, "tribunus", "tribunus.db"))
   })()
 
   let loadingTask: Fiber.Fiber<void, unknown> = yield* Effect.void.pipe(Effect.forkChild)
@@ -424,7 +424,7 @@ const main = Effect.gen(function* () {
     server = listener
     yield* Deferred.succeed(serverReady, {
       url,
-      username: "opencode",
+      username: "tribunus",
       password,
     })
 

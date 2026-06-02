@@ -1,6 +1,6 @@
-# OpenCode Desktop
+# Tribunus Desktop
 
-The OpenCode Desktop app, built with Electron.
+The Tribunus Desktop app, built with Electron.
 
 ## Development
 

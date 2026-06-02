@@ -52,6 +52,12 @@ export function report(paths: AppDataPaths) {
 
 export function envForDesktopAppData(paths: AppDataPaths): Record<string, string> {
   return {
+    TRIBUNUS_DESKTOP_USER_DATA: paths.userData,
+    TRIBUNUS_STATE_HOME: paths.state,
+    TRIBUNUS_CONFIG_HOME: paths.config,
+    TRIBUNUS_CACHE_HOME: paths.cache,
+    TRIBUNUS_DATA_HOME: paths.data,
+    TRIBUNUS_LOG_HOME: paths.logs,
     OPENCODE_DESKTOP_USER_DATA: paths.userData,
     OPENCODE_STATE_HOME: paths.state,
     OPENCODE_CONFIG_HOME: paths.config,

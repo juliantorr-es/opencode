@@ -135,7 +135,7 @@ export function createMainWindow() {
     height: state.height,
     show: false,
     autoHideMenuBar: true,
-    title: "OpenCode",
+    title: "Tribunus",
     icon: iconPath(),
     backgroundColor: backgroundColor ?? defaultBackgroundColor(),
     ...(process.platform === "darwin"
@@ -189,7 +189,7 @@ export function transitionToSafeMode(win: BrowserWindow, error: { message: strin
   win.setSize(800, 600)
   win.center()
   win.setResizable(true)
-  win.setTitle("OpenCode — Safe Mode")
+  win.setTitle("Tribunus — Safe Mode")
   loadWindow(win, "safe-mode.html")
   return win
 }
@@ -349,7 +349,7 @@ function wireWindowRecovery(win: BrowserWindow, name: string) {
 
     if (!isMainFrame || errorCode === -3) return
     void show(
-      "OpenCode failed to load",
+      "Tribunus failed to load",
       [`Window: ${name}`, `URL: ${validatedURL}`, `Error: ${errorCode} ${errorDescription}`].join("\n"),
       false,
     )
@@ -370,7 +370,7 @@ function wireWindowRecovery(win: BrowserWindow, name: string) {
       "error",
     )
     void show(
-      "OpenCode window terminated unexpectedly",
+      "Tribunus window terminated unexpectedly",
       [`Window: ${name}`, `Reason: ${details.reason}`, `Code: ${details.exitCode ?? "<unknown>"}`].join("\n"),
       false,
     )
@@ -378,7 +378,7 @@ function wireWindowRecovery(win: BrowserWindow, name: string) {
   win.on("unresponsive", () => {
     writeLog("window", "renderer unresponsive", { window: name, currentURL: win.webContents.getURL() }, "error")
     sampler.start()
-    void show("OpenCode is not responding", "You can relaunch the app, open the logs, or keep waiting.", true)
+    void show("Tribunus is not responding", "You can relaunch the app, open the logs, or keep waiting.", true)
   })
   win.on("responsive", () => {
     writeLog("window", "renderer responsive", { window: name, currentURL: win.webContents.getURL() }, "error")

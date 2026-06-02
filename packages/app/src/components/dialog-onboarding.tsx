@@ -80,9 +80,9 @@ export function DialogOnboarding(props: { startAt?: number }) {
           {index() === 0 && (
             <div class="flex flex-col items-center justify-center flex-1 gap-4">
               <Splash class="w-20 h-24" />
-              <h1 class="text-24-medium text-text-strong">Welcome to OpenCode</h1>
+              <h1 class="text-24-medium text-text-strong">Welcome to Tribunus</h1>
               <p class="text-14-regular text-text-base text-center max-w-sm">
-                Your AI-powered coding assistant. OpenCode helps you write, refactor, and understand code faster.
+                Your AI-powered coding assistant. Tribunus helps you write, refactor, and understand code faster.
               </p>
               <Button variant="primary" size="large" onClick={handleNext} class="mt-4">
                 Get Started
@@ -133,7 +133,7 @@ export function DialogOnboarding(props: { startAt?: number }) {
                   </div>
                   <div>
                     <div class="text-14-medium text-text-strong">Open a project</div>
-                    <div class="text-12-regular text-text-weak">Open a codebase to start working with OpenCode</div>
+                    <div class="text-12-regular text-text-weak">Open a codebase to start working with Tribunus</div>
                   </div>
                 </div>
                 <div class="flex items-start gap-3">

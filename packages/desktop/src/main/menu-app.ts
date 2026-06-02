@@ -1,5 +1,5 @@
 /**
- * Application menu — macOS-only "OpenCode" menu.
+ * Application menu — macOS-only "Tribunus" menu.
  *
  * Registers menu structure and action handlers for:
  *   app.checkForUpdates  — triggers updater check
@@ -20,7 +20,7 @@ export type AppMenuDeps = {
 export function registerAppMenuActions(registry: MenuActionRegistry, deps: AppMenuDeps): void {
   registry.add({
     id: "app",
-    label: "OpenCode",
+    label: "Tribunus",
     platforms: ["macos"],
     items: [
       { type: "item", role: "about" },
