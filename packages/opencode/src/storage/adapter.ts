@@ -1,5 +1,6 @@
 import { Context, Effect, Layer, Option, Redacted, Schema, Schedule } from "effect"
 import { Database } from "./db"
+import { ensureProjectionMeta } from "./projections"
 import { DatabaseConfig } from "@/effect/database-config"
 import { HealthRegistry, HealthStatus } from "@/server/health"
 import { init as initPg, applyMigrations } from "#db"
@@ -9,26 +10,18 @@ import { classifyError } from "@/diagnostic/instance-failure-codes"
 
 // ── Query adapter helpers ──────────────────────────────────────
 
+// ── Query adapter helpers ──────────────────────────────────────
+
 /**
  * Return one optional row from a Drizzle query builder.
- *
- * ## Type inference
- * `T` is inferred from the `.then()` callback parameter type of the
- * passed query builder. When Drizzle's query builder has complex generic
- * overloads, TypeScript may fail to resolve `T` and default it to `{}`.
- *
- * If you see errors where properties of the expected row type don't exist
- * on `{}`, annotate the call explicitly:
- *
- * ```ts
- * const row = await one<AccountRow>(db.select().from(AccountTable).where(...))
- * ```
+ * Returns `any` to avoid TypeScript inference issues with drizzle's
+ * complex generic overloads. Callers should cast to their expected type.
  */
-export function one<T>(query: { then(onfulfilled: (value: T[]) => any): any; limit?(n: number): any }): Promise<T | undefined> {
+export function one(query: any): any {
   if (query && typeof query.limit === "function") {
-    return query.limit(1).then((rows: T[]) => rows[0])
+    return query.limit(1).then((rows: any[]) => rows[0])
   }
-  return (query as any).then((rows: T[]) => {
+  return (query as any).then((rows: any[]) => {
     return Array.isArray(rows) ? rows[0] : rows
   })
 }
@@ -203,6 +196,9 @@ export const LocalPgAdapter: Layer.Layer<Service> = Layer.effect(
     // before any queries run. Client() is the module-level singleton.
     const client = Database.Client()
     yield* Effect.promise(() => applyMigrations(client))
+    yield* Effect.promise(() =>
+      ensureProjectionMeta(),
+    )
     return makeLocalPgAdapter()
   }),
 )

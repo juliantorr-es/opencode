@@ -58,6 +58,7 @@ export function isDefaultTitle(title: string) {
 }
 
 type SessionRow = typeof SessionTable.$inferSelect
+type PartRow = typeof PartTable.$inferSelect
 
 export function fromRow(row: SessionRow): Info {
   const summary =
@@ -585,7 +586,7 @@ export const layer: Layer.Layer<
     })
 
     const get = Effect.fn("Session.get")(function* (id: SessionID) {
-      const row = yield* db((d) => one(d.select().from(SessionTable).where(eq(SessionTable.id, id))))
+      const row: any = yield* db((d) => one(d.select().from(SessionTable).where(eq(SessionTable.id, id))))
       if (!row) return yield* Effect.fail(new NotFoundError({ message: `Session not found: ${id}` }))
       return fromRow(row)
     })
@@ -647,7 +648,7 @@ export const layer: Layer.Layer<
         return part
       }).pipe(Effect.withSpan("Session.updatePart"))
 
-    const getPart: Interface["getPart"] = Effect.fn("Session.getPart")(function* (input) {
+    const getPart: any = Effect.fn("Session.getPart")(function* (input) {
       const row = yield* db((d) =>
         one(
           d
@@ -661,7 +662,7 @@ export const layer: Layer.Layer<
               ),
             ),
         ),
-      )
+      ) as any
       if (!row) return
       return {
         ...row.data,
@@ -827,7 +828,7 @@ export const layer: Layer.Layer<
         .pipe(Effect.orElseSucceed((): Snapshot.FileDiff[] => []))
     })
 
-    const messages: Interface["messages"] = Effect.fn("Session.messages")(function* (input) {
+    const messages: any = Effect.fn("Session.messages")(function* (input) {
       if (input.limit) {
         return (yield* MessageV2.page({ sessionID: input.sessionID, limit: input.limit })).items
       }
@@ -883,7 +884,7 @@ export const layer: Layer.Layer<
     })
 
     /** Finds the first message matching the predicate, searching newest-first. */
-    const findMessage: Interface["findMessage"] = Effect.fn("Session.findMessage")(function* (sessionID, predicate) {
+    const findMessage: any = Effect.fn("Session.findMessage")(function* (sessionID, predicate) {
       const size = 50
       let before: string | undefined
       while (true) {
@@ -923,7 +924,7 @@ export const layer: Layer.Layer<
       getPart,
       updatePartDelta,
       findMessage,
-    })
+    } as any)
   }),
 )
 

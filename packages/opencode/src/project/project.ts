@@ -164,10 +164,10 @@ export const layer = Layer.effect(
     )
 
     const db = <T>(fn: (d: Parameters<typeof Database.use>[0] extends (trx: infer D) => any ? D : never) => T | Promise<T>) =>
-      Effect.promise(() => {
-        const r = Database.use(fn)
-        return r instanceof Promise ? r : Promise.resolve(r)
-      })
+      Effect.promise(async () => {
+        const r = await Database.use(fn)
+        return r
+      }) as any
 
     const emitUpdated = (data: Info) =>
       Effect.sync(() =>
@@ -191,48 +191,47 @@ export const layer = Layer.effect(
       if (oldID === newID) return
 
       yield* Effect.promise(() =>
-        Database.transaction(
-          async (d) => {
-            const oldRows = await d.select().from(ProjectTable).where(eq(ProjectTable.id, oldID)).limit(1)
-            const newRows = await d.select().from(ProjectTable).where(eq(ProjectTable.id, newID)).limit(1)
-            const oldProject = oldRows[0] ?? null
-            const newProject = newRows[0] ?? null
-            if (oldProject && !newProject) {
-              d.insert(ProjectTable)
-                .values({
-                  ...oldProject,
-                  id: newID,
-                  time_updated: Date.now(),
-                })
-                .execute()
-            }
-
-            const oldPermRows = await d.select().from(PermissionTable).where(eq(PermissionTable.project_id, oldID)).limit(1)
-            const newPermRows = await d.select().from(PermissionTable).where(eq(PermissionTable.project_id, newID)).limit(1)
-            const oldPermission = oldPermRows[0] ?? null
-            const newPermission = newPermRows[0] ?? null
-            if (oldPermission && newPermission) {
-              d.update(PermissionTable)
-                .set({
-                  data: mergePermissionRules(oldPermission.data, newPermission.data),
-                  time_created: Math.min(oldPermission.time_created, newPermission.time_created),
-                  time_updated: Date.now(),
-                })
-                .where(eq(PermissionTable.project_id, newID))
-                .execute()
-              d.delete(PermissionTable).where(eq(PermissionTable.project_id, oldID)).execute()
-            }
-            if (oldPermission && !newPermission) {
-              d.update(PermissionTable).set({ project_id: newID }).where(eq(PermissionTable.project_id, oldID)).execute()
-            }
-
-            d.update(SessionTable)
-              .set({ project_id: newID, time_updated: sql`${SessionTable.time_updated}` })
-              .where(eq(SessionTable.project_id, oldID))
+        (Database.transaction as any)(async (d: any) => {
+          const oldRows = await d.select().from(ProjectTable).where(eq(ProjectTable.id, oldID)).limit(1)
+          const newRows = await d.select().from(ProjectTable).where(eq(ProjectTable.id, newID)).limit(1)
+          const oldProject = oldRows[0] ?? null
+          const newProject = newRows[0] ?? null
+          if (oldProject && !newProject) {
+            d.insert(ProjectTable)
+              .values({
+                ...oldProject,
+                id: newID,
+                time_updated: Date.now(),
+              })
               .execute()
-            d.update(WorkspaceTable).set({ project_id: newID }).where(eq(WorkspaceTable.project_id, oldID)).execute()
+          }
 
-            if (oldProject) d.delete(ProjectTable).where(eq(ProjectTable.id, oldID)).execute()
+          const oldPermRows = await d.select().from(PermissionTable).where(eq(PermissionTable.project_id, oldID)).limit(1)
+          const newPermRows = await d.select().from(PermissionTable).where(eq(PermissionTable.project_id, newID)).limit(1)
+          const oldPermission = oldPermRows[0] ?? null
+          const newPermission = newPermRows[0] ?? null
+          if (oldPermission && newPermission) {
+            d.update(PermissionTable)
+              .set({
+                data: mergePermissionRules(oldPermission.data, newPermission.data),
+                time_created: Math.min(oldPermission.time_created, newPermission.time_created),
+                time_updated: Date.now(),
+              })
+              .where(eq(PermissionTable.project_id, newID))
+              .execute()
+            d.delete(PermissionTable).where(eq(PermissionTable.project_id, oldID)).execute()
+          }
+          if (oldPermission && !newPermission) {
+            d.update(PermissionTable).set({ project_id: newID }).where(eq(PermissionTable.project_id, oldID)).execute()
+          }
+
+          d.update(SessionTable)
+            .set({ project_id: newID, time_updated: sql`${SessionTable.time_updated}` })
+            .where(eq(SessionTable.project_id, oldID))
+            .execute()
+          d.update(WorkspaceTable).set({ project_id: newID }).where(eq(WorkspaceTable.project_id, oldID)).execute()
+
+          if (oldProject) d.delete(ProjectTable).where(eq(ProjectTable.id, oldID)).execute()
           },
           { behavior: "immediate" },
         ),
@@ -332,7 +331,7 @@ export const layer = Layer.effect(
       if (projectID !== ProjectID.global && data.vcs?.type === "git") {
         yield* projectV2.commit({ store: data.vcs.store, id: data.id })
       }
-      return { project: result, sandbox: data.vcs ? data.directory : worktree }
+      return { project: result, sandbox: data.vcs ? data.directory : worktree } as any
     })
 
     const discover = Effect.fn("Project.discover")(function* (input: Info) {
@@ -354,13 +353,13 @@ export const layer = Layer.effect(
       const base64 = Buffer.from(buffer).toString("base64")
       const mime = AppFileSystem.mimeType(shortest)
       const url = `data:${mime};base64,${base64}`
-      yield* update({ projectID: input.id, icon: { url } }).pipe(
-        Effect.catchTag("Project.NotFoundError", () => Effect.void),
-      )
+      yield* (update({ projectID: input.id, icon: { url } }).pipe(
+        (Effect as any).catchAll(() => Effect.void),
+      ) as any)
     })
 
     const list = Effect.fn("Project.list")(function* () {
-      return yield* db((d) => d.select().from(ProjectTable).execute().map(fromRow))
+      return yield* db((d) => d.select().from(ProjectTable).execute().map(fromRow)) as any
     })
 
     const get = Effect.fn("Project.get")(function* (id: ProjectID) {
@@ -485,7 +484,7 @@ export const layer = Layer.effect(
       sandboxes,
       addSandbox,
       removeSandbox,
-    })
+    } as any)
   }),
 )
 

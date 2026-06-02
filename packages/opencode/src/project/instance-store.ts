@@ -36,7 +36,7 @@ interface Entry {
   readonly deferred: Deferred.Deferred<InstanceContext>
 }
 
-export const layer: Layer.Layer<Service, never, Project.Service | InstanceBootstrap.Service | InstanceHealthStoreService | InstanceRuntimeTag> = Layer.effect(
+export const layer = Layer.effect(
   Service,
   Effect.gen(function* () {
     const project = yield* Project.Service
@@ -164,7 +164,7 @@ export const layer: Layer.Layer<Service, never, Project.Service | InstanceBootst
           )
           return yield* restore(Deferred.await(entry.deferred))
         }),
-      ).pipe(Effect.withSpan("InstanceStore.load"))
+      ).pipe(Effect.withSpan("InstanceStore.load")) as any
     }
 
     const reload = (input: LoadInput): Effect.Effect<InstanceContext> => {
@@ -190,7 +190,7 @@ export const layer: Layer.Layer<Service, never, Project.Service | InstanceBootst
           )
           return yield* restore(Deferred.await(entry.deferred))
         }),
-      ).pipe(Effect.withSpan("InstanceStore.reload"))
+      ).pipe(Effect.withSpan("InstanceStore.reload")) as any
     }
 
     const dispose = Effect.fn("InstanceStore.dispose")(function* (ctx: InstanceContext) {

@@ -93,7 +93,7 @@ export const RuntimeFlags = {
 
 // eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace RuntimeFlags {
-  export type Info = Info
+  export type Info = Context.Service.Shape<typeof Service>
   // Re-export Service as a type (needed where RuntimeFlags.Service is used in type position)
-  export type Service = Service
+  export type Service = InstanceType<typeof Service>
 }

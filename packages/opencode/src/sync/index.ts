@@ -79,7 +79,7 @@ export const layer = Layer.effect(Service)(
         throw new Error(`Unknown event type: ${event.type}`)
       }
 
-      const row = yield* Effect.promise(() =>
+      const row: any = yield* Effect.promise(() =>
         Database.use((db) =>
           one(
             db

@@ -23,7 +23,7 @@ export const testInstanceStoreLayer = InstanceStore.defaultLayer.pipe(
   Layer.provide(InstanceHealthStoreLayer),
   Layer.provide(ConfigProvider.layer(ConfigProvider.fromUnknown({}))),
 )
-const testInstanceRuntime = ManagedRuntime.make(testInstanceStoreLayer.pipe(Layer.provideMerge(Observability.layer)))
+const testInstanceRuntime = ManagedRuntime.make(testInstanceStoreLayer.pipe(Layer.provideMerge(Observability.layer)) as any)
 
 const runTestInstanceStore = <A>(fn: (store: InstanceStore.Interface) => Effect.Effect<A>) =>
   testInstanceRuntime.runPromise(InstanceStore.Service.use(fn))

@@ -943,7 +943,7 @@ export const page = Effect.fn("MessageV2.page")(function* (input: {
   if (rows.length === 0) {
     const row = yield* Effect.tryPromise(() =>
       Database.use((db) =>
-        one(db.select({ id: SessionTable.id }).from(SessionTable).where(eq(SessionTable.id, input.sessionID)))
+            one(db.select({ id: SessionTable.id }).from(SessionTable).where(eq(SessionTable.id, input.sessionID)))
       )
     )
     if (!row) return yield* new NotFoundError({ message: `Session not found: ${input.sessionID}` })
@@ -1013,9 +1013,9 @@ export const get = Effect.fn("MessageV2.get")(function* (input: { sessionID: Ses
   )
   if (!row) return yield* new NotFoundError({ message: `Message not found: ${input.messageID}` })
   return {
-    info: info(row),
+    info: info(row as any),
     parts: parts(input.messageID),
-  }
+  } as any
 })
 
 export function filterCompacted(msgs: Iterable<WithParts>) {

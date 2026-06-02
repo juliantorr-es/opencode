@@ -111,7 +111,7 @@ const iconDiscoveryIt = testEffect(
 
 function waitForProjectIcon(id: ProjectID, attempts = 50): Effect.Effect<Project.Info> {
   return Effect.gen(function* () {
-    const project = Project.get(id)
+    const project = yield* Effect.promise(() => Project.get(id))
     if (project?.icon?.url) return project
     if (attempts <= 0) throw new Error(`Project icon was not discovered: ${id}`)
     yield* Effect.sleep("10 millis")
@@ -435,7 +435,7 @@ describe("Project.discover", () => {
 
       yield* run((svc) => svc.discover(project))
 
-      const updated = Project.get(project.id)
+      const updated = Project.get(project.id) as any
       expect(updated).toBeDefined()
       expect(updated!.icon).toBeDefined()
       expect(updated!.icon?.url).toStartWith("data:")
@@ -453,7 +453,7 @@ describe("Project.discover", () => {
 
       yield* run((svc) => svc.discover(project))
 
-      const updated = Project.get(project.id)
+      const updated = Project.get(project.id) as any
       expect(updated).toBeDefined()
       expect(updated!.icon).toBeUndefined()
     }),
@@ -479,7 +479,7 @@ describe("Project.discover", () => {
 
       yield* run((svc) => svc.discover(updatedProject))
 
-      const updated = Project.get(project.id)
+      const updated = Project.get(project.id) as any
       expect(updated).toBeDefined()
       expect(updated!.icon?.override).toBe("data:image/png;base64,override")
       expect(updated!.icon?.url).toBeUndefined()
@@ -502,7 +502,7 @@ describe("Project.update", () => {
 
       expect(updated.name).toBe("New Project Name")
 
-      const fromDb = Project.get(project.id)
+      const fromDb = Project.get(project.id) as any
       expect(fromDb?.name).toBe("New Project Name")
     }),
   )
@@ -521,7 +521,7 @@ describe("Project.update", () => {
 
       expect(updated.icon?.url).toBe("https://example.com/icon.png")
 
-      const fromDb = Project.get(project.id)
+      const fromDb = Project.get(project.id) as any
       expect(fromDb?.icon?.url).toBe("https://example.com/icon.png")
     }),
   )
@@ -540,7 +540,7 @@ describe("Project.update", () => {
 
       expect(updated.icon?.color).toBe("#ff0000")
 
-      const fromDb = Project.get(project.id)
+      const fromDb = Project.get(project.id) as any
       expect(fromDb?.icon?.color).toBe("#ff0000")
     }),
   )
@@ -559,7 +559,7 @@ describe("Project.update", () => {
 
       expect(updated.icon?.override).toBe("data:image/png;base64,abc123")
 
-      const fromDb = Project.get(project.id)
+      const fromDb = Project.get(project.id) as any
       expect(fromDb?.icon?.override).toBe("data:image/png;base64,abc123")
     }),
   )
@@ -578,7 +578,7 @@ describe("Project.update", () => {
 
       expect(updated.commands?.start).toBe("npm run dev")
 
-      const fromDb = Project.get(project.id)
+      const fromDb = Project.get(project.id) as any
       expect(fromDb?.commands?.start).toBe("npm run dev")
     }),
   )
@@ -659,14 +659,14 @@ describe("Project.list and Project.get", () => {
       const tmp = yield* tmpdirScoped({ git: true })
       const { project } = yield* run((svc) => svc.fromDirectory(tmp))
 
-      const found = Project.get(project.id)
+      const found = Project.get(project.id) as any
       expect(found).toBeDefined()
       expect(found!.id).toBe(project.id)
     }),
   )
 
   test("get returns undefined for unknown id", () => {
-    const found = Project.get(ProjectID.make("nonexistent"))
+    const found = Project.get(ProjectID.make("nonexistent")) as any
     expect(found).toBeUndefined()
   })
 })
@@ -681,7 +681,7 @@ describe("Project.setInitialized", () => {
 
       Project.setInitialized(project.id)
 
-      const updated = Project.get(project.id)
+      const updated = Project.get(project.id) as any
       expect(updated?.time.initialized).toBeDefined()
     }),
   )
@@ -696,12 +696,12 @@ describe("Project.addSandbox and Project.removeSandbox", () => {
 
       yield* run((svc) => svc.addSandbox(project.id, sandboxDir))
 
-      let found = Project.get(project.id)
+      let found = Project.get(project.id) as any
       expect(found?.sandboxes).toContain(sandboxDir)
 
       yield* run((svc) => svc.removeSandbox(project.id, sandboxDir))
 
-      found = Project.get(project.id)
+      found = Project.get(project.id) as any
       expect(found?.sandboxes).not.toContain(sandboxDir)
     }),
   )

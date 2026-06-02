@@ -158,6 +158,37 @@ function buildContext(agent: string, laneId: string): string {
 }
 
 // ═══════════════════════════════════════════════════
+// LANE CONTEXT FAST-PATH — read from projection when available
+// ═══════════════════════════════════════════════════
+
+function getLaneContext(db: Database, agent: string, laneId: string): {
+  phase: "explore" | "execute"
+  memory: string
+  ctxStr: string
+  deadlines: any[]
+  peers: string
+} {
+  // Fast path: read pre-built context from projection
+  try {
+    const row = db.query(
+      `SELECT context FROM lane_context_projection WHERE lane_id = ?`
+    ).get(laneId) as { context: string } | undefined
+    if (row) {
+      const parsed = JSON.parse(row.context)
+      return parsed
+    }
+  } catch { /* fall through to full query chain */ }
+
+  // Fallback: build from scratch (existing query chain)
+  const phase = inferPhase(agent)
+  const memory = hiveMemory(agent)
+  const ctxStr = buildContext(agent, laneId)
+  const deadlines = checkDeadlines(db, laneId)
+  const peers = peerHealth(laneId)
+  return { phase, memory, ctxStr, deadlines, peers }
+}
+
+// ═══════════════════════════════════════════════════
 // AGENT PROFILES
 // ═══════════════════════════════════════════════════
 
@@ -301,15 +332,11 @@ export default async function plugin(input: PluginInput): Promise<Hooks> {
       timed("chat.message", () => {
         const agent = msg.agent || ""
         const profile = AGENT_PROFILES[agent]
-        const phase = inferPhase(agent)
-        const temp = phase === "explore" ? profile?.exploreTemp : profile?.executeTemp
-        const role = profile ? `You are a ${agent} in ${phase} phase (temp ${temp}).` : ""
-        const memory = hiveMemory(agent)
-        const ctxStr = buildContext(agent, currentLaneID)
-        const deadlines = checkDeadlines(db, currentLaneID)
-        const peers = peerHealth(currentLaneID)
-        const overdue = deadlines.length > 0
-          ? "\n⏰ OVERDUE:\n" + deadlines.map((o: any) =>
+        const ctx = getLaneContext(db, agent, currentLaneID)
+        const temp = ctx.phase === "explore" ? profile?.exploreTemp : profile?.executeTemp
+        const role = profile ? `You are a ${agent} in ${ctx.phase} phase (temp ${temp}).` : ""
+        const overdue = ctx.deadlines.length > 0
+          ? "\n⏰ OVERDUE:\n" + ctx.deadlines.map((o: any) =>
               `  • ${o.agent}: ${o.overdue_seconds}s overdue`).join("\n")
           : ""
 
@@ -318,10 +345,10 @@ export default async function plugin(input: PluginInput): Promise<Hooks> {
           role,
           "• leaf_handoff(action=\"started\"|\"handoff\", status=\"completed|failed|partial\", ...)",
           "• ping(action=\"check\"|\"reply\", status=\"stuck\", ...)",
-          `🧠 HIVE: ${memory}`,
-          ctxStr,
+          `🧠 HIVE: ${ctx.memory}`,
+          ctx.ctxStr,
           overdue,
-          peers,
+          ctx.peers,
         ].filter(Boolean).join("\n")
 
         output.parts = parts.map((p: any) =>

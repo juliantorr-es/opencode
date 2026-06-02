@@ -1080,7 +1080,7 @@ describe("session.llm.stream", () => {
             Layer.provide(Plugin.defaultLayer),
             Layer.provide(failingNativeClient),
             Layer.provide(RuntimeFlags.layer({ experimentalNativeLlm: false })),
-          ),
+          ) as any,
           {
             user: {
               id: MessageID.make("msg_user-native-flag-off"),
@@ -1143,7 +1143,7 @@ describe("session.llm.stream", () => {
           temperature: 0.2,
         } satisfies Agent.Info
 
-        yield* drainWith(llmLayerWithExecutor(RequestExecutor.defaultLayer, { experimentalNativeLlm: true }), {
+        yield* drainWith(llmLayerWithExecutor(RequestExecutor.defaultLayer, { experimentalNativeLlm: true }) as any, {
           user: {
             id: MessageID.make("msg_user-native"),
             sessionID,
@@ -1226,7 +1226,7 @@ describe("session.llm.stream", () => {
           permission: [{ permission: "*", pattern: "*", action: "allow" }],
         } satisfies Agent.Info
 
-        yield* drainWith(llmLayerWithExecutor(executor, { experimentalNativeLlm: true }), {
+        yield* drainWith(llmLayerWithExecutor(executor, { experimentalNativeLlm: true }) as any, {
           user: {
             id: MessageID.make("msg_user-native-injected-tool"),
             sessionID,
@@ -1314,7 +1314,7 @@ describe("session.llm.stream", () => {
           permission: [{ permission: "*", pattern: "*", action: "allow" }],
         } satisfies Agent.Info
 
-        yield* drainWith(llmLayerWithExecutor(RequestExecutor.defaultLayer, { experimentalNativeLlm: true }), {
+        yield* drainWith(llmLayerWithExecutor(RequestExecutor.defaultLayer, { experimentalNativeLlm: true }) as any, {
           user: {
             id: MessageID.make("msg_user-native-tool"),
             sessionID,

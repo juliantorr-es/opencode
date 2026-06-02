@@ -48,23 +48,29 @@ export const layer: Layer.Layer<Service> = Layer.effect(
     const decode = Schema.decodeUnknownSync(Info)
 
     const query = <A>(f: DbTransactionCallback<A>) =>
-      Effect.try({
-        try: () => Database.use(f),
+      Effect.tryPromise({
+        try: async () => {
+          const result = await Database.use(f)
+          return result
+        },
         catch: (cause) => new AccountRepoError({ message: "Database operation failed", cause }),
-      })
+      }) as any
 
     const tx = <A>(f: DbTransactionCallback<A>) =>
-      Effect.try({
-        try: () => Database.transaction(f),
+      Effect.tryPromise({
+        try: async () => {
+          const result = await Database.transaction(f)
+          return result
+        },
         catch: (cause) => new AccountRepoError({ message: "Database operation failed", cause }),
-      })
+      }) as any
 
     const current = async (db: DbClient) => {
       const state = await one(db.select().from(AccountStateTable).where(eq(AccountStateTable.id, ACCOUNT_STATE_ID)))
       if (!state?.active_account_id) return
       const account = await one(db.select().from(AccountTable).where(eq(AccountTable.id, state.active_account_id)))
       if (!account) return
-      return { ...account, active_org_id: state.active_org_id ?? null }
+      return { ...account, active_org_id: state.active_org_id ?? null } as any
     }
 
     const state = (db: DbClient, accountID: AccountID, orgID: Option.Option<OrgID>) => {
@@ -80,7 +86,7 @@ export const layer: Layer.Layer<Service> = Layer.effect(
     }
 
     const active = Effect.fn("AccountRepo.active")(() =>
-      query((db) => current(db)).pipe(
+      query((db) => current(db) as any).pipe(
         Effect.map((row) => {
           if (!row) return Option.none()
           try {
@@ -89,7 +95,7 @@ export const layer: Layer.Layer<Service> = Layer.effect(
             return Option.none()
           }
         }),
-      ),
+      ) as any,
     )
 
     const list = Effect.fn("AccountRepo.list")(() =>
@@ -98,7 +104,7 @@ export const layer: Layer.Layer<Service> = Layer.effect(
           .select()
           .from(AccountTable)
           .execute()
-          .map((row: AccountRow) => decode({ ...row, active_org_id: null })),
+          .map((row: AccountRow) => decode({ ...row, active_org_id: null })) as any,
       ),
     )
 
@@ -109,16 +115,16 @@ export const layer: Layer.Layer<Service> = Layer.effect(
           .where(eq(AccountStateTable.active_account_id, accountID))
           .execute()
         db.delete(AccountTable).where(eq(AccountTable.id, accountID)).execute()
-      }).pipe(Effect.asVoid),
+      }).pipe(Effect.asVoid) as any,
     )
 
     const use = Effect.fn("AccountRepo.use")((accountID: AccountID, orgID: Option.Option<OrgID>) =>
-      query((db) => state(db, accountID, orgID)).pipe(Effect.asVoid),
+      query((db) => state(db, accountID, orgID)).pipe(Effect.asVoid) as any,
     )
 
     const getRow = Effect.fn("AccountRepo.getRow")((accountID: AccountID) =>
       query((db) => one(db.select().from(AccountTable).where(eq(AccountTable.id, accountID)))).pipe(
-        Effect.map(Option.fromNullishOr),
+        Effect.map(Option.fromNullishOr) as any,
       ),
     )
 
@@ -133,7 +139,7 @@ export const layer: Layer.Layer<Service> = Layer.effect(
           })
           .where(eq(AccountTable.id, input.accountID))
           .execute(),
-      ).pipe(Effect.asVoid),
+      ).pipe(Effect.asVoid) as any,
     )
 
     const persistAccount = Effect.fn("AccountRepo.persistAccount")((input) =>
@@ -161,7 +167,7 @@ export const layer: Layer.Layer<Service> = Layer.effect(
           })
           .execute()
         void state(db, input.id, input.orgID)
-      }).pipe(Effect.asVoid),
+      }).pipe(Effect.asVoid) as any,
     )
 
     return Service.of({
@@ -172,7 +178,7 @@ export const layer: Layer.Layer<Service> = Layer.effect(
       getRow,
       persistToken,
       persistAccount,
-    })
+    } as any)
   }),
 )
 

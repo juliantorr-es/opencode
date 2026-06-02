@@ -14,7 +14,8 @@ export const reloadInstance = (input: LoadInput) =>
   AppRuntime.runPromise(InstanceStore.Service.use((store) => store.reload(input)))
 
 import { Effect, Fiber, Layer, Scope } from "effect"
-import { InstanceRuntimeInterface, InstanceRuntimeTag } from "./instance-runtime-contract"
+import type { InstanceRuntimeInterface } from "./instance-runtime-contract"
+import { InstanceRuntimeTag } from "./instance-runtime-contract"
 
 export type Interface = InstanceRuntimeInterface
 export { InstanceRuntimeTag as Service }
@@ -28,7 +29,7 @@ export const layer: Layer.Layer<
   Effect.gen(function* () {
     const scope = yield* Scope.Scope
 
-    const fork = <A, E>(label: string, effect: Effect.Effect<A, E, never>): Effect.Effect<Fiber.RuntimeFiber<A, E>> =>
+    const fork = <A, E>(label: string, effect: Effect.Effect<A, E, never>): Effect.Effect<Fiber.Fiber<A, E>> =>
       Effect.gen(function* () {
         yield* Effect.logDebug(`forking instance work`).pipe(
           Effect.annotateLogs("label", label),

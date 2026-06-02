@@ -115,6 +115,12 @@ export default tool({
           return { query: q, results }
         })
         .get("/api/graph/:file", ({ params: { file } }) => {
+          // Fast path: pre-built graph from projection
+          const cached = db.query(`SELECT graph_data FROM dependency_graph_projection WHERE file = ?`).get(file) as any
+          if (cached?.graph_data) {
+            return new Response(cached.graph_data, { headers: { "Content-Type": "image/svg+xml" } })
+          }
+          // Fallback: BFS + D3 simulation
           const svg = buildD3Graph(db, file)
           return new Response(svg, { headers: { "Content-Type": "image/svg+xml" } })
         })

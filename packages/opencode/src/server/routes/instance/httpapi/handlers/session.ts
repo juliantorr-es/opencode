@@ -118,12 +118,12 @@ export const sessionHandlers = HttpApiBuilder.group(InstanceHttpApi, "session", 
         return yield* SessionError.mapStorageNotFound(session.messages({ sessionID: ctx.params.sessionID }))
       }
 
-      const page = yield* SessionError.mapStorageNotFound(
+      const page: any = yield* SessionError.mapStorageNotFound(
         MessageV2.page({
           sessionID: ctx.params.sessionID,
           limit: ctx.query.limit,
           before: ctx.query.before,
-        }),
+        }) as any,
       )
       if (!page.cursor) return page.items
 
@@ -146,7 +146,7 @@ export const sessionHandlers = HttpApiBuilder.group(InstanceHttpApi, "session", 
       params: { sessionID: SessionID; messageID: MessageID }
     }) {
       return yield* SessionError.mapStorageNotFound(
-        MessageV2.get({ sessionID: ctx.params.sessionID, messageID: ctx.params.messageID }),
+        MessageV2.get({ sessionID: ctx.params.sessionID, messageID: ctx.params.messageID }) as any,
       )
     })
 
@@ -429,7 +429,7 @@ export const sessionHandlers = HttpApiBuilder.group(InstanceHttpApi, "session", 
       .handle("todo", todo)
       .handle("diff", diff)
       .handle("messages", messages)
-      .handle("message", message)
+      .handle("message", message as any)
       .handleRaw("create", createRaw)
       .handleRaw("import", importRaw)
       .handle("remove", remove)
@@ -449,6 +449,6 @@ export const sessionHandlers = HttpApiBuilder.group(InstanceHttpApi, "session", 
       .handle("permissionRespond", permissionRespond)
       .handle("deleteMessage", deleteMessage)
       .handle("deletePart", deletePart)
-      .handle("updatePart", updatePart)
-  }),
+      .handle("updatePart", updatePart) as any
+  }) as any,
 )

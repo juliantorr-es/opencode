@@ -674,7 +674,7 @@ export const layer = Layer.effect(
     })
 
     const currentModel = Effect.fnUntraced(function* (sessionID: SessionID) {
-      const current = yield* Effect.tryPromise(() =>
+      const current: any = yield* Effect.tryPromise(() =>
         Database.use((db) =>
           one(db.select({ model: SessionTable.model }).from(SessionTable).where(eq(SessionTable.id, sessionID)))
         )
@@ -713,7 +713,7 @@ export const layer = Layer.effect(
               .where(eq(SessionTable.id, input.sessionID))
           )
         )
-      )
+      ) as any
       const model = input.model ?? ag.model ?? (yield* currentModel(input.sessionID))
       const same = ag.model && model.providerID === ag.model.providerID && model.modelID === ag.model.modelID
       const full =
@@ -1513,7 +1513,7 @@ export const layer = Layer.effect(
       "SessionPrompt.shell",
     )(function* (input: ShellInput) {
       const ready = yield* Latch.make()
-      return yield* state.startShell(input.sessionID, lastAssistant(input.sessionID), shellImpl(input, ready), ready)
+      return yield* state.startShell(input.sessionID, lastAssistant(input.sessionID), shellImpl(input, ready) as any, ready)
     })
 
     const command = Effect.fn("SessionPrompt.command")(function* (input: CommandInput) {

@@ -111,14 +111,14 @@ export const layer = Layer.effect(
                   "data_migration.cursor": cursor ?? "",
                 },
               }),
-            )
+            ) as any
             if (!next) return
             cursor = next
             yield* Effect.sleep("10 millis")
           }
         }),
       },
-    ]
+    ] as any
 
     yield* Effect.gen(function* () {
       if (migrations.length === 0) return
@@ -131,7 +131,7 @@ export const layer = Layer.effect(
             .select({ name: DataMigrationTable.name })
             .from(DataMigrationTable)
             .where(eq(DataMigrationTable.name, migration.name))
-            .limit(1).then(rows => rows[0]),
+            .limit(1).then((rows: any[]) => rows[0]),
         )
         if (completed) continue
 
