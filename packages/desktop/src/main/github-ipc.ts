@@ -4,6 +4,7 @@ import { IPC } from "./ipc-channels"
 import { getGithubClientId } from "./app-config"
 import { getStore } from "./store"
 import { withIpcResult } from "./ipc-contract"
+import { setSecret, getSecret, deleteSecret } from "./desktop-secret-store"
 
 const GITHUB_TOKEN_URL = "https://github.com/login/oauth/access_token"
 
@@ -64,39 +65,41 @@ export function registerGithubIpcHandlers() {
 
   ipcMain.handle(IPC.handle.GITHUB_GET_TOKEN, async () => {
     return withIpcResult("github.token.get", async () => {
+      const result = await getSecret({ namespace: "github", key: "default" })
+      if (result !== null) return result
+
+      // Migration: check old electron-store for a token and promote it
       const raw = getStore("github-auth").get("token") as string | undefined
-      if (!raw) return null
-      try {
-        return safeStorage.decryptString(Buffer.from(raw, "base64"))
-      } catch {
-        return null
+      if (raw) {
+        try {
+          const token = safeStorage.decryptString(Buffer.from(raw, "base64"))
+          await setSecret({ namespace: "github", key: "default" }, token)
+          getStore("github-auth").delete("token")
+          return token
+        } catch {
+          return null
+        }
       }
+      return null
     })
   })
 
   ipcMain.handle(IPC.handle.GITHUB_SET_TOKEN, async (_event, token: string) => {
     return withIpcResult("github.token.set", async () => {
-      const encrypted = safeStorage.encryptString(token)
-      getStore("github-auth").set("token", encrypted.toString("base64"))
+      await setSecret({ namespace: "github", key: "default" }, token)
     })
   })
 
   ipcMain.handle(IPC.handle.GITHUB_CLEAR_TOKEN, async () => {
     return withIpcResult("github.token.clear", async () => {
-      getStore("github-auth").delete("token")
+      await deleteSecret({ namespace: "github", key: "default" })
     })
   })
 
   ipcMain.handle(IPC.handle.GITHUB_API_PROXY, async (_event, url: string, options?: { method?: string; headers?: Record<string, string>; body?: string }) => {
     return withIpcResult("github.apiProxy", async () => {
-      const raw = getStore("github-auth").get("token") as string | undefined
-      if (!raw) return { status: 401, body: "Not authenticated" }
-      let token: string
-      try {
-        token = safeStorage.decryptString(Buffer.from(raw, "base64"))
-      } catch {
-        return { status: 401, body: "Failed to decrypt token" }
-      }
+      const token = await getSecret({ namespace: "github", key: "default" })
+      if (!token) return { status: 401, body: "Not authenticated" }
 
       const urlObj = new URL(url)
       const allowed = ["api.github.com", "uploads.github.com"]

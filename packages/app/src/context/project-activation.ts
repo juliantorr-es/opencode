@@ -56,6 +56,24 @@ export interface ProjectActivationDiagnostics {
   reason: string | null
   sessionID: string | null
 }
+// ── Typed readiness result ─────────────────────────────
+
+export type ProjectReadiness =
+  | { status: "ready"; directory: string }
+  | { status: "provider_setup_required"; directory: string; reason: string }
+  | { status: "empty"; directory: string }
+  | { status: "failed"; directory: string; code: string; message: string; retryable: boolean }
+
+// ── Dependency injection (avoids circular imports) ─────
+
+interface ActivationDeps {
+  openProjectLocal: (directory: string) => void
+  touchProject: (directory: string) => void
+  ensureReady: (directory: string) => Promise<ProjectReadiness>
+  navigateToProject: (directory: string) => void
+  bootstrapInstance: (directory: string) => Promise<void>
+  isInstanceBooted: (directory: string) => boolean
+}
 
 // ── Public API type ─────────────────────────────────────
 
@@ -66,6 +84,9 @@ export interface ProjectActivationMachine {
   canOpenProject(): boolean
   currentDirectory(): string | undefined
   diagnostics(): ProjectActivationDiagnostics
+  openProject(directory: string, opts?: { navigate?: boolean }): Promise<void>
+  ensureReady(directory: string): Promise<ProjectReadiness>
+  retryActivation(): void
 }
 
 // ── Helpers ─────────────────────────────────────────────
@@ -156,9 +177,9 @@ function broadcastEvent(prev: ActivationState, next: ActivationState, event: Act
   }
 }
 
-// ── Factory ─────────────────────────────────────────────
+ // ── Factory ─────────────────────────────────────────────
 
-export function createProjectActivation(): ProjectActivationMachine {
+export function createProjectActivation(deps: ActivationDeps): ProjectActivationMachine {
   const [state, setState] = createSignal<ActivationState>({ name: "uninitialized" })
 
   function send(event: ActivationEvent): void {
@@ -207,11 +228,61 @@ export function createProjectActivation(): ProjectActivationMachine {
     }
   }
 
+  // ── Execution methods ────────────────────────────────
+
+  async function openProject(directory: string, opts?: { navigate?: boolean }): Promise<void> {
+    send({ type: "PROJECT_SELECTED", directory })
+    deps.openProjectLocal(directory)
+    deps.touchProject(directory)
+    try {
+      const readiness = await deps.ensureReady(directory)
+      switch (readiness.status) {
+        case "ready":
+          send({ type: "INSTANCE_BOOT_OK", directory })
+          send({ type: "PROJECT_CONTEXT_LOADED", directory })
+          break
+        case "provider_setup_required":
+          send({ type: "INSTANCE_BOOT_OK", directory })
+          send({ type: "PROVIDERS_MISSING", directory, reason: readiness.reason })
+          break
+        case "empty":
+          send({ type: "INSTANCE_BOOT_OK", directory })
+          send({ type: "PROJECT_CONTEXT_LOADED", directory })
+          break
+        case "failed":
+          send({ type: "FAIL", directory, error: readiness.message })
+          return
+      }
+      if (opts?.navigate !== false) {
+        deps.navigateToProject(directory)
+      }
+    } catch (err) {
+      send({ type: "FAIL", directory, error: err instanceof Error ? err.message : String(err) })
+    }
+  }
+
+  async function ensureReady(directory: string): Promise<ProjectReadiness> {
+    if (deps.isInstanceBooted(directory)) {
+      return { status: "ready", directory }
+    }
+    try {
+      await deps.bootstrapInstance(directory)
+      return { status: "ready", directory }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err)
+      return { status: "failed", directory, code: "BOOT_ERROR", message, retryable: true }
+    }
+  }
+
+  function retryActivation(): void {
+    send({ type: "RETRY" })
+  }
+
   if (typeof window !== "undefined") {
     ;(window as any).__opencode_diag__ = { activation: () => diagnostics() }
   }
 
-  return { state, send, canCreateSession, canOpenProject, currentDirectory, diagnostics }
+  return { state, send, canCreateSession, canOpenProject, currentDirectory, diagnostics, openProject, ensureReady, retryActivation }
 }
 
 export function setSentryDiagnostics(diag: any) {

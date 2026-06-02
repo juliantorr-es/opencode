@@ -66,6 +66,37 @@ export async function withIpcResult<T>(operation: string, fn: () => Promise<T>):
   }
 }
 
+/**
+ * Runtime IpcResult shape validator.
+ * In development mode, typedInvoke uses this to reject malformed IPC responses
+ * before they reach renderer code.
+ */
+export function isIpcResult(value: unknown): value is IpcResult<unknown> {
+  if (value === null || typeof value !== "object") return false
+  const obj = value as Record<string, unknown>
+  const ok = obj.ok
+  if (typeof ok !== "boolean") return false
+  if (ok) {
+    return "value" in obj
+  }
+  if (!("error" in obj)) return false
+  const err = obj.error
+  if (err === null || typeof err !== "object") return false
+  const e = err as Record<string, unknown>
+  return typeof e.code === "string" && typeof e.message === "string"
+}
+
+/** IPC contract violation error */
+export class IpcContractViolationError extends Error {
+  constructor(
+    public readonly channel: string,
+    public readonly actualShape: string,
+  ) {
+    super(`IPC contract violation on channel "${channel}": expected IpcResult, got ${actualShape}`)
+    this.name = "IpcContractViolationError"
+  }
+}
+
 export function normalizeIpcError(operation: string, error: unknown): IpcErr["error"] {
   const message = error instanceof Error ? error.message : String(error ?? "Unknown error")
   if (message.includes("Access denied") || message.includes("permission") || message.includes("Permission"))
@@ -244,6 +275,16 @@ export interface IpcHandleContract {
   [IPC.handle.GET_SAFE_MODE_DIAGNOSTICS]: { params: []; returns: Promise<SafeModeDiagnostics> }
   [IPC.handle.SAFE_MODE_ACTION]: { params: [action: SafeModeAction]; returns: Promise<void> }
   [IPC.handle.OPEN_PROJECT]: { params: [directory: string]; returns: Promise<string> }
+  // ── Secrets ──────────────────────────────────────────────
+  [IPC.handle.SECRETS_SET]: { params: [ref: { namespace: string; accountID?: string; key: string }, value: string]; returns: Promise<void> }
+  [IPC.handle.SECRETS_GET]: { params: [ref: { namespace: string; accountID?: string; key: string }]; returns: Promise<string | null> }
+  [IPC.handle.SECRETS_DELETE]: { params: [ref: { namespace: string; accountID?: string; key: string }]; returns: Promise<void> }
+  [IPC.handle.SECRETS_LIST]: { params: [namespace?: string]; returns: Promise<{ namespace: string; accountID?: string; key: string; createdAt: number; updatedAt: number }[]> }
+  [IPC.handle.SECRETS_STATUS]: { params: []; returns: Promise<{ available: boolean; encrypted: boolean; secretCount: number }> }
+  // ── Notifications ───────────────────────────────────────
+  [IPC.handle.NOTIFICATIONS_NOTIFY]: { params: [opts: { kind: string; title: string; body: string; actionRef?: string; project?: string }]; returns: Promise<boolean> }
+  [IPC.handle.NOTIFICATIONS_STATUS]: { params: []; returns: Promise<{ supported: boolean; enabled: boolean; permission: string }> }
+  [IPC.handle.NOTIFICATIONS_SET_PREFERENCES]: { params: [prefs: { enabled?: boolean; agentBlocked?: boolean; reviewRequired?: boolean; releaseBinderComplete?: boolean; projectActivationFailed?: boolean; sidecarFailed?: boolean }]; returns: Promise<void> }
 }
 
 // ──────────────────────────────────────────────────────────────
@@ -295,15 +336,20 @@ export function typedInvoke<C extends keyof IpcHandleContract & string>(
   channel: C,
   ...args: IpcHandleContract[C]["params"]
 ): IpcHandleContract[C]["returns"] {
-  return ipcRenderer.invoke(channel, ...(args as unknown[])).then((result: IpcResult<unknown>) => {
-    if (result.ok) return result.value as IpcHandleContract[C]["returns"]
-
-    const error = new Error(result.error.message)
-    ;(error as Error & { code?: string; recoverable?: boolean; details?: unknown }).code = result.error.code
-    ;(error as Error & { code?: string; recoverable?: boolean; details?: unknown }).recoverable = result.error.recoverable
-    ;(error as Error & { code?: string; recoverable?: boolean; details?: unknown }).details = result.error.details
-    throw error
-  }) as IpcHandleContract[C]["returns"]
+  return ipcRenderer.invoke(channel, ...(args as unknown[]))
+    .then((rawResult: unknown): IpcHandleContract[C]["returns"] => {
+      if (process.env.NODE_ENV === "development") {
+        if (!isIpcResult(rawResult)) {
+          throw new IpcContractViolationError(
+            channel,
+            rawResult === null ? "null" : typeof rawResult,
+          )
+        }
+      }
+      const result = rawResult as IpcResult<unknown>
+      if (result.ok) return result.value as IpcHandleContract[C]["returns"]
+      throw result.error
+    })
 }
 
 /**
@@ -386,6 +432,16 @@ interface BridgeHandleMap {
   getGitStatus: typeof IPC.handle.GET_GIT_STATUS
   getCapabilities: typeof IPC.handle.GET_CAPABILITIES
   openProject: typeof IPC.handle.OPEN_PROJECT
+  // ── Secrets ──────────────────────────────────────────────
+  secretsSet: typeof IPC.handle.SECRETS_SET
+  secretsGet: typeof IPC.handle.SECRETS_GET
+  secretsDelete: typeof IPC.handle.SECRETS_DELETE
+  secretsList: typeof IPC.handle.SECRETS_LIST
+  secretsStatus: typeof IPC.handle.SECRETS_STATUS
+  // ── Notifications ───────────────────────────────────────
+  notificationsNotify: typeof IPC.handle.NOTIFICATIONS_NOTIFY
+  notificationsStatus: typeof IPC.handle.NOTIFICATIONS_STATUS
+  notificationsSetPreferences: typeof IPC.handle.NOTIFICATIONS_SET_PREFERENCES
 }
 
 /** @internal — Bridge send-method → IPC send channel constant mapping */
@@ -564,6 +620,16 @@ export const IPC_METHOD_REGISTRY: {
 
   // ── Git ────────────────────────────────────────────────
   { channel: IPC.handle.GET_GIT_STATUS, usesIpcResult: true, returns: "IpcResult<GitCheck | null>", rendererSees: "GitCheck | null" },
+  // ── Secrets ──────────────────────────────────────────────
+  { channel: IPC.handle.SECRETS_SET, usesIpcResult: true, returns: "IpcResult<void>", rendererSees: "void" },
+  { channel: IPC.handle.SECRETS_GET, usesIpcResult: true, returns: "IpcResult<string | null>", rendererSees: "string | null" },
+  { channel: IPC.handle.SECRETS_DELETE, usesIpcResult: true, returns: "IpcResult<void>", rendererSees: "void" },
+  { channel: IPC.handle.SECRETS_LIST, usesIpcResult: true, returns: "IpcResult<{ namespace: string; accountID?: string; key: string; createdAt: number; updatedAt: number }[]>", rendererSees: "{ namespace: string; accountID?: string; key: string; createdAt: number; updatedAt: number }[]" },
+  { channel: IPC.handle.SECRETS_STATUS, usesIpcResult: true, returns: "IpcResult<{ available: boolean; encrypted: boolean; secretCount: number }>", rendererSees: "{ available: boolean; encrypted: boolean; secretCount: number }" },
+  // ── Notifications ───────────────────────────────────────
+  { channel: IPC.handle.NOTIFICATIONS_NOTIFY, usesIpcResult: true, returns: "IpcResult<boolean>", rendererSees: "boolean" },
+  { channel: IPC.handle.NOTIFICATIONS_STATUS, usesIpcResult: true, returns: "IpcResult<{ supported: boolean; enabled: boolean; permission: string }>", rendererSees: "{ supported: boolean; enabled: boolean; permission: string }" },
+  { channel: IPC.handle.NOTIFICATIONS_SET_PREFERENCES, usesIpcResult: true, returns: "IpcResult<void>", rendererSees: "void" },
 ]
 
 // ── Runtime Validation ───────────────────────────────────

@@ -71,6 +71,24 @@ export function initFromPool(pool: PgPool): NodePgDatabase {
   return drizzlePg({ client: pool.getPool() }) as NodePgDatabase
 }
 
+
+/**
+ * Classify database errors that are benign when re-running idempotent migrations.
+ * Covers PostgreSQL SQLSTATE codes for duplicate objects and common message patterns
+ * from other SQL engines (PGlite, SQLite, etc.).
+ */
+function isBenignIdempotencyError(error: unknown, _statement: string): boolean {
+  if (error instanceof Error || (typeof error === "object" && error !== null)) {
+    const e = error as Record<string, unknown>
+    if (e.code === "42701") return true  // duplicate_column
+    if (e.code === "42P07") return true  // duplicate_table
+    if (e.code === "42P16") return true  // duplicate_object
+    const msg = (e.message as string) ?? ""
+    if (/already exists/.test(msg)) return true
+    if (/duplicate (column|table|relation)/i.test(msg)) return true
+  }
+  return false
+}
 export async function applyMigrations(db: PgClient): Promise<void> {
   try {
     const folder = new URL("../../migration-pg", import.meta.url).pathname
@@ -108,10 +126,15 @@ export async function applyMigrations(db: PgClient): Promise<void> {
         for (const migration of migrations) {
           if (applied.has(migration.hash)) continue
           for (const sql of migration.sql) {
-            await execFn(sql).catch((e: any) => {
-              if (/already exists|does not exist/.test(e?.message ?? "") || e?.code === "42701") return
-              throw e
-            })
+            try {
+              await execFn(sql)
+            } catch (error) {
+              if (isBenignIdempotencyError(error, sql)) {
+                console.debug("[migration] Benign idempotency notice:", (error as Error)?.message ?? error)
+                continue
+              }
+              throw error
+            }
           }
           await client.query(
             'INSERT INTO "__drizzle_migrations" ("hash", "created_at") VALUES ($1, $2)',
@@ -125,8 +148,8 @@ export async function applyMigrations(db: PgClient): Promise<void> {
       // node-postgres path: use drizzle's built-in migrator
       await migrate(db as NodePgDatabase, { migrationsFolder: folder })
     }
-  } catch (e: any) {
-    if (/already exists|does not exist/.test(e?.message ?? "") || (e as any)?.code === "42701") return
+  } catch (e: unknown) {
+    if (isBenignIdempotencyError(e, "")) return
     throw e
   }
 }

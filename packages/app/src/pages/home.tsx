@@ -24,6 +24,7 @@ import { DialogSelectServer } from "@/components/dialog-select-server"
 import { ServerConnection, useServer } from "@/context/server"
 import { useServerSync } from "@/context/server-sync"
 import { useLanguage } from "@/context/language"
+import { useProjectActivation } from "@/context/project-activation"
 import { useNotification } from "@/context/notification"
 import { usePermission } from "@/context/permission"
 import { displayName, getProjectAvatarSource, projectForSession, sortedRootSessions } from "@/pages/layout/helpers"
@@ -73,6 +74,7 @@ function HomeDesign() {
   const navigate = useNavigate()
   const server = useServer()
   const language = useLanguage()
+  const activation = useProjectActivation()
   const notification = useNotification()
   const [state, setState] = createStore({ search: "", timeFilter: "all" as TimeFilter, agentFilter: "" as string, modelFilter: "" as string, project: undefined as string | undefined })
 
@@ -162,8 +164,7 @@ function HomeDesign() {
   }
 
   function addProject(directory: string) {
-    layout.projects.open(directory)
-    server.projects.touch(directory)
+    void activation.openProject(directory, { navigate: false })
     setState("project", directory)
   }
 
@@ -173,15 +174,11 @@ function HomeDesign() {
       void chooseProject()
       return
     }
-    layout.projects.open(project.worktree)
-    server.projects.touch(project.worktree)
-    navigate(`/${base64Encode(project.worktree)}/session`)
+    void activation.openProject(project.worktree, { navigate: true })
   }
 
   function openProjectNewSession(directory: string) {
-    layout.projects.open(directory)
-    server.projects.touch(directory)
-    navigate(`/${base64Encode(directory)}/session`)
+    void activation.openProject(directory, { navigate: true })
   }
 
   const showEditProjectDialog = (project: LocalProject) => {
@@ -200,9 +197,7 @@ function HomeDesign() {
 
   function openSession(session: Session) {
     const project = projectForSession(session, projects(), projectByID())
-    layout.projects.open(project?.worktree ?? session.directory)
-    server.projects.touch(project?.worktree ?? session.directory)
-    navigate(`/${base64Encode(session.directory)}/session/${session.id}`)
+    void activation.openProject(project?.worktree ?? session.directory, { navigate: true })
   }
 
   async function chooseProject() {
@@ -799,6 +794,7 @@ function LegacyHome() {
   const servers = useServers()
   const server = useServer()
   const language = useLanguage()
+  const activation = useProjectActivation()
   const homedir = createMemo(() => sync.data.path.home)
   const recent = createMemo(() => {
     return sync.data.project
@@ -815,9 +811,7 @@ function LegacyHome() {
   })
 
   function openProject(directory: string) {
-    layout.projects.open(directory)
-    server.projects.touch(directory)
-    navigate(`/${base64Encode(directory)}`)
+    void activation.openProject(directory, { navigate: true })
   }
 
   async function chooseProject() {

@@ -74,6 +74,16 @@ export const IPC = {
     GET_SAFE_MODE_DIAGNOSTICS: "opencode:get-safe-mode-diagnostics",
     SAFE_MODE_ACTION: "opencode:safe-mode-action",
     OPEN_PROJECT: "opencode:open-project",
+    // ── Secrets ────────────────────────────────────────────
+    SECRETS_SET: "opencode:secrets-set",
+    SECRETS_GET: "opencode:secrets-get",
+    SECRETS_DELETE: "opencode:secrets-delete",
+    SECRETS_LIST: "opencode:secrets-list",
+    SECRETS_STATUS: "opencode:secrets-status",
+    // ── Notifications ──────────────────────────────────────
+    NOTIFICATIONS_NOTIFY: "opencode:notifications-notify",
+    NOTIFICATIONS_STATUS: "opencode:notifications-status",
+    NOTIFICATIONS_SET_PREFERENCES: "opencode:notifications-set-preferences",
   } as const,
 
   send: {

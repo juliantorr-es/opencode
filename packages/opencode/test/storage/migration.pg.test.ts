@@ -70,7 +70,7 @@ describe("PG migrations", () => {
       )
       const rows = Array.isArray(countResult) ? countResult : countResult.rows ?? []
       const cnt = Number(rows[0]?.cnt ?? 0)
-      expect(cnt).toBe(4)
+      expect(cnt).toBe(5)
     } finally {
       const underlying = (client as any).$client
       if (underlying && typeof underlying.end === "function") {

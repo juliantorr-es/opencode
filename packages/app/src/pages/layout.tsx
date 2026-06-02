@@ -180,7 +180,17 @@ export default function Layout(props: ParentProps) {
   })
 
   const theme = useTheme()
-  const activation = createProjectActivation()
+  const activation = createProjectActivation({
+    openProjectLocal: (directory) => layout.projects.open(directory),
+    touchProject: (directory) => server.projects.touch(directory),
+    ensureReady: (directory) => serverSync.project.ensureReady(directory),
+    navigateToProject: (directory) => navigateToProject(directory),
+    bootstrapInstance: (directory) => serverSync.project.bootstrapInstance(directory),
+    isInstanceBooted: (directory) => {
+      const child = serverSync.peek(directory, { bootstrap: false })
+      return child[0].status === "partial" || child[0].status === "complete"
+    },
+  })
   const language = useLanguage()
   const newDesign = createMemo(() => settings.general.newLayoutDesigns())
   const initialDirectory = decode64(params.dir)
@@ -1429,9 +1439,7 @@ export default function Layout(props: ParentProps) {
   }
 
   function openProject(directory: string, navigate = true) {
-    layout.projects.open(directory)
-    activation.send({ type: "PROJECT_OPENED_LOCALLY", directory })
-    if (navigate) return navigateToProject(directory)
+    void activation.openProject(directory, { navigate })
   }
 
   const handleDeepLinks = (urls: string[]) => {
@@ -1539,12 +1547,10 @@ export default function Layout(props: ParentProps) {
     function resolve(result: string | string[] | null) {
       if (Array.isArray(result)) {
         for (const directory of result) {
-          activation.send({ type: "PROJECT_SELECTED", directory })
           void openProject(directory, false)
         }
         void navigateToProject(result[0])
       } else if (result) {
-        activation.send({ type: "PROJECT_SELECTED", directory: result })
         void openProject(result)
       }
     }
@@ -1611,7 +1617,7 @@ export default function Layout(props: ParentProps) {
     setStore("workspaceOrder", root, (order) => (order ?? []).filter((workspace) => workspace !== directory))
 
     layout.projects.close(directory)
-    layout.projects.open(root)
+    openProject(root, false)
 
     if (shouldLeave) return
 

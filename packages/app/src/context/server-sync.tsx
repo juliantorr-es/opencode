@@ -1,4 +1,4 @@
-import type { Config, OpencodeClient, Path, Project, ProviderAuthResponse, Todo } from "@opencode-ai/sdk/v2/client"
+import type { Config, OpencodeClient, Path, Project, ProviderAuthResponse, Session, Todo } from "@opencode-ai/sdk/v2/client"
 import { showToast } from "@opencode-ai/ui/toast"
 import { getFilename } from "@opencode-ai/core/util/path"
 import { batch, createContext, getOwner, onCleanup, onMount, type ParentProps, untrack, useContext } from "solid-js"
@@ -6,6 +6,7 @@ import { createStore, produce, reconcile } from "solid-js/store"
 import { useLanguage } from "@/context/language"
 import type { InitError } from "../pages/error"
 import { useServerSDK } from "./server-sdk"
+import type { ProjectReadiness } from "./project-activation"
 import {
   bootstrapDirectory,
   bootstrapGlobal,
@@ -47,6 +48,10 @@ export const queryKeys = {
 }
 
 let childStoreReady: (key: string) => boolean = () => true
+
+type SessionsBootResult =
+  | { status: "ok"; sessions: any[] }
+  | { status: "error"; message: string }
 
 type GlobalStore = {
   ready: boolean
@@ -121,10 +126,9 @@ export function createServerSyncContext() {
   const language = useLanguage()
   const owner = getOwner()
   if (!owner) throw new Error("ServerSync must be created within owner")
-
+  const sessionLoads = new Map<string, Promise<SessionsBootResult>>()
   const sdkCache = new Map<string, OpencodeClient>()
   const booting = new Map<string, Promise<void>>()
-  const sessionLoads = new Map<string, Promise<void>>()
   const sessionMeta = new Map<string, { limit: number }>()
 
   const sdkFor = (directory: string) => {
@@ -274,9 +278,9 @@ export function createServerSyncContext() {
   // Single canonical path: bootstrap the backend instance,
   // then load sessions. Call this before touching providers/files/sessions.
 
-  async function ensureReady(directory: string) {
+  async function ensureReady(directory: string): Promise<ProjectReadiness> {
     const key = directoryKey(directory)
-    if (!key) return
+    if (!key) return { status: "failed", directory, code: "INVALID_KEY", message: "Directory key missing", retryable: false }
     children.pin(key)
     try {
       children.ensureChild(directory)
@@ -284,8 +288,11 @@ export function createServerSyncContext() {
       if (booting.has(key) || !children.children[key] || children.children[key]![0].status === "loading") {
         await bootstrapInstance(directory)
       }
-      // Load sessions
       await loadSessionsBootstrapped(directory)
+      return { status: "ready", directory }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err)
+      return { status: "failed", directory, code: "ENSURE_READY_ERROR", message, retryable: true }
     } finally {
       children.unpin(key)
     }
@@ -295,14 +302,14 @@ export function createServerSyncContext() {
   // Internal: assumes instance is already ready.
   // Does NOT create/pin child store — caller must do that.
 
-  async function loadSessionsBootstrapped(directory: string) {
+  async function loadSessionsBootstrapped(directory: string): Promise<{ status: "ok"; sessions: any[] } | { status: "error"; message: string }> {
     const key = directoryKey(directory)
-    if (!key) return
+    if (!key) return { status: "error", message: "Invalid directory" }
     const pending = sessionLoads.get(key)
     if (pending) return pending
     const store = children.children[key]?.[0]
     const setStore = children.children[key]?.[1]
-    if (!store || !setStore) return
+    if (!store || !setStore) return { status: "error", message: "Child store not ready" }
     const meta = sessionMeta.get(key)
     if (meta && meta.limit >= store.limit) {
       const next = trimSessions(store.session, {
@@ -313,56 +320,52 @@ export function createServerSyncContext() {
         setStore("session", reconcile(next, { key: "id" }))
         cleanupDroppedSessionCaches(store, setStore, next, setSessionTodo)
       }
-      return
+      const sessions = store.session
+      return { status: "ok", sessions: sessions as any[] }
     }
 
     const limit = Math.max(store.limit + SESSION_RECENT_LIMIT, SESSION_RECENT_LIMIT)
-    const promise = queryClient
-      .fetchQuery({
-        ...queryOptionsApi.sessions(key),
-        queryFn: () =>
-          loadRootSessionsWithFallback({
-            directory,
-            limit,
-            list: (query) => serverSDK.client.session.list(query),
-          })
-            .then((x) => {
-              const nonArchived = (x.data ?? [])
-                .filter((s) => !!s?.id)
-                .filter((s) => !s.time?.archived)
-                .sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0))
-              const limit = store.limit
-              const childSessions = store.session.filter((s) => !!s.parentID)
-              const sessions = trimSessions([...nonArchived, ...childSessions], {
-                limit,
-                permission: store.permission,
-              })
-              batch(() => {
-                setStore(
-                  "sessionTotal",
-                  estimateRootSessionTotal({
-                    count: nonArchived.length,
-                    limit: x.limit,
-                    limited: x.limited,
-                  }),
-                )
-                setStore("session", reconcile(sessions, { key: "id" }))
-                cleanupDroppedSessionCaches(store, setStore, sessions, setSessionTodo)
-              })
-              sessionMeta.set(key, { limit })
+    const promise = (async (): Promise<{ status: "ok"; sessions: any[] } | { status: "error"; message: string }> => {
+      try {
+        const sessions = await queryClient.fetchQuery({
+          ...queryOptionsApi.sessions(key),
+          queryFn: async () => {
+            const result = await loadRootSessionsWithFallback({
+              directory,
+              limit,
+              list: (query) => serverSDK.client.session.list(query),
             })
-            .catch((err) => {
-              console.error("Failed to load sessions", err)
-              const project = getFilename(directory)
-              showToast({
-                variant: "error",
-                title: language.t("toast.session.listFailed.title", { project }),
-                description: formatServerError(err, language.t),
-              })
+            const nonArchived = (result.data ?? [])
+              .filter((s) => !!s?.id)
+              .filter((s) => !s.time?.archived)
+              .sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0))
+            const childSessions = store.session.filter((s) => !!s.parentID)
+            const sessions = trimSessions([...nonArchived, ...childSessions], {
+              limit: store.limit,
+              permission: store.permission,
             })
-            .then(() => null),
-      })
-      .then(() => {})
+            batch(() => {
+              setStore(
+                "sessionTotal",
+                estimateRootSessionTotal({
+                  count: nonArchived.length,
+                  limit: result.limit,
+                  limited: result.limited,
+                }),
+              )
+              setStore("session", reconcile(sessions, { key: "id" }))
+              cleanupDroppedSessionCaches(store, setStore, sessions, setSessionTodo)
+            })
+            sessionMeta.set(key, { limit })
+            return sessions
+          },
+        })
+        return { status: "ok" as const, sessions: sessions as any[] }
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err)
+        return { status: "error" as const, message }
+      }
+    })()
 
     sessionLoads.set(key, promise)
     void promise.finally(() => {
@@ -487,6 +490,7 @@ export function createServerSyncContext() {
   const projectApi = {
     loadSessions,
     ensureReady,
+    bootstrapInstance,
     meta(directory: string, patch: ProjectMeta) {
       children.projectMeta(directory, patch)
     },

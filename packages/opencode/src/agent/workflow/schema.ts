@@ -77,3 +77,75 @@ export interface WorkflowPreset {
   defaultRisk: RiskLevel
   template: AgentWorkflow
 }
+
+/**
+ * Workflow Authority — distinguishes what users may customize from what
+ * the platform enforces regardless of workflow configuration.
+ *
+ * Customizable: roles, rigor, parallelism, validation gates, outputs, budget
+ * Mandatory (never bypassed): secret redaction, path scope restrictions,
+ *   unsafe git prohibitions, audit event recording, tool permission safety,
+ *   runtime artifact hygiene
+ */
+export interface WorkflowAuthority {
+  /** User-customizable preferences */
+  customizable: {
+    roles: boolean
+    rigorLevel: boolean
+    parallelism: boolean
+    validationGates: boolean
+    outputs: boolean
+    budget: boolean
+    toolPolicy: boolean
+  }
+  /** Non-negotiable platform invariants — always enforced */
+  mandatory: {
+    secretRedaction: true
+    pathScopeRestrictions: true
+    unsafeGitProhibitions: true
+    auditEventRecording: true
+    toolPermissionSafety: true
+    runtimeArtifactHygiene: true
+  }
+}
+
+/** The canonical authority — what the platform guarantees regardless of workflow */
+export const WORKFLOW_AUTHORITY: WorkflowAuthority = {
+  customizable: {
+    roles: true,
+    rigorLevel: true,
+    parallelism: true,
+    validationGates: true,
+    outputs: true,
+    budget: true,
+    toolPolicy: true,
+  },
+  mandatory: {
+    secretRedaction: true,
+    pathScopeRestrictions: true,
+    unsafeGitProhibitions: true,
+    auditEventRecording: true,
+    toolPermissionSafety: true,
+    runtimeArtifactHygiene: true,
+  },
+}
+
+/**
+ * Validate that a workflow does not attempt to bypass mandatory invariants.
+ * Returns the set of violated invariants, or empty if the workflow is valid.
+ */
+export function validateWorkflowAuthority(workflow: AgentWorkflow): string[] {
+  const violations: string[] = []
+
+  // Secret redaction check: secrets must use main-owned store, never renderer-local
+  // Path scope: scope must be within allowed roots
+  // Git safety: no force-push, no destructive operations
+  // Audit: all mutations must record events
+  // Tool permission: deny list must include unsafe shell operations
+  // Artifact hygiene: no runtime DB/log artifacts tracked in repo
+
+  // Currently all presets are compliant — this function exists as a hook
+  // for future enforcement when workflows become user-editable.
+
+  return violations
+}

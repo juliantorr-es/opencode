@@ -1,8 +1,9 @@
-import { afterEach, expect } from "bun:test"
+import { afterEach, expect, test } from "bun:test"
 import { existsSync } from "node:fs"
 import path from "node:path"
 import { pathToFileURL } from "node:url"
 import { CrossSpawnSpawner } from "@opencode-ai/core/cross-spawn-spawner"
+import { init, applyMigrations } from "#db"
 import { Cause, Deferred, Effect, Exit, Fiber, Layer } from "effect"
 import { Database } from "../../src/storage/db"
 import { DatabaseAdapter } from "../../src/storage/adapter"
@@ -166,3 +167,37 @@ it.live("forked bootstrap fiber resolves InstanceEnvironment services", () =>
     expect(result).toBe(true)
   }),
 )
+
+test("migration double-run produces zero unhandled rejections", async () => {
+  const rejections: unknown[] = []
+  const onUnhandled = (reason: unknown) => {
+    rejections.push(reason)
+  }
+  process.on("unhandledRejection", onUnhandled)
+
+  const closeClient = async (client: any) => {
+    const raw = client?.$client ?? client
+    if (raw && typeof raw.close === "function") {
+      await raw.close()
+    }
+  }
+
+  try {
+    const db = init(":memory:")
+    try {
+      // Fresh bootstrap — applies all migrations
+      await applyMigrations(db)
+      // Re-bootstrap — idempotent, every statement should be a benign duplicate
+      await applyMigrations(db)
+
+      // Flush microtasks and timers so any lingering promise rejections surface
+      await new Promise((resolve) => setTimeout(resolve, 50))
+
+      expect(rejections).toHaveLength(0)
+    } finally {
+      await closeClient(db)
+    }
+  } finally {
+    process.off("unhandledRejection", onUnhandled)
+  }
+})

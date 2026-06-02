@@ -91,7 +91,7 @@ describe("applyMigrations idempotency", () => {
       expect(tables).toContain("__drizzle_migrations")
 
       const count = await getMigrationCount(client)
-      expect(count).toBe(4)
+      expect(count).toBe(5)
 
       // Verify user-facing tables exist
       expect(tables).toContain("session")
@@ -113,8 +113,8 @@ describe("applyMigrations idempotency", () => {
       const hashes1 = await getMigrationHashes(client)
       const tables1 = await getTables(client)
 
-      expect(count1).toBe(4)
-      expect(hashes1).toHaveLength(4)
+      expect(count1).toBe(5)
+      expect(hashes1).toHaveLength(5)
 
       // Second run — should be a complete no-op
       await applyMigrations(client)
@@ -170,12 +170,12 @@ describe("applyMigrations idempotency", () => {
       // Second run — should succeed now
       await applyMigrations(client)
 
-      // All 4 hashes recorded
+      // All 5 hashes recorded
       const countAfterRetry = await getMigrationCount(client)
-      expect(countAfterRetry).toBe(4)
+      expect(countAfterRetry).toBe(5)
 
       const hashes = await getMigrationHashes(client)
-      expect(hashes).toHaveLength(4)
+      expect(hashes).toHaveLength(5)
 
       // All user tables should exist after successful retry
       const tablesAfterRetry = await getTables(client)
@@ -204,7 +204,7 @@ describe("applyMigrations idempotency", () => {
       await applyMigrations(client)
 
       const countAfter = await getMigrationCount(client)
-      expect(countAfter).toBe(4)
+      expect(countAfter).toBe(5)
 
       const tablesAfter = await getTables(client)
       expect(tablesAfter).toContain("session")
@@ -220,41 +220,31 @@ describe("applyMigrations idempotency", () => {
       // Apply once
       await applyMigrations(client)
       const hashesBefore = await getMigrationHashes(client)
-      expect(hashesBefore).toHaveLength(4)
+      expect(hashesBefore).toHaveLength(5)
 
       // Simulate loss of tracking state (e.g. someone manually
       // cleared the tracking table rows).  Re-running should
-      // re-record all 4 hashes — but the migration SQL statements
-      // will fail because tables already exist (no IF NOT EXISTS).
-      // This test validates the skip path: on a real second run
-      // with hashes present, every migration is skipped.
+      // re-record all 5 hashes — the per-statement idempotency
+      // classifier handles "already exists" errors gracefully.
+      // This test validates that clearing rows and re-applying
+      // recovers tracking state without throwing.
       await clearTrackingRows(client)
 
       const countCleared = await getMigrationCount(client)
       expect(countCleared).toBe(0)
 
-      // Re-apply — the DDL will fail on duplicate tables, but the
-      // key invariant is that we DON'T silently lose the tracking
-      // state.  After repair (drop & re-apply) things are fine.
-      //
-      // For this test we just assert that clearing rows leaves the
-      // tracking table empty, proving the skip-mechanism depends
-      // on hash presence, not on a side-channel.
+      // Re-apply — benign errors from duplicate DDL are caught
+      // per-statement, so applyMigrations succeeds and all hashes
+      // are re-recorded.
+      await applyMigrations(client)
 
-      // Re-populate: since tables already exist, applyMigrations will
-      // throw.  We verify no hash was recorded for the failing migration.
-      let threw = false
-      try {
-        await applyMigrations(client)
-      } catch {
-        threw = true
-      }
-      expect(threw).toBe(true)
-
-      // The tracking table should still be empty — no hash was
-      // recorded because the first migration failed.
+      // All 5 hashes re-recorded
       const countAfterRetry = await getMigrationCount(client)
-      expect(countAfterRetry).toBe(0)
+      expect(countAfterRetry).toBe(5)
+
+      const hashesAfter = await getMigrationHashes(client)
+      expect(hashesAfter).toHaveLength(5)
+      expect(hashesAfter).toEqual(hashesBefore)
     } finally {
       await closeClient(client)
     }
@@ -320,7 +310,7 @@ describe("applyMigrations idempotency", () => {
       // First call: apply everything
       await applyMigrations(client)
       const count = await getMigrationCount(client)
-      expect(count).toBe(4)
+      expect(count).toBe(5)
 
       // Second call: every migration is skipped, loop body never
       // executes any exec/query beyond the initial SELECT.
@@ -328,7 +318,7 @@ describe("applyMigrations idempotency", () => {
       await applyMigrations(client)
 
       // Hash count unchanged
-      expect(await getMigrationCount(client)).toBe(4)
+      expect(await getMigrationCount(client)).toBe(5)
     } finally {
       await closeClient(client)
     }
