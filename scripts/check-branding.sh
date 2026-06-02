@@ -43,6 +43,13 @@ ALLOWLIST=(
   ".git/"
   "node_modules/"
   ".opencode/"
+  ".opencode/README.md"
+  "opencode.jsonc"
+  "tribunus.jsonc"
+  ".opencode/plugin.ts"
+  ".opencode/tools/"
+  ".opencode/themes/"
+  ".opencode/plugins/"
   "banks/"
   "*.db"
   "*.db-shm"
@@ -66,7 +73,9 @@ CHECKS=0
 echo "=== Branding Guard ==="
 echo ""
 
-# Files that MUST NOT contain "opencode" in user-facing text
+# Note: tribunus.jsonc is canonical; opencode.jsonc is a deprecated fallback.
+# Both are allowlisted above — they are config files, not public branding.
+# Files below MUST NOT contain "opencode" in user-facing text.
 # Technical namespace references (OPENCODE_ env vars, repo URLs, code paths)
 # are tracked separately in TECH_NAMESPACE_NEEDS_MIGRATION.
 MUST_NOT_BRAND=(
@@ -91,6 +100,17 @@ done
 
 echo ""
 echo "Checks: $CHECKS, Failures: $FAILS"
+
+echo ""
+echo "=== Legacy .opencode/ Inventory ==="
+if [ -d ".opencode" ]; then
+  echo "Legacy .opencode/ directory exists (read-only, deprecated)"
+  find .opencode -type f -not -path "*/.git/*" -not -name "README.md" | sort | while read -r f; do
+    echo "  [legacy] $f"
+  done
+else
+  echo "No legacy .opencode/ directory — clean."
+fi
 
 if [ "$FAILS" -gt 0 ]; then
   echo ""

@@ -338,7 +338,7 @@ export class Service extends Context.Service<Service, Interface>()("@opencode/Co
 export const use = serviceUse(Service)
 
 function globalConfigFile() {
-  const candidates = ["opencode.jsonc", "opencode.json", "config.json"].map((file) =>
+  const candidates = ["tribunus.jsonc", "opencode.jsonc", "opencode.json", "config.json"].map((file) =>
     path.join(Global.Path.config, file),
   )
   for (const file of candidates) {
@@ -483,6 +483,7 @@ export const layer = Layer.effect(
       }
       result = mergeConfig(result, yield* loadFile(path.join(Global.Path.config, "config.json"), env))
       result = mergeConfig(result, yield* loadFile(path.join(Global.Path.config, "opencode.json"), env))
+      result = mergeConfig(result, yield* loadFile(path.join(Global.Path.config, "tribunus.jsonc"), env))
       result = mergeConfig(result, yield* loadFile(path.join(Global.Path.config, "opencode.jsonc"), env))
 
       const legacy = path.join(Global.Path.config, "config")
@@ -651,7 +652,7 @@ export const layer = Layer.effect(
 
         for (const dir of directories) {
           if (dir.endsWith(".tribunus") || dir.endsWith(".opencode") || dir === configDirEnv) {
-            for (const file of ["opencode.json", "opencode.jsonc"]) {
+            for (const file of ["opencode.json", "tribunus.jsonc", "opencode.jsonc"]) {
               const source = path.join(dir, file)
               log.debug(`loading config from ${source}`)
               yield* merge(source, yield* loadFile(source, authEnv))
@@ -745,7 +746,7 @@ export const layer = Layer.effect(
 
         const managedDir = ConfigManaged.managedConfigDir()
         if (existsSync(managedDir)) {
-          for (const file of ["opencode.json", "opencode.jsonc"]) {
+          for (const file of ["opencode.json", "tribunus.jsonc", "opencode.jsonc"]) {
             const source = path.join(managedDir, file)
             yield* merge(source, yield* loadFile(source), "global")
           }

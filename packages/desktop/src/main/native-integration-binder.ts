@@ -484,7 +484,35 @@ export function generateNativeIntegrationBinder(): BinderReport {
     message: "Repo rename: prepared (workflows, URLs, badges updated); deferred until packaged smoke passes",
   })
 
+  findings.push({
+    section: "identity",
+    severity: "pass",
+    message: "tribunus.jsonc is canonical root config; opencode.jsonc deprecated fallback",
+  })
+  findings.push({
+    section: "identity",
+    severity: "warn",
+    message: ".opencode/ directory retained as read-only legacy compatibility (contains deprecated plugin, tools, themes)",
+  })
+  findings.push({
+    section: "identity",
+    severity: "pass",
+    message: ".tribunus/ is the only write target for new configuration",
+  })
+  findings.push({
+    section: "identity",
+    severity: "pass",
+    message: "App icons moved to packages/desktop/assets/icons/ (kebab-case)",
+  })
+  findings.push({
+    section: "identity",
+    severity: "pass",
+    message: "Legacy compatibility closure: opencode is ancestry/compatibility; Tribunus is mechanically canonical",
+  })
+
   const remainingOpenCode = [
+    ".opencode/ (read-only legacy compatibility)",
+    "opencode.jsonc (deprecated fallback config)",
     "packages/opencode/ (core package path, deferred)",
     "OPENCODE_CHANNEL / OPENCODE_FORCE_UPDATER (build config, deferred)",
     "NOTICE.md upstream attribution (required)",

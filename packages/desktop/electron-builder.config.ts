@@ -45,7 +45,7 @@ const getBase = (): Configuration => ({
   ],
   mac: {
     category: "public.app-category.developer-tools",
-    icon: `resources/icons/icon.icns`,
+    icon: "assets/icons/tribunus-app-icon.png",
     hardenedRuntime: true,
     gatekeeperAssess: false,
     entitlements: "resources/entitlements.plist",
@@ -61,7 +61,7 @@ const getBase = (): Configuration => ({
     schemes: ["tribunus"],
   },
   win: {
-    icon: `resources/icons/icon.ico`,
+    icon: "assets/icons/tribunus-app-icon.png",
     signtoolOptions: {
       sign: signWindows,
     },
@@ -77,11 +77,11 @@ const getBase = (): Configuration => ({
   nsis: {
     oneClick: true,
     perMachine: false,
-    installerIcon: `resources/icons/icon.ico`,
-    installerHeaderIcon: `resources/icons/icon.ico`,
+    installerIcon: "assets/icons/tribunus-app-icon.png",
+    installerHeaderIcon: "assets/icons/tribunus-app-icon.png",
   },
   linux: {
-    icon: `resources/icons`,
+    icon: "assets/icons/tribunus-app-icon.png",
     category: "Development",
     target: ["AppImage", "deb", "rpm"],
   },

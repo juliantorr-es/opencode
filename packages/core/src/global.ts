@@ -17,6 +17,8 @@ import { Flock } from "./util/flock"
 import { Flag } from "./flag/flag"
 
 const app = "tribunus"
+// Never write to .opencode — it is read-only legacy.
+// .tribunus is the only config directory used for writes.
 const oldApp = "opencode"
 const data = path.join(xdgData!, app)
 const cache = path.join(xdgCache!, app)

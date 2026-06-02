@@ -1,6 +1,20 @@
-# .opencode — Deprecated
+# .opencode — Deprecated (Read-Only Legacy)
 
-This directory is a legacy config directory from the opencode ancestry.
-The canonical Tribunus config directory is `.tribunus/`.
+⚠ This directory is read-only legacy configuration from the opencode ancestry.
 
-.opencode is kept for backward compatibility only. New configuration should go in `.tribunus/`.
+## Migration
+
+All new configuration goes to `.tribunus/`.
+This directory is kept for compatibility only — it will not be modified by Tribunus.
+
+## What's here
+
+- plugin.ts — deprecated upstream plugin
+- tools/ — deprecated upstream tools
+- themes/ — deprecated themes
+- tui.json — deprecated TUI config
+
+## What to do
+
+Copy any custom tools or plugins you want to keep to `.tribunus/tools/`.
+The rest can be ignored.
