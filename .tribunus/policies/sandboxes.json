@@ -1,0 +1,58 @@
+{
+  "$schema": "https://tribunus.dev/schemas/sandbox-policy.v1.json",
+  "version": 1,
+  "sandboxTemplates": [
+    {
+      "id": "frontend-junior",
+      "description": "Junior developer working on frontend UI",
+      "allowedPaths": ["packages/app/**", "packages/ui/**"],
+      "deniedPaths": ["packages/core/**", "packages/desktop/src/main/**", "packages/opencode/src/storage/**"],
+      "allowedTools": ["read", "search", "grep", "find", "lsp", "test"],
+      "deniedTools": ["git_checkpoint", "npm_install", "migration_execute"],
+      "requiresReview": true,
+      "canCommit": false,
+      "maxAgents": 3,
+      "maxRuntimeMinutes": 120,
+      "allowedWorkflows": ["frontend-polish", "quick-fix"]
+    },
+    {
+      "id": "backend-senior",
+      "description": "Senior developer with backend access",
+      "allowedPaths": ["packages/**"],
+      "deniedPaths": [],
+      "allowedTools": ["read", "search", "grep", "find", "lsp", "write", "edit", "bash", "test", "typecheck", "git_checkpoint"],
+      "deniedTools": ["force_push"],
+      "requiresReview": false,
+      "canCommit": true,
+      "maxAgents": 8,
+      "maxRuntimeMinutes": 480,
+      "allowedWorkflows": ["backend-hardening", "refactor", "quick-fix", "prototype"]
+    },
+    {
+      "id": "security-auditor",
+      "description": "Security reviewer with read-only access",
+      "allowedPaths": ["packages/**"],
+      "deniedPaths": [],
+      "allowedTools": ["read", "search", "grep", "find", "lsp", "secret_scan"],
+      "deniedTools": ["write", "edit", "bash", "git_checkpoint", "npm_install", "migration_execute"],
+      "requiresReview": true,
+      "canCommit": false,
+      "maxAgents": 2,
+      "maxRuntimeMinutes": 180,
+      "allowedWorkflows": ["security-review"]
+    },
+    {
+      "id": "release-engineer",
+      "description": "Release engineer with full pipeline access",
+      "allowedPaths": ["packages/**", ".github/**"],
+      "deniedPaths": [],
+      "allowedTools": ["read", "search", "grep", "find", "lsp", "write", "edit", "bash", "test", "typecheck", "git_checkpoint", "npm_install"],
+      "deniedTools": ["force_push"],
+      "requiresReview": true,
+      "canCommit": true,
+      "maxAgents": 6,
+      "maxRuntimeMinutes": 480,
+      "allowedWorkflows": ["enterprise-closure", "backend-hardening", "refactor"]
+    }
+  ]
+}

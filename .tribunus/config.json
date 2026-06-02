@@ -1,0 +1,37 @@
+{
+  "$schema": "https://tribunus.dev/schemas/project-config.v1.json",
+  "version": 1,
+  "project": {
+    "name": "tribunus-desktop"
+  },
+  "workflows": {
+    "default": "quick-fix",
+    "allowed": [
+      "quick-fix",
+      "prototype",
+      "frontend-polish",
+      "backend-hardening",
+      "research",
+      "security-review",
+      "refactor",
+      "enterprise-closure"
+    ]
+  },
+  "policy": {
+    "protectedPaths": [
+      ".env",
+      ".env.*",
+      ".github/**",
+      "packages/*/migration*/**"
+    ],
+    "runtimeArtifactsForbidden": true,
+    "forcePushForbidden": true
+  },
+  "coordination": {
+    "backend": "auto"
+  },
+  "gates": {
+    "required": ["typecheck", "bootstrap-test"],
+    "optional": ["secret-scan", "valkey-smoke"]
+  }
+}

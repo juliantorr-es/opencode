@@ -2,6 +2,16 @@ import path from "path"
 import fs from "fs/promises"
 import { xdgData, xdgCache, xdgConfig, xdgState } from "xdg-basedir"
 import os from "os"
+
+/**
+ * Global user-level paths (XDG base directories).
+ *
+ * These are for user-level config, data, cache, and state — stored in
+ * ~/.config/tribunus (Linux), ~/Library/Application Support/tribunus (macOS),
+ * or %APPDATA%/tribunus (Windows). This is NOT the repo-local .tribunus/
+ * directory. For repo-local declarative config, see config-migration.ts:
+ * `repoConfigDir(repoRoot)`.
+ */
 import { Context, Effect, Layer } from "effect"
 import { Flock } from "./util/flock"
 import { Flag } from "./flag/flag"

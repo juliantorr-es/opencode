@@ -1,0 +1,22 @@
+# Never commit runtime artifacts
+*.db
+*.db-shm
+*.db-wal
+*.rdb
+*.aof
+*.log
+*.zip
+
+# Never commit secrets
+secrets*
+*.env
+*.key
+
+# Local-only overrides (not committed)
+local.json
+local.*
+
+# Temp files
+tmp/
+cache/
+state/
