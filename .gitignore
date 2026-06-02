@@ -64,3 +64,12 @@ banks/
 *.db
 *.db-shm
 *.db-wal
+
+# Third-party source/build drops
+valkey-*/
+redis-*/
+*.tar.gz
+# Valkey runtime state
+packages/desktop/resources/valkey/**/var/
+packages/desktop/resources/valkey/**/data/
+**/valkey-data/

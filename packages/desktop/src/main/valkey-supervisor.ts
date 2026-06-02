@@ -4,6 +4,21 @@ import { app, utilityProcess } from "electron"
 import type { UtilityProcess } from "electron"
 import Redis from "ioredis" // Only imported in main process, never renderer
 
+interface ValkeyDiagnostics {
+  available: boolean
+  enabled: boolean
+  platform: string
+  binaryPath: string
+  version: string
+  pid: number | null
+  ready: boolean
+  port: number | null
+  url: string | null
+  mode: "ephemeral"
+  persistence: "disabled"
+  lastError: string | null
+}
+
 interface ValkeyStatus {
   ready: boolean
   pid: number | null
@@ -84,9 +99,26 @@ logfile ""
     status.url = null
   }
 
+  function getDiagnostics(): ValkeyDiagnostics {
+    return {
+      available: existsSync(binaryPath),
+      enabled: process.env.OPENCODE_COORDINATION_BACKEND === "local-valkey",
+      platform: process.platform,
+      binaryPath,
+      version: "9.1.0",
+      pid: status.pid,
+      ready: status.ready,
+      port: port || null,
+      url: status.url,
+      mode: "ephemeral",
+      persistence: "disabled",
+      lastError: status.lastError,
+    }
+  }
+
   function getStatus(): ValkeyStatus { return { ...status } }
 
-  return { start, stop, getStatus, dataDir, binaryPath }
+  return { start, stop, getStatus, getDiagnostics, dataDir, binaryPath }
 }
 
 function getValkeyBinaryPath(): string {

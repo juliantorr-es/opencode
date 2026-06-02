@@ -108,6 +108,7 @@ import { AgentCodeViewer } from "@/components/agent-code-viewer"
 import { AgentGitPanel } from "@/components/agent-git-panel"
 import { AgentSymbolSearch } from "@/components/agent-symbol-search"
 import { AgentOutputPanel } from "@/components/agent-output-panel"
+import { AgentWorkflowDesigner } from "@/components/agent-workflow-designer"
 
 export default function Layout(props: ParentProps) {
   const [store, setStore, , ready] = persisted(
@@ -152,7 +153,7 @@ export default function Layout(props: ParentProps) {
   // ── Operator surface panels ──
   const [bottomTab, setBottomTab] = createSignal<"output" | "problems" | "git" | "search">("output")
   const [selectedFile, setSelectedFile] = createSignal<string | undefined>()
-  const [rightTab, setRightTab] = createSignal<"code" | "diff" | "explorer">("explorer")
+  const [rightTab, setRightTab] = createSignal<"code" | "diff" | "explorer" | "workflow">("explorer")
   let modifierTimer: ReturnType<typeof setTimeout> | undefined
   const isMac = typeof navigator === "object" && /(Mac|iPod|iPhone|iPad)/.test(navigator.platform)
   const modKey = isMac ? "Meta" : "Control"
@@ -2354,12 +2355,14 @@ export default function Layout(props: ParentProps) {
                 <button class="px-2 py-0.5 text-11-regular rounded" onClick={() => setRightTab("code")}>Code</button>
                 <button class="px-2 py-0.5 text-11-regular rounded" onClick={() => setRightTab("diff")}>Diff</button>
                 <button class="px-2 py-0.5 text-11-regular rounded" onClick={() => setRightTab("explorer")}>Files</button>
+                <button class="px-2 py-0.5 text-11-regular rounded" onClick={() => setRightTab("workflow")}>Workflow</button>
                 <button class="absolute right-3 text-11-regular text-text-weak hover:text-text-base px-2 py-0.5" onClick={() => setSelectedFile(undefined)}>×</button>
               </div>
               <Switch>
                 <Match when={rightTab() === "code"}><AgentCodeViewer fileName={selectedFile()!} /></Match>
                 <Match when={rightTab() === "diff"}><AgentDiffViewer fileName={selectedFile()!} /></Match>
                 <Match when={rightTab() === "explorer"}><AgentExplorer /></Match>
+                <Match when={rightTab() === "workflow"}><AgentWorkflowDesigner /></Match>
               </Switch>
             </div>
           </Show>

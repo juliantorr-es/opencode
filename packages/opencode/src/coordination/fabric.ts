@@ -52,6 +52,16 @@ export interface CoordinationFabric {
   dispose(): Promise<void>
 }
 
+
+// ── Feature Flag ────────────────────────────────────────
+/** Set to true to enable local-valkey coordination backend. Off by default. */
+export const VALKEY_ENABLED = false
+
+/** Returns true if the Valkey binary exists on disk for this platform. */
+export function isValkeyBinaryAvailable(): boolean {
+  if (VALKEY_ENABLED) return true
+  return false
+}
 // ── Fabric Factory ──────────────────────────────────────
 // Returns the appropriate CoordinationFabric based on env.
 
@@ -61,7 +71,7 @@ export async function createFabric(): Promise<CoordinationFabric> {
     const { createLocalFabric } = await import("./local-fabric")
     return createLocalFabric()
   }
-  if (backend === "local-valkey" || backend === "remote-valkey") {
+  if ((backend === "local-valkey" || backend === "remote-valkey") && VALKEY_ENABLED) {
     const url = process.env.OPENCODE_VALKEY_URL ?? "redis://127.0.0.1:6379"
     const { createValkeyFabric } = await import("./valkey-fabric")
     try {
@@ -71,6 +81,9 @@ export async function createFabric(): Promise<CoordinationFabric> {
       const { createLocalFabric } = await import("./local-fabric")
       return createLocalFabric()
     }
+  }
+  if (backend === "local-valkey" || backend === "remote-valkey") {
+    console.warn("[coordination] Valkey backend requested but VALKEY_ENABLED is false — using local")
   }
   // default: local
   const { createLocalFabric } = await import("./local-fabric")

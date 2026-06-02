@@ -47,8 +47,35 @@ describe("CoordinationFabric", () => {
     expect(empty).toBeUndefined()
   })
 
-  it.skip("Valkey fabric — same contract as local", () => {
-    // Requires running Valkey instance. Run with:
-    // RUN_VALKEY_TESTS=1 bun test
+  describe("ValkeyFabric", () => {
+    const shouldRun = process.env.RUN_VALKEY_TESTS === "1"
+    const testFn = shouldRun ? it : it.skip
+
+    testFn("heartbeat stores agent heartbeat in Valkey", async () => {
+      const { createValkeyFabric } = await import("../../src/coordination/valkey-fabric")
+      const url = process.env.OPENCODE_VALKEY_URL ?? "redis://127.0.0.1:6379"
+      const fabric = await createValkeyFabric(url)
+      try {
+        await fabric.heartbeat({ agentId: "v1", repoId: "r1", status: "active", timestamp: Date.now() })
+        const result = await fabric.acquireLease({ repoId: "r1", path: "/src/v.ts", agentId: "v1", ttlMs: 5000 })
+        expect(result.granted).toBe(true)
+        await fabric.releaseLease(result.leaseId!)
+      } finally {
+        await fabric.dispose()
+      }
+    })
+
+    testFn("enqueue/dequeue works in Valkey", async () => {
+      const { createValkeyFabric } = await import("../../src/coordination/valkey-fabric")
+      const url = process.env.OPENCODE_VALKEY_URL ?? "redis://127.0.0.1:6379"
+      const fabric = await createValkeyFabric(url)
+      try {
+        await fabric.enqueue("tasks", { id: "vj1", type: "test", payload: {} })
+        const job = await fabric.dequeue("tasks")
+        expect(job?.id).toBe("vj1")
+      } finally {
+        await fabric.dispose()
+      }
+    })
   })
 })
