@@ -1,159 +1,164 @@
-## Tribunus Fork — Agent Workflow Lab
+# Tribunus
 
-This repository is my personal fork of Tribunus. It is not the upstream Tribunus project and is not affiliated with the Tribunus team.
+Local-first control plane for agentic engineering.
 
-I have deprecated the TUI-first approach in this fork. Current work centers on getting a v1 desktop executable ready for distribution on macOS, Linux, and Windows.
+Tribunus coordinates coding agents with realtime task boards, tool queues,
+capacity-aware scheduling, workflow gates, and release-readiness evidence.
+It starts as a macOS desktop cockpit with a local coordination engine,
+with a longer-term path toward secure team collaboration.
 
-I use this fork as a working lab for AI coding-agent workflows, repo cartography, validation gates, review agents, tool wrappers, and multi-agent development patterns. The fork is meant to show not just agent prompts, but the surrounding engineering system that makes agent work repeatable and reviewable.
+[![macOS active](https://img.shields.io/badge/macOS-active-4c1?style=flat-square)](https://tribunus.dev)
+[![Valkey 9.1.0 bundled](https://img.shields.io/badge/Valkey-9.1.0%20bundled-036?style=flat-square)](https://valkey.io)
+[![Status: pre-alpha](https://img.shields.io/badge/status-pre--alpha-orange?style=flat-square)](https://tribunus.dev)
 
-### What makes this fork special
+## Why Tribunus
 
-The fork’s distinctive work falls into a few connected lanes:
+Coding agents are cheap to spawn but expensive to coordinate. Teams need
+queues, claims, gates, visibility, and evidence. Tribunus provides the
+real-time control plane that makes multi-agent engineering operational —
+you can see, constrain, queue, audit, and review agent work across
+repositories in real time.
 
-| Path | Purpose |
-| --- | --- |
-| Agent workflow stack | `.tribunus/` contains custom agent profiles, workflow tools, repo navigation helpers, review agents, and validation utilities that shape how work gets done. |
-| Runtime and product changes | `packages/opencode/`, `packages/app/`, `packages/desktop/`, `packages/ui/`, `packages/core/`, `packages/plugin/`, and `packages/effect-drizzle-sqlite/` contain the runtime, desktop, UI, plugin, storage, and migration work that backs the workflow layer. |
-| Evidence and cartography | `docs/json/` is the largest body of fork-specific output, with structured audits, cartography, roadmaps, session records, and evidence artifacts. |
-| Generated investigation artifacts | `.build/rig-relay/` holds planning records, investigation outputs, and implementation evidence from agent-assisted development sessions. |
-| Repo rules and schemas | `docs/schemas/`, `AGENTS.md`, `PROJECT.md`, `TOOL_GUIDE.md`, and related project files define the operating rules, workflow documentation, and repo-specific guidance. |
+## What It Does Today
 
-### Why this fork matters
+- **macOS desktop cockpit** — Electron app with sidecar runtime, project activation, and operator IDE surfaces
+- **Local Valkey coordination** — Bundled Valkey 9.1.0 for darwin-arm64 and darwin-x64 with SHA256 verification; powers realtime task boards, tool scheduling, and cache fanout
+- **Tool execution scheduler** — Resource-class queues (read_light, search_medium, cpu_heavy, io_heavy, exclusive_repo, network) prevent agent swarms from saturating the machine
+- **Single-flight cache** — Identical expensive tool calls (typecheck, build, test) deduplicate; one execution fans out to all waiters
+- **Capacity profiler** — Hardware-adaptive scheduler limits derived from CPU cores, memory class, and disk throughput; M1 Air gets conservative limits, M3 Max gets room to run
+- **Workflow presets** — Quick Fix, Frontend Polish, Backend Hardening, Security Review, Enterprise Closure, and more; each defines agent roles, validation gates, tool policies, and required outputs
+- **Desktop secret store** — OS-encrypted provider/GitHub credentials via Electron safeStorage; renderer sees metadata only, sidecar receives secrets by ref only when needed
+- **Desktop notifications** — High-signal events only (agent blocked, review required, release binder complete, sidecar failed); per-kind toggles, quiet hours
+- **Release binder** — Structured audit evidence: what changed, what passed, what failed, platform matrix, known limitations, release recommendation
+- **`.tribunus/` project config** — Repo-local declarative policy: workflows, sandbox templates, protected paths, tool policies; committed and reviewable; runtime state stays in appData
 
-This fork is meant to show applied work inside a real AI coding-agent codebase. The focus is not just prompting an agent, but building repeatable engineering workflows around agents: scoped tool use, evidence-backed review, structured findings, safer automation, reproducible development lanes, and the runtime changes needed to make those workflows real.
+## Current Status
 
-### Upstream project
+Tribunus is in active development. macOS is the first platform.
 
-The original Tribunus README is preserved below for reference.
+| Item | Status |
+|------|--------|
+| macOS desktop app | Active development |
+| Local Valkey coordination | Bundled, SHA256 verified, PONG-proven |
+| Tool scheduler / cache | Primitives in place, local scheduler functional |
+| Workflow presets | 8 presets, UI designer, execution engine scaffold |
+| Project activation | Single-owner state machine, typed readiness contract |
+| Secret store + notifications | Desktop services in Electron main |
+| Team collaboration | Foundation present; full networked team mode not shipped |
+| Linux / Windows | Planned; LocalFabric fallback available |
 
----
-
-<p align="center">
-  <a href="https://tribunus.ai">
-    <picture>
-      <source srcset="packages/console/app/src/asset/logo-ornate-dark.svg" media="(prefers-color-scheme: dark)">
-      <source srcset="packages/console/app/src/asset/logo-ornate-light.svg" media="(prefers-color-scheme: light)">
-      <img src="packages/console/app/src/asset/logo-ornate-light.svg" alt="Tribunus logo">
-    </picture>
-  </a>
-</p>
-<p align="center">The open source AI coding agent.</p>
-<p align="center">
-  <a href="https://tribunus.ai/discord"><img alt="Discord" src="https://img.shields.io/discord/1391832426048651334?style=flat-square&label=discord" /></a>
-  <a href="https://www.npmjs.com/package/tribunus-ai"><img alt="npm" src="https://img.shields.io/npm/v/tribunus-ai?style=flat-square" /></a>
-  <a href="https://github.com/tribunus-dev/tribunus/actions/workflows/publish.yml"><img alt="Build status" src="https://img.shields.io/github/actions/workflow/status/tribunus-dev/tribunus/publish.yml?style=flat-square&branch=dev" /></a>
-</p>
-
-<p align="center">
-  <a href="README.md">English</a> |
-  <a href="README.zh.md">简体中文</a> |
-  <a href="README.zht.md">繁體中文</a> |
-  <a href="README.ko.md">한국어</a> |
-  <a href="README.de.md">Deutsch</a> |
-  <a href="README.es.md">Español</a> |
-  <a href="README.fr.md">Français</a> |
-  <a href="README.it.md">Italiano</a> |
-  <a href="README.da.md">Dansk</a> |
-  <a href="README.ja.md">日本語</a> |
-  <a href="README.pl.md">Polski</a> |
-  <a href="README.ru.md">Русский</a> |
-  <a href="README.bs.md">Bosanski</a> |
-  <a href="README.ar.md">العربية</a> |
-  <a href="README.no.md">Norsk</a> |
-  <a href="README.br.md">Português (Brasil)</a> |
-  <a href="README.th.md">ไทย</a> |
-  <a href="README.tr.md">Türkçe</a> |
-  <a href="README.uk.md">Українська</a> |
-  <a href="README.bn.md">বাংলা</a> |
-  <a href="README.gr.md">Ελληνικά</a> |
-  <a href="README.vi.md">Tiếng Việt</a>
-</p>
-
-[![Tribunus Terminal UI](packages/web/src/assets/lander/screenshot.png)](https://tribunus.ai)
-
----
-
-### Installation
+## Quick Start
 
 ```bash
-# YOLO
-curl -fsSL https://tribunus.ai/install | bash
+# Install dependencies
+bun install
 
-# Package managers
-npm i -g tribunus-ai@latest        # or bun/pnpm/yarn
-scoop install tribunus             # Windows
-choco install tribunus             # Windows
-brew install tribunus-dev/tap/tribunus # macOS and Linux (recommended, always up to date)
-brew install tribunus              # macOS and Linux (official brew formula, updated less)
-sudo pacman -S tribunus            # Arch Linux (Stable)
-paru -S tribunus-bin               # Arch Linux (Latest from AUR)
-mise use -g tribunus               # Any OS
-nix run nixpkgs#tribunus           # or github:tribunus-dev/tribunus for latest dev branch
+# Run typecheck
+cd packages/desktop && bun run typecheck
+
+# Run tests
+cd packages/opencode && bun test
+
+# Run the desktop app (dev mode)
+bun run dev:desktop
+
+# Run branding guard
+bash scripts/check-branding.sh
+
+# Run Valkey smoke test
+cd packages/desktop && bun run scripts/smoke-valkey-packaged.ts .
 ```
 
-> [!TIP]
-> Remove versions older than 0.1.x before installing.
+## macOS Valkey Coordination
 
-### Desktop App (BETA)
+Tribunus bundles Valkey 9.1.0 for Apple Silicon (arm64) and Intel (x64).
+Each platform directory includes the binary, BSD-3-Clause COPYING, build
+provenance (VALKEY_BUILD.json), and SHA256SUMS for integrity verification.
 
-Tribunus is also available as a desktop application. Download directly from the [releases page](https://github.com/tribunus-dev/tribunus/releases) or [tribunus.ai/download](https://tribunus.ai/download).
+- Binds 127.0.0.1 only — no external network exposure
+- Uses a random local port
+- No persistence by default
+- Exits cleanly when the app exits
+- SHA256 verified at startup in packaged mode
 
-| Platform              | Download                           |
-| --------------------- | ---------------------------------- |
-| macOS (Apple Silicon) | `tribunus-desktop-mac-arm64.dmg`   |
-| macOS (Intel)         | `tribunus-desktop-mac-x64.dmg`     |
-| Windows               | `tribunus-desktop-windows-x64.exe` |
-| Linux                 | `.deb`, `.rpm`, or `.AppImage`     |
+Valkey is the live coordination substrate — it powers queues, leases,
+pub/sub, and cache. The durable database (PGlite) remains the source of truth.
 
-```bash
-# macOS (Homebrew)
-brew install --cask tribunus-desktop
-# Windows (Scoop)
-scoop bucket add extras; scoop install extras/tribunus-desktop
+## Project Configuration
+
+Tribunus uses two config layers:
+
+**`.tribunus/`** — Repo-local declarative project policy. Commit this.
+Contains workflows, sandbox templates, protected paths, tool policies,
+and agent profiles. JSON config is loaded automatically; executable
+code (plugin.ts, tools/*.ts) requires workspace trust.
+
+**appData** — Local runtime state. Never commit this.
+Contains PGlite database, Valkey runtime, secret metadata, logs,
+caches, and debug bundles.
+
+Safety invariants (secret redaction, path scope restrictions, unsafe
+git prohibitions, audit event recording, tool permission enforcement,
+runtime artifact hygiene) cannot be disabled by any config layer.
+
+## Architecture
+
+```
+Electron main
+  ├── Sidecar supervisor
+  ├── Optional Valkey supervisor
+  ├── IPC contract + runtime decode
+  ├── Desktop secret store
+  └── Desktop notification service
+
+Sidecar / Runtime
+  ├── PGlite durable database
+  ├── Coordination fabric (local or Valkey)
+  ├── Tool scheduler + single-flight cache
+  ├── Capacity profiler + pressure monitor
+  ├── Project / session / tool runtime
+  └── Diagnostics
+
+Renderer
+  ├── Project activation machine
+  ├── Realtime task board overlay
+  ├── Operator IDE surfaces
+  ├── Workflow designer
+  └── Performance profile panel
 ```
 
-#### Installation Directory
+## Roadmap
 
-The install script respects the following priority order for the installation path:
+**Near-term**
+- Packaged macOS smoke test
+- Project/session activation closure
+- Realtime task board vertical slice
+- Public alpha release
 
-1. `$TRIBUNUS_INSTALL_DIR` - Custom installation directory
-2. `$XDG_BIN_DIR` - XDG Base Directory Specification compliant path
-3. `$HOME/bin` - Standard user binary directory (if it exists or can be created)
-4. `$HOME/.tribunus/bin` - Default fallback
+**Later**
+- LAN/VPN team coordinator
+- Senior/junior sandbox grants
+- Shared repo claims
+- Peer identity + signed approvals
+- Multi-user task board
+- Linux / Windows support
 
-```bash
-# Examples
-TRIBUNUS_INSTALL_DIR=/usr/local/bin curl -fsSL https://tribunus.ai/install | bash
-XDG_BIN_DIR=$HOME/.local/bin curl -fsSL https://tribunus.ai/install | bash
-```
+## Contributing
 
-### Agents
+See [CONTRIBUTING.md](CONTRIBUTING.md).
 
-Tribunus includes two built-in agents you can switch between with the `Tab` key.
+Early contributions are welcome. The project is macOS-first and uses Bun
+as the primary runtime. TypeScript throughout. AGPLv3 with dual-licensing.
 
-- **build** - Default, full-access agent for development work
-- **plan** - Read-only agent for analysis and code exploration
-  - Denies file edits by default
-  - Asks permission before running bash commands
-  - Ideal for exploring unfamiliar codebases or planning changes
+## Upstream Attribution
 
-Also included is a **general** subagent for complex searches and multistep tasks.
-This is used internally and can be invoked using `@general` in messages.
+Tribunus began as a derivative of [opencode](https://github.com/sst/opencode)
+and has since diverged toward local-first multi-agent engineering orchestration.
+Upstream notices and licenses are preserved in [NOTICE.md](NOTICE.md).
 
-Learn more about [agents](https://tribunus.ai/docs/agents).
+## License
 
-### Documentation
+Tribunus is licensed under the GNU Affero General Public License v3.0 (AGPLv3).
+A separate commercial license may be obtained — contact hello@tribunus.dev.
 
-For more info on how to configure Tribunus, [**head over to our docs**](https://tribunus.ai/docs).
-
-### Contributing
-
-If you're interested in contributing to Tribunus, please read our [contributing docs](./CONTRIBUTING.md) before submitting a pull request.
-
-### Building on Tribunus
-
-If you are working on a project that's related to Tribunus and is using "tribunus" as part of its name, for example "tribunus-dashboard" or "tribunus-mobile", please add a note to your README to clarify that it is not built by the Tribunus team and is not affiliated with us in any way.
-
----
-
-**Join our community** [Discord](https://discord.gg/tribunus) | [X.com](https://x.com/tribunus)
+See [LICENSE](LICENSE) for the full text.
