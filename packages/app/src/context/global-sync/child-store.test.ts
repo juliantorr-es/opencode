@@ -27,7 +27,7 @@ const queryOptionsApi = {
   agents: (directory: string) => ({ queryKey: [directory, "agents"], queryFn: async () => [] }),
   mcp: (directory: string) => ({ queryKey: [directory, "mcp"], queryFn: async () => ({}) }),
   lsp: (directory: string) => ({ queryKey: [directory, "lsp"], queryFn: async () => [] }),
-  sessions: (directory: string) => ({ queryKey: [directory, "loadSessions"] as const }),
+  sessions: (directory: string) => ({ queryKey: ["project", directory, "sessions"] as const }),
 } as unknown as QueryOptionsApi
 
 function createOwner(callback: (owner: Owner) => void) {

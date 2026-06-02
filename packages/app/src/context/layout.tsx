@@ -560,8 +560,8 @@ export const { use: useLayout, provider: LayoutProvider } = createSimpleContext(
         open(directory: string) {
           const root = rootFor(directory)
           if (server.projects.list().find((x) => x.worktree === root)) return
-          void serverSync.project.loadSessions(root)
           server.projects.open(root)
+          void serverSync.project.ensureReady(root)
         },
         close(directory: string) {
           server.projects.close(directory)

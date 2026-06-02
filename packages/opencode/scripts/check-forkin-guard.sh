@@ -8,11 +8,8 @@ SENSITIVE_PATHS=(
   "src/project/instance-store.ts"
   "src/project/bootstrap.ts"
   "src/project/instance-layer.ts"
-  "src/project/instance-runtime.ts"
   "src/tool/registry.ts"
   "src/tool/tool.ts"
-  "src/agent/"
-  "src/session/"
   "src/plugin/"
 )
 

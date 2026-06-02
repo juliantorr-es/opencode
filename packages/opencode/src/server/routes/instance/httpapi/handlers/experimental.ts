@@ -127,7 +127,7 @@ export const experimentalHandlers = HttpApiBuilder.group(InstanceHttpApi, "exper
 
     const session = Effect.fn("ExperimentalHttpApi.session")(function* (ctx: { query: typeof SessionListQuery.Type }) {
       const limit = ctx.query.limit ?? 100
-      const sessions = Array.from(
+      const sessions = yield* Effect.promise(() =>
         Session.listGlobal({
           directory: ctx.query.directory,
           roots: ctx.query.roots,

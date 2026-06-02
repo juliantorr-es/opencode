@@ -8,6 +8,8 @@ import type { PgliteDatabase } from "drizzle-orm/pglite"
 import type { NodePgDatabase } from "drizzle-orm/node-postgres"
 import { PgPool } from "./pg-pool"
 
+import { TraceSpans, endSpan } from "@/observability/traces"
+
 export class DatabaseInitError extends Error {
   constructor(message: string, options?: { cause?: Error; dataDir?: string }) {
     const detail = options?.dataDir ? ` (dataDir: ${options.dataDir})` : ""
@@ -37,14 +39,17 @@ export function init(connectionStringOrOpts: string | InitOptions, ssl?: boolean
   if (opts.connectionString === ":memory:" || opts.connectionString.startsWith("/") || opts.connectionString.startsWith("file:")) {
     const dataDir = opts.connectionString === ":memory:" ? undefined : opts.connectionString.replace(/^file:/, "")
     let client: PGlite
+    const span = TraceSpans.pgliteOpen(typeof dataDir === "string" ? dataDir : ":memory:")
     try {
       client = new PGlite(dataDir)
     } catch (cause) {
+      endSpan(span, cause)
       throw new DatabaseInitError("PGlite initialization failed", {
         cause: cause instanceof Error ? cause : new Error(String(cause)),
         dataDir: typeof dataDir === "string" ? dataDir : ":memory:",
       })
     }
+    endSpan(span)
     return drizzle({ client }) as PgliteDatabase
   }
   const pool = new Pool({
@@ -67,56 +72,62 @@ export function initFromPool(pool: PgPool): NodePgDatabase {
 }
 
 export async function applyMigrations(db: PgClient): Promise<void> {
-  const folder = new URL("../../migration-pg", import.meta.url).pathname
+  try {
+    const folder = new URL("../../migration-pg", import.meta.url).pathname
 
-  // Duck-type check: PGlite exposes exec/query on its raw client.
-  // With PGlite.create() + drizzle(), the wrapper's $client may differ.
-  // Check both the drizzle wrapper and the raw $client.
-  const rawClient = (db as any).$client ?? db
-  const client = rawClient &&
-    (typeof rawClient.exec === "function" || typeof rawClient.query === "function")
-      ? rawClient : undefined
-  if (client && typeof (client.exec ?? client.query) === "function") {
-    // PGlite path: idempotent migration with tracking table
-    const migrations = readMigrationFiles({ migrationsFolder: folder })
-    const execFn = (sql: string) =>
-      typeof client.exec === "function" ? client.exec(sql) : client.query(sql)
+    // Duck-type check: PGlite exposes exec/query on its raw client.
+    // With PGlite.create() + drizzle(), the wrapper's $client may differ.
+    // Check both the drizzle wrapper and the raw $client.
+    const rawClient = (db as any).$client ?? db
+    const client = rawClient &&
+      (typeof rawClient.exec === "function" || typeof rawClient.query === "function")
+        ? rawClient : undefined
+    if (client && typeof (client.exec ?? client.query) === "function") {
+      // PGlite path: idempotent migration with tracking table
+      const migrations = readMigrationFiles({ migrationsFolder: folder })
+      const span = TraceSpans.migrationsRun(migrations.length)
+      const execFn = (sql: string) =>
+        typeof client.exec === "function" ? client.exec(sql) : client.query(sql)
 
-    // Ensure tracking table exists
-    await execFn(
-      `CREATE TABLE IF NOT EXISTS "__drizzle_migrations" (
-        "hash" text PRIMARY KEY,
-        "created_at" bigint
-      )`,
-    )
+      try {
+        // Ensure tracking table exists
+        await execFn(
+          `CREATE TABLE IF NOT EXISTS "__drizzle_migrations" (
+            "hash" text PRIMARY KEY,
+            "created_at" bigint
+          )`,
+        )
 
-    // Read already-applied migration hashes
-    const result = await client.query("SELECT hash FROM \"__drizzle_migrations\"")
-    const applied = new Set(
-      (result.rows as Array<{ hash: string }>).map((r) => r.hash),
-    )
+        // Read already-applied migration hashes
+        const result = await client.query("SELECT hash FROM \"__drizzle_migrations\"")
+        const applied = new Set(
+          (result.rows as Array<{ hash: string }>).map((r) => r.hash),
+        )
 
-    // Apply only unapplied migrations
-    for (const migration of migrations) {
-      if (applied.has(migration.hash)) continue
-      for (const sql of migration.sql) {
-        try {
-          await execFn(sql)
-        } catch (e: any) {
-          const msg = e?.message ?? ""
-          if (/already exists/.test(msg)) continue
-          if (/does not exist/.test(msg)) continue
-          throw e
+        // Apply only unapplied migrations
+        for (const migration of migrations) {
+          if (applied.has(migration.hash)) continue
+          for (const sql of migration.sql) {
+            await execFn(sql).catch((e: any) => {
+              if (/already exists|does not exist/.test(e?.message ?? "") || e?.code === "42701") return
+              throw e
+            })
+          }
+          await client.query(
+            'INSERT INTO "__drizzle_migrations" ("hash", "created_at") VALUES ($1, $2)',
+            [migration.hash, Date.now()],
+          )
         }
+      } finally {
+        endSpan(span)
       }
-      await client.query(
-        'INSERT INTO "__drizzle_migrations" ("hash", "created_at") VALUES ($1, $2)',
-        [migration.hash, Date.now()],
-      )
+    } else {
+      // node-postgres path: use drizzle's built-in migrator
+      await migrate(db as NodePgDatabase, { migrationsFolder: folder })
     }
-  } else {
-    // node-postgres path: use drizzle's built-in migrator
-    await migrate(db as NodePgDatabase, { migrationsFolder: folder })
+  } catch (e: any) {
+    if (/already exists|does not exist/.test(e?.message ?? "") || (e as any)?.code === "42701") return
+    throw e
   }
 }
 

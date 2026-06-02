@@ -160,16 +160,24 @@ export const globalHandlers = HttpApiBuilder.group(RootHttpApi, "global", (handl
       const healthStore = yield* Effect.serviceOption(InstanceHealthStoreService)
       let instanceCount = 0
       let instanceHealthy = 0
+      const instances: { directory: string; status: string }[] = []
       if (Option.isSome(healthStore)) {
         const all = yield* healthStore.value.getAll()
         instanceCount = all.size
-        instanceHealthy = [...all.values()].filter(h => h.status === "ready").length
+        for (const [dir, h] of all) {
+          instanceHealthy += h.status === "ready" ? 1 : 0
+          instances.push({ directory: dir, status: h.status })
+        }
       }
+      const config = yield* Config.Service
       return {
-        classification: instanceCount === 0 ? "fresh_empty_db" : "renderer_hydration_suspect",
+        classification: instanceCount === 0 ? "fresh_empty_db" : instanceHealthy === instanceCount ? "all_healthy" : "degraded",
+        recommendation: instanceCount === 0 ? "open_project" : instanceHealthy < instanceCount ? "inspect_failing_instances" : null,
+        sidecarReady: true,
         instanceCount,
         instanceHealthy,
-        sidecarReady: true,
+        instances,
+        dataPath: config.dataPath ?? "unknown",
         warnings: [] as { code: string; message: string }[],
       }
     })

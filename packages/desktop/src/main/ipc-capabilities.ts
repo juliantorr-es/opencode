@@ -1,5 +1,6 @@
 import { ipcMain } from "electron"
 import { IPC } from "./ipc-channels"
+import { withIpcResult } from "./ipc-contract"
 
 export interface DesktopCapabilities {
   github: boolean
@@ -23,6 +24,6 @@ export function getCapabilities(): DesktopCapabilities {
 
 export function registerCapabilitiesIpcHandlers() {
   ipcMain.handle(IPC.handle.GET_CAPABILITIES, () => {
-    return getCapabilities()
+    return withIpcResult("capabilities.get", () => getCapabilities())
   })
 }

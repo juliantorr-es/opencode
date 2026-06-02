@@ -16,6 +16,7 @@ import {
 import { makeEventListener } from "@solid-primitives/event-listener"
 import { useLocation, useNavigate, useParams } from "@solidjs/router"
 import { useQuery } from "@tanstack/solid-query"
+import { useProjectActivation } from "@/context/project-activation"
 import { useLayout, LocalProject } from "@/context/layout"
 import { useServerSync } from "@/context/server-sync"
 import { Persist, persisted } from "@/utils/persist"
@@ -95,6 +96,7 @@ import {
 import { ProjectDragOverlay, SortableProject, type ProjectSidebarContext } from "./layout/sidebar-project"
 import { SidebarContent } from "./layout/sidebar-shell"
 import { SidebarPanel } from "./layout/sidebar-panel"
+import { createProjectActivation, ProjectActivationProvider } from "@/context/project-activation"
 import { workspaceName as _workspaceName, setWorkspaceName as _setWorkspaceName, workspaceLabel as _workspaceLabel } from "./layout/workspace-labels"
 
 export default function Layout(props: ParentProps) {
@@ -162,6 +164,7 @@ export default function Layout(props: ParentProps) {
   })
 
   const theme = useTheme()
+  const activation = createProjectActivation()
   const language = useLanguage()
   const newDesign = createMemo(() => settings.general.newLayoutDesigns())
   const initialDirectory = decode64(params.dir)
@@ -663,7 +666,7 @@ export default function Layout(props: ParentProps) {
 
     const result: Session[] = []
     for (const dir of dirs) {
-      const [dirStore] = serverSync.child(dir, { bootstrap: true })
+      const [dirStore] = serverSync.child(dir, { bootstrap: false })
       const dirSessions = sortedRootSessions(dirStore, now)
       result.push(...dirSessions)
     }
@@ -1024,6 +1027,8 @@ export default function Layout(props: ParentProps) {
     }
   }
 
+  const activation = useProjectActivation()
+
   command.register("layout", () => {
     const commands: CommandOption[] = [
       {
@@ -1122,6 +1127,22 @@ export default function Layout(props: ParentProps) {
         onSelect: () => {
           const session = currentSessions().find((s) => s.id === params.id)
           if (session) void archiveSession(session)
+        },
+      },
+      {
+        id: "session.new",
+        title: language.t("command.session.new"),
+        category: language.t("command.category.session"),
+        disabled: !params.dir,
+        onSelect: () => {
+          if (!activation.canCreateSession()) {
+            if (activation.state().name === "empty") {
+              chooseProject()
+              return
+            }
+            return
+          }
+          navigateWithSidebarReset(`/${params.dir}/session`)
         },
       },
       {
@@ -1393,6 +1414,7 @@ export default function Layout(props: ParentProps) {
 
   function openProject(directory: string, navigate = true) {
     layout.projects.open(directory)
+    activation.send({ type: "PROJECT_OPENED_LOCALLY", directory })
     if (navigate) return navigateToProject(directory)
   }
 
@@ -1501,10 +1523,12 @@ export default function Layout(props: ParentProps) {
     function resolve(result: string | string[] | null) {
       if (Array.isArray(result)) {
         for (const directory of result) {
+          activation.send({ type: "PROJECT_SELECTED", directory })
           void openProject(directory, false)
         }
         void navigateToProject(result[0])
       } else if (result) {
+        activation.send({ type: "PROJECT_SELECTED", directory: result })
         void openProject(result)
       }
     }
@@ -1878,7 +1902,10 @@ export default function Layout(props: ParentProps) {
         const next = new Set(dirs)
         for (const directory of next) {
           if (loadedSessionDirs.has(directory)) continue
-          void serverSync.project.loadSessions(directory)
+          serverSync.project.loadSessions(directory).then(() => {
+            activation.send({ type: "INSTANCE_BOOT_OK", directory })
+            activation.send({ type: "PROJECT_CONTEXT_LOADED", directory })
+          })
         }
 
         loadedSessionDirs.clear()
@@ -2090,6 +2117,7 @@ export default function Layout(props: ParentProps) {
       showEditProjectDialog={showEditProjectDialog}
       chooseProject={chooseProject}
       connectProvider={connectProvider}
+      openSettings={openSettings}
       handleWorkspaceDragStart={handleWorkspaceDragStart}
       handleWorkspaceDragEnd={handleWorkspaceDragEnd}
       handleWorkspaceDragOver={handleWorkspaceDragOver}
@@ -2133,6 +2161,7 @@ export default function Layout(props: ParentProps) {
   )
 
   return (
+    <ProjectActivationProvider value={activation}>
     <AmbientProvider>
     <Show
       when={!newDesign()}
@@ -2314,6 +2343,7 @@ export default function Layout(props: ParentProps) {
       onClose={() => setShowKeyHints(false)}
     />
     </AmbientProvider>
+    </ProjectActivationProvider>
   )
 }
 

@@ -1,4 +1,6 @@
 import { createMemo, For, Show, type Accessor, type JSX } from "solid-js"
+import { Dialog } from "@kobalte/core/dialog"
+import { Splash } from "@opencode-ai/ui/logo"
 import { Button } from "@opencode-ai/ui/button"
 import { DropdownMenu } from "@opencode-ai/ui/dropdown-menu"
 import { IconButton } from "@opencode-ai/ui/icon-button"
@@ -19,6 +21,7 @@ import { useNotification } from "@/context/notification"
 import { useLanguage } from "@/context/language"
 import { useProviders } from "@/hooks/use-providers"
 import { useServerSync } from "@/context/server-sync"
+import { useProjectActivation } from "@/context/project-activation"
 import { ConstrainDragXAxis } from "@/utils/solid-dnd"
 import { LocalWorkspace, SortableWorkspace, WorkspaceDragOverlay, type WorkspaceSidebarContext } from "./sidebar-workspace"
 
@@ -34,7 +37,6 @@ type InlineEditorComponent = (props: {
   stopPropagation?: boolean
   openOnDblClick?: boolean
 }) => JSX.Element
-
 export interface SidebarPanelProps {
   project: Accessor<LocalProject | undefined>
   mobile?: boolean
@@ -53,6 +55,7 @@ export interface SidebarPanelProps {
   showEditProjectDialog: (project: LocalProject) => void
   chooseProject: () => Promise<void>
   connectProvider: () => void
+  openSettings: () => void
   handleWorkspaceDragStart: (event: unknown) => void
   handleWorkspaceDragEnd: () => void
   handleWorkspaceDragOver: (event: DragEvent) => void
@@ -70,6 +73,7 @@ export const SidebarPanel = (panelProps: SidebarPanelProps) => {
   const language = useLanguage()
   const providers = useProviders()
   const serverSync = useServerSync()
+  const activation = useProjectActivation()
 
   const project = panelProps.project
   const merged = createMemo(() => panelProps.mobile || (panelProps.merged ?? layout.sidebar.opened()))
@@ -130,21 +134,74 @@ export const SidebarPanel = (panelProps: SidebarPanelProps) => {
       <Show
         when={project()}
         fallback={
-          <Show when={empty()}>
-            <div class="flex-1 min-h-0 -mt-4 flex items-center justify-center px-6 pb-64 text-center">
-              <div class="mt-8 flex max-w-60 flex-col items-center gap-6 text-center">
-                <div class="flex flex-col gap-3">
-                  <div class="text-14-medium text-text-strong">{language.t("sidebar.empty.title")}</div>
-                  <div class="text-14-regular text-text-base" style={{ "line-height": "var(--line-height-normal)" }}>
-                    {language.t("sidebar.empty.description")}
+          <>
+            <Show when={activation.state().name === "provider_setup_required"}>
+              <Dialog.Root open={true}>
+                <Dialog.Content>
+                  <Dialog.Title>Provider setup required</Dialog.Title>
+                  <Dialog.Description>
+                    This project is open, but no model provider is configured.
+                    Configure a model provider before starting a session.
+                  </Dialog.Description>
+                  <div class="flex gap-2 mt-4">
+                    <Button onClick={panelProps.openSettings}>Open Settings</Button>
+                    <Button variant="outline" onClick={() => activation.send({ type: "RETRY" })}>Retry</Button>
                   </div>
-                </div>
+                </Dialog.Content>
+              </Dialog.Root>
+            </Show>
+            <Show when={activation.state().name === "failed"}>
+              <Dialog.Root open={true}>
+                <Dialog.Content>
+                  <Dialog.Title>Project failed to load</Dialog.Title>
+                  <Dialog.Description>
+                    {activation.diagnostics().error ?? "Unknown error"}
+                  </Dialog.Description>
+                  <div class="flex gap-2 mt-4">
+                    <Button onClick={() => activation.send({ type: "RETRY" })}>Retry</Button>
+                    <Button variant="outline" onClick={() => {
+                      void navigator.clipboard.writeText(JSON.stringify(activation.diagnostics(), null, 2))
+                    }}>Copy Diagnostics</Button>
+                  </div>
+                </Dialog.Content>
+              </Dialog.Root>
+            </Show>
+            <Show when={empty()}>
+              <div class="flex flex-col items-center justify-center h-full gap-4 p-6">
+                <Splash class="w-12 h-15" />
+                <p class="text-14-regular text-text-base text-center">
+                  No project loaded. The local sidecar is running,{"\n"}
+                  but this desktop app has no active project yet.
+                </p>
+                <p class="text-12-regular text-text-weak">
+                  Sidecar: ready · Database: fresh · Instances: 0
+                </p>
                 <Button size="large" icon="folder-add-left" onClick={panelProps.chooseProject}>
-                  {language.t("command.project.open")}
+                  Open a repository to start
                 </Button>
               </div>
-            </div>
-          </Show>
+            </Show>
+            <Show when={!empty() && activation.state().name !== "provider_setup_required" && activation.state().name !== "failed" && activation.state().name !== "project_ready" && activation.state().name !== "uninitialized" && activation.state().name !== "empty"}>
+              <div class="flex-1 min-h-0 -mt-4 flex items-center justify-center px-6 pb-64 text-center">
+                <div class="mt-8 flex max-w-60 flex-col items-center gap-6 text-center">
+                  <div class="flex flex-col gap-3">
+                    <div class="text-14-medium text-text-strong">Opening project\u2026</div>
+                    <div class="text-14-regular text-text-base" style={{ "line-height": "var(--line-height-normal)" }}>
+                      {language.t("sidebar.empty.description")}
+                    </div>
+                  </div>
+                  <Button
+                    size="large"
+                    icon="folder-add-left"
+                    disabled={!activation.canOpenProject()}
+                    onClick={panelProps.chooseProject}
+                  >
+                    {language.t("command.project.open")}
+                  </Button>
+                </div>
+              </div>
+            </Show>
+          </>
         }
         keyed
       >

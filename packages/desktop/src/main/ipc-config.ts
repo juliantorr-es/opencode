@@ -89,7 +89,7 @@ export function registerConfigIpcHandlers() {
       try {
         const store = getStore("desktop-plugin-config")
         const v = validateAndFilterPluginConfigs(store.get("configs"))
-        return v.configs
+        return v
       } catch (e) {
         console.error("get-desktop-plugin-config failed:", e)
         throw e

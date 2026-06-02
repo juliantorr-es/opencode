@@ -221,8 +221,10 @@ interface ErrorPageProps {
 
 export const ErrorPage: Component<ErrorPageProps> = (props) => {
   const platform = usePlatform()
+  const fallbackT = (key: string | number, _opts?: any) => String(key)
   const language = useLanguage()
-  const formattedError = () => formatError(props.error, language.t)
+  const t = ((language as any)?.t ?? fallbackT) as (key: string | number, opts?: any) => string
+  const formattedError = () => formatError(props.error, t)
   let recordedFatalError: Promise<void> | undefined
   const [store, setStore] = createStore({
     checking: false,
@@ -289,8 +291,8 @@ export const ErrorPage: Component<ErrorPageProps> = (props) => {
       <div class="w-2/3 max-w-3xl flex flex-col items-center justify-center gap-8">
         <Logo class="w-58.5 opacity-12 shrink-0" />
         <div class="flex flex-col items-center gap-2 text-center">
-          <h1 class="text-lg font-medium text-text-strong">{language.t("error.page.title")}</h1>
-          <p class="text-sm text-text-weak">{language.t("error.page.description")}</p>
+          <h1 class="text-lg font-medium text-text-strong">{t("error.page.title")}</h1>
+          <p class="text-sm text-text-weak">{t("error.page.description")}</p>
         </div>
         <TextField
           value={formattedError()}
@@ -298,16 +300,16 @@ export const ErrorPage: Component<ErrorPageProps> = (props) => {
           copyable
           multiline
           class="max-h-96 w-full font-mono text-xs no-scrollbar"
-          label={language.t("error.page.details.label")}
+          label={t("error.page.details.label")}
           hideLabel
         />
         <div class="flex flex-row items-center justify-center gap-3 flex-wrap max-w-64">
           <Button size="large" onClick={platform.restart}>
-            {language.t("error.page.action.restart")}
+            {t("error.page.action.restart")}
           </Button>
           <Show when={platform.platform === "desktop" && platform.exportDebugLogs}>
             <Button size="large" variant="ghost" onClick={exportDebugLogs}>
-              {language.t("error.page.action.exportLogs")}
+              {t("error.page.action.exportLogs")}
             </Button>
           </Show>
           <Show when={Sentry.isEnabled}>
@@ -322,7 +324,7 @@ export const ErrorPage: Component<ErrorPageProps> = (props) => {
                     setReported(true)
                   }}
                 >
-                  {language.t(reported() ? "error.page.action.reported" : "error.page.action.report")}
+                  {t(reported() ? "error.page.action.reported" : "error.page.action.report")}
                 </Button>
               )
             }}
@@ -333,13 +335,13 @@ export const ErrorPage: Component<ErrorPageProps> = (props) => {
               fallback={
                 <Button size="large" variant="ghost" onClick={checkForUpdates} disabled={store.checking}>
                   {store.checking
-                    ? language.t("error.page.action.checking")
-                    : language.t("error.page.action.checkUpdates")}
+                    ? t("error.page.action.checking")
+                    : t("error.page.action.checkUpdates")}
                 </Button>
               }
             >
               <Button size="large" onClick={installUpdate}>
-                {language.t("error.page.action.updateTo", { version: store.version ?? "" })}
+                {t("error.page.action.updateTo", { version: store.version ?? "" })}
               </Button>
             </Show>
           </Show>
@@ -349,19 +351,19 @@ export const ErrorPage: Component<ErrorPageProps> = (props) => {
         </Show>
         <div class="flex flex-col items-center gap-2">
           <div class="flex items-center justify-center gap-1">
-            {language.t("error.page.report.prefix")}
+            {t("error.page.report.prefix")}
             <button
               type="button"
               class="flex items-center text-text-interactive-base gap-1"
               onClick={() => platform.openLink(DESKTOP_FEEDBACK_URL)}
             >
-              <div>{language.t("error.page.report.discord")}</div>
+              <div>{t("error.page.report.discord")}</div>
               <Icon name="discord" class="text-text-interactive-base" />
             </button>
           </div>
           <Show when={platform.version}>
             {(version) => (
-              <p class="text-xs text-text-weak">{language.t("error.page.version", { version: version() })}</p>
+              <p class="text-xs text-text-weak">{t("error.page.version", { version: version() })}</p>
             )}
           </Show>
         </div>

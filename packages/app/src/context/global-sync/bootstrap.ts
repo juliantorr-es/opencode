@@ -18,7 +18,7 @@ import type { State, VcsCache } from "./types"
 import { cmp, normalizeAgentList, normalizeProviderList } from "./utils"
 import { formatServerError } from "@/utils/server-errors"
 import { QueryClient, queryOptions } from "@tanstack/solid-query"
-import { loadMcpQuery } from "../server-sync"
+import { loadMcpQuery, queryKeys } from "../server-sync"
 import { NormalizedProviderListResponse } from "@opencode-ai/ui/context"
 
 type GlobalStore = {
@@ -180,19 +180,19 @@ function warmSessions(input: {
 
 export const loadProvidersQuery = (directory: string | null, sdk: OpencodeClient) =>
   queryOptions({
-    queryKey: [directory, "providers"],
+    queryKey: directory === null ? [null, "providers"] as const : queryKeys.project.providers(directory),
     queryFn: () => retry(() => sdk.provider.list().then((x) => normalizeProviderList(x.data!))),
   })
 
 export const loadAgentsQuery = (directory: string | null, sdk: OpencodeClient) =>
   queryOptions({
-    queryKey: [directory, "agents"],
+    queryKey: directory === null ? [null, "agents"] as const : queryKeys.project.agents(directory),
     queryFn: () => retry(() => sdk.app.agents().then((x) => normalizeAgentList(x.data))),
   })
 
 export const loadPathQuery = (directory: string | null, sdk: OpencodeClient) =>
   queryOptions<Path>({
-    queryKey: [directory, "path"],
+    queryKey: directory === null ? [null, "path"] as const : queryKeys.project.path(directory),
     queryFn: () => retry(() => sdk.path.get().then((x) => x.data!)),
   })
 
@@ -224,110 +224,107 @@ export async function bootstrapDirectory(input: {
 
   const rev = (providerRev.get(input.directory) ?? 0) + 1
   providerRev.set(input.directory, rev)
-  ;(async () => {
-    const slow = [
-      () => Promise.resolve(input.loadSessions(input.directory)),
-      () =>
-        input.queryClient
-          .ensureQueryData(loadAgentsQuery(input.directory, input.sdk))
-          .then((data) => input.setStore("agent", data)),
-      () =>
-        retry(() => input.sdk.config.get().then((x) => input.setStore("config", reconcile(x.data!, { merge: false })))),
-      () => retry(() => input.sdk.session.status().then((x) => input.setStore("session_status", x.data!))),
-      !seededProject &&
-        (() => retry(() => input.sdk.project.current()).then((x) => input.setStore("project", x.data!.id))),
-      !seededPath &&
-        (() =>
-          input.queryClient.ensureQueryData(loadPathQuery(input.directory, input.sdk)).then((data) => {
-            const next = projectID(data.directory ?? input.directory, input.global.project)
-            if (next) input.setStore("project", next)
-          })),
-      () =>
-        retry(() =>
-          input.sdk.vcs.get().then((x) => {
-            const next = x.data ?? input.store.vcs
-            input.setStore("vcs", next)
-            if (next) input.vcsCache.setStore("value", next)
-          }),
-        ),
-      () => retry(() => input.sdk.command.list().then((x) => input.setStore("command", x.data ?? []))),
-      () =>
-        retry(() =>
-          input.sdk.permission.list().then((x) => {
-            const ids = (x.data ?? []).map((perm) => perm?.sessionID).filter((id): id is string => !!id)
-            const grouped = groupBySession(
-              (x.data ?? []).filter((perm): perm is PermissionRequest => !!perm?.id && !!perm.sessionID),
-            )
-            return warmSessions({ ids, store: input.store, setStore: input.setStore, sdk: input.sdk }).then(() =>
-              batch(() => {
-                for (const sessionID of Object.keys(input.store.permission)) {
-                  if (grouped[sessionID]) continue
-                  input.setStore("permission", sessionID, [])
-                }
-                for (const [sessionID, permissions] of Object.entries(grouped)) {
-                  input.setStore(
-                    "permission",
-                    sessionID,
-                    reconcile(
-                      permissions.filter((p) => !!p?.id).sort((a, b) => cmp(a.id, b.id)),
-                      { key: "id" },
-                    ),
-                  )
-                }
-              }),
-            )
-          }),
-        ),
-      () =>
-        retry(() =>
-          input.sdk.question.list().then((x) => {
-            const ids = (x.data ?? []).map((question) => question?.sessionID).filter((id): id is string => !!id)
-            const grouped = groupBySession((x.data ?? []).filter((q): q is QuestionRequest => !!q?.id && !!q.sessionID))
-            return warmSessions({ ids, store: input.store, setStore: input.setStore, sdk: input.sdk }).then(() =>
-              batch(() => {
-                for (const sessionID of Object.keys(input.store.question)) {
-                  if (grouped[sessionID]) continue
-                  input.setStore("question", sessionID, [])
-                }
-                for (const [sessionID, questions] of Object.entries(grouped)) {
-                  input.setStore(
-                    "question",
-                    sessionID,
-                    reconcile(
-                      questions.filter((q) => !!q?.id).sort((a, b) => cmp(a.id, b.id)),
-                      { key: "id" },
-                    ),
-                  )
-                }
-              }),
-            )
-          }),
-        ),
-      () => Promise.resolve(input.loadSessions(input.directory)),
-      () => input.queryClient.fetchQuery(loadMcpQuery(input.directory, input.sdk)),
-      () =>
-        input.queryClient.fetchQuery(loadProvidersQuery(input.directory, input.sdk)).catch((err) => {
-          const project = getFilename(input.directory)
-          showToast({
-            variant: "error",
-            title: input.translate("toast.project.reloadFailed.title", { project }),
-            description: formatServerError(err, input.translate),
-          })
+  const slow = [
+    () => Promise.resolve(input.loadSessions(input.directory)),
+    () =>
+      input.queryClient
+        .ensureQueryData(loadAgentsQuery(input.directory, input.sdk))
+        .then((data) => input.setStore("agent", data)),
+    () =>
+      retry(() => input.sdk.config.get().then((x) => input.setStore("config", reconcile(x.data!, { merge: false })))),
+    () => retry(() => input.sdk.session.status().then((x) => input.setStore("session_status", x.data!))),
+    !seededProject &&
+      (() => retry(() => input.sdk.project.current()).then((x) => input.setStore("project", x.data!.id))),
+    !seededPath &&
+      (() =>
+        input.queryClient.ensureQueryData(loadPathQuery(input.directory, input.sdk)).then((data) => {
+          const next = projectID(data.directory ?? input.directory, input.global.project)
+          if (next) input.setStore("project", next)
+        })),
+    () =>
+      retry(() =>
+        input.sdk.vcs.get().then((x) => {
+          const next = x.data ?? input.store.vcs
+          input.setStore("vcs", next)
+          if (next) input.vcsCache.setStore("value", next)
         }),
-    ].filter(Boolean) as (() => Promise<any>)[]
+      ),
+    () => retry(() => input.sdk.command.list().then((x) => input.setStore("command", x.data ?? []))),
+    () =>
+      retry(() =>
+        input.sdk.permission.list().then((x) => {
+          const ids = (x.data ?? []).map((perm) => perm?.sessionID).filter((id): id is string => !!id)
+          const grouped = groupBySession(
+            (x.data ?? []).filter((perm): perm is PermissionRequest => !!perm?.id && !!perm.sessionID),
+          )
+          return warmSessions({ ids, store: input.store, setStore: input.setStore, sdk: input.sdk }).then(() =>
+            batch(() => {
+              for (const sessionID of Object.keys(input.store.permission)) {
+                if (grouped[sessionID]) continue
+                input.setStore("permission", sessionID, [])
+              }
+              for (const [sessionID, permissions] of Object.entries(grouped)) {
+                input.setStore(
+                  "permission",
+                  sessionID,
+                  reconcile(
+                    permissions.filter((p) => !!p?.id).sort((a, b) => cmp(a.id, b.id)),
+                    { key: "id" },
+                  ),
+                )
+              }
+            }),
+          )
+        }),
+      ),
+    () =>
+      retry(() =>
+        input.sdk.question.list().then((x) => {
+          const ids = (x.data ?? []).map((question) => question?.sessionID).filter((id): id is string => !!id)
+          const grouped = groupBySession((x.data ?? []).filter((q): q is QuestionRequest => !!q?.id && !!q.sessionID))
+          return warmSessions({ ids, store: input.store, setStore: input.setStore, sdk: input.sdk }).then(() =>
+            batch(() => {
+              for (const sessionID of Object.keys(input.store.question)) {
+                if (grouped[sessionID]) continue
+                input.setStore("question", sessionID, [])
+              }
+              for (const [sessionID, questions] of Object.entries(grouped)) {
+                input.setStore(
+                  "question",
+                  sessionID,
+                  reconcile(
+                    questions.filter((q) => !!q?.id).sort((a, b) => cmp(a.id, b.id)),
+                    { key: "id" },
+                  ),
+                )
+              }
+            }),
+          )
+        }),
+      ),
+    () => input.queryClient.fetchQuery(loadMcpQuery(input.directory, input.sdk)),
+    () =>
+      input.queryClient.fetchQuery(loadProvidersQuery(input.directory, input.sdk)).catch((err) => {
+        const project = getFilename(input.directory)
+        showToast({
+          variant: "error",
+          title: input.translate("toast.project.reloadFailed.title", { project }),
+          description: formatServerError(err, input.translate),
+        })
+      }),
+  ].filter(Boolean) as (() => Promise<any>)[]
 
-    await waitForPaint()
-    const slowErrs = errors(await runAll(slow))
-    if (slowErrs.length > 0) {
-      console.error("Failed to finish bootstrap instance", slowErrs[0])
-      const project = getFilename(input.directory)
-      showToast({
-        variant: "error",
-        title: input.translate("toast.project.reloadFailed.title", { project }),
-        description: formatServerError(slowErrs[0], input.translate),
-      })
-    }
+  await waitForPaint()
+  const slowErrs = errors(await runAll(slow))
+  if (slowErrs.length > 0) {
+    console.error("Failed to finish bootstrap instance", slowErrs[0])
+    const project = getFilename(input.directory)
+    showToast({
+      variant: "error",
+      title: input.translate("toast.project.reloadFailed.title", { project }),
+      description: formatServerError(slowErrs[0], input.translate),
+    })
+  }
 
-    if (loading && slowErrs.length === 0) input.setStore("status", "complete")
-  })()
+  if (loading && slowErrs.length === 0) input.setStore("status", "complete")
 }

@@ -174,15 +174,6 @@ export function createChildStoreManager(input: {
           const initialMeta = meta[0].value
           const initialIcon = icon[0].value
 
-          const [pathQuery, mcpQuery, lspQuery, providerQuery] = useQueries(() => ({
-            queries: [
-              input.queryOptions.path(key),
-              input.queryOptions.mcp(key),
-              input.queryOptions.lsp(key),
-              input.queryOptions.providers(key),
-            ],
-          }))
-
           const child = createStore<State>({
             project: "",
             projectMeta: initialMeta,
@@ -236,6 +227,17 @@ export function createChildStoreManager(input: {
           })
           children[key] = child
           disposers.set(key, dispose)
+
+          // Project-scoped queries are gated: they only fire once the child store
+          // status is at least "partial", i.e. the per-directory backend is booted.
+          const [pathQuery, mcpQuery, lspQuery, providerQuery] = useQueries(() => ({
+            queries: [
+              { ...input.queryOptions.path(key), enabled: child[0].status !== "loading" },
+              { ...input.queryOptions.mcp(key), enabled: child[0].status !== "loading" },
+              { ...input.queryOptions.lsp(key), enabled: child[0].status !== "loading" },
+              { ...input.queryOptions.providers(key), enabled: child[0].status !== "loading" },
+            ],
+          }))
 
           const onPersistedInit = (init: Promise<string> | string | null, run: () => void) => {
             if (!(init instanceof Promise)) return

@@ -31,6 +31,22 @@ import { PathKey } from "@/utils/path-key"
 import { createDirSyncContext } from "./directory-sync"
 import { createSimpleContext, NormalizedProviderListResponse } from "@opencode-ai/ui/context"
 import { createRefCountMap } from "@/utils/refcount"
+import { Schema } from "effect"
+
+export const queryKeys = {
+  diagnostics: ["sidecar", "diagnostics"] as const,
+  globalBootstrap: ["global", "bootstrap"] as const,
+  project: {
+    status: (dir: string) => ["project", dir, "status"] as const,
+    path: (dir: string) => ["project", dir, "path"] as const,
+    providers: (dir: string) => ["project", dir, "providers"] as const,
+    sessions: (dir: string) => ["project", dir, "sessions"] as const,
+    agents: (dir: string) => ["project", dir, "agents"] as const,
+    fileProviders: (dir: string) => ["project", dir, "file-providers"] as const,
+  },
+}
+
+let childStoreReady: (key: string) => boolean = () => true
 
 type GlobalStore = {
   ready: boolean
@@ -68,11 +84,38 @@ function makeQueryOptionsApi(serverSDK: () => OpencodeClient, sdkFor: (dir: Path
     agents: (directory: PathKey) => loadAgentsQuery(directory, sdkFor(directory)),
     mcp: (directory: PathKey) => loadMcpQuery(directory, sdkFor(directory)),
     lsp: (directory: PathKey) => loadLspQuery(directory, sdkFor(directory)),
-    sessions: (directory: PathKey) => ({ queryKey: [directory, "loadSessions"] as const }),
+    sessions: (directory: PathKey) => ({ queryKey: queryKeys.project.sessions(directory), enabled: () => childStoreReady(directory) }),
   }
 }
 export type QueryOptionsApi = ReturnType<typeof makeQueryOptionsApi>
 
+
+// ── IPC Decode Helpers ───────────────────────────────────
+// Every renderer boot dependency must be decoded before use.
+// TypeScript lies at IPC boundaries; schemas prove the shape.
+
+export const SidecarConfig = Schema.Struct({
+  url: Schema.String,
+  username: Schema.String,
+  password: Schema.String,
+})
+
+export const Diagnostics = Schema.Struct({
+  classification: Schema.String,
+  recommendation: Schema.UndefinedOr(Schema.String),
+  sidecarReady: Schema.Boolean,
+  instanceCount: Schema.Number,
+  instanceHealthy: Schema.Number,
+})
+
+export function decodeOrThrow<T>(label: string, schema: Schema.Schema<T>, value: unknown): T {
+  const result = Schema.decodeUnknownSync(schema)(value)
+  if (result._tag === "Left") {
+    console.error(`[ipc-decode] ${label} failed`, { errors: result.left })
+    throw new Error(`${label} decode failed`)
+  }
+  return result.right
+}
 export function createServerSyncContext() {
   const serverSDK = useServerSDK()
   const language = useLanguage()
@@ -104,7 +147,7 @@ export function createServerSyncContext() {
 
   const [globalStore, setGlobalStore] = createStore<GlobalStore>({
     get ready() {
-      return bootstrap.isPending
+      return !bootstrap.isPending && !bootstrap.isError
     },
     project: [],
     session_todo: {},
@@ -152,7 +195,7 @@ export function createServerSyncContext() {
   }) as typeof setGlobalStore
 
   const bootstrap = useQuery(() => ({
-    queryKey: ["bootstrap"],
+    queryKey: queryKeys.globalBootstrap,
     queryFn: async () => {
       await bootstrapGlobal({
         serverSDK: serverSDK.client,
@@ -194,7 +237,7 @@ export function createServerSyncContext() {
   const queue = createRefreshQueue({
     paused,
     key: directoryKey,
-    bootstrap: () => queryClient.fetchQuery({ queryKey: ["bootstrap"] }),
+    bootstrap: () => queryClient.fetchQuery({ queryKey: queryKeys.globalBootstrap }),
     bootstrapInstance,
   })
 
@@ -220,13 +263,46 @@ export function createServerSyncContext() {
     },
   })
 
-  async function loadSessions(directory: string) {
+  // Wire childStoreReady so project-scoped query enabled guards can check
+  // whether the per-directory child store has reached partial/complete status.
+  childStoreReady = (key) => {
+    const child = children.children[key]
+    return child?.[0].status === "partial" || child?.[0].status === "complete"
+  }
+
+  // ── ensureReady ────────────────────────────────────────
+  // Single canonical path: bootstrap the backend instance,
+  // then load sessions. Call this before touching providers/files/sessions.
+
+  async function ensureReady(directory: string) {
     const key = directoryKey(directory)
+    if (!key) return
+    children.pin(key)
+    try {
+      children.ensureChild(directory)
+      // Bootstrap the instance if needed
+      if (booting.has(key) || !children.children[key] || children.children[key]![0].status === "loading") {
+        await bootstrapInstance(directory)
+      }
+      // Load sessions
+      await loadSessionsBootstrapped(directory)
+    } finally {
+      children.unpin(key)
+    }
+  }
+
+  // ── loadSessionsBootstrapped ────────────────────────────
+  // Internal: assumes instance is already ready.
+  // Does NOT create/pin child store — caller must do that.
+
+  async function loadSessionsBootstrapped(directory: string) {
+    const key = directoryKey(directory)
+    if (!key) return
     const pending = sessionLoads.get(key)
     if (pending) return pending
-
-    children.pin(key)
-    const [store, setStore] = children.child(directory, { bootstrap: false })
+    const store = children.children[key]?.[0]
+    const setStore = children.children[key]?.[1]
+    if (!store || !setStore) return
     const meta = sessionMeta.get(key)
     if (meta && meta.limit >= store.limit) {
       const next = trimSessions(store.session, {
@@ -237,7 +313,6 @@ export function createServerSyncContext() {
         setStore("session", reconcile(next, { key: "id" }))
         cleanupDroppedSessionCaches(store, setStore, next, setSessionTodo)
       }
-      children.unpin(key)
       return
     }
 
@@ -292,9 +367,13 @@ export function createServerSyncContext() {
     sessionLoads.set(key, promise)
     void promise.finally(() => {
       sessionLoads.delete(key)
-      children.unpin(key)
     })
     return promise
+  }
+
+  // ── loadSessions (public) ──────────────────────────────
+  async function loadSessions(directory: string) {
+    return ensureReady(directory)
   }
 
   async function bootstrapInstance(directory: string) {
@@ -321,7 +400,7 @@ export function createServerSyncContext() {
         store: child[0],
         setStore: child[1],
         vcsCache: cache,
-        loadSessions,
+        loadSessions: loadSessionsBootstrapped,
         translate: language.t,
         queryClient,
       })
@@ -407,6 +486,7 @@ export function createServerSyncContext() {
 
   const projectApi = {
     loadSessions,
+    ensureReady,
     meta(directory: string, patch: ProjectMeta) {
       children.projectMeta(directory, patch)
     },
@@ -422,7 +502,7 @@ export function createServerSyncContext() {
       // Invalidate all provider queries so newly configured custom providers
       // appear immediately in the available provider list across all directories.
       queryClient.invalidateQueries({ queryKey: [null, "providers"] })
-      queryClient.invalidateQueries({ predicate: (query) => query.queryKey[1] === "providers" })
+      queryClient.invalidateQueries({ predicate: (query) => query.queryKey.at(-1) === "providers" })
     },
   }))
 

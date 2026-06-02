@@ -5,3 +5,4 @@ export { loadLocaleDict, normalizeLocale, type Locale } from "./context/language
 export { type DisplayBackend, type FatalRendererErrorLog, type Platform, PlatformProvider } from "./context/platform"
 export { ServerConnection } from "./context/server"
 export { handleNotificationClick } from "./utils/notification-click"
+export { decodeOrThrow, SidecarConfig } from "./context/server-sync"

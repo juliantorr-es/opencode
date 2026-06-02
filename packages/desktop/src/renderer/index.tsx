@@ -12,6 +12,8 @@ import {
   type Platform,
   PlatformProvider,
   ServerConnection,
+  SidecarConfig,
+  decodeOrThrow,
   useCommand,
 } from "@opencode-ai/app"
 import * as Sentry from "@sentry/solid"
@@ -325,7 +327,11 @@ render(() => {
   const [windowCount] = createResource(() => window.api.getWindowCount())
 
   // Fetch sidecar credentials (available immediately, before health check)
-  const [sidecar] = createResource(() => window.api.awaitInitialization(() => undefined))
+  const [sidecar] = createResource(() =>
+    window.api.awaitInitialization(() => undefined).then((data) =>
+      decodeOrThrow("sidecarInit", SidecarConfig, data),
+    ),
+  )
 
   const [defaultServer] = createResource(() =>
     platform.getDefaultServer?.().then((url) => {

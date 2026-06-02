@@ -25,57 +25,66 @@ async function generateCodeChallenge(verifier: string): Promise<string> {
 
 export function registerGithubIpcHandlers() {
   ipcMain.handle(IPC.handle.GITHUB_OAUTH_START, async () => {
-    const codeVerifier = generateCodeVerifier()
-    const codeChallenge = await generateCodeChallenge(codeVerifier)
-    const state = crypto.randomBytes(16).toString("hex")
-    const clientId = getGithubClientId()
-    const authorizeUrl = `https://github.com/login/oauth/authorize?client_id=${clientId}&redirect_uri=opencode://github-oauth&scope=repo,user&state=${state}&code_challenge=${codeChallenge}&code_challenge_method=S256`
-    pendingOAuth.set(state, { code_verifier: codeVerifier, state })
-    await shell.openExternal(authorizeUrl)
-    return state
+    return withIpcResult("github.oauth.start", async () => {
+      const codeVerifier = generateCodeVerifier()
+      const codeChallenge = await generateCodeChallenge(codeVerifier)
+      const state = crypto.randomBytes(16).toString("hex")
+      const clientId = getGithubClientId()
+      const authorizeUrl = `https://github.com/login/oauth/authorize?client_id=${clientId}&redirect_uri=opencode://github-oauth&scope=repo,user&state=${state}&code_challenge=${codeChallenge}&code_challenge_method=S256`
+      pendingOAuth.set(state, { code_verifier: codeVerifier, state })
+      await shell.openExternal(authorizeUrl)
+      return state
+    })
   })
 
   ipcMain.handle(IPC.handle.GITHUB_OAUTH_CALLBACK, async (_event, code: string, state: string) => {
-    const pkce = pendingOAuth.get(state)
-    if (!pkce) throw new Error("Invalid OAuth state")
-    pendingOAuth.delete(state)
-
-    const clientId = getGithubClientId()
-    const response = await net.fetch(GITHUB_TOKEN_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded", Accept: "application/json" },
-      body: new URLSearchParams({
-        client_id: clientId,
-        code,
-        redirect_uri: "opencode://github-oauth",
-        code_verifier: pkce.code_verifier,
-      }),
+    return withIpcResult("github.oauth.callback", async () => {
+      const pkce = pendingOAuth.get(state)
+      if (!pkce) throw new Error("Invalid OAuth state")
+      pendingOAuth.delete(state)
+      const clientId = getGithubClientId()
+      const response = await net.fetch(GITHUB_TOKEN_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded", Accept: "application/json" },
+        body: new URLSearchParams({
+          client_id: clientId,
+          code,
+          redirect_uri: "opencode://github-oauth",
+          code_verifier: pkce.code_verifier,
+        }),
+      })
+      const data: any = await response.json()
+      if (data.access_token) {
+        const encrypted = safeStorage.encryptString(data.access_token)
+        getStore("github-auth").set("token", encrypted.toString("base64"))
+      }
+      if (data.error) throw new Error(data.error_description ?? data.error)
     })
-    const data: any = await response.json()
-    if (data.access_token) {
-      const encrypted = safeStorage.encryptString(data.access_token)
-      getStore("github-auth").set("token", encrypted.toString("base64"))
-    }
-    if (data.error) throw new Error(data.error_description ?? data.error)
   })
 
   ipcMain.handle(IPC.handle.GITHUB_GET_TOKEN, async () => {
-    const raw = getStore("github-auth").get("token") as string | undefined
-    if (!raw) return null
-    try {
-      return safeStorage.decryptString(Buffer.from(raw, "base64"))
-    } catch {
-      return null
-    }
+    return withIpcResult("github.token.get", async () => {
+      const raw = getStore("github-auth").get("token") as string | undefined
+      if (!raw) return null
+      try {
+        return safeStorage.decryptString(Buffer.from(raw, "base64"))
+      } catch {
+        return null
+      }
+    })
   })
 
   ipcMain.handle(IPC.handle.GITHUB_SET_TOKEN, async (_event, token: string) => {
-    const encrypted = safeStorage.encryptString(token)
-    getStore("github-auth").set("token", encrypted.toString("base64"))
+    return withIpcResult("github.token.set", async () => {
+      const encrypted = safeStorage.encryptString(token)
+      getStore("github-auth").set("token", encrypted.toString("base64"))
+    })
   })
 
   ipcMain.handle(IPC.handle.GITHUB_CLEAR_TOKEN, async () => {
-    getStore("github-auth").delete("token")
+    return withIpcResult("github.token.clear", async () => {
+      getStore("github-auth").delete("token")
+    })
   })
 
   ipcMain.handle(IPC.handle.GITHUB_API_PROXY, async (_event, url: string, options?: { method?: string; headers?: Record<string, string>; body?: string }) => {

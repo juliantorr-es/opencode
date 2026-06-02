@@ -16,6 +16,8 @@ import { Todo } from "@/session/todo"
 import { MessageID, PartID, SessionID } from "@/session/schema"
 import { NamedError } from "@opencode-ai/core/util/error"
 import { ExportedSession, importSession } from "@/session/session-export"
+import { TraceSpans, endSpan } from "@/observability/traces"
+import { InstanceRef } from "@/effect/instance-ref"
 import { Cause, Effect, Option, Schema, Scope } from "effect"
 import * as Stream from "effect/Stream"
 import { HttpServerRequest, HttpServerResponse } from "effect/unstable/http"
@@ -168,7 +170,19 @@ export const sessionHandlers = HttpApiBuilder.group(InstanceHttpApi, "session", 
     })
 
     const create = Effect.fn("SessionHttpApi.create")(function* (ctx: { payload?: Session.CreateInput }) {
-      return yield* shareSvc.create(ctx.payload)
+      const instance = yield* InstanceRef
+      const directory = instance?.directory ?? "unknown"
+      const span = TraceSpans.sessionCreate(directory)
+      let result: Session.Info
+      let _error: unknown
+      try {
+        result = yield* shareSvc.create(ctx.payload)
+      } catch (e) {
+        _error = e
+      }
+      endSpan(span, _error)
+      if (_error !== undefined) throw _error
+      return result
     })
 
     const createRaw = Effect.fn("SessionHttpApi.createRaw")(function* (ctx: {

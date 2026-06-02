@@ -237,7 +237,9 @@ export const layer = Layer.effect(
             order === "asc" ? asc(SessionTable.id) : desc(SessionTable.id),
           )
 
-        const rows = input.limit === undefined ? (query as any).execute() : (query as any).limit(input.limit).execute()
+        const rows = yield* Effect.promise(() =>
+          input.limit === undefined ? (query as any).execute() : (query as any).limit(input.limit).execute(),
+        )
         return (direction === "previous" ? rows.toReversed() : rows).map((row: typeof SessionTable.$inferSelect) => fromRow(row))
       }),
       messages: Effect.fn("V2Session.messages")(function* (input) {
@@ -268,18 +270,21 @@ export const layer = Layer.effect(
           ? and(eq(SessionMessageTable.session_id, input.sessionID), boundary)
           : eq(SessionMessageTable.session_id, input.sessionID)
 
-        const rows = Database.use((db) => {
-          const query = db
-            .select()
-            .from(SessionMessageTable)
-            .where(where)
-            .orderBy(
-              order === "asc" ? asc(SessionMessageTable.time_created) : desc(SessionMessageTable.time_created),
-              order === "asc" ? asc(SessionMessageTable.id) : desc(SessionMessageTable.id),
-            )
-          const rows = input.limit === undefined ? query.execute() : query.limit(input.limit).execute()
-          return direction === "previous" ? rows.toReversed() : rows
-        })
+        const rows = yield* Effect.promise(() =>
+          Database.use(async (db) => {
+            const query = db
+              .select()
+              .from(SessionMessageTable)
+              .where(where)
+              .orderBy(
+                order === "asc" ? asc(SessionMessageTable.time_created) : desc(SessionMessageTable.time_created),
+                order === "asc" ? asc(SessionMessageTable.id) : desc(SessionMessageTable.id),
+              )
+            const rows =
+              input.limit === undefined ? await query.execute() : await query.limit(input.limit).execute()
+            return direction === "previous" ? rows.toReversed() : rows
+          }),
+        )
         return yield* Effect.forEach(rows, (row) => decode(row as any))
       }),
       context: Effect.fn("V2Session.context")(function* (sessionID) {

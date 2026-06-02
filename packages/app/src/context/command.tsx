@@ -317,7 +317,16 @@ export const { use: useCommand, provider: CommandProvider } = createSimpleContex
       const all: CommandOption[] = []
 
       for (const reg of store.registrations) {
-        for (const opt of reg.options()) {
+        if (typeof reg.options !== "function") {
+          console.error("[command] invalid registration — options is not a function", { key: reg.key, optionsType: typeof reg.options })
+          continue
+        }
+        const opts = reg.options()
+        if (!Array.isArray(opts)) {
+          console.error("[command] invalid registration — options() did not return array", { key: reg.key, returned: opts })
+          continue
+        }
+        for (const opt of opts) {
           if (seen.has(opt.id)) {
             if (import.meta.env.DEV && !warnedDuplicates.has(opt.id)) {
               warnedDuplicates.add(opt.id)
@@ -329,7 +338,6 @@ export const { use: useCommand, provider: CommandProvider } = createSimpleContex
           all.push(opt)
         }
       }
-
       return all
     })
 
@@ -451,11 +459,10 @@ export const { use: useCommand, provider: CommandProvider } = createSimpleContex
       const id = typeof key === "string" ? key : undefined
       const next = typeof key === "function" ? key : cb
       if (!next) return
-      const options = createMemo(next)
-      const entry: CommandRegistration = {
-        key: id,
-        options,
-      }
+      const options = createMemo(() => {
+        try { return next() } catch (_) { return [] as CommandOption[] }
+      })
+      const entry: CommandRegistration = { key: id, options }
       setStore("registrations", (arr) => upsertCommandRegistration(arr, entry))
       onCleanup(() => {
         setStore("registrations", (arr) => arr.filter((x) => x !== entry))

@@ -65,7 +65,9 @@ const SessionRoute = Object.assign(
 
 function UiI18nBridge(props: ParentProps) {
   const language = useLanguage()
-  return <I18nProvider value={{ locale: language.intl, t: language.t }}>{props.children}</I18nProvider>
+  const t = ((language as any)?.t ?? ((key: string) => key)) as (key: string, params?: any) => string
+  const locale = ((language as any)?.intl ?? (() => "en")) as () => string
+  return <I18nProvider value={{ locale, t }}>{props.children}</I18nProvider>
 }
 
 declare global {
@@ -267,17 +269,23 @@ function ConnectionGate(props: ParentProps<{ disableHealthCheck?: boolean }>) {
   )
 }
 
+/** useLanguage that returns undefined instead of throwing when provider isn't mounted */
+function useLanguageSafe() {
+  try { return useLanguage() } catch { return undefined }
+}
+
 function ConnectionError(props: { onRetry?: () => void; onServerSelected?: (key: ServerConnection.Key) => void }) {
-  const language = useLanguage()
+  const lang = useLanguageSafe()
+  const t = (lang as any)?.t ?? ((key: string) => key)
   const server = useServer()
   const others = () => server.list.filter((s) => ServerConnection.key(s) !== server.key)
   const name = createMemo(() => server.name || server.key)
   const serverToken = "\u0000server\u0000"
-  const unreachable = createMemo(() => language.t("app.server.unreachable", { server: serverToken }).split(serverToken))
+  const unreachable = createMemo(() => t("app.server.unreachable", { server: serverToken }).split(serverToken))
 
   const timer = setInterval(() => props.onRetry?.(), 1000)
-  onCleanup(() => clearInterval(timer))
 
+  onCleanup(() => clearInterval(timer))
   return (
     <div class="h-dvh w-screen flex flex-col items-center justify-center bg-background-base gap-6 p-6">
       <div class="flex flex-col items-center max-w-md text-center">
@@ -287,11 +295,11 @@ function ConnectionError(props: { onRetry?: () => void; onServerSelected?: (key:
           <span class="text-text-strong font-medium">{name()}</span>
           {unreachable()[1]}
         </p>
-        <p class="mt-1 text-12-regular text-text-weak">{language.t("app.server.retrying")}</p>
+        <p class="mt-1 text-12-regular text-text-weak">{t("app.server.retrying")}</p>
       </div>
       <Show when={others().length > 0}>
         <div class="flex flex-col gap-2 w-full max-w-sm">
-          <span class="text-12-regular text-text-base text-center">{language.t("app.server.otherServers")}</span>
+          <span class="text-12-regular text-text-base text-center">{t("app.server.otherServers")}</span>
           <div class="flex flex-col gap-1 bg-surface-base rounded-lg p-2">
             <For each={others()}>
               {(conn) => {

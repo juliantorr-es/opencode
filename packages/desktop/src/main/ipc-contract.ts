@@ -293,7 +293,15 @@ export function typedInvoke<C extends keyof IpcHandleContract & string>(
   channel: C,
   ...args: IpcHandleContract[C]["params"]
 ): IpcHandleContract[C]["returns"] {
-  return ipcRenderer.invoke(channel, ...(args as unknown[])) as unknown as IpcHandleContract[C]["returns"]
+  return ipcRenderer.invoke(channel, ...(args as unknown[])).then((result: IpcResult<unknown>) => {
+    if (result.ok) return result.value as IpcHandleContract[C]["returns"]
+
+    const error = new Error(result.error.message)
+    ;(error as Error & { code?: string; recoverable?: boolean; details?: unknown }).code = result.error.code
+    ;(error as Error & { code?: string; recoverable?: boolean; details?: unknown }).recoverable = result.error.recoverable
+    ;(error as Error & { code?: string; recoverable?: boolean; details?: unknown }).details = result.error.details
+    throw error
+  }) as IpcHandleContract[C]["returns"]
 }
 
 /**
@@ -455,4 +463,3 @@ export function pluginSend(channel: string, data?: unknown): void {
 export function pluginInvoke(channel: string, data?: unknown): Promise<unknown> {
   return typedInvoke(IPC.handle.PLUGIN_INVOKE, channel, data)
 }
-

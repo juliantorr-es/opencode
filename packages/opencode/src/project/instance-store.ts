@@ -13,6 +13,8 @@ import * as Project from "./project"
 import { InstanceRuntimeTag } from "./instance-runtime-contract"
 import { InstanceEnvironment } from "./instance-environment"
 
+import { TraceSpans, endSpan } from "@/observability/traces"
+
 export interface LoadInput {
   directory: string
   worktree?: string
@@ -73,23 +75,31 @@ export const layer = Layer.effect(
               )
         yield* health.set(ctx.directory, { status: "booting", updatedAt: Date.now() })
         const result = yield* bootstrap.run.pipe(Effect.provideService(InstanceRef, ctx))
-        yield* health.set(ctx.directory, {
-          status: result.status,
-          failedServices: result.failedServices,
-          updatedAt: Date.now(),
-        })
-        yield* Effect.sync(() =>
-          GlobalBus.emit("event", {
-            directory: ctx.directory,
-            project: ctx.project.id,
-            workspace: WorkspaceContext.workspaceID,
-            payload: result.status === "ready"
-              ? { type: "instance.loaded", properties: { directory: ctx.directory } }
-              : result.status === "degraded"
-                ? { type: "instance.degraded", properties: { directory: ctx.directory, failedServices: result.failedServices } }
-                : { type: "instance.failed", properties: { directory: ctx.directory, error: "All services failed to initialize" } },
-          }),
-        )
+        const span = TraceSpans.instanceBoot(ctx.directory)
+        let _spanError: unknown
+        try {
+          yield* health.set(ctx.directory, {
+            status: result.status,
+            failedServices: result.failedServices,
+            updatedAt: Date.now(),
+          })
+          yield* Effect.sync(() =>
+            GlobalBus.emit("event", {
+              directory: ctx.directory,
+              project: ctx.project.id,
+              workspace: WorkspaceContext.workspaceID,
+              payload: result.status === "ready"
+                ? { type: "instance.loaded", properties: { directory: ctx.directory } }
+                : result.status === "degraded"
+                  ? { type: "instance.degraded", properties: { directory: ctx.directory, failedServices: result.failedServices } }
+                  : { type: "instance.failed", properties: { directory: ctx.directory, error: "All services failed to initialize" } },
+            }),
+          )
+        } catch (e) {
+          _spanError = e
+        }
+        endSpan(span, _spanError)
+        if (_spanError !== undefined) throw _spanError
         return ctx
       }).pipe(Effect.withSpan("InstanceStore.boot"))
 

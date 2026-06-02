@@ -215,17 +215,24 @@ function HomeDesign() {
       if (result) addProject(result)
     }
 
+    function ensureReady(result: string | string[] | null) {
+      if (!result) return
+      const dirs = Array.isArray(result) ? result : [result]
+      void Promise.all(dirs.map((d) => sync.project.ensureReady(d)))
+    }
+
     if (platform.openDirectoryPickerDialog && server.isLocal()) {
       const result = await platform.openDirectoryPickerDialog?.({
         title: language.t("command.project.open"),
         multiple: true,
       })
       resolve(result)
+      ensureReady(result)
       return
     }
 
     dialog.show(
-      () => <DialogSelectDirectory multiple={true} onSelect={resolve} />,
+      () => <DialogSelectDirectory multiple={true} onSelect={(r) => { resolve(r); ensureReady(r) }} />,
       () => resolve(null),
     )
   }
@@ -824,15 +831,22 @@ function LegacyHome() {
       }
     }
 
+    function ensureReady(result: string | string[] | null) {
+      if (!result) return
+      const dirs = Array.isArray(result) ? result : [result]
+      void Promise.all(dirs.map((d) => sync.project.ensureReady(d)))
+    }
+
     if (platform.openDirectoryPickerDialog && server.isLocal()) {
       const result = await platform.openDirectoryPickerDialog?.({
         title: language.t("command.project.open"),
         multiple: true,
       })
       resolve(result)
+      ensureReady(result)
     } else {
       dialog.show(
-        () => <DialogSelectDirectory multiple={true} onSelect={resolve} />,
+        () => <DialogSelectDirectory multiple={true} onSelect={(r) => { resolve(r); ensureReady(r) }} />,
         () => resolve(null),
       )
     }

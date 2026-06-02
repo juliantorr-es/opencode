@@ -85,7 +85,7 @@ export const DialogCommandPalette: Component = () => {
       return command.options
     },
     key: (opt: CommandOption) => opt.id,
-    filterKeys: ["title", "description", "id", "category"],
+    filterKeys: ["title", "description", "id", "category", "slash"],
     groupBy: (opt: CommandOption) => opt.category ?? "Commands",
     sortGroupsBy: (a: { category: string }, b: { category: string }) => {
       const order = ["AI Actions", "Suggested", "FILES"]

@@ -593,8 +593,12 @@ export const layer: Layer.Layer<
 
     const list = Effect.fn("Session.list")(function* (input?: ListInput) {
       const ctx = yield* InstanceState.context
-      return Array.from(
-        listByProject({ projectID: ctx.project.id, experimentalWorkspaces: flags.experimentalWorkspaces, ...input }),
+      return yield* Effect.promise(() =>
+        listByProject({
+          projectID: ctx.project.id,
+          experimentalWorkspaces: flags.experimentalWorkspaces,
+          ...input,
+        }),
       )
     })
 
@@ -953,7 +957,7 @@ const cancelBackgroundJobs = Effect.fn("Session.cancelBackgroundJobs")(function*
   )
 })
 
-function* listByProject(
+async function listByProject(
   input: ListInput & {
     projectID: ProjectID
     experimentalWorkspaces: boolean
@@ -991,7 +995,7 @@ function* listByProject(
 
   const limit = input.limit ?? 100
 
-  const rows = Database.use((db) =>
+  const rows = await Database.use(async (db) =>
     db
       .select()
       .from(SessionTable)
@@ -1000,12 +1004,10 @@ function* listByProject(
       .limit(limit)
       .execute(),
   )
-  for (const row of rows) {
-    yield fromRow(row)
-  }
+  return rows.map(fromRow)
 }
 
-export function* listGlobal(input?: {
+export async function listGlobal(input?: {
   directory?: string
   roots?: boolean
   start?: number
@@ -1037,7 +1039,7 @@ export function* listGlobal(input?: {
 
   const limit = input?.limit ?? 100
 
-  const rows = Database.use((db) => {
+  const rows = await Database.use(async (db) => {
     const query =
       conditions.length > 0
         ? db
@@ -1052,7 +1054,7 @@ export function* listGlobal(input?: {
   const projects = new Map<string, ProjectInfo>()
 
   if (ids.length > 0) {
-    const items = Database.use((db) =>
+    const items = await Database.use(async (db) =>
       db
         .select({ id: ProjectTable.id, name: ProjectTable.name, worktree: ProjectTable.worktree })
         .from(ProjectTable)
@@ -1068,10 +1070,10 @@ export function* listGlobal(input?: {
     }
   }
 
-  for (const row of rows) {
+  return rows.map((row) => {
     const project = projects.get(row.project_id) ?? null
-    yield { ...fromRow(row), project }
-  }
+    return { ...fromRow(row), project }
+  })
 }
 
 export * as Session from "./session"

@@ -39,7 +39,8 @@ export class DesktopPluginLoader {
   private async ensureConfigs(): Promise<PluginConfigEntry[]> {
     if (this.configs.length === 0) {
       const result = (await window.api.getDesktopPluginConfig?.().catch(() => undefined)) ?? { configs: [] as PluginConfigEntry[], dropped: 0 }
-      this.configs = result.configs
+      const configs = (result as any).configs ?? (result as any).value?.configs ?? []
+      this.configs = configs
     }
     return this.configs
   }
