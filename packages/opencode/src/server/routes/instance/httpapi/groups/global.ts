@@ -41,8 +41,8 @@ export const GlobalPaths = {
   config: "/global/config",
   dispose: "/global/dispose",
   upgrade: "/global/upgrade",
+  diagnostics: "/global/diagnostics",
 } as const
-
 export const GlobalApi = HttpApi.make("global").add(
   HttpApiGroup.make("global")
     .add(
@@ -103,6 +103,11 @@ export const GlobalApi = HttpApi.make("global").add(
           summary: "Upgrade opencode",
           description: "Upgrade opencode to the specified version or latest if not specified.",
         }),
+      ),
+      HttpApiEndpoint.get("diagnostics", GlobalPaths.diagnostics, {
+        success: described(Schema.Unknown, "Startup diagnostics"),
+      }).annotateMerge(
+        OpenApi.annotations({ summary: "Startup diagnostics", description: "Projection and canonical table stats" }),
       ),
     )
     .annotateMerge(OpenApi.annotations({ title: "global", description: "Global server routes." })),

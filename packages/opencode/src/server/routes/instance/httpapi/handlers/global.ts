@@ -15,6 +15,7 @@ import { HttpApiBuilder } from "effect/unstable/httpapi"
 import * as Sse from "effect/unstable/encoding/Sse"
 import { RootHttpApi } from "../api"
 import { GlobalUpgradeInput } from "../groups/global"
+import { Database } from "@/storage/db"
 
 const log = Log.create({ service: "server" })
 
@@ -153,9 +154,25 @@ export const globalHandlers = HttpApiBuilder.group(RootHttpApi, "global", (handl
         return HttpServerResponse.jsonUnsafe({ success: false, error: "Invalid request body" }, { status: 400 })
       }
       const result = yield* upgrade({ payload: payload.payload })
-      return HttpServerResponse.jsonUnsafe(result.body, { status: result.status })
     })
 
+    const diagnostics = Effect.fn("GlobalHttpApi.diagnostics")(function* () {
+      const healthStore = yield* Effect.serviceOption(InstanceHealthStoreService)
+      let instanceCount = 0
+      let instanceHealthy = 0
+      if (Option.isSome(healthStore)) {
+        const all = yield* healthStore.value.getAll()
+        instanceCount = all.size
+        instanceHealthy = [...all.values()].filter(h => h.status === "ready").length
+      }
+      return {
+        classification: instanceCount === 0 ? "fresh_empty_db" : "renderer_hydration_suspect",
+        instanceCount,
+        instanceHealthy,
+        sidecarReady: true,
+        warnings: [] as { code: string; message: string }[],
+      }
+    })
     return handlers
       .handle("health", health)
       .handleRaw("event", event)
@@ -163,5 +180,6 @@ export const globalHandlers = HttpApiBuilder.group(RootHttpApi, "global", (handl
       .handle("configUpdate", configUpdate)
       .handle("dispose", dispose)
       .handleRaw("upgrade", upgradeRaw)
+      .handle("diagnostics", diagnostics)
   }),
 )

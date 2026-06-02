@@ -40,7 +40,12 @@ export default defineConfig({
       rollupOptions: {
         input: { index: "src/main/index.ts", sidecar: "src/main/sidecar.ts" },
       },
-      externalizeDeps: { include: [nodePtyPkg] },
+      // PGlite MUST remain externalized. Bundling it into app chunks breaks
+      // import.meta.url asset resolution for its WASM/data files (postgres.wasm,
+      // postgres.data). When bundled, PGlite's `new URL("./postgres.data",
+      // import.meta.url)` resolves relative to the output chunk directory instead
+      // of its node_modules package layout, causing ENOENT on sidecar startup.
+      externalizeDeps: { include: [nodePtyPkg, "@electric-sql/pglite"] },
     },
     plugins: [
       {
@@ -61,7 +66,7 @@ export default defineConfig({
         name: "opencode:copy-server-assets",
         async writeBundle() {
           for (const l of await fs.readdir(OPENCODE_SERVER_DIST)) {
-            if (!l.endsWith(".wasm")) continue
+            if (!l.endsWith(".wasm") && !l.endsWith(".data")) continue
             await fs.writeFile(`./out/main/chunks/${l}`, await fs.readFile(`${OPENCODE_SERVER_DIST}/${l}`))
           }
         },

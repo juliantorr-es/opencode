@@ -1,5 +1,5 @@
-import { PGlite } from "@electric-sql/pglite"
 import { Pool } from "pg"
+import { PGlite } from "@electric-sql/pglite"
 import { drizzle } from "drizzle-orm/pglite"
 import { drizzle as drizzlePg } from "drizzle-orm/node-postgres"
 import { migrate } from "drizzle-orm/node-postgres/migrator"
@@ -27,7 +27,6 @@ export interface InitOptions {
   connectionTimeoutMs?: number
   idleTimeoutMs?: number
 }
-
 export function init(connectionString: string, ssl?: boolean): PgClient
 export function init(opts: InitOptions): PgClient
 export function init(connectionStringOrOpts: string | InitOptions, ssl?: boolean): PgClient {
@@ -70,14 +69,21 @@ export function initFromPool(pool: PgPool): NodePgDatabase {
 export async function applyMigrations(db: PgClient): Promise<void> {
   const folder = new URL("../../migration-pg", import.meta.url).pathname
 
-  // Duck-type check: PGlite exposes exec() on its raw client
-  const client = (db as any).$client
-  if (typeof client.exec === "function") {
+  // Duck-type check: PGlite exposes exec/query on its raw client.
+  // With PGlite.create() + drizzle(), the wrapper's $client may differ.
+  // Check both the drizzle wrapper and the raw $client.
+  const rawClient = (db as any).$client ?? db
+  const client = rawClient &&
+    (typeof rawClient.exec === "function" || typeof rawClient.query === "function")
+      ? rawClient : undefined
+  if (client && typeof (client.exec ?? client.query) === "function") {
     // PGlite path: idempotent migration with tracking table
     const migrations = readMigrationFiles({ migrationsFolder: folder })
+    const execFn = (sql: string) =>
+      typeof client.exec === "function" ? client.exec(sql) : client.query(sql)
 
     // Ensure tracking table exists
-    await client.exec(
+    await execFn(
       `CREATE TABLE IF NOT EXISTS "__drizzle_migrations" (
         "hash" text PRIMARY KEY,
         "created_at" bigint
@@ -95,12 +101,10 @@ export async function applyMigrations(db: PgClient): Promise<void> {
       if (applied.has(migration.hash)) continue
       for (const sql of migration.sql) {
         try {
-          await client.exec(sql)
+          await execFn(sql)
         } catch (e: any) {
           const msg = e?.message ?? ""
-          // Skip idempotent DDL: relation/column/constraint/index already exists
           if (/already exists/.test(msg)) continue
-          // Skip idempotent DDL: does not exist (drop if not exists)
           if (/does not exist/.test(msg)) continue
           throw e
         }

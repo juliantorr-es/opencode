@@ -91,7 +91,8 @@ export const Client = Object.assign(
 
 export function close() {
   if (!Client.loaded()) return
-  ;(Client() as any).$client.close()
+  const db = Client() as any
+  db.$client?.close()
   Client.reset()
 }
 
