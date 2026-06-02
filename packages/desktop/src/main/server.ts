@@ -8,6 +8,7 @@ import { getUserShell, loadShellEnv } from "./shell-env"
 import { getStore } from "./store"
 import type { StorageMigrationProgress } from "../preload/types"
 import { sanitizeEnv } from "./env-blocklist"
+import { resolveDesktopAppDataPaths, ensureDesktopAppDataPaths, envForDesktopAppData } from "./app-data-paths"
 
 export type WslConfig = { enabled: boolean }
 
@@ -58,13 +59,16 @@ export function setWslConfig(config: WslConfig) {
 }
 
 export function preferAppEnv(userDataPath: string) {
+  const paths = resolveDesktopAppDataPaths(userDataPath)
+  ensureDesktopAppDataPaths(paths)
   const shell = process.platform === "win32" ? null : getUserShell()
+  const shellEnv = shell ? loadShellEnv(shell) : {}
   Object.assign(process.env, {
-    ...(shell ? loadShellEnv(shell) : null),
+    ...shellEnv,
+    ...envForDesktopAppData(paths),
+    OPENCODE_CLIENT: "desktop",
     OPENCODE_EXPERIMENTAL_ICON_DISCOVERY: "true",
     OPENCODE_EXPERIMENTAL_FILEWATCHER: "true",
-    OPENCODE_CLIENT: "desktop",
-    XDG_STATE_HOME: process.env.XDG_STATE_HOME ?? userDataPath,
   })
 }
 
@@ -77,7 +81,7 @@ export async function spawnLocalServer(
   const sidecar = join(dirname(fileURLToPath(import.meta.url)), "sidecar.js")
   const child = utilityProcess.fork(sidecar, [], {
     cwd: process.cwd(),
-    env: createSidecarEnv(),
+    env: createSidecarEnv(options.userDataPath),
     serviceName: SIDECAR_SERVICE_NAME,
     stdio: "pipe",
   })
@@ -263,9 +267,13 @@ export async function checkHealth(url: string, password?: string | null): Promis
   }
 }
 
-function createSidecarEnv(): Record<string, string> {
-  const env = sanitizeEnv(process.env)
-  delete env.DEBUG
+function createSidecarEnv(userDataPath: string): Record<string, string> {
+  const paths = resolveDesktopAppDataPaths(userDataPath)
+  const env = sanitizeEnv({
+    ...process.env,
+    ...envForDesktopAppData(paths),
+    OPENCODE_CLIENT: "desktop-sidecar",
+  })
   if (process.platform === "linux") delete env.LD_PRELOAD
   return env
 }

@@ -44,7 +44,15 @@ const fallbackPath = (file: string) =>
     ? path.join(Global.Path.data, file)
     : path.join(process.cwd(), ".opencode", file)
 
+function isDesktop() {
+  return process.env.OPENCODE_CLIENT === "desktop" || process.env.OPENCODE_CLIENT === "desktop-sidecar"
+}
+
 export const getPath = (flags?: Pick<DatabaseFlags, "disableChannelDb">) => {
+  if (isDesktop()) {
+    const stateHome = process.env.OPENCODE_STATE_HOME || process.env.XDG_STATE_HOME
+    if (stateHome) return path.join(stateHome, "pglite")
+  }
   if (Flag.OPENCODE_DB) {
     if (Flag.OPENCODE_DB === ":memory:") return Flag.OPENCODE_DB
     if (path.isAbsolute(Flag.OPENCODE_DB)) return Flag.OPENCODE_DB
@@ -78,6 +86,17 @@ export const Client = Object.assign(
 
     client = db
     loaded = true
+
+    // Guard: desktop mode must not use repo-relative paths for mutable state
+    if (isDesktop() && dbPath) {
+      const repoRoot = process.cwd()
+      if (!dbPath.startsWith("/") || dbPath.startsWith(repoRoot)) {
+        console.error(
+          `[desktop-path-guard] Mutable DB path must be under userData, got: ${dbPath}. ` +
+          `Set OPENCODE_STATE_HOME to a directory under userData.`
+        )
+      }
+    }
     return db
   },
   {
