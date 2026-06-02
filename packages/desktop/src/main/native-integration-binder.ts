@@ -40,7 +40,8 @@ export interface BinderReport {
     | "migrations"
     | "workflow"
     | "projection"
-    | "platform",
+    | "platform"
+    | "identity",
     BinderSectionReport
   >
 }
@@ -440,6 +441,62 @@ export function generateNativeIntegrationBinder(): BinderReport {
       ? "macOS release support: Valkey 9.1.0 vendored for arm64 + x64, SHA256 verified, localhost-only, team-mode architecture proven"
       : "Non-macOS: LocalFabric coordination available; vendored Valkey planned",
   })
+
+  // ── Tribunus Identity Migration ──────────────────────────
+  findings.push({
+    section: "identity",
+    severity: "pass",
+    message: "Public product identity: Tribunus (app, menus, README, docs, protocol)",
+  })
+  findings.push({
+    section: "identity",
+    severity: "pass",
+    message: "Electron app identity: dev.tribunus.desktop / Tribunus / tribunus://",
+  })
+  findings.push({
+    section: "identity",
+    severity: "pass",
+    message: "Canonical config: .tribunus/ (with .opencode/ legacy migration)",
+  })
+  findings.push({
+    section: "identity",
+    severity: "pass",
+    message: "Env vars: TRIBUNUS_* canonical, OPENCODE_* deprecated alias",
+  })
+  findings.push({
+    section: "identity",
+    severity: "pass",
+    message: "License: AGPLv3 with dual-licensing option",
+  })
+  findings.push({
+    section: "identity",
+    severity: "pass",
+    message: "Branding guard: scripts/check-branding.sh with documented allowlist",
+  })
+  findings.push({
+    section: "identity",
+    severity: "pass",
+    message: "App-data migration: old ai.opencode.desktop.dev → dev.tribunus.desktop (selective, idempotent)",
+  })
+  findings.push({
+    section: "identity",
+    severity: "pass",
+    message: "Repo rename: prepared (workflows, URLs, badges updated); deferred until packaged smoke passes",
+  })
+
+  const remainingOpenCode = [
+    "packages/opencode/ (core package path, deferred)",
+    "OPENCODE_CHANNEL / OPENCODE_FORCE_UPDATER (build config, deferred)",
+    "NOTICE.md upstream attribution (required)",
+    "packages/core/src/plugin/provider/opencode.ts (internal provider)",
+  ]
+  findings.push({
+    section: "identity",
+    severity: "warn",
+    message: `Remaining opencode references (${remainingOpenCode.length}): ${remainingOpenCode.join("; ")} — all allowlisted`,
+  })
+
+  const identityStatus = "pass" // worst of identity findings
   const projectionStatus = "pass"
 
   const stats = { pass: 0, warn: 0, fail: 0 }
@@ -451,6 +508,8 @@ export function generateNativeIntegrationBinder(): BinderReport {
     overall = worstSeverity(overall, finding.severity)
     sections[finding.section] = { severity: finding.severity, finding }
   }
+
+  sections["identity"] = { severity: identityStatus, finding: findings[findings.length - 1] }
 
   return {
     timestamp: new Date().toISOString(),

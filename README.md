@@ -83,12 +83,12 @@ curl -fsSL https://tribunus.ai/install | bash
 npm i -g tribunus-ai@latest        # or bun/pnpm/yarn
 scoop install tribunus             # Windows
 choco install tribunus             # Windows
-brew install anomalyco/tap/tribunus # macOS and Linux (recommended, always up to date)
+brew install tribunus-dev/tap/tribunus # macOS and Linux (recommended, always up to date)
 brew install tribunus              # macOS and Linux (official brew formula, updated less)
 sudo pacman -S tribunus            # Arch Linux (Stable)
 paru -S tribunus-bin               # Arch Linux (Latest from AUR)
 mise use -g tribunus               # Any OS
-nix run nixpkgs#tribunus           # or github:anomalyco/opencode for latest dev branch
+nix run nixpkgs#tribunus           # or github:tribunus-dev/tribunus for latest dev branch
 ```
 
 > [!TIP]
@@ -96,7 +96,7 @@ nix run nixpkgs#tribunus           # or github:anomalyco/opencode for latest dev
 
 ### Desktop App (BETA)
 
-Tribunus is also available as a desktop application. Download directly from the [releases page](https://github.com/anomalyco/opencode/releases) or [tribunus.ai/download](https://tribunus.ai/download).
+Tribunus is also available as a desktop application. Download directly from the [releases page](https://github.com/tribunus-dev/tribunus/releases) or [tribunus.ai/download](https://tribunus.ai/download).
 
 | Platform              | Download                           |
 | --------------------- | ---------------------------------- |

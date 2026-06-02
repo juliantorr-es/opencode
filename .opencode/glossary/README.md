@@ -2,7 +2,7 @@
 
 Use this folder for locale-specific translation guidance that supplements `.opencode/agent/translator.md`.
 
-The global glossary in `translator.md` remains the source of truth for shared do-not-translate terms (commands, code, paths, product names, etc.). These locale files capture community learnings about phrasing and terminology preferences.
+Use this folder for locale-specific translation guidance that supplements `.opencode/agent/translator.md`.
 
 ## File Naming
 
@@ -33,7 +33,7 @@ Prefer guidance that is:
 
 ## Sources
 
-- PR #12345: https://github.com/anomalyco/opencode/pull/12345
+- PR #12345: https://github.com/tribunus-dev/tribunus/pull/12345
 
 ## Do Not Translate (Locale Additions)
 

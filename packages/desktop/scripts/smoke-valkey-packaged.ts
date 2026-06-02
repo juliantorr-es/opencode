@@ -6,7 +6,8 @@
  */
 
 import { existsSync, readFileSync } from "node:fs";
-import { join } from "node:path";
+import { join, basename } from "node:path";
+import * as os from "node:os";
 import { spawn, execSync, type ChildProcess } from "node:child_process";
 import { createHash } from "node:crypto";
 import { createConnection } from "node:net";
@@ -100,12 +101,58 @@ try {
 	fail(`Version check failed: ${err instanceof Error ? err.message : String(err)}`);
 }
 
+
+// ── Tribunus Identity Verification ────────────────────
+
+// Check app bundle name
+const appName = basename(appPath, ".app")
+if (appName === "Tribunus") {
+  pass(`App name: ${appName} (correct)`)
+} else if (appName === "OpenCode") {
+  fail(`App name is still "OpenCode" — brand migration incomplete`)
+} else {
+  console.log(`  ⚠️  App name: ${appName} (expected Tribunus)`)
+}
+
+// Check Info.plist for bundle ID
+const plistPath = join(appPath, "Contents", "Info.plist")
+if (existsSync(plistPath)) {
+  try {
+    const plist = execSync(`plutil -p "${plistPath}"`, { encoding: "utf-8", timeout: 5000 })
+    if (plist.includes("dev.tribunus.desktop")) {
+      pass("Bundle ID: dev.tribunus.desktop (correct)")
+    } else if (plist.includes("opencode")) {
+      fail("Bundle ID still contains opencode")
+    } else {
+      console.log(`  ⚠️  Bundle ID not recognized`)
+    }
+    if (plist.includes("Tribunus")) {
+      pass("Display name: Tribunus (correct)")
+    }
+    if (plist.includes("tribunus://")) {
+      pass("Protocol scheme: tribunus:// (correct)")
+    } else if (plist.includes("opencode://")) {
+      fail("Protocol scheme still opencode://")
+    }
+  } catch {
+    console.log(`  ⚠️  Could not read Info.plist`)
+  }
+}
+
+// Check expected config dir
+const expectedTribunus = join(os.homedir(), ".tribunus")
+if (existsSync(expectedTribunus)) {
+  pass(`Config dir: ${expectedTribunus}`)
+} else {
+  console.log(`  ⚠️  .tribunus not found (may not exist until first launch)`)
+}
 // ── PING/PONG test ───────────────────────────────────────
 
 console.log(`\n  Starting Valkey for live test...`);
 
 const port = 63800 + Math.floor(Math.random() * 100);
 let valkeyProcess: ChildProcess | undefined;
+let valkeyReady = false;
 
 try {
 	valkeyProcess = spawn(binaryPath, [
@@ -163,6 +210,7 @@ try {
 
 	if (pong === "+PONG") {
 		pass("PING → PONG");
+		valkeyReady = true;
 	} else {
 		fail(`PING response: ${pong}`);
 	}
@@ -187,10 +235,14 @@ try {
 
 // ── Summary ──────────────────────────────────────────────
 
-console.log(`\n${passes} passed, ${failures} failed\n`);
+console.log(`\n${passes} passed, ${failures} failed`);
+
+console.log("\nIdentity: Tribunus")
+console.log(`Platform: ${platform}-${arch}`)
+console.log(`Valkey: ${valkeyReady ? "operational" : "not available"}`)
 
 if (failures > 0) {
 	process.exit(1);
 }
 
-console.log("Smoke test complete — Valkey is release-ready for this platform.\n");
+console.log("\nSmoke test complete — Tribunus identity + Valkey verified.\n");

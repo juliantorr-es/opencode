@@ -7,7 +7,7 @@ set to "local-valkey" or "remote-valkey".
 
 ## Default Mode
 
-The default local desktop mode does NOT require Valkey. The app uses LocalFabric
+The default local desktop mode does NOT require Valkey. Tribunus uses LocalFabric
 by default, which provides in-memory coordination without any external process.
 
 ## macOS Release Support
@@ -43,7 +43,7 @@ Apple Silicon (arm64) and Intel (x64). Each platform directory includes:
 - No persistence by default (`--save "" --appendonly no`)
 - Runtime data stored under `appData/state/valkey`
 - Logs stored under `appData/logs`
-- Exits cleanly when the app exits
+- Exits cleanly when Tribunus exits
 - SHA256 verified at startup in packaged mode
 
 ## Future: Team Mode

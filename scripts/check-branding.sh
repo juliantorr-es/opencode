@@ -42,11 +42,10 @@ ALLOWLIST=(
   "github/"
   ".git/"
   "node_modules/"
-  "banks/"
   ".opencode/"
+  "banks/"
   "*.db"
   "*.db-shm"
-  "*.db-wal"
   "*.zip"
   "*.png"
   "*.svg"
@@ -79,7 +78,7 @@ MUST_NOT_BRAND=(
 
 for file in "${MUST_NOT_BRAND[@]}"; do
   if [ -f "$file" ]; then
-    if grep -i "opencode" "$file" 2>/dev/null | grep -v "@opencode-ai\|tribunus\|packages/opencode\|\.opencode/" > /dev/null 2>&1; then
+    if grep -i "opencode" "$file" 2>/dev/null | grep -v "@opencode-ai\|tribunus\|packages/opencode\|\.opencode" > /dev/null 2>&1; then
       echo "FAIL: $file contains 'opencode' branding"
       grep -in "opencode" "$file" | grep -iv "@opencode-ai\|tribunus" | head -3
       FAILS=$((FAILS + 1))

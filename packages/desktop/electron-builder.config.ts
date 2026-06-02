@@ -105,7 +105,7 @@ function getConfig() {
         appId: "dev.tribunus.desktop.beta",
         productName: "Tribunus Beta",
         protocols: { name: "Tribunus Beta", schemes: ["tribunus"] },
-        publish: { provider: "github", owner: "anomalyco", repo: "opencode-beta", channel: "latest" },
+        publish: { provider: "github", owner: "tribunus-dev", repo: "tribunus-beta", channel: "latest" },
         rpm: { packageName: "tribunus-beta" },
       }
     }
@@ -115,7 +115,7 @@ function getConfig() {
         appId: "dev.tribunus.desktop",
         productName: "Tribunus",
         protocols: { name: "Tribunus", schemes: ["tribunus"] },
-        publish: { provider: "github", owner: "anomalyco", repo: "opencode", channel: "latest" },
+        publish: { provider: "github", owner: "tribunus-dev", repo: "tribunus", channel: "latest" },
         rpm: { packageName: "tribunus" },
       }
     }

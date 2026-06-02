@@ -22,24 +22,24 @@ export const files = Effect.fn("ConfigPaths.projectFiles")(function* (
 
 export const directories = Effect.fn("ConfigPaths.directories")(function* (directory: string, worktree?: string) {
   const afs = yield* AppFileSystem.Service
+  const configDirEnv = process.env.TRIBUNUS_CONFIG_DIR ?? Flag.OPENCODE_CONFIG_DIR
   return unique([
     Global.Path.config,
     ...(!Flag.OPENCODE_DISABLE_PROJECT_CONFIG
       ? yield* afs.up({
-          targets: [".opencode"],
+          targets: [".tribunus", ".opencode"],
           start: directory,
           stop: worktree,
         })
       : []),
     ...(yield* afs.up({
-      targets: [".opencode"],
+      targets: [".tribunus", ".opencode"],
       start: Global.Path.home,
       stop: Global.Path.home,
     })),
-    ...(Flag.OPENCODE_CONFIG_DIR ? [Flag.OPENCODE_CONFIG_DIR] : []),
+    ...(configDirEnv ? [configDirEnv] : []),
   ])
 })
-
 export function fileInDirectory(dir: string, name: string) {
   return [path.join(dir, `${name}.json`), path.join(dir, `${name}.jsonc`)]
 }

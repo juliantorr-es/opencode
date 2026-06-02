@@ -2,7 +2,7 @@
 
 ## Sources
 
-- PR #9947: https://github.com/anomalyco/opencode/pull/9947
+- PR #9947: https://github.com/tribunus-dev/tribunus/pull/9947
 
 ## Do Not Translate (Locale Additions)
 
