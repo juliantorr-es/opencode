@@ -174,11 +174,11 @@ export function createChildStoreManager(input: {
           const initialMeta = meta[0].value
           const initialIcon = icon[0].value
 
-          const child = createStore<State>({
+          const child: [Store<State>, SetStoreFunction<State>] = createStore<State>({
             project: "",
             projectMeta: initialMeta,
             icon: initialIcon,
-            get provider_ready() {
+            get provider_ready(): boolean {
               return !providerQuery.isLoading
             },
             get provider() {
@@ -187,7 +187,7 @@ export function createChildStoreManager(input: {
               if (providerQuery.data?.all.size === 0 && input.global.provider.all.size > 0) return input.global.provider
               return providerQuery.data ?? EMPTY
             },
-            config: {},
+            config: {} as any,
             get path() {
               if (pathQuery.isLoading || !pathQuery.data)
                 return { state: "", config: "", worktree: "", directory: "", home: "" }
@@ -210,13 +210,13 @@ export function createChildStoreManager(input: {
             get mcp_ready() {
               return !mcpQuery.isLoading
             },
-            get mcp() {
+            get mcp(): any {
               return mcpQuery.isLoading ? {} : (mcpQuery.data ?? {})
             },
             get lsp_ready() {
               return !lspQuery.isLoading
             },
-            get lsp() {
+            get lsp(): any {
               return lspQuery.isLoading ? [] : (lspQuery.data ?? [])
             },
             vcs: vcsStore.value,
@@ -230,7 +230,7 @@ export function createChildStoreManager(input: {
 
           // Project-scoped queries are gated: they only fire once the child store
           // status is at least "partial", i.e. the per-directory backend is booted.
-          const [pathQuery, mcpQuery, lspQuery, providerQuery] = useQueries(() => ({
+          const [pathQuery, mcpQuery, lspQuery, providerQuery]: any[] = useQueries(() => ({
             queries: [
               { ...input.queryOptions.path(key), enabled: child[0].status !== "loading" },
               { ...input.queryOptions.mcp(key), enabled: child[0].status !== "loading" },
@@ -250,7 +250,7 @@ export function createChildStoreManager(input: {
           onPersistedInit(vcs[2], () => {
             const cached = vcsStore.value
             if (!cached?.branch) return
-            child[1]("vcs", (value) => value ?? cached)
+            child[1]("vcs", (value: any) => value ?? cached)
           })
 
           onPersistedInit(meta[2], () => {

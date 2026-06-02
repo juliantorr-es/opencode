@@ -1,7 +1,8 @@
 # Valkey Coordination Sidecar
 
-Valkey is an optional coordination sidecar used for live agent coordination
-in team/distributed mode. It is only used when the coordination backend is
+Valkey is the optional coordination sidecar for live multi-agent orchestration.
+It powers realtime agent status, tool scheduling, backpressure, cache fanout, and
+the task board live overlay. It is only used when the coordination backend is
 set to "local-valkey" or "remote-valkey".
 
 ## Default Mode
@@ -9,17 +10,53 @@ set to "local-valkey" or "remote-valkey".
 The default local desktop mode does NOT require Valkey. The app uses LocalFabric
 by default, which provides in-memory coordination without any external process.
 
-## Binary
+## macOS Release Support
 
-The `darwin-arm64` binary is built from Valkey 9.1.0 source:
-- Source: https://github.com/valkey-io/valkey
-- License: BSD-3-Clause (see darwin-arm64/COPYING)
-- Build provenance: darwin-arm64/VALKEY_BUILD.json
+macOS is fully supported with vendored Valkey 9.1.0 binaries for both
+Apple Silicon (arm64) and Intel (x64). Each platform directory includes:
+- `bin/valkey-server` — the binary
+- `COPYING` — BSD-3-Clause license
+- `VALKEY_BUILD.json` — build provenance (source, compiler, flags)
+- `SHA256SUMS` — cryptographic hash for integrity verification
 
-## Platform Support
+## Binary Provenance
 
-Only darwin-arm64 is currently vendored. Other platforms will be added
-as the Valkey coordination feature matures.
+- Source: https://github.com/valkey-io/valkey (tag 9.1.0)
+- License: BSD-3-Clause
+- Build: Clang on macOS, optimized for the target architecture
+- Verification: SHA256SUMS in each platform directory; verified at runtime in packaged mode
+
+## Platform Matrix
+
+| Platform        | Status       | Binary         | SHA256 Verified | Notes |
+|-----------------|-------------|----------------|-----------------|-------|
+| darwin-arm64    | ✅ Vendored  | valkey-server 9.1.0 | ✅ | Built from source, BSD-3-Clause |
+| darwin-x64      | ✅ Vendored  | valkey-server 9.1.0 | ✅ | Cross-compiled from arm64, BSD-3-Clause |
+| linux-x64       | 🔮 Planned  | —              | — | Can be built from source during release packaging |
+| linux-arm64     | 🔮 Planned  | —              | — | Can be built from source during release packaging |
+| win32-x64       | ❌ Unsupported | —             | — | Valkey is Unix-first. Windows uses remote-valkey or LocalFabric |
+
+## Runtime Behavior
+
+- Binds 127.0.0.1 only — no external network exposure
+- Uses random local port
+- No persistence by default (`--save "" --appendonly no`)
+- Runtime data stored under `appData/state/valkey`
+- Logs stored under `appData/logs`
+- Exits cleanly when the app exits
+- SHA256 verified at startup in packaged mode
+
+## Future: Team Mode
+
+The vendored Valkey binaries are the foundation for future team collaboration features:
+- Shared coordination across LAN/VPN
+- Senior sandbox grants
+- Shared repo claims
+- Peer identity
+- Signed approvals
+- Multi-user task board
+
+Networked team mode and remote-Valkey are planned post-v1.
 
 ## License
 
@@ -28,20 +65,3 @@ The full license text is preserved in each platform directory.
 
 Valkey is a Redis-compatible fork that retained the BSD license after
 Redis changed licensing in 2024.
-
-## Platform Matrix
-
-| Platform        | Status      | Binary    | Notes |
-|-----------------|-------------|-----------|-------|
-| darwin-arm64    | ✅ Vendored  | valkey-server 9.1.0 | Built from source, BSD-3-Clause |
-| darwin-x64      | ✅ Vendored  | valkey-server 9.1.0 | Cross-compiled from arm64, BSD-3-Clause |
-| linux-x64       | ❌ Not built | — | Can be built from source during release packaging |
-| linux-arm64     | ❌ Not built | — | Can be built from source during release packaging |
-| win32-x64       | ❌ Not supported | — | Valkey is Unix-first. Windows needs WSL, remote-Valkey-only, or alternative |
-
-## Windows Strategy
-
-Valkey/Redis-style servers are Unix-first. On Windows:
-- **Local dev**: Use LocalFabric (default, no Valkey needed)
-- **Team mode**: Connect to a remote Valkey instance (remote-valkey backend)
-- **Future**: Evaluate WSL-based local Valkey or a Windows-compatible coordination alternative

@@ -180,7 +180,7 @@ export default function Layout(props: ParentProps) {
   })
 
   const theme = useTheme()
-  const activation = createProjectActivation({
+  const activation2 = createProjectActivation({
     openProjectLocal: (directory) => layout.projects.open(directory),
     touchProject: (directory) => server.projects.touch(directory),
     ensureReady: (directory) => serverSync.project.ensureReady(directory),

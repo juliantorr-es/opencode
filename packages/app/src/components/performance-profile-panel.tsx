@@ -70,7 +70,7 @@ export function PerformanceProfilePanel(props: { data?: ProfileUIData }) {
             {["conservative", "balanced", "aggressive"].map(m => (
               <button
                 class={`px-2 py-0.5 text-11-regular rounded ${mode() === m ? "bg-accent text-accent-contrast" : "bg-surface-raised text-text-weak"}`}
-                onClick={() => setMode(m)}
+                onClick={() => setMode(m as any)}
               >
                 {m}
               </button>

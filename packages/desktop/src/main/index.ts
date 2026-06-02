@@ -194,17 +194,19 @@ const main = Effect.gen(function* () {
 
   // ── Valkey Sidecar ──────────────────────────────────────
   const valkeyEnabled = process.env.OPENCODE_COORDINATION_BACKEND === "local-valkey" || process.env.OPENCODE_COORDINATION_BACKEND === "remote-valkey"
-  let valkeySupervisor: ReturnType<typeof createValkeySupervisor> | undefined
+  let valkeySupervisor: ReturnType<typeof import("./valkey-supervisor").createValkeySupervisor> | undefined
   if (valkeyEnabled) {
-    const { createValkeySupervisor } = await import("./valkey-supervisor")
-    valkeySupervisor = createValkeySupervisor(electronPlatformPaths.getPath("userData"))
-    const valkeyStatus = await valkeySupervisor.start()
-    if (valkeyStatus.ready) {
-      process.env.OPENCODE_VALKEY_URL = valkeyStatus.url!
-      log.info("Valkey sidecar started", { url: valkeyStatus.url, pid: valkeyStatus.pid })
-    } else {
-      log.warn("Valkey failed to start — falling back to local coordination", { error: valkeyStatus.lastError })
-    }
+    void (async () => {
+      const { createValkeySupervisor } = await import("./valkey-supervisor")
+      valkeySupervisor = createValkeySupervisor(electronPlatformPaths.getPath("userData"))
+      const valkeyStatus = await valkeySupervisor.start()
+      if (valkeyStatus.ready) {
+        process.env.OPENCODE_VALKEY_URL = valkeyStatus.url!
+        logger.info("Valkey sidecar started", { url: valkeyStatus.url, pid: valkeyStatus.pid })
+      } else {
+        logger.warn("Valkey failed to start — falling back to local coordination", { error: valkeyStatus.lastError })
+      }
+    })()
   }
 
   app.on("second-instance", (_event: Event, argv: string[]) => {

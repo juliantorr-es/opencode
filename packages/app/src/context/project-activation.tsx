@@ -1,6 +1,12 @@
 import { createContext, createSignal, useContext, type ParentProps } from "solid-js"
 import { decodeOrThrow, Diagnostics } from "./server-sync"
-import * as Sentry from "@sentry/electron/renderer"
+// Sentry import: @sentry/electron/renderer may not be available in all build contexts
+let Sentry: any
+try {
+  Sentry = require("@sentry/electron/renderer")
+} catch {
+  Sentry = { setContext: () => {} }
+}
 import { createEventBus } from "@solid-primitives/event-bus"
 
 // ── Activation Event Bus ───────────────────────────────
@@ -166,13 +172,13 @@ function broadcastEvent(prev: ActivationState, next: ActivationState, event: Act
   switch (next.name) {
     case "opening_project":
     case "booting_instance":
-      activationEvents.emit("project:activation-started", { directory: next.directory })
+      ;(activationEvents as any).emit("project:activation-started", { directory: next.directory })
       break
     case "project_ready":
-      activationEvents.emit("project:activation-ready", { directory: next.directory })
+      ;(activationEvents as any).emit("project:activation-ready", { directory: next.directory })
       break
     case "failed":
-      activationEvents.emit("project:activation-failed", { directory: (next as any).directory, error: (next as any).error })
+      ;(activationEvents as any).emit("project:activation-failed", { directory: (next as any).directory, error: (next as any).error })
       break
   }
 }
@@ -309,7 +315,7 @@ export function startDiagnosticsPolling(fetchFn: () => Promise<any>) {
   diagnosticsPollTimer = setInterval(async () => {
     try {
       const diag = await fetchFn()
-      activationEvents.emit("diagnostics:updated", { classification: diag.classification })
+      ;(activationEvents as any).emit("diagnostics:updated", { classification: diag.classification })
     } catch {}
   }, 30000) // every 30 seconds
 }

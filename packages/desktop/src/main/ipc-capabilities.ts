@@ -23,7 +23,7 @@ export function getCapabilities(): DesktopCapabilities {
 }
 
 export function registerCapabilitiesIpcHandlers() {
-  ipcMain.handle(IPC.handle.GET_CAPABILITIES, () => {
-    return withIpcResult("capabilities.get", () => getCapabilities())
+  ipcMain.handle(IPC.handle.GET_CAPABILITIES, async () => {
+    return withIpcResult("capabilities.get", async () => getCapabilities())
   })
 }

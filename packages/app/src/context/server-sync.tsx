@@ -114,12 +114,12 @@ export const Diagnostics = Schema.Struct({
 })
 
 export function decodeOrThrow<T>(label: string, schema: Schema.Schema<T>, value: unknown): T {
-  const result = Schema.decodeUnknownSync(schema)(value)
+  const result = Schema.decodeUnknownSync(schema as any)(value)
   if (result._tag === "Left") {
-    console.error(`[ipc-decode] ${label} failed`, { errors: result.left })
+    console.error(`[ipc-decode] ${label} failed`, { errors: (result as any).left })
     throw new Error(`${label} decode failed`)
   }
-  return result.right
+  return (result as any).right
 }
 export function createServerSyncContext() {
   const serverSDK = useServerSDK()
@@ -403,7 +403,7 @@ export function createServerSyncContext() {
         store: child[0],
         setStore: child[1],
         vcsCache: cache,
-        loadSessions: loadSessionsBootstrapped,
+        loadSessions: (dir: string) => { void loadSessionsBootstrapped(dir) },
         translate: language.t,
         queryClient,
       })

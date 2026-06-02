@@ -136,7 +136,7 @@ export const SidebarPanel = (panelProps: SidebarPanelProps) => {
         fallback={
           <>
             <Show when={activation.state().name === "provider_setup_required"}>
-              <Dialog.Root open={true}>
+              <Dialog open={true}>
                 <Dialog.Content>
                   <Dialog.Title>Provider setup required</Dialog.Title>
                   <Dialog.Description>
@@ -145,13 +145,13 @@ export const SidebarPanel = (panelProps: SidebarPanelProps) => {
                   </Dialog.Description>
                   <div class="flex gap-2 mt-4">
                     <Button onClick={panelProps.openSettings}>Open Settings</Button>
-                    <Button variant="outline" onClick={() => activation.send({ type: "RETRY" })}>Retry</Button>
+                    <Button variant={"outline" as any} onClick={() => activation.send({ type: "RETRY" })}>Retry</Button>
                   </div>
                 </Dialog.Content>
-              </Dialog.Root>
+              </Dialog>
             </Show>
             <Show when={activation.state().name === "failed"}>
-              <Dialog.Root open={true}>
+              <Dialog open={true}>
                 <Dialog.Content>
                   <Dialog.Title>Project failed to load</Dialog.Title>
                   <Dialog.Description>
@@ -159,12 +159,12 @@ export const SidebarPanel = (panelProps: SidebarPanelProps) => {
                   </Dialog.Description>
                   <div class="flex gap-2 mt-4">
                     <Button onClick={() => activation.send({ type: "RETRY" })}>Retry</Button>
-                    <Button variant="outline" onClick={() => {
+                    <Button variant={"outline" as any} onClick={() => {
                       void navigator.clipboard.writeText(JSON.stringify(activation.diagnostics(), null, 2))
                     }}>Copy Diagnostics</Button>
                   </div>
                 </Dialog.Content>
-              </Dialog.Root>
+              </Dialog>
             </Show>
             <Show when={empty()}>
               <div class="flex flex-col items-center justify-center h-full gap-4 p-6">
