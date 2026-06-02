@@ -78,16 +78,16 @@ export const ensureCoordinationTables = Effect.fn("Coordination.ensureCoordinati
         status TEXT NOT NULL,
         result TEXT,
         error TEXT,
-        created_at INTEGER NOT NULL,
-        expires_at INTEGER,
-        released_at INTEGER
+        created_at BIGINT NOT NULL,
+        expires_at BIGINT,
+        released_at BIGINT
       )`,
     ),
   )
   // Migrate existing tables: add expires_at for coordination_claim TTL support
   try {
     yield* adapter.query((db) =>
-      db.run(`ALTER TABLE coordination_claim ADD COLUMN expires_at INTEGER`),
+      db.run(`ALTER TABLE coordination_claim ADD COLUMN expires_at BIGINT`),
     )
   } catch (_) {
     // Column already exists — silently ignore
@@ -95,7 +95,7 @@ export const ensureCoordinationTables = Effect.fn("Coordination.ensureCoordinati
   // Migrate existing tables: add expires_at for coordination_reservation TTL support
   try {
     yield* adapter.query((db) =>
-      db.run(`ALTER TABLE coordination_reservation ADD COLUMN expires_at INTEGER`),
+      db.run(`ALTER TABLE coordination_reservation ADD COLUMN expires_at BIGINT`),
     )
   } catch (_) {
     // Column already exists — silently ignore
@@ -115,8 +115,8 @@ export const ensureCoordinationTables = Effect.fn("Coordination.ensureCoordinati
         task_id TEXT NOT NULL,
         session_id TEXT NOT NULL,
         status TEXT NOT NULL,
-        created_at INTEGER NOT NULL,
-        expires_at INTEGER,
+        created_at BIGINT NOT NULL,
+        expires_at BIGINT,
         base_digest TEXT
       )`,
     ),

@@ -1,4 +1,4 @@
-import { pgTable, text, integer, jsonb, primaryKey } from "drizzle-orm/pg-core"
+import { pgTable, text, integer, bigint, jsonb, primaryKey } from "drizzle-orm/pg-core"
 
 export const CoordinationClaimTable = pgTable("coordination_claim", {
   task_id: text().primaryKey(),
@@ -10,9 +10,9 @@ export const CoordinationClaimTable = pgTable("coordination_claim", {
   status: text().notNull().$type<"claimed" | "released" | "failed">(),
   result: text(),
   error: text(),
-  created_at: integer().notNull(),
-  expires_at: integer(),
-  released_at: integer(),
+  created_at: bigint({ mode: "number" }).notNull(),
+  expires_at: bigint({ mode: "number" }),
+  released_at: bigint({ mode: "number" }),
 })
 
 export const CoordinationReservationTable = pgTable("coordination_reservation", {
@@ -20,8 +20,8 @@ export const CoordinationReservationTable = pgTable("coordination_reservation", 
   task_id: text().notNull(),
   session_id: text().notNull(),
   status: text().notNull().$type<"reserved" | "released" | "conflicted">(),
-  created_at: integer().notNull(),
-  expires_at: integer(),
+  created_at: bigint({ mode: "number" }).notNull(),
+  expires_at: bigint({ mode: "number" }),
   base_digest: text(),
 })
 
