@@ -16,6 +16,7 @@ import {
   decodeOrThrow,
   useCommand,
 } from "@opencode-ai/app"
+import { MainWindowBootFallback } from "./components/main-window-boot-fallback"
 import * as Sentry from "@sentry/solid"
 import type { AsyncStorage } from "@solid-primitives/storage"
 import { MemoryRouter } from "@solidjs/router"
@@ -415,6 +416,7 @@ render(() => {
             !windowCount.loading &&
             !locale.loading
           }
+          fallback={MainWindowBootFallback({resources: [{name: "sidecar", loading: sidecar.loading}, {name: "defaultServer", loading: defaultServer.loading}, {name: "windowConfig", loading: windowConfig.loading}, {name: "windowCount", loading: windowCount.loading}, {name: "locale", loading: locale.loading}]})}
         >
           {(_) => {
             return (
