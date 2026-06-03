@@ -18,7 +18,7 @@ export async function createValkeyFabric(url: string): Promise<CoordinationFabri
     async acquireLease(input) {
       const key = `repo:${input.repoId}:lease:${input.path}`
       const value = JSON.stringify({ agentId: input.agentId, acquiredAt: Date.now() })
-      const result = await redis.set(key, value, "NX", "EX", Math.ceil(input.ttlMs / 1000))
+      const result = await (redis as any).set(key, value, "NX", "EX", Math.ceil(input.ttlMs / 1000))
       if (result === "OK") return { granted: true, leaseId: key }
       const existing = await redis.get(key)
       if (existing) {

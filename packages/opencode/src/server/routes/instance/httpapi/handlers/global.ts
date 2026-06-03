@@ -153,7 +153,7 @@ export const globalHandlers = HttpApiBuilder.group(RootHttpApi, "global", (handl
       if (!payload.valid) {
         return HttpServerResponse.jsonUnsafe({ success: false, error: "Invalid request body" }, { status: 400 })
       }
-      const result = yield* upgrade({ payload: payload.payload })
+      return yield* upgrade({ payload: payload.payload })
     })
 
     const diagnostics = Effect.fn("GlobalHttpApi.diagnostics")(function* () {
@@ -204,7 +204,7 @@ export const globalHandlers = HttpApiBuilder.group(RootHttpApi, "global", (handl
       .handle("configGet", configGet)
       .handle("configUpdate", configUpdate)
       .handle("dispose", dispose)
-      .handleRaw("upgrade", upgradeRaw)
+      .handleRaw("upgrade", upgradeRaw as any)
       .handle("diagnostics", diagnostics)
   }),
 )

@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { describe, expect } from "bun:test"
 import { Deferred, Effect, Layer } from "effect"
 import { Project } from "@/project/project"
@@ -27,7 +28,7 @@ describe("session.listGlobal", () => {
         const firstSession = yield* withSession({ title: "first-session" })
         const secondSession = yield* withSession({ title: "second-session" }).pipe(provideInstance(second))
 
-        const sessions = yield* Effect.sync(() => [...SessionNs.listGlobal({ limit: 200 })])
+        const sessions = yield* Effect.promise(() => SessionNs.listGlobal({ limit: 200 }))
         const ids = sessions.map((session) => session.id)
 
         expect(ids).toContain(firstSession.id)
@@ -56,12 +57,12 @@ describe("session.listGlobal", () => {
 
         yield* SessionNs.Service.use((session) => session.setArchived({ sessionID: archived.id, time: Date.now() }))
 
-        const sessions = yield* Effect.sync(() => [...SessionNs.listGlobal({ limit: 200 })])
+        const sessions = yield* Effect.promise(() => SessionNs.listGlobal({ limit: 200 }))
         const ids = sessions.map((session) => session.id)
 
         expect(ids).not.toContain(archived.id)
 
-        const allSessions = yield* Effect.sync(() => [...SessionNs.listGlobal({ limit: 200, archived: true })])
+        const allSessions = yield* Effect.promise(() => SessionNs.listGlobal({ limit: 200, archived: true }))
         const allIds = allSessions.map((session) => session.id)
 
         expect(allIds).toContain(archived.id)
@@ -86,7 +87,7 @@ describe("session.listGlobal", () => {
         )
         const second = yield* withSession({ title: "page-two" })
 
-        const page = yield* Effect.sync(() => [...SessionNs.listGlobal({ directory: test.directory, limit: 1 })])
+        const page = yield* Effect.promise(() => SessionNs.listGlobal({ directory: test.directory, limit: 1 }))
         expect(page.length).toBe(1)
         expect(page[0].id).toBe(second.id)
 

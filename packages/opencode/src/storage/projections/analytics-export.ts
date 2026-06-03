@@ -40,11 +40,10 @@ export const analyticsExportModule = {
   // Export canonical rows from PGlite into DuckDB for analysis
   exportTable: (table: string): Effect.Effect<AnalyticsExport, never, DuckDBConfig.Service> =>
     Effect.gen(function* () {
-      // Query canonical rows from PGlite
       const rows: Record<string, unknown>[] = yield* Effect.tryPromise({
         try: () => getPGlite().query(`SELECT * FROM "${table}"`).then((r) => r.rows),
         catch: () => [] as Record<string, unknown>[],
-      })
+      }).pipe(Effect.orDie)
 
       // Sink into DuckDB via stdin JSON (write-capable, no -readonly)
       if (rows.length > 0) {
@@ -58,9 +57,10 @@ export const analyticsExportModule = {
               JSON.stringify(rows),
             ),
           ).pipe(
-            Effect.catchAll((e: unknown) =>
+          ).pipe(
+            Effect.catchCause((cause) =>
               Effect.logError(
-                `DuckDB export failed for ${table}: ${(e as Error)?.message ?? String(e)}`,
+                `DuckDB export failed for ${table}: ${cause}`,
               ),
             ),
           )
@@ -79,9 +79,9 @@ export const analyticsExportModule = {
     Effect.gen(function* () {
       const duckdb = yield* DuckDB.Service
       return yield* Effect.promise(() => duckdb.all<T>(sql)).pipe(
-        Effect.catchAll((e: unknown) =>
+        Effect.catchCause((cause) =>
           Effect.logError(
-            `Analytics query failed: ${(e as Error)?.message ?? String(e)}`,
+            `Analytics query failed: ${cause}`,
           ).pipe(Effect.as([] as T[])),
         ),
       )
@@ -113,6 +113,6 @@ export const analyticsExportModule = {
             .query(`SELECT 1 FROM "${table}" LIMIT 1`)
             .then((r) => r.rows.length > 0),
         catch: () => false,
-      })
+      }).pipe(Effect.orDie)
     }),
 }

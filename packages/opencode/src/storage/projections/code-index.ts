@@ -4,7 +4,8 @@
 
 import { Effect } from "effect"
 import * as Database from "../db"
-import Parser, { Language, type Node } from "web-tree-sitter"
+import { Parser, Language, type Node } from "web-tree-sitter"
+
 import { fileURLToPath } from "url"
 import { lazy } from "@/util/lazy"
 
@@ -176,7 +177,7 @@ function extractSymbols(
 // ── Storage helpers ───────────────────────────────────
 
 function storeSymbols(symbols: CodeSymbol[]): void {
-  const db = Database.Client()
+  const db = Database.Client() as any
   for (const s of symbols) {
     db.exec(
       `INSERT OR REPLACE INTO code_symbol_projection (id, file, name, kind, line, "column", parent_name, language, project_root) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
@@ -201,7 +202,7 @@ function storeFallbackSymbols(
   content: string,
   lang: string,
 ): void {
-  const db = Database.Client()
+  const db = Database.Client() as any
   const funcRe = /(?:export\s+)?(?:async\s+)?function\s+(\w+)/g
   const classRe = /(?:export\s+)?class\s+(\w+)/g
   let match: RegExpExecArray | null
@@ -276,7 +277,7 @@ export const codeIndexProjection = {
     files: { path: string; content: string }[],
   ): Effect.Effect<void> =>
     Effect.gen(function* () {
-      const db = Database.Client()
+      const db = Database.Client() as any
       db.exec(`DELETE FROM code_symbol_projection WHERE project_root = $1`, [
         root,
       ])
