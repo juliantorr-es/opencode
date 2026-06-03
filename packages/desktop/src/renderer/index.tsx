@@ -265,10 +265,11 @@ const createPlatform = (): Platform => {
 
     getDefaultServer: async () => {
       const url = await window.api.getDefaultServerUrl().catch(() => null)
-      if (!url) return null
-      return ServerConnection.Key.make(url)
+      if (url) return ServerConnection.Key.make(url)
+      const sidecar = await window.api.awaitInitialization(() => undefined).catch(() => undefined)
+      if (sidecar?.url) return ServerConnection.Key.make(sidecar.url)
+      return null
     },
-
     setDefaultServer: async (url: string | null) => {
       await window.api.setDefaultServerUrl(url)
     },
