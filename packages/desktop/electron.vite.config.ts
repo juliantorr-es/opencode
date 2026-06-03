@@ -92,6 +92,12 @@ export default defineConfig({
   },
   renderer: {
     plugins: [appPlugin, sentry],
+      {
+        name: "strip-crossorigin",
+        transformIndexHtml(html: string) {
+          return html.replace(/ crossorigin=""/g, "").replace(/ crossorigin /g, " ")
+        },
+      },
     publicDir: "../../../app/public",
     root: "src/renderer",
     build: {
