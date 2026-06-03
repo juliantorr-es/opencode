@@ -4,6 +4,7 @@ import type { DesktopTheme } from "@opencode-ai/ui/theme/types"
 import oc2ThemeJson from "../../../ui/src/theme/themes/oc-2.json"
 import { app, BrowserWindow, dialog, net, nativeImage, nativeTheme, protocol } from "electron"
 import { dirname, isAbsolute, join, relative, resolve } from "node:path"
+import { existsSync } from "node:fs"
 import { fileURLToPath, pathToFileURL } from "node:url"
 import type { TitlebarTheme } from "../preload/types"
 import { PINCH_ZOOM_ENABLED_KEY } from "./constants"
@@ -11,9 +12,10 @@ import { IPC } from "./ipc-channels"
 import { exportDebugLogs, write as writeLog } from "./logging"
 import { getStore } from "./store"
 import { createUnresponsiveSampler } from "./unresponsive"
-
 const root = dirname(fileURLToPath(import.meta.url))
-const rendererRoot = join(root, "../renderer")
+// Use app.getAppPath() instead of import.meta.url so renderer root remains
+// stable even if this module is code-split into out/main/chunks.
+const rendererRoot = join(app.getAppPath(), "out", "renderer")
 const rendererProtocol = "oc"
 const rendererHost = "renderer"
 const clipboardWritePermission = "clipboard-sanitized-write"
@@ -240,6 +242,12 @@ export function registerRendererProtocol() {
     }
 
     const file = resolve(rendererRoot, `.${decodeURIComponent(url.pathname)}`)
+    const fileExists = existsSync(file)
+    console.log("[protocol]", { url: request.url, rendererRoot, file, exists: fileExists })
+    if (!fileExists) {
+      writeLog("protocol", "file not found", { url: request.url, file, rendererRoot }, "error")
+      return new Response("File not found", { status: 404 })
+    }
     const rel = relative(rendererRoot, file)
     if (rel.startsWith("..") || isAbsolute(rel)) {
       writeLog("protocol", "rejected path", { url: request.url, file }, "warn")
