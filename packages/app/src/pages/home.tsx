@@ -1,5 +1,5 @@
 import type { Session } from "@opencode-ai/sdk/v2/client"
-import { createMemo, createSignal, For, Match, onCleanup, Show, Switch } from "solid-js"
+import { createEffect, createMemo, createSignal, For, Match, onCleanup, Show, Switch } from "solid-js"
 import { debounce } from "@solid-primitives/scheduled"
 import fuzzysort from "fuzzysort"
 import { createStore } from "solid-js/store"
@@ -59,6 +59,9 @@ type TimeFilter = "all" | "today" | "week" | "month"
 
 export default function Home() {
   const settings = useSettings()
+  createEffect(() => {
+    console.log("[home-route]", "mounted", settings.general.newLayoutDesigns())
+  })
   return (
     <Show when={settings.general.newLayoutDesigns()} fallback={<LegacyHome />}>
       <HomeDesign />

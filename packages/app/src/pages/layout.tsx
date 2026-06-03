@@ -18,7 +18,6 @@ import {
 import { makeEventListener } from "@solid-primitives/event-listener"
 import { useLocation, useNavigate, useParams } from "@solidjs/router"
 import { useQuery } from "@tanstack/solid-query"
-import { useProjectActivation } from "@/context/project-activation"
 import { useLayout, LocalProject } from "@/context/layout"
 import { useServerSync } from "@/context/server-sync"
 import { Persist, persisted } from "@/utils/persist"
@@ -180,7 +179,7 @@ export default function Layout(props: ParentProps) {
   })
 
   const theme = useTheme()
-  const activation2 = createProjectActivation({
+  const activation = createProjectActivation({
     openProjectLocal: (directory) => layout.projects.open(directory),
     touchProject: (directory) => server.projects.touch(directory),
     ensureReady: (directory) => serverSync.project.ensureReady(directory),
@@ -218,7 +217,7 @@ export default function Layout(props: ParentProps) {
   const currentDir = createMemo(() => route().dir)
 
   const [state, setState] = createStore({
-    autoselect: !initialDirectory && !newDesign(),
+    autoselect: !initialDirectory,
     busyWorkspaces: {} as Record<string, boolean>,
     hoverProject: undefined as string | undefined,
     scrollSessionKey: undefined as string | undefined,
@@ -1052,8 +1051,6 @@ export default function Layout(props: ParentProps) {
       }
     }
   }
-
-  const activation = useProjectActivation()
 
   command.register("layout", () => {
     const commands: CommandOption[] = [

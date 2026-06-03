@@ -533,6 +533,7 @@ export function createServerSyncContext() {
 
 export const { use: useServerSync, provider: ServerSyncProvider } = createSimpleContext({
   name: "ServerSync",
+  gate: false,
   init: () => {
     const sync = createServerSyncContext()
 

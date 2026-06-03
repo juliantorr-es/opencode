@@ -169,10 +169,16 @@ function SessionProviders(props: ParentProps) {
 function RouterRoot(props: ParentProps<{ appChildren?: JSX.Element }>) {
   return (
     <AppShellProviders>
-      {/*<Suspense fallback={<Loading />}>*/}
-      {props.appChildren}
-      {props.children}
-      {/*</Suspense>*/}
+      <Suspense
+        fallback={
+          <div class="h-dvh w-screen flex flex-col items-center justify-center bg-background-base">
+            <Splash class="w-16 h-20 opacity-50 animate-pulse" />
+          </div>
+        }
+      >
+        {props.appChildren}
+        {props.children}
+      </Suspense>
     </AppShellProviders>
   )
 }
@@ -337,7 +343,20 @@ function ConnectionError(props: { onRetry?: () => void; onServerSelected?: (key:
 function ServerKey(props: ParentProps) {
   const server = useServer()
   return (
-    <Show when={server.current} keyed>
+    <Show
+      when={server.current}
+      keyed
+      fallback={
+        <div class="h-dvh w-screen flex flex-col items-center justify-center bg-background-base text-text-base">
+          <div class="max-w-lg px-6 text-center space-y-2">
+            <div class="text-14-medium">Waiting for active server</div>
+            <div class="text-12-regular text-text-weak break-all">key: {server.key || "(empty)"}</div>
+            <div class="text-12-regular text-text-weak">current: {server.current ? serverName(server.current) : "(none)"}</div>
+            <div class="text-12-regular text-text-weak">list length: {server.list.length}</div>
+          </div>
+        </div>
+      }
+    >
       {props.children}
     </Show>
   )

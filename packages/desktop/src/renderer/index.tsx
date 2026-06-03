@@ -449,4 +449,3 @@ render(() => {
     </DesktopPluginProvider>
   )
 }, root!)
-

@@ -109,6 +109,10 @@ export default function Page() {
   const newSessionDesign = createMemo(() => settings.general.newLayoutDesigns())
 
   createEffect(() => {
+    console.log("[session-route]", "mounted", { dir: params.dir, id: params.id, path: location.pathname, newSessionDesign: newSessionDesign() })
+  })
+
+  createEffect(() => {
     if (!prompt.ready()) return
     untrack(() => {
       if (params.id) return
