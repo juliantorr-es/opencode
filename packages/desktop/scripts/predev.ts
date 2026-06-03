@@ -11,6 +11,6 @@ await $`cp ${pgliteDir}/postgres.data ../opencode/dist/node/`.quiet()
 await $`cp ${pgliteDir}/postgres.wasm ../opencode/dist/node/`.quiet()
 
 
-// Remove stale electron-vite output so the dev build is forced fresh
+// Force fresh build output before electron-vite runs
 await $`rm -rf out/main out/migration-pg`.quiet()
 await $`cp -r ../opencode/migration-pg out/migration-pg`.quiet()
