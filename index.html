@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Tribunus — The control plane for agentic engineering. Coordinate hundreds of coding agents with real-time visibility and scoped authority.">
+  <meta name="theme-color" content="#0a0a0f">
+  <meta name="color-scheme" content="dark">
+
+  <title>Tribunus — The Control Plane for Agentic Engineering</title>
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="Tribunus — The Control Plane for Agentic Engineering">
+  <meta property="og:description" content="Coordinate hundreds of coding agents in a single repository. Real-time visibility, scoped authority, zero chaos.">
+  <meta property="og:url" content="https://tribunus.dev">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Tribunus">
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400..700&display=swap">
+
+  <link rel="stylesheet" href="styles.css">
+
+  <!-- Inline critical CSS for hero -->
+  <style>
+    :root {
+      --bg: #0a0a0f;
+      --surface: #14141f;
+      --surface-raised: #1c1c2a;
+      --border: #2a2a3a;
+      --accent: #d4a853;
+      --accent-hover: #e0b963;
+      --text: #e8e6e3;
+      --text-muted: #9898a8;
+      --text-dim: #6b6b7a;
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    html{scroll-behavior:smooth;background:var(--bg);color:var(--text);font-family:"Inter",system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;font-size:16px;line-height:1.6;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
+    body{min-height:100vh;overflow-x:hidden}
+    @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:0.01ms!important;animation-iteration-count:1!important;transition-duration:0.01ms!important;scroll-behavior:auto!important}}
+    .visually-hidden{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+  </style>
+</head>
+<body>
+  <a href="#hero" class="skip-link">Skip to content</a>
+
+  <header class="nav-bar" id="nav-bar">
+    <nav class="nav-inner" aria-label="Main navigation">
+      <a href="#hero" class="nav-logo" aria-label="Tribunus home">TRIBUNUS</a>
+      <a href="#download" class="nav-cta" aria-label="Download Tribunus">Download</a>
+    </nav>
+  </header>
+
+  <main>
+    <!-- Hero -->
+    <section class="hero" id="hero" aria-labelledby="hero-heading">
+      <div class="hero-grid-bg" aria-hidden="true"></div>
+      <div class="hero-content">
+        <h1 id="hero-heading" class="hero-title">Command the Cohort.</h1>
+        <p class="hero-subtitle">Coordinate hundreds of coding agents in a single repository. Real-time visibility, scoped authority, zero chaos.</p>
+        <a href="#download" class="hero-cta">Download for macOS</a>
+      </div>
+      <div class="hero-accent" aria-hidden="true"></div>
+    </section>
+
+    <!-- What It Does -->
+    <section class="section" id="what-it-does" aria-labelledby="features-heading">
+      <div class="section-container">
+        <h2 id="features-heading" class="section-heading">The Software Factory, Reimagined.</h2>
+        <div class="bento-grid">
+          <article class="bento-card bento-card--wide" data-reveal>
+            <div class="bento-icon" aria-hidden="true">
+              <div class="geo geo-nodes"></div>
+            </div>
+            <h3 class="bento-title">Orchestrate Agents</h3>
+            <p class="bento-desc">Spawn and coordinate hundreds of coding agents working concurrently across your entire codebase. Define missions, assign scope, and watch the cohort execute.</p>
+          </article>
+          <article class="bento-card bento-card--tall" data-reveal>
+            <div class="bento-icon" aria-hidden="true">
+              <div class="geo geo-eye"></div>
+            </div>
+            <h3 class="bento-title">Real-Time Visibility</h3>
+            <p class="bento-desc">Every file change, every agent decision, every diff streams live to every team member. Nothing happens in the dark.</p>
+          </article>
+          <article class="bento-card" data-reveal>
+            <div class="bento-icon" aria-hidden="true">
+              <div class="geo geo-shield"></div>
+            </div>
+            <h3 class="bento-title">Scoped Authority</h3>
+            <p class="bento-desc">Senior engineers set the perimeter. Juniors and rookies operate within explicit guardrails. Authority flows down — never sideways.</p>
+          </article>
+          <article class="bento-card" data-reveal>
+            <div class="bento-icon" aria-hidden="true">
+              <div class="geo geo-ledger"></div>
+            </div>
+            <h3 class="bento-title">Evidence &amp; Gates</h3>
+            <p class="bento-desc">Every change is tracked, every decision is auditable, every merge is gated. Cryptographic evidence chains for regulated environments.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- Enterprise Capabilities -->
+    <section class="section section--alt" id="enterprise" aria-labelledby="capabilities-heading">
+      <div class="section-container">
+        <h2 id="capabilities-heading" class="section-heading">From Prototype to Production.</h2>
+        <div class="capabilities-grid">
+          <div class="capability-card" data-reveal>
+            <div class="capability-shape capability-shape--diamond" aria-hidden="true"></div>
+            <h3 class="capability-title">Prototyping</h3>
+            <p class="capability-desc">Spin up working prototypes in minutes. Define the scaffold and let agents wire the plumbing while you focus on architecture.</p>
+          </div>
+          <div class="capability-card" data-reveal>
+            <div class="capability-shape capability-shape--circle" aria-hidden="true"></div>
+            <h3 class="capability-title">Debugging</h3>
+            <p class="capability-desc">Deploy agent squads to trace through unfamiliar code, surface root causes, and propose fixes — all in parallel.</p>
+          </div>
+          <div class="capability-card" data-reveal>
+            <div class="capability-shape capability-shape--chevron" aria-hidden="true"></div>
+            <h3 class="capability-title">Fast Iteration</h3>
+            <p class="capability-desc">Ship features in hours, not sprints. Agents handle the boilerplate; your team reviews the intent and ships the result.</p>
+          </div>
+          <div class="capability-card" data-reveal>
+            <div class="capability-shape capability-shape--hexagon" aria-hidden="true"></div>
+            <h3 class="capability-title">Rapid Feature Implementation</h3>
+            <p class="capability-desc">Translate requirements into working code at pace. Break down features into parallel agent tasks with automatic conflict resolution.</p>
+          </div>
+          <div class="capability-card" data-reveal>
+            <div class="capability-shape capability-shape--shield" aria-hidden="true"></div>
+            <h3 class="capability-title">Cybersecurity Auditing</h3>
+            <p class="capability-desc">Turn agents loose on your codebase to find vulnerabilities, check compliance, and produce audit-ready reports.</p>
+          </div>
+          <div class="capability-card" data-reveal>
+            <div class="capability-shape capability-shape--cross" aria-hidden="true"></div>
+            <h3 class="capability-title">Ethical Hacking Workflows</h3>
+            <p class="capability-desc">Run structured penetration testing campaigns with agents that report findings to a central evidence ledger.</p>
+          </div>
+          <div class="capability-card" data-reveal>
+            <div class="capability-shape capability-shape--target" aria-hidden="true"></div>
+            <h3 class="capability-title">Full Production Delivery</h3>
+            <p class="capability-desc">From greenfield to production. Agents draft, test, document, and package. Humans review and approve each gate.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Team Coordination -->
+    <section class="section" id="team" aria-labelledby="team-heading">
+      <div class="section-container team-layout">
+        <div class="team-text" data-reveal>
+          <h2 id="team-heading" class="section-heading">Built for Teams.</h2>
+          <p class="team-paragraph">Tribunus runs peer-to-peer over a serverless coordination mesh. No central server, no single point of failure, no cloud dependency. Every engineer on the team sees every agent's work in real time.</p>
+          <p class="team-paragraph">Senior engineers define mission parameters, set review gates, and control which agents have access to which parts of the codebase. Junior engineers operate within sandboxes — learning by observing how the cohort executes under constraint.</p>
+          <p class="team-paragraph">The result: a software factory where every contributor works at the top of their capability, no one is blocked waiting for review, and every merge meets the bar.</p>
+        </div>
+        <div class="team-diagram" data-reveal aria-hidden="true">
+          <div class="diagram-container">
+            <div class="diagram-row">
+              <div class="diagram-agent"></div>
+              <div class="diagram-agent"></div>
+              <div class="diagram-agent"></div>
+              <div class="diagram-agent"></div>
+            </div>
+            <div class="diagram-row">
+              <div class="diagram-agent diagram-agent--sub"></div>
+              <div class="diagram-agent diagram-agent--sub"></div>
+              <div class="diagram-agent diagram-agent--sub"></div>
+            </div>
+            <div class="diagram-lines" aria-hidden="true"></div>
+            <div class="diagram-coordinator">
+              <span>COORDINATOR</span>
+            </div>
+            <div class="diagram-row diagram-row--engineers">
+              <div class="diagram-engineer">
+                <div class="diagram-avatar"></div>
+                <span>Senior</span>
+              </div>
+              <div class="diagram-engineer">
+                <div class="diagram-avatar"></div>
+                <span>Senior</span>
+              </div>
+              <div class="diagram-engineer">
+                <div class="diagram-avatar"></div>
+                <span>Junior</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Download -->
+    <section class="section section--alt" id="download" aria-labelledby="download-heading">
+      <div class="section-container">
+        <h2 id="download-heading" class="section-heading">Get Tribunus.</h2>
+        <div class="download-grid">
+          <article class="download-card" data-reveal>
+            <div class="download-card-inner">
+              <h3 class="download-title">macOS Apple Silicon</h3>
+              <p class="download-desc">Native ARM64 binary. M1/M2/M3/M4 and later.</p>
+              <span class="version-badge">v0.1.0 — Developer Preview</span>
+              <a href="#" class="download-btn" aria-label="Download Tribunus for macOS Apple Silicon">
+                <span class="download-btn-icon" aria-hidden="true">↓</span>
+                Download
+              </a>
+            </div>
+          </article>
+          <article class="download-card download-card--pending" data-reveal>
+            <div class="download-card-inner">
+              <h3 class="download-title">macOS Intel</h3>
+              <p class="download-desc">x86-64 binary for Intel-based Macs.</p>
+              <span class="version-badge version-badge--pending">Coming Soon</span>
+              <span class="download-btn download-btn--disabled" aria-disabled="true">Available Soon</span>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+      <p class="footer-tagline">&copy; 2026 Tribunus. Engineered with precision.</p>
+      <nav class="footer-links" aria-label="Footer links">
+        <a href="https://github.com/tribunus" class="footer-link" rel="noopener noreferrer" target="_blank">GitHub</a>
+        <a href="mailto:hello@tribunus.dev" class="footer-link">Contact</a>
+        <a href="#" class="footer-link">Privacy</a>
+      </nav>
+    </div>
+  </footer>
+
+  <script src="main.js" defer></script>
+</body>
+</html>
