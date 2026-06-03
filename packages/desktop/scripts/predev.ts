@@ -5,8 +5,9 @@ await $`bun ./scripts/copy-icons.ts ${process.env.OPENCODE_CHANNEL ?? "dev"}`
 await $`cd ../opencode && bun script/build-node.ts`
 
 // Copy PGlite WASM/data assets so the electron sidecar can load them
-await $`cp ../node_modules/.bun/@electric-sql+pglite@0.2.17/node_modules/@electric-sql/pglite/dist/postgres.data ../opencode/dist/node/ 2>/dev/null || true`
-await $`cp ../node_modules/.bun/@electric-sql+pglite@0.2.17/node_modules/@electric-sql/pglite/dist/postgres.wasm ../opencode/dist/node/ 2>/dev/null || true`
+const repoRoot = (await $`git rev-parse --show-toplevel`.quiet()).text().trim()
+await $`find ${repoRoot}/node_modules/.bun -name "postgres.data" -path "*pglite*" -exec cp {} ../opencode/dist/node/ \\;`.quiet()
+await $`find ${repoRoot}/node_modules/.bun -name "postgres.wasm" -path "*pglite*" -exec cp {} ../opencode/dist/node/ \\;`.quiet()
 
 
 // Copy migration directory so db.pg.ts can resolve it at runtime

@@ -2,6 +2,7 @@ import { sentryVitePlugin } from "@sentry/vite-plugin"
 import { defineConfig } from "electron-vite"
 import appPlugin from "@opencode-ai/app/vite"
 import * as fs from "node:fs/promises"
+import { execSync } from "node:child_process"
 
 const OPENCODE_SERVER_DIST = "../opencode/dist/node"
 
@@ -65,10 +66,15 @@ export default defineConfig({
       {
         name: "opencode:copy-server-assets",
         async writeBundle() {
+          // Copy from opencode dist first (fast path)
           for (const l of await fs.readdir(OPENCODE_SERVER_DIST)) {
             if (!l.endsWith(".wasm") && !l.endsWith(".data")) continue
             await fs.writeFile(`./out/main/chunks/${l}`, await fs.readFile(`${OPENCODE_SERVER_DIST}/${l}`))
           }
+          // Fallback: copy from node_modules via find (handles + in package name)
+          const cwd = process.cwd()
+          execSync(`find ${cwd}/../../node_modules/.bun -name "postgres.data" -path "*pglite*" -exec cp {} ${cwd}/out/main/chunks/ \\;`, { stdio: "pipe" })
+          execSync(`find ${cwd}/../../node_modules/.bun -name "postgres.wasm" -path "*pglite*" -exec cp {} ${cwd}/out/main/chunks/ \\;`, { stdio: "pipe" })
         },
       },
     ],
