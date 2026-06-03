@@ -1,4 +1,4 @@
-import { ipcMain } from "electron"
+import { registerIpcHandler } from "./ipc-registration"
 import type { IpcMainInvokeEvent } from "electron"
 import { IPC } from "./ipc-channels"
 import { withIpcResult } from "./ipc-contract"
@@ -18,7 +18,7 @@ function checkReserved(name: string) {
 }
 
 export function registerStoreIpcHandlers() {
-  ipcMain.handle(IPC.handle.STORE_GET, (_event: IpcMainInvokeEvent, name: string, key: string) => {
+  registerIpcHandler(IPC.handle.STORE_GET, (_event: IpcMainInvokeEvent, name: string, key: string) => {
     return withIpcResult("store.get", async () => {
       checkReserved(name)
       try {
@@ -31,35 +31,35 @@ export function registerStoreIpcHandlers() {
       }
     })
   })
-  ipcMain.handle(IPC.handle.STORE_SET, (_event: IpcMainInvokeEvent, name: string, key: string, value: unknown) => {
+  registerIpcHandler(IPC.handle.STORE_SET, (_event: IpcMainInvokeEvent, name: string, key: string, value: unknown) => {
     return withIpcResult("store.set", async () => {
       checkReserved(name)
       const store = getStore(name)
       store.set(key, value)
     })
   })
-  ipcMain.handle(IPC.handle.STORE_DELETE, (_event: IpcMainInvokeEvent, name: string, key: string) => {
+  registerIpcHandler(IPC.handle.STORE_DELETE, (_event: IpcMainInvokeEvent, name: string, key: string) => {
     return withIpcResult("store.delete", async () => {
       checkReserved(name)
       const store = getStore(name)
       store.delete(key)
     })
   })
-  ipcMain.handle(IPC.handle.STORE_CLEAR, (_event: IpcMainInvokeEvent, name: string) => {
+  registerIpcHandler(IPC.handle.STORE_CLEAR, (_event: IpcMainInvokeEvent, name: string) => {
     return withIpcResult("store.clear", async () => {
       checkReserved(name)
       const store = getStore(name)
       store.clear()
     })
   })
-  ipcMain.handle(IPC.handle.STORE_KEYS, (_event: IpcMainInvokeEvent, name: string) => {
+  registerIpcHandler(IPC.handle.STORE_KEYS, (_event: IpcMainInvokeEvent, name: string) => {
     return withIpcResult("store.keys", async () => {
       checkReserved(name)
       const store = getStore(name)
       return Object.keys(store.store)
     })
   })
-  ipcMain.handle(IPC.handle.STORE_LENGTH, (_event: IpcMainInvokeEvent, name: string) => {
+  registerIpcHandler(IPC.handle.STORE_LENGTH, (_event: IpcMainInvokeEvent, name: string) => {
     return withIpcResult("store.length", async () => {
       checkReserved(name)
       const store = getStore(name)

@@ -180,4 +180,10 @@ if (root instanceof HTMLElement) {
     ),
     root,
   )
+  queueMicrotask(() => {
+    console.info("[renderer] app-ready", {
+      route: typeof window !== "undefined" ? window.location.pathname : "unknown",
+      timestamp: Date.now(),
+    })
+  })
 }

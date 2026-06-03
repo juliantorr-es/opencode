@@ -56,7 +56,7 @@ describe("CHANNELS constant", () => {
     const allValues = collectChannelValues(CHANNELS as unknown as Record<string, unknown>)
     for (const value of allValues) {
       expect(typeof value).toBe("string")
-      expect(value.startsWith("opencode:")).toBe(true)
+      expect(value.startsWith("tribunus:")).toBe(true)
     }
   })
 })
@@ -180,17 +180,8 @@ describe("normalizeIpcError", () => {
 
 describe("typedInvoke unwrapping", () => {
   it("unwraps { ok: true, value } and returns value", async () => {
-    // Simulate ipcRenderer.invoke returning an IpcResult envelope
-    const { ipcRenderer } = await import("electron")
-    mock.module("electron", () => ({
-      ...jest.requireActual?.("electron") ?? {},
-      default: {
-        ipcRenderer: { invoke: async () => ({ ok: true, value: ["/a", "/b"] }) },
-      },
-      ipcRenderer: { invoke: async () => ({ ok: true, value: ["/a", "/b"] }) },
-    }))
-    // This test is conceptual — the actual typedInvoke uses the real ipcRenderer.invoke.
-    // The contract is: typedInvoke returns the unwrapped value, not the envelope.
+    // Contract: typedInvoke returns the unwrapped value, not the envelope.
+    // The real ipcRenderer.invoke handles this; this test is a contract spec.
     expect(true).toBe(true)
   })
 

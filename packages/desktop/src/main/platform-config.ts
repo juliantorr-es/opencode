@@ -135,7 +135,7 @@ export class BrowserPlatformPaths implements PlatformPaths {
   }
 
   getAppId(): string {
-    return "ai.opencode.desktop"
+    return "dev.tribunus.desktop"
   }
 }
 

@@ -33,12 +33,12 @@ export async function createValkeyFabric(url: string): Promise<CoordinationFabri
     },
 
     async publish(event) {
-      await redis.publish("opencode:events", JSON.stringify(event))
+      await redis.publish("tribunus:events", JSON.stringify(event))
     },
 
     async subscribe(topic, handler) {
       const sub = redis.duplicate()
-      await sub.subscribe("opencode:events")
+      await sub.subscribe("tribunus:events")
       const listener = (_channel: string, message: string) => {
         try {
           const event = JSON.parse(message) as CoordinationEvent

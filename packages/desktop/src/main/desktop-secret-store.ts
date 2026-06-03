@@ -1,4 +1,5 @@
-import { ipcMain, safeStorage, app } from "electron"
+import { safeStorage, app } from "electron"
+import { registerIpcHandler } from "./ipc-registration"
 import { existsSync, readFileSync, writeFileSync, mkdirSync } from "node:fs"
 import { join } from "node:path"
 import { IPC } from "./ipc-channels"
@@ -126,23 +127,18 @@ export async function listSecretMetadata(namespace?: string): Promise<SecretMeta
 }
 
 export function registerSecretIpcHandlers() {
-  ipcMain.handle(IPC.handle.SECRETS_SET, async (_event, ref: SecretRef, value: string) =>
-    withIpcResult("secrets.set", () => setSecret(ref, value))
-  )
-  ipcMain.handle(IPC.handle.SECRETS_GET, async (_event, ref: SecretRef) =>
-    withIpcResult("secrets.get", () => getSecret(ref))
-  )
-  ipcMain.handle(IPC.handle.SECRETS_DELETE, async (_event, ref: SecretRef) =>
-    withIpcResult("secrets.delete", () => deleteSecret(ref))
-  )
-  ipcMain.handle(IPC.handle.SECRETS_LIST, async (_event, namespace?: string) =>
-    withIpcResult("secrets.list", () => listSecretMetadata(namespace))
-  )
-  ipcMain.handle(IPC.handle.SECRETS_STATUS, async () =>
+  registerIpcHandler(IPC.handle.SECRETS_SET, async (_event, ref: SecretRef, value: string) =>
+    withIpcResult("secrets.set", () => setSecret(ref, value)))
+  registerIpcHandler(IPC.handle.SECRETS_GET, async (_event, ref: SecretRef) =>
+    withIpcResult("secrets.get", () => getSecret(ref)))
+  registerIpcHandler(IPC.handle.SECRETS_DELETE, async (_event, ref: SecretRef) =>
+    withIpcResult("secrets.delete", () => deleteSecret(ref)))
+  registerIpcHandler(IPC.handle.SECRETS_LIST, async (_event, namespace?: string) =>
+    withIpcResult("secrets.list", () => listSecretMetadata(namespace)))
+  registerIpcHandler(IPC.handle.SECRETS_STATUS, async () =>
     withIpcResult("secrets.status", async () => {
       const index = loadIndex(app.getPath("userData"))
       const available = safeStorage.isEncryptionAvailable()
       return { available, encrypted: available, secretCount: Object.keys(index).length }
-    })
-  )
+    }))
 }

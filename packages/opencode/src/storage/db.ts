@@ -11,6 +11,7 @@ import * as Log from "@opencode-ai/core/util/log"
 import { NamedError } from "@opencode-ai/core/util/error"
 import path from "path"
 import { Flag } from "@opencode-ai/core/flag/flag"
+import { resolve, relative } from "node:path"
 import { InstallationChannel } from "@opencode-ai/core/installation/version"
 import { EffectBridge } from "@/effect/bridge"
 import { init } from "#db"
@@ -48,9 +49,41 @@ function isDesktop() {
   return process.env.OPENCODE_CLIENT === "desktop" || process.env.OPENCODE_CLIENT === "desktop-sidecar"
 }
 
+
+/**
+ * Check if candidate path is equal to or a descendant of userDataRoot.
+ * Uses resolved paths so symlinks are followed, not just string prefix matching.
+ */
+function isPathUnderUserData(candidate: string, userDataRoot: string): boolean {
+  const resolvedUserData = resolve(userDataRoot)
+  const resolvedCandidate = resolve(candidate)
+  const rel = relative(resolvedUserData, resolvedCandidate)
+  return rel === "" || (!rel.startsWith("..") && !isAbsolutePath(rel))
+}
+
+function isAbsolutePath(p: string): boolean {
+  return /^[a-zA-Z]:[/\\]/.test(p) || p.startsWith("/")
+}
+
+/**
+ * Read a Tribunus env var with OPENCODE_ fallback.
+ * Logs a deprecation warning if the OPENCODE_ variant is used.
+ */
+function tribunusEnv(keySuffix: string): string | undefined {
+  const tribunusKey = `TRIBUNUS_${keySuffix}`
+  const opencodeKey = `OPENCODE_${keySuffix}`
+  const tribunusVal = process.env[tribunusKey]
+  if (tribunusVal !== undefined) return tribunusVal
+  const opencodeVal = process.env[opencodeKey]
+  if (opencodeVal !== undefined) {
+    console.warn(`[deprecated] ${opencodeKey} is deprecated, use ${tribunusKey} instead`)
+    return opencodeVal
+  }
+  return undefined
+}
 export const getPath = (flags?: Pick<DatabaseFlags, "disableChannelDb">) => {
   if (isDesktop()) {
-    const stateHome = process.env.OPENCODE_STATE_HOME || process.env.XDG_STATE_HOME
+    const stateHome = tribunusEnv("STATE_HOME") || process.env.XDG_STATE_HOME
     if (stateHome) return path.join(stateHome, "pglite")
   }
   if (Flag.OPENCODE_DB) {
@@ -89,11 +122,11 @@ export const Client = Object.assign(
 
     // Guard: desktop mode must not use repo-relative paths for mutable state
     if (isDesktop() && dbPath) {
-      const repoRoot = process.cwd()
-      if (!dbPath.startsWith("/") || dbPath.startsWith(repoRoot)) {
+      const userData = tribunusEnv("DESKTOP_USER_DATA")
+      if (userData && !isPathUnderUserData(dbPath, userData)) {
         console.error(
           `[desktop-path-guard] Mutable DB path must be under userData, got: ${dbPath}. ` +
-          `Set OPENCODE_STATE_HOME to a directory under userData.`
+          `Set TRIBUNUS_STATE_HOME to a directory under userData.`
         )
       }
     }

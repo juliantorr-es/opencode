@@ -213,6 +213,8 @@ export const CHANNELS = {
 export interface IpcHandleContract {
   [IPC.handle.KILL_SIDECAR]: { params: []; returns: Promise<void> }
   [IPC.handle.AWAIT_INITIALIZATION]: { params: []; returns: Promise<ServerReadyData> }
+  [IPC.handle.SIDECAR_STATUS]: { params: []; returns: Promise<{ pid: number | null; url: string | null; startedAt: number | null; readyAt: number | null; lastExitCode: number | null; restartCount: number; startupPhases: ReadonlyArray<{ phase: string; status: string; timestamp: number }> }> },
+  [IPC.handle.RESTART_SIDECAR]: { params: []; returns: Promise<void> },
   [IPC.handle.GET_WINDOW_CONFIG]: { params: []; returns: Promise<WindowConfig> }
   [IPC.handle.CONSUME_INITIAL_DEEP_LINKS]: { params: []; returns: Promise<string[]> }
   [IPC.handle.GET_DEFAULT_SERVER_URL]: { params: []; returns: Promise<string | null> }

@@ -78,15 +78,20 @@ export function initFromPool(pool: PgPool): NodePgDatabase {
  * from other SQL engines (PGlite, SQLite, etc.).
  */
 function isBenignIdempotencyError(error: unknown, _statement: string): boolean {
-  if (error instanceof Error || (typeof error === "object" && error !== null)) {
-    const e = error as Record<string, unknown>
-    if (e.code === "42701") return true  // duplicate_column
-    if (e.code === "42P07") return true  // duplicate_table
-    if (e.code === "42P16") return true  // duplicate_object
-    const msg = (e.message as string) ?? ""
-    if (/already exists/.test(msg)) return true
-    if (/duplicate (column|table|relation)/i.test(msg)) return true
-  }
+  if (!(error instanceof Error) && !(typeof error === "object" && error !== null)) return false
+  const e = error as Record<string, unknown>
+  // Driver-level SQLSTATE codes (PostgreSQL/node-postgres/PGlite when .code is set)
+  if (e.code === "42701") return true // duplicate_column
+  if (e.code === "42P07") return true // duplicate_table
+  if (e.code === "42P16") return true // duplicate_object
+  const msg: string = (e.message as string) ?? ""
+  // SQLSTATE codes embedded in the error message (PGlite / alternative drivers)
+  if (msg.includes("42701")) return true // duplicate_column
+  if (msg.includes("42P07")) return true // duplicate_table
+  if (msg.includes("42P16")) return true // duplicate_object
+  // Pattern-based fallback for drivers that don't include SQLSTATE
+  if (/already exists/.test(msg)) return true
+  if (/duplicate (column|table|relation)/i.test(msg)) return true
   return false
 }
 export async function applyMigrations(db: PgClient): Promise<void> {

@@ -1,4 +1,4 @@
-import { ipcMain } from "electron"
+import { registerIpcHandler } from "./ipc-registration"
 import type { IpcMainInvokeEvent } from "electron"
 import { IPC } from "./ipc-channels"
 import { withIpcResult } from "./ipc-contract"
@@ -11,7 +11,7 @@ import {
 import { getStore } from "./store"
 
 export function registerConfigIpcHandlers() {
-  ipcMain.handle(IPC.handle.GET_DESKTOP_CUSTOM_AGENTS, () => {
+  registerIpcHandler(IPC.handle.GET_DESKTOP_CUSTOM_AGENTS, () => {
     return withIpcResult("config.getDesktopCustomAgents", async () => {
       try {
         const store = getStore("desktop-custom-agents")
@@ -23,7 +23,7 @@ export function registerConfigIpcHandlers() {
     })
   })
 
-  ipcMain.handle(IPC.handle.SET_DESKTOP_CUSTOM_AGENTS, async (_event: IpcMainInvokeEvent, agents: unknown[]) => {
+  registerIpcHandler(IPC.handle.SET_DESKTOP_CUSTOM_AGENTS, async (_event: IpcMainInvokeEvent, agents: unknown[]) => {
     return withIpcResult("config.setDesktopCustomAgents", async () => {
       try {
         const store = getStore("desktop-custom-agents")
@@ -37,7 +37,7 @@ export function registerConfigIpcHandlers() {
     })
   })
 
-  ipcMain.handle(IPC.handle.DELETE_DESKTOP_CUSTOM_AGENT, async (_event: IpcMainInvokeEvent, id: string) => {
+  registerIpcHandler(IPC.handle.DELETE_DESKTOP_CUSTOM_AGENT, async (_event: IpcMainInvokeEvent, id: string) => {
     return withIpcResult("config.deleteDesktopCustomAgent", async () => {
       try {
         const store = getStore("desktop-custom-agents")
@@ -55,7 +55,7 @@ export function registerConfigIpcHandlers() {
     })
   })
 
-  ipcMain.handle(IPC.handle.GET_DESKTOP_MCP_SERVERS, () => {
+  registerIpcHandler(IPC.handle.GET_DESKTOP_MCP_SERVERS, () => {
     return withIpcResult("config.getDesktopMcpServers", async () => {
       try {
         const store = getStore("desktop-mcp-servers")
@@ -68,7 +68,7 @@ export function registerConfigIpcHandlers() {
     })
   })
 
-  ipcMain.handle(IPC.handle.SET_DESKTOP_MCP_SERVERS, async (_event: IpcMainInvokeEvent, servers: unknown[]) => {
+  registerIpcHandler(IPC.handle.SET_DESKTOP_MCP_SERVERS, async (_event: IpcMainInvokeEvent, servers: unknown[]) => {
     return withIpcResult("config.setDesktopMcpServers", async () => {
       try {
         const store = getStore("desktop-mcp-servers")
@@ -84,7 +84,7 @@ export function registerConfigIpcHandlers() {
     })
   })
 
-  ipcMain.handle(IPC.handle.GET_DESKTOP_PLUGIN_CONFIG, () => {
+  registerIpcHandler(IPC.handle.GET_DESKTOP_PLUGIN_CONFIG, () => {
     return withIpcResult("config.getDesktopPluginConfig", async () => {
       try {
         const store = getStore("desktop-plugin-config")
@@ -97,7 +97,7 @@ export function registerConfigIpcHandlers() {
     })
   })
 
-  ipcMain.handle(IPC.handle.SET_DESKTOP_PLUGIN_CONFIG, async (_event: IpcMainInvokeEvent, configs: unknown[]) => {
+  registerIpcHandler(IPC.handle.SET_DESKTOP_PLUGIN_CONFIG, async (_event: IpcMainInvokeEvent, configs: unknown[]) => {
     return withIpcResult("config.setDesktopPluginConfig", async () => {
       try {
         const store = getStore("desktop-plugin-config")

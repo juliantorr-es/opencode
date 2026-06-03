@@ -11,21 +11,22 @@
  */
 
 import { type BrowserWindow, ipcMain } from "electron"
+import { registerIpcHandler } from "./ipc-registration"
 import { IPC } from "./ipc-channels"
 import { withIpcResult } from "./ipc-contract"
-
 /**
  * Register all plugin transport IPC handlers.
  * Must be called from registerIpcHandlers() in ipc.ts.
  */
 export function registerPluginTransportIpcHandlers(): void {
   // Renderer → Main: fire-and-forget plugin message
-  ipcMain.on(IPC.send.PLUGIN_SEND, (_event, channel: string, data: unknown) => {
+  ipcMain.on(IPC.send.PLUGIN_SEND, (event, channel: string, data: unknown) => {
+    if (!event.sender) return
     handlePluginMessage(channel, data)
   })
 
   // Renderer → Main: request/response plugin RPC
-  ipcMain.handle(IPC.handle.PLUGIN_INVOKE, (_event, channel: string, data: unknown) => {
+  registerIpcHandler(IPC.handle.PLUGIN_INVOKE, (_event, channel: string, data: unknown) => {
     return withIpcResult("plugin.invoke", async () => {
       return handlePluginInvoke(channel, data)
     })

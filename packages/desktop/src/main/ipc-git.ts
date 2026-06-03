@@ -1,4 +1,4 @@
-import { ipcMain } from "electron"
+import { registerIpcHandler } from "./ipc-registration"
 import { exec } from "child_process"
 import { promisify } from "util"
 import { IPC } from "./ipc-channels"
@@ -43,7 +43,7 @@ async function getGitStatus(): Promise<GitCheck | null> {
   }
 }
 export function registerGitIpcHandlers() {
-  ipcMain.handle(IPC.handle.GET_GIT_STATUS, async () => {
+  registerIpcHandler(IPC.handle.GET_GIT_STATUS, async () => {
     return withIpcResult("git.status", () => getGitStatus())
   })
 }

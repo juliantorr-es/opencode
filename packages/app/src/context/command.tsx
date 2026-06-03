@@ -9,7 +9,7 @@ import { dict as en } from "@/i18n/en"
 import { Persist, persisted } from "@/utils/persist"
 
 // ── Custom event for AI command routing ──
-export const AI_COMMAND_EVENT = "opencode:ai-command"
+export const AI_COMMAND_EVENT = "tribunus:ai-command"
 export function dispatchAiCommand(command: string, payload?: string) {
   window.dispatchEvent(new CustomEvent(AI_COMMAND_EVENT, { detail: { command, payload } }))
 }

@@ -24,10 +24,14 @@ const FORBIDDEN_PATTERNS = [
 const REQUIRED_PATTERNS = [
   "server ready",
   "product:",
+  "[renderer] app-ready",
 ]
 
 let output = ""
 let failures = 0
+let serverReady = false
+let rendererReady = false
+let readyTimer: ReturnType<typeof setTimeout> | null = null
 let requiredFound = new Set<string>()
 
 function fail(reason: string) {
@@ -48,9 +52,14 @@ const proc = spawn("bun", ["run", "dev:desktop"], {
   stdio: ["ignore", "pipe", "pipe"],
   env: { ...process.env, ELECTRON_ENABLE_LOGGING: "1" },
 })
-
 const timer = setTimeout(() => {
-  fail(`Timeout after ${TIMEOUT_MS / 1000}s`)
+  if (rendererReady) {
+    fail(`Timeout after ${TIMEOUT_MS / 1000}s — renderer was ready but quiet period never ended`)
+  } else if (serverReady) {
+    fail(`Timeout after ${TIMEOUT_MS / 1000}s — server ready but renderer never signaled app-ready`)
+  } else {
+    fail(`Timeout after ${TIMEOUT_MS / 1000}s`)
+  }
   proc.kill()
   process.exit(1)
 }, TIMEOUT_MS)
@@ -73,15 +82,26 @@ function onData(data: Buffer) {
     }
   }
 
-  // If we've found server ready, the app is up
-  if (text.includes("server ready") && text.includes("url:")) {
-    console.log("  Server detected — app is running")
-    // Give it a moment to finish startup, then kill
-    setTimeout(() => {
+  // Track server ready
+  if (text.includes("server ready") && text.includes("url:") && !serverReady) {
+    serverReady = true
+    console.log("  Server ready detected")
+  }
+
+  // Track renderer ready
+  if (text.includes("[renderer] app-ready") && !rendererReady) {
+    rendererReady = true
+    console.log("  Renderer app-ready detected")
+  }
+
+  // When both signals are received, start 5s quiet period then succeed
+  if (serverReady && rendererReady && readyTimer === null) {
+    console.log("  Both signals received — waiting 5s quiet period...")
+    readyTimer = setTimeout(() => {
       clearTimeout(timer)
       proc.kill()
       summarize()
-    }, 2000)
+    }, 5000)
   }
 }
 

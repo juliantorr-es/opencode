@@ -340,7 +340,7 @@ const main = Effect.gen(function* () {
 
   let overlay: BrowserWindow | null = null
   const crashLock = join(electronPlatformPaths.getPath("userData"), ".crash_lock")
-  const safeModeRequested = process.argv.includes("--safe-mode") || process.env.OPENCODE_SAFE_MODE === "1"
+  const safeModeRequested = process.argv.includes("--safe-mode") || process.env.TRIBUNUS_SAFE_MODE === "1" || process.env.OPENCODE_SAFE_MODE === "1"
   const crashDetected = existsSync(crashLock)
   const inSafeMode = safeModeRequested || crashDetected
   if (inSafeMode) {
@@ -366,7 +366,7 @@ const main = Effect.gen(function* () {
   )
 
   const needsMigration = inSafeMode ? false : ((): boolean => {
-    if (process.env.OPENCODE_DB === ":memory:") return false
+    if (process.env.TRIBUNUS_DB === ":memory:" || process.env.OPENCODE_DB === ":memory:") return false
 
     // Checks for PGlite/WAL directory — detects if first-time setup is needed
     const xdg = process.env.XDG_DATA_HOME
@@ -378,7 +378,7 @@ const main = Effect.gen(function* () {
 
   if (!inSafeMode) {
     const port = yield* Effect.gen(function* () {
-      const fromEnv = process.env.OPENCODE_PORT
+      const fromEnv = process.env.TRIBUNUS_PORT || process.env.OPENCODE_PORT
       if (fromEnv) {
         const parsed = Number.parseInt(fromEnv, 10)
         if (!Number.isNaN(parsed)) return parsed

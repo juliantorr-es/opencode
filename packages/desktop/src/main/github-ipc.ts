@@ -1,11 +1,11 @@
 import crypto from "node:crypto"
-import { ipcMain, net, safeStorage, shell } from "electron"
-import { IPC } from "./ipc-channels"
+import { net, safeStorage, shell } from "electron"
+import { registerIpcHandler } from "./ipc-registration"
 import { getGithubClientId } from "./app-config"
+import { IPC } from "./ipc-channels"
 import { getStore } from "./store"
 import { withIpcResult } from "./ipc-contract"
 import { setSecret, getSecret, deleteSecret } from "./desktop-secret-store"
-
 const GITHUB_TOKEN_URL = "https://github.com/login/oauth/access_token"
 
 type PkceState = {
@@ -25,7 +25,7 @@ async function generateCodeChallenge(verifier: string): Promise<string> {
 }
 
 export function registerGithubIpcHandlers() {
-  ipcMain.handle(IPC.handle.GITHUB_OAUTH_START, async () => {
+  registerIpcHandler(IPC.handle.GITHUB_OAUTH_START, async () => {
     return withIpcResult("github.oauth.start", async () => {
       const codeVerifier = generateCodeVerifier()
       const codeChallenge = await generateCodeChallenge(codeVerifier)
@@ -38,7 +38,7 @@ export function registerGithubIpcHandlers() {
     })
   })
 
-  ipcMain.handle(IPC.handle.GITHUB_OAUTH_CALLBACK, async (_event, code: string, state: string) => {
+  registerIpcHandler(IPC.handle.GITHUB_OAUTH_CALLBACK, async (_event, code: string, state: string) => {
     return withIpcResult("github.oauth.callback", async () => {
       const pkce = pendingOAuth.get(state)
       if (!pkce) throw new Error("Invalid OAuth state")
@@ -50,7 +50,7 @@ export function registerGithubIpcHandlers() {
         body: new URLSearchParams({
           client_id: clientId,
           code,
-          redirect_uri: "opencode://github-oauth",
+          redirect_uri: "tribunus://github-oauth",
           code_verifier: pkce.code_verifier,
         }),
       })
@@ -63,11 +63,11 @@ export function registerGithubIpcHandlers() {
     })
   })
 
-  ipcMain.handle(IPC.handle.GITHUB_GET_TOKEN, async () => {
+  registerIpcHandler(IPC.handle.GITHUB_GET_TOKEN, async () => {
     return withIpcResult("github.token.get", async () => {
       const result = await getSecret({ namespace: "github", key: "default" })
       if (result !== null) return result
-
+  
       // Migration: check old electron-store for a token and promote it
       const raw = getStore("github-auth").get("token") as string | undefined
       if (raw) {
@@ -84,29 +84,29 @@ export function registerGithubIpcHandlers() {
     })
   })
 
-  ipcMain.handle(IPC.handle.GITHUB_SET_TOKEN, async (_event, token: string) => {
+  registerIpcHandler(IPC.handle.GITHUB_SET_TOKEN, async (_event, token: string) => {
     return withIpcResult("github.token.set", async () => {
       await setSecret({ namespace: "github", key: "default" }, token)
     })
   })
 
-  ipcMain.handle(IPC.handle.GITHUB_CLEAR_TOKEN, async () => {
+  registerIpcHandler(IPC.handle.GITHUB_CLEAR_TOKEN, async () => {
     return withIpcResult("github.token.clear", async () => {
       await deleteSecret({ namespace: "github", key: "default" })
     })
   })
 
-  ipcMain.handle(IPC.handle.GITHUB_API_PROXY, async (_event, url: string, options?: { method?: string; headers?: Record<string, string>; body?: string }) => {
+  registerIpcHandler(IPC.handle.GITHUB_API_PROXY, async (_event, url: string, options?: { method?: string; headers?: Record<string, string>; body?: string }) => {
     return withIpcResult("github.apiProxy", async () => {
       const token = await getSecret({ namespace: "github", key: "default" })
       if (!token) return { status: 401, body: "Not authenticated" }
-
+  
       const urlObj = new URL(url)
       const allowed = ["api.github.com", "uploads.github.com"]
       if (!allowed.includes(urlObj.hostname)) {
         return { error: { type: "forbidden", hostname: urlObj.hostname, allowedHostnames: allowed } }
       }
-
+  
       const response = await net.fetch(url, {
         method: options?.method ?? "GET",
         headers: {

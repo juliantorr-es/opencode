@@ -177,13 +177,13 @@ export const globalHandlers = HttpApiBuilder.group(RootHttpApi, "global", (handl
         instanceCount,
         instanceHealthy,
         instances,
-        dataPath: process.env.OPENCODE_STATE_HOME
-          ? `${process.env.OPENCODE_STATE_HOME}/pglite`
+        dataPath: (process.env.TRIBUNUS_STATE_HOME || process.env.OPENCODE_STATE_HOME)
+          ? `${process.env.TRIBUNUS_STATE_HOME || process.env.OPENCODE_STATE_HOME}/pglite`
           : "unknown",
-        statePath: process.env.OPENCODE_STATE_HOME ?? "unknown",
-        configPath: process.env.OPENCODE_CONFIG_HOME ?? "unknown",
-        cachePath: process.env.OPENCODE_CACHE_HOME ?? "unknown",
-        logPath: process.env.OPENCODE_LOG_HOME ?? "unknown",
+        statePath: process.env.TRIBUNUS_STATE_HOME || process.env.OPENCODE_STATE_HOME || "unknown",
+        configPath: process.env.TRIBUNUS_CONFIG_HOME || process.env.OPENCODE_CONFIG_HOME || "unknown",
+        cachePath: process.env.TRIBUNUS_CACHE_HOME || process.env.OPENCODE_CACHE_HOME || "unknown",
+        logPath: process.env.TRIBUNUS_LOG_HOME || process.env.OPENCODE_LOG_HOME || "unknown",
         client: process.env.OPENCODE_CLIENT ?? "unknown",
         warnings: [] as { code: string; message: string }[],
         coordination: {

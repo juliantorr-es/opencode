@@ -195,7 +195,9 @@ export const LocalPgAdapter: Layer.Layer<Service> = Layer.effect(
     // Ensure the PGlite database is initialized and migrations are applied
     // before any queries run. Client() is the module-level singleton.
     const client = Database.Client()
-    yield* Effect.promise(() => applyMigrations(client).catch(() => {}))
+    yield* Effect.promise(() => applyMigrations(client).catch((err) => {
+      console.warn("[db] Migration failed during adapter init:", err instanceof Error ? err.message : err)
+    }))
     yield* Effect.promise(() =>
       ensureProjectionMeta(),
     )

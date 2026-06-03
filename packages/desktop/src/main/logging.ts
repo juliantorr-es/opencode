@@ -55,7 +55,7 @@ export async function exportDebugLogs() {
     await netLog.stopLogging().catch((error) => write("network", "failed to stop net log", { error }))
   }
 
-  const output = join(electronPlatformPaths.getPath("downloads"), `opencode-debug-${stamp()}.zip`)
+  const output = join(electronPlatformPaths.getPath("downloads"), `tribunus-debug-${stamp()}.zip`)
   try {
     write("main", "exporting debug logs", { output })
     await writeZip(output, [
@@ -152,7 +152,7 @@ function manifest() {
 
 function serverLogRoots() {
   const xdgData = process.env.XDG_DATA_HOME || join(homedir(), ".local", "share")
-  return [...new Set([join(xdgData, "opencode", "log"), join(electronPlatformPaths.getPath("userData"), "opencode", "log")])]
+  return [...new Set([join(xdgData, "tribunus", "log"), join(electronPlatformPaths.getPath("userData"), "tribunus", "log")])]
 }
 
 type Entry = { name: string; path?: string; data?: Buffer }

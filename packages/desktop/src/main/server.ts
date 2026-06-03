@@ -1,7 +1,10 @@
 import { dirname, join } from "node:path"
 import { existsSync, readFileSync } from "node:fs"
 import { fileURLToPath } from "node:url"
-import { app, ipcMain, utilityProcess } from "electron"
+import { app, utilityProcess } from "electron"
+import { registerIpcHandler } from "./ipc-registration"
+import { withIpcResult } from "./ipc-contract"
+import { IPC } from "./ipc-channels"
 import type { Details } from "electron"
 import { DEFAULT_SERVER_URL_KEY, WSL_ENABLED_KEY } from "./constants"
 import { getUserShell, loadShellEnv } from "./shell-env"
@@ -282,7 +285,7 @@ export async function checkHealth(url: string, password?: string | null): Promis
 
   const headers = new Headers()
   if (password) {
-    const auth = Buffer.from(`opencode:${password}`).toString("base64")
+    const auth = Buffer.from(`tribunus:${password}`).toString("base64")
     headers.set("authorization", `Basic ${auth}`)
   }
 
@@ -334,17 +337,20 @@ function defer<T>() {
   })
   return { promise, resolve, reject }
 }
-
-ipcMain.handle("SIDECAR_STATUS", () => sidecarState)
-ipcMain.handle("RESTART_SIDECAR", async () => {
-  sidecarState.restartCount++
-  currentSidecarChild?.kill()
-  if (lastSpawnParams) {
-    await spawnLocalServer(
-      lastSpawnParams.hostname,
-      lastSpawnParams.port,
-      lastSpawnParams.password,
-      lastSpawnParams.options,
-    )
-  }
+registerIpcHandler(IPC.handle.SIDECAR_STATUS, () => {
+  return withIpcResult("sidecar.status", async () => sidecarState)
+})
+registerIpcHandler(IPC.handle.RESTART_SIDECAR, async () => {
+  return withIpcResult("sidecar.restart", async () => {
+    sidecarState.restartCount++
+    currentSidecarChild?.kill()
+    if (lastSpawnParams) {
+      await spawnLocalServer(
+        lastSpawnParams.hostname,
+        lastSpawnParams.port,
+        lastSpawnParams.password,
+        lastSpawnParams.options,
+      )
+    }
+  })
 })

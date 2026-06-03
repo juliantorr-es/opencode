@@ -12,6 +12,8 @@ export const IPC = {
   handle: {
     KILL_SIDECAR: "tribunus:kill-sidecar",
     AWAIT_INITIALIZATION: "tribunus:await-initialization",
+    SIDECAR_STATUS: "tribunus:sidecar-status",
+    RESTART_SIDECAR: "tribunus:restart-sidecar",
     GET_WINDOW_CONFIG: "tribunus:get-window-config",
     CONSUME_INITIAL_DEEP_LINKS: "tribunus:consume-initial-deep-links",
     GET_DEFAULT_SERVER_URL: "tribunus:get-default-server-url",

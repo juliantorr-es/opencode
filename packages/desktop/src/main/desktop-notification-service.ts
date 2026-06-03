@@ -1,4 +1,5 @@
-import { ipcMain, Notification, BrowserWindow } from "electron"
+import { Notification, BrowserWindow } from "electron"
+import { registerIpcHandler } from "./ipc-registration"
 import { IPC } from "./ipc-channels"
 import { withIpcResult } from "./ipc-contract"
 import { getStore } from "./store"
@@ -98,7 +99,7 @@ export function notify(input: DesktopNotificationInput): boolean {
     if (win) {
       win.focus()
       if (input.actionRef) {
-        win.webContents.send("opencode:push:notification-action", {
+        win.webContents.send("tribunus:push:notification-action", {
           actionRef: input.actionRef,
           kind: input.kind,
           project: input.project,
@@ -113,13 +114,13 @@ export function notify(input: DesktopNotificationInput): boolean {
 }
 
 export function registerNotificationIpcHandlers() {
-  ipcMain.handle(IPC.handle.NOTIFICATIONS_NOTIFY, async (_event, opts: DesktopNotificationInput) =>
+  registerIpcHandler(IPC.handle.NOTIFICATIONS_NOTIFY, async (_event, opts: DesktopNotificationInput) =>
     withIpcResult("notifications.notify", () => Promise.resolve(notify(opts)))
   )
-  ipcMain.handle(IPC.handle.NOTIFICATIONS_STATUS, async () =>
+  registerIpcHandler(IPC.handle.NOTIFICATIONS_STATUS, async () =>
     withIpcResult("notifications.status", () => Promise.resolve(getNotificationStatus()))
   )
-  ipcMain.handle(IPC.handle.NOTIFICATIONS_SET_PREFERENCES, async (_event, prefs: Partial<NotificationPreferences>) =>
+  registerIpcHandler(IPC.handle.NOTIFICATIONS_SET_PREFERENCES, async (_event, prefs: Partial<NotificationPreferences>) =>
     withIpcResult("notifications.setPreferences", () => Promise.resolve(setNotificationPreferences(prefs)))
   )
 }

@@ -1,4 +1,4 @@
-import { ipcMain } from "electron"
+import { registerIpcHandler } from "./ipc-registration"
 import { IPC } from "./ipc-channels"
 import { withIpcResult } from "./ipc-contract"
 
@@ -23,7 +23,7 @@ export function getCapabilities(): DesktopCapabilities {
 }
 
 export function registerCapabilitiesIpcHandlers() {
-  ipcMain.handle(IPC.handle.GET_CAPABILITIES, async () => {
+  registerIpcHandler(IPC.handle.GET_CAPABILITIES, async () => {
     return withIpcResult("capabilities.get", async () => getCapabilities())
   })
 }

@@ -1,4 +1,6 @@
 // ── Coordination Fabric ─────────────────────────────────
+import { getEnv } from "../compat/opencode-legacy"
+
 // Optional coordination plane for live agent coordination.
 // Local mode works without Valkey/Redis. Durable truth stays in DB.
 
@@ -66,13 +68,13 @@ export function isValkeyBinaryAvailable(): boolean {
 // Returns the appropriate CoordinationFabric based on env.
 
 export async function createFabric(): Promise<CoordinationFabric> {
-  const backend = process.env.OPENCODE_COORDINATION_BACKEND ?? "local"
+  const backend = getEnv("COORDINATION_BACKEND") ?? "local"
   if (backend === "local") {
     const { createLocalFabric } = await import("./local-fabric")
     return createLocalFabric()
   }
   if ((backend === "local-valkey" || backend === "remote-valkey") && VALKEY_ENABLED) {
-    const url = process.env.OPENCODE_VALKEY_URL ?? "redis://127.0.0.1:6379"
+    const url = getEnv("VALKEY_URL") ?? "redis://127.0.0.1:6379"
     const { createValkeyFabric } = await import("./valkey-fabric")
     try {
       return await createValkeyFabric(url)

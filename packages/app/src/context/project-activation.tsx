@@ -1,13 +1,14 @@
 import { createContext, createSignal, useContext, type ParentProps } from "solid-js"
-import { decodeOrThrow, Diagnostics } from "./server-sync"
-// Sentry import: @sentry/electron/renderer may not be available in all build contexts
-let Sentry: any
-try {
-  Sentry = require("@sentry/electron/renderer")
-} catch {
-  Sentry = { setContext: () => {} }
-}
 import { createEventBus } from "@solid-primitives/event-bus"
+import { decodeOrThrow, Diagnostics } from "./server-sync"
+
+// Telemetry: uses app-level observability, not direct Sentry import.
+// Sentry integration is provided by the desktop renderer entry point.
+const telemetry = {
+  setContext(_name: string, _data: unknown) {
+    // Hooked by packages/desktop/src/renderer/index.tsx if available
+  },
+}
 
 // ── Activation Event Bus ───────────────────────────────
 // Broadcasts lifecycle facts so components can react without
@@ -198,7 +199,7 @@ export function createProjectActivation(deps: ActivationDeps): ProjectActivation
       broadcastEvent(current, next, event)
       // Update Sentry context on every lifecycle transition
       try {
-        Sentry.setContext("projectActivation", {
+        telemetry.setContext("projectActivation", {
           state: next.name,
           ...("directory" in next ? { directory: (next as any).directory } : {}),
           previousState: current.name,
@@ -294,7 +295,7 @@ export function createProjectActivation(deps: ActivationDeps): ProjectActivation
 export function setSentryDiagnostics(diag: any) {
   const decoded = decodeOrThrow("diagnostics", Diagnostics, diag)
   try {
-    Sentry.setContext("sidecarDiagnostics", {
+    telemetry.setContext("sidecarDiagnostics", {
       classification: decoded.classification,
       instanceCount: decoded.instanceCount,
       instanceHealthy: decoded.instanceHealthy,
