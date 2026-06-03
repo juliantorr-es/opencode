@@ -4,6 +4,7 @@ import { batch, createEffect, createMemo, createRoot, on, onCleanup } from "soli
 import { useParams } from "@solidjs/router"
 import { useSDK } from "./sdk"
 import type { Platform } from "./platform"
+import { usePlatform } from "./platform"
 import { ServerConnection, useServer } from "./server"
 import { defaultTitle, titleNumber } from "./terminal-title"
 import { Persist, persisted, removePersisted } from "@/utils/persist"
@@ -18,6 +19,11 @@ export type LocalPTY = {
   scrollY?: number
   cursor?: number
 }
+
+export type TerminalRuntimeKind = "native-pty" | "webcontainer" | "wasm" | "remote" | "unavailable"
+export type TerminalRuntimeStatus =
+  | { ok: true; kind: TerminalRuntimeKind }
+  | { ok: false; kind: "unavailable"; reason: string }
 
 const WORKSPACE_KEY = "__workspace__"
 const MAX_TERMINAL_SESSIONS = 20
@@ -385,6 +391,7 @@ export const { use: useTerminal, provider: TerminalProvider } = createSimpleCont
   gate: false,
   init: () => {
     const sdk = useSDK()
+    const platform = usePlatform()
     const server = useServer()
     const params = useParams()
     const cache = new Map<string, TerminalCacheEntry>()
@@ -435,6 +442,10 @@ export const { use: useTerminal, provider: TerminalProvider } = createSimpleCont
     }
 
     const workspace = createMemo(() => loadWorkspace(params.dir!, params.id, scope()))
+    const runtimeStatus = createMemo<TerminalRuntimeStatus>(() => {
+      if (platform.platform === "desktop") return { ok: true, kind: "native-pty" }
+      return { ok: false, kind: "unavailable", reason: "No terminal runtime is configured for browser mode." }
+    })
 
     createEffect(
       on(
@@ -450,10 +461,15 @@ export const { use: useTerminal, provider: TerminalProvider } = createSimpleCont
     )
 
     return {
+      runtimeStatus: () => runtimeStatus(),
+      canCreate: () => runtimeStatus().ok,
       ready: () => workspace().ready(),
       all: () => workspace().all(),
       active: () => workspace().active(),
-      new: () => workspace().new(),
+      new: () => {
+        if (!runtimeStatus().ok) return
+        workspace().new()
+      },
       update: (pty: Partial<LocalPTY> & { id: string }) => workspace().update(pty),
       trim: (id: string) => workspace().trim(id),
       trimAll: () => workspace().trimAll(),

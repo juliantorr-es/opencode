@@ -421,8 +421,21 @@ export const { use: useCommand, provider: CommandProvider } = createSimpleContex
     }
 
     const showPalette = () => {
+      console.debug("[palette] showPalette start")
       void import("@/components/dialog-command-palette").then((x) => {
-        dialog.show(() => <x.DialogCommandPalette />)
+        console.debug("[palette] dialog module loaded")
+        dialog.show(() => (
+          <x.DialogCommandPalette
+            options={options()}
+            recents={recentStore.recents}
+            favorites={recentStore.favorites}
+            t={language.t}
+            trackUse={trackUse}
+            trigger={run}
+            close={() => dialog.close()}
+          />
+        ))
+        console.debug("[palette] dialog.show returned")
       }).catch((e) => console.error("[palette] failed to load dialog-command-palette", e))
     }
 

@@ -36,6 +36,7 @@ import { createSimpleContext, NormalizedProviderListResponse } from "@opencode-a
 import { createRefCountMap } from "@/utils/refcount"
 import { Schema } from "effect"
 import { mergeDeep } from "remeda"
+import { Persist, persisted } from "@/utils/persist"
 
 export const queryKeys = {
   diagnostics: ["sidecar", "diagnostics"] as const,
@@ -153,8 +154,11 @@ export function createServerSyncContext() {
     queries: [queryOptionsApi.globalConfig(), queryOptionsApi.providers(null), queryOptionsApi.path(null)],
   }))
 
-  const [localConfig, setLocalConfig] = createSignal<Partial<Config>>({})
-  const mergedConfig = createMemo(() => mergeDeep(configQuery.data ?? {}, localConfig()) as Config)
+  const [localConfig, setLocalConfig] = persisted(
+    Persist.global("config.browser.v1"),
+    createStore<Partial<Config>>({}),
+  )
+  const mergedConfig = createMemo(() => mergeDeep(configQuery.data ?? {}, localConfig) as Config)
 
   const [globalStore, setGlobalStore] = createStore<GlobalStore>({
     get ready() {
@@ -174,7 +178,7 @@ export function createServerSyncContext() {
       return providerQuery.data ?? EMPTY
     },
     get config() {
-      if (configQuery.isLoading && Object.keys(localConfig()).length === 0) return {}
+      if (configQuery.isLoading && Object.keys(localConfig).length === 0) return {}
       return mergedConfig()
     },
     get reload() {
@@ -515,13 +519,23 @@ export function createServerSyncContext() {
         return config
       }
 
-      usedLocalConfigUpdate = false
-      const response = await serverSDK.client.global.config.update({ config })
-      setLocalConfig({})
-      return response.data ?? config
+      try {
+        usedLocalConfigUpdate = false
+        const response = await serverSDK.client.global.config.update({ config })
+        setLocalConfig({})
+        return response.data ?? config
+      } catch (err) {
+        usedLocalConfigUpdate = true
+        setLocalConfig((current) => mergeDeep(current, config) as Partial<Config>)
+        return config
+      }
     },
     onSuccess: () => {
-      if (usedLocalConfigUpdate) return
+      if (usedLocalConfigUpdate) {
+        queryClient.invalidateQueries({ queryKey: [null, "providers"] })
+        queryClient.invalidateQueries({ predicate: (query) => query.queryKey.at(-1) === "providers" })
+        return
+      }
       bootstrap.refetch()
       // Invalidate all provider queries so newly configured custom providers
       // appear immediately in the available provider list across all directories.

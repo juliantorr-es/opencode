@@ -32,6 +32,12 @@ export function TerminalPanel() {
   const size = createSizing()
   const height = createMemo(() => layout.terminal.height())
   const close = () => view().terminal.close()
+  const runtimeStatus = createMemo(() => terminal.runtimeStatus())
+  const runtimeUnavailableMessage = () => {
+    const status = runtimeStatus()
+    if (status.ok) return ""
+    return status.reason
+  }
   let root: HTMLDivElement | undefined
 
   const [store, setStore] = createStore({
@@ -61,7 +67,7 @@ export function TerminalPanel() {
       return
     }
 
-    if (!terminal.ready() || terminal.all().length !== 0 || store.autoCreated) return
+    if (!terminal.canCreate() || !terminal.ready() || terminal.all().length !== 0 || store.autoCreated) return
     terminal.new()
     setStore("autoCreated", true)
   })
@@ -249,6 +255,25 @@ export function TerminalPanel() {
             </div>
           }
         >
+          <Show
+            when={terminal.canCreate()}
+            fallback={
+              <div class="flex flex-col h-full pointer-events-none">
+                <div class="h-10 flex items-center gap-2 px-2 border-b border-border-weaker-base bg-background-stronger overflow-hidden">
+                  <For each={handoff()}>
+                    {(title) => (
+                      <div class="px-2 py-1 rounded-md bg-surface-base text-14-regular text-text-weak truncate max-w-40">
+                        {title}
+                      </div>
+                    )}
+                  </For>
+                </div>
+                <div class="flex-1 flex items-center justify-center text-text-weak">
+                  {runtimeUnavailableMessage()}
+                </div>
+              </div>
+            }
+          >
           <DragDropProvider
             onDragStart={handleTerminalDragStart}
             onDragEnd={handleTerminalDragEnd}
@@ -326,6 +351,7 @@ export function TerminalPanel() {
               </Show>
             </DragOverlay>
           </DragDropProvider>
+          </Show>
         </Show>
       </div>
     </div>

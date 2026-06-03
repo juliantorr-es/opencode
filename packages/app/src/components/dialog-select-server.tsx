@@ -180,6 +180,11 @@ export function DialogSelectServer() {
   const { defaultKey, canDefault, setDefault } = useDefaultServer()
   const { previewStatus } = useServerPreview()
   const checkServerHealth = useCheckServerHealth()
+  const currentKey = createMemo(() => {
+    const current = server.current
+    if (!current) return undefined
+    return ServerConnection.key(current)
+  })
   const [store, setStore] = createStore({
     status: {} as Record<ServerConnection.Key, ServerHealth | undefined>,
     addServer: {
@@ -563,7 +568,7 @@ export function DialogSelectServer() {
                     showCredentials
                   />
                   <div class="flex items-center justify-center gap-4 pl-4">
-                    <Show when={ServerConnection.key(current()) === key}>
+                    <Show when={currentKey() === key}>
                       <Icon name="check" class="h-6" />
                     </Show>
 
