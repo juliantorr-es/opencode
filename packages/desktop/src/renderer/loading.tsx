@@ -24,7 +24,7 @@ render(() => {
     return Math.max(25, Math.min(100, percent()))
   })
 
-  window.api.awaitInitialization((next) => setStep(next as InitStep)).catch(() => undefined)
+  window.api.awaitInitialization((next) => setStep(next as InitStep)).then(() => setStep({ phase: "done" })).catch(() => undefined)
 
   onMount(() => {
     setLine(0)

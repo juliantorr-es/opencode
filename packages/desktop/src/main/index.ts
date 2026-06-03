@@ -275,6 +275,7 @@ const main = Effect.gen(function* () {
           logger.log("awaiting server ready")
           const res = yield* Deferred.await(serverReady)
           logger.log("server ready", { url: res.url })
+          sendStep({ phase: "done" })
           return res
         } finally {
           initEmitter.off("step", listener)
@@ -465,7 +466,16 @@ const main = Effect.gen(function* () {
     yield* Fiber.await(loadingTask)
     setInitStep({ phase: "done" })
 
-    if (overlay) yield* Deferred.await(loadingComplete)
+    if (overlay) {
+      yield* Deferred.await(loadingComplete).pipe(
+        Effect.timeout("5 seconds"),
+        Effect.catch(() =>
+          Effect.sync(() => {
+            logger.warn("loading overlay did not report completion; continuing to main window")
+          }),
+        ),
+      )
+    }
 
     mainWindow = createMainWindow()
   }
