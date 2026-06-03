@@ -11,8 +11,6 @@ await $`cp ${pgliteDir}/postgres.data ../opencode/dist/node/`.quiet()
 await $`cp ${pgliteDir}/postgres.wasm ../opencode/dist/node/`.quiet()
 
 
-// Force electron-vite dev to rebuild the main chunk by removing stale cache
-await $`rm -f out/main/chunks/node-*.js 2>/dev/null || true`.quiet()
-
-// Copy migration directory so db.pg.ts can resolve it at runtime
-await $`rm -rf out/migration-pg && cp -r ../opencode/migration-pg out/migration-pg`
+// Remove stale electron-vite output so the dev build is forced fresh
+await $`rm -rf out/main out/migration-pg`.quiet()
+await $`cp -r ../opencode/migration-pg out/migration-pg`.quiet()
