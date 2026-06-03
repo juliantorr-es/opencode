@@ -40,11 +40,10 @@ export const analyticsExportModule = {
   // Export canonical rows from PGlite into DuckDB for analysis
   exportTable: (table: string): Effect.Effect<AnalyticsExport, never, DuckDBConfig.Service> =>
     Effect.gen(function* () {
-      const rows: Record<string, unknown>[] = yield* Effect.tryPromise({
+      const rows = yield* Effect.tryPromise({
         try: () => getPGlite().query(`SELECT * FROM "${table}"`).then((r) => r.rows),
         catch: () => [] as Record<string, unknown>[],
-      }).pipe(Effect.orDie)
-
+      }) as Effect.Effect<Record<string, unknown>[], never>
       // Sink into DuckDB via stdin JSON (write-capable, no -readonly)
       if (rows.length > 0) {
         const config = yield* DuckDBConfig.Service
@@ -113,6 +112,6 @@ export const analyticsExportModule = {
             .query(`SELECT 1 FROM "${table}" LIMIT 1`)
             .then((r) => r.rows.length > 0),
         catch: () => false,
-      }).pipe(Effect.orDie)
+      }) as Effect.Effect<boolean, never>
     }),
 }
