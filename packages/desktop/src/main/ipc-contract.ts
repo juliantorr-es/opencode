@@ -541,6 +541,9 @@ export const IPC_METHOD_REGISTRY: {
 }[] = [
   // ── Init ───────────────────────────────────────────────
   { channel: IPC.handle.KILL_SIDECAR, usesIpcResult: true, returns: "IpcResult<void>", rendererSees: "void" },
+  { channel: IPC.handle.SIDECAR_STATUS, usesIpcResult: true, returns: "IpcResult<SidecarStatus>", rendererSees: "SidecarStatus" },
+  { channel: IPC.handle.RESTART_SIDECAR, usesIpcResult: true, returns: "IpcResult<void>", rendererSees: "void" },
+  { channel: IPC.handle.OPEN_PROJECT, usesIpcResult: true, returns: "IpcResult<string>", rendererSees: "string" },
   { channel: IPC.handle.AWAIT_INITIALIZATION, usesIpcResult: true, returns: "IpcResult<ServerReadyData>", rendererSees: "ServerReadyData" },
   { channel: IPC.handle.GET_WINDOW_CONFIG, usesIpcResult: true, returns: "IpcResult<WindowConfig>", rendererSees: "WindowConfig" },
   { channel: IPC.handle.CONSUME_INITIAL_DEEP_LINKS, usesIpcResult: true, returns: "IpcResult<string[]>", rendererSees: "string[]" },
