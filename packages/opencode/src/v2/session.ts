@@ -240,7 +240,8 @@ export const layer = Layer.effect(
         const rows = yield* Effect.promise(() =>
           input.limit === undefined ? (query as any).execute() : (query as any).limit(input.limit).execute(),
         )
-        return (direction === "previous" ? rows.toReversed() : rows).map((row: typeof SessionTable.$inferSelect) => fromRow(row))
+        const typedRows = rows as (typeof SessionTable.$inferSelect)[]
+        return (direction === "previous" ? typedRows.toReversed() : typedRows).map(fromRow)
       }),
       messages: Effect.fn("V2Session.messages")(function* (input) {
         yield* result.get(input.sessionID)

@@ -1070,7 +1070,7 @@ export async function listGlobal(input?: {
     }
   }
 
-  return rows.map((row) => {
+  return rows.map((row: typeof SessionTable.$inferSelect) => {
     const project = projects.get(row.project_id) ?? null
     return { ...fromRow(row), project }
   })

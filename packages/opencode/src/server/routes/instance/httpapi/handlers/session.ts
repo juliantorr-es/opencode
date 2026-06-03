@@ -173,7 +173,7 @@ export const sessionHandlers = HttpApiBuilder.group(InstanceHttpApi, "session", 
       const instance = yield* InstanceRef
       const directory = instance?.directory ?? "unknown"
       const span = TraceSpans.sessionCreate(directory)
-      let result: Session.Info
+      let result!: Session.Info
       let _error: unknown
       try {
         result = yield* shareSvc.create(ctx.payload)

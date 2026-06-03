@@ -37,7 +37,7 @@ describe("migration runtime idempotency", () => {
     try {
       await applyMigrations(client)
     } finally {
-      const underlying = (client as Record<string, unknown>).$client
+      const underlying = (client as unknown as Record<string, unknown>).$client
       if (
         underlying &&
         typeof (underlying as Record<string, unknown>).end === "function"
@@ -58,7 +58,7 @@ describe("migration runtime idempotency", () => {
       // Run migrations again — should be idempotent
       await applyMigrations(client)
     } finally {
-      const underlying = (client as Record<string, unknown>).$client
+      const underlying = (client as unknown as Record<string, unknown>).$client
       if (
         underlying &&
         typeof (underlying as Record<string, unknown>).end === "function"
@@ -98,7 +98,7 @@ describe("migration runtime idempotency", () => {
     } finally {
       console.debug = originalDebug
 
-      const underlying = (client as Record<string, unknown>).$client
+      const underlying = (client as unknown as Record<string, unknown>).$client
       if (
         underlying &&
         typeof (underlying as Record<string, unknown>).end === "function"

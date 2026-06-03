@@ -3,7 +3,7 @@ import { Database } from "./db"
 // ── Projection Metadata Table ────────────────────────
 
 export async function ensureProjectionMeta(): Promise<void> {
-  const db = Database.Client()
+  const db = Database.Client() as any
   db.execute(`
     CREATE TABLE IF NOT EXISTS _projection_meta (
       name TEXT PRIMARY KEY,
@@ -37,7 +37,7 @@ export interface ProjectionHealth {
  * Returns health for all registered projections or a specific one by name.
  */
 export async function getProjectionHealth(name?: string): Promise<ProjectionHealth[]> {
-  const db = Database.Client()
+  const db = Database.Client() as any
   await ensureProjectionMeta()
 
   const query = name
@@ -82,7 +82,7 @@ export async function getProjectionHealth(name?: string): Promise<ProjectionHeal
  * Call after a successful rebuild.
  */
 export async function markProjectionCurrent(name: string, version: number = 1): Promise<void> {
-  const db = Database.Client()
+  const db = Database.Client() as any
   const now = Date.now()
   db.execute(
     `INSERT INTO _projection_meta (name, version, last_built_at, last_checked_at, is_stale)
@@ -100,7 +100,7 @@ export async function markProjectionCurrent(name: string, version: number = 1): 
  * Mark a projection as stale (needs rebuild).
  */
 export async function markProjectionStale(name: string): Promise<void> {
-  const db = Database.Client()
+  const db = Database.Client() as any
   const now = Date.now()
   db.execute(
     `UPDATE _projection_meta SET is_stale = 1, last_checked_at = ? WHERE name = ?`,

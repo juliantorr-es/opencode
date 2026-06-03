@@ -2,7 +2,8 @@
 // Instruments cross-runtime boundaries: sidecar boot, project activation,
 // tool invocation, session creation, migration runs, projection rebuilds.
 
-import { Span, trace, SpanStatusCode } from "@opentelemetry/api"
+import type { Span } from "@opentelemetry/api"
+import { trace, SpanStatusCode } from "@opentelemetry/api"
 
 const tracer = trace.getTracer("opencode-desktop")
 
