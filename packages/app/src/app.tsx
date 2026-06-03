@@ -221,15 +221,21 @@ function ConnectionGate(props: ParentProps<{ disableHealthCheck?: boolean }>) {
     props.disableHealthCheck
       ? true
       : Effect.gen(function* () {
-          if (!server.current) return true
+          if (!server.current) {
+            console.log("[healthcheck] no server configured, skipping")
+            return true
+          }
           const { http, type } = server.current
+          console.log("[healthcheck] checking", { url: http })
 
           while (true) {
             const res = yield* Effect.promise(() => checkServerHealth(http))
+            console.log("[healthcheck] response", { healthy: res.healthy, url: http })
             if (res.healthy) return true
             if (checkMode() === "background" || type === "http") return false
           }
         }).pipe(
+
           Effect.timeoutOrElse({ duration: "10 seconds", orElse: () => Effect.succeed(false) }),
           Effect.ensuring(Effect.sync(() => setCheckMode("background"))),
           Effect.runPromise,
