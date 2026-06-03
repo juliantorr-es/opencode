@@ -359,7 +359,8 @@ export const layer = Layer.effect(
     })
 
     const list = Effect.fn("Project.list")(function* () {
-      return yield* db((d) => d.select().from(ProjectTable).execute().map(fromRow)) as any
+      const rows = yield* db((d) => d.select().from(ProjectTable).execute())
+      return rows.map((row: Row) => fromRow(row))
     })
 
     const get = Effect.fn("Project.get")(function* (id: ProjectID) {
@@ -500,14 +501,9 @@ export const defaultLayer = layer.pipe(
 
 export const use = serviceUse(Service)
 
-export function list() {
-  return Database.use((db) =>
-    db
-      .select()
-      .from(ProjectTable)
-      .execute()
-      .map((row: typeof ProjectTable.$inferSelect) => fromRow(row)),
-  )
+export async function list(): Promise<Info[]> {
+  const rows = await Database.use((db) => db.select().from(ProjectTable).execute())
+  return rows.map((row: Row) => fromRow(row))
 }
 
 export async function get(id: ProjectID): Promise<Info | undefined> {

@@ -648,7 +648,7 @@ describe("Project.list and Project.get", () => {
       const tmp = yield* tmpdirScoped({ git: true })
       const { project } = yield* run((svc) => svc.fromDirectory(tmp))
 
-      const all = Project.list()
+      const all = yield* Effect.promise(() => Project.list())
       expect(all.length).toBeGreaterThan(0)
       expect(all.find((p: Project.Info) => p.id === project.id)).toBeDefined()
     }),
