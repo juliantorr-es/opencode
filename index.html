@@ -65,6 +65,58 @@
       <div class="hero-accent" aria-hidden="true"></div>
     </section>
 
+    <!-- Origin Story -->
+    <section class="section" id="origin" aria-labelledby="origin-heading">
+      <div class="section-container">
+        <h2 id="origin-heading" class="section-heading">How Tribunus Was Born.</h2>
+
+        <div class="tab-root">
+          <input type="radio" name="origin-tab" id="tab-little-frictions" class="tab-input" checked>
+          <input type="radio" name="origin-tab" id="tab-fork" class="tab-input">
+          <input type="radio" name="origin-tab" id="tab-rebuild" class="tab-input">
+          <input type="radio" name="origin-tab" id="tab-philosophy" class="tab-input">
+          <input type="radio" name="origin-tab" id="tab-where-now" class="tab-input">
+          <input type="radio" name="origin-tab" id="tab-where-going" class="tab-input">
+
+          <div class="tab-nav" role="tablist" aria-label="Origin story chapters">
+            <label for="tab-little-frictions" class="tab-label" role="tab" aria-selected="true" tabindex="0">The Little Frictions</label>
+            <label for="tab-fork" class="tab-label" role="tab" aria-selected="false" tabindex="-1">The Fork</label>
+            <label for="tab-rebuild" class="tab-label" role="tab" aria-selected="false" tabindex="-1">The Rebuild</label>
+            <label for="tab-philosophy" class="tab-label" role="tab" aria-selected="false" tabindex="-1">The Philosophy</label>
+            <label for="tab-where-now" class="tab-label" role="tab" aria-selected="false" tabindex="-1">Where We Are Now</label>
+            <label for="tab-where-going" class="tab-label" role="tab" aria-selected="false" tabindex="-1">Where We're Going</label>
+          </div>
+
+          <div class="tab-panels">
+            <div class="tab-panel" data-reveal>
+              <p>It started as an OpenCode fork. Not because OpenCode was bad — because the little frictions add up. I started by writing my own agent profiles. Then my own custom tools to make agents more effective. Then my own coordination scripts. The agents were reading and writing handoff logs in ad-hoc JSON files scattered across disk. I built what was essentially a database out of a pile of scripts on the filesystem. Every day, another friction. Another workaround. Another script that almost worked.</p>
+            </div>
+
+            <div class="tab-panel" data-reveal>
+              <p>Eventually I forked the experimental branch of OpenCode on GitHub and started looking inside. I needed to find the root of all the little annoyances that were driving me insane. What I found was that the architecture of a single-agent tool simply cannot be retrofitted into a multi-agent system. The coordination layer has to be <em>native</em>. So I started building.</p>
+            </div>
+
+            <div class="tab-panel" data-reveal>
+              <p>I yanked SQLite and transplanted PGlite + DuckDB + Valkey to build a high-throughput coordination layer. I turned my custom agents into actual state machines. Each spawned subagent became its own mini runtime with conditional state machines — forcing agents to actually follow the orchestration path I designed, consistently. I enabled shared worktrees and background agents so the main agent became a dispatcher that summons team leads, each coordinating a different portion of the development process. I deprecated the TUI-first approach and made every capability a first-class implementation in both the agent operation UX and the user-facing UI.</p>
+            </div>
+
+            <div class="tab-panel" data-reveal>
+              <p>I built this with love, tears, and frustration. I firmly believe that leaving an agent to roam unsupervised into any system with shell access is the engineering equivalent of leaving a toddler with a loaded nailgun unsupervised. Useful tool, wrong supervision model. But the right supervision model didn't exist. So I had to build my own. I'm sharing it here so you don't have to experience that kind of pain either.</p>
+            </div>
+
+            <div class="tab-panel" data-reveal>
+              <p>Today, a single developer can orchestrate and see in real time the changes being made to the codebase by hundreds of concurrent agents. The macOS app (Apple Silicon and Intel) lets you spawn agent cohorts, define missions, set scope boundaries, and watch every diff stream live. Nothing happens in the dark.</p>
+            </div>
+
+            <div class="tab-panel" data-reveal>
+              <p>The end goal is first-class real-time collaboration where teams of software engineers work together, each spawning hundreds of concurrent agents, all in the same repository at the same time. The real-time coordination is so smooth that a senior engineer can see what juniors and rookies are doing in real time. Teams should spend more time building the product than screaming at each other in meetings about someone deleting the production database because they sent the wrong prompt.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+
     <!-- What It Does -->
     <section class="section" id="what-it-does" aria-labelledby="features-heading">
       <div class="section-container">
@@ -146,6 +198,108 @@
       </div>
     </section>
 
+
+    <!-- Blog -->
+    <section class="section" id="blog" aria-labelledby="blog-heading">
+      <div class="section-container">
+        <h2 id="blog-heading" class="section-heading">From the Workbench.</h2>
+        <div class="blog-grid">
+          <article class="blog-card" data-reveal>
+            <h3 class="blog-card-title">What Happens When 100 Agents Edit the Same File</h3>
+            <p class="blog-card-desc">A technical deep-dive into merge conflict resolution at scale.</p>
+            <span class="blog-card-badge">Coming soon</span>
+          </article>
+          <article class="blog-card" data-reveal>
+            <h3 class="blog-card-title">Why I Yanked SQLite for PGlite + DuckDB + Valkey</h3>
+            <p class="blog-card-desc">The architecture decisions behind the coordination layer.</p>
+            <span class="blog-card-badge">Coming soon</span>
+          </article>
+          <article class="blog-card" data-reveal>
+            <h3 class="blog-card-title">The Toddler and the Nailgun</h3>
+            <p class="blog-card-desc">On supervision models, agent safety, and why building the control plane matters.</p>
+            <span class="blog-card-badge">Coming soon</span>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- Roadmap -->
+    <section class="section section--alt" id="roadmap" aria-labelledby="roadmap-heading">
+      <div class="section-container">
+        <h2 id="roadmap-heading" class="section-heading">The Road Ahead.</h2>
+        <div class="roadmap-timeline">
+          <div class="roadmap-phase" data-reveal>
+            <div class="roadmap-marker" aria-hidden="true"></div>
+            <div class="roadmap-content">
+              <span class="roadmap-phase-label">Phase 1 — Now</span>
+              <h3 class="roadmap-phase-title">macOS Developer Preview</h3>
+              <p class="roadmap-phase-desc">macOS native app, single developer orchestrating hundreds of agents, real-time change visibility, scoped authority, LocalFabric coordination backend.</p>
+            </div>
+          </div>
+          <div class="roadmap-phase" data-reveal>
+            <div class="roadmap-marker" aria-hidden="true"></div>
+            <div class="roadmap-content">
+              <span class="roadmap-phase-label">Phase 2 — Next</span>
+              <h3 class="roadmap-phase-title">Team Collaboration</h3>
+              <p class="roadmap-phase-desc">Real-time team collaboration, peer-to-peer serverless architecture, senior/junior/rookie sandboxing, Valkey coordination backend for live multi-user sessions.</p>
+            </div>
+          </div>
+          <div class="roadmap-phase" data-reveal>
+            <div class="roadmap-marker" aria-hidden="true"></div>
+            <div class="roadmap-content">
+              <span class="roadmap-phase-label">Phase 3 — Later</span>
+              <h3 class="roadmap-phase-title">Enterprise Governance</h3>
+              <p class="roadmap-phase-desc">Enterprise governance, cryptographic audit trails, policy-gated merges, compliance-ready evidence rings, remote-Valkey for distributed teams.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- FAQ -->
+    <section class="section" id="faq" aria-labelledby="faq-heading">
+      <div class="section-container">
+        <h2 id="faq-heading" class="section-heading">Frequently Asked.</h2>
+        <div class="faq-list">
+          <details class="faq-item" data-reveal>
+            <summary class="faq-question">What is Tribunus?</summary>
+            <p class="faq-answer">Tribunus is a control plane for agentic engineering. It coordinates hundreds of coding agents working concurrently in a single repository with real-time visibility and scoped authority.</p>
+          </details>
+          <details class="faq-item" data-reveal>
+            <summary class="faq-question">Is this just another AI coding tool?</summary>
+            <p class="faq-answer">No. Tribunus does not generate code. It coordinates the agents that do. It handles the orchestration, visibility, gate enforcement, and evidence tracking so you don't have to manage a hundred agent sessions manually.</p>
+          </details>
+          <details class="faq-item" data-reveal>
+            <summary class="faq-question">Do I need to run my own LLM?</summary>
+            <p class="faq-answer">No. Tribunus works with whatever LLM backend you already use — OpenAI, Anthropic, local models via Ollama, or enterprise providers. The control plane is model-agnostic.</p>
+          </details>
+          <details class="faq-item" data-reveal>
+            <summary class="faq-question">Is this free?</summary>
+            <p class="faq-answer">The macOS developer preview is free. Pricing for team and enterprise tiers will be announced when those features ship. There will always be a generous free tier for individual developers.</p>
+          </details>
+          <details class="faq-item" data-reveal>
+            <summary class="faq-question">Can agents break my codebase?</summary>
+            <p class="faq-answer">Agents operate within scoped authority defined by you. They can only write to files you explicitly allow. Senior engineers set the perimeter. Every change is visible in real time. Every merge is gated.</p>
+          </details>
+          <details class="faq-item" data-reveal>
+            <summary class="faq-question">How is this different from running multiple Claude Code instances?</summary>
+            <p class="faq-answer">Running multiple agents without coordination means merge conflicts, race conditions, duplicated work, and zero visibility into what each agent is doing. Tribunus provides the coordination fabric that makes multi-agent development safe, visible, and productive.</p>
+          </details>
+        </div>
+      </div>
+    </section>
+
+    <!-- Contact -->
+    <section class="section section--alt" id="contact" aria-labelledby="contact-heading">
+      <div class="section-container">
+        <h2 id="contact-heading" class="section-heading">Get in Touch.</h2>
+        <div class="contact-content" data-reveal>
+          <p class="contact-item"><strong>Email</strong> <a href="mailto:hello@tribunus.dev" class="contact-link">hello@tribunus.dev</a></p>
+          <p class="contact-item"><strong>GitHub</strong> <a href="https://github.com/juliantorr-es/opencode" class="contact-link" rel="noopener noreferrer" target="_blank">github.com/juliantorr-es/opencode</a></p>
+          <p class="contact-tagline">Built with love, tears, and frustration in Buenos Aires, Argentina.</p>
+        </div>
+      </div>
+    </section>
     <!-- Team Coordination -->
     <section class="section" id="team" aria-labelledby="team-heading">
       <div class="section-container team-layout">

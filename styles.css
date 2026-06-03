@@ -1011,6 +1011,335 @@ a {
   }
 }
 
+
+/* ---- Origin Story Tabs ---- */
+.tab-root {
+  margin-top: var(--space-2xl);
+}
+
+.tab-input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.tab-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: var(--space-xl);
+}
+
+.tab-label {
+  padding: var(--space-sm) var(--space-lg);
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  transition: color var(--transition-fast), border-color var(--transition-fast);
+  user-select: none;
+}
+
+.tab-label:hover {
+  color: var(--text);
+}
+
+/* Active tab label — driven by radio :checked */
+#tab-little-frictions:checked ~ .tab-nav label[for="tab-little-frictions"],
+#tab-fork:checked ~ .tab-nav label[for="tab-fork"],
+#tab-rebuild:checked ~ .tab-nav label[for="tab-rebuild"],
+#tab-philosophy:checked ~ .tab-nav label[for="tab-philosophy"],
+#tab-where-now:checked ~ .tab-nav label[for="tab-where-now"],
+#tab-where-going:checked ~ .tab-nav label[for="tab-where-going"] {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+
+/* Panel visibility — hidden by default, shown via :checked */
+.tab-panel {
+  display: none;
+  animation: tab-fade 300ms var(--ease-out);
+}
+
+#tab-little-frictions:checked ~ .tab-panels .tab-panel:nth-child(1),
+#tab-fork:checked ~ .tab-panels .tab-panel:nth-child(2),
+#tab-rebuild:checked ~ .tab-panels .tab-panel:nth-child(3),
+#tab-philosophy:checked ~ .tab-panels .tab-panel:nth-child(4),
+#tab-where-now:checked ~ .tab-panels .tab-panel:nth-child(5),
+#tab-where-going:checked ~ .tab-panels .tab-panel:nth-child(6) {
+  display: block;
+}
+
+@keyframes tab-fade {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.tab-panel p {
+  color: var(--text-muted);
+  font-size: 1.05rem;
+  line-height: 1.75;
+  max-width: 72ch;
+}
+
+.tab-panel p + p {
+  margin-top: var(--space-md);
+}
+
+.tab-panel em {
+  color: var(--accent);
+  font-style: italic;
+}
+
+/* Responsive: collapse tabs to vertical list on mobile */
+@media (max-width: 600px) {
+  .tab-nav {
+    flex-direction: column;
+    border-bottom: none;
+    gap: var(--space-xs);
+    margin-bottom: var(--space-lg);
+  }
+
+  .tab-label {
+    border-bottom: none;
+    border-left: 2px solid transparent;
+    margin-bottom: 0;
+    padding: var(--space-sm) var(--space-md);
+  }
+
+  #tab-little-frictions:checked ~ .tab-nav label[for="tab-little-frictions"],
+  #tab-fork:checked ~ .tab-nav label[for="tab-fork"],
+  #tab-rebuild:checked ~ .tab-nav label[for="tab-rebuild"],
+  #tab-philosophy:checked ~ .tab-nav label[for="tab-philosophy"],
+  #tab-where-now:checked ~ .tab-nav label[for="tab-where-now"],
+  #tab-where-going:checked ~ .tab-nav label[for="tab-where-going"] {
+    border-left-color: var(--accent);
+    border-bottom-color: transparent;
+    background: var(--surface);
+  }
+}
+
+/* ---- Blog ---- */
+.blog-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-xl);
+  margin-top: var(--space-2xl);
+}
+
+.blog-card {
+  position: relative;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--space-xl);
+  transition: border-color var(--transition-base), transform var(--transition-base);
+}
+
+.blog-card:hover {
+  border-color: var(--border-gold);
+  transform: translateY(-2px);
+}
+
+.blog-card-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: var(--space-sm);
+  line-height: 1.4;
+}
+
+.blog-card-desc {
+  font-size: 0.925rem;
+  color: var(--text-muted);
+  line-height: 1.6;
+  margin-bottom: var(--space-lg);
+}
+
+.blog-card-badge {
+  display: inline-block;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--accent);
+  border: 1px solid var(--border-gold);
+  border-radius: 9999px;
+  padding: 0.25em 0.75em;
+  letter-spacing: 0.02em;
+}
+
+/* Responsive: stack blog cards */
+@media (max-width: 768px) {
+  .blog-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ---- Roadmap Timeline ---- */
+.roadmap-timeline {
+  position: relative;
+  margin-top: var(--space-2xl);
+  padding-left: var(--space-2xl);
+}
+
+.roadmap-timeline::before {
+  content: '';
+  position: absolute;
+  left: 7px;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--border);
+}
+
+.roadmap-phase {
+  position: relative;
+  padding-bottom: var(--space-2xl);
+}
+
+.roadmap-phase:last-child {
+  padding-bottom: 0;
+}
+
+.roadmap-marker {
+  position: absolute;
+  left: calc(-1 * var(--space-2xl) + 2px);
+  top: 4px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: 2px solid var(--bg);
+  z-index: 1;
+}
+
+.roadmap-phase-label {
+  display: inline-block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: var(--space-xs);
+}
+
+.roadmap-phase-title {
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: var(--space-sm);
+}
+
+.roadmap-phase-desc {
+  font-size: 0.95rem;
+  color: var(--text-muted);
+  line-height: 1.65;
+  max-width: 64ch;
+}
+
+/* ---- FAQ ---- */
+.faq-list {
+  margin-top: var(--space-2xl);
+  max-width: 800px;
+}
+
+.faq-item {
+  border-bottom: 1px solid var(--border);
+}
+
+.faq-item:first-child {
+  border-top: 1px solid var(--border);
+}
+
+.faq-question {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-lg) 0;
+  font-size: 1.05rem;
+  font-weight: 500;
+  color: var(--text);
+  cursor: pointer;
+  list-style: none;
+  transition: color var(--transition-fast);
+}
+
+.faq-question::-webkit-details-marker {
+  display: none;
+}
+
+.faq-question::marker {
+  display: none;
+  content: '';
+}
+
+/* Custom disclosure indicator */
+.faq-question::before {
+  content: '+';
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  font-weight: 300;
+  color: var(--accent);
+  transition: transform var(--transition-fast);
+}
+
+details[open] > .faq-question::before {
+  content: '\2212';
+}
+
+.faq-question:hover {
+  color: var(--accent);
+}
+
+.faq-answer {
+  padding: 0 0 var(--space-lg) 28px;
+  font-size: 0.95rem;
+  color: var(--text-muted);
+  line-height: 1.7;
+  max-width: 72ch;
+}
+
+/* ---- Contact ---- */
+.contact-content {
+  text-align: center;
+  margin-top: var(--space-2xl);
+}
+
+.contact-item {
+  font-size: 1.05rem;
+  color: var(--text-muted);
+  margin-bottom: var(--space-sm);
+}
+
+.contact-item strong {
+  color: var(--text);
+  margin-right: var(--space-sm);
+}
+
+.contact-link {
+  color: var(--accent);
+  text-decoration: none;
+  transition: color var(--transition-fast);
+}
+
+.contact-link:hover {
+  color: var(--accent-hover);
+  text-decoration: underline;
+}
+
+.contact-tagline {
+  margin-top: var(--space-xl);
+  font-size: 0.95rem;
+  color: var(--text-dim);
+  font-style: italic;
+}
 /* ---- Scroll-Driven Animations (progressive enhancement) ---- */
 @supports (animation-timeline: scroll()) {
   .section {

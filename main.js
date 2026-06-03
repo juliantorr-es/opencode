@@ -89,4 +89,53 @@
     },
     { passive: false }
   );
+
+
+  /* ---- Origin story tab keyboard navigation ---- */
+  (function setupTabKeyboard() {
+    const tabRoot = document.querySelector('.tab-root');
+    if (!tabRoot) return;
+
+    const inputs = tabRoot.querySelectorAll('.tab-input');
+    const labels = tabRoot.querySelectorAll('.tab-label');
+    if (inputs.length === 0 || labels.length === 0) return;
+
+    function getSelectedIndex() {
+      for (let i = 0; i < inputs.length; i++) {
+        if (inputs[i].checked) return i;
+      }
+      return 0;
+    }
+
+    function selectTab(index) {
+      const clamped = ((index % inputs.length) + inputs.length) % inputs.length;
+      inputs[clamped].checked = true;
+      // Update aria-selected on labels
+      for (let i = 0; i < labels.length; i++) {
+        const selected = i === clamped;
+        labels[i].setAttribute('aria-selected', String(selected));
+        labels[i].setAttribute('tabindex', selected ? '0' : '-1');
+      }
+      labels[clamped].focus();
+    }
+
+    for (let i = 0; i < labels.length; i++) {
+      labels[i].addEventListener('keydown', (e) => {
+        let handled = true;
+        switch (e.key) {
+          case 'ArrowRight': selectTab(getSelectedIndex() + 1); break;
+          case 'ArrowLeft':  selectTab(getSelectedIndex() - 1); break;
+          case 'Home':       selectTab(0); break;
+          case 'End':        selectTab(inputs.length - 1); break;
+          default:           handled = false;
+        }
+        if (handled) e.preventDefault();
+      });
+
+      // Update aria on click too
+      labels[i].addEventListener('click', () => {
+        selectTab(i);
+      });
+    }
+  })();
 })();
