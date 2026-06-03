@@ -4,7 +4,7 @@ import { createGlobalEmitter } from "@solid-primitives/event-bus"
 import { makeEventListener } from "@solid-primitives/event-listener"
 import { batch, onCleanup, onMount } from "solid-js"
 import { createSdkForServer } from "@/utils/server"
-import { useLanguage } from "./language"
+
 import { usePlatform } from "./platform"
 import { ServerConnection, useServer } from "./server"
 import { createRefCountMap } from "@/utils/refcount"
@@ -247,10 +247,20 @@ function createServerSdkContext(server: ServerConnection.Any) {
 export const { use: useServerSDK, provider: ServerSDKProvider } = createSimpleContext({
   name: "ServerSDK",
   init: () => {
-    const language = useLanguage()
     const server = useServer()
 
-    if (!server.current) throw new Error(language.t("error.serverSDK.noServerAvailable"))
+    if (!server.current) {
+      const noop = () => () => {}
+      return {
+        url: "",
+        client: undefined as unknown as ReturnType<typeof createSdkForServer>,
+        event: { on: noop, listen: noop, start: () => {} },
+        createClient: () => { throw new Error("Server not ready") },
+        createDirSdkContext: () => { throw new Error("Server not ready") },
+        ready: false,
+        isReady: false,
+      }
+    }
     const sdk = createServerSdkContext(server.current)
     return {
       ...sdk,
