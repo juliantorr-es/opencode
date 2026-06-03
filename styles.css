@@ -774,6 +774,133 @@ a {
   background: var(--surface-raised);
 }
 
+/* ---- Product Proof Diagram ---- */
+.proof-diagram {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  max-width: 740px;
+  margin: 0 auto var(--space-2xl);
+  padding: var(--space-lg) 0;
+}
+
+.proof-node {
+  background: var(--surface);
+  border: 2px solid var(--accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 1;
+}
+
+.proof-node--you {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.proof-node--plane {
+  width: 168px;
+  padding: var(--space-md) var(--space-sm);
+  border-radius: 12px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  text-align: center;
+  line-height: 1.35;
+  box-shadow: 0 0 24px rgba(212,168,83,0.12);
+}
+
+.proof-connector {
+  width: 48px;
+  height: 0;
+  border-top: 1.5px dashed var(--accent);
+  opacity: 0.45;
+  flex-shrink: 0;
+}
+
+.proof-agents {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-xs);
+  position: relative;
+}
+
+.proof-node--agent {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border-width: 1.5px;
+  border-color: var(--border);
+  background: var(--surface-raised);
+}
+
+/* Proof Callouts */
+.proof-callouts {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  max-width: 740px;
+  margin: 0 auto;
+}
+
+.proof-callout {
+  padding: var(--space-md) var(--space-lg);
+  border-left: 3px solid var(--accent);
+  background: var(--surface);
+  border-radius: 0 8px 8px 0;
+}
+
+.proof-callout--left {
+  align-self: flex-start;
+  max-width: 540px;
+}
+
+.proof-callout--center {
+  align-self: center;
+  max-width: 540px;
+}
+
+.proof-callout--right {
+  align-self: flex-end;
+  max-width: 540px;
+}
+
+.proof-callout-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--accent);
+  margin-bottom: var(--space-xs);
+}
+
+.proof-callout-desc {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+/* Roadmap badge for team section */
+.roadmap-badge {
+  display: inline-block;
+  padding: 2px 10px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--accent);
+  border: 1.5px solid var(--accent);
+  border-radius: 3px;
+  margin-bottom: var(--space-sm);
+}
+
 /* ---- Download ---- */
 .download-grid {
   display: grid;
@@ -929,6 +1056,10 @@ a {
 .capability-card[data-reveal]:nth-child(6) { transition-delay: 300ms; }
 .capability-card[data-reveal]:nth-child(7) { transition-delay: 360ms; }
 
+.proof-callout[data-reveal]:nth-child(1) { transition-delay: 0ms; }
+.proof-callout[data-reveal]:nth-child(2) { transition-delay: 80ms; }
+.proof-callout[data-reveal]:nth-child(3) { transition-delay: 160ms; }
+
 /* ---- Container Queries for Bento Grid ---- */
 @container (max-width: 600px) {
   .bento-grid {
@@ -984,6 +1115,31 @@ a {
     min-height: 90vh;
     padding: var(--space-3xl) var(--space-lg);
   }
+
+  .proof-diagram {
+    flex-direction: column;
+    gap: var(--space-sm);
+    padding: var(--space-md) 0;
+  }
+
+  .proof-connector {
+    width: 0;
+    height: 28px;
+    border-top: 0;
+    border-left: 1.5px dashed var(--accent);
+  }
+
+  .proof-agents {
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--space-sm);
+  }
+
+  .proof-callout--left,
+  .proof-callout--center,
+  .proof-callout--right {
+    align-self: stretch;
+    max-width: none;
+  }
 }
 
 @media (max-width: 560px) {
@@ -1008,6 +1164,14 @@ a {
 
   .download-card-inner {
     padding: var(--space-xl);
+  }
+
+  .proof-agents {
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+  .proof-callout {
+    padding: var(--space-sm) var(--space-md);
   }
 }
 
