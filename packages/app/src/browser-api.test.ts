@@ -4,6 +4,9 @@ import { browserApi, installBrowserApi } from "./browser-api"
 beforeEach(() => {
   // Remove window.api before each test so the install is clean
   delete (window as unknown as Record<string, unknown>).api
+  localStorage.removeItem("opencode-custom-agents")
+  localStorage.removeItem("opencode-mcp-servers")
+  localStorage.removeItem("opencode-default-server-url")
 })
 
 describe("installBrowserApi", () => {
@@ -46,12 +49,15 @@ describe("browserApi method signatures", () => {
     expect(result).toEqual([])
   })
 
-  test("setCustomAgents resolves without error", async () => {
-    await expect(browserApi.setCustomAgents?.([])).resolves.toBeUndefined()
-  })
-
-  test("deleteCustomAgent resolves without error", async () => {
-    await expect(browserApi.deleteCustomAgent?.("test-id")).resolves.toBeUndefined()
+  test("setCustomAgents persists and deleteCustomAgent removes by id", async () => {
+    const agents = [
+      { id: "agent-1", name: "Agent 1", prompt: "Do work" },
+      { id: "agent-2", name: "Agent 2", prompt: "Do work" },
+    ]
+    await expect(browserApi.setCustomAgents?.(agents)).resolves.toBeUndefined()
+    await expect(browserApi.getCustomAgents?.()).resolves.toEqual(agents)
+    await expect(browserApi.deleteCustomAgent?.("agent-1")).resolves.toBeUndefined()
+    await expect(browserApi.getCustomAgents?.()).resolves.toEqual([agents[1]])
   })
 
   test("getMcpServers returns an empty array", async () => {
@@ -59,8 +65,10 @@ describe("browserApi method signatures", () => {
     expect(result).toEqual([])
   })
 
-  test("setMcpServers resolves without error", async () => {
-    await expect(browserApi.setMcpServers?.([])).resolves.toBeUndefined()
+  test("setMcpServers persists server entries", async () => {
+    const servers = [{ name: "mcp-1", config: { type: "remote", url: "http://localhost", enabled: true } }]
+    await expect(browserApi.setMcpServers?.(servers)).resolves.toBeUndefined()
+    await expect(browserApi.getMcpServers?.()).resolves.toEqual(servers)
   })
 
   test("recordFatalRendererError resolves without error", async () => {

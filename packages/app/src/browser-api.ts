@@ -21,6 +21,30 @@ function debug(name: string, ...args: unknown[]) {
   }
 }
 
+function readJsonStorage<T>(key: string, fallback: T): T {
+  if (typeof localStorage === "undefined") return fallback
+  const raw = localStorage.getItem(key)
+  if (!raw) return fallback
+  try {
+    return JSON.parse(raw) as T
+  } catch {
+    return fallback
+  }
+}
+
+function writeJsonStorage(key: string, value: unknown) {
+  if (typeof localStorage === "undefined") return
+  localStorage.setItem(key, JSON.stringify(value))
+}
+
+function removeStorage(key: string) {
+  if (typeof localStorage === "undefined") return
+  localStorage.removeItem(key)
+}
+
+const CUSTOM_AGENTS_STORAGE_KEY = "opencode-custom-agents"
+const MCP_SERVERS_STORAGE_KEY = "opencode-mcp-servers"
+
 /** All methods that the renderer code accesses on `window.api`. */
 export interface BrowserApi {
   setTitlebar?: (theme: { mode: "light" | "dark" }) => Promise<void>
@@ -100,26 +124,36 @@ export const browserApi: BrowserApi = {
 
   getCustomAgents() {
     debug("getCustomAgents")
-    return Promise.resolve([])
+    return Promise.resolve(readJsonStorage<unknown[]>(CUSTOM_AGENTS_STORAGE_KEY, []))
   },
 
-  setCustomAgents(_agents) {
-    debug("setCustomAgents", _agents)
+  setCustomAgents(agents) {
+    debug("setCustomAgents", agents)
+    writeJsonStorage(CUSTOM_AGENTS_STORAGE_KEY, agents ?? [])
     return Promise.resolve()
   },
 
-  deleteCustomAgent(_id) {
-    debug("deleteCustomAgent", _id)
+  deleteCustomAgent(id) {
+    debug("deleteCustomAgent", id)
+    const agents = readJsonStorage<unknown[]>(CUSTOM_AGENTS_STORAGE_KEY, [])
+    writeJsonStorage(
+      CUSTOM_AGENTS_STORAGE_KEY,
+      agents.filter((agent) => {
+        if (!agent || typeof agent !== "object") return true
+        return (agent as Record<string, unknown>).id !== id
+      }),
+    )
     return Promise.resolve()
   },
 
   getMcpServers() {
     debug("getMcpServers")
-    return Promise.resolve([])
+    return Promise.resolve(readJsonStorage<unknown[]>(MCP_SERVERS_STORAGE_KEY, []))
   },
 
-  setMcpServers(_servers) {
-    debug("setMcpServers", _servers)
+  setMcpServers(servers) {
+    debug("setMcpServers", servers)
+    writeJsonStorage(MCP_SERVERS_STORAGE_KEY, servers ?? [])
     return Promise.resolve()
   },
 
@@ -162,7 +196,7 @@ export const browserApi: BrowserApi = {
     if (url !== null) {
       localStorage.setItem("opencode-default-server-url", url)
     } else {
-      localStorage.removeItem("opencode-default-server-url")
+      removeStorage("opencode-default-server-url")
     }
     return Promise.resolve()
   },
