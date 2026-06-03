@@ -18,12 +18,12 @@ export function MainWindowBootFallback(props: { resources: LoadingResource[] }) 
         height: "100vh",
         width: "100vw",
         background: "var(--background-base, #0d0d0d)",
-        color: "var(--foreground-muted, #888888)",
+        color: "var(--text-weak, #888888)",
         "font-family": "system-ui, -apple-system, sans-serif",
-        "font-size": "14px",
+        "font-size": "var(--font-size-md, 14px)",
       }}
     >
-      <div style={{ "font-size": "18px", "font-weight": 600, "margin-bottom": "16px", color: "var(--foreground-base, #eeeeee)" }}>
+      <div style={{ "font-size": "18px", "font-weight": 600, "margin-bottom": "16px", color: "var(--text-base, #eeeeee)" }}>
         Starting Tribunus Desktop
       </div>
       <div style={{ opacity: 0.7 }}>
@@ -36,8 +36,8 @@ export function MainWindowBootFallback(props: { resources: LoadingResource[] }) 
           style={{
             width: "24px",
             height: "24px",
-            border: "2px solid var(--foreground-muted, #888888)",
-            "border-top-color": "var(--accent-base, #6366f1)",
+            border: "2px solid var(--text-weak, #888888)",
+            "border-top-color": "var(--surface-interactive-base, #6366f1)",
             "border-radius": "50%",
             animation: "tribunus-spin 0.8s linear infinite",
           }}
