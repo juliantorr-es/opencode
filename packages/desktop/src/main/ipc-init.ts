@@ -31,13 +31,13 @@ export type Deps = {
   wslPath: (path: string, mode: "windows" | "linux" | null) => Promise<string>
   resolveAppPath: (appName: string) => Promise<string | null>
   loadingWindowComplete: () => void
+  rendererReady: () => void
   runUpdater: (alertOnFail: boolean) => Promise<void> | void
   checkUpdate: () => Promise<{ updateAvailable: boolean; version?: string }>
   installUpdate: () => Promise<void> | void
   setBackgroundColor: (color: string) => void
   exportDebugLogs: () => Promise<string>
   recordFatalRendererError: (error: FatalRendererError) => Promise<void> | void
-
   getSafeModeDiagnostics: () => Promise<SafeModeDiagnostics>
   safeModeAction: (action: SafeModeAction) => Promise<void>
 }

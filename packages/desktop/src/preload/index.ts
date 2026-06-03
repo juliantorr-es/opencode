@@ -74,7 +74,7 @@ const api: ElectronAPI = {
   showNotification: (title, body) => typedSend(IPC.send.SHOW_NOTIFICATION, title, body),
   relaunch: () => typedSend(IPC.send.RELAUNCH),
   loadingWindowComplete: () => typedSend(IPC.send.LOADING_WINDOW_COMPLETE),
-
+  rendererReady: () => typedSend(IPC.send.RENDERER_READY),
   // --- Complex listener methods (keep ipcRenderer.on) ---
   awaitInitialization: (onStep) => {
     const handler = (_: unknown, step: InitStep) => onStep(step)

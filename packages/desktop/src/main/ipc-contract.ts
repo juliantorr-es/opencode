@@ -301,6 +301,7 @@ export interface IpcSendContract {
   [IPC.send.RELAUNCH]: { params: [] }
   [IPC.send.LOADING_WINDOW_COMPLETE]: { params: [] }
   [IPC.send.PLUGIN_SEND]: { params: [channel: string, data?: unknown] }
+  [IPC.send.RENDERER_READY]: { params: [] }
 }
 
 // ──────────────────────────────────────────────────────────────

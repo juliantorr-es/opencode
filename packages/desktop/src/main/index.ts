@@ -296,6 +296,9 @@ const main = Effect.gen(function* () {
     wslPath: async (path, mode) => wslPath(path, mode),
     resolveAppPath: async (appName) => resolveAppPath(appName),
     loadingWindowComplete: () => Deferred.doneUnsafe(loadingComplete, Effect.void),
+    rendererReady: () => {
+      logger.log("renderer reported ready")
+    },
     runUpdater: async (alertOnFail) => checkForUpdates(alertOnFail, killSidecar),
     checkUpdate: async () => checkUpdate(),
     installUpdate: async () => installUpdate(killSidecar),

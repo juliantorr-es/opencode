@@ -94,8 +94,8 @@ export const IPC = {
     RELAUNCH: "tribunus:relaunch",
     LOADING_WINDOW_COMPLETE: "tribunus:loading-window-complete",
     PLUGIN_SEND: "tribunus:plugin:send",
+    RENDERER_READY: "tribunus:renderer-ready",
   } as const,
-
   push: {
     INIT_STEP: "tribunus:init-step",
     STORAGE_MIGRATION_PROGRESS: "tribunus:storage-migration-progress",
