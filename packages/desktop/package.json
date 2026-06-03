@@ -12,7 +12,7 @@
   "scripts": {
     "typecheck": "tsgo -b",
     "predev": "bun ./scripts/predev.ts",
-    "dev": "electron-vite build",
+    "dev": "electron-vite build && electron-vite preview",
     "prebuild": "bun ./scripts/prebuild.ts",
     "build": "electron-vite build",
     "preview": "electron-vite preview",
