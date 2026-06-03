@@ -51,8 +51,14 @@ import { ServersProvider } from "./context/servers"
 import { AppErrorBoundary } from "./components/error-boundary"
 import { InspectorPage } from "./components/inspector/inspector-page"
 
-const HomeRoute = lazy(() => import("@/pages/home"))
-const Session = lazy(() => import("@/pages/session"))
+const HomeRoute = lazy(() => import("@/pages/home").catch((err) => {
+  console.error("[app] Failed to lazy-load HomeRoute:", err)
+  throw err
+}))
+const Session = lazy(() => import("@/pages/session").catch((err) => {
+  console.error("[app] Failed to lazy-load Session:", err)
+  throw err
+}))
 
 const SessionRoute = Object.assign(
   () => (

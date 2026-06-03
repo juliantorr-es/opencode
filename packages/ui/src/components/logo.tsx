@@ -25,8 +25,8 @@ export const Splash = (props: Pick<ComponentProps<"svg">, "ref" | "class">) => {
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
     >
-      <path d="M60 80H20V40H60V80Z" fill="var(--icon-base)" />
-      <path d="M60 20H20V80H60V20ZM80 100H0V0H80V100Z" fill="var(--icon-strong-base)" />
+      <path d="M60 80H20V40H60V80Z" fill="var(--icon-base, currentColor)" />
+      <path d="M60 20H20V80H60V20ZM80 100H0V0H80V100Z" fill="var(--icon-strong-base, currentColor)" />
     </svg>
   )
 }
