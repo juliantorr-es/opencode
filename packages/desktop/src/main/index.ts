@@ -183,8 +183,7 @@ const main = Effect.gen(function* () {
   app.commandLine.appendSwitch("enable-features", features ? `${jsCallStackFeature},${features}` : jsCallStackFeature)
   if (!electronPlatformPaths.isPackaged) app.commandLine.appendSwitch("remote-debugging-port", "9222")
 
-  // CSP warning: dev-only (unsafe-eval for Vite HMR).
-  // Packaged builds use stricter CSP. Tracked as TECH-DEBT-CSP.
+
 
   if (!app.requestSingleInstanceLock()) {
     app.quit()
