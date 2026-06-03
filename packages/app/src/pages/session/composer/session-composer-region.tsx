@@ -1,5 +1,4 @@
 import { Show, createEffect, createMemo, onCleanup } from "solid-js"
-import { useProjectActivation } from "@/context/project-activation"
 import { createStore } from "solid-js/store"
 import { useNavigate } from "@solidjs/router"
 import { useSpring } from "@opencode-ai/ui/motion-spring"
@@ -54,14 +53,13 @@ export function SessionComposerRegion(props: {
   const language = useLanguage()
   const route = useSessionKey()
   const sync = useSync()
-  const activation = useProjectActivation()
   const view = layout.view(route.sessionKey)
 
   const handoffPrompt = createMemo(() => getSessionHandoff(route.sessionKey())?.prompt)
   const info = createMemo(() => (route.params.id ? sync.session.get(route.params.id) : undefined))
   const parentID = createMemo(() => info()?.parentID)
   const child = createMemo(() => !!parentID())
-  const showComposer = createMemo(() => (!props.state.blocked() || child()) && activation.canCreateSession())
+  const showComposer = createMemo(() => !props.state.blocked() || child())
 
   const previewPrompt = () =>
     prompt

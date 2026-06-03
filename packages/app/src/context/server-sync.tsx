@@ -2,10 +2,12 @@ import type { Config, OpencodeClient, Path, Project, ProviderAuthResponse, Sessi
 import { showToast } from "@opencode-ai/ui/toast"
 import { getFilename } from "@opencode-ai/core/util/path"
 import { batch, createContext, getOwner, onCleanup, onMount, type ParentProps, untrack, useContext } from "solid-js"
+import { createMemo, createSignal } from "solid-js"
 import { createStore, produce, reconcile } from "solid-js/store"
 import { useLanguage } from "@/context/language"
 import type { InitError } from "../pages/error"
 import { useServerSDK } from "./server-sdk"
+import { usePlatform } from "./platform"
 import type { ProjectReadiness } from "./project-activation"
 import {
   bootstrapDirectory,
@@ -33,6 +35,7 @@ import { createDirSyncContext } from "./directory-sync"
 import { createSimpleContext, NormalizedProviderListResponse } from "@opencode-ai/ui/context"
 import { createRefCountMap } from "@/utils/refcount"
 import { Schema } from "effect"
+import { mergeDeep } from "remeda"
 
 export const queryKeys = {
   diagnostics: ["sidecar", "diagnostics"] as const,
@@ -123,6 +126,7 @@ export function decodeOrThrow<T>(label: string, schema: Schema.Schema<T>, value:
 }
 export function createServerSyncContext() {
   const serverSDK = useServerSDK()
+  const platform = usePlatform()
   const language = useLanguage()
   const owner = getOwner()
   if (!owner) throw new Error("ServerSync must be created within owner")
@@ -149,6 +153,9 @@ export function createServerSyncContext() {
     queries: [queryOptionsApi.globalConfig(), queryOptionsApi.providers(null), queryOptionsApi.path(null)],
   }))
 
+  const [localConfig, setLocalConfig] = createSignal<Partial<Config>>({})
+  const mergedConfig = createMemo(() => mergeDeep(configQuery.data ?? {}, localConfig()) as Config)
+
   const [globalStore, setGlobalStore] = createStore<GlobalStore>({
     get ready() {
       return !bootstrap.isPending && !bootstrap.isError
@@ -167,8 +174,8 @@ export function createServerSyncContext() {
       return providerQuery.data ?? EMPTY
     },
     get config() {
-      if (configQuery.isLoading) return {}
-      return configQuery.data ?? {}
+      if (configQuery.isLoading && Object.keys(localConfig()).length === 0) return {}
+      return mergedConfig()
     },
     get reload() {
       return updateConfigMutation.isPending ? "pending" : undefined
@@ -499,9 +506,22 @@ export function createServerSyncContext() {
     },
   }
 
+  let usedLocalConfigUpdate = false
   const updateConfigMutation = useMutation(() => ({
-    mutationFn: (config: Config) => serverSDK.client.global.config.update({ config }),
+    mutationFn: async (config: Config) => {
+      if (platform.platform === "web") {
+        usedLocalConfigUpdate = true
+        setLocalConfig((current) => mergeDeep(current, config) as Partial<Config>)
+        return config
+      }
+
+      usedLocalConfigUpdate = false
+      const response = await serverSDK.client.global.config.update({ config })
+      setLocalConfig({})
+      return response.data ?? config
+    },
     onSuccess: () => {
+      if (usedLocalConfigUpdate) return
       bootstrap.refetch()
       // Invalidate all provider queries so newly configured custom providers
       // appear immediately in the available provider list across all directories.

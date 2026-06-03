@@ -21,6 +21,7 @@ export interface TextFieldProps
         | "readOnly"
       >
     > {
+  onValueChange?: (value: string) => void
   label?: string
   hideLabel?: boolean
   description?: string
@@ -38,6 +39,7 @@ export function TextField(props: TextFieldProps) {
     "defaultValue",
     "value",
     "onChange",
+    "onValueChange",
     "onKeyDown",
     "validationState",
     "required",
@@ -85,7 +87,7 @@ export function TextField(props: TextFieldProps) {
       name={local.name}
       defaultValue={local.defaultValue}
       value={local.value}
-      onChange={local.onChange}
+      onChange={local.onValueChange ?? local.onChange}
       onKeyDown={local.onKeyDown}
       onClick={handleClick}
       required={local.required}
