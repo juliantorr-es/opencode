@@ -72,8 +72,13 @@ redis-*/
 # Valkey runtime state
 packages/desktop/resources/valkey/**/var/
 packages/desktop/resources/valkey/**/data/
+
+# Product documentation (pre-release — do not commit)
+TRIBUNUS_*.md
+RELEASE_READINESS_BINDER.md
 **/valkey-data/
 
 
 # Generated declaration files from app package build
 packages/opencode/src/agent/workflow/*.d.ts
+
