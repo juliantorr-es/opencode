@@ -23,6 +23,8 @@ import { MemoryRouter } from "@solidjs/router"
 import { createEffect, createResource, onCleanup, onMount, Show } from "solid-js"
 import { render } from "solid-js/web"
 import pkg from "../../package.json"
+import "./design-tokens.css"
+
 import { initI18n, t } from "./i18n"
 import { resetZoom, setPinchZoomEnabled, webviewZoom, zoomIn, zoomOut } from "./webview-zoom"
 import { DesktopPluginProvider } from "./plugin-context"
