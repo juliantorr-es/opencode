@@ -434,7 +434,3 @@ render(() => {
   )
 }, root!)
 
-// Signal renderer readiness after the first paint
-requestAnimationFrame(() => {
-  window.api.rendererReady()
-})
