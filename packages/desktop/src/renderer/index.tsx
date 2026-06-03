@@ -344,8 +344,19 @@ render(() => {
       if (url) return ServerConnection.key({ type: "http", http: { url } })
     }),
   )
-  const [locale] = createResource(loadLocale)
 
+  // On first run with no configured server, auto-set the local sidecar as default
+
+  createEffect(() => {
+    const data = sidecar()
+    const current = defaultServer()
+    if (data?.url && !current) {
+      const key = ServerConnection.key({ type: "http", http: { url: data.url } })
+      void platform.setDefaultServer?.(key)
+    }
+  })
+
+  const [locale] = createResource(loadLocale)
   const servers = () => {
     const data = sidecar()
     if (!data) return []
