@@ -310,6 +310,9 @@ window.api.onMenuCommand((id) => {
 listenForDeepLinks()
 
 render(() => {
+  onMount(() => {
+    window.api.rendererReady()
+  })
   const platform = createPlatform()
   const [windowConfig] = createResource(() => window.api.getWindowConfig().catch(() => ({ updaterEnabled: false })))
   const loadLocale = async () => {
