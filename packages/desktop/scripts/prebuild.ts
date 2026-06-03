@@ -12,9 +12,8 @@ await $`cd ../opencode && bun script/build-node.ts`
 
 // Copy pglite .data and .wasm assets into the opencode node dist
 // so the copy-server-assets electron-vite plugin bundles them into out/main/chunks
-// Use find to avoid + in package name breaking bun shell glob expansion
-await $`find node_modules/.bun -name "postgres.data" -path "*pglite*" -exec cp {} ../opencode/dist/node/ \\;`
-await $`find node_modules/.bun -name "postgres.wasm" -path "*pglite*" -exec cp {} ../opencode/dist/node/ \\;`
+await $`cp ../../node_modules/.bun/@electric-sql+pglite@0.2.17/node_modules/@electric-sql/pglite/dist/postgres.data ../opencode/dist/node/`
+await $`cp ../../node_modules/.bun/@electric-sql+pglite@0.2.17/node_modules/@electric-sql/pglite/dist/postgres.wasm ../opencode/dist/node/`
 // Copy migration directory so db.pg.ts can resolve it at runtime
 await $`rm -rf out/migration-pg && cp -r ../opencode/migration-pg out/migration-pg`
 
