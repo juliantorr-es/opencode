@@ -110,7 +110,8 @@ function extractDirectory(s: ActivationState): string | undefined {
 
 function reducer(state: ActivationState, event: ActivationEvent): ActivationState {
   switch (state.name) {
-    case "uninitialized": {
+  case "uninitialized": {
+      if (event.type === "PROJECT_SELECTED") return { name: "opening_project", directory: event.directory }
       if (event.type === "SIDECAR_READY") return { name: "empty" }
       if (event.type === "NO_PROJECTS_FOUND") return { name: "empty" }
       return state
@@ -241,6 +242,9 @@ export function createProjectActivation(deps: ActivationDeps): ProjectActivation
     send({ type: "PROJECT_SELECTED", directory })
     deps.openProjectLocal(directory)
     deps.touchProject(directory)
+    if (opts?.navigate !== false) {
+      deps.navigateToProject(directory)
+    }
     try {
       const readiness = await deps.ensureReady(directory)
       switch (readiness.status) {
@@ -259,9 +263,6 @@ export function createProjectActivation(deps: ActivationDeps): ProjectActivation
         case "failed":
           send({ type: "FAIL", directory, error: readiness.message })
           return
-      }
-      if (opts?.navigate !== false) {
-        deps.navigateToProject(directory)
       }
     } catch (err) {
       send({ type: "FAIL", directory, error: err instanceof Error ? err.message : String(err) })

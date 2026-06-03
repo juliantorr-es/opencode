@@ -378,15 +378,12 @@ export function AppInterface(props: {
               <ServerSDKProvider>
                 <ServerSyncProvider>
                   <Dynamic
-                    component={props.router ?? Router}
-                    root={(routerProps) => <RouterRoot appChildren={props.children}>{routerProps.children}</RouterRoot>}
-                  >
+                  component={props.router ?? Router}
+                  root={(routerProps) => <RouterRoot appChildren={props.children}>{routerProps.children}</RouterRoot>}
+                >
                     <Route path="/" component={() => <AppErrorBoundary><HomeRoute /></AppErrorBoundary>} />
-                    <Route path="/:dir" component={() => <AppErrorBoundary><DirectoryLayout /></AppErrorBoundary>}>
-                      <Route path="/" component={() => <Navigate href="session" />} />
-                      <Route path="/session/:id?" component={() => <AppErrorBoundary><SessionRoute /></AppErrorBoundary>} />
-                      <Route path="/inspector" component={() => <InspectorPage />} />
-                    </Route>
+                    <Route path="/:dir/session/:id?" component={() => <AppErrorBoundary><DirectoryLayout><SessionRoute /></DirectoryLayout></AppErrorBoundary>} />
+                    <Route path="/:dir" component={() => <AppErrorBoundary><DirectoryLayout><Navigate href="session" /></DirectoryLayout></AppErrorBoundary>} />
                   </Dynamic>
                 </ServerSyncProvider>
               </ServerSDKProvider>

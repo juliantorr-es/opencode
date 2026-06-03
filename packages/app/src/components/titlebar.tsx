@@ -739,6 +739,7 @@ function TabNavItem(props: {
   onClose: () => void
 }) {
   const match = useMatch(() => props.href)
+  const navigate = useNavigate()
   const isActive = () => !!match()
   return (
     <div
@@ -748,6 +749,11 @@ function TabNavItem(props: {
       <a
         href={props.href}
         class="flex h-full min-w-0 flex-1 flex-row items-center gap-1.5 overflow-hidden text-[13px] font-medium leading-5 text-v2-text-text-faint group-data-[active='true']:text-v2-text-text-base"
+        onClick={(event) => {
+          console.log("[titlebar-nav]", props.href)
+          event.preventDefault()
+          navigate(props.href)
+        }}
       >
         <ProjectTabAvatar project={props.project} directory={props.directory} />
         <span class="text-clip leading-5">{props.title}</span>
@@ -787,12 +793,18 @@ function ProjectTabAvatar(props: { project?: LocalProject; directory: string }) 
 }
 
 function NewSessionTabItem(props: { href: string; title: string; onClose: () => void }) {
+  const navigate = useNavigate()
   return (
     <div class="group relative flex h-7 max-w-60 flex-row items-center gap-1.5 overflow-hidden rounded-[6px] bg-[var(--v2-overlay-simple-overlay-pressed)] pl-1.5 pr-8 whitespace-nowrap focus-within:outline focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-[var(--v2-border-border-focus)]">
       <a
         href={props.href}
         aria-current="page"
         class="flex h-full min-w-0 flex-1 flex-row items-center gap-1.5 overflow-hidden text-[13px] font-medium leading-5 text-[var(--v2-text-text-base)]"
+        onClick={(event) => {
+          console.log("[titlebar-nav]", props.href)
+          event.preventDefault()
+          navigate(props.href)
+        }}
       >
         <span class="flex size-4 shrink-0 rotate-90 items-center justify-center">
           <IconV2 name="edit" />
