@@ -85,29 +85,19 @@ export const ensureCoordinationTables = Effect.fn("Coordination.ensureCoordinati
     ),
   )
   // Migrate existing tables: add expires_at for coordination_claim TTL support
-  try {
-    yield* adapter.query((db) =>
-      db.run(`ALTER TABLE coordination_claim ADD COLUMN expires_at BIGINT`),
-    )
-  } catch (_) {
-    // Column already exists — silently ignore
-  }
+  yield* adapter.query((db) =>
+    db.run(`ALTER TABLE coordination_claim ADD COLUMN expires_at BIGINT`).catch(() => {}),
+  )
+
   // Migrate existing tables: add expires_at for coordination_reservation TTL support
-  try {
-    yield* adapter.query((db) =>
-      db.run(`ALTER TABLE coordination_reservation ADD COLUMN expires_at BIGINT`),
-    )
-  } catch (_) {
-    // Column already exists — silently ignore
-  }
+  yield* adapter.query((db) =>
+    db.run(`ALTER TABLE coordination_reservation ADD COLUMN expires_at BIGINT`).catch(() => {}),
+  )
+
   // Migrate existing tables: add base_digest for digest-backed conflict detection
-  try {
-    yield* adapter.query((db) =>
-      db.run(`ALTER TABLE coordination_reservation ADD COLUMN base_digest TEXT`),
-    )
-  } catch (_) {
-    // Column already exists — silently ignore
-  }
+  yield* adapter.query((db) =>
+    db.run(`ALTER TABLE coordination_reservation ADD COLUMN base_digest TEXT`).catch(() => {}),
+  )
   yield* adapter.query((db) =>
     db.run(
       `CREATE TABLE IF NOT EXISTS coordination_reservation (
