@@ -150,7 +150,11 @@ export function makeLocalPgAdapter(): Interface {
         const result = fn(client)
         return result instanceof Promise ? result : Promise.resolve(result)
       },
-      catch: (cause) => new DatabaseError({ message: "Query failed", cause, isRetryable: false }),
+      catch: (cause) => {
+        console.error("[adapter] Query failed — cause:", cause instanceof Error ? cause.message : String(cause))
+        if (cause instanceof Error && cause.stack) console.error("[adapter] Stack:", cause.stack.split("\n").slice(0, 4).join("\n"))
+        return new DatabaseError({ message: "Query failed", cause, isRetryable: false })
+      },
     })
 
   const transaction = <T>(
