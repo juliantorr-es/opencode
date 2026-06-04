@@ -308,25 +308,40 @@ export function TerminalPanel() {
                       />
                     </TooltipKeybind>
                   </div>
+                  <div class="flex-1" />
+                  <div class="h-full flex items-center pr-4">
+                    <div class="text-12-regular text-text-weaker uppercase tracking-wider flex items-center gap-2">
+                      <Show when={runtimeStatus().kind === "webcontainer"}>
+                        <span class="text-orange-500 bg-orange-500/10 px-2 py-0.5 rounded text-10-medium tracking-wide">VIRTUAL FS SANDBOX</span>
+                      </Show>
+                      {runtimeStatus().kind === "webcontainer" ? "Isolated Browser Node Runtime" : runtimeStatus().kind}
+                    </div>
+                  </div>
                 </Tabs.List>
               </Tabs>
               <div class="flex-1 min-h-0 relative">
                 <Show when={terminal.active()} keyed>
                   {(id) => {
                     const ops = terminal.bind()
+                    const session = terminal.runtime().getSession(id)
                     return (
                       <Show when={all().find((pty) => pty.id === id)}>
-                        {(pty) => (
-                          <div id={`terminal-wrapper-${id}`} class="absolute inset-0">
-                            <Terminal
-                              pty={pty()}
-                              autoFocus={opened()}
-                              onConnect={() => markTerminalConnected(terminalRecoveryKey(pty()), id, ops.trim)}
-                              onCleanup={ops.update}
-                              onConnectError={() => recoverTerminal(terminalRecoveryKey(pty()), id, ops.clone)}
-                            />
-                          </div>
-                        )}
+                        {(ptyAccessor) => {
+                          const pty = ptyAccessor()
+                          const key = terminalRecoveryKey(pty)
+                          return (
+                            <div id={`terminal-wrapper-${id}`} class="absolute inset-0">
+                              <Terminal
+                                pty={pty}
+                                session={session}
+                                autoFocus={opened()}
+                                onConnect={() => markTerminalConnected(key, id, ops.trim)}
+                                onCleanup={ops.update}
+                                onConnectError={() => recoverTerminal(key, id, ops.clone)}
+                              />
+                            </div>
+                          )
+                        }}
                       </Show>
                     )
                   }}

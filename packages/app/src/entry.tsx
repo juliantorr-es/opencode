@@ -12,6 +12,7 @@ import pkg from "../package.json"
 import { ServerConnection } from "./context/server"
 import { DEFAULT_URL, DEFAULT_PORT, STORAGE_KEYS } from "@/constants"
 import { installBrowserApi } from "@/browser-api"
+import { WebcontainerDiagnostic } from "./components/webcontainer-diagnostic"
 
 const getLocale = () => {
   if (typeof navigator !== "object") return "en" as const
@@ -175,6 +176,7 @@ if (root instanceof HTMLElement) {
             servers={[server]}
             disableHealthCheck
           />
+          <WebcontainerDiagnostic />
         </AppBaseProviders>
       </PlatformProvider>
     ),

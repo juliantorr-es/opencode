@@ -8,6 +8,12 @@ import { usePlatform } from "./platform"
 import { ServerConnection, useServer } from "./server"
 import { defaultTitle, titleNumber } from "./terminal-title"
 import { Persist, persisted, removePersisted } from "@/utils/persist"
+import { useLanguage } from "./language"
+import { NativePtyRuntime } from "@/utils/native-pty-runtime"
+import { NoTerminalRuntime } from "@/utils/no-terminal-runtime"
+import { WebContainerRuntimeAdapter } from "@/utils/webcontainer-runtime"
+import type { TerminalRuntime, TerminalRuntimeStatus, TerminalRuntimeKind } from "@/utils/terminal-runtime"
+
 
 export type LocalPTY = {
   id: string
@@ -20,10 +26,7 @@ export type LocalPTY = {
   cursor?: number
 }
 
-export type TerminalRuntimeKind = "native-pty" | "webcontainer" | "wasm" | "remote" | "unavailable"
-export type TerminalRuntimeStatus =
-  | { ok: true; kind: TerminalRuntimeKind }
-  | { ok: false; kind: "unavailable"; reason: string }
+export type { TerminalRuntimeKind, TerminalRuntimeStatus }
 
 const WORKSPACE_KEY = "__workspace__"
 const MAX_TERMINAL_SESSIONS = 20
@@ -240,26 +243,36 @@ function createWorkspaceTerminalSession(
       })
   }
 
-  const clone = async (client: ReturnType<typeof useSDK>["client"], id: string) => {
+  const clone = async (client: ReturnType<typeof useSDK>["client"], id: string, kind: TerminalRuntimeKind) => {
     const index = store.all.findIndex((x) => x.id === id)
     const pty = store.all[index]
     if (!pty) return
-    const next = await client.pty
-      .create({
-        title: pty.title,
-      })
-      .catch((error: unknown) => {
-        console.error("Failed to clone terminal", error)
-        return undefined
-      })
-    if (!next?.data) return
+
+    let nextId = ""
+    let nextTitle = pty.title
+
+    if (kind === "webcontainer") {
+      nextId = "pty_" + Math.random().toString(36).slice(2)
+    } else {
+      const next = await client.pty
+        .create({
+          title: pty.title,
+        })
+        .catch((error: unknown) => {
+          console.error("Failed to clone terminal", error)
+          return undefined
+        })
+      if (!next?.data) return
+      nextId = next.data.id!
+      nextTitle = next.data.title ?? pty.title
+    }
 
     const active = store.active === pty.id
 
     batch(() => {
       setStore("all", index, {
-        id: next.data.id,
-        title: next.data.title ?? pty.title,
+        id: nextId,
+        title: nextTitle,
         titleNumber: pty.titleNumber,
         buffer: undefined,
         cursor: undefined,
@@ -268,7 +281,7 @@ function createWorkspaceTerminalSession(
         cols: undefined,
       })
       if (active) {
-        setStore("active", next.data.id)
+        setStore("active", nextId)
       }
     })
   }
@@ -283,8 +296,20 @@ function createWorkspaceTerminalSession(
         setStore("all", [])
       })
     },
-    new() {
+    new(kind: TerminalRuntimeKind) {
       const nextNumber = pickNextTerminalNumber()
+
+      if (kind === "webcontainer") {
+        const id = "pty_" + Math.random().toString(36).slice(2)
+        const newTerminal = {
+          id,
+          title: defaultTitle(nextNumber),
+          titleNumber: nextNumber,
+        }
+        setStore("all", store.all.length, newTerminal)
+        setStore("active", id)
+        return
+      }
 
       sdk.client.pty
         .create({ title: defaultTitle(nextNumber) })
@@ -318,10 +343,10 @@ function createWorkspaceTerminalSession(
         return next
       })
     },
-    async clone(id: string) {
-      await clone(sdk.client, id)
+    async clone(id: string, kind: TerminalRuntimeKind) {
+      await clone(sdk.client, id, kind)
     },
-    bind() {
+    bind(kind: TerminalRuntimeKind) {
       const client = sdk.client
       return {
         trim(id: string) {
@@ -330,10 +355,11 @@ function createWorkspaceTerminalSession(
           setStore("all", index, (pty) => trimTerminal(pty))
         },
         update(pty: Partial<LocalPTY> & { id: string }) {
+          if (kind === "webcontainer") return
           update(client, pty)
         },
         async clone(id: string) {
-          await clone(client, id)
+          await clone(client, id, kind)
         },
       }
     },
@@ -352,7 +378,7 @@ function createWorkspaceTerminalSession(
       const prevIndex = index === 0 ? store.all.length - 1 : index - 1
       setStore("active", store.all[prevIndex]?.id)
     },
-    async close(id: string) {
+    async close(id: string, kind: TerminalRuntimeKind) {
       const index = store.all.findIndex((f) => f.id === id)
       if (index !== -1) {
         batch(() => {
@@ -368,6 +394,8 @@ function createWorkspaceTerminalSession(
           )
         })
       }
+
+      if (kind === "webcontainer") return
 
       await sdk.client.pty.remove({ ptyID: id }).catch((error: unknown) => {
         console.error("Failed to close terminal", error)
@@ -394,6 +422,7 @@ export const { use: useTerminal, provider: TerminalProvider } = createSimpleCont
     const platform = usePlatform()
     const server = useServer()
     const params = useParams()
+    const language = useLanguage()
     const cache = new Map<string, TerminalCacheEntry>()
     const scope = createMemo(() => {
       return getTerminalServerScope(server.current, server.key)
@@ -442,10 +471,22 @@ export const { use: useTerminal, provider: TerminalProvider } = createSimpleCont
     }
 
     const workspace = createMemo(() => loadWorkspace(params.dir!, params.id, scope()))
-    const runtimeStatus = createMemo<TerminalRuntimeStatus>(() => {
-      if (platform.platform === "desktop") return { ok: true, kind: "native-pty" }
-      return { ok: false, kind: "unavailable", reason: "No terminal runtime is configured for browser mode." }
+    const runtime = createMemo<TerminalRuntime>(() => {
+      if (platform.platform === "desktop") {
+        return new NativePtyRuntime({
+          client: sdk.client,
+          directory: sdk.directory,
+          url: sdk.url,
+          sameOrigin: new URL(sdk.url, location.href).origin === location.origin,
+          username: server.current?.http?.username ?? "tribunus",
+          password: server.current?.http?.password ?? "",
+          authToken: server.current?.type === "http" ? !!server.current.authToken : false,
+          language,
+        })
+      }
+      return new WebContainerRuntimeAdapter()
     })
+    const runtimeStatus = createMemo<TerminalRuntimeStatus>(() => runtime().status())
 
     createEffect(
       on(
@@ -461,6 +502,7 @@ export const { use: useTerminal, provider: TerminalProvider } = createSimpleCont
     )
 
     return {
+      runtime: () => runtime(),
       runtimeStatus: () => runtimeStatus(),
       canCreate: () => runtimeStatus().ok,
       ready: () => workspace().ready(),
@@ -468,15 +510,15 @@ export const { use: useTerminal, provider: TerminalProvider } = createSimpleCont
       active: () => workspace().active(),
       new: () => {
         if (!runtimeStatus().ok) return
-        workspace().new()
+        workspace().new(runtime().kind)
       },
       update: (pty: Partial<LocalPTY> & { id: string }) => workspace().update(pty),
       trim: (id: string) => workspace().trim(id),
       trimAll: () => workspace().trimAll(),
-      clone: (id: string) => workspace().clone(id),
-      bind: () => workspace(),
+      clone: (id: string) => workspace().clone(id, runtime().kind),
+      bind: () => workspace().bind(runtime().kind),
       open: (id: string) => workspace().open(id),
-      close: (id: string) => workspace().close(id),
+      close: (id: string) => workspace().close(id, runtime().kind),
       move: (id: string, to: number) => workspace().move(id, to),
       next: () => workspace().next(),
       previous: () => workspace().previous(),

@@ -27,11 +27,30 @@ export default [
         },
         define: {
           "import.meta.env.VITE_OPENCODE_CHANNEL": JSON.stringify(channel),
+          "import.meta.env.VITE_WEBCONTAINER_ISOLATION": JSON.stringify(process.env.VITE_WEBCONTAINER_ISOLATION ?? "false"),
         },
         worker: {
           format: "es",
         },
       }
+    },
+    configureServer(server) {
+      server.middlewares.use((req, res, next) => {
+        if (process.env.VITE_WEBCONTAINER_ISOLATION === "true") {
+          res.setHeader("Cross-Origin-Opener-Policy", "same-origin")
+          res.setHeader("Cross-Origin-Embedder-Policy", "require-corp")
+        }
+        next()
+      })
+    },
+    configurePreviewServer(server) {
+      server.middlewares.use((req, res, next) => {
+        if (process.env.VITE_WEBCONTAINER_ISOLATION === "true") {
+          res.setHeader("Cross-Origin-Opener-Policy", "same-origin")
+          res.setHeader("Cross-Origin-Embedder-Policy", "require-corp")
+        }
+        next()
+      })
     },
   },
   {
