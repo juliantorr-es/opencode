@@ -1,0 +1,89 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.tribunus.io/identity/legacy-reference-registry.v1.json",
+  "title": "Legacy Reference Registry",
+  "description": "Registry of legacy references and patterns that are retained for compatibility, migration, or historical purposes. Each entry documents why a legacy reference exists, what it serves, and when it may be removed.",
+  "type": "object",
+  "required": ["version", "generatedAt", "entries"],
+  "properties": {
+    "version": {
+      "type": "string",
+      "description": "Schema version identifier"
+    },
+    "generatedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp when this registry was generated"
+    },
+    "entries": {
+      "type": "array",
+      "description": "Legacy reference entries documenting retained patterns and their lifecycle",
+      "items": {
+        "type": "object",
+        "required": [
+          "path",
+          "pattern",
+          "classification",
+          "subsystem",
+          "reason",
+          "permanent",
+          "replacementIdentity"
+        ],
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "Repository path where the legacy reference exists"
+          },
+          "pattern": {
+            "type": "string",
+            "description": "Exact pattern or AST selector identifying the legacy reference"
+          },
+          "classification": {
+            "type": "string",
+            "enum": [
+              "UPSTREAM_ATTRIBUTION_PERMANENT",
+              "EXTERNAL_UPSTREAM_DEPENDENCY",
+              "LEGACY_READ_COMPATIBILITY",
+              "LEGACY_DATA_MIGRATION",
+              "COMPATIBILITY_TEST_REFERENCE",
+              "HISTORICAL_FIXTURE",
+              "REMOVE_BEFORE_ALPHA",
+              "FORBIDDEN_ACTIVE_IDENTITY"
+            ],
+            "description": "Classification of the legacy reference's purpose and lifecycle"
+          },
+          "subsystem": {
+            "type": "string",
+            "description": "Owning subsystem responsible for this legacy reference"
+          },
+          "reason": {
+            "type": "string",
+            "description": "Explanation of why this reference is retained"
+          },
+          "permanent": {
+            "type": "boolean",
+            "description": "Whether this legacy reference is permanent (never to be removed)"
+          },
+          "compatibilityContract": {
+            "type": "string",
+            "description": "What compatibility contract this reference serves"
+          },
+          "removalGate": {
+            "type": "string",
+            "description": "Condition under which this reference may be removed, e.g. 'before public alpha', 'after migration reader ships for 2 releases'"
+          },
+          "replacementIdentity": {
+            "type": "string",
+            "description": "What replaces this legacy reference once removed"
+          },
+          "validatingTest": {
+            "type": "string",
+            "description": "Path to the test that validates this reference's continued correctness"
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

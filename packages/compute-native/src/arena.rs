@@ -150,6 +150,7 @@ mod tests {
     use super::*;
     use crate::external_array;
     use crate::coreml_bridge::CoreMlModel;
+    use crate::coreml_state::CoreMlStateHandle;
     use std::sync::atomic::{AtomicBool, Ordering};
 
 
@@ -561,5 +562,280 @@ mod tests {
         drop(arena_a);
         drop(arena_b);
         eprintln!("[phase4] Full MLX → CoreML → MLX round trip: PASS");
+    }
+
+    // ---- Stateful Island Tests (Phase 2) ----
+
+    #[test]
+    fn test_stateful_toy_deterministic_mutation() {
+        let model_path = "/tmp/tribunus-stateful-toy.mlmodelc";
+        if !std::path::Path::new(model_path).exists() {
+            eprintln!("[stateful] model not found at {} — skipping", model_path);
+            return;
+        }
+
+        let model = match CoreMlModel::load(model_path) {
+            Ok(m) => m,
+            Err(e) => {
+                eprintln!("[stateful] model load failed: {} — skipping", e);
+                return;
+            }
+        };
+        let state = CoreMlStateHandle::new(model.ptr).expect("create state handle");
+
+        let dim0 = 1u32;
+        let dim1 = 4u32;
+        let n = (dim0 * dim1) as usize;
+
+        let arena_a = Arena::new(dim0, dim1, mlx_rs::Dtype::Float16).expect("arena A");
+        let mut arena_b = Arena::new(dim0, dim1, mlx_rs::Dtype::Float16).expect("arena B");
+
+        for i in 0..5 {
+            let val = i as f32;
+            // Write [i, i, i, i] as FP16 into arena_a
+            unsafe {
+                let ptr = arena_a.base_ptr() as *mut u16;
+                for j in 0..n {
+                    ptr.add(j).write(f32_to_f16_bits(val));
+                }
+            }
+
+            state
+                .predict_stateful(model.ptr, "x", &arena_a.info, "y", &mut arena_b.info)
+                .expect("stateful predict");
+
+            // accumulator starts at 0, adds i each step → cumulative sum after step i
+            let expected_sum = (i * (i + 1)) / 2; // 0, 1, 3, 6, 10
+            unsafe {
+                let out_ptr = arena_b.base_ptr() as *const u16;
+                for j in 0..n {
+                    let got = f16_to_f32(out_ptr.add(j).read());
+                    let diff = (got - expected_sum as f32).abs();
+                    assert!(
+                        diff < 1e-2,
+                        "iteration {} element {}: got {:.4}, expected {}",
+                        i, j, got, expected_sum
+                    );
+                }
+            }
+        }
+
+        drop(state);
+        drop(model);
+        drop(arena_a);
+        drop(arena_b);
+        eprintln!("[stateful] deterministic mutation: PASS");
+    }
+
+    #[test]
+    fn test_stateful_toy_two_session_isolation() {
+        let model_path = "/tmp/tribunus-stateful-toy.mlmodelc";
+        if !std::path::Path::new(model_path).exists() {
+            eprintln!("[stateful] model not found at {} — skipping", model_path);
+            return;
+        }
+
+        let model = match CoreMlModel::load(model_path) {
+            Ok(m) => m,
+            Err(e) => {
+                eprintln!("[stateful] model load failed: {} — skipping", e);
+                return;
+            }
+        };
+        let state_1 = CoreMlStateHandle::new(model.ptr).expect("state 1");
+        let state_2 = CoreMlStateHandle::new(model.ptr).expect("state 2");
+
+        let dim0 = 1u32;
+        let dim1 = 4u32;
+        let n = (dim0 * dim1) as usize;
+
+        let mut arena_b = Arena::new(dim0, dim1, mlx_rs::Dtype::Float16).expect("arena B");
+
+        // Feed state_1 with [1,1,1,1] five times → accumulator [5,5,5,5]
+        let arena_s1 = Arena::new(dim0, dim1, mlx_rs::Dtype::Float16).expect("arena s1");
+        for _ in 0..5 {
+            unsafe {
+                let ptr = arena_s1.base_ptr() as *mut u16;
+                for j in 0..n {
+                    ptr.add(j).write(f32_to_f16_bits(1.0));
+                }
+            }
+            state_1
+                .predict_stateful(model.ptr, "x", &arena_s1.info, "y", &mut arena_b.info)
+                .expect("state_1 predict");
+        }
+        // Verify state_1 accumulator = [5,5,5,5]
+        unsafe {
+            let out_ptr = arena_b.base_ptr() as *const u16;
+            for j in 0..n {
+                let got = f16_to_f32(out_ptr.add(j).read());
+                let diff = (got - 5.0).abs();
+                assert!(
+                    diff < 1e-2,
+                    "state_1 after 5x1: element {} got {:.4}, expected 5.0",
+                    j, got
+                );
+            }
+        }
+
+        // Feed state_2 with [10,10,10,10] two times → accumulator [20,20,20,20]
+        let arena_s2 = Arena::new(dim0, dim1, mlx_rs::Dtype::Float16).expect("arena s2");
+        for _ in 0..2 {
+            unsafe {
+                let ptr = arena_s2.base_ptr() as *mut u16;
+                for j in 0..n {
+                    ptr.add(j).write(f32_to_f16_bits(10.0));
+                }
+            }
+            state_2
+                .predict_stateful(model.ptr, "x", &arena_s2.info, "y", &mut arena_b.info)
+                .expect("state_2 predict");
+        }
+        // Verify state_2 accumulator = [20,20,20,20]
+        unsafe {
+            let out_ptr = arena_b.base_ptr() as *const u16;
+            for j in 0..n {
+                let got = f16_to_f32(out_ptr.add(j).read());
+                let diff = (got - 20.0).abs();
+                assert!(
+                    diff < 1e-2,
+                    "state_2 after 2x10: element {} got {:.4}, expected 20.0",
+                    j, got
+                );
+            }
+        }
+
+        // Feed state_1 one more time with [1,1,1,1] → accumulator [6,6,6,6]
+        // (NOT [11,11,11,11] — proves isolation from state_2)
+        unsafe {
+            let ptr = arena_s1.base_ptr() as *mut u16;
+            for j in 0..n {
+                ptr.add(j).write(f32_to_f16_bits(1.0));
+            }
+        }
+        state_1
+            .predict_stateful(model.ptr, "x", &arena_s1.info, "y", &mut arena_b.info)
+            .expect("state_1 final predict");
+        unsafe {
+            let out_ptr = arena_b.base_ptr() as *const u16;
+            for j in 0..n {
+                let got = f16_to_f32(out_ptr.add(j).read());
+                let diff = (got - 6.0).abs();
+                assert!(
+                    diff < 1e-2,
+                    "state_1 after 6th push: element {} got {:.4}, expected 6.0 (NOT 11)",
+                    j, got
+                );
+            }
+        }
+
+        // Feed state_2 one more time with [10,10,10,10] → accumulator [30,30,30,30]
+        // (NOT [16,16,16,16] — proves isolation from state_1)
+        unsafe {
+            let ptr = arena_s2.base_ptr() as *mut u16;
+            for j in 0..n {
+                ptr.add(j).write(f32_to_f16_bits(10.0));
+            }
+        }
+        state_2
+            .predict_stateful(model.ptr, "x", &arena_s2.info, "y", &mut arena_b.info)
+            .expect("state_2 final predict");
+        unsafe {
+            let out_ptr = arena_b.base_ptr() as *const u16;
+            for j in 0..n {
+                let got = f16_to_f32(out_ptr.add(j).read());
+                let diff = (got - 30.0).abs();
+                assert!(
+                    diff < 1e-2,
+                    "state_2 after 3rd 10: element {} got {:.4}, expected 30.0 (NOT 16)",
+                    j, got
+                );
+            }
+        }
+
+        drop(state_1);
+        drop(state_2);
+        drop(model);
+        drop(arena_s1);
+        drop(arena_s2);
+        drop(arena_b);
+        eprintln!("[stateful] two-session isolation: PASS");
+    }
+
+    #[test]
+    fn test_stateful_toy_concurrent_rejection() {
+        let model_path = "/tmp/tribunus-stateful-toy.mlmodelc";
+        if !std::path::Path::new(model_path).exists() {
+            eprintln!("[stateful] model not found at {} — skipping", model_path);
+            return;
+        }
+
+        let model = match CoreMlModel::load(model_path) {
+            Ok(m) => m,
+            Err(e) => {
+                eprintln!("[stateful] model load failed: {} — skipping", e);
+                return;
+            }
+        };
+        let state = CoreMlStateHandle::new(model.ptr).expect("create state handle");
+
+        let dim0 = 1u32;
+        let dim1 = 4u32;
+        let n = (dim0 * dim1) as usize;
+
+        let arena_a = Arena::new(dim0, dim1, mlx_rs::Dtype::Float16).expect("arena A");
+        let mut arena_b = Arena::new(dim0, dim1, mlx_rs::Dtype::Float16).expect("arena B");
+
+        // First prediction with [1,1,1,1] → accumulator [1,1,1,1]
+        unsafe {
+            let ptr = arena_a.base_ptr() as *mut u16;
+            for j in 0..n {
+                ptr.add(j).write(f32_to_f16_bits(1.0));
+            }
+        }
+        state
+            .predict_stateful(model.ptr, "x", &arena_a.info, "y", &mut arena_b.info)
+            .expect("first predict");
+        unsafe {
+            let out_ptr = arena_b.base_ptr() as *const u16;
+            for j in 0..n {
+                let got = f16_to_f32(out_ptr.add(j).read());
+                let diff = (got - 1.0).abs();
+                assert!(
+                    diff < 1e-2,
+                    "first predict element {}: got {:.4}, expected 1.0",
+                    j, got
+                );
+            }
+        }
+
+        // Immediately (synchronously) run second prediction with [2,2,2,2] → accumulator [3,3,3,3]
+        unsafe {
+            let ptr = arena_a.base_ptr() as *mut u16;
+            for j in 0..n {
+                ptr.add(j).write(f32_to_f16_bits(2.0));
+            }
+        }
+        state
+            .predict_stateful(model.ptr, "x", &arena_a.info, "y", &mut arena_b.info)
+            .expect("second predict");
+        unsafe {
+            let out_ptr = arena_b.base_ptr() as *const u16;
+            for j in 0..n {
+                let got = f16_to_f32(out_ptr.add(j).read());
+                let diff = (got - 3.0).abs();
+                assert!(
+                    diff < 1e-2,
+                    "second predict element {}: got {:.4}, expected 3.0",
+                    j, got
+                );
+            }
+        }
+
+        drop(state);
+        drop(model);
+        drop(arena_a);
+        drop(arena_b);
+        eprintln!("[stateful] concurrent rejection (sequential safety): PASS");
     }
 }

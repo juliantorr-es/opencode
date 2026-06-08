@@ -62,8 +62,8 @@ cd packages/opencode && bun test
 # Run the desktop app (dev mode)
 bun run dev:desktop
 
-# Run branding guard
-bash scripts/check-branding.sh
+# Run identity verification (replaces branding guard)
+bun run scripts/identity/verify-identity.ts
 
 # Run Valkey smoke test
 cd packages/desktop && bun run scripts/smoke-valkey-packaged.ts .

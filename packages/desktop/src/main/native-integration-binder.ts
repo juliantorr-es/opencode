@@ -471,7 +471,7 @@ export function generateNativeIntegrationBinder(): BinderReport {
   findings.push({
     section: "identity",
     severity: "pass",
-    message: "Branding guard: scripts/check-branding.sh with documented allowlist",
+    message: "Identity verification: scripts/identity/verify-identity.ts with legacy-reference-registry",
   })
   findings.push({
     section: "identity",

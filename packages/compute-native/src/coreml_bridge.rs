@@ -23,7 +23,7 @@ extern "C" {
 
 /// Owned Core ML model handle.
 pub struct CoreMlModel {
-    ptr: *mut std::ffi::c_void,
+pub(crate) ptr: *mut std::ffi::c_void,
 }
 
 impl CoreMlModel {

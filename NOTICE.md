@@ -1,34 +1,52 @@
-# Notice
+# NOTICE
 
-Tribunus began as a derivative of [opencode](https://github.com/sst/opencode) and has diverged into a local-first multi-agent engineering control plane.
+## Upstream Attribution
 
-## License
+Tribunus began as a derivative of [opencode](https://github.com/sst/opencode) by SST Inc.
 
-Tribunus is licensed under the GNU Affero General Public License v3.0 (AGPLv3).
-The full license text is in [LICENSE](LICENSE).
+The original OpenCode project is licensed under the MIT License. The original copyright and license notice is preserved below.
 
-### Dual Licensing
+### Original Copyright Notice
 
-If the terms of the AGPLv3 are not suitable for your use case — for example, if you wish to distribute a proprietary application that embeds Tribunus — a separate commercial license may be obtained. Contact [hello@tribunus.dev](mailto:hello@tribunus.dev) for terms.
+```
+MIT License
 
-### Why AGPLv3?
+Copyright (c) 2024 SST Inc.
 
-The AGPLv3 ensures that all users of Tribunus — including those who interact with it over a network — have the freedom to study, modify, and share the software. This is the strongest copyleft license that prevents proprietary SaaS wrappers from enclosing the commons.
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
-The dual-licensing option preserves the ability to build commercial products on top of Tribunus without violating the AGPL.
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
 
-## Upstream
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+```
 
-The original opencode project is licensed under the MIT License.
+### Divergence
 
-Original copyright notice:
-> Copyright (c) 2024 SST, Inc.
-> Permission is hereby granted, free of charge, to any person obtaining a copy
-> of this software and associated documentation files (the "Software"), to deal
-> in the Software without restriction, including without limitation the rights
-> to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-> copies of the Software, and to permit persons to whom the Software is
-> furnished to do so, subject to the following conditions:
-> ...
+Tribunus has significantly diverged from the upstream OpenCode project. The codebase, architecture, and direction are now substantially different from the original work.
 
-See the upstream [LICENSE](https://github.com/sst/opencode/blob/dev/LICENSE) for the full MIT text.
+### Upstream Packages and Dependencies
+
+The following packages originated from OpenCode and have been adapted for Tribunus:
+
+- **@opencode-ai/sdk** — retained with upstream attribution
+- **@opencode-ai/plugin** — now an internal workspace being renamed to @tribunus/*
+- **@opencode-ai/core** — now an internal workspace being renamed to @tribunus/*
+- **@opencode-ai/llm** — now an internal workspace being renamed to @tribunus/*
+
+Any @opencode-ai/* packages still present in this repository are internal workspaces in the process of being renamed to @tribunus/*.
+
+---
+
+Copyright (c) 2024 SST Inc. Portions Copyright (c) 2024-2026 Julian Torres. All rights reserved.

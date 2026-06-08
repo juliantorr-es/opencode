@@ -141,12 +141,11 @@ Service pattern: Tagged `Service` class extends `Context.Service<Service, Interf
 - **Lint**: `.oxlintrc.json` (type-aware, Effect/SolidJS-specific suppressions)
 - **Infra**: `sst.config.ts`, `infra/*.ts`
 - **Key modules**: `route/client.ts`, `route/protocol.ts`, `tool.ts`, `tool-runtime.ts`
-- **Scripts**: `script/build_and_run.sh` (desktop dev), `script/publish.ts` (release pipeline), `script/version.ts`, `script/hygiene-check.ts`, `script/stats.ts`
-- **Branding**: `BRANDING.md`, `TRIBUNUS_BRAND_STRATEGY.md`, `scripts/check-branding.sh`
+
+- **Branding**: `BRANDING.md`, `scripts/identity/verify-identity.ts`, `schemas/identity/tribunus-identity.v1.json`
 
 ## Runtime/Tooling Preferences
 
-| Concern | Choice |
 |---|---|
 | Runtime | Bun (1.3.14) |
 | Package Manager | Bun |

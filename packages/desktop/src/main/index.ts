@@ -57,7 +57,7 @@ const APP_NAMES: Record<string, string> = {
   beta: "Tribunus Beta",
   prod: "Tribunus",
 }
-const TEST_ONBOARDING = process.env.OPENCODE_TEST_ONBOARDING === "1"
+const TEST_ONBOARDING = process.env.TRIBUNUS_TEST_ONBOARDING === "1"
 const jsCallStackFeature = "DocumentPolicyIncludeJSCallStacksInCrashReports"
 
 let logger: ReturnType<typeof initLogging>
@@ -127,7 +127,7 @@ const main = Effect.gen(function* () {
     process.chdir(homedir())
   } catch {}
 
-  process.env.OPENCODE_DISABLE_EMBEDDED_WEB_UI = "true"
+  process.env.TRIBUNUS_DISABLE_EMBEDDED_WEB_UI = "true"
 
   const appId = electronPlatformPaths.getAppId()
   const onboardingTestRoot = ((): string | undefined => {
@@ -138,7 +138,7 @@ const main = Effect.gen(function* () {
     ;["data", "config", "cache", "state", "desktop", "session"].forEach((dir) =>
       mkdirSync(join(root, dir), { recursive: true }),
     )
-    process.env.OPENCODE_DB = ":memory:"
+    process.env.TRIBUNUS_DB = ":memory:"
     process.env.XDG_DATA_HOME = join(root, "data")
     process.env.XDG_CONFIG_HOME = join(root, "config")
     process.env.XDG_CACHE_HOME = join(root, "cache")
@@ -192,7 +192,7 @@ const main = Effect.gen(function* () {
   preferAppEnv(electronPlatformPaths.getPath("userData"))
 
   // ── Valkey Sidecar ──────────────────────────────────────
-  const valkeyEnabled = process.env.OPENCODE_COORDINATION_BACKEND === "local-valkey" || process.env.OPENCODE_COORDINATION_BACKEND === "remote-valkey"
+  const valkeyEnabled = process.env.TRIBUNUS_COORDINATION_BACKEND === "local-valkey" || process.env.TRIBUNUS_COORDINATION_BACKEND === "remote-valkey" || process.env.OPENCODE_COORDINATION_BACKEND === "local-valkey" || process.env.OPENCODE_COORDINATION_BACKEND === "remote-valkey"
   let valkeySupervisor: ReturnType<typeof import("./valkey-supervisor").createValkeySupervisor> | undefined
   if (valkeyEnabled) {
     void (async () => {
@@ -200,6 +200,7 @@ const main = Effect.gen(function* () {
       valkeySupervisor = createValkeySupervisor(electronPlatformPaths.getPath("userData"))
       const valkeyStatus = await valkeySupervisor.start()
       if (valkeyStatus.ready) {
+        process.env.TRIBUNUS_VALKEY_URL = valkeyStatus.url!
         process.env.OPENCODE_VALKEY_URL = valkeyStatus.url!
         logger.info("Valkey sidecar started", { url: valkeyStatus.url, pid: valkeyStatus.pid })
       } else {
@@ -338,7 +339,7 @@ const main = Effect.gen(function* () {
 
   let overlay: BrowserWindow | null = null
   const crashLock = join(electronPlatformPaths.getPath("userData"), ".crash_lock")
-  const safeModeRequested = process.argv.includes("--safe-mode") || process.env.TRIBUNUS_SAFE_MODE === "1" || process.env.OPENCODE_SAFE_MODE === "1"
+  const safeModeRequested = process.argv.includes("--safe-mode") || process.env.TRIBUNUS_SAFE_MODE === "1"
   const crashDetected = existsSync(crashLock)
   const inSafeMode = safeModeRequested || crashDetected
   if (inSafeMode) {
@@ -364,7 +365,7 @@ const main = Effect.gen(function* () {
   )
 
   const needsMigration = inSafeMode ? false : ((): boolean => {
-    if (process.env.TRIBUNUS_DB === ":memory:" || process.env.OPENCODE_DB === ":memory:") return false
+    if (process.env.TRIBUNUS_DB === ":memory:") return false
 
     // Checks for PGlite/WAL directory — detects if first-time setup is needed
     const xdg = process.env.XDG_DATA_HOME
@@ -376,7 +377,7 @@ const main = Effect.gen(function* () {
 
   if (!inSafeMode) {
     const port = yield* Effect.gen(function* () {
-      const fromEnv = process.env.TRIBUNUS_PORT || process.env.OPENCODE_PORT
+      const fromEnv = process.env.TRIBUNUS_PORT
       if (fromEnv) {
         const parsed = Number.parseInt(fromEnv, 10)
         if (!Number.isNaN(parsed)) return parsed

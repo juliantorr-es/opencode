@@ -3,12 +3,14 @@
 mod attention;
 pub mod arena;
 pub mod arena_lifecycle;
+pub mod arena_pool;
 mod bridge;
 pub mod capability;
 pub mod compute_image;
 pub mod config;
 pub mod coreml_bridge;
 pub mod coreml_state;
+pub mod errors;
 pub mod external_array;
 mod gemma;
 pub mod kv_cache;

@@ -1,0 +1,22 @@
+{
+  "product": "Tribunus",
+  "version": "0.1.0-pre-alpha",
+  "generatedAt": "2026-06-08T01:18:00Z",
+  "capabilities": [
+    {"name": "macOS desktop cockpit", "status": "active_development", "notes": "Electron app with sidecar runtime, project activation, operator IDE surfaces"},
+    {"name": "Local Valkey coordination", "status": "shipped", "notes": "Bundled Valkey 9.1.0 for darwin-arm64 and darwin-x64"},
+    {"name": "Tool execution scheduler", "status": "shipped", "notes": "Resource-class queues with single-flight cache"},
+    {"name": "Capacity profiler", "status": "shipped", "notes": "Hardware-adaptive scheduler limits"},
+    {"name": "Workflow presets", "status": "shipped", "notes": "8 presets with UI designer"},
+    {"name": "Desktop secret store", "status": "shipped", "notes": "OS-encrypted via Electron safeStorage"},
+    {"name": "Desktop notifications", "status": "shipped", "notes": "High-signal events only"},
+    {"name": "Release binder", "status": "shipped", "notes": "Structured audit evidence"},
+    {"name": "Project configuration", "status": "shipped", "notes": ".tribunus/ declarative policy"},
+    {"name": "Team collaboration", "status": "planned", "notes": "Foundation present; full networked team mode not shipped"},
+    {"name": "Linux support", "status": "planned", "notes": "LocalFabric fallback available"},
+    {"name": "Windows support", "status": "planned", "notes": "Not started"},
+    {"name": "Compute kernel", "status": "verified", "notes": "SharedTensorArena v1 with Core ML pixel buffer; iOSurface-backed"},
+    {"name": "Control plane CRUD", "status": "verified", "notes": "Tribunus-branded entity CRUD with checkpointing"},
+    {"name": "Identity settlement", "status": "in_progress", "notes": "Identity migration gate v1; scanner, manifest, registry, verifier"}
+  ]
+}

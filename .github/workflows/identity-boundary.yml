@@ -1,0 +1,24 @@
+name: Identity Boundary
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  identity-check:
+    name: Identity Boundary Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: "1.3.14"
+      - name: Run identity verifier
+        run: bun run scripts/identity/verify-identity.ts
+      - name: Upload identity receipt
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: identity-receipt
+          path: artifacts/identity/identity-verification.receipt.json

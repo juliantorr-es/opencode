@@ -1,0 +1,18 @@
+{
+  "commitSha": "627cbe907f667d0b7891708ece90ec14df8e6ac0",
+  "identityManifestVersion": "1.0.0",
+  "filesScanned": 4107,
+  "occurrencesByClassification": {
+    "UNRESOLVED": 42176
+  },
+  "permanentExceptions": 0,
+  "temporaryExceptions": 0,
+  "unresolvedOccurrences": 42176,
+  "staleExceptions": 0,
+  "verificationDurationMs": 4176,
+  "finalVerdict": "FAIL",
+  "failures": [
+    "Found 42176 unauthorized legacy reference(s) not in legacy-reference-registry",
+    "Internal workspace package packages/app/package.json uses upstream namespace \"@opencode-ai/app\" instead of \"@tribunus\""
+  ]
+}

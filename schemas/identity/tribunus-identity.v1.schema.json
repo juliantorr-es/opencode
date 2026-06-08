@@ -1,0 +1,183 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tribunus.dev/schemas/identity/tribunus-identity.v1.schema.json",
+  "title": "Tribunus Identity Manifest v1",
+  "description": "Schema defining the canonical identity manifest for the Tribunus project. Used to declare naming conventions, platform identifiers, and contact information across the entire Tribunus ecosystem.",
+  "type": "object",
+  "required": [
+    "canonicalProductName",
+    "canonicalRepository",
+    "canonicalDomain",
+    "canonicalExecutable",
+    "canonicalCliInvocation",
+    "canonicalProjectDir",
+    "canonicalConfigFile",
+    "canonicalEnvPrefix",
+    "canonicalProtocolScheme",
+    "canonicalHttpHeaderPrefix",
+    "canonicalPackageScope",
+    "desktopProductName",
+    "desktopBundleId",
+    "desktopAppSupportDir",
+    "displayContact",
+    "securityContact",
+    "supportUrl",
+    "docsRoot",
+    "updateEndpoint",
+    "deepLinkScheme",
+    "userAgentPrefix",
+    "artifactPrefix",
+    "telemetryNamespace",
+    "releaseNamingPattern",
+    "version"
+  ],
+  "properties": {
+    "canonicalProductName": {
+      "type": "string",
+      "description": "The primary, authoritative product name. Used everywhere a human-readable product identifier is needed.",
+      "default": "Tribunus"
+    },
+    "canonicalRepository": {
+      "type": "string",
+      "description": "The canonical GitHub repository in owner/repo format.",
+      "default": "Tribunus-dev/Tribunus"
+    },
+    "canonicalDomain": {
+      "type": "string",
+      "description": "The primary domain for the project, used in URLs, email addresses, and branding.",
+      "default": "tribunus.dev"
+    },
+    "canonicalExecutable": {
+      "type": "string",
+      "description": "The name of the main compiled binary or executable entry point.",
+      "default": "tribunus"
+    },
+    "canonicalCliInvocation": {
+      "type": "string",
+      "description": "The CLI command invocation string used to launch the tool.",
+      "default": "tribunus"
+    },
+    "canonicalProjectDir": {
+      "type": "string",
+      "description": "The hidden directory name created by the tool in a user's home or project root.",
+      "default": ".tribunus"
+    },
+    "canonicalConfigFile": {
+      "type": "string",
+      "description": "The default configuration file name used across the project.",
+      "default": "tribunus.jsonc"
+    },
+    "canonicalEnvPrefix": {
+      "type": "string",
+      "description": "The prefix applied to all environment variables defined by the project.",
+      "default": "TRIBUNUS_"
+    },
+    "canonicalProtocolScheme": {
+      "type": "string",
+      "description": "The URI scheme for internal or canonical protocol handlers.",
+      "default": "tribunus://"
+    },
+    "canonicalHttpHeaderPrefix": {
+      "type": "string",
+      "description": "The prefix applied to custom HTTP headers defined by the project.",
+      "default": "x-tribunus-"
+    },
+    "canonicalPackageScope": {
+      "type": "string",
+      "description": "The NPM or package manager scope used for published packages.",
+      "default": "@tribunus"
+    },
+    "desktopProductName": {
+      "type": "string",
+      "description": "The product name as it appears in desktop UI (menus, title bars, notifications).",
+      "default": "Tribunus"
+    },
+    "desktopBundleId": {
+      "type": "string",
+      "description": "The reverse-DNS bundle identifier used for macOS, Electron, and platform packaging.",
+      "default": "dev.tribunus.desktop"
+    },
+    "desktopAppSupportDir": {
+      "type": "string",
+      "description": "The relative path under the user's app support directory where the desktop app stores data.",
+      "default": "Application Support/Tribunus"
+    },
+    "displayContact": {
+      "type": "string",
+      "format": "email",
+      "description": "The public contact email address for general inquiries.",
+      "default": "hello@tribunus.dev"
+    },
+    "securityContact": {
+      "type": "string",
+      "format": "email",
+      "description": "The email address for responsible security disclosures.",
+      "default": "security@tribunus.dev"
+    },
+    "supportUrl": {
+      "type": "string",
+      "format": "uri",
+      "description": "The URL users should visit for support, documentation, or issue tracking.",
+      "default": "https://tribunus.dev/support"
+    },
+    "docsRoot": {
+      "type": "string",
+      "format": "uri",
+      "description": "The root URL for all project documentation.",
+      "default": "https://tribunus.dev/docs"
+    },
+    "updateEndpoint": {
+      "type": "string",
+      "format": "uri",
+      "pattern": "^https://",
+      "description": "The HTTPS endpoint used for checking and downloading application updates."
+    },
+    "deepLinkScheme": {
+      "type": "string",
+      "description": "The URI scheme registered for deep linking into the desktop application.",
+      "default": "tribunus"
+    },
+    "userAgentPrefix": {
+      "type": "string",
+      "description": "The prefix used in User-Agent header values sent by official project components.",
+      "default": "Tribunus"
+    },
+    "artifactPrefix": {
+      "type": "string",
+      "description": "The prefix for published release artifact filenames and identifiers.",
+      "default": "tribunus"
+    },
+    "telemetryNamespace": {
+      "type": "string",
+      "description": "The namespace under which telemetry events, spans, and metrics are emitted.",
+      "default": "tribunus"
+    },
+    "releaseNamingPattern": {
+      "type": "string",
+      "description": "A template pattern for release artifact filenames. Supports placeholders such as {platform}, {arch}, {version}, and {ext}.",
+      "examples": [
+        "tribunus-{platform}-{arch}-{version}.{ext}"
+      ]
+    },
+    "version": {
+      "type": "string",
+      "description": "The version of this identity manifest, following semver."
+    },
+    "displayStrings": {
+      "type": "object",
+      "description": "Optional human-readable strings for product presentation and marketing materials.",
+      "properties": {
+        "tagline": {
+          "type": "string",
+          "description": "A short, memorable tagline describing the product at a glance."
+        },
+        "shortDescription": {
+          "type": "string",
+          "description": "A one- or two-sentence description of the product's purpose and value."
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,32 @@
+{
+  "$schema": "https://tribunus.dev/schemas/identity/tribunus-identity.v1.schema.json",
+  "canonicalProductName": "Tribunus",
+  "canonicalRepository": "Tribunus-dev/Tribunus",
+  "canonicalDomain": "tribunus.dev",
+  "canonicalExecutable": "tribunus",
+  "canonicalCliInvocation": "tribunus",
+  "canonicalProjectDir": ".tribunus",
+  "canonicalConfigFile": "tribunus.jsonc",
+  "canonicalEnvPrefix": "TRIBUNUS_",
+  "canonicalProtocolScheme": "tribunus://",
+  "canonicalHttpHeaderPrefix": "x-tribunus-",
+  "canonicalPackageScope": "@tribunus",
+  "desktopProductName": "Tribunus",
+  "desktopBundleId": "dev.tribunus.desktop",
+  "desktopAppSupportDir": "Application Support/Tribunus",
+  "displayContact": "hello@tribunus.dev",
+  "securityContact": "security@tribunus.dev",
+  "supportUrl": "https://tribunus.dev/support",
+  "docsRoot": "https://tribunus.dev/docs",
+  "updateEndpoint": "https://tribunus.dev/updates",
+  "deepLinkScheme": "tribunus",
+  "userAgentPrefix": "Tribunus",
+  "artifactPrefix": "tribunus",
+  "telemetryNamespace": "tribunus",
+  "releaseNamingPattern": "tribunus-{platform}-{arch}-{version}.{ext}",
+  "version": "1.0.0",
+  "displayStrings": {
+    "tagline": "Local-first control plane for agentic engineering",
+    "shortDescription": "Tribunus coordinates coding agents with realtime task boards, tool queues, and release-readiness evidence."
+  }
+}
