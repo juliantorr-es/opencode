@@ -13,6 +13,13 @@ use mlx_rs::error::Result as MlxResult;
 use mlx_rs::ops::indexing::IndexOp;
 use mlx_rs::Array;
 
+// ── Helpers ────────────────────────────────────────────────────────────────
+
+/// Hidden scale for the prologue embedding: sqrt(hidden_size).
+pub fn prologue_hidden_scale(plan: &ProloguePlan) -> f32 {
+    (plan.embedding_shape[1] as f32).sqrt()
+}
+
 // ── Prologue ───────────────────────────────────────────────────────────────
 
 /// Embedding lookup: token_ids → initial hidden state.
@@ -25,7 +32,20 @@ pub fn run_prologue(
     _plan: &ProloguePlan,
     hidden_scale: f32,
 ) -> MlxResult<Array> {
-    let emb = primitives::quantized_embedding_lookup(token_ids, emb_weight, emb_scales, emb_biases)?;
+    // Shape contract: token_ids rank 1 (flat tokens) or 2 (batchless [1, tokens]).
+    debug_assert!(token_ids.ndim() == 1 || token_ids.ndim() == 2,
+        "token_ids must be rank 1 or 2, got rank {}", token_ids.ndim());
+    // Flatten to 1D if a singleton batch dim is present.
+    let flat_ids = if token_ids.ndim() == 2 {
+        token_ids.reshape(&[-1])?
+    } else {
+        token_ids.clone()
+    };
+
+    let emb = primitives::quantized_embedding_lookup(&flat_ids, emb_weight, emb_scales, emb_biases)?;
+    // Hidden state must be rank 2 (no batch dim): [tokens, hidden_size]
+    debug_assert_eq!(emb.ndim(), 2,
+        "hidden state must be rank 2 (batchless), got rank {}", emb.ndim());
     emb.multiply(&Array::from_f32(hidden_scale))
 }
 
@@ -62,6 +82,9 @@ pub fn run_layer(
     kv_offset: u32,
     rms_norm_eps: f32,
 ) -> MlxResult<Array> {
+    // Shape contract: hidden state is batchless [tokens, hidden_size].
+    debug_assert_eq!(hidden.ndim(), 2,
+        "hidden state must be rank 2 (batchless), got rank {}", hidden.ndim());
     let _n_tokens = hidden.shape()[0];
 
     // --- Attention norm ---
@@ -162,6 +185,8 @@ fn sliding_attention_layer(
 
     // Materialize the current token batch before appending so the cache holds
     // stable KV tensors rather than a larger lazy graph.
+    // Per-step commit: construct candidate K/V updates, complete layer evaluation,
+    // then commit the cache position. A failed layer must not partially advance the cache.
     q.eval()?;
     k.eval()?;
     v.eval()?;
@@ -220,8 +245,15 @@ fn full_attention_layer(
         .reshape(&[n_tokens, n_heads as i32, head_dim as i32])?;
     let k = qmatmul(x, kw, ks, kb)?
         .reshape(&[n_tokens, n_kv_heads as i32, head_dim as i32])?;
-    let v = qmatmul(x, vw, vs, vb)?
-        .reshape(&[n_tokens, n_kv_heads as i32, head_dim as i32])?;
+
+    // Plan-driven V semantics: when attention_k_eq_v is true, K and V share
+    // weights so we alias K as V rather than computing a separate projection.
+    let v: Array = if plan.attention_k_eq_v {
+        k.clone()
+    } else {
+        qmatmul(x, vw, vs, vb)?
+            .reshape(&[n_tokens, n_kv_heads as i32, head_dim as i32])?
+    };
 
     let q = if let Some(wn) = q_norm_weight {
         primitives::rms_norm(&q.reshape(&[-1, head_dim as i32])?, wn, 1e-6)?
@@ -245,7 +277,8 @@ fn full_attention_layer(
     let k4d = primitives::rope_apply(&k4d, rope_cos, rope_sin, kv_offset, plan.partial_rotary_factor)?;
     let k = k4d.reshape(&[n_tokens, n_kv_heads as i32, head_dim as i32])?;
 
-    // Store the transformed K and the real V projection in the cache.
+    // Per-step commit: construct candidate K/V updates, complete layer evaluation,
+    // then commit the cache position. A failed layer must not partially advance the cache.
     q.eval()?;
     k.eval()?;
     v.eval()?;
@@ -278,10 +311,25 @@ fn full_attention_layer(
 
 // ── Epilogue ───────────────────────────────────────────────────────────────
 
+/// Result of an epilogue execution.
+///
+/// The caller MUST `eval()` the `selected_token` before reading the scalar
+/// value. The `logits` field (when `Some`) holds the full logits tensor
+/// (shape `[1, seq_len, vocab_size]`) for optional inspection.
+pub struct EpilogueResult {
+    /// Scalar token array — caller MUST eval() before reading.
+    pub selected_token: Array,
+    /// Full logits tensor [1, seq_len, vocab_size] before last-token slicing.
+    pub logits: Option<Array>,
+}
+
 /// Final normalization, tied output projection, softcapping, and token selection.
 ///
-/// Returns the selected token as an MLX Array so the caller can explicitly
-/// `eval()` the actual epilogue result before reading it.
+/// Returns an `EpilogueResult` so the caller can explicitly `eval()` the
+/// selected token before reading it. Logits are returned as an `Option` for
+/// optional inspection — the caller can `eval()` and inspect them as needed.
+///
+/// This function does NOT force `eval()` on the returned arrays.
 pub fn run_epilogue(
     hidden: &Array,
     final_norm: &Array,
@@ -292,7 +340,11 @@ pub fn run_epilogue(
     rms_norm_eps: f32,
     tie_word_embeddings: bool,
     sampler: &SamplerConfig,
-) -> MlxResult<Array> {
+) -> MlxResult<EpilogueResult> {
+    // Shape contract: hidden state is batchless [tokens, hidden_size].
+    debug_assert_eq!(hidden.ndim(), 2,
+        "hidden state must be rank 2 (batchless), got rank {}", hidden.ndim());
+
     // Final RMSNorm
     let normed = primitives::rms_norm(hidden, final_norm, rms_norm_eps)?;
 
@@ -346,7 +398,10 @@ pub fn run_epilogue(
     if sampler.is_greedy() {
         let token_arr = mlx_rs::ops::indexing::argmax_axis(&last_logits, -1, None)
             .map_err(|e| mlx_rs::error::Exception::custom(format!("argmax: {:?}", e)))?;
-        return Ok(token_arr);
+        return Ok(EpilogueResult {
+            selected_token: token_arr,
+            logits: Some(logits),
+        });
     }
 
     // Non-greedy path: temperature scaling, top-k, top-p, then categorical sample.
@@ -439,7 +494,10 @@ pub fn run_epilogue(
             .max_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal))
             .map(|(i, _)| i as u32)
             .unwrap_or(0);
-        return Ok(Array::from_slice(&[token], &[1]));
+        return Ok(EpilogueResult {
+            selected_token: Array::from_slice(&[token], &[1]),
+            logits: Some(logits),
+        });
     }
 
     // 5. Categorical sample via MLX
@@ -450,14 +508,21 @@ pub fn run_epilogue(
         None => None,
     };
     let token_arr = mlx_rs::random::categorical(&filtered_arr, None, None, key.as_ref())?;
-    Ok(token_arr)
+    Ok(EpilogueResult {
+        selected_token: token_arr,
+        logits: Some(logits),
+    })
 }
 
 // ── Mask helpers ───────────────────────────────────────────────────────────
 
-fn causal_mask(rows: u32, cols: u32, offset: u32) -> MlxResult<Array> {
-    let rows_usize = rows as usize;
-    let cols_usize = cols as usize;
+/// Build a causal attention mask sized [query_len, kv_len].
+///
+/// Position `i` of the query attends to key positions `j <= offset + i`.
+/// For single-token decode against a cache (query_len=1), the mask is [1, kv_len].
+fn causal_mask(query_len: u32, kv_len: u32, offset: u32) -> MlxResult<Array> {
+    let rows_usize = query_len as usize;
+    let cols_usize = kv_len as usize;
     let mut d = vec![0.0f32; rows_usize * cols_usize];
     for i in 0..rows_usize {
         let max_key = offset as usize + i;
@@ -467,12 +532,16 @@ fn causal_mask(rows: u32, cols: u32, offset: u32) -> MlxResult<Array> {
             }
         }
     }
-    Ok(Array::from_slice(&d, &[1, 1, rows as i32, cols as i32]))
+    Ok(Array::from_slice(&d, &[1, 1, query_len as i32, kv_len as i32]))
 }
 
-fn sliding_mask(rows: u32, cols: u32, window: u32, offset: u32) -> MlxResult<Array> {
-    let rows_usize = rows as usize;
-    let cols_usize = cols as usize;
+/// Build a sliding-window attention mask sized [query_len, kv_len].
+///
+/// Each query position attends only to keys within the sliding window.
+/// For single-token decode against a cache, the mask is [1, kv_len].
+fn sliding_mask(query_len: u32, kv_len: u32, window: u32, offset: u32) -> MlxResult<Array> {
+    let rows_usize = query_len as usize;
+    let cols_usize = kv_len as usize;
     let mut d = vec![0.0f32; rows_usize * cols_usize];
     for i in 0..rows_usize {
         let query_pos = offset as usize + i;
@@ -483,7 +552,7 @@ fn sliding_mask(rows: u32, cols: u32, window: u32, offset: u32) -> MlxResult<Arr
             }
         }
     }
-    Ok(Array::from_slice(&d, &[1, 1, rows as i32, cols as i32]))
+    Ok(Array::from_slice(&d, &[1, 1, query_len as i32, kv_len as i32]))
 }
 
 fn repeat_kv(x: &Array, n_rep: u32) -> MlxResult<Array> {

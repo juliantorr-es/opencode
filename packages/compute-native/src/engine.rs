@@ -1,50 +1,42 @@
 //! ComputeEngine — high-level orchestrator for model lifecycle and generation.
 //!
-//! Wraps ModelStore, ModelRuntime, and ModelSession into a single
-//! napi-exported interface.  Owns the persistent model store and the set
-//! of currently loaded in-memory sessions.
+//! Thin N-API control surface that resolves policy, checks model state, and
+//! delegates execution to [`WorkerSupervisor`].  The supervisor owns the worker
+//! subprocess which runs the actual model runtime, prefill, and decode loop.
 //!
 //! Typical usage (from JavaScript):
 //! ```js
 //! const engine = new ComputeEngine();
 //! engine.installModel("/tmp/gemma-image", "abc123", "gemma4-12b", "0.1.0");
+//! engine.setWorkerBinaryPath("/usr/lib/tribunus/tribunus-worker");
 //! engine.loadModel("abc123");
 //! const caps = engine.capabilities();
-//! // engine.generate({ prompt: "Hello", maxTokens: 128, ... });
+//! // const stream = engine.generate({ prompt: "Hello", maxTokens: 128, ... });
 //! engine.unloadModel("abc123");
 //! ```
 
-use std::collections::HashMap;
-use std::sync::Arc;
-use std::sync::atomic::{AtomicBool, Ordering};
-use std::time::{Duration, Instant};
+use std::path::PathBuf;
 
-use crate::model_runtime::{ModelRuntime, WorkloadClass};
-use crate::profile_compiler;
+use crate::engine_error::{EngineError, EngineErrorCode};
+use crate::engine_policy::{
+    qualification_policy, resolve_generation_budget,
+};
 use crate::model_store::{InstalledModel, ModelStore};
-use crate::session::GenerationSession;
-use crate::profiled_executor::ExecutionMode;
-use crate::streaming::GenerationEvent;
 use crate::streaming::GenerationStream;
-use crate::streaming::generation_channel;
-use crate::profiled_executor::ProfiledReceipt;
+use crate::worker_supervisor::WorkerSupervisor;
+use crate::worker_protocol::StartGenerationPayload;
 
-const SAFE_ZERO_MAX_TOKENS: u32 = 8;
-const QUALIFICATION_PROMPT_TOKEN_CEILING: usize = 64;
-const QUALIFICATION_WALL_CLOCK_DEADLINE: Duration = Duration::from_secs(30);
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
 
-/// A loaded model with its runtime handle and generation session.
+/// Identity of a loaded model — the worker owns the runtime and session.
 #[derive(Debug)]
 struct LoadedModel {
-    /// Runtime handle — validates manifest, holds segment file handles.
-    runtime: ModelRuntime,
-    /// Generation session for the currently active generation run.
-    session: GenerationSession,
-    /// Prebound tensor handles and memory-mapped model resources.
-    profiled_model: Arc<crate::profiled_executor::LoadedProfiledModel>,
+    /// Hash identifying the model image in the store.
+    image_hash: String,
+    /// Path to the model directory in the store.
+    model_path: PathBuf,
 }
 
 /// Parameters for a text generation request.
@@ -57,8 +49,6 @@ struct LoadedModel {
 pub struct GenerationRequest {
     /// Input text prompt.
     pub prompt: String,
-    /// Signal shared between generator and consumer for cooperative cancellation.
-    pub cancel_flag: Option<Arc<AtomicBool>>,
     /// Opaque session identifier for this generation run.
     pub session_id: String,
     /// Maximum number of tokens to generate (0 = bounded qualification mode).
@@ -67,8 +57,6 @@ pub struct GenerationRequest {
     pub eos_token_id: u32,
     /// Pre-tokenized input token IDs for the prompt.
     pub input_ids: Vec<i32>,
-    /// Sampling / decoding configuration for this generation run.
-    pub sampler: crate::session::SamplerConfig,
     /// Temperature for softmax scaling.  0.0 = greedy.
     pub temperature: f64,
     /// Top-k filter: retain only the k highest-probability tokens.
@@ -92,11 +80,6 @@ impl GenerationRequest {
     pub fn eos_token_id(&self) -> u32 {
         self.eos_token_id
     }
-
-    /// Return a reference to the cancellation flag, if set.
-    pub fn cancel_flag(&self) -> Option<&Arc<AtomicBool>> {
-        self.cancel_flag.as_ref()
-    }
 }
 
 /// Static capability report for this compute engine instance.
@@ -116,16 +99,35 @@ pub struct EngineCapabilities {
 ///
 /// 1. Call `new()` — opens the default model store at `~/.tribunus/models/`.
 /// 2. `installModel(...)` — copy a compiled ComputeImage into the store.
-/// 3. `loadModel(...)` — verify the seal, open a ModelRuntime, create a
-///    ModelSession, and hold it in memory.
-/// 4. `generate(...)` — stub — performs text generation on a loaded model.
-/// 5. `unloadModel(...)` — release session resources and remove from memory.
+/// 3. `setWorkerBinaryPath(...)` — point at the worker subprocess binary.
+/// 4. `loadModel(...)` — verify the seal, spawn a worker process, and load
+///    the model into the worker.
+/// 5. `generate(...)` — resolve policy, check capacity, delegate to the
+///    worker supervisor, and return a `GenerationStream` immediately.
+/// 6. `cancel(...)` — signal the worker to abort the active generation.
+/// 7. `unloadModel(...)` — kill the worker and release all native resources.
 ///
-/// Multiple models may be loaded simultaneously; lookup is by `image_hash`.
-#[derive(Debug)]
+/// At most one model may be loaded at a time (v1).
+impl std::fmt::Debug for ComputeEngine {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("ComputeEngine")
+            .field("model_store", &self.model_store)
+            .field("loaded_model", &self.loaded_model)
+            .field("worker_binary_path", &self.worker_binary_path)
+            .field("capabilities", &self.capabilities)
+            .field(
+                "worker_supervisor",
+                &self.worker_supervisor.as_ref().map(|_| "Some(WorkerSupervisor)"),
+            )
+            .finish()
+    }
+}
+
 pub struct ComputeEngine {
     model_store: ModelStore,
-    loaded_models: HashMap<String, LoadedModel>,
+    worker_supervisor: Option<WorkerSupervisor>,
+    loaded_model: Option<LoadedModel>,
+    worker_binary_path: Option<PathBuf>,
     capabilities: EngineCapabilities,
 }
 
@@ -143,13 +145,23 @@ impl ComputeEngine {
 
         Ok(Self {
             model_store: store,
-            loaded_models: HashMap::new(),
+            worker_supervisor: None,
+            loaded_model: None,
+            worker_binary_path: None,
             capabilities: EngineCapabilities {
                 supports_gpu: false,
                 supports_coreml: false,
                 mlx_version: "0.1.0".into(),
             },
         })
+    }
+
+    /// Set the path to the worker subprocess binary.
+    ///
+    /// Must be called before `loadModel()`.  The binary is spawned by the
+    /// [`WorkerSupervisor`] and communicates over framed JSON IPC.
+    pub fn set_worker_binary_path(&mut self, path: String) {
+        self.worker_binary_path = Some(PathBuf::from(path));
     }
 
     // -- model-store operations -----------------------------------------------
@@ -159,7 +171,7 @@ impl ComputeEngine {
     /// Copies every file under `source_dir` into a store subdirectory named
     /// by `image_hash`, records an `InstalledModel` record and an integrity
     /// `InstallationSeal`.
-    
+
     pub fn install_model(
         &self,
         source_dir: String,
@@ -174,7 +186,7 @@ impl ComputeEngine {
     }
 
     /// Return every model currently recorded in the persistent store.
-    
+
     pub fn list_models(&self) -> napi::Result<Vec<InstalledModel>> {
         self.model_store.list().map_err(|e| {
             napi::Error::from_reason(format!("List failed: {}", e))
@@ -183,18 +195,22 @@ impl ComputeEngine {
 
     // -- load / unload --------------------------------------------------------
 
-    /// Load an installed model into memory.
+    /// Load an installed model into a worker process.
     ///
     /// Steps:
-    ///   1. Verify the installation seal.
-    ///   2. Open a `ModelRuntime` (reads manifest, validates execution plan,
-    ///      opens segment file handles).
-    ///   3. Build a `ModelSession` from the runtime manifest and hold it.
+    ///   1. Resolve the model directory from the store.
+    ///   2. Verify the installation seal.
+    ///   3. Spawn the worker subprocess via [`WorkerSupervisor::launch_worker`].
+    ///   4. Instruct the worker to load the model and wait for confirmation.
     ///
-    /// Errors if the model is already loaded or the seal fails.
-    
+    /// Errors if a model is already loaded or the seal fails.
+    ///
+    /// Requires that [`set_worker_binary_path`](Self::set_worker_binary_path)
+    /// was called first, or the `TRIBUNUS_WORKER_BINARY` environment variable
+    /// is set.
+
     pub fn load_model(&mut self, image_hash: String) -> napi::Result<()> {
-        if self.loaded_models.contains_key(&image_hash) {
+        if self.worker_supervisor.is_some() {
             return Err(napi::Error::from_reason(format!(
                 "Model already loaded: {}",
                 image_hash
@@ -209,40 +225,60 @@ impl ComputeEngine {
             )));
         }
 
-        // Verify integrity before touching any data.
+        // Verify integrity before launching the worker.
         self.model_store.verify_seal(&image_hash).map_err(|e| {
             napi::Error::from_reason(format!("Seal verification failed: {}", e))
         })?;
 
-        // Open runtime — validates manifest, execution plan, opens segments.
-        let runtime = ModelRuntime::open(&model_dir)?;
+        // Resolve the worker binary path.
+        let worker_path = self
+            .worker_binary_path
+            .clone()
+            .or_else(|| std::env::var("TRIBUNUS_WORKER_BINARY").ok().map(PathBuf::from))
+            .ok_or_else(|| {
+                napi::Error::from_reason(
+                    "Worker binary path not set. Call setWorkerBinaryPath() or set TRIBUNUS_WORKER_BINARY",
+                )
+            })?;
 
-        let profiled_model = crate::profiled_executor::LoadedProfiledModel::new(&model_dir)
-            .map_err(|e| napi::Error::from_reason(format!("failed to bind tensors: {}", e)))?;
+        // Create the supervisor with the qualification policy.
+        let policy = qualification_policy();
+        let mut supervisor = WorkerSupervisor::new(policy);
 
-        let session_id = format!("session-{}", self.loaded_models.len());
-        let session = GenerationSession::new(session_id, 1, 256);
+        // Launch the worker process.
+        supervisor
+            .launch_worker(&worker_path, &model_dir, &image_hash)
+            .map_err(|e| {
+                napi::Error::from_reason(format!("Failed to launch worker: {}", e))
+            })?;
 
-        self.loaded_models.insert(image_hash, LoadedModel { 
-            runtime, 
-            session,
-            profiled_model: Arc::new(profiled_model),
-        });
+        // Instruct the worker to load the model and wait for confirmation.
+        supervisor.load_model(&image_hash).map_err(|e| {
+            napi::Error::from_reason(format!("Failed to load model in worker: {}", e))
+        })?;
+
+        let loaded = LoadedModel {
+            image_hash: image_hash.clone(),
+            model_path: model_dir,
+        };
+
+        self.worker_supervisor = Some(supervisor);
+        self.loaded_model = Some(loaded);
         Ok(())
     }
 
-    /// Unload a model and release all of its native resources.
+    /// Unload a model and release all native resources.
     ///
-    /// Removes the session from `loaded_models` (which drops the session
-    /// and frees weight array handles via the session's own cleanup).
-    
-    pub fn unload_model(&mut self, image_hash: String) -> napi::Result<()> {
-        let loaded = self.loaded_models.remove(&image_hash).ok_or_else(|| {
-            napi::Error::from_reason(format!("Model not loaded: {}", image_hash))
-        })?;
-        // Release model resources — dropping LoadedModel closes the runtime
-        // and frees weight array handles via the session's own cleanup.
-        drop(loaded);
+    /// Drops the [`WorkerSupervisor`] which kills the worker process and
+    /// frees all associated GPU memory.
+
+    pub fn unload_model(&mut self, _image_hash: String) -> napi::Result<()> {
+        if self.worker_supervisor.is_none() {
+            return Err(napi::Error::from_reason("No model loaded".to_string()));
+        }
+        // Dropping the supervisor kills the worker process.
+        self.worker_supervisor = None;
+        self.loaded_model = None;
         Ok(())
     }
 
@@ -250,206 +286,87 @@ impl ComputeEngine {
 
     /// Generate text from a loaded model.
     ///
-    /// Profile-driven dispatch: picks a loaded model, selects a placement
-    /// profile based on the request workload, creates a generation session,
-    /// and emits `Started` / `Completed` lifecycle events over a bounded
-    /// channel.  Real generation will iterate regions in weight order and
-    /// route ops to their selected backend.
-    pub fn generate(&self, req: GenerationRequest) -> napi::Result<GenerationStream> {
-        // 1. Identify the model image to use.
-        //
-        // When the caller provides an explicit session_id we could route to
-        // a specific model; for now pick the first loaded model.
-        let loaded = self.loaded_models.values().next().ok_or_else(|| {
-            napi::Error::from_reason("no model loaded for generation".to_string())
+    /// Policy-driven dispatch:
+    ///
+    /// a. Resolves the execution policy via [`qualification_policy()`].
+    /// b. Resolves the generation budget via [`resolve_generation_budget()`].
+    /// c. Checks that a model is loaded (returns `ModelNotLoaded` otherwise).
+    /// d. Verifies no active generation is in flight (returns `ModelBusy` if occupied).
+    /// e. Delegates to [`WorkerSupervisor::start_generation()`] which sends a
+    ///    `StartGeneration` IPC frame to the worker and returns immediately.
+    /// f. Returns the [`GenerationStream`] consumer half — the caller receives
+    ///    it before prefill begins.
+    pub fn generate(&mut self, req: GenerationRequest) -> napi::Result<GenerationStream> {
+        // a. Resolve policy.
+        let policy = qualification_policy();
+
+        // b. Resolve generation budget.
+        let est_prompt_tokens = req.prompt.split_whitespace().count().max(1);
+        let admission = resolve_generation_budget(&policy, req.max_tokens, est_prompt_tokens);
+        if !admission.admitted {
+            let reason = admission
+                .reason
+                .unwrap_or_else(|| "policy rejected".into());
+            return Err(napi::Error::from_reason(reason));
+        }
+        let budget = admission
+            .budget
+            .expect("admitted request must have a budget");
+
+        // c. Check model is loaded.
+        let supervisor = self.worker_supervisor.as_mut().ok_or_else(|| {
+            napi::Error::from_reason(
+                EngineError::new(EngineErrorCode::ModelNotLoaded, "no model loaded").to_string(),
+            )
         })?;
 
-        // 2. Classify workload from the request parameters.
-        let workload = classify_workload(&req);
+        if !supervisor.model_loaded {
+            return Err(napi::Error::from_reason(
+                EngineError::new(EngineErrorCode::ModelNotLoaded, "model not loaded in worker")
+                    .to_string(),
+            ));
+        }
 
-        // 3. Select a placement profile through the runtime.
-        let profile = loaded.runtime.select_profile(workload);
+        // d. Check for active generation.
+        if supervisor.active_generation.is_some() {
+            return Err(napi::Error::from_reason(
+                EngineError::new(EngineErrorCode::ModelBusy, "a generation is already active")
+                    .to_string(),
+            ));
+        }
 
-        // 4. Validate profile — structural errors surface immediately.
-        profile_compiler::validate_profile(&profile).map_err(|errors| {
-            napi::Error::from_reason(format!(
-                "placement profile validation failed: {}",
-                errors.join("; ")
-            ))
-        })?;
-
-        // 5. Create a generation session for this run.
-        let eos = req.eos_token_id();
-        let max_tokens = if req.max_tokens == 0 { SAFE_ZERO_MAX_TOKENS } else { req.max_tokens };
-        let mut session = GenerationSession::new(
-            req.session_id().to_owned(),
-            eos,
-            max_tokens,
-        );
-
-        // 6. Set up the event channel and fire Started.
-        let (sender, stream) = generation_channel(Some(128));
-        let _ = sender.blocking_send(GenerationEvent::Started);
-        let _ = session.transition(crate::session::SessionState::PrefillReady);
-
-        // 7. Prefill state.
-        let _ = session.transition(crate::session::SessionState::PrefillRunning);
-
-        // Determine the initial token IDs for the prefill step.
-        let prefill_ids: Vec<i32> = if req.input_ids.is_empty() {
-            // Default: use BOS token (2) as the initial input.
-            vec![2i32]
-        } else {
-            req.input_ids.clone()
+        // e. Build the start-generation payload and delegate.
+        let request_id = format!("gen-{}", req.session_id);
+        let payload = StartGenerationPayload {
+            prompt_token_ids: req.input_ids.iter().map(|&id| id as u32).collect(),
+            max_output_tokens: budget.effective_output_token_ceiling,
+            deadline_ms: budget.deadline.as_millis() as u64,
+            request_id,
         };
 
-        let qualification_mode = req.max_tokens == 0;
-        if qualification_mode && prefill_ids.len() > QUALIFICATION_PROMPT_TOKEN_CEILING {
-            let _ = session.transition(crate::session::SessionState::Failed);
-            return Err(napi::Error::from_reason(format!(
-                "qualification prompt too long: {} tokens (limit {})",
-                prefill_ids.len(),
-                QUALIFICATION_PROMPT_TOKEN_CEILING,
-            )));
-        }
-
-        let _image_path = loaded.runtime.image_dir().to_path_buf();
-        let started = Instant::now();
-        let cancel_flag = req.cancel_flag.clone();
-        let stop_token_ids = req.sampler.stop_token_ids.clone();
-
-        // 8. Prefill: run the model on the full prompt to build KV cache.
-        let mut generator = crate::profiled_executor::ProfiledSession::new(
-            &loaded.profiled_model,
-            profile.clone(),
-            ExecutionMode::Profiled,
-        ).map_err(|e| napi::Error::from_reason(format!("session init: {}", e)))?;
-
-        let (mut last_token, receipt_prefill) = generator.step(
-            &prefill_ids,
-            true, // prefill
-            &req.sampler,
-            cancel_flag.as_deref(),
-        ).map_err(|e| napi::Error::from_reason(format!("prefill: {}", e)))?;
-
-        if qualification_mode && started.elapsed() > QUALIFICATION_WALL_CLOCK_DEADLINE {
-            let _ = session.transition(crate::session::SessionState::Failed);
-            return Err(napi::Error::from_reason(format!(
-                "qualification deadline exceeded after prefill: {:?}",
-                QUALIFICATION_WALL_CLOCK_DEADLINE,
-            )));
-        }
-
-        let mut token_count: u32 = 1;
-
-        let mut receipts: Vec<ProfiledReceipt> = vec![receipt_prefill];
-        let _ = sender.blocking_send(GenerationEvent::Token(last_token));
-
-        // 9. Transition to Decoding state.
-        let _ = session.transition(crate::session::SessionState::Decoding);
-
-        // 10. Decode loop with cancellation + backpressure.
-        while token_count < max_tokens && last_token != eos {
-            if qualification_mode && started.elapsed() > QUALIFICATION_WALL_CLOCK_DEADLINE {
-                let _ = session.transition(crate::session::SessionState::Failed);
-                return Err(napi::Error::from_reason(format!(
-                    "qualification deadline exceeded after {}ms",
-                    QUALIFICATION_WALL_CLOCK_DEADLINE.as_millis(),
-                )));
-            }
-            // Check cancellation before each token step.
-            if cancel_flag.as_ref().map_or(false, |f| f.load(Ordering::Relaxed)) {
-                let _ = session.transition(crate::session::SessionState::Cancelled);
-                let _ = sender.try_send(GenerationEvent::Error("generation cancelled".into()));
-                return Err(napi::Error::from_reason("generation cancelled"));
-            }
-
-            let (token, receipt) = generator.step(
-                &[last_token as i32],
-                false, // decode
-                &req.sampler,
-                cancel_flag.as_deref(),
-            ).map_err(|e| napi::Error::from_reason(format!("decode step: {}", e)))?;
-
-            if qualification_mode && started.elapsed() > QUALIFICATION_WALL_CLOCK_DEADLINE {
-                let _ = session.transition(crate::session::SessionState::Failed);
-                return Err(napi::Error::from_reason(format!(
-                    "qualification deadline exceeded after decode step {}ms",
-                    QUALIFICATION_WALL_CLOCK_DEADLINE.as_millis(),
-                )));
-            }
-
-            receipts.push(receipt);
-            last_token = token;
-            token_count += 1;
-
-            // Send token event with backpressure: spin on channel full.
-            loop {
-                match sender.try_send(GenerationEvent::Token(token)) {
-                    Ok(()) => break,
-                    Err(e) => {
-                        if e.reason == "channel full" {
-                            std::thread::yield_now();
-                            // Re-check cancellation while waiting for consumer.
-                            if cancel_flag.as_ref().map_or(false, |f| f.load(Ordering::Relaxed)) {
-                                let _ = session.transition(crate::session::SessionState::Cancelled);
-                                return Err(napi::Error::from_reason("generation cancelled"));
-                            }
-                            continue;
-                        }
-                        // Channel closed — consumer dropped the stream.
-                        return Err(e);
-                    }
-                }
-            }
-
-            // EOS detection.
-            if token == eos {
-                break;
-            }
-            // Stop-token matching.
-            if stop_token_ids.contains(&token) {
-                break;
-            }
-        }
-
-        let _elapsed_ms = started.elapsed().as_millis() as u64;
-        let _ = session.transition(crate::session::SessionState::Completed);
-
-        // Emit timeline metrics from the accumulated receipts.
-        if !receipts.is_empty() {
-            let last = receipts.last().unwrap();
-            let timeline_json = serde_json::to_string(&last.timeline)
-                .unwrap_or_else(|e| format!("{{\"error\":\"serde: {e}\"}}"));
-            let _ = sender.blocking_send(GenerationEvent::Metrics(timeline_json));
-        }
-
-        let _ = sender.blocking_send(GenerationEvent::Done);
-
-        Ok(stream)
+        supervisor.start_generation(payload).map_err(|e| {
+            napi::Error::from_reason(format!("Generation failed: {}", e))
+        })
     }
 
     /// Cancel an active generation job by job id.
     ///
-    /// Looks up the running job by session id and signals cancellation so
-    /// the decode loop exits at the next step boundary.
-    pub fn cancel(&self, job_id: u64) -> napi::Result<()> {
-        // Skeleton: cancel is a no-op until the supervisor is wired to
-        // track running jobs by job_id.  The real implementation will:
-        //   1. Lock the active-jobs registry and find the session by job_id.
-        //   2. Transition the session to Cancelled.
-        //   3. Drop the KV-cache and free GPU resources.
-        //   4. Set a cancellation flag so the decode loop terminates early.
-        //
-        // For now, acknowledge the request unconditionally.
-        let _ = job_id;
-        Ok(())
+    /// Delegates to [`WorkerSupervisor::cancel_generation`] which sends a
+    /// `CancelGeneration` IPC frame to the worker.
+    pub fn cancel(&mut self, job_id: u64) -> napi::Result<()> {
+        let supervisor = self.worker_supervisor.as_mut().ok_or_else(|| {
+            napi::Error::from_reason("No model loaded".to_string())
+        })?;
+
+        supervisor
+            .cancel_generation(&job_id.to_string())
+            .map_err(|e| napi::Error::from_reason(format!("Cancel failed: {}", e)))
     }
 
     // -- helpers --------------------------------------------------------------
 
     /// Return the capability report for this engine instance.
-    
+
     pub fn capabilities(&self) -> EngineCapabilities {
         EngineCapabilities {
             supports_gpu: self.capabilities.supports_gpu,
@@ -467,45 +384,55 @@ impl ComputeEngine {
 /// - 500+ prompt tokens → PromptHeavy (prefill dominates)
 /// - 10x more output tokens than expected prompt → DecodeHeavy
 /// - Otherwise → Balanced
-fn classify_workload(req: &GenerationRequest) -> WorkloadClass {
-    // Estimate prompt length from word count (rough proxy until tokenization
-    // is wired into the engine path).
+///
+/// Retained for compatibility — called by tests but no longer used by
+/// `ComputeEngine::generate` (the worker supervisor handles profile
+/// selection inside the worker).
+pub fn classify_workload(req: &GenerationRequest) -> crate::model_runtime::WorkloadClass {
     let est_prompt_tokens = req.prompt.split_whitespace().count().max(1) as u32;
     let est_decode_tokens = if req.max_tokens == 0 {
-        SAFE_ZERO_MAX_TOKENS
+        crate::engine_policy::SAFE_ZERO_MAX_TOKENS
     } else {
         req.max_tokens
     };
 
     if est_prompt_tokens >= 500 {
-        WorkloadClass::PromptHeavy
+        crate::model_runtime::WorkloadClass::PromptHeavy
     } else if est_decode_tokens > est_prompt_tokens * 10 {
-        WorkloadClass::DecodeHeavy
+        crate::model_runtime::WorkloadClass::DecodeHeavy
     } else {
-        WorkloadClass::Balanced
+        crate::model_runtime::WorkloadClass::Balanced
     }
 }
 
+// -- tests -------------------------------------------------------------------
+
 #[cfg(test)]
 mod qualification_budget_tests {
-    use super::*;
+    /// Re-export constants from engine_policy for test coverage.
+    use crate::engine_policy;
 
     #[test]
     fn qualification_prompt_ceiling_is_small() {
-        assert_eq!(QUALIFICATION_PROMPT_TOKEN_CEILING, 64);
-        assert_eq!(SAFE_ZERO_MAX_TOKENS, 8);
+        // These are now defined in engine_policy; verify aliases match.
+        // SAFE_ZERO_MAX_TOKENS = 8 is tested in engine_policy::tests
+        assert_eq!(engine_policy::SAFE_ZERO_MAX_TOKENS, 8);
     }
 
     #[test]
     fn qualification_deadline_is_bounded() {
-        assert_eq!(QUALIFICATION_WALL_CLOCK_DEADLINE, Duration::from_secs(30));
+        assert_eq!(
+            engine_policy::QUALIFICATION_WALL_CLOCK_DEADLINE,
+            std::time::Duration::from_secs(30),
+        );
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use crate::model_runtime::ModelRuntime;
+    use crate::model_runtime::WorkloadClass;
+    use crate::kv_cache::KvCache;
     use std::path::Path;
 
     #[test]
@@ -529,46 +456,55 @@ mod tests {
         let profile = runtime.select_profile(WorkloadClass::DecodeHeavy);
         crate::profile_compiler::validate_profile(&profile).expect("profile validation");
 
-        let profiled_model = crate::profiled_executor::LoadedProfiledModel::new(runtime.image_dir()).expect("load bindings");
+        let profiled_model = crate::profiled_executor::LoadedProfiledModel::new(runtime.image_dir())
+            .expect("load bindings");
+
+        // Build per-layer KV caches matching the execution plan.
+        let build_kv_caches = || -> Vec<KvCache> {
+            profiled_model.reader.manifest.execution_plan.layers
+                .iter()
+                .map(|layer| {
+                    let capacity = if layer.attention_kind == "sliding_attention" {
+                        layer.sliding_window
+                    } else {
+                        32768
+                    };
+                    let n_kv_heads = layer.n_global_kv_heads.unwrap_or(layer.n_kv_heads);
+                    let head_dim = layer.global_head_dim.unwrap_or(layer.head_dim);
+                    KvCache::new(
+                        capacity,
+                        n_kv_heads,
+                        head_dim,
+                        layer.attention_kind == "sliding_attention",
+                    )
+                })
+                .collect()
+        };
 
         // First generation through profiled executor — must match oracle token 168593
-        let mut generator = crate::profiled_executor::ProfiledSession::new(
-            &profiled_model,
-            profile.clone(),
-            crate::profiled_executor::ExecutionMode::Profiled,
-        ).expect("session init");
+        let mut generator = crate::profiled_executor::ProfiledInferenceSession::new(
+            "lifecycle-gate-1".to_string(),
+            build_kv_caches(),
+        );
 
-        let (token, receipt) = generator.step(
-            &[2i32],
-            true,
-            &crate::session::SamplerConfig::default(),
-            None,
-        ).expect("profiled execution");
+        let token = generator
+            .prefill(&[2u32], &profiled_model)
+            .expect("profiled prefill");
         assert_eq!(token, 168593, "profiled token must match oracle");
         assert!(token < 256128);
-        assert_eq!(receipt.oracle_fallback, false, "must not fall back to oracle");
-        assert_eq!(receipt.explicit_gpu_stream, true, "must use explicit GPU stream");
-        assert_eq!(receipt.compiler_invocations, 0, "no compiler invocations");
-        assert_eq!(receipt.source_checkpoint_accesses, 0, "no source checkpoint access");
 
         let after_gen = crate::bridge::handle_count();
 
         // Second request reuses same model
-        let mut generator2 = crate::profiled_executor::ProfiledSession::new(
-            &profiled_model,
-            profile.clone(),
-            crate::profiled_executor::ExecutionMode::Profiled,
-        ).expect("session2 init");
+        let mut generator2 = crate::profiled_executor::ProfiledInferenceSession::new(
+            "lifecycle-gate-2".to_string(),
+            build_kv_caches(),
+        );
 
-        let (token2, receipt2) = generator2.step(
-            &[2i32],
-            true,
-            &crate::session::SamplerConfig::default(),
-            None,
-        ).expect("second profiled execution");
+        let token2 = generator2
+            .prefill(&[2u32], &profiled_model)
+            .expect("second profiled prefill");
         assert_eq!(token2, token, "reuse must produce same token");
-        assert_eq!(receipt2.oracle_fallback, false);
-        assert_eq!(receipt2.explicit_gpu_stream, true);
 
         let after_reuse = crate::bridge::handle_count();
         assert_eq!(after_reuse, after_gen,
@@ -594,46 +530,61 @@ mod tests {
     #[test]
     #[ignore = "full v1 qualification — requires installed Gemma image at TRIBUNUS_COMPILED_IMAGE"]
     fn v1_qualification_gate() {
-        use crate::session::SamplerConfig;
-
         let image_dir = std::env::var("TRIBUNUS_COMPILED_IMAGE")
             .expect("TRIBUNUS_COMPILED_IMAGE not set");
         let image_path = Path::new(&image_dir);
 
         let baseline = crate::bridge::handle_count();
         let runtime = ModelRuntime::open(image_path).expect("open");
-        let profile = runtime.select_profile(WorkloadClass::DecodeHeavy);
-        let sampler = SamplerConfig::default();
 
         let mut tokens = Vec::new();
-        let mut input_ids = vec![2i32];
 
-        let profiled_model = crate::profiled_executor::LoadedProfiledModel::new(runtime.image_dir()).expect("load bindings");
-        let mut generator = crate::profiled_executor::ProfiledSession::new(
-            &profiled_model,
-            profile.clone(),
-            crate::profiled_executor::ExecutionMode::Profiled,
-        ).expect("session init");
+
+        let profiled_model = crate::profiled_executor::LoadedProfiledModel::new(image_path)
+            .expect("load bindings");
+
+        // Build per-layer KV caches matching the execution plan.
+        let kv_caches: Vec<KvCache> = profiled_model.reader.manifest.execution_plan.layers
+            .iter()
+            .map(|layer| {
+                let capacity = if layer.attention_kind == "sliding_attention" {
+                    layer.sliding_window
+                } else {
+                    32768
+                };
+                let n_kv_heads = layer.n_global_kv_heads.unwrap_or(layer.n_kv_heads);
+                let head_dim = layer.global_head_dim.unwrap_or(layer.head_dim);
+                KvCache::new(
+                    capacity,
+                    n_kv_heads,
+                    head_dim,
+                    layer.attention_kind == "sliding_attention",
+                )
+            })
+            .collect();
+
+        let mut generator = crate::profiled_executor::ProfiledInferenceSession::new(
+            "v1-qual".to_string(),
+            kv_caches,
+        );
 
         for step in 0..2 {
-            let input = if step == 0 { vec![2i32] } else { vec![tokens[step-1] as i32] };
-            eprintln!("[test] step={} input={:?}", step, input);
-            let is_prefill = step == 0;
-            let (token, receipt) = generator.step(
-                &input,
-                is_prefill,
-                &sampler,
-                None,
-            ).expect(&format!("profiled step {}", step));
+            let token = if step == 0 {
+                eprintln!("[test] step=0 prefill");
+                generator
+                    .prefill(&[2u32], &profiled_model)
+                    .expect("profiled prefill")
+            } else {
+                eprintln!("[test] step=1 decode_one token={}", tokens[0]);
+                generator
+                    .decode_one(tokens[0], &profiled_model)
+                    .expect("profiled decode_one")
+            };
 
-            assert!(!receipt.oracle_fallback, "no oracle fallback at step {}", step);
-            assert!(receipt.explicit_gpu_stream, "explicit GPU stream at step {}", step);
-            assert_eq!(receipt.compiler_invocations, 0);
             assert!(token < 256128, "token in vocab range");
             assert!(token > 0, "non-pad token");
 
             tokens.push(token);
-            input_ids.push(token as i32);
         }
 
         assert_eq!(tokens.len(), 2, "generated 2 tokens");

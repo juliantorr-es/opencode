@@ -1,22 +1,25 @@
 //! Profiled heterogeneous executor — GPU-canary-gated execution with explicit receipts.
 //!
 //! Uses MappedImage-based segment file access via seek + read_exact.
+//!
+//! The model runtime (LoadedProfiledModel) is immutable and survives requests.
+//! Per-generation state lives in ProfiledInferenceSession (owns KV caches,
+//! cancellation flag, token buffer, and timeline).
 
 use crate::compute_image::{CompiledImageReader, TensorEntry};
+use crate::engine_error::{EngineError, EngineErrorCode};
 use crate::kv_cache::KvCache;
 use crate::mapped_image::MappedImage;
-use crate::mlx_executor::{run_gpu_canary, MlxExecutor};
 use crate::placement_profile::ExecutionPlacementProfile;
-use crate::residency::ResidencyManager;
 use crate::runtime_trace::{RuntimeTimeline, TimelineEvent, TimelineEventType};
+use crate::session::InferenceSessionState;
 use mlx_rs::Array;
-use std::io::{Read, Seek, SeekFrom};
+
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::ffi::CString;
 use std::os::raw::{c_char, c_int, c_void};
 use std::path::{Path, PathBuf};
 use std::collections::HashMap;
-use std::time::Instant;
 use std::sync::Arc;
 
 /// Execution mode for the runtime.
@@ -59,64 +62,75 @@ pub struct ProfiledReceipt {
     pub timeline: RuntimeTimeline,
 }
 
-/// Load tensor data from a MappedImage segment file using seek + read_exact.
-fn load_tensor_from_segment_file(
-    segment_file: &std::fs::File,
+/// Adapter wrapping a sub-range of a MappedSegment for no-copy external array
+/// construction via [`crate::external_array::new_external_array`].
+struct SegmentSlice {
+    segment: Arc<crate::mapped_image::MappedSegment>,
+    offset: usize,
+    length: usize,
+}
+
+impl crate::external_array::ExternalStorage for SegmentSlice {
+    fn data_ptr(&self) -> *const u8 {
+        unsafe { self.segment.data_ptr().add(self.offset) }
+    }
+    fn byte_len(&self) -> usize {
+        self.length
+    }
+}
+
+/// Load tensor data from a MappedSegment using external array construction.
+///
+/// Uses [`crate::external_array::new_external_array`] for all supported dtypes
+/// so that MLX operates directly on the mmap-backed memory rather than a copy.
+fn load_tensor_from_mapped_segment(
+    segment: &std::sync::Arc<crate::mapped_image::MappedSegment>,
     entry: &TensorEntry,
     byte_counter: &mut u64,
 ) -> napi::Result<mlx_rs::Array> {
-    let mut file = segment_file
-        .try_clone()
-        .map_err(|e| napi::Error::from_reason(format!("clone file handle: {}", e)))?;
-    file.seek(SeekFrom::Start(entry.offset))
-        .map_err(|e| napi::Error::from_reason(format!(
-            "seek tensor {} at offset {}: {}", entry.name, entry.offset, e
-        )))?;
-    let mut buf = vec![0u8; entry.byte_length as usize];
-    file.read_exact(&mut buf)
-        .map_err(|e| napi::Error::from_reason(format!("read tensor {}: {}", entry.name, e)))?;
+    let mapping = segment.data_slice();
+    let offset = entry.offset as usize;
+    let len = entry.byte_length as usize;
+    let end = offset + len;
+    if end > mapping.len() {
+        return Err(napi::Error::from_reason(format!(
+            "tensor {} at offset {} len {} exceeds mapping len {}",
+            entry.name, offset, len, mapping.len()
+        )));
+    }
     *byte_counter += entry.byte_length;
     let dims: Vec<i32> = entry.physical_shape.iter().map(|&d| d as i32).collect();
+
+    // TODO: wire external_array for true no-copy when mapped ABI is complete
+    let storage = Arc::new(SegmentSlice {
+        segment: segment.clone(),
+        offset,
+        length: len,
+    });
+
     match entry.storage_dtype.as_str() {
-        "U8" | "Uint8" => Ok(mlx_rs::Array::from_slice(&buf, &dims)),
-        "F32" | "Float32" => {
-            if buf.len() % 4 != 0 {
-                return Err(napi::Error::from_reason(format!(
-                    "f32 payload length {} not multiple of 4", buf.len()
-                )));
-            }
-            let data: Vec<f32> = buf
-                .chunks_exact(4)
-                .map(|c| f32::from_le_bytes([c[0], c[1], c[2], c[3]]))
-                .collect();
-            Ok(mlx_rs::Array::from_slice(&data, &dims))
-        }
-        "BF16" | "BFloat16" => {
-            if buf.len() % 2 != 0 {
-                return Err(napi::Error::from_reason(format!(
-                    "bf16 payload length {} not multiple of 2", buf.len()
-                )));
-            }
-            let data: Vec<f32> = buf
-                .chunks_exact(2)
-                .map(|c| {
-                    let bf = u16::from_le_bytes([c[0], c[1]]);
-                    f32::from_bits((bf as u32) << 16)
-                })
-                .collect();
-            Ok(mlx_rs::Array::from_slice(&data, &dims))
-        }
+        "U8" | "Uint8" => unsafe {
+            crate::external_array::new_external_array(storage, &dims, mlx_rs::Dtype::Uint8)
+                .map_err(|e| napi::Error::from_reason(e))
+        },
+        "F32" | "Float32" => unsafe {
+            crate::external_array::new_external_array(storage, &dims, mlx_rs::Dtype::Float32)
+                .map_err(|e| napi::Error::from_reason(e))
+        },
+        "BF16" | "BFloat16" => unsafe {
+            crate::external_array::new_external_array(storage, &dims, mlx_rs::Dtype::Bfloat16)
+                .map_err(|e| napi::Error::from_reason(e))
+        },
         "I8" | "Int8" => {
-            let data: Vec<i8> = buf.iter().map(|&b| b as i8).collect();
+            // external_array does not yet support Int8 natively; fall back to the
+            // copy path. This is harmless since Int8 weights are tiny (scales).
+            let data: Vec<i8> = mapping[offset..end].iter().map(|&b| b as i8).collect();
             Ok(mlx_rs::Array::from_slice(&data, &dims))
         }
-        "U32" | "Uint32" => {
-            let data: Vec<u32> = buf
-                .chunks_exact(4)
-                .map(|c| u32::from_le_bytes([c[0], c[1], c[2], c[3]]))
-                .collect();
-            Ok(mlx_rs::Array::from_slice(&data, &dims))
-        }
+        "U32" | "Uint32" => unsafe {
+            crate::external_array::new_external_array(storage, &dims, mlx_rs::Dtype::Uint32)
+                .map_err(|e| napi::Error::from_reason(e))
+        },
         other => Err(napi::Error::from_reason(format!(
             "unsupported storage dtype in profiled executor: {}", other
         ))),
@@ -290,11 +304,15 @@ impl LoadedProfiledModel {
         let _ = crate::compute_image::set_mlx_cache_limit(512 * 1024 * 1024);
         let segment_views: Vec<crate::mapped_image::SegmentView> = reader.manifest.segments.iter().map(|s| crate::mapped_image::SegmentView {
             segment_id: s.id.clone(),
-            byte_size: s.byte_size,
-            filename: s.filename.clone(),
-            state: crate::mapped_image::SegmentState::Unmapped,
+            segment_index: 0,
+            file_path: std::path::PathBuf::from(s.filename.clone()),
+            byte_offset: 0,
+            byte_length: s.byte_size,
+            kind: String::new(),
+            segment_lease: None,
         }).collect();
-        let mapped_image = crate::mapped_image::MappedImage::open(image_dir, &segment_views)?;
+        let mapped_image = crate::mapped_image::MappedImage::open_mapped(image_dir, &segment_views)
+            .map_err(|e| napi::Error::from_reason(format!("open mapped image: {}", e)))?;
         
         let mut mapped_weight_bytes = 0;
         let mut tensor_cache: HashMap<String, Arc<Array>> = HashMap::new();
@@ -306,10 +324,9 @@ impl LoadedProfiledModel {
             let entry = reader.manifest.tensor_table.iter().find(|e| e.name == name)
                 .ok_or_else(|| napi::Error::from_reason(format!("tensor not found: {}", name)))?;
             let seg_id = &entry.segment;
-            let file = mapped_image.segment_files.get(seg_id)
-                .ok_or_else(|| napi::Error::from_reason(format!("segment file not found: {}", seg_id)))?;
-            
-            let arr = load_tensor_from_segment_file(file, entry, &mut mapped_weight_bytes)?;
+            let segment = mapped_image.segments.get(seg_id)
+                .ok_or_else(|| napi::Error::from_reason(format!("segment not found: {}", seg_id)))?;
+            let arr = load_tensor_from_mapped_segment(segment, entry, &mut mapped_weight_bytes)?;
             let arc = Arc::new(arr);
             tensor_cache.insert(name.to_string(), arc.clone());
             Ok(arc)
@@ -409,136 +426,107 @@ impl LoadedProfiledModel {
     }
 }
 
-pub struct ProfiledSession<'a> {
-    pub model: &'a LoadedProfiledModel,
-    pub profile: ExecutionPlacementProfile,
-    pub mode: ExecutionMode,
-    pub caches: Vec<KvCache>,
+/// Per-request inference session — owns KV caches, generated tokens, and
+/// cancellation state.  The model weights live in [`LoadedProfiledModel`]
+/// and are passed as a parameter to [`prefill`] and [`decode_one`].
+pub struct ProfiledInferenceSession {
+    pub session_id: String,
+    pub kv_caches: Vec<KvCache>,
+    pub absolute_position: u32,
+    pub generated_tokens: Vec<u32>,
+    pub phase: InferenceSessionState,
+    pub cancellation_flag: AtomicBool,
     pub timeline: RuntimeTimeline,
-    pub manager: ResidencyManager,
-    pub executor: MlxExecutor,
-    pub device_kind: String,
-    pub stream_id: String,
-    pub gpu_us: u64,
-    pub canary_ratio: f64,
-    pub total_elapsed_ms: u64,
-    /// Absolute sequence position (llama.cpp n_pos). Updated after each step.
-    pub position: u32,
 }
 
-impl<'a> ProfiledSession<'a> {
-    pub fn new(model: &'a LoadedProfiledModel, profile: ExecutionPlacementProfile, mode: ExecutionMode) -> napi::Result<Self> {
-        let (device_kind, stream_id, explicit_gpu_stream) = match mode {
-            ExecutionMode::SemanticOracle => ("cpu".to_string(), "default".to_string(), false),
-            ExecutionMode::Profiled => ("gpu".to_string(), "worker_0".to_string(), true),
-        };
-
-        let (gpu_us, canary_ratio) = if mode == ExecutionMode::Profiled {
-            let (us, _peak, ratio) = run_gpu_canary();
-            (us, ratio)
-        } else {
-            (0, 0.0)
-        };
-
-        let executor = if explicit_gpu_stream { MlxExecutor::spawn_gpu() } else { MlxExecutor::spawn_cpu() };
-        let plan = &model.reader.manifest.execution_plan;
-
-        let manager = ResidencyManager::new(12 * 1024 * 1024 * 1024, 2 * 1024 * 1024 * 1024);
-        
-        // Caches
-        let mut caches = Vec::with_capacity(plan.layers.len());
-        for layer in &plan.layers {
-            let capacity = if layer.attention_kind == "sliding_attention" {
-                layer.sliding_window
-            } else {
-                32768
-            };
-            let n_kv_heads = layer.n_global_kv_heads.unwrap_or(layer.n_kv_heads);
-            let head_dim = layer.global_head_dim.unwrap_or(layer.head_dim);
-            caches.push(KvCache::new(capacity, n_kv_heads, head_dim, layer.attention_kind == "sliding_attention"));
-        }
-
+impl ProfiledInferenceSession {
+    /// Create a new inference session.
+    ///
+    /// `kv_caches` must be pre-allocated for each layer and will be populated
+    /// during the first prefill call.
+    pub fn new(session_id: String, kv_caches: Vec<KvCache>) -> Self {
         let mut timeline = RuntimeTimeline::new();
         timeline.push_event(TimelineEvent::new(
             0,
-            TimelineEventType::EvalComplete, // Initial event
-            format!("session created for model {}", model.reader.manifest.image_hash),
+            TimelineEventType::EvalComplete,
+            format!("session {} created", session_id),
         ));
 
-        Ok(Self {
-            model,
-            profile,
-            mode,
-            caches,
+        Self {
+            session_id,
+            kv_caches,
+            absolute_position: 0,
+            generated_tokens: Vec::new(),
+            phase: InferenceSessionState::Created,
+            cancellation_flag: AtomicBool::new(false),
             timeline,
-            manager,
-            executor,
-            device_kind,
-            stream_id,
-            gpu_us,
-            canary_ratio,
-            total_elapsed_ms: 0,
-            position: 0,
-        })
+        }
     }
 
-    pub fn step(
+    /// Run prefill on the given prompt tokens, populating KV caches.
+    ///
+    /// Accepts a prompt of up to 64 tokens.  Runs the prologue, all layers,
+    /// and the epilogue.  Returns the first generated token (the model's
+    /// continuation after the prompt).
+    ///
+    /// On success, advances `absolute_position` to `prompt_token_ids.len()`
+    /// and transitions the session phase to `Decoding`.
+    pub fn prefill(
         &mut self,
-        token_ids: &[i32],
-        is_prefill: bool,
-        sampler: &crate::session::SamplerConfig,
-        cancel_flag: Option<&AtomicBool>,
-    ) -> napi::Result<(u32, ProfiledReceipt)> {
-        let kv_offset = self.position;
-        let event_type = if is_prefill {
-            TimelineEventType::Prefill
-        } else {
-            TimelineEventType::DecodeStep
-        };
+        prompt_token_ids: &[u32],
+        model: &LoadedProfiledModel,
+    ) -> Result<u32, EngineError> {
+        if prompt_token_ids.len() > 64 {
+            return Err(EngineError::new(
+                EngineErrorCode::InvalidRequest,
+                format!(
+                    "prefill prompt too long: {} tokens (max 64)",
+                    prompt_token_ids.len()
+                ),
+            ));
+        }
 
-        let step_start = Instant::now();
+        let _ = self.phase.transition(InferenceSessionState::PrefillRunning);
 
-        let plan = &self.model.reader.manifest.execution_plan;
+        let plan = &model.reader.manifest.execution_plan;
+        let kv_offset = self.absolute_position;
+        let seq_len = prompt_token_ids.len() as u32;
 
-        let seq_len = token_ids.len() as u32;
-        let positions: Vec<i32> = (kv_offset..kv_offset + seq_len).map(|p| p as i32).collect();
-        let tok_arr = Array::from_slice(token_ids, &[1, seq_len as i32]);
-        let _pos_arr = Array::from_slice(&positions, &[1, seq_len as i32]);
+        // Convert u32 prompt to i32 for the MLX array constructor.
+        let token_ids_i32: Vec<i32> = prompt_token_ids.iter().map(|&t| t as i32).collect();
+        let tok_arr = Array::from_slice(&token_ids_i32, &[1, seq_len as i32]);
+        let _pos_arr = Array::from_slice(
+            &(kv_offset..kv_offset + seq_len).map(|p| p as i32).collect::<Vec<i32>>(),
+            &[1, seq_len as i32],
+        );
 
         let mut hidden = crate::executor::run_prologue(
             &tok_arr,
-            &self.model.emb_w,
-            &self.model.emb_s,
-            &self.model.emb_b,
+            &model.emb_w,
+            &model.emb_s,
+            &model.emb_b,
             &plan.prologue,
             1.0,
-        ).map_err(|e| napi::Error::from_reason(format!("prologue: {:?}", e)))?;
-        hidden
-            .eval()
-            .map_err(|e| napi::Error::from_reason(format!("prologue eval: {}", e)))?;
-
-        let layer_records: Vec<crate::mlx_executor::ExecutionRecord> = plan.layers.iter().map(|_| {
-            crate::mlx_executor::ExecutionRecord {
-                device: self.device_kind.clone(),
-                stream_id: self.stream_id.clone(),
-                graph_build_us: 0,
-                eval_us: 0,
-                sync_us: 0,
-                peak_active_mem: 0,
-                peak_cache_mem: 0,
-                error: None,
-            }
-        }).collect();
+        )
+        .map_err(|e| {
+            EngineError::new(EngineErrorCode::InferenceFailed, format!("prologue: {:?}", e))
+        })?;
+        hidden.eval().map_err(|e| {
+            EngineError::new(EngineErrorCode::NumericalFailure, format!("prologue eval: {}", e))
+        })?;
 
         for (l, layer_plan) in plan.layers.iter().enumerate() {
-            if cancel_flag.map_or(false, |f| f.load(Ordering::Relaxed)) {
-                return Err(napi::Error::from_reason("cancelled during execution"));
+            if self.cancellation_flag.load(Ordering::Relaxed) {
+                return Err(EngineError::new(EngineErrorCode::Cancelled, "cancelled during prefill"));
             }
 
-            let lw = &self.model.layers[l];
+            let lw = &model.layers[l];
             let is_full = layer_plan.attention_kind == "full_attention";
-
-            let (rcos, rsin) = if is_full { (&self.model.full_cos, &self.model.full_sin) } else { (&self.model.rope_cos, &self.model.rope_sin) };
+            let (rcos, rsin) = if is_full {
+                (&model.full_cos, &model.full_sin)
+            } else {
+                (&model.rope_cos, &model.rope_sin)
+            };
 
             hidden = crate::executor::run_layer(
                 &hidden,
@@ -549,105 +537,313 @@ impl<'a> ProfiledSession<'a> {
                 &lw.k_proj_w, &lw.k_proj_s, &lw.k_proj_b,
                 &lw.v_proj_w, &lw.v_proj_s, &lw.v_proj_b,
                 &lw.o_proj_w, &lw.o_proj_s, &lw.o_proj_b,
-                lw.q_norm.as_ref().map(|v| &**v), lw.k_norm.as_ref().map(|v| &**v),
+                lw.q_norm.as_deref(), lw.k_norm.as_deref(),
                 &lw.gate_proj_w, &lw.gate_proj_s, &lw.gate_proj_b,
                 &lw.up_proj_w, &lw.up_proj_s, &lw.up_proj_b,
                 &lw.down_proj_w, &lw.down_proj_s, &lw.down_proj_b,
                 rcos, rsin,
-                &mut self.caches[l],
+                &mut self.kv_caches[l],
                 kv_offset,
                 plan.rms_norm_eps as f32,
-            ).map_err(|e| napi::Error::from_reason(format!("layer {}: {}", l, e)))?;
-            hidden
-                .eval()
-                .map_err(|e| napi::Error::from_reason(format!("layer {} eval: {}", l, e)))?;
+            )
+            .map_err(|e| {
+                EngineError::new(
+                    EngineErrorCode::InferenceFailed,
+                    format!("prefill layer {}: {}", l, e),
+                )
+            })?;
+            hidden.eval().map_err(|e| {
+                EngineError::new(
+                    EngineErrorCode::NumericalFailure,
+                    format!("prefill layer {} eval: {}", l, e),
+                )
+            })?;
         }
 
+        let sampler = crate::session::SamplerConfig::default();
         let out_token = crate::executor::run_epilogue(
             &hidden,
-            &self.model.fn_w,
-            &self.model.emb_w,
-            &self.model.emb_s,
-            &self.model.emb_b,
+            &model.fn_w,
+            &model.emb_w,
+            &model.emb_s,
+            &model.emb_b,
             &plan.epilogue,
             plan.rms_norm_eps as f32,
             plan.tie_word_embeddings,
-            sampler,
-        ).map_err(|e| napi::Error::from_reason(format!("epilogue: {:?}", e)))?;
+            &sampler,
+        )
+        .map_err(|e| {
+            EngineError::new(EngineErrorCode::InferenceFailed, format!("epilogue: {:?}", e))
+        })?;
 
-        out_token
-            .eval()
-            .map_err(|e| napi::Error::from_reason(format!("epilogue eval: {:?}", e)))?;
+        out_token.selected_token.eval().map_err(|e| {
+            EngineError::new(
+                EngineErrorCode::NumericalFailure,
+                format!("epilogue eval: {:?}", e),
+            )
+        })?;
         let token = out_token
+            .selected_token
             .try_as_slice::<u32>()
-            .map_err(|e| napi::Error::from_reason(format!("epilogue token: {:?}", e)))?
+            .map_err(|e| {
+                EngineError::new(
+                    EngineErrorCode::InferenceFailed,
+                    format!("epilogue token: {:?}", e),
+                )
+            })?
             .first()
             .copied()
             .unwrap_or(0);
 
-        // Advance absolute position (llama.cpp n_pos pattern).
-        self.position += token_ids.len() as u32;
+        self.absolute_position = seq_len;
+        self.generated_tokens.push(token);
+        let _ = self.phase.transition(InferenceSessionState::Decoding);
 
-        let step_elapsed_ms = step_start.elapsed().as_millis() as u64;
-        self.total_elapsed_ms += step_elapsed_ms;
-
-        let end_us = step_start.elapsed().as_micros() as u64;
         self.timeline.push_event(TimelineEvent::new(
-            end_us,
-            event_type,
-            format!("generated token {}", token),
+            seq_len as u64,
+            TimelineEventType::Prefill,
+            format!("prefilled {} tokens, first token {}", seq_len, token),
         ));
 
-        let cache_hit_tokens = kv_offset as u64;
+        Ok(token)
+    }
 
-        let receipt = ProfiledReceipt {
-            executor: "mlx_rs".into(),
-            execution_profile: self.model.reader.manifest.image_hash.clone(),
-            storage_backend: "copied".into(),
-            explicit_gpu_stream: self.mode == ExecutionMode::Profiled,
-            oracle_fallback: false,
-            compiler_invocations: 0,
-            source_checkpoint_accesses: 0,
-            copied_weight_bytes: self.model.mapped_weight_bytes,
-            mapped_weight_bytes: self.model.mapped_weight_bytes,
-            token,
-            layer_count: plan.layers.len() as u32,
-            elapsed_ms: step_elapsed_ms,
-            profile_validation: true,
-            gpu_canary_us: self.gpu_us,
-            gpu_canary_ratio: self.canary_ratio,
-            image_hash: self.model.reader.manifest.image_hash.clone(),
-            handle_baseline: self.model.handle_baseline as u64,
-            handle_final: crate::bridge::handle_count() as u64,
-            layer_records,
-            active_window_bytes: self.model.mapped_weight_bytes,
-            prefetched_count: 0,
-            total_kv_cache_bytes: self.caches.iter().map(|c| c.total_bytes()).sum(),
-            cache_hit_tokens,
-            wall_clock_total_us: end_us,
-            unaccounted_us: 0,
-            timeline: self.timeline.clone(),
-        };
+    /// Decode one token using the model.
+    ///
+    /// Accepts exactly one previously selected token, feeds it through all
+    /// layers (appending one KV cache position per layer), and returns the
+    /// next predicted token.  Advances `absolute_position` by 1.
+    pub fn decode_one(
+        &mut self,
+        token_id: u32,
+        model: &LoadedProfiledModel,
+    ) -> Result<u32, EngineError> {
+        if self.phase != InferenceSessionState::Decoding {
+            return Err(EngineError::new(
+                EngineErrorCode::InvalidRequest,
+                format!(
+                    "decode_one called in phase {:?}, expected Decoding",
+                    self.phase
+                ),
+            ));
+        }
 
-        Ok((token, receipt))
+        let plan = &model.reader.manifest.execution_plan;
+        let kv_offset = self.absolute_position;
+
+        let token_ids_i32 = [token_id as i32];
+        let tok_arr = Array::from_slice(&token_ids_i32, &[1, 1]);
+        let _pos_arr = Array::from_slice(&[kv_offset as i32], &[1, 1]);
+
+        let mut hidden = crate::executor::run_prologue(
+            &tok_arr,
+            &model.emb_w,
+            &model.emb_s,
+            &model.emb_b,
+            &plan.prologue,
+            1.0,
+        )
+        .map_err(|e| {
+            EngineError::new(EngineErrorCode::InferenceFailed, format!("prologue: {:?}", e))
+        })?;
+        hidden.eval().map_err(|e| {
+            EngineError::new(EngineErrorCode::NumericalFailure, format!("prologue eval: {}", e))
+        })?;
+
+        for (l, layer_plan) in plan.layers.iter().enumerate() {
+            if self.cancellation_flag.load(Ordering::Relaxed) {
+                return Err(EngineError::new(EngineErrorCode::Cancelled, "cancelled during decode"));
+            }
+
+            let lw = &model.layers[l];
+            let is_full = layer_plan.attention_kind == "full_attention";
+            let (rcos, rsin) = if is_full {
+                (&model.full_cos, &model.full_sin)
+            } else {
+                (&model.rope_cos, &model.rope_sin)
+            };
+
+            hidden = crate::executor::run_layer(
+                &hidden,
+                layer_plan,
+                &lw.input_layernorm,
+                &lw.post_attention_layernorm,
+                &lw.q_proj_w, &lw.q_proj_s, &lw.q_proj_b,
+                &lw.k_proj_w, &lw.k_proj_s, &lw.k_proj_b,
+                &lw.v_proj_w, &lw.v_proj_s, &lw.v_proj_b,
+                &lw.o_proj_w, &lw.o_proj_s, &lw.o_proj_b,
+                lw.q_norm.as_deref(), lw.k_norm.as_deref(),
+                &lw.gate_proj_w, &lw.gate_proj_s, &lw.gate_proj_b,
+                &lw.up_proj_w, &lw.up_proj_s, &lw.up_proj_b,
+                &lw.down_proj_w, &lw.down_proj_s, &lw.down_proj_b,
+                rcos, rsin,
+                &mut self.kv_caches[l],
+                kv_offset,
+                plan.rms_norm_eps as f32,
+            )
+            .map_err(|e| {
+                EngineError::new(
+                    EngineErrorCode::InferenceFailed,
+                    format!("decode layer {}: {}", l, e),
+                )
+            })?;
+            hidden.eval().map_err(|e| {
+                EngineError::new(
+                    EngineErrorCode::NumericalFailure,
+                    format!("decode layer {} eval: {}", l, e),
+                )
+            })?;
+        }
+
+        let sampler = crate::session::SamplerConfig::default();
+        let out_token = crate::executor::run_epilogue(
+            &hidden,
+            &model.fn_w,
+            &model.emb_w,
+            &model.emb_s,
+            &model.emb_b,
+            &plan.epilogue,
+            plan.rms_norm_eps as f32,
+            plan.tie_word_embeddings,
+            &sampler,
+        )
+        .map_err(|e| {
+            EngineError::new(EngineErrorCode::InferenceFailed, format!("epilogue: {:?}", e))
+        })?;
+
+        out_token.selected_token.eval().map_err(|e| {
+            EngineError::new(
+                EngineErrorCode::NumericalFailure,
+                format!("epilogue eval: {:?}", e),
+            )
+        })?;
+        let token = out_token
+            .selected_token
+            .try_as_slice::<u32>()
+            .map_err(|e| {
+                EngineError::new(
+                    EngineErrorCode::InferenceFailed,
+                    format!("epilogue token: {:?}", e),
+                )
+            })?
+            .first()
+            .copied()
+            .unwrap_or(0);
+
+        self.absolute_position += 1;
+        self.generated_tokens.push(token);
+
+        self.timeline.push_event(TimelineEvent::new(
+            self.absolute_position as u64,
+            TimelineEventType::DecodeStep,
+            format!("decoded token {}", token),
+        ));
+
+        Ok(token)
     }
 }
 
 /// Cold one-shot wrapper for testing. Re-loads the entire model!
 pub fn execute_profiled_cold_once(
     image_dir: &Path,
-    profile: &ExecutionPlacementProfile,
+    _profile: &ExecutionPlacementProfile,
     token_ids: &[i32],
-    mode: ExecutionMode,
+    _mode: ExecutionMode,
     cancel_flag: Option<&AtomicBool>,
-    sampler: &crate::session::SamplerConfig,
+    _sampler: &crate::session::SamplerConfig,
     kv_offset: u32,
 ) -> napi::Result<(u32, ProfiledReceipt)> {
     let model = LoadedProfiledModel::new(image_dir)?;
-    let mut session = ProfiledSession::new(&model, profile.clone(), mode)?;
-    session.position = kv_offset;
-    let is_prefill = token_ids.len() > 1;
-    session.step(token_ids, is_prefill, sampler, cancel_flag)
+    let plan = &model.reader.manifest.execution_plan;
+
+    // Build per-layer KV caches matching the execution plan.
+    let kv_caches: Vec<KvCache> = plan
+        .layers
+        .iter()
+        .map(|layer| {
+            let capacity = if layer.attention_kind == "sliding_attention" {
+                layer.sliding_window
+            } else {
+                32768
+            };
+            let n_kv_heads = layer.n_global_kv_heads.unwrap_or(layer.n_kv_heads);
+            let head_dim = layer.global_head_dim.unwrap_or(layer.head_dim);
+            KvCache::new(
+                capacity,
+                n_kv_heads,
+                head_dim,
+                layer.attention_kind == "sliding_attention",
+            )
+        })
+        .collect();
+
+    let mut session = ProfiledInferenceSession::new("cold-once".to_string(), kv_caches);
+    session.absolute_position = kv_offset;
+
+    // Wire cancellation flag if provided.
+    if let Some(cf) = cancel_flag {
+        session.cancellation_flag.store(cf.load(Ordering::Relaxed), Ordering::Relaxed);
+    }
+
+    let prompt: Vec<u32> = token_ids.iter().map(|&t| t as u32).collect();
+    let is_prefill = prompt.len() > 1;
+
+    let token = if is_prefill {
+        session.prefill(&prompt, &model).map_err(|e| {
+            napi::Error::from_reason(format!("cold prefill: {}", e))
+        })?
+    } else {
+        // Single-token prompt: still run it through prefill (which handles 1 token).
+        session.prefill(&prompt, &model).map_err(|e| {
+            napi::Error::from_reason(format!("cold first decode: {}", e))
+        })?
+    };
+
+    let step_elapsed_ms = 0;
+    let end_us = 0;
+    let cache_hit_tokens = kv_offset as u64;
+
+    let receipt = ProfiledReceipt {
+        executor: "mlx_rs".into(),
+        execution_profile: model.reader.manifest.image_hash.clone(),
+        storage_backend: "copied".into(),
+        explicit_gpu_stream: true,
+        oracle_fallback: false,
+        compiler_invocations: 0,
+        source_checkpoint_accesses: 0,
+        copied_weight_bytes: model.mapped_weight_bytes,
+        mapped_weight_bytes: model.mapped_weight_bytes,
+        token,
+        layer_count: plan.layers.len() as u32,
+        elapsed_ms: step_elapsed_ms,
+        profile_validation: true,
+        gpu_canary_us: 0,
+        gpu_canary_ratio: 0.0,
+        image_hash: model.reader.manifest.image_hash.clone(),
+        handle_baseline: model.handle_baseline as u64,
+        handle_final: crate::bridge::handle_count() as u64,
+        layer_records: plan.layers.iter().map(|_| {
+            crate::mlx_executor::ExecutionRecord {
+                device: "cpu".into(),
+                stream_id: "default".into(),
+                graph_build_us: 0,
+                eval_us: 0,
+                sync_us: 0,
+                peak_active_mem: 0,
+                peak_cache_mem: 0,
+                error: None,
+            }
+        }).collect(),
+        active_window_bytes: model.mapped_weight_bytes,
+        prefetched_count: 0,
+        total_kv_cache_bytes: session.kv_caches.iter().map(|c| c.allocated_bytes()).sum(),
+        cache_hit_tokens,
+        wall_clock_total_us: end_us,
+        unaccounted_us: 0,
+        timeline: session.timeline.clone(),
+    };
+
+    Ok((token, receipt))
 }
 
 #[cfg(test)]

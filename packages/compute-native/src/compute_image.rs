@@ -8,6 +8,10 @@
 //!
 //! v0 is the copied, runtime-ready image. It proves canonicalization,
 //! bounded residency, and output parity. No-copy Metal buffers remain v2.
+/// Storage ABI identifier for the baseline copied (CPU-allocated) path.
+pub const STORAGE_ABI_COPIED_V0: &str = "copied-v0";
+/// Storage ABI identifier for the mapped, no-copy (Metal-buffer) path.
+pub const STORAGE_ABI_MAPPED_NO_COPY_V1: &str = "mapped-no-copy-v1";
 
 use mlx_rs::Array;
 use serde::{Deserialize, Serialize};
@@ -46,6 +50,27 @@ pub struct Manifest {
 fn default_storage_abi() -> String {
     "copied-v0".to_string()
 }
+fn default_alignment_bytes() -> u64 {
+    4096
+}
+fn default_tensor_alignment_bytes() -> u64 {
+    16
+}
+fn default_layout_version() -> u32 {
+    1
+}
+impl Manifest {
+    /// Check whether the manifest's `required_storage_abi` is compatible with
+    /// the selected `StorageBackend`.
+    pub fn storage_abi_matches(&self, backend: &StorageBackend) -> bool {
+        match backend {
+            StorageBackend::Copied => self.required_storage_abi == STORAGE_ABI_COPIED_V0,
+            StorageBackend::MappedNoCopy => {
+                self.required_storage_abi == STORAGE_ABI_MAPPED_NO_COPY_V1
+            }
+        }
+    }
+}
 
 /// Cryptographic identity of the source checkpoint.
 #[derive(Clone, Serialize, Deserialize)]
@@ -75,9 +100,12 @@ pub struct Segment {
     pub sha256: String,
     pub tensor_ids: Vec<u32>, // ordered tensor references
     pub kind: SegmentKind,
+    /// Alignment constraint in bytes for the mapped-no-copy backend (default 4096).
+    #[serde(default = "default_alignment_bytes")]
+    pub alignment_bytes: u64,
 }
 
-#[derive(Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub enum SegmentKind {
     Persistent, // always loaded (embeddings, final norm)
     Layer(u32), // per-layer, load/free per execution window
@@ -103,6 +131,12 @@ pub struct TensorEntry {
     pub physical_shape: Vec<u32>,
     pub mutability: String,
     pub quantization: Option<QuantizationDesc>,
+    /// Per-tensor alignment in bytes for the mapped-no-copy backend (default 16).
+    #[serde(default = "default_tensor_alignment_bytes")]
+    pub tensor_alignment_bytes: u64,
+    /// Layout version for the tensor-cache key computation (default 1).
+    #[serde(default = "default_layout_version")]
+    pub layout_version: u32,
 }
 
 #[derive(Clone, Serialize, Deserialize)]
@@ -409,6 +443,8 @@ impl ImageBuilder {
             physical_shape,
             mutability: "read_only".into(),
             quantization,
+            tensor_alignment_bytes: default_tensor_alignment_bytes(),
+            layout_version: default_layout_version(),
         });
 
         id
@@ -470,6 +506,7 @@ impl ImageBuilder {
                 sha256,
                 tensor_ids: seg.tensor_ids,
                 kind: seg.kind,
+                alignment_bytes: default_alignment_bytes(),
             });
 
             // Build residency plan
@@ -1096,6 +1133,45 @@ impl CompiledImageReader {
                 "compiled image segment hash mismatch",
             ));
         }
+        // ── mapped-no-copy-v1 additional checks ──────────────────────
+        if self.manifest.required_storage_abi == STORAGE_ABI_MAPPED_NO_COPY_V1 {
+        for segment in &self.manifest.segments {
+            let seg_path = self.image_dir.join(&segment.filename);
+            if !seg_path.exists() {
+                return Err(napi::Error::from_reason(format!(
+                    "mapped-no-copy: segment file does not exist: {}",
+                    seg_path.display()
+                )));
+        }
+            let meta = seg_path.metadata().map_err(|e| {
+                napi::Error::from_reason(format!(
+                    "mapped-no-copy: stat {}: {}",
+                    seg_path.display(), e
+                ))
+            })?;
+            let actual_len = meta.len();
+            if actual_len != segment.byte_size {
+                return Err(napi::Error::from_reason(format!(
+                    "mapped-no-copy: segment {} size mismatch: manifest says {} but file is {}",
+                    segment.filename, segment.byte_size, actual_len
+                )));
+        }
+            if segment.alignment_bytes == 0 || segment.byte_size % segment.alignment_bytes != 0 {
+                return Err(napi::Error::from_reason(format!(
+                    "mapped-no-copy: segment {} byte_size {} is not aligned to {}",
+                    segment.filename, segment.byte_size, segment.alignment_bytes
+                )));
+        }
+        }
+        for tensor in &self.manifest.tensor_table {
+            if tensor.tensor_alignment_bytes == 0 || tensor.offset % tensor.tensor_alignment_bytes != 0 {
+                return Err(napi::Error::from_reason(format!(
+                    "mapped-no-copy: tensor {} offset {} not aligned to {}",
+                    tensor.name, tensor.offset, tensor.tensor_alignment_bytes
+                )));
+        }
+        }
+        }
 
         Ok(ManifestVerification {
             manifest_hash_matches,
@@ -1273,8 +1349,7 @@ pub fn mlx_cache_memory_bytes() -> u64 {
 }
 
 /// Returns MLX peak memory in bytes, or 0 if unavailable.
-    #[allow(dead_code)]
-    fn mlx_peak_memory_bytes() -> u64 {
+pub fn mlx_peak_memory_bytes() -> u64 {
     #[cfg(target_os = "macos")]
     {
         let mut res: usize = 0;
@@ -1302,6 +1377,35 @@ pub fn set_mlx_cache_limit(limit_bytes: u64) -> u64 {
     {
         let mut prev: usize = 0;
         unsafe { mlx_sys::mlx_set_cache_limit(&mut prev, limit_bytes as usize) };
+        prev as u64
+    }
+    #[cfg(not(target_os = "macos"))]
+    {
+        let _ = limit_bytes;
+        0
+    }
+}
+
+/// Get the MLX Metal active memory limit in bytes.
+pub fn mlx_get_memory_limit() -> u64 {
+    #[cfg(target_os = "macos")]
+    {
+        let mut res: usize = 0;
+        unsafe { mlx_sys::mlx_get_memory_limit(&mut res) };
+        res as u64
+    }
+    #[cfg(not(target_os = "macos"))]
+    {
+        0
+    }
+}
+
+/// Set the MLX Metal active memory limit in bytes. Returns the previous limit.
+pub fn set_mlx_memory_limit(limit_bytes: u64) -> u64 {
+    #[cfg(target_os = "macos")]
+    {
+        let mut prev: usize = 0;
+        unsafe { mlx_sys::mlx_set_memory_limit(&mut prev, limit_bytes as usize) };
         prev as u64
     }
     #[cfg(not(target_os = "macos"))]
@@ -1375,6 +1479,91 @@ fn estimate_open_runtime_peak_bytes(manifest: &Manifest) -> u64 {
         .saturating_add(rope_bytes)
         .saturating_add(embedding_dequant_bytes)
         .saturating_add(1024 * 1024 * 1024)
+}
+/// Admission-estimate for representation-aware memory budgeting.
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, Default)]
+pub struct RepresentationAdmissionEstimate {
+    pub virtual_mapped_bytes: u64,
+    pub expected_resident_bytes: u64,
+    pub persistent_materialized_bytes: u64,
+    pub max_layer_window_bytes: u64,
+    pub rope_bytes: u64,
+    pub kv_budget_bytes: u64,
+    pub mlx_workspace_bytes: u64,
+    pub allocator_cache_bytes: u64,
+    pub system_reserve_bytes: u64,
+}
+
+/// Produce an admission estimate given the manifest.
+///
+/// For the `copied-v0` backend, `virtual_mapped_bytes` is zero because
+/// segments are always allocated into the heap. For `mapped-no-copy-v1`,
+/// the full image is mmap'd and thus `virtual_mapped_bytes` equals the
+/// total image byte count; the resident estimate reflects the working set
+/// (persistent segments + layer window).
+pub fn representation_aware_admission_estimate(manifest: &Manifest) -> RepresentationAdmissionEstimate {
+    let persistent_materialized_bytes: u64 = manifest
+        .residency_plan
+        .persistent_segments
+        .iter()
+        .filter_map(|sid| manifest.segments.iter().find(|s| &s.id == sid))
+        .map(|s| s.byte_size)
+        .sum();
+
+    let layer_segments: Vec<&Segment> = manifest
+        .residency_plan
+        .layer_segments
+        .iter()
+        .filter_map(|sid| manifest.segments.iter().find(|s| &s.id == sid))
+        .collect();
+
+    let max_layer_window_bytes: u64 = {
+        let window = manifest.residency_plan.layer_window_size.max(1) as usize;
+        let mut sorted = layer_segments.clone();
+        sorted.sort_by(|a, b| b.byte_size.cmp(&a.byte_size));
+        sorted.iter().take(window).map(|s| s.byte_size).sum()
+    };
+
+    let total_mapped: u64 = manifest.segments.iter().map(|s| s.byte_size).sum();
+
+    let arch = &manifest.architecture;
+    let rope_bytes = u64::from(arch.max_position_embeddings)
+        .saturating_mul(u64::from(arch.head_dim))
+        .saturating_mul(4)
+        .saturating_add(
+            u64::from(arch.max_position_embeddings)
+                .saturating_mul(u64::from(arch.global_head_dim.unwrap_or(arch.head_dim)))
+                .saturating_mul(4),
+        );
+    let kv_budget_bytes = rope_bytes.saturating_mul(4); // rough kv-cache × layers
+    let mlx_workspace_bytes = 512 * 1024 * 1024;
+    let allocator_cache_bytes = 512 * 1024 * 1024;
+    let system_reserve_bytes = 2u64 * 1024 * 1024 * 1024;
+
+    let is_mapped = manifest.required_storage_abi == STORAGE_ABI_MAPPED_NO_COPY_V1;
+    let virtual_mapped_bytes = if is_mapped { total_mapped } else { 0 };
+    let expected_resident_bytes = if is_mapped {
+        persistent_materialized_bytes
+            .saturating_add(max_layer_window_bytes)
+            .saturating_add(rope_bytes)
+            .saturating_add(mlx_workspace_bytes)
+    } else {
+        total_mapped
+            .saturating_add(rope_bytes)
+            .saturating_add(mlx_workspace_bytes)
+    };
+
+    RepresentationAdmissionEstimate {
+        virtual_mapped_bytes,
+        expected_resident_bytes,
+        persistent_materialized_bytes,
+        max_layer_window_bytes,
+        rope_bytes,
+        kv_budget_bytes,
+        mlx_workspace_bytes,
+        allocator_cache_bytes,
+        system_reserve_bytes,
+    }
 }
 
 /// Native dependency identity and capability report.
@@ -2173,7 +2362,7 @@ impl ImageRuntime {
             .ok_or_else(|| napi::Error::from_reason("norm weight invalid"))?
         };
 
-        let token_arr = crate::executor::run_epilogue(
+        let epi = crate::executor::run_epilogue(
             &hidden,
             &fn_w,
             &emb_w, &emb_s, &emb_b,
@@ -2184,10 +2373,10 @@ impl ImageRuntime {
         )
         .map_err(|e| napi::Error::from_reason(format!("epilogue: {:?}", e)))?;
 
-        token_arr
+        epi.selected_token
             .eval()
             .map_err(|e| napi::Error::from_reason(format!("epilogue eval: {:?}", e)))?;
-        let token_id = token_arr
+        let token_id = epi.selected_token
             .try_as_slice::<u32>()
             .map_err(|e| napi::Error::from_reason(format!("epilogue token: {:?}", e)))?
             .first()
@@ -3416,6 +3605,163 @@ mod tests {
             "unexpected abi-mismatch error: {}",
             err
         );
+    }
+    #[test]
+    fn test_storage_abi_matching() {
+        let source = SourceIdentity {
+            config_hash: "abc".into(),
+            shard_hashes: vec![],
+            tokenizer_hashes: vec![],
+            auxiliary_hashes: vec![],
+            model_type: "test".into(),
+            quantization_bits: 8,
+            quantization_group_size: 64,
+            quantization_mode: "affine".into(),
+        };
+
+        let defaults = Manifest {
+            image_version: "0.1.0".into(),
+            compiler_version: "test".into(),
+            runtime_abi: "test".into(),
+            source: source,
+            architecture: crate::config::TextArchitecture {
+                hidden_size: 64,
+                intermediate_size: 128,
+                num_attention_heads: 4,
+                num_key_value_heads: 1,
+                head_dim: 16,
+                global_head_dim: Some(16),
+                num_global_key_value_heads: Some(1),
+                num_hidden_layers: 1,
+                vocab_size: 64,
+                sliding_window: 8,
+                max_position_embeddings: 16,
+                rms_norm_eps: 1e-6,
+                tie_word_embeddings: true,
+                attention_k_eq_v: true,
+                final_logit_softcapping: None,
+                hidden_size_per_layer_input: 0,
+                layer_types: vec![crate::config::AttentionKind::SlidingAttention],
+                rope_local: crate::config::RopeSpec {
+                    theta: 10000.0,
+                    rope_type: "default".into(),
+                    partial_rotary_factor: None,
+                },
+                rope_global: None,
+                model_type: "test".into(),
+            },
+            segments: vec![],
+            tensor_table: vec![],
+            alias_table: vec![],
+            residency_plan: ResidencyPlan {
+                persistent_segments: vec![],
+                layer_segments: vec![],
+                layer_window_size: 2,
+                total_bytes: 0,
+            },
+            image_hash: "dummy".into(),
+            required_storage_abi: STORAGE_ABI_COPIED_V0.into(),
+            required_capabilities: vec![],
+            execution_plan: crate::config::ModelExecutionPlan::default(),
+        };
+
+        assert!(defaults.storage_abi_matches(&StorageBackend::Copied));
+        assert!(!defaults.storage_abi_matches(&StorageBackend::MappedNoCopy));
+
+        // Check constants
+        assert_eq!(STORAGE_ABI_COPIED_V0, "copied-v0");
+        assert_eq!(STORAGE_ABI_MAPPED_NO_COPY_V1, "mapped-no-copy-v1");
+    }
+
+    #[test]
+    fn test_alignment_validation() {
+        // Build a manifest manually with mapped-no-copy-v1 and proper alignment
+        let segment = Segment {
+            id: "test_seg".into(),
+            filename: "segment_000.bin".into(),
+            byte_size: 4096,
+            sha256: "0000000000000000000000000000000000000000000000000000000000000000".into(),
+            tensor_ids: vec![0],
+            kind: SegmentKind::Persistent,
+            alignment_bytes: 4096,
+        };
+        let tensor = TensorEntry {
+            id: 0,
+            name: "weight".into(),
+            role: "embed".into(),
+            layer: None,
+            segment: "test_seg".into(),
+            source_filename: "x.safetensors".into(),
+            source_sha256: "0000".into(),
+            source_offset: 0,
+            offset: 0,
+            byte_length: 256,
+            logical_dtype: "F32".into(),
+            storage_dtype: "F32".into(),
+            logical_shape: vec![16, 16],
+            physical_shape: vec![16, 16],
+            mutability: "read_only".into(),
+            quantization: None,
+            tensor_alignment_bytes: 16,
+            layout_version: 1,
+        };
+        let manifest = Manifest {
+            image_version: "0.1.0".into(),
+            compiler_version: "test".into(),
+            runtime_abi: "test".into(),
+            source: SourceIdentity {
+                config_hash: "abc".into(),
+                shard_hashes: vec![],
+                tokenizer_hashes: vec![],
+                auxiliary_hashes: vec![],
+                model_type: "test".into(),
+                quantization_bits: 8,
+                quantization_group_size: 64,
+                quantization_mode: "affine".into(),
+            },
+            architecture: crate::config::TextArchitecture {
+                hidden_size: 64,
+                intermediate_size: 128,
+                num_attention_heads: 4,
+                num_key_value_heads: 1,
+                head_dim: 16,
+                global_head_dim: Some(16),
+                num_global_key_value_heads: Some(1),
+                num_hidden_layers: 1,
+                vocab_size: 64,
+                sliding_window: 8,
+                max_position_embeddings: 16,
+                rms_norm_eps: 1e-6,
+                tie_word_embeddings: true,
+                attention_k_eq_v: true,
+                final_logit_softcapping: None,
+                hidden_size_per_layer_input: 0,
+                layer_types: vec![crate::config::AttentionKind::SlidingAttention],
+                rope_local: crate::config::RopeSpec {
+                    theta: 10000.0,
+                    rope_type: "default".into(),
+                    partial_rotary_factor: None,
+                },
+                rope_global: None,
+                model_type: "test".into(),
+            },
+            segments: vec![segment],
+            tensor_table: vec![tensor],
+            alias_table: vec![],
+            residency_plan: ResidencyPlan {
+                persistent_segments: vec!["test_seg".into()],
+                layer_segments: vec![],
+                layer_window_size: 2,
+                total_bytes: 4096,
+            },
+            image_hash: "dummy".into(),
+            required_storage_abi: STORAGE_ABI_MAPPED_NO_COPY_V1.into(),
+            required_capabilities: vec![],
+            execution_plan: crate::config::ModelExecutionPlan::default(),
+        };
+
+        assert!(manifest.storage_abi_matches(&StorageBackend::MappedNoCopy));
+        assert!(!manifest.storage_abi_matches(&StorageBackend::Copied));
     }
 
     #[test]
