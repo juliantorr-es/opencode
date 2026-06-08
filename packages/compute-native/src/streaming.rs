@@ -15,7 +15,6 @@
 //! - [`validate_event_sequence`] — check a slice of events for valid ordering.
 use napi_derive::napi;
 use std::fmt;
-use uuid::Uuid;
 
 /// Events emitted during a single generation run.
 ///
@@ -99,29 +98,35 @@ impl GenerationStream {
     /// Block the current thread until the next event arrives or the channel
     /// is closed and drained.
     ///
-    /// Terminal events from the out-of-band channel are checked first so
-    /// they are never delayed behind a backlog of tokens.
+    /// Ordinary events are drained first to preserve ordering. Terminal
+    /// events are only returned when the ordinary channel is empty.
     #[napi]
     pub fn recv(&mut self) -> Option<GenerationEvent> {
-        // Terminal channel first — unbounded, highest priority.
+        // Drain ordinary channel first — preserve ordering.
+        if let Ok(event) = self.inner.try_recv() {
+            return Some(event);
+        }
+        // Only check terminal when ordinary is drained.
         if let Ok(event) = self.terminal_rx.try_recv() {
             return Some(event);
         }
+        // Block only on ordinary channel.
         self.inner.blocking_recv()
     }
 
     /// Attempt to receive an event without blocking.
     ///
-    /// Terminal events are checked first.
+    /// Ordinary events are checked first to preserve ordering.
     ///
     /// Returns `None` when the channel is empty but still open, or closed
     /// and drained.
     #[napi]
     pub fn try_recv(&mut self) -> Option<GenerationEvent> {
-        if let Ok(event) = self.terminal_rx.try_recv() {
+        // Drain ordinary channel first — preserve ordering.
+        if let Ok(event) = self.inner.try_recv() {
             return Some(event);
         }
-        self.inner.try_recv().ok()
+        self.terminal_rx.try_recv().ok()
     }
 
     /// Close the stream — signals the sender via `is_closed()` that the
@@ -383,12 +388,9 @@ pub struct GenerationHandle {
 }
 
 impl GenerationHandle {
-    /// Create a new `GenerationHandle` with a randomly-generated UUID job ID.
-    pub fn new(stream: GenerationStream) -> Self {
-        Self {
-            job_id: Uuid::new_v4().to_string(),
-            stream,
-        }
+    /// Create a new `GenerationHandle` with the given job ID.
+    pub fn new(job_id: String, stream: GenerationStream) -> Self {
+        Self { job_id, stream }
     }
 }
 
@@ -668,13 +670,9 @@ mod tests {
     #[test]
     fn test_generation_handle_job_id() {
         let (_, stream) = generation_channel(None);
-        let handle = GenerationHandle::new(stream);
+        let handle = GenerationHandle::new("job-42".to_string(), stream);
 
-        // job_id is a non-empty UUID string.
-        assert!(!handle.job_id.is_empty());
-        // Should parse as a valid UUID v4.
-        let parsed: Uuid = handle.job_id.parse().expect("valid UUID");
-        assert_eq!(parsed.get_version(), Some(uuid::Version::Random));
+        assert_eq!(handle.job_id, "job-42");
     }
 
     #[test]

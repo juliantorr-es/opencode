@@ -19,7 +19,7 @@
 
 use std::io::Read;
 use std::path::PathBuf;
-use std::sync::atomic::{AtomicBool, AtomicI64, AtomicU32, AtomicU64, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicI64, AtomicU32, Ordering};
 use std::sync::mpsc;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
@@ -35,19 +35,13 @@ use tribunus_compute_native::worker_memory::{
 use tribunus_compute_native::worker_protocol::{
     Frame, GenerationCompletedPayload, GenerationFailedPayload, HeartbeatPayload, HostCommand,
     MessageKind, PolicySnapshotPayload, ProtocolValidator, StartGenerationPayload, TokenPayload,
-    WorkerEvent, V1_0, MAX_FRAME_SIZE_BYTES,
+    WorkerEvent, WorkerFatalPayload, V1_0, MAX_FRAME_SIZE_BYTES,
 };
 
 // ── Defaults ───────────────────────────────────────────────────────────────
 
 /// Default EOS token for Gemma (used when not provided via protocol).
 const DEFAULT_EOS_TOKEN: u32 = 1;
-
-/// Default MLX active memory limit (10 GiB) when PolicySnapshotPayload absent.
-const DEFAULT_ACTIVE_LIMIT: u64 = 10 * 1024 * 1024 * 1024;
-
-/// Default MLX cache limit (1 GiB) when PolicySnapshotPayload absent.
-const DEFAULT_CACHE_LIMIT: u64 = 1024 * 1024 * 1024;
 
 /// Heartbeat emission interval.
 const HEARTBEAT_INTERVAL: Duration = Duration::from_millis(250);
@@ -156,6 +150,7 @@ impl InferenceState {
         self.clear_current_layer();
         self.set_step(NO_STEP);
         self.set_active_request(None);
+        self.cancel.store(false, Ordering::Relaxed);
     }
 }
 
@@ -167,31 +162,27 @@ impl InferenceState {
 /// inference, and heartbeat threads can all send frames concurrently.
 /// Sequence numbers are atomically allocated.
 struct WorkerEventWriter {
-    inner: Mutex<std::io::BufWriter<std::io::Stdout>>,
-    next_seq: SeqCounter,
+    inner: Mutex<(std::io::BufWriter<std::io::Stdout>, u64)>,
     worker_id: String,
-}
-
-/// Thin wrapper for atomic sequence count.
-struct SeqCounter(AtomicU64);
-
-impl SeqCounter {
-    fn new() -> Self { Self(AtomicU64::new(0)) }
-    fn next(&self) -> u64 { self.0.fetch_add(1, Ordering::Relaxed) }
 }
 
 impl WorkerEventWriter {
     fn new(worker_id: String) -> Self {
         Self {
-            inner: Mutex::new(std::io::BufWriter::new(std::io::stdout())),
-            next_seq: SeqCounter::new(),
+            inner: Mutex::new((std::io::BufWriter::new(std::io::stdout()), 0)),
             worker_id,
         }
     }
 
     /// Serialize and write a worker-event frame.
     fn write_event(&self, event: WorkerEvent, request_id: Option<&str>, payload: Value) {
-        let seq = self.next_seq.next();
+        let mut guard = self.inner.lock();
+        let seq = {
+            let (_, ref mut counter) = &mut *guard;
+            let s = *counter;
+            *counter += 1;
+            s
+        };
         let frame = Frame::new_worker_event(
             self.worker_id.clone(),
             seq,
@@ -199,7 +190,7 @@ impl WorkerEventWriter {
             event,
             payload,
         );
-        write_frame(&mut *self.inner.lock(), &frame);
+        write_frame(&mut guard.0, &frame);
     }
 }
 
@@ -255,15 +246,17 @@ fn main() {
     let writer = Arc::new(WorkerEventWriter::new(worker_id.clone()));
     let state = Arc::new(InferenceState::new());
     let (cmd_tx, cmd_rx) = mpsc::channel::<InferenceCommand>();
+    let shutdown = Arc::new(AtomicBool::new(false));
 
     // ── Spawn inference thread ────────────────────────────────────────────
     let inf_writer = Arc::clone(&writer);
     let inf_state = Arc::clone(&state);
     let inf_worker_id = worker_id.clone();
+    let inf_shutdown = Arc::clone(&shutdown);
     let inf_handle = std::thread::Builder::new()
         .name("inference".into())
         .spawn(move || {
-            inference_thread(inf_worker_id, &image_dir, cmd_rx, inf_writer, inf_state);
+            inference_thread(inf_worker_id, &image_dir, cmd_rx, inf_writer, inf_state, inf_shutdown);
         })
         .expect("spawn inference thread");
 
@@ -271,15 +264,16 @@ fn main() {
     let hb_writer = Arc::clone(&writer);
     let hb_state = Arc::clone(&state);
     let hb_worker_id = worker_id.clone();
+    let hb_shutdown = Arc::clone(&shutdown);
     let hb_handle = std::thread::Builder::new()
         .name("heartbeat".into())
         .spawn(move || {
-            heartbeat_thread(hb_worker_id, worker_start, hb_writer, hb_state);
+            heartbeat_thread(hb_worker_id, worker_start, hb_writer, hb_state, hb_shutdown);
         })
         .expect("spawn heartbeat thread");
 
     // ── Command thread (main) ─────────────────────────────────────────────
-    command_thread(&worker_id, &image_dir_str, writer, state, cmd_tx);
+    command_thread(&worker_id, &image_dir_str, writer, state, cmd_tx, shutdown);
 
     // Wait for peers; cmd_tx has been consumed by command_thread, so when
     // command_thread exits it drops the sender, which signals the receiver.
@@ -298,15 +292,17 @@ fn command_thread(
     writer: Arc<WorkerEventWriter>,
     state: Arc<InferenceState>,
     cmd_tx: mpsc::Sender<InferenceCommand>,
+    shutdown: Arc<AtomicBool>,
 ) {
     let mut stdin = std::io::stdin().lock();
-    let _validator = ProtocolValidator::new(worker_id.to_string());
+    let mut validator = ProtocolValidator::new(worker_id.to_string());
 
     loop {
         let frame = match read_frame(&mut stdin) {
             Ok(f) => f,
             Err(e) => {
                 eprintln!("[worker {}] frame read error: {}", worker_id, e);
+                shutdown.store(true, Ordering::Relaxed);
                 break;
             }
         };
@@ -332,6 +328,21 @@ fn command_thread(
             }
         };
 
+        // Validate every frame through the protocol validator.
+        if let Err(e) = validator.validate_host_command(&frame) {
+            eprintln!(
+                "[worker {}] protocol validation error: {:?}",
+                worker_id, e
+            );
+            writer.write_event(
+                WorkerEvent::WorkerFatal,
+                None,
+                serde_json::json!({ "error": format!("{:?}", e) }),
+            );
+            shutdown.store(true, Ordering::Relaxed);
+            break;
+        }
+
         match cmd {
             HostCommand::Hello => {
                 eprintln!("[worker {}] received Hello", worker_id);
@@ -348,15 +359,34 @@ fn command_thread(
                     worker_id, image_dir_str
                 );
 
-                // Extract optional policy limits from the frame payload.
-                let (active_limit, cache_limit) = frame
-                    .payload
-                    .as_object()
-                    .and_then(|_| {
-                        serde_json::from_value::<PolicySnapshotPayload>(frame.payload.clone()).ok()
-                    })
-                    .map(|p| (p.mlx_active_memory_limit_bytes, p.mlx_cache_limit_bytes))
-                    .unwrap_or((DEFAULT_ACTIVE_LIMIT, DEFAULT_CACHE_LIMIT));
+                // Policy snapshot is required; fail if missing or malformed.
+                let snapshot = match serde_json::from_value::<PolicySnapshotPayload>(
+                    frame.payload.clone(),
+                ) {
+                    Ok(s) => s,
+                    Err(e) => {
+                        eprintln!(
+                            "[worker {}] missing or invalid policy snapshot: {}",
+                            worker_id, e
+                        );
+                        writer.write_event(
+                            WorkerEvent::GenerationFailed,
+                            None,
+                            serde_json::to_value(GenerationFailedPayload {
+                                request_id: String::new(),
+                                error_code: "policy-snapshot-missing".into(),
+                                message: format!("{}", e),
+                                phase: "load".into(),
+                                diagnostics: None,
+                            })
+                            .unwrap_or_default(),
+                        );
+                        continue;
+                    }
+                };
+
+                let active_limit = snapshot.mlx_active_memory_limit_bytes;
+                let cache_limit = snapshot.mlx_cache_limit_bytes;
 
                 let _ = cmd_tx.send(InferenceCommand::LoadModel {
                     active_limit,
@@ -437,6 +467,7 @@ fn command_thread(
             HostCommand::Shutdown => {
                 eprintln!("[worker {}] shutdown requested", worker_id);
                 let _ = cmd_tx.send(InferenceCommand::Shutdown);
+                shutdown.store(true, Ordering::Relaxed);
                 break;
             }
 
@@ -459,18 +490,23 @@ fn inference_thread(
     rx: mpsc::Receiver<InferenceCommand>,
     writer: Arc<WorkerEventWriter>,
     state: Arc<InferenceState>,
+    shutdown: Arc<AtomicBool>,
 ) {
     let mut model: Option<LoadedProfiledModel> = None;
     let mut session: Option<ProfiledInferenceSession> = None;
 
     for cmd in rx {
         match cmd {
-            InferenceCommand::Shutdown => break,
+            InferenceCommand::Shutdown => {
+                shutdown.store(true, Ordering::Relaxed);
+                break;
+            }
 
             InferenceCommand::UnloadModel => {
                 session = None;
                 model = None;
                 state.reset();
+                state.cancel.store(false, Ordering::Relaxed);
                 // Response already sent by command thread.
             }
 
@@ -508,8 +544,15 @@ fn inference_thread(
                         writer.write_event(
                             WorkerEvent::WorkerFatal,
                             None,
-                            serde_json::json!({"error": err_msg}),
+                            serde_json::to_value(WorkerFatalPayload {
+                                error_code: "model-load-failed".into(),
+                                message: err_msg,
+                                phase: "load".into(),
+                                diagnostics: None,
+                            })
+                            .unwrap_or_default(),
                         );
+                        shutdown.store(true, Ordering::Relaxed);
                         // WorkerFatal is terminal — exit the inference loop.
                         break;
                     }
@@ -641,7 +684,7 @@ fn inference_thread(
                             serde_json::to_value(payload).unwrap_or_default(),
                         );
                         state.reset();
-                        session = Some(gen_session);
+                        session = None;
                         continue;
                     }
                 };
@@ -757,9 +800,9 @@ fn inference_thread(
                     );
                 }
 
-                // Clean up per-generation state.
+                // Clean up per-generation state — drop the session.
                 state.reset();
-                session = Some(gen_session);
+                session = None;
             }
         }
     }
@@ -791,8 +834,12 @@ fn heartbeat_thread(
     worker_start: Instant,
     writer: Arc<WorkerEventWriter>,
     state: Arc<InferenceState>,
+    shutdown: Arc<AtomicBool>,
 ) {
     loop {
+        if shutdown.load(Ordering::Relaxed) {
+            break;
+        }
         std::thread::sleep(HEARTBEAT_INTERVAL);
 
         let uptime = worker_start.elapsed().as_millis() as u64;

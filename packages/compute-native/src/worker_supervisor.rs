@@ -15,8 +15,9 @@ use crate::streaming::{
     generation_channel, GenerationEvent, GenerationHandle, GenerationSender,
 };
 use crate::worker_protocol::{
-    Frame, HeartbeatPayload, HostCommand, MessageKind, ProtocolValidator,
-    StartGenerationPayload, TokenPayload, WorkerEvent, MAX_FRAME_SIZE_BYTES,
+    Frame, HeartbeatPayload, HostCommand, MessageKind, PolicySnapshotPayload,
+    ProtocolValidator, StartGenerationPayload, TokenPayload, WorkerEvent,
+    MAX_FRAME_SIZE_BYTES,
 };
 use parking_lot::Mutex;
 use serde_json::Value;
@@ -24,7 +25,7 @@ use std::collections::HashMap;
 use std::io::{BufRead, BufReader, BufWriter, Read, Write};
 use std::path::Path;
 use std::process::{Child, ChildStdin, ChildStdout, Command, ExitStatus, Stdio};
-use std::sync::atomic::{AtomicBool, AtomicU32, AtomicU64, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicU32, Ordering};
 use std::sync::Arc;
 use std::thread::JoinHandle;
 use std::time::{Duration, Instant};
@@ -37,9 +38,6 @@ const GENERATION_CHANNEL_CAPACITY: usize = 256;
 
 /// How long to wait for a HelloAck during handshake.
 const HANDSHAKE_TIMEOUT: Duration = Duration::from_secs(5);
-
-/// How long between handshake poll iterations.
-const HANDSHAKE_POLL_INTERVAL: Duration = Duration::from_millis(10);
 
 /// Graceful-shutdown wait before SIGKILL.
 const SHUTDOWN_TIMEOUT: Duration = Duration::from_secs(10);
@@ -154,25 +152,56 @@ impl WorkerProcessControl {
 
 /// Thread-safe command writer.
 ///
-/// Uses a [`Mutex<BufWriter<ChildStdin>>`] internally for thread-safe writes.
-/// Sequence numbers are allocated atomically.
+/// Uses a [`Mutex<CommandWriterInner>`] internally for thread-safe writes.
+/// Sequence numbers are allocated under the lock to avoid ordering inversions.
+struct CommandWriterInner {
+    writer: BufWriter<ChildStdin>,
+    next_seq: u64,
+}
+
 pub struct WorkerCommandWriter {
-    inner: Mutex<BufWriter<ChildStdin>>,
-    next_seq: AtomicU64,
+    inner: Mutex<CommandWriterInner>,
     worker_id: String,
 }
 
 impl WorkerCommandWriter {
     pub fn new(stdin: ChildStdin, worker_id: String) -> Self {
         Self {
-            inner: Mutex::new(BufWriter::new(stdin)),
-            next_seq: AtomicU64::new(0),
+            inner: Mutex::new(CommandWriterInner {
+                writer: BufWriter::new(stdin),
+                next_seq: 0,
+            }),
             worker_id,
         }
     }
 
-    fn write_frame_locked(&self, frame: &Frame) -> Result<(), EngineError> {
-        let json = serde_json::to_vec(frame).map_err(|e| {
+    fn write_frame_locked(
+        &self,
+        cmd: HostCommand,
+        request_id: Option<&str>,
+        payload: Value,
+    ) -> Result<(), EngineError> {
+        let mut guard = self.inner.lock();
+        let seq = guard.next_seq;
+        guard.next_seq += 1;
+
+        let frame = match request_id {
+            Some(rid) => Frame::new_host_command_with_request(
+                &self.worker_id,
+                seq,
+                rid,
+                cmd,
+                payload,
+            ),
+            None => Frame::new_host_command(
+                self.worker_id.clone(),
+                seq,
+                cmd,
+                payload,
+            ),
+        };
+
+        let json = serde_json::to_vec(&frame).map_err(|e| {
             EngineError::new(
                 EngineErrorCode::InternalInvariantViolation,
                 format!("failed to serialize frame: {e}"),
@@ -186,21 +215,20 @@ impl WorkerCommandWriter {
             ));
         }
 
-        let mut writer = self.inner.lock();
         let len = json.len() as u32;
-        writer.write_all(&len.to_le_bytes()).map_err(|e| {
+        guard.writer.write_all(&len.to_le_bytes()).map_err(|e| {
             EngineError::new(
                 EngineErrorCode::WorkerCrashed,
                 format!("failed to write to worker stdin: {e}"),
             )
         })?;
-        writer.write_all(&json).map_err(|e| {
+        guard.writer.write_all(&json).map_err(|e| {
             EngineError::new(
                 EngineErrorCode::WorkerCrashed,
                 format!("failed to write frame: {e}"),
             )
         })?;
-        writer.flush().map_err(|e| {
+        guard.writer.flush().map_err(|e| {
             EngineError::new(
                 EngineErrorCode::WorkerCrashed,
                 format!("failed to flush worker stdin: {e}"),
@@ -212,9 +240,7 @@ impl WorkerCommandWriter {
     /// Send a command without a request correlation id (Hello, Ping, Shutdown,
     /// LoadModel, UnloadModel, MemoryPressure).
     pub fn send_command(&self, cmd: HostCommand, payload: Value) -> Result<(), EngineError> {
-        let seq = self.next_seq.fetch_add(1, Ordering::SeqCst);
-        let frame = Frame::new_host_command(self.worker_id.clone(), seq, cmd, payload);
-        self.write_frame_locked(&frame)
+        self.write_frame_locked(cmd, None, payload)
     }
 
     /// Send a request-scoped command (StartGeneration, CancelGeneration).
@@ -224,20 +250,12 @@ impl WorkerCommandWriter {
         request_id: &str,
         payload: Value,
     ) -> Result<(), EngineError> {
-        let seq = self.next_seq.fetch_add(1, Ordering::SeqCst);
-        let frame = Frame::new_host_command_with_request(
-            &self.worker_id,
-            seq,
-            request_id,
-            cmd,
-            payload,
-        );
-        self.write_frame_locked(&frame)
+        self.write_frame_locked(cmd, Some(request_id), payload)
     }
 
     /// Current outgoing sequence number (for diagnostics).
     pub fn next_seq(&self) -> u64 {
-        self.next_seq.load(Ordering::SeqCst)
+        self.inner.lock().next_seq
     }
 
     /// The worker instance ID this writer targets.
@@ -753,79 +771,65 @@ impl WorkerSupervisor {
                 .expect("failed to spawn stderr reader")
         });
 
-        // ── Handshake: send Hello, wait for HelloAck ──
-        cmd_writer.send_command(HostCommand::Hello, Value::Null)?;
+        // ── Handshake: create channel, spawn event reader, wait for HelloAck ──
+        let handshake_complete = Arc::new(std::sync::atomic::AtomicBool::new(false));
+        let hc_clone = Arc::clone(&handshake_complete);
+        let (handshake_tx, handshake_rx) = std::sync::mpsc::channel::<Result<Frame, EngineError>>();
 
-        let deadline = Instant::now() + HANDSHAKE_TIMEOUT;
-        let mut acked = false;
-
-        while Instant::now() < deadline {
-            // Check if worker exited early.
-            if !process_ctrl.is_alive() {
-                let exit = process_ctrl.exit_status();
-                return Err(EngineError::new(
-                    EngineErrorCode::WorkerLaunchFailed,
-                    format!(
-                        "worker exited before handshake: {}",
-                        exit.map(|s| s.to_string()).unwrap_or_else(|| "unknown".into())
-                    ),
-                ));
-            }
-
-            // Try a non-blocking frame read using the event reader's buffer.
-            match event_reader.try_read_next_event() {
-                Ok(Some(frame)) => {
-                    if matches!(
-                        &frame.message_kind,
-                        MessageKind::WorkerEvent(WorkerEvent::HelloAck)
-                    ) {
-                        acked = true;
-                        break;
-                    }
-                    return Err(EngineError::new(
-                        EngineErrorCode::WorkerHandshakeFailed,
-                        "unexpected frame during handshake",
-                    ));
-                }
-                Ok(None) => {}
-                Err(e) => {
-                    return Err(EngineError::new(
-                        EngineErrorCode::WorkerHandshakeFailed,
-                        format!("handshake read error: {e}"),
-                    ));
-                }
-            }
-
-            std::thread::sleep(HANDSHAKE_POLL_INTERVAL);
-        }
-
-        if !acked {
-            return Err(EngineError::new(
-                EngineErrorCode::WorkerHandshakeFailed,
-                "handshake timed out — no HelloAck received",
-            ));
-        }
-
-        // ── Handshake complete — spawn background threads ──
-        let reader_runtime = Arc::clone(&runtime_state);
-        let reader_registry = Arc::clone(&registry);
-        let reader_diagnostics = Arc::clone(&diagnostics);
-        let reader_process = Arc::clone(&process_ctrl);
-        let reader_policy = policy.clone();
+        // Spawn event reader thread immediately — it reads frames and pumps them
+        // into the channel. During handshake, the main thread receives from the
+        // channel with a timeout instead of blocking on fill_buf().
+        let er_runtime = Arc::clone(&runtime_state);
+        let er_registry = Arc::clone(&registry);
+        let er_diagnostics = Arc::clone(&diagnostics);
+        let er_process = Arc::clone(&process_ctrl);
+        let er_policy = policy.clone();
 
         let event_reader_handle = std::thread::Builder::new()
             .name("worker-event-reader".into())
             .spawn(move || {
                 Self::run_event_reader(
                     &mut event_reader,
-                    &reader_runtime,
-                    &reader_registry,
-                    &reader_diagnostics,
-                    &reader_process,
-                    &reader_policy,
+                    &er_runtime,
+                    &er_registry,
+                    &er_diagnostics,
+                    &er_process,
+                    &er_policy,
+                    &handshake_tx,
+                    &hc_clone,
                 );
             })
             .expect("failed to spawn event reader");
+
+        // Send Hello and wait for HelloAck.
+        cmd_writer.send_command(HostCommand::Hello, Value::Null)?;
+
+        match handshake_rx.recv_timeout(HANDSHAKE_TIMEOUT) {
+            Ok(Ok(frame)) => {
+                if !matches!(
+                    &frame.message_kind,
+                    MessageKind::WorkerEvent(WorkerEvent::HelloAck)
+                ) {
+                    return Err(EngineError::new(
+                        EngineErrorCode::WorkerHandshakeFailed,
+                        "unexpected frame during handshake",
+                    ));
+                }
+            }
+            Ok(Err(e)) => {
+                return Err(e);
+            }
+            Err(_) => {
+                return Err(EngineError::new(
+                    EngineErrorCode::WorkerHandshakeFailed,
+                    "handshake timed out — no HelloAck received",
+                ));
+            }
+        }
+
+        // Handshake complete — event reader stops forwarding to channel.
+        handshake_complete.store(true, std::sync::atomic::Ordering::SeqCst);
+        drop(handshake_rx);
 
         // Spawn watchdog thread.
         let watchdog_process = Arc::clone(&process_ctrl);
@@ -877,7 +881,19 @@ impl WorkerSupervisor {
             ));
         }
 
-        let payload = serde_json::json!({ "image_hash": image_hash });
+        let policy_snapshot = PolicySnapshotPayload {
+            mlx_active_memory_limit_bytes: self.policy.mlx_active_memory_limit_bytes,
+            mlx_cache_limit_bytes: self.policy.mlx_cache_limit_bytes,
+            prompt_token_ceiling: self.policy.prompt_token_ceiling,
+            output_token_ceiling: self.policy.output_token_ceiling,
+        };
+        let payload = serde_json::json!({
+            "image_hash": image_hash,
+            "mlx_active_memory_limit_bytes": policy_snapshot.mlx_active_memory_limit_bytes,
+            "mlx_cache_limit_bytes": policy_snapshot.mlx_cache_limit_bytes,
+            "prompt_token_ceiling": policy_snapshot.prompt_token_ceiling,
+            "output_token_ceiling": policy_snapshot.output_token_ceiling,
+        });
         self.cmd_writer
             .send_command(HostCommand::LoadModel, payload)?;
 
@@ -956,14 +972,16 @@ impl WorkerSupervisor {
 
         let active = ActiveRequest::new(
             request_id.clone(),
-            public_job_id,
+            public_job_id.clone(),
             sender,
             deadline,
             deadline_at,
         );
 
-        // Send StartGeneration before inserting into registry so the worker
-        // can start processing immediately.
+        // Insert into registry FIRST so the worker can be processing and
+        // events dispatched before command send returns.
+        self.registry.insert(active);
+
         let payload = serde_json::to_value(request).map_err(|e| {
             EngineError::new(
                 EngineErrorCode::InternalInvariantViolation,
@@ -971,15 +989,32 @@ impl WorkerSupervisor {
             )
         })?;
 
-        self.cmd_writer.send_command_with_request(
+        if let Err(e) = self.cmd_writer.send_command_with_request(
             HostCommand::StartGeneration,
             &request_id,
             payload,
-        )?;
+        ) {
+            self.registry.remove(&request_id);
+            return Err(e);
+        }
 
-        self.registry.insert(active);
+        let mut handle = GenerationHandle::new(public_job_id, stream);
 
-        Ok(GenerationHandle::new(stream))
+        // Wire disconnect detection: when the consumer closes the stream,
+        // mark the request as consumer-disconnected and request cancellation.
+        if let Some(disconnect_rx) = handle.stream.take_disconnect_notifier() {
+            let registry = Arc::clone(&self.registry);
+            let rid = request_id.clone();
+            std::thread::Builder::new()
+                .name(format!("disconnect-watcher-{rid}"))
+                .spawn(move || {
+                    let _ = disconnect_rx.blocking_recv();
+                    registry.request_cancellation(&rid);
+                })
+                .ok();
+        }
+
+        Ok(handle)
     }
 
     // ── Cancel Generation ────────────────────────────────────────────────
@@ -1116,6 +1151,8 @@ impl WorkerSupervisor {
         diagnostics: &WorkerDiagnosticsCollector,
         process: &WorkerProcessControl,
         _policy: &ExecutionPolicy,
+        handshake_tx: &std::sync::mpsc::Sender<Result<Frame, EngineError>>,
+        handshake_complete: &std::sync::atomic::AtomicBool,
     ) {
         loop {
             // Check if the worker is still alive.
@@ -1141,6 +1178,14 @@ impl WorkerSupervisor {
             };
 
             let req_id = frame.request_id.as_deref();
+
+            // During handshake, also forward the frame through the channel.
+            if !handshake_complete.load(std::sync::atomic::Ordering::SeqCst) {
+                if handshake_tx.send(Ok(frame.clone())).is_err() {
+                    // Receiver dropped — handshake must have completed or failed.
+                    return;
+                }
+            }
 
             match &frame.message_kind {
                 MessageKind::WorkerEvent(event) => match event {
@@ -2341,5 +2386,106 @@ mod integration_tests {
         assert!(!test_var_seen, "env_clear should prevent TEST_VAR from reaching the worker");
         let _ = child.kill();
         let _ = child.wait();
+    }
+
+    /// Sequential generation: start a generation, drain to terminal,
+    /// then start a second generation and drain again.
+    #[test]
+    #[ignore]
+    fn test_sequential_generations() {
+        let worker_id = "integration-test-sequential-gen";
+        let (mut child, instance_id) = spawn_fake_worker("normal", worker_id);
+        let stdin = child.stdin.take().expect("stdin");
+        let stdout = child.stdout.take().expect("stdout");
+        let mut stdout_reader = BufReader::new(stdout);
+        let cmd_writer = WorkerCommandWriter::new(stdin, instance_id.clone());
+        handshake(&cmd_writer, &mut stdout_reader);
+        load_model(&cmd_writer, "test-hash");
+
+        // First generation
+        start_generation(&cmd_writer, "gen-001");
+        let gen1_frames = drain_until_terminal(&mut stdout_reader, Duration::from_secs(5));
+        let gen1_completed = gen1_frames.iter().any(|f| {
+            matches!(
+                &f.message_kind,
+                MessageKind::WorkerEvent(WorkerEvent::GenerationCompleted)
+            )
+        });
+        assert!(gen1_completed, "first generation should complete");
+
+        // Second generation
+        start_generation(&cmd_writer, "gen-002");
+        let gen2_frames = drain_until_terminal(&mut stdout_reader, Duration::from_secs(5));
+        let gen2_completed = gen2_frames.iter().any(|f| {
+            matches!(
+                &f.message_kind,
+                MessageKind::WorkerEvent(WorkerEvent::GenerationCompleted)
+            )
+        });
+        assert!(gen2_completed, "second generation should complete");
+
+        // Assert second generation's tokens are correct (42, 43, 44 in normal mode).
+        let gen2_tokens: Vec<&Frame> = gen2_frames
+            .iter()
+            .filter(|f| matches!(&f.message_kind, MessageKind::WorkerEvent(WorkerEvent::Token)))
+            .collect();
+        assert!(!gen2_tokens.is_empty(), "second generation should produce tokens");
+        if let Some(tok) = gen2_tokens.first() {
+            let tok_id = tok.payload.get("token_id").and_then(|v| v.as_u64());
+            assert_eq!(tok_id, Some(42), "first token of second generation should be 42");
+        }
+
+        // Assert no model-busy error across both generations.
+        let all_frames: Vec<&Frame> = gen1_frames.iter().chain(gen2_frames.iter()).collect();
+        let has_model_busy = all_frames.iter().any(|f| {
+            let msg = serde_json::to_string(&f.payload).unwrap_or_default();
+            msg.contains("busy")
+        });
+        assert!(!has_model_busy, "should not see model-busy error");
+
+        let _ = child.kill();
+        let _ = child.wait();
+    }
+
+    /// Graceful shutdown: follow protocol to completion, send Shutdown,
+    /// verify the process exits with code 0 (not killed).
+    #[test]
+    #[ignore]
+    fn test_graceful_shutdown_no_sigkill() {
+        let worker_id = "integration-test-graceful-shutdown";
+        let (mut child, instance_id) = spawn_fake_worker("normal", worker_id);
+        let stdin = child.stdin.take().expect("stdin");
+        let stdout = child.stdout.take().expect("stdout");
+        let mut stdout_reader = BufReader::new(stdout);
+        let cmd_writer = WorkerCommandWriter::new(stdin, instance_id.clone());
+        handshake(&cmd_writer, &mut stdout_reader);
+        load_model(&cmd_writer, "test-hash");
+        start_generation(&cmd_writer, "gen-001");
+
+        // Drain until terminal — worker sends GenerationCompleted.
+        let frames = drain_until_terminal(&mut stdout_reader, Duration::from_secs(5));
+        assert!(
+            frames.iter().any(|f| {
+                matches!(
+                    &f.message_kind,
+                    MessageKind::WorkerEvent(WorkerEvent::GenerationCompleted)
+                )
+            }),
+            "generation should complete before shutdown"
+        );
+
+        // Tell worker to unload.
+        cmd_writer.send_command(HostCommand::UnloadModel, serde_json::json!({})).expect("UnloadModel");
+        let _unloaded = wait_for_event(&mut stdout_reader, WorkerEvent::ModelUnloaded, Duration::from_secs(5));
+
+        // Send graceful Shutdown and wait for exit.
+        cmd_writer
+            .send_command(HostCommand::Shutdown, serde_json::Value::Null)
+            .expect("failed to send Shutdown");
+
+        let status = child
+            .wait()
+            .expect("worker process should exit cleanly");
+        assert!(status.success(), "worker exit code should be 0 (not killed)");
     }
 }
