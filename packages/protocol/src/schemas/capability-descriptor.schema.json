@@ -1,0 +1,107 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tribunus.dev/schemas/capability-descriptor.v1",
+  "title": "Capability Descriptor",
+  "description": "Schema describing a capability — a named permission scoped to resources, tools, or files, with risk and audit metadata. Self-describing via the schema discriminator field.",
+  "type": "object",
+  "$defs": {
+    "NormalizedError": {
+      "$ref": "https://opencode.ai/schemas/defs.json#/$defs/NormalizedError"
+    },
+    "PermissionsClass": {
+      "type": "string",
+      "enum": ["read", "write", "execute", "admin", "audit"],
+      "description": "Classification of the permission level for a capability"
+    },
+    "ScopeDefinition": {
+      "type": "object",
+      "description": "Defines the scope and access boundary for a capability — what resources, tools, or files it applies to",
+      "properties": {
+        "scope_type": {
+          "type": "string",
+          "enum": ["file", "directory", "tool", "resource", "global"],
+          "description": "Kind of resource the scope applies to"
+        },
+        "pattern": {
+          "type": "string",
+          "description": "Glob pattern matching the resources within this scope"
+        },
+        "is_exclusive": {
+          "type": "boolean",
+          "description": "If true, no other capability may grant access to the same resources within this scope"
+        }
+      },
+      "required": ["scope_type", "pattern"],
+      "additionalProperties": false
+    },
+    "RiskLevel": {
+      "type": "string",
+      "enum": ["low", "medium", "high", "critical"],
+      "description": "Categorization of the risk associated with granting this capability"
+    },
+    "DeprecationInfo": {
+      "type": "object",
+      "description": "Information about capability deprecation status and migration path",
+      "properties": {
+        "deprecated": {
+          "type": "boolean",
+          "description": "Whether this capability is deprecated"
+        },
+        "replaced_by": {
+          "type": "string",
+          "description": "The capability_id of the capability that replaces this one"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "properties": {
+    "schema": {
+      "type": "string",
+      "const": "tribunus.capability_descriptor.v1",
+      "description": "Schema identifier for self-describing documents"
+    },
+    "capability_id": {
+      "type": "string",
+      "description": "Unique identifier for the capability"
+    },
+    "name": {
+      "type": "string",
+      "description": "Human-readable name of the capability"
+    },
+    "description": {
+      "type": "string",
+      "description": "Description of what the capability grants access to and under what conditions"
+    },
+    "permission_class": {
+      "$ref": "#/$defs/PermissionsClass",
+      "description": "Permission classification for this capability"
+    },
+    "scopes": {
+      "type": "array",
+      "description": "List of scopes defining the access boundaries for this capability",
+      "items": {
+        "$ref": "#/$defs/ScopeDefinition"
+      },
+      "minItems": 1
+    },
+    "risk_level": {
+      "$ref": "#/$defs/RiskLevel",
+      "description": "Risk level associated with granting this capability"
+    },
+    "requires_approval": {
+      "type": "boolean",
+      "description": "Whether granting this capability requires explicit human or automated approval"
+    },
+    "requires_audit": {
+      "type": "boolean",
+      "description": "Whether all uses of this capability must be recorded in the audit log"
+    },
+    "deprecation": {
+      "$ref": "#/$defs/DeprecationInfo",
+      "description": "Optional deprecation information for this capability"
+    }
+  },
+  "required": ["schema", "capability_id", "name", "description", "permission_class", "scopes", "risk_level", "requires_approval", "requires_audit"],
+  "additionalProperties": false
+}

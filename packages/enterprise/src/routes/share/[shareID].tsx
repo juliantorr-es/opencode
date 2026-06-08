@@ -281,16 +281,16 @@ export default function () {
                             <div class="flex gap-3 items-center">
                               <IconButton
                                 as={"a"}
-                                href="https://github.com/anomalyco/opencode"
+                                href="https://github.com/tribunus-dev/tribunus"
                                 target="_blank"
                                 icon="github"
                                 variant="ghost"
                               />
                               <IconButton
                                 as={"a"}
-                                href="https://opencode.ai/discord"
+                                href="https://github.com/juliantorr-es/opencode/discussions"
                                 target="_blank"
-                                icon="discord"
+                                icon="speech-bubble"
                                 variant="ghost"
                               />
                             </div>

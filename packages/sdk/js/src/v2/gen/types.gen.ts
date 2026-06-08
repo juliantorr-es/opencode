@@ -5,45 +5,27 @@ export type ClientOptions = {
 }
 
 export type Event =
-  | EventTuiPromptAppend
-  | EventTuiCommandExecute
-  | EventTuiToastShow1
-  | EventTuiSessionSelect
   | EventServerConnected
   | EventGlobalDisposed
+  | EventInstanceCreated
+  | EventInstanceLoaded
+  | EventInstanceDegraded
+  | EventInstanceFailed
   | EventServerInstanceDisposed
-  | EventFileEdited
-  | EventFileWatcherUpdated
   | EventLspClientDiagnostics
   | EventLspUpdated
   | EventMessagePartDelta
   | EventPermissionAsked
   | EventPermissionReplied
-  | EventSessionDiff
-  | EventSessionError
-  | EventQuestionAsked
-  | EventQuestionReplied
-  | EventQuestionRejected
-  | EventTodoUpdated
   | EventSessionStatus
   | EventSessionIdle
+  | EventSessionDiff
+  | EventSessionError
   | EventMcpToolsChanged
   | EventMcpBrowserOpenFailed
+  | EventMcpStatusChanged
   | EventCommandExecuted
   | EventProjectUpdated
-  | EventSessionCompacted
-  | EventVcsBranchUpdated
-  | EventWorkspaceReady
-  | EventWorkspaceFailed
-  | EventWorkspaceStatus
-  | EventWorktreeReady
-  | EventWorktreeFailed
-  | EventPtyCreated
-  | EventPtyUpdated
-  | EventPtyExited
-  | EventPtyDeleted
-  | EventInstallationUpdated
-  | EventInstallationUpdateAvailable
   | EventMessageUpdated
   | EventMessageRemoved
   | EventMessagePartUpdated
@@ -77,15 +59,31 @@ export type Event =
   | EventSessionNextCompactionStarted
   | EventSessionNextCompactionDelta
   | EventSessionNextCompactionEnded
+  | EventFileEdited
+  | EventFileWatcherUpdated
+  | EventInstallationUpdated
+  | EventInstallationUpdateAvailable
+  | EventProjectMapInvalidated
+  | EventPtyCreated
+  | EventPtyUpdated
+  | EventPtyExited
+  | EventPtyDeleted
+  | EventQuestionAsked
+  | EventQuestionReplied
+  | EventQuestionRejected
+  | EventSessionCompacted
+  | EventTodoUpdated
+  | EventVcsBranchUpdated
+  | EventWorktreeReady
+  | EventWorktreeFailed
+  | EventWorkspaceReady
+  | EventWorkspaceFailed
+  | EventWorkspaceStatus
   | EventCatalogModelUpdated
   | EventModelsDevRefreshed
   | EventAccountAdded
   | EventAccountRemoved
   | EventAccountSwitched
-  | EventCoordinationSessionHeartbeat
-  | EventCoordinationTaskStatus
-  | EventCoordinationPathClaimed
-  | EventCoordinationActivityLogged
 
 export type OAuth = {
   type: "oauth"
@@ -123,61 +121,6 @@ export type InvalidRequestError = {
   field?: string
 }
 
-export type EventTuiPromptAppend = {
-  id: string
-  type: "tui.prompt.append"
-  properties: {
-    text: string
-  }
-}
-
-export type EventTuiCommandExecute = {
-  id: string
-  type: "tui.command.execute"
-  properties: {
-    command:
-      | "session.list"
-      | "session.new"
-      | "session.share"
-      | "session.interrupt"
-      | "session.compact"
-      | "session.page.up"
-      | "session.page.down"
-      | "session.line.up"
-      | "session.line.down"
-      | "session.half.page.up"
-      | "session.half.page.down"
-      | "session.first"
-      | "session.last"
-      | "prompt.clear"
-      | "prompt.submit"
-      | "agent.cycle"
-      | string
-  }
-}
-
-export type EventTuiToastShow = {
-  id: string
-  type: "tui.toast.show"
-  properties: {
-    title?: string
-    message: string
-    variant: "info" | "success" | "warning" | "error"
-    duration?: number
-  }
-}
-
-export type EventTuiSessionSelect = {
-  id: string
-  type: "tui.session.select"
-  properties: {
-    /**
-     * Session ID to navigate to
-     */
-    sessionID: string
-  }
-}
-
 export type PermissionRequest = {
   id: string
   sessionID: string
@@ -192,6 +135,43 @@ export type PermissionRequest = {
     callID: string
   }
 }
+
+export type SessionStatus =
+  | {
+      type: "idle"
+    }
+  | {
+      type: "retry"
+      attempt: number
+      message: string
+      action?: {
+        reason: string
+        provider: string
+        title: string
+        message: string
+        label: string
+        link?: string
+      }
+      next: number
+    }
+  | {
+      type: "busy"
+    }
+  | {
+      type: "coordination_unavailable"
+    }
+  | {
+      type: "coordination_rebuilding"
+    }
+  | {
+      type: "coordination_recovered"
+    }
+  | {
+      type: "coordination_degraded"
+    }
+  | {
+      type: "coordination_refused"
+    }
 
 export type SnapshotFileDiff = {
   file?: string
@@ -263,98 +243,34 @@ export type ApiError = {
   }
 }
 
-export type QuestionOption = {
-  /**
-   * Display text (1-5 words, concise)
-   */
-  label: string
-  /**
-   * Explanation of choice
-   */
-  description: string
+export type McpStatusConnected = {
+  status: "connected"
 }
 
-export type QuestionInfo = {
-  /**
-   * Complete question
-   */
-  question: string
-  /**
-   * Very short label (max 30 chars)
-   */
-  header: string
-  /**
-   * Available choices
-   */
-  options: Array<QuestionOption>
-  multiple?: boolean
-  custom?: boolean
+export type McpStatusDisabled = {
+  status: "disabled"
 }
 
-export type QuestionTool = {
-  messageID: string
-  callID: string
+export type McpStatusFailed = {
+  status: "failed"
+  error: string
 }
 
-export type QuestionRequest = {
-  id: string
-  sessionID: string
-  /**
-   * Questions to ask
-   */
-  questions: Array<QuestionInfo>
-  tool?: QuestionTool
+export type McpStatusNeedsAuth = {
+  status: "needs_auth"
 }
 
-export type QuestionAnswer = Array<string>
-
-export type QuestionReplied = {
-  sessionID: string
-  requestID: string
-  answers: Array<QuestionAnswer>
+export type McpStatusNeedsClientRegistration = {
+  status: "needs_client_registration"
+  error: string
 }
 
-export type QuestionRejected = {
-  sessionID: string
-  requestID: string
-}
-
-export type Todo = {
-  /**
-   * Brief description of the task
-   */
-  content: string
-  /**
-   * Current status of the task: pending, in_progress, completed, cancelled
-   */
-  status: string
-  /**
-   * Priority level of the task: high, medium, low
-   */
-  priority: string
-}
-
-export type SessionStatus =
-  | {
-      type: "idle"
-    }
-  | {
-      type: "retry"
-      attempt: number
-      message: string
-      action?: {
-        reason: string
-        provider: string
-        title: string
-        message: string
-        label: string
-        link?: string
-      }
-      next: number
-    }
-  | {
-      type: "busy"
-    }
+export type McpStatus =
+  | McpStatusConnected
+  | McpStatusDisabled
+  | McpStatusFailed
+  | McpStatusNeedsAuth
+  | McpStatusNeedsClientRegistration
 
 export type Project = {
   id: string
@@ -378,16 +294,6 @@ export type Project = {
     initialized?: number
   }
   sandboxes: Array<string>
-}
-
-export type Pty = {
-  id: string
-  title: string
-  command: string
-  args: Array<string>
-  cwd: string
-  status: "running" | "exited"
-  pid: number
 }
 
 export type OutputFormatText = {
@@ -805,50 +711,113 @@ export type Prompt = {
   references?: Array<PromptReferenceAttachment>
 }
 
+export type Pty = {
+  id: string
+  title: string
+  command: string
+  args: Array<string>
+  cwd: string
+  status: "running" | "exited"
+  pid: number
+}
+
+export type QuestionOption = {
+  /**
+   * Display text (1-5 words, concise)
+   */
+  label: string
+  /**
+   * Explanation of choice
+   */
+  description: string
+}
+
+export type QuestionInfo = {
+  /**
+   * Complete question
+   */
+  question: string
+  /**
+   * Very short label (max 30 chars)
+   */
+  header: string
+  /**
+   * Available choices
+   */
+  options: Array<QuestionOption>
+  multiple?: boolean
+  custom?: boolean
+}
+
+export type QuestionTool = {
+  messageID: string
+  callID: string
+}
+
+export type QuestionRequest = {
+  id: string
+  sessionID: string
+  /**
+   * Questions to ask
+   */
+  questions: Array<QuestionInfo>
+  tool?: QuestionTool
+}
+
+export type QuestionAnswer = Array<string>
+
+export type QuestionReplied = {
+  sessionID: string
+  requestID: string
+  answers: Array<QuestionAnswer>
+}
+
+export type QuestionRejected = {
+  sessionID: string
+  requestID: string
+}
+
+export type Todo = {
+  /**
+   * Brief description of the task
+   */
+  content: string
+  /**
+   * Current status of the task: pending, in_progress, completed, cancelled
+   */
+  status: string
+  /**
+   * Priority level of the task: high, medium, low
+   */
+  priority: string
+}
+
 export type GlobalEvent = {
   directory: string
   project?: string
   workspace?: string
   payload:
-    | EventTuiPromptAppend
-    | EventTuiCommandExecute
-    | EventTuiToastShow
-    | EventTuiSessionSelect
     | EventServerConnected
     | EventGlobalDisposed
+    | EventInstanceCreated
+    | EventInstanceLoaded
+    | EventInstanceDegraded
+    | EventInstanceFailed
     | EventServerInstanceDisposed
-    | EventFileEdited
-    | EventFileWatcherUpdated
     | EventLspClientDiagnostics
     | EventLspUpdated
     | EventMessagePartDelta
     | EventPermissionAsked
     | EventPermissionReplied
-    | EventSessionDiff
-    | EventSessionError
-    | EventQuestionAsked
-    | EventQuestionReplied
-    | EventQuestionRejected
-    | EventTodoUpdated
     | EventSessionStatus
     | EventSessionIdle
+    | EventSessionDiff
+    | EventSessionError
     | EventMcpToolsChanged
     | EventMcpBrowserOpenFailed
+    | EventMcpStatusChanged
     | EventCommandExecuted
     | EventProjectUpdated
-    | EventSessionCompacted
-    | EventVcsBranchUpdated
-    | EventWorkspaceReady
-    | EventWorkspaceFailed
-    | EventWorkspaceStatus
-    | EventWorktreeReady
-    | EventWorktreeFailed
-    | EventPtyCreated
-    | EventPtyUpdated
-    | EventPtyExited
-    | EventPtyDeleted
-    | EventInstallationUpdated
-    | EventInstallationUpdateAvailable
     | EventMessageUpdated
     | EventMessageRemoved
     | EventMessagePartUpdated
@@ -882,15 +851,31 @@ export type GlobalEvent = {
     | EventSessionNextCompactionStarted
     | EventSessionNextCompactionDelta
     | EventSessionNextCompactionEnded
+    | EventFileEdited
+    | EventFileWatcherUpdated
+    | EventInstallationUpdated
+    | EventInstallationUpdateAvailable
+    | EventProjectMapInvalidated
+    | EventPtyCreated
+    | EventPtyUpdated
+    | EventPtyExited
+    | EventPtyDeleted
+    | EventQuestionAsked
+    | EventQuestionReplied
+    | EventQuestionRejected
+    | EventSessionCompacted
+    | EventTodoUpdated
+    | EventVcsBranchUpdated
+    | EventWorktreeReady
+    | EventWorktreeFailed
+    | EventWorkspaceReady
+    | EventWorkspaceFailed
+    | EventWorkspaceStatus
     | EventCatalogModelUpdated
     | EventModelsDevRefreshed
     | EventAccountAdded
     | EventAccountRemoved
     | EventAccountSwitched
-    | EventCoordinationSessionHeartbeat
-    | EventCoordinationTaskStatus
-    | EventCoordinationPathClaimed
-    | EventCoordinationActivityLogged
     | SyncEventMessageUpdated
     | SyncEventMessageRemoved
     | SyncEventMessagePartUpdated
@@ -1016,6 +1001,11 @@ export type AgentConfig = {
   steps?: number
   maxSteps?: number
   permission?: PermissionConfig
+  lifecycle?: {
+    type: "linear" | "dag" | "generic"
+    phases?: Array<unknown>
+    transitions?: Array<unknown>
+  }
   [key: string]:
     | unknown
     | string
@@ -1040,6 +1030,11 @@ export type AgentConfig = {
     | "info"
     | number
     | PermissionConfig
+    | {
+        type: "linear" | "dag" | "generic"
+        phases?: Array<unknown>
+        transitions?: Array<unknown>
+      }
     | undefined
 }
 
@@ -1657,6 +1652,11 @@ export type Agent = {
   options: {
     [key: string]: unknown
   }
+  lifecycle?: {
+    type: "linear" | "dag" | "generic"
+    phases?: Array<unknown>
+    transitions?: Array<unknown>
+  }
   steps?: number
 }
 
@@ -1672,35 +1672,6 @@ export type FormatterStatus = {
   extensions: Array<string>
   enabled: boolean
 }
-
-export type McpStatusConnected = {
-  status: "connected"
-}
-
-export type McpStatusDisabled = {
-  status: "disabled"
-}
-
-export type McpStatusFailed = {
-  status: "failed"
-  error: string
-}
-
-export type McpStatusNeedsAuth = {
-  status: "needs_auth"
-}
-
-export type McpStatusNeedsClientRegistration = {
-  status: "needs_client_registration"
-  error: string
-}
-
-export type McpStatus =
-  | McpStatusConnected
-  | McpStatusDisabled
-  | McpStatusFailed
-  | McpStatusNeedsAuth
-  | McpStatusNeedsClientRegistration
 
 export type McpUnsupportedOAuthError = {
   error: string
@@ -1906,55 +1877,48 @@ export type ProviderNotFoundError = {
   message: string
 }
 
-export type EventTuiPromptAppend2 = {
-  type: "tui.prompt.append"
-  properties: {
-    text: string
-  }
+export type ClaimInfo = {
+  taskId: string
+  sessionId: string
+  wave: number | "NaN" | "Infinity" | "-Infinity" | "Infinity" | "-Infinity" | "NaN"
+  waveType: string
+  subagentType: string
+  description: string
+  status: string
+  result?: string
+  error?: string
+  createdAt: number | "NaN" | "Infinity" | "-Infinity" | "Infinity" | "-Infinity" | "NaN"
+  releasedAt?: number | "NaN" | "Infinity" | "-Infinity" | "Infinity" | "-Infinity" | "NaN"
 }
 
-export type EventTuiCommandExecute2 = {
-  type: "tui.command.execute"
-  properties: {
-    command:
-      | "session.list"
-      | "session.new"
-      | "session.share"
-      | "session.interrupt"
-      | "session.compact"
-      | "session.page.up"
-      | "session.page.down"
-      | "session.line.up"
-      | "session.line.down"
-      | "session.half.page.up"
-      | "session.half.page.down"
-      | "session.first"
-      | "session.last"
-      | "prompt.clear"
-      | "prompt.submit"
-      | "agent.cycle"
-      | string
-  }
+export type ReservationInfo = {
+  path: string
+  taskId: string
+  sessionId: string
+  status: string
+  createdAt: number | "NaN" | "Infinity" | "-Infinity" | "Infinity" | "-Infinity" | "NaN"
 }
 
-export type EventTuiToastShow2 = {
-  type: "tui.toast.show"
-  properties: {
-    title?: string
-    message: string
-    variant: "info" | "success" | "warning" | "error"
-    duration?: number
-  }
+export type ClaimsResponse = {
+  claims: Array<ClaimInfo>
+  reservations: Array<ReservationInfo>
 }
 
-export type EventTuiSessionSelect2 = {
-  type: "tui.session.select"
-  properties: {
-    /**
-     * Session ID to navigate to
-     */
-    sessionID: string
-  }
+export type ClaimsTreeResponse = {
+  nodes: Array<{
+    path: string
+    name: string
+    type: "file" | "directory"
+    status: string
+    claim?: ClaimInfo
+    children?: Array<{
+      path: string
+      name: string
+      type: "file" | "directory"
+      status: string
+      claim?: ClaimInfo
+    }>
+  }>
 }
 
 export type Workspace = {
@@ -2527,28 +2491,45 @@ export type EventGlobalDisposed = {
   }
 }
 
-export type EventServerInstanceDisposed = {
+export type EventInstanceCreated = {
   id: string
-  type: "server.instance.disposed"
+  type: "instance.created"
   properties: {
     directory: string
   }
 }
 
-export type EventFileEdited = {
+export type EventInstanceLoaded = {
   id: string
-  type: "file.edited"
+  type: "instance.loaded"
   properties: {
-    file: string
+    directory: string
   }
 }
 
-export type EventFileWatcherUpdated = {
+export type EventInstanceDegraded = {
   id: string
-  type: "file.watcher.updated"
+  type: "instance.degraded"
   properties: {
-    file: string
-    event: "add" | "change" | "unlink"
+    directory: string
+    failedServices: Array<string>
+  }
+}
+
+export type EventInstanceFailed = {
+  id: string
+  type: "instance.failed"
+  properties: {
+    directory: string
+    error: string
+  }
+}
+
+export type EventServerInstanceDisposed = {
+  id: string
+  type: "server.instance.disposed"
+  properties: {
+    directory: string
   }
 }
 
@@ -2597,6 +2578,23 @@ export type EventPermissionReplied = {
   }
 }
 
+export type EventSessionStatus = {
+  id: string
+  type: "session.status"
+  properties: {
+    sessionID: string
+    status: SessionStatus
+  }
+}
+
+export type EventSessionIdle = {
+  id: string
+  type: "session.idle"
+  properties: {
+    sessionID: string
+  }
+}
+
 export type EventSessionDiff = {
   id: string
   type: "session.diff"
@@ -2622,50 +2620,6 @@ export type EventSessionError = {
   }
 }
 
-export type EventQuestionAsked = {
-  id: string
-  type: "question.asked"
-  properties: QuestionRequest
-}
-
-export type EventQuestionReplied = {
-  id: string
-  type: "question.replied"
-  properties: QuestionReplied
-}
-
-export type EventQuestionRejected = {
-  id: string
-  type: "question.rejected"
-  properties: QuestionRejected
-}
-
-export type EventTodoUpdated = {
-  id: string
-  type: "todo.updated"
-  properties: {
-    sessionID: string
-    todos: Array<Todo>
-  }
-}
-
-export type EventSessionStatus = {
-  id: string
-  type: "session.status"
-  properties: {
-    sessionID: string
-    status: SessionStatus
-  }
-}
-
-export type EventSessionIdle = {
-  id: string
-  type: "session.idle"
-  properties: {
-    sessionID: string
-  }
-}
-
 export type EventMcpToolsChanged = {
   id: string
   type: "mcp.tools.changed"
@@ -2680,6 +2634,16 @@ export type EventMcpBrowserOpenFailed = {
   properties: {
     mcpName: string
     url: string
+  }
+}
+
+export type EventMcpStatusChanged = {
+  id: string
+  type: "mcp.status.changed"
+  properties: {
+    server: string
+    status: McpStatus
+    previousStatus?: McpStatus
   }
 }
 
@@ -2698,113 +2662,6 @@ export type EventProjectUpdated = {
   id: string
   type: "project.updated"
   properties: Project
-}
-
-export type EventSessionCompacted = {
-  id: string
-  type: "session.compacted"
-  properties: {
-    sessionID: string
-  }
-}
-
-export type EventVcsBranchUpdated = {
-  id: string
-  type: "vcs.branch.updated"
-  properties: {
-    branch?: string
-  }
-}
-
-export type EventWorkspaceReady = {
-  id: string
-  type: "workspace.ready"
-  properties: {
-    name: string
-  }
-}
-
-export type EventWorkspaceFailed = {
-  id: string
-  type: "workspace.failed"
-  properties: {
-    message: string
-  }
-}
-
-export type EventWorkspaceStatus = {
-  id: string
-  type: "workspace.status"
-  properties: {
-    workspaceID: string
-    status: "connected" | "connecting" | "disconnected" | "error"
-  }
-}
-
-export type EventWorktreeReady = {
-  id: string
-  type: "worktree.ready"
-  properties: {
-    name: string
-    branch?: string
-  }
-}
-
-export type EventWorktreeFailed = {
-  id: string
-  type: "worktree.failed"
-  properties: {
-    message: string
-  }
-}
-
-export type EventPtyCreated = {
-  id: string
-  type: "pty.created"
-  properties: {
-    info: Pty
-  }
-}
-
-export type EventPtyUpdated = {
-  id: string
-  type: "pty.updated"
-  properties: {
-    info: Pty
-  }
-}
-
-export type EventPtyExited = {
-  id: string
-  type: "pty.exited"
-  properties: {
-    id: string
-    exitCode: number
-  }
-}
-
-export type EventPtyDeleted = {
-  id: string
-  type: "pty.deleted"
-  properties: {
-    id: string
-  }
-}
-
-export type EventInstallationUpdated = {
-  id: string
-  type: "installation.updated"
-  properties: {
-    version: string
-  }
-}
-
-export type EventInstallationUpdateAvailable = {
-  id: string
-  type: "installation.update-available"
-  properties: {
-    version: string
-  }
 }
 
 export type EventMessageUpdated = {
@@ -3253,6 +3110,163 @@ export type EventSessionNextCompactionEnded = {
   }
 }
 
+export type EventFileEdited = {
+  id: string
+  type: "file.edited"
+  properties: {
+    file: string
+  }
+}
+
+export type EventFileWatcherUpdated = {
+  id: string
+  type: "file.watcher.updated"
+  properties: {
+    file: string
+    event: "add" | "change" | "unlink"
+  }
+}
+
+export type EventInstallationUpdated = {
+  id: string
+  type: "installation.updated"
+  properties: {
+    version: string
+  }
+}
+
+export type EventInstallationUpdateAvailable = {
+  id: string
+  type: "installation.update-available"
+  properties: {
+    version: string
+  }
+}
+
+export type EventProjectMapInvalidated = {
+  id: string
+  type: "project_map.invalidated"
+  properties: null
+}
+
+export type EventPtyCreated = {
+  id: string
+  type: "pty.created"
+  properties: {
+    info: Pty
+  }
+}
+
+export type EventPtyUpdated = {
+  id: string
+  type: "pty.updated"
+  properties: {
+    info: Pty
+  }
+}
+
+export type EventPtyExited = {
+  id: string
+  type: "pty.exited"
+  properties: {
+    id: string
+    exitCode: number
+  }
+}
+
+export type EventPtyDeleted = {
+  id: string
+  type: "pty.deleted"
+  properties: {
+    id: string
+  }
+}
+
+export type EventQuestionAsked = {
+  id: string
+  type: "question.asked"
+  properties: QuestionRequest
+}
+
+export type EventQuestionReplied = {
+  id: string
+  type: "question.replied"
+  properties: QuestionReplied
+}
+
+export type EventQuestionRejected = {
+  id: string
+  type: "question.rejected"
+  properties: QuestionRejected
+}
+
+export type EventSessionCompacted = {
+  id: string
+  type: "session.compacted"
+  properties: {
+    sessionID: string
+  }
+}
+
+export type EventTodoUpdated = {
+  id: string
+  type: "todo.updated"
+  properties: {
+    sessionID: string
+    todos: Array<Todo>
+  }
+}
+
+export type EventVcsBranchUpdated = {
+  id: string
+  type: "vcs.branch.updated"
+  properties: {
+    branch?: string
+  }
+}
+
+export type EventWorktreeReady = {
+  id: string
+  type: "worktree.ready"
+  properties: {
+    name: string
+    branch?: string
+  }
+}
+
+export type EventWorktreeFailed = {
+  id: string
+  type: "worktree.failed"
+  properties: {
+    message: string
+  }
+}
+
+export type EventWorkspaceReady = {
+  id: string
+  type: "workspace.ready"
+  properties: {
+    name: string
+  }
+}
+
+export type EventWorkspaceFailed = {
+  id: string
+  type: "workspace.failed"
+  properties: {
+    message: string
+  }
+}
+
+export type EventWorkspaceStatus = {
+  id: string
+  type: "workspace.status"
+  properties: {
+    workspaceID: string
+    status: "connected" | "connecting" | "disconnected" | "error"
+  }
+}
+
 export type ModelV2Info = {
   id: string
   apiID: string
@@ -3414,56 +3428,6 @@ export type EventAccountSwitched = {
     serviceID: string
     from?: string
     to?: string
-  }
-}
-
-export type EventCoordinationSessionHeartbeat = {
-  id: string
-  type: "coordination.session_heartbeat"
-  properties: {
-    session_id: string
-    agent: string
-    status: "active" | "idle" | "blocked"
-    current_file?: string
-    mission_summary?: string
-    heartbeat_at: number
-  }
-}
-
-export type EventCoordinationTaskStatus = {
-  id: string
-  type: "coordination.task_status"
-  properties: {
-    session_id: string
-    task_id: string
-    task_type: string
-    status: "running" | "completed" | "failed" | "blocked"
-    description: string
-    agent_name?: string
-    changed_at: number
-  }
-}
-
-export type EventCoordinationPathClaimed = {
-  id: string
-  type: "coordination.path_claimed"
-  properties: {
-    session_id: string
-    path: string
-    intent: "edit" | "create" | "read" | "delete"
-    claimed_at: number
-  }
-}
-
-export type EventCoordinationActivityLogged = {
-  id: string
-  type: "coordination.activity_logged"
-  properties: {
-    session_id: string
-    action: string
-    target?: string
-    details?: Record<string, unknown>
-    logged_at: number
   }
 }
 
@@ -3769,17 +3733,6 @@ export type ProviderV2Info = {
   }
 }
 
-export type EventTuiToastShow1 = {
-  id: string
-  type: "tui.toast.show"
-  properties: {
-    title?: string
-    message: string
-    variant: "info" | "success" | "warning" | "error"
-    duration?: number
-  }
-}
-
 export type ModelV2Info1 = {
   id: string
   apiID: string
@@ -4007,6 +3960,10 @@ export type GlobalHealthResponses = {
   200: {
     healthy: true
     version: string
+    components?: {
+      [key: string]: unknown
+    }
+    instance_healthy?: boolean
   }
 }
 
@@ -4146,6 +4103,29 @@ export type GlobalUpgradeResponses = {
 }
 
 export type GlobalUpgradeResponse = GlobalUpgradeResponses[keyof GlobalUpgradeResponses]
+
+export type GlobalDiagnosticsData = {
+  body?: never
+  path?: never
+  query?: never
+  url: "/global/diagnostics"
+}
+
+export type GlobalDiagnosticsErrors = {
+  /**
+   * Bad request
+   */
+  400: BadRequestError
+}
+
+export type GlobalDiagnosticsError = GlobalDiagnosticsErrors[keyof GlobalDiagnosticsErrors]
+
+export type GlobalDiagnosticsResponses = {
+  /**
+   * Startup diagnostics
+   */
+  200: unknown
+}
 
 export type EventSubscribeData = {
   body?: never
@@ -6559,6 +6539,83 @@ export type SessionMessageResponses = {
 
 export type SessionMessageResponse = SessionMessageResponses[keyof SessionMessageResponses]
 
+export type SessionImportData = {
+  body?: {
+    version: "1"
+    exportedAt: number
+    sanitized: boolean
+    session: {
+      id: string
+      slug: string
+      projectID: string
+      workspaceID?: string
+      directory: string
+      parentID?: string
+      summary?: {
+        additions: number
+        deletions: number
+        files: number
+        diffs?: Array<SnapshotFileDiff>
+      }
+      cost?: number
+      tokens?: {
+        input: number
+        output: number
+        reasoning: number
+        cache: {
+          read: number
+          write: number
+        }
+      }
+      title: string
+      agent?: string
+      model?: {
+        id: string
+        providerID: string
+        variant?: string
+      }
+      version: string
+      time: {
+        created: number
+        updated: number
+        compacting?: number
+        archived?: number
+      }
+      revert?: {
+        messageID: string
+        partID?: string
+        snapshot?: string
+        diff?: string
+      }
+    }
+    messages: Array<{
+      info: Message
+      parts: Array<Part>
+    }>
+  }
+  path?: never
+  query?: never
+  url: "/session/import"
+}
+
+export type SessionImportErrors = {
+  /**
+   * BadRequest | InvalidRequestError
+   */
+  400: EffectHttpApiErrorBadRequest | InvalidRequestError
+}
+
+export type SessionImportError = SessionImportErrors[keyof SessionImportErrors]
+
+export type SessionImportResponses = {
+  /**
+   * Imported session
+   */
+  200: Session
+}
+
+export type SessionImportResponse = SessionImportResponses[keyof SessionImportResponses]
+
 export type SessionForkData = {
   body?: {
     messageID?: string
@@ -6738,6 +6795,146 @@ export type SessionShareResponses = {
 }
 
 export type SessionShareResponse = SessionShareResponses[keyof SessionShareResponses]
+
+export type SessionCapabilitiesData = {
+  body?: never
+  path: {
+    sessionID: string
+  }
+  query?: {
+    directory?: string
+    workspace?: string
+  }
+  url: "/session/{sessionID}/capabilities"
+}
+
+export type SessionCapabilitiesErrors = {
+  /**
+   * BadRequest | InvalidRequestError
+   */
+  400: EffectHttpApiErrorBadRequest | InvalidRequestError
+  /**
+   * NotFoundError
+   */
+  404: NotFoundError
+}
+
+export type SessionCapabilitiesError = SessionCapabilitiesErrors[keyof SessionCapabilitiesErrors]
+
+export type SessionCapabilitiesResponses = {
+  /**
+   * Get session capabilities
+   */
+  200: {
+    inspect: {
+      available: boolean
+      reason?: string
+      message?: string
+      recoveryState: string
+      requiredApproval: string
+      grantedApproval: string
+      privilegeBoundaries: Array<string>
+      missingBoundaries: Array<string>
+      authorityChain?: Array<unknown>
+      missingAuthority?: Array<string>
+      effectiveApproval?: string
+      requiredBoundaries?: Array<string>
+      grantedBoundaries?: Array<string>
+      consentClass?: string
+    }
+    share: {
+      available: boolean
+      reason?: string
+      message?: string
+      recoveryState: string
+      requiredApproval: string
+      grantedApproval: string
+      privilegeBoundaries: Array<string>
+      missingBoundaries: Array<string>
+      authorityChain?: Array<unknown>
+      missingAuthority?: Array<string>
+      effectiveApproval?: string
+      requiredBoundaries?: Array<string>
+      grantedBoundaries?: Array<string>
+      consentClass?: string
+    }
+    tool: {
+      available: boolean
+      reason?: string
+      message?: string
+      recoveryState: string
+      requiredApproval: string
+      grantedApproval: string
+      privilegeBoundaries: Array<string>
+      missingBoundaries: Array<string>
+      authorityChain?: Array<unknown>
+      missingAuthority?: Array<string>
+      effectiveApproval?: string
+      requiredBoundaries?: Array<string>
+      grantedBoundaries?: Array<string>
+      consentClass?: string
+    }
+  }
+}
+
+export type SessionCapabilitiesResponse = SessionCapabilitiesResponses[keyof SessionCapabilitiesResponses]
+
+export type SessionAuthorityReceiptsData = {
+  body?: never
+  path: {
+    sessionID: string
+  }
+  query?: {
+    directory?: string
+    workspace?: string
+    limit?: string
+    capabilityID?: string
+    outcome?: string
+    actionName?: string
+  }
+  url: "/session/{sessionID}/authority-receipts"
+}
+
+export type SessionAuthorityReceiptsErrors = {
+  /**
+   * BadRequest | InvalidRequestError
+   */
+  400: EffectHttpApiErrorBadRequest | InvalidRequestError
+  /**
+   * NotFoundError
+   */
+  404: NotFoundError
+}
+
+export type SessionAuthorityReceiptsError = SessionAuthorityReceiptsErrors[keyof SessionAuthorityReceiptsErrors]
+
+export type SessionAuthorityReceiptsResponses = {
+  /**
+   * Get session authority receipts
+   */
+  200: Array<{
+    receiptID: string
+    createdAt: number | "NaN" | "Infinity" | "-Infinity" | "Infinity" | "-Infinity" | "NaN"
+    capabilityID: string
+    actionName: string
+    sessionID: string
+    projectID: string
+    outcome: string
+    reasons: Array<string>
+    message: string
+    authorityChain: Array<unknown>
+    missingAuthority: Array<string>
+    recoveryState: string
+    requiredApproval: string
+    effectiveApproval: string
+    requiredBoundaries: Array<string>
+    grantedBoundaries: Array<string>
+    consentClass: string
+  }>
+}
+
+export type SessionAuthorityReceiptsResponse =
+  SessionAuthorityReceiptsResponses[keyof SessionAuthorityReceiptsResponses]
 
 export type SessionSummarizeData = {
   body?: {
@@ -7635,390 +7832,68 @@ export type V2ProviderGetResponses = {
 
 export type V2ProviderGetResponse = V2ProviderGetResponses[keyof V2ProviderGetResponses]
 
-export type TuiAppendPromptData = {
-  body?: {
-    text: string
-  }
-  path?: never
-  query?: {
-    directory?: string
-    workspace?: string
-  }
-  url: "/tui/append-prompt"
-}
-
-export type TuiAppendPromptErrors = {
-  /**
-   * BadRequest | InvalidRequestError
-   */
-  400: EffectHttpApiErrorBadRequest | InvalidRequestError
-}
-
-export type TuiAppendPromptError = TuiAppendPromptErrors[keyof TuiAppendPromptErrors]
-
-export type TuiAppendPromptResponses = {
-  /**
-   * Prompt processed successfully
-   */
-  200: boolean
-}
-
-export type TuiAppendPromptResponse = TuiAppendPromptResponses[keyof TuiAppendPromptResponses]
-
-export type TuiOpenHelpData = {
+export type ClaimsListData = {
   body?: never
   path?: never
   query?: {
-    directory?: string
-    workspace?: string
+    sessionId?: string
+    status?: string
   }
-  url: "/tui/open-help"
+  url: "/api/claims"
 }
 
-export type TuiOpenHelpErrors = {
+export type ClaimsListErrors = {
   /**
-   * Bad request
+   * InvalidRequestError
    */
-  400: BadRequestError
-}
-
-export type TuiOpenHelpError = TuiOpenHelpErrors[keyof TuiOpenHelpErrors]
-
-export type TuiOpenHelpResponses = {
+  400: InvalidRequestError
   /**
-   * Help dialog opened successfully
+   * <No Content>
    */
-  200: boolean
+  500: unknown
 }
 
-export type TuiOpenHelpResponse = TuiOpenHelpResponses[keyof TuiOpenHelpResponses]
+export type ClaimsListError = ClaimsListErrors[keyof ClaimsListErrors]
 
-export type TuiOpenSessionsData = {
+export type ClaimsListResponses = {
+  /**
+   * ClaimsResponse
+   */
+  200: ClaimsResponse
+}
+
+export type ClaimsListResponse = ClaimsListResponses[keyof ClaimsListResponses]
+
+export type ClaimsTreeData = {
   body?: never
   path?: never
   query?: {
-    directory?: string
-    workspace?: string
+    sessionId?: string
   }
-  url: "/tui/open-sessions"
+  url: "/api/claims/tree"
 }
 
-export type TuiOpenSessionsErrors = {
+export type ClaimsTreeErrors = {
   /**
-   * Bad request
+   * InvalidRequestError
    */
-  400: BadRequestError
-}
-
-export type TuiOpenSessionsError = TuiOpenSessionsErrors[keyof TuiOpenSessionsErrors]
-
-export type TuiOpenSessionsResponses = {
+  400: InvalidRequestError
   /**
-   * Session dialog opened successfully
+   * <No Content>
    */
-  200: boolean
+  500: unknown
 }
 
-export type TuiOpenSessionsResponse = TuiOpenSessionsResponses[keyof TuiOpenSessionsResponses]
+export type ClaimsTreeError = ClaimsTreeErrors[keyof ClaimsTreeErrors]
 
-export type TuiOpenThemesData = {
-  body?: never
-  path?: never
-  query?: {
-    directory?: string
-    workspace?: string
-  }
-  url: "/tui/open-themes"
-}
-
-export type TuiOpenThemesErrors = {
+export type ClaimsTreeResponses = {
   /**
-   * Bad request
+   * ClaimsTreeResponse
    */
-  400: BadRequestError
+  200: ClaimsTreeResponse
 }
 
-export type TuiOpenThemesError = TuiOpenThemesErrors[keyof TuiOpenThemesErrors]
-
-export type TuiOpenThemesResponses = {
-  /**
-   * Theme dialog opened successfully
-   */
-  200: boolean
-}
-
-export type TuiOpenThemesResponse = TuiOpenThemesResponses[keyof TuiOpenThemesResponses]
-
-export type TuiOpenModelsData = {
-  body?: never
-  path?: never
-  query?: {
-    directory?: string
-    workspace?: string
-  }
-  url: "/tui/open-models"
-}
-
-export type TuiOpenModelsErrors = {
-  /**
-   * Bad request
-   */
-  400: BadRequestError
-}
-
-export type TuiOpenModelsError = TuiOpenModelsErrors[keyof TuiOpenModelsErrors]
-
-export type TuiOpenModelsResponses = {
-  /**
-   * Model dialog opened successfully
-   */
-  200: boolean
-}
-
-export type TuiOpenModelsResponse = TuiOpenModelsResponses[keyof TuiOpenModelsResponses]
-
-export type TuiSubmitPromptData = {
-  body?: never
-  path?: never
-  query?: {
-    directory?: string
-    workspace?: string
-  }
-  url: "/tui/submit-prompt"
-}
-
-export type TuiSubmitPromptErrors = {
-  /**
-   * Bad request
-   */
-  400: BadRequestError
-}
-
-export type TuiSubmitPromptError = TuiSubmitPromptErrors[keyof TuiSubmitPromptErrors]
-
-export type TuiSubmitPromptResponses = {
-  /**
-   * Prompt submitted successfully
-   */
-  200: boolean
-}
-
-export type TuiSubmitPromptResponse = TuiSubmitPromptResponses[keyof TuiSubmitPromptResponses]
-
-export type TuiClearPromptData = {
-  body?: never
-  path?: never
-  query?: {
-    directory?: string
-    workspace?: string
-  }
-  url: "/tui/clear-prompt"
-}
-
-export type TuiClearPromptErrors = {
-  /**
-   * Bad request
-   */
-  400: BadRequestError
-}
-
-export type TuiClearPromptError = TuiClearPromptErrors[keyof TuiClearPromptErrors]
-
-export type TuiClearPromptResponses = {
-  /**
-   * Prompt cleared successfully
-   */
-  200: boolean
-}
-
-export type TuiClearPromptResponse = TuiClearPromptResponses[keyof TuiClearPromptResponses]
-
-export type TuiExecuteCommandData = {
-  body?: {
-    command: string
-  }
-  path?: never
-  query?: {
-    directory?: string
-    workspace?: string
-  }
-  url: "/tui/execute-command"
-}
-
-export type TuiExecuteCommandErrors = {
-  /**
-   * BadRequest | InvalidRequestError
-   */
-  400: EffectHttpApiErrorBadRequest | InvalidRequestError
-}
-
-export type TuiExecuteCommandError = TuiExecuteCommandErrors[keyof TuiExecuteCommandErrors]
-
-export type TuiExecuteCommandResponses = {
-  /**
-   * Command executed successfully
-   */
-  200: boolean
-}
-
-export type TuiExecuteCommandResponse = TuiExecuteCommandResponses[keyof TuiExecuteCommandResponses]
-
-export type TuiShowToastData = {
-  body?: {
-    title?: string
-    message: string
-    variant: "info" | "success" | "warning" | "error"
-    duration?: number
-  }
-  path?: never
-  query?: {
-    directory?: string
-    workspace?: string
-  }
-  url: "/tui/show-toast"
-}
-
-export type TuiShowToastErrors = {
-  /**
-   * Bad request
-   */
-  400: BadRequestError
-}
-
-export type TuiShowToastError = TuiShowToastErrors[keyof TuiShowToastErrors]
-
-export type TuiShowToastResponses = {
-  /**
-   * Toast notification shown successfully
-   */
-  200: boolean
-}
-
-export type TuiShowToastResponse = TuiShowToastResponses[keyof TuiShowToastResponses]
-
-export type TuiPublishData = {
-  body?: EventTuiPromptAppend2 | EventTuiCommandExecute2 | EventTuiToastShow2 | EventTuiSessionSelect2
-  path?: never
-  query?: {
-    directory?: string
-    workspace?: string
-  }
-  url: "/tui/publish"
-}
-
-export type TuiPublishErrors = {
-  /**
-   * BadRequest | InvalidRequestError
-   */
-  400: EffectHttpApiErrorBadRequest | InvalidRequestError
-}
-
-export type TuiPublishError = TuiPublishErrors[keyof TuiPublishErrors]
-
-export type TuiPublishResponses = {
-  /**
-   * Event published successfully
-   */
-  200: boolean
-}
-
-export type TuiPublishResponse = TuiPublishResponses[keyof TuiPublishResponses]
-
-export type TuiSelectSessionData = {
-  body?: {
-    /**
-     * Session ID to navigate to
-     */
-    sessionID: string
-  }
-  path?: never
-  query?: {
-    directory?: string
-    workspace?: string
-  }
-  url: "/tui/select-session"
-}
-
-export type TuiSelectSessionErrors = {
-  /**
-   * BadRequest | InvalidRequestError
-   */
-  400: EffectHttpApiErrorBadRequest | InvalidRequestError
-  /**
-   * NotFoundError
-   */
-  404: NotFoundError
-}
-
-export type TuiSelectSessionError = TuiSelectSessionErrors[keyof TuiSelectSessionErrors]
-
-export type TuiSelectSessionResponses = {
-  /**
-   * Session selected successfully
-   */
-  200: boolean
-}
-
-export type TuiSelectSessionResponse = TuiSelectSessionResponses[keyof TuiSelectSessionResponses]
-
-export type TuiControlNextData = {
-  body?: never
-  path?: never
-  query?: {
-    directory?: string
-    workspace?: string
-  }
-  url: "/tui/control/next"
-}
-
-export type TuiControlNextErrors = {
-  /**
-   * Bad request
-   */
-  400: BadRequestError
-}
-
-export type TuiControlNextError = TuiControlNextErrors[keyof TuiControlNextErrors]
-
-export type TuiControlNextResponses = {
-  /**
-   * Next TUI request
-   */
-  200: {
-    path: string
-    body: unknown
-  }
-}
-
-export type TuiControlNextResponse = TuiControlNextResponses[keyof TuiControlNextResponses]
-
-export type TuiControlResponseData = {
-  body?: unknown
-  path?: never
-  query?: {
-    directory?: string
-    workspace?: string
-  }
-  url: "/tui/control/response"
-}
-
-export type TuiControlResponseErrors = {
-  /**
-   * Bad request
-   */
-  400: BadRequestError
-}
-
-export type TuiControlResponseError = TuiControlResponseErrors[keyof TuiControlResponseErrors]
-
-export type TuiControlResponseResponses = {
-  /**
-   * Response submitted successfully
-   */
-  200: boolean
-}
-
-export type TuiControlResponseResponse = TuiControlResponseResponses[keyof TuiControlResponseResponses]
+export type ClaimsTreeResponse2 = ClaimsTreeResponses[keyof ClaimsTreeResponses]
 
 export type ExperimentalWorkspaceAdapterListData = {
   body?: never

@@ -1,0 +1,134 @@
+{
+  "schema": "omp.tool.manifest.v1",
+  "tool_id": "text_replace",
+  "version": "1.0.0",
+  "title": "Text Replace",
+  "description": "Single-file, exact text replacement with stale-read protection. Requires expected_before_sha256 by default. Refuses on zero matches, multiple matches, stale hashes, and path-policy violations. Writes a receipt, diff artifact, and audit event on success.",
+  "authority": {
+    "risk_level": "write_medium",
+    "side_effects": "filesystem_write",
+    "requires_approval": true,
+    "requires_hash_precondition": true,
+    "allowed_roots": [
+      "."
+    ],
+    "denied_patterns": [
+      ".git/",
+      "node_modules/",
+      "dist/",
+      "build/",
+      "coverage/",
+      ".env",
+      ".env.*",
+      "*.pem",
+      "*.key",
+      "*.sqlite",
+      "*.db",
+      ".omp/tools/receipts/",
+      ".omp/tools/diffs/",
+      ".omp/tools/events/",
+      ".omp/tools/journals/"
+    ]
+  },
+  "input_schema": {
+    "type": "object",
+    "required": [
+      "path",
+      "expected_before_sha256",
+      "old_text",
+      "new_text"
+    ],
+    "properties": {
+      "path": {
+        "type": "string",
+        "description": "File to modify, relative to project root"
+      },
+      "expected_before_sha256": {
+        "type": "string",
+        "description": "SHA-256 of the file before mutation. Rejects on mismatch."
+      },
+      "old_text": {
+        "type": "string",
+        "description": "Exact text to replace — literal match, no regex"
+      },
+      "new_text": {
+        "type": "string",
+        "description": "Replacement text"
+      },
+      "replace_mode": {
+        "type": "string",
+        "enum": [
+          "exact_once"
+        ],
+        "default": "exact_once"
+      },
+      "allow_unverified_write": {
+        "type": "boolean",
+        "default": false,
+        "description": "If true, allows writes without expected_before_sha256. Marks hash_precondition_satisfied: false."
+      },
+      "unverified_write_reason": {
+        "type": "string",
+        "description": "Required when allow_unverified_write is true"
+      },
+      "reason": {
+        "type": "string",
+        "description": "Why this replacement is needed"
+      }
+    }
+  },
+  "output_schema": {
+    "type": "object",
+    "properties": {
+      "path": {
+        "type": "string"
+      },
+      "before_sha256": {
+        "type": "string"
+      },
+      "after_sha256": {
+        "type": "string"
+      },
+      "replacements": {
+        "type": "number"
+      },
+      "before_size_bytes": {
+        "type": "number"
+      },
+      "after_size_bytes": {
+        "type": "number"
+      },
+      "receipt_id": {
+        "type": "string"
+      },
+      "receipt_path": {
+        "type": "string"
+      },
+      "diff_path": {
+        "type": "string"
+      }
+    }
+  },
+  "receipt_schema": {
+    "$ref": "omp.tool.receipt.v1"
+  },
+  "examples": [
+    {
+      "name": "Simple replacement with hash",
+      "input": {
+        "path": "src/utils.ts",
+        "expected_before_sha256": "abc123...",
+        "old_text": "function oldName()",
+        "new_text": "function newName()",
+        "reason": "Rename for clarity"
+      },
+      "expected_status": "ok"
+    }
+  ],
+  "provider_exports": {
+    "mistral_function_calling": true,
+    "openai_tools": true,
+    "anthropic_tools": true,
+    "mcp": true
+  }
+}

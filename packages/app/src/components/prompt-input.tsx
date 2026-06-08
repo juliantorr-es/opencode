@@ -55,6 +55,7 @@ import { usePlatform } from "@/context/platform"
 import { useSettings } from "@/context/settings"
 import { useSessionLayout } from "@/pages/session/session-layout"
 import { createSessionTabs } from "@/pages/session/helpers"
+import { useCapabilities } from "@/context/capability"
 import { createTextFragment, getCursorPosition, setCursorPosition, setRangeEdge } from "./prompt-input/editor-dom"
 import { createPromptAttachments } from "./prompt-input/attachments"
 import { ACCEPTED_FILE_TYPES } from "./prompt-input/files"
@@ -80,6 +81,12 @@ import { useQueryOptions } from "@/context/server-sync"
 import { pathKey } from "@/utils/path-key"
 import { base64Encode } from "@opencode-ai/core/util/encode"
 import { displayName } from "@/pages/layout/helpers"
+import {
+  formatSessionRecoveryStatusLabel,
+  isSessionRecoveryMutationBlocked,
+  isSessionRecoveryStatus,
+  type SessionStatusLike,
+} from "@/utils/cockpit-truth"
 
 // ── Types ──
 interface PromptInputProps {
@@ -144,6 +151,7 @@ export const PromptInput: Component<PromptInputProps> = (props) => {
   const language = useLanguage()
   const platform = usePlatform()
   const settings = useSettings()
+  const capabilities = useCapabilities()
   const { params, tabs, view } = useSessionLayout()
 
   // ── AI command event listener ──
@@ -349,6 +357,13 @@ export const PromptInput: Component<PromptInputProps> = (props) => {
     if (store.mode === "shell") return 0
     return prompt.context.items().filter((item) => !!item.comment?.trim()).length
   })
+  const sessionStatus = createMemo<SessionStatusLike>(() => (params.id ? sync.data.session_status[params.id] : undefined))
+  const recoveryLabel = createMemo<string | undefined>(() => {
+    const value = sessionStatus()
+    if (!isSessionRecoveryStatus(value)) return undefined
+    return formatSessionRecoveryStatusLabel(value.type)
+  })
+  const recoveryBlocked = createMemo(() => isSessionRecoveryMutationBlocked(sessionStatus()))
   const blank = createMemo(() => {
     const text = prompt
       .current()
@@ -357,7 +372,17 @@ export const PromptInput: Component<PromptInputProps> = (props) => {
     return text.trim().length === 0 && imageAttachments().length === 0 && commentCount() === 0
   })
   const stopping = createMemo(() => working() && blank())
+  const sendDisabled = createMemo(() => (!working() && blank()) || (recoveryBlocked() && !stopping()))
+  const sendTooltipInactive = createMemo(() => !working() && blank() && !recoveryBlocked())
   const tip = () => {
+    if (recoveryBlocked() && !working()) {
+      return (
+        <div class="flex items-center gap-2">
+          <span>{recoveryLabel()}</span>
+          <span class="text-icon-base text-12-medium text-[10px]!">send disabled</span>
+        </div>
+      )
+    }
     if (stopping()) {
       return (
         <div class="flex items-center gap-2">
@@ -1337,6 +1362,7 @@ export const PromptInput: Component<PromptInputProps> = (props) => {
     if (event.key === "Enter" && !event.shiftKey) {
       event.preventDefault()
       if (event.repeat) return
+      if (recoveryBlocked() && !stopping()) return
       if (
         working() &&
         prompt
@@ -1428,7 +1454,7 @@ export const PromptInput: Component<PromptInputProps> = (props) => {
       if (!directory) return
       selectProject(directory)
     }
-    if (platform.openDirectoryPickerDialog && server.isLocal()) {
+    if (capabilities().localFilesystem.available && platform.openDirectoryPickerDialog) {
       select(await platform.openDirectoryPickerDialog({ title: language.t("command.project.open") }))
       return
     }
@@ -1630,11 +1656,11 @@ export const PromptInput: Component<PromptInputProps> = (props) => {
                   </Show>
                   <ComposerModelControl state={modelControlState()} />
                 </div>
-                <Tooltip placement="top" inactive={!working() && blank()} value={tip()}>
+                <Tooltip placement="top" inactive={sendTooltipInactive()} value={tip()}>
                   <IconButton
                     data-action="prompt-submit"
                     type="submit"
-                    disabled={!working() && blank()}
+                    disabled={sendDisabled()}
                     tabIndex={store.mode === "normal" ? undefined : -1}
                     icon={stopping() ? "stop" : store.mode === "shell" ? "arrow-undo-down" : "arrow-up"}
                     variant="primary"
@@ -1773,11 +1799,11 @@ export const PromptInput: Component<PromptInputProps> = (props) => {
                 />
 
                 <div class="flex items-center gap-1 pointer-events-auto">
-                  <Tooltip placement="top" inactive={!working() && blank()} value={tip()}>
+                  <Tooltip placement="top" inactive={sendTooltipInactive()} value={tip()}>
                     <IconButton
                       data-action="prompt-submit"
                       type="submit"
-                      disabled={!working() && blank()}
+                      disabled={sendDisabled()}
                       tabIndex={store.mode === "normal" ? undefined : -1}
                       icon={stopping() ? "stop" : store.mode === "shell" ? "arrow-undo-down" : "arrow-up"}
                       variant="primary"

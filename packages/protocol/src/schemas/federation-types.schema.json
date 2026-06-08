@@ -1,0 +1,208 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tribunus.dev/schemas/federation-types.v1",
+  "title": "Tribunus Federation Types Schema",
+  "description": "Schema for Tribunus federation message types — envelope, event, command, query, and response objects for cross-origin communication.",
+  "type": "object",
+  "$defs": {
+    "FederationEnvelope": {
+      "type": "object",
+      "description": "Outer envelope wrapping all federation messages between origins.",
+      "properties": {
+        "envelope_id": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Unique envelope identifier (UUID v4)"
+        },
+        "source_origin": {
+          "type": "string",
+          "format": "uri",
+          "description": "Origin URL of the sender"
+        },
+        "target_origin": {
+          "type": "string",
+          "format": "uri",
+          "description": "Origin URL of the intended recipient"
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 timestamp of when the envelope was created"
+        },
+        "message_type": {
+          "type": "string",
+          "enum": ["event", "command", "query", "response"],
+          "description": "Type of message carried in the payload"
+        },
+        "payload_schema": {
+          "type": "string",
+          "description": "JSON Schema $ref URI identifying the schema of the inner payload"
+        },
+        "signing_scheme": {
+          "type": "string",
+          "enum": ["none", "hmac-sha256", "ed25519"],
+          "description": "Cryptographic signing scheme used to sign the envelope"
+        },
+        "signature": {
+          "type": "string",
+          "description": "Base64-encoded signature, present when signing_scheme is not 'none'"
+        }
+      },
+      "required": ["envelope_id", "source_origin", "target_origin", "timestamp", "message_type", "payload_schema", "signing_scheme"],
+      "additionalProperties": false
+    },
+    "FederationEvent": {
+      "type": "object",
+      "description": "An event message published across federation boundaries.",
+      "properties": {
+        "event_id": {
+          "type": "string",
+          "description": "Unique event identifier"
+        },
+        "event_type": {
+          "type": "string",
+          "description": "Classification of the event"
+        },
+        "source": {
+          "type": "object",
+          "description": "Origin details of the event producer",
+          "properties": {
+            "origin": {
+              "type": "string",
+              "format": "uri",
+              "description": "Origin URL of the event producer"
+            },
+            "agent_id": {
+              "type": "string",
+              "description": "Agent identifier that produced the event"
+            },
+            "lane_id": {
+              "type": "string",
+              "description": "Lane identifier the agent was operating in"
+            }
+          },
+          "required": ["origin", "agent_id"],
+          "additionalProperties": false
+        },
+        "data": {
+          "type": "object",
+          "description": "Event-type-specific data payload"
+        }
+      },
+      "required": ["event_id", "event_type", "source", "data"],
+      "additionalProperties": false
+    },
+    "FederationCommand": {
+      "type": "object",
+      "description": "A command message instructing a remote entity to perform an action.",
+      "properties": {
+        "command_id": {
+          "type": "string",
+          "description": "Unique command identifier"
+        },
+        "command_type": {
+          "type": "string",
+          "description": "Classification of the command"
+        },
+        "target": {
+          "type": "object",
+          "description": "Target entity details for the command",
+          "properties": {
+            "origin": {
+              "type": "string",
+              "format": "uri",
+              "description": "Origin URL of the target"
+            },
+            "entity_type": {
+              "type": "string",
+              "description": "Type of entity the command targets"
+            },
+            "entity_id": {
+              "type": "string",
+              "description": "Identifier of the target entity"
+            }
+          },
+          "required": ["origin", "entity_type", "entity_id"],
+          "additionalProperties": false
+        },
+        "params": {
+          "type": "object",
+          "description": "Command-specific parameters"
+        }
+      },
+      "required": ["command_id", "command_type", "target", "params"],
+      "additionalProperties": false
+    },
+    "FederationQuery": {
+      "type": "object",
+      "description": "A query message requesting data from a remote origin.",
+      "properties": {
+        "query_id": {
+          "type": "string",
+          "description": "Unique query identifier"
+        },
+        "query_type": {
+          "type": "string",
+          "description": "Classification of the query"
+        },
+        "target": {
+          "type": "object",
+          "description": "Target specification for the query",
+          "properties": {},
+          "additionalProperties": true
+        },
+        "filters": {
+          "type": "object",
+          "description": "Filter criteria for the query",
+          "properties": {},
+          "additionalProperties": true
+        }
+      },
+      "required": ["query_id", "query_type", "target", "filters"],
+      "additionalProperties": false
+    },
+    "FederationResponse": {
+      "type": "object",
+      "description": "A response message correlated to a prior query or command.",
+      "properties": {
+        "response_id": {
+          "type": "string",
+          "description": "Unique response identifier"
+        },
+        "correlation_id": {
+          "type": "string",
+          "description": "Identifier of the query or command this response correlates to"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["success", "error", "partial"],
+          "description": "Response status indicating success, error, or partial completion"
+        },
+        "data": {
+          "type": "object",
+          "description": "Response data payload"
+        },
+        "error": {
+          "type": "object",
+          "description": "Error details, present when status is 'error' or 'partial'",
+          "properties": {},
+          "additionalProperties": true
+        }
+      },
+      "required": ["response_id", "correlation_id", "status", "data"],
+      "additionalProperties": false
+    }
+  },
+  "properties": {
+    "schema": {
+      "const": "tribunus.federation_types.v1",
+      "description": "Self-describing schema identifier — always tribunus.federation_types.v1"
+    },
+    "schema_version": {
+      "type": "string",
+      "description": "Version string for this schema"
+    }
+  },
+  "required": ["schema", "schema_version"],
+  "additionalProperties": false
+}

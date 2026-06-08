@@ -1,0 +1,23 @@
+# Spectral ruleset for JSON Schema linting.
+# Custom rules validate schema metadata properties.
+# Note: $ref resolution warnings for local defs.json references
+# are expected and harmless since ajv handles local resolution.
+rules:
+  schema-version:
+    description: Schema must reference draft-2020-12.
+    message: "Schema must declare $schema referencing draft-2020-12"
+    severity: error
+    given: $
+    then:
+      field: $schema
+      function: pattern
+      functionOptions:
+        match: "^https://json-schema\\.org/draft/2020-12/schema$"
+  schema-id-required:
+    description: Schema must have a top-level $id.
+    message: "Schema must declare a top-level $id"
+    severity: error
+    given: $
+    then:
+      field: $id
+      function: truthy

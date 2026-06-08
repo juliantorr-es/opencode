@@ -1,0 +1,91 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tribunus.dev/schemas/work-state-transition.v1",
+  "title": "Tribunus Work State Transition Schema",
+  "description": "Defines the state machines and transition rules for Tribunus work entities (campaigns, missions, lanes, tasks).",
+  "type": "object",
+  "$defs": {
+    "TransitionRule": {
+      "type": "object",
+      "description": "A single transition rule governing whether a state change is allowed between two states for a given entity type.",
+      "properties": {
+        "entity_type": {
+          "type": "string",
+          "enum": ["campaign", "mission", "lane", "task"],
+          "description": "Entity type this transition rule applies to"
+        },
+        "from_state": {
+          "type": "string",
+          "description": "The originating state"
+        },
+        "to_state": {
+          "type": "string",
+          "description": "The target state"
+        },
+        "allowed": {
+          "type": "boolean",
+          "description": "Whether this transition is permitted"
+        },
+        "conditions": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Optional list of conditions that must be satisfied for the transition to be allowed"
+        }
+      },
+      "required": ["entity_type", "from_state", "to_state", "allowed"],
+      "additionalProperties": false
+    },
+    "StateMachine": {
+      "type": "object",
+      "description": "A complete state machine definition for a given entity type.",
+      "properties": {
+        "entity_type": {
+          "type": "string",
+          "description": "Entity type this state machine governs"
+        },
+        "states": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "All valid states for this entity type"
+        },
+        "transitions": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/TransitionRule" },
+          "description": "List of allowed and disallowed transitions"
+        },
+        "initial_state": {
+          "type": "string",
+          "description": "The state entities of this type start in"
+        },
+        "terminal_states": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "States that represent the end of the lifecycle for this entity type"
+        }
+      },
+      "required": ["entity_type", "states", "transitions", "initial_state", "terminal_states"],
+      "additionalProperties": false
+    }
+  },
+  "properties": {
+    "schema": {
+      "const": "tribunus.work_state_transition.v1",
+      "description": "Self-describing schema identifier — always tribunus.work_state_transition.v1"
+    },
+    "schema_version": {
+      "type": "string",
+      "description": "Version string for this schema"
+    },
+    "state_machines": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/StateMachine" },
+      "description": "Array of state machine definitions, one per entity type"
+    },
+    "validation_version": {
+      "type": "string",
+      "description": "Version identifier for the validation ruleset"
+    }
+  },
+  "required": ["schema", "schema_version", "state_machines", "validation_version"],
+  "additionalProperties": false
+}

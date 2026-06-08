@@ -1,0 +1,139 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://opencode.ai/schemas/meta.schema.json",
+  "title": "OpenCode Schema Meta-Schema",
+  "description": "Meta-schema that validates all project JSON schemas for 2020-12 compliance and project conventions.",
+  "type": "object",
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "JSON Schema version URI. Must point to draft/2020-12.",
+      "enum": ["https://json-schema.org/draft/2020-12/schema"]
+    },
+    "$id": {
+      "type": "string",
+      "format": "uri",
+      "description": "Stable absolute URI identifying the schema."
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Human-readable schema title in PascalCase."
+    },
+    "description": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Schema purpose and scope."
+    },
+    "type": {
+      "type": "string",
+      "enum": ["object", "array", "string", "number", "integer", "boolean", "null"],
+      "description": "JSON Schema type keyword."
+    },
+    "properties": {
+      "type": "object",
+      "description": "Object property definitions. Keys must use camelCase.",
+      "additionalProperties": {
+        "type": "object"
+      },
+      "propertyNames": {
+        "type": "string",
+        "pattern": "^[a-z][a-zA-Z0-9]*$",
+        "description": "Property names must use camelCase."
+      }
+    },
+    "$defs": {
+      "type": "object",
+      "description": "Reusable schema definitions. Keys must use PascalCase.",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["type", "description"],
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "Definition type."
+          },
+          "description": {
+            "type": "string",
+            "minLength": 1,
+            "description": "What this definition represents."
+          }
+        }
+      },
+      "propertyNames": {
+        "type": "string",
+        "pattern": "^[A-Z][a-zA-Z0-9]*$",
+        "description": "Definition names must use PascalCase."
+      }
+    },
+    "required": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "List of required properties."
+    },
+    "additionalProperties": {
+      "type": "boolean",
+      "description": "Whether additional properties are allowed."
+    },
+    "enum": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Enumeration of allowed values."
+    },
+    "pattern": {
+      "type": "string",
+      "description": "Regex pattern for string validation."
+    },
+    "format": {
+      "type": "string",
+      "description": "Semantic format (e.g., date-time, uri, email)."
+    },
+    "minimum": {
+      "type": "number",
+      "description": "Minimum numeric value."
+    },
+    "maximum": {
+      "type": "number",
+      "description": "Maximum numeric value."
+    },
+    "minLength": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Minimum string length."
+    },
+    "maxLength": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Maximum string length."
+    },
+    "items": {
+      "type": "object",
+      "description": "Schema for array items."
+    },
+    "examples": {
+      "type": "array",
+      "description": "Example values."
+    },
+    "$comment": {
+      "type": "string",
+      "description": "Arbitrary comment."
+    }
+  },
+  "required": ["$schema", "$id", "title", "description"],
+  "allOf": [
+    {
+      "description": "Schema must be a valid 2020-12 document. Standard 2020-12 keywords are allowed; unknown top-level keys are rejected.",
+      "then": {
+        "properties": {
+          "$schema": {
+            "enum": ["https://json-schema.org/draft/2020-12/schema"]
+          }
+        }
+      }
+    }
+  ]
+}

@@ -97,16 +97,6 @@ export const ensureCoordinationTables = Effect.fn("Coordination.ensureCoordinati
       )`,
     ),
   )
-  // Compatibility migrations — idempotent IF NOT EXISTS for previously-deployed columns
-  yield* adapter.query((db) =>
-    db.run(`ALTER TABLE coordination_claim ADD COLUMN IF NOT EXISTS expires_at BIGINT`),
-  )
-  yield* adapter.query((db) =>
-    db.run(`ALTER TABLE coordination_reservation ADD COLUMN IF NOT EXISTS expires_at BIGINT`),
-  )
-  yield* adapter.query((db) =>
-    db.run(`ALTER TABLE coordination_reservation ADD COLUMN IF NOT EXISTS base_digest TEXT`),
-  )
   yield* adapter.query((db) =>
     db.run(
       `CREATE TABLE IF NOT EXISTS coordination_fan_out (

@@ -1,0 +1,204 @@
+{
+  "schema": "omp.tool.manifest.v1",
+  "tool_id": "struct_read",
+  "version": "1.0.0",
+  "title": "Structured Read",
+  "description": "Bounded, safe project inspection. Returns file content with SHA-256 by default. Supports modes: full, head, range, symbols, and focus. Symbol focus uses tree-sitter AST when available with regex+brace fallback. Reports symbol_confidence. Truncates large files with continuation hints.",
+  "authority": {
+    "risk_level": "read",
+    "side_effects": "filesystem_read",
+    "requires_approval": false,
+    "requires_hash_precondition": false,
+    "allowed_roots": [
+      "."
+    ],
+    "denied_patterns": [
+      ".env",
+      ".env.*",
+      "*.pem",
+      "*.key"
+    ],
+    "max_file_bytes": 1000000
+  },
+  "input_schema": {
+    "type": "object",
+    "required": [
+      "path"
+    ],
+    "properties": {
+      "path": {
+        "type": "string",
+        "description": "File to read, relative to project root"
+      },
+      "mode": {
+        "type": "string",
+        "enum": [
+          "full",
+          "head",
+          "range",
+          "symbols",
+          "focus"
+        ],
+        "default": "full",
+        "description": "Read mode"
+      },
+      "start_line": {
+        "type": "number",
+        "description": "Start line for 'range' mode (1-indexed)"
+      },
+      "end_line": {
+        "type": "number",
+        "description": "End line for 'range' mode (1-indexed, inclusive)"
+      },
+      "symbol_name": {
+        "type": "string",
+        "description": "Symbol name for 'focus' mode"
+      },
+      "max_bytes": {
+        "type": "number",
+        "default": 50000,
+        "description": "Maximum bytes to return"
+      },
+      "max_lines": {
+        "type": "number",
+        "default": 2000,
+        "description": "Maximum lines to return"
+      },
+      "include_sha256": {
+        "type": "boolean",
+        "default": true,
+        "description": "Include SHA-256 hash of the file"
+      },
+      "include_line_numbers": {
+        "type": "boolean",
+        "default": false,
+        "description": "Include line numbers in content output"
+      }
+    }
+  },
+  "output_schema": {
+    "type": "object",
+    "properties": {
+      "path": {
+        "type": "string"
+      },
+      "sha256": {
+        "type": "string"
+      },
+      "size_bytes": {
+        "type": "number"
+      },
+      "total_lines": {
+        "type": "number"
+      },
+      "mode": {
+        "type": "string"
+      },
+      "content": {
+        "type": "string"
+      },
+      "range": {
+        "type": "object",
+        "properties": {
+          "start_line": {
+            "type": "number"
+          },
+          "end_line": {
+            "type": "number"
+          }
+        }
+      },
+      "symbols": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string"
+            },
+            "kind": {
+              "type": "string"
+            },
+            "start_line": {
+              "type": "number"
+            },
+            "end_line": {
+              "type": "number"
+            }
+          }
+        }
+      },
+      "focused_symbol": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "start_line": {
+            "type": "number"
+          },
+          "end_line": {
+            "type": "number"
+          },
+          "content": {
+            "type": "string"
+          },
+          "symbol_confidence": {
+            "type": "string",
+            "enum": [
+              "ast",
+              "heuristic",
+              "none"
+            ]
+          }
+        }
+      },
+      "truncated": {
+        "type": "boolean"
+      },
+      "continuation": {
+        "type": "object",
+        "properties": {
+          "next_start_line": {
+            "type": "number"
+          },
+          "reason": {
+            "type": "string",
+            "enum": [
+              "max_bytes",
+              "max_lines",
+              "file_too_large"
+            ]
+          }
+        }
+      }
+    }
+  },
+  "examples": [
+    {
+      "name": "Read full file",
+      "input": {
+        "path": "src/utils.ts"
+      },
+      "expected_status": "ok"
+    },
+    {
+      "name": "Focus on a symbol",
+      "input": {
+        "path": "src/utils.ts",
+        "mode": "focus",
+        "symbol_name": "resolvePath"
+      },
+      "expected_status": "ok"
+    }
+  ],
+  "provider_exports": {
+    "mistral_function_calling": true,
+    "openai_tools": true,
+    "anthropic_tools": true,
+    "mcp": true
+  }
+}

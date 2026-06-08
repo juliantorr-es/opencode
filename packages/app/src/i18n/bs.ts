@@ -119,7 +119,7 @@ export const dict = {
   "dialog.model.manage.description": "Prilagodi koji se modeli prikazuju u izborniku modela.",
   "dialog.model.manage.provider.toggle": "Uključi/isključi sve {{provider}} modele",
 
-  "dialog.model.unpaid.freeModels.title": "Besplatni modeli koje obezbjeđuje OpenCode",
+  "dialog.model.unpaid.freeModels.title": "Besplatni modeli koje obezbjeđuje Tribunus",
   "dialog.model.unpaid.addMore.title": "Dodaj još modela od popularnih provajdera",
 
   "dialog.provider.viewAll": "Prikaži više provajdera",
@@ -131,30 +131,25 @@ export const dict = {
   "provider.connect.status.inProgress": "Autorizacija je u toku...",
   "provider.connect.status.waiting": "Čekanje na autorizaciju...",
   "provider.connect.status.failed": "Autorizacija nije uspjela: {{error}}",
-  "provider.connect.apiKey.description":
-    "Unesi svoj {{provider}} API ključ da povežeš račun i koristiš {{provider}} modele u OpenCode-u.",
+  "provider.connect.apiKey.description": "Unesi svoj {{provider}} API ključ da povežeš račun i koristiš {{provider}} modele u Tribunus-u.",
   "provider.connect.apiKey.label": "{{provider}} API ključ",
   "provider.connect.apiKey.placeholder": "API ključ",
   "provider.connect.apiKey.required": "API ključ je obavezan",
-  "provider.connect.opencodeZen.line1":
-    "OpenCode Zen ti daje pristup kuriranom skupu pouzdanih, optimizovanih modela za coding agente.",
-  "provider.connect.opencodeZen.line2":
-    "Sa jednim API ključem dobijaš pristup modelima kao što su Claude, GPT, Gemini, GLM i drugi.",
+  "provider.connect.opencodeZen.line1": "Tribunus Zen ti daje pristup kuriranom skupu pouzdanih, optimizovanih modela za coding agente.",
+  "provider.connect.opencodeZen.line2": "Sa jednim API ključem dobijaš pristup modelima kao što su Claude, GPT, Gemini, GLM i drugi.",
   "provider.connect.opencodeZen.visit.prefix": "Posjeti ",
   "provider.connect.opencodeZen.visit.link": "opencode.ai/zen",
   "provider.connect.opencodeZen.visit.suffix": " da preuzmeš svoj API ključ.",
   "provider.connect.oauth.code.visit.prefix": "Posjeti ",
   "provider.connect.oauth.code.visit.link": "ovaj link",
-  "provider.connect.oauth.code.visit.suffix":
-    " da preuzmeš autorizacijski kod i povežeš račun te koristiš {{provider}} modele u OpenCode-u.",
+  "provider.connect.oauth.code.visit.suffix": " da preuzmeš autorizacijski kod i povežeš račun te koristiš {{provider}} modele u Tribunus-u.",
   "provider.connect.oauth.code.label": "{{method}} autorizacijski kod",
   "provider.connect.oauth.code.placeholder": "Autorizacijski kod",
   "provider.connect.oauth.code.required": "Autorizacijski kod je obavezan",
   "provider.connect.oauth.code.invalid": "Nevažeći autorizacijski kod",
   "provider.connect.oauth.auto.visit.prefix": "Posjeti ",
   "provider.connect.oauth.auto.visit.link": "ovaj link",
-  "provider.connect.oauth.auto.visit.suffix":
-    " i unesi kod ispod da povežeš račun i koristiš {{provider}} modele u OpenCode-u.",
+  "provider.connect.oauth.auto.visit.suffix": " i unesi kod ispod da povežeš račun i koristiš {{provider}} modele u Tribunus-u.",
   "provider.connect.oauth.auto.confirmationCode": "Kod za potvrdu",
   "provider.connect.toast.connected.title": "{{provider}} povezan",
   "provider.connect.toast.connected.description": "{{provider}} modeli su sada dostupni za korištenje.",
@@ -172,8 +167,7 @@ export const dict = {
   "provider.custom.field.baseURL.placeholder": "https://api.mojprovajder.com/v1",
   "provider.custom.field.apiKey.label": "API ključ",
   "provider.custom.field.apiKey.placeholder": "API ključ",
-  "provider.custom.field.apiKey.description":
-    "Opcionalno. Ostavi prazno ako upravljaš autentifikacijom putem zaglavlja.",
+  "provider.custom.field.apiKey.description": "Opcionalno. Ostavi prazno ako upravljaš autentifikacijom putem zaglavlja.",
   "provider.custom.models.label": "Modeli",
   "provider.custom.models.id.label": "ID",
   "provider.custom.models.id.placeholder": "model-id",
@@ -310,7 +304,7 @@ export const dict = {
   "dialog.export.title": "Export Session",
   "dialog.export.description": "Export this session as a JSON file for backup or sharing",
   "dialog.export.sanitize": "Remove permissions and local paths",
-  "dialog.export.format": "OpenCode Session (.opencode-session)",
+  "dialog.export.format": "Tribunus Session (.opencode-session)",
   "dialog.export.button": "Export",
   "dialog.export.exporting": "Exporting...",
   "dialog.import.title": "Import Session",
@@ -325,7 +319,7 @@ export const dict = {
   "dialog.directory.empty": "Nema pronađenih foldera",
 
   "dialog.server.title": "Serveri",
-  "dialog.server.description": "Promijeni na koji se OpenCode server ova aplikacija povezuje.",
+  "dialog.server.description": "Promijeni na koji se Tribunus server ova aplikacija povezuje.",
   "dialog.server.search.placeholder": "Pretraži servere",
   "dialog.server.empty": "Još nema servera",
   "dialog.server.add.title": "Dodaj server",
@@ -340,8 +334,7 @@ export const dict = {
   "dialog.server.add.password": "Lozinka (opcionalno)",
   "dialog.server.edit.title": "Uredi server",
   "dialog.server.default.title": "Podrazumijevani server",
-  "dialog.server.default.description":
-    "Poveži se na ovaj server pri pokretanju aplikacije umjesto pokretanja lokalnog servera. Potreban je restart.",
+  "dialog.server.default.description": "Poveži se na ovaj server pri pokretanju aplikacije umjesto pokretanja lokalnog servera. Potreban je restart.",
   "dialog.server.default.none": "Nije odabran server",
   "dialog.server.default.set": "Postavi trenutni server kao podrazumijevani",
   "dialog.server.default.clear": "Očisti",
@@ -367,8 +360,7 @@ export const dict = {
   "dialog.project.edit.worktree.startup.placeholder": "npr. bun install",
 
   "context.breakdown.title": "Razlaganje konteksta",
-  "context.breakdown.note":
-    'Približna raspodjela ulaznih tokena. "Ostalo" uključuje definicije alata i dodatni overhead.',
+  "context.breakdown.note": 'Približna raspodjela ulaznih tokena. "Ostalo" uključuje definicije alata i dodatni overhead.',
   "context.breakdown.system": "Sistem",
   "context.breakdown.user": "Korisnik",
   "context.breakdown.assistant": "Asistent",
@@ -458,7 +450,7 @@ export const dict = {
   "toast.session.listFailed.title": "Neuspjelo učitavanje sesija za {{project}}",
 
   "toast.update.title": "Dostupno ažuriranje",
-  "toast.update.description": "Nova verzija OpenCode-a ({{version}}) je dostupna za instalaciju.",
+  "toast.update.description": "Nova verzija Tribunus-a ({{version}}) je dostupna za instalaciju.",
   "toast.update.action.installRestart": "Instaliraj i restartuj",
   "toast.update.action.notYet": "Ne još",
 
@@ -471,12 +463,11 @@ export const dict = {
   "error.page.action.checking": "Provjera...",
   "error.page.action.checkUpdates": "Provjeri ažuriranja",
   "error.page.action.updateTo": "Ažuriraj na {{version}}",
-  "error.page.report.prefix": "Molimo prijavi ovu grešku OpenCode timu",
-  "error.page.report.discord": "na Discordu",
+  "error.page.report.prefix": "Molimo prijavi ovu grešku Tribunus timu",
+  "error.page.report.discord": "na GitHub Discussionsu",
   "error.page.version": "Verzija: {{version}}",
 
-  "error.dev.rootNotFound":
-    "Korijenski element nije pronađen. Da li si zaboravio da ga dodaš u index.html? Ili je možda id atribut pogrešno napisan?",
+  "error.dev.rootNotFound": "Korijenski element nije pronađen. Da li si zaboravio da ga dodaš u index.html? Ili je možda id atribut pogrešno napisan?",
 
   "error.serverSync.connectFailed": "Nije moguće povezati se na server. Da li server radi na `{{url}}`?",
   "directory.error.invalidUrl": "Nevažeći direktorij u URL-u.",
@@ -490,14 +481,12 @@ export const dict = {
   "error.chain.didYouMean": "Da li si mislio: {{suggestions}}",
   "error.chain.modelNotFound": "Model nije pronađen: {{provider}}/{{model}}",
   "error.chain.checkConfig": "Provjeri konfiguraciju (opencode.json) provider/model names",
-  "error.chain.mcpFailed": 'MCP server "{{name}}" nije uspio. Napomena: OpenCode još ne podržava MCP autentifikaciju.',
+  "error.chain.mcpFailed": 'MCP server "{{name}}" nije uspio. Napomena: Tribunus još ne podržava MCP autentifikaciju.',
   "error.chain.providerAuthFailed": "Autentifikacija provajdera nije uspjela ({{provider}}): {{message}}",
-  "error.chain.providerInitFailed":
-    'Neuspjelo inicijalizovanje provajdera "{{provider}}". Provjeri kredencijale i konfiguraciju.',
+  "error.chain.providerInitFailed": 'Neuspjelo inicijalizovanje provajdera "{{provider}}". Provjeri kredencijale i konfiguraciju.',
   "error.chain.configJsonInvalid": "Konfiguracijska datoteka na {{path}} nije važeći JSON(C)",
   "error.chain.configJsonInvalidWithMessage": "Konfiguracijska datoteka na {{path}} nije važeći JSON(C): {{message}}",
-  "error.chain.configDirectoryTypo":
-    'Direktorij "{{dir}}" u {{path}} nije ispravan. Preimenuj direktorij u "{{suggestion}}" ili ga ukloni. Ovo je česta greška u kucanju.',
+  "error.chain.configDirectoryTypo": 'Direktorij "{{dir}}" u {{path}} nije ispravan. Preimenuj direktorij u "{{suggestion}}" ili ga ukloni. Ovo je česta greška u kucanju.',
   "error.chain.configFrontmatterError": "Neuspjelo parsiranje frontmatter-a u {{path}}:\n{{message}}",
   "error.chain.configInvalid": "Konfiguracijska datoteka na {{path}} nije ispravna",
   "error.chain.configInvalidWithMessage": "Konfiguracijska datoteka na {{path}} nije ispravna: {{message}}",
@@ -526,8 +515,7 @@ export const dict = {
   "session.review.loadingChanges": "Učitavanje izmjena...",
   "session.review.empty": "Još nema izmjena u ovoj sesiji",
   "session.review.noVcs": "Nije detektovan Git sistem kontrole verzija, promjene se ne prikazuju",
-  "session.review.noSnapshot":
-    "Praćenje snimaka (snapshot) je onemogućeno u konfiguraciji, pa promjene sesije nisu dostupne",
+  "session.review.noSnapshot": "Praćenje snimaka (snapshot) je onemogućeno u konfiguraciji, pa promjene sesije nisu dostupne",
   "session.review.noChanges": "Nema izmjena",
 
   "session.files.selectToOpen": "Odaberi datoteku za otvaranje",
@@ -600,8 +588,7 @@ export const dict = {
   "terminal.title.numbered": "Terminal {{number}}",
   "terminal.close": "Zatvori terminal",
   "terminal.connectionLost.title": "Veza prekinuta",
-  "terminal.connectionLost.description":
-    "Veza s terminalom je prekinuta. Ovo se može desiti kada se server restartuje.",
+  "terminal.connectionLost.description": "Veza s terminalom je prekinuta. Ovo se može desiti kada se server restartuje.",
 
   "common.closeTab": "Zatvori karticu",
   "common.dismiss": "Odbaci",
@@ -624,13 +611,13 @@ export const dict = {
   "sidebar.workspaces.enable": "Omogući radne prostore",
   "sidebar.workspaces.disable": "Onemogući radne prostore",
   "sidebar.gettingStarted.title": "Početak",
-  "sidebar.gettingStarted.line1": "OpenCode uključuje besplatne modele, tako da možeš odmah početi.",
+  "sidebar.gettingStarted.line1": "Tribunus uključuje besplatne modele, tako da možeš odmah početi.",
   "sidebar.gettingStarted.line2": "Poveži bilo kojeg provajdera da koristiš modele, npr. Claude, GPT, Gemini itd.",
   "sidebar.project.recentSessions": "Nedavne sesije",
   "sidebar.project.viewAllSessions": "Prikaži sve sesije",
   "sidebar.project.clearNotifications": "Očisti obavijesti",
 
-  "app.name.desktop": "OpenCode Desktop",
+  "app.name.desktop": "Tribunus Desktop",
 
   "settings.section.desktop": "Desktop",
   "settings.section.server": "Server",
@@ -638,7 +625,7 @@ export const dict = {
   "settings.tab.shortcuts": "Prečice",
   "settings.desktop.section.wsl": "WSL",
   "settings.desktop.wsl.title": "WSL integracija",
-  "settings.desktop.wsl.description": "Pokreni OpenCode server unutar WSL-a na Windowsu.",
+  "settings.desktop.wsl.description": "Pokreni Tribunus server unutar WSL-a na Windowsu.",
 
   "settings.general.section.appearance": "Izgled",
   "settings.general.section.notifications": "Sistemske obavijesti",
@@ -648,13 +635,13 @@ export const dict = {
   "settings.general.section.display": "Prikaz",
 
   "settings.general.row.language.title": "Jezik",
-  "settings.general.row.language.description": "Promijeni jezik prikaza u OpenCode-u",
+  "settings.general.row.language.description": "Promijeni jezik prikaza u Tribunus-u",
   "settings.general.row.appearance.title": "Izgled",
-  "settings.general.row.appearance.description": "Prilagodi kako OpenCode izgleda na tvom uređaju",
+  "settings.general.row.appearance.description": "Prilagodi kako Tribunus izgleda na tvom uređaju",
   "settings.general.row.colorScheme.title": "Šema boja",
-  "settings.general.row.colorScheme.description": "Odaberi da li OpenCode prati sistemsku, svijetlu ili tamnu temu",
+  "settings.general.row.colorScheme.description": "Odaberi da li Tribunus prati sistemsku, svijetlu ili tamnu temu",
   "settings.general.row.theme.title": "Tema",
-  "settings.general.row.theme.description": "Prilagodi temu OpenCode-a.",
+  "settings.general.row.theme.description": "Prilagodi temu Tribunus-a.",
   "settings.general.row.font.title": "Font za kod",
   "settings.general.row.font.description": "Prilagodi font koji se koristi u blokovima koda",
   "settings.general.row.terminalFont.title": "Terminal Font",
@@ -669,30 +656,26 @@ export const dict = {
   "settings.general.row.reasoningSummaries.description": "Prikaži sažetke rasuđivanja modela na vremenskoj traci",
 
   "settings.general.row.shellToolPartsExpanded.title": "Proširi dijelove shell alata",
-  "settings.general.row.shellToolPartsExpanded.description":
-    "Prikaži dijelove shell alata podrazumijevano proširene na vremenskoj traci",
+  "settings.general.row.shellToolPartsExpanded.description": "Prikaži dijelove shell alata podrazumijevano proširene na vremenskoj traci",
   "settings.general.row.editToolPartsExpanded.title": "Proširi dijelove alata za uređivanje",
-  "settings.general.row.editToolPartsExpanded.description":
-    "Prikaži dijelove alata za uređivanje, pisanje i patch podrazumijevano proširene na vremenskoj traci",
+  "settings.general.row.editToolPartsExpanded.description": "Prikaži dijelove alata za uređivanje, pisanje i patch podrazumijevano proširene na vremenskoj traci",
   "settings.general.row.showSessionProgressBar.title": "Prikaži traku napretka sesije",
-  "settings.general.row.showSessionProgressBar.description":
-    "Prikaži animiranu traku napretka na vrhu sesije kada agent radi",
+  "settings.general.row.showSessionProgressBar.description": "Prikaži animiranu traku napretka na vrhu sesije kada agent radi",
   "settings.general.row.wayland.title": "Koristi nativni Wayland",
   "settings.general.row.wayland.description": "Onemogući X11 fallback na Waylandu. Zahtijeva restart.",
-  "settings.general.row.wayland.tooltip":
-    "Na Linuxu sa monitorima miješanih stopa osvježavanja, nativni Wayland može biti stabilniji.",
+  "settings.general.row.wayland.tooltip": "Na Linuxu sa monitorima miješanih stopa osvježavanja, nativni Wayland može biti stabilniji.",
 
   "settings.general.row.releaseNotes.title": "Bilješke o izdanju",
   "settings.general.row.releaseNotes.description": 'Prikaži iskačuće prozore "Šta je novo" nakon ažuriranja',
 
   "settings.updates.row.startup.title": "Provjeri ažuriranja pri pokretanju",
-  "settings.updates.row.startup.description": "Automatski provjerava ažuriranja kada se OpenCode pokrene",
+  "settings.updates.row.startup.description": "Automatski provjerava ažuriranja kada se Tribunus pokrene",
   "settings.updates.row.check.title": "Provjeri ažuriranja",
   "settings.updates.row.check.description": "Ručno provjeri ažuriranja i instaliraj ako su dostupna",
   "settings.updates.action.checkNow": "Provjeri sada",
   "settings.updates.action.checking": "Provjera...",
   "settings.updates.toast.latest.title": "Sve je ažurno",
-  "settings.updates.toast.latest.description": "Koristiš najnoviju verziju OpenCode-a.",
+  "settings.updates.toast.latest.description": "Koristiš najnoviju verziju Tribunus-a.",
   "sound.option.none": "Nijedan",
   "sound.option.alert01": "Upozorenje 01",
   "sound.option.alert02": "Upozorenje 02",
@@ -741,8 +724,7 @@ export const dict = {
   "sound.option.yup06": "Da 06",
 
   "settings.general.notifications.agent.title": "Agent",
-  "settings.general.notifications.agent.description":
-    "Prikaži sistemsku obavijest kada agent završi ili zahtijeva pažnju",
+  "settings.general.notifications.agent.description": "Prikaži sistemsku obavijest kada agent završi ili zahtijeva pažnju",
   "settings.general.notifications.permissions.title": "Dozvole",
   "settings.general.notifications.permissions.description": "Prikaži sistemsku obavijest kada je potrebna dozvola",
   "settings.general.notifications.errors.title": "Greške",
@@ -803,8 +785,7 @@ export const dict = {
   "settings.permissions.tool.read.title": "Čitanje",
   "settings.permissions.tool.read.description": "Čitanje datoteke (podudara se s putanjom datoteke)",
   "settings.permissions.tool.edit.title": "Uređivanje",
-  "settings.permissions.tool.edit.description":
-    "Mijenjanje datoteka, uključujući izmjene, pisanja, patch-eve i multi-izmjene",
+  "settings.permissions.tool.edit.description": "Mijenjanje datoteka, uključujući izmjene, pisanja, patch-eve i multi-izmjene",
   "settings.permissions.tool.glob.title": "Glob",
   "settings.permissions.tool.glob.description": "Podudaranje datoteka pomoću glob šablona",
   "settings.permissions.tool.grep.title": "Grep",
@@ -906,8 +887,7 @@ export const dict = {
   "debugBar.ariaLabel": "Dijagnostika performansi razvoja",
   "debugBar.na": "n/a",
   "debugBar.nav.label": "NAV",
-  "debugBar.nav.tip":
-    "Posljednji završeni prelazak rute koji dotiče stranicu sesije, mjeren od početka rutera do prvog iscrtavanja nakon smirivanja.",
+  "debugBar.nav.tip": "Posljednji završeni prelazak rute koji dotiče stranicu sesije, mjeren od početka rutera do prvog iscrtavanja nakon smirivanja.",
   "debugBar.fps.label": "FPS",
   "debugBar.fps.tip": "Kadrovi u sekundi tokom posljednjih 5 sekundi.",
   "debugBar.frame.label": "FRAME",
@@ -919,8 +899,7 @@ export const dict = {
   "debugBar.delay.label": "DELAY",
   "debugBar.delay.tip": "Najgore zabilježeno kašnjenje unosa u posljednjih 5 sekundi.",
   "debugBar.inp.label": "INP",
-  "debugBar.inp.tip":
-    "Približno trajanje interakcije tokom posljednjih 5 sekundi. Ovo je slično INP-u, nije službeni Web Vitals INP.",
+  "debugBar.inp.tip": "Približno trajanje interakcije tokom posljednjih 5 sekundi. Ovo je slično INP-u, nije službeni Web Vitals INP.",
   "debugBar.cls.label": "CLS",
   "debugBar.cls.tip": "Kumulativni pomak rasporeda za trenutni životni vijek aplikacije.",
   "debugBar.mem.label": "MEM",
@@ -993,13 +972,13 @@ export const dict = {
   "dialog.mcp.form.url": "Server URL",  // TODO: translate
   "dialog.mcp.form.urlPlaceholder": "http://localhost:3000",  // TODO: translate
   "dialog.recovery.exportLogs": "Export Logs",  // TODO: translate
-  "dialog.recovery.failedToLoad": "OpenCode failed to load",  // TODO: translate
+  "dialog.recovery.failedToLoad": "Tribunus failed to load",  // TODO: translate
   "dialog.recovery.keepWaiting": "Keep Waiting",  // TODO: translate
-  "dialog.recovery.notResponding": "OpenCode is not responding",  // TODO: translate
+  "dialog.recovery.notResponding": "Tribunus is not responding",  // TODO: translate
   "dialog.recovery.notRespondingDetail": "You can relaunch the app, open the logs, or keep waiting.",  // TODO: translate
   "dialog.recovery.quit": "Quit",  // TODO: translate
   "dialog.recovery.relaunch": "Relaunch",  // TODO: translate
-  "dialog.recovery.terminated": "OpenCode window terminated unexpectedly",  // TODO: translate
+  "dialog.recovery.terminated": "Tribunus window terminated unexpectedly",  // TODO: translate
   "error.page.action.exportLogs": "Export Logs",  // TODO: translate
   "github.branchName": "Branch Name",  // TODO: translate
   "github.commitMessage": "Commit Message",  // TODO: translate

@@ -18,6 +18,18 @@ import { type ServerHealth } from "@/utils/server-health"
 import { useQueryOptions } from "@/context/server-sync"
 import { pathKey } from "@/utils/path-key"
 import { useServers } from "@/context/servers"
+import { useCapabilities } from "@/context/capability"
+import { useLifecycle, type LifecycleState } from "@/context/lifecycle"
+import { useTerminal } from "@/context/terminal"
+import {
+  formatArtifactCapability,
+  formatPlatformMode,
+  formatSessionRecoveryStatusLabel,
+  formatTerminalRuntimeKind,
+  formatWorkspaceMode,
+  isSessionRecoveryStatus,
+  type SessionStatusLike,
+} from "@/utils/cockpit-truth"
 
 const pollMs = 10_000
 
@@ -286,7 +298,100 @@ function ServerStatusList(props: { state: ServerStatusState }) {
   )
 }
 
-export function StatusPopoverBody(props: { shown: Accessor<boolean> }) {
+function LifecycleStatusPanel(props: { sessionID?: string }) {
+  const lifecycleContext = useLifecycle()
+  const state = createMemo<LifecycleState>(() => {
+    if (!props.sessionID) return "unavailable"
+    return lifecycleContext.getLifecycle(props.sessionID).state
+  })
+
+  const stateColors: Record<LifecycleState, string> = {
+    idle: "bg-border-weak-base",
+    unavailable: "bg-border-weak-base",
+    planning: "bg-border-weak-base",
+    executing: "bg-icon-brand-base",
+    verifying: "bg-icon-brand-base",
+    waiting_for_permission: "bg-icon-warning-base",
+    completed: "bg-icon-success-base",
+    failed: "bg-icon-critical-base",
+  }
+
+  return (
+    <div class="flex flex-col gap-3">
+      <div class="flex items-center gap-2">
+        <div class={`size-2 rounded-full ${stateColors[state()]}`} />
+        <span class="text-14-regular text-text-base">Current state: <strong class="font-medium">{state()}</strong></span>
+      </div>
+
+      <Show when={import.meta.env.DEV}>
+        <div class="mt-2 flex flex-col gap-2 pt-3 border-t border-border-default">
+          <div class="text-11-medium text-text-weaker uppercase tracking-wider">DEV Mode Switcher</div>
+          <div class="flex flex-wrap gap-1.5">
+            <For each={Object.keys(stateColors) as LifecycleState[]}>
+              {(s) => (
+                <Button 
+                  variant={state() === s ? "primary" : "secondary"}
+                  size="small" 
+                  class="h-6 text-11-regular px-2 py-0"
+                  onClick={() => props.sessionID && lifecycleContext.setLifecycle(props.sessionID, s)}
+                >
+                  {s}
+                </Button>
+              )}
+            </For>
+          </div>
+        </div>
+      </Show>
+    </div>
+  )
+}
+
+function CockpitTruthSummary(props: { sessionID?: string }) {
+  const platform = usePlatform()
+  const capabilities = useCapabilities()
+  const terminal = useTerminal()
+  const sync = useSync()
+
+  const terminalStatus = createMemo(() => terminal.runtimeStatus())
+  const sessionStatus = createMemo<SessionStatusLike>(() => (props.sessionID ? sync.data.session_status[props.sessionID] : undefined))
+  const recoveryLabel = createMemo<string | undefined>(() => {
+    const value = sessionStatus()
+    if (!isSessionRecoveryStatus(value)) return undefined
+    return formatSessionRecoveryStatusLabel(value.type)
+  })
+  const artifactCapability = createMemo(() =>
+    formatArtifactCapability(capabilities().localFilesystem.available || terminalStatus().ok),
+  )
+  const workspaceMode = createMemo(() =>
+    platform.platform === "web"
+      ? "Virtual FS sandbox"
+      : terminalStatus().ok && terminalStatus().kind === "native-pty"
+        ? "Local workspace"
+        : "Unknown",
+  )
+
+  return (
+    <div class="flex flex-col gap-2 rounded-lg border border-border-default bg-background-base px-3 py-2.5">
+      <div class="text-11-medium uppercase tracking-wider text-text-weaker">Cockpit Truth</div>
+      <div class="grid grid-cols-[max-content_minmax(0,1fr)] gap-x-3 gap-y-1 text-12-regular">
+        <span class="text-text-weaker">Platform Mode</span>
+        <span class="text-text-base">{formatPlatformMode(platform.platform)}</span>
+        <span class="text-text-weaker">Terminal Runtime</span>
+        <span class="text-text-base">{formatTerminalRuntimeKind(terminalStatus().ok ? terminalStatus().kind : undefined)}</span>
+        <span class="text-text-weaker">Workspace Mode</span>
+        <span class="text-text-base">{workspaceMode()}</span>
+        <Show when={recoveryLabel()}>
+          <span class="text-text-weaker">Session Status</span>
+          <span class="text-text-base">{recoveryLabel()}</span>
+        </Show>
+        <span class="text-text-weaker">Artifact Capability</span>
+        <span class="text-text-base">{artifactCapability()}</span>
+      </div>
+    </div>
+  )
+}
+
+export function StatusPopoverBody(props: { shown: Accessor<boolean>; sessionID?: string }) {
   const sync = useSync()
   const servers = useServers()
   const server = useServer()
@@ -294,6 +399,7 @@ export function StatusPopoverBody(props: { shown: Accessor<boolean> }) {
   const dialog = useDialog()
   const language = useLanguage()
   const navigate = useNavigate()
+  const capabilities = useCapabilities()
 
   const fail = (err: unknown) => {
     showToast({
@@ -329,32 +435,42 @@ export function StatusPopoverBody(props: { shown: Accessor<boolean> }) {
 
   return (
     <div class="flex items-center gap-1 w-[360px] rounded-xl shadow-[var(--shadow-lg-border-base)]">
-      <Tabs
-        aria-label={language.t("status.popover.ariaLabel")}
-        class="tabs bg-background-strong rounded-xl overflow-hidden"
-        data-component="tabs"
-        data-active="servers"
-        defaultValue="servers"
-        variant="alt"
-      >
-        <Tabs.List data-slot="tablist" class="bg-transparent border-b-0 px-4 pt-2 pb-0 gap-4 h-10">
-          <Tabs.Trigger value="servers" data-slot="tab" class="text-12-regular">
-            {servers.list().length > 0 ? `${servers.list().length} ` : ""}
-            {language.t("status.popover.tab.servers")}
-          </Tabs.Trigger>
-          <Tabs.Trigger value="mcp" data-slot="tab" class="text-12-regular">
-            {mcpConnected() > 0 ? `${mcpConnected()} ` : ""}
-            {language.t("status.popover.tab.mcp")}
-          </Tabs.Trigger>
-          <Tabs.Trigger value="lsp" data-slot="tab" class="text-12-regular">
-            {lspCount() > 0 ? `${lspCount()} ` : ""}
-            {language.t("status.popover.tab.lsp")}
-          </Tabs.Trigger>
-          <Tabs.Trigger value="plugins" data-slot="tab" class="text-12-regular">
-            {pluginCount() > 0 ? `${pluginCount()} ` : ""}
-            {language.t("status.popover.tab.plugins")}
-          </Tabs.Trigger>
-        </Tabs.List>
+      <div class="flex w-full flex-col gap-2">
+          <div class="px-2 pt-2">
+            <CockpitTruthSummary sessionID={props.sessionID} />
+          </div>
+        <Tabs
+          aria-label={language.t("status.popover.ariaLabel")}
+          class="tabs bg-background-strong rounded-xl overflow-hidden"
+          data-component="tabs"
+          data-active="servers"
+          defaultValue="servers"
+          variant="alt"
+        >
+          <Tabs.List data-slot="tablist" class="bg-transparent border-b-0 px-4 pt-2 pb-0 gap-4 h-10">
+            <Tabs.Trigger value="servers" data-slot="tab" class="text-12-regular">
+              {servers.list().length > 0 ? `${servers.list().length} ` : ""}
+              {language.t("status.popover.tab.servers")}
+            </Tabs.Trigger>
+            <Tabs.Trigger value="mcp" data-slot="tab" class="text-12-regular">
+              {mcpConnected() > 0 ? `${mcpConnected()} ` : ""}
+              {language.t("status.popover.tab.mcp")}
+            </Tabs.Trigger>
+            <Tabs.Trigger value="lsp" data-slot="tab" class="text-12-regular">
+              {lspCount() > 0 ? `${lspCount()} ` : ""}
+              {language.t("status.popover.tab.lsp")}
+            </Tabs.Trigger>
+            <Tabs.Trigger value="plugins" data-slot="tab" class="text-12-regular">
+              {pluginCount() > 0 ? `${pluginCount()} ` : ""}
+              {language.t("status.popover.tab.plugins")}
+            </Tabs.Trigger>
+            <Tabs.Trigger value="capabilities" data-slot="tab" class="text-12-regular">
+              Capabilities
+            </Tabs.Trigger>
+            <Tabs.Trigger value="lifecycle" data-slot="tab" class="text-12-regular">
+              Lifecycle
+            </Tabs.Trigger>
+          </Tabs.List>
 
         <Tabs.Content value="servers">
           <div class="flex flex-col px-2 pb-2">
@@ -530,7 +646,46 @@ export function StatusPopoverBody(props: { shown: Accessor<boolean> }) {
             </div>
           </div>
         </Tabs.Content>
-      </Tabs>
+
+        <Tabs.Content value="capabilities">
+          <div class="flex flex-col px-2 pb-2">
+            <div class="flex flex-col p-3 bg-background-base rounded-sm min-h-14 gap-2">
+              <For each={Object.entries(capabilities())}>
+                {([key, cap]) => {
+                  if (key === "platformMode") return null
+                  const state = cap as { available: boolean; reason?: string }
+                  return (
+                    <div class="flex flex-col w-full px-2 py-1">
+                      <div class="flex items-center gap-2">
+                        <div
+                          classList={{
+                            "size-1.5 rounded-full shrink-0": true,
+                            "bg-icon-success-base": state.available,
+                            "bg-icon-warning-base": !state.available,
+                          }}
+                        />
+                        <span class="text-14-regular text-text-base">{key}</span>
+                      </div>
+                      <Show when={!state.available && state.reason}>
+                        <span class="text-12-regular text-text-weak pl-3.5 mt-0.5">{state.reason}</span>
+                      </Show>
+                    </div>
+                  )
+                }}
+              </For>
+            </div>
+          </div>
+        </Tabs.Content>
+
+        <Tabs.Content value="lifecycle">
+          <div class="flex flex-col px-2 pb-2">
+            <div class="flex flex-col p-3 bg-background-base rounded-sm min-h-14">
+              <LifecycleStatusPanel sessionID={props.sessionID} />
+            </div>
+          </div>
+        </Tabs.Content>
+        </Tabs>
+      </div>
     </div>
   )
 }

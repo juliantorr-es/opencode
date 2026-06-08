@@ -30,10 +30,10 @@ export default function NotFound() {
             <a href={language.route("/docs")}>{i18n.t("notFound.docs")}</a>
           </div>
           <div data-slot="action">
-            <a href="https://github.com/anomalyco/opencode">{i18n.t("notFound.github")}</a>
+            <a href="https://github.com/tribunus-dev/tribunus">{i18n.t("notFound.github")}</a>
           </div>
           <div data-slot="action">
-            <a href={language.route("/discord")}>{i18n.t("notFound.discord")}</a>
+            <a href={language.route("/community")}>{i18n.t("notFound.discord")}</a>
           </div>
         </section>
       </div>

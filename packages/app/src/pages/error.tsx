@@ -358,7 +358,7 @@ export const ErrorPage: Component<ErrorPageProps> = (props) => {
               onClick={() => platform.openLink(DESKTOP_FEEDBACK_URL)}
             >
               <div>{t("error.page.report.discord")}</div>
-              <Icon name="discord" class="text-text-interactive-base" />
+              <Icon name="github" class="text-text-interactive-base" />
             </button>
           </div>
           <Show when={platform.version}>

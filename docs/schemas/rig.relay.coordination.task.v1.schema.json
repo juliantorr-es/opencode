@@ -1,9 +1,14 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "rig.relay.coordination.task.v1",
+  "$id": "https://tribunus.dev/schemas/coordination.task.v1",
   "title": "Rig Relay Coordination Task Event",
   "description": "Schema for coordination.task_status events emitted by the task tool. Each event represents a state transition in a subagent task lifecycle: running → completed/failed.",
   "type": "object",
+  "$defs": {
+    "NormalizedError": {
+      "$ref": "https://opencode.ai/schemas/defs.json#/$defs/NormalizedError"
+    }
+  },
   "properties": {
     "session_id": {
       "type": "string",
@@ -36,16 +41,5 @@
     }
   },
   "required": ["session_id", "task_id", "task_type", "status", "description", "changed_at"],
-  "additionalProperties": false,
-  "examples": [
-    {
-      "session_id": "ses_abc123",
-      "task_id": "ses_def456",
-      "task_type": "cartographer",
-      "status": "completed",
-      "description": "Map IPC interface surface",
-      "agent_name": "cartographer",
-      "changed_at": 1748563200000
-    }
-  ]
+  "additionalProperties": false
 }

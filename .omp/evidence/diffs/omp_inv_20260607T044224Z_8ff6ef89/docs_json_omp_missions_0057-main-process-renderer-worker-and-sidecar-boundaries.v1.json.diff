@@ -1,0 +1,11 @@
+--- a/docs/json/omp/missions/0057-main-process-renderer-worker-and-sidecar-boundaries.v1.json
++++ b/docs/json/omp/missions/0057-main-process-renderer-worker-and-sidecar-boundaries.v1.json
+@@ -62,7 +62,7 @@
+   "automation_mode": "manual",
+   "maximum_attempts": 3,
+   "escalation_policy": "If a process cannot be restarted after max attempts, escalate to user with failure report",
+-  "maturity_target": "bootstrap_complete"
++  "maturity_target": "bootstrap_complete",
+   "created_at": "2026-06-07T04:40:48.484Z",
+   "updated_at": "2026-06-07T04:40:48.484Z"
+ }

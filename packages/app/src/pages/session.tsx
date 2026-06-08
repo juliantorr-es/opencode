@@ -57,6 +57,8 @@ import { useSessionLayout } from "@/pages/session/session-layout"
 import { syncSessionModel } from "@/pages/session/session-model-helpers"
 import { SessionSidePanel } from "@/pages/session/session-side-panel"
 import { TerminalPanel } from "@/pages/session/terminal-panel"
+import { ArtifactRail } from "@/pages/session/artifact-rail"
+import { useArtifacts } from "@/context/artifact"
 import { useSessionCommands } from "@/pages/session/use-session-commands"
 import { useSessionHashScroll } from "@/pages/session/use-session-hash-scroll"
 import { shouldUseV2NewSessionPage } from "@/pages/session/new-session-layout"
@@ -66,6 +68,8 @@ import { Persist, persisted } from "@/utils/persist"
 import { extractPromptFromParts } from "@/utils/prompt"
 import { same } from "@/utils/same"
 import { formatServerError } from "@/utils/server-errors"
+import { isBackendUnavailableError, isNotFoundError, type SessionRouteState } from "@/utils/runtime-lifecycle"
+import { SessionRouteStatePanel } from "@/components/session/session-route-state"
 import { useUsageExceededDialogs } from "./session/usage-exceeded-dialogs"
 import * as Review from "./session/session-review"
 import { createSessionHistoryLoader, type SessionHistoryWindowInput } from "./session/session-history-loader"
@@ -106,6 +110,7 @@ export default function Page() {
   const [searchParams, setSearchParams] = useSearchParams<{ prompt?: string }>()
   const location = useLocation()
   const { params, sessionKey, tabs, view } = useSessionLayout()
+  const artifacts = useArtifacts()
   const newSessionDesign = createMemo(() => settings.general.newLayoutDesigns())
 
   createEffect(() => {
@@ -517,14 +522,14 @@ export default function Page() {
   const markScrollGesture = (target?: EventTarget | null) => Scroll.markScrollGesture(scroller, (ts) => setUi("scrollGesture", ts), target)
   const hasScrollGesture = () => Scroll.hasScrollGesture(ui.scrollGesture, scrollGestureWindowMs)
 
-  const [sessionSync] = createResource(
+  const [sessionRoute, { refetch: refreshSessionRoute }] = createResource(
     () => [sdk.directory, params.id] as const,
-    ([directory, id]) => {
+    async ([directory, id]) => {
       if (refreshFrame !== undefined) cancelAnimationFrame(refreshFrame)
       if (refreshTimer !== undefined) window.clearTimeout(refreshTimer)
       refreshFrame = undefined
       refreshTimer = undefined
-      if (!id) return
+      if (!id) return { state: "ready", sessionID: "", scopeKey: directory } satisfies SessionRouteState
 
       const cached = untrack(() => sync.data.message[id] !== undefined)
       const stale = !cached
@@ -546,9 +551,58 @@ export default function Page() {
         }, 0)
       })
 
-      return sync.session.sync(id)
+      try {
+        await sync.session.sync(id)
+        const session = sync.session.get(id)
+        if (!session) {
+          const prefetch = getSessionPrefetch(directory, id)
+          return prefetch && Date.now() - prefetch.at <= SESSION_PREFETCH_TTL
+            ? ({ state: "hydrating", reason: "Session accepted, waiting for durable read." } satisfies SessionRouteState)
+            : ({
+                state: "not_yet_readable",
+                reason: "Session exists, but the route cannot read it yet.",
+              } satisfies SessionRouteState)
+        }
+        if (session.directory !== sdk.directory) {
+          return {
+            state: "scope_mismatch",
+            reason: `Session belongs to ${session.directory}, not ${sdk.directory}.`,
+          } satisfies SessionRouteState
+        }
+        return {
+          state: "ready",
+          sessionID: session.id,
+          scopeKey: session.directory,
+        } satisfies SessionRouteState
+      } catch (error) {
+        if (isNotFoundError(error)) {
+          const prefetch = getSessionPrefetch(directory, id)
+          if (prefetch && Date.now() - prefetch.at <= SESSION_PREFETCH_TTL) {
+            return {
+              state: "hydrating",
+              reason: "Session accepted, waiting for durable read.",
+            } satisfies SessionRouteState
+          }
+          return {
+            state: "missing",
+            reason: "Session does not exist in this project.",
+          } satisfies SessionRouteState
+        }
+        if (isBackendUnavailableError(error)) {
+          return {
+            state: "backend_unavailable",
+            reason: formatServerError(error, language.t, "Backend unavailable"),
+          } satisfies SessionRouteState
+        }
+        return {
+          state: "failed",
+          reason: formatServerError(error, language.t),
+        } satisfies SessionRouteState
+      }
     },
   )
+  const sessionRouteState = createMemo(() => sessionRoute())
+  const sessionRouteReady = createMemo(() => !params.id || sessionRouteState()?.state === "ready")
 
   createEffect(
     on(
@@ -1540,137 +1594,152 @@ export default function Page() {
 
   return (
     <div class="relative bg-background-base size-full overflow-hidden flex flex-col">
-      {sessionSync() ?? ""}
-      <SessionHeader />
-      <div class="flex-1 min-h-0 flex flex-col md:flex-row">
-        <Show when={!isDesktop() && !!params.id}>
-          <Tabs value={store.mobileTab} class="h-auto">
-            <Tabs.List>
-              <Tabs.Trigger
-                value="session"
-                class="!w-1/2 !max-w-none"
-                classes={{ button: "w-full" }}
-                onClick={() => setStore("mobileTab", "session")}
-              >
-                {language.t("session.tab.session")}
-              </Tabs.Trigger>
-              <Tabs.Trigger
-                value="changes"
-                class="!w-1/2 !max-w-none !border-r-0"
-                classes={{ button: "w-full" }}
-                onClick={() => setStore("mobileTab", "changes")}
-              >
-                {hasReview()
-                  ? language.t("session.review.filesChanged", { count: reviewCount() })
-                  : language.t("session.review.change.other")}
-              </Tabs.Trigger>
-            </Tabs.List>
-          </Tabs>
-        </Show>
+      <Show
+        when={sessionRouteReady()}
+        fallback={
+          <SessionRouteStatePanel
+            state={sessionRouteState() ?? { state: "hydrating" }}
+            onRetry={() => {
+              void refreshSessionRoute()
+            }}
+          />
+        }
+      >
+        <SessionHeader />
+        <div class="flex-1 min-h-0 flex flex-col md:flex-row">
+          <Show when={!isDesktop() && !!params.id}>
+            <Tabs value={store.mobileTab} class="h-auto">
+              <Tabs.List>
+                <Tabs.Trigger
+                  value="session"
+                  class="!w-1/2 !max-w-none"
+                  classes={{ button: "w-full" }}
+                  onClick={() => setStore("mobileTab", "session")}
+                >
+                  {language.t("session.tab.session")}
+                </Tabs.Trigger>
+                <Tabs.Trigger
+                  value="changes"
+                  class="!w-1/2 !max-w-none !border-r-0"
+                  classes={{ button: "w-full" }}
+                  onClick={() => setStore("mobileTab", "changes")}
+                >
+                  {hasReview()
+                    ? language.t("session.review.filesChanged", { count: reviewCount() })
+                    : language.t("session.review.change.other")}
+                </Tabs.Trigger>
+              </Tabs.List>
+            </Tabs>
+          </Show>
 
-        <div
-          classList={{
-            "@container relative shrink-0 flex flex-col min-h-0 h-full bg-background-stronger flex-1 md:flex-none": true,
-            "duration-[240ms] ease-[cubic-bezier(0.22,1,0.36,1)] will-change-[width] motion-reduce:transition-none":
-              !size.active() && !ui.reviewSnap,
-            "transition-[width]": !isV2NewSessionPage(),
-          }}
-          style={{
-            width: sessionPanelWidth(),
-          }}
-        >
-          <div class="flex-1 min-h-0 overflow-hidden">
-            <Switch>
-              <Match when={params.id && mobileChanges()}>
-                <div class="relative h-full overflow-hidden">
-                  {reviewContent({
-                    diffStyle: "unified",
-                    classes: {
-                      root: "pb-8",
-                      header: "px-4",
-                      container: "px-4",
-                    },
-                    loadingClass: "px-4 py-4 text-text-weak",
-                    emptyClass: "h-full pb-64 -mt-4 flex flex-col items-center justify-center text-center gap-6",
-                  })}
-                </div>
-              </Match>
-              <Match when={params.id}>
-                <Show when={messagesReady()}>
-                  <MessageTimeline
-                    actions={actions}
-                    scroll={ui.scroll}
-                    onResumeScroll={resumeScroll}
-                    setScrollRef={setScrollRef}
-                    onScheduleScrollState={scheduleScrollState}
-                    onAutoScrollHandleScroll={autoScroll.handleScroll}
-                    onMarkScrollGesture={markScrollGesture}
-                    hasScrollGesture={hasScrollGesture}
-                    onUserScroll={markUserScroll}
-                    onHistoryScroll={historyLoader.onScrollerScroll}
-                    onAutoScrollInteraction={autoScroll.handleInteraction}
-                    shouldAnchorBottom={() =>
-                      !location.hash && !store.messageId && !ui.pendingMessage && !autoScroll.userScrolled()
-                    }
-                    centered={centered()}
-                    setContentRef={(el) => {
-                      content = el
-                      autoScroll.contentRef(el)
+          <div
+            classList={{
+              "@container relative shrink-0 flex flex-col min-h-0 h-full bg-background-stronger flex-1 md:flex-none": true,
+              "duration-[240ms] ease-[cubic-bezier(0.22,1,0.36,1)] will-change-[width] motion-reduce:transition-none":
+                !size.active() && !ui.reviewSnap,
+              "transition-[width]": !isV2NewSessionPage(),
+            }}
+            style={{
+              width: sessionPanelWidth(),
+            }}
+          >
+            <div class="flex-1 min-h-0 overflow-hidden">
+              <Switch>
+                <Match when={params.id && mobileChanges()}>
+                  <div class="relative h-full overflow-hidden">
+                    {reviewContent({
+                      diffStyle: "unified",
+                      classes: {
+                        root: "pb-8",
+                        header: "px-4",
+                        container: "px-4",
+                      },
+                      loadingClass: "px-4 py-4 text-text-weak",
+                      emptyClass: "h-full pb-64 -mt-4 flex flex-col items-center justify-center text-center gap-6",
+                    })}
+                  </div>
+                </Match>
+                <Match when={params.id}>
+                  <Show when={messagesReady()}>
+                    <MessageTimeline
+                      actions={actions}
+                      scroll={ui.scroll}
+                      onResumeScroll={resumeScroll}
+                      setScrollRef={setScrollRef}
+                      onScheduleScrollState={scheduleScrollState}
+                      onAutoScrollHandleScroll={autoScroll.handleScroll}
+                      onMarkScrollGesture={markScrollGesture}
+                      hasScrollGesture={hasScrollGesture}
+                      onUserScroll={markUserScroll}
+                      onHistoryScroll={historyLoader.onScrollerScroll}
+                      onAutoScrollInteraction={autoScroll.handleInteraction}
+                      shouldAnchorBottom={() =>
+                        !location.hash && !store.messageId && !ui.pendingMessage && !autoScroll.userScrolled()
+                      }
+                      centered={centered()}
+                      setContentRef={(el) => {
+                        content = el
+                        autoScroll.contentRef(el)
 
-                      const root = scroller
-                      if (root) scheduleScrollState(root)
-                    }}
-                    historyShift={historyLoader.shift()}
-                    userMessages={historyLoader.userMessages()}
-                    anchor={anchor}
-                    setRevealMessage={(fn) => {
-                      revealMessage = fn
-                    }}
-                  />
-                </Show>
-              </Match>
-              <Match when={true}>
-                <Show when={newSessionDesign()} fallback={<NewSessionView worktree={newSessionWorktree()} />}>
-                  <NewSessionDesignView>{composerRegion("inline")}</NewSessionDesignView>
-                </Show>
-              </Match>
-            </Switch>
+                        const root = scroller
+                        if (root) scheduleScrollState(root)
+                      }}
+                      historyShift={historyLoader.shift()}
+                      userMessages={historyLoader.userMessages()}
+                      anchor={anchor}
+                      setRevealMessage={(fn) => {
+                        revealMessage = fn
+                      }}
+                    />
+                  </Show>
+                </Match>
+                <Match when={true}>
+                  <Show when={newSessionDesign()} fallback={<NewSessionView worktree={newSessionWorktree()} />}>
+                    <NewSessionDesignView>{composerRegion("inline")}</NewSessionDesignView>
+                  </Show>
+                </Match>
+              </Switch>
+            </div>
+
+            <Show when={params.id || !newSessionDesign()}>{composerRegion("dock")}</Show>
+
+            <Show when={desktopReviewOpen()}>
+              <div onPointerDown={() => size.start()}>
+                <ResizeHandle
+                  direction="horizontal"
+                  size={layout.session.width()}
+                  min={450}
+                  max={typeof window === "undefined" ? 1000 : window.innerWidth * 0.45}
+                  onResize={(width) => {
+                    size.touch()
+                    layout.session.resize(width)
+                  }}
+                />
+              </div>
+            </Show>
           </div>
 
-          <Show when={params.id || !newSessionDesign()}>{composerRegion("dock")}</Show>
+          <SessionSidePanel
+            canReview={canReview}
+            diffs={reviewDiffs}
+            diffsReady={reviewReady}
+            empty={reviewEmptyText}
+            hasReview={hasReview}
+            reviewCount={reviewCount}
+            reviewPanel={reviewPanel}
+            activeDiff={tree.activeDiff}
+            focusReviewDiff={focusReviewDiff}
+            reviewSnap={ui.reviewSnap}
+            size={size}
+          />
 
-          <Show when={desktopReviewOpen()}>
-            <div onPointerDown={() => size.start()}>
-              <ResizeHandle
-                direction="horizontal"
-                size={layout.session.width()}
-                min={450}
-                max={typeof window === "undefined" ? 1000 : window.innerWidth * 0.45}
-                onResize={(width) => {
-                  size.touch()
-                  layout.session.resize(width)
-                }}
-              />
-            </div>
+          <Show when={artifacts.railOpened() && params.id}>
+            <ArtifactRail sessionID={params.id!} />
           </Show>
         </div>
 
-        <SessionSidePanel
-          canReview={canReview}
-          diffs={reviewDiffs}
-          diffsReady={reviewReady}
-          empty={reviewEmptyText}
-          hasReview={hasReview}
-          reviewCount={reviewCount}
-          reviewPanel={reviewPanel}
-          activeDiff={tree.activeDiff}
-          focusReviewDiff={focusReviewDiff}
-          reviewSnap={ui.reviewSnap}
-          size={size}
-        />
-      </div>
-
-      <TerminalPanel />
+        <TerminalPanel />
+      </Show>
     </div>
   )
 }

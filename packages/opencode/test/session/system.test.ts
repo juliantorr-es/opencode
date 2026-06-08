@@ -62,6 +62,16 @@ const it = testEffect(
 )
 
 describe("session.system", () => {
+  it.effect("provider appends the shared constitution after the model base", () =>
+    Effect.gen(function* () {
+      const prompt = SystemPrompt.provider({ api: { id: "gpt-5.2" }, providerID: "openai" } as any)
+
+      expect(prompt).toHaveLength(2)
+      expect(prompt[0]).toContain("You are OpenCode, the best coding agent on the planet.")
+      expect(prompt[1]).toContain("Be concise, direct, and to the point.")
+    }),
+  )
+
   it.effect("skills output is sorted by name and stable across calls", () =>
     Effect.gen(function* () {
       const prompt = yield* SystemPrompt.Service

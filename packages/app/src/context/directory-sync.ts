@@ -40,6 +40,19 @@ const isNotFound = (error: unknown) =>
   error.cause !== null &&
   (error.cause as { status?: unknown }).status === 404
 
+const shouldRetrySessionRead = (error: unknown) => {
+  if (isNotFound(error)) return true
+  if (!(error instanceof Error)) return false
+  const message = error.message.toLowerCase()
+  return (
+    message.includes("failed to fetch") ||
+    message.includes("network request failed") ||
+    message.includes("econnrefused") ||
+    message.includes("econnreset") ||
+    message.includes("etimedout")
+  )
+}
+
 function merge<T extends { id: string }>(a: readonly T[], b: readonly T[]) {
   const map = new Map(a.map((item) => [item.id, item] as const))
   for (const item of b) map.set(item.id, item)
@@ -468,7 +481,11 @@ export const createDirSyncContext = (directory: string, serverSync: ReturnType<t
           const sessionReq =
             hasSession && !opts?.force
               ? Promise.resolve()
-              : retry(() => client.session.get({ sessionID }))
+              : retry(() => client.session.get({ sessionID }), {
+                  attempts: 5,
+                  delay: 150,
+                  retryIf: shouldRetrySessionRead,
+                })
                   .then((session) => {
                     if (!tracked(directory, sessionID)) return
                     const data = session.data

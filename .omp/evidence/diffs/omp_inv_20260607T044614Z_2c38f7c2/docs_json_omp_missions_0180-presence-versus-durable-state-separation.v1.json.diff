@@ -1,0 +1,21 @@
+--- a/docs/json/omp/missions/0180-presence-versus-durable-state-separation.v1.json
++++ b/docs/json/omp/missions/0180-presence-versus-durable-state-separation.v1.json
+@@ -28,6 +28,18 @@
+     "durable-state",
+     "architecture"
+   ],
++  "depends_on": [],
++  "unlocks": [],
++  "authority_scope": "",
++  "allowed_paths": [],
++  "required_evidence": [],
++  "acceptance_gates": [],
++  "rollback_strategy": "",
++  "recovery_strategy": "",
++  "automation_mode": "manual",
++  "maximum_attempts": 3,
++  "escalation_policy": "",
++  "maturity_target": "bootstrap_complete",
+   "created_at": "2026-06-07T04:45:24.710Z",
+   "updated_at": "2026-06-07T04:45:24.710Z"
+ }

@@ -580,7 +580,16 @@ export const layer = Layer.effect(
         OTEL_RESOURCE_ATTRIBUTES: process.env.OTEL_RESOURCE_ATTRIBUTES,
       }
 
-      yield* WorkspaceAdapterRuntime.create(adapter, config, env)
+      yield* WorkspaceAdapterRuntime.create(adapter, config, env).pipe(
+        Effect.catchCause((cause) =>
+          Effect.gen(function* () {
+            yield* db((db) =>
+              db.delete(WorkspaceTable).where(eq(WorkspaceTable.id, info.id)).execute()
+            )
+            return yield* Effect.failCause(cause)
+          })
+        )
+      )
       yield* Effect.all(
         [
           waitEvent({
@@ -965,7 +974,7 @@ export const layer = Layer.effect(
           timeout,
           signal,
           fn(event) {
-            if (event.workspace !== workspaceID && event.payload.type !== "sync") {
+            if (event.workspace !== workspaceID || event.payload.type !== "sync") {
               return false
             }
             return synced(state)

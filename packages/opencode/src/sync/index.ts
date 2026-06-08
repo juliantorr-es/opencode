@@ -155,33 +155,35 @@ export const layer = Layer.effect(Service)(
       // Note that this is an "immediate" transaction which is critical.
       // We need to make sure we can safely read and write with nothing
       // else changing the data from under us
-      Database.transaction(
-        (tx) => {
-          const id = EventID.ascending()
-          const rows = [
-            ...tx
+      yield* Effect.promise(() =>
+        Database.transaction(
+          async (tx) => {
+            const id = EventID.ascending()
+            const rows = await tx
               .select({ seq: EventSequenceTable.seq })
               .from(EventSequenceTable)
               .where(eq(EventSequenceTable.aggregate_id, agg))
-              .limit(1),
-          ]
-          const row = rows[0]
-          const seq = row?.seq != null ? row.seq + 1 : 0
+              .limit(1)
+            const row = rows[0]
+            const seq = row?.seq != null ? row.seq + 1 : 0
 
-          const event = { id, seq, aggregateID: agg, data }
-          process(def, event, { bus, bridge, publish, experimentalWorkspaces: flags.experimentalWorkspaces })
-        },
-        {
-          behavior: "immediate",
-        },
+            const event = { id, seq, aggregateID: agg, data }
+            await process(def, event, { bus, bridge, publish, experimentalWorkspaces: flags.experimentalWorkspaces })
+          },
+          {
+            behavior: "immediate",
+          },
+        )
       )
     })
 
     const remove: Interface["remove"] = Effect.fn("SyncEvent.remove")(function* (aggregateID) {
-      Database.transaction((tx) => {
-        tx.delete(EventSequenceTable).where(eq(EventSequenceTable.aggregate_id, aggregateID)).execute()
-        tx.delete(EventTable).where(eq(EventTable.aggregate_id, aggregateID)).execute()
-      })
+      yield* Effect.promise(() =>
+        Database.transaction(async (tx) => {
+          await tx.delete(EventSequenceTable).where(eq(EventSequenceTable.aggregate_id, aggregateID)).execute()
+          await tx.delete(EventTable).where(eq(EventTable.aggregate_id, aggregateID)).execute()
+        })
+      )
     })
 
     const claim: Interface["claim"] = Effect.fn("SyncEvent.claim")((aggregateID, ownerID) =>
@@ -297,7 +299,7 @@ function register(def: Definition) {
   registry.set(versionedType(def.type, def.version), def)
 }
 
-function process<Def extends Definition>(
+async function process<Def extends Definition>(
   def: Def,
   event: Event<Def>,
   options: {
@@ -318,22 +320,22 @@ function process<Def extends Definition>(
     return
   }
 
-  Database.transaction((tx) => {
-    projector(tx, event.data, event)
+  await Database.transaction(async (tx) => {
+    await projector(tx, event.data, event)
 
     if (options.experimentalWorkspaces) {
-      tx.insert(EventSequenceTable)
+      await tx.insert(EventSequenceTable)
         .values({
           aggregate_id: event.aggregateID,
           seq: event.seq,
           owner_id: options?.ownerID,
-        })
+         })
         .onConflictDoUpdate({
           target: EventSequenceTable.aggregate_id,
           set: { seq: event.seq },
         })
         .execute()
-      tx.insert(EventTable)
+      await tx.insert(EventTable)
         .values({
           id: event.id,
           seq: event.seq,

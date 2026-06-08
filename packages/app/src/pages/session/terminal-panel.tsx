@@ -14,11 +14,14 @@ import { Terminal } from "@/components/terminal"
 import { useCommand } from "@/context/command"
 import { useLanguage } from "@/context/language"
 import { useLayout } from "@/context/layout"
+import { usePlatform } from "@/context/platform"
 import { useTerminal } from "@/context/terminal"
 import { terminalTabLabel } from "@/pages/session/terminal-label"
 import { createSizing, focusTerminalById } from "@/pages/session/helpers"
 import { getTerminalHandoff, setTerminalHandoff } from "@/pages/session/handoff"
 import { useSessionLayout } from "@/pages/session/session-layout"
+import { useCapabilities } from "@/context/capability"
+import { formatTerminalRuntimeKind } from "@/utils/cockpit-truth"
 
 export function TerminalPanel() {
   const delays = [120, 240]
@@ -26,6 +29,8 @@ export function TerminalPanel() {
   const terminal = useTerminal()
   const language = useLanguage()
   const command = useCommand()
+  const capabilities = useCapabilities()
+  const platform = usePlatform()
   const { params, view } = useSessionLayout()
 
   const opened = createMemo(() => view().terminal.opened())
@@ -33,7 +38,20 @@ export function TerminalPanel() {
   const height = createMemo(() => layout.terminal.height())
   const close = () => view().terminal.close()
   const runtimeStatus = createMemo(() => terminal.runtimeStatus())
+  const canCreate = createMemo(() => capabilities().terminalRuntime.available && terminal.canCreate())
+  const terminalTruthLabel = createMemo(() => {
+    const status = runtimeStatus()
+    if (!status.ok) return platform.platform === "web"
+      ? "Terminal (Unknown runtime, Virtual FS sandbox)"
+      : "Terminal (Unknown runtime, Unknown workspace)"
+    if (status.kind === "native-pty") return "Terminal (Native PTY, Local workspace)"
+    if (status.kind === "webcontainer") return "Terminal (WebContainer, Virtual FS sandbox)"
+    return `Terminal (${formatTerminalRuntimeKind(status.kind)}, ${platform.platform === "web" ? "Virtual FS sandbox" : "Unknown workspace"})`
+  })
   const runtimeUnavailableMessage = () => {
+    if (!capabilities().terminalRuntime.available) {
+      return capabilities().terminalRuntime.reason || "Terminal unavailable"
+    }
     const status = runtimeStatus()
     if (status.ok) return ""
     return status.reason
@@ -67,7 +85,7 @@ export function TerminalPanel() {
       return
     }
 
-    if (!terminal.canCreate() || !terminal.ready() || terminal.all().length !== 0 || store.autoCreated) return
+    if (!canCreate() || !terminal.ready() || terminal.all().length !== 0 || store.autoCreated) return
     terminal.new()
     setStore("autoCreated", true)
   })
@@ -256,7 +274,7 @@ export function TerminalPanel() {
           }
         >
           <Show
-            when={terminal.canCreate()}
+            when={canCreate()}
             fallback={
               <div class="flex flex-col h-full pointer-events-none">
                 <div class="h-10 flex items-center gap-2 px-2 border-b border-border-weaker-base bg-background-stronger overflow-hidden">
@@ -310,11 +328,11 @@ export function TerminalPanel() {
                   </div>
                   <div class="flex-1" />
                   <div class="h-full flex items-center pr-4">
-                    <div class="text-12-regular text-text-weaker uppercase tracking-wider flex items-center gap-2">
-                      <Show when={runtimeStatus().kind === "webcontainer"}>
-                        <span class="text-orange-500 bg-orange-500/10 px-2 py-0.5 rounded text-10-medium tracking-wide">VIRTUAL FS SANDBOX</span>
-                      </Show>
-                      {runtimeStatus().kind === "webcontainer" ? "Isolated Browser Node Runtime" : runtimeStatus().kind}
+                    <div class="flex flex-col items-end gap-0.5 text-right">
+                      <div class="text-12-regular text-text-weaker">{terminalTruthLabel()}</div>
+                      <div class="text-10-regular text-text-weaker">
+                        Artifact receipts are artifact-source dependent.
+                      </div>
                     </div>
                   </div>
                 </Tabs.List>

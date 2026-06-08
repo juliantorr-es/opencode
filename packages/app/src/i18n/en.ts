@@ -125,7 +125,7 @@ export const dict = {
   "dialog.model.manage.description": "Customize which models appear in the model selector.",
   "dialog.model.manage.provider.toggle": "Toggle all {{provider}} models",
 
-  "dialog.model.unpaid.freeModels.title": "Free models provided by OpenCode",
+  "dialog.model.unpaid.freeModels.title": "Free models provided by Tribunus",
   "dialog.model.unpaid.addMore.title": "Add more models from popular providers",
 
   "dialog.provider.viewAll": "Show more providers",
@@ -137,30 +137,25 @@ export const dict = {
   "provider.connect.status.inProgress": "Authorization in progress...",
   "provider.connect.status.waiting": "Waiting for authorization...",
   "provider.connect.status.failed": "Authorization failed: {{error}}",
-  "provider.connect.apiKey.description":
-    "Enter your {{provider}} API key to connect your account and use {{provider}} models in OpenCode.",
+  "provider.connect.apiKey.description": "Enter your {{provider}} API key to connect your account and use {{provider}} models in Tribunus.",
   "provider.connect.apiKey.label": "{{provider}} API key",
   "provider.connect.apiKey.placeholder": "API key",
   "provider.connect.apiKey.required": "API key is required",
-  "provider.connect.opencodeZen.line1":
-    "OpenCode Zen gives you access to a curated set of reliable optimized models for coding agents.",
-  "provider.connect.opencodeZen.line2":
-    "With a single API key you'll get access to models such as Claude, GPT, Gemini, GLM and more.",
+  "provider.connect.opencodeZen.line1": "Tribunus Zen gives you access to a curated set of reliable optimized models for coding agents.",
+  "provider.connect.opencodeZen.line2": "With a single API key you'll get access to models such as Claude, GPT, Gemini, GLM and more.",
   "provider.connect.opencodeZen.visit.prefix": "Visit ",
   "provider.connect.opencodeZen.visit.link": "opencode.ai/zen",
   "provider.connect.opencodeZen.visit.suffix": " to collect your API key.",
   "provider.connect.oauth.code.visit.prefix": "Visit ",
   "provider.connect.oauth.code.visit.link": "this link",
-  "provider.connect.oauth.code.visit.suffix":
-    " to collect your authorization code to connect your account and use {{provider}} models in OpenCode.",
+  "provider.connect.oauth.code.visit.suffix": " to collect your authorization code to connect your account and use {{provider}} models in Tribunus.",
   "provider.connect.oauth.code.label": "{{method}} authorization code",
   "provider.connect.oauth.code.placeholder": "Authorization code",
   "provider.connect.oauth.code.required": "Authorization code is required",
   "provider.connect.oauth.code.invalid": "Invalid authorization code",
   "provider.connect.oauth.auto.visit.prefix": "Visit ",
   "provider.connect.oauth.auto.visit.link": "this link",
-  "provider.connect.oauth.auto.visit.suffix":
-    " and enter the code below to connect your account and use {{provider}} models in OpenCode.",
+  "provider.connect.oauth.auto.visit.suffix": " and enter the code below to connect your account and use {{provider}} models in Tribunus.",
   "provider.connect.oauth.auto.confirmationCode": "Confirmation code",
   "provider.connect.toast.connected.title": "{{provider}} connected",
   "provider.connect.toast.connected.description": "{{provider}} models are now available to use.",
@@ -338,7 +333,7 @@ export const dict = {
   "dialog.export.title": "Export Session",
   "dialog.export.description": "Export this session as a JSON file for backup or sharing",
   "dialog.export.sanitize": "Remove permissions and local paths",
-  "dialog.export.format": "OpenCode Session (.opencode-session)",
+  "dialog.export.format": "Tribunus Session (.opencode-session)",
   "dialog.export.button": "Export",
   "dialog.export.exporting": "Exporting...",
   "dialog.import.title": "Import Session",
@@ -357,7 +352,7 @@ export const dict = {
   "app.server.otherServers": "Other servers",
 
   "dialog.server.title": "Servers",
-  "dialog.server.description": "Switch which OpenCode server this app connects to.",
+  "dialog.server.description": "Switch which Tribunus server this app connects to.",
   "dialog.server.search.placeholder": "Search servers",
   "dialog.server.empty": "No servers yet",
   "dialog.server.add.title": "Add server",
@@ -374,8 +369,7 @@ export const dict = {
   "dialog.server.add.passwordPlaceholder": "password",
   "dialog.server.edit.title": "Edit server",
   "dialog.server.default.title": "Default server",
-  "dialog.server.default.description":
-    "Connect to this server on app launch instead of starting a local server. Requires restart.",
+  "dialog.server.default.description": "Connect to this server on app launch instead of starting a local server. Requires restart.",
   "dialog.server.default.none": "No server selected",
   "dialog.server.default.set": "Set current server as default",
   "dialog.server.default.clear": "Clear",
@@ -508,7 +502,7 @@ export const dict = {
   "toast.project.reloadFailed.title": "Failed to reload {{project}}",
 
   "toast.update.title": "Update available",
-  "toast.update.description": "A new version of OpenCode ({{version}}) is now available to install.",
+  "toast.update.description": "A new version of Tribunus ({{version}}) is now available to install.",
   "toast.update.action.installRestart": "Install and restart",
   "toast.update.action.notYet": "Not yet",
 
@@ -523,12 +517,11 @@ export const dict = {
   "error.page.action.checkUpdates": "Check for updates",
   "error.page.action.updateTo": "Update to {{version}}",
   "error.page.circular": "[Circular]",
-  "error.page.report.prefix": "Please report this error to the OpenCode team",
-  "error.page.report.discord": "on Discord",
+  "error.page.report.prefix": "Please report this error to the Tribunus team",
+  "error.page.report.discord": "on GitHub Discussions",
   "error.page.version": "Version: {{version}}",
 
-  "error.dev.rootNotFound":
-    "Root element not found. Did you forget to add it to your index.html? Or maybe the id attribute got misspelled?",
+  "error.dev.rootNotFound": "Root element not found. Did you forget to add it to your index.html? Or maybe the id attribute got misspelled?",
 
   "error.serverSync.connectFailed": "Could not connect to server. Is there a server running at `{{url}}`?",
   "error.serverSDK.noServerAvailable": "Tribunus server is not available",
@@ -549,14 +542,12 @@ export const dict = {
   "error.chain.didYouMean": "Did you mean: {{suggestions}}",
   "error.chain.modelNotFound": "Model not found: {{provider}}/{{model}}",
   "error.chain.checkConfig": "Check your config (opencode.json) provider/model names",
-  "error.chain.mcpFailed": 'MCP server "{{name}}" failed. Note, OpenCode does not support MCP authentication yet.',
+  "error.chain.mcpFailed": 'MCP server "{{name}}" failed. Note, Tribunus does not support MCP authentication yet.',
   "error.chain.providerAuthFailed": "Provider authentication failed ({{provider}}): {{message}}",
-  "error.chain.providerInitFailed":
-    'Failed to initialize provider "{{provider}}". Check credentials and configuration.',
+  "error.chain.providerInitFailed": 'Failed to initialize provider "{{provider}}". Check credentials and configuration.',
   "error.chain.configJsonInvalid": "Config file at {{path}} is not valid JSON(C)",
   "error.chain.configJsonInvalidWithMessage": "Config file at {{path}} is not valid JSON(C): {{message}}",
-  "error.chain.configDirectoryTypo":
-    'Directory "{{dir}}" in {{path}} is not valid. Rename the directory to "{{suggestion}}" or remove it. This is a common typo.',
+  "error.chain.configDirectoryTypo": 'Directory "{{dir}}" in {{path}} is not valid. Rename the directory to "{{suggestion}}" or remove it. This is a common typo.',
   "error.chain.configFrontmatterError": "Failed to parse frontmatter in {{path}}:\n{{message}}",
   "error.chain.configInvalid": "Config file at {{path}} is invalid",
   "error.chain.configInvalidWithMessage": "Config file at {{path}} is invalid: {{message}}",
@@ -697,10 +688,8 @@ export const dict = {
   "status.popover.action.manageServers": "Manage servers",
 
   "session.share.popover.title": "Publish on web",
-  "session.share.popover.description.shared":
-    "This session is public on the web. It is accessible to anyone with the link.",
-  "session.share.popover.description.unshared":
-    "Share session publicly on the web. It will be accessible to anyone with the link.",
+  "session.share.popover.description.shared": "This session is public on the web. It is accessible to anyone with the link.",
+  "session.share.popover.description.unshared": "Share session publicly on the web. It will be accessible to anyone with the link.",
   "session.share.action.share": "Share",
   "session.share.action.publish": "Publish",
   "session.share.action.publishing": "Publishing...",
@@ -720,8 +709,7 @@ export const dict = {
   "terminal.close": "Close terminal",
   "terminal.connectionLost.title": "Connection Lost",
   "terminal.connectionLost.abnormalClose": "WebSocket closed abnormally: {{code}}",
-  "terminal.connectionLost.description":
-    "The terminal connection was interrupted. This can happen when the server restarts.",
+  "terminal.connectionLost.description": "The terminal connection was interrupted. This can happen when the server restarts.",
 
   "common.closeTab": "Close tab",
   "common.dismiss": "Dismiss",
@@ -765,7 +753,7 @@ export const dict = {
   "sidebar.workspaces.enable": "Enable workspaces",
   "sidebar.workspaces.disable": "Disable workspaces",
   "sidebar.gettingStarted.title": "Getting started",
-  "sidebar.gettingStarted.line1": "OpenCode includes free models so you can start immediately.",
+  "sidebar.gettingStarted.line1": "Tribunus includes free models so you can start immediately.",
   "sidebar.gettingStarted.line2": "Connect any provider to use models, inc. Claude, GPT, Gemini etc.",
   "sidebar.project.recentSessions": "Recent sessions",
   "sidebar.project.viewAllSessions": "View all sessions",
@@ -776,8 +764,7 @@ export const dict = {
   "debugBar.ariaLabel": "Development performance diagnostics",
   "debugBar.na": "n/a",
   "debugBar.nav.label": "NAV",
-  "debugBar.nav.tip":
-    "Last completed route transition touching a session page, measured from router start until the first paint after it settles.",
+  "debugBar.nav.tip": "Last completed route transition touching a session page, measured from router start until the first paint after it settles.",
   "debugBar.fps.label": "FPS",
   "debugBar.fps.tip": "Rolling frames per second over the last 5 seconds.",
   "debugBar.frame.label": "FRAME",
@@ -789,15 +776,14 @@ export const dict = {
   "debugBar.delay.label": "DELAY",
   "debugBar.delay.tip": "Worst observed input delay in the last 5 seconds.",
   "debugBar.inp.label": "INP",
-  "debugBar.inp.tip":
-    "Approximate interaction duration over the last 5 seconds. This is INP-like, not the official Web Vitals INP.",
+  "debugBar.inp.tip": "Approximate interaction duration over the last 5 seconds. This is INP-like, not the official Web Vitals INP.",
   "debugBar.cls.label": "CLS",
   "debugBar.cls.tip": "Cumulative layout shift for the current app lifetime.",
   "debugBar.mem.label": "MEM",
   "debugBar.mem.tipUnavailable": "Used JS heap vs heap limit. Chromium only.",
   "debugBar.mem.tip": "Used JS heap vs heap limit. {{used}} of {{limit}}.",
 
-  "app.name.desktop": "OpenCode Desktop",
+  "app.name.desktop": "Tribunus Desktop",
 
   "settings.section.desktop": "Desktop",
   "settings.section.server": "Server",
@@ -805,7 +791,7 @@ export const dict = {
   "settings.tab.shortcuts": "Shortcuts",
   "settings.desktop.section.wsl": "WSL",
   "settings.desktop.wsl.title": "WSL integration",
-  "settings.desktop.wsl.description": "Run the OpenCode server inside WSL on Windows.",
+  "settings.desktop.wsl.description": "Run the Tribunus server inside WSL on Windows.",
 
   "settings.general.section.appearance": "Appearance",
   "settings.general.section.advanced": "Advanced",
@@ -816,18 +802,17 @@ export const dict = {
   "settings.general.section.display": "Display",
 
   "settings.general.row.language.title": "Language",
-  "settings.general.row.language.description": "Change the display language for OpenCode",
+  "settings.general.row.language.description": "Change the display language for Tribunus",
   "settings.general.row.shell.title": "Terminal Shell",
-  "settings.general.row.shell.description":
-    "Choose the shell used for your terminal. Compatible shells are also used for agent tool calls.",
+  "settings.general.row.shell.description": "Choose the shell used for your terminal. Compatible shells are also used for agent tool calls.",
   "settings.general.row.shell.autoDefault": "Auto (Default)",
   "settings.general.row.shell.terminalOnly": "terminal only",
   "settings.general.row.appearance.title": "Appearance",
-  "settings.general.row.appearance.description": "Customise how OpenCode looks on your device",
+  "settings.general.row.appearance.description": "Customise how Tribunus looks on your device",
   "settings.general.row.colorScheme.title": "Color scheme",
-  "settings.general.row.colorScheme.description": "Choose whether OpenCode follows the system, light, or dark theme",
+  "settings.general.row.colorScheme.description": "Choose whether Tribunus follows the system, light, or dark theme",
   "settings.general.row.theme.title": "Theme",
-  "settings.general.row.theme.description": "Customise how OpenCode is themed.",
+  "settings.general.row.theme.description": "Customise how Tribunus is themed.",
   "settings.general.row.font.title": "Code Font",
   "settings.general.row.font.description": "Customise the font used in code blocks",
   "settings.general.row.terminalFont.title": "Terminal Font",
@@ -853,14 +838,11 @@ export const dict = {
   "settings.general.row.reasoningSummaries.title": "Show reasoning summaries",
   "settings.general.row.reasoningSummaries.description": "Display model reasoning summaries in the timeline",
   "settings.general.row.shellToolPartsExpanded.title": "Expand shell tool parts",
-  "settings.general.row.shellToolPartsExpanded.description":
-    "Show shell tool parts expanded by default in the timeline",
+  "settings.general.row.shellToolPartsExpanded.description": "Show shell tool parts expanded by default in the timeline",
   "settings.general.row.editToolPartsExpanded.title": "Expand edit tool parts",
-  "settings.general.row.editToolPartsExpanded.description":
-    "Show edit, write, and patch tool parts expanded by default in the timeline",
+  "settings.general.row.editToolPartsExpanded.description": "Show edit, write, and patch tool parts expanded by default in the timeline",
   "settings.general.row.showSessionProgressBar.title": "Show session progress bar",
-  "settings.general.row.showSessionProgressBar.description":
-    "Display the animated progress bar at the top of the session when the agent is working",
+  "settings.general.row.showSessionProgressBar.description": "Display the animated progress bar at the top of the session when the agent is working",
   "settings.general.row.newLayoutDesigns.title": "New layout and designs",
   "settings.general.row.newLayoutDesigns.description": "Enable the redesigned layout, home, composer, and session UI",
   "settings.general.row.pinchZoom.title": "Pinch to zoom",
@@ -868,20 +850,19 @@ export const dict = {
 
   "settings.general.row.wayland.title": "Use native Wayland",
   "settings.general.row.wayland.description": "Disable X11 fallback on Wayland. Requires restart.",
-  "settings.general.row.wayland.tooltip":
-    "On Linux with mixed refresh-rate monitors, native Wayland can be more stable.",
+  "settings.general.row.wayland.tooltip": "On Linux with mixed refresh-rate monitors, native Wayland can be more stable.",
 
   "settings.general.row.releaseNotes.title": "Release notes",
   "settings.general.row.releaseNotes.description": "Show What's New popups after updates",
 
   "settings.updates.row.startup.title": "Check for updates on startup",
-  "settings.updates.row.startup.description": "Automatically check for updates when OpenCode launches",
+  "settings.updates.row.startup.description": "Automatically check for updates when Tribunus launches",
   "settings.updates.row.check.title": "Check for updates",
   "settings.updates.row.check.description": "Manually check for updates and install if available",
   "settings.updates.action.checkNow": "Check now",
   "settings.updates.action.checking": "Checking...",
   "settings.updates.toast.latest.title": "You're up to date",
-  "settings.updates.toast.latest.description": "You're running the latest version of OpenCode.",
+  "settings.updates.toast.latest.description": "You're running the latest version of Tribunus.",
   "sound.option.none": "None",
   "sound.option.alert01": "Alert 01",
   "sound.option.alert02": "Alert 02",
@@ -930,8 +911,7 @@ export const dict = {
   "sound.option.yup06": "Yup 06",
 
   "settings.general.notifications.agent.title": "Agent",
-  "settings.general.notifications.agent.description":
-    "Show system notification when the agent is complete or needs attention",
+  "settings.general.notifications.agent.description": "Show system notification when the agent is complete or needs attention",
   "settings.general.notifications.permissions.title": "Permissions",
   "settings.general.notifications.permissions.description": "Show system notification when a permission is required",
   "settings.general.notifications.errors.title": "Errors",

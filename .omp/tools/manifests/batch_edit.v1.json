@@ -1,0 +1,193 @@
+{
+  "schema": "omp.tool.manifest.v1",
+  "tool_id": "batch_edit",
+  "version": "1.0.0",
+  "title": "Batch Edit",
+  "description": "Validated multi-edit operation across one or more files. Validates all edits before writing. If validation fails, no files are written. Requires expected_before_sha256 for every touched file. Writes per-file diffs, a combined diff, one batch receipt, and an audit event on success.",
+  "authority": {
+    "risk_level": "write_high",
+    "side_effects": "filesystem_write",
+    "requires_approval": true,
+    "requires_hash_precondition": true,
+    "allowed_roots": [
+      "."
+    ],
+    "denied_patterns": [
+      ".git/",
+      "node_modules/",
+      "dist/",
+      "build/",
+      "coverage/",
+      ".env",
+      ".env.*",
+      "*.pem",
+      "*.key",
+      "*.sqlite",
+      "*.db",
+      ".omp/tools/receipts/",
+      ".omp/tools/diffs/",
+      ".omp/tools/events/",
+      ".omp/tools/journals/"
+    ],
+    "max_files_touched": 20
+  },
+  "input_schema": {
+    "type": "object",
+    "required": [
+      "files"
+    ],
+    "properties": {
+      "files": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": [
+            "path",
+            "expected_before_sha256",
+            "edits"
+          ],
+          "properties": {
+            "path": {
+              "type": "string",
+              "description": "File to modify, relative to project root"
+            },
+            "expected_before_sha256": {
+              "type": "string",
+              "description": "SHA-256 of the file before any edits. Rejects on mismatch."
+            },
+            "edits": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "required": [
+                      "kind",
+                      "old_text",
+                      "new_text"
+                    ],
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "const": "replace_exact_once"
+                      },
+                      "old_text": {
+                        "type": "string"
+                      },
+                      "new_text": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        }
+      },
+      "allow_unverified_write": {
+        "type": "boolean",
+        "default": false
+      },
+      "unverified_write_reason": {
+        "type": "string"
+      },
+      "reason": {
+        "type": "string",
+        "description": "Why these edits are needed"
+      }
+    }
+  },
+  "output_schema": {
+    "type": "object",
+    "properties": {
+      "files": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "path": {
+              "type": "string"
+            },
+            "before_sha256": {
+              "type": "string"
+            },
+            "after_sha256": {
+              "type": "string"
+            },
+            "edit_count": {
+              "type": "number"
+            },
+            "before_size_bytes": {
+              "type": "number"
+            },
+            "after_size_bytes": {
+              "type": "number"
+            },
+            "diff_path": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "total_files": {
+        "type": "number"
+      },
+      "total_edits": {
+        "type": "number"
+      },
+      "receipt_id": {
+        "type": "string"
+      },
+      "receipt_path": {
+        "type": "string"
+      },
+      "journal_path": {
+        "type": "string"
+      }
+    }
+  },
+  "receipt_schema": {
+    "$ref": "omp.tool.receipt.v1"
+  },
+  "examples": [
+    {
+      "name": "Rename across two files",
+      "input": {
+        "files": [
+          {
+            "path": "src/api.ts",
+            "expected_before_sha256": "abc123...",
+            "edits": [
+              {
+                "kind": "replace_exact_once",
+                "old_text": "function oldHandler()",
+                "new_text": "function newHandler()"
+              }
+            ]
+          },
+          {
+            "path": "src/routes.ts",
+            "expected_before_sha256": "def456...",
+            "edits": [
+              {
+                "kind": "replace_exact_once",
+                "old_text": "oldHandler",
+                "new_text": "newHandler"
+              }
+            ]
+          }
+        ],
+        "reason": "Rename handler across API and routes"
+      },
+      "expected_status": "ok"
+    }
+  ],
+  "provider_exports": {
+    "mistral_function_calling": true,
+    "openai_tools": true,
+    "anthropic_tools": true,
+    "mcp": true
+  }
+}

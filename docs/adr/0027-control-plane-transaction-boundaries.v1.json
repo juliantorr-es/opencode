@@ -1,0 +1,16 @@
+{
+  "schema": "rig.relay.adr.v1",
+  "schema_version": "v1",
+  "id": "0027",
+  "title": "Control-Plane Transaction Boundaries",
+  "status": "accepted",
+  "date": "2026-06-07",
+  "last_modified": "2026-06-07T06:45:00.000Z",
+  "authors": ["system"],
+  "tags": ["control-plane", "transactions", "pglite", "atomicity", "repository"],
+  "context": "The control-plane repository interface (packages/opencode/src/control-plane/repository.ts) defines CRUD operations for campaigns, missions, lanes, and tasks. PGlite supports BEGIN/COMMIT/ROLLBACK. Without explicit transaction boundaries, multi-entity operations can leave partial state on failure.",
+  "decision": "Define transaction boundaries for all control-plane operations.\n\nTRANSACTION SCOPES:\n- Campaign creation: ATOMIC. Campaign row + initial receipt MUST commit together.\n- Campaign status transition: ATOMIC. Status update + status-change receipt MUST commit together.\n- Mission creation: ATOMIC. Mission row + campaign reference validation + receipt.\n- Mission status transition: ATOMIC. Same pattern as campaign.\n- Lane creation: ATOMIC. Lane row + mission reference + receipt.\n- Lane lease acquisition: ATOMIC. Lease check + lease write + receipt. Uses SELECT FOR UPDATE to prevent race conditions.\n- Task creation: ATOMIC. Task row + lane/mission references + receipt.\n- Task assignment: ATOMIC. Assignment update + receipt.\n- Checkpoint creation: NON-TRANSACTIONAL (snapshot is idempotent and large).\n- Research packet creation: ATOMIC. Packet + memory links commit together.\n- Memory link creation: ATOMIC. Link + dedup check commit together.\n\nMULTI-ENTITY OPERATIONS:\n- Campaign decomposition (create missions): Each mission creation is its own transaction. If mission 3 of 10 fails, missions 1-2 are committed and 3-10 retry.\n- Board import: Each entity type is batched in transactions of configurable size (default 50 rows). Savepoints allow partial rollback within a batch.\n- Migration: Each entity type migration is transactional. If migration fails, DataMigrationTable records the failure for resumption.\n\nSAVEPOINTS:\n- Used for partial rollback within batched operations.\n- A savepoint is created before each entity within a batch.\n- On entity failure: ROLLBACK TO SAVEPOINT, log the error, continue with next entity.\n- After batch completion: RELEASE SAVEPOINT or COMMIT.\n\nENFORCEMENT:\n- The ControlPlaneRepository.transaction method wraps operations in BEGIN/COMMIT/ROLLBACK.\n- Methods annotated with @transactional MUST be called within a transaction context.\n- Direct PGlite access outside the repository is forbidden.\n\nINTEGRATION TESTS:\n- test: create campaign + mission in one transaction, verify both committed or neither.\n- test: task status update fails mid-transaction, verify rollback leaves original state.\n- test: lane lease acquisition with concurrent claim, verify SELECT FOR UPDATE prevents double-lease.",
+  "consequences": "Every control-plane mutation is explicitly transactional. No partial state survives a failure. Savepoints prevent one bad entity from rolling back an entire batch. The repository interface is the sole path to PGlite — direct access is blocked. Integration tests verify rollback correctness.",
+  "supersedes": [],
+  "superseded_by": []
+}

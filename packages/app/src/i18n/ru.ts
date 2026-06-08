@@ -119,7 +119,7 @@ export const dict = {
   "dialog.model.manage.description": "Настройте какие модели появляются в выборе модели",
   "dialog.model.manage.provider.toggle": "Переключить все модели {{provider}}",
 
-  "dialog.model.unpaid.freeModels.title": "Бесплатные модели от OpenCode",
+  "dialog.model.unpaid.freeModels.title": "Бесплатные модели от Tribunus",
   "dialog.model.unpaid.addMore.title": "Добавьте больше моделей от популярных провайдеров",
 
   "dialog.provider.viewAll": "Показать больше провайдеров",
@@ -131,30 +131,25 @@ export const dict = {
   "provider.connect.status.inProgress": "Авторизация...",
   "provider.connect.status.waiting": "Ожидание авторизации...",
   "provider.connect.status.failed": "Ошибка авторизации: {{error}}",
-  "provider.connect.apiKey.description":
-    "Введите ваш API ключ {{provider}} для подключения аккаунта и использования моделей {{provider}} в OpenCode.",
+  "provider.connect.apiKey.description": "Введите ваш API ключ {{provider}} для подключения аккаунта и использования моделей {{provider}} в Tribunus.",
   "provider.connect.apiKey.label": "{{provider}} API ключ",
   "provider.connect.apiKey.placeholder": "API ключ",
   "provider.connect.apiKey.required": "API ключ обязателен",
-  "provider.connect.opencodeZen.line1":
-    "OpenCode Zen даёт вам доступ к отобранным надёжным оптимизированным моделям для агентов программирования.",
-  "provider.connect.opencodeZen.line2":
-    "С одним API ключом вы получите доступ к таким моделям как Claude, GPT, Gemini, GLM и другим.",
+  "provider.connect.opencodeZen.line1": "Tribunus Zen даёт вам доступ к отобранным надёжным оптимизированным моделям для агентов программирования.",
+  "provider.connect.opencodeZen.line2": "С одним API ключом вы получите доступ к таким моделям как Claude, GPT, Gemini, GLM и другим.",
   "provider.connect.opencodeZen.visit.prefix": "Посетите ",
   "provider.connect.opencodeZen.visit.link": "opencode.ai/zen",
   "provider.connect.opencodeZen.visit.suffix": " чтобы получить ваш API ключ.",
   "provider.connect.oauth.code.visit.prefix": "Посетите ",
   "provider.connect.oauth.code.visit.link": "эту ссылку",
-  "provider.connect.oauth.code.visit.suffix":
-    " чтобы получить код авторизации для подключения аккаунта и использования моделей {{provider}} в OpenCode.",
+  "provider.connect.oauth.code.visit.suffix": " чтобы получить код авторизации для подключения аккаунта и использования моделей {{provider}} в Tribunus.",
   "provider.connect.oauth.code.label": "{{method}} код авторизации",
   "provider.connect.oauth.code.placeholder": "Код авторизации",
   "provider.connect.oauth.code.required": "Код авторизации обязателен",
   "provider.connect.oauth.code.invalid": "Неверный код авторизации",
   "provider.connect.oauth.auto.visit.prefix": "Посетите ",
   "provider.connect.oauth.auto.visit.link": "эту ссылку",
-  "provider.connect.oauth.auto.visit.suffix":
-    " и введите код ниже для подключения аккаунта и использования моделей {{provider}} в OpenCode.",
+  "provider.connect.oauth.auto.visit.suffix": " и введите код ниже для подключения аккаунта и использования моделей {{provider}} в Tribunus.",
   "provider.connect.oauth.auto.confirmationCode": "Код подтверждения",
   "provider.connect.toast.connected.title": "{{provider}} подключён",
   "provider.connect.toast.connected.description": "Модели {{provider}} теперь доступны.",
@@ -172,8 +167,7 @@ export const dict = {
   "provider.custom.field.baseURL.placeholder": "https://api.myprovider.com/v1",
   "provider.custom.field.apiKey.label": "API ключ",
   "provider.custom.field.apiKey.placeholder": "API ключ",
-  "provider.custom.field.apiKey.description":
-    "Необязательно. Оставьте пустым, если управляете авторизацией через заголовки.",
+  "provider.custom.field.apiKey.description": "Необязательно. Оставьте пустым, если управляете авторизацией через заголовки.",
   "provider.custom.models.label": "Модели",
   "provider.custom.models.id.label": "ID",
   "provider.custom.models.id.placeholder": "model-id",
@@ -309,7 +303,7 @@ export const dict = {
   "dialog.export.title": "Export Session",
   "dialog.export.description": "Export this session as a JSON file for backup or sharing",
   "dialog.export.sanitize": "Remove permissions and local paths",
-  "dialog.export.format": "OpenCode Session (.opencode-session)",
+  "dialog.export.format": "Tribunus Session (.opencode-session)",
   "dialog.export.button": "Export",
   "dialog.export.exporting": "Exporting...",
   "dialog.import.title": "Import Session",
@@ -324,7 +318,7 @@ export const dict = {
   "dialog.directory.empty": "Папки не найдены",
 
   "dialog.server.title": "Серверы",
-  "dialog.server.description": "Переключите сервер OpenCode к которому подключается приложение.",
+  "dialog.server.description": "Переключите сервер Tribunus к которому подключается приложение.",
   "dialog.server.search.placeholder": "Поиск серверов",
   "dialog.server.empty": "Серверов пока нет",
   "dialog.server.add.title": "Добавить сервер",
@@ -339,8 +333,7 @@ export const dict = {
   "dialog.server.add.password": "Пароль (необязательно)",
   "dialog.server.edit.title": "Редактировать сервер",
   "dialog.server.default.title": "Сервер по умолчанию",
-  "dialog.server.default.description":
-    "Подключаться к этому серверу при запуске приложения вместо запуска локального сервера. Требуется перезапуск.",
+  "dialog.server.default.description": "Подключаться к этому серверу при запуске приложения вместо запуска локального сервера. Требуется перезапуск.",
   "dialog.server.default.none": "Сервер не выбран",
   "dialog.server.default.set": "Установить текущий сервер по умолчанию",
   "dialog.server.default.clear": "Очистить",
@@ -363,12 +356,10 @@ export const dict = {
   "dialog.project.edit.color.select": "Выбрать цвет {{color}}",
 
   "dialog.project.edit.worktree.startup": "Скрипт запуска рабочего пространства",
-  "dialog.project.edit.worktree.startup.description":
-    "Запускается после создания нового рабочего пространства (worktree).",
+  "dialog.project.edit.worktree.startup.description": "Запускается после создания нового рабочего пространства (worktree).",
   "dialog.project.edit.worktree.startup.placeholder": "например, bun install",
   "context.breakdown.title": "Разбивка контекста",
-  "context.breakdown.note":
-    'Приблизительная разбивка входных токенов. "Другое" включает определения инструментов и накладные расходы.',
+  "context.breakdown.note": 'Приблизительная разбивка входных токенов. "Другое" включает определения инструментов и накладные расходы.',
   "context.breakdown.system": "Система",
   "context.breakdown.user": "Пользователь",
   "context.breakdown.assistant": "Ассистент",
@@ -457,7 +448,7 @@ export const dict = {
   "toast.session.listFailed.title": "Не удалось загрузить сессии для {{project}}",
 
   "toast.update.title": "Доступно обновление",
-  "toast.update.description": "Новая версия OpenCode ({{version}}) доступна для установки.",
+  "toast.update.description": "Новая версия Tribunus ({{version}}) доступна для установки.",
   "toast.update.action.installRestart": "Установить и перезапустить",
   "toast.update.action.notYet": "Пока нет",
 
@@ -470,12 +461,11 @@ export const dict = {
   "error.page.action.checking": "Проверка...",
   "error.page.action.checkUpdates": "Проверить обновления",
   "error.page.action.updateTo": "Обновить до {{version}}",
-  "error.page.report.prefix": "Пожалуйста, сообщите об этой ошибке команде OpenCode",
-  "error.page.report.discord": "в Discord",
+  "error.page.report.prefix": "Пожалуйста, сообщите об этой ошибке команде Tribunus",
+  "error.page.report.discord": "в GitHub Discussions",
   "error.page.version": "Версия: {{version}}",
 
-  "error.dev.rootNotFound":
-    "Корневой элемент не найден. Вы забыли добавить его в index.html? Или, может быть, атрибут id был написан неправильно?",
+  "error.dev.rootNotFound": "Корневой элемент не найден. Вы забыли добавить его в index.html? Или, может быть, атрибут id был написан неправильно?",
 
   "error.serverSync.connectFailed": "Не удалось подключиться к серверу. Запущен ли сервер по адресу `{{url}}`?",
   "directory.error.invalidUrl": "Недопустимая директория в URL.",
@@ -489,16 +479,12 @@ export const dict = {
   "error.chain.didYouMean": "Возможно, вы имели в виду: {{suggestions}}",
   "error.chain.modelNotFound": "Модель не найдена: {{provider}}/{{model}}",
   "error.chain.checkConfig": "Проверьте названия провайдера/модели в конфиге (opencode.json)",
-  "error.chain.mcpFailed":
-    'MCP сервер "{{name}}" завершился с ошибкой. Обратите внимание, что OpenCode пока не поддерживает MCP авторизацию.',
+  "error.chain.mcpFailed": 'MCP сервер "{{name}}" завершился с ошибкой. Обратите внимание, что Tribunus пока не поддерживает MCP авторизацию.',
   "error.chain.providerAuthFailed": "Ошибка аутентификации провайдера ({{provider}}): {{message}}",
-  "error.chain.providerInitFailed":
-    'Не удалось инициализировать провайдера "{{provider}}". Проверьте учётные данные и конфигурацию.',
+  "error.chain.providerInitFailed": 'Не удалось инициализировать провайдера "{{provider}}". Проверьте учётные данные и конфигурацию.',
   "error.chain.configJsonInvalid": "Конфигурационный файл по адресу {{path}} не является валидным JSON(C)",
-  "error.chain.configJsonInvalidWithMessage":
-    "Конфигурационный файл по адресу {{path}} не является валидным JSON(C): {{message}}",
-  "error.chain.configDirectoryTypo":
-    'Папка "{{dir}}" в {{path}} невалидна. Переименуйте папку в "{{suggestion}}" или удалите её. Это распространённая опечатка.',
+  "error.chain.configJsonInvalidWithMessage": "Конфигурационный файл по адресу {{path}} не является валидным JSON(C): {{message}}",
+  "error.chain.configDirectoryTypo": 'Папка "{{dir}}" в {{path}} невалидна. Переименуйте папку в "{{suggestion}}" или удалите её. Это распространённая опечатка.',
   "error.chain.configFrontmatterError": "Не удалось разобрать frontmatter в {{path}}:\n{{message}}",
   "error.chain.configInvalid": "Конфигурационный файл по адресу {{path}} невалиден",
   "error.chain.configInvalidWithMessage": "Конфигурационный файл по адресу {{path}} невалиден: {{message}}",
@@ -578,10 +564,8 @@ export const dict = {
   "status.popover.action.manageServers": "Управлять серверами",
 
   "session.share.popover.title": "Опубликовать в интернете",
-  "session.share.popover.description.shared":
-    "Эта сессия общедоступна. Доступ к ней может получить любой, у кого есть ссылка.",
-  "session.share.popover.description.unshared":
-    "Опубликуйте сессию в интернете. Доступ к ней сможет получить любой, у кого есть ссылка.",
+  "session.share.popover.description.shared": "Эта сессия общедоступна. Доступ к ней может получить любой, у кого есть ссылка.",
+  "session.share.popover.description.unshared": "Опубликуйте сессию в интернете. Доступ к ней сможет получить любой, у кого есть ссылка.",
   "session.share.action.share": "Поделиться",
   "session.share.action.publish": "Опубликовать",
   "session.share.action.publishing": "Публикация...",
@@ -600,8 +584,7 @@ export const dict = {
   "terminal.title.numbered": "Терминал {{number}}",
   "terminal.close": "Закрыть терминал",
   "terminal.connectionLost.title": "Соединение потеряно",
-  "terminal.connectionLost.description":
-    "Соединение с терминалом прервано. Это может произойти при перезапуске сервера.",
+  "terminal.connectionLost.description": "Соединение с терминалом прервано. Это может произойти при перезапуске сервера.",
 
   "common.closeTab": "Закрыть вкладку",
   "common.dismiss": "Закрыть",
@@ -624,21 +607,20 @@ export const dict = {
   "sidebar.workspaces.enable": "Включить рабочие пространства",
   "sidebar.workspaces.disable": "Отключить рабочие пространства",
   "sidebar.gettingStarted.title": "Начало работы",
-  "sidebar.gettingStarted.line1": "OpenCode включает бесплатные модели, чтобы вы могли начать сразу.",
-  "sidebar.gettingStarted.line2":
-    "Подключите любого провайдера для использования моделей, включая Claude, GPT, Gemini и др.",
+  "sidebar.gettingStarted.line1": "Tribunus включает бесплатные модели, чтобы вы могли начать сразу.",
+  "sidebar.gettingStarted.line2": "Подключите любого провайдера для использования моделей, включая Claude, GPT, Gemini и др.",
   "sidebar.project.recentSessions": "Недавние сессии",
   "sidebar.project.viewAllSessions": "Посмотреть все сессии",
   "sidebar.project.clearNotifications": "Очистить уведомления",
 
-  "app.name.desktop": "OpenCode Desktop",
+  "app.name.desktop": "Tribunus Desktop",
   "settings.section.desktop": "Приложение",
   "settings.section.server": "Сервер",
   "settings.tab.general": "Основные",
   "settings.tab.shortcuts": "Горячие клавиши",
   "settings.desktop.section.wsl": "WSL",
   "settings.desktop.wsl.title": "Интеграция с WSL",
-  "settings.desktop.wsl.description": "Запускать сервер OpenCode внутри WSL на Windows.",
+  "settings.desktop.wsl.description": "Запускать сервер Tribunus внутри WSL на Windows.",
 
   "settings.general.section.appearance": "Внешний вид",
   "settings.general.section.notifications": "Системные уведомления",
@@ -648,13 +630,13 @@ export const dict = {
   "settings.general.section.display": "Дисплей",
 
   "settings.general.row.language.title": "Язык",
-  "settings.general.row.language.description": "Изменить язык отображения OpenCode",
+  "settings.general.row.language.description": "Изменить язык отображения Tribunus",
   "settings.general.row.appearance.title": "Внешний вид",
-  "settings.general.row.appearance.description": "Настройте как OpenCode выглядит на вашем устройстве",
+  "settings.general.row.appearance.description": "Настройте как Tribunus выглядит на вашем устройстве",
   "settings.general.row.colorScheme.title": "Цветовая схема",
-  "settings.general.row.colorScheme.description": "Выберите, следует ли OpenCode системной, светлой или тёмной теме",
+  "settings.general.row.colorScheme.description": "Выберите, следует ли Tribunus системной, светлой или тёмной теме",
   "settings.general.row.theme.title": "Тема",
-  "settings.general.row.theme.description": "Настройте оформление OpenCode.",
+  "settings.general.row.theme.description": "Настройте оформление Tribunus.",
   "settings.general.row.font.title": "Шрифт кода",
   "settings.general.row.font.description": "Настройте шрифт, используемый в блоках кода",
   "settings.general.row.terminalFont.title": "Terminal Font",
@@ -662,38 +644,33 @@ export const dict = {
   "settings.general.row.uiFont.title": "Шрифт интерфейса",
   "settings.general.row.uiFont.description": "Настройте шрифт, используемый во всем интерфейсе",
   "settings.general.row.followup.title": "Поведение уточняющих вопросов",
-  "settings.general.row.followup.description":
-    "Выберите, отправлять ли уточняющие вопросы сразу или помещать их в очередь",
+  "settings.general.row.followup.description": "Выберите, отправлять ли уточняющие вопросы сразу или помещать их в очередь",
   "settings.general.row.followup.option.queue": "Очередь",
   "settings.general.row.followup.option.steer": "Направлять",
   "settings.general.row.reasoningSummaries.title": "Показывать сводки рассуждений",
   "settings.general.row.reasoningSummaries.description": "Отображать сводки рассуждений модели в ленте",
 
   "settings.general.row.shellToolPartsExpanded.title": "Разворачивать элементы инструмента shell",
-  "settings.general.row.shellToolPartsExpanded.description":
-    "Показывать элементы инструмента shell в ленте развернутыми по умолчанию",
+  "settings.general.row.shellToolPartsExpanded.description": "Показывать элементы инструмента shell в ленте развернутыми по умолчанию",
   "settings.general.row.editToolPartsExpanded.title": "Разворачивать элементы инструмента edit",
-  "settings.general.row.editToolPartsExpanded.description":
-    "Показывать элементы инструментов edit, write и patch в ленте развернутыми по умолчанию",
+  "settings.general.row.editToolPartsExpanded.description": "Показывать элементы инструментов edit, write и patch в ленте развернутыми по умолчанию",
   "settings.general.row.showSessionProgressBar.title": "Показывать индикатор прогресса сессии",
-  "settings.general.row.showSessionProgressBar.description":
-    "Показывать анимированный индикатор прогресса вверху сессии, когда агент работает",
+  "settings.general.row.showSessionProgressBar.description": "Показывать анимированный индикатор прогресса вверху сессии, когда агент работает",
   "settings.general.row.wayland.title": "Использовать нативный Wayland",
   "settings.general.row.wayland.description": "Отключить X11 fallback на Wayland. Требуется перезапуск.",
-  "settings.general.row.wayland.tooltip":
-    "На Linux с мониторами разной частоты обновления нативный Wayland может быть стабильнее.",
+  "settings.general.row.wayland.tooltip": "На Linux с мониторами разной частоты обновления нативный Wayland может быть стабильнее.",
 
   "settings.general.row.releaseNotes.title": "Примечания к выпуску",
   "settings.general.row.releaseNotes.description": 'Показывать всплывающие окна "Что нового" после обновлений',
 
   "settings.updates.row.startup.title": "Проверять обновления при запуске",
-  "settings.updates.row.startup.description": "Автоматически проверять обновления при запуске OpenCode",
+  "settings.updates.row.startup.description": "Автоматически проверять обновления при запуске Tribunus",
   "settings.updates.row.check.title": "Проверить обновления",
   "settings.updates.row.check.description": "Проверить обновления вручную и установить, если доступны",
   "settings.updates.action.checkNow": "Проверить сейчас",
   "settings.updates.action.checking": "Проверка...",
   "settings.updates.toast.latest.title": "У вас последняя версия",
-  "settings.updates.toast.latest.description": "Вы используете последнюю версию OpenCode.",
+  "settings.updates.toast.latest.description": "Вы используете последнюю версию Tribunus.",
   "sound.option.none": "Нет",
   "sound.option.alert01": "Alert 01",
   "sound.option.alert02": "Alert 02",
@@ -742,11 +719,9 @@ export const dict = {
   "sound.option.yup06": "Yup 06",
 
   "settings.general.notifications.agent.title": "Агент",
-  "settings.general.notifications.agent.description":
-    "Показывать системное уведомление когда агент завершён или требует внимания",
+  "settings.general.notifications.agent.description": "Показывать системное уведомление когда агент завершён или требует внимания",
   "settings.general.notifications.permissions.title": "Разрешения",
-  "settings.general.notifications.permissions.description":
-    "Показывать системное уведомление когда требуется разрешение",
+  "settings.general.notifications.permissions.description": "Показывать системное уведомление когда требуется разрешение",
   "settings.general.notifications.errors.title": "Ошибки",
   "settings.general.notifications.errors.description": "Показывать системное уведомление когда происходит ошибка",
 
@@ -805,8 +780,7 @@ export const dict = {
   "settings.permissions.tool.read.title": "Чтение",
   "settings.permissions.tool.read.description": "Чтение файла (по совпадению пути)",
   "settings.permissions.tool.edit.title": "Редактирование",
-  "settings.permissions.tool.edit.description":
-    "Изменение файлов, включая редактирование, запись, патчи и мульти-редактирование",
+  "settings.permissions.tool.edit.description": "Изменение файлов, включая редактирование, запись, патчи и мульти-редактирование",
   "settings.permissions.tool.glob.title": "Glob",
   "settings.permissions.tool.glob.description": "Сопоставление файлов по паттернам glob",
   "settings.permissions.tool.grep.title": "Grep",
@@ -830,8 +804,7 @@ export const dict = {
   "settings.permissions.tool.external_directory.title": "Внешняя директория",
   "settings.permissions.tool.external_directory.description": "Доступ к файлам вне директории проекта",
   "settings.permissions.tool.doom_loop.title": "Doom Loop",
-  "settings.permissions.tool.doom_loop.description":
-    "Обнаружение повторяющихся вызовов инструментов с одинаковыми входными данными",
+  "settings.permissions.tool.doom_loop.description": "Обнаружение повторяющихся вызовов инструментов с одинаковыми входными данными",
 
   "session.delete.failed.title": "Не удалось удалить сессию",
   "session.delete.title": "Удалить сессию",
@@ -909,8 +882,7 @@ export const dict = {
   "debugBar.ariaLabel": "Диагностика производительности разработки",
   "debugBar.na": "н/д",
   "debugBar.nav.label": "NAV",
-  "debugBar.nav.tip":
-    "Последний завершенный переход маршрута, затрагивающий страницу сеанса, измеренный от запуска маршрутизатора до первой отрисовки после стабилизации.",
+  "debugBar.nav.tip": "Последний завершенный переход маршрута, затрагивающий страницу сеанса, измеренный от запуска маршрутизатора до первой отрисовки после стабилизации.",
   "debugBar.fps.label": "FPS",
   "debugBar.fps.tip": "Скользящая частота кадров в секунду за последние 5 секунд.",
   "debugBar.frame.label": "FRAME",
@@ -922,8 +894,7 @@ export const dict = {
   "debugBar.delay.label": "DELAY",
   "debugBar.delay.tip": "Худшая наблюдаемая задержка ввода за последние 5 секунд.",
   "debugBar.inp.label": "INP",
-  "debugBar.inp.tip":
-    "Приблизительная продолжительность взаимодействия за последние 5 секунд. Это похоже на INP, а не официальный Web Vitals INP.",
+  "debugBar.inp.tip": "Приблизительная продолжительность взаимодействия за последние 5 секунд. Это похоже на INP, а не официальный Web Vitals INP.",
   "debugBar.cls.label": "CLS",
   "debugBar.cls.tip": "Кумулятивный сдвиг макета за текущее время жизни приложения.",
   "debugBar.mem.label": "MEM",
@@ -996,13 +967,13 @@ export const dict = {
   "dialog.mcp.form.url": "Server URL",  // TODO: translate
   "dialog.mcp.form.urlPlaceholder": "http://localhost:3000",  // TODO: translate
   "dialog.recovery.exportLogs": "Export Logs",  // TODO: translate
-  "dialog.recovery.failedToLoad": "OpenCode failed to load",  // TODO: translate
+  "dialog.recovery.failedToLoad": "Tribunus failed to load",  // TODO: translate
   "dialog.recovery.keepWaiting": "Keep Waiting",  // TODO: translate
-  "dialog.recovery.notResponding": "OpenCode is not responding",  // TODO: translate
+  "dialog.recovery.notResponding": "Tribunus is not responding",  // TODO: translate
   "dialog.recovery.notRespondingDetail": "You can relaunch the app, open the logs, or keep waiting.",  // TODO: translate
   "dialog.recovery.quit": "Quit",  // TODO: translate
   "dialog.recovery.relaunch": "Relaunch",  // TODO: translate
-  "dialog.recovery.terminated": "OpenCode window terminated unexpectedly",  // TODO: translate
+  "dialog.recovery.terminated": "Tribunus window terminated unexpectedly",  // TODO: translate
   "error.page.action.exportLogs": "Export Logs",  // TODO: translate
   "github.branchName": "Branch Name",  // TODO: translate
   "github.commitMessage": "Commit Message",  // TODO: translate

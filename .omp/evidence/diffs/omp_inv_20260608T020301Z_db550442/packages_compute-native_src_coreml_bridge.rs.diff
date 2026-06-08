@@ -1,0 +1,37 @@
+--- a/packages/compute-native/src/coreml_bridge.rs
++++ b/packages/compute-native/src/coreml_bridge.rs
+@@ -61,6 +61,34 @@
+         };
+         if status != 0 {
+             return Err(format!("tribunus_coreml_predict failed: {}", status));
++        }
++        Ok(())
++    }
++
++    /// Run prediction via IOSurface/pixel-buffer path.
++    /// Input arena MUST be IOSurface-backed (non-null cv_buffer).
++    /// Output arena MUST be pre-allocated and IOSurface-backed.
++    /// Both arenas must remain alive until after prediction completes.
++    pub fn predict_pixelbuffer(
++        &self,
++        input_name: &str,
++        input_arena: &ArenaInfo,
++        output_name: &str,
++        output_arena: &mut ArenaInfo,
++    ) -> Result<(), String> {
++        let c_in_name = std::ffi::CString::new(input_name).map_err(|e| format!("CString: {}", e))?;
++        let c_out_name = std::ffi::CString::new(output_name).map_err(|e| format!("CString: {}", e))?;
++        let status = unsafe {
++            tribunus_coreml_predict_pixelbuffer(
++                self.ptr,
++                c_in_name.as_ptr(),
++                input_arena,
++                c_out_name.as_ptr(),
++                output_arena,
++            )
++        };
++        if status != 0 {
++            return Err(format!("tribunus_coreml_predict_pixelbuffer failed: {}", status));
+         }
+         Ok(())
+     }

@@ -1,9 +1,14 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://rig.relay/schemas/prepublication_review_cycle.v1",
+  "$id": "https://tribunus.dev/schemas/prepublication_review_cycle.v1",
   "title": "Prepublication Review Cycle",
   "description": "Schema for prepublication review cycles that capture review rounds, findings, builder responses, and the admission verdict.",
   "type": "object",
+  "$defs": {
+    "NormalizedError": {
+      "$ref": "https://opencode.ai/schemas/defs.json#/$defs/NormalizedError"
+    }
+  },
   "properties": {
     "schemaVersion": {
       "type": "string",
@@ -28,29 +33,13 @@
       "items": {
         "type": "object",
         "properties": {
-          "findingId": {
-            "type": "string",
-            "description": "Unique identifier for this finding"
-          },
-          "axis": {
-            "type": "string",
-            "description": "Review axis (e.g. coupling, safety, surface_area)"
-          },
-          "severity": {
-            "type": "string",
-            "enum": ["blocking", "informational"],
-            "description": "Severity of the finding"
-          },
-          "description": {
-            "type": "string",
-            "description": "Detailed description of the finding"
-          },
-          "blocking": {
-            "type": "boolean",
-            "description": "Whether this finding blocks publication"
-          }
+          "id": { "type": "string", "description": "Finding identifier" },
+          "severity": { "type": "string", "enum": ["critical", "high", "medium", "low"] },
+          "description": { "type": "string", "description": "Finding description" },
+          "evidence": { "type": "string", "description": "Supporting evidence" },
+          "builderResponse": { "type": "string", "description": "Builder's response to the finding" }
         },
-        "required": ["findingId", "axis", "severity", "description", "blocking"]
+        "required": ["id", "severity", "description"]
       }
     },
     "builderResponses": {
@@ -59,29 +48,16 @@
       "items": {
         "type": "object",
         "properties": {
-          "findingId": {
-            "type": "string",
-            "description": "The finding being responded to"
-          },
-          "resolution": {
-            "type": "string",
-            "description": "Resolution status: fixed, wontfix, deferred, disputed"
-          },
-          "description": {
-            "type": "string",
-            "description": "Detailed response description"
-          }
+          "findingId": { "type": "string", "description": "ID of the finding being responded to" },
+          "response": { "type": "string", "description": "Builder's response" },
+          "actionTaken": { "type": "string", "description": "Action taken by the builder" }
         },
-        "required": ["findingId", "resolution"]
+        "required": ["findingId", "response"]
       }
     },
     "verdict": {
       "type": "string",
-      "enum": [
-        "prepublication_admitted",
-        "prepublication_repair_required",
-        "prepublication_blocked_external_dependency"
-      ],
+      "enum": ["admitted", "rejected", "revision_required"],
       "description": "Verdict for this review round"
     },
     "admittedAt": {

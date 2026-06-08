@@ -146,7 +146,7 @@ export const Info = Schema.Struct({
     description: "Server configuration for opencode serve and web commands",
   }),
   command: Schema.optional(Schema.Record(Schema.String, ConfigCommand.Info)).annotate({
-    description: "Command configuration, see https://opencode.ai/docs/commands",
+    description: "Command configuration, see https://tribunus.dev/docs/commands",
   }),
   skills: Schema.optional(ConfigSkills.Info).annotate({ description: "Additional skill folder paths" }),
   reference: Schema.optional(ConfigReference.Info).annotate({
@@ -219,7 +219,7 @@ export const Info = Schema.Struct({
       }),
       [Schema.Record(Schema.String, ConfigAgent.Info)],
     ),
-  ).annotate({ description: "Agent configuration, see https://opencode.ai/docs/agents" }),
+  ).annotate({ description: "Agent configuration, see https://tribunus.dev/docs/agents" }),
   provider: Schema.optional(Schema.Record(Schema.String, ConfigProvider.Info)).annotate({
     description: "Custom provider configurations and model overrides",
   }),
@@ -340,13 +340,7 @@ export class Service extends Context.Service<Service, Interface>()("@opencode/Co
 export const use = serviceUse(Service)
 
 function globalConfigFile() {
-  const candidates = ["tribunus.jsonc", "opencode.jsonc", "opencode.json", "config.json"].map((file) =>
-    path.join(Global.Path.config, file),
-  )
-  for (const file of candidates) {
-    if (existsSync(file)) return file
-  }
-  return candidates[0]
+  return path.join(Global.Path.config, "tribunus.jsonc")
 }
 
 function patchJsonc(input: string, patch: unknown, path: string[] = []): string {
@@ -468,25 +462,18 @@ export const layer = Layer.effect(
 
     const loadGlobal = Effect.fnUntraced(function* (env?: Record<string, string>) {
       let result: Info = {}
-      // Seed the default global config with the schema for editor completion, but avoid writing when the user
-      // explicitly routes config through env-provided paths or content.
-      if (!Flag.OPENCODE_CONFIG && !process.env.TRIBUNUS_CONFIG_DIR && !Flag.OPENCODE_CONFIG_DIR && !Flag.OPENCODE_CONFIG_CONTENT) {
-        const file = globalConfigFile()
-        if (!existsSync(file)) {
-          yield* fs
-            .writeWithDirs(file, JSON.stringify({ $schema: "https://opencode.ai/config.json" }, null, 2))
-            .pipe(
-              Effect.catch((err) => {
-                log.warn("config bootstrap write failed", classifyError(err, "instance.config.bootstrap"))
-                return Effect.void
-              }),
-            )
-        }
+      const file = globalConfigFile()
+      if (!existsSync(file)) {
+        yield* fs
+          .writeWithDirs(file, JSON.stringify({ $schema: "https://tribunus.dev/config.json" }, null, 2))
+          .pipe(
+            Effect.catch((err) => {
+              log.warn("config bootstrap write failed", classifyError(err, "instance.config.bootstrap"))
+              return Effect.void
+            }),
+          )
       }
-      result = mergeConfig(result, yield* loadFile(path.join(Global.Path.config, "config.json"), env))
-      result = mergeConfig(result, yield* loadFile(path.join(Global.Path.config, "opencode.json"), env))
       result = mergeConfig(result, yield* loadFile(path.join(Global.Path.config, "tribunus.jsonc"), env))
-      result = mergeConfig(result, yield* loadFile(path.join(Global.Path.config, "opencode.jsonc"), env))
 
       const legacy = path.join(Global.Path.config, "config")
       if (existsSync(legacy)) {
@@ -552,7 +539,7 @@ export const layer = Layer.effect(
 
         const pluginScopeForSource = Effect.fnUntraced(function* (source: string) {
           if (source.startsWith("http://") || source.startsWith("https://")) return "global"
-          if (source === "OPENCODE_CONFIG_CONTENT") return "local"
+          if (source === "TRIBUNUS_CONFIG_CONTENT") return "local"
           if (containsPath(source, ctx)) return "local"
           return "global"
         })
@@ -628,15 +615,8 @@ export const layer = Layer.effect(
         const global = Object.keys(authEnv).length ? yield* loadGlobal(authEnv) : yield* getGlobal()
         yield* merge(Global.Path.config, global, "global")
 
-        if (Flag.OPENCODE_CONFIG) {
-          yield* merge(Flag.OPENCODE_CONFIG, yield* loadFile(Flag.OPENCODE_CONFIG, authEnv))
-          log.debug("loaded custom config", { path: Flag.OPENCODE_CONFIG })
-        }
-
-        if (!Flag.OPENCODE_DISABLE_PROJECT_CONFIG) {
-          for (const file of yield* ConfigPaths.files("opencode", ctx.directory, ctx.worktree).pipe(Effect.orDie)) {
-            yield* merge(file, yield* loadFile(file, authEnv), "local")
-          }
+        for (const file of yield* ConfigPaths.files("tribunus", ctx.directory, ctx.worktree).pipe(Effect.orDie)) {
+          yield* merge(file, yield* loadFile(file, authEnv), "local")
         }
 
         result.agent = result.agent || {}
@@ -645,7 +625,7 @@ export const layer = Layer.effect(
 
         const directories = yield* ConfigPaths.directories(ctx.directory, ctx.worktree)
 
-        const configDirEnv = process.env.TRIBUNUS_CONFIG_DIR ?? Flag.OPENCODE_CONFIG_DIR
+        const configDirEnv = process.env.TRIBUNUS_CONFIG_DIR
         if (configDirEnv) {
           log.debug("loading config from config dir", { path: configDirEnv })
         }
@@ -653,14 +633,16 @@ export const layer = Layer.effect(
         const deps: Fiber.Fiber<void>[] = []
 
         for (const dir of directories) {
-          if (dir.endsWith(".tribunus") || dir.endsWith(".opencode") || dir === configDirEnv) {
-            for (const file of ["opencode.json", "tribunus.jsonc", "opencode.jsonc"]) {
+          if (dir.endsWith(".tribunus") || dir.endsWith(".omp") || dir === configDirEnv) {
+            for (const file of ["tribunus.jsonc"]) {
               const source = path.join(dir, file)
-              log.debug(`loading config from ${source}`)
-              yield* merge(source, yield* loadFile(source, authEnv))
-              result.agent ??= {}
-              result.mode ??= {}
-              result.plugin ??= []
+              if (yield* fs.existsSafe(source)) {
+                log.debug(`loading config from ${source}`)
+                yield* merge(source, yield* loadFile(source, authEnv))
+                result.agent ??= {}
+                result.mode ??= {}
+                result.plugin ??= []
+              }
             }
           }
           yield* ensureGitignore(dir).pipe(Effect.orDie)
@@ -691,7 +673,7 @@ export const layer = Layer.effect(
           result.command = mergeDeep(result.command ?? {}, yield* Effect.promise(() => ConfigCommand.load(dir)))
           result.agent = mergeDeep(result.agent ?? {}, yield* Effect.promise(() => ConfigAgent.load(dir)))
           result.agent = mergeDeep(result.agent ?? {}, yield* Effect.promise(() => ConfigAgent.loadMode(dir)))
-          // Auto-discovered plugins under `.opencode/plugin(s)` are already local files, so ConfigPlugin.load
+          // Auto-discovered plugins under `.tribunus/plugin(s)` are already local files, so ConfigPlugin.load
           // returns normalized Specs and we only need to attach origin metadata here.
           const list = yield* Effect.promise(() => ConfigPlugin.load(dir))
           yield* mergePluginOrigins(dir, list)
@@ -699,13 +681,13 @@ export const layer = Layer.effect(
 
         const configContent = getEnv("CONFIG_CONTENT")
         if (configContent) {
-          const source = "OPENCODE_CONFIG_CONTENT"
+          const source = "TRIBUNUS_CONFIG_CONTENT"
           const next = yield* loadConfig(configContent, {
             dir: ctx.directory,
             source,
           })
           yield* merge(source, next, "local")
-          log.debug("loaded custom config from OPENCODE_CONFIG_CONTENT")
+          log.debug("loaded custom config from TRIBUNUS_CONFIG_CONTENT")
         }
 
         const activeAccount = Option.getOrUndefined(
@@ -749,7 +731,7 @@ export const layer = Layer.effect(
 
         const managedDir = ConfigManaged.managedConfigDir()
         if (existsSync(managedDir)) {
-          for (const file of ["opencode.json", "tribunus.jsonc", "opencode.jsonc"]) {
+          for (const file of ["tribunus.jsonc"]) {
             const source = path.join(managedDir, file)
             yield* merge(source, yield* loadFile(source), "global")
           }
@@ -774,14 +756,6 @@ export const layer = Layer.effect(
               mode: "primary" as const,
             },
           })
-        }
-
-        if (Flag.OPENCODE_PERMISSION) {
-          try {
-            result.permission = mergeDeep(result.permission ?? {}, JSON.parse(Flag.OPENCODE_PERMISSION))
-          } catch (err) {
-            log.warn("OPENCODE_PERMISSION contains invalid JSON, skipping", { err })
-          }
         }
 
         if (result.tools) {

@@ -27,7 +27,6 @@ import { ProviderV2 } from "@opencode-ai/core/provider"
 import * as DateTime from "effect/DateTime"
 import * as Log from "@opencode-ai/core/util/log"
 import { eq } from "drizzle-orm"
-import { resetDatabase } from "../fixture/db"
 import { disposeAllInstances, provideInstanceEffect, TestInstance, tmpdirScoped } from "../fixture/fixture"
 import { TestLLMServer } from "../lib/llm-server"
 import { testProviderConfig } from "../lib/test-provider"
@@ -214,8 +213,6 @@ function requestJson<T>(path: string, init?: RequestInit) {
 
 afterEach(async () => {
   Flag.OPENCODE_EXPERIMENTAL_WORKSPACES = originalWorkspaces
-  await disposeAllInstances()
-  await resetDatabase()
 })
 
 describe("session HttpApi", () => {
@@ -630,6 +627,11 @@ describe("session HttpApi", () => {
           body: JSON.stringify({ title: "created" }),
         })
         expect(created.title).toBe("created")
+        expect(
+          yield* requestJson<Session.Info>(pathFor(SessionPaths.get, { sessionID: created.id }), {
+            headers: { "x-opencode-directory": test.directory },
+          }),
+        ).toMatchObject({ id: created.id, title: "created" })
 
         const updated = yield* requestJson<Session.Info>(pathFor(SessionPaths.update, { sessionID: created.id }), {
           method: "PATCH",

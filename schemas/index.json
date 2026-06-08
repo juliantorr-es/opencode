@@ -1,0 +1,235 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://opencode.ai/schemas/index.json",
+  "title": "OpenCode Schema Registry Index",
+  "description": "Index of all JSON schemas in the OpenCode/Tribunus project.",
+  "governance": {
+    "ownership_model": "domain-assigned",
+    "description": "Each schema is owned by the domain team responsible for its semantics. The owner field on each schema entry identifies the owning domain. Control-plane schemas are owned by the control-plane team. Provider/routing schemas by the LLM team. UI schemas by the app team.",
+    "namespace_conventions": {
+      "rig.relay": "Control-plane relay schemas \u2014 campaigns, missions, reviews, approvals, push records",
+      "opencode": "Core runtime schemas \u2014 debug packets, runtime events",
+      "tribunus": "Tribunus-branded schemas \u2014 roadmap, protocol spine",
+      "theme": "UI/design schemas \u2014 desktop theme, design tokens"
+    },
+    "modification_rules": {
+      "proposal": "Schema changes proposed via PR with linked ADR or mission",
+      "approval": "Owner domain reviews and approves. Cross-domain changes require all affected owners.",
+      "merge": "CI must pass schema:validate and schema:check before merge",
+      "deprecation": "Deprecated schemas marked with deprecated:true and tombstone_date. Old versions remain readable for 2 release cycles.",
+      "breaking_changes": "Breaking changes require new schema version (e.g., v1\u2192v2) and migration path for consumers."
+    },
+    "orphan_policy": "Schemas without an explicit owner default to control-plane. An automated CI check detects schemas with no owner and fails the build."
+  },
+  "type": "object",
+  "properties": {
+    "schemas": {
+      "type": "array",
+      "description": "List of registered schemas in the project.",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "title",
+          "description",
+          "path",
+          "version"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique schema identifier (e.g., review_manifest.v1)"
+          },
+          "title": {
+            "type": "string",
+            "description": "Human-readable schema title"
+          },
+          "description": {
+            "type": "string",
+            "description": "Schema purpose and scope"
+          },
+          "path": {
+            "type": "string",
+            "description": "Filesystem path to the schema"
+          },
+          "version": {
+            "type": "string",
+            "description": "Schema version (e.g., v1)"
+          },
+          "deprecated": {
+            "type": "boolean",
+            "description": "Whether this schema is deprecated"
+          }
+        }
+      }
+    }
+  },
+  "required": [
+    "schemas"
+  ],
+  "additionalProperties": false,
+  "schemas": [
+    {
+      "id": "review_manifest.v1",
+      "title": "Review Manifest",
+      "description": "Schema for review manifests that capture the subject, artifacts, weight rubric, comparison data, and verdict of a review cycle.",
+      "path": "docs/schemas/rig.relay.review_manifest.v1.schema.json",
+      "version": "v1",
+      "owner": "control-plane",
+      "namespace": "rig.relay"
+    },
+    {
+      "id": "verification_record.v1",
+      "title": "Verification Record",
+      "description": "Schema for verification records capturing verification results and metadata.",
+      "path": "docs/schemas/rig.relay.verification_record.v1.schema.json",
+      "version": "v1",
+      "owner": "control-plane",
+      "namespace": "rig.relay"
+    },
+    {
+      "id": "red_team_approval.v1",
+      "title": "Red Team Approval",
+      "description": "Schema for red team approval records.",
+      "path": "docs/schemas/rig.relay.red_team_approval.v1.schema.json",
+      "version": "v1",
+      "owner": "control-plane",
+      "namespace": "rig.relay"
+    },
+    {
+      "id": "repair_plan_approval.v1",
+      "title": "Repair Plan Approval",
+      "description": "Schema for repair plan approval records.",
+      "path": "docs/schemas/rig.relay.repair_plan_approval.v1.schema.json",
+      "version": "v1",
+      "owner": "control-plane",
+      "namespace": "rig.relay"
+    },
+    {
+      "id": "reporting_honesty_audit.v1",
+      "title": "Reporting Honesty Audit",
+      "description": "Schema for reporting honesty audit records.",
+      "path": "docs/schemas/rig.relay.reporting_honesty_audit.v1.schema.json",
+      "version": "v1",
+      "owner": "control-plane",
+      "namespace": "rig.relay"
+    },
+    {
+      "id": "native_tool_architecture.v1",
+      "title": "Native Tool Architecture Design",
+      "description": "Schema for native tool architecture design documents.",
+      "path": "docs/schemas/rig.relay.native_tool_architecture.v1.schema.json",
+      "version": "v1",
+      "owner": "control-plane",
+      "namespace": "rig.relay"
+    },
+    {
+      "id": "plan_approval.v1",
+      "title": "Plan Approval",
+      "description": "Schema for plan approval records.",
+      "path": "docs/schemas/rig.relay.plan_approval.v1.schema.json",
+      "version": "v1",
+      "owner": "control-plane",
+      "namespace": "rig.relay"
+    },
+    {
+      "id": "prepublication_review_cycle.v1",
+      "title": "Prepublication Review Cycle",
+      "description": "Schema for prepublication review cycle records.",
+      "path": "docs/schemas/rig.relay.prepublication_review_cycle.v1.schema.json",
+      "version": "v1",
+      "owner": "control-plane",
+      "namespace": "rig.relay"
+    },
+    {
+      "id": "push_record.v1",
+      "title": "Push Record",
+      "description": "Schema for push records capturing push events and metadata.",
+      "path": "docs/schemas/rig.relay.push_record.v1.schema.json",
+      "version": "v1",
+      "owner": "control-plane",
+      "namespace": "rig.relay"
+    },
+    {
+      "id": "debug_packet.v1",
+      "title": "Tribunus Debug Packet",
+      "description": "Schema for a full session debug packet exported from Tribunus.",
+      "path": "docs/schemas/opencode.debug_packet.v1.schema.json",
+      "version": "v1",
+      "owner": "runtime",
+      "namespace": "opencode"
+    },
+    {
+      "id": "runtime_event.v1",
+      "title": "Tribunus Runtime Event",
+      "description": "Schema for runtime events capturing session state and transitions.",
+      "path": "docs/schemas/opencode.runtime_event.v1.schema.json",
+      "version": "v1",
+      "owner": "runtime",
+      "namespace": "opencode"
+    },
+    {
+      "id": "builder_publication_record.v1",
+      "title": "Builder Publication Record",
+      "description": "Schema for builder publication records.",
+      "path": "docs/schemas/rig.relay.builder_publication_record.v1.schema.json",
+      "version": "v1",
+      "owner": "control-plane",
+      "namespace": "rig.relay"
+    },
+    {
+      "id": "coordination_task.v1",
+      "title": "Coordination Task",
+      "description": "Schema for coordination task records.",
+      "path": "docs/schemas/rig.relay.coordination.task.v1.schema.json",
+      "version": "v1",
+      "owner": "control-plane",
+      "namespace": "rig.relay"
+    },
+    {
+      "id": "database_security_doctrine.v1",
+      "title": "Database Security Doctrine",
+      "description": "Schema for database security doctrine records.",
+      "path": "docs/schemas/rig.relay.database_security_doctrine.v1.schema.json",
+      "version": "v1",
+      "owner": "control-plane",
+      "namespace": "rig.relay"
+    },
+    {
+      "id": "migration_caller_inventory.v1",
+      "title": "Migration Caller Inventory",
+      "description": "Schema for migration caller inventory records.",
+      "path": "docs/schemas/rig.relay.migration_caller_inventory.v1.schema.json",
+      "version": "v1",
+      "owner": "control-plane",
+      "namespace": "rig.relay"
+    },
+    {
+      "id": "desktop_theme.v1",
+      "title": "OpenCode Desktop Theme",
+      "description": "A theme definition for the OpenCode desktop application.",
+      "path": "packages/ui/src/theme/desktop-theme.schema.json",
+      "version": "v1",
+      "owner": "app",
+      "namespace": "theme"
+    },
+    {
+      "id": "roadmap.v1",
+      "title": "Relational Roadmap",
+      "description": "Relational roadmap schema mapping ADRs to campaigns, missions, lanes, and tasks with concurrent lane execution.",
+      "path": "docs/schemas/rig.relay.roadmap.v1.schema.json",
+      "version": "v1",
+      "owner": "control-plane",
+      "namespace": "rig.relay"
+    },
+    {
+      "id": "roadmap.v2",
+      "title": "Relational Roadmap v2",
+      "description": "Relational roadmap schema v2 with maturity classification, horizon partitioning, authority scoping, evidence requirements, and unattended execution policies.",
+      "path": "docs/schemas/rig.relay.roadmap.v2.schema.json",
+      "version": "v2",
+      "owner": "control-plane",
+      "namespace": "rig.relay"
+    }
+  ]
+}

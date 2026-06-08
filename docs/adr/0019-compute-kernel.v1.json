@@ -1,0 +1,36 @@
+{
+  "schema": "rig.relay.adr.v1",
+  "schema_version": "v1",
+  "id": "0019",
+  "title": "Tribunus Compute Kernel — Governed, Copy-Honest Accelerator Runtime",
+  "status": "accepted",
+  "date": "2026-06-06",
+  "last_modified": "2026-06-07T05:09:03.852Z",
+  "authors": [
+    "system"
+  ],
+  "tags": [
+    "compute",
+    "kernel",
+    "accelerator",
+    "governance",
+    "security",
+    "dharma",
+    "pglite",
+    "valkey",
+    "mlx",
+    "mlx-rs",
+    "rust",
+    "napi-rs",
+    "apple-silicon",
+    "metal",
+    "zero-copy",
+    "gemma",
+    "bootstrap"
+  ],
+  "context": "Tribunus needs local compute as a first-class runtime subsystem, not as an incidental ML library integration. The current architecture already distinguishes durable authority, coordination, memory, session lifecycle, and runtime capabilities. Local inference, embeddings, reranking, KV-cache management, model execution, and accelerator access should follow the same doctrine. If these are modeled as ad hoc Python scripts, opaque MLX calls, or vendor-specific inference adapters, the system will inherit hidden memory movement, unclear authority boundaries, unreceipted execution, and backend lock-in.",
+  "decision": "### MLX via mlx-rs: Apple Silicon Compute Backend (Accepted — Bootstrap Gate)\n\nTribunus will use a Rust-native, copy-honest Compute Kernel with an MLX/Metal backend as the first implementation lane. The architecture has crossed from speculative to physically viable: the TypeScript-to-Rust-to-MLX-to-Metal chain exists and has been demonstrated through a working napi-rs bridge, safetensors inspection and loading, MLX array operations via opaque handles, and a Gemma-like text decoder core that exercises the full compute path (attention, RoPE, SwiGLU, RMSNorm, causal masking, forward pass, greedy sampling).\n\n**The following claims are NOT yet verified and remain subject to gated acceptance criteria:**\n\n- Numerical equivalence against an official or trusted Gemma 4 reference implementation\n- Correct hybrid local/global attention schedule, proportional RoPE scaling, and tokenizer behavior matching Google's published model card\n- End-to-end zero-copy weight loading (current path: mmap→MLX copy, not mmap→MLX external buffer reference)\n- ArrayHandle registry safety under concurrent access, stale handle reuse, and long-running session accumulation\n- Non-blocking async execution (current forward pass is synchronous and would freeze the Bun event loop)\n- Production packaging with pinned mlx-rs, mlx-c, and MLX Core versions and reproducible build receipts\n- Multimodal input (text-only decoder core only; Gemma 4's image and audio projections are not implemented)\n\n**What has been demonstrated:**\n\n- Bun/napi-rs loads a compiled Rust addon and discovers the MLX backend\n- Safetensors files can be inspected (header read) and loaded (tensors→handles) through mlx-rs\n- MLX array operations (matmul, add, multiply) execute through the handle registry\n- A Gemma-configured decoder (RMSNorm, RoPE, GQA, SwiGLU, 48 layers) accepts weights and produces logits\n- TypeScript governance layer degrades gracefully when the native addon is not built\n- Stub mode tests pass (4/4), validating the TypeScript adapter shell\n\nThe next gate is \"MLX Backend Correctness, Lifetime, and Copy-Honesty Gate\" — numerical parity validation, handle lifecycle safety, async execution, and a copy ledger through every data-movement transition.\n\n### Previous Survey (Retained for Reference)\n\nThe original survey of Burn+CubeCL, Candle, IREE, Arrow C Data Interface, DLPack, and Safetensors remains valid context. Burn+CubeCL is deferred for cross-platform. Safetensors is the weight format. DLPack and Arrow C Data Interface are the interchange standards for plugin consumers.",
+  "consequences": "### Build & Distribution\n\nAdding a Rust native crate introduces Rust toolchain and CMake dependencies. The native addon currently targets arm64-darwin only. Exact dependency version binding (mlx-rs version, mlx-c version, MLX Core version, Metal SDK version, macOS deployment target) must be captured in a build receipt before production packaging. The Electron desktop app already ships native addons (mac_window.node), establishing the packaging pattern.\n\n### API Surface\n\nThe Tribunus governance layer (TypeScript) remains the authority boundary. The Rust crate is a pure compute substrate — it has no access to PGlite, Valkey, session state, or coordination. All governance decisions (receipt generation, checkpoint persistence, model registry lookups) happen in TypeScript. The Rust layer receives buffer handles, executes operations, and returns receipts.\n\n### Synchronization Model\n\nThe current forward pass is synchronous and would block the Bun event loop. Production use requires either napi-rs async tasks, a dedicated native executor thread, or a job/submission model where TypeScript submits inference jobs and consumes token batches asynchronously. The streaming boundary must be cancellation-aware and backpressure-aware.\n\n### Memory Model\n\nApple Silicon unified memory means allocations via MLX are accessible to both CPU and GPU without copies between CPU and GPU memory pools. However, the current safetensors loading path copies from the mmap'd file region into MLX-managed storage — this is one materialization copy, not a true zero-copy weight path. A copy ledger through every data-movement transition (mmap→Rust view→MLX Array→Metal allocation→kernel input) must be produced and validated. Internal arrays should remain behind opaque handles; readback via array_data_f32 is a materializing operation and must be labeled as such.\n\n### ArrayHandle Registry Safety\n\nThe global ArrayHandle registry currently uses monotonically increasing integers without generation checking. A released handle whose slot is reused could be addressed accidentally by stale TypeScript state. A slot-and-generation identifier (or opaque random identifier) must replace the current scheme. Handle lifecycle must define owner scope, creation receipt, last-use state, release operation, invalid-handle behavior, and bounded retention to prevent unbounded accumulation during long-running sessions.\n\n### Stub Discrimination\n\nThe native backend loader must distinguish three states: (1) native backend available and verified, (2) native backend unavailable with explicit degraded mode, (3) native backend required but unavailable. Stub substitution in production for any authority-relevant operation is a correctness failure. The execution receipt must identify the concrete backend as mlx-metal, cpu-reference, or stub — not merely infer it from a router branch.\n\n### Model Distribution\n\nPre-converted safetensors weights from mlx-community on Hugging Face. The current text decoder core targets the Gemma text architecture but does not yet verify numerical equivalence against Google's official reference. Multimodal projections (image, audio) and the hybrid local/global attention schedule are not implemented.",
+  "supersedes": [],
+  "superseded_by": []
+}

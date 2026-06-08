@@ -103,6 +103,32 @@ CREATE TABLE IF NOT EXISTS _analytics_diagnostics (
   args_used TEXT, recovery_attempted INTEGER, recorded_at BIGINT
 )` as const
 
+// ── Valkey Coordination Tables ──────────────────────────────
+//
+// Tables for Valkey-backed coordination fabric metrics. Populated
+// by the DuckDB pipeline when optional valkeySnapshot data is provided.
+
+/** Valkey consumer group snapshot — group names, stream keys, pending counts. */
+export const VALKEY_CONSUMER_GROUPS_TABLE = `
+CREATE OR REPLACE TABLE _pipeline_valkey_consumer_groups (
+  group_name TEXT,
+  stream_key TEXT,
+  pending_count INTEGER,
+  last_delivered_id TEXT,
+  consumer_count INTEGER,
+  snapshot_at_epoch BIGINT
+)` as const
+
+/** Valkey heartbeat snapshot — agent presence and generation. */
+export const VALKEY_HEARTBEATS_TABLE = `
+CREATE OR REPLACE TABLE _pipeline_valkey_heartbeats (
+  agent_id TEXT,
+  lane_id TEXT,
+  last_heartbeat_epoch BIGINT,
+  status TEXT,
+  generation INTEGER
+)` as const
+
 // ── Context Projection Tables ──────────────────────────────
 //
 // Tables for context-aware working set ranking. Populated by
@@ -322,6 +348,184 @@ FROM _pipeline_runtime_event
 ORDER BY session_id, ts
 ` as const
 
+// ── Product Analytical Queries ───────────────────────────────
+
+/** Packet Propagation Velocity — "Which packet families propagate fastest?" */
+export const PACKET_PROPAGATION_VELOCITY_VIEW = `
+CREATE OR REPLACE VIEW packet_propagation_velocity AS
+WITH packet_data AS (
+  SELECT
+    COALESCE(
+      json_extract_string(model, '$.source_family'),
+      json_extract_string(model, '$.packet_type'),
+      'unknown'
+    ) AS packet_family,
+    CAST(json_extract(model, '$.time_to_propagate') AS DOUBLE) AS time_to_propagate,
+    id AS session_id
+  FROM _pipeline_session
+  WHERE json_extract_string(model, '$.source_packet') IS NOT NULL
+     OR json_extract_string(model, '$.packet_type') IS NOT NULL
+),
+event_propagation AS (
+  SELECT
+    event_type AS packet_family,
+    session_id,
+    CAST((EXTRACT(epoch FROM MAX(ts)) - EXTRACT(epoch FROM MIN(ts))) * 1000 AS BIGINT) AS propagation_window_ms
+  FROM _pipeline_runtime_event
+  WHERE event_type IS NOT NULL
+  GROUP BY event_type, session_id
+)
+SELECT
+  COALESCE(pd.packet_family, ep.packet_family) AS packet_family,
+  COUNT(DISTINCT COALESCE(pd.session_id, ep.session_id)) AS sessions,
+  AVG(pd.time_to_propagate) AS avg_time_to_propagate_ms,
+  MAX(pd.time_to_propagate) AS max_time_to_propagate_ms,
+  AVG(NULLIF(ep.propagation_window_ms, 0)) AS avg_propagation_window_ms,
+  CASE WHEN AVG(pd.time_to_propagate) IS NOT NULL THEN 'direct' ELSE 'inferred' END AS source_type
+FROM packet_data pd
+FULL OUTER JOIN event_propagation ep ON pd.packet_family = ep.packet_family AND pd.session_id = ep.session_id
+GROUP BY COALESCE(pd.packet_family, ep.packet_family)
+ORDER BY COALESCE(AVG(pd.time_to_propagate), AVG(ep.propagation_window_ms)) ASC NULLS LAST
+` as const
+
+/** Framework Failure Frequency — "Which frameworks produce repeated failures?" */
+export const FRAMEWORK_FAILURE_FREQUENCY_VIEW = `
+CREATE OR REPLACE VIEW framework_failure_frequency AS
+SELECT
+  COALESCE(split_part(tool_name, ':', 1), 'unknown') AS framework,
+  COUNT(*) AS failure_count,
+  MAX(ts) AS last_failure,
+  COUNT(DISTINCT session_id) AS distinct_sessions,
+  COUNT(DISTINCT tool_name) AS distinct_tools
+FROM _pipeline_runtime_event
+WHERE status = 'failed'
+  AND error_code IS NOT NULL
+GROUP BY framework
+ORDER BY failure_count DESC
+` as const
+
+/** Dharma PR Correlation — "Which dharma signals correlate with merged PRs?" */
+export const DHARMA_PR_CORRELATION_VIEW = `
+CREATE OR REPLACE VIEW dharma_pr_correlation AS
+WITH session_signals AS (
+  SELECT
+    COALESCE(
+      json_extract_string(model, '$.dharma'),
+      json_extract_string(model, '$.dharma_signal'),
+      json_extract_string(model, '$.tags')
+    ) AS dharma_signal,
+    CAST(
+      COALESCE(
+        json_extract(model, '$.merged_prs'),
+        json_extract(model, '$.merged_pr_count'),
+        '0'
+      ) AS INTEGER
+    ) AS merged_prs,
+    id AS session_id
+  FROM _pipeline_session
+  WHERE json_extract_string(model, '$.dharma') IS NOT NULL
+     OR json_extract_string(model, '$.dharma_signal') IS NOT NULL
+     OR json_extract_string(model, '$.tags') IS NOT NULL
+)
+SELECT
+  dharma_signal,
+  COUNT(*) AS total_sessions,
+  SUM(merged_prs) AS merged_prs,
+  CASE
+    WHEN COUNT(*) > 0 THEN SUM(merged_prs)::DOUBLE / COUNT(*)
+    ELSE 0.0
+  END AS correlation_score,
+  MAX(merged_prs) AS max_prs_in_session
+FROM session_signals
+WHERE dharma_signal IS NOT NULL
+GROUP BY dharma_signal
+ORDER BY correlation_score DESC
+` as const
+
+/** Codex Staleness — "Which codex entries are going stale?" */
+export const CODEX_STALENESS_VIEW = `
+CREATE OR REPLACE VIEW codex_staleness AS
+SELECT
+  file_path,
+  MAX(ts) AS last_touched,
+  CAST((EXTRACT(epoch FROM CURRENT_TIMESTAMP) - EXTRACT(epoch FROM MAX(ts))) / 86400 AS INTEGER) AS days_since_touch,
+  CASE
+    WHEN MAX(ts) < CURRENT_TIMESTAMP - INTERVAL '7 days' THEN TRUE
+    ELSE FALSE
+  END AS is_stale,
+  COUNT(*) AS total_events,
+  COUNT(DISTINCT session_id) AS sessions_touched,
+  COUNT(DISTINCT actor) AS distinct_actors
+FROM _pipeline_runtime_event
+WHERE file_path IS NOT NULL
+GROUP BY file_path
+ORDER BY last_touched ASC NULLS LAST
+` as const
+
+/** Agent Route Quality — "Which agent routes produce bad matches?" */
+export const AGENT_ROUTE_QUALITY_VIEW = `
+CREATE OR REPLACE VIEW agent_route_quality AS
+SELECT
+  COALESCE(actor, 'unknown') AS route,
+  COUNT(*) AS total_calls,
+  SUM(CASE WHEN status = 'failed' OR status = 'error' THEN 1 ELSE 0 END) AS error_count,
+  SUM(CASE WHEN status = 'success' THEN 1 ELSE 0 END) AS success_count,
+  CASE
+    WHEN COUNT(*) > 0
+    THEN CAST(SUM(CASE WHEN status = 'failed' OR status = 'error' THEN 1 ELSE 0 END) AS DOUBLE) / COUNT(*) * 100.0
+    ELSE 0.0
+  END AS error_rate,
+  AVG(duration_ms) AS avg_duration_ms
+FROM _pipeline_runtime_event
+WHERE actor IS NOT NULL
+  OR event_type LIKE 'agent.%'
+GROUP BY route
+ORDER BY error_rate DESC
+` as const
+
+// ── Valkey Coordination Views ───────────────────────────────
+
+/** Stale Heartbeats — agents with heartbeat > 60s ago. */
+export const STALE_HEARTBEATS_VIEW = `
+CREATE OR REPLACE VIEW stale_heartbeats AS
+SELECT
+  agent_id,
+  lane_id,
+  last_heartbeat_epoch,
+  status,
+  generation,
+  (CAST(epoch_ms(CURRENT_TIMESTAMP) AS BIGINT) - last_heartbeat_epoch) / 1000 AS stale_seconds
+FROM _pipeline_valkey_heartbeats
+WHERE last_heartbeat_epoch < CAST(epoch_ms(CURRENT_TIMESTAMP) AS BIGINT) - 60000
+ORDER BY stale_seconds DESC
+` as const
+
+/** Consumer Lag — consumer groups sorted by pending_count DESC. */
+export const CONSUMER_LAG_VIEW = `
+CREATE OR REPLACE VIEW consumer_lag AS
+SELECT
+  group_name,
+  stream_key,
+  pending_count,
+  last_delivered_id,
+  consumer_count,
+  snapshot_at_epoch
+FROM _pipeline_valkey_consumer_groups
+ORDER BY pending_count DESC
+` as const
+
+/** Coordination Health — summary of total agents, active leases, generation. */
+export const COORDINATION_HEALTH_VIEW = `
+CREATE OR REPLACE VIEW coordination_health AS
+SELECT
+  (SELECT COUNT(DISTINCT agent_id) FROM _pipeline_valkey_heartbeats WHERE status = 'active') AS total_agents,
+  (SELECT COUNT(*) FROM _pipeline_valkey_heartbeats WHERE status = 'active') AS active_leases,
+  GREATEST((SELECT COALESCE(MAX(generation), 0) FROM _pipeline_valkey_heartbeats), 0) AS generation,
+  (SELECT COALESCE(SUM(pending_count), 0) FROM _pipeline_valkey_consumer_groups) AS total_pending,
+  (SELECT COUNT(*) FROM _pipeline_valkey_consumer_groups) AS consumer_group_count,
+  CAST(epoch_ms(CURRENT_TIMESTAMP) AS BIGINT) AS snapshot_at_epoch
+` as const
+
 /** All runtime event analytical views. */
 export const RUNTIME_EVENT_VIEWS = [
   FAILURE_HOTSPOTS_VIEW,
@@ -330,12 +534,21 @@ export const RUNTIME_EVENT_VIEWS = [
   PHASE_GATE_DENIALS_VIEW,
   ERROR_SUMMARY_VIEW,
   SESSION_TIMELINE_VIEW,
+  STALE_HEARTBEATS_VIEW,
+  CONSUMER_LAG_VIEW,
+  COORDINATION_HEALTH_VIEW,
+  PACKET_PROPAGATION_VELOCITY_VIEW,
+  FRAMEWORK_FAILURE_FREQUENCY_VIEW,
+  DHARMA_PR_CORRELATION_VIEW,
+  CODEX_STALENESS_VIEW,
+  AGENT_ROUTE_QUALITY_VIEW,
 ] as const
 
 /** All analytical tables to create on init (before views). */
 export const ALL_TABLES = [
   WAVES_TABLE, FINDINGS_TABLE, REGISTRY_TABLE,
   QA_TABLE, DIAGNOSTICS_TABLE, RUNTIME_EVENTS_TABLE,
+  VALKEY_CONSUMER_GROUPS_TABLE, VALKEY_HEARTBEATS_TABLE,
   ...ALL_CTX_TABLES,
 ] as const
 

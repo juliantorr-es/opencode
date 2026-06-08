@@ -11,7 +11,7 @@ export const dict = {
   "desktop.updater.checkFailed.title": "アップデートの確認に失敗しました",
   "desktop.updater.checkFailed.message": "アップデートを確認できませんでした",
   "desktop.updater.none.title": "利用可能なアップデートはありません",
-  "desktop.updater.none.message": "すでに最新バージョンの OpenCode を使用しています",
+  "desktop.updater.none.message": "すでに最新バージョンの Tribunus を使用しています",
   "desktop.updater.downloadFailed.title": "アップデートに失敗しました",
   "desktop.updater.downloadFailed.message": "アップデートをダウンロードできませんでした",
   "desktop.updater.downloaded.title": "アップデートをダウンロードしました",

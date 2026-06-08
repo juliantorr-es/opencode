@@ -63,14 +63,14 @@ describe("PG migrations", () => {
       // Tracking table should exist
       expect(tablesSecond).toContain("__drizzle_migrations")
 
-      // Should have exactly 4 migration records
+      // Should have exactly 8 migration records
       const underlying = (client as any).$client
       const countResult = await underlying.query(
         'SELECT COUNT(*) as cnt FROM "__drizzle_migrations"',
       )
       const rows = Array.isArray(countResult) ? countResult : countResult.rows ?? []
       const cnt = Number(rows[0]?.cnt ?? 0)
-      expect(cnt).toBe(5)
+      expect(cnt).toBe(8)
     } finally {
       const underlying = (client as any).$client
       if (underlying && typeof underlying.end === "function") {

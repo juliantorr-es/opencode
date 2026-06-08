@@ -1,153 +1,78 @@
 {
-  "share": "auto",
-  "$schema": "https://tribunus.dev/config.json",
-  "default_agent": "general-man-agent",
-  "provider": {},
+  "$schema": "https://opencode.ai/config.json",
+  "lsp": true,
   "permission": {
-    "*": "deny",
+    "bash": "allow",
+    "edit": "allow",
     "read": {
+      "*": "allow",
       "*.env": "deny",
       "*.env.*": "deny",
-      "*": "allow"
+      "*.env.example": "allow"
     },
-    "doom_loop": "deny",
-    "question": "deny",
-    "external_directory": "deny"
-  },
-  "mcp": {},
-  "agent": {
-    "general-man-agent": {
-      "permission": {
-        "lane_spawn": "allow",
-        "task_board": "allow",
-        "smart_session": "allow",
-        "read(action=\"messages\")": "allow",
-        "record(action=\"lesson\")": "allow",
-        "session_diff": "allow",
-        "roadmap(action=\"init\")": "allow",
-        "roadmap(action=\"progress\")": "allow",
-        "roadmap(action=\"next\")": "allow",
-        "roadmap(action=\"deprecate\")": "allow",
-        "roadmap(action=\"prioritize\")": "allow",
-        "feedback(action=\"tool\")": "allow",
-        "verify(action=\"files\")": "allow"
-      }
-    },
-    "cartographer": {
-      "permission": {
-        "spawn_leaf": "allow",
-        "smart_find": "allow",
-        "smart_grep": "allow",
-        "smart_git": "allow",
-        "read_source": "allow",
-        "read(action=\"artifact\")": "allow",
-        "read(action=\"lib\")": "allow",
-        "smart_batch": "allow",
-        "smart_sd": "allow",
-        "discover(action=\"findings\")": "allow",
-        "gate(action=\"finding\")": "allow",
-        "record(action=\"lesson\")": "allow",
-        "record(action=\"activity\")": "allow",
-        "record(action=\"finding\")": "allow",
-        "feedback(action=\"tool\")": "allow"
-      }
-    },
-    "architect": {
-      "permission": {
-        "spawn_leaf": "allow",
-        "smart_find": "allow",
-        "smart_grep": "allow",
-        "smart_git": "allow",
-        "read_source": "allow",
-        "read(action=\"artifact\")": "allow",
-        "read(action=\"lib\")": "allow",
-        "smart_batch": "allow",
-        "smart_sd": "allow",
-        "discover(action=\"findings\")": "allow",
-        "gate(action=\"finding\")": "allow",
-        "record(action=\"lesson\")": "allow",
-        "record(action=\"activity\")": "allow",
-        "record(action=\"finding\")": "allow",
-        "feedback(action=\"tool\")": "allow"
-      }
-    },
-    "critic": {
-      "permission": {
-        "spawn_leaf": "allow",
-        "smart_find": "allow",
-        "smart_grep": "allow",
-        "smart_git": "allow",
-        "read_source": "allow",
-        "read(action=\"artifact\")": "allow",
-        "read(action=\"lib\")": "allow",
-        "smart_batch": "allow",
-        "smart_sd": "allow",
-        "gate(action=\"finding\")": "allow",
-        "record(action=\"lesson\")": "allow",
-        "record(action=\"activity\")": "allow",
-        "record(action=\"finding\")": "allow",
-        "feedback(action=\"tool\")": "allow"
-      }
-    },
-    "surgeon": {
-      "permission": {
-        "spawn_leaf": "allow",
-        "verify(action=\"files\")": "allow",
-        "smart_find": "allow",
-        "smart_grep": "allow",
-        "smart_git": "allow",
-        "smart_bun": "allow",
-        "read_source": "allow",
-        "read(action=\"artifact\")": "allow",
-        "read(action=\"lib\")": "allow",
-        "smart_batch": "allow",
-        "smart_sd": "allow",
-        "gate(action=\"finding\")": "allow",
-        "record(action=\"lesson\")": "allow",
-        "record(action=\"activity\")": "allow",
-        "record(action=\"finding\")": "allow",
-        "feedback(action=\"tool\")": "allow"
-      }
-    },
-    "trial": {
-      "permission": {
-        "spawn_leaf": "allow",
-        "smart_find": "allow",
-        "smart_grep": "allow",
-        "smart_git": "allow",
-        "smart_bun": "allow",
-        "read_source": "allow",
-        "smart_batch": "allow",
-        "smart_sd": "allow",
-        "gate(action=\"finding\")": "allow",
-        "record(action=\"lesson\")": "allow",
-        "record(action=\"activity\")": "allow",
-        "record(action=\"finding\")": "allow",
-        "feedback(action=\"tool\")": "allow"
-      }
-    },
-    "journalist": {
-      "permission": {
-        "spawn_leaf": "allow",
-        "smart_find": "allow",
-        "smart_grep": "allow",
-        "smart_git": "allow",
-        "smart_bun": "allow",
-        "read_source": "allow",
-        "smart_batch": "allow",
-        "smart_sd": "allow",
-        "smart_edit": "allow",
-        "smart_write": "allow",
-        "gate(action=\"finding\")": "allow",
-        "record(action=\"lesson\")": "allow",
-        "record(action=\"activity\")": "allow",
-        "record(action=\"finding\")": "allow",
-        "feedback(action=\"tool\")": "allow"
-      }
-    }
-  },
-  "tools": {
-    "github-triage": false,
-    "github-pr-search": false
+    "glob": "allow",
+    "grep": "allow",
+    "webfetch": "allow",
+    "websearch": "allow",
+    "skill": "allow",
+    "task": "allow",
+    // ── Custom tools from .omp/tools/ ──────────────────────────────────
+    // Control plane — campaigns
+    "new_campaign": "allow",
+    "start_campaign": "allow",
+    "end_campaign": "allow",
+    "checkpoint_campaign": "allow",
+    // Control plane — missions
+    "new_mission": "allow",
+    "start_mission": "allow",
+    "end_mission": "allow",
+    "checkpoint_mission": "allow",
+    // Control plane — lanes
+    "new_lane": "allow",
+    "start_lane": "allow",
+    "end_lane": "allow",
+    "checkpoint_lane": "allow",
+    // Control plane — tasks
+    "new_task": "allow",
+    "start_task": "allow",
+    "end_task": "allow",
+    "checkpoint_task": "allow",
+    // Board & session
+    "task_board": "allow",
+    "smart_session": "allow",
+    // Export & review
+    "code_review_export": "allow",
+    "review_packet_export": "allow",
+    "semantic_review_packet_export": "allow",
+    "verify_review_packets": "allow",
+    // Code intelligence
+    "authority_audit": "allow",
+    "symbol_lookup": "allow",
+    "impact_analysis": "allow",
+    "semantic_repo_map": "allow",
+    "test_gap_report": "allow",
+    "generate_research_context_packets": "allow",
+    // Smart I/O & execution
+    "smart_bash": "allow",
+    "smart_edit": "allow",
+    "smart_write": "allow",
+    "smart_find": "allow",
+    "smart_grep": "allow",
+    "smart_git": "allow",
+    "smart_bun": "allow",
+    "smart_sd": "allow",
+    // File operations
+    "read_source": "allow",
+    "struct_read": "allow",
+    "batch_edit": "allow",
+    "text_replace": "allow",
+    // ADR
+    "new_adr": "allow",
+    "update_adr": "allow",
+    // OMP coordination
+    "omp_history": "allow",
+    "omp_recover": "allow"
   }
 }
+
+

@@ -1,0 +1,67 @@
+{
+  "schema": "omp.tool.manifest.v1",
+  "tool_id": "review_packet_export",
+  "version": "1.0.0",
+  "title": "Review Packet Export",
+  "description": "Agent-facing paired packet exporter. Exports the semantic IR ZIP and source-review ZIP from the same OMP semantic snapshot.",
+  "authority": {
+    "risk_level": "write_medium",
+    "side_effects": "filesystem_write",
+    "requires_approval": false,
+    "requires_hash_precondition": false,
+    "allowed_roots": [
+      "."
+    ],
+    "denied_patterns": [
+      ".git/",
+      "node_modules/",
+      ".env",
+      ".env.*",
+      "*.pem",
+      "*.key"
+    ],
+    "max_files_touched": 10
+  },
+  "input_schema": {
+    "type": "object",
+    "properties": {
+      "semantic_output_path": {
+        "type": "string"
+      },
+      "source_output_path": {
+        "type": "string"
+      },
+      "force": {
+        "type": "boolean",
+        "default": true,
+        "description": "Rebuild the semantic snapshot before exporting. Defaults to true for agent-facing handoffs."
+      }
+    }
+  },
+  "output_schema": {
+    "type": "object",
+    "properties": {
+      "semantic_zip_path": {
+        "type": "string"
+      },
+      "semantic_zip_sha256": {
+        "type": "string"
+      },
+      "source_zip_path": {
+        "type": "string"
+      },
+      "source_zip_sha256": {
+        "type": "string"
+      },
+      "warnings": {
+        "type": "array"
+      }
+    }
+  },
+  "provider_exports": {
+    "mistral_function_calling": true,
+    "openai_tools": true,
+    "anthropic_tools": true,
+    "mcp": true
+  }
+}

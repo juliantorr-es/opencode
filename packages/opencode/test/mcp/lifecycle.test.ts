@@ -1,7 +1,15 @@
-import { expect, mock, beforeEach } from "bun:test"
-import { Cause, Effect, Exit } from "effect"
+import { expect, mock, beforeEach, test } from "bun:test"
+import { Cause, Effect, Exit, Layer } from "effect"
+import { ChildProcessSpawner } from "effect/unstable/process"
 import type { MCP as MCPNS } from "../../src/mcp/index"
-import { testEffect } from "../lib/effect"
+import { CapabilityToolRegistry, liveRegistryLayer } from "../../src/capability/tool-registry"
+import { DatabaseAdapter } from "@/storage/adapter"
+import { Config } from "../../src/config/config"
+import { Bus } from "../../src/bus"
+import { McpAuth } from "../../src/mcp/auth"
+import { AppFileSystem } from "@opencode-ai/core/filesystem"
+import { CrossSpawnSpawner } from "@opencode-ai/core/cross-spawn-spawner"
+import { provideTmpdirInstance } from "../fixture/fixture"
 
 // --- Mock infrastructure ---
 
@@ -181,7 +189,46 @@ beforeEach(() => {
 const { MCP } = await import("../../src/mcp/index")
 const { McpOAuthCallback } = await import("../../src/mcp/oauth-callback")
 
-const it = testEffect(MCP.defaultLayer)
+const childProcessSpawnerLayer = Layer.succeed(
+  ChildProcessSpawner.ChildProcessSpawner,
+  ChildProcessSpawner.make(() => Effect.die("unexpected child process spawn")),
+)
+
+const mcpLayer = Layer.mergeAll(
+  DatabaseAdapter.defaultLayer,
+  liveRegistryLayer,
+  MCP.layer.pipe(
+    Layer.provide(liveRegistryLayer),
+    Layer.provide(McpAuth.defaultLayer),
+    Layer.provideMerge(Bus.layer),
+    Layer.provide(Config.defaultLayer),
+    Layer.provide(CrossSpawnSpawner.defaultLayer),
+    Layer.provide(AppFileSystem.defaultLayer),
+  ),
+).pipe(Layer.provideMerge(childProcessSpawnerLayer))
+
+const runLifecycle = <A, E, R>(
+  effect: Effect.Effect<A, E, R>,
+  options?: { git?: boolean; config?: Partial<Record<string, unknown>> | (() => Partial<Record<string, unknown>>) },
+) =>
+  Effect.runPromise(
+    provideTmpdirInstance(() => effect, options as any).pipe(Effect.scoped, Effect.provide(mcpLayer)) as any,
+  )
+
+const it = {
+  instance: <A, E>(
+    name: string,
+    body: () => Effect.Effect<A, E, never>,
+    options?: { git?: boolean; config?: Partial<Record<string, unknown>> | (() => Partial<Record<string, unknown>>) } | number,
+    _opts?: number,
+  ) =>
+    test(name, () => {
+      const lifecycleOptions = typeof options === "number" ? undefined : options
+      return runLifecycle(body(), lifecycleOptions)
+    }, { timeout: 30000 }),
+  live: <A, E>(name: string, body: () => Effect.Effect<A, E, never>) =>
+    test(name, () => runLifecycle(body()), { timeout: 30000 }),
+}
 
 function statusName(status: Record<string, MCPNS.Status> | MCPNS.Status, server: string) {
   if ("status" in status) return status.status
@@ -231,6 +278,7 @@ it.instance(
   () =>
     MCP.Service.use((mcp: MCPNS.Interface) =>
       Effect.gen(function* () {
+        const registry = yield* CapabilityToolRegistry
         lastCreatedClientName = "status-server"
         const serverState = getOrCreateClientState("status-server")
 
@@ -255,6 +303,11 @@ it.instance(
         expect(Object.keys(after).some((key) => key.includes("next_tool"))).toBe(true)
         expect(Object.keys(after).some((key) => key.includes("test_tool"))).toBe(false)
         expect(serverState.listToolsCalls).toBe(2)
+
+        const oldExit = yield* registry.resolveCapabilityTool("status-server.test_tool").pipe(Effect.exit)
+        expect(Exit.isFailure(oldExit)).toBe(true)
+        const nextDef = yield* registry.resolveCapabilityTool("status-server.next_tool")
+        expect(nextDef.providerID).toBe("status-server")
       }),
     ),
   { config: { mcp: {} } },
@@ -269,6 +322,7 @@ it.instance(
   () =>
     MCP.Service.use((mcp: MCPNS.Interface) =>
       Effect.gen(function* () {
+        const registry = yield* CapabilityToolRegistry
         lastCreatedClientName = "disc-server"
         getOrCreateClientState("disc-server")
 
@@ -288,6 +342,9 @@ it.instance(
         const tools = yield* mcp.tools()
         const serverTools = Object.keys(tools).filter((k) => k.startsWith("disc-server"))
         expect(serverTools.length).toBe(0)
+
+        const exit = yield* registry.resolveCapabilityTool("disc-server.test_tool").pipe(Effect.exit)
+        expect(Exit.isFailure(exit)).toBe(true)
       }),
     ),
   {
@@ -307,6 +364,7 @@ it.instance(
   () =>
     MCP.Service.use((mcp: MCPNS.Interface) =>
       Effect.gen(function* () {
+        const registry = yield* CapabilityToolRegistry
         lastCreatedClientName = "reconn-server"
         const serverState = getOrCreateClientState("reconn-server")
         serverState.tools = [
@@ -326,6 +384,9 @@ it.instance(
 
         const tools = yield* mcp.tools()
         expect(Object.keys(tools).some((k) => k.includes("my_tool"))).toBe(true)
+
+        const def = yield* registry.resolveCapabilityTool("reconn-server.my_tool")
+        expect(def.providerID).toBe("reconn-server")
       }),
     ),
   {
@@ -351,6 +412,7 @@ it.instance(
   () =>
     MCP.Service.use((mcp: MCPNS.Interface) =>
       Effect.gen(function* () {
+        const registry = yield* CapabilityToolRegistry
         lastCreatedClientName = "replace-server"
         const firstState = getOrCreateClientState("replace-server")
 
@@ -373,6 +435,54 @@ it.instance(
 
         expect(firstState.closed).toBe(true)
         expect(secondState.closed).toBe(false)
+
+        const def = yield* registry.resolveCapabilityTool("replace-server.test_tool")
+        expect(def.providerID).toBe("replace-server")
+      }),
+    ),
+  { config: { mcp: {} } },
+)
+
+it.instance(
+  "re-adding a trusted provider without explicit metadata downgrades to conservative metadata",
+  () =>
+    MCP.Service.use((mcp: MCPNS.Interface) =>
+      Effect.gen(function* () {
+        const registry = yield* CapabilityToolRegistry
+        lastCreatedClientName = "trust-shift"
+        const serverState = getOrCreateClientState("trust-shift")
+        serverState.tools = [
+          { name: "policy_tool", description: "policy", inputSchema: { type: "object", properties: {} } },
+        ]
+
+        yield* mcp.add("trust-shift", {
+          type: "local",
+          command: ["echo", "test"],
+          trust: "trusted",
+          tool_metadata: {
+            policy_tool: {
+              privilegeBoundaries: ["network"],
+              mutationClass: "side-effect",
+              determinismClass: "external",
+              approvalLevel: "auto",
+            },
+          } as any,
+        })
+
+        const trustedDef = yield* registry.resolveCapabilityTool("trust-shift.policy_tool")
+        expect(trustedDef.metadata.approvalLevel).toBe("auto")
+        expect(trustedDef.importStatus).toBe("trusted")
+
+        yield* mcp.add("trust-shift", {
+          type: "local",
+          command: ["echo", "test"],
+          trust: "trusted",
+        })
+
+        const downgraded = yield* registry.resolveCapabilityTool("trust-shift.policy_tool")
+        expect(downgraded.metadata.privilegeBoundaries).toEqual(["unknown"])
+        expect(downgraded.metadata.approvalLevel).toBe("human")
+        expect(downgraded.importStatus).toBe("conservative")
       }),
     ),
   { config: { mcp: {} } },
@@ -684,6 +794,44 @@ it.instance(
       }),
     ),
   { config: { mcp: {} } },
+)
+
+it.instance(
+  "tools() suppresses disabled-trust MCP providers",
+  () =>
+    MCP.Service.use((mcp: MCPNS.Interface) =>
+      Effect.gen(function* () {
+        const registry = yield* CapabilityToolRegistry
+        lastCreatedClientName = "disabled-trust"
+        const serverState = getOrCreateClientState("disabled-trust")
+        serverState.tools = [
+          { name: "should_not_surface", description: "Hidden tool", inputSchema: { type: "object", properties: {} } },
+        ]
+
+        yield* mcp.add("disabled-trust", {
+          type: "local",
+          command: ["echo", "test"],
+          trust: "disabled",
+        })
+
+        const tools = yield* mcp.tools()
+        expect(Object.keys(tools).length).toBe(0)
+
+        const exit = yield* registry.resolveCapabilityTool("disabled-trust.should_not_surface").pipe(Effect.exit)
+        expect(Exit.isFailure(exit)).toBe(true)
+      }),
+    ),
+  {
+    config: {
+      mcp: {
+        "disabled-trust": {
+          type: "local",
+          command: ["echo", "test"],
+          trust: "disabled",
+        },
+      },
+    },
+  },
 )
 
 // ========================================================================

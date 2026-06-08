@@ -1,0 +1,84 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tribunus.dev/schemas/event-envelope.v1",
+  "title": "Tribunus Event Envelope",
+  "description": "Schema for Tribunus event envelopes — self-describing carrier for all event types flowing through the protocol layer.",
+  "type": "object",
+  "$defs": {
+    "NormalizedError": {
+      "$ref": "https://opencode.ai/schemas/defs.json#/$defs/NormalizedError"
+    }
+  },
+  "properties": {
+    "schema": {
+      "const": "tribunus.event_envelope.v1",
+      "description": "Self-describing schema identifier — always tribunus.event_envelope.v1"
+    },
+    "event_id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Unique event identifier (UUID v4)"
+    },
+    "event_type": {
+      "type": "string",
+      "enum": [
+        "federation_event",
+        "plugin_event",
+        "lifecycle_event",
+        "tool_event",
+        "coordination_event"
+      ],
+      "description": "Classification of the event payload"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp of when the event was created"
+    },
+    "session_id": {
+      "type": "string",
+      "description": "Session identifier this event belongs to"
+    },
+    "source": {
+      "type": "object",
+      "description": "Origin of the event within the Tribunus hierarchy",
+      "properties": {
+        "agent_id": {
+          "type": "string",
+          "description": "Agent identifier that produced the event"
+        },
+        "lane_id": {
+          "type": "string",
+          "description": "Lane identifier"
+        },
+        "mission_id": {
+          "type": "string",
+          "description": "Mission identifier"
+        },
+        "campaign_id": {
+          "type": "string",
+          "description": "Campaign identifier"
+        }
+      },
+      "required": ["agent_id"]
+    },
+    "payload": {
+      "type": "object",
+      "description": "Event-type-specific data payload"
+    },
+    "schema_version": {
+      "type": "string",
+      "description": "Version string for the event envelope schema"
+    }
+  },
+  "required": [
+    "schema",
+    "event_id",
+    "event_type",
+    "timestamp",
+    "source",
+    "payload",
+    "schema_version"
+  ],
+  "additionalProperties": false
+}

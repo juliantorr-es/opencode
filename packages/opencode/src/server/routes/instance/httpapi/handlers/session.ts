@@ -36,9 +36,23 @@ import {
   ShellPayload,
   SummarizePayload,
   UpdatePayload,
+  SessionCapabilitiesResponse,
+  AuthorityReceiptsQuery,
 } from "../groups/session"
 import { InvalidRequestError, PermissionNotFoundError } from "../errors"
 import * as SessionError from "./session-errors"
+import { queryAuthorityReceipts } from "@/capability/receipts"
+import {
+  sessionGetMetadata,
+  shareCreateMetadata,
+  toolExecuteMetadata,
+  enforceCapabilityGovernance,
+  getRecoveryState,
+  CapabilityContext,
+  type PrivilegeBoundary,
+  type ApprovalLevel,
+} from "@/capability/metadata"
+import { evaluateCapabilityAuthority } from "@/capability/authority"
 
 const tryParseJson = (text: string) =>
   Effect.try({
@@ -293,6 +307,87 @@ export const sessionHandlers = HttpApiBuilder.group(InstanceHttpApi, "session", 
       return yield* requireSession(ctx.params.sessionID)
     })
 
+    const capabilities = Effect.fn("SessionHttpApi.capabilities")(function* (ctx: {
+      params: { sessionID: SessionID }
+    }) {
+      const sessionID = ctx.params.sessionID
+      yield* requireSession(sessionID)
+
+      const capCtx = yield* Effect.serviceOption(CapabilityContext)
+      const grantedBoundaries = Option.isSome(capCtx)
+        ? capCtx.value.grantedBoundaries
+        : (["none", "filesystem", "network", "secrets", "shell"] as readonly PrivilegeBoundary[])
+      const approvalLevelGranted = Option.isSome(capCtx)
+        ? capCtx.value.approvalLevelGranted
+        : ("auto" as ApprovalLevel)
+      const authorityGrants = Option.isSome(capCtx)
+        ? (capCtx.value.authorityGrants ?? [])
+        : []
+
+      const evaluate = (metadata: any) =>
+        Effect.gen(function* () {
+          const recoveryState = yield* getRecoveryState(sessionID, metadata.mutationClass)
+          const checkResult = evaluateCapabilityAuthority({
+            metadata,
+            recoveryState,
+            grantedBoundaries,
+            approvalLevelGranted,
+            availableAuthorityGrants: authorityGrants,
+          })
+
+          const grantedSet = new Set(grantedBoundaries)
+          const missingBoundaries = metadata.privilegeBoundaries.filter(
+            (b: any) => b !== "none" && !grantedSet.has(b),
+          )
+
+          return {
+            available: checkResult.available,
+            reason: checkResult.reasons[0],
+            message: checkResult.message,
+            recoveryState,
+            requiredApproval: metadata.approvalLevel,
+            grantedApproval: approvalLevelGranted,
+            privilegeBoundaries: metadata.privilegeBoundaries,
+            missingBoundaries,
+            authorityChain: checkResult.authorityChain,
+            missingAuthority: checkResult.missingAuthority,
+            effectiveApproval: checkResult.effectiveApproval,
+            requiredBoundaries: checkResult.requiredBoundaries,
+            grantedBoundaries: checkResult.grantedBoundaries,
+            consentClass: checkResult.consentClass,
+          }
+        })
+
+      const inspectResult = yield* evaluate(sessionGetMetadata)
+      const shareResult = yield* evaluate(shareCreateMetadata)
+      const toolResult = yield* evaluate(toolExecuteMetadata)
+
+      return {
+        inspect: inspectResult,
+        share: shareResult,
+        tool: toolResult,
+      }
+    })
+
+    const authorityReceipts = Effect.fn("SessionHttpApi.authorityReceipts")(function* (ctx: {
+      params: { sessionID: SessionID }
+      query: typeof AuthorityReceiptsQuery.Type
+    }) {
+      const sessionID = ctx.params.sessionID
+      yield* requireSession(sessionID)
+
+      const rawLimit = ctx.query.limit
+      const clampedLimit = Math.min(Math.max(rawLimit ?? 20, 1), 100)
+
+      return yield* queryAuthorityReceipts({
+        sessionId: sessionID,
+        capabilityId: ctx.query.capabilityID,
+        outcome: ctx.query.outcome,
+        actionName: ctx.query.actionName,
+        limit: clampedLimit,
+      })
+    })
+
     const summarize = Effect.fn("SessionHttpApi.summarize")(function* (ctx: {
       params: { sessionID: SessionID }
       payload: typeof SummarizePayload.Type
@@ -453,6 +548,8 @@ export const sessionHandlers = HttpApiBuilder.group(InstanceHttpApi, "session", 
       .handle("init", init)
       .handle("share", share)
       .handle("unshare", unshare)
+      .handle("capabilities", capabilities)
+      .handle("authorityReceipts", authorityReceipts)
       .handle("summarize", summarize)
       .handle("prompt", prompt)
       .handle("promptAsync", promptAsync)

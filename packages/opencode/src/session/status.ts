@@ -29,6 +29,21 @@ export const Info = Schema.Union([
   Schema.Struct({
     type: Schema.Literal("busy"),
   }),
+  Schema.Struct({
+    type: Schema.Literal("coordination_unavailable"),
+  }),
+  Schema.Struct({
+    type: Schema.Literal("coordination_rebuilding"),
+  }),
+  Schema.Struct({
+    type: Schema.Literal("coordination_recovered"),
+  }),
+  Schema.Struct({
+    type: Schema.Literal("coordination_degraded"),
+  }),
+  Schema.Struct({
+    type: Schema.Literal("coordination_refused"),
+  }),
 ]).annotate({ identifier: "SessionStatus" })
 export type Info = Schema.Schema.Type<typeof Info>
 

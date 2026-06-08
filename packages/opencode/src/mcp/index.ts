@@ -43,6 +43,7 @@ import { InstanceState } from "@/effect/instance-state"
 import { ChildProcess, ChildProcessSpawner } from "effect/unstable/process"
 import { CrossSpawnSpawner } from "@opencode-ai/core/cross-spawn-spawner"
 import { HealthRegistry, HealthStatus } from "@/server/health"
+import { CapabilityToolRegistry, normalizeMcpToolDefinition } from "@/capability/tool-registry"
 
 const log = Log.create({ service: "mcp" })
 const DEFAULT_TIMEOUT = 30_000
@@ -179,9 +180,14 @@ const pendingOAuthTransports = new Map<string, TransportWithAuth>()
 type PromptInfo = Awaited<ReturnType<MCPClient["listPrompts"]>>["prompts"][number]
 type ResourceInfo = Awaited<ReturnType<MCPClient["listResources"]>>["resources"][number]
 type McpEntry = NonNullable<Config.Info["mcp"]>[string]
+type McpTrustLevel = "trusted" | "conservative" | "disabled"
 
 function isMcpConfigured(entry: McpEntry): entry is ConfigMCP.Info {
   return Schema.is(ConfigMCP.Info)(entry)
+}
+
+function resolveMcpTrustLevel(entry?: ConfigMCP.Info): McpTrustLevel {
+  return entry?.trust ?? "conservative"
 }
 
 const sanitize = (s: string) => s.replace(/[^a-zA-Z0-9_-]/g, "_")
@@ -351,6 +357,7 @@ export const layer = Layer.effect(
     const spawner = yield* ChildProcessSpawner.ChildProcessSpawner
     const auth = yield* McpAuth.Service
     const bus = yield* Bus.Service
+    const capabilityRegistry = yield* CapabilityToolRegistry
 
     const serverLocks = new Map<string, Semaphore.Semaphore>()
     const withServerLock = (name: string) => {
@@ -603,6 +610,23 @@ export const layer = Layer.effect(
                 if (s.clients[name] !== client || s.status[name]?.status !== "connected") return
 
                 s.defs[name] = listed
+                const mcpConfig = s.config[name]
+                if (mcpConfig && isMcpConfigured(mcpConfig)) {
+                  const trust = resolveMcpTrustLevel(mcpConfig)
+                  if (trust === "disabled") {
+                    yield* capabilityRegistry.removeCapabilityToolsByProvider(name)
+                  } else {
+                    const normalized = listed.map((tool) =>
+                      normalizeMcpToolDefinition(
+                        name,
+                        tool,
+                        trust,
+                        mcpConfig.tool_metadata?.[tool.name] as Record<string, unknown> | undefined,
+                      ),
+                    )
+                    yield* capabilityRegistry.replaceCapabilityToolsForProvider(name, normalized)
+                  }
+                }
                 yield* bus.publish(ToolsChanged, { server: name }).pipe(Effect.ignore)
               } finally {
                 console.log(`[MCP] Released lock for server "${name}"`)
@@ -691,6 +715,7 @@ export const layer = Layer.effect(
           delete s.status[name]
           delete s.defs[name]
         }).pipe(
+          Effect.tap(() => capabilityRegistry.removeCapabilityToolsByProvider(name)),
           Effect.andThen(
             Effect.tryPromise(() => client.close()).pipe(
               Effect.tapError((e) => Effect.logWarning(`mcp: closeClient failed for "${name}"`, e)),
@@ -756,7 +781,24 @@ export const layer = Layer.effect(
               return result.status
             }
 
-            return yield* storeClient(s, name, result.mcpClient, result.defs!, mcp.timeout)
+            const status = yield* storeClient(s, name, result.mcpClient, result.defs!, mcp.timeout)
+            if (mcp.enabled !== false) {
+              const trust = resolveMcpTrustLevel(mcp)
+              if (trust === "disabled") {
+                yield* capabilityRegistry.removeCapabilityToolsByProvider(name)
+              } else {
+                const normalized = result.defs!.map((tool) =>
+                  normalizeMcpToolDefinition(
+                    name,
+                    tool,
+                    trust,
+                    mcp.tool_metadata?.[tool.name] as Record<string, unknown> | undefined,
+                  ),
+                )
+                yield* capabilityRegistry.replaceCapabilityToolsForProvider(name, normalized)
+              }
+            }
+            return status
           } finally {
             console.log(`[MCP] Released lock for server "${name}"`)
           }
@@ -791,6 +833,7 @@ export const layer = Layer.effect(
             yield* closeClient(s, name)
             delete s.clients[name]
             s.status[name] = { status: "disabled" }
+            yield* capabilityRegistry.removeCapabilityToolsByProvider(name)
           } finally {
             console.log(`[MCP] Released lock for server "${name}"`)
           }
@@ -819,18 +862,35 @@ export const layer = Layer.effect(
           Effect.gen(function* () {
             const mcpConfig = config[clientName]
             const entry = mcpConfig && isMcpConfigured(mcpConfig) ? mcpConfig : s.config[clientName]
+            const trust = resolveMcpTrustLevel(entry)
 
-            const listed = s.defs[clientName]
-            if (!listed) {
-              log.warn("missing cached tools for connected server", { clientName })
-              return
-            }
+                if (trust === "disabled") {
+                  log.info("skipping MCP tools for disabled provider trust", { clientName })
+                  yield* capabilityRegistry.removeCapabilityToolsByProvider(clientName)
+                  return
+                }
 
-            const timeout = entry?.timeout ?? defaultTimeout
-            for (const mcpTool of listed) {
-              result[sanitize(clientName) + "_" + sanitize(mcpTool.name)] = convertMcpTool(mcpTool, client, timeout)
-            }
-          }),
+                const listed = s.defs[clientName]
+                if (!listed) {
+                  log.warn("missing cached tools for connected server", { clientName })
+                  yield* capabilityRegistry.removeCapabilityToolsByProvider(clientName)
+                  return
+                }
+
+                const timeout = entry?.timeout ?? defaultTimeout
+                const normalized = listed.map((mcpTool) =>
+                  normalizeMcpToolDefinition(
+                    clientName,
+                    mcpTool,
+                    trust,
+                    entry?.tool_metadata?.[mcpTool.name] as Record<string, unknown> | undefined,
+                  ),
+                )
+                yield* capabilityRegistry.replaceCapabilityToolsForProvider(clientName, normalized)
+                for (const mcpTool of listed) {
+                  result[sanitize(clientName) + "_" + sanitize(mcpTool.name)] = convertMcpTool(mcpTool, client, timeout)
+                }
+              }),
         { concurrency: "unbounded" },
       )
       return result

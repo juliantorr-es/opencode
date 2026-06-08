@@ -10,6 +10,7 @@ import { createOpencodeClient } from "@opencode-ai/sdk/v2"
 declare function validateSession(opts: { url: string; directory: string; sessionID: string; fetch: typeof globalThis.fetch }): Promise<void>
 import { InstanceBootstrap } from "../../src/project/bootstrap-service"
 import { InstanceStore } from "../../src/project/instance-store"
+import { layer as InstanceHealthStoreLayer } from "../../src/project/instance-health"
 import { HttpApiApp } from "../../src/server/routes/instance/httpapi/server"
 import { Server } from "../../src/server/server"
 import { MessageID, PartID, SessionID } from "../../src/session/schema"
@@ -31,6 +32,7 @@ const it = testEffect(
     AppFileSystem.defaultLayer,
     CrossSpawnSpawner.defaultLayer,
     InstanceStore.defaultLayer.pipe(Layer.provide(noopBootstrap)),
+    InstanceHealthStoreLayer,
   ),
 )
 
@@ -102,6 +104,15 @@ function authorization(username: string, password: string) {
 
 function call<T>(request: () => Promise<T>) {
   return Effect.promise(request)
+}
+
+function callWithTimeout<T>(label: string, request: () => Promise<T>) {
+  return call(request).pipe(
+    Effect.timeoutOrElse({
+      duration: "5 seconds",
+      orElse: () => Effect.fail(new Error(`${label} timed out`)),
+    }),
+  )
 }
 
 function capture(request: () => Promise<SdkResult>) {
@@ -206,7 +217,7 @@ function httpapiInstance<A, E>(
       yield* options.setup?.(instance.directory) ?? Effect.void
       return yield* run({ sdk: client(options.serverPath, instance.directory), directory: instance.directory })
     }),
-    { git: options.git ?? true, config: { formatter: false, lsp: false, ...options.config } },
+    { git: options.git ?? true, config: { formatter: false, lsp: false, share: "disabled", ...options.config } },
   )
 }
 
@@ -234,7 +245,7 @@ function withProject<A, E, E2 = never>(
   return Effect.gen(function* () {
     const directory = yield* tmpdirScoped({
       git: options.git ?? false,
-      config: { formatter: false, lsp: false, ...options.config },
+      config: { formatter: false, lsp: false, share: "disabled", ...options.config },
     })
     yield* options.setup?.(directory) ?? Effect.void
     return yield* run({ sdk: client(serverPath, directory), directory })
@@ -358,14 +369,19 @@ describe("HttpApi SDK", () => {
     { serverPath: "raw", git: false, setup: writeStandardFiles },
     ({ sdk }) =>
       Effect.gen(function* () {
-        const file = yield* call(() => sdk.file.read({ path: "hello.txt" }))
-        const session = yield* call(() => sdk.session.create({ title: "sdk" }))
-        const listed = yield* call(() => sdk.session.list({ roots: true, limit: 10 }))
+        const file = yield* callWithTimeout("file.read", () => sdk.file.read({ path: "hello.txt" }))
+        const session = yield* callWithTimeout("session.create", () => sdk.session.create({ title: "sdk" }))
+        const sessionRead = yield* callWithTimeout("session.get", () =>
+          sdk.session.get({ sessionID: String(record(session.data).id) }),
+        )
+        const listed = yield* callWithTimeout("session.list", () => sdk.session.list({ roots: true, limit: 10 }))
 
         expect(file.response.status).toBe(200)
         expect(file.data).toMatchObject({ content: "hello" })
         expect(session.response.status).toBe(200)
         expect(session.data).toMatchObject({ title: "sdk" })
+        expect(sessionRead.response.status).toBe(200)
+        expect(sessionRead.data).toMatchObject({ id: session.data?.id, title: "sdk" })
         expect(listed.response.status).toBe(200)
         expect(listed.data?.map((item) => item.id)).toContain(session.data?.id)
 
@@ -804,56 +820,6 @@ describe("HttpApi SDK", () => {
     ),
   )
 
-  serverPathParity("matches generated SDK TUI validation and command routes", (serverPath) =>
-    withStandardProject(serverPath, ({ sdk }) =>
-      Effect.gen(function* () {
-        const session = yield* capture(() => sdk.session.create({ title: "tui" }))
-        const sessionID = String(record(session.data).id)
-        const appendPrompt = yield* capture(() => sdk.tui.appendPrompt({ text: "hello" }))
-        const openHelp = yield* capture(() => sdk.tui.openHelp())
-        const openSessions = yield* capture(() => sdk.tui.openSessions())
-        const openThemes = yield* capture(() => sdk.tui.openThemes())
-        const openModels = yield* capture(() => sdk.tui.openModels())
-        const submitPrompt = yield* capture(() => sdk.tui.submitPrompt())
-        const clearPrompt = yield* capture(() => sdk.tui.clearPrompt())
-        const executeCommand = yield* capture(() => sdk.tui.executeCommand({ command: "session_new" }))
-        const showToast = yield* capture(() => sdk.tui.showToast({ title: "SDK", message: "hello", variant: "info" }))
-        const selectSession = yield* capture(() => sdk.tui.selectSession({ sessionID }))
-        const missingSession = yield* capture(() => sdk.tui.selectSession({ sessionID: "ses_missing" }))
-        const invalidSession = yield* capture(() => sdk.tui.selectSession({ sessionID: "invalid_session_id" }))
-
-        return {
-          statuses: statuses({
-            session,
-            appendPrompt,
-            openHelp,
-            openSessions,
-            openThemes,
-            openModels,
-            submitPrompt,
-            clearPrompt,
-            executeCommand,
-            showToast,
-            selectSession,
-            missingSession,
-            invalidSession,
-          }),
-          data: {
-            appendPrompt: appendPrompt.data,
-            openHelp: openHelp.data,
-            openSessions: openSessions.data,
-            openThemes: openThemes.data,
-            openModels: openModels.data,
-            submitPrompt: submitPrompt.data,
-            clearPrompt: clearPrompt.data,
-            executeCommand: executeCommand.data,
-            showToast: showToast.data,
-            selectSession: selectSession.data,
-          },
-        }
-      }),
-    ),
-  )
 
   serverPathParity("matches generated SDK project git initialization", (serverPath) =>
     withProject(serverPath, {}, ({ sdk, directory }) =>

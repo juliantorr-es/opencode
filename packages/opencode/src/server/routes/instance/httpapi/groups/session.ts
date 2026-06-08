@@ -72,6 +72,57 @@ export const PermissionResponsePayload = Schema.Struct({
   response: Permission.Reply,
 })
 
+export const CapabilityCheckResult = Schema.Struct({
+  available: Schema.Boolean,
+  reason: Schema.optional(Schema.String),
+  message: Schema.optional(Schema.String),
+  recoveryState: Schema.String,
+  requiredApproval: Schema.String,
+  grantedApproval: Schema.String,
+  privilegeBoundaries: Schema.Array(Schema.String),
+  missingBoundaries: Schema.Array(Schema.String),
+  authorityChain: Schema.optional(Schema.Array(Schema.Any)),
+  missingAuthority: Schema.optional(Schema.Array(Schema.String)),
+  effectiveApproval: Schema.optional(Schema.String),
+  requiredBoundaries: Schema.optional(Schema.Array(Schema.String)),
+  grantedBoundaries: Schema.optional(Schema.Array(Schema.String)),
+  consentClass: Schema.optional(Schema.String),
+})
+
+export const AuthorityReceiptSummary = Schema.Struct({
+  receiptID: Schema.String,
+  createdAt: Schema.Number,
+  capabilityID: Schema.String,
+  actionName: Schema.String,
+  sessionID: Schema.NullOr(Schema.String),
+  projectID: Schema.NullOr(Schema.String),
+  outcome: Schema.String,
+  reasons: Schema.Array(Schema.String),
+  message: Schema.NullOr(Schema.String),
+  authorityChain: Schema.Array(Schema.Any),
+  missingAuthority: Schema.Array(Schema.String),
+  recoveryState: Schema.String,
+  requiredApproval: Schema.String,
+  effectiveApproval: Schema.NullOr(Schema.String),
+  requiredBoundaries: Schema.Array(Schema.String),
+  grantedBoundaries: Schema.Array(Schema.String),
+  consentClass: Schema.String,
+})
+
+export const AuthorityReceiptsQuery = Schema.Struct({
+  ...WorkspaceRoutingQueryFields,
+  limit: Schema.optional(Schema.NumberFromString),
+  capabilityID: Schema.optional(Schema.String),
+  outcome: Schema.optional(Schema.String),
+  actionName: Schema.optional(Schema.String),
+})
+
+export const SessionCapabilitiesResponse = Schema.Struct({
+  inspect: CapabilityCheckResult,
+  share: CapabilityCheckResult,
+  tool: CapabilityCheckResult,
+})
+
 export const SessionPaths = {
   list: root,
   status: `${root}/status`,
@@ -88,6 +139,8 @@ export const SessionPaths = {
   fork: `${root}/:sessionID/fork`,
   abort: `${root}/:sessionID/abort`,
   share: `${root}/:sessionID/share`,
+  capabilities: `${root}/:sessionID/capabilities`,
+  authorityReceipts: `${root}/:sessionID/authority-receipts`,
   init: `${root}/:sessionID/init`,
   summarize: `${root}/:sessionID/summarize`,
   prompt: `${root}/:sessionID/message`,
@@ -307,6 +360,30 @@ export const SessionApi = HttpApi.make("session")
             identifier: "session.unshare",
             summary: "Unshare session",
             description: "Remove the shareable link for a session, making it private again.",
+          }),
+        ),
+        HttpApiEndpoint.get("capabilities", SessionPaths.capabilities, {
+          params: { sessionID: SessionID },
+          query: WorkspaceRoutingQuery,
+          success: described(SessionCapabilitiesResponse, "Get session capabilities"),
+          error: [HttpApiError.BadRequest, ApiNotFoundError],
+        }).annotateMerge(
+          OpenApi.annotations({
+            identifier: "session.capabilities",
+            summary: "Get session capabilities",
+            description: "Retrieve effective action capability availability for this session under the current recovery state and approval context.",
+          }),
+        ),
+        HttpApiEndpoint.get("authorityReceipts", SessionPaths.authorityReceipts, {
+          params: { sessionID: SessionID },
+          query: AuthorityReceiptsQuery,
+          success: described(Schema.Array(AuthorityReceiptSummary), "Get session authority receipts"),
+          error: [HttpApiError.BadRequest, ApiNotFoundError],
+        }).annotateMerge(
+          OpenApi.annotations({
+            identifier: "session.authorityReceipts",
+            summary: "Get session authority receipts",
+            description: "Retrieve recent capability authority receipts for this session, sorted newest first.",
           }),
         ),
         HttpApiEndpoint.post("summarize", SessionPaths.summarize, {

@@ -6,7 +6,7 @@ export const dict = {
   "nav.github": "GitHub",
   "nav.docs": "文档",
   "nav.changelog": "更新日志",
-  "nav.discord": "Discord",
+  "nav.discord": "Community Discussions",
   "nav.x": "X",
   "nav.enterprise": "企业版",
   "nav.zen": "Zen",
@@ -25,7 +25,7 @@ export const dict = {
   "footer.docs": "文档",
   "footer.changelog": "更新日志",
   "footer.feishu": "飞书",
-  "footer.discord": "Discord",
+  "footer.discord": "Discussions",
   "footer.x": "X",
 
   "legal.brand": "品牌",
@@ -43,7 +43,7 @@ export const dict = {
   "notFound.home": "首页",
   "notFound.docs": "文档",
   "notFound.github": "GitHub",
-  "notFound.discord": "Discord",
+  "notFound.discord": "Discussions",
   "notFound.logoLightAlt": "opencode logo 亮色",
   "notFound.logoDarkAlt": "opencode logo 暗色",
 

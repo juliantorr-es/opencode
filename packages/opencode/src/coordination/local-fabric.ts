@@ -5,6 +5,7 @@ export function createLocalFabric(): CoordinationFabric {
   const leases = new Map<string, { leaseId: string; path: string; agentId: string; expiresAt: number }>()
   const subscribers = new Map<string, Set<(event: CoordinationEvent) => void>>()
   const queues = new Map<string, CoordinationJob[]>()
+  let generation = 1
 
   return {
     async heartbeat(agent) {
@@ -40,6 +41,25 @@ export function createLocalFabric(): CoordinationFabric {
     async backpressure(queue) {
       const q = queues.get(queue) ?? []
       return { queued: q.length, processing: 0, throttled: q.length > 100 }
+    },
+    async generation() {
+      return generation
+    },
+    async reset() {
+      heartbeats.clear()
+      leases.clear()
+      queues.clear()
+      subscribers.clear()
+      generation += 1
+      return generation
+    },
+    async snapshot() {
+      return {
+        generation,
+        heartbeats: heartbeats.size,
+        leases: leases.size,
+        queues: [...queues.values()].reduce((count, queue) => count + queue.length, 0),
+      }
     },
     async dispose() {
       heartbeats.clear()

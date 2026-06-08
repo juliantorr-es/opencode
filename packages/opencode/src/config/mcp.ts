@@ -6,6 +6,12 @@ export const Local = Schema.Struct({
   command: Schema.mutable(Schema.Array(Schema.String)).annotate({
     description: "Command and arguments to run the MCP server",
   }),
+  trust: Schema.optional(Schema.Literals(["trusted", "conservative", "disabled"])).annotate({
+    description: "Provider trust policy for MCP server metadata and tool import behavior",
+  }),
+  tool_metadata: Schema.optional(Schema.Record(Schema.String, Schema.Any)).annotate({
+    description: "Optional provider-level metadata overrides keyed by tool name",
+  }),
   environment: Schema.optional(Schema.Record(Schema.String, Schema.String)).annotate({
     description: "Environment variables to set when running the MCP server",
   }),
@@ -39,6 +45,12 @@ export type OAuth = Schema.Schema.Type<typeof OAuth>
 export const Remote = Schema.Struct({
   type: Schema.Literal("remote").annotate({ description: "Type of MCP server connection" }),
   url: Schema.String.annotate({ description: "URL of the remote MCP server" }),
+  trust: Schema.optional(Schema.Literals(["trusted", "conservative", "disabled"])).annotate({
+    description: "Provider trust policy for MCP server metadata and tool import behavior",
+  }),
+  tool_metadata: Schema.optional(Schema.Record(Schema.String, Schema.Any)).annotate({
+    description: "Optional provider-level metadata overrides keyed by tool name",
+  }),
   enabled: Schema.optional(Schema.Boolean).annotate({
     description: "Enable or disable the MCP server on startup",
   }),

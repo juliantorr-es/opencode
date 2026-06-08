@@ -1,0 +1,25 @@
+{
+  "mcpServers": {
+    "postgres": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-postgres", "${OPENCODE_DATABASE_URL}"]
+    },
+    "playwright": {
+      "command": "npx",
+      "args": ["@playwright/mcp@latest", "--headless", "--browser=chromium", "--isolated"]
+    },
+    "tmux": {
+      "command": "npx",
+      "args": ["-y", "tmux-mcp-server"]
+    },
+    "sentry": {
+      "type": "http",
+      "url": "https://mcp.sentry.dev/mcp"
+    },
+
+    "mnemopi": {
+      "command": "bun",
+      "args": ["run", "node_modules/@oh-my-pi/pi-mnemopi/src/cli.ts", "mcp", "--transport", "stdio"]
+    }
+  }
+}

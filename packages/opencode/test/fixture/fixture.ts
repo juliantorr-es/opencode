@@ -22,6 +22,7 @@ export const testInstanceStoreLayer = InstanceStore.defaultLayer.pipe(
   Layer.provide(noopBootstrap),
   Layer.provide(InstanceHealthStoreLayer),
   Layer.provide(ConfigProvider.layer(ConfigProvider.fromUnknown({}))),
+  Layer.provideMerge(InstanceRuntime.layer),
 )
 const testInstanceRuntime = ManagedRuntime.make(testInstanceStoreLayer.pipe(Layer.provideMerge(Observability.layer)) as any)
 

@@ -1,0 +1,169 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://opencode.ai/schemas/defs.json",
+  "title": "OpenCode Shared Definitions",
+  "description": "Shared JSON Schema definitions for reuse across all OpenCode/Tribunus schemas.",
+  "type": "object",
+  "properties": {},
+  "$defs": {
+    "HexColor": {
+      "type": "string",
+      "pattern": "^#([0-9a-fA-F]{3}|[0-9a-fA-F]{4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$",
+      "description": "A hex color value like #fff, #ffff, #ffffff, or #ffffffff"
+    },
+    "ColorValue": {
+      "type": "string",
+      "pattern": "^(#([0-9a-fA-F]{3}|[0-9a-fA-F]{4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})|var\\(--[a-z0-9-]+\\))$",
+      "description": "Either a hex color value (#rgb/#rgba/#rrggbb/#rrggbbaa) or a CSS variable reference"
+    },
+    "ToolCallSummary": {
+      "type": "object",
+      "description": "Summary of a tool call made during a session",
+      "properties": {
+        "toolName": {
+          "type": "string",
+          "description": "Name of the tool called"
+        },
+        "arguments": {
+          "type": "object",
+          "description": "Arguments passed to the tool"
+        },
+        "result": {
+          "type": "object",
+          "description": "Result returned by the tool"
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 timestamp of the call"
+        }
+      },
+      "required": ["toolName", "arguments", "timestamp"]
+    },
+    "FileEditSummary": {
+      "type": "object",
+      "description": "Summary of a file edit made during a session",
+      "properties": {
+        "filePath": {
+          "type": "string",
+          "description": "Path to the file edited"
+        },
+        "changes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": ["insert", "delete", "replace"]
+              },
+              "line": {
+                "type": "integer",
+                "description": "Line number where the change occurred"
+              },
+              "content": {
+                "type": "string",
+                "description": "Content of the change"
+              }
+            },
+            "required": ["type", "line", "content"]
+          }
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 timestamp of the edit"
+        }
+      },
+      "required": ["filePath", "changes", "timestamp"]
+    },
+    "PermissionDecision": {
+      "type": "object",
+      "description": "Decision made about a permission request",
+      "properties": {
+        "allowed": {
+          "type": "boolean",
+          "description": "Whether the permission was granted"
+        },
+        "reason": {
+          "type": "string",
+          "description": "Reason for the decision"
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 timestamp of the decision"
+        }
+      },
+      "required": ["allowed", "timestamp"]
+    },
+    "LifecycleTransition": {
+      "type": "object",
+      "description": "Transition in the session lifecycle",
+      "properties": {
+        "from": {
+          "type": "string",
+          "description": "Previous lifecycle state"
+        },
+        "to": {
+          "type": "string",
+          "description": "New lifecycle state"
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 timestamp of the transition"
+        }
+      },
+      "required": ["from", "to", "timestamp"]
+    },
+    "McpEvent": {
+      "type": "object",
+      "description": "Event from an MCP server",
+      "properties": {
+        "server": {
+          "type": "string",
+          "description": "Name of the MCP server"
+        },
+        "type": {
+          "type": "string",
+          "description": "Type of event"
+        },
+        "data": {
+          "type": "object",
+          "description": "Event-specific data"
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 timestamp of the event"
+        }
+      },
+      "required": ["server", "type", "data", "timestamp"]
+    },
+    "NormalizedError": {
+      "type": "object",
+      "description": "Normalized error structure for diagnostics",
+      "properties": {
+        "code": {
+          "type": "string",
+          "description": "Error code"
+        },
+        "message": {
+          "type": "string",
+          "description": "Human-readable error message"
+        },
+        "stack": {
+          "type": ["string", "null"],
+          "description": "Error stack trace"
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 timestamp of the error"
+        }
+      },
+      "required": ["code", "message", "timestamp"]
+    }
+  }
+}

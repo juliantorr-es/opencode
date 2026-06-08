@@ -88,3 +88,24 @@ docs/adr/012-anti-scraping-dataset-protection.md
 docs/adr/013-oss-integrity-gate.md
 docs/adr/014-tribunus-cell-federation.md
 docs/adr/015-mcp-governed-capabilities.md
+docs/adr/016-sandbox-cell.md
+docs/adr/017-developer-graph.md
+
+# ── OMP runtime state (code-intelligence databases, snapshots, packets)
+.omp/state/
+# Review/export archive bundles
+tribunus-source-review.zip
+tribunus-gemini-code-review.zip
+tribunus-gemini-ir.zip
+compute-kernel-review.zip
+compute-kernel-review-manifest.json
+# Session recording HTML exports
+omp-session-*.html
+# Compute-native build artifacts and models
+packages/compute-native/models/
+packages/compute-native/tribunus-compute-native.darwin-arm64.node
+packages/compute-native/index.js
+packages/compute-native/index.d.ts
+# Scratch/temp TypeScript files in opencode
+packages/opencode/scratch-temp*.ts
+packages/opencode/scratch-temp-test.ts

@@ -1,3 +1,4 @@
+import type { ValkeyStreams } from "./stream-primitives"
 // ── Coordination Fabric ─────────────────────────────────
 import { getEnv } from "../compat/opencode-legacy"
 
@@ -51,6 +52,10 @@ export interface CoordinationFabric {
   enqueue(queue: string, job: CoordinationJob): Promise<void>
   dequeue(queue: string): Promise<CoordinationJob | undefined>
   backpressure(queue: string): Promise<BackpressureState>
+  generation(): Promise<number>
+  reset(): Promise<number>
+  snapshot(): Promise<{ generation: number; heartbeats: number; leases: number; queues: number }>
+  streams: ValkeyStreams
   dispose(): Promise<void>
 }
 

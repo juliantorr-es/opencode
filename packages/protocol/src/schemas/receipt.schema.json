@@ -1,0 +1,188 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tribunus.dev/schemas/receipt.v1",
+  "title": "Tribunus Receipt Schemas",
+  "description": "Receipt types for Tribunus governance, capability, dharma, and audit subsystems.",
+  "type": "object",
+  "$defs": {
+    "NormalizedError": {
+      "$ref": "https://opencode.ai/schemas/defs.json#/$defs/NormalizedError"
+    },
+    "GovernanceReceipt": {
+      "type": "object",
+      "description": "Receipt issued by the governance subsystem for an authority action",
+      "properties": {
+        "receipt_id": {
+          "type": "string",
+          "description": "Unique receipt identifier"
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 timestamp of receipt issuance"
+        },
+        "action": {
+          "type": "string",
+          "description": "Governance action performed"
+        },
+        "entity_type": {
+          "type": "string",
+          "description": "Type of entity the action targeted"
+        },
+        "entity_id": {
+          "type": "string",
+          "description": "Identifier of the entity"
+        },
+        "authority_chain": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Chain of authorities that approved the action"
+        },
+        "outcome": {
+          "type": "string",
+          "description": "Outcome of the governance action"
+        },
+        "refusal_reasons": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Reasons for refusal, if the action was denied"
+        }
+      },
+      "required": ["receipt_id", "timestamp", "action", "entity_type", "entity_id", "outcome"]
+    },
+    "CapabilityReceipt": {
+      "type": "object",
+      "description": "Receipt issued for a capability invocation decision",
+      "properties": {
+        "receipt_id": {
+          "type": "string",
+          "description": "Unique receipt identifier"
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 timestamp of receipt issuance"
+        },
+        "capability_id": {
+          "type": "string",
+          "description": "Identifier of the capability invoked"
+        },
+        "action_name": {
+          "type": "string",
+          "description": "Name of the action performed"
+        },
+        "session_id": {
+          "type": "string",
+          "description": "Session identifier the capability was invoked under"
+        },
+        "authority_outcome": {
+          "type": "string",
+          "description": "Outcome of the authority check"
+        },
+        "refusal_reasons": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Reasons for refusal, if the capability was denied"
+        },
+        "recovery_state": {
+          "type": "string",
+          "description": "Recovery state if the invocation entered a recoverable error path"
+        },
+        "approval_level": {
+          "type": "string",
+          "description": "Level of approval granted for the invocation"
+        }
+      },
+      "required": ["receipt_id", "timestamp", "capability_id", "action_name", "authority_outcome"]
+    },
+    "DharmaReceipt": {
+      "type": "object",
+      "description": "Receipt issued by the dharma subsystem evaluating agent behavior",
+      "properties": {
+        "receipt_id": {
+          "type": "string",
+          "description": "Unique receipt identifier"
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 timestamp of receipt issuance"
+        },
+        "event_type": {
+          "type": "string",
+          "description": "Type of event being evaluated"
+        },
+        "dharma_signal": {
+          "type": "string",
+          "description": "Dharma signal emitted by the evaluation"
+        },
+        "score": {
+          "type": "number",
+          "description": "Numeric score from the dharma evaluation"
+        },
+        "session_id": {
+          "type": "string",
+          "description": "Session identifier the evaluation relates to"
+        },
+        "evidence": {
+          "type": "object",
+          "description": "Supporting evidence for the dharma evaluation"
+        }
+      },
+      "required": ["receipt_id", "timestamp", "event_type", "dharma_signal", "score"]
+    },
+    "AuditReceipt": {
+      "type": "object",
+      "description": "Receipt issued for an audit finding",
+      "properties": {
+        "receipt_id": {
+          "type": "string",
+          "description": "Unique receipt identifier"
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 timestamp of receipt issuance"
+        },
+        "audit_type": {
+          "type": "string",
+          "description": "Type of audit performed"
+        },
+        "entity_type": {
+          "type": "string",
+          "description": "Type of entity audited"
+        },
+        "entity_id": {
+          "type": "string",
+          "description": "Identifier of the audited entity"
+        },
+        "findings": {
+          "type": "array",
+          "items": { "type": "object" },
+          "description": "Audit findings"
+        },
+        "severity": {
+          "type": "string",
+          "description": "Severity level of the audit outcome"
+        },
+        "reviewer": {
+          "type": "string",
+          "description": "Reviewer who conducted the audit"
+        }
+      },
+      "required": ["receipt_id", "timestamp", "audit_type", "entity_type", "entity_id", "findings"]
+    }
+  },
+  "properties": {
+    "receipt_type": {
+      "type": "string",
+      "description": "Discriminator — selects which $def entry applies"
+    },
+    "receipt": {
+      "type": "object",
+      "description": "One of GovernanceReceipt, CapabilityReceipt, DharmaReceipt, or AuditReceipt"
+    }
+  },
+  "required": ["receipt_type", "receipt"],
+  "additionalProperties": false
+}

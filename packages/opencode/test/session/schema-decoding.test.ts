@@ -225,6 +225,11 @@ describe("SessionStatus.Info", () => {
   test("idle / busy discriminators", () => {
     expect(decode({ type: "idle" })).toEqual({ type: "idle" })
     expect(decode({ type: "busy" })).toEqual({ type: "busy" })
+    expect(decode({ type: "coordination_unavailable" })).toEqual({ type: "coordination_unavailable" })
+    expect(decode({ type: "coordination_rebuilding" })).toEqual({ type: "coordination_rebuilding" })
+    expect(decode({ type: "coordination_recovered" })).toEqual({ type: "coordination_recovered" })
+    expect(decode({ type: "coordination_degraded" })).toEqual({ type: "coordination_degraded" })
+    expect(decode({ type: "coordination_refused" })).toEqual({ type: "coordination_refused" })
   })
 
   test("retry carries attempt/message/action/next", () => {

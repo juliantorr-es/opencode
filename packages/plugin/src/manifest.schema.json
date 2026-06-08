@@ -1,0 +1,198 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tribunus.dev/schemas/plugin-manifest.v1",
+  "title": "Plugin Manifest",
+  "description": "Schema for a tribunus.plugin.manifest.v1 document — the declarative manifest a plugin publishes to declare identity, capabilities, permissions, and trust metadata.",
+  "type": "object",
+  "$defs": {
+    "PublisherInfo": {
+      "type": "object",
+      "description": "Identity information for the plugin publisher",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Display name of the publisher"
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "description": "Contact email for the publisher"
+        },
+        "url": {
+          "type": "string",
+          "format": "uri",
+          "description": "Publisher website or repository URL"
+        }
+      },
+      "required": ["name"],
+      "additionalProperties": false
+    },
+    "ContributionPoint": {
+      "type": "object",
+      "description": "A single contribution point — an extension surface provided by the plugin",
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["tool", "ui", "workflow", "data", "collaboration", "federation"],
+          "description": "The contribution type"
+        },
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for this contribution point within the plugin"
+        },
+        "entry": {
+          "type": "string",
+          "description": "Path to the implementation entrypoint, resolved relative to the plugin root"
+        },
+        "metadata": {
+          "type": "object",
+          "description": "Optional metadata bag for the hosting runtime"
+        }
+      },
+      "required": ["type", "id", "entry"],
+      "additionalProperties": false
+    },
+    "CapabilityRequest": {
+      "type": "object",
+      "description": "A capability the plugin requests from the runtime",
+      "properties": {
+        "capability": {
+          "type": "string",
+          "description": "Canonical name of the capability (e.g. filesystem.read, network.connect)"
+        },
+        "reason": {
+          "type": "string",
+          "description": "Human-readable justification for the capability request"
+        },
+        "scopes": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Optional list of sub-scopes within the capability"
+        },
+        "riskLevel": {
+          "type": "string",
+          "enum": ["low", "medium", "high", "critical"],
+          "description": "Risk level assigned to this capability request"
+        }
+      },
+      "required": ["capability", "reason", "riskLevel"],
+      "additionalProperties": false
+    },
+    "PermissionDeclaration": {
+      "type": "object",
+      "description": "A resource permission the plugin declares",
+      "properties": {
+        "resource": {
+          "type": "string",
+          "description": "The resource type (e.g. file, http, process, clipboard)"
+        },
+        "actions": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Allowed actions on the resource (e.g. [\"read\", \"write\"])"
+        },
+        "scope": {
+          "type": "string",
+          "description": "Optional glob pattern scoping the resource access"
+        }
+      },
+      "required": ["resource", "actions"],
+      "additionalProperties": false
+    },
+    "TrustMetadata": {
+      "type": "object",
+      "description": "Trust and provenance metadata for the plugin",
+      "properties": {
+        "signingKey": {
+          "type": "string",
+          "description": "Cryptographic signing key fingerprint"
+        },
+        "publisherKey": {
+          "type": "string",
+          "description": "Publisher's public key fingerprint"
+        },
+        "verifiedPublisher": {
+          "type": "boolean",
+          "description": "Whether the publisher has been verified by a trusted authority"
+        },
+        "contentHash": {
+          "type": "string",
+          "description": "Content hash of the plugin bundle (e.g. SHA-256 hex)"
+        },
+        "lastAudit": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 date of the last audit"
+        }
+      },
+      "required": ["verifiedPublisher"],
+      "additionalProperties": false
+    }
+  },
+  "properties": {
+    "schema": {
+      "type": "string",
+      "const": "tribunus.plugin.manifest.v1",
+      "description": "Schema discriminator — must be tribunus.plugin.manifest.v1"
+    },
+    "id": {
+      "type": "string",
+      "description": "Globally unique plugin identifier (reverse-domain recommended)"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+",
+      "description": "Semantic version string"
+    },
+    "name": {
+      "type": "string",
+      "description": "Human-readable plugin name"
+    },
+    "description": {
+      "type": "string",
+      "description": "Short description of what the plugin does"
+    },
+    "publisher": {
+      "$ref": "#/$defs/PublisherInfo",
+      "description": "Publisher identity"
+    },
+    "activationEvents": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Lifecycle events that activate this plugin"
+    },
+    "contributionPoints": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/ContributionPoint" },
+      "description": "Contribution points this plugin provides"
+    },
+    "capabilities": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/CapabilityRequest" },
+      "description": "Capabilities this plugin requests from the runtime"
+    },
+    "permissions": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/PermissionDeclaration" },
+      "description": "Resource permissions this plugin declares"
+    },
+    "trust": {
+      "$ref": "#/$defs/TrustMetadata",
+      "description": "Trust and audit metadata"
+    }
+  },
+  "required": [
+    "schema",
+    "id",
+    "version",
+    "name",
+    "description",
+    "publisher",
+    "activationEvents",
+    "contributionPoints",
+    "capabilities",
+    "permissions",
+    "trust"
+  ],
+  "additionalProperties": false
+}

@@ -63,6 +63,7 @@ import { setSessionHandoff } from "@/pages/session/handoff"
 import { useDialog } from "@opencode-ai/ui/context/dialog"
 import { useTheme, type ColorScheme } from "@opencode-ai/ui/theme/context"
 import { useCommand, type CommandOption } from "@/context/command"
+import { useCapabilities } from "@/context/capability"
 import { ConstrainDragXAxis, getDraggableId } from "@/utils/solid-dnd"
 import { DebugBar } from "@/components/debug-bar"
 import { KeyHintOverlay } from "@/components/key-hint-overlay"
@@ -145,6 +146,7 @@ export default function Layout(props: ParentProps) {
   const providers = useProviders()
   const dialog = useDialog()
   const command = useCommand()
+  const capabilities = useCapabilities()
 
   // ── Key hint overlay (modifier hold detection) ──
   const [showKeyHints, setShowKeyHints] = createSignal(false)
@@ -1553,12 +1555,19 @@ export default function Layout(props: ParentProps) {
       }
     }
 
-    if (platform.openDirectoryPickerDialog && server.isLocal()) {
-      const result = await platform.openDirectoryPickerDialog?.({
+    function ensureReady(result: string | string[] | null) {
+      if (!result) return
+      const dirs = Array.isArray(result) ? result : [result]
+      void Promise.all(dirs.map((d) => serverSync.project.ensureReady(d)))
+    }
+
+    if (capabilities().localFilesystem.available && platform.openDirectoryPickerDialog) {
+      const result = await platform.openDirectoryPickerDialog({
         title: language.t("command.project.open"),
         multiple: true,
       })
       resolve(result)
+      ensureReady(result)
     } else {
       const run = ++dialogRun
       void import("@/components/dialog-select-directory").then((x) => {

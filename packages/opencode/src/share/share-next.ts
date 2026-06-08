@@ -16,9 +16,22 @@ import { eq } from "drizzle-orm"
 import { Config } from "@/config/config"
 import * as Log from "@opencode-ai/core/util/log"
 import { SessionShareTable } from "@/storage/schema"
+import {
+  enforceCapabilityGovernance,
+  shareCreateMetadata,
+  getRecoveryState,
+  CapabilityContext,
+  PrivilegeBoundary,
+  CapabilityRefusalError,
+  type ApprovalLevel,
+} from "@/capability/metadata"
+import { evaluateCapabilityAuthority } from "@/capability/authority"
+import { persistAuthorityReceipt } from "@/capability/receipts"
 
 const log = Log.create({ service: "share-next" })
-const disabled = process.env["OPENCODE_DISABLE_SHARE"] === "true" || process.env["OPENCODE_DISABLE_SHARE"] === "1"
+function isDisabled() {
+  return process.env["OPENCODE_DISABLE_SHARE"] === "true" || process.env["OPENCODE_DISABLE_SHARE"] === "1"
+}
 
 export type Api = {
   create: string
@@ -126,7 +139,7 @@ export const layer = Layer.effect(
 
     function sync(sessionID: SessionID, data: Data[]): Effect.Effect<void> {
       return Effect.gen(function* () {
-        if (disabled) return
+        if (isDisabled()) return
         const share = yield* getCached(sessionID)
         if (!share) return
 
@@ -168,7 +181,7 @@ export const layer = Layer.effect(
           ),
         )
 
-        if (disabled) return cache
+        if (isDisabled()) return cache
 
         const watch = <D extends { type: string }>(
           def: D,
@@ -257,7 +270,7 @@ export const layer = Layer.effect(
     })
 
     const flush = Effect.fn("ShareNext.flush")(function* (sessionID: SessionID) {
-      if (disabled) return
+      if (isDisabled()) return
       const s = yield* InstanceState.get(state)
       const queued = s.queue.get(sessionID)
       if (!queued) return
@@ -307,7 +320,7 @@ export const layer = Layer.effect(
     })
 
     const init = Effect.fn("ShareNext.init")(function* () {
-      if (disabled) return
+      if (isDisabled()) return
       yield* InstanceState.get(state)
     })
 
@@ -316,7 +329,62 @@ export const layer = Layer.effect(
     })
 
     const create = Effect.fn("ShareNext.create")(function* (sessionID: SessionID) {
-      if (disabled) return { id: "", url: "", secret: "" }
+      if (isDisabled()) return { id: "", url: "", secret: "" }
+
+      let projectID: string | undefined = undefined
+      try {
+        const sess = yield* session.get(sessionID)
+        projectID = sess.projectID
+      } catch (e) {
+        // Nullable projectID fallback
+      }
+
+      // Enforce capability governance for share.create
+      const recoveryState = yield* getRecoveryState(sessionID, "side-effect")
+      const capCtx = yield* Effect.serviceOption(CapabilityContext)
+      const grantedBoundaries = Option.isSome(capCtx)
+        ? capCtx.value.grantedBoundaries
+        : (["none", "filesystem", "network", "secrets", "shell"] as readonly PrivilegeBoundary[])
+      const approvalLevelGranted = Option.isSome(capCtx)
+        ? capCtx.value.approvalLevelGranted
+        : ("auto" as ApprovalLevel)
+      const authorityGrants = Option.isSome(capCtx)
+        ? capCtx.value.authorityGrants
+        : undefined
+
+      const capResult = evaluateCapabilityAuthority({
+        metadata: shareCreateMetadata,
+        recoveryState,
+        grantedBoundaries,
+        approvalLevelGranted,
+        availableAuthorityGrants: authorityGrants,
+      })
+
+      yield* persistAuthorityReceipt({
+        capabilityId: shareCreateMetadata.id,
+        actionName: "share.create",
+        sessionId: sessionID,
+        projectId: projectID,
+        authorityOutcome: capResult.available ? "allowed" : "refused",
+        refusalReasons: capResult.reasons,
+        authorityChain: capResult.authorityChain,
+        missingAuthority: capResult.missingAuthority,
+        recoveryState,
+        approvalLevel: shareCreateMetadata.approvalLevel,
+        privilegeBoundaries: [...shareCreateMetadata.privilegeBoundaries],
+        consentClass: capResult.consentClass,
+      })
+
+      if (!capResult.available) {
+        const reason = capResult.reasons[0] as any
+        return yield* Effect.fail(
+          new CapabilityRefusalError({
+            reason: reason || "coordination_state_blocks_side_effect",
+            message: capResult.message || "Capability share.create refused",
+          })
+        )
+      }
+
       log.info("creating share", { sessionID })
       const req = yield* request()
       const result = yield* HttpClientRequest.post(`${req.baseUrl}${req.api.create}`).pipe(
@@ -349,7 +417,7 @@ export const layer = Layer.effect(
     })
 
     const remove = Effect.fn("ShareNext.remove")(function* (sessionID: SessionID) {
-      if (disabled) return
+      if (isDisabled()) return
       log.info("removing share", { sessionID })
       const s = yield* InstanceState.get(state)
       const share = yield* getCached(sessionID)

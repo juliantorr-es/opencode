@@ -122,7 +122,7 @@ export const dict = {
   "dialog.model.manage.description": "Налаштуйте, які моделі відображатимуться у виборі моделей.",
   "dialog.model.manage.provider.toggle": "Перемкнути всі моделі {{provider}}",
 
-  "dialog.model.unpaid.freeModels.title": "Безкоштовні моделі від OpenCode",
+  "dialog.model.unpaid.freeModels.title": "Безкоштовні моделі від Tribunus",
   "dialog.model.unpaid.addMore.title": "Додати більше моделей від популярних провайдерів",
 
   "dialog.provider.viewAll": "Показати більше провайдерів",
@@ -134,30 +134,25 @@ export const dict = {
   "provider.connect.status.inProgress": "Авторизація виконується...",
   "provider.connect.status.waiting": "Очікування авторизації...",
   "provider.connect.status.failed": "Авторизація не вдалася: {{error}}",
-  "provider.connect.apiKey.description":
-    "Введіть ключ API {{provider}}, щоб підключити обліковий запис і використовувати моделі {{provider}} у OpenCode.",
+  "provider.connect.apiKey.description": "Введіть ключ API {{provider}}, щоб підключити обліковий запис і використовувати моделі {{provider}} у Tribunus.",
   "provider.connect.apiKey.label": "Ключ API {{provider}}",
   "provider.connect.apiKey.placeholder": "Ключ API",
   "provider.connect.apiKey.required": "Ключ API обов'язковий",
-  "provider.connect.opencodeZen.line1":
-    "OpenCode Zen надає доступ до відібраного набору надійних оптимізованих моделей для агентів кодування.",
-  "provider.connect.opencodeZen.line2":
-    "З одним ключем API ви отримаєте доступ до таких моделей, як Claude, GPT, Gemini, GLM та інших.",
+  "provider.connect.opencodeZen.line1": "Tribunus Zen надає доступ до відібраного набору надійних оптимізованих моделей для агентів кодування.",
+  "provider.connect.opencodeZen.line2": "З одним ключем API ви отримаєте доступ до таких моделей, як Claude, GPT, Gemini, GLM та інших.",
   "provider.connect.opencodeZen.visit.prefix": "Відвідайте ",
   "provider.connect.opencodeZen.visit.link": "opencode.ai/zen",
   "provider.connect.opencodeZen.visit.suffix": ", щоб отримати ключ API.",
   "provider.connect.oauth.code.visit.prefix": "Відвідайте ",
   "provider.connect.oauth.code.visit.link": "це посилання",
-  "provider.connect.oauth.code.visit.suffix":
-    ", щоб отримати код авторизації, підключити обліковий запис і використовувати моделі {{provider}} у OpenCode.",
+  "provider.connect.oauth.code.visit.suffix": ", щоб отримати код авторизації, підключити обліковий запис і використовувати моделі {{provider}} у Tribunus.",
   "provider.connect.oauth.code.label": "Код авторизації {{method}}",
   "provider.connect.oauth.code.placeholder": "Код авторизації",
   "provider.connect.oauth.code.required": "Код авторизації обов'язковий",
   "provider.connect.oauth.code.invalid": "Недійсний код авторизації",
   "provider.connect.oauth.auto.visit.prefix": "Відвідайте ",
   "provider.connect.oauth.auto.visit.link": "це посилання",
-  "provider.connect.oauth.auto.visit.suffix":
-    " і введіть код нижче, щоб підключити обліковий запис і використовувати моделі {{provider}} у OpenCode.",
+  "provider.connect.oauth.auto.visit.suffix": " і введіть код нижче, щоб підключити обліковий запис і використовувати моделі {{provider}} у Tribunus.",
   "provider.connect.oauth.auto.confirmationCode": "Код підтвердження",
   "provider.connect.toast.connected.title": "{{provider}} підключено",
   "provider.connect.toast.connected.description": "Моделі {{provider}} тепер доступні для використання.",
@@ -175,8 +170,7 @@ export const dict = {
   "provider.custom.field.baseURL.placeholder": "https://api.myprovider.com/v1",
   "provider.custom.field.apiKey.label": "Ключ API",
   "provider.custom.field.apiKey.placeholder": "Ключ API",
-  "provider.custom.field.apiKey.description":
-    "Необов'язково. Залиште порожнім, якщо ви керуєте авторизацією через заголовки.",
+  "provider.custom.field.apiKey.description": "Необов'язково. Залиште порожнім, якщо ви керуєте авторизацією через заголовки.",
   "provider.custom.models.label": "Моделі",
   "provider.custom.models.id.label": "ID",
   "provider.custom.models.id.placeholder": "model-id",
@@ -323,7 +317,7 @@ export const dict = {
   "app.server.otherServers": "Інші сервери",
 
   "dialog.server.title": "Сервери",
-  "dialog.server.description": "Перемкніть сервер OpenCode, до якого підключається ця програма.",
+  "dialog.server.description": "Перемкніть сервер Tribunus, до якого підключається ця програма.",
   "dialog.server.search.placeholder": "Пошук серверів",
   "dialog.server.empty": "Ще немає серверів",
   "dialog.server.add.title": "Додати сервер",
@@ -340,8 +334,7 @@ export const dict = {
   "dialog.server.add.passwordPlaceholder": "пароль",
   "dialog.server.edit.title": "Редагувати сервер",
   "dialog.server.default.title": "Сервер за замовчуванням",
-  "dialog.server.default.description":
-    "Підключатися до цього сервера під час запуску програми замість запуску локального сервера. Потребує перезапуску.",
+  "dialog.server.default.description": "Підключатися до цього сервера під час запуску програми замість запуску локального сервера. Потребує перезапуску.",
   "dialog.server.default.none": "Сервер не вибрано",
   "dialog.server.default.set": "Встановити поточний сервер як сервер за замовчуванням",
   "dialog.server.default.clear": "Очистити",
@@ -373,8 +366,7 @@ export const dict = {
   "dialog.releaseNotes.media.alt": "Попередній перегляд релізу",
 
   "context.breakdown.title": "Розподіл контексту",
-  "context.breakdown.note":
-    'Приблизний розподіл вхідних токенів. "Інше" включає визначення інструментів і накладні витрати.',
+  "context.breakdown.note": 'Приблизний розподіл вхідних токенів. "Інше" включає визначення інструментів і накладні витрати.',
   "context.breakdown.system": "Система",
   "context.breakdown.user": "Користувач",
   "context.breakdown.assistant": "Асистент",
@@ -466,7 +458,7 @@ export const dict = {
   "toast.project.reloadFailed.title": "Не вдалося перезавантажити {{project}}",
 
   "toast.update.title": "Доступне оновлення",
-  "toast.update.description": "Нова версія OpenCode ({{version}}) тепер доступна для встановлення.",
+  "toast.update.description": "Нова версія Tribunus ({{version}}) тепер доступна для встановлення.",
   "toast.update.action.installRestart": "Встановити та перезапустити",
   "toast.update.action.notYet": "Не зараз",
 
@@ -480,12 +472,11 @@ export const dict = {
   "error.page.action.checkUpdates": "Перевірити оновлення",
   "error.page.action.updateTo": "Оновити до {{version}}",
   "error.page.circular": "[Циклічне]",
-  "error.page.report.prefix": "Будь ласка, повідомте про цю помилку команді OpenCode",
-  "error.page.report.discord": "на Discord",
+  "error.page.report.prefix": "Будь ласка, повідомте про цю помилку команді Tribunus",
+  "error.page.report.discord": "на GitHub Discussions",
   "error.page.version": "Версія: {{version}}",
 
-  "error.dev.rootNotFound":
-    "Кореневий елемент не знайдено. Ви забули додати його до index.html? Або, можливо, атрибут id було написано з помилкою?",
+  "error.dev.rootNotFound": "Кореневий елемент не знайдено. Ви забули додати його до index.html? Або, можливо, атрибут id було написано з помилкою?",
 
   "error.serverSync.connectFailed": "Не вдалося підключитися до сервера. Чи працює сервер за адресою `{{url}}`?",
   "error.serverSDK.noServerAvailable": "Сервер недоступний",
@@ -506,15 +497,12 @@ export const dict = {
   "error.chain.didYouMean": "Можливо, ви мали на увазі: {{suggestions}}",
   "error.chain.modelNotFound": "Модель не знайдено: {{provider}}/{{model}}",
   "error.chain.checkConfig": "Перевірте назви провайдерів/моделей у конфігурації (opencode.json)",
-  "error.chain.mcpFailed":
-    'Сервер MCP "{{name}}" не працює. Зверніть увагу, OpenCode ще не підтримує автентифікацію MCP.',
+  "error.chain.mcpFailed": 'Сервер MCP "{{name}}" не працює. Зверніть увагу, Tribunus ще не підтримує автентифікацію MCP.',
   "error.chain.providerAuthFailed": "Автентифікація провайдера не вдалася ({{provider}}): {{message}}",
-  "error.chain.providerInitFailed":
-    'Не вдалося ініціалізувати провайдера "{{provider}}". Перевірте облікові дані та конфігурацію.',
+  "error.chain.providerInitFailed": 'Не вдалося ініціалізувати провайдера "{{provider}}". Перевірте облікові дані та конфігурацію.',
   "error.chain.configJsonInvalid": "Файл конфігурації {{path}} не є дійсним JSON(C)",
   "error.chain.configJsonInvalidWithMessage": "Файл конфігурації {{path}} не є дійсним JSON(C): {{message}}",
-  "error.chain.configDirectoryTypo":
-    'Каталог "{{dir}}" у {{path}} недійсний. Перейменуйте каталог на "{{suggestion}}" або видаліть його. Це поширена помилка.',
+  "error.chain.configDirectoryTypo": 'Каталог "{{dir}}" у {{path}} недійсний. Перейменуйте каталог на "{{suggestion}}" або видаліть його. Це поширена помилка.',
   "error.chain.configFrontmatterError": "Не вдалося розібрати frontmatter у {{path}}:\n{{message}}",
   "error.chain.configInvalid": "Файл конфігурації {{path}} недійсний",
   "error.chain.configInvalidWithMessage": "Файл конфігурації {{path}} недійсний: {{message}}",
@@ -620,10 +608,8 @@ export const dict = {
   "status.popover.action.manageServers": "Керувати серверами",
 
   "session.share.popover.title": "Опублікувати в інтернеті",
-  "session.share.popover.description.shared":
-    "Ця сесія є публічною в інтернеті. Вона доступна будь-кому за посиланням.",
-  "session.share.popover.description.unshared":
-    "Опублікуйте сесію публічно в інтернеті. Вона буде доступна будь-кому за посиланням.",
+  "session.share.popover.description.shared": "Ця сесія є публічною в інтернеті. Вона доступна будь-кому за посиланням.",
+  "session.share.popover.description.unshared": "Опублікуйте сесію публічно в інтернеті. Вона буде доступна будь-кому за посиланням.",
   "session.share.action.share": "Поділитися",
   "session.share.action.publish": "Опублікувати",
   "session.share.action.publishing": "Публікація...",
@@ -643,8 +629,7 @@ export const dict = {
   "terminal.close": "Закрити термінал",
   "terminal.connectionLost.title": "З'єднання втрачено",
   "terminal.connectionLost.abnormalClose": "WebSocket закрито аномально: {{code}}",
-  "terminal.connectionLost.description":
-    "З'єднання з терміналом було перервано. Це може статися під час перезапуску сервера.",
+  "terminal.connectionLost.description": "З'єднання з терміналом було перервано. Це може статися під час перезапуску сервера.",
 
   "common.closeTab": "Закрити вкладку",
   "common.dismiss": "Відхилити",
@@ -688,9 +673,8 @@ export const dict = {
   "sidebar.workspaces.enable": "Увімкнути робочі області",
   "sidebar.workspaces.disable": "Вимкнути робочі області",
   "sidebar.gettingStarted.title": "Початок роботи",
-  "sidebar.gettingStarted.line1": "OpenCode містить безкоштовні моделі, тому ви можете почати негайно.",
-  "sidebar.gettingStarted.line2":
-    "Підключіть будь-якого провайдера, щоб використовувати моделі, включаючи Claude, GPT, Gemini тощо.",
+  "sidebar.gettingStarted.line1": "Tribunus містить безкоштовні моделі, тому ви можете почати негайно.",
+  "sidebar.gettingStarted.line2": "Підключіть будь-якого провайдера, щоб використовувати моделі, включаючи Claude, GPT, Gemini тощо.",
   "sidebar.project.recentSessions": "Нещодавні сесії",
   "sidebar.project.viewAllSessions": "Переглянути всі сесії",
   "sidebar.project.clearNotifications": "Очистити сповіщення",
@@ -700,8 +684,7 @@ export const dict = {
   "debugBar.ariaLabel": "Діагностика продуктивності розробки",
   "debugBar.na": "н/д",
   "debugBar.nav.label": "NAV",
-  "debugBar.nav.tip":
-    "Останній завершений перехід маршруту, що торкається сторінки сесії, виміряний від запуску маршрутизатора до першого відображення після стабілізації.",
+  "debugBar.nav.tip": "Останній завершений перехід маршруту, що торкається сторінки сесії, виміряний від запуску маршрутизатора до першого відображення після стабілізації.",
   "debugBar.fps.label": "FPS",
   "debugBar.fps.tip": "Поточна кількість кадрів за секунду за останні 5 секунд.",
   "debugBar.frame.label": "FRAME",
@@ -713,15 +696,14 @@ export const dict = {
   "debugBar.delay.label": "DELAY",
   "debugBar.delay.tip": "Найгірша спостережувана затримка введення за останні 5 секунд.",
   "debugBar.inp.label": "INP",
-  "debugBar.inp.tip":
-    "Приблизна тривалість взаємодії за останні 5 секунд. Це схоже на INP, а не на офіційний Web Vitals INP.",
+  "debugBar.inp.tip": "Приблизна тривалість взаємодії за останні 5 секунд. Це схоже на INP, а не на офіційний Web Vitals INP.",
   "debugBar.cls.label": "CLS",
   "debugBar.cls.tip": "Сукупний зсув макета за весь час роботи програми.",
   "debugBar.mem.label": "MEM",
   "debugBar.mem.tipUnavailable": "Використана купа JS проти ліміту купи. Тільки Chromium.",
   "debugBar.mem.tip": "Використана купа JS проти ліміту купи. {{used}} з {{limit}}.",
 
-  "app.name.desktop": "OpenCode Desktop",
+  "app.name.desktop": "Tribunus Desktop",
 
   "settings.section.desktop": "Робочий стіл",
   "settings.section.server": "Сервер",
@@ -729,7 +711,7 @@ export const dict = {
   "settings.tab.shortcuts": "Скорочення",
   "settings.desktop.section.wsl": "WSL",
   "settings.desktop.wsl.title": "Інтеграція WSL",
-  "settings.desktop.wsl.description": "Запускати сервер OpenCode всередині WSL на Windows.",
+  "settings.desktop.wsl.description": "Запускати сервер Tribunus всередині WSL на Windows.",
 
   "settings.general.section.appearance": "Зовнішній вигляд",
   "settings.general.section.advanced": "Додатково",
@@ -740,18 +722,17 @@ export const dict = {
   "settings.general.section.display": "Дисплей",
 
   "settings.general.row.language.title": "Мова",
-  "settings.general.row.language.description": "Змінити мову інтерфейсу OpenCode",
+  "settings.general.row.language.description": "Змінити мову інтерфейсу Tribunus",
   "settings.general.row.shell.title": "Командна оболонка термінала",
-  "settings.general.row.shell.description":
-    "Виберіть оболонку для термінала. Сумісні оболонки також використовуються для викликів інструментів агента.",
+  "settings.general.row.shell.description": "Виберіть оболонку для термінала. Сумісні оболонки також використовуються для викликів інструментів агента.",
   "settings.general.row.shell.autoDefault": "Авто (за замовчуванням)",
   "settings.general.row.shell.terminalOnly": "тільки термінал",
   "settings.general.row.appearance.title": "Зовнішній вигляд",
-  "settings.general.row.appearance.description": "Налаштуйте вигляд OpenCode на вашому пристрої",
+  "settings.general.row.appearance.description": "Налаштуйте вигляд Tribunus на вашому пристрої",
   "settings.general.row.colorScheme.title": "Кольорова схема",
-  "settings.general.row.colorScheme.description": "Виберіть, чи OpenCode використовує системну, світлу або темну тему",
+  "settings.general.row.colorScheme.description": "Виберіть, чи Tribunus використовує системну, світлу або темну тему",
   "settings.general.row.theme.title": "Тема",
-  "settings.general.row.theme.description": "Налаштуйте тему OpenCode.",
+  "settings.general.row.theme.description": "Налаштуйте тему Tribunus.",
   "settings.general.row.font.title": "Шрифт коду",
   "settings.general.row.font.description": "Налаштуйте шрифт, який використовується в блоках коду",
   "settings.general.row.terminalFont.title": "Шрифт термінала",
@@ -767,8 +748,7 @@ export const dict = {
   "settings.general.row.showNavigation.title": "Елементи навігації",
   "settings.general.row.showNavigation.description": "Показувати кнопки назад і вперед у заголовку робочого столу",
   "settings.general.row.showSearch.title": "Палітра команд",
-  "settings.general.row.showSearch.description":
-    "Показувати кнопку пошуку та палітри команд у заголовку робочого столу",
+  "settings.general.row.showSearch.description": "Показувати кнопку пошуку та палітри команд у заголовку робочого столу",
   "settings.general.row.showTerminal.title": "Термінал",
   "settings.general.row.showTerminal.description": "Показувати кнопку термінала в заголовку робочого столу",
   "settings.general.row.showStatus.title": "Статус сервера",
@@ -776,31 +756,27 @@ export const dict = {
   "settings.general.row.reasoningSummaries.title": "Показувати підсумки мислення",
   "settings.general.row.reasoningSummaries.description": "Відображати підсумки мислення моделі на часовій шкалі",
   "settings.general.row.shellToolPartsExpanded.title": "Розгортати частини інструменту оболонки",
-  "settings.general.row.shellToolPartsExpanded.description":
-    "Показувати частини інструменту оболонки розгорнутими за замовчуванням на часовій шкалі",
+  "settings.general.row.shellToolPartsExpanded.description": "Показувати частини інструменту оболонки розгорнутими за замовчуванням на часовій шкалі",
   "settings.general.row.editToolPartsExpanded.title": "Розгортати частини інструменту редагування",
-  "settings.general.row.editToolPartsExpanded.description":
-    "Показувати частини інструментів редагування, запису та патчів розгорнутими за замовчуванням на часовій шкалі",
+  "settings.general.row.editToolPartsExpanded.description": "Показувати частини інструментів редагування, запису та патчів розгорнутими за замовчуванням на часовій шкалі",
   "settings.general.row.showSessionProgressBar.title": "Показувати індикатор прогресу сесії",
-  "settings.general.row.showSessionProgressBar.description":
-    "Відображати анімований індикатор прогресу вгорі сесії, коли агент працює",
+  "settings.general.row.showSessionProgressBar.description": "Відображати анімований індикатор прогресу вгорі сесії, коли агент працює",
 
   "settings.general.row.wayland.title": "Використовувати нативний Wayland",
   "settings.general.row.wayland.description": "Вимкнути резервний X11 на Wayland. Потребує перезапуску.",
-  "settings.general.row.wayland.tooltip":
-    "На Linux з моніторами з різною частотою оновлення нативний Wayland може бути більш стабільним.",
+  "settings.general.row.wayland.tooltip": "На Linux з моніторами з різною частотою оновлення нативний Wayland може бути більш стабільним.",
 
   "settings.general.row.releaseNotes.title": "Нотатки до релізу",
   "settings.general.row.releaseNotes.description": 'Показувати спливаючі вікна "Що нового" після оновлень',
 
   "settings.updates.row.startup.title": "Перевіряти оновлення під час запуску",
-  "settings.updates.row.startup.description": "Автоматично перевіряти наявність оновлень під час запуску OpenCode",
+  "settings.updates.row.startup.description": "Автоматично перевіряти наявність оновлень під час запуску Tribunus",
   "settings.updates.row.check.title": "Перевірити оновлення",
   "settings.updates.row.check.description": "Вручну перевірити наявність оновлень і встановити, якщо доступні",
   "settings.updates.action.checkNow": "Перевірити зараз",
   "settings.updates.action.checking": "Перевірка...",
   "settings.updates.toast.latest.title": "У вас актуальна версія",
-  "settings.updates.toast.latest.description": "Ви використовуєте останню версію OpenCode.",
+  "settings.updates.toast.latest.description": "Ви використовуєте останню версію Tribunus.",
   "sound.option.none": "Немає",
   "sound.option.alert01": "Alert 01",
   "sound.option.alert02": "Alert 02",
@@ -849,8 +825,7 @@ export const dict = {
   "sound.option.yup06": "Yup 06",
 
   "settings.general.notifications.agent.title": "Агент",
-  "settings.general.notifications.agent.description":
-    "Показувати системне сповіщення, коли агент завершує роботу або потребує уваги",
+  "settings.general.notifications.agent.description": "Показувати системне сповіщення, коли агент завершує роботу або потребує уваги",
   "settings.general.notifications.permissions.title": "Дозволи",
   "settings.general.notifications.permissions.description": "Показувати системне сповіщення, коли потрібен дозвіл",
   "settings.general.notifications.errors.title": "Помилки",
@@ -937,8 +912,7 @@ export const dict = {
   "settings.permissions.tool.external_directory.title": "Зовнішній каталог",
   "settings.permissions.tool.external_directory.description": "Доступ до файлів за межами каталогу проєкту",
   "settings.permissions.tool.doom_loop.title": "Цикл приреченості",
-  "settings.permissions.tool.doom_loop.description":
-    "Виявлення повторюваних викликів інструментів з однаковими вхідними даними",
+  "settings.permissions.tool.doom_loop.description": "Виявлення повторюваних викликів інструментів з однаковими вхідними даними",
 
   "session.delete.failed.title": "Не вдалося видалити сесію",
   "session.delete.title": "Видалити сесію",
@@ -994,7 +968,7 @@ export const dict = {
   "dialog.export.button": "Export",  // TODO: translate
   "dialog.export.description": "Export this session as a JSON file for backup or sharing",  // TODO: translate
   "dialog.export.exporting": "Exporting...",  // TODO: translate
-  "dialog.export.format": "OpenCode Session (.opencode-session)",  // TODO: translate
+  "dialog.export.format": "Tribunus Session (.opencode-session)",  // TODO: translate
   "dialog.export.sanitize": "Remove permissions and local paths",  // TODO: translate
   "dialog.export.title": "Export Session",  // TODO: translate
   "dialog.import.button": "Import",  // TODO: translate
@@ -1023,13 +997,13 @@ export const dict = {
   "dialog.mcp.form.url": "Server URL",  // TODO: translate
   "dialog.mcp.form.urlPlaceholder": "http://localhost:3000",  // TODO: translate
   "dialog.recovery.exportLogs": "Export Logs",  // TODO: translate
-  "dialog.recovery.failedToLoad": "OpenCode failed to load",  // TODO: translate
+  "dialog.recovery.failedToLoad": "Tribunus failed to load",  // TODO: translate
   "dialog.recovery.keepWaiting": "Keep Waiting",  // TODO: translate
-  "dialog.recovery.notResponding": "OpenCode is not responding",  // TODO: translate
+  "dialog.recovery.notResponding": "Tribunus is not responding",  // TODO: translate
   "dialog.recovery.notRespondingDetail": "You can relaunch the app, open the logs, or keep waiting.",  // TODO: translate
   "dialog.recovery.quit": "Quit",  // TODO: translate
   "dialog.recovery.relaunch": "Relaunch",  // TODO: translate
-  "dialog.recovery.terminated": "OpenCode window terminated unexpectedly",  // TODO: translate
+  "dialog.recovery.terminated": "Tribunus window terminated unexpectedly",  // TODO: translate
   "error.page.action.exportLogs": "Export Logs",  // TODO: translate
   "github.branchName": "Branch Name",  // TODO: translate
   "github.commitMessage": "Commit Message",  // TODO: translate

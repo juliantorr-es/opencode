@@ -67,6 +67,12 @@ export const TRUST_GATED_PATTERNS = [
   ".tribunus/tools/*.js",
   ".tribunus/agents/*.ts",
   ".tribunus/agents/*.js",
+  ".omp/plugin.ts",
+  ".omp/plugin.js",
+  ".omp/tools/*.ts",
+  ".omp/tools/*.js",
+  ".omp/agents/*.ts",
+  ".omp/agents/*.js",
 ]
 
 export function isTrustGatedPath(relativePath: string): boolean {

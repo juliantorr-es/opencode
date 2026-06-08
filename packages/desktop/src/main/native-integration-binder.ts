@@ -476,7 +476,7 @@ export function generateNativeIntegrationBinder(): BinderReport {
   findings.push({
     section: "identity",
     severity: "pass",
-    message: "App-data migration: old ai.opencode.desktop.dev → dev.tribunus.desktop (selective, idempotent)",
+    message: "App-data migration: none required for clean pre-release installs",
   })
   findings.push({
     section: "identity",

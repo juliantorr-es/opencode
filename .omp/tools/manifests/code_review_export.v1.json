@@ -1,0 +1,71 @@
+{
+  "schema": "omp.tool.manifest.v1",
+  "tool_id": "code_review_export",
+  "version": "1.0.0",
+  "title": "Code Review Export",
+  "description": "Low-level review packet exporter. Supports bootstrap_review, gemini_code_review, gemini_zip_attachment, gemini_ir, and gemini_structured_ir_v1 profiles. Writes review ZIP artifacts at the repository root and reports hashes, counts, warnings, and timing details.",
+  "authority": {
+    "risk_level": "write_medium",
+    "side_effects": "filesystem_write",
+    "requires_approval": false,
+    "requires_hash_precondition": false,
+    "allowed_roots": [
+      "."
+    ],
+    "denied_patterns": [
+      ".git/",
+      "node_modules/",
+      ".env",
+      ".env.*",
+      "*.pem",
+      "*.key"
+    ],
+    "max_files_touched": 10
+  },
+  "input_schema": {
+    "type": "object",
+    "properties": {
+      "include_untracked": {
+        "type": "boolean",
+        "default": false
+      },
+      "profile": {
+        "type": "string",
+        "enum": [
+          "bootstrap_review",
+          "gemini_code_review",
+          "gemini_zip_attachment",
+          "gemini_ir",
+          "gemini_structured_ir_v1"
+        ],
+        "default": "bootstrap_review"
+      }
+    }
+  },
+  "output_schema": {
+    "type": "object",
+    "properties": {
+      "status": {
+        "type": "string"
+      },
+      "zipPath": {
+        "type": "string"
+      },
+      "zipSha256": {
+        "type": "string"
+      },
+      "fileCount": {
+        "type": "number"
+      },
+      "warningsCount": {
+        "type": "number"
+      }
+    }
+  },
+  "provider_exports": {
+    "mistral_function_calling": true,
+    "openai_tools": true,
+    "anthropic_tools": true,
+    "mcp": true
+  }
+}

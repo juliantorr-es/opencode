@@ -27,7 +27,13 @@ const AgentSchema = Schema.StructWithRest(
     temperature: Schema.optional(Schema.Finite),
     top_p: Schema.optional(Schema.Finite),
     prompt: Schema.optional(Schema.String),
-    tools: Schema.optional(Schema.Record(Schema.String, Schema.Boolean)).annotate({
+    tools: Schema.optional(
+      Schema.Union([
+        Schema.Record(Schema.String, Schema.Boolean),
+        Schema.Array(Schema.String),
+        Schema.String,
+      ])
+    ).annotate({
       description: "@deprecated Use 'permission' field instead",
     }),
     disable: Schema.optional(Schema.Boolean),
@@ -89,18 +95,41 @@ const normalize = (agent: Schema.Schema.Type<typeof AgentSchema>): Schema.Schema
   }
 
   const permission: ConfigPermission.Info = {}
-  for (const [tool, enabled] of Object.entries(agent.tools ?? {})) {
-    const action = enabled ? "allow" : "deny"
-    if (tool === "write" || tool === "edit" || tool === "patch") {
-      permission.edit = action
-      continue
+  if (agent.tools) {
+    if (typeof agent.tools === "string") {
+      const toolNames = agent.tools.split(",").map((name) => name.trim()).filter(Boolean)
+      for (const name of toolNames) {
+        if (name === "write" || name === "edit" || name === "patch") {
+          permission.edit = "allow"
+        } else {
+          permission[name] = "allow"
+        }
+      }
+    } else if (Array.isArray(agent.tools)) {
+      for (const name of agent.tools) {
+        if (name === "write" || name === "edit" || name === "patch") {
+          permission.edit = "allow"
+        } else {
+          permission[name] = "allow"
+        }
+      }
+    } else {
+      for (const [tool, enabled] of Object.entries(agent.tools)) {
+        const action = enabled ? "allow" : "deny"
+        if (tool === "write" || tool === "edit" || tool === "patch") {
+          permission.edit = action
+          continue
+        }
+        permission[tool] = action
+      }
     }
-    permission[tool] = action
   }
   globalThis.Object.assign(permission, agent.permission)
 
   const steps = agent.steps ?? agent.maxSteps
-  return { ...agent, options, permission, ...(steps !== undefined ? { steps } : {}) }
+  const normalizedTools = typeof agent.tools === "object" && !Array.isArray(agent.tools) ? agent.tools : undefined
+
+  return { ...agent, tools: normalizedTools, options, permission, ...(steps !== undefined ? { steps } : {}) }
 }
 
 export const Info = AgentSchema.pipe(

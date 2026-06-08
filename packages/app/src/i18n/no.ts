@@ -122,7 +122,7 @@ export const dict = {
   "dialog.model.manage.description": "Tilpass hvilke modeller som vises i modellvelgeren.",
   "dialog.model.manage.provider.toggle": "Veksle alle {{provider}}-modeller",
 
-  "dialog.model.unpaid.freeModels.title": "Gratis modeller levert av OpenCode",
+  "dialog.model.unpaid.freeModels.title": "Gratis modeller levert av Tribunus",
   "dialog.model.unpaid.addMore.title": "Legg til flere modeller fra populære leverandører",
 
   "dialog.provider.viewAll": "Vis flere leverandører",
@@ -134,30 +134,25 @@ export const dict = {
   "provider.connect.status.inProgress": "Autorisering pågår...",
   "provider.connect.status.waiting": "Venter på autorisering...",
   "provider.connect.status.failed": "Autorisering mislyktes: {{error}}",
-  "provider.connect.apiKey.description":
-    "Skriv inn din {{provider}} API-nøkkel for å koble til kontoen din og bruke {{provider}}-modeller i OpenCode.",
+  "provider.connect.apiKey.description": "Skriv inn din {{provider}} API-nøkkel for å koble til kontoen din og bruke {{provider}}-modeller i Tribunus.",
   "provider.connect.apiKey.label": "{{provider}} API-nøkkel",
   "provider.connect.apiKey.placeholder": "API-nøkkel",
   "provider.connect.apiKey.required": "API-nøkkel er påkrevd",
-  "provider.connect.opencodeZen.line1":
-    "OpenCode Zen gir deg tilgang til et utvalg av pålitelige optimaliserte modeller for kodeagenter.",
-  "provider.connect.opencodeZen.line2":
-    "Med én enkelt API-nøkkel får du tilgang til modeller som Claude, GPT, Gemini, GLM og flere.",
+  "provider.connect.opencodeZen.line1": "Tribunus Zen gir deg tilgang til et utvalg av pålitelige optimaliserte modeller for kodeagenter.",
+  "provider.connect.opencodeZen.line2": "Med én enkelt API-nøkkel får du tilgang til modeller som Claude, GPT, Gemini, GLM og flere.",
   "provider.connect.opencodeZen.visit.prefix": "Besøk ",
   "provider.connect.opencodeZen.visit.link": "opencode.ai/zen",
   "provider.connect.opencodeZen.visit.suffix": " for å hente API-nøkkelen din.",
   "provider.connect.oauth.code.visit.prefix": "Besøk ",
   "provider.connect.oauth.code.visit.link": "denne lenken",
-  "provider.connect.oauth.code.visit.suffix":
-    " for å hente autorisasjonskoden din for å koble til kontoen din og bruke {{provider}}-modeller i OpenCode.",
+  "provider.connect.oauth.code.visit.suffix": " for å hente autorisasjonskoden din for å koble til kontoen din og bruke {{provider}}-modeller i Tribunus.",
   "provider.connect.oauth.code.label": "{{method}} autorisasjonskode",
   "provider.connect.oauth.code.placeholder": "Autorisasjonskode",
   "provider.connect.oauth.code.required": "Autorisasjonskode er påkrevd",
   "provider.connect.oauth.code.invalid": "Ugyldig autorisasjonskode",
   "provider.connect.oauth.auto.visit.prefix": "Besøk ",
   "provider.connect.oauth.auto.visit.link": "denne lenken",
-  "provider.connect.oauth.auto.visit.suffix":
-    " og skriv inn koden nedenfor for å koble til kontoen din og bruke {{provider}}-modeller i OpenCode.",
+  "provider.connect.oauth.auto.visit.suffix": " og skriv inn koden nedenfor for å koble til kontoen din og bruke {{provider}}-modeller i Tribunus.",
   "provider.connect.oauth.auto.confirmationCode": "Bekreftelseskode",
   "provider.connect.toast.connected.title": "{{provider}} tilkoblet",
   "provider.connect.toast.connected.description": "{{provider}}-modeller er nå tilgjengelige.",
@@ -312,7 +307,7 @@ export const dict = {
   "dialog.export.title": "Export Session",
   "dialog.export.description": "Export this session as a JSON file for backup or sharing",
   "dialog.export.sanitize": "Remove permissions and local paths",
-  "dialog.export.format": "OpenCode Session (.opencode-session)",
+  "dialog.export.format": "Tribunus Session (.opencode-session)",
   "dialog.export.button": "Export",
   "dialog.export.exporting": "Exporting...",
   "dialog.import.title": "Import Session",
@@ -327,7 +322,7 @@ export const dict = {
   "dialog.directory.empty": "Ingen mapper funnet",
 
   "dialog.server.title": "Servere",
-  "dialog.server.description": "Bytt hvilken OpenCode-server denne appen kobler til.",
+  "dialog.server.description": "Bytt hvilken Tribunus-server denne appen kobler til.",
   "dialog.server.search.placeholder": "Søk etter servere",
   "dialog.server.empty": "Ingen servere ennå",
   "dialog.server.add.title": "Legg til en server",
@@ -342,8 +337,7 @@ export const dict = {
   "dialog.server.add.password": "Passord (valgfritt)",
   "dialog.server.edit.title": "Rediger server",
   "dialog.server.default.title": "Standardserver",
-  "dialog.server.default.description":
-    "Koble til denne serveren ved oppstart i stedet for å starte en lokal server. Krever omstart.",
+  "dialog.server.default.description": "Koble til denne serveren ved oppstart i stedet for å starte en lokal server. Krever omstart.",
   "dialog.server.default.none": "Ingen server valgt",
   "dialog.server.default.set": "Sett gjeldende server som standard",
   "dialog.server.default.clear": "Tøm",
@@ -459,7 +453,7 @@ export const dict = {
   "toast.session.listFailed.title": "Kunne ikke laste sesjoner for {{project}}",
 
   "toast.update.title": "Oppdatering tilgjengelig",
-  "toast.update.description": "En ny versjon av OpenCode ({{version}}) er nå tilgjengelig for installasjon.",
+  "toast.update.description": "En ny versjon av Tribunus ({{version}}) er nå tilgjengelig for installasjon.",
   "toast.update.action.installRestart": "Installer og start på nytt",
   "toast.update.action.notYet": "Ikke nå",
 
@@ -472,12 +466,11 @@ export const dict = {
   "error.page.action.checking": "Sjekker...",
   "error.page.action.checkUpdates": "Se etter oppdateringer",
   "error.page.action.updateTo": "Oppdater til {{version}}",
-  "error.page.report.prefix": "Vennligst rapporter denne feilen til OpenCode-teamet",
-  "error.page.report.discord": "på Discord",
+  "error.page.report.prefix": "Vennligst rapporter denne feilen til Tribunus-teamet",
+  "error.page.report.discord": "på GitHub Discussions",
   "error.page.version": "Versjon: {{version}}",
 
-  "error.dev.rootNotFound":
-    "Rotelement ikke funnet. Glemte du å legge det til i index.html? Eller kanskje id-attributten er feilstavet?",
+  "error.dev.rootNotFound": "Rotelement ikke funnet. Glemte du å legge det til i index.html? Eller kanskje id-attributten er feilstavet?",
 
   "error.serverSync.connectFailed": "Kunne ikke koble til server. Kjører det en server på `{{url}}`?",
   "directory.error.invalidUrl": "Invalid directory in URL.",
@@ -491,14 +484,12 @@ export const dict = {
   "error.chain.didYouMean": "Mente du: {{suggestions}}",
   "error.chain.modelNotFound": "Modell ikke funnet: {{provider}}/{{model}}",
   "error.chain.checkConfig": "Sjekk leverandør-/modellnavnene i konfigurasjonen din (opencode.json)",
-  "error.chain.mcpFailed": 'MCP-server "{{name}}" mislyktes. Merk at OpenCode ikke støtter MCP-autentisering ennå.',
+  "error.chain.mcpFailed": 'MCP-server "{{name}}" mislyktes. Merk at Tribunus ikke støtter MCP-autentisering ennå.',
   "error.chain.providerAuthFailed": "Leverandørautentisering mislyktes ({{provider}}): {{message}}",
-  "error.chain.providerInitFailed":
-    'Kunne ikke initialisere leverandør "{{provider}}". Sjekk legitimasjon og konfigurasjon.',
+  "error.chain.providerInitFailed": 'Kunne ikke initialisere leverandør "{{provider}}". Sjekk legitimasjon og konfigurasjon.',
   "error.chain.configJsonInvalid": "Konfigurasjonsfilen på {{path}} er ikke gyldig JSON(C)",
   "error.chain.configJsonInvalidWithMessage": "Konfigurasjonsfilen på {{path}} er ikke gyldig JSON(C): {{message}}",
-  "error.chain.configDirectoryTypo":
-    'Mappen "{{dir}}" i {{path}} er ikke gyldig. Gi mappen nytt navn til "{{suggestion}}" eller fjern den. Dette er en vanlig skrivefeil.',
+  "error.chain.configDirectoryTypo": 'Mappen "{{dir}}" i {{path}} er ikke gyldig. Gi mappen nytt navn til "{{suggestion}}" eller fjern den. Dette er en vanlig skrivefeil.',
   "error.chain.configFrontmatterError": "Kunne ikke analysere frontmatter i {{path}}:\n{{message}}",
   "error.chain.configInvalid": "Konfigurasjonsfilen på {{path}} er ugyldig",
   "error.chain.configInvalidWithMessage": "Konfigurasjonsfilen på {{path}} er ugyldig: {{message}}",
@@ -527,8 +518,7 @@ export const dict = {
   "session.review.loadingChanges": "Laster endringer...",
   "session.review.empty": "Ingen endringer i denne sesjonen ennå",
   "session.review.noVcs": "Ingen Git-versjonskontrollsystem oppdaget, endringer vises ikke",
-  "session.review.noSnapshot":
-    "Snapshot-sporing er deaktivert i konfigurasjonen, så sesjonsendringer er ikke tilgjengelige",
+  "session.review.noSnapshot": "Snapshot-sporing er deaktivert i konfigurasjonen, så sesjonsendringer er ikke tilgjengelige",
   "session.review.noChanges": "Ingen endringer",
 
   "session.files.selectToOpen": "Velg en fil å åpne",
@@ -581,10 +571,8 @@ export const dict = {
   "status.popover.action.manageServers": "Administrer servere",
 
   "session.share.popover.title": "Publiser på nett",
-  "session.share.popover.description.shared":
-    "Denne sesjonen er offentlig på nettet. Den er tilgjengelig for alle med lenken.",
-  "session.share.popover.description.unshared":
-    "Del sesjonen offentlig på nettet. Den vil være tilgjengelig for alle med lenken.",
+  "session.share.popover.description.shared": "Denne sesjonen er offentlig på nettet. Den er tilgjengelig for alle med lenken.",
+  "session.share.popover.description.unshared": "Del sesjonen offentlig på nettet. Den vil være tilgjengelig for alle med lenken.",
   "session.share.action.share": "Del",
   "session.share.action.publish": "Publiser",
   "session.share.action.publishing": "Publiserer...",
@@ -603,8 +591,7 @@ export const dict = {
   "terminal.title.numbered": "Terminal {{number}}",
   "terminal.close": "Lukk terminal",
   "terminal.connectionLost.title": "Tilkobling mistet",
-  "terminal.connectionLost.description":
-    "Terminalforbindelsen ble avbrutt. Dette kan skje når serveren starter på nytt.",
+  "terminal.connectionLost.description": "Terminalforbindelsen ble avbrutt. Dette kan skje når serveren starter på nytt.",
 
   "common.closeTab": "Lukk fane",
   "common.dismiss": "Avvis",
@@ -627,13 +614,13 @@ export const dict = {
   "sidebar.workspaces.enable": "Aktiver arbeidsområder",
   "sidebar.workspaces.disable": "Deaktiver arbeidsområder",
   "sidebar.gettingStarted.title": "Kom i gang",
-  "sidebar.gettingStarted.line1": "OpenCode inkluderer gratis modeller så du kan starte umiddelbart.",
+  "sidebar.gettingStarted.line1": "Tribunus inkluderer gratis modeller så du kan starte umiddelbart.",
   "sidebar.gettingStarted.line2": "Koble til en leverandør for å bruke modeller, inkl. Claude, GPT, Gemini osv.",
   "sidebar.project.recentSessions": "Nylige sesjoner",
   "sidebar.project.viewAllSessions": "Vis alle sesjoner",
   "sidebar.project.clearNotifications": "Fjern varsler",
 
-  "app.name.desktop": "OpenCode Desktop",
+  "app.name.desktop": "Tribunus Desktop",
 
   "settings.section.desktop": "Skrivebord",
   "settings.section.server": "Server",
@@ -641,7 +628,7 @@ export const dict = {
   "settings.tab.shortcuts": "Snarveier",
   "settings.desktop.section.wsl": "WSL",
   "settings.desktop.wsl.title": "WSL-integrasjon",
-  "settings.desktop.wsl.description": "Kjør OpenCode-serveren i WSL på Windows.",
+  "settings.desktop.wsl.description": "Kjør Tribunus-serveren i WSL på Windows.",
 
   "settings.general.section.appearance": "Utseende",
   "settings.general.section.notifications": "Systemvarsler",
@@ -651,13 +638,13 @@ export const dict = {
   "settings.general.section.display": "Skjerm",
 
   "settings.general.row.language.title": "Språk",
-  "settings.general.row.language.description": "Endre visningsspråket for OpenCode",
+  "settings.general.row.language.description": "Endre visningsspråket for Tribunus",
   "settings.general.row.appearance.title": "Utseende",
-  "settings.general.row.appearance.description": "Tilpass hvordan OpenCode ser ut på enheten din",
+  "settings.general.row.appearance.description": "Tilpass hvordan Tribunus ser ut på enheten din",
   "settings.general.row.colorScheme.title": "Fargevalg",
-  "settings.general.row.colorScheme.description": "Velg om OpenCode skal følge systemets, lyst eller mørkt tema",
+  "settings.general.row.colorScheme.description": "Velg om Tribunus skal følge systemets, lyst eller mørkt tema",
   "settings.general.row.theme.title": "Tema",
-  "settings.general.row.theme.description": "Tilpass hvordan OpenCode er tematisert.",
+  "settings.general.row.theme.description": "Tilpass hvordan Tribunus er tematisert.",
   "settings.general.row.font.title": "Kodefont",
   "settings.general.row.font.description": "Tilpass skrifttypen som brukes i kodeblokker",
   "settings.general.row.terminalFont.title": "Terminal Font",
@@ -673,27 +660,24 @@ export const dict = {
   "settings.general.row.shellToolPartsExpanded.title": "Utvid shell-verktøydeler",
   "settings.general.row.shellToolPartsExpanded.description": "Vis shell-verktøydeler utvidet som standard i tidslinjen",
   "settings.general.row.editToolPartsExpanded.title": "Utvid edit-verktøydeler",
-  "settings.general.row.editToolPartsExpanded.description":
-    "Vis edit-, write- og patch-verktøydeler utvidet som standard i tidslinjen",
+  "settings.general.row.editToolPartsExpanded.description": "Vis edit-, write- og patch-verktøydeler utvidet som standard i tidslinjen",
   "settings.general.row.showSessionProgressBar.title": "Vis fremdriftslinje for sesjonen",
-  "settings.general.row.showSessionProgressBar.description":
-    "Vis den animerte fremdriftslinjen øverst i sesjonen når agenten jobber",
+  "settings.general.row.showSessionProgressBar.description": "Vis den animerte fremdriftslinjen øverst i sesjonen når agenten jobber",
   "settings.general.row.wayland.title": "Bruk innebygd Wayland",
   "settings.general.row.wayland.description": "Deaktiver X11-fallback på Wayland. Krever omstart.",
-  "settings.general.row.wayland.tooltip":
-    "På Linux med skjermer med blandet oppdateringsfrekvens kan innebygd Wayland være mer stabilt.",
+  "settings.general.row.wayland.tooltip": "På Linux med skjermer med blandet oppdateringsfrekvens kan innebygd Wayland være mer stabilt.",
 
   "settings.general.row.releaseNotes.title": "Utgivelsesnotater",
   "settings.general.row.releaseNotes.description": 'Vis "Hva er nytt"-vinduer etter oppdateringer',
 
   "settings.updates.row.startup.title": "Se etter oppdateringer ved oppstart",
-  "settings.updates.row.startup.description": "Se automatisk etter oppdateringer når OpenCode starter",
+  "settings.updates.row.startup.description": "Se automatisk etter oppdateringer når Tribunus starter",
   "settings.updates.row.check.title": "Se etter oppdateringer",
   "settings.updates.row.check.description": "Se etter oppdateringer manuelt og installer hvis tilgjengelig",
   "settings.updates.action.checkNow": "Sjekk nå",
   "settings.updates.action.checking": "Sjekker...",
   "settings.updates.toast.latest.title": "Du er oppdatert",
-  "settings.updates.toast.latest.description": "Du bruker den nyeste versjonen av OpenCode.",
+  "settings.updates.toast.latest.description": "Du bruker den nyeste versjonen av Tribunus.",
   "sound.option.none": "Ingen",
   "sound.option.alert01": "Varsel 01",
   "sound.option.alert02": "Varsel 02",
@@ -742,8 +726,7 @@ export const dict = {
   "sound.option.yup06": "Ja 06",
 
   "settings.general.notifications.agent.title": "Agent",
-  "settings.general.notifications.agent.description":
-    "Vis systemvarsel når agenten er ferdig eller trenger oppmerksomhet",
+  "settings.general.notifications.agent.description": "Vis systemvarsel når agenten er ferdig eller trenger oppmerksomhet",
   "settings.general.notifications.permissions.title": "Tillatelser",
   "settings.general.notifications.permissions.description": "Vis systemvarsel når en tillatelse er påkrevd",
   "settings.general.notifications.errors.title": "Feil",
@@ -804,8 +787,7 @@ export const dict = {
   "settings.permissions.tool.read.title": "Les",
   "settings.permissions.tool.read.description": "Lesing av en fil (matcher filbanen)",
   "settings.permissions.tool.edit.title": "Rediger",
-  "settings.permissions.tool.edit.description":
-    "Endre filer, inkludert redigeringer, skriving, patcher og multi-redigeringer",
+  "settings.permissions.tool.edit.description": "Endre filer, inkludert redigeringer, skriving, patcher og multi-redigeringer",
   "settings.permissions.tool.glob.title": "Glob",
   "settings.permissions.tool.glob.description": "Match filer ved hjelp av glob-mønstre",
   "settings.permissions.tool.grep.title": "Grep",
@@ -907,8 +889,7 @@ export const dict = {
   "debugBar.ariaLabel": "Utviklingsytelsesdiagnostikk",
   "debugBar.na": "i/t",
   "debugBar.nav.label": "NAV",
-  "debugBar.nav.tip":
-    "Siste fullførte ruteovergang som berører en sesjonsside, målt fra ruterstart til første opptegning etter at den har roet seg.",
+  "debugBar.nav.tip": "Siste fullførte ruteovergang som berører en sesjonsside, målt fra ruterstart til første opptegning etter at den har roet seg.",
   "debugBar.fps.label": "FPS",
   "debugBar.fps.tip": "Rullende bilder per sekund over de siste 5 sekundene.",
   "debugBar.frame.label": "FRAME",
@@ -920,8 +901,7 @@ export const dict = {
   "debugBar.delay.label": "DELAY",
   "debugBar.delay.tip": "Verste observerte inndataforsinkelse i de siste 5 sekundene.",
   "debugBar.inp.label": "INP",
-  "debugBar.inp.tip":
-    "Omtrentlig interaksjonsvarighet over de siste 5 sekundene. Dette er INP-lignende, ikke den offisielle Web Vitals INP.",
+  "debugBar.inp.tip": "Omtrentlig interaksjonsvarighet over de siste 5 sekundene. Dette er INP-lignende, ikke den offisielle Web Vitals INP.",
   "debugBar.cls.label": "CLS",
   "debugBar.cls.tip": "Kumulativ layoutforskyvning for gjeldende app-levetid.",
   "debugBar.mem.label": "MEM",
@@ -994,13 +974,13 @@ export const dict = {
   "dialog.mcp.form.url": "Server URL",  // TODO: translate
   "dialog.mcp.form.urlPlaceholder": "http://localhost:3000",  // TODO: translate
   "dialog.recovery.exportLogs": "Export Logs",  // TODO: translate
-  "dialog.recovery.failedToLoad": "OpenCode failed to load",  // TODO: translate
+  "dialog.recovery.failedToLoad": "Tribunus failed to load",  // TODO: translate
   "dialog.recovery.keepWaiting": "Keep Waiting",  // TODO: translate
-  "dialog.recovery.notResponding": "OpenCode is not responding",  // TODO: translate
+  "dialog.recovery.notResponding": "Tribunus is not responding",  // TODO: translate
   "dialog.recovery.notRespondingDetail": "You can relaunch the app, open the logs, or keep waiting.",  // TODO: translate
   "dialog.recovery.quit": "Quit",  // TODO: translate
   "dialog.recovery.relaunch": "Relaunch",  // TODO: translate
-  "dialog.recovery.terminated": "OpenCode window terminated unexpectedly",  // TODO: translate
+  "dialog.recovery.terminated": "Tribunus window terminated unexpectedly",  // TODO: translate
   "error.page.action.exportLogs": "Export Logs",  // TODO: translate
   "github.branchName": "Branch Name",  // TODO: translate
   "github.commitMessage": "Commit Message",  // TODO: translate

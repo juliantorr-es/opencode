@@ -1,111 +1,114 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "opencode.runtime_event.v1",
-  "title": "OpenCode Runtime Event",
+  "$id": "https://tribunus.dev/schemas/runtime_event.v1",
+  "title": "Tribunus Runtime Event",
   "description": "Schema for a single runtime event in OpenCode's event-driven execution model. Events capture actor actions, tool invocations, lifecycle transitions, and system diagnostics with normalized error codes and performance metadata.",
   "type": "object",
+  "$defs": {
+    "NormalizedError": {
+      "$ref": "https://opencode.ai/schemas/defs.json#/$defs/NormalizedError"
+    }
+  },
   "properties": {
     "id": {
       "type": "string",
-      "description": "Unique event identifier"
+      "description": "Unique identifier for the event"
     },
     "sessionId": {
       "type": "string",
-      "description": "Session that owns this event"
+      "description": "Session identifier"
     },
     "runId": {
       "type": "string",
-      "description": "Run (turn) identifier within the session"
+      "description": "Run identifier"
     },
     "parentEventId": {
-      "type": "string",
-      "description": "Optional parent event ID for event hierarchy"
+      "type": ["string", "null"],
+      "description": "Parent event identifier, if any"
     },
     "correlationId": {
+      "type": ["string", "null"],
+      "description": "Correlation identifier for tracing"
+    },
+    "traceId": {
+      "type": ["string", "null"],
+      "description": "W3C Trace Context trace ID for distributed tracing across subsystems"
+    },
+    "spanId": {
+      "type": ["string", "null"],
+      "description": "W3C Trace Context span ID for this event within a trace"
+    },
+    "severity": {
       "type": "string",
-      "description": "Optional correlation ID for cross-event tracing"
+      "enum": ["trace", "debug", "info", "warn", "error", "fatal"],
+      "description": "Event severity level"
+    },
+    "source": {
+      "type": "string",
+      "description": "Subsystem that emitted the event (e.g., coordination, session, tool, http, cockpit)"
     },
     "ts": {
       "type": "string",
       "format": "date-time",
-      "description": "ISO 8601 timestamp when the event occurred"
+      "description": "ISO 8601 timestamp of the event"
     },
     "actor": {
       "type": "string",
-      "enum": ["user", "assistant", "tool", "system", "lifecycle"],
-      "description": "Actor that produced the event"
+      "description": "Actor that generated the event (e.g., agent, user, system)"
     },
     "eventType": {
       "type": "string",
-      "description": "Dot-notation event type identifier (e.g. session.next.tool.called)"
+      "description": "Type of event (e.g., tool_call, file_edit, lifecycle, error)"
     },
     "phase": {
-      "type": "string",
-      "description": "Optional phase label within the session lifecycle"
+      "type": ["string", "null"],
+      "description": "Phase of the session when the event occurred"
     },
     "status": {
       "type": "string",
-      "enum": ["started", "succeeded", "failed", "denied", "cancelled", "recovered"],
-      "description": "Event status describing the outcome"
+      "description": "Status of the event (e.g., started, completed, failed)"
     },
     "toolName": {
-      "type": "string",
-      "description": "Name of the tool if this event relates to a tool invocation"
+      "type": ["string", "null"],
+      "description": "Name of the tool called, if applicable"
     },
     "filePath": {
-      "type": "string",
-      "description": "File path associated with the event, if any"
+      "type": ["string", "null"],
+      "description": "Path to the file edited, if applicable"
     },
     "model": {
-      "type": "string",
-      "description": "Model identifier if this event relates to an LLM call"
+      "type": ["string", "null"],
+      "description": "Model used for the event, if applicable"
     },
     "durationMs": {
-      "type": "number",
-      "description": "Duration in milliseconds for the event's operation"
+      "type": ["number", "null"],
+      "description": "Duration of the event in milliseconds, if applicable"
     },
     "tokenInput": {
-      "type": "number",
-      "description": "Number of input tokens consumed"
+      "type": ["number", "null"],
+      "description": "Number of input tokens, if applicable"
     },
     "tokenOutput": {
-      "type": "number",
-      "description": "Number of output tokens produced"
+      "type": ["number", "null"],
+      "description": "Number of output tokens, if applicable"
     },
     "errorCode": {
-      "type": "string",
-      "description": "Normalized error code in dot-notation (e.g. tool.timeout, lifecycle.phase_gate_denied)"
+      "type": ["string", "null"],
+      "description": "Error code, if applicable"
     },
     "errorMessage": {
-      "type": "string",
-      "description": "Human-readable error message"
+      "type": ["string", "null"],
+      "description": "Error message, if applicable"
     },
     "recoverable": {
-      "type": "boolean",
-      "description": "Whether the error is recoverable"
+      "type": ["boolean", "null"],
+      "description": "Whether the error is recoverable, if applicable"
     },
     "payloadJson": {
+      "type": "string",
       "description": "Full original event properties as a free-form JSON value"
     }
   },
   "required": ["id", "sessionId", "runId", "ts", "actor", "eventType"],
-  "additionalProperties": false,
-  "examples": [
-    {
-      "id": "evt_abc123",
-      "sessionId": "ses_def456",
-      "runId": "run_789ghi",
-      "parentEventId": "evt_abc122",
-      "ts": "2026-05-30T12:00:00Z",
-      "actor": "tool",
-      "eventType": "session.next.tool.called",
-      "phase": "execution",
-      "status": "succeeded",
-      "toolName": "search_replace",
-      "filePath": "src/main.ts",
-      "durationMs": 342,
-      "tokenInput": 1500,
-      "tokenOutput": 280
-    }
-  ]
+  "additionalProperties": false
 }

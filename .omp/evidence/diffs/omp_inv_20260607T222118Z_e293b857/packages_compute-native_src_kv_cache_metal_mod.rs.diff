@@ -1,0 +1,44 @@
+--- a/packages/compute-native/src/kv_cache/metal/mod.rs
++++ b/packages/compute-native/src/kv_cache/metal/mod.rs
+@@ -108,30 +108,32 @@
+ 
+     unsafe {
+         let _ = bits; // quiet unused warning
+-        mlx_sys::mlx_fast_metal_kernel_set_input_names(
+-            kernel.handle,
++        let config = mlx_sys::mlx_fast_metal_kernel_config_new();
++        mlx_sys::mlx_fast_metal_kernel_config_set_input_names(
++            config,
+             4,
+             c"inp".as_ptr(),
+             c"signs".as_ptr(),
+             c"boundaries".as_ptr(),
+             c"dims".as_ptr(),
+         );
+-        mlx_sys::mlx_fast_metal_kernel_set_output_names(
+-            kernel.handle,
++        mlx_sys::mlx_fast_metal_kernel_config_set_output_names(
++            config,
+             2,
+             c"packed_out".as_ptr(),
+             c"norms_out".as_ptr(),
+         );
+-        mlx_sys::mlx_fast_metal_kernel_set_grid(kernel.handle, (n_vecs * dim) as i32, 1, 1);
+-        mlx_sys::mlx_fast_metal_kernel_set_thread_group(kernel.handle, dim as i32, 1, 1);
++        mlx_sys::mlx_fast_metal_kernel_config_set_grid(config, (n_vecs * dim) as i32, 1, 1);
++        mlx_sys::mlx_fast_metal_kernel_config_set_thread_group(config, dim as i32, 1, 1);
+ 
+         let p_dim_i32 = p_dim as i32;
+-        mlx_sys::mlx_fast_metal_kernel_add_output_arg(kernel.handle, &p_dim_i32, 1, T_U32);
+-        mlx_sys::mlx_fast_metal_kernel_add_output_arg(kernel.handle, std::ptr::null(), 0, T_F32);
++        mlx_sys::mlx_fast_metal_kernel_config_add_output_arg(config, &p_dim_i32, 1, T_U32);
++        mlx_sys::mlx_fast_metal_kernel_config_add_output_arg(config, std::ptr::null(), 0, T_F32);
+ 
+         let inputs = make_input_vector(&[vectors, signs, boundaries, &dims_arr]);
+         let mut outputs = make_input_vector(&[]);
+-        mlx_sys::mlx_fast_metal_kernel_apply(&mut outputs, kernel.handle, inputs, default_stream());
++        mlx_sys::mlx_fast_metal_kernel_apply(&mut outputs, kernel.handle, inputs, config, default_stream());
++        mlx_sys::mlx_fast_metal_kernel_config_free(config);
+ 
+         let packed = extract_output(outputs, 0).reshape(&[n_vecs as i32, p_dim as i32])?;
+         let norms = extract_output(outputs, 1).reshape(&[n_vecs as i32])?;

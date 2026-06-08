@@ -41,6 +41,13 @@ import { Global } from "@opencode-ai/core/global"
 import { Effect, Layer, Option, Context, Schema, Types } from "effect"
 import { NonNegativeInt, optionalOmitUndefined } from "@opencode-ai/core/schema"
 import { RuntimeFlags } from "@/effect/runtime-flags"
+import {
+  enforceCapabilityGovernance,
+  sessionGetMetadata,
+  getRecoveryState,
+  CapabilityContext,
+  PrivilegeBoundary,
+} from "@/capability/metadata"
 
 const log = Log.create({ service: "session" })
 
@@ -586,6 +593,17 @@ export const layer: Layer.Layer<
     })
 
     const get = Effect.fn("Session.get")(function* (id: SessionID) {
+      const recoveryState = yield* getRecoveryState(id, "read-only")
+      const capCtx = yield* Effect.serviceOption(CapabilityContext)
+      const grantedBoundaries = Option.isSome(capCtx) ? capCtx.value.grantedBoundaries : (["none", "filesystem", "network", "secrets", "shell"] as readonly PrivilegeBoundary[])
+      const approvalLevelGranted = Option.isSome(capCtx) ? capCtx.value.approvalLevelGranted : "auto"
+      yield* enforceCapabilityGovernance({
+        metadata: sessionGetMetadata,
+        recoveryState,
+        grantedBoundaries,
+        approvalLevelGranted,
+      })
+
       const row: any = yield* db((d) => one(d.select().from(SessionTable).where(eq(SessionTable.id, id))))
       if (!row) return yield* Effect.fail(new NotFoundError({ message: `Session not found: ${id}` }))
       return fromRow(row)
@@ -614,7 +632,9 @@ export const layer: Layer.Layer<
     })
 
     const remove: Interface["remove"] = Effect.fnUntraced(function* (sessionID: SessionID) {
-      const session = yield* get(sessionID)
+      const session = yield* get(sessionID).pipe(
+        Effect.catchTag("CapabilityRefusalError", (err) => Effect.die(err)),
+      )
       try {
         // `remove` needs to work in all cases, such as broken sessions that
         // run cleanup without instance state.

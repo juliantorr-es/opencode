@@ -1,0 +1,267 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tribunus.dev/schemas/roadmap.v1",
+  "title": "Relational Roadmap",
+  "description": "Relational roadmap schema mapping ADRs to campaigns, missions, lanes, and tasks. Supports concurrent lane execution and hierarchical task breakdowns.",
+  "type": "object",
+  "$defs": {
+    "NormalizedError": {
+      "$ref": "https://opencode.ai/schemas/defs.json#/$defs/NormalizedError"
+    },
+    "Task": {
+      "type": "object",
+      "description": "An actionable task within a lane",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Unique task identifier"
+        },
+        "title": {
+          "type": "string",
+          "description": "Task title"
+        },
+        "description": {
+          "type": "string",
+          "description": "Task description"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["not_started", "in_progress", "completed", "blocked", "failed"],
+          "description": "Task status"
+        },
+        "priority": {
+          "type": "string",
+          "enum": ["p0", "p1", "p2", "p3"],
+          "description": "Task priority"
+        },
+        "assignee": {
+          "type": "string",
+          "description": "Assignee identifier"
+        },
+        "due_date": {
+          "type": "string",
+          "format": "date",
+          "description": "Due date for the task"
+        },
+        "dependencies": {
+          "type": "array",
+          "description": "List of task IDs this task depends on",
+          "items": { "type": "string", "format": "uuid" }
+        },
+        "acceptance_criteria": {
+          "type": "array",
+          "description": "List of acceptance criteria for the task",
+          "items": { "type": "string" }
+        }
+      },
+      "required": ["id", "title", "status"]
+    },
+    "Lane": {
+      "type": "object",
+      "description": "A lane within a mission, executed concurrently",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Unique lane identifier"
+        },
+        "title": {
+          "type": "string",
+          "description": "Lane title"
+        },
+        "description": {
+          "type": "string",
+          "description": "Lane description"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["not_started", "in_progress", "completed", "blocked", "failed"],
+          "description": "Lane status"
+        },
+        "tasks": {
+          "type": "array",
+          "description": "List of tasks within this lane",
+          "items": { "$ref": "#/$defs/Task" }
+        },
+        "concurrency_group": {
+          "type": "string",
+          "description": "Group identifier for concurrent execution"
+        }
+      },
+      "required": ["id", "title", "status", "tasks"]
+    },
+    "Mission": {
+      "type": "object",
+      "description": "A mission within a campaign",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Unique mission identifier"
+        },
+        "title": {
+          "type": "string",
+          "description": "Mission title"
+        },
+        "description": {
+          "type": "string",
+          "description": "Mission description"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["not_started", "in_progress", "completed", "blocked", "failed"],
+          "description": "Mission status"
+        },
+        "lanes": {
+          "type": "array",
+          "description": "List of lanes within this mission (executed concurrently)",
+          "items": { "$ref": "#/$defs/Lane" }
+        },
+        "start_date": {
+          "type": "string",
+          "format": "date",
+          "description": "Mission start date"
+        },
+        "end_date": {
+          "type": "string",
+          "format": "date",
+          "description": "Mission end date"
+        }
+      },
+      "required": ["id", "title", "status", "lanes"]
+    },
+    "Campaign": {
+      "type": "object",
+      "description": "A campaign within the roadmap",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Unique campaign identifier"
+        },
+        "title": {
+          "type": "string",
+          "description": "Campaign title"
+        },
+        "description": {
+          "type": "string",
+          "description": "Campaign description"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["planned", "active", "completed", "blocked", "cancelled"],
+          "description": "Campaign status"
+        },
+        "missions": {
+          "type": "array",
+          "description": "List of missions within this campaign",
+          "items": { "$ref": "#/$defs/Mission" }
+        },
+        "start_date": {
+          "type": "string",
+          "format": "date",
+          "description": "Campaign start date"
+        },
+        "end_date": {
+          "type": "string",
+          "format": "date",
+          "description": "Campaign end date"
+        },
+        "budget": {
+          "type": "object",
+          "description": "Budget allocation for the campaign",
+          "properties": {
+            "currency": { "type": "string", "description": "Currency code" },
+            "total": { "type": "number", "description": "Total budget" },
+            "allocated": { "type": "number", "description": "Budget allocated so far" }
+          },
+          "required": ["currency", "total"]
+        }
+      },
+      "required": ["id", "title", "status", "missions"]
+    },
+    "AdrReference": {
+      "type": "object",
+      "description": "Reference to an ADR",
+      "properties": {
+        "adr_id": {
+          "type": "string",
+          "pattern": "^\\d{4}$",
+          "description": "ADR identifier (e.g., '0001')"
+        },
+        "title": {
+          "type": "string",
+          "description": "ADR title"
+        },
+        "link": {
+          "type": "string",
+          "format": "uri",
+          "description": "Link to the ADR file"
+        }
+      },
+      "required": ["adr_id", "title"]
+    }
+  },
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "enum": ["rig.relay.roadmap.v1"],
+      "description": "Schema identifier"
+    },
+    "title": {
+      "type": "string",
+      "description": "Roadmap title"
+    },
+    "description": {
+      "type": "string",
+      "description": "Roadmap description"
+    },
+    "status": {
+      "type": "string",
+      "enum": ["planned", "active", "completed", "blocked", "cancelled"],
+      "description": "Roadmap status"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Roadmap creation timestamp"
+    },
+    "updated_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Roadmap last update timestamp"
+    },
+    "adrs": {
+      "type": "array",
+      "description": "List of ADRs related to this roadmap",
+      "items": { "$ref": "#/$defs/AdrReference" }
+    },
+    "campaigns": {
+      "type": "array",
+      "description": "List of campaigns within this roadmap",
+      "items": { "$ref": "#/$defs/Campaign" }
+    },
+    "meta": {
+      "type": "object",
+      "description": "Metadata and tags",
+      "properties": {
+        "tags": {
+          "type": "array",
+          "description": "List of tags",
+          "items": { "type": "string" }
+        },
+        "owner": {
+          "type": "string",
+          "description": "Owner identifier"
+        },
+        "reviewers": {
+          "type": "array",
+          "description": "List of reviewer identifiers",
+          "items": { "type": "string" }
+        }
+      }
+    }
+  },
+  "required": ["schema_version", "title", "status", "created_at", "campaigns"]
+}

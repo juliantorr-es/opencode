@@ -17,6 +17,11 @@ import { type ToolDefinition } from "./tool.js"
 
 export * from "./tool.js"
 export * from "./errors.js"
+export * from "./manifest.js"
+export * from "./governance.js"
+export * from "./revocation.js"
+export * from "./confinement.js"
+export * from "./host.js"
 
 export type ProviderContext = {
   source: "env" | "config" | "custom" | "api"

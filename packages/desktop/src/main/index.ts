@@ -47,7 +47,6 @@ import {
   setDockIcon,
   transitionToSafeMode,
 } from "./windows"
-import { migrateAppDataIfNeeded } from "./app-data-paths"
 import { migrate } from "./migrate"
 import { checkUpdate, checkForUpdates, installUpdate, setupAutoUpdater } from "./updater"
 import { Deferred, Effect, Fiber } from "effect"
@@ -191,10 +190,6 @@ const main = Effect.gen(function* () {
   }
 
   preferAppEnv(electronPlatformPaths.getPath("userData"))
-
-  // Migrate app data from old opencode identity to new Tribunus identity
-  const oldUserData = join(homedir(), "Library", "Application Support", "ai.opencode.desktop.dev")
-  migrateAppDataIfNeeded(oldUserData, app.getPath("userData"))
 
   // ── Valkey Sidecar ──────────────────────────────────────
   const valkeyEnabled = process.env.OPENCODE_COORDINATION_BACKEND === "local-valkey" || process.env.OPENCODE_COORDINATION_BACKEND === "remote-valkey"

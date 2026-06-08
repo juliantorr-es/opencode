@@ -1221,7 +1221,7 @@ function Footer() {
         </a>
       </div>
       <div data-slot="cell">
-        <a href="https://opencode.ai/docs">Docs</a>
+        <a href="https://tribunus.dev/docs">Docs</a>
       </div>
       <div data-slot="cell">
         <a href="https://opencode.ai/changelog">Changelog</a>

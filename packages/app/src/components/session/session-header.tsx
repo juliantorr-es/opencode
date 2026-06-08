@@ -21,8 +21,12 @@ import { useSync } from "@/context/sync"
 import { useTerminal } from "@/context/terminal"
 import { focusTerminalById } from "@/pages/session/helpers"
 import { useSessionLayout } from "@/pages/session/session-layout"
+import { useCapabilities } from "@/context/capability"
+import { useArtifacts } from "@/context/artifact"
+import { useLifecycle } from "@/context/lifecycle"
 import { messageAgentColor } from "@/utils/agent"
 import { decode64 } from "@/utils/base64"
+import { formatSessionChromeStatusLabel } from "@/utils/cockpit-truth"
 import { Persist, persisted } from "@/utils/persist"
 import { StatusPopover, StatusPopoverV2 } from "../status-popover"
 import { IconButtonV2 } from "@opencode-ai/ui/v2/components/icon-button-v2.jsx"
@@ -140,6 +144,9 @@ export function SessionHeader() {
   const settings = useSettings()
   const sync = useSync()
   const terminal = useTerminal()
+  const capabilities = useCapabilities()
+  const artifacts = useArtifacts()
+  const lifecycleContext = useLifecycle()
   const { params, view } = useSessionLayout()
 
   const projectDirectory = createMemo(() => decode64(params.dir) ?? "")
@@ -222,7 +229,8 @@ export function SessionHeader() {
     app: undefined as OpenApp | undefined,
   })
 
-  const canOpen = createMemo(() => platform.platform === "desktop" && !!platform.openPath && server.isLocal())
+  const localFsCapability = createMemo(() => capabilities().localFilesystem)
+  const canOpen = createMemo(() => localFsCapability().available && !!platform.openPath && server.isLocal())
   const current = createMemo(
     () =>
       options().find((o) => o.id === prefs.app) ??
@@ -233,13 +241,29 @@ export function SessionHeader() {
   const tint = createMemo(() =>
     messageAgentColor(params.id ? sync.data.message[params.id] : undefined, sync.data.agent),
   )
+  
+  const sessionStatus = createMemo(() => (params.id ? sync.data.session_status[params.id] : undefined))
+  const lifecycleState = createMemo(() => {
+    if (!params.id) return "unavailable"
+    return lifecycleContext.getLifecycle(params.id).state
+  })
+  const statusLabel = createMemo(() =>
+    formatSessionChromeStatusLabel({
+      sessionStatus: sessionStatus(),
+      lifecycleState: lifecycleState(),
+      fallbackLabel: language.t("status.popover.trigger"),
+    }),
+  )
   const v2ActionsState = createMemo<SessionHeaderV2ActionsState>(() => ({
+    sessionID: params.id,
     statusVisible: status(),
-    statusLabel: language.t("status.popover.trigger"),
+    statusLabel: statusLabel(),
     reviewLabel: language.t("command.review.toggle"),
     reviewKeybind: command.keybind("review.toggle"),
     reviewOpened: view().reviewPanel.opened(),
     onReviewToggle: () => view().reviewPanel.toggle(),
+    artifactOpened: artifacts.railOpened(),
+    onArtifactToggle: artifacts.toggleRail,
   }))
 
   const selectApp = (app: OpenApp) => {
@@ -330,18 +354,34 @@ export function SessionHeader() {
                       <Show
                         when={canOpen()}
                         fallback={
-                          <div class="flex h-[24px] box-border items-center rounded-md border border-border-weak-base bg-surface-panel overflow-hidden">
-                            <Button
-                              variant="ghost"
-                              class="rounded-none h-full py-0 pr-3 pl-0.5 gap-1.5 border-none shadow-none"
-                              onClick={copyPath}
-                              aria-label={language.t("session.header.open.copyPath")}
-                            >
-                              <Icon name="copy" size="small" class="text-icon-base" />
-                              <span class="text-12-regular text-text-strong">
-                                {language.t("session.header.open.copyPath")}
-                              </span>
-                            </Button>
+                          <div class="flex items-center gap-1">
+                            <Tooltip placement="bottom" value={localFsCapability().reason}>
+                              <div class="flex h-[24px] box-border items-center rounded-md border border-border-weak-base bg-surface-panel overflow-hidden opacity-50 cursor-not-allowed">
+                                <Button
+                                  variant="ghost"
+                                  class="rounded-none h-full px-0.5 border-none shadow-none !cursor-not-allowed"
+                                  disabled={true}
+                                  aria-label={language.t("session.header.open.ariaLabel", { app: current().label })}
+                                >
+                                  <div class="flex size-5 shrink-0 items-center justify-center [&_[data-component=app-icon]]:size-5">
+                                    <AppIcon id={current().icon} />
+                                  </div>
+                                </Button>
+                              </div>
+                            </Tooltip>
+                            <div class="flex h-[24px] box-border items-center rounded-md border border-border-weak-base bg-surface-panel overflow-hidden">
+                              <Button
+                                variant="ghost"
+                                class="rounded-none h-full py-0 pr-3 pl-0.5 gap-1.5 border-none shadow-none"
+                                onClick={copyPath}
+                                aria-label={language.t("session.header.open.copyPath")}
+                              >
+                                <Icon name="copy" size="small" class="text-icon-base" />
+                                <span class="text-12-regular text-text-strong">
+                                  {language.t("session.header.open.copyPath")}
+                                </span>
+                              </Button>
+                            </div>
                           </div>
                         }
                       >
@@ -446,13 +486,19 @@ export function SessionHeader() {
                     </Show>
                     <Show when={term()}>
                       <TooltipKeybind
-                        title={language.t("command.terminal.toggle")}
+                        title={
+                          !capabilities().terminalRuntime.available
+                            ? capabilities().terminalRuntime.reason || language.t("command.terminal.toggle")
+                            : language.t("command.terminal.toggle")
+                        }
                         keybind={command.keybind("terminal.toggle")}
                       >
                         <Button
                           variant="ghost"
                           class="group/terminal-toggle titlebar-icon w-8 h-6 p-0 box-border shrink-0"
+                          classList={{ "opacity-50 cursor-not-allowed": !capabilities().terminalRuntime.available }}
                           onClick={toggleTerminal}
+                          disabled={!capabilities().terminalRuntime.available}
                           aria-label={language.t("command.terminal.toggle")}
                           aria-expanded={view().terminal.opened()}
                           aria-controls="terminal-panel"
@@ -520,12 +566,15 @@ export function SessionHeader() {
 }
 
 type SessionHeaderV2ActionsState = {
+  sessionID: string | undefined
   statusVisible: boolean
   statusLabel: string
   reviewLabel: string
   reviewKeybind: string
   reviewOpened: boolean
   onReviewToggle: () => void
+  artifactOpened: boolean
+  onArtifactToggle: () => void
 }
 
 function SessionHeaderV2Actions(props: { state: SessionHeaderV2ActionsState }) {
@@ -533,7 +582,7 @@ function SessionHeaderV2Actions(props: { state: SessionHeaderV2ActionsState }) {
     <div class="flex items-center gap-0">
       <Show when={props.state.statusVisible}>
         <Tooltip placement="bottom" value={props.state.statusLabel}>
-          <StatusPopoverV2 />
+          <StatusPopoverV2 sessionID={props.state.sessionID} />
         </Tooltip>
       </Show>
       <TooltipKeybind title={props.state.reviewLabel} keybind={props.state.reviewKeybind}>
@@ -548,6 +597,23 @@ function SessionHeaderV2Actions(props: { state: SessionHeaderV2ActionsState }) {
           aria-expanded={props.state.reviewOpened}
           aria-controls="review-panel"
           icon={<IconV2 name="sidebar-right" />}
+        />
+      </TooltipKeybind>
+      <TooltipKeybind title="Toggle Artifacts" keybind="">
+        <IconButtonV2
+          type="button"
+          variant="ghost-muted"
+          size="large"
+          class="!w-9 shrink-0 border border-border-weak-base bg-background-base/70"
+          classList={{
+            "border-border-strong-base bg-background-base": props.state.artifactOpened,
+          }}
+          state={props.state.artifactOpened ? "pressed" : undefined}
+          onClick={props.state.onArtifactToggle}
+          aria-label="Toggle Artifacts"
+          aria-expanded={props.state.artifactOpened}
+          aria-controls="artifact-rail"
+          icon={<IconV2 name="file" />}
         />
       </TooltipKeybind>
     </div>

@@ -5,7 +5,7 @@ MODE="${1:-run}"
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 DESKTOP_DIR="$ROOT_DIR/packages/desktop"
-APP_NAME="OpenCode"
+APP_NAME="Tribunus Dev"
 LOG_DIR="${TMPDIR:-/tmp}/opencode-desktop-run"
 RUN_LOG="$LOG_DIR/build_and_run.log"
 
@@ -53,18 +53,18 @@ case "$MODE" in
   --telemetry|telemetry)
     kill_existing
     launch_dev_background
-    /usr/bin/log stream --info --style compact --predicate "subsystem == \"ai.opencode.desktop\""
+    /usr/bin/log stream --info --style compact --predicate "subsystem == \"dev.tribunus.desktop.dev\""
     ;;
   --verify|verify)
     kill_existing
     launch_dev_background
 
     if wait_for_app; then
-      printf 'OpenCode launched successfully from the repo build.\n'
+      printf 'Tribunus Dev launched successfully from the repo build.\n'
       exit 0
     fi
 
-    printf 'OpenCode did not appear to launch from the repo build.\n' >&2
+    printf 'Tribunus Dev did not appear to launch from the repo build.\n' >&2
     if [ -f "$RUN_LOG" ]; then
       tail -n 120 "$RUN_LOG" >&2 || true
     fi

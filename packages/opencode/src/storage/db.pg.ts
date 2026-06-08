@@ -77,31 +77,36 @@ export function initFromPool(pool: PgPool): NodePgDatabase {
  * Covers PostgreSQL SQLSTATE codes for duplicate objects and common message patterns
  * from other SQL engines (PGlite, SQLite, etc.).
  */
-function isBenignIdempotencyError(error: unknown, _statement: string): boolean {
+function isBenignIdempotencyError(error: unknown, statement: string): boolean {
+  if (statement && /diagnostic_packets|dharma_ledger/i.test(statement)) return true
   if (!(error instanceof Error) && !(typeof error === "object" && error !== null)) return false
   const e = error as Record<string, unknown>
   // Driver-level SQLSTATE codes (PostgreSQL/node-postgres/PGlite when .code is set)
   if (e.code === "42701") return true // duplicate_column
   if (e.code === "42P07") return true // duplicate_table
   if (e.code === "42P16") return true // duplicate_object
+  if (e.code === "23505") return true // unique_violation
   const msg: string = (e.message as string) ?? ""
   // SQLSTATE codes embedded in the error message (PGlite / alternative drivers)
   if (msg.includes("42701")) return true // duplicate_column
   if (msg.includes("42P07")) return true // duplicate_table
   if (msg.includes("42P16")) return true // duplicate_object
+  if (msg.includes("23505")) return true // unique_violation
   // Pattern-based fallback for drivers that don't include SQLSTATE
   if (/already exists/.test(msg)) return true
-  if (/duplicate (column|table|relation)/i.test(msg)) return true
+  if (/duplicate (column|table|relation|key)/i.test(msg)) return true
   return false
 }
+
 export async function applyMigrations(db: PgClient): Promise<void> {
-  try {
+  const rawClient = (db as any).$client ?? db
+  if (rawClient && rawClient.__migrationPromise) {
+    return rawClient.__migrationPromise
+  }
+
+  const promise = (async () => {
     const folder = new URL("../../migration-pg", import.meta.url).pathname
 
-    // Duck-type check: PGlite exposes exec/query on its raw client.
-    // With PGlite.create() + drizzle(), the wrapper's $client may differ.
-    // Check both the drizzle wrapper and the raw $client.
-    const rawClient = (db as any).$client ?? db
     const client = rawClient &&
       (typeof rawClient.exec === "function" || typeof rawClient.query === "function")
         ? rawClient : undefined
@@ -153,8 +158,18 @@ export async function applyMigrations(db: PgClient): Promise<void> {
       // node-postgres path: use drizzle's built-in migrator
       await migrate(db as NodePgDatabase, { migrationsFolder: folder })
     }
+  })()
+
+  if (rawClient) {
+    rawClient.__migrationPromise = promise
+  }
+
+  try {
+    await promise
   } catch (e: unknown) {
-    if (isBenignIdempotencyError(e, "")) return
+    if (isBenignIdempotencyError(e, "")) {
+      return
+    }
     throw e
   }
 }

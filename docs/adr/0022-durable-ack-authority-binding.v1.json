@@ -1,0 +1,29 @@
+{
+  "schema": "rig.relay.adr.v1",
+  "schema_version": "v1",
+  "id": "0022",
+  "title": "Durable ACK Authority Binding — Coordination Kernel Durable Lifecycle Binding",
+  "status": "accepted",
+  "date": "2026-06-06",
+  "last_modified": "2026-06-07T05:01:24.933Z",
+  "authors": [
+    "system"
+  ],
+  "tags": [
+    "valkey",
+    "pglite",
+    "coordination",
+    "durability",
+    "authority",
+    "ack-binding",
+    "receipts",
+    "evidence-chain",
+    "capability",
+    "approval"
+  ],
+  "context": "The Valkey coordination kernel primitives (streams, consumer groups, sorted sets, heartbeats, leases) are substantially implemented. However, the current work-queue implementation contains TODOs in completeAndAck, failTerminalAndAck, failRetryableAndAck, and deadLetterAndAck where PGlite durable writes should occur before Valkey XACK. reconcilePending currently always acks to prevent blocking rather than inspecting PGlite lifecycle state. Recovery rebuild uses simulated rather than PGlite-derived state. The test suite proves behavioral shape but not durable authority — several tests use in-memory Sets as terminal facts rather than querying PGlite tables.",
+  "decision": "Valkey may coordinate, schedule, fan out, and serialize work, but no stream entry may be acknowledged as terminal unless the corresponding PGlite work item and attempt lifecycle has already been written and can be queried after restart. XACK becomes a receipt of durable state, not the durable state itself. The specific rules: (1) completeAndAck and failTerminalAndAck must write terminal durable state to WorkItemTable and WorkAttemptTable before XACK. (2) failRetryableAndAck must write retry-scheduled durable state before requeue. (3) DeadLetterAndAck must write DeadLetterTable record before terminal XACK. (4) reconcilePending must inspect PGlite lifecycle state: if terminal durable state exists, ack; if retry state exists, reschedule/requeue; if no corresponding durable work exists, quarantine the stream entry. (5) Cold-start rebuild must scan non-terminal PGlite rows, derive Valkey structures, and emit recovery receipts — it must not rebuild completed, failed-terminal, cancelled, or dead-lettered work.",
+  "consequences": "This makes the coordination kernel provably correct: no Valkey state transition is authoritative without a preceding PGlite commit. It introduces a strict ordering constraint that increases latency slightly (PGlite write before Valkey ACK) but eliminates the class of bugs where work is acknowledged but never durably recorded or vice versa. Tests must inspect both PGlite and Valkey state in every assertion that claims lifecyle correctness. The durability-first rule applies to scheduler promotion as well: a sorted-set promotion cannot disappear work if the process crashes between durable selection and Valkey enqueue.",
+  "supersedes": [],
+  "superseded_by": []
+}

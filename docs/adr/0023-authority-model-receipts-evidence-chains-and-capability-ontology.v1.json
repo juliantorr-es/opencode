@@ -1,0 +1,21 @@
+{
+  "schema": "rig.relay.adr.v1",
+  "schema_version": "v1",
+  "id": "0023",
+  "title": "Authority Model — Receipts, Evidence Chains, and Capability Ontology",
+  "status": "accepted",
+  "date": "2026-06-07",
+  "last_modified": "2026-06-07T05:01:15.480Z",
+  "context": "Define the unified authority vocabulary and doctrine for Tribunus: what constitutes a receipt, how evidence chains are structured, the capability ontology governing all authorization decisions, the approval gate taxonomy, and the durable-before-ACK invariant that binds all authority claims to observable PGlite state. This ADR establishes the doctrinal foundation for campaigns 0009 (Authority and Auditability), 0018 (Security/Sandboxing), and 0019 (Supply Chain).",
+  "decision": "",
+  "consequences": "",
+  "authors": [],
+  "tags": [
+    "authority",
+    "receipts",
+    "evidence-chain",
+    "capability",
+    "approval",
+    "durability"
+  ]
+}

@@ -123,7 +123,7 @@ export const dict = {
   "dialog.model.manage.description": "Model seçicide hangi modellerin görüneceğini özelleştirin.",
   "dialog.model.manage.provider.toggle": "Tüm {{provider}} modellerini aç/kapat",
 
-  "dialog.model.unpaid.freeModels.title": "OpenCode tarafından sunulan ücretsiz modeller",
+  "dialog.model.unpaid.freeModels.title": "Tribunus tarafından sunulan ücretsiz modeller",
   "dialog.model.unpaid.addMore.title": "Popüler sağlayıcılardan daha fazla model ekleyin",
 
   "dialog.provider.viewAll": "Daha fazla sağlayıcı göster",
@@ -135,20 +135,16 @@ export const dict = {
   "provider.connect.status.inProgress": "Yetkilendirme devam ediyor...",
   "provider.connect.status.waiting": "Yetkilendirme bekleniyor...",
   "provider.connect.status.failed": "Yetkilendirme başarısız: {{error}}",
-  "provider.connect.apiKey.description":
-    "{{provider}} hesabınızı bağlamak ve OpenCode'da {{provider}} modellerini kullanmak için {{provider}} API anahtarınızı girin.",
+  "provider.connect.apiKey.description": "{{provider}} hesabınızı bağlamak ve Tribunus'da {{provider}} modellerini kullanmak için {{provider}} API anahtarınızı girin.",
   "provider.connect.apiKey.label": "{{provider}} API anahtarı",
   "provider.connect.apiKey.placeholder": "API anahtarı",
   "provider.connect.apiKey.required": "API anahtarı gerekli",
-  "provider.connect.opencodeZen.line1":
-    "OpenCode Zen, kodlama ajanları için seçilmiş güvenilir optimize edilmiş modellere erişim sağlar.",
-  "provider.connect.opencodeZen.line2":
-    "Tek bir API anahtarıyla Claude, GPT, Gemini, GLM ve daha fazlası gibi modellere erişebilirsiniz.",
+  "provider.connect.opencodeZen.line1": "Tribunus Zen, kodlama ajanları için seçilmiş güvenilir optimize edilmiş modellere erişim sağlar.",
+  "provider.connect.opencodeZen.line2": "Tek bir API anahtarıyla Claude, GPT, Gemini, GLM ve daha fazlası gibi modellere erişebilirsiniz.",
   "provider.connect.opencodeZen.visit.prefix": "",
   "provider.connect.opencodeZen.visit.link": "opencode.ai/zen",
   "provider.connect.opencodeZen.visit.suffix": " adresini ziyaret ederek API anahtarınızı alın.",
-  "provider.connect.oauth.code.visit.prefix":
-    "Hesabınızı bağlamak ve OpenCode'da {{provider}} modellerini kullanmak için ",
+  "provider.connect.oauth.code.visit.prefix": "Hesabınızı bağlamak ve Tribunus'da {{provider}} modellerini kullanmak için ",
   "provider.connect.oauth.code.visit.link": "bu bağlantıya",
   "provider.connect.oauth.code.visit.suffix": " tıklayarak yetkilendirme kodunuzu alın.",
   "provider.connect.oauth.code.label": "{{method}} yetkilendirme kodu",
@@ -157,8 +153,7 @@ export const dict = {
   "provider.connect.oauth.code.invalid": "Geçersiz yetkilendirme kodu",
   "provider.connect.oauth.auto.visit.prefix": "",
   "provider.connect.oauth.auto.visit.link": "Bu bağlantıya",
-  "provider.connect.oauth.auto.visit.suffix":
-    " tıklayarak aşağıdaki kodu girin ve hesabınızı bağlayarak OpenCode'da {{provider}} modellerini kullanın.",
+  "provider.connect.oauth.auto.visit.suffix": " tıklayarak aşağıdaki kodu girin ve hesabınızı bağlayarak Tribunus'da {{provider}} modellerini kullanın.",
   "provider.connect.oauth.auto.confirmationCode": "Onay kodu",
   "provider.connect.toast.connected.title": "{{provider}} bağlandı",
   "provider.connect.toast.connected.description": "{{provider}} modelleri artık kullanımda.",
@@ -176,8 +171,7 @@ export const dict = {
   "provider.custom.field.baseURL.placeholder": "https://api.saglayicim.com/v1",
   "provider.custom.field.apiKey.label": "API anahtarı",
   "provider.custom.field.apiKey.placeholder": "API anahtarı",
-  "provider.custom.field.apiKey.description":
-    "İsteğe bağlı. Kimlik doğrulamayı başlıklar ile yönetiyorsanız boş bırakın.",
+  "provider.custom.field.apiKey.description": "İsteğe bağlı. Kimlik doğrulamayı başlıklar ile yönetiyorsanız boş bırakın.",
   "provider.custom.models.label": "Modeller",
   "provider.custom.models.id.label": "Kimlik",
   "provider.custom.models.id.placeholder": "model-kimlik",
@@ -314,7 +308,7 @@ export const dict = {
   "dialog.export.title": "Export Session",
   "dialog.export.description": "Export this session as a JSON file for backup or sharing",
   "dialog.export.sanitize": "Remove permissions and local paths",
-  "dialog.export.format": "OpenCode Session (.opencode-session)",
+  "dialog.export.format": "Tribunus Session (.opencode-session)",
   "dialog.export.button": "Export",
   "dialog.export.exporting": "Exporting...",
   "dialog.import.title": "Import Session",
@@ -329,7 +323,7 @@ export const dict = {
   "dialog.directory.empty": "Klasör bulunamadı",
 
   "dialog.server.title": "Sunucular",
-  "dialog.server.description": "Bu uygulamanın hangi OpenCode sunucusuna bağlanacağını değiştirin.",
+  "dialog.server.description": "Bu uygulamanın hangi Tribunus sunucusuna bağlanacağını değiştirin.",
   "dialog.server.search.placeholder": "Sunucu ara",
   "dialog.server.empty": "Henüz sunucu yok",
   "dialog.server.add.title": "Sunucu ekle",
@@ -344,8 +338,7 @@ export const dict = {
   "dialog.server.add.password": "Şifre (isteğe bağlı)",
   "dialog.server.edit.title": "Sunucuyu düzenle",
   "dialog.server.default.title": "Varsayılan sunucu",
-  "dialog.server.default.description":
-    "Uygulama başlatıldığında yerel sunucu başlatmak yerine bu sunucuya bağlan. Yeniden başlatma gerektirir.",
+  "dialog.server.default.description": "Uygulama başlatıldığında yerel sunucu başlatmak yerine bu sunucuya bağlan. Yeniden başlatma gerektirir.",
   "dialog.server.default.none": "Sunucu seçilmedi",
   "dialog.server.default.set": "Mevcut sunucuyu varsayılan olarak ayarla",
   "dialog.server.default.clear": "Temizle",
@@ -461,7 +454,7 @@ export const dict = {
   "toast.session.listFailed.title": "{{project}} için oturumlar yüklenemedi",
 
   "toast.update.title": "Güncelleme mevcut",
-  "toast.update.description": "OpenCode'un yeni bir sürümü ({{version}}) yüklemeye hazır.",
+  "toast.update.description": "Tribunus'un yeni bir sürümü ({{version}}) yüklemeye hazır.",
   "toast.update.action.installRestart": "Yükle ve yeniden başlat",
   "toast.update.action.notYet": "Şimdi değil",
 
@@ -474,12 +467,11 @@ export const dict = {
   "error.page.action.checking": "Kontrol ediliyor...",
   "error.page.action.checkUpdates": "Güncellemeleri kontrol et",
   "error.page.action.updateTo": "{{version}} sürümüne güncelle",
-  "error.page.report.prefix": "Lütfen bu hatayı OpenCode ekibine bildirin",
-  "error.page.report.discord": "Discord üzerinden",
+  "error.page.report.prefix": "Lütfen bu hatayı Tribunus ekibine bildirin",
+  "error.page.report.discord": "GitHub Discussions üzerinden",
   "error.page.version": "Sürüm: {{version}}",
 
-  "error.dev.rootNotFound":
-    "Kök eleman bulunamadı. index.html dosyanıza eklemeyi unuttunuz mu? Ya da id özelliği yanlış mı yazıldı?",
+  "error.dev.rootNotFound": "Kök eleman bulunamadı. index.html dosyanıza eklemeyi unuttunuz mu? Ya da id özelliği yanlış mı yazıldı?",
 
   "error.serverSync.connectFailed": "Sunucuya bağlanılamadı. `{{url}}` adresinde çalışan bir sunucu var mı?",
   "directory.error.invalidUrl": "URL'de geçersiz dizin.",
@@ -493,16 +485,12 @@ export const dict = {
   "error.chain.didYouMean": "Bunu mu demek istediniz: {{suggestions}}",
   "error.chain.modelNotFound": "Model bulunamadı: {{provider}}/{{model}}",
   "error.chain.checkConfig": "Yapılandırma dosyanızı (opencode.json) sağlayıcı/model adlarını kontrol edin",
-  "error.chain.mcpFailed":
-    'MCP sunucusu "{{name}}" başarısız oldu. Not: OpenCode henüz MCP kimlik doğrulamasını desteklemiyor.',
+  "error.chain.mcpFailed": 'MCP sunucusu "{{name}}" başarısız oldu. Not: Tribunus henüz MCP kimlik doğrulamasını desteklemiyor.',
   "error.chain.providerAuthFailed": "Sağlayıcı kimlik doğrulaması başarısız ({{provider}}): {{message}}",
-  "error.chain.providerInitFailed":
-    '"{{provider}}" sağlayıcısı başlatılamadı. Kimlik bilgilerini ve yapılandırmayı kontrol edin.',
+  "error.chain.providerInitFailed": '"{{provider}}" sağlayıcısı başlatılamadı. Kimlik bilgilerini ve yapılandırmayı kontrol edin.',
   "error.chain.configJsonInvalid": "{{path}} adresindeki yapılandırma dosyası geçerli JSON(C) değil",
-  "error.chain.configJsonInvalidWithMessage":
-    "{{path}} adresindeki yapılandırma dosyası geçerli JSON(C) değil: {{message}}",
-  "error.chain.configDirectoryTypo":
-    '"{{dir}}" dizini {{path}} içinde geçerli değil. Dizini "{{suggestion}}" olarak yeniden adlandırın veya kaldırın. Bu yaygın bir yazım hatasıdır.',
+  "error.chain.configJsonInvalidWithMessage": "{{path}} adresindeki yapılandırma dosyası geçerli JSON(C) değil: {{message}}",
+  "error.chain.configDirectoryTypo": '"{{dir}}" dizini {{path}} içinde geçerli değil. Dizini "{{suggestion}}" olarak yeniden adlandırın veya kaldırın. Bu yaygın bir yazım hatasıdır.',
   "error.chain.configFrontmatterError": "{{path}} içindeki ön bilgi ayrıştırılamadı:\n{{message}}",
   "error.chain.configInvalid": "{{path}} adresindeki yapılandırma dosyası geçersiz",
   "error.chain.configInvalidWithMessage": "{{path}} adresindeki yapılandırma dosyası geçersiz: {{message}}",
@@ -531,8 +519,7 @@ export const dict = {
   "session.review.loadingChanges": "Değişiklikler yükleniyor...",
   "session.review.empty": "Bu oturumda henüz değişiklik yok",
   "session.review.noVcs": "Git VCS algılanamadı, oturum değişiklikleri tespit edilemeyecek",
-  "session.review.noSnapshot":
-    "Yapılandırmada anlık görüntü takibi devre dışı bırakıldı, bu nedenle oturum değişiklikleri kullanılamıyor",
+  "session.review.noSnapshot": "Yapılandırmada anlık görüntü takibi devre dışı bırakıldı, bu nedenle oturum değişiklikleri kullanılamıyor",
   "session.review.noChanges": "Değişiklik yok",
 
   "session.files.selectToOpen": "Açmak için bir dosya seçin",
@@ -586,8 +573,7 @@ export const dict = {
 
   "session.share.popover.title": "Web'de yayınla",
   "session.share.popover.description.shared": "Bu oturum web'de herkese açıktır. Bağlantıya sahip herkes erişebilir.",
-  "session.share.popover.description.unshared":
-    "Oturumu web'de herkese açık olarak paylaşın. Bağlantıya sahip herkes erişebilecek.",
+  "session.share.popover.description.unshared": "Oturumu web'de herkese açık olarak paylaşın. Bağlantıya sahip herkes erişebilecek.",
   "session.share.action.share": "Paylaş",
   "session.share.action.publish": "Yayınla",
   "session.share.action.publishing": "Yayınlanıyor...",
@@ -606,8 +592,7 @@ export const dict = {
   "terminal.title.numbered": "Terminal {{number}}",
   "terminal.close": "Terminali kapat",
   "terminal.connectionLost.title": "Bağlantı Kesildi",
-  "terminal.connectionLost.description":
-    "Terminal bağlantısı kesildi. Bu durum sunucu yeniden başladığında oluşabilir.",
+  "terminal.connectionLost.description": "Terminal bağlantısı kesildi. Bu durum sunucu yeniden başladığında oluşabilir.",
 
   "common.closeTab": "Sekmeyi kapat",
   "common.dismiss": "Kapat",
@@ -630,13 +615,13 @@ export const dict = {
   "sidebar.workspaces.enable": "Çalışma alanlarını etkinleştir",
   "sidebar.workspaces.disable": "Çalışma alanlarını devre dışı bırak",
   "sidebar.gettingStarted.title": "Başlarken",
-  "sidebar.gettingStarted.line1": "OpenCode ücretsiz modeller içerir, böylece hemen başlayabilirsiniz.",
+  "sidebar.gettingStarted.line1": "Tribunus ücretsiz modeller içerir, böylece hemen başlayabilirsiniz.",
   "sidebar.gettingStarted.line2": "Claude, GPT, Gemini vb. modelleri kullanmak için herhangi bir sağlayıcı bağlayın.",
   "sidebar.project.recentSessions": "Son oturumlar",
   "sidebar.project.viewAllSessions": "Tüm oturumları görüntüle",
   "sidebar.project.clearNotifications": "Bildirimleri temizle",
 
-  "app.name.desktop": "OpenCode Masaüstü",
+  "app.name.desktop": "Tribunus Masaüstü",
 
   "settings.section.desktop": "Masaüstü",
   "settings.section.server": "Sunucu",
@@ -644,7 +629,7 @@ export const dict = {
   "settings.tab.shortcuts": "Kısayollar",
   "settings.desktop.section.wsl": "WSL",
   "settings.desktop.wsl.title": "WSL entegrasyonu",
-  "settings.desktop.wsl.description": "OpenCode sunucusunu Windows'ta WSL içinde çalıştırın.",
+  "settings.desktop.wsl.description": "Tribunus sunucusunu Windows'ta WSL içinde çalıştırın.",
 
   "settings.general.section.appearance": "Görünüm",
   "settings.general.section.notifications": "Sistem bildirimleri",
@@ -654,14 +639,13 @@ export const dict = {
   "settings.general.section.display": "Ekran",
 
   "settings.general.row.language.title": "Dil",
-  "settings.general.row.language.description": "OpenCode'un görünüm dilini değiştirin",
+  "settings.general.row.language.description": "Tribunus'un görünüm dilini değiştirin",
   "settings.general.row.appearance.title": "Görünüm",
-  "settings.general.row.appearance.description": "OpenCode'un cihazınızdaki görünümünü özelleştirin",
+  "settings.general.row.appearance.description": "Tribunus'un cihazınızdaki görünümünü özelleştirin",
   "settings.general.row.colorScheme.title": "Renk şeması",
-  "settings.general.row.colorScheme.description":
-    "OpenCode'un sistem, açık veya koyu temayı takip etip etmeyeceğini seçin",
+  "settings.general.row.colorScheme.description": "Tribunus'un sistem, açık veya koyu temayı takip etip etmeyeceğini seçin",
   "settings.general.row.theme.title": "Tema",
-  "settings.general.row.theme.description": "OpenCode'un temasını özelleştirin.",
+  "settings.general.row.theme.description": "Tribunus'un temasını özelleştirin.",
   "settings.general.row.font.title": "Kod Yazı Tipi",
   "settings.general.row.font.description": "Kod bloklarında kullanılan yazı tipini özelleştirin",
   "settings.general.row.terminalFont.title": "Terminal Font",
@@ -669,40 +653,34 @@ export const dict = {
   "settings.general.row.uiFont.title": "Arayüz Yazı Tipi",
   "settings.general.row.uiFont.description": "Arayüz genelinde kullanılan yazı tipini özelleştirin",
   "settings.general.row.followup.title": "Takip davranışı",
-  "settings.general.row.followup.description":
-    "Takip komutlarının hemen yönlendirilmesini mi yoksa sırada beklemesini mi istediğinizi seçin",
+  "settings.general.row.followup.description": "Takip komutlarının hemen yönlendirilmesini mi yoksa sırada beklemesini mi istediğinizi seçin",
   "settings.general.row.followup.option.queue": "Sıra",
   "settings.general.row.followup.option.steer": "Yönlendir",
   "settings.general.row.reasoningSummaries.title": "Akıl yürütme özetlerini göster",
   "settings.general.row.reasoningSummaries.description": "Zaman çizelgesinde model akıl yürütme özetlerini görüntüle",
   "settings.general.row.shellToolPartsExpanded.title": "Kabuk araç bileşenlerini genişlet",
-  "settings.general.row.shellToolPartsExpanded.description":
-    "Zaman çizelgesinde kabuk araç bileşenlerini varsayılan olarak genişletilmiş göster",
+  "settings.general.row.shellToolPartsExpanded.description": "Zaman çizelgesinde kabuk araç bileşenlerini varsayılan olarak genişletilmiş göster",
   "settings.general.row.editToolPartsExpanded.title": "Düzenleme araç bileşenlerini genişlet",
-  "settings.general.row.editToolPartsExpanded.description":
-    "Zaman çizelgesinde düzenleme, yazma ve yama araç bileşenlerini varsayılan olarak genişletilmiş göster",
+  "settings.general.row.editToolPartsExpanded.description": "Zaman çizelgesinde düzenleme, yazma ve yama araç bileşenlerini varsayılan olarak genişletilmiş göster",
 
   "settings.general.row.showSessionProgressBar.title": "Oturum ilerleme çubuğunu göster",
-  "settings.general.row.showSessionProgressBar.description":
-    "Ajan çalışırken oturumun üst kısmında animasyonlu ilerleme çubuğunu göster",
+  "settings.general.row.showSessionProgressBar.description": "Ajan çalışırken oturumun üst kısmında animasyonlu ilerleme çubuğunu göster",
 
   "settings.general.row.wayland.title": "Yerel Wayland kullan",
-  "settings.general.row.wayland.description":
-    "Wayland'da X11 geri dönüşünü devre dışı bırak. Yeniden başlatma gerektirir.",
-  "settings.general.row.wayland.tooltip":
-    "Karışık yenileme hızlı monitörlere sahip Linux'ta yerel Wayland daha kararlı olabilir.",
+  "settings.general.row.wayland.description": "Wayland'da X11 geri dönüşünü devre dışı bırak. Yeniden başlatma gerektirir.",
+  "settings.general.row.wayland.tooltip": "Karışık yenileme hızlı monitörlere sahip Linux'ta yerel Wayland daha kararlı olabilir.",
 
   "settings.general.row.releaseNotes.title": "Sürüm notları",
   "settings.general.row.releaseNotes.description": "Güncellemelerden sonra Yenilikler bildirimlerini göster",
 
   "settings.updates.row.startup.title": "Başlangıçta güncellemeleri kontrol et",
-  "settings.updates.row.startup.description": "OpenCode başladığında otomatik güncelleme kontrolü yap",
+  "settings.updates.row.startup.description": "Tribunus başladığında otomatik güncelleme kontrolü yap",
   "settings.updates.row.check.title": "Güncellemeleri kontrol et",
   "settings.updates.row.check.description": "Elle güncelleme kontrolü yap ve varsa yükle",
   "settings.updates.action.checkNow": "Şimdi kontrol et",
   "settings.updates.action.checking": "Kontrol ediliyor...",
   "settings.updates.toast.latest.title": "Güncelsiniz",
-  "settings.updates.toast.latest.description": "OpenCode'un en son sürümünü kullanıyorsunuz.",
+  "settings.updates.toast.latest.description": "Tribunus'un en son sürümünü kullanıyorsunuz.",
 
   "sound.option.none": "Yok",
   "sound.option.alert01": "Uyarı 01",
@@ -752,8 +730,7 @@ export const dict = {
   "sound.option.yup06": "Evet 06",
 
   "settings.general.notifications.agent.title": "Ajan",
-  "settings.general.notifications.agent.description":
-    "Ajan tamamlandığında veya dikkat gerektirdiğinde sistem bildirimi göster",
+  "settings.general.notifications.agent.description": "Ajan tamamlandığında veya dikkat gerektirdiğinde sistem bildirimi göster",
   "settings.general.notifications.permissions.title": "İzinler",
   "settings.general.notifications.permissions.description": "İzin gerektiğinde sistem bildirimi göster",
   "settings.general.notifications.errors.title": "Hatalar",
@@ -916,8 +893,7 @@ export const dict = {
   "debugBar.ariaLabel": "Geliştirme performansı teşhisi",
   "debugBar.na": "yok",
   "debugBar.nav.label": "NAV",
-  "debugBar.nav.tip":
-    "Yönlendirici başlangıcından yerleşme sonrası ilk boyamaya kadar ölçülen, bir oturum sayfasına dokunan son tamamlanmış rota geçişi.",
+  "debugBar.nav.tip": "Yönlendirici başlangıcından yerleşme sonrası ilk boyamaya kadar ölçülen, bir oturum sayfasına dokunan son tamamlanmış rota geçişi.",
   "debugBar.fps.label": "FPS",
   "debugBar.fps.tip": "Son 5 saniyedeki kayan saniye başına kare sayısı.",
   "debugBar.frame.label": "FRAME",
@@ -1002,13 +978,13 @@ export const dict = {
   "dialog.mcp.form.url": "Server URL",  // TODO: translate
   "dialog.mcp.form.urlPlaceholder": "http://localhost:3000",  // TODO: translate
   "dialog.recovery.exportLogs": "Export Logs",  // TODO: translate
-  "dialog.recovery.failedToLoad": "OpenCode failed to load",  // TODO: translate
+  "dialog.recovery.failedToLoad": "Tribunus failed to load",  // TODO: translate
   "dialog.recovery.keepWaiting": "Keep Waiting",  // TODO: translate
-  "dialog.recovery.notResponding": "OpenCode is not responding",  // TODO: translate
+  "dialog.recovery.notResponding": "Tribunus is not responding",  // TODO: translate
   "dialog.recovery.notRespondingDetail": "You can relaunch the app, open the logs, or keep waiting.",  // TODO: translate
   "dialog.recovery.quit": "Quit",  // TODO: translate
   "dialog.recovery.relaunch": "Relaunch",  // TODO: translate
-  "dialog.recovery.terminated": "OpenCode window terminated unexpectedly",  // TODO: translate
+  "dialog.recovery.terminated": "Tribunus window terminated unexpectedly",  // TODO: translate
   "error.page.action.exportLogs": "Export Logs",  // TODO: translate
   "github.branchName": "Branch Name",  // TODO: translate
   "github.commitMessage": "Commit Message",  // TODO: translate

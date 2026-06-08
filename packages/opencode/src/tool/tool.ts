@@ -10,6 +10,20 @@ import * as CacheKey from "./cache-key"
 import { AppFileSystem } from "@opencode-ai/core/filesystem"
 import { InstanceState } from "@/effect/instance-state"
 import path from "path"
+import {
+  getRecoveryState,
+  CapabilityContext,
+  type PrivilegeBoundary,
+  type ApprovalLevel,
+  CapabilityRefusalError,
+} from "@/capability/metadata"
+import { evaluateCapabilityAuthority } from "@/capability/authority"
+import { persistAuthorityReceipt } from "@/capability/receipts"
+import { CapabilityToolRegistry, CapabilityToolRegistryError, type CapabilityToolDefinition } from "@/capability/tool-registry"
+import { SessionTable } from "@/storage/schema"
+import { eq } from "@/storage/db"
+import * as Database from "@/storage/db"
+import { one } from "@/storage/adapter"
 
 interface Metadata {
   [key: string]: any
@@ -129,6 +143,38 @@ type Init<Parameters extends Schema.Decoder<unknown>, M extends Metadata> =
   | DefWithoutID<Parameters, M>
   | (() => Effect.Effect<DefWithoutID<Parameters, M>>)
 
+function makeConservativeToolDefinition(id: string, toolInfo: { description?: string; jsonSchema?: JSONSchema7 } & Record<string, any>): CapabilityToolDefinition {
+  const description = toolInfo.description || `Execute tool ${id}`
+  const sourceType = toolInfo.sourceType === "mcp" ? "mcp" : toolInfo.sourceType ?? "native"
+  const providerID = toolInfo.providerID ?? "opencode.native"
+
+  return {
+    toolID: id,
+    capabilityID: `tool.execute:${id}`,
+    sourceType,
+    providerID,
+    displayName: toolInfo.displayName ?? id,
+    description,
+    metadata: {
+      id: `tool.execute:${id}`,
+      description,
+      privilegeBoundaries: ["unknown"],
+      mutationClass: "side-effect",
+      determinismClass: "external",
+      approvalLevel: "human",
+      blockedRecoveryStates: [
+        "coordination_unavailable",
+        "coordination_rebuilding",
+        "coordination_degraded",
+        "coordination_refused",
+      ],
+    },
+    receiptBehavior: "authority-receipt",
+    importStatus: "conservative",
+    inputSchema: toolInfo.jsonSchema,
+  }
+}
+
 export type InferParameters<T> =
   T extends Info<infer P, any>
     ? Schema.Schema.Type<P>
@@ -191,8 +237,104 @@ function wrap<Parameters extends Schema.Decoder<unknown>, M extends Metadata>(
         // 7. Span annotation last — the span records the final outcome including all
         //    upstream processing.
 
+        const governed = Effect.gen(function* () {
+          const registryOpt = yield* Effect.serviceOption(CapabilityToolRegistry)
+          let toolDef: CapabilityToolDefinition | undefined
+
+          if (Option.isSome(registryOpt)) {
+            const registry = registryOpt.value
+            const resolved = yield* registry.resolveCapabilityTool(id).pipe(
+              Effect.catchIf(
+                (error) => error instanceof CapabilityToolRegistryError && error.reason === "tool_not_found",
+                () => Effect.succeed(undefined),
+              ),
+            )
+            toolDef = resolved
+          }
+
+          if (toolDef === undefined) {
+            toolDef = makeConservativeToolDefinition(id, toolInfo as any)
+          }
+
+          const dynamicMetadata = toolDef.metadata
+
+          let projectID: string | undefined = undefined
+          try {
+            const row: any = yield* Effect.promise(() =>
+              Database.use((db) =>
+                one(
+                  db
+                    .select({ project_id: SessionTable.project_id })
+                    .from(SessionTable)
+                    .where(eq(SessionTable.id, ctx.sessionID))
+                )
+              )
+            )
+            projectID = row?.project_id
+          } catch (e) {
+            // Nullable fallback
+          }
+
+          const recoveryState = yield* getRecoveryState(ctx.sessionID, dynamicMetadata.mutationClass)
+          const capCtx = yield* Effect.serviceOption(CapabilityContext)
+          const grantedBoundaries = Option.isSome(capCtx)
+            ? capCtx.value.grantedBoundaries
+            : ((ctx.extra?.grantedBoundaries as PrivilegeBoundary[]) ?? ["shell"])
+          const approvalLevelGranted = Option.isSome(capCtx)
+            ? capCtx.value.approvalLevelGranted
+            : ((ctx.extra?.approvalLevelGranted as ApprovalLevel) ?? "auto")
+          const authorityGrants = Option.isSome(capCtx)
+            ? capCtx.value.authorityGrants
+            : undefined
+
+          const capResult = evaluateCapabilityAuthority({
+            metadata: dynamicMetadata,
+            recoveryState,
+            grantedBoundaries,
+            approvalLevelGranted,
+            availableAuthorityGrants: authorityGrants,
+          })
+
+          const extendedChain = [
+            {
+              toolID: toolDef.toolID,
+              providerID: toolDef.providerID,
+              sourceType: toolDef.sourceType,
+              importStatus: toolDef.importStatus,
+            },
+            ...(capResult.authorityChain ?? []),
+          ]
+
+          yield* persistAuthorityReceipt({
+            capabilityId: dynamicMetadata.id,
+            actionName: `tool.execute:${id}`,
+            sessionId: ctx.sessionID,
+            projectId: projectID,
+            authorityOutcome: capResult.available ? "allowed" : "refused",
+            refusalReasons: capResult.reasons,
+            authorityChain: extendedChain,
+            missingAuthority: capResult.missingAuthority,
+            recoveryState,
+            approvalLevel: dynamicMetadata.approvalLevel,
+            privilegeBoundaries: [...dynamicMetadata.privilegeBoundaries],
+            consentClass: capResult.consentClass,
+          })
+
+          if (!capResult.available) {
+            const reason = capResult.reasons[0] as any
+            return yield* Effect.fail(
+              new CapabilityRefusalError({
+                reason: reason || "human_approval_required",
+                message: capResult.message || `Capability tool.execute:${id} refused`,
+              })
+            )
+          }
+        })
+
         // ── Stage 1: Decode tool arguments ──
-        const decoded = decodeToolArgs(decode, id, toolInfo.formatValidationError)(args)
+        const decoded = Effect.flatMap(governed, () =>
+          decodeToolArgs(decode, id, toolInfo.formatValidationError)(args)
+        )
 
         // ── Stage 2: Execute with cache + truncation (retry wraps compute only) ──
         const executed = Effect.flatMap(decoded, (params) =>

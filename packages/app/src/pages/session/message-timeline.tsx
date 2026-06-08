@@ -62,6 +62,7 @@ import { useLanguage } from "@/context/language"
 import { useSessionKey } from "@/pages/session/session-layout"
 import { useServerSDK } from "@/context/server-sdk"
 import { usePlatform } from "@/context/platform"
+import { useSessionCapabilities } from "@/context/capability"
 import { useSettings } from "@/context/settings"
 import { useSDK } from "@/context/sdk"
 import { useSync } from "@/context/sync"
@@ -317,9 +318,11 @@ export function MessageTimeline(props: {
   const language = useLanguage()
   const { params, sessionKey } = useSessionKey()
   const platform = usePlatform()
+  const sessionID = createMemo(() => params.id)
+  const capabilities = useSessionCapabilities(() => sessionID() ?? "")
 
   let virtualizer: VirtualizerHandle | undefined
-  const sessionID = createMemo(() => params.id)
+
   const sessionMessages = createMemo(() => {
     const id = sessionID()
     if (!id) return emptyMessages
@@ -1543,6 +1546,7 @@ export function MessageTimeline(props: {
                             </DropdownMenu.Item>
                             <Show when={shareEnabled()}>
                               <DropdownMenu.Item
+                                disabled={capabilities.data()?.share?.available === false}
                                 onSelect={() => {
                                   setTitle({ pendingShare: true, menuOpen: false })
                                 }}
@@ -1602,9 +1606,11 @@ export function MessageTimeline(props: {
                                   {language.t("session.share.popover.title")}
                                 </div>
                                 <div class="text-12-regular text-text-weak">
-                                  {shareUrl()
-                                    ? language.t("session.share.popover.description.shared")
-                                    : language.t("session.share.popover.description.unshared")}
+                                  {capabilities.data()?.share?.available === false
+                                    ? capabilities.data()?.share?.message
+                                    : (shareUrl()
+                                      ? language.t("session.share.popover.description.shared")
+                                      : language.t("session.share.popover.description.unshared"))}
                                 </div>
                               </div>
                               <div class="mt-3 flex flex-col gap-2">
@@ -1616,7 +1622,7 @@ export function MessageTimeline(props: {
                                       variant="primary"
                                       class="w-full"
                                       onClick={shareSession}
-                                      disabled={shareMutation.isPending}
+                                      disabled={shareMutation.isPending || capabilities.data()?.share?.available === false}
                                     >
                                       {shareMutation.isPending
                                         ? language.t("session.share.action.publishing")

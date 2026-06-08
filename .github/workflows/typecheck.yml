@@ -17,5 +17,11 @@ jobs:
       - name: Setup Bun
         uses: ./.github/actions/setup-bun
 
+      - name: Validate JSON schemas
+        run: bun run schema:validate
+
+      - name: Check schema types are current
+        run: bun run schema:check
+
       - name: Run typecheck
         run: bun typecheck

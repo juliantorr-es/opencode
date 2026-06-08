@@ -1,9 +1,14 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "rig.relay.adr.v1",
+  "$id": "https://tribunus.dev/schemas/adr.v1",
   "title": "Architecture Decision Record",
   "description": "Schema for structured Architecture Decision Records (ADRs). ADRs document significant architectural decisions, their context, rationale, and consequences. Designed for the repo's JSON-first documentation policy — human-readable renderings are generated from these canonical JSON sources.",
   "type": "object",
+  "$defs": {
+    "NormalizedError": {
+      "$ref": "https://opencode.ai/schemas/defs.json#/$defs/NormalizedError"
+    }
+  },
   "properties": {
     "schema": {
       "type": "string",
@@ -21,87 +26,53 @@
     },
     "title": {
       "type": "string",
-      "description": "Short descriptive title of the decision in sentence case",
-      "minLength": 1
+      "description": "ADR title"
     },
     "status": {
       "type": "string",
-      "enum": ["proposed", "accepted", "deprecated", "superseded"],
-      "description": "Lifecycle status of the decision. proposed: under review. accepted: active and governing. deprecated: no longer recommended but not yet replaced. superseded: replaced by a later ADR."
+      "description": "ADR status (e.g., proposed, accepted, deprecated, superseded)"
     },
     "date": {
       "type": "string",
       "format": "date",
-      "description": "Date the ADR was originally proposed (ISO 8601 date, YYYY-MM-DD)"
+      "description": "Date the ADR was created"
     },
     "last_modified": {
       "type": "string",
       "format": "date-time",
-      "description": "ISO 8601 timestamp of last modification"
+      "description": "Last modification timestamp"
     },
     "context": {
       "type": "string",
-      "description": "The context and problem statement that motivated this decision. What forces are at play? What constraints exist? What options were considered?",
-      "minLength": 1
+      "description": "Context and problem statement"
     },
     "decision": {
       "type": "string",
-      "description": "The decision that was made and its full rationale. What is the change? Why was this option chosen over the alternatives?",
-      "minLength": 1
+      "description": "Decision made"
     },
     "consequences": {
       "type": "string",
-      "description": "The consequences of this decision — what becomes easier, harder, or different. Include both positive and negative consequences.",
-      "minLength": 1
+      "description": "Consequences of the decision"
     },
     "supersedes": {
-      "type": "array",
-      "items": {
-        "type": "string",
-        "pattern": "^\\d{4}$"
-      },
-      "description": "ADR IDs that this decision supersedes (e.g. ['0003']). Empty array if none."
+      "type": "string",
+      "description": "ADR ID this one supersedes, if any"
     },
     "superseded_by": {
-      "type": "array",
-      "items": {
-        "type": "string",
-        "pattern": "^\\d{4}$"
-      },
-      "description": "ADR IDs that supersede this decision. Empty array if still active."
+      "type": "string",
+      "description": "ADR ID that supersedes this one, if any"
     },
     "authors": {
       "type": "array",
-      "items": {
-        "type": "string"
-      },
-      "description": "Authors who contributed to this decision"
+      "description": "List of authors",
+      "items": { "type": "string" }
     },
     "tags": {
       "type": "array",
-      "items": {
-        "type": "string"
-      },
-      "description": "Tags for categorization (e.g. ['build', 'testing', 'architecture'])"
+      "description": "List of tags",
+      "items": { "type": "string" }
     }
   },
   "required": ["schema", "id", "title", "status", "date", "context", "decision", "consequences"],
-  "additionalProperties": false,
-  "examples": [
-    {
-      "schema": "rig.relay.adr.v1",
-      "schema_version": "v1",
-      "id": "0001",
-      "title": "Shared build convention layer with tsconfig base and vite preset",
-      "status": "proposed",
-      "date": "2026-05-31",
-      "context": "The monorepo has ~25 packages with independent tsconfig files and 6 vite-based packages with duplicated plugin configuration. Build tool diversity is architecturally necessary (each tool serves a distinct output target), but the absence of shared configuration creates onboarding friction and makes cross-package build changes risky.",
-      "decision": "Create a root tsconfig.base.json with shared compiler settings and a shared vite preset package for the 6 SolidJS-based web apps. Keep all existing build tools — they are idiomatic for their targets. Per-package configs extend the shared base and override only what is unique (entry point, output name, environment-specific settings).",
-      "consequences": "Positive: reduces configuration duplication, makes compiler option changes consistent across the monorepo, simplifies onboarding. Negative: adds an indirection layer that may slow down local debugging of compiler issues, requires all package tsconfig updates to consider the shared base.",
-      "supersedes": [],
-      "superseded_by": [],
-      "authors": ["architect"],
-      "tags": ["build", "convention", "typescript", "vite"]
-    }
-  ]
+  "additionalProperties": false
 }

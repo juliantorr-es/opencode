@@ -6,3 +6,22 @@ export { type DisplayBackend, type FatalRendererErrorLog, type Platform, Platfor
 export { ServerConnection } from "./context/server"
 export { handleNotificationClick } from "./utils/notification-click"
 export { decodeOrThrow, SidecarConfig } from "./context/server-sync"
+
+// ── PWA Mobile Cockpit ───────────────────────────────────────────
+
+export { projectionStream, commandGateway, notificationGateway, pairingManager } from "./pwa"
+export type {
+  ProjectionKind,
+  ProjectionDelta,
+  ProjectionCache,
+  ConnectionStatus,
+  CockpitCommand,
+  GrantedCapability,
+  CommandIntent,
+  CommandResponse,
+  PushAlertKind,
+  PushAlertPayload,
+  PushPermission,
+  PairingPayload,
+  PairedSession,
+} from "./pwa"

@@ -109,7 +109,7 @@ export const dict = {
   "dialog.model.manage": "Gerenciar modelos",
   "dialog.model.manage.description": "Personalizar quais modelos aparecem no seletor de modelos.",
   "dialog.model.manage.provider.toggle": "Alternar todos os modelos {{provider}}",
-  "dialog.model.unpaid.freeModels.title": "Modelos gratuitos fornecidos pelo OpenCode",
+  "dialog.model.unpaid.freeModels.title": "Modelos gratuitos fornecidos pelo Tribunus",
   "dialog.model.unpaid.addMore.title": "Adicionar mais modelos de provedores populares",
   "dialog.provider.viewAll": "Ver mais provedores",
   "provider.connect.title": "Conectar {{provider}}",
@@ -119,30 +119,25 @@ export const dict = {
   "provider.connect.status.inProgress": "Autorização em andamento...",
   "provider.connect.status.waiting": "Aguardando autorização...",
   "provider.connect.status.failed": "Autorização falhou: {{error}}",
-  "provider.connect.apiKey.description":
-    "Digite sua chave de API do {{provider}} para conectar sua conta e usar modelos do {{provider}} no OpenCode.",
+  "provider.connect.apiKey.description": "Digite sua chave de API do {{provider}} para conectar sua conta e usar modelos do {{provider}} no Tribunus.",
   "provider.connect.apiKey.label": "Chave de API do {{provider}}",
   "provider.connect.apiKey.placeholder": "Chave de API",
   "provider.connect.apiKey.required": "A chave de API é obrigatória",
-  "provider.connect.opencodeZen.line1":
-    "OpenCode Zen oferece acesso a um conjunto selecionado de modelos confiáveis otimizados para agentes de código.",
-  "provider.connect.opencodeZen.line2":
-    "Com uma única chave de API você terá acesso a modelos como Claude, GPT, Gemini, GLM e mais.",
+  "provider.connect.opencodeZen.line1": "Tribunus Zen oferece acesso a um conjunto selecionado de modelos confiáveis otimizados para agentes de código.",
+  "provider.connect.opencodeZen.line2": "Com uma única chave de API você terá acesso a modelos como Claude, GPT, Gemini, GLM e mais.",
   "provider.connect.opencodeZen.visit.prefix": "Visite ",
   "provider.connect.opencodeZen.visit.link": "opencode.ai/zen",
   "provider.connect.opencodeZen.visit.suffix": " para obter sua chave de API.",
   "provider.connect.oauth.code.visit.prefix": "Visite ",
   "provider.connect.oauth.code.visit.link": "este link",
-  "provider.connect.oauth.code.visit.suffix":
-    " para obter seu código de autorização e conectar sua conta para usar modelos do {{provider}} no OpenCode.",
+  "provider.connect.oauth.code.visit.suffix": " para obter seu código de autorização e conectar sua conta para usar modelos do {{provider}} no Tribunus.",
   "provider.connect.oauth.code.label": "Código de autorização {{method}}",
   "provider.connect.oauth.code.placeholder": "Código de autorização",
   "provider.connect.oauth.code.required": "O código de autorização é obrigatório",
   "provider.connect.oauth.code.invalid": "Código de autorização inválido",
   "provider.connect.oauth.auto.visit.prefix": "Visite ",
   "provider.connect.oauth.auto.visit.link": "este link",
-  "provider.connect.oauth.auto.visit.suffix":
-    " e digite o código abaixo para conectar sua conta e usar modelos do {{provider}} no OpenCode.",
+  "provider.connect.oauth.auto.visit.suffix": " e digite o código abaixo para conectar sua conta e usar modelos do {{provider}} no Tribunus.",
   "provider.connect.oauth.auto.confirmationCode": "Código de confirmação",
   "provider.connect.toast.connected.title": "{{provider}} conectado",
   "provider.connect.toast.connected.description": "Modelos do {{provider}} agora estão disponíveis para uso.",
@@ -286,7 +281,7 @@ export const dict = {
   "dialog.export.title": "Export Session",
   "dialog.export.description": "Export this session as a JSON file for backup or sharing",
   "dialog.export.sanitize": "Remove permissions and local paths",
-  "dialog.export.format": "OpenCode Session (.opencode-session)",
+  "dialog.export.format": "Tribunus Session (.opencode-session)",
   "dialog.export.button": "Export",
   "dialog.export.exporting": "Exporting...",
   "dialog.import.title": "Import Session",
@@ -299,7 +294,7 @@ export const dict = {
   "dialog.directory.search.placeholder": "Buscar pastas",
   "dialog.directory.empty": "Nenhuma pasta encontrada",
   "dialog.server.title": "Servidores",
-  "dialog.server.description": "Trocar para qual servidor OpenCode este aplicativo se conecta.",
+  "dialog.server.description": "Trocar para qual servidor Tribunus este aplicativo se conecta.",
   "dialog.server.search.placeholder": "Buscar servidores",
   "dialog.server.empty": "Nenhum servidor ainda",
   "dialog.server.add.title": "Adicionar um servidor",
@@ -314,8 +309,7 @@ export const dict = {
   "dialog.server.add.password": "Senha (opcional)",
   "dialog.server.edit.title": "Editar servidor",
   "dialog.server.default.title": "Servidor padrão",
-  "dialog.server.default.description":
-    "Conectar a este servidor na inicialização do aplicativo ao invés de iniciar um servidor local. Requer reinicialização.",
+  "dialog.server.default.description": "Conectar a este servidor na inicialização do aplicativo ao invés de iniciar um servidor local. Requer reinicialização.",
   "dialog.server.default.none": "Nenhum servidor selecionado",
   "dialog.server.default.set": "Definir servidor atual como padrão",
   "dialog.server.default.clear": "Limpar",
@@ -338,8 +332,7 @@ export const dict = {
   "dialog.project.edit.worktree.startup.description": "Executa após criar um novo espaço de trabalho (worktree).",
   "dialog.project.edit.worktree.startup.placeholder": "ex: bun install",
   "context.breakdown.title": "Detalhamento do Contexto",
-  "context.breakdown.note":
-    'Detalhamento aproximado dos tokens de entrada. "Outros" inclui definições de ferramentas e overhead.',
+  "context.breakdown.note": 'Detalhamento aproximado dos tokens de entrada. "Outros" inclui definições de ferramentas e overhead.',
   "context.breakdown.system": "Sistema",
   "context.breakdown.user": "Usuário",
   "context.breakdown.assistant": "Assistente",
@@ -423,7 +416,7 @@ export const dict = {
   "toast.session.import.invalid.title": "Invalid session file",
   "toast.session.listFailed.title": "Falha ao carregar sessões para {{project}}",
   "toast.update.title": "Atualização disponível",
-  "toast.update.description": "Uma nova versão do OpenCode ({{version}}) está disponível para instalação.",
+  "toast.update.description": "Uma nova versão do Tribunus ({{version}}) está disponível para instalação.",
   "toast.update.action.installRestart": "Instalar e reiniciar",
   "toast.update.action.notYet": "Agora não",
   "error.page.title": "Algo deu errado",
@@ -435,11 +428,10 @@ export const dict = {
   "error.page.action.checking": "Verificando...",
   "error.page.action.checkUpdates": "Verificar atualizações",
   "error.page.action.updateTo": "Atualizar para {{version}}",
-  "error.page.report.prefix": "Por favor, reporte este erro para a equipe do OpenCode",
-  "error.page.report.discord": "no Discord",
+  "error.page.report.prefix": "Por favor, reporte este erro para a equipe do Tribunus",
+  "error.page.report.discord": "no GitHub Discussions",
   "error.page.version": "Versão: {{version}}",
-  "error.dev.rootNotFound":
-    "Elemento raiz não encontrado. Você esqueceu de adicioná-lo ao seu index.html? Ou talvez o atributo id foi escrito incorretamente?",
+  "error.dev.rootNotFound": "Elemento raiz não encontrado. Você esqueceu de adicioná-lo ao seu index.html? Ou talvez o atributo id foi escrito incorretamente?",
   "error.serverSync.connectFailed": "Não foi possível conectar ao servidor. Há um servidor executando em `{{url}}`?",
   "directory.error.invalidUrl": "Diretório inválido na URL.",
   "error.chain.unknown": "Erro desconhecido",
@@ -451,15 +443,12 @@ export const dict = {
   "error.chain.didYouMean": "Você quis dizer: {{suggestions}}",
   "error.chain.modelNotFound": "Modelo não encontrado: {{provider}}/{{model}}",
   "error.chain.checkConfig": "Verifique os nomes de provedor/modelo na sua configuração (opencode.json)",
-  "error.chain.mcpFailed": 'Servidor MCP "{{name}}" falhou. Nota: OpenCode ainda não suporta autenticação MCP.',
+  "error.chain.mcpFailed": 'Servidor MCP "{{name}}" falhou. Nota: Tribunus ainda não suporta autenticação MCP.',
   "error.chain.providerAuthFailed": "Autenticação do provedor falhou ({{provider}}): {{message}}",
-  "error.chain.providerInitFailed":
-    'Falha ao inicializar provedor "{{provider}}". Verifique credenciais e configuração.',
+  "error.chain.providerInitFailed": 'Falha ao inicializar provedor "{{provider}}". Verifique credenciais e configuração.',
   "error.chain.configJsonInvalid": "Arquivo de configuração em {{path}} não é um JSON(C) válido",
-  "error.chain.configJsonInvalidWithMessage":
-    "Arquivo de configuração em {{path}} não é um JSON(C) válido: {{message}}",
-  "error.chain.configDirectoryTypo":
-    'Diretório "{{dir}}" em {{path}} não é válido. Renomeie o diretório para "{{suggestion}}" ou remova-o. Este é um erro de digitação comum.',
+  "error.chain.configJsonInvalidWithMessage": "Arquivo de configuração em {{path}} não é um JSON(C) válido: {{message}}",
+  "error.chain.configDirectoryTypo": 'Diretório "{{dir}}" em {{path}} não é válido. Renomeie o diretório para "{{suggestion}}" ou remova-o. Este é um erro de digitação comum.',
   "error.chain.configFrontmatterError": "Falha ao analisar frontmatter em {{path}}:\n{{message}}",
   "error.chain.configInvalid": "Arquivo de configuração em {{path}} é inválido",
   "error.chain.configInvalidWithMessage": "Arquivo de configuração em {{path}} é inválido: {{message}}",
@@ -484,8 +473,7 @@ export const dict = {
   "session.review.loadingChanges": "Carregando alterações...",
   "session.review.empty": "Nenhuma alteração nesta sessão ainda",
   "session.review.noVcs": "Nenhum Sistema de Controle de Versão Git detectado, alterações não exibidas",
-  "session.review.noSnapshot":
-    "O rastreamento de snapshot está desabilitado na configuração, então as alterações da sessão estão indisponíveis",
+  "session.review.noSnapshot": "O rastreamento de snapshot está desabilitado na configuração, então as alterações da sessão estão indisponíveis",
   "session.review.noChanges": "Sem alterações",
   "session.files.selectToOpen": "Selecione um arquivo para abrir",
   "session.files.all": "Todos os arquivos",
@@ -531,10 +519,8 @@ export const dict = {
   "status.popover.tab.plugins": "Plugins",
   "status.popover.action.manageServers": "Gerenciar servidores",
   "session.share.popover.title": "Publicar na web",
-  "session.share.popover.description.shared":
-    "Esta sessão é pública na web. Está acessível para qualquer pessoa com o link.",
-  "session.share.popover.description.unshared":
-    "Compartilhar sessão publicamente na web. Estará acessível para qualquer pessoa com o link.",
+  "session.share.popover.description.shared": "Esta sessão é pública na web. Está acessível para qualquer pessoa com o link.",
+  "session.share.popover.description.unshared": "Compartilhar sessão publicamente na web. Estará acessível para qualquer pessoa com o link.",
   "session.share.action.share": "Compartilhar",
   "session.share.action.publish": "Publicar",
   "session.share.action.publishing": "Publicando...",
@@ -551,8 +537,7 @@ export const dict = {
   "terminal.title.numbered": "Terminal {{number}}",
   "terminal.close": "Fechar terminal",
   "terminal.connectionLost.title": "Conexão Perdida",
-  "terminal.connectionLost.description":
-    "A conexão do terminal foi interrompida. Isso pode acontecer quando o servidor reinicia.",
+  "terminal.connectionLost.description": "A conexão do terminal foi interrompida. Isso pode acontecer quando o servidor reinicia.",
   "common.closeTab": "Fechar aba",
   "common.dismiss": "Descartar",
   "common.requestFailed": "Requisição falhou",
@@ -573,19 +558,19 @@ export const dict = {
   "sidebar.workspaces.enable": "Habilitar espaços de trabalho",
   "sidebar.workspaces.disable": "Desabilitar espaços de trabalho",
   "sidebar.gettingStarted.title": "Começando",
-  "sidebar.gettingStarted.line1": "OpenCode inclui modelos gratuitos para você começar imediatamente.",
+  "sidebar.gettingStarted.line1": "Tribunus inclui modelos gratuitos para você começar imediatamente.",
   "sidebar.gettingStarted.line2": "Conecte qualquer provedor para usar modelos, incluindo Claude, GPT, Gemini etc.",
   "sidebar.project.recentSessions": "Sessões recentes",
   "sidebar.project.viewAllSessions": "Ver todas as sessões",
   "sidebar.project.clearNotifications": "Limpar notificações",
-  "app.name.desktop": "OpenCode Desktop",
+  "app.name.desktop": "Tribunus Desktop",
   "settings.section.desktop": "Desktop",
   "settings.section.server": "Servidor",
   "settings.tab.general": "Geral",
   "settings.tab.shortcuts": "Atalhos",
   "settings.desktop.section.wsl": "WSL",
   "settings.desktop.wsl.title": "WSL integration",
-  "settings.desktop.wsl.description": "Executar o servidor OpenCode dentro do WSL no Windows.",
+  "settings.desktop.wsl.description": "Executar o servidor Tribunus dentro do WSL no Windows.",
   "settings.general.section.appearance": "Aparência",
   "settings.general.section.notifications": "Notificações do sistema",
   "settings.general.section.updates": "Atualizações",
@@ -593,13 +578,13 @@ export const dict = {
   "settings.general.section.feed": "Feed",
   "settings.general.section.display": "Tela",
   "settings.general.row.language.title": "Idioma",
-  "settings.general.row.language.description": "Alterar o idioma de exibição do OpenCode",
+  "settings.general.row.language.description": "Alterar o idioma de exibição do Tribunus",
   "settings.general.row.appearance.title": "Aparência",
-  "settings.general.row.appearance.description": "Personalize como o OpenCode aparece no seu dispositivo",
+  "settings.general.row.appearance.description": "Personalize como o Tribunus aparece no seu dispositivo",
   "settings.general.row.colorScheme.title": "Esquema de cores",
-  "settings.general.row.colorScheme.description": "Escolha se o OpenCode segue o tema do sistema, claro ou escuro",
+  "settings.general.row.colorScheme.description": "Escolha se o Tribunus segue o tema do sistema, claro ou escuro",
   "settings.general.row.theme.title": "Tema",
-  "settings.general.row.theme.description": "Personalize como o OpenCode é tematizado.",
+  "settings.general.row.theme.description": "Personalize como o Tribunus é tematizado.",
   "settings.general.row.font.title": "Fonte de código",
   "settings.general.row.font.description": "Personalize a fonte usada em blocos de código",
   "settings.general.row.terminalFont.title": "Terminal Font",
@@ -607,35 +592,30 @@ export const dict = {
   "settings.general.row.uiFont.title": "Fonte da interface",
   "settings.general.row.uiFont.description": "Personalize a fonte usada em toda a interface",
   "settings.general.row.followup.title": "Comportamento de acompanhamento",
-  "settings.general.row.followup.description":
-    "Escolha se os prompts de acompanhamento orientam imediatamente ou esperam na fila",
+  "settings.general.row.followup.description": "Escolha se os prompts de acompanhamento orientam imediatamente ou esperam na fila",
   "settings.general.row.followup.option.queue": "Fila",
   "settings.general.row.followup.option.steer": "Orientar",
   "settings.general.row.reasoningSummaries.title": "Mostrar resumos de raciocínio",
   "settings.general.row.reasoningSummaries.description": "Exibir resumos de raciocínio do modelo na linha do tempo",
   "settings.general.row.shellToolPartsExpanded.title": "Expandir partes da ferramenta shell",
-  "settings.general.row.shellToolPartsExpanded.description":
-    "Mostrar partes da ferramenta shell expandidas por padrão na linha do tempo",
+  "settings.general.row.shellToolPartsExpanded.description": "Mostrar partes da ferramenta shell expandidas por padrão na linha do tempo",
   "settings.general.row.editToolPartsExpanded.title": "Expandir partes da ferramenta de edição",
-  "settings.general.row.editToolPartsExpanded.description":
-    "Mostrar partes das ferramentas de edição, escrita e patch expandidas por padrão na linha do tempo",
+  "settings.general.row.editToolPartsExpanded.description": "Mostrar partes das ferramentas de edição, escrita e patch expandidas por padrão na linha do tempo",
   "settings.general.row.showSessionProgressBar.title": "Mostrar barra de progresso da sessão",
-  "settings.general.row.showSessionProgressBar.description":
-    "Exibir a barra de progresso animada no topo da sessão quando o agente estiver trabalhando",
+  "settings.general.row.showSessionProgressBar.description": "Exibir a barra de progresso animada no topo da sessão quando o agente estiver trabalhando",
   "settings.general.row.wayland.title": "Usar Wayland nativo",
   "settings.general.row.wayland.description": "Desabilitar fallback X11 no Wayland. Requer reinicialização.",
-  "settings.general.row.wayland.tooltip":
-    "No Linux com monitores de taxas de atualização mistas, Wayland nativo pode ser mais estável.",
+  "settings.general.row.wayland.tooltip": "No Linux com monitores de taxas de atualização mistas, Wayland nativo pode ser mais estável.",
   "settings.general.row.releaseNotes.title": "Notas da versão",
   "settings.general.row.releaseNotes.description": 'Mostrar pop-ups de "Novidades" após atualizações',
   "settings.updates.row.startup.title": "Verificar atualizações ao iniciar",
-  "settings.updates.row.startup.description": "Verificar atualizações automaticamente quando o OpenCode iniciar",
+  "settings.updates.row.startup.description": "Verificar atualizações automaticamente quando o Tribunus iniciar",
   "settings.updates.row.check.title": "Verificar atualizações",
   "settings.updates.row.check.description": "Verificar atualizações manualmente e instalar se houver",
   "settings.updates.action.checkNow": "Verificar agora",
   "settings.updates.action.checking": "Verificando...",
   "settings.updates.toast.latest.title": "Você está atualizado",
-  "settings.updates.toast.latest.description": "Você está usando a versão mais recente do OpenCode.",
+  "settings.updates.toast.latest.description": "Você está usando a versão mais recente do Tribunus.",
   "sound.option.none": "Nenhum",
   "sound.option.alert01": "Alerta 01",
   "sound.option.alert02": "Alerta 02",
@@ -683,11 +663,9 @@ export const dict = {
   "sound.option.yup05": "Sim 05",
   "sound.option.yup06": "Sim 06",
   "settings.general.notifications.agent.title": "Agente",
-  "settings.general.notifications.agent.description":
-    "Mostrar notificação do sistema quando o agente estiver completo ou precisar de atenção",
+  "settings.general.notifications.agent.description": "Mostrar notificação do sistema quando o agente estiver completo ou precisar de atenção",
   "settings.general.notifications.permissions.title": "Permissões",
-  "settings.general.notifications.permissions.description":
-    "Mostrar notificação do sistema quando uma permissão for necessária",
+  "settings.general.notifications.permissions.description": "Mostrar notificação do sistema quando uma permissão for necessária",
   "settings.general.notifications.errors.title": "Erros",
   "settings.general.notifications.errors.description": "Mostrar notificação do sistema quando ocorrer um erro",
   "settings.general.sounds.agent.title": "Agente",
@@ -739,8 +717,7 @@ export const dict = {
   "settings.permissions.tool.read.title": "Ler",
   "settings.permissions.tool.read.description": "Ler um arquivo (corresponde ao caminho do arquivo)",
   "settings.permissions.tool.edit.title": "Editar",
-  "settings.permissions.tool.edit.description":
-    "Modificar arquivos, incluindo edições, escritas, patches e multi-edições",
+  "settings.permissions.tool.edit.description": "Modificar arquivos, incluindo edições, escritas, patches e multi-edições",
   "settings.permissions.tool.glob.title": "Glob",
   "settings.permissions.tool.glob.description": "Corresponder arquivos usando padrões glob",
   "settings.permissions.tool.grep.title": "Grep",
@@ -840,8 +817,7 @@ export const dict = {
   "debugBar.ariaLabel": "Diagnóstico de desempenho de desenvolvimento",
   "debugBar.na": "n/a",
   "debugBar.nav.label": "NAV",
-  "debugBar.nav.tip":
-    "Última transição de rota concluída tocando em uma página de sessão, medida desde o início do roteador até a primeira pintura após o estabelecimento.",
+  "debugBar.nav.tip": "Última transição de rota concluída tocando em uma página de sessão, medida desde o início do roteador até a primeira pintura após o estabelecimento.",
   "debugBar.fps.label": "FPS",
   "debugBar.fps.tip": "Quadros por segundo nos últimos 5 segundos.",
   "debugBar.frame.label": "FRAME",
@@ -853,8 +829,7 @@ export const dict = {
   "debugBar.delay.label": "DELAY",
   "debugBar.delay.tip": "Pior atraso de entrada observado nos últimos 5 segundos.",
   "debugBar.inp.label": "INP",
-  "debugBar.inp.tip":
-    "Duração aproximada da interação nos últimos 5 segundos. Isso é semelhante ao INP, não o INP oficial do Web Vitals.",
+  "debugBar.inp.tip": "Duração aproximada da interação nos últimos 5 segundos. Isso é semelhante ao INP, não o INP oficial do Web Vitals.",
   "debugBar.cls.label": "CLS",
   "debugBar.cls.tip": "Mudança cumulativa de layout para o tempo de vida atual do aplicativo.",
   "debugBar.mem.label": "MEM",
@@ -927,13 +902,13 @@ export const dict = {
   "dialog.mcp.form.url": "Server URL",  // TODO: translate
   "dialog.mcp.form.urlPlaceholder": "http://localhost:3000",  // TODO: translate
   "dialog.recovery.exportLogs": "Export Logs",  // TODO: translate
-  "dialog.recovery.failedToLoad": "OpenCode failed to load",  // TODO: translate
+  "dialog.recovery.failedToLoad": "Tribunus failed to load",  // TODO: translate
   "dialog.recovery.keepWaiting": "Keep Waiting",  // TODO: translate
-  "dialog.recovery.notResponding": "OpenCode is not responding",  // TODO: translate
+  "dialog.recovery.notResponding": "Tribunus is not responding",  // TODO: translate
   "dialog.recovery.notRespondingDetail": "You can relaunch the app, open the logs, or keep waiting.",  // TODO: translate
   "dialog.recovery.quit": "Quit",  // TODO: translate
   "dialog.recovery.relaunch": "Relaunch",  // TODO: translate
-  "dialog.recovery.terminated": "OpenCode window terminated unexpectedly",  // TODO: translate
+  "dialog.recovery.terminated": "Tribunus window terminated unexpectedly",  // TODO: translate
   "error.page.action.exportLogs": "Export Logs",  // TODO: translate
   "github.branchName": "Branch Name",  // TODO: translate
   "github.commitMessage": "Commit Message",  // TODO: translate

@@ -35,6 +35,9 @@ import { ToolJsonSchema } from "@/tool/json-schema"
 import * as ToolCache from "@/tool/cache"
 import { MessageID, SessionID } from "@/session/schema"
 import { RuntimeFlags } from "@/effect/runtime-flags"
+import { DatabaseAdapter } from "@/storage/adapter"
+
+import { liveRegistryLayer } from "../../src/capability/tool-registry"
 
 const node = CrossSpawnSpawner.defaultLayer
 const configLayer = TestConfig.layer({
@@ -68,6 +71,8 @@ const registryLayer = (opts: RegistryLayerOptions = {}) =>
       Layer.provide(Format.defaultLayer),
       Layer.provide(node),
       Layer.provide(Ripgrep.defaultLayer),
+      Layer.provide(liveRegistryLayer),
+      Layer.provide(DatabaseAdapter.defaultLayer),
     )
     .pipe(
       Layer.provide(Truncate.defaultLayer),
@@ -342,6 +347,64 @@ describe("tool.registry", () => {
         },
         required: ["query"],
       })
+    }),
+  )
+
+  it.instance("loads OMP custom tools with parameters and handles execution", () =>
+    Effect.gen(function* () {
+      const test = yield* TestInstance
+      const customTools = path.join(test.directory, ".opencode", "tools")
+      yield* Effect.promise(() => fs.mkdir(customTools, { recursive: true }))
+      yield* Effect.promise(() =>
+        Bun.write(
+          path.join(customTools, "omp_test.ts"),
+          [
+            "import z from 'zod'",
+            "const factory = (pi: any) => ({",
+            "  name: 'omp_test',",
+            "  label: 'OMP Test Tool',",
+            "  description: 'omp test description',",
+            "  parameters: pi.zod.object({",
+            "    input: pi.zod.string().describe('test input')",
+            "  }),",
+            "  async execute(_toolCallId, params) {",
+            "    return {",
+            "      content: [{ type: 'text', text: `OMP result for ${params.input}` }],",
+            "      details: { status: 'success', value: params.input }",
+            "    }",
+            "  }",
+            "})",
+            "export default factory",
+            "",
+          ].join("\n"),
+        ),
+      )
+
+      const registry = yield* ToolRegistry.Service
+      const loaded = (yield* registry.all()).find((tool) => tool.id === "omp_test")
+      if (!loaded) throw new Error("custom OMP tool was not loaded")
+      expect(loaded?.jsonSchema).toMatchObject({
+        type: "object",
+        properties: {
+          input: { type: "string", description: "test input" },
+        },
+        required: ["input"],
+      })
+
+      const agents = yield* Agent.Service
+      const result = yield* loaded.execute({ input: "hello" }, {
+        sessionID: SessionID.make("ses_test"),
+        messageID: MessageID.make("msg_test"),
+        agent: (yield* agents.defaultInfo()).name,
+        abort: new AbortController().signal,
+        messages: [],
+        metadata: () => Effect.void,
+        ask: () => Effect.void,
+      } satisfies Tool.Context)
+
+      expect(result.output).toBe("OMP result for hello")
+      expect(result.metadata).toMatchObject({ status: "success", value: "hello" })
+      expect(result.title).toBe("OMP Test Tool")
     }),
   )
 

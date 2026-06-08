@@ -119,7 +119,7 @@ export const dict = {
   "dialog.model.manage.description": "Tilpas hvilke modeller der vises i modelvælgeren.",
   "dialog.model.manage.provider.toggle": "Skift alle {{provider}}-modeller",
 
-  "dialog.model.unpaid.freeModels.title": "Gratis modeller leveret af OpenCode",
+  "dialog.model.unpaid.freeModels.title": "Gratis modeller leveret af Tribunus",
   "dialog.model.unpaid.addMore.title": "Tilføj flere modeller fra populære udbydere",
 
   "dialog.provider.viewAll": "Vis flere udbydere",
@@ -131,30 +131,25 @@ export const dict = {
   "provider.connect.status.inProgress": "Godkendelse i gang...",
   "provider.connect.status.waiting": "Venter på godkendelse...",
   "provider.connect.status.failed": "Godkendelse mislykkedes: {{error}}",
-  "provider.connect.apiKey.description":
-    "Indtast din {{provider}} API-nøgle for at forbinde din konto og bruge {{provider}} modeller i OpenCode.",
+  "provider.connect.apiKey.description": "Indtast din {{provider}} API-nøgle for at forbinde din konto og bruge {{provider}} modeller i Tribunus.",
   "provider.connect.apiKey.label": "{{provider}} API-nøgle",
   "provider.connect.apiKey.placeholder": "API-nøgle",
   "provider.connect.apiKey.required": "API-nøgle er påkrævet",
-  "provider.connect.opencodeZen.line1":
-    "OpenCode Zen giver dig adgang til et udvalg af pålidelige optimerede modeller til kodningsagenter.",
-  "provider.connect.opencodeZen.line2":
-    "Med en enkelt API-nøgle får du adgang til modeller som Claude, GPT, Gemini, GLM og flere.",
+  "provider.connect.opencodeZen.line1": "Tribunus Zen giver dig adgang til et udvalg af pålidelige optimerede modeller til kodningsagenter.",
+  "provider.connect.opencodeZen.line2": "Med en enkelt API-nøgle får du adgang til modeller som Claude, GPT, Gemini, GLM og flere.",
   "provider.connect.opencodeZen.visit.prefix": "Besøg ",
   "provider.connect.opencodeZen.visit.link": "opencode.ai/zen",
   "provider.connect.opencodeZen.visit.suffix": " for at hente din API-nøgle.",
   "provider.connect.oauth.code.visit.prefix": "Besøg ",
   "provider.connect.oauth.code.visit.link": "dette link",
-  "provider.connect.oauth.code.visit.suffix":
-    " for at hente din godkendelseskode for at forbinde din konto og bruge {{provider}} modeller i OpenCode.",
+  "provider.connect.oauth.code.visit.suffix": " for at hente din godkendelseskode for at forbinde din konto og bruge {{provider}} modeller i Tribunus.",
   "provider.connect.oauth.code.label": "{{method}} godkendelseskode",
   "provider.connect.oauth.code.placeholder": "Godkendelseskode",
   "provider.connect.oauth.code.required": "Godkendelseskode er påkrævet",
   "provider.connect.oauth.code.invalid": "Ugyldig godkendelseskode",
   "provider.connect.oauth.auto.visit.prefix": "Besøg ",
   "provider.connect.oauth.auto.visit.link": "dette link",
-  "provider.connect.oauth.auto.visit.suffix":
-    " og indtast koden nedenfor for at forbinde din konto og bruge {{provider}} modeller i OpenCode.",
+  "provider.connect.oauth.auto.visit.suffix": " og indtast koden nedenfor for at forbinde din konto og bruge {{provider}} modeller i Tribunus.",
   "provider.connect.oauth.auto.confirmationCode": "Bekræftelseskode",
   "provider.connect.toast.connected.title": "{{provider}} forbundet",
   "provider.connect.toast.connected.description": "{{provider}} modeller er nu tilgængelige.",
@@ -308,7 +303,7 @@ export const dict = {
   "dialog.export.title": "Export Session",
   "dialog.export.description": "Export this session as a JSON file for backup or sharing",
   "dialog.export.sanitize": "Remove permissions and local paths",
-  "dialog.export.format": "OpenCode Session (.opencode-session)",
+  "dialog.export.format": "Tribunus Session (.opencode-session)",
   "dialog.export.button": "Export",
   "dialog.export.exporting": "Exporting...",
   "dialog.import.title": "Import Session",
@@ -323,7 +318,7 @@ export const dict = {
   "dialog.directory.empty": "Ingen mapper fundet",
 
   "dialog.server.title": "Servere",
-  "dialog.server.description": "Skift hvilken OpenCode-server denne app forbinder til.",
+  "dialog.server.description": "Skift hvilken Tribunus-server denne app forbinder til.",
   "dialog.server.search.placeholder": "Søg servere",
   "dialog.server.empty": "Ingen servere endnu",
   "dialog.server.add.title": "Tilføj en server",
@@ -338,8 +333,7 @@ export const dict = {
   "dialog.server.add.password": "Adgangskode (valgfrit)",
   "dialog.server.edit.title": "Rediger server",
   "dialog.server.default.title": "Standardserver",
-  "dialog.server.default.description":
-    "Forbind til denne server ved start af app i stedet for at starte en lokal server. Kræver genstart.",
+  "dialog.server.default.description": "Forbind til denne server ved start af app i stedet for at starte en lokal server. Kræver genstart.",
   "dialog.server.default.none": "Ingen server valgt",
   "dialog.server.default.set": "Sæt nuværende server som standard",
   "dialog.server.default.clear": "Ryd",
@@ -365,8 +359,7 @@ export const dict = {
   "dialog.project.edit.worktree.startup.description": "Køres efter oprettelse af et nyt arbejdsområde (worktree).",
   "dialog.project.edit.worktree.startup.placeholder": "f.eks. bun install",
   "context.breakdown.title": "Kontekstfordeling",
-  "context.breakdown.note":
-    'Omtrentlig fordeling af input-tokens. "Andre" inkluderer værktøjsdefinitioner og overhead.',
+  "context.breakdown.note": 'Omtrentlig fordeling af input-tokens. "Andre" inkluderer værktøjsdefinitioner og overhead.',
   "context.breakdown.system": "System",
   "context.breakdown.user": "Bruger",
   "context.breakdown.assistant": "Assistent",
@@ -455,7 +448,7 @@ export const dict = {
   "toast.session.listFailed.title": "Kunne ikke indlæse sessioner for {{project}}",
 
   "toast.update.title": "Opdatering tilgængelig",
-  "toast.update.description": "En ny version af OpenCode ({{version}}) er nu tilgængelig til installation.",
+  "toast.update.description": "En ny version af Tribunus ({{version}}) er nu tilgængelig til installation.",
   "toast.update.action.installRestart": "Installer og genstart",
   "toast.update.action.notYet": "Ikke endnu",
 
@@ -468,12 +461,11 @@ export const dict = {
   "error.page.action.checking": "Tjekker...",
   "error.page.action.checkUpdates": "Tjek for opdateringer",
   "error.page.action.updateTo": "Opdater til {{version}}",
-  "error.page.report.prefix": "Rapporter venligst denne fejl til OpenCode-teamet",
-  "error.page.report.discord": "på Discord",
+  "error.page.report.prefix": "Rapporter venligst denne fejl til Tribunus-teamet",
+  "error.page.report.discord": "på GitHub Discussions",
   "error.page.version": "Version: {{version}}",
 
-  "error.dev.rootNotFound":
-    "Rodelement ikke fundet. Har du glemt at tilføje det til din index.html? Eller måske er id-attributten stavet forkert?",
+  "error.dev.rootNotFound": "Rodelement ikke fundet. Har du glemt at tilføje det til din index.html? Eller måske er id-attributten stavet forkert?",
 
   "error.serverSync.connectFailed": "Kunne ikke forbinde til server. Kører der en server på `{{url}}`?",
   "directory.error.invalidUrl": "Ugyldig mappe i URL.",
@@ -487,14 +479,12 @@ export const dict = {
   "error.chain.didYouMean": "Mente du: {{suggestions}}",
   "error.chain.modelNotFound": "Model ikke fundet: {{provider}}/{{model}}",
   "error.chain.checkConfig": "Tjek dine konfigurations (opencode.json) udbyder/modelnavne",
-  "error.chain.mcpFailed": 'MCP-server "{{name}}" fejlede. Bemærk, OpenCode understøtter ikke MCP-godkendelse endnu.',
+  "error.chain.mcpFailed": 'MCP-server "{{name}}" fejlede. Bemærk, Tribunus understøtter ikke MCP-godkendelse endnu.',
   "error.chain.providerAuthFailed": "Udbydergodkendelse mislykkedes ({{provider}}): {{message}}",
-  "error.chain.providerInitFailed":
-    'Kunne ikke initialisere udbyder "{{provider}}". Tjek legitimationsoplysninger og konfiguration.',
+  "error.chain.providerInitFailed": 'Kunne ikke initialisere udbyder "{{provider}}". Tjek legitimationsoplysninger og konfiguration.',
   "error.chain.configJsonInvalid": "Konfigurationsfil på {{path}} er ikke gyldig JSON(C)",
   "error.chain.configJsonInvalidWithMessage": "Konfigurationsfil på {{path}} er ikke gyldig JSON(C): {{message}}",
-  "error.chain.configDirectoryTypo":
-    'Mappe "{{dir}}" i {{path}} er ikke gyldig. Omdøb mappen til "{{suggestion}}" eller fjern den. Dette er en almindelig slåfejl.',
+  "error.chain.configDirectoryTypo": 'Mappe "{{dir}}" i {{path}} er ikke gyldig. Omdøb mappen til "{{suggestion}}" eller fjern den. Dette er en almindelig slåfejl.',
   "error.chain.configFrontmatterError": "Kunne ikke parse frontmatter i {{path}}:\n{{message}}",
   "error.chain.configInvalid": "Konfigurationsfil på {{path}} er ugyldig",
   "error.chain.configInvalidWithMessage": "Konfigurationsfil på {{path}} er ugyldig: {{message}}",
@@ -523,8 +513,7 @@ export const dict = {
   "session.review.loadingChanges": "Indlæser ændringer...",
   "session.review.empty": "Ingen ændringer i denne session endnu",
   "session.review.noVcs": "Intet Git versionsstyringssystem fundet, ændringer vises ikke",
-  "session.review.noSnapshot":
-    "Snapshot-sporing er deaktiveret i konfigurationen, så sessionsændringer er ikke tilgængelige",
+  "session.review.noSnapshot": "Snapshot-sporing er deaktiveret i konfigurationen, så sessionsændringer er ikke tilgængelige",
   "session.review.noChanges": "Ingen ændringer",
   "session.files.selectToOpen": "Vælg en fil at åbne",
   "session.files.all": "Alle filer",
@@ -575,10 +564,8 @@ export const dict = {
   "status.popover.action.manageServers": "Administrer servere",
 
   "session.share.popover.title": "Udgiv på nettet",
-  "session.share.popover.description.shared":
-    "Denne session er offentlig på nettet. Den er tilgængelig for alle med linket.",
-  "session.share.popover.description.unshared":
-    "Del session offentligt på nettet. Den vil være tilgængelig for alle med linket.",
+  "session.share.popover.description.shared": "Denne session er offentlig på nettet. Den er tilgængelig for alle med linket.",
+  "session.share.popover.description.unshared": "Del session offentligt på nettet. Den vil være tilgængelig for alle med linket.",
   "session.share.action.share": "Del",
   "session.share.action.publish": "Udgiv",
   "session.share.action.publishing": "Udgiver...",
@@ -620,20 +607,20 @@ export const dict = {
   "sidebar.workspaces.enable": "Aktiver arbejdsområder",
   "sidebar.workspaces.disable": "Deaktiver arbejdsområder",
   "sidebar.gettingStarted.title": "Kom i gang",
-  "sidebar.gettingStarted.line1": "OpenCode inkluderer gratis modeller så du kan starte med det samme.",
+  "sidebar.gettingStarted.line1": "Tribunus inkluderer gratis modeller så du kan starte med det samme.",
   "sidebar.gettingStarted.line2": "Forbind enhver udbyder for at bruge modeller, inkl. Claude, GPT, Gemini osv.",
   "sidebar.project.recentSessions": "Seneste sessioner",
   "sidebar.project.viewAllSessions": "Vis alle sessioner",
   "sidebar.project.clearNotifications": "Ryd notifikationer",
 
-  "app.name.desktop": "OpenCode Desktop",
+  "app.name.desktop": "Tribunus Desktop",
   "settings.section.desktop": "Desktop",
   "settings.section.server": "Server",
   "settings.tab.general": "Generelt",
   "settings.tab.shortcuts": "Genveje",
   "settings.desktop.section.wsl": "WSL",
   "settings.desktop.wsl.title": "WSL integration",
-  "settings.desktop.wsl.description": "Kør OpenCode-serveren inde i WSL på Windows.",
+  "settings.desktop.wsl.description": "Kør Tribunus-serveren inde i WSL på Windows.",
 
   "settings.general.section.appearance": "Udseende",
   "settings.general.section.notifications": "Systemmeddelelser",
@@ -643,13 +630,13 @@ export const dict = {
   "settings.general.section.display": "Skærm",
 
   "settings.general.row.language.title": "Sprog",
-  "settings.general.row.language.description": "Ændr visningssproget for OpenCode",
+  "settings.general.row.language.description": "Ændr visningssproget for Tribunus",
   "settings.general.row.appearance.title": "Udseende",
-  "settings.general.row.appearance.description": "Tilpas hvordan OpenCode ser ud på din enhed",
+  "settings.general.row.appearance.description": "Tilpas hvordan Tribunus ser ud på din enhed",
   "settings.general.row.colorScheme.title": "Farveskema",
-  "settings.general.row.colorScheme.description": "Vælg om OpenCode følger systemets, lyst eller mørkt tema",
+  "settings.general.row.colorScheme.description": "Vælg om Tribunus følger systemets, lyst eller mørkt tema",
   "settings.general.row.theme.title": "Tema",
-  "settings.general.row.theme.description": "Tilpas hvordan OpenCode er temabestemt.",
+  "settings.general.row.theme.description": "Tilpas hvordan Tribunus er temabestemt.",
   "settings.general.row.font.title": "Kode-skrifttype",
   "settings.general.row.font.description": "Tilpas skrifttypen, der bruges i kodeblokke",
   "settings.general.row.terminalFont.title": "Terminal Font",
@@ -666,27 +653,24 @@ export const dict = {
   "settings.general.row.shellToolPartsExpanded.title": "Udvid shell-værktøjsdele",
   "settings.general.row.shellToolPartsExpanded.description": "Vis shell-værktøjsdele udvidet som standard i tidslinjen",
   "settings.general.row.editToolPartsExpanded.title": "Udvid edit-værktøjsdele",
-  "settings.general.row.editToolPartsExpanded.description":
-    "Vis edit-, write- og patch-værktøjsdele udvidet som standard i tidslinjen",
+  "settings.general.row.editToolPartsExpanded.description": "Vis edit-, write- og patch-værktøjsdele udvidet som standard i tidslinjen",
   "settings.general.row.showSessionProgressBar.title": "Vis sessionens fremdriftslinje",
-  "settings.general.row.showSessionProgressBar.description":
-    "Vis den animerede fremdriftslinje øverst i sessionen, når agenten arbejder",
+  "settings.general.row.showSessionProgressBar.description": "Vis den animerede fremdriftslinje øverst i sessionen, når agenten arbejder",
   "settings.general.row.wayland.title": "Brug native Wayland",
   "settings.general.row.wayland.description": "Deaktiver X11-fallback på Wayland. Kræver genstart.",
-  "settings.general.row.wayland.tooltip":
-    "På Linux med skærme med blandet opdateringshastighed kan native Wayland være mere stabilt.",
+  "settings.general.row.wayland.tooltip": "På Linux med skærme med blandet opdateringshastighed kan native Wayland være mere stabilt.",
 
   "settings.general.row.releaseNotes.title": "Udgivelsesnoter",
   "settings.general.row.releaseNotes.description": 'Vis "Hvad er nyt"-popups efter opdateringer',
 
   "settings.updates.row.startup.title": "Tjek for opdateringer ved opstart",
-  "settings.updates.row.startup.description": "Tjek automatisk for opdateringer, når OpenCode starter",
+  "settings.updates.row.startup.description": "Tjek automatisk for opdateringer, når Tribunus starter",
   "settings.updates.row.check.title": "Tjek for opdateringer",
   "settings.updates.row.check.description": "Tjek manuelt for opdateringer og installer, hvis tilgængelig",
   "settings.updates.action.checkNow": "Tjek nu",
   "settings.updates.action.checking": "Tjekker...",
   "settings.updates.toast.latest.title": "Du er opdateret",
-  "settings.updates.toast.latest.description": "Du kører den nyeste version af OpenCode.",
+  "settings.updates.toast.latest.description": "Du kører den nyeste version af Tribunus.",
 
   "sound.option.none": "Ingen",
   "sound.option.alert01": "Alarm 01",
@@ -735,8 +719,7 @@ export const dict = {
   "sound.option.yup05": "Ja 05",
   "sound.option.yup06": "Ja 06",
   "settings.general.notifications.agent.title": "Agent",
-  "settings.general.notifications.agent.description":
-    "Vis systemmeddelelse når agenten er færdig eller kræver opmærksomhed",
+  "settings.general.notifications.agent.description": "Vis systemmeddelelse når agenten er færdig eller kræver opmærksomhed",
   "settings.general.notifications.permissions.title": "Tilladelser",
   "settings.general.notifications.permissions.description": "Vis systemmeddelelse når en tilladelse er påkrævet",
   "settings.general.notifications.errors.title": "Fejl",
@@ -797,8 +780,7 @@ export const dict = {
   "settings.permissions.tool.read.title": "Læs",
   "settings.permissions.tool.read.description": "Læsning af en fil (matcher filstien)",
   "settings.permissions.tool.edit.title": "Rediger",
-  "settings.permissions.tool.edit.description":
-    "Ændre filer, herunder redigeringer, skrivninger, patches og multi-redigeringer",
+  "settings.permissions.tool.edit.description": "Ændre filer, herunder redigeringer, skrivninger, patches og multi-redigeringer",
   "settings.permissions.tool.glob.title": "Glob",
   "settings.permissions.tool.glob.description": "Match filer ved hjælp af glob-mønstre",
   "settings.permissions.tool.grep.title": "Grep",
@@ -900,8 +882,7 @@ export const dict = {
   "debugBar.ariaLabel": "Udviklingsydelsesdiagnostik",
   "debugBar.na": "n/a",
   "debugBar.nav.label": "NAV",
-  "debugBar.nav.tip":
-    "Sidste gennemførte ruteovergang, der berører en sessionsside, målt fra routerstart til den første optegning efter den falder til ro.",
+  "debugBar.nav.tip": "Sidste gennemførte ruteovergang, der berører en sessionsside, målt fra routerstart til den første optegning efter den falder til ro.",
   "debugBar.fps.label": "FPS",
   "debugBar.fps.tip": "Rullende billeder pr. sekund over de sidste 5 sekunder.",
   "debugBar.frame.label": "FRAME",
@@ -913,8 +894,7 @@ export const dict = {
   "debugBar.delay.label": "DELAY",
   "debugBar.delay.tip": "Værste observerede inputforsinkelse i de sidste 5 sekunder.",
   "debugBar.inp.label": "INP",
-  "debugBar.inp.tip":
-    "Omtrentlig interaktionsvarighed over de sidste 5 sekunder. Dette er INP-lignende, ikke den officielle Web Vitals INP.",
+  "debugBar.inp.tip": "Omtrentlig interaktionsvarighed over de sidste 5 sekunder. Dette er INP-lignende, ikke den officielle Web Vitals INP.",
   "debugBar.cls.label": "CLS",
   "debugBar.cls.tip": "Kumulativt layoutskift for den nuværende app-levetid.",
   "debugBar.mem.label": "MEM",
@@ -987,13 +967,13 @@ export const dict = {
   "dialog.mcp.form.url": "Server URL",  // TODO: translate
   "dialog.mcp.form.urlPlaceholder": "http://localhost:3000",  // TODO: translate
   "dialog.recovery.exportLogs": "Export Logs",  // TODO: translate
-  "dialog.recovery.failedToLoad": "OpenCode failed to load",  // TODO: translate
+  "dialog.recovery.failedToLoad": "Tribunus failed to load",  // TODO: translate
   "dialog.recovery.keepWaiting": "Keep Waiting",  // TODO: translate
-  "dialog.recovery.notResponding": "OpenCode is not responding",  // TODO: translate
+  "dialog.recovery.notResponding": "Tribunus is not responding",  // TODO: translate
   "dialog.recovery.notRespondingDetail": "You can relaunch the app, open the logs, or keep waiting.",  // TODO: translate
   "dialog.recovery.quit": "Quit",  // TODO: translate
   "dialog.recovery.relaunch": "Relaunch",  // TODO: translate
-  "dialog.recovery.terminated": "OpenCode window terminated unexpectedly",  // TODO: translate
+  "dialog.recovery.terminated": "Tribunus window terminated unexpectedly",  // TODO: translate
   "error.page.action.exportLogs": "Export Logs",  // TODO: translate
   "github.branchName": "Branch Name",  // TODO: translate
   "github.commitMessage": "Commit Message",  // TODO: translate

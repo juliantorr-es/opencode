@@ -12,7 +12,7 @@ export function Footer() {
     const locale = language.locale()
     return locale === "zh" || locale === "zht"
       ? ({ key: "footer.feishu", link: language.route("/feishu") } as const)
-      : ({ key: "footer.discord", link: language.route("/discord") } as const)
+      : ({ key: "footer.discord", link: language.route("/community") } as const)
   })
   const githubData = createAsync(() => github())
   const starCount = createMemo(() =>

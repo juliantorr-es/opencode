@@ -30,6 +30,7 @@ import { usePermission } from "@/context/permission"
 import { displayName, getProjectAvatarSource, projectForSession, sortedRootSessions } from "@/pages/layout/helpers"
 import { sessionTitle } from "@/utils/session-title"
 import { pathKey } from "@/utils/path-key"
+import { useCapabilities } from "@/context/capability"
 import { messageAgentColor } from "@/utils/agent"
 import { sessionPermissionRequest } from "@/pages/session/composer/session-request-tree"
 import { ServerHealthIndicator } from "@/components/server/server-row"
@@ -77,6 +78,7 @@ function HomeDesign() {
   const navigate = useNavigate()
   const server = useServer()
   const language = useLanguage()
+  const capabilities = useCapabilities()
   const activation = useProjectActivation()
   const notification = useNotification()
   const [state, setState] = createStore({ search: "", timeFilter: "all" as TimeFilter, agentFilter: "" as string, modelFilter: "" as string, project: undefined as string | undefined })
@@ -219,8 +221,8 @@ function HomeDesign() {
       void Promise.all(dirs.map((d) => sync.project.ensureReady(d)))
     }
 
-    if (platform.openDirectoryPickerDialog && server.isLocal()) {
-      const result = await platform.openDirectoryPickerDialog?.({
+    if (capabilities().localFilesystem.available && platform.openDirectoryPickerDialog) {
+      const result = await platform.openDirectoryPickerDialog({
         title: language.t("command.project.open"),
         multiple: true,
       })
@@ -797,6 +799,7 @@ function LegacyHome() {
   const servers = useServers()
   const server = useServer()
   const language = useLanguage()
+  const capabilities = useCapabilities()
   const activation = useProjectActivation()
   const homedir = createMemo(() => sync.data.path.home)
   const recent = createMemo(() => {
@@ -834,8 +837,8 @@ function LegacyHome() {
       void Promise.all(dirs.map((d) => sync.project.ensureReady(d)))
     }
 
-    if (platform.openDirectoryPickerDialog && server.isLocal()) {
-      const result = await platform.openDirectoryPickerDialog?.({
+    if (capabilities().localFilesystem.available && platform.openDirectoryPickerDialog) {
+      const result = await platform.openDirectoryPickerDialog({
         title: language.t("command.project.open"),
         multiple: true,
       })

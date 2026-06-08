@@ -6,6 +6,8 @@ import * as TestConsole from "effect/testing/TestConsole"
 import { DatabaseAdapter } from "@/storage/adapter"
 import { memoMap } from "@opencode-ai/core/effect/memo-map"
 import type { Config } from "@/config/config"
+import { layer as EventStoreLayer } from "../../src/event/event-store"
+import { layer as InstanceHealthStoreLayer } from "../../src/project/instance-health"
 import { TestInstance, withTmpdirInstance } from "../fixture/fixture"
 
 type Body<A, E, R> = Effect.Effect<A, E, R> | (() => Effect.Effect<A, E, R>)
@@ -128,12 +130,15 @@ const testEnv = Layer.mergeAll(
   TestConsole.layer,
   TestClock.layer(),
   DatabaseAdapter.LocalPgAdapter,
+  InstanceHealthStoreLayer,
 ) as any
 
 const liveEnv = Layer.mergeAll(
   TestConsole.layer,
   configProviderLayer,
   DatabaseAdapter.LocalPgAdapter,
+  EventStoreLayer,
+  InstanceHealthStoreLayer,
 ) as any
 
 export const it = make(testEnv, liveEnv)

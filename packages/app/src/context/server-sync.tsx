@@ -118,10 +118,21 @@ export const Diagnostics = Schema.Struct({
 })
 
 export function decodeOrThrow<T>(label: string, schema: Schema.Schema<T>, value: unknown): T {
+<<<<<<< Updated upstream
   try {
     return Schema.decodeUnknownSync(schema as any)(value)
   } catch (error) {
     console.error(`[ipc-decode] ${label} failed`, { error })
+||||||| Stash base
+  const result = Schema.decodeUnknownSync(schema as any)(value)
+  if (result._tag === "Left") {
+    console.error(`[ipc-decode] ${label} failed`, { errors: (result as any).left })
+=======
+  try {
+    return Schema.decodeUnknownSync(schema as any)(value)
+  } catch (error) {
+    console.error(`[ipc-decode] ${label} failed`, error)
+>>>>>>> Stashed changes
     throw new Error(`${label} decode failed`)
   }
 }

@@ -47,6 +47,26 @@ describe("CoordinationFabric", () => {
     expect(empty).toBeUndefined()
   })
 
+  it("tracks generation and reset wipes ephemeral state", async () => {
+    const before = await fabric.generation()
+    await fabric.heartbeat({ agentId: "a-reset", repoId: "r1", status: "active", timestamp: Date.now() })
+    const lease = await fabric.acquireLease({ repoId: "r1", path: "/src/reset.ts", agentId: "a-reset", ttlMs: 5000 })
+    await fabric.enqueue("tasks", { id: "j-reset", type: "test", payload: {} })
+
+    const after = await fabric.reset()
+    const snapshot = await fabric.snapshot()
+
+    expect(after).toBe(before + 1)
+    expect(snapshot.generation).toBe(after)
+    expect(snapshot.heartbeats).toBe(0)
+    expect(snapshot.leases).toBe(0)
+    expect(snapshot.queues).toBe(0)
+
+    const reacquire = await fabric.acquireLease({ repoId: "r1", path: "/src/reset.ts", agentId: "a-other", ttlMs: 5000 })
+    expect(reacquire.granted).toBe(true)
+    expect(lease.leaseId).toBeDefined()
+  })
+
   describe("ValkeyFabric", () => {
     const shouldRun = process.env.RUN_VALKEY_TESTS === "1"
     const testFn = shouldRun ? it : it.skip

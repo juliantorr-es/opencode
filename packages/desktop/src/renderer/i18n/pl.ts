@@ -11,7 +11,7 @@ export const dict = {
   "desktop.updater.checkFailed.title": "Nie udało się sprawdzić aktualizacji",
   "desktop.updater.checkFailed.message": "Nie udało się sprawdzić aktualizacji",
   "desktop.updater.none.title": "Brak dostępnych aktualizacji",
-  "desktop.updater.none.message": "Korzystasz już z najnowszej wersji OpenCode",
+  "desktop.updater.none.message": "Korzystasz już z najnowszej wersji Tribunus",
   "desktop.updater.downloadFailed.title": "Aktualizacja nie powiodła się",
   "desktop.updater.downloadFailed.message": "Nie udało się pobrać aktualizacji",
   "desktop.updater.downloaded.title": "Aktualizacja pobrana",

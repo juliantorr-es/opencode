@@ -1,0 +1,418 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tribunus.dev/schemas/roadmap.v2",
+  "title": "Relational Roadmap v2",
+  "description": "Relational roadmap schema v2 with maturity classification, horizon partitioning, authority scoping, evidence requirements, and unattended execution policies. Maps ADRs to campaigns, missions, lanes, and tasks across four execution horizons.",
+  "type": "object",
+  "$defs": {
+    "NormalizedError": {
+      "$ref": "https://opencode.ai/schemas/defs.json#/$defs/NormalizedError"
+    },
+    "RetryPolicy": {
+      "type": "object",
+      "description": "Retry policy for task execution",
+      "properties": {
+        "max_retries": { "type": "integer", "description": "Maximum retry attempts" },
+        "backoff_strategy": { "type": "string", "enum": ["fixed", "exponential", "linear"], "description": "Backoff strategy" },
+        "initial_delay_ms": { "type": "integer", "description": "Initial delay in milliseconds" },
+        "max_delay_ms": { "type": "integer", "description": "Maximum delay in milliseconds" }
+      },
+      "required": ["max_retries", "backoff_strategy"]
+    },
+    "CompletionReceipt": {
+      "type": "object",
+      "description": "Evidence of task completion beyond zero exit code",
+      "properties": {
+        "evidence_type": { "type": "string", "enum": ["diff", "screenshot", "test_output", "log_snapshot", "hash", "manual"], "description": "Type of evidence" },
+        "artifact_path": { "type": "string", "description": "Path to the evidence artifact" },
+        "observed_at": { "type": "string", "format": "date-time", "description": "When evidence was observed" },
+        "verifier": { "type": "string", "description": "Agent or tool that verified the evidence" }
+      },
+      "required": ["evidence_type"]
+    },
+    "Task": {
+      "type": "object",
+      "description": "An actionable task within a lane",
+      "properties": {
+        "id": {
+          "type": "string", "format": "uuid", "description": "Unique task identifier"
+        },
+        "title": {
+          "type": "string", "description": "Task title"
+        },
+        "description": {
+          "type": "string", "description": "Task description"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["not_started", "ready", "in_progress", "verifying", "completed", "blocked", "failed", "abandoned"],
+          "description": "Task execution status"
+        },
+        "maturity": {
+          "type": "string",
+          "enum": ["modeled", "scaffolded", "bootstrap_complete", "integrated", "hardened", "release_candidate", "production_ready", "operational", "deprecated"],
+          "description": "Proven maturity level independent of status"
+        },
+        "priority": {
+          "type": "string",
+          "enum": ["p0", "p1", "p2", "p3"],
+          "description": "Task priority"
+        },
+        "assignee": {
+          "type": "string",
+          "description": "Assignee identifier"
+        },
+        "due_date": {
+          "type": "string", "format": "date", "description": "Due date for the task"
+        },
+        "dependencies": {
+          "type": "array",
+          "description": "List of task IDs this task depends on",
+          "items": { "type": "string", "format": "uuid" }
+        },
+        "acceptance_criteria": {
+          "type": "array",
+          "description": "List of acceptance criteria for the task",
+          "items": { "type": "string" }
+        },
+        "expected_outputs": {
+          "type": "array",
+          "description": "Expected outputs that prove completion",
+          "items": { "type": "string" }
+        },
+        "verification_commands": {
+          "type": "array",
+          "description": "Commands that verify task completion",
+          "items": { "type": "string" }
+        },
+        "evidence_requirements": {
+          "type": "array",
+          "description": "Evidence required to validate completion",
+          "items": { "type": "string" }
+        },
+        "mutation_scope": {
+          "type": "array",
+          "description": "Paths this task is allowed to mutate",
+          "items": { "type": "string" }
+        },
+        "risk_class": {
+          "type": "string",
+          "enum": ["low", "medium", "high", "critical"],
+          "description": "Risk classification for unattended execution"
+        },
+        "retry_policy": {
+          "$ref": "#/$defs/RetryPolicy",
+          "description": "Retry configuration for failed task execution"
+        },
+        "failure_classification": {
+          "type": "string",
+          "enum": ["introduced_regression", "pre_existing_failure", "infrastructure_failure", "flaky_test", "resource_exhaustion", "invalid_test_assumption"],
+          "description": "Classification of the failure mode if task fails"
+        },
+        "next_safe_action": {
+          "type": "string",
+          "description": "What to do after this task fails or succeeds"
+        },
+        "completion_receipt": {
+          "$ref": "#/$defs/CompletionReceipt",
+          "description": "Evidence backing the completion claim"
+        },
+        "horizon": {
+          "type": "string",
+          "enum": ["committed", "planned", "strategic", "research"],
+          "description": "Execution horizon classification"
+        }
+      },
+      "required": ["id", "title", "status"]
+    },
+    "Lane": {
+      "type": "object",
+      "description": "A lane within a mission, executed concurrently",
+      "properties": {
+        "id": {
+          "type": "string", "format": "uuid", "description": "Unique lane identifier"
+        },
+        "title": {
+          "type": "string", "description": "Lane title"
+        },
+        "description": {
+          "type": "string", "description": "Lane description"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["idle", "active", "paused", "completed", "failed"],
+          "description": "Lane execution status"
+        },
+        "maturity": {
+          "type": "string",
+          "enum": ["modeled", "scaffolded", "bootstrap_complete", "integrated", "hardened", "release_candidate", "production_ready", "operational", "deprecated"],
+          "description": "Proven maturity level"
+        },
+        "tasks": {
+          "type": "array",
+          "description": "List of tasks within this lane",
+          "items": { "$ref": "#/$defs/Task" }
+        },
+        "concurrency_group": {
+          "type": "string",
+          "description": "Group identifier for concurrent execution"
+        },
+        "write_paths": {
+          "type": "array",
+          "description": "Filesystem paths this lane can write to",
+          "items": { "type": "string" }
+        },
+        "lease_holder": {
+          "type": "string",
+          "description": "Agent or process holding the lane lease"
+        }
+      },
+      "required": ["id", "title", "status", "tasks"]
+    },
+    "Mission": {
+      "type": "object",
+      "description": "A mission within a campaign",
+      "properties": {
+        "id": {
+          "type": "string", "format": "uuid", "description": "Unique mission identifier"
+        },
+        "title": {
+          "type": "string", "description": "Mission title"
+        },
+        "description": {
+          "type": "string", "description": "Mission description"
+        },
+        "purpose": {
+          "type": "string", "description": "What this mission achieves and why"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["not_started", "ready", "in_progress", "blocked", "verifying", "completed", "abandoned"],
+          "description": "Mission execution status"
+        },
+        "maturity": {
+          "type": "string",
+          "enum": ["modeled", "scaffolded", "bootstrap_complete", "integrated", "hardened", "release_candidate", "production_ready", "operational", "deprecated"],
+          "description": "Proven maturity level independent of status"
+        },
+        "horizon": {
+          "type": "string",
+          "enum": ["committed", "planned", "strategic", "research"],
+          "description": "Execution horizon classification"
+        },
+        "lanes": {
+          "type": "array",
+          "description": "List of lanes within this mission (executed concurrently)",
+          "items": { "$ref": "#/$defs/Lane" }
+        },
+        "start_date": { "type": "string", "format": "date", "description": "Mission start date" },
+        "end_date": { "type": "string", "format": "date", "description": "Mission end date" },
+        "depends_on": {
+          "type": "array",
+          "description": "Mission IDs this mission depends on",
+          "items": { "type": "string" }
+        },
+        "unlocks": {
+          "type": "array",
+          "description": "Mission IDs this mission unblocks",
+          "items": { "type": "string" }
+        },
+        "authority_scope": {
+          "type": "string",
+          "description": "Authority domain this mission operates within"
+        },
+        "allowed_paths": {
+          "type": "array",
+          "description": "Paths this mission is authorized to read and write",
+          "items": { "type": "string" }
+        },
+        "required_evidence": {
+          "type": "array",
+          "description": "Evidence artifacts required for mission completion",
+          "items": { "type": "string" }
+        },
+        "acceptance_gates": {
+          "type": "array",
+          "description": "Gates that must pass before mission is complete",
+          "items": { "type": "string" }
+        },
+        "rollback_strategy": {
+          "type": "string",
+          "description": "How to undo this mission if it introduces problems"
+        },
+        "recovery_strategy": {
+          "type": "string",
+          "description": "How to recover if this mission fails mid-execution"
+        },
+        "automation_mode": {
+          "type": "string",
+          "enum": ["manual", "semi_automated", "fully_automated", "unattended"],
+          "description": "Level of automation permitted for this mission"
+        },
+        "maximum_attempts": {
+          "type": "integer",
+          "description": "Maximum execution attempts before escalation"
+        },
+        "escalation_policy": {
+          "type": "string",
+          "description": "Who or what to escalate to when maximum attempts are reached"
+        },
+        "maturity_target": {
+          "type": "string",
+          "enum": ["modeled", "scaffolded", "bootstrap_complete", "integrated", "hardened", "release_candidate", "production_ready", "operational"],
+          "description": "Target maturity level for this mission"
+        }
+      },
+      "required": ["id", "title", "status", "lanes"]
+    },
+    "Campaign": {
+      "type": "object",
+      "description": "A campaign within the roadmap",
+      "properties": {
+        "id": {
+          "type": "string", "format": "uuid", "description": "Unique campaign identifier"
+        },
+        "title": {
+          "type": "string", "description": "Campaign title"
+        },
+        "description": {
+          "type": "string", "description": "Campaign description"
+        },
+        "objective": {
+          "type": "string", "description": "Campaign objective"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["not_started", "ready", "in_progress", "blocked", "verifying", "completed", "abandoned"],
+          "description": "Campaign execution status"
+        },
+        "maturity": {
+          "type": "string",
+          "enum": ["modeled", "scaffolded", "bootstrap_complete", "integrated", "hardened", "release_candidate", "production_ready", "operational", "deprecated"],
+          "description": "Proven maturity level independent of status"
+        },
+        "horizon": {
+          "type": "string",
+          "enum": ["committed", "planned", "strategic", "research"],
+          "description": "Execution horizon classification"
+        },
+        "missions": {
+          "type": "array",
+          "description": "List of missions within this campaign",
+          "items": { "$ref": "#/$defs/Mission" }
+        },
+        "start_date": { "type": "string", "format": "date", "description": "Campaign start date" },
+        "end_date": { "type": "string", "format": "date", "description": "Campaign end date" },
+        "follow_on_campaigns": {
+          "type": "array",
+          "description": "Campaign IDs that continue this campaign's productionization work",
+          "items": { "type": "string" }
+        },
+        "budget": {
+          "type": "object",
+          "description": "Budget allocation for the campaign",
+          "properties": {
+            "currency": { "type": "string", "description": "Currency code" },
+            "total": { "type": "number", "description": "Total budget" },
+            "allocated": { "type": "number", "description": "Budget allocated so far" }
+          },
+          "required": ["currency", "total"]
+        }
+      },
+      "required": ["id", "title", "status", "missions"]
+    },
+    "AdrReference": {
+      "type": "object",
+      "description": "Reference to an ADR",
+      "properties": {
+        "adr_id": { "type": "string", "pattern": "^\\d{4}$", "description": "ADR identifier (e.g., '0001')" },
+        "title": { "type": "string", "description": "ADR title" },
+        "link": { "type": "string", "format": "uri", "description": "Link to the ADR file" }
+      },
+      "required": ["adr_id", "title"]
+    }
+  },
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "enum": ["rig.relay.roadmap.v2"],
+      "description": "Schema identifier"
+    },
+    "title": {
+      "type": "string",
+      "description": "Roadmap title"
+    },
+    "description": {
+      "type": "string",
+      "description": "Roadmap description"
+    },
+    "status": {
+      "type": "string",
+      "enum": ["planned", "active", "completed", "blocked", "cancelled"],
+      "description": "Roadmap status"
+    },
+    "horizons": {
+      "type": "object",
+      "description": "Four-horizon partitioning of the roadmap",
+      "properties": {
+        "committed": {
+          "type": "object",
+          "description": "Fully specified tasks, may run unattended",
+          "properties": {
+            "campaigns": { "type": "array", "items": { "type": "string" } },
+            "ready_tasks_target": { "type": "integer", "description": "Target number of ready tasks (150-300)" }
+          }
+        },
+        "planned": {
+          "type": "object",
+          "description": "Missions and acceptance gates with provisional tasks",
+          "properties": {
+            "campaigns": { "type": "array", "items": { "type": "string" } },
+            "planned_tasks_target": { "type": "integer", "description": "Target number of planned tasks blocked behind gates (300-500)" }
+          }
+        },
+        "strategic": {
+          "type": "object",
+          "description": "Campaigns with dependency ordering, missions defined but tasks not locked",
+          "properties": {
+            "campaigns": { "type": "array", "items": { "type": "string" } }
+          }
+        },
+        "research": {
+          "type": "object",
+          "description": "Questions not yet authorized for implementation",
+          "properties": {
+            "campaigns": { "type": "array", "items": { "type": "string" } },
+            "research_questions": { "type": "array", "items": { "type": "string" } }
+          }
+        }
+      }
+    },
+    "created_at": {
+      "type": "string", "format": "date-time", "description": "Roadmap creation timestamp"
+    },
+    "updated_at": {
+      "type": "string", "format": "date-time", "description": "Roadmap last update timestamp"
+    },
+    "adrs": {
+      "type": "array",
+      "description": "List of ADRs related to this roadmap",
+      "items": { "$ref": "#/$defs/AdrReference" }
+    },
+    "campaigns": {
+      "type": "array",
+      "description": "List of campaigns within this roadmap",
+      "items": { "$ref": "#/$defs/Campaign" }
+    },
+    "meta": {
+      "type": "object",
+      "description": "Metadata and tags",
+      "properties": {
+        "tags": { "type": "array", "items": { "type": "string" } },
+        "owner": { "type": "string" },
+        "reviewers": { "type": "array", "items": { "type": "string" } }
+      }
+    }
+  },
+  "required": ["schema_version", "title", "status", "created_at", "campaigns"]
+}

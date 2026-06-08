@@ -1,0 +1,53 @@
+--- a/packages/compute-native/src/lib.rs
++++ b/packages/compute-native/src/lib.rs
+@@ -194,31 +194,27 @@
+     Ok(handle as i64)
+ }
+ 
+-/// Greedy sampling: extract the next token from logits.
+-///
+-/// `logitsHandle` — handle for logits array [1, seq_len, vocab_size]
+-/// Returns the token ID.
++/// Run Gemma 4 forward pass and sample the next token via greedy argmax.
++/// Returns the token ID directly — no logits array crosses the FFI boundary.
+ #[napi]
+-pub fn gemma_sample_greedy(logits_handle: i64) -> napi::Result<u32> {
+-    let logits = {
+-        let registry = crate::bridge::ARRAY_REGISTRY.read();
+-        registry
+-            .get(logits_handle as u64)
+-            .cloned()
+-            .ok_or_else(|| napi::Error::from_reason("Logits handle not found"))?
+-    };
+-
+-    let last_logits = logits
+-        .index((0..1, (logits.shape()[1] - 1)..logits.shape()[1], ..));
+-
+-    // Argmax along last dim
+-    let token = ops::indexing::argmax(&last_logits, -1, false)
+-        .map_err(|e| napi::Error::from_reason(format!("Argmax error: {:?}", e)))?;
++pub fn gemma_sample_greedy(
++    input_ids: napi::bindgen_prelude::Buffer,
++    weight_handles_json: String,
++    kv_offset: u32,
++) -> napi::Result<u32> {
++    let weight_map: std::collections::HashMap<String, u64> =
++        serde_json::from_str(&weight_handles_json)
++            .map_err(|e| napi::Error::from_reason(format!("Invalid weight handles JSON: {}", e)))?;
++    let weight_vec: Vec<(String, u64)> = weight_map.into_iter().collect();
+ 
+-    let value = token
+-        .try_as_slice::<i32>()
+-        .map_err(|e| napi::Error::from_reason(format!("Read error: {:?}", e)))?;
++    let ids_slice = unsafe {
++        std::slice::from_raw_parts(input_ids.as_ptr() as *const i32, input_ids.len() / 4)
++    };
++    let seq_len = ids_slice.len() as i32;
++    let input_array = Array::from_slice(ids_slice, &[1, seq_len]);
+ 
+-    Ok(value.first().copied().unwrap_or(0) as u32)
++    let config = gemma::GemmaConfig::gemma4_12b();
++    let model = gemma::GemmaModel::new(config, weight_vec)?;
++    model.sample_token(&input_array, kv_offset)
+ }
+ 

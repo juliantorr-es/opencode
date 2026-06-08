@@ -1,9 +1,14 @@
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "rig.relay.reporting_honesty_audit.v1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tribunus.dev/schemas/reporting_honesty_audit.v1",
   "title": "Reporting Honesty Audit",
   "description": "Structured audit artifact that flags overclaim language in reporting artifacts — claims that exceed their supporting evidence.",
   "type": "object",
+  "$defs": {
+    "NormalizedError": {
+      "$ref": "https://opencode.ai/schemas/defs.json#/$defs/NormalizedError"
+    }
+  },
   "properties": {
     "schema": {
       "type": "string",
@@ -15,10 +20,12 @@
     },
     "generated_at": {
       "type": "string",
-      "format": "date-time"
+      "format": "date-time",
+      "description": "ISO 8601 timestamp when the audit was generated"
     },
     "lane_id": {
-      "type": "string"
+      "type": "string",
+      "description": "Lane identifier"
     },
     "methodology": {
       "type": "string",
@@ -28,133 +35,48 @@
       "type": "object",
       "description": "Clear definitions for each severity level",
       "properties": {
-        "high": {
-          "type": "string",
-          "description": "Evidence actively contradicts the claim. Examples: claim says 'zero errors' but data shows 280 errors; claim says 'production-proven' but no deployment exists."
-        },
-        "medium": {
-          "type": "string",
-          "description": "Evidence is missing, insufficient, or internally inconsistent. Examples: empty verification section, bare aggregation claims without evidence links, concurrency claims without stress testing."
-        },
-        "low": {
-          "type": "string",
-          "description": "Claim is technically true but framing minimizes context or is misleading in aggregate. Examples: 'zero new errors' buries 383 pre-existing errors; internal field naming contradictions."
-        }
+        "high": { "type": "string", "description": "Definition of high severity overclaim" },
+        "medium": { "type": "string", "description": "Definition of medium severity overclaim" },
+        "low": { "type": "string", "description": "Definition of low severity overclaim" }
       },
       "required": ["high", "medium", "low"]
     },
     "detection_criteria": {
       "type": "array",
       "description": "Explicit patterns used to detect overclaims",
-      "items": {
-        "type": "string"
-      }
+      "items": { "type": "string" }
     },
     "maturity_level_taxonomy": {
       "type": "object",
       "description": "Standardized maturity levels for classifying artifact claims",
-      "additionalProperties": {
-        "type": "string"
-      }
+      "additionalProperties": { "type": "string" }
     },
     "findings": {
       "type": "array",
+      "description": "List of overclaim findings",
       "items": {
         "type": "object",
         "properties": {
-          "artifact_path": {
-            "type": "string",
-            "description": "Path to the artifact containing the overclaim"
-          },
-          "observed_claim": {
-            "type": "string",
-            "description": "The specific claim or language being flagged"
-          },
-          "evidence_gap": {
-            "type": "string",
-            "description": "Why the claim exceeds its supporting evidence"
-          },
-          "suggested_maturity_level": {
-            "type": "string",
-            "description": "The highest maturity level honestly supported by the evidence"
-          },
-          "severity": {
-            "type": "string",
-            "enum": ["high", "medium", "low"]
-          },
-          "pattern_type": {
-            "type": "string",
-            "description": "Classification of overclaim pattern"
-          }
+          "id": { "type": "string", "description": "Unique finding identifier" },
+          "severity": { "type": "string", "enum": ["high", "medium", "low"] },
+          "description": { "type": "string", "description": "Finding description" },
+          "evidence": { "type": "string", "description": "Supporting evidence" },
+          "suggested_repair": { "type": "string", "description": "Suggested repair action" }
         },
-        "required": ["artifact_path", "observed_claim", "evidence_gap", "suggested_maturity_level", "severity"]
+        "required": ["id", "severity", "description"]
       }
     },
     "summary": {
       "type": "object",
+      "description": "Audit summary",
       "properties": {
-        "total_artifacts_scanned": {
-          "type": "integer",
-          "minimum": 0
-        },
-        "total_findings": {
-          "type": "integer",
-          "minimum": 0
-        },
-        "high_severity": {
-          "type": "integer",
-          "minimum": 0
-        },
-        "medium_severity": {
-          "type": "integer",
-          "minimum": 0
-        },
-        "low_severity": {
-          "type": "integer",
-          "minimum": 0
-        },
-        "worst_offenders": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "properties": {
-              "artifact_path": { "type": "string" },
-              "reason": { "type": "string" },
-              "overclaim_type": { "type": "string" }
-            },
-            "required": ["artifact_path", "reason", "overclaim_type"]
-          }
-        },
-        "recommended_rewrite_priority": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "properties": {
-              "rank": { "type": "integer" },
-              "artifact": { "type": "string" },
-              "action": { "type": "string" },
-              "effort": { "type": "string" },
-              "impact": { "type": "string" }
-            },
-            "required": ["rank", "artifact", "action", "effort", "impact"]
-          }
-        },
-        "positive_examples": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "properties": {
-              "artifact": { "type": "string" },
-              "reason": { "type": "string" }
-            },
-            "required": ["artifact", "reason"]
-          }
-        },
-        "patterns_summary": {
-          "type": "object"
-        }
+        "total_findings": { "type": "integer" },
+        "high_severity": { "type": "integer" },
+        "medium_severity": { "type": "integer" },
+        "low_severity": { "type": "integer" },
+        "recommendation": { "type": "string" }
       },
-      "required": ["total_artifacts_scanned", "total_findings", "high_severity", "medium_severity", "low_severity"]
+      "required": ["total_findings", "high_severity", "medium_severity", "low_severity", "recommendation"]
     }
   },
   "required": ["schema", "audit_id", "generated_at", "findings", "summary"]

@@ -144,8 +144,9 @@ export const Client = Object.assign(
 export function close() {
   if (!Client.loaded()) return
   const db = Client() as any
-  db.$client?.close()
+  const promise = db.$client?.close()
   Client.reset()
+  return promise
 }
 
 export type TxOrDb = Transaction | Client
@@ -181,20 +182,26 @@ export function effect(fn: () => any | Promise<any>) {
 type NotPromise<T> = T extends Promise<any> ? never : T
 
 export function transaction<T>(
-  callback: (tx: TxOrDb) => NotPromise<T>,
+  callback: (tx: TxOrDb) => T,
   options?: {
     behavior?: "deferred" | "immediate" | "exclusive"
   },
-): NotPromise<T> {
+): T {
   try {
     return callback(ctx.use().tx)
   } catch (err) {
     if (err instanceof LocalContext.NotFound) {
       const effects: (() => void | Promise<void>)[] = []
       const txCallback = EffectBridge.bind((tx: TxOrDb) => ctx.provide({ tx, effects }, () => callback(tx)))
-      const result = (Client() as any).transaction(txCallback, { behavior: options?.behavior })
+      const result = (Client() as any).transaction(txCallback)
+      if (result instanceof Promise) {
+        return result.then((res) => {
+          for (const effect of effects) effect()
+          return res
+        }) as any
+      }
       for (const effect of effects) effect()
-      return result as NotPromise<T>
+      return result as T
     }
     throw err
   }

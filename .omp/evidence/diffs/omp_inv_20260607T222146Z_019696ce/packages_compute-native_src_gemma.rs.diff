@@ -1,0 +1,11 @@
+--- a/packages/compute-native/src/gemma.rs
++++ b/packages/compute-native/src/gemma.rs
+@@ -97,7 +97,7 @@
+ 
+ fn rms_norm(x: &Array, weight: &Array, eps: f32) -> MlxResult<Array> {
+     let x_f32 = x.as_dtype(mlx_rs::Dtype::Float32)?;
+-    let mean_sq = ops::mean(&x_f32.multiply(&x_f32)?, &[-1], true)?;
++    let mean_sq = ops::mean(&x_f32.multiply(&x_f32)?, &[-1])?;
+     let rsqrt = ops::rsqrt(&mean_sq.add(&Array::from_float(eps))?)?;
+     let normed = x.multiply(&rsqrt.as_dtype(mlx_rs::Dtype::Float32)?)?;
+     normed.multiply(weight)

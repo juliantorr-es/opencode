@@ -399,6 +399,71 @@ export const layer = Layer.effect(
           }
         }
 
+        function fromOmpTool(id: string, def: any): Tool.Def {
+          const zodParams = def.parameters as z.ZodObject<any>
+          const jsonSchema = zodJsonSchema(zodParams)
+          const parameters = Schema.declare<unknown>((u): u is unknown => zodParams.safeParse(u).success)
+          return {
+            id,
+            parameters,
+            jsonSchema,
+            description: def.description,
+            execute: (args, toolCtx) =>
+              Effect.gen(function* () {
+                const onUpdate = (update: any) => {
+                  // bridge updates
+                }
+                const ompCtx = {
+                  sessionId: toolCtx.sessionID,
+                  messageId: toolCtx.messageID,
+                  agent: toolCtx.agent,
+                  abort: toolCtx.abort,
+                }
+                const signal = toolCtx.abort
+                const result = yield* Effect.promise(() =>
+                  def.execute(toolCtx.callID || "unknown", args, onUpdate, ompCtx, signal),
+                )
+                const outputText = result && Array.isArray(result.content)
+                  ? result.content.map((c: any) => c?.text ?? "").join("\n")
+                  : result && typeof result === "object" && "content" in result
+                  ? String(result.content || "")
+                  : typeof result === "string"
+                  ? result
+                  : String(result ?? "")
+                const metadata = (result && typeof result === "object" && result.details) ? result.details : {}
+                const title = def.label ?? id
+                const info = yield* agent.get(toolCtx.agent)
+                const out = yield* truncate.output(outputText, {}, info)
+                return {
+                  title,
+                  output: out.truncated ? out.content : outputText,
+                  metadata: {
+                    ...metadata,
+                    truncated: out.truncated,
+                    ...(out.truncated && { outputPath: out.outputPath }),
+                  },
+                }
+              }).pipe(
+                Effect.provideContext(toolRuntime),
+                Effect.catch((error: unknown) =>
+                  Effect.succeed({
+                    title: id,
+                    metadata: { status: "error" },
+                    output: `[${id}] OMP tool error: ${error instanceof Error ? error.message : String(error)}`,
+                  }),
+                ),
+                Effect.withSpan("Tool.execute", {
+                  attributes: {
+                    "tool.name": id,
+                    "session.id": toolCtx.sessionID,
+                    "message.id": toolCtx.messageID,
+                    ...(toolCtx.callID ? { "tool.call_id": toolCtx.callID } : {}),
+                  },
+                }),
+              ),
+          }
+        }
+
         const dirs = yield* config.directories()
         const matches = dirs.flatMap((dir) =>
           Glob.scanSync("{tool,tools}/*.{js,ts}", { cwd: dir, absolute: true, dot: true, symlink: true }),
@@ -410,10 +475,31 @@ export const layer = Layer.effect(
           // Import it as `file://` so Node on Windows accepts the dynamic import.
           const mod = yield* Effect.promise(() => import(pathToFileURL(match).href))
           for (const [id, def] of Object.entries(mod)) {
-            if (!isPluginTool(def)) continue
-            const toolId = id === "default" ? namespace : `${namespace}_${id}`
-            const safeToolId = BUILTIN_TOOL_IDS.has(toolId) ? `plugin_${toolId}` : toolId
-            custom.push(fromPlugin(safeToolId, def))
+            let instantiatedDef = def
+            if (isCustomToolFactory(def)) {
+              try {
+                const pi = {
+                  zod: z,
+                  cwd: ctx.directory,
+                }
+                instantiatedDef = def(pi)
+              } catch (err) {
+                log.warn("failed to instantiate custom tool factory", { id, error: String(err) })
+                continue
+              }
+            }
+
+            if (isOmpTool(instantiatedDef)) {
+              const toolId = id === "default" ? namespace : `${namespace}_${id}`
+              const isOmp = match.includes("/.omp/") || match.includes("\\.omp\\")
+              const safeToolId = isOmp ? toolId : (BUILTIN_TOOL_IDS.has(toolId) ? `plugin_${toolId}` : toolId)
+              custom.push(fromOmpTool(safeToolId, instantiatedDef))
+            } else if (isPluginTool(instantiatedDef)) {
+              const toolId = id === "default" ? namespace : `${namespace}_${id}`
+              const isOmp = match.includes("/.omp/") || match.includes("\\.omp\\")
+              const safeToolId = isOmp ? toolId : (BUILTIN_TOOL_IDS.has(toolId) ? `plugin_${toolId}` : toolId)
+              custom.push(fromPlugin(safeToolId, instantiatedDef))
+            }
           }
           if (mod.modeDescriptions !== null && typeof mod.modeDescriptions === "object") {
             modeDescriptions.set(namespace, mod.modeDescriptions as Record<string, string>)
@@ -663,7 +749,9 @@ export const layer = Layer.effect(
 
     const all: Interface["all"] = Effect.fn("ToolRegistry.all")(function* () {
       const s = yield* InstanceState.get(state)
-      return [...s.builtin, ...s.custom] as Tool.Def[]
+      const customIds = new Set(s.custom.map((tool) => tool.id))
+      const uniqueBuiltin = s.builtin.filter((tool) => !customIds.has(tool.id))
+      return [...uniqueBuiltin, ...s.custom] as Tool.Def[]
     })
 
     const ids: Interface["ids"] = Effect.fn("ToolRegistry.ids")(function* () {
@@ -834,6 +922,14 @@ function isZodType(value: unknown): value is z.ZodType {
 
 function isPluginTool(value: unknown): value is ToolDefinition {
   return typeof value === "object" && value !== null && "args" in value && "description" in value && "execute" in value
+}
+
+function isOmpTool(value: unknown): value is { parameters: z.ZodType; description: string; execute: Function; label?: string } {
+  return typeof value === "object" && value !== null && "parameters" in value && "execute" in value
+}
+
+function isCustomToolFactory(value: unknown): value is (pi: any) => any {
+  return typeof value === "function"
 }
 
 function isJsonSchemaDefinition(value: unknown): value is JSONSchema7Definition {

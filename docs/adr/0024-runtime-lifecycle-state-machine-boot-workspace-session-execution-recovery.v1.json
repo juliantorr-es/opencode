@@ -1,0 +1,24 @@
+{
+  "schema": "rig.relay.adr.v1",
+  "schema_version": "v1",
+  "id": "0024",
+  "title": "Runtime Lifecycle State Machine — Boot, Workspace, Session, Execution, Recovery",
+  "status": "accepted",
+  "date": "2026-06-07",
+  "last_modified": "2026-06-07T05:02:25.260Z",
+  "context": "Define the unified runtime state machine for the Tribunus application lifecycle: Instance Boot → Workspace Open → Project Attach → Session Start → Agent Execution → Artifact Production → Cockpit Projection → Suspend/Resume → Crash Recovery → Session Close. This ADR establishes the canonical states, valid transitions, crash recovery semantics, projection lifecycle, and suspend/resume contract. The runtime state machine is the outer nervous system within which the campaign state machine (lane lifecycle) and coordination kernel operate.",
+  "decision": "",
+  "consequences": "",
+  "authors": [],
+  "tags": [
+    "runtime",
+    "lifecycle",
+    "state-machine",
+    "boot",
+    "workspace",
+    "session",
+    "crash-recovery",
+    "suspend",
+    "projection"
+  ]
+}

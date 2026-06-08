@@ -378,7 +378,9 @@ export function createPromptSubmit(input: PromptSubmitInput) {
         if (shouldAutoAccept) permission.enableAutoAccept(session.id, sessionDirectory)
         local.session.promote(sessionDirectory, session.id)
         layout.handoff.setTabs(base64Encode(sessionDirectory), session.id)
-        navigate(`/${base64Encode(sessionDirectory)}/session/${session.id}`)
+        if (mode !== "normal") {
+          navigate(`/${base64Encode(sessionDirectory)}/session/${session.id}`)
+        }
       }
     }
     if (!session) {
@@ -554,15 +556,20 @@ export function createPromptSubmit(input: PromptSubmitInput) {
       return true
     }
 
-    void sendFollowupDraft({
-      client,
-      sync,
-      serverSync,
-      draft,
-      messageID,
-      optimisticBusy: sessionDirectory === projectDirectory,
-      before: waitForWorktree,
-    }).catch((err) => {
+    try {
+      await sendFollowupDraft({
+        client,
+        sync,
+        serverSync,
+        draft,
+        messageID,
+        optimisticBusy: sessionDirectory === projectDirectory,
+        before: waitForWorktree,
+      })
+      if (isNewSession) {
+        navigate(`/${base64Encode(sessionDirectory)}/session/${session.id}`)
+      }
+    } catch (err) {
       pending.delete(session.id)
       if (sessionDirectory === projectDirectory) {
         sync.set("session_status", session.id, { type: "idle" })
@@ -574,7 +581,7 @@ export function createPromptSubmit(input: PromptSubmitInput) {
       removeOptimisticMessage()
       restoreCommentItems(commentItems)
       restoreInput()
-    })
+    }
   }
 
   return {

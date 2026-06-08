@@ -565,7 +565,7 @@ export const { use: useSessionViz, provider: SessionVizProvider } = createSimple
 
     const unsub = sdk.event.listen((e) => {
       const event = e.details as Event
-      const { type, properties } = event
+      const { type, properties } = event as any
 
       // Handle known SDK event types
       switch (type) {

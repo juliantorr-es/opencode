@@ -1,0 +1,16 @@
+{
+  "schema": "rig.relay.adr.v1",
+  "schema_version": "v1",
+  "id": "0024",
+  "title": "Policy Decision and Enforcement Points — PDP/PEP Architecture",
+  "status": "accepted",
+  "date": "2026-06-07",
+  "last_modified": "2026-06-07T05:30:00.000Z",
+  "authors": ["system"],
+  "tags": ["authority", "policy", "pdp", "pep", "capability", "permission"],
+  "context": "Tribunus has a capability-based authorization system (capability/authority.ts, capability/receipts.ts, capability/metadata.ts) and a permission broker (capability/permission-broker). The system evaluates capability grants before tool execution, share creation, and other authority-relevant actions. However, the PDP (Policy Decision Point) and PEP (Policy Enforcement Point) separation is implicit in the code rather than documented as an architectural contract.",
+  "decision": "Adopt an explicit PDP/PEP architecture:\n\nPOLICY DECISION POINT (PDP):\n- Centralized in capability/authority.ts — evaluateCapabilityAuthority is the canonical PDP.\n- Accepts: principal identity, requested capability, context (session, workspace, project).\n- Evaluates: capability grants from CapabilityAuthorityReceiptTable against the requested action.\n- Returns: permitted (with scope), denied (with reasons), or escalated (requires approval).\n- Policy decisions are cacheable with a TTL of 5 minutes for read-heavy paths.\n\nPOLICY ENFORCEMENT POINT (PEP):\n- Distributed — each subsystem has PEPs at ingress boundaries.\n- Tool execution PEP: tool/tool.ts calls evaluateCapabilityAuthority before tool dispatch.\n- API ingress PEP: HTTP middleware validates session tokens and scope.\n- Extension PEP: capability/permission-broker enforces sandbox boundaries.\n- File access PEP: capability/filesystem-scope validates paths against grants.\n- Each PEP is the closest enforcement point to the resource it protects.\n\nPOLICY DISTRIBUTION:\n- Policies (capability grants) are stored in PGlite (CapabilityAuthorityReceiptTable).\n- PEPs query the PDP, which reads from PGlite.\n- Policy changes (new grants, revocations) take effect on next PDP evaluation — no push distribution needed.\n- Revocation invalidates cached decisions and forces re-evaluation.\n\nBOUNDED LATENCY:\n- PDP evaluation is synchronous (PGlite query) with sub-millisecond latency.\n- Policy cache TTL bounds the maximum staleness to 5 minutes.\n- Revocation bypasses cache — immediate effect.",
+  "consequences": "The PDP/PEP separation makes the authorization model testable in isolation: PDP correctness can be verified without running the full system. PEPs become thin enforcement wrappers. Policy caching reduces PGlite load for frequent authorization checks while maintaining freshness guarantees. New PEPs can be added at any ingress boundary without changing the PDP. The model supports future policy languages (Rego, Cedar) by replacing the PDP implementation while keeping PEP interfaces stable.",
+  "supersedes": [],
+  "superseded_by": []
+}

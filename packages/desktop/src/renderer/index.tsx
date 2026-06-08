@@ -435,7 +435,10 @@ render(() => {
           {(_) => {
             return (
               <AppInterface
-                defaultServer={defaultServer.latest ?? ServerConnection.Key.make("sidecar")}
+                defaultServer={
+                  defaultServer.latest ??
+                  ServerConnection.Key.make(sidecar.latest?.url ?? "sidecar")
+                }
                 servers={servers()}
                 router={MemoryRouter}
               >

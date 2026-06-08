@@ -256,10 +256,92 @@ function createCLIClient(
 // package is confirmed available; currently falls back to CLI subprocess.
 
 async function createWASMClient(_dbPath?: string): Promise<DuckDBRawClient | null> {
-  // WASM initialization requires the @duckdb/duckdb-wasm package plus
-  // bundled data files (.wasm, .worker). Return null to use CLI fallback
-  // until the WASM integration is verified end-to-end.
-  return null
+  let duckdb: any
+  try {
+    // Dynamic import — throws if @duckdb/duckdb-wasm not installed
+    duckdb = await import("@duckdb/duckdb-wasm")
+  } catch {
+    // Package not available — graceful fallback to CLI
+    return null
+  }
+
+  try {
+    // Use the Node-blocking WASM variant (single-process, no workers)
+    const createDuckDB = duckdb.createDuckDB
+    const getBundles = duckdb.getJsDelivrBundles
+    const Logger = duckdb.VoidLogger
+    const runtime = duckdb.NODE_RUNTIME ?? duckdb.DEFAULT_RUNTIME
+    const AccessMode = duckdb.DuckDBAccessMode
+
+    if (!createDuckDB || !getBundles || !Logger || !runtime) {
+      return null
+    }
+
+    const bundles = getBundles()
+    const ddb = await createDuckDB(bundles, new Logger(), runtime)
+
+    if (!ddb?.open || !ddb?.connect) {
+      return null
+    }
+
+    // Open an in-memory database (analytical queries are enforced read-only upstream)
+    ddb.open({
+      path: _dbPath ?? ":memory:",
+      accessMode: AccessMode?.READ_WRITE ?? 3,
+    })
+
+    // Acquire a persistent connection
+    let conn: any
+    try {
+      conn = ddb.connect()
+    } catch {
+      ddb.disconnect?.()
+      return null
+    }
+
+    if (!conn?.query) {
+      ddb.disconnect?.()
+      return null
+    }
+
+    const closed = { current: false }
+
+    const client: DuckDBRawClient = {
+      all: async <T>(sql: string, params?: any[]) => {
+        if (closed.current) throw new DuckDBError("DuckDB WASM client is closed")
+        const finalSql = params ? safeBind(sql, params) : sql
+        const table = conn.query(finalSql)
+        const rows = table.toArray()
+        return rows.map((r: any) => r.toJSON()) as T[]
+      },
+
+      get: async <T>(sql: string, params?: any[]) => {
+        if (closed.current) throw new DuckDBError("DuckDB WASM client is closed")
+        const finalSql = params ? safeBind(sql, params) : sql
+        const table = conn.query(finalSql)
+        const rows = table.toArray()
+        const row = rows[0]
+        return (row?.toJSON() ?? undefined) as T | undefined
+      },
+
+      run: async (sql: string) => {
+        if (closed.current) throw new DuckDBError("DuckDB WASM client is closed")
+        conn.query(sql)
+      },
+
+      close: async () => {
+        if (closed.current) return
+        closed.current = true
+        try { conn.close() } catch { /* ignore */ }
+        try { ddb.disconnect?.() } catch { /* ignore */ }
+      },
+    }
+
+    return client
+  } catch {
+    // WASM instantiation failed at runtime — fall back to CLI
+    return null
+  }
 }
 
 // ── Write client (no pool, no -readonly, no firewall) ─────
@@ -304,7 +386,10 @@ export async function init(
   executionTimeoutMs: number = DEFAULT_EXECUTION_TIMEOUT_MS,
 ): Promise<DuckDBRawClient> {
   const wasm = await createWASMClient(dbPath)
-  if (wasm) return wasm
+  if (wasm) {
+    console.log("DuckDB: using WASM in-process client")
+    return wasm
+  }
   return createCLIClient(dbPath, maxConnections, queueTimeoutMs, executionTimeoutMs)
 }
 

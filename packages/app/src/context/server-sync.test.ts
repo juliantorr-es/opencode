@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test"
 import { canDisposeDirectory, pickDirectoriesToEvict } from "./global-sync/eviction"
 import { estimateRootSessionTotal, loadRootSessionsWithFallback } from "./global-sync/session-load"
+import { decodeOrThrow, SidecarConfig } from "./server-sync"
 
 describe("pickDirectoriesToEvict", () => {
   test("keeps pinned stores and evicts idle stores", () => {
@@ -118,5 +119,30 @@ describe("canDisposeDirectory", () => {
         loadingSessions: false,
       }),
     ).toBe(true)
+  })
+})
+
+describe("decodeOrThrow", () => {
+  test("returns decoded value for valid input", () => {
+    expect(
+      decodeOrThrow("sidecarInit", SidecarConfig, {
+        url: "http://127.0.0.1:49660",
+        username: "tribunus",
+        password: "secret",
+      }),
+    ).toEqual({
+      url: "http://127.0.0.1:49660",
+      username: "tribunus",
+      password: "secret",
+    })
+  })
+
+  test("throws for invalid input", () => {
+    expect(() =>
+      decodeOrThrow("sidecarInit", SidecarConfig, {
+        url: "http://127.0.0.1:49660",
+        username: "tribunus",
+      }),
+    ).toThrow("sidecarInit decode failed")
   })
 })

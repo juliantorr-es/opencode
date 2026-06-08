@@ -42,7 +42,12 @@ export class Service extends Context.Service<Service, Interface>()("@opencode/Du
 
 // ── Pipeline helpers ────────────────────────────────────────
 
-export function runPipeline(dbPath: string, adapter: DatabaseAdapter.Interface, signal?: AbortSignal): Effect.Effect<void> {
+export function runPipeline(
+  dbPath: string,
+  adapter: DatabaseAdapter.Interface,
+  signal?: AbortSignal,
+  valkeySnapshot?: { generation: number; heartbeats: number; leases: number; queues: number },
+): Effect.Effect<void> {
   if (dbPath === ":memory:") { return Effect.void }
   return Effect.gen(function* () {
     // 1. Check meta guard — skip if already populated at this schema version
@@ -103,6 +108,43 @@ export function runPipeline(dbPath: string, adapter: DatabaseAdapter.Interface, 
 
     // 5b. Build context projection tables from runtime events
     yield* buildContextProjections(dbPath, adapter, signal)
+
+    // 5c. Optionally ingest Valkey snapshot data into coordination tables
+    if (valkeySnapshot) {
+      const now = Date.now()
+      const heartbeatRows = [{
+        agent_id: "__aggregate__",
+        lane_id: "__aggregate__",
+        last_heartbeat_epoch: now,
+        status: "active",
+        generation: valkeySnapshot.generation,
+      }]
+      const consumerGroupRows = [{
+        group_name: "__pipeline__",
+        stream_key: "coordination:queue",
+        pending_count: valkeySnapshot.queues,
+        last_delivered_id: "0",
+        consumer_count: valkeySnapshot.leases,
+        snapshot_at_epoch: now,
+      }]
+      yield* Effect.promise(() =>
+        execDuckDBStdin(
+          dbPath,
+          "INSERT INTO _pipeline_valkey_heartbeats SELECT * FROM read_json_auto('/dev/stdin')",
+          JSON.stringify(heartbeatRows),
+          signal,
+        ),
+      )
+      yield* Effect.promise(() =>
+        execDuckDBStdin(
+          dbPath,
+          "INSERT INTO _pipeline_valkey_consumer_groups SELECT * FROM read_json_auto('/dev/stdin')",
+          JSON.stringify(consumerGroupRows),
+          signal,
+        ),
+      )
+      yield* Effect.logInfo("Valkey snapshot ingested into DuckDB coordination tables")
+    }
 
     // 6. Write meta as LAST step — if anything above fails, meta is not written
     yield* Effect.promise(() => execDuckDB(dbPath, WRITE_META, signal))
