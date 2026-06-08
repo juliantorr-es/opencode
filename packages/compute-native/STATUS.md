@@ -1,39 +1,7 @@
-# Tribunus Compute Kernel — Status
-
-## Current Mission: Full 48-Layer ComputeImage Execution Gate
-
-Phase A-D complete. The compiler now emits a complete `ModelExecutionPlan` with all 48 `LayerPlan` entries, prologue plan, and epilogue plan. The runtime executes the full model from a compiled execution plan with segment-scoped residency.
-
-### Completed (2026-06-08)
-
-- **Phase A: Plan Schema** — `build_execution_plan()` in config.rs; `ModelExecutionPlan::validate()` with comprehensive checks; compiler wires plan into manifest.
-- **Phase B: Storage-Neutral Execution** — `executor.rs` with `run_prologue()`, `run_layer()`, `run_epilogue()` — all plan-driven, no layer-index branching.
-- **Phase C: Prologue + Epilogue** — Embedding activation with dequantization; tied output projection via embedding reactivation; final logit softcapping; native greedy argmax.
-- **Phase D: 48-Layer Execution** — `ImageRuntime::run_full_model()` iterates all layers from `execution_plan.layers`, eval-before-retire, per-layer telemetry to stderr, handle count verification.
-
-### Key Files
 
 | File | Lines | Role |
 |---|---|---|
-| `src/executor.rs` | ~310 | Plan-driven executors (prologue, layer, epilogue) |
-| `src/config.rs` | ~940 | `ModelExecutionPlan`, `LayerPlan`, `build_execution_plan()`, `validate()` |
-| `src/compute_image.rs` | ~2800 | `ImageRuntime::run_full_model()`, compiler with plan embedding |
-| `src/lib.rs` | ~280 | `run_full_model_from_image` napi binding |
 
-### In Progress
-
-- **Phase E: Structural Tests** — Synthetic plan validation, malformed plan rejection, segment corruption gate.
-
-### Deferred
-
-- Phase F-H: Real checkpoint integration tests require the Gemma 4 12B safetensors — out of scope for CI.
-- KV-cache integration, mapped no-copy storage, token streaming, Core ML placement.
-
-SharedTensorArena v1 phases 0–4 are complete: real IOSurface-backed FP16 storage, MLX external-array access, Core ML IOSurface input, caller-provided Core ML output backing, and a verified zero-application-copy MLX → Core ML → MLX round trip.
-
-Phases 0–4 are fully verified: 5 identity model tests pass without SIGSEGV. The FP16 I/O path works end-to-end with the hermetic compiler toolchain producing properly typed ML Programs via `ct.TensorType(dtype=np.float16)`.
-
-Phases 5–10 infrastructure is implemented (stateful bridge, Tokio supervisor, arena pool, capability report, hybrid profile schema, structured errors, receipts).
 
 Core ML stateful model loading works (confirmed with the stateful toy model). Stateful prediction still crashes because `coreml_state.mm` is stubs — real MLState bridge implementation deferred to Phase 12.
 

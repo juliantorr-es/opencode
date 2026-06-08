@@ -912,4 +912,36 @@ mod tests {
         assert_eq!(original.position, recovered.position);
         assert_eq!(original.logprob, recovered.logprob);
     }
+
+    /// Prove that a WorkerFatalPayload serialises with exact field names
+    /// and round-trips correctly so the supervisor can decode error code,
+    /// message, and phase.
+    #[test]
+    fn test_worker_fatal_payload_roundtrip() {
+        let payload = WorkerFatalPayload {
+            error_code: "protocol-violation".into(),
+            message: "sequence gap detected".into(),
+            phase: "command-dispatch".into(),
+            diagnostics: Some(vec!["expected seq 5, got 8".into()]),
+        };
+        let json = serde_json::to_value(&payload).expect("serialize");
+        assert_eq!(json["error_code"], "protocol-violation");
+        assert_eq!(json["message"], "sequence gap detected");
+        assert_eq!(json["phase"], "command-dispatch");
+        let diags = json["diagnostics"].as_array().expect("diagnostics is array");
+        assert_eq!(diags[0], "expected seq 5, got 8");
+
+        // Round-trip through Frame payload.
+        let frame = Frame::new_worker_event(
+            "test-worker-id".into(),
+            3,
+            "req-001".into(),
+            WorkerEvent::WorkerFatal,
+            json.clone(),
+        );
+        let frame_json = serde_json::to_string(&frame).expect("frame serialize");
+        let decoded: Frame = serde_json::from_str(&frame_json).expect("frame deserialize");
+        assert_eq!(decoded.payload["error_code"], "protocol-violation");
+        assert_eq!(decoded.payload["phase"], "command-dispatch");
+    }
 }

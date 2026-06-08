@@ -6,13 +6,14 @@
 //! Per-generation state lives in ProfiledInferenceSession (owns KV caches,
 //! cancellation flag, token buffer, and timeline).
 
-use crate::compute_image::{CompiledImageReader, TensorEntry};
+use crate::compute_image::{CompiledImageReader, CopyClassification, TensorEntry};
 use crate::engine_error::{EngineError, EngineErrorCode};
 use crate::kv_cache::KvCache;
 use crate::mapped_image::MappedImage;
 use crate::placement_profile::ExecutionPlacementProfile;
 use crate::runtime_trace::{RuntimeTimeline, TimelineEvent, TimelineEventType};
 use crate::session::InferenceSessionState;
+use crate::worker_memory;
 use mlx_rs::Array;
 
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -86,8 +87,7 @@ impl crate::external_array::ExternalStorage for SegmentSlice {
 fn load_tensor_from_mapped_segment(
     segment: &std::sync::Arc<crate::mapped_image::MappedSegment>,
     entry: &TensorEntry,
-    byte_counter: &mut u64,
-) -> napi::Result<mlx_rs::Array> {
+) -> napi::Result<(mlx_rs::Array, CopyClassification)> {
     let mapping = segment.data_slice();
     let offset = entry.offset as usize;
     let len = entry.byte_length as usize;
@@ -98,7 +98,6 @@ fn load_tensor_from_mapped_segment(
             entry.name, offset, len, mapping.len()
         )));
     }
-    *byte_counter += entry.byte_length;
     let dims: Vec<i32> = entry.physical_shape.iter().map(|&d| d as i32).collect();
 
     // TODO: wire external_array for true no-copy when mapped ABI is complete
@@ -110,26 +109,31 @@ fn load_tensor_from_mapped_segment(
 
     match entry.storage_dtype.as_str() {
         "U8" | "Uint8" => unsafe {
-            crate::external_array::new_external_array(storage, &dims, mlx_rs::Dtype::Uint8)
-                .map_err(|e| napi::Error::from_reason(e))
+            let arr = crate::external_array::new_external_array(storage, &dims, mlx_rs::Dtype::Uint8)
+                .map_err(|e| napi::Error::from_reason(e))?;
+            Ok((arr, CopyClassification::MappedNoCopy))
         },
         "F32" | "Float32" => unsafe {
-            crate::external_array::new_external_array(storage, &dims, mlx_rs::Dtype::Float32)
-                .map_err(|e| napi::Error::from_reason(e))
+            let arr = crate::external_array::new_external_array(storage, &dims, mlx_rs::Dtype::Float32)
+                .map_err(|e| napi::Error::from_reason(e))?;
+            Ok((arr, CopyClassification::MappedNoCopy))
         },
         "BF16" | "BFloat16" => unsafe {
-            crate::external_array::new_external_array(storage, &dims, mlx_rs::Dtype::Bfloat16)
-                .map_err(|e| napi::Error::from_reason(e))
+            let arr = crate::external_array::new_external_array(storage, &dims, mlx_rs::Dtype::Bfloat16)
+                .map_err(|e| napi::Error::from_reason(e))?;
+            Ok((arr, CopyClassification::MappedNoCopy))
         },
         "I8" | "Int8" => {
             // external_array does not yet support Int8 natively; fall back to the
             // copy path. This is harmless since Int8 weights are tiny (scales).
             let data: Vec<i8> = mapping[offset..end].iter().map(|&b| b as i8).collect();
-            Ok(mlx_rs::Array::from_slice(&data, &dims))
-        }
+            let arr = mlx_rs::Array::from_slice(&data, &dims);
+            Ok((arr, CopyClassification::CopiedFallback))
+        },
         "U32" | "Uint32" => unsafe {
-            crate::external_array::new_external_array(storage, &dims, mlx_rs::Dtype::Uint32)
-                .map_err(|e| napi::Error::from_reason(e))
+            let arr = crate::external_array::new_external_array(storage, &dims, mlx_rs::Dtype::Uint32)
+                .map_err(|e| napi::Error::from_reason(e))?;
+            Ok((arr, CopyClassification::MappedNoCopy))
         },
         other => Err(napi::Error::from_reason(format!(
             "unsupported storage dtype in profiled executor: {}", other
@@ -280,6 +284,8 @@ pub struct LoadedProfiledModel {
     pub full_cos: Arc<Array>,
     pub full_sin: Arc<Array>,
     pub mapped_weight_bytes: u64,
+    pub copied_weight_bytes: u64,
+    pub materialized_bytes: u64,
     pub handle_baseline: usize,
 }
 
@@ -300,8 +306,11 @@ impl LoadedProfiledModel {
                 )));
             }
         }
-        let _ = crate::compute_image::clear_mlx_cache();
-        let _ = crate::compute_image::set_mlx_cache_limit(512 * 1024 * 1024);
+        // Compute admission estimate and configure MLX memory limits before
+        // loading any tensors so the allocator is already constrained.
+        let estimate = crate::model_runtime::compute_admission_estimate(&reader.manifest);
+        let machine = worker_memory::detect_machine_profile();
+        worker_memory::configure_mlx_limits_for_model(&estimate, &machine);
         let segment_views: Vec<crate::mapped_image::SegmentView> = reader.manifest.segments.iter().map(|s| crate::mapped_image::SegmentView {
             segment_id: s.id.clone(),
             segment_index: 0,
@@ -315,6 +324,8 @@ impl LoadedProfiledModel {
             .map_err(|e| napi::Error::from_reason(format!("open mapped image: {}", e)))?;
         
         let mut mapped_weight_bytes = 0;
+        let mut copied_weight_bytes = 0;
+        let mut materialized_bytes = 0;
         let mut tensor_cache: HashMap<String, Arc<Array>> = HashMap::new();
 
         let mut load_tensor = |name: &str| -> napi::Result<Arc<Array>> {
@@ -326,7 +337,13 @@ impl LoadedProfiledModel {
             let seg_id = &entry.segment;
             let segment = mapped_image.segments.get(seg_id)
                 .ok_or_else(|| napi::Error::from_reason(format!("segment not found: {}", seg_id)))?;
-            let arr = load_tensor_from_mapped_segment(segment, entry, &mut mapped_weight_bytes)?;
+            let (arr, classification) = load_tensor_from_mapped_segment(segment, entry)?;
+            let byte_len = entry.byte_length;
+            match classification {
+                CopyClassification::MappedNoCopy => mapped_weight_bytes += byte_len,
+                CopyClassification::CopiedFallback => copied_weight_bytes += byte_len,
+                _ => materialized_bytes += byte_len,
+            }
             let arc = Arc::new(arr);
             tensor_cache.insert(name.to_string(), arc.clone());
             Ok(arc)
@@ -413,6 +430,22 @@ impl LoadedProfiledModel {
             });
         }
 
+        // Post-load RSS comparison: warn if actual RSS exceeds the admission
+        // estimate by more than 20 %.
+        let postload_rss = worker_memory::sample_process_rss_self();
+        let estimated_peak = estimate.peak_bytes();
+        if postload_rss > estimated_peak && estimated_peak > 0 {
+            let ratio = postload_rss as f64 / estimated_peak as f64;
+            if ratio > 1.20 {
+                eprintln!(
+                    "[profiled-model] WARNING: post-load RSS ({} bytes) exceeds admission estimate ({} bytes) by {:.1}%",
+                    postload_rss,
+                    estimated_peak,
+                    (ratio - 1.0) * 100.0,
+                );
+            }
+        }
+
         Ok(Self {
             image_dir: image_dir.to_path_buf(),
             reader,
@@ -421,6 +454,8 @@ impl LoadedProfiledModel {
             emb_w, emb_s, emb_b, fn_w,
             rope_cos, rope_sin, full_cos, full_sin,
             mapped_weight_bytes,
+            copied_weight_bytes,
+            materialized_bytes,
             handle_baseline,
         })
     }
@@ -506,7 +541,7 @@ impl ProfiledInferenceSession {
             &model.emb_s,
             &model.emb_b,
             &plan.prologue,
-            1.0,
+            crate::executor::prologue_hidden_scale(&plan.prologue),
         )
         .map_err(|e| {
             EngineError::new(EngineErrorCode::InferenceFailed, format!("prologue: {:?}", e))
@@ -553,11 +588,26 @@ impl ProfiledInferenceSession {
                 )
             })?;
             hidden.eval().map_err(|e| {
+                self.kv_caches[l].rollback();
                 EngineError::new(
                     EngineErrorCode::NumericalFailure,
                     format!("prefill layer {} eval: {}", l, e),
                 )
             })?;
+            self.kv_caches[l].commit_step();
+        }
+
+        // Validate all layers committed the expected number of positions.
+        for (l, _) in plan.layers.iter().enumerate() {
+            if self.kv_caches[l].committed_len != seq_len {
+                return Err(EngineError::new(
+                    EngineErrorCode::InferenceFailed,
+                    format!(
+                        "prefill layer {} committed {} positions, expected {}",
+                        l, self.kv_caches[l].committed_len, seq_len
+                    ),
+                ));
+            }
         }
 
         let sampler = crate::session::SamplerConfig::default();
@@ -641,7 +691,7 @@ impl ProfiledInferenceSession {
             &model.emb_s,
             &model.emb_b,
             &plan.prologue,
-            1.0,
+            crate::executor::prologue_hidden_scale(&plan.prologue),
         )
         .map_err(|e| {
             EngineError::new(EngineErrorCode::InferenceFailed, format!("prologue: {:?}", e))
@@ -688,11 +738,27 @@ impl ProfiledInferenceSession {
                 )
             })?;
             hidden.eval().map_err(|e| {
+                self.kv_caches[l].rollback();
                 EngineError::new(
                     EngineErrorCode::NumericalFailure,
                     format!("decode layer {} eval: {}", l, e),
                 )
             })?;
+            self.kv_caches[l].commit_step();
+        }
+
+        // Validate all layers advanced by exactly 1 position.
+        let expected = kv_offset + 1;
+        for (l, _) in plan.layers.iter().enumerate() {
+            if self.kv_caches[l].committed_len != expected {
+                return Err(EngineError::new(
+                    EngineErrorCode::InferenceFailed,
+                    format!(
+                        "decode layer {} committed {} positions, expected {}",
+                        l, self.kv_caches[l].committed_len, expected
+                    ),
+                ));
+            }
         }
 
         let sampler = crate::session::SamplerConfig::default();

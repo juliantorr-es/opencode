@@ -1,10 +1,12 @@
 //! Event-driven generation streaming infrastructure.
 //!
-//! Provides a bounded channel pair for streaming generation events
-//! (tokens, text chunks, progress, metrics, warnings, errors, lifecycle)
-//! from a compute-native generation backend to a JS consumer, plus an
-//! unbounded out-of-band channel for terminal events so they always
-//! deliver even when the main event buffer is saturated.
+//! Provides a single unified event queue backed by `parking_lot::Mutex` +
+//! `Condvar` for streaming generation events from a compute-native generation
+//! backend to a JS consumer.
+//!
+//! Terminal events bypass the capacity check so they always deliver even when
+//! the event buffer is saturated, and the single-queue design eliminates the
+//! wake-up race present in the old dual-channel approach.
 //!
 //! # Structure
 //!
@@ -14,7 +16,11 @@
 //! - [`generation_channel`] — construct a (sender, stream) pair.
 //! - [`validate_event_sequence`] — check a slice of events for valid ordering.
 use napi_derive::napi;
+use parking_lot::{Condvar, Mutex};
+use std::collections::VecDeque;
 use std::fmt;
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::Arc;
 
 /// Events emitted during a single generation run.
 ///
@@ -48,6 +54,39 @@ pub enum GenerationEvent {
 }
 
 // ---------------------------------------------------------------------------
+// Internal shared queue
+// ---------------------------------------------------------------------------
+
+/// The shared state behind both [`GenerationSender`] and [`GenerationStream`].
+///
+/// All events — ordinary and terminal — go through the same `VecDeque`,
+/// protected by a `parking_lot::Mutex` and signaled with a `Condvar`. The
+/// [`closed`] flag is set when the consumer calls [`GenerationStream::close`];
+/// `sender_alive` tracks whether any sender is still alive (so the consumer
+/// can distinguish "nothing right now" from "nothing ever again").
+struct SharedQueue {
+    queue: Mutex<VecDeque<GenerationEvent>>,
+    cv: Condvar,
+    capacity: usize,
+    closed: AtomicBool,
+    sender_alive: AtomicBool,
+    terminal_seen: AtomicBool,
+}
+
+impl SharedQueue {
+    fn new(capacity: usize) -> Self {
+        Self {
+            queue: Mutex::new(VecDeque::with_capacity(capacity)),
+            cv: Condvar::new(),
+            capacity,
+            closed: AtomicBool::new(false),
+            sender_alive: AtomicBool::new(true),
+            terminal_seen: AtomicBool::new(false),
+        }
+    }
+}
+
+// ---------------------------------------------------------------------------
 // Terminal-event helpers
 // ---------------------------------------------------------------------------
 
@@ -67,14 +106,11 @@ fn is_terminal(event: &GenerationEvent) -> bool {
 /// [`try_recv`](Self::try_recv) to poll without blocking, or
 /// [`close`](Self::close) to signal that no more events are wanted.
 ///
-/// Terminal events (Done, Error, Cancelled) are delivered through a
-/// separate unbounded channel so they always arrive even when the
-/// main event buffer is saturated.
+/// All events flow through a single unified queue so there is no wake-up race
+/// between ordinary and terminal events.
 #[napi]
 pub struct GenerationStream {
-    inner: tokio::sync::mpsc::Receiver<GenerationEvent>,
-    terminal_rx: tokio::sync::mpsc::UnboundedReceiver<GenerationEvent>,
-    closed: bool,
+    shared: Arc<SharedQueue>,
     /// Oneshot sender — fired when the stream is closed.
     /// Extracted at channel creation; the receiver side is returned by
     /// [`take_disconnect_notifier`].
@@ -86,7 +122,7 @@ pub struct GenerationStream {
 impl fmt::Debug for GenerationStream {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("GenerationStream")
-            .field("closed", &self.closed)
+            .field("closed", &self.shared.closed.load(Ordering::Relaxed))
             .field("disconnect_tx", &self.disconnect_tx.as_ref().map(|_| "<Sender>"))
             .field("disconnect_rx", &self.disconnect_rx.as_ref().map(|_| "<Receiver>"))
             .finish_non_exhaustive()
@@ -95,60 +131,82 @@ impl fmt::Debug for GenerationStream {
 
 #[napi]
 impl GenerationStream {
-    /// Block the current thread until the next event arrives or the channel
-    /// is closed and drained.
+    /// Block the current thread until the next event arrives, or the channel
+    /// is closed and drained (returns `None`).
     ///
-    /// Ordinary events are drained first to preserve ordering. Terminal
-    /// events are only returned when the ordinary channel is empty.
+    /// Terminal and ordinary events share a single queue so ordering is
+    /// preserved and there is no wake-up race.
     #[napi]
     pub fn recv(&mut self) -> Option<GenerationEvent> {
-        // Drain ordinary channel first — preserve ordering.
-        if let Ok(event) = self.inner.try_recv() {
-            return Some(event);
+        let mut guard = self.shared.queue.lock();
+        loop {
+            // Once a terminal has been delivered, always return None.
+            if self.shared.terminal_seen.load(Ordering::Acquire) {
+                return None;
+            }
+            if let Some(event) = guard.pop_front() {
+                // Track terminal delivery so subsequent recv() calls return None.
+                if is_terminal(&event) {
+                    self.shared.terminal_seen.store(true, Ordering::Release);
+                }
+                // Wake a producer that might be waiting for space.
+                self.shared.cv.notify_one();
+                return Some(event);
+            }
+            // No data: if closed or the sender is gone, we are done.
+            if self.shared.closed.load(Ordering::Acquire)
+                || !self.shared.sender_alive.load(Ordering::Acquire)
+            {
+                return None;
+            }
+            self.shared.cv.wait(&mut guard);
         }
-        // Only check terminal when ordinary is drained.
-        if let Ok(event) = self.terminal_rx.try_recv() {
-            return Some(event);
-        }
-        // Block only on ordinary channel.
-        self.inner.blocking_recv()
     }
 
     /// Attempt to receive an event without blocking.
     ///
-    /// Ordinary events are checked first to preserve ordering.
-    ///
-    /// Returns `None` when the channel is empty but still open, or closed
+    /// Returns `None` when the queue is empty but still open, or closed
     /// and drained.
     #[napi]
     pub fn try_recv(&mut self) -> Option<GenerationEvent> {
-        // Drain ordinary channel first — preserve ordering.
-        if let Ok(event) = self.inner.try_recv() {
-            return Some(event);
+        let mut guard = self.shared.queue.lock();
+        if self.shared.terminal_seen.load(Ordering::Acquire) {
+            return None;
         }
-        self.terminal_rx.try_recv().ok()
+        let event = guard.pop_front();
+        if event.is_some() {
+            if let Some(ref e) = event {
+                if is_terminal(e) {
+                    self.shared.terminal_seen.store(true, Ordering::Release);
+                }
+            }
+            self.shared.cv.notify_one();
+        }
+        event
     }
 
     /// Close the stream — signals the sender via `is_closed()` that the
-    /// consumer has disconnected. Subsequent `try_send_or_cancel` calls
-    /// on the sender return `Cancelled`.
+    /// consumer has disconnected. Subsequent `try_send_or_cancel` calls on
+    /// the sender return `Cancelled`.
     ///
-    /// The unbounded terminal channel is **not** closed so that any
-    /// already-in-flight terminal event can still be delivered.
+    /// Already-queued events (including terminal events sent afterwards via
+    /// [`send_terminal`](GenerationSender::send_terminal)) will still be
+    /// drained by [`recv`](Self::recv) before it returns `None`.
     #[napi]
     pub fn close(&mut self) {
-        self.inner.close();
+        self.shared.closed.store(true, Ordering::Release);
         // Fire the disconnect oneshot so any waiting receiver is woken.
         if let Some(tx) = self.disconnect_tx.take() {
             let _ = tx.send(());
         }
-        self.closed = true;
+        // Wake any blocked consumer so it sees the closed flag.
+        self.shared.cv.notify_all();
     }
 
     /// Returns `true` once [`close`](Self::close) has been called.
     #[napi]
     pub fn is_closed(&self) -> bool {
-        self.closed
+        self.shared.closed.load(Ordering::Acquire)
     }
 
     /// Extract the disconnect notifier receiver, if it hasn't been taken
@@ -165,6 +223,15 @@ impl GenerationStream {
     }
 }
 
+// Drop impl: when the stream is dropped without an explicit close, mark
+// the queue closed so any blocked sender or consumer can unblock.
+impl Drop for GenerationStream {
+    fn drop(&mut self) {
+        self.shared.closed.store(true, Ordering::Release);
+        self.shared.cv.notify_all();
+    }
+}
+
 // ---------------------------------------------------------------------------
 // Sending half
 // ---------------------------------------------------------------------------
@@ -175,13 +242,11 @@ impl GenerationStream {
 /// [`try_send`](Self::try_send), [`blocking_send`](Self::blocking_send), or
 /// [`send_terminal`](Self::send_terminal) to push events to the consumer.
 ///
-/// Terminal events (Done, Error, Cancelled) sent via [`send_terminal`] use
-/// a separate unbounded channel and are therefore guaranteed to arrive even
-/// when the main event buffer is full.
+/// Terminal events sent via [`send_terminal`] bypass the capacity check and
+/// are therefore guaranteed to arrive even when the main event buffer is full.
 #[napi]
 pub struct GenerationSender {
-    inner: tokio::sync::mpsc::Sender<GenerationEvent>,
-    terminal_tx: tokio::sync::mpsc::UnboundedSender<GenerationEvent>,
+    shared: Arc<SharedQueue>,
 }
 
 #[napi]
@@ -192,14 +257,16 @@ impl GenerationSender {
     /// after the consumer drains) or closed (the consumer dropped the stream).
     #[napi]
     pub fn try_send(&self, event: GenerationEvent) -> napi::Result<()> {
-        use tokio::sync::mpsc::error::TrySendError;
-        self.inner.try_send(event).map_err(|e| {
-            let msg: String = match &e {
-                TrySendError::Full(_) => "channel full".into(),
-                TrySendError::Closed(_) => "channel closed".into(),
-            };
-            napi::Error::from_reason(msg)
-        })
+        let mut guard = self.shared.queue.lock();
+        if self.shared.closed.load(Ordering::Acquire) {
+            return Err(napi::Error::from_reason("channel closed"));
+        }
+        if guard.len() >= self.shared.capacity {
+            return Err(napi::Error::from_reason("channel full"));
+        }
+        guard.push_back(event);
+        self.shared.cv.notify_one();
+        Ok(())
     }
 
     /// Block the current thread until the event is sent.
@@ -207,21 +274,29 @@ impl GenerationSender {
     /// Fails when the consumer has dropped the stream.
     #[napi]
     pub fn blocking_send(&self, event: GenerationEvent) -> napi::Result<()> {
-        self.inner
-            .blocking_send(event)
-            .map_err(|_| napi::Error::from_reason("channel closed"))
+        let mut guard = self.shared.queue.lock();
+        while guard.len() >= self.shared.capacity {
+            if self.shared.closed.load(Ordering::Acquire) {
+                return Err(napi::Error::from_reason("channel closed"));
+            }
+            self.shared.cv.wait(&mut guard);
+        }
+        guard.push_back(event);
+        self.shared.cv.notify_one();
+        Ok(())
     }
 
-    /// Send a terminal event through the out-of-band unbounded channel.
+    /// Send a terminal event through the unified queue, bypassing the
+    /// capacity limit.
     ///
     /// This always succeeds — the event will be delivered even if the
-    /// main bounded channel is completely full. If the consumer has
-    /// already dropped the stream, the event is silently discarded.
+    /// main event buffer is completely full. If the consumer has already
+    /// closed the stream, the event is still queued for draining.
     #[napi]
     pub fn send_terminal(&self, event: GenerationEvent) {
-        // Silently discard if the consumer is already gone — the stream
-        // has been dropped and nobody is listening.
-        let _ = self.terminal_tx.send(event);
+        let mut guard = self.shared.queue.lock();
+        guard.push_back(event);
+        self.shared.cv.notify_one();
     }
 
     /// Attempt to send, returning an immediate `"Cancelled"` error when
@@ -231,38 +306,44 @@ impl GenerationSender {
     /// unnecessary work once the consumer has disconnected.
     #[napi]
     pub fn try_send_or_cancel(&self, event: GenerationEvent) -> napi::Result<()> {
-        if self.inner.is_closed() {
+        let mut guard = self.shared.queue.lock();
+        if self.shared.closed.load(Ordering::Acquire) {
             return Err(napi::Error::from_reason("Cancelled"));
         }
-        use tokio::sync::mpsc::error::TrySendError;
-        self.inner.try_send(event).map_err(|e| {
-            let msg: String = match &e {
-                TrySendError::Full(_) => "channel full".into(),
-                TrySendError::Closed(_) => "channel closed".into(),
-            };
-            napi::Error::from_reason(msg)
-        })
+        if guard.len() >= self.shared.capacity {
+            return Err(napi::Error::from_reason("channel full"));
+        }
+        guard.push_back(event);
+        self.shared.cv.notify_one();
+        Ok(())
     }
 
-    /// Check whether the consumer has dropped the stream.
+    /// Check whether the consumer has dropped (closed) the stream.
     #[napi]
     pub fn is_closed(&self) -> bool {
-        self.inner.is_closed()
+        self.shared.closed.load(Ordering::Acquire)
     }
 
     /// Maximum capacity the channel was created with.
     #[napi]
     pub fn capacity(&self) -> usize {
-        self.inner.max_capacity()
+        self.shared.capacity
     }
 
-    /// Returns `true` when the consumer has disconnected from the stream
-    /// (either the main event channel is closed OR the terminal channel
-    /// is closed).
+    /// Returns `true` when the consumer has disconnected from the stream.
     ///
     /// Backends should check this before performing expensive work.
     pub fn is_disconnected(&self) -> bool {
-        self.inner.is_closed() || self.terminal_tx.is_closed()
+        self.shared.closed.load(Ordering::Acquire)
+    }
+}
+
+// When the sender is dropped, signal the consumer that no more events
+// will arrive (the sender is gone).
+impl Drop for GenerationSender {
+    fn drop(&mut self) {
+        self.shared.sender_alive.store(false, Ordering::Release);
+        self.shared.cv.notify_all();
     }
 }
 
@@ -277,7 +358,7 @@ impl GenerationSender {
 /// [`try_send`](GenerationSender::try_send) returns an error. Defaults to 128.
 ///
 /// Terminal events sent via [`send_terminal`](GenerationSender::send_terminal)
-/// use a separate unbounded channel and are unaffected by this limit.
+/// bypass the capacity limit and are unaffected by this value.
 ///
 /// # Example (TypeScript)
 ///
@@ -291,20 +372,16 @@ pub fn generation_channel(
     capacity: Option<u32>,
 ) -> (GenerationSender, GenerationStream) {
     let cap = capacity.unwrap_or(128).max(1) as usize;
-    let (tx, rx) = tokio::sync::mpsc::channel(cap);
-    let (terminal_tx, terminal_rx) = tokio::sync::mpsc::unbounded_channel();
+    let shared = Arc::new(SharedQueue::new(cap));
     let (disconnect_tx, disconnect_rx) = tokio::sync::oneshot::channel();
     (
         GenerationSender {
-            inner: tx,
-            terminal_tx,
+            shared: shared.clone(),
         },
         GenerationStream {
-            inner: rx,
-            terminal_rx,
+            shared,
             disconnect_tx: Some(disconnect_tx),
             disconnect_rx: Some(disconnect_rx),
-            closed: false,
         },
     )
 }
@@ -398,7 +475,7 @@ impl GenerationHandle {
 mod tests {
     use super::*;
 
-    /// Basic round-trip through the bounded channel.
+    /// Basic round-trip through the channel.
     #[test]
     fn test_basic_send_recv() {
         let (tx, mut rx) = generation_channel(None);
@@ -421,11 +498,11 @@ mod tests {
     fn test_terminal_delivery_under_pressure() {
         let (tx, mut rx) = generation_channel(Some(1));
 
-        // Fill the bounded channel.
+        // Fill the channel.
         tx.try_send(GenerationEvent::Token(1)).unwrap();
         assert!(tx.try_send(GenerationEvent::Token(2)).is_err()); // full
 
-        // Terminal still gets through.
+        // Terminal still gets through (bypasses capacity).
         tx.send_terminal(GenerationEvent::Done);
 
         assert!(matches!(rx.recv(), Some(GenerationEvent::Token(1))));
@@ -461,8 +538,7 @@ mod tests {
         assert!(result.is_ok());
     }
 
-    /// Terminal events via the unbounded channel are received even after
-    /// the bounded channel is closed by the consumer.
+    /// Terminal events are received even after the stream is closed.
     #[test]
     fn test_terminal_after_close() {
         let (tx, mut rx) = generation_channel(None);
@@ -572,7 +648,7 @@ mod tests {
         assert!(validate_event_sequence_impl(&events));
     }
 
-    /// Terminal events outside the bounded channel still pass validation.
+    /// Terminal events pass validation.
     #[test]
     fn test_event_sequence_validation() {
         // Valid: Started, tokens, terminal
@@ -656,11 +732,67 @@ mod tests {
         // Drain.
         assert!(matches!(rx.recv(), Some(GenerationEvent::Token(1))));
         assert!(matches!(rx.recv(), Some(GenerationEvent::Token(2))));
-        // At this point the bounded channel is empty, so the terminal
+        // At this point the queue is empty, so the terminal
         // from the other thread should arrive.
         done.store(true, Ordering::SeqCst);
         assert!(matches!(rx.recv(), Some(GenerationEvent::Done)));
         assert!(rx.recv().is_none());
+    }
+
+    /// Prove that a blocking receive returns a terminal event rather than
+    /// None when the stream closes with a terminal still pending.
+    #[test]
+    fn test_blocking_recv_returns_pending_terminal_not_none() {
+        let (tx, mut rx) = generation_channel(Some(2));
+        // Enqueue one ordinary event, then close the stream.
+        tx.try_send(GenerationEvent::Token(1)).unwrap();
+        rx.close(); // marks closed, terminal channel remains open for delivery
+        // Send terminal via the unified queue.
+        tx.send_terminal(GenerationEvent::Done);
+
+        // Drain the already-enqueued ordinary event.
+        rx.recv(); // Token(1)
+        // Now queue has only the terminal — recv must not return None.
+        let final_event = rx.recv();
+        assert!(
+            matches!(final_event, Some(GenerationEvent::Done)),
+            "blocking recv returned {:?} instead of Some(Done)",
+            final_event
+        );
+    }
+
+    /// Consumer begins blocking recv before terminal is sent; sender sends
+    /// terminal on a separate thread; consumer receives it (not None).
+    ///
+    /// This proves the wake-up race between the old dual-channel design is
+    /// closed: the consumer blocks on a single condvar that is awoken when
+    /// the terminal arrives.
+    #[test]
+    fn test_terminal_wakes_blocked_recv() {
+        let (tx, mut rx) = generation_channel(Some(2));
+
+        // Start consumer in another thread — it will block on recv().
+        let handle = std::thread::spawn(move || {
+            // This blocks until the terminal event arrives.
+            match rx.recv() {
+                Some(GenerationEvent::Done) => true,
+                other => {
+                    eprintln!("Expected Some(Done), got {:?}", other);
+                    false
+                }
+            }
+        });
+
+        // Give the consumer time to start blocking on recv.
+        std::thread::sleep(std::time::Duration::from_millis(100));
+
+        // Send terminal — should wake the blocked consumer.
+        tx.send_terminal(GenerationEvent::Done);
+
+        assert!(
+            handle.join().unwrap(),
+            "consumer should have received Some(Done), not None"
+        );
     }
 
     // ------------------------------------------------------------------

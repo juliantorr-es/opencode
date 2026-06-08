@@ -270,6 +270,33 @@ pub fn configure_mlx_memory_limits(active_limit_bytes: u64, cache_limit_bytes: u
     compute_image::clear_mlx_cache();
 }
 
+/// Configure MLX memory limits from a model admission estimate and machine profile.
+///
+/// Calculates the MLX allocator budget as `usable_bytes - peak_needed`, then
+/// splits it into active (50%) and cache (25%) limits.  The remaining 25% is
+/// left for transient workspaces and system overhead.
+///
+/// # Panics
+/// Panics when the admission estimate exceeds the machine's usable memory.
+pub fn configure_mlx_limits_for_model(
+    estimate: &crate::model_runtime::ModelAdmissionEstimate,
+    machine: &MachineProfile,
+) {
+    let available = machine.usable_bytes;
+    let needed = estimate.peak_bytes();
+    if needed > available {
+        panic!(
+            "model admission estimate {} exceeds usable memory {}",
+            needed, available,
+        );
+    }
+    let mlx_budget = available.saturating_sub(needed);
+    let active_limit = mlx_budget / 2;
+    let cache_limit = mlx_budget / 4;
+    crate::compute_image::set_mlx_memory_limit(active_limit);
+    crate::compute_image::set_mlx_cache_limit(cache_limit);
+}
+
 // ── MLX memory snapshot ────────────────────────────────────────────────────
 
 /// A point-in-time snapshot of MLX Metal allocator state.

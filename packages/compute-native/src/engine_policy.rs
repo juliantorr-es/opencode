@@ -16,7 +16,7 @@ pub(crate) const SAFE_ZERO_MAX_TOKENS: u32 = 8;
 const QUALIFICATION_PROMPT_TOKEN_CEILING: usize = 64;
 
 /// Wall-clock deadline for a single qualification-mode generation request.
-const QUALIFICATION_WALL_CLOCK_DEADLINE: Duration = Duration::from_secs(30);
+pub(crate) const QUALIFICATION_WALL_CLOCK_DEADLINE: Duration = Duration::from_secs(30);
 
 // ── ExecutionPolicy ────────────────────────────────────────────────────────
 

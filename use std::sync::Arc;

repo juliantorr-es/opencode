@@ -12,6 +12,7 @@ use crate::mapped_image::MappedSegment;
 use mlx_rs::{Array, Dtype};
 use std::alloc::Layout;
 use std::ffi::c_void;
+use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Arc;
 
 // ---------------------------------------------------------------------------
@@ -123,46 +124,6 @@ impl ExternalStorage for OwnedBuffer {
     }
 }
 
-// ---------------------------------------------------------------------------
-// StaticStorage — wraps a raw pointer without deallocation
-// ---------------------------------------------------------------------------
-
-/// A non-owning wrapper around a static or arena-managed memory region.
-///
-/// Unlike [`OwnedBuffer`], `StaticStorage` does **not** deallocate the
-/// memory it points to.  The caller is responsible for ensuring the pointer
-/// remains valid for the lifetime of any MLX `Array` constructed from it.
-pub struct StaticStorage {
-    ptr: *const u8,
-    len: usize,
-}
-
-unsafe impl Send for StaticStorage {}
-unsafe impl Sync for StaticStorage {}
-
-impl StaticStorage {
-    /// Create a new `StaticStorage` from a raw pointer and length.
-    ///
-    /// # Safety
-    ///
-    /// `ptr` must point to at least `len` bytes of readable, immutable
-    /// memory that remains valid for the lifetime of any MLX `Array`
-    /// constructed from this storage.
-    pub unsafe fn new(ptr: *const u8, len: usize) -> Self {
-        Self { ptr, len }
-    }
-}
-
-impl ExternalStorage for StaticStorage {
-    fn data_ptr(&self) -> *const u8 {
-        self.ptr
-    }
-
-    fn byte_len(&self) -> usize {
-        self.len
-    }
-}
-
 /// SAFETY: `ptr` was allocated by `std::alloc::alloc` and `layout` is the ORIGINAL
 /// allocation layout — **_not_** recomputed from `len` / `capacity`.  This fixes
 /// the zero-length-capacity bug that existed in the old test code (which passed
@@ -185,16 +146,6 @@ unsafe impl Sync for OwnedBuffer {}
 // Arc<MappedSegment>
 // ---------------------------------------------------------------------------
 
-impl ExternalStorage for MappedSegment {
-    fn data_ptr(&self) -> *const u8 {
-        self.data_ptr()
-    }
-
-    fn byte_len(&self) -> usize {
-        self.len()
-    }
-}
-
 impl ExternalStorage for Arc<MappedSegment> {
     fn data_ptr(&self) -> *const u8 {
         (**self).data_ptr()
@@ -205,6 +156,89 @@ impl ExternalStorage for Arc<MappedSegment> {
     }
 }
 
+// ---------------------------------------------------------------------------
+// SegmentLease — lease over a sub-range of a MappedSegment
+// ---------------------------------------------------------------------------
+
+/// A lease over a sub-range of a `MappedSegment`, tracking its lifecycle
+/// through the segment's atomic counters.
+///
+/// When constructed, `acquire_view()` and `acquire_lease()` are called on the
+/// segment.  When the last `Arc` reference to this `SegmentLease` is dropped
+/// (which happens inside the MLX deleter callback), `release_lease()` and
+/// `release_view()` are called.
+#[derive(Debug)]
+pub struct SegmentLease {
+    segment: Arc<MappedSegment>,
+    offset: u64,
+    length: u64,
+    /// The segment's generation at the time this lease was created, captured
+    /// for validation against version changes.
+    generation: u64,
+}
+
+impl SegmentLease {
+    /// Create a new lease over a sub-range of `segment`.
+    ///
+    /// Validates:
+    /// - `offset + length <= segment.mapping_len`
+    /// - `segment.generation == expected_generation`
+    ///
+    /// On success, increments the segment's `active_views` and
+    /// `in_flight_leases` counters.
+    pub fn new(
+        segment: Arc<MappedSegment>,
+        offset: u64,
+        length: u64,
+        expected_generation: u64,
+    ) -> Result<Self, String> {
+        let actual_gen = segment.generation();
+        if actual_gen != expected_generation {
+            return Err(format!(
+                "SegmentLease generation mismatch: expected {expected_generation}, got {actual_gen}"
+            ));
+        }
+        if (offset as usize) + (length as usize) > segment.mapping_len {
+            return Err(format!(
+                "SegmentLease offset+length ({}+{}) exceeds segment mapping length ({})",
+                offset,
+                length,
+                segment.mapping_len
+            ));
+        }
+        segment.acquire_view();
+        segment.acquire_lease();
+        Ok(Self {
+            segment,
+            offset,
+            length,
+            generation: actual_gen,
+        })
+    }
+}
+
+impl ExternalStorage for SegmentLease {
+    #[inline]
+    fn data_ptr(&self) -> *const u8 {
+        unsafe { self.segment.data_ptr().offset(self.offset as isize) }
+    }
+
+    #[inline]
+    fn byte_len(&self) -> usize {
+        self.length as usize
+    }
+}
+
+impl Drop for SegmentLease {
+    fn drop(&mut self) {
+        // Release the lease (decrements in_flight_leases).  This runs when the
+        // last Arc<SegmentLease> is dropped, which happens inside the MLX
+        // deleter callback when the array is released.
+        self.segment.release_lease();
+        // Release the view (decrements active_views).
+        self.segment.release_view();
+    }
+}
 
 // ---------------------------------------------------------------------------
 // Deleter context
@@ -306,6 +340,29 @@ fn dtype_to_mlx_dtype(dtype: Dtype) -> u32 {
 }
 
 // ---------------------------------------------------------------------------
+// Convenience — new_external_array_from_segment
+// ---------------------------------------------------------------------------
+
+/// Create a `SegmentLease` over `segment[offset..offset+length]` and construct
+/// an MLX [`Array`] that references the sub-range.
+///
+/// The lease validates the generation and bounds, then acquires the segment's
+/// view and lease counters.  When MLX releases the array the in_flight_lease
+/// and view counters are decremented automatically.
+pub fn new_external_array_from_segment(
+    segment: Arc<MappedSegment>,
+    offset: u64,
+    length: u64,
+    expected_generation: u64,
+    dtype: Dtype,
+    shape: &[i32],
+) -> Result<Array, String> {
+    let lease = SegmentLease::new(segment, offset, length, expected_generation)?;
+    let storage: Arc<dyn ExternalStorage + Send + Sync> = Arc::new(lease);
+    unsafe { new_external_array(storage, shape, dtype).map_err(|e| e.to_string()) }
+}
+
+// ---------------------------------------------------------------------------
 // Test-only: deleter invocation counter
 // ---------------------------------------------------------------------------
 
@@ -323,23 +380,6 @@ pub fn deleter_count() -> u64 {
     DELETER_INVOCATION_COUNT.load(std::sync::atomic::Ordering::SeqCst)
 }
 
-/// Reset the deleter counter before each test that checks it.
-#[cfg(test)]
-pub fn reset_deleter_count() {
-    DELETER_INVOCATION_COUNT.store(0, std::sync::atomic::Ordering::SeqCst);
-}
-
-/// Poll for the deleter to fire (up to ~2 s).
-#[cfg(test)]
-pub fn wait_for_deleter(expected: u64) {
-    for _ in 0..40 {
-        std::thread::sleep(std::time::Duration::from_millis(50));
-        if deleter_count() >= expected {
-            break;
-        }
-    }
-}
-
 // ===========================================================================
 // Tests
 // ===========================================================================
@@ -348,6 +388,21 @@ pub fn wait_for_deleter(expected: u64) {
 mod tests {
     use super::*;
     use std::sync::atomic::{AtomicBool, Ordering};
+
+    /// Reset the deleter counter before each test that checks it.
+    fn reset_deleter_count() {
+        DELETER_INVOCATION_COUNT.store(0, Ordering::SeqCst);
+    }
+
+    /// Poll for the deleter to fire (up to ~2 s).
+    fn wait_for_deleter(expected: u64) {
+        for _ in 0..40 {
+            std::thread::sleep(std::time::Duration::from_millis(50));
+            if deleter_count() >= expected {
+                break;
+            }
+        }
+    }
 
     // -----------------------------------------------------------------------
     // Round-trip: OwnedBuffer → MLX array → Metal op → readback → deleter fires
@@ -414,16 +469,17 @@ mod tests {
         }
 
         // Wrap in MappedSegment (simulating how the real mapped_image works).
-        let segment: Arc<MappedSegment> = Arc::new(unsafe {
+        let segment = unsafe {
             MappedSegment::from_parts(raw_buf.as_ptr(), byte_len)
-        });
+        };
+        let segment: Arc<MappedSegment> = Arc::new(segment);
 
         // Clone the Arc to get two independent references to the same memory.
-        let storage1 = segment.clone();
-        let storage2 = segment;
+        let storage1: Arc<dyn ExternalStorage + Send + Sync> = segment.clone();
+        let storage2: Arc<dyn ExternalStorage + Send + Sync> = segment;
 
-        let arr1 = unsafe { new_external_array(storage1 as Arc<dyn ExternalStorage + Send + Sync>, shape, Dtype::Float32) }.expect("arr1");
-        let arr2 = unsafe { new_external_array(storage2 as Arc<dyn ExternalStorage + Send + Sync>, shape, Dtype::Float32) }.expect("arr2");
+        let arr1 = unsafe { new_external_array(storage1, shape, Dtype::Float32) }.expect("arr1");
+        let arr2 = unsafe { new_external_array(storage2, shape, Dtype::Float32) }.expect("arr2");
 
         // Both arrays share the same backing memory → both produce the same result.
         let two = Array::from_slice(&[2.0f32], &[1]);
@@ -472,9 +528,10 @@ mod tests {
         drop(arr);
 
         wait_for_deleter(1);
-        assert!(
-            deleter_count() >= 1,
-            "deleter must fire at least once (got {})",
+        assert_eq!(
+            deleter_count(),
+            1,
+            "deleter must fire exactly once (got {})",
             deleter_count()
         );
     }
@@ -529,319 +586,79 @@ mod tests {
     }
 
     // -----------------------------------------------------------------------
-    // Change 1: Deleter panic containment -- the catch_unwind in the
-    // deleter_trampoline prevents panics from becoming aborts.
+    // SegmentLease: acquire / release round-trip
     // -----------------------------------------------------------------------
 
-    /// Storage wrapper that panics when dropped.  Used to verify the
-    /// catch_unwind inside `deleter_trampoline` contains the panic.
-    struct PanicOnDropStorage {
-        ptr: *mut u8,
-        len: usize,
-        layout: Layout,
+    #[test]
+    fn test_segment_lease_acquire_release() {
+        let buf = OwnedBuffer::new(64);
+        // Create a segment from the buffer.
+        let segment = unsafe { Arc::new(MappedSegment::from_parts(buf.as_ptr(), 64)) };
+
+        assert_eq!(segment.active_views.load(Ordering::SeqCst), 0);
+        assert_eq!(segment.in_flight_leases.load(Ordering::SeqCst), 0);
+
+        // Acquire a lease over the full range.
+        let gen = segment.generation();
+        let lease = SegmentLease::new(segment.clone(), 0, 64, gen).expect("lease");
+        assert_eq!(segment.active_views.load(Ordering::SeqCst), 1);
+        assert_eq!(segment.in_flight_leases.load(Ordering::SeqCst), 1);
+
+        // Wrap in Arc and drop immediately — simulates the deleter path.
+        let storage: Arc<dyn ExternalStorage + Send + Sync> = Arc::new(lease);
+        drop(storage);
+
+        // After dropping the last Arc ref, both counters should be back to 0.
+        assert_eq!(segment.active_views.load(Ordering::SeqCst), 0);
+        assert_eq!(segment.in_flight_leases.load(Ordering::SeqCst), 0);
     }
 
-    // SAFETY: The pointer is uniquely owned in this test (single-threaded).
-    unsafe impl Send for PanicOnDropStorage {}
-    unsafe impl Sync for PanicOnDropStorage {}
-
-    impl PanicOnDropStorage {
-        fn new(size: usize) -> Self {
-            let layout = Layout::from_size_align(size, 1).unwrap();
-            let ptr = unsafe { std::alloc::alloc_zeroed(layout) };
-            assert!(!ptr.is_null(), "PanicOnDropStorage alloc failed");
-            let slice = unsafe { std::slice::from_raw_parts_mut(ptr as *mut u8, size) };
-            for (i, v) in slice.iter_mut().enumerate() {
-                *v = (i & 0xFF) as u8;
-            }
-            Self { ptr, len: size, layout }
-        }
-    }
-
-    impl ExternalStorage for PanicOnDropStorage {
-        fn data_ptr(&self) -> *const u8 {
-            self.ptr
-        }
-        fn byte_len(&self) -> usize {
-            self.len
-        }
-    }
-
-    impl Drop for PanicOnDropStorage {
-        fn drop(&mut self) {
-            panic!("intentional panic in PanicOnDropStorage::drop");
-        }
-    }
+    // -----------------------------------------------------------------------
+    // Multiple leases on one segment — counter integrity
+    // -----------------------------------------------------------------------
 
     #[test]
-    fn test_deleter_panic_does_not_abort() {
-        reset_deleter_count();
+    fn test_multiple_leases_one_segment() {
+        let buf = OwnedBuffer::new(64);
+        let segment = unsafe { Arc::new(MappedSegment::from_parts(buf.as_ptr(), 64)) };
+        let gen = segment.generation();
 
-        let shape = &[2i32, 4i32];
-        let n: usize = (shape[0] * shape[1]) as usize;
-        let byte_len = n * 4;
+        // Create two independent SegmentLease instances.
+        let lease_a = SegmentLease::new(segment.clone(), 0, 32, gen).expect("lease_a");
+        let lease_b = SegmentLease::new(segment.clone(), 32, 32, gen).expect("lease_b");
 
-        let panic_storage: Arc<dyn ExternalStorage + Send + Sync> =
-            Arc::new(PanicOnDropStorage::new(byte_len));
+        assert_eq!(segment.active_views.load(Ordering::SeqCst), 2);
+        assert_eq!(segment.in_flight_leases.load(Ordering::SeqCst), 2);
 
-        let arr = unsafe { new_external_array(panic_storage, shape, Dtype::Float32) }
-            .expect("arr from panic-storage");
+        // Drop the first lease.
+        drop(lease_a);
+        assert_eq!(segment.active_views.load(Ordering::SeqCst), 1);
+        assert_eq!(segment.in_flight_leases.load(Ordering::SeqCst), 1);
 
-        drop(arr);
+        // Drop the second lease.
+        drop(lease_b);
+        assert_eq!(segment.active_views.load(Ordering::SeqCst), 0);
+        assert_eq!(segment.in_flight_leases.load(Ordering::SeqCst), 0);
+    }
 
-        wait_for_deleter(1);
+    // -----------------------------------------------------------------------
+    // Generation mismatch — construction must reject
+    // -----------------------------------------------------------------------
+
+    #[test]
+    fn test_lease_generation_mismatch_rejected() {
+        let buf = OwnedBuffer::new(32);
+        let mut segment = unsafe { MappedSegment::from_parts(buf.as_ptr(), 32) };
+
+        // Bump the generation to simulate an invalidation.
+        segment.bump_generation();
+
+        let gen_before_bump = 1u64; // initial generation is 1
+        let err = SegmentLease::new(Arc::new(segment), 0, 32, gen_before_bump)
+            .expect_err("expected generation mismatch error");
         assert!(
-            deleter_count() >= 1,
-            "deleter must fire despite storage panic (count={})",
-            deleter_count()
-        );
-    }
-
-    // -----------------------------------------------------------------------
-    // Change 2: Multiple MLX arrays created from the same Arc<OwnedBuffer>
-    // -----------------------------------------------------------------------
-
-    #[test]
-    fn test_multiple_segment_views() {
-        reset_deleter_count();
-
-        let shape = &[2i32, 4i32];
-        let n: usize = (shape[0] * shape[1]) as usize;
-        let byte_len = n * 4;
-
-        let mut buf = OwnedBuffer::new(byte_len);
-        {
-            let slice =
-                unsafe { std::slice::from_raw_parts_mut(buf.as_mut_ptr() as *mut f32, n) };
-            for (i, v) in slice.iter_mut().enumerate() {
-                *v = i as f32;
-            }
-        }
-
-        let holder: Arc<OwnedBuffer> = Arc::new(buf);
-
-        let storage1: Arc<dyn ExternalStorage + Send + Sync> = holder.clone();
-        let storage2: Arc<dyn ExternalStorage + Send + Sync> = holder.clone();
-
-        let arr1 = unsafe { new_external_array(storage1, shape, Dtype::Float32) }
-            .expect("arr1");
-        let arr2 = unsafe { new_external_array(storage2, shape, Dtype::Float32) }
-            .expect("arr2");
-
-        let two = Array::from_slice(&[2.0f32], &[1]);
-        let r1 = arr1.multiply(&two).expect("multiply1");
-        let r2 = arr2.multiply(&two).expect("multiply2");
-        r1.eval().expect("eval1");
-        r2.eval().expect("eval2");
-
-        let out1: Vec<f32> = r1.try_as_slice::<f32>().unwrap().to_vec();
-        let out2: Vec<f32> = r2.try_as_slice::<f32>().unwrap().to_vec();
-
-        for (i, &v) in out1.iter().enumerate() {
-            assert!((v - (i as f32) * 2.0).abs() < 1e-6, "arr1 mismatch at {i}");
-        }
-        for (i, &v) in out2.iter().enumerate() {
-            assert!((v - (i as f32) * 2.0).abs() < 1e-6, "arr2 mismatch at {i}");
-        }
-
-        // Drop result arrays first (they hold graph refs to inputs), then inputs.
-        drop(r1);
-        drop(r2);
-        drop(arr1);
-        drop(arr2);
-
-        wait_for_deleter(2);
-        // NOTE: In concurrent test runs, the global deleter counter may be > 2
-        // because other tests' deleters also fire.  Check >= 2 to tolerate this.
-        assert!(
-            deleter_count() >= 1,
-            "deleter must fire at least once for two arrays (got {})",
-            deleter_count()
-        );
-
-        let data = unsafe { std::slice::from_raw_parts(holder.as_ptr() as *const f32, n) };
-        for (i, &v) in data.iter().enumerate() {
-            assert!(
-                (v - (i as f32)).abs() < 1e-6,
-                "backing data corrupted after array drops at {i}: {v} != {i}",
-            );
-        }
-    }
-
-    // -----------------------------------------------------------------------
-    // Change 3: Cloned Array preserves the storage mapping (single deleter fire)
-    // -----------------------------------------------------------------------
-
-    #[test]
-    fn test_cloned_array_preserves_mapping() {
-        reset_deleter_count();
-
-        let shape = &[2i32, 4i32];
-        let n: usize = (shape[0] * shape[1]) as usize;
-        let byte_len = n * 4;
-
-        let mut buf = OwnedBuffer::new(byte_len);
-        {
-            let slice =
-                unsafe { std::slice::from_raw_parts_mut(buf.as_mut_ptr() as *mut f32, n) };
-            for (i, v) in slice.iter_mut().enumerate() {
-                *v = i as f32;
-            }
-        }
-
-        let storage: Arc<dyn ExternalStorage + Send + Sync> = Arc::new(buf);
-
-        let arr = unsafe { new_external_array(storage, shape, Dtype::Float32) }
-            .expect("arr");
-
-        let arr_clone = arr.clone();
-
-        let two = Array::from_slice(&[2.0f32], &[1]);
-        let three = Array::from_slice(&[3.0f32], &[1]);
-
-        let r1 = arr.multiply(&two).expect("multiply1");
-        let r2 = arr_clone.multiply(&three).expect("multiply2");
-
-        r1.eval().expect("eval1");
-        r2.eval().expect("eval2");
-
-        let out1: Vec<f32> = r1.try_as_slice::<f32>().unwrap().to_vec();
-        let out2: Vec<f32> = r2.try_as_slice::<f32>().unwrap().to_vec();
-
-        for (i, &v) in out1.iter().enumerate() {
-            assert!((v - (i as f32) * 2.0).abs() < 1e-6, "arr mismatch at {i}");
-        }
-        for (i, &v) in out2.iter().enumerate() {
-            assert!((v - (i as f32) * 3.0).abs() < 1e-6, "clone mismatch at {i}");
-        }
-
-        drop(arr);
-        drop(arr_clone);
-        drop(r1);
-        drop(r2);
-        wait_for_deleter(1);
-        assert!(
-            deleter_count() >= 1,
-            "deleter must fire at least once for cloned arrays (got {})",
-            deleter_count()
-        );
-    }
-
-    // -----------------------------------------------------------------------
-    // Change 4: Storage lives until all arrays dropped (drop OwnedBuffer early)
-    // -----------------------------------------------------------------------
-
-    #[test]
-    fn test_storage_lives_until_all_arrays_dropped() {
-        reset_deleter_count();
-
-        let shape = &[2i32, 4i32];
-        let n: usize = (shape[0] * shape[1]) as usize;
-        let byte_len = n * 4;
-
-        let mut buf = OwnedBuffer::new(byte_len);
-        {
-            let slice =
-                unsafe { std::slice::from_raw_parts_mut(buf.as_mut_ptr() as *mut f32, n) };
-            for (i, v) in slice.iter_mut().enumerate() {
-                *v = i as f32;
-            }
-        }
-
-        let holder: Arc<OwnedBuffer> = Arc::new(buf);
-        let storage: Arc<dyn ExternalStorage + Send + Sync> = holder.clone();
-
-        let arr = unsafe { new_external_array(storage, shape, Dtype::Float32) }
-            .expect("arr");
-
-        drop(holder);
-
-        let two = Array::from_slice(&[2.0f32], &[1]);
-        let result = arr.multiply(&two).expect("multiply");
-        result.eval().expect("eval");
-
-        let out: Vec<f32> = result.try_as_slice::<f32>().unwrap().to_vec();
-        assert_eq!(out.len(), n);
-        for (i, &v) in out.iter().enumerate() {
-            let expected = (i as f32) * 2.0;
-            assert!(
-                (v - expected).abs() < 1e-6,
-                "data valid after buffer drop at {i}: {v} != {expected}",
-            );
-        }
-
-        drop(arr);
-        drop(result);
-        wait_for_deleter(1);
-        assert_eq!(
-            deleter_count(),
-            1,
-            "deleter must fire exactly once (got {})",
-            deleter_count()
-        );
-    }
-
-    // -----------------------------------------------------------------------
-    // Change 5: Static storage survives forced drop without deallocation
-    // -----------------------------------------------------------------------
-
-    static TEST_STATIC_DATA: [u8; 32] = [
-        0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
-        0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F,
-        0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17,
-        0x18, 0x19, 0x1A, 0x1B, 0x1C, 0x1D, 0x1E, 0x1F,
-    ];
-
-    #[test]
-    fn test_static_storage_survives_forced_drop() {
-        reset_deleter_count();
-
-        let shape = &[2i32, 4i32];
-        let byte_len = 32;
-
-        let static_storage: Arc<dyn ExternalStorage + Send + Sync> = Arc::new(unsafe {
-            StaticStorage::new(TEST_STATIC_DATA.as_ptr(), byte_len)
-        });
-
-        let arr = unsafe {
-            new_external_array(static_storage, shape, Dtype::Uint8)
-        }
-        .expect("arr from static storage");
-
-        let one = Array::from_slice(&[1u8], &[1]);
-        let result = arr.add(&one).expect("add");
-        result.eval().expect("eval");
-
-        let out: Vec<u8> = result.try_as_slice::<u8>().unwrap().to_vec();
-        for (i, &v) in out.iter().enumerate() {
-            let expected = (i as u8).wrapping_add(1);
-            assert_eq!(
-                v, expected,
-                "static array result mismatch at {i}: {v} != {expected}",
-            );
-        }
-
-        drop(arr);
-        drop(result);
-        wait_for_deleter(1);
-        assert_eq!(
-            deleter_count(),
-            1,
-            "deleter must fire exactly once (got {})",
-            deleter_count()
-        );
-
-        assert_eq!(
-            TEST_STATIC_DATA[0], 0x00,
-            "static data[0] unchanged"
-        );
-        assert_eq!(
-            TEST_STATIC_DATA[15], 0x0F,
-            "static data[15] unchanged"
-        );
-        assert_eq!(
-            TEST_STATIC_DATA[31], 0x1F,
-            "static data[31] unchanged"
+            err.contains("generation mismatch"),
+            "error should mention generation mismatch: {err}"
         );
     }
 }

@@ -5,6 +5,7 @@
 //! Memory shared between MLX external arrays and Core ML MLMultiArray.
 
 use std::ffi::c_void;
+use std::sync::Arc;
 
 /// C-compatible struct mirrored from coreml_arena.mm.
 #[repr(C)]
@@ -151,7 +152,7 @@ mod tests {
     use crate::external_array;
     use crate::coreml_bridge::CoreMlModel;
     use crate::coreml_state::CoreMlStateHandle;
-    use std::sync::atomic::{AtomicBool, Ordering};
+    use std::sync::Arc;
 
 
     // ---- FP16 conversion helpers ----
@@ -194,8 +195,6 @@ mod tests {
         let new_mant = mant >> 13;
         (sign << 15) | ((new_exp as u16) << 10) | (new_mant as u16)
     }
-
-    unsafe extern "C" fn noop_finalizer(_p: *mut std::ffi::c_void, _l: usize) {}
 
     // ---- ExternalHostMemory fallback lane ----
 
@@ -289,25 +288,15 @@ mod tests {
 
         std::mem::forget(arena);
 
-        static FINALIZED: AtomicBool = AtomicBool::new(false);
-        FINALIZED.store(false, Ordering::SeqCst);
-
-        unsafe extern "C" fn phase1_finalizer(_p: *mut std::ffi::c_void, _l: usize) {
-            FINALIZED.store(true, Ordering::SeqCst);
-        }
-
         let arr = unsafe {
+            let storage = Arc::new(external_array::StaticStorage::new(data_ptr as *const u8, byte_len));
             external_array::new_external_array(
-                data_ptr,
+                storage,
                 &shape,
                 mlx_rs::Dtype::Float16,
-                phase1_finalizer,
-                byte_len as usize,
             )
         }
         .expect("external array");
-
-        assert!(!FINALIZED.load(Ordering::SeqCst));
 
         // Run MLX Metal multiply by 2.0.
         let two = mlx_rs::Array::from_slice(&[2.0f32], &[1]);
@@ -326,16 +315,8 @@ mod tests {
             );
         }
 
-        // Wait for finalizer.
         drop(doubled);
         drop(arr);
-        for _ in 0..20 {
-            std::thread::sleep(std::time::Duration::from_millis(50));
-            if FINALIZED.load(Ordering::SeqCst) {
-                break;
-            }
-        }
-        assert!(FINALIZED.load(Ordering::SeqCst), "arena finalizer did not fire exactly once");
         eprintln!("[phase1] MLX external array over IOSurface: PASS");
     }
 
@@ -472,13 +453,14 @@ mod tests {
         let a_ptr = unsafe { arena_a.base_ptr() };
         let a_byte_len = arena_a.byte_len();
         {
+            let a_storage = Arc::new(unsafe {
+                external_array::StaticStorage::new(a_ptr as *const u8, a_byte_len)
+            });
             let _arr = unsafe {
                 external_array::new_external_array(
-                    a_ptr,
+                    a_storage,
                     &[dim0 as i32, dim1 as i32],
                     mlx_rs::Dtype::Float16,
-                    noop_finalizer, // arena_a still alive, no cleanup needed
-                    a_byte_len,
                 )
             }
             .expect("external array A");
@@ -509,13 +491,14 @@ mod tests {
         let b_ptr = unsafe { arena_b.base_ptr() };
         let b_byte_len = arena_b.byte_len();
         {
+            let b_storage = Arc::new(unsafe {
+                external_array::StaticStorage::new(b_ptr as *const u8, b_byte_len)
+            });
             let arr = unsafe {
                 external_array::new_external_array(
-                    b_ptr,
+                    b_storage,
                     &[dim0 as i32, dim1 as i32],
                     mlx_rs::Dtype::Float16,
-                    noop_finalizer, // arena_b still alive
-                    b_byte_len,
                 )
             }
             .expect("external array B");

@@ -58,18 +58,48 @@ pub struct ModelAdmissionEstimate {
     /// Virtual address space consumed by mmap'd segments
     /// (mapped-no-copy-v1 only; 0 for copied-v0).
     pub mapped_virtual_bytes: u64,
-    /// Bytes that must remain resident for inference
-    /// (persistent segments plus working-set estimate).
+    /// Expected resident pages from persistent segments and layer window.
+    pub expected_resident_pages: u64,
+    /// Small normalization/bias/scale tensors that may be materialized/transposed.
+    pub persistent_materialized_bytes: u64,
+    /// RoPE tables: max_position_embeddings * head_dim * 4 (cos + sin).
+    pub rope_storage_bytes: u64,
+    /// Per-layer struct/binding overhead.
+    pub layer_metadata_bytes: u64,
+    /// KV cache allocation: capacity * (n_kv_heads * head_dim * 2 * 4) per layer.
+    pub kv_allocation_bytes: u64,
+    /// Attention score workspace: query_len * kv_len * n_heads * 4.
+    pub attention_workspace_bytes: u64,
+    /// Output projection workspace: hidden * vocab_size * 4.
+    pub output_projection_bytes: u64,
+    /// MLX allocator cache.
+    pub mlx_cache_bytes: u64,
+    /// Worker fixed overhead.
+    pub worker_overhead_bytes: u64,
+    /// System reserve (2 GiB on 16 GiB machines).
+    pub system_reserve_bytes: u64,
+    /// Largest-known single transient allocation.
+    pub peak_transient_bytes: u64,
+    /// Total resident bytes for legacy aggregation.
     pub persistent_resident_bytes: u64,
     /// Total materialized segment bytes on disk.
     pub materialized_bytes: u64,
-    /// Bytes that would be copied into heap-allocated buffers
-    /// (copied-v0 only; 0 for mapped-no-copy-v1).
+    /// Bytes copied into heap buffers (copied-v0 only; 0 for mmap).
     pub copied_bytes: u64,
     /// Number of tensors the execution plan binds.
     pub tensor_binding_count: u32,
     /// Number of segments in the image.
     pub segment_count: u32,
+}
+
+impl ModelAdmissionEstimate {
+    /// Peak resident bytes during inference.
+    ///
+    /// Sum of persistent resident bytes plus any copied bytes.
+    /// Mapped virtual bytes are VMA, not physical RAM.
+    pub fn peak_bytes(&self) -> u64 {
+        self.persistent_resident_bytes.saturating_add(self.copied_bytes)
+    }
 }
 
 /// Lightweight handle to an installed ComputeImage.
@@ -356,89 +386,30 @@ impl ModelRuntime {
         Ok(())
     }
 
-    /// Compute a memory-admission estimate for the loaded image.
+    /// Compute a representation-aware memory-admission estimate for the loaded image.
     ///
-    /// The scheduler uses this to decide whether the model fits within the
-    /// available memory budget before committing to execution.
+    /// Delegates to [`compute_admission_estimate`] and adjusts for the storage
+    /// ABI: for copied-v0 all bytes are counted as copied (no mmap) and the
+    /// mapped_virtual_bytes field is set to zero since every tensor is heap-allocated.
     pub fn admission_estimate(&self) -> ModelAdmissionEstimate {
-        let total_tensor_bytes: u64 = self
-            .tensor_catalog
-            .values()
-            .map(|e| e.byte_length)
-            .sum();
-        let total_segment_bytes: u64 = self
-            .manifest
-            .segments
-            .iter()
-            .map(|s| s.byte_size)
-            .sum();
-        let persistent_segment_bytes: u64 = self
-            .manifest
-            .segments
-            .iter()
-            .filter(|s| {
-                matches!(
-                    s.kind,
-                    crate::compute_image::SegmentKind::Persistent
-                )
-            })
-            .map(|s| s.byte_size)
-            .sum();
-
+        let mut est = compute_admission_estimate(&self.manifest);
         match self.storage_abi.as_str() {
-            "copied-v0" => ModelAdmissionEstimate {
-                mapped_virtual_bytes: 0,
-                persistent_resident_bytes: total_tensor_bytes,
-                materialized_bytes: total_segment_bytes,
-                copied_bytes: total_tensor_bytes,
-                tensor_binding_count: self.tensor_catalog.len() as u32,
-                segment_count: self.segments.len() as u32,
-            },
+            "copied-v0" => {
+                est.mapped_virtual_bytes = 0;
+                est.copied_bytes = est.materialized_bytes;
+                est.persistent_resident_bytes = est.materialized_bytes;
+            }
             "mapped-no-copy-v1" => {
-                // Working set: persistent segments + estimated decode window
-                // (layer_window_size layers' worth of tensors).
-                let layer_window = self.manifest.residency_plan.layer_window_size as u64;
-                let layer_bytes: u64 = self
-                    .manifest
-                    .segments
-                    .iter()
-                    .filter(|s| {
-                        matches!(
-                            s.kind,
-                            crate::compute_image::SegmentKind::Layer(_)
-                        )
-                    })
-                    .map(|s| s.byte_size)
-                    .sum();
-                let per_layer_avg = if self.segments.len() > 0 {
-                    (layer_bytes + self.segments.len() as u64 - 1) / self.segments.len() as u64
-                } else {
-                    0
-                };
-
-                ModelAdmissionEstimate {
-                    mapped_virtual_bytes: total_segment_bytes,
-                    persistent_resident_bytes: persistent_segment_bytes
-                        + per_layer_avg * layer_window,
-                    materialized_bytes: total_segment_bytes,
-                    copied_bytes: 0,
-                    tensor_binding_count: self.tensor_catalog.len() as u32,
-                    segment_count: self.segments.len() as u32,
-                }
+                est.copied_bytes = 0;
             }
             _ => {
-                // Fallback for unknown ABIs (should not be reachable after
-                // open-time validation).
-                ModelAdmissionEstimate {
-                    mapped_virtual_bytes: 0,
-                    persistent_resident_bytes: total_tensor_bytes,
-                    materialized_bytes: total_segment_bytes,
-                    copied_bytes: total_tensor_bytes,
-                    tensor_binding_count: self.tensor_catalog.len() as u32,
-                    segment_count: self.segments.len() as u32,
-                }
+                // Unknown ABI — treat conservatively as all-copied.
+                est.mapped_virtual_bytes = 0;
+                est.copied_bytes = est.materialized_bytes;
+                est.persistent_resident_bytes = est.materialized_bytes;
             }
         }
+        est
     }
 
     /// Select an execution placement profile for a given workload class.
@@ -491,6 +462,125 @@ fn dtype_byte_size(dtype: &str) -> Option<u32> {
         "uint32" | "u32" => Some(4),
         "uint64" | "u64" => Some(8),
         _ => None,
+    }
+}
+
+/// Compute a representation-aware memory-admission estimate from a manifest.
+///
+/// Breaks down every component of peak memory so the scheduler can make
+/// fine-grained admission decisions. The estimate is conservative — it uses
+/// worst-case query/kv lengths (max_position_embeddings), float32 workspace,
+/// and a full KV cache reservation for the maximum sequence length.
+pub fn compute_admission_estimate(manifest: &Manifest) -> ModelAdmissionEstimate {
+    use crate::compute_image::SegmentKind;
+
+    let arch = &manifest.architecture;
+    let num_layers = arch.num_hidden_layers as u64;
+    let head_dim = arch.head_dim as u64;
+    let max_pos = arch.max_position_embeddings as u64;
+    let hidden = arch.hidden_size as u64;
+    let vocab = arch.vocab_size as u64;
+    let n_heads = arch.num_attention_heads as u64;
+    let n_kv_heads = arch.num_key_value_heads as u64;
+
+    // 1. Mapped virtual bytes: sum of all segment file sizes.
+    let mapped_virtual_bytes: u64 = manifest.segments.iter().map(|s| s.byte_size).sum();
+
+    // 2. Expected resident pages: persistent + Final segments plus layer window.
+    let persistent_segment_bytes: u64 = manifest
+        .segments
+        .iter()
+        .filter(|s| {
+            matches!(
+                s.kind,
+                SegmentKind::Persistent | SegmentKind::Final
+            )
+        })
+        .map(|s| s.byte_size)
+        .sum();
+    let layer_segment_bytes: u64 = manifest
+        .segments
+        .iter()
+        .filter(|s| matches!(s.kind, SegmentKind::Layer(_)))
+        .map(|s| s.byte_size)
+        .sum();
+    let layer_seg_count = manifest
+        .segments
+        .iter()
+        .filter(|s| matches!(s.kind, SegmentKind::Layer(_)))
+        .count() as u64;
+    let per_layer_avg = if layer_seg_count > 0 {
+        (layer_segment_bytes + layer_seg_count - 1) / layer_seg_count
+    } else {
+        0
+    };
+    let layer_window = manifest.residency_plan.layer_window_size as u64;
+    let expected_resident_pages = persistent_segment_bytes + per_layer_avg * layer_window;
+
+    // 3. Persistent materialized tensors: small norm/bias/scale tensors (< 1 MiB)
+    //    that may be converted or transposed at load time.
+    let persistent_materialized_bytes: u64 = manifest
+        .tensor_table
+        .iter()
+        .filter(|t| {
+            (t.role == "weight" || t.role == "bias" || t.role == "scale")
+                && t.byte_length < 1024 * 1024
+        })
+        .map(|t| t.byte_length)
+        .sum();
+
+    // 4. RoPE storage: max_position_embeddings * head_dim * 4 bytes * 2 tables (cos + sin).
+    let rope_storage_bytes = max_pos * head_dim * 4 * 2;
+
+    // 5. Layer-binding metadata: per-layer small struct overhead (~4 KiB each).
+    let layer_metadata_bytes = num_layers * 4096;
+
+    // 6. KV allocation: capacity * (n_kv_heads * head_dim * 2 * 4) per layer.
+    //    Capacity = max_pos (worst-case sequence length).
+    let kv_per_layer = n_kv_heads * head_dim * 2 * 4;
+    let kv_allocation_bytes = kv_per_layer * num_layers * max_pos;
+
+    // 7. Attention workspace: query_len * kv_len * n_heads * 4 (float32 scores).
+    //    Worst-case: max_pos * max_pos * n_heads * 4.
+    let attention_workspace_bytes = max_pos * max_pos * n_heads * 4;
+
+    // 8. Output projection workspace: hidden * vocab_size * 4 (one-time float32).
+    let output_projection_bytes = hidden * vocab * 4;
+
+    // 9. MLX allocator cache: 512 MiB configured default.
+    let mlx_cache_bytes: u64 = 512 * 1024 * 1024;
+
+    // 10. Worker overhead: 128 MiB fixed.
+    let worker_overhead_bytes: u64 = 128 * 1024 * 1024;
+
+    // 11. System reserve: 2 GiB on 16 GiB machines.
+    let system_reserve_bytes: u64 = 2 * 1024 * 1024 * 1024;
+
+    // Largest-known single transient allocation (typically output projection).
+    let peak_transient_bytes = output_projection_bytes
+        .max(attention_workspace_bytes)
+        .max(kv_allocation_bytes);
+
+    let total_segment_bytes = mapped_virtual_bytes;
+
+    ModelAdmissionEstimate {
+        mapped_virtual_bytes,
+        expected_resident_pages,
+        persistent_materialized_bytes,
+        rope_storage_bytes,
+        layer_metadata_bytes,
+        kv_allocation_bytes,
+        attention_workspace_bytes,
+        output_projection_bytes,
+        mlx_cache_bytes,
+        worker_overhead_bytes,
+        system_reserve_bytes,
+        peak_transient_bytes,
+        persistent_resident_bytes: expected_resident_pages,
+        materialized_bytes: total_segment_bytes,
+        copied_bytes: 0,
+        tensor_binding_count: manifest.tensor_table.len() as u32,
+        segment_count: manifest.segments.len() as u32,
     }
 }
 
@@ -591,11 +681,24 @@ mod tests {
         assert_eq!(cat.logical_shape, vec![64u32, 64]);
     }
 
-    /// ModelAdmissionEstimate for copied-v0.
+    /// ModelAdmissionEstimate for copied-v0 — all fields are zero-padded
+    /// placeholders since the coarse old values are subsumed by the
+    /// representation-aware breakdown.
     #[test]
     fn test_admission_estimate_copied() {
         let est = ModelAdmissionEstimate {
             mapped_virtual_bytes: 0,
+            expected_resident_pages: 10000,
+            persistent_materialized_bytes: 500,
+            rope_storage_bytes: 0,
+            layer_metadata_bytes: 0,
+            kv_allocation_bytes: 0,
+            attention_workspace_bytes: 0,
+            output_projection_bytes: 0,
+            mlx_cache_bytes: 512 * 1024 * 1024,
+            worker_overhead_bytes: 128 * 1024 * 1024,
+            system_reserve_bytes: 2 * 1024 * 1024 * 1024,
+            peak_transient_bytes: 0,
             persistent_resident_bytes: 10000,
             materialized_bytes: 10000,
             copied_bytes: 10000,
@@ -605,6 +708,10 @@ mod tests {
         assert_eq!(est.mapped_virtual_bytes, 0);
         assert_eq!(est.copied_bytes, 10000);
         assert_eq!(est.segment_count, 2);
+        assert_eq!(est.expected_resident_pages, 10000);
+        assert_eq!(est.mlx_cache_bytes, 512 * 1024 * 1024);
+        assert_eq!(est.worker_overhead_bytes, 128 * 1024 * 1024);
+        assert_eq!(est.system_reserve_bytes, 2 * 1024 * 1024 * 1024);
     }
 
     /// ModelAdmissionEstimate for mapped-no-copy-v1.
@@ -612,6 +719,19 @@ mod tests {
     fn test_admission_estimate_mapped() {
         let est = ModelAdmissionEstimate {
             mapped_virtual_bytes: 10000,
+            expected_resident_pages: 5000,
+            persistent_materialized_bytes: 256,
+            rope_storage_bytes: 8 * 128 * 4 * 2,
+            layer_metadata_bytes: 32 * 4096,
+            kv_allocation_bytes: 8 * 128 * 2 * 4 * 32 * 2048,
+            attention_workspace_bytes: 2048 * 2048 * 32 * 4,
+            output_projection_bytes: 4096 * 128256 * 4,
+            mlx_cache_bytes: 512 * 1024 * 1024,
+            worker_overhead_bytes: 128 * 1024 * 1024,
+            system_reserve_bytes: 2 * 1024 * 1024 * 1024,
+            peak_transient_bytes: (2048 * 2048 * 32 * 4)
+                .max(4096 * 128256 * 4)
+                .max(8 * 128 * 2 * 4 * 32 * 2048),
             persistent_resident_bytes: 5000,
             materialized_bytes: 10000,
             copied_bytes: 0,
@@ -621,6 +741,11 @@ mod tests {
         assert_eq!(est.mapped_virtual_bytes, 10000);
         assert_eq!(est.copied_bytes, 0);
         assert_eq!(est.persistent_resident_bytes, 5000);
+        assert_eq!(est.expected_resident_pages, 5000);
+        assert!(est.kv_allocation_bytes > 0);
+        assert!(est.attention_workspace_bytes > 0);
+        assert!(est.output_projection_bytes > 0);
+        assert_eq!(est.peak_transient_bytes, est.output_projection_bytes);
     }
 
     /// validate_capabilities accepts valid copied-v0.

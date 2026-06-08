@@ -387,12 +387,13 @@ pub fn run_epilogue(
         logits
     };
 
-    // Extract last token position logits: shape [1, 1, vocab_size]
-    let last_logits = logits.index((
-        0..1,
-        (logits.shape()[1] - 1)..logits.shape()[1],
+    // logits is rank 2 [tokens, vocab]. Extract last token row, then restore
+    // batch+seq dims for argmax compat: [1, 1, vocab_size].
+    let last_row = logits.index((
+        (logits.shape()[0] - 1)..logits.shape()[0],
         ..,
     ));
+    let last_logits = last_row.reshape(&[1, 1, -1])?;
 
     // Greedy path: fast argmax (no sampling overhead)
     if sampler.is_greedy() {

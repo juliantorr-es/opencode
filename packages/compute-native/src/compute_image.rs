@@ -13,6 +13,11 @@ pub const STORAGE_ABI_COPIED_V0: &str = "copied-v0";
 /// Storage ABI identifier for the mapped, no-copy (Metal-buffer) path.
 pub const STORAGE_ABI_MAPPED_NO_COPY_V1: &str = "mapped-no-copy-v1";
 
+/// Return true if `abi` is a recognised storage ABI identifier.
+pub fn is_valid_storage_abi(abi: &str) -> bool {
+    abi == STORAGE_ABI_COPIED_V0 || abi == STORAGE_ABI_MAPPED_NO_COPY_V1
+}
+
 use mlx_rs::Array;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
@@ -58,6 +63,204 @@ fn default_tensor_alignment_bytes() -> u64 {
 }
 fn default_layout_version() -> u32 {
     1
+}
+/// Validate that `dtype` is a recognised physical storage dtype and return
+/// Specification for the mapped-no-copy-v1 storage ABI.
+#[derive(Debug, Clone)]
+pub struct StorageAbiSpec {
+    pub abi_id: String,
+    /// Minimum segment file alignment in bytes (must be a multiple of page size).
+    pub segment_alignment_bytes: u64,
+    /// Minimum tensor offset alignment within a segment.
+    pub tensor_offset_alignment_bytes: u64,
+    /// Supported physical dtypes in storage order.
+    pub supported_physical_dtypes: Vec<String>,
+    /// Byte order (always "le" for Apple Silicon).
+    pub byte_order: String,
+    /// Layout version for cache key stability.
+    pub layout_version: u32,
+}
+
+impl StorageAbiSpec {
+    pub fn mapped_no_copy_v1() -> Self {
+        Self {
+            abi_id: STORAGE_ABI_MAPPED_NO_COPY_V1.to_string(),
+            segment_alignment_bytes: 4096,
+            tensor_offset_alignment_bytes: 16,
+            supported_physical_dtypes: vec![
+                "U8".into(), "I8".into(), "F16".into(), "BF16".into(),
+                "F32".into(), "U32".into(),
+            ],
+            byte_order: "le".into(),
+            layout_version: 1,
+        }
+    }
+}
+
+/// Validate a single `TensorEntry` against the mapped-no-copy-v1 ABI.
+///
+/// Checks:
+/// - Offset must be aligned to `tensor_offset_alignment_bytes`.
+/// - `storage_dtype` must be in `supported_physical_dtypes`.
+/// - Quantized tensors with scale/bias side-tensors must have group sizes
+///   compatible with the declared shape (groups × group_size must not overflow
+///   the flattened logical element count).
+///
+/// Collects all violations into the returned `Vec`; does not short-circuit.
+pub fn validate_tensor_for_mapped_abi(
+    entry: &TensorEntry,
+    spec: &StorageAbiSpec,
+) -> Result<(), Vec<String>> {
+    let mut errors = Vec::new();
+
+    // Offset alignment check
+    if entry.offset % spec.tensor_offset_alignment_bytes != 0 {
+        errors.push(format!(
+            "tensor {} offset {} is not aligned to {} bytes",
+            entry.name, entry.offset, spec.tensor_offset_alignment_bytes,
+        ));
+    }
+
+    // Storage dtype in supported list
+    let dtype_upper = entry.storage_dtype.to_uppercase();
+    if !spec.supported_physical_dtypes.iter().any(|d| d.to_uppercase() == dtype_upper) {
+        errors.push(format!(
+            "tensor {} storage_dtype {} is not in supported dtypes {:?}",
+            entry.name, entry.storage_dtype, spec.supported_physical_dtypes,
+        ));
+    }
+
+    // Quantized tensor validation
+    if let Some(qdesc) = &entry.quantization {
+        // The flattened logical element count must be representable.
+        let log_prod: u64 = entry.logical_shape.iter().copied().map(u64::from).product();
+        let groups = u64::from(qdesc.groups);
+        let group_size = u64::from(qdesc.group_size);
+        let packed = groups.saturating_mul(group_size);
+        if packed > log_prod {
+            errors.push(format!(
+                "tensor {} quantized groups {} × group_size {} = {} > logical elements {}",
+                entry.name, qdesc.groups, qdesc.group_size, packed, log_prod,
+            ));
+        }
+    }
+
+    if errors.is_empty() { Ok(()) } else { Err(errors) }
+}
+
+/// Validate the entire `Manifest` against a given `StorageAbiSpec`.
+///
+/// Checks:
+/// - All segments have `alignment_bytes` that is a multiple of the ABI's
+///   `segment_alignment_bytes`.
+/// - All tensors pass `validate_tensor_for_mapped_abi`.
+///
+/// Returns `Err(Vec<String>)` with every violation; does not short-circuit.
+pub fn validate_manifest_for_abi(
+    manifest: &Manifest,
+    spec: &StorageAbiSpec,
+) -> Result<(), Vec<String>> {
+    let mut errors = Vec::new();
+
+    // Segment alignment validation
+    for seg in &manifest.segments {
+        if seg.alignment_bytes % spec.segment_alignment_bytes != 0 {
+            errors.push(format!(
+                "segment {} alignment_bytes {} is not a multiple of {} (ABI segment alignment)",
+                seg.id, seg.alignment_bytes, spec.segment_alignment_bytes,
+            ));
+        }
+    }
+
+    // Tensor validation against ABI
+    for entry in &manifest.tensor_table {
+        if let Err(tensor_errors) = validate_tensor_for_mapped_abi(entry, spec) {
+            errors.extend(tensor_errors);
+        }
+    }
+
+    if errors.is_empty() { Ok(()) } else { Err(errors) }
+}
+/// Validate that `dtype` is a recognised physical storage dtype and return
+/// the expected byte count for the given shape.  Handles unpacked dtypes
+/// (f32 4b, bf16 2b, f16 2b, u8 1b, i8 1b, u32 4b) and quantized packed
+/// dtypes where the caller accounts for group-size packing separately.
+///
+/// Quantized packed types ("U8", "I8" with quantization context) have the
+/// same per-element byte count as their unpacked counterpart (1×prod), so
+/// this function returns `prod` for both unpacked and quantized u8/i8.
+pub fn validate_physical_dtype(
+    dtype: &str,
+    byte_length: u64,
+    shape: &[u32],
+) -> Result<u64, String> {
+    let prod: u64 = shape.iter().copied().map(u64::from).product();
+    let element_bytes = match dtype {
+        "f32" | "F32" | "Float32" => 4u64,
+        "bf16" | "BF16" | "BFloat16" => 2,
+        "f16" | "F16" | "Float16" => 2,
+        "u8" | "U8" | "Uint8" => 1,
+        "i8" | "I8" | "Int8" => 1,
+        "u32" | "U32" | "Uint32" => 4,
+        other => return Err(format!("unsupported physical dtype: {}", other)),
+    };
+    let expected = prod.saturating_mul(element_bytes);
+    if byte_length != expected {
+        return Err(format!(
+            "dtype {} with shape {:?}: expected {} bytes ({}×{}), got {}",
+            dtype, shape, expected, prod, element_bytes, byte_length,
+        ));
+    }
+    Ok(expected)
+}
+
+/// Validate physical tensor layout constraints for a single `TensorEntry`
+/// within a segment of `segment_byte_size` bytes.
+///
+/// Checks: byte_length > 0, offset + byte_length <= segment_byte_size,
+/// shape-based byte count matches byte_length, and when the entry declares
+/// a `QuantizationDesc` the scale/bias entries are dimensionally consistent.
+pub fn validate_tensor_layout(
+    entry: &TensorEntry,
+    segment_byte_size: u64,
+) -> Result<(), String> {
+    if entry.byte_length == 0 {
+        return Err(format!("tensor {} has zero byte_length", entry.name));
+    }
+    let end = entry.offset.saturating_add(entry.byte_length);
+    if end > segment_byte_size {
+        return Err(format!(
+            "tensor {} offset {} + byte_length {} exceeds segment size {}",
+            entry.name, entry.offset, entry.byte_length, segment_byte_size,
+        ));
+    }
+
+    // Validate that physical_shape × dtype bytes matches byte_length.
+    // Allow quantization packing where byte_length may differ from
+    // the unpacked product (e.g. packed weights smaller than logical).
+    if entry.quantization.is_some() {
+        // For quantized tensors, the byte_length is the packed payload;
+        // logical validation is ownership of the caller.  We only check
+        // that it is non-zero (already done above) and that the physical
+        // shape is not degenerate.
+        if entry.physical_shape.is_empty()
+            || entry.physical_shape.iter().any(|&d| d == 0)
+        {
+            return Err(format!(
+                "tensor {} has degenerate quantized physical shape {:?}",
+                entry.name, entry.physical_shape,
+            ));
+        }
+    } else {
+        // Unquantized: validate dtype byte count matches.
+        validate_physical_dtype(
+            &entry.storage_dtype,
+            entry.byte_length,
+            &entry.physical_shape,
+        )?;
+    }
+
+    Ok(())
 }
 impl Manifest {
     /// Check whether the manifest's `required_storage_abi` is compatible with
@@ -139,7 +342,7 @@ pub struct TensorEntry {
     pub layout_version: u32,
 }
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct QuantizationDesc {
     pub bits: u32,
     pub group_size: u32,
@@ -154,6 +357,94 @@ pub struct AliasEntry {
     pub logical_name: String,
     pub physical_tensor_id: u32,
     pub reason: String,
+}
+
+/// A resolved tensor binding — connects a manifest entry to its mapped segment
+/// and provides the MLX array handle at runtime.
+#[derive(Debug, Clone)]
+pub struct ResolvedTensorBinding {
+    pub tensor_id: u32,
+    pub canonical_name: String,
+    pub segment_id: String,
+    pub offset: u64,
+    pub byte_length: u64,
+    pub physical_dtype: String,
+    pub runtime_dtype: String,
+    pub physical_shape: Vec<u32>,
+    pub logical_shape: Vec<u32>,
+    pub strides: Vec<u32>,
+    pub quantization: Option<QuantizationDesc>,
+    pub alias_of: Option<u32>,
+    pub layout_version: u32,
+}
+
+/// Build a complete tensor binding catalog from a manifest.
+///
+/// Iterates `manifest.tensor_table` and `manifest.alias_table`, resolves aliases
+/// (setting `alias_of` on the logical entry pointing to the physical tensor ID),
+/// and returns a `HashMap` keyed by canonical tensor name.
+///
+/// Aliased entries share a single `ResolvedTensorBinding` with the alias entry
+/// having `alias_of` set to the physical tensor's ID.
+pub fn build_tensor_catalog(manifest: &Manifest) -> HashMap<String, ResolvedTensorBinding> {
+    // First pass: build bindings from the tensor table.
+    let mut catalog: HashMap<String, ResolvedTensorBinding> = HashMap::new();
+    for entry in &manifest.tensor_table {
+        catalog.insert(
+            entry.name.clone(),
+            ResolvedTensorBinding {
+                tensor_id: entry.id,
+                canonical_name: entry.name.clone(),
+                segment_id: entry.segment.clone(),
+                offset: entry.offset,
+                byte_length: entry.byte_length,
+                physical_dtype: entry.storage_dtype.clone(),
+                runtime_dtype: entry.logical_dtype.clone(),
+                physical_shape: entry.physical_shape.clone(),
+                logical_shape: entry.logical_shape.clone(),
+                strides: Vec::new(),
+                quantization: entry.quantization.clone(),
+                alias_of: None,
+                layout_version: entry.layout_version,
+            },
+        );
+    }
+
+    // Second pass: resolve aliases.
+    for alias in &manifest.alias_table {
+        if let Some(phys_binding) = catalog.get(&resolve_tensor_name(
+            alias.physical_tensor_id,
+            &manifest.tensor_table,
+        )) {
+            let binding = ResolvedTensorBinding {
+                tensor_id: alias.physical_tensor_id,
+                canonical_name: alias.logical_name.clone(),
+                segment_id: phys_binding.segment_id.clone(),
+                offset: phys_binding.offset,
+                byte_length: phys_binding.byte_length,
+                physical_dtype: phys_binding.physical_dtype.clone(),
+                runtime_dtype: phys_binding.runtime_dtype.clone(),
+                physical_shape: phys_binding.physical_shape.clone(),
+                logical_shape: phys_binding.logical_shape.clone(),
+                strides: phys_binding.strides.clone(),
+                quantization: phys_binding.quantization.clone(),
+                alias_of: Some(alias.physical_tensor_id),
+                layout_version: phys_binding.layout_version,
+            };
+            catalog.insert(alias.logical_name.clone(), binding);
+        }
+    }
+
+    catalog
+}
+
+/// Helper: resolve a tensor ID to its canonical name from the tensor table.
+fn resolve_tensor_name(id: u32, table: &[TensorEntry]) -> String {
+    table
+        .iter()
+        .find(|entry| entry.id == id)
+        .map(|entry| entry.name.clone())
+        .unwrap_or_default()
 }
 
 /// Runtime residency plan.
@@ -258,6 +549,21 @@ pub struct ManifestVerification {
     pub segment_hashes_match: bool,
     pub verified_segment_count: usize,
     pub total_bytes: u64,
+}
+
+/// How tensor bytes were moved from storage into MLX.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum CopyClassification {
+    /// Direct mmap view, no application copy. MLX may still copy internally.
+    MappedNoCopy,
+    /// Copied from mmap into an application-side buffer before MLX construction.
+    CopiedFallback,
+    /// MLX created a contiguous temporary (reshape, transpose, dtype cast, repeat).
+    MaterializedContiguous,
+    /// BF16 -> F32 or other dtype promotion.
+    MaterializedDtypeConversion,
+    /// K/V physically repeated for grouped-query attention.
+    MaterializedRepeat,
 }
 
 #[derive(Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
@@ -1142,7 +1448,7 @@ impl CompiledImageReader {
                     "mapped-no-copy: segment file does not exist: {}",
                     seg_path.display()
                 )));
-        }
+            }
             let meta = seg_path.metadata().map_err(|e| {
                 napi::Error::from_reason(format!(
                     "mapped-no-copy: stat {}: {}",
@@ -1155,22 +1461,55 @@ impl CompiledImageReader {
                     "mapped-no-copy: segment {} size mismatch: manifest says {} but file is {}",
                     segment.filename, segment.byte_size, actual_len
                 )));
-        }
-            if segment.alignment_bytes == 0 || segment.byte_size % segment.alignment_bytes != 0 {
+            }
+            // alignment_bytes must be a power of two >= 4096 and divide byte_size
+            let ab = segment.alignment_bytes;
+            if ab < 4096 || ab & (ab.wrapping_sub(1)) != 0 {
+                return Err(napi::Error::from_reason(format!(
+                    "mapped-no-copy: segment {} alignment_bytes {} is not a power of two >= 4096",
+                    segment.filename, ab
+                )));
+            }
+            if segment.byte_size % ab != 0 {
                 return Err(napi::Error::from_reason(format!(
                     "mapped-no-copy: segment {} byte_size {} is not aligned to {}",
                     segment.filename, segment.byte_size, segment.alignment_bytes
                 )));
+            }
         }
-        }
+        let seg_map: std::collections::HashMap<&str, &Segment> = self.manifest.segments
+            .iter()
+            .map(|s| (s.id.as_str(), s))
+            .collect();
         for tensor in &self.manifest.tensor_table {
-            if tensor.tensor_alignment_bytes == 0 || tensor.offset % tensor.tensor_alignment_bytes != 0 {
+            let tab = if tensor.tensor_alignment_bytes != 0 {
+                tensor.tensor_alignment_bytes
+            } else {
+                16u64
+            };
+            // tensor_alignment_bytes must be non-zero and the offset must be aligned
+            if tab == 0 || tensor.offset % tab != 0 {
                 return Err(napi::Error::from_reason(format!(
                     "mapped-no-copy: tensor {} offset {} not aligned to {}",
-                    tensor.name, tensor.offset, tensor.tensor_alignment_bytes
+                    tensor.name, tensor.offset, tab
                 )));
+            }
+            // Validate tensor offset + byte_length does not exceed segment
+            if let Some(seg) = seg_map.get(tensor.segment.as_str()) {
+                let tensor_end = tensor.offset.saturating_add(tensor.byte_length);
+                if tensor_end > seg.byte_size {
+                    return Err(napi::Error::from_reason(format!(
+                        "mapped-no-copy: tensor {} offset {} + byte_length {} exceeds segment {} byte_size {}",
+                        tensor.name, tensor.offset, tensor.byte_length, seg.id, seg.byte_size
+                    )));
+                }
+            }
         }
-        }
+        } else if !is_valid_storage_abi(&self.manifest.required_storage_abi) {
+            return Err(napi::Error::from_reason(format!(
+                "unknown storage ABI: {}",
+                self.manifest.required_storage_abi
+            )));
         }
 
         Ok(ManifestVerification {
@@ -1492,6 +1831,11 @@ pub struct RepresentationAdmissionEstimate {
     pub mlx_workspace_bytes: u64,
     pub allocator_cache_bytes: u64,
     pub system_reserve_bytes: u64,
+    /// Maximum single transient allocation during inference
+    /// (attention workspace, output projection buffer, etc.).
+    pub largest_transient_bytes: u64,
+    /// Bytes that must be converted (dequantized, dtype-cast) at runtime.
+    pub materialized_bytes: u64,
 }
 
 /// Produce an admission estimate given the manifest.
@@ -1502,7 +1846,7 @@ pub struct RepresentationAdmissionEstimate {
 /// total image byte count; the resident estimate reflects the working set
 /// (persistent segments + layer window).
 pub fn representation_aware_admission_estimate(manifest: &Manifest) -> RepresentationAdmissionEstimate {
-    let persistent_materialized_bytes: u64 = manifest
+    let persistent_bytes: u64 = manifest
         .residency_plan
         .persistent_segments
         .iter()
@@ -1542,27 +1886,55 @@ pub fn representation_aware_admission_estimate(manifest: &Manifest) -> Represent
 
     let is_mapped = manifest.required_storage_abi == STORAGE_ABI_MAPPED_NO_COPY_V1;
     let virtual_mapped_bytes = if is_mapped { total_mapped } else { 0 };
-    let expected_resident_bytes = if is_mapped {
-        persistent_materialized_bytes
+
+    // Estimate largest transient allocation.
+    // Attention workspace: seq_len × hidden_size × 4 (one f32 hidden state).
+    // Output projection: hidden_size × vocab_size × 4 (logits).
+    let seq_len = u64::from(arch.max_position_embeddings.min(8192));
+    let hidden_size = u64::from(arch.hidden_size);
+    let vocab_size = u64::from(arch.vocab_size);
+    let attention_workspace = seq_len.saturating_mul(hidden_size).saturating_mul(4);
+    let output_proj_workspace = hidden_size.saturating_mul(vocab_size).saturating_mul(4);
+    let largest_transient_bytes = attention_workspace.max(output_proj_workspace);
+
+    let (expected_resident_bytes, materialized_bytes) = if is_mapped {
+        // mapped-no-copy-v1: resident = working set, materialized = dtype conversions
+        let resident = persistent_bytes
             .saturating_add(max_layer_window_bytes)
             .saturating_add(rope_bytes)
-            .saturating_add(mlx_workspace_bytes)
+            .saturating_add(mlx_workspace_bytes);
+        // Count quantized tensors that must be dequantized at runtime
+        let materialized: u64 = manifest.tensor_table
+            .iter()
+            .filter(|t| t.quantization.is_some())
+            .map(|t| t.byte_length)
+            .sum();
+        (resident, materialized)
     } else {
-        total_mapped
+        // copied-v0: resident = all tensor bytes copied into process memory
+        let total_tensor_bytes: u64 = manifest.tensor_table
+            .iter()
+            .map(|t| t.byte_length)
+            .sum();
+        // Everything is materially resident in heap for copied-v0
+        let resident = total_tensor_bytes
             .saturating_add(rope_bytes)
-            .saturating_add(mlx_workspace_bytes)
+            .saturating_add(mlx_workspace_bytes);
+        (resident, 0)
     };
 
     RepresentationAdmissionEstimate {
         virtual_mapped_bytes,
         expected_resident_bytes,
-        persistent_materialized_bytes,
+        persistent_materialized_bytes: persistent_bytes,
         max_layer_window_bytes,
         rope_bytes,
         kv_budget_bytes,
         mlx_workspace_bytes,
         allocator_cache_bytes,
         system_reserve_bytes,
+        largest_transient_bytes,
+        materialized_bytes,
     }
 }
 
@@ -3941,5 +4313,104 @@ mod tests {
         assert_eq!(after_run, baseline_handles,
             "handle count must return to baseline: {} != {}",
             after_run, baseline_handles);
+    }
+
+    #[test]
+    fn test_storage_abi_validation_rejects_unknown() {
+        // Verify that is_valid_storage_abi rejects unknown identifiers
+        assert!(is_valid_storage_abi(STORAGE_ABI_COPIED_V0));
+        assert!(is_valid_storage_abi(STORAGE_ABI_MAPPED_NO_COPY_V1));
+        assert!(!is_valid_storage_abi("copied-v2"));
+        assert!(!is_valid_storage_abi("mapped-no-copy-v0"));
+        assert!(!is_valid_storage_abi(""));
+        assert!(!is_valid_storage_abi("unknown-abi"));
+    }
+
+    #[test]
+    fn test_tensor_layout_offset_oob() {
+        // A tensor whose offset + byte_length exceeds its segment should fail.
+        let entry = TensorEntry {
+            id: 0,
+            name: "oob_tensor".into(),
+            role: "test".into(),
+            layer: None,
+            segment: "seg".into(),
+            source_filename: "x.safetensors".into(),
+            source_sha256: "0000".into(),
+            source_offset: 0,
+            offset: 100,
+            byte_length: 200,
+            logical_dtype: "F32".into(),
+            storage_dtype: "F32".into(),
+            logical_shape: vec![10, 5],
+            physical_shape: vec![10, 5],
+            mutability: "read_only".into(),
+            quantization: None,
+            tensor_alignment_bytes: 16,
+            layout_version: 1,
+        };
+
+        // Segment is only 250 bytes, tensor ends at 300 -> OOB
+        let result = validate_tensor_layout(&entry, 250);
+        assert!(result.is_err(), "expected OOB error");
+        assert!(
+            result.unwrap_err().contains("exceeds segment size"),
+            "unexpected error message"
+        );
+
+        // With enough space it should succeed
+        let result = validate_tensor_layout(&entry, 301);
+        assert!(result.is_ok(), "expected OK for large enough segment");
+
+        // Zero byte_length should be rejected
+        let zero_entry = TensorEntry {
+            byte_length: 0,
+            ..entry.clone()
+        };
+        let result = validate_tensor_layout(&zero_entry, 100);
+        assert!(result.is_err(), "expected error for zero byte_length");
+        assert!(
+            result.unwrap_err().contains("zero byte_length"),
+            "unexpected error message"
+        );
+    }
+
+    #[test]
+    fn test_physical_dtype_byte_count() {
+        // f32: 4 * (2*3*4) = 96
+        let r = validate_physical_dtype("f32", 96, &[2, 3, 4]);
+        assert!(r.is_ok());
+        assert_eq!(r.unwrap(), 96);
+
+        // bf16: 2 * (8*4) = 64
+        let r = validate_physical_dtype("BF16", 64, &[8, 4]);
+        assert!(r.is_ok());
+        assert_eq!(r.unwrap(), 64);
+
+        // f16: 2 * 128 = 256
+        let r = validate_physical_dtype("f16", 256, &[128]);
+        assert!(r.is_ok());
+
+        // u8: 1 * (4*8) = 32
+        let r = validate_physical_dtype("U8", 32, &[4, 8]);
+        assert!(r.is_ok());
+
+        // i8: same as u8
+        let r = validate_physical_dtype("I8", 32, &[4, 8]);
+        assert!(r.is_ok());
+
+        // u32: 4 * 50 = 200
+        let r = validate_physical_dtype("U32", 200, &[50]);
+        assert!(r.is_ok());
+
+        // Wrong byte count
+        let r = validate_physical_dtype("f32", 100, &[2, 3, 4]);
+        assert!(r.is_err());
+        assert!(r.unwrap_err().contains("expected 96 bytes"));
+
+        // Unknown dtype
+        let r = validate_physical_dtype("f64", 8, &[1]);
+        assert!(r.is_err());
+        assert!(r.unwrap_err().contains("unsupported"));
     }
 }

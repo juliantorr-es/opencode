@@ -337,7 +337,12 @@ fn command_thread(
             writer.write_event(
                 WorkerEvent::WorkerFatal,
                 None,
-                serde_json::json!({ "error": format!("{:?}", e) }),
+                serde_json::to_value(WorkerFatalPayload {
+                    error_code: "protocol-violation".into(),
+                    message: format!("{:?}", e),
+                    phase: "command-dispatch".into(),
+                    diagnostics: None,
+                }).unwrap_or_default(),
             );
             shutdown.store(true, Ordering::Relaxed);
             break;
@@ -370,18 +375,18 @@ fn command_thread(
                             worker_id, e
                         );
                         writer.write_event(
-                            WorkerEvent::GenerationFailed,
+                            WorkerEvent::WorkerFatal,
                             None,
-                            serde_json::to_value(GenerationFailedPayload {
-                                request_id: String::new(),
-                                error_code: "policy-snapshot-missing".into(),
+                            serde_json::to_value(WorkerFatalPayload {
+                                error_code: "policy-snapshot-invalid".into(),
                                 message: format!("{}", e),
                                 phase: "load".into(),
                                 diagnostics: None,
                             })
                             .unwrap_or_default(),
                         );
-                        continue;
+                        shutdown.store(true, Ordering::Relaxed);
+                        break;
                     }
                 };
 
