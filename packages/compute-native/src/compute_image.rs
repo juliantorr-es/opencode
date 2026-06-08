@@ -13,7 +13,9 @@ use mlx_rs::Array;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use std::collections::HashMap;
+use std::ffi::CString;
 use std::path::{Path, PathBuf};
+use std::os::raw::{c_char, c_int, c_void};
 use std::time::Instant;
 use crate::quantized::QuantizedLinearBinding;
 
@@ -1154,6 +1156,21 @@ impl CompiledImageReader {
             ));
         }
 
+        if !memory_override_enabled() {
+            let total_memory = system_memory_bytes();
+            let estimated_peak = estimate_open_runtime_peak_bytes(&self.manifest);
+            if total_memory > 0 && estimated_peak > total_memory.saturating_sub(2 * 1024 * 1024 * 1024) {
+                return Err(napi::Error::from_reason(format!(
+                    "refusing to open runtime: estimated peak {} exceeds safe budget on this machine (total memory {})",
+                    estimated_peak,
+                    total_memory,
+                )));
+            }
+        }
+
+        let _ = clear_mlx_cache();
+        let _ = set_mlx_cache_limit(512 * 1024 * 1024);
+
         let mut runtime = ImageRuntime {
             manifest: self.manifest.clone(),
             receipt: self.receipt.clone(),
@@ -1292,6 +1309,72 @@ pub fn set_mlx_cache_limit(limit_bytes: u64) -> u64 {
         let _ = limit_bytes;
         0
     }
+}
+
+fn system_memory_bytes() -> u64 {
+    #[cfg(target_os = "macos")]
+    {
+        unsafe {
+            extern "C" {
+                fn sysctlbyname(
+                    name: *const c_char,
+                    oldp: *mut c_void,
+                    oldlenp: *mut usize,
+                    newp: *mut c_void,
+                    newlen: usize,
+                ) -> c_int;
+            }
+
+            let mut value: u64 = 0;
+            let mut size = std::mem::size_of::<u64>();
+            let name = CString::new("hw.memsize").expect("CString");
+            let ret = sysctlbyname(
+                name.as_ptr(),
+                &mut value as *mut _ as *mut c_void,
+                &mut size as *mut usize,
+                std::ptr::null_mut(),
+                0,
+            );
+            if ret == 0 && value > 0 {
+                return value;
+            }
+        }
+    }
+    0
+}
+
+fn memory_override_enabled() -> bool {
+    matches!(
+        std::env::var("TRIBUNUS_COMPUTE_ALLOW_HIGH_MEMORY").ok().as_deref(),
+        Some("1") | Some("true") | Some("TRUE") | Some("yes") | Some("YES")
+    )
+}
+
+fn estimate_open_runtime_peak_bytes(manifest: &Manifest) -> u64 {
+    let persistent_bytes = manifest
+        .residency_plan
+        .persistent_segments
+        .iter()
+        .filter_map(|segment_id| manifest.segments.iter().find(|segment| &segment.id == segment_id))
+        .map(|segment| segment.byte_size)
+        .sum::<u64>();
+    let arch = &manifest.architecture;
+    let rope_bytes = u64::from(arch.max_position_embeddings)
+        .saturating_mul(u64::from(arch.head_dim))
+        .saturating_mul(4)
+        .saturating_add(
+            u64::from(arch.max_position_embeddings)
+                .saturating_mul(u64::from(arch.global_head_dim.unwrap_or(arch.head_dim)))
+                .saturating_mul(4),
+        );
+    let embedding_dequant_bytes = u64::from(arch.vocab_size)
+        .saturating_mul(u64::from(arch.hidden_size))
+        .saturating_mul(4);
+
+    persistent_bytes
+        .saturating_add(rope_bytes)
+        .saturating_add(embedding_dequant_bytes)
+        .saturating_add(1024 * 1024 * 1024)
 }
 
 /// Native dependency identity and capability report.
@@ -1628,12 +1711,8 @@ impl ImageRuntime {
         };
 
         let tok = Array::from_slice(&[2i32], &[1]);
-        let group_size = (emb_w.shape()[1] as i32 * 4) / emb_s.shape()[1];
-        let wf = mlx_rs::ops::dequantize(&emb_w, &emb_s, &emb_b, group_size, 8)
-            .map_err(|e| napi::Error::from_reason(format!("dequantize embed: {:?}", e)))?;
-        let emb = mlx_rs::ops::indexing::take_axis(&wf, &tok, 0)
-            .map_err(|e| napi::Error::from_reason(format!("embed take: {:?}", e)))?;
-        let mut hidden = emb
+        let mut hidden = crate::primitives::quantized_embedding_lookup(&tok, &emb_w, &emb_s, &emb_b)
+            .map_err(|e| napi::Error::from_reason(format!("embed lookup: {:?}", e)))?
             .multiply(&Array::from_f32((arch.hidden_size as f32).sqrt()))
             .map_err(|e| napi::Error::from_reason(format!("embed scale: {:?}", e)))?;
 

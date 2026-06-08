@@ -25,13 +25,7 @@ pub fn run_prologue(
     _plan: &ProloguePlan,
     hidden_scale: f32,
 ) -> MlxResult<Array> {
-    let group_size = if emb_scales.shape().len() >= 1 {
-        (emb_weight.shape()[1] as i32 * 4) / emb_scales.shape()[emb_scales.shape().len() - 1]
-    } else {
-        64
-    };
-    let wf = mlx_rs::ops::dequantize(emb_weight, emb_scales, emb_biases, group_size, 8)?;
-    let emb = mlx_rs::ops::indexing::take_axis(&wf, token_ids, 0)?;
+    let emb = primitives::quantized_embedding_lookup(token_ids, emb_weight, emb_scales, emb_biases)?;
     emb.multiply(&Array::from_f32(hidden_scale))
 }
 
@@ -144,37 +138,40 @@ fn sliding_attention_layer(
     let v = qmatmul(x, vw, vs, vb)?
         .reshape(&[n_tokens, n_kv_heads as i32, head_dim as i32])?;
 
-    // Append raw (pre-norm, pre-RoPE) K,V to cache, then read full window.
-    cache.append(k, v)?;
-    let (k_cached, v_cached) = cache.read_window().expect("cache must be non-empty after append");
-    let cached_seq = k_cached.shape()[0];
-
-    // Q projection: norm + RoPE on current tokens only.
     let q = if let Some(wn) = q_norm_weight {
         primitives::rms_norm(&q.reshape(&[-1, head_dim as i32])?, wn, 1e-6)?
     } else {
         primitives::rms_norm_scale_free(&q.reshape(&[-1, head_dim as i32])?, 1e-6)?
-    }.reshape(&[n_tokens, n_heads as i32, head_dim as i32])?;
+    }
+    .reshape(&[n_tokens, n_heads as i32, head_dim as i32])?;
 
-    // Apply norm + RoPE to the full cached K.
-    let k_cached = if let Some(wn) = k_norm_weight {
-        primitives::rms_norm(&k_cached.reshape(&[-1, head_dim as i32])?, wn, 1e-6)?
+    let k = if let Some(wn) = k_norm_weight {
+        primitives::rms_norm(&k.reshape(&[-1, head_dim as i32])?, wn, 1e-6)?
     } else {
-        primitives::rms_norm_scale_free(&k_cached.reshape(&[-1, head_dim as i32])?, 1e-6)?
-    }.reshape(&[cached_seq as i32, n_kv_heads as i32, head_dim as i32])?;
+        primitives::rms_norm_scale_free(&k.reshape(&[-1, head_dim as i32])?, 1e-6)?
+    }
+    .reshape(&[n_tokens, n_kv_heads as i32, head_dim as i32])?;
 
-    // RoPE on Q (current tokens)
     let q4d = q.reshape(&[1, n_heads as i32, n_tokens, head_dim as i32])?;
     let q4d = primitives::rope_apply(&q4d, rope_cos, rope_sin, kv_offset, plan.partial_rotary_factor)?;
     let q = q4d.reshape(&[n_tokens, n_heads as i32, head_dim as i32])?;
 
-    // RoPE on cached K (all positions, starting at offset 0)
-    let k4d = k_cached.reshape(&[1, n_kv_heads as i32, cached_seq as i32, head_dim as i32])?;
-    let k4d = primitives::rope_apply(&k4d, rope_cos, rope_sin, 0, plan.partial_rotary_factor)?;
-    let k = k4d.reshape(&[cached_seq as i32, n_kv_heads as i32, head_dim as i32])?;
+    let k4d = k.reshape(&[1, n_kv_heads as i32, n_tokens, head_dim as i32])?;
+    let k4d = primitives::rope_apply(&k4d, rope_cos, rope_sin, kv_offset, plan.partial_rotary_factor)?;
+    let k = k4d.reshape(&[n_tokens, n_kv_heads as i32, head_dim as i32])?;
+
+    // Materialize the current token batch before appending so the cache holds
+    // stable KV tensors rather than a larger lazy graph.
+    q.eval()?;
+    k.eval()?;
+    v.eval()?;
+
+    cache.append(k, v)?;
+    let (k_cached, v_cached) = cache.read_window().expect("cache must be non-empty after append");
+    let cached_seq = k_cached.shape()[0];
 
     // GQA repeat KV
-    let k_exp = repeat_kv(&k, n_rep)?;
+    let k_exp = repeat_kv(&k_cached, n_rep)?;
     let v_exp = repeat_kv(&v_cached, n_rep)?;
 
     // Attention scores: Q [heads, n_tokens, hd] @ K^T [heads, hd, cached_seq]
@@ -187,18 +184,10 @@ fn sliding_attention_layer(
         .matmul(&mlx_rs::ops::transpose_axes(&kt, &[0, 2, 1])?)?
         .divide(&Array::from_f32(scale))?;
 
-    // Causal mask sized [n_tokens, cached_seq] with sliding window
-    let mask = causal_mask(cached_seq as u32)?
-        .add(&sliding_mask(cached_seq as u32, plan.sliding_window, n_heads)?)?;
+    // Causal + sliding mask sized [n_tokens, cached_seq].
+    let mask = causal_mask(n_tokens as u32, cached_seq as u32, kv_offset)?
+        .add(&sliding_mask(n_tokens as u32, cached_seq as u32, plan.sliding_window, kv_offset)?)?;
     eprintln!("[mask] cached_seq={} n_tokens={} n_heads={}", cached_seq, n_tokens, n_heads);
-    // Subset to only the last n_tokens rows along the sequence axis.
-    let mask = if cached_seq > n_tokens {
-        let rows_from = (cached_seq - n_tokens) as i32;
-        eprintln!("[mask] subset rows_from={}..cached_seq", rows_from);
-        mask.index((.., .., rows_from.., ..))
-    } else {
-        mask
-    };
     let scores = scores.add(&mask)?;
 
     let attn = mlx_rs::ops::softmax_axes(&scores, &[-1], None)?;
@@ -231,41 +220,40 @@ fn full_attention_layer(
     let k = qmatmul(x, kw, ks, kb)?
         .reshape(&[n_tokens, n_kv_heads as i32, head_dim as i32])?;
 
-    // K-equals-V: store K in both K and V cache slots.
-    let v = k.clone();
-    // Append raw (pre-norm, pre-RoPE) K and V (=K) to cache, then read full window.
-    cache.append(k, v)?;
-    let (k_cached, v_cached) = cache.read_window().expect("cache must be non-empty after append");
-    let cached_seq = k_cached.shape()[0];
-
-    // Q projection: norm + RoPE on current tokens only.
     let q = if let Some(wn) = q_norm_weight {
         primitives::rms_norm(&q.reshape(&[-1, head_dim as i32])?, wn, 1e-6)?
     } else {
         primitives::rms_norm_scale_free(&q.reshape(&[-1, head_dim as i32])?, 1e-6)?
-    }.reshape(&[n_tokens, n_heads as i32, head_dim as i32])?;
+    }
+    .reshape(&[n_tokens, n_heads as i32, head_dim as i32])?;
 
-    // Apply norm + RoPE to the full cached K.
-    let k_cached = if let Some(wn) = k_norm_weight {
-        primitives::rms_norm(&k_cached.reshape(&[-1, head_dim as i32])?, wn, 1e-6)?
+    let k = if let Some(wn) = k_norm_weight {
+        primitives::rms_norm(&k.reshape(&[-1, head_dim as i32])?, wn, 1e-6)?
     } else {
-        primitives::rms_norm_scale_free(&k_cached.reshape(&[-1, head_dim as i32])?, 1e-6)?
-    }.reshape(&[cached_seq as i32, n_kv_heads as i32, head_dim as i32])?;
+        primitives::rms_norm_scale_free(&k.reshape(&[-1, head_dim as i32])?, 1e-6)?
+    }
+    .reshape(&[n_tokens, n_kv_heads as i32, head_dim as i32])?;
 
-    // RoPE on Q (current tokens)
     let q4d = q.reshape(&[1, n_heads as i32, n_tokens, head_dim as i32])?;
     let q4d = primitives::rope_apply(&q4d, rope_cos, rope_sin, kv_offset, plan.partial_rotary_factor)?;
     let q = q4d.reshape(&[n_tokens, n_heads as i32, head_dim as i32])?;
 
-    // RoPE on cached K (all positions, starting at offset 0)
-    let k4d = k_cached.reshape(&[1, n_kv_heads as i32, cached_seq as i32, head_dim as i32])?;
-    let k4d = primitives::rope_apply(&k4d, rope_cos, rope_sin, 0, plan.partial_rotary_factor)?;
-    let k = k4d.reshape(&[cached_seq as i32, n_kv_heads as i32, head_dim as i32])?;
-    let v = v_cached; // V stays pre-RoPE (same as current non-cached behavior)
+    let k4d = k.reshape(&[1, n_kv_heads as i32, n_tokens, head_dim as i32])?;
+    let k4d = primitives::rope_apply(&k4d, rope_cos, rope_sin, kv_offset, plan.partial_rotary_factor)?;
+    let k = k4d.reshape(&[n_tokens, n_kv_heads as i32, head_dim as i32])?;
+
+    // K-equals-V: store the transformed K in both cache slots.
+    let v = k.clone();
+    q.eval()?;
+    k.eval()?;
+    v.eval()?;
+    cache.append(k, v)?;
+    let (k_cached, v_cached) = cache.read_window().expect("cache must be non-empty after append");
+    let cached_seq = k_cached.shape()[0];
 
     // GQA repeat KV
-    let k_exp = repeat_kv(&k, n_rep)?;
-    let v_exp = repeat_kv(&v, n_rep)?;
+    let k_exp = repeat_kv(&k_cached, n_rep)?;
+    let v_exp = repeat_kv(&v_cached, n_rep)?;
 
     let qt = q.reshape(&[n_heads as i32, n_tokens, head_dim as i32])?;
     let kt = k_exp.reshape(&[n_heads as i32, cached_seq as i32, head_dim as i32])?;
@@ -276,14 +264,8 @@ fn full_attention_layer(
         .matmul(&mlx_rs::ops::transpose_axes(&kt, &[0, 2, 1])?)?
         .divide(&Array::from_f32(scale))?;
 
-    // Full causal mask sized [cached_seq, cached_seq], subset to last n_tokens rows
-    let mask = causal_mask(cached_seq as u32)?;
-    let mask = if cached_seq > n_tokens {
-        let rows_from = (cached_seq - n_tokens) as i32;
-        mask.index((.., .., rows_from.., ..))
-    } else {
-        mask
-    };
+    // Full causal mask sized [n_tokens, cached_seq].
+    let mask = causal_mask(n_tokens as u32, cached_seq as u32, kv_offset)?;
     let scores = scores.add(&mask)?;
 
     let attn = mlx_rs::ops::softmax_axes(&scores, &[-1], None)?;
@@ -477,33 +459,35 @@ pub fn run_epilogue(
 
 // ── Mask helpers ───────────────────────────────────────────────────────────
 
-fn causal_mask(seq_len: u32) -> MlxResult<Array> {
-    let n = seq_len as usize;
-    let mut d = vec![0.0f32; n * n];
-    for i in 0..n {
-        for j in 0..n {
-            if j > i {
-                d[i * n + j] = f32::NEG_INFINITY;
+fn causal_mask(rows: u32, cols: u32, offset: u32) -> MlxResult<Array> {
+    let rows_usize = rows as usize;
+    let cols_usize = cols as usize;
+    let mut d = vec![0.0f32; rows_usize * cols_usize];
+    for i in 0..rows_usize {
+        let max_key = offset as usize + i;
+        for j in 0..cols_usize {
+            if j > max_key {
+                d[i * cols_usize + j] = f32::NEG_INFINITY;
             }
         }
     }
-    Ok(Array::from_slice(&d, &[1, 1, seq_len as i32, seq_len as i32]))
+    Ok(Array::from_slice(&d, &[1, 1, rows as i32, cols as i32]))
 }
 
-fn sliding_mask(seq_len: u32, window: u32, _n_heads: u32) -> MlxResult<Array> {
-    if seq_len <= window {
-        return Ok(Array::from_slice(&[0.0f32], &[1, 1, 1, 1]));
-    }
-    let n = seq_len as usize;
-    let mut d = vec![0.0f32; n * n];
-    for i in 0..n {
-        for j in 0..n {
-            if (j as i32) < (i as i32 - window as i32) {
-                d[i * n + j] = f32::NEG_INFINITY;
+fn sliding_mask(rows: u32, cols: u32, window: u32, offset: u32) -> MlxResult<Array> {
+    let rows_usize = rows as usize;
+    let cols_usize = cols as usize;
+    let mut d = vec![0.0f32; rows_usize * cols_usize];
+    for i in 0..rows_usize {
+        let query_pos = offset as usize + i;
+        let min_key = query_pos.saturating_add(1).saturating_sub(window as usize);
+        for j in 0..cols_usize {
+            if j < min_key || j > query_pos {
+                d[i * cols_usize + j] = f32::NEG_INFINITY;
             }
         }
     }
-    Ok(Array::from_slice(&d, &[1, 1, seq_len as i32, seq_len as i32]))
+    Ok(Array::from_slice(&d, &[1, 1, rows as i32, cols as i32]))
 }
 
 fn repeat_kv(x: &Array, n_rep: u32) -> MlxResult<Array> {

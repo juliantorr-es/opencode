@@ -317,10 +317,8 @@ impl ComputeEngine {
             cancel_flag.as_deref(),
         ).map_err(|e| napi::Error::from_reason(format!("prefill: {}", e)))?;
 
-        let prompt_len = prefill_ids.len() as u32;
         let mut token_count: u32 = 1;
 
-        // The session's position is now prompt_len (advanced by step()).
         let mut receipts: Vec<ProfiledReceipt> = vec![receipt_prefill];
         let _ = sender.blocking_send(GenerationEvent::Token(last_token));
 

@@ -95,6 +95,34 @@ pub fn rope_apply(
     mlx_rs::ops::concatenate(&[&rotated_even, &rotated_odd])
 }
 
+/// Gather quantized embedding rows for the requested token ids and then dequantize only those rows.
+///
+/// This mirrors `mlx_rs::nn::QuantizedEmbedding::forward`, which indexes the packed
+/// weight, scales, and biases before dequantizing. It avoids materializing the
+/// full vocabulary matrix.
+pub fn quantized_embedding_lookup(
+    token_ids: &Array,
+    weight: &Array,
+    scales: &Array,
+    biases: &Array,
+) -> MlxResult<Array> {
+    let group_size = if scales.shape().len() >= 1 {
+        (weight.shape()[1] as i32 * 4) / scales.shape()[scales.shape().len() - 1]
+    } else {
+        64
+    };
+
+    let flat_ids = token_ids.reshape(&[-1])?;
+    let rows = mlx_rs::ops::indexing::take_axis(weight, &flat_ids, 0)?;
+    let row_scales = mlx_rs::ops::indexing::take_axis(scales, &flat_ids, 0)?;
+    let row_biases = mlx_rs::ops::indexing::take_axis(biases, &flat_ids, 0)?;
+    let out = mlx_rs::ops::dequantize(&rows, &row_scales, &row_biases, group_size, 8)?;
+
+    let mut shape = token_ids.shape().to_vec();
+    shape.push(out.shape()[out.shape().len() - 1]);
+    out.reshape(&shape)
+}
+
 // ── Quantized Embedding ────────────────────────────────────────────────────
 
 /// QuantizedEmbedding: gather over quantized weight storage.
@@ -137,16 +165,9 @@ impl QuantizedEmbedding {
             .ok_or_else(|| mlx_rs::error::Exception::custom("embed biases not found"))?;
         drop(reg);
 
-        // Gather: select rows from dequantized weight
-        let w_f32 = mlx_rs::ops::dequantize(&w, &s, &b, 64, 8)?;
-        // Gather rows: w_f32[token_ids] — shape [batch, seq, hidden_dim]
-        let flat_ids = token_ids.reshape(&[-1])?;
-        let gathered = mlx_rs::ops::indexing::take_axis(&w_f32, &flat_ids, 0)?;
-        let out_shape = {
-            let mut s = token_ids.shape().to_vec();
-            s.push(self.hidden_dim as i32);
-            s
-        };
+        let gathered = quantized_embedding_lookup(token_ids, &w, &s, &b)?;
+        let mut out_shape = token_ids.shape().to_vec();
+        out_shape.push(self.hidden_dim as i32);
         gathered.reshape(&out_shape)
     }
 

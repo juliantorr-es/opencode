@@ -4,15 +4,16 @@
 
 use crate::compute_image::{CompiledImageReader, TensorEntry};
 use crate::kv_cache::KvCache;
-use crate::mapped_image::{MappedImage, SegmentState, SegmentView};
+use crate::mapped_image::MappedImage;
 use crate::mlx_executor::{run_gpu_canary, MlxExecutor};
 use crate::placement_profile::ExecutionPlacementProfile;
-use crate::receipts::CopyClassification;
 use crate::residency::ResidencyManager;
-use crate::runtime_trace::{RuntimeTimeline, TimedRegion, SyncMarker, TimelineEvent, TimelineEventType};
+use crate::runtime_trace::{RuntimeTimeline, TimelineEvent, TimelineEventType};
 use mlx_rs::Array;
 use std::io::{Read, Seek, SeekFrom};
 use std::sync::atomic::{AtomicBool, Ordering};
+use std::ffi::CString;
+use std::os::raw::{c_char, c_int, c_void};
 use std::path::{Path, PathBuf};
 use std::collections::HashMap;
 use std::time::Instant;
@@ -148,6 +149,81 @@ fn build_rope_tables(
     ))
 }
 
+fn system_memory_bytes() -> u64 {
+    #[cfg(target_os = "macos")]
+    {
+        unsafe {
+            extern "C" {
+                fn sysctlbyname(
+                    name: *const c_char,
+                    oldp: *mut c_void,
+                    oldlenp: *mut usize,
+                    newp: *mut c_void,
+                    newlen: usize,
+                ) -> c_int;
+            }
+
+            let mut value: u64 = 0;
+            let mut size = std::mem::size_of::<u64>();
+            let name = CString::new("hw.memsize").expect("CString");
+            let ret = sysctlbyname(
+                name.as_ptr(),
+                &mut value as *mut _ as *mut c_void,
+                &mut size as *mut usize,
+                std::ptr::null_mut(),
+                0,
+            );
+            if ret == 0 && value > 0 {
+                return value;
+            }
+        }
+    }
+    0
+}
+
+fn high_memory_override_enabled() -> bool {
+    matches!(
+        std::env::var("TRIBUNUS_COMPUTE_ALLOW_HIGH_MEMORY").ok().as_deref(),
+        Some("1") | Some("true") | Some("TRUE") | Some("yes") | Some("YES")
+    )
+}
+
+fn estimate_profiled_peak_bytes(reader: &CompiledImageReader) -> u64 {
+    let manifest = &reader.manifest;
+    let tensor_bytes = manifest.tensor_table.iter().map(|entry| entry.byte_length).sum::<u64>();
+    let max_tensor_bytes = manifest
+        .tensor_table
+        .iter()
+        .map(|entry| entry.byte_length)
+        .max()
+        .unwrap_or(0);
+    let max_segment_bytes = manifest
+        .segments
+        .iter()
+        .map(|segment| segment.byte_size)
+        .max()
+        .unwrap_or(0);
+    let arch = &manifest.architecture;
+    let rope_bytes = u64::from(arch.max_position_embeddings)
+        .saturating_mul(u64::from(arch.head_dim))
+        .saturating_mul(4)
+        .saturating_add(
+            u64::from(arch.max_position_embeddings)
+                .saturating_mul(u64::from(arch.global_head_dim.unwrap_or(arch.head_dim)))
+                .saturating_mul(4),
+        );
+    let embedding_dequant_bytes = u64::from(arch.vocab_size)
+        .saturating_mul(u64::from(arch.hidden_size))
+        .saturating_mul(4);
+
+    tensor_bytes
+        .saturating_add(max_tensor_bytes)
+        .saturating_add(max_segment_bytes)
+        .saturating_add(rope_bytes)
+        .saturating_add(embedding_dequant_bytes)
+        .saturating_add(2 * 1024 * 1024 * 1024)
+}
+
 pub struct LayerWeights {
     pub input_layernorm: Arc<Array>,
     pub post_attention_layernorm: Arc<Array>,
@@ -199,6 +275,19 @@ impl LoadedProfiledModel {
         ) -> napi::Result<Self> {
         let handle_baseline = crate::bridge::handle_count();
         let reader = CompiledImageReader::open(image_dir)?;
+        if !high_memory_override_enabled() {
+            let total_memory = system_memory_bytes();
+            let estimated_peak = estimate_profiled_peak_bytes(&reader);
+            if total_memory > 0 && estimated_peak > total_memory.saturating_sub(2 * 1024 * 1024 * 1024) {
+                return Err(napi::Error::from_reason(format!(
+                    "refusing to load profiled model: estimated peak {} exceeds safe budget on this machine (total memory {})",
+                    estimated_peak,
+                    total_memory,
+                )));
+            }
+        }
+        let _ = crate::compute_image::clear_mlx_cache();
+        let _ = crate::compute_image::set_mlx_cache_limit(512 * 1024 * 1024);
         let segment_views: Vec<crate::mapped_image::SegmentView> = reader.manifest.segments.iter().map(|s| crate::mapped_image::SegmentView {
             segment_id: s.id.clone(),
             byte_size: s.byte_size,
@@ -354,7 +443,7 @@ impl<'a> ProfiledSession<'a> {
         let executor = if explicit_gpu_stream { MlxExecutor::spawn_gpu() } else { MlxExecutor::spawn_cpu() };
         let plan = &model.reader.manifest.execution_plan;
 
-        let mut manager = ResidencyManager::new(12 * 1024 * 1024 * 1024, 2 * 1024 * 1024 * 1024);
+        let manager = ResidencyManager::new(12 * 1024 * 1024 * 1024, 2 * 1024 * 1024 * 1024);
         
         // Caches
         let mut caches = Vec::with_capacity(plan.layers.len());
@@ -424,8 +513,11 @@ impl<'a> ProfiledSession<'a> {
             &plan.prologue,
             1.0,
         ).map_err(|e| napi::Error::from_reason(format!("prologue: {:?}", e)))?;
+        hidden
+            .eval()
+            .map_err(|e| napi::Error::from_reason(format!("prologue eval: {}", e)))?;
 
-        let mut layer_records: Vec<crate::mlx_executor::ExecutionRecord> = plan.layers.iter().map(|_| {
+        let layer_records: Vec<crate::mlx_executor::ExecutionRecord> = plan.layers.iter().map(|_| {
             crate::mlx_executor::ExecutionRecord {
                 device: self.device_kind.clone(),
                 stream_id: self.stream_id.clone(),
@@ -466,6 +558,9 @@ impl<'a> ProfiledSession<'a> {
                 kv_offset,
                 plan.rms_norm_eps as f32,
             ).map_err(|e| napi::Error::from_reason(format!("layer {}: {}", l, e)))?;
+            hidden
+                .eval()
+                .map_err(|e| napi::Error::from_reason(format!("layer {} eval: {}", l, e)))?;
         }
 
         let out_token = crate::executor::run_epilogue(
@@ -538,7 +633,7 @@ pub fn execute_profiled_cold_once(
     mode: ExecutionMode,
     cancel_flag: Option<&AtomicBool>,
     sampler: &crate::session::SamplerConfig,
-    mut kv_offset: u32,
+    kv_offset: u32,
 ) -> napi::Result<(u32, ProfiledReceipt)> {
     let model = LoadedProfiledModel::new(image_dir)?;
     let mut session = ProfiledSession::new(&model, profile.clone(), mode)?;
