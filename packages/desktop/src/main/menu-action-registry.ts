@@ -14,7 +14,7 @@
  */
 
 import type { BrowserWindow } from "electron"
-import type { DesktopMenu, DesktopMenuAction } from "@opencode-ai/app/desktop-menu"
+import type { DesktopMenu, DesktopMenuAction } from "@tribunus/app/desktop-menu"
 
 type ActionHandler = (win: BrowserWindow | null, ...args: unknown[]) => void
 

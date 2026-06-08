@@ -1,8 +1,8 @@
 import { describe, expect, test } from "bun:test"
-import type { PluginTransport, DesktopPluginApi } from "@opencode-ai/plugin/desktop"
+import type { PluginTransport, DesktopPluginApi } from "@tribunus/plugin/desktop"
 
 // ---------------------------------------------------------------------------
-// DC-003 Gap 1: PluginTransport type exported from @opencode-ai/plugin/desktop
+// DC-003 Gap 1: PluginTransport type exported from @tribunus/plugin/desktop
 //
 // PluginTransport is an interface (compile-time type), so we verify the
 // structural contract at runtime — any object conforming to the interface

@@ -1,7 +1,7 @@
 import { Component, For, Show, type JSX } from "solid-js"
 import { Popover as KobaltePopover } from "@kobalte/core/popover"
-import { Icon, type IconProps } from "@opencode-ai/ui/icon"
-import { TextField } from "@opencode-ai/ui/text-field"
+import { Icon, type IconProps } from "@tribunus/ui/icon"
+import { TextField } from "@tribunus/ui/text-field"
 import { useLocal } from "@/context/local"
 
 export type ComposerPickerItemState = {

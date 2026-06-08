@@ -1,6 +1,6 @@
-import { Switch } from "@opencode-ai/ui/switch"
-import { TextField } from "@opencode-ai/ui/text-field"
-import { Select } from "@opencode-ai/ui/select"
+import { Switch } from "@tribunus/ui/switch"
+import { TextField } from "@tribunus/ui/text-field"
+import { Select } from "@tribunus/ui/select"
 import { For, type ComponentProps, splitProps } from "solid-js"
 import type { AgentStudioConfig } from "./types"
 import { AVAILABLE_MODELS, AVAILABLE_TOOLS, ROLE_COLORS } from "./types"
@@ -192,7 +192,7 @@ export function AgentEditor(raw: AgentEditorProps) {
   )
 }
 
-// Inline range slider since @opencode-ai/ui/slider-v2 doesn't exist yet
+// Inline range slider since @tribunus/ui/slider-v2 doesn't exist yet
 function RangeSlider(p: {
   value: number
   min: number

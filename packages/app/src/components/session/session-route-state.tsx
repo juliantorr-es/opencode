@@ -1,5 +1,5 @@
-import { Button } from "@opencode-ai/ui/button"
-import { Spinner } from "@opencode-ai/ui/spinner"
+import { Button } from "@tribunus/ui/button"
+import { Spinner } from "@tribunus/ui/spinner"
 import { Show } from "solid-js"
 import {
   formatSessionRouteStateLabel,

@@ -1,6 +1,6 @@
 import { createSignal, onCleanup } from "solid-js"
 import { createStore, produce } from "solid-js/store"
-import { createSimpleContext } from "@opencode-ai/ui/context"
+import { createSimpleContext } from "@tribunus/ui/context"
 
 export type AgentRole = "planner" | "coder" | "reviewer" | "tester" | "general"
 export type AgentStatus = "idle" | "thinking" | "working" | "blocked" | "done"

@@ -1,11 +1,11 @@
 import { describe, expect } from "bun:test"
 import { DateTime, Effect, Layer, Option } from "effect"
-import { Catalog } from "@opencode-ai/core/catalog"
-import { EventV2 } from "@opencode-ai/core/event"
-import { Location } from "@opencode-ai/core/location"
-import { ModelV2 } from "@opencode-ai/core/model"
-import { PluginV2 } from "@opencode-ai/core/plugin"
-import { ProviderV2 } from "@opencode-ai/core/provider"
+import { Catalog } from "@tribunus/core/catalog"
+import { EventV2 } from "@tribunus/core/event"
+import { Location } from "@tribunus/core/location"
+import { ModelV2 } from "@tribunus/core/model"
+import { PluginV2 } from "@tribunus/core/plugin"
+import { ProviderV2 } from "@tribunus/core/provider"
 import { testEffect } from "./lib/effect"
 
 const locationLayer = Layer.succeed(Location.Service, Location.Service.of({ directory: "test" }))

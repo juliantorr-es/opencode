@@ -2,7 +2,7 @@ import { For, createSignal, createMemo, Show } from "solid-js"
 
 // Inline workflow types — resolves without opencode package import.
 // When opencode is available as a runtime dependency, these can be replaced
-// with the canonical types from packages/opencode/src/agent/workflow/.
+// with the canonical types from packages/runtime/src/agent/workflow/.
 
 interface WorkflowRole {
   id: string
@@ -68,7 +68,7 @@ interface WorkflowPreset {
   template: AgentWorkflow
 }
 
-// Inline presets — mirrors packages/opencode/src/agent/workflow/presets.ts
+// Inline presets — mirrors packages/runtime/src/agent/workflow/presets.ts
 const presets: WorkflowPreset[] = [
   {
     id: "quick-fix",
@@ -223,7 +223,7 @@ export function AgentWorkflowDesigner() {
 
         <div>
           <label class="text-11-regular text-text-weak uppercase tracking-wider">Scope (directories, one per line)</label>
-          <textarea value={scope()} onInput={(e) => setScope(e.currentTarget.value)} rows={3} placeholder="packages/opencode/src/&#10;packages/desktop/src/" class="w-full mt-1 bg-surface-raised text-12-regular px-2 py-1 rounded border border-surface-border resize-none" />
+          <textarea value={scope()} onInput={(e) => setScope(e.currentTarget.value)} rows={3} placeholder="packages/runtime/src/&#10;packages/desktop/src/" class="w-full mt-1 bg-surface-raised text-12-regular px-2 py-1 rounded border border-surface-border resize-none" />
         </div>
 
         <button onClick={generate} class="w-full py-1.5 bg-accent text-accent-contrast text-12-regular rounded hover:bg-accent/90">Generate Plan</button>

@@ -1,5 +1,5 @@
-import { Popover } from "@opencode-ai/ui/popover"
-import { Icon } from "@opencode-ai/ui/icon"
+import { Popover } from "@tribunus/ui/popover"
+import { Icon } from "@tribunus/ui/icon"
 import { createSignal, Show } from "solid-js"
 import { useAmbient, type WatcherStatus } from "@/context/ambient"
 

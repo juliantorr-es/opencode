@@ -1,5 +1,5 @@
 {
-  "name": "@opencode-ai/slack",
+  "name": "@tribunus/slack",
   "version": "1.15.12",
   "type": "module",
   "license": "AGPL-3.0-only",
@@ -8,7 +8,7 @@
     "typecheck": "tsgo --noEmit"
   },
   "dependencies": {
-    "@opencode-ai/sdk": "workspace:*",
+    "@tribunus/sdk": "workspace:*",
     "@slack/bolt": "^3.17.1"
   },
   "devDependencies": {

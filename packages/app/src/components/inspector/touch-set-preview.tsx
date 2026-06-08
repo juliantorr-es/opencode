@@ -1,6 +1,6 @@
 import { createMemo, createResource, createSignal, For, Show } from "solid-js"
-import { Icon } from "@opencode-ai/ui/icon"
-import { Tag } from "@opencode-ai/ui/tag"
+import { Icon } from "@tribunus/ui/icon"
+import { Tag } from "@tribunus/ui/tag"
 
 // ── Types ──
 

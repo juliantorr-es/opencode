@@ -1,0 +1,117 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tribunus.dev/schemas/identity/package-authority-map.v1.schema.json",
+  "title": "Package Authority Map v1",
+  "description": "Schema mapping every known package in the Tribunus workspace to its canonical identity: current name, intended name, ownership class, and migration strategy. Serves as the single source of truth for package identity during the OpenCode->Tribunus cutover.",
+  "type": "object",
+  "required": [
+    "packages",
+    "version",
+    "generatedAt"
+  ],
+  "properties": {
+    "packages": {
+      "type": "array",
+      "description": "All known packages in the workspace, including those pending migration, third-party dependencies, and obsolete packages.",
+      "items": {
+        "type": "object",
+        "required": [
+          "currentName",
+          "currentPath",
+          "intendedName",
+          "intendedPath",
+          "ownership",
+          "isWorkspace",
+          "isPublished",
+          "license",
+          "repositoryOfRecord",
+          "migrationStrategy"
+        ],
+        "properties": {
+          "currentName": {
+            "type": "string",
+            "description": "Current package name as declared in its package.json, e.g. \"@tribunus/sdk\""
+          },
+          "currentPath": {
+            "type": "string",
+            "description": "Relative filesystem path to the package root, e.g. \"packages/sdk/js\""
+          },
+          "intendedName": {
+            "type": "string",
+            "description": "Target package name after full migration, e.g. \"@tribunus/sdk\""
+          },
+          "intendedPath": {
+            "type": "string",
+            "description": "Target filesystem path after migration (may be same as currentPath)"
+          },
+          "ownership": {
+            "type": "string",
+            "enum": [
+              "TRIBUNUS_FIRST_PARTY",
+              "TRIBUNUS_FIRST_PARTY_PRIVATE",
+              "EXTERNAL_OPENCODE_DEPENDENCY",
+              "TRIBUNUS_COMPATIBILITY_FACADE",
+              "VENDORED_UPSTREAM_SOURCE",
+              "OBSOLETE_DEPENDENCY"
+            ],
+            "description": "Ownership classification determining how the package is managed"
+          },
+          "isWorkspace": {
+            "type": "boolean",
+            "description": "Whether the package is resolved as workspace:* in the monorepo"
+          },
+          "isPublished": {
+            "type": "boolean",
+            "description": "Whether the package is published to a package registry"
+          },
+          "license": {
+            "type": "string",
+            "description": "SPDX license identifier from package.json"
+          },
+          "repositoryOfRecord": {
+            "type": "string",
+            "description": "URL of the primary repository hosting this package"
+          },
+          "upstreamOrigin": {
+            "type": "string",
+            "description": "URL of the original upstream source, if the package is forked, vendored, or derived",
+            "default": ""
+          },
+          "compatibilityRequirements": {
+            "type": "string",
+            "description": "Details of required backward-compatibility guarantees (API surface, protocol, etc.)",
+            "default": ""
+          },
+          "externalConsumers": {
+            "type": "array",
+            "description": "Known external consumers of this package's public API",
+            "items": {
+              "type": "string"
+            },
+            "default": []
+          },
+          "migrationStrategy": {
+            "type": "string",
+            "description": "The approach to migrate this package to its intended identity"
+          },
+          "removalCondition": {
+            "type": "string",
+            "description": "Condition under which this package can be removed (e.g. after all consumers migrate)",
+            "default": ""
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "version": {
+      "type": "string",
+      "description": "Schema version string, semver"
+    },
+    "generatedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp of when this authority map was generated"
+    }
+  },
+  "additionalProperties": false
+}

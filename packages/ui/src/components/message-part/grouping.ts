@@ -1,4 +1,4 @@
-import type { Part as PartType, ToolPart } from "@opencode-ai/sdk/v2"
+import type { Part as PartType, ToolPart } from "@tribunus/sdk/v2"
 import type { PartRef, PartGroup } from "./types"
 import { CONTEXT_GROUP_TOOLS } from "./types"
 

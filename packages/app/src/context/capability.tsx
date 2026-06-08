@@ -1,5 +1,5 @@
 import { createMemo, createResource, type Accessor } from "solid-js"
-import { createSimpleContext } from "@opencode-ai/ui/context"
+import { createSimpleContext } from "@tribunus/ui/context"
 import { usePlatform } from "./platform"
 import { useServer } from "./server"
 import { useLanguage } from "./language"

@@ -1,19 +1,19 @@
 import { Show, createEffect, createResource, createSignal, onCleanup, type JSX } from "solid-js"
 import { makeEventListener } from "@solid-primitives/event-listener"
-import type { SnapshotFileDiff, VcsFileDiff } from "@opencode-ai/sdk/v2"
-import { SessionReview } from "@opencode-ai/ui/session-review"
+import type { SnapshotFileDiff, VcsFileDiff } from "@tribunus/sdk/v2"
+import { SessionReview } from "@tribunus/ui/session-review"
 import type {
   SessionReviewCommentActions,
   SessionReviewCommentDelete,
   SessionReviewCommentUpdate,
-} from "@opencode-ai/ui/session-review"
+} from "@tribunus/ui/session-review"
 import type { SelectedLineRange } from "@/context/file"
 import { useSDK } from "@/context/sdk"
 import { useLayout } from "@/context/layout"
 import type { LineComment } from "@/context/comments"
 import { useLanguage } from "@/context/language"
-import { Button } from "@opencode-ai/ui/button"
-import { TextField } from "@opencode-ai/ui/text-field"
+import { Button } from "@tribunus/ui/button"
+import { TextField } from "@tribunus/ui/text-field"
 
 export type DiffStyle = "unified" | "split"
 

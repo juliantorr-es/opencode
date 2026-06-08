@@ -1,6 +1,6 @@
 import { Component, For, Show, createMemo, createSignal } from "solid-js"
 import { formatKeybind, dispatchAiCommand, type CommandOption, type CommandUsageRecord } from "@/context/command"
-import { Icon } from "@opencode-ai/ui/icon"
+import { Icon } from "@tribunus/ui/icon"
 
 type IconName =
   | "align-right" | "archive" | "arrow-down-to-line" | "arrow-left" | "arrow-right"

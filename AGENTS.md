@@ -15,18 +15,18 @@ The project uses **Bun** as the primary runtime and package manager (v1.3.14), *
 ### Key Modules
 
 - **LLM Core** (`packages/llm/src/`): Route/protocol architecture with 13 provider configs, 6 wire protocols (anthropic-messages, openai-chat, openai-responses, bedrock-converse, gemini, openai-compatible-chat). Each exports route + model factory.
-- **Tool System** (`packages/opencode/src/tool/`): ~200 tool definitions with `.ts` + `.txt` (system prompt) pairs. `TypedResult` pattern for structured tool output.
-- **Session Management** (`packages/opencode/src/session/`): AI session lifecycle with projectors, event-sourced state.
+- **Tool System** (`packages/runtime/src/tool/`): ~200 tool definitions with `.ts` + `.txt` (system prompt) pairs. `TypedResult` pattern for structured tool output.
+- **Session Management** (`packages/runtime/src/session/`): AI session lifecycle with projectors, event-sourced state.
 - **Agent System** (`packages/core/src/agent.ts`): Agent orchestration and workflow.
 - **Project System** (`packages/core/src/project.ts`): Workspace management.
 - **Plugin System** (`packages/plugin/src/`): Extension infrastructure.
-- **ACP / ACP-Next** (`packages/opencode/src/acp/`, `acp-next/`): Multi-agent coordination protocol.
-- **Campaigns** (`packages/opencode/src/campaign/`): Structured missions with auditor, push-gate, push-record, process-auditor services.
-- **Coordination Kernel** (`packages/opencode/src/coordination/`): Valkey Stream-backed distributed work queue. Fabric abstraction (valkey-fabric / local-fabric), scheduler, recovery, durable-store.ts (79KB).
-- **CLI** (`packages/opencode/src/cli/`): Command-line interface.
-- **HTTP API** (`packages/opencode/src/http/` + `server/routes/instance/httpapi/`): REST/WebSocket endpoints with handlers, groups, middleware chain.
-- **Storage** (`packages/opencode/src/storage/`): PostgreSQL + Drizzle ORM. `.pg.sql.ts` files ship typed SQL alongside modules.
-- **Control Plane** (`packages/opencode/src/control-plane/`): Recently added Tribunus-branded init, CRUD, schema, checkpoint modules.
+- **ACP / ACP-Next** (`packages/runtime/src/acp/`, `acp-next/`): Multi-agent coordination protocol.
+- **Campaigns** (`packages/runtime/src/campaign/`): Structured missions with auditor, push-gate, push-record, process-auditor services.
+- **Coordination Kernel** (`packages/runtime/src/coordination/`): Valkey Stream-backed distributed work queue. Fabric abstraction (valkey-fabric / local-fabric), scheduler, recovery, durable-store.ts (79KB).
+- **CLI** (`packages/runtime/src/cli/`): Command-line interface.
+- **HTTP API** (`packages/runtime/src/http/` + `server/routes/instance/httpapi/`): REST/WebSocket endpoints with handlers, groups, middleware chain.
+- **Storage** (`packages/runtime/src/storage/`): PostgreSQL + Drizzle ORM. `.pg.sql.ts` files ship typed SQL alongside modules.
+- **Control Plane** (`packages/runtime/src/control-plane/`): Recently added Tribunus-branded init, CRUD, schema, checkpoint modules.
 - **Frontend** (`packages/app/src/`): SolidJS + Tailwind CSS v4 + @solidjs/router + @tanstack/solid-query + 25 locales i18n.
 - **Shared UI** (`packages/ui/src/`): ~250 components (180 base + 70 v2 redesigned), pierre file editor, Kobalte, motion.
 - **Desktop** (`packages/desktop/src/`): Electron 41.2 with main/preload/renderer layers. main/ includes sidecar, Valkey supervisor, node-pty terminal, auto-updater, IPC contract (41.8KB), WSL support.
@@ -51,7 +51,7 @@ Deployed via SST (`sst.config.ts`): Cloudflare Workers (API), Astro (web), Solid
 ## Key Directories
 
 ```
-packages/opencode/src/       Main backend server, session, tools, ACP, coordination
+packages/runtime/src/       Main backend server, session, tools, ACP, coordination
 packages/core/src/           Domain models, providers, agent system
 packages/llm/src/            LLM routing, wire protocols, tool runtime
 packages/app/src/            Web frontend (SolidJS)
@@ -62,7 +62,7 @@ packages/plugin/src/         Plugin infrastructure
 packages/http-recorder/      HTTP/WS replay for deterministic tests
 packages/identity/src/       Authentication
 packages/enterprise/src/     Enterprise features
-packages/opencode/test/      Test fixtures and helpers
+packages/runtime/test/      Test fixtures and helpers
 scripts/                     Mnemopi, branding, session scripts
 script/                      Build, release, changelog, stats, hygiene
 docs/                        ADRs, branding, schemas, findings
@@ -80,6 +80,7 @@ All package-level commands run from the package directory (not root).
 |---|---|
 | Root | `bun lint`, `bun typecheck`, `bun run dev`, `bun run dev:desktop`, `bun run dev:web` |
 | opencode | `bun test`, `bun test:ci`, `bun test:pg`, `bun typecheck`, `bun dev` |
+| runtime | `bun test`, `bun test:ci`, `bun test:pg`, `bun typecheck`, `bun dev` |
 | llm | `bun test`, `bun typecheck` |
 | core | `bun test`, `bun typecheck` |
 | app | `bun dev`, `bun build`, `bun test`, `bun test:unit` |
@@ -87,7 +88,7 @@ All package-level commands run from the package directory (not root).
 | ui | `bun dev`, `bun test` |
 | plugin | `bun build`, `bun typecheck` |
 | sdk | `bun run script/build.ts` (in packages/sdk/js) |
-| Database | `bun run db:generate:pg --name <slug>`, `bun run db:migrate` (in packages/opencode) |
+| Database | `bun run db:generate:pg --name <slug>`, `bun run db:migrate` (in packages/runtime) |
 
 Lint: `bun lint` (oxlint from root). Typecheck: `bun turbo typecheck` (tsgo, never tsc directly).
 
@@ -114,7 +115,7 @@ Lint: `bun lint` (oxlint from root). Typecheck: `bun turbo typecheck` (tsgo, nev
 - For `foo/index.ts`: `export * as Foo from .`
 - Multi-sibling: no barrel, import directly
 - Private helpers: non-exported top-level functions
-- Sub-path exports for package internals (e.g. `@opencode-ai/core/provider`)
+- Sub-path exports for package internals (e.g. `@tribunus/core/provider`)
 
 ### Effect Patterns
 
@@ -131,7 +132,7 @@ Service pattern: Tagged `Service` class extends `Context.Service<Service, Interf
 
 ### Session Management
 
-`InstanceState` for per-directory state (in `packages/opencode/src/instance-state/`).
+`InstanceState` for per-directory state (in `packages/runtime/src/instance-state/`).
 
 ## Important Files
 
@@ -163,7 +164,7 @@ Service pattern: Tagged `Service` class extends `Context.Service<Service, Interf
 
 - **Unit/Integration**: Bun test (`bun:test`) with Effect-native wrapper
 - **E2E**: Playwright (Chromium)
-- **Recorded tests**: `@opencode-ai/http-recorder` for deterministic HTTP/WS replay of LLM provider responses
+- **Recorded tests**: `@tribunus/http-recorder` for deterministic HTTP/WS replay of LLM provider responses
 
 ### Core Test Helpers
 
@@ -186,7 +187,7 @@ Test preload (`test/preload.ts`): sets `OPENCODE_DB=:memory:`, clears API keys, 
 
 ### Test Execution
 
-- Run from package directory, not root: `cd packages/opencode && bun test`
+- Run from package directory, not root: `cd packages/runtime && bun test`
 - CI: `bun turbo test:ci` across linux + windows (Blacksmith runners). Separate PG + DuckDB storage tests. JUnit XML via `mikepenz/action-junit-report`
 - Record mode: `RECORD=true bun test` to capture HTTP responses
 - Server tests: prefer `NodeHttpServer.layerTest`, `HttpApiBuilder` probe groups — see `test/server/AGENTS.md`

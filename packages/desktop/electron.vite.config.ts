@@ -1,6 +1,6 @@
 import { sentryVitePlugin } from "@sentry/vite-plugin"
 import { defineConfig } from "electron-vite"
-import appPlugin from "@opencode-ai/app/vite"
+import appPlugin from "@tribunus/app/vite"
 import * as fs from "node:fs/promises"
 import { execSync } from "node:child_process"
 

@@ -1,0 +1,289 @@
+{
+  "metadata": {
+    "generatedAt": "2026-06-08T03:47:22.783Z",
+    "source": "scripts/identity/build-package-authority-map.ts",
+    "description": "Package authority map for Tribunus Source Identity Cutover",
+    "firstPartyCount": 29,
+    "externalCount": 3
+  },
+  "entries": [
+    {
+      "currentName": "@tribunus/app",
+      "path": "packages/app",
+      "authority": "TRIBUNUS_FIRST_PARTY",
+      "intendedName": "@tribunus/app",
+      "license": "AGPL-3.0-only",
+      "isWorkspace": true,
+      "exists": true
+    },
+    {
+      "currentName": "@tribunus/console-app",
+      "path": "packages/console/app",
+      "authority": "TRIBUNUS_FIRST_PARTY",
+      "intendedName": "@tribunus/console-app",
+      "license": "MIT",
+      "isWorkspace": true,
+      "exists": true
+    },
+    {
+      "currentName": "@opencode-ai/console-core",
+      "path": "packages/console/core",
+      "authority": "TRIBUNUS_FIRST_PARTY",
+      "intendedName": "@tribunus/console-core",
+      "license": "MIT",
+      "isWorkspace": true,
+      "exists": true
+    },
+    {
+      "currentName": "@tribunus/console-function",
+      "path": "packages/console/function",
+      "authority": "TRIBUNUS_FIRST_PARTY",
+      "intendedName": "@tribunus/console-function",
+      "license": "MIT",
+      "isWorkspace": true,
+      "exists": true
+    },
+    {
+      "currentName": "@opencode-ai/console-mail",
+      "path": "packages/console/mail",
+      "authority": "TRIBUNUS_FIRST_PARTY",
+      "intendedName": "@tribunus/console-mail",
+      "license": "MIT",
+      "isWorkspace": true,
+      "exists": true
+    },
+    {
+      "currentName": "@opencode-ai/console-resource",
+      "path": "packages/console/resource",
+      "authority": "TRIBUNUS_FIRST_PARTY",
+      "intendedName": "@tribunus/console-resource",
+      "license": "MIT",
+      "isWorkspace": true,
+      "exists": true
+    },
+    {
+      "currentName": "@tribunus/console-support",
+      "path": "packages/console/support",
+      "authority": "TRIBUNUS_FIRST_PARTY",
+      "intendedName": "@tribunus/console-support",
+      "license": "MIT",
+      "isWorkspace": true,
+      "exists": true
+    },
+    {
+      "currentName": "@tribunus/containers",
+      "path": "packages/containers",
+      "authority": "TRIBUNUS_FIRST_PARTY",
+      "intendedName": "@tribunus/containers",
+      "isWorkspace": true,
+      "exists": true
+    },
+    {
+      "currentName": "@opencode-ai/core",
+      "path": "packages/core",
+      "authority": "TRIBUNUS_FIRST_PARTY",
+      "intendedName": "@tribunus/core",
+      "license": "AGPL-3.0-only",
+      "isWorkspace": true,
+      "exists": true
+    },
+    {
+      "currentName": "@tribunus/enterprise",
+      "path": "packages/enterprise",
+      "authority": "TRIBUNUS_FIRST_PARTY",
+      "intendedName": "@tribunus/enterprise",
+      "license": "AGPL-3.0-only",
+      "isWorkspace": true,
+      "exists": true
+    },
+    {
+      "currentName": "@tribunus/function",
+      "path": "packages/function",
+      "authority": "TRIBUNUS_FIRST_PARTY",
+      "intendedName": "@tribunus/function",
+      "license": "AGPL-3.0-only",
+      "isWorkspace": true,
+      "exists": true
+    },
+    {
+      "currentName": "@tribunus/http-recorder",
+      "path": "packages/http-recorder",
+      "authority": "TRIBUNUS_FIRST_PARTY",
+      "intendedName": "@tribunus/http-recorder",
+      "license": "AGPL-3.0-only",
+      "isWorkspace": true,
+      "exists": true
+    },
+    {
+      "currentName": "@opencode-ai/llm",
+      "path": "packages/llm",
+      "authority": "TRIBUNUS_FIRST_PARTY",
+      "intendedName": "@tribunus/llm",
+      "license": "AGPL-3.0-only",
+      "isWorkspace": true,
+      "exists": true
+    },
+    {
+      "currentName": "@opencode-ai/plugin",
+      "path": "packages/plugin",
+      "authority": "TRIBUNUS_FIRST_PARTY",
+      "intendedName": "@tribunus/plugin",
+      "license": "AGPL-3.0-only",
+      "isWorkspace": true,
+      "exists": true
+    },
+    {
+      "currentName": "@tribunus/script",
+      "path": "packages/script",
+      "authority": "TRIBUNUS_FIRST_PARTY",
+      "intendedName": "@tribunus/script",
+      "license": "AGPL-3.0-only",
+      "isWorkspace": true,
+      "exists": true
+    },
+    {
+      "currentName": "@opencode-ai/sdk",
+      "path": "packages/sdk/js",
+      "authority": "TRIBUNUS_FIRST_PARTY",
+      "intendedName": "@tribunus/sdk",
+      "license": "MIT",
+      "isWorkspace": true,
+      "exists": true
+    },
+    {
+      "currentName": "@tribunus/slack",
+      "path": "packages/slack",
+      "authority": "TRIBUNUS_FIRST_PARTY",
+      "intendedName": "@tribunus/slack",
+      "license": "AGPL-3.0-only",
+      "isWorkspace": true,
+      "exists": true
+    },
+    {
+      "currentName": "@tribunus/stats-app",
+      "path": "packages/stats/app",
+      "authority": "TRIBUNUS_FIRST_PARTY",
+      "intendedName": "@tribunus/stats-app",
+      "license": "MIT",
+      "isWorkspace": true,
+      "exists": true
+    },
+    {
+      "currentName": "@opencode-ai/stats-core",
+      "path": "packages/stats/core",
+      "authority": "TRIBUNUS_FIRST_PARTY",
+      "intendedName": "@tribunus/stats-core",
+      "license": "MIT",
+      "isWorkspace": true,
+      "exists": true
+    },
+    {
+      "currentName": "@tribunus/stats-server",
+      "path": "packages/stats/server",
+      "authority": "TRIBUNUS_FIRST_PARTY",
+      "intendedName": "@tribunus/stats-server",
+      "license": "MIT",
+      "isWorkspace": true,
+      "exists": true
+    },
+    {
+      "currentName": "@tribunus/storybook",
+      "path": "packages/storybook",
+      "authority": "TRIBUNUS_FIRST_PARTY",
+      "intendedName": "@tribunus/storybook",
+      "isWorkspace": true,
+      "exists": true
+    },
+    {
+      "currentName": "@opencode-ai/ui",
+      "path": "packages/ui",
+      "authority": "TRIBUNUS_FIRST_PARTY",
+      "intendedName": "@tribunus/ui",
+      "license": "AGPL-3.0-only",
+      "isWorkspace": true,
+      "exists": true
+    },
+    {
+      "currentName": "@tribunus/web",
+      "path": "packages/web",
+      "authority": "TRIBUNUS_FIRST_PARTY",
+      "intendedName": "@tribunus/web",
+      "license": "AGPL-3.0-only",
+      "isWorkspace": true,
+      "exists": true
+    },
+    {
+      "currentName": "@tribunus-ai/github-pages-mcp",
+      "path": "packages/github-pages-mcp",
+      "authority": "TRIBUNUS_FIRST_PARTY",
+      "intendedName": "@tribunus-ai/github-pages-mcp",
+      "isWorkspace": true,
+      "exists": true
+    },
+    {
+      "currentName": "@tribunus/compute",
+      "path": "packages/compute",
+      "authority": "TRIBUNUS_FIRST_PARTY",
+      "intendedName": "@tribunus/compute",
+      "license": "AGPL-3.0-only",
+      "isWorkspace": true,
+      "exists": true
+    },
+    {
+      "currentName": "@tribunus/compute-native",
+      "path": "packages/compute-native",
+      "authority": "TRIBUNUS_FIRST_PARTY",
+      "intendedName": "@tribunus/compute-native",
+      "license": "AGPL-3.0-only",
+      "isWorkspace": true,
+      "exists": true
+    },
+    {
+      "currentName": "@tribunus/protocol",
+      "path": "packages/protocol",
+      "authority": "TRIBUNUS_FIRST_PARTY",
+      "intendedName": "@tribunus/protocol",
+      "isWorkspace": true,
+      "exists": true
+    },
+    {
+      "currentName": "opencode",
+      "path": "packages/opencode",
+      "authority": "TRIBUNUS_FIRST_PARTY",
+      "intendedName": "@tribunus/runtime",
+      "license": "AGPL-3.0-only",
+      "isWorkspace": true,
+      "exists": true
+    },
+    {
+      "currentName": "tribunus",
+      "path": "packages/desktop",
+      "authority": "TRIBUNUS_FIRST_PARTY",
+      "intendedName": "tribunus",
+      "license": "AGPL-3.0-only",
+      "isWorkspace": true,
+      "exists": true
+    },
+    {
+      "currentName": "@gitlab/opencode-gitlab-auth",
+      "path": "",
+      "authority": "EXTERNAL_OPENCODE_DEPENDENCY",
+      "isWorkspace": false,
+      "exists": false
+    },
+    {
+      "currentName": "opencode-gitlab-auth",
+      "path": "",
+      "authority": "EXTERNAL_OPENCODE_DEPENDENCY",
+      "isWorkspace": false,
+      "exists": false
+    },
+    {
+      "currentName": "opencode-poe-auth",
+      "path": "",
+      "authority": "EXTERNAL_OPENCODE_DEPENDENCY",
+      "isWorkspace": false,
+      "exists": false
+    }
+  ]
+}

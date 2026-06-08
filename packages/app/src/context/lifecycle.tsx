@@ -1,4 +1,4 @@
-import { createSimpleContext } from "@opencode-ai/ui/context"
+import { createSimpleContext } from "@tribunus/ui/context"
 import { createStore, produce } from "solid-js/store"
 
 export type LifecycleState = 

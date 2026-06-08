@@ -1,5 +1,5 @@
-import { Button } from "@opencode-ai/ui/button"
-import { TextField } from "@opencode-ai/ui/text-field"
+import { Button } from "@tribunus/ui/button"
+import { TextField } from "@tribunus/ui/text-field"
 import { createEffect, createMemo, createSignal, Show } from "solid-js"
 import { useLanguage } from "@/context/language"
 import type { McpServerEntry } from "@/types/mcp"

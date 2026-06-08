@@ -569,18 +569,10 @@ mod tests {
     #[test]
     fn test_stateful_toy_deterministic_mutation() {
         let model_path = "/tmp/tribunus-stateful-toy.mlmodelc";
-        if !std::path::Path::new(model_path).exists() {
-            eprintln!("[stateful] model not found at {} — skipping", model_path);
-            return;
-        }
-
-        let model = match CoreMlModel::load(model_path) {
-            Ok(m) => m,
-            Err(e) => {
-                eprintln!("[stateful] model load failed: {} — skipping", e);
-                return;
-            }
-        };
+        // Hard-fail if the model doesn't exist or can't load.
+        // This test is expected to pass in the verified compiler environment.
+        let model = CoreMlModel::load(model_path)
+            .expect(&format!("FAIL: stateful model must load from {} — compiler environment not configured?", model_path));
         let state = CoreMlStateHandle::new(model.ptr).expect("create state handle");
 
         let dim0 = 1u32;
@@ -630,18 +622,10 @@ mod tests {
     #[test]
     fn test_stateful_toy_two_session_isolation() {
         let model_path = "/tmp/tribunus-stateful-toy.mlmodelc";
-        if !std::path::Path::new(model_path).exists() {
-            eprintln!("[stateful] model not found at {} — skipping", model_path);
-            return;
-        }
-
-        let model = match CoreMlModel::load(model_path) {
-            Ok(m) => m,
-            Err(e) => {
-                eprintln!("[stateful] model load failed: {} — skipping", e);
-                return;
-            }
-        };
+        // Hard-fail if the model doesn't exist or can't load.
+        // This test is expected to pass in the verified compiler environment.
+        let model = CoreMlModel::load(model_path)
+            .expect(&format!("FAIL: stateful model must load from {} — compiler environment not configured?", model_path));
         let state_1 = CoreMlStateHandle::new(model.ptr).expect("state 1");
         let state_2 = CoreMlStateHandle::new(model.ptr).expect("state 2");
 
@@ -764,19 +748,13 @@ mod tests {
 
     #[test]
     fn test_stateful_toy_concurrent_rejection() {
+        // Verify that rapid sequential predictions on the same state don't corrupt each other.
+        // True concurrent rejection (same-state simultaneous use) is gated on the Tokio supervisor.
         let model_path = "/tmp/tribunus-stateful-toy.mlmodelc";
-        if !std::path::Path::new(model_path).exists() {
-            eprintln!("[stateful] model not found at {} — skipping", model_path);
-            return;
-        }
-
-        let model = match CoreMlModel::load(model_path) {
-            Ok(m) => m,
-            Err(e) => {
-                eprintln!("[stateful] model load failed: {} — skipping", e);
-                return;
-            }
-        };
+        // Hard-fail if the model doesn't exist or can't load.
+        // This test is expected to pass in the verified compiler environment.
+        let model = CoreMlModel::load(model_path)
+            .expect(&format!("FAIL: stateful model must load from {} — compiler environment not configured?", model_path));
         let state = CoreMlStateHandle::new(model.ptr).expect("create state handle");
 
         let dim0 = 1u32;
@@ -786,6 +764,7 @@ mod tests {
         let arena_a = Arena::new(dim0, dim1, mlx_rs::Dtype::Float16).expect("arena A");
         let mut arena_b = Arena::new(dim0, dim1, mlx_rs::Dtype::Float16).expect("arena B");
 
+        // Verify that rapid sequential predictions on the same state don't corrupt each other.
         // First prediction with [1,1,1,1] → accumulator [1,1,1,1]
         unsafe {
             let ptr = arena_a.base_ptr() as *mut u16;

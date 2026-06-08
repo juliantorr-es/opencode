@@ -2,7 +2,7 @@ import { createMemo, createResource, createSignal, For, Show, type Component } f
 import { useInspector, type RuntimeEvent } from "@/context/inspector"
 import { useServerSDK } from "@/context/server-sdk"
 import { useParams } from "@solidjs/router"
-import { showToast } from "@opencode-ai/ui/toast"
+import { showToast } from "@tribunus/ui/toast"
 
 // ── Types ──
 

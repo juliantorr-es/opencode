@@ -1,7 +1,7 @@
 import { BrowserWindow } from "electron"
 import type { IpcMainInvokeEvent } from "electron"
 import { registerIpcHandler } from "./ipc-registration"
-import type { DesktopMenuAction } from "@opencode-ai/app/desktop-menu"
+import type { DesktopMenuAction } from "@tribunus/app/desktop-menu"
 import { IPC } from "./ipc-channels"
 import { withIpcResult } from "./ipc-contract"
 import type { TitlebarTheme } from "../preload/types"

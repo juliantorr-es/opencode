@@ -1,9 +1,9 @@
 import { createSignal, onCleanup, onMount } from "solid-js"
 import { createStore, produce } from "solid-js/store"
-import type { Event } from "@opencode-ai/sdk/v2/client"
+import type { Event } from "@tribunus/sdk/v2/client"
 import { useServerSDK } from "./server-sdk"
 import { useSettings } from "./settings"
-import { createSimpleContext } from "@opencode-ai/ui/context"
+import { createSimpleContext } from "@tribunus/ui/context"
 
 // ── Types ──
 

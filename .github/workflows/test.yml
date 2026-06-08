@@ -70,7 +70,7 @@ jobs:
 
       - name: Run HttpApi exerciser gates
         if: runner.os == 'Linux'
-        working-directory: packages/opencode
+        working-directory: packages/runtime
         run: bun run test:httpapi
 
       - name: Publish unit reports
@@ -134,7 +134,7 @@ jobs:
         uses: ./.github/actions/setup-bun
 
       - name: Run PG integration tests
-        working-directory: packages/opencode
+        working-directory: packages/runtime
         run: bun run test:pg:ci
         env:
           OPENCODE_DATABASE_URL: postgresql://opencode:opencode@localhost:5432/opencode_test
@@ -157,7 +157,7 @@ jobs:
           include-hidden-files: true
           if-no-files-found: ignore
           retention-days: 7
-          path: packages/opencode/.artifacts/unit/junit-pg.xml
+          path: packages/runtime/.artifacts/unit/junit-pg.xml
 
   duckdb:
     name: duckdb (${{ matrix.settings.name }})
@@ -186,7 +186,7 @@ jobs:
         uses: ./.github/actions/setup-bun
 
       - name: Run DuckDB migration tests
-        working-directory: packages/opencode
+        working-directory: packages/runtime
         run: bun run test:duckdb:ci
         env:
           OPENCODE_DUCKDB_PATH: ":memory:"
@@ -209,7 +209,7 @@ jobs:
           include-hidden-files: true
           if-no-files-found: ignore
           retention-days: 7
-          path: packages/opencode/.artifacts/unit/junit-duckdb.xml
+          path: packages/runtime/.artifacts/unit/junit-duckdb.xml
 
   e2e:
     name: e2e (${{ matrix.settings.name }})

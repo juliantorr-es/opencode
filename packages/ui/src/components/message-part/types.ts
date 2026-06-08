@@ -7,7 +7,7 @@ import type {
   ReasoningPart,
   TextPart,
   ToolPart,
-} from "@opencode-ai/sdk/v2"
+} from "@tribunus/sdk/v2"
 import type { IconProps } from "../icon"
 
 export interface Diagnostic {

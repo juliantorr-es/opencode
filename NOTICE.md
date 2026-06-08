@@ -40,12 +40,12 @@ Tribunus has significantly diverged from the upstream OpenCode project. The code
 
 The following packages originated from OpenCode and have been adapted for Tribunus:
 
-- **@opencode-ai/sdk** — retained with upstream attribution
-- **@opencode-ai/plugin** — now an internal workspace being renamed to @tribunus/*
-- **@opencode-ai/core** — now an internal workspace being renamed to @tribunus/*
-- **@opencode-ai/llm** — now an internal workspace being renamed to @tribunus/*
+- **@tribunus/sdk** — retained with upstream attribution
+- **@tribunus/plugin** — now an internal workspace being renamed to @tribunus/*
+- **@tribunus/core** — now an internal workspace being renamed to @tribunus/*
+- **@tribunus/llm** — now an internal workspace being renamed to @tribunus/*
 
-Any @opencode-ai/* packages still present in this repository are internal workspaces in the process of being renamed to @tribunus/*.
+All @opencode-ai/* workspace packages have been renamed to @tribunus/* as part of the Tribunus Source Identity Cutover.
 
 ---
 

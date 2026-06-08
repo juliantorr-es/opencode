@@ -1,0 +1,13 @@
+import { Effect, Schema } from "effect"
+
+import { Identifier } from "@/id/id"
+import { Newtype } from "@tribunus/core/schema"
+
+export class PermissionID extends Newtype<PermissionID>()(
+  "PermissionID",
+  Schema.String.check(Schema.isStartsWith("per")),
+) {
+  static ascending(id?: string): PermissionID {
+    return this.make(Effect.runSync(Identifier.ascending("permission", id)))
+  }
+}

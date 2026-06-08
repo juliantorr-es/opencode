@@ -15,7 +15,7 @@ import {
   SidecarConfig,
   decodeOrThrow,
   useCommand,
-} from "@opencode-ai/app"
+} from "@tribunus/app"
 import { MainWindowBootFallback } from "./components/main-window-boot-fallback"
 import * as Sentry from "@sentry/solid"
 import type { AsyncStorage } from "@solid-primitives/storage"
@@ -29,8 +29,8 @@ import { initI18n, t } from "./i18n"
 import { resetZoom, setPinchZoomEnabled, webviewZoom, zoomIn, zoomOut } from "./webview-zoom"
 import { DesktopPluginProvider } from "./plugin-context"
 import "./styles.css"
-import { useDialog } from "@opencode-ai/ui/context/dialog"
-import { useTheme } from "@opencode-ai/ui/theme"
+import { useDialog } from "@tribunus/ui/context/dialog"
+import { useTheme } from "@tribunus/ui/theme"
 
 const root = document.getElementById("root")
 if (import.meta.env.DEV && !(root instanceof HTMLElement)) {

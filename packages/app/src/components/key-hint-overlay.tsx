@@ -1,5 +1,5 @@
 import { For, Show, createEffect, createMemo, onCleanup } from "solid-js"
-import { KeybindV2 } from "@opencode-ai/ui/v2/components/keybind-v2.jsx"
+import { KeybindV2 } from "@tribunus/ui/v2/components/keybind-v2.jsx"
 import { parseKeybind } from "@/context/command"
 import type { CommandOption } from "@/context/command"
 

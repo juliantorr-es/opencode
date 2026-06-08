@@ -1,4 +1,4 @@
-import type { McpRemoteConfig } from "@opencode-ai/sdk/v2/client"
+import type { McpRemoteConfig } from "@tribunus/sdk/v2/client"
 
 type McpLocalConfig = {
   type: "local"

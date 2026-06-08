@@ -3,7 +3,7 @@ import type {
   DesktopHostSlotMap,
   DesktopPluginApi,
   DesktopPluginModule,
-} from "@opencode-ai/plugin/desktop"
+} from "@tribunus/plugin/desktop"
 import { createPluginTransport } from "./plugin-transport"
 
 type SlotName = keyof DesktopHostSlotMap

@@ -2,9 +2,9 @@ import { createMemo, createSignal, For, Show } from "solid-js"
 import { useParams } from "@solidjs/router"
 import { useServerSDK } from "@/context/server-sdk"
 import { useInspector, type RuntimeEvent } from "@/context/inspector"
-import { useDialog } from "@opencode-ai/ui/context/dialog"
-import { Dialog } from "@opencode-ai/ui/dialog"
-import { showToast } from "@opencode-ai/ui/toast"
+import { useDialog } from "@tribunus/ui/context/dialog"
+import { Dialog } from "@tribunus/ui/dialog"
+import { showToast } from "@tribunus/ui/toast"
 
 // ── Types ──
 

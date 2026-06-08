@@ -1,5 +1,5 @@
 /**
- * Shared mock factories for @opencode-ai/ui components used in dialog tests.
+ * Shared mock factories for @tribunus/ui components used in dialog tests.
  * Import and apply in beforeAll() before importing the dialog under test.
  *
  * These mocks avoid JSX compilation issues (bun test doesn't support SolidJS JSX)
@@ -149,12 +149,12 @@ export function getMockDefaults(): MockProviders {
 }
 
 /**
- * Mock all @opencode-ai/ui components that dialog components import.
+ * Mock all @tribunus/ui components that dialog components import.
  * Must be called inside beforeAll().
  */
 export function mockUiPrimitives(): void {
-  // @opencode-ai/ui/dialog — renders [data-component="dialog"] wrapper
-  mock.module("@opencode-ai/ui/dialog", () => {
+  // @tribunus/ui/dialog — renders [data-component="dialog"] wrapper
+  mock.module("@tribunus/ui/dialog", () => {
     function Dialog(props: any) {
       const children: Array<any> = []
       if (props.title) children.push(h("div", { "data-slot": "dialog-header" }, h("h2", { "data-slot": "dialog-title" }, props.title)))
@@ -169,8 +169,8 @@ export function mockUiPrimitives(): void {
     return { Dialog }
   })
 
-  // @opencode-ai/ui/button
-  mock.module("@opencode-ai/ui/button", () => {
+  // @tribunus/ui/button
+  mock.module("@tribunus/ui/button", () => {
     function Button(props: any) {
       return h("button", {
         "data-component": "button",
@@ -184,8 +184,8 @@ export function mockUiPrimitives(): void {
     return { Button }
   })
 
-  // @opencode-ai/ui/icon-button
-  mock.module("@opencode-ai/ui/icon-button", () => {
+  // @tribunus/ui/icon-button
+  mock.module("@tribunus/ui/icon-button", () => {
     function IconButton(props: any) {
       return h("button", {
         "data-component": "icon-button",
@@ -199,19 +199,19 @@ export function mockUiPrimitives(): void {
   })
 
   // Passive UI components (rendered but not tested)
-  mock.module("@opencode-ai/ui/icon", () => ({ Icon: () => "" }))
-  mock.module("@opencode-ai/ui/logo", () => ({ Splash: () => "" }))
-  mock.module("@opencode-ai/ui/spinner", () => ({ Spinner: () => "" }))
-  mock.module("@opencode-ai/ui/tooltip", () => ({ Tooltip: (p: any) => p.children || "" }))
-  mock.module("@opencode-ai/ui/tag", () => ({ Tag: (p: any) => p.children || "" }))
-  mock.module("@opencode-ai/ui/toast", () => ({ showToast: () => {} }))
-  mock.module("@opencode-ai/ui/file-icon", () => ({ FileIcon: () => "" }))
-  mock.module("@opencode-ai/ui/provider-icon", () => ({ ProviderIcon: () => "" }))
-  mock.module("@opencode-ai/ui/avatar", () => ({ Avatar: () => "" }))
-  mock.module("@opencode-ai/ui/keybind", () => ({ Keybind: () => "" }))
+  mock.module("@tribunus/ui/icon", () => ({ Icon: () => "" }))
+  mock.module("@tribunus/ui/logo", () => ({ Splash: () => "" }))
+  mock.module("@tribunus/ui/spinner", () => ({ Spinner: () => "" }))
+  mock.module("@tribunus/ui/tooltip", () => ({ Tooltip: (p: any) => p.children || "" }))
+  mock.module("@tribunus/ui/tag", () => ({ Tag: (p: any) => p.children || "" }))
+  mock.module("@tribunus/ui/toast", () => ({ showToast: () => {} }))
+  mock.module("@tribunus/ui/file-icon", () => ({ FileIcon: () => "" }))
+  mock.module("@tribunus/ui/provider-icon", () => ({ ProviderIcon: () => "" }))
+  mock.module("@tribunus/ui/avatar", () => ({ Avatar: () => "" }))
+  mock.module("@tribunus/ui/keybind", () => ({ Keybind: () => "" }))
 
-  // @opencode-ai/ui/list — handles items/each render-prop pattern
-  mock.module("@opencode-ai/ui/list", () => {
+  // @tribunus/ui/list — handles items/each render-prop pattern
+  mock.module("@tribunus/ui/list", () => {
     function List(props: any) {
       const rawItems = props.items
         ? typeof props.items === "function"
@@ -234,11 +234,11 @@ export function mockUiPrimitives(): void {
     return { List }
   })
 
-  mock.module("@opencode-ai/ui/select", () => {
+  mock.module("@tribunus/ui/select", () => {
     function Select(props: any) { return h("div", { "data-component": "select" }, props.children) }
     return { Select }
   })
-  mock.module("@opencode-ai/ui/text-field", () => {
+  mock.module("@tribunus/ui/text-field", () => {
     function TextField(props: any) {
       const children: Array<any> = []
       if (props.label) children.push(h("span", { "data-slot": "text-field-label" }, props.label))
@@ -248,8 +248,8 @@ export function mockUiPrimitives(): void {
     }
     return { TextField }
   })
-  mock.module("@opencode-ai/ui/switch", () => ({ Switch: (p: any) => p.children || "" }))
-  mock.module("@opencode-ai/ui/tabs", () => {
+  mock.module("@tribunus/ui/switch", () => ({ Switch: (p: any) => p.children || "" }))
+  mock.module("@tribunus/ui/tabs", () => {
     function Tabs(p: any) { return p.children || "" }
     Tabs.List = (p: any) => p.children || ""
     Tabs.Content = (p: any) => p.children || ""
@@ -257,8 +257,8 @@ export function mockUiPrimitives(): void {
     Tabs.SectionTitle = (p: any) => p.children || ""
     return { Tabs }
   })
-  mock.module("@opencode-ai/ui/dropdown-menu", () => ({ DropdownMenu: (p: any) => p.children || "" }))
-  mock.module("@opencode-ai/ui/hooks", () => ({
+  mock.module("@tribunus/ui/dropdown-menu", () => ({ DropdownMenu: (p: any) => p.children || "" }))
+  mock.module("@tribunus/ui/hooks", () => ({
     useFilteredList: () => ({
       filtered: () => [],
       filter: () => "",
@@ -271,7 +271,7 @@ export function mockUiPrimitives(): void {
       onKeyDown: () => {},
     }),
   }))
-  mock.module("@opencode-ai/ui/context", () => ({
+  mock.module("@tribunus/ui/context", () => ({
     createSimpleContext: () => {
       const ctx = {} as Record<string, unknown>
       return {
@@ -281,7 +281,7 @@ export function mockUiPrimitives(): void {
       }
     },
   }))
-  mock.module("@opencode-ai/ui/theme/context", () => ({
+  mock.module("@tribunus/ui/theme/context", () => ({
     useTheme: () => ({ colorScheme: "light", setColorScheme: () => {}, theme: "system" }),
     ThemeProvider: (p: any) => p.children || "",
   }))
@@ -309,12 +309,12 @@ export function mockUiPrimitives(): void {
 }
 
 /**
- * Mock @opencode-ai/ui/context/dialog so useDialog() returns safe no-ops.
+ * Mock @tribunus/ui/context/dialog so useDialog() returns safe no-ops.
  * Dialog components call useDialog() for close/show. When mocked,
  * close/show are available as no-ops and the component renders inline.
  */
 export function mockDialogContext(): void {
-  mock.module("@opencode-ai/ui/context/dialog", () => ({
+  mock.module("@tribunus/ui/context/dialog", () => ({
     DialogProvider: (props: any) => {
       return h("div", { "data-component": "dialog-provider" }, props.children)
     },

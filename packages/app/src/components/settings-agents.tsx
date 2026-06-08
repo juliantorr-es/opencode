@@ -1,5 +1,5 @@
-import { Button } from "@opencode-ai/ui/button"
-import { useDialog } from "@opencode-ai/ui/context/dialog"
+import { Button } from "@tribunus/ui/button"
+import { useDialog } from "@tribunus/ui/context/dialog"
 import type { Component } from "solid-js"
 import { useLanguage } from "@/context/language"
 import { DialogManageAgents } from "./dialog-manage-agents"

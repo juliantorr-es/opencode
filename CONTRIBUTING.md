@@ -50,7 +50,7 @@ All pull requests must reference an existing issue or an active mission from the
 ```bash
 bun install                           # install all dependencies
 bun run dev:desktop                   # start the desktop app in development mode
-cd packages/opencode && bun test      # run opencode package tests
+cd packages/runtime && bun test      # run opencode package tests
 bun run typecheck                     # type-check the entire workspace from root
 ```
 

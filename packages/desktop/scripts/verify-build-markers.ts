@@ -10,7 +10,7 @@ const MARKERS = [
 const errors: string[] = []
 
 for (const marker of MARKERS) {
-  let file = marker.checkFile ?? "packages/opencode/dist/node/node.js"
+  let file = marker.checkFile ?? "packages/runtime/dist/node/node.js"
   try {
     const result = await $`grep -c ${marker.pattern} ${file}`.quiet()
     if (result.exitCode !== 0) {

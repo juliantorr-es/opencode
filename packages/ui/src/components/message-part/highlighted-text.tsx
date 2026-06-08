@@ -1,5 +1,5 @@
 import { createMemo, For } from "solid-js"
-import type { AgentPart, FilePart } from "@opencode-ai/sdk/v2"
+import type { AgentPart, FilePart } from "@tribunus/sdk/v2"
 import type { HighlightSegment } from "./types"
 
 export function HighlightedText(props: { text: string; references: FilePart[]; agents: AgentPart[] }) {

@@ -1,9 +1,9 @@
 import { describe, expect } from "bun:test"
 import { Effect } from "effect"
-import { Catalog } from "@opencode-ai/core/catalog"
-import { PluginV2 } from "@opencode-ai/core/plugin"
-import { VercelPlugin } from "@opencode-ai/core/plugin/provider/vercel"
-import { ProviderV2 } from "@opencode-ai/core/provider"
+import { Catalog } from "@tribunus/core/catalog"
+import { PluginV2 } from "@tribunus/core/plugin"
+import { VercelPlugin } from "@tribunus/core/plugin/provider/vercel"
+import { ProviderV2 } from "@tribunus/core/provider"
 import { it, model, provider } from "./provider-helper"
 
 describe("VercelPlugin", () => {

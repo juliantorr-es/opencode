@@ -1,0 +1,196 @@
+========================================================================
+  TRIBUNUS PACKAGE AUTHORITY MAP
+  Source Identity Cutover
+  Generated: 2026-06-08T03:47:22.784Z
+========================================================================
+
+TRIBUNUS_FIRST_PARTY (29 packages)
+------------------------------------------------------------------------
+
+  @tribunus/app
+    path:          packages/app
+    intended name: @tribunus/app
+    license:       AGPL-3.0-only
+    exists:        true
+
+  @tribunus/console-app
+    path:          packages/console/app
+    intended name: @tribunus/console-app
+    license:       MIT
+    exists:        true
+
+  @opencode-ai/console-core
+    path:          packages/console/core
+    intended name: @tribunus/console-core
+    license:       MIT
+    exists:        true
+
+  @tribunus/console-function
+    path:          packages/console/function
+    intended name: @tribunus/console-function
+    license:       MIT
+    exists:        true
+
+  @opencode-ai/console-mail
+    path:          packages/console/mail
+    intended name: @tribunus/console-mail
+    license:       MIT
+    exists:        true
+
+  @opencode-ai/console-resource
+    path:          packages/console/resource
+    intended name: @tribunus/console-resource
+    license:       MIT
+    exists:        true
+
+  @tribunus/console-support
+    path:          packages/console/support
+    intended name: @tribunus/console-support
+    license:       MIT
+    exists:        true
+
+  @tribunus/containers
+    path:          packages/containers
+    intended name: @tribunus/containers
+    license:       (missing)
+    exists:        true
+
+  @opencode-ai/core
+    path:          packages/core
+    intended name: @tribunus/core
+    license:       AGPL-3.0-only
+    exists:        true
+
+  @tribunus/enterprise
+    path:          packages/enterprise
+    intended name: @tribunus/enterprise
+    license:       AGPL-3.0-only
+    exists:        true
+
+  @tribunus/function
+    path:          packages/function
+    intended name: @tribunus/function
+    license:       AGPL-3.0-only
+    exists:        true
+
+  @tribunus/http-recorder
+    path:          packages/http-recorder
+    intended name: @tribunus/http-recorder
+    license:       AGPL-3.0-only
+    exists:        true
+
+  @opencode-ai/llm
+    path:          packages/llm
+    intended name: @tribunus/llm
+    license:       AGPL-3.0-only
+    exists:        true
+
+  @opencode-ai/plugin
+    path:          packages/plugin
+    intended name: @tribunus/plugin
+    license:       AGPL-3.0-only
+    exists:        true
+
+  @tribunus/script
+    path:          packages/script
+    intended name: @tribunus/script
+    license:       AGPL-3.0-only
+    exists:        true
+
+  @opencode-ai/sdk
+    path:          packages/sdk/js
+    intended name: @tribunus/sdk
+    license:       MIT
+    exists:        true
+
+  @tribunus/slack
+    path:          packages/slack
+    intended name: @tribunus/slack
+    license:       AGPL-3.0-only
+    exists:        true
+
+  @tribunus/stats-app
+    path:          packages/stats/app
+    intended name: @tribunus/stats-app
+    license:       MIT
+    exists:        true
+
+  @opencode-ai/stats-core
+    path:          packages/stats/core
+    intended name: @tribunus/stats-core
+    license:       MIT
+    exists:        true
+
+  @tribunus/stats-server
+    path:          packages/stats/server
+    intended name: @tribunus/stats-server
+    license:       MIT
+    exists:        true
+
+  @tribunus/storybook
+    path:          packages/storybook
+    intended name: @tribunus/storybook
+    license:       (missing)
+    exists:        true
+
+  @opencode-ai/ui
+    path:          packages/ui
+    intended name: @tribunus/ui
+    license:       AGPL-3.0-only
+    exists:        true
+
+  @tribunus/web
+    path:          packages/web
+    intended name: @tribunus/web
+    license:       AGPL-3.0-only
+    exists:        true
+
+  @tribunus-ai/github-pages-mcp
+    path:          packages/github-pages-mcp
+    intended name: @tribunus-ai/github-pages-mcp
+    license:       (missing)
+    exists:        true
+
+  @tribunus/compute
+    path:          packages/compute
+    intended name: @tribunus/compute
+    license:       AGPL-3.0-only
+    exists:        true
+
+  @tribunus/compute-native
+    path:          packages/compute-native
+    intended name: @tribunus/compute-native
+    license:       AGPL-3.0-only
+    exists:        true
+
+  @tribunus/protocol
+    path:          packages/protocol
+    intended name: @tribunus/protocol
+    license:       (missing)
+    exists:        true
+
+  opencode
+    path:          packages/opencode
+    intended name: @tribunus/runtime
+    license:       AGPL-3.0-only
+    exists:        true
+
+  tribunus
+    path:          packages/desktop
+    intended name: tribunus
+    license:       AGPL-3.0-only
+    exists:        true
+
+EXTERNAL_OPENCODE_DEPENDENCY (3 packages)
+------------------------------------------------------------------------
+
+  @gitlab/opencode-gitlab-auth
+    isWorkspace:   false
+
+  opencode-gitlab-auth
+    isWorkspace:   false
+
+  opencode-poe-auth
+    isWorkspace:   false
+
+========================================================================

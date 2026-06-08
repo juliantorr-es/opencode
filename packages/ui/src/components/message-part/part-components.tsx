@@ -17,7 +17,7 @@ import {
   Todo,
   QuestionAnswer,
   QuestionInfo,
-} from "@opencode-ai/sdk/v2"
+} from "@tribunus/sdk/v2"
 import { useData } from "../../context"
 import { useFileComponent } from "../../context/file"
 import { useI18n } from "../../context/i18n"
@@ -35,8 +35,8 @@ import { TextShimmer } from "../text-shimmer"
 import { FileIcon } from "../file-icon"
 import { Checkbox } from "../checkbox"
 import stripAnsi from "strip-ansi"
-import { checksum } from "@opencode-ai/core/util/encode"
-import { getFilename } from "@opencode-ai/core/util/path"
+import { checksum } from "@tribunus/core/util/encode"
+import { getFilename } from "@tribunus/core/util/path"
 import { patchFiles } from "../apply-patch-file"
 import { readPartText } from "../message-part-text"
 import { normalize, resolveFileDiff } from "../session-diff"

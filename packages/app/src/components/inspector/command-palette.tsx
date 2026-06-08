@@ -12,7 +12,7 @@ import { createStore } from "solid-js/store"
 import { Portal } from "solid-js/web"
 import fuzzysort from "fuzzysort"
 import { useCommand, dispatchAiCommand, type CommandOption } from "@/context/command"
-import { Icon } from "@opencode-ai/ui/icon"
+import { Icon } from "@tribunus/ui/icon"
 import { useInspector } from "@/context/inspector"
 
 type PaletteCommand = CommandOption & {

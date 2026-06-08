@@ -3,7 +3,7 @@ import { decode64 } from "@/utils/base64"
 import { useParams } from "@solidjs/router"
 import { Iterable, pipe } from "effect"
 import { createMemo } from "solid-js"
-import type { Config, Provider } from "@opencode-ai/sdk/v2/client"
+import type { Config, Provider } from "@tribunus/sdk/v2/client"
 
 export const popularProviders = [
   "opencode",

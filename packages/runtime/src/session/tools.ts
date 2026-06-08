@@ -1,0 +1,248 @@
+import { Agent } from "@/agent/agent"
+import { Provider } from "@/provider/provider"
+import { ProviderTransform } from "@/provider/transform"
+import { MCP } from "@/mcp"
+import { Permission } from "@/permission"
+import { Tool } from "@/tool/tool"
+import { ToolJsonSchema } from "@/tool/json-schema"
+import { ToolRegistry } from "@/tool/registry"
+import { Truncate } from "@/tool/truncate"
+import * as TypedResult from "@/tool/typed-result"
+import * as ToolCache from "@/tool/cache"
+import { ModelID } from "@/provider/schema"
+import { Plugin } from "@/plugin"
+import type { TaskPromptOps } from "@/tool/task"
+import { type Tool as AITool, tool, jsonSchema, type ToolExecutionOptions, asSchema } from "ai"
+import { Effect, Option, Semaphore } from "effect"
+import { MessageV2 } from "./message-v2"
+import * as Session from "./session"
+import { SessionProcessor } from "./processor"
+import { PartID } from "./schema"
+import * as Log from "@tribunus/core/util/log"
+import { EffectBridge } from "@/effect/bridge"
+import { Bus } from "@/bus"
+import * as Execution from "@/tool/execution"
+import { PhaseGate } from "@/lifecycle/gate"
+
+const log = Log.create({ service: "session.tools" })
+
+export const resolve = Effect.fn("SessionTools.resolve")(function* (input: {
+  agent: Agent.Info
+  model: Provider.Model
+  session: Session.Info
+  processor: Pick<SessionProcessor.Handle, "message" | "updateToolCall">
+  bypassAgentCheck: boolean
+  messages: MessageV2.WithParts[]
+  promptOps: TaskPromptOps
+}) {
+  using _ = log.time("resolveTools")
+  const tools: Record<string, AITool> = {}
+  const run = yield* EffectBridge.make()
+  const plugin = yield* Plugin.Service
+  const permission = yield* Permission.Service
+  const registry = yield* ToolRegistry.Service
+  const mcp = yield* MCP.Service
+  const truncate = yield* Truncate.Service
+  const readSemaphore = yield* Semaphore.make(10)
+  const writeSemaphore = yield* Semaphore.make(3)
+  const phaseGate = yield* Effect.serviceOption(PhaseGate.Service)
+
+  const context = (args: Record<string, unknown>, options: ToolExecutionOptions): Tool.Context => ({
+    sessionID: input.session.id,
+    abort: options.abortSignal!,
+    messageID: input.processor.message.id,
+    callID: options.toolCallId,
+    extra: { model: input.model, bypassAgentCheck: input.bypassAgentCheck, promptOps: input.promptOps },
+    agent: input.agent.name,
+    messages: input.messages,
+    metadata: (val) =>
+      input.processor.updateToolCall(options.toolCallId, (match) => {
+        if (!["running", "pending"].includes(match.state.status)) return match
+        return {
+          ...match,
+          state: {
+            title: val.title,
+            metadata: val.metadata,
+            status: "running",
+            input: args,
+            time: { start: Date.now() },
+          },
+        }
+      }),
+    ask: (req) =>
+      permission
+        .ask({
+          ...req,
+          sessionID: input.session.id,
+          tool: { messageID: input.processor.message.id, callID: options.toolCallId },
+          ruleset: Permission.merge(input.agent.permission, input.session.permission ?? []),
+        })
+        .pipe(Effect.orDie),
+  })
+
+  for (const item of yield* registry.tools({
+    modelID: ModelID.make(input.model.api.id),
+    providerID: input.model.providerID,
+    agent: input.agent,
+  })) {
+    const schema = ProviderTransform.schema(input.model, ToolJsonSchema.fromTool(item))
+    tools[item.id] = tool({
+      description: item.description,
+      inputSchema: jsonSchema(schema),
+      execute(args, options) {
+        const toolSemaphore = (item as any).cacheable ? readSemaphore : writeSemaphore
+        return run.promise(
+          toolSemaphore.withPermit(
+            Effect.gen(function* () {
+              const ctx = context(args, options)
+              // Phase gate: reject tools not allowed by the current lifecycle phase
+              if (Option.isSome(phaseGate)) {
+                yield* phaseGate.value.checkAllowed(item.id)
+              }
+              yield* plugin.trigger(
+                "tool.execute.before",
+                { tool: item.id, sessionID: ctx.sessionID, callID: ctx.callID },
+                { args },
+              )
+              // Wrap execution in TypedResult so all tool results carry typed
+              // failure info + suggested next actions, even on defects.
+              const result = yield* TypedResult.wrapExecute(
+                item.id,
+                item.execute(args, ctx) as Effect.Effect<Tool.ExecuteResult, never, any>,
+              )
+              // Invalidate read cache for write tools (non-cacheable tools mutate state)
+              if (!(item as any).cacheable) {
+                const cacheOption = yield* Effect.serviceOption(ToolCache.Service)
+                if (Option.isSome(cacheOption)) {
+                  const beforeStats = yield* cacheOption.value.stats()
+                  yield* cacheOption.value.invalidate()
+                  yield* Effect.annotateCurrentSpan({
+                    "cache.invalidated": true,
+                    "cache.invalidation_scope": "full",
+                    "cache.invalidation_entries": beforeStats.size,
+                    "cache.invalidation_bytes": beforeStats.estimatedBytes,
+                    "cache.invalidation_trigger_tool": item.id,
+                  })
+                }
+              }
+              const output = {
+                ...result,
+                attachments: result.attachments?.map((attachment) => ({
+                  ...attachment,
+                  id: PartID.ascending(),
+                  sessionID: ctx.sessionID,
+                  messageID: input.processor.message.id,
+                })),
+              }
+              yield* plugin.trigger(
+                "tool.execute.after",
+                { tool: item.id, sessionID: ctx.sessionID, callID: ctx.callID, args, status: (result as any).metadata?.toolStatus ?? "succeeded" },
+                output,
+              )
+              return output
+            }).pipe(
+              Effect.withSpan("Tool.execute", {
+                attributes: {
+                  "tool.name": item.id,
+                  "session.id": input.session.id,
+                  "message.id": input.processor.message.id,
+                  "tool.type": "builtin",
+                },
+              }),
+            ),
+          ),
+        )
+      },
+    })
+  }
+
+  for (const [key, item] of Object.entries(yield* mcp.tools())) {
+    const execute = item.execute
+    if (!execute) continue
+
+    const schema = yield* Effect.promise(() => Promise.resolve(asSchema(item.inputSchema).jsonSchema))
+    const transformed = ProviderTransform.schema(input.model, schema)
+    item.inputSchema = jsonSchema(transformed)
+    item.execute = (args, opts) =>
+      run.promise(
+        Effect.gen(function* () {
+          const ctx = context(args, opts)
+          yield* plugin.trigger(
+            "tool.execute.before",
+            { tool: key, sessionID: ctx.sessionID, callID: opts.toolCallId },
+            { args },
+          )
+          const result: Awaited<ReturnType<NonNullable<typeof execute>>> = yield* Effect.gen(function* () {
+            yield* ctx.ask({ permission: key, metadata: {}, patterns: ["*"], always: ["*"] })
+            return yield* Effect.promise(() => execute(args, opts))
+          }).pipe(
+            Effect.withSpan("Tool.execute", {
+              attributes: {
+                "tool.name": key,
+                "tool.call_id": opts.toolCallId,
+                "session.id": ctx.sessionID,
+                "message.id": input.processor.message.id,
+                "tool.type": "mcp",
+              },
+            }),
+          )
+          const mcpStatus = (result as { isError?: boolean })?.isError ? "failed" : "succeeded"
+          yield* plugin.trigger(
+            "tool.execute.after",
+            { tool: key, sessionID: ctx.sessionID, callID: opts.toolCallId, args, status: mcpStatus },
+            result,
+          )
+
+          const textParts: string[] = []
+          const attachments: Omit<MessageV2.FilePart, "id" | "sessionID" | "messageID">[] = []
+          for (const contentItem of result.content) {
+            if (contentItem.type === "text") textParts.push(contentItem.text)
+            else if (contentItem.type === "image") {
+              attachments.push({
+                type: "file",
+                mime: contentItem.mimeType,
+                url: `data:${contentItem.mimeType};base64,${contentItem.data}`,
+              })
+            } else if (contentItem.type === "resource") {
+              const { resource } = contentItem
+              if (resource.text) textParts.push(resource.text)
+              if (resource.blob) {
+                attachments.push({
+                  type: "file",
+                  mime: resource.mimeType ?? "application/octet-stream",
+                  url: `data:${resource.mimeType ?? "application/octet-stream"};base64,${resource.blob}`,
+                  filename: resource.uri,
+                })
+              }
+            }
+          }
+
+          const truncated = yield* truncate.output(textParts.join("\n\n"), {}, input.agent)
+          const metadata: Record<string, unknown> = {
+            toolStatus: mcpStatus,
+            truncated: truncated.truncated,
+            ...(truncated.truncated && { outputPath: truncated.outputPath }),
+          }
+
+          const output = {
+            title: "",
+            metadata,
+            output: truncated.content,
+            attachments: attachments.map((attachment) => ({
+              ...attachment,
+              id: PartID.ascending(),
+              sessionID: ctx.sessionID,
+              messageID: input.processor.message.id,
+            })),
+            content: result.content,
+          }
+          return output
+        }),
+      )
+    tools[key] = item
+  }
+
+  return tools
+})
+
+export * as SessionTools from "./tools"

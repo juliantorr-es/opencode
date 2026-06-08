@@ -6,6 +6,23 @@
 use serde::{Deserialize, Serialize};
 use std::time::{SystemTime, UNIX_EPOCH};
 
+// Frozen capability names — do not rename without ABI revision.
+pub const CAP_IOSURFACE_CREATION: &str = "iosurface_creation";
+pub const CAP_IOSURFACE_PIXEL_BUFFER: &str = "iosurface_pixel_buffer";
+pub const CAP_FP16_PIXELBUFFER_MULTIARRAYS: &str = "fp16_pixelbuffer_multiarrays";
+pub const CAP_EXTERNAL_HOST_MEMORY: &str = "external_host_memory";
+pub const CAP_IOSURFACE_FP16_BRIDGE: &str = "iosurface_fp16_bridge";
+pub const CAP_COREML_IOSURFACE_INPUT: &str = "coreml_iosurface_input";
+pub const CAP_COREML_OUTPUT_BACKING: &str = "coreml_output_backing";
+pub const CAP_MLX_IOSURFACE_EXTERNAL_ARRAY: &str = "mlx_iosurface_external_array";
+pub const CAP_MLX_COREML_ROUND_TRIP: &str = "mlx_coreml_round_trip";
+pub const CAP_COREML_STATEFUL_MODELS: &str = "coreml_stateful_models";
+pub const CAP_COREML_MULTIFUNCTION_MODELS: &str = "coreml_multifunction_models";
+pub const CAP_COREML_ASYNC_STATEFUL: &str = "coreml_async_stateful_prediction";
+pub const CAP_ARENA_POOLING: &str = "arena_pooling";
+pub const CAP_STATE_LEASE_ISOLATION: &str = "state_lease_isolation";
+pub const CAP_HYBRID_COMPUTE_IMAGE: &str = "hybrid_compute_image";
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SharedTensorCapabilityReport {
     // Storage

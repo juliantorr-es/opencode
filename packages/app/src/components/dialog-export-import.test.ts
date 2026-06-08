@@ -82,7 +82,7 @@ describe("DialogExport", () => {
       h(exportMod.DialogExport, {}),
     )
     expect(document.body.textContent).toContain("dialog.export.button")
-    // DialogExport uses a plain <button> element, not @opencode-ai/ui Button
+    // DialogExport uses a plain <button> element, not @tribunus/ui Button
     const buttons = document.querySelectorAll<HTMLButtonElement>("button")
     const exportBtn = [...buttons].find((b) => b.textContent?.trim() === "dialog.export.button")
     expect(exportBtn).toBeTruthy()

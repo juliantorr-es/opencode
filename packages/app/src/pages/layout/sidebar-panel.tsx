@@ -1,10 +1,10 @@
 import { createMemo, For, Show, type Accessor, type JSX } from "solid-js"
 import { Dialog } from "@kobalte/core/dialog"
-import { Splash } from "@opencode-ai/ui/logo"
-import { Button } from "@opencode-ai/ui/button"
-import { DropdownMenu } from "@opencode-ai/ui/dropdown-menu"
-import { IconButton } from "@opencode-ai/ui/icon-button"
-import { Tooltip } from "@opencode-ai/ui/tooltip"
+import { Splash } from "@tribunus/ui/logo"
+import { Button } from "@tribunus/ui/button"
+import { DropdownMenu } from "@tribunus/ui/dropdown-menu"
+import { IconButton } from "@tribunus/ui/icon-button"
+import { Tooltip } from "@tribunus/ui/tooltip"
 import {
   DragDropProvider,
   DragDropSensors,
@@ -13,8 +13,8 @@ import {
   closestCenter,
 } from "@thisbeyond/solid-dnd"
 import type { DragEvent } from "@thisbeyond/solid-dnd"
-import { base64Encode } from "@opencode-ai/core/util/encode"
-import { getFilename } from "@opencode-ai/core/util/path"
+import { base64Encode } from "@tribunus/core/util/encode"
+import { getFilename } from "@tribunus/core/util/path"
 import { useParams } from "@solidjs/router"
 import { useLayout, type LocalProject } from "@/context/layout"
 import { useNotification } from "@/context/notification"

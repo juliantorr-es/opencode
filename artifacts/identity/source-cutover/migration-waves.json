@@ -1,0 +1,636 @@
+{
+  "waves": [
+    {
+      "wave": 1,
+      "label": "Leaf Packages",
+      "description": "Packages with no first-party workspace dependents — safe to rename without cascading.",
+      "packages": [
+        {
+          "currentName": "@opencode-ai/app",
+          "intendedName": "@tribunus/app",
+          "path": "packages/app",
+          "renameDirectory": false,
+          "targetPath": "packages/app",
+          "dependsOn": [
+            "@opencode-ai/core",
+            "@opencode-ai/sdk",
+            "@opencode-ai/ui"
+          ],
+          "importReferences": [
+            {
+              "consumer": "tribunus",
+              "consumerPath": "packages/desktop",
+              "depType": "devDependencies"
+            }
+          ]
+        },
+        {
+          "currentName": "@tribunus/console-app",
+          "intendedName": "@tribunus/console-app",
+          "path": "packages/console/app",
+          "renameDirectory": false,
+          "targetPath": "packages/console/app",
+          "dependsOn": [
+            "@opencode-ai/console-core",
+            "@opencode-ai/console-mail",
+            "@opencode-ai/console-resource",
+            "@opencode-ai/ui"
+          ],
+          "importReferences": []
+        },
+        {
+          "currentName": "@tribunus/console-function",
+          "intendedName": "@tribunus/console-function",
+          "path": "packages/console/function",
+          "renameDirectory": false,
+          "targetPath": "packages/console/function",
+          "dependsOn": [
+            "@opencode-ai/console-core",
+            "@opencode-ai/console-resource"
+          ],
+          "importReferences": []
+        },
+        {
+          "currentName": "@tribunus/console-support",
+          "intendedName": "@tribunus/console-support",
+          "path": "packages/console/support",
+          "renameDirectory": false,
+          "targetPath": "packages/console/support",
+          "dependsOn": [
+            "@opencode-ai/console-core"
+          ],
+          "importReferences": []
+        },
+        {
+          "currentName": "@tribunus/containers",
+          "intendedName": "@tribunus/containers",
+          "path": "packages/containers",
+          "renameDirectory": false,
+          "targetPath": "packages/containers",
+          "dependsOn": [],
+          "importReferences": []
+        },
+        {
+          "currentName": "@tribunus/enterprise",
+          "intendedName": "@tribunus/enterprise",
+          "path": "packages/enterprise",
+          "renameDirectory": false,
+          "targetPath": "packages/enterprise",
+          "dependsOn": [
+            "@opencode-ai/core",
+            "@opencode-ai/ui"
+          ],
+          "importReferences": []
+        },
+        {
+          "currentName": "@tribunus/function",
+          "intendedName": "@tribunus/function",
+          "path": "packages/function",
+          "renameDirectory": false,
+          "targetPath": "packages/function",
+          "dependsOn": [],
+          "importReferences": []
+        },
+        {
+          "currentName": "@opencode-ai/http-recorder",
+          "intendedName": "@tribunus/http-recorder",
+          "path": "packages/http-recorder",
+          "renameDirectory": false,
+          "targetPath": "packages/http-recorder",
+          "dependsOn": [],
+          "importReferences": [
+            {
+              "consumer": "llm",
+              "consumerPath": "packages/llm",
+              "depType": "devDependencies"
+            },
+            {
+              "consumer": "opencode",
+              "consumerPath": "packages/opencode",
+              "depType": "devDependencies"
+            }
+          ]
+        },
+        {
+          "currentName": "@opencode-ai/script",
+          "intendedName": "@tribunus/script",
+          "path": "packages/script",
+          "renameDirectory": false,
+          "targetPath": "packages/script",
+          "dependsOn": [],
+          "importReferences": [
+            {
+              "consumer": "opencode",
+              "consumerPath": "packages/opencode",
+              "depType": "devDependencies"
+            }
+          ]
+        },
+        {
+          "currentName": "@opencode-ai/slack",
+          "intendedName": "@tribunus/slack",
+          "path": "packages/slack",
+          "renameDirectory": false,
+          "targetPath": "packages/slack",
+          "dependsOn": [
+            "@opencode-ai/sdk"
+          ],
+          "importReferences": []
+        },
+        {
+          "currentName": "@tribunus/stats-app",
+          "intendedName": "@tribunus/stats-app",
+          "path": "packages/stats/app",
+          "renameDirectory": false,
+          "targetPath": "packages/stats/app",
+          "dependsOn": [
+            "@opencode-ai/stats-core",
+            "@opencode-ai/ui"
+          ],
+          "importReferences": []
+        },
+        {
+          "currentName": "@tribunus/stats-server",
+          "intendedName": "@tribunus/stats-server",
+          "path": "packages/stats/server",
+          "renameDirectory": false,
+          "targetPath": "packages/stats/server",
+          "dependsOn": [
+            "@opencode-ai/stats-core"
+          ],
+          "importReferences": []
+        },
+        {
+          "currentName": "@tribunus/storybook",
+          "intendedName": "@tribunus/storybook",
+          "path": "packages/storybook",
+          "renameDirectory": false,
+          "targetPath": "packages/storybook",
+          "dependsOn": [],
+          "importReferences": []
+        },
+        {
+          "currentName": "@opencode-ai/web",
+          "intendedName": "@tribunus/web",
+          "path": "packages/web",
+          "renameDirectory": false,
+          "targetPath": "packages/web",
+          "dependsOn": [],
+          "importReferences": []
+        }
+      ]
+    },
+    {
+      "wave": 2,
+      "label": "Foundation Packages",
+      "description": "Core infrastructure packages (core, llm, ui, protocol, compute) — broad consumer base, renamed early to unblock downstream.",
+      "packages": [
+        {
+          "currentName": "@opencode-ai/core",
+          "intendedName": "@tribunus/core",
+          "path": "packages/core",
+          "renameDirectory": false,
+          "targetPath": "packages/core",
+          "dependsOn": [],
+          "importReferences": [
+            {
+              "consumer": "app",
+              "consumerPath": "packages/app",
+              "depType": "dependencies"
+            },
+            {
+              "consumer": "ui",
+              "consumerPath": "packages/ui",
+              "depType": "dependencies"
+            },
+            {
+              "consumer": "opencode",
+              "consumerPath": "packages/opencode",
+              "depType": "devDependencies"
+            },
+            {
+              "consumer": "enterprise",
+              "consumerPath": "packages/enterprise",
+              "depType": "dependencies"
+            }
+          ]
+        },
+        {
+          "currentName": "@opencode-ai/llm",
+          "intendedName": "@tribunus/llm",
+          "path": "packages/llm",
+          "renameDirectory": false,
+          "targetPath": "packages/llm",
+          "dependsOn": [],
+          "importReferences": [
+            {
+              "consumer": "opencode",
+              "consumerPath": "packages/opencode",
+              "depType": "dependencies"
+            }
+          ]
+        },
+        {
+          "currentName": "@opencode-ai/ui",
+          "intendedName": "@tribunus/ui",
+          "path": "packages/ui",
+          "renameDirectory": false,
+          "targetPath": "packages/ui",
+          "dependsOn": [
+            "@opencode-ai/core",
+            "@opencode-ai/sdk"
+          ],
+          "importReferences": [
+            {
+              "consumer": "app",
+              "consumerPath": "packages/app",
+              "depType": "dependencies"
+            },
+            {
+              "consumer": "tribunus",
+              "consumerPath": "packages/desktop",
+              "depType": "devDependencies"
+            },
+            {
+              "consumer": "opencode",
+              "consumerPath": "packages/opencode",
+              "depType": "dependencies"
+            },
+            {
+              "consumer": "enterprise",
+              "consumerPath": "packages/enterprise",
+              "depType": "dependencies"
+            },
+            {
+              "consumer": "storybook",
+              "consumerPath": "packages/storybook",
+              "depType": "devDependencies"
+            },
+            {
+              "consumer": "stats-app",
+              "consumerPath": "packages/stats/app",
+              "depType": "dependencies"
+            },
+            {
+              "consumer": "console-app",
+              "consumerPath": "packages/console/app",
+              "depType": "dependencies"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "wave": 3,
+      "label": "SDK & Plugin",
+      "description": "SDK consumed by public consumers, and Plugin (depends on SDK) — must be renamed before consumer wave.",
+      "packages": [
+        {
+          "currentName": "@opencode-ai/plugin",
+          "intendedName": "@tribunus/plugin",
+          "path": "packages/plugin",
+          "renameDirectory": false,
+          "targetPath": "packages/plugin",
+          "dependsOn": [
+            "@opencode-ai/sdk"
+          ],
+          "importReferences": [
+            {
+              "consumer": "opencode",
+              "consumerPath": "packages/opencode",
+              "depType": "dependencies"
+            }
+          ]
+        },
+        {
+          "currentName": "@opencode-ai/sdk",
+          "intendedName": "@tribunus/sdk",
+          "path": "packages/sdk/js",
+          "renameDirectory": false,
+          "targetPath": "packages/sdk/js",
+          "dependsOn": [
+            "@tribunus/protocol"
+          ],
+          "importReferences": [
+            {
+              "consumer": "app",
+              "consumerPath": "packages/app",
+              "depType": "dependencies"
+            },
+            {
+              "consumer": "ui",
+              "consumerPath": "packages/ui",
+              "depType": "dependencies"
+            },
+            {
+              "consumer": "opencode",
+              "consumerPath": "packages/opencode",
+              "depType": "dependencies"
+            },
+            {
+              "consumer": "plugin",
+              "consumerPath": "packages/plugin",
+              "depType": "dependencies"
+            },
+            {
+              "consumer": "slack",
+              "consumerPath": "packages/slack",
+              "depType": "dependencies"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "wave": 4,
+      "label": "Consumer Packages",
+      "description": "Application-level packages consuming foundation, SDK, and UI packages.",
+      "packages": [
+        {
+          "currentName": "@opencode-ai/console-core",
+          "intendedName": "@tribunus/console-core",
+          "path": "packages/console/core",
+          "renameDirectory": false,
+          "targetPath": "packages/console/core",
+          "dependsOn": [
+            "@opencode-ai/console-mail",
+            "@opencode-ai/console-resource"
+          ],
+          "importReferences": [
+            {
+              "consumer": "console-app",
+              "consumerPath": "packages/console/app",
+              "depType": "dependencies"
+            },
+            {
+              "consumer": "console-function",
+              "consumerPath": "packages/console/function",
+              "depType": "dependencies"
+            },
+            {
+              "consumer": "console-support",
+              "consumerPath": "packages/console/support",
+              "depType": "dependencies"
+            }
+          ]
+        },
+        {
+          "currentName": "@opencode-ai/console-mail",
+          "intendedName": "@tribunus/console-mail",
+          "path": "packages/console/mail",
+          "renameDirectory": false,
+          "targetPath": "packages/console/mail",
+          "dependsOn": [],
+          "importReferences": [
+            {
+              "consumer": "console-core",
+              "consumerPath": "packages/console/core",
+              "depType": "dependencies"
+            },
+            {
+              "consumer": "console-app",
+              "consumerPath": "packages/console/app",
+              "depType": "dependencies"
+            }
+          ]
+        },
+        {
+          "currentName": "@opencode-ai/console-resource",
+          "intendedName": "@tribunus/console-resource",
+          "path": "packages/console/resource",
+          "renameDirectory": false,
+          "targetPath": "packages/console/resource",
+          "dependsOn": [],
+          "importReferences": [
+            {
+              "consumer": "console-core",
+              "consumerPath": "packages/console/core",
+              "depType": "dependencies"
+            },
+            {
+              "consumer": "console-app",
+              "consumerPath": "packages/console/app",
+              "depType": "dependencies"
+            },
+            {
+              "consumer": "console-function",
+              "consumerPath": "packages/console/function",
+              "depType": "dependencies"
+            }
+          ]
+        },
+        {
+          "currentName": "@opencode-ai/stats-core",
+          "intendedName": "@tribunus/stats-core",
+          "path": "packages/stats/core",
+          "renameDirectory": false,
+          "targetPath": "packages/stats/core",
+          "dependsOn": [],
+          "importReferences": [
+            {
+              "consumer": "stats-app",
+              "consumerPath": "packages/stats/app",
+              "depType": "dependencies"
+            },
+            {
+              "consumer": "stats-server",
+              "consumerPath": "packages/stats/server",
+              "depType": "dependencies"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "wave": 5,
+      "label": "Runtime Package",
+      "description": "The main opencode runtime npm name change (opencode → @tribunus/runtime); last npm rename before directory move.",
+      "packages": [
+        {
+          "currentName": "opencode",
+          "intendedName": "@tribunus/runtime",
+          "path": "packages/opencode",
+          "renameDirectory": false,
+          "targetPath": "packages/opencode",
+          "dependsOn": [
+            "@opencode-ai/llm",
+            "@opencode-ai/plugin",
+            "@opencode-ai/sdk",
+            "@opencode-ai/ui"
+          ],
+          "importReferences": [
+            {
+              "consumer": "web",
+              "consumerPath": "packages/web",
+              "depType": "devDependencies"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "wave": 6,
+      "label": "Directory Rename",
+      "description": "Rename packages/opencode → packages/runtime; all npm renames already applied, only filesystem path references and imports remain.",
+      "packages": [
+        {
+          "currentName": "opencode",
+          "intendedName": "@tribunus/runtime",
+          "path": "packages/opencode",
+          "renameDirectory": true,
+          "targetPath": "packages/runtime",
+          "dependsOn": [],
+          "importReferences": []
+        }
+      ]
+    }
+  ],
+  "graph": {
+    "@opencode-ai/core": [],
+    "@opencode-ai/app": [
+      "@opencode-ai/core",
+      "@opencode-ai/sdk",
+      "@opencode-ai/ui"
+    ],
+    "tribunus": [],
+    "@opencode-ai/web": [],
+    "@opencode-ai/ui": [
+      "@opencode-ai/core",
+      "@opencode-ai/sdk"
+    ],
+    "@opencode-ai/llm": [],
+    "@tribunus/compute": [
+      "@tribunus/compute-native"
+    ],
+    "@tribunus/compute-native": [],
+    "@tribunus/protocol": [],
+    "opencode": [
+      "@opencode-ai/llm",
+      "@opencode-ai/plugin",
+      "@opencode-ai/sdk",
+      "@opencode-ai/ui"
+    ],
+    "@opencode-ai/sdk": [
+      "@tribunus/protocol"
+    ],
+    "@opencode-ai/plugin": [
+      "@opencode-ai/sdk"
+    ],
+    "@opencode-ai/script": [],
+    "@opencode-ai/slack": [
+      "@opencode-ai/sdk"
+    ],
+    "@tribunus/enterprise": [
+      "@opencode-ai/core",
+      "@opencode-ai/ui"
+    ],
+    "@opencode-ai/http-recorder": [],
+    "@tribunus/function": [],
+    "@opencode-ai/storybook": [],
+    "@tribunus/containers": [],
+    "@tribunus-ai/github-pages-mcp": [],
+    "@opencode-ai/stats-core": [],
+    "@tribunus/stats-app": [
+      "@opencode-ai/stats-core",
+      "@opencode-ai/ui"
+    ],
+    "@tribunus/stats-server": [
+      "@tribunus/stats-core"
+    ],
+    "@opencode-ai/console-core": [
+      "@opencode-ai/console-mail",
+      "@opencode-ai/console-resource"
+    ],
+    "@tribunus/console-app": [
+      "@opencode-ai/console-core",
+      "@opencode-ai/console-mail",
+      "@opencode-ai/console-resource",
+      "@opencode-ai/ui"
+    ],
+    "@tribunus/console-function": [
+      "@opencode-ai/console-core",
+      "@opencode-ai/console-resource"
+    ],
+    "@tribunus/console-support": [
+      "@opencode-ai/console-core"
+    ],
+    "@opencode-ai/console-mail": [],
+    "@opencode-ai/console-resource": []
+  },
+  "reverseGraph": {
+    "@opencode-ai/core": [
+      "@opencode-ai/app",
+      "@tribunus/enterprise",
+      "@opencode-ai/ui"
+    ],
+    "@opencode-ai/app": [],
+    "tribunus": [],
+    "@opencode-ai/web": [],
+    "@opencode-ai/ui": [
+      "@opencode-ai/app",
+      "@tribunus/console-app",
+      "@tribunus/enterprise",
+      "@tribunus/stats-app",
+      "opencode"
+    ],
+    "@opencode-ai/llm": [
+      "opencode"
+    ],
+    "@tribunus/compute": [],
+    "@tribunus/compute-native": [
+      "@tribunus/compute"
+    ],
+    "@tribunus/protocol": [
+      "@opencode-ai/sdk"
+    ],
+    "opencode": [],
+    "@opencode-ai/sdk": [
+      "@opencode-ai/app",
+      "@opencode-ai/plugin",
+      "@opencode-ai/slack",
+      "@opencode-ai/ui",
+      "opencode"
+    ],
+    "@opencode-ai/plugin": [
+      "opencode"
+    ],
+    "@opencode-ai/script": [],
+    "@opencode-ai/slack": [],
+    "@tribunus/enterprise": [],
+    "@opencode-ai/http-recorder": [],
+    "@tribunus/function": [],
+    "@opencode-ai/storybook": [],
+    "@tribunus/containers": [],
+    "@tribunus-ai/github-pages-mcp": [],
+    "@tribunus/stats-core": [
+      "@tribunus/stats-app",
+      "@tribunus/stats-server"
+    ],
+    "@tribunus/stats-app": [],
+    "@tribunus/stats-server": [],
+    "@opencode-ai/console-core": [
+      "@tribunus/console-app",
+      "@tribunus/console-function",
+      "@tribunus/console-support"
+    ],
+    "@tribunus/console-function": [],
+    "@tribunus/console-support": [],
+    "@opencode-ai/console-mail": [
+      "@tribunus/console-app",
+      "@opencode-ai/console-core"
+    ],
+    "@opencode-ai/console-resource": [
+      "@tribunus/console-app",
+      "@opencode-ai/console-core",
+      "@tribunus/console-function"
+    ]
+  },
+  "summary": {
+    "totalFirstParty": 29,
+    "totalRenamed": 24,
+    "totalWaves": 6,
+    "directoryRenames": [
+      "packages/opencode → packages/runtime"
+    ]
+  }
+}

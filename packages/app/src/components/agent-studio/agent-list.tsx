@@ -1,5 +1,5 @@
-import { Icon } from "@opencode-ai/ui/icon"
-import { IconButton } from "@opencode-ai/ui/icon-button"
+import { Icon } from "@tribunus/ui/icon"
+import { IconButton } from "@tribunus/ui/icon-button"
 import { type ComponentProps, For, Show, splitProps } from "solid-js"
 import type { AgentStudioConfig } from "./types"
 import { ROLE_COLORS } from "./types"

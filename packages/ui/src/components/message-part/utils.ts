@@ -1,5 +1,5 @@
-import { getDirectory as _getDirectory, getFilename } from "@opencode-ai/core/util/path"
-import type { Session, Part as PartType } from "@opencode-ai/sdk/v2"
+import { getDirectory as _getDirectory, getFilename } from "@tribunus/core/util/path"
+import type { Session, Part as PartType } from "@tribunus/sdk/v2"
 import { type UiI18n, useI18n } from "../../context/i18n"
 import { useData } from "../../context"
 import type { IconProps } from "../icon"

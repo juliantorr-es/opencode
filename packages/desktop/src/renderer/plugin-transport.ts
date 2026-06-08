@@ -12,7 +12,7 @@
  * cross-plugin collisions on the wire.
  */
 
-import type { PluginTransport } from "@opencode-ai/plugin/desktop"
+import type { PluginTransport } from "@tribunus/plugin/desktop"
 
 // ---------------------------------------------------------------------------
 // Factory

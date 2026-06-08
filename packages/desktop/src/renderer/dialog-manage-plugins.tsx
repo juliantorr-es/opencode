@@ -1,9 +1,9 @@
 import { Component, createSignal, For, Show } from "solid-js"
 import { t } from "./i18n"
-import { Dialog } from "@opencode-ai/ui/dialog"
-import { Button } from "@opencode-ai/ui/button"
-import { Switch } from "@opencode-ai/ui/switch"
-import { TextField } from "@opencode-ai/ui/text-field"
+import { Dialog } from "@tribunus/ui/dialog"
+import { Button } from "@tribunus/ui/button"
+import { Switch } from "@tribunus/ui/switch"
+import { TextField } from "@tribunus/ui/text-field"
 import type { PluginConfigEntry } from "../preload/types"
 
 type ViewMode = "list" | "install"

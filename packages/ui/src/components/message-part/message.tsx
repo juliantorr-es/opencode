@@ -24,7 +24,7 @@ import {
   TextPart,
   ToolPart,
   UserMessage,
-} from "@opencode-ai/sdk/v2"
+} from "@tribunus/sdk/v2"
 import { useData } from "../../context"
 import { useFileComponent } from "../../context/file"
 import { useDialog } from "../../context/dialog"
@@ -41,8 +41,8 @@ import { ToolStatusTitle } from "../tool-status-title"
 import { Collapsible } from "../collapsible"
 import { Markdown } from "../markdown"
 import { ImagePreview } from "../image-preview"
-import { checksum } from "@opencode-ai/core/util/encode"
-import { getFilename } from "@opencode-ai/core/util/path"
+import { checksum } from "@tribunus/core/util/encode"
+import { getFilename } from "@tribunus/core/util/path"
 import { DiffChanges } from "../diff-changes"
 import { Checkbox } from "../checkbox"
 import { FileIcon } from "../file-icon"

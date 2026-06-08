@@ -1,7 +1,7 @@
 import { createMemo, createSignal, onCleanup } from "solid-js"
 import { createStore, produce } from "solid-js/store"
-import type { Event } from "@opencode-ai/sdk/v2/client"
-import { createSimpleContext } from "@opencode-ai/ui/context"
+import type { Event } from "@tribunus/sdk/v2/client"
+import { createSimpleContext } from "@tribunus/ui/context"
 import { useServerSDK } from "./server-sdk"
 
 // ── Public Types ──

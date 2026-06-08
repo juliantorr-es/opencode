@@ -1,9 +1,9 @@
 import { createSignal } from "solid-js"
-import { Dialog } from "@opencode-ai/ui/dialog"
-import { Button } from "@opencode-ai/ui/button"
-import { useDialog } from "@opencode-ai/ui/context/dialog"
-import { Splash } from "@opencode-ai/ui/logo"
-import { Icon } from "@opencode-ai/ui/icon"
+import { Dialog } from "@tribunus/ui/dialog"
+import { Button } from "@tribunus/ui/button"
+import { useDialog } from "@tribunus/ui/context/dialog"
+import { Splash } from "@tribunus/ui/logo"
+import { Icon } from "@tribunus/ui/icon"
 import { useSettings } from "@/context/settings"
 
 export function DialogOnboarding(props: { startAt?: number }) {

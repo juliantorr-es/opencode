@@ -3,7 +3,7 @@ import { useArtifacts, type Artifact } from "@/context/artifact"
 import { applyArtifactEventV0 } from "@/context/artifact-event"
 import { commandResultToArtifactEventsV0 } from "@/context/artifact-command-source"
 import { ArtifactViewer } from "@/components/artifacts/artifact-viewer"
-import { Button } from "@opencode-ai/ui/button"
+import { Button } from "@tribunus/ui/button"
 
 export interface ArtifactRailProps {
   sessionID: string

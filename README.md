@@ -57,7 +57,7 @@ bun install
 cd packages/desktop && bun run typecheck
 
 # Run tests
-cd packages/opencode && bun test
+cd packages/runtime && bun test
 
 # Run the desktop app (dev mode)
 bun run dev:desktop

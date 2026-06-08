@@ -115,23 +115,23 @@ These 14 errors in `src/plugin/index.ts` + 2 in `src/plugin/github-copilot/copil
 
 ## Files Changed
 
-1. `packages/opencode/src/mcp/auth.ts` — Flattened nested gen, catchAll→catchCause
-2. `packages/opencode/src/context/packet.ts` — catchAll→catchCause, freshness fields, Interface cast
-3. `packages/opencode/src/event/event-bridge.ts` — EventName import, boundary cast
-4. `packages/opencode/src/event/event-store.ts` — EventName import, boundary cast
-5. `packages/opencode/src/event/event-names.ts` — Added 10 missing event names
-6. `packages/opencode/src/mcp/index.ts` — Removed redundant oauth ternary
-7. `packages/opencode/src/plugin/index.ts` — tryPromise fix, Service.of() cast, syntax fixes
-8. `packages/opencode/src/event/agent-queries.ts` — annotations→annotate, Schema type fix
-9. `packages/opencode/src/storage/db.duckdb.ts` — DuckDBRawClient.all params
-10. `packages/opencode/src/id/id.ts` — dieSync→die
-11. `packages/opencode/src/campaign/projector.ts` — CampaignProjector→Service rename
-12. `packages/opencode/src/campaign/binder.ts` — EventName import, param type
-13. `packages/opencode/test/fixture/fixture.ts` — Layer type cast
-14. `packages/opencode/test/permission/next.test.ts` — Effect.void→Effect.succeed
-15. `packages/opencode/test/plugin/workspace-adapter.test.ts` — Effect.void→Effect.succeed
-16. `packages/opencode/test/server/httpapi-sdk.test.ts` — Effect.void→Effect.succeed
-17. `packages/opencode/test/server/httpapi-session.test.ts` — Effect.void→Effect.succeed
-18. `packages/opencode/test/server/project-init-git.test.ts` — Effect.void→Effect.succeed
-19. `packages/opencode/test/project/instance.test.ts` — Effect.void→Effect.succeed
+1. `packages/runtime/src/mcp/auth.ts` — Flattened nested gen, catchAll→catchCause
+2. `packages/runtime/src/context/packet.ts` — catchAll→catchCause, freshness fields, Interface cast
+3. `packages/runtime/src/event/event-bridge.ts` — EventName import, boundary cast
+4. `packages/runtime/src/event/event-store.ts` — EventName import, boundary cast
+5. `packages/runtime/src/event/event-names.ts` — Added 10 missing event names
+6. `packages/runtime/src/mcp/index.ts` — Removed redundant oauth ternary
+7. `packages/runtime/src/plugin/index.ts` — tryPromise fix, Service.of() cast, syntax fixes
+8. `packages/runtime/src/event/agent-queries.ts` — annotations→annotate, Schema type fix
+9. `packages/runtime/src/storage/db.duckdb.ts` — DuckDBRawClient.all params
+10. `packages/runtime/src/id/id.ts` — dieSync→die
+11. `packages/runtime/src/campaign/projector.ts` — CampaignProjector→Service rename
+12. `packages/runtime/src/campaign/binder.ts` — EventName import, param type
+13. `packages/runtime/test/fixture/fixture.ts` — Layer type cast
+14. `packages/runtime/test/permission/next.test.ts` — Effect.void→Effect.succeed
+15. `packages/runtime/test/plugin/workspace-adapter.test.ts` — Effect.void→Effect.succeed
+16. `packages/runtime/test/server/httpapi-sdk.test.ts` — Effect.void→Effect.succeed
+17. `packages/runtime/test/server/httpapi-session.test.ts` — Effect.void→Effect.succeed
+18. `packages/runtime/test/server/project-init-git.test.ts` — Effect.void→Effect.succeed
+19. `packages/runtime/test/project/instance.test.ts` — Effect.void→Effect.succeed
 20. `packages/app/src/test-utils/dialog-harness.tsx` — render cast

@@ -28,6 +28,9 @@ const OUTPUT_JSON = join(ARTIFACTS_DIR, "identity-inventory.before.json");
 const OUTPUT_SUMMARY = join(ARTIFACTS_DIR, "identity-inventory.before.summary.txt");
 const RECEIPT_JSON = join(ARTIFACTS_DIR, "identity-verification.receipt.json");
 const REPORT_TXT = join(ARTIFACTS_DIR, "identity-verification.report.txt");
+const BASELINE_MODE = process.argv.includes("--source-identity-baseline");
+const BASELINE_DIR = "artifacts/identity/source-cutover";
+const BASELINE_JSON = join(BASELINE_DIR, "baseline.v1.json");
 
 const IDENTITY_MANIFEST_PATH = "schemas/identity/tribunus-identity.v1.json";
 const REGISTRY_PATH = "schemas/identity/legacy-reference-registry.v1.json";
@@ -399,6 +402,9 @@ async function main(): Promise<never> {
   if (!existsSync(ARTIFACTS_DIR)) {
     mkdirSync(ARTIFACTS_DIR, { recursive: true });
   }
+  if (!existsSync(BASELINE_DIR)) {
+    mkdirSync(BASELINE_DIR, { recursive: true });
+  }
 
   // -- 1. Read the canonical identity manifest -----------------------------
   const identityManifest = readIdentityManifest(IDENTITY_MANIFEST_PATH);
@@ -474,6 +480,29 @@ async function main(): Promise<never> {
     catCount.set(occ.category, (catCount.get(occ.category) ?? 0) + 1);
   }
 
+  // -- Source Identity baseline metrics -----------------------------------
+  const firstPartyPackageRefs = result.occurrences.filter(
+    (o) => o.matched.includes("@opencode-ai"),
+  ).length;
+  const packagesOpenCodePathRefs = result.occurrences.filter(
+    (o) => o.file.startsWith("packages/opencode/"),
+  ).length;
+
+  if (BASELINE_MODE) {
+    const baseline = {
+      commit: getGitCommitSha(),
+      timestamp: new Date().toISOString(),
+      firstPartyPackageRefs,
+      packagesOpenCodePathRefs,
+      unresolvedTotal: unresolvedOccurrences.length,
+      categoryCounts: Object.fromEntries(catCount),
+    };
+    writeFileSync(resolve(BASELINE_JSON), JSON.stringify(baseline, null, 2) + "\n");
+    console.log(`\nSource identity baseline written to ${BASELINE_JSON}`);
+    console.log(JSON.stringify(baseline, null, 2));
+    process.exit(0);
+  }
+
   // -- 5. Detect STALE registry entries (registered but not found) ---------
   const staleEntries: RegistryEntry[] = [];
   const allOccurrencePatterns = new Set(
@@ -495,6 +524,21 @@ async function main(): Promise<never> {
   }
 
   // -- 6. V E R I F I C A T I O N   C H E C K S ---------------------------
+
+  // 6z. Source Identity baseline enforcement (first-party package refs)
+  if (!BASELINE_MODE && existsSync(BASELINE_JSON)) {
+    const baselineRaw = readFileSync(BASELINE_JSON, "utf-8");
+    const baseline = JSON.parse(baselineRaw);
+    if (firstPartyPackageRefs > baseline.firstPartyPackageRefs) {
+      failures.push(
+        `First-party package references increased from ${baseline.firstPartyPackageRefs} (baseline) to ${firstPartyPackageRefs} (current)`,
+      );
+    }
+  } else if (!BASELINE_MODE) {
+    console.warn(
+      `WARNING: No baseline found at ${BASELINE_JSON}. Run with --source-identity-baseline first.`,
+    );
+  }
 
   // 6a. Unauthorized legacy references (not in any registry category)
   if (unresolvedOccurrences.length > 0) {

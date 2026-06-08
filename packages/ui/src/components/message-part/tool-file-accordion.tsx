@@ -3,7 +3,7 @@ import { Accordion } from "../accordion"
 import { StickyAccordionHeader } from "../sticky-accordion-header"
 import { FileIcon } from "../file-icon"
 import { Icon } from "../icon"
-import { getFilename } from "@opencode-ai/core/util/path"
+import { getFilename } from "@tribunus/core/util/path"
 import { getDirectory } from "./utils"
 
 export function ToolFileAccordion(props: { path: string; actions?: JSX.Element; children: JSX.Element }) {

@@ -1,7 +1,7 @@
 import { createStore } from "solid-js/store"
 import { createMemo, createEffect, on, onCleanup } from "solid-js"
 import { same } from "@/utils/same"
-import type { UserMessage } from "@opencode-ai/sdk/v2"
+import type { UserMessage } from "@tribunus/sdk/v2"
 
 const emptyUserMessages: UserMessage[] = []
 

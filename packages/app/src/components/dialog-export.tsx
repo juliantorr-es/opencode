@@ -3,9 +3,9 @@ import { useParams } from "@solidjs/router"
 import { useSDK } from "@/context/sdk"
 import { useSync } from "@/context/sync"
 import { usePlatform } from "@/context/platform"
-import { useDialog } from "@opencode-ai/ui/context/dialog"
-import { Dialog } from "@opencode-ai/ui/dialog"
-import { showToast } from "@opencode-ai/ui/toast"
+import { useDialog } from "@tribunus/ui/context/dialog"
+import { Dialog } from "@tribunus/ui/dialog"
+import { showToast } from "@tribunus/ui/toast"
 import { useLanguage } from "@/context/language"
 
 export const DialogExport: Component = () => {

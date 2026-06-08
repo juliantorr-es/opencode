@@ -7,7 +7,7 @@ import {
   onMount,
   useContext,
 } from "solid-js"
-import type { DesktopHostSlotMap } from "@opencode-ai/plugin/desktop"
+import type { DesktopHostSlotMap } from "@tribunus/plugin/desktop"
 import { DesktopPluginLoader } from "./plugin-loader"
 
 type SlotName = keyof DesktopHostSlotMap

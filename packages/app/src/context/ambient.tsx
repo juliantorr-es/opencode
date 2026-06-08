@@ -1,6 +1,6 @@
 import { createStore, reconcile } from "solid-js/store"
 import { batch, createEffect, onCleanup } from "solid-js"
-import { createSimpleContext } from "@opencode-ai/ui/context"
+import { createSimpleContext } from "@tribunus/ui/context"
 import { checkGitStatus } from "@/ambient/watchers/git-status"
 import { checkTestStatus } from "@/ambient/watchers/test-status"
 import { checkDeps } from "@/ambient/watchers/deps"

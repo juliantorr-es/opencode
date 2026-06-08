@@ -1,11 +1,11 @@
 import { describe, expect } from "bun:test"
 import { DateTime, Effect, Layer, Option } from "effect"
-import { Catalog } from "@opencode-ai/core/catalog"
-import { Location } from "@opencode-ai/core/location"
-import { ModelV2 } from "@opencode-ai/core/model"
-import { PluginV2 } from "@opencode-ai/core/plugin"
-import { OpencodePlugin } from "@opencode-ai/core/plugin/provider/opencode"
-import { ProviderV2 } from "@opencode-ai/core/provider"
+import { Catalog } from "@tribunus/core/catalog"
+import { Location } from "@tribunus/core/location"
+import { ModelV2 } from "@tribunus/core/model"
+import { PluginV2 } from "@tribunus/core/plugin"
+import { OpencodePlugin } from "@tribunus/core/plugin/provider/opencode"
+import { ProviderV2 } from "@tribunus/core/provider"
 import { it, model, provider, withEnv } from "./provider-helper"
 
 const cost = (input: number, output = 0) => [{ input, output, cache: { read: 0, write: 0 } }]

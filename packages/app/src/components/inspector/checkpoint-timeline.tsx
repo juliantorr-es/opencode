@@ -1,7 +1,7 @@
 import { createMemo, createSignal, For, Index, Show } from "solid-js"
 import { useParams } from "@solidjs/router"
 import { useInspector, type RuntimeEvent } from "@/context/inspector"
-import { showToast } from "@opencode-ai/ui/toast"
+import { showToast } from "@tribunus/ui/toast"
 
 // ── Types ──
 

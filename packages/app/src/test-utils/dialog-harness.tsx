@@ -2,7 +2,7 @@
  * Dialog Test Harness — SolidJS dialog component testing via hyperscript.
  *
  * Mounts dialog components directly (no DialogProvider/show() infrastructure).
- * Test files should mock @opencode-ai/ui context dependencies via mock.module().
+ * Test files should mock @tribunus/ui context dependencies via mock.module().
  *
  * Usage:
  * ```ts

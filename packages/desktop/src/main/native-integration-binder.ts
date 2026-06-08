@@ -513,7 +513,7 @@ export function generateNativeIntegrationBinder(): BinderReport {
   const remainingOpenCode = [
     ".opencode/ (read-only legacy compatibility)",
     "opencode.jsonc (deprecated fallback config)",
-    "packages/opencode/ (core package path, deferred)",
+    "packages/runtime/ (core package path, deferred)",
     "OPENCODE_CHANNEL / OPENCODE_FORCE_UPDATER (build config, deferred)",
     "NOTICE.md upstream attribution (required)",
     "packages/core/src/plugin/provider/opencode.ts (internal provider)",

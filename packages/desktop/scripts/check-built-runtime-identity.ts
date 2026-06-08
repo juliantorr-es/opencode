@@ -1,6 +1,6 @@
 /**
  * Built Runtime Identity Guard
- * Scans packages/opencode/dist and packages/desktop/out for stale strings.
+ * Scans packages/runtime/dist and packages/desktop/out for stale strings.
  * Fails if forbidden patterns appear in executed artifacts.
  */
 

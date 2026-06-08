@@ -94,7 +94,7 @@ export interface GovernanceService {
  * and `GovernanceServiceTag.of({...})` to create an implementation.
  */
 export class GovernanceServiceTag extends Context.Service<GovernanceServiceTag, GovernanceService>()(
-  "@opencode-ai/plugin/GovernanceService",
+  "@tribunus/plugin/GovernanceService",
 ) {}
 
 // ---------------------------------------------------------------------------

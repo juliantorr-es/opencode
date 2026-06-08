@@ -1,6 +1,6 @@
 import { createMemo, createResource, createSignal, For, Show } from "solid-js"
-import { Collapsible } from "@opencode-ai/ui/collapsible"
-import { Icon } from "@opencode-ai/ui/icon"
+import { Collapsible } from "@tribunus/ui/collapsible"
+import { Icon } from "@tribunus/ui/icon"
 
 // ── Types ──
 
