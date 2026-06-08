@@ -490,6 +490,91 @@ const TOOLS = [
   },
 ]
 
+  // ── Repository operations (administration, metadata) ──
+  {
+    name: "list_repositories",
+    description: "List repositories accessible to the GitHub App installation",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        per_page: { type: "number", description: "Results per page (max 100)" },
+        page: { type: "number", description: "Page number" },
+      },
+      required: [],
+    },
+  },
+  {
+    name: "get_repository",
+    description: "Get metadata for a single repository",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        owner: { type: "string", description: "Repository owner" },
+        repo: { type: "string", description: "Repository name" },
+      },
+      required: ["owner", "repo"],
+    },
+  },
+
+  // ── Git data (contents, refs) ──
+  {
+    name: "compare_commits",
+    description: "Compare two commits, branches, or tags — returns the diff (files changed, commits between)",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        owner: { type: "string", description: "Repository owner" },
+        repo: { type: "string", description: "Repository name" },
+        base: { type: "string", description: "Base ref (e.g. 'main', 'HEAD~5')" },
+        head: { type: "string", description: "Head ref (e.g. 'feature-branch', 'HEAD')" },
+      },
+      required: ["owner", "repo", "base", "head"],
+    },
+  },
+  {
+    name: "create_branch",
+    description: "Create a new branch from a base ref SHA",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        owner: { type: "string", description: "Repository owner" },
+        repo: { type: "string", description: "Repository name" },
+        branch: { type: "string", description: "New branch name (e.g. 'feature/foo')" },
+        sha: { type: "string", description: "SHA to branch from" },
+      },
+      required: ["owner", "repo", "branch", "sha"],
+    },
+  },
+  {
+    name: "get_commit",
+    description: "Get a single commit by SHA",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        owner: { type: "string", description: "Repository owner" },
+        repo: { type: "string", description: "Repository name" },
+        sha: { type: "string", description: "Commit SHA" },
+      },
+      required: ["owner", "repo", "sha"],
+    },
+  },
+
+  // ── Workflow jobs (actions) ──
+  {
+    name: "list_workflow_jobs",
+    description: "List jobs for a specific workflow run",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        owner: { type: "string", description: "Repository owner" },
+        repo: { type: "string", description: "Repository name" },
+        run_id: { type: "number", description: "Workflow run ID" },
+        per_page: { type: "number", description: "Results per page" },
+      },
+      required: ["owner", "repo", "run_id"],
+    },
+  },
+
 // ── Helpers ─────────────────────────────────────────────────────────────────
 
 function qs(params: Record<string, unknown>): string {

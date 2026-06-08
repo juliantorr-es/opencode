@@ -1,80 +1,79 @@
 === Tribunus Identity Verification Report ===
-Generated:       2026-06-08T03:25:06.872Z
-Commit:          627cbe907f667d0b7891708ece90ec14df8e6ac0
+Generated:       2026-06-08T04:04:38.747Z
+Commit:          0d8ae34c5f8217a7c4c1e1953c18d7f85635574b
 Identity Version: 1.0.0
 Verdict:         FAIL
 
 --- Scan Statistics ---
-  Files scanned:             4107
-  Total occurrences:         42176
-  Files with occurrences:    2599
-  Mixed-identity lines:      324
+  Files scanned:             3920
+  Total occurrences:         102841
+  Files with occurrences:    1605
+  Mixed-identity lines:      1331
 
 --- Occurrence Classification ---
-  UNRESOLVED: 42176
+  UNRESOLVED: 102841
 
 --- Registry Status ---
   Permanent exceptions:        0
   Temporary exceptions:        0
-  Unresolved occurrences:      42176
+  Unresolved occurrences:      102841
   Stale registry entries:      0
 
 --- Unresolved Occurrences (Unauthorized) ---
   .dockerignore:2  matched="opencode"
   .dockerignore:2  matched=".opencode"
-  .omp/agents/cartographer.md:32  matched="OPENCODE"
-  .omp/agents/cartographer.md:38  matched="OPENCODE"
-  .omp/agents/edge-case-enumerator.md:31  matched="OPENCODE"
-  .omp/agents/journalist.md:23  matched="opencode"
-  .omp/agents/journalist.md:42  matched="opencode"
-  .omp/agents/journalist.md:43  matched="opencode"
-  .omp/agents/journalist.md:44  matched="opencode"
-  .omp/agents/module-grapher.md:37  matched="opencode"
-  .omp/agents/module-grapher.md:37  matched="opencode"
-  .omp/agents/surgeon.md:63  matched="opencode"
-  .omp/agents/surgeon.md:63  matched="opencode"
-  .omp/agents/test-reader.md:29  matched="OPENCODE"
-  .omp/agents/trial.md:49  matched="opencode"
-  .omp/agents/vitals.md:25  matched="opencode"
-  .omp/instructions/conventions.md:7  matched="opencode"
-  .omp/instructions/testing.md:7  matched="opencode"
-  .omp/instructions/testing.md:11  matched="opencode"
-  .omp/mcp-manifest.v1.json:8  matched="OPENCODE"
-  .omp/mcp-manifest.v1.json:16  matched="OPENCODE"
-  .omp/mcp.json:5  matched="OPENCODE"
-  .omp/rules/workflow.md:3  matched="OpenCode"
-  .omp/skills/effect/SKILL.md:14  matched="opencode"
-  .omp/skills/effect/SKILL.md:14  matched=".opencode"
-  .omp/skills/effect/SKILL.md:15  matched="opencode"
-  .omp/skills/effect/SKILL.md:15  matched=".opencode"
-  .omp/skills/effect/SKILL.md:30  matched="opencode"
-  .omp/skills/effect/SKILL.md:30  matched=".opencode"
-  .omp/skills/effect/SKILL.md:34  matched="opencode"
-  .omp/skills/effect/SKILL.md:36  matched="opencode"
-  .omp/tool-mapping.md:1  matched="OpenCode"
-  .omp/tool-mapping.md:3  matched="OpenCode"
-  .omp/tool-mapping.md:7  matched="OpenCode"
-  .omp/tool-mapping.md:24  matched="OpenCode"
-  .omp/tool-mapping.md:29  matched="OpenCode"
-  .omp/tool-mapping.md:41  matched="OpenCode"
-  .omp/tool-mapping.md:43  matched="OpenCode"
-  .omp/tools/_lib/review-export/bootstrap-builder.ts:642  matched="OPENCODE"
-  .omp/tools/_lib/review-export/bootstrap-builder.ts:642  matched=".OPENCODE"
-  .omp/tools/_lib/review-export/bootstrap-builder.ts:779  matched="OPENCODE"
-  .omp/tools/_lib/review-export/bootstrap-builder.ts:779  matched=".OPENCODE"
-  .omp/tools/_lib/review-export/classification.ts:42  matched="opencode"
-  .omp/tools/_lib/review-export/classification.ts:42  matched="opencode"
-  .omp/tools/_lib/review-export/classification.ts:42  matched="opencode"
-  .omp/tools/_lib/review-export/classification.ts:105  matched="opencode"
-  .omp/tools/_lib/review-export/classification.ts:106  matched="opencode"
-  .omp/tools/_lib/review-export/classification.ts:107  matched="opencode"
-  .omp/tools/_lib/review-export/classification.ts:108  matched="opencode"
-  .omp/tools/_lib/review-export/gemini-ir-builder.ts:1343  matched="opencode"
-  ... and 42126 more
+  .tribunus/package-lock.json:8  matched="opencode"
+  .tribunus/package-lock.json:8  matched="@opencode-ai"
+  .tribunus/package-lock.json:89  matched="opencode"
+  .tribunus/package-lock.json:89  matched="@opencode-ai"
+  .tribunus/package-lock.json:91  matched="opencode"
+  .tribunus/package-lock.json:91  matched="@opencode-ai"
+  .tribunus/package-lock.json:95  matched="opencode"
+  .tribunus/package-lock.json:95  matched="@opencode-ai"
+  .tribunus/package-lock.json:116  matched="opencode"
+  .tribunus/package-lock.json:116  matched="@opencode-ai"
+  .tribunus/package-lock.json:118  matched="opencode"
+  .tribunus/package-lock.json:118  matched="@opencode-ai"
+  .tribunus/package.json:3  matched="opencode"
+  .tribunus/package.json:3  matched="@opencode-ai"
+  .tribunus/policies/sandboxes.json:9  matched="opencode"
+  AGENTS.md:5  matched="OpenCode"
+  AGENTS.md:13  matched="opencode"
+  AGENTS.md:82  matched="opencode"
+  AGENTS.md:139  matched="opencode"
+  AGENTS.md:159  matched="opencode"
+  AGENTS.md:186  matched="OPENCODE"
+  BRANDING.md:1  matched="OpenCode"
+  BRANDING.md:3  matched="OpenCode"
+  BRANDING.md:10  matched="OpenCode"
+  BRANDING.md:16  matched="opencode"
+  BRANDING.md:16  matched="OpenCode"
+  BRANDING.md:20  matched="opencode"
+  BRANDING.md:20  matched="opencode"
+  BRANDING.md:21  matched="OPENCODE"
+  BRANDING.md:32  matched="opencode"
+  BRANDING.md:34  matched="OpenCode"
+  BRANDING.md:37  matched="opencode"
+  BRANDING.md:37  matched="opencode"
+  BRANDING.md:41  matched="OpenCode"
+  BRANDING.md:43  matched="opencode"
+  BRANDING.md:44  matched="opencode"
+  BRANDING.md:45  matched="OPENCODE"
+  BRANDING.md:46  matched="opencode"
+  BRANDING.md:46  matched=".opencode"
+  BRANDING.md:47  matched="opencode"
+  CONTRIBUTING.md:53  matched="opencode"
+  INDEX.md:9  matched="opencode"
+  INDEX.md:9  matched=".opencode"
+  INDEX.md:25  matched="opencode"
+  INDEX.md:25  matched="opencode"
+  INDEX.md:25  matched=".opencode"
+  INDEX.md:25  matched=".opencode"
+  INDEX.md:26  matched="opencode"
+  ... and 102791 more
 
 --- Failure Reasons ---
-  FAIL: Found 42176 unauthorized legacy reference(s) not in legacy-reference-registry
-  FAIL: Internal workspace package packages/app/package.json uses upstream namespace "@opencode-ai/app" instead of "@tribunus"
+  FAIL: Found 102841 unauthorized legacy reference(s) not in legacy-reference-registry
 
 --- Verification Artifacts ---
   Scan JSON:      /Users/user/Developer/GitHub/Tribunus/artifacts/identity/identity-inventory.before.json
