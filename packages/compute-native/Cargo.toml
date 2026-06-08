@@ -12,6 +12,10 @@ crate-type = ["cdylib", "rlib"]
 name = "tribunus-compute-worker"
 path = "src/bin/tribunus-compute-worker.rs"
 
+[[bin]]
+name = "tribunus-fake-worker"
+path = "src/bin/tribunus-fake-worker.rs"
+
 [dependencies]
 napi = { version = "3.9.0", features = ["napi8", "serde-json"], default-features = false }
 napi-derive = "3.5.6"

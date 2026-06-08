@@ -49,6 +49,8 @@ pub enum HostCommand {
     Ping,
     /// Graceful shutdown — worker should terminate after flushing.
     Shutdown,
+    /// Sent by the watchdog when the worker's RSS crosses the soft ceiling.
+    MemoryPressure,
 }
 
 /// Events emitted from the worker to the host.
@@ -145,6 +147,14 @@ pub struct HeartbeatPayload {
     pub elapsed_ms: u64,
     /// Index of the most recently completed decode step, if any.
     pub last_completed_step: Option<u32>,
+    /// Request ID of the currently active generation, if any.
+    pub active_request_id: Option<String>,
+    /// MLX Metal active memory in bytes.
+    pub mlx_active_memory: u64,
+    /// MLX Metal cache memory in bytes.
+    pub mlx_cache_memory: u64,
+    /// MLX Metal peak memory in bytes.
+    pub mlx_peak_memory: u64,
 }
 
 /// Payload for [`WorkerEvent::GenerationCompleted`].
@@ -171,8 +181,36 @@ pub struct GenerationFailedPayload {
     pub message: String,
     /// Phase during which the failure occurred.
     pub phase: String,
+    /// Optional diagnostic hints (e.g. stack snippets, log excerpts).
+    pub diagnostics: Option<Vec<String>>,
 }
 
+/// Payload for [`WorkerEvent::WorkerFatal`].
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct WorkerFatalPayload {
+    /// Machine-readable error code.
+    pub error_code: String,
+    /// Human-readable error description.
+    pub message: String,
+    /// Phase during which the fatal error occurred.
+    pub phase: String,
+    /// Optional diagnostic hints (e.g. stack snippets, log excerpts).
+    pub diagnostics: Option<Vec<String>>,
+}
+
+/// Payload for [`WorkerEvent::HelloAck`] / [`HostCommand::LoadModel`] carrying
+/// policy limits from the host to the worker.
+#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+pub struct PolicySnapshotPayload {
+    /// Maximum active memory for MLX operations, in bytes.
+    pub mlx_active_memory_limit_bytes: u64,
+    /// Maximum MLX cache size, in bytes.
+    pub mlx_cache_limit_bytes: u64,
+    /// Maximum number of prompt tokens the worker should accept.
+    pub prompt_token_ceiling: usize,
+    /// Maximum number of output tokens per generation.
+    pub output_token_ceiling: u32,
+}
 // ────────────────────────────────────────────────────────────────────────────
 // Frame
 // ────────────────────────────────────────────────────────────────────────────
@@ -223,6 +261,28 @@ impl Frame {
             worker_instance_id: worker_id,
             sequence_number: seq,
             request_id: None,
+            message_kind: MessageKind::HostCommand(cmd),
+            payload,
+        }
+    }
+
+    /// Create a new host-command frame with a specific request correlation id.
+    ///
+    /// Used for request-scoped commands such as [`HostCommand::StartGeneration`]
+    /// and [`HostCommand::CancelGeneration`]. Request-less commands (Hello, Ping,
+    /// Shutdown, etc.) should use [`Frame::new_host_command`] instead.
+    pub fn new_host_command_with_request(
+        worker_id: &str,
+        seq: u64,
+        request_id: &str,
+        cmd: HostCommand,
+        payload: serde_json::Value,
+    ) -> Self {
+        Frame {
+            version: V1_0,
+            worker_instance_id: worker_id.to_string(),
+            sequence_number: seq,
+            request_id: Some(request_id.to_string()),
             message_kind: MessageKind::HostCommand(cmd),
             payload,
         }
@@ -301,8 +361,7 @@ pub fn validate_frame(
     expected_worker_id: Option<&str>,
 ) -> Result<(), FrameValidationError> {
     // 1. Size check — serialize to JSON and measure.
-    let serialized =
-        serde_json::to_vec(frame).map_err(|_| FrameValidationError::FrameTooLarge)?;
+    let serialized = serde_json::to_vec(frame).map_err(|_| FrameValidationError::FrameTooLarge)?;
     if serialized.len() > MAX_FRAME_SIZE_BYTES {
         return Err(FrameValidationError::FrameTooLarge);
     }
@@ -327,13 +386,167 @@ pub fn validate_frame(
     // 5. Message kind must be a recognized variant.
     //    With #[serde(untagged)], an unknown string would already cause
     //    deserialization to fail, but we verify round-trip explicitly.
-    let kind_value =
-        serde_json::to_value(&frame.message_kind).map_err(|_| FrameValidationError::InvalidMessageKind)?;
+    let kind_value = serde_json::to_value(&frame.message_kind)
+        .map_err(|_| FrameValidationError::InvalidMessageKind)?;
     if !kind_value.is_string() {
         return Err(FrameValidationError::InvalidMessageKind);
     }
 
     Ok(())
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+// Stateful Protocol Validator
+// ────────────────────────────────────────────────────────────────────────────
+
+/// Stateful validator that tracks protocol state across frames.
+///
+/// Maintains the expected worker ID, next expected sequence number, and
+/// active/terminal request sets so that direction-aware validation (e.g.
+/// rejecting duplicate start requests or events for unknown requests) can
+/// be performed without external bookkeeping.
+#[derive(Debug, Clone)]
+pub struct ProtocolValidator {
+    /// Worker instance ID the validator expects on every frame.
+    pub expected_worker_id: String,
+    /// Next sequence number the validator expects.
+    pub next_expected_seq: u64,
+    /// Request IDs that are currently in flight (started but not yet terminal).
+    pub known_requests: Vec<String>,
+    /// Request IDs that have received a terminal event (completed, cancelled,
+    /// or failed).
+    pub terminal_requests: Vec<String>,
+}
+
+impl ProtocolValidator {
+    /// Create a new validator for the given `worker_id`.
+    pub fn new(worker_id: String) -> Self {
+        ProtocolValidator {
+            expected_worker_id: worker_id,
+            next_expected_seq: 0,
+            known_requests: Vec::new(),
+            terminal_requests: Vec::new(),
+        }
+    }
+
+    /// Run stateless checks (version, seq, worker ID, message kind) shared by
+    /// both host and worker frames.
+    fn validate_baseline(&self, frame: &Frame) -> Result<(), FrameValidationError> {
+        // 1. Version must be V1_0.
+        if frame.version != V1_0 {
+            return Err(FrameValidationError::UnknownVersion);
+        }
+
+        // 2. Sequence must match expected (no regression, no gaps).
+        if frame.sequence_number != self.next_expected_seq {
+            return Err(FrameValidationError::SequenceRegression);
+        }
+
+        // 3. Worker ID must match.
+        if frame.worker_instance_id != self.expected_worker_id {
+            return Err(FrameValidationError::UnknownRequest);
+        }
+
+        // 4. Message kind must be a recognized variant.
+        let kind_value = serde_json::to_value(&frame.message_kind)
+            .map_err(|_| FrameValidationError::InvalidMessageKind)?;
+        if !kind_value.is_string() {
+            return Err(FrameValidationError::InvalidMessageKind);
+        }
+
+        Ok(())
+    }
+
+    /// Validate a host-command frame and advance internal state.
+    ///
+    /// Checks:
+    /// - Baseline fields (version, seq, worker ID, message kind).
+    /// - `message_kind` is a [`HostCommand`].
+    /// - For [`HostCommand::StartGeneration`]: rejects if `request_id` is
+    ///   already in `known_requests` (duplicate).
+    /// - For [`HostCommand::CancelGeneration`]: rejects if `request_id` is
+    ///   not in `known_requests`.
+    pub fn validate_host_command(&mut self, frame: &Frame) -> Result<(), FrameValidationError> {
+        self.validate_baseline(frame)?;
+
+        // Verify this is actually a HostCommand.
+        let cmd = match &frame.message_kind {
+            MessageKind::HostCommand(cmd) => cmd,
+            _ => return Err(FrameValidationError::InvalidMessageKind),
+        };
+
+        // Request-scoped checks.
+        if let Some(req_id) = &frame.request_id {
+            match cmd {
+                HostCommand::StartGeneration => {
+                    if self.known_requests.contains(req_id) {
+                        return Err(FrameValidationError::DuplicateRequestStart);
+                    }
+                }
+                HostCommand::CancelGeneration => {
+                    if !self.known_requests.contains(req_id) {
+                        return Err(FrameValidationError::UnknownRequest);
+                    }
+                }
+                _ => {}
+            }
+        }
+
+        self.next_expected_seq += 1;
+        Ok(())
+    }
+
+    /// Validate a worker-event frame and advance internal state.
+    ///
+    /// Checks:
+    /// - Baseline fields (version, seq, worker ID, message kind).
+    /// - `message_kind` is a [`WorkerEvent`].
+    /// - On [`WorkerEvent::GenerationStarted`]: records the `request_id` into
+    ///   `known_requests`.
+    /// - On terminal events ([`GenerationCompleted`](WorkerEvent::GenerationCompleted),
+    ///   [`GenerationCancelled`](WorkerEvent::GenerationCancelled),
+    ///   [`GenerationFailed`](WorkerEvent::GenerationFailed)):
+    ///   rejects if `request_id` is unknown or already terminal;
+    ///   otherwise moves from `known_requests` to `terminal_requests`.
+    pub fn validate_worker_event(&mut self, frame: &Frame) -> Result<(), FrameValidationError> {
+        self.validate_baseline(frame)?;
+
+        // Verify this is actually a WorkerEvent.
+        let event = match &frame.message_kind {
+            MessageKind::WorkerEvent(ev) => ev,
+            _ => return Err(FrameValidationError::InvalidMessageKind),
+        };
+
+        if let Some(req_id) = &frame.request_id {
+            match event {
+                WorkerEvent::GenerationStarted => {
+                    // Duplicate start of a known request is an error.
+                    if self.known_requests.contains(req_id) {
+                        return Err(FrameValidationError::DuplicateRequestStart);
+                    }
+                    self.known_requests.push(req_id.clone());
+                }
+                WorkerEvent::GenerationCompleted
+                | WorkerEvent::GenerationCancelled
+                | WorkerEvent::GenerationFailed => {
+                    // Reject unknown or already-terminated requests.
+                    if !self.known_requests.contains(req_id) {
+                        return Err(FrameValidationError::UnknownRequest);
+                    }
+                    if self.terminal_requests.contains(req_id) {
+                        return Err(FrameValidationError::TerminalAfterClose);
+                    }
+                    // Move from known to terminal.
+                    self.known_requests.retain(|id| id != req_id);
+                    self.terminal_requests.push(req_id.clone());
+                }
+                _ => {}
+            }
+        }
+
+        self.next_expected_seq += 1;
+        Ok(())
+    }
 }
 
 // ────────────────────────────────────────────────────────────────────────────
@@ -544,6 +757,145 @@ mod tests {
     }
 
     // ── Additional: Payload schema round-trips ───────────────────────────
+
+    // ── Stateful ProtocolValidator tests ─────────────────────────────────
+
+    #[test]
+    fn test_stateful_validator_sequence_tracking() {
+        let worker_id = "wkr-001".to_string();
+        let mut val = ProtocolValidator::new(worker_id.clone());
+
+        // Seq 0: Hello
+        let hello = Frame::new_host_command(
+            worker_id.clone(),
+            0,
+            HostCommand::Hello,
+            serde_json::Value::Null,
+        );
+        assert!(val.validate_host_command(&hello).is_ok());
+        assert_eq!(val.next_expected_seq, 1);
+        assert!(val.known_requests.is_empty());
+
+        // Seq 1: Ping
+        let ping = Frame::new_host_command(
+            worker_id.clone(),
+            1,
+            HostCommand::Ping,
+            serde_json::Value::Null,
+        );
+        assert!(val.validate_host_command(&ping).is_ok());
+        assert_eq!(val.next_expected_seq, 2);
+
+        // Seq 2 with wrong seq (regression) fails
+        let bad_seq = Frame::new_host_command(
+            worker_id.clone(),
+            0, // same as seq 0
+            HostCommand::Ping,
+            serde_json::Value::Null,
+        );
+        let err = val.validate_host_command(&bad_seq).unwrap_err();
+        assert_eq!(err, FrameValidationError::SequenceRegression);
+        assert_eq!(val.next_expected_seq, 2); // state unchanged
+    }
+
+    #[test]
+    fn test_stateful_validator_duplicate_start_rejected() {
+        let worker_id = "wkr-002".to_string();
+        let mut val = ProtocolValidator::new(worker_id.clone());
+
+        // Send GenerationStarted event (seq 0) to register request.
+        let started = Frame::new_worker_event(
+            worker_id.clone(),
+            0,
+            "gen-abc".into(),
+            WorkerEvent::GenerationStarted,
+            serde_json::Value::Null,
+        );
+        assert!(val.validate_worker_event(&started).is_ok());
+        assert!(val.known_requests.contains(&"gen-abc".to_string()));
+
+        // Host tries to StartGeneration with the same request_id — reject.
+        let dup_start = Frame::new_host_command_with_request(
+            &worker_id,
+            1,
+            "gen-abc",
+            HostCommand::StartGeneration,
+            serde_json::json!({
+                "prompt_token_ids": [1, 2, 3],
+                "max_output_tokens": 128,
+                "deadline_ms": 30_000,
+                "request_id": "gen-abc",
+            }),
+        );
+        let err = val.validate_host_command(&dup_start).unwrap_err();
+        assert_eq!(err, FrameValidationError::DuplicateRequestStart);
+    }
+
+    #[test]
+    fn test_stateful_validator_terminal_after_close_rejected() {
+        let worker_id = "wkr-003".to_string();
+        let mut val = ProtocolValidator::new(worker_id.clone());
+
+        // Register request via GenerationStarted (seq 0).
+        let started = Frame::new_worker_event(
+            worker_id.clone(),
+            0,
+            "gen-xyz".into(),
+            WorkerEvent::GenerationStarted,
+            serde_json::Value::Null,
+        );
+        assert!(val.validate_worker_event(&started).is_ok());
+
+        // Send GenerationCompleted (seq 1) — moves to terminal.
+        let completed = Frame::new_worker_event(
+            worker_id.clone(),
+            1,
+            "gen-xyz".into(),
+            WorkerEvent::GenerationCompleted,
+            serde_json::json!({
+                "request_id": "gen-xyz",
+                "token_count": 42,
+                "ttft_ms": 500,
+                "total_ms": 2000,
+            }),
+        );
+        assert!(val.validate_worker_event(&completed).is_ok());
+        assert!(!val.known_requests.contains(&"gen-xyz".to_string()));
+        assert!(val.terminal_requests.contains(&"gen-xyz".to_string()));
+
+        // Another terminal event for the same request (seq 2) — rejected.
+        let dup_terminal = Frame::new_worker_event(
+            worker_id.clone(),
+            2,
+            "gen-xyz".into(),
+            WorkerEvent::GenerationFailed,
+            serde_json::json!({
+                "request_id": "gen-xyz",
+                "error_code": "E_ALREADY_DONE",
+                "message": "generation already completed",
+                "phase": "decode",
+            }),
+        );
+        let err = val.validate_worker_event(&dup_terminal).unwrap_err();
+        assert_eq!(err, FrameValidationError::TerminalAfterClose);
+    }
+
+    #[test]
+    fn test_stateful_validator_wrong_worker_id_rejected() {
+        let worker_id = "real-worker".to_string();
+        let mut val = ProtocolValidator::new(worker_id.clone());
+
+        // Frame with a different worker ID.
+        let intruder = Frame::new_host_command(
+            "impostor".into(),
+            0,
+            HostCommand::Ping,
+            serde_json::Value::Null,
+        );
+        let err = val.validate_host_command(&intruder).unwrap_err();
+        assert_eq!(err, FrameValidationError::UnknownRequest);
+        assert_eq!(val.next_expected_seq, 0); // state not advanced
+    }
 
     #[test]
     fn token_payload_round_trip() {

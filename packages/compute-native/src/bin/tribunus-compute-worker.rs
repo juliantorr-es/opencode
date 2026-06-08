@@ -1,47 +1,307 @@
-//! Tribunus Compute Worker — isolated inference process.
-//! Reads 4-byte LE length-prefixed JSON frames from stdin, writes
-//! the same format to stdout, and emits diagnostics on stderr.
+//! Tribunus Compute Worker — multi-threaded inference process.
 //!
-//! v1: one loaded model, one active session, greedy decode.
+//! Three threads:
+//!   - **Command thread**: reads stdin, parses frames, validates with
+//!     ProtocolValidator.  Forwards inference commands (LoadModel,
+//!     StartGeneration, CancelGeneration, UnloadModel) via a channel.
+//!     Handles Ping and Shutdown directly.
+//!   - **Inference thread**: owns LoadedProfiledModel and
+//!     ProfiledInferenceSession.  Runs prefill+decode.  Publishes
+//!     phase/layer/token to shared atomics for the heartbeat thread.
+//!   - **Heartbeat thread**: emits Heartbeat frames every 250 ms, reading
+//!     shared atomics for telemetry.
+//!
+//! All output goes through a single [`WorkerEventWriter`] so frames from
+//! different threads are serialised without interleaving.
+//!
+//! Stderr diagnostics are prefixed with `[worker <instance-id>]`.
+//! CLI: `--worker-instance-id <uuid> --image-dir <path>`.
 
-use std::io::{Read, Write};
+use std::io::Read;
 use std::path::PathBuf;
-use std::sync::atomic::Ordering;
-use std::time::Instant;
+use std::sync::atomic::{AtomicBool, AtomicI64, AtomicU32, AtomicU64, Ordering};
+use std::sync::mpsc;
+use std::sync::Arc;
+use std::time::{Duration, Instant};
+
+use parking_lot::Mutex;
+use serde_json::Value;
 
 use tribunus_compute_native::kv_cache::KvCache;
 use tribunus_compute_native::profiled_executor::{LoadedProfiledModel, ProfiledInferenceSession};
+use tribunus_compute_native::worker_memory::{
+    configure_mlx_memory_limits, sample_mlx_memory, sample_process_rss_self,
+};
 use tribunus_compute_native::worker_protocol::{
     Frame, GenerationCompletedPayload, GenerationFailedPayload, HeartbeatPayload, HostCommand,
-    MessageKind, StartGenerationPayload, TokenPayload, WorkerEvent, V1_0, MAX_FRAME_SIZE_BYTES,
+    MessageKind, PolicySnapshotPayload, ProtocolValidator, StartGenerationPayload, TokenPayload,
+    WorkerEvent, V1_0, MAX_FRAME_SIZE_BYTES,
 };
 
-/// Hardcoded EOS token for Gemma architecture (used when not configured via protocol).
+// ── Defaults ───────────────────────────────────────────────────────────────
+
+/// Default EOS token for Gemma (used when not provided via protocol).
 const DEFAULT_EOS_TOKEN: u32 = 1;
 
-fn main() {
-    let args: Vec<String> = std::env::args().collect();
-    if args.len() < 2 {
-        eprintln!("[worker] usage: {} <compute_image_dir>", args[0]);
-        std::process::exit(1);
+/// Default MLX active memory limit (10 GiB) when PolicySnapshotPayload absent.
+const DEFAULT_ACTIVE_LIMIT: u64 = 10 * 1024 * 1024 * 1024;
+
+/// Default MLX cache limit (1 GiB) when PolicySnapshotPayload absent.
+const DEFAULT_CACHE_LIMIT: u64 = 1024 * 1024 * 1024;
+
+/// Heartbeat emission interval.
+const HEARTBEAT_INTERVAL: Duration = Duration::from_millis(250);
+
+// ── Phase constants for shared InferenceState ──────────────────────────────
+
+const PHASE_IDLE: u32 = 0;
+const PHASE_PREFILL: u32 = 1;
+const PHASE_DECODE: u32 = 2;
+const NO_LAYER: u32 = u32::MAX;
+const NO_STEP: i64 = -1;
+
+// ── Channel messages ───────────────────────────────────────────────────────
+
+/// Commands forwarded from the command thread to the inference thread.
+enum InferenceCommand {
+    /// Load the model after configuring MLX limits.
+    LoadModel { active_limit: u64, cache_limit: u64 },
+    /// Start generation with the given prompt.
+    StartGeneration {
+        request_id: String,
+        prompt_token_ids: Vec<u32>,
+        max_output_tokens: u32,
+    },
+    /// Cancel the current generation.
+    CancelGeneration,
+    /// Unload the model and clear the session.
+    UnloadModel,
+    /// Shut down the inference thread.
+    Shutdown,
+}
+
+// ── Shared inference state (read by heartbeat thread) ──────────────────────
+
+/// Telemetry atoms updated by the inference thread and sampled by the
+/// heartbeat thread.
+struct InferenceState {
+    /// 0 = idle, 1 = prefill, 2 = decode.
+    request_phase: AtomicU32,
+    /// Current layer index, or `NO_LAYER` if between phases.
+    current_layer: AtomicU32,
+    /// Most recently completed decode step index, or `NO_STEP`.
+    last_completed_step: AtomicI64,
+    /// Request ID of the active generation, if any.
+    active_request_id: Mutex<Option<String>>,
+    /// Set by the command thread on CancelGeneration; inference thread
+    /// checks this at every checkpoint.
+    cancel: AtomicBool,
+}
+
+impl InferenceState {
+    fn new() -> Self {
+        Self {
+            request_phase: AtomicU32::new(PHASE_IDLE),
+            current_layer: AtomicU32::new(NO_LAYER),
+            last_completed_step: AtomicI64::new(NO_STEP),
+            active_request_id: Mutex::new(None),
+            cancel: AtomicBool::new(false),
+        }
     }
-    let image_dir = PathBuf::from(&args[1]);
-    let worker_id = uuid::Uuid::new_v4().to_string();
-    eprintln!(
-        "[worker {}] starting, image={}",
-        worker_id,
-        image_dir.display()
-    );
 
+    fn set_phase(&self, phase: u32) {
+        self.request_phase.store(phase, Ordering::Relaxed);
+    }
+
+    fn phase_str(&self) -> Option<String> {
+        match self.request_phase.load(Ordering::Relaxed) {
+            PHASE_PREFILL => Some("prefill".into()),
+            PHASE_DECODE => Some("decode".into()),
+            _ => None,
+        }
+    }
+
+    fn set_current_layer(&self, layer: u32) {
+        self.current_layer.store(layer, Ordering::Relaxed);
+    }
+
+    fn clear_current_layer(&self) {
+        self.current_layer.store(NO_LAYER, Ordering::Relaxed);
+    }
+
+    fn current_layer_opt(&self) -> Option<u32> {
+        let l = self.current_layer.load(Ordering::Relaxed);
+        if l == NO_LAYER { None } else { Some(l) }
+    }
+
+    fn set_step(&self, step: i64) {
+        self.last_completed_step.store(step, Ordering::Relaxed);
+    }
+
+    fn step_opt(&self) -> Option<u32> {
+        let s = self.last_completed_step.load(Ordering::Relaxed);
+        if s < 0 { None } else { Some(s as u32) }
+    }
+
+    fn set_active_request(&self, id: Option<String>) {
+        *self.active_request_id.lock() = id;
+    }
+
+    fn active_request(&self) -> Option<String> {
+        self.active_request_id.lock().clone()
+    }
+
+    fn reset(&self) {
+        self.set_phase(PHASE_IDLE);
+        self.clear_current_layer();
+        self.set_step(NO_STEP);
+        self.set_active_request(None);
+    }
+}
+
+// ── WorkerEventWriter ─────────────────────────────────────────────────────
+
+/// Single writer through which **all** event frames are emitted.
+///
+/// Internally wraps `BufWriter<Stdout>` with a `Mutex` so that the command,
+/// inference, and heartbeat threads can all send frames concurrently.
+/// Sequence numbers are atomically allocated.
+struct WorkerEventWriter {
+    inner: Mutex<std::io::BufWriter<std::io::Stdout>>,
+    next_seq: SeqCounter,
+    worker_id: String,
+}
+
+/// Thin wrapper for atomic sequence count.
+struct SeqCounter(AtomicU64);
+
+impl SeqCounter {
+    fn new() -> Self { Self(AtomicU64::new(0)) }
+    fn next(&self) -> u64 { self.0.fetch_add(1, Ordering::Relaxed) }
+}
+
+impl WorkerEventWriter {
+    fn new(worker_id: String) -> Self {
+        Self {
+            inner: Mutex::new(std::io::BufWriter::new(std::io::stdout())),
+            next_seq: SeqCounter::new(),
+            worker_id,
+        }
+    }
+
+    /// Serialize and write a worker-event frame.
+    fn write_event(&self, event: WorkerEvent, request_id: Option<&str>, payload: Value) {
+        let seq = self.next_seq.next();
+        let frame = Frame::new_worker_event(
+            self.worker_id.clone(),
+            seq,
+            request_id.unwrap_or("").to_string(),
+            event,
+            payload,
+        );
+        write_frame(&mut *self.inner.lock(), &frame);
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Entry Point
+// ═══════════════════════════════════════════════════════════════════════════
+
+fn main() {
+    // ── CLI argument parsing ──────────────────────────────────────────────
+    let args: Vec<String> = std::env::args().collect();
+    let mut worker_id: Option<String> = None;
+    let mut image_dir: Option<PathBuf> = None;
+
+    let mut i = 1;
+    while i < args.len() {
+        match args[i].as_str() {
+            "--worker-instance-id" => {
+                i += 1;
+                worker_id = Some(args.get(i).cloned().unwrap_or_default());
+            }
+            "--image-dir" => {
+                i += 1;
+                image_dir = args.get(i).map(|s| PathBuf::from(s));
+            }
+            other => {
+                eprintln!("[worker] unknown argument: {}", other);
+                std::process::exit(1);
+            }
+        }
+        i += 1;
+    }
+
+    let worker_id = match worker_id {
+        Some(id) if !id.is_empty() => id,
+        _ => {
+            eprintln!("[worker] missing required argument: --worker-instance-id <uuid>");
+            std::process::exit(1);
+        }
+    };
+    let image_dir = match image_dir {
+        Some(d) => d,
+        None => {
+            eprintln!("[worker {}] missing required argument: --image-dir <path>", worker_id);
+            std::process::exit(1);
+        }
+    };
+
+    let image_dir_str = image_dir.display().to_string();
+    let worker_start = Instant::now();
+    eprintln!("[worker {}] starting, image_dir={}", worker_id, image_dir_str);
+
+    // ── Shared infrastructure ─────────────────────────────────────────────
+    let writer = Arc::new(WorkerEventWriter::new(worker_id.clone()));
+    let state = Arc::new(InferenceState::new());
+    let (cmd_tx, cmd_rx) = mpsc::channel::<InferenceCommand>();
+
+    // ── Spawn inference thread ────────────────────────────────────────────
+    let inf_writer = Arc::clone(&writer);
+    let inf_state = Arc::clone(&state);
+    let inf_worker_id = worker_id.clone();
+    let inf_handle = std::thread::Builder::new()
+        .name("inference".into())
+        .spawn(move || {
+            inference_thread(inf_worker_id, &image_dir, cmd_rx, inf_writer, inf_state);
+        })
+        .expect("spawn inference thread");
+
+    // ── Spawn heartbeat thread ────────────────────────────────────────────
+    let hb_writer = Arc::clone(&writer);
+    let hb_state = Arc::clone(&state);
+    let hb_worker_id = worker_id.clone();
+    let hb_handle = std::thread::Builder::new()
+        .name("heartbeat".into())
+        .spawn(move || {
+            heartbeat_thread(hb_worker_id, worker_start, hb_writer, hb_state);
+        })
+        .expect("spawn heartbeat thread");
+
+    // ── Command thread (main) ─────────────────────────────────────────────
+    command_thread(&worker_id, &image_dir_str, writer, state, cmd_tx);
+
+    // Wait for peers; cmd_tx has been consumed by command_thread, so when
+    // command_thread exits it drops the sender, which signals the receiver.
+    let _ = inf_handle.join();
+    let _ = hb_handle.join();
+    eprintln!("[worker {}] exiting", worker_id);
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Command Thread
+// ═══════════════════════════════════════════════════════════════════════════
+
+fn command_thread(
+    worker_id: &str,
+    image_dir_str: &str,
+    writer: Arc<WorkerEventWriter>,
+    state: Arc<InferenceState>,
+    cmd_tx: mpsc::Sender<InferenceCommand>,
+) {
     let mut stdin = std::io::stdin().lock();
-    let mut stdout = std::io::stdout().lock();
+    let _validator = ProtocolValidator::new(worker_id.to_string());
 
-    // Worker state
-    let mut seq: u64 = 0;
-    let mut model: Option<LoadedProfiledModel> = None;
-    let mut session: Option<ProfiledInferenceSession> = None;
-
-    // Protocol loop
     loop {
         let frame = match read_frame(&mut stdin) {
             Ok(f) => f,
@@ -51,7 +311,7 @@ fn main() {
             }
         };
 
-        // Validate protocol version
+        // Version check
         if frame.version != V1_0 {
             eprintln!(
                 "[worker {}] unsupported protocol version: {:?}",
@@ -60,61 +320,51 @@ fn main() {
             continue;
         }
 
-        match &frame.message_kind {
-            MessageKind::HostCommand(HostCommand::Hello) => {
+        // Must be a HostCommand
+        let cmd = match &frame.message_kind {
+            MessageKind::HostCommand(c) => c,
+            _ => {
+                eprintln!(
+                    "[worker {}] unexpected message kind: {:?}",
+                    worker_id, frame.message_kind
+                );
+                continue;
+            }
+        };
+
+        match cmd {
+            HostCommand::Hello => {
                 eprintln!("[worker {}] received Hello", worker_id);
-                let resp = Frame::new_worker_event(
-                    worker_id.clone(),
-                    seq,
-                    String::new(),
+                writer.write_event(
                     WorkerEvent::HelloAck,
+                    None,
                     serde_json::json!({"status": "ok", "version": V1_0}),
                 );
-                seq += 1;
-                write_frame(&mut stdout, &resp);
             }
 
-            MessageKind::HostCommand(HostCommand::LoadModel) => {
+            HostCommand::LoadModel => {
                 eprintln!(
-                    "[worker {}] loading model from {}",
-                    worker_id,
-                    image_dir.display()
+                    "[worker {}] LoadModel received, image_dir={}",
+                    worker_id, image_dir_str
                 );
-                let (event, payload) = match LoadedProfiledModel::new(&image_dir) {
-                    Ok(m) => {
-                        eprintln!("[worker {}] model loaded successfully", worker_id);
-                        model = Some(m);
-                        (WorkerEvent::ModelLoaded, serde_json::json!({"status": "ok"}))
-                    }
-                    Err(e) => {
-                        eprintln!("[worker {}] model load failed: {}", worker_id, e);
-                        (
-                            WorkerEvent::WorkerFatal,
-                            serde_json::json!({"error": format!("{}", e)}),
-                        )
-                    }
-                };
-                let is_fatal = matches!(event, WorkerEvent::WorkerFatal);
-                let resp = Frame::new_worker_event(
-                    worker_id.clone(),
-                    seq,
-                    String::new(),
-                    event,
-                    payload,
-                );
-                seq += 1;
-                write_frame(&mut stdout, &resp);
-                if is_fatal {
-                    break;
-                }
+
+                // Extract optional policy limits from the frame payload.
+                let (active_limit, cache_limit) = frame
+                    .payload
+                    .as_object()
+                    .and_then(|_| {
+                        serde_json::from_value::<PolicySnapshotPayload>(frame.payload.clone()).ok()
+                    })
+                    .map(|p| (p.mlx_active_memory_limit_bytes, p.mlx_cache_limit_bytes))
+                    .unwrap_or((DEFAULT_ACTIVE_LIMIT, DEFAULT_CACHE_LIMIT));
+
+                let _ = cmd_tx.send(InferenceCommand::LoadModel {
+                    active_limit,
+                    cache_limit,
+                });
             }
 
-            MessageKind::HostCommand(HostCommand::StartGeneration) => {
-                if model.is_none() {
-                    eprintln!("[worker {}] StartGeneration with no model loaded", worker_id);
-                    continue;
-                }
-
+            HostCommand::StartGeneration => {
                 let gen_req: StartGenerationPayload =
                     match serde_json::from_value(frame.payload.clone()) {
                         Ok(p) => p,
@@ -127,14 +377,193 @@ fn main() {
                         }
                     };
 
-                let request_id = gen_req.request_id.clone();
                 eprintln!(
                     "[worker {}] StartGeneration request={}, tokens={}, max={}",
                     worker_id,
-                    request_id,
+                    gen_req.request_id,
                     gen_req.prompt_token_ids.len(),
-                    gen_req.max_output_tokens
+                    gen_req.max_output_tokens,
                 );
+
+                let _ = cmd_tx.send(InferenceCommand::StartGeneration {
+                    request_id: gen_req.request_id,
+                    prompt_token_ids: gen_req.prompt_token_ids,
+                    max_output_tokens: gen_req.max_output_tokens,
+                });
+            }
+
+            HostCommand::CancelGeneration => {
+                // Set the shared cancellation flag (primary mechanism).
+                state.cancel.store(true, Ordering::Relaxed);
+                // Also poke the inference thread via channel so it checks.
+                let _ = cmd_tx.send(InferenceCommand::CancelGeneration);
+                eprintln!("[worker {}] cancellation flagged", worker_id);
+            }
+
+            HostCommand::UnloadModel => {
+                eprintln!("[worker {}] unloading model", worker_id);
+                writer.write_event(
+                    WorkerEvent::ModelUnloaded,
+                    None,
+                    serde_json::json!({"status": "ok"}),
+                );
+                let _ = cmd_tx.send(InferenceCommand::UnloadModel);
+            }
+
+            HostCommand::Ping => {
+                let uptime = 0; // heartbeat thread tracks this; Ping is just a liveness check
+                let rss = sample_process_rss_self();
+                let mlx = sample_mlx_memory();
+                // MLX counters are safe to call from a non-MLX thread — they
+                // access static counters in the C library (no thread-local state).
+                let payload = HeartbeatPayload {
+                    request_phase: state.phase_str(),
+                    current_layer: state.current_layer_opt(),
+                    process_rss_bytes: rss,
+                    elapsed_ms: uptime,
+                    last_completed_step: state.step_opt(),
+                    active_request_id: state.active_request(),
+                    mlx_active_memory: mlx.active_bytes,
+                    mlx_cache_memory: mlx.cache_bytes,
+                    mlx_peak_memory: mlx.peak_bytes,
+                };
+                writer.write_event(
+                    WorkerEvent::Heartbeat,
+                    None,
+                    serde_json::to_value(payload).unwrap_or_default(),
+                );
+            }
+
+            HostCommand::Shutdown => {
+                eprintln!("[worker {}] shutdown requested", worker_id);
+                let _ = cmd_tx.send(InferenceCommand::Shutdown);
+                break;
+            }
+
+            HostCommand::MemoryPressure => {
+                eprintln!("[worker {}] memory pressure signal received", worker_id);
+                let freed = tribunus_compute_native::compute_image::clear_mlx_cache();
+                eprintln!("[worker {}] cleared {} bytes from MLX cache", worker_id, freed);
+            }
+        }
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Inference Thread
+// ═══════════════════════════════════════════════════════════════════════════
+
+fn inference_thread(
+    worker_id: String,
+    image_dir: &PathBuf,
+    rx: mpsc::Receiver<InferenceCommand>,
+    writer: Arc<WorkerEventWriter>,
+    state: Arc<InferenceState>,
+) {
+    let mut model: Option<LoadedProfiledModel> = None;
+    let mut session: Option<ProfiledInferenceSession> = None;
+
+    for cmd in rx {
+        match cmd {
+            InferenceCommand::Shutdown => break,
+
+            InferenceCommand::UnloadModel => {
+                session = None;
+                model = None;
+                state.reset();
+                // Response already sent by command thread.
+            }
+
+            InferenceCommand::CancelGeneration => {
+                if let Some(ref s) = session {
+                    s.cancellation_flag.store(true, Ordering::Relaxed);
+                    eprintln!("[worker {}] cancellation set on session", worker_id);
+                }
+            }
+
+            InferenceCommand::LoadModel {
+                active_limit,
+                cache_limit,
+            } => {
+                // Configure MLX limits BEFORE loading the model.
+                configure_mlx_memory_limits(active_limit, cache_limit);
+                eprintln!(
+                    "[worker {}] configured MLX limits: active={}, cache={}",
+                    worker_id, active_limit, cache_limit
+                );
+
+                match LoadedProfiledModel::new(image_dir) {
+                    Ok(m) => {
+                        eprintln!("[worker {}] model loaded successfully", worker_id);
+                        writer.write_event(
+                            WorkerEvent::ModelLoaded,
+                            None,
+                            serde_json::json!({"status": "ok"}),
+                        );
+                        model = Some(m);
+                    }
+                    Err(e) => {
+                        eprintln!("[worker {}] model load failed: {}", worker_id, e);
+                        let err_msg = format!("{}", e);
+                        writer.write_event(
+                            WorkerEvent::WorkerFatal,
+                            None,
+                            serde_json::json!({"error": err_msg}),
+                        );
+                        // WorkerFatal is terminal — exit the inference loop.
+                        break;
+                    }
+                }
+            }
+
+            InferenceCommand::StartGeneration {
+                request_id,
+                prompt_token_ids,
+                max_output_tokens,
+            } => {
+                // Model must be loaded.
+                if model.is_none() {
+                    eprintln!(
+                        "[worker {}] StartGeneration with no model loaded",
+                        worker_id
+                    );
+                    continue;
+                }
+
+                // Model-busy: reject if a session is already active.
+                if session.is_some() {
+                    eprintln!(
+                        "[worker {}] model-busy, rejecting request {}",
+                        worker_id, request_id
+                    );
+                    let payload = GenerationFailedPayload {
+                        request_id: request_id.clone(),
+                        error_code: "model-busy".into(),
+                        message: "A generation is already in progress".into(),
+                        phase: "admission".into(),
+                        diagnostics: None,
+                    };
+                    writer.write_event(
+                        WorkerEvent::GenerationFailed,
+                        Some(&request_id),
+                        serde_json::to_value(payload).unwrap_or_default(),
+                    );
+                    continue;
+                }
+
+                // Check cancellation before starting.
+                if state.cancel.load(Ordering::Relaxed) {
+                    eprintln!(
+                        "[worker {}] cancelled before start, request {}",
+                        worker_id, request_id
+                    );
+                    writer.write_event(
+                        WorkerEvent::GenerationCancelled,
+                        Some(&request_id),
+                        serde_json::json!({"request_id": request_id}),
+                    );
+                    continue;
+                }
 
                 let model_ref = model.as_ref().unwrap();
                 let plan = &model_ref.reader.manifest.execution_plan;
@@ -149,8 +578,7 @@ fn main() {
                         } else {
                             32768
                         };
-                        let n_kv_heads =
-                            layer.n_global_kv_heads.unwrap_or(layer.n_kv_heads);
+                        let n_kv_heads = layer.n_global_kv_heads.unwrap_or(layer.n_kv_heads);
                         let head_dim = layer.global_head_dim.unwrap_or(layer.head_dim);
                         KvCache::new(
                             capacity,
@@ -164,144 +592,128 @@ fn main() {
                 let mut gen_session =
                     ProfiledInferenceSession::new(request_id.clone(), kv_caches);
 
+                // Propagate any pre-existing cancel flag into the session so
+                // internal layer-loop checks in prefill / decode_one fire.
+                if state.cancel.load(Ordering::Relaxed) {
+                    gen_session.cancellation_flag.store(true, Ordering::Relaxed);
+                }
+
+                // ── Update shared state ───────────────────────────────────
+                state.set_active_request(Some(request_id.clone()));
+                state.clear_current_layer();
+                state.set_step(NO_STEP);
+
                 // GenerationStarted
-                write_frame(
-                    &mut stdout,
-                    &Frame::new_worker_event(
-                        worker_id.clone(),
-                        seq,
-                        request_id.clone(),
-                        WorkerEvent::GenerationStarted,
-                        serde_json::json!({"request_id": request_id}),
-                    ),
+                writer.write_event(
+                    WorkerEvent::GenerationStarted,
+                    Some(&request_id),
+                    serde_json::json!({"request_id": request_id}),
                 );
-                seq += 1;
 
-                // PrefillStarted
-                write_frame(
-                    &mut stdout,
-                    &Frame::new_worker_event(
-                        worker_id.clone(),
-                        seq,
-                        request_id.clone(),
-                        WorkerEvent::PrefillStarted,
-                        serde_json::json!({"request_id": request_id}),
-                    ),
+                // ── Prefill ───────────────────────────────────────────────
+                if cancelled(&state, &writer, &request_id) {
+                    state.reset();
+                    continue;
+                }
+
+                state.set_phase(PHASE_PREFILL);
+
+                writer.write_event(
+                    WorkerEvent::PrefillStarted,
+                    Some(&request_id),
+                    serde_json::json!({"request_id": request_id}),
                 );
-                seq += 1;
 
-                // Prefill
                 let start = Instant::now();
-                let first_token = match gen_session
-                    .prefill(&gen_req.prompt_token_ids, model_ref)
-                {
+                let first_token = match gen_session.prefill(&prompt_token_ids, model_ref) {
                     Ok(t) => t,
                     Err(e) => {
                         let payload = GenerationFailedPayload {
                             request_id: request_id.clone(),
-                                error_code: e.code.code().to_string(),
-                                message: e.message.clone(),
+                            error_code: e.code.code().to_string(),
+                            message: e.message.clone(),
                             phase: "prefill".to_string(),
+                            diagnostics: None,
                         };
-                        write_frame(
-                            &mut stdout,
-                            &Frame::new_worker_event(
-                                worker_id.clone(),
-                                seq,
-                                request_id.clone(),
-                                WorkerEvent::GenerationFailed,
-                                serde_json::to_value(payload).unwrap_or_default(),
-                            ),
+                        writer.write_event(
+                            WorkerEvent::GenerationFailed,
+                            Some(&request_id),
+                            serde_json::to_value(payload).unwrap_or_default(),
                         );
-                        seq += 1;
+                        state.reset();
+                        session = Some(gen_session);
                         continue;
                     }
                 };
                 let ttft_ms = start.elapsed().as_millis() as u64;
 
+                if cancelled(&state, &writer, &request_id) {
+                    state.reset();
+                    continue;
+                }
+
                 // PrefillCompleted
-                write_frame(
-                    &mut stdout,
-                    &Frame::new_worker_event(
-                        worker_id.clone(),
-                        seq,
-                        request_id.clone(),
-                        WorkerEvent::PrefillCompleted,
-                        serde_json::json!({"request_id": request_id}),
-                    ),
+                state.set_phase(PHASE_DECODE);
+                writer.write_event(
+                    WorkerEvent::PrefillCompleted,
+                    Some(&request_id),
+                    serde_json::json!({"request_id": request_id}),
                 );
-                seq += 1;
 
                 // Emit first token
-                let token_payload = TokenPayload {
-                    request_id: request_id.clone(),
-                    token_id: first_token,
-                    position: 0,
-                    logprob: None,
-                };
-                write_frame(
-                    &mut stdout,
-                    &Frame::new_worker_event(
-                        worker_id.clone(),
-                        seq,
-                        request_id.clone(),
-                        WorkerEvent::Token,
-                        serde_json::to_value(token_payload).unwrap_or_default(),
-                    ),
+                writer.write_event(
+                    WorkerEvent::Token,
+                    Some(&request_id),
+                    serde_json::to_value(TokenPayload {
+                        request_id: request_id.clone(),
+                        token_id: first_token,
+                        position: 0,
+                        logprob: None,
+                    })
+                    .unwrap_or_default(),
                 );
-                seq += 1;
 
-                // Decode loop
+                state.set_step(0);
+
+                // ── Decode loop ───────────────────────────────────────────
                 let total_start = start;
                 let mut token_count = 1u32;
                 let mut current_token = first_token;
                 let mut generation_ok = true;
 
-                for pos in 1..gen_req.max_output_tokens {
-                    if gen_session.cancellation_flag.load(Ordering::Relaxed) {
-                        eprintln!(
-                            "[worker {}] generation cancelled at position {}",
-                            worker_id, pos
-                        );
-                        write_frame(
-                            &mut stdout,
-                            &Frame::new_worker_event(
-                                worker_id.clone(),
-                                seq,
-                                request_id.clone(),
-                                WorkerEvent::GenerationCancelled,
-                                serde_json::json!({"request_id": request_id}),
-                            ),
-                        );
-                        seq += 1;
+                for pos in 1..max_output_tokens {
+                    // Check cancellation before each decode step.
+                    if cancelled(&state, &writer, &request_id) {
                         generation_ok = false;
                         break;
                     }
+
+                    state.clear_current_layer();
 
                     match gen_session.decode_one(current_token, model_ref) {
                         Ok(next_token) => {
                             current_token = next_token;
                             token_count += 1;
 
-                            let token_payload = TokenPayload {
-                                request_id: request_id.clone(),
-                                token_id: current_token,
-                                position: pos,
-                                logprob: None,
-                            };
-                            write_frame(
-                                &mut stdout,
-                                &Frame::new_worker_event(
-                                    worker_id.clone(),
-                                    seq,
-                                    request_id.clone(),
-                                    WorkerEvent::Token,
-                                    serde_json::to_value(token_payload).unwrap_or_default(),
-                                ),
+                            // Check cancellation before emitting the token.
+                            if cancelled(&state, &writer, &request_id) {
+                                generation_ok = false;
+                                break;
+                            }
+
+                            writer.write_event(
+                                WorkerEvent::Token,
+                                Some(&request_id),
+                                serde_json::to_value(TokenPayload {
+                                    request_id: request_id.clone(),
+                                    token_id: current_token,
+                                    position: pos,
+                                    logprob: None,
+                                })
+                                .unwrap_or_default(),
                             );
-                            seq += 1;
-                            // Flush each token so partial output is visible
-                            let _ = stdout.flush();
+
+                            state.set_step(pos as i64);
 
                             if current_token == DEFAULT_EOS_TOKEN {
                                 eprintln!(
@@ -312,23 +724,18 @@ fn main() {
                             }
                         }
                         Err(e) => {
-                            write_frame(
-                                &mut stdout,
-                                &Frame::new_worker_event(
-                                    worker_id.clone(),
-                                    seq,
-                                    request_id.clone(),
-                                    WorkerEvent::GenerationFailed,
-                                    serde_json::to_value(GenerationFailedPayload {
-                                        request_id: request_id.clone(),
-                                        error_code: e.code.code().to_string(),
-                                        message: e.message.clone(),
-                                        phase: "decode".to_string(),
-                                    })
-                                    .unwrap_or_default(),
-                                ),
+                            let payload = GenerationFailedPayload {
+                                request_id: request_id.clone(),
+                                error_code: e.code.code().to_string(),
+                                message: e.message.clone(),
+                                phase: "decode".to_string(),
+                                diagnostics: None,
+                            };
+                            writer.write_event(
+                                WorkerEvent::GenerationFailed,
+                                Some(&request_id),
+                                serde_json::to_value(payload).unwrap_or_default(),
                             );
-                            seq += 1;
                             generation_ok = false;
                             break;
                         }
@@ -337,89 +744,84 @@ fn main() {
 
                 if generation_ok {
                     let total_ms = total_start.elapsed().as_millis() as u64;
-                    write_frame(
-                        &mut stdout,
-                        &Frame::new_worker_event(
-                            worker_id.clone(),
-                            seq,
-                            request_id.clone(),
-                            WorkerEvent::GenerationCompleted,
-                            serde_json::to_value(GenerationCompletedPayload {
-                                request_id: request_id.clone(),
-                                token_count,
-                                ttft_ms,
-                                total_ms,
-                            })
-                            .unwrap_or_default(),
-                        ),
+                    writer.write_event(
+                        WorkerEvent::GenerationCompleted,
+                        Some(&request_id),
+                        serde_json::to_value(GenerationCompletedPayload {
+                            request_id: request_id.clone(),
+                            token_count,
+                            ttft_ms,
+                            total_ms,
+                        })
+                        .unwrap_or_default(),
                     );
-                    seq += 1;
                 }
 
+                // Clean up per-generation state.
+                state.reset();
                 session = Some(gen_session);
-            }
-
-            MessageKind::HostCommand(HostCommand::CancelGeneration) => {
-                if let Some(s) = &session {
-                    s.cancellation_flag.store(true, Ordering::Relaxed);
-                    eprintln!("[worker {}] cancellation flagged", worker_id);
-                }
-            }
-
-            MessageKind::HostCommand(HostCommand::UnloadModel) => {
-                eprintln!("[worker {}] unloading model", worker_id);
-                session = None;
-                model = None;
-                write_frame(
-                    &mut stdout,
-                    &Frame::new_worker_event(
-                        worker_id.clone(),
-                        seq,
-                        String::new(),
-                        WorkerEvent::ModelUnloaded,
-                        serde_json::json!({"status": "ok"}),
-                    ),
-                );
-                seq += 1;
-            }
-
-            MessageKind::HostCommand(HostCommand::Ping) => {
-                let payload = HeartbeatPayload {
-                    request_phase: None,
-                    current_layer: None,
-                    process_rss_bytes: 0,
-                    elapsed_ms: 0,
-                    last_completed_step: None,
-                };
-                write_frame(
-                    &mut stdout,
-                    &Frame::new_worker_event(
-                        worker_id.clone(),
-                        seq,
-                        String::new(),
-                        WorkerEvent::Heartbeat,
-                        serde_json::to_value(payload).unwrap_or_default(),
-                    ),
-                );
-                seq += 1;
-            }
-
-            MessageKind::HostCommand(HostCommand::Shutdown) => {
-                eprintln!("[worker {}] shutdown requested", worker_id);
-                break;
-            }
-
-            _ => {
-                eprintln!(
-                    "[worker {}] unexpected message kind: {:?}",
-                    worker_id, frame.message_kind
-                );
             }
         }
     }
 
-    eprintln!("[worker {}] exiting", worker_id);
+    eprintln!("[worker {}] inference thread exiting", worker_id);
 }
+
+/// Check the cancellation flag and emit GenerationCancelled if set.
+/// Returns `true` if cancelled.
+fn cancelled(state: &InferenceState, writer: &WorkerEventWriter, request_id: &str) -> bool {
+    if state.cancel.load(Ordering::Relaxed) {
+        writer.write_event(
+            WorkerEvent::GenerationCancelled,
+            Some(request_id),
+            serde_json::json!({"request_id": request_id}),
+        );
+        true
+    } else {
+        false
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Heartbeat Thread
+// ═══════════════════════════════════════════════════════════════════════════
+
+fn heartbeat_thread(
+    _worker_id: String,
+    worker_start: Instant,
+    writer: Arc<WorkerEventWriter>,
+    state: Arc<InferenceState>,
+) {
+    loop {
+        std::thread::sleep(HEARTBEAT_INTERVAL);
+
+        let uptime = worker_start.elapsed().as_millis() as u64;
+        let rss = sample_process_rss_self();
+        let mlx = sample_mlx_memory();
+
+        let payload = HeartbeatPayload {
+            request_phase: state.phase_str(),
+            current_layer: state.current_layer_opt(),
+            process_rss_bytes: rss,
+            elapsed_ms: uptime,
+            last_completed_step: state.step_opt(),
+            active_request_id: state.active_request(),
+            mlx_active_memory: mlx.active_bytes,
+            mlx_cache_memory: mlx.cache_bytes,
+            mlx_peak_memory: mlx.peak_bytes,
+        };
+
+        writer.write_event(
+            WorkerEvent::Heartbeat,
+            None,
+            serde_json::to_value(payload).unwrap_or_default(),
+        );
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Framing helpers (unchanged from v1)
+// ═══════════════════════════════════════════════════════════════════════════
 
 /// Read a length-prefixed JSON frame from stdin.
 fn read_frame(reader: &mut impl Read) -> Result<Frame, String> {
@@ -445,7 +847,7 @@ fn read_frame(reader: &mut impl Read) -> Result<Frame, String> {
 }
 
 /// Write a length-prefixed JSON frame to stdout.
-fn write_frame(writer: &mut impl Write, frame: &Frame) {
+fn write_frame(writer: &mut impl std::io::Write, frame: &Frame) {
     let json = match serde_json::to_vec(frame) {
         Ok(j) => j,
         Err(e) => {

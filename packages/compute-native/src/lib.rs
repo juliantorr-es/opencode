@@ -319,17 +319,88 @@ pub fn engine_install_model(
     ))
 }
 
-/// Generate tokens from a compiled compute image.
+/// Generate tokens from a compiled compute image using pre-tokenized input IDs.
+///
+/// This is a bridge function for the napi layer.  The `input_ids` buffer
+/// contains a sequence of little-endian `u32` token IDs (4 bytes each).
+///
+/// Returns a JSON string with the generation job ID, e.g.:
+/// ```json
+/// {"jobId": "a1b2c3d4-...", "streamHandle": "<napi external placeholder>"}
+/// ```
+///
+/// The real streaming API goes through napi external — this bridge
+/// demonstrates the interface shape and provides the job_id for polling.
 #[napi]
 pub fn engine_generate(
     image_hash: String,
-    prompt: String,
+    input_ids: napi::bindgen_prelude::Buffer,
     max_tokens: i32,
 ) -> napi::Result<String> {
-    Ok(format!(
-        "engine_generate: hash={}, prompt_len={}, max_tokens={}",
-        image_hash,
-        prompt.len(),
-        max_tokens,
-    ))
+    // Convert Buffer (4 bytes per u32) to Vec<u32>
+    if input_ids.len() % 4 != 0 {
+        return Err(napi::Error::from_reason(format!(
+            "input_ids buffer length ({}) must be a multiple of 4 (u32)",
+            input_ids.len(),
+        )));
+    }
+    let ids: Vec<u32> = input_ids
+        .chunks(4)
+        .map(|chunk| u32::from_le_bytes([chunk[0], chunk[1], chunk[2], chunk[3]]))
+        .collect();
+
+    let mut engine = engine::ComputeEngine::new()?;
+
+    // Set worker binary path from environment if available.
+    if let Ok(path) = std::env::var("TRIBUNUS_WORKER_BINARY") {
+        engine.set_worker_binary_path(path);
+    }
+
+    // Load the model.
+    engine.load_model(image_hash)?;
+
+    // Generate — returns a GenerationHandle with job_id and stream.
+    let handle = engine
+        .generate(&ids, max_tokens.max(0) as u32)
+        .map_err(|e| napi::Error::from_reason(format!("Generation failed: {}", e)))?;
+
+    // Return job_id as JSON; stream handle placeholder for napi external.
+    let result = serde_json::json!({
+        "jobId": handle.job_id,
+        "streamHandle": null,
+    });
+    serde_json::to_string(&result)
+        .map_err(|e| napi::Error::from_reason(format!("json serialize: {}", e)))
+}
+
+/// Cancel an active generation by job ID.
+///
+/// Bridge function — delegates to [`ComputeEngine::cancel_generation`].
+/// Returns `{"cancelled": true}` on success or throws an napi error on
+/// failure.  The real cancellation path requires a persistent engine
+/// instance exposed as a napi external.
+#[napi]
+pub fn engine_cancel_generation(
+    image_hash: String,
+    job_id: String,
+) -> napi::Result<String> {
+    let mut engine = engine::ComputeEngine::new()?;
+
+    if let Ok(path) = std::env::var("TRIBUNUS_WORKER_BINARY") {
+        engine.set_worker_binary_path(path);
+    }
+
+    // Load model so the supervisor exists to forward cancellation.
+    let _ = engine.load_model(image_hash);
+
+    engine
+        .cancel_generation(job_id.clone())
+        .map_err(|e| napi::Error::from_reason(format!("Cancel failed: {}", e)))?;
+
+    let result = serde_json::json!({
+        "cancelled": true,
+        "jobId": job_id,
+    });
+    serde_json::to_string(&result)
+        .map_err(|e| napi::Error::from_reason(format!("json serialize: {}", e)))
 }

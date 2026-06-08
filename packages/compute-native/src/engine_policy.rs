@@ -53,6 +53,16 @@ pub struct ExecutionPolicy {
     /// Set to `true` by `allow_high_memory_override()` under the
     /// `private-development` feature gate.
     pub unqualified: bool,
+    /// Max time to wait for model load handshake.
+    pub model_load_timeout: Duration,
+    /// Watchdog tick interval in milliseconds.
+    pub watchdog_interval_ms: u64,
+    /// RSS must fall below this to clear a soft-pressure episode.
+    pub soft_pressure_reset_threshold_bytes: u64,
+    /// Max worker restarts before permanent fault.
+    pub restart_limit: u32,
+    /// Max bytes of worker stderr kept in ring buffer.
+    pub stderr_diagnostic_ceiling_bytes: usize,
 }
 
 // ── EosPolicy ──────────────────────────────────────────────────────────────
@@ -303,6 +313,11 @@ pub fn resolve_generation_budget(
 /// | `worker_heartbeat_timeout` | 2 s |
 /// | `max_ipc_frame_size` | 1 MiB |
 /// | `unqualified` | `false` |
+/// | `model_load_timeout` | 120 s |
+/// | `watchdog_interval_ms` | 150 |
+/// | `soft_pressure_reset_threshold_bytes` | 12 GiB |
+/// | `restart_limit` | 3 |
+/// | `stderr_diagnostic_ceiling_bytes` | 65536 (64 KiB) |
 pub fn qualification_policy() -> ExecutionPolicy {
     ExecutionPolicy {
         physical_memory_reserve_bytes: 1 << 30,            // 1 GiB
@@ -318,6 +333,11 @@ pub fn qualification_policy() -> ExecutionPolicy {
         worker_heartbeat_timeout: Duration::from_secs(2),
         max_ipc_frame_size: 1 << 20,                       // 1 MiB
         unqualified: false,
+        model_load_timeout: Duration::from_secs(120),     // 120 s
+        watchdog_interval_ms: 150,                         // 150 ms
+        soft_pressure_reset_threshold_bytes: 12 << 30,    // 12 GiB
+        restart_limit: 3,
+        stderr_diagnostic_ceiling_bytes: 65536,            // 64 KiB
     }
 }
 
@@ -343,6 +363,11 @@ pub fn allow_high_memory_override() -> ExecutionPolicy {
         worker_heartbeat_timeout: Duration::from_secs(10),
         max_ipc_frame_size: 16 << 20,                      // 16 MiB
         unqualified: true,
+        model_load_timeout: Duration::from_secs(300),    // 5 min
+        watchdog_interval_ms: 500,                         // 500 ms
+        soft_pressure_reset_threshold_bytes: 60 << 30,    // 60 GiB
+        restart_limit: 10,
+        stderr_diagnostic_ceiling_bytes: 1 << 20,          // 1 MiB
     }
 }
 
@@ -416,6 +441,11 @@ mod tests {
         assert_eq!(p.worker_heartbeat_timeout, Duration::from_secs(2));
         assert_eq!(p.max_ipc_frame_size, 1 << 20);
         assert!(!p.unqualified);
+        assert_eq!(p.model_load_timeout, Duration::from_secs(120));
+        assert_eq!(p.watchdog_interval_ms, 150);
+        assert_eq!(p.soft_pressure_reset_threshold_bytes, 12 << 30);
+        assert_eq!(p.restart_limit, 3);
+        assert_eq!(p.stderr_diagnostic_ceiling_bytes, 65536);
     }
 
     // ── DeadlineGuard ────────────────────────────────────────────────────

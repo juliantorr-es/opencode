@@ -27,6 +27,7 @@ pub enum EngineErrorCode {
     WorkerProtocolViolation,
     WorkerCrashed,
     WorkerUnresponsive,
+    WorkerRestartLimitExceeded,
     DeadlineExceeded,
     MemoryLimitExceeded,
     Cancelled,
@@ -51,6 +52,7 @@ impl EngineErrorCode {
             Self::WorkerProtocolViolation => "worker-protocol-violation",
             Self::WorkerCrashed => "worker-crashed",
             Self::WorkerUnresponsive => "worker-unresponsive",
+            Self::WorkerRestartLimitExceeded => "worker-restart-limit-exceeded",
             Self::DeadlineExceeded => "deadline-exceeded",
             Self::MemoryLimitExceeded => "memory-limit-exceeded",
             Self::Cancelled => "cancelled",
@@ -84,6 +86,29 @@ impl EngineErrorCode {
     }
 }
 
+/// Reasons a worker was forcibly terminated by the supervisor.
+#[derive(Debug, Clone, PartialEq)]
+pub enum ForcedTerminationReason {
+    DeadlineExceeded { overrun_ms: u64 },
+    MemoryLimitExceeded { rss_bytes: u64, hard_ceiling_bytes: u64 },
+    HeartbeatLost { last_heartbeat_ms: u64, timeout_ms: u64 },
+    ProtocolViolation { details: String },
+    WorkerCrashed { exit_code: Option<i32>, signal: Option<i32> },
+    ConsumerDisconnected,
+}
+
+/// Details about a worker process's exit.
+#[derive(Debug, Clone, PartialEq)]
+pub struct WorkerExitDetails {
+    pub worker_pid: u32,
+    pub exit_code: Option<i32>,
+    pub signal: Option<i32>,
+    pub uptime_ms: u64,
+    pub last_heartbeat_ms: u64,
+    pub peak_rss_bytes: u64,
+    pub faulted: bool,
+}
+
 /// A structured inference-engine error.
 ///
 /// Construct via [`EngineError::new`] or the builder-style helpers,
@@ -97,6 +122,10 @@ pub struct EngineError {
     /// One of `"admission"`, `"prefill"`, `"decode"`, `"epilogue"`, `"unknown"`.
     pub phase: Option<String>,
     pub worker_terminated: bool,
+    /// Reason the worker was forcibly terminated by the supervisor, if applicable.
+    pub forced_termination_reason: Option<ForcedTerminationReason>,
+    /// Details about the worker process exit, if available.
+    pub worker_exit_details: Option<WorkerExitDetails>,
 }
 
 // ---------------------------------------------------------------------------
@@ -106,6 +135,31 @@ pub struct EngineError {
 impl std::fmt::Display for EngineError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "[{}] {}", self.code.code(), self.message)
+    }
+}
+
+impl std::fmt::Display for ForcedTerminationReason {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::DeadlineExceeded { overrun_ms } => {
+                write!(f, "deadline-exceeded (overrun: {}ms)", overrun_ms)
+            }
+            Self::MemoryLimitExceeded { rss_bytes, hard_ceiling_bytes } => {
+                write!(f, "memory-limit-exceeded (rss: {} / ceiling: {})", rss_bytes, hard_ceiling_bytes)
+            }
+            Self::HeartbeatLost { last_heartbeat_ms, timeout_ms } => {
+                write!(f, "heartbeat-lost (last: {}ms / timeout: {}ms)", last_heartbeat_ms, timeout_ms)
+            }
+            Self::ProtocolViolation { details } => {
+                write!(f, "protocol-violation: {}", details)
+            }
+            Self::WorkerCrashed { exit_code, signal } => {
+                write!(f, "worker-crashed (exit: {:?} / signal: {:?})", exit_code, signal)
+            }
+            Self::ConsumerDisconnected => {
+                write!(f, "consumer-disconnected")
+            }
+        }
     }
 }
 
@@ -127,6 +181,8 @@ impl EngineError {
             request_id: None,
             phase: None,
             worker_terminated: code.worker_terminated(),
+            forced_termination_reason: None,
+            worker_exit_details: None,
         }
     }
 
@@ -143,6 +199,8 @@ impl EngineError {
             request_id: None,
             phase: None,
             worker_terminated: code.worker_terminated(),
+            forced_termination_reason: None,
+            worker_exit_details: None,
         }
     }
 
@@ -159,6 +217,8 @@ impl EngineError {
             request_id: Some(request_id.into()),
             phase: None,
             worker_terminated: code.worker_terminated(),
+            forced_termination_reason: None,
+            worker_exit_details: None,
         }
     }
 
@@ -167,6 +227,18 @@ impl EngineError {
     /// Typical values: `"admission"`, `"prefill"`, `"decode"`, `"epilogue"`, `"unknown"`.
     pub fn at_phase(mut self, phase: impl Into<String>) -> Self {
         self.phase = Some(phase.into());
+        self
+    }
+
+    /// Attach a forced termination reason.
+    pub fn with_forced_termination(mut self, reason: ForcedTerminationReason) -> Self {
+        self.forced_termination_reason = Some(reason);
+        self
+    }
+
+    /// Attach worker exit details.
+    pub fn with_worker_exit(mut self, details: WorkerExitDetails) -> Self {
+        self.worker_exit_details = Some(details);
         self
     }
 }
@@ -180,7 +252,9 @@ impl EngineError {
     /// boundary.
     ///
     /// Keys: `"code"`, `"message"`, `"modelImageHash"` (or `null`),
-    /// `"requestId"` (or `null`), `"phase"`, `"retryable"`, `"workerTerminated"`.
+    /// `"requestId"` (or `null`), `"phase"`, `"retryable"`, `"workerTerminated"`,
+    /// `"forcedTerminationReason"` (string or `null`),
+    /// `"workerExitDetails"` (object or `null`).
     pub fn to_napi_json(&self) -> Value {
         serde_json::json!({
             "code": self.code.code(),
@@ -190,6 +264,18 @@ impl EngineError {
             "phase": self.phase,
             "retryable": self.code.retryable(),
             "workerTerminated": self.worker_terminated,
+            "forcedTerminationReason": self.forced_termination_reason.as_ref().map(|r| r.to_string()),
+            "workerExitDetails": self.worker_exit_details.as_ref().map(|d| {
+                serde_json::json!({
+                    "workerPid": d.worker_pid,
+                    "exitCode": d.exit_code,
+                    "signal": d.signal,
+                    "uptimeMs": d.uptime_ms,
+                    "lastHeartbeatMs": d.last_heartbeat_ms,
+                    "peakRssBytes": d.peak_rss_bytes,
+                    "faulted": d.faulted,
+                })
+            }),
         })
     }
 }
@@ -202,13 +288,22 @@ impl EngineError {
 ///
 /// Logs to stderr, ensures `worker_terminated` is set if the code warrants it,
 /// and returns the (possibly adjusted) error.
-pub fn failure_funnel(error: EngineError) -> EngineError {
+///
+/// Accepts an optional `ForcedTerminationReason` and `WorkerExitDetails` that
+/// are attached to the returned error.
+pub fn failure_funnel(
+    error: EngineError,
+    forced_termination: Option<ForcedTerminationReason>,
+    worker_exit: Option<WorkerExitDetails>,
+) -> EngineError {
     eprintln!("[ENGINE_ERROR] [{}] {}", error.code.code(), error.message);
 
     // Re-derive worker_terminated from the code so callers cannot accidentally
     // clear it when it should be set.
     let mut e = error;
     e.worker_terminated = e.code.worker_terminated();
+    e.forced_termination_reason = forced_termination.or(e.forced_termination_reason);
+    e.worker_exit_details = worker_exit.or(e.worker_exit_details);
     e
 }
 
@@ -227,6 +322,8 @@ pub fn cancellation_funnel(
         request_id,
         phase: None,
         worker_terminated: EngineErrorCode::Cancelled.worker_terminated(),
+        forced_termination_reason: None,
+        worker_exit_details: None,
     }
 }
 
@@ -393,16 +490,93 @@ mod tests {
             request_id: None,
             phase: None,
             worker_terminated: false, // incorrect – funnel should fix
+            forced_termination_reason: None,
+            worker_exit_details: None,
         };
-        let err = failure_funnel(err);
+        let err = failure_funnel(err, None, None);
         assert!(err.worker_terminated);
     }
 
     #[test]
     fn test_failure_funnel_preserves_non_terminated() {
         let err = EngineError::new(EngineErrorCode::PolicyRejected, "denied");
-        let err = failure_funnel(err);
+        let err = failure_funnel(err, None, None);
         assert!(!err.worker_terminated);
+    }
+
+    #[test]
+    fn test_forced_termination_reason() {
+        let reason = ForcedTerminationReason::DeadlineExceeded { overrun_ms: 5000 };
+        let err = EngineError::new(EngineErrorCode::DeadlineExceeded, "timed out")
+            .with_forced_termination(reason.clone());
+        assert_eq!(err.forced_termination_reason, Some(reason));
+
+        // Build from the funnel with extra details.
+        let reason2 = ForcedTerminationReason::MemoryLimitExceeded {
+            rss_bytes: 1_000_000_000,
+            hard_ceiling_bytes: 2_000_000_000,
+        };
+        let err2 = failure_funnel(
+            EngineError::new(EngineErrorCode::MemoryLimitExceeded, "OOM"),
+            Some(reason2.clone()),
+            None,
+        );
+        assert_eq!(err2.forced_termination_reason, Some(reason2));
+    }
+
+    #[test]
+    fn test_worker_exit_details_roundtrip() {
+        let details = WorkerExitDetails {
+            worker_pid: 12345,
+            exit_code: Some(1),
+            signal: None,
+            uptime_ms: 600_000,
+            last_heartbeat_ms: 599_000,
+            peak_rss_bytes: 512_000_000,
+            faulted: true,
+        };
+        let err = EngineError::new(EngineErrorCode::WorkerCrashed, "segfault")
+            .with_worker_exit(details.clone());
+        assert_eq!(err.worker_exit_details, Some(details.clone()));
+
+        // Verify JSON round-trip includes the worker exit details.
+        let json = err.to_napi_json();
+        let wd = json["workerExitDetails"].as_object().unwrap();
+        assert_eq!(wd["workerPid"], 12345);
+        assert_eq!(wd["exitCode"], serde_json::json!(1));
+        assert!(wd["signal"].is_null());
+        assert_eq!(wd["uptimeMs"], 600_000);
+        assert_eq!(wd["lastHeartbeatMs"], 599_000);
+        assert_eq!(wd["peakRssBytes"], 512_000_000);
+        assert_eq!(wd["faulted"], true);
+
+        // Verify the forcedTerminationReason is null when not set.
+        assert!(json["forcedTerminationReason"].is_null());
+    }
+
+    #[test]
+    fn test_failure_funnel_attaches_details() {
+        let reason = ForcedTerminationReason::HeartbeatLost {
+            last_heartbeat_ms: 1000,
+            timeout_ms: 5000,
+        };
+        let details = WorkerExitDetails {
+            worker_pid: 67890,
+            exit_code: None,
+            signal: Some(9),
+            uptime_ms: 120_000,
+            last_heartbeat_ms: 1000,
+            peak_rss_bytes: 256_000_000,
+            faulted: true,
+        };
+        let err = failure_funnel(
+            EngineError::new(EngineErrorCode::WorkerUnresponsive, "no heartbeat"),
+            Some(reason),
+            Some(details),
+        );
+        assert!(err.worker_terminated);
+        assert!(err.forced_termination_reason.is_some());
+        assert!(err.worker_exit_details.is_some());
     }
 
     #[test]
@@ -446,6 +620,7 @@ mod tests {
             EngineErrorCode::WorkerProtocolViolation,
             EngineErrorCode::WorkerCrashed,
             EngineErrorCode::WorkerUnresponsive,
+            EngineErrorCode::WorkerRestartLimitExceeded,
             EngineErrorCode::DeadlineExceeded,
             EngineErrorCode::MemoryLimitExceeded,
             EngineErrorCode::Cancelled,

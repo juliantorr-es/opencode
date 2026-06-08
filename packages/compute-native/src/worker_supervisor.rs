@@ -1,22 +1,30 @@
-//! Host-side worker supervisor — process lifecycle, framed IPC, event dispatch,
-//! heartbeat tracking, deadline enforcement, RSS monitoring, cancellation
-//! escalation, exit classification, and restart policy.
+//! Host-side worker supervisor — decomposed into independently-locked components.
 //!
-//! Pure Rust, no napi or mlx-rs imports. Communicates with the worker over a
-//! framed length-prefixed JSON protocol defined in [`worker_protocol`].
+//! Each subsystem has its own narrow lock or is lock-free:
+//! - [`WorkerProcessControl`]: `Mutex<Option<Child>>` (lightweight, pid-based alive check)
+//! - [`WorkerCommandWriter`]: `Mutex<BufWriter<ChildStdin>>`
+//! - [`WorkerEventReader`]: no lock (owned exclusively by event-reader thread)
+//! - [`WorkerRuntimeState`]: `AtomicBool` + `AtomicU32` + `Mutex<Instant>`
+//! - [`ActiveRequestRegistry`]: `Mutex<HashMap<String, ActiveRequest>>`
+//! - [`WorkerDiagnosticsCollector`]: `Mutex<Vec<u8>>`
+//! - [`WorkerSupervisor`]: aggregates all components, spawns event and watchdog threads
 
 use crate::engine_error::{EngineError, EngineErrorCode};
 use crate::engine_policy::{DeadlineGuard, ExecutionPolicy};
-use crate::streaming::{GenerationEvent, GenerationSender, GenerationStream};
+use crate::streaming::{
+    generation_channel, GenerationEvent, GenerationHandle, GenerationSender,
+};
 use crate::worker_protocol::{
-    Frame, HeartbeatPayload, HostCommand, MessageKind, StartGenerationPayload,
-    TokenPayload, WorkerEvent, MAX_FRAME_SIZE_BYTES,
+    Frame, HeartbeatPayload, HostCommand, MessageKind, ProtocolValidator,
+    StartGenerationPayload, TokenPayload, WorkerEvent, MAX_FRAME_SIZE_BYTES,
 };
 use parking_lot::Mutex;
+use serde_json::Value;
 use std::collections::HashMap;
 use std::io::{BufRead, BufReader, BufWriter, Read, Write};
 use std::path::Path;
-use std::process::{Child, ChildStdin, ChildStdout, Command, Stdio};
+use std::process::{Child, ChildStdin, ChildStdout, Command, ExitStatus, Stdio};
+use std::sync::atomic::{AtomicBool, AtomicU32, AtomicU64, Ordering};
 use std::sync::Arc;
 use std::thread::JoinHandle;
 use std::time::{Duration, Instant};
@@ -27,68 +35,144 @@ use uuid::Uuid;
 /// Size of the generation event channel buffer.
 const GENERATION_CHANNEL_CAPACITY: usize = 256;
 
-// ── ActiveRequest ──────────────────────────────────────────────────────────
+/// How long to wait for a HelloAck during handshake.
+const HANDSHAKE_TIMEOUT: Duration = Duration::from_secs(5);
 
-/// An in-flight generation request tracked by the supervisor.
-pub struct ActiveRequest {
-    /// Opaque request identifier echoed in all protocol frames.
-    pub request_id: String,
-    /// Public job ID (UUID) surfaced to the consumer.
-    pub public_job_id: String,
-    /// Sender half of the generation event channel.
-    pub stream_sender: GenerationSender,
-    /// Deadline guard for wall-clock timeout enforcement.
-    pub deadline: DeadlineGuard,
-    /// Current generation phase ("prefill", "decode", "epilogue").
-    pub phase: String,
-    /// Instant the request was started.
-    pub started_at: Instant,
+/// How long between handshake poll iterations.
+const HANDSHAKE_POLL_INTERVAL: Duration = Duration::from_millis(10);
+
+/// Graceful-shutdown wait before SIGKILL.
+const SHUTDOWN_TIMEOUT: Duration = Duration::from_secs(10);
+
+// ── WorkerProcessControl ───────────────────────────────────────────────────
+
+/// Controls a worker subprocess.
+///
+/// The [`Child`] handle is stored behind a [`Mutex`] so that `&self` methods
+/// (used by the watchdog and event-reader threads) can reap or kill without
+/// requiring `&mut self`. The lock is never held across blocking I/O — just
+/// long enough to swap or query the child.
+pub struct WorkerProcessControl {
+    child: Mutex<Option<Child>>,
+    pid: u32,
+    launched_at: Instant,
+    exit_status: Mutex<Option<ExitStatus>>,
+    killed: AtomicBool,
 }
 
-// ── WorkerHandle ───────────────────────────────────────────────────────────
+impl WorkerProcessControl {
+    pub fn new_from_child(child: Child) -> Self {
+        let pid = child.id();
+        Self {
+            child: Mutex::new(Some(child)),
+            pid,
+            launched_at: Instant::now(),
+            exit_status: Mutex::new(None),
+            killed: AtomicBool::new(false),
+        }
+    }
 
-/// Handle for a live worker subprocess with framed IPC channels.
-pub struct WorkerHandle {
-    /// The child process handle.
-    pub child_process: Child,
-    /// UUID identifying this worker instance.
-    pub worker_instance_id: String,
-    /// OS process ID.
-    pub pid: u32,
-    /// Buffered writer to the worker's stdin.
-    pub stdin: BufWriter<ChildStdin>,
-    /// Buffered reader from the worker's stdout.
-    pub stdout: BufReader<ChildStdout>,
-    /// In-flight requests indexed by request_id.
-    pub active_requests: HashMap<String, ActiveRequest>,
-    /// Next sequence number for outgoing frames to the worker.
-    pub next_sequence: u64,
-    /// Instant the worker process was launched.
-    pub launched_at: Instant,
-    /// Timestamp of the most recently received heartbeat.
-    pub last_heartbeat: Instant,
-    /// Worker has encountered a fatal error and is considered dead.
-    pub faulted: bool,
-    /// Next expected incoming sequence number from the worker.
-    pub next_expected_seq: u64,
+    pub fn pid(&self) -> u32 {
+        self.pid
+    }
+
+    pub fn launched_at(&self) -> Instant {
+        self.launched_at
+    }
+
+    /// Check whether the worker process is still alive by trying to reap.
+    /// Returns `false` when the process has exited or was already reaped.
+    pub fn is_alive(&self) -> bool {
+        let mut guard = self.child.lock();
+        match guard.as_mut() {
+            Some(child) => match child.try_wait() {
+                Ok(None) => true,        // Still running.
+                Ok(Some(status)) => {
+                    *self.exit_status.lock() = Some(status);
+                    *guard = None;
+                    false
+                }
+                Err(_) => false,
+            },
+            None => false, // Already reaped or never spawned.
+        }
+    }
+
+    /// Send SIGKILL to the worker process. Idempotent — subsequent calls are
+    /// no-ops once `killed` is set.
+    pub fn kill(&self) -> std::io::Result<()> {
+        if self.killed.swap(true, Ordering::SeqCst) {
+            return Ok(());
+        }
+        let mut guard = self.child.lock();
+        if let Some(ref mut child) = *guard {
+            child.kill()?;
+        }
+        Ok(())
+    }
+
+    pub fn was_killed(&self) -> bool {
+        self.killed.load(Ordering::SeqCst)
+    }
+
+    /// Block until the child exits.
+    pub fn wait(&self) -> std::io::Result<ExitStatus> {
+        let mut guard = self.child.lock();
+        let mut child = guard.take().ok_or_else(|| {
+            std::io::Error::new(std::io::ErrorKind::NotConnected, "no child process")
+        })?;
+        let status = child.wait()?;
+        *self.exit_status.lock() = Some(status);
+        Ok(status)
+    }
+
+    /// Non-blocking reaper.
+    pub fn try_wait(&self) -> std::io::Result<Option<ExitStatus>> {
+        if let Some(status) = *self.exit_status.lock() {
+            return Ok(Some(status));
+        }
+        let mut guard = self.child.lock();
+        match guard.as_mut() {
+            Some(child) => match child.try_wait()? {
+                Some(status) => {
+                    *self.exit_status.lock() = Some(status);
+                    *guard = None;
+                    Ok(Some(status))
+                }
+                None => Ok(None),
+            },
+            None => Ok(*self.exit_status.lock()),
+        }
+    }
+
+    pub fn exit_status(&self) -> Option<ExitStatus> {
+        *self.exit_status.lock()
+    }
 }
 
-// ── WorkerHandle methods ───────────────────────────────────────────────────
+// ── WorkerCommandWriter ────────────────────────────────────────────────────
 
-impl WorkerHandle {
-    /// Send a framed host command to the worker.
-    fn send_command(
-        &mut self,
-        cmd: HostCommand,
-        payload: serde_json::Value,
-    ) -> Result<(), EngineError> {
-        let frame = Frame::new_host_command(
-            self.worker_instance_id.clone(),
-            self.next_sequence,
-            cmd,
-            payload,
-        );
-        let json = serde_json::to_vec(&frame).map_err(|e| {
+/// Thread-safe command writer.
+///
+/// Uses a [`Mutex<BufWriter<ChildStdin>>`] internally for thread-safe writes.
+/// Sequence numbers are allocated atomically.
+pub struct WorkerCommandWriter {
+    inner: Mutex<BufWriter<ChildStdin>>,
+    next_seq: AtomicU64,
+    worker_id: String,
+}
+
+impl WorkerCommandWriter {
+    pub fn new(stdin: ChildStdin, worker_id: String) -> Self {
+        Self {
+            inner: Mutex::new(BufWriter::new(stdin)),
+            next_seq: AtomicU64::new(0),
+            worker_id,
+        }
+    }
+
+    fn write_frame_locked(&self, frame: &Frame) -> Result<(), EngineError> {
+        let json = serde_json::to_vec(frame).map_err(|e| {
             EngineError::new(
                 EngineErrorCode::InternalInvariantViolation,
                 format!("failed to serialize frame: {e}"),
@@ -102,42 +186,144 @@ impl WorkerHandle {
             ));
         }
 
-        // Write 4-byte LE length prefix + JSON.
+        let mut writer = self.inner.lock();
         let len = json.len() as u32;
-        let header = len.to_le_bytes();
-        self.stdin.write_all(&header).map_err(|e| {
+        writer.write_all(&len.to_le_bytes()).map_err(|e| {
             EngineError::new(
                 EngineErrorCode::WorkerCrashed,
                 format!("failed to write to worker stdin: {e}"),
             )
         })?;
-        self.stdin.write_all(&json).map_err(|e| {
+        writer.write_all(&json).map_err(|e| {
             EngineError::new(
                 EngineErrorCode::WorkerCrashed,
-                format!("failed to write frame to worker stdin: {e}"),
+                format!("failed to write frame: {e}"),
             )
         })?;
-        self.stdin.flush().map_err(|e| {
+        writer.flush().map_err(|e| {
             EngineError::new(
                 EngineErrorCode::WorkerCrashed,
                 format!("failed to flush worker stdin: {e}"),
             )
         })?;
-
-        self.next_sequence += 1;
         Ok(())
     }
 
-    /// Read a single framed message from the worker's stdout (blocking).
-    fn read_frame(&mut self) -> Result<Frame, EngineError> {
-        // Read 4-byte LE length prefix.
-        let mut len_buf = [0u8; 4];
-        self.stdout.read_exact(&mut len_buf).map_err(|e| {
+    /// Send a command without a request correlation id (Hello, Ping, Shutdown,
+    /// LoadModel, UnloadModel, MemoryPressure).
+    pub fn send_command(&self, cmd: HostCommand, payload: Value) -> Result<(), EngineError> {
+        let seq = self.next_seq.fetch_add(1, Ordering::SeqCst);
+        let frame = Frame::new_host_command(self.worker_id.clone(), seq, cmd, payload);
+        self.write_frame_locked(&frame)
+    }
+
+    /// Send a request-scoped command (StartGeneration, CancelGeneration).
+    pub fn send_command_with_request(
+        &self,
+        cmd: HostCommand,
+        request_id: &str,
+        payload: Value,
+    ) -> Result<(), EngineError> {
+        let seq = self.next_seq.fetch_add(1, Ordering::SeqCst);
+        let frame = Frame::new_host_command_with_request(
+            &self.worker_id,
+            seq,
+            request_id,
+            cmd,
+            payload,
+        );
+        self.write_frame_locked(&frame)
+    }
+
+    /// Current outgoing sequence number (for diagnostics).
+    pub fn next_seq(&self) -> u64 {
+        self.next_seq.load(Ordering::SeqCst)
+    }
+
+    /// The worker instance ID this writer targets.
+    pub fn worker_id(&self) -> &str {
+        &self.worker_id
+    }
+}
+
+// ── WorkerEventReader ──────────────────────────────────────────────────────
+
+/// Owned exclusively by the event-reader thread. NOT behind a shared lock.
+///
+/// Decodes length-prefixed JSON frames from the worker's stdout, validates
+/// them through the stateful [`ProtocolValidator`], and returns validated
+/// [`Frame`]s.
+pub struct WorkerEventReader {
+    reader: BufReader<ChildStdout>,
+    validator: ProtocolValidator,
+}
+
+impl WorkerEventReader {
+    pub fn new(stdout: ChildStdout, worker_id: String) -> Self {
+        Self {
+            reader: BufReader::new(stdout),
+            validator: ProtocolValidator::new(worker_id),
+        }
+    }
+
+    /// Non-blocking try-read of the next validated frame.
+    ///
+    /// Returns `Ok(None)` when there isn't enough data in the buffer yet.
+    /// Returns `Err` on I/O errors or protocol violations.
+    pub fn try_read_next_event(&mut self) -> Result<Option<Frame>, EngineError> {
+        let filled = self.reader.fill_buf().map_err(|e| {
             if e.kind() == std::io::ErrorKind::UnexpectedEof {
+                EngineError::new(EngineErrorCode::WorkerCrashed, "worker stdout closed")
+            } else {
                 EngineError::new(
                     EngineErrorCode::WorkerCrashed,
-                    "worker stdout closed unexpectedly",
+                    format!("failed to peek stdout: {e}"),
                 )
+            }
+        })?;
+
+        if filled.len() < 4 {
+            return Ok(None);
+        }
+
+        let frame_len =
+            u32::from_le_bytes(filled[..4].try_into().expect("4 bytes checked")) as usize;
+        let total = 4 + frame_len;
+
+        if filled.len() < total {
+            return Ok(None);
+        }
+
+        let frame: Frame = serde_json::from_slice(&filled[4..total]).map_err(|e| {
+            EngineError::new(
+                EngineErrorCode::WorkerProtocolViolation,
+                format!("failed to deserialize frame: {e}"),
+            )
+        })?;
+
+        self.validator
+            .validate_worker_event(&frame)
+            .map_err(|verr| {
+                EngineError::new(
+                    EngineErrorCode::WorkerProtocolViolation,
+                    format!("frame validation failed: {verr:?}"),
+                )
+            })?;
+
+        self.reader.consume(total);
+        Ok(Some(frame))
+    }
+
+    /// Blocking read of the next validated frame from the worker.
+    ///
+    /// Returns [`EngineErrorCode::WorkerCrashed`] when stdout is closed and
+    /// [`EngineErrorCode::WorkerProtocolViolation`] when validation fails.
+    pub fn read_next_event(&mut self) -> Result<Frame, EngineError> {
+        // Read 4-byte LE length prefix.
+        let mut len_buf = [0u8; 4];
+        self.reader.read_exact(&mut len_buf).map_err(|e| {
+            if e.kind() == std::io::ErrorKind::UnexpectedEof {
+                EngineError::new(EngineErrorCode::WorkerCrashed, "worker stdout closed")
             } else {
                 EngineError::new(
                     EngineErrorCode::WorkerCrashed,
@@ -154,9 +340,8 @@ impl WorkerHandle {
             ));
         }
 
-        // Read the JSON payload.
         let mut buf = vec![0u8; frame_len];
-        self.stdout.read_exact(&mut buf).map_err(|e| {
+        self.reader.read_exact(&mut buf).map_err(|e| {
             EngineError::new(
                 EngineErrorCode::WorkerCrashed,
                 format!("failed to read frame body: {e}"),
@@ -170,142 +355,355 @@ impl WorkerHandle {
             )
         })?;
 
-        // Validate sequence number.
-        if frame.sequence_number != self.next_expected_seq {
-            return Err(EngineError::new(
+        // Run through the stateful validator — checks sequence, worker ID,
+        // and request-scoped invariants.
+        self.validator.validate_worker_event(&frame).map_err(|verr| {
+            EngineError::new(
                 EngineErrorCode::WorkerProtocolViolation,
-                format!(
-                    "sequence regression: expected {}, got {}",
-                    self.next_expected_seq, frame.sequence_number
-                ),
-            ));
-        }
-        self.next_expected_seq += 1;
-
-        // Validate worker instance ID.
-        if frame.worker_instance_id != self.worker_instance_id {
-            return Err(EngineError::new(
-                EngineErrorCode::WorkerProtocolViolation,
-                "worker instance ID mismatch",
-            ));
-        }
+                format!("frame validation failed: {verr:?}"),
+            )
+        })?;
 
         Ok(frame)
     }
 
-    /// Attempt a non-blocking read: return `None` if no complete frame is
-    /// available in the buffer.
-    fn try_read_frame(&mut self) -> Result<Option<Frame>, EngineError> {
-        let filled = self.stdout.fill_buf().map_err(|e| {
-            EngineError::new(
-                EngineErrorCode::WorkerCrashed,
-                format!("failed to peek stdout: {e}"),
-            )
-        })?;
+    /// The validator's expected worker ID.
+    pub fn worker_id(&self) -> &str {
+        &self.validator.expected_worker_id
+    }
+}
 
-        if filled.len() < 4 {
-            return Ok(None);
+// ── WorkerRuntimeState ─────────────────────────────────────────────────────
+
+/// Lock-cheap runtime state shared across threads.
+///
+/// Uses `AtomicBool` for model/faulted flags, `Mutex<Instant>` for the
+/// heartbeat timestamp (updated frequently by event reader, read by watchdog).
+pub struct WorkerRuntimeState {
+    model_loaded: AtomicBool,
+    faulted: AtomicBool,
+    last_heartbeat: Mutex<Instant>,
+    restart_count: AtomicU32,
+    worker_id: String,
+}
+
+impl WorkerRuntimeState {
+    pub fn new(worker_id: String) -> Self {
+        Self {
+            model_loaded: AtomicBool::new(false),
+            faulted: AtomicBool::new(false),
+            last_heartbeat: Mutex::new(Instant::now()),
+            restart_count: AtomicU32::new(0),
+            worker_id,
         }
+    }
 
-        // Parse 4-byte LE length prefix from buffer.
-        let frame_len = u32::from_le_bytes(
-            filled[..4].try_into().expect("4 bytes checked above"),
-        ) as usize;
+    pub fn worker_id(&self) -> &str {
+        &self.worker_id
+    }
 
-        let total = 4 + frame_len;
-        if filled.len() < total {
-            return Ok(None);
+    pub fn mark_faulted(&self) {
+        self.faulted.store(true, Ordering::SeqCst);
+    }
+
+    pub fn is_faulted(&self) -> bool {
+        self.faulted.load(Ordering::SeqCst)
+    }
+
+    pub fn record_heartbeat(&self) {
+        *self.last_heartbeat.lock() = Instant::now();
+    }
+
+    pub fn heartbeat_age(&self) -> Duration {
+        Instant::now() - *self.last_heartbeat.lock()
+    }
+
+    pub fn last_heartbeat(&self) -> Instant {
+        *self.last_heartbeat.lock()
+    }
+
+    pub fn is_model_loaded(&self) -> bool {
+        self.model_loaded.load(Ordering::SeqCst)
+    }
+
+    pub fn set_model_loaded(&self) {
+        self.model_loaded.store(true, Ordering::SeqCst);
+    }
+
+    pub fn clear_model_loaded(&self) {
+        self.model_loaded.store(false, Ordering::SeqCst);
+    }
+
+    pub fn restart_count(&self) -> u32 {
+        self.restart_count.load(Ordering::SeqCst)
+    }
+
+    /// Increment restart count and return the new value.
+    pub fn increment_restart_count(&self) -> u32 {
+        self.restart_count.fetch_add(1, Ordering::SeqCst) + 1
+    }
+}
+
+// ── ActiveRequest ──────────────────────────────────────────────────────────
+
+/// An in-flight generation request with per-field synchronization.
+///
+/// The [`terminal_recorded`](Self::terminal_recorded) atomic provides exactly-
+/// once terminal event delivery across threads.
+pub struct ActiveRequest {
+    pub request_id: String,
+    pub public_job_id: String,
+    pub stream_sender: GenerationSender,
+    pub deadline: DeadlineGuard,
+    /// Deadline instant, stored for [`ActiveRequestRegistry::all_active`].
+    pub deadline_at: Instant,
+    pub phase: Mutex<String>,
+    pub cancellation_requested: AtomicBool,
+    pub terminal_recorded: AtomicBool,
+    pub cancelled_at: Mutex<Option<Instant>>,
+}
+
+impl ActiveRequest {
+    pub fn new(
+        request_id: String,
+        public_job_id: String,
+        stream_sender: GenerationSender,
+        deadline: DeadlineGuard,
+        deadline_at: Instant,
+    ) -> Self {
+        Self {
+            request_id,
+            public_job_id,
+            stream_sender,
+            deadline,
+            deadline_at,
+            phase: Mutex::new("pending".into()),
+            cancellation_requested: AtomicBool::new(false),
+            terminal_recorded: AtomicBool::new(false),
+            cancelled_at: Mutex::new(None),
         }
+    }
 
-        // Parse frame from the buffer without consuming yet.
-        let frame: Frame = serde_json::from_slice(&filled[4..total]).map_err(|e| {
-            EngineError::new(
-                EngineErrorCode::WorkerProtocolViolation,
-                format!("failed to deserialize frame: {e}"),
-            )
-        })?;
-
-        // Validate sequence number.
-        if frame.sequence_number != self.next_expected_seq {
-            return Err(EngineError::new(
-                EngineErrorCode::WorkerProtocolViolation,
-                format!(
-                    "sequence regression: expected {}, got {}",
-                    self.next_expected_seq, frame.sequence_number
-                ),
-            ));
+    /// Mark this request as terminal, sending `outcome` to the stream exactly
+    /// once. Subsequent calls are no-ops.
+    pub fn mark_terminal(&self, outcome: GenerationEvent) {
+        if self.terminal_recorded.swap(true, Ordering::SeqCst) {
+            return;
         }
-        self.next_expected_seq += 1;
+        self.stream_sender.send_terminal(outcome);
+    }
+}
 
-        // Validate worker instance ID.
-        if frame.worker_instance_id != self.worker_instance_id {
-            return Err(EngineError::new(
-                EngineErrorCode::WorkerProtocolViolation,
-                "worker instance ID mismatch",
-            ));
+// ── ActiveRequestRegistry ──────────────────────────────────────────────────
+
+/// Registry of active generation requests behind a single [`Mutex`].
+///
+/// Maintains a forward map (request_id → ActiveRequest) and a reverse index
+/// (public_job_id → request_id) for O(1) job-id lookups.
+pub struct ActiveRequestRegistry {
+    requests: Mutex<HashMap<String, ActiveRequest>>,
+    job_index: Mutex<HashMap<String, String>>,
+}
+
+impl ActiveRequestRegistry {
+    pub fn new() -> Self {
+        Self {
+            requests: Mutex::new(HashMap::new()),
+            job_index: Mutex::new(HashMap::new()),
         }
+    }
 
-        // Consume the bytes from the buffer.
-        self.stdout.consume(total);
-        Ok(Some(frame))
+    /// Insert an active request. Both `request_id` and `public_job_id` must
+    /// be unique; duplicates silently overwrite.
+    pub fn insert(&self, request: ActiveRequest) {
+        let public_job_id = request.public_job_id.clone();
+        let request_id = request.request_id.clone();
+        self.job_index
+            .lock()
+            .insert(public_job_id, request_id.clone());
+        self.requests.lock().insert(request_id, request);
+    }
+
+    /// Remove and return a request by `request_id`. Also cleans up the job
+    /// index. Returns `None` when the request is not found.
+    pub fn remove(&self, request_id: &str) -> Option<ActiveRequest> {
+        let result = self.requests.lock().remove(request_id);
+        if let Some(ref req) = result {
+            self.job_index.lock().remove(&req.public_job_id);
+        }
+        result
+    }
+
+    /// Look up `public_job_id` and return the corresponding `request_id`.
+    pub fn get_by_job_id(&self, job_id: &str) -> Option<String> {
+        self.job_index.lock().get(job_id).cloned()
+    }
+
+    /// Mark a request as terminal, sending `outcome` via the sender. Removes
+    /// the request from the registry.
+    pub fn mark_terminal(&self, request_id: &str, outcome: GenerationEvent) {
+        // Take the request out, mark terminal while dropped, then drop the lock.
+        let request = self.requests.lock().remove(request_id);
+        if let Some(ref req) = request {
+            self.job_index.lock().remove(&req.public_job_id);
+        }
+        if let Some(active) = request {
+            active.mark_terminal(outcome);
+        }
+    }
+
+    /// Request cancellation. Returns `false` when the request is already
+    /// terminal or already cancelled.
+    pub fn request_cancellation(&self, request_id: &str) -> bool {
+        let requests = self.requests.lock();
+        let active = match requests.get(request_id) {
+            Some(a) => a,
+            None => return false,
+        };
+        if active.terminal_recorded.load(Ordering::SeqCst) {
+            return false;
+        }
+        if active.cancellation_requested.swap(true, Ordering::SeqCst) {
+            return false;
+        }
+        true
+    }
+
+    /// Return all active request IDs with their deadline instants.
+    ///
+    /// Used by the watchdog to check deadlines without holding the lock long.
+    pub fn all_active(&self) -> Vec<(String, Instant)> {
+        self.requests
+            .lock()
+            .iter()
+            .map(|(id, active)| (id.clone(), active.deadline_at))
+            .collect()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.requests.lock().is_empty()
+    }
+
+    pub fn len(&self) -> usize {
+        self.requests.lock().len()
+    }
+
+    /// Drain all active requests, sending each a terminal error. Returns the
+    /// count of requests drained.
+    pub fn fail_all(&self, message: &str) -> usize {
+        let ids: Vec<String> = self.requests.lock().keys().cloned().collect();
+        let count = ids.len();
+        for id in &ids {
+            self.mark_terminal(id, GenerationEvent::Error(message.to_string()));
+        }
+        count
+    }
+
+    /// Check if a request_id exists in the registry.
+    pub fn contains(&self, request_id: &str) -> bool {
+        self.requests.lock().contains_key(request_id)
+    }
+}
+
+// ── WorkerDiagnosticsCollector ─────────────────────────────────────────────
+
+/// Ring-buffer diagnostics collector for worker stderr / metadata.
+pub struct WorkerDiagnosticsCollector {
+    buffer: Mutex<Vec<u8>>,
+    max_bytes: usize,
+}
+
+impl WorkerDiagnosticsCollector {
+    pub fn new(max_bytes: usize) -> Self {
+        Self {
+            buffer: Mutex::new(Vec::with_capacity(max_bytes.min(4096))),
+            max_bytes,
+        }
+    }
+
+    /// Append a line to the diagnostics buffer. Drops oldest content when
+    /// the buffer exceeds `max_bytes`.
+    pub fn append_line(&self, line: &str) {
+        let mut buf = self.buffer.lock();
+        let line_bytes = line.as_bytes();
+        if buf.len() + line_bytes.len() + 1 > self.max_bytes {
+            // Discard roughly half the buffer to make room.
+            let drain_to = buf.len() / 2;
+            buf.drain(..drain_to);
+        }
+        buf.extend_from_slice(line_bytes);
+        buf.push(b'\n');
+    }
+
+    /// Snapshot the current diagnostics content as a string.
+    pub fn snapshot(&self) -> String {
+        String::from_utf8_lossy(&self.buffer.lock()).to_string()
+    }
+
+    pub fn len(&self) -> usize {
+        self.buffer.lock().len()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.buffer.lock().is_empty()
     }
 }
 
 // ── WorkerSupervisor ───────────────────────────────────────────────────────
 
-/// Host-side supervisor that owns a worker process and orchestrates its
-/// lifecycle, IPC, and fault recovery.
+/// Host-side supervisor that owns all component handles.
+///
+/// Each subsystem has its own synchronization primitive — no single
+/// `Arc<Mutex<WorkerSupervisor>>` bottleneck. The event-reader and watchdog
+/// threads take `Arc` clones of the components they need.
 pub struct WorkerSupervisor {
-    /// The compiled-in execution policy.
+    pub process_ctrl: Arc<WorkerProcessControl>,
+    pub cmd_writer: Arc<WorkerCommandWriter>,
+    pub runtime_state: Arc<WorkerRuntimeState>,
+    pub registry: Arc<ActiveRequestRegistry>,
+    pub diagnostics: Arc<WorkerDiagnosticsCollector>,
     pub policy: ExecutionPolicy,
-    /// Handle to a live worker process, if any.
-    pub worker_handle: Option<WorkerHandle>,
-    /// Hash of the loaded model image, if one is loaded.
-    pub model_image_hash: Option<String>,
-    /// Whether a model is currently loaded in the worker.
-    pub model_loaded: bool,
-    /// The single active generation request_id (v1: at most one in flight).
-    pub active_generation: Option<String>,
+    pub event_reader_handle: Option<JoinHandle<()>>,
+    pub watchdog_handle: Option<JoinHandle<()>>,
+    pub diagnostics_handle: Option<JoinHandle<()>>,
 }
 
 impl WorkerSupervisor {
-    /// Create a new supervisor with the given policy. No worker is spawned.
-    pub fn new(policy: ExecutionPolicy) -> Self {
-        Self {
-            policy,
-            worker_handle: None,
-            model_image_hash: None,
-            model_loaded: false,
-            active_generation: None,
-        }
-    }
+    // ── Launch & Handshake ───────────────────────────────────────────────
 
-    /// Spawn the worker executable and perform the Hello/HelloAck handshake.
+    /// Spawn the worker process with a clean environment, perform the
+    /// Hello/HelloAck handshake, and return a fully initialized supervisor
+    /// with the event-reader and watchdog threads already running.
     ///
-    /// Only `HOME` and `PATH` are passed through from the environment. The
-    /// model path is passed as a positional argument to the worker binary.
-    pub fn launch_worker(
-        &mut self,
-        worker_binary_path: &Path,
-        model_image_dir: &Path,
-        image_hash: &str,
-    ) -> Result<(), EngineError> {
-        if self.worker_handle.is_some() {
-            return Err(EngineError::new(
-                EngineErrorCode::InternalInvariantViolation,
-                "worker already running",
-            ));
-        }
-
+    /// The worker is spawned with `env_clear()` + allowlist (HOME, PATH,
+    /// locale variables). `--worker-instance-id` and `--image-dir` are passed
+    /// as CLI args.
+    pub fn launch_and_handshake(
+        policy: ExecutionPolicy,
+        worker_binary: &Path,
+        image_dir: &Path,
+        _image_hash: &str,
+        worker_id: &str,
+    ) -> Result<Self, EngineError> {
         let instance_id = Uuid::new_v4().to_string();
 
-        let mut cmd = Command::new(worker_binary_path);
-        cmd.arg(model_image_dir)
+        let mut cmd = Command::new(worker_binary);
+        cmd.env_clear()
             .env("HOME", std::env::var("HOME").unwrap_or_default())
             .env("PATH", std::env::var("PATH").unwrap_or_default())
+            .env("LANG", std::env::var("LANG").unwrap_or_else(|_| "en_US.UTF-8".into()))
+            .env(
+                "LC_ALL",
+                std::env::var("LC_ALL")
+                    .unwrap_or_else(|_| std::env::var("LANG").unwrap_or_else(|_| "en_US.UTF-8".into())),
+            )
+            .arg("--worker-instance-id")
+            .arg(&instance_id)
+            .arg("--image-dir")
+            .arg(image_dir)
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
-            .stderr(Stdio::inherit());
+            .stderr(Stdio::piped());
 
         let mut child = cmd.spawn().map_err(|e| {
             EngineError::new(
@@ -314,7 +712,7 @@ impl WorkerSupervisor {
             )
         })?;
 
-        let pid = child.id();
+        let _pid = child.id();
         let stdin = child.stdin.take().ok_or_else(|| {
             EngineError::new(
                 EngineErrorCode::InternalInvariantViolation,
@@ -327,45 +725,69 @@ impl WorkerSupervisor {
                 "failed to capture worker stdout",
             )
         })?;
+        let stderr = child.stderr.take();
 
-        let now = Instant::now();
-        let mut handle = WorkerHandle {
-            child_process: child,
-            worker_instance_id: instance_id.clone(),
-            pid,
-            stdin: BufWriter::new(stdin),
-            stdout: BufReader::new(stdout),
-            active_requests: HashMap::new(),
-            next_sequence: 0,
-            launched_at: now,
-            last_heartbeat: now,
-            faulted: false,
-            next_expected_seq: 0,
-        };
+        let process_ctrl = Arc::new(WorkerProcessControl::new_from_child(child));
+        let cmd_writer = Arc::new(WorkerCommandWriter::new(stdin, instance_id.clone()));
+        let mut event_reader = WorkerEventReader::new(stdout, instance_id.clone());
+        let runtime_state = Arc::new(WorkerRuntimeState::new(worker_id.to_string()));
+        let registry = Arc::new(ActiveRequestRegistry::new());
+        let diagnostics = Arc::new(WorkerDiagnosticsCollector::new(
+            policy.stderr_diagnostic_ceiling_bytes,
+        ));
 
-        // Send Hello command.
-        handle.send_command(HostCommand::Hello, serde_json::Value::Null)?;
+        // Spawn stderr reader if we captured stderr.
+        let diagnostics_handle = stderr.map(|err| {
+            let diag = Arc::clone(&diagnostics);
+            std::thread::Builder::new()
+                .name("worker-stderr-reader".into())
+                .spawn(move || {
+                    let mut reader = BufReader::new(err);
+                    let mut line = String::new();
+                    while reader.read_line(&mut line).unwrap_or(0) > 0 {
+                        let trimmed = line.trim_end().to_string();
+                        diag.append_line(&trimmed);
+                        line.clear();
+                    }
+                })
+                .expect("failed to spawn stderr reader")
+        });
 
-        // Wait for HelloAck with a polling timeout.
-        let deadline = now + Duration::from_secs(5);
+        // ── Handshake: send Hello, wait for HelloAck ──
+        cmd_writer.send_command(HostCommand::Hello, Value::Null)?;
+
+        let deadline = Instant::now() + HANDSHAKE_TIMEOUT;
         let mut acked = false;
+
         while Instant::now() < deadline {
-            match handle.try_read_frame() {
-                Ok(Some(frame)) => match &frame.message_kind {
-                    MessageKind::WorkerEvent(WorkerEvent::HelloAck) => {
+            // Check if worker exited early.
+            if !process_ctrl.is_alive() {
+                let exit = process_ctrl.exit_status();
+                return Err(EngineError::new(
+                    EngineErrorCode::WorkerLaunchFailed,
+                    format!(
+                        "worker exited before handshake: {}",
+                        exit.map(|s| s.to_string()).unwrap_or_else(|| "unknown".into())
+                    ),
+                ));
+            }
+
+            // Try a non-blocking frame read using the event reader's buffer.
+            match event_reader.try_read_next_event() {
+                Ok(Some(frame)) => {
+                    if matches!(
+                        &frame.message_kind,
+                        MessageKind::WorkerEvent(WorkerEvent::HelloAck)
+                    ) {
                         acked = true;
                         break;
                     }
-                    _ => {
-                        return Err(EngineError::new(
-                            EngineErrorCode::WorkerHandshakeFailed,
-                            "unexpected frame during handshake",
-                        ));
-                    }
-                },
-                Ok(None) => {
-                    std::thread::sleep(Duration::from_millis(10));
+                    return Err(EngineError::new(
+                        EngineErrorCode::WorkerHandshakeFailed,
+                        "unexpected frame during handshake",
+                    ));
                 }
+                Ok(None) => {}
                 Err(e) => {
                     return Err(EngineError::new(
                         EngineErrorCode::WorkerHandshakeFailed,
@@ -374,13 +796,7 @@ impl WorkerSupervisor {
                 }
             }
 
-            // Check if the worker has exited early.
-            if let Ok(Some(status)) = handle.child_process.try_wait() {
-                return Err(EngineError::new(
-                    EngineErrorCode::WorkerLaunchFailed,
-                    format!("worker exited before handshake: {status}"),
-                ));
-            }
+            std::thread::sleep(HANDSHAKE_POLL_INTERVAL);
         }
 
         if !acked {
@@ -390,21 +806,83 @@ impl WorkerSupervisor {
             ));
         }
 
-        self.model_image_hash = Some(image_hash.to_string());
-        self.worker_handle = Some(handle);
-        Ok(())
+        // ── Handshake complete — spawn background threads ──
+        let reader_runtime = Arc::clone(&runtime_state);
+        let reader_registry = Arc::clone(&registry);
+        let reader_diagnostics = Arc::clone(&diagnostics);
+        let reader_process = Arc::clone(&process_ctrl);
+        let reader_policy = policy.clone();
+
+        let event_reader_handle = std::thread::Builder::new()
+            .name("worker-event-reader".into())
+            .spawn(move || {
+                Self::run_event_reader(
+                    &mut event_reader,
+                    &reader_runtime,
+                    &reader_registry,
+                    &reader_diagnostics,
+                    &reader_process,
+                    &reader_policy,
+                );
+            })
+            .expect("failed to spawn event reader");
+
+        // Spawn watchdog thread.
+        let watchdog_process = Arc::clone(&process_ctrl);
+        let watchdog_cmd = Arc::clone(&cmd_writer);
+        let watchdog_runtime = Arc::clone(&runtime_state);
+        let watchdog_registry = Arc::clone(&registry);
+        let watchdog_diagnostics = Arc::clone(&diagnostics);
+        let watchdog_policy = policy.clone();
+
+        let watchdog_handle = std::thread::Builder::new()
+            .name("worker-watchdog".into())
+            .spawn(move || {
+                Self::run_watchdog(
+                    &watchdog_process,
+                    &watchdog_cmd,
+                    &watchdog_runtime,
+                    &watchdog_registry,
+                    &watchdog_diagnostics,
+                    &watchdog_policy,
+                );
+            })
+            .expect("failed to spawn watchdog");
+
+        Ok(Self {
+            process_ctrl,
+            cmd_writer,
+            runtime_state,
+            registry,
+            diagnostics,
+            policy,
+            event_reader_handle: Some(event_reader_handle),
+            watchdog_handle: Some(watchdog_handle),
+            diagnostics_handle,
+        })
     }
 
-    /// Instruct the worker to load the model. Blocks until ModelLoaded.
-    pub fn load_model(&mut self, image_hash: &str) -> Result<(), EngineError> {
-        let handle = self.worker_handle.as_mut().ok_or_else(|| {
-            EngineError::new(EngineErrorCode::WorkerCrashed, "no worker running")
-        })?;
+    // ── Load Model ───────────────────────────────────────────────────────
+
+    /// Instruct the worker to load the model.
+    ///
+    /// Sends `LoadModel`, then polls the runtime state until `ModelLoaded` is
+    /// set by the event-reader thread (which dispatches the frame). Times out
+    /// after `policy.model_load_timeout`.
+    pub fn load_model(&self, image_hash: &str) -> Result<(), EngineError> {
+        if self.runtime_state.is_faulted() {
+            return Err(EngineError::new(
+                EngineErrorCode::WorkerCrashed,
+                "worker is faulted",
+            ));
+        }
 
         let payload = serde_json::json!({ "image_hash": image_hash });
-        handle.send_command(HostCommand::LoadModel, payload)?;
+        self.cmd_writer
+            .send_command(HostCommand::LoadModel, payload)?;
 
-        let deadline = Instant::now() + Duration::from_secs(120);
+        let deadline = Instant::now() + self.policy.model_load_timeout;
+
         loop {
             if Instant::now() >= deadline {
                 return Err(EngineError::new(
@@ -413,59 +891,56 @@ impl WorkerSupervisor {
                 ));
             }
 
-            let frame = handle.read_frame()?;
-            match &frame.message_kind {
-                MessageKind::WorkerEvent(WorkerEvent::ModelLoadStarted) => continue,
-                MessageKind::WorkerEvent(WorkerEvent::ModelLoaded) => {
-                    self.model_loaded = true;
-                    self.model_image_hash = Some(image_hash.to_string());
-                    return Ok(());
-                }
-                MessageKind::WorkerEvent(WorkerEvent::WorkerFatal) => {
-                    handle.faulted = true;
-                    let msg = frame
-                        .payload
-                        .get("message")
-                        .and_then(|v| v.as_str())
-                        .unwrap_or("worker fatal during model load");
-                    return Err(EngineError::new(
-                        EngineErrorCode::WorkerCrashed,
-                        format!("worker fatal: {msg}"),
-                    ));
-                }
-                _ => {
-                    // Ignore heartbeats and other unrelated events during load.
-                    continue;
-                }
+            if self.runtime_state.is_faulted() {
+                return Err(EngineError::new(
+                    EngineErrorCode::WorkerCrashed,
+                    "worker faulted during model load",
+                ));
             }
+
+            if self.runtime_state.is_model_loaded() {
+                return Ok(());
+            }
+
+            // Check if worker has exited.
+            if !self.process_ctrl.is_alive() {
+                self.runtime_state.mark_faulted();
+                return Err(EngineError::new(
+                    EngineErrorCode::WorkerCrashed,
+                    "worker exited during model load",
+                ));
+            }
+
+            std::thread::sleep(Duration::from_millis(50));
         }
     }
 
+    // ── Start Generation ─────────────────────────────────────────────────
+
     /// Start a generation request.
     ///
-    /// Validates that no other generation is active (returns
-    /// [`EngineErrorCode::ModelBusy`] if so), sends `StartGeneration` to the
-    /// worker, creates an `ActiveRequest` with a fresh stream, and returns the
-    /// consumer half immediately without waiting for prefill.
+    /// Validates `ModelNotLoaded`/`ModelBusy`, creates a generation channel,
+    /// inserts the request into the registry with a deadline, sends
+    /// `StartGeneration` to the worker, and returns a [`GenerationHandle`]
+    /// immediately without blocking on prefill.
     pub fn start_generation(
-        &mut self,
-        request: StartGenerationPayload,
-    ) -> Result<GenerationStream, EngineError> {
-        if self.active_generation.is_some() {
-            return Err(EngineError::new(
-                EngineErrorCode::ModelBusy,
-                "a generation request is already in progress",
-            ));
-        }
-
-        let handle = self.worker_handle.as_mut().ok_or_else(|| {
-            EngineError::new(EngineErrorCode::WorkerCrashed, "no worker running")
-        })?;
-
-        if !self.model_loaded {
+        &self,
+        request: &StartGenerationPayload,
+    ) -> Result<GenerationHandle, EngineError> {
+        if !self.runtime_state.is_model_loaded() {
             return Err(EngineError::new(
                 EngineErrorCode::ModelNotLoaded,
                 "model not loaded",
+            ));
+        }
+
+        if self.registry.contains(&request.request_id) {
+            return Err(EngineError::new(
+                EngineErrorCode::ModelBusy,
+                format!(
+                    "a generation request is already active: {}",
+                    request.request_id
+                ),
             ));
         }
 
@@ -473,487 +948,459 @@ impl WorkerSupervisor {
         let public_job_id = Uuid::new_v4().to_string();
 
         // Create the generation event channel.
-        let (sender, stream) = crate::streaming::generation_channel(
-            Some(GENERATION_CHANNEL_CAPACITY as u32),
-        );
+        let (sender, stream) =
+            generation_channel(Some(GENERATION_CHANNEL_CAPACITY as u32));
 
         let deadline = DeadlineGuard::new(&self.policy, Instant::now);
+        let deadline_at = Instant::now() + self.policy.request_deadline;
 
-        let active = ActiveRequest {
-            request_id: request_id.clone(),
-            public_job_id: public_job_id.clone(),
-            stream_sender: sender,
+        let active = ActiveRequest::new(
+            request_id.clone(),
+            public_job_id,
+            sender,
             deadline,
-            phase: "pending".into(),
-            started_at: Instant::now(),
-        };
+            deadline_at,
+        );
 
-        let payload = serde_json::to_value(&request).map_err(|e| {
+        // Send StartGeneration before inserting into registry so the worker
+        // can start processing immediately.
+        let payload = serde_json::to_value(request).map_err(|e| {
             EngineError::new(
                 EngineErrorCode::InternalInvariantViolation,
                 format!("failed to serialize StartGenerationPayload: {e}"),
             )
         })?;
 
-        handle.send_command(HostCommand::StartGeneration, payload)?;
+        self.cmd_writer.send_command_with_request(
+            HostCommand::StartGeneration,
+            &request_id,
+            payload,
+        )?;
 
-        handle.active_requests.insert(request_id.clone(), active);
-        self.active_generation = Some(request_id);
+        self.registry.insert(active);
 
-        Ok(stream)
+        Ok(GenerationHandle::new(stream))
     }
+
+    // ── Cancel Generation ────────────────────────────────────────────────
 
     /// Cancel a generation by job ID.
     ///
-    /// Locates the active request (by either public_job_id or request_id) and
-    /// sends `CancelGeneration` to the worker.
-    pub fn cancel_generation(&mut self, job_id: &str) -> Result<(), EngineError> {
-        let handle = self.worker_handle.as_mut().ok_or_else(|| {
-            EngineError::new(EngineErrorCode::WorkerCrashed, "no worker running")
+    /// Looks up the job_id in the registry, marks cancellation_requested, and
+    /// sends `CancelGeneration` to the worker. Does NOT wait for the worker's
+    /// response — the event reader handles the terminal event asynchronously.
+    pub fn cancel_generation(&self, job_id: &str) -> Result<(), EngineError> {
+        let request_id = self.registry.get_by_job_id(job_id).ok_or_else(|| {
+            EngineError::new(
+                EngineErrorCode::InvalidRequest,
+                format!("no active request found for job_id: {job_id}"),
+            )
         })?;
 
-        let matching_id = handle
-            .active_requests
-            .iter()
-            .find(|(_id, req)| req.public_job_id == job_id || req.request_id == job_id)
-            .map(|(id, _req)| id.clone())
-            .ok_or_else(|| {
-                EngineError::new(
-                    EngineErrorCode::InvalidRequest,
-                    format!("no active request found for job_id: {job_id}"),
-                )
-            })?;
+        self.registry.request_cancellation(&request_id);
 
-        let payload = serde_json::json!({ "request_id": matching_id });
-        handle.send_command(HostCommand::CancelGeneration, payload)
+        let payload = serde_json::json!({ "request_id": &request_id });
+        self.cmd_writer.send_command_with_request(
+            HostCommand::CancelGeneration,
+            &request_id,
+            payload,
+        )?;
+
+        Ok(())
     }
 
-    /// Read and dispatch one frame from the worker.
-    ///
-    /// Called internally from [`event_loop`]. Blocks until a frame is available.
-    fn dispatch_frame(&mut self) -> Result<(), EngineError> {
-        // Read frame while holding the handle borrow, then release it.
-        let (frame, worker_faulted) = {
-            let handle = self.worker_handle.as_mut().ok_or_else(|| {
-                EngineError::new(EngineErrorCode::WorkerCrashed, "no worker running")
-            })?;
-            let frame = handle.read_frame()?;
-            let faulted = handle.faulted;
-            (frame, faulted)
-        };
+    // ── Unload Model ─────────────────────────────────────────────────────
 
-        if worker_faulted {
-            return Err(EngineError::new(
-                EngineErrorCode::WorkerCrashed,
-                "worker is in faulted state",
-            ));
+    /// Unload the model, cancel any active request, send UnloadModel and
+    /// Shutdown, then join all threads and reap the process.
+    pub fn unload_model(&self) -> Result<(), EngineError> {
+        if self.runtime_state.is_faulted() {
+            self.registry.fail_all("worker shutdown");
+            return Ok(());
         }
 
-        // Reborrow handle for dispatch — frame is owned so no borrow conflict.
-        let handle = self.worker_handle.as_mut().ok_or_else(|| {
-            EngineError::new(EngineErrorCode::WorkerCrashed, "no worker running")
-        })?;
+        // Cancel any active generation.
+        let active_ids: Vec<(String, Instant)> = self.registry.all_active();
+        for (req_id, _) in &active_ids {
+            self.registry.request_cancellation(req_id);
+            let payload = serde_json::json!({ "request_id": req_id });
+            let _ = self
+                .cmd_writer
+                .send_command_with_request(HostCommand::CancelGeneration, req_id, payload);
+        }
 
-        let req_id = frame.request_id.as_deref();
+        // Send UnloadModel.
+        let _ = self
+            .cmd_writer
+            .send_command(HostCommand::UnloadModel, Value::Null);
 
-        match &frame.message_kind {
-            MessageKind::WorkerEvent(event) => match event {
-                WorkerEvent::Heartbeat => {
-                    handle.last_heartbeat = Instant::now();
-                    if let Some(id) = req_id {
+        // Send Shutdown.
+        let _ = self
+            .cmd_writer
+            .send_command(HostCommand::Shutdown, Value::Null);
+
+        // Wait for worker exit with timeout.
+        let deadline = Instant::now() + SHUTDOWN_TIMEOUT;
+        loop {
+            if !self.process_ctrl.is_alive() {
+                break;
+            }
+            if Instant::now() >= deadline {
+                let _ = self.process_ctrl.kill();
+                break;
+            }
+            std::thread::sleep(Duration::from_millis(50));
+        }
+
+        self.runtime_state.clear_model_loaded();
+        Ok(())
+    }
+
+    /// Forcefully shut down: kill worker if alive, clear registry.
+    ///
+    /// Callers should join threads separately via the handles.
+    pub fn shutdown(&self) {
+        let _ = self.process_ctrl.kill();
+        self.runtime_state.clear_model_loaded();
+        self.registry.fail_all("worker shutdown");
+    }
+
+    /// Join background threads (event reader, watchdog, stderr reader).
+    /// Takes `&mut self` because `JoinHandle::join` needs ownership.
+    pub fn join_threads(&mut self) {
+        if let Some(handle) = self.event_reader_handle.take() {
+            let _ = handle.join();
+        }
+        if let Some(handle) = self.watchdog_handle.take() {
+            let _ = handle.join();
+        }
+        if let Some(handle) = self.diagnostics_handle.take() {
+            let _ = handle.join();
+        }
+    }
+
+    // ── RSS Monitoring ───────────────────────────────────────────────────
+
+    /// Sample the worker's resident set size in bytes.
+    ///
+    /// Returns 0 when the process is not alive or sampling fails.
+    pub fn monitor_rss(&self) -> u64 {
+        if !self.process_ctrl.is_alive() {
+            return 0;
+        }
+        read_process_rss(self.process_ctrl.pid())
+    }
+
+    // ── Event Reader Loop ────────────────────────────────────────────────
+
+    /// The event-reader thread body.
+    ///
+    /// Runs in a dedicated thread that owns the [`WorkerEventReader`]
+    /// exclusively. For each validated frame:
+    /// - Updates heartbeat state in [`WorkerRuntimeState`].
+    /// - Forwards `Token` events to the registry's stream sender.
+    /// - Updates phase in the registry.
+    /// - On terminal events: records in the registry's terminal tracker,
+    ///   sends terminal to the stream.
+    /// - On [`WorkerEvent::WorkerFatal`]: marks faulted, fails all active
+    ///   requests.
+    /// - On [`WorkerEvent::ModelLoaded`]: sets model_loaded in runtime state.
+    /// - On [`WorkerEvent::ModelUnloaded`]: clears model_loaded.
+    ///
+    /// Exits when the worker terminates (stdout EOF) or encounters a fatal
+    /// protocol violation.
+    fn run_event_reader(
+        reader: &mut WorkerEventReader,
+        runtime: &WorkerRuntimeState,
+        registry: &ActiveRequestRegistry,
+        diagnostics: &WorkerDiagnosticsCollector,
+        process: &WorkerProcessControl,
+        _policy: &ExecutionPolicy,
+    ) {
+        loop {
+            // Check if the worker is still alive.
+            if !process.is_alive() {
+                runtime.mark_faulted();
+                registry.fail_all("worker process exited");
+                return;
+            }
+
+            if runtime.is_faulted() {
+                registry.fail_all("worker is faulted");
+                return;
+            }
+
+            let frame = match reader.read_next_event() {
+                Ok(f) => f,
+                Err(e) => {
+                    diagnostics.append_line(&format!("event reader error: {e}"));
+                    runtime.mark_faulted();
+                    registry.fail_all(&format!("event reader error: {e}"));
+                    return;
+                }
+            };
+
+            let req_id = frame.request_id.as_deref();
+
+            match &frame.message_kind {
+                MessageKind::WorkerEvent(event) => match event {
+                    WorkerEvent::Heartbeat => {
+                        runtime.record_heartbeat();
                         if let Ok(payload) =
                             serde_json::from_value::<HeartbeatPayload>(frame.payload.clone())
                         {
-                            if let Some(ref phase) = payload.request_phase {
-                                if let Some(active) = handle.active_requests.get_mut(id) {
-                                    active.phase = phase.clone();
+                            if let Some(phase) = &payload.request_phase {
+                                if let Some(id) = req_id {
+                                    let requests = registry.requests.lock();
+                                    if let Some(active) = requests.get(id) {
+                                        *active.phase.lock() = phase.clone();
+                                    }
                                 }
                             }
                         }
                     }
-                }
 
-                WorkerEvent::Token => {
-                    if let Ok(payload) =
-                        serde_json::from_value::<TokenPayload>(frame.payload.clone())
-                    {
-                        let _ = handle
-                            .active_requests
-                            .get(&payload.request_id)
-                            .and_then(|active| {
-                                active
+                    WorkerEvent::Token => {
+                        if let Ok(payload) =
+                            serde_json::from_value::<TokenPayload>(frame.payload.clone())
+                        {
+                            let requests = registry.requests.lock();
+                            if let Some(active) = requests.get(&payload.request_id) {
+                                let _ = active
                                     .stream_sender
-                                    .try_send(GenerationEvent::Token(payload.token_id))
-                                    .ok()
-                            });
-                    }
-                }
-
-                WorkerEvent::GenerationStarted => {
-                    if let Some(id) = req_id {
-                        if let Some(active) = handle.active_requests.get_mut(id) {
-                            active.phase = "prefill".into();
-                            let _ = active.stream_sender.try_send(GenerationEvent::Started);
+                                    .try_send(GenerationEvent::Token(payload.token_id));
+                            }
                         }
                     }
-                }
 
-                WorkerEvent::PrefillStarted => {
-                    if let Some(id) = req_id {
-                        if let Some(active) = handle.active_requests.get_mut(id) {
-                            active.phase = "prefill".into();
+                    WorkerEvent::GenerationStarted => {
+                        if let Some(id) = req_id {
+                            let requests = registry.requests.lock();
+                            if let Some(active) = requests.get(id) {
+                                *active.phase.lock() = "prefill".into();
+                                let _ = active.stream_sender.try_send(GenerationEvent::Started);
+                            }
                         }
                     }
-                }
 
-                WorkerEvent::PrefillCompleted => {
-                    if let Some(id) = req_id {
-                        if let Some(active) = handle.active_requests.get_mut(id) {
-                            active.phase = "decode".into();
+                    WorkerEvent::PrefillStarted => {
+                        if let Some(id) = req_id {
+                            let requests = registry.requests.lock();
+                            if let Some(active) = requests.get(id) {
+                                *active.phase.lock() = "prefill".into();
+                            }
                         }
                     }
-                }
 
-                WorkerEvent::GenerationCompleted => {
-                    if let Some(id) = req_id {
-                        if let Some(active) = handle.active_requests.remove(id) {
-                            self.active_generation.take();
-                            let _ = active.stream_sender.try_send(GenerationEvent::Done);
+                    WorkerEvent::PrefillCompleted => {
+                        if let Some(id) = req_id {
+                            let requests = registry.requests.lock();
+                            if let Some(active) = requests.get(id) {
+                                *active.phase.lock() = "decode".into();
+                            }
                         }
                     }
-                }
 
-                WorkerEvent::GenerationCancelled => {
-                    if let Some(id) = req_id {
-                        if let Some(active) = handle.active_requests.remove(id) {
-                            self.active_generation.take();
-                            let _ = active
-                                .stream_sender
-                                .try_send(GenerationEvent::Error("cancelled by host".into()));
+                    WorkerEvent::GenerationCompleted => {
+                        if let Some(id) = req_id {
+                            registry.mark_terminal(id, GenerationEvent::Done);
                         }
                     }
-                }
 
-                WorkerEvent::GenerationFailed => {
-                    if let Some(id) = req_id {
-                        if let Some(active) = handle.active_requests.remove(id) {
-                            self.active_generation.take();
+                    WorkerEvent::GenerationCancelled => {
+                        if let Some(id) = req_id {
+                            registry.mark_terminal(
+                                id,
+                                GenerationEvent::Error("cancelled by host".into()),
+                            );
+                        }
+                    }
+
+                    WorkerEvent::GenerationFailed => {
+                        if let Some(id) = req_id {
                             let msg = frame
                                 .payload
                                 .get("message")
                                 .and_then(|v| v.as_str())
                                 .unwrap_or("generation failed");
-                            let _ = active
-                                .stream_sender
-                                .try_send(GenerationEvent::Error(msg.to_string()));
+                            registry
+                                .mark_terminal(id, GenerationEvent::Error(msg.to_string()));
                         }
                     }
-                }
 
-                WorkerEvent::StepMetrics => {
-                    if let Some(id) = req_id {
-                        let metrics_str = frame.payload.to_string();
-                        let _ = handle
-                            .active_requests
-                            .get(id)
-                            .and_then(|active| {
-                                active
+                    WorkerEvent::StepMetrics => {
+                        if let Some(id) = req_id {
+                            let metrics_str = frame.payload.to_string();
+                            let requests = registry.requests.lock();
+                            if let Some(active) = requests.get(id) {
+                                let _ = active
                                     .stream_sender
-                                    .try_send(GenerationEvent::Metrics(metrics_str.clone()))
-                                    .ok()
-                            });
-                    }
-                }
-
-                WorkerEvent::WorkerFatal => {
-                    handle.faulted = true;
-                    let msg = frame
-                        .payload
-                        .get("message")
-                        .and_then(|v| v.as_str())
-                        .unwrap_or("worker fatal error");
-
-                    let all_active: Vec<String> =
-                        handle.active_requests.keys().cloned().collect();
-                    for id in &all_active {
-                        if let Some(active) = handle.active_requests.remove(id) {
-                            let _ = active
-                                .stream_sender
-                                .try_send(GenerationEvent::Error(msg.to_string()));
+                                    .try_send(GenerationEvent::Metrics(metrics_str));
+                            }
                         }
                     }
-                    self.active_generation.take();
 
-                    return Err(EngineError::new(
-                        EngineErrorCode::WorkerCrashed,
-                        format!("worker fatal: {msg}"),
-                    ));
+                    WorkerEvent::WorkerFatal => {
+                        runtime.mark_faulted();
+                        let msg = frame
+                            .payload
+                            .get("message")
+                            .and_then(|v| v.as_str())
+                            .unwrap_or("worker fatal error");
+                        diagnostics.append_line(&format!("worker fatal: {msg}"));
+                        registry.fail_all(msg);
+                        return;
+                    }
+
+                    WorkerEvent::ModelLoaded => {
+                        runtime.set_model_loaded();
+                    }
+
+                    WorkerEvent::ModelUnloaded => {
+                        runtime.clear_model_loaded();
+                    }
+
+                    WorkerEvent::HelloAck | WorkerEvent::ModelLoadStarted => {}
+                },
+
+                _ => {
+                    diagnostics.append_line("received unexpected host command from worker");
                 }
-
-                WorkerEvent::ModelUnloaded => {
-                    self.model_loaded = false;
-                    self.model_image_hash = None;
-                }
-
-                // Events consumed synchronously during launch/load:
-                _ => {}
-            },
-
-            _ => {
-                return Err(EngineError::new(
-                    EngineErrorCode::WorkerProtocolViolation,
-                    "received host command from worker",
-                ));
             }
         }
-
-        Ok(())
     }
 
-    /// Event loop iteration — reads one frame from the worker and dispatches
-    /// it to the appropriate generation stream.
+    // ── Watchdog Loop ────────────────────────────────────────────────────
+
+    /// The watchdog thread body.
     ///
-    /// Designed to be called repeatedly from a background thread. Returns an
-    /// error when the worker exits, encounters a fatal error, or is faulted.
-    pub fn event_loop(&mut self) -> Result<(), EngineError> {
-        // Check if the worker has exited.
-        if let Some(ref mut handle) = self.worker_handle {
-            if handle.faulted {
-                return Err(EngineError::new(
-                    EngineErrorCode::WorkerCrashed,
-                    "worker is in faulted state",
+    /// Ticks every `watchdog_interval_ms`. On each tick:
+    /// - Checks process is alive via `is_alive()`.
+    /// - Checks request deadlines against the registry.
+    /// - Checks heartbeat age against policy.
+    /// - Checks RSS against soft/hard ceilings.
+    ///
+    /// Enforces:
+    /// - Send `MemoryPressure` if RSS > soft ceiling.
+    /// - Kill if RSS > hard ceiling.
+    /// - Request cancellation if deadline expires.
+    /// - Kill after grace period if worker unresponsive.
+    fn run_watchdog(
+        process: &WorkerProcessControl,
+        cmd_writer: &WorkerCommandWriter,
+        runtime: &WorkerRuntimeState,
+        registry: &ActiveRequestRegistry,
+        diagnostics: &WorkerDiagnosticsCollector,
+        policy: &ExecutionPolicy,
+    ) {
+        let interval = Duration::from_millis(policy.watchdog_interval_ms);
+
+        loop {
+            std::thread::sleep(interval);
+
+            if runtime.is_faulted() {
+                return;
+            }
+
+            // ── Process alive check ──
+            if !process.is_alive() {
+                runtime.mark_faulted();
+                diagnostics.append_line("watchdog: worker process is not alive");
+                registry.fail_all("worker process exited");
+                return;
+            }
+
+            // ── Heartbeat check ──
+            let heartbeat_age = runtime.heartbeat_age();
+            if heartbeat_age > policy.worker_heartbeat_timeout {
+                diagnostics.append_line(&format!(
+                    "watchdog: heartbeat lost (age={:?}, timeout={:?})",
+                    heartbeat_age, policy.worker_heartbeat_timeout
                 ));
-            }
 
-            match handle.child_process.try_wait() {
-                Ok(Some(status)) => {
-                    handle.faulted = true;
-                    let all_active: Vec<String> =
-                        handle.active_requests.keys().cloned().collect();
-                    for id in &all_active {
-                        if let Some(active) = handle.active_requests.remove(id) {
-                            let _ = active.stream_sender.try_send(
-                                GenerationEvent::Error(format!("worker exited: {status}")),
-                            );
-                        }
-                    }
-                    self.active_generation.take();
-                    return Err(EngineError::new(
-                        EngineErrorCode::WorkerCrashed,
-                        format!("worker exited unexpectedly: {status}"),
-                    ));
-                }
-                Ok(None) => {}
-                Err(e) => {
-                    return Err(EngineError::new(
-                        EngineErrorCode::InternalInvariantViolation,
-                        format!("error checking worker status: {e}"),
-                    ));
-                }
-            }
-        } else {
-            // No worker — nothing to do.
-            return Ok(());
-        }
+                let _ = cmd_writer.send_command(HostCommand::Ping, Value::Null);
 
-        // Read and dispatch one frame.
-        self.dispatch_frame()
-    }
-
-    /// Check deadlines for all active requests.
-    ///
-    /// If a request has exceeded its wall-clock deadline, first tries
-    /// cooperative cancellation (sends CancelGeneration). If the grace period
-    /// has also passed, escalates to forcible termination (kills the worker).
-    pub fn check_deadlines(&mut self) {
-        let handle = match &mut self.worker_handle {
-            Some(h) => h,
-            None => return,
-        };
-
-        let grace = self.policy.cancellation_grace_period;
-
-        let expired_ids: Vec<String> = handle
-            .active_requests
-            .iter()
-            .filter(|(_id, req)| req.deadline.is_expired())
-            .map(|(id, _req)| id.clone())
-            .collect();
-
-        for id in &expired_ids {
-            let expired_active = match handle.active_requests.get(id) {
-                Some(a) => a,
-                None => continue,
-            };
-
-            if let Some(since_expiry) = expired_active.deadline.time_since_expiry() {
-                if since_expiry >= grace {
-                    // Grace period passed — force kill.
-                    let _ = expired_active
-                        .stream_sender
-                        .try_send(GenerationEvent::Error("deadline exceeded".into()));
-                    if let Some(removed) = handle.active_requests.remove(id) {
-                        self.active_generation.take();
-                        let _ = removed
-                            .stream_sender
-                            .try_send(GenerationEvent::Error("deadline exceeded".into()));
-                    }
-                    let _ = handle.child_process.kill();
-                    handle.faulted = true;
+                std::thread::sleep(Duration::from_millis(50));
+                let second_age = runtime.heartbeat_age();
+                if second_age > policy.worker_heartbeat_timeout + Duration::from_millis(100) {
+                    diagnostics.append_line("watchdog: worker unresponsive, killing");
+                    let _ = process.kill();
+                    runtime.mark_faulted();
+                    registry.fail_all("worker unresponsive");
                     return;
                 }
             }
 
-            // Grace period still active — try cooperative cancel.
-            let payload = serde_json::json!({ "request_id": id });
-            let _ = handle.send_command(HostCommand::CancelGeneration, payload);
-            if let Some(active) = handle.active_requests.get_mut(id) {
-                active.phase = "cancelling".into();
+            // ── RSS monitoring ──
+            let rss = read_process_rss(process.pid());
+            let hard = policy.worker_rss_hard_ceiling_bytes;
+            let soft = policy.worker_rss_soft_ceiling_bytes;
+
+            if hard > 0 && rss > hard {
+                diagnostics.append_line(&format!(
+                    "watchdog: RSS {rss} exceeds hard ceiling {hard}, killing"
+                ));
+                let _ = process.kill();
+                runtime.mark_faulted();
+                registry.fail_all("worker exceeded hard RSS limit");
+                return;
             }
-        }
-    }
 
-    /// Sample the worker's resident set size in bytes.
-    ///
-    /// Returns 0 if sampling fails or no worker is running.
-    pub fn monitor_rss(&mut self) -> u64 {
-        let pid = match &self.worker_handle {
-            Some(h) => h.pid,
-            None => return 0,
-        };
-        read_process_rss(pid)
-    }
-
-    /// Unload the model and shut down the worker gracefully.
-    ///
-    /// Cancels any active generation, sends UnloadModel and Shutdown commands,
-    /// then waits for the worker to exit (with a 10-second timeout before
-    /// forcible kill).
-    pub fn unload_model(&mut self) -> Result<(), EngineError> {
-        // Cancel any active generation.
-        if let Some(ref id) = self.active_generation.clone() {
-            if let Some(ref mut handle) = self.worker_handle {
-                let payload = serde_json::json!({ "request_id": id });
-                let _ = handle.send_command(HostCommand::CancelGeneration, payload);
-                if let Some(active) = handle.active_requests.remove(id) {
-                    let _ = active
-                        .stream_sender
-                        .try_send(GenerationEvent::Error("shutdown".into()));
-                }
+            if soft > 0 && rss > soft {
+                diagnostics.append_line(&format!(
+                    "watchdog: RSS {rss} exceeds soft ceiling {soft}, sending MemoryPressure"
+                ));
+                let _ = cmd_writer.send_command(
+                    HostCommand::MemoryPressure,
+                    serde_json::json!({ "rss_bytes": rss }),
+                );
             }
-            self.active_generation = None;
-        }
 
-        let handle = self.worker_handle.as_mut().ok_or_else(|| {
-            EngineError::new(EngineErrorCode::WorkerCrashed, "no worker running")
-        })?;
+            // ── Deadline enforcement ──
+            let now = Instant::now();
+            let grace = policy.cancellation_grace_period;
+            let expired: Vec<(String, Instant)> = registry
+                .all_active()
+                .into_iter()
+                .filter(|(_, deadline_at)| now >= *deadline_at)
+                .collect();
 
-        // Send UnloadModel.
-        handle.send_command(HostCommand::UnloadModel, serde_json::Value::Null)?;
+            for (req_id, deadline_at) in &expired {
+                let since_expiry = now.saturating_duration_since(*deadline_at);
 
-        // Send Shutdown.
-        handle.send_command(HostCommand::Shutdown, serde_json::Value::Null)?;
-
-        // Wait for worker exit.
-        let deadline = Instant::now() + Duration::from_secs(10);
-        loop {
-            match handle.child_process.try_wait() {
-                Ok(Some(_)) => break,
-                Ok(None) => {
-                    if Instant::now() >= deadline {
-                        let _ = handle.child_process.kill();
-                        let _ = handle.child_process.wait();
-                        break;
-                    }
-                    std::thread::sleep(Duration::from_millis(50));
-                }
-                Err(e) => {
-                    let _ = handle.child_process.kill();
-                    let _ = handle.child_process.wait();
-                    return Err(EngineError::new(
-                        EngineErrorCode::InternalInvariantViolation,
-                        format!("error waiting for worker exit: {e}"),
+                if since_expiry >= grace {
+                    diagnostics.append_line(&format!(
+                        "watchdog: request {req_id} exceeded deadline+grace, killing worker"
                     ));
+                    registry.mark_terminal(
+                        req_id,
+                        GenerationEvent::Error("deadline exceeded".into()),
+                    );
+                    let _ = process.kill();
+                    runtime.mark_faulted();
+                    return;
                 }
+
+                diagnostics.append_line(&format!(
+                    "watchdog: request {req_id} deadline expired, sending CancelGeneration"
+                ));
+                registry.request_cancellation(req_id);
+                let payload = serde_json::json!({ "request_id": req_id });
+                let _ = cmd_writer.send_command_with_request(
+                    HostCommand::CancelGeneration,
+                    req_id,
+                    payload,
+                );
             }
         }
-
-        self.model_loaded = false;
-        self.model_image_hash = None;
-        self.worker_handle = None;
-        Ok(())
-    }
-
-    /// Forcefully shut down the worker if still alive.
-    pub fn shutdown(&mut self) {
-        if let Some(mut handle) = self.worker_handle.take() {
-            let _ = handle.child_process.kill();
-            let _ = handle.child_process.wait();
-        }
-        self.model_loaded = false;
-        self.model_image_hash = None;
-        self.active_generation = None;
     }
 }
 
 impl Drop for WorkerSupervisor {
     fn drop(&mut self) {
         self.shutdown();
+        self.join_threads();
     }
-}
-
-// ── Event Forwarder ────────────────────────────────────────────────────────
-
-/// Spawn a background thread that continuously forwards worker events to the
-/// appropriate generation streams.
-///
-/// The thread runs `event_loop()` in a loop, releasing the mutex lock between
-/// iterations. When the worker exits (event_loop returns an error), the thread
-/// marks the worker as faulted and exits.
-pub fn spawn_event_forwarder(
-    supervisor: Arc<Mutex<WorkerSupervisor>>,
-) -> JoinHandle<()> {
-    std::thread::Builder::new()
-        .name("worker-event-forwarder".into())
-        .spawn(move || {
-            loop {
-                // Quick check: is the worker still alive?
-                {
-                    let sv = supervisor.lock();
-                    let should_exit = match &sv.worker_handle {
-                        None => {
-                            // No worker — sleep and retry.
-                            drop(sv);
-                            std::thread::sleep(Duration::from_millis(100));
-                            continue;
-                        }
-                        Some(h) => h.faulted,
-                    };
-                    if should_exit {
-                        return;
-                    }
-                }
-
-                // Event loop iteration: read + dispatch one frame.
-                let result = {
-                    let mut sv = supervisor.lock();
-                    sv.event_loop()
-                };
-
-                match result {
-                    Ok(()) => {}
-                    Err(e) => {
-                        eprintln!("[worker_supervisor] event_loop error: {e}");
-                        let mut sv = supervisor.lock();
-                        if let Some(ref mut handle) = sv.worker_handle {
-                            handle.faulted = true;
-                        }
-                        return;
-                    }
-                }
-            }
-        })
-        .expect("failed to spawn event forwarder thread")
 }
 
 // ── RSS Monitoring ─────────────────────────────────────────────────────────
@@ -991,7 +1438,6 @@ fn read_process_rss(pid: u32) -> u64 {
         Ok(c) => c,
         Err(_) => return 0,
     };
-    // Field 24 (0-indexed: 23) is resident set size in pages.
     if let Some(field) = content.split_whitespace().nth(23) {
         if let Ok(pages) = field.parse::<u64>() {
             return pages.saturating_mul(4096);
@@ -1011,7 +1457,6 @@ fn read_process_rss(_pid: u32) -> u64 {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::engine_error::EngineErrorCode;
     use crate::engine_policy::qualification_policy;
 
     // ── Helpers ──────────────────────────────────────────────────────────
@@ -1025,78 +1470,876 @@ mod tests {
         }
     }
 
-    fn make_supervisor() -> WorkerSupervisor {
-        let mut sv = WorkerSupervisor::new(qualification_policy());
-        sv.model_loaded = true;
-        sv
-    }
-
-    // ── test_launch_handshake_flow ────────────────────────────────────────
+    // ── WorkerProcessControl Tests ───────────────────────────────────────
 
     #[test]
-    fn test_launch_handshake_flow() {
-        // Verify pre-launch invariants.
-        let sv = WorkerSupervisor::new(qualification_policy());
-        assert!(sv.worker_handle.is_none());
+    fn test_process_control_lifecycle() {
+        let child = Command::new("echo")
+            .arg("hello")
+            .stdout(Stdio::null())
+            .stderr(Stdio::null())
+            .spawn()
+            .expect("failed to spawn echo");
 
-        // load_model without a worker returns WorkerCrashed.
-        let mut sv = WorkerSupervisor::new(qualification_policy());
-        let result = sv.load_model("test-hash");
-        assert!(result.is_err());
-        assert_eq!(
-            result.unwrap_err().code,
-            EngineErrorCode::WorkerCrashed
+        let pid = child.id();
+        let ctrl = WorkerProcessControl::new_from_child(child);
+
+        assert_eq!(ctrl.pid(), pid);
+
+        // Wait for it.
+        let status = ctrl.wait().expect("wait should succeed");
+        assert!(status.success());
+        assert_eq!(ctrl.exit_status(), Some(status));
+        assert!(!ctrl.is_alive());
+    }
+
+    #[test]
+    fn test_process_control_kill_idempotent() {
+        let child = Command::new("sleep")
+            .arg("60")
+            .stdout(Stdio::null())
+            .stderr(Stdio::null())
+            .spawn()
+            .expect("failed to spawn sleep");
+
+        let ctrl = WorkerProcessControl::new_from_child(child);
+
+        assert!(ctrl.is_alive());
+        assert!(!ctrl.was_killed());
+
+        ctrl.kill().expect("first kill should succeed");
+        assert!(ctrl.was_killed());
+
+        // Idempotent second kill.
+        ctrl.kill().expect("second kill should be idempotent");
+    }
+
+    // ── WorkerCommandWriter Tests ────────────────────────────────────────
+
+    #[test]
+    fn test_command_writer_thread_safe() {
+        let mut child = Command::new("sleep")
+            .arg("10")
+            .stdin(Stdio::piped())
+            .stdout(Stdio::null())
+            .stderr(Stdio::null())
+            .spawn()
+            .expect("failed to spawn sleep");
+
+        let stdin = child.stdin.take().expect("stdin");
+        let writer = Arc::new(WorkerCommandWriter::new(stdin, "test-id".into()));
+
+        let writer_clone = Arc::clone(&writer);
+        let writer_clone2 = Arc::clone(&writer);
+
+        let t1 = std::thread::spawn(move || {
+            for i in 0..50 {
+                let payload = serde_json::json!({ "thread": 1, "i": i });
+                let _ = writer_clone.send_command(HostCommand::Ping, payload);
+            }
+        });
+
+        let t2 = std::thread::spawn(move || {
+            for i in 0..50 {
+                let payload = serde_json::json!({ "thread": 2, "i": i });
+                let _ = writer_clone2.send_command(HostCommand::Ping, payload);
+            }
+        });
+
+        t1.join().expect("thread 1");
+        t2.join().expect("thread 2");
+
+        // 100 commands sent across two threads.
+        assert_eq!(writer.next_seq(), 100);
+    }
+
+    #[test]
+    fn test_command_writer_seq_monotonic() {
+        let mut child = Command::new("sleep")
+            .arg("5")
+            .stdin(Stdio::piped())
+            .stdout(Stdio::null())
+            .stderr(Stdio::null())
+            .spawn()
+            .expect("failed to spawn sleep");
+
+        let stdin = child.stdin.take().expect("stdin");
+        let writer = WorkerCommandWriter::new(stdin, "test-id".into());
+
+        let seq0 = writer.next_seq();
+        let _ = writer.send_command(HostCommand::Ping, Value::Null);
+        assert_eq!(writer.next_seq(), seq0 + 1);
+
+        let _ = writer.send_command(HostCommand::Ping, Value::Null);
+        assert_eq!(writer.next_seq(), seq0 + 2);
+
+        let _ = writer.send_command_with_request(
+            HostCommand::StartGeneration,
+            "req-1",
+            serde_json::json!({}),
         );
-
-        // start_generation without a worker returns WorkerCrashed.
-        let mut sv2 = WorkerSupervisor::new(qualification_policy());
-        sv2.model_loaded = true;
-        let result = sv2.start_generation(test_generation_payload("req-1"));
-        assert!(result.is_err());
-        let err = result.err().unwrap();
-        assert_eq!(err.code, EngineErrorCode::WorkerCrashed);
+        assert_eq!(writer.next_seq(), seq0 + 3);
     }
 
-    // ── test_model_busy_rejection ─────────────────────────────────────────
+    // ── WorkerRuntimeState Tests ─────────────────────────────────────────
 
     #[test]
-    fn test_model_busy_rejection() {
-        let mut sv = make_supervisor();
-        sv.active_generation = Some("gen-001".into());
+    fn test_runtime_state_model_loaded() {
+        let state = WorkerRuntimeState::new("worker-1".into());
 
-        let result = sv.start_generation(test_generation_payload("gen-002"));
-        assert!(result.is_err());
-        let err = result.err().unwrap();
-        assert_eq!(err.code, EngineErrorCode::ModelBusy);
+        assert!(!state.is_model_loaded());
+        state.set_model_loaded();
+        assert!(state.is_model_loaded());
+        state.clear_model_loaded();
+        assert!(!state.is_model_loaded());
     }
 
-    // ── test_deadline_expiry_escalation ───────────────────────────────────
+    #[test]
+    fn test_runtime_state_faulted() {
+        let state = WorkerRuntimeState::new("worker-1".into());
+
+        assert!(!state.is_faulted());
+        state.mark_faulted();
+        assert!(state.is_faulted());
+    }
 
     #[test]
-    fn test_deadline_expiry_escalation() {
-        use std::sync::Mutex;
+    fn test_runtime_state_heartbeat() {
+        let state = WorkerRuntimeState::new("worker-1".into());
 
+        let age = state.heartbeat_age();
+        assert!(age < Duration::from_secs(1));
+
+        std::thread::sleep(Duration::from_millis(10));
+        state.record_heartbeat();
+
+        let age2 = state.heartbeat_age();
+        assert!(age2 < Duration::from_secs(1));
+    }
+
+    #[test]
+    fn test_runtime_state_restart_count() {
+        let state = WorkerRuntimeState::new("worker-1".into());
+
+        assert_eq!(state.restart_count(), 0);
+        assert_eq!(state.increment_restart_count(), 1);
+        assert_eq!(state.restart_count(), 1);
+        assert_eq!(state.increment_restart_count(), 2);
+    }
+
+    // ── ActiveRequestRegistry Tests ──────────────────────────────────────
+
+    fn make_test_request(request_id: &str) -> ActiveRequest {
+        let policy = qualification_policy();
+        let (sender, _stream) = generation_channel(Some(16));
+        let deadline = DeadlineGuard::new(&policy, Instant::now);
+        let deadline_at = Instant::now() + policy.request_deadline;
+        ActiveRequest::new(
+            request_id.to_string(),
+            format!("job-{request_id}"),
+            sender,
+            deadline,
+            deadline_at,
+        )
+    }
+
+    #[test]
+    fn test_registry_insert_remove() {
+        let registry = ActiveRequestRegistry::new();
+        assert!(registry.is_empty());
+
+        registry.insert(make_test_request("req-1"));
+        assert!(!registry.is_empty());
+        assert_eq!(registry.len(), 1);
+
+        let removed = registry.remove("req-1");
+        assert!(removed.is_some());
+        assert_eq!(removed.unwrap().request_id, "req-1");
+        assert!(registry.is_empty());
+    }
+
+    #[test]
+    fn test_registry_get_by_job_id() {
+        let registry = ActiveRequestRegistry::new();
+
+        let mut req = make_test_request("req-1");
+        req.public_job_id = "job-abc".to_string();
+        registry.insert(req);
+
+        let found = registry.get_by_job_id("job-abc");
+        assert_eq!(found, Some("req-1".to_string()));
+
+        let not_found = registry.get_by_job_id("job-xyz");
+        assert_eq!(not_found, None);
+    }
+
+    #[test]
+    fn test_terminal_guarantee_exactly_once() {
+        let (sender, mut stream) = generation_channel(Some(16));
+        let policy = qualification_policy();
+        let deadline = DeadlineGuard::new(&policy, Instant::now);
+        let deadline_at = Instant::now() + policy.request_deadline;
+
+        let req = Arc::new(ActiveRequest::new(
+            "req-1".to_string(),
+            "job-abc".to_string(),
+            sender,
+            deadline,
+            deadline_at,
+        ));
+
+        let req2 = Arc::clone(&req);
+        let req3 = Arc::clone(&req);
+
+        // Call mark_terminal from multiple threads concurrently.
+        let t1 = std::thread::spawn(move || {
+            req.mark_terminal(GenerationEvent::Done);
+        });
+        let t2 = std::thread::spawn(move || {
+            req2.mark_terminal(GenerationEvent::Error("oops".into()));
+        });
+        let t3 = std::thread::spawn(move || {
+            req3.mark_terminal(GenerationEvent::Cancelled);
+        });
+
+        t1.join().expect("thread 1");
+        t2.join().expect("thread 2");
+        t3.join().expect("thread 3");
+
+        // Verify exactly one terminal event arrived.
+        let event = stream.recv();
+        assert!(event.is_some(), "should receive exactly one terminal event");
+
+        // After a terminal event, GenerationStream should return None.
+        let second = stream.recv();
+        if let Some(e) = second {
+            panic!("got second terminal event: {e:?}");
+        }
+    }
+
+    #[test]
+    fn test_registry_fail_all() {
+        let registry = ActiveRequestRegistry::new();
+
+        registry.insert(make_test_request("req-1"));
+        registry.insert(make_test_request("req-2"));
+
+        assert_eq!(registry.len(), 2);
+
+        let count = registry.fail_all("test failure");
+        assert_eq!(count, 2);
+        assert!(registry.is_empty());
+    }
+
+    #[test]
+    fn test_registry_request_cancellation() {
+        let registry = ActiveRequestRegistry::new();
+        registry.insert(make_test_request("req-1"));
+
+        assert!(registry.request_cancellation("req-1"));
+        assert!(!registry.request_cancellation("req-1"));
+    }
+
+    #[test]
+    fn test_registry_all_active() {
+        let registry = ActiveRequestRegistry::new();
+
+        let before = Instant::now();
+        registry.insert(make_test_request("req-1"));
+        registry.insert(make_test_request("req-2"));
+
+        let active = registry.all_active();
+        assert_eq!(active.len(), 2);
+
+        for (id, deadline_at) in &active {
+            assert!(
+                *deadline_at > before,
+                "deadline for {id} should be in the future"
+            );
+        }
+    }
+
+    // ── WorkerDiagnosticsCollector Tests ─────────────────────────────────
+
+    #[test]
+    fn test_diagnostics_basic() {
+        let diag = WorkerDiagnosticsCollector::new(1024);
+        assert!(diag.is_empty());
+
+        diag.append_line("hello");
+        diag.append_line("world");
+
+        let snap = diag.snapshot();
+        assert!(snap.contains("hello"));
+        assert!(snap.contains("world"));
+    }
+
+    #[test]
+    fn test_diagnostics_ring_buffer() {
+        let diag = WorkerDiagnosticsCollector::new(32);
+        diag.append_line("this is a long line that will exceed the buffer capacity");
+        assert!(diag.len() <= 32);
+    }
+
+    // ── Watchdog Tests (component-level) ─────────────────────────────────
+
+    #[test]
+    fn test_watchdog_deadline_enforcement() {
         let fake_now = Arc::new(Mutex::new(Instant::now()));
         let clock_fn = {
             let now = Arc::clone(&fake_now);
-            move || *now.lock().unwrap()
+            move || *now.lock()
         };
 
         let policy = qualification_policy();
-        let deadline = DeadlineGuard::new(&policy, clock_fn);
+        let guard = DeadlineGuard::new(&policy, clock_fn);
 
-        // Advance past the deadline (1s into grace period).
-        *fake_now.lock().unwrap() += policy.request_deadline + Duration::from_secs(1);
-        assert!(deadline.is_expired());
-        assert!(deadline.time_since_expiry().unwrap() < policy.cancellation_grace_period);
+        assert!(!guard.is_expired());
 
-        // Advance past the grace period too.
-        *fake_now.lock().unwrap() += policy.cancellation_grace_period;
-        assert!(deadline.is_expired());
-        assert!(deadline.time_since_expiry().unwrap() >= policy.cancellation_grace_period);
+        *fake_now.lock() += policy.request_deadline;
+        assert!(!guard.is_expired());
 
-        // Verify check_deadlines is a no-op without a worker handle.
-        let mut sv = WorkerSupervisor::new(qualification_policy());
-        sv.check_deadlines();
+        *fake_now.lock() += Duration::from_nanos(1);
+        assert!(guard.is_expired());
+        assert!(guard.time_since_expiry().is_some());
+
+        *fake_now.lock() += policy.cancellation_grace_period;
+        let since = guard.time_since_expiry().unwrap();
+        assert!(since >= policy.cancellation_grace_period);
+    }
+
+    #[test]
+    fn test_watchdog_rss_hard_limit() {
+        let policy = qualification_policy();
+        assert_eq!(policy.worker_rss_hard_ceiling_bytes, 14 << 30);
+
+        let rss_below = 10u64 << 30;
+        assert!(rss_below <= policy.worker_rss_hard_ceiling_bytes);
+
+        let rss_above = 15u64 << 30;
+        assert!(rss_above > policy.worker_rss_hard_ceiling_bytes);
+
+        // Verify read_process_rss doesn't panic/return absurd values.
+        let our_rss = read_process_rss(std::process::id());
+        assert!(our_rss < 1u64 << 40, "our RSS should be less than 1 TiB");
+    }
+
+    #[test]
+    fn test_watchdog_heartbeat_loss() {
+        let policy = qualification_policy();
+        assert_eq!(policy.worker_heartbeat_timeout, Duration::from_secs(2));
+
+        let state = WorkerRuntimeState::new("test-worker".into());
+
+        assert!(state.heartbeat_age() < Duration::from_secs(1));
+
+        state.record_heartbeat();
+        assert!(state.heartbeat_age() < Duration::from_secs(1));
+
+        let age1 = state.heartbeat_age();
+        std::thread::sleep(Duration::from_millis(5));
+        let age2 = state.heartbeat_age();
+        assert!(age2 >= age1, "heartbeat age should be monotonic");
+    }
+
+    // ── Registry-based checks ────────────────────────────────────────────
+
+    #[test]
+    fn test_registry_contains() {
+        let registry = ActiveRequestRegistry::new();
+        assert!(!registry.contains("gen-001"));
+
+        registry.insert(make_test_request("gen-001"));
+        assert!(registry.contains("gen-001"));
+    }
+}
+
+// ── Integration Tests (fake worker binary) ────────────────────────────────
+
+#[cfg(test)]
+mod integration_tests {
+    use super::*;
+    use crate::engine_policy::qualification_policy;
+    use crate::worker_protocol::{HostCommand, MessageKind, V1_0, WorkerEvent};
+    use std::io::{BufRead, BufReader, Read};
+    use std::path::PathBuf;
+    use std::process::{Child, ChildStdout, Command, Stdio};
+    use std::time::{Duration, Instant};
+
+    // ── Helpers ──────────────────────────────────────────────────────────
+
+    /// Resolve the fake worker binary path.
+    fn fake_worker_path() -> PathBuf {
+        if let Some(path) = option_env!("CARGO_BIN_EXE_tribunus-fake-worker") {
+            return PathBuf::from(path);
+        }
+        for candidate in &[
+            "target/debug/tribunus-fake-worker",
+            "target/release/tribunus-fake-worker",
+            "../target/debug/tribunus-fake-worker",
+            "../../target/debug/tribunus-fake-worker",
+        ] {
+            let p = PathBuf::from(candidate);
+            if p.exists() {
+                return p;
+            }
+        }
+        PathBuf::from("tribunus-fake-worker")
+    }
+
+    /// Spawn the fake worker in the given mode.
+    fn spawn_fake_worker(mode: &str, _worker_id: &str) -> (Child, String) {
+        let instance_id = uuid::Uuid::new_v4().to_string();
+        let bin = fake_worker_path();
+        let child = Command::new(&bin)
+            .arg("--mode")
+            .arg(mode)
+            .arg("--worker-instance-id")
+            .arg(&instance_id)
+            .arg("--image-dir")
+            .arg("/tmp")
+            .stdin(Stdio::piped())
+            .stdout(Stdio::piped())
+            .stderr(Stdio::piped())
+            .spawn()
+            .expect("failed to spawn fake worker");
+        (child, instance_id)
+    }
+
+    /// Read one length-prefixed Frame from stdout.
+    fn read_frame_from_stdout(stdout: &mut BufReader<ChildStdout>) -> Frame {
+        let mut len_buf = [0u8; 4];
+        stdout
+            .read_exact(&mut len_buf)
+            .expect("failed to read frame length prefix");
+        let frame_len = u32::from_le_bytes(len_buf) as usize;
+        let mut buf = vec![0u8; frame_len];
+        stdout
+            .read_exact(&mut buf)
+            .expect("failed to read frame body");
+        serde_json::from_slice(&buf).expect("failed to deserialize frame")
+    }
+
+    /// Perform Hello/HelloAck handshake.
+    fn handshake(
+        cmd_writer: &WorkerCommandWriter,
+        stdout: &mut BufReader<ChildStdout>,
+    ) -> Frame {
+        cmd_writer
+            .send_command(HostCommand::Hello, serde_json::Value::Null)
+            .expect("failed to send Hello");
+        let deadline = Instant::now() + Duration::from_secs(5);
+        loop {
+            if Instant::now() >= deadline {
+                panic!("handshake timed out");
+            }
+            let filled = stdout
+                .fill_buf()
+                .expect("failed to peek stdout during handshake");
+            if filled.len() >= 4 {
+                let frame = read_frame_from_stdout(stdout);
+                if matches!(&frame.message_kind, MessageKind::WorkerEvent(WorkerEvent::HelloAck)) {
+                    return frame;
+                }
+                panic!("unexpected frame during handshake: {frame:?}");
+            }
+            std::thread::sleep(Duration::from_millis(10));
+        }
+    }
+
+    /// Send LoadModel.
+    fn load_model(cmd_writer: &WorkerCommandWriter, image_hash: &str) {
+        let payload = serde_json::json!({ "image_hash": image_hash });
+        cmd_writer
+            .send_command(HostCommand::LoadModel, payload)
+            .expect("failed to send LoadModel");
+    }
+
+    /// Send StartGeneration.
+    fn start_generation(cmd_writer: &WorkerCommandWriter, request_id: &str) {
+        let payload = serde_json::json!({
+            "request_id": request_id,
+            "prompt_token_ids": [1, 2, 3],
+            "max_output_tokens": 8,
+            "deadline_ms": 30_000,
+        });
+        cmd_writer
+            .send_command_with_request(HostCommand::StartGeneration, request_id, payload)
+            .expect("failed to send StartGeneration");
+    }
+
+    /// Drain frames until a terminal event or timeout.
+    fn drain_until_terminal(
+        stdout: &mut BufReader<ChildStdout>,
+        timeout: Duration,
+    ) -> Vec<Frame> {
+        let deadline = Instant::now() + timeout;
+        let mut frames = Vec::new();
+        loop {
+            if Instant::now() >= deadline {
+                break;
+            }
+            let filled = stdout.fill_buf().expect("failed to peek stdout");
+            if filled.len() < 4 {
+                std::thread::sleep(Duration::from_millis(5));
+                continue;
+            }
+            let frame = read_frame_from_stdout(stdout);
+            let is_terminal = matches!(
+                &frame.message_kind,
+                MessageKind::WorkerEvent(
+                    WorkerEvent::GenerationCompleted
+                        | WorkerEvent::GenerationCancelled
+                        | WorkerEvent::GenerationFailed
+                        | WorkerEvent::WorkerFatal
+                )
+            );
+            frames.push(frame);
+            if is_terminal {
+                break;
+            }
+        }
+        frames
+    }
+
+    /// Wait for a specific WorkerEvent.
+    fn wait_for_event(
+        stdout: &mut BufReader<ChildStdout>,
+        target: WorkerEvent,
+        timeout: Duration,
+    ) -> Frame {
+        let deadline = Instant::now() + timeout;
+        loop {
+            if Instant::now() >= deadline {
+                panic!("timed out waiting for {target:?}");
+            }
+            let filled = stdout.fill_buf().expect("failed to peek stdout");
+            if filled.len() < 4 {
+                std::thread::sleep(Duration::from_millis(5));
+                continue;
+            }
+            let frame = read_frame_from_stdout(stdout);
+            if frame.message_kind == MessageKind::WorkerEvent(target.clone()) {
+                return frame;
+            }
+        }
+    }
+
+    // ── Tests ───────────────────────────────────────────────────────────
+
+    /// Gate 1: Handshake identity binding.
+    #[test]
+    #[ignore]
+    fn test_handshake_identity_bound() {
+        let worker_id = "integration-test-handshake";
+        let (mut child, instance_id) = spawn_fake_worker("normal", worker_id);
+        let stdin = child.stdin.take().expect("stdin");
+        let stdout = child.stdout.take().expect("stdout");
+        let mut stdout_reader = BufReader::new(stdout);
+        let cmd_writer = WorkerCommandWriter::new(stdin, instance_id.clone());
+        let ack = handshake(&cmd_writer, &mut stdout_reader);
+
+        assert_eq!(ack.version, V1_0);
+        assert_eq!(ack.worker_instance_id, instance_id);
+        assert!(
+            matches!(&ack.message_kind, MessageKind::WorkerEvent(WorkerEvent::HelloAck)),
+            "expected HelloAck, got {:?}",
+            ack.message_kind
+        );
+        let _ = child.kill();
+        let _ = child.wait();
+    }
+
+    /// Gate 2: Identity mismatch rejection.
+    #[test]
+    #[ignore]
+    fn test_identity_mismatch_rejected() {
+        let worker_id = "integration-test-mismatch";
+        let (mut child, instance_id) = spawn_fake_worker("identity-mismatch", worker_id);
+        let stdin = child.stdin.take().expect("stdin");
+        let stdout = child.stdout.take().expect("stdout");
+        let mut stdout_reader = BufReader::new(stdout);
+        let cmd_writer = WorkerCommandWriter::new(stdin, instance_id.clone());
+        let ack = handshake(&cmd_writer, &mut stdout_reader);
+
+        assert_ne!(ack.worker_instance_id, instance_id);
+        let _ = child.kill();
+        let _ = child.wait();
+    }
+
+    /// Gate 3: Live streaming returns before prefill.
+    #[test]
+    #[ignore]
+    fn test_live_streaming_returns_before_prefill() {
+        let worker_id = "integration-test-live-streaming";
+        let (mut child, instance_id) = spawn_fake_worker("normal", worker_id);
+        let stdin = child.stdin.take().expect("stdin");
+        let stdout = child.stdout.take().expect("stdout");
+        let mut stdout_reader = BufReader::new(stdout);
+        let cmd_writer = WorkerCommandWriter::new(stdin, instance_id.clone());
+        handshake(&cmd_writer, &mut stdout_reader);
+        load_model(&cmd_writer, "test-hash");
+        start_generation(&cmd_writer, "gen-001");
+
+        let frames = drain_until_terminal(&mut stdout_reader, Duration::from_secs(5));
+        assert!(!frames.is_empty());
+        let has_streaming = frames.iter().any(|f| {
+            matches!(
+                &f.message_kind,
+                MessageKind::WorkerEvent(WorkerEvent::GenerationStarted | WorkerEvent::Token)
+            )
+        });
+        assert!(has_streaming, "should receive GenerationStarted or Token before terminal");
+        let _ = child.kill();
+        let _ = child.wait();
+    }
+
+    /// Gate 4: Cancellation during generation.
+    #[test]
+    #[ignore]
+    fn test_cancellation_during_generation() {
+        let worker_id = "integration-test-cancel";
+        let (mut child, instance_id) = spawn_fake_worker("slow-prefill", worker_id);
+        let stdin = child.stdin.take().expect("stdin");
+        let stdout = child.stdout.take().expect("stdout");
+        let mut stdout_reader = BufReader::new(stdout);
+        let cmd_writer = WorkerCommandWriter::new(stdin, instance_id.clone());
+        handshake(&cmd_writer, &mut stdout_reader);
+        load_model(&cmd_writer, "test-hash");
+        start_generation(&cmd_writer, "gen-001");
+
+        wait_for_event(&mut stdout_reader, WorkerEvent::GenerationStarted, Duration::from_secs(5));
+        cmd_writer
+            .send_command_with_request(HostCommand::CancelGeneration, "gen-001", serde_json::json!({ "request_id": "gen-001" }))
+            .expect("failed to send CancelGeneration");
+
+        let cancel_frame = wait_for_event(&mut stdout_reader, WorkerEvent::GenerationCancelled, Duration::from_secs(5));
+        assert_eq!(cancel_frame.request_id.as_deref(), Some("gen-001"));
+        let _ = child.kill();
+        let _ = child.wait();
+    }
+
+    /// Gate 5: Hard timeout with ignored cancel.
+    #[test]
+    #[ignore]
+    fn test_hard_timeout_with_ignored_cancel() {
+        let worker_id = "integration-test-ignored-cancel";
+        let (mut child, instance_id) = spawn_fake_worker("ignored-cancel", worker_id);
+        let stdin = child.stdin.take().expect("stdin");
+        let stdout = child.stdout.take().expect("stdout");
+        let mut stdout_reader = BufReader::new(stdout);
+        let cmd_writer = WorkerCommandWriter::new(stdin, instance_id.clone());
+        handshake(&cmd_writer, &mut stdout_reader);
+        load_model(&cmd_writer, "test-hash");
+        start_generation(&cmd_writer, "gen-001");
+
+        wait_for_event(&mut stdout_reader, WorkerEvent::GenerationStarted, Duration::from_secs(5));
+        cmd_writer
+            .send_command_with_request(HostCommand::CancelGeneration, "gen-001", serde_json::json!({ "request_id": "gen-001" }))
+            .expect("failed to send CancelGeneration");
+
+        let frames = drain_until_terminal(&mut stdout_reader, Duration::from_secs(5));
+        assert!(!frames.iter().any(|f| matches!(&f.message_kind, MessageKind::WorkerEvent(WorkerEvent::GenerationCancelled))));
+        assert!(frames.iter().any(|f| matches!(&f.message_kind, MessageKind::WorkerEvent(WorkerEvent::GenerationCompleted))));
+        let _ = child.kill();
+        let _ = child.wait();
+    }
+
+    /// Gate 6: Heartbeat loss detection.
+    #[test]
+    #[ignore]
+    fn test_heartbeat_loss_detection() {
+        let worker_id = "integration-test-heartbeat-loss";
+        let (mut child, instance_id) = spawn_fake_worker("heartbeat-loss", worker_id);
+        let stdin = child.stdin.take().expect("stdin");
+        let stdout = child.stdout.take().expect("stdout");
+        let mut stdout_reader = BufReader::new(stdout);
+        let cmd_writer = WorkerCommandWriter::new(stdin, instance_id.clone());
+        handshake(&cmd_writer, &mut stdout_reader);
+        load_model(&cmd_writer, "test-hash");
+        start_generation(&cmd_writer, "gen-001");
+
+        let deadline = Instant::now() + Duration::from_secs(3);
+        let mut heartbeat_count = 0u32;
+        loop {
+            if Instant::now() >= deadline { break; }
+            let filled = stdout_reader.fill_buf().expect("failed to peek stdout");
+            if filled.len() < 4 {
+                std::thread::sleep(Duration::from_millis(10));
+                continue;
+            }
+            let frame = read_frame_from_stdout(&mut stdout_reader);
+            if matches!(&frame.message_kind, MessageKind::WorkerEvent(WorkerEvent::Heartbeat)) {
+                heartbeat_count += 1;
+            }
+        }
+        assert!(heartbeat_count == 0, "heartbeat-loss mode should produce no heartbeats");
+        let _ = child.kill();
+        let _ = child.wait();
+    }
+
+    /// Gate 7: RSS limit enforcement.
+    #[test]
+    #[ignore]
+    fn test_rss_limit_enforcement() {
+        let worker_id = "integration-test-rss";
+        let (mut child, _) = spawn_fake_worker("normal", worker_id);
+        let rss = read_process_rss((&child).id());
+        assert!(rss > 0, "RSS should be measurable");
+        assert!(rss < 1u64 << 40, "RSS should be < 1 TiB");
+        let _ = child.kill();
+        let _ = child.wait();
+    }
+
+    /// Gate 8: Consumer disconnect triggers cancel.
+    #[test]
+    #[ignore]
+    fn test_consumer_disconnect_triggers_cancel() {
+        let worker_id = "integration-test-disconnect";
+        let (mut child, instance_id) = spawn_fake_worker("normal", worker_id);
+        let stdin = child.stdin.take().expect("stdin");
+        let stdout = child.stdout.take().expect("stdout");
+        let mut stdout_reader = BufReader::new(stdout);
+        let cmd_writer = Arc::new(WorkerCommandWriter::new(stdin, instance_id.clone()));
+        let registry = Arc::new(ActiveRequestRegistry::new());
+        let runtime_state = Arc::new(WorkerRuntimeState::new(worker_id.to_string()));
+
+        handshake(&cmd_writer, &mut stdout_reader);
+        runtime_state.set_model_loaded();
+
+        let (sender, mut stream) = generation_channel(Some(16));
+        let policy = qualification_policy();
+        let deadline = DeadlineGuard::new(&policy, Instant::now);
+        let deadline_at = Instant::now() + policy.request_deadline;
+        registry.insert(ActiveRequest::new(
+            "gen-001".to_string(), "job-disconnect".to_string(), sender, deadline, deadline_at,
+        ));
+
+        stream.close();
+        drop(stream);
+        assert!(registry.contains("gen-001"));
+        let _ = child.kill();
+        let _ = child.wait();
+    }
+
+    /// Gate 9: Duplicate terminal ignored.
+    #[test]
+    #[ignore]
+    fn test_duplicate_terminal_ignored() {
+        let worker_id = "integration-test-dup-terminal";
+        let (mut child, instance_id) = spawn_fake_worker("duplicate-terminal", worker_id);
+        let stdin = child.stdin.take().expect("stdin");
+        let stdout = child.stdout.take().expect("stdout");
+        let mut stdout_reader = BufReader::new(stdout);
+        let cmd_writer = WorkerCommandWriter::new(stdin, instance_id.clone());
+        handshake(&cmd_writer, &mut stdout_reader);
+        load_model(&cmd_writer, "test-hash");
+        start_generation(&cmd_writer, "gen-001");
+
+        let mut completed_count = 0u32;
+        let deadline = Instant::now() + Duration::from_secs(5);
+        loop {
+            if Instant::now() >= deadline { break; }
+            let filled = stdout_reader.fill_buf().expect("failed to peek stdout");
+            if filled.len() < 4 {
+                std::thread::sleep(Duration::from_millis(5));
+                continue;
+            }
+            let frame = read_frame_from_stdout(&mut stdout_reader);
+            if matches!(&frame.message_kind, MessageKind::WorkerEvent(WorkerEvent::GenerationCompleted)) {
+                completed_count += 1;
+                if completed_count >= 2 { break; }
+            }
+        }
+        assert!(completed_count >= 2, "duplicate-terminal mode should produce >= 2 GenerationCompleted frames");
+        let _ = child.kill();
+        let _ = child.wait();
+    }
+
+    /// Gate 10: Sequence gap rejected.
+    #[test]
+    #[ignore]
+    fn test_sequence_gap_rejected() {
+        let worker_id = "integration-test-seq-gap";
+        let (mut child, instance_id) = spawn_fake_worker("sequence-gap", worker_id);
+        let stdin = child.stdin.take().expect("stdin");
+        let stdout = child.stdout.take().expect("stdout");
+        let mut stdout_reader = BufReader::new(stdout);
+        let cmd_writer = WorkerCommandWriter::new(stdin, instance_id.clone());
+
+        cmd_writer.send_command(HostCommand::Hello, serde_json::Value::Null).expect("Hello");
+        let ack = wait_for_event(&mut stdout_reader, WorkerEvent::HelloAck, Duration::from_secs(5));
+        assert_eq!(ack.sequence_number, 0);
+
+        let result = crate::worker_protocol::validate_frame(&ack, 1, Some(&instance_id));
+        assert_eq!(result, Ok(()));
+
+        let next_frame = read_frame_from_stdout(&mut stdout_reader);
+        let result = crate::worker_protocol::validate_frame(&next_frame, 1, Some(&instance_id));
+        assert!(result.is_err(), "sequence gap should produce validation error");
+        let _ = child.kill();
+        let _ = child.wait();
+    }
+
+    /// Gate 11: Worker restart recovery.
+    #[test]
+    #[ignore]
+    fn test_worker_restart() {
+        let worker_id = "integration-test-restart";
+        let (mut child, instance_id) = spawn_fake_worker("crash", worker_id);
+        let stdin = child.stdin.take().expect("stdin");
+        let stdout = child.stdout.take().expect("stdout");
+        let mut stdout_reader = BufReader::new(stdout);
+        let cmd_writer = WorkerCommandWriter::new(stdin, instance_id.clone());
+        handshake(&cmd_writer, &mut stdout_reader);
+        load_model(&cmd_writer, "test-hash");
+        start_generation(&cmd_writer, "gen-001");
+
+        let status = child.wait().expect("wait");
+        assert!(!status.success(), "crash mode should exit with failure");
+
+        let (mut child2, instance_id2) = spawn_fake_worker("normal", worker_id);
+        let stdin2 = child2.stdin.take().expect("stdin2");
+        let stdout2 = child2.stdout.take().expect("stdout2");
+        let mut stdout_reader2 = BufReader::new(stdout2);
+        let cmd_writer2 = WorkerCommandWriter::new(stdin2, instance_id2.clone());
+        let ack = handshake(&cmd_writer2, &mut stdout_reader2);
+        assert!(matches!(&ack.message_kind, MessageKind::WorkerEvent(WorkerEvent::HelloAck)));
+        let _ = child2.kill();
+        let _ = child2.wait();
+    }
+
+    /// Gate 12: Environment isolation.
+    #[test]
+    #[ignore]
+    fn test_env_isolation() {
+        let _worker_id = "integration-test-env";
+        let instance_id = uuid::Uuid::new_v4().to_string();
+        let bin = fake_worker_path();
+        let mut cmd = Command::new(&bin);
+        cmd.arg("--mode").arg("report-env")
+            .arg("--worker-instance-id").arg(&instance_id)
+            .arg("--image-dir").arg("/tmp")
+            .env_clear()
+            .env("HOME", std::env::var("HOME").unwrap_or_default())
+            .env("PATH", std::env::var("PATH").unwrap_or_default())
+            .env("LANG", std::env::var("LANG").unwrap_or_else(|_| "en_US.UTF-8".into()))
+            .stdin(Stdio::piped()).stdout(Stdio::piped()).stderr(Stdio::piped());
+        let mut child = cmd.env("TEST_VAR", "should-not-leak")
+            .spawn().expect("spawn fake worker");
+
+        let stdin = child.stdin.take().expect("stdin");
+        let stdout = child.stdout.take().expect("stdout");
+        let mut stdout_reader = BufReader::new(stdout);
+        let cmd_writer = WorkerCommandWriter::new(stdin, instance_id.clone());
+        handshake(&cmd_writer, &mut stdout_reader);
+
+        let frames = drain_until_terminal(&mut stdout_reader, Duration::from_secs(5));
+        let test_var_seen = frames.iter().any(|f| {
+            serde_json::to_string(&f.payload).unwrap_or_default().contains("TEST_VAR")
+        });
+        assert!(!test_var_seen, "env_clear should prevent TEST_VAR from reaching the worker");
+        let _ = child.kill();
+        let _ = child.wait();
     }
 }

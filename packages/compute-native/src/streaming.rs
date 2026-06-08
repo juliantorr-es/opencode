@@ -14,6 +14,8 @@
 //! - [`generation_channel`] — construct a (sender, stream) pair.
 //! - [`validate_event_sequence`] — check a slice of events for valid ordering.
 use napi_derive::napi;
+use std::fmt;
+use uuid::Uuid;
 
 /// Events emitted during a single generation run.
 ///
@@ -74,6 +76,22 @@ pub struct GenerationStream {
     inner: tokio::sync::mpsc::Receiver<GenerationEvent>,
     terminal_rx: tokio::sync::mpsc::UnboundedReceiver<GenerationEvent>,
     closed: bool,
+    /// Oneshot sender — fired when the stream is closed.
+    /// Extracted at channel creation; the receiver side is returned by
+    /// [`take_disconnect_notifier`].
+    disconnect_tx: Option<tokio::sync::oneshot::Sender<()>>,
+    /// Oneshot receiver — taken by callers who want to await disconnect.
+    disconnect_rx: Option<tokio::sync::oneshot::Receiver<()>>,
+}
+
+impl fmt::Debug for GenerationStream {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("GenerationStream")
+            .field("closed", &self.closed)
+            .field("disconnect_tx", &self.disconnect_tx.as_ref().map(|_| "<Sender>"))
+            .field("disconnect_rx", &self.disconnect_rx.as_ref().map(|_| "<Receiver>"))
+            .finish_non_exhaustive()
+    }
 }
 
 #[napi]
@@ -115,6 +133,10 @@ impl GenerationStream {
     #[napi]
     pub fn close(&mut self) {
         self.inner.close();
+        // Fire the disconnect oneshot so any waiting receiver is woken.
+        if let Some(tx) = self.disconnect_tx.take() {
+            let _ = tx.send(());
+        }
         self.closed = true;
     }
 
@@ -122,6 +144,19 @@ impl GenerationStream {
     #[napi]
     pub fn is_closed(&self) -> bool {
         self.closed
+    }
+
+    /// Extract the disconnect notifier receiver, if it hasn't been taken
+    /// already.
+    ///
+    /// The returned [`Receiver`](tokio::sync::oneshot::Receiver) resolves
+    /// (with `Ok(())` or `Err(oneshot::error::RecvError)`) when the stream
+    /// is closed. Callers can `.await` or `.blocking_recv()` on it to
+    /// detect consumer disconnect without polling.
+    pub fn take_disconnect_notifier(
+        &mut self,
+    ) -> Option<tokio::sync::oneshot::Receiver<()>> {
+        self.disconnect_rx.take()
     }
 }
 
@@ -215,6 +250,15 @@ impl GenerationSender {
     pub fn capacity(&self) -> usize {
         self.inner.max_capacity()
     }
+
+    /// Returns `true` when the consumer has disconnected from the stream
+    /// (either the main event channel is closed OR the terminal channel
+    /// is closed).
+    ///
+    /// Backends should check this before performing expensive work.
+    pub fn is_disconnected(&self) -> bool {
+        self.inner.is_closed() || self.terminal_tx.is_closed()
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -244,6 +288,7 @@ pub fn generation_channel(
     let cap = capacity.unwrap_or(128).max(1) as usize;
     let (tx, rx) = tokio::sync::mpsc::channel(cap);
     let (terminal_tx, terminal_rx) = tokio::sync::mpsc::unbounded_channel();
+    let (disconnect_tx, disconnect_rx) = tokio::sync::oneshot::channel();
     (
         GenerationSender {
             inner: tx,
@@ -252,6 +297,8 @@ pub fn generation_channel(
         GenerationStream {
             inner: rx,
             terminal_rx,
+            disconnect_tx: Some(disconnect_tx),
+            disconnect_rx: Some(disconnect_rx),
             closed: false,
         },
     )
@@ -324,6 +371,26 @@ fn validate_event_sequence_impl(events: &[GenerationEvent]) -> bool {
 // ---------------------------------------------------------------------------
 // Tests
 // ---------------------------------------------------------------------------
+
+/// A stable handle wrapping a [`GenerationStream`] with a unique job ID.
+///
+/// This is pure Rust (not napi-exported) and is intended to be embedded
+/// in higher-level N-API wrappers (e.g. in `engine.rs`).
+#[derive(Debug)]
+pub struct GenerationHandle {
+    pub job_id: String,
+    pub stream: GenerationStream,
+}
+
+impl GenerationHandle {
+    /// Create a new `GenerationHandle` with a randomly-generated UUID job ID.
+    pub fn new(stream: GenerationStream) -> Self {
+        Self {
+            job_id: Uuid::new_v4().to_string(),
+            stream,
+        }
+    }
+}
 
 #[cfg(test)]
 mod tests {
@@ -592,5 +659,46 @@ mod tests {
         done.store(true, Ordering::SeqCst);
         assert!(matches!(rx.recv(), Some(GenerationEvent::Done)));
         assert!(rx.recv().is_none());
+    }
+
+    // ------------------------------------------------------------------
+    // GenerationHandle & disconnect notifier
+    // ------------------------------------------------------------------
+
+    #[test]
+    fn test_generation_handle_job_id() {
+        let (_, stream) = generation_channel(None);
+        let handle = GenerationHandle::new(stream);
+
+        // job_id is a non-empty UUID string.
+        assert!(!handle.job_id.is_empty());
+        // Should parse as a valid UUID v4.
+        let parsed: Uuid = handle.job_id.parse().expect("valid UUID");
+        assert_eq!(parsed.get_version(), Some(uuid::Version::Random));
+    }
+
+    #[test]
+    fn test_disconnect_notifier_fires_on_close() {
+        let (_, mut stream) = generation_channel(None);
+        let mut rx = stream
+            .take_disconnect_notifier()
+            .expect("disconnect rx should be present");
+
+        // Not yet closed.
+        assert!(!stream.is_closed());
+
+        // Close the stream — this should fire the oneshot.
+        stream.close();
+
+        // The receiver should now resolve.
+        match rx.try_recv() {
+            Ok(()) => {} // expected
+            Err(tokio::sync::oneshot::error::TryRecvError::Closed) => {
+                panic!("disconnect notifier was dropped before send");
+            }
+            Err(tokio::sync::oneshot::error::TryRecvError::Empty) => {
+                panic!("disconnect notifier not fired after close");
+            }
+        }
     }
 }
