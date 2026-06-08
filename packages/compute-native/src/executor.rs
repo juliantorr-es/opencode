@@ -75,7 +75,7 @@ pub fn run_layer(
             q_norm_weight, k_norm_weight, rope_cos, rope_sin, kv_offset, cache,
         )?,
         "full_attention" => full_attention_layer(
-            &normed, plan, qw, qs, qb, kw, ks, kb, ow, os, ob,
+            &normed, plan, qw, qs, qb, kw, ks, kb, vw, vs, vb, ow, os, ob,
             q_norm_weight, k_norm_weight, rope_cos, rope_sin, kv_offset, cache,
         )?,
         other => {
@@ -201,6 +201,7 @@ fn full_attention_layer(
     plan: &LayerPlan,
     qw: &Array, qs: &Array, qb: &Array,
     kw: &Array, ks: &Array, kb: &Array,
+    vw: &Array, vs: &Array, vb: &Array,
     ow: &Array, os: &Array, ob: &Array,
     q_norm_weight: Option<&Array>,
     k_norm_weight: Option<&Array>,
@@ -218,6 +219,8 @@ fn full_attention_layer(
     let q = qmatmul(x, qw, qs, qb)?
         .reshape(&[n_tokens, n_heads as i32, head_dim as i32])?;
     let k = qmatmul(x, kw, ks, kb)?
+        .reshape(&[n_tokens, n_kv_heads as i32, head_dim as i32])?;
+    let v = qmatmul(x, vw, vs, vb)?
         .reshape(&[n_tokens, n_kv_heads as i32, head_dim as i32])?;
 
     let q = if let Some(wn) = q_norm_weight {
@@ -242,8 +245,7 @@ fn full_attention_layer(
     let k4d = primitives::rope_apply(&k4d, rope_cos, rope_sin, kv_offset, plan.partial_rotary_factor)?;
     let k = k4d.reshape(&[n_tokens, n_kv_heads as i32, head_dim as i32])?;
 
-    // K-equals-V: store the transformed K in both cache slots.
-    let v = k.clone();
+    // Store the transformed K and the real V projection in the cache.
     q.eval()?;
     k.eval()?;
     v.eval()?;
@@ -276,10 +278,10 @@ fn full_attention_layer(
 
 // ── Epilogue ───────────────────────────────────────────────────────────────
 
-/// Final normalization, tied output projection, softcapping, and native greedy argmax.
+/// Final normalization, tied output projection, softcapping, and token selection.
 ///
-/// Returns the selected token ID as a u32 scalar — no logits cross the boundary.
-/// The caller is responsible for calling `eval()` before reading the result.
+/// Returns the selected token as an MLX Array so the caller can explicitly
+/// `eval()` the actual epilogue result before reading it.
 pub fn run_epilogue(
     hidden: &Array,
     final_norm: &Array,
@@ -290,7 +292,7 @@ pub fn run_epilogue(
     rms_norm_eps: f32,
     tie_word_embeddings: bool,
     sampler: &SamplerConfig,
-) -> MlxResult<u32> {
+) -> MlxResult<Array> {
     // Final RMSNorm
     let normed = primitives::rms_norm(hidden, final_norm, rms_norm_eps)?;
 
@@ -344,10 +346,7 @@ pub fn run_epilogue(
     if sampler.is_greedy() {
         let token_arr = mlx_rs::ops::indexing::argmax_axis(&last_logits, -1, None)
             .map_err(|e| mlx_rs::error::Exception::custom(format!("argmax: {:?}", e)))?;
-        let values = token_arr
-            .try_as_slice::<u32>()
-            .map_err(|e| mlx_rs::error::Exception::custom(format!("read token: {:?}", e)))?;
-        return Ok(values.first().copied().unwrap_or(0));
+        return Ok(token_arr);
     }
 
     // Non-greedy path: temperature scaling, top-k, top-p, then categorical sample.
@@ -440,7 +439,7 @@ pub fn run_epilogue(
             .max_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal))
             .map(|(i, _)| i as u32)
             .unwrap_or(0);
-        return Ok(token);
+        return Ok(Array::from_slice(&[token], &[1]));
     }
 
     // 5. Categorical sample via MLX
@@ -451,10 +450,7 @@ pub fn run_epilogue(
         None => None,
     };
     let token_arr = mlx_rs::random::categorical(&filtered_arr, None, None, key.as_ref())?;
-    let values = token_arr
-        .try_as_slice::<u32>()
-        .map_err(|e| mlx_rs::error::Exception::custom(format!("read sampled token: {:?}", e)))?;
-    Ok(values.first().copied().unwrap_or(0))
+    Ok(token_arr)
 }
 
 // ── Mask helpers ───────────────────────────────────────────────────────────

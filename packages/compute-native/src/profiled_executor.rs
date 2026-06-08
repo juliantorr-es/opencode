@@ -575,7 +575,15 @@ impl<'a> ProfiledSession<'a> {
             sampler,
         ).map_err(|e| napi::Error::from_reason(format!("epilogue: {:?}", e)))?;
 
-        hidden.eval().map_err(|e| napi::Error::from_reason(format!("epilogue eval: {:?}", e)))?;
+        out_token
+            .eval()
+            .map_err(|e| napi::Error::from_reason(format!("epilogue eval: {:?}", e)))?;
+        let token = out_token
+            .try_as_slice::<u32>()
+            .map_err(|e| napi::Error::from_reason(format!("epilogue token: {:?}", e)))?
+            .first()
+            .copied()
+            .unwrap_or(0);
 
         // Advance absolute position (llama.cpp n_pos pattern).
         self.position += token_ids.len() as u32;
@@ -587,7 +595,7 @@ impl<'a> ProfiledSession<'a> {
         self.timeline.push_event(TimelineEvent::new(
             end_us,
             event_type,
-            format!("generated token {}", out_token),
+            format!("generated token {}", token),
         ));
 
         let cache_hit_tokens = kv_offset as u64;
@@ -602,7 +610,7 @@ impl<'a> ProfiledSession<'a> {
             source_checkpoint_accesses: 0,
             copied_weight_bytes: self.model.mapped_weight_bytes,
             mapped_weight_bytes: self.model.mapped_weight_bytes,
-            token: out_token,
+            token,
             layer_count: plan.layers.len() as u32,
             elapsed_ms: step_elapsed_ms,
             profile_validation: true,
@@ -621,7 +629,7 @@ impl<'a> ProfiledSession<'a> {
             timeline: self.timeline.clone(),
         };
 
-        Ok((out_token, receipt))
+        Ok((token, receipt))
     }
 }
 

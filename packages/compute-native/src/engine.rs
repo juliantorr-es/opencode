@@ -17,6 +17,7 @@
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
+use std::time::{Duration, Instant};
 
 use crate::model_runtime::{ModelRuntime, WorkloadClass};
 use crate::profile_compiler;
@@ -27,6 +28,10 @@ use crate::streaming::GenerationEvent;
 use crate::streaming::GenerationStream;
 use crate::streaming::generation_channel;
 use crate::profiled_executor::ProfiledReceipt;
+
+const SAFE_ZERO_MAX_TOKENS: u32 = 8;
+const QUALIFICATION_PROMPT_TOKEN_CEILING: usize = 64;
+const QUALIFICATION_WALL_CLOCK_DEADLINE: Duration = Duration::from_secs(30);
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
@@ -56,7 +61,7 @@ pub struct GenerationRequest {
     pub cancel_flag: Option<Arc<AtomicBool>>,
     /// Opaque session identifier for this generation run.
     pub session_id: String,
-    /// Maximum number of tokens to generate (0 = unlimited until EOS).
+    /// Maximum number of tokens to generate (0 = bounded qualification mode).
     pub max_tokens: u32,
     /// Token ID that signals end-of-sequence.
     pub eos_token_id: u32,
@@ -275,7 +280,7 @@ impl ComputeEngine {
 
         // 5. Create a generation session for this run.
         let eos = req.eos_token_id();
-        let max_tokens = if req.max_tokens == 0 { u32::MAX } else { req.max_tokens };
+        let max_tokens = if req.max_tokens == 0 { SAFE_ZERO_MAX_TOKENS } else { req.max_tokens };
         let mut session = GenerationSession::new(
             req.session_id().to_owned(),
             eos,
@@ -298,8 +303,18 @@ impl ComputeEngine {
             req.input_ids.clone()
         };
 
+        let qualification_mode = req.max_tokens == 0;
+        if qualification_mode && prefill_ids.len() > QUALIFICATION_PROMPT_TOKEN_CEILING {
+            let _ = session.transition(crate::session::SessionState::Failed);
+            return Err(napi::Error::from_reason(format!(
+                "qualification prompt too long: {} tokens (limit {})",
+                prefill_ids.len(),
+                QUALIFICATION_PROMPT_TOKEN_CEILING,
+            )));
+        }
+
         let _image_path = loaded.runtime.image_dir().to_path_buf();
-        let started = std::time::Instant::now();
+        let started = Instant::now();
         let cancel_flag = req.cancel_flag.clone();
         let stop_token_ids = req.sampler.stop_token_ids.clone();
 
@@ -317,6 +332,14 @@ impl ComputeEngine {
             cancel_flag.as_deref(),
         ).map_err(|e| napi::Error::from_reason(format!("prefill: {}", e)))?;
 
+        if qualification_mode && started.elapsed() > QUALIFICATION_WALL_CLOCK_DEADLINE {
+            let _ = session.transition(crate::session::SessionState::Failed);
+            return Err(napi::Error::from_reason(format!(
+                "qualification deadline exceeded after prefill: {:?}",
+                QUALIFICATION_WALL_CLOCK_DEADLINE,
+            )));
+        }
+
         let mut token_count: u32 = 1;
 
         let mut receipts: Vec<ProfiledReceipt> = vec![receipt_prefill];
@@ -327,6 +350,13 @@ impl ComputeEngine {
 
         // 10. Decode loop with cancellation + backpressure.
         while token_count < max_tokens && last_token != eos {
+            if qualification_mode && started.elapsed() > QUALIFICATION_WALL_CLOCK_DEADLINE {
+                let _ = session.transition(crate::session::SessionState::Failed);
+                return Err(napi::Error::from_reason(format!(
+                    "qualification deadline exceeded after {}ms",
+                    QUALIFICATION_WALL_CLOCK_DEADLINE.as_millis(),
+                )));
+            }
             // Check cancellation before each token step.
             if cancel_flag.as_ref().map_or(false, |f| f.load(Ordering::Relaxed)) {
                 let _ = session.transition(crate::session::SessionState::Cancelled);
@@ -340,6 +370,14 @@ impl ComputeEngine {
                 &req.sampler,
                 cancel_flag.as_deref(),
             ).map_err(|e| napi::Error::from_reason(format!("decode step: {}", e)))?;
+
+            if qualification_mode && started.elapsed() > QUALIFICATION_WALL_CLOCK_DEADLINE {
+                let _ = session.transition(crate::session::SessionState::Failed);
+                return Err(napi::Error::from_reason(format!(
+                    "qualification deadline exceeded after decode step {}ms",
+                    QUALIFICATION_WALL_CLOCK_DEADLINE.as_millis(),
+                )));
+            }
 
             receipts.push(receipt);
             last_token = token;
@@ -434,7 +472,7 @@ fn classify_workload(req: &GenerationRequest) -> WorkloadClass {
     // is wired into the engine path).
     let est_prompt_tokens = req.prompt.split_whitespace().count().max(1) as u32;
     let est_decode_tokens = if req.max_tokens == 0 {
-        u32::MAX
+        SAFE_ZERO_MAX_TOKENS
     } else {
         req.max_tokens
     };
@@ -445,6 +483,22 @@ fn classify_workload(req: &GenerationRequest) -> WorkloadClass {
         WorkloadClass::DecodeHeavy
     } else {
         WorkloadClass::Balanced
+    }
+}
+
+#[cfg(test)]
+mod qualification_budget_tests {
+    use super::*;
+
+    #[test]
+    fn qualification_prompt_ceiling_is_small() {
+        assert_eq!(QUALIFICATION_PROMPT_TOKEN_CEILING, 64);
+        assert_eq!(SAFE_ZERO_MAX_TOKENS, 8);
+    }
+
+    #[test]
+    fn qualification_deadline_is_bounded() {
+        assert_eq!(QUALIFICATION_WALL_CLOCK_DEADLINE, Duration::from_secs(30));
     }
 }
 

@@ -2173,7 +2173,7 @@ impl ImageRuntime {
             .ok_or_else(|| napi::Error::from_reason("norm weight invalid"))?
         };
 
-        let token_id = crate::executor::run_epilogue(
+        let token_arr = crate::executor::run_epilogue(
             &hidden,
             &fn_w,
             &emb_w, &emb_s, &emb_b,
@@ -2184,8 +2184,15 @@ impl ImageRuntime {
         )
         .map_err(|e| napi::Error::from_reason(format!("epilogue: {:?}", e)))?;
 
-        hidden.eval()
+        token_arr
+            .eval()
             .map_err(|e| napi::Error::from_reason(format!("epilogue eval: {:?}", e)))?;
+        let token_id = token_arr
+            .try_as_slice::<u32>()
+            .map_err(|e| napi::Error::from_reason(format!("epilogue token: {:?}", e)))?
+            .first()
+            .copied()
+            .unwrap_or(0);
 
         self.release();
         Ok(token_id)
