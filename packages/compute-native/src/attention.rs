@@ -148,7 +148,7 @@ fn causal_mask(seq_len: u32) -> MlxResult<Array> {
     ))
 }
 
-fn sliding_mask(seq_len: u32, window: u32, n_heads: u32) -> MlxResult<Array> {
+fn sliding_mask(seq_len: u32, window: u32, _n_heads: u32) -> MlxResult<Array> {
     if seq_len <= window {
         return Ok(Array::from_slice(&[0.0f32], &[1, 1, 1, 1]));
     }

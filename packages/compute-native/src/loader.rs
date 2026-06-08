@@ -4,7 +4,6 @@
 //! (tensor_name, ArrayHandle) pairs for each tensor.
 
 use crate::bridge::ARRAY_REGISTRY;
-use mlx_rs::Array;
 use std::path::Path;
 
 /// A loaded tensor from a safetensors file.
@@ -44,8 +43,8 @@ pub fn load_safetensors(path: &str) -> napi::Result<Vec<LoadedTensor>> {
             .tensor(name)
             .map_err(|e| napi::Error::from_reason(format!("Tensor not found: {}", e)))?;
 
-        let data = view.data();
-        let shape: Vec<i32> = view.shape().iter().map(|&d| d as i32).collect();
+        let _data = view.data();
+        let _shape: Vec<i32> = view.shape().iter().map(|&d| d as i32).collect();
         let array = crate::model::tensor_view_to_array(&view);
 
         let shape = array.shape().to_vec();

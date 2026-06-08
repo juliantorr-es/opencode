@@ -1,19 +1,18 @@
 //! Gemma-architecture text decoder core.
 //!
-//! This is a conventional Gemma-like decoder structure (RMSNorm, RoPE, GQA,
-//! SwiGLU, causal masking) configured to Gemma 4 12B dimensions. It exercises
-//! the full compute path but does NOT yet implement:
+//! Config-driven Gemma-architecture text decoder with config-based attention
+//! scheduling. (RMSNorm, RoPE, GQA, SwiGLU, causal masking) configured to
+//! Gemma 4 12B dimensions. It exercises the full compute path but does NOT
+//! yet implement:
 //!
-//!   - Hybrid local/global attention schedule (all layers use full attention)
 //!   - Proportional RoPE scaling for 256K context
 //!   - Multimodal projections (image, audio)
 //!   - Gemma 4's specific conversation formatting and thinking controls
 //!   - Numerical parity verification against Google's official reference
 //!
-//! This is the "text decoder core" lane. Verification against the published
-//! Gemma 4 model card is a separate gate.
 
 use crate::bridge::ARRAY_REGISTRY;
+use crate::config::AttentionKind::{self, FullAttention, SlidingAttention};
 use mlx_rs::ops::indexing::IndexOp;
 use mlx_rs::Array;
 use mlx_rs::{error::Result as MlxResult, ops};
@@ -34,12 +33,26 @@ pub struct GemmaConfig {
     pub rope_theta: f32,
     pub max_seq_len: u32,
     pub rms_norm_eps: f32,
+    pub sliding_window: u32,
+    pub layer_types: Vec<AttentionKind>,
+    pub global_head_dim: Option<u32>,
+    pub n_global_kv_heads: Option<u32>,
 }
 
 impl GemmaConfig {
     pub fn gemma4_12b() -> Self {
         let hidden_size = 3840;
         let n_heads = 32;
+
+        // Gemma 4 12B schedule: [sliding×5, full×1] × 8 = 48 layers
+        let mut layer_types = Vec::with_capacity(48);
+        for _ in 0..8 {
+            for _ in 0..5 {
+                layer_types.push(SlidingAttention);
+            }
+            layer_types.push(FullAttention);
+        }
+
         Self {
             n_layers: 48,
             n_heads,
@@ -51,7 +64,47 @@ impl GemmaConfig {
             rope_theta: 500_000.0,
             max_seq_len: 131072,
             rms_norm_eps: 1e-6,
+            sliding_window: 1024,
+            layer_types,
+            global_head_dim: Some(512),
+            n_global_kv_heads: Some(1),
         }
+    }
+
+    /// Returns `true` for sliding (local) attention layers.
+    /// Falls back to sliding when the layer index is out of range.
+    pub fn layer_is_sliding(&self, layer: u32) -> bool {
+        match self.layer_types.get(layer as usize) {
+            Some(SlidingAttention) => true,
+            Some(FullAttention) => false,
+            None => true, // default sliding for unknown
+        }
+    }
+
+    /// Returns `true` for global (full) attention layers.
+    pub fn layer_is_global(&self, layer: u32) -> bool {
+        !self.layer_is_sliding(layer)
+    }
+
+    /// Build sliding window attention mask.
+    pub fn sliding_mask(&self, seq_len: u32) -> MlxResult<Array> {
+        let window = self.sliding_window;
+        if seq_len <= window {
+            return Ok(Array::from_slice(&[0.0f32], &[1, 1, 1, 1]));
+        }
+        let n = seq_len as usize;
+        let mut d = vec![0.0f32; n * n];
+        for i in 0..n {
+            for j in 0..n {
+                if (j as i32) < (i as i32 - window as i32) {
+                    d[i * n + j] = f32::NEG_INFINITY;
+                }
+            }
+        }
+        Ok(Array::from_slice(
+            &d,
+            &[1, 1, seq_len as i32, seq_len as i32],
+        ))
     }
 }
 
@@ -156,6 +209,18 @@ fn gemma_attention(
     mask: Option<&Array>,
 ) -> MlxResult<Array> {
     let cfg = &weights.config;
+    let is_global = cfg.layer_is_global(layer);
+    let h_dim = if is_global {
+        cfg.global_head_dim.unwrap_or(cfg.head_dim)
+    } else {
+        cfg.head_dim
+    };
+    let n_kv = if is_global {
+        cfg.n_global_kv_heads.unwrap_or(cfg.n_kv_heads)
+    } else {
+        cfg.n_kv_heads
+    };
+
     let batch_size = x.shape()[0];
     let seq_len = x.shape()[1];
 
@@ -165,9 +230,14 @@ fn gemma_attention(
     let k_w = weights
         .layer_weight(layer, "self_attn.k_proj.weight")
         .map_err(napi_to_mlx)?;
-    let v_w = weights
-        .layer_weight(layer, "self_attn.v_proj.weight")
-        .map_err(napi_to_mlx)?;
+    let v_w = if is_global {
+        // Global layers alias v_proj → k_proj (k_eq_v)
+        k_w.clone()
+    } else {
+        weights
+            .layer_weight(layer, "self_attn.v_proj.weight")
+            .map_err(napi_to_mlx)?
+    };
     let o_w = weights
         .layer_weight(layer, "self_attn.o_proj.weight")
         .map_err(napi_to_mlx)?;
@@ -175,20 +245,20 @@ fn gemma_attention(
     let q = x.matmul(&ops::transpose_axes(&q_w, &[1, 0])?)?.reshape(&[
         batch_size,
         seq_len,
-        cfg.n_heads as i32,
-        cfg.head_dim as i32,
+        cfg.n_heads as i32,  // n_heads stays the same; head_dim changes
+        h_dim as i32,
     ])?;
     let k = x.matmul(&ops::transpose_axes(&k_w, &[1, 0])?)?.reshape(&[
         batch_size,
         seq_len,
-        cfg.n_kv_heads as i32,
-        cfg.head_dim as i32,
+        n_kv as i32,
+        h_dim as i32,
     ])?;
     let v = x.matmul(&ops::transpose_axes(&v_w, &[1, 0])?)?.reshape(&[
         batch_size,
         seq_len,
-        cfg.n_kv_heads as i32,
-        cfg.head_dim as i32,
+        n_kv as i32,
+        h_dim as i32,
     ])?;
 
     let q_roped = apply_rope(&q, rope_cos, rope_sin, kv_offset)?;
@@ -330,13 +400,19 @@ impl GemmaModel {
         let mut hidden = ops::indexing::take_axis(&embed_weight, input_ids, 0)?
             .multiply(&Array::from_f32(scale))?;
 
-        let mask = if seq_len > 1 {
-            Some(create_causal_mask(seq_len)?)
-        } else {
-            None
-        };
-
         for layer in 0..self.config.n_layers {
+            let mask: Option<Array> = if seq_len > 1 {
+                if self.config.layer_is_sliding(layer) {
+                    let causal = create_causal_mask(seq_len)?;
+                    let sliding = self.config.sliding_mask(seq_len)?;
+                    Some(causal.add(&sliding)?)
+                } else {
+                    Some(create_causal_mask(seq_len)?)
+                }
+            } else {
+                None
+            };
+
             hidden = gemma_decoder_layer(
                 &hidden,
                 &self.weights,

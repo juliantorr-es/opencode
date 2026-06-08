@@ -9,7 +9,8 @@ def compile_mlprogram(prog, output_name, compute_units="cpuAndGPU", deployment_t
         prog,
         convert_to="mlprogram",
         minimum_deployment_target=getattr(ct.target, deployment_target),
-        compute_units=ct.ComputeUnit.CPU_AND_GPU,
+        compute_precision=ct.precision.FLOAT16,
+        compute_units=getattr(ct.ComputeUnit, compute_units),
     )
 
     mlpackage_path = f"/tmp/tribunus-{output_name}.mlpackage"
@@ -24,5 +25,19 @@ def compile_mlprogram(prog, output_name, compute_units="cpuAndGPU", deployment_t
         print(f"COMPILE FAIL: {result.stderr}", file=sys.stderr)
         sys.exit(1)
 
-    print(f"COMPILE: {output_name} -> {mlmodelc_path}")
-    return mlmodelc_path
+    # coremlcompiler nests output: outer/name.mlmodelc/
+    # Core ML APIs expect the inner directory containing metadata.json.
+    inner_path = _find_model_dir(mlmodelc_path)
+    if inner_path is None:
+        print(f"COMPILE FAIL: no metadata.json in {mlmodelc_path}", file=sys.stderr)
+        sys.exit(1)
+    print(f"COMPILE: {output_name} -> {inner_path}")
+    return inner_path
+
+
+def _find_model_dir(mlmodelc_path):
+    """Walk compiled output to find the inner directory with metadata.json."""
+    for root, dirs, files in os.walk(mlmodelc_path):
+        if "metadata.json" in files and "model.mil" in files:
+            return root
+    return None

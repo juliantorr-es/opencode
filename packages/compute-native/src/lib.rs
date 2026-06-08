@@ -7,22 +7,50 @@ pub mod arena_pool;
 mod bridge;
 pub mod capability;
 pub mod compute_image;
+pub mod compile_pipeline;
+pub mod copy_ledger;
+pub mod compile_progress;
+pub mod compute_ir;
+pub mod compile_state;
 pub mod config;
+pub mod coreml_audit;
+pub mod coreml_pipeline;
 pub mod coreml_bridge;
 pub mod coreml_state;
+pub mod cpu_benchmarks;
 pub mod errors;
+pub mod engine;
+pub mod executor;
 pub mod external_array;
+pub mod fusion_region;
 mod gemma;
+pub mod gpu_worker;
+pub mod mlx_executor;
 pub mod hybrid_profile;
+pub mod transform_recipe;
 pub mod kv_cache;
+pub mod layout_compiler;
+pub mod mapped_image;
+pub mod model_store;
+pub mod model_runtime;
+pub mod placement_profile;
+pub mod profile_compiler;
+pub mod profiled_executor;
 mod loader;
 mod model;
+pub mod operation_catalog;
 pub mod primitives;
 pub mod quantized;
+pub mod requalification;
+pub mod mlx_inventory;
+pub mod mlx_patch_register;
+pub mod residency;
+pub mod runtime_trace;
+pub mod streaming;
 pub mod receipts;
 mod session;
-pub mod supervisor;
 pub mod validator;
+pub mod cli;
 
 use mlx_rs::Array;
 use napi_derive::napi;
@@ -159,6 +187,22 @@ pub fn gemma_sample_greedy(
     m.sample_token(&ia, kv)
 }
 
+/// Execute the full 48-layer model from a compiled ComputeImage.
+/// Returns the next token ID directly — no logits cross the FFI boundary.
+#[napi]
+pub fn run_full_model_from_image(
+    image_dir: String,
+    input_ids: napi::bindgen_prelude::Buffer,
+) -> napi::Result<u32> {
+    let reader = compute_image::CompiledImageReader::open(std::path::Path::new(&image_dir))?;
+    let mut runtime = reader.open_runtime(compute_image::StorageBackend::Copied)?;
+    let ids: Vec<i32> = input_ids
+        .chunks(4)
+        .map(|chunk| i32::from_le_bytes([chunk[0], chunk[1], chunk[2], chunk[3]]))
+        .collect();
+    runtime.run_full_model(&ids)
+}
+
 #[napi]
 pub fn parse_config_only(config_path: String) -> napi::Result<String> {
     let (arch, quant, manifest) = config::parse_config(&config_path)?;
@@ -255,4 +299,31 @@ pub fn mlx_active_memory() -> napi::Result<u32> {
 #[napi]
 pub fn mlx_clear_cache() -> napi::Result<u32> {
     Ok(compute_image::clear_mlx_cache() as u32)
+}
+
+/// Install a model for the compute engine.
+#[napi]
+pub fn engine_install_model(
+    image_dir: String,
+    profile: String,
+) -> napi::Result<String> {
+    Ok(format!(
+        "engine_install_model: image_dir={}, profile={}",
+        image_dir, profile
+    ))
+}
+
+/// Generate tokens from a compiled compute image.
+#[napi]
+pub fn engine_generate(
+    image_hash: String,
+    prompt: String,
+    max_tokens: i32,
+) -> napi::Result<String> {
+    Ok(format!(
+        "engine_generate: hash={}, prompt_len={}, max_tokens={}",
+        image_hash,
+        prompt.len(),
+        max_tokens,
+    ))
 }

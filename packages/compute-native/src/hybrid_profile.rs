@@ -6,7 +6,6 @@
 //! and from the MLX-only profile.
 
 use serde::{Deserialize, Serialize};
-use uuid::Uuid;
 
 /// Complete hybrid deployment profile.
 #[derive(Debug, Clone, Serialize, Deserialize)]

@@ -343,15 +343,11 @@ mod tests {
 
     #[test]
     fn test_iosurface_phase2_coreml_pixelbuffer_input() {
-        let model_path = "/tmp/tribunus-coreml-nn-identity.mlmodelc";
-        if !std::path::Path::new(model_path).exists() {
-            eprintln!("[phase2] model not found at {} — skipping", model_path);
-            return;
-        }
+        let model_path = "/tmp/tribunus-coreml-nn-identity.mlmodelc/tribunus-coreml-nn-identity.mlmodelc";
 
         let model = CoreMlModel::load(model_path).expect("load Core ML model");
         let dim0 = 1u32;
-        let dim1 = 8u32;
+        let dim1 = 256u32;
         let n = (dim0 * dim1) as usize;
 
         // Input arena A — IOSurface-backed FP16.
@@ -395,15 +391,11 @@ mod tests {
 
     #[test]
     fn test_iosurface_phase3_output_backings() {
-        let model_path = "/tmp/tribunus-coreml-nn-identity.mlmodelc";
-        if !std::path::Path::new(model_path).exists() {
-            eprintln!("[phase3] model not found at {} — skipping", model_path);
-            return;
-        }
+        let model_path = "/tmp/tribunus-coreml-nn-identity.mlmodelc/tribunus-coreml-nn-identity.mlmodelc";
 
         let model = CoreMlModel::load(model_path).expect("load Core ML model");
         let dim0 = 1u32;
-        let dim1 = 8u32;
+        let dim1 = 256u32;
         let n = (dim0 * dim1) as usize;
 
         let arena_a = Arena::new(dim0, dim1, mlx_rs::Dtype::Float16).expect("arena A");
@@ -457,11 +449,7 @@ mod tests {
 
     #[test]
     fn test_iosurface_phase4_full_roundtrip() {
-        let model_path = "/tmp/tribunus-coreml-nn-identity.mlmodelc";
-        if !std::path::Path::new(model_path).exists() {
-            eprintln!("[phase4] model not found at {} — skipping", model_path);
-            return;
-        }
+        let model_path = "/tmp/tribunus-coreml-nn-identity.mlmodelc/tribunus-coreml-nn-identity.mlmodelc";
 
         let model = CoreMlModel::load(model_path).expect("load Core ML model");
         let dim0 = 1u32;
@@ -484,7 +472,7 @@ mod tests {
         let a_ptr = unsafe { arena_a.base_ptr() };
         let a_byte_len = arena_a.byte_len();
         {
-            let arr = unsafe {
+            let _arr = unsafe {
                 external_array::new_external_array(
                     a_ptr,
                     &[dim0 as i32, dim1 as i32],
@@ -494,7 +482,11 @@ mod tests {
                 )
             }
             .expect("external array A");
-            let readback: Vec<f32> = arr.try_as_slice::<f32>().unwrap().to_vec();
+            // Read directly from the IOSurface backing (we wrote u16 bits).
+            let readback: Vec<f32> = unsafe {
+                let raw = a_ptr as *const u16;
+                (0..n).map(|i| f16_to_f32(raw.add(i).read())).collect()
+            };
             for i in 0..n.min(8) {
                 let expected = i as f32;
                 assert!(
@@ -568,7 +560,7 @@ mod tests {
 
     #[test]
     fn test_stateful_toy_deterministic_mutation() {
-        let model_path = "/tmp/tribunus-stateful-toy.mlmodelc";
+        let model_path = "/tmp/tribunus-stateful-toy.mlmodelc/tribunus-stateful-toy.mlmodelc";
         // Hard-fail if the model doesn't exist or can't load.
         // This test is expected to pass in the verified compiler environment.
         let model = CoreMlModel::load(model_path)
@@ -621,7 +613,7 @@ mod tests {
 
     #[test]
     fn test_stateful_toy_two_session_isolation() {
-        let model_path = "/tmp/tribunus-stateful-toy.mlmodelc";
+        let model_path = "/tmp/tribunus-stateful-toy.mlmodelc/tribunus-stateful-toy.mlmodelc";
         // Hard-fail if the model doesn't exist or can't load.
         // This test is expected to pass in the verified compiler environment.
         let model = CoreMlModel::load(model_path)
@@ -750,7 +742,7 @@ mod tests {
     fn test_stateful_toy_concurrent_rejection() {
         // Verify that rapid sequential predictions on the same state don't corrupt each other.
         // True concurrent rejection (same-state simultaneous use) is gated on the Tokio supervisor.
-        let model_path = "/tmp/tribunus-stateful-toy.mlmodelc";
+        let model_path = "/tmp/tribunus-stateful-toy.mlmodelc/tribunus-stateful-toy.mlmodelc";
         // Hard-fail if the model doesn't exist or can't load.
         // This test is expected to pass in the verified compiler environment.
         let model = CoreMlModel::load(model_path)
@@ -816,5 +808,66 @@ mod tests {
         drop(arena_a);
         drop(arena_b);
         eprintln!("[stateful] concurrent rejection (sequential safety): PASS");
+    }
+
+    #[test]
+    fn test_gemma_mlp_coreml_prediction() {
+        let model_path = "/tmp/tribunus-gemma-mlp.mlmodelc/tribunus-gemma-mlp.mlmodelc";
+
+        let model = CoreMlModel::load(model_path).expect("load Gemma MLP model");
+        let dim0 = 1u32;
+        let dim1 = 3840u32;
+        let n = (dim0 * dim1) as usize;
+
+        // Input arena A — IOSurface-backed FP16.
+        let arena_a = Arena::new(dim0, dim1, mlx_rs::Dtype::Float16).expect("arena A");
+
+        // Fill with deterministic pattern: sin(i/100.0) as FP16.
+        unsafe {
+            let ptr = arena_a.base_ptr() as *mut u16;
+            for i in 0..n {
+                ptr.add(i).write(f32_to_f16_bits((i as f32 / 100.0).sin()));
+            }
+        }
+
+        // Output arena B.
+        let mut arena_b = Arena::new(dim0, dim1, mlx_rs::Dtype::Float16).expect("arena B");
+
+        // Capture backing identity before prediction.
+        let b_id_before = arena_b.io_surface_id();
+        let b_addr_before = arena_b.info.base_address;
+
+        // Run Core ML prediction with IOSurface pixel buffer path.
+        model
+            .predict_pixelbuffer("x", &arena_a.info, "output", &mut arena_b.info)
+            .expect("predict_pixelbuffer");
+
+        // Verify output is nonzero — at least one element has |value| > 1e-6.
+        let mut found_nonzero = false;
+        unsafe {
+            let out_ptr = b_addr_before as *const u16;
+            for i in 0..n {
+                let got = f16_to_f32(out_ptr.add(i).read());
+                if got.abs() > 1e-6 {
+                    found_nonzero = true;
+                    break;
+                }
+            }
+        }
+        assert!(found_nonzero, "all Gemma MLP output elements are zero (dead model?)");
+
+        // Verify Arena output IOSurface identity — no reallocation.
+        assert_eq!(
+            arena_b.io_surface_id(),
+            b_id_before,
+            "arena B IOSurface ID changed after prediction"
+        );
+        assert_eq!(
+            arena_b.info.base_address,
+            b_addr_before,
+            "arena B base address changed after prediction"
+        );
+
+        eprintln!("[gemma-mlp] Core ML prediction: PASS");
     }
 }

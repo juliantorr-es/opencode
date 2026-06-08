@@ -486,94 +486,94 @@ const TOOLS = [
         repo: { type: "string" },
       },
       required: ["owner", "repo"],
+      },
     },
-  },
-]
 
-  // ── Repository operations (administration, metadata) ──
-  {
-    name: "list_repositories",
-    description: "List repositories accessible to the GitHub App installation",
-    inputSchema: {
-      type: "object" as const,
-      properties: {
-        per_page: { type: "number", description: "Results per page (max 100)" },
-        page: { type: "number", description: "Page number" },
+    // ── Repository operations (administration, metadata) ──
+    {
+      name: "list_repositories",
+      description: "List repositories accessible to the GitHub App installation",
+      inputSchema: {
+        type: "object" as const,
+        properties: {
+         per_page: { type: "number", description: "Results per page (max 100)" },
+          page: { type: "number", description: "Page number" },
+        },
+        required: [],
       },
-      required: [],
     },
-  },
-  {
-    name: "get_repository",
-    description: "Get metadata for a single repository",
-    inputSchema: {
-      type: "object" as const,
-      properties: {
-        owner: { type: "string", description: "Repository owner" },
-        repo: { type: "string", description: "Repository name" },
-      },
+    {
+      name: "get_repository",
+      description: "Get metadata for a single repository",
+      inputSchema: {
+        type: "object" as const,
+        properties: {
+          owner: { type: "string", description: "Repository owner" },
+          repo: { type: "string", description: "Repository name" },
+        },
       required: ["owner", "repo"],
+      },
     },
-  },
 
-  // ── Git data (contents, refs) ──
-  {
-    name: "compare_commits",
-    description: "Compare two commits, branches, or tags — returns the diff (files changed, commits between)",
-    inputSchema: {
-      type: "object" as const,
-      properties: {
-        owner: { type: "string", description: "Repository owner" },
-        repo: { type: "string", description: "Repository name" },
-        base: { type: "string", description: "Base ref (e.g. 'main', 'HEAD~5')" },
-        head: { type: "string", description: "Head ref (e.g. 'feature-branch', 'HEAD')" },
+    // ── Git data (contents, refs) ──
+    {
+      name: "compare_commits",
+      description: "Compare two commits, branches, or tags — returns the diff (files changed, commits between)",
+      inputSchema: {
+        type: "object" as const,
+        properties: {
+          owner: { type: "string", description: "Repository owner" },
+          repo: { type: "string", description: "Repository name" },
+          base: { type: "string", description: "Base ref (e.g. 'main', 'HEAD~5')" },
+          head: { type: "string", description: "Head ref (e.g. 'feature-branch', 'HEAD')" },
+        },
+        required: ["owner", "repo", "base", "head"],
       },
-      required: ["owner", "repo", "base", "head"],
     },
-  },
-  {
-    name: "create_branch",
-    description: "Create a new branch from a base ref SHA",
-    inputSchema: {
-      type: "object" as const,
-      properties: {
-        owner: { type: "string", description: "Repository owner" },
-        repo: { type: "string", description: "Repository name" },
-        branch: { type: "string", description: "New branch name (e.g. 'feature/foo')" },
-        sha: { type: "string", description: "SHA to branch from" },
+    {
+      name: "create_branch",
+      description: "Create a new branch from a base ref SHA",
+      inputSchema: {
+        type: "object" as const,
+        properties: {
+          owner: { type: "string", description: "Repository owner" },
+          repo: { type: "string", description: "Repository name" },
+          branch: { type: "string", description: "New branch name (e.g. 'feature/foo')" },
+          sha: { type: "string", description: "SHA to branch from" },
+        },
+        required: ["owner", "repo", "branch", "sha"],
       },
-      required: ["owner", "repo", "branch", "sha"],
     },
-  },
-  {
-    name: "get_commit",
-    description: "Get a single commit by SHA",
-    inputSchema: {
-      type: "object" as const,
-      properties: {
-        owner: { type: "string", description: "Repository owner" },
-        repo: { type: "string", description: "Repository name" },
-        sha: { type: "string", description: "Commit SHA" },
+    {
+      name: "get_commit",
+      description: "Get a single commit by SHA",
+      inputSchema: {
+        type: "object" as const,
+        properties: {
+          owner: { type: "string", description: "Repository owner" },
+          repo: { type: "string", description: "Repository name" },
+          sha: { type: "string", description: "Commit SHA" },
+        },
+        required: ["owner", "repo", "sha"],
       },
-      required: ["owner", "repo", "sha"],
     },
-  },
 
-  // ── Workflow jobs (actions) ──
-  {
-    name: "list_workflow_jobs",
-    description: "List jobs for a specific workflow run",
-    inputSchema: {
-      type: "object" as const,
-      properties: {
-        owner: { type: "string", description: "Repository owner" },
-        repo: { type: "string", description: "Repository name" },
-        run_id: { type: "number", description: "Workflow run ID" },
-        per_page: { type: "number", description: "Results per page" },
+    // ── Workflow jobs (actions) ──
+    {
+      name: "list_workflow_jobs",
+      description: "List jobs for a specific workflow run",
+      inputSchema: {
+        type: "object" as const,
+        properties: {
+          owner: { type: "string", description: "Repository owner" },
+          repo: { type: "string", description: "Repository name" },
+          run_id: { type: "number", description: "Workflow run ID" },
+          per_page: { type: "number", description: "Results per page" },
+        },
+        required: ["owner", "repo", "run_id"],
       },
-      required: ["owner", "repo", "run_id"],
-    },
-  },
+      },
+]
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -731,6 +731,37 @@ server.setRequestHandler(CallToolRequestSchema, async (request: CallToolRequest)
         })
         return ok(r)
       }
+
+      // ── Pages ──
+      // ── Repository operations ──
+      case "list_repositories":
+        return ok(await ghGet(`/installation/repositories${qs({ per_page: a?.per_page, page: a?.page })}`))
+
+      case "get_repository":
+        return ok(await ghGet(`/repos/${repo}`))
+
+      // ── Git data ──
+      case "compare_commits":
+        return ok(await ghGet(`/repos/${repo}/compare/${a?.base}...${a?.head}`))
+
+      case "create_branch": {
+        const r = await ghPost(`/repos/${repo}/git/refs`, {
+          ref: `refs/heads/${a?.branch}`,
+          sha: a?.sha,
+        })
+        return ok(r)
+      }
+
+      case "get_commit":
+        return ok(await ghGet(`/repos/${repo}/commits/${a?.sha}`))
+
+      // ── Workflow jobs ──
+      case "list_workflow_jobs":
+        return ok(
+          await ghGet(
+            `/repos/${repo}/actions/runs/${a?.run_id}/jobs${qs({ per_page: a?.per_page })}`,
+          ),
+        )
 
       // ── Pages ──
       case "get_pages_config":

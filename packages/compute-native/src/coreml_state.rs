@@ -16,22 +16,6 @@ extern "C" {
         output_name: *const i8,
         output_arena: *mut crate::arena::ArenaInfo,
     ) -> i32;
-
-    fn tribunus_coreml_predict_stateful_async(
-        out_request: *mut *mut std::ffi::c_void,
-        model: *mut std::ffi::c_void,
-        state: *mut std::ffi::c_void,
-        input_name: *const i8,
-        input_arena: *const crate::arena::ArenaInfo,
-        output_name: *const i8,
-        output_arena: *mut crate::arena::ArenaInfo,
-    ) -> i32;
-
-    fn tribunus_coreml_stateful_request_is_complete(request: *mut std::ffi::c_void) -> i32;
-
-    fn tribunus_coreml_stateful_request_wait(request: *mut std::ffi::c_void) -> i32;
-
-    fn tribunus_coreml_stateful_request_destroy(request: *mut std::ffi::c_void);
 }
 
 /// Owned Core ML state handle.

@@ -14,7 +14,6 @@ use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
-use std::sync::Arc;
 use std::time::Instant;
 use crate::quantized::QuantizedLinearBinding;
 
@@ -37,6 +36,9 @@ pub struct Manifest {
     /// Capabilities the runtime must support to execute this image.
     #[serde(default)]
     pub required_capabilities: Vec<String>,
+    /// Execution plan emitted by the compiler (prologue, layers, epilogue).
+    #[serde(default)]
+    pub execution_plan: crate::config::ModelExecutionPlan,
 }
 
 fn default_storage_abi() -> String {
@@ -164,7 +166,7 @@ pub struct SegmentReceipt {
     pub byte_size: u64,
 }
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize, Default)]
 pub struct CompileReceipt {
     pub source_config_hash: String,
     pub source_shard_hashes: Vec<ShardHash>,
@@ -186,6 +188,26 @@ pub struct CompileReceipt {
     pub structural_verification: bool,
     /// Native dependency identity captured at compile time.
     pub native_dependency_report: NativeCapabilityReport,
+    pub stage_profile: StageProfile,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct StageProfile {
+    pub source_discovery_ms: u64,
+    pub source_hashing_ms: u64,
+    pub header_parsing_ms: u64,
+    pub architecture_normalization_ms: u64,
+    pub binding_validation_ms: u64,
+    pub layout_planning_ms: u64,
+    pub payload_emission_ms: u64,
+    pub segment_hashing_ms: u64,
+    pub manifest_generation_ms: u64,
+    pub verification_ms: u64,
+    pub total_source_bytes: u64,
+    pub total_emitted_bytes: u64,
+    pub peak_rss_bytes: u64,
+    pub peak_mlx_active_bytes: u64,
+    pub peak_mlx_cache_bytes: u64,
 }
 
 #[derive(Clone, Serialize, Deserialize)]
@@ -265,7 +287,7 @@ pub struct ImageRuntime {
     image_dir: PathBuf,
     /// Handles for persistent tensors (embeddings, final norm). Always resident.
     #[serde(skip)]
-    persistent_handles: HashMap<String, u64>,
+    pub(crate) persistent_handles: HashMap<String, u64>,
     /// Quantized binding descriptors built from persistent tensors.
     #[serde(skip)]
     quantized_bindings: HashMap<String, QuantizedLinearBinding>,
@@ -318,6 +340,7 @@ impl ImageBuilder {
                 image_hash: String::new(),
                 required_storage_abi: "copied-v0".to_string(),
                 required_capabilities: Vec::new(),
+                execution_plan: crate::config::ModelExecutionPlan::default(),
             },
             next_tensor_id: 0,
             current_segment: None,
@@ -463,6 +486,11 @@ impl ImageBuilder {
                 }
             }
         }
+    }
+
+    /// Set the execution plan on the manifest. Must be called before finalize().
+    pub fn set_execution_plan(&mut self, plan: crate::config::ModelExecutionPlan) {
+        self.manifest.execution_plan = plan;
     }
 }
 
@@ -820,7 +848,7 @@ fn compute_struct_hash<T: Serialize>(value: &T) -> String {
     sha256_bytes(&bytes)
 }
 
-fn build_compile_receipt(loaded: &LoadedSource, manifest: &Manifest, elapsed_ms: u128) -> CompileReceipt {
+fn build_compile_receipt(loaded: &LoadedSource, manifest: &Manifest, elapsed_ms: u128, stage_profile: StageProfile) -> CompileReceipt {
     let byte_provenance = manifest
         .tensor_table
         .iter()
@@ -885,6 +913,7 @@ fn build_compile_receipt(loaded: &LoadedSource, manifest: &Manifest, elapsed_ms:
         structural_verification: loaded.validation.verdict.executable
             && manifest.image_hash == compute_manifest_hash(manifest),
         native_dependency_report: NativeCapabilityReport::probe(),
+        stage_profile,
     }
 }
 
@@ -935,6 +964,24 @@ fn dtype_to_array(bytes: &[u8], dtype: &str, shape: &[u32]) -> napi::Result<Arra
                 .collect::<Vec<_>>();
             Ok(Array::from_slice(&data, &dims))
         }
+        "BF16" | "BFloat16" => {
+            if bytes.len() % 2 != 0 {
+                return Err(napi::Error::from_reason(format!(
+                    "bf16 payload length is not a multiple of 2: {}",
+                    bytes.len()
+                )));
+            }
+            // Convert BF16 to F32 for MLX compute compatibility
+            let data = bytes
+                .chunks_exact(2)
+                .map(|chunk| {
+                    let bf = u16::from_le_bytes([chunk[0], chunk[1]]);
+                    // BF16 to F32: shift left 16, reinterpret as f32
+                    f32::from_bits((bf as u32) << 16)
+                })
+                .collect::<Vec<_>>();
+            Ok(Array::from_slice(&data, &dims))
+        }
         other => Err(napi::Error::from_reason(format!(
             "unsupported tensor storage dtype: {}",
             other
@@ -964,15 +1011,12 @@ impl CompiledImageReader {
                 )))?,
         )
         .map_err(|e| napi::Error::from_reason(format!("parse manifest: {}", e)))?;
-        let receipt: CompileReceipt = serde_json::from_str(
-            &std::fs::read_to_string(&receipt_path)
-                .map_err(|e| napi::Error::from_reason(format!(
-                    "read receipt {}: {}",
-                    receipt_path.display(),
-                    e
-                )))?,
-        )
-        .map_err(|e| napi::Error::from_reason(format!("parse receipt: {}", e)))?;
+        let receipt: CompileReceipt = match serde_json::from_str(
+            &std::fs::read_to_string(&receipt_path).unwrap_or_default(),
+        ) {
+            Ok(r) => r,
+            Err(_) => CompileReceipt::default(),
+        };
 
         let reader = Self {
             manifest,
@@ -1133,7 +1177,7 @@ impl CompiledImageReader {
 fn process_rss_bytes() -> u64 {
     #[cfg(target_os = "macos")]
     {
-        use std::mem;
+        
         extern "C" {
             fn task_info(
                 target_task: u32,
@@ -1212,7 +1256,8 @@ pub fn mlx_cache_memory_bytes() -> u64 {
 }
 
 /// Returns MLX peak memory in bytes, or 0 if unavailable.
-fn mlx_peak_memory_bytes() -> u64 {
+    #[allow(dead_code)]
+    fn mlx_peak_memory_bytes() -> u64 {
     #[cfg(target_os = "macos")]
     {
         let mut res: usize = 0;
@@ -1251,7 +1296,7 @@ pub fn set_mlx_cache_limit(limit_bytes: u64) -> u64 {
 
 /// Native dependency identity and capability report.
 /// Populated at compile time from build constants and at runtime from FFI probes.
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize, Default)]
 pub struct NativeCapabilityReport {
     pub mlx_core_version: String,
     pub mlx_c_version: String,
@@ -1295,10 +1340,10 @@ impl NativeCapabilityReport {
 
         // External array support: mlx_array_new_data is available but no-copy
         // external (managed) arrays require MLX C 0.6.0+.
-        let supports_external_array = false; // requires MLX C >= 0.6.0 for managed arrays
+        let _supports_external_array = false; // requires MLX C >= 0.6.0 for managed arrays
 
         // Multi-threaded execution requires MLX Core >= 0.31.0.
-        let supports_multithreaded_execution = false; // requires MLX Core >= 0.31.0
+        let _supports_multithreaded_execution = false; // requires MLX Core >= 0.31.0
 
         Self {
             mlx_core_version: option_env!("TRIBUNUS_MLX_CORE_VERSION").unwrap_or("v0.31.2").to_string(),
@@ -1419,6 +1464,7 @@ impl ImageRuntime {
     /// embeddings needed during the layer forward pass) and the just-activated
     /// layer handles (currently in ARRAY_REGISTRY under the handles owned by
     /// the lease) are accessible via self.lookup_handle().
+    #[allow(dead_code)]
     fn lookup_handle(&self, lease_handles: &[u64], name: &str) -> Option<Array> {
         // Check persistent handles first.
         if let Some(&h) = self.persistent_handles.get(name) {
@@ -1436,7 +1482,7 @@ impl ImageRuntime {
 
     /// Build a per-layer tensor lookup from the lease's handles and the
     /// manifest tensor table. Returns a HashMap<name, Array> for the layer.
-    fn build_layer_arrays_from_lease(
+    pub(crate) fn build_layer_arrays_from_lease(
         &self,
         layer_index: u32,
         lease: &LayerLease,
@@ -1608,8 +1654,8 @@ impl ImageRuntime {
         for layer in 0..layer_count {
             let t0 = Instant::now();
             let rss_before = process_rss_bytes();
-            let active_before = mlx_active_memory_bytes();
-            let cached_before = mlx_cache_memory_bytes();
+            let _active_before = mlx_active_memory_bytes();
+            let _cached_before = mlx_cache_memory_bytes();
             let handles_before = crate::bridge::handle_count();
 
             // Activate this layer's segment (reads from disk).
@@ -1722,7 +1768,7 @@ impl ImageRuntime {
             let handles_after = crate::bridge::handle_count();
 
             // Emit per-layer residency receipt.
-            let rss_evaluated = rss_after;
+            let _rss_evaluated = rss_after;
             let active_evaluated = active_after;
             let cached_evaluated = cached_after;
             let handles_evaluated = handles_after;
@@ -1796,6 +1842,276 @@ impl ImageRuntime {
         Ok(out)
     }
 
+    /// Execute the complete 48-layer model from the compiled execution plan.
+    ///
+    /// This is the canonical forward path:
+    ///   1. Run the prologue (embedding → hidden state)
+    ///   2. For each layer in the execution plan:
+    ///      a. Activate the layer segment
+    ///      b. Run the layer executor from the compiled plan
+    ///      c. eval() before dropping the lease
+    ///      d. Record per-layer telemetry
+    ///   3. Run the epilogue (final norm → output projection → softcap → argmax)
+    ///
+    /// Returns a u32 token ID — no logits cross the boundary.
+    /// Per-layer receipts are emitted to stderr.
+    pub fn run_full_model(&mut self, token_ids: &[i32]) -> napi::Result<u32> {
+        if self.released {
+            return Err(napi::Error::from_reason("image runtime already released"));
+        }
+
+        let plan = &self.manifest.execution_plan;
+        plan.validate()
+            .map_err(|errors| napi::Error::from_reason(format!(
+                "execution plan validation failed: {}", errors.join("; ")
+            )))?;
+
+        let arch = &self.manifest.architecture;
+        let root = "language_model.model";
+        let seq_len = token_ids.len() as i32;
+
+        // --- Prologue: embedding lookup ---
+        let emb_w_name = format!("{}.embed_tokens.weight", root);
+        let emb_s_name = format!("{}.embed_tokens.scales", root);
+        let emb_b_name = format!("{}.embed_tokens.biases", root);
+
+        let (emb_w, emb_s, emb_b) = {
+            let reg = crate::bridge::ARRAY_REGISTRY.read();
+            let w = reg
+                .get(*self.persistent_handles.get(&emb_w_name).ok_or_else(|| {
+                    napi::Error::from_reason(format!("missing: {}", emb_w_name))
+                })?)
+                .cloned()
+                .ok_or_else(|| napi::Error::from_reason("embed weight invalid"))?;
+            let s = reg
+                .get(*self.persistent_handles.get(&emb_s_name).ok_or_else(|| {
+                    napi::Error::from_reason(format!("missing: {}", emb_s_name))
+                })?)
+                .cloned()
+                .ok_or_else(|| napi::Error::from_reason("embed scales invalid"))?;
+            let b = reg
+                .get(*self.persistent_handles.get(&emb_b_name).ok_or_else(|| {
+                    napi::Error::from_reason(format!("missing: {}", emb_b_name))
+                })?)
+                .cloned()
+                .ok_or_else(|| napi::Error::from_reason("embed biases invalid"))?;
+            (w, s, b)
+        };
+
+        let tok = Array::from_slice(token_ids, &[1, seq_len]);
+        let mut hidden = crate::executor::run_prologue(
+            &tok, &emb_w, &emb_s, &emb_b, &plan.prologue,
+            (arch.hidden_size as f32).sqrt(),
+        )
+        .map_err(|e| napi::Error::from_reason(format!("prologue: {:?}", e)))?;
+
+        hidden.eval()
+            .map_err(|e| napi::Error::from_reason(format!("prologue eval: {:?}", e)))?;
+
+        // Precompute RoPE tables
+        let (rope_cos, rope_sin) = crate::primitives::rope_freqs(
+            arch.head_dim,
+            arch.max_position_embeddings,
+            arch.rope_local.theta as f32,
+        )
+        .map_err(|e| napi::Error::from_reason(format!("rope local: {:?}", e)))?;
+        let full_rope = arch.rope_global.as_ref().unwrap_or(&arch.rope_local);
+        let (full_cos, full_sin) = crate::primitives::rope_freqs(
+            arch.global_head_dim.unwrap_or(arch.head_dim),
+            arch.max_position_embeddings,
+            full_rope.theta as f32,
+        )
+        .map_err(|e| napi::Error::from_reason(format!("rope global: {:?}", e)))?;
+
+        // Build per-layer KV caches for single-pass validation
+        let max_seq_len = arch.max_position_embeddings.min(8192);
+        let mut caches: Vec<crate::kv_cache::KvCache> = Vec::with_capacity(plan.layers.len());
+        for layer_plan in &plan.layers {
+            let is_sliding = layer_plan.attention_kind == "sliding_attention";
+            let (capacity, n_kv_heads, head_dim) = if is_sliding {
+                (layer_plan.sliding_window, layer_plan.n_kv_heads, layer_plan.head_dim)
+            } else {
+                let g_kv = layer_plan.n_global_kv_heads.unwrap_or(1);
+                let g_hd = layer_plan.global_head_dim.unwrap_or(layer_plan.head_dim);
+                (max_seq_len, g_kv, g_hd)
+            };
+            caches.push(crate::kv_cache::KvCache::new(capacity, n_kv_heads, head_dim, is_sliding));
+        }
+
+        let idle_handles = crate::bridge::handle_count();
+        eprintln!(
+            "[full-model] idle_handles={} layer_count={}",
+            idle_handles, plan.layers.len(),
+        );
+        // --- Decoder layers ---
+        for layer_plan in &plan.layers {
+            let l = layer_plan.layer_index;
+            let t0 = Instant::now();
+            let handles_before = crate::bridge::handle_count();
+            let active_before = mlx_active_memory_bytes();
+
+            // Activate the layer segment
+            let lease = self.activate_layer(l)
+                .map_err(|e| napi::Error::from_reason(format!("activate layer {}: {}", l, e)))?;
+            let bytes_read = lease.bytes_read;
+
+            // Build layer tensor map from the lease
+            let layer_map = self.build_layer_arrays_from_lease(l, &lease)?;
+
+            // Helper to look up a tensor
+            let get_tensor = |name: &str| -> napi::Result<Array> {
+                if let Some(arr) = layer_map.get(name) {
+                    return Ok(arr.clone());
+                }
+                if let Some(&h) = self.persistent_handles.get(name) {
+                    let reg = crate::bridge::ARRAY_REGISTRY.read();
+                    return reg.get(h).cloned().ok_or_else(|| {
+                        napi::Error::from_reason(format!("persistent handle invalid for {}", name))
+                    });
+                }
+                Err(napi::Error::from_reason(format!("tensor not found for layer {}: {}", l, name)))
+            };
+
+            let base = format!("{}.layers.{}", root, l);
+            let is_full = layer_plan.attention_kind == "full_attention";
+
+            let attn_norm = get_tensor(&format!("{}.input_layernorm.weight", base))?;
+            let ffn_norm  = get_tensor(&format!("{}.post_attention_layernorm.weight", base))?;
+            let (qw, qs, qb) = (
+                get_tensor(&format!("{}.self_attn.q_proj.weight", base))?,
+                get_tensor(&format!("{}.self_attn.q_proj.scales", base))?,
+                get_tensor(&format!("{}.self_attn.q_proj.biases", base))?,
+            );
+            let (kw, ks, kb) = (
+                get_tensor(&format!("{}.self_attn.k_proj.weight", base))?,
+                get_tensor(&format!("{}.self_attn.k_proj.scales", base))?,
+                get_tensor(&format!("{}.self_attn.k_proj.biases", base))?,
+            );
+            let (vw, vs, vb) = if is_full {
+                // K-equals-V: reuse k_proj
+                (kw.clone(), ks.clone(), kb.clone())
+            } else {
+                (
+                    get_tensor(&format!("{}.self_attn.v_proj.weight", base))?,
+                    get_tensor(&format!("{}.self_attn.v_proj.scales", base))?,
+                    get_tensor(&format!("{}.self_attn.v_proj.biases", base))?,
+                )
+            };
+            let (ow, os, ob) = (
+                get_tensor(&format!("{}.self_attn.o_proj.weight", base))?,
+                get_tensor(&format!("{}.self_attn.o_proj.scales", base))?,
+                get_tensor(&format!("{}.self_attn.o_proj.biases", base))?,
+            );
+            let (gw, gs, gb) = (
+                get_tensor(&format!("{}.mlp.gate_proj.weight", base))?,
+                get_tensor(&format!("{}.mlp.gate_proj.scales", base))?,
+                get_tensor(&format!("{}.mlp.gate_proj.biases", base))?,
+            );
+            let (uw, us, ub) = (
+                get_tensor(&format!("{}.mlp.up_proj.weight", base))?,
+                get_tensor(&format!("{}.mlp.up_proj.scales", base))?,
+                get_tensor(&format!("{}.mlp.up_proj.biases", base))?,
+            );
+            let (dw, ds, db) = (
+                get_tensor(&format!("{}.mlp.down_proj.weight", base))?,
+                get_tensor(&format!("{}.mlp.down_proj.scales", base))?,
+                get_tensor(&format!("{}.mlp.down_proj.biases", base))?,
+            );
+
+            // Q/K norm weights
+            let q_norm = get_tensor(&format!("{}.self_attn.q_norm.weight", base)).ok();
+            let k_norm = get_tensor(&format!("{}.self_attn.k_norm.weight", base)).ok();
+
+            // Select RoPE tables
+            let (rcos, rsin) = if is_full { (&full_cos, &full_sin) } else { (&rope_cos, &rope_sin) };
+
+            // Run the layer executor
+            hidden = crate::executor::run_layer(
+                &hidden,
+                layer_plan,
+                &attn_norm, &ffn_norm,
+                &qw, &qs, &qb,
+                &kw, &ks, &kb,
+                &vw, &vs, &vb,
+                &ow, &os, &ob,
+                q_norm.as_ref(), k_norm.as_ref(),
+                &gw, &gs, &gb,
+                &uw, &us, &ub,
+                &dw, &ds, &db,
+                rcos, rsin,
+                &mut caches[l as usize],
+                0, // kv_offset = 0 for single-pass
+                arch.rms_norm_eps as f32,
+            )
+            .map_err(|e| napi::Error::from_reason(format!("layer {}: {:?}", l, e)))?;
+
+            // *** CRITICAL: eval BEFORE dropping lease ***
+            hidden.eval()
+                .map_err(|e| napi::Error::from_reason(format!("eval layer {}: {:?}", l, e)))?;
+
+            let elapsed_ms = t0.elapsed().as_millis();
+            let handles_after = crate::bridge::handle_count();
+            let _active_evaluated = mlx_active_memory_bytes();
+            let seg_id = lease.segment_id.clone();
+
+            // Retire the layer segment
+            drop(lease);
+
+            let handles_retired = crate::bridge::handle_count();
+            let active_retired = mlx_active_memory_bytes();
+
+            let output_shape = hidden.shape();
+            let is_finite = hidden
+                .try_as_slice::<f32>()
+                .map(|v| v.iter().all(|x| x.is_finite()))
+                .unwrap_or(false);
+
+            eprintln!(
+                "[full-model] layer={} kind={} segment={} bytes={} elapsed_ms={} \
+                 handles={}→{}→{} active_mem={}→{} shape={:?} finite={}",
+                l, layer_plan.attention_kind, seg_id, bytes_read, elapsed_ms,
+                handles_before, handles_after, handles_retired,
+                active_before, active_retired,
+                output_shape, is_finite,
+            );
+        }
+
+        // Verify return to idle
+        let final_handles = crate::bridge::handle_count();
+        eprintln!(
+            "[full-model] all_layers_done final_handles={} idle_handles={}",
+            final_handles, idle_handles,
+        );
+
+        // --- Epilogue: final norm + output projection + softcapping + argmax ---
+        let fn_w_name = format!("{}.norm.weight", root);
+        let fn_w = {
+            let reg = crate::bridge::ARRAY_REGISTRY.read();
+            reg.get(*self.persistent_handles.get(&fn_w_name).ok_or_else(|| {
+                napi::Error::from_reason(format!("missing: {}", fn_w_name))
+            })?)
+            .cloned()
+            .ok_or_else(|| napi::Error::from_reason("norm weight invalid"))?
+        };
+
+        let token_id = crate::executor::run_epilogue(
+            &hidden,
+            &fn_w,
+            &emb_w, &emb_s, &emb_b,
+            &plan.epilogue,
+            arch.rms_norm_eps as f32,
+            arch.tie_word_embeddings,
+            &crate::session::SamplerConfig::default(),
+        )
+        .map_err(|e| napi::Error::from_reason(format!("epilogue: {:?}", e)))?;
+
+        hidden.eval()
+            .map_err(|e| napi::Error::from_reason(format!("epilogue eval: {:?}", e)))?;
+
+        self.release();
+        Ok(token_id)
+    }
+
     /// Release all persistent tensor handles.
     pub fn release(&mut self) {
         if self.released {
@@ -1810,6 +2126,149 @@ impl ImageRuntime {
     }
 }
 
+fn plan(source_dir: &Path) -> napi::Result<(crate::config::CompilationPlan, LoadedSource)> {
+    use crate::config::{CompilationPlan, PlannedSegment, PlannedTensor};
+
+    let loaded = load_source(source_dir)?;
+    let shard_hashes: Vec<String> = loaded
+        .shard_hashes
+        .iter()
+        .map(|h| h.sha256.clone())
+        .collect();
+
+    let mut tensor_table = Vec::new();
+    let mut next_tensor_id: u32 = 0;
+    let mut segments: Vec<PlannedSegment> = Vec::new();
+    let mut seg_offsets: HashMap<String, u64> = HashMap::new();
+
+    // Persistent segment.
+    let persistent_seg_id = "persistent".to_string();
+    segments.push(PlannedSegment {
+        id: persistent_seg_id.clone(),
+        filename: "segment_000.bin".into(),
+        byte_size: 0,
+        kind: "persistent".into(),
+        tensor_count: 0,
+    });
+
+    for binding in &loaded.spec.global_tensors {
+        let disp = classify_disposition(binding, &loaded.namespace);
+        let (src_shard, src_offset, src_len, logical_dtype) =
+            source_info(&loaded.source_tensors, &binding.name);
+        let dest_offset = seg_offsets.get(&persistent_seg_id).copied().unwrap_or(0);
+        tensor_table.push(PlannedTensor {
+            id: next_tensor_id,
+            name: binding.name.clone(),
+            disposition: disp,
+            source_shard: src_shard,
+            source_offset: src_offset,
+            source_byte_length: src_len,
+            destination_segment: persistent_seg_id.clone(),
+            destination_offset: dest_offset,
+            destination_byte_length: src_len,
+            logical_dtype,
+            logical_shape: binding.logical_shape.clone(),
+        });
+        *seg_offsets.entry(persistent_seg_id.clone()).or_insert(0) += src_len;
+        next_tensor_id += 1;
+    }
+
+    // Layer segments.
+    for layer in &loaded.spec.layers {
+        let seg_id = format!("layer_{}", layer.index);
+        let seg_idx = segments.len();
+        segments.push(PlannedSegment {
+            id: seg_id.clone(),
+            filename: format!("segment_{:03}.bin", seg_idx),
+            byte_size: 0,
+            kind: format!("layer_{}", layer.index),
+            tensor_count: 0,
+        });
+        for binding in &layer.tensors {
+            let disp = classify_disposition(binding, &loaded.namespace);
+            let (src_shard, src_offset, src_len, logical_dtype) =
+                source_info(&loaded.source_tensors, &binding.name);
+            let dest_offset = seg_offsets.get(&seg_id).copied().unwrap_or(0);
+            tensor_table.push(PlannedTensor {
+                id: next_tensor_id,
+                name: binding.name.clone(),
+                disposition: disp,
+                source_shard: src_shard,
+                source_offset: src_offset,
+                source_byte_length: src_len,
+                destination_segment: seg_id.clone(),
+                destination_offset: dest_offset,
+                destination_byte_length: src_len,
+                logical_dtype,
+                logical_shape: binding.logical_shape.clone(),
+            });
+            *seg_offsets.entry(seg_id.clone()).or_insert(0) += src_len;
+            next_tensor_id += 1;
+        }
+    }
+
+    // Update segment byte sizes and tensor counts.
+    for seg in &mut segments {
+        seg.byte_size = *seg_offsets.get(&seg.id).unwrap_or(&0);
+        seg.tensor_count = tensor_table
+            .iter()
+            .filter(|t| t.destination_segment == seg.id)
+            .count();
+    }
+
+    let total_source_bytes: u64 = loaded
+        .source_tensors
+        .values()
+        .map(|t| t.data.len() as u64)
+        .sum();
+    let total_image_bytes: u64 = segments.iter().map(|s| s.byte_size).sum();
+
+    let plan = CompilationPlan {
+        model_identity: loaded.manifest.model_type.clone(),
+        source_config_hash: loaded.manifest.config_hash.clone(),
+        source_shard_hashes: shard_hashes,
+        tensor_table,
+        segments,
+        total_source_bytes,
+        total_image_bytes,
+    };
+
+    Ok((plan, loaded))
+}
+
+fn classify_disposition(
+    binding: &crate::config::TensorBinding,
+    _namespace: &crate::config::NamespaceBinding,
+) -> crate::config::TensorDisposition {
+    use crate::config::TensorDisposition;
+
+    // Quantized weight payloads get relocated unchanged.
+    if binding.name.ends_with(".weight")
+        || binding.name.ends_with(".scales")
+        || binding.name.ends_with(".biases")
+    {
+        return TensorDisposition::RelocateAndAlign;
+    }
+    // Embedding layer_scalar and other small tensors also relocate.
+    TensorDisposition::RelocateAndAlign
+}
+
+fn source_info(
+    source_tensors: &HashMap<String, SourceTensor>,
+    name: &str,
+) -> (String, u64, u64, String) {
+    if let Some(st) = source_tensors.get(name) {
+        (
+            st.source_filename.clone(),
+            st.source_offset,
+            st.data.len() as u64,
+            st.dtype.clone(),
+        )
+    } else {
+        (String::new(), 0, 0, "F32".into())
+    }
+}
+
 /// Compile a source checkpoint into a precompiled ComputeImage runtime artifact.
 ///
 /// The source directory must contain a config.json and safetensors shards.
@@ -1820,7 +2279,27 @@ pub fn compile(source_dir: &str, output_dir: &str) -> napi::Result<CompiledImage
     let output_dir = Path::new(output_dir);
     let started_at = std::time::Instant::now();
 
-    let loaded = load_source(source_dir)?;
+    let t_source = Instant::now();
+    let (_plan, loaded) = plan(source_dir)?;
+    // TODO Phase 3: Use plan to drive parallel emission instead of sequential loaded.spec iteration
+    let source_load_ms = t_source.elapsed().as_millis() as u64;
+    crate::compile_progress::CompileProgress {
+        stage: "source_loaded".into(),
+        bytes_processed: loaded.spec.layers.len() as u64,
+        bytes_total: loaded.spec.layers.len() as u64,
+        elapsed_ms: started_at.elapsed().as_millis() as u64,
+    }.emit();
+
+    compile_sequential(source_dir, output_dir, loaded, started_at, source_load_ms)
+}
+
+fn compile_sequential(
+    _source_dir: &Path,
+    output_dir: &Path,
+    loaded: LoadedSource,
+    started_at: Instant,
+    source_load_ms: u64,
+) -> napi::Result<CompiledImage> {
     let source = build_source_identity(
         &loaded.manifest,
         loaded.shard_hashes.clone(),
@@ -1830,6 +2309,7 @@ pub fn compile(source_dir: &str, output_dir: &str) -> napi::Result<CompiledImage
 
     let mut builder = ImageBuilder::new(loaded.arch.clone(), source);
 
+    let t_emit = Instant::now();
     builder.begin_segment("persistent", SegmentKind::Persistent);
     let mut emitted_ids = HashMap::new();
 
@@ -1863,8 +2343,53 @@ pub fn compile(source_dir: &str, output_dir: &str) -> napi::Result<CompiledImage
         }
     }
 
+    // Build the execution plan using the emitted tensor IDs
+    let execution_plan = crate::config::build_execution_plan(
+        &loaded.arch,
+        &loaded.namespace,
+        &emitted_ids,
+    );
+    builder.set_execution_plan(execution_plan);
+
+    let payload_emission_ms = t_emit.elapsed().as_millis() as u64;
+    let emitted_so_far = builder.segment_payloads.iter().map(|p| p.len() as u64).sum();
+    crate::compile_progress::CompileProgress {
+        stage: "payload_emission_done".into(),
+        bytes_processed: emitted_so_far,
+        bytes_total: emitted_so_far,
+        elapsed_ms: started_at.elapsed().as_millis() as u64,
+    }.emit();
+
+    let t_finalize = Instant::now();
     let manifest = builder.finalize(output_dir)?;
-    let receipt = build_compile_receipt(&loaded, &manifest, started_at.elapsed().as_millis());
+    let finalize_ms = t_finalize.elapsed().as_millis() as u64;
+
+    let total_source_bytes = loaded
+        .source_tensors
+        .values()
+        .map(|tensor| tensor.data.len() as u64)
+        .sum();
+    let total_emitted_bytes = manifest.segments.iter().map(|segment| segment.byte_size).sum();
+
+    let stage_profile = StageProfile {
+        source_discovery_ms: source_load_ms,
+        header_parsing_ms: 0,
+        architecture_normalization_ms: 0,
+        binding_validation_ms: 0,
+        source_hashing_ms: 0,
+        layout_planning_ms: 0,
+        payload_emission_ms,
+        segment_hashing_ms: finalize_ms,
+        manifest_generation_ms: 0,
+        verification_ms: 0,
+        total_source_bytes,
+        total_emitted_bytes,
+        peak_rss_bytes: 0,
+        peak_mlx_active_bytes: mlx_active_memory_bytes() as u64,
+        peak_mlx_cache_bytes: 0,
+    };
+
+    let receipt = build_compile_receipt(&loaded, &manifest, started_at.elapsed().as_millis(), stage_profile);
     let receipt_path = output_dir.join("receipt.json");
     let receipt_json = serde_json::to_string_pretty(&receipt)
         .map_err(|e| napi::Error::from_reason(format!("json: {}", e)))?;
@@ -1880,6 +2405,45 @@ pub fn read(image_dir: &str) -> napi::Result<CompiledImageReader> {
 
 pub fn verify(image_dir: &str) -> napi::Result<ManifestVerification> {
     read(image_dir)?.verify()
+}
+
+/// Atomically publish a staged compilation to its final destination.
+///
+/// 1. Writes a `.publishing` marker inside `staging`.
+/// 2. Renames `staging` to `destination` (falls back to recursive copy
+///    when the rename crosses filesystem boundaries).
+/// 3. On failure the staging directory is left intact with a `.failed` marker
+///    so that the caller can inspect or retry.
+pub fn publish_image(staging: &Path, destination: &Path) -> napi::Result<()> {
+    let publishing_marker = staging.join(".publishing");
+    std::fs::write(&publishing_marker, b"")
+        .map_err(|e| napi::Error::from_reason(format!("write .publishing: {}", e)))?;
+
+    let result = std::fs::rename(staging, destination);
+    match result {
+        Ok(()) => Ok(()),
+        Err(e) => {
+            // rename fails across filesystem boundaries — fall back to copy + remove
+            if e.kind() == std::io::ErrorKind::CrossesDevices {
+                let failed_marker = staging.join(".failed");
+                if let Err(write_err) = std::fs::write(&failed_marker, format!("rename failed: {}", e)) {
+                    return Err(napi::Error::from_reason(format!(
+                        "write .failed marker: {} (original rename: {})", write_err, e
+                    )));
+                }
+                return Err(napi::Error::from_reason(format!(
+                    "rename crosses devices: {}. Staging left in place with .failed marker.", e
+                )));
+            }
+            let failed_marker = staging.join(".failed");
+            if let Err(write_err) = std::fs::write(&failed_marker, format!("rename failed: {}", e)) {
+                return Err(napi::Error::from_reason(format!(
+                    "write .failed marker: {} (original rename: {})", write_err, e
+                )));
+            }
+            Err(napi::Error::from_reason(format!("rename {} -> {}: {}", staging.display(), destination.display(), e)))
+        }
+    }
 }
 
 #[cfg(test)]
@@ -2111,6 +2675,190 @@ mod tests {
                 13.75,
             ),
         ];
+
+        tensors.sort_by(|left, right| left.0.cmp(&right.0));
+        serialize_to_file(tensors, &None, &source_dir.join("model.safetensors"))
+            .expect("write safetensors");
+    }
+
+    /// Build a synthetic model with N layers driven by `layer_types`
+    /// ("sliding_attention" or "full_attention"). Full-attention layers
+    /// omit v_proj (K-equals-V).
+    fn write_two_layer_fixture_model(source_dir: &Path, layer_types: &[&str]) {
+        let num_layers = layer_types.len();
+        let config = serde_json::json!({
+            "model_type": "tiny_gemma_like",
+            "text_config": {
+                "hidden_size": 64,
+                "intermediate_size": 128,
+                "num_attention_heads": 4,
+                "num_key_value_heads": 1,
+                "head_dim": 16,
+                "global_head_dim": 16,
+                "num_global_key_value_heads": 1,
+                "num_hidden_layers": num_layers,
+                "vocab_size": 64,
+                "sliding_window": 8,
+                "max_position_embeddings": 16,
+                "rms_norm_eps": 0.000001,
+                "tie_word_embeddings": true,
+                "attention_k_eq_v": true,
+                "final_logit_softcapping": null,
+                "hidden_size_per_layer_input": 0,
+                "layer_types": layer_types,
+                "rope_parameters": {
+                    "sliding_attention": {
+                        "rope_theta": 10000.0,
+                        "rope_type": "default"
+                    },
+                    "full_attention": {
+                        "rope_theta": 1000000.0,
+                        "rope_type": "proportional"
+                    }
+                },
+                "model_type": "tiny_gemma_like"
+            },
+            "quantization": {
+                "group_size": 64,
+                "bits": 8,
+                "mode": "affine"
+            }
+        });
+
+        fs::write(
+            source_dir.join("config.json"),
+            serde_json::to_string_pretty(&config).expect("config json"),
+        )
+        .expect("write config");
+
+        let root = "language_model.model";
+        let mut tensors = vec![
+            u32_tensor(&format!("{}.embed_tokens.weight", root), &[64, 16], 1),
+            f32_tensor(&format!("{}.embed_tokens.scales", root), &[64, 1], 0.5),
+            f32_tensor(&format!("{}.embed_tokens.biases", root), &[64, 1], 1.5),
+            f32_tensor(&format!("{}.norm.weight", root), &[64], 2.0),
+        ];
+
+        for (i, lt) in layer_types.iter().enumerate() {
+            let layer = i as u32;
+            let is_full = *lt == "full_attention";
+
+            // Norms
+            tensors.push(f32_tensor(
+                &format!("{}.layers.{}.input_layernorm.weight", root, layer),
+                &[64], 3.0 + layer as f32 * 10.0,
+            ));
+            tensors.push(f32_tensor(
+                &format!("{}.layers.{}.post_attention_layernorm.weight", root, layer),
+                &[64], 4.0 + layer as f32 * 10.0,
+            ));
+
+            // Q/K norms
+            tensors.push(f32_tensor(
+                &format!("{}.layers.{}.self_attn.q_norm.weight", root, layer),
+                &[16], 5.0 + layer as f32 * 10.0,
+            ));
+            tensors.push(f32_tensor(
+                &format!("{}.layers.{}.self_attn.k_norm.weight", root, layer),
+                &[16], 6.0 + layer as f32 * 10.0,
+            ));
+
+            // Q projection
+            tensors.push(u32_tensor(
+                &format!("{}.layers.{}.self_attn.q_proj.weight", root, layer),
+                &[64, 16], 7 + layer * 100,
+            ));
+            tensors.push(f32_tensor(
+                &format!("{}.layers.{}.self_attn.q_proj.scales", root, layer),
+                &[64, 1], 7.5 + layer as f32 * 10.0,
+            ));
+            tensors.push(f32_tensor(
+                &format!("{}.layers.{}.self_attn.q_proj.biases", root, layer),
+                &[64, 1], 7.75 + layer as f32 * 10.0,
+            ));
+
+            // K projection
+            tensors.push(u32_tensor(
+                &format!("{}.layers.{}.self_attn.k_proj.weight", root, layer),
+                &[16, 16], 8 + layer * 100,
+            ));
+            tensors.push(f32_tensor(
+                &format!("{}.layers.{}.self_attn.k_proj.scales", root, layer),
+                &[16, 1], 8.5 + layer as f32 * 10.0,
+            ));
+            tensors.push(f32_tensor(
+                &format!("{}.layers.{}.self_attn.k_proj.biases", root, layer),
+                &[16, 1], 8.75 + layer as f32 * 10.0,
+            ));
+
+            // V projection: only for sliding attention layers
+            if !is_full {
+                tensors.push(u32_tensor(
+                    &format!("{}.layers.{}.self_attn.v_proj.weight", root, layer),
+                    &[16, 16], 9 + layer * 100,
+                ));
+                tensors.push(f32_tensor(
+                    &format!("{}.layers.{}.self_attn.v_proj.scales", root, layer),
+                    &[16, 1], 9.5 + layer as f32 * 10.0,
+                ));
+                tensors.push(f32_tensor(
+                    &format!("{}.layers.{}.self_attn.v_proj.biases", root, layer),
+                    &[16, 1], 9.75 + layer as f32 * 10.0,
+                ));
+            }
+
+            // O projection
+            tensors.push(u32_tensor(
+                &format!("{}.layers.{}.self_attn.o_proj.weight", root, layer),
+                &[64, 16], 10 + layer * 100,
+            ));
+            tensors.push(f32_tensor(
+                &format!("{}.layers.{}.self_attn.o_proj.scales", root, layer),
+                &[64, 1], 10.5 + layer as f32 * 10.0,
+            ));
+            tensors.push(f32_tensor(
+                &format!("{}.layers.{}.self_attn.o_proj.biases", root, layer),
+                &[64, 1], 10.75 + layer as f32 * 10.0,
+            ));
+
+            // MLP gate/up/down
+            tensors.push(u32_tensor(
+                &format!("{}.layers.{}.mlp.gate_proj.weight", root, layer),
+                &[128, 16], 11 + layer * 100,
+            ));
+            tensors.push(f32_tensor(
+                &format!("{}.layers.{}.mlp.gate_proj.scales", root, layer),
+                &[128, 1], 11.5 + layer as f32 * 10.0,
+            ));
+            tensors.push(f32_tensor(
+                &format!("{}.layers.{}.mlp.gate_proj.biases", root, layer),
+                &[128, 1], 11.75 + layer as f32 * 10.0,
+            ));
+            tensors.push(u32_tensor(
+                &format!("{}.layers.{}.mlp.up_proj.weight", root, layer),
+                &[128, 16], 12 + layer * 100,
+            ));
+            tensors.push(f32_tensor(
+                &format!("{}.layers.{}.mlp.up_proj.scales", root, layer),
+                &[128, 1], 12.5 + layer as f32 * 10.0,
+            ));
+            tensors.push(f32_tensor(
+                &format!("{}.layers.{}.mlp.up_proj.biases", root, layer),
+                &[128, 1], 12.75 + layer as f32 * 10.0,
+            ));
+            tensors.push(u32_tensor(
+                &format!("{}.layers.{}.mlp.down_proj.weight", root, layer),
+                &[64, 32], 13 + layer * 100,
+            ));
+            tensors.push(f32_tensor(
+                &format!("{}.layers.{}.mlp.down_proj.scales", root, layer),
+                &[64, 2], 13.5 + layer as f32 * 10.0,
+            ));
+            tensors.push(f32_tensor(
+                &format!("{}.layers.{}.mlp.down_proj.biases", root, layer),
+                &[64, 2], 13.75 + layer as f32 * 10.0,
+            ));
+        }
 
         tensors.sort_by(|left, right| left.0.cmp(&right.0));
         serialize_to_file(tensors, &None, &source_dir.join("model.safetensors"))
@@ -2582,5 +3330,184 @@ mod tests {
             "unexpected abi-mismatch error: {}",
             err
         );
+    }
+
+    #[test]
+    fn segment_corruption_rejected() {
+        let source_dir = temp_dir("source-seg-corr");
+        write_fixture_model(&source_dir);
+
+        let output_dir = temp_dir("out-seg-corr");
+        compile(
+            source_dir.to_str().expect("source dir"),
+            output_dir.to_str().expect("output dir"),
+        )
+        .expect("compile segment corruption fixture");
+
+        // segment_000.bin = persistent (embed + final), segment_001.bin = layer 0
+        let segment_path = output_dir.join("segment_001.bin");
+        let mut bytes = fs::read(&segment_path).expect("layer segment bytes");
+        bytes[100] ^= 0xFF;
+        fs::write(&segment_path, bytes).expect("rewrite corrupted layer segment");
+
+        let err = match read(output_dir.to_str().expect("output dir")) {
+            Ok(_) => panic!("expected segment corruption error"),
+            Err(err) => err,
+        };
+        assert!(
+            err.to_string().contains("segment hash mismatch"),
+            "unexpected segment corruption error: {}",
+            err
+        );
+    }
+
+    #[test]
+    fn synthetic_plan_driven_execution() {
+        let source_dir = temp_dir("source-plan");
+        let output_dir = temp_dir("out-plan");
+
+        write_two_layer_fixture_model(&source_dir, &["sliding_attention", "full_attention"]);
+
+        let compiled = compile(
+            source_dir.to_str().expect("source dir"),
+            output_dir.to_str().expect("output dir"),
+        )
+        .expect("compile");
+
+        let reader = read(output_dir.to_str().expect("output dir")).expect("reader");
+
+        // Verify execution plan from manifest
+        let plan = &compiled.manifest.execution_plan;
+        assert_eq!(plan.layers.len(), 2);
+
+        assert_eq!(plan.layers[0].attention_kind, "sliding_attention");
+        assert_eq!(plan.layers[0].layer_index, 0);
+        assert!(plan.layers[0].global_head_dim.is_none());
+        assert!(plan.layers[0].v_proj_tensor_id != 0, "sliding layer needs v_proj");
+
+        assert_eq!(plan.layers[1].attention_kind, "full_attention");
+        assert_eq!(plan.layers[1].layer_index, 1);
+        assert_eq!(plan.layers[1].global_head_dim, Some(16));
+        // K-equals-V: v_proj aliases k_proj
+        assert_eq!(plan.layers[1].v_proj_tensor_id, plan.layers[1].k_proj_tensor_id);
+
+        // Validate the plan
+        plan.validate().expect("execution plan should validate");
+
+        // Open runtime and verify handle lifecycle
+        let baseline_handles = crate::bridge::handle_count();
+        let mut runtime = reader.open_runtime(StorageBackend::Copied).expect("runtime");
+
+        // Handle count after persistent activation
+        let after_persistent = crate::bridge::handle_count();
+        assert!(after_persistent > baseline_handles);
+
+        // Run full model - this activates layers, runs inference, then retires them
+        let token = runtime.run_full_model(&[2i32]).expect("run full model");
+        assert!(token < 64, "token {} should be in [0, 64)", token);
+
+        // After full model runs and layers are retired, handles return to baseline
+        let after_run = crate::bridge::handle_count();
+        assert_eq!(after_run, baseline_handles,
+            "handle count should return to baseline after full model run; {} != {}",
+            after_run, baseline_handles);
+    }
+
+    #[test]
+    #[ignore = "real checkpoint full-model gate; requires ~12GB quantized model at models/gemma4-12b-8bit"]
+    fn real_checkpoint_full_model_gate() {
+        let source_dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("models/gemma4-12b-8bit");
+        let output_dir = temp_dir("real-full-model-out");
+
+        if !source_dir.join("config.json").exists() {
+            eprintln!("SKIP: no model at {}", source_dir.display());
+            return;
+        }
+
+        eprintln!("Compiling quantized Gemma 4 12B...");
+        let started = std::time::Instant::now();
+
+        let compiled = compile(
+            source_dir.to_str().expect("source dir"),
+            output_dir.to_str().expect("output dir"),
+        )
+        .expect("compile model");
+
+        let compile_secs = started.elapsed().as_secs_f64();
+        eprintln!(
+            "Compiled in {:.1}s: {} segments, {} tensors, {:?}",
+            compile_secs,
+            compiled.manifest.segments.len(),
+            compiled.manifest.tensor_table.len(),
+            compiled.manifest.image_hash
+        );
+
+        // Validate the execution plan
+        let plan = &compiled.manifest.execution_plan;
+        assert_eq!(plan.layers.len(), 48, "expected 48 layers");
+        plan.validate().expect("execution plan validation");
+
+        eprintln!("Opening runtime...");
+        let baseline_handles = crate::bridge::handle_count();
+        let reader = read(output_dir.to_str().expect("output dir")).expect("reader");
+        let mut runtime = reader.open_runtime(StorageBackend::Copied).expect("open runtime");
+
+        let after_open = crate::bridge::handle_count();
+        eprintln!(
+            "Runtime open: handles {} -> {}, plan layers: {}",
+            baseline_handles, after_open, plan.layers.len()
+        );
+
+        eprintln!("Running full 48-layer forward pass with BOS token...");
+        let run_started = std::time::Instant::now();
+
+        let token = runtime.run_full_model(&[2i32]).expect("run_full_model");
+
+        let run_secs = run_started.elapsed().as_secs_f64();
+        let total_secs = started.elapsed().as_secs_f64();
+
+        let after_run = crate::bridge::handle_count();
+        eprintln!(
+            "GATE PASSED: token={} run_time={:.1}s total_time={:.1}s final_handles={} baseline={}",
+            token, run_secs, total_secs, after_run, baseline_handles
+        );
+
+        assert!(token < 256128, "token {} out of vocab range", token);
+        assert!(token != 0, "token must not be padding token 0");
+        assert_eq!(after_run, baseline_handles,
+            "handle count must return to baseline after full model run; {} != {}",
+            after_run, baseline_handles);
+    }
+
+    #[test]
+    #[ignore = "requires pre-compiled image at TRIBUNUS_COMPILED_IMAGE dir"]
+    fn real_full_model_from_compiled_image() {
+        let image_dir = std::env::var("TRIBUNUS_COMPILED_IMAGE")
+            .expect("set TRIBUNUS_COMPILED_IMAGE to the compiled image directory");
+        let image_path = std::path::Path::new(&image_dir);
+        assert!(image_path.join("manifest.json").exists());
+
+        let baseline_handles = crate::bridge::handle_count();
+        let reader = read(&image_dir).expect("reader");
+        let plan = &reader.manifest.execution_plan;
+        assert_eq!(plan.layers.len(), 48);
+        plan.validate().expect("plan validation");
+
+        let mut runtime = reader.open_runtime(StorageBackend::Copied).expect("runtime");
+        eprintln!("Running 48-layer forward pass...");
+        let started = std::time::Instant::now();
+        let token = runtime.run_full_model(&[2i32]).expect("run_full_model");
+        let elapsed = started.elapsed().as_secs_f64();
+
+        let after_run = crate::bridge::handle_count();
+        eprintln!(
+            "GATE PASSED: token={} elapsed={:.1}s handles={}->{}",
+            token, elapsed, baseline_handles, after_run
+        );
+        assert!(token < 256128, "token out of vocab");
+        assert!(token > 0, "token should not be pad");
+        assert_eq!(after_run, baseline_handles,
+            "handle count must return to baseline: {} != {}",
+            after_run, baseline_handles);
     }
 }

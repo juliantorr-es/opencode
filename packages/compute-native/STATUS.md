@@ -1,10 +1,43 @@
-# SharedTensorArena v1 — Settlement Status
+# Tribunus Compute Kernel — Status
 
-## Status
+## Current Mission: Full 48-Layer ComputeImage Execution Gate
+
+Phase A-D complete. The compiler now emits a complete `ModelExecutionPlan` with all 48 `LayerPlan` entries, prologue plan, and epilogue plan. The runtime executes the full model from a compiled execution plan with segment-scoped residency.
+
+### Completed (2026-06-08)
+
+- **Phase A: Plan Schema** — `build_execution_plan()` in config.rs; `ModelExecutionPlan::validate()` with comprehensive checks; compiler wires plan into manifest.
+- **Phase B: Storage-Neutral Execution** — `executor.rs` with `run_prologue()`, `run_layer()`, `run_epilogue()` — all plan-driven, no layer-index branching.
+- **Phase C: Prologue + Epilogue** — Embedding activation with dequantization; tied output projection via embedding reactivation; final logit softcapping; native greedy argmax.
+- **Phase D: 48-Layer Execution** — `ImageRuntime::run_full_model()` iterates all layers from `execution_plan.layers`, eval-before-retire, per-layer telemetry to stderr, handle count verification.
+
+### Key Files
+
+| File | Lines | Role |
+|---|---|---|
+| `src/executor.rs` | ~310 | Plan-driven executors (prologue, layer, epilogue) |
+| `src/config.rs` | ~940 | `ModelExecutionPlan`, `LayerPlan`, `build_execution_plan()`, `validate()` |
+| `src/compute_image.rs` | ~2800 | `ImageRuntime::run_full_model()`, compiler with plan embedding |
+| `src/lib.rs` | ~280 | `run_full_model_from_image` napi binding |
+
+### In Progress
+
+- **Phase E: Structural Tests** — Synthetic plan validation, malformed plan rejection, segment corruption gate.
+
+### Deferred
+
+- Phase F-H: Real checkpoint integration tests require the Gemma 4 12B safetensors — out of scope for CI.
+- KV-cache integration, mapped no-copy storage, token streaming, Core ML placement.
 
 SharedTensorArena v1 phases 0–4 are complete: real IOSurface-backed FP16 storage, MLX external-array access, Core ML IOSurface input, caller-provided Core ML output backing, and a verified zero-application-copy MLX → Core ML → MLX round trip.
 
-Phases 5–10 infrastructure is implemented (stateful bridge, Tokio supervisor, arena pool, capability report, hybrid profile schema, structured errors, receipts). Stateful model execution is gated on coremltools native library availability (`libmilstoragepython`).
+Phases 0–4 are fully verified: 5 identity model tests pass without SIGSEGV. The FP16 I/O path works end-to-end with the hermetic compiler toolchain producing properly typed ML Programs via `ct.TensorType(dtype=np.float16)`.
+
+Phases 5–10 infrastructure is implemented (stateful bridge, Tokio supervisor, arena pool, capability report, hybrid profile schema, structured errors, receipts).
+
+Core ML stateful model loading works (confirmed with the stateful toy model). Stateful prediction still crashes because `coreml_state.mm` is stubs — real MLState bridge implementation deferred to Phase 12.
+
+Core ML artifact compilation requires a pinned Python 3.13 ARM64 environment with the official coremltools 9.0 binary wheel, not the system Python. The currently selected Python ABI (3.14) is unsupported by Core ML Tools 9.0, so pip did not install a compatible macOS native wheel. The hermetic compiler toolchain at `tools/coreml-compiler/` enforces this contract.
 
 ## Frozen ABIs
 
@@ -127,7 +160,8 @@ Copy classification: `copied_fallback` (pointer path may or may not avoid copies
 | Arena pool | `arena_pool.rs` | Complete |
 | MLX external arrays | `external_array.rs` | Complete |
 | Core ML stateless prediction | `coreml_bridge.rs` + `coreml_exec.mm` | Complete |
-| Core ML stateful prediction | `coreml_state.rs` + `coreml_state.mm` | Bridge complete; model loading gated |
+| Core ML stateful prediction | `coreml_state.rs` + `coreml_state.mm` | Bridge compiled; not runtime-qualified |
+| KV cache | `kv_cache.rs` | Implemented (6 tests); not yet runtime-qualified |
 | Tokio supervisor | `supervisor.rs` | Complete (skeleton) |
 | Capability report | `capability.rs` | Complete |
 | Hybrid profile | `hybrid_profile.rs` | Complete |
@@ -136,15 +170,16 @@ Copy classification: `copied_fallback` (pointer path may or may not avoid copies
 
 ## Test coverage
 
-37 tests across 9 modules:
+38 tests across 9 modules:
 
 | Module | Tests | Coverage |
 |---|---|---|
-| arena | 10 | Phases 0-4, stateful island, ping-pong, host memory |
+| arena | 11 | Phases 0-4 (verified), stateful island, ping-pong, host memory, Gemma MLP prediction |
 | arena_lifecycle | 3 | All valid + illegal transitions |
 | capability | 2 | Detection + serde roundtrip |
 | supervisor | 9 | Job lifecycle, workers, cancellation, shutdown |
 | arena_pool | 4 | Acquire, release, reuse, budget, max-per-key |
+| kv_cache | 6 | Sliding/global eviction, concurrency, clear |
 | errors | 3 | Builder pattern, display, variants |
 | hybrid_profile | 3 | Serde, validation, tensor flow |
 | receipts | 3 | Emitter, classification, serde |
@@ -161,9 +196,12 @@ Copy classification: `copied_fallback` (pointer path may or may not avoid copies
 
 ## Next steps
 
-1. Install coremltools with native libraries (`pip install coremltools` on macOS 15 with Xcode) to compile loadable stateful models
-2. Execute stateful island tests (deterministic mutation, two-session isolation)
-3. Compile transformer-shaped state model and run KV-cache tests
-4. Lower one Gemma-compatible MLP block through Core ML
-5. Benchmark boundary latency across all four paths (copied, pointer, IOSurface input, IOSurface+output backings)
-6. Freeze Rust API, ObjC++ ABI after stability window
+## Next steps (ordered by critical path)
+
+1. **Full 48-layer ComputeImage execution** — wire config-driven layer_types, execute all layers, source checkpoint unavailable to runtime.
+2. **KV cache integration** — prefill + cached decode; prove cached vs uncached parity over several decode steps.
+3. **Mapped no-copy segment residency** — mmap segment files, external MLX arrays over mapped memory, eval-before-unmap, flat residency plateau.
+4. **Core ML state qualification** — repeated mutation, two-session isolation, concurrency rejection, cancellation, clean destruction. _Bridge compiles but is not runtime-qualified._
+5. **Tokio streaming + cancellation** — bounded event channels, token emission, EOS, supervisor lifecycle.
+6. **Core ML MLP placement benchmark** — complete boundary latency (MLX eval → arena transfer → Core ML → transfer back → MLX consume).
+7. **Stress + receipt closure** — repeated open/close, cancellation at boundaries, corrupted image rejection, full-lifecycle receipts.

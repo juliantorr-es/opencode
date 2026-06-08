@@ -1,0 +1,92 @@
+    #[test]
+    fn test_segment_view() {
+        let sv = SegmentView {
+            segment_id: "layer_0_attn".into(),
+            byte_size: 4096,
+            filename: "segment_000.bin".into(),
+            state: SegmentState::Mapped,
+        };
+        assert_eq!(sv.segment_id, "layer_0_attn");
+        assert_eq!(sv.byte_size, 4096);
+        assert_eq!(sv.state, SegmentState::Mapped);
+    }
+
+    #[test]
+    fn test_open_close() {
+        let dir = std::env::temp_dir().join("mapped_image_test_open_close");
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).unwrap();
+
+        let seg_id = "test_seg".to_string();
+        let seg_filename = format!("{}.seg", seg_id);
+        let seg_path = dir.join(&seg_filename);
+        let mut f = std::fs::File::create(&seg_path).unwrap();
+        f.write_all(&[0u8; 256]).unwrap();
+        drop(f);
+
+        let segments = [SegmentView {
+            segment_id: seg_id.clone(),
+            byte_size: 256,
+            filename: seg_filename,
+            state: SegmentState::Unmapped,
+        }];
+
+        let mut image = MappedImage::open(&dir, &segments).unwrap();
+        assert!(image.is_mapped());
+        assert!(image.segment_files.contains_key(&seg_id));
+        assert_eq!(image.segment_size(&seg_id), Some(256));
+
+        image.close();
+        assert!(!image.is_mapped());
+        assert!(image.segment_files.is_empty());
+
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn test_drop_calls_close() {
+        let dir = std::env::temp_dir().join("mapped_image_test_drop");
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).unwrap();
+
+        let seg_id = "drop_seg".to_string();
+        let seg_filename = format!("{}.seg", seg_id);
+        let seg_path = dir.join(&seg_filename);
+        let mut f = std::fs::File::create(&seg_path).unwrap();
+        f.write_all(&[0u8; 128]).unwrap();
+        drop(f);
+
+        let segments = [SegmentView {
+            segment_id: seg_id.clone(),
+            byte_size: 128,
+            filename: seg_filename,
+            state: SegmentState::Unmapped,
+        }];
+
+        {
+            let image = MappedImage::open(&dir, &segments).unwrap();
+            assert!(image.is_mapped());
+        }
+
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn test_missing_file_returns_error() {
+        let dir = std::env::temp_dir().join("mapped_image_test_missing");
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).unwrap();
+
+        let segments = [SegmentView {
+            segment_id: "nonexistent".into(),
+            byte_size: 64,
+            filename: "nonexistent.seg".into(),
+            state: SegmentState::Unmapped,
+        }];
+
+        let result = MappedImage::open(&dir, &segments);
+        assert!(result.is_err());
+
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+}

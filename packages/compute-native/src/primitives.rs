@@ -70,7 +70,7 @@ pub fn rope_apply(
     cos: &Array,
     sin: &Array,
     offset: u32,
-    partial_factor: Option<f32>,
+    _partial_factor: Option<f32>,
 ) -> MlxResult<Array> {
     use mlx_rs::ops::indexing::IndexOp;
 

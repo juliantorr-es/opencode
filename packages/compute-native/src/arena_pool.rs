@@ -8,7 +8,7 @@
 use std::collections::HashMap;
 use std::sync::Mutex;
 use crate::arena::Arena;
-use crate::arena_lifecycle::{ArenaId, LifecycleState};
+use crate::arena_lifecycle::LifecycleState;
 
 /// Pool key: profile + shape.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
