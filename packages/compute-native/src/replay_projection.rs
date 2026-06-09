@@ -99,6 +99,7 @@ pub struct ProjectionHarness {
     pub family: ProjectionFamily,
     pub logical_hash: String,
     pub root_hash: String,
+    pub hidden_size: i32,
     pub image_dir: String,
 }
 
@@ -116,6 +117,7 @@ impl ProjectionHarness {
             .map_err(|e| format!("open image: {}", e))?;
 
         let logical_hash = reader.manifest.image_hash.clone();
+        let hidden_size = reader.manifest.architecture.hidden_size as i32;
         let root_hash = "3a0c6d47d42b42cba87d1be8a764a9717c9836e2748e4c0b3932ead6f645d8dd".to_string();
 
         let layer_plan = reader.manifest.execution_plan.layers
@@ -135,7 +137,7 @@ impl ProjectionHarness {
             _ => return Err(format!("unknown family: {}", family_name)),
         };
 
-        let base = format!("model.layers.{}.{}", layer_index, proj_prefix);
+        let base = format!("language_model.model.layers.{}.{}", layer_index, proj_prefix);
         let weight_name = format!("{}.weight", base);
         let scales_name = format!("{}.scales", base);
         let biases_name = format!("{}.biases", base);
@@ -201,6 +203,7 @@ impl ProjectionHarness {
             layer_index,
             attention_kind,
             family,
+            hidden_size,
             logical_hash,
             root_hash,
             image_dir: image_dir.display().to_string(),
@@ -337,13 +340,11 @@ impl ProjectionHarness {
     }
 
     pub fn replay_decode(&self, samples: usize, warmups: usize) -> Vec<ReplaySample> {
-        let hidden_size = self.weight.shape()[1] as i32;
-        self.replay(samples, warmups, &[1, hidden_size], "decode")
+        self.replay(samples, warmups, &[1, self.hidden_size], "decode")
     }
 
     pub fn replay_prefill(&self, samples: usize, warmups: usize) -> Vec<ReplaySample> {
-        let hidden_size = self.weight.shape()[1] as i32;
-        self.replay(samples, warmups, &[4, hidden_size], "prefill")
+        self.replay(samples, warmups, &[4, self.hidden_size], "prefill")
     }
 
     fn compute_digest(result: &Array) -> String {
