@@ -8,66 +8,7 @@
 
 import { test, expect } from "bun:test";
 
-// ── Mirror of parseStandardLayerEvents from scripts/e0000-baseline.ts ──
-// Must be kept in sync with the orchestrator implementation.
-function parseStandardLayerEvents(
-  stderr: string,
-  runId: string,
-): Array<Record<string, unknown>> {
-  const events: Array<Record<string, unknown>> = [];
-  let currentPhase = "";
-  let forwardPassIndex = 0;
-  let tokenStep: number | null = null;
-
-  for (const line of stderr.split("\n")) {
-    const phaseStart = line.match(/\[phase\]\s+(\S+)\s+start(?:\s+token_step=(\d+))?/);
-    if (phaseStart) {
-      forwardPassIndex++;
-      if (phaseStart[1] === "prefill") {
-        tokenStep = null;
-      } else if (phaseStart[1] === "decode_step") {
-        tokenStep = phaseStart[2] ? parseInt(phaseStart[2]!) : null;
-      }
-      currentPhase = phaseStart[1]!;
-      continue;
-    }
-    if (line.match(/\[phase\]\s+\S+\s+end/)) continue;
-
-    const layerM = line.match(/layer=(\d+)/);
-    const kindM = line.match(/kind=(\S+)/);
-    const shapeM = line.match(/shape=\[(\d+),\s*(\d+)\]/);
-    const finiteM = line.match(/finite=(true|false)/);
-    if (layerM && kindM && shapeM && finiteM) {
-      const idx = parseInt(layerM[1]!);
-      let sid = "layer_" + idx;
-      if (currentPhase === "decode_step" && tokenStep !== null) {
-        sid = "decode_step_" + tokenStep + "_layer_" + idx;
-      }
-      events.push({
-        schema_version: "1.0",
-        run_id: runId,
-        request_id: runId,
-        worker_id: "w",
-        sequence_number: events.length + 1,
-        event_type: "stage",
-        clock_domain: "worker_monotonic",
-        monotonic_ns: 0,
-        stage: {
-          stage_id: sid,
-          substrate_id: "mlx_generic_gpu",
-          layer_index: idx,
-          attention_kind: kindM[1]!,
-          status: finiteM[1] === "true" ? "completed" : "failed",
-          phase: currentPhase || undefined,
-          forward_pass_index: forwardPassIndex || undefined,
-          token_step: tokenStep ?? undefined,
-          measurements: { eval_ns: 0, materialized_bytes: 0, file_read_bytes: 0, kv_delta: 0 },
-        },
-      });
-    }
-  }
-  return events;
-}
+import { parseStandardLayerEvents } from "../src/parse/standard-layer-events.js";
 
 // ── Tests ───────────────────────────────────────────────────────────────────
 

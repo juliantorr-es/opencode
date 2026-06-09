@@ -10,6 +10,7 @@ import { mkdirSync, existsSync } from "fs";
 import { join } from "path";
 import { $ } from "bun";
 import { RunDirectory } from "../src/recorder/run-dir.js";
+import { parseStandardLayerEvents } from "../src/parse/standard-layer-events.js";
 import { finalizeRun } from "../src/recorder/finalize.js";
 import { normalizeRun } from "../src/normalize/normalize.js";
 import { buildDuckDb } from "../src/normalize/duckdb.js";
@@ -17,7 +18,7 @@ import { buildDuckDb } from "../src/normalize/duckdb.js";
 // ── Constants ────────────────────────────────────────────────────────────────
 
 const ROOT = join(import.meta.dir, "../../..");
-const RESEARCH_DATA = join(ROOT, ".research-data");
+const RESEARCH_DATA = Bun.env.TRIBUNUS_RESEARCH_DATA_ROOT || join(ROOT, ".research-data");
 const COMPUTE_DIR = join(ROOT, "packages/compute-native");
 const SKIP_MODEL = Bun.env.SKIP_MODEL === "1";
 
@@ -99,101 +100,6 @@ const WORKLOADS: Record<string, WorkloadDef> = {
   },
 };
 
-// ── Shared output parsing ────────────────────────────────────────────────────
-
-/** Parse per-layer events from the same stderr format used by all model tests. */
-export function parseStandardLayerEvents(
-  stderr: string,
-  runId: string,
-): Array<Record<string, unknown>> {
-  const events: Array<Record<string, unknown>> = [];
-  let currentPhase = "";
-  let forwardPassIndex = 0;
-  let tokenStep: number | null = null;
-
-  for (const line of stderr.split("\n")) {
-    // Track phase markers
-    const phaseStart = line.match(/\[phase\]\s+(\S+)\s+start(?:\s+token_step=(\d+))?/);
-    if (phaseStart) {
-      const phase = phaseStart[1]!;
-      forwardPassIndex++;
-      if (phase === "prefill") {
-        tokenStep = null;
-      } else if (phase === "decode_step") {
-        tokenStep = phaseStart[2] ? parseInt(phaseStart[2]!) : null;
-      }
-      currentPhase = phase;
-      continue;
-    }
-    const phaseEnd = line.match(/\[phase\]\s+(\S+)\s+end/);
-    if (phaseEnd) {
-      continue;
-    }
-
-    // Parse layer event line — key=value extraction (field-order independent)
-    const layerM = line.match(/layer=(\d+)/);
-    const kindM = line.match(/kind=(\S+)/);
-    const shapeM = line.match(/shape=\[(\d+),\s*(\d+)\]/);
-    const finiteM = line.match(/finite=(true|false)/);
-    // Optional: extract real measurements when present
-    const elapsedM = line.match(/elapsed_ms=(\d+)/);
-    const bytesM = line.match(/bytes=(\d+)/);
-    if (layerM && kindM && shapeM && finiteM) {
-      const layerIndex = parseInt(layerM[1]!);
-      const evalNs = elapsedM ? parseInt(elapsedM[1]!) * 1_000_000 : 0;
-      const fileBytes = bytesM ? parseInt(bytesM[1]!) : 0;
-      let stageId: string;
-      if (currentPhase === "decode_step" && tokenStep !== null) {
-        stageId = `decode_step_${tokenStep}_layer_${layerIndex}`;
-      } else {
-        stageId = `layer_${layerIndex}`;
-      }
-      events.push({
-        schema_version: "1.0",
-        run_id: runId,
-        request_id: runId,
-        worker_id: "worker-1",
-        sequence_number: events.length + 1,
-        event_type: "stage",
-        clock_domain: "worker_monotonic",
-        monotonic_ns: 0,
-        stage: {
-          stage_id: stageId,
-          substrate_id: "mlx_generic_gpu",
-          layer_index: layerIndex,
-          attention_kind: kindM[1]!,
-          status: finiteM[1] === "true" ? "completed" : "failed",
-          phase: currentPhase || undefined,
-          forward_pass_index: forwardPassIndex || undefined,
-          token_step: tokenStep ?? undefined,
-          measurements: {
-            eval_ns: evalNs,
-            file_read_bytes: fileBytes,
-            materialized_bytes: 0,
-            kv_delta: 0,
-          },
-        },
-      });
-    }
-  }
-  return events;
-}
-
-/** Parse the compiled image hash from test stdout or stderr and verify against expected. */
-function verifyImageHash(stdout: string, stderr: string): string | null {
-  const combined = stdout + "\n" + stderr;
-  const m = combined.match(/image hash:\s*([a-f0-9]{64})/);
-  if (!m) return null;
-  const parsed = m[1]!;
-  if (parsed !== FROZEN_IMAGE.hash) {
-    console.error(
-      `IMAGE HASH MISMATCH: compiled ${parsed.slice(0, 12)}... != frozen ${FROZEN_IMAGE.hash.slice(0, 12)}...`,
-    );
-    return null;
-  }
-  return parsed;
-}
-
 // ── Main ─────────────────────────────────────────────────────────────────────
 
 async function main() {
@@ -220,7 +126,7 @@ async function main() {
   const branch = (await $`git rev-parse --abbrev-ref HEAD`.quiet().cwd(ROOT).text()).trim();
   const commitTs = (await $`git log -1 --format=%ct`.quiet().cwd(ROOT).text()).trim();
   const dirtyOut = (await $`echo clean`.quiet().cwd(ROOT).text()).trim();
-  const dirty = dirtyOut !== "clean";
+  const dirty = dirtyOut.length > 0;
   const treeHash = (await $`git rev-parse HEAD^{tree}`.quiet().cwd(ROOT).text()).trim();
   const rustVer = (await $`rustc --version`.quiet().cwd(ROOT).text()).trim();
   const rustVersion = rustVer.replace("rustc ", "").split(" ")[0]!;
