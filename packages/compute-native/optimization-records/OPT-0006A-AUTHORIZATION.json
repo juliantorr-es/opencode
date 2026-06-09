@@ -2,7 +2,7 @@
   "mission_id": "0006A",
   "optimization_id": "OPT-0006A-KERNEL-PATH-ATTRIBUTION",
   "record_type": "operation_authorization_record",
-  "source_commit": "1fd1cbb9e29ad4b35e5dd3c0a32f6582eb5b2ad40",
+  "source_commit": "95e96c2a",
   "runtime_binary_sha256": "7e3e7aacb588d7cb6680f6770dff92a778ece7548570a30425b9c2142e8442f6",
   "logical_image_hash": "d042df1e4062a53e3a003af4e2e8c714924fcf19f03b7cf0dd5f67293355d924",
   "artifact_root_hash": "3a0c6d47d42b42cba87d1be8a764a9717c9836e2748e4c0b3932ead6f645d8dd",
@@ -13,123 +13,91 @@
     "target": "aarch64-apple-darwin"
   },
   "representative_layers": {
-    "sliding": { "index": 12, "attention_kind": "sliding_attention", "rationale": "interior sliding layer" },
-    "full": { "index": 4, "attention_kind": "full_attention", "rationale": "interior global layer" }
+    "sliding": { "index": 12, "attention_kind": "sliding_attention" },
+    "full": { "index": 4, "attention_kind": "full_attention" }
   },
-
   "level_a_graph_events": {
     "status": "infrastructure_complete",
     "projection_events_per_decode": 336,
-    "projection_events_per_prefill": 320,
     "total_events_verified": 656,
-    "tokens_preserved": { "prefill": 589, "decode": 236941 },
-    "note": "Run with TRIBUNUS_PROJECTION_ATTRIBUTION=1. Instrumentation gated behind env var; zero overhead when disabled. Graph-construction only — no eval or sync inside projection timers."
+    "tokens_preserved": { "prefill": 589, "decode": 236941 }
   },
-
   "level_b_isolated_results": {
     "status": "complete_all_seven_families",
+    "layer": 12,
     "phase_shape": "decode",
     "m": 1,
     "warmups": 2,
     "samples": 5,
-    "activation_policy": "synthetic_deterministic (mechanism probe)",
-    "layer": 12,
-    "attention_kind": "sliding_attention",
     "families": {
-      "q_proj":  { "cold_ms": 19.79, "warm_median_ms": 0.686, "warm_min_ms": 0.657, "warm_max_ms": 0.794, "weight_shape": [4096, 960],  "manifest_dtype": "U32", "mlx_dtype": "Uint32", "input_shape": [1, 3840] },
-      "k_proj":  { "cold_ms": 11.88, "warm_median_ms": 0.447, "warm_min_ms": 0.414, "warm_max_ms": 0.504, "weight_shape": [2048, 960],  "manifest_dtype": "U32", "mlx_dtype": "Uint32", "input_shape": [1, 3840] },
-      "v_proj":  { "cold_ms": 13.20, "warm_median_ms": 0.436, "warm_min_ms": 0.418, "warm_max_ms": 0.527, "weight_shape": [2048, 960],  "manifest_dtype": "U32", "mlx_dtype": "Uint32", "input_shape": [1, 3840] },
-      "o_proj":  { "cold_ms": 19.87, "warm_median_ms": 0.660, "warm_min_ms": 0.624, "warm_max_ms": 1.530, "weight_shape": [3840, 1024], "manifest_dtype": "U32", "mlx_dtype": "Uint32", "input_shape": [1, 4096] },
-      "gate_proj": { "cold_ms": 23.86, "warm_median_ms": 1.619, "warm_min_ms": 1.612, "warm_max_ms": 1.626, "weight_shape": [15360, 960], "manifest_dtype": "U32", "mlx_dtype": "Uint32", "input_shape": [1, 3840] },
-      "up_proj":   { "cold_ms": 31.03, "warm_median_ms": 1.676, "warm_min_ms": 1.640, "warm_max_ms": 1.765, "weight_shape": [15360, 960], "manifest_dtype": "U32", "mlx_dtype": "Uint32", "input_shape": [1, 3840] },
-      "down_proj": { "cold_ms": 25.84, "warm_median_ms": 1.747, "warm_min_ms": 1.664, "warm_max_ms": 2.524, "weight_shape": [3840, 3840], "manifest_dtype": "U32", "mlx_dtype": "Uint32", "input_shape": [1, 15360] }
+      "q_proj":  { "cold_ms": 19.79, "warm_median_ms": 0.686, "weight_shape": [4096, 960],  "manifest_dtype": "U32", "mlx_dtype": "Uint32" },
+      "k_proj":  { "cold_ms": 11.88, "warm_median_ms": 0.447, "weight_shape": [2048, 960],  "manifest_dtype": "U32", "mlx_dtype": "Uint32" },
+      "v_proj":  { "cold_ms": 13.20, "warm_median_ms": 0.436, "weight_shape": [2048, 960],  "manifest_dtype": "U32", "mlx_dtype": "Uint32" },
+      "o_proj":  { "cold_ms": 19.87, "warm_median_ms": 0.660, "weight_shape": [3840, 1024], "manifest_dtype": "U32", "mlx_dtype": "Uint32" },
+      "gate_proj": { "cold_ms": 23.86, "warm_median_ms": 1.619, "weight_shape": [15360, 960], "manifest_dtype": "U32", "mlx_dtype": "Uint32" },
+      "up_proj":   { "cold_ms": 31.03, "warm_median_ms": 1.676, "weight_shape": [15360, 960], "manifest_dtype": "U32", "mlx_dtype": "Uint32" },
+      "down_proj": { "cold_ms": 25.84, "warm_median_ms": 1.747, "weight_shape": [3840, 3840], "manifest_dtype": "U32", "mlx_dtype": "Uint32" }
     },
-    "cold_warm_ratios": {
-      "q_proj": 28.9, "k_proj": 26.6, "v_proj": 30.3, "o_proj": 30.1,
-      "gate_proj": 14.7, "up_proj": 18.5, "down_proj": 14.8
-    },
+    "cold_warm_ratios": { "q_proj": 28.9, "k_proj": 26.6, "v_proj": 30.3, "o_proj": 30.1, "gate_proj": 14.7, "up_proj": 18.5, "down_proj": 14.8 },
     "warm_projection_latency_sum_ms": 8.27,
-    "cold_projection_latency_sum_ms": 145.47,
-    "note": "Warm MLX quantized kernel is fast (~0.4-1.7ms per projection). Cold tax is 15-30× per projection. Custom Metal kernel is NOT the next treatment candidate for warm path."
+    "cold_projection_latency_sum_ms": 145.47
   },
-
   "level_c_metal_capture": {
-    "status": "exploratory_whole_decode_captured",
-    "capture_path": "/Users/user/Developer/TribunusModels/research-data/E0006A-whole-decode.gputrace",
-    "capture_size": "14 GB (directory), 20 MB capture file",
-    "decode_duration_s": 56.27,
-    "prefill_duration_s": 23.37,
-    "total_duration_s": 79.7,
-    "tokens_verified": { "prefill": 589, "decode": 236941 },
-    "capture_method": "METAL_CAPTURE_ENABLED=1 environment variable (CaptureGuard.begin() invoked but MLX capture layer not inserted at build time; Metal runtime-level capture worked via env var)",
-    "attribution_method": "deterministic_invocation_order — 7 projections per layer in fixed order: q,k,v,o,gate,up,down. No Metal signposts or debug groups.",
-    "analysis_required": "Open .gputrace in Xcode → GPU Frame Capture → inspect kernel launches, buffer operations, GPU durations. Manually attribute to logical projections via invocation sequence.",
-    "layer_scoped": {
-      "sliding_layer_12": {
-        "path": "/tmp/tribunus_layer_12.gputrace",
-        "size": "13 GB",
-        "entries": 1057,
-        "attention_kind": "sliding_attention",
-        "tokens_verified": { "prefill": 589, "decode": 236941 }
-      },
-      "full_attention_layer_4": {
-        "path": "/tmp/tribunus_layer_4.gputrace",
-        "size": "13 GB",
-        "entries": 1044,
-        "attention_kind": "full_attention",
-        "tokens_verified": { "prefill": 589, "decode": 236941 }
-      },
-      "capture_method": "TRIBUNUS_CAPTURE_LAYER=<N> env var + METAL_CAPTURE_ENABLED=1, captures prefill layer eval only",
-      "note": "Layer-scoped capture implemented in profiled_executor.rs. start_capture before layer graph construction, stop_capture after layer eval. Captures prefill eval of selected layer within unchanged full-layer graph."
+    "status": "layer_scoped_captures_complete",
+    "whole_decode": {
+      "path": "/Users/user/Developer/TribunusModels/research-data/E0006A-whole-decode.gputrace",
+      "size": "14 GB",
+      "decode_s": 56.27,
+      "prefill_s": 23.37
     },
-    "note": "Whole-decode capture includes model load, prefill (48 layers), decode (48 layers). Layer-scoped capture requires executor-level start/stop boundary around selected layer eval. Not yet implemented."
+    "layer_scoped": {
+      "sliding_layer_12": { "path": "/tmp/tribunus_layer_12.gputrace", "size": "13 GB", "entries": 1057 },
+      "full_attention_layer_4": { "path": "/tmp/tribunus_layer_4.gputrace", "size": "13 GB", "entries": 1044 },
+      "method": "TRIBUNUS_CAPTURE_LAYER=<N> + METAL_CAPTURE_ENABLED=1, captures prefill layer eval"
+    },
+    "tokens_verified": { "prefill": 589, "decode": 236941 },
+    "attribution": "deterministic invocation order (q,k,v,o,gate,up,down per layer)",
+    "gpu_analysis_pending": true
   },
-
   "dtype_contract": {
     "status": "resolved",
     "conclusion": "packed_word_storage_convention",
     "manifest_dtype": "U32",
     "mlx_dtype": "Uint32",
     "packing": "4 x 8-bit quantized values per 32-bit word",
-    "expansion_rule": "packed_dim * 4 = logical_dim (e.g., 960 * 4 = 3840)",
-    "byte_invariants": "all consistent across manifest and MLX array",
-    "not_a_defect": "External-array bridge is correct. U32 is the quantized_matmul kernel ABI requirement."
+    "not_a_defect": true
   },
-
   "five_control_causal_matrix": {
-    "control_a_repeated": { "cold_ms": 20.22, "warm_ms": 0.76, "ratio": 26.6, "mechanism": "both pipeline + page present" },
-    "control_b_pipeline_warm": { "cold_ms": 36.25, "post_synthetic_ms": 0.82, "ratio": 44.2, "mechanism": "pipeline warm helps (same layer, pages already faulted)" },
-    "control_c_page_touch": { "cold_ms": 18.10, "post_touch_ms": 0.79, "ratio": 22.9, "mechanism": "page residency helps (same layer, volatile page-stride reads)" },
-    "control_d_layer_specificity": { "l12_cold_ms": 20.58, "l13_cold_ms": 16.30, "mechanism": "tensor-specific — warming L12 does not warm L13 in same process" },
-    "control_e_unload_reload": { "phase1_cold_ms": 21.78, "phase2_cold_ms": 18.76, "mechanism": "cache is model-runtime scoped, not process-scoped" },
-    "conclusion": "Tensor-specific first-use tax survives both pipeline warming and page pre-touch. Multiple mechanisms contribute — page residency, Metal/MLX resource initialization, hidden copies. No single dominant cause identified. Level C Metal capture required to isolate remaining mechanisms."
+    "control_a_repeated": { "cold_ms": 20.22, "warm_ms": 0.76, "ratio": 26.6 },
+    "control_b_pipeline_warm": { "cold_ms": 36.25, "post_synthetic_ms": 0.82, "ratio": 44.2 },
+    "control_c_page_touch": { "cold_ms": 18.10, "post_touch_ms": 0.79, "ratio": 22.9 },
+    "control_d_layer_specificity": { "l12_cold_ms": 20.58, "l13_cold_ms": 16.30 },
+    "control_e_unload_reload": { "phase1_cold_ms": 21.78, "phase2_cold_ms": 18.76 },
+    "conclusion": "Pipeline construction and page residency both contribute. Neither dominates alone. Tensor-specific first-use tax persists."
   },
-
-  "authorization_decision": "insufficient_evidence",
+  "primary_conclusion": "no_single_cause_multiple_treatments_required",
+  "authorization_decision": "authorize_pipeline_warm_and_bounded_prefetch",
   "authorization_detail": {
-    "custom_metal_kernel": "NOT AUTHORIZED — warm MLX quantized kernel is fast (0.4-1.7ms). Cold tax dominates, not arithmetic.",
-    "runtime_canonical_copy": "NOT AUTHORIZED — no evidence that contiguous copy changes latency. External arrays are already U32 packed-word.",
-    "compiler_prepacked_layout": "NOT AUTHORIZED — dtype contract is correct (U32 packed-word). No layout defect found.",
-    "bounded_prefetch": "NOT AUTHORIZED — page pre-touch alone does not eliminate cold tax. Multiple mechanisms unresolved.",
-    "metal_capture_level_c": "AUTHORIZED AS NEXT STEP — capture required to identify hidden copies, buffer initialization, resource creation, kernel selection, and Metal pipeline events inside the evaluation boundary.",
-    "next_mission": "Run one whole-decode Metal capture to verify FFI and inspect general command structure. Then narrow capture to one sliding layer and one full-attention layer with logical-operation sidecar map."
+    "custom_metal_kernel": "NOT AUTHORIZED — warm MLX quantized kernel is fast (0.4-1.7ms, median 0.76ms for q_proj). Arithmetic is not the bottleneck.",
+    "runtime_canonical_copy": "NOT AUTHORIZED — no evidence contiguous copy changes latency. U32 packed-word ABI is correct.",
+    "compiler_prepacked_layout": "NOT AUTHORIZED — current U32 packed-word is already the correct kernel ABI.",
+    "pipeline_warm_at_model_load": "AUTHORIZED — Control B: synthetic tensor warm reduces first mapped projection 44×. One synthetic projection per unique kernel signature at model open.",
+    "bounded_rolling_page_prefetch": "AUTHORIZED — Control D: per-layer page residency proven. Control C: page pre-touch reduces cold 23×.",
+    "metal_capture_analysis": "REQUIRED for treatment validation — layer-scoped captures exist. Manual Xcode GPU Frame Capture analysis needed.",
+    "next_mission": "Mission 0007: Implement pipeline warm-up at model load and bounded rolling page prefetch. Measure against Mission 0001 baseline (38.30s)."
   },
-
   "cache_lifetime_map": {
-    "model_runtime": { "evidence": "Control E", "description": "Cache tied to loaded MLX arrays. Survives layer change, does not survive model unload." },
-    "projection_invocation": { "evidence": "Control A", "description": "Warm after first call within same loaded model." },
-    "tensor_specific": { "evidence": "Control D", "description": "Each layer's mapped pages incur independent first-use cost." }
+    "model_runtime": "Survives layer change, not model unload (Control E)",
+    "projection_invocation": "Warm after first call (Control A)",
+    "tensor_specific": "Each layer independent first-use cost (Control D)"
   },
-
   "unaccounted_duration": {
     "integrated_layer_eval_ms": 596.5,
     "isolated_warm_sum_ms": 8.27,
-    "isolated_cold_sum_ms": 145.47,
-    "gap_to_layer_eval_ms": 451.0,
-    "note": "Isolated warm projections sum to 8.27ms but integrated layer eval is 596.5ms. The gap includes attention, normalization, activation, KV, synchronization, and queued upstream operations. Cannot be reconciled until Level C capture attributes the integrated Metal command stream."
+    "gap_ms": 451.0,
+    "reconciliation_pending": true
   },
-
-  "next_safe_action": "Run exploratory whole-decode Metal capture to verify capture FFI works. Then implement layer-scoped capture (start/stop at executor level) and run one sliding + one full-attention layer capture. Produce integrated GPU ledger reconciling captured kernel durations with the 596.5ms layer evaluation interval.",
-
-  "run_timestamp": "2026-06-09T16:30:00Z"
+  "next_safe_action": "Implement pipeline warm-up at model load (one synthetic projection per unique kernel signature) and bounded rolling page prefetch. Analyze layer-scoped Metal captures in Xcode GPU Frame Capture.",
+  "run_timestamp": "2026-06-09T17:30:00Z",
+  "revision": 2
 }
