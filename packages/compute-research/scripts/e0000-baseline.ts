@@ -102,7 +102,7 @@ const WORKLOADS: Record<string, WorkloadDef> = {
 // ── Shared output parsing ────────────────────────────────────────────────────
 
 /** Parse per-layer events from the same stderr format used by all model tests. */
-function parseStandardLayerEvents(
+export function parseStandardLayerEvents(
   stderr: string,
   runId: string,
 ): Array<Record<string, unknown>> {
@@ -116,8 +116,8 @@ function parseStandardLayerEvents(
     const phaseStart = line.match(/\[phase\]\s+(\S+)\s+start(?:\s+token_step=(\d+))?/);
     if (phaseStart) {
       const phase = phaseStart[1]!;
+      forwardPassIndex++;
       if (phase === "prefill") {
-        forwardPassIndex++;
         tokenStep = null;
       } else if (phase === "decode_step") {
         tokenStep = phaseStart[2] ? parseInt(phaseStart[2]!) : null;
@@ -130,12 +130,13 @@ function parseStandardLayerEvents(
       continue;
     }
 
-    // Parse layer event line
-    const m = line.match(
-      /layer=(\d+)\s+kind=(\S+)\s+shape=\[(\d+),\s*(\d+)\]\s+finite=(true|false)\s+handles=(\d+)/,
-    );
-    if (m) {
-      const layerIndex = parseInt(m[1]!);
+    // Parse layer event line — key=value extraction (field-order independent)
+    const layerM = line.match(/layer=(\d+)/);
+    const kindM = line.match(/kind=(\S+)/);
+    const shapeM = line.match(/shape=\[(\d+),\s*(\d+)\]/);
+    const finiteM = line.match(/finite=(true|false)/);
+    if (layerM && kindM && shapeM && finiteM) {
+      const layerIndex = parseInt(layerM[1]!);
       let stageId: string;
       if (currentPhase === "decode_step" && tokenStep !== null) {
         stageId = `decode_step_${tokenStep}_layer_${layerIndex}`;
@@ -155,8 +156,8 @@ function parseStandardLayerEvents(
           stage_id: stageId,
           substrate_id: "mlx_generic_gpu",
           layer_index: layerIndex,
-          attention_kind: m[2]!,
-          status: m[5] === "true" ? "completed" : "failed",
+          attention_kind: kindM[1]!,
+          status: finiteM[1] === "true" ? "completed" : "failed",
           phase: currentPhase || undefined,
           forward_pass_index: forwardPassIndex || undefined,
           token_step: tokenStep ?? undefined,
