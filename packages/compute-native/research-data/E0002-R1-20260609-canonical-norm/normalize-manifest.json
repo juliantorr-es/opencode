@@ -1,0 +1,49 @@
+{
+  "run_id": "E0002-R1-20260609-canonical",
+  "normalized_dir": "/Users/user/Developer/GitHub/Tribunus/packages/compute-native/research-data/E0002-R1-20260609-canonical-norm",
+  "files": [
+    {
+      "name": "runs.arrow",
+      "row_count": 1,
+      "sha256": "7a162911d2470e9b79a9fa4d1a0dd2be550e88c4bb221c9c97443815103361d9",
+      "byte_size": 8314,
+      "format": "arrow_ipc"
+    },
+    {
+      "name": "stage_events.arrow",
+      "row_count": 96,
+      "sha256": "5acb28d6b73d131c2f0a9cc3636b92817f251571ce394bd8b291506570177d21",
+      "byte_size": 34866,
+      "format": "arrow_ipc"
+    },
+    {
+      "name": "memory_samples.arrow",
+      "row_count": 96,
+      "sha256": "8083087d5479bb443132296d28e29e1e361e8c75c87633356b0d6f6fc1f6f89c",
+      "byte_size": 14786,
+      "format": "arrow_ipc"
+    },
+    {
+      "name": "token_metrics.arrow",
+      "row_count": 0,
+      "sha256": "e181b6c013a1421f7592af819326004b4d1f51f6cdaded2505741e9277fe6041",
+      "byte_size": 194,
+      "format": "arrow_ipc"
+    },
+    {
+      "name": "correctness_checkpoints.arrow",
+      "row_count": 0,
+      "sha256": "e181b6c013a1421f7592af819326004b4d1f51f6cdaded2505741e9277fe6041",
+      "byte_size": 194,
+      "format": "arrow_ipc"
+    }
+  ],
+  "referential_integrity": {
+    "valid": true,
+    "run_ids_in_events": 1,
+    "run_ids_in_runs": [
+      "E0002-R1-20260609-canonical"
+    ],
+    "orphaned_run_ids": []
+  }
+}

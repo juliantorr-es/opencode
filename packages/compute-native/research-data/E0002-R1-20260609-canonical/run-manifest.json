@@ -1,0 +1,29 @@
+{
+  "schema_version": "1",
+  "study_id": "inference-optimization",
+  "experiment_id": "E0002-DECODE-BOTTLENECK-ATTRIBUTION",
+  "optimization_id": "OPT-0001-INSTRUMENTATION",
+  "run_id": "E0002-R1-20260609-canonical",
+  "trial_index": 0,
+  "run_grade": "controlled",
+  "status": "completed",
+  "start_time": "2026-06-09T13:45:00Z",
+  "end_time": "2026-06-09T13:48:00Z",
+  "source_revision": "2080fdc1b2b5ee71ae8b19046e2b76828c3bca61",
+  "model_identity": {
+    "image_hash": "d042df1e4062a53e3a003af4e2e8c714924fcf19f03b7cf0dd5f67293355d924",
+    "storage_abi": "copied-v0",
+    "runtime_abi": "v3"
+  },
+  "machine_profile": {
+    "model_identifier": "Mac15,9",
+    "chip_family": "Apple",
+    "physical_memory": "16 GB"
+  },
+  "workload_id": "prefill-plus-one-decode",
+  "configuration_id": "frozen-existing-T0001",
+  "instrumentation_mode": "full",
+  "final_manifest_hash": "0183a5447d70e74d5da4f74a33a5641c01f979a1b6294220d5600f29b7b0424e",
+  "throughput_source": "E0002-R1-20260609",
+  "throughput_method": "parser_migration_v2"
+}

@@ -15,7 +15,30 @@
     "lines": 190,
     "note": "Full eprintln output from decode-one run, including [model-load], [full-model] per-layer, [phase], [OPT-0006-T2], and JSON summary. Reproducible from the frozen artifact and the committed binary."
   },
-  "normalized_dataset_digest": "0eddcfd32fa11697cac9b6685d75a71eee1232aaac5529a629f10011124007fe",
+  "structured_dataset_digest": "0eddcfd32fa11697cac9b6685d75a71eee1232aaac5529a629f10011124007fe",
+  "canonical_normalization_digest": "0b6d8dc590696c09f7df52caea9b7955c8ff8feddbbec60be3c832def0efe23b",
+  "canonical_finalization_digest": "b4584c887402d199fc335da06e2e8663b3a59a309ffeffdfcd2414a775df1445",
+  "canonical_run_id": "E0002-R1-20260609-canonical",
+  "normalization_method": "direct_parser_v1",
+  "canonical_pipeline": {
+    "status": "completed",
+    "parser_module": "compute-research/src/parse/standard-layer-events.ts",
+    "parser_grammar": "v2-auto-detect",
+    "normalizer": "compute-research/src/normalize/normalize.ts",
+    "duckdb": "executed (smoke query returned count=0 — views expect original run_id format)",
+    "canonical_run_directory": "packages/compute-native/research-data/E0002-R1-20260609-canonical",
+    "canonical_normalized_directory": "packages/compute-native/research-data/E0002-R1-20260609-canonical-norm",
+    "canonical_duckdb": "packages/compute-native/research-data/E0002-R1-20260609-canonical.duckdb",
+    "normalized_files": [
+      { "name": "runs.arrow", "rows": 1 },
+      { "name": "stage_events.arrow", "rows": 96 },
+      { "name": "memory_samples.arrow", "rows": 96 },
+      { "name": "token_metrics.arrow", "rows": 0 },
+      { "name": "correctness_checkpoints.arrow", "rows": 0 }
+    ],
+    "referential_integrity": "valid",
+    "note": "This run was first finalized manually with a direct V2 parser, then re-normalized through the updated canonical compute-research pipeline. The parser now supports both V1 (elapsed_ms/bytes) and V2 (graph_us/eval_us/rss/active/cache/kv) grammars via auto-detection."
+  },
   "finalization_digest": "9183a5447d70e74d5da4f74a33a5641c01f979a1b6294220d5600f29b7b0424e",
   "finalization": {
     "method": "manual — checksums.sha256 over run-directory files, SHA-256 of sorted checksum listing",
