@@ -3,7 +3,10 @@
   "treatment_id": "T0000-CPU-MATVEC",
   "experiment_id": "E0001-NEON-ORACLE",
   "hypothesis": "A Rust-native quantized matrix-vector kernel at M=1 decode shapes can match or approach Metal performance for single-token Gemma projections, enabling CPU as either a primary backend or a heterogeneous shape-based dispatch target.",
-  "baseline": "Metal quantized_matmul on external mapped U8 weights (estimated 0.5–1 ms for K=3840, N=8192)",
+  "baseline": {
+    "status": "unavailable",
+    "note": "No directly measured, forced-evaluation Metal projection baseline exists at the time of this experiment. The integrated layer evaluation time (596.5 ms decode mean) divided by 7 projections yields ~85 ms per projection, but this crude division is not a valid per-projection benchmark — it includes attention, normalization, activation, and KV overhead within the layer. An arithmetic baseline derived from integrated layer timing appears in the prior revision and has been removed as unsupported."
+  },
   "target_stage": "Level 1 — operation microbenchmark against representative real shapes (Gemma Q-projection: K=3840, N=8192, group_size=64)",
   "implementation": "Four Rust implementations in native_kernel.rs: scalar_reference (naive float loop), llvm_auto (chunked iterators for auto-vectorization), cache_blocked_scalar (blocked scalar dequant loop, cache-friendly), neon_f32_fma_v1 (vld1q/vfmaq NEON intrinsics)",
   "expected_mechanism": "NEON SIMD should provide 4-8x speedup over scalar through 128-bit fused multiply-add; if CPU is competitive at M=1, heterogeneous dispatch should be used for small-batch projections",
@@ -50,7 +53,7 @@
     "cache_blocked_scalar": "cache_blocked_scalar",
     "neon_f32_fma_v1": "neon_f32_fma_v1"
   },
-  "final_decision": "Rust CPU implementations are ~40x slower than expected Metal performance. The cache_blocked_scalar variant (fastest at 42.8 ms) is 40–85x slower than the 0.5–1 ms Metal baseline for the same shape. CPU NEON is not competitive as a production projection backend at M=1. Retain Rust implementation as correctness oracle, portability fallback, and foundation for compiler-time layout transforms. Metal remains the authorized production projection backend. This experiment does not claim to establish the optimized performance ceiling of NEON — a heavily tuned NEON kernel with fused dequant+matmul and cache-aware tiling could potentially be faster, but the 40x gap makes it unlikely to close.",
+  "final_decision": "The Rust CPU implementations provide an independent correctness oracle. No production backend decision can be made until a directly measured, forced-evaluation Metal projection baseline exists for the same shapes. The cache_blocked_scalar variant (fastest at 42.8 ms) is retained as a portability fallback and compiler/layout-kernel substrate. The experiment does not claim to establish the optimized performance ceiling of NEON.",
   "result": {
     "scalar_reference": {
       "median_us": 117025,
@@ -83,13 +86,7 @@
     "reference": "scalar_reference"
   },
   "effective_throughput": {
-    "cache_blocked_scalar_effective_gflops": "not computed",
-    "note": "Effective throughput in GFLOPS not computed. Raw timing: cache_blocked_scalar at 42.8ms for M=1,K=3840,N=8192 implies ~0.7 GMAC/s effective (2*M*K*N/42.8ms). Metal at 0.5ms would be ~63 GMAC/s effective."
-  },
-  "metal_comparison": {
-    "isolated_metal_estimate": "0.5–1.0 ms for same shape",
-    "metal_source": "Estimated from E0002 decode per-projection timing (extrapolated from per-layer eval time / 7 projections)",
-    "cpu_vs_metal_ratio": "~40–85x slower"
+    "note": "Effective throughput not computed. A Metal comparison would require a directly measured isolated Metal projection baseline, which does not exist. The crude integrated-eval/7 division (~85 ms) is not a valid per-projection measurement and cannot be used for throughput comparison."
   },
   "limitations": [
     "Raw timing values (min/max/IQR) were not recorded during the benchmark run — only median values are available.",
@@ -99,9 +96,9 @@
     "This experiment does not establish an optimized NEON performance ceiling."
   ],
   "conclusion": [
-    "The current CPU implementations are not competitive with the measured Metal path for this projection.",
-    "Metal remains the production projection backend.",
-    "The CPU implementation is retained as a correctness oracle, fallback, and compiler/layout-kernel substrate.",
+    "The Rust implementations provide an independent correctness oracle for quantized matvec at M=1.",
+    "No production backend decision can be made: no directly measured, forced-evaluation isolated Metal projection baseline exists for the same shapes.",
+    "The integrated layer evaluation time divided by 7 projections (~85 ms) is not a valid per-projection benchmark and cannot be compared against the CPU oracle.",
     "The experiment does not establish an optimized NEON performance ceiling."
   ]
 }

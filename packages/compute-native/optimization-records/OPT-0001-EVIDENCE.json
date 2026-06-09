@@ -9,12 +9,20 @@
   "artifact_root_hash": "3a0c6d47d42b42cba87d1be8a764a9717c9836e2748e4c0b3932ead6f645d8dd",
   "machine_identity": "Apple M1, 16GB LPDDR4X, macOS 26.x (darwin 25.5.0), aarch64-apple-darwin",
   "instrumentation_schema_version": "1.0",
-  "raw_trace_digest": "stored at /tmp/opt0001_trace.txt",
+  "raw_trace": {
+    "path": "packages/compute-native/research-data/E0002-R1-raw-trace.txt",
+    "sha256": "d5e57004cb2b0a0b771f1dfd04c87df2cf0f0a29af329e123a93f637292bbfa1",
+    "lines": 190,
+    "note": "Full eprintln output from decode-one run, including [model-load], [full-model] per-layer, [phase], [OPT-0006-T2], and JSON summary. Reproducible from the frozen artifact and the committed binary."
+  },
+  "normalized_dataset_digest": null,
+  "finalization_digest": null,
   "phase_ledger": {
     "prefill": {
       "wall_s": 16.46,
       "graph_build_s": 1.97,
       "eval_s": 9.14,
+      "accounted_s": 11.11,
       "unaccounted_s": 5.36,
       "unaccounted_pct": 32.55,
       "layers": 48,
@@ -22,73 +30,114 @@
       "all_finite": true
     },
     "decode": {
-      "wall_s": 38.3,
+      "wall_s": 38.30,
       "graph_build_s": 6.19,
       "eval_s": 28.63,
+      "accounted_s": 34.82,
       "unaccounted_s": 3.49,
-      "unaccounted_pct": 9.1,
+      "unaccounted_pct": 9.10,
       "layers": 48,
       "token": 236941,
       "all_finite": true
     }
   },
+  "per_layer_stats": {
+    "decode_wall_mean_ms": 797.9,
+    "decode_accounted_mean_ms": 725.4,
+    "decode_graph_mean_ms": 129.0,
+    "decode_eval_mean_ms": 596.5,
+    "decode_unaccounted_mean_ms": 72.7,
+    "sliding_layers": {
+      "count": 40,
+      "total_s": 28.39,
+      "mean_per_layer_ms": 709.8
+    },
+    "full_attention_layers": {
+      "count": 8,
+      "total_s": 6.43,
+      "mean_per_layer_ms": 803.8
+    },
+    "full_vs_sliding_ratio": 1.13
+  },
   "operation_family_ledger": {
-    "note": "Per-projection timing not instrumented. Available: per-layer graph_us + eval_us only.",
+    "note": "Per-projection timing not instrumented. Available: per-layer graph_us + eval_us totals only. Projection families cannot be separated from attention, normalization, activation, and KV overhead within each layer.",
     "decode_accounted_pct": 90.9,
     "decode_graph_construction_pct": 16.2,
     "decode_evaluation_pct": 74.7,
     "sliding_attention_total_pct": 74.1,
     "full_attention_total_pct": 16.8,
-    "projection_families": "not_instrumented — estimated 59.8% of wall time based on layer composition",
+    "unaccounted_pct": 9.1,
+    "projection_families": "not_instrumented",
     "kv_copy_bytes": 131072,
     "kv_alloc_bytes": 671252480
   },
-  "memory_bound_proof": {
-    "model_load_mapped_bytes": 12670153523,
-    "model_load_copied_bytes": 0,
-    "model_load_materialized_bytes": 0,
-    "postload_rss": 9663676416,
-    "mlx_active_steady_state": 13743895347,
-    "mlx_cache_peak": 19922944,
-    "decode_rss_peak": 16986931,
-    "note": "Model fits in memory via mapped-no-copy. All 1180 tensors mapped directly from mmap'd segments. No weight copies."
+  "residency_assessment": {
+    "model_load": {
+      "mapped_tensors": 1180,
+      "copied_tensors": 0,
+      "materialized_tensors": 0,
+      "mapped_bytes": 12670153523,
+      "copied_bytes": 0,
+      "materialized_bytes": 0,
+      "postload_rss_bytes": 9663676416,
+      "mlx_active_bytes": 12670153523,
+      "mlx_cache_bytes": 0,
+      "page_faults": 0
+    },
+    "decode_peak": {
+      "mlx_active_bytes": 13743895347,
+      "mlx_cache_peak_bytes": 19922944,
+      "per_layer_rss_range_bytes": "6.7 GB down to ~15 MB during prefill; ~16 MB during decode"
+    },
+    "conclusion": [
+      "All 1180 model tensors were bound as mapped external arrays. No application-level weight copy was recorded during model load.",
+      "Physical residency behavior remains unresolved: page-fault sampling is disabled (SIGBUS on macOS 26.x), and per-layer RSS values show an implausible drop from 6.7 GB to ~15 MB during prefill. If the drop is real (OS reclaiming MAP_PRIVATE file-backed pages under Metal memory pressure), it indicates severe memory contention rather than comfortable residency.",
+      "MLX active memory reaches 13.7 GB on a 16 GB machine. MLX active/peak/cache are allocator-specific measures; they are not equivalent to process RSS or total physical footprint. The model operates close to the machine envelope.",
+      "Residency optimization is not authorized until page-fault sampling is operational and a valid per-layer RSS series can be collected."
+    ]
   },
   "deterministic_token_proof": {
     "prefill_token": 589,
     "decode_token": 236941,
-    "prompt": [
-      2,
-      42,
-      100,
-      500
-    ],
+    "prompt": [2, 42, 100, 500],
     "verified_against": "E0000-DECODE1-v1 frozen control"
   },
   "t2_probe": {
     "status": "blocked",
-    "reason": "External array dtype mismatch — Uint8 external arrays report as Uint32 through MLX Metal path. Copy comparison could not execute.",
+    "reason": "External array dtype mismatch — Uint8 external arrays report as Uint32 through MLX Metal path on Apple Silicon. Copy comparison could not execute.",
     "ext_qmatmul_ms": 18.8,
     "shape": "4096x960"
   },
   "conclusion": [
-    "Decode bottleneck confirmed: eval_us (Metal kernel + sync) dominates at 74.7% of wall time.",
-    "Graph construction (lazy MLX operation recording) accounts for 16.2%.",
-    "Per-projection timing NOT available — cannot determine which matmul dominates.",
+    "Decode bottleneck confirmed: eval_us (Metal kernel execution + synchronization fence) dominates at 74.7% of wall time (28.63s of 38.30s).",
+    "Graph construction (lazy MLX operation recording) accounts for 16.2% (6.19s).",
+    "Decode per-layer mean: 797.9 ms wall, 725.4 ms accounted (129.0 ms graph + 596.5 ms eval).",
+    "Full-attention layers are 1.13× more expensive per layer than sliding (803.8 ms vs 709.8 ms).",
+    "Per-projection timing NOT available — cannot determine which matmul dominates the 74.7% eval time.",
     "T2 contiguity hypothesis UNTESTED due to external array dtype mismatch.",
-    "No evidence of hidden weight copies at model load (all 1180 tensors mapped).",
-    "No evidence of RSS growth during decode (stable at ~16MB after initial layers).",
-    "Full attention layers are 1.4x more expensive than sliding per layer.",
-    "KV cache copies only for full attention (16KB/step/layer × 8 layers)."
+    "All 1180 model tensors mapped-no-copy at load. No application-level weight copies.",
+    "Physical residency unresolved: page-fault sampling disabled, per-layer RSS series invalid.",
+    "KV cache copies only for full-attention layers (16 KB/step × 8 layers = 128 KB total per decode step)."
   ],
   "authorization_decision": "authorize_per_projection_instrumentation",
   "authorization_detail": {
-    "layout_qualification": "NOT AUTHORIZED — per-projection timing unavailable; T2 probe blocked",
-    "kv_optimization": "NOT AUTHORIZED — KV copy is only 131KB total, overshadowed by eval time",
-    "graph_sync_optimization": "NOT AUTHORIZED — graph is only 16.2%; eval dominates",
-    "residency_optimization": "NOT AUTHORIZED — model fits in memory via mapped-no-copy; RSS stable",
-    "mlx_kernel_path_investigation": "AUTHORIZED — eval dominates at 74.7%; per-projection timing is prerequisite",
+    "layout_qualification": "NOT AUTHORIZED — per-projection timing unavailable; T2 probe blocked by dtype mismatch",
+    "kv_optimization": "NOT AUTHORIZED — KV copy is 128 KB/step, overshadowed by 596.5 ms evaluation",
+    "graph_sync_optimization": "NOT AUTHORIZED — graph construction is 16.2% of wall time; eval dominates",
+    "residency_optimization": "NOT AUTHORIZED — page-fault sampling disabled; per-layer RSS series invalid; physical residency unresolved",
+    "mlx_kernel_path_investigation": "AUTHORIZED — eval dominates at 74.7% of decode wall time; per-projection attribution is the prerequisite",
     "insufficient_evidence": false,
-    "next_action": "Add per-qmatmul (per-projection) timing instrumentation to executor.rs. Instrument each quantized_matmul call with elapsed time. Re-run decode-one. Then re-evaluate layout qualification."
+    "next_mission": "Build a non-perturbing three-level projection attribution system: (1) per-projection graph-build timing via Instant around each quantized_matmul call, labeled projection_graph_build_us; (2) isolated projection execution timing via forced eval+synchronize in a diagnostic microbenchmark or replay harness, labeled isolated_projection_eval_us; (3) integrated GPU kernel attribution via Metal capture, GPU signposts, or MLX backend instrumentation to identify actual kernel execution inside the unchanged full-layer graph, labeled integrated_gpu_duration_us. The third level is the only method that can assign integrated GPU time to individual projections without inserting seven new synchronization barriers that perturb the execution graph."
   },
-  "run_timestamp": "2026-06-09T13:45:00Z"
+  "run_timestamp": "2026-06-09T13:45:00Z",
+  "revision": "2",
+  "revision_timestamp": "2026-06-09T15:00:00Z",
+  "revision_changes": [
+    "Fixed per-layer timing units: 725 ms not 0.725 ms (×1000 error).",
+    "Fixed full-attention ratio: 1.13× not 1.4× (803.8/709.8 = 1.13).",
+    "Replaced raw_trace_digest path with committed path + SHA-256 hash.",
+    "Replaced invalid RSS conclusions: per-layer series shows implausible 6.7 GB → 15 MB drop; physical residency marked unresolved.",
+    "Removed 'model fits comfortably' — MLX active 13.7 GB on 16 GB machine is close to the envelope.",
+    "Replaced next_action with three-level attribution system description (graph-build, isolated eval, integrated GPU)."
+  ]
 }

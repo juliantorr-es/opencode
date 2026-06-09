@@ -1,0 +1,190 @@
+Loading profiled model: /Users/user/Developer/TribunusModels/compute-images/d042df1e4062a53e3a003af4e2e8c714924fcf19f03b7cf0dd5f67293355d924
+[profiled-model] WARNING: post-load RSS (9388310528 bytes) exceeds admission estimate (1552138070 bytes) by 504.9%
+[model-load] segments=49 mapped_views=1180 copied_fallback=0 materialized=0 total_views=1180 page_faults=0
+[model-load] mapped_bytes=11.8GB copied_bytes=0B materialized_bytes=0B postload_rss=8.7GB active=11.8GB cache=0B handles_before=0 handles_after=0 handle_delta=0
+Prefill 4 tokens...
+[phase] prefill start
+[OPT-0006-T2] first-qmatmul shape=[4096,960] ext=18.8ms (copy comparison unavailable — external array dtype mismatch)
+[mask] cached_seq=4 n_tokens=4 n_heads=16
+[full-model] layer=0 kind=sliding_attention graph_us=57904 eval_us=150839 rss=6.7GB→6.0GB handles=0→0 active=11.8GB→11.9GB cache=49092B→9.4MB kv_seq=4 kv_copy=0 kv_alloc=16777216 shape=[4,3840] finite=true
+[mask] cached_seq=4 n_tokens=4 n_heads=16
+[full-model] layer=1 kind=sliding_attention graph_us=25378 eval_us=152789 rss=6.0GB→5.5GB handles=0→0 active=11.9GB→11.9GB cache=16.9MB→9.4MB kv_seq=4 kv_copy=0 kv_alloc=16777216 shape=[4,3840] finite=true
+[mask] cached_seq=4 n_tokens=4 n_heads=16
+[full-model] layer=2 kind=sliding_attention graph_us=27452 eval_us=153184 rss=5.5GB→5.1GB handles=0→0 active=11.9GB→12.0GB cache=9.4MB→9.4MB kv_seq=4 kv_copy=0 kv_alloc=16777216 shape=[4,3840] finite=true
+[mask] cached_seq=4 n_tokens=4 n_heads=16
+[full-model] layer=3 kind=sliding_attention graph_us=26020 eval_us=147660 rss=5.1GB→4.6GB handles=0→0 active=12.0GB→12.0GB cache=16.9MB→9.4MB kv_seq=4 kv_copy=0 kv_alloc=16777216 shape=[4,3840] finite=true
+[mask] cached_seq=4 n_tokens=4 n_heads=16
+[full-model] layer=4 kind=sliding_attention graph_us=27451 eval_us=166948 rss=4.6GB→4.2GB handles=0→0 active=12.0GB→12.0GB cache=9.4MB→9.4MB kv_seq=4 kv_copy=0 kv_alloc=16777216 shape=[4,3840] finite=true
+[full-model] layer=5 kind=full_attention graph_us=73954 eval_us=168018 rss=4.2GB→3.6GB handles=0→0 active=12.0GB→12.2GB cache=9.4MB→11.4MB kv_seq=4 kv_copy=0 kv_alloc=16384 shape=[4,3840] finite=true
+[mask] cached_seq=4 n_tokens=4 n_heads=16
+[full-model] layer=6 kind=sliding_attention graph_us=30604 eval_us=164557 rss=3.6GB→3.5GB handles=0→0 active=12.2GB→12.3GB cache=19.0MB→9.4MB kv_seq=4 kv_copy=0 kv_alloc=16777216 shape=[4,3840] finite=true
+[mask] cached_seq=4 n_tokens=4 n_heads=16
+[full-model] layer=7 kind=sliding_attention graph_us=28497 eval_us=156655 rss=3.5GB→3.4GB handles=0→0 active=12.3GB→12.3GB cache=16.9MB→9.4MB kv_seq=4 kv_copy=0 kv_alloc=16777216 shape=[4,3840] finite=true
+[mask] cached_seq=4 n_tokens=4 n_heads=16
+[full-model] layer=8 kind=sliding_attention graph_us=28171 eval_us=154089 rss=3.4GB→3.3GB handles=0→0 active=12.3GB→12.3GB cache=9.4MB→9.4MB kv_seq=4 kv_copy=0 kv_alloc=16777216 shape=[4,3840] finite=true
+[mask] cached_seq=4 n_tokens=4 n_heads=16
+[full-model] layer=9 kind=sliding_attention graph_us=27307 eval_us=152395 rss=3.3GB→3.2GB handles=0→0 active=12.3GB→12.3GB cache=16.9MB→9.4MB kv_seq=4 kv_copy=0 kv_alloc=16777216 shape=[4,3840] finite=true
+[mask] cached_seq=4 n_tokens=4 n_heads=16
+[full-model] layer=10 kind=sliding_attention graph_us=28685 eval_us=154517 rss=3.2GB→3.2GB handles=0→0 active=12.3GB→12.3GB cache=16.9MB→9.4MB kv_seq=4 kv_copy=0 kv_alloc=16777216 shape=[4,3840] finite=true
+[full-model] layer=11 kind=full_attention graph_us=25698 eval_us=152182 rss=3.2GB→3.1GB handles=0→0 active=12.3GB→12.3GB cache=9.4MB→11.4MB kv_seq=4 kv_copy=0 kv_alloc=16384 shape=[4,3840] finite=true
+[mask] cached_seq=4 n_tokens=4 n_heads=16
+[full-model] layer=12 kind=sliding_attention graph_us=23861 eval_us=139794 rss=3.1GB→3.0GB handles=0→0 active=12.3GB→12.3GB cache=19.0MB→9.4MB kv_seq=4 kv_copy=0 kv_alloc=16777216 shape=[4,3840] finite=true
+[mask] cached_seq=4 n_tokens=4 n_heads=16
+[full-model] layer=13 kind=sliding_attention graph_us=25887 eval_us=144178 rss=3.0GB→2.7GB handles=0→0 active=12.3GB→12.4GB cache=9.4MB→9.4MB kv_seq=4 kv_copy=0 kv_alloc=16777216 shape=[4,3840] finite=true
+[mask] cached_seq=4 n_tokens=4 n_heads=16
+[full-model] layer=14 kind=sliding_attention graph_us=27342 eval_us=151354 rss=2.7GB→2.5GB handles=0→0 active=12.4GB→12.4GB cache=9.4MB→9.4MB kv_seq=4 kv_copy=0 kv_alloc=16777216 shape=[4,3840] finite=true
+[mask] cached_seq=4 n_tokens=4 n_heads=16
+[full-model] layer=15 kind=sliding_attention graph_us=25330 eval_us=146023 rss=2.5GB→2.2GB handles=0→0 active=12.4GB→12.4GB cache=9.6MB→9.4MB kv_seq=4 kv_copy=0 kv_alloc=16777216 shape=[4,3840] finite=true
+[mask] cached_seq=4 n_tokens=4 n_heads=16
+[full-model] layer=16 kind=sliding_attention graph_us=26756 eval_us=141216 rss=2.2GB→2.0GB handles=0→0 active=12.4GB→12.4GB cache=9.4MB→9.4MB kv_seq=4 kv_copy=0 kv_alloc=16777216 shape=[4,3840] finite=true
+[full-model] layer=17 kind=full_attention graph_us=24897 eval_us=161802 rss=2.0GB→1.7GB handles=0→0 active=12.4GB→12.4GB cache=9.4MB→11.4MB kv_seq=4 kv_copy=0 kv_alloc=16384 shape=[4,3840] finite=true
+[mask] cached_seq=4 n_tokens=4 n_heads=16
+[full-model] layer=18 kind=sliding_attention graph_us=25267 eval_us=151019 rss=1.7GB→1.5GB handles=0→0 active=12.4GB→12.4GB cache=11.4MB→9.4MB kv_seq=4 kv_copy=0 kv_alloc=16777216 shape=[4,3840] finite=true
+[mask] cached_seq=4 n_tokens=4 n_heads=16
+[full-model] layer=19 kind=sliding_attention graph_us=28304 eval_us=141084 rss=1.5GB→1.3GB handles=0→0 active=12.4GB→12.4GB cache=9.6MB→9.4MB kv_seq=4 kv_copy=0 kv_alloc=16777216 shape=[4,3840] finite=true
+[mask] cached_seq=4 n_tokens=4 n_heads=16
+[full-model] layer=20 kind=sliding_attention graph_us=27022 eval_us=134749 rss=1.3GB→1.3GB handles=0→0 active=12.4GB→12.4GB cache=9.6MB→9.4MB kv_seq=4 kv_copy=0 kv_alloc=16777216 shape=[4,3840] finite=true
+[mask] cached_seq=4 n_tokens=4 n_heads=16
+[full-model] layer=21 kind=sliding_attention graph_us=24143 eval_us=135176 rss=1.3GB→1.3GB handles=0→0 active=12.4GB→12.5GB cache=9.4MB→9.4MB kv_seq=4 kv_copy=0 kv_alloc=16777216 shape=[4,3840] finite=true
+[mask] cached_seq=4 n_tokens=4 n_heads=16
+[full-model] layer=22 kind=sliding_attention graph_us=24439 eval_us=150943 rss=1.3GB→1.2GB handles=0→0 active=12.5GB→12.5GB cache=16.9MB→9.4MB kv_seq=4 kv_copy=0 kv_alloc=16777216 shape=[4,3840] finite=true
+[full-model] layer=23 kind=full_attention graph_us=26498 eval_us=164649 rss=1.2GB→1.0GB handles=0→0 active=12.5GB→12.5GB cache=9.4MB→11.4MB kv_seq=4 kv_copy=0 kv_alloc=16384 shape=[4,3840] finite=true
+[mask] cached_seq=4 n_tokens=4 n_heads=16
+[full-model] layer=24 kind=sliding_attention graph_us=26311 eval_us=154183 rss=1.0GB→917.5MB handles=0→0 active=12.5GB→12.5GB cache=11.7MB→9.4MB kv_seq=4 kv_copy=0 kv_alloc=16777216 shape=[4,3840] finite=true
+[mask] cached_seq=4 n_tokens=4 n_heads=16
+[full-model] layer=25 kind=sliding_attention graph_us=27701 eval_us=152058 rss=917.5MB→810.8MB handles=0→0 active=12.5GB→12.5GB cache=16.9MB→9.4MB kv_seq=4 kv_copy=0 kv_alloc=16777216 shape=[4,3840] finite=true
+[mask] cached_seq=4 n_tokens=4 n_heads=16
+[full-model] layer=26 kind=sliding_attention graph_us=25746 eval_us=141469 rss=810.8MB→745.6MB handles=0→0 active=12.5GB→12.5GB cache=16.9MB→9.4MB kv_seq=4 kv_copy=0 kv_alloc=16777216 shape=[4,3840] finite=true
+[mask] cached_seq=4 n_tokens=4 n_heads=16
+[full-model] layer=27 kind=sliding_attention graph_us=26211 eval_us=146137 rss=745.6MB→583.0MB handles=0→0 active=12.5GB→12.5GB cache=16.9MB→9.4MB kv_seq=4 kv_copy=0 kv_alloc=16777216 shape=[4,3840] finite=true
+[mask] cached_seq=4 n_tokens=4 n_heads=16
+[full-model] layer=28 kind=sliding_attention graph_us=27695 eval_us=196912 rss=583.0MB→546.0MB handles=0→0 active=12.5GB→12.6GB cache=9.4MB→9.4MB kv_seq=4 kv_copy=0 kv_alloc=16777216 shape=[4,3840] finite=true
+[full-model] layer=29 kind=full_attention graph_us=35065 eval_us=240798 rss=546.0MB→546.1MB handles=0→0 active=12.5GB→12.6GB cache=16.9MB→11.4MB kv_seq=4 kv_copy=0 kv_alloc=16384 shape=[4,3840] finite=true
+[mask] cached_seq=4 n_tokens=4 n_heads=16
+[full-model] layer=30 kind=sliding_attention graph_us=43458 eval_us=229867 rss=546.1MB→546.1MB handles=0→0 active=12.5GB→12.6GB cache=19.0MB→9.4MB kv_seq=4 kv_copy=0 kv_alloc=16777216 shape=[4,3840] finite=true
+[mask] cached_seq=4 n_tokens=4 n_heads=16
+[full-model] layer=31 kind=sliding_attention graph_us=41100 eval_us=221852 rss=546.1MB→546.1MB handles=0→0 active=12.6GB→12.6GB cache=16.9MB→9.4MB kv_seq=4 kv_copy=0 kv_alloc=16777216 shape=[4,3840] finite=true
+[mask] cached_seq=4 n_tokens=4 n_heads=16
+[full-model] layer=32 kind=sliding_attention graph_us=38505 eval_us=236487 rss=546.1MB→492.1MB handles=0→0 active=12.6GB→12.6GB cache=16.9MB→9.4MB kv_seq=4 kv_copy=0 kv_alloc=16777216 shape=[4,3840] finite=true
+[mask] cached_seq=4 n_tokens=4 n_heads=16
+[full-model] layer=33 kind=sliding_attention graph_us=43433 eval_us=244248 rss=492.1MB→394.3MB handles=0→0 active=12.6GB→12.6GB cache=16.9MB→9.4MB kv_seq=4 kv_copy=0 kv_alloc=16777216 shape=[4,3840] finite=true
+[mask] cached_seq=4 n_tokens=4 n_heads=16
+[full-model] layer=34 kind=sliding_attention graph_us=44221 eval_us=232090 rss=394.3MB→384.9MB handles=0→0 active=12.6GB→12.6GB cache=9.6MB→9.4MB kv_seq=4 kv_copy=0 kv_alloc=16777216 shape=[4,3840] finite=true
+[full-model] layer=35 kind=full_attention graph_us=121697 eval_us=292823 rss=384.9MB→339.6MB handles=0→0 active=12.6GB→12.6GB cache=16.9MB→11.4MB kv_seq=4 kv_copy=0 kv_alloc=16384 shape=[4,3840] finite=true
+[mask] cached_seq=4 n_tokens=4 n_heads=16
+[full-model] layer=36 kind=sliding_attention graph_us=53028 eval_us=226132 rss=339.6MB→286.6MB handles=0→0 active=12.6GB→12.6GB cache=19.0MB→9.4MB kv_seq=4 kv_copy=0 kv_alloc=16777216 shape=[4,3840] finite=true
+[mask] cached_seq=4 n_tokens=4 n_heads=16
+[full-model] layer=37 kind=sliding_attention graph_us=42652 eval_us=221233 rss=286.6MB→275.9MB handles=0→0 active=12.6GB→12.7GB cache=9.4MB→9.4MB kv_seq=4 kv_copy=0 kv_alloc=16777216 shape=[4,3840] finite=true
+[mask] cached_seq=4 n_tokens=4 n_heads=16
+[full-model] layer=38 kind=sliding_attention graph_us=45609 eval_us=231187 rss=275.9MB→276.0MB handles=0→0 active=12.7GB→12.7GB cache=9.4MB→9.4MB kv_seq=4 kv_copy=0 kv_alloc=16777216 shape=[4,3840] finite=true
+[mask] cached_seq=4 n_tokens=4 n_heads=16
+[full-model] layer=39 kind=sliding_attention graph_us=42901 eval_us=241055 rss=276.0MB→228.8MB handles=0→0 active=12.7GB→12.7GB cache=9.4MB→9.4MB kv_seq=4 kv_copy=0 kv_alloc=16777216 shape=[4,3840] finite=true
+[mask] cached_seq=4 n_tokens=4 n_heads=16
+[full-model] layer=40 kind=sliding_attention graph_us=44597 eval_us=238709 rss=228.8MB→223.7MB handles=0→0 active=12.7GB→12.7GB cache=16.9MB→9.4MB kv_seq=4 kv_copy=0 kv_alloc=16777216 shape=[4,3840] finite=true
+[full-model] layer=41 kind=full_attention graph_us=140827 eval_us=252295 rss=223.7MB→174.8MB handles=0→0 active=12.7GB→12.7GB cache=16.9MB→11.4MB kv_seq=4 kv_copy=0 kv_alloc=16384 shape=[4,3840] finite=true
+[mask] cached_seq=4 n_tokens=4 n_heads=16
+[full-model] layer=42 kind=sliding_attention graph_us=49420 eval_us=279700 rss=174.8MB→142.7MB handles=0→0 active=12.7GB→12.7GB cache=19.0MB→9.4MB kv_seq=4 kv_copy=0 kv_alloc=16777216 shape=[4,3840] finite=true
+[mask] cached_seq=4 n_tokens=4 n_heads=16
+[full-model] layer=43 kind=sliding_attention graph_us=46553 eval_us=276429 rss=142.7MB→96.1MB handles=0→0 active=12.7GB→12.7GB cache=16.9MB→9.4MB kv_seq=4 kv_copy=0 kv_alloc=16777216 shape=[4,3840] finite=true
+[mask] cached_seq=4 n_tokens=4 n_heads=16
+[full-model] layer=44 kind=sliding_attention graph_us=53811 eval_us=266446 rss=96.1MB→47.1MB handles=0→0 active=12.7GB→12.8GB cache=16.9MB→9.4MB kv_seq=4 kv_copy=0 kv_alloc=16777216 shape=[4,3840] finite=true
+[mask] cached_seq=4 n_tokens=4 n_heads=16
+[full-model] layer=45 kind=sliding_attention graph_us=50036 eval_us=264140 rss=47.1MB→15.0MB handles=0→0 active=12.8GB→12.8GB cache=16.9MB→9.4MB kv_seq=4 kv_copy=0 kv_alloc=16777216 shape=[4,3840] finite=true
+[mask] cached_seq=4 n_tokens=4 n_heads=16
+[full-model] layer=46 kind=sliding_attention graph_us=53115 eval_us=255719 rss=15.0MB→14.6MB handles=0→0 active=12.8GB→12.8GB cache=16.9MB→9.4MB kv_seq=4 kv_copy=0 kv_alloc=16777216 shape=[4,3840] finite=true
+[full-model] layer=47 kind=full_attention graph_us=126179 eval_us=257270 rss=14.6MB→14.6MB handles=0→0 active=12.8GB→12.8GB cache=16.9MB→11.4MB kv_seq=4 kv_copy=0 kv_alloc=16384 shape=[4,3840] finite=true
+[phase] prefill end
+prefill token=589 elapsed=16.46s
+Decode...
+[phase] decode_step start token_step=4
+[mask] cached_seq=5 n_tokens=1 n_heads=16
+[full-model] layer=0 kind=sliding_attention graph_us=137596 eval_us=630091 rss=15.3MB→15.8MB handles=0→0 active=12.8GB→12.8GB cache=0B→9.2MB kv_seq=5 kv_copy=0 kv_alloc=16777216 shape=[1,3840] finite=true
+[mask] cached_seq=5 n_tokens=1 n_heads=16
+[full-model] layer=1 kind=sliding_attention graph_us=128270 eval_us=573190 rss=15.8MB→15.8MB handles=0→0 active=12.8GB→12.8GB cache=16.3MB→16.3MB kv_seq=5 kv_copy=0 kv_alloc=16777216 shape=[1,3840] finite=true
+[mask] cached_seq=5 n_tokens=1 n_heads=16
+[full-model] layer=2 kind=sliding_attention graph_us=101868 eval_us=603559 rss=15.8MB→15.8MB handles=0→0 active=12.8GB→12.8GB cache=16.3MB→9.2MB kv_seq=5 kv_copy=0 kv_alloc=16777216 shape=[1,3840] finite=true
+[mask] cached_seq=5 n_tokens=1 n_heads=16
+[full-model] layer=3 kind=sliding_attention graph_us=108045 eval_us=766069 rss=15.8MB→15.8MB handles=0→0 active=12.8GB→12.8GB cache=16.3MB→9.2MB kv_seq=5 kv_copy=0 kv_alloc=16777216 shape=[1,3840] finite=true
+[mask] cached_seq=5 n_tokens=1 n_heads=16
+[full-model] layer=4 kind=sliding_attention graph_us=118881 eval_us=801492 rss=15.8MB→15.9MB handles=0→0 active=12.8GB→12.8GB cache=9.2MB→9.2MB kv_seq=5 kv_copy=0 kv_alloc=16777216 shape=[1,3840] finite=true
+[full-model] layer=5 kind=full_attention graph_us=307042 eval_us=866231 rss=15.9MB→15.9MB handles=0→0 active=12.8GB→12.8GB cache=16.3MB→11.2MB kv_seq=5 kv_copy=16384 kv_alloc=20480 shape=[1,3840] finite=true
+[mask] cached_seq=5 n_tokens=1 n_heads=16
+[full-model] layer=6 kind=sliding_attention graph_us=219160 eval_us=758787 rss=15.9MB→15.9MB handles=0→0 active=12.8GB→12.8GB cache=18.4MB→9.2MB kv_seq=5 kv_copy=0 kv_alloc=16777216 shape=[1,3840] finite=true
+[mask] cached_seq=5 n_tokens=1 n_heads=16
+[full-model] layer=7 kind=sliding_attention graph_us=133246 eval_us=967793 rss=15.9MB→16.0MB handles=0→0 active=12.8GB→12.8GB cache=9.2MB→9.2MB kv_seq=5 kv_copy=0 kv_alloc=16777216 shape=[1,3840] finite=true
+[mask] cached_seq=5 n_tokens=1 n_heads=16
+[full-model] layer=8 kind=sliding_attention graph_us=133876 eval_us=877038 rss=16.0MB→16.0MB handles=0→0 active=12.8GB→12.8GB cache=9.2MB→9.2MB kv_seq=5 kv_copy=0 kv_alloc=16777216 shape=[1,3840] finite=true
+[mask] cached_seq=5 n_tokens=1 n_heads=16
+[full-model] layer=9 kind=sliding_attention graph_us=126696 eval_us=855982 rss=16.0MB→16.0MB handles=0→0 active=12.8GB→12.8GB cache=9.2MB→9.2MB kv_seq=5 kv_copy=0 kv_alloc=16777216 shape=[1,3840] finite=true
+[mask] cached_seq=5 n_tokens=1 n_heads=16
+[full-model] layer=10 kind=sliding_attention graph_us=157442 eval_us=860430 rss=16.0MB→16.0MB handles=0→0 active=12.8GB→12.8GB cache=16.3MB→9.2MB kv_seq=5 kv_copy=0 kv_alloc=16777216 shape=[1,3840] finite=true
+[full-model] layer=11 kind=full_attention graph_us=209851 eval_us=761608 rss=16.0MB→16.1MB handles=0→0 active=12.8GB→12.8GB cache=9.2MB→11.2MB kv_seq=5 kv_copy=16384 kv_alloc=20480 shape=[1,3840] finite=true
+[mask] cached_seq=5 n_tokens=1 n_heads=16
+[full-model] layer=12 kind=sliding_attention graph_us=244199 eval_us=584507 rss=16.1MB→16.1MB handles=0→0 active=12.8GB→12.8GB cache=11.2MB→9.2MB kv_seq=5 kv_copy=0 kv_alloc=16777216 shape=[1,3840] finite=true
+[mask] cached_seq=5 n_tokens=1 n_heads=16
+[full-model] layer=13 kind=sliding_attention graph_us=141206 eval_us=362991 rss=16.1MB→16.1MB handles=0→0 active=12.8GB→12.8GB cache=9.2MB→9.2MB kv_seq=5 kv_copy=0 kv_alloc=16777216 shape=[1,3840] finite=true
+[mask] cached_seq=5 n_tokens=1 n_heads=16
+[full-model] layer=14 kind=sliding_attention graph_us=88412 eval_us=394576 rss=16.1MB→16.1MB handles=0→0 active=12.8GB→12.8GB cache=9.2MB→9.2MB kv_seq=5 kv_copy=0 kv_alloc=16777216 shape=[1,3840] finite=true
+[mask] cached_seq=5 n_tokens=1 n_heads=16
+[full-model] layer=15 kind=sliding_attention graph_us=89060 eval_us=570451 rss=16.1MB→16.1MB handles=0→0 active=12.8GB→12.8GB cache=9.2MB→9.2MB kv_seq=5 kv_copy=0 kv_alloc=16777216 shape=[1,3840] finite=true
+[mask] cached_seq=5 n_tokens=1 n_heads=16
+[full-model] layer=16 kind=sliding_attention graph_us=108881 eval_us=521944 rss=16.1MB→16.1MB handles=0→0 active=12.8GB→12.8GB cache=16.3MB→9.2MB kv_seq=5 kv_copy=0 kv_alloc=16777216 shape=[1,3840] finite=true
+[full-model] layer=17 kind=full_attention graph_us=56838 eval_us=671791 rss=16.1MB→16.1MB handles=0→0 active=12.8GB→12.8GB cache=16.3MB→11.2MB kv_seq=5 kv_copy=16384 kv_alloc=20480 shape=[1,3840] finite=true
+[mask] cached_seq=5 n_tokens=1 n_heads=16
+[full-model] layer=18 kind=sliding_attention graph_us=160587 eval_us=519118 rss=16.1MB→16.1MB handles=0→0 active=12.8GB→12.8GB cache=11.2MB→9.2MB kv_seq=5 kv_copy=0 kv_alloc=16777216 shape=[1,3840] finite=true
+[mask] cached_seq=5 n_tokens=1 n_heads=16
+[full-model] layer=19 kind=sliding_attention graph_us=72947 eval_us=434610 rss=16.1MB→16.1MB handles=0→0 active=12.8GB→12.8GB cache=9.2MB→9.2MB kv_seq=5 kv_copy=0 kv_alloc=16777216 shape=[1,3840] finite=true
+[mask] cached_seq=5 n_tokens=1 n_heads=16
+[full-model] layer=20 kind=sliding_attention graph_us=86149 eval_us=463556 rss=16.1MB→16.1MB handles=0→0 active=12.8GB→12.8GB cache=16.3MB→9.2MB kv_seq=5 kv_copy=0 kv_alloc=16777216 shape=[1,3840] finite=true
+[mask] cached_seq=5 n_tokens=1 n_heads=16
+[full-model] layer=21 kind=sliding_attention graph_us=103115 eval_us=540359 rss=16.1MB→16.2MB handles=0→0 active=12.8GB→12.8GB cache=16.3MB→9.2MB kv_seq=5 kv_copy=0 kv_alloc=16777216 shape=[1,3840] finite=true
+[mask] cached_seq=5 n_tokens=1 n_heads=16
+[full-model] layer=22 kind=sliding_attention graph_us=71864 eval_us=427579 rss=16.2MB→16.2MB handles=0→0 active=12.8GB→12.8GB cache=16.3MB→9.2MB kv_seq=5 kv_copy=0 kv_alloc=16777216 shape=[1,3840] finite=true
+[full-model] layer=23 kind=full_attention graph_us=97092 eval_us=571686 rss=16.2MB→16.2MB handles=0→0 active=12.8GB→12.8GB cache=16.3MB→11.2MB kv_seq=5 kv_copy=16384 kv_alloc=20480 shape=[1,3840] finite=true
+[mask] cached_seq=5 n_tokens=1 n_heads=16
+[full-model] layer=24 kind=sliding_attention graph_us=49702 eval_us=783820 rss=16.2MB→16.2MB handles=0→0 active=12.8GB→12.8GB cache=11.2MB→9.2MB kv_seq=5 kv_copy=0 kv_alloc=16777216 shape=[1,3840] finite=true
+[mask] cached_seq=5 n_tokens=1 n_heads=16
+[full-model] layer=25 kind=sliding_attention graph_us=149409 eval_us=645646 rss=16.2MB→16.2MB handles=0→0 active=12.8GB→12.8GB cache=16.3MB→9.2MB kv_seq=5 kv_copy=0 kv_alloc=16777216 shape=[1,3840] finite=true
+[mask] cached_seq=5 n_tokens=1 n_heads=16
+[full-model] layer=26 kind=sliding_attention graph_us=139684 eval_us=1018960 rss=16.2MB→16.2MB handles=0→0 active=12.8GB→12.8GB cache=9.2MB→9.2MB kv_seq=5 kv_copy=0 kv_alloc=16777216 shape=[1,3840] finite=true
+[mask] cached_seq=5 n_tokens=1 n_heads=16
+[full-model] layer=27 kind=sliding_attention graph_us=166262 eval_us=801304 rss=16.2MB→16.2MB handles=0→0 active=12.8GB→12.8GB cache=16.3MB→9.2MB kv_seq=5 kv_copy=0 kv_alloc=16777216 shape=[1,3840] finite=true
+[mask] cached_seq=5 n_tokens=1 n_heads=16
+[full-model] layer=28 kind=sliding_attention graph_us=195636 eval_us=921794 rss=16.2MB→16.2MB handles=0→0 active=12.8GB→12.8GB cache=16.3MB→9.2MB kv_seq=5 kv_copy=0 kv_alloc=16777216 shape=[1,3840] finite=true
+[full-model] layer=29 kind=full_attention graph_us=271378 eval_us=515215 rss=16.2MB→16.2MB handles=0→0 active=12.8GB→12.8GB cache=9.2MB→11.2MB kv_seq=5 kv_copy=16384 kv_alloc=20480 shape=[1,3840] finite=true
+[mask] cached_seq=5 n_tokens=1 n_heads=16
+[full-model] layer=30 kind=sliding_attention graph_us=186019 eval_us=310271 rss=16.2MB→16.2MB handles=0→0 active=12.8GB→12.8GB cache=11.2MB→9.2MB kv_seq=5 kv_copy=0 kv_alloc=16777216 shape=[1,3840] finite=true
+[mask] cached_seq=5 n_tokens=1 n_heads=16
+[full-model] layer=31 kind=sliding_attention graph_us=56925 eval_us=768545 rss=16.2MB→16.2MB handles=0→0 active=12.8GB→12.8GB cache=16.3MB→9.2MB kv_seq=5 kv_copy=0 kv_alloc=16777216 shape=[1,3840] finite=true
+[mask] cached_seq=5 n_tokens=1 n_heads=16
+[full-model] layer=32 kind=sliding_attention graph_us=162425 eval_us=526205 rss=16.2MB→16.2MB handles=0→0 active=12.8GB→12.8GB cache=16.3MB→9.2MB kv_seq=5 kv_copy=0 kv_alloc=16777216 shape=[1,3840] finite=true
+[mask] cached_seq=5 n_tokens=1 n_heads=16
+[full-model] layer=33 kind=sliding_attention graph_us=47521 eval_us=462329 rss=16.2MB→16.2MB handles=0→0 active=12.8GB→12.8GB cache=16.3MB→9.2MB kv_seq=5 kv_copy=0 kv_alloc=16777216 shape=[1,3840] finite=true
+[mask] cached_seq=5 n_tokens=1 n_heads=16
+[full-model] layer=34 kind=sliding_attention graph_us=140824 eval_us=608110 rss=16.2MB→16.2MB handles=0→0 active=12.8GB→12.8GB cache=9.2MB→9.2MB kv_seq=5 kv_copy=0 kv_alloc=16777216 shape=[1,3840] finite=true
+[full-model] layer=35 kind=full_attention graph_us=164642 eval_us=344310 rss=16.2MB→16.2MB handles=0→0 active=12.8GB→12.8GB cache=9.2MB→11.2MB kv_seq=5 kv_copy=16384 kv_alloc=20480 shape=[1,3840] finite=true
+[mask] cached_seq=5 n_tokens=1 n_heads=16
+[full-model] layer=36 kind=sliding_attention graph_us=34813 eval_us=561070 rss=16.2MB→16.2MB handles=0→0 active=12.8GB→12.8GB cache=18.4MB→9.2MB kv_seq=5 kv_copy=0 kv_alloc=16777216 shape=[1,3840] finite=true
+[mask] cached_seq=5 n_tokens=1 n_heads=16
+[full-model] layer=37 kind=sliding_attention graph_us=120812 eval_us=420158 rss=16.2MB→16.2MB handles=0→0 active=12.8GB→12.8GB cache=9.2MB→9.2MB kv_seq=5 kv_copy=0 kv_alloc=16777216 shape=[1,3840] finite=true
+[mask] cached_seq=5 n_tokens=1 n_heads=16
+[full-model] layer=38 kind=sliding_attention graph_us=112860 eval_us=276230 rss=16.2MB→16.2MB handles=0→0 active=12.8GB→12.8GB cache=16.3MB→9.2MB kv_seq=5 kv_copy=0 kv_alloc=16777216 shape=[1,3840] finite=true
+[mask] cached_seq=5 n_tokens=1 n_heads=16
+[full-model] layer=39 kind=sliding_attention graph_us=24129 eval_us=570273 rss=16.2MB→16.2MB handles=0→0 active=12.8GB→12.8GB cache=16.3MB→9.2MB kv_seq=5 kv_copy=0 kv_alloc=16777216 shape=[1,3840] finite=true
+[mask] cached_seq=5 n_tokens=1 n_heads=16
+[full-model] layer=40 kind=sliding_attention graph_us=73825 eval_us=235550 rss=16.2MB→16.2MB handles=0→0 active=12.8GB→12.8GB cache=16.3MB→9.2MB kv_seq=5 kv_copy=0 kv_alloc=16777216 shape=[1,3840] finite=true
+[full-model] layer=41 kind=full_attention graph_us=165586 eval_us=816485 rss=16.2MB→16.1MB handles=0→0 active=12.8GB→12.8GB cache=9.2MB→11.2MB kv_seq=5 kv_copy=16384 kv_alloc=20480 shape=[1,3840] finite=true
+[mask] cached_seq=5 n_tokens=1 n_heads=16
+[full-model] layer=42 kind=sliding_attention graph_us=229911 eval_us=357337 rss=16.1MB→16.2MB handles=0→0 active=12.8GB→12.8GB cache=11.2MB→9.2MB kv_seq=5 kv_copy=0 kv_alloc=16777216 shape=[1,3840] finite=true
+[mask] cached_seq=5 n_tokens=1 n_heads=16
+[full-model] layer=43 kind=sliding_attention graph_us=78124 eval_us=340162 rss=16.2MB→16.2MB handles=0→0 active=12.8GB→12.8GB cache=9.2MB→9.2MB kv_seq=5 kv_copy=0 kv_alloc=16777216 shape=[1,3840] finite=true
+[mask] cached_seq=5 n_tokens=1 n_heads=16
+[full-model] layer=44 kind=sliding_attention graph_us=165510 eval_us=660151 rss=16.2MB→16.2MB handles=0→0 active=12.8GB→12.8GB cache=16.3MB→9.2MB kv_seq=5 kv_copy=0 kv_alloc=16777216 shape=[1,3840] finite=true
+[mask] cached_seq=5 n_tokens=1 n_heads=16
+[full-model] layer=45 kind=sliding_attention graph_us=15494 eval_us=261273 rss=16.2MB→16.2MB handles=0→0 active=12.8GB→12.8GB cache=9.2MB→9.2MB kv_seq=5 kv_copy=0 kv_alloc=16777216 shape=[1,3840] finite=true
+[mask] cached_seq=5 n_tokens=1 n_heads=16
+[full-model] layer=46 kind=sliding_attention graph_us=16267 eval_us=648288 rss=16.2MB→16.2MB handles=0→0 active=12.8GB→12.8GB cache=9.2MB→9.2MB kv_seq=5 kv_copy=0 kv_alloc=16777216 shape=[1,3840] finite=true
+[full-model] layer=47 kind=full_attention graph_us=216636 eval_us=389274 rss=16.2MB→16.2MB handles=0→0 active=12.8GB→12.8GB cache=16.3MB→11.2MB kv_seq=5 kv_copy=16384 kv_alloc=20480 shape=[1,3840] finite=true
+[phase] decode_step end
+decode token=236941 elapsed=38.30s
+{"decode_s":38.304144667,"decode_token":236941,"layers":48,"prefill_s":16.462876,"prefill_token":589,"status":"decoded"}
