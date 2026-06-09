@@ -1,0 +1,73 @@
+{
+  "optimization_id": "OPT-0001-INSTRUMENTATION",
+  "treatment_id": "T0001-HIGH-FIDELITY-TELEMETRY",
+  "experiment_id": "E0002-DECODE-BOTTLENECK-ATTRIBUTION",
+  "hypothesis": "Replacing the placeholder-zero layer emitter with real measured values for graph-build time, evaluation time, RSS, MLX active/cache memory, KV cache state, and model-load telemetry will decompose the 42-second decode anomaly into named phases and identify the dominant bottleneck.",
+  "baseline": "E0000-DECODE1-v1 frozen control: 42.00s median decode-pass latency with 96 finite layer executions (48 prefill + 48 decode). Prior layer emission used hardcoded zeros for bytes, elapsed_ms, handles, and active_mem.",
+  "target_stage": "Level 5 — prefill plus one decode step, measured against the frozen E0000-DECODE1-v1 workload",
+  "implementation": "profiled_executor.rs: Split per-layer timing into graph_us (run_layer graph construction) and eval_us (hidden.eval GPU execution + sync fence). Added RSS before/after per layer via sample_process_rss_self(), MLX active/cache before/after via mlx_active_memory_bytes()/mlx_cache_memory_bytes(), KV state (seq_len, copy_bytes, allocated_bytes) per layer, and handle counts before/after. model-load telemetry: segment count, mapped/copied/materialized tensor counts and bytes, post-load RSS, MLX active/cache, handle delta. executor.rs: OPT-0006-T2 contiguity probe comparing external mapped vs canonical contiguous weight in the first quantized_matmul call. worker_memory.rs: sample_page_faults() via proc_pid_rusage RUSAGE_INFO_V2 ri_pageins.",
+  "expected_mechanism": "The split graph_us vs eval_us timing will reveal whether the 700ms-per-layer is dominated by graph construction (lazy MLX operation recording) or evaluation (GPU kernel execution + Metal command buffer submission + sync fence). The 48 per-layer eval() fences are the suspected primary bottleneck — each forces a GPU→CPU synchronization that prevents layer pipelining. For single-token decode, the eval fence overhead may dominate the actual kernel work.",
+  "primary_metric": "Median decode-pass latency decomposed into graph-build and eval time per layer",
+  "secondary_metrics": [
+    "Ratio of graph_us to eval_us per layer (sliding vs full attention)",
+    "RSS growth during decode (prefill baseline vs decode peak)",
+    "MLX active/cache memory stability across 48 decode layers",
+    "KV cache copy_bytes per layer (sliding vs full attention — full attention copies entire committed prefix on every append)",
+    "Handle count stability during decode (confirms no tensor recreation)",
+    "Model-load: mapped vs copied tensor ratio",
+    "Post-load page faults (ri_pageins)"
+  ],
+  "correctness_gates": [
+    "Deterministic output tokens match E0000-DECODE1-v1 control: prefill token 589, decode token 236941",
+    "All [full-model] eprintln fields carry real measured values (no zeros)",
+    "Model-load [model-load] report captures all classification counts",
+    "graph_us + eval_us accounts for layer wall time within 5%"
+  ],
+  "memory_gates": [
+    "Post-load RSS within admission estimate bounds",
+    "MLX active memory within configured limit (high-memory-override or computed from machine profile)",
+    "Decode RSS growth bounded (no per-layer leak)"
+  ],
+  "source_commits": [
+    "3f4ff781 feat: OPT-0001 — real per-layer timing instrumentation for bottleneck attribution",
+    "fe219934 feat: model-load telemetry report — mapped segments, tensor views, copy classifications, handles",
+    "56d79525 feat: sample_page_faults() — cumulative I/O pageins via proc_pid_rusage",
+    "0bb38348 feat: add page_faults (ri_pageins) to model-load telemetry report"
+  ],
+  "binary_hashes": [],
+  "experiment_ids": ["E0002-DECODE-BOTTLENECK-ATTRIBUTION"],
+  "comparison_ids": ["E0000-DECODE1-v1"],
+  "bottleneck_ledger": {
+    "prefill": "AWAITING INFERENCE RUN",
+    "decode": "AWAITING INFERENCE RUN"
+  },
+  "result_classification": "deferred",
+  "final_decision": "Instrumentation code is complete and compiles cleanly with zero errors. All [full-model] per-layer eprintln fields now carry real measured values (graph_us, eval_us, RSS before/after, MLX active/cache before/after, handle counts, KV state). Model-load telemetry reports segment count, tensor classification, bytes, RSS, and page faults. The instrumentation cannot produce bottleneck ledgers without running inference against the frozen E0000 artifact (physical identity 3a0c6d47). Defer classification to 'pending inference run'. The expected outcome: graph_us dominates but is small (microseconds — lazy operation recording), while eval_us carries the full kernel execution + sync cost. The 48 eval fences prevent GPU pipelining across layers, making single-token decode particularly sensitive to sync overhead.",
+  "notes": "The OPT-0006-T2 contiguity probe in executor.rs will fire on the first quantized_matmul call during inference and compare external mapped vs canonical contiguous weight timing. This is the first remediation step in the 4-part repair order. The contiguity hypothesis: MLX quantized_matmul checks row contiguity on mapped external arrays and creates a hidden GPU copy; a canonical contiguous allocation avoids the copy. If confirmed, the permanent fix is to emit backend-native packed layouts from the ComputeImage compiler (prepack_quantized_weights on ImageBuilder already implemented).",
+  "instrumentation_fields_status": {
+    "graph_build_time": "graph_us — measured via std::time::Instant before run_layer",
+    "evaluation_time": "eval_us — measured before hidden.eval()",
+    "explicit_sync_time": "included in eval_us (eval() = GPU execution + Metal fence)",
+    "kernel_queue_time": "not observable — MLX opaque",
+    "file_read_bytes": "not measured — OS I/O interception required",
+    "page_faults": "sample_page_faults() available, reported in model-load, not per-layer",
+    "mapped_bytes": "reported in [model-load]",
+    "tensor_view_creations": "handles_before→after per layer",
+    "tensor_view_reuse": "not tracked",
+    "copied_bytes": "reported in [model-load], kv_copy per layer in [full-model]",
+    "temporary_materialization_bytes": "not observable — MLX internal",
+    "dtype_conversion_bytes": "not observable — MLX internal",
+    "layout_normalization_bytes": "not observable — MLX internal",
+    "mlx_active_bytes": "per layer before/after in [full-model]",
+    "mlx_cache_bytes": "per layer before/after in [full-model]",
+    "process_rss": "per layer before/after in [full-model]",
+    "kv_logical_length": "kvc.seq_len per layer in [full-model]",
+    "kv_capacity": "kvc.capacity available",
+    "kv_append_bytes": "not separately tracked",
+    "kv_copied_bytes": "kvc.copy_bytes() per layer in [full-model]",
+    "kv_allocation_bytes": "kvc.allocated_bytes() per layer in [full-model]",
+    "attention_mask_bytes": "not measured",
+    "grouped_query_expansion_bytes": "not measured",
+    "output_shape": "shape_d0, shape_d1 per layer in [full-model]"
+  }
+}

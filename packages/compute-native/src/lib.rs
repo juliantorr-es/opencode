@@ -33,6 +33,7 @@ pub mod hybrid_profile;
 pub mod transform_recipe;
 pub mod kv_cache;
 pub mod layout_compiler;
+pub mod layout_transform;
 pub mod mapped_image;
 pub mod model_store;
 pub mod model_runtime;
