@@ -18,9 +18,9 @@
   "structured_dataset_digest": "0eddcfd32fa11697cac9b6685d75a71eee1232aaac5529a629f10011124007fe",
   "canonical_normalization_digest": "a6bf8decc7185ea467395b9198e2f61e834f307ab12264c0d571cd6301ef1eb9",
   "canonical_finalization_digest": "f38f6f62032b9d13c0482c2df4f9ae0da601c920c1afee25f55f39b6dceb700a",
-  "canonical_finalization_digest": "b4584c887402d199fc335da06e2e8663b3a59a309ffeffdfcd2414a775df1445",
   "canonical_run_id": "E0002-R1-20260609-canonical",
-  "normalization_method": "direct_parser_v1",
+  "structured_dataset_method": "direct_parser_v1",
+  "canonical_normalization_method": "normalizeRun_v1_with_standard_layer_parser_v2",
   "canonical_pipeline": {
     "status": "completed",
     "parser_module": "compute-research/src/parse/standard-layer-events.ts",

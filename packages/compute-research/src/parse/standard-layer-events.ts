@@ -101,20 +101,20 @@ export function parseStandardLayerEvents(
                status: "completed",
                phase: currentPhase || undefined,
                forward_pass_index: forwardPassIndex || undefined,
-               measurements: {
-                // Backward-compatible keys used by the normalizer's MemorySampleRecord columns
-                resident_bytes: rssAfterM ? Math.round(parseMem(rssAfterM[1]!)) : 0,
-                active_bytes: activeAfterM ? Math.round(parseMem(activeAfterM[1]!)) : 0,
+              measurements: Object.assign(
+                {},
+                // Backward-compatible keys used by the normalizer's MemorySampleRecord columns.
+                // Emitted as null (not 0) when the metric was not observed.
+                rssAfterM ? { resident_bytes: Math.round(parseMem(rssAfterM[1]!)) } : null,
+                activeAfterM ? { active_bytes: Math.round(parseMem(activeAfterM[1]!)) } : null,
                 // MLX-specific fields stored in the measurements JSON blob.
                 // mlx_active_bytes  = MLX allocator active memory (Metal buffer pool).
-                // mlx_cache_bytes  = MLX allocator cache memory, NOT macOS compressed.
-                // wired_bytes      = 0 (not measured in V2 instrumentation).
-                // compressed_bytes = 0 (not measured; do not interpret as MLX cache).
-                mlx_active_bytes: activeAfterM ? Math.round(parseMem(activeAfterM[1]!)) : null,
-                mlx_cache_bytes: cacheAfterM ? Math.round(parseMem(cacheAfterM[1]!)) : null,
-                wired_bytes: 0,
-                compressed_bytes: 0,
-               } as Record<string, unknown>,
+                // mlx_cache_bytes  = MLX allocator cache memory.
+                // wired_bytes and compressed_bytes are NEVER emitted —
+                // they are not measured by V2 instrumentation.
+                activeAfterM ? { mlx_active_bytes: Math.round(parseMem(activeAfterM[1]!)) } : null,
+                cacheAfterM ? { mlx_cache_bytes: Math.round(parseMem(cacheAfterM[1]!)) } : null,
+              ) as Record<string, unknown>,
              },
            });
          }

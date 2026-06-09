@@ -263,6 +263,41 @@ describe("Pipeline E2E", () => {
     expect(normResult.files.length).toBe(0);
   });
 
+  test("duplicate top-level JSON keys rejected in finalization", () => {
+    const dupRoot = tempDir();
+    tmpRoots.push(dupRoot);
+
+    const dupId = "dup-key-run";
+    const rd = new RunDirectory(dupId, dupRoot);
+    rd.writeRunManifest({
+      run_id: dupId, experiment_id: "exp-001", run_grade: "controlled", status: "completed",
+      model_identity: { image_hash: "sha256:deadbeef" },
+      machine_profile: { anon_id: "m1", chip: "M1", memory: "16GB" },
+  });
+    // Write a provenance.json with a duplicate key in raw text
+    const fs = require("fs");
+    const provPath = join(rd.partialRoot, "provenance.json");
+    fs.writeFileSync(provPath,
+      '{\n' +
+      '  "schema_version": "1",\n' +
+      '  "schema_version": "1",\n' +  // DUPLICATE — should be caught
+      '  "source": { "repo_url": "x", "commit_sha": "a", "branch": "b", "commit_timestamp": "2026-01-01T00:00:00Z", "dirty": false, "tree_hash": "c" },\n' +
+      '  "toolchain": { "rust_version": "1", "target_triple": "a", "linker": "l", "opt_profile": "r" },\n' +
+      '  "model": { "image_hash": "h", "storage_abi": "v1", "runtime_abi": "v1", "manifest_hash": "m", "execution_plan_hash": "e", "arch_hash": "a", "quant_hash": "q", "tokenizer_hash": "t", "model_revision": "r" },\n' +
+      '  "machine": { "anon_id": "x", "model_identifier": "M", "chip_family": "A", "perf_cores": 1, "eff_cores": 1, "gpu_cores": 1, "physical_memory": "1 GB", "os_version": "1", "kernel_version": "1" },\n' +
+      '  "environment": { "variables": {}, "redacted_paths": [], "redaction_metadata": {} }\n' +
+      '}\n'
+    );
+    rd.flush();
+    rd.close();
+
+    const rec = finalizeRun(rd);
+    const provVal = rec.validations.find(v => v.file.includes("provenance.json"));
+    expect(provVal).toBeDefined();
+    expect(provVal!.valid).toBe(false);
+    expect(provVal!.errors.some(e => e.includes("duplicate JSON keys"))).toBe(true);
+    expect(provVal!.errors.some(e => e.includes("schema_version"))).toBe(true);
+  });
   test("zero-effect CI blocks promotion", async () => {
     const zeroRoot = tempDir();
     tmpRoots.push(zeroRoot);
