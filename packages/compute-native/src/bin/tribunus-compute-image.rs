@@ -529,8 +529,6 @@ fn cmd_replay_projection(args: &[String]) -> Result<(), String> {
             "--page-touch" => { page_touch = true; }
             "--two-layer" => { i += 1; if i < args.len() { two_layer = Some(args[i].parse::<usize>().map_err(|_| format!("invalid second layer: {}", args[i]))?); } }
             "--unload-reload" => { unload_reload = true; }
-            "--two-layer" => { i += 1; if i < args.len() { two_layer = Some(args[i].parse::<usize>().map_err(|_| format!("invalid second layer: {}", args[i]))?); } }
-            "--samples" => { i += 1; if i < args.len() { samples = args[i].parse::<usize>().map_err(|_| format!("invalid samples: {}", args[i]))?; } }
             "--warmups" => { i += 1; if i < args.len() { warmups = args[i].parse::<usize>().map_err(|_| format!("invalid warmups: {}", args[i]))?; } }
             _ => { return Err(format!("unknown flag: {}", args[i])); }
         }
@@ -556,12 +554,12 @@ fn cmd_replay_projection(args: &[String]) -> Result<(), String> {
     } else if let Some(l2) = two_layer {
         // Control D: warm layer L, test layer L+1
         eprintln!("Control D: warming layer {} then testing layer {}", layer_idx, l2);
-        let mut results = harness.replay_decode(3, 0);
+        let mut results = harness.replay_decode(samples, warmups);
         eprintln!("Layer {} warm complete", layer_idx);
         let harness2 = tribunus_compute_native::replay_projection::ProjectionHarness::open(
             Path::new(&image_dir), l2, &family_name,
         ).map_err(|e| format!("harness2 open: {}", e))?;
-        let results2 = harness2.replay_decode(3, 0);
+        let results2 = harness2.replay_decode(samples, warmups);
         results.extend(results2);
         results
     } else if pipeline_warm {

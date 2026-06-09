@@ -407,17 +407,25 @@ impl ProjectionHarness {
         let input_shape = self.input_shape_for();
         let mut results = Vec::new();
 
-        // Cold baseline
-        results.push(self.replay_one(&input_shape, "decode_cold_baseline"));
-
-        // Pre-touch: force page faults on CPU by reading weight bytes
+        // Pre-touch FIRST: force page faults on CPU by reading all tensor
+        // bytes BEFORE any GPU execution. This tests whether page residency
+        // alone resolves the cold penalty.
         let _ = self.weight.try_as_slice::<u32>().map(|s| {
             let sum: u64 = s.iter().map(|&x| x as u64).sum();
             sum
         });
+        // Also touch scale and bias pages
+        let _ = self.scale.try_as_slice::<f32>().map(|s| {
+            let sum: f32 = s.iter().sum();
+            sum
+        });
+        let _ = self.bias.try_as_slice::<f32>().map(|s| {
+            let sum: f32 = s.iter().sum();
+            sum
+        });
 
-        // Now run projection with pretouched pages
-        results.push(self.replay_one(&input_shape, "decode_post_touch"));
+        // Only NOW execute — first GPU projection should benefit from pre-touch
+        results.push(self.replay_one(&input_shape, "decode_pretouch_first"));
         results
     }
 
