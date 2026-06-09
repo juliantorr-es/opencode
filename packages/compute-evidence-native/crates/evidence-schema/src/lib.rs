@@ -245,6 +245,7 @@ pub enum EventPayloadV4 {
     ModelLoad(ModelLoadEvent),
     TokenMetric(TokenMetricEvent),
     Lifecycle(LifecycleEvent),
+    ResourceLifecycle(ResourceLifecycleEvent),
     Diagnostic(DiagnosticEvent),
 }
 
@@ -445,6 +446,63 @@ pub struct DiagnosticEvent {
 }
 
 // ── Machine profile ────────────────────────────────────────────────────────
+// ── ResourceLifecycleEvent ──────────────────────────────────────────────────
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ResourceLifecycleEvent {
+    pub resource_id: String,
+    pub owner_scope: ResourceOwnerScope,
+    pub resource_class: ResourceClass,
+    pub lifecycle_phase: LifecyclePhase,
+    pub logical_bytes: u64,
+    pub physical_bytes: Option<u64>,
+    pub creation_cause: Option<String>,
+    pub retention_cause: Option<String>,
+    pub parent_operation: Option<String>,
+    pub generation: u32,
+    pub eviction_policy: Option<String>,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum ResourceOwnerScope {
+    Device,
+    WorkerProcess,
+    ModelRuntime,
+    Session,
+    ProjectionInvocation,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum ResourceClass {
+    MappedSegment,
+    MlxArray,
+    MetalPipeline,
+    CompiledKernel,
+    TemporaryWorkspace,
+    KvCache,
+    TokenizerCache,
+    ProjectionReplayInput,
+    ArrowBatchBuffer,
+    Other,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum LifecyclePhase {
+    Created,
+    Retained,
+    Reused,
+    Evicted,
+    Released,
+    CacheHit,
+    CacheMiss,
+    CapacityExceeded,
+    ReleaseVerified,
+}
+
+// ── DiagnosticEvent ────────────────────────────────────────────────────────
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MachineProfile {

@@ -155,6 +155,8 @@ fn cmd_inspect(file_path: &str) {
                     tribunus_evidence_schema::EventPayloadV4::TokenMetric(_) => "token_metric",
                     tribunus_evidence_schema::EventPayloadV4::Lifecycle(_) => "lifecycle",
                     tribunus_evidence_schema::EventPayloadV4::Diagnostic(_) => "diagnostic",
+                tribunus_evidence_schema::EventPayloadV4::ResourceLifecycle(_) => "resource_lifecycle",
+                tribunus_evidence_schema::EventPayloadV4::Diagnostic(_) => "diagnostic",
                 };
                 *counts.entry(tag.to_string()).or_insert(0) += 1;
             }

@@ -513,6 +513,7 @@ fn cmd_replay_projection(args: &[String]) -> Result<(), String> {
     let mut phase_shape = "decode".to_string();
     let mut pipeline_warm = false;
     let mut two_layer: Option<usize> = None;
+    let mut unload_reload = false;
     let mut page_touch = false;
     let mut samples = 20usize;
     let mut warmups = 5usize;
@@ -526,6 +527,8 @@ fn cmd_replay_projection(args: &[String]) -> Result<(), String> {
             "--samples" => { i += 1; if i < args.len() { samples = args[i].parse::<usize>().map_err(|_| format!("invalid samples: {}", args[i]))?; } }
             "--pipeline-warm" => { pipeline_warm = true; }
             "--page-touch" => { page_touch = true; }
+            "--two-layer" => { i += 1; if i < args.len() { two_layer = Some(args[i].parse::<usize>().map_err(|_| format!("invalid second layer: {}", args[i]))?); } }
+            "--unload-reload" => { unload_reload = true; }
             "--two-layer" => { i += 1; if i < args.len() { two_layer = Some(args[i].parse::<usize>().map_err(|_| format!("invalid second layer: {}", args[i]))?); } }
             "--samples" => { i += 1; if i < args.len() { samples = args[i].parse::<usize>().map_err(|_| format!("invalid samples: {}", args[i]))?; } }
             "--warmups" => { i += 1; if i < args.len() { warmups = args[i].parse::<usize>().map_err(|_| format!("invalid warmups: {}", args[i]))?; } }
@@ -546,7 +549,11 @@ fn cmd_replay_projection(args: &[String]) -> Result<(), String> {
         &family_name,
     ).map_err(|e| format!("harness open: {}", e))?;
 
-    let samples_vec = if let Some(l2) = two_layer {
+    let samples_vec = if unload_reload {
+        tribunus_compute_native::replay_projection::ProjectionHarness::replay_unload_reload(
+            Path::new(&image_dir), layer_idx, &family_name,
+        )
+    } else if let Some(l2) = two_layer {
         // Control D: warm layer L, test layer L+1
         eprintln!("Control D: warming layer {} then testing layer {}", layer_idx, l2);
         let mut results = harness.replay_decode(3, 0);

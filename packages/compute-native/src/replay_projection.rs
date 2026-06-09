@@ -534,4 +534,43 @@ impl ProjectionHarness {
         // weights and dequantizing through the CPU path, which is not yet wired.
         (max_abs, None, None, None, "reference_only (no oracle comparison)".to_string())
     }
+
+    /// ── Control E: Unload-and-reload cache-owner test. ──
+    /// Warm one projection, drop all model tensor references, reopen the
+    /// same projection from the artifact.  If warm: cache is process/device
+    /// scoped (Metal pipeline cache persists).  If cold: cache is model-
+    /// runtime scoped (tied to the loaded tensor arrays).
+    pub fn replay_unload_reload(
+        image_dir: &Path,
+        layer_index: usize,
+        family_name: &str,
+    ) -> Vec<ReplaySample> {
+        let mut results = Vec::new();
+        let input_shape = {
+            let h = Self::open(image_dir, layer_index, family_name)
+                .map_err(|e| eprintln!("warn: open failed: {}", e)).ok();
+            h.map(|h| h.input_shape_for()).unwrap_or_else(|| vec![1, 3840])
+        };
+
+        // Phase 1: warm with first harness
+        {
+            let h1 = match Self::open(image_dir, layer_index, family_name) {
+                Ok(h) => h,
+                Err(e) => { eprintln!("open phase1: {}", e); return results; }
+            };
+            let samples = h1.replay_decode(3, 0);
+            results.extend(samples);
+        } // h1 dropped — all tensor references released
+
+        // Phase 2: reopen and test
+        match Self::open(image_dir, layer_index, family_name) {
+            Ok(h2) => {
+                let samples = h2.replay_decode(3, 0);
+                results.extend(samples);
+            }
+            Err(e) => { eprintln!("open phase2: {}", e); }
+        }
+
+        results
+    }
 }
