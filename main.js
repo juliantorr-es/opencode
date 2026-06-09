@@ -138,4 +138,36 @@
       });
     }
   })();
+
+  /* ---- Theme Toggle ---- */
+  (function setupThemeToggle() {
+    const toggle = document.querySelector('.theme-toggle');
+    if (!toggle) return;
+
+    const themeMeta = document.querySelector('meta[name="theme-color"]');
+
+    function setTheme(theme) {
+      if (theme === 'light') {
+        document.documentElement.setAttribute('data-theme', 'light');
+        if (themeMeta) themeMeta.setAttribute('content', '#fafaf6');
+        localStorage.setItem('tribunus-theme', 'light');
+      } else {
+        document.documentElement.removeAttribute('data-theme');
+        if (themeMeta) themeMeta.setAttribute('content', '#0a0a0f');
+        localStorage.setItem('tribunus-theme', 'dark');
+      }
+    }
+
+    toggle.addEventListener('click', () => {
+      const isLight = document.documentElement.hasAttribute('data-theme');
+      setTheme(isLight ? 'dark' : 'light');
+    });
+
+    // Listen for system preference changes (only when no manual override)
+    window.matchMedia('(prefers-color-scheme: light)').addEventListener('change', (e) => {
+      if (!localStorage.getItem('tribunus-theme')) {
+        setTheme(e.matches ? 'light' : 'dark');
+      }
+    });
+  })();
 })();
