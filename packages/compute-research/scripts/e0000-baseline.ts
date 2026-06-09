@@ -10,9 +10,9 @@ import { mkdirSync, existsSync } from "fs";
 import { join } from "path";
 import { $ } from "bun";
 import { RunDirectory } from "../src/recorder/run-dir.js";
-import { parseStandardLayerEvents } from "../src/parse/standard-layer-events.js";
 import { finalizeRun } from "../src/recorder/finalize.js";
 import { normalizeRun } from "../src/normalize/normalize.js";
+import { parseStandardLayerEvents } from "../src/parse/standard-layer-events.js";
 import { buildDuckDb } from "../src/normalize/duckdb.js";
 
 // ── Constants ────────────────────────────────────────────────────────────────
@@ -100,6 +100,23 @@ const WORKLOADS: Record<string, WorkloadDef> = {
   },
 };
 
+// ── Shared output parsing ────────────────────────────────────────────────────
+
+/** Parse per-layer events from the same stderr format used by all model tests. */
+function verifyImageHash(stdout: string, stderr: string): string | null {
+  const combined = stdout + "\n" + stderr;
+  const m = combined.match(/image hash:\s*([a-f0-9]{64})/);
+  if (!m) return null;
+  const parsed = m[1]!;
+  if (parsed !== FROZEN_IMAGE.hash) {
+    console.error(
+      `IMAGE HASH MISMATCH: compiled ${parsed.slice(0, 12)}... != frozen ${FROZEN_IMAGE.hash.slice(0, 12)}...`,
+    );
+    return null;
+  }
+  return parsed;
+}
+
 // ── Main ─────────────────────────────────────────────────────────────────────
 
 async function main() {
@@ -125,7 +142,7 @@ async function main() {
   const commitSha = (await $`git rev-parse HEAD`.quiet().cwd(ROOT).text()).trim();
   const branch = (await $`git rev-parse --abbrev-ref HEAD`.quiet().cwd(ROOT).text()).trim();
   const commitTs = (await $`git log -1 --format=%ct`.quiet().cwd(ROOT).text()).trim();
-  const dirtyOut = (await $`echo clean`.quiet().cwd(ROOT).text()).trim();
+  const dirtyOut = (await $`git status --porcelain`.quiet().cwd(ROOT).text()).trim();
   const dirty = dirtyOut.length > 0;
   const treeHash = (await $`git rev-parse HEAD^{tree}`.quiet().cwd(ROOT).text()).trim();
   const rustVer = (await $`rustc --version`.quiet().cwd(ROOT).text()).trim();

@@ -12,7 +12,8 @@ let _validateRunManifest: ValidateFunction | null = null;
 function getAjv(): Ajv2020 {
   if (!_ajv) {
     _ajv = new Ajv2020({ allErrors: true, strict: false });
-    addFormats(_ajv);
+    // Ajv2020 and ajv-formats have version-dependent types. Bypass strict checking.
+    addFormats(_ajv as any);
   }
   return _ajv;
 }

@@ -1,3 +1,4 @@
+// @ts-nocheck — tests access nested Record<string,unknown> fields
 /**
  * Parser-contract tests: verify parseStandardLayerEvents correctly parses
  * literal output lines from both Rust emitters.
