@@ -270,6 +270,18 @@ pub struct LayerWeights {
     pub k_norm: Option<Arc<Array>>,
 }
 
+
+/// Format bytes for human-readable display in per-layer telemetry.
+fn format_bytes(b: u64) -> String {
+    if b >= 1_073_741_824 {
+        format!("{:.1}GB", b as f64 / 1_073_741_824.0)
+    } else if b >= 1_048_576 {
+        format!("{:.1}MB", b as f64 / 1_048_576.0)
+    } else {
+        format!("{}B", b)
+    }
+}
+
 pub struct LoadedProfiledModel {
     pub image_dir: PathBuf,
     pub reader: CompiledImageReader,
@@ -556,6 +568,8 @@ impl ProfiledInferenceSession {
                 return Err(EngineError::new(EngineErrorCode::Cancelled, "cancelled during prefill"));
             }
 
+            let layer_start = std::time::Instant::now();
+            let handles_before = crate::bridge::handle_count();
             let lw = &model.layers[l];
             let is_full = layer_plan.attention_kind == "full_attention";
             let (rcos, rsin) = if is_full {
@@ -596,18 +610,26 @@ impl ProfiledInferenceSession {
                 )
             })?;
             self.kv_caches[l].commit_step();
+            let kvc = &self.kv_caches[l];
+            eprintln!(
+                "[kv] layer={} capacity={} committed={} seq_len={} copy_bytes={} allocated_bytes={}",
+                l, kvc.capacity, kvc.committed_len, kvc.seq_len, kvc.copy_bytes(), kvc.allocated_bytes()
+            );
             let s = hidden.shape();
+            let layer_elapsed_ms = layer_start.elapsed().as_millis() as u64;
             let shape_d0 = s.first().copied().unwrap_or(0);
             let shape_d1 = s.get(1).copied().unwrap_or(0);
             eprintln!(
-                "[full-model] layer={} kind={} segment={} bytes={} elapsed_ms={} handles={} active_mem={} shape=[{},{}] finite={}",
+                "[full-model] layer={} kind={} elapsed_ms={} handles={}→{} active_mem={}→{} cache_mem={}→{} shape=[{},{}] finite={}",
                 l,
                 layer_plan.attention_kind,
-                "mapped",
-                0u64,
-                0u64,
-                0usize,
-                "N/A",
+                layer_elapsed_ms,
+                handles_before,
+                crate::bridge::handle_count(),
+                format_bytes(crate::compute_image::mlx_active_memory_bytes()),
+                format_bytes(crate::compute_image::mlx_active_memory_bytes()), // measured after eval above
+                format_bytes(crate::compute_image::mlx_cache_memory_bytes()),
+                format_bytes(crate::compute_image::mlx_cache_memory_bytes()),
                 shape_d0, shape_d1,
                 true,
             );
@@ -722,6 +744,8 @@ impl ProfiledInferenceSession {
                 return Err(EngineError::new(EngineErrorCode::Cancelled, "cancelled during decode"));
             }
 
+            let layer_start = std::time::Instant::now();
+            let handles_before = crate::bridge::handle_count();
             let lw = &model.layers[l];
             let is_full = layer_plan.attention_kind == "full_attention";
             let (rcos, rsin) = if is_full {
@@ -762,18 +786,26 @@ impl ProfiledInferenceSession {
                 )
             })?;
             self.kv_caches[l].commit_step();
+            let kvc = &self.kv_caches[l];
+            eprintln!(
+                "[kv] layer={} capacity={} committed={} seq_len={} copy_bytes={} allocated_bytes={}",
+                l, kvc.capacity, kvc.committed_len, kvc.seq_len, kvc.copy_bytes(), kvc.allocated_bytes()
+            );
             let s = hidden.shape();
+            let layer_elapsed_ms = layer_start.elapsed().as_millis() as u64;
             let shape_d0 = s.first().copied().unwrap_or(0);
             let shape_d1 = s.get(1).copied().unwrap_or(0);
             eprintln!(
-                "[full-model] layer={} kind={} segment={} bytes={} elapsed_ms={} handles={} active_mem={} shape=[{},{}] finite={}",
+                "[full-model] layer={} kind={} elapsed_ms={} handles={}→{} active_mem={}→{} cache_mem={}→{} shape=[{},{}] finite={}",
                 l,
                 layer_plan.attention_kind,
-                "mapped",
-                0u64,
-                0u64,
-                0usize,
-                "N/A",
+                layer_elapsed_ms,
+                handles_before,
+                crate::bridge::handle_count(),
+                format_bytes(crate::compute_image::mlx_active_memory_bytes()),
+                format_bytes(crate::compute_image::mlx_active_memory_bytes()), // measured after eval above
+                format_bytes(crate::compute_image::mlx_cache_memory_bytes()),
+                format_bytes(crate::compute_image::mlx_cache_memory_bytes()),
                 shape_d0, shape_d1,
                 true,
             );
