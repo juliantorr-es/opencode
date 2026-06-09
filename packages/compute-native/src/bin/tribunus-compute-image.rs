@@ -16,6 +16,8 @@ use rayon::prelude::*;
 use sha2::{Digest, Sha256};
 use uuid::Uuid;
 
+use tribunus_compute_native::profiled_executor::{LoadedProfiledModel, ProfiledInferenceSession, ExecutionMode};
+use tribunus_compute_native::kv_cache::KvCache;
 use tribunus_compute_native::compute_image;
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -27,6 +29,7 @@ fn main() {
     if args.len() < 2 {
         eprintln!("Usage:");
         eprintln!("  tribunus-compute-image build --source <dir> --output <dir>");
+        eprintln!("  tribunus-compute-image decode-one --image <dir>");
         eprintln!("  tribunus-compute-image infer  --image <dir>");
         eprintln!("  tribunus-compute-image verify --image <dir> [--expected-hash <hash>] [--full]");
         std::process::exit(1);
@@ -36,6 +39,7 @@ fn main() {
         "build" => cmd_build(&args[2..]),
         "verify" => cmd_verify(&args[2..]),
         "infer" => cmd_infer(&args[2..]),
+        "decode-one" => cmd_decode_one(&args[2..]),
         other => {
             eprintln!("unknown command: {other}");
             std::process::exit(1);
@@ -429,5 +433,65 @@ fn cmd_infer(args: &[String]) -> Result<(), String> {
     println!("{}", serde_json::to_string(&out).unwrap());
 
     eprintln!("GATE PASSED: token={} elapsed={:.1}s", token, elapsed_s);
+    Ok(())
+}
+
+
+// ── decode-one command ────────────────────────────────────────────────────
+
+fn cmd_decode_one(args: &[String]) -> Result<(), String> {
+    let mut image: Option<String> = None;
+    let mut i = 0;
+    while i < args.len() {
+        match args[i].as_str() {
+            "--image" => { i += 1; if i < args.len() { image = Some(args[i].clone()); } }
+            _ => { return Err(format!("unknown flag: {}", args[i])); }
+        }
+        i += 1;
+    }
+    let image_dir = image.ok_or("missing --image")?;
+    let image_path = Path::new(&image_dir);
+    if !image_path.join("manifest.json").exists() {
+        return Err("not a ComputeImage directory".into());
+    }
+
+    eprintln!("Loading profiled model: {}", image_dir);
+    let model = LoadedProfiledModel::new(image_path)
+        .map_err(|e| format!("load: {e}"))?;
+
+    let plan = &model.reader.manifest.execution_plan;
+    let kv_caches: Vec<KvCache> = plan.layers.iter().map(|lp| {
+        let is_sliding = lp.attention_kind == "sliding_attention";
+        let (n_kv, hd) = if lp.attention_kind == "full_attention" {
+            (lp.n_global_kv_heads.unwrap_or(1), lp.global_head_dim.unwrap_or(512))
+        } else {
+            (lp.n_kv_heads, lp.head_dim)
+        };
+        KvCache::new(if is_sliding { 1024 } else { 8 }, n_kv, hd, is_sliding)
+    }).collect();
+
+    let mut session = ProfiledInferenceSession::new("d1".into(), kv_caches);
+
+    let prompt: &[u32] = &[2, 42, 100, 500];
+    eprintln!("Prefill {} tokens...", prompt.len());
+    let t0 = Instant::now();
+    let tok0 = session.prefill(prompt, &model).map_err(|e| format!("prefill: {e}"))?;
+    let ps = t0.elapsed().as_secs_f64();
+    eprintln!("prefill token={} elapsed={:.2}s", tok0, ps);
+
+    eprintln!("Decode...");
+    let t0 = Instant::now();
+    let tok1 = session.decode_one(tok0, &model).map_err(|e| format!("decode: {e}"))?;
+    let ds = t0.elapsed().as_secs_f64();
+    eprintln!("decode token={} elapsed={:.2}s", tok1, ds);
+
+    println!("{}", serde_json::to_string(&json!({
+        "status": "decoded",
+        "prefill_token": tok0,
+        "decode_token": tok1,
+        "prefill_s": ps,
+        "decode_s": ds,
+        "layers": plan.layers.len(),
+    })).unwrap());
     Ok(())
 }

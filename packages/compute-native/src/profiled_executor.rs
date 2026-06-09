@@ -521,7 +521,7 @@ impl ProfiledInferenceSession {
             ));
         }
 
-        let _ = self.phase.transition(InferenceSessionState::PrefillRunning);
+        self.phase = InferenceSessionState::PrefillRunning;
 
         let plan = &model.reader.manifest.execution_plan;
         let kv_offset = self.absolute_position;
@@ -663,7 +663,7 @@ impl ProfiledInferenceSession {
 
         self.absolute_position = seq_len;
         self.generated_tokens.push(token);
-        let _ = self.phase.transition(InferenceSessionState::Decoding);
+        self.phase = InferenceSessionState::Decoding;
 
         self.timeline.push_event(TimelineEvent::new(
             seq_len as u64,
