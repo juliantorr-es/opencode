@@ -56,27 +56,29 @@ pub fn compile_with_authority(
 ) -> napi::Result<CompiledImage> {
     match authority {
         CompilationAuthority::TestFixture => {
-            let profile = option_env!("PROFILE").unwrap_or("unknown");
+            let profile = option_env!("TRIBUNUS_PROFILE").unwrap_or("unknown");
             if profile == "image-build" {
                 return Err(napi::Error::new(
                     napi::Status::GenericFailure,
                     "TestFixture must not use image-build profile. Use cargo test or cargo build.",
                 ));
             }
+            // Enforce fixture ceiling: max 4 layers, 256 tensors, 128 MB total source
+            verify_fixture_ceiling(source_dir)?;
         }
         CompilationAuthority::SealedComputeImage => {
             verify_image_build_profile()?;
         }
     }
-    compile(source_dir, output_dir)
+    compile_unchecked(source_dir, output_dir)
 }
 
 /// Verify the current binary was compiled under the image-build profile.
 pub fn verify_image_build_profile() -> napi::Result<()> {
-    let profile = option_env!("PROFILE").unwrap_or("unknown");
-    let opt_level = option_env!("OPT_LEVEL").unwrap_or("0");
+    let profile = option_env!("TRIBUNUS_PROFILE").unwrap_or("unknown");
+    let opt_level = option_env!("TRIBUNUS_OPT_LEVEL").unwrap_or("0");
     let debug_assertions = cfg!(debug_assertions);
-    let target = option_env!("TARGET").unwrap_or("unknown");
+    let target = option_env!("TRIBUNUS_TARGET").unwrap_or("unknown");
 
     let mut failures: Vec<String> = Vec::new();
     if profile != "image-build" {
@@ -102,21 +104,68 @@ pub fn verify_image_build_profile() -> napi::Result<()> {
     Ok(())
 }
 
+fn verify_fixture_ceiling(source_dir: &str) -> napi::Result<()> {
+    use std::fs;
+    let dir = std::path::Path::new(source_dir);
+    if !dir.exists() {
+        return Ok(()); // non-existent source — let the compiler handle the error
+    }
+    // Check config.json for layer count
+    let config_path = dir.join("config.json");
+    if config_path.exists() {
+        let config: serde_json::Value = serde_json::from_str(
+            &fs::read_to_string(&config_path).map_err(|e| napi::Error::from_reason(format!("read config: {e}")))?
+        ).map_err(|e| napi::Error::from_reason(format!("parse config: {e}")))?;
+        if let Some(n) = config["num_hidden_layers"].as_u64() {
+            if n > 4 {
+                return Err(napi::Error::new(napi::Status::GenericFailure,
+                    format!("TestFixture ceiling: max 4 layers, found {n}. Use SealedComputeImage for production models.")));
+            }
+        }
+        if let Some(n) = config["vocab_size"].as_u64() {
+            if n > 65536 {
+                return Err(napi::Error::new(napi::Status::GenericFailure,
+                    format!("TestFixture ceiling: max 65536 vocab, found {n}")));
+            }
+        }
+    }
+    // Check total source file size
+    let mut total_bytes: u64 = 0;
+    let max_fixture_bytes: u64 = 128 * 1024 * 1024; // 128 MB
+    for entry in fs::read_dir(dir).map_err(|e| napi::Error::from_reason(format!("read_dir: {e}")))? {
+        let entry = entry.map_err(|e| napi::Error::from_reason(format!("entry: {e}")))?;
+        let path = entry.path();
+        if path.extension().map_or(false, |e| e == "safetensors" || e == "json" || e == "bin") {
+            if let Ok(meta) = path.metadata() {
+                total_bytes += meta.len();
+            }
+        }
+    }
+    if total_bytes > max_fixture_bytes {
+        return Err(napi::Error::new(napi::Status::GenericFailure,
+            format!("TestFixture source ceiling: {max_fixture_bytes} bytes, found {total_bytes}")));
+    }
+    Ok(())
+}
+
 /// Export profile attestation for callers (builder binary, seal.json).
 pub fn image_build_attestation() -> serde_json::Value {
-    let profile = option_env!("PROFILE").unwrap_or("unknown");
-    let opt_level = option_env!("OPT_LEVEL").unwrap_or("0");
-    let target = option_env!("TARGET").unwrap_or("unknown");
+    let profile = option_env!("TRIBUNUS_PROFILE").unwrap_or("unknown");
+    let opt_level = option_env!("TRIBUNUS_OPT_LEVEL").unwrap_or("0");
+    let target = option_env!("TRIBUNUS_TARGET").unwrap_or("unknown");
     json!({
         "event": "compiler_profile",
         "profile": profile,
         "opt_level": opt_level,
-        "lto": "fat",
-        "codegen_units": 1,
+        "lto": "expected-fat-per-image-build-profile",
+        "codegen_units": "expected-1-per-image-build-profile",
         "debug_assertions": cfg!(debug_assertions),
-        "incremental": false,
+        "incremental": "expected-false-per-image-build-profile",
         "target": target,
-        "authorized": profile == "image-build",
+        "authorized": profile == "image-build"
+            && opt_level == "3"
+            && !cfg!(debug_assertions)
+            && target == "aarch64-apple-darwin",
     })
 }
 
@@ -3013,7 +3062,7 @@ fn source_info(
 /// The source directory must contain a config.json and safetensors shards.
 /// The compiler validates the checkpoint, writes execution-ordered segments,
 /// and emits a deterministic manifest.json plus receipt.json.
-pub fn compile(source_dir: &str, output_dir: &str) -> napi::Result<CompiledImage> {
+fn compile_unchecked(source_dir: &str, output_dir: &str) -> napi::Result<CompiledImage> {
     let source_dir = Path::new(source_dir);
     let output_dir = Path::new(output_dir);
     let started_at = std::time::Instant::now();
@@ -3725,9 +3774,10 @@ mod tests {
     }
 
     fn real_checkpoint_compile_phase(source_dir: &Path, output_dir: &Path) {
-        let compiled = compile(
+        let compiled = compile_with_authority(
             source_dir.to_str().expect("source dir"),
             output_dir.to_str().expect("output dir"),
+            CompilationAuthority::TestFixture,
         )
         .expect("compile real checkpoint");
         let reader = read(output_dir.to_str().expect("output dir")).expect("reader");
@@ -3795,14 +3845,16 @@ mod tests {
 
         write_fixture_model(&source_dir);
 
-        let first = compile(
+        let first = compile_with_authority(
             source_dir.to_str().expect("source dir"),
             output_dir_a.to_str().expect("output dir a"),
+            CompilationAuthority::TestFixture,
         )
         .expect("first compile");
-        let second = compile(
+        let second = compile_with_authority(
             source_dir.to_str().expect("source dir"),
             output_dir_b.to_str().expect("output dir b"),
+            CompilationAuthority::TestFixture,
         )
         .expect("second compile");
 
@@ -3840,9 +3892,10 @@ mod tests {
 
         write_fixture_model(&source_dir);
 
-        let compiled = compile(
+        let compiled = compile_with_authority(
             source_dir.to_str().expect("source dir"),
             output_dir.to_str().expect("output dir"),
+            CompilationAuthority::TestFixture,
         )
         .expect("compile");
         let reader = read(output_dir.to_str().expect("output dir")).expect("reader");
@@ -3897,9 +3950,10 @@ mod tests {
 
         write_fixture_model(&source_dir);
 
-        let compiled = compile(
+        let compiled = compile_with_authority(
             source_dir.to_str().expect("source dir"),
             output_dir.to_str().expect("output dir"),
+            CompilationAuthority::TestFixture,
         )
         .expect("compile");
         let reader = read(output_dir.to_str().expect("output dir")).expect("reader");
@@ -4011,9 +4065,10 @@ mod tests {
         write_fixture_model(&source_dir);
 
         let corrupted_dir = temp_dir("out-corrupted");
-        compile(
+        compile_with_authority(
             source_dir.to_str().expect("source dir"),
             corrupted_dir.to_str().expect("output dir"),
+            CompilationAuthority::TestFixture,
         )
         .expect("compile corrupted fixture");
         let segment_path = corrupted_dir.join("segment_000.bin");
@@ -4031,9 +4086,10 @@ mod tests {
         );
 
         let missing_dir = temp_dir("out-missing");
-        compile(
+        compile_with_authority(
             source_dir.to_str().expect("source dir"),
             missing_dir.to_str().expect("output dir"),
+            CompilationAuthority::TestFixture,
         )
         .expect("compile missing fixture");
         fs::remove_file(missing_dir.join("segment_000.bin")).expect("remove segment");
@@ -4048,9 +4104,10 @@ mod tests {
         );
 
         let abi_dir = temp_dir("out-abi");
-        compile(
+        compile_with_authority(
             source_dir.to_str().expect("source dir"),
             abi_dir.to_str().expect("output dir"),
+            CompilationAuthority::TestFixture,
         )
         .expect("compile abi fixture");
         let manifest_path = abi_dir.join("manifest.json");
@@ -4234,9 +4291,10 @@ mod tests {
         write_fixture_model(&source_dir);
 
         let output_dir = temp_dir("out-seg-corr");
-        compile(
+        compile_with_authority(
             source_dir.to_str().expect("source dir"),
             output_dir.to_str().expect("output dir"),
+            CompilationAuthority::TestFixture,
         )
         .expect("compile segment corruption fixture");
 
@@ -4264,9 +4322,10 @@ mod tests {
 
         write_two_layer_fixture_model(&source_dir, &["sliding_attention", "full_attention"]);
 
-        let compiled = compile(
+        let compiled = compile_with_authority(
             source_dir.to_str().expect("source dir"),
             output_dir.to_str().expect("output dir"),
+            CompilationAuthority::TestFixture,
         )
         .expect("compile");
 
@@ -4450,9 +4509,10 @@ mod tests {
         eprintln!("Compiling quantized Gemma 4 12B...");
         let started = std::time::Instant::now();
 
-        let compiled = compile(
+        let compiled = compile_with_authority(
             source_dir.to_str().expect("source dir"),
             output_dir.to_str().expect("output dir"),
+            CompilationAuthority::TestFixture,
         )
         .expect("compile model");
 
@@ -4536,9 +4596,10 @@ mod tests {
         eprintln!("Compiling quantized Gemma 4 12B...");
         let started = std::time::Instant::now();
 
-        let compiled = compile(
+        let compiled = compile_with_authority(
             source_dir.to_str().expect("source dir"),
             output_dir.to_str().expect("output dir"),
+            CompilationAuthority::TestFixture,
         )
         .expect("compile model");
 

@@ -262,7 +262,7 @@ pub fn validate_from_metadata(config_path: String, shard_jsons: String) -> napi:
 /// Outputs manifest.json, receipt.json, and execution-ordered segment files.
 #[napi]
 pub fn compile_image(source_dir: String, output_dir: String) -> napi::Result<String> {
-    let image = compute_image::compile(&source_dir, &output_dir)?;
+    let image = compute_image::compile_with_authority(&source_dir, &output_dir, compute_image::CompilationAuthority::SealedComputeImage)?;
     serde_json::to_string_pretty(&image)
         .map_err(|e| napi::Error::from_reason(format!("json: {}", e)))
 }
