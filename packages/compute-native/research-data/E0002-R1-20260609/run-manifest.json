@@ -1,0 +1,31 @@
+{
+  "run_id": "E0002-R1-20260609",
+  "schema_version": "1.0",
+  "experiment_id": "E0002-DECODE-BOTTLENECK-ATTRIBUTION",
+  "treatment_id": "T0001-FROZEN-EXISTING",
+  "source_commit": "2080fdc1b2b5ee71ae8b19046e2b76828c3bca61",
+  "runtime_binary_sha256": "7e3e7aacb588d7cb6680f6770dff92a778ece7548570a30425b9c2142e8442f6",
+  "binary_profile": "image-build (release + LTO + codegen-units=1 + opt-level=3)",
+  "logical_image_hash": "d042df1e4062a53e3a003af4e2e8c714924fcf19f03b7cf0dd5f67293355d924",
+  "artifact_root_hash": "3a0c6d47d42b42cba87d1be8a764a9717c9836e2748e4c0b3932ead6f645d8dd",
+  "machine": "Apple M1, 16GB LPDDR4X, macOS 26.x, aarch64-apple-darwin",
+  "workload": "prefill-plus-one-decode",
+  "prompt_token_ids": [
+    2,
+    42,
+    100,
+    500
+  ],
+  "observed_tokens": {
+    "prefill": 589,
+    "decode": 236941
+  },
+  "elapsed_s": {
+    "prefill": 16.46,
+    "decode": 38.3
+  },
+  "layout_policy": "frozen_existing",
+  "storage_abi": "copied-v0",
+  "event_count": 196,
+  "timestamp": "2026-06-09T13:45:00Z"
+}

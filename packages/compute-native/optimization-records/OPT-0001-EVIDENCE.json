@@ -15,8 +15,18 @@
     "lines": 190,
     "note": "Full eprintln output from decode-one run, including [model-load], [full-model] per-layer, [phase], [OPT-0006-T2], and JSON summary. Reproducible from the frozen artifact and the committed binary."
   },
-  "normalized_dataset_digest": null,
-  "finalization_digest": null,
+  "normalized_dataset_digest": "0eddcfd32fa11697cac9b6685d75a71eee1232aaac5529a629f10011124007fe",
+  "finalization_digest": "9183a5447d70e74d5da4f74a33a5641c01f979a1b6294220d5600f29b7b0424e",
+  "finalization": {
+    "method": "manual — checksums.sha256 over run-directory files, SHA-256 of sorted checksum listing",
+    "run_directory": "packages/compute-native/research-data/E0002-R1-20260609",
+    "files": [
+      { "name": "events.jsonl", "sha256": "006df399f971ac1b63ec90f9c131ded01384c7276fc8f3621712b8a2b32919ed", "size": 120052 },
+      { "name": "run-manifest.json", "sha256": "8a945fc7dc76352a1def5d66f6d9bd3c98bb5286674935b5f3f6bb9d863245b0", "size": 1024 }
+    ],
+    "checksums_sha256": "006df399f971ac1b63ec90f9c131ded01384c7276fc8f3621712b8a2b32919ed  events.jsonl\n8a945fc7dc76352a1def5d66f6d9bd3c98bb5286674935b5f3f6bb9d863245b0  run-manifest.json",
+    "note": "Normalization via compute-research pipeline skipped — the new [full-model] telemetry format with per-layer graph_us/eval_us/rss is not yet supported by parseStandardLayerEvents in packages/compute-research. Events were parsed from the raw trace by a direct parser and committed as events.jsonl in the run directory. The normalized_dataset_digest is a compound SHA-256 of the sorted event and manifest content hashes."
+  },
   "phase_ledger": {
     "prefill": {
       "wall_s": 16.46,
@@ -127,17 +137,18 @@
     "residency_optimization": "NOT AUTHORIZED — page-fault sampling disabled; per-layer RSS series invalid; physical residency unresolved",
     "mlx_kernel_path_investigation": "AUTHORIZED — eval dominates at 74.7% of decode wall time; per-projection attribution is the prerequisite",
     "insufficient_evidence": false,
-    "next_mission": "Build a non-perturbing three-level projection attribution system: (1) per-projection graph-build timing via Instant around each quantized_matmul call, labeled projection_graph_build_us; (2) isolated projection execution timing via forced eval+synchronize in a diagnostic microbenchmark or replay harness, labeled isolated_projection_eval_us; (3) integrated GPU kernel attribution via Metal capture, GPU signposts, or MLX backend instrumentation to identify actual kernel execution inside the unchanged full-layer graph, labeled integrated_gpu_duration_us. The third level is the only method that can assign integrated GPU time to individual projections without inserting seven new synchronization barriers that perturb the execution graph."
+    "next_mission": "Mission 0006A: Quantized Projection Kernel-Path Attribution. Three levels: (1) projection_graph_build_us via Instant around each quantized_matmul call; (2) isolated_projection_eval_us via forced eval+synchronize in a diagnostic microbenchmark or replay harness operating on one real mapped projection from the frozen artifact; (3) integrated_gpu_duration_us via Metal capture, GPU signposts, or MLX backend instrumentation to associate kernel launches with Q/K/V/O/gate/up/down projections inside an unchanged full-layer graph. The Uint8→Uint32 external-array dtype mismatch must be investigated as part of this mission — it may affect kernel selection, stride interpretation, and temporary-copy behavior."
   },
   "run_timestamp": "2026-06-09T13:45:00Z",
-  "revision": "2",
-  "revision_timestamp": "2026-06-09T15:00:00Z",
+  "revision": 3,
+  "revision_timestamp": "2026-06-09T15:30:00Z",
   "revision_changes": [
     "Fixed per-layer timing units: 725 ms not 0.725 ms (×1000 error).",
     "Fixed full-attention ratio: 1.13× not 1.4× (803.8/709.8 = 1.13).",
-    "Replaced raw_trace_digest path with committed path + SHA-256 hash.",
+    "Replaced raw_trace_digest path with committed trace + SHA-256 hash.",
     "Replaced invalid RSS conclusions: per-layer series shows implausible 6.7 GB → 15 MB drop; physical residency marked unresolved.",
     "Removed 'model fits comfortably' — MLX active 13.7 GB on 16 GB machine is close to the envelope.",
-    "Replaced next_action with three-level attribution system description (graph-build, isolated eval, integrated GPU)."
+    "Replaced next_action with three-level attribution system description.",
+    "Added finalization_digest and normalized_dataset_digest computed from run-directory files."
   ]
 }
