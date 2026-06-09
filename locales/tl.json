@@ -1,0 +1,300 @@
+{
+  "_meta": {
+    "language": "Filipino",
+    "nativeName": "Filipino",
+    "dir": "ltr",
+    "locale": "tl"
+  },
+  "nav": {
+    "logo": "TRIBUNUS",
+    "download": "I-download"
+  },
+  "hero": {
+    "title": "Utusan ang Hunta.",
+    "subtitle": "I- coordinate ang daan-daang coding agents sa iisang repository. Real-time visibility, may hangganang authority, walang gulo.",
+    "cta": "I-download para sa macOS"
+  },
+  "proof": {
+    "heading": "Makikita Mo sa Aksyon.",
+    "plane": "Tribunus\nControl Plane",
+    "you": "Ikaw",
+    "orchestrate": {
+      "title": "Mag-orkestra",
+      "desc": "Mag-set ng mission, mag-assign ng scope, mag-deploy ng squad. Isang engineer → daan-daang agents."
+    },
+    "observe": {
+      "title": "Magmasid",
+      "desc": "Bawat diff, bawat desisyon, bawat status ng agent — live stream. Walang nangyayari sa dilim."
+    },
+    "govern": {
+      "title": "Mamahala",
+      "desc": "May hangganang authority, merge gates, evidence chains. Senior engineers ang nagtatakda ng hangganan."
+    }
+  },
+  "features": {
+    "heading": "Ang Software Factory, Muling Inimbento.",
+    "orchestrate": {
+      "title": "I-orkestra ang mga Agent",
+      "desc": "Mag-spawn at mag-coordinate ng daan-daang coding agents na sabay-sabay na gumagawa sa buong codebase mo. Mag-set ng missions, mag-assign ng scope, at panoorin ang squad habang nag-e-execute."
+    },
+    "visibility": {
+      "title": "Real-Time Visibility",
+      "desc": "Bawat file change, bawat agent decision, bawat diff — live stream sa bawat miyembro ng team. Walang nangyayari sa dilim."
+    },
+    "authority": {
+      "title": "May Hangganang Authority",
+      "desc": "Senior engineers ang nagtatakda ng perimeter. Juniors at rookies gumagawa sa loob ng malinaw na guardrails. Ang authority ay dumadaloy pababa — hindi kailanman patawid."
+    },
+    "evidence": {
+      "title": "Ebidensya at Gates",
+      "desc": "Bawat change ay tracked, bawat decision ay auditable, bawat merge ay may gate. Cryptographic evidence chains para sa regulated environments."
+    }
+  },
+  "capabilities": {
+    "heading": "Mula Prototype Hanggang Production.",
+    "prototyping": {
+      "title": "Pagbuo ng Prototype",
+      "desc": "Gumawa ng working prototypes sa ilang minuto lang. I-define ang scaffold at hayaan ang agents na mag-wire ng plumbing habang naka-focus ka sa architecture."
+    },
+    "debugging": {
+      "title": "Debugging",
+      "desc": "Mag-deploy ng agent squads para mag-trace ng unfamiliar code, maghanap ng root causes, at mag-propose ng fixes — lahat sabay-sabay."
+    },
+    "iteration": {
+      "title": "Mabilis na Iteration",
+      "desc": "Mag-ship ng features sa oras, hindi sa sprints. Agents ang humahawak ng boilerplate; ang team mo ang nagre-review ng intent at nagshi-ship ng resulta."
+    },
+    "featureImpl": {
+      "title": "Mabilis na Feature Implementation",
+      "desc": "I-convert ang requirements sa working code nang mabilis. Hatiin ang features sa parallel agent tasks na may automatic conflict resolution."
+    },
+    "auditing": {
+      "title": "Cybersecurity Auditing",
+      "desc": "Pakawalan ang agents sa codebase mo para maghanap ng vulnerabilities, mag-check ng compliance, at gumawa ng audit-ready reports."
+    },
+    "ethicalHacking": {
+      "title": "Ethical Hacking Workflows",
+      "desc": "Mag-run ng structured penetration testing campaigns na may agents na nagre-report ng findings sa central evidence ledger."
+    },
+    "production": {
+      "title": "Full Production Delivery",
+      "desc": "Mula greenfield hanggang production. Agents ang nagda-draft, nagte-test, nagdo-dokumento, at nagpa-package. Humans ang nagre-review at nag-aaprub ng bawat gate."
+    }
+  },
+  "compute": {
+    "badge": "Bago",
+    "heading": "Local Inference. Walang Round Trips.",
+    "lead": "Ang Tribunus ay hindi lang control plane. May dala itong native inference runtime na nag-e-execute ng models locally sa Apple Silicon — walang cloud, walang API keys, walang latency tax.",
+    "mlx": "MLX",
+    "coreml": "Core ML / ANE",
+    "bridge": "IOSurface\nFP16",
+    "mlxKernel": "Kernel Ops",
+    "mlxAttention": "Attention",
+    "mlxMlp": "MLP",
+    "coremlMlp": "MLP Layers",
+    "coremlState": "State Islands",
+    "statLayers": "Layers na Kwalipikado",
+    "statCopies": "Application Copies",
+    "statTests": "Tests sa 9 Modules",
+    "statPrecision": "Boundary Precision",
+    "hybrid": {
+      "title": "MLX + Core ML Hybrid",
+      "desc": "Attention tumatakbo sa MLX. MLP layers nag-o-offload sa Apple Neural Engine sa pamamagitan ng Core ML — na may zero-copy IOSurface tensor handoff sa pagitan ng runtimes."
+    },
+    "arena": {
+      "title": "Arena Allocation",
+      "desc": "IOSurface-backed FP16 arena pools na may lease semantics. Walang malloc sa hot path. Bawat tensor transition ay may resibo at auditable."
+    },
+    "deterministic": {
+      "title": "Deterministic Decoding",
+      "desc": "Greedy decode na may exact token match verification. Eight-token qualification suite. Parehas na seed, parehas na input — parehas na output. Palagi."
+    },
+    "kvCache": {
+      "title": "KV Cache Engine",
+      "desc": "Sliding window at global eviction policies. Prefill + cached decode parity. Concurrent access na may tamang lease isolation."
+    }
+  },
+  "explainer": {
+    "heading": "Ano Ba Talaga ang Ginagawa ng Compute Engine.",
+    "lead": "Kalimutan ang jargon. Ito ang nangyayari kapag pinindot mo ang Enter — sa simpleng salita, na may actual data mula sa research runs namin.",
+    "step1": {
+      "title": "Nasa Disk Mo ang Model",
+      "body": "Isang frozen copy ng Gemma 4 12B ang nasa local storage. Mino-map ito ng Tribunus sa memory nang isang beses — walang downloads, walang API keys, walang cloud. Ang model ay identified ng cryptographic hash para alam mo exactly kung ano ang pinapatakbo mo.",
+      "dataLabel": "Model hash"
+    },
+    "step2": {
+      "title": "Dalawang Engine Sabay na Nag-aapoy",
+      "body": "Ginagamit ng MLX ang GPU at pinapatakbo ang attention layers — ang parte ng model na nagde-decide kung aling salita ang mahalaga. Ginagamit ng Core ML ang Apple Neural Engine at pinapatakbo ang feed-forward layers — ang parte na nagpo-process ng na-decide. Nagsha-share sila ng memory sa pamamagitan ng tinatawag na IOSurface. Isipin mo na lang parang dalawang kusinero na nagbabahagi ng iisang sangkalan sa halip na magpasa-pasa ng sangkap.",
+      "dataLabel": "Mga kopya sa pagitan ng engines"
+    },
+    "step3": {
+      "title": "42 Stages, Bawat Microsecond ay Recorded",
+      "body": "Mula sa sandaling magising ang worker hanggang sa lumabas ang final token, bawat operasyon ay may timestamp at resibo. Gusto mo malaman exactly gaano katagal ang attention softmax sa layer 23 ng 48-layer stack? Nasa event journal 'yan. Hindi ito logging — ito ay forensic instrumentation. Kung may mabagal, alam mo exactly kung ano at exactly magkano.",
+      "dataLabel1": "Pipeline stages",
+      "dataLabel2": "Layers na tracked",
+      "dataLabel3": "Events per run"
+    },
+    "step4": {
+      "title": "Parehas Input → Parehas Output. Palagi.",
+      "body": "Deterministic greedy decoding ay nangangahulugang ang model ay gumagawa ng exact na parehas na tokens para sa exact na parehas na input. Vina-verify namin ito gamit ang eight-token qualification suite — dapat magtugma ang runtime sa oracle reference token-per-token. Kung isang token ang mali, rejected ang run. Ito ang paraan para malaman mong walang nasira ang mga optimizations mo.",
+      "dataLabel": "Qualification requirement"
+    },
+    "step5": {
+      "title": "Bawat Claim ay May Resibo",
+      "body": "Walang performance claim na ginagawa nang walang run manifest, provenance chain, at immutable observation record. Limang experiments ang na-design (EXP-0000 hanggang EXP-0004), bawat isa may formal hypotheses, repetition policies, at correctness gates. Ang data ay nasa DuckDB — queryable, auditable, at permanently archived. Ang rejected optimizations ay hindi kailanman dine-delete para walang umulit ng parehas na dead end.",
+      "dataLabel1": "Experiments na na-design",
+      "dataLabel2": "Workloads na na-define",
+      "dataLabel3": "Run grades"
+    },
+    "cta": "Ito ang pundasyon. Ang control plane ay nag-coordinate ng agents. Ang compute engine ay nagpapatakbo ng models. Ang evidence plane ay nagpapatunay na pareho silang gumagana. Tatlong haligi, isang platform."
+  },
+  "research": {
+    "heading": "Ang Performance Claims ay Kailangan ng Proof.",
+    "lead": "Bawat performance claim ay sinusuportahan ng Research Evidence Plane — isang provenance-tracked experiment framework na may 42 instrumented pipeline stages, cryptographic artifact hashing, at immutable run records.",
+    "pipelineInit": "Simula",
+    "pipelinePerToken": "Bawat Token",
+    "pipelineTeardown": "Tapos",
+    "pipelineCaption": "42 pipeline stages — instrumented, timestamped, may resibo. Bawat microsecond accounted for.",
+    "runGrades": {
+      "title": "Run Grades",
+      "desc": "Bawat run ay may grado: exploratory, controlled, claim candidate, o archival. Controlled+ runs lang ang sumusuporta sa optimization decisions. Ang legacy results ay naka-marka na hindi authoritative."
+    },
+    "immutable": {
+      "title": "Immutable Observations",
+      "desc": "Ang raw observations ay hindi kailanman mino-modify in place. Ang corrections ay gumagawa ng bagong copy na may provenance link sa original. Ang negative results ay preserved forever — pinipigilan ang paulit-ulit na dead ends."
+    },
+    "provenance": {
+      "title": "Provenance Chain",
+      "desc": "Bawat run ay nagca-capture ng source commit, binary hashes, model identity, machine profile, at environment. DuckDB analytics sa normalized event stream. Walang tinatanggap na walang ebidensya."
+    },
+    "claim": {
+      "text": "Ang Tribunus local inference runtime v1 ay physically at semantically qualified para sa isang frozen Gemma 4 12B ComputeImage sa qualified Apple Silicon 16 GB profile.",
+      "meta": "Status: Draft · Scope: 64-token prompt ceiling, 8-token output ceiling, deterministic greedy decoding · Model: d042df1e…"
+    }
+  },
+  "roadmap": {
+    "heading": "Ang Daan sa Hinaharap.",
+    "phase1": {
+      "label": "Phase 1 — Ngayon",
+      "title": "macOS Developer Preview",
+      "desc": "macOS native app, isang developer na nag-o-orkestra ng daan-daang agents, real-time change visibility, may hangganang authority, LocalFabric coordination backend."
+    },
+    "phase2": {
+      "label": "Phase 2 — Susunod",
+      "title": "Team Collaboration",
+      "desc": "Real-time team collaboration, peer-to-peer serverless architecture, senior/junior/rookie sandboxing, Valkey coordination backend para sa live multi-user sessions."
+    },
+    "phase3": {
+      "label": "Phase 3 — Mamaya",
+      "title": "Enterprise Governance",
+      "desc": "Enterprise governance, cryptographic audit trails, policy-gated merges, compliance-ready evidence rings, remote-Valkey para sa distributed teams."
+    },
+    "computeNow": {
+      "label": "Compute — Ngayon",
+      "title": "Native Inference Runtime",
+      "desc": "MLX + Core ML hybrid execution, IOSurface FP16 arena allocation, deterministic decoding, KV cache engine. 48-layer qualification sa Gemma 4 12B. Application-copy-free tensor handoff."
+    },
+    "computeNext": {
+      "label": "Compute — Susunod",
+      "title": "Evidence Plane Qualification",
+      "desc": "Full claim-candidate runs sa lahat ng workloads. Core ML state qualification. Tokio streaming na may cancellation. MLP placement benchmarks. Frozen dataset release para sa archival-grade claims."
+    }
+  },
+  "origin": {
+    "heading": "Paano Ipinanganak ang Tribunus.",
+    "tab1": "Ang Maliit na Frictions",
+    "tab2": "Ang Fork",
+    "tab3": "Ang Rebuild",
+    "tab4": "Ang Pilosopiya",
+    "tab5": "Kung Saan Tayo Ngayon",
+    "tab6": "Kung Saan Tayo Pupunta",
+    "panel1": "Nagsimula ito bilang fork ng OpenCode. Hindi dahil masama ang OpenCode — dahil ang maliliit na friction ay naiipon. Nagsimula akong gumawa ng sarili kong agent profiles. Tapos sarili kong custom tools para maging mas epektibo ang agents. Tapos sarili kong coordination scripts. Ang agents ay nagbabasa at nagsusulat ng handoff logs sa ad-hoc JSON files na nakakalat sa disk. Sa esensya nagtayo ako ng database mula sa tambak ng scripts sa filesystem. Araw-araw, bagong friction. Bagong workaround. Panibagong script na halos gumagana.",
+    "panel2": "Sa bandang huli, ni-fork ko ang experimental branch ng OpenCode sa GitHub at nagsimulang tumingin sa loob. Kailangan kong hanapin ang ugat ng lahat ng maliliit na annoyances na nagpapabaliw sa akin. Ang natuklasan ko ay ang architecture ng isang single-agent tool ay hindi kayang i-retrofit para maging multi-agent system. Ang coordination layer ay dapat native. Kaya nagsimula akong magtayo.",
+    "panel3": "Binunot ko ang SQLite at inilipat ang PGlite + DuckDB + Valkey para gumawa ng high-throughput coordination layer. Ginawa kong actual state machines ang custom agents ko. Bawat spawned subagent ay naging sarili nitong mini runtime na may conditional state machines — pinipilit ang agents na talagang sundin ang orchestration path na dinisenyo ko, consistently. Na-enable ko ang shared worktrees at background agents para ang main agent ay naging dispatcher na nagpapa-call ng team leads, bawat isa nag-coordinate ng ibang portion ng development process. Itinigil ko ang TUI-first approach at ginawa ang bawat capability na first-class implementation sa parehong agent operation UX at user-facing UI.",
+    "panel4": "Ginawa ko ito nang may pagmamahal, luha, at pagkabigo. Matibay ang paniniwala ko na hayaan ang agent na gumala nang walang supervision sa kahit anong system na may shell access — iyon ay engineering equivalent ng pag-iwan sa isang paslit na may load na nailgun na walang bantay. Kapaki-pakinabang na tool, maling supervision model. Pero ang tamang supervision model ay wala pa. Kaya kailangan kong gumawa ng sarili ko. Ibinabahagi ko ito dito para hindi mo na kailangang maranasan ang ganoong klaseng sakit.",
+    "panel5": "Ngayon, isang developer lang ay kayang mag-orkestra at makita sa real-time ang mga changes na ginagawa sa codebase ng daan-daang sabay-sabay na agents. Ang macOS app (Apple Silicon at Intel) ay nagpapahintulot sa iyo na mag-spawn ng agent squads, mag-define ng missions, mag-set ng scope boundaries, at panoorin ang bawat diff na mag-live stream. Walang nangyayari sa dilim.",
+    "panel6": "Ang end goal ay first-class real-time collaboration kung saan ang mga teams ng software engineers ay nagtutulungan, bawat isa nag-s-spawn ng daan-daang concurrent agents, lahat sa iisang repository sa parehong oras. Ang real-time coordination ay sobrang smooth na ang senior engineer ay makikita kung ano ang ginagawa ng juniors at rookies sa real-time. Ang teams ay dapat gumugugol ng mas maraming oras sa pagbuo ng produkto kaysa sa pagsigawan sa isa't isa sa meetings tungkol sa may nag-delete ng production database dahil nag-send ng maling prompt."
+  },
+  "blog": {
+    "heading": "Mula sa Workbench.",
+    "article1": {
+      "title": "Ang 42-Stage Pipeline: Bakit Namin Ini-instrument ang Bawat Microsecond",
+      "desc": "Mula worker_launch hanggang worker_teardown — ang taxonomy sa likod ng pagsukat ng inference performance ng Tribunus."
+    },
+    "article2": {
+      "title": "Zero-Copy Tensors sa MLX at Core ML",
+      "desc": "Paano inaalis ng IOSurface-backed FP16 arenas ang application-level copies sa hybrid compute boundary."
+    },
+    "article3": {
+      "title": "Ang Negative Results ay Immortal",
+      "desc": "Bakit pinapanatili ng Evidence Plane ang rejected optimizations forever — at paano iyon nakakatipid ng engineering years."
+    },
+    "badge": "Malapit na"
+  },
+  "team": {
+    "badge": "Roadmap",
+    "heading": "Saan Ito Patungo.",
+    "p1": "Ang susunod na phase ng Tribunus ay peer-to-peer serverless team coordination. Walang central server, walang cloud dependency, walang single point of failure. Bawat engineer ay makakakita ng trabaho ng bawat agent sa real-time — senior engineers na nanonood ng junior cohorts, rookies na natututo mula sa kung paano gumagana ang system sa ilalim ng constraint.",
+    "p2": "Ang senior engineers ay magdi-define ng mission parameters, magse-set ng review gates, at kokontrol kung aling agents ang may access sa aling parte ng codebase. Ang junior engineers ay gagana sa loob ng sandboxes — natututo sa pamamagitan ng pagmamasid kung paano nag-e-execute ang squad sa ilalim ng constraint. Ang mga araw ng pagsigawan sa isa't isa sa meetings tungkol sa may nag-delete ng production database dahil nag-send ng maling prompt ay matatapos na.",
+    "p3": "Ang resulta ay isang software factory kung saan bawat contributor ay gagana sa tuktok ng kanilang capability, walang ma-block na naghihintay ng review, at bawat merge ay makaka-meet ng bar.",
+    "coordinator": "COORDINATOR",
+    "senior": "Senior",
+    "junior": "Junior"
+  },
+  "faq": {
+    "heading": "Mga Madalas Itanong.",
+    "q1": {
+      "question": "Ano ang Tribunus?",
+      "answer": "Ang Tribunus ay isang control plane para sa agentic engineering. Nag-coordinate ito ng daan-daang coding agents na sabay-sabay na gumagawa sa iisang repository na may real-time visibility at may hangganang authority."
+    },
+    "q2": {
+      "question": "Ito ba ay isa lang na AI coding tool?",
+      "answer": "Hindi. Ang Tribunus ay hindi gumagawa ng code. Nag-coordinate ito ng mga agents na gumagawa. Hinahawakan nito ang orchestration, visibility, gate enforcement, at evidence tracking para hindi mo na kailangang mag-manage ng daan-daang agent sessions nang manu-mano."
+    },
+    "q3": {
+      "question": "Kailangan ko bang mag-run ng sarili kong LLM?",
+      "answer": "Hindi. Gumagana ang Tribunus sa kahit anong LLM backend na gamit mo na — OpenAI, Anthropic, local models sa pamamagitan ng Ollama, o enterprise providers. Ang control plane ay model-agnostic."
+    },
+    "q4": {
+      "question": "Libre ba ito?",
+      "answer": "Ang macOS developer preview ay libre. Ang pricing para sa team at enterprise tiers ay ia-announce kapag lumabas ang mga features na 'yun. Palaging may generous free tier para sa mga indibidwal na developers."
+    },
+    "q5": {
+      "question": "Puwede bang sirain ng agents ang codebase ko?",
+      "answer": "Ang agents ay gumagawa sa loob ng may hangganang authority na dine-define mo. Puwede lang silang mag-write sa files na explicitly mong pinapayagan. Senior engineers ang nagse-set ng perimeter. Bawat change ay visible sa real-time. Bawat merge ay may gate."
+    },
+    "q6": {
+      "question": "Ano pinagkaiba nito sa pag-run ng multiple Claude Code instances?",
+      "answer": "Ang pag-run ng multiple agents nang walang coordination ay nangangahulugan ng merge conflicts, race conditions, duplicated work, at zero visibility sa ginagawa ng bawat agent. Ang Tribunus ay nagbibigay ng coordination fabric na nagpapagawa sa multi-agent development na safe, visible, at productive."
+    }
+  },
+  "contact": {
+    "heading": "Makipag-ugnayan.",
+    "email": "Email",
+    "github": "GitHub",
+    "tagline": "Ginawa ng isang Venezuelan engineer sa San Francisco, California — nang may pagmamahal, luha, at pagkabigo."
+  },
+  "download": {
+    "heading": "Kunin ang Tribunus.",
+    "arm64": {
+      "title": "macOS Apple Silicon",
+      "desc": "Native ARM64 binary. M1/M2/M3/M4 at mas bago.",
+      "badge": "v0.1.0 — Developer Preview",
+      "btn": "I-download"
+    },
+    "intel": {
+      "title": "macOS Intel",
+      "desc": "x86-64 binary para sa Intel-based Macs.",
+      "badge": "Malapit na — Intel Build"
+    }
+  },
+  "footer": {
+    "copyright": "© 2026 Tribunus. In-engineer nang may katumpakan.",
+    "github": "GitHub",
+    "contact": "Kontak",
+    "privacy": "Privacy"
+  },
+  "langSwitcher": {
+    "label": "Wika"
+  }
+}

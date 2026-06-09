@@ -1,0 +1,300 @@
+{
+  "_meta": {
+    "language": "Deutsch",
+    "nativeName": "Deutsch",
+    "dir": "ltr",
+    "locale": "de"
+  },
+  "nav": {
+    "logo": "TRIBUNUS",
+    "download": "Herunterladen"
+  },
+  "hero": {
+    "title": "Führe die Kohorte.",
+    "subtitle": "Hunderte Coding-Agenten in einem Repository koordinieren. Echtzeit-Übersicht, delegierte Rechte, null Chaos.",
+    "cta": "Für macOS herunterladen"
+  },
+  "proof": {
+    "heading": "In Aktion sehen.",
+    "plane": "Tribunus\nControl Plane",
+    "you": "Du",
+    "orchestrate": {
+      "title": "Orchestrieren",
+      "desc": "Missionen definieren, Umfang festlegen, Kohorten starten. Ein Ingenieur → hunderte Agenten."
+    },
+    "observe": {
+      "title": "Beobachten",
+      "desc": "Jeder Diff, jede Entscheidung, jeder Agentenstatus in Echtzeit. Nichts passiert im Verborgenen."
+    },
+    "govern": {
+      "title": "Steuern",
+      "desc": "Abgestufte Rechte, Merge-Gates, Beweisketten. Erfahrene Ingenieure setzen den Rahmen."
+    }
+  },
+  "features": {
+    "heading": "Die Software-Fabrik, neu gedacht.",
+    "orchestrate": {
+      "title": "Agenten orchestrieren",
+      "desc": "Starte und koordiniere hunderte Coding-Agenten, die parallel an deiner gesamten Codebasis arbeiten. Definiere Missionen, setze Grenzen und beobachte die Kohorte bei der Arbeit."
+    },
+    "visibility": {
+      "title": "Echtzeit-Übersicht",
+      "desc": "Jede Dateiänderung, jede Agentenentscheidung, jeder Diff wird live an jedes Teammitglied gestreamt. Nichts passiert im Verborgenen."
+    },
+    "authority": {
+      "title": "Abgestufte Rechte",
+      "desc": "Erfahrene Ingenieure setzen den Rahmen. Junioren und Einsteiger bewegen sich innerhalb klarer Leitplanken. Berechtigungen fließen nach unten — nie seitwärts."
+    },
+    "evidence": {
+      "title": "Nachweise & Gates",
+      "desc": "Jede Änderung wird verfolgt, jede Entscheidung ist prüfbar, jeder Merge ist abgesichert. Kryptografische Beweisketten für regulierte Umgebungen."
+    }
+  },
+  "capabilities": {
+    "heading": "Vom Prototyp zur Produktion.",
+    "prototyping": {
+      "title": "Prototyping",
+      "desc": "Arbeitsfähige Prototypen in Minuten. Definiere das Gerüst und lass die Agenten die Verkabelung übernehmen, während du dich auf die Architektur konzentrierst."
+    },
+    "debugging": {
+      "title": "Fehlersuche",
+      "desc": "Entsende Agenten-Teams, um unbekannten Code zu durchleuchten, Ursachen aufzuspüren und Lösungen vorzuschlagen — alles parallel."
+    },
+    "iteration": {
+      "title": "Schnelle Iterationen",
+      "desc": "Features in Stunden ausliefern, nicht in Sprints. Agenten erledigen die Standardarbeit; dein Team prüft die Absicht und liefert aus."
+    },
+    "featureImpl": {
+      "title": "Schnelle Feature-Implementierung",
+      "desc": "Anforderungen in kürzester Zeit in funktionierenden Code übersetzen. Zerlege Features in parallele Agentenaufgaben mit automatischer Konfliktlösung."
+    },
+    "auditing": {
+      "title": "Sicherheitsaudits",
+      "desc": "Lasse Agenten auf deine Codebasis los, um Schwachstellen zu finden, Compliance zu prüfen und prüfbereite Berichte zu erstellen."
+    },
+    "ethicalHacking": {
+      "title": "Ethical-Hacking-Workflows",
+      "desc": "Führe strukturierte Penetrationstests mit Agenten durch, die Ergebnisse in einem zentralen Nachweissystem melden."
+    },
+    "production": {
+      "title": "Volle Produktionsreife",
+      "desc": "Von der grünen Wiese in die Produktion. Agenten entwerfen, testen, dokumentieren und verpacken. Menschen prüfen und geben jedes Gate frei."
+    }
+  },
+  "compute": {
+    "badge": "Neu",
+    "heading": "Lokale Inferenz. Keine Round Trips.",
+    "lead": "Tribunus ist nicht nur eine Control Plane. Es liefert eine native Inferenz-Runtime mit, die Modelle lokal auf Apple Silicon ausführt — keine Cloud, keine API-Keys, keine Latenzsteuer.",
+    "mlx": "MLX",
+    "coreml": "Core ML / ANE",
+    "bridge": "IOSurface\nFP16",
+    "mlxKernel": "Kernel Ops",
+    "mlxAttention": "Attention",
+    "mlxMlp": "MLP",
+    "coremlMlp": "MLP Layers",
+    "coremlState": "State Islands",
+    "statLayers": "Layers Qualified",
+    "statCopies": "Application Copies",
+    "statTests": "Tests Across 9 Modules",
+    "statPrecision": "Boundary Precision",
+    "hybrid": {
+      "title": "MLX + Core ML Hybrid",
+      "desc": "Attention läuft auf MLX. MLP-Layer werden an die Apple Neural Engine über Core ML ausgelagert — mit Zero-Copy IOSurface-Tensor-Übergabe zwischen den Laufzeiten."
+    },
+    "arena": {
+      "title": "Arena Allocation",
+      "desc": "IOSurface-gestützte FP16-Arena-Pools mit Leasing-Semantik. Kein malloc im heißen Pfad. Jeder Tensor-Übergang wird quittiert und geprüft."
+    },
+    "deterministic": {
+      "title": "Deterministisches Decoding",
+      "desc": "Greedy Decode mit exakter Token-Übereinstimmungsprüfung. Acht-Token-Qualifizierungssuite. Gleicher Seed, gleiche Eingabe — gleiche Ausgabe. Jedes Mal."
+    },
+    "kvCache": {
+      "title": "KV-Cache-Engine",
+      "desc": "Sliding Window und globale Eviction-Strategien. Prefill + gecachte Decode-Parität. Gleichzeitiger Zugriff mit sauberer Leasing-Isolation."
+    }
+  },
+  "explainer": {
+    "heading": "Was die Compute-Engine tatsächlich tut.",
+    "lead": "Vergiss das Fachchinesisch. Hier passiert, wenn du Enter drückst — auf Deutsch, mit echten Daten aus unseren Forschungsläufen.",
+    "step1": {
+      "title": "Das Modell liegt auf deiner Festplatte",
+      "body": "Eine eingefrorene Kopie von Gemma 4 12B liegt im lokalen Speicher. Tribunus mapped sie einmal in den Arbeitsspeicher — kein Herunterladen, keine API-Keys, keine Cloud. Das Modell ist durch seinen kryptografischen Hash identifizierbar, du weißt also genau, was du ausführst.",
+      "dataLabel": "Modell-Hash"
+    },
+    "step2": {
+      "title": "Zwei Engines starten gleichzeitig",
+      "body": "MLX übernimmt die GPU und führt die Attention-Layer aus — den Teil des Modells, der entscheidet, welche Wörter wichtig sind. Core ML übernimmt die Apple Neural Engine und führt die Feed-Forward-Layer aus — den Teil, der das Beschlossene verarbeitet. Sie teilen sich den Speicher über IOSurface. Stell es dir vor wie eine Produktionsstraße mit zwei Schichtleitern, die am selben Fließband arbeiten — keine Übergabe von Hand zu Hand.",
+      "dataLabel": "Kopien zwischen den Engines"
+    },
+    "step3": {
+      "title": "42 Stufen, jede Mikrosekunde erfasst",
+      "body": "Vom Aufwachen des Workers bis zum letzten ausgegebenen Token wird jede Operation mit Zeitstempel und Quittung versehen. Du willst genau wissen, wie lange die Attention-Softmax auf Layer 23 des 48-Layer-Stacks gedauert hat? Es steht im Ereignisjournal. Das ist kein Logging — das ist forensische Instrumentierung. Wenn etwas langsam ist, weißt du genau was und genau wie viel.",
+      "dataLabel1": "Pipeline-Stufen",
+      "dataLabel2": "Erfasste Layer",
+      "dataLabel3": "Ereignisse pro Lauf"
+    },
+    "step4": {
+      "title": "Gleiche Eingabe → Gleiche Ausgabe. Jedes Mal.",
+      "body": "Deterministisches Greedy Decoding bedeutet, dass das Modell bei identischer Eingabe exakt dieselben Tokens produziert. Wir verifizieren das mit einer Acht-Token-Qualifizierungssuite — die Runtime muss mit der Oracle-Referenz Token für Token übereinstimmen. Stimmt ein einziges Token nicht, wird der Lauf abgelehnt. So weißt du, dass deine Optimierungen nichts kaputt gemacht haben.",
+      "dataLabel": "Qualifizierungsanforderung"
+    },
+    "step5": {
+      "title": "Jede Behauptung hat eine Quittung",
+      "body": "Keine Leistungsbehauptung wird ohne Laufmanifest, Provenienzkette und unveränderlichen Beobachtungsdatensatz aufgestellt. Fünf Experimente wurden entworfen (EXP-0000 bis EXP-0004), jedes mit formalen Hypothesen, Wiederholungsrichtlinien und Korrektheitsgates. Die Daten leben in DuckDB — abfragbar, prüfbar und dauerhaft archiviert. Abgelehnte Optimierungen werden nie gelöscht, damit niemand dieselbe Sackgasse zweimal geht.",
+      "dataLabel1": "Entworfene Experimente",
+      "dataLabel2": "Definierte Workloads",
+      "dataLabel3": "Laufnoten"
+    },
+    "cta": "Das ist das Fundament. Die Control Plane koordiniert Agenten. Die Compute Engine führt Modelle aus. Die Evidence Plane beweist, dass beide funktionieren. Drei Säulen, eine Plattform."
+  },
+  "research": {
+    "heading": "Leistungsversprechen brauchen Beweise.",
+    "lead": "Jedes Leistungsversprechen wird durch die Research Evidence Plane gestützt — ein Provenienz-verfolgtes Experiment-Framework mit 42 instrumentierten Pipeline-Stufen, kryptografischem Artefakt-Hashing und unveränderlichen Laufdatensätzen.",
+    "pipelineInit": "Init",
+    "pipelinePerToken": "Per-Token",
+    "pipelineTeardown": "Teardown",
+    "pipelineCaption": "42 Pipeline-Stufen — instrumentiert, zeitgestempelt, quittiert. Jede Mikrosekunde erfasst.",
+    "runGrades": {
+      "title": "Laufnoten",
+      "desc": "Jeder Lauf wird benotet: explorativ, kontrolliert, Anwartschaft auf Beleg oder archiviert. Nur kontrollierte+ Läufe stützen Optimierungsentscheidungen. Legacy-Ergebnisse gelten als nicht autoritativ."
+    },
+    "immutable": {
+      "title": "Unveränderliche Beobachtungen",
+      "desc": "Rohdaten werden niemals nachträglich geändert. Korrekturen erzeugen eine neue Kopie mit Provenienzverweis auf das Original. Negative Ergebnisse bleiben für immer erhalten — um wiederholte Sackgassen zu verhindern."
+    },
+    "provenance": {
+      "title": "Provenienzkette",
+      "desc": "Jeder Lauf erfasst Source-Commit, Binär-Hashes, Modellidentität, Maschinenprofil und Umgebung. DuckDB-Analysen über den normalisierten Ereignisstrom. Nichts wird geglaubt — alles wird geprüft."
+    },
+    "claim": {
+      "text": "Tribunus lokale Inferenz-Runtime v1 physisch und semantisch qualifiziert für ein eingefrorenes Gemma 4 12B ComputeImage auf dem qualifizierten Apple Silicon 16 GB Profil.",
+      "meta": "Status: Entwurf · Umfang: 64-Token-Prompt-Obergrenze, 8-Token-Output-Obergrenze, deterministisches Greedy Decoding · Modell: d042df1e…"
+    }
+  },
+  "roadmap": {
+    "heading": "Der Weg nach vorn.",
+    "phase1": {
+      "label": "Phase 1 — Jetzt",
+      "title": "macOS Developer Preview",
+      "desc": "Native macOS-App, ein Entwickler koordiniert hunderte Agenten, Echtzeit-Änderungsübersicht, abgestufte Rechte, LocalFabric-Koordinations-Backend."
+    },
+    "phase2": {
+      "label": "Phase 2 — Als nächstes",
+      "title": "Team-Zusammenarbeit",
+      "desc": "Echtzeit-Team-Kollaboration, Peer-to-Peer Serverless-Architektur, Senior/Junior/Einsteiger-Sandboxing, Valkey-Koordinations-Backend für Live-Mehrbenutzersitzungen."
+    },
+    "phase3": {
+      "label": "Phase 3 — Später",
+      "title": "Enterprise Governance",
+      "desc": "Enterprise-Governance, kryptografische Prüfpfade, Policy-gesteuerte Merges, Compliance-fähige Beweisringe, Remote-Valkey für verteilte Teams."
+    },
+    "computeNow": {
+      "label": "Compute — Jetzt",
+      "title": "Native Inferenz-Runtime",
+      "desc": "MLX + Core ML Hybrid-Ausführung, IOSurface FP16 Arena Allocation, deterministisches Decoding, KV-Cache-Engine. 48-Layer-Qualifizierung auf Gemma 4 12B. Application-Copy-freie Tensor-Übergabe."
+    },
+    "computeNext": {
+      "label": "Compute — Als nächstes",
+      "title": "Evidence Plane Qualifizierung",
+      "desc": "Volle Claim-Candidate-Läufe über alle Workloads. Core ML State-Qualifizierung. Tokio-Streaming mit Cancellation. MLP-Platzierungs-Benchmarks. Eingefrorener Dataset-Release für archivierungsfähige Behauptungen."
+    }
+  },
+  "origin": {
+    "heading": "Wie Tribunus entstand.",
+    "tab1": "Die kleinen Reibungen",
+    "tab2": "Der Fork",
+    "tab3": "Der Neubau",
+    "tab4": "Die Philosophie",
+    "tab5": "Wo wir jetzt stehen",
+    "tab6": "Wohin wir gehen",
+    "panel1": "Es begann als OpenCode-Fork. Nicht weil OpenCode schlecht war — sondern weil sich die kleinen Reibungen aufsummieren. Ich fing an, eigene Agentenprofile zu schreiben. Dann eigene benutzerdefinierte Tools, um Agenten effektiver zu machen. Dann eigene Koordinationsskripte. Die Agenten lasen und schrieben Übergabelogs in ad-hoc JSON-Dateien, die über die ganze Festplatte verstreut waren. Ich baute im Grunde eine Datenbank aus einem Haufen Skripte auf dem Dateisystem. Jeden Tag eine neue Reibung. Ein neuer Workaround. Ein weiteres Skript, das fast funktionierte.",
+    "panel2": "Irgendwann forkte ich den experimentellen Branch von OpenCode auf GitHub und fing an, hineinzuschauen. Ich musste die Wurzel all der kleinen Ärgernisse finden, die mich in den Wahnsinn trieben. Was ich fand: Die Architektur eines Einzel-Agenten-Tools lässt sich nicht nachträglich zu einem Multi-Agenten-System umbauen. Die Koordinationsebene muss nativ sein. Also fing ich an zu bauen.",
+    "panel3": "Ich riss SQLite heraus und verpflanzte PGlite + DuckDB + Valkey, um eine Hochdurchsatz-Koordinationsschicht zu bauen. Ich machte aus meinen benutzerdefinierten Agenten echte Zustandsmaschinen. Jeder gestartete Sub-Agent wurde zu einer eigenen Mini-Runtime mit bedingten Zustandsmaschinen — so waren Agenten gezwungen, dem von mir entworfenen Orchestrierungspfad konsistent zu folgen. Ich aktivierte gemeinsame Worktrees und Hintergrundagenten, sodass der Haupt-Agent zum Disponenten wurde, der Teamleiter einberuft, die jeweils verschiedene Teile des Entwicklungsprozesses koordinieren. Ich deprecatete den TUI-first-Ansatz und machte jede Fähigkeit zu einer erstklassigen Implementierung sowohl in der Agentenoperations-UX als auch im benutzerseitigen Interface.",
+    "panel4": "Ich habe das hier mit Liebe, Tränen und Frustration gebaut. Ich bin fest davon überzeugt, dass man einen Agenten mit Shell-Zugriff unbeaufsichtigt durch jedes System streifen zu lassen, technisch gesehen so ist, als würde man einem Azubi den Schlüssel zum Kernkraftwerk geben. Nützliches Werkzeug, falsches Beaufsichtigungsmodell. Aber das richtige Modell gab es nicht. Also musste ich mein eigenes bauen. Ich teile es hier, damit du diese Art von Schmerz nicht auch erleben musst.",
+    "panel5": "Heute kann ein einzelner Entwickler in Echtzeit orchestrieren und sehen, welche Änderungen hunderte gleichzeitiger Agenten an der Codebasis vornehmen. Die macOS-App (Apple Silicon und Intel) lässt dich Agentenkohorten starten, Missionen definieren, Umfangsgrenzen setzen und jeden Diff live streamen. Nichts passiert im Verborgenen.",
+    "panel6": "Das Endziel ist erstklassige Echtzeit-Zusammenarbeit, bei der Teams von Softwareentwicklern gemeinsam arbeiten, jeder hunderte gleichzeitiger Agenten startet, alle im selben Repository zur selben Zeit. Die Echtzeit-Koordination ist so reibungslos, dass ein Senior-Ingenieur in Echtzeit sehen kann, was Junioren und Einsteiger tun. Teams sollten mehr Zeit damit verbringen, das Produkt zu bauen, als sich in Meetings anzuschreien, weil jemand die Produktionsdatenbank gelöscht hat, weil er den falschen Prompt gesendet hat."
+  },
+  "blog": {
+    "heading": "Aus der Werkstatt.",
+    "article1": {
+      "title": "Die 42-Stufen-Pipeline: Warum wir jede Mikrosekunde messen",
+      "desc": "Von worker_launch bis worker_teardown — die Taxonomie hinter Tribunus-Inferenz-Leistungsmessung."
+    },
+    "article2": {
+      "title": "Zero-Copy-Tensoren zwischen MLX und Core ML",
+      "desc": "Wie IOSurface-gestützte FP16-Arenen Application-Level-Kopien an der Hybrid-Compute-Grenze eliminieren."
+    },
+    "article3": {
+      "title": "Negative Ergebnisse sind unsterblich",
+      "desc": "Warum die Evidence Plane abgelehnte Optimierungen für immer bewahrt — und wie das Ingenieursjahren spart."
+    },
+    "badge": "Demnächst"
+  },
+  "team": {
+    "badge": "Fahrplan",
+    "heading": "Wohin die Reise geht.",
+    "p1": "Die nächste Phase von Tribunus ist die Peer-to-Peer Serverless-Team-Koordination. Kein zentraler Server, keine Cloud-Abhängigkeit, kein Single Point of Failure. Jeder Ingenieur sieht die Arbeit jedes Agenten in Echtzeit — Senior-Ingenieure beobachten Junioren-Kohorten, Einsteiger lernen, wie das System unter Auflagen arbeitet.",
+    "p2": "Senior-Ingenieure definieren Missionsparameter, setzen Review-Gates und kontrollieren, welche Agenten Zugriff auf welche Teile der Codebasis haben. Junioren arbeiten in Sandboxes — sie lernen durch Beobachtung, wie die Kohorte unter vorgegebenen Grenzen arbeitet. Die Tage des Anschreiens in Meetings, weil jemand die Produktionsdatenbank mit dem falschen Prompt gelöscht hat, sind dann vorbei.",
+    "p3": "Das Ergebnis ist eine Software-Fabrik, in der jeder Mitarbeiter auf dem Höhepunkt seiner Fähigkeiten arbeitet, niemand auf ein Review wartet und jeder Merge die Latte erfüllt.",
+    "coordinator": "KOORDINATOR",
+    "senior": "Senior",
+    "junior": "Junior"
+  },
+  "faq": {
+    "heading": "Häufige Fragen.",
+    "q1": {
+      "question": "Was ist Tribunus?",
+      "answer": "Tribunus ist eine Control Plane für agentisches Engineering. Es koordiniert hunderte Coding-Agenten, die gleichzeitig in einem einzigen Repository arbeiten — mit Echtzeit-Übersicht und abgestuften Rechten."
+    },
+    "q2": {
+      "question": "Ist das nur ein weiteres KI-Coding-Tool?",
+      "answer": "Nein. Tribunus generiert keinen Code. Es koordiniert die Agenten, die das tun. Es übernimmt Orchestrierung, Transparenz, Gate-Durchsetzung und Nachweisverfolgung — damit du nicht hunderte Agentensitzungen manuell verwalten musst."
+    },
+    "q3": {
+      "question": "Muss ich mein eigenes LLM betreiben?",
+      "answer": "Nein. Tribunus funktioniert mit jedem LLM-Backend, das du bereits verwendest — OpenAI, Anthropic, lokale Modelle über Ollama oder Enterprise-Anbieter. Die Control Plane ist modellunabhängig."
+    },
+    "q4": {
+      "question": "Ist das kostenlos?",
+      "answer": "Die macOS Developer Preview ist kostenlos. Preise für Team- und Enterprise-Tarife werden angekündigt, wenn diese Funktionen ausgeliefert werden. Es wird immer einen großzügigen kostenlosen Tarif für einzelne Entwickler geben."
+    },
+    "q5": {
+      "question": "Können Agenten meine Codebase kaputtmachen?",
+      "answer": "Agenten arbeiten innerhalb von dir definierten Rechtebereichen. Sie können nur in Dateien schreiben, die du explizit erlaubst. Senior-Ingenieure setzen den Rahmen. Jede Änderung ist in Echtzeit sichtbar. Jeder Merge ist abgesichert."
+    },
+    "q6": {
+      "question": "Was ist der Unterschied zum Ausführen mehrerer Claude Code-Instanzen?",
+      "answer": "Mehrere Agenten ohne Koordination zu betreiben bedeutet Merge-Konflikte, Race Conditions, doppelte Arbeit und null Übersicht darüber, was jeder Agent tut. Tribunus liefert das Koordinationsgeflecht, das Multi-Agenten-Entwicklung sicher, transparent und produktiv macht."
+    }
+  },
+  "contact": {
+    "heading": "Kontakt aufnehmen.",
+    "email": "E-Mail",
+    "github": "GitHub",
+    "tagline": "Entwickelt von einem venezolanischen Ingenieur in San Francisco, Kalifornien — mit Liebe, Tränen und Frustration."
+  },
+  "download": {
+    "heading": "Hol dir Tribunus.",
+    "arm64": {
+      "title": "macOS Apple Silicon",
+      "desc": "Native ARM64-Binärdatei. M1/M2/M3/M4 und neuer.",
+      "badge": "v0.1.0 — Developer Preview",
+      "btn": "Herunterladen"
+    },
+    "intel": {
+      "title": "macOS Intel",
+      "desc": "x86-64-Binärdatei für Intel-basierte Macs.",
+      "badge": "Demnächst — Intel-Build"
+    }
+  },
+  "footer": {
+    "copyright": "© 2026 Tribunus. Mit Präzision entwickelt.",
+    "github": "GitHub",
+    "contact": "Kontakt",
+    "privacy": "Datenschutz"
+  },
+  "langSwitcher": {
+    "label": "Sprache"
+  }
+}

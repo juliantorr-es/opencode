@@ -2371,22 +2371,65 @@ details[open] > .faq-question::before {
   margin-right: 22px;
 }
 
-/* CJK + Arabic font stack */
+/* CJK font stack */
 [lang="zh"] body,
 [lang="ja"] body,
 [lang="ko"] body {
   font-family: "Inter", "Noto Sans SC", "Noto Sans JP", "Noto Sans KR", system-ui, -apple-system, sans-serif;
 }
 
+/* Arabic script (Arabic, Persian, Urdu) */
+[lang="ar"] body,
 [lang="fa"] body,
-[lang="hi"] body {
-  font-family: "Inter", "Noto Naskh Arabic", "Noto Sans Arabic", "Noto Sans Devanagari", system-ui, -apple-system, sans-serif;
+[lang="ur"] body {
+  font-family: "Inter", "Noto Naskh Arabic", "Noto Sans Arabic", system-ui, -apple-system, sans-serif;
 }
 
+/* Hebrew */
+[lang="he"] body {
+  font-family: "Inter", "Noto Sans Hebrew", system-ui, -apple-system, sans-serif;
+}
+
+/* Devanagari (Hindi, Marathi) */
+[lang="hi"] body,
+[lang="mr"] body {
+  font-family: "Inter", "Noto Sans Devanagari", system-ui, -apple-system, sans-serif;
+}
+
+/* Bengali */
+[lang="bn"] body {
+  font-family: "Inter", "Noto Sans Bengali", system-ui, -apple-system, sans-serif;
+}
+
+/* Tamil */
+[lang="ta"] body {
+  font-family: "Inter", "Noto Sans Tamil", system-ui, -apple-system, sans-serif;
+}
+
+/* Telugu */
+[lang="te"] body {
+  font-family: "Inter", "Noto Sans Telugu", system-ui, -apple-system, sans-serif;
+}
+
+/* Thai */
+[lang="th"] body {
+  font-family: "Inter", "Noto Sans Thai", system-ui, -apple-system, sans-serif;
+}
+
+/* Greek */
+[lang="el"] body {
+  font-family: "Inter", "Noto Sans", system-ui, -apple-system, sans-serif;
+}
+
+/* RTL languages — increased line height for readability */
+[lang="ar"] .hero-title,
+[lang="ar"] .section-heading,
 [lang="fa"] .hero-title,
 [lang="fa"] .section-heading,
-[lang="hi"] .hero-title,
-[lang="hi"] .section-heading {
+[lang="ur"] .hero-title,
+[lang="ur"] .section-heading,
+[lang="he"] .hero-title,
+[lang="he"] .section-heading {
   line-height: 1.5;
 }
 

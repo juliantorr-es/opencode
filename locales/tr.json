@@ -1,0 +1,300 @@
+{
+  "_meta": {
+    "language": "Türkçe",
+    "nativeName": "Türkçe",
+    "dir": "ltr",
+    "locale": "tr"
+  },
+  "nav": {
+    "logo": "TRIBUNUS",
+    "download": "İndir"
+  },
+  "hero": {
+    "title": "Kohortu Yönet.",
+    "subtitle": "Tek bir depoda yüzlerce kodlama aracısını koordine edin. Gerçek zamanlı görünürlük, sınırlı yetki, sıfır kaos.",
+    "cta": "macOS için İndir"
+  },
+  "proof": {
+    "heading": "Çalışırken Gör.",
+    "plane": "Tribunus\nKontrol Düzlemi",
+    "you": "Sen",
+    "orchestrate": {
+      "title": "Orkestrasyon",
+      "desc": "Görevleri tanımla, kapsamı belirle, kohortları oluştur. Bir mühendis → yüzlerce aracı."
+    },
+    "observe": {
+      "title": "Gözlemle",
+      "desc": "Her fark, her karar, her aracı durumu anında akar. Hiçbir şey karanlıkta olmaz."
+    },
+    "govern": {
+      "title": "Yönet",
+      "desc": "Sınırlı yetki, birleştirme kapıları, kanıt zincirleri. Kıdemli mühendisler çevreyi belirler."
+    }
+  },
+  "features": {
+    "heading": "Yazılım Fabrikası, Yeniden Tasarlanmış.",
+    "orchestrate": {
+      "title": "Aracıları Orkestre Et",
+      "desc": "Tüm kod tabanınızda eşzamanlı çalışan yüzlerce kodlama aracısını oluşturun ve koordine edin. Görevleri tanımlayın, kapsamı belirleyin ve kohortun icrasını izleyin."
+    },
+    "visibility": {
+      "title": "Gerçek Zamanlı Görünürlük",
+      "desc": "Her dosya değişikliği, her aracı kararı, her fark ekip üyelerinize canlı olarak akar. Hiçbir şey karanlıkta olmaz."
+    },
+    "authority": {
+      "title": "Sınırlı Yetki",
+      "desc": "Kıdemli mühendisler çevreyi belirler. Gençler ve acemiler net kılavuzlar içinde çalışır. Yetki yukarıdan aşağı akar — asla yanal değil."
+    },
+    "evidence": {
+      "title": "Kanıt ve Kapılar",
+      "desc": "Her değişiklik izlenir, her karar denetlenebilir, her birleştirme kapıya tabidir. Düzenlemeye tabi ortamlar için kriptografik kanıt zincirleri."
+    }
+  },
+  "capabilities": {
+    "heading": "Prototipten Üretime.",
+    "prototyping": {
+      "title": "Prototipleme",
+      "desc": "Dakikalar içinde çalışan prototipler oluşturun. İskeleti tanımlayın ve siz mimariye odaklanırken aracıların tesisatı döşemesine izin verin."
+    },
+    "debugging": {
+      "title": "Hata Ayıklama",
+      "desc": "Yabancı kodda iz sürmek, kök nedenleri bulmak ve düzeltmeler önermek için aracı ekipleri görevlendirin — hepsi paralel olarak."
+    },
+    "iteration": {
+      "title": "Hızlı Tekrarlama",
+      "desc": "Özellikleri haftalarca değil, saatler içinde gönderin. Aracılar rutin işleri halleder; ekibiniz niyeti inceler ve sonucu yayınlar."
+    },
+    "featureImpl": {
+      "title": "Hızlı Özellik Uygulama",
+      "desc": "Gereksinimleri hızla çalışan koda dönüştürün. Özellikleri otomatik çakışma çözümüyle paralel aracı görevlerine bölün."
+    },
+    "auditing": {
+      "title": "Siber Güvenlik Denetimi",
+      "desc": "Aracıları kod tabanınıza salarak açıklar bulmalarını, uyumluluğu kontrol etmelerini ve denetime hazır raporlar üretmelerini sağlayın."
+    },
+    "ethicalHacking": {
+      "title": "Etik Hackleme İş Akışları",
+      "desc": "Aracıların bulguları merkezi bir kanıt defterine raporladığı yapılandırılmış sızma testi kampanyaları yürütün."
+    },
+    "production": {
+      "title": "Tam Üretim Teslimatı",
+      "desc": "Yeşil alandan üretime. Aracılar taslak yazar, test eder, belgeler ve paketler. İnsanlar her kapıda inceler ve onaylar."
+    }
+  },
+  "compute": {
+    "badge": "Yeni",
+    "heading": "Yerel Çıkarım. Sıfır Gidiş Dönüş.",
+    "lead": "Tribunus sadece bir kontrol düzlemi değil. Apple Silicon'da modelleri yerel olarak çalıştıran bir çıkarım çalışma zamanıyla birlikte gelir — bulut yok, API anahtarı yok, gecikme vergisi yok.",
+    "mlx": "MLX",
+    "coreml": "Core ML / ANE",
+    "bridge": "IOSurface\nFP16",
+    "mlxKernel": "Çekirdek İşlemleri",
+    "mlxAttention": "Dikkat",
+    "mlxMlp": "MLP",
+    "coremlMlp": "MLP Katmanları",
+    "coremlState": "Durum Adaları",
+    "statLayers": "Nitelikli Katmanlar",
+    "statCopies": "Uygulama Kopyaları",
+    "statTests": "9 Modülde Testler",
+    "statPrecision": "Sınır Hassasiyeti",
+    "hybrid": {
+      "title": "MLX + Core ML Karma",
+      "desc": "Dikkat MLX'te çalışır. MLP katmanları Core ML aracılığıyla Apple Neural Engine'e yüklenir — çalışma zamanları arasında sıfır kopyalı IOSurface tensör aktarımıyla."
+    },
+    "arena": {
+      "title": "Arena Tahsisi",
+      "desc": "Kiralama semantiğiyle IOSurface destekli FP16 arena havuzları. Sıcak yolda malloc yok. Her tensör geçişi makbuzlu ve denetlenebilir."
+    },
+    "deterministic": {
+      "title": "Belirleyici Kod Çözme",
+      "desc": "Tam token eşleştirme doğrulamasıyla açgözlü kod çözme. Sekiz token nitelik paketi. Aynı tohum, aynı girdi — aynı çıktı. Her seferinde."
+    },
+    "kvCache": {
+      "title": "KV Önbellek Motoru",
+      "desc": "Kayan pencere ve genel tahliye politikaları. Ön doldurma + önbelleğe alınmış kod çözme eşitliği. Uygun kiralama izolasyonuyla eşzamanlı erişim."
+    }
+  },
+  "explainer": {
+    "heading": "Hesaplama Motoru Aslında Ne Yapıyor.",
+    "lead": "Jargonu unutun. Enter'a bastığınızda olan şey bu — sade Türkçeyle, araştırma çalışmalarımızdan gerçek verilerle.",
+    "step1": {
+      "title": "Model Diskinizde",
+      "body": "Gemma 4 12B'nin donmuş bir kopyası yerel depolamada durur. Tribunus onu bir kez belleğe haritalar — indirme yok, API anahtarı yok, bulut yok. Model kriptografik hash ile tanımlanır, böylece tam olarak ne çalıştırdığınızı bilirsiniz.",
+      "dataLabel": "Model hash"
+    },
+    "step2": {
+      "title": "İki Motor Aynı Anda Başlıyor",
+      "body": "MLX GPU'yu alır ve dikkat katmanlarını çalıştırır — modelin hangi kelimelerin önemli olduğuna karar veren kısmı. Core ML, Apple Neural Engine'i alır ve ileri besleme katmanlarını çalıştırır — karar verileni işleyen kısım. IOSurface aracılığıyla belleği paylaşırlar. Bunu iki aşçının bir tezgahı paylaşması gibi düşünün — malzemeleri ileri geri taşımak yerine.",
+      "dataLabel": "Motorlar arası kopyalar"
+    },
+    "step3": {
+      "title": "42 Aşama, Her Mikrosaniye Kayıtlı",
+      "body": "Çalışanın uyandığı andan son tokenin aktığı ana kadar her işlem zaman damgalı ve makbuzludur. 48 katmanlı yığındaki 23. katmanda dikkat softmax'ının tam olarak ne kadar sürdüğünü bilmek ister misiniz? Olay günlüğünde. Bu kayıt tutma değil — adli enstrümantasyon. Bir şey yavaşsa, tam olarak neyi ve ne kadar olduğunu bilirsiniz.",
+      "dataLabel1": "Boru hattı aşamaları",
+      "dataLabel2": "İzlenen katmanlar",
+      "dataLabel3": "Çalışma başına olay"
+    },
+    "step4": {
+      "title": "Aynı Girdi → Aynı Çıktı. Her Seferinde.",
+      "body": "Belirleyici açgözlü kod çözme, modelin aynı girdi için tam olarak aynı tokenları üretmesi anlamına gelir. Bunu sekiz tokenlik bir nitelik paketiyle doğrularız — çalışma zamanı, oracle referansıyla token-token eşleşmelidir. Tek bir token yanlışsa çalışma reddedilir. Optimizasyonlarınızın hiçbir şeyi bozmadığını böyle bilirsiniz.",
+      "dataLabel": "Nitelik gereksinimi"
+    },
+    "step5": {
+      "title": "Her İddianın Makbuzu Var",
+      "body": "Hiçbir performans iddiası, bir çalışma manifestosu, bir kaynak zinciri ve değişmez bir gözlem kaydı olmadan yapılmaz. Beş deney tasarlandı (EXP-0000'dan EXP-0004'e kadar), her biri resmi hipotezler, tekrarlama politikaları ve doğruluk kapılarıyla. Veriler DuckDB'de yaşar — sorgulanabilir, denetlenebilir ve kalıcı olarak arşivlenir. Reddedilen optimizasyonlar asla silinmez, böylece kimse aynı çıkmaza girmez.",
+      "dataLabel1": "Tasarlanan deneyler",
+      "dataLabel2": "Tanımlanan iş yükleri",
+      "dataLabel3": "Çalışma notları"
+    },
+    "cta": "Bu temel. Kontrol düzlemi aracıları koordine eder. Hesaplama motoru modelleri çalıştırır. Kanıt düzlemi ikisinin de çalıştığını kanıtlar. Üç sütun, tek platform."
+  },
+  "research": {
+    "heading": "Performans İddiaları Kanıt Gerektirir.",
+    "lead": "Her performans iddiası, Araştırma Kanıt Düzlemi tarafından desteklenir — 42 enstrümante boru hattı aşaması, kriptografik yapıt hashleme ve değişmez çalışma kayıtlarıyla izlenebilir bir deney çerçevesi.",
+    "pipelineInit": "Başlatma",
+    "pipelinePerToken": "Token Başına",
+    "pipelineTeardown": "Kapatma",
+    "pipelineCaption": "42 boru hattı aşaması — enstrümante, zaman damgalı, makbuzlu. Her mikrosaniye hesaba katılmış.",
+    "runGrades": {
+      "title": "Çalışma Notları",
+      "desc": "Her çalışma notlanır: keşifsel, kontrollü, iddia adayı veya arşivsel. Yalnızca kontrollü+ çalışmalar optimizasyon kararlarını destekler. Eski sonuçlar yetkili değil olarak işaretlenir."
+    },
+    "immutable": {
+      "title": "Değişmez Gözlemler",
+      "desc": "Ham gözlemler asla yerinde değiştirilmez. Düzeltmeler, orijinaline kaynak bağlantısıyla yeni bir kopya üretir. Negatif sonuçlar sonsuza kadar korunur — tekrarlanan çıkmazları önler."
+    },
+    "provenance": {
+      "title": "Kaynak Zinciri",
+      "desc": "Her çalışma kaynak commit'i, ikili hash'leri, model kimliğini, makine profilini ve ortamı yakalar. Normalleştirilmiş olay akışı üzerinde DuckDB analitiği. Hiçbir şey inanca dayanmaz."
+    },
+    "claim": {
+      "text": "Tribunus yerel çıkarım çalışma zamanı v1, nitelikli Apple Silicon 16 GB profilinde donmuş bir Gemma 4 12B ComputeImage için fiziksel ve anlamsal olarak nitelendirilmiştir.",
+      "meta": "Durum: Taslak · Kapsam: 64-token girdi tavanı, 8-token çıktı tavanı, belirleyici açgözlü kod çözme · Model: d042df1e…"
+    }
+  },
+  "roadmap": {
+    "heading": "Önümüzdeki Yol.",
+    "phase1": {
+      "label": "Aşama 1 — Şimdi",
+      "title": "macOS Geliştirici Önizlemesi",
+      "desc": "macOS yerel uygulaması, yüzlerce aracıyı yöneten tek geliştirici, gerçek zamanlı değişiklik görünürlüğü, sınırlı yetki, LocalFabric koordinasyon arka ucu."
+    },
+    "phase2": {
+      "label": "Aşama 2 — Sonraki",
+      "title": "Takım İşbirliği",
+      "desc": "Gerçek zamanlı takım işbirliği, eşler arası sunucusuz mimari, kıdemli/genç/acemi korumalı alanı, canlı çok kullanıcılı oturumlar için Valkey koordinasyon arka ucu."
+    },
+    "phase3": {
+      "label": "Aşama 3 — Daha Sonra",
+      "title": "Kurumsal Yönetişim",
+      "desc": "Kurumsal yönetişim, kriptografik denetim izleri, politika güdümlü birleştirmeler, uyumluluğa hazır kanıt halkaları, dağıtık ekipler için uzak-Valkey."
+    },
+    "computeNow": {
+      "label": "Hesaplama — Şimdi",
+      "title": "Yerel Çıkarım Çalışma Zamanı",
+      "desc": "MLX + Core ML hibrit yürütme, IOSurface FP16 arena tahsisi, belirleyici kod çözme, KV önbellek motoru. Gemma 4 12B'de 48-katman nitelendirmesi. Uygulama kopyasız tensör aktarımı."
+    },
+    "computeNext": {
+      "label": "Hesaplama — Sonraki",
+      "title": "Kanıt Düzlemi Nitelendirmesi",
+      "desc": "Tüm iş yüklerinde tam iddia adayı çalışmaları. Core ML durum nitelendirmesi. İptal ile Tokio akışı. MLP yerleşim kıyaslamaları. Arşiv dereceli iddialar için donmuş veri seti yayını."
+    }
+  },
+  "origin": {
+    "heading": "Tribunus Nasıl Doğdu.",
+    "tab1": "Küçük Sürtünmeler",
+    "tab2": "Çatal",
+    "tab3": "Yeniden İnşa",
+    "tab4": "Felsefe",
+    "tab5": "Şu Anda Neredeyiz",
+    "tab6": "Nereye Gidiyoruz",
+    "panel1": "Bir OpenCode çatalı olarak başladı. OpenCode kötü olduğu için değil — küçük sürtünmeler birikir. Kendi aracı profillerimi yazarak başladım. Sonra aracıları daha etkili kılmak için kendi özel araçlarımı. Sonra kendi koordinasyon betiklerimi. Aracılar, diske dağılmış gelişigüzel JSON dosyalarında teslim günlükleri okuyup yazıyordu. Dosya sistemindeki bir betik yığınından esasen bir veritabanı inşa ettim. Her gün, başka bir sürtünme. Başka bir geçici çözüm. Neredeyse çalışan başka bir betik.",
+    "panel2": "Sonunda GitHub'da OpenCode'un deneysel dalını çatalladım ve içine bakmaya başladım. Beni deli eden tüm küçük rahatsızlıkların kökünü bulmam gerekiyordu. Bulduğum şey, tek aracılı bir aracın mimarisinin çok aracılı bir sisteme geriye dönük olarak uyarlanamayacağıydı. Koordinasyon katmanı yerel olmak zorunda. Bu yüzden inşa etmeye başladım.",
+    "panel3": "SQLite'ı söküp yerine yüksek verimli bir koordinasyon katmanı inşa etmek için PGlite + DuckDB + Valkey'i yerleştirdim. Özel aracılarımı gerçek durum makinelerine dönüştürdüm. Her oluşturulan alt aracı, koşullu durum makineleriyle kendi mini çalışma zamanı haline geldi — aracıları tasarladığım orkestrasyon yolunu tutarlı bir şekilde takip etmeye zorladı. Paylaşılan çalışma ağaçlarını ve arka plan aracılarını etkinleştirdim, böylece ana aracı, her biri geliştirme sürecinin farklı bir bölümünü koordine eden ekip liderlerini çağıran bir dağıtıcı haline geldi. TUI-ilk yaklaşımı kullanımdan kaldırdım ve her yeteneği hem aracı operasyon UX'inde hem de kullanıcıya yönelik arayüzde birinci sınıf bir vatandaş yaptım.",
+    "panel4": "Bunu sevgi, gözyaşı ve hayal kırıklığıyla inşa ettim. Bir aracıyı kabuk erişimi olan herhangi bir sistemde denetimsiz dolaşmaya bırakmanın, bir çocuğu dolu bir çivi tabancasıyla denetimsiz bırakmakla aynı mühendislik hatası olduğuna kesinlikle inanıyorum. Kullanışlı araç, yanlış denetim modeli. Ama doğru denetim modeli yoktu. Bu yüzden kendiminkini inşa etmek zorunda kaldım. Burada paylaşıyorum ki siz de bu acıyı yaşamak zorunda kalmayın.",
+    "panel5": "Bugün, tek bir geliştirici yüzlerce eşzamanlı aracı tarafından kod tabanında yapılan değişiklikleri gerçek zamanlı olarak orkestre edebilir ve görebilir. macOS uygulaması (Apple Silicon ve Intel) aracı kohortları oluşturmanıza, görevler tanımlamanıza, kapsam sınırları belirlemenize ve her farkı canlı izlemenize olanak tanır. Hiçbir şey karanlıkta olmaz.",
+    "panel6": "Nihai hedef, yazılım mühendislerinden oluşan ekiplerin birlikte çalıştığı, her birinin yüzlerce eşzamanlı aracı başlattığı, hepsinin aynı depoda aynı anda olduğu birinci sınıf gerçek zamanlı işbirliğidir. Gerçek zamanlı koordinasyon o kadar akıcıdır ki kıdemli bir mühendis gençlerin ve acemilerin ne yaptığını gerçek zamanlı görebilir. Takımlar, yanlış prompt gönderdiği için üretim veritabanını silen biri hakkında toplantılarda birbirlerine bağırmaktan daha fazla zamanı ürün inşa ederek geçirmelidir."
+  },
+  "blog": {
+    "heading": "Tezgahtan.",
+    "article1": {
+      "title": "42 Aşamalı Boru Hattı: Neden Her Mikrosaniyeyi Ölçüyoruz",
+      "desc": "worker_launch'tan worker_teardown'a — Tribunus çıkarım performans ölçümünün ardındaki taksonomi."
+    },
+    "article2": {
+      "title": "MLX ve Core ML Arasında Sıfır Kopyalı Tensörler",
+      "desc": "IOSurface destekli FP16 arenaları, hibrit hesaplama sınırında uygulama seviyesindeki kopyaları nasıl ortadan kaldırıyor."
+    },
+    "article3": {
+      "title": "Negatif Sonuçlar Ölümsüzdür",
+      "desc": "Kanıt Düzlemi reddedilen optimizasyonları neden sonsuza kadar saklar — ve bu mühendislik yıllarını nasıl kurtarır."
+    },
+    "badge": "Çok yakında"
+  },
+  "team": {
+    "badge": "Yol Haritası",
+    "heading": "Burası Nereye Gidiyor.",
+    "p1": "Tribunus'un bir sonraki aşaması eşler arası sunucusuz takım koordinasyonudur. Merkezi sunucu yok, bulut bağımlılığı yok, tek hata noktası yok. Her mühendis her aracının çalışmasını gerçek zamanlı görecek — kıdemli mühendisler genç kohortları izleyecek, acemiler sistemin kısıtlama altında nasıl çalıştığını gözlemleyerek öğrenecek.",
+    "p2": "Kıdemli mühendisler görev parametrelerini tanımlayacak, inceleme kapıları belirleyecek ve hangi aracıların kod tabanının hangi bölümlerine erişebileceğini kontrol edecek. Genç mühendisler korumalı alanlarda çalışacak — kohortun kısıtlama altında nasıl yürüttüğünü gözlemleyerek öğrenecek. Yanlış prompt gönderdiği için üretim veritabanını silen biri hakkında toplantılarda birbirine bağırma günleri bitecek.",
+    "p3": "Sonuç, her katkıda bulunanın yeteneğinin zirvesinde çalıştığı, kimsenin inceleme beklerken bloke olmadığı ve her birleştirmenin çıtayı karşıladığı bir yazılım fabrikası olacak.",
+    "coordinator": "KOORDİNATÖR",
+    "senior": "Kıdemli",
+    "junior": "Genç"
+  },
+  "faq": {
+    "heading": "Sıkça Sorulanlar.",
+    "q1": {
+      "question": "Tribunus nedir?",
+      "answer": "Tribunus, aracılı mühendislik için bir kontrol düzlemidir. Gerçek zamanlı görünürlük ve sınırlı yetkiyle tek bir depoda eşzamanlı çalışan yüzlerce kodlama aracısını koordine eder."
+    },
+    "q2": {
+      "question": "Bu sadece başka bir AI kodlama aracı mı?",
+      "answer": "Hayır. Tribunus kod üretmez. Kod üreten aracıları koordine eder. Orkestrasyon, görünürlük, kapı uygulaması ve kanıt takibini halleder, böylece yüzlerce aracı oturumunu manuel yönetmek zorunda kalmazsınız."
+    },
+    "q3": {
+      "question": "Kendi LLM'imi çalıştırmam gerekir mi?",
+      "answer": "Hayır. Tribunus zaten kullandığınız herhangi bir LLM arka ucuyla çalışır — OpenAI, Anthropic, Ollama aracılığıyla yerel modeller veya kurumsal sağlayıcılar. Kontrol düzlemi modelden bağımsızdır."
+    },
+    "q4": {
+      "question": "Ücretsiz mi?",
+      "answer": "macOS geliştirici önizlemesi ücretsizdir. Takım ve kurumsal kademelerin fiyatlandırması, bu özellikler yayınlandığında duyurulacaktır. Bireysel geliştiriciler için her zaman cömert bir ücretsiz kademe olacaktır."
+    },
+    "q5": {
+      "question": "Aracılar kod tabanımı bozabilir mi?",
+      "answer": "Aracılar sizin tanımladığınız sınırlı yetki dahilinde çalışır. Yalnızca açıkça izin verdiğiniz dosyalara yazabilirler. Kıdemli mühendisler çevreyi belirler. Her değişiklik gerçek zamanlı görünür. Her birleştirme kapıya tabidir."
+    },
+    "q6": {
+      "question": "Bunun birden çok Claude Code örneği çalıştırmaktan farkı ne?",
+      "answer": "Koordinasyon olmadan birden çok aracı çalıştırmak, birleştirme çakışmaları, yarış koşulları, tekrarlanan işler ve her aracının ne yaptığına dair sıfır görünürlük anlamına gelir. Tribunus, çok aracılı geliştirmeyi güvenli, görünür ve üretken kılan koordinasyon dokusunu sağlar."
+    }
+  },
+  "contact": {
+    "heading": "İletişime Geçin.",
+    "email": "E-posta",
+    "github": "GitHub",
+    "tagline": "San Francisco, Kaliforniya'da Venezuelalı bir mühendis tarafından — sevgi, gözyaşı ve hayal kırıklığıyla inşa edildi."
+  },
+  "download": {
+    "heading": "Tribunus'u Edinin.",
+    "arm64": {
+      "title": "macOS Apple Silicon",
+      "desc": "Yerel ARM64 ikilisi. M1/M2/M3/M4 ve sonrası.",
+      "badge": "v0.1.0 — Geliştirici Önizlemesi",
+      "btn": "İndir"
+    },
+    "intel": {
+      "title": "macOS Intel",
+      "desc": "Intel tabanlı Mac'ler için x86-64 ikilisi.",
+      "badge": "Çok Yakında — Intel Yapısı"
+    }
+  },
+  "footer": {
+    "copyright": "© 2026 Tribunus. Hassasiyetle mühendislik ürünü.",
+    "github": "GitHub",
+    "contact": "İletişim",
+    "privacy": "Gizlilik"
+  },
+  "langSwitcher": {
+    "label": "Dil"
+  }
+}

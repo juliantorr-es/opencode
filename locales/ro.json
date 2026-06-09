@@ -1,0 +1,300 @@
+{
+  "_meta": {
+    "language": "Română",
+    "nativeName": "Română",
+    "dir": "ltr",
+    "locale": "ro"
+  },
+  "nav": {
+    "logo": "TRIBUNUS",
+    "download": "Descarcă"
+  },
+  "hero": {
+    "title": "Condu Cohorta.",
+    "subtitle": "Coordonează sute de agenți de codificare într-un singur repository. Vizibilitate în timp real, autoritate limitată, haos zero.",
+    "cta": "Descarcă pentru macOS"
+  },
+  "proof": {
+    "heading": "Vezi în Acțiune.",
+    "plane": "Tribunus\nPlan de Control",
+    "you": "Tu",
+    "orchestrate": {
+      "title": "Orchestrează",
+      "desc": "Definește misiuni, atribuie domenii, lansează cohorte. Un inginer → sute de agenți."
+    },
+    "observe": {
+      "title": "Observă",
+      "desc": "Fiecare diff, fiecare decizie, fiecare stare a agentului este transmisă în direct. Nimic nu se petrece în întuneric."
+    },
+    "govern": {
+      "title": "Guvernează",
+      "desc": "Autoritate limitată, porți de integrare, lanțuri de dovezi. Inginerii seniori stabilesc perimetrul."
+    }
+  },
+  "features": {
+    "heading": "Fabrica de Software, Reimaginată.",
+    "orchestrate": {
+      "title": "Orchestrează Agenți",
+      "desc": "Lansează și coordonează sute de agenți de codificare care lucrează concurent în întregul tău cod-sursă. Definește misiuni, atribuie domenii și urmărește cum execută cohorta."
+    },
+    "visibility": {
+      "title": "Vizibilitate în Timp Real",
+      "desc": "Fiecare modificare de fișier, fiecare decizie a agentului, fiecare diff este transmis în direct fiecărui membru al echipei. Nimic nu se petrece în întuneric."
+    },
+    "authority": {
+      "title": "Autoritate Limitată",
+      "desc": "Inginerii seniori stabilesc perimetrul. Juniorii și începătorii operează în interiorul unor bariere explicite. Autoritatea curge în jos — niciodată lateral."
+    },
+    "evidence": {
+      "title": "Dovezi și Porți",
+      "desc": "Fiecare modificare este urmărită, fiecare decizie este auditabilă, fiecare integrare este blocată. Lanțuri de dovezi criptografice pentru medii reglementate."
+    }
+  },
+  "capabilities": {
+    "heading": "De la Prototip la Producție.",
+    "prototyping": {
+      "title": "Prototipare",
+      "desc": "Creează prototipuri funcționale în câteva minute. Definește scheletul și lasă agenții să conecteze instalația în timp ce tu te concentrezi pe arhitectură."
+    },
+    "debugging": {
+      "title": "Depanare",
+      "desc": "Desfășoară echipe de agenți pentru a explora cod necunoscut, a identifica cauze fundamentale și a propune remedieri — totul în paralel."
+    },
+    "iteration": {
+      "title": "Iterație Rapidă",
+      "desc": "Lansează funcționalități în ore, nu în sprinturi. Agenții se ocupă de munca de rutină; echipa ta revizuiește intenția și finalizează livrarea."
+    },
+    "featureImpl": {
+      "title": "Implementare Rapidă de Funcționalități",
+      "desc": "Transformă cerințele în cod funcțional într-un ritm susținut. Descompune funcționalitățile în sarcini paralele ale agenților cu rezolvare automată a conflictelor."
+    },
+    "auditing": {
+      "title": "Audit de Securitate Cibernetică",
+      "desc": "Dă drumul agenților în codul tău-sursă pentru a găsi vulnerabilități, a verifica conformitatea și a produce rapoarte gata de audit."
+    },
+    "ethicalHacking": {
+      "title": "Fluxuri de Hacking Etic",
+      "desc": "Execută campanii structurate de testare a pătrunderii cu agenți care raportează descoperirile într-un registru central de dovezi."
+    },
+    "production": {
+      "title": "Livrare Completă în Producție",
+      "desc": "De la zero la producție. Agenții redactează, testează, documentează și împachetează. Oamenii revizuiesc și aprobă fiecare poartă."
+    }
+  },
+  "compute": {
+    "badge": "Nou",
+    "heading": "Inferență Locală. Zero Cală Dus-Întors.",
+    "lead": "Tribunus nu este doar un plan de control. Include un motor de inferență nativ care execută modele local pe Apple Silicon — fără cloud, fără chei API, fără taxă de latență.",
+    "mlx": "MLX",
+    "coreml": "Core ML / ANE",
+    "bridge": "IOSurface\nFP16",
+    "mlxKernel": "Operații Nucleu",
+    "mlxAttention": "Atenție",
+    "mlxMlp": "MLP",
+    "coremlMlp": "Straturi MLP",
+    "coremlState": "Insule de Stare",
+    "statLayers": "Straturi Calificate",
+    "statCopies": "Copii de Aplicație",
+    "statTests": "Teste în 9 Module",
+    "statPrecision": "Precizie la Limită",
+    "hybrid": {
+      "title": "Hibrid MLX + Core ML",
+      "desc": "Atenția rulează pe MLX. Straturile MLP sunt descărcate pe Apple Neural Engine prin Core ML — cu transfer zero-copy de tensori IOSurface între runtime-uri."
+    },
+    "arena": {
+      "title": "Alocare Arenă",
+      "desc": "Piscine de arenă FP16 bazate pe IOSurface cu semantică de leasing. Niciun malloc pe calea fierbinte. Fiecare tranziție de tensor este înregistrată și auditabilă."
+    },
+    "deterministic": {
+      "title": "Decodificare Deterministică",
+      "desc": "Decodificare greedy cu verificare exactă a potrivirii token-urilor. Suită de calificare cu opt token-uri. Aceeași sămânță, aceeași intrare — aceeași ieșire. De fiecare dată."
+    },
+    "kvCache": {
+      "title": "Motor Cache KV",
+      "desc": "Politici de fereastră glisantă și evacuare globală. Paritate între preumplere și decodificare în cache. Acces concurent cu izolare corespunzătoare prin leasing."
+    }
+  },
+  "explainer": {
+    "heading": "Ce Face Motorul de Calcul de Fapt.",
+    "lead": "Lasă jargonul. Iată ce se întâmplă când apeși Enter — în română simplă, cu datele reale din rulările noastre de cercetare.",
+    "step1": {
+      "title": "Modelul Trăiește pe Discul Tău",
+      "body": "O copie statică a lui Gemma 4 12B se află în memoria locală. Tribunus o mapează în memorie o singură dată — fără descărcări, fără chei API, fără cloud. Modelul este identificat prin hash-ul său criptografic, astfel încât să știi exact ce rulezi.",
+      "dataLabel": "Hash model"
+    },
+    "step2": {
+      "title": "Două Motoare Pornesc Simultaneu",
+      "body": "MLX preia GPU-ul și rulează straturile de atenție — partea modelului care decide care cuvinte contează. Core ML preia Apple Neural Engine și rulează straturile feed-forward — partea care procesează ce s-a decis. Împart memoria prin ceva numit IOSurface. Gândește-te ca la doi bucătari care împart aceeași masă de lucru în loc să-și passeze ingredientele unul altuia.",
+      "dataLabel": "Copii între motoare"
+    },
+    "step3": {
+      "title": "42 de Etape, Fiecare Microsecundă Urmărită",
+      "body": "Din momentul în care worker-ul se trezește până când ultimul token iese, fiecare operație este timestampată și înregistrată. Vrei să știi exact cât a durat softmax-ul de atenție pe stratul 23 din cele 48? Este în jurnalul de evenimente. Asta nu este logare — este instrumentație criminalistică. Dacă ceva este lent, știi exact ce și exact cât.",
+      "dataLabel1": "Etape pipeline",
+      "dataLabel2": "Straturi urmărite",
+      "dataLabel3": "Evenimente per rulare"
+    },
+    "step4": {
+      "title": "Aceeași Intrare → Aceeași Ieșire. De Fiecare Dată.",
+      "body": "Decodificarea greedy deterministică înseamnă că modelul produce exact aceleași token-uri pentru exact aceeași intrare. Verificăm acest lucru cu o suită de calificare de opt token-uri — runtime-ul trebuie să se potrivească cu referința oracle token cu token. Dacă un singur token este greșit, rularea este respinsă. Așa știi că optimizările tale nu au stricat nimic.",
+      "dataLabel": "Cerință de calificare"
+    },
+    "step5": {
+      "title": "Fiecare Afirmație Are o Dovadă",
+      "body": "Nicio afirmație de performanță nu se face fără un manifest de rulare, un lanț de proveniență și o înregistrare de observație imutabilă. Cinci experimente au fost proiectate (EXP-0000 până la EXP-0004), fiecare cu ipoteze formale, politici de repetiție și porți de corectitudine. Datele trăiesc în DuckDB — interogabile, auditabile și arhivate permanent. Optimizările respinse nu sunt niciodată șterse pentru ca nimeni să nu repete aceeași fundătură.",
+      "dataLabel1": "Experimente proiectate",
+      "dataLabel2": "Încărcări definite",
+      "dataLabel3": "Grade de rulare"
+    },
+    "cta": "Aceasta este fundația. Planul de control coordonează agenții. Motorul de calcul rulează modelele. Planul de dovezi demonstrează că ambele funcționează. Trei piloni, o singură platformă."
+  },
+  "research": {
+    "heading": "Afirmațiile de Performanță au Nevoie de Dovadă.",
+    "lead": "Fiecare afirmație de performanță este susținută de Planul de Dovezi de Cercetare — un cadru experimental cu trasabilitate a provenienței, 42 de etape de pipeline instrumentate, hashing criptografic al artefactelor și înregistrări imutabile de rulare.",
+    "pipelineInit": "Inițiere",
+    "pipelinePerToken": "Per Token",
+    "pipelineTeardown": "Finalizare",
+    "pipelineCaption": "42 de etape pipeline — instrumentate, timestampate, înregistrate. Fiecare microsecundă contabilizată.",
+    "runGrades": {
+      "title": "Grade de Rulare",
+      "desc": "Fiecare rulare este clasificată: exploratorie, controlată, candidată la afirmație sau arhivistică. Doar rulările controlate+ susțin deciziile de optimizare. Rezultatele moștenite sunt marcate ca neautoritative."
+    },
+    "immutable": {
+      "title": "Observații Imutabile",
+      "desc": "Observațiile brute nu sunt niciodată modificate în loc. Corecțiile produc o copie nouă cu legătură de proveniență la original. Rezultatele negative sunt păstrate pentru totdeauna — prevenind fundăturile repetate."
+    },
+    "provenance": {
+      "title": "Lanț de Proveniență",
+      "desc": "Fiecare rulare capturează commit-ul sursă, hash-urile binare, identitatea modelului, profilul mașinii și mediul. Analiză DuckDB pe fluxul de evenimente normalizat. Nimic nu este luat la credință."
+    },
+    "claim": {
+      "text": "Runtime-ul de inferență locală Tribunus v1 calificat fizic și semantic pentru o imagine de calcul Gemma 4 12B înghețată pe profilul Apple Silicon 16 GB calificat.",
+      "meta": "Stare: Schiță · Domeniu: Plafon de 64 token-uri de prompt, plafon de 8 token-uri de ieșire, decodificare greedy deterministică · Model: d042df1e…"
+    }
+  },
+  "roadmap": {
+    "heading": "Drumul din Față.",
+    "phase1": {
+      "label": "Faza 1 — Acum",
+      "title": "Previzualizare pentru Dezvoltatori macOS",
+      "desc": "Aplicație nativă macOS, un singur dezvoltator orchestrând sute de agenți, vizibilitate a modificărilor în timp real, autoritate limitată, backend de coordonare LocalFabric."
+    },
+    "phase2": {
+      "label": "Faza 2 — Următoarea",
+      "title": "Colaborare în Echipă",
+      "desc": "Colaborare în timp real în echipă, arhitectură peer-to-peer fără server, izolare senior/junior/începător, backend de coordonare Valkey pentru sesiuni live multi-utilizator."
+    },
+    "phase3": {
+      "label": "Faza 3 — Mai Târziu",
+      "title": "Guvernanță Enterprise",
+      "desc": "Guvernanță enterprise, urme de audit criptografice, integrări blocate de politici, inele de dovezi pregătite pentru conformitate, Valkey remote pentru echipe distribuite."
+    },
+    "computeNow": {
+      "label": "Calcul — Acum",
+      "title": "Runtime de Inferență Nativ",
+      "desc": "Execuție hibridă MLX + Core ML, alocare arenă IOSurface FP16, decodificare deterministică, motor cache KV. Calificare pe 48 de straturi pe Gemma 4 12B. Transfer de tensori fără copiere la nivel de aplicație."
+    },
+    "computeNext": {
+      "label": "Calcul — Următoarea",
+      "title": "Calificare Plan de Dovezi",
+      "desc": "Rulări candidate la afirmație complete pe toate încărcările. Calificare stare Core ML. Streaming Tokio cu anulare. Benchmark-uri de plasare MLP. Lansare set de date înghețat pentru afirmații de grad arhivistic."
+    }
+  },
+  "origin": {
+    "heading": "Cum S-a Născut Tribunus.",
+    "tab1": "Fricțiunile Mici",
+    "tab2": "Bifurcația",
+    "tab3": "Reconstrucția",
+    "tab4": "Filozofia",
+    "tab5": "Unde Suntem Acum",
+    "tab6": "Încotro Ne Îndreptăm",
+    "panel1": "A început ca o bifurcație a OpenCode. Nu pentru că OpenCode era rău — pentru că micile fricțiuni se adună. Am început să-mi scriu propriile profiluri de agenți. Apoi propriile instrumente personalizate pentru a face agenții mai eficienți. Apoi propriile scripturi de coordonare. Agenții citeau și scriau jurnale de predare în fișiere JSON ad-hoc împrăștiate pe disc. Am construit ceea ce era, în esență, o bază de date dintr-un morman de scripturi pe sistemul de fișiere. În fiecare zi, o nouă fricțiune. O nouă soluție de compromis. Un nou script care aproape funcționa.",
+    "panel2": "În cele din urmă, am bifurcat ramura experimentală a OpenCode pe GitHub și am început să mă uit în interior. Trebuia să găsesc rădăcina tuturor micilor neplăceri care mă înnebuneau. Ce am descoperit a fost că arhitectura unui instrument cu un singur agent pur și simplu nu poate fi adaptată la un sistem multi-agent. Stratul de coordonare trebuie să fie nativ. Așa că am început să construiesc.",
+    "panel3": "Am scos SQLite și am transplantat PGlite + DuckDB + Valkey pentru a construi un strat de coordonare de înaltă performanță. Mi-am transformat agenții personalizați în mașini cu stări proprii. Fiecare subagent generat a devenit propriul său mini runtime cu mașini cu stări condiționale — forțând agenții să urmeze de fapt calea de orchestrare pe care am proiectat-o, în mod constant. Am activat spații de lucru partajate și agenți de fundal, astfel încât agentul principal să devină un dispecer care convoacă lideri de echipă, fiecare coordonând o parte diferită a procesului de dezvoltare. Am depreciat abordarea TUI-first și am făcut ca fiecare capacitate să fie o implementare de primă clasă atât în UX-ul de operare a agenților, cât și în interfața cu utilizatorul.",
+    "panel4": "Am construit asta cu dragoste, lacrimi și frustrare. Cred cu tărie că a lăsa un agent să hoinărească nesupravegheat în orice sistem cu acces la shell este echivalentul inginoresc al a lăsa un copil cu un pistol de cuie încărcat nesupravegheat. Instrument util, model de supraveghere greșit. Dar modelul de supraveghere corect nu exista. Așa că a trebuit să-l construiesc eu. Îl împărtășesc aici ca tu să nu fii nevoit să treci prin aceeași durere.",
+    "panel5": "Astăzi, un singur dezvoltator poate orchestra și vedea în timp real modificările pe care sute de agenți concurenți le fac codului-sursă. Aplicația macOS (Apple Silicon și Intel) îți permite să creezi cohorte de agenți, să definești misiuni, să stabilești limite de domeniu și să urmărești fiecare diff în direct. Nimic nu se petrece în întuneric.",
+    "panel6": "Scopul final este colaborarea în timp real de primă clasă, în care echipe de ingineri software lucrează împreună, fiecare generând sute de agenți concurenți, toți în același repository în același timp. Coordonarea în timp real este atât de fluidă încât un inginer senior poate vedea ce fac juniorii și începătorii în timp real. Echipele ar trebui să petreacă mai mult timp construind produsul decât țipându-se la ședințe pentru că cineva a șters baza de date de producție pentru că a trimis prompt-ul greșit."
+  },
+  "blog": {
+    "heading": "De la Bancul de Lucru.",
+    "article1": {
+      "title": "Pipeline-ul de 42 de Etape: De Ce Instrumentăm Fiecare Microsecundă",
+      "desc": "De la worker_launch la worker_teardown — taxonomia din spatele măsurătorii de performanță a inferenței Tribunus."
+    },
+    "article2": {
+      "title": "Tensori Zero-Copy Între MLX și Core ML",
+      "desc": "Cum arenele FP16 bazate pe IOSurface elimină copiile la nivel de aplicație la granița calculului hibrid."
+    },
+    "article3": {
+      "title": "Rezultatele Negative Sunt Imortale",
+      "desc": "De ce Planul de Dovezi păstrează optimizările respinse pentru totdeauna — și cum asta economisește ani de inginerie."
+    },
+    "badge": "În curând"
+  },
+  "team": {
+    "badge": "Foaie de Parcurs",
+    "heading": "Încotro Ne Îndreptăm.",
+    "p1": "Următoarea fază a Tribunus este coordonarea echipelor peer-to-peer fără server. Fără server central, fără dependență de cloud, fără punct unic de defect. Fiecare inginer va vedea munca fiecărui agent în timp real — seniorii observând cohorte de juniori, începătorii învățând cum funcționează sistemul sub constrângeri.",
+    "p2": "Inginerii seniori vor defini parametrii misiunilor, vor stabili porți de revizuire și vor controla ce agenți au acces la ce părți ale codului-sursă. Inginerii juniori vor opera în sandbox-uri — învățând prin observarea modului în care cohorta execută sub constrângeri. Vor apune vremurile în care se țipa la ședințe pentru că cineva a șters baza de date de producție pentru că a trimis prompt-ul greșit.",
+    "p3": "Rezultatul va fi o fabrică de software în care fiecare contributor va lucra la maximumul capacității sale, nimeni nu va fi blocat așteptând o revizuire și fiecare integrare va îndeplini standardul.",
+    "coordinator": "COORDONATOR",
+    "senior": "Senior",
+    "junior": "Junior"
+  },
+  "faq": {
+    "heading": "Întrebări Frecvente.",
+    "q1": {
+      "question": "Ce este Tribunus?",
+      "answer": "Tribunus este un plan de control pentru inginerie agentică. Coordonează sute de agenți de codificare care lucrează concurent într-un singur repository cu vizibilitate în timp real și autoritate limitată."
+    },
+    "q2": {
+      "question": "Este doar un alt instrument AI pentru codare?",
+      "answer": "Nu. Tribunus nu generează cod. Coordonează agenții care fac asta. Se ocupă de orchestrare, vizibilitate, aplicare a porților și urmărire a dovezilor, astfel încât tu să nu fii nevoit să gestionezi o sută de sesiuni de agenți manual."
+    },
+    "q3": {
+      "question": "Trebuie să-mi rulez propriul LLM?",
+      "answer": "Nu. Tribunus funcționează cu orice backend LLM pe care îl folosești deja — OpenAI, Anthropic, modele locale via Ollama sau furnizori enterprise. Planul de control este independent de model."
+    },
+    "q4": {
+      "question": "Este gratuit?",
+      "answer": "Previzualizarea pentru dezvoltatori macOS este gratuită. Prețurile pentru nivelurile de echipă și enterprise vor fi anunțate atunci când acele funcționalități vor fi lansate. Va exista întotdeauna un nivel gratuit generos pentru dezvoltatorii individuali."
+    },
+    "q5": {
+      "question": "Pot agenții să-mi strice codul-sursă?",
+      "answer": "Agenții operează în limitele de autoritate definite de tine. Pot scrie doar în fișierele pe care le permiți în mod explicit. Inginerii seniori stabilesc perimetrul. Fiecare modificare este vizibilă în timp real. Fiecare integrare este blocată."
+    },
+    "q6": {
+      "question": "Cu ce este diferit de rularea mai multor instanțe Claude Code?",
+      "answer": "Rularea mai multor agenți fără coordonare înseamnă conflicte de integrare, condiții de cursă, muncă duplicată și vizibilitate zero asupra a ceea ce face fiecare agent. Tribunus oferă țesătura de coordonare care face dezvoltarea multi-agent sigură, vizibilă și productivă."
+    }
+  },
+  "contact": {
+    "heading": "Ia Legătura.",
+    "email": "Email",
+    "github": "GitHub",
+    "tagline": "Construit de un inginer venezuelean în San Francisco, California — cu dragoste, lacrimi și frustrare."
+  },
+  "download": {
+    "heading": "Obține Tribunus.",
+    "arm64": {
+      "title": "macOS Apple Silicon",
+      "desc": "Binar ARM64 nativ. M1/M2/M3/M4 și ulterioare.",
+      "badge": "v0.1.0 — Previzualizare pentru Dezvoltatori",
+      "btn": "Descarcă"
+    },
+    "intel": {
+      "title": "macOS Intel",
+      "desc": "Binar x86-64 pentru Mac-uri cu Intel.",
+      "badge": "În Curând — Compilare Intel"
+    }
+  },
+  "footer": {
+    "copyright": "© 2026 Tribunus. Inginerie de precizie.",
+    "github": "GitHub",
+    "contact": "Contact",
+    "privacy": "Confidențialitate"
+  },
+  "langSwitcher": {
+    "label": "Limbă"
+  }
+}

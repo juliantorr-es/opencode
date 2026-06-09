@@ -1,0 +1,300 @@
+{
+  "_meta": {
+    "language": "Czech",
+    "nativeName": "Čeština",
+    "dir": "ltr",
+    "locale": "cs"
+  },
+  "nav": {
+    "logo": "TRIBUNUS",
+    "download": "Stáhnout"
+  },
+  "hero": {
+    "title": "Ovládni kohortu.",
+    "subtitle": "Koordinuj stovky kódovacích agentů v jediném repozitáři. Přehled v reálném čase, vymezené pravomoci, žádný chaos.",
+    "cta": "Stáhnout pro macOS"
+  },
+  "proof": {
+    "heading": "Podívej se na to v akci.",
+    "plane": "Tribunus\nControl Plane",
+    "you": "Ty",
+    "orchestrate": {
+      "title": "Orchestrace",
+      "desc": "Definuj mise, přiděluj rozsah, spouštěj kohorty. Jeden inženýr → stovky agentů."
+    },
+    "observe": {
+      "title": "Sledování",
+      "desc": "Každý diff, každé rozhodnutí, každý stav agenta v přímém přenosu. Nic se neděje potmě."
+    },
+    "govern": {
+      "title": "Správa",
+      "desc": "Vymezené pravomoci, brány pro merge, řetězce důkazů. Seniorní inženýři nastavují hranice."
+    }
+  },
+  "features": {
+    "heading": "Softwarová továrna. Jinak.",
+    "orchestrate": {
+      "title": "Orchestrace agentů",
+      "desc": "Spouštěj a koordinuj stovky agentů pracujících paralelně napříč celou kódovou bází. Definuj mise, přiděluj rozsah a sleduj, jak kohorta pracuje."
+    },
+    "visibility": {
+      "title": "Přehled v reálném čase",
+      "desc": "Každá změna souboru, každé rozhodnutí agenta, každý diff se streamuje živě všem členům týmu. Nic se neděje potmě."
+    },
+    "authority": {
+      "title": "Vymezené pravomoci",
+      "desc": "Seniorní inženýři nastavují hranice. Junioři a nováčci pracují v jasně daných mantinelech. Pravomoci tečou shora dolů — nikdy do stran."
+    },
+    "evidence": {
+      "title": "Důkazy a brány",
+      "desc": "Každá změna je sledovaná, každé rozhodnutí auditovatelné, každý merge je opatřený bránou. Kryptografické řetězce důkazů pro regulovaná prostředí."
+    }
+  },
+  "capabilities": {
+    "heading": "Od prototypu do produkce.",
+    "prototyping": {
+      "title": "Prototypování",
+      "desc": "Rozjeď funkční prototypy během minut. Definuj kostru a agenti propojí elektroinstalaci, zatímco ty se soustředíš na architekturu."
+    },
+    "debugging": {
+      "title": "Ladění",
+      "desc": "Pošli squadru agentů prozkoumat neznámý kód, najít příčiny a navrhnout opravy — všechno paralelně."
+    },
+    "iteration": {
+      "title": "Rychlé iterace",
+      "desc": "Dodávej funkce v hodinách, ne ve sprintech. Agenti se postarají o šablonovitou práci; tým zkontroluje záměr a schválí výsledek."
+    },
+    "featureImpl": {
+      "title": "Rychlá implementace funkcí",
+      "desc": "Převáděj požadavky na funkční kód v tempu. Rozkládej funkce na paralelní úkoly agentů s automatickým řešením konfliktů."
+    },
+    "auditing": {
+      "title": "Audit kybernetické bezpečnosti",
+      "desc": "Vypusť agenty do kódové báze, aby našli zranitelnosti, zkontrolovali shodu a vytvořili auditující zprávy."
+    },
+    "ethicalHacking": {
+      "title": "Pracovní postupy etického hackingu",
+      "desc": "Prováděj strukturované kampaně penetračního testování s agenty, kteří hlásí nálezy do centrální evidence důkazů."
+    },
+    "production": {
+      "title": "Plné produkční nasazení",
+      "desc": "Od zelené louky do produkce. Agenti píší, testují, dokumentují a balí. Člověk kontroluje a schvaluje každou bránu."
+    }
+  },
+  "compute": {
+    "badge": "Novinka",
+    "heading": "Lokální inference. Žádné cesty do cloudu.",
+    "lead": "Tribunus není jen control plane. Přináší nativní běhové prostředí inference, které spouští modely lokálně na Apple Silicon — žádný cloud, žádné API klíče, žádné zpoždění.",
+    "mlx": "MLX",
+    "coreml": "Core ML / ANE",
+    "bridge": "IOSurface\nFP16",
+    "mlxKernel": "Kernel Ops",
+    "mlxAttention": "Attention",
+    "mlxMlp": "MLP",
+    "coremlMlp": "MLP Layers",
+    "coremlState": "State Islands",
+    "statLayers": "Kvalifikovaných vrstev",
+    "statCopies": "Kopií aplikace",
+    "statTests": "Testů napříč 9 moduly",
+    "statPrecision": "Přesnost na hranicích",
+    "hybrid": {
+      "title": "Hybrid MLX + Core ML",
+      "desc": "Attention běží na MLX. MLP vrstvy se odlehčují na Apple Neural Engine přes Core ML — s předáváním tensorů zero-copy přes IOSurface mezi běhovými prostředími."
+    },
+    "arena": {
+      "title": "Arenová alokace",
+      "desc": "FP16 arény na IOSurface s leasingovou sémantikou. Žádné mallocy na horké cestě. Každý přechod tensoru je receiptovaný a auditovatelný."
+    },
+    "deterministic": {
+      "title": "Deterministické dekódování",
+      "desc": "Hladové dekódování s ověřením token po tokenu. Sada osmi kvalifikačních testů. Stejný seed, stejný vstup — stejný výstup. Pokaždé."
+    },
+    "kvCache": {
+      "title": "Engine KV cache",
+      "desc": "Politiky klouzavého okna a globálního vytěsňování. Parita prefill a cached decode. Souběžný přístup s pořádnou izolací."
+    }
+  },
+  "explainer": {
+    "heading": "Co vlastně ten výpočetní engine dělá.",
+    "lead": "Zapomeň na žargon. Tohle se děje, když zmáčkneš Enter — lidsky, s reálnými daty z našich výzkumných běhů.",
+    "step1": {
+      "title": "Model žije na tvém disku",
+      "body": "Zamrzlá kopie Gemma 4 12B leží v lokálním úložišti. Tribunus ji namapuje do paměti jednou — žádné stahování, žádné API klíče, žádný cloud. Model je identifikovaný svým kryptografickým hashem, takže přesně víš, co spouštíš.",
+      "dataLabel": "Hash modelu"
+    },
+    "step2": {
+      "title": "Dva enginy startují najednou",
+      "body": "MLX převezme GPU a spouští attention vrstvy — část modelu, která rozhoduje, která slova jsou důležitá. Core ML převezme Apple Neural Engine a spouští feed-forward vrstvy — část zpracovávající to, co bylo rozhodnuto. Sdílejí paměť přes mechanismus IOSurface. Představ si to jako dva programátory editující stejný soubor přes SSH místo aby si posílali patche emailem.",
+      "dataLabel": "Kopií mezi enginy"
+    },
+    "step3": {
+      "title": "42 fází, každá mikrosekunda zaznamenaná",
+      "body": "Od probuzení workera po vyplivnutí posledního tokenu — každá operace má časové razítko a účtenku. Chceš přesně vědět, jak dlouho trval attention softmax na 23. vrstvě ze 48? Je to v deníku událostí. Tohle není logování — je to forenzní instrumentace. Pokud je něco pomalé, víš přesně co a přesně o kolik.",
+      "dataLabel1": "Fází pipeline",
+      "dataLabel2": "Sledovaných vrstev",
+      "dataLabel3": "Událostí za běh"
+    },
+    "step4": {
+      "title": "Stejný vstup → stejný výstup. Pokaždé.",
+      "body": "Deterministické hladové dekódování znamená, že model vyrobí naprosto stejné tokeny pro naprosto stejný vstup. Ověřujeme to sadou osmi kvalifikačních testů — runtime se musí shodovat s referencí token po tokenu. Pokud je jediný token špatně, běh je odmítnut. Takhle víš, že ti optimalizace nic nerozbily.",
+      "dataLabel": "Kvalifikační požadavek"
+    },
+    "step5": {
+      "title": "Každé tvrzení má účtenku",
+      "body": "Žádné tvrzení o výkonu není učiněno bez manifestu běhu, řetězce původu a neměnného záznamu pozorování. Bylo navrženo pět experimentů (EXP-0000 až EXP-0004), každý s formálními hypotézami, politikami opakování a bránami korektnosti. Data žijí v DuckDB — dotazovatelná, auditovatelná a trvale archivovaná. Zamítnuté optimalizace se nikdy nemažou — aby nikdo neopakoval ty samé slepé uličky.",
+      "dataLabel1": "Navržených experimentů",
+      "dataLabel2": "Definovaných zátěží",
+      "dataLabel3": "Známek běhů"
+    },
+    "cta": "Tohle je základ. Control plane koordinuje agenty. Compute engine spouští modely. Evidence plane dokazuje, že obojí funguje. Tři pilíře, jedna platforma."
+  },
+  "research": {
+    "heading": "Tvrzení o výkonu potřebují důkazy.",
+    "lead": "Každé tvrzení o výkonu je podloženo Research Evidence Plane — rámcem pro experimenty se sledováním původu, 42 instrumentovanými fázemi pipeline, kryptografickým hashováním artefaktů a neměnnými záznamy běhů.",
+    "pipelineInit": "Init",
+    "pipelinePerToken": "Per-Token",
+    "pipelineTeardown": "Teardown",
+    "pipelineCaption": "42 fází pipeline — instrumentovaných, s časovými razítky, s účtenkami. Každá mikrosekunda zaúčtovaná.",
+    "runGrades": {
+      "title": "Známky běhů",
+      "desc": "Každý běh je ohodnocen: exploratorní, kontrolovaný, kandidát na tvrzení nebo archivní. Pouze kontrolované a vyšší podporují rozhodnutí o optimalizacích. Zastaralé výsledky jsou označeny jako neautoritativní."
+    },
+    "immutable": {
+      "title": "Neměnná pozorování",
+      "desc": "Surová pozorování nejsou nikdy modifikována na místě. Opravy vytvářejí novou kopii s odkazem na původ. Negativní výsledky jsou uchovány navždy — zabraňují opakování stejných slepých uliček."
+    },
+    "provenance": {
+      "title": "Řetězec původu",
+      "desc": "Každý běh zachycuje zdrojový commit, hashe binárek, identitu modelu, profil stroje a prostředí. Analýzy DuckDB nad normalizovaným proudem událostí. Nic se nebere jako dogma."
+    },
+    "claim": {
+      "text": "Lokální inferenční runtime Tribunus v1 fyzicky a sémanticky kvalifikovaný pro jednu zamrzlou Gemma 4 12B ComputeImage na kvalifikovaném profilu Apple Silicon 16 GB.",
+      "meta": "Stav: Návrh · Rozsah: strop 64 tokenů na vstupu, 8 tokenů na výstupu, deterministické hladové dekódování · Model: d042df1e…"
+    }
+  },
+  "roadmap": {
+    "heading": "Cesta před námi.",
+    "phase1": {
+      "label": "Fáze 1 — Teď",
+      "title": "Developer Preview pro macOS",
+      "desc": "Nativní aplikace pro macOS, jeden vývojář orchestruje stovky agentů, přehled o změnách v reálném čase, vymezené pravomoci, koordinační backend LocalFabric."
+    },
+    "phase2": {
+      "label": "Fáze 2 — Příště",
+      "title": "Týmová spolupráce",
+      "desc": "Spolupráce v reálném čase, peer-to-peer architektura bez serveru, sandboxy senior/junior/rookie, koordinační backend Valkey pro živé multi-uživatelské sezení."
+    },
+    "phase3": {
+      "label": "Fáze 3 — Později",
+      "title": "Enterprise správa",
+      "desc": "Enterprise governance, kryptografické auditní stopy, politicky řízené merge brány, důkazní kruhy pro compliance, vzdálený Valkey pro distribuované týmy."
+    },
+    "computeNow": {
+      "label": "Compute — Teď",
+      "title": "Nativní inferenční runtime",
+      "desc": "Hybridní provádění MLX + Core ML, IOSurface FP16 arenová alokace, deterministické dekódování, engine KV cache. Kvalifikace 48 vrstev na Gemma 4 12B. Předávání tensorů bez kopií na úrovni aplikace."
+    },
+    "computeNext": {
+      "label": "Compute — Dále",
+      "title": "Kvalifikace Evidence Plane",
+      "desc": "Plné kandidátské běhy napříč všemi zátěžemi. Kvalifikace stavů Core ML. Tokio streamování se zrušením. Benchmarky umístění MLP. Vydání zamrzlé datové sady pro archivní tvrzení."
+    }
+  },
+  "origin": {
+    "heading": "Jak se zrodil Tribunus.",
+    "tab1": "Malé třecí plochy",
+    "tab2": "Fork",
+    "tab3": "Přestavba",
+    "tab4": "Filozofie",
+    "tab5": "Kde jsme teď",
+    "tab6": "Kam směřujeme",
+    "panel1": "Začalo to jako fork OpenCode. Ne že by OpenCode byl špatný — ale malé třecí plochy se sčítají. Nejdřív jsem napsal vlastní profily agentů. Pak vlastní nástroje, aby agenti byli efektivnější. Pak vlastní koordinační skripty. Agenti četli a psali logy v ad-hoc JSON souborech roztroušených po disku. Postavil jsem v podstatě databázi z hromady skriptů v souborovém systému. Každý den — další tření. Další obejití. Další skript, který skoro fungoval.",
+    "panel2": "Nakonec jsem forknul experimentální větev OpenCode na GitHubu a podíval se dovnitř. Potřeboval jsem najít kořen všech těch malých vypečeností, co mě přiváděly k šílenství. Zjistil jsem, že architekturu nástroje pro jednoho agenta nelze předělat na multiagentní systém. Koordinační vrstva musí být nativní. Tak jsem začal stavět.",
+    "panel3": "Vytrhal jsem SQLite a narouboval PGlite + DuckDB + Valkey pro výkonnou koordinační vrstvu. Předělal jsem vlastní agenty na skutečné stavové automaty. Každý spawnutý subagent se stal mini runtime s podmíněnými stavovými automaty — nutící agenty skutečně následovat orchestrovanou cestu, kterou jsem navrhl. Povolil jsem sdílené pracovní stromy a agenty na pozadí, takže hlavní agent se stal dispečerem svolávajícím team leady — každý koordinuje jinou část vývoje. Zahodil jsem přístup nejdřív TUI a udělal každou schopnost prvotřídní implementací jak v UX operací s agenty, tak v uživatelském rozhraní.",
+    "panel4": "Stavěl jsem to s láskou, slzami a frustrací. Jsem pevně přesvědčen, že nechat agenta volně se potulovat systémem se shell přístupem je technický ekvivalent nechat batole s motorovou pilou bez dozoru. Užitečný nástroj, špatný model dohledu. Ale správný model dohledu neexistoval. Musel jsem si postavit vlastní. Sdílím ho tady, abyste takovou bolest nemuseli zažívat ani vy.",
+    "panel5": "Dneska může jediný vývojář orchestrovat a vidět v reálném čase změny prováděné v kódové bázi stovkami paralelních agentů. macOS aplikace (Apple Silicon i Intel) umožňuje spouštět kohorty agentů, definovat mise, nastavovat hranice rozsahu a sledovat každý diff naživo. Nic se neděje potmě.",
+    "panel6": "Konečným cílem je prvotřídní spolupráce v reálném čase, kde týmy softwarových inženýrů pracují společně, každý spouští stovky paralelních agentů, všichni ve stejném repozitáři ve stejnou dobu. Koordinace je tak plynulá, že seniorní inženýr vidí, co junioři a nováčci dělají v reálném čase. Týmy by měly trávit víc času stavěním produktu než řvaním na sebe na poradách o tom, že někdo smazal produkční databázi, protože poslal špatný prompt."
+  },
+  "blog": {
+    "heading": "Z dílny.",
+    "article1": {
+      "title": "42-fázová pipeline: proč instrumentujeme každou mikrosekundu",
+      "desc": "Od worker_launch po worker_teardown — taxonomie měření výkonu inference Tribunus."
+    },
+    "article2": {
+      "title": "Tensory zero-copy mezi MLX a Core ML",
+      "desc": "Jak FP16 arény na IOSurface eliminují kopírování na úrovni aplikace na hranici hybridních výpočtů."
+    },
+    "article3": {
+      "title": "Negativní výsledky jsou nesmrtelné",
+      "desc": "Proč Evidence Plane uchovává zamítnuté optimalizace navždy — a jak to šetří roky inženýrské práce."
+    },
+    "badge": "Již brzy"
+  },
+  "team": {
+    "badge": "Plán",
+    "heading": "Kam to směřuje.",
+    "p1": "Příští fáze Tribunus je peer-to-peer týmová koordinace bez serveru. Žádný centrální server, žádná závislost na cloudu, žádný jediný bod selhání. Každý inženýr uvidí práci každého agenta v reálném čase — seniorní inženýři sledující juniorské kohorty, nováčci se učí, jak systém funguje pod omezeními.",
+    "p2": "Seniorní inženýři budou definovat parametry misí, nastavovat review brány a řídit, kteří agenti mají přístup do kterých částí kódové báze. Juniorští inženýři budou pracovat v sandboxech — učit se pozorováním, jak kohorta pracuje pod omezeními. Dny řvaní na sebe na poradách o tom, že někdo smazal produkční databázi špatným promptem, budou u konce.",
+    "p3": "Výsledkem bude softwarová továrna, kde každý přispěvatel pracuje na vrcholu svých schopností, nikdo nečeká na review a každý merge splňuje laťku.",
+    "coordinator": "KOORDINÁTOR",
+    "senior": "Senior",
+    "junior": "Junior"
+  },
+  "faq": {
+    "heading": "Často kladené.",
+    "q1": {
+      "question": "Co je Tribunus?",
+      "answer": "Tribunus je control plane pro agentní vývoj softwaru. Koordinuje stovky agentů pracujících paralelně v jediném repozitáři s přehledem v reálném čase a vymezenými pravomocemi."
+    },
+    "q2": {
+      "question": "Je to další AI nástroj na kódování?",
+      "answer": "Ne. Tribunus negeneruje kód. Koordinuje agenty, kteří to dělají. Stará se o orchestraci, přehled, vynucování bran a sledování důkazů — abys nemusel ručně spravovat stovku agentích sezení."
+    },
+    "q3": {
+      "question": "Potřebuju vlastní LLM?",
+      "answer": "Ne. Tribunus funguje s jakýmkoli LLM backendem, který už používáš — OpenAI, Anthropic, lokální modely přes Ollama nebo enterprise provider. Control plane je na modelu nezávislý."
+    },
+    "q4": {
+      "question": "Je to zadarmo?",
+      "answer": "Developer preview pro macOS je zdarma. Ceny pro týmové a enterprise úrovně budou oznámeny, až tyto funkce vyjdou. Pro individuální vývojáře bude vždy štědrá bezplatná úroveň."
+    },
+    "q5": {
+      "question": "Můžou agenti rozbít moji kódovou bázi?",
+      "answer": "Agenti pracují v rámci rozsahu, který definuješ. Mohou zapisovat jen do souborů, které explicitně povolíš. Seniorní inženýři nastavují hranice. Každá změna je viditelná v reálném čase. Každý merge je chráněný bránou."
+    },
+    "q6": {
+      "question": "Čím se to liší od běhu více instancí Claude Code?",
+      "answer": "Běh více agentů bez koordinace znamená merge konflikty, race conditions, duplicitní práci a nulový přehled o tom, co každý agent dělá. Tribunus poskytuje koordinační tkaninu, která dělá multiagentní vývoj bezpečným, přehledným a produktivním."
+    }
+  },
+  "contact": {
+    "heading": "Ozvi se.",
+    "email": "Email",
+    "github": "GitHub",
+    "tagline": "Postavil venezuelský inženýr v San Franciscu v Kalifornii — s láskou, slzami a frustrací."
+  },
+  "download": {
+    "heading": "Získej Tribunus.",
+    "arm64": {
+      "title": "macOS Apple Silicon",
+      "desc": "Nativní ARM64 binárka. M1/M2/M3/M4 a novější.",
+      "badge": "v0.1.0 — Developer Preview",
+      "btn": "Stáhnout"
+    },
+    "intel": {
+      "title": "macOS Intel",
+      "desc": "x86-64 binárka pro Intel-based Macy.",
+      "badge": "Již brzy — Intel sestavení"
+    }
+  },
+  "footer": {
+    "copyright": "© 2026 Tribunus. Postaveno s přesností.",
+    "github": "GitHub",
+    "contact": "Kontakt",
+    "privacy": "Soukromí"
+  },
+  "langSwitcher": {
+    "label": "Jazyk"
+  }
+}

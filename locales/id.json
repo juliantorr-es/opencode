@@ -1,0 +1,300 @@
+{
+  "_meta": {
+    "language": "Indonesian",
+    "nativeName": "Bahasa Indonesia",
+    "dir": "ltr",
+    "locale": "id"
+  },
+  "nav": {
+    "logo": "TRIBUNUS",
+    "download": "Unduh"
+  },
+  "hero": {
+    "title": "Kendalikan Pasukan.",
+    "subtitle": "Koordinasi ratusan agen coding dalam satu repositori. Visibilitas real-time, wewenang terbatas, nol kekacauan.",
+    "cta": "Unduh untuk macOS"
+  },
+  "proof": {
+    "heading": "Lihat Langsung.",
+    "plane": "Tribunus\nControl Plane",
+    "you": "Kamu",
+    "orchestrate": {
+      "title": "Orkestrasi",
+      "desc": "Tentukan misi, tetapkan ruang lingkup, kerahkan pasukan. Satu engineer → ratusan agen."
+    },
+    "observe": {
+      "title": "Pantau",
+      "desc": "Setiap diff, setiap keputusan, setiap status agen mengalir langsung. Tak ada yang terjadi dalam gelap."
+    },
+    "govern": {
+      "title": "Kendalikan",
+      "desc": "Wewenang terbatas, gerbang merge, rantai bukti. Engineer senior yang pasang pagar."
+    }
+  },
+  "features": {
+    "heading": "Pabrik Perangkat Lunak, Didefinisikan Ulang.",
+    "orchestrate": {
+      "title": "Orkestrasi Agen",
+      "desc": "Kerahkan dan koordinasikan ratusan agen coding yang bekerja bersamaan di seluruh codebase. Tentukan misi, tetapkan ruang lingkup, dan saksikan pasukan bekerja."
+    },
+    "visibility": {
+      "title": "Visibilitas Real-Time",
+      "desc": "Setiap perubahan file, setiap keputusan agen, setiap diff mengalir langsung ke semua anggota tim. Tak ada yang terjadi dalam gelap."
+    },
+    "authority": {
+      "title": "Wewenang Terbatas",
+      "desc": "Engineer senior yang pasang pagar. Junior dan pemula beroperasi dalam batasan yang jelas. Wewenang mengalir ke bawah — tidak pernah ke samping."
+    },
+    "evidence": {
+      "title": "Bukti & Gerbang",
+      "desc": "Setiap perubahan terlacak, setiap keputusan teraudit, setiap merge melewati gerbang. Rantai bukti kriptografis untuk lingkungan teregulasi."
+    }
+  },
+  "capabilities": {
+    "heading": "Dari Purwarupa ke Produksi.",
+    "prototyping": {
+      "title": "Purwarupa",
+      "desc": "Buat purwarupa fungsional dalam hitungan menit. Definisikan kerangka dan biarkan agen mengurus koneksinya sementara Anda fokus pada arsitektur."
+    },
+    "debugging": {
+      "title": "Debugging",
+      "desc": "Kerahkan regu agen untuk menelusuri kode asing, menemukan akar masalah, dan mengusulkan perbaikan — semuanya paralel."
+    },
+    "iteration": {
+      "title": "Iterasi Cepat",
+      "desc": "Kirim fitur dalam hitungan jam, bukan sprint. Agen urus bagian repetitif; tim Anda review niatnya dan kirim hasilnya."
+    },
+    "featureImpl": {
+      "title": "Implementasi Fitur Cepat",
+      "desc": "Terjemahkan kebutuhan menjadi kode berfungsi dengan cepat. Pecah fitur menjadi tugas agen paralel dengan resolusi konflik otomatis."
+    },
+    "auditing": {
+      "title": "Audit Keamanan Siber",
+      "desc": "Lepas agen ke codebase untuk menemukan celah keamanan, memeriksa kepatuhan, dan menghasilkan laporan siap audit."
+    },
+    "ethicalHacking": {
+      "title": "Alur Kerja Ethical Hacking",
+      "desc": "Jalankan kampanye penetration testing terstruktur dengan agen yang melaporkan temuan ke buku besar bukti pusat."
+    },
+    "production": {
+      "title": "Pengiriman Produksi Penuh",
+      "desc": "Dari lahan kosong ke produksi. Agen menyusun, menguji, mendokumentasi, dan mengemas. Manusia review dan setujui setiap gerbang."
+    }
+  },
+  "compute": {
+    "badge": "Baru",
+    "heading": "Inferensi Lokal. Nol Perjalanan Bolak-Balik.",
+    "lead": "Tribunus bukan sekadar control plane. Ia menyertakan runtime inferensi native yang menjalankan model secara lokal di Apple Silicon — tanpa cloud, tanpa API key, tanpa biaya latensi.",
+    "mlx": "MLX",
+    "coreml": "Core ML / ANE",
+    "bridge": "IOSurface\nFP16",
+    "mlxKernel": "Operasi Kernel",
+    "mlxAttention": "Attention",
+    "mlxMlp": "MLP",
+    "coremlMlp": "Lapisan MLP",
+    "coremlState": "State Islands",
+    "statLayers": "Lapisan Tersertifikasi",
+    "statCopies": "Salinan Digunakan",
+    "statTests": "Pengujian di 9 Modul",
+    "statPrecision": "Presisi Batas",
+    "hybrid": {
+      "title": "Hibrida MLX + Core ML",
+      "desc": "Attention berjalan di MLX. Lapisan MLP dialihkan ke Apple Neural Engine lewat Core ML — dengan serah terima tensor zero-copy lewat IOSurface antar runtime."
+    },
+    "arena": {
+      "title": "Alokasi Arena",
+      "desc": "Pool arena FP16 berbasis IOSurface dengan semantik sewa. Tanpa malloc di jalur panas. Setiap transisi tensor memiliki resi dan teraudit."
+    },
+    "deterministic": {
+      "title": "Decoding Deterministik",
+      "desc": "Greedy decode dengan verifikasi kecocokan token eksak. Paket kualifikasi delapan token. Seed sama, input sama — output sama. Setiap saat."
+    },
+    "kvCache": {
+      "title": "Mesin KV Cache",
+      "desc": "Kebijakan sliding window dan eviction global. Prefill + decode parity dengan cache. Akses konkuren dengan isolasi sewa yang tepat."
+    }
+  },
+  "explainer": {
+    "heading": "Apa yang Sebenarnya Dilakukan Compute Engine.",
+    "lead": "Lupakan jargon. Inilah yang terjadi saat kamu tekan Enter — dalam bahasa sehari-hari, dengan data nyata dari riset kami.",
+    "step1": {
+      "title": "Model Ada di Disk Kamu",
+      "body": "Salinan frozen Gemma 4 12B ada di penyimpanan lokal. Tribunus memetakannya ke memori sekali — tanpa unduhan, tanpa API key, tanpa cloud. Model diidentifikasi dengan hash kriptografis jadi kamu tahu persis apa yang kamu jalankan.",
+      "dataLabel": "Hash model"
+    },
+    "step2": {
+      "title": "Dua Mesin Menyala Bersamaan",
+      "body": "MLX menggunakan GPU dan menjalankan lapisan attention — bagian model yang memutuskan kata mana yang penting. Core ML menggunakan Apple Neural Engine dan menjalankan lapisan feed-forward — bagian yang memproses keputusan tadi. Mereka berbagi memori melalui sesuatu bernama IOSurface. Anggap saja seperti dua juru masak berbagi satu talenan, bukan saling oper bahan bolak-balik.",
+      "dataLabel": "Salinan antar mesin"
+    },
+    "step3": {
+      "title": "42 Tahap, Setiap Mikrodetik Tercatat",
+      "body": "Dari saat worker bangun hingga token terakhir dikirim, setiap operasi diberi timestamp dan resi. Ingin tahu persis berapa lama attention softmax di lapisan 23 dari 48 lapisan? Itu ada di jurnal peristiwa. Ini bukan logging — ini instrumentasi forensik. Kalau ada yang lambat, kamu tahu persis apa dan seberapa banyak.",
+      "dataLabel1": "Tahap pipeline",
+      "dataLabel2": "Lapisan terlacak",
+      "dataLabel3": "Peristiwa per proses"
+    },
+    "step4": {
+      "title": "Input Sama → Output Sama. Setiap Saat.",
+      "body": "Greedy decoding deterministik berarti model menghasilkan token yang persis sama untuk input yang persis sama. Kami verifikasi ini dengan paket kualifikasi delapan token — runtime harus cocok dengan referensi oracle token demi token. Jika satu token salah, proses ditolak. Ini cara kamu tahu optimasi tidak merusak apa pun.",
+      "dataLabel": "Persyaratan kualifikasi"
+    },
+    "step5": {
+      "title": "Setiap Klaim Punya Resi",
+      "body": "Tidak ada klaim performa yang dibuat tanpa run manifest, rantai provenans, dan catatan observasi yang tidak bisa diubah. Lima eksperimen telah dirancang (EXP-0000 hingga EXP-0004), masing-masing dengan hipotesis formal, kebijakan pengulangan, dan gerbang kebenaran. Data tinggal di DuckDB — bisa dikueri, diaudit, dan diarsipkan permanen. Optimasi yang ditolak tidak pernah dihapus agar tidak ada yang mengulangi jalan buntu yang sama.",
+      "dataLabel1": "Eksperimen dirancang",
+      "dataLabel2": "Workload didefinisikan",
+      "dataLabel3": "Nilai proses"
+    },
+    "cta": "Ini fondasinya. Control plane mengoordinasikan agen. Compute engine menjalankan model. Evidence plane membuktikan keduanya bekerja. Tiga pilar, satu platform."
+  },
+  "research": {
+    "heading": "Klaim Performa Butuh Bukti.",
+    "lead": "Setiap klaim performa didukung oleh Research Evidence Plane — kerangka eksperimen berprovenans dengan 42 tahap pipeline terinstrumentasi, hashing artefak kriptografis, dan catatan proses yang tidak bisa diubah.",
+    "pipelineInit": "Inisiasi",
+    "pipelinePerToken": "Per Token",
+    "pipelineTeardown": "Penutupan",
+    "pipelineCaption": "42 tahap pipeline — terinstrumentasi, timestamped, berresi. Setiap mikrodetik diperhitungkan.",
+    "runGrades": {
+      "title": "Nilai Proses",
+      "desc": "Setiap proses dinilai: eksploratoris, terkontrol, kandidat klaim, atau arsip. Hanya proses terkontrol+ yang mendukung keputusan optimasi. Hasil lama ditandai tidak otoritatif."
+    },
+    "immutable": {
+      "title": "Observasi Tak Terubah",
+      "desc": "Observasi mentah tidak pernah dimodifikasi di tempat. Koreksi menghasilkan salinan baru dengan tautan provenans ke aslinya. Hasil negatif disimpan selamanya — mencegah pengulangan jalan buntu."
+    },
+    "provenance": {
+      "title": "Rantai Provenans",
+      "desc": "Setiap proses menangkap source commit, hash biner, identitas model, profil mesin, dan lingkungan. DuckDB analitik di atas aliran peristiwa yang dinormalisasi. Tak ada yang diterima begitu saja."
+    },
+    "claim": {
+      "text": "Runtime inferensi lokal Tribunus v1 secara fisik dan logis memenuhi syarat untuk satu frozen Gemma 4 12B ComputeImage pada profil Apple Silicon 16 GB yang memenuhi syarat.",
+      "meta": "Status: Draf · Ruang lingkup: batas prompt 64 token, batas output 8 token, greedy decoding deterministik · Model: d042df1e…"
+    }
+  },
+  "roadmap": {
+    "heading": "Jalan ke Depan.",
+    "phase1": {
+      "label": "Fase 1 — Sekarang",
+      "title": "Pratinjau Developer macOS",
+      "desc": "Aplikasi native macOS, satu developer mengorkestrasi ratusan agen, visibilitas perubahan real-time, wewenang terbatas, backend koordinasi LocalFabric."
+    },
+    "phase2": {
+      "label": "Fase 2 — Selanjutnya",
+      "title": "Kolaborasi Tim",
+      "desc": "Kolaborasi tim real-time, arsitektur peer-to-peer tanpa server, sandboxing senior/junior/rookie, backend koordinasi Valkey untuk sesi multi-pengguna langsung."
+    },
+    "phase3": {
+      "label": "Fase 3 — Nanti",
+      "title": "Tata Kelola Perusahaan",
+      "desc": "Tata kelola perusahaan, jejak audit kriptografis, gerbang merge berbasis kebijakan, lingkaran bukti siap kepatuhan, Valkey jarak jauh untuk tim terdistribusi."
+    },
+    "computeNow": {
+      "label": "Compute — Sekarang",
+      "title": "Runtime Inferensi Native",
+      "desc": "Eksekusi hibrida MLX + Core ML, alokasi arena IOSurface FP16, decoding deterministik, mesin KV cache. Kualifikasi 48 lapisan pada Gemma 4 12B. Serah terima tensor tanpa salinan aplikasi."
+    },
+    "computeNext": {
+      "label": "Compute — Selanjutnya",
+      "title": "Kualifikasi Evidence Plane",
+      "desc": "Proses kandidat klaim penuh di semua workload. Kualifikasi state Core ML. Streaming Tokio dengan pembatalan. Tolok ukur penempatan MLP. Rilis dataset beku untuk klaim tingkat arsip."
+    }
+  },
+  "origin": {
+    "heading": "Bagaimana Tribunus Lahir.",
+    "tab1": "Gesekan Kecil",
+    "tab2": "Fork",
+    "tab3": "Bangun Ulang",
+    "tab4": "Filosofi",
+    "tab5": "Kita di Mana Sekarang",
+    "tab6": "Kita Mau ke Mana",
+    "panel1": "Semua berawal sebagai fork OpenCode. Bukan karena OpenCode jelek — karena gesekan-gesekan kecil itu menumpuk. Saya mulai dengan menulis profil agen sendiri. Lalu alat kustom sendiri untuk membuat agen lebih efektif. Lalu skrip koordinasi sendiri. Agen-agen membaca dan menulis log serah terima di file JSON dadakan yang berserakan di disk. Saya pada dasarnya membangun database dari tumpukan skrip di filesystem. Setiap hari, gesekan baru. Jalan pintas baru. Skrip lain yang hampir berhasil.",
+    "panel2": "Akhirnya saya fork cabang eksperimental OpenCode di GitHub dan mulai melihat ke dalam. Saya perlu menemukan akar semua gangguan kecil yang membuat saya gila. Yang saya temukan adalah bahwa arsitektur alat agen tunggal tidak bisa dipasangi sistem multi-agen. Lapisan koordinasi harus native. Maka saya mulai membangun.",
+    "panel3": "Saya cabut SQLite dan transplantasi PGlite + DuckDB + Valkey untuk membangun lapisan koordinasi throughput tinggi. Saya mengubah agen kustom saya menjadi state machine nyata. Setiap subagen yang lahir menjadi runtime mini-nya sendiri dengan state machine bersyarat — memaksa agen untuk benar-benar mengikuti jalur orkestrasi yang saya desain, secara konsisten. Saya mengaktifkan shared worktrees dan background agents sehingga agen utama menjadi dispatcher yang memanggil pemimpin tim, masing-masing mengoordinasikan bagian proses pengembangan yang berbeda. Saya menghentikan pendekatan TUI-first dan menjadikan setiap kemampuan sebagai implementasi kelas satu baik di UX operasi agen maupun UI pengguna.",
+    "panel4": "Saya membangun ini dengan cinta, air mata, dan frustrasi. Saya sangat percaya bahwa membiarkan agen berkeliaran tanpa pengawasan ke sistem mana pun dengan akses shell — itu adalah padanan teknik dari membiarkan balita bermain dengan pistol paku yang sudah terisi tanpa pengawasan. Alat berguna, model pengawasan salah. Tapi model pengawasan yang benar tidak ada. Jadi saya harus membuatnya sendiri. Saya bagikan di sini agar kamu tidak perlu merasakan sakit seperti itu juga.",
+    "panel5": "Hari ini, satu developer bisa mengorkestrasi dan melihat secara real-time perubahan yang dibuat pada codebase oleh ratusan agen bersamaan. Aplikasi macOS (Apple Silicon dan Intel) memungkinkan Anda membuat pasukan agen, menentukan misi, menetapkan batasan ruang lingkup, dan menonton setiap diff mengalir langsung. Tak ada yang terjadi dalam gelap.",
+    "panel6": "Tujuan akhirnya adalah kolaborasi real-time kelas satu di mana tim insinyur perangkat lunak bekerja bersama, masing-masing mengerahkan ratusan agen bersamaan, semua di repositori yang sama pada waktu yang sama. Koordinasi real-time sangat mulus sehingga engineer senior bisa melihat apa yang dilakukan junior dan pemula secara real-time. Tim harus menghabiskan lebih banyak waktu membangun produk daripada berteriak-teriak dalam rapat tentang seseorang yang menghapus production database karena mengirim prompt yang salah."
+  },
+  "blog": {
+    "heading": "Dari Meja Kerja.",
+    "article1": {
+      "title": "Pipeline 42 Tahap: Kenapa Kami Ukur Setiap Mikrodetik",
+      "desc": "Dari worker_launch ke worker_teardown — taksonomi di balik pengukuran performa inferensi Tribunus."
+    },
+    "article2": {
+      "title": "Tensor Zero-Copy di MLX dan Core ML",
+      "desc": "Bagaimana arena FP16 berbasis IOSurface menghilangkan salinan tingkat aplikasi di batas komputasi hibrida."
+    },
+    "article3": {
+      "title": "Hasil Negatif Abadi",
+      "desc": "Kenapa Evidence Plane menyimpan optimasi yang ditolak selamanya — dan bagaimana itu menghemat tahun-tahun rekayasa."
+    },
+    "badge": "Segera hadir"
+  },
+  "team": {
+    "badge": "Peta Jalan",
+    "heading": "Ke Mana Arahnya.",
+    "p1": "Fase berikutnya dari Tribunus adalah koordinasi tim peer-to-peer tanpa server. Tanpa server pusat, tanpa ketergantungan cloud, tanpa titik kegagalan tunggal. Setiap engineer akan melihat kerja setiap agen secara real-time — engineer senior mengamati regu junior, pemula belajar dari bagaimana sistem beroperasi di bawah batasan.",
+    "p2": "Engineer senior akan menentukan parameter misi, memasang gerbang review, dan mengontrol agen mana yang punya akses ke bagian codebase mana. Engineer junior akan beroperasi dalam sandbox — belajar dengan mengamati bagaimana pasukan bekerja di bawah batasan. Hari-hari berteriak-teriak dalam rapat tentang seseorang yang menghapus production database karena mengirim prompt yang salah akan berakhir.",
+    "p3": "Hasilnya akan menjadi pabrik perangkat lunak di mana setiap kontributor bekerja di puncak kemampuannya, tak ada yang terblokir menunggu review, dan setiap merge memenuhi standar.",
+    "coordinator": "KOORDINATOR",
+    "senior": "Senior",
+    "junior": "Junior"
+  },
+  "faq": {
+    "heading": "Pertanyaan Umum.",
+    "q1": {
+      "question": "Apa itu Tribunus?",
+      "answer": "Tribunus adalah control plane untuk rekayasa berbasis agen. Ia mengoordinasikan ratusan agen coding yang bekerja bersamaan dalam satu repositori dengan visibilitas real-time dan wewenang terbatas."
+    },
+    "q2": {
+      "question": "Apa ini cuma alat AI coding lain?",
+      "answer": "Bukan. Tribunus tidak menghasilkan kode. Ia mengoordinasikan agen yang melakukannya. Ia menangani orkestrasi, visibilitas, penegakan gerbang, dan pelacakan bukti sehingga Anda tidak perlu mengelola ratusan sesi agen secara manual."
+    },
+    "q3": {
+      "question": "Apa saya harus menjalankan LLM sendiri?",
+      "answer": "Tidak. Tribunus bekerja dengan backend LLM apa pun yang sudah Anda gunakan — OpenAI, Anthropic, model lokal lewat Ollama, atau penyedia enterprise. Control plane tidak tergantung model."
+    },
+    "q4": {
+      "question": "Apakah ini gratis?",
+      "answer": "Pratinjau developer macOS gratis. Harga untuk tim dan enterprise akan diumumkan saat fitur-fitur itu dirilis. Akan selalu ada paket gratis yang murah hati untuk pengembang individu."
+    },
+    "q5": {
+      "question": "Bisakah agen merusak codebase saya?",
+      "answer": "Agen beroperasi dalam wewenang terbatas yang Anda tentukan. Mereka hanya bisa menulis ke file yang Anda izinkan secara eksplisit. Engineer senior yang pasang pagar. Setiap perubahan terlihat real-time. Setiap merge melewati gerbang."
+    },
+    "q6": {
+      "question": "Apa bedanya dengan menjalankan beberapa instance Claude Code?",
+      "answer": "Menjalankan banyak agen tanpa koordinasi berarti konflik merge, race condition, kerja duplikat, dan nol visibilitas ke dalam apa yang dilakukan setiap agen. Tribunus menyediakan kain koordinasi yang membuat pengembangan multi-agen aman, terlihat, dan produktif."
+    }
+  },
+  "contact": {
+    "heading": "Hubungi Kami.",
+    "email": "Email",
+    "github": "GitHub",
+    "tagline": "Dibangun oleh insinyur Venezuela di San Francisco, California — dengan cinta, air mata, dan frustrasi."
+  },
+  "download": {
+    "heading": "Dapatkan Tribunus.",
+    "arm64": {
+      "title": "macOS Apple Silicon",
+      "desc": "Biner ARM64 native. M1/M2/M3/M4 dan seterusnya.",
+      "badge": "v0.1.0 — Pratinjau Developer",
+      "btn": "Unduh"
+    },
+    "intel": {
+      "title": "macOS Intel",
+      "desc": "Biner x86-64 untuk Mac berbasis Intel.",
+      "badge": "Segera hadir — Build Intel"
+    }
+  },
+  "footer": {
+    "copyright": "© 2026 Tribunus. Direkayasa dengan presisi.",
+    "github": "GitHub",
+    "contact": "Kontak",
+    "privacy": "Privasi"
+  },
+  "langSwitcher": {
+    "label": "Bahasa"
+  }
+}

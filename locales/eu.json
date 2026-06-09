@@ -1,0 +1,300 @@
+{
+  "_meta": {
+    "language": "Euskara",
+    "nativeName": "Euskara",
+    "dir": "ltr",
+    "locale": "eu"
+  },
+  "nav": {
+    "logo": "TRIBUNUS",
+    "download": "Deskargatu"
+  },
+  "hero": {
+    "title": "Gidatu Kortea.",
+    "subtitle": "Ehunka kode-agente koordinatu biltegi bakarrean. Denbora errealeko ikusgarritasuna, eskuordetutako agintea, kaosik gabe.",
+    "cta": "Deskargatu macOSrako"
+  },
+  "proof": {
+    "heading": "Ikusi Martxan.",
+    "plane": "Tribunus\nKontrol Plana",
+    "you": "Zu",
+    "orchestrate": {
+      "title": "Orkestratu",
+      "desc": "Zehaztu misioak, esleitu esparruak, sortu korteeak. Ingeniari bat → ehunka agente."
+    },
+    "observe": {
+      "title": "Behatu",
+      "desc": "Diff bakoitza, erabaki bakoitza, agente-egoera bakoitza zuzeneko transmisioan. Ezer ez da iluntasunean gertatzen."
+    },
+    "govern": {
+      "title": "Gobernatu",
+      "desc": "Eskuordetutako agintea, batze-ateak, ebidentzia-kateak. Ingeniari nagusiek perimetroa ezartzen dute."
+    }
+  },
+  "features": {
+    "heading": "Software Lantegia, Birpentsatua.",
+    "orchestrate": {
+      "title": "Orkestratu Agenteak",
+      "desc": "Ehunka kode-agente sortu eta koordinatu, zure kode-base osoan aldi berean lanean. Zehaztu misioak, esleitu esparruak, eta behatu nola exekutatzen duen korteak."
+    },
+    "visibility": {
+      "title": "Denbora Errealeko Ikusgarritasuna",
+      "desc": "Fitxategi-aldaketa bakoitza, agente-erabaki bakoitza, diff bakoitza zuzeneko transmisioan taldekide guztientzat. Ezer ez da iluntasunean gertatzen."
+    },
+    "authority": {
+      "title": "Eskuordetutako Agintea",
+      "desc": "Ingeniari nagusiek perimetroa ezartzen dute. Juniorrek eta hasiberriek muga argiekin jarduten dute. Agintea beherantz doa — inoiz ez albora."
+    },
+    "evidence": {
+      "title": "Ebidentzia eta Ateak",
+      "desc": "Aldaketa bakoitza jarraipenarekin, erabaki bakoitza auditagarri, batze bakoitza ateekin babestua. Ebidentzia-kate kriptografikoak ingurune arautuentzat."
+    }
+  },
+  "capabilities": {
+    "heading": "Prototipiotik Ekoizpenera.",
+    "prototyping": {
+      "title": "Prototipoak",
+      "desc": "Sortu prototipo funtzionalak minututan. Zehaztu egitura eta utzi agenteek hoditeria konektatzen, zu arkitekturara bideratzen zaren bitartean."
+    },
+    "debugging": {
+      "title": "Arazketa",
+      "desc": "Zabaldu agente-taldeak kode ezezaguna arakatzeko, erroko kausak aurkitzeko eta konponketak proposatzeko — dena paraleloan."
+    },
+    "iteration": {
+      "title": "Iterazio Azkarra",
+      "desc": "Eman ezaugarriak orduetan, ez sprintetan. Agenteek lan errepikakorra kudeatzen dute; zure taldeak asmoa berrikusten du eta emaitza bidaltzen du."
+    },
+    "featureImpl": {
+      "title": "Ezaugarrien Inplementazio Azkarra",
+      "desc": "Itzuli baldintzak kode funtzionalera erritmo bizian. Deskonposatu ezaugarriak agenteen zeregin paraleloetan, gatazken konponbide automatikoarekin."
+    },
+    "auditing": {
+      "title": "Zibersegurtasun Auditoria",
+      "desc": "Utzi agenteak zure kode-basean librean ahultasunak bilatzeko, betetze-egiaztapenak egiteko eta auditoretza-rako gertu dauden txostenak sortzeko."
+    },
+    "ethicalHacking": {
+      "title": "Hacking Etikorako Fluxuak",
+      "desc": "Zuzendu sartze-proba kanpaina egituratuak, agenteek aurkikuntzak ebidentzia-erregistro zentralizatu batera bidaltzen dituztela."
+    },
+    "production": {
+      "title": "Ekoizpenera Bidalketa Osoa",
+      "desc": "Hutsune hutsetik ekoizpenera. Agenteek idatzi, probatu, dokumentatu eta paketatzen dute. Gizakiek berrikusi eta onartzen dute ate bakoitza."
+    }
+  },
+  "compute": {
+    "badge": "Berria",
+    "heading": "Inferentzia Lokala. Zero Itzuli-bidai.",
+    "lead": "Tribunus ez da kontrol plana soilik. Berekin dator Apple Silicon-en modeloak lokalki exekutatzen dituen inferentzia-exekuzio natiboa — hobarik ez, API gakorik ez, latentzia-zergarik gabe.",
+    "mlx": "MLX",
+    "coreml": "Core ML / ANE",
+    "bridge": "IOSurface\nFP16",
+    "mlxKernel": "Nukleo Eragiketak",
+    "mlxAttention": "Arreta",
+    "mlxMlp": "MLP",
+    "coremlMlp": "MLP Geruzak",
+    "coremlState": "Egoera Uharteak",
+    "statLayers": "Geruza Kualifikatuak",
+    "statCopies": "Aplikazio Kopiak",
+    "statTests": "Probak 9 Modulutan",
+    "statPrecision": "Muga Zehaztasuna",
+    "hybrid": {
+      "title": "MLX + Core ML Hibridoa",
+      "desc": "Arreta MLX-n exekutatzen da. MLP geruzak Apple Neural Engine-ra deskargatzen dira Core ML bidez — IOSurface tensor transferentzia zero-kopiarekin exekuzio-inguruneen artean."
+    },
+    "arena": {
+      "title": "Arena Esleipena",
+      "desc": "IOSurface-eko FP16 arena igerilekuak errentamendu-semantikarekin. Mallocrantz bidetik kanpo. Tensor trantsizio bakoitza erregistratua eta auditagarria."
+    },
+    "deterministic": {
+      "title": "Deskodetze Determinista",
+      "desc": "Deskodetze grinatsua token-akurketa zehatzarekin. Zortzi tokenezko kualifikazio-suitea. Hazi bera, sarrera bera — irteera bera. Beti."
+    },
+    "kvCache": {
+      "title": "KV Cache Motorra",
+      "desc": "Leiho irristakorra eta kanporatze orokorreko politikak. Aurrekarga eta cache deskodetze parekotasuna. Aldi bereko sarbidea errentamendu bereizketarekin."
+    }
+  },
+  "explainer": {
+    "heading": "Zer Egiten Duen Benetan Konputazio Motorrak.",
+    "lead": "Ahaztu jargon teknikoaz. Hona hemen zer gertatzen den Sartu sakatzen duzunean — euskaraz argi, gure ikerketa-exekuzioetako datu errealekin.",
+    "step1": {
+      "title": "Modeloa Zure Diskoan Bizi Da",
+      "body": "Gemma 4 12B-ren kopia izoztu bat biltegiratze lokalean dago. Tribunusek behin mapeatzen du memorian — deskargarik gabe, API gakorik gabe, hobaric gabe. Modeloa bere hash kriptografikoaren bidez identifikatzen da, zer exekutatzen ari zaren zehatz jakin dezazun.",
+      "dataLabel": "Modelo hasha"
+    },
+    "step2": {
+      "title": "Bi Motor Abiatzen Dira Aldi Berean",
+      "body": "MLX-k GPUa hartu eta arreta-geruzak exekutatzen ditu — zein hitzek duten pisua erabakitzen duen modeloaren zatia. Core ML-k Apple Neural Engine hartu eta feed-forward geruzak exekutatzen ditu — erabakia prozesatzen duen zatia. Memoria IOSurface izeneko baten bidez partekatzen dute. Pentsa ezazu bi sukaldarik lan-mahai bera partekatzea osagaiak alde batetik bestera pasa beharrean.",
+      "dataLabel": "Kopiak motorren artean"
+    },
+    "step3": {
+      "title": "42 Etapa, Mikrosegundo Bakoitza Erregistratua",
+      "body": "Worker-a esnatzen den momentutik azken token-a irteten den arte, eragiketa bakoitza denbora-markarekin eta erregistroarekin doa. Zehatz jakin nahi al duzu zenbat iraun zuen arretaren softmax-ek 48 geruzetako 23. geruzan? Gertaera-egunkarian dago. Hau ez da erregistro hutsa — instrumentazio forentsea da. Zerbait motel badabil, badakizu zer den eta zehazki zenbat den motelagoa.",
+      "dataLabel1": "Pipeline etapak",
+      "dataLabel2": "Erregistratutako geruzak",
+      "dataLabel3": "Gertaerak exekuzio bakoitzeko"
+    },
+    "step4": {
+      "title": "Sarrera Bera → Irteera Bera. Beti.",
+      "body": "Deskodetze grinatsu deterministak esan nahi du modeloak token berdinak ekoizten dituela sarrera berdinarentzat. Zortzi tokenezko kualifikazio-suite batekin egiaztatzen dugu — exekuzioak token tokeneko oracle erreferentziarekin bat etorri behar du. Token bakar bat oker badago, exekuzioa baztertzen da. Horrela dakizu zure optimizazioek ez dutela ezer hautsi.",
+      "dataLabel": "Kualifikazio eskakizuna"
+    },
+    "step5": {
+      "title": "Alborapen Bakoitzak Erregistroa Dauka",
+      "body": "Ezarpen-erreklamazio bat ere ez da egiten exekuzio-manifesturik, jatorri-katerik eta behaketa-erregistro aldaezinik gabe. Bost esperimentu diseinatu dira (EXP-0000-tik EXP-0004-ra), bakoitza hipotesi formalekin, errepikapen-politikekin eta zuzentasun-ateekin. Datuen DuckDB-n bizi dira — kontsultagarriak, auditagarriak eta betirako artxibatuak. Baztertutako optimizazioak ez dira inoiz ezabatzen, inork ez dezan berdin-berdina den bide itsua errepika.",
+      "dataLabel1": "Esperimentu diseinatuak",
+      "dataLabel2": "Lan-karga definitutakoak",
+      "dataLabel3": "Exekuzio-mailak"
+    },
+    "cta": "Hau da oinarria. Kontrol planak agenteak koordinatzen ditu. Konputazio motorrak modeloak exekutatzen ditu. Ebidentzia planoak frogatzen du biek funtzionatzen dutela. Hiru zutabe, plataforma bat."
+  },
+  "research": {
+    "heading": "Errendimendu-Erreklamazioek Froga Behar Dute.",
+    "lead": "Errendimendu-erreklamazio bakoitza Ikerketa Ebidentzia Planoak babesten du — jatorri-jarraipeneko esperimentu-markoa, 42 pipeline etapa instrumentatu, artefaktuen hash kriptografikoa eta exekuzio-erregistro aldaezinekin.",
+    "pipelineInit": "Hasiera",
+    "pipelinePerToken": "Token Bakoitzeko",
+    "pipelineTeardown": "Amaiera",
+    "pipelineCaption": "42 pipeline etapa — instrumentatuak, denbora-markadunak, erregistratuak. Mikrosegundo bakoitza kontabilizatuta.",
+    "runGrades": {
+      "title": "Exekuzio Mailak",
+      "desc": "Exekuzio bakoitza sailkatuta: esploraziozkoa, kontrolatua, erreklamazio hautagaia edo artxibokoa. Kontrolatutako+ exekuzioek soilik onartzen dituzte optimizazio erabakiak. Ondarezko emaitzak ez-autoritatibo gisa markatzen dira."
+    },
+    "immutable": {
+      "title": "Behaketa Aldaezinak",
+      "desc": "Gordineko behaketak ez dira inoiz bertan aldatzen. Zuzentzeek jatorrizkoaren jatorri-lotura duen kopia berria sortzen dute. Emaitza negatiboak betirako gordetzen dira — errepikatutako bide itsuak saihestuz."
+    },
+    "provenance": {
+      "title": "Jatorri Katea",
+      "desc": "Exekuzio bakoitzak iturburu-commit, bitar hashe, modelo identitatea, makina profila eta ingurunea harrapatzen ditu. DuckDB analitika gertaera-fluxu normalizatuaren gainean. Ezer ez da sinesten frogarik gabe."
+    },
+    "claim": {
+      "text": "Tribunus inferentzia lokaleko exekuzio v1 fisikoki eta semantikoki kualifikatua Gemma 4 12B ComputeImage izoztu baterako, kualifikatutako Apple Silicon 16 GB profilean.",
+      "meta": "Egoera: Zirriborroa · Esparrua: 64 tokeneko sarrera-sabaia, 8 tokeneko irteera-sabaia, deskodetze grinatsu determinista · Modeloa: d042df1e…"
+    }
+  },
+  "roadmap": {
+    "heading": "Aurrerako Bidea.",
+    "phase1": {
+      "label": "1. Fasea — Orain",
+      "title": "macOS Garatzaile Aurrebista",
+      "desc": "macOS aplikazio natiboa, garatzaile bakar batek ehunka agente orkestratzen ditu, denbora errealeko aldaketa-ikusgarritasuna, eskuordetutako agintea, LocalFabric koordinazio atzealdea."
+    },
+    "phase2": {
+      "label": "2. Fasea — Hurrengoa",
+      "title": "Talde Lankidetza",
+      "desc": "Denbora errealeko talde lankidetza, peer-to-peer zerbitzaririk gabeko arkitektura, senior/junior/hasiberri isolamendua, Valkey koordinazio atzealdea zuzeneko erabiltzaile anitzeko saioetarako."
+    },
+    "phase3": {
+      "label": "3. Fasea — Geroago",
+      "title": "Enpresa Gobernantza",
+      "desc": "Enpresa gobernantza, auditoretza-bide kriptografikoak, politika bidezko batze-ateak, betetze-ko prestaturiko ebidentzia-eraztunak, urrutiko Valkey banatutako taldeentzat."
+    },
+    "computeNow": {
+      "label": "Konputazioa — Orain",
+      "title": "Inferentzia Exekuzio Natiboa",
+      "desc": "MLX + Core ML exekuzio hibridoa, IOSurface FP16 arena esleipena, deskodetze determinista, KV cache motorra. 48 geruzako kualifikazioa Gemma 4 12B-n. Aplikazio kopiarik gabeko tensor transferentzia."
+    },
+    "computeNext": {
+      "label": "Konputazioa — Hurrengoa",
+      "title": "Ebidentzia Planoaren Kualifikazioa",
+      "desc": "Erreklamazio-hautagai exekuzio osoak lan-karga guztietan. Core ML egoera kualifikazioa. Tokio streaminga ezeztapenarekin. MLP kokapen erreferentziak. Datu-multzo izoztuaren argitalpena artxibo-mailako erreklamazioetarako."
+    }
+  },
+  "origin": {
+    "heading": "Nola Jaio Zen Tribunus.",
+    "tab1": "Marruskadura Txikiak",
+    "tab2": "Bifurkazioa",
+    "tab3": "Birsorkuntza",
+    "tab4": "Filosofia",
+    "tab5": "Non Gaude Orain",
+    "tab6": "Nora Goaz",
+    "panel1": "OpenCode-ren bifurkazio gisa hasi zen. Ez OpenCode txarra zelako — marruskadura txikiak pilatzen direlako baizik. Neure agente-profilak idazten hasi nintzen. Gero neure tresna pertsonalizatuak agenteak eraginkorragoak egiteko. Gero neure koordinazio-scriptak. Agenteek JSON fitxategi ad-hocetan idatzitako esku-emateen erregistroak irakurtzen eta idazten zituzten, diskoan sakabanatuta. Funtsean, datu-base bat eraiki nuen fitxategi-sistemako script pilo batekin. Egunero, marruskadura berri bat. Konponbide behin-behineko bat. Ia funtzionatzen zuen script berri bat.",
+    "panel2": "Azkenik, OpenCode-ren adar esperimentala bifurkatu nuen GitHub-en eta barrura begiratzen hasi nintzen. Zorotzen ninduten gogaikarritasun txiki guztien erroa aurkitu behar nuen. Aurkitu nuena zen agente bakarreko tresna baten arkitektura ezin dela egokitu sistema multiagente batera. Koordinazio-geruza natiboa izan behar da. Beraz, eraikitzen hasi nintzen.",
+    "panel3": "SQLite kendu eta PGlite + DuckDB + Valkey transplantatu nituen koordinazio-geruza errendimendu handikoa eraikitzeko. Neure agente pertsonalizatuak benetako egoera-makina bihurtu nituen. Sortutako azpiagente bakoitza bere mini exekuzio bihurtu zen egoera-makina baldintzagarriekin — agenteak nik diseinatutako orkestrazio-bidea benetan eta era koherentean jarraitzera behartuz. Lan-espazio partekatuak eta atzealdeko agenteak gaitu nituen, agente nagusia talde-buruak deitzen dituen banatzaile bihurtu zedin, bakoitza garapen-prozesuaren atal ezberdin bat koordinatuz. TUI-lehen hurbilpena desagerrarazi nuen eta gaitasun bakoitza lehen mailako inplementazio bihurtu nuen bai agenteen eragiketa UX-ean bai erabiltzaile-interfazean.",
+    "panel4": "Hau maitasunez, malkoz eta frustrazioz eraiki nuen. Sendo sinesten dut agente bat gainbegiratu gabe edozein sistematan ibiltzen uztea shell sarbidearekin, haur bat kargatutako pistolatzar-aparailu batekin gainbegiratu gabe uztearen pareko ingeniaritza dela. Tresna erabilgarria, gainbegiratze-eredu okerra. Baina gainbegiratze-eredu zuzena ez zegoen. Beraz, neuk eraiki behar izan nuen. Hemen partekatzen dut, zuk ere min hori bera jasan behar ez dezazun.",
+    "panel5": "Gaur, garatzaile bakar batek ehunka agente aldi berean kode-basean egiten ari diren aldaketak orkestratu eta denbora errealean ikus ditzake. macOS aplikazioak (Apple Silicon eta Intel) agente-korteeak sortzeko, misioak definitzeko, esparru-mugak ezartzeko eta diff bakoitza zuzenean ikusteko aukera ematen du. Ezer ez da iluntasunean gertatzen.",
+    "panel6": "Azken helburua lehen mailako denbora errealeko lankidetza da, non software-ingeniari taldeek elkarrekin lan egiten duten, bakoitza ehunka agente aldi berean sortuz, denak biltegi berean aldi berean. Denbora errealeko koordinazioa hain da leuna non ingenari nagusi batek juniorrek eta hasiberriek zer egiten ari diren denbora errealean ikus dezakeen. Taldeek produktua eraikitzen eman beharko lukete denbora gehiago, elkarri batzarretan oihu egiten baino, norbaitek ekoizpen-datubasea ezabatu duelako prompt okerra bidali zuelako."
+  },
+  "blog": {
+    "heading": "Lan-mahaitik.",
+    "article1": {
+      "title": "42 Etapako Pipelina: Zergatik Instrumentatzen Dugun Mikrosegundo Bakoitza",
+      "desc": "worker_launch-etik worker_teardown-era — Tribunus inferentzia errendimenduaren neurketaren atzean dagoen taxonomia."
+    },
+    "article2": {
+      "title": "Zero-Kopia Tensorrak MLX eta Core ML Artean",
+      "desc": "Nola IOSurface-eko FP16 arenek aplikazio-mailako kopiak ezabatzen dituzten konputazio hibridoaren mugan."
+    },
+    "article3": {
+      "title": "Emaitza Negatiboak Hilezkorrak Dira",
+      "desc": "Zergatik Ebidentzia Planoak baztertutako optimizazioak betirako gordetzen dituen — eta nola aurrezten duen horrek ingeniaritza urteak."
+    },
+    "badge": "Laster"
+  },
+  "team": {
+    "badge": "Bide-orria",
+    "heading": "Nora Goaz.",
+    "p1": "Tribunus-en hurrengo fasea peer-to-peer zerbitzaririk gabeko talde koordinazioa da. Besterik gabeko zerbitzari zentralik, ez hodeiko mendekotasunik, ez huts-puntu bakarrekorik. Ingeniari bakoitzak agente bakoitzaren lana denbora errealean ikusiko du — nagusiek juniorren korteeak behatzen, hasiberriek sistema murrizketa pean nola funtzionatzen duen ikasiz.",
+    "p2": "Ingeniari nagusiek misio-parametroak definitu, berrikuspen-ateak ezarri eta zein agentek kode-basearen zein ataletan duten sarbidea kontrolatuko dute. Junior ingeniariek sandbox-en barruan jardungo dute — behatuz ikasiz nola exekutatzen duen korteak murrizketa pean. Elkarri batzarretan oihu egiteko egunak amaitu egingo dira, norbaitek ekoizpen-datubasea ezabatu duelako prompt okerra bidali zuelako.",
+    "p3": "Emaitza software-lantegi bat izango da, non kolaboratzaile bakoitza bere gaitasunaren gailurrean lan egingo duen, inor ez baita blokeatuta egongo berrikuspen baten zain, eta batze bakoitzak langa gaindituko du.",
+    "coordinator": "KOORDINATZAILEA",
+    "senior": "Senior",
+    "junior": "Junior"
+  },
+  "faq": {
+    "heading": "Maiz Egindako Galderak.",
+    "q1": {
+      "question": "Zer da Tribunus?",
+      "answer": "Tribunus ingeniaritza agentikorako kontrol plana da. Ehunka kode-agente aldi berean biltegi bakarrean lan egiten koordinatzen ditu, denbora errealeko ikusgarritasunarekin eta eskuordetutako agintearekin."
+    },
+    "q2": {
+      "question": "AI kode-tresna bat besterik ez da?",
+      "answer": "Ez. Tribunus-ek ez du koderik sortzen. Hori egiten duten agenteak koordinatzen ditu. Orkestrazioa, ikusgarritasuna, ateak betearaztea eta ebidentzien jarraipena kudeatzen ditu, zuk ehunka agente-saio eskuz kudeatu beharrik ez izateko."
+    },
+    "q3": {
+      "question": "Neure LLM-a exekutatu behar al dut?",
+      "answer": "Ez. Tribunus-ek dagoeneko erabiltzen duzun edozein LLM atzerekin funtzionatzen du — OpenAI, Anthropic, tokiko modeloak Ollama bidez, edo enpresa-hornitzaileak. Kontrol plana modelo-independentea da."
+    },
+    "q4": {
+      "question": "Doan al da?",
+      "answer": "macOS garatzaile aurrebista doakoa da. Talde eta enpresa mailetarako prezioak ezaugarri horiek kaleratzen direnean iragarriko dira. Beti egongo da doako maila eskuzabala garatzaile indibidualentzat."
+    },
+    "q5": {
+      "question": "Apurtu al dezakete agenteek nire kode-basea?",
+      "answer": "Agenteek zuk definitutako eskuordetutako agintearen barruan jarduten dute. Soilik espresuki baimendutako fitxategietan idatzi dezakete. Ingeniari nagusiek perimetroa ezartzen dute. Aldaketa bakoitza denbora errealean ikusgai da. Batze bakoitzak atea du."
+    },
+    "q6": {
+      "question": "Zertan da ezberdina Claude Code instantzia anitz exekutatzearekin alderatuta?",
+      "answer": "Agente anitz koordinaziorik gabe exekutatzeak batze-gatazkak, lasterketa-baldintzak, bikoiztutako lana eta agente bakoitzak egiten duenaren ikusgarritasun hutsa dakartza. Tribunus-ek koordinazio-ehuna eskaintzen du, garapen multiagentikoa seguru, ikusgarri eta produktibo egiten duena."
+    }
+  },
+  "contact": {
+    "heading": "Jarri Harremanetan.",
+    "email": "Posta elektronikoa",
+    "github": "GitHub",
+    "tagline": "Venezuelako ingeniari batek eraikia San Frantziskon, Kalifornian — maitasunez, malkoz eta frustrazioz."
+  },
+  "download": {
+    "heading": "Eskuratu Tribunus.",
+    "arm64": {
+      "title": "macOS Apple Silicon",
+      "desc": "ARM64 bitar natiboa. M1/M2/M3/M4 eta ondorengoak.",
+      "badge": "v0.1.0 — Garatzaile Aurrebista",
+      "btn": "Deskargatu"
+    },
+    "intel": {
+      "title": "macOS Intel",
+      "desc": "x86-64 bitarra Intel Mac-rentzat.",
+      "badge": "Laster — Intel Eraikuntza"
+    }
+  },
+  "footer": {
+    "copyright": "© 2026 Tribunus. Zehaztasunez egindako ingeniaritza.",
+    "github": "GitHub",
+    "contact": "Kontaktua",
+    "privacy": "Pribatutasuna"
+  },
+  "langSwitcher": {
+    "label": "Hizkuntza"
+  }
+}

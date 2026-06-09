@@ -1,0 +1,300 @@
+{
+  "_meta": {
+    "language": "Swahili",
+    "nativeName": "Kiswahili",
+    "dir": "ltr",
+    "locale": "sw"
+  },
+  "nav": {
+    "logo": "TRIBUNUS",
+    "download": "Pakua"
+  },
+  "hero": {
+    "title": "Amuru Kikosi.",
+    "subtitle": "Ratibu mamia ya mawakala wa coding kwenye hazina moja. Mwonekano wa wakati halisi, mamlaka yenye mipaka, bila fujo.",
+    "cta": "Pakua kwa macOS"
+  },
+  "proof": {
+    "heading": "Ione Ikitenda.",
+    "plane": "Tribunus\nControl Plane",
+    "you": "Wewe",
+    "orchestrate": {
+      "title": "Panga",
+      "desc": "Fafanua misheni, weka mipaka, tuma vikosi. Mhandisi mmoja → mamia ya mawakala."
+    },
+    "observe": {
+      "title": "Chunguza",
+      "desc": "Kila diff, kila uamuzi, kila hali ya wakala inatiririka moja kwa moja. Hakuna kinachotokea gizani."
+    },
+    "govern": {
+      "title": "Tawala",
+      "desc": "Mamlaka yenye mipaka, milango ya kuunganisha, minyororo ya ushahidi. Wahandisi wakuu huweka mpaka."
+    }
+  },
+  "features": {
+    "heading": "Kiwanda cha Programu, Kilichoundwa Upya.",
+    "orchestrate": {
+      "title": "Panga Mawakala",
+      "desc": "Zindua na ratibu mamia ya mawakala wa coding wanaofanya kazi kwa pamoja katika hazina yako yote ya msimbo. Fafanua misheni, weka mipaka, na tazama kikosi kikitekeleza."
+    },
+    "visibility": {
+      "title": "Mwonekano wa Wakati Halisi",
+      "desc": "Kila badiliko la faili, kila uamuzi wa wakala, kila diff yatiririka moja kwa moja kwa kila mwanachama wa timu. Hakuna kinachotokea gizani."
+    },
+    "authority": {
+      "title": "Mamlaka Yenye Mipaka",
+      "desc": "Wahandisi wakuu huweka mpaka. Vijana na wageni hufanya kazi ndani ya mipaka iliyo wazi. Mamlaka yanateremka chini — hayaelei pembeni."
+    },
+    "evidence": {
+      "title": "Ushahidi na Milango",
+      "desc": "Kila badiliko hufuatiliwa, kila uamuzi unaweza kukaguliwa, kila kuunganisha kuna lango. Minyororo ya ushahidi wa kriptografia kwa mazingira yaliyodhibitiwa."
+    }
+  },
+  "capabilities": {
+    "heading": "Kutoka Mfano hadi Uzalishaji.",
+    "prototyping": {
+      "title": "Utengenezaji wa Mifano",
+      "desc": "Tengeneza mifano inayofanya kazi kwa dakika. Fafanua kiunzi na waache mawakala wayaweke mabomba huku wewe ukizingatia usanifu."
+    },
+    "debugging": {
+      "title": "Kutafuta Makosa",
+      "desc": "Tuma vikosi vya mawakala kufuatilia msimbo usiofahamika, kutafuta sababu za msingi, na kupendekeza marekebisho — sambamba kabisa."
+    },
+    "iteration": {
+      "title": "Marudio ya Haraka",
+      "desc": "Tuma vipengele kwa saa, si sprints. Mawakala hushughulikia kazi za kawaida; timu yako hukagua dhamira na kusafirisha matokeo."
+    },
+    "featureImpl": {
+      "title": "Utekelezaji wa Haraka wa Vipengele",
+      "desc": "Tafsiri mahitaji kuwa msimbo unaofanya kazi kwa kasi. Gawanya vipengele katika kazi sambamba za mawakala kwa utatuzi wa migongano wa kiotomatiki."
+    },
+    "auditing": {
+      "title": "Ukaguzi wa Usalama wa Mtandao",
+      "desc": "Wachia mawakala kwenye hazina yako ya msimbo kutafuta udhaifu, kuangalia ufuasi, na kutoa ripoti tayari kwa ukaguzi."
+    },
+    "ethicalHacking": {
+      "title": "Utendaji wa Udukuzi wa Kimaadili",
+      "desc": "Endesha kampeni za majaribio ya kupenya zilizopangwa na mawakala wanaoripoti matokeo kwa daftari kuu la ushahidi."
+    },
+    "production": {
+      "title": "Uwasilishaji Kamili wa Uzalishaji",
+      "desc": "Kutoka kiwanja hadi uzalishaji. Mawakala huandaa, hujaribu, huandika nyaraka, na hufunga kifurushi. Wanadamu hukagua na kuidhinisha kila lango."
+    }
+  },
+  "compute": {
+    "badge": "Mpya",
+    "heading": "Uelekezaji wa Ndani. Hakuna Safari za Kwenda na Kurudi.",
+    "lead": "Tribunus si control plane tu. Inakuja na programu elekezi ya asili inayotekeleza modeli ndani ya kifaa kwenye Apple Silicon — hakuna wingu, hakuna funguo za API, hakuna kodi ya muda wa kusubiri.",
+    "mlx": "MLX",
+    "coreml": "Core ML / ANE",
+    "bridge": "IOSurface\nFP16",
+    "mlxKernel": "Shughuli za Kernel",
+    "mlxAttention": "Attention",
+    "mlxMlp": "MLP",
+    "coremlMlp": "Safu za MLP",
+    "coremlState": "Visiwa vya Hali",
+    "statLayers": "Safu Zilizohitimu",
+    "statCopies": "Nakala Zilizotumika",
+    "statTests": "Majaribio kwenye Moduli 9",
+    "statPrecision": "Usahihi wa Mipaka",
+    "hybrid": {
+      "title": "Mseto wa MLX + Core ML",
+      "desc": "Attention inaendesha kwenye MLX. Safu za MLP zinaondoka kwenda Apple Neural Engine kupitia Core ML — kwa uhamisho wa tensor wa nakala-sifuri kupitia IOSurface kati ya programu elekezi."
+    },
+    "arena": {
+      "title": "Ugawaji wa Uwanja",
+      "desc": "Mabwawa ya uwanja ya FP16 yanayotegemea IOSurface yenye kanuni za ukodishaji. Hakuna malloc kwenye njia nyepesi. Kila mpito wa tensor una risiti na unaweza kukaguliwa."
+    },
+    "deterministic": {
+      "title": "Usimbuaji wa Kuamua",
+      "desc": "Greedy decode kwa uthibitishaji wa tokeni inayolingana kamili. Kifurushi cha kuhitimu cha tokeni nane. Mbegu sawa, ingizo sawa — towe sawa. Kila wakati."
+    },
+    "kvCache": {
+      "title": "Injini ya KV Cache",
+      "desc": "Sera za dirisha la kuteleza na uondoaji wa jumla. Prefill + usimbuaji sambamba na kashe. Ufikiaji wa wakati mmoja kwa utengaji wa ukodishaji unaofaa."
+    }
+  },
+  "explainer": {
+    "heading": "Injini ya Kukokotoa Inafanya Nini Hasa.",
+    "lead": "Sahau istilahi. Hiki ndicho kinachotokea unapobonyeza Enter — kwa Kiswahili cha kawaida, pamoja na data halisi kutoka kwa tafiti zetu.",
+    "step1": {
+      "title": "Modeli Iko kwenye Diski Yako",
+      "body": "Nakala iliyogandishwa ya Gemma 4 12B iko kwenye hifadhi ya ndani. Tribunus huichora kwenye kumbukumbu mara moja — hakuna kupakua, hakuna funguo za API, hakuna wingu. Modeli inatambuliwa kwa hash ya kriptografia ili ujue hasa unachoendesha.",
+      "dataLabel": "Hash ya modeli"
+    },
+    "step2": {
+      "title": "Injini Mbili Huwaka Wakati Mmoja",
+      "body": "MLX inatumia GPU na kuendesha safu za attention — sehemu ya modeli inayoamua maneno gani ni muhimu. Core ML inatumia Apple Neural Engine na kuendesha safu za feed-forward — sehemu inayochakata kilichojulikana. Zinashiriki kumbukumbu kupitia kitu kiitwacho IOSurface. Fikiria kama wapishi wawili wanaoshiriki ubao mmoja wa kukatia badala ya kupishana viungo.",
+      "dataLabel": "Nakala kati ya injini"
+    },
+    "step3": {
+      "title": "Hatua 42, Kila Mikrosekundi Imeandikwa",
+      "body": "Tangu wakati mfanyakazi anapoamka hadi tokeni ya mwisho inapotoka, kila operesheni ina muhuri wa muda na risiti. Unataka kujua hasa attention softmax ilichukua muda gani kwenye safu ya 23 kati ya 48? Iko kwenye jarida la matukio. Hii si kumbukumbu — hii ni uchunguzi wa kitaalamu. Ikiwa kitu kina mwendo wa polepole, unajua hasa kitu gani na kiasi gani.",
+      "dataLabel1": "Hatua za bomba",
+      "dataLabel2": "Safu zinazofuatiliwa",
+      "dataLabel3": "Matukio kwa kila ukimbizaji"
+    },
+    "step4": {
+      "title": "Ingizo Sawa → Towe Sawa. Kila Wakati.",
+      "body": "Usimbuaji wa kuamua wa kushiba unamaanisha modeli inazalisha tokeni zinazofanana kabisa kwa ingizo linalofanana kabisa. Tunathibitisha hili kwa kifurushi cha kuhitimu cha tokeni nane — programu elekezi lazima ilingane na rejeleo la mwongoo tokeni kwa tokeni. Ikiwa tokeni moja si sahihi, ukimbizaji unakataliwa. Hivi ndivyo unavyojua uboreshaji wako haukuvunja chochote.",
+      "dataLabel": "Sharti la kuhitimu"
+    },
+    "step5": {
+      "title": "Kila Dai Lina Risiti",
+      "body": "Hakuna dai la utendaji linalotolewa bila tamko la ukimbizaji, mlolongo wa asili, na rekodi ya uchunguzi isiyobadilika. Majaribio matano yameundwa (EXP-0000 hadi EXP-0004), kila moja lina nadharia rasmi, sera za kurudia, na milango ya usahihi. Data iko kwenye DuckDB — inayoweza kuulizwa, kukaguliwa, na kuhifadhiwa kabisa. Uboreshaji uliokataliwa haufutwi kamwe ili mtu asirudie njia ileile ya mwisho.",
+      "dataLabel1": "Majaribio yaliyoundwa",
+      "dataLabel2": "Kazi zilizofafanuliwa",
+      "dataLabel3": "Daraja za ukimbizaji"
+    },
+    "cta": "Huu ndio msingi. Control plane huratibu mawakala. Compute engine huendesha modeli. Evidence plane huthibitisha zote zinavyofanya kazi. Nguzo tatu, jukwaa moja."
+  },
+  "research": {
+    "heading": "Madai ya Utendaji Yanahitaji Uthibitisho.",
+    "lead": "Kila dai la utendaji linaungwa mkono na Research Evidence Plane — mfumo wa majaribio unaofuatilia asili wenye hatua 42 za bomba zilizopimwa, hashing za mabaki ya kriptografia, na rekodi za ukimbizaji zisizobadilika.",
+    "pipelineInit": "Anza",
+    "pipelinePerToken": "Kwa Tokeni",
+    "pipelineTeardown": "Maliza",
+    "pipelineCaption": "Hatua 42 za bomba — zilizopimwa, zilizowekwa muhuri, zenye risiti. Kila mikrosekundi imehesabiwa.",
+    "runGrades": {
+      "title": "Daraja za Ukimbizaji",
+      "desc": "Kila ukimbizaji una daraja: uchunguzi, uliodhibitiwa, mtahiniwa wa dai, au kumbukumbu. Ukimbizaji uliodhibitiwa+ pekee ndio unaounga mkono maamuzi ya uboreshaji. Matokeo ya zamani yametiwa alama kuwa si ya mamlaka."
+    },
+    "immutable": {
+      "title": "Uchunguzi Usiobadilika",
+      "desc": "Uchunguzi ghafi haubadilishwi kamwe mahali pake. Marekebisho hutoa nakala mpya yenye kiungo cha asili kwa asilia. Matokeo hasi huhifadhiwa milele — kuzuia kurudiwa kwa njia za mwisho."
+    },
+    "provenance": {
+      "title": "Mlolongo wa Asili",
+      "desc": "Kila ukimbizaji hunasa ahadi ya chanzo, hashi za mfumo wa jozi, utambulisho wa modeli, wasifu wa mashine, na mazingira. DuckDB uchanganuzi juu ya mkondo wa matukio uliosawazishwa. Hakuna kinachokubaliwa kwa imani tu."
+    },
+    "claim": {
+      "text": "Programu elekezi ya uelekezaji wa ndani ya Tribunus v1 imehitimu kimwili na kimantiki kwa Picha moja ya Kokotoa iliyogandishwa ya Gemma 4 12B kwenye wasifu uliohitimu wa Apple Silicon 16 GB.",
+      "meta": "Hali: Rasimu · Mipaka: dari ya kidokezo cha tokeni 64, dari ya towe cha tokeni 8, usimbuaji wa kuamua wa kushiba · Modeli: d042df1e…"
+    }
+  },
+  "roadmap": {
+    "heading": "Barabara ya Mbele.",
+    "phase1": {
+      "label": "Awamu ya 1 — Sasa",
+      "title": "Onyesho la Awali la Msanidi wa macOS",
+      "desc": "Programu asilia ya macOS, msanidi mmoja akiratibu mamia ya mawakala, mwonekano wa wakati halisi wa mabadiliko, mamlaka yenye mipaka, programu ya ushirikiano ya LocalFabric."
+    },
+    "phase2": {
+      "label": "Awamu ya 2 — Inayofuata",
+      "title": "Ushirikiano wa Timu",
+      "desc": "Ushirikiano wa timu kwa wakati halisi, usanifu wa rika-kwa-rika usio na seva, sanduku za kujifungia za senior/junior/rookie, programu ya ushirikiano ya Valkey kwa vikao vya watumiaji wengi wa moja kwa moja."
+    },
+    "phase3": {
+      "label": "Awamu ya 3 — Baadaye",
+      "title": "Utawala wa Biashara",
+      "desc": "Utawala wa biashara, nyayo za ukaguzi wa kriptografia, milango ya kuunganisha yenye sera, pete za ushahidi tayari kwa ufuasi, Valkey ya mbali kwa timu zilizotawanyika."
+    },
+    "computeNow": {
+      "label": "Kokotoa — Sasa",
+      "title": "Programu Elekezi Asilia ya Uelekezaji",
+      "desc": "Utekelezaji mseto wa MLX + Core ML, ugawaji wa uwanja wa IOSurface FP16, usimbuaji wa kuamua, injini ya KV cache. Kuhitimu safu 48 kwenye Gemma 4 12B. Uhamisho wa tensor bila nakala ya programu."
+    },
+    "computeNext": {
+      "label": "Kokotoa — Inayofuata",
+      "title": "Kuhitimu kwa Evidence Plane",
+      "desc": "Ukimbizaji kamili wa watahiniwa wa madai kwenye kazi zote. Kuhitimu hali ya Core ML. Utiririshaji wa Tokio kwa kughairi. Vigezo vya uwekaji wa MLP. Utoaji wa hifadhidata iliyogandishwa kwa madai ya daraja la kumbukumbu."
+    }
+  },
+  "origin": {
+    "heading": "Jinsi Tribunus Ilivyozaliwa.",
+    "tab1": "Msuguano Mdogo",
+    "tab2": "Fork",
+    "tab3": "Ujenzi Mpya",
+    "tab4": "Falsafa",
+    "tab5": "Tuko Wapi Sasa",
+    "tab6": "Tunakokwenda",
+    "panel1": "Ilianza kama fork ya OpenCode. Si kwa sababu OpenCode ilikuwa mbaya — kwa sababu misuguano midogo ilijilimbikiza. Nilianza kuandika wasifu wangu wa mawakala. Kisha zana zangu maalum kufanya mawakala wawe na ufanisi zaidi. Kisha hati zangu za uratibu. Mawakala walikuwa wakisoma na kuandika kumbukumbu za mkono katika faili za JSON za muda zilizotawanyika kwenye diski. Kimsingi nilijenga hifadhidata kutoka kwa rundo la hati kwenye mfumo wa faili. Kila siku, msuguano mpya. Suluhu la muda mfupi jipya. Hati nyingine iliyokaribia kufanya kazi.",
+    "panel2": "Hatimaye nilifork tawi la majaribio la OpenCode kwenye GitHub na kuanza kutazama ndani. Nilihitaji kupata mzizi wa shida zote ndogo zilizonikasirisha. Nilichokuta ni kwamba usanifu wa zana ya wakala mmoja hauwezi kubadilishwa kuwa mfumo wa mawakala wengi. Safu ya uratibu lazima iwe asilia. Kwa hiyo nilianza kujenga.",
+    "panel3": "Niliondoa SQLite na kupandikiza PGlite + DuckDB + Valkey kujenga safu ya uratibu ya upitishaji wa juu. Niligeuza mawakala wangu maalum kuwa mashine halisi za hali. Kila subagent iliyozinduliwa ikawa programu elekezi yake ndogo yenye mashine za hali zenye masharti — kulazimisha mawakala kufuata njia ya uratibu niliyoibuni, kwa uthabiti. Niliwezesha viwanja vya kazi vilivyoshirikiwa na mawakala wa chinichini ili wakala mkuu awe mtoa huduma anayeita viongozi wa timu, kila mmoja akiratibu sehemu tofauti ya mchakato wa maendeleo. Niliacha mbinu ya TUI-kwanza na nikafanya kila uwezo kuwa utekelezaji wa daraja la kwanza katika UX ya operesheni ya wakala na UI inayomkabili mtumiaji.",
+    "panel4": "Nimejenga hii kwa upendo, machozi, na kuchanganyikiwa. Ninaamini kabisa kuwa kumwacha wakala azurure bila usimamizi kwenye mfumo wowote ulio na ufikiaji wa shell — hiyo ni sawa na kumwacha mtoto mchanga akiwa na bunduki ya misumari iliyojazwa bila usimamizi. Zana muhimu, lakini mtindo mbaya wa usimamizi. Lakini mtindo sahihi wa usimamizi haukuwepo. Kwa hiyo nililazimika kujenga wangu. Ninaishiriki hapa ili usipate maumivu kama hayo pia.",
+    "panel5": "Leo, msanidi mmoja anaweza kuratibu na kuona kwa wakati halisi mabadiliko yanayofanywa kwenye hazina ya msimbo na mamia ya mawakala kwa pamoja. Programu ya macOS (Apple Silicon na Intel) inakuwezesha kuzindua vikosi vya mawakala, kufafanua misheni, kuweka mipaka, na kutazama kila diff ikitiririka moja kwa moja. Hakuna kinachotokea gizani.",
+    "panel6": "Lengo la mwisho ni ushirikiano wa daraja la kwanza wa wakati halisi ambapo timu za wahandisi wa programu hufanya kazi pamoja, kila mmoja akizindua mamia ya mawakala wakati huo huo, wote kwenye hazina moja kwa wakati mmoja. Uratibu wa wakati halisi ni mwepesi hivi kwamba mhandisi mkuu anaweza kuona kile vijana na wageni wanachofanya kwa wakati halisi. Timu zinapaswa kutumia muda zaidi kujenga bidhaa kuliko kupigana kelele mikutano kuhusu mtu aliyefuta hifadhidata ya uzalishaji kwa sababu alituma kidokezo kibaya."
+  },
+  "blog": {
+    "heading": "Kutoka Benchi la Kazi.",
+    "article1": {
+      "title": "Bomba la Hatua 42: Kwa Nini Tunapima Kila Mikrosekundi",
+      "desc": "Kutoka worker_launch hadi worker_teardown — uainishaji nyuma ya upimaji wa utendaji wa uelekezaji wa Tribunus."
+    },
+    "article2": {
+      "title": "Tensor za Nakala-Sifuri Kati ya MLX na Core ML",
+      "desc": "Jinsi uwanja wa FP16 unaotegemea IOSurface unavyoondoa nakala za kiwango cha programu kwenye mpaka wa kokotoa mseto."
+    },
+    "article3": {
+      "title": "Matokeo Hasi Hayafi",
+      "desc": "Kwa nini Evidence Plane huhifadhi uboreshaji uliokataliwa milele — na jinsi hiyo inavyookoa miaka ya uhandisi."
+    },
+    "badge": "Inakuja hivi karibuni"
+  },
+  "team": {
+    "badge": "Ramani ya Njia",
+    "heading": "Hii Inakokwenda.",
+    "p1": "Awamu inayofuata ya Tribunus ni uratibu wa timu usio na seva wa rika-kwa-rika. Hakuna seva kuu, hakuna utegemezi wa wingu, hakuna sehemu moja ya kushindwa. Kila mhandisi ataona kazi ya kila wakala kwa wakati halisi — wahandisi wakuu wakiangalia vikosi vya vijana, wageni wakijifunza kutoka jinsi mfumo unavyofanya kazi chini ya vikwazo.",
+    "p2": "Wahandisi wakuu watafafanua vigezo vya misheni, kuweka milango ya ukaguzi, na kudhibiti ni mawakala gani wana ufikiaji wa sehemu gani za hazina ya msimbo. Wahandisi vijana watafanya kazi ndani ya sanduku la kujifungia — wakijifunza kwa kuangalia jinsi kikosi kinavyotekeleza chini ya vizuizi. Siku za kupigana kelele mikutano kuhusu mtu aliyefuta hifadhidata ya uzalishaji kwa sababu alituma kidokezo kibaya zitakwisha.",
+    "p3": "Matokeo yatakuwa kiwanda cha programu ambapo kila mchangiaji atafanya kazi kwenye kilele cha uwezo wake, hakuna atakayezuiliwa kusubiri ukaguzi, na kila kuunganisha kutafikia kiwango.",
+    "coordinator": "MRATIBU",
+    "senior": "Mkuu",
+    "junior": "Vijana"
+  },
+  "faq": {
+    "heading": "Maswali Yanayoulizwa Mara kwa Mara.",
+    "q1": {
+      "question": "Tribunus ni nini?",
+      "answer": "Tribunus ni control plane kwa uhandisi wa wakala. Inaratibu mamia ya mawakala wa coding wanaofanya kazi kwa pamoja kwenye hazina moja kwa mwonekano wa wakati halisi na mamlaka yenye mipaka."
+    },
+    "q2": {
+      "question": "Hii ni zana nyingine tu ya AI ya coding?",
+      "answer": "Hapana. Tribunus haitoi msimbo. Inaratibu mawakala wanaofanya hivyo. Inashughulikia uratibu, mwonekano, utekelezaji wa lango, na ufuatiliaji wa ushahidi ili usilazimike kusimamia vikao vya mamia ya mawakala kwa mikono."
+    },
+    "q3": {
+      "question": "Je, ninahitaji kuendesha LLM yangu mwenyewe?",
+      "answer": "Hapana. Tribunus inafanya kazi na programu yoyote ya nyuma ya LLM unayotumia tayari — OpenAI, Anthropic, modeli za ndani kupitia Ollama, au watoa huduma wa biashara. Control plane haitegemei modeli."
+    },
+    "q4": {
+      "question": "Je, hii ni bure?",
+      "answer": "Onyesho la awali la msanidi wa macOS ni bure. Bei kwa timu na biashara itatangazwa wakati vipengele hivyo vinapotolewa. Kutakuwa na kiwango cha bure cha ukarimu kwa wasanidi binafsi siku zote."
+    },
+    "q5": {
+      "question": "Je, mawakala wanaweza kuvunja hazina yangu ya msimbo?",
+      "answer": "Mawakala hufanya kazi ndani ya mamlaka yenye mipaka uliyoiweka. Wanaweza tu kuandika kwenye faili unazoruhusu waziwazi. Wahandisi wakuu huweka mpaka. Kila badiliko linaonekana kwa wakati halisi. Kila kuunganisha kuna lango."
+    },
+    "q6": {
+      "question": "Hii inatofautiana vipi na kuendesha matukio mengi ya Claude Code?",
+      "answer": "Kuendesha mawakala wengi bila uratibu kunamaanisha migongano ya kuunganisha, hali za kukimbiana, kazi iliyorudiwa, na kutokuwa na mwonekano wa kile kila wakala anachofanya. Tribunus hutoa kitambaa cha uratibu kinachofanya maendeleo ya mawakala wengi kuwa salama, yenye mwonekano, na yenye tija."
+    }
+  },
+  "contact": {
+    "heading": "Wasiliana Nasi.",
+    "email": "Barua Pepe",
+    "github": "GitHub",
+    "tagline": "Imejengwa na mhandisi wa Venezuela huko San Francisco, California — kwa upendo, machozi, na kuchanganyikiwa."
+  },
+  "download": {
+    "heading": "Pata Tribunus.",
+    "arm64": {
+      "title": "macOS Apple Silicon",
+      "desc": "Mfumo wa jozi asilia wa ARM64. M1/M2/M3/M4 na zaidi.",
+      "badge": "v0.1.0 — Onyesho la Awali la Msanidi",
+      "btn": "Pakua"
+    },
+    "intel": {
+      "title": "macOS Intel",
+      "desc": "Mfumo wa jozi wa x86-64 kwa Mac zenye Intel.",
+      "badge": "Inakuja hivi karibuni — Toleo la Intel"
+    }
+  },
+  "footer": {
+    "copyright": "© 2026 Tribunus. Imehandisiwa kwa usahihi.",
+    "github": "GitHub",
+    "contact": "Wasiliana",
+    "privacy": "Faragha"
+  },
+  "langSwitcher": {
+    "label": "Lugha"
+  }
+}

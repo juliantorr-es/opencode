@@ -1,0 +1,300 @@
+{
+  "_meta": {
+    "language": "Suomi",
+    "nativeName": "Suomi",
+    "dir": "ltr",
+    "locale": "fi"
+  },
+  "nav": {
+    "logo": "TRIBUNUS",
+    "download": "Lataa"
+  },
+  "hero": {
+    "title": "Johda Kohorttia.",
+    "subtitle": "Koordinoi satoja koodausagentteja yhdessä repossa. Reaaliaikainen näkyvyys, rajattu toimivalta, nolla kaaosta.",
+    "cta": "Lataa macOS:lle"
+  },
+  "proof": {
+    "heading": "Katso toiminnassa.",
+    "plane": "Tribunus\nControl Plane",
+    "you": "Sinä",
+    "orchestrate": {
+      "title": "Orkestroi",
+      "desc": "Määritä missiot, rajaa laajuus, käynnistä kohortit. Yksi insinööri → satoja agentteja."
+    },
+    "observe": {
+      "title": "Tarkkaile",
+      "desc": "Jokainen diff, jokainen päätös, jokainen agentin tila striimataan livenä. Mikään ei tapahdu pimeässä."
+    },
+    "govern": {
+      "title": "Hallitse",
+      "desc": "Rajattu toimivalta, merge-portit, todisteketjut. Seniorit insinöörit asettavat rajat."
+    }
+  },
+  "features": {
+    "heading": "Ohjelmistotehdas, uudelleen keksitty.",
+    "orchestrate": {
+      "title": "Orkestroi agentteja",
+      "desc": "Käynnistä ja koordinoi satoja koodausagentteja, jotka työskentelevät rinnakkain koko koodipohjasi läpi. Määritä missiot, aseta rajat ja katso kohortin toimivan."
+    },
+    "visibility": {
+      "title": "Reaaliaikainen näkyvyys",
+      "desc": "Jokainen tiedostomuutos, jokainen agentin päätös, jokainen diff striimataan livenä jokaiselle tiimin jäsenelle. Mikään ei tapahdu pimeässä."
+    },
+    "authority": {
+      "title": "Rajattu toimivalta",
+      "desc": "Seniorit insinöörit asettavat rajat. Juniorit ja aloittelijat toimivat selkeiden ohjeiden puitteissa. Toimivalta virtaa alaspäin — ei koskaan sivusuunnassa."
+    },
+    "evidence": {
+      "title": "Todisteet & portit",
+      "desc": "Jokainen muutos jäljitetään, jokainen päätös on tarkastettavissa, jokainen merge on suojattu. Kryptografiset todisteketjut säännellyille ympäristöille."
+    }
+  },
+  "capabilities": {
+    "heading": "Prototyypistä tuotantoon.",
+    "prototyping": {
+      "title": "Prototypointi",
+      "desc": "Luo toimivia prototyyppejä minuuteissa. Määritä runko ja anna agenttien hoitaa putkityöt sillä aikaa kun keskityt arkkitehtuuriin."
+    },
+    "debugging": {
+      "title": "Vianetsintä",
+      "desc": "Lähetä agenttiryhmiä tutkimaan tuntematonta koodia, paikantamaan juurisyitä ja ehdottamaan korjauksia — kaikki rinnakkain."
+    },
+    "iteration": {
+      "title": "Nopea iterointi",
+      "desc": "Toimita ominaisuuksia tunneissa, ei sprinteissä. Agentit hoitavat rutiinityön; tiimisi tarkistaa tarkoituksen ja toimittaa tuloksen."
+    },
+    "featureImpl": {
+      "title": "Nopea ominaisuuksien toteutus",
+      "desc": "Muuta vaatimukset toimivaksi koodiksi vauhdilla. Pura ominaisuudet rinnakkaisiksi agenttitehtäviksi automaattisella konfliktienratkaisulla."
+    },
+    "auditing": {
+      "title": "Kyberturvallisuustarkastus",
+      "desc": "Päästä agentit vapaaksi koodipohjaasi löytämään haavoittuvuuksia, tarkistamaan vaatimustenmukaisuutta ja tuottamaan tarkastusvalmiita raportteja."
+    },
+    "ethicalHacking": {
+      "title": "Eettisen hakkerointityönkulut",
+      "desc": "Suorita jäsenneltyjä tunkeutumistestauskampanjoita agenteilla, jotka raportoivat havainnot keskustodistekirjaan."
+    },
+    "production": {
+      "title": "Täysi tuotantotoimitus",
+      "desc": "Puhtaalta pöydältä tuotantoon. Agentit luonnostelevat, testaavat, dokumentoivat ja paketoivat. Ihmiset tarkistavat ja hyväksyvät jokaisen portin."
+    }
+  },
+  "compute": {
+    "badge": "Uusi",
+    "heading": "Paikallinen inferenssi. Ei verkkomatkoja.",
+    "lead": "Tribunus ei ole pelkkä kontrollipaneeli. Se sisältää natiivin inferenssiajonajan, joka suorittaa malleja paikallisesti Apple Siliconilla — ei pilveä, ei API-avaimia, ei viiveveroa.",
+    "mlx": "MLX",
+    "coreml": "Core ML / ANE",
+    "bridge": "IOSurface\nFP16",
+    "mlxKernel": "Kernel Ops",
+    "mlxAttention": "Attention",
+    "mlxMlp": "MLP",
+    "coremlMlp": "MLP Layers",
+    "coremlState": "State Islands",
+    "statLayers": "Layers Qualified",
+    "statCopies": "Application Copies",
+    "statTests": "Tests Across 9 Modules",
+    "statPrecision": "Boundary Precision",
+    "hybrid": {
+      "title": "MLX + Core ML -hybridi",
+      "desc": "Attention toimii MLX:llä. MLP-kerrokset siirretään Apple Neural Engineerille Core ML:n kautta — zero-copy IOSurface-tensorinsiirrolla ajonaikojen välillä."
+    },
+    "arena": {
+      "title": "Areenavaraus",
+      "desc": "IOSurface-pohjaiset FP16-areenapoolit vuokraussemantiikalla. Ei mallocia kuumalla polulla. Jokainen tensorisiirto kirjataan ja tarkastetaan."
+    },
+    "deterministic": {
+      "title": "Deterministinen dekoodaus",
+      "desc": "Greedy-dekoodaus tarkalla token-vastaavuuden varmennuksella. Kahdeksan tokenin kvalifiointisarja. Sama siemen, sama syöte — sama tulos. Joka kerta."
+    },
+    "kvCache": {
+      "title": "KV-välimuistimoottori",
+      "desc": "Liukuva ikkuna ja globaalit poistostrategiat. Prefill + välimuistillinen dekoodauspariteetti. Samanaikainen pääsy asianmukaisella vuokrauseristyksellä."
+    }
+  },
+  "explainer": {
+    "heading": "Mitä laskentamoottori oikeasti tekee.",
+    "lead": "Unohda jargon. Tässä on mitä tapahtuu kun painat enteriä — suomeksi, oikealla datalla tutkimusajoistamme.",
+    "step1": {
+      "title": "Malli on levylläsi",
+      "body": "Jäädytetty kopio Gemma 4 12B:stä sijaitsee paikallisessa tallennustilassa. Tribunus kuvaa sen muistiin kerran — ei latauksia, ei API-avaimia, ei pilveä. Malli tunnistetaan kryptografisella hashillaan, joten tiedät tarkalleen mitä ajat.",
+      "dataLabel": "Mallin hash"
+    },
+    "step2": {
+      "title": "Kaksi moottoria käynnistyy samanaikaisesti",
+      "body": "MLX ottaa GPU:n ja ajaa attention-kerrokset — sen osan mallista, joka päättää mitkä sanat ovat tärkeitä. Core ML ottaa Apple Neural Engineerin ja ajaa feed-forward-kerrokset — sen osan, joka käsittelee päätetyn asian. Ne jakavat muistin IOSurfacen kautta. Ajattele sitä kuin kahta kokkia, jotka jakavat saman leikkuulaudan sen sijaan että vaihtaisivat aineksia edestakaisin.",
+      "dataLabel": "Kopiot moottoreiden välillä"
+    },
+    "step3": {
+      "title": "42 vaihetta, jokainen mikrosekunti jäljitetty",
+      "body": "Siitä hetkestä kun työntekijä herää siihen hetkeen kun viimeinen token virtaa ulos, jokainen operaatio aikaleimataan ja kirjataan. Haluatko tietää tarkalleen kuinka kauan attention-softmax kesti kerroksella 23 48-kerroksisessa pinossa? Se on tapahtumalokissa. Tämä ei ole lokitusta — se on forensista instrumentointia. Jos jokin on hidasta, tiedät tarkalleen mitä ja tarkalleen kuinka paljon.",
+      "dataLabel1": "Pipeline-vaiheet",
+      "dataLabel2": "Jäljitetyt kerrokset",
+      "dataLabel3": "Tapahtumat per ajo"
+    },
+    "step4": {
+      "title": "Sama syöte → sama tulos. Joka kerta.",
+      "body": "Deterministinen greedy-dekoodaus tarkoittaa, että malli tuottaa täsmälleen samat tokenit täsmälleen samalla syötteellä. Varmennamme tämän kahdeksan tokenin kvalifiointisarjalla — ajonaika on vastattava oracle-viitettä token tokenilta. Jos yksikin token on väärä, ajo hylätään. Näin tiedät, etteivät optimointisi ole rikkoneet mitään.",
+      "dataLabel": "Kvalifiointivaatimus"
+    },
+    "step5": {
+      "title": "Jokaisella väitteellä on kuitti",
+      "body": "Mitään suorituskykyväitettä ei tehdä ilman ajomanifestia, alkuperäketjua ja muuttumatonta havaintotallennetta. Viisi koetta on suunniteltu (EXP-0000–EXP-0004), jokaisella muodolliset hypoteesit, toistopolitiikat ja oikeellisuusportit. Data elää DuckDB:ssä — kyseltävissä, tarkastettavissa ja pysyvästi arkistoituna. Hylätyt optimoinnit poistetaan koskaan, joten kukaan ei toista samaa umpikujaa.",
+      "dataLabel1": "Suunnitellut kokeet",
+      "dataLabel2": "Määritellyt työkuormat",
+      "dataLabel3": "Ajoarvosanat"
+    },
+    "cta": "Tämä on perusta. Kontrollipaneeli koordinoi agentteja. Laskentamoottori ajaa malleja. Todistetaso todistaa molempien toimivan. Kolme pilaria, yksi alusta."
+  },
+  "research": {
+    "heading": "Suorituskykyväitteet tarvitsevat todisteita.",
+    "lead": "Jokaista suorituskykyväitettä tukee Research Evidence Plane — alkuperäjäljitetty koekeysikko, jossa on 42 instrumentoitua pipeline-vaihetta, kryptografinen artefaktihashaus ja muuttumattomat ajotallenteet.",
+    "pipelineInit": "Init",
+    "pipelinePerToken": "Per-Token",
+    "pipelineTeardown": "Teardown",
+    "pipelineCaption": "42 pipeline-vaihetta — instrumentoidut, aikaleimatut, kirjatut. Jokainen mikrosekunti tilillä.",
+    "runGrades": {
+      "title": "Ajoarvosanat",
+      "desc": "Jokainen ajo arvostellaan: tutkiva, kontrolloitu, väite-ehdokas tai arkistoitu. Vain kontrolloidut+ ajot tukevat optimointipäätöksiä. Vanhat tulokset merkitään ei-autoritatiivisiksi."
+    },
+    "immutable": {
+      "title": "Muuttumattomat havainnot",
+      "desc": "Raakahavaintoja ei koskaan muuteta jälkikäteen. Korjaukset tuottavat uuden kopion alkuperäislinkillä alkuperäiseen. Negatiiviset tulokset säilytetään ikuisesti — toistuvien umpikujien estämiseksi."
+    },
+    "provenance": {
+      "title": "Alkuperäketju",
+      "desc": "Jokainen ajo tallentaa lähdesitoumuksen, binäärihashit, mallin identiteetin, koneprofiilin ja ympäristön. DuckDB-analyysit normalisoidun tapahtumavirran yli. Mitään ei oteta uskon varassa."
+    },
+    "claim": {
+      "text": "Tribunus paikallinen inferenssiajonaika v1 fyysisesti ja semanttisesti kvalifioitu yhdelle jäädytetylle Gemma 4 12B ComputeImage -profiilille kvalifioidulla Apple Silicon 16 GB -profiililla.",
+      "meta": "Tila: Luonnos · Laajuus: 64-tokenin prompt-katto, 8-tokenin ulostulokatto, deterministinen greedy-dekoodaus · Malli: d042df1e…"
+    }
+  },
+  "roadmap": {
+    "heading": "Tie eteenpäin.",
+    "phase1": {
+      "label": "Vaihe 1 — Nyt",
+      "title": "macOS Developer Preview",
+      "desc": "Natiivi macOS-sovellus, yksi insinööri orkestroi satoja agentteja, reaaliaikainen muutosnäkyvyys, rajattu toimivalta, LocalFabric-koordinaatiobackend."
+    },
+    "phase2": {
+      "label": "Vaihe 2 — Seuraavaksi",
+      "title": "Tiimiyhteistyö",
+      "desc": "Reaaliaikainen tiimiyhteistyö, peer-to-peer serveritön arkkitehtuuri, seniori/juniori/aloittelija-hiekkalaatikointi, Valkey-koordinaatiobackend live-monikäyttäjäistuntoihin."
+    },
+    "phase3": {
+      "label": "Vaihe 3 — Myöhemmin",
+      "title": "Yrityshallinta",
+      "desc": "Yrityshallinta, kryptografiset tarkastuspolut, käytäntöohjatut yhdistämiset, vaatimustenmukaisuusvalmiit todisterenkaat, remote-Valkey hajautetuille tiimeille."
+    },
+    "computeNow": {
+      "label": "Compute — Nyt",
+      "title": "Natiivi inferenssiajonaika",
+      "desc": "MLX + Core ML -hybridisuoritus, IOSurface FP16 areenavaraus, deterministinen dekoodaus, KV-välimuistimoottori. 48-kerroksen kvalifiointi Gemma 4 12B:llä. Application-copy-vapaa tensorinsiirto."
+    },
+    "computeNext": {
+      "label": "Compute — Seuraavaksi",
+      "title": "Todistetason kvalifiointi",
+      "desc": "Täydet väite-ehdokasajot kaikilla työkuormilla. Core ML -tilan kvalifiointi. Tokio-suoratoisto peruutuksella. MLP-sijoitusbenchmarkit. Jäädytetty datajulkaisu arkistointikelpoisille väitteille."
+    }
+  },
+  "origin": {
+    "heading": "Kuinka Tribunus syntyi.",
+    "tab1": "Pienet kitkat",
+    "tab2": "Haarautus",
+    "tab3": "Uudelleenrakennus",
+    "tab4": "Filosofia",
+    "tab5": "Missä olemme nyt",
+    "tab6": "Minne olemme menossa",
+    "panel1": "Se alkoi OpenCode-haarautuksena. Ei siksi, että OpenCode olisi ollut huono — vaan siksi, että pienet kitkat kasaantuvat. Aloitin kirjoittamalla omia agenttiprofiilejani. Sitten omia mukautettuja työkaluja tehdäkseni agenteista tehokkaampia. Sitten omia koordinaatioskriptejä. Agentit lukivat ja kirjoittivat luovutuslokeja ad-hoc JSON-tiedostoina ripoteltuina ympäri levyä. Rakensin käytännössä tietokannan kasasta skriptejä tiedostojärjestelmään. Joka päivä uusi kitka. Uusi kiertotie. Uusi skripti, joka melkein toimi.",
+    "panel2": "Lopulta haarautin OpenCoden kokeellisen haaran GitHubissa ja aloin tutkia sisälle. Minun piti löytää kaikkien pienten ärsytysten juuri, jotka ajoivat minut hulluksi. Löysin sen, että yhden agentin työkalun arkkitehtuuria ei yksinkertaisesti voi jälkiasentaa moniagenttijärjestelmäksi. Koordinaatiokerroksen on oltava natiivi. Joten aloin rakentaa.",
+    "panel3": "Revin SQLiten irti ja siirsin PGlite + DuckDB + Valkeyn tilalle rakentaakseni suurteholäpäisyn koordinaatiokerroksen. Tein mukautetuista agenteistani oikeita tilakoneita. Jokaisesta käynnistetystä alagentista tuli oma miniajon aikansa ehdollisine tilakoneineen — pakottaen agentit seuraamaan johdonmukaisesti suunnittelemaani orkestrointipolkua. Otin käyttöön jaetut työpuut ja tausta-agentit, joten pääagentista tuli lähettäjä, joka kutsuu koolle tiimijohtajia, joista jokainen koordinoi eri osaa kehitysprosessista. Poistin TUI-ensin-lähestymistavan käytöstä ja tein jokaisesta kyvykkyydestä ensiluokkaisen toteutuksen sekä agenttitoiminnan UX:ssä että käyttäjälle näkyvässä käyttöliittymässä.",
+    "panel4": "Rakensin tämän rakkaudella, kyynelillä ja turhautumisella. Uskon vakaasti, että agentin jättäminen valvomatta mihin tahansa järjestelmään shell-pääsyllä on teknisesti sama asia kuin antaa harjoittelijalle avaimet ydinvoimalaan. Hyödyllinen työkalu, väärä valvontamalli. Mutta oikeaa valvontamallia ei ollut olemassa. Joten minun täytyi rakentaa omani. Jaan sen täällä, jotta sinun ei tarvitse kokea sellaista kipua itse.",
+    "panel5": "Tänään yksi kehittäjä voi reaaliajassa orkestroida ja nähdä muutokset, joita sadat samanaikaiset agentit tekevät koodipohjaan. macOS-sovellus (Apple Silicon ja Intel) antaa sinun käynnistää agenttikohortteja, määritellä missioita, asettaa laajuusrajoja ja katsoa jokaisen diffin striimaavan livenä. Mikään ei tapahdu pimeässä.",
+    "panel6": "Lopputavoite on ensiluokkainen reaaliaikainen yhteistyö, jossa ohjelmistoinsinöörien tiimit työskentelevät yhdessä, jokainen käynnistää satoja samanaikaisia agentteja, kaikki samassa repossa samaan aikaan. Reaaliaikainen koordinaatio on niin saumatonta, että seniori-insinööri näkee reaaliajassa mitä juniorit ja aloittelijat tekevät. Tiimien pitäisi käyttää enemmän aikaa tuotteen rakentamiseen kuin toistensa huutamiseen kokouksissa, koska joku poisti tuotantotietokannan lähettämällä väärän promptin."
+  },
+  "blog": {
+    "heading": "Työpöydältä.",
+    "article1": {
+      "title": "42-vaiheinen pipeline: miksi mittaamme jokaisen mikrosekunnin",
+      "desc": "Worker_launchista worker_teardowniin — taksonomia Tribunus-inferenssin suorituskykymittauksen takana."
+    },
+    "article2": {
+      "title": "Zero-copy-tensorit MLX:n ja Core ML:n välillä",
+      "desc": "Kuinka IOSurface-pohjaiset FP16-areenat eliminoivat sovellustason kopiot hybridilaskennan rajapinnalla."
+    },
+    "article3": {
+      "title": "Negatiiviset tulokset ovat kuolemattomia",
+      "desc": "Miksi todistetaso säilyttää hylätyt optimoinnit ikuisesti — ja kuinka se säästää insinöörivuosia."
+    },
+    "badge": "Tulossa pian"
+  },
+  "team": {
+    "badge": "Tiekartta",
+    "heading": "Minne tämä on menossa.",
+    "p1": "Tribunuksen seuraava vaihe on peer-to-peer serveritön tiimikoordinaatio. Ei keskuspalvelinta, ei pilviriippuvuutta, ei yhtä vika pistettä. Jokainen insinööri näkee jokaisen agentin työn reaaliajassa — seniorit insinöörit tarkkailemassa juniorikohortteja, aloittelijat oppimassa kuinka järjestelmä toimii rajoitusten alaisena.",
+    "p2": "Seniorit insinöörit määrittävät missioparametrit, asettavat tarkistusportit ja hallitsevat mitä agentteja pääsee mihin koodipohjan osiin. Juniorit insinöörit toimivat hiekkalaatikoissa — he oppivat tarkkailemalla kuinka kohortti suorittaa rajoitusten alaisena. Ne päivät, jolloin huudetaan toisille kokouksissa koska joku poisti tuotantotietokannan lähettämällä väärän promptin, ovat ohi.",
+    "p3": "Tuloksena on ohjelmistotehdas, jossa jokainen tekijä työskentelee kykyjensä huipulla, kukaan ei jää odottamaan tarkistusta ja jokainen yhdistäminen täyttää riman.",
+    "coordinator": "KOORDINAATTORI",
+    "senior": "Seniori",
+    "junior": "Juniori"
+  },
+  "faq": {
+    "heading": "Usein kysyttyä.",
+    "q1": {
+      "question": "Mikä on Tribunus?",
+      "answer": "Tribunus on kontrollipaneeli agenttipohjaiseen ohjelmistokehitykseen. Se koordinoi satoja koodausagentteja, jotka työskentelevät samanaikaisesti yhdessä repossa reaaliaikaisella näkyvyydellä ja rajatulla toimivallalla."
+    },
+    "q2": {
+      "question": "Onko tämä vain toinen AI-koodaustyökalu?",
+      "answer": "Ei. Tribunus ei generoi koodia. Se koordinoi agentteja, jotka tekevät sen. Se hoitaa orkestroinnin, näkyvyyden, porttien valvonnan ja todisteiden jäljityksen — jotta sinun ei tarvitse hallita satoja agentti-istuntoja manuaalisesti."
+    },
+    "q3": {
+      "question": "Täytyykö minun ajaa omaa LLM:ää?",
+      "answer": "Ei. Tribunus toimii millä tahansa LLM-taustajärjestelmällä, jota jo käytät — OpenAI, Anthropic, paikalliset mallit Ollaman kautta tai yritystoimittajat. Kontrollipaneeli on malliriippumaton."
+    },
+    "q4": {
+      "question": "Onko tämä ilmainen?",
+      "answer": "macOS Developer Preview on ilmainen. Hinnoittelu tiimi- ja yritystasoille ilmoitetaan, kun ne ominaisuudet julkaistaan. Yksittäisille kehittäjille on aina antelias ilmainen taso."
+    },
+    "q5": {
+      "question": "Voivatko agentit rikkoa koodipohjani?",
+      "answer": "Agentit toimivat sinun määrittämäsi rajatun toimivallan puitteissa. Ne voivat kirjoittaa vain tiedostoihin, jotka olet nimenomaisesti sallinut. Seniorit insinöörit asettavat rajat. Jokainen muutos on näkyvissä reaaliajassa. Jokainen yhdistäminen on suojattu."
+    },
+    "q6": {
+      "question": "Miten tämä eroaa useiden Claude Code -instanssien ajamisesta?",
+      "answer": "Useiden agenttien ajaminen ilman koordinaatiota tarkoittaa yhdistämiskonflikteja, kilpailutilanteita, päällekkäistä työtä ja nolla näkyvyyttä siihen, mitä kukin agentti tekee. Tribunus tarjoaa koordinaatiokudoksen, joka tekee moniagenttikehityksestä turvallista, näkyvää ja tuottavaa."
+    }
+  },
+  "contact": {
+    "heading": "Ota yhteyttä.",
+    "email": "Sähköposti",
+    "github": "GitHub",
+    "tagline": "Venezuelalaisen insinöörin rakentama San Franciscossa, Kaliforniassa — rakkaudella, kyynelillä ja turhautumisella."
+  },
+  "download": {
+    "heading": "Hanki Tribunus.",
+    "arm64": {
+      "title": "macOS Apple Silicon",
+      "desc": "Natiivi ARM64-binääri. M1/M2/M3/M4 ja uudemmat.",
+      "badge": "v0.1.0 — Developer Preview",
+      "btn": "Lataa"
+    },
+    "intel": {
+      "title": "macOS Intel",
+      "desc": "x86-64-binääri Intel-pohjaisille Maceille.",
+      "badge": "Tulossa pian — Intel-versio"
+    }
+  },
+  "footer": {
+    "copyright": "© 2026 Tribunus. Rakennettu tarkkuudella.",
+    "github": "GitHub",
+    "contact": "Yhteys",
+    "privacy": "Yksityisyys"
+  },
+  "langSwitcher": {
+    "label": "Kieli"
+  }
+}

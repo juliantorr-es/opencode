@@ -1,0 +1,300 @@
+{
+  "_meta": {
+    "language": "Nederlands",
+    "nativeName": "Nederlands",
+    "dir": "ltr",
+    "locale": "nl"
+  },
+  "nav": {
+    "logo": "TRIBUNUS",
+    "download": "Downloaden"
+  },
+  "hero": {
+    "title": "Leid de Cohort.",
+    "subtitle": "Coördineer honderden codeeragenten in één repository. Real-time inzicht, afgebakende bevoegdheden, nul chaos.",
+    "cta": "Download voor macOS"
+  },
+  "proof": {
+    "heading": "Zie het in actie.",
+    "plane": "Tribunus\nControl Plane",
+    "you": "Jij",
+    "orchestrate": {
+      "title": "Orchestreer",
+      "desc": "Bepaal missies, wijs reikwijdte toe, start cohorts. Eén engineer → honderden agenten."
+    },
+    "observe": {
+      "title": "Observeer",
+      "desc": "Elke diff, elke beslissing, elke agentstatus wordt live gestreamd. Niets gebeurt in het donker."
+    },
+    "govern": {
+      "title": "Beheer",
+      "desc": "Afgebakende bevoegdheden, merge-gates, bewijsketens. Senior engineers stellen de grenzen."
+    }
+  },
+  "features": {
+    "heading": "De softwarefabriek, opnieuw uitgevonden.",
+    "orchestrate": {
+      "title": "Orchestreer agenten",
+      "desc": "Start en coördineer honderden codeeragenten die parallel aan je hele codebase werken. Definieer missies, stel grenzen, en zie hoe de cohort uitvoert."
+    },
+    "visibility": {
+      "title": "Real-time inzicht",
+      "desc": "Elke bestandswijziging, elke agentbeslissing, elke diff wordt live gestreamd naar elk teamlid. Niets gebeurt in het donker."
+    },
+    "authority": {
+      "title": "Afgebakende bevoegdheden",
+      "desc": "Senior engineers stellen de perimeter. Juniors en nieuwkomers werken binnen duidelijke richtlijnen. Bevoegdheden stromen naar beneden — nooit zijwaarts."
+    },
+    "evidence": {
+      "title": "Bewijs & Gates",
+      "desc": "Elke wijziging wordt bijgehouden, elke beslissing is controleerbaar, elke merge is beveiligd. Cryptografische bewijsketens voor gereguleerde omgevingen."
+    }
+  },
+  "capabilities": {
+    "heading": "Van prototype naar productie.",
+    "prototyping": {
+      "title": "Prototyping",
+      "desc": "Binnen enkele minuten werkende prototypes maken. Bepaal de opzet en laat agenten de bedrading regelen terwijl jij je op de architectuur richt."
+    },
+    "debugging": {
+      "title": "Debuggen",
+      "desc": "Stuur agentteams op pad om onbekende code te doorgronden, oorzaken op te sporen en oplossingen voor te stellen — allemaal parallel."
+    },
+    "iteration": {
+      "title": "Snelle iteraties",
+      "desc": "Functies in uren opleveren, niet in sprints. Agenten doen het standaardwerk; jouw team beoordeelt de intentie en levert op."
+    },
+    "featureImpl": {
+      "title": "Snelle functie-implementatie",
+      "desc": "Eisen in recordtijd omzetten naar werkende code. Splits functies op in parallelle agenttaken met automatische conflictoplossing."
+    },
+    "auditing": {
+      "title": "Cybersecurity-audits",
+      "desc": "Laat agenten los op je codebase om kwetsbaarheden te vinden, compliance te controleren en auditklare rapporten te produceren."
+    },
+    "ethicalHacking": {
+      "title": "Ethisch hacken-workflows",
+      "desc": "Voer gestructureerde penetratietestcampagnes uit met agenten die bevindingen rapporteren aan een centraal bewijsregister."
+    },
+    "production": {
+      "title": "Volledige productielevering",
+      "desc": "Van groen gras tot productie. Agenten ontwerpen, testen, documenteren en verpakken. Mensen beoordelen en keuren elke poort goed."
+    }
+  },
+  "compute": {
+    "badge": "Nieuw",
+    "heading": "Lokale inferentie. Geen round trips.",
+    "lead": "Tribunus is niet zomaar een control plane. Het levert een native inferentie-runtime die modellen lokaal op Apple Silicon draait — geen cloud, geen API-sleutels, geen latentiebelasting.",
+    "mlx": "MLX",
+    "coreml": "Core ML / ANE",
+    "bridge": "IOSurface\nFP16",
+    "mlxKernel": "Kernel Ops",
+    "mlxAttention": "Attention",
+    "mlxMlp": "MLP",
+    "coremlMlp": "MLP Layers",
+    "coremlState": "State Islands",
+    "statLayers": "Layers Qualified",
+    "statCopies": "Application Copies",
+    "statTests": "Tests Across 9 Modules",
+    "statPrecision": "Boundary Precision",
+    "hybrid": {
+      "title": "MLX + Core ML hybride",
+      "desc": "Attention draait op MLX. MLP-layers worden naar de Apple Neural Engine via Core ML verplaatst — met zero-copy IOSurface tensoroverdracht tussen runtimes."
+    },
+    "arena": {
+      "title": "Arena-toewijzing",
+      "desc": "IOSurface-ondersteunde FP16-arena-pools met lease-semantiek. Geen malloc in het kritieke pad. Elke tensorovergang wordt geregistreerd en gecontroleerd."
+    },
+    "deterministic": {
+      "title": "Deterministisch decoderen",
+      "desc": "Greedy decode met exacte tokenovereenkomst-verificatie. Acht-token-kwalificatiesuite. Dezelfde seed, dezelfde invoer — dezelfde uitvoer. Elke keer."
+    },
+    "kvCache": {
+      "title": "KV-cache-engine",
+      "desc": "Schuifraam en globale verwijderingsstrategieën. Prefill + gecachte decodepariteit. Gelijktijdige toegang met propere lease-isolatie."
+    }
+  },
+  "explainer": {
+    "heading": "Wat de compute-engine daadwerkelijk doet.",
+    "lead": "Vergeet de jargon. Dit is wat er gebeurt als je op enter drukt — in gewoon Nederlands, met echte data uit onze onderzoeksruns.",
+    "step1": {
+      "title": "Het model staat op je schijf",
+      "body": "Een bevroren kopie van Gemma 4 12B ligt in de lokale opslag. Tribunus mapt het eenmaal in het geheugen — geen downloads, geen API-sleutels, geen cloud. Het model is identificeerbaar via zijn cryptografische hash, dus je weet precies wat je draait.",
+      "dataLabel": "Model-hash"
+    },
+    "step2": {
+      "title": "Twee engines starten tegelijk",
+      "body": "MLX neemt de GPU en draait de attention-layers — het deel van het model dat beslist welke woorden belangrijk zijn. Core ML neemt de Apple Neural Engine en draait de feed-forward-layers — het deel dat verwerkt wat is besloten. Ze delen het geheugen via IOSurface. Zie het als twee monteurs die één werkbank delen in plaats van gereedschap heen en weer te moeten aangeven.",
+      "dataLabel": "Kopieën tussen engines"
+    },
+    "step3": {
+      "title": "42 fases, elke microseconde vastgelegd",
+      "body": "Vanaf het moment dat de worker ontwaakt tot het moment dat de laatste token naar buiten stroomt, wordt elke operatie voorzien van een tijdstempel en een ontvangstbewijs. Wil je precies weten hoe lang de attention-softmax op laag 23 van de 48-lagen-stapel duurde? Het staat in het gebeurtenisjournaal. Dit is geen logging — het is forensische instrumentatie. Als iets traag is, weet je precies wat en precies hoeveel.",
+      "dataLabel1": "Pipeline-fases",
+      "dataLabel2": "Gevolgde lagen",
+      "dataLabel3": "Gebeurtenissen per run"
+    },
+    "step4": {
+      "title": "Zelfde invoer → zelfde uitvoer. Elke keer.",
+      "body": "Deterministisch greedy decoderen betekent dat het model exact dezelfde tokens produceert voor exact dezelfde invoer. We verifiëren dit met een acht-token-kwalificatiesuite — de runtime moet token voor token overeenkomen met de oracle-referentie. Als een enkele token afwijkt, wordt de run afgewezen. Zo weet je dat je optimalisaties niets hebben gebroken.",
+      "dataLabel": "Kwalificatie-eis"
+    },
+    "step5": {
+      "title": "Elke bewering heeft een ontvangstbewijs",
+      "body": "Geen prestatiebewering wordt gedaan zonder een run-manifest, een herkomstketen en een onveranderlijk observatieregister. Vijf experimenten zijn ontworpen (EXP-0000 tot EXP-0004), elk met formele hypotheses, herhalingsbeleid en correctheidsgates. De data leeft in DuckDB — opvraagbaar, controleerbaar en permanent gearchiveerd. Afgewezen optimalisaties worden nooit verwijderd, zodat niemand dezelfde doodlopende weg bewandelt.",
+      "dataLabel1": "Ontworpen experimenten",
+      "dataLabel2": "Gedefinieerde workloads",
+      "dataLabel3": "Run-cijfers"
+    },
+    "cta": "Dit is de basis. De control plane coördineert agenten. De compute-engine draait modellen. De evidence plane bewijst dat beide werken. Drie pijlers, één platform."
+  },
+  "research": {
+    "heading": "Prestatieclaims hebben bewijs nodig.",
+    "lead": "Elke prestatieclaim wordt ondersteund door de Research Evidence Plane — een herkomstgevolgd experimentframework met 42 geïnstrumenteerde pipeline-fases, cryptografische artefact-hashing en onveranderlijke run-registraties.",
+    "pipelineInit": "Init",
+    "pipelinePerToken": "Per-Token",
+    "pipelineTeardown": "Teardown",
+    "pipelineCaption": "42 pipeline-fases — geïnstrumenteerd, getijdstempeld, geregistreerd. Elke microseconde verantwoord.",
+    "runGrades": {
+      "title": "Run-cijfers",
+      "desc": "Elke run krijgt een cijfer: exploratief, gecontroleerd, claim-kandidaat of gearchiveerd. Alleen gecontroleerde+ runs ondersteunen optimalisatiebeslissingen. Legacy-resultaten worden als niet-autoritatief gemarkeerd."
+    },
+    "immutable": {
+      "title": "Onveranderlijke observaties",
+      "desc": "Ruwe observaties worden nooit achteraf gewijzigd. Correcties produceren een nieuwe kopie met herkomstverwijzing naar het origineel. Negatieve resultaten blijven voor altijd bewaard — om herhaalde doodlopende wegen te voorkomen."
+    },
+    "provenance": {
+      "title": "Herkomstketen",
+      "desc": "Elke run legt source-commit, binaire hashes, modelidentiteit, machineprofiel en omgeving vast. DuckDB-analyses over de genormaliseerde gebeurtenisstroom. Niets wordt op geloof aangenomen."
+    },
+    "claim": {
+      "text": "Tribunus lokale inferentie-runtime v1 fysiek en semantisch gekwalificeerd voor één bevroren Gemma 4 12B ComputeImage op het gekwalificeerde Apple Silicon 16 GB profiel.",
+      "meta": "Status: Concept · Reikwijdte: 64-token prompt-plafond, 8-token output-plafond, deterministisch greedy decoderen · Model: d042df1e…"
+    }
+  },
+  "roadmap": {
+    "heading": "De weg vooruit.",
+    "phase1": {
+      "label": "Fase 1 — Nu",
+      "title": "macOS Developer Preview",
+      "desc": "Native macOS-app, één engineer die honderden agenten orkestreert, real-time wijzigingsinzicht, afgebakende bevoegdheden, LocalFabric-coördinatiebackend."
+    },
+    "phase2": {
+      "label": "Fase 2 — Straks",
+      "title": "Teamsamenwerking",
+      "desc": "Real-time teamsamenwerking, peer-to-peer serverloze architectuur, senior/junior/nieuwkomer-sandboxing, Valkey-coördinatiebackend voor live multi-gebruikerssessies."
+    },
+    "phase3": {
+      "label": "Fase 3 — Later",
+      "title": "Enterprise-governance",
+      "desc": "Enterprise-governance, cryptografische audittrails, policy-gestuurde merges, compliance-klare bewijsringen, remote-Valkey voor verspreide teams."
+    },
+    "computeNow": {
+      "label": "Compute — Nu",
+      "title": "Native inferentie-runtime",
+      "desc": "MLX + Core ML hybride uitvoering, IOSurface FP16 arena-toewijzing, deterministisch decoderen, KV-cache-engine. 48-laag-kwalificatie op Gemma 4 12B. Application-copy-vrije tensoroverdracht."
+    },
+    "computeNext": {
+      "label": "Compute — Straks",
+      "title": "Evidence-plane-kwalificatie",
+      "desc": "Volledige claim-kandidaat-runs over alle workloads. Core ML state-kwalificatie. Tokio-streaming met annulering. MLP-plaatsingsbenchmarks. Bevroren dataset-release voor archiveringsklare claims."
+    }
+  },
+  "origin": {
+    "heading": "Hoe Tribunus is ontstaan.",
+    "tab1": "De kleine fricties",
+    "tab2": "De fork",
+    "tab3": "De herbouw",
+    "tab4": "De filosofie",
+    "tab5": "Waar we nu staan",
+    "tab6": "Waar we naartoe gaan",
+    "panel1": "Het begon als een OpenCode-fork. Niet omdat OpenCode slecht was — maar omdat de kleine fricties zich opstapelen. Ik begon met het schrijven van mijn eigen agentprofielen. Daarna mijn eigen aangepaste tools om agenten effectiever te maken. Daarna mijn eigen coördinatiescripts. De agenten lazen en schreven overdrachtslogs in ad-hoc JSON-bestanden verspreid over de schijf. Ik bouwde wat in wezen een database was uit een stapel scripts op het bestandssysteem. Elke dag een nieuwe frictie. Een nieuwe workaround. Een nieuw script dat bijna werkte.",
+    "panel2": "Uiteindelijk forkte ik de experimentele branch van OpenCode op GitHub en begon naar binnen te kijken. Ik moest de oorzaak van al die kleine ergernissen vinden die me gek maakten. Wat ik vond was dat de architectuur van een single-agent-tool simpelweg niet achteraf kan worden omgebouwd tot een multi-agent-systeem. De coördinatielaag moet native zijn. Dus begon ik te bouwen.",
+    "panel3": "Ik rukte SQLite eruit en transplanteerde PGlite + DuckDB + Valkey om een hoge-doorvoercoördinatielaag te bouwen. Ik maakte van mijn aangepaste agenten echte toestandsmachines. Elke gestarte subagent werd een eigen mini-runtime met conditionele toestandsmachines — waardoor agenten gedwongen werden om consistent het door mij ontworpen orkestratiepad te volgen. Ik schakelde gedeelde worktrees en achtergrondagenten in, zodat de hoofdagent een dispatcher werd die teamleiders oproept, die elk een ander deel van het ontwikkelproces coördineren. Ik deprecated de TUI-first-benadering en maakte van elke capability een eersteklas implementatie in zowel de agentoperatie-UX als de gebruikersinterface.",
+    "panel4": "Ik heb dit gebouwd met liefde, tranen en frustratie. Ik geloof heilig dat een agent onbeheerd door elk systeem met shell-toegang laten dwalen technisch gezien hetzelfde is als een stagiair de sleutels van de stroomcentrale geven. Nuttig gereedschap, verkeerd toezichtmodel. Maar het juiste toezichtmodel bestond niet. Dus moest ik mijn eigen bouwen. Ik deel het hier zodat jij dat soort pijn niet ook hoeft te ervaren.",
+    "panel5": "Vandaag kan één enkele ontwikkelaar in real-time orkestreren en zien welke wijzigingen er door honderden gelijktijdige agenten aan de codebase worden gemaakt. De macOS-app (Apple Silicon en Intel) laat je agentcohorts starten, missies definiëren, reikwijdte-grenzen stellen en elke diff live zien stromen. Niets gebeurt in het donker.",
+    "panel6": "Het uiteindelijke doel is eersteklas real-time samenwerking waarin teams van software-engineers samenwerken, elk honderden gelijktijdige agenten starten, allemaal in dezelfde repository op hetzelfde moment. De real-time coördinatie is zo soepel dat een senior engineer in real-time kan zien wat juniors en nieuwkomers doen. Teams zouden meer tijd moeten besteden aan het bouwen van het product dan aan elkaar de huid vol schelden in vergaderingen omdat iemand de productiedatabase heeft verwijderd door de verkeerde prompt te sturen."
+  },
+  "blog": {
+    "heading": "Van de werkbank.",
+    "article1": {
+      "title": "De 42-fasen-pipeline: waarom we elke microseconde meten",
+      "desc": "Van worker_launch tot worker_teardown — de taxonomie achter Tribunus-inferentieprestatiemeting."
+    },
+    "article2": {
+      "title": "Zero-copy-tensors tussen MLX en Core ML",
+      "desc": "Hoe IOSurface-ondersteunde FP16-arena's application-level-kopieën elimineren op de hybride-computegrens."
+    },
+    "article3": {
+      "title": "Negatieve resultaten zijn onsterfelijk",
+      "desc": "Waarom de Evidence Plane afgewezen optimalisaties voor altijd bewaart — en hoe dat ingenieursjaren bespaart."
+    },
+    "badge": "Binnenkort"
+  },
+  "team": {
+    "badge": "Routekaart",
+    "heading": "Waar dit naartoe gaat.",
+    "p1": "De volgende fase van Tribunus is peer-to-peer serverloze teamcoördinatie. Geen centrale server, geen cloudafhankelijkheid, geen single point of failure. Elke engineer ziet het werk van elke agent in real-time — senior engineers die junioren-cohorts observeren, nieuwkomers die leren van hoe het systeem onder beperkingen werkt.",
+    "p2": "Senior engineers definiëren missieparameters, stellen reviewgates in en bepalen welke agenten toegang hebben tot welke delen van de codebase. Junior engineers werken binnen sandboxen — ze leren door te observeren hoe de cohort onder beperkingen uitvoert. De dagen dat we elkaar de huid vol schelden in vergaderingen omdat iemand de productiedatabase heeft verwijderd door de verkeerde prompt te sturen, zijn dan voorbij.",
+    "p3": "Het resultaat is een softwarefabriek waarin elke bijdrager op het hoogtepunt van zijn kunnen werkt, niemand vastzit te wachten op een review en elke merge aan de lat voldoet.",
+    "coordinator": "COÖRDINATOR",
+    "senior": "Senior",
+    "junior": "Junior"
+  },
+  "faq": {
+    "heading": "Veelgestelde vragen.",
+    "q1": {
+      "question": "Wat is Tribunus?",
+      "answer": "Tribunus is een control plane voor agentisch engineering. Het coördineert honderden codeeragenten die gelijktijdig in één repository werken met real-time inzicht en afgebakende bevoegdheden."
+    },
+    "q2": {
+      "question": "Is dit gewoon weer een AI-codeertool?",
+      "answer": "Nee. Tribunus genereert geen code. Het coördineert de agenten die dat doen. Het regelt de orkestratie, zichtbaarheid, gate-handhaving en bewijsregistratie — zodat jij niet handmatig honderden agentsessies hoeft te beheren."
+    },
+    "q3": {
+      "question": "Moet ik mijn eigen LLM draaien?",
+      "answer": "Nee. Tribunus werkt met elk LLM-backend dat je al gebruikt — OpenAI, Anthropic, lokale modellen via Ollama of enterprise-providers. De control plane is modelonafhankelijk."
+    },
+    "q4": {
+      "question": "Is dit gratis?",
+      "answer": "De macOS Developer Preview is gratis. Prijzen voor team- en enterprise-tier worden aangekondigd wanneer die functies worden uitgebracht. Er zal altijd een ruimhartige gratis tier zijn voor individuele ontwikkelaars."
+    },
+    "q5": {
+      "question": "Kunnen agenten mijn codebase breken?",
+      "answer": "Agenten werken binnen door jou bepaalde bevoegdheidsgrenzen. Ze kunnen alleen schrijven naar bestanden die je expliciet toestaat. Senior engineers stellen de perimeter. Elke wijziging is in real-time zichtbaar. Elke merge is beveiligd."
+    },
+    "q6": {
+      "question": "Wat is het verschil met het draaien van meerdere Claude Code-instanties?",
+      "answer": "Meerdere agenten zonder coördinatie draaien betekent mergeconflicten, race conditions, dubbel werk en nul inzicht in wat elke agent doet. Tribunus biedt het coördinatieweefsel dat multi-agent-ontwikkeling veilig, zichtbaar en productief maakt."
+    }
+  },
+  "contact": {
+    "heading": "Neem contact op.",
+    "email": "E-mail",
+    "github": "GitHub",
+    "tagline": "Gebouwd door een Venezolaanse engineer in San Francisco, Californië — met liefde, tranen en frustratie."
+  },
+  "download": {
+    "heading": "Download Tribunus.",
+    "arm64": {
+      "title": "macOS Apple Silicon",
+      "desc": "Native ARM64-binary. M1/M2/M3/M4 en nieuwer.",
+      "badge": "v0.1.0 — Developer Preview",
+      "btn": "Downloaden"
+    },
+    "intel": {
+      "title": "macOS Intel",
+      "desc": "x86-64-binary voor Intel-Macs.",
+      "badge": "Binnenkort — Intel-build"
+    }
+  },
+  "footer": {
+    "copyright": "© 2026 Tribunus. Met precisie ontwikkeld.",
+    "github": "GitHub",
+    "contact": "Contact",
+    "privacy": "Privacy"
+  },
+  "langSwitcher": {
+    "label": "Taal"
+  }
+}

@@ -1,0 +1,300 @@
+{
+  "_meta": {
+    "language": "Dansk",
+    "nativeName": "Dansk",
+    "dir": "ltr",
+    "locale": "da"
+  },
+  "nav": {
+    "logo": "TRIBUNUS",
+    "download": "Hent"
+  },
+  "hero": {
+    "title": "Kommandér Kohorten.",
+    "subtitle": "Koordinér hundredvis af kodningsagenter i ét repository. Realtidsoverblik, afgrænset autoritet, nul kaos.",
+    "cta": "Hent til macOS"
+  },
+  "proof": {
+    "heading": "Se det i aktion.",
+    "plane": "Tribunus\nControl Plane",
+    "you": "Dig",
+    "orchestrate": {
+      "title": "Orkestrér",
+      "desc": "Definér missioner, tildel omfang, start kohorter. Én ingeniør → hundredvis af agenter."
+    },
+    "observe": {
+      "title": "Observere",
+      "desc": "Hver diff, hver beslutning, hver agentstatus streames live. Intet sker i mørket."
+    },
+    "govern": {
+      "title": "Styr",
+      "desc": "Afgrænset autoritet, merge-gates, beviskæder. Senioringeniører sætter rammerne."
+    }
+  },
+  "features": {
+    "heading": "Softwarefabrikken, genopfundet.",
+    "orchestrate": {
+      "title": "Orkestrér agenter",
+      "desc": "Start og koordinér hundredvis af kodningsagenter, der arbejder parallelt på tværs af hele din kodebase. Definér missioner, sæt grænser og se kohorten udføre."
+    },
+    "visibility": {
+      "title": "Realtidsoverblik",
+      "desc": "Hver filændring, hver agentbeslutning, hver diff streames live til hvert teammedlem. Intet sker i mørket."
+    },
+    "authority": {
+      "title": "Afgrænset autoritet",
+      "desc": "Senioringeniører sætter rammerne. Juniorer og nybegyndere arbejder inden for tydelige retningslinjer. Autoritet flyder nedad — aldrig sidelæns."
+    },
+    "evidence": {
+      "title": "Bevis & gates",
+      "desc": "Hver ændring spores, hver beslutning er reviderbar, hver merge er sikret. Kryptografiske beviskæder til regulerede miljøer."
+    }
+  },
+  "capabilities": {
+    "heading": "Fra prototype til produktion.",
+    "prototyping": {
+      "title": "Prototyping",
+      "desc": "Skab fungerende prototyper på få minutter. Definér stilladset og lad agenter forbinde infrastrukturen, mens du fokuserer på arkitekturen."
+    },
+    "debugging": {
+      "title": "Fejlfinding",
+      "desc": "Send agenthold ud for at spore gennem ukendt kode, find rodårsager og foreslå løsninger — alt sammen parallelt."
+    },
+    "iteration": {
+      "title": "Hurtig iteration",
+      "desc": "Lever funktioner på timer, ikke sprints. Agenter håndterer kedelarbejdet; dit team gennemgår hensigten og leverer resultatet."
+    },
+    "featureImpl": {
+      "title": "Hurtig funktionsimplementering",
+      "desc": "Omsæt krav til fungerende kode i højt tempo. Opdel funktioner i parallelle agentopgaver med automatisk konfliktløsning."
+    },
+    "auditing": {
+      "title": "Cybersikkerhedsrevision",
+      "desc": "Sæt agenter løs på din kodebase for at finde sårbarheder, tjekke overholdelse og producere revisionsklare rapporter."
+    },
+    "ethicalHacking": {
+      "title": "Etisk hacking-arbejdsgange",
+      "desc": "Kør strukturerede penetrationstestkampagner med agenter, der rapporterer resultater til en central bevisbog."
+    },
+    "production": {
+      "title": "Fuld produktionslevering",
+      "desc": "Fra bar mark til produktion. Agenter udarbejder, tester, dokumenterer og pakker. Mennesker gennemgår og godkender hver gate."
+    }
+  },
+  "compute": {
+    "badge": "Ny",
+    "heading": "Lokal inferens. Ingen rundture.",
+    "lead": "Tribunus er ikke bare en kontrolpult. Den leveres med en native inferenskøretid, der kører modeller lokalt på Apple Silicon — ingen sky, ingen API-nøgler, ingen latenstidsskat.",
+    "mlx": "MLX",
+    "coreml": "Core ML / ANE",
+    "bridge": "IOSurface\nFP16",
+    "mlxKernel": "Kernel Ops",
+    "mlxAttention": "Attention",
+    "mlxMlp": "MLP",
+    "coremlMlp": "MLP Layers",
+    "coremlState": "State Islands",
+    "statLayers": "Layers Qualified",
+    "statCopies": "Application Copies",
+    "statTests": "Tests Across 9 Modules",
+    "statPrecision": "Boundary Precision",
+    "hybrid": {
+      "title": "MLX + Core ML hybrid",
+      "desc": "Attention kører på MLX. MLP-lag skubbes til Apple Neural Engine via Core ML — med zero-copy IOSurface-tensoroverførsel mellem køretiderne."
+    },
+    "arena": {
+      "title": "Arenaallokering",
+      "desc": "IOSurface-baserede FP16-arenabassiner med leasing-semantik. Ingen malloc i den varme sti. Hver tensorovergang kvitteres og revideres."
+    },
+    "deterministic": {
+      "title": "Deterministisk afkodning",
+      "desc": "Greedy decode med nøjagtig token-match-verifikation. Otte-token-kvalifikationssuite. Samme frø, samme input — samme output. Hver gang."
+    },
+    "kvCache": {
+      "title": "KV-cache-motor",
+      "desc": "Glidende vindue og globale bortskaffelsesstrategier. Prefill + cachet afkodningsparitet. Samtidig adgang med ordentlig leasingisolering."
+    }
+  },
+  "explainer": {
+    "heading": "Hvad compute-rent faktisk gør.",
+    "lead": "Glem jargon. Her er hvad der sker, når du trykker enter — på dansk, med faktiske data fra vores forskningskørsler.",
+    "step1": {
+      "title": "Modellen ligger på din disk",
+      "body": "En frossen kopi af Gemma 4 12B sidder i lokal lagring. Tribunus mapper den ind i hukommelsen én gang — ingen downloads, ingen API-nøgler, ingen sky. Modellen identificeres ved sin kryptografiske hash, så du ved præcis, hvad du kører.",
+      "dataLabel": "Model-hash"
+    },
+    "step2": {
+      "title": "To motorer starter samtidigt",
+      "body": "MLX tager GPU'en og kører attention-lagene — den del af modellen, der bestemmer hvilke ord, der betyder noget. Core ML tager Apple Neural Engine og kører feed-forward-lagene — den del, der behandler hvad der blev bestemt. De deler hukommelse gennem IOSurface. Tænk på det som to kokke, der deler ét skærebræt i stedet for at sende ingredienser frem og tilbage.",
+      "dataLabel": "Kopier mellem motorer"
+    },
+    "step3": {
+      "title": "42 trin, hvert mikrosekund sporet",
+      "body": "Fra det øjebik arbejderen vågner til det øjeblik den sidste token strømmer ud, bliver hver operation tidsstemplet og kvitteret. Vil du vide præcis, hvor lang tid attention-softmax tog på lag 23 af 48-lags-stakken? Det står i hændelsesjournalen. Dette er ikke logning — det er forensisk instrumentering. Hvis noget er langsomt, ved du præcis hvad og præcis hvor meget.",
+      "dataLabel1": "Pipeline-trin",
+      "dataLabel2": "Sporede lag",
+      "dataLabel3": "Hændelser per kørsel"
+    },
+    "step4": {
+      "title": "Samme input → samme output. Hver gang.",
+      "body": "Deterministisk greedy-afkodning betyder, at modellen producerer nøjagtig de samme tokens for nøjagtig det samme input. Vi verificerer dette med en otte-token-kvalifikationssuite — køretiden skal matche oracle-referencen token for token. Hvis en enkelt token er forkert, afvises kørslen. Sådan ved du, at dine optimeringer ikke har brudt noget.",
+      "dataLabel": "Kvalifikationskrav"
+    },
+    "step5": {
+      "title": "Hver påstand har et kvittering",
+      "body": "Ingen præstationspåstand fremsættes uden et kørselsmanifest, en oprindelseskæde og en uforanderlig observationspost. Fem eksperimenter er designet (EXP-0000 til EXP-0004), hver med formelle hypoteser, gentagelsespolitikker og korrekthedsgates. Dataene lever i DuckDB — forespørgelige, reviderbare og permanent arkiverede. Afviste optimeringer slettes aldrig, så ingen gentager den samme blindgyde.",
+      "dataLabel1": "Designede eksperimenter",
+      "dataLabel2": "Definerede workloads",
+      "dataLabel3": "Kørselskarakterer"
+    },
+    "cta": "Dette er fundamentet. Kontrolpulten koordinerer agenter. Computemotoren kører modeller. Bevisplanet beviser, at begge virker. Tre søjler, én platform."
+  },
+  "research": {
+    "heading": "Præstationspåstande kræver beviser.",
+    "lead": "Hver præstationspåstand understøttes af Research Evidence Plane — en oprindelsessporet eksperimentramme med 42 instrumenterede pipeline-trin, kryptografisk artefakthashning og uforanderlige kørselsregistreringer.",
+    "pipelineInit": "Init",
+    "pipelinePerToken": "Per-Token",
+    "pipelineTeardown": "Teardown",
+    "pipelineCaption": "42 pipeline-trin — instrumenterede, tidsstemplede, kvitterede. Hvert mikrosekund gjort rede for.",
+    "runGrades": {
+      "title": "Kørselskarakterer",
+      "desc": "Hver kørsel bedømmes: udforskende, kontrolleret, påstandskandidat eller arkiveret. Kun kontrollerede+ kørsler understøtter optimeringsbeslutninger. Ældre resultater markeres som ikke-autorative."
+    },
+    "immutable": {
+      "title": "Uforanderlige observationer",
+      "desc": "Rå observationer ændres aldrig i bagefter. Rettelser producerer en ny kopi med oprindelseslink til originalen. Negative resultater bevares for evigt — for at forhindre gentagne blindgyder."
+    },
+    "provenance": {
+      "title": "Oprindelseskæde",
+      "desc": "Hver kørsel fanger source-commit, binære hashes, modelidentitet, maskinprofil og miljø. DuckDB-analyser over den normaliserede hændelsesstrøm. Intet tages på tro."
+    },
+    "claim": {
+      "text": "Tribunus lokal inferenskøretid v1 fysisk og semantisk kvalificeret til én frossen Gemma 4 12B ComputeImage på den kvalificerede Apple Silicon 16 GB-profil.",
+      "meta": "Status: Udkast · Omfang: 64-token prompt-loft, 8-token output-loft, deterministisk greedy-afkodning · Model: d042df1e…"
+    }
+  },
+  "roadmap": {
+    "heading": "Vejen frem.",
+    "phase1": {
+      "label": "Fase 1 — Nu",
+      "title": "macOS Developer Preview",
+      "desc": "Native macOS-app, én ingeniør der orkestrerer hundredvis af agenter, realtidsændringsoverblik, afgrænset autoritet, LocalFabric-koordinationsbackend."
+    },
+    "phase2": {
+      "label": "Fase 2 — Næste",
+      "title": "Teamsamarbejde",
+      "desc": "Realtids-teamsamarbejde, peer-to-peer serverløs arkitektur, senior/junior/nybegynder-sandkasser, Valkey-koordinationsbackend til live-flerebrugersessioner."
+    },
+    "phase3": {
+      "label": "Fase 3 — Senere",
+      "title": "Enterprise-styring",
+      "desc": "Enterprise-styring, kryptografiske revisionsspor, policy-styrede merges, compliance-klare bevisringe, remote-Valkey til distribuerede teams."
+    },
+    "computeNow": {
+      "label": "Compute — Nu",
+      "title": "Native inferenskøretid",
+      "desc": "MLX + Core ML hybridudførelse, IOSurface FP16 arenaallokering, deterministisk afkodning, KV-cache-motor. 48-lags-kvalifikation på Gemma 4 12B. Application-copy-fri tensoroverførsel."
+    },
+    "computeNext": {
+      "label": "Compute — Næste",
+      "title": "Bevisplan-kvalifikation",
+      "desc": "Fulde påstandskandidatkørsler på tværs af alle workloads. Core ML state-kvalifikation. Tokio-streaming med annullering. MLP-placeringsbenchmarks. Frossen datasetudgivelse til arkiveringsklare påstande."
+    }
+  },
+  "origin": {
+    "heading": "Hvordan Tribunus blev født.",
+    "tab1": "De små friktioner",
+    "tab2": "Forken",
+    "tab3": "Genopbygningen",
+    "tab4": "Filosofien",
+    "tab5": "Hvor vi er nu",
+    "tab6": "Hvor vi er på vej hen",
+    "panel1": "Det startede som en OpenCode-fork. Ikke fordi OpenCode var dårligt — men fordi de små friktioner løber op. Jeg begyndte med at skrive mine egne agentprofiler. Så mine egne brugerdefinerede værktøjer for at gøre agenter mere effektive. Så mine egne koordineringsscripts. Agenterne læste og skrev overdragelseslogs i ad-hoc JSON-filer spredt ud over disken. Jeg byggede hvad der i bund og grund var en database ud af en bunke scripts på filsystemet. Hver dag en ny friktion. En ny workaround. Et nyt script, der næsten virkede.",
+    "panel2": "Til sidst forkede jeg den eksperimentelle gren af OpenCode på GitHub og begyndte at kigge indeni. Jeg var nødt til at finde roden til alle de små irritationer, der drev mig til vanvid. Hvad jeg fandt var, at arkitekturen af et enkeltagentværktøj simpelthen ikke kan eftermonteres til et multiagentsystem. Koordinationslaget skal være native. Så jeg begyndte at bygge.",
+    "panel3": "Jeg rev SQLite ud og transplanterede PGlite + DuckDB + Valkey for at bygge et højgennemstrømningskoordinationslag. Jeg gjorde mine brugerdefinerede agenter til rigtige tilstandsmaskiner. Hver startet underagent blev sin egen mini-køretid med betingede tilstandsmaskiner — hvilket tvang agenter til konsekvent at følge den orkestreringssti, jeg designede. Jeg aktiverede delte arbejdstræer og baggrundsagenter, så hovedagenten blev en afsender, der indkalder teamledere, som hver koordinerer en forskellig del af udviklingsprocessen. Jeg afskrev TUI-først-tilgangen og gjorde hver funktion til en førsteklasses implementering i både agentoperations-UX'en og brugergrænsefladen.",
+    "panel4": "Jeg byggede dette med kærlighed, tårer og frustration. Jeg tror dybt og inderligt at efterlade en agent uden opsyn i ethvert system med shell-adgang er det tekniske svar på at give en elev nøglerne til et kraftværk. Nyttigt værktøj, forkert opsynsmodel. Men den rigtige opsynsmodel fandtes ikke. Så jeg var nødt til at bygge min egen. Jeg deler den her, så du ikke også behøver at opleve den slags smerte.",
+    "panel5": "I dag kan en enkelt udvikler i realtid orkestrere og se de ændringer der bliver lavet i kodebasen af hundredvis af samtidige agenter. macOS-appen (Apple Silicon og Intel) lader dig starte agentkohorter, definere missioner, sætte omfangsgrænser og se hver diff streame live. Intet sker i mørket.",
+    "panel6": "Slutmålet er førsteklasses realtidssamarbejde, hvor teams af softwareingeniører arbejder sammen, hver især starter hundredvis af samtidige agenter, alle i det samme repository på samme tid. Realtidskoordineringen er så glat, at en senioringeniør i realtid kan se hvad juniorer og nybegyndere laver. Teams burde bruge mere tid på at bygge produktet end på at skrige ad hinanden i møder, fordi nogen slettede produktionsdatabasen ved at sende den forkerte prompt."
+  },
+  "blog": {
+    "heading": "Fra værkstedet.",
+    "article1": {
+      "title": "42-trins-pipelinen: hvorfor vi måler hvert mikrosekund",
+      "desc": "Fra worker_launch til worker_teardown — taksonomien bag Tribunus inferenspræstationsmåling."
+    },
+    "article2": {
+      "title": "Zero-copy-tensorer mellem MLX og Core ML",
+      "desc": "Hvordan IOSurface-baserede FP16-arenaer eliminerer applikationsniveau-kopier ved hybrid-compute-grænsen."
+    },
+    "article3": {
+      "title": "Negative resultater er udødelige",
+      "desc": "Hvorfor bevisplanet bevarer afviste optimeringer for evigt — og hvordan det sparer ingeniørår."
+    },
+    "badge": "Kommer snart"
+  },
+  "team": {
+    "badge": "Køreplan",
+    "heading": "Hvor dette er på vej hen.",
+    "p1": "Næste fase af Tribunus er peer-to-peer serverløs teamkoordinering. Ingen central server, ingen skyafhængighed, intet single point of failure. Hver ingeniør ser hver agents arbejde i realtid — senioringeniører der observerer juniorkohorter, nybegyndere der lærer af hvordan systemet arbejder under begrænsninger.",
+    "p2": "Senioringeniører definerer missionsparametre, sætter review-gates og kontrollerer hvilke agenter der har adgang til hvilke dele af kodebasen. Junioringeniører arbejder inden for sandkasser — de lærer ved at observere hvordan kohorten udfører under begrænsninger. Dagene med at skrige ad hinanden i møder fordi nogen slettede produktionsdatabasen ved at sende den forkerte prompt vil være forbi.",
+    "p3": "Resultatet bliver en softwarefabrik, hvor hver bidragyder arbejder på toppen af sin evne, ingen blokeres af at vente på gennemgang, og hver merge møder barren.",
+    "coordinator": "KOORDINATOR",
+    "senior": "Senior",
+    "junior": "Junior"
+  },
+  "faq": {
+    "heading": "Ofte stillede spørgsmål.",
+    "q1": {
+      "question": "Hvad er Tribunus?",
+      "answer": "Tribunus er en kontrolpult til agentisk udvikling. Den koordinerer hundredvis af kodningsagenter, der arbejder samtidigt i ét repository med realtidsoverblik og afgrænset autoritet."
+    },
+    "q2": {
+      "question": "Er det her endnu et AI-kodningsværktøj?",
+      "answer": "Nej. Tribunus genererer ikke kode. Den koordinerer agenterne der gør. Den håndterer orkestrering, synlighed, gate-håndhævelse og bevissporing — så du ikke manuelt skal håndtere hundredvis af agentsessioner."
+    },
+    "q3": {
+      "question": "Skal jeg køre min egen LLM?",
+      "answer": "Nej. Tribunus fungerer med uanset hvilket LLM-backend du allerede bruger — OpenAI, Anthropic, lokale modeller via Ollama eller enterprise-udbydere. Kontrolpulten er modeluafhængig."
+    },
+    "q4": {
+      "question": "Er dette gratis?",
+      "answer": "macOS Developer Preview er gratis. Priser for team- og enterprise-niveauer vil blive annonceret, når de funktioner udkommer. Der vil altid være en generøs gratisniveau for individuelle udviklere."
+    },
+    "q5": {
+      "question": "Kan agenter ødelægge min kodebase?",
+      "answer": "Agenter arbejder inden for afgrænset autoritet defineret af dig. De kan kun skrive til filer, du udtrykkeligt tillader. Senioringeniører sætter rammerne. Hver ændring er synlig i realtid. Hver merge er sikret."
+    },
+    "q6": {
+      "question": "Hvad er forskellen fra at køre flere Claude Code-instanser?",
+      "answer": "At køre flere agenter uden koordinering betyder merge-konflikter, race conditions, dobbeltarbejde og nul indsigt i hvad hver agent laver. Tribunus leverer koordinationsvævet, der gør multiagent-udvikling sikker, synlig og produktiv."
+    }
+  },
+  "contact": {
+    "heading": "Kontakt os.",
+    "email": "E-mail",
+    "github": "GitHub",
+    "tagline": "Bygget af en venezuelansk ingeniør i San Francisco, Californien — med kærlighed, tårer og frustration."
+  },
+  "download": {
+    "heading": "Hent Tribunus.",
+    "arm64": {
+      "title": "macOS Apple Silicon",
+      "desc": "Native ARM64-binær. M1/M2/M3/M4 og nyere.",
+      "badge": "v0.1.0 — Developer Preview",
+      "btn": "Hent"
+    },
+    "intel": {
+      "title": "macOS Intel",
+      "desc": "x86-64-binær til Intel-baserede Macs.",
+      "badge": "Kommer snart — Intel-byg"
+    }
+  },
+  "footer": {
+    "copyright": "© 2026 Tribunus. Konstrueret med præcision.",
+    "github": "GitHub",
+    "contact": "Kontakt",
+    "privacy": "Privatliv"
+  },
+  "langSwitcher": {
+    "label": "Sprog"
+  }
+}

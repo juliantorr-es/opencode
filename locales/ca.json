@@ -1,0 +1,300 @@
+{
+  "_meta": {
+    "language": "Català",
+    "nativeName": "Català",
+    "dir": "ltr",
+    "locale": "ca"
+  },
+  "nav": {
+    "logo": "TRIBUNUS",
+    "download": "Descarrega"
+  },
+  "hero": {
+    "title": "Ordena la Cohort.",
+    "subtitle": "Coordina centenars d'agents de codi en un sol repositori. Visibilitat en temps real, autoritat delimitada, zero caos.",
+    "cta": "Descarrega per a macOS"
+  },
+  "proof": {
+    "heading": "Mira-ho en Acció.",
+    "plane": "Tribunus\nPla de Control",
+    "you": "Tu",
+    "orchestrate": {
+      "title": "Orquestra",
+      "desc": "Defineix missions, assigna àmbits, desplega cohorts. Un enginyer → centenars d'agents."
+    },
+    "observe": {
+      "title": "Observa",
+      "desc": "Cada diff, cada decisió, cada estat d'agent es transmet en directe. Res no passa a les fosques."
+    },
+    "govern": {
+      "title": "Governa",
+      "desc": "Autoritat delimitada, comportes de fusió, cadenes d'evidència. Els sèniors marquen el perímetre."
+    }
+  },
+  "features": {
+    "heading": "La Fàbrica de Programari, Reimaginada.",
+    "orchestrate": {
+      "title": "Orquestra Agents",
+      "desc": "Desplega i coordina centenars d'agents de codi que treballen concurrentment a tot el teu codi font. Defineix missions, assigna àmbits i observa com la cohort executa."
+    },
+    "visibility": {
+      "title": "Visibilitat en Temps Real",
+      "desc": "Cada canvi de fitxer, cada decisió d'agent, cada diff es transmet en directe a cada membre de l'equip. Res no passa a les fosques."
+    },
+    "authority": {
+      "title": "Autoritat Delimitada",
+      "desc": "Els enginyers sèniors marquen el perímetre. Els júnior i novells operen dins de barreres explícites. L'autoritat flueix cap avall — mai cap als costats."
+    },
+    "evidence": {
+      "title": "Evidència i Comportes",
+      "desc": "Cada canvi es registra, cada decisió és auditables, cada fusió té comportes. Cadenes d'evidència criptogràfica per a entorns regulats."
+    }
+  },
+  "capabilities": {
+    "heading": "Del Prototip a la Producció.",
+    "prototyping": {
+      "title": "Prototipat",
+      "desc": "Crea prototips funcionals en minuts. Defineix l'estructura i deixa que els agents connectin la fontaneria mentre tu et centres en l'arquitectura."
+    },
+    "debugging": {
+      "title": "Depuració",
+      "desc": "Desplega esquadrons d'agents per rastrejar codi desconegut, trobar causes arrel i proposar solucions — tot en paral·lel."
+    },
+    "iteration": {
+      "title": "Iteració Ràpida",
+      "desc": "Publica funcionalitats en hores, no en sprints. Els agents gestionen el repetitiu; el teu equip revisa la intenció i tanca el lliurament."
+    },
+    "featureImpl": {
+      "title": "Implementació Ràpida de Funcionalitats",
+      "desc": "Tradueix requisits en codi funcional a bon ritme. Descompon funcionalitats en tasques d'agent paral·leles amb resolució automàtica de conflictes."
+    },
+    "auditing": {
+      "title": "Auditoria de Ciberseguretat",
+      "desc": "Deixa anar els agents pel teu codi font per trobar vulnerabilitats, verificar compliment i produir informes llistos per a auditoria."
+    },
+    "ethicalHacking": {
+      "title": "Fluxos d'Hackeig Ètic",
+      "desc": "Executa campanyes estructurades de proves de penetració amb agents que reporten les troballes a un registre d'evidències central."
+    },
+    "production": {
+      "title": "Lliurament Complet a Producció",
+      "desc": "Del terreny verge a producció. Els agents redacten, proven, documenten i empaqueten. Els humans revisen i aproven cada comporta."
+    }
+  },
+  "compute": {
+    "badge": "Nou",
+    "heading": "Inferència Local. Zero Viatges d'Anada i Tornada.",
+    "lead": "Tribunus no és només un pla de control. Incorpora un motor d'inferència natiu que executa models localment a Apple Silicon — sense núvol, sense claus API, sense impost de latència.",
+    "mlx": "MLX",
+    "coreml": "Core ML / ANE",
+    "bridge": "IOSurface\nFP16",
+    "mlxKernel": "Operacions del Nucli",
+    "mlxAttention": "Atenció",
+    "mlxMlp": "MLP",
+    "coremlMlp": "Capes MLP",
+    "coremlState": "Illes d'Estat",
+    "statLayers": "Capes Qualificades",
+    "statCopies": "Còpies d'Aplicació",
+    "statTests": "Tests a 9 Mòduls",
+    "statPrecision": "Precisió de Límit",
+    "hybrid": {
+      "title": "Híbrid MLX + Core ML",
+      "desc": "L'atenció s'executa a MLX. Les capes MLP es descarreguen al Apple Neural Engine a través de Core ML — amb traspàs de tensors IOSurface de còpia zero entre temps d'execució."
+    },
+    "arena": {
+      "title": "Assignació d'Arena",
+      "desc": "Piscines d'arena FP16 amb suport IOSurface i semàntica de lloguer. Sense malloc al camí calent. Cada transició de tensor es registra i audita."
+    },
+    "deterministic": {
+      "title": "Descodificació Determinista",
+      "desc": "Descodificació greedy amb verificació exacta de coincidència de tokens. Suite de qualificació de vuit tokens. Mateixa llavor, mateixa entrada — mateixa sortida. Sempre."
+    },
+    "kvCache": {
+      "title": "Motor de Cau KV",
+      "desc": "Polítiques de finestra lliscant i d'expulsió global. Paritat de preompliment i descodificació en cau. Accés concurrent amb aïllament de lloguer adequat."
+    }
+  },
+  "explainer": {
+    "heading": "Què Fa Realment el Motor de Càlcul.",
+    "lead": "Oblida't de l'argot. Aquí tens què passa quan premis enter — en català clar, amb les dades reals de les nostres execucions d'investigació.",
+    "step1": {
+      "title": "El Model Viu al Teu Disc",
+      "body": "Una còpia congelada de Gemma 4 12B reposa a l'emmagatzematge local. Tribunus la mapeja a memòria un sol cop — sense descàrregues, sense claus API, sense núvol. El model s'identifica pel seu hash criptogràfic perquè sàpigues exactament què estàs executant.",
+      "dataLabel": "Hash del model"
+    },
+    "step2": {
+      "title": "Dos Motors s'Engeguen alhora",
+      "body": "MLX agafa la GPU i executa les capes d'atenció — la part del model que decideix quines paraules importen. Core ML agafa el Apple Neural Engine i executa les capes feed-forward — la part que processa el que s'ha decidit. Comparteixen memòria a través d'alguna cosa que es diu IOSurface. Pensa-ho com dos cuiners compartint un mateix marbre de pastisseria en lloc de passar-se els ingredients d'un costat a l'altre.",
+      "dataLabel": "Còpies entre motors"
+    },
+    "step3": {
+      "title": "42 Etapes, Cada Microsegon Comptat",
+      "body": "Des del moment en què el treballador es desperta fins que el darrer token surt, cada operació es registra amb marca de temps i rebut. Vols saber exactament quant va trigar el softmax d'atenció a la capa 23 de les 48? És al diari d'esdeveniments. Això no és un registre — és instrumentació forense. Si alguna cosa va lenta, saps exactament què i exactament quant.",
+      "dataLabel1": "Etapes del pipeline",
+      "dataLabel2": "Capes registrades",
+      "dataLabel3": "Esdeveniments per execució"
+    },
+    "step4": {
+      "title": "Mateixa Entrada → Mateixa Sortida. Sempre.",
+      "body": "La descodificació greedy determinista fa que el model produeixi exactament els mateixos tokens per a exactament la mateixa entrada. Ho verifiquem amb una suite de qualificació de vuit tokens — el runtime ha de coincidir amb la referència oracle token per token. Si un sol token és incorrecte, l'execució es rebutja. Així saps que les optimitzacions no han trencat res.",
+      "dataLabel": "Requisit de qualificació"
+    },
+    "step5": {
+      "title": "Cada Afirmació Té un Rebut",
+      "body": "No es fa cap afirmació de rendiment sense un manifest d'execució, una cadena de procedència i un registre d'observació immutables. S'han dissenyat cinc experiments (EXP-0000 a EXP-0004), cadascun amb hipòtesis formals, polítiques de repetició i comportes de correcció. Les dades viuen a DuckDB — consultables, auditables i arxivades permanentment. Les optimitzacions rebutjades no s'esborren mai perquè ningú repeteixi el mateix carreró sense sortida.",
+      "dataLabel1": "Experiments dissenyats",
+      "dataLabel2": "Càrregues definides",
+      "dataLabel3": "Graus d'execució"
+    },
+    "cta": "Aquest és el fonament. El pla de control coordina agents. El motor de càlcul executa models. El pla d'evidència demostra que tots dos funcionen. Tres pilars, una plataforma."
+  },
+  "research": {
+    "heading": "Les Afirmacions de Rendiment Necessiten Proves.",
+    "lead": "Cada afirmació de rendiment es recolza en el Pla d'Evidència d'Investigació — un marc experimental amb traçabilitat de procedència, 42 etapes de pipeline instrumentades, hash criptogràfic d'artefactes i registres d'execució immutables.",
+    "pipelineInit": "Inici",
+    "pipelinePerToken": "Per Token",
+    "pipelineTeardown": "Finalització",
+    "pipelineCaption": "42 etapes del pipeline — instrumentades, marcades, rebutjades. Cada microsegon comptabilitzat.",
+    "runGrades": {
+      "title": "Graus d'Execució",
+      "desc": "Cada execució es classifica: exploratòria, controlada, candidata a afirmació o arxivada. Només les execucions controlades+ suporten decisions d'optimització. Els resultats hereditaris es marquen com a no autoritzats."
+    },
+    "immutable": {
+      "title": "Observacions Immutables",
+      "desc": "Les observacions en brut no es modifiquen mai al seu lloc. Les correccions produeixen una nova còpia amb enllaç de procedència a l'original. Els resultats negatius es conserven per sempre — evitant carrerons sense sortida repetits."
+    },
+    "provenance": {
+      "title": "Cadena de Procedència",
+      "desc": "Cada execució captura el commit font, els hashs binaris, la identitat del model, el perfil de la màquina i l'entorn. Analítica DuckDB sobre el flux d'esdeveniments normalitzat. Res no es dona per descomptat."
+    },
+    "claim": {
+      "text": "Tribunus runtime d'inferència local v1 qualificat física i semànticament per a una imatge de càlcul Gemma 4 12B congelada al perfil Apple Silicon 16 GB qualificat.",
+      "meta": "Estat: Esborrany · Abast: Sostre de 64 tokens d'entrada, sostre de 8 tokens de sortida, descodificació greedy determinista · Model: d042df1e…"
+    }
+  },
+  "roadmap": {
+    "heading": "El Camí per Davant.",
+    "phase1": {
+      "label": "Fase 1 — Ara",
+      "title": "Vista Prèvia per a Desenvolupadors macOS",
+      "desc": "Aplicació nativa macOS, un desenvolupador orquestrant centenars d'agents, visibilitat de canvis en temps real, autoritat delimitada, backend de coordinació LocalFabric."
+    },
+    "phase2": {
+      "label": "Fase 2 — Següent",
+      "title": "Col·laboració en Equip",
+      "desc": "Col·laboració en equip en temps real, arquitectura peer-to-peer sense servidor, entorns aïllats sènior/júnior/novell, backend de coordinació Valkey per a sessions multiusuari en directe."
+    },
+    "phase3": {
+      "label": "Fase 3 — Més Endavant",
+      "title": "Governança Empresarial",
+      "desc": "Governança empresarial, pistes d'auditoria criptogràfiques, fusions amb comportes de política, anells d'evidència preparats per a compliment, Valkey remot per a equips distribuïts."
+    },
+    "computeNow": {
+      "label": "Càlcul — Ara",
+      "title": "Runtime d'Inferència Natiu",
+      "desc": "Execució híbrida MLX + Core ML, assignació d'arena IOSurface FP16, descodificació determinista, motor de cau KV. Qualificació de 48 capes a Gemma 4 12B. Traspàs de tensors sense còpia d'aplicació."
+    },
+    "computeNext": {
+      "label": "Càlcul — Següent",
+      "title": "Qualificació del Pla d'Evidència",
+      "desc": "Execucions candidates a afirmació completes a totes les càrregues. Qualificació d'estat de Core ML. Streaming Tokio amb cancel·lació. Punts de referència de colocació MLP. Publicació de conjunt de dades congelat per a afirmacions de grau arxivístic."
+    }
+  },
+  "origin": {
+    "heading": "Com va Nàixer Tribunus.",
+    "tab1": "Les Petites Friccions",
+    "tab2": "La Bifurcació",
+    "tab3": "La Reconstrucció",
+    "tab4": "La Filosofia",
+    "tab5": "On Som Ara",
+    "tab6": "On Anem",
+    "panel1": "Va començar com una bifurcació d'OpenCode. No perquè OpenCode fos dolent — perquè les petites friccions s'acumulen. Vaig començar escrivint els meus propis perfils d'agent. Després les meves pròpies eines personalitzades per fer els agents més efectius. Després els meus propis scripts de coordinació. Els agents llegien i escrivien registres de traspàs en fitxers JSON ad-hoc escampats pel disc. Vaig construir essencialment una base de dades a partir d'una pila de scripts al sistema de fitxers. Cada dia, una altra fricció. Una altra solució provisional. Un altre script que gairebé funcionava.",
+    "panel2": "Finalment vaig bifurcar la branca experimental d'OpenCode a GitHub i vaig començar a mirar endins. Necessitava trobar l'arrel de totes les petites molèsties que m'estaven tornant boig. El que vaig trobar és que l'arquitectura d'una eina d'un sol agent simplement no es pot adaptar a un sistema multiagent. La capa de coordinació ha de ser nativa. Així que vaig començar a construir.",
+    "panel3": "Vaig arrencar SQLite i vaig trasplantar PGlite + DuckDB + Valkey per construir una capa de coordinació d'alt rendiment. Vaig convertir els meus agents personalitzats en màquines d'estat reals. Cada subagent creat es va convertir en el seu propi mini runtime amb màquines d'estat condicionals — obligant els agents a seguir realment el camí d'orquestració que vaig dissenyar, de manera consistent. Vaig habilitar espais de treball compartits i agents en segon pla perquè l'agent principal es convertís en un coordinador que convoca líders d'equip, cadascun coordinant una part diferent del procés de desenvolupament. Vaig depreciar l'enfocament centrat en la TUI i vaig fer que cada capacitat fos una implementació de primera classe tant a l'UX d'operació d'agents com a la interfície d'usuari.",
+    "panel4": "Vaig construir això amb amor, llàgrimes i frustració. Crec fermament que deixar un agent vagar sense supervisió per qualsevol sistema amb accés a la shell és l'equivalent d'enginyeria de deixar un infant amb una pistola de claus carregada sense supervisió. Eina útil, model de supervisió equivocat. Però el model de supervisió correcte no existia. Així que vaig haver de construir-lo jo. Ho comparteixo aquí perquè tu no hagis de passar per aquest dolor tampoc.",
+    "panel5": "Avui, un sol desenvolupador pot orquestrar i veure en temps real els canvis que centenars d'agents concurrents fan al codi font. L'aplicació macOS (Apple Silicon i Intel) et permet crear cohorts d'agents, definir missions, establir límits d'abast i veure cada diff en directe. Res no passa a les fosques.",
+    "panel6": "L'objectiu final és la col·laboració en temps real de primera classe on equips d'enginyers de programari treballin junts, cadascun generant centenars d'agents concurrents, tots al mateix repositori alhora. La coordinació en temps real és tan fluida que un enginyer sènior pot veure què fan els júnior i novells en temps real. Els equips haurien de passar més temps construint el producte que cridant-se en reunions perquè algú va esborrar la base de dades de producció per enviar el prompt equivocat."
+  },
+  "blog": {
+    "heading": "Des del Taller.",
+    "article1": {
+      "title": "El Pipeline de 42 Etapes: Per Què Instrumentem Cada Microsegon",
+      "desc": "De worker_launch a worker_teardown — la taxonomia darrere la mesura de rendiment d'inferència de Tribunus."
+    },
+    "article2": {
+      "title": "Tensors de Còpia Zero Entre MLX i Core ML",
+      "desc": "Com les arenes FP16 amb suport IOSurface eliminen les còpies a nivell d'aplicació al límit del càlcul híbrid."
+    },
+    "article3": {
+      "title": "Els Resultats Negatius Són Immortals",
+      "desc": "Per què el Pla d'Evidència conserva les optimitzacions rebutjades per sempre — i com això estalvia anys d'enginyeria."
+    },
+    "badge": "Pròximament"
+  },
+  "team": {
+    "badge": "Full de Ruta",
+    "heading": "Cap a On Anem.",
+    "p1": "La pròxima fase de Tribunus és la coordinació d'equips peer-to-peer sense servidor. Sense servidor central, sense dependència del núvol, sense punt únic de fallada. Cada enginyer veurà la feina de cada agent en temps real — els sèniors observant cohorts júnior, els novells aprenent de com funciona el sistema sota restriccions.",
+    "p2": "Els enginyers sèniors definiran paràmetres de missió, establiran comportes de revisió i controlaran quins agents tenen accés a quines parts del codi font. Els enginyers júnior operaran dins d'entorns aïllats — aprenent observant com la cohort executa sota restriccions. S'hauran acabat els dies de cridar-se en reunions perquè algú va esborrar la base de dades de producció per enviar el prompt equivocat.",
+    "p3": "El resultat serà una fàbrica de programari on cada col·laborador treballarà al màxim de la seva capacitat, ningú estarà bloquejat esperant una revisió, i cada fusió complirà l'estàndard.",
+    "coordinator": "COORDINADOR",
+    "senior": "Sènior",
+    "junior": "Júnior"
+  },
+  "faq": {
+    "heading": "Preguntes Freqüents.",
+    "q1": {
+      "question": "Què és Tribunus?",
+      "answer": "Tribunus és un pla de control per a enginyeria agent. Coordina centenars d'agents de codi que treballen concurrentment en un sol repositori amb visibilitat en temps real i autoritat delimitada."
+    },
+    "q2": {
+      "question": "És només una altra eina d'IA per programar?",
+      "answer": "No. Tribunus no genera codi. Coordina els agents que ho fan. Gestiona l'orquestració, la visibilitat, l'aplicació de comportes i el seguiment d'evidències perquè no hagis de gestionar cent sessions d'agent manualment."
+    },
+    "q3": {
+      "question": "Necessito executar el meu propi LLM?",
+      "answer": "No. Tribunus funciona amb qualsevol backend LLM que ja facis servir — OpenAI, Anthropic, models locals via Ollama, o proveïdors empresarials. El pla de control és independent del model."
+    },
+    "q4": {
+      "question": "És gratuït?",
+      "answer": "La vista prèvia per a desenvolupadors macOS és gratuïta. El preu per als nivells d'equip i empresa s'anunciarà quan aquestes funcionalitats es llancin. Sempre hi haurà un nivell gratuït generós per a desenvolupadors individuals."
+    },
+    "q5": {
+      "question": "Poden els agents trencar el meu codi?",
+      "answer": "Els agents operen dins de l'autoritat delimitada que tu defineixes. Només poden escriure als fitxers que tu permetis explícitament. Els enginyers sèniors marquen el perímetre. Cada canvi és visible en temps real. Cada fusió té comportes."
+    },
+    "q6": {
+      "question": "En què es diferencia d'executar múltiples instàncies de Claude Code?",
+      "answer": "Executar múltiples agents sense coordinació significa conflictes de fusió, condicions de cursa, treball duplicat i zero visibilitat del que fa cada agent. Tribunus proporciona l'entramat de coordinació que fa que el desenvolupament multiagent sigui segur, visible i productiu."
+    }
+  },
+  "contact": {
+    "heading": "Posa't en Contacte.",
+    "email": "Correu electrònic",
+    "github": "GitHub",
+    "tagline": "Construït per un enginyer veneçolà a San Francisco, Califòrnia — amb amor, llàgrimes i frustració."
+  },
+  "download": {
+    "heading": "Aconsegueix Tribunus.",
+    "arm64": {
+      "title": "macOS Apple Silicon",
+      "desc": "Binari ARM64 natiu. M1/M2/M3/M4 i posteriors.",
+      "badge": "v0.1.0 — Vista Prèvia per a Desenvolupadors",
+      "btn": "Descarrega"
+    },
+    "intel": {
+      "title": "macOS Intel",
+      "desc": "Binari x86-64 per a Macs amb Intel.",
+      "badge": "Pròximament — Compilació Intel"
+    }
+  },
+  "footer": {
+    "copyright": "© 2026 Tribunus. Enginyeria de precisió.",
+    "github": "GitHub",
+    "contact": "Contacte",
+    "privacy": "Privadesa"
+  },
+  "langSwitcher": {
+    "label": "Idioma"
+  }
+}

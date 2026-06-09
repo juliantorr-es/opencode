@@ -1,0 +1,300 @@
+{
+  "_meta": {
+    "language": "Magyar",
+    "nativeName": "Magyar",
+    "dir": "ltr",
+    "locale": "hu"
+  },
+  "nav": {
+    "logo": "TRIBUNUS",
+    "download": "Letöltés"
+  },
+  "hero": {
+    "title": "Vezényeld a Kohorszot.",
+    "subtitle": "Több száz kódoló ágens koordinálása egyetlen repóban. Valós idejű átláthatóság, korlátozott jogosultság, nulla káosz.",
+    "cta": "Letöltés macOS-re"
+  },
+  "proof": {
+    "heading": "Lásd Működés Közben.",
+    "plane": "Tribunus\nIrányító Sík",
+    "you": "Te",
+    "orchestrate": {
+      "title": "Orkesztrálj",
+      "desc": "Határozz meg küldetéseket, rendelj hozzá hatóköröket, indíts kohorszokat. Egy mérnök → több száz ágens."
+    },
+    "observe": {
+      "title": "Figyelj",
+      "desc": "Minden diff, minden döntés, minden ágensállapot élőben közvetítve. Semmi sem történik a sötétben."
+    },
+    "govern": {
+      "title": "Kormányozz",
+      "desc": "Korlátozott jogosultság, egyesítési kapuk, bizonyítékláncok. A szenior mérnökök szabják meg a kereteket."
+    }
+  },
+  "features": {
+    "heading": "A Szoftvergyár, Újragondolva.",
+    "orchestrate": {
+      "title": "Ágensek Orkesztrálása",
+      "desc": "Több száz kódoló ágens indítása és koordinálása, akik egyidejűleg dolgoznak a teljes kódbázison. Határozz meg küldetéseket, rendelj hozzá hatóköröket és figyeld, ahogy a kohorsz végrehajt."
+    },
+    "visibility": {
+      "title": "Valós Idejű Átláthatóság",
+      "desc": "Minden fájlváltozás, minden ágensdöntés, minden diff élőben közvetítve a csapat minden tagjának. Semmi sem történik a sötétben."
+    },
+    "authority": {
+      "title": "Korlátozott Jogosultság",
+      "desc": "A szenior mérnökök szabják meg a kereteket. A juniorok és újoncok egyértelmű korlátok között dolgoznak. A jogosultság lefelé áramlik — soha nem oldalirányban."
+    },
+    "evidence": {
+      "title": "Bizonyíték és Kapuk",
+      "desc": "Minden változás nyomon követhető, minden döntés ellenőrizhető, minden egyesítés kapuval védett. Kriptográfiai bizonyítékláncok szabályozott környezetekhez."
+    }
+  },
+  "capabilities": {
+    "heading": "Prototípustól a Gyártásig.",
+    "prototyping": {
+      "title": "Prototípuskészítés",
+      "desc": "Perc alatt hozz létre működő prototípusokat. Határozd meg a vázat, és hagyd, hogy az ágensek bekössék a szerelvényeket, amíg te az architektúrára koncentrálsz."
+    },
+    "debugging": {
+      "title": "Hibakeresés",
+      "desc": "Indíts ágensosztagokat ismeretlen kód feltérképezésére, gyökérokok feltárására és javaslatok kidolgozására — mindezt párhuzamosan."
+    },
+    "iteration": {
+      "title": "Gyors Iteráció",
+      "desc": "Adj ki funkciókat órák alatt, ne sprintekben. Az ágensek végzik az ismétlődő munkát; a csapatod ellenőrzi a szándékot és lezárja a szállítást."
+    },
+    "featureImpl": {
+      "title": "Gyors Funkciómegvalósítás",
+      "desc": "Fordítsd le a követelményeket működő kódra gyors ütemben. Bontsd le a funkciókat párhuzamos ágensfeladatokra automatikus ütközésfeloldással."
+    },
+    "auditing": {
+      "title": "Kiberbiztonsági Auditálás",
+      "desc": "Engedd az ágenseket a kódbázisodra sérülékenységek keresésére, megfelelőség ellenőrzésére és auditra kész jelentések készítésére."
+    },
+    "ethicalHacking": {
+      "title": "Etikus Hackelési Munkafolyamatok",
+      "desc": "Végezz strukturált behatolástesztelési kampányokat olyan ágensekkel, amelyek a megállapításokat egy központi bizonyíték-naplóba jelentik."
+    },
+    "production": {
+      "title": "Teljes Gyártásba Szállítás",
+      "desc": "A nulláról az éles rendszerig. Az ágensek megírják, letesztelik, dokumentálják és becsomagolják. Az emberek ellenőrzik és jóváhagyják az egyes kapukat."
+    }
+  },
+  "compute": {
+    "badge": "Új",
+    "heading": "Helyi Következtetés. Zéró Köröket.",
+    "lead": "A Tribunus nem csupán egy irányító sík. Beépített natív következtető motorral érkezik, amely modelleket futtat lokálisan Apple Silicon-on — felhő nélkül, API-kulcsok nélkül, késleltetési adó nélkül.",
+    "mlx": "MLX",
+    "coreml": "Core ML / ANE",
+    "bridge": "IOSurface\nFP16",
+    "mlxKernel": "Magműveletek",
+    "mlxAttention": "Figyelem",
+    "mlxMlp": "MLP",
+    "coremlMlp": "MLP Rétegek",
+    "coremlState": "Állapot Szigetek",
+    "statLayers": "Kvalifikált Rétegek",
+    "statCopies": "Alkalmazás Másolatok",
+    "statTests": "Tesztek 9 Modulban",
+    "statPrecision": "Határ Pontosság",
+    "hybrid": {
+      "title": "MLX + Core ML Hibrid",
+      "desc": "A figyelem az MLX-en fut. Az MLP rétegek az Apple Neural Engine-re kerülnek ki a Core ML-en keresztül — zéró másolású IOSurface tenzorátadással a futási környezetek között."
+    },
+    "arena": {
+      "title": "Aréna Foglalás",
+      "desc": "IOSurface-alapú FP16 aréna medencék bérleti szemantikával. Nincs malloc a forró útvonalon. Minden tenzorátmenet nyugtázott és ellenőrizhető."
+    },
+    "deterministic": {
+      "title": "Determinisztikus Dekódolás",
+      "desc": "Mohó dekódolás pontos token-egyezés ellenőrzéssel. Nyolc tokenes kvalifikációs szett. Ugyanaz a mag, ugyanaz a bemenet — ugyanaz a kimenet. Minden alkalommal."
+    },
+    "kvCache": {
+      "title": "KV Gyorsítótár Motor",
+      "desc": "Csúszó ablak és globális eltávolítási stratégiák. Előtöltés és gyorsítótárazott dekódolás paritása. Párhuzamos hozzáférés megfelelő bérleti elkülönítéssel."
+    }
+  },
+  "explainer": {
+    "heading": "Mit Csinál Valójában a Számítási Motor.",
+    "lead": "Felejtsd el a zsargont. Íme, mi történik, amikor megnyomod az Entert — egyszerű magyar nyelven, a kutatási futtatásaink valós adataival.",
+    "step1": {
+      "title": "A Modell a Te Lemezeden Él",
+      "body": "A Gemma 4 12B egy befagyasztott másolata a helyi tárolóban található. A Tribunus egyszer térképezi be a memóriába — nincs letöltés, nincs API-kulcs, nincs felhő. A modellt a kriptográfiai hash-e azonosítja, így pontosan tudod, mit futtatsz.",
+      "dataLabel": "Modell hash"
+    },
+    "step2": {
+      "title": "Két Motor Egyszerre Indul",
+      "body": "Az MLX átveszi a GPU-t és futtatja a figyelmi rétegeket — a modell azon részét, amely eldönti, mely szavak számítanak. A Core ML átveszi az Apple Neural Engine-t és futtatja a feed-forward rétegeket — a részt, amely feldolgozza a döntést. Memóriát osztanak meg az IOSurface nevű technológián keresztül. Gondolj rá úgy, mint két szakácsra, akik ugyanazt a munkapultot használják, ahelyett, hogy hozzávalókat adogatnának egymásnak.",
+      "dataLabel": "Másolatok a motorok között"
+    },
+    "step3": {
+      "title": "42 Szakasz, Minden Mikromásodperc Nyomon Követve",
+      "body": "Attól a pillanattól kezdve, hogy a worker felébred, egészen addig, amíg az utolsó token kiáramlik, minden művelet időbélyegzővel és nyugtával rendelkezik. Pontosan tudni akarod, mennyi ideig tartott a figyelmi softmax a 48 réteges verem 23. rétegén? Benne van az eseménynaplóban. Ez nem naplózás — ez törvényszéki instrumentálás. Ha valami lassú, pontosan tudod, mi és mennyivel.",
+      "dataLabel1": "Csővezeték szakaszok",
+      "dataLabel2": "Követett rétegek",
+      "dataLabel3": "Események futtatásonként"
+    },
+    "step4": {
+      "title": "Ugyanaz a Bemenet → Ugyanaz a Kimenet. Minden Alkalommal.",
+      "body": "A determinisztikus mohó dekódolás azt jelenti, hogy a modell pontosan ugyanazokat a tokeneket állítja elő pontosan ugyanarra a bemenetre. Ezt egy nyolc tokenes kvalifikációs szettel ellenőrizzük — a futási környezetnek tokenről tokenre egyeznie kell az oracle referenciával. Ha egyetlen token is hibás, a futtatás elutasításra kerül. Így tudod, hogy az optimalizációid nem törtek el semmit.",
+      "dataLabel": "Kvalifikációs követelmény"
+    },
+    "step5": {
+      "title": "Minden Állításnak Van Nyugtája",
+      "body": "Teljesítményállítás soha nem születik futtatási manifesztum, származási lánc és megváltoztathatatlan megfigyelési rekord nélkül. Öt kísérletet terveztünk (EXP-0000-tól EXP-0004-ig), mindegyik formális hipotézisekkel, ismétlési politikákkal és helyességi kapukkal. Az adatok a DuckDB-ben élnek — lekérdezhetőek, auditálhatóak és véglegesen archiváltak. Az elutasított optimalizációkat soha nem töröljük, hogy senki ne járja újra ugyanazt a zsákutcát.",
+      "dataLabel1": "Tervezett kísérletek",
+      "dataLabel2": "Definiált munkaterhelések",
+      "dataLabel3": "Futtatási fokozatok"
+    },
+    "cta": "Ez az alap. Az irányító sík koordinálja az ágenseket. A számítási motor futtatja a modelleket. A bizonyíték sík igazolja, hogy mindkettő működik. Három pillér, egy platform."
+  },
+  "research": {
+    "heading": "A Teljesítményállításoknak Bizonyíték Kell.",
+    "lead": "Minden teljesítményállítást a Kutatási Bizonyíték Sík támaszt alá — egy származáskövető kísérleti keretrendszer 42 instrumentált csővezeték szakasszal, kriptográfiai artefaktum hash-eléssel és megváltoztathatatlan futtatási rekordokkal.",
+    "pipelineInit": "Inicializálás",
+    "pipelinePerToken": "Tokenenként",
+    "pipelineTeardown": "Lezárás",
+    "pipelineCaption": "42 csővezeték szakasz — instrumentált, időbélyegzett, nyugtázott. Minden mikromásodperc elszámolva.",
+    "runGrades": {
+      "title": "Futtatási Fokozatok",
+      "desc": "Minden futtatás besorolásra kerül: feltáró, ellenőrzött, állítás-jelölt vagy archív. Csak az ellenőrzött+ futtatások támogatják az optimalizációs döntéseket. Az örökölt eredmények nem hitelesként vannak megjelölve."
+    },
+    "immutable": {
+      "title": "Megváltoztathatatlan Megfigyelések",
+      "desc": "A nyers megfigyelések soha nem módosulnak a helyükön. A javítások egy új másolatot hoznak létre, származási hivatkozással az eredetire. A negatív eredmények örökre megőrződnek — megelőzve az ismételt zsákutcákat."
+    },
+    "provenance": {
+      "title": "Származási Lánc",
+      "desc": "Minden futtatás rögzíti a forráskommitot, a bináris hásheket, a modell azonosságát, a gép profilját és a környezetet. DuckDB analitika a normalizált eseményfolyamon. Semmit sem veszünk készpénznek."
+    },
+    "claim": {
+      "text": "Tribunus helyi következtető futtató v1 fizikailag és szemantikailag kvalifikálva egy befagyasztott Gemma 4 12B ComputeImage-re a kvalifikált Apple Silicon 16 GB profilon.",
+      "meta": "Állapot: Vázlat · Hatókör: 64 token prompt plafon, 8 token kimeneti plafon, determinisztikus mohó dekódolás · Modell: d042df1e…"
+    }
+  },
+  "roadmap": {
+    "heading": "Az Előttünk Álló Út.",
+    "phase1": {
+      "label": "1. Fázis — Most",
+      "title": "macOS Fejlesztői Előnézet",
+      "desc": "Natív macOS alkalmazás, egy fejlesztő több száz ágenst orkesztrál, valós idejű változás-áttekinthetőség, korlátozott jogosultság, LocalFabric koordinációs háttérrendszer."
+    },
+    "phase2": {
+      "label": "2. Fázis — Következő",
+      "title": "Csapat Együttműködés",
+      "desc": "Valós idejű csapat együttműködés, peer-to-peer szerver nélküli architektúra, szenior/junior/újonc elkülönítés, Valkey koordinációs háttérrendszer élő többfelhasználós munkamenetekhez."
+    },
+    "phase3": {
+      "label": "3. Fázis — Később",
+      "title": "Vállalati Irányítás",
+      "desc": "Vállalati irányítás, kriptográfiai auditnyomok, szabályzattal védett egyesítések, megfelelőségre kész bizonyítékgyűrűk, távoli Valkey elosztott csapatoknak."
+    },
+    "computeNow": {
+      "label": "Számítás — Most",
+      "title": "Natív Következtető Futtató",
+      "desc": "MLX + Core ML hibrid végrehajtás, IOSurface FP16 aréna foglalás, determinisztikus dekódolás, KV gyorsítótár motor. 48 réteges kvalifikáció Gemma 4 12B-n. Alkalmazás másolás nélküli tenzorátadás."
+    },
+    "computeNext": {
+      "label": "Számítás — Következő",
+      "title": "Bizonyíték Sík Kvalifikáció",
+      "desc": "Teljes állítás-jelölt futtatások minden munkaterhelésen. Core ML állapot kvalifikáció. Tokio streamelés megszakítással. MLP elhelyezési benchmarkok. Befagyasztott adatkészlet kiadás archív fokozatú állításokhoz."
+    }
+  },
+  "origin": {
+    "heading": "Hogyan Született a Tribunus.",
+    "tab1": "A Kis Sürelődések",
+    "tab2": "A Fork",
+    "tab3": "Az Újraépítés",
+    "tab4": "A Filozófia",
+    "tab5": "Hol Tartunk Most",
+    "tab6": "Hová Tartunk",
+    "panel1": "Egy OpenCode fork-ként kezdődött. Nem azért, mert az OpenCode rossz volt — hanem mert a kis súrlódások összeadódnak. Elkezdtem saját ágensprofilokat írni. Aztán saját egyedi eszközöket, hogy az ágensek hatékonyabbak legyenek. Aztán saját koordinációs szkripteket. Az ágensek ad-hoc JSON fájlokba írt átadási naplókat olvastak és írtak, szétszórva a lemezen. Lényegében egy adatbázist építettem a fájlrendszeren elszórt szkriptek halmazából. Minden nap egy új súrlódás. Egy új áthidaló megoldás. Egy új szkript, ami majdnem működött.",
+    "panel2": "Végül fork-oltam az OpenCode kísérleti ágát a GitHub-on és elkezdtem belenézni. Meg kellett találnom az összes apró bosszúság gyökerét, amelyek az őrületbe kergettek. Amit találtam, az az volt, hogy egy egyágenses eszköz architektúráját egyszerűen nem lehet átalakítani egy többágenses rendszerré. A koordinációs rétegnek natívnak kell lennie. Így elkezdtem építeni.",
+    "panel3": "Kitéptem az SQLite-ot és beültettem a PGlite + DuckDB + Valkey-t, hogy egy nagy teljesítményű koordinációs réteget építsek. Átalakítottam az egyedi ágenseimet valódi állapotgépekké. Minden létrehozott alágens a saját mini futási környezetévé vált feltételes állapotgépekkel — kényszerítve az ágenseket, hogy ténylegesen kövessék az általam tervezett orkesztrációs utat, következetesen. Engedélyeztem a megosztott munkaterületeket és háttérágenseket, így a fő ágens egy diszpécserré vált, aki csapatvezetőket hív be, mindegyik a fejlesztési folyamat más-más részét koordinálva. Elavulttá tettem a TUI-first megközelítést, és minden képességet első osztályú implementációvá tettem mind az ágensek operációs UX-ében, mind a felhasználói felületen.",
+    "panel4": "Ezt szeretettel, könnyekkel és frusztrációval építettem. Szilárdan hiszem, hogy hagyni egy ágenst felügyelet nélkül kóborolni bármely rendszerben, amelyhez shell hozzáférése van, annak a mérnöki megfelelője, mintha egy gyereket hagynánk felügyelet nélkül egy töltött szegfűszegzővel. Hasznos eszköz, rossz felügyeleti modell. De a megfelelő felügyeleti modell nem létezett. Így meg kellett építenem a sajátomat. Itt osztom meg, hogy neked ne kelljen átélned ugyanezt a fájdalmat.",
+    "panel5": "Ma egyetlen fejlesztő orkesztrálhatja és láthatja valós időben a változtatásokat, amelyeket több száz egyidejű ágens végez a kódbázison. A macOS alkalmazás (Apple Silicon és Intel) lehetővé teszi ágenskohorszok létrehozását, küldetések meghatározását, határok felállítását és minden diff élő követését. Semmi sem történik a sötétben.",
+    "panel6": "A végső cél az első osztályú valós idejű együttműködés, ahol szoftvermérnökök csapatai dolgoznak együtt, mindegyik több száz egyidejű ágenst indítva, mind ugyanabban a repóban, egy időben. A valós idejű koordináció olyan gördülékeny, hogy egy szenior mérnök valós időben láthatja, mit csinálnak a juniorok és újoncok. A csapatoknak több időt kellene tölteniük a termék építésével, mint egymásra kiabálni megbeszéléseken, amiért valaki törölte az éles adatbázist, mert rossz promptot küldött."
+  },
+  "blog": {
+    "heading": "A Munkapadról.",
+    "article1": {
+      "title": "A 42 Szakaszos Csővezeték: Miért Instrumentálunk Minden Mikromásodpercet",
+      "desc": "A worker_launch-tól a worker_teardown-ig — a taxonómia a Tribunus következtetési teljesítménymérése mögött."
+    },
+    "article2": {
+      "title": "Zéró Másolású Tenzorok MLX és Core ML Között",
+      "desc": "Hogyan szüntetik meg az IOSurface-alapú FP16 arénák az alkalmazásszintű másolatokat a hibrid számítási határon."
+    },
+    "article3": {
+      "title": "A Negatív Eredmények Halhatatlanok",
+      "desc": "Miért őrzi meg a Bizonyíték Sík az elutasított optimalizációkat örökre — és hogyan takarít ez meg éveket a mérnöki munkából."
+    },
+    "badge": "Hamarosan"
+  },
+  "team": {
+    "badge": "Útiterv",
+    "heading": "Hová Tartunk.",
+    "p1": "A Tribunus következő fázisa a peer-to-peer szerver nélküli csapatkoordináció. Nincs központi szerver, nincs felhőfüggőség, nincs egyetlen meghibásodási pont. Minden mérnök látni fogja minden ágens munkáját valós időben — a szeniorok figyelik a junior kohorszokat, az újoncok tanulnak a rendszer korlátok közötti működéséből.",
+    "p2": "A szenior mérnökök határozzák meg a küldetés paramétereit, állítják be a felülvizsgálati kapukat és szabályozzák, mely ágensek férhetnek hozzá a kódbázis mely részeihez. A junior mérnökök homokozókban dolgoznak — megfigyeléssel tanulva, hogyan hajt végre a kohorsz korlátok között. Véget érnek a napok, amikor egymásra kiabáltunk megbeszéléseken, mert valaki törölte az éles adatbázist, mert rossz promptot küldött.",
+    "p3": "Az eredmény egy szoftvergyár lesz, ahol minden közreműködő a képességei csúcsán dolgozik, senki sem akad el felülvizsgálatra várva, és minden egyesítés megüti a mércét.",
+    "coordinator": "KOORDINÁTOR",
+    "senior": "Szenior",
+    "junior": "Junior"
+  },
+  "faq": {
+    "heading": "Gyakori Kérdések.",
+    "q1": {
+      "question": "Mi az a Tribunus?",
+      "answer": "A Tribunus egy irányító sík ágens alapú szoftverfejlesztéshez. Több száz kódoló ágenst koordinál, akik egyidejűleg dolgoznak egyetlen repóban, valós idejű átláthatósággal és korlátozott jogosultsággal."
+    },
+    "q2": {
+      "question": "Ez csak egy újabb AI kódoló eszköz?",
+      "answer": "Nem. A Tribunus nem generál kódot. Az azt tevő ágenseket koordinálja. Kezeli az orkesztrációt, az átláthatóságot, a kapuk érvényesítését és a bizonyítékok nyomon követését, hogy neked ne kelljen száz ágens munkamenetet kézzel menedzselned."
+    },
+    "q3": {
+      "question": "Futtatnom kell a saját LLM-emet?",
+      "answer": "Nem. A Tribunus bármilyen, általad már használt LLM háttérrendszerrel működik — OpenAI, Anthropic, helyi modellek Ollama-n keresztül, vagy vállalati szolgáltatók. Az irányító sík modellfüggetlen."
+    },
+    "q4": {
+      "question": "Ingyenes?",
+      "answer": "A macOS fejlesztői előnézet ingyenes. A csapat és vállalati szintek árazását akkor jelentjük be, amikor azok a funkciók megjelennek. Mindig lesz egy bőkezű ingyenes szint egyéni fejlesztők számára."
+    },
+    "q5": {
+      "question": "Tönkretehetik az ágensek a kódbázisomat?",
+      "answer": "Az ágensek az általad meghatározott korlátozott jogosultságon belül működnek. Csak azokba a fájlokba írhatnak, amelyeket te kifejezetten engedélyezel. A szenior mérnökök szabják meg a kereteket. Minden változás valós időben látható. Minden egyesítés kapuval védett."
+    },
+    "q6": {
+      "question": "Miben különbözik ez több Claude Code példány futtatásától?",
+      "answer": "Több ágens koordináció nélküli futtatása egyesítési konfliktusokat, versenyhelyzeteket, duplikált munkát és nulla rálátást jelent arra, mit csinál az egyes ágensek. A Tribunus biztosítja azt a koordinációs szövetet, amely a többágenses fejlesztést biztonságossá, átláthatóvá és produktívvá teszi."
+    }
+  },
+  "contact": {
+    "heading": "Lépj Kapcsolatba.",
+    "email": "Email",
+    "github": "GitHub",
+    "tagline": "Egy venezuelai mérnök építette San Franciscóban, Kaliforniában — szeretettel, könnyekkel és frusztrációval."
+  },
+  "download": {
+    "heading": "Szerezd Meg a Tribunus-t.",
+    "arm64": {
+      "title": "macOS Apple Silicon",
+      "desc": "Natív ARM64 bináris. M1/M2/M3/M4 és újabbak.",
+      "badge": "v0.1.0 — Fejlesztői Előnézet",
+      "btn": "Letöltés"
+    },
+    "intel": {
+      "title": "macOS Intel",
+      "desc": "x86-64 bináris Intel-alapú Mac-ekhez.",
+      "badge": "Hamarosan — Intel Build"
+    }
+  },
+  "footer": {
+    "copyright": "© 2026 Tribunus. Precíziós mérnöki munka.",
+    "github": "GitHub",
+    "contact": "Kapcsolat",
+    "privacy": "Adatvédelem"
+  },
+  "langSwitcher": {
+    "label": "Nyelv"
+  }
+}
