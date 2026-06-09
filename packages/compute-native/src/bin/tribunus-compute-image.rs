@@ -479,9 +479,15 @@ fn cmd_decode_one(args: &[String]) -> Result<(), String> {
     let tok0 = session.prefill(prompt, &model).map_err(|e| format!("prefill: {e}"))?;
     let ps = t0.elapsed().as_secs_f64();
     eprintln!("prefill token={} elapsed={:.2}s", tok0, ps);
+    let pf_kv_alloc: u64 = session.kv_caches.iter().map(|k| k.allocated_bytes()).sum();
+    let pf_kv_copy: u64 = session.kv_caches.iter().map(|k| k.copy_bytes()).sum();
+    eprintln!("[kv-prefill] allocated={} copied={}", pf_kv_alloc, pf_kv_copy);
 
     eprintln!("Decode...");
     let t0 = Instant::now();
+    let dc_kv_alloc: u64 = session.kv_caches.iter().map(|k| k.allocated_bytes()).sum();
+    let dc_kv_copy: u64 = session.kv_caches.iter().map(|k| k.copy_bytes()).sum();
+    eprintln!("[kv-decode] allocated={} copied={}", dc_kv_alloc, dc_kv_copy);
     let tok1 = session.decode_one(tok0, &model).map_err(|e| format!("decode: {e}"))?;
     let ds = t0.elapsed().as_secs_f64();
     eprintln!("decode token={} elapsed={:.2}s", tok1, ds);
