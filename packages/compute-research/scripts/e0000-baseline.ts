@@ -6,6 +6,8 @@
 // Set SKIP_MODEL=1 to skip model execution (pipeline prove-out only).
 
 import { mkdirSync, existsSync, renameSync } from "fs";
+import { normalizeRun } from "../src/normalize/normalize.js";
+import { buildDuckDb } from "../src/normalize/duckdb.js";
 import { join } from "path";
 import { $ } from "bun";
 import type { Subprocess } from "bun";
@@ -36,7 +38,7 @@ async function main() {
   }
 
   // ── 1. Provenance ──
-  console.log("[1/5] Provenance...");
+  console.log("[1/7] Provenance...");
   const commitSha = await sh`git rev-parse HEAD`;
   const branch = await sh`git rev-parse --abbrev-ref HEAD`;
   const commitTs = await sh`git log -1 --format=%ct`;
@@ -45,7 +47,7 @@ async function main() {
   const rustVer = await sh`rustc --version`;
   const rustVersion = rustVer.replace("rustc ", "").split(" ")[0]!;
 
-  if (dirty) {
+  if (dirty && !Bun.env.SKIP_MODEL) {
     console.error("ERROR: dirty tree — controlled baseline requires clean commit.");
     process.exit(1);
   }
@@ -78,7 +80,7 @@ async function main() {
   await Bun.write(join(partialDir, "provenance.json"), JSON.stringify(provenance, null, 2));
 
   // ── 2. Model execution ──
-  console.log("[2/5] Model gate...");
+  console.log("[2/7] Model gate...");
   let layerEvents: Array<Record<string, unknown>> = [];
   let outputToken: number | null = null;
   let imageHash = provenance.model.image_hash;
@@ -138,7 +140,7 @@ async function main() {
   }
 
   // ── 3. Artifacts ──
-  console.log(`[3/5] Artifacts (${layerEvents.length} layer events)...`);
+  console.log(`[3/7] Artifacts (${layerEvents.length} layer events)...`);
 
   // run-manifest.json
   await Bun.write(join(partialDir, "run-manifest.json"), JSON.stringify({
@@ -177,7 +179,7 @@ async function main() {
   await writer.flush();
 
   // ── 4. Finalize ──
-  console.log("[4/5] Finalize...");
+  console.log("[4/7] Finalize...");
 
   // checksums.sha256
   const checksums: string[] = [];
@@ -208,7 +210,18 @@ async function main() {
   mkdirSync(RESEARCH_DATA, { recursive: true });
   renameSync(partialDir, finalDir);
 
-  // ── 5. Summary ──
+  // ── 5. Normalize + DuckDB ──
+  console.log("[5/7] Normalize...");
+  const normDir = join(RESEARCH_DATA, `${runId}-norm`);
+  const normResult = normalizeRun(finalDir, normDir);
+  console.log(`  files: ${normResult.files.length}  integrity: ${normResult.referential_integrity.valid}`);
+
+  console.log("[6/7] DuckDB...");
+  const dbPath = join(RESEARCH_DATA, `${runId}.duckdb`);
+  const dbResult = await buildDuckDb(normDir, dbPath);
+  console.log(`  executed: ${dbResult.executed}  db: ${dbResult.db_path}`);
+
+  // ── 7. Summary ──
   console.log(`[5/5] Done.`);
   console.log("");
   console.log(`  run_id:     ${runId}`);
