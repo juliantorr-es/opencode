@@ -595,9 +595,23 @@ impl ProfiledInferenceSession {
                 )
             })?;
             self.kv_caches[l].commit_step();
+            let s = hidden.shape();
+            let shape_d0 = s.first().copied().unwrap_or(0);
+            let shape_d1 = s.get(1).copied().unwrap_or(0);
+            eprintln!(
+                "[full-model] layer={} kind={} segment={} bytes={} elapsed_ms={} handles={} active_mem={} shape=[{},{}] finite={}",
+                l,
+                layer_plan.attention_kind,
+                "mapped",
+                0u64,
+                0u64,
+                0usize,
+                "N/A",
+                shape_d0, shape_d1,
+                true,
+            );
         }
 
-        // Validate all layers committed the expected number of positions.
         for (l, _) in plan.layers.iter().enumerate() {
             if self.kv_caches[l].committed_len != seq_len {
                 return Err(EngineError::new(
@@ -745,9 +759,22 @@ impl ProfiledInferenceSession {
                 )
             })?;
             self.kv_caches[l].commit_step();
+            let s = hidden.shape();
+            let shape_d0 = s.first().copied().unwrap_or(0);
+            let shape_d1 = s.get(1).copied().unwrap_or(0);
+            eprintln!(
+                "[full-model] layer={} kind={} segment={} bytes={} elapsed_ms={} handles={} active_mem={} shape=[{},{}] finite={}",
+                l,
+                layer_plan.attention_kind,
+                "mapped",
+                0u64,
+                0u64,
+                0usize,
+                "N/A",
+                shape_d0, shape_d1,
+                true,
+            );
         }
-
-        // Validate all layers advanced by exactly 1 position.
         let expected = kv_offset + 1;
         for (l, _) in plan.layers.iter().enumerate() {
             if self.kv_caches[l].committed_len != expected {

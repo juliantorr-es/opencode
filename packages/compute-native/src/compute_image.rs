@@ -4446,6 +4446,8 @@ mod tests {
         let plan = &compiled.manifest.execution_plan;
         assert_eq!(plan.layers.len(), 48, "expected 48 layers");
         plan.validate().expect("execution plan should validate");
+        eprintln!("image hash: {}", compiled.manifest.image_hash);
+
 
         eprintln!("Opening runtime...");
         let baseline_handles = crate::bridge::handle_count();
@@ -4529,6 +4531,8 @@ mod tests {
 
         let plan = &compiled.manifest.execution_plan;
         assert_eq!(plan.layers.len(), 48, "expected 48 layers");
+        eprintln!("image hash: {}", compiled.manifest.image_hash);
+
         plan.validate().expect("execution plan should validate");
 
         eprintln!("Opening runtime...");

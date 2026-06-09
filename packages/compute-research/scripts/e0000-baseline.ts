@@ -141,9 +141,10 @@ function parseStandardLayerEvents(
   return events;
 }
 
-/** Parse the compiled image hash from test stdout and verify against expected. */
-function verifyImageHash(stdout: string): string | null {
-  const m = stdout.match(/image hash:\s*([a-f0-9]{64})/);
+/** Parse the compiled image hash from test stdout or stderr and verify against expected. */
+function verifyImageHash(stdout: string, stderr: string): string | null {
+  const combined = stdout + "\n" + stderr;
+  const m = combined.match(/image hash:\s*([a-f0-9]{64})/);
   if (!m) return null;
   const parsed = m[1]!;
   if (parsed !== FROZEN_IMAGE.hash) {
@@ -251,37 +252,7 @@ async function main() {
     },
   });
 
-  rd.writeRunManifest({
-    schema_version: "1",
-    study_id: "tribunus-gemma4-12b-m1-v1",
-    experiment_id: "EXP-0000",
-    optimization_id: "OPT-0000",
-    run_id: runId,
-    trial_index: 0,
-    run_grade: "claim_candidate",
-    status: "completed",
-    start_time: startTime.toISOString(),
-    end_time: new Date().toISOString(),
-    source_revision: commitSha,
-    model_identity: {
-      image_hash: FROZEN_IMAGE.hash,
-      storage_abi: FROZEN_IMAGE.storage_abi,
-      runtime_abi: FROZEN_IMAGE.runtime_abi,
-      tokenizer_hash: "pending",
-    },
-    machine_profile: {
-      anon_id: "m1-16gb",
-      model_id: "MacBookPro18,3",
-      chip: "M1 Pro",
-      cores: 10,
-      memory: "16 GB",
-      os_version: "15.5",
-    },
-    workload_id: workload.id,
-    configuration_id: "v3-baseline",
-    instrumentation_mode: "research_standard",
-    final_manifest_hash: "pending",
-  });
+  console.log("[3/7] Metadata...");
 
   rd.writeWorkload({
     workload_id: workload.id,
@@ -341,7 +312,7 @@ async function main() {
     }
 
     // Verify compiled image hash matches frozen identity
-    const compiledHash = verifyImageHash(stdout);
+    const compiledHash = verifyImageHash(stdout, stderr);
     if (!compiledHash) {
       console.error("Image hash verification failed. Aborting.");
       process.exit(1);
@@ -410,6 +381,41 @@ async function main() {
     process.exit(1);
   }
   console.log(`  layers: ${layerEvents.length}/${requireLayers ?? "unbounded"} — ok`);
+
+  // ── 5. Write run manifest (after run with actual timings) ──
+  console.log("[5/7] Manifest...");
+  const endTime = new Date();
+  rd.writeRunManifest({
+    schema_version: "1",
+    study_id: "tribunus-gemma4-12b-m1-v1",
+    experiment_id: "EXP-0000",
+    optimization_id: "OPT-0000",
+    run_id: runId,
+    trial_index: 0,
+    run_grade: "claim_candidate",
+    status: modelPassed ? "completed" : "failed",
+    start_time: startTime.toISOString(),
+    end_time: endTime.toISOString(),
+    source_revision: commitSha,
+    model_identity: {
+      image_hash: FROZEN_IMAGE.hash,
+      storage_abi: FROZEN_IMAGE.storage_abi,
+      runtime_abi: FROZEN_IMAGE.runtime_abi,
+      tokenizer_hash: "pending",
+    },
+    machine_profile: {
+      anon_id: "m1-16gb",
+      model_id: "MacBookPro18,3",
+      chip: "M1 Pro",
+      cores: 10,
+      memory: "16 GB",
+      os_version: "15.5",
+    },
+    workload_id: workload.id,
+    configuration_id: "v3-baseline",
+    instrumentation_mode: "research_standard",
+    final_manifest_hash: "pending",
+  });
 
   // ── 6. Write events ──
   console.log("[5/7] Events...");
