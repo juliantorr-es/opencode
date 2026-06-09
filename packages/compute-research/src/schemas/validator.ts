@@ -6,8 +6,8 @@ import { resolve } from "path";
 
 // ── Schema cache ────────────────────────────────────────────────────────────
 let _ajv: Ajv2020 | null = null;
-let _validateProvenance: ReturnType<Ajv2020["compile"]> | null = null;
-let _validateRunManifest: ReturnType<Ajv2020["compile"]> | null = null;
+let _validateProvenance: ValidateFunction | null = null;
+let _validateRunManifest: ValidateFunction | null = null;
 
 function getAjv(): Ajv2020 {
   if (!_ajv) {
