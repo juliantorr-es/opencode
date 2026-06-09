@@ -64,9 +64,13 @@ pub struct ReplaySample {
     pub mean_abs_error: Option<f64>,
     pub cosine_similarity: Option<f64>,
     pub oracle_status: String,
+    pub pretouch_bytes: u64,
+    pub pretouch_pages: u64,
+    pub pretouch_checksum: u64,
+    pub pretouch_duration_ns: u128,
 }
 
-// ── ReplayResult ───────────────────────────────────────────────────────────
+// ── ReplayResult ─
 
 #[derive(Debug, Serialize)]
 pub struct ReplayResult {
@@ -320,6 +324,10 @@ impl ProjectionHarness {
                 mean_abs_error: mean_abs,
                 cosine_similarity: cosine,
                 oracle_status,
+                pretouch_bytes: 0,
+                pretouch_pages: 0,
+                pretouch_checksum: 0,
+                pretouch_duration_ns: 0,
             }
         };
 
@@ -407,25 +415,62 @@ impl ProjectionHarness {
         let input_shape = self.input_shape_for();
         let mut results = Vec::new();
 
-        // Pre-touch FIRST: force page faults on CPU by reading all tensor
-        // bytes BEFORE any GPU execution. This tests whether page residency
-        // alone resolves the cold penalty.
-        let _ = self.weight.try_as_slice::<u32>().map(|s| {
-            let sum: u64 = s.iter().map(|&x| x as u64).sum();
-            sum
-        });
-        // Also touch scale and bias pages
-        let _ = self.scale.try_as_slice::<f32>().map(|s| {
-            let sum: f32 = s.iter().sum();
-            sum
-        });
-        let _ = self.bias.try_as_slice::<f32>().map(|s| {
-            let sum: f32 = s.iter().sum();
-            sum
-        });
+        /// Volatile page-stride read across a typed slice's memory.
+        /// Touches exactly one byte per 4096-byte page boundary, forces page faults,
+        /// and returns (checksum, total_bytes_touched, page_count).
+        fn volatile_page_touch<T>(slice: &[T]) -> (u64, u64, u64) {
+            let byte_len = slice.len() * std::mem::size_of::<T>();
+            let ptr = slice.as_ptr() as *const u8;
+            let mut checksum = 0u64;
+            let mut pages = 0u64;
+            let mut off = 0usize;
+            while off < byte_len {
+                // Volatile read prevents compiler from eliding the load
+                checksum = checksum.wrapping_add(
+                    unsafe { std::ptr::read_volatile(ptr.add(off)) } as u64,
+                );
+                off += 4096;
+                pages += 1;
+            }
+            (checksum, byte_len as u64, pages)
+        }
 
-        // Only NOW execute — first GPU projection should benefit from pre-touch
-        results.push(self.replay_one(&input_shape, "decode_pretouch_first"));
+        let pretouch_start = std::time::Instant::now();
+
+        let mut pretouch_checksum = 0u64;
+        let mut pretouch_bytes = 0u64;
+        let mut pretouch_pages = 0u64;
+
+        if let Ok(slice) = self.weight.try_as_slice::<u32>() {
+            let (cksum, bytes, pages) = volatile_page_touch(slice);
+            pretouch_checksum = pretouch_checksum.wrapping_add(cksum);
+            pretouch_bytes += bytes;
+            pretouch_pages += pages;
+        }
+        if let Ok(slice) = self.scale.try_as_slice::<f32>() {
+            let (cksum, bytes, pages) = volatile_page_touch(slice);
+            pretouch_checksum = pretouch_checksum.wrapping_add(cksum);
+            pretouch_bytes += bytes;
+            pretouch_pages += pages;
+        }
+        if let Ok(slice) = self.bias.try_as_slice::<f32>() {
+            let (cksum, bytes, pages) = volatile_page_touch(slice);
+            pretouch_checksum = pretouch_checksum.wrapping_add(cksum);
+            pretouch_bytes += bytes;
+            pretouch_pages += pages;
+        }
+
+        let pretouch_duration_ns = pretouch_start.elapsed().as_nanos();
+
+        // Force compiler to materialise the checksum computation
+        std::hint::black_box(pretouch_checksum);
+
+        let mut sample = self.replay_one(&input_shape, "decode_pretouch_first");
+        sample.pretouch_bytes = pretouch_bytes;
+        sample.pretouch_pages = pretouch_pages;
+        sample.pretouch_checksum = pretouch_checksum;
+        sample.pretouch_duration_ns = pretouch_duration_ns;
+        results.push(sample);
         results
     }
 
@@ -506,6 +551,10 @@ impl ProjectionHarness {
             mean_abs_error: None,
             cosine_similarity: None,
             oracle_status: "skipped".to_string(),
+            pretouch_bytes: 0,
+            pretouch_pages: 0,
+            pretouch_checksum: 0,
+            pretouch_duration_ns: 0,
         }
     }
 

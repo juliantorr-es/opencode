@@ -540,20 +540,22 @@ fn cmd_replay_projection(args: &[String]) -> Result<(), String> {
     let layer_idx = layer.ok_or("missing --layer")?;
     let family_name = family.ok_or("missing --family")?;
 
-    eprintln!("Opening replay harness: image={} layer={} family={} phase={}",
-        image_dir, layer_idx, family_name, phase_shape);
-
-    let harness = tribunus_compute_native::replay_projection::ProjectionHarness::open(
-        Path::new(&image_dir),
-        layer_idx,
-        &family_name,
-    ).map_err(|e| format!("harness open: {}", e))?;
-
     let samples_vec = if unload_reload {
+        // No outer harness — replay_unload_reload handles its own lifecycle
         tribunus_compute_native::replay_projection::ProjectionHarness::replay_unload_reload(
             Path::new(&image_dir), layer_idx, &family_name,
         )
-    } else if let Some(l2) = two_layer {
+    } else {
+        eprintln!("Opening replay harness: image={} layer={} family={} phase={}",
+            image_dir, layer_idx, family_name, phase_shape);
+
+        let harness = tribunus_compute_native::replay_projection::ProjectionHarness::open(
+            Path::new(&image_dir),
+            layer_idx,
+            &family_name,
+        ).map_err(|e| format!("harness open: {}", e))?;
+
+        if let Some(l2) = two_layer {
         // Control D: warm layer L, test layer L+1
         eprintln!("Control D: warming layer {} then testing layer {}", layer_idx, l2);
         let mut results = harness.replay_decode(samples, warmups);
@@ -572,7 +574,8 @@ fn cmd_replay_projection(args: &[String]) -> Result<(), String> {
         harness.replay_prefill(samples, warmups)
     } else {
         harness.replay_decode(samples, warmups)
-    };
+    }
+};
 
     for s in &samples_vec {
         println!("{}", serde_json::to_string(s).map_err(|e| format!("json: {}", e))?);
@@ -584,11 +587,15 @@ fn cmd_replay_projection(args: &[String]) -> Result<(), String> {
 
 fn cmd_metal_capture(args: &[String]) -> Result<(), String> {
     let mut image: Option<String> = None;
+    let mut phase = "decode".to_string();
+    let mut layer: Option<usize> = None;
     let mut output = "/tmp/tribunus_metal_capture.gputrace".to_string();
     let mut i = 0;
     while i < args.len() {
         match args[i].as_str() {
             "--image" => { i += 1; if i < args.len() { image = Some(args[i].clone()); } }
+            "--phase" => { i += 1; if i < args.len() { phase = args[i].clone(); } }
+            "--layer" => { i += 1; if i < args.len() { layer = Some(args[i].parse::<usize>().map_err(|_| format!("invalid layer: {}", args[i]))?); } }
             "--output" => { i += 1; if i < args.len() { output = args[i].clone(); } }
             _ => { return Err(format!("unknown flag: {}", args[i])); }
         }
@@ -596,23 +603,21 @@ fn cmd_metal_capture(args: &[String]) -> Result<(), String> {
     }
     let image_dir = image.ok_or("missing --image")?;
 
-    if !tribunus_compute_native::metal_capture::is_available() {
-        return Err("Metal is not available on this machine".into());
+    let guard = tribunus_compute_native::metal_capture::CaptureGuard::begin(&output)
+        .ok_or_else(|| "failed to start Metal capture (Metal unavailable or already active)".to_string())?;
+
+    eprintln!("Metal capture active: {} (phase={}, layer={:?})", output, phase, layer);
+
+    let decode_result = cmd_decode_one(&["--image".to_string(), image_dir.clone()]);
+
+    drop(guard);
+
+    let meta = std::fs::metadata(&output)
+        .map_err(|e| format!("capture output not found: {} ({})", output, e))?;
+    if meta.len() == 0 {
+        return Err(format!("capture output is empty: {}", output));
     }
 
-    eprintln!("Metal capture: {}", output);
-    eprintln!("Starting capture...");
-    if !tribunus_compute_native::metal_capture::start_capture(&output) {
-        return Err("failed to start Metal capture".into());
-    }
-
-    let result = cmd_decode_one(&["--image".to_string(), image_dir.clone()]);
-
-    eprintln!("Stopping capture...");
-    if !tribunus_compute_native::metal_capture::stop_capture() {
-        eprintln!("warning: failed to stop Metal capture");
-    }
-
-    eprintln!("Capture saved to: {}", output);
-    result
+    eprintln!("Capture saved: {} ({} bytes)", output, meta.len());
+    decode_result
 }
