@@ -53,38 +53,7 @@ const WORKLOADS: Record<string, WorkloadDef> = {
       return m ? [parseInt(m[1]!)] : [];
     },
     parseLayerEvents(stderr: string, runId: string): Array<Record<string, unknown>> {
-      const events: Array<Record<string, unknown>> = [];
-      for (const line of stderr.split("\n")) {
-        const m = line.match(
-          /layer=(\d+)\s+kind=(\S+)\s+shape=\[(\d+),\s*(\d+)\]\s+finite=(true|false)\s+handles=(\d+)/,
-        );
-        if (m) {
-          events.push({
-            schema_version: "1.0",
-            run_id: runId,
-            request_id: runId,
-            worker_id: "worker-1",
-            sequence_number: events.length + 1,
-            event_type: "stage",
-            clock_domain: "worker_monotonic",
-            monotonic_ns: 0,
-            stage: {
-              stage_id: `layer_${m[1]}`,
-              substrate_id: "mlx_generic_gpu",
-              layer_index: parseInt(m[1]!),
-              attention_kind: m[2]!,
-              status: m[5] === "true" ? "completed" : "failed",
-              measurements: {
-                eval_ns: 0,
-                materialized_bytes: 0,
-                file_read_bytes: 0,
-                kv_delta: 0,
-              },
-            },
-          });
-        }
-      }
-      return events;
+      return parseStandardLayerEvents(stderr, runId);
     },
   },
   "prefill-plus-one-decode": {
@@ -96,38 +65,95 @@ const WORKLOADS: Record<string, WorkloadDef> = {
     requireLayers: 48,
     parseTokens(stdout: string, _stderr: string): number[] {
       const tokens: number[] = [];
-      for (const m of stdout.matchAll(/(?:Prefill|Decode)\s+token\s+\d+:\s*(\d+)/g)) {
+      // Test emits: "Decode token: 4242" (no index number)
+      for (const m of stdout.matchAll(/(?:Prefill|Decode)\s+token:\s*(\d+)/g)) {
         tokens.push(parseInt(m[1]!));
       }
       return tokens;
     },
-    parseLayerEvents(_stderr: string, _runId: string): Array<Record<string, unknown>> {
-      return [];
+    parseLayerEvents(stderr: string, runId: string): Array<Record<string, unknown>> {
+      return parseStandardLayerEvents(stderr, runId);
     },
   },
   "eight-token-qualification": {
     id: "eight-token-qualification",
     testName: "real_checkpoint_decode_eight_tokens",
     promptTokenIds: [2],
-    outputBudget: 8,
-    description: "BOS prefill, 8 decode steps",
+    outputBudget: 9, // 1 prefill token + 8 decode tokens
+    description: "BOS prefill, 8 decode steps (9 tokens total)",
     requireLayers: 48,
     parseTokens(stdout: string, _stderr: string): number[] {
-      const m = stdout.match(/Tokens:\s*\[([^\]]+)\]/);
+      const m = stdout.match(/All tokens:\s*\[([^\]]+)\]/);
       if (m) {
         return m[1]!.split(",").map((s) => parseInt(s.trim()));
       }
+      // Fallback: individual Decode token lines
       const tokens: number[] = [];
-      for (const m2 of stdout.matchAll(/Decode\s+token\s+\d+:\s*(\d+)/g)) {
+      for (const m2 of stdout.matchAll(/Decode\s+token:\s*(\d+)/g)) {
         tokens.push(parseInt(m2[1]!));
       }
       return tokens;
     },
-    parseLayerEvents(_stderr: string, _runId: string): Array<Record<string, unknown>> {
-      return [];
+    parseLayerEvents(stderr: string, runId: string): Array<Record<string, unknown>> {
+      return parseStandardLayerEvents(stderr, runId);
     },
   },
 };
+
+// ── Shared output parsing ────────────────────────────────────────────────────
+
+/** Parse per-layer events from the same stderr format used by all model tests. */
+function parseStandardLayerEvents(
+  stderr: string,
+  runId: string,
+): Array<Record<string, unknown>> {
+  const events: Array<Record<string, unknown>> = [];
+  for (const line of stderr.split("\n")) {
+    const m = line.match(
+      /layer=(\d+)\s+kind=(\S+)\s+shape=\[(\d+),\s*(\d+)\]\s+finite=(true|false)\s+handles=(\d+)/,
+    );
+    if (m) {
+      events.push({
+        schema_version: "1.0",
+        run_id: runId,
+        request_id: runId,
+        worker_id: "worker-1",
+        sequence_number: events.length + 1,
+        event_type: "stage",
+        clock_domain: "worker_monotonic",
+        monotonic_ns: 0, // RuntimeTimeline wiring pending
+        stage: {
+          stage_id: `layer_${m[1]}`,
+          substrate_id: "mlx_generic_gpu",
+          layer_index: parseInt(m[1]!),
+          attention_kind: m[2]!,
+          status: m[5] === "true" ? "completed" : "failed",
+          measurements: {
+            eval_ns: 0, // RuntimeTimeline wiring pending
+            materialized_bytes: 0,
+            file_read_bytes: 0,
+            kv_delta: 0,
+          },
+        },
+      });
+    }
+  }
+  return events;
+}
+
+/** Parse the compiled image hash from test stdout and verify against expected. */
+function verifyImageHash(stdout: string): string | null {
+  const m = stdout.match(/image hash:\s*([a-f0-9]{64})/);
+  if (!m) return null;
+  const parsed = m[1]!;
+  if (parsed !== FROZEN_IMAGE.hash) {
+    console.error(
+      `IMAGE HASH MISMATCH: compiled ${parsed.slice(0, 12)}... != frozen ${FROZEN_IMAGE.hash.slice(0, 12)}...`,
+    );
+    return null;
+  }
+  return parsed;
+}
 
 // ── Main ─────────────────────────────────────────────────────────────────────
 
@@ -314,6 +340,14 @@ async function main() {
       process.exit(1);
     }
 
+    // Verify compiled image hash matches frozen identity
+    const compiledHash = verifyImageHash(stdout);
+    if (!compiledHash) {
+      console.error("Image hash verification failed. Aborting.");
+      process.exit(1);
+    }
+    console.log(`  image: ${compiledHash.slice(0, 12)}... (verified)`);
+
     // Parse tokens using workload's parser
     outputTokens = workload.parseTokens(stdout, stderr);
 
@@ -347,7 +381,11 @@ async function main() {
         },
       });
     }
-    outputTokens = [189773];
+    // Generate synthetic tokens matching workload budget
+    outputTokens = [];
+    for (let t = 0; t < workload.outputBudget; t++) {
+      outputTokens.push(189773 + t);
+    }
     modelPassed = true;
   }
 
