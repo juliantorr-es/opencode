@@ -475,10 +475,11 @@ impl LoadedProfiledModel {
         let postload_active = crate::compute_image::mlx_active_memory_bytes();
         let postload_cache = crate::compute_image::mlx_cache_memory_bytes();
        let segment_count = mapped_image.segments.len();
+        let page_faults = worker_memory::sample_page_faults();
         eprintln!(
-            "[model-load] segments={} mapped_views={} copied_fallback={} materialized={} total_views={}",
+            "[model-load] segments={} mapped_views={} copied_fallback={} materialized={} total_views={} page_faults={}",
             segment_count, mapped_tensor_count, copied_tensor_count, materialized_tensor_count,
-            tensor_cache.len(),
+            tensor_cache.len(), page_faults,
         );
         eprintln!(
             "[model-load] mapped_bytes={} copied_bytes={} materialized_bytes={} postload_rss={} active={} cache={} handles_before={} handles_after={} handle_delta={}",
