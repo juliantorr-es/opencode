@@ -1,7 +1,8 @@
 import { readdirSync, readFileSync, renameSync, statSync, writeFileSync } from "fs";
 import { createHash } from "crypto";
-import { join, relative } from "path";
+import { basename, join, relative } from "path";
 import type { RunDirectory } from "./run-dir.js";
+import { validateProvenanceShape, validateRunManifestShape } from "../schemas/validator.js";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -32,10 +33,22 @@ function sha256File(filePath: string): string {
 function validateJsonFile(filePath: string): SchemaValidationEntry {
   const errors: string[] = [];
   const buf = readFileSync(filePath, "utf-8");
+  let parsed: unknown;
   try {
-    JSON.parse(buf);
+    parsed = JSON.parse(buf);
   } catch (e) {
     errors.push(`invalid JSON: ${(e as Error).message}`);
+  }
+  // Structural schema validation for known artifacts
+  if (parsed !== undefined) {
+    const schemaErrors: string[] = [];
+    const fileName = basename(filePath);
+    if (fileName === "provenance.json") {
+      schemaErrors.push(...validateProvenanceShape(parsed));
+    } else if (fileName === "run-manifest.json") {
+      schemaErrors.push(...validateRunManifestShape(parsed));
+    }
+    errors.push(...schemaErrors);
   }
   return { file: filePath, valid: errors.length === 0, errors };
 }

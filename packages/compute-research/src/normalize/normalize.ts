@@ -20,7 +20,7 @@ export interface NormalizedFile {
   readonly row_count: number;
   readonly sha256: string;
   readonly byte_size: number;
-  readonly format: "arrow_ipc";
+  readonly format: "arrow_ipc" | "ndjson";
 }
 
 /** Result of referential integrity validation. */
@@ -606,7 +606,7 @@ export function normalizeRun(
         row_count: tbl.rows.length,
         sha256: sha256Bytes(buf),
         byte_size: buf.length,
-        format: "arrow_ipc",
+        format: "ndjson",
       });
       continue;
     }

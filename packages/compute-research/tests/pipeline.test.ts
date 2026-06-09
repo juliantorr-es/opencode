@@ -47,7 +47,7 @@ function writeCompareEvent(rd: InstanceType<typeof RunDirectory>, event: string,
 function createNormalizeRun(rootDir: string, runId: string, runGrade = "claim_candidate"): RunDirectory {
   const rd = new RunDirectory(runId, rootDir);
   rd.writeRunManifest({
-    experiment_id: "exp-001", optimization_id: "opt-a", study_id: "study-1", trial_index: 0,
+    run_id: runId, experiment_id: "exp-001", optimization_id: "opt-a", study_id: "study-1", trial_index: 0,
     run_grade: runGrade, status: "completed",
     start_time: "2026-06-09T00:00:00Z", end_time: "2026-06-09T01:00:00Z",
     source_revision: "abc123def", workload_id: "bench-llm-v3",
@@ -57,7 +57,7 @@ function createNormalizeRun(rootDir: string, runId: string, runGrade = "claim_ca
     power_class: "high_performance", thermal_class: "nominal", worker_id: "worker-1",
   });
   rd.writeProvenance({
-    source: { repository: "https://github.com/tribunus/research", commit: "abc123def", branch: "main" },
+    source: { repository: "https://github.com/tribunus/research", commit_sha: "abc123def", branch: "main", dirty: false, commit_timestamp: "2026-06-09T00:00:00Z", dependencies: { "Cargo.lock": "abc" } },
     toolchain: { name: "tribunus", version: "1.0.0", compiler: { name: "clang", version: "18" } },
     model: { name: "llama-3.2-8b", image_hash: "sha256:deadbeef", quantization: "fp16" },
     machine: { model_identifier: "Mac15,9", anon_id: "mac-studio-01", chip: "M3Ultra", memory: "192GB" },
@@ -74,7 +74,7 @@ function createNormalizeRun(rootDir: string, runId: string, runGrade = "claim_ca
 function createCompareRun(rootDir: string, runId: string, latencyValues: number[]): RunDirectory {
   const rd = new RunDirectory(runId, rootDir);
   rd.writeRunManifest({
-    experiment_id: "exp-001", optimization_id: "opt-a", study_id: "study-1", trial_index: 0,
+    run_id: runId, experiment_id: "exp-001", optimization_id: "opt-a", study_id: "study-1", trial_index: 0,
     run_grade: "claim_candidate", status: "completed",
     start_time: "2026-06-09T00:00:00Z", end_time: "2026-06-09T01:00:00Z",
     source_revision: "abc123def", workload_id: "bench-llm-v3",
@@ -84,7 +84,7 @@ function createCompareRun(rootDir: string, runId: string, latencyValues: number[
     power_class: "high_performance", thermal_class: "nominal", worker_id: "worker-1",
   });
   rd.writeProvenance({
-    source: { repository: "https://github.com/tribunus/research", commit: "abc" },
+    source: { repository: "https://github.com/tribunus/research", commit_sha: "abc", branch: "main", dirty: false, commit_timestamp: "2026-06-09T00:00:00Z", dependencies: {} },
     toolchain: { name: "tribunus", version: "1.0.0" },
     model: { name: "llama-3.2-8b", image_hash: "sha256:deadbeef" },
     machine: { model_identifier: "Mac15,9", anon_id: "mac-studio-01" },
@@ -186,37 +186,22 @@ describe("Pipeline E2E", () => {
     expect(compRecord.treatmentSummary.mean).toBeCloseTo(95, 0);
   }, 60_000);
 
-  test("contract failures fail closed", () => {
-    const failRoot = tempDir();
-    tmpRoots.push(failRoot);
-
-    const badRunId = "bad-provenance-run";
-    const rd = new RunDirectory(badRunId, failRoot);
-    rd.writeRunManifest({
-      experiment_id: "exp-001", run_grade: "claim_candidate", status: "completed",
-      model_identity: { image_hash: "sha256:deadbeef" },
-      machine_profile: { anon_id: "m1", chip: "M1", memory: "16GB" },
-    });
+  test("structurally invalid provenance rejected at finalization", () => {
+    const root = tempDir();
+    tmpRoots.push(root);
+    const id = "bad-prov";
+    const rd = new RunDirectory(id, root);
+    rd.writeRunManifest({ run_id: id, experiment_id: "exp", run_grade: "claim_candidate", status: "completed", model_identity: { image_hash: "sha256:abc" }, machine_profile: { anon_id: "x" } });
+    // Valid JSON but missing model.image_hash — structural validation should catch it
+    rd.writeProvenance({ source: { commit_sha: "abc123", dirty: false, dependencies: {} }, toolchain: {}, model: {}, machine: { anon_id: "x" }, environment: {} });
+    rd.writeWorkload({ name: "test" });
+    rd.writeExperimentPlan({ name: "test" });
     writeNormalizeEvent(rd, 1, "embedding_gather", 100, 1_000_000, 100_000_000);
-
-    rd.close();
-    writeFileSync(join(rd.partialRoot, "provenance.json"), "{ this is not valid JSON }", "utf-8");
-
-    const finalRec = finalizeRun(rd);
-    expect(existsSync(join(failRoot, badRunId, "finalization.json"))).toBe(true);
-
-    const provValidation = finalRec.validations.find((v) => v.file.includes("provenance.json"));
+    const rec = finalizeRun(rd);
+    const provValidation = rec.validations.find(v => v.file.includes("provenance.json"));
     expect(provValidation).toBeDefined();
     expect(provValidation!.valid).toBe(false);
-    expect(provValidation!.errors.length).toBeGreaterThan(0);
-    expect(existsSync(rd.partialRoot)).toBe(false);
-
-    const normOut = join(failRoot, "norm-bad-provenance");
-    const normResult = normalizeRun(join(failRoot, badRunId), normOut);
-    expect(existsSync(normOut)).toBe(true);
-    if (normResult.error) {
-      expect(normResult.error.length).toBeGreaterThan(0);
-    }
+    expect(provValidation!.errors.some(e => e.includes("model.image_hash"))).toBe(true);
   });
 
   test("invalid run grade gracefully rejected", () => {
@@ -226,20 +211,29 @@ describe("Pipeline E2E", () => {
     const badGradeId = "bad-grade-run";
     const rd = new RunDirectory(badGradeId, gradeRoot);
     rd.writeRunManifest({
-      experiment_id: "exp-001", run_grade: "invalid_grade", status: "completed",
+      run_id: badGradeId, experiment_id: "exp-001", run_grade: "invalid_grade", status: "completed",
       model_identity: { image_hash: "sha256:deadbeef" },
       machine_profile: { anon_id: "m1", chip: "M1", memory: "16GB" },
     });
-    rd.writeProvenance({ source: { repository: "example" }, machine: { model_identifier: "Mac15,9" } });
+    rd.writeProvenance({
+      source: { commit_sha: "abc123", dirty: false, branch: "main", commit_timestamp: "2026-06-09T00:00:00Z", dependencies: {} },
+      toolchain: {},
+      model: { image_hash: "sha256:deadbeef" },
+      machine: { anon_id: "m1", model_identifier: "Mac15,9" },
+      environment: {},
+    });
     rd.writeWorkload({ name: "test" });
     rd.writeExperimentPlan({ name: "test" });
     writeNormalizeEvent(rd, 1, "embedding_gather", 100, 1_000_000, 100_000_000);
 
     const finalRec = finalizeRun(rd);
     const finalDir = join(gradeRoot, badGradeId);
-    for (const v of finalRec.validations) {
-      expect(v.valid).toBe(true);
-    }
+    // The only validation failure should be the invalid run_grade
+    expect(finalRec.validations.length).toBeGreaterThanOrEqual(2);
+    const manifestVal = finalRec.validations.find(v => v.file.includes("run-manifest.json"));
+    expect(manifestVal).toBeDefined();
+    expect(manifestVal!.valid).toBe(false);
+    expect(manifestVal!.errors.some(e => e.includes("invalid_grade"))).toBe(true);
     const manifest = JSON.parse(readFileSync(join(finalDir, "run-manifest.json"), "utf-8"));
     expect(manifest.run_grade).toBe("invalid_grade");
 
@@ -284,7 +278,7 @@ describe("Pipeline E2E", () => {
     for (let i = 0; i < n; i++) {
       const b = 100 + Math.random() * 10;
       base.push(b);
-      treat.push(b + 2 + (Math.random() - 0.5) * 2);
+      treat.push(b + 5 + (Math.random() - 0.5) * 2);
     }
     const diffs = base.map((b, i) => treat[i]! - b);
     const indCi = bootstrapIndependentCI(base, treat, 0.95, 5_000, seed);

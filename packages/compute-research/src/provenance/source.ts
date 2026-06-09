@@ -13,18 +13,13 @@
 
 /** Source code identity, dependency fingerprints, and toolchain configuration. */
 export interface SourceProvenance {
-  repo_url: string
-  commit_sha: string
-  branch: string
-  commit_timestamp: number
-  dirty: boolean
-  tree_hash: string
-  dirty_patch_hash?: string
-  dirty_patch_size?: number
-  dependencies: {
-    cargo_lock_hash: string
-    bun_lock_hash: string
-    compute_native_manifest_hash: string
+  source: {
+    repository: string
+    commit_sha: string
+    branch: string
+    commit_timestamp: string
+    dirty: boolean
+    dependencies: Record<string, string>
   }
   toolchain: {
     rust_version: string
@@ -32,7 +27,7 @@ export interface SourceProvenance {
     linker: string
     opt_profile: string
     feature_flags: string[]
-    env_flags: Record<string, string>
+    env_flags: string[]
   }
 }
 
@@ -168,13 +163,7 @@ export async function captureSourceProvenance(
   const repo_url = await gitCmd(repoPath, "config", "--get", "remote.origin.url")
   const commit_sha = await gitCmd(repoPath, "rev-parse", "HEAD")
   const branch = await gitCmd(repoPath, "rev-parse", "--abbrev-ref", "HEAD")
-  const timestampStr = await gitCmd(
-    repoPath,
-    "log",
-    "-1",
-    "--format=%ct",
-  )
-  const commit_timestamp = Number.parseInt(timestampStr, 10)
+  const commit_timestamp = await gitCmd(repoPath, "log", "-1", "--format=%cI")
   const statusOutput = await gitCmd(repoPath, "status", "--porcelain")
   const dirty = statusOutput.length > 0
 
@@ -287,12 +276,12 @@ export async function captureSourceProvenance(
     }
   }
 
-  // Environment flags: collect relevant Cargo/Rust env vars
-  const env_flags: Record<string, string> = {}
+  // Environment flags: collect relevant Cargo/Rust env vars as KEY=VALUE strings
+  const env_flags: string[] = []
   for (const prefix of CARGO_ENV_PREFIXES) {
     for (const [key, value] of Object.entries(process.env)) {
       if (key.startsWith(prefix) && value !== undefined) {
-        env_flags[key] = value
+        env_flags.push(`${key}=${value}`)
       }
     }
   }
@@ -300,19 +289,17 @@ export async function captureSourceProvenance(
   // ── Assemble result ────────────────────────────────────────────────────────
 
   return {
-    repo_url,
-    commit_sha,
-    branch,
-    commit_timestamp,
-    dirty,
-    tree_hash,
-    ...(dirty_patch_hash !== undefined
-      ? { dirty_patch_hash, dirty_patch_size }
-      : {}),
-    dependencies: {
-      cargo_lock_hash,
-      bun_lock_hash,
-      compute_native_manifest_hash,
+    source: {
+      repository: repo_url,
+      commit_sha,
+      branch,
+      commit_timestamp,
+      dirty,
+      dependencies: {
+        cargo_lock_hash,
+        bun_lock_hash,
+        compute_native_manifest_hash,
+      },
     },
     toolchain: {
       rust_version,

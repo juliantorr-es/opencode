@@ -63,8 +63,8 @@ INNER JOIN runs t
  AND b.machine_anon_id = t.machine_anon_id
  AND (b.experiment_id = t.experiment_id OR b.optimization_id = t.optimization_id)
  AND b.run_id <> t.run_id
-WHERE b.run_grade IN ('claim_candidate', 'production')
-  AND t.run_grade IN ('claim_candidate', 'production')
+WHERE b.run_grade IN ('claim_candidate', 'controlled')
+  AND t.run_grade IN ('claim_candidate', 'controlled')
   AND b.status = 'completed'
   AND t.status = 'completed';
 
