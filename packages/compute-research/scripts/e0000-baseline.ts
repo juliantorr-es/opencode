@@ -36,7 +36,7 @@ type WorkloadDef = {
   outputBudget: number;
   description: string;
   requireLayers: number | null;
-  parseTokens(stdout: string, _stderr: string): number[];
+  parseTokens(_stdout: string, stderr: string): number[];
   parseLayerEvents(stderr: string, runId: string): Array<Record<string, unknown>>;
 };
 
@@ -48,8 +48,8 @@ const WORKLOADS: Record<string, WorkloadDef> = {
     outputBudget: 1,
     description: "Single BOS token forward pass — 48 layers, one output token",
     requireLayers: 48,
-    parseTokens(stdout: string, _stderr: string): number[] {
-      const m = stdout.match(/GATE PASSED:\s*token=(\d+)/);
+    parseTokens(_stdout: string, stderr: string): number[] {
+      const m = stderr.match(/GATE PASSED:\s*token=(\d+)/);
       return m ? [parseInt(m[1]!)] : [];
     },
     parseLayerEvents(stderr: string, runId: string): Array<Record<string, unknown>> {
@@ -62,11 +62,10 @@ const WORKLOADS: Record<string, WorkloadDef> = {
     promptTokenIds: [2, 42, 100, 500],
     outputBudget: 2,
     description: "Prefill 4 tokens, decode 1 token",
-    requireLayers: 48,
-    parseTokens(stdout: string, _stderr: string): number[] {
+    requireLayers: 96,
+    parseTokens(_stdout: string, stderr: string): number[] {
       const tokens: number[] = [];
-      // Test emits: "Decode token: 4242" (no index number)
-      for (const m of stdout.matchAll(/(?:Prefill|Decode)\s+token:\s*(\d+)/g)) {
+      for (const m of stderr.matchAll(/(?:Prefill|Decode)\s+token:\s*(\d+)/g)) {
         tokens.push(parseInt(m[1]!));
       }
       return tokens;
@@ -81,15 +80,15 @@ const WORKLOADS: Record<string, WorkloadDef> = {
     promptTokenIds: [2],
     outputBudget: 9, // 1 prefill token + 8 decode tokens
     description: "BOS prefill, 8 decode steps (9 tokens total)",
-    requireLayers: 48,
-    parseTokens(stdout: string, _stderr: string): number[] {
-      const m = stdout.match(/All tokens:\s*\[([^\]]+)\]/);
+    requireLayers: 432,
+    parseTokens(_stdout: string, stderr: string): number[] {
+      const m = stderr.match(/Tokens:\s*\[([^\]]+)\]/);
       if (m) {
         return m[1]!.split(",").map((s) => parseInt(s.trim()));
       }
       // Fallback: individual Decode token lines
       const tokens: number[] = [];
-      for (const m2 of stdout.matchAll(/Decode\s+token:\s*(\d+)/g)) {
+      for (const m2 of stderr.matchAll(/Decode\s+token:\s*(\d+)/g)) {
         tokens.push(parseInt(m2[1]!));
       }
       return tokens;
@@ -108,11 +107,41 @@ function parseStandardLayerEvents(
   runId: string,
 ): Array<Record<string, unknown>> {
   const events: Array<Record<string, unknown>> = [];
+  let currentPhase = "";
+  let forwardPassIndex = 0;
+  let tokenStep: number | null = null;
+
   for (const line of stderr.split("\n")) {
+    // Track phase markers
+    const phaseStart = line.match(/\[phase\]\s+(\S+)\s+start(?:\s+token_step=(\d+))?/);
+    if (phaseStart) {
+      const phase = phaseStart[1]!;
+      if (phase === "prefill") {
+        forwardPassIndex++;
+        tokenStep = null;
+      } else if (phase === "decode_step") {
+        tokenStep = phaseStart[2] ? parseInt(phaseStart[2]!) : null;
+      }
+      currentPhase = phase;
+      continue;
+    }
+    const phaseEnd = line.match(/\[phase\]\s+(\S+)\s+end/);
+    if (phaseEnd) {
+      continue;
+    }
+
+    // Parse layer event line
     const m = line.match(
       /layer=(\d+)\s+kind=(\S+)\s+shape=\[(\d+),\s*(\d+)\]\s+finite=(true|false)\s+handles=(\d+)/,
     );
     if (m) {
+      const layerIndex = parseInt(m[1]!);
+      let stageId: string;
+      if (currentPhase === "decode_step" && tokenStep !== null) {
+        stageId = `decode_step_${tokenStep}_layer_${layerIndex}`;
+      } else {
+        stageId = `layer_${layerIndex}`;
+      }
       events.push({
         schema_version: "1.0",
         run_id: runId,
@@ -123,11 +152,14 @@ function parseStandardLayerEvents(
         clock_domain: "worker_monotonic",
         monotonic_ns: 0, // RuntimeTimeline wiring pending
         stage: {
-          stage_id: `layer_${m[1]}`,
+          stage_id: stageId,
           substrate_id: "mlx_generic_gpu",
-          layer_index: parseInt(m[1]!),
+          layer_index: layerIndex,
           attention_kind: m[2]!,
           status: m[5] === "true" ? "completed" : "failed",
+          phase: currentPhase || undefined,
+          forward_pass_index: forwardPassIndex || undefined,
+          token_step: tokenStep ?? undefined,
           measurements: {
             eval_ns: 0, // RuntimeTimeline wiring pending
             materialized_bytes: 0,

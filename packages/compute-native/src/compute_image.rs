@@ -4245,6 +4245,7 @@ mod tests {
             compiled.manifest.tensor_table.len(),
             compiled.manifest.image_hash
         );
+        eprintln!("image hash: {}", compiled.manifest.image_hash);
 
         // Validate the execution plan
         let plan = &compiled.manifest.execution_plan;

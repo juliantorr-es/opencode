@@ -550,6 +550,7 @@ impl ProfiledInferenceSession {
             EngineError::new(EngineErrorCode::NumericalFailure, format!("prologue eval: {}", e))
         })?;
 
+        eprintln!("[phase] prefill start");
         for (l, layer_plan) in plan.layers.iter().enumerate() {
             if self.cancellation_flag.load(Ordering::Relaxed) {
                 return Err(EngineError::new(EngineErrorCode::Cancelled, "cancelled during prefill"));
@@ -611,6 +612,7 @@ impl ProfiledInferenceSession {
                 true,
             );
         }
+        eprintln!("[phase] prefill end");
 
         for (l, _) in plan.layers.iter().enumerate() {
             if self.kv_caches[l].committed_len != seq_len {
@@ -714,6 +716,7 @@ impl ProfiledInferenceSession {
             EngineError::new(EngineErrorCode::NumericalFailure, format!("prologue eval: {}", e))
         })?;
 
+        eprintln!("[phase] decode_step start token_step={}", self.absolute_position);
         for (l, layer_plan) in plan.layers.iter().enumerate() {
             if self.cancellation_flag.load(Ordering::Relaxed) {
                 return Err(EngineError::new(EngineErrorCode::Cancelled, "cancelled during decode"));
@@ -775,6 +778,7 @@ impl ProfiledInferenceSession {
                 true,
             );
         }
+        eprintln!("[phase] decode_step end");
         let expected = kv_offset + 1;
         for (l, _) in plan.layers.iter().enumerate() {
             if self.kv_caches[l].committed_len != expected {
