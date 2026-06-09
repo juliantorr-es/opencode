@@ -8,9 +8,11 @@ use std::fs;
 use std::fs::File;
 use std::path::Path;
 use std::io::Read;
+use rayon::prelude::*;
 use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 
 use serde_json::json;
+use rayon::prelude::*;
 use sha2::{Digest, Sha256};
 use uuid::Uuid;
 
@@ -256,12 +258,42 @@ fn cmd_verify(args: &[String]) -> Result<(), String> {
         }
     }
 
-    // If --full: recompute image hash from all segments and compare.
+    // If --full: verify every segment SHA-256 against manifest (parallel), plus artifact root hash.
     if full {
-        let recomputed = recompute_image_hash(image_path, &reader.manifest)?;
-        if recomputed != stored_hash {
+        let results: Vec<(String, bool, Vec<u8>)> = reader.manifest.segments
+            .par_iter()
+            .map(|seg| {
+                let sp = image_path.join(&seg.filename);
+                let bytes = std::fs::read(&sp)
+                    .unwrap_or_else(|e| panic!("read {}: {}", seg.filename, e));
+                let computed = format!("{:x}", Sha256::digest(&bytes));
+                let ok = computed == seg.sha256;
+                (seg.filename.clone(), ok, bytes)
+            })
+            .collect();
+
+        let mut mismatches: Vec<String> = Vec::new();
+        let mut verified = 0usize;
+        let mut root_hasher = Sha256::new();
+        for (filename, ok, bytes) in &results {
+            if *ok { verified += 1; }
+            else { mismatches.push(format!("{}: hash mismatch", filename)); }
+            root_hasher.update(bytes);
+        }
+        if !mismatches.is_empty() {
             return Err(format!(
-                "full verify hash mismatch: stored={stored_hash} recomputed={recomputed}"
+                "segment hash mismatches ({}/{} verified):\n{}",
+                verified, reader.manifest.segments.len(), mismatches.join("\n")
+            ));
+        }
+        let recomputed_root = format!("{:x}", root_hasher.finalize());
+        let expected_root = seal.get("artifact_root_hash")
+            .and_then(|v| v.as_str().map(|s| s.to_string()))
+            .unwrap_or_else(|| stored_hash.clone());
+        if recomputed_root != expected_root {
+            return Err(format!(
+                "artifact root hash mismatch: stored={} recomputed={}",
+                &expected_root[..16], &recomputed_root[..16]
             ));
         }
     }
@@ -276,6 +308,7 @@ fn cmd_verify(args: &[String]) -> Result<(), String> {
         "image_hash": image_hash,
         "segment_count": segment_count,
         "tensor_count": tensor_count,
+        "artifact_root_hash": seal["artifact_root_hash"].as_str().unwrap_or(&stored_hash).to_string(),
         "storage_abi": storage_abi,
     });
     println!("{}", serde_json::to_string(&out).unwrap());
