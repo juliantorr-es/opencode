@@ -1,0 +1,18 @@
+{
+  "run_grade": {
+    "values": ["exploratory", "controlled", "claim_candidate", "archival", "legacy_provisional"],
+    "descriptions": {
+      "exploratory": "Dirty tree OK, 1 rep, unsupported settings OK. Cannot support paper claims.",
+      "controlled": "Committed revision, frozen workload, recognized machine, known model hash, complete provenance. Can support optimization promotion.",
+      "claim_candidate": "Controlled + preregistered metrics, repetition policy, thermal/power controls, correctness comparison.",
+      "archival": "Claim_candidate included in frozen dataset release.",
+      "legacy_provisional": "Predates evidence plane. Marked as NOT authoritative."
+    }
+  },
+  "instrumentation_mode": {
+    "values": ["off", "minimal", "research_standard", "research_deep"]
+  },
+  "result_classification": {
+    "values": ["promoted", "rejected", "deferred", "research_only", "inconclusive"]
+  }
+}

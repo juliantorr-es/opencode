@@ -7,7 +7,8 @@
 import type { StageShare, BottleneckLedger } from "./bottleneck.js";
 import { buildBottleneckLedger } from "./bottleneck.js";
 import {
-  bootstrapCI,
+  bootstrapIndependentCI,
+  bootstrapPairedCI,
   cohensD,
   pairedDifference,
   outlierDetect,
@@ -48,6 +49,10 @@ export interface ComparisonConfig {
   readonly confidence?: number;
   /** Number of bootstrap resamples (default 10_000). */
   readonly nBootstrap?: number;
+  /** Force paired analysis (default: auto-detect when lengths match). */
+  readonly paired?: boolean;
+  /** Seed for reproducible bootstrap resampling. */
+  readonly randomSeed?: number;
 }
 
 export type ComparisonRecommendation =
@@ -101,6 +106,13 @@ export interface ComparisonRecord {
 
   readonly ci: { lower: number; upper: number };
   readonly effectSize: number;
+
+  readonly analysis_method: "paired" | "independent";
+  readonly bootstrap_statistic: "mean_difference";
+  readonly bootstrap_count: number;
+  readonly confidence_level: number;
+  readonly random_seed: number | undefined;
+  readonly ci_method: "percentile";
 
   readonly pairedDiff: PairedDifference;
   readonly outlierIndices: readonly number[];
@@ -180,15 +192,35 @@ export async function runComparison(
       : 0;
 
   // 6. Bootstrap CI on the difference of means (treatment - baseline)
-  const allValues = [...baselineValues, ...treatmentValues];
-  const ci =
-    allValues.length >= 2
-      ? bootstrapCI(
-          allValues,
-          config.confidence ?? 0.95,
-          config.nBootstrap ?? 10_000,
-        )
-      : { lower: 0, upper: 0 };
+  const isPaired =
+    config.paired ?? (baselineValues.length === treatmentValues.length);
+  const nBootstrap = config.nBootstrap ?? 10_000;
+  const confidenceLevel = config.confidence ?? 0.95;
+
+  let ci: { lower: number; upper: number };
+  if (baselineValues.length < 2 || treatmentValues.length < 2) {
+    ci = { lower: 0, upper: 0 };
+  } else if (isPaired) {
+    const diffs = baselineValues.map((b, i) => treatmentValues[i]! - b);
+    ci = bootstrapPairedCI(
+      diffs,
+      confidenceLevel,
+      nBootstrap,
+      config.randomSeed,
+    );
+  } else {
+    ci = bootstrapIndependentCI(
+      baselineValues,
+      treatmentValues,
+      confidenceLevel,
+      nBootstrap,
+      config.randomSeed,
+    );
+  }
+
+  const analysisMethod: "paired" | "independent" = isPaired
+    ? "paired"
+    : "independent";
 
   // 7. Effect size
   const effectSize =
@@ -250,6 +282,12 @@ export async function runComparison(
     percentageDifference,
     ci,
     effectSize,
+    analysis_method: analysisMethod,
+    bootstrap_statistic: "mean_difference",
+    bootstrap_count: nBootstrap,
+    confidence_level: confidenceLevel,
+    random_seed: config.randomSeed,
+    ci_method: "percentile",
     pairedDiff,
     outlierIndices,
     bottleneckLedger,
@@ -408,18 +446,23 @@ function deriveRecommendation(
   if (!evidenceComplete) return "inconclusive";
   if (!allGatesPass) return "rejected";
 
+  // Effect not distinguishable from zero — CI straddles zero
+  if (ci.lower <= 0 && ci.upper >= 0) {
+    return "research_only";
+  }
+
   // Effect size guidelines (Cohen): small≈0.2, medium≈0.5, large≈0.8
   const absD = Math.abs(effectSize);
 
-  if (absD < 0.2 && ci.lower <= 0 && ci.upper >= 0) {
+  if (absD < 0.2) {
     return "research_only";
   }
-  if (absD >= 0.5 && effectSize < 0 && ci.upper < 0) {
-    // Treatment is significantly better (negative = lower values = improvement)
+  // baseline - treatment: positive = improvement (lower latency/memory), negative = regression
+  const improved = effectSize > 0;
+  if (absD >= 0.5 && improved && ci.upper < 0) {
     return "promoted";
   }
-  if (absD >= 0.5 && effectSize > 0 && ci.lower > 0) {
-    // Treatment is significantly worse
+  if (absD >= 0.5 && !improved && ci.lower > 0) {
     return "rejected";
   }
   if (absD >= 0.2) {

@@ -7,8 +7,8 @@
   "treatment_config": "v3-baseline",
   "workloads": ["bos-single-token"],
   "machine_profile_id": "apple-m1-pro",
-  "run_grade": "experimental",
-  "instrumentation_mode": "full",
+  "run_grade": "claim_candidate",
+  "instrumentation_mode": "research_standard",
   "primary_metric": "token_correctness",
   "repetition_policy": {
     "min_repetitions": 3,

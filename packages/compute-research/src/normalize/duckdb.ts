@@ -1,64 +1,24 @@
-import { mkdirSync, writeFileSync } from "node:fs";
+import { execSync } from "node:child_process";
+import { readFileSync, writeFileSync, mkdirSync, existsSync } from "node:fs";
 import { join, resolve } from "node:path";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 export interface DuckDbConfig {
-  /** Path to a DuckDB CLI binary. If unset, generates scripts only. */
+  /** Path to a DuckDB CLI binary.  Defaults to "duckdb" (PATH lookup). */
   readonly cliPath?: string;
-  /** If true, attempt to run the DuckDB CLI after writing scripts. */
-  readonly execute?: boolean;
+  /** Path to views.sql.  If unset, searched relative to CWD and known locations. */
+  readonly viewsPath?: string;
 }
 
 export interface DuckDbResult {
   readonly db_path: string;
-  readonly schema_path: string;
-  readonly load_script_path: string;
-  readonly sql_view_path: string;
   readonly executed: boolean;
+  readonly error?: string;
+  readonly smoke_query_result?: { count: number }[];
 }
 
-// ── Schema DDL ────────────────────────────────────────────────────────────────
-
-/**
- * Per-column schema entry mapping column name to DuckDB type.
- */
-interface ColumnDef {
-  readonly name: string;
-  readonly type: string;
-}
-
-/**
- * Table definition with column schema and JSON data path.
- */
-interface TableDef {
-  readonly name: string;
-  readonly columns: ColumnDef[];
-  readonly parquetPath: string;
-}
-
-function parquetSchema(table: TableDef): string {
-  const cols = table.columns.map((c) => `  ${c.name} ${c.type}`).join(",\n");
-  return cols;
-}
-
-function tableFromParquetJSON(
-  name: string,
-  parquetFile: string,
-): TableDef | null {
-  // Derive columns from the _schema field in the parquet placeholder JSON.
-  // We emit a CREATE TABLE statement manually since the JSON is not native Parquet.
-  const columnMap = SCHEMAS[name];
-  if (!columnMap) return null;
-
-  const columns: ColumnDef[] = Object.entries(columnMap).map(([n, t]) => ({
-    name: n,
-    type: t,
-  }));
-  return { name, columns, parquetPath: parquetFile };
-}
-
-// ── Registered schemas (mirrors normalize/index.ts) ───────────────────────────
+// ── Schema definitions (mirrors normalize.ts SCHEMAS) ─────────────────────────
 
 const SCHEMAS: Record<string, Record<string, string>> = {
   runs: {
@@ -159,15 +119,72 @@ const SCHEMAS: Record<string, Record<string, string>> = {
   },
 };
 
+// ── Arrow → NDJSON ───────────────────────────────────────────────────────────
+
+/**
+ * Read an Arrow IPC file and produce NDJSON rows.
+ *
+ * apache-arrow is used here because DuckDB CLI v1.5.x does not have a built-in
+ * `arrow_ipc_scan` function (the arrow extension was added in v1.6+).  We
+ * convert the Arrow data to NDJSON and use DuckDB's native `read_json_auto`.
+ *
+ * Once DuckDB v1.6+ is available system-wide, this conversion can be removed
+ * and tables created directly via:
+ *   CREATE TABLE t AS SELECT * FROM arrow_ipc_scan('t.arrow');
+ */
+function arrowFileToNdjson(arrowPath: string, columns: Record<string, string>): string {
+  let tableFromIPC: (buf: ArrayBufferLike) => unknown;
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const arrow = require("apache-arrow");
+    tableFromIPC = arrow.tableFromIPC;
+  } catch {
+    // apache-arrow not available; try .ndjson fallback
+    const ndjsonPath = arrowPath.replace(/\.arrow$/, ".ndjson");
+    if (existsSync(ndjsonPath)) {
+      return readFileSync(ndjsonPath, "utf-8");
+    }
+    throw new Error(
+      `Cannot read ${arrowPath}: apache-arrow not available and no .ndjson fallback found`,
+    );
+  }
+
+  const raw = readFileSync(arrowPath);
+  const ab = raw.buffer.slice(raw.byteOffset, raw.byteOffset + raw.byteLength);
+  const table = tableFromIPC(ab) as {
+    numRows: number;
+    schema: { fields: Array<{ name: string }> };
+    getChild: (name: string) => { get: (i: number) => unknown } | null;
+  };
+  const colNames = Object.keys(columns);
+  const lines: string[] = new Array(table.numRows);
+
+  for (let i = 0; i < table.numRows; i++) {
+    const row: Record<string, unknown> = {};
+    for (const col of colNames) {
+      const colVec = table.getChild(col);
+      row[col] = colVec ? colVec.get(i) : null;
+    }
+    lines[i] = JSON.stringify(row);
+  }
+
+  return lines.join("\n") + "\n";
+}
+
 // ── Public API ────────────────────────────────────────────────────────────────
 
 /**
- * Generate a DuckDB-compatible schema and load script from a normalization
- * output directory.  In v1 this writes a SQL schema file and a load script
- * that imports the parquet-placeholder JSON files.
+ * Build a DuckDB database from normalized Arrow IPC files.
  *
- * When `config.cliPath` is set and `config.execute` is true, the DuckDB CLI
- * is invoked to materialise the database.
+ * Steps:
+ *   1. Convert each `.arrow` file to NDJSON (DuckDB CLI v1.5.x needs NDJSON)
+ *   2. Shell out to `duckdb` CLI to CREATE TABLE + load data
+ *   3. Execute analytical views from research/sql/views.sql
+ *   4. Run smoke query: SELECT COUNT(*) FROM valid_claim_runs
+ *
+ * Returns DuckDbResult with `executed: true` on success, including smoke-query
+ * results.  If DuckDB CLI is unavailable, sets `executed: false` and writes an
+ * error message.
  */
 export function buildDuckDb(
   normalizedDir: string,
@@ -176,14 +193,30 @@ export function buildDuckDb(
 ): DuckDbResult {
   const absNormalized = resolve(normalizedDir);
   const absDbPath = resolve(dbPath);
-  const outputBase = join(absNormalized, ".duckdb");
 
+  // ── 1. Validate DuckDB CLI availability ────────────────────────────────
+
+  const cli = config?.cliPath ?? "duckdb";
+  let cliAvailable = false;
+  try {
+    execSync(`${cli} --version`, { stdio: "pipe", timeout: 5000 });
+    cliAvailable = true;
+  } catch {
+    return {
+      db_path: absDbPath,
+      executed: false,
+      error: `DuckDB CLI ("${cli}") not found or not executable. Install DuckDB via 'brew install duckdb' or set config.cliPath.`,
+    };
+  }
+
+  // ── 2. Convert .arrow → NDJSON and emit CREATE TABLE statements ────────
+
+  const outputBase = join(absNormalized, ".duckdb");
   mkdirSync(outputBase, { recursive: true });
 
-  // ── 1. Generate CREATE TABLE statements ───────────────────────────────
-
   const createStmts: string[] = [];
-  const insertStmts: string[] = [];
+  const ndjsonDir = join(outputBase, "ndjson");
+  mkdirSync(ndjsonDir, { recursive: true });
 
   for (const [tableName, cols] of Object.entries(SCHEMAS)) {
     const colDefs = Object.entries(cols)
@@ -194,28 +227,33 @@ export function buildDuckDb(
       `CREATE TABLE IF NOT EXISTS "${tableName}" (\n${colDefs}\n);`,
     );
 
-    // INSERT from the parquet-placeholder JSON using DuckDB's read_json_auto
-    // with the flattened rows path via JSON extract.
-    const parquetFile = `${tableName}.parquet.json`;
-    const parquetPath = join(absNormalized, parquetFile);
+    const arrowFile = `${tableName}.arrow`;
+    const arrowPath = join(absNormalized, arrowFile);
+    const ndjsonFile = `${tableName}.ndjson`;
+    const ndjsonPath = join(ndjsonDir, ndjsonFile);
 
-    // JSON loaded via read_json_auto on the `rows` array, but we wrap in
-    // UNNEST to flatten the rows array of the placeholder file.
-    insertStmts.push(
-      `INSERT INTO "${tableName}"\n  SELECT * FROM read_json_auto('${parquetPath}', format='array', columns={rows: 'STRUCT(${Object.entries(cols).map(([n, t]) => `"${n}" ${t}`).join(", ")}[])'});`,
-    );
-
-    // Simpler approach: insert from the raw JSON using UNNEST of the rows array.
-    insertStmts.push(
-      `INSERT OR REPLACE INTO "${tableName}"\n  SELECT * FROM (SELECT UNNEST(rows) FROM read_json_auto('${parquetPath}', format='array')) WHERE row_count = (SELECT COUNT(*) FROM read_json_auto('${parquetPath}', format='array'));`,
-    );
+    if (existsSync(arrowPath)) {
+      try {
+        const ndjson = arrowFileToNdjson(arrowPath, cols);
+        writeFileSync(ndjsonPath, ndjson, "utf-8");
+      } catch (err) {
+        return {
+          db_path: absDbPath,
+          executed: false,
+          error: `Failed to convert ${arrowPath} to NDJSON: ${err instanceof Error ? err.message : String(err)}`,
+        };
+      }
+    } else {
+      // Table may be empty; write empty NDJSON
+      writeFileSync(ndjsonPath, "", "utf-8");
+    }
   }
 
-  // ── 2. Write schema file ──────────────────────────────────────────────
+  // ── 3. Write load SQL script ───────────────────────────────────────────
 
-  const schemaPath = join(outputBase, "schema.sql");
-  const schemaContent = [
-    "-- DuckDB schema for normalized compute-research data",
+  const loadPath = join(outputBase, "load.sql");
+  const loadLines: string[] = [
+    "-- DuckDB load script for normalized compute-research data",
     "-- Generated by buildDuckDb",
     "--",
     `-- Normalized directory: ${absNormalized}`,
@@ -223,54 +261,104 @@ export function buildDuckDb(
     "",
     createStmts.join("\n\n"),
     "",
-  ].join("\n");
-  writeFileSync(schemaPath, schemaContent, "utf-8");
+    "-- Load data from NDJSON files",
+    "",
+  ];
 
-  // ── 3. Write load script ───────────────────────────────────────────────
+  for (const tableName of Object.keys(SCHEMAS)) {
+    const ndjsonPath = join(ndjsonDir, `${tableName}.ndjson`);
+    // Only INSERT if there are rows; otherwise the empty NDJSON causes
+    // read_json_auto to infer 0 columns (DuckDB issue with empty files).
+    const ndjsonContent = readFileSync(ndjsonPath, "utf-8").trim();
+    if (ndjsonContent.length > 0) {
+      loadLines.push(
+        `INSERT INTO "${tableName}" SELECT * FROM read_json_auto('${ndjsonPath}');`,
+      );
+    }
+  }
 
-  const loadPath = join(outputBase, "load.sql");
-  const loadContent = [
-    "-- DuckDB load script for normalized compute-research data",
-    `-- Database path: ${absDbPath}`,
-    "",
-    `.open '${absDbPath}'`,
-    "",
-    createStmts.join("\n\n"),
-    "",
-    "-- Load data from parquet-placeholder JSON files",
-    "",
-    ...Object.keys(SCHEMAS).map((tableName) => {
-      const parquetFile = `${tableName}.parquet.json`;
-      const parquetPath = join(absNormalized, parquetFile);
-      return [
-        `INSERT INTO "${tableName}"`,
-        `  SELECT UNNEST(rows) FROM read_json_auto('${parquetPath}', format='array');`,
-      ].join("\n");
-    }),
-    "",
-  ].join("\n");
-  writeFileSync(loadPath, loadContent, "utf-8");
+  loadLines.push("");
+  writeFileSync(loadPath, loadLines.join("\n"), "utf-8");
 
-  // ── 4. Reference the views SQL file ───────────────────────────────────
+  // ── 4. Locate and copy views.sql ───────────────────────────────────────
+
+  // Use explicit path, or search relative to CWD and other known locations
+  const viewsCandidates: string[] = [];
+  if (config?.viewsPath) {
+    viewsCandidates.push(resolve(config.viewsPath));
+  }
+  // Search relative to CWD (repo root via multiple parent depths)
+  const cwd = process.cwd();
+  viewsCandidates.push(
+    resolve(join(cwd, "research", "sql", "views.sql")),
+    resolve(join(cwd, "..", "research", "sql", "views.sql")),
+    resolve(join(cwd, "..", "..", "research", "sql", "views.sql")),
+    resolve(join(cwd, "..", "..", "..", "research", "sql", "views.sql")),
+    resolve(join(__dirname, "..", "..", "..", "..", "..", "research", "sql", "views.sql")),
+    resolve(join(absNormalized, "..", "..", "..", "..", "research", "sql", "views.sql")),
+    resolve(join(absNormalized, "..", "..", "..", "research", "sql", "views.sql")),
+    resolve(join(absNormalized, "..", "..", "research", "sql", "views.sql")),
+  );
 
   const viewsPath = join(outputBase, "views.sql");
-  const viewsNote = [
-    "-- Analytical views for compute-research data",
-    "-- See research/sql/views.sql for the canonical view definitions",
-    `-- Symbolic reference: research/sql/views.sql`,
-    "",
+  let viewsFound = false;
+  for (const candidate of viewsCandidates) {
+    const resolved = resolve(candidate);
+    if (existsSync(resolved)) {
+      const viewsContent = readFileSync(resolved, "utf-8");
+      writeFileSync(viewsPath, viewsContent, "utf-8");
+      viewsFound = true;
+      break;
+    }
+  }
+
+  if (!viewsFound) {
+    writeFileSync(
+      viewsPath,
+      "-- views.sql not found at canonical path\n",
+      "utf-8",
+    );
+  }
+
+  // ── 5. Execute via DuckDB CLI ───────────────────────────────────────────
+
+  // Step A: Pipe SQL init commands into the DuckDB CLI with the DB path.
+  const initSql = [
+    `.read '${loadPath}'`,
+    `.read '${viewsPath}'`,
   ].join("\n");
-  writeFileSync(viewsPath, viewsNote, "utf-8");
 
-  // ── 5. Execute (if configured) ────────────────────────────────────────
+  try {
+    execSync(`${cli} '${absDbPath}'`, {
+      input: initSql,
+      stdio: ["pipe", "pipe", "pipe"],
+      timeout: 30000,
+      encoding: "utf-8",
+    });
 
-  let executed = false;
+    // Step B: Parseable smoke query with -csv -noheader
+    const stdout = execSync(`${cli} -csv -noheader '${absDbPath}' "SELECT COUNT(*) FROM valid_claim_runs;"`, {
+      stdio: ["pipe", "pipe", "pipe"],
+      timeout: 10000,
+      encoding: "utf-8",
+    });
 
-  return {
-    db_path: absDbPath,
-    schema_path: schemaPath,
-    load_script_path: loadPath,
-    sql_view_path: viewsPath,
-    executed,
-  };
+    // Smoke query result is a single CSV value
+    const countStr = stdout.trim();
+    const count = Number.parseInt(countStr, 10);
+    const smokeResult = Number.isFinite(count) ? count : 0;
+
+    return {
+      db_path: absDbPath,
+      executed: true,
+      smoke_query_result: [{ count: smokeResult }],
+    };
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    return {
+      db_path: absDbPath,
+      executed: false,
+      error: `DuckDB execution failed: ${msg}`,
+    };
+  }
 }

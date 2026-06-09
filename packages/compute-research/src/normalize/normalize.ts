@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import { readFileSync, readdirSync, mkdirSync, writeFileSync } from "node:fs";
 import { join, basename } from "node:path";
+import { tableFromArrays, tableToIPC } from "apache-arrow";
 
 // ── Public Types ─────────────────────────────────────────────────────────────
 
@@ -13,12 +14,13 @@ export interface NormalizeResult {
   readonly error?: string;
 }
 
-/** Metadata about one emitted parquet-placeholder file. */
+/** Metadata about one emitted Arrow IPC file. */
 export interface NormalizedFile {
   readonly name: string;
   readonly row_count: number;
   readonly sha256: string;
   readonly byte_size: number;
+  readonly format: "arrow_ipc";
 }
 
 /** Result of referential integrity validation. */
@@ -131,25 +133,158 @@ export interface CorrectnessCheckpointRecord {
   readonly passed: boolean;
 }
 
-// ── Parquet Placeholder Schema ────────────────────────────────────────────────
+// ── Schema definitions ───────────────────────────────────────────────────────
+// Shared with duckdb.ts — maps table name to DuckDB type strings.
 
-interface ParquetFile<T> {
-  _format: "parquet_placeholder";
-  _schema_version: string;
-  _schema: Record<string, string>;
-  rows: T[];
+const SCHEMAS: Record<string, Record<string, string>> = {
+  runs: {
+    run_id: "VARCHAR",
+    experiment_id: "VARCHAR",
+    optimization_id: "VARCHAR",
+    study_id: "VARCHAR",
+    trial_index: "INTEGER",
+    run_grade: "VARCHAR",
+    status: "VARCHAR",
+    start_time: "VARCHAR",
+    end_time: "VARCHAR",
+    source_revision: "VARCHAR",
+    workload_id: "VARCHAR",
+    machine_anon_id: "VARCHAR",
+    machine_chip: "VARCHAR",
+    machine_memory: "VARCHAR",
+    model_image_hash: "VARCHAR",
+    instrumentation_mode: "VARCHAR",
+    page_cache_class: "VARCHAR",
+    power_class: "VARCHAR",
+    thermal_class: "VARCHAR",
+    worker_id: "VARCHAR",
+    event_count: "BIGINT",
+    stage_event_count: "BIGINT",
+    memory_sample_count: "BIGINT",
+    token_metric_count: "BIGINT",
+    checkpoint_count: "BIGINT",
+  },
+  stage_events: {
+    run_id: "VARCHAR",
+    request_id: "VARCHAR",
+    worker_id: "VARCHAR",
+    sequence_number: "BIGINT",
+    event_type: "VARCHAR",
+    clock_domain: "VARCHAR",
+    monotonic_ns: "BIGINT",
+    wall_ns: "BIGINT",
+    stage_id: "VARCHAR",
+    substrate_id: "VARCHAR",
+    layer_index: "INTEGER",
+    attention_kind: "VARCHAR",
+    graph_region_id: "VARCHAR",
+    kernel_id: "VARCHAR",
+    stage_status: "VARCHAR",
+    measurements: "VARCHAR",
+  },
+  memory_samples: {
+    run_id: "VARCHAR",
+    request_id: "VARCHAR",
+    worker_id: "VARCHAR",
+    sequence_number: "BIGINT",
+    event_type: "VARCHAR",
+    clock_domain: "VARCHAR",
+    monotonic_ns: "BIGINT",
+    wall_ns: "BIGINT",
+    stage_id: "VARCHAR",
+    substrate_id: "VARCHAR",
+    layer_index: "INTEGER",
+    resident_bytes: "DOUBLE",
+    wired_bytes: "DOUBLE",
+    active_bytes: "DOUBLE",
+    compressed_bytes: "DOUBLE",
+  },
+  token_metrics: {
+    run_id: "VARCHAR",
+    request_id: "VARCHAR",
+    worker_id: "VARCHAR",
+    sequence_number: "BIGINT",
+    event_type: "VARCHAR",
+    clock_domain: "VARCHAR",
+    monotonic_ns: "BIGINT",
+    wall_ns: "BIGINT",
+    token_index: "BIGINT",
+    token_id: "BIGINT",
+    decode_ns: "DOUBLE",
+    attention_ns: "DOUBLE",
+    mlp_ns: "DOUBLE",
+    norm_ns: "DOUBLE",
+    sample_ns: "DOUBLE",
+  },
+  correctness_checkpoints: {
+    run_id: "VARCHAR",
+    request_id: "VARCHAR",
+    checkpoint_id: "VARCHAR",
+    layer_or_stage: "VARCHAR",
+    tensor_name: "VARCHAR",
+    comparison_method: "VARCHAR",
+    reference_hash: "VARCHAR",
+    treatment_hash: "VARCHAR",
+    max_abs_error: "DOUBLE",
+    mean_abs_error: "DOUBLE",
+    max_rel_error: "DOUBLE",
+    mean_rel_error: "DOUBLE",
+    cosine_similarity: "DOUBLE",
+    tolerance: "DOUBLE",
+    passed: "BOOLEAN",
+  },
+};
+
+// ── Arrow IPC writer ──────────────────────────────────────────────────────────
+
+/**
+ * Write an Arrow IPC file from an array of flat row objects.
+ *
+ * Uses `tableFromArrays` which infers Arrow types from JS values:
+ *   string  → Utf8 (dictionary-encoded)
+ *   number  → Float64
+ *   boolean → Bool
+ *
+ * The inferred types are close enough for DuckDB's schema-on-read.
+ */
+function writeArrow(destPath: string, rows: Record<string, unknown>[]): Buffer {
+  if (rows.length === 0) {
+    const table = tableFromArrays({});
+    const ipcBuf = Buffer.from(tableToIPC(table, "file"));
+    writeFileSync(destPath, ipcBuf);
+    return ipcBuf;
+  }
+
+  const colNames = Object.keys(rows[0]!);
+  const colArrays: Record<string, unknown[]> = {};
+  for (const name of colNames) {
+    colArrays[name] = [];
+  }
+  for (const row of rows) {
+    for (const name of colNames) {
+      colArrays[name]!.push(row[name]);
+    }
+  }
+
+  const table = tableFromArrays(colArrays);
+  const ipcBuf = Buffer.from(tableToIPC(table, "file"));
+  writeFileSync(destPath, ipcBuf);
+  return ipcBuf;
 }
 
-function makeParquet<T>(
-  schema: Record<string, string>,
-  rows: T[],
-): ParquetFile<T> {
-  return {
-    _format: "parquet_placeholder",
-    _schema_version: "1",
-    _schema: schema,
-    rows,
-  };
+/**
+ * Fallback NDJSON writer — used only when apache-arrow is unavailable at
+ * runtime.  DuckDB reads this with `read_json_auto`.
+ */
+function writeNdjson(destPath: string, rows: Record<string, unknown>[]): Buffer {
+  const lines: string[] = new Array(rows.length);
+  for (let i = 0; i < rows.length; i++) {
+    lines[i] = JSON.stringify(rows[i]);
+  }
+  const content = lines.join("\n") + "\n";
+  const buf = Buffer.from(content, "utf-8");
+  writeFileSync(destPath, buf);
+  return buf;
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -245,8 +380,8 @@ function readEvents(eventPath: string): RawEvent[] {
 // ── Main ──────────────────────────────────────────────────────────────────────
 
 /**
- * Read a finalized run directory and produce normalized parquet-placeholder
- * files in `outputDir`.  Validates referential integrity across all emitted
+ * Read a finalized run directory and produce normalized Arrow IPC files
+ * in `outputDir`.  Validates referential integrity across all emitted
  * tables and returns a manifest with row counts and content hashes.
  */
 export function normalizeRun(
@@ -268,7 +403,7 @@ export function normalizeRun(
   const eventsPath = join(runDir, "events.jsonl");
   const events = readEvents(eventsPath);
 
-  // 3. Load checkpoints from receipts/checkpoints/
+  // 3. Load checkpoints
   const checkpointDir = join(runDir, "checkpoints");
   let checkpointFiles: string[] = [];
   try {
@@ -276,7 +411,7 @@ export function normalizeRun(
       (f) => f.endsWith(".json") || f.endsWith(".jsonl"),
     );
   } catch {
-    // no checkpoints directory — optional
+    // optional
   }
 
   const checkpoints: Record<string, unknown>[] = [];
@@ -300,8 +435,6 @@ export function normalizeRun(
 
     if (ev.event_type === "stage" && ev.stage) {
       const s = ev.stage;
-      const meas = s.measurements ?? {};
-
       stageEvents.push({
         run_id: ev.run_id,
         request_id: ev.request_id,
@@ -318,7 +451,7 @@ export function normalizeRun(
         graph_region_id: s.graph_region_id ?? "",
         kernel_id: s.kernel_id ?? "",
         stage_status: s.status,
-        measurements: JSON.stringify(meas),
+        measurements: JSON.stringify(s.measurements ?? {}),
       });
     }
 
@@ -425,110 +558,8 @@ export function normalizeRun(
     checkpoint_count: correctnessRecords.length,
   };
 
-  const runSchema: Record<string, string> = {
-    run_id: "VARCHAR",
-    experiment_id: "VARCHAR",
-    optimization_id: "VARCHAR",
-    study_id: "VARCHAR",
-    trial_index: "INTEGER",
-    run_grade: "VARCHAR",
-    status: "VARCHAR",
-    start_time: "VARCHAR",
-    end_time: "VARCHAR",
-    source_revision: "VARCHAR",
-    workload_id: "VARCHAR",
-    machine_anon_id: "VARCHAR",
-    machine_chip: "VARCHAR",
-    machine_memory: "VARCHAR",
-    model_image_hash: "VARCHAR",
-    instrumentation_mode: "VARCHAR",
-    page_cache_class: "VARCHAR",
-    power_class: "VARCHAR",
-    thermal_class: "VARCHAR",
-    worker_id: "VARCHAR",
-    event_count: "BIGINT",
-    stage_event_count: "BIGINT",
-    memory_sample_count: "BIGINT",
-    token_metric_count: "BIGINT",
-    checkpoint_count: "BIGINT",
-  };
-
-  const stageSchema: Record<string, string> = {
-    run_id: "VARCHAR",
-    request_id: "VARCHAR",
-    worker_id: "VARCHAR",
-    sequence_number: "BIGINT",
-    event_type: "VARCHAR",
-    clock_domain: "VARCHAR",
-    monotonic_ns: "BIGINT",
-    wall_ns: "BIGINT",
-    stage_id: "VARCHAR",
-    substrate_id: "VARCHAR",
-    layer_index: "INTEGER",
-    attention_kind: "VARCHAR",
-    graph_region_id: "VARCHAR",
-    kernel_id: "VARCHAR",
-    stage_status: "VARCHAR",
-    measurements: "VARCHAR",
-  };
-
-  const memSchema: Record<string, string> = {
-    run_id: "VARCHAR",
-    request_id: "VARCHAR",
-    worker_id: "VARCHAR",
-    sequence_number: "BIGINT",
-    event_type: "VARCHAR",
-    clock_domain: "VARCHAR",
-    monotonic_ns: "BIGINT",
-    wall_ns: "BIGINT",
-    stage_id: "VARCHAR",
-    substrate_id: "VARCHAR",
-    layer_index: "INTEGER",
-    resident_bytes: "DOUBLE",
-    wired_bytes: "DOUBLE",
-    active_bytes: "DOUBLE",
-    compressed_bytes: "DOUBLE",
-  };
-
-  const tokenSchema: Record<string, string> = {
-    run_id: "VARCHAR",
-    request_id: "VARCHAR",
-    worker_id: "VARCHAR",
-    sequence_number: "BIGINT",
-    event_type: "VARCHAR",
-    clock_domain: "VARCHAR",
-    monotonic_ns: "BIGINT",
-    wall_ns: "BIGINT",
-    token_index: "BIGINT",
-    token_id: "BIGINT",
-    decode_ns: "DOUBLE",
-    attention_ns: "DOUBLE",
-    mlp_ns: "DOUBLE",
-    norm_ns: "DOUBLE",
-    sample_ns: "DOUBLE",
-  };
-
-  const cpSchema: Record<string, string> = {
-    run_id: "VARCHAR",
-    request_id: "VARCHAR",
-    checkpoint_id: "VARCHAR",
-    layer_or_stage: "VARCHAR",
-    tensor_name: "VARCHAR",
-    comparison_method: "VARCHAR",
-    reference_hash: "VARCHAR",
-    treatment_hash: "VARCHAR",
-    max_abs_error: "DOUBLE",
-    mean_abs_error: "DOUBLE",
-    max_rel_error: "DOUBLE",
-    mean_rel_error: "DOUBLE",
-    cosine_similarity: "DOUBLE",
-    tolerance: "DOUBLE",
-    passed: "BOOLEAN",
-  };
-
   // 6. Validate referential integrity
   const runIdsInEvents = new Set(events.map((e) => e.run_id));
-  // For single-run normalization, the expected run_id is runId.
   const orphaned = [...runIdsInEvents].filter((rid) => rid !== runId);
 
   const integrity: ReferentialIntegrity = {
@@ -547,52 +578,62 @@ export function normalizeRun(
   // 7. Write output files
   mkdirSync(outputDir, { recursive: true });
 
-  const rowCounts: Record<string, number> = {
-    "runs.parquet.json": 1,
-    "stage_events.parquet.json": stageEvents.length,
-    "memory_samples.parquet.json": memorySamples.length,
-    "token_metrics.parquet.json": tokenMetrics.length,
-    "correctness_checkpoints.parquet.json": correctnessRecords.length,
-  };
+  interface TableOutput {
+    name: string;
+    rows: Record<string, unknown>[];
+  }
 
-  type FileOutput = { name: string; data: string };
-  const dataOutputs: FileOutput[] = [
-    { name: "runs.parquet.json", data: JSON.stringify(makeParquet(runSchema, [runsRow])) },
-    { name: "stage_events.parquet.json", data: JSON.stringify(makeParquet(stageSchema, stageEvents)) },
-    { name: "memory_samples.parquet.json", data: JSON.stringify(makeParquet(memSchema, memorySamples)) },
-    { name: "token_metrics.parquet.json", data: JSON.stringify(makeParquet(tokenSchema, tokenMetrics)) },
-    { name: "correctness_checkpoints.parquet.json", data: JSON.stringify(makeParquet(cpSchema, correctnessRecords)) },
+  const tableOutputs: TableOutput[] = [
+    { name: "runs", rows: [runsRow] },
+    { name: "stage_events", rows: stageEvents as unknown as Record<string, unknown>[] },
+    { name: "memory_samples", rows: memorySamples as unknown as Record<string, unknown>[] },
+    { name: "token_metrics", rows: tokenMetrics as unknown as Record<string, unknown>[] },
+    { name: "correctness_checkpoints", rows: correctnessRecords as unknown as Record<string, unknown>[] },
   ];
 
-  for (const ofile of dataOutputs) {
-    const dest = join(outputDir, ofile.name);
-    const buf = Buffer.from(ofile.data, "utf-8");
-    writeFileSync(dest, buf);
+  for (const tbl of tableOutputs) {
+    const arrowFile = `${tbl.name}.arrow`;
+    const dest = join(outputDir, arrowFile);
+
+    let buf: Buffer;
+    try {
+      buf = writeArrow(dest, tbl.rows);
+    } catch {
+      // Fallback — apache-arrow unavailable at runtime
+      buf = writeNdjson(dest.replace(/\.arrow$/, ".ndjson"), tbl.rows);
+      files.push({
+        name: `${tbl.name}.ndjson`,
+        row_count: tbl.rows.length,
+        sha256: sha256Bytes(buf),
+        byte_size: buf.length,
+        format: "arrow_ipc",
+      });
+      continue;
+    }
+
     files.push({
-      name: ofile.name,
-      row_count: rowCounts[ofile.name] ?? 0,
+      name: arrowFile,
+      row_count: tbl.rows.length,
       sha256: sha256Bytes(buf),
       byte_size: buf.length,
+      format: "arrow_ipc",
     });
   }
 
   // Write the normalize manifest
-  const manifestResult: Omit<NormalizeResult, "files"> & { files: NormalizedFile[] } = {
+  const manifestResult: NormalizeResult = {
     run_id: runId,
     normalized_dir: outputDir,
     files,
     referential_integrity: integrity,
+    ...(errors.length > 0 ? { error: errors.join("; ") } : {}),
   };
-  if (errors.length > 0) {
-    (manifestResult as Record<string, unknown>).error = errors.join("; ");
-  }
 
   const manifestJson = JSON.stringify(manifestResult, null, 2) + "\n";
   const outManifestPath = join(outputDir, "normalize-manifest.json");
   writeFileSync(outManifestPath, manifestJson);
-
-  // Update the normalize-manifest entry in files list
   const manifestBuf = Buffer.from(manifestJson, "utf-8");
+
   const existingIdx = files.findIndex((f) => f.name === "normalize-manifest.json");
   if (existingIdx !== -1) {
     files[existingIdx] = {
@@ -600,6 +641,7 @@ export function normalizeRun(
       row_count: 0,
       sha256: sha256Bytes(manifestBuf),
       byte_size: manifestBuf.length,
+      format: "arrow_ipc",
     };
   } else {
     files.push({
@@ -607,6 +649,7 @@ export function normalizeRun(
       row_count: 0,
       sha256: sha256Bytes(manifestBuf),
       byte_size: manifestBuf.length,
+      format: "arrow_ipc",
     });
   }
 

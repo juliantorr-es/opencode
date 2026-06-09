@@ -41,12 +41,12 @@
     },
     "run_grade": {
       "type": "string",
-      "enum": ["production", "experimental", "dev", "validation", "stress"],
+      "enum": ["exploratory", "controlled", "claim_candidate", "archival", "legacy_provisional"],
       "description": "Minimum run grade required for this experiment."
     },
     "instrumentation_mode": {
       "type": "string",
-      "enum": ["full", "sampled", "minimal", "none"],
+      "enum": ["off", "minimal", "research_standard", "research_deep"],
       "description": "Required instrumentation level."
     },
     "primary_metric": {

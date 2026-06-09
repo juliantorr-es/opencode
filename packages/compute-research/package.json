@@ -11,7 +11,10 @@
   "exports": {
     "./*": "./src/*.ts"
   },
-  "dependencies": {},
+  "dependencies": {
+    "apache-arrow": "21.1.0",
+    "duckdb": "1.4.4"
+  },
   "devDependencies": {
     "@tsconfig/bun": "catalog:",
     "@types/bun": "catalog:"

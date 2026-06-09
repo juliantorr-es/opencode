@@ -6,35 +6,133 @@
  * Bun-native APIs with no runtime dependencies.
  */
 
-// ── Bootstrap confidence interval ─────────────────────────────────────────────
+// ── Seeded PRNG (mulberry32) ────────────────────────────────────────────────
 
 /**
- * Compute a bootstrap percentile confidence interval for `samples`.
- *
- * @param samples   Raw observations.
- * @param confidence  Confidence level, e.g. 0.95 for 95 % CI.
- * @param nBootstrap  Number of bootstrap resamples (default 10_000).
- * @returns  `{ lower, upper }` percentile bounds.
+ * Create a deterministic pseudo-random number generator from a seed.
+ * Uses the mulberry32 algorithm. Returns a function that yields values in [0, 1).
  */
-export function bootstrapCI(
-  samples: number[],
+function seededRandom(seed: number): () => number {
+  let s = seed | 0;
+  return () => {
+    s = (s + 0x6d2b79f5) | 0;
+    let t = Math.imul(s ^ (s >>> 15), 1 | s);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+// ── Bootstrap confidence intervals ──────────────────────────────────────────
+
+/**
+ * Compute a bootstrap percentile confidence interval for the difference
+ * of means between two **independent** groups.
+ *
+ * For each replicate:
+ *   1. Resample `a` with replacement → `a*`
+ *   2. Resample `b` with replacement → `b*`
+ *   3. Compute `mean(a*) - mean(b*)`
+ *
+ * The replicate differences are sorted and percentile bounds extracted.
+ *
+ * @param a            Baseline group observations.
+ * @param b            Treatment group observations.
+ * @param confidence   Confidence level, e.g. 0.95 for 95 % CI.
+ * @param nBootstrap   Number of bootstrap resamples (default 10_000).
+ * @param seed         Optional seed for reproducible random resampling.
+ * @returns            `{ lower, upper }` percentile bounds.
+ */
+export function bootstrapIndependentCI(
+  a: number[],
+  b: number[],
   confidence: number,
   nBootstrap = 10_000,
+  seed?: number,
 ): { lower: number; upper: number } {
-  if (samples.length < 2) {
-    throw new Error(`bootstrapCI requires ≥2 samples, got ${samples.length}`);
+  if (a.length < 2 || b.length < 2) {
+    throw new Error(
+      `bootstrapIndependentCI requires ≥2 samples per group, got ${a.length} and ${b.length}`,
+    );
   }
   if (confidence <= 0 || confidence >= 1) {
     throw new RangeError(`confidence must be in (0,1), got ${confidence}`);
   }
 
-  const n = samples.length;
+  const rng: () => number =
+    seed !== undefined ? seededRandom(seed) : Math.random;
+  const nA = a.length;
+  const nB = b.length;
+  const diffs = new Float64Array(nBootstrap);
+
+  for (let i = 0; i < nBootstrap; i++) {
+    let sumA = 0;
+    for (let j = 0; j < nA; j++) {
+      sumA += a[Math.floor(rng() * nA)]!;
+    }
+    const meanA = sumA / nA;
+
+    let sumB = 0;
+    for (let j = 0; j < nB; j++) {
+      sumB += b[Math.floor(rng() * nB)]!;
+    }
+    const meanB = sumB / nB;
+
+    diffs[i] = meanB - meanA; // treatment - baseline
+  }
+
+  diffs.sort();
+
+  const tail = (1 - confidence) / 2;
+  const lowerIdx = Math.floor(nBootstrap * tail);
+  const upperIdx = Math.floor(nBootstrap * (1 - tail)) - 1;
+
+  return {
+    lower: diffs[lowerIdx]!,
+    upper: diffs[upperIdx]!,
+  };
+}
+
+/**
+ * Compute a bootstrap percentile confidence interval for the mean of
+ * **paired** differences.
+ *
+ * The caller is responsible for computing `treatment[i] - baseline[i]`
+ * upfront and passing the result as `differences`.
+ *
+ * Each bootstrap replicate resamples the paired differences with
+ * replacement and computes the mean. The replicate means are sorted
+ * and percentile bounds extracted.
+ *
+ * @param differences  Paired differences (treatment - baseline).
+ * @param confidence   Confidence level, e.g. 0.95 for 95 % CI.
+ * @param nBootstrap   Number of bootstrap resamples (default 10_000).
+ * @param seed         Optional seed for reproducible random resampling.
+ * @returns            `{ lower, upper }` percentile bounds.
+ */
+export function bootstrapPairedCI(
+  differences: number[],
+  confidence: number,
+  nBootstrap = 10_000,
+  seed?: number,
+): { lower: number; upper: number } {
+  if (differences.length < 2) {
+    throw new Error(
+      `bootstrapPairedCI requires ≥2 differences, got ${differences.length}`,
+    );
+  }
+  if (confidence <= 0 || confidence >= 1) {
+    throw new RangeError(`confidence must be in (0,1), got ${confidence}`);
+  }
+
+  const rng: () => number =
+    seed !== undefined ? seededRandom(seed) : Math.random;
+  const n = differences.length;
   const means = new Float64Array(nBootstrap);
 
   for (let i = 0; i < nBootstrap; i++) {
     let sum = 0;
     for (let j = 0; j < n; j++) {
-      sum += samples[Math.floor(Math.random() * n)];
+      sum += differences[Math.floor(rng() * n)]!;
     }
     means[i] = sum / n;
   }
