@@ -51,6 +51,8 @@ pub mod residency;
 pub mod runtime_trace;
 pub mod streaming;
 pub mod receipts;
+pub mod research_trace;
+pub mod research_metrics;
 mod session;
 pub mod validator;
 pub mod worker_memory;

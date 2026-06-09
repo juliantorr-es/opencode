@@ -1,0 +1,19 @@
+{
+  "experiment_id": "EXP-0001",
+  "title": "No-Op Synthetic Treatment — Pipeline Proof",
+  "hypothesis": "A no-op treatment (identical binary, identical config) produces statistically indistinguishable results from baseline.",
+  "optimization_id": "OPT-0000",
+  "baseline_config": "v3-baseline",
+  "treatment_config": "v3-baseline",
+  "workloads": ["bos-single-token"],
+  "machine_profile_id": "apple-m1-pro",
+  "run_grade": "experimental",
+  "instrumentation_mode": "full",
+  "primary_metric": "token_correctness",
+  "repetition_policy": {
+    "min_repetitions": 3,
+    "warmup_policy": "discard_first",
+    "run_ordering": "interleaved"
+  },
+  "timeout_seconds": 3600
+}

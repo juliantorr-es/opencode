@@ -1,0 +1,179 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "optimization-record.v1.json",
+  "title": "OptimizationRecord",
+  "description": "A formal record of a single optimization hypothesis, experiment, and outcome within the Tribunus Inference Research Evidence Plane. Every optimization begins with a written hypothesis and ends with a classification.",
+  "type": "object",
+  "required": [
+    "optimization_id",
+    "title",
+    "subsystem",
+    "target_pipeline",
+    "current_implementation",
+    "proposed_replacement",
+    "bottleneck_hypothesis",
+    "expected_mechanism",
+    "expected_primary_effect",
+    "possible_regressions",
+    "source_commits",
+    "feature_flags",
+    "fallback_path",
+    "deployability_class",
+    "correctness_gates",
+    "safety_gates",
+    "experiment_ids",
+    "result_classification",
+    "final_decision",
+    "created_at",
+    "updated_at"
+  ],
+  "properties": {
+    "optimization_id": {
+      "type": "string",
+      "pattern": "^OPT-\\d{4}$",
+      "description": "Unique optimization identifier in the format OPT-NNNN."
+    },
+    "title": {
+      "type": "string",
+      "description": "Short human-readable description of the optimization (e.g. 'FlashAttention-3 for decode kernel')."
+    },
+    "subsystem": {
+      "type": "string",
+      "enum": [
+        "model_open",
+        "prefill",
+        "decode",
+        "kv_cache",
+        "attention",
+        "mlp",
+        "embedding",
+        "epilogue",
+        "storage",
+        "graph_scheduling",
+        "control_plane"
+      ],
+      "description": "The inference subsystem this optimization targets."
+    },
+    "target_pipeline": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Stage IDs within the inference pipeline that this optimization directly affects. These reference pipeline-stage identifiers defined elsewhere in the research plane.",
+      "minItems": 1
+    },
+    "current_implementation": {
+      "type": "string",
+      "description": "Description of the production implementation currently in use that this optimization seeks to replace or augment."
+    },
+    "proposed_replacement": {
+      "type": "string",
+      "description": "Description of the replacement technique, kernel, algorithm, or architecture being proposed."
+    },
+    "bottleneck_hypothesis": {
+      "type": "string",
+      "description": "Statement of the bottleneck this optimization addresses, including the reasoning chain linking the observed or predicted bottleneck to the proposed change."
+    },
+    "expected_mechanism": {
+      "type": "string",
+      "description": "Explanation of how the proposed replacement achieves its effect — the causal mechanism, not just the empirical expectation."
+    },
+    "expected_primary_effect": {
+      "type": "string",
+      "description": "Quantitative expectation of the primary improvement metric (e.g. 'reduce decode token latency by >= 15% at batch size 8 on M2 Ultra')."
+    },
+    "possible_regressions": {
+      "type": "string",
+      "description": "Known or suspected ways the optimization could degrade performance, increase memory, harm numerical accuracy, or introduce latency tails."
+    },
+    "source_commits": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-f0-9]{7,40}$"
+      },
+      "description": "Commit SHAs in the Tribunus repository that implement the optimization. At least 7-character prefixes are accepted.",
+      "minItems": 0
+    },
+    "feature_flags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Feature flag identifiers or environment variable names that gate this optimization at runtime.",
+      "minItems": 0
+    },
+    "fallback_path": {
+      "type": "string",
+      "description": "Description of the path the runtime takes when the optimization is disabled, deactivated, or rolled back. Documents what reverting the feature flag restores."
+    },
+    "deployability_class": {
+      "type": "string",
+      "enum": [
+        "generic_mlx",
+        "tribunus_custom_mlx",
+        "tribunus_metal",
+        "coreml_placement",
+        "public_ane",
+        "orion_research",
+        "cpu_accelerate",
+        "kv_architecture",
+        "storage_change",
+        "graph_scheduling",
+        "control_plane"
+      ],
+      "description": "Deployment surface and risk tier that this optimization belongs to. Determines the review, testing, and rollout requirements."
+    },
+    "correctness_gates": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Names of correctness gates that must pass before this optimization can be promoted. Gate names reference specific validation procedures defined in the research plane.",
+      "minItems": 0
+    },
+    "safety_gates": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Names of safety gates that must pass before this optimization can be promoted. Safety gates cover numerical accuracy, memory safety, error handling, and rollback readiness.",
+      "minItems": 0
+    },
+    "experiment_ids": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^EXP-\\d{4}$"
+      },
+      "description": "Experiment identifiers in the format EXP-NNNN that were conducted to validate this optimization. Negative results remain associated with the record; experiments are never deleted.",
+      "minItems": 0
+    },
+    "result_classification": {
+      "type": "string",
+      "enum": [
+        "promoted",
+        "rejected",
+        "deferred",
+        "research_only",
+        "inconclusive"
+      ],
+      "description": "Final classification of the optimization's experimental outcome after all evidence has been collected and reviewed."
+    },
+    "final_decision": {
+      "type": "string",
+      "description": "Human-readable summary of the final decision: what was decided, why, and any follow-up actions or conditions attached."
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp of when this record was first created."
+    },
+    "updated_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp of the most recent update to this record. Must equal created_at on initial creation."
+    }
+  },
+  "additionalProperties": false
+}

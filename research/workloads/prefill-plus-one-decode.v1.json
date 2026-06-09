@@ -1,0 +1,17 @@
+{
+  "$schema": "../schemas/workload.v1.json",
+  "workload_id": "prefill-plus-one-decode",
+  "version": "1.0.0",
+  "tokenizer_id": "gemma4-12b-8bit",
+  "prompt_token_ids": [2, 42, 100, 500],
+  "prompt_length": 4,
+  "output_budget": 2,
+  "sampler_config": {
+    "temperature": 0,
+    "top_k": 1,
+    "top_p": 1.0
+  },
+  "eos_behavior": "stop",
+  "context_policy": "extend",
+  "required_checkpoints": []
+}

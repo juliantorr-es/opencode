@@ -1,0 +1,17 @@
+{
+  "$schema": "../schemas/workload.v1.json",
+  "workload_id": "local-attention-layer",
+  "version": "1.0.0",
+  "tokenizer_id": "gemma4-12b-8bit",
+  "prompt_token_ids": [2, 10, 20, 30, 40],
+  "prompt_length": 5,
+  "output_budget": 1,
+  "sampler_config": {
+    "temperature": 0,
+    "top_k": 1,
+    "top_p": 1.0
+  },
+  "eos_behavior": "stop",
+  "context_policy": "first_local_layer_only",
+  "required_checkpoints": []
+}

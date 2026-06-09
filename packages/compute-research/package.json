@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json.schemastore.org/package.json",
+  "version": "1.0.0",
+  "name": "@tribunus/compute-research",
+  "type": "module",
+  "license": "AGPL-3.0-only",
+  "private": true,
+  "scripts": {
+    "typecheck": "tsgo --noEmit"
+  },
+  "exports": {
+    "./*": "./src/*.ts"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@tsconfig/bun": "catalog:",
+    "@types/bun": "catalog:"
+  }
+}

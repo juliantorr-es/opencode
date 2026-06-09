@@ -1,0 +1,170 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "research/schemas/provenance.v1.json",
+  "title": "Provenance v1",
+  "description": "Schema for the full provenance record of a run. Captures source code identity, dependency fingerprints, toolchain configuration, binary artifacts, model identity, machine characteristics, and environment variables.",
+  "type": "object",
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "1",
+      "description": "Version of this schema definition."
+    },
+    "source": {
+      "type": "object",
+      "properties": {
+        "repo_url": { "type": "string", "format": "uri", "description": "Repository URL." },
+        "commit_sha": { "type": "string", "description": "Full commit SHA." },
+        "branch": { "type": "string", "description": "Branch name." },
+        "commit_timestamp": { "type": "string", "format": "date-time", "description": "Commit timestamp (ISO 8601)." },
+        "dirty": { "type": "boolean", "description": "Whether the working tree had uncommitted changes." },
+        "tree_hash": { "type": "string", "description": "Git tree hash of the committed state." },
+        "dirty_patch_hash": {
+          "type": "string",
+          "description": "SHA-256 of the diff between working tree and HEAD, present only when dirty is true."
+        }
+      },
+      "required": ["repo_url", "commit_sha", "branch", "commit_timestamp", "dirty", "tree_hash"],
+      "additionalProperties": false,
+      "description": "Source code identity at build time."
+    },
+    "dependencies": {
+      "type": "object",
+      "properties": {
+        "Cargo.lock_hash": { "type": "string", "description": "SHA-256 of Cargo.lock if Rust dependencies involved." },
+        "Bun.lock_hash": { "type": "string", "description": "SHA-256 of bun.lock if JavaScript dependencies involved." },
+        "mlx_fork_revision": { "type": "string", "description": "Git revision of the mlx fork used." },
+        "mlx_rs_revision": { "type": "string", "description": "Git revision of mlx-rs used." }
+      },
+      "additionalProperties": false,
+      "description": "Fingerprints of dependency manifests and fork revisions."
+    },
+    "toolchain": {
+      "type": "object",
+      "properties": {
+        "rust_version": { "type": "string", "description": "Rust toolchain version (e.g. nightly-2025-01-01)." },
+        "target_triple": { "type": "string", "description": "Target triple (e.g. aarch64-apple-darwin)." },
+        "linker": { "type": "string", "description": "Linker used (e.g. ld64, lld, mold)." },
+        "opt_profile": { "type": "string", "description": "Optimization profile (e.g. release, debug, release-lto)." },
+        "feature_flags": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Feature flags enabled at compile time."
+        },
+        "env_flags": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Environment flags active at compile time."
+        }
+      },
+      "required": ["rust_version", "target_triple", "linker", "opt_profile"],
+      "additionalProperties": false,
+      "description": "Compiler toolchain configuration."
+    },
+    "binaries": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string", "description": "Binary name." },
+          "sha256": { "type": "string", "description": "SHA-256 hash of the binary." },
+          "byte_size": { "type": "integer", "minimum": 0, "description": "Binary file size in bytes." },
+          "build_timestamp": { "type": "string", "format": "date-time", "description": "ISO 8601 timestamp of binary build." }
+        },
+        "required": ["name", "sha256", "byte_size", "build_timestamp"],
+        "additionalProperties": false
+      },
+      "description": "Binary artifacts produced by the build."
+    },
+    "model": {
+      "type": "object",
+      "properties": {
+        "image_hash": { "type": "string", "description": "Hash of the compute image." },
+        "storage_abi": { "type": "string", "description": "Storage ABI version identifier." },
+        "runtime_abi": { "type": "string", "description": "Runtime ABI version identifier." },
+        "manifest_hash": { "type": "string", "description": "Hash of the model manifest." },
+        "segment_hashes": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Per-segment hashes of model weight segments."
+        },
+        "tensor_table_hash": { "type": "string", "description": "Hash of the tensor metadata table." },
+        "execution_plan_hash": { "type": "string", "description": "Hash of the execution plan." },
+        "arch_hash": { "type": "string", "description": "Hash of the model architecture definition." },
+        "quant_hash": { "type": "string", "description": "Hash of the quantization configuration." },
+        "tokenizer_hash": { "type": "string", "description": "Hash of the tokenizer." },
+        "tokenizer_config_hash": { "type": "string", "description": "Hash of the tokenizer configuration." },
+        "chat_template_hash": { "type": "string", "description": "Hash of the chat template." },
+        "model_revision": { "type": "string", "description": "Revision tag of the source model (e.g. Hugging Face commit)." },
+        "eos_token_ids": {
+          "type": "array",
+          "items": { "type": "integer" },
+          "description": "End-of-sequence token IDs."
+        }
+      },
+      "required": [
+        "image_hash", "storage_abi", "runtime_abi",
+        "manifest_hash", "execution_plan_hash", "arch_hash",
+        "quant_hash", "tokenizer_hash", "model_revision"
+      ],
+      "additionalProperties": false,
+      "description": "Model identity and weight metadata."
+    },
+    "machine": {
+      "type": "object",
+      "properties": {
+        "anon_id": { "type": "string", "description": "Anonymized machine identifier." },
+        "model_identifier": { "type": "string", "description": "Machine model identifier (e.g. Mac15,9)." },
+        "chip_family": { "type": "string", "description": "Chip family (e.g. Apple, Intel)." },
+        "perf_cores": { "type": "integer", "description": "Number of performance cores." },
+        "eff_cores": { "type": "integer", "description": "Number of efficiency cores." },
+        "gpu_cores": { "type": "integer", "description": "Number of GPU cores." },
+        "neural_engine": { "type": "string", "description": "Neural engine model or availability." },
+        "physical_memory": { "type": "string", "description": "Physical memory (e.g. 64 GB)." },
+        "storage_type": { "type": "string", "description": "Storage type (e.g. SSD, NVMe)." },
+        "disk_available": { "type": "string", "description": "Available disk space at run time (e.g. 500 GB)." },
+        "os_version": { "type": "string", "description": "Operating system version." },
+        "kernel_version": { "type": "string", "description": "Kernel version." }
+      },
+      "required": [
+        "anon_id", "model_identifier", "chip_family",
+        "perf_cores", "eff_cores", "gpu_cores",
+        "physical_memory", "os_version", "kernel_version"
+      ],
+      "additionalProperties": false,
+      "description": "Machine hardware and OS characteristics."
+    },
+    "environment": {
+      "type": "object",
+      "properties": {
+        "variables": {
+          "type": "object",
+          "additionalProperties": { "type": "string" },
+          "description": "Key-value pairs of environment variables (non-redacted)."
+        },
+        "redacted_paths": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Paths that were redacted from the environment record."
+        },
+        "redaction_metadata": {
+          "type": "object",
+          "additionalProperties": { "type": "string" },
+          "description": "Metadata about what was redacted and why."
+        }
+      },
+      "required": ["variables", "redacted_paths", "redaction_metadata"],
+      "additionalProperties": false,
+      "description": "Runtime environment snapshot with redaction support."
+    }
+  },
+  "required": [
+    "schema_version",
+    "source",
+    "toolchain",
+    "model",
+    "machine",
+    "environment"
+  ],
+  "additionalProperties": false
+}

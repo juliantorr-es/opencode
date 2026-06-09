@@ -1,0 +1,91 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "research/schemas/event.v1.json",
+  "title": "Event v1",
+  "description": "Schema for a single instrumentation event within a run. Events capture lifecycle transitions, stage-level measurements, and hardware performance counter samples across multiple clock domains.",
+  "type": "object",
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "1",
+      "description": "Version of this schema definition."
+    },
+    "run_id": {
+      "type": "string",
+      "description": "Identifier of the run that produced this event."
+    },
+    "request_id": {
+      "type": "string",
+      "description": "Request correlation identifier."
+    },
+    "worker_id": {
+      "type": "string",
+      "description": "Identifier of the worker that emitted this event."
+    },
+    "sequence_number": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Monotonically increasing sequence number within the run."
+    },
+    "event_type": {
+      "type": "string",
+      "enum": [
+        "lifecycle",
+        "stage",
+        "memory_sample",
+        "io_sample",
+        "kv_sample",
+        "correctness_checkpoint",
+        "terminal",
+        "kernel_invocation",
+        "placement_event"
+      ],
+      "description": "Classification of the event."
+    },
+    "clock_domain": {
+      "type": "string",
+      "enum": ["worker_monotonic", "host_monotonic", "wall"],
+      "description": "Clock domain used for the timestamps."
+    },
+    "monotonic_ns": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Monotonic clock value in nanoseconds."
+    },
+    "wall_ns": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Wall clock value in nanoseconds since epoch."
+    },
+    "stage": {
+      "type": "object",
+      "properties": {
+        "stage_id": { "type": "string", "description": "Stage identifier." },
+        "substrate_id": { "type": "string", "description": "Substrate or backend identifier." },
+        "layer_index": { "type": "integer", "minimum": 0, "description": "Index of the layer within the model." },
+        "attention_kind": { "type": "string", "description": "Kind of attention mechanism (e.g. sdpa, flash, masked)." },
+        "graph_region_id": { "type": "string", "description": "Identifier of the graph region being executed." },
+        "kernel_id": { "type": "string", "description": "Identifier of the specific kernel invoked." },
+        "status": { "type": "string", "enum": ["started", "in_progress", "completed", "failed", "skipped"], "description": "Execution status of the stage." },
+        "measurements": {
+          "type": "object",
+          "additionalProperties": true,
+          "description": "Stage-specific measurements as key-value pairs."
+        }
+      },
+      "required": ["stage_id", "status"],
+      "additionalProperties": false,
+      "description": "Stage or kernel execution context for this event."
+    }
+  },
+  "required": [
+    "schema_version",
+    "run_id",
+    "request_id",
+    "worker_id",
+    "sequence_number",
+    "event_type",
+    "clock_domain"
+  ],
+  "additionalProperties": false
+}

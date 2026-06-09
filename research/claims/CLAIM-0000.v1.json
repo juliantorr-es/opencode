@@ -1,0 +1,15 @@
+{
+  "claim_id": "CLAIM-0000",
+  "wording": "Tribunus local inference runtime v1 physically and semantically qualified for one frozen Gemma 4 12B ComputeImage on the qualified Apple Silicon 16 GB profile.",
+  "scope": "Hardening Pass v3 qualification envelope — 64-token prompt ceiling, 8-token output ceiling, deterministic greedy decoding, single worker, single session.",
+  "machine_profile": "apple-silicon-16gb",
+  "model_id": "d042df1e4062a53e3a003af4e2e8c714924fcf19f03b7cf0dd5f67293355d924",
+  "workload_ids": ["bos-single-token"],
+  "baseline_experiment": "EXP-0000",
+  "treatment_experiment": null,
+  "comparison_ids": [],
+  "analysis_artifact_hashes": [],
+  "limitations": "Legacy provisional result predates evidence plane. Authoritative baseline E0000 pending.",
+  "confidence_statement": "The engine executes all 48 layers deterministically with finite values, handle cleanup, and correct epilogue. Pending evidence-plane re-collection for claim-grade status.",
+  "publication_status": "draft"
+}

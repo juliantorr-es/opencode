@@ -1305,7 +1305,7 @@ impl WorkerSupervisor {
                         runtime.clear_model_loaded();
                     }
 
-                    WorkerEvent::HelloAck | WorkerEvent::ModelLoadStarted => {}
+                    WorkerEvent::HelloAck | WorkerEvent::ModelLoadStarted | WorkerEvent::ResearchTraceBatch => {}
                 },
 
                 _ => {

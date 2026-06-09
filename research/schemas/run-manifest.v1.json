@@ -1,0 +1,178 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "research/schemas/run-manifest.v1.json",
+  "title": "Run Manifest v1",
+  "description": "Schema for a single inference run manifest within the Tribunus Inference Research Evidence Plane. Captures all metadata needed to uniquely identify, reproduce, and audit a run.",
+  "type": "object",
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "1",
+      "description": "Version of this schema definition."
+    },
+    "study_id": {
+      "type": "string",
+      "description": "Top-level study identifier this run belongs to."
+    },
+    "experiment_id": {
+      "type": "string",
+      "description": "Experiment identifier within the study."
+    },
+    "optimization_id": {
+      "type": "string",
+      "description": "Optimization pass or trial series identifier."
+    },
+    "run_id": {
+      "type": "string",
+      "description": "Unique identifier for this run."
+    },
+    "trial_index": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Zero-based index of this repetition within the experiment."
+    },
+    "run_grade": {
+      "type": "string",
+      "enum": ["production", "experimental", "dev", "validation", "stress"],
+      "description": "Grade classification of this run."
+    },
+    "status": {
+      "type": "string",
+      "enum": ["pending", "running", "completed", "failed", "aborted", "timeout"],
+      "description": "Execution status of this run."
+    },
+    "start_time": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp when the run started."
+    },
+    "end_time": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp when the run ended."
+    },
+    "source_revision": {
+      "type": "string",
+      "description": "Git commit SHA of the source code used for this run."
+    },
+    "binary_identities": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string", "description": "Binary name." },
+          "sha256": { "type": "string", "description": "SHA-256 hash of the binary." },
+          "path": { "type": "string", "description": "Filesystem path to the binary." }
+        },
+        "required": ["name", "sha256", "path"],
+        "additionalProperties": false
+      },
+      "description": "Identities of all binaries involved in this run."
+    },
+    "model_identity": {
+      "type": "object",
+      "properties": {
+        "image_hash": { "type": "string", "description": "Hash of the compute image." },
+        "storage_abi": { "type": "string", "description": "Storage ABI version identifier." },
+        "runtime_abi": { "type": "string", "description": "Runtime ABI version identifier." },
+        "tokenizer_hash": { "type": "string", "description": "Hash of the tokenizer configuration." }
+      },
+      "required": ["image_hash", "storage_abi", "runtime_abi", "tokenizer_hash"],
+      "additionalProperties": false,
+      "description": "Compute image identity used for this run."
+    },
+    "machine_profile": {
+      "type": "object",
+      "properties": {
+        "anon_id": { "type": "string", "description": "Anonymized machine identifier." },
+        "model_id": { "type": "string", "description": "Machine model identifier (e.g. Mac15,9)." },
+        "chip": { "type": "string", "description": "Chip model (e.g. Apple M3 Max)." },
+        "cores": { "type": "integer", "description": "Total CPU core count." },
+        "memory": { "type": "string", "description": "Physical memory (e.g. 64 GB, 128 GB)." },
+        "os_version": { "type": "string", "description": "Operating system version." }
+      },
+      "required": ["anon_id", "model_id", "chip", "cores", "memory", "os_version"],
+      "additionalProperties": false,
+      "description": "Hardware profile of the machine that executed this run."
+    },
+    "workload_id": {
+      "type": "string",
+      "description": "Identifier referencing the workload definition."
+    },
+    "configuration_id": {
+      "type": "string",
+      "description": "Identifier referencing the configuration used for this run."
+    },
+    "instrumentation_mode": {
+      "type": "string",
+      "enum": ["full", "sampled", "minimal", "none"],
+      "description": "Level of instrumentation applied during this run."
+    },
+    "warmup_class": {
+      "type": "string",
+      "description": "Classification of warmup state (e.g. cold, warm, hot)."
+    },
+    "page_cache_class": {
+      "type": "string",
+      "description": "Classification of page cache state (e.g. flushed, populated)."
+    },
+    "power_class": {
+      "type": "string",
+      "description": "Classification of power state (e.g. low_power, balanced, high_performance)."
+    },
+    "thermal_class": {
+      "type": "string",
+      "description": "Classification of thermal state (e.g. nominal, throttled)."
+    },
+    "policy_id": {
+      "type": "string",
+      "description": "Identifier of the scheduling or execution policy used."
+    },
+    "worker_id": {
+      "type": "string",
+      "description": "Identifier of the worker process that executed this run."
+    },
+    "parent_pid": {
+      "type": "integer",
+      "description": "Process ID of the parent process that spawned the worker."
+    },
+    "artifact_references": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "artifact_id": { "type": "string", "description": "Unique artifact identifier." },
+          "path": { "type": "string", "description": "Filesystem or storage path." },
+          "byte_size": { "type": "integer", "minimum": 0, "description": "Size in bytes." },
+          "mime_type": { "type": "string", "description": "MIME type of the artifact." }
+        },
+        "required": ["artifact_id", "path", "byte_size", "mime_type"],
+        "additionalProperties": false
+      },
+      "description": "References to artifacts produced or consumed by this run."
+    },
+    "final_manifest_hash": {
+      "type": "string",
+      "description": "SHA-256 hash over the canonical serialization of the entire manifest."
+    }
+  },
+  "required": [
+    "schema_version",
+    "study_id",
+    "experiment_id",
+    "optimization_id",
+    "run_id",
+    "trial_index",
+    "run_grade",
+    "status",
+    "start_time",
+    "source_revision",
+    "model_identity",
+    "machine_profile",
+    "workload_id",
+    "configuration_id",
+    "instrumentation_mode",
+    "final_manifest_hash"
+  ],
+  "additionalProperties": false
+}

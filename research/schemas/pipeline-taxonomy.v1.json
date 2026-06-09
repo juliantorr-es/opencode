@@ -1,0 +1,859 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tribunus.dev/schemas/research/pipeline-taxonomy.v1.schema.json",
+  "title": "Inference Research Evidence Plane — Pipeline Taxonomy v1",
+  "description": "Phase 0 frozen schema defining all pipeline stage identifiers, execution substrate identifiers, and stage-substrate event mapping rules for the Tribunus Inference Research Evidence Plane. Stage and substrate IDs are stable: existing meanings never change. New stages/substrates may be added in future versions.",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "taxonomyVersion",
+    "stages",
+    "substrates",
+    "eventMappingRules"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "type": "string",
+      "description": "Version of this schema definition, semver",
+      "enum": ["1.0.0"]
+    },
+    "taxonomyVersion": {
+      "type": "string",
+      "description": "Version of the taxonomy content (incremented when stages or substrates are added)",
+      "enum": ["1.0.0"]
+    },
+    "stages": {
+      "type": "object",
+      "description": "All pipeline stage definitions. Stages execute in sequence; each is identified by a stable numeric ID. New stages may be added in future versions; existing stage meanings never change.",
+      "required": [
+        "worker_launch",
+        "model_verification",
+        "segment_mapping",
+        "tensor_binding",
+        "persistent_materialization",
+        "model_admission",
+        "rope_construction",
+        "session_creation",
+        "embedding_gather",
+        "embedding_dequantization",
+        "embedding_scaling",
+        "input_normalization",
+        "q_projection",
+        "k_projection",
+        "v_projection",
+        "q_normalization",
+        "k_normalization",
+        "rope_application",
+        "kv_candidate_append",
+        "kv_commit",
+        "attention_mask_construction",
+        "attention_score",
+        "attention_softmax",
+        "attention_value",
+        "output_projection",
+        "residual_connection",
+        "post_attention_normalization",
+        "mlp_gate_projection",
+        "mlp_up_projection",
+        "activation",
+        "elementwise_gate",
+        "mlp_down_projection",
+        "final_normalization",
+        "vocabulary_projection",
+        "logit_softcap",
+        "sampling",
+        "scalar_token_transfer",
+        "token_streaming",
+        "request_finalization",
+        "session_cleanup",
+        "model_unload",
+        "worker_shutdown"
+      ],
+      "properties": {
+        "worker_launch": {
+          "$anchor": "stage-worker-launch",
+          "type": "object",
+          "required": ["id", "name", "description"],
+          "properties": {
+            "id": { "type": "integer", "const": 1, "description": "Stable numeric stage identifier" },
+            "name": { "type": "string", "const": "worker_launch", "description": "Canonical snake_case stage name" },
+            "description": { "type": "string", "const": "Launch the compute worker process, initializing its runtime and IPC channels. First stage in every pipeline invocation." }
+          },
+          "additionalProperties": false
+        },
+        "model_verification": {
+          "$anchor": "stage-model-verification",
+          "type": "object",
+          "required": ["id", "name", "description"],
+          "properties": {
+            "id": { "type": "integer", "const": 2 },
+            "name": { "type": "string", "const": "model_verification" },
+            "description": { "type": "string", "const": "Verify that the requested model is loaded, valid, and matches the expected checksum or manifest. Fail-fast gate before tensor work begins." }
+          },
+          "additionalProperties": false
+        },
+        "segment_mapping": {
+          "$anchor": "stage-segment-mapping",
+          "type": "object",
+          "required": ["id", "name", "description"],
+          "properties": {
+            "id": { "type": "integer", "const": 3 },
+            "name": { "type": "string", "const": "segment_mapping" },
+            "description": { "type": "string", "const": "Map the logical model graph into memory segments or shards. Determines which tensors reside on which devices or memory pools." }
+          },
+          "additionalProperties": false
+        },
+        "tensor_binding": {
+          "$anchor": "stage-tensor-binding",
+          "type": "object",
+          "required": ["id", "name", "description"],
+          "properties": {
+            "id": { "type": "integer", "const": 4 },
+            "name": { "type": "string", "const": "tensor_binding" },
+            "description": { "type": "string", "const": "Bind logical tensors to concrete device memory buffers. Resolves segment mappings into physical allocations." }
+          },
+          "additionalProperties": false
+        },
+        "persistent_materialization": {
+          "$anchor": "stage-persistent-materialization",
+          "type": "object",
+          "required": ["id", "name", "description"],
+          "properties": {
+            "id": { "type": "integer", "const": 5 },
+            "name": { "type": "string", "const": "persistent_materialization" },
+            "description": { "type": "string", "const": "Materialize or load persistent model weights (safetensors, checkpoint) into the bound tensor buffers. May be skipped if weights already resident." }
+          },
+          "additionalProperties": false
+        },
+        "model_admission": {
+          "$anchor": "stage-model-admission",
+          "type": "object",
+          "required": ["id", "name", "description"],
+          "properties": {
+            "id": { "type": "integer", "const": 6 },
+            "name": { "type": "string", "const": "model_admission" },
+            "description": { "type": "string", "const": "Admit the model into the inference graph: final integrity check, warmup, and graph compilation or JIT if applicable. Model is ready for inference after this stage." }
+          },
+          "additionalProperties": false
+        },
+        "rope_construction": {
+          "$anchor": "stage-rope-construction",
+          "type": "object",
+          "required": ["id", "name", "description"],
+          "properties": {
+            "id": { "type": "integer", "const": 7 },
+            "name": { "type": "string", "const": "rope_construction" },
+            "description": { "type": "string", "const": "Precompute Rotary Position Embedding (RoPE) frequency tables for the current context length. Cached and reused across decode steps." }
+          },
+          "additionalProperties": false
+        },
+        "session_creation": {
+          "$anchor": "stage-session-creation",
+          "type": "object",
+          "required": ["id", "name", "description"],
+          "properties": {
+            "id": { "type": "integer", "const": 8 },
+            "name": { "type": "string", "const": "session_creation" },
+            "description": { "type": "string", "const": "Create an inference session: per-request context, KV cache reservation, sequence tracking. Each prompt or continuation opens a session." }
+          },
+          "additionalProperties": false
+        },
+        "embedding_gather": {
+          "$anchor": "stage-embedding-gather",
+          "type": "object",
+          "required": ["id", "name", "description"],
+          "properties": {
+            "id": { "type": "integer", "const": 9 },
+            "name": { "type": "string", "const": "embedding_gather" },
+            "description": { "type": "string", "const": "Gather input token embeddings from the embedding table. Converts token IDs to dense vectors." }
+          },
+          "additionalProperties": false
+        },
+        "embedding_dequantization": {
+          "$anchor": "stage-embedding-dequantization",
+          "type": "object",
+          "required": ["id", "name", "description"],
+          "properties": {
+            "id": { "type": "integer", "const": 10 },
+            "name": { "type": "string", "const": "embedding_dequantization" },
+            "description": { "type": "string", "const": "Dequantize embedding weights if stored in quantized format (e.g. NF4, GPTQ). Outputs full-precision embeddings." }
+          },
+          "additionalProperties": false
+        },
+        "embedding_scaling": {
+          "$anchor": "stage-embedding-scaling",
+          "type": "object",
+          "required": ["id", "name", "description"],
+          "properties": {
+            "id": { "type": "integer", "const": 11 },
+            "name": { "type": "string", "const": "embedding_scaling" },
+            "description": { "type": "string", "const": "Apply embedding scaling factor (e.g. sqrt(d_model)) to normalize raw embeddings before attention layers." }
+          },
+          "additionalProperties": false
+        },
+        "input_normalization": {
+          "$anchor": "stage-input-normalization",
+          "type": "object",
+          "required": ["id", "name", "description"],
+          "properties": {
+            "id": { "type": "integer", "const": 12 },
+            "name": { "type": "string", "const": "input_normalization" },
+            "description": { "type": "string", "const": "Apply input (pre-attention) layer normalization (LayerNorm, RMSNorm, etc.) to the embedding vector." }
+          },
+          "additionalProperties": false
+        },
+        "q_projection": {
+          "$anchor": "stage-q-projection",
+          "type": "object",
+          "required": ["id", "name", "description"],
+          "properties": {
+            "id": { "type": "integer", "const": 13 },
+            "name": { "type": "string", "const": "q_projection" },
+            "description": { "type": "string", "const": "Project normalized input through the query weight matrix (W_q). Produces the query tensor for attention." }
+          },
+          "additionalProperties": false
+        },
+        "k_projection": {
+          "$anchor": "stage-k-projection",
+          "type": "object",
+          "required": ["id", "name", "description"],
+          "properties": {
+            "id": { "type": "integer", "const": 14 },
+            "name": { "type": "string", "const": "k_projection" },
+            "description": { "type": "string", "const": "Project normalized input through the key weight matrix (W_k). Produces the key tensor for attention." }
+          },
+          "additionalProperties": false
+        },
+        "v_projection": {
+          "$anchor": "stage-v-projection",
+          "type": "object",
+          "required": ["id", "name", "description"],
+          "properties": {
+            "id": { "type": "integer", "const": 15 },
+            "name": { "type": "string", "const": "v_projection" },
+            "description": { "type": "string", "const": "Project normalized input through the value weight matrix (W_v). Produces the value tensor for attention." }
+          },
+          "additionalProperties": false
+        },
+        "q_normalization": {
+          "$anchor": "stage-q-normalization",
+          "type": "object",
+          "required": ["id", "name", "description"],
+          "properties": {
+            "id": { "type": "integer", "const": 16 },
+            "name": { "type": "string", "const": "q_normalization" },
+            "description": { "type": "string", "const": "Apply QK normalization (if separate from input norm) to the query tensor. Optional; depends on architecture (e.g. LLaMA 3+)." }
+          },
+          "additionalProperties": false
+        },
+        "k_normalization": {
+          "$anchor": "stage-k-normalization",
+          "type": "object",
+          "required": ["id", "name", "description"],
+          "properties": {
+            "id": { "type": "integer", "const": 17 },
+            "name": { "type": "string", "const": "k_normalization" },
+            "description": { "type": "string", "const": "Apply QK normalization (if separate from input norm) to the key tensor. Optional; depends on architecture." }
+          },
+          "additionalProperties": false
+        },
+        "rope_application": {
+          "$anchor": "stage-rope-application",
+          "type": "object",
+          "required": ["id", "name", "description"],
+          "properties": {
+            "id": { "type": "integer", "const": 18 },
+            "name": { "type": "string", "const": "rope_application" },
+            "description": { "type": "string", "const": "Apply Rotary Position Embedding to the query and key tensors. Uses the precomputed RoPE tables from rope_construction." }
+          },
+          "additionalProperties": false
+        },
+        "kv_candidate_append": {
+          "$anchor": "stage-kv-candidate-append",
+          "type": "object",
+          "required": ["id", "name", "description"],
+          "properties": {
+            "id": { "type": "integer", "const": 19 },
+            "name": { "type": "string", "const": "kv_candidate_append" },
+            "description": { "type": "string", "const": "Append the current key and value tensors as candidates in the KV cache ring buffer. Pre-commit phase before cache eviction policy runs." }
+          },
+          "additionalProperties": false
+        },
+        "kv_commit": {
+          "$anchor": "stage-kv-commit",
+          "type": "object",
+          "required": ["id", "name", "description"],
+          "properties": {
+            "id": { "type": "integer", "const": 20 },
+            "name": { "type": "string", "const": "kv_commit" },
+            "description": { "type": "string", "const": "Commit key-value pairs to the persistent KV cache. Eviction policy (e.g. evict-first, rolling window) is applied here." }
+          },
+          "additionalProperties": false
+        },
+        "attention_mask_construction": {
+          "$anchor": "stage-attention-mask-construction",
+          "type": "object",
+          "required": ["id", "name", "description"],
+          "properties": {
+            "id": { "type": "integer", "const": 21 },
+            "name": { "type": "string", "const": "attention_mask_construction" },
+            "description": { "type": "string", "const": "Build the causal attention mask, optionally incorporating ALiBi bias, sliding window, or sparse pattern masks." }
+          },
+          "additionalProperties": false
+        },
+        "attention_score": {
+          "$anchor": "stage-attention-score",
+          "type": "object",
+          "required": ["id", "name", "description"],
+          "properties": {
+            "id": { "type": "integer", "const": 22 },
+            "name": { "type": "string", "const": "attention_score" },
+            "description": { "type": "string", "const": "Compute raw attention scores: Q @ K^T scaled by 1/sqrt(d_k). Produces the pre-softmax score matrix." }
+          },
+          "additionalProperties": false
+        },
+        "attention_softmax": {
+          "$anchor": "stage-attention-softmax",
+          "type": "object",
+          "required": ["id", "name", "description"],
+          "properties": {
+            "id": { "type": "integer", "const": 23 },
+            "name": { "type": "string", "const": "attention_softmax" },
+            "description": { "type": "string", "const": "Apply softmax (or alternative normalization like ReLU/KDE) to the attention scores, masking out invalid positions via the attention mask." }
+          },
+          "additionalProperties": false
+        },
+        "attention_value": {
+          "$anchor": "stage-attention-value",
+          "type": "object",
+          "required": ["id", "name", "description"],
+          "properties": {
+            "id": { "type": "integer", "const": 24 },
+            "name": { "type": "string", "const": "attention_value" },
+            "description": { "type": "string", "const": "Compute the weighted sum of values: softmax(QK^T) @ V. Produces the per-head attention output." }
+          },
+          "additionalProperties": false
+        },
+        "output_projection": {
+          "$anchor": "stage-output-projection",
+          "type": "object",
+          "required": ["id", "name", "description"],
+          "properties": {
+            "id": { "type": "integer", "const": 25 },
+            "name": { "type": "string", "const": "output_projection" },
+            "description": { "type": "string", "const": "Project concatenated attention heads through the output weight matrix (W_o). Multi-head attention output." }
+          },
+          "additionalProperties": false
+        },
+        "residual_connection": {
+          "$anchor": "stage-residual-connection",
+          "type": "object",
+          "required": ["id", "name", "description"],
+          "properties": {
+            "id": { "type": "integer", "const": 26 },
+            "name": { "type": "string", "const": "residual_connection" },
+            "description": { "type": "string", "const": "Add the multi-head attention output to the residual stream (input + attention_output). First residual in each transformer block." }
+          },
+          "additionalProperties": false
+        },
+        "post_attention_normalization": {
+          "$anchor": "stage-post-attention-normalization",
+          "type": "object",
+          "required": ["id", "name", "description"],
+          "properties": {
+            "id": { "type": "integer", "const": 27 },
+            "name": { "type": "string", "const": "post_attention_normalization" },
+            "description": { "type": "string", "const": "Apply post-attention (pre-FFN) layer normalization to the residual stream." }
+          },
+          "additionalProperties": false
+        },
+        "mlp_gate_projection": {
+          "$anchor": "stage-mlp-gate-projection",
+          "type": "object",
+          "required": ["id", "name", "description"],
+          "properties": {
+            "id": { "type": "integer", "const": 28 },
+            "name": { "type": "string", "const": "mlp_gate_projection" },
+            "description": { "type": "string", "const": "Compute the gate projection (W_gate) for the gated MLP (SwiGLU, GeGLU, etc.)." }
+          },
+          "additionalProperties": false
+        },
+        "mlp_up_projection": {
+          "$anchor": "stage-mlp-up-projection",
+          "type": "object",
+          "required": ["id", "name", "description"],
+          "properties": {
+            "id": { "type": "integer", "const": 29 },
+            "name": { "type": "string", "const": "mlp_up_projection" },
+            "description": { "type": "string", "const": "Compute the up projection (W_up) for the gated MLP: the expansion path from d_model to d_ff." }
+          },
+          "additionalProperties": false
+        },
+        "activation": {
+          "$anchor": "stage-activation",
+          "type": "object",
+          "required": ["id", "name", "description"],
+          "properties": {
+            "id": { "type": "integer", "const": 30 },
+            "name": { "type": "string", "const": "activation" },
+            "description": { "type": "string", "const": "Apply pointwise activation function (SiLU, GELU, ReLU) to the gate projection." }
+          },
+          "additionalProperties": false
+        },
+        "elementwise_gate": {
+          "$anchor": "stage-elementwise-gate",
+          "type": "object",
+          "required": ["id", "name", "description"],
+          "properties": {
+            "id": { "type": "integer", "const": 31 },
+            "name": { "type": "string", "const": "elementwise_gate" },
+            "description": { "type": "string", "const": "Elementwise multiply (gate) the activated gate projection with the up projection: activation(W_gate(x)) * W_up(x)." }
+          },
+          "additionalProperties": false
+        },
+        "mlp_down_projection": {
+          "$anchor": "stage-mlp-down-projection",
+          "type": "object",
+          "required": ["id", "name", "description"],
+          "properties": {
+            "id": { "type": "integer", "const": 32 },
+            "name": { "type": "string", "const": "mlp_down_projection" },
+            "description": { "type": "string", "const": "Compute the down projection (W_down) of the gated MLP: contraction from d_ff back to d_model." }
+          },
+          "additionalProperties": false
+        },
+        "final_normalization": {
+          "$anchor": "stage-final-normalization",
+          "type": "object",
+          "required": ["id", "name", "description"],
+          "properties": {
+            "id": { "type": "integer", "const": 33 },
+            "name": { "type": "string", "const": "final_normalization" },
+            "description": { "type": "string", "const": "Apply the final layer normalization to the transformer stack output before vocabulary projection." }
+          },
+          "additionalProperties": false
+        },
+        "vocabulary_projection": {
+          "$anchor": "stage-vocabulary-projection",
+          "type": "object",
+          "required": ["id", "name", "description"],
+          "properties": {
+            "id": { "type": "integer", "const": 34 },
+            "name": { "type": "string", "const": "vocabulary_projection" },
+            "description": { "type": "string", "const": "Project the normalized output through the language model head (lm_head) to produce logits over the vocabulary." }
+          },
+          "additionalProperties": false
+        },
+        "logit_softcap": {
+          "$anchor": "stage-logit-softcap",
+          "type": "object",
+          "required": ["id", "name", "description"],
+          "properties": {
+            "id": { "type": "integer", "const": 35 },
+            "name": { "type": "string", "const": "logit_softcap" },
+            "description": { "type": "string", "const": "Apply logit soft-capping (if configured) to clamp extreme logit values. Optional; depends on model architecture." }
+          },
+          "additionalProperties": false
+        },
+        "sampling": {
+          "$anchor": "stage-sampling",
+          "type": "object",
+          "required": ["id", "name", "description"],
+          "properties": {
+            "id": { "type": "integer", "const": 36 },
+            "name": { "type": "string", "const": "sampling" },
+            "description": { "type": "string", "const": "Sample the next token from the logit distribution. Applies temperature, top-k, top-p, repetition penalty, and other sampling strategies." }
+          },
+          "additionalProperties": false
+        },
+        "scalar_token_transfer": {
+          "$anchor": "stage-scalar-token-transfer",
+          "type": "object",
+          "required": ["id", "name", "description"],
+          "properties": {
+            "id": { "type": "integer", "const": 37 },
+            "name": { "type": "string", "const": "scalar_token_transfer" },
+            "description": { "type": "string", "const": "Transfer the sampled token (a scalar token ID) from the compute worker back to the control plane. Boundary crossing between compute and orchestration." }
+          },
+          "additionalProperties": false
+        },
+        "token_streaming": {
+          "$anchor": "stage-token-streaming",
+          "type": "object",
+          "required": ["id", "name", "description"],
+          "properties": {
+            "id": { "type": "integer", "const": 38 },
+            "name": { "type": "string", "const": "token_streaming" },
+            "description": { "type": "string", "const": "Stream the decoded token(s) to the client or consumer via the response channel (SSE, WebSocket, streaming HTTP)." }
+          },
+          "additionalProperties": false
+        },
+        "request_finalization": {
+          "$anchor": "stage-request-finalization",
+          "type": "object",
+          "required": ["id", "name", "description"],
+          "properties": {
+            "id": { "type": "integer", "const": 39 },
+            "name": { "type": "string", "const": "request_finalization" },
+            "description": { "type": "string", "const": "Finalize the inference request: send EOS/stop signal, collect telemetry, aggregate per-request metrics. Request is complete after this stage." }
+          },
+          "additionalProperties": false
+        },
+        "session_cleanup": {
+          "$anchor": "stage-session-cleanup",
+          "type": "object",
+          "required": ["id", "name", "description"],
+          "properties": {
+            "id": { "type": "integer", "const": 40 },
+            "name": { "type": "string", "const": "session_cleanup" },
+            "description": { "type": "string", "const": "Release per-session resources: KV cache allocations, intermediate tensors, session metadata, and any device-side buffers." }
+          },
+          "additionalProperties": false
+        },
+        "model_unload": {
+          "$anchor": "stage-model-unload",
+          "type": "object",
+          "required": ["id", "name", "description"],
+          "properties": {
+            "id": { "type": "integer", "const": 41 },
+            "name": { "type": "string", "const": "model_unload" },
+            "description": { "type": "string", "const": "Unload the model from device memory: release weight tensors, compiled graphs, and device-side model state. Last stage before worker teardown." }
+          },
+          "additionalProperties": false
+        },
+        "worker_shutdown": {
+          "$anchor": "stage-worker-shutdown",
+          "type": "object",
+          "required": ["id", "name", "description"],
+          "properties": {
+            "id": { "type": "integer", "const": 42 },
+            "name": { "type": "string", "const": "worker_shutdown" },
+            "description": { "type": "string", "const": "Shut down the compute worker process: close IPC channels, flush logs, release host resources, and exit. Terminal stage." }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "substrates": {
+      "type": "object",
+      "description": "All execution substrate definitions. Each substrate represents a distinct compute backend or acceleration target. ID 0 is always the CPU scalar fallback.",
+      "required": [
+        "cpu_scalar",
+        "cpu_accelerate",
+        "mlx_generic_cpu",
+        "mlx_generic_gpu",
+        "mlx_custom_extension",
+        "tribunus_metal",
+        "coreml_cpu",
+        "coreml_gpu",
+        "coreml_ane",
+        "orion_ane_research",
+        "control_plane"
+      ],
+      "properties": {
+        "cpu_scalar": {
+          "$anchor": "substrate-cpu-scalar",
+          "type": "object",
+          "required": ["id", "name", "description"],
+          "properties": {
+            "id": { "type": "integer", "const": 0, "description": "Stable numeric substrate identifier" },
+            "name": { "type": "string", "const": "cpu_scalar", "description": "Canonical snake_case substrate name" },
+            "description": { "type": "string", "const": "Scalar CPU execution — single-threaded, no acceleration. Universal fallback; every stage MUST have a cpu_scalar path." }
+          },
+          "additionalProperties": false
+        },
+        "cpu_accelerate": {
+          "$anchor": "substrate-cpu-accelerate",
+          "type": "object",
+          "required": ["id", "name", "description"],
+          "properties": {
+            "id": { "type": "integer", "const": 1 },
+            "name": { "type": "string", "const": "cpu_accelerate" },
+            "description": { "type": "string", "const": "CPU execution via Apple Accelerate framework (BLAS/LAPACK vectorized). Multi-threaded, uses AMX coprocessor when available." }
+          },
+          "additionalProperties": false
+        },
+        "mlx_generic_cpu": {
+          "$anchor": "substrate-mlx-generic-cpu",
+          "type": "object",
+          "required": ["id", "name", "description"],
+          "properties": {
+            "id": { "type": "integer", "const": 2 },
+            "name": { "type": "string", "const": "mlx_generic_cpu" },
+            "description": { "type": "string", "const": "MLX framework execution on CPU via the mlx-rs bindings. Uses MLX's default CPU backend with lazy evaluation and JIT compilation." }
+          },
+          "additionalProperties": false
+        },
+        "mlx_generic_gpu": {
+          "$anchor": "substrate-mlx-generic-gpu",
+          "type": "object",
+          "required": ["id", "name", "description"],
+          "properties": {
+            "id": { "type": "integer", "const": 3 },
+            "name": { "type": "string", "const": "mlx_generic_gpu" },
+            "description": { "type": "string", "const": "MLX framework execution on Apple GPU via Metal Performance Shaders (MPS) backend. MLX's primary GPU path." }
+          },
+          "additionalProperties": false
+        },
+        "mlx_custom_extension": {
+          "$anchor": "substrate-mlx-custom-extension",
+          "type": "object",
+          "required": ["id", "name", "description"],
+          "properties": {
+            "id": { "type": "integer", "const": 4 },
+            "name": { "type": "string", "const": "mlx_custom_extension" },
+            "description": { "type": "string", "const": "MLX execution via custom C++ extensions written against the mlx-rs or mlx-sys APIs. Used for optimized kernels not in upstream MLX." }
+          },
+          "additionalProperties": false
+        },
+        "tribunus_metal": {
+          "$anchor": "substrate-tribunus-metal",
+          "type": "object",
+          "required": ["id", "name", "description"],
+          "properties": {
+            "id": { "type": "integer", "const": 5 },
+            "name": { "type": "string", "const": "tribunus_metal" },
+            "description": { "type": "string", "const": "Tribunus-native Metal Performance Shaders and custom Metal shader kernels, bypassing MLX for direct GPU compute. Includes megakernel paths." }
+          },
+          "additionalProperties": false
+        },
+        "coreml_cpu": {
+          "$anchor": "substrate-coreml-cpu",
+          "type": "object",
+          "required": ["id", "name", "description"],
+          "properties": {
+            "id": { "type": "integer", "const": 6 },
+            "name": { "type": "string", "const": "coreml_cpu" },
+            "description": { "type": "string", "const": "Apple Core ML execution on CPU via the Core ML framework's CPU backend." }
+          },
+          "additionalProperties": false
+        },
+        "coreml_gpu": {
+          "$anchor": "substrate-coreml-gpu",
+          "type": "object",
+          "required": ["id", "name", "description"],
+          "properties": {
+            "id": { "type": "integer", "const": 7 },
+            "name": { "type": "string", "const": "coreml_gpu" },
+            "description": { "type": "string", "const": "Apple Core ML execution on GPU via the Core ML framework's Metal backend." }
+          },
+          "additionalProperties": false
+        },
+        "coreml_ane": {
+          "$anchor": "substrate-coreml-ane",
+          "type": "object",
+          "required": ["id", "name", "description"],
+          "properties": {
+            "id": { "type": "integer", "const": 8 },
+            "name": { "type": "string", "const": "coreml_ane" },
+            "description": { "type": "string", "const": "Apple Core ML execution on the Apple Neural Engine (ANE). Deploys to the dedicated ANE hardware." }
+          },
+          "additionalProperties": false
+        },
+        "orion_ane_research": {
+          "$anchor": "substrate-orion-ane-research",
+          "type": "object",
+          "required": ["id", "name", "description"],
+          "properties": {
+            "id": { "type": "integer", "const": 9 },
+            "name": { "type": "string", "const": "orion_ane_research" },
+            "description": { "type": "string", "const": "Research substrate for Orion ANE (experimental Apple Neural Engine compiler/runtime). Not for production use." }
+          },
+          "additionalProperties": false
+        },
+        "control_plane": {
+          "$anchor": "substrate-control-plane",
+          "type": "object",
+          "required": ["id", "name", "description"],
+          "properties": {
+            "id": { "type": "integer", "const": 10 },
+            "name": { "type": "string", "const": "control_plane" },
+            "description": { "type": "string", "const": "Control plane orchestrator execution. Used for stages that run outside the compute worker (e.g. request finalization, session cleanup, worker lifecycle)." }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "eventMappingRules": {
+      "type": "object",
+      "description": "Rules governing how stage-substrate mapping events are recorded and validated.",
+      "required": [
+        "eventSchema",
+        "fallbackRules",
+        "versioningRules"
+      ],
+      "properties": {
+        "eventSchema": {
+          "$anchor": "event-schema",
+          "type": "object",
+          "description": "Schema for a single stage-substrate mapping event.",
+          "required": [
+            "stage_id",
+            "substrate_id",
+            "backend"
+          ],
+          "properties": {
+            "stage_id": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 65535,
+              "description": "Numeric identifier of the pipeline stage. MUST reference a valid stage ID defined in the 'stages' object. Values 1-42 are defined in v1; higher values are user-defined for custom/extension stages."
+            },
+            "substrate_id": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 65535,
+              "description": "Numeric identifier of the execution substrate. MUST reference a valid substrate ID defined in the 'substrates' object. Values 0-10 are defined in v1."
+            },
+            "layer_index": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Index of the transformer layer this event applies to. 0-based. Omitted or null for non-layer-specific stages (e.g. worker_launch, session_creation)."
+            },
+            "attention_kind": {
+              "type": "string",
+              "description": "Kind of attention mechanism for attention-related stages. Values: 'mha' (multi-head), 'mqa' (multi-query), 'gqa' (grouped-query), 'mla' (multi-head latent). Omitted for non-attention stages.",
+              "enum": ["mha", "mqa", "gqa", "mla"]
+            },
+            "graph_region_id": {
+              "type": "string",
+              "description": "Identifier for the model graph region or subgraph this event belongs to. Enables hierarchical tracing across model subcomponents."
+            },
+            "backend": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Canonical backend name (e.g. 'mlx', 'tribunus-metal', 'coreml', 'accelerate', 'cpu'). Matches substrate by convention but recorded as a string for forward compatibility."
+            },
+            "kernel_id": {
+              "type": "string",
+              "description": "Specific kernel or shader function name responsible for computation (e.g. 'metal::attention_kernel_v1', 'mlx::scaled_dot_product_attention'). Omitted for substrate-managed stages without kernel visibility."
+            }
+          },
+          "additionalProperties": false
+        },
+        "fallbackRules": {
+          "type": "object",
+          "description": "Rules for recording fallback events when a stage fails on its primary substrate and retries on an alternative.",
+          "required": ["recordFallbackAsDistinctEvent", "fallbackFields"],
+          "properties": {
+            "recordFallbackAsDistinctEvent": {
+              "type": "boolean",
+              "const": true,
+              "description": "Fallback MUST be recorded as a separate distinct event, never merged or implied."
+            },
+            "fallbackFields": {
+              "type": "object",
+              "required": ["stage_id", "primary_substrate_id", "fallback_substrate_id", "fallback_reason"],
+              "properties": {
+                "stage_id": {
+                  "type": "integer",
+                  "description": "The stage that fell back"
+                },
+                "primary_substrate_id": {
+                  "type": "integer",
+                  "description": "The originally targeted substrate"
+                },
+                "fallback_substrate_id": {
+                  "type": "integer",
+                  "description": "The substrate the stage actually ran on"
+                },
+                "fallback_reason": {
+                  "type": "string",
+                  "description": "Reason for the fallback (e.g. 'kernel_not_found', 'device_memory_pressure', 'substrate_not_available', 'timeout')"
+                }
+              },
+              "additionalProperties": false
+            },
+            "eventPayload": {
+              "type": "object",
+              "description": "A fallback event carries all standard event fields plus the fallback-specific fields. Both the primary and fallback events are recorded.",
+              "allOf": [
+                { "$ref": "#/$defs/stageEvent" },
+                {
+                  "type": "object",
+                  "required": ["primary_substrate_id", "fallback_reason"],
+                  "properties": {
+                    "primary_substrate_id": { "type": "integer" },
+                    "fallback_reason": { "type": "string" }
+                  }
+                }
+              ]
+            }
+          },
+          "additionalProperties": false
+        },
+        "versioningRules": {
+          "type": "object",
+          "description": "Rules governing schema and taxonomy version evolution.",
+          "required": ["backwardCompatibility", "stageImmutability", "substrateImmutability", "deprecationRule"],
+          "properties": {
+            "backwardCompatibility": {
+              "type": "string",
+              "const": "Existing stage and substrate IDs MUST never be reassigned, repurposed, or removed. New IDs may be added with strictly increasing values.",
+              "description": "Backward compatibility guarantee for the taxonomy."
+            },
+            "stageImmutability": {
+              "type": "string",
+              "const": "Once assigned, a stage ID and its name are permanent. The semantic meaning of a stage MUST NOT change. Clarifying descriptions may be amended.",
+              "description": "Immutability contract for stage definitions."
+            },
+            "substrateImmutability": {
+              "type": "string",
+              "const": "Once assigned, a substrate ID and its name are permanent. A substrate's general capability domain MUST NOT change, though implementation details may evolve.",
+              "description": "Immutability contract for substrate definitions."
+            },
+            "deprecationRule": {
+              "type": "string",
+              "const": "If a stage or substrate becomes obsolete, it MUST NOT be reused. The definition is marked deprecated (removed from the enum of recommended IDs) but the ID and definition remain in the schema for historical traceability.",
+              "description": "Deprecation policy for obsolete IDs."
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "$defs": {
+    "stageEvent": {
+      "$anchor": "stage-event",
+      "type": "object",
+      "description": "A complete stage-substrate mapping event combining stage identification, substrate identification, and optional context fields.",
+      "required": [
+        "stage_id",
+        "substrate_id",
+        "backend"
+      ],
+      "properties": {
+        "stage_id": { "type": "integer", "minimum": 1 },
+        "substrate_id": { "type": "integer", "minimum": 0 },
+        "layer_index": { "type": "integer", "minimum": 0 },
+        "attention_kind": { "type": "string", "enum": ["mha", "mqa", "gqa", "mla"] },
+        "graph_region_id": { "type": "string" },
+        "backend": { "type": "string", "minLength": 1 },
+        "kernel_id": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "fallbackEvent": {
+      "$anchor": "fallback-event",
+      "type": "object",
+      "description": "A fallback event: all stage event fields plus fallback-specific fields.",
+      "allOf": [
+        { "$ref": "#/$defs/stageEvent" },
+        {
+          "type": "object",
+          "required": ["primary_substrate_id", "fallback_reason"],
+          "properties": {
+            "primary_substrate_id": { "type": "integer", "minimum": 0, "description": "The originally targeted substrate ID" },
+            "fallback_reason": { "type": "string", "minLength": 1, "description": "Human-readable reason for the fallback" }
+          },
+          "additionalProperties": false
+        }
+      ]
+    }
+  },
+  "additionalProperties": false
+}

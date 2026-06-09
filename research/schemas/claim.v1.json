@@ -1,0 +1,89 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "research/schemas/claim.v1.json",
+  "title": "Claim v1",
+  "description": "Schema for a published research claim within the Tribunus Inference Research Evidence Plane. Binds experimental evidence to a specific factual assertion with scope, limitations, and confidence.",
+  "type": "object",
+  "properties": {
+    "claim_id": {
+      "type": "string",
+      "description": "Unique identifier for this claim."
+    },
+    "wording": {
+      "type": "string",
+      "description": "Canonical, precise statement of the claim."
+    },
+    "scope": {
+      "type": "string",
+      "description": "Scope of applicability (e.g. model families, hardware platforms, quantization levels)."
+    },
+    "machine_profile": {
+      "type": "string",
+      "description": "Machine profile identifier this claim applies to."
+    },
+    "model_id": {
+      "type": "string",
+      "description": "Model identifier this claim applies to."
+    },
+    "workload_ids": {
+      "type": "array",
+      "items": { "type": "string" },
+      "minItems": 1,
+      "description": "Workload identifiers this claim is based on."
+    },
+    "baseline_experiment": {
+      "type": "string",
+      "description": "Experiment identifier for the baseline comparison."
+    },
+    "treatment_experiment": {
+      "type": "string",
+      "description": "Experiment identifier for the treatment comparison."
+    },
+    "comparison_ids": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Identifiers of comparisons used to support this claim."
+    },
+    "analysis_artifact_hashes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string", "description": "Artifact name." },
+          "sha256": { "type": "string", "description": "SHA-256 hash of the artifact." }
+        },
+        "required": ["name", "sha256"],
+        "additionalProperties": false
+      },
+      "description": "Hashes of analysis artifacts that support this claim."
+    },
+    "limitations": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Known limitations and caveats of this claim."
+    },
+    "confidence_statement": {
+      "type": "string",
+      "description": "Qualitative or quantitative statement of confidence in the claim."
+    },
+    "publication_status": {
+      "type": "string",
+      "enum": ["draft", "internal_review", "published", "retracted", "superseded"],
+      "description": "Publication status of this claim."
+    }
+  },
+  "required": [
+    "claim_id",
+    "wording",
+    "scope",
+    "machine_profile",
+    "model_id",
+    "workload_ids",
+    "baseline_experiment",
+    "treatment_experiment",
+    "limitations",
+    "confidence_statement",
+    "publication_status"
+  ],
+  "additionalProperties": false
+}

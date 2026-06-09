@@ -1,0 +1,19 @@
+{
+  "experiment_id": "EXP-0002",
+  "title": "Single Local Attention Layer Qualification",
+  "hypothesis": "The first sliding_attention layer produces correct output shape, finite values, and correct KV state.",
+  "optimization_id": "OPT-0000",
+  "baseline_config": "v3-baseline",
+  "treatment_config": "v3-baseline",
+  "workloads": ["local-attention-layer"],
+  "machine_profile_id": "apple-m1-pro",
+  "run_grade": "experimental",
+  "instrumentation_mode": "full",
+  "primary_metric": "token_correctness",
+  "repetition_policy": {
+    "min_repetitions": 3,
+    "warmup_policy": "discard_first",
+    "run_ordering": "sequential"
+  },
+  "timeout_seconds": 600
+}

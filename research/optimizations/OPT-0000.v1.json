@@ -1,0 +1,41 @@
+{
+  "optimization_id": "OPT-0000",
+  "title": "V3 Unchanged Baseline — Hardening Pass v3 Reference",
+  "subsystem": "model_open",
+  "target_pipeline": [2, 3, 4, 5, 6, 7],
+  "current_implementation": "All hardening pass v3 improvements: unified streaming queue, storage ABI v1, tensor catalog, copy classification, admission estimate, KV commit/rollback, hidden scale fix, 2D logits fix.",
+  "proposed_replacement": "N/A — this is the baseline, not an optimization.",
+  "bottleneck_hypothesis": "N/A — baseline measurement only.",
+  "expected_mechanism": "N/A",
+  "expected_primary_effect": "N/A",
+  "possible_regressions": [],
+  "source_commits": [],
+  "feature_flags": [],
+  "fallback_path": "N/A",
+  "deployability_class": "generic_mlx",
+  "correctness_gates": ["v3_full_model_gate", "handle_cleanup", "finite_values"],
+  "safety_gates": ["worker_containment", "memory_ceiling"],
+  "experiment_ids": ["EXP-0000", "EXP-0001"],
+  "result_classification": "promoted",
+  "final_decision": "Baseline — no change. Reserved as authoritative reference.",
+  "created_at": "2026-06-08T00:00:00Z",
+  "legacy_evidence": {
+    "run_id": "placeholder-uuid",
+    "grade": "legacy_provisional",
+    "date": "2026-06-08",
+    "duration_s": 2751.4,
+    "image_hash": "d042df1e4062a53e3a003af4e2e8c714924fcf19f03b7cf0dd5f67293355d924",
+    "output_token": 189773,
+    "handle_leak": false,
+    "missing_evidence": [
+      "run_manifest",
+      "provenance",
+      "machine_profile",
+      "environment",
+      "event_journal",
+      "per_layer_kv",
+      "file_io",
+      "finalization"
+    ]
+  }
+}

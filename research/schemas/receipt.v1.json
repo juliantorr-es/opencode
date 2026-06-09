@@ -1,0 +1,134 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "research/schemas/receipt.v1.json",
+  "title": "Receipt v1",
+  "description": "Schema for a model mapping and materialization receipt. Captures timing, resource usage, and admission decisions during model-open operations on Apple Silicon.",
+  "type": "object",
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "1",
+      "description": "Version of this schema definition."
+    },
+    "verification_time_ms": {
+      "type": "number",
+      "minimum": 0,
+      "description": "Time in milliseconds spent verifying model integrity."
+    },
+    "mapping_time_ms": {
+      "type": "number",
+      "minimum": 0,
+      "description": "Time in milliseconds spent mapping model segments into memory."
+    },
+    "binding_time_ms": {
+      "type": "number",
+      "minimum": 0,
+      "description": "Time in milliseconds spent binding segments to the GPU."
+    },
+    "materialization_time_ms": {
+      "type": "number",
+      "minimum": 0,
+      "description": "Total time in milliseconds for model materialization."
+    },
+    "segment_count": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Number of weight segments materialized."
+    },
+    "tensor_count": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Number of tensors materialized."
+    },
+    "alias_count": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Number of tensor aliases resolved."
+    },
+    "mapped_virtual_bytes": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Total virtual address space mapped in bytes."
+    },
+    "expected_resident_bytes": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Expected physical memory footprint in bytes."
+    },
+    "observed_rss_delta": {
+      "type": "integer",
+      "description": "Observed change in resident set size in bytes (may be negative)."
+    },
+    "mlx_active_delta": {
+      "type": "integer",
+      "description": "Change in mlx active memory in bytes."
+    },
+    "mlx_cache_delta": {
+      "type": "integer",
+      "description": "Change in mlx cache memory in bytes."
+    },
+    "persistent_materialization_bytes": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Bytes stored in persistent materialization."
+    },
+    "conversion_bytes": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Bytes processed through format conversion."
+    },
+    "file_read_bytes": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Bytes read from storage during materialization."
+    },
+    "page_faults": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Number of page faults incurred during materialization."
+    },
+    "tensor_views_created": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Number of tensor views created."
+    },
+    "tensor_aliases_reused": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Number of tensor aliases reused from cache."
+    },
+    "mapping_leases": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Number of mapping leases acquired."
+    },
+    "admission_estimate": {
+      "type": "number",
+      "description": "Estimated memory cost used for admission (bytes or abstract units)."
+    },
+    "admission_decision": {
+      "type": "string",
+      "enum": ["admit", "deny", "defer"],
+      "description": "Admission decision for the model load."
+    }
+  },
+  "required": [
+    "schema_version",
+    "verification_time_ms",
+    "mapping_time_ms",
+    "binding_time_ms",
+    "materialization_time_ms",
+    "segment_count",
+    "tensor_count",
+    "alias_count",
+    "mapped_virtual_bytes",
+    "expected_resident_bytes",
+    "observed_rss_delta",
+    "mlx_active_delta",
+    "mlx_cache_delta",
+    "tensor_views_created",
+    "tensor_aliases_reused",
+    "admission_decision"
+  ],
+  "additionalProperties": false
+}

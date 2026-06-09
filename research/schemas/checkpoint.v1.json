@@ -1,0 +1,95 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "research/schemas/checkpoint.v1.json",
+  "title": "Checkpoint v1",
+  "description": "Schema for a correctness checkpoint comparing tensor outputs between a baseline and treatment run. Used to validate numerical equivalence and detect regressions.",
+  "type": "object",
+  "properties": {
+    "checkpoint_id": {
+      "type": "string",
+      "description": "Unique identifier for this checkpoint comparison."
+    },
+    "run_id": {
+      "type": "string",
+      "description": "Identifier of the run that produced this checkpoint."
+    },
+    "layer_or_stage": {
+      "type": "string",
+      "description": "Name or identifier of the layer or stage being checkpointed."
+    },
+    "tensor_name": {
+      "type": "string",
+      "description": "Name of the tensor being compared."
+    },
+    "shape": {
+      "type": "array",
+      "items": { "type": "integer" },
+      "description": "Shape of the tensor (list of dimension sizes)."
+    },
+    "dtype": {
+      "type": "string",
+      "description": "Data type of the tensor (e.g. float16, float32, bfloat16, int8)."
+    },
+    "comparison_method": {
+      "type": "string",
+      "description": "Method used for comparison (e.g. absolute_difference, relative_difference, cosine_similarity)."
+    },
+    "reference_hash": {
+      "type": "string",
+      "description": "SHA-256 hash of the reference (baseline) tensor."
+    },
+    "treatment_hash": {
+      "type": "string",
+      "description": "SHA-256 hash of the treatment tensor."
+    },
+    "abs_error_summary": {
+      "type": "object",
+      "properties": {
+        "max": { "type": "number", "description": "Maximum absolute error." },
+        "mean": { "type": "number", "description": "Mean absolute error." },
+        "median": { "type": "number", "description": "Median absolute error." },
+        "std": { "type": "number", "description": "Standard deviation of absolute error." }
+      },
+      "additionalProperties": false,
+      "description": "Summary statistics of absolute error between reference and treatment."
+    },
+    "rel_error_summary": {
+      "type": "object",
+      "properties": {
+        "max": { "type": "number", "description": "Maximum relative error." },
+        "mean": { "type": "number", "description": "Mean relative error." },
+        "median": { "type": "number", "description": "Median relative error." },
+        "std": { "type": "number", "description": "Standard deviation of relative error." }
+      },
+      "additionalProperties": false,
+      "description": "Summary statistics of relative error between reference and treatment."
+    },
+    "cosine_similarity": {
+      "type": "number",
+      "description": "Cosine similarity between reference and treatment tensors."
+    },
+    "tolerance": {
+      "type": "number",
+      "minimum": 0,
+      "description": "Tolerance threshold used for the pass/fail decision."
+    },
+    "passed": {
+      "type": "boolean",
+      "description": "Whether the checkpoint comparison passed within tolerance."
+    }
+  },
+  "required": [
+    "checkpoint_id",
+    "run_id",
+    "layer_or_stage",
+    "tensor_name",
+    "shape",
+    "dtype",
+    "comparison_method",
+    "reference_hash",
+    "treatment_hash",
+    "abs_error_summary",
+    "passed"
+  ],
+  "additionalProperties": false
+}

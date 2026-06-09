@@ -88,9 +88,11 @@ pub enum WorkerEvent {
     ModelUnloaded,
     /// Fatal worker error — worker is about to terminate.
     WorkerFatal,
+    /// Batch of research trace events from the worker.
+    ResearchTraceBatch,
 }
 
-/// Combined message kind — either a host command or a worker event.
+/// Combined message kind
 ///
 /// Serializes as a flat kebab-case string (e.g. `"hello"`, `"hello-ack"`)
 /// thanks to `#[serde(untagged)]`.
@@ -213,6 +215,36 @@ pub struct PolicySnapshotPayload {
 }
 // ────────────────────────────────────────────────────────────────────────────
 // Frame
+/// Payload for [`WorkerEvent::ResearchTraceBatch`].
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ResearchTraceBatchPayload {
+    pub request_id: String,
+    pub batch_index: u64,
+    pub events: Vec<ResearchTraceEventJson>,
+    pub buffer_drops: u64,
+    pub buffer_overflowed: bool,
+}
+
+/// JSON-serializable version of TraceEvent for wire transport.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ResearchTraceEventJson {
+    pub monotonic_ns: u64,
+    pub stage_id: u16,
+    pub substrate_id: u8,
+    pub clock_domain: u8,
+    pub layer_index: u8,
+    pub attention_kind: u8,
+    pub status: u8,
+    pub graph_build_ns: u32,
+    pub eval_ns: u32,
+    pub sync_ns: u32,
+    pub mlx_active_delta: i32,
+    pub mlx_cache_delta: i32,
+    pub rss_delta: i32,
+    pub materialized_bytes: u32,
+    pub file_read_bytes: u32,
+    pub kv_delta: i32,
+}
 // ────────────────────────────────────────────────────────────────────────────
 
 /// Maximum serialized frame size in bytes (1 MB).
@@ -943,5 +975,81 @@ mod tests {
         let decoded: Frame = serde_json::from_str(&frame_json).expect("frame deserialize");
         assert_eq!(decoded.payload["error_code"], "protocol-violation");
         assert_eq!(decoded.payload["phase"], "command-dispatch");
+    }
+
+    /// Verify that ResearchTraceBatch is a valid non-terminal WorkerEvent
+    /// that serializes, deserializes, and passes through the stateful
+    /// validator without being treated as a request terminal event.
+    #[test]
+    fn valid_worker_event_transitions() {
+        // Opaque empty events (no real trace data, just structure).
+        let dummy_events: Vec<ResearchTraceEventJson> = vec![
+            ResearchTraceEventJson {
+                monotonic_ns: 1000,
+                stage_id: 1,
+                substrate_id: 2,
+                clock_domain: 0,
+                layer_index: 3,
+                attention_kind: 0,
+                status: 1,
+                graph_build_ns: 500,
+                eval_ns: 200,
+                sync_ns: 50,
+                mlx_active_delta: 1024,
+                mlx_cache_delta: 512,
+                rss_delta: 4096,
+                materialized_bytes: 65536,
+                file_read_bytes: 0,
+                kv_delta: 0,
+            },
+        ];
+
+        let payload = ResearchTraceBatchPayload {
+            request_id: "req-trace-001".into(),
+            batch_index: 0,
+            events: dummy_events,
+            buffer_drops: 0,
+            buffer_overflowed: false,
+        };
+        let payload_value = serde_json::to_value(&payload).expect("payload serialize");
+
+        // Build a worker-event frame with ResearchTraceBatch.
+        let frame = Frame::new_worker_event(
+            "trace-worker".into(),
+            0,
+            "req-trace-001".into(),
+            WorkerEvent::ResearchTraceBatch,
+            payload_value,
+        );
+
+        // 1) Serde round-trip of the Frame.
+        let round_tripped = round_trip(&frame);
+        assert_eq!(frame.sequence_number, round_tripped.sequence_number);
+        assert_eq!(frame.request_id, round_tripped.request_id);
+        assert_eq!(frame.payload, round_tripped.payload);
+        match (&round_tripped.message_kind, &frame.message_kind) {
+            (MessageKind::WorkerEvent(a), MessageKind::WorkerEvent(b)) => assert_eq!(a, b),
+            _ => panic!("message_kind discriminant changed"),
+        }
+
+        // 2) Payload struct round-trips independently.
+        let json = serde_json::to_string(&payload).expect("serialize");
+        let recovered: ResearchTraceBatchPayload =
+            serde_json::from_str(&json).expect("deserialize");
+        assert_eq!(recovered.request_id, "req-trace-001");
+        assert_eq!(recovered.batch_index, 0);
+        assert!(!recovered.buffer_overflowed);
+
+        // 3) Stateful validator accepts ResearchTraceBatch as a non-terminal event
+        //    (it advances sequence but does not move the request to terminal).
+        let mut validator = ProtocolValidator::new("trace-worker".into());
+        assert!(validator.validate_worker_event(&frame).is_ok());
+        assert_eq!(validator.next_expected_seq, 1);
+        // ResearchTraceBatch is NOT a terminal event, so the request should
+        // remain in known_requests (if it was added) or non-existent. Since the
+        // validator treats unlisted events as no-ops on request tracking,
+        // known_requests stays empty for an unrecognized request_id.
+        assert!(validator.known_requests.is_empty());
+        assert!(validator.terminal_requests.is_empty());
     }
 }

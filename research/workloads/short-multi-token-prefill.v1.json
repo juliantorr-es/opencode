@@ -1,0 +1,17 @@
+{
+  "$schema": "../schemas/workload.v1.json",
+  "workload_id": "short-multi-token-prefill",
+  "version": "1.0.0",
+  "tokenizer_id": "gemma4-12b-8bit",
+  "prompt_token_ids": [2, 1234, 5678, 9012],
+  "prompt_length": 4,
+  "output_budget": 1,
+  "sampler_config": {
+    "temperature": 0,
+    "top_k": 1,
+    "top_p": 1.0
+  },
+  "eos_behavior": "stop",
+  "context_policy": "extend",
+  "required_checkpoints": []
+}

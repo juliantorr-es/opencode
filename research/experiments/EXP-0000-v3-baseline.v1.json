@@ -1,0 +1,20 @@
+{
+  "experiment_id": "EXP-0000",
+  "title": "V3 Authoritative Baseline — Full 48-Layer Gate",
+  "hypothesis": "The unchanged Hardening Pass v3 runtime produces a deterministic first token with zero handle leaks for the BOS-only workload.",
+  "optimization_id": "OPT-0000",
+  "baseline_config": "v3-baseline",
+  "treatment_config": "v3-baseline",
+  "workloads": ["bos-single-token"],
+  "machine_profile_id": "apple-m1-pro",
+  "run_grade": "validation",
+  "instrumentation_mode": "full",
+  "primary_metric": "token_correctness",
+  "repetition_policy": {
+    "min_repetitions": 3,
+    "warmup_policy": "discard_first",
+    "run_ordering": "sequential"
+  },
+  "timeout_seconds": 3600,
+  "memory_ceiling_bytes": 15000000000
+}

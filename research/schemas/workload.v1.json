@@ -1,0 +1,83 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "research/schemas/workload.v1.json",
+  "title": "Workload v1",
+  "description": "Schema for an inference workload definition within the Tribunus Inference Research Evidence Plane. Describes the prompt, sampler configuration, and execution constraints for a reproducible inference task.",
+  "type": "object",
+  "properties": {
+    "workload_id": {
+      "type": "string",
+      "description": "Unique identifier for this workload definition."
+    },
+    "version": {
+      "type": "string",
+      "description": "Version of this workload definition."
+    },
+    "tokenizer_id": {
+      "type": "string",
+      "description": "Identifier of the tokenizer to use."
+    },
+    "prompt_token_ids": {
+      "type": "array",
+      "items": { "type": "integer" },
+      "description": "Token IDs comprising the prompt."
+    },
+    "source_text": {
+      "type": "string",
+      "description": "Human-readable source text of the prompt (optional, for interpretability)."
+    },
+    "prompt_length": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Number of tokens in the prompt."
+    },
+    "output_budget": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Maximum number of tokens to generate."
+    },
+    "expected_deterministic_tokens": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Number of tokens expected to be deterministic given the sampler config (optional)."
+    },
+    "sampler_config": {
+      "type": "object",
+      "properties": {
+        "temperature": { "type": "number", "description": "Sampling temperature." },
+        "top_k": { "type": "integer", "description": "Top-k sampling parameter." },
+        "top_p": { "type": "number", "description": "Top-p (nucleus) sampling parameter." }
+      },
+      "required": ["temperature", "top_k", "top_p"],
+      "additionalProperties": false,
+      "description": "Sampler hyperparameters."
+    },
+    "eos_behavior": {
+      "type": "string",
+      "enum": ["stop", "ignore", "truncate", "wrap"],
+      "description": "Behavior when an end-of-sequence token is encountered."
+    },
+    "context_policy": {
+      "type": "string",
+      "description": "Policy for context window management (e.g. truncate_left, sliding_window, extend)."
+    },
+    "required_checkpoints": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "List of checkpoint identifiers required before running this workload."
+    }
+  },
+  "required": [
+    "workload_id",
+    "version",
+    "tokenizer_id",
+    "prompt_token_ids",
+    "prompt_length",
+    "output_budget",
+    "sampler_config",
+    "eos_behavior",
+    "context_policy",
+    "required_checkpoints"
+  ],
+  "additionalProperties": false
+}

@@ -1,0 +1,21 @@
+{
+  "experiment_id": "EXP-0004",
+  "title": "Eight-Token Decode Qualification",
+  "hypothesis": "Eight consecutive greedy decode tokens match the oracle reference.",
+  "optimization_id": "OPT-0000",
+  "baseline_config": "v3-baseline",
+  "treatment_config": "v3-baseline",
+  "workloads": ["eight-token-qualification"],
+  "machine_profile_id": "apple-m1-pro",
+  "run_grade": "validation",
+  "instrumentation_mode": "full",
+  "primary_metric": "token_exact_match",
+  "secondary_metrics": ["ttft_ms", "median_token_latency_ms", "peak_rss_bytes"],
+  "correctness_requirements": ["oracle_match", "numerical_tolerance_1e-4"],
+  "repetition_policy": {
+    "min_repetitions": 3,
+    "warmup_policy": "discard_first",
+    "run_ordering": "sequential"
+  },
+  "timeout_seconds": 1200
+}

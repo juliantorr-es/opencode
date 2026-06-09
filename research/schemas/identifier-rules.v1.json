@@ -1,0 +1,66 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tribunus.corp/evidence-plane/v1/identifier-rules",
+  "title": "Identifier Rules v1",
+  "description": "Validates the format of Tribunus Inference Research Evidence Plane identifiers.",
+  "type": "object",
+  "properties": {
+    "run_id": {
+      "type": "string",
+      "description": "UUID v4 assigned at run creation",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+    },
+    "optimization_id": {
+      "type": "string",
+      "description": "Sequential optimization identifier, OPT-0000 reserved for baseline",
+      "pattern": "^OPT-\\d{4}$"
+    },
+    "experiment_id": {
+      "type": "string",
+      "description": "Sequential experiment identifier",
+      "pattern": "^EXP-\\d{4}$"
+    },
+    "artifact_id": {
+      "type": "string",
+      "description": "SHA-256 of artifact content, lowercase hex",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "claim_id": {
+      "type": "string",
+      "description": "Sequential claim identifier",
+      "pattern": "^CLAIM-\\d{4}$"
+    },
+    "kernel_id": {
+      "type": "string",
+      "description": "Sequential kernel identifier",
+      "pattern": "^KERN-\\d{4}$"
+    },
+    "placement_id": {
+      "type": "string",
+      "description": "Sequential placement identifier",
+      "pattern": "^PLACE-\\d{4}$"
+    },
+    "study_id": {
+      "type": "string",
+      "description": "Stable study name, kebab-case",
+      "pattern": "^[a-z][a-z0-9]*(-[a-z0-9]+)*$"
+    },
+    "workload_id": {
+      "type": "string",
+      "description": "Kebab-case stable workload name",
+      "pattern": "^[a-z][a-z0-9]*(-[a-z0-9]+)*$"
+    },
+    "trial_index": {
+      "type": "integer",
+      "description": "0-based repetition counter within an experiment",
+      "minimum": 0
+    }
+  },
+  "required": [
+    "run_id",
+    "optimization_id",
+    "experiment_id",
+    "artifact_id"
+  ],
+  "additionalProperties": false
+}
