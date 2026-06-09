@@ -602,13 +602,16 @@ impl ProfiledInferenceSession {
                     format!("prefill layer {}: {}", l, e),
                 )
             })?;
-            hidden.eval().map_err(|e| {
-                self.kv_caches[l].rollback();
-                EngineError::new(
-                    EngineErrorCode::NumericalFailure,
-                    format!("prefill layer {} eval: {}", l, e),
-                )
-            })?;
+            // OPT-0005: batch eval every 6 layers (one local/global cycle)
+            if ((l + 1) % 6 == 0) || (l + 1 == plan.layers.len()) {
+                hidden.eval().map_err(|e| {
+                    self.kv_caches[l].rollback();
+                    EngineError::new(
+                        EngineErrorCode::NumericalFailure,
+                        format!("prefill layer {} eval: {}", l, e),
+                    )
+                })?;
+            }
             self.kv_caches[l].commit_step();
             let kvc = &self.kv_caches[l];
             eprintln!(
@@ -778,13 +781,16 @@ impl ProfiledInferenceSession {
                     format!("decode layer {}: {}", l, e),
                 )
             })?;
-            hidden.eval().map_err(|e| {
-                self.kv_caches[l].rollback();
-                EngineError::new(
-                    EngineErrorCode::NumericalFailure,
-                    format!("decode layer {} eval: {}", l, e),
-                )
-            })?;
+            // OPT-0005: batch eval every 6 layers
+            if ((l + 1) % 6 == 0) || (l + 1 == plan.layers.len()) {
+                hidden.eval().map_err(|e| {
+                    self.kv_caches[l].rollback();
+                    EngineError::new(
+                        EngineErrorCode::NumericalFailure,
+                        format!("decode layer {} eval: {}", l, e),
+                    )
+                })?;
+            }
             self.kv_caches[l].commit_step();
             let kvc = &self.kv_caches[l];
             eprintln!(

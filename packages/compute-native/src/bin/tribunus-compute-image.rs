@@ -451,16 +451,28 @@ fn cmd_decode_one(args: &[String]) -> Result<(), String> {
     }
     let image_dir = image.ok_or("missing --image")?;
     let image_path = Path::new(&image_dir);
-    if !image_path.join("manifest.json").exists() {
-        return Err("not a ComputeImage directory".into());
-    }
 
+    // Seal verification
+    let seal_path = image_path.join("seal.json");
+    if !seal_path.exists() {
+        return Err("not a sealed ComputeImage (missing seal.json)".into());
+    }
+    let seal: serde_json::Value = serde_json::from_str(
+        &std::fs::read_to_string(&seal_path).map_err(|e| format!("read seal: {e}"))?
+    ).map_err(|e| format!("parse seal: {e}"))?;
+    let logical_hash = seal["image_hash"].as_str().unwrap_or("unknown").to_string();
+    let artifact_hash = seal["artifact_root_hash"].as_str().unwrap_or("unknown").to_string();
+    eprintln!("[seal] logical_image_hash={} artifact_root_hash={}", &logical_hash[..16], &artifact_hash[..16]);
+
+    // Load model once (opens image internally)
     eprintln!("Loading profiled model: {}", image_dir);
     let model = LoadedProfiledModel::new(image_path)
         .map_err(|e| format!("load: {e}"))?;
 
     eprintln!("[model-load] layers={} segments={} tensors={}", model.layers.len(), model.reader.manifest.segments.len(), model.reader.manifest.tensor_table.len());
     let plan = &model.reader.manifest.execution_plan;
+
+    // Centralized KV construction from plan
     let kv_caches: Vec<KvCache> = plan.layers.iter().map(|lp| {
         let is_sliding = lp.attention_kind == "sliding_attention";
         let (n_kv, hd) = if lp.attention_kind == "full_attention" {
@@ -468,7 +480,8 @@ fn cmd_decode_one(args: &[String]) -> Result<(), String> {
         } else {
             (lp.n_kv_heads, lp.head_dim)
         };
-        KvCache::new(if is_sliding { 1024 } else { 8 }, n_kv, hd, is_sliding)
+        let capacity: u32 = if is_sliding { 1024u32 } else { 8 };
+        KvCache::new(capacity, n_kv, hd, is_sliding)
     }).collect();
 
     let mut session = ProfiledInferenceSession::new("d1".into(), kv_caches);
@@ -483,17 +496,33 @@ fn cmd_decode_one(args: &[String]) -> Result<(), String> {
     let pf_kv_copy: u64 = session.kv_caches.iter().map(|k| k.copy_bytes()).sum();
     eprintln!("[kv-prefill] allocated={} copied={}", pf_kv_alloc, pf_kv_copy);
 
+    // KV consistency: fail closed
+    for (l, kvc) in session.kv_caches.iter().enumerate() {
+        if kvc.committed_len != 4 {
+            return Err(format!("layer {}: prefill committed {} positions, expected 4", l, kvc.committed_len));
+        }
+    }
+
     eprintln!("Decode...");
     let t0 = Instant::now();
-    let dc_kv_alloc: u64 = session.kv_caches.iter().map(|k| k.allocated_bytes()).sum();
-    let dc_kv_copy: u64 = session.kv_caches.iter().map(|k| k.copy_bytes()).sum();
-    eprintln!("[kv-decode] allocated={} copied={}", dc_kv_alloc, dc_kv_copy);
     let tok1 = session.decode_one(tok0, &model).map_err(|e| format!("decode: {e}"))?;
     let ds = t0.elapsed().as_secs_f64();
     eprintln!("decode token={} elapsed={:.2}s", tok1, ds);
+    let dc_kv_alloc: u64 = session.kv_caches.iter().map(|k| k.allocated_bytes()).sum();
+    let dc_kv_copy: u64 = session.kv_caches.iter().map(|k| k.copy_bytes()).sum();
+    eprintln!("[kv-decode] allocated={} copied={}", dc_kv_alloc, dc_kv_copy);
+
+    // KV consistency: fail closed
+    for (l, kvc) in session.kv_caches.iter().enumerate() {
+        if kvc.committed_len != 5 {
+            return Err(format!("layer {}: decode committed {} positions, expected 5", l, kvc.committed_len));
+        }
+    }
 
     println!("{}", serde_json::to_string(&json!({
         "status": "decoded",
+        "logical_image_hash": logical_hash,
+        "artifact_root_hash": artifact_hash,
         "prefill_token": tok0,
         "decode_token": tok1,
         "prefill_s": ps,
