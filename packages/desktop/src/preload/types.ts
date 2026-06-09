@@ -226,4 +226,5 @@ export type ElectronAPI = {
   pluginOff: (channel: string, handler: (data: unknown) => void) => void
   /** Plugin transport — request/response RPC to main process */
   pluginInvoke: (channel: string, data?: unknown) => Promise<unknown>
+  onIpcFailure?: (cb: (error: { requestId: string; code: string; message: string; recoverability: string; timestamp: number }) => void) => () => void
 }

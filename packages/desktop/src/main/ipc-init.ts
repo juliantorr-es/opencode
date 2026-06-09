@@ -305,22 +305,4 @@ export function registerInitIpcHandlers(deps: Deps, runtime: DesktopRuntime) {
     }
     return resolved
   }))
-
-  registerIpcEffectHandler(runtime, {
-    channel: IPC.handle.SYSTEM_STATUS,
-    params: S.Tuple([]),
-    success: S.Unknown,
-    timeout: 5_000,
-    senderPolicy: "standard",
-    mapError: mapInitError,
-  }, () => Effect.sync(() => ({
-    sidecar: { ready: true, url: process.env.TRIBUNUS_VALKEY_URL ?? null, pid: null, restartCount: 0, lastError: null },
-    server: { url: null, configured: false },
-    safeMode: false,
-    degraded: false,
-    degradedReason: null,
-    ipc: { protocolVersion: 1 },
-    update: { status: "idle", version: null },
-    build: { version: app.getVersion(), channel: "dev", electronVersion: process.versions.electron },
-  })))
 }

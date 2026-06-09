@@ -35,10 +35,10 @@ export function SystemStatusPanel() {
 
       {/* Actions */}
       <div class="flex gap-2 mt-4">
-        <button class="btn btn-secondary" onClick={() => window.api.restartSidecar?.()}>
-          Restart Sidecar
+        <button class="btn btn-secondary" onClick={() => window.api.killSidecar()}>
+          Kill Sidecar
         </button>
-        <button class="btn btn-secondary" onClick={() => window.api.exportDebugLogs?.()}>
+        <button class="btn btn-secondary" onClick={() => window.api.exportDebugLogs()}>
           Export Diagnostics
         </button>
       </div>

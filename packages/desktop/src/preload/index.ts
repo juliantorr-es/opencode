@@ -143,6 +143,11 @@ const api: ElectronAPI = {
   pluginInvoke: (channel: string, data?: unknown) => {
     return pluginInvoke(channel, data)
   },
+  onIpcFailure: (cb) => {
+    const handler = (_event: unknown, error: unknown) => cb(error as { requestId: string; code: string; message: string; recoverability: string; timestamp: number })
+    ipcRenderer.on("tribunus:ipc-failure", handler)
+    return () => ipcRenderer.removeListener("tribunus:ipc-failure", handler)
+  },
 }
 
 contextBridge.exposeInMainWorld("api", api as unknown as ElectronAPI)
