@@ -5,7 +5,9 @@
 //!   verify --image <dir> [--expected-hash <hash>] [--full]
 
 use std::fs;
+use std::fs::File;
 use std::path::Path;
+use std::io::Read;
 use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 
 use serde_json::json;
@@ -81,6 +83,10 @@ fn cmd_build(args: &[String]) -> Result<(), String> {
         ));
     }
 
+    // Profile attestation — print before compiling
+    let attestation = compute_image::image_build_attestation();
+    println!("{}", serde_json::to_string(&attestation).unwrap());
+
     // Create staging directory.
     let uuid = Uuid::new_v4();
     let staging = format!("{output}.build-{uuid}");
@@ -91,7 +97,9 @@ fn cmd_build(args: &[String]) -> Result<(), String> {
 
     // Compile into staging.
     let compile_start = Instant::now();
-    let compiled = compute_image::compile(source, &staging)
+    let compiled = compute_image::compile_with_authority(
+        source, &staging, compute_image::CompilationAuthority::SealedComputeImage
+    )
         .map_err(|e| format!("compilation failed: {e}"))?;
     let compile_ns = compile_start.elapsed().as_nanos() as u64;
     let compile_duration_s = compile_ns as f64 / 1_000_000_000.0;
@@ -132,6 +140,21 @@ fn cmd_build(args: &[String]) -> Result<(), String> {
 
     // Write seal.json.
     let compiler_commit = env!("CARGO_PKG_VERSION");
+    let builder_sha256 = {
+        let exe_path = std::env::current_exe()
+            .map_err(|e| format!("current_exe: {e}"))?;
+        let mut file = File::open(&exe_path)
+            .map_err(|e| format!("open {:?}: {e}", exe_path))?;
+        let mut hasher = Sha256::new();
+        let mut buf = [0u8; 65536];
+        loop {
+            let n = file.read(&mut buf)
+                .map_err(|e| format!("read {:?}: {e}", exe_path))?;
+            if n == 0 { break; }
+            hasher.update(&buf[..n]);
+        }
+        format!("{:x}", hasher.finalize())
+    };
     let sealed_at = format_iso8601(
         SystemTime::now()
             .duration_since(UNIX_EPOCH)
@@ -142,6 +165,7 @@ fn cmd_build(args: &[String]) -> Result<(), String> {
     let seal = json!({
         "status": "sealed",
         "image_hash": image_hash,
+        "builder_sha256": builder_sha256,
         "segment_count": segment_count,
         "tensor_count": tensor_count,
         "compile_duration_s": compile_duration_s,

@@ -43,6 +43,17 @@ cc = "1.2"
 private-development = []
 
 [profile.release]
-lto = true
 strip = "symbols"
+lto = true
 codegen-units = 1
+
+[profile.image-build]
+inherits = "release"
+opt-level = 3
+lto = true
+codegen-units = 1
+incremental = false
+debug = false
+debug-assertions = false
+overflow-checks = false
+strip = "symbols"
