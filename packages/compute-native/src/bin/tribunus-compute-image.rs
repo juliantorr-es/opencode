@@ -512,6 +512,7 @@ fn cmd_replay_projection(args: &[String]) -> Result<(), String> {
     let mut family: Option<String> = None;
     let mut phase_shape = "decode".to_string();
     let mut pipeline_warm = false;
+    let mut two_layer: Option<usize> = None;
     let mut page_touch = false;
     let mut samples = 20usize;
     let mut warmups = 5usize;
@@ -525,6 +526,7 @@ fn cmd_replay_projection(args: &[String]) -> Result<(), String> {
             "--samples" => { i += 1; if i < args.len() { samples = args[i].parse::<usize>().map_err(|_| format!("invalid samples: {}", args[i]))?; } }
             "--pipeline-warm" => { pipeline_warm = true; }
             "--page-touch" => { page_touch = true; }
+            "--two-layer" => { i += 1; if i < args.len() { two_layer = Some(args[i].parse::<usize>().map_err(|_| format!("invalid second layer: {}", args[i]))?); } }
             "--samples" => { i += 1; if i < args.len() { samples = args[i].parse::<usize>().map_err(|_| format!("invalid samples: {}", args[i]))?; } }
             "--warmups" => { i += 1; if i < args.len() { warmups = args[i].parse::<usize>().map_err(|_| format!("invalid warmups: {}", args[i]))?; } }
             _ => { return Err(format!("unknown flag: {}", args[i])); }
@@ -544,7 +546,18 @@ fn cmd_replay_projection(args: &[String]) -> Result<(), String> {
         &family_name,
     ).map_err(|e| format!("harness open: {}", e))?;
 
-    let samples_vec = if pipeline_warm {
+    let samples_vec = if let Some(l2) = two_layer {
+        // Control D: warm layer L, test layer L+1
+        eprintln!("Control D: warming layer {} then testing layer {}", layer_idx, l2);
+        let mut results = harness.replay_decode(3, 0);
+        eprintln!("Layer {} warm complete", layer_idx);
+        let harness2 = tribunus_compute_native::replay_projection::ProjectionHarness::open(
+            Path::new(&image_dir), l2, &family_name,
+        ).map_err(|e| format!("harness2 open: {}", e))?;
+        let results2 = harness2.replay_decode(3, 0);
+        results.extend(results2);
+        results
+    } else if pipeline_warm {
         harness.replay_with_pipeline_warm()
     } else if page_touch {
         harness.replay_with_page_touch()
