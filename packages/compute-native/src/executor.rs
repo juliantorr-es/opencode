@@ -131,6 +131,48 @@ fn qmatmul(x: &Array, w: &Array, s: &Array, b: &Array) -> MlxResult<Array> {
     } else {
         64
     };
+
+    // OPT-0006-T2 diagnostic: first-call stride/contiguity probe.
+    // Answers: do external (mmap-backed) arrays trigger hidden copies?
+    use std::sync::atomic::{AtomicBool, Ordering};
+    static T2_PROBE: AtomicBool = AtomicBool::new(true);
+    if T2_PROBE.swap(false, Ordering::Relaxed) {
+        let ws = w.shape();
+        w.eval()?;
+        let t_ext_start = std::time::Instant::now();
+        let r1 = mlx_rs::ops::quantized_matmul(x, w, s, b, true, group_size, 8)?;
+        let _ = r1.eval()?;
+        let t_ext = t_ext_start.elapsed();
+        // contiguous copy of w, s, b — materialize and measure copy overhead
+        let w_vec: Vec<u8> = w.try_as_slice::<u8>()
+            .map_err(|e| mlx_rs::error::Exception::custom(format!("w as_slice: {:?}", e)))?
+            .to_vec();
+        let wc = Array::from_slice(&w_vec, &ws);
+        let s_vec: Vec<f32> = s.try_as_slice::<f32>()
+            .map_err(|e| mlx_rs::error::Exception::custom(format!("s as_slice: {:?}", e)))?
+            .to_vec();
+        let sc = Array::from_slice(&s_vec, &s.shape());
+        let b_vec: Vec<f32> = b.try_as_slice::<f32>()
+            .map_err(|e| mlx_rs::error::Exception::custom(format!("b as_slice: {:?}", e)))?
+            .to_vec();
+        let bc = Array::from_slice(&b_vec, &b.shape());
+        let t_copy_start = std::time::Instant::now();
+        let r2 = mlx_rs::ops::quantized_matmul(x, &wc, &sc, &bc, true, group_size, 8)?;
+        let _ = r2.eval()?;
+        let t_copy = t_copy_start.elapsed();
+        let ws_str: Vec<String> = ws.iter().map(|d| d.to_string()).collect();
+        // Shape as stride proxy
+        let wss: Vec<String> = ws.iter().map(|d| d.to_string()).collect();
+        eprintln!(
+            "[OPT-0006-T2] first-qmatmul shape=[{}] strides=[{}] ext={:.1}ms copy={:.1}ms ratio={:.2}x",
+            ws_str.join(","), wss.join(","),
+            t_ext.as_secs_f64() * 1000.0,
+            t_copy.as_secs_f64() * 1000.0,
+            t_copy.as_secs_f64() / t_ext.as_secs_f64(),
+        );
+        return Ok(r1);
+    }
+
     mlx_rs::ops::quantized_matmul(x, w, s, b, true, group_size, 8)
 }
 

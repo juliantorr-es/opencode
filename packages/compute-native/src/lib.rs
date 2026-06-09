@@ -47,6 +47,7 @@ pub mod quantized;
 pub mod requalification;
 pub mod mlx_inventory;
 pub mod mlx_patch_register;
+pub mod native_kernel;
 pub mod residency;
 pub mod runtime_trace;
 pub mod streaming;

@@ -20,6 +20,10 @@ path = "src/bin/tribunus-fake-worker.rs"
 name = "tribunus-compute-image"
 path = "src/bin/tribunus-compute-image.rs"
 
+[[bin]]
+name = "tribunus-native-bench"
+path = "src/bin/tribunus-native-bench.rs"
+
 [dependencies]
 napi = { version = "3.9.0", features = ["napi8", "serde-json"], default-features = false }
 napi-derive = "3.5.6"
