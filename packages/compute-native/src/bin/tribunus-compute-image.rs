@@ -12,6 +12,7 @@ use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 
 use serde_json::json;
 use sha2::{Digest, Sha256};
+use rayon::prelude::*;
 use uuid::Uuid;
 
 use tribunus_compute_native::compute_image;
@@ -148,6 +149,22 @@ fn cmd_build(args: &[String]) -> Result<(), String> {
         }
         format!("{:x}", hasher.finalize())
     };
+    // Compute artifact root hash from all segment files (parallel with rayon)
+    eprintln!("[build] computing artifact root hash (parallel, {} segments)...", compiled.manifest.segments.len());
+    let seg_data: Vec<Vec<u8>> = compiled.manifest.segments
+        .par_iter()
+        .map(|seg| {
+            let sp = staging_path.join(&seg.filename);
+            std::fs::read(&sp).unwrap_or_else(|e| panic!("read {}: {}", seg.filename, e))
+        })
+        .collect();
+    let mut root_hasher = Sha256::new();
+    for bytes in &seg_data {
+        root_hasher.update(bytes);
+    }
+    let artifact_root_hash = format!("{:x}", root_hasher.finalize());
+    eprintln!("[build] artifact_root_hash: {}...", &artifact_root_hash[..16]);
+
     let sealed_at = format_iso8601(
         SystemTime::now()
             .duration_since(UNIX_EPOCH)
@@ -158,6 +175,8 @@ fn cmd_build(args: &[String]) -> Result<(), String> {
     let seal = json!({
         "status": "sealed",
         "image_hash": image_hash,
+        "artifact_root_hash": artifact_root_hash,
+        "manifest_image_hash": image_hash,
         "builder_sha256": builder_sha256,
         "segment_count": segment_count,
         "tensor_count": tensor_count,
@@ -255,14 +274,50 @@ fn cmd_verify(args: &[String]) -> Result<(), String> {
         }
     }
 
-    // If --full: recompute image hash from all segments and compare.
+    // If --full: verify every segment SHA-256 against manifest (parallel),
+    // then verify artifact root hash against seal.json.
     if full {
-        let recomputed = recompute_image_hash(image_path, &reader.manifest)?;
-        if recomputed != stored_hash {
+        eprintln!("[verify] full: hashing {} segments in parallel...", reader.manifest.segments.len());
+        let results: Vec<(String, bool, Vec<u8>)> = reader.manifest.segments
+            .par_iter()
+            .map(|seg| {
+                let sp = image_path.join(&seg.filename);
+                let bytes = std::fs::read(&sp)
+                    .unwrap_or_else(|e| panic!("read {}: {}", seg.filename, e));
+                let computed = format!("{:x}", Sha256::digest(&bytes));
+                let ok = computed == seg.sha256;
+                (seg.filename.clone(), ok, bytes)
+            })
+            .collect();
+
+        let mut mismatches: Vec<String> = Vec::new();
+        let mut verified = 0usize;
+        let mut root_hasher = Sha256::new();
+        for (filename, ok, bytes) in &results {
+            if *ok { verified += 1; }
+            else { mismatches.push(format!("{}: hash mismatch", filename)); }
+            root_hasher.update(bytes);
+        }
+        if !mismatches.is_empty() {
             return Err(format!(
-                "full verify hash mismatch: stored={stored_hash} recomputed={recomputed}"
+                "segment hash mismatches ({}/{} verified):\n{}",
+                verified, reader.manifest.segments.len(), mismatches.join("\n")
             ));
         }
+        eprintln!("[verify] segments: {}/{} verified", verified, reader.manifest.segments.len());
+
+        let recomputed_root = format!("{:x}", root_hasher.finalize());
+        // Compare against seal.json artifact_root_hash
+        let expected_root = seal.get("artifact_root_hash")
+            .and_then(|v| v.as_str().map(|s| s.to_string()))
+            .unwrap_or_else(|| stored_hash.clone());
+        if recomputed_root != expected_root {
+            return Err(format!(
+                "artifact root hash mismatch: seal={} recomputed={}",
+                &expected_root[..16], &recomputed_root[..16]
+            ));
+        }
+        eprintln!("[verify] artifact root hash: match");
     }
 
     let segment_count = reader.manifest.segments.len();
@@ -272,7 +327,9 @@ fn cmd_verify(args: &[String]) -> Result<(), String> {
 
     let out = json!({
         "status": "verified",
+        "segments_verified": segment_count,
         "image_hash": image_hash,
+        "artifact_root_hash": seal["artifact_root_hash"].as_str().unwrap_or(&image_hash).to_string(),
         "segment_count": segment_count,
         "tensor_count": tensor_count,
         "storage_abi": storage_abi,
@@ -286,25 +343,9 @@ fn cmd_verify(args: &[String]) -> Result<(), String> {
 // Helpers
 // ═══════════════════════════════════════════════════════════════════════════
 
-/// Recompute the image hash by reading every segment file, hashing each, and
-/// combining them into a single hex string.
-fn recompute_image_hash(
-    dir: &Path,
-    manifest: &compute_image::Manifest,
-) -> Result<String, String> {
-    let mut hasher = Sha256::new();
-    for seg in &manifest.segments {
-        let path = dir.join(&seg.filename);
-        let bytes = fs::read(&path)
-            .map_err(|e| format!("read {}: {e}", seg.filename))?;
-        hasher.update(&bytes);
-    }
-    Ok(format!("{:x}", hasher.finalize()))
-}
-
 /// Sync (fsync) an open directory. Falls back to a no-op on platforms where
 /// File::open on a directory is unsupported.
-fn sync_dir(path: &Path) -> Result<(), String> {
+fn sync_dir
     match fs::File::open(path) {
         Ok(file) => file.sync_all().map_err(|e| format!("sync dir failed: {e}")),
         Err(_) => Ok(()),

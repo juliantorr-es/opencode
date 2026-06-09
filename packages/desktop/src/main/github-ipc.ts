@@ -54,7 +54,8 @@ export function registerGithubIpcHandlers(runtime: DesktopRuntime) {
     senderPolicy: "strict",
     mapError: mapGithubError,
   }, (params: unknown) => Effect.gen(function* () {
-    const [code, state] = params as [string, string]
+    const arr = params as [string, string]
+    const [code, state] = arr
     const pkce = pendingOAuth.get(state)
     if (!pkce) return yield* Effect.fail(new GithubInvalidOAuthStateError())
     pendingOAuth.delete(state)
@@ -85,7 +86,7 @@ export function registerGithubIpcHandlers(runtime: DesktopRuntime) {
       return yield* Effect.fail(new GithubOAuthRejectedError())
     }
     return yield* Effect.succeed(undefined)
-  }))
+  }).pipe(Effect.orDie))
 
   registerIpcEffectHandler(runtime, {
     channel: IPC.handle.GITHUB_GET_TOKEN,
@@ -171,5 +172,5 @@ export function registerGithubIpcHandlers(runtime: DesktopRuntime) {
       })
     )
     return { status: response.status, body: yield* Effect.tryPromise(() => response.text()) }
-  }))
+  }).pipe(Effect.orDie))
 }

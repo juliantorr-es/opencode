@@ -51,7 +51,7 @@ export async function typedInvokeV2<S = unknown>(
   channel: string,
   _successSchema: unknown,
   ...args: unknown[]
-): Promise<unknown> {
+): Promise<S> {
   const rawResult: unknown = await ipcRenderer.invoke(channel, ...args)
 
   if (!validateIpcResult(rawResult)) {
@@ -73,7 +73,7 @@ export async function typedInvokeV2<S = unknown>(
   }
 
   if (result.ok) {
-    return result.value
+    return result.value as S
   }
 
   throw new RenderableIpcError(result.error, result.requestId)
