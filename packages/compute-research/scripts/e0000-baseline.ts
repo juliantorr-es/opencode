@@ -281,6 +281,10 @@ async function main() {
     console.log(`  image: ${compiledHash.slice(0, 12)}... (verified)`);
 
     // Parse tokens using workload's parser
+    // Save raw stderr for future renormalization
+    const stderrPath = join(rd["partialRoot"] || join(RESEARCH_DATA, runId + ".partial"), "diagnostics", "raw-stderr.txt");
+    Bun.write(stderrPath, stderr);
+
     outputTokens = workload.parseTokens(stdout, stderr);
 
     // Parse per-layer events
