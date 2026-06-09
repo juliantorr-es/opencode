@@ -7,12 +7,39 @@
  * Imported by both the E0000 orchestrator and the parser-contract tests.
  */
 
+export interface StandardLayerEvent {
+  schema_version: string
+  run_id: string
+  request_id: string
+  worker_id: string
+  sequence_number: number
+  event_type: string
+  clock_domain: string
+  monotonic_ns: number
+  stage: {
+    stage_id: string
+    substrate_id: string
+    layer_index: number
+    attention_kind: string
+    status: string
+    phase?: string
+    forward_pass_index?: number
+    token_step?: number
+    measurements: {
+      eval_ns: number
+      file_read_bytes: number
+      materialized_bytes: number
+      kv_delta: number
+    }
+  }
+}
+
 /** Parse per-layer events from the stderr format used by all model tests. */
 export function parseStandardLayerEvents(
   stderr: string,
   runId: string,
-): Array<Record<string, unknown>> {
-  const events: Array<Record<string, unknown>> = [];
+): StandardLayerEvent[] {
+  const events: StandardLayerEvent[] = [];
   let currentPhase = "";
   let forwardPassIndex = 0;
   let tokenStep: number | null = null;
