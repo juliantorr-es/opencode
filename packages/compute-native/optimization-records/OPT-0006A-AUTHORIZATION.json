@@ -54,11 +54,18 @@
   },
 
   "level_c_metal_capture": {
-    "status": "infrastructure_complete_not_run",
-    "capture_scaffold": "CaptureGuard with module-scope atomic, finish() returns CaptureReceipt with SHA-256, existing output path rejection, Drop as panic cleanup",
-    "ffi_bindings": "mlx_metal_start_capture/stop_capture via external C linkage, cfg(target_os = macos) guarded",
-    "cli_command": "metal-capture --image <path> [--output <path>]",
-    "note": "Capture not yet run. Whole-decode capture only; layer-scoped capture requires executor-level start/stop boundary. No Metal signposts or debug groups implemented — attribution via deterministic invocation order only."
+    "status": "exploratory_whole_decode_captured",
+    "capture_path": "/Users/user/Developer/TribunusModels/research-data/E0006A-whole-decode.gputrace",
+    "capture_size": "14 GB (directory), 20 MB capture file",
+    "decode_duration_s": 56.27,
+    "prefill_duration_s": 23.37,
+    "total_duration_s": 79.7,
+    "tokens_verified": { "prefill": 589, "decode": 236941 },
+    "capture_method": "METAL_CAPTURE_ENABLED=1 environment variable (CaptureGuard.begin() invoked but MLX capture layer not inserted at build time; Metal runtime-level capture worked via env var)",
+    "attribution_method": "deterministic_invocation_order — 7 projections per layer in fixed order: q,k,v,o,gate,up,down. No Metal signposts or debug groups.",
+    "analysis_required": "Open .gputrace in Xcode → GPU Frame Capture → inspect kernel launches, buffer operations, GPU durations. Manually attribute to logical projections via invocation sequence.",
+    "layer_scoped": false,
+    "note": "Whole-decode capture includes model load, prefill (48 layers), decode (48 layers). Layer-scoped capture requires executor-level start/stop boundary around selected layer eval. Not yet implemented."
   },
 
   "dtype_contract": {
