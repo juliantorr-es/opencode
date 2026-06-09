@@ -82,7 +82,7 @@ export interface Interface {
 
 type State = Omit<Interface, "generate">
 
-export class Service extends Context.Service<Service, Interface>()("@opencode/Agent") {}
+export class Service extends Context.Service<Service, Interface>()("@tribunus/Agent") {}
 
 export const use = serviceUse(Service)
 

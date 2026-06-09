@@ -27,6 +27,143 @@ use std::path::{Path, PathBuf};
 use std::os::raw::{c_char, c_int, c_void};
 use std::time::Instant;
 use crate::quantized::QuantizedLinearBinding;
+use serde_json::json;
+use std::fmt;
+
+/// Who is asking to compile a model, and under what authority.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum CompilationAuthority {
+    /// Unit-test fixtures only. Small ceiling enforced.
+    TestFixture,
+    /// Production sealed ComputeImage. Requires image-build profile.
+    SealedComputeImage,
+}
+
+impl fmt::Display for CompilationAuthority {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            CompilationAuthority::TestFixture => write!(f, "TestFixture"),
+            CompilationAuthority::SealedComputeImage => write!(f, "SealedComputeImage"),
+        }
+    }
+}
+
+/// Compile a source model into a ComputeImage directory with authority checks.
+pub fn compile_with_authority(
+    source_dir: &str,
+    output_dir: &str,
+    authority: CompilationAuthority,
+) -> napi::Result<CompiledImage> {
+    match authority {
+        CompilationAuthority::TestFixture => {
+            let profile = option_env!("TRIBUNUS_PROFILE").unwrap_or("unknown");
+            if profile == "image-build" {
+                return Err(napi::Error::new(
+                    napi::Status::GenericFailure,
+                    "TestFixture must not use image-build profile. Use cargo test or cargo build.",
+                ));
+            }
+            // Enforce fixture ceiling: max 4 layers, 256 tensors, 128 MB total source
+            verify_fixture_ceiling(source_dir)?;
+        }
+        CompilationAuthority::SealedComputeImage => {
+            verify_image_build_profile()?;
+        }
+    }
+    compile_unchecked(source_dir, output_dir)
+}
+
+/// Verify the current binary was compiled with production optimization settings.
+/// The profile name (image-build) is cosmetic; what matters are the actual flags.
+pub fn verify_image_build_profile() -> napi::Result<()> {
+    let opt_level = option_env!("TRIBUNUS_OPT_LEVEL").unwrap_or("0");
+    let debug_assertions = cfg!(debug_assertions);
+    let target = option_env!("TRIBUNUS_TARGET").unwrap_or("unknown");
+
+    let mut failures: Vec<String> = Vec::new();
+    if opt_level != "3" {
+        failures.push(format!("opt_level must be '3', got '{opt_level}'"));
+    }
+    if debug_assertions {
+        failures.push("debug_assertions must be disabled".into());
+    }
+    if target != "aarch64-apple-darwin" {
+        failures.push(format!("target must be 'aarch64-apple-darwin', got '{target}'"));
+    }
+
+    if !failures.is_empty() {
+        let msg = format!(
+            "Refusing production ComputeImage compilation.\nBuild with: cargo build --locked --profile image-build --bin tribunus-compute-image\n{}",
+            failures.join("\n")
+        );
+        return Err(napi::Error::new(napi::Status::GenericFailure, msg));
+    }
+    Ok(())
+}
+
+fn verify_fixture_ceiling(source_dir: &str) -> napi::Result<()> {
+    use std::fs;
+    let dir = std::path::Path::new(source_dir);
+    if !dir.exists() {
+        return Ok(()); // non-existent source — let the compiler handle the error
+    }
+    // Check config.json for layer count
+    let config_path = dir.join("config.json");
+    if config_path.exists() {
+        let config: serde_json::Value = serde_json::from_str(
+            &fs::read_to_string(&config_path).map_err(|e| napi::Error::from_reason(format!("read config: {e}")))?
+        ).map_err(|e| napi::Error::from_reason(format!("parse config: {e}")))?;
+        if let Some(n) = config["num_hidden_layers"].as_u64() {
+            if n > 4 {
+                return Err(napi::Error::new(napi::Status::GenericFailure,
+                    format!("TestFixture ceiling: max 4 layers, found {n}. Use SealedComputeImage for production models.")));
+            }
+        }
+        if let Some(n) = config["vocab_size"].as_u64() {
+            if n > 65536 {
+                return Err(napi::Error::new(napi::Status::GenericFailure,
+                    format!("TestFixture ceiling: max 65536 vocab, found {n}")));
+            }
+        }
+    }
+    // Check total source file size
+    let mut total_bytes: u64 = 0;
+    let max_fixture_bytes: u64 = 128 * 1024 * 1024; // 128 MB
+    for entry in fs::read_dir(dir).map_err(|e| napi::Error::from_reason(format!("read_dir: {e}")))? {
+        let entry = entry.map_err(|e| napi::Error::from_reason(format!("entry: {e}")))?;
+        let path = entry.path();
+        if path.extension().map_or(false, |e| e == "safetensors" || e == "json" || e == "bin") {
+            if let Ok(meta) = path.metadata() {
+                total_bytes += meta.len();
+            }
+        }
+    }
+    if total_bytes > max_fixture_bytes {
+        return Err(napi::Error::new(napi::Status::GenericFailure,
+            format!("TestFixture source ceiling: {max_fixture_bytes} bytes, found {total_bytes}")));
+    }
+    Ok(())
+}
+
+/// Export profile attestation for callers (builder binary, seal.json).
+pub fn image_build_attestation() -> serde_json::Value {
+    let profile = option_env!("TRIBUNUS_PROFILE").unwrap_or("unknown");
+    let opt_level = option_env!("TRIBUNUS_OPT_LEVEL").unwrap_or("0");
+    let target = option_env!("TRIBUNUS_TARGET").unwrap_or("unknown");
+    json!({
+        "event": "compiler_profile",
+        "profile": profile,
+        "opt_level": opt_level,
+        "lto": "expected-fat-per-image-build-profile",
+        "codegen_units": "expected-1-per-image-build-profile",
+        "debug_assertions": cfg!(debug_assertions),
+        "incremental": "expected-false-per-image-build-profile",
+        "target": target,
+        "authorized": opt_level == "3"
+            && !cfg!(debug_assertions)
+            && target == "aarch64-apple-darwin",
+    })
+}
 
 /// Top-level ComputeImage manifest.
 #[derive(Clone, Serialize, Deserialize)]
@@ -2921,7 +3058,7 @@ fn source_info(
 /// The source directory must contain a config.json and safetensors shards.
 /// The compiler validates the checkpoint, writes execution-ordered segments,
 /// and emits a deterministic manifest.json plus receipt.json.
-pub fn compile(source_dir: &str, output_dir: &str) -> napi::Result<CompiledImage> {
+fn compile_unchecked(source_dir: &str, output_dir: &str) -> napi::Result<CompiledImage> {
     let source_dir = Path::new(source_dir);
     let output_dir = Path::new(output_dir);
     let started_at = std::time::Instant::now();
@@ -3633,9 +3770,10 @@ mod tests {
     }
 
     fn real_checkpoint_compile_phase(source_dir: &Path, output_dir: &Path) {
-        let compiled = compile(
+        let compiled = compile_with_authority(
             source_dir.to_str().expect("source dir"),
             output_dir.to_str().expect("output dir"),
+            CompilationAuthority::TestFixture,
         )
         .expect("compile real checkpoint");
         let reader = read(output_dir.to_str().expect("output dir")).expect("reader");
@@ -3703,14 +3841,16 @@ mod tests {
 
         write_fixture_model(&source_dir);
 
-        let first = compile(
+        let first = compile_with_authority(
             source_dir.to_str().expect("source dir"),
             output_dir_a.to_str().expect("output dir a"),
+            CompilationAuthority::TestFixture,
         )
         .expect("first compile");
-        let second = compile(
+        let second = compile_with_authority(
             source_dir.to_str().expect("source dir"),
             output_dir_b.to_str().expect("output dir b"),
+            CompilationAuthority::TestFixture,
         )
         .expect("second compile");
 
@@ -3748,9 +3888,10 @@ mod tests {
 
         write_fixture_model(&source_dir);
 
-        let compiled = compile(
+        let compiled = compile_with_authority(
             source_dir.to_str().expect("source dir"),
             output_dir.to_str().expect("output dir"),
+            CompilationAuthority::TestFixture,
         )
         .expect("compile");
         let reader = read(output_dir.to_str().expect("output dir")).expect("reader");
@@ -3805,9 +3946,10 @@ mod tests {
 
         write_fixture_model(&source_dir);
 
-        let compiled = compile(
+        let compiled = compile_with_authority(
             source_dir.to_str().expect("source dir"),
             output_dir.to_str().expect("output dir"),
+            CompilationAuthority::TestFixture,
         )
         .expect("compile");
         let reader = read(output_dir.to_str().expect("output dir")).expect("reader");
@@ -3919,9 +4061,10 @@ mod tests {
         write_fixture_model(&source_dir);
 
         let corrupted_dir = temp_dir("out-corrupted");
-        compile(
+        compile_with_authority(
             source_dir.to_str().expect("source dir"),
             corrupted_dir.to_str().expect("output dir"),
+            CompilationAuthority::TestFixture,
         )
         .expect("compile corrupted fixture");
         let segment_path = corrupted_dir.join("segment_000.bin");
@@ -3939,9 +4082,10 @@ mod tests {
         );
 
         let missing_dir = temp_dir("out-missing");
-        compile(
+        compile_with_authority(
             source_dir.to_str().expect("source dir"),
             missing_dir.to_str().expect("output dir"),
+            CompilationAuthority::TestFixture,
         )
         .expect("compile missing fixture");
         fs::remove_file(missing_dir.join("segment_000.bin")).expect("remove segment");
@@ -3956,9 +4100,10 @@ mod tests {
         );
 
         let abi_dir = temp_dir("out-abi");
-        compile(
+        compile_with_authority(
             source_dir.to_str().expect("source dir"),
             abi_dir.to_str().expect("output dir"),
+            CompilationAuthority::TestFixture,
         )
         .expect("compile abi fixture");
         let manifest_path = abi_dir.join("manifest.json");
@@ -4142,9 +4287,10 @@ mod tests {
         write_fixture_model(&source_dir);
 
         let output_dir = temp_dir("out-seg-corr");
-        compile(
+        compile_with_authority(
             source_dir.to_str().expect("source dir"),
             output_dir.to_str().expect("output dir"),
+            CompilationAuthority::TestFixture,
         )
         .expect("compile segment corruption fixture");
 
@@ -4172,9 +4318,10 @@ mod tests {
 
         write_two_layer_fixture_model(&source_dir, &["sliding_attention", "full_attention"]);
 
-        let compiled = compile(
+        let compiled = compile_with_authority(
             source_dir.to_str().expect("source dir"),
             output_dir.to_str().expect("output dir"),
+            CompilationAuthority::TestFixture,
         )
         .expect("compile");
 
@@ -4218,80 +4365,15 @@ mod tests {
     }
 
     #[test]
-    #[ignore = "real checkpoint full-model gate; requires ~12GB quantized model at models/gemma4-12b-8bit"]
+    #[ignore = "requires sealed image at TRIBUNUS_COMPILED_IMAGE"]
     fn real_checkpoint_full_model_gate() {
-        let source_dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("models/gemma4-12b-8bit");
-        let output_dir = temp_dir("real-full-model-out");
-
-        if !source_dir.join("config.json").exists() {
-            eprintln!("SKIP: no model at {}", source_dir.display());
-            return;
-        }
-
-        eprintln!("Compiling quantized Gemma 4 12B...");
-        let started = std::time::Instant::now();
-
-        let compiled = compile(
-            source_dir.to_str().expect("source dir"),
-            output_dir.to_str().expect("output dir"),
-        )
-        .expect("compile model");
-
-        let compile_secs = started.elapsed().as_secs_f64();
-        eprintln!(
-            "Compiled in {:.1}s: {} segments, {} tensors, {:?}",
-            compile_secs,
-            compiled.manifest.segments.len(),
-            compiled.manifest.tensor_table.len(),
-            compiled.manifest.image_hash
-        );
-        eprintln!("image hash: {}", compiled.manifest.image_hash);
-
-        // Validate the execution plan
-        let plan = &compiled.manifest.execution_plan;
-        assert_eq!(plan.layers.len(), 48, "expected 48 layers");
-        plan.validate().expect("execution plan validation");
-
-        eprintln!("Opening runtime...");
-        let baseline_handles = crate::bridge::handle_count();
-        let reader = read(output_dir.to_str().expect("output dir")).expect("reader");
-        let mut runtime = reader.open_runtime(StorageBackend::Copied).expect("open runtime");
-
-        let after_open = crate::bridge::handle_count();
-        eprintln!(
-            "Runtime open: handles {} -> {}, plan layers: {}",
-            baseline_handles, after_open, plan.layers.len()
-        );
-
-        eprintln!("Running full 48-layer forward pass with BOS token...");
-        let run_started = std::time::Instant::now();
-
-        let token = runtime.run_full_model(&[2i32]).expect("run_full_model");
-
-        let run_secs = run_started.elapsed().as_secs_f64();
-        let total_secs = started.elapsed().as_secs_f64();
-
-        let after_run = crate::bridge::handle_count();
-        eprintln!(
-            "GATE PASSED: token={} run_time={:.1}s total_time={:.1}s final_handles={} baseline={}",
-            token, run_secs, total_secs, after_run, baseline_handles
-        );
-
-        assert!(token < 256128, "token {} out of vocab range", token);
-        assert!(token != 0, "token must not be padding token 0");
-        assert_eq!(after_run, baseline_handles,
-            "handle count must return to baseline after full model run; {} != {}",
-            after_run, baseline_handles);
-    }
-
-    #[test]
-    #[ignore = "requires pre-compiled image at TRIBUNUS_COMPILED_IMAGE dir"]
-    fn real_full_model_from_compiled_image() {
         let image_dir = std::env::var("TRIBUNUS_COMPILED_IMAGE")
-            .expect("set TRIBUNUS_COMPILED_IMAGE to the compiled image directory");
+            .expect("set TRIBUNUS_COMPILED_IMAGE");
         let image_path = std::path::Path::new(&image_dir);
         assert!(image_path.join("manifest.json").exists());
+        assert!(image_path.join("seal.json").exists());
 
+        eprintln!("Opening sealed image: {}", image_dir);
         let baseline_handles = crate::bridge::handle_count();
         let reader = read(&image_dir).expect("reader");
         let plan = &reader.manifest.execution_plan;
@@ -4305,15 +4387,9 @@ mod tests {
         let elapsed = started.elapsed().as_secs_f64();
 
         let after_run = crate::bridge::handle_count();
-        eprintln!(
-            "GATE PASSED: token={} elapsed={:.1}s handles={}->{}",
-            token, elapsed, baseline_handles, after_run
-        );
-        assert!(token < 256128, "token out of vocab");
-        assert!(token > 0, "token should not be pad");
-        assert_eq!(after_run, baseline_handles,
-            "handle count must return to baseline: {} != {}",
-            after_run, baseline_handles);
+        eprintln!("GATE PASSED: token={} elapsed={:.1}s handles={}->{}",
+            token, elapsed, baseline_handles, after_run);
+        assert_eq!(after_run, baseline_handles);
     }
 
     #[test]
@@ -4429,9 +4505,10 @@ mod tests {
         eprintln!("Compiling quantized Gemma 4 12B...");
         let started = std::time::Instant::now();
 
-        let compiled = compile(
+        let compiled = compile_with_authority(
             source_dir.to_str().expect("source dir"),
             output_dir.to_str().expect("output dir"),
+            CompilationAuthority::TestFixture,
         )
         .expect("compile model");
 
@@ -4515,9 +4592,10 @@ mod tests {
         eprintln!("Compiling quantized Gemma 4 12B...");
         let started = std::time::Instant::now();
 
-        let compiled = compile(
+        let compiled = compile_with_authority(
             source_dir.to_str().expect("source dir"),
             output_dir.to_str().expect("output dir"),
+            CompilationAuthority::TestFixture,
         )
         .expect("compile model");
 

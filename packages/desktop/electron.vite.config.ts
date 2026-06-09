@@ -4,7 +4,7 @@ import appPlugin from "@tribunus/app/vite"
 import * as fs from "node:fs/promises"
 import { execSync } from "node:child_process"
 
-const OPENCODE_SERVER_DIST = "../opencode/dist/node"
+const OPENCODE_SERVER_DIST = "../runtime/dist/node"
 
 const channel = (() => {
   const raw = process.env.OPENCODE_CHANNEL

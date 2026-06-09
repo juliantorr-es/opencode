@@ -1,4 +1,14 @@
+fn forward(name: &str) {
+    let value = std::env::var(name).unwrap_or_else(|_| format!("{name}_MISSING"));
+    println!("cargo:rustc-env=TRIBUNUS_{name}={value}");
+}
+
 fn main() {
+    forward("PROFILE");
+    forward("OPT_LEVEL");
+    forward("TARGET");
+    forward("DEBUG");
+
     napi_build::setup();
 
     // Compile the ObjC++ Core ML / IOSurface bridge.

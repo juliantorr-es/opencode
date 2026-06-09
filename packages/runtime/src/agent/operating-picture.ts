@@ -47,7 +47,7 @@ export interface Interface {
   readonly get: (options?: GetOptions) => Effect.Effect<AgentOperatingPicture>
 }
 
-export class Service extends Context.Service<Service, Interface>()("@opencode/OperatingPicture") {}
+export class Service extends Context.Service<Service, Interface>()("@tribunus/OperatingPicture") {}
 
 export const use = serviceUse(Service)
 

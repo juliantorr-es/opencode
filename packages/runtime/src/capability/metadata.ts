@@ -74,7 +74,7 @@ export class CapabilityContext extends Context.Service<
     readonly approvalLevelGranted: ApprovalLevel
     readonly authorityGrants?: readonly any[]
   }
->()("@opencode/CapabilityContext") {}
+>()("@tribunus/CapabilityContext") {}
 
 // Standard metadata definitions for live capabilities
 export const sessionGetMetadata: CapabilityMetadata = {

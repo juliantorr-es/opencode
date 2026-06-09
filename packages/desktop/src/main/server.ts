@@ -309,6 +309,7 @@ export async function checkHealth(url: string, password?: string | null): Promis
 // and are never persisted to disk by the desktop app.
 function createSidecarEnv(userDataPath: string): Record<string, string> {
   const paths = resolveDesktopAppDataPaths(userDataPath)
+  ensureDirectories(paths)
   const env = sanitizeEnv({
     ...process.env,
     ...envForDesktopAppData(paths),

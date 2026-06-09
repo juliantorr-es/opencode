@@ -10,4 +10,4 @@ export interface InstanceRuntimeInterface {
 export class InstanceRuntimeTag extends Context.Service<
   InstanceRuntimeTag,
   InstanceRuntimeInterface
->()("@opencode/InstanceRuntime") {}
+>()("@tribunus/InstanceRuntime") {}

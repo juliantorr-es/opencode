@@ -81,7 +81,7 @@ export class CapabilityToolRegistry extends Context.Service<
       context: CapabilityToolCheckContext,
     ) => Effect.Effect<CapabilityAuthorityResult, CapabilityToolRegistryError>
   }
->()("@opencode/CapabilityToolRegistry") {}
+>()("@tribunus/CapabilityToolRegistry") {}
 
 export const liveRegistryLayer = Layer.effect(
   CapabilityToolRegistry,

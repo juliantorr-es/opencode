@@ -556,7 +556,7 @@ export interface WorkQueueDurableStore {
  * This allows dependency injection through the Effect layer system.
  */
 export class WorkQueueDurableStoreService extends Context.Service<WorkQueueDurableStoreService>()(
-  "@opencode/WorkQueueDurableStore"
+  "@tribunus/WorkQueueDurableStore"
 ) {
   constructor(store: WorkQueueDurableStore) {
     super()

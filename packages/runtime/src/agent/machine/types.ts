@@ -233,7 +233,7 @@ export interface MachineDependencies {
 export class MachineDependenciesService extends Context.Service<
   MachineDependenciesService,
   MachineDependencies
->()("@opencode/agent/MachineDependencies") {}
+>()("@tribunus/agent/MachineDependencies") {}
 
 // ─── Machine Runner ───────────────────────────────────────────────────────────
 
@@ -255,7 +255,7 @@ export interface MachineRegistry {
 export class MachineRegistryService extends Context.Service<
   MachineRegistryService,
   MachineRegistry
->()("@opencode/agent/MachineRegistry") {}
+>()("@tribunus/agent/MachineRegistry") {}
 
 // ─── Event Schema (for artifact recording) ────────────────────────────────────
 

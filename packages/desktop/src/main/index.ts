@@ -49,7 +49,9 @@ import {
 } from "./windows"
 import { migrate } from "./migrate"
 import { checkUpdate, checkForUpdates, installUpdate, setupAutoUpdater } from "./updater"
-import { Deferred, Effect, Fiber } from "effect"
+import { Deferred, Effect, Fiber, ManagedRuntime } from "effect"
+import { makeDesktopRuntime } from "./effect/desktop-runtime"
+import { registerQualificationDriver } from "./qualification-driver"
 import * as Sentry from "@sentry/electron"
 
 const APP_NAMES: Record<string, string> = {
@@ -118,6 +120,14 @@ function ensureLoopbackNoProxy() {
   upsert("NO_PROXY")
   upsert("no_proxy")
 }
+
+// Root Effect runtime — owns every long-lived resource in the main process.
+// Electron process lifetime = root Effect scope lifetime.
+
+// Test-only qualification driver — activates when TRIBUNUS_QUALIFICATION_DRIVER=1
+registerQualificationDriver()
+
+const desktopRuntime = makeDesktopRuntime()
 
 const main = Effect.gen(function* () {
   contextMenu({ showSaveImageAs: true, showLookUpSelection: false, showSearchWithGoogle: false })
@@ -225,14 +235,15 @@ const main = Effect.gen(function* () {
     event.preventDefault()
     logger.log("deep link received via open-url", { url })
     emitDeepLinks([url])
-  })
-
-  app.on("before-quit", () => {
-    void killSidecar()
+    void desktopRuntime.dispose()
   })
 
   app.on("will-quit", () => {
-    valkeySupervisor?.stop()
+    void killSidecar()
+    void desktopRuntime.dispose()
+  })
+
+  app.on("will-quit", () => {
     void killSidecar()
   })
 
@@ -245,7 +256,9 @@ const main = Effect.gen(function* () {
   })
 
   setRelaunchHandler(() => {
-    void killSidecar().finally(() => {
+    void killSidecar()
+      .then(() => desktopRuntime.dispose())
+      .finally(() => {
       app.relaunch()
       app.exit(0)
     })
@@ -253,7 +266,9 @@ const main = Effect.gen(function* () {
 
   for (const signal of ["SIGINT", "SIGTERM"] as const) {
     process.on(signal, () => {
-      void killSidecar().finally(() => app.exit(0))
+      void killSidecar()
+        .then(() => desktopRuntime.dispose())
+        .finally(() => app.exit(0))
     })
   }
 
@@ -333,7 +348,7 @@ const main = Effect.gen(function* () {
           writeLog("safe-mode", `safe mode action: ${action}`, {}, "info")
       }
     },
-  })
+  }, desktopRuntime)
 
   yield* Effect.promise(() => app.whenReady())
 
@@ -394,7 +409,10 @@ const main = Effect.gen(function* () {
           return
         }
         const p = address.port
-        server.close(() => Effect.runSync(Deferred.succeed(res, p)))
+        server.close(() => {
+          // macOS may hold the port briefly after close — delay release
+          setTimeout(() => Effect.runSync(Deferred.succeed(res, p)), 100)
+        })
       })
 
       return yield* Deferred.await(res)
@@ -485,7 +503,9 @@ const main = Effect.gen(function* () {
         void checkForUpdates(true, killSidecar)
       },
       relaunch: () => {
-        void killSidecar().finally(() => {
+        void killSidecar()
+          .then(() => desktopRuntime.dispose())
+          .finally(() => {
           app.relaunch()
           app.exit(0)
         })
@@ -496,4 +516,4 @@ const main = Effect.gen(function* () {
   overlay?.close()
 })
 
-Effect.runFork(main)
+desktopRuntime.runFork(main)

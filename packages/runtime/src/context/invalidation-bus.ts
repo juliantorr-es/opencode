@@ -13,7 +13,7 @@ export interface Interface {
   readonly subscribeAll: () => Effect.Effect<Stream.Stream<InvalidationEvent>, never, Scope.Scope>
 }
 
-export class ContextInvalidationBus extends Context.Service<ContextInvalidationBus, Interface>()("@opencode/ContextInvalidationBus") {}
+export class ContextInvalidationBus extends Context.Service<ContextInvalidationBus, Interface>()("@tribunus/ContextInvalidationBus") {}
 
 export const use = serviceUse(ContextInvalidationBus)
 

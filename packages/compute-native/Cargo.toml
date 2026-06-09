@@ -16,6 +16,10 @@ path = "src/bin/tribunus-compute-worker.rs"
 name = "tribunus-fake-worker"
 path = "src/bin/tribunus-fake-worker.rs"
 
+[[bin]]
+name = "tribunus-compute-image"
+path = "src/bin/tribunus-compute-image.rs"
+
 [dependencies]
 napi = { version = "3.9.0", features = ["napi8", "serde-json"], default-features = false }
 napi-derive = "3.5.6"
@@ -39,6 +43,17 @@ cc = "1.2"
 private-development = []
 
 [profile.release]
-lto = true
 strip = "symbols"
+lto = true
 codegen-units = 1
+
+[profile.image-build]
+inherits = "release"
+opt-level = 3
+lto = true
+codegen-units = 1
+incremental = false
+debug = false
+debug-assertions = false
+overflow-checks = false
+strip = "symbols"

@@ -19,7 +19,7 @@ export interface Interface {
   readonly set: (component: string, status: ComponentHealth) => Effect.Effect<void>
 }
 
-export class Service extends Context.Service<Service, Interface>()("@opencode/HealthRegistry") {}
+export class Service extends Context.Service<Service, Interface>()("@tribunus/HealthRegistry") {}
 
 export const HealthRegistry = Service
 

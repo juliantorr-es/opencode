@@ -102,7 +102,7 @@ export interface Interface {
   readonly getIntegrationResult: (campaignId: string) => Effect.Effect<Option.Option<IntegrationResult>>
 }
 
-export class Service extends Context.Service<Service, Interface>()("@opencode/CampaignIntegrator") {}
+export class Service extends Context.Service<Service, Interface>()("@tribunus/CampaignIntegrator") {}
 
 export const use = serviceUse(Service)
 

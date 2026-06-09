@@ -179,7 +179,7 @@ export interface Interface {
   readonly suggestNext: (toolId: string) => Effect.Effect<string[], never, never>
 }
 
-export class Service extends Context.Service<Service, Interface>()("@opencode/ToolRegistry") {}
+export class Service extends Context.Service<Service, Interface>()("@tribunus/ToolRegistry") {}
 
 export const layer = Layer.effect(
   Service,

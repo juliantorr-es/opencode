@@ -35,7 +35,7 @@ export interface Interface {
   readonly refresh: () => Effect.Effect<ProjectMap>
 }
 
-export class Service extends Context.Service<Service, Interface>()("@opencode/ProjectMap") {}
+export class Service extends Context.Service<Service, Interface>()("@tribunus/ProjectMap") {}
 
 export const use = serviceUse(Service)
 

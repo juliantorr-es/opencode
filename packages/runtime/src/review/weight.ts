@@ -57,7 +57,7 @@ export interface Interface {
   readonly calculateScore: (rubric: WeightRubric, scores: Record<string, number>) => ScoreResult
 }
 
-export class Service extends Context.Service<Service, Interface>()("@opencode/ReviewWeight") {}
+export class Service extends Context.Service<Service, Interface>()("@tribunus/ReviewWeight") {}
 
 // ── Layer ───────────────────────────────────────────────────────────────
 

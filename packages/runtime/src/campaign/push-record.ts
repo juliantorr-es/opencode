@@ -66,7 +66,7 @@ export interface Interface {
   readonly getRecord: (pushId: string) => Effect.Effect<PushRecord | null>
 }
 
-export class Service extends Context.Service<Service, Interface>()("@opencode/PushRecordService") {}
+export class Service extends Context.Service<Service, Interface>()("@tribunus/PushRecordService") {}
 
 // ── Helpers ────────────────────────────────────────────────
 

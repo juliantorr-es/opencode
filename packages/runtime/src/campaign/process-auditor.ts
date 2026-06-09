@@ -44,7 +44,7 @@ export interface ProcessAuditorInterface {
 export class ProcessAuditorService extends Context.Service<
   ProcessAuditorService,
   ProcessAuditorInterface
->()("@opencode/ProcessAuditor") {}
+>()("@tribunus/ProcessAuditor") {}
 
 // ── Chronology Violation Checks ──────────────────────────────
 

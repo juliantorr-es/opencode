@@ -89,7 +89,7 @@ export interface Interface {
   readonly readManifest: (filePath: string) => Effect.Effect<Manifest, never, never>
 }
 
-export class Service extends Context.Service<Service, Interface>()("@opencode/ReviewManifest") {}
+export class Service extends Context.Service<Service, Interface>()("@tribunus/ReviewManifest") {}
 
 // ── Schema for validation ───────────────────────────────────────────────
 

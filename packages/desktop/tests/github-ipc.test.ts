@@ -1,3 +1,4 @@
+import { Effect } from "effect"
 import { describe, expect, test, mock, beforeAll, beforeEach } from "bun:test"
 import { createElectronMock } from "../src/test-utils/electron-mock"
 
@@ -26,6 +27,7 @@ const handlerStoreData = new Map<string, string>()
 
 // Intercept electron imports before the real module is loaded
 mock.module("electron", () => ({
+  app: { getPath: () => "/tmp/test-user-data" },
   ipcMain: electronMock.ipcMain,
   net: electronMock.net,
   safeStorage: electronMock.safeStorage,
@@ -60,7 +62,19 @@ mock.module("../src/main/store", () => ({
   }),
 }))
 
-let registerGithubIpcHandlers: () => void
+mock.module("../src/main/desktop-secret-store", () => ({
+    setSecret: async (ref: { namespace: string; key: string }, value: string) => {
+      handlerStoreData.set(`${ref.namespace}/${ref.key}`, value)
+    },
+    getSecret: async (ref: { namespace: string; key: string }) => {
+      return handlerStoreData.get(`${ref.namespace}/${ref.key}`) ?? null
+    },
+    deleteSecret: async (ref: { namespace: string; key: string }) => {
+      handlerStoreData.delete(`${ref.namespace}/${ref.key}`)
+    },
+  }))
+
+let registerGithubIpcHandlers: (_runtime: unknown) => void
 
 beforeAll(async () => {
   const mod = await import("../src/main/github-ipc")
@@ -573,8 +587,30 @@ describe("IPC handler registration (via mock factory)", () => {
     })
   })
 
+  // Mocks for the new registerIpcEffectHandler API
+  const mockRuntime = {
+    runPromise(effect: any) { return Effect.runPromise(effect) },
+    runPromiseExit(effect: any) { return Effect.runPromise(Effect.exit(effect)) },
+    runFork() { throw new Error("runFork not mocked") },
+    runSync() { throw new Error("runSync not mocked") },
+    dispose() { return Promise.resolve() },
+  }
+  function unwrapEnvelope(result: any) {
+    if (result && typeof result === "object" && "ok" in result) {
+      if (result.ok === true) return result.value
+      if (result.ok === false) throw new Error(result.error?.message ?? "Handler returned error envelope")
+    }
+    return result
+  }
+  function makeEvent() {
+    return {
+      sender: { isDestroyed: () => false, getURL: () => "file:///app/index.html", mainFrame: { getURL: () => "file:///app/index.html" } },
+      senderFrame: undefined,
+    }
+  }
+
   test("registers all 6 GitHub IPC handlers", () => {
-    registerGithubIpcHandlers()
+    registerGithubIpcHandlers(mockRuntime)
 
     const channels = [...electronMock.ipcMain._handlers.keys()]
     expect(channels).toEqual([
@@ -589,10 +625,10 @@ describe("IPC handler registration (via mock factory)", () => {
   })
 
   test("GITHUB_OAUTH_START returns state and opens browser with correct URL", async () => {
-    registerGithubIpcHandlers()
+    registerGithubIpcHandlers(mockRuntime)
     const handler = electronMock.ipcMain._handlers.get("github-oauth-start")!
 
-    const state = await handler()
+    const state = unwrapEnvelope(await handler(makeEvent()))
 
     expect(typeof state).toBe("string")
     expect(state.length).toBeGreaterThan(0)
@@ -607,33 +643,35 @@ describe("IPC handler registration (via mock factory)", () => {
   })
 
   test("GITHUB_OAUTH_CALLBACK exchanges code for token via net.fetch", async () => {
-    registerGithubIpcHandlers()
+    registerGithubIpcHandlers(mockRuntime)
     const startHandler = electronMock.ipcMain._handlers.get("github-oauth-start")!
     const callbackHandler = electronMock.ipcMain._handlers.get("github-oauth-callback")!
 
-    const state = await startHandler()
+    const state = unwrapEnvelope(await startHandler(makeEvent()))
 
-    await callbackHandler({}, "test_auth_code", state)
+    await callbackHandler(makeEvent(), "test_auth_code", state)
 
     // net.fetch was called with the token URL
     expect(electronMock.net.fetch.mock.calls.length).toBe(1)
     expect(electronMock.net.fetch.mock.calls[0].args[0]).toBe("https://github.com/login/oauth/access_token")
 
     // Token was encrypted and persisted to store
-    expect(electronMock.safeStorage.encryptString.mock.calls.length).toBe(1)
-    expect(electronMock.safeStorage.encryptString.mock.calls[0].args[0]).toBe("gho_mock_token_12345")
-    expect(handlerStoreData.get("token")).toBeTruthy()
+    expect(handlerStoreData.has("github/default")).toBe(true)
+    expect(handlerStoreData.get("github/default")).toBe("gho_mock_token_12345")
+    expect(handlerStoreData.get("github/default")).toBeTruthy()
   })
 
   test("GITHUB_OAUTH_CALLBACK throws on invalid state", async () => {
-    registerGithubIpcHandlers()
+    registerGithubIpcHandlers(mockRuntime)
     const handler = electronMock.ipcMain._handlers.get("github-oauth-callback")!
 
-    await expect(handler({}, "code", "nonexistent-state")).rejects.toThrow("Invalid OAuth state")
+    const result = await handler(makeEvent(), "code", "nonexistent-state")
+    expect(result.ok).toBe(false)
+    expect(result.error.message).toContain("Invalid or expired OAuth state")
   })
 
   test("GITHUB_OAUTH_CALLBACK throws on error response from GitHub", async () => {
-    registerGithubIpcHandlers()
+    registerGithubIpcHandlers(mockRuntime)
     const startHandler = electronMock.ipcMain._handlers.get("github-oauth-start")!
     const callbackHandler = electronMock.ipcMain._handlers.get("github-oauth-callback")!
 
@@ -643,54 +681,56 @@ describe("IPC handler registration (via mock factory)", () => {
       return new Response(JSON.stringify({ error: "bad_verification_code", error_description: "The code is incorrect" }))
     })
 
-    const state = await startHandler()
+    const state = unwrapEnvelope(await startHandler(makeEvent()))
 
-    await expect(callbackHandler({}, "bad-code", state)).rejects.toThrow("The code is incorrect")
+    const result = await callbackHandler(makeEvent(), "bad-code", state)
+    expect(result.ok).toBe(false)
+    expect(result.error.message).toContain("GitHub OAuth authorization was rejected")
   })
 
   test("GITHUB_SET_TOKEN encrypts and stores the token", async () => {
-    registerGithubIpcHandlers()
+    registerGithubIpcHandlers(mockRuntime)
     const handler = electronMock.ipcMain._handlers.get("github-set-token")!
 
-    await handler({}, "my-secret-token")
+    await handler(makeEvent(), "my-secret-token")
 
-    expect(electronMock.safeStorage.encryptString.mock.calls.length).toBe(1)
-    expect(electronMock.safeStorage.encryptString.mock.calls[0].args[0]).toBe("my-secret-token")
-    expect(handlerStoreData.get("token")).toBeTruthy()
+    expect(handlerStoreData.has("github/default")).toBe(true)
+    expect(handlerStoreData.get("github/default")).toBe("my-secret-token")
+    expect(handlerStoreData.get("github/default")).toBeTruthy()
   })
 
   test("GITHUB_GET_TOKEN returns decrypted token", async () => {
-    registerGithubIpcHandlers()
+    registerGithubIpcHandlers(mockRuntime)
     const setHandler = electronMock.ipcMain._handlers.get("github-set-token")!
     const getHandler = electronMock.ipcMain._handlers.get("github-get-token")!
 
     await setHandler({}, "stored-token-value")
-    const result = await getHandler()
+    const result = unwrapEnvelope(await getHandler(makeEvent()))
 
     expect(result).toBe("stored-token-value")
   })
 
   test("GITHUB_GET_TOKEN returns null when no token stored", async () => {
-    registerGithubIpcHandlers()
+    registerGithubIpcHandlers(mockRuntime)
     const handler = electronMock.ipcMain._handlers.get("github-get-token")!
 
-    const result = await handler()
+    const result = unwrapEnvelope(await handler(makeEvent()))
     expect(result).toBeNull()
   })
 
   test("GITHUB_GET_TOKEN returns null on decrypt failure", async () => {
-    registerGithubIpcHandlers()
+    registerGithubIpcHandlers(mockRuntime)
     const handler = electronMock.ipcMain._handlers.get("github-get-token")!
 
     // Plant a token that wasn't encrypted by safeStorage
     handlerStoreData.set("token", Buffer.from("plain-unencrypted-data").toString("base64"))
 
-    const result = await handler()
+    const result = unwrapEnvelope(await handler(makeEvent()))
     expect(result).toBeNull()
   })
 
   test("GITHUB_CLEAR_TOKEN deletes the token", async () => {
-    registerGithubIpcHandlers()
+    registerGithubIpcHandlers(mockRuntime)
     const setHandler = electronMock.ipcMain._handlers.get("github-set-token")!
     const clearHandler = electronMock.ipcMain._handlers.get("github-clear-token")!
     const getHandler = electronMock.ipcMain._handlers.get("github-get-token")!
@@ -703,15 +743,15 @@ describe("IPC handler registration (via mock factory)", () => {
   })
 
   test("GITHUB_API_PROXY returns 401 when not authenticated", async () => {
-    registerGithubIpcHandlers()
+    registerGithubIpcHandlers(mockRuntime)
     const handler = electronMock.ipcMain._handlers.get("github-api-proxy")!
 
-    const result = await handler({}, "https://api.github.com/user")
+    const result = await handler(makeEvent(), "https://api.github.com/user")
     expect(result).toEqual({ status: 401, body: "Not authenticated" })
   })
 
   test("GITHUB_API_PROXY rejects disallowed hostnames", async () => {
-    registerGithubIpcHandlers()
+    registerGithubIpcHandlers(mockRuntime)
     const setHandler = electronMock.ipcMain._handlers.get("github-set-token")!
     const proxyHandler = electronMock.ipcMain._handlers.get("github-api-proxy")!
 
@@ -728,7 +768,7 @@ describe("IPC handler registration (via mock factory)", () => {
   })
 
   test("GITHUB_API_PROXY proxies authenticated requests to GitHub", async () => {
-    registerGithubIpcHandlers()
+    registerGithubIpcHandlers(mockRuntime)
     const setHandler = electronMock.ipcMain._handlers.get("github-set-token")!
     const proxyHandler = electronMock.ipcMain._handlers.get("github-api-proxy")!
 

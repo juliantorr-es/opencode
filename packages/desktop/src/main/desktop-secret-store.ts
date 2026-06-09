@@ -1,9 +1,12 @@
 import { safeStorage, app } from "electron"
-import { registerIpcHandler } from "./ipc-registration"
 import { existsSync, readFileSync, writeFileSync, mkdirSync } from "node:fs"
 import { join } from "node:path"
 import { IPC } from "./ipc-channels"
-import { withIpcResult } from "./ipc-contract"
+import { Effect } from "effect"
+import { registerIpcEffectHandler } from "./ipc-adapter"
+import type { DesktopRuntime } from "./effect/desktop-runtime"
+import * as S from "../ipc/schema-compat"
+import { mapSecretError } from "./errors/secrets-errors"
 
 export interface SecretRef {
   namespace: "provider" | "github" | "plugin" | "coordination" | "team"
@@ -126,19 +129,93 @@ export async function listSecretMetadata(namespace?: string): Promise<SecretMeta
   return results
 }
 
-export function registerSecretIpcHandlers() {
-  registerIpcHandler(IPC.handle.SECRETS_SET, async (_event, ref: SecretRef, value: string) =>
-    withIpcResult("secrets.set", () => setSecret(ref, value)))
-  registerIpcHandler(IPC.handle.SECRETS_GET, async (_event, ref: SecretRef) =>
-    withIpcResult("secrets.get", () => getSecret(ref)))
-  registerIpcHandler(IPC.handle.SECRETS_DELETE, async (_event, ref: SecretRef) =>
-    withIpcResult("secrets.delete", () => deleteSecret(ref)))
-  registerIpcHandler(IPC.handle.SECRETS_LIST, async (_event, namespace?: string) =>
-    withIpcResult("secrets.list", () => listSecretMetadata(namespace)))
-  registerIpcHandler(IPC.handle.SECRETS_STATUS, async () =>
-    withIpcResult("secrets.status", async () => {
-      const index = loadIndex(app.getPath("userData"))
-      const available = safeStorage.isEncryptionAvailable()
-      return { available, encrypted: available, secretCount: Object.keys(index).length }
-    }))
+export function registerSecretIpcHandlers(runtime: DesktopRuntime) {
+  // ── SECRETS_SET ──
+  registerIpcEffectHandler(runtime, {
+    channel: IPC.handle.SECRETS_SET,
+    params: S.Tuple([S.Struct({
+      namespace: S.Str,
+      accountID: S.Optional(S.Str),
+      key: S.Str,
+    }), S.Str]),
+    success: S.UndefinedConst,
+    timeout: 10_000,
+    senderPolicy: "strict",
+    mapError: mapSecretError,
+  }, (params: unknown) => Effect.tryPromise(async () => {
+    const [ref, value] = params as [any, string]
+    if (!value || value.length === 0) throw new Error("Secret value must be non-empty")
+    await setSecret(ref, value)
+  }))
+
+  // ── SECRETS_GET ──
+  registerIpcEffectHandler(runtime, {
+    channel: IPC.handle.SECRETS_GET,
+    params: S.Tuple([S.Struct({
+      namespace: S.Str,
+      accountID: S.Optional(S.Str),
+      key: S.Str,
+    })]),
+    success: S.Nullable(S.Str),
+    timeout: 10_000,
+    senderPolicy: "strict",
+    mapError: mapSecretError,
+  }, (params: unknown) => Effect.tryPromise(async () => {
+    const [ref] = params as [any]
+    return getSecret(ref)
+  }))
+
+  // ── SECRETS_DELETE ──
+  registerIpcEffectHandler(runtime, {
+    channel: IPC.handle.SECRETS_DELETE,
+    params: S.Tuple([S.Struct({
+      namespace: S.Str,
+      accountID: S.Optional(S.Str),
+      key: S.Str,
+    })]),
+    success: S.UndefinedConst,
+    timeout: 10_000,
+    senderPolicy: "strict",
+    mapError: mapSecretError,
+  }, (params: unknown) => Effect.tryPromise(async () => {
+    const [ref] = params as [any]
+    await deleteSecret(ref)
+  }))
+
+  // ── SECRETS_LIST ──
+  registerIpcEffectHandler(runtime, {
+    channel: IPC.handle.SECRETS_LIST,
+    params: S.Tuple([S.Optional(S.Str)]),
+    success: S.Arr(S.Struct({
+      namespace: S.Str,
+      accountID: S.Optional(S.Str),
+      key: S.Str,
+      createdAt: S.Num,
+      updatedAt: S.Num,
+    })),
+    timeout: 10_000,
+    senderPolicy: "strict",
+    mapError: mapSecretError,
+  }, (params: unknown) => Effect.tryPromise(async () => {
+    const [namespace] = params as [string | undefined]
+    return listSecretMetadata(namespace)
+  }))
+
+  // ── SECRETS_STATUS ──
+  registerIpcEffectHandler(runtime, {
+    channel: IPC.handle.SECRETS_STATUS,
+    params: S.Tuple([]),
+    success: S.Struct({
+      available: S.Bool,
+      encrypted: S.Bool,
+      secretCount: S.Num,
+    }),
+    timeout: 10_000,
+    senderPolicy: "strict",
+    mapError: mapSecretError,
+  }, () => Effect.tryPromise(async () => {
+    const index = loadIndex(app.getPath("userData"))
+    const available = safeStorage.isEncryptionAvailable()
+    return { available, encrypted: available, secretCount: Object.keys(index).length }
+  }))
 }

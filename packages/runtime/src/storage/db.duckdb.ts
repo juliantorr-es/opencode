@@ -33,10 +33,10 @@ export class DuckDBError extends Error {
 // ── Service tags ──────────────────────────────────────────
 
 /** Read-only DuckDB client — user-facing queries with -readonly and firewall. */
-export class Service extends Context.Service<Service, DuckDBRawClient>()("@opencode/DuckDB") {}
+export class Service extends Context.Service<Service, DuckDBRawClient>()("@tribunus/DuckDB") {}
 
 /** Write-capable DuckDB client — internal DDL without -readonly. */
-export class WriteService extends Context.Service<WriteService, DuckDBRawClient>()("@opencode/DuckDBWrite") {}
+export class WriteService extends Context.Service<WriteService, DuckDBRawClient>()("@tribunus/DuckDBWrite") {}
 
 // ── Pool configuration ─────────────────────────────────────
 

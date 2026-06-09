@@ -1,35 +1,38 @@
 import { contextBridge, ipcRenderer } from "electron"
-import type { ElectronAPI, InitStep, SafeModeAction, StorageMigrationProgress } from "./types"
+import type { ElectronAPI, InitStep, SafeModeAction, ServerReadyData, StorageMigrationProgress } from "./types"
 import { IPC } from "../main/ipc-channels"
 import { typedInvoke, typedSend, pluginSend, pluginInvoke } from "../main/ipc-contract"
+import { typedInvoke, typedSend, pluginSend, pluginInvoke } from "../main/ipc-contract"
+import { typedInvokeV2 } from "./ipc-client"
+
 
 const api: ElectronAPI = {
   // --- Simple invoke methods ---
-  killSidecar: () => typedInvoke(IPC.handle.KILL_SIDECAR),
-  getWindowConfig: () => typedInvoke(IPC.handle.GET_WINDOW_CONFIG),
-  consumeInitialDeepLinks: () => typedInvoke(IPC.handle.CONSUME_INITIAL_DEEP_LINKS),
-  getDefaultServerUrl: () => typedInvoke(IPC.handle.GET_DEFAULT_SERVER_URL),
-  setDefaultServerUrl: (url) => typedInvoke(IPC.handle.SET_DEFAULT_SERVER_URL, url),
-  getWslConfig: () => typedInvoke(IPC.handle.GET_WSL_CONFIG),
-  setWslConfig: (config) => typedInvoke(IPC.handle.SET_WSL_CONFIG, config),
-  getDisplayBackend: () => typedInvoke(IPC.handle.GET_DISPLAY_BACKEND),
-  setDisplayBackend: (backend) => typedInvoke(IPC.handle.SET_DISPLAY_BACKEND, backend),
-  parseMarkdownCommand: (markdown) => typedInvoke(IPC.handle.PARSE_MARKDOWN, markdown),
-  checkAppExists: (appName) => typedInvoke(IPC.handle.CHECK_APP_EXISTS, appName),
-  wslPath: (path, mode) => typedInvoke(IPC.handle.WSL_PATH, path, mode),
-  resolveAppPath: (appName) => typedInvoke(IPC.handle.RESOLVE_APP_PATH, appName),
-  storeGet: (name, key) => typedInvoke(IPC.handle.STORE_GET, name, key),
-  storeSet: (name, key, value) => typedInvoke(IPC.handle.STORE_SET, name, key, value),
-  storeDelete: (name, key) => typedInvoke(IPC.handle.STORE_DELETE, name, key),
-  storeClear: (name) => typedInvoke(IPC.handle.STORE_CLEAR, name),
-  storeKeys: (name) => typedInvoke(IPC.handle.STORE_KEYS, name),
-  storeLength: (name) => typedInvoke(IPC.handle.STORE_LENGTH, name),
+  killSidecar: () => typedInvokeV2(IPC.handle.KILL_SIDECAR, null),
+  getWindowConfig: () => typedInvokeV2(IPC.handle.GET_WINDOW_CONFIG, null),
+  consumeInitialDeepLinks: () => typedInvokeV2(IPC.handle.CONSUME_INITIAL_DEEP_LINKS, null),
+  getDefaultServerUrl: () => typedInvokeV2(IPC.handle.GET_DEFAULT_SERVER_URL, null),
+  setDefaultServerUrl: (url) => typedInvokeV2(IPC.handle.SET_DEFAULT_SERVER_URL, null, url),
+  getWslConfig: () => typedInvokeV2(IPC.handle.GET_WSL_CONFIG, null),
+  setWslConfig: (config) => typedInvokeV2(IPC.handle.SET_WSL_CONFIG, null, config),
+  getDisplayBackend: () => typedInvokeV2(IPC.handle.GET_DISPLAY_BACKEND, null),
+  setDisplayBackend: (backend) => typedInvokeV2(IPC.handle.SET_DISPLAY_BACKEND, null, backend),
+  parseMarkdownCommand: (markdown) => typedInvokeV2(IPC.handle.PARSE_MARKDOWN, null, markdown),
+  checkAppExists: (appName) => typedInvokeV2(IPC.handle.CHECK_APP_EXISTS, null, appName),
+  wslPath: (path, mode) => typedInvokeV2(IPC.handle.WSL_PATH, null, path, mode),
+  resolveAppPath: (appName) => typedInvokeV2(IPC.handle.RESOLVE_APP_PATH, null, appName),
+  storeGet: (name, key) => typedInvokeV2(IPC.handle.STORE_GET, null, name, key),
+  storeSet: (name, key, value) => typedInvokeV2(IPC.handle.STORE_SET, null, name, key, value),
+  storeDelete: (name, key) => typedInvokeV2(IPC.handle.STORE_DELETE, null, name, key),
+  storeClear: (name) => typedInvokeV2(IPC.handle.STORE_CLEAR, null, name),
+  storeKeys: (name) => typedInvokeV2(IPC.handle.STORE_KEYS, null, name),
+  storeLength: (name) => typedInvokeV2(IPC.handle.STORE_LENGTH, null, name),
   getWindowCount: () => typedInvoke(IPC.handle.GET_WINDOW_COUNT),
-  openDirectoryPicker: (opts) => typedInvoke(IPC.handle.OPEN_DIRECTORY_PICKER, opts),
-  openFilePicker: (opts) => typedInvoke(IPC.handle.OPEN_FILE_PICKER, opts),
-  saveFilePicker: (opts) => typedInvoke(IPC.handle.SAVE_FILE_PICKER, opts),
-  openPath: (path, app) => typedInvoke(IPC.handle.OPEN_PATH, path, app),
-  readClipboardImage: () => typedInvoke(IPC.handle.READ_CLIPBOARD_IMAGE),
+  openDirectoryPicker: (opts) => typedInvokeV2(IPC.handle.OPEN_DIRECTORY_PICKER, null, opts),
+  openFilePicker: (opts) => typedInvokeV2(IPC.handle.OPEN_FILE_PICKER, null, opts),
+  saveFilePicker: (opts) => typedInvokeV2(IPC.handle.SAVE_FILE_PICKER, null, opts),
+  openPath: (path, app) => typedInvokeV2(IPC.handle.OPEN_PATH, null, path, app),
+  readClipboardImage: () => typedInvokeV2(IPC.handle.READ_CLIPBOARD_IMAGE, null),
   getWindowFocused: () => typedInvoke(IPC.handle.GET_WINDOW_FOCUSED),
   setWindowFocus: () => typedInvoke(IPC.handle.SET_WINDOW_FOCUS),
   showWindow: () => typedInvoke(IPC.handle.SHOW_WINDOW),
@@ -39,12 +42,12 @@ const api: ElectronAPI = {
   setPinchZoomEnabled: (enabled) => typedInvoke(IPC.handle.SET_PINCH_ZOOM_ENABLED, enabled),
   setTitlebar: (theme) => typedInvoke(IPC.handle.SET_TITLEBAR, theme),
   runDesktopMenuAction: (action) => typedInvoke(IPC.handle.RUN_DESKTOP_MENU_ACTION, action),
-  runUpdater: (alertOnFail) => typedInvoke(IPC.handle.RUN_UPDATER, alertOnFail),
-  checkUpdate: () => typedInvoke(IPC.handle.CHECK_UPDATE),
-  installUpdate: () => typedInvoke(IPC.handle.INSTALL_UPDATE),
-  setBackgroundColor: (color) => typedInvoke(IPC.handle.SET_BACKGROUND_COLOR, color),
-  exportDebugLogs: () => typedInvoke(IPC.handle.EXPORT_DEBUG_LOGS),
-  recordFatalRendererError: (error) => typedInvoke(IPC.handle.RECORD_FATAL_RENDERER_ERROR, error),
+  runUpdater: (alertOnFail) => typedInvokeV2(IPC.handle.RUN_UPDATER, null, alertOnFail),
+  checkUpdate: () => typedInvokeV2(IPC.handle.CHECK_UPDATE, null),
+  installUpdate: () => typedInvokeV2(IPC.handle.INSTALL_UPDATE, null),
+  setBackgroundColor: (color) => typedInvokeV2(IPC.handle.SET_BACKGROUND_COLOR, null, color),
+  exportDebugLogs: () => typedInvokeV2(IPC.handle.EXPORT_DEBUG_LOGS, null),
+  recordFatalRendererError: (error) => typedInvokeV2(IPC.handle.RECORD_FATAL_RENDERER_ERROR, null, error),
   getDesktopPluginConfig: () => typedInvoke(IPC.handle.GET_DESKTOP_PLUGIN_CONFIG),
   setDesktopPluginConfig: (configs) => typedInvoke(IPC.handle.SET_DESKTOP_PLUGIN_CONFIG, configs),
   getCustomAgents: () => typedInvoke(IPC.handle.GET_DESKTOP_CUSTOM_AGENTS),
@@ -52,12 +55,12 @@ const api: ElectronAPI = {
   deleteCustomAgent: (id) => typedInvoke(IPC.handle.DELETE_DESKTOP_CUSTOM_AGENT, id),
   getMcpServers: () => typedInvoke(IPC.handle.GET_DESKTOP_MCP_SERVERS),
   setMcpServers: (servers) => typedInvoke(IPC.handle.SET_DESKTOP_MCP_SERVERS, servers),
-  githubStartOAuth: () => typedInvoke(IPC.handle.GITHUB_OAUTH_START),
-  githubOAuthCallback: (code, state) => typedInvoke(IPC.handle.GITHUB_OAUTH_CALLBACK, code, state),
-  githubGetToken: () => typedInvoke(IPC.handle.GITHUB_GET_TOKEN),
-  githubSetToken: (token) => typedInvoke(IPC.handle.GITHUB_SET_TOKEN, token),
-  githubClearToken: () => typedInvoke(IPC.handle.GITHUB_CLEAR_TOKEN),
-  githubApiProxy: (url, options) => typedInvoke(IPC.handle.GITHUB_API_PROXY, url, options),
+  githubStartOAuth: () => typedInvokeV2(IPC.handle.GITHUB_OAUTH_START, null),
+  githubOAuthCallback: (code, state) => typedInvokeV2(IPC.handle.GITHUB_OAUTH_CALLBACK, null, code, state),
+  githubGetToken: () => typedInvokeV2(IPC.handle.GITHUB_GET_TOKEN, null),
+  githubSetToken: (token) => typedInvokeV2(IPC.handle.GITHUB_SET_TOKEN, null, token),
+  githubClearToken: () => typedInvokeV2(IPC.handle.GITHUB_CLEAR_TOKEN, null),
+  githubApiProxy: (url, options) => typedInvokeV2(IPC.handle.GITHUB_API_PROXY, null, url, options),
   sessionExportData: (data, opts) => typedInvoke(IPC.handle.SESSION_EXPORT_DATA, data, opts),
   sessionImportFile: (opts) => typedInvoke(IPC.handle.SESSION_IMPORT_FILE, opts),
   setLocalePreference: (locale) => typedInvoke(IPC.handle.SET_LOCALE_PREFERENCE, locale),
@@ -65,9 +68,9 @@ const api: ElectronAPI = {
 
   getGitStatus: () => typedInvoke(IPC.handle.GET_GIT_STATUS),
   getCapabilities: () => typedInvoke(IPC.handle.GET_CAPABILITIES),
-  getSafeModeDiagnostics: () => typedInvoke(IPC.handle.GET_SAFE_MODE_DIAGNOSTICS),
-  safeModeAction: (action: SafeModeAction) => typedInvoke(IPC.handle.SAFE_MODE_ACTION, action),
-  openProject: (directory) => typedInvoke(IPC.handle.OPEN_PROJECT, directory),
+  getSafeModeDiagnostics: () => typedInvokeV2(IPC.handle.GET_SAFE_MODE_DIAGNOSTICS, null),
+  safeModeAction: (action: SafeModeAction) => typedInvokeV2(IPC.handle.SAFE_MODE_ACTION, null, action),
+  openProject: (directory) => typedInvokeV2(IPC.handle.OPEN_PROJECT, null, directory),
 
   // --- Send methods (fire-and-forget) ---
   openLink: (url) => typedSend(IPC.send.OPEN_LINK, url),
@@ -79,7 +82,7 @@ const api: ElectronAPI = {
   awaitInitialization: (onStep) => {
     const handler = (_: unknown, step: InitStep) => onStep(step)
     ipcRenderer.on(IPC.push.INIT_STEP, handler)
-    return typedInvoke(IPC.handle.AWAIT_INITIALIZATION).finally(() => {
+    return (typedInvokeV2(IPC.handle.AWAIT_INITIALIZATION, null) as Promise<ServerReadyData>).finally(() => {
       ipcRenderer.removeListener(IPC.push.INIT_STEP, handler)
     })
   },

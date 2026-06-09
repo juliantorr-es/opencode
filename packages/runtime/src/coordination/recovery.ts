@@ -119,7 +119,7 @@ export interface RebuildReceipt {
  * - Handles crash recovery at every critical boundary
  */
 export class CoordinationRecovery extends Context.Service<CoordinationRecovery>()(
-  "@opencode/CoordinationRecovery"
+  "@tribunus/CoordinationRecovery"
 ) {
   constructor(
     private readonly db: DatabaseAdapter.Service,

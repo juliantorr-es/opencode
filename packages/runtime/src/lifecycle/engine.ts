@@ -23,7 +23,7 @@ export interface Interface {
   }) => Effect.Effect<PhaseResult[]>
 }
 
-export class Service extends Context.Service<Service, Interface>()("@opencode/LifecycleEngine") {}
+export class Service extends Context.Service<Service, Interface>()("@tribunus/LifecycleEngine") {}
 
 export const layer = Context.empty
 

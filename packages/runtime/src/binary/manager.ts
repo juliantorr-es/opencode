@@ -117,7 +117,7 @@ export interface Interface {
   readonly download: (name: BinaryName) => Effect.Effect<string>
 }
 
-export class Service extends Context.Service<Service, Interface>()("@opencode/BinaryManager") {}
+export class Service extends Context.Service<Service, Interface>()("@tribunus/BinaryManager") {}
 
 // ─── Implementation ───────────────────────────────────────────────────────────
 

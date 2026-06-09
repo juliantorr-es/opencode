@@ -46,7 +46,7 @@ export interface Interface {
   ) => Effect.Effect<{ filepath: string; content: string }[], AppFileSystem.Error>
 }
 
-export class Service extends Context.Service<Service, Interface>()("@opencode/Instruction") {}
+export class Service extends Context.Service<Service, Interface>()("@tribunus/Instruction") {}
 
 export const layer: Layer.Layer<
   Service,

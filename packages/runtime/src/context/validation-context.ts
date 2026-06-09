@@ -23,7 +23,7 @@ export interface Interface {
 
 // ── Service ──────────────────────────────────────────────
 
-export class Service extends Context.Service<Service, Interface>()("@opencode/ValidationContext") {}
+export class Service extends Context.Service<Service, Interface>()("@tribunus/ValidationContext") {}
 
 export const use = serviceUse(Service)
 

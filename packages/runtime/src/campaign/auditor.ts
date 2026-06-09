@@ -365,7 +365,7 @@ export interface Interface {
   readonly getAuditReport: (campaignId: string) => Effect.Effect<AuditReport | null>
 }
 
-export class Service extends Context.Service<Service, Interface>()("@opencode/CampaignAuditor") {}
+export class Service extends Context.Service<Service, Interface>()("@tribunus/CampaignAuditor") {}
 
 // ── Build lane audit data from campaign lanes + binders ────
 

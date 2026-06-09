@@ -2,7 +2,7 @@ import windowState from "electron-window-state"
 import { resolveThemeVariant } from "@tribunus/ui/theme/resolve"
 import type { DesktopTheme } from "@tribunus/ui/theme/types"
 import oc2ThemeJson from "../../../ui/src/theme/themes/oc-2.json"
-import { app, BrowserWindow, dialog, net, nativeImage, nativeTheme, protocol } from "electron"
+import { app, BrowserWindow, dialog, net, nativeImage, nativeTheme, protocol, shell } from "electron"
 import { dirname, isAbsolute, join, relative, resolve } from "node:path"
 import { existsSync } from "node:fs"
 import { fileURLToPath, pathToFileURL } from "node:url"
@@ -15,7 +15,9 @@ import { createUnresponsiveSampler } from "./unresponsive"
 const root = dirname(fileURLToPath(import.meta.url))
 // Use app.getAppPath() instead of import.meta.url so renderer root remains
 // stable even if this module is code-split into out/main/chunks.
-const rendererRoot = join(app.getAppPath(), "out", "renderer")
+// app.getAppPath() returns out/main/ in production builds.
+// Renderer assets are at out/renderer/ (sibling, not child).
+const rendererRoot = join(dirname(app.getAppPath()), "renderer")
 const rendererProtocol = "oc"
 const rendererHost = "renderer"
 const clipboardWritePermission = "clipboard-sanitized-write"
@@ -29,8 +31,8 @@ const oc2Background = {
 const documentPolicyHeader = "Document-Policy"
 const jsCallStacksDocumentPolicy = "include-js-call-stacks-in-crash-reports"
 const cspHeader = "Content-Security-Policy"
-const cspDev = "default-src 'self' oc:; script-src 'self' oc: 'unsafe-eval' 'wasm-unsafe-eval'; style-src 'self' oc: 'unsafe-inline'; img-src 'self' oc: data: https:; font-src 'self' oc: data:; media-src 'self' oc: data:; connect-src * data: ws://localhost:* wss://localhost:*"
-const cspProd = "default-src 'self' oc:; script-src 'self' oc:; style-src 'self' oc: 'unsafe-inline'; img-src 'self' oc: data: https:; font-src 'self' oc: data:; media-src 'self' oc: data:; connect-src oc: data: ws://localhost:* wss://localhost:*"
+const cspDev = "default-src 'self' oc:; script-src 'self' oc: 'unsafe-eval' 'wasm-unsafe-eval'; style-src 'self' oc: 'unsafe-inline'; img-src 'self' oc: data: https:; font-src 'self' oc: data:; media-src 'self' oc: data:; connect-src * data: ws://localhost:* wss://localhost:*; base-uri 'self'; form-action 'none'; frame-ancestors 'none'; object-src 'none'"
+const cspProd = "default-src 'self' oc:; script-src 'self' oc:; style-src 'self' oc: 'unsafe-inline'; img-src 'self' oc: data: https:; font-src 'self' oc: data:; media-src 'self' oc: data:; connect-src oc: data: ws://localhost:* wss://localhost:*; base-uri 'self'; form-action 'none'; frame-ancestors 'none'; object-src 'none'"
 
 protocol.registerSchemesAsPrivileged([
   {
@@ -163,6 +165,42 @@ export function createMainWindow() {
 
   allowRendererPermissions(win)
   wireWindowRecovery(win, "main")
+
+  // Navigation restrictions: deny in-app navigation to external URLs.
+  // Only https is permitted for external links (http in dev).
+  // Parse URLs properly — string-prefix checks are foolable.
+  const ALLOWED_EXTERNAL_SCHEMES = new Set<string>(["https:"])
+  if (!app.isPackaged) ALLOWED_EXTERNAL_SCHEMES.add("http:")
+  const DEV_ORIGIN = "http://localhost:5173"
+
+  function safeOpenExternal(raw: string): void {
+    let parsed: URL
+    try { parsed = new URL(raw) } catch { return }
+    if (!ALLOWED_EXTERNAL_SCHEMES.has(parsed.protocol)) return
+    // Reject embedded credentials and control characters
+    if (parsed.username || parsed.password) return
+    if (/[\x00-\x1f\x7f]/.test(raw)) return
+    void shell.openExternal(parsed.href)
+  }
+
+  win.webContents.setWindowOpenHandler(({ url }) => {
+    // oc: is internal custom protocol — allow through. Only check external URLs.
+    if (!url.startsWith("oc://")) safeOpenExternal(url)
+    return { action: "deny" }
+  })
+
+  win.webContents.on("will-navigate", (event, rawUrl) => {
+    // Internal navigation: oc: is a custom protocol — URL constructor can't parse it
+    if (rawUrl.startsWith("oc://")) return
+    let parsed: URL
+    try { parsed = new URL(rawUrl) } catch {
+      event.preventDefault()
+      return
+    }
+    if (!app.isPackaged && parsed.origin === DEV_ORIGIN) return
+    event.preventDefault()
+    safeOpenExternal(rawUrl)
+  })
 
   win.webContents.session.webRequest.onBeforeSendHeaders((details, callback) => {
     const { requestHeaders } = details

@@ -1043,7 +1043,7 @@ interface State {
   varsLoaders: Record<string, CustomVarsLoader>
 }
 
-export class Service extends Context.Service<Service, Interface>()("@opencode/Provider") {}
+export class Service extends Context.Service<Service, Interface>()("@tribunus/Provider") {}
 
 export const use = serviceUse(Service)
 

@@ -56,7 +56,7 @@ export interface Interface {
   readonly allGatesPass: (context: PushGateContext) => Effect.Effect<boolean>
 }
 
-export class Service extends Context.Service<Service, Interface>()("@opencode/PushGateService") {}
+export class Service extends Context.Service<Service, Interface>()("@tribunus/PushGateService") {}
 
 // ── Gate Predicate Implementations ──────────────────────────
 

@@ -42,7 +42,7 @@ export interface Interface {
   ) => Effect.Effect<ComparisonResult, never, never>
 }
 
-export class Service extends Context.Service<Service, Interface>()("@opencode/ReviewComparison") {}
+export class Service extends Context.Service<Service, Interface>()("@tribunus/ReviewComparison") {}
 
 // ── Helpers ─────────────────────────────────────────────────────────────
 

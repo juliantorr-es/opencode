@@ -35,7 +35,7 @@ export interface Interface {
   }) => Effect.Effect<readonly PullRequest[], Error>
 }
 
-export class Service extends Context.Service<Service, Interface>()("@opencode/GitHubService") {}
+export class Service extends Context.Service<Service, Interface>()("@tribunus/GitHubService") {}
 
 function githubApiUrl(path: string): string {
   return `https://api.github.com${path}`

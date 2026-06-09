@@ -1,7 +1,7 @@
 import { Config, Context, Layer, Option, Redacted } from "effect"
 import { ConfigService } from "@/effect/config-service"
 
-export class Service extends ConfigService.Service<Service>()("@opencode/DatabaseConfig", {
+export class Service extends ConfigService.Service<Service>()("@tribunus/DatabaseConfig", {
   url: Config.redacted("OPENCODE_DATABASE_URL").pipe(Config.option),
   ssl: Config.boolean("OPENCODE_DATABASE_SSL").pipe(Config.withDefault(true)),
   poolSize: Config.number("OPENCODE_DATABASE_POOL_SIZE").pipe(Config.withDefault(10)),

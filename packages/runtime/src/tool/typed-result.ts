@@ -603,7 +603,7 @@ export interface Interface {
   readonly classifyError: (error: unknown) => { errorKind: string; recoverable: boolean; summary: string }
 }
 
-export class Service extends Context.Service<Service, Interface>()("@opencode/TypedResult") {}
+export class Service extends Context.Service<Service, Interface>()("@tribunus/TypedResult") {}
 
 export const layer: Layer.Layer<Service> = Layer.succeed(
   Service,

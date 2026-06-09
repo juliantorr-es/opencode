@@ -127,7 +127,7 @@ export interface OrchestratorInterface {
 }
 
 export class OrchestratorService extends Context.Service<OrchestratorService, OrchestratorInterface>()(
-  "@opencode/CampaignOrchestrator",
+  "@tribunus/CampaignOrchestrator",
 ) {}
 
 // ── Pure Helpers ──────────────────────────────────────────

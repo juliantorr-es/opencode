@@ -78,7 +78,7 @@ export interface Interface {
 
 // ─── Service Tag ────────────────────────────────────────────────────────
 
-export class Service extends Context.Service<Service, Interface>()("@opencode/FlightRecorder") {}
+export class Service extends Context.Service<Service, Interface>()("@tribunus/FlightRecorder") {}
 
 export const use = serviceUse(Service)
 

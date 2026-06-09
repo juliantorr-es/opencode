@@ -14,7 +14,7 @@ interface State {
   readonly allowedTools: ReadonlySet<string>
 }
 
-export class Service extends Context.Service<Service, Interface>()("@opencode/PhaseGate") {}
+export class Service extends Context.Service<Service, Interface>()("@tribunus/PhaseGate") {}
 
 const make = Effect.gen(function* () {
   const state = yield* Ref.make<State | undefined>(undefined)

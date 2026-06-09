@@ -39,7 +39,7 @@ export interface Interface {
   latestEntry(): Effect.Effect<TraceEntry | undefined>
 }
 
-export class Service extends Context.Service<Service, Interface>()("@opencode/InstanceTrace") {}
+export class Service extends Context.Service<Service, Interface>()("@tribunus/InstanceTrace") {}
 
 const ensureWrite = (path: string, entry: TraceEntry): Effect.Effect<void, Error> =>
   Effect.promise(() =>

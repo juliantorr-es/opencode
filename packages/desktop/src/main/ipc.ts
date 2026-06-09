@@ -14,26 +14,28 @@ import { registerPluginTransportIpcHandlers } from "./plugin-transport-ipc"
 import { registerCapabilitiesIpcHandlers } from "./ipc-capabilities"
 import { registerGitIpcHandlers } from "./ipc-git"
 import { registerSecretIpcHandlers } from "./desktop-secret-store"
+import type { DesktopRuntime } from "./effect/desktop-runtime"
 import { registerNotificationIpcHandlers } from "./desktop-notification-service"
 import { validateRegisteredIpcHandlers } from "./ipc-registration"
+import { checkSender } from "./ipc-sender"
 let registered = false
 
-export function registerIpcHandlers(deps: InitDeps) {
+export function registerIpcHandlers(deps: InitDeps, runtime: DesktopRuntime) {
   if (registered) return
   registered = true
 
-  registerInitIpcHandlers(deps)
+  registerInitIpcHandlers(deps, runtime)
   registerConfigIpcHandlers()
-  registerStoreIpcHandlers()
-  registerFsIpcHandlers()
+  registerStoreIpcHandlers(runtime)
+  registerFsIpcHandlers(runtime)
   registerSessionIpcHandlers()
   registerWindowIpcHandlers()
   registerLocaleIpcHandlers()
-  registerGithubIpcHandlers()
+  registerGithubIpcHandlers(runtime)
   registerPluginTransportIpcHandlers()
   registerCapabilitiesIpcHandlers()
   registerGitIpcHandlers()
-  registerSecretIpcHandlers()
+  registerSecretIpcHandlers(runtime)
   registerNotificationIpcHandlers()
 
   const issues = validateRegisteredIpcHandlers()
@@ -44,8 +46,12 @@ export function registerIpcHandlers(deps: InitDeps) {
 
   // Direct relaunch — renderer sends this to trigger app restart
   ipcMain.on(IPC.send.RELAUNCH, (event) => {
-    if (!event.sender) {
-      console.error("[ipc] RELAUNCH: blocked — no sender")
+    const senderCheck = checkSender(event.sender, "strict", {
+      url: event.sender?.getURL() ?? "",
+      isMainFrame: event.senderFrame === event.sender?.mainFrame,
+    })
+    if (!senderCheck.allowed) {
+      console.error("[ipc] RELAUNCH: blocked:", senderCheck.reason)
       return
     }
     app.relaunch()

@@ -14,7 +14,7 @@ export interface Interface {
   readonly remove: (id: string) => Effect.Effect<void>
 }
 
-export class Service extends Context.Service<Service, Interface>()("@opencode/InstanceHealthStore") {}
+export class Service extends Context.Service<Service, Interface>()("@tribunus/InstanceHealthStore") {}
 
 export const layer: Layer.Layer<Service> = Layer.effect(
   Service,

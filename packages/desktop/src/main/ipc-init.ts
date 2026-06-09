@@ -1,10 +1,12 @@
 import { app, ipcMain } from "electron"
-import type { IpcMainInvokeEvent } from "electron"
-import { registerIpcHandler } from "./ipc-registration"
+import { Effect } from "effect"
+import { registerIpcEffectHandler } from "./ipc-adapter"
 import * as path from "node:path"
 import { existsSync } from "node:fs"
 import { IPC } from "./ipc-channels"
-import { withIpcResult } from "./ipc-contract"
+import * as S from "../ipc/schema-compat"
+import type { DesktopRuntime } from "./effect/desktop-runtime"
+import { mapInitError } from "./errors/init-errors"
 import type {
   InitStep,
   FatalRendererError,
@@ -47,94 +49,260 @@ export type Deps = {
  * These are thin wrappers — the actual logic lives in index.ts
  * and its dependencies.
  */
-export function registerInitIpcHandlers(deps: Deps) {
-  registerIpcHandler(IPC.handle.KILL_SIDECAR, () => {
-    return withIpcResult("init.killSidecar", async () => deps.killSidecar())
-  })
+export function registerInitIpcHandlers(deps: Deps, runtime: DesktopRuntime) {
+  registerIpcEffectHandler(runtime, {
+    channel: IPC.handle.KILL_SIDECAR,
+    params: S.Tuple([]),
+    success: S.UndefinedConst,
+    timeout: 10_000,
+    senderPolicy: "strict",
+    mapError: mapInitError,
+  }, () => Effect.tryPromise(async () => { return await (deps.killSidecar() as Promise<any>) }))
 
-  registerIpcHandler(IPC.handle.AWAIT_INITIALIZATION, (event: IpcMainInvokeEvent) => {
-    return withIpcResult("init.awaitInitialization", async () => {
-      const send = (step: InitStep) => event.sender.send(IPC.push.INIT_STEP, step)
-      return deps.awaitInitialization(send)
-    })
-  })
-  registerIpcHandler(IPC.handle.GET_WINDOW_CONFIG, () => {
-    return withIpcResult("init.getWindowConfig", async () => deps.getWindowConfig())
-  })
-  registerIpcHandler(IPC.handle.CONSUME_INITIAL_DEEP_LINKS, () => {
-    return withIpcResult("init.consumeInitialDeepLinks", async () => deps.consumeInitialDeepLinks())
-  })
-  registerIpcHandler(IPC.handle.GET_DEFAULT_SERVER_URL, () => {
-    return withIpcResult("init.getDefaultServerUrl", async () => deps.getDefaultServerUrl())
-  })
-  registerIpcHandler(IPC.handle.SET_DEFAULT_SERVER_URL, (_event: IpcMainInvokeEvent, url: string | null) => {
-    return withIpcResult("init.setDefaultServerUrl", async () => deps.setDefaultServerUrl(url))
-  })
-  registerIpcHandler(IPC.handle.GET_WSL_CONFIG, () => {
-    return withIpcResult("init.getWslConfig", async () => deps.getWslConfig())
-  })
-  registerIpcHandler(IPC.handle.SET_WSL_CONFIG, (_event: IpcMainInvokeEvent, config: WslConfig) => {
-    return withIpcResult("init.setWslConfig", async () => deps.setWslConfig(config))
-  })
-  registerIpcHandler(IPC.handle.GET_DISPLAY_BACKEND, () => {
-    return withIpcResult("init.getDisplayBackend", async () => deps.getDisplayBackend())
-  })
-  registerIpcHandler(IPC.handle.SET_DISPLAY_BACKEND, (_event: IpcMainInvokeEvent, backend: string | null) => {
-    return withIpcResult("init.setDisplayBackend", async () => deps.setDisplayBackend(backend))
-  })
-  registerIpcHandler(IPC.handle.PARSE_MARKDOWN, (_event: IpcMainInvokeEvent, markdown: string) => {
-    return withIpcResult("init.parseMarkdown", async () => deps.parseMarkdown(markdown))
-  })
-  registerIpcHandler(IPC.handle.CHECK_APP_EXISTS, (_event: IpcMainInvokeEvent, appName: string) => {
-    return withIpcResult("init.checkAppExists", async () => deps.checkAppExists(appName))
-  })
-  registerIpcHandler(IPC.handle.WSL_PATH, (_event: IpcMainInvokeEvent, path: string, mode: "windows" | "linux" | null) => {
-    return withIpcResult("init.wslPath", async () => deps.wslPath(path, mode))
-  })
-  registerIpcHandler(IPC.handle.RESOLVE_APP_PATH, (_event: IpcMainInvokeEvent, appName: string) => {
-    return withIpcResult("init.resolveAppPath", async () => deps.resolveAppPath(appName))
-  })
+  registerIpcEffectHandler(runtime, {
+    channel: IPC.handle.AWAIT_INITIALIZATION,
+    params: S.Tuple([]),
+    success: S.Unknown,
+    timeout: 60_000,
+    senderPolicy: "standard",
+    mapError: mapInitError,
+  }, () => Effect.tryPromise(async () => deps.awaitInitialization((_: InitStep) => {})))
+
+  registerIpcEffectHandler(runtime, {
+    channel: IPC.handle.GET_WINDOW_CONFIG,
+    params: S.Tuple([]),
+    success: S.Unknown,
+    timeout: 10_000,
+    senderPolicy: "standard",
+    mapError: mapInitError,
+  }, () => Effect.tryPromise(async () => { return await (deps.getWindowConfig() as Promise<any>) }))
+
+  registerIpcEffectHandler(runtime, {
+    channel: IPC.handle.CONSUME_INITIAL_DEEP_LINKS,
+    params: S.Tuple([]),
+    success: S.Arr(S.Str),
+    timeout: 30_000,
+    senderPolicy: "standard",
+    mapError: mapInitError,
+  }, () => Effect.tryPromise(async () => { return await (deps.consumeInitialDeepLinks() as Promise<any>) }))
+
+  registerIpcEffectHandler(runtime, {
+    channel: IPC.handle.GET_DEFAULT_SERVER_URL,
+    params: S.Tuple([]),
+    success: S.Nullable(S.Str),
+    timeout: 10_000,
+    senderPolicy: "standard",
+    mapError: mapInitError,
+  }, () => Effect.tryPromise(async () => { return await (deps.getDefaultServerUrl() as Promise<any>) }))
+
+  registerIpcEffectHandler(runtime, {
+    channel: IPC.handle.SET_DEFAULT_SERVER_URL,
+    params: S.Tuple([S.Nullable(S.Str)]),
+    success: S.UndefinedConst,
+    timeout: 30_000,
+    senderPolicy: "strict",
+    mapError: mapInitError,
+  }, (params: unknown) => Effect.tryPromise(async () => {
+    const [url] = params as [string | null]
+    return deps.setDefaultServerUrl(url)
+  }))
+
+  registerIpcEffectHandler(runtime, {
+    channel: IPC.handle.GET_WSL_CONFIG,
+    params: S.Tuple([]),
+    success: S.Unknown,
+    timeout: 10_000,
+    senderPolicy: "standard",
+    mapError: mapInitError,
+  }, () => Effect.tryPromise(async () => { return await (deps.getWslConfig() as Promise<any>) }))
+
+  registerIpcEffectHandler(runtime, {
+    channel: IPC.handle.SET_WSL_CONFIG,
+    params: S.Tuple([S.Unknown]),
+    success: S.UndefinedConst,
+    timeout: 30_000,
+    senderPolicy: "standard",
+    mapError: mapInitError,
+  }, (params: unknown) => Effect.tryPromise(async () => {
+    const [config] = params as [WslConfig]
+    return deps.setWslConfig(config)
+  }))
+
+  registerIpcEffectHandler(runtime, {
+    channel: IPC.handle.GET_DISPLAY_BACKEND,
+    params: S.Tuple([]),
+    success: S.Nullable(S.Str),
+    timeout: 10_000,
+    senderPolicy: "standard",
+    mapError: mapInitError,
+  }, () => Effect.tryPromise(async () => { return await (deps.getDisplayBackend() as Promise<any>) }))
+
+  registerIpcEffectHandler(runtime, {
+    channel: IPC.handle.SET_DISPLAY_BACKEND,
+    params: S.Tuple([S.Nullable(S.Str)]),
+    success: S.UndefinedConst,
+    timeout: 30_000,
+    senderPolicy: "standard",
+    mapError: mapInitError,
+  }, (params: unknown) => Effect.tryPromise(async () => {
+    const [backend] = params as [string | null]
+    return deps.setDisplayBackend(backend)
+  }))
+
+  registerIpcEffectHandler(runtime, {
+    channel: IPC.handle.PARSE_MARKDOWN,
+    params: S.Tuple([S.Str]),
+    success: S.Str,
+    timeout: 30_000,
+    senderPolicy: "standard",
+    mapError: mapInitError,
+  }, (params: unknown) => Effect.tryPromise(async () => {
+    const [markdown] = params as [string]
+    return deps.parseMarkdown(markdown)
+  }))
+
+  registerIpcEffectHandler(runtime, {
+    channel: IPC.handle.CHECK_APP_EXISTS,
+    params: S.Tuple([S.Str]),
+    success: S.Bool,
+    timeout: 30_000,
+    senderPolicy: "standard",
+    mapError: mapInitError,
+  }, (params: unknown) => Effect.tryPromise(async () => {
+    const [appName] = params as [string]
+    return deps.checkAppExists(appName)
+  }))
+
+  registerIpcEffectHandler(runtime, {
+    channel: IPC.handle.WSL_PATH,
+    params: S.Tuple([S.Str, S.Nullable(S.Str)]),
+    success: S.Str,
+    timeout: 30_000,
+    senderPolicy: "standard",
+    mapError: mapInitError,
+  }, (params: unknown) => Effect.tryPromise(async () => {
+    const [wslPath_, mode] = params as [string, string | null]
+    return deps.wslPath(wslPath_, mode as "windows" | "linux" | null)
+  }))
+
+  registerIpcEffectHandler(runtime, {
+    channel: IPC.handle.RESOLVE_APP_PATH,
+    params: S.Tuple([S.Str]),
+    success: S.Nullable(S.Str),
+    timeout: 30_000,
+    senderPolicy: "standard",
+    mapError: mapInitError,
+  }, (params: unknown) => Effect.tryPromise(async () => {
+    const [appName] = params as [string]
+    return deps.resolveAppPath(appName)
+  }))
+
   ipcMain.on(IPC.send.LOADING_WINDOW_COMPLETE, () => deps.loadingWindowComplete())
-  registerIpcHandler(IPC.handle.RUN_UPDATER, (_event: IpcMainInvokeEvent, alertOnFail: boolean) => {
-    return withIpcResult("init.runUpdater", async () => deps.runUpdater(alertOnFail))
-  })
-  registerIpcHandler(IPC.handle.CHECK_UPDATE, () => {
-    return withIpcResult("init.checkUpdate", async () => deps.checkUpdate())
-  })
-  registerIpcHandler(IPC.handle.INSTALL_UPDATE, () => {
-    return withIpcResult("init.installUpdate", async () => deps.installUpdate())
-  })
-  registerIpcHandler(IPC.handle.SET_BACKGROUND_COLOR, (_event: IpcMainInvokeEvent, color: string) => {
-    return withIpcResult("init.setBackgroundColor", async () => deps.setBackgroundColor(color))
-  })
-  registerIpcHandler(IPC.handle.EXPORT_DEBUG_LOGS, () => {
-    return withIpcResult("init.exportDebugLogs", async () => deps.exportDebugLogs())
-  })
-  registerIpcHandler(IPC.handle.RECORD_FATAL_RENDERER_ERROR, (_event: IpcMainInvokeEvent, error: FatalRendererError) => {
-    return withIpcResult("init.recordFatalRendererError", async () => deps.recordFatalRendererError(error))
-  })
 
-  registerIpcHandler(IPC.handle.GET_SAFE_MODE_DIAGNOSTICS, () => {
-    return withIpcResult("init.getSafeModeDiagnostics", async () => deps.getSafeModeDiagnostics())
-  })
-  registerIpcHandler(IPC.handle.SAFE_MODE_ACTION, (_event: IpcMainInvokeEvent, action: SafeModeAction) => {
-    return withIpcResult("init.safeModeAction", async () => deps.safeModeAction(action))
-  })
+  registerIpcEffectHandler(runtime, {
+    channel: IPC.handle.RUN_UPDATER,
+    params: S.Tuple([S.Bool]),
+    success: S.UndefinedConst,
+    timeout: 60_000,
+    senderPolicy: "strict",
+    mapError: mapInitError,
+  }, (params: unknown) => Effect.tryPromise(async () => {
+    const [alertOnFail] = params as [boolean]
+    return deps.runUpdater(alertOnFail)
+  }))
 
-  registerIpcHandler(IPC.handle.OPEN_PROJECT, async (_event: IpcMainInvokeEvent, directory: string) => {
-    return withIpcResult("project.open", async () => {
-      const resolved = path.resolve(directory)
-      if (!existsSync(resolved)) {
-        throw new Error(`Directory not found: ${resolved}`)
-      }
-      const userData = app.getPath("userData")
-      if (userData && (resolved === userData || resolved.startsWith(userData + path.sep))) {
-        console.warn(
-          `[project.open] Directory resolves inside app data directory (userData). ` +
-            `This may indicate the user selected the app-data directory instead of a project: ${resolved}`,
-        )
-      }
-      return resolved
-    })
-  })
+  registerIpcEffectHandler(runtime, {
+    channel: IPC.handle.CHECK_UPDATE,
+    params: S.Tuple([]),
+    success: S.Unknown,
+    timeout: 60_000,
+    senderPolicy: "standard",
+    mapError: mapInitError,
+  }, () => Effect.tryPromise(async () => { return await (deps.checkUpdate() as Promise<any>) }))
+
+  registerIpcEffectHandler(runtime, {
+    channel: IPC.handle.INSTALL_UPDATE,
+    params: S.Tuple([]),
+    success: S.UndefinedConst,
+    timeout: 60_000,
+    senderPolicy: "strict",
+    mapError: mapInitError,
+  }, () => Effect.tryPromise(async () => { return await (deps.installUpdate() as Promise<any>) }))
+
+  registerIpcEffectHandler(runtime, {
+    channel: IPC.handle.SET_BACKGROUND_COLOR,
+    params: S.Tuple([S.Str]),
+    success: S.UndefinedConst,
+    timeout: 30_000,
+    senderPolicy: "standard",
+    mapError: mapInitError,
+  }, (params: unknown) => Effect.sync(() => {
+    const [color] = params as [string]
+    deps.setBackgroundColor(color)
+  }))
+
+  registerIpcEffectHandler(runtime, {
+    channel: IPC.handle.EXPORT_DEBUG_LOGS,
+    params: S.Tuple([]),
+    success: S.Str,
+    timeout: 60_000,
+    senderPolicy: "standard",
+    mapError: mapInitError,
+  }, () => Effect.tryPromise(async () => { return await (deps.exportDebugLogs() as Promise<any>) }))
+
+  registerIpcEffectHandler(runtime, {
+    channel: IPC.handle.RECORD_FATAL_RENDERER_ERROR,
+    params: S.Tuple([S.Unknown]),
+    success: S.UndefinedConst,
+    timeout: 30_000,
+    senderPolicy: "standard",
+    mapError: mapInitError,
+  }, (params: unknown) => Effect.tryPromise(async () => {
+    const [error] = params as [FatalRendererError]
+    return deps.recordFatalRendererError(error)
+  }))
+
+  registerIpcEffectHandler(runtime, {
+    channel: IPC.handle.GET_SAFE_MODE_DIAGNOSTICS,
+    params: S.Tuple([]),
+    success: S.Unknown,
+    timeout: 30_000,
+    senderPolicy: "standard",
+    mapError: mapInitError,
+  }, () => Effect.tryPromise(async () => { return await (deps.getSafeModeDiagnostics() as Promise<any>) }))
+
+  registerIpcEffectHandler(runtime, {
+    channel: IPC.handle.SAFE_MODE_ACTION,
+    params: S.Tuple([S.Str]),
+    success: S.UndefinedConst,
+    timeout: 30_000,
+    senderPolicy: "strict",
+    mapError: mapInitError,
+  }, (params: unknown) => Effect.tryPromise(async () => {
+    const [action] = params as [SafeModeAction]
+    return deps.safeModeAction(action)
+  }))
+
+  registerIpcEffectHandler(runtime, {
+    channel: IPC.handle.OPEN_PROJECT,
+    params: S.Tuple([S.Str]),
+    success: S.Str,
+    timeout: 30_000,
+    senderPolicy: "strict",
+    mapError: mapInitError,
+  }, (params: unknown) => Effect.sync(() => {
+    const [directory] = params as [string]
+    const resolved = path.resolve(directory)
+    if (!existsSync(resolved)) {
+      throw new Error(`Directory not found: ${resolved}`)
+    }
+    const userData = app.getPath("userData")
+    if (userData && (resolved === userData || resolved.startsWith(userData + path.sep))) {
+      console.warn(
+        `[project.open] Directory resolves inside app data directory (userData). ` +
+          `This may indicate the user selected the app-data directory instead of a project: ${resolved}`,
+      )
+    }
+    return resolved
+  }))
 }

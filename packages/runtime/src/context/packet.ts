@@ -105,7 +105,7 @@ export interface Interface {
   ) => Effect.Effect<ContextPacket>
 }
 
-export class Service extends Context.Service<Service, Interface>()("@opencode/ContextPacket") {}
+export class Service extends Context.Service<Service, Interface>()("@tribunus/ContextPacket") {}
 
 export const use = serviceUse(Service)
 

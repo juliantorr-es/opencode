@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+set -euo pipefail
+cd "$(dirname "$0")/../packages/compute-native"
+
+echo "Building tribunus-compute-image with image-build profile..."
+cargo build --locked --profile image-build --bin tribunus-compute-image
+
+echo ""
+echo "Executing build..."
+exec ./target/image-build/tribunus-compute-image "$@"

@@ -178,7 +178,7 @@ export interface Interface {
 
 // ── Service Tag ───────────────────────────────────────────
 
-export class Service extends Context.Service<Service, Interface>()("@opencode/BinderService") {}
+export class Service extends Context.Service<Service, Interface>()("@tribunus/BinderService") {}
 
 export const use = serviceUse(Service)
 

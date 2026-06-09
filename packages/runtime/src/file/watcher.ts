@@ -63,7 +63,7 @@ export interface Interface {
   readonly init: () => Effect.Effect<void>
 }
 
-export class Service extends Context.Service<Service, Interface>()("@opencode/FileWatcher") {}
+export class Service extends Context.Service<Service, Interface>()("@tribunus/FileWatcher") {}
 
 export const layer = Layer.effect(
   Service,

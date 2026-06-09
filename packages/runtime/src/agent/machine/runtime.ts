@@ -203,7 +203,7 @@ function runMachineLoop(
 
 // ─── Machine Registry Service ─────────────────────────────────────────────
 
-export class Service extends Context.Service<Service, Interface>()("@opencode/AgentMachineRegistry") {}
+export class Service extends Context.Service<Service, Interface>()("@tribunus/AgentMachineRegistry") {}
 
 export interface Interface {
   readonly register: (def: MachineDef<any>) => Effect.Effect<void>

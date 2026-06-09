@@ -359,7 +359,7 @@ export function defaultContractFor(mode: AuthorityMode): AuthorityContract {
 
 // ─── Service Implementation ──────────────────────────────────────────────────
 
-export class Service extends Context.Service<Service, Interface>()("@opencode/Authority") {}
+export class Service extends Context.Service<Service, Interface>()("@tribunus/Authority") {}
 
 const make = Effect.gen(function* () {
   const contract = yield* Ref.make<AuthorityContract>(DEFAULT_CONTRACTS.investigate)

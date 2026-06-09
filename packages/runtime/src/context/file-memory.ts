@@ -40,7 +40,7 @@ export interface Interface {
   readonly getByEditor: (actor: string) => Effect.Effect<FileContext[]>
 }
 
-export class Service extends Context.Service<Service, Interface>()("@opencode/FileMemory") {}
+export class Service extends Context.Service<Service, Interface>()("@tribunus/FileMemory") {}
 
 export const use = serviceUse(Service)
 

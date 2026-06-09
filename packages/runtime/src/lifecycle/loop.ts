@@ -23,7 +23,7 @@ export interface LifecycleLoopInterface {
 }
 
 export class LifecycleLoop extends Context.Service<LifecycleLoop, LifecycleLoopInterface>()(
-  "@opencode/LifecycleLoop",
+  "@tribunus/LifecycleLoop",
 ) {}
 
 export const LifecycleLoopTag = LifecycleLoop

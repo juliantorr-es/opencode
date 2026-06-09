@@ -60,14 +60,14 @@ export interface Interface {
 }
 
 export class MessageLoader extends Context.Service<MessageLoader, MessageLoaderInterface>()(
-  "@opencode/ACPNextUsageMessageLoader",
+  "@tribunus/ACPNextUsageMessageLoader",
 ) {}
 
 export class ContextLimitLoader extends Context.Service<ContextLimitLoader, ContextLimitLoaderInterface>()(
-  "@opencode/ACPNextUsageContextLimitLoader",
+  "@tribunus/ACPNextUsageContextLimitLoader",
 ) {}
 
-export class Service extends Context.Service<Service, Interface>()("@opencode/ACPNextUsage") {}
+export class Service extends Context.Service<Service, Interface>()("@tribunus/ACPNextUsage") {}
 
 export function messageLoaderFromSDK(sdk: SDK): MessageLoaderInterface {
   return MessageLoader.of({

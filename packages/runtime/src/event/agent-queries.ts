@@ -31,7 +31,7 @@ export interface Interface {
 // ── Service Tag ───────────────────────────────────────────
 
 export class Service extends Context.Service<Service, Interface>()(
-  "@opencode/EventAgentQueries",
+  "@tribunus/EventAgentQueries",
 ) {}
 
 export const use = serviceUse(Service)

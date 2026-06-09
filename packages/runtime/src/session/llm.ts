@@ -53,7 +53,7 @@ export interface Interface {
   readonly stream: (input: StreamInput) => Stream.Stream<LLMEvent, unknown>
 }
 
-export class Service extends Context.Service<Service, Interface>()("@opencode/LLM") {}
+export class Service extends Context.Service<Service, Interface>()("@tribunus/LLM") {}
 
 export const use = serviceUse(Service)
 

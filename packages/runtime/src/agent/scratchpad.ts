@@ -17,7 +17,7 @@ export interface Interface {
   readonly reset: Effect.Effect<void>
 }
 
-export class Service extends Context.Service<Service, Interface>()("@opencode/Scratchpad") {}
+export class Service extends Context.Service<Service, Interface>()("@tribunus/Scratchpad") {}
 
 const DEFAULT: Scratchpad = {
   hypothesis: "",

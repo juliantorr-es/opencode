@@ -356,7 +356,7 @@ export interface Interface {
 
 // ── Service ──────────────────────────────────────────────────
 
-export class Service extends Context.Service<Service, Interface>()("@opencode/Secretary") {}
+export class Service extends Context.Service<Service, Interface>()("@tribunus/Secretary") {}
 
 // ── Helpers ──────────────────────────────────────────────────
 

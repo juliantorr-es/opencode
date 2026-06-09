@@ -116,7 +116,7 @@ export interface Interface {
 
 // ── Service tag ──────────────────────────────────────────────
 
-export class Service extends Context.Service<Service, Interface>()("@opencode/DatabaseAdapter") {}
+export class Service extends Context.Service<Service, Interface>()("@tribunus/DatabaseAdapter") {}
 
 // ── Local Pg adapter ─────────────────────────────────────────
 

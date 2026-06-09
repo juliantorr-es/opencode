@@ -66,7 +66,7 @@ export interface Interface {
   readonly claim: (aggregateID: string, ownerID: string) => Effect.Effect<void>
 }
 
-export class Service extends Context.Service<Service, Interface>()("@opencode/SyncEvent") {}
+export class Service extends Context.Service<Service, Interface>()("@tribunus/SyncEvent") {}
 
 export const layer = Layer.effect(Service)(
   Effect.gen(function* () {

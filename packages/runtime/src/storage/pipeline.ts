@@ -38,7 +38,7 @@ SELECT * FROM read_json_auto('/dev/stdin')`
 
 export interface Interface {}
 
-export class Service extends Context.Service<Service, Interface>()("@opencode/DuckDBPipeline") {}
+export class Service extends Context.Service<Service, Interface>()("@tribunus/DuckDBPipeline") {}
 
 // ── Pipeline helpers ────────────────────────────────────────
 

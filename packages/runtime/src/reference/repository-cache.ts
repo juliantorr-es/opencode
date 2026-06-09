@@ -101,7 +101,7 @@ export interface Interface {
   parseGitHubRemote: (input: string) => { owner: string; repo: string } | null
 }
 
-export class Service extends Context.Service<Service, Interface>()("@opencode/RepositoryCache") {}
+export class Service extends Context.Service<Service, Interface>()("@tribunus/RepositoryCache") {}
 
 function statusForRepository(input: { reuse: boolean; refresh?: boolean; branchMatches?: boolean }) {
   if (!input.reuse) return "cloned" as const

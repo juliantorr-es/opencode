@@ -37,7 +37,7 @@ export interface Interface {
   readonly stats: () => Effect.Effect<CacheStats>
 }
 
-export class Service extends Context.Service<Service, Interface>()("@opencode/ToolCache") {}
+export class Service extends Context.Service<Service, Interface>()("@tribunus/ToolCache") {}
 
 const approximateSize = (value: unknown): number => {
   try {

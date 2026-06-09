@@ -114,7 +114,7 @@ export interface Interface {
   readonly getCrashStatus: () => Effect.Effect<Record<string, { crashCount: number; quarantined: boolean; lastCrashed?: string }>>
 }
 
-export class Service extends Context.Service<Service, Interface>()("@opencode/Plugin") {}
+export class Service extends Context.Service<Service, Interface>()("@tribunus/Plugin") {}
 
 export function experimentalWebSocketsEnabled(input: { enabled: boolean; channel?: string }) {
   return input.enabled || ["local", "dev", "beta"].includes(input.channel ?? InstallationChannel)

@@ -30,7 +30,7 @@ export interface Interface {
   readonly query: (filters?: QueryFilters) => Effect.Effect<RuntimeEvent[], DatabaseAdapter.DatabaseError>
 }
 
-export class Service extends Context.Service<Service, Interface>()("@opencode/EventStore") {}
+export class Service extends Context.Service<Service, Interface>()("@tribunus/EventStore") {}
 
 export const use = serviceUse(Service)
 
