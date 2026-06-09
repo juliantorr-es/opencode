@@ -392,6 +392,23 @@ export function normalizeRun(
   const errors: string[] = [];
   const files: NormalizedFile[] = [];
 
+  // 0. Check finalization — refuse to normalize invalid or incomplete runs
+  const finalizationPath = join(runDir, "finalization.json");
+  const finalization = readJsonFile<Record<string, unknown>>(finalizationPath);
+  if (!finalization) {
+    errors.push("finalization.json missing — run was never finalized");
+  } else if (finalization.error) {
+    errors.push(`run finalization failed: ${finalization.error}`);
+  } else {
+    const validations = finalization.validations as Array<{valid: boolean}> | undefined;
+    if (validations && validations.some((v) => !v.valid)) {
+      errors.push("run has failed schema validations — refusing to normalize");
+    }
+  }
+  if (errors.length > 0) {
+    return { run_id: runId, normalized_dir: outputDir, files: [], referential_integrity: { valid: false, run_ids_in_events: 0, run_ids_in_runs: [], orphaned_run_ids: [] }, error: errors.join("; ") };
+  }
+
   // 1. Load the run manifest
   const manifestPath = join(runDir, "run-manifest.json");
   const manifest = readJsonFile<Record<string, unknown>>(manifestPath);

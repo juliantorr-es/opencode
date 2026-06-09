@@ -78,16 +78,18 @@ function createNormalizeRun(rootDir: string, runId: string, runGrade = "claim_ca
 function createCompareRun(rootDir: string, runId: string, latencyValues: number[]): RunDirectory {
   const rd = new RunDirectory(runId, rootDir);
   rd.writeRunManifest({
+    schema_version: "1",
     run_id: runId, experiment_id: "exp-001", optimization_id: "opt-a", study_id: "study-1", trial_index: 0,
     run_grade: "claim_candidate", status: "completed",
     start_time: "2026-06-09T00:00:00Z", end_time: "2026-06-09T01:00:00Z",
-    source_revision: "abc123def", workload_id: "bench-llm-v3",
-    model_identity: { image_hash: "sha256:deadbeef" },
-    machine_profile: { anon_id: "mac-studio-01", chip: "M3Ultra", memory: "192GB" },
-    instrumentation_mode: "research_standard", page_cache_class: "warm",
-    power_class: "high_performance", thermal_class: "nominal", worker_id: "worker-1",
+    source_revision: "abc123def", workload_id: "bench-llm-v3", configuration_id: "cfg-1",
+    instrumentation_mode: "research_standard",
+    model_identity: { image_hash: "sha256:deadbeef", storage_abi: "v1", runtime_abi: "v1", tokenizer_hash: "t" },
+    machine_profile: { anon_id: "mac-studio-01", model_id: "Mac15,9", chip: "M3Ultra", cores: 24, memory: "192GB", os_version: "15.5" },
+    final_manifest_hash: "sha256:ffff",
   });
   rd.writeProvenance({
+    schema_version: "1",
     source: { repo_url: "https://github.com/tribunus/research", commit_sha: "abc", branch: "main", dirty: false, commit_timestamp: "2026-06-09T00:00:00Z", tree_hash: "abc123" },
     dependencies: {},
     toolchain: { rust_version: "1.85.0", target_triple: "aarch64-apple-darwin", linker: "ld64", opt_profile: "release", feature_flags: [], env_flags: [] },
@@ -240,22 +242,25 @@ describe("Pipeline E2E", () => {
     writeNormalizeEvent(rd, 1, "embedding_gather", 100, 1_000_000, 100_000_000);
 
     const finalRec = finalizeRun(rd);
-    const finalDir = join(gradeRoot, badGradeId);
+    // Fail-closed: invalid runs are renamed to .invalid, not .final
+    const invalidDir = join(gradeRoot, `${badGradeId}.invalid`);
+    expect(existsSync(invalidDir)).toBe(true);
     // The only validation failure should be the invalid run_grade
     expect(finalRec.validations.length).toBeGreaterThanOrEqual(2);
     const manifestVal = finalRec.validations.find(v => v.file.includes("run-manifest.json"));
     expect(manifestVal).toBeDefined();
     expect(manifestVal!.valid).toBe(false);
     expect(manifestVal!.errors.some(e => e.includes("allowed values") || e.includes("enum"))).toBe(true);
-    const manifest = JSON.parse(readFileSync(join(finalDir, "run-manifest.json"), "utf-8"));
-    expect(manifest.run_grade).toBe("invalid_grade");
+    // finalization error is recorded
+    expect(finalRec.error).toBeDefined();
+    expect(finalRec.error!.includes("finalization blocked")).toBe(true);
 
+    // Normalizer must refuse to normalize an invalid directory
     const normOut = join(gradeRoot, "norm-bad-grade");
-    const normResult = normalizeRun(finalDir, normOut);
-    expect(normResult.error).toBeUndefined();
-    const runArrow = normResult.files.find((f) => f.name === "runs.arrow");
-    expect(runArrow).toBeDefined();
-    expect(runArrow!.row_count).toBe(1);
+    const normResult = normalizeRun(invalidDir, normOut);
+    expect(normResult.error).toBeDefined();
+    expect(normResult.error!.includes("finalization failed")).toBe(true);
+    expect(normResult.files.length).toBe(0);
   });
 
   test("zero-effect CI blocks promotion", async () => {

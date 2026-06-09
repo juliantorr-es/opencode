@@ -1,16 +1,17 @@
-import Ajv, { type ValidateFunction } from "ajv";
+import { type ValidateFunction } from "ajv";
+import Ajv2020 from "ajv/dist/2020";
 import addFormats from "ajv-formats";
 import { readFileSync } from "fs";
 import { resolve } from "path";
 
 // ── Schema cache ────────────────────────────────────────────────────────────
-let _ajv: Ajv | null = null;
-let _validateProvenance: ValidateFunction | null = null;
-let _validateRunManifest: ValidateFunction | null = null;
+let _ajv: Ajv2020 | null = null;
+let _validateProvenance: ReturnType<Ajv2020["compile"]> | null = null;
+let _validateRunManifest: ReturnType<Ajv2020["compile"]> | null = null;
 
-function getAjv(): Ajv {
+function getAjv(): Ajv2020 {
   if (!_ajv) {
-    _ajv = new Ajv({ allErrors: true, strict: false });
+    _ajv = new Ajv2020({ allErrors: true, strict: false });
     addFormats(_ajv);
   }
   return _ajv;
@@ -33,9 +34,10 @@ export function validateProvenanceShape(data: unknown): string[] {
       resolve(import.meta.dir, "../../../../research/schemas/provenance.v1.json")
     );
   }
-  const valid = _validateProvenance(data);
+  const v = _validateProvenance!;
+  const valid = v(data);
   if (valid) return [];
-  return (_validateProvenance.errors ?? []).map(
+  return (v.errors ?? []).map(
     (e) => `${e.instancePath || "/"}: ${e.message}`
   );
 }
@@ -47,9 +49,10 @@ export function validateRunManifestShape(data: unknown): string[] {
       resolve(import.meta.dir, "../../../../research/schemas/run-manifest.v1.json")
     );
   }
-  const valid = _validateRunManifest(data);
+  const v = _validateRunManifest!;
+  const valid = v(data);
   if (valid) return [];
-  return (_validateRunManifest.errors ?? []).map(
+  return (v.errors ?? []).map(
     (e) => `${e.instancePath || "/"}: ${e.message}`
   );
 }

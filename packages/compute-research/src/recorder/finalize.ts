@@ -138,7 +138,14 @@ export function finalizeRun(runDir: RunDirectory): FinalizationRecord {
   // 5. Compute final digest (SHA-256 of the sorted, canonical checksum listing)
   const finalDigest = createHash("sha256").update(checksumContent).digest("hex");
 
-  // 6. Write finalization.json
+  // 6. Check if any validation failed — fail-closed: refuse authoritative rename
+  const anyValidationFailed = validations.some((v) => !v.valid);
+  if (anyValidationFailed) {
+    errors.push("finalization blocked: one or more schema validations failed");
+  }
+
+  // 7. Write finalization.json
+  const hasErrors = errors.length > 0;
   const finalization: FinalizationRecord = {
     run_id: runId,
     timestamp,
@@ -147,14 +154,16 @@ export function finalizeRun(runDir: RunDirectory): FinalizationRecord {
     file_count: fileCount,
     byte_count: byteCount,
     validations,
-    ...(errors.length > 0 ? { error: errors.join("; ") } : {}),
+    ...(hasErrors ? { error: errors.join("; ") } : {}),
   };
 
   const finalizationPath = join(partialRoot, "finalization.json");
   writeFileSync(finalizationPath, JSON.stringify(finalization, null, 2) + "\n", "utf-8");
 
-  // 7. Atomic rename: {root}/{runId}.partial → {root}/{runId}
-  const finalRoot = join(runDir.root, runId);
+  // 8. Atomic rename: {root}/{runId}.partial → {root}/{runId}
+  //    If any validation failed, rename to .invalid instead.
+  const suffix = hasErrors ? ".invalid" : "";
+  const finalRoot = join(runDir.root, `${runId}${suffix}`);
   try {
     renameSync(partialRoot, finalRoot);
     finalization.checksums_path = join(finalRoot, "checksums.sha256");
