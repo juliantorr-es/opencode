@@ -4413,4 +4413,181 @@ mod tests {
         assert!(r.is_err());
         assert!(r.unwrap_err().contains("unsupported"));
     }
+
+    #[test]
+    #[ignore = "real checkpoint prefill+decode_one; requires ~12GB quantized model at models/gemma4-12b-8bit"]
+    fn real_checkpoint_decode_one_token_after_prefill() {
+        let source_dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("models/gemma4-12b-8bit");
+        let output_dir = temp_dir("real-decode-1-out");
+
+        if !source_dir.join("config.json").exists() {
+            eprintln!("SKIP: no model at {}", source_dir.display());
+            return;
+        }
+
+        eprintln!("Compiling quantized Gemma 4 12B...");
+        let started = std::time::Instant::now();
+
+        let compiled = compile(
+            source_dir.to_str().expect("source dir"),
+            output_dir.to_str().expect("output dir"),
+        )
+        .expect("compile model");
+
+        let compile_secs = started.elapsed().as_secs_f64();
+        eprintln!(
+            "Compiled in {:.1}s: {} segments, {} tensors, {:?}",
+            compile_secs,
+            compiled.manifest.segments.len(),
+            compiled.manifest.tensor_table.len(),
+            compiled.manifest.image_hash
+        );
+
+        let plan = &compiled.manifest.execution_plan;
+        assert_eq!(plan.layers.len(), 48, "expected 48 layers");
+        plan.validate().expect("execution plan should validate");
+
+        eprintln!("Opening runtime...");
+        let baseline_handles = crate::bridge::handle_count();
+        let _reader = read(output_dir.to_str().expect("output dir")).expect("reader");
+
+        eprintln!("Loading profiled model...");
+        let profiled_model = crate::profiled_executor::LoadedProfiledModel::new(&output_dir)
+            .expect("load profiled model");
+
+        let kv_caches: Vec<crate::kv_cache::KvCache> = plan.layers.iter().map(|lp| {
+            let is_sliding = lp.attention_kind == "sliding_attention";
+            let (capacity, n_kv_heads, head_dim) = if is_sliding {
+                (lp.sliding_window, lp.n_kv_heads, lp.head_dim)
+            } else {
+                let g_kv = lp.n_global_kv_heads.unwrap_or(lp.n_kv_heads);
+                let g_hd = lp.global_head_dim.unwrap_or(lp.head_dim);
+                (32768u32, g_kv, g_hd)
+            };
+            crate::kv_cache::KvCache::new(capacity, n_kv_heads, head_dim, is_sliding)
+        }).collect();
+
+        let mut session = crate::profiled_executor::ProfiledInferenceSession::new(
+            "decode-1".into(),
+            kv_caches,
+        );
+
+        eprintln!("Prefilling with [2, 42, 100, 500]...");
+        let first_token = session
+            .prefill(&[2, 42, 100, 500], &profiled_model)
+            .expect("prefill");
+        eprintln!("Prefill token: {}", first_token);
+        assert!(first_token < 262144, "first token {} out of vocab range", first_token);
+        assert!(first_token != 0, "first token must not be padding token 0");
+
+        eprintln!("Decoding one token after prefill...");
+        let second_token = session
+            .decode_one(first_token, &profiled_model)
+            .expect("decode_one");
+        eprintln!("Decode token: {}", second_token);
+        assert!(second_token < 262144, "second token {} out of vocab range", second_token);
+        assert!(second_token != 0, "second token must not be padding token 0");
+
+        drop(session);
+        drop(profiled_model);
+        let after_run = crate::bridge::handle_count();
+        assert_eq!(after_run, baseline_handles,
+            "handle count must return to baseline after decode; {} != {}",
+            after_run, baseline_handles);
+
+        eprintln!("[decode-1] PASSED: first={} second={}", first_token, second_token);
+    }
+
+    #[test]
+    #[ignore = "real checkpoint 8-token decode; requires ~12GB quantized model at models/gemma4-12b-8bit"]
+    fn real_checkpoint_decode_eight_tokens() {
+        let source_dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("models/gemma4-12b-8bit");
+        let output_dir = temp_dir("real-decode-8-out");
+
+        if !source_dir.join("config.json").exists() {
+            eprintln!("SKIP: no model at {}", source_dir.display());
+            return;
+        }
+
+        eprintln!("Compiling quantized Gemma 4 12B...");
+        let started = std::time::Instant::now();
+
+        let compiled = compile(
+            source_dir.to_str().expect("source dir"),
+            output_dir.to_str().expect("output dir"),
+        )
+        .expect("compile model");
+
+        let compile_secs = started.elapsed().as_secs_f64();
+        eprintln!(
+            "Compiled in {:.1}s: {} segments, {} tensors, {:?}",
+            compile_secs,
+            compiled.manifest.segments.len(),
+            compiled.manifest.tensor_table.len(),
+            compiled.manifest.image_hash
+        );
+
+        let plan = &compiled.manifest.execution_plan;
+        assert_eq!(plan.layers.len(), 48, "expected 48 layers");
+        plan.validate().expect("execution plan should validate");
+
+        eprintln!("Opening runtime...");
+        let baseline_handles = crate::bridge::handle_count();
+        let _reader = read(output_dir.to_str().expect("output dir")).expect("reader");
+
+        eprintln!("Loading profiled model...");
+        let profiled_model = crate::profiled_executor::LoadedProfiledModel::new(&output_dir)
+            .expect("load profiled model");
+
+        let kv_caches: Vec<crate::kv_cache::KvCache> = plan.layers.iter().map(|lp| {
+            let is_sliding = lp.attention_kind == "sliding_attention";
+            let (capacity, n_kv_heads, head_dim) = if is_sliding {
+                (lp.sliding_window, lp.n_kv_heads, lp.head_dim)
+            } else {
+                let g_kv = lp.n_global_kv_heads.unwrap_or(lp.n_kv_heads);
+                let g_hd = lp.global_head_dim.unwrap_or(lp.head_dim);
+                (32768u32, g_kv, g_hd)
+            };
+            crate::kv_cache::KvCache::new(capacity, n_kv_heads, head_dim, is_sliding)
+        }).collect();
+
+        let mut session = crate::profiled_executor::ProfiledInferenceSession::new(
+            "decode-8".into(),
+            kv_caches,
+        );
+
+        eprintln!("Prefilling with BOS token [2]...");
+        let first_token = session
+            .prefill(&[2u32], &profiled_model)
+            .expect("prefill");
+        assert!(first_token < 262144, "first token {} out of vocab range", first_token);
+        assert!(first_token != 0, "first token must not be 0");
+
+        let mut tokens: Vec<u32> = Vec::with_capacity(9);
+        tokens.push(first_token);
+
+        eprintln!("Decoding 8 tokens...");
+        let mut prev = first_token;
+        for i in 0..8 {
+            let next = session
+                .decode_one(prev, &profiled_model)
+                .expect("decode_one");
+            assert!(next < 262144, "token {} out of vocab range at step {}", next, i);
+            assert!(next != 0, "token must not be 0 at step {}", i);
+            tokens.push(next);
+            prev = next;
+        }
+
+        eprintln!("Tokens: {:?}", tokens);
+        assert_eq!(tokens.len(), 9, "expected 9 tokens (1 prefill + 8 decode)");
+
+        drop(session);
+        drop(profiled_model);
+        let after_run = crate::bridge::handle_count();
+        assert_eq!(after_run, baseline_handles,
+            "handle count must return to baseline after 8 decode steps; {} != {}",
+            after_run, baseline_handles);
+
+        eprintln!("[decode-8] PASSED: {} tokens", tokens.len());
+    }
 }

@@ -17,6 +17,7 @@ const RESEARCH_DATA = join(ROOT, ".research-data");
 const COMPUTE_DIR = join(ROOT, "packages/compute-native");
 const MODEL_DIR = join(COMPUTE_DIR, "models/gemma4-12b-8bit");
 const SKIP_MODEL = Bun.env.SKIP_MODEL === "1";
+const WORKLOAD = Bun.env.WORKLOAD || WORKLOAD === "decode-one" ? "prefill-plus-one-decode" : WORKLOAD === "decode-eight" ? "eight-token-qualification" : "bos-single-token";
 
 async function sh(cmd: TemplateStringsArray, ...args: unknown[]): Promise<string> {
   const result = await $({ raw: [cmd.join("%s")] }).cwd(ROOT).quiet().nothrow();
@@ -88,8 +89,10 @@ async function main() {
 
   if (!SKIP_MODEL) {
     console.log("  (this takes ~46 minutes...)");
+    const testName = WORKLOAD === "decode-one" ? "real_checkpoint_decode_one_token_after_prefill" : WORKLOAD === "decode-eight" ? "real_checkpoint_decode_eight_tokens" : "real_checkpoint_full_model_gate";
+    console.log(`  test: ${testName}`);
     const t0 = Date.now();
-    const result = await $`cargo test --lib -- --ignored --nocapture real_checkpoint_full_model_gate`
+    const result = await $`cargo test --lib -- --ignored --nocapture ${testName}`
       .cwd(COMPUTE_DIR).nothrow();
     const elapsed = (Date.now() - t0) / 1000;
     const stdout = result.stdout.toString();
