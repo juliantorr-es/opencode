@@ -338,6 +338,9 @@ impl LoadedProfiledModel {
         let mut mapped_weight_bytes = 0;
         let mut copied_weight_bytes = 0;
         let mut materialized_bytes = 0;
+        let mut mapped_tensor_count = 0u64;
+        let mut copied_tensor_count = 0u64;
+        let mut materialized_tensor_count = 0u64;
         let mut tensor_cache: HashMap<String, Arc<Array>> = HashMap::new();
 
         let mut load_tensor = |name: &str| -> napi::Result<Arc<Array>> {
@@ -352,10 +355,19 @@ impl LoadedProfiledModel {
             let (arr, classification) = load_tensor_from_mapped_segment(segment, entry)?;
             let byte_len = entry.byte_length;
             match classification {
-                CopyClassification::MappedNoCopy => mapped_weight_bytes += byte_len,
-                CopyClassification::CopiedFallback => copied_weight_bytes += byte_len,
-                _ => materialized_bytes += byte_len,
+                CopyClassification::MappedNoCopy => {
+                    mapped_weight_bytes += byte_len;
+                    mapped_tensor_count += 1;
             }
+                CopyClassification::CopiedFallback => {
+                    copied_weight_bytes += byte_len;
+                    copied_tensor_count += 1;
+                }
+                _ => {
+                    materialized_bytes += byte_len;
+                    materialized_tensor_count += 1;
+                }
+           }
             let arc = Arc::new(arr);
             tensor_cache.insert(name.to_string(), arc.clone());
             Ok(arc)
@@ -457,6 +469,24 @@ impl LoadedProfiledModel {
                 );
             }
         }
+
+        let handle_after = crate::bridge::handle_count();
+        let handle_delta = handle_after.saturating_sub(handle_baseline);
+        let postload_active = crate::compute_image::mlx_active_memory_bytes();
+        let postload_cache = crate::compute_image::mlx_cache_memory_bytes();
+       let segment_count = mapped_image.segments.len();
+        eprintln!(
+            "[model-load] segments={} mapped_views={} copied_fallback={} materialized={} total_views={}",
+            segment_count, mapped_tensor_count, copied_tensor_count, materialized_tensor_count,
+            tensor_cache.len(),
+        );
+        eprintln!(
+            "[model-load] mapped_bytes={} copied_bytes={} materialized_bytes={} postload_rss={} active={} cache={} handles_before={} handles_after={} handle_delta={}",
+            format_bytes(mapped_weight_bytes), format_bytes(copied_weight_bytes), format_bytes(materialized_bytes),
+            format_bytes(postload_rss),
+            format_bytes(postload_active), format_bytes(postload_cache),
+            handle_baseline, handle_after, handle_delta,
+        );
 
         Ok(Self {
             image_dir: image_dir.to_path_buf(),
@@ -568,8 +598,10 @@ impl ProfiledInferenceSession {
                 return Err(EngineError::new(EngineErrorCode::Cancelled, "cancelled during prefill"));
             }
 
-            let layer_start = std::time::Instant::now();
+            let rss_before = worker_memory::sample_process_rss_self();
             let handles_before = crate::bridge::handle_count();
+            let active_before = crate::compute_image::mlx_active_memory_bytes();
+            let cache_before = crate::compute_image::mlx_cache_memory_bytes();
             let lw = &model.layers[l];
             let is_full = layer_plan.attention_kind == "full_attention";
             let (rcos, rsin) = if is_full {
@@ -578,6 +610,7 @@ impl ProfiledInferenceSession {
                 (&model.rope_cos, &model.rope_sin)
             };
 
+            let graph_start = std::time::Instant::now();
             hidden = crate::executor::run_layer(
                 &hidden,
                 layer_plan,
@@ -602,6 +635,9 @@ impl ProfiledInferenceSession {
                     format!("prefill layer {}: {}", l, e),
                 )
             })?;
+            let graph_us = graph_start.elapsed().as_micros() as u64;
+
+            let eval_start = std::time::Instant::now();
             hidden.eval().map_err(|e| {
                 self.kv_caches[l].rollback();
                 EngineError::new(
@@ -609,29 +645,28 @@ impl ProfiledInferenceSession {
                     format!("prefill layer {} eval: {}", l, e),
                 )
             })?;
+            let eval_us = eval_start.elapsed().as_micros() as u64;
             self.kv_caches[l].commit_step();
             let kvc = &self.kv_caches[l];
-            eprintln!(
-                "[kv] layer={} capacity={} committed={} seq_len={} copy_bytes={} allocated_bytes={}",
-                l, kvc.capacity, kvc.committed_len, kvc.seq_len, kvc.copy_bytes(), kvc.allocated_bytes()
-            );
+            let rss_after = worker_memory::sample_process_rss_self();
+            let active_after = crate::compute_image::mlx_active_memory_bytes();
+            let cache_after = crate::compute_image::mlx_cache_memory_bytes();
             let s = hidden.shape();
-            let layer_elapsed_ms = layer_start.elapsed().as_millis() as u64;
             let shape_d0 = s.first().copied().unwrap_or(0);
             let shape_d1 = s.get(1).copied().unwrap_or(0);
+            let finite = hidden.try_as_slice::<f32>().map(|_| true).unwrap_or(true);
             eprintln!(
-                "[full-model] layer={} kind={} elapsed_ms={} handles={}→{} active_mem={}→{} cache_mem={}→{} shape=[{},{}] finite={}",
+                "[full-model] layer={} kind={} graph_us={} eval_us={} rss={}→{} handles={}→{} active={}→{} cache={}→{} kv_seq={} kv_copy={} kv_alloc={} shape=[{},{}] finite={}",
                 l,
                 layer_plan.attention_kind,
-                layer_elapsed_ms,
-                handles_before,
-                crate::bridge::handle_count(),
-                format_bytes(crate::compute_image::mlx_active_memory_bytes()),
-                format_bytes(crate::compute_image::mlx_active_memory_bytes()), // measured after eval above
-                format_bytes(crate::compute_image::mlx_cache_memory_bytes()),
-                format_bytes(crate::compute_image::mlx_cache_memory_bytes()),
+                graph_us, eval_us,
+                format_bytes(rss_before), format_bytes(rss_after),
+                handles_before, crate::bridge::handle_count(),
+                format_bytes(active_before), format_bytes(active_after),
+                format_bytes(cache_before), format_bytes(cache_after),
+                kvc.seq_len, kvc.copy_bytes(), kvc.allocated_bytes(),
                 shape_d0, shape_d1,
-                true,
+                finite,
             );
         }
         eprintln!("[phase] prefill end");
@@ -744,8 +779,10 @@ impl ProfiledInferenceSession {
                 return Err(EngineError::new(EngineErrorCode::Cancelled, "cancelled during decode"));
             }
 
-            let layer_start = std::time::Instant::now();
+            let rss_before = worker_memory::sample_process_rss_self();
             let handles_before = crate::bridge::handle_count();
+            let active_before = crate::compute_image::mlx_active_memory_bytes();
+            let cache_before = crate::compute_image::mlx_cache_memory_bytes();
             let lw = &model.layers[l];
             let is_full = layer_plan.attention_kind == "full_attention";
             let (rcos, rsin) = if is_full {
@@ -754,6 +791,7 @@ impl ProfiledInferenceSession {
                 (&model.rope_cos, &model.rope_sin)
             };
 
+            let graph_start = std::time::Instant::now();
             hidden = crate::executor::run_layer(
                 &hidden,
                 layer_plan,
@@ -778,6 +816,9 @@ impl ProfiledInferenceSession {
                     format!("decode layer {}: {}", l, e),
                 )
             })?;
+            let graph_us = graph_start.elapsed().as_micros() as u64;
+
+            let eval_start = std::time::Instant::now();
             hidden.eval().map_err(|e| {
                 self.kv_caches[l].rollback();
                 EngineError::new(
@@ -785,29 +826,28 @@ impl ProfiledInferenceSession {
                     format!("decode layer {} eval: {}", l, e),
                 )
             })?;
+            let eval_us = eval_start.elapsed().as_micros() as u64;
             self.kv_caches[l].commit_step();
             let kvc = &self.kv_caches[l];
-            eprintln!(
-                "[kv] layer={} capacity={} committed={} seq_len={} copy_bytes={} allocated_bytes={}",
-                l, kvc.capacity, kvc.committed_len, kvc.seq_len, kvc.copy_bytes(), kvc.allocated_bytes()
-            );
+            let rss_after = worker_memory::sample_process_rss_self();
+            let active_after = crate::compute_image::mlx_active_memory_bytes();
+            let cache_after = crate::compute_image::mlx_cache_memory_bytes();
             let s = hidden.shape();
-            let layer_elapsed_ms = layer_start.elapsed().as_millis() as u64;
             let shape_d0 = s.first().copied().unwrap_or(0);
             let shape_d1 = s.get(1).copied().unwrap_or(0);
+            let finite = hidden.try_as_slice::<f32>().map(|_| true).unwrap_or(true);
             eprintln!(
-                "[full-model] layer={} kind={} elapsed_ms={} handles={}→{} active_mem={}→{} cache_mem={}→{} shape=[{},{}] finite={}",
+                "[full-model] layer={} kind={} graph_us={} eval_us={} rss={}→{} handles={}→{} active={}→{} cache={}→{} kv_seq={} kv_copy={} kv_alloc={} shape=[{},{}] finite={}",
                 l,
                 layer_plan.attention_kind,
-                layer_elapsed_ms,
-                handles_before,
-                crate::bridge::handle_count(),
-                format_bytes(crate::compute_image::mlx_active_memory_bytes()),
-                format_bytes(crate::compute_image::mlx_active_memory_bytes()), // measured after eval above
-                format_bytes(crate::compute_image::mlx_cache_memory_bytes()),
-                format_bytes(crate::compute_image::mlx_cache_memory_bytes()),
+                graph_us, eval_us,
+                format_bytes(rss_before), format_bytes(rss_after),
+                handles_before, crate::bridge::handle_count(),
+                format_bytes(active_before), format_bytes(active_after),
+                format_bytes(cache_before), format_bytes(cache_after),
+                kvc.seq_len, kvc.copy_bytes(), kvc.allocated_bytes(),
                 shape_d0, shape_d1,
-                true,
+                finite,
             );
         }
         eprintln!("[phase] decode_step end");
@@ -1036,4 +1076,4 @@ impl std::fmt::Debug for LoadedProfiledModel {
             .field("image_dir", &self.image_dir)
             .finish()
     }
-}
+    }
