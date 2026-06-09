@@ -10,6 +10,7 @@
 //! platforms, all functions return false / error.  Use `cfg(target_os =
 //! "macos")` guards at the call site when the capture path is optional.
 
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::ffi::CString;
 
 /// Check if Metal is available on this machine.
@@ -61,21 +62,23 @@ pub fn stop_capture() -> bool {
 
 // ── RAII capture guard ─────────────────────────────────────────────────────
 
+/// Process-wide flag preventing nested Metal captures.
+static CAPTURE_ACTIVE: AtomicBool = AtomicBool::new(false);
+
 /// Owns an active Metal capture session.  Calls `stop_capture()` in `Drop`
 /// so capture is finalized even on panic.  Nested captures are prevented by
 /// a process-wide atomic flag.
 pub struct CaptureGuard {
     path: String,
     active: bool,
+    finished: bool,
 }
 
 impl CaptureGuard {
     /// Begin a new capture session.  Returns `None` if capture is already
-    /// active, Metal is unavailable, or `start_capture` fails.
+    /// active, Metal is unavailable, the output path already exists and
+    /// cannot be removed, or `start_capture` fails.
     pub fn begin(path: &str) -> Option<Self> {
-        use std::sync::atomic::{AtomicBool, Ordering};
-        static CAPTURE_ACTIVE: AtomicBool = AtomicBool::new(false);
-
         if CAPTURE_ACTIVE.swap(true, Ordering::SeqCst) {
             eprintln!("[metal-capture] capture already active — refusing nested capture");
             return None;
@@ -86,6 +89,22 @@ impl CaptureGuard {
             return None;
         }
 
+        // Reject existing output path — remove it so a fresh trace is
+        // always captured, avoiding stale-file confusion.
+        let p = std::path::Path::new(path);
+        if p.exists() {
+            match std::fs::remove_file(p) {
+                Ok(_) => {
+                    eprintln!("[metal-capture] removed existing file at {path}");
+                }
+                Err(e) => {
+                    eprintln!("[metal-capture] failed to remove existing {path}: {e}");
+                    CAPTURE_ACTIVE.store(false, Ordering::SeqCst);
+                    return None;
+                }
+            }
+        }
+
         if !start_capture(path) {
             CAPTURE_ACTIVE.store(false, Ordering::SeqCst);
             return None;
@@ -94,21 +113,72 @@ impl CaptureGuard {
         Some(CaptureGuard {
             path: path.into(),
             active: true,
+            finished: false,
+        })
+    }
+
+    /// Stop capture, verify the output file exists and is nonempty,
+    /// compute SHA-256, and return a [`CaptureReceipt`].
+    ///
+    /// Returns `Err` with a descriptive message when any step fails.
+    /// After a successful call the guard is consumed — calling `finish`
+    /// twice is prevented by move semantics.
+    pub fn finish(mut self) -> Result<CaptureReceipt, String> {
+        self.finished = true;
+        let stopped = stop_capture();
+        CAPTURE_ACTIVE.store(false, Ordering::SeqCst);
+
+        if !stopped {
+            return Err("stop_capture failed".into());
+        }
+
+        let meta = std::fs::metadata(&self.path)
+            .map_err(|e| format!("output file missing after capture: {e}"))?;
+        if meta.len() == 0 {
+            return Err("output file is empty".into());
+        }
+
+        let data = std::fs::read(&self.path)
+            .map_err(|e| format!("failed to read output file: {e}"))?;
+        let sha = {
+            use sha2::{Digest, Sha256};
+            let mut h = Sha256::new();
+            h.update(&data);
+            format!("{:x}", h.finalize())
+        };
+
+        Ok(CaptureReceipt {
+            output_path: self.path.clone(),
+            file_size: meta.len(),
+            file_sha256: sha,
+            phase: String::new(),
+            layer_index: None,
+            attention_kind: None,
+            source_commit: String::new(),
+            binary_sha256: String::new(),
+            logical_image_hash: String::new(),
+            artifact_root_hash: String::new(),
+            capture_started: true,
+            capture_stopped: true,
+            metal_available: true,
         })
     }
 }
 
 impl Drop for CaptureGuard {
     fn drop(&mut self) {
-        if self.active {
-            use std::sync::atomic::{AtomicBool, Ordering};
-            static CAPTURE_ACTIVE: AtomicBool = AtomicBool::new(false);
-            // The guard may have been moved; re-read the flag
+        if self.active && !self.finished {
             let stopped = stop_capture();
             CAPTURE_ACTIVE.store(false, Ordering::SeqCst);
             if !stopped {
                 eprintln!("[metal-capture] warning: stop_capture failed for {}", self.path);
             }
+            // Capture was aborted (panic or early drop without finish()) —
+            // distinguish intentional finishes from crashes in diagnostics.
+            eprintln!(
+                "[metal-capture] capture aborted — {} not finalized",
+                self.path
+            );
         }
     }
 }

@@ -24,6 +24,7 @@ use sha2::{Sha256, Digest};
 #[derive(Debug, Clone, Serialize)]
 pub struct ReplaySample {
     pub sample_index: usize,
+    pub runtime_generation: u32,
     pub phase: String,
     pub projection_family: String,
     pub layer_index: usize,
@@ -284,6 +285,7 @@ impl ProjectionHarness {
 
             ReplaySample {
                 sample_index,
+                runtime_generation: 0,
                 phase: format!("{}_{}", phase, label),
                 projection_family: self.family.as_str().to_string(),
                 layer_index: self.layer_index,
@@ -511,6 +513,7 @@ impl ProjectionHarness {
 
         ReplaySample {
             sample_index: 0,
+            runtime_generation: 0,
             phase: label.to_string(),
             projection_family: self.family.as_str().to_string(),
             layer_index: self.layer_index,
@@ -603,26 +606,27 @@ impl ProjectionHarness {
         family_name: &str,
     ) -> Vec<ReplaySample> {
         let mut results = Vec::new();
-        let input_shape = {
-            let h = Self::open(image_dir, layer_index, family_name)
-                .map_err(|e| eprintln!("warn: open failed: {}", e)).ok();
-            h.map(|h| h.input_shape_for()).unwrap_or_else(|| vec![1, 3840])
-        };
 
-        // Phase 1: warm with first harness
+        // Phase 1: warm with first harness (generation 0)
         {
             let h1 = match Self::open(image_dir, layer_index, family_name) {
                 Ok(h) => h,
                 Err(e) => { eprintln!("open phase1: {}", e); return results; }
             };
-            let samples = h1.replay_decode(3, 0);
+            let mut samples = h1.replay_decode(3, 0);
+            for s in &mut samples {
+                s.runtime_generation = 0;
+            }
             results.extend(samples);
         } // h1 dropped — all tensor references released
 
-        // Phase 2: reopen and test
+        // Phase 2: reopen and test (generation 1)
         match Self::open(image_dir, layer_index, family_name) {
             Ok(h2) => {
-                let samples = h2.replay_decode(3, 0);
+                let mut samples = h2.replay_decode(3, 0);
+                for s in &mut samples {
+                    s.runtime_generation = 1;
+                }
                 results.extend(samples);
             }
             Err(e) => { eprintln!("open phase2: {}", e); }

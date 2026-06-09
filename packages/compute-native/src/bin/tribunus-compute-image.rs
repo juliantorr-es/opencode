@@ -587,15 +587,11 @@ fn cmd_replay_projection(args: &[String]) -> Result<(), String> {
 
 fn cmd_metal_capture(args: &[String]) -> Result<(), String> {
     let mut image: Option<String> = None;
-    let mut phase = "decode".to_string();
-    let mut layer: Option<usize> = None;
     let mut output = "/tmp/tribunus_metal_capture.gputrace".to_string();
     let mut i = 0;
     while i < args.len() {
         match args[i].as_str() {
             "--image" => { i += 1; if i < args.len() { image = Some(args[i].clone()); } }
-            "--phase" => { i += 1; if i < args.len() { phase = args[i].clone(); } }
-            "--layer" => { i += 1; if i < args.len() { layer = Some(args[i].parse::<usize>().map_err(|_| format!("invalid layer: {}", args[i]))?); } }
             "--output" => { i += 1; if i < args.len() { output = args[i].clone(); } }
             _ => { return Err(format!("unknown flag: {}", args[i])); }
         }
@@ -606,11 +602,11 @@ fn cmd_metal_capture(args: &[String]) -> Result<(), String> {
     let guard = tribunus_compute_native::metal_capture::CaptureGuard::begin(&output)
         .ok_or_else(|| "failed to start Metal capture (Metal unavailable or already active)".to_string())?;
 
-    eprintln!("Metal capture active: {} (phase={}, layer={:?})", output, phase, layer);
+    eprintln!("Metal capture active: {} (whole_decode_capture)", output);
 
     let decode_result = cmd_decode_one(&["--image".to_string(), image_dir.clone()]);
 
-    drop(guard);
+    guard.finish().map_err(|e| format!("capture finish failed: {}", e))?;
 
     let meta = std::fs::metadata(&output)
         .map_err(|e| format!("capture output not found: {} ({})", output, e))?;
@@ -618,6 +614,13 @@ fn cmd_metal_capture(args: &[String]) -> Result<(), String> {
         return Err(format!("capture output is empty: {}", output));
     }
 
-    eprintln!("Capture saved: {} ({} bytes)", output, meta.len());
+    let receipt = json!({
+        "status": "captured",
+        "capture_type": "whole_decode_capture",
+        "output": output,
+        "bytes": meta.len(),
+    });
+    println!("{}", serde_json::to_string(&receipt).unwrap());
+
     decode_result
 }
