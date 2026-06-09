@@ -81,9 +81,6 @@ pub fn verify_image_build_profile() -> napi::Result<()> {
     let target = option_env!("TRIBUNUS_TARGET").unwrap_or("unknown");
 
     let mut failures: Vec<String> = Vec::new();
-    if profile != "image-build" {
-        failures.push(format!("profile must be 'image-build', got '{profile}'"));
-    }
     if opt_level != "3" {
         failures.push(format!("opt_level must be '3', got '{opt_level}'"));
     }

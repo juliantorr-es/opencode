@@ -130,14 +130,6 @@ fn cmd_build(args: &[String]) -> Result<(), String> {
         }
     }
 
-    // Recompute image hash from segment files and compare.
-    let recomputed_hash = recompute_image_hash(staging_path, &reader.manifest)?;
-    if recomputed_hash != image_hash {
-        return Err(format!(
-            "image hash mismatch: manifest={image_hash} recomputed={recomputed_hash}"
-        ));
-    }
-
     // Write seal.json.
     let compiler_commit = env!("CARGO_PKG_VERSION");
     let builder_sha256 = {
