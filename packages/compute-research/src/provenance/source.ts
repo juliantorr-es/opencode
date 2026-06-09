@@ -14,12 +14,19 @@
 /** Source code identity, dependency fingerprints, and toolchain configuration. */
 export interface SourceProvenance {
   source: {
-    repository: string
+    repo_url: string
     commit_sha: string
     branch: string
     commit_timestamp: string
     dirty: boolean
-    dependencies: Record<string, string>
+    tree_hash: string
+    dirty_patch_hash?: string
+  }
+  dependencies: {
+    "Cargo.lock_hash"?: string
+    "Bun.lock_hash"?: string
+    "mlx_fork_revision"?: string
+    "mlx_rs_revision"?: string
   }
   toolchain: {
     rust_version: string
@@ -290,16 +297,17 @@ export async function captureSourceProvenance(
 
   return {
     source: {
-      repository: repo_url,
+      repo_url: repo_url,
       commit_sha,
       branch,
       commit_timestamp,
       dirty,
-      dependencies: {
-        cargo_lock_hash,
-        bun_lock_hash,
-        compute_native_manifest_hash,
-      },
+      tree_hash,
+      ...(dirty ? { dirty_patch_hash } : {}),
+    },
+    dependencies: {
+      "Cargo.lock_hash": cargo_lock_hash,
+      "Bun.lock_hash": bun_lock_hash,
     },
     toolchain: {
       rust_version,

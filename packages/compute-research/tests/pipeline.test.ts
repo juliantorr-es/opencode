@@ -11,6 +11,7 @@ function duckdbAvailable(): boolean {
   catch { return false; }
 }
 
+import { validateProvenanceShape } from "../src/schemas/validator.js";
 import { RunDirectory } from "../src/recorder/run-dir.js";
 import { finalizeRun } from "../src/recorder/finalize.js";
 import { normalizeRun } from "../src/normalize/normalize.js";
@@ -47,21 +48,24 @@ function writeCompareEvent(rd: InstanceType<typeof RunDirectory>, event: string,
 function createNormalizeRun(rootDir: string, runId: string, runGrade = "claim_candidate"): RunDirectory {
   const rd = new RunDirectory(runId, rootDir);
   rd.writeRunManifest({
+    schema_version: "1",
     run_id: runId, experiment_id: "exp-001", optimization_id: "opt-a", study_id: "study-1", trial_index: 0,
     run_grade: runGrade, status: "completed",
     start_time: "2026-06-09T00:00:00Z", end_time: "2026-06-09T01:00:00Z",
-    source_revision: "abc123def", workload_id: "bench-llm-v3",
-    model_identity: { image_hash: "sha256:deadbeef" },
-    machine_profile: { anon_id: "mac-studio-01", chip: "M3Ultra", memory: "192GB" },
-    instrumentation_mode: "research_standard", page_cache_class: "warm",
-    power_class: "high_performance", thermal_class: "nominal", worker_id: "worker-1",
+    source_revision: "abc123def", workload_id: "bench-llm-v3", configuration_id: "cfg-1",
+    instrumentation_mode: "research_standard",
+    model_identity: { image_hash: "sha256:deadbeef", storage_abi: "v1", runtime_abi: "v1", tokenizer_hash: "t" },
+    machine_profile: { anon_id: "mac-studio-01", model_id: "Mac15,9", chip: "M3Ultra", cores: 24, memory: "192GB", os_version: "15.5" },
+    final_manifest_hash: "sha256:ffff",
   });
   rd.writeProvenance({
-    source: { repository: "https://github.com/tribunus/research", commit_sha: "abc123def", branch: "main", dirty: false, commit_timestamp: "2026-06-09T00:00:00Z", dependencies: { "Cargo.lock": "abc" } },
-    toolchain: { name: "tribunus", version: "1.0.0", compiler: { name: "clang", version: "18" } },
-    model: { name: "llama-3.2-8b", image_hash: "sha256:deadbeef", quantization: "fp16" },
-    machine: { model_identifier: "Mac15,9", anon_id: "mac-studio-01", chip: "M3Ultra", memory: "192GB" },
-    environment: { os: "macOS 15.5", kernel: "25.0", library_versions: { metal: "3.2", cuda: null } },
+    schema_version: "1",
+    source: { repo_url: "https://github.com/tribunus/research", commit_sha: "abc123def", branch: "main", dirty: false, commit_timestamp: "2026-06-09T00:00:00Z", tree_hash: "def456abc" },
+    dependencies: { "Cargo.lock_hash": "abc" },
+    toolchain: { rust_version: "1.85.0", target_triple: "aarch64-apple-darwin", linker: "ld64", opt_profile: "release", feature_flags: [], env_flags: [] },
+    model: { image_hash: "sha256:deadbeef", storage_abi: "v1", runtime_abi: "v1", manifest_hash: "m", execution_plan_hash: "e", arch_hash: "a", quant_hash: "q", tokenizer_hash: "t", model_revision: "r" },
+    machine: { anon_id: "mac-studio-01", model_identifier: "Mac15,9", chip_family: "Apple", perf_cores: 10, eff_cores: 4, gpu_cores: 32, physical_memory: "64 GB", os_version: "15.5", kernel_version: "24.5" },
+    environment: { variables: {}, redacted_paths: [], redaction_metadata: {} },
   });
   rd.writeWorkload({ name: "bench-llm-v3", description: "LLM inference benchmark v3", parameters: { batch_size: 1, max_tokens: 128 } });
   rd.writeExperimentPlan({ name: "llm-inference-optimization", hypothesis: "Memory compression improves throughput", config: { iterations: 5, warmup: 2 } });
@@ -84,11 +88,12 @@ function createCompareRun(rootDir: string, runId: string, latencyValues: number[
     power_class: "high_performance", thermal_class: "nominal", worker_id: "worker-1",
   });
   rd.writeProvenance({
-    source: { repository: "https://github.com/tribunus/research", commit_sha: "abc", branch: "main", dirty: false, commit_timestamp: "2026-06-09T00:00:00Z", dependencies: {} },
-    toolchain: { name: "tribunus", version: "1.0.0" },
-    model: { name: "llama-3.2-8b", image_hash: "sha256:deadbeef" },
-    machine: { model_identifier: "Mac15,9", anon_id: "mac-studio-01" },
-    environment: { os: "macOS 15.5", kernel: "25.0" },
+    source: { repo_url: "https://github.com/tribunus/research", commit_sha: "abc", branch: "main", dirty: false, commit_timestamp: "2026-06-09T00:00:00Z", tree_hash: "abc123" },
+    dependencies: {},
+    toolchain: { rust_version: "1.85.0", target_triple: "aarch64-apple-darwin", linker: "ld64", opt_profile: "release", feature_flags: [], env_flags: [] },
+    model: { image_hash: "sha256:deadbeef", storage_abi: "v1", runtime_abi: "v1", manifest_hash: "m", execution_plan_hash: "e", arch_hash: "a", quant_hash: "q", tokenizer_hash: "t", model_revision: "r" },
+    machine: { anon_id: "mac-studio-01", model_identifier: "Mac15,9", chip_family: "Apple", perf_cores: 10, eff_cores: 4, gpu_cores: 32, physical_memory: "64 GB", os_version: "15.5", kernel_version: "24.5" },
+    environment: { variables: {}, redacted_paths: [], redaction_metadata: {} },
   });
   rd.writeWorkload({ name: "bench-llm-v3", parameters: { batch_size: 1, max_tokens: 128 } });
   rd.writeExperimentPlan({ name: "llm-inference-optimization", config: { iterations: latencyValues.length, warmup: 2 } });
@@ -193,7 +198,14 @@ describe("Pipeline E2E", () => {
     const rd = new RunDirectory(id, root);
     rd.writeRunManifest({ run_id: id, experiment_id: "exp", run_grade: "claim_candidate", status: "completed", model_identity: { image_hash: "sha256:abc" }, machine_profile: { anon_id: "x" } });
     // Valid JSON but missing model.image_hash — structural validation should catch it
-    rd.writeProvenance({ source: { commit_sha: "abc123", dirty: false, dependencies: {} }, toolchain: {}, model: {}, machine: { anon_id: "x" }, environment: {} });
+    rd.writeProvenance({
+      source: { repo_url: "https://example.com", commit_sha: "abc123", branch: "main", commit_timestamp: "2026-06-09T00:00:00Z", dirty: false, tree_hash: "def" },
+      dependencies: {},
+      toolchain: { rust_version: "1.85", target_triple: "aarch64", linker: "ld", opt_profile: "release", feature_flags: [], env_flags: [] },
+      model: {},
+      machine: { anon_id: "x", model_identifier: "Mac", chip_family: "Apple", perf_cores: 1, eff_cores: 1, gpu_cores: 1, physical_memory: "1 GB", os_version: "1", kernel_version: "1" },
+      environment: { variables: {}, redacted_paths: [], redaction_metadata: {} },
+    });
     rd.writeWorkload({ name: "test" });
     rd.writeExperimentPlan({ name: "test" });
     writeNormalizeEvent(rd, 1, "embedding_gather", 100, 1_000_000, 100_000_000);
@@ -201,7 +213,7 @@ describe("Pipeline E2E", () => {
     const provValidation = rec.validations.find(v => v.file.includes("provenance.json"));
     expect(provValidation).toBeDefined();
     expect(provValidation!.valid).toBe(false);
-    expect(provValidation!.errors.some(e => e.includes("model.image_hash"))).toBe(true);
+    expect(provValidation!.errors.some(e => e.includes("must have required property 'image_hash'"))).toBe(true);
   });
 
   test("invalid run grade gracefully rejected", () => {
@@ -216,11 +228,12 @@ describe("Pipeline E2E", () => {
       machine_profile: { anon_id: "m1", chip: "M1", memory: "16GB" },
     });
     rd.writeProvenance({
-      source: { commit_sha: "abc123", dirty: false, branch: "main", commit_timestamp: "2026-06-09T00:00:00Z", dependencies: {} },
-      toolchain: {},
-      model: { image_hash: "sha256:deadbeef" },
-      machine: { anon_id: "m1", model_identifier: "Mac15,9" },
-      environment: {},
+      source: { repo_url: "https://example.com", commit_sha: "abc123", branch: "main", commit_timestamp: "2026-06-09T00:00:00Z", dirty: false, tree_hash: "def" },
+      dependencies: {},
+      toolchain: { rust_version: "1.85", target_triple: "aarch64", linker: "ld", opt_profile: "release", feature_flags: [], env_flags: [] },
+      model: { image_hash: "sha256:deadbeef", storage_abi: "v1", runtime_abi: "v1", manifest_hash: "m", execution_plan_hash: "e", arch_hash: "a", quant_hash: "q", tokenizer_hash: "t", model_revision: "r" },
+      machine: { anon_id: "m1", model_identifier: "Mac15,9", chip_family: "Apple", perf_cores: 1, eff_cores: 1, gpu_cores: 1, physical_memory: "1 GB", os_version: "1", kernel_version: "1" },
+      environment: { variables: {}, redacted_paths: [], redaction_metadata: {} },
     });
     rd.writeWorkload({ name: "test" });
     rd.writeExperimentPlan({ name: "test" });
@@ -233,7 +246,7 @@ describe("Pipeline E2E", () => {
     const manifestVal = finalRec.validations.find(v => v.file.includes("run-manifest.json"));
     expect(manifestVal).toBeDefined();
     expect(manifestVal!.valid).toBe(false);
-    expect(manifestVal!.errors.some(e => e.includes("invalid_grade"))).toBe(true);
+    expect(manifestVal!.errors.some(e => e.includes("allowed values") || e.includes("enum"))).toBe(true);
     const manifest = JSON.parse(readFileSync(join(finalDir, "run-manifest.json"), "utf-8"));
     expect(manifest.run_grade).toBe("invalid_grade");
 
@@ -300,5 +313,32 @@ describe("Pipeline E2E", () => {
     expect(indCi3.lower).not.toBe(indCi.lower);
     const pairedCi3 = bootstrapPairedCI(diffs, 0.95, 5_000, seed + 1);
     expect(pairedCi3.lower).not.toBe(pairedCi.lower);
+  });
+
+  test("provenance.v1.json schema enforces exact contract", () => {
+    const schemaPath = join(import.meta.dir, "../../../research/schemas/provenance.v1.json");
+    const schema = JSON.parse(readFileSync(schemaPath, "utf-8"));
+    expect(schema.additionalProperties).toBe(false);
+
+    const validProv: Record<string, unknown> = {
+      schema_version: "1",
+      source: { repo_url: "https://example.com", commit_sha: "abc", branch: "main", commit_timestamp: "2026-06-09T00:00:00Z", dirty: false, tree_hash: "def" },
+      dependencies: {},
+      toolchain: { rust_version: "1.80", target_triple: "aarch64-apple-darwin", linker: "ld64", opt_profile: "release", feature_flags: [], env_flags: [] },
+      model: { image_hash: "h", storage_abi: "v1", runtime_abi: "v1", manifest_hash: "m", execution_plan_hash: "e", arch_hash: "a", quant_hash: "q", tokenizer_hash: "t", model_revision: "r" },
+      machine: { anon_id: "a", model_identifier: "Mac15,9", chip_family: "Apple", perf_cores: 10, eff_cores: 4, gpu_cores: 32, physical_memory: "64 GB", os_version: "15.5", kernel_version: "24.5" },
+      environment: { variables: {}, redacted_paths: [], redaction_metadata: {} },
+    };
+    const errors = validateProvenanceShape(validProv);
+    expect(errors).toEqual([]);
+
+    // Missing required field fails
+    const badProv = { ...validProv };
+    delete (badProv as { source?: unknown }).source;
+    expect(validateProvenanceShape(badProv).length).toBeGreaterThan(0);
+
+    // Unknown field fails (additionalProperties: false)
+    const extraProv = { ...validProv, extra_field: true };
+    expect(validateProvenanceShape(extraProv).length).toBeGreaterThan(0);
   });
 });
