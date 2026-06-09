@@ -255,6 +255,34 @@ pub fn sample_process_rss_self() -> u64 {
     }
 }
 
+/// Sample cumulative page faults requiring I/O (pageins) for the current process.
+///
+/// On macOS uses `proc_pid_rusage` (RUSAGE_INFO_V2) and reads `ri_pageins`.
+/// Returns 0 on failure and **never panics**.
+pub fn sample_page_faults() -> u64 {
+    #[cfg(target_os = "macos")]
+    {
+        use libc::rusage_info_v2;
+        let mut info: rusage_info_v2 = unsafe { std::mem::zeroed() };
+        let mut info_ptr: *mut libc::c_void = &mut info as *mut _ as *mut libc::c_void;
+        let ret = unsafe {
+            libc::proc_pid_rusage(
+                libc::getpid() as libc::c_int,
+                libc::RUSAGE_INFO_V2,
+                &mut info_ptr,
+            )
+        };
+        if ret == 0 {
+            return info.ri_pageins;
+        }
+        0
+    }
+    #[cfg(not(target_os = "macos"))]
+    {
+        0
+    }
+}
+
 // ── MLX memory configuration ───────────────────────────────────────────────
 
 /// Configure MLX Metal active and cache memory limits, then drain the cache.
