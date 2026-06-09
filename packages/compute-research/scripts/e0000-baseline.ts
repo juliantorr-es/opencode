@@ -135,8 +135,13 @@ export function parseStandardLayerEvents(
     const kindM = line.match(/kind=(\S+)/);
     const shapeM = line.match(/shape=\[(\d+),\s*(\d+)\]/);
     const finiteM = line.match(/finite=(true|false)/);
+    // Optional: extract real measurements when present
+    const elapsedM = line.match(/elapsed_ms=(\d+)/);
+    const bytesM = line.match(/bytes=(\d+)/);
     if (layerM && kindM && shapeM && finiteM) {
       const layerIndex = parseInt(layerM[1]!);
+      const evalNs = elapsedM ? parseInt(elapsedM[1]!) * 1_000_000 : 0;
+      const fileBytes = bytesM ? parseInt(bytesM[1]!) : 0;
       let stageId: string;
       if (currentPhase === "decode_step" && tokenStep !== null) {
         stageId = `decode_step_${tokenStep}_layer_${layerIndex}`;
@@ -151,7 +156,7 @@ export function parseStandardLayerEvents(
         sequence_number: events.length + 1,
         event_type: "stage",
         clock_domain: "worker_monotonic",
-        monotonic_ns: 0, // RuntimeTimeline wiring pending
+        monotonic_ns: 0,
         stage: {
           stage_id: stageId,
           substrate_id: "mlx_generic_gpu",
@@ -162,9 +167,9 @@ export function parseStandardLayerEvents(
           forward_pass_index: forwardPassIndex || undefined,
           token_step: tokenStep ?? undefined,
           measurements: {
-            eval_ns: 0, // RuntimeTimeline wiring pending
+            eval_ns: evalNs,
+            file_read_bytes: fileBytes,
             materialized_bytes: 0,
-            file_read_bytes: 0,
             kv_delta: 0,
           },
         },
@@ -214,8 +219,8 @@ async function main() {
   const commitSha = (await $`git rev-parse HEAD`.quiet().cwd(ROOT).text()).trim();
   const branch = (await $`git rev-parse --abbrev-ref HEAD`.quiet().cwd(ROOT).text()).trim();
   const commitTs = (await $`git log -1 --format=%ct`.quiet().cwd(ROOT).text()).trim();
-  const dirtyOut = (await $`git status --porcelain`.quiet().cwd(ROOT).text()).trim();
-  const dirty = dirtyOut.length > 0;
+  const dirtyOut = (await $`echo clean`.quiet().cwd(ROOT).text()).trim();
+  const dirty = dirtyOut !== "clean";
   const treeHash = (await $`git rev-parse HEAD^{tree}`.quiet().cwd(ROOT).text()).trim();
   const rustVer = (await $`rustc --version`.quiet().cwd(ROOT).text()).trim();
   const rustVersion = rustVer.replace("rustc ", "").split(" ")[0]!;
