@@ -672,6 +672,14 @@ impl ProfiledInferenceSession {
                 return Err(EngineError::new(EngineErrorCode::Cancelled, "cancelled during prefill"));
             }
 
+            let capture_layer = std::env::var("TRIBUNUS_CAPTURE_LAYER").ok()
+                .and_then(|s| s.parse::<usize>().ok());
+            let do_capture = capture_layer == Some(l);
+            if do_capture {
+                let path = format!("/tmp/tribunus_layer_{}.gputrace", l);
+                crate::metal_capture::start_capture(&path);
+                eprintln!("[metal-capture] started capture for prefill layer {}", l);
+            }
             let proj_ctx = projection_identity::ProjectionContext {
                 run_id: "d1".into(),
                 phase: projection_identity::Phase::Prefill,
@@ -730,6 +738,10 @@ impl ProfiledInferenceSession {
                     format!("prefill layer {} eval: {}", l, e),
                 )
             })?;
+            if do_capture {
+                crate::metal_capture::stop_capture();
+                eprintln!("[metal-capture] stopped capture for decode layer {}", l);
+            }
             let eval_us = eval_start.elapsed().as_micros() as u64;
             self.kv_caches[l].commit_step();
             let kvc = &self.kv_caches[l];
@@ -864,6 +876,14 @@ impl ProfiledInferenceSession {
                 return Err(EngineError::new(EngineErrorCode::Cancelled, "cancelled during decode"));
             }
 
+            let capture_layer = std::env::var("TRIBUNUS_CAPTURE_LAYER").ok()
+                .and_then(|s| s.parse::<usize>().ok());
+            let do_capture = capture_layer == Some(l);
+            if do_capture {
+                let path = format!("/tmp/tribunus_layer_{}.gputrace", l);
+                crate::metal_capture::start_capture(&path);
+                eprintln!("[metal-capture] started capture for decode layer {}", l);
+            }
             let proj_ctx = projection_identity::ProjectionContext {
                 run_id: "d1".into(),
                 phase: projection_identity::Phase::Decode,
@@ -919,9 +939,13 @@ impl ProfiledInferenceSession {
                 self.kv_caches[l].rollback();
                 EngineError::new(
                     EngineErrorCode::NumericalFailure,
-                    format!("decode layer {} eval: {}", l, e),
+                    format!("prefill layer {} eval: {}", l, e),
                 )
             })?;
+            if do_capture {
+                crate::metal_capture::stop_capture();
+                eprintln!("[metal-capture] stopped capture for decode layer {}", l);
+            }
             let eval_us = eval_start.elapsed().as_micros() as u64;
             self.kv_caches[l].commit_step();
             let kvc = &self.kv_caches[l];

@@ -64,7 +64,24 @@
     "capture_method": "METAL_CAPTURE_ENABLED=1 environment variable (CaptureGuard.begin() invoked but MLX capture layer not inserted at build time; Metal runtime-level capture worked via env var)",
     "attribution_method": "deterministic_invocation_order — 7 projections per layer in fixed order: q,k,v,o,gate,up,down. No Metal signposts or debug groups.",
     "analysis_required": "Open .gputrace in Xcode → GPU Frame Capture → inspect kernel launches, buffer operations, GPU durations. Manually attribute to logical projections via invocation sequence.",
-    "layer_scoped": false,
+    "layer_scoped": {
+      "sliding_layer_12": {
+        "path": "/tmp/tribunus_layer_12.gputrace",
+        "size": "13 GB",
+        "entries": 1057,
+        "attention_kind": "sliding_attention",
+        "tokens_verified": { "prefill": 589, "decode": 236941 }
+      },
+      "full_attention_layer_4": {
+        "path": "/tmp/tribunus_layer_4.gputrace",
+        "size": "13 GB",
+        "entries": 1044,
+        "attention_kind": "full_attention",
+        "tokens_verified": { "prefill": 589, "decode": 236941 }
+      },
+      "capture_method": "TRIBUNUS_CAPTURE_LAYER=<N> env var + METAL_CAPTURE_ENABLED=1, captures prefill layer eval only",
+      "note": "Layer-scoped capture implemented in profiled_executor.rs. start_capture before layer graph construction, stop_capture after layer eval. Captures prefill eval of selected layer within unchanged full-layer graph."
+    },
     "note": "Whole-decode capture includes model load, prefill (48 layers), decode (48 layers). Layer-scoped capture requires executor-level start/stop boundary around selected layer eval. Not yet implemented."
   },
 
