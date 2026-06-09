@@ -67,13 +67,11 @@ export function parseStandardLayerEvents(
            graph_build_ns: graphNs,
            eval_ns: evalNs,
            total_ns: graphNs + evalNs,
-           kv_seq_len: kvSeqM ? parseInt(kvSeqM[1]!) : 0,
-           kv_copy_bytes: kvCopyM ? parseInt(kvCopyM[1]!) : 0,
-           kv_alloc_bytes: kvAllocM ? parseInt(kvAllocM[1]!) : 0,
-           file_read_bytes: 0,
-           materialized_bytes: 0,
-           kv_delta: 0,
          };
+        // Only include KV fields when present in the trace
+        if (kvSeqM) (measurements as Record<string, unknown>).kv_seq_len = parseInt(kvSeqM[1]!);
+        if (kvCopyM) (measurements as Record<string, unknown>).kv_copy_bytes = parseInt(kvCopyM[1]!);
+        if (kvAllocM) (measurements as Record<string, unknown>).kv_alloc_bytes = parseInt(kvAllocM[1]!);
          // Emit a companion memory_sample for RSS/MLX telemetry
          const rssAfterM = line.match(/rss=\S+→(\S+)/);
          const activeAfterM = line.match(/active=\S+→(\S+)/);
@@ -104,11 +102,19 @@ export function parseStandardLayerEvents(
                phase: currentPhase || undefined,
                forward_pass_index: forwardPassIndex || undefined,
                measurements: {
-                 resident_bytes: rssAfterM ? Math.round(parseMem(rssAfterM[1]!)) : 0,
-                 active_bytes: activeAfterM ? Math.round(parseMem(activeAfterM[1]!)) : 0,
-                 compressed_bytes: cacheAfterM ? Math.round(parseMem(cacheAfterM[1]!)) : 0,
-                 wired_bytes: 0,
-               },
+                // Backward-compatible keys used by the normalizer's MemorySampleRecord columns
+                resident_bytes: rssAfterM ? Math.round(parseMem(rssAfterM[1]!)) : 0,
+                active_bytes: activeAfterM ? Math.round(parseMem(activeAfterM[1]!)) : 0,
+                // MLX-specific fields stored in the measurements JSON blob.
+                // mlx_active_bytes  = MLX allocator active memory (Metal buffer pool).
+                // mlx_cache_bytes  = MLX allocator cache memory, NOT macOS compressed.
+                // wired_bytes      = 0 (not measured in V2 instrumentation).
+                // compressed_bytes = 0 (not measured; do not interpret as MLX cache).
+                mlx_active_bytes: activeAfterM ? Math.round(parseMem(activeAfterM[1]!)) : null,
+                mlx_cache_bytes: cacheAfterM ? Math.round(parseMem(cacheAfterM[1]!)) : null,
+                wired_bytes: 0,
+                compressed_bytes: 0,
+               } as Record<string, unknown>,
              },
            });
          }
@@ -116,15 +122,13 @@ export function parseStandardLayerEvents(
          // ── V1 grammar (original E0000 format) ──
          const elapsedM = line.match(/elapsed_ms=(\d+)/);
          const bytesM = line.match(/bytes=(\d+)/);
+        const evalNs = elapsedM ? parseInt(elapsedM[1]!) * 1_000_000 : 0;
          measurements = {
            grammar_version: "v1",
-           graph_build_ns: 0,
-           eval_ns: elapsedM ? parseInt(elapsedM[1]!) * 1_000_000 : 0,
-           total_ns: elapsedM ? parseInt(elapsedM[1]!) * 1_000_000 : 0,
-           file_read_bytes: bytesM ? parseInt(bytesM[1]!) : 0,
-           materialized_bytes: 0,
-           kv_delta: 0,
+          eval_ns: evalNs,
+          total_ns: evalNs,
          };
+        if (bytesM) (measurements as Record<string, unknown>).file_read_bytes = parseInt(bytesM[1]!);
        }
        events.push({
          schema_version: "1.0",

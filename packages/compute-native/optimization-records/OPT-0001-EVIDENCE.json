@@ -16,7 +16,8 @@
     "note": "Full eprintln output from decode-one run, including [model-load], [full-model] per-layer, [phase], [OPT-0006-T2], and JSON summary. Reproducible from the frozen artifact and the committed binary."
   },
   "structured_dataset_digest": "0eddcfd32fa11697cac9b6685d75a71eee1232aaac5529a629f10011124007fe",
-  "canonical_normalization_digest": "0b6d8dc590696c09f7df52caea9b7955c8ff8feddbbec60be3c832def0efe23b",
+  "canonical_normalization_digest": "a6bf8decc7185ea467395b9198e2f61e834f307ab12264c0d571cd6301ef1eb9",
+  "canonical_finalization_digest": "f38f6f62032b9d13c0482c2df4f9ae0da601c920c1afee25f55f39b6dceb700a",
   "canonical_finalization_digest": "b4584c887402d199fc335da06e2e8663b3a59a309ffeffdfcd2414a775df1445",
   "canonical_run_id": "E0002-R1-20260609-canonical",
   "normalization_method": "direct_parser_v1",
@@ -25,7 +26,12 @@
     "parser_module": "compute-research/src/parse/standard-layer-events.ts",
     "parser_grammar": "v2-auto-detect",
     "normalizer": "compute-research/src/normalize/normalize.ts",
-    "duckdb": "executed (smoke query returned count=0 — views expect original run_id format)",
+    "duckdb": "executed — smoke query returns 0 because valid_claim_runs filters run_grade='claim_candidate'; this run is 'controlled'. Direct query confirms 192 events (96 stage + 96 memory_sample) in the runs table.",
+    "parser_schema_corrections": [
+      "Zero-vs-unavailable: absent measurements (file_read_bytes, materialized_bytes, kv_delta) are omitted from the measurements object rather than emitted as phantom zeros.",
+      "Memory-field semantics: MLX cache memory is stored as mlx_cache_bytes in the measurements JSON, NOT as compressed_bytes. compressed_bytes and wired_bytes remain 0 (not measured in V2 instrumentation).",
+      "Backward-compatible: resident_bytes and active_bytes remain in the normalizer's MemorySampleRecord columns for DuckDB view compatibility."
+    ],
     "canonical_run_directory": "packages/compute-native/research-data/E0002-R1-20260609-canonical",
     "canonical_normalized_directory": "packages/compute-native/research-data/E0002-R1-20260609-canonical-norm",
     "canonical_duckdb": "packages/compute-native/research-data/E0002-R1-20260609-canonical.duckdb",
