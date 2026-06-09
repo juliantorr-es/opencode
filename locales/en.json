@@ -1,0 +1,300 @@
+{
+  "_meta": {
+    "language": "English",
+    "nativeName": "English",
+    "dir": "ltr",
+    "locale": "en"
+  },
+  "nav": {
+    "logo": "TRIBUNUS",
+    "download": "Download"
+  },
+  "hero": {
+    "title": "Command the Cohort.",
+    "subtitle": "Coordinate hundreds of coding agents in a single repository. Real-time visibility, scoped authority, zero chaos.",
+    "cta": "Download for macOS"
+  },
+  "proof": {
+    "heading": "See It in Action.",
+    "plane": "Tribunus\nControl Plane",
+    "you": "You",
+    "orchestrate": {
+      "title": "Orchestrate",
+      "desc": "Define missions, assign scope, spawn cohorts. One engineer → hundreds of agents."
+    },
+    "observe": {
+      "title": "Observe",
+      "desc": "Every diff, every decision, every agent status streams live. Nothing happens in the dark."
+    },
+    "govern": {
+      "title": "Govern",
+      "desc": "Scoped authority, merge gates, evidence chains. Senior engineers set the perimeter."
+    }
+  },
+  "features": {
+    "heading": "The Software Factory, Reimagined.",
+    "orchestrate": {
+      "title": "Orchestrate Agents",
+      "desc": "Spawn and coordinate hundreds of coding agents working concurrently across your entire codebase. Define missions, assign scope, and watch the cohort execute."
+    },
+    "visibility": {
+      "title": "Real-Time Visibility",
+      "desc": "Every file change, every agent decision, every diff streams live to every team member. Nothing happens in the dark."
+    },
+    "authority": {
+      "title": "Scoped Authority",
+      "desc": "Senior engineers set the perimeter. Juniors and rookies operate within explicit guardrails. Authority flows down — never sideways."
+    },
+    "evidence": {
+      "title": "Evidence & Gates",
+      "desc": "Every change is tracked, every decision is auditable, every merge is gated. Cryptographic evidence chains for regulated environments."
+    }
+  },
+  "capabilities": {
+    "heading": "From Prototype to Production.",
+    "prototyping": {
+      "title": "Prototyping",
+      "desc": "Spin up working prototypes in minutes. Define the scaffold and let agents wire the plumbing while you focus on architecture."
+    },
+    "debugging": {
+      "title": "Debugging",
+      "desc": "Deploy agent squads to trace through unfamiliar code, surface root causes, and propose fixes — all in parallel."
+    },
+    "iteration": {
+      "title": "Fast Iteration",
+      "desc": "Ship features in hours, not sprints. Agents handle the boilerplate; your team reviews the intent and ships the result."
+    },
+    "featureImpl": {
+      "title": "Rapid Feature Implementation",
+      "desc": "Translate requirements into working code at pace. Break down features into parallel agent tasks with automatic conflict resolution."
+    },
+    "auditing": {
+      "title": "Cybersecurity Auditing",
+      "desc": "Turn agents loose on your codebase to find vulnerabilities, check compliance, and produce audit-ready reports."
+    },
+    "ethicalHacking": {
+      "title": "Ethical Hacking Workflows",
+      "desc": "Run structured penetration testing campaigns with agents that report findings to a central evidence ledger."
+    },
+    "production": {
+      "title": "Full Production Delivery",
+      "desc": "From greenfield to production. Agents draft, test, document, and package. Humans review and approve each gate."
+    }
+  },
+  "compute": {
+    "badge": "New",
+    "heading": "Local Inference. Zero Round Trips.",
+    "lead": "Tribunus isn't just a control plane. It ships a native inference runtime that executes models locally on Apple Silicon — no cloud, no API keys, no latency tax.",
+    "mlx": "MLX",
+    "coreml": "Core ML / ANE",
+    "bridge": "IOSurface\nFP16",
+    "mlxKernel": "Kernel Ops",
+    "mlxAttention": "Attention",
+    "mlxMlp": "MLP",
+    "coremlMlp": "MLP Layers",
+    "coremlState": "State Islands",
+    "statLayers": "Layers Qualified",
+    "statCopies": "Application Copies",
+    "statTests": "Tests Across 9 Modules",
+    "statPrecision": "Boundary Precision",
+    "hybrid": {
+      "title": "MLX + Core ML Hybrid",
+      "desc": "Attention runs on MLX. MLP layers offload to the Apple Neural Engine through Core ML — with zero-copy IOSurface tensor handoff between runtimes."
+    },
+    "arena": {
+      "title": "Arena Allocation",
+      "desc": "IOSurface-backed FP16 arena pools with lease semantics. No malloc in the hot path. Every tensor transition is receipted and auditable."
+    },
+    "deterministic": {
+      "title": "Deterministic Decoding",
+      "desc": "Greedy decode with exact token match verification. Eight-token qualification suite. Same seed, same input — same output. Every time."
+    },
+    "kvCache": {
+      "title": "KV Cache Engine",
+      "desc": "Sliding window and global eviction policies. Prefill + cached decode parity. Concurrent access with proper lease isolation."
+    }
+  },
+  "explainer": {
+    "heading": "What the Compute Engine Actually Does.",
+    "lead": "Forget the jargon. Here is what happens when you press enter — in plain English, with the actual data from our research runs.",
+    "step1": {
+      "title": "The Model Lives on Your Disk",
+      "body": "A frozen copy of Gemma 4 12B sits in local storage. Tribunus maps it into memory once — no downloads, no API keys, no cloud. The model is identified by its cryptographic hash so you know exactly what you are running.",
+      "dataLabel": "Model hash"
+    },
+    "step2": {
+      "title": "Two Engines Fire Up at Once",
+      "body": "MLX takes the GPU and runs the attention layers — the part of the model that decides which words matter. Core ML takes the Apple Neural Engine and runs the feed-forward layers — the part that processes what was decided. They share memory through something called IOSurface. Think of it like two chefs sharing one cutting board instead of passing ingredients back and forth.",
+      "dataLabel": "Copies between engines"
+    },
+    "step3": {
+      "title": "42 Stages, Every Microsecond Tracked",
+      "body": "From the moment the worker wakes up to the moment the final token streams out, every operation is timestamped and receipted. Want to know exactly how long the attention softmax took on layer 23 of the 48-layer stack? It is in the event journal. This is not logging — it is forensic instrumentation. If something is slow, you know exactly what and exactly how much.",
+      "dataLabel1": "Pipeline stages",
+      "dataLabel2": "Layers tracked",
+      "dataLabel3": "Events per run"
+    },
+    "step4": {
+      "title": "Same Input → Same Output. Every Time.",
+      "body": "Deterministic greedy decoding means the model produces the exact same tokens for the exact same input. We verify this with an eight-token qualification suite — the runtime must match the oracle reference token-for-token. If a single token is wrong, the run is rejected. This is how you know your optimizations did not break anything.",
+      "dataLabel": "Qualification requirement"
+    },
+    "step5": {
+      "title": "Every Claim Has a Receipt",
+      "body": "No performance claim is made without a run manifest, a provenance chain, and an immutable observation record. Five experiments have been designed (EXP-0000 through EXP-0004), each with formal hypotheses, repetition policies, and correctness gates. The data lives in DuckDB — queryable, auditable, and permanently archived. Rejected optimizations are never deleted so nobody repeats the same dead end.",
+      "dataLabel1": "Experiments designed",
+      "dataLabel2": "Workloads defined",
+      "dataLabel3": "Run grades"
+    },
+    "cta": "This is the foundation. The control plane coordinates agents. The compute engine runs models. The evidence plane proves they both work. Three pillars, one platform."
+  },
+  "research": {
+    "heading": "Performance Claims Need Proof.",
+    "lead": "Every performance claim is backed by the Research Evidence Plane — a provenance-tracked experiment framework with 42 instrumented pipeline stages, cryptographic artifact hashing, and immutable run records.",
+    "pipelineInit": "Init",
+    "pipelinePerToken": "Per-Token",
+    "pipelineTeardown": "Teardown",
+    "pipelineCaption": "42 pipeline stages — instrumented, timestamped, receipted. Every microsecond accounted for.",
+    "runGrades": {
+      "title": "Run Grades",
+      "desc": "Every run is graded: exploratory, controlled, claim candidate, or archival. Only controlled+ runs support optimization decisions. Legacy results are marked not authoritative."
+    },
+    "immutable": {
+      "title": "Immutable Observations",
+      "desc": "Raw observations are never modified in place. Corrections produce a new copy with provenance link to the original. Negative results are preserved forever — preventing repeated dead ends."
+    },
+    "provenance": {
+      "title": "Provenance Chain",
+      "desc": "Every run captures source commit, binary hashes, model identity, machine profile, and environment. DuckDB analytics over the normalized event stream. Nothing is taken on faith."
+    },
+    "claim": {
+      "text": "Tribunus local inference runtime v1 physically and semantically qualified for one frozen Gemma 4 12B ComputeImage on the qualified Apple Silicon 16 GB profile.",
+      "meta": "Status: Draft · Scope: 64-token prompt ceiling, 8-token output ceiling, deterministic greedy decoding · Model: d042df1e…"
+    }
+  },
+  "roadmap": {
+    "heading": "The Road Ahead.",
+    "phase1": {
+      "label": "Phase 1 — Now",
+      "title": "macOS Developer Preview",
+      "desc": "macOS native app, single developer orchestrating hundreds of agents, real-time change visibility, scoped authority, LocalFabric coordination backend."
+    },
+    "phase2": {
+      "label": "Phase 2 — Next",
+      "title": "Team Collaboration",
+      "desc": "Real-time team collaboration, peer-to-peer serverless architecture, senior/junior/rookie sandboxing, Valkey coordination backend for live multi-user sessions."
+    },
+    "phase3": {
+      "label": "Phase 3 — Later",
+      "title": "Enterprise Governance",
+      "desc": "Enterprise governance, cryptographic audit trails, policy-gated merges, compliance-ready evidence rings, remote-Valkey for distributed teams."
+    },
+    "computeNow": {
+      "label": "Compute — Now",
+      "title": "Native Inference Runtime",
+      "desc": "MLX + Core ML hybrid execution, IOSurface FP16 arena allocation, deterministic decoding, KV cache engine. 48-layer qualification on Gemma 4 12B. Application-copy-free tensor handoff."
+    },
+    "computeNext": {
+      "label": "Compute — Next",
+      "title": "Evidence Plane Qualification",
+      "desc": "Full claim-candidate runs across all workloads. Core ML state qualification. Tokio streaming with cancellation. MLP placement benchmarks. Frozen dataset release for archival-grade claims."
+    }
+  },
+  "origin": {
+    "heading": "How Tribunus Was Born.",
+    "tab1": "The Little Frictions",
+    "tab2": "The Fork",
+    "tab3": "The Rebuild",
+    "tab4": "The Philosophy",
+    "tab5": "Where We Are Now",
+    "tab6": "Where We're Going",
+    "panel1": "It started as an OpenCode fork. Not because OpenCode was bad — because the little frictions add up. I started by writing my own agent profiles. Then my own custom tools to make agents more effective. Then my own coordination scripts. The agents were reading and writing handoff logs in ad-hoc JSON files scattered across disk. I built what was essentially a database out of a pile of scripts on the filesystem. Every day, another friction. Another workaround. Another script that almost worked.",
+    "panel2": "Eventually I forked the experimental branch of OpenCode on GitHub and started looking inside. I needed to find the root of all the little annoyances that were driving me insane. What I found was that the architecture of a single-agent tool simply cannot be retrofitted into a multi-agent system. The coordination layer has to be native. So I started building.",
+    "panel3": "I yanked SQLite and transplanted PGlite + DuckDB + Valkey to build a high-throughput coordination layer. I turned my custom agents into actual state machines. Each spawned subagent became its own mini runtime with conditional state machines — forcing agents to actually follow the orchestration path I designed, consistently. I enabled shared worktrees and background agents so the main agent became a dispatcher that summons team leads, each coordinating a different portion of the development process. I deprecated the TUI-first approach and made every capability a first-class implementation in both the agent operation UX and the user-facing UI.",
+    "panel4": "I built this with love, tears, and frustration. I firmly believe that leaving an agent to roam unsupervised into any system with shell access is the engineering equivalent of leaving a toddler with a loaded nailgun unsupervised. Useful tool, wrong supervision model. But the right supervision model didn't exist. So I had to build my own. I'm sharing it here so you don't have to experience that kind of pain either.",
+    "panel5": "Today, a single developer can orchestrate and see in real time the changes being made to the codebase by hundreds of concurrent agents. The macOS app (Apple Silicon and Intel) lets you spawn agent cohorts, define missions, set scope boundaries, and watch every diff stream live. Nothing happens in the dark.",
+    "panel6": "The end goal is first-class real-time collaboration where teams of software engineers work together, each spawning hundreds of concurrent agents, all in the same repository at the same time. The real-time coordination is so smooth that a senior engineer can see what juniors and rookies are doing in real time. Teams should spend more time building the product than screaming at each other in meetings about someone deleting the production database because they sent the wrong prompt."
+  },
+  "blog": {
+    "heading": "From the Workbench.",
+    "article1": {
+      "title": "The 42-Stage Pipeline: Why We Instrument Every Microsecond",
+      "desc": "From worker_launch to worker_teardown — the taxonomy behind Tribunus inference performance measurement."
+    },
+    "article2": {
+      "title": "Zero-Copy Tensors Across MLX and Core ML",
+      "desc": "How IOSurface-backed FP16 arenas eliminate application-level copies at the hybrid compute boundary."
+    },
+    "article3": {
+      "title": "Negative Results Are Immortal",
+      "desc": "Why the Evidence Plane preserves rejected optimizations forever — and how that saves engineering years."
+    },
+    "badge": "Coming soon"
+  },
+  "team": {
+    "badge": "Roadmap",
+    "heading": "Where This Is Going.",
+    "p1": "The next phase of Tribunus is peer-to-peer serverless team coordination. No central server, no cloud dependency, no single point of failure. Every engineer will see every agent's work in real time — senior engineers watching junior cohorts, rookies learning from how the system operates under constraint.",
+    "p2": "Senior engineers will define mission parameters, set review gates, and control which agents have access to which parts of the codebase. Junior engineers will operate within sandboxes — learning by observing how the cohort executes under constraint. The days of screaming at each other in meetings about someone deleting the production database because they sent the wrong prompt will be over.",
+    "p3": "The result will be a software factory where every contributor will work at the top of their capability, no one will be blocked waiting for review, and every merge will meet the bar.",
+    "coordinator": "COORDINATOR",
+    "senior": "Senior",
+    "junior": "Junior"
+  },
+  "faq": {
+    "heading": "Frequently Asked.",
+    "q1": {
+      "question": "What is Tribunus?",
+      "answer": "Tribunus is a control plane for agentic engineering. It coordinates hundreds of coding agents working concurrently in a single repository with real-time visibility and scoped authority."
+    },
+    "q2": {
+      "question": "Is this just another AI coding tool?",
+      "answer": "No. Tribunus does not generate code. It coordinates the agents that do. It handles the orchestration, visibility, gate enforcement, and evidence tracking so you don't have to manage a hundred agent sessions manually."
+    },
+    "q3": {
+      "question": "Do I need to run my own LLM?",
+      "answer": "No. Tribunus works with whatever LLM backend you already use — OpenAI, Anthropic, local models via Ollama, or enterprise providers. The control plane is model-agnostic."
+    },
+    "q4": {
+      "question": "Is this free?",
+      "answer": "The macOS developer preview is free. Pricing for team and enterprise tiers will be announced when those features ship. There will always be a generous free tier for individual developers."
+    },
+    "q5": {
+      "question": "Can agents break my codebase?",
+      "answer": "Agents operate within scoped authority defined by you. They can only write to files you explicitly allow. Senior engineers set the perimeter. Every change is visible in real time. Every merge is gated."
+    },
+    "q6": {
+      "question": "How is this different from running multiple Claude Code instances?",
+      "answer": "Running multiple agents without coordination means merge conflicts, race conditions, duplicated work, and zero visibility into what each agent is doing. Tribunus provides the coordination fabric that makes multi-agent development safe, visible, and productive."
+    }
+  },
+  "contact": {
+    "heading": "Get in Touch.",
+    "email": "Email",
+    "github": "GitHub",
+    "tagline": "Built by a Venezuelan engineer in San Francisco, California — with love, tears, and frustration."
+  },
+  "download": {
+    "heading": "Get Tribunus.",
+    "arm64": {
+      "title": "macOS Apple Silicon",
+      "desc": "Native ARM64 binary. M1/M2/M3/M4 and later.",
+      "badge": "v0.1.0 — Developer Preview",
+      "btn": "Download"
+    },
+    "intel": {
+      "title": "macOS Intel",
+      "desc": "x86-64 binary for Intel-based Macs.",
+      "badge": "Coming Soon — Intel Build"
+    }
+  },
+  "footer": {
+    "copyright": "© 2026 Tribunus. Engineered with precision.",
+    "github": "GitHub",
+    "contact": "Contact",
+    "privacy": "Privacy"
+  },
+  "langSwitcher": {
+    "label": "Language"
+  }
+}

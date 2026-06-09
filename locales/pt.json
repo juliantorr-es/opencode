@@ -1,0 +1,300 @@
+{
+  "_meta": {
+    "language": "Portuguese",
+    "nativeName": "Português (Brasil)",
+    "dir": "ltr",
+    "locale": "pt"
+  },
+  "nav": {
+    "logo": "TRIBUNUS",
+    "download": "Baixar"
+  },
+  "hero": {
+    "title": "Comande a Coorte.",
+    "subtitle": "Coordene centenas de agentes de codificação em um único repositório. Visibilidade em tempo real, autoridade com escopo definido, zero caos.",
+    "cta": "Baixar para macOS"
+  },
+  "proof": {
+    "heading": "Veja em Ação.",
+    "plane": "Tribunus\nPlano de Controle",
+    "you": "Você",
+    "orchestrate": {
+      "title": "Orquestrar",
+      "desc": "Defina missões, atribua escopo, dispare coortes. Um engenheiro → centenas de agentes."
+    },
+    "observe": {
+      "title": "Observar",
+      "desc": "Cada diff, cada decisão, cada status de agente é transmitido ao vivo. Nada acontece no escuro."
+    },
+    "govern": {
+      "title": "Governar",
+      "desc": "Autoridade com escopo, portões de merge, cadeias de evidência. Engenheiros seniores definem o perímetro."
+    }
+  },
+  "features": {
+    "heading": "A Fábrica de Software, Reinventada.",
+    "orchestrate": {
+      "title": "Orquestrar Agentes",
+      "desc": "Dispare e coordene centenas de agentes de codificação trabalhando simultaneamente em toda a sua base de código. Defina missões, atribua escopo e veja a coorte executar."
+    },
+    "visibility": {
+      "title": "Visibilidade em Tempo Real",
+      "desc": "Cada alteração de arquivo, cada decisão de agente, cada diff é transmitido ao vivo para cada membro da equipe. Nada acontece no escuro."
+    },
+    "authority": {
+      "title": "Autoridade com Escopo",
+      "desc": "Engenheiros seniores definem o perímetro. Juniores e novatos operam dentro de barreiras explícitas. A autoridade flui para baixo — nunca para os lados."
+    },
+    "evidence": {
+      "title": "Evidência e Portões",
+      "desc": "Cada alteração é rastreada, cada decisão é auditável, cada merge é controlado por portões. Cadeias de evidência criptográfica para ambientes regulamentados."
+    }
+  },
+  "capabilities": {
+    "heading": "Do Protótipo à Produção.",
+    "prototyping": {
+      "title": "Prototipagem",
+      "desc": "Crie protótipos funcionais em minutos. Defina o esqueleto e deixe os agentes conectarem a infraestrutura enquanto você foca na arquitetura."
+    },
+    "debugging": {
+      "title": "Depuração",
+      "desc": "Implante esquadrões de agentes para rastrear código desconhecido, identificar causas raiz e propor correções — tudo em paralelo."
+    },
+    "iteration": {
+      "title": "Iteração Rápida",
+      "desc": "Entregue funcionalidades em horas, não em sprints. Agentes cuidam do trabalho repetitivo; sua equipe revisa a intenção e entrega o resultado."
+    },
+    "featureImpl": {
+      "title": "Implementação Rápida de Funcionalidades",
+      "desc": "Transforme requisitos em código funcional em ritmo acelerado. Divida funcionalidades em tarefas paralelas para agentes com resolução automática de conflitos."
+    },
+    "auditing": {
+      "title": "Auditoria de Cibersegurança",
+      "desc": "Solte agentes na sua base de código para encontrar vulnerabilidades, verificar conformidade e produzir relatórios prontos para auditoria."
+    },
+    "ethicalHacking": {
+      "title": "Fluxos de Hacking Ético",
+      "desc": "Execute campanhas estruturadas de teste de penetração com agentes que reportam descobertas a um registro central de evidências."
+    },
+    "production": {
+      "title": "Entrega Completa em Produção",
+      "desc": "Do projeto inicial à produção. Agentes rascunham, testam, documentam e empacotam. Humanos revisam e aprovam cada portão."
+    }
+  },
+  "compute": {
+    "badge": "Novo",
+    "heading": "Inferência Local. Zero Viagens de Ida e Volta.",
+    "lead": "Tribunus não é apenas um plano de controle. Ele inclui um runtime de inferência nativo que executa modelos localmente no Apple Silicon — sem nuvem, sem chaves de API, sem custo de latência.",
+    "mlx": "MLX",
+    "coreml": "Core ML / ANE",
+    "bridge": "IOSurface\nFP16",
+    "mlxKernel": "Operações do Kernel",
+    "mlxAttention": "Atenção",
+    "mlxMlp": "MLP",
+    "coremlMlp": "Camadas MLP",
+    "coremlState": "Ilhas de Estado",
+    "statLayers": "Camadas Qualificadas",
+    "statCopies": "Cópias de Aplicação",
+    "statTests": "Testes em 9 Módulos",
+    "statPrecision": "Precisão de Limite",
+    "hybrid": {
+      "title": "Híbrido MLX + Core ML",
+      "desc": "Atenção roda no MLX. Camadas MLP são descarregadas para o Apple Neural Engine via Core ML — com transferência de tensores zero-copy IOSurface entre runtimes."
+    },
+    "arena": {
+      "title": "Alocação em Arena",
+      "desc": "Pools de arena FP16 com suporte IOSurface e semântica de concessão. Sem malloc no caminho crítico. Cada transição de tensor é registrada e auditável."
+    },
+    "deterministic": {
+      "title": "Decodificação Determinística",
+      "desc": "Decodificação gananciosa com verificação exata de correspondência de tokens. Conjunto de qualificação de oito tokens. Mesma semente, mesma entrada — mesma saída. Todas as vezes."
+    },
+    "kvCache": {
+      "title": "Mecanismo de Cache KV",
+      "desc": "Políticas de janela deslizante e evicção global. Paridade entre preenchimento e decodificação em cache. Acesso concorrente com isolação adequada de concessão."
+    }
+  },
+  "explainer": {
+    "heading": "O Que o Mecanismo de Computação Realmente Faz.",
+    "lead": "Esqueça o jargão. Aqui está o que acontece quando você pressiona enter — em português claro, com os dados reais de nossas execuções de pesquisa.",
+    "step1": {
+      "title": "O Modelo Vive no Seu Disco",
+      "body": "Uma cópia congelada do Gemma 4 12B está armazenada localmente. O Tribunus a mapeia na memória uma vez — sem downloads, sem chaves de API, sem nuvem. O modelo é identificado por seu hash criptográfico para que você saiba exatamente o que está executando.",
+      "dataLabel": "Hash do modelo"
+    },
+    "step2": {
+      "title": "Dois Mecanismos Iniciam ao Mesmo Tempo",
+      "body": "MLX assume a GPU e executa as camadas de atenção — a parte do modelo que decide quais palavras importam. Core ML assume o Apple Neural Engine e executa as camadas feed-forward — a parte que processa o que foi decidido. Eles compartilham memória através de algo chamado IOSurface. Pense como dois chefs compartilhando uma tábua de corte em vez de passar ingredientes de um lado para o outro.",
+      "dataLabel": "Cópias entre mecanismos"
+    },
+    "step3": {
+      "title": "42 Estágios, Cada Microssegundo Rastreado",
+      "body": "Desde o momento em que o worker é ativado até o momento em que o token final é transmitido, cada operação tem timestamp e recibo. Quer saber exatamente quanto tempo a softmax de atenção levou na camada 23 da pilha de 48 camadas? Está no diário de eventos. Isso não é logging — é instrumentação forense. Se algo está lento, você sabe exatamente o quê e exatamente quanto.",
+      "dataLabel1": "Estágios do pipeline",
+      "dataLabel2": "Camadas rastreadas",
+      "dataLabel3": "Eventos por execução"
+    },
+    "step4": {
+      "title": "Mesma Entrada → Mesma Saída. Todas as Vezes.",
+      "body": "A decodificação gananciosa determinística significa que o modelo produz exatamente os mesmos tokens para exatamente a mesma entrada. Verificamos isso com um conjunto de qualificação de oito tokens — o runtime deve corresponder à referência do oráculo token por token. Se um único token estiver errado, a execução é rejeitada. É assim que você sabe que suas otimizações não quebraram nada.",
+      "dataLabel": "Requisito de qualificação"
+    },
+    "step5": {
+      "title": "Toda Alegação Tem um Recibo",
+      "body": "Nenhuma alegação de performance é feita sem um manifesto de execução, uma cadeia de proveniência e um registro de observação imutável. Cinco experimentos foram projetados (EXP-0000 a EXP-0004), cada um com hipóteses formais, políticas de repetição e portões de corretude. Os dados residem no DuckDB — consultáveis, auditáveis e arquivados permanentemente. Otimizações rejeitadas nunca são deletadas para que ninguém repita o mesmo beco sem saída.",
+      "dataLabel1": "Experimentos projetados",
+      "dataLabel2": "Cargas de trabalho definidas",
+      "dataLabel3": "Graus de execução"
+    },
+    "cta": "Esta é a fundação. O plano de controle coordena agentes. O mecanismo de computação executa modelos. O plano de evidência prova que ambos funcionam. Três pilares, uma plataforma."
+  },
+  "research": {
+    "heading": "Alegações de Performance Precisam de Prova.",
+    "lead": "Toda alegação de performance é respaldada pelo Plano de Evidência de Pesquisa — uma estrutura de experimentos com rastreamento de proveniência, 42 estágios de pipeline instrumentados, hash criptográfico de artefatos e registros de execução imutáveis.",
+    "pipelineInit": "Inicialização",
+    "pipelinePerToken": "Por Token",
+    "pipelineTeardown": "Finalização",
+    "pipelineCaption": "42 estágios de pipeline — instrumentados, com timestamp e recibo. Cada microssegundo contabilizado.",
+    "runGrades": {
+      "title": "Graus de Execução",
+      "desc": "Toda execução é graduada: exploratória, controlada, candidata a alegação ou arquivada. Apenas execuções controladas+ sustentam decisões de otimização. Resultados legados são marcados como não autoritativos."
+    },
+    "immutable": {
+      "title": "Observações Imutáveis",
+      "desc": "Observações brutas nunca são modificadas no local. Correções produzem uma nova cópia com link de proveniência para o original. Resultados negativos são preservados para sempre — prevenindo becos sem saída repetidos."
+    },
+    "provenance": {
+      "title": "Cadeia de Proveniência",
+      "desc": "Toda execução captura commit de origem, hashes binários, identidade do modelo, perfil da máquina e ambiente. Análise DuckDB sobre o fluxo de eventos normalizado. Nada é aceito na fé."
+    },
+    "claim": {
+      "text": "O runtime de inferência local Tribunus v1 está física e semanticamente qualificado para uma ComputeImage Gemma 4 12B congelada no perfil Apple Silicon 16 GB qualificado.",
+      "meta": "Status: Rascunho · Escopo: teto de 64 tokens de prompt, teto de 8 tokens de saída, decodificação gananciosa determinística · Modelo: d042df1e…"
+    }
+  },
+  "roadmap": {
+    "heading": "O Caminho à Frente.",
+    "phase1": {
+      "label": "Fase 1 — Agora",
+      "title": "Developer Preview para macOS",
+      "desc": "Aplicativo nativo macOS, desenvolvedor único orquestrando centenas de agentes, visibilidade de alterações em tempo real, autoridade com escopo, backend de coordenação LocalFabric."
+    },
+    "phase2": {
+      "label": "Fase 2 — Próximo",
+      "title": "Colaboração em Equipe",
+      "desc": "Colaboração em equipe em tempo real, arquitetura peer-to-peer sem servidor, sandboxing sênior/júnior/novato, backend de coordenação Valkey para sessões multiusuário ao vivo."
+    },
+    "phase3": {
+      "label": "Fase 3 — Futuro",
+      "title": "Governança Empresarial",
+      "desc": "Governança empresarial, trilhas de auditoria criptográfica, merges controlados por políticas, anéis de evidência prontos para conformidade, Valkey remoto para equipes distribuídas."
+    },
+    "computeNow": {
+      "label": "Computação — Agora",
+      "title": "Runtime de Inferência Nativo",
+      "desc": "Execução híbrida MLX + Core ML, alocação em arena IOSurface FP16, decodificação determinística, mecanismo de cache KV. Qualificação de 48 camadas no Gemma 4 12B. Transferência de tensores sem cópia de aplicação."
+    },
+    "computeNext": {
+      "label": "Computação — Próximo",
+      "title": "Qualificação do Plano de Evidência",
+      "desc": "Execuções candidatas completas em todas as cargas de trabalho. Qualificação de estado Core ML. Streaming Tokio com cancelamento. Benchmarks de posicionamento MLP. Lançamento de conjunto de dados congelado para alegações de nível de arquivo."
+    }
+  },
+  "origin": {
+    "heading": "Como o Tribunus Nasceu.",
+    "tab1": "As Pequenas Fricções",
+    "tab2": "O Fork",
+    "tab3": "A Reconstrução",
+    "tab4": "A Filosofia",
+    "tab5": "Onde Estamos Agora",
+    "tab6": "Para Onde Estamos Indo",
+    "panel1": "Começou como um fork do OpenCode. Não porque o OpenCode fosse ruim — porque as pequenas fricções se acumulam. Comecei escrevendo meus próprios perfis de agente. Depois minhas próprias ferramentas personalizadas para tornar os agentes mais eficazes. Depois meus próprios scripts de coordenação. Os agentes estavam lendo e escrevendo logs de handoff em arquivos JSON ad-hoc espalhados pelo disco. Eu construí o que era essencialmente um banco de dados a partir de uma pilha de scripts no sistema de arquivos. Todo dia, outra fricção. Outra gambiarra. Outro script que quase funcionava.",
+    "panel2": "Eventualmente eu fiz o fork do branch experimental do OpenCode no GitHub e comecei a olhar por dentro. Precisava encontrar a raiz de todas as pequenas irritações que estavam me enlouquecendo. O que descobri foi que a arquitetura de uma ferramenta de agente único simplesmente não pode ser adaptada para um sistema multiagente. A camada de coordenação precisa ser nativa. Então comecei a construir.",
+    "panel3": "Removi o SQLite e transplantei PGlite + DuckDB + Valkey para construir uma camada de coordenação de alta capacidade. Transformei meus agentes personalizados em máquinas de estado reais. Cada subagente criado se tornou seu próprio mini runtime com máquinas de estado condicionais — forçando os agentes a realmente seguirem o caminho de orquestração que projetei, de forma consistente. Habilitei worktrees compartilhados e agentes em segundo plano para que o agente principal se tornasse um dispatcher que convoca líderes de equipe, cada um coordenando uma porção diferente do processo de desenvolvimento. Depreciei a abordagem TUI-first e tornei cada capacidade uma implementação de primeira classe tanto na UX de operação do agente quanto na interface do usuário.",
+    "panel4": "Construí isso com amor, lágrimas e frustração. Acredito firmemente que deixar um agente perambular sem supervisão em qualquer sistema com acesso ao shell é o equivalente em engenharia a deixar uma criança com uma pistola de pregos carregada sem supervisão. Ferramenta útil, modelo de supervisão errado. Mas o modelo de supervisão correto não existia. Então tive que construir o meu próprio. Estou compartilhando aqui para que você não precise passar por esse tipo de dor também.",
+    "panel5": "Hoje, um único desenvolvedor pode orquestrar e ver em tempo real as alterações sendo feitas na base de código por centenas de agentes concorrentes. O aplicativo macOS (Apple Silicon e Intel) permite que você crie coortes de agentes, defina missões, estabeleça limites de escopo e veja cada diff ser transmitido ao vivo. Nada acontece no escuro.",
+    "panel6": "O objetivo final é a colaboração em tempo real de primeira classe, onde equipes de engenheiros de software trabalham juntas, cada uma criando centenas de agentes concorrentes, todos no mesmo repositório ao mesmo tempo. A coordenação em tempo real é tão suave que um engenheiro sênior pode ver o que os juniores e novatos estão fazendo em tempo real. As equipes devem passar mais tempo construindo o produto do que gritando umas com as outras em reuniões sobre alguém deletar o banco de dados de produção porque enviou o prompt errado."
+  },
+  "blog": {
+    "heading": "Da Bancada.",
+    "article1": {
+      "title": "O Pipeline de 42 Estágios: Por Que Instrumentamos Cada Microssegundo",
+      "desc": "Do worker_launch ao worker_teardown — a taxonomia por trás da medição de performance de inferência do Tribunus."
+    },
+    "article2": {
+      "title": "Tensores Zero-Copy Entre MLX e Core ML",
+      "desc": "Como as arenas FP16 com suporte IOSurface eliminam cópias em nível de aplicação na fronteira de computação híbrida."
+    },
+    "article3": {
+      "title": "Resultados Negativos São Imortais",
+      "desc": "Por que o Plano de Evidência preserva otimizações rejeitadas para sempre — e como isso economiza anos de engenharia."
+    },
+    "badge": "Em breve"
+  },
+  "team": {
+    "badge": "Roadmap",
+    "heading": "Para Onde Isso Está Indo.",
+    "p1": "A próxima fase do Tribunus é a coordenação de equipe peer-to-peer sem servidor. Sem servidor central, sem dependência de nuvem, sem ponto único de falha. Cada engenheiro verá o trabalho de cada agente em tempo real — engenheiros seniores observando coortes juniores, novatos aprendendo com a operação do sistema sob restrições.",
+    "p2": "Engenheiros seniores definirão parâmetros de missão, estabelecerão portões de revisão e controlarão quais agentes têm acesso a quais partes da base de código. Engenheiros juniores operarão dentro de sandboxes — aprendendo observando como a coorte executa sob restrições. Os dias de gritar uns com os outros em reuniões sobre alguém deletar o banco de dados de produção porque enviou o prompt errado terão acabado.",
+    "p3": "O resultado será uma fábrica de software onde cada colaborador trabalhará no máximo de sua capacidade, ninguém ficará bloqueado esperando revisão, e cada merge atenderá ao padrão.",
+    "coordinator": "COORDENADOR",
+    "senior": "Sênior",
+    "junior": "Júnior"
+  },
+  "faq": {
+    "heading": "Perguntas Frequentes.",
+    "q1": {
+      "question": "O que é o Tribunus?",
+      "answer": "Tribunus é um plano de controle para engenharia agentiva. Ele coordena centenas de agentes de codificação trabalhando simultaneamente em um único repositório com visibilidade em tempo real e autoridade com escopo definido."
+    },
+    "q2": {
+      "question": "Isso é só mais uma ferramenta de codificação com IA?",
+      "answer": "Não. O Tribunus não gera código. Ele coordena os agentes que o fazem. Ele gerencia a orquestração, visibilidade, aplicação de portões e rastreamento de evidências para que você não precise gerenciar dezenas de sessões de agente manualmente."
+    },
+    "q3": {
+      "question": "Preciso executar meu próprio LLM?",
+      "answer": "Não. O Tribunus funciona com qualquer backend de LLM que você já usa — OpenAI, Anthropic, modelos locais via Ollama ou provedores empresariais. O plano de controle é agnóstico em relação ao modelo."
+    },
+    "q4": {
+      "question": "Isso é gratuito?",
+      "answer": "A preview para desenvolvedores do macOS é gratuita. Os preços para os níveis de equipe e empresarial serão anunciados quando essas funcionalidades forem lançadas. Sempre haverá um nível gratuito generoso para desenvolvedores individuais."
+    },
+    "q5": {
+      "question": "Os agentes podem quebrar minha base de código?",
+      "answer": "Os agentes operam dentro de autoridade com escopo definido por você. Eles só podem escrever em arquivos que você explicitamente permitir. Engenheiros seniores definem o perímetro. Cada alteração é visível em tempo real. Cada merge é controlado."
+    },
+    "q6": {
+      "question": "Como isso é diferente de executar várias instâncias do Claude Code?",
+      "answer": "Executar vários agentes sem coordenação significa conflitos de merge, condições de corrida, trabalho duplicado e zero visibilidade do que cada agente está fazendo. O Tribunus fornece a estrutura de coordenação que torna o desenvolvimento multiagente seguro, visível e produtivo."
+    }
+  },
+  "contact": {
+    "heading": "Entre em Contato.",
+    "email": "Email",
+    "github": "GitHub",
+    "tagline": "Construído por um engenheiro venezuelano em São Francisco, Califórnia — com amor, lágrimas e frustração."
+  },
+  "download": {
+    "heading": "Obtenha o Tribunus.",
+    "arm64": {
+      "title": "macOS Apple Silicon",
+      "desc": "Binário nativo ARM64. M1/M2/M3/M4 e posteriores.",
+      "badge": "v0.1.0 — Developer Preview",
+      "btn": "Baixar"
+    },
+    "intel": {
+      "title": "macOS Intel",
+      "desc": "Binário x86-64 para Macs baseados em Intel.",
+      "badge": "Em breve — Build para Intel"
+    }
+  },
+  "footer": {
+    "copyright": "© 2026 Tribunus. Projetado com precisão.",
+    "github": "GitHub",
+    "contact": "Contato",
+    "privacy": "Privacidade"
+  },
+  "langSwitcher": {
+    "label": "Idioma"
+  }
+}
