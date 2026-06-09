@@ -29,6 +29,7 @@ fn main() {
     if args.len() < 2 {
         eprintln!("Usage:");
         eprintln!("  tribunus-compute-image build --source <dir> --output <dir>");
+        eprintln!("  tribunus-compute-image metal-capture --image <dir> [--output <path>]");
         eprintln!("  tribunus-compute-image replay-projection --image <dir> --layer <N> --family <name>");
         eprintln!("  tribunus-compute-image decode-one --image <dir>");
         eprintln!("  tribunus-compute-image infer  --image <dir>");
@@ -40,6 +41,7 @@ fn main() {
         "build" => cmd_build(&args[2..]),
         "verify" => cmd_verify(&args[2..]),
         "infer" => cmd_infer(&args[2..]),
+        "metal-capture" => cmd_metal_capture(&args[2..]),
         "replay-projection" => cmd_replay_projection(&args[2..]),
         "decode-one" => cmd_decode_one(&args[2..]),
         other => {
@@ -578,4 +580,39 @@ fn cmd_replay_projection(args: &[String]) -> Result<(), String> {
 
     eprintln!("Done: {} samples ({})", samples_vec.len(), phase_shape);
     Ok(())
+}
+
+fn cmd_metal_capture(args: &[String]) -> Result<(), String> {
+    let mut image: Option<String> = None;
+    let mut output = "/tmp/tribunus_metal_capture.gputrace".to_string();
+    let mut i = 0;
+    while i < args.len() {
+        match args[i].as_str() {
+            "--image" => { i += 1; if i < args.len() { image = Some(args[i].clone()); } }
+            "--output" => { i += 1; if i < args.len() { output = args[i].clone(); } }
+            _ => { return Err(format!("unknown flag: {}", args[i])); }
+        }
+        i += 1;
+    }
+    let image_dir = image.ok_or("missing --image")?;
+
+    if !tribunus_compute_native::metal_capture::is_available() {
+        return Err("Metal is not available on this machine".into());
+    }
+
+    eprintln!("Metal capture: {}", output);
+    eprintln!("Starting capture...");
+    if !tribunus_compute_native::metal_capture::start_capture(&output) {
+        return Err("failed to start Metal capture".into());
+    }
+
+    let result = cmd_decode_one(&["--image".to_string(), image_dir.clone()]);
+
+    eprintln!("Stopping capture...");
+    if !tribunus_compute_native::metal_capture::stop_capture() {
+        eprintln!("warning: failed to stop Metal capture");
+    }
+
+    eprintln!("Capture saved to: {}", output);
+    result
 }

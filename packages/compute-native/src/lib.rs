@@ -45,6 +45,7 @@ mod loader;
 mod model;
 pub mod operation_catalog;
 pub mod primitives;
+pub mod metal_capture;
 pub mod replay_projection;
 pub mod quantized;
 pub mod requalification;
