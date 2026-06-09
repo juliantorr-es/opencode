@@ -71,7 +71,7 @@ import type { PublicIpcError } from "../ipc/errors"
 export function registerIpcEffectHandler<P, S>(
   runtime: DesktopRuntime,
   options: IpcHandlerOptions<P, S>,
-  handler: (params: P) => Effect.Effect<S, never, never>,
+  handler: (params: unknown) => Effect.Effect<S, unknown, never>,
 ): void {
   ipcMain.handle(options.channel, async (event: IpcMainInvokeEvent, ...rawArgs: unknown[]) => {
     // 1. Sender authorization ------------------------------------------------
@@ -91,7 +91,7 @@ export function registerIpcEffectHandler<P, S>(
     const requestId = newRequestId()
 
     // 3. Parameter decoding --------------------------------------------------
-    let params: P
+    let params: unknown
     try {
       // beta.66 Schema type mismatch: Schema.Schema<any> vs Decoder<unknown, never>
       const decode = Schema.decodeUnknownSync(options.params as unknown as Parameters<typeof Schema.decodeUnknownSync>[0])

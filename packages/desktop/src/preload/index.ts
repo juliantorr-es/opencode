@@ -2,7 +2,6 @@ import { contextBridge, ipcRenderer } from "electron"
 import type { ElectronAPI, InitStep, SafeModeAction, ServerReadyData, StorageMigrationProgress } from "./types"
 import { IPC } from "../main/ipc-channels"
 import { typedInvoke, typedSend, pluginSend, pluginInvoke } from "../main/ipc-contract"
-import { typedInvoke, typedSend, pluginSend, pluginInvoke } from "../main/ipc-contract"
 import { typedInvokeV2 } from "./ipc-client"
 
 
@@ -143,4 +142,4 @@ const api: ElectronAPI = {
   },
 }
 
-contextBridge.exposeInMainWorld("api", api)
+contextBridge.exposeInMainWorld("api", api as unknown as ElectronAPI)

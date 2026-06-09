@@ -47,7 +47,7 @@ function validateIpcResult(rawResult: unknown): rawResult is IpcOk | IpcErr {
  *
  * Throws RenderableIpcError for any envelope violation or remote error.
  */
-export async function typedInvokeV2(
+export async function typedInvokeV2<S = unknown>(
   channel: string,
   _successSchema: unknown,
   ...args: unknown[]
