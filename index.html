@@ -185,7 +185,149 @@
       </div>
     </section>
 
-    <!-- 5. Roadmap -->
+    <!-- 5. Compute Engine -->
+    <section class="section" id="compute" aria-labelledby="compute-heading">
+      <div class="section-container">
+        <span class="section-badge">New</span>
+        <h2 id="compute-heading" class="section-heading">Local Inference. Zero Round Trips.</h2>
+        <p class="section-lead">Tribunus isn't just a control plane. It ships a native inference runtime that executes models locally on Apple Silicon — no cloud, no API keys, no latency tax.</p>
+
+        <div class="compute-arch" data-reveal aria-hidden="true">
+          <div class="compute-layer compute-layer--mlx">
+            <span class="compute-layer-label">MLX</span>
+            <div class="compute-layer-nodes">
+              <div class="compute-node">Kernel Ops</div>
+              <div class="compute-node">Attention</div>
+              <div class="compute-node">MLP</div>
+            </div>
+          </div>
+          <div class="compute-bridge" aria-hidden="true">
+            <span class="compute-bridge-label">IOSurface<br>FP16</span>
+            <div class="compute-bridge-arrow"></div>
+          </div>
+          <div class="compute-layer compute-layer--coreml">
+            <span class="compute-layer-label">Core ML / ANE</span>
+            <div class="compute-layer-nodes">
+              <div class="compute-node">MLP Layers</div>
+              <div class="compute-node">State Islands</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="compute-stats" data-reveal>
+          <div class="compute-stat">
+            <span class="compute-stat-value">48</span>
+            <span class="compute-stat-label">Layers Qualified</span>
+          </div>
+          <div class="compute-stat">
+            <span class="compute-stat-value">0</span>
+            <span class="compute-stat-label">Application Copies</span>
+          </div>
+          <div class="compute-stat">
+            <span class="compute-stat-value">38</span>
+            <span class="compute-stat-label">Tests Across 9 Modules</span>
+          </div>
+          <div class="compute-stat">
+            <span class="compute-stat-value">FP16</span>
+            <span class="compute-stat-label">Boundary Precision</span>
+          </div>
+        </div>
+
+        <div class="compute-features">
+          <article class="compute-feature" data-reveal>
+            <h3 class="compute-feature-title">MLX + Core ML Hybrid</h3>
+            <p class="compute-feature-desc">Attention runs on MLX. MLP layers offload to the Apple Neural Engine through Core ML — with zero-copy IOSurface tensor handoff between runtimes.</p>
+          </article>
+          <article class="compute-feature" data-reveal>
+            <h3 class="compute-feature-title">Arena Allocation</h3>
+            <p class="compute-feature-desc">IOSurface-backed FP16 arena pools with lease semantics. No malloc in the hot path. Every tensor transition is receipted and auditable.</p>
+          </article>
+          <article class="compute-feature" data-reveal>
+            <h3 class="compute-feature-title">Deterministic Decoding</h3>
+            <p class="compute-feature-desc">Greedy decode with exact token match verification. Eight-token qualification suite. Same seed, same input — same output. Every time.</p>
+          </article>
+          <article class="compute-feature" data-reveal>
+            <h3 class="compute-feature-title">KV Cache Engine</h3>
+            <p class="compute-feature-desc">Sliding window and global eviction policies. Prefill + cached decode parity. Concurrent access with proper lease isolation.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- 6. Research Evidence Plane -->
+    <section class="section section--alt" id="research" aria-labelledby="research-heading">
+      <div class="section-container">
+        <h2 id="research-heading" class="section-heading">Performance Claims Need Proof.</h2>
+        <p class="section-lead">Every performance claim is backed by the Research Evidence Plane — a provenance-tracked experiment framework with 42 instrumented pipeline stages, cryptographic artifact hashing, and immutable run records.</p>
+
+        <div class="pipeline-viz" data-reveal aria-hidden="true">
+          <div class="pipeline-phase">
+            <span class="pipeline-phase-label">Init</span>
+            <div class="pipeline-stages">
+              <div class="pipeline-stage" title="worker_launch"></div>
+              <div class="pipeline-stage" title="model_verification"></div>
+              <div class="pipeline-stage" title="segment_mapping"></div>
+              <div class="pipeline-stage" title="tensor_binding"></div>
+              <div class="pipeline-stage" title="persistent_materialization"></div>
+              <div class="pipeline-stage" title="model_admission"></div>
+              <div class="pipeline-stage" title="rope_construction"></div>
+            </div>
+          </div>
+          <div class="pipeline-phase">
+            <span class="pipeline-phase-label">Per-Token</span>
+            <div class="pipeline-stages">
+              <div class="pipeline-stage" title="embedding_gather"></div>
+              <div class="pipeline-stage pipeline-stage--wide" title="attention: Q/K/V proj, RoPE, scores, softmax, output"></div>
+              <div class="pipeline-stage pipeline-stage--wide" title="mlp: gate, up, down projections"></div>
+              <div class="pipeline-stage" title="sampling"></div>
+              <div class="pipeline-stage" title="streaming"></div>
+            </div>
+          </div>
+          <div class="pipeline-phase">
+            <span class="pipeline-phase-label">Teardown</span>
+            <div class="pipeline-stages">
+              <div class="pipeline-stage" title="session_destruction"></div>
+              <div class="pipeline-stage" title="worker_teardown"></div>
+            </div>
+          </div>
+        </div>
+        <p class="pipeline-caption" data-reveal>42 pipeline stages — instrumented, timestamped, receipted. Every microsecond accounted for.</p>
+
+        <div class="evidence-grid">
+          <article class="evidence-card" data-reveal>
+            <div class="evidence-icon" aria-hidden="true">
+              <div class="geo geo-shield"></div>
+            </div>
+            <h3 class="evidence-title">Run Grades</h3>
+            <p class="evidence-desc">Every run is graded: exploratory, controlled, claim candidate, or archival. Only controlled+ runs support optimization decisions. Legacy results are marked not authoritative.</p>
+          </article>
+          <article class="evidence-card" data-reveal>
+            <div class="evidence-icon" aria-hidden="true">
+              <div class="geo geo-ledger"></div>
+            </div>
+            <h3 class="evidence-title">Immutable Observations</h3>
+            <p class="evidence-desc">Raw observations are never modified in place. Corrections produce a new copy with provenance link to the original. Negative results are preserved forever — preventing repeated dead ends.</p>
+          </article>
+          <article class="evidence-card" data-reveal>
+            <div class="evidence-icon" aria-hidden="true">
+              <div class="geo geo-nodes"></div>
+            </div>
+            <h3 class="evidence-title">Provenance Chain</h3>
+            <p class="evidence-desc">Every run captures source commit, binary hashes, model identity, machine profile, and environment. DuckDB analytics over the normalized event stream. Nothing is taken on faith.</p>
+          </article>
+        </div>
+
+        <div class="claim-block" data-reveal>
+          <div class="claim-badge">CLAIM-0000</div>
+          <blockquote class="claim-text">
+            Tribunus local inference runtime v1 physically and semantically qualified for one frozen Gemma 4 12B ComputeImage on the qualified Apple Silicon 16 GB profile.
+          </blockquote>
+          <p class="claim-meta">Status: Draft &middot; Scope: 64-token prompt ceiling, 8-token output ceiling, deterministic greedy decoding &middot; Model: d042df1e…</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 7. Roadmap -->
     <section class="section section--alt" id="roadmap" aria-labelledby="roadmap-heading">
       <div class="section-container">
         <h2 id="roadmap-heading" class="section-heading">The Road Ahead.</h2>
@@ -214,11 +356,27 @@
               <p class="roadmap-phase-desc">Enterprise governance, cryptographic audit trails, policy-gated merges, compliance-ready evidence rings, remote-Valkey for distributed teams.</p>
             </div>
           </div>
+          <div class="roadmap-phase" data-reveal>
+            <div class="roadmap-marker roadmap-marker--alt" aria-hidden="true"></div>
+            <div class="roadmap-content">
+              <span class="roadmap-phase-label">Compute — Now</span>
+              <h3 class="roadmap-phase-title">Native Inference Runtime</h3>
+              <p class="roadmap-phase-desc">MLX + Core ML hybrid execution, IOSurface FP16 arena allocation, deterministic decoding, KV cache engine. 48-layer qualification on Gemma 4 12B. Application-copy-free tensor handoff.</p>
+            </div>
+          </div>
+          <div class="roadmap-phase" data-reveal>
+            <div class="roadmap-marker roadmap-marker--alt" aria-hidden="true"></div>
+            <div class="roadmap-content">
+              <span class="roadmap-phase-label">Compute — Next</span>
+              <h3 class="roadmap-phase-title">Evidence Plane Qualification</h3>
+              <p class="roadmap-phase-desc">Full claim-candidate runs across all workloads. Core ML state qualification. Tokio streaming with cancellation. MLP placement benchmarks. Frozen dataset release for archival-grade claims.</p>
+            </div>
+          </div>
         </div>
       </div>
     </section>
 
-    <!-- 6. Origin Story -->
+    <!-- 8. Origin Story -->
     <section class="section" id="origin" aria-labelledby="origin-heading">
       <div class="section-container">
         <h2 id="origin-heading" class="section-heading">How Tribunus Was Born.</h2>
@@ -269,31 +427,31 @@
       </div>
     </section>
 
-    <!-- 7. Blog -->
+    <!-- 9. Blog -->
     <section class="section" id="blog" aria-labelledby="blog-heading">
       <div class="section-container">
         <h2 id="blog-heading" class="section-heading">From the Workbench.</h2>
         <div class="blog-grid">
           <article class="blog-card" data-reveal>
-            <h3 class="blog-card-title">What Happens When 100 Agents Edit the Same File</h3>
-            <p class="blog-card-desc">A technical deep-dive into merge conflict resolution at scale.</p>
+            <h3 class="blog-card-title">The 42-Stage Pipeline: Why We Instrument Every Microsecond</h3>
+            <p class="blog-card-desc">From worker_launch to worker_teardown — the taxonomy behind Tribunus inference performance measurement.</p>
             <span class="blog-card-badge">Coming soon</span>
           </article>
           <article class="blog-card" data-reveal>
-            <h3 class="blog-card-title">Why I Yanked SQLite for PGlite + DuckDB + Valkey</h3>
-            <p class="blog-card-desc">The architecture decisions behind the coordination layer.</p>
+            <h3 class="blog-card-title">Zero-Copy Tensors Across MLX and Core ML</h3>
+            <p class="blog-card-desc">How IOSurface-backed FP16 arenas eliminate application-level copies at the hybrid compute boundary.</p>
             <span class="blog-card-badge">Coming soon</span>
           </article>
           <article class="blog-card" data-reveal>
-            <h3 class="blog-card-title">The Toddler and the Nailgun</h3>
-            <p class="blog-card-desc">On supervision models, agent safety, and why building the control plane matters.</p>
+            <h3 class="blog-card-title">Negative Results Are Immortal</h3>
+            <p class="blog-card-desc">Why the Evidence Plane preserves rejected optimizations forever — and how that saves engineering years.</p>
             <span class="blog-card-badge">Coming soon</span>
           </article>
         </div>
       </div>
     </section>
 
-    <!-- 8. Where This Is Going -->
+    <!-- 10. Where This Is Going -->
     <section class="section section--alt" id="team" aria-labelledby="team-heading">
       <div class="section-container team-layout">
         <div class="team-text" data-reveal>
@@ -339,7 +497,7 @@
       </div>
     </section>
 
-    <!-- 9. FAQ -->
+    <!-- 11. FAQ -->
     <section class="section" id="faq" aria-labelledby="faq-heading">
       <div class="section-container">
         <h2 id="faq-heading" class="section-heading">Frequently Asked.</h2>
@@ -372,7 +530,7 @@
       </div>
     </section>
 
-    <!-- 10. Contact -->
+    <!-- 12. Contact -->
     <section class="section section--alt" id="contact" aria-labelledby="contact-heading">
       <div class="section-container">
         <h2 id="contact-heading" class="section-heading">Get in Touch.</h2>
@@ -384,7 +542,7 @@
       </div>
     </section>
 
-    <!-- 11. Download -->
+    <!-- 13. Download -->
     <section class="section section--alt" id="download" aria-labelledby="download-heading">
       <div class="section-container">
         <h2 id="download-heading" class="section-heading">Get Tribunus.</h2>
