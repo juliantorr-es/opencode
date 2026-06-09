@@ -127,7 +127,7 @@ impl crate::external_array::ExternalStorage for SegmentSlice {
 ///
 /// Uses [`crate::external_array::new_external_array`] for all supported dtypes
 /// so that MLX operates directly on the mmap-backed memory rather than a copy.
-fn load_tensor_from_mapped_segment(
+pub fn load_tensor_from_mapped_segment(
     segment: &std::sync::Arc<crate::mapped_image::MappedSegment>,
     entry: &TensorEntry,
 ) -> napi::Result<(mlx_rs::Array, CopyClassification)> {

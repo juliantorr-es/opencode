@@ -45,6 +45,7 @@ mod loader;
 mod model;
 pub mod operation_catalog;
 pub mod primitives;
+pub mod replay_projection;
 pub mod quantized;
 pub mod requalification;
 pub mod mlx_inventory;

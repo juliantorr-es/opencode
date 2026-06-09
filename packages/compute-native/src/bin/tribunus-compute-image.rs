@@ -29,6 +29,7 @@ fn main() {
     if args.len() < 2 {
         eprintln!("Usage:");
         eprintln!("  tribunus-compute-image build --source <dir> --output <dir>");
+        eprintln!("  tribunus-compute-image replay-projection --image <dir> --layer <N> --family <name>");
         eprintln!("  tribunus-compute-image decode-one --image <dir>");
         eprintln!("  tribunus-compute-image infer  --image <dir>");
         eprintln!("  tribunus-compute-image verify --image <dir> [--expected-hash <hash>] [--full]");
@@ -39,6 +40,7 @@ fn main() {
         "build" => cmd_build(&args[2..]),
         "verify" => cmd_verify(&args[2..]),
         "infer" => cmd_infer(&args[2..]),
+        "replay-projection" => cmd_replay_projection(&args[2..]),
         "decode-one" => cmd_decode_one(&args[2..]),
         other => {
             eprintln!("unknown command: {other}");
@@ -501,5 +503,52 @@ fn cmd_decode_one(args: &[String]) -> Result<(), String> {
         "decode_s": ds,
         "layers": plan.layers.len(),
     })).unwrap());
+    Ok(())
+}
+
+fn cmd_replay_projection(args: &[String]) -> Result<(), String> {
+    let mut image: Option<String> = None;
+    let mut layer: Option<usize> = None;
+    let mut family: Option<String> = None;
+    let mut phase_shape = "decode".to_string();
+    let mut samples = 20usize;
+    let mut warmups = 5usize;
+    let mut i = 0;
+    while i < args.len() {
+        match args[i].as_str() {
+            "--image" => { i += 1; if i < args.len() { image = Some(args[i].clone()); } }
+            "--layer" => { i += 1; if i < args.len() { layer = Some(args[i].parse::<usize>().map_err(|_| format!("invalid layer: {}", args[i]))?); } }
+            "--family" => { i += 1; if i < args.len() { family = Some(args[i].clone()); } }
+            "--phase-shape" => { i += 1; if i < args.len() { phase_shape = args[i].clone(); } }
+            "--samples" => { i += 1; if i < args.len() { samples = args[i].parse::<usize>().map_err(|_| format!("invalid samples: {}", args[i]))?; } }
+            "--warmups" => { i += 1; if i < args.len() { warmups = args[i].parse::<usize>().map_err(|_| format!("invalid warmups: {}", args[i]))?; } }
+            _ => { return Err(format!("unknown flag: {}", args[i])); }
+        }
+        i += 1;
+    }
+    let image_dir = image.ok_or("missing --image")?;
+    let layer_idx = layer.ok_or("missing --layer")?;
+    let family_name = family.ok_or("missing --family")?;
+
+    eprintln!("Opening replay harness: image={} layer={} family={} phase={}",
+        image_dir, layer_idx, family_name, phase_shape);
+
+    let harness = tribunus_compute_native::replay_projection::ProjectionHarness::open(
+        Path::new(&image_dir),
+        layer_idx,
+        &family_name,
+    ).map_err(|e| format!("harness open: {}", e))?;
+
+    let samples_vec = if phase_shape == "prefill" {
+        harness.replay_prefill(samples, warmups)
+    } else {
+        harness.replay_decode(samples, warmups)
+    };
+
+    for s in &samples_vec {
+        println!("{}", serde_json::to_string(s).map_err(|e| format!("json: {}", e))?);
+    }
+
+    eprintln!("Done: {} samples ({})", samples_vec.len(), phase_shape);
     Ok(())
 }
