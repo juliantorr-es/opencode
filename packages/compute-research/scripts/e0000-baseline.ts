@@ -44,7 +44,7 @@ type WorkloadDef = {
 const WORKLOADS: Record<string, WorkloadDef> = {
     "bos-precompiled": {
     id: "bos-single-token",
-    testName: "real_full_model_from_compiled_image",
+    testName: "real_checkpoint_full_model_gate",
     promptTokenIds: [2],
     outputBudget: 1,
     description: "BOS from precompiled image (TRIBUNUS_COMPILED_IMAGE) — ~2min",
