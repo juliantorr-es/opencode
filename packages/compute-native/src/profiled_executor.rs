@@ -32,6 +32,48 @@ pub enum ExecutionMode {
     Profiled,
 }
 
+/// Layout treatment policy — controls how weight tensors are presented to MLX.
+///
+/// All policies are explicit.  Opening a frozen artifact defaults to
+/// [`LayoutPolicy::FrozenExisting`].  Experimental policies must be
+/// explicitly requested and are never activated by inference alone.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum LayoutPolicy {
+    /// Use weights exactly as stored in the artifact — no copies, no transforms.
+    /// This is the only policy authorized for sealed production artifacts.
+    FrozenExisting,
+    /// Create a canonical contiguous CPU copy of one representative quantized
+    /// weight tensor outside the timed projection region, then compare the
+    /// external-mapped and canonical-copy paths.  Diagnostic only — does not
+    /// alter inference behavior.
+    RuntimeCanonicalCopyProbe,
+    /// Require the artifact manifest to declare `prepacked_layout =
+    /// "prepacked-int8-v1"`.  Rejects artifacts that were compiled without
+    /// prepacking.  This policy must never be applied to the frozen E0000
+    /// control artifact.
+    CompilerPrepackedV1,
+}
+
+impl LayoutPolicy {
+    /// Return the policy's string identifier for CLI and logging.
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            LayoutPolicy::FrozenExisting => "frozen_existing",
+            LayoutPolicy::RuntimeCanonicalCopyProbe => "runtime_canonical_copy_probe",
+            LayoutPolicy::CompilerPrepackedV1 => "compiler_prepacked_v1",
+        }
+    }
+
+    /// Parse a policy from a CLI string.  Unknown values return `None`.
+    pub fn from_str(s: &str) -> Option<Self> {
+        match s {
+            "frozen_existing" => Some(LayoutPolicy::FrozenExisting),
+            "runtime_canonical_copy_probe" => Some(LayoutPolicy::RuntimeCanonicalCopyProbe),
+            "compiler_prepacked_v1" => Some(LayoutPolicy::CompilerPrepackedV1),
+            _ => None,
+        }
+    }
+}
 /// Result of one profiled full-model execution.
 #[derive(Debug, Clone)]
 pub struct ProfiledReceipt {
@@ -302,11 +344,41 @@ pub struct LoadedProfiledModel {
 }
 
 impl LoadedProfiledModel {
+    /// Load a profiled model from a ComputeImage directory.
+    ///
+    /// `layout_policy` defaults to [`LayoutPolicy::FrozenExisting`] when `None`.
+    /// [`LayoutPolicy::CompilerPrepackedV1`] requires the manifest to declare
+    /// `prepacked_layout = "prepacked-int8-v1"` and rejects the frozen E0000
+    /// control artifact.
     pub fn new(
         image_dir: &Path,
+    ) -> napi::Result<Self> {
+        Self::new_with_policy(image_dir, LayoutPolicy::FrozenExisting)
+    }
+
+    pub fn new_with_policy(
+        image_dir: &Path,
+        layout_policy: LayoutPolicy,
         ) -> napi::Result<Self> {
         let handle_baseline = crate::bridge::handle_count();
         let reader = CompiledImageReader::open(image_dir)?;
+
+        // ── Layout policy validation ───────────────────────────────────
+        let prepacked = &reader.manifest.prepacked_layout;
+        match layout_policy {
+            LayoutPolicy::CompilerPrepackedV1 => {
+                if prepacked != "prepacked-int8-v1" {
+                    return Err(napi::Error::from_reason(format!(
+                        "compiler_prepacked_v1 requires prepacked_layout=\"prepacked-int8-v1\", found \"{}\". Refusing to apply this policy to an artifact compiled without prepacking.",
+                        prepacked
+                    )));
+                }
+            }
+            LayoutPolicy::FrozenExisting | LayoutPolicy::RuntimeCanonicalCopyProbe => {
+                // No validation required; these policies accept any valid artifact.
+            }
+        }
+
         if !high_memory_override_enabled() {
             let total_memory = system_memory_bytes();
             let estimated_peak = estimate_profiled_peak_bytes(&reader);

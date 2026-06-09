@@ -221,31 +221,19 @@ pub fn sample_process_rss(pid: u32) -> u64 {
 pub fn sample_process_rss_self() -> u64 {
     #[cfg(target_os = "macos")]
     {
-        extern "C" {
-            fn task_info(
-                target_task: u32,
-                flavor: u32,
-                task_info_out: *mut u32,
-                task_info_count: *mut u32,
-            ) -> i32;
-            fn mach_task_self() -> u32;
-        }
-        const TASK_BASIC_INFO: u32 = 5;
-        const TASK_BASIC_INFO_COUNT: u32 = 10;
-        let mut info = [0u32; 10];
-        let mut count = TASK_BASIC_INFO_COUNT;
+        use libc::{mach_task_self, task_info, mach_task_basic_info, MACH_TASK_BASIC_INFO, MACH_TASK_BASIC_INFO_COUNT};
+        let mut info: mach_task_basic_info = unsafe { std::mem::zeroed() };
+        let mut count = MACH_TASK_BASIC_INFO_COUNT;
         let ret = unsafe {
             task_info(
                 mach_task_self(),
-                TASK_BASIC_INFO,
-                info.as_mut_ptr(),
+                MACH_TASK_BASIC_INFO,
+                &mut info as *mut _ as *mut i32,
                 &mut count,
             )
         };
-        if ret == 0 && count >= 2 {
-            let lo = info[1] as u64;
-            let hi = info[2] as u64;
-            return (hi << 32) | lo;
+        if ret == 0 {
+            return info.resident_size;
         }
         0
     }
@@ -262,6 +250,12 @@ pub fn sample_process_rss_self() -> u64 {
 pub fn sample_page_faults() -> u64 {
     #[cfg(target_os = "macos")]
     {
+        // SAFETY: proc_pid_rusage with RUSAGE_INFO_V2 can SIGBUS on
+        // macOS versions where the rusage_info_v2 struct layout differs
+        // from the libc crate definition. Guard with an env opt-in.
+        if std::env::var("TRIBUNUS_ENABLE_PAGE_FAULTS").ok().as_deref() != Some("1") {
+            return 0;
+        }
         use libc::rusage_info_v2;
         let mut info: rusage_info_v2 = unsafe { std::mem::zeroed() };
         let mut info_ptr: *mut libc::c_void = &mut info as *mut _ as *mut libc::c_void;

@@ -16,7 +16,7 @@ use rayon::prelude::*;
 use sha2::{Digest, Sha256};
 use uuid::Uuid;
 
-use tribunus_compute_native::profiled_executor::{LoadedProfiledModel, ProfiledInferenceSession, ExecutionMode};
+use tribunus_compute_native::profiled_executor::{LoadedProfiledModel, ProfiledInferenceSession};
 use tribunus_compute_native::kv_cache::KvCache;
 use tribunus_compute_native::compute_image;
 
@@ -441,10 +441,18 @@ fn cmd_infer(args: &[String]) -> Result<(), String> {
 
 fn cmd_decode_one(args: &[String]) -> Result<(), String> {
     let mut image: Option<String> = None;
+    let mut layout_policy = tribunus_compute_native::profiled_executor::LayoutPolicy::FrozenExisting;
     let mut i = 0;
     while i < args.len() {
         match args[i].as_str() {
             "--image" => { i += 1; if i < args.len() { image = Some(args[i].clone()); } }
+            "--layout-policy" => {
+                i += 1;
+                if i < args.len() {
+                    layout_policy = tribunus_compute_native::profiled_executor::LayoutPolicy::from_str(&args[i])
+                        .ok_or_else(|| format!("invalid layout policy: {}. Valid: frozen_existing, runtime_canonical_copy_probe, compiler_prepacked_v1", args[i]))?;
+                }
+            }
             _ => { return Err(format!("unknown flag: {}", args[i])); }
         }
         i += 1;
@@ -455,8 +463,8 @@ fn cmd_decode_one(args: &[String]) -> Result<(), String> {
         return Err("not a ComputeImage directory".into());
     }
 
-    eprintln!("Loading profiled model: {}", image_dir);
-    let model = LoadedProfiledModel::new(image_path)
+    eprintln!("Loading profiled model: {} (layout_policy={})", image_dir, layout_policy.as_str());
+    let model = LoadedProfiledModel::new_with_policy(image_path, layout_policy)
         .map_err(|e| format!("load: {e}"))?;
 
     let plan = &model.reader.manifest.execution_plan;

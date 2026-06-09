@@ -24,20 +24,84 @@
     "786a1ea7 feat: ARM quantized matrix-vector oracle",
     "0bb38348 feat: add page_faults to model-load telemetry report"
   ],
-  "binary_hashes": [],
+  "binary_hashes": ["tribunus-native-bench: not recorded (run before artifact hashing was required)"],
   "experiment_ids": ["E0001-NEON-ORACLE"],
   "comparison_ids": [],
+  "experiment_parameters": {
+    "M": 1,
+    "K": 3840,
+    "N": 8192,
+    "group_size": 64,
+    "quantization_bits": 8,
+    "quantization_mode": "int8 per-group (scale + bias)",
+    "machine": "Apple M1 (arm64)",
+    "profile": "release (opt-level=3, lto=true, codegen-units=1)",
+    "warmup_count": 3,
+    "sample_count": 10
+  },
   "bottleneck_ledger": {
     "prefill": [],
     "decode": []
   },
   "result_classification": "rejected",
+  "treatment_names": {
+    "scalar_reference": "scalar_reference",
+    "llvm_auto": "llvm_auto",
+    "cache_blocked_scalar": "cache_blocked_scalar",
+    "neon_f32_fma_v1": "neon_f32_fma_v1"
+  },
   "final_decision": "Rust CPU implementations are ~40x slower than expected Metal performance. The cache_blocked_scalar variant (fastest at 42.8 ms) is 40–85x slower than the 0.5–1 ms Metal baseline for the same shape. CPU NEON is not competitive as a production projection backend at M=1. Retain Rust implementation as correctness oracle, portability fallback, and foundation for compiler-time layout transforms. Metal remains the authorized production projection backend. This experiment does not claim to establish the optimized performance ceiling of NEON — a heavily tuned NEON kernel with fused dequant+matmul and cache-aware tiling could potentially be faster, but the 40x gap makes it unlikely to close.",
   "result": {
-    "scalar_reference": { "median_us": 117025, "speedup_vs_scalar": 1.00 },
-    "llvm_auto": { "median_us": 111867, "speedup_vs_scalar": 1.05 },
-    "cache_blocked_scalar": { "median_us": 42805, "speedup_vs_scalar": 2.73 },
-    "neon_f32_fma_v1": { "median_us": 64978, "speedup_vs_scalar": 1.80 }
+    "scalar_reference": {
+      "median_us": 117025,
+      "min_us": "not recorded",
+      "max_us": "not recorded",
+      "speedup_vs_scalar": 1.00
+    },
+    "llvm_auto": {
+      "median_us": 111867,
+      "min_us": "not recorded",
+      "max_us": "not recorded",
+      "speedup_vs_scalar": 1.05
+    },
+    "cache_blocked_scalar": {
+      "median_us": 42805,
+      "min_us": "not recorded",
+      "max_us": "not recorded",
+      "speedup_vs_scalar": 2.73
+    },
+    "neon_f32_fma_v1": {
+      "median_us": 64978,
+      "min_us": "not recorded",
+      "max_us": "not recorded",
+      "speedup_vs_scalar": 1.80
+    }
   },
-  "notes": "Measured on Apple M1 (arm64), release build (opt-level=3, lto=true, codegen-units=1). The cache_blocked_scalar variant is faster than the explicit NEON intrinsic variant because the latter's vgetq_lane_f32 lane-extraction overhead dominates the inner loop. Dequantization per-element (31.5M dequant ops for 3840×8192) is the primary bottleneck, not the matrix multiply itself. A fused dequant+matvec kernel that precomputes per-row contributions could reduce this overhead."
+  "output_agreement": {
+    "max_absolute_error": "not recorded in raw form (output agreement verified via assert during benchmark)",
+    "max_relative_error": "not recorded",
+    "reference": "scalar_reference"
+  },
+  "effective_throughput": {
+    "cache_blocked_scalar_effective_gflops": "not computed",
+    "note": "Effective throughput in GFLOPS not computed. Raw timing: cache_blocked_scalar at 42.8ms for M=1,K=3840,N=8192 implies ~0.7 GMAC/s effective (2*M*K*N/42.8ms). Metal at 0.5ms would be ~63 GMAC/s effective."
+  },
+  "metal_comparison": {
+    "isolated_metal_estimate": "0.5–1.0 ms for same shape",
+    "metal_source": "Estimated from E0002 decode per-projection timing (extrapolated from per-layer eval time / 7 projections)",
+    "cpu_vs_metal_ratio": "~40–85x slower"
+  },
+  "limitations": [
+    "Raw timing values (min/max/IQR) were not recorded during the benchmark run — only median values are available.",
+    "Maximum absolute and relative error were verified via assert during the benchmark but the numeric values were not recorded.",
+    "Binary SHA-256 hash was not recorded at the time of the run.",
+    "The NEON intrinsic implementation (neon_f32_fma_v1) is slower than cache_blocked_scalar because vgetq_lane_f32 lane-extraction overhead dominates the inner loop.",
+    "This experiment does not establish an optimized NEON performance ceiling."
+  ],
+  "conclusion": [
+    "The current CPU implementations are not competitive with the measured Metal path for this projection.",
+    "Metal remains the production projection backend.",
+    "The CPU implementation is retained as a correctness oracle, fallback, and compiler/layout-kernel substrate.",
+    "The experiment does not establish an optimized NEON performance ceiling."
+  ]
 }

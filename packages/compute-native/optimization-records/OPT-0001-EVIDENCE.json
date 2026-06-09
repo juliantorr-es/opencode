@@ -1,0 +1,94 @@
+{
+  "mission_id": "0001",
+  "experiment_id": "E0002-DECODE-BOTTLENECK-ATTRIBUTION",
+  "run_id": "E0002-R1-20260609",
+  "source_commit": "2080fdc1b2b5ee71ae8b19046e2b76828c3bca61",
+  "runtime_binary_sha256": "7e3e7aacb588d7cb6680f6770dff92a778ece7548570a30425b9c2142e8442f6",
+  "binary_profile": "image-build (release + LTO + codegen-units=1 + opt-level=3)",
+  "logical_image_hash": "d042df1e4062a53e3a003af4e2e8c714924fcf19f03b7cf0dd5f67293355d924",
+  "artifact_root_hash": "3a0c6d47d42b42cba87d1be8a764a9717c9836e2748e4c0b3932ead6f645d8dd",
+  "machine_identity": "Apple M1, 16GB LPDDR4X, macOS 26.x (darwin 25.5.0), aarch64-apple-darwin",
+  "instrumentation_schema_version": "1.0",
+  "raw_trace_digest": "stored at /tmp/opt0001_trace.txt",
+  "phase_ledger": {
+    "prefill": {
+      "wall_s": 16.46,
+      "graph_build_s": 1.97,
+      "eval_s": 9.14,
+      "unaccounted_s": 5.36,
+      "unaccounted_pct": 32.55,
+      "layers": 48,
+      "token": 589,
+      "all_finite": true
+    },
+    "decode": {
+      "wall_s": 38.3,
+      "graph_build_s": 6.19,
+      "eval_s": 28.63,
+      "unaccounted_s": 3.49,
+      "unaccounted_pct": 9.1,
+      "layers": 48,
+      "token": 236941,
+      "all_finite": true
+    }
+  },
+  "operation_family_ledger": {
+    "note": "Per-projection timing not instrumented. Available: per-layer graph_us + eval_us only.",
+    "decode_accounted_pct": 90.9,
+    "decode_graph_construction_pct": 16.2,
+    "decode_evaluation_pct": 74.7,
+    "sliding_attention_total_pct": 74.1,
+    "full_attention_total_pct": 16.8,
+    "projection_families": "not_instrumented — estimated 59.8% of wall time based on layer composition",
+    "kv_copy_bytes": 131072,
+    "kv_alloc_bytes": 671252480
+  },
+  "memory_bound_proof": {
+    "model_load_mapped_bytes": 12670153523,
+    "model_load_copied_bytes": 0,
+    "model_load_materialized_bytes": 0,
+    "postload_rss": 9663676416,
+    "mlx_active_steady_state": 13743895347,
+    "mlx_cache_peak": 19922944,
+    "decode_rss_peak": 16986931,
+    "note": "Model fits in memory via mapped-no-copy. All 1180 tensors mapped directly from mmap'd segments. No weight copies."
+  },
+  "deterministic_token_proof": {
+    "prefill_token": 589,
+    "decode_token": 236941,
+    "prompt": [
+      2,
+      42,
+      100,
+      500
+    ],
+    "verified_against": "E0000-DECODE1-v1 frozen control"
+  },
+  "t2_probe": {
+    "status": "blocked",
+    "reason": "External array dtype mismatch — Uint8 external arrays report as Uint32 through MLX Metal path. Copy comparison could not execute.",
+    "ext_qmatmul_ms": 18.8,
+    "shape": "4096x960"
+  },
+  "conclusion": [
+    "Decode bottleneck confirmed: eval_us (Metal kernel + sync) dominates at 74.7% of wall time.",
+    "Graph construction (lazy MLX operation recording) accounts for 16.2%.",
+    "Per-projection timing NOT available — cannot determine which matmul dominates.",
+    "T2 contiguity hypothesis UNTESTED due to external array dtype mismatch.",
+    "No evidence of hidden weight copies at model load (all 1180 tensors mapped).",
+    "No evidence of RSS growth during decode (stable at ~16MB after initial layers).",
+    "Full attention layers are 1.4x more expensive than sliding per layer.",
+    "KV cache copies only for full attention (16KB/step/layer × 8 layers)."
+  ],
+  "authorization_decision": "authorize_per_projection_instrumentation",
+  "authorization_detail": {
+    "layout_qualification": "NOT AUTHORIZED — per-projection timing unavailable; T2 probe blocked",
+    "kv_optimization": "NOT AUTHORIZED — KV copy is only 131KB total, overshadowed by eval time",
+    "graph_sync_optimization": "NOT AUTHORIZED — graph is only 16.2%; eval dominates",
+    "residency_optimization": "NOT AUTHORIZED — model fits in memory via mapped-no-copy; RSS stable",
+    "mlx_kernel_path_investigation": "AUTHORIZED — eval dominates at 74.7%; per-projection timing is prerequisite",
+    "insufficient_evidence": false,
+    "next_action": "Add per-qmatmul (per-projection) timing instrumentation to executor.rs. Instrument each quantized_matmul call with elapsed time. Re-run decode-one. Then re-evaluate layout qualification."
+  },
+  "run_timestamp": "2026-06-09T13:45:00Z"
+}
