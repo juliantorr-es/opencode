@@ -459,6 +459,7 @@ fn cmd_decode_one(args: &[String]) -> Result<(), String> {
     let model = LoadedProfiledModel::new(image_path)
         .map_err(|e| format!("load: {e}"))?;
 
+    eprintln!("[model-load] layers={} segments={} tensors={}", model.layers.len(), model.reader.manifest.segments.len(), model.reader.manifest.tensor_table.len());
     let plan = &model.reader.manifest.execution_plan;
     let kv_caches: Vec<KvCache> = plan.layers.iter().map(|lp| {
         let is_sliding = lp.attention_kind == "sliding_attention";
