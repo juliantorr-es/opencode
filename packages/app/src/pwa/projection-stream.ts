@@ -182,7 +182,9 @@ export function createProjectionStream(): ProjectionStreamClient {
     const delay = exponential + jitter
     reconnectAttempt++
     setStatus("reconnecting")
-    reconnectTimer = setTimeout(() => connect(connectTarget.url, connectTarget.token), delay)
+    if (!connectTarget) return
+    const target = connectTarget
+    reconnectTimer = setTimeout(() => connect(target.url, target.token), delay)
   }
 
   function clearReconnect() {
