@@ -1,0 +1,11 @@
+[package]
+name = "tribunus-evidence-arrow"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Tribunus evidence-plane Arrow — direct RecordBatch construction from typed events"
+
+[dependencies]
+tribunus-evidence-schema = { path = "../evidence-schema" }
+arrow = { version = "54", features = ["prettyprint"] }
+chrono = { version = "0.4", features = ["serde"] }

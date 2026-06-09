@@ -1,0 +1,12 @@
+[package]
+name = "tribunus-evidence-schema"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Tribunus evidence-plane event schema — typed V4 event envelope, payloads, and serialization"
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+uuid = { version = "1", features = ["v4", "serde"] }
+chrono = { version = "0.4", features = ["serde"] }

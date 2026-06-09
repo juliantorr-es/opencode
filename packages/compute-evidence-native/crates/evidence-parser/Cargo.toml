@@ -1,0 +1,12 @@
+[package]
+name = "tribunus-evidence-parser"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Tribunus evidence-plane streaming parser — NDJSON ingestion, validation, V1-V3 migration"
+
+[dependencies]
+tribunus-evidence-schema = { path = "../evidence-schema" }
+serde = { version = "1", features = ["derive"] }
+sha2 = "0.10"
+serde_json = "1"

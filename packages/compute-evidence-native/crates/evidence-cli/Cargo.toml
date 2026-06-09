@@ -1,0 +1,16 @@
+[package]
+name = "tribunus-evidence-cli"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Tribunus evidence-plane CLI — ingest, validate, normalize, inspect, benchmark"
+
+[[bin]]
+name = "tribunus-evidence"
+path = "src/main.rs"
+
+[dependencies]
+tribunus-evidence-schema = { path = "../evidence-schema" }
+tribunus-evidence-parser = { path = "../evidence-parser" }
+tribunus-evidence-arrow = { path = "../evidence-arrow" }
+serde_json = "1"
