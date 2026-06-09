@@ -1,0 +1,43 @@
+{
+  "optimization_id": "OPT-0000-NEON-ORACLE",
+  "treatment_id": "T0000-CPU-MATVEC",
+  "experiment_id": "E0001-NEON-ORACLE",
+  "hypothesis": "A Rust-native quantized matrix-vector kernel at M=1 decode shapes can match or approach Metal performance for single-token Gemma projections, enabling CPU as either a primary backend or a heterogeneous shape-based dispatch target.",
+  "baseline": "Metal quantized_matmul on external mapped U8 weights (estimated 0.5–1 ms for K=3840, N=8192)",
+  "target_stage": "Level 1 — operation microbenchmark against representative real shapes (Gemma Q-projection: K=3840, N=8192, group_size=64)",
+  "implementation": "Four Rust implementations in native_kernel.rs: scalar_reference (naive float loop), llvm_auto (chunked iterators for auto-vectorization), cache_blocked_scalar (blocked scalar dequant loop, cache-friendly), neon_f32_fma_v1 (vld1q/vfmaq NEON intrinsics)",
+  "expected_mechanism": "NEON SIMD should provide 4-8x speedup over scalar through 128-bit fused multiply-add; if CPU is competitive at M=1, heterogeneous dispatch should be used for small-batch projections",
+  "primary_metric": "Median wall-clock microseconds per single-inference quantized matvec (M=1, K=3840, N=8192, group_size=64)",
+  "secondary_metrics": [
+    "Speedup ratio vs scalar_reference baseline",
+    "Maximum absolute error vs scalar_reference (correctness gate)"
+  ],
+  "correctness_gates": [
+    "All four variants produce identical output to scalar_reference within 1e-5 tolerance",
+    "Round-trip test (prepack → uninterleave → compare) passes for synthetic data"
+  ],
+  "memory_gates": [
+    "No implementation allocates more than O(K*N + N*K/group_size) bytes",
+    "No mmap or external allocation — all pure stack/heap Rust"
+  ],
+  "source_commits": [
+    "786a1ea7 feat: ARM quantized matrix-vector oracle",
+    "0bb38348 feat: add page_faults to model-load telemetry report"
+  ],
+  "binary_hashes": [],
+  "experiment_ids": ["E0001-NEON-ORACLE"],
+  "comparison_ids": [],
+  "bottleneck_ledger": {
+    "prefill": [],
+    "decode": []
+  },
+  "result_classification": "rejected",
+  "final_decision": "Rust CPU implementations are ~40x slower than expected Metal performance. The cache_blocked_scalar variant (fastest at 42.8 ms) is 40–85x slower than the 0.5–1 ms Metal baseline for the same shape. CPU NEON is not competitive as a production projection backend at M=1. Retain Rust implementation as correctness oracle, portability fallback, and foundation for compiler-time layout transforms. Metal remains the authorized production projection backend. This experiment does not claim to establish the optimized performance ceiling of NEON — a heavily tuned NEON kernel with fused dequant+matmul and cache-aware tiling could potentially be faster, but the 40x gap makes it unlikely to close.",
+  "result": {
+    "scalar_reference": { "median_us": 117025, "speedup_vs_scalar": 1.00 },
+    "llvm_auto": { "median_us": 111867, "speedup_vs_scalar": 1.05 },
+    "cache_blocked_scalar": { "median_us": 42805, "speedup_vs_scalar": 2.73 },
+    "neon_f32_fma_v1": { "median_us": 64978, "speedup_vs_scalar": 1.80 }
+  },
+  "notes": "Measured on Apple M1 (arm64), release build (opt-level=3, lto=true, codegen-units=1). The cache_blocked_scalar variant is faster than the explicit NEON intrinsic variant because the latter's vgetq_lane_f32 lane-extraction overhead dominates the inner loop. Dequantization per-element (31.5M dequant ops for 3840×8192) is the primary bottleneck, not the matrix multiply itself. A fused dequant+matvec kernel that precomputes per-row contributions could reduce this overhead."
+}
