@@ -72,7 +72,7 @@ export function registerGithubIpcHandlers(runtime: DesktopRuntime) {
         }),
       })
     )
-    const data = yield* Effect.tryPromise(() => response.json()) as unknown
+    const data = yield* Effect.tryPromise(() => response.json()) as unknown as Record<string, unknown>
     if (data && typeof data === "object" && "access_token" in data) {
       const accessToken = (data as Record<string, unknown>).access_token
       if (typeof accessToken === "string") {

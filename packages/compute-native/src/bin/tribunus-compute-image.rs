@@ -345,7 +345,7 @@ fn cmd_verify(args: &[String]) -> Result<(), String> {
 
 /// Sync (fsync) an open directory. Falls back to a no-op on platforms where
 /// File::open on a directory is unsupported.
-fn sync_dir
+fn sync_dir(path: &Path) -> Result<(), String> {
     match fs::File::open(path) {
         Ok(file) => file.sync_all().map_err(|e| format!("sync dir failed: {e}")),
         Err(_) => Ok(()),

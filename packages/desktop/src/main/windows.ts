@@ -55,6 +55,35 @@ const pinchZoomEnabled = new WeakMap<BrowserWindow, boolean>()
 const titlebarHeight = 40
 const maxZoomLevel = 10
 const minZoomLevel = 0.2
+ 
+ /** Window role for deterministic identification */
+ export type WindowRole = "main" | "loading" | "safe-mode" | "plugin"
+ 
+ /** Map of window IDs to declared roles */
+ const windowRoles = new Map<number, WindowRole>()
+ 
+ /** Create a BrowserWindow with an explicit role */
+ export function createWindowWithRole(role: WindowRole, options: Electron.BrowserWindowConstructorOptions): Electron.BrowserWindow {
+   const win = new BrowserWindow(options)
+   windowRoles.set(win.id, role)
+   win.on("closed", () => windowRoles.delete(win.id))
+   return win
+ }
+ 
+ /** Find a window by its role */
+ export function findWindowByRole(role: WindowRole): BrowserWindow | null {
+   for (const [id, r] of windowRoles) {
+     if (r === role) {
+       const win = BrowserWindow.fromId(id)
+       if (win && !win.isDestroyed()) return win
+     }
+   }
+   return null
+ }
+ 
+ export function getWindowRole(win: BrowserWindow): WindowRole | undefined {
+   return windowRoles.get(win.id)
+ }
 
 export function setRelaunchHandler(handler: () => void) {
   relaunchHandler = handler
@@ -132,7 +161,7 @@ export function createMainWindow() {
   })
 
   const mode = tone()
-  const win = new BrowserWindow({
+  const win = createWindowWithRole("main", {
     x: state.x,
     y: state.y,
     width: state.width,
@@ -230,13 +259,14 @@ export function transitionToSafeMode(win: BrowserWindow, error: { message: strin
   win.center()
   win.setResizable(true)
   win.setTitle("Tribunus — Safe Mode")
+  windowRoles.set(win.id, "safe-mode")
   loadWindow(win, "safe-mode.html")
   return win
 }
 
 export function createLoadingWindow() {
   const mode = tone()
-  const win = new BrowserWindow({
+  const win = createWindowWithRole("loading", {
     width: 640,
     height: 480,
     resizable: false,

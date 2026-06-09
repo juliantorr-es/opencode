@@ -1,5 +1,6 @@
 import { Schema } from "effect"
 import { app, BrowserWindow } from "electron"
+import { findWindowByRole } from "./windows"
 
 export function registerQualificationDriver(): void {
   if (process.env.TRIBUNUS_QUALIFICATION_DRIVER !== "1") return
@@ -62,13 +63,11 @@ function reject(id: string, code: string, message: string) {
 }
 
 function findMainWindow(): BrowserWindow | null {
-  const wins = BrowserWindow.getAllWindows()
-  for (const win of wins) {
-    if (!win.isDestroyed() && win.webContents.getURL().includes("renderer/index.html")) {
-      return win
-    }
-  }
-  return null
+  return findWindowByRole("main")
+}
+
+function findSafeModeWindow(): BrowserWindow | null {
+  return findWindowByRole("safe-mode")
 }
 
 process.on("message", async (raw: unknown) => {
@@ -103,7 +102,7 @@ process.on("message", async (raw: unknown) => {
         break
       }
       case "window.screenshot": {
-        const win = findMainWindow()
+        const win = findMainWindow() ?? findSafeModeWindow()
         if (!win) { reject(id, "unavailable", "No main renderer window"); break }
         try {
           const image = await win.webContents.capturePage()
@@ -115,7 +114,7 @@ process.on("message", async (raw: unknown) => {
         break
       }
       case "renderer.execute": {
-        const win = findMainWindow()
+        const win = findMainWindow() ?? findSafeModeWindow()
         if (!win) { reject(id, "unavailable", "No main renderer window"); break }
         const code = params.code as string
         if (!code || code.length > 10000) { reject(id, "invalid_request", "Code too long or empty"); break }
@@ -128,7 +127,7 @@ process.on("message", async (raw: unknown) => {
         break
       }
       case "renderer.invokeApi": {
-        const win = findMainWindow()
+        const win = findMainWindow() ?? findSafeModeWindow()
         if (!win) { reject(id, "unavailable", "No main renderer window"); break }
         const method = params.method as string
         const args = (params.args as unknown[]) ?? []
@@ -149,7 +148,7 @@ process.on("message", async (raw: unknown) => {
         break
       }
       case "crash.injectRenderer": {
-        const win = findMainWindow()
+        const win = findMainWindow() ?? findSafeModeWindow()
         if (!win) { reject(id, "unavailable", "No main renderer window"); break }
         try {
           await win.webContents.executeJavaScript("throw new Error('Qualification crash injection')")
@@ -161,7 +160,7 @@ process.on("message", async (raw: unknown) => {
         break
       }
       case "dom.querySelector": {
-        const win = findMainWindow()
+        const win = findMainWindow() ?? findSafeModeWindow()
         if (!win) { reject(id, "unavailable", "No main renderer window"); break }
         const selector = params.selector as string
         if (!selector || selector.length > 256) { reject(id, "invalid_request", "Invalid selector"); break }
@@ -180,7 +179,7 @@ process.on("message", async (raw: unknown) => {
         break
       }
       case "dom.clickSelector": {
-        const win = findMainWindow()
+        const win = findMainWindow() ?? findSafeModeWindow()
         if (!win) { reject(id, "unavailable", "No main renderer window"); break }
         const selector = params.selector as string
         if (!selector || selector.length > 256) { reject(id, "invalid_request", "Invalid selector"); break }
@@ -200,7 +199,7 @@ process.on("message", async (raw: unknown) => {
         break
       }
       case "dom.waitForSelector": {
-        const win = findMainWindow()
+        const win = findMainWindow() ?? findSafeModeWindow()
         if (!win) { reject(id, "unavailable", "No main renderer window"); break }
         const selector = params.selector as string
         const timeout = (params.timeout as number) ?? 10_000
