@@ -13,6 +13,7 @@ pub mod compile_progress;
 pub mod compute_ir;
 pub mod compile_state;
 pub mod config;
+pub mod projection_identity;
 pub mod coreml_audit;
 pub mod coreml_pipeline;
 pub mod coreml_bridge;

@@ -9,6 +9,7 @@ use crate::config::{EpiloguePlan, LayerPlan, ProloguePlan};
 use crate::kv_cache::KvCache;
 use crate::primitives;
 use crate::session::SamplerConfig;
+use crate::projection_identity::{self, ProjectionContext, ProjectionFamily, dtype_to_storage};
 use mlx_rs::error::Result as MlxResult;
 use mlx_rs::ops::indexing::IndexOp;
 use mlx_rs::Array;
@@ -81,6 +82,7 @@ pub fn run_layer(
     cache: &mut KvCache,
     kv_offset: u32,
     rms_norm_eps: f32,
+    ctx: &ProjectionContext,
 ) -> MlxResult<Array> {
     // Shape contract: hidden state is batchless [tokens, hidden_size].
     debug_assert_eq!(hidden.ndim(), 2,
@@ -96,10 +98,12 @@ pub fn run_layer(
         "sliding_attention" => sliding_attention_layer(
             &normed, plan, qw, qs, qb, kw, ks, kb, vw, vs, vb, ow, os, ob,
             q_norm_weight, k_norm_weight, rope_cos, rope_sin, kv_offset, cache,
+            ctx,
         )?,
         "full_attention" => full_attention_layer(
             &normed, plan, qw, qs, qb, kw, ks, kb, vw, vs, vb, ow, os, ob,
             q_norm_weight, k_norm_weight, rope_cos, rope_sin, kv_offset, cache,
+            ctx,
         )?,
         other => {
             return Err(mlx_rs::error::Exception::custom(format!(
@@ -115,10 +119,10 @@ pub fn run_layer(
     let normed = primitives::rms_norm(&hidden, ffn_norm, rms_norm_eps)?;
 
     // --- SwiGLU MLP ---
-    let gate = qmatmul(&normed, gw, gs, gb)?;
-    let up = qmatmul(&normed, uw, us, ub)?;
+    let gate = qmatmul_attributed(&normed, gw, gs, gb, true, 64, 8, ctx, ProjectionFamily::GateProj, 4)?;
+    let up = qmatmul_attributed(&normed, uw, us, ub, true, 64, 8, ctx, ProjectionFamily::UpProj, 5)?;
     let gated = mlx_rs::nn::silu(&gate)?.multiply(&up)?;
-    let ffn_out = qmatmul(&gated, dw, ds, db)?;
+    let ffn_out = qmatmul_attributed(&gated, dw, ds, db, true, 64, 8, ctx, ProjectionFamily::DownProj, 6)?;
 
     residual.add(&ffn_out)
 }
@@ -182,6 +186,99 @@ fn qmatmul(x: &Array, w: &Array, s: &Array, b: &Array) -> MlxResult<Array> {
     mlx_rs::ops::quantized_matmul(x, w, s, b, true, group_size, 8)
 }
 
+// ── Projection attribution wrapper ────────────────────────────────────
+
+/// Wrapper around qmatmul that conditionally emits a projection attribution
+/// event when `TRIBUNUS_PROJECTION_ATTRIBUTION=1`.
+///
+/// When the env var is unset (the common case), this function degenerates
+/// to a direct call to `qmatmul` — zero overhead beyond an AtomicBool load.
+/// No eval, synchronization, or host readback occurs inside the timer.
+fn qmatmul_attributed(
+    x: &Array,
+    w: &Array,
+    s: &Array,
+    b: &Array,
+    _transpose: bool,
+    _group_size: i32,
+    _bits: i32,
+    ctx: &ProjectionContext,
+    family: ProjectionFamily,
+    invocation: usize,
+) -> MlxResult<Array> {
+    // One-time gate check: cache in a static AtomicBool so the fast path
+    // is a single relaxed load (no env var string allocation).
+    static GATE_INIT: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+    static GATE_ENABLED: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+
+    if !GATE_INIT.load(std::sync::atomic::Ordering::Relaxed) {
+        let enabled = std::env::var("TRIBUNUS_PROJECTION_ATTRIBUTION")
+            .ok()
+            .as_deref()
+            == Some("1");
+        GATE_ENABLED.store(enabled, std::sync::atomic::Ordering::Relaxed);
+        GATE_INIT.store(true, std::sync::atomic::Ordering::Relaxed);
+    }
+
+    if !GATE_ENABLED.load(std::sync::atomic::Ordering::Relaxed) {
+        return qmatmul(x, w, s, b);
+    }
+
+    // ---- Instrumented path ----
+    let start = std::time::Instant::now();
+    let result = qmatmul(x, w, s, b)?;
+    let delta_ns = start.elapsed().as_nanos() as u64;
+
+    let input_shape = x.shape();
+    let w_shape = w.shape();
+
+    // Compute group_size from scales shape (same logic as qmatmul).
+    let gs = if s.shape().len() >= 1 {
+        (w.shape()[1] as i32 * 4) / s.shape()[s.shape().len() - 1]
+    } else {
+        64
+    };
+
+    let runtime_dtype_str = format!("{:?}", w.dtype());
+    let storage_dtype_str = dtype_to_storage(&w.dtype());
+
+    // Build weight_physical = weight_logical for now; the physical shape
+    // is identical because we operate on the canonical MLX representation.
+    let w_d0 = w_shape.first().copied().unwrap_or(0);
+    let w_d1 = w_shape.get(1).copied().unwrap_or(0);
+
+    let token_step_str = match ctx.token_step {
+        Some(ts) => format!("{}", ts),
+        None => String::new(),
+    };
+
+    eprintln!(
+        "[proj] run_id={} phase={} forward_pass={} token_step={} layer={} kind={} family={} invocation={} graph_build_ns={} input=[{},{}] weight_logical=[{},{}] weight_physical=[{},{}] storage_dtype={} runtime_dtype={} group_size={} bits={} transpose={}",
+        ctx.run_id,
+        ctx.phase.as_str(),
+        ctx.forward_pass_index,
+        token_step_str,
+        ctx.layer_index,
+        ctx.attention_kind.as_str(),
+        family.as_str(),
+        invocation,
+        delta_ns,
+        input_shape.first().copied().unwrap_or(0),
+        input_shape.get(1).copied().unwrap_or(0),
+        w_d0,
+        w_d1,
+        w_d0,
+        w_d1,
+        storage_dtype_str,
+        runtime_dtype_str,
+        gs,
+        8,   // bits — always 8 for our quantized matmul
+        true, // transpose — always true for qmatmul
+    );
+
+    Ok(result)
+}
+
 fn sliding_attention_layer(
     x: &Array,
     plan: &LayerPlan,
@@ -195,6 +292,7 @@ fn sliding_attention_layer(
     rope_sin: &Array,
     kv_offset: u32,
     cache: &mut KvCache,
+    ctx: &ProjectionContext,
 ) -> MlxResult<Array> {
     let n_tokens = x.shape()[0];
     let n_heads = plan.n_heads;
@@ -202,11 +300,11 @@ fn sliding_attention_layer(
     let head_dim = plan.head_dim;
     let n_rep = n_heads / n_kv_heads;
 
-    let q = qmatmul(x, qw, qs, qb)?
+    let q = qmatmul_attributed(x, qw, qs, qb, true, 64, 8, ctx, ProjectionFamily::QProj, 0)?
         .reshape(&[n_tokens, n_heads as i32, head_dim as i32])?;
-    let k = qmatmul(x, kw, ks, kb)?
+    let k = qmatmul_attributed(x, kw, ks, kb, true, 64, 8, ctx, ProjectionFamily::KProj, 1)?
         .reshape(&[n_tokens, n_kv_heads as i32, head_dim as i32])?;
-    let v = qmatmul(x, vw, vs, vb)?
+    let v = qmatmul_attributed(x, vw, vs, vb, true, 64, 8, ctx, ProjectionFamily::VProj, 2)?
         .reshape(&[n_tokens, n_kv_heads as i32, head_dim as i32])?;
 
     let q = if let Some(wn) = q_norm_weight {
@@ -266,7 +364,7 @@ fn sliding_attention_layer(
     let attn = mlx_rs::ops::softmax_axes(&scores, &[-1], None)?;
     let out = attn.matmul(&vt)?
         .reshape(&[n_tokens, (n_heads * head_dim) as i32])?;
-    qmatmul(&out, ow, os, ob)?.reshape(&[n_tokens, -1])
+    qmatmul_attributed(&out, ow, os, ob, true, 64, 8, ctx, ProjectionFamily::OProj, 3)?.reshape(&[n_tokens, -1])
 }
 
 fn full_attention_layer(
@@ -282,6 +380,7 @@ fn full_attention_layer(
     rope_sin: &Array,
     kv_offset: u32,
     cache: &mut KvCache,
+    ctx: &ProjectionContext,
 ) -> MlxResult<Array> {
     let n_tokens = x.shape()[0];
     let n_heads = plan.n_heads;
@@ -289,9 +388,9 @@ fn full_attention_layer(
     let n_kv_heads = plan.n_global_kv_heads.unwrap_or(plan.n_kv_heads);
     let n_rep = n_heads / n_kv_heads;
 
-    let q = qmatmul(x, qw, qs, qb)?
+    let q = qmatmul_attributed(x, qw, qs, qb, true, 64, 8, ctx, ProjectionFamily::QProj, 0)?
         .reshape(&[n_tokens, n_heads as i32, head_dim as i32])?;
-    let k = qmatmul(x, kw, ks, kb)?
+    let k = qmatmul_attributed(x, kw, ks, kb, true, 64, 8, ctx, ProjectionFamily::KProj, 1)?
         .reshape(&[n_tokens, n_kv_heads as i32, head_dim as i32])?;
 
     // Plan-driven V semantics: when attention_k_eq_v is true, K and V share
@@ -299,7 +398,7 @@ fn full_attention_layer(
     let v: Array = if plan.attention_k_eq_v {
         k.clone()
     } else {
-        qmatmul(x, vw, vs, vb)?
+        qmatmul_attributed(x, vw, vs, vb, true, 64, 8, ctx, ProjectionFamily::VProj, 2)?
             .reshape(&[n_tokens, n_kv_heads as i32, head_dim as i32])?
     };
 
@@ -354,7 +453,7 @@ fn full_attention_layer(
     let attn = mlx_rs::ops::softmax_axes(&scores, &[-1], None)?;
     let out = attn.matmul(&vt)?
         .reshape(&[n_tokens, (n_heads * head_dim) as i32])?;
-    qmatmul(&out, ow, os, ob)?.reshape(&[n_tokens, -1])
+    qmatmul_attributed(&out, ow, os, ob, true, 64, 8, ctx, ProjectionFamily::OProj, 3)?.reshape(&[n_tokens, -1])
 }
 
 // ── Epilogue ───────────────────────────────────────────────────────────────

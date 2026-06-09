@@ -13,6 +13,7 @@ use crate::mapped_image::MappedImage;
 use crate::placement_profile::ExecutionPlacementProfile;
 use crate::runtime_trace::{RuntimeTimeline, TimelineEvent, TimelineEventType};
 use crate::session::InferenceSessionState;
+use crate::projection_identity;
 use crate::worker_memory;
 use mlx_rs::Array;
 
@@ -671,6 +672,16 @@ impl ProfiledInferenceSession {
                 return Err(EngineError::new(EngineErrorCode::Cancelled, "cancelled during prefill"));
             }
 
+            let proj_ctx = projection_identity::ProjectionContext {
+                run_id: "d1".into(),
+                phase: projection_identity::Phase::Prefill,
+                forward_pass_index: 1,
+                token_step: None,
+                layer_index: l,
+                attention_kind: if layer_plan.attention_kind == "sliding_attention"
+                    { projection_identity::AttentionKind::Sliding }
+                    else { projection_identity::AttentionKind::Full },
+            };
             let rss_before = worker_memory::sample_process_rss_self();
             let handles_before = crate::bridge::handle_count();
             let active_before = crate::compute_image::mlx_active_memory_bytes();
@@ -701,6 +712,7 @@ impl ProfiledInferenceSession {
                 &mut self.kv_caches[l],
                 kv_offset,
                 plan.rms_norm_eps as f32,
+                &proj_ctx,
             )
             .map_err(|e| {
                 EngineError::new(
@@ -852,6 +864,16 @@ impl ProfiledInferenceSession {
                 return Err(EngineError::new(EngineErrorCode::Cancelled, "cancelled during decode"));
             }
 
+            let proj_ctx = projection_identity::ProjectionContext {
+                run_id: "d1".into(),
+                phase: projection_identity::Phase::Decode,
+                forward_pass_index: 1,
+                token_step: Some(self.absolute_position),
+                layer_index: l,
+                attention_kind: if layer_plan.attention_kind == "sliding_attention"
+                    { projection_identity::AttentionKind::Sliding }
+                    else { projection_identity::AttentionKind::Full },
+            };
             let rss_before = worker_memory::sample_process_rss_self();
             let handles_before = crate::bridge::handle_count();
             let active_before = crate::compute_image::mlx_active_memory_bytes();
@@ -882,6 +904,7 @@ impl ProfiledInferenceSession {
                 &mut self.kv_caches[l],
                 kv_offset,
                 plan.rms_norm_eps as f32,
+                &proj_ctx,
             )
             .map_err(|e| {
                 EngineError::new(

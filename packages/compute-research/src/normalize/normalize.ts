@@ -115,6 +115,32 @@ export interface TokenMetricRecord {
   readonly sample_ns: number;
 }
 
+export interface ProjectionStageEventRecord {
+  readonly run_id: string;
+  readonly request_id: string;
+  readonly worker_id: string;
+  readonly sequence_number: number;
+  readonly event_type: string;
+  readonly clock_domain: string;
+  readonly monotonic_ns: number;
+  readonly wall_ns: number;
+  readonly stage_id: string;
+  readonly substrate_id: string;
+  readonly layer_index: number;
+  readonly attention_kind: string;
+  readonly projection_family: string;
+  readonly projection_invocation: number;
+  readonly storage_dtype: string;
+  readonly runtime_dtype: string;
+  readonly input_shape: string;
+  readonly weight_logical_shape: string;
+  readonly weight_physical_shape: string;
+  readonly group_size: number;
+  readonly bits: number;
+  readonly transpose: boolean;
+  readonly measurements: string;
+}
+
 export interface CorrectnessCheckpointRecord {
   readonly run_id: string;
   readonly request_id: string;
@@ -162,6 +188,7 @@ const SCHEMAS: Record<string, Record<string, string>> = {
     stage_event_count: "BIGINT",
     memory_sample_count: "BIGINT",
     token_metric_count: "BIGINT",
+    projection_stage_count: "BIGINT",
     checkpoint_count: "BIGINT",
   },
   stage_events: {
@@ -216,6 +243,31 @@ const SCHEMAS: Record<string, Record<string, string>> = {
     norm_ns: "DOUBLE",
     sample_ns: "DOUBLE",
   },
+  projection_stage_events: {
+    run_id: "VARCHAR",
+    request_id: "VARCHAR",
+    worker_id: "VARCHAR",
+    sequence_number: "BIGINT",
+    event_type: "VARCHAR",
+    clock_domain: "VARCHAR",
+    monotonic_ns: "BIGINT",
+    wall_ns: "BIGINT",
+    stage_id: "VARCHAR",
+    substrate_id: "VARCHAR",
+    layer_index: "INTEGER",
+    attention_kind: "VARCHAR",
+    projection_family: "VARCHAR",
+    projection_invocation: "BIGINT",
+    storage_dtype: "VARCHAR",
+    runtime_dtype: "VARCHAR",
+    input_shape: "VARCHAR",
+    weight_logical_shape: "VARCHAR",
+    weight_physical_shape: "VARCHAR",
+    group_size: "INTEGER",
+    bits: "INTEGER",
+    transpose: "BOOLEAN",
+    measurements: "VARCHAR",
+  },
   correctness_checkpoints: {
     run_id: "VARCHAR",
     request_id: "VARCHAR",
@@ -235,7 +287,7 @@ const SCHEMAS: Record<string, Record<string, string>> = {
   },
 };
 
-// ── Arrow IPC writer ──────────────────────────────────────────────────────────
+// ── Arrow IPC writer ──
 
 /**
  * Write an Arrow IPC file from an array of flat row objects.
@@ -445,6 +497,7 @@ export function normalizeRun(
   const memorySamples: MemorySampleRecord[] = [];
   const tokenMetrics: TokenMetricRecord[] = [];
   const correctnessRecords: CorrectnessCheckpointRecord[] = [];
+  const projectionStageEvents: ProjectionStageEventRecord[] = [];
 
   for (const ev of events) {
     const monoTs = ev.monotonic_ns ?? 0;
@@ -469,6 +522,35 @@ export function normalizeRun(
         kernel_id: s.kernel_id ?? "",
         stage_status: s.status,
         measurements: JSON.stringify(s.measurements ?? {}),
+      });
+    }
+
+    if (ev.event_type === "projection_stage") {
+      const meas = ev.stage?.measurements ?? {};
+      projectionStageEvents.push({
+        run_id: ev.run_id,
+        request_id: ev.request_id,
+        worker_id: ev.worker_id,
+        sequence_number: ev.sequence_number,
+        event_type: ev.event_type,
+        clock_domain: ev.clock_domain,
+        monotonic_ns: monoTs,
+        wall_ns: wallTs,
+        stage_id: ev.stage?.stage_id ?? "",
+        substrate_id: ev.stage?.substrate_id ?? "",
+        layer_index: safeInt(ev.stage?.layer_index),
+        attention_kind: safeStr(ev.stage?.attention_kind),
+        projection_family: safeStr(meas.family) || "",
+        projection_invocation: safeInt(meas.invocation) || 0,
+        storage_dtype: safeStr(meas.storage_dtype) || "",
+        runtime_dtype: safeStr(meas.runtime_dtype) || "",
+        input_shape: JSON.stringify(meas.input_shape ?? []),
+        weight_logical_shape: JSON.stringify(meas.weight_logical_shape ?? []),
+        weight_physical_shape: JSON.stringify(meas.weight_physical_shape ?? []),
+        group_size: safeInt(meas.group_size) || 0,
+        bits: safeInt(meas.bits) || 0,
+        transpose: safeBool(meas.transpose),
+        measurements: JSON.stringify(meas),
       });
     }
 
@@ -572,6 +654,7 @@ export function normalizeRun(
     stage_event_count: stageEvents.length,
     memory_sample_count: memorySamples.length,
     token_metric_count: tokenMetrics.length,
+    projection_stage_count: projectionStageEvents.length,
     checkpoint_count: correctnessRecords.length,
   };
 
@@ -606,6 +689,7 @@ export function normalizeRun(
     { name: "memory_samples", rows: memorySamples as unknown as Record<string, unknown>[] },
     { name: "token_metrics", rows: tokenMetrics as unknown as Record<string, unknown>[] },
     { name: "correctness_checkpoints", rows: correctnessRecords as unknown as Record<string, unknown>[] },
+    { name: "projection_stage_events", rows: projectionStageEvents as unknown as Record<string, unknown>[] },
   ];
 
   for (const tbl of tableOutputs) {

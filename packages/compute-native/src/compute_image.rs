@@ -26,6 +26,7 @@ use std::ffi::CString;
 use std::path::{Path, PathBuf};
 use std::os::raw::{c_char, c_int, c_void};
 use std::time::Instant;
+use crate::projection_identity;
 use crate::quantized::QuantizedLinearBinding;
 use serde_json::json;
 use std::fmt;
@@ -3016,6 +3017,14 @@ impl ImageRuntime {
                 &mut caches[l as usize],
                 0, // kv_offset = 0 for single-pass
                 arch.rms_norm_eps as f32,
+                &projection_identity::ProjectionContext {
+                    run_id: "test".into(),
+                    phase: projection_identity::Phase::Prefill,
+                    forward_pass_index: 1,
+                    token_step: None,
+                    layer_index: l as usize,
+                    attention_kind: projection_identity::AttentionKind::Sliding,
+                },
             )
             .map_err(|e| napi::Error::from_reason(format!("layer {}: {:?}", l, e)))?;
 

@@ -9,6 +9,9 @@
  *   V2 (OPT-0001) — graph_us, eval_us, rss=A→B, active=X→Y, cache=P→Q,
  *                    kv_seq, kv_copy, kv_alloc, shape=[N,N], finite=true/false
  * Auto-detected: V2 is selected when the line contains graph_us=.
+ *   V3 (OPT-0002) — [proj] projection_stage events: graph_build_ns, shapes,
+ *                    dtypes, group_size, bits, transpose, family (q/k/v/o/gate/up/down)
+ * Auto-detected: V3 is selected when the line starts with "[proj]".
  *
  * Imported by both the E0000 orchestrator and the parser-contract tests.
  */
@@ -151,6 +154,88 @@ export function parseStandardLayerEvents(
            measurements,
          },
        });
+    }
+
+    // ── V3 grammar (projection events) ──
+    // Field-order independent key=value extraction, same as V1/V2.
+    // Format: [proj] run_id=... phase=... forward_pass=... token_step=...
+    //         layer=... kind=... family=... invocation=... graph_build_ns=...
+    //         input=[d0,d1] weight_logical=[d0,d1] weight_physical=[d0,d1]
+    //         storage_dtype=... runtime_dtype=... group_size=... bits=... transpose=...
+    if (line.startsWith("[proj]")) {
+      const layerProjM = line.match(/layer=(\d+)/);
+      const kindProjM = line.match(/kind=(\S+)/);
+      const familyM = line.match(/family=(\S+)/);
+      const invocationM = line.match(/invocation=(\d+)/);
+      const graphBuildNsM = line.match(/graph_build_ns=(\d+)/);
+      const inputShapeM = line.match(/input=\[(\d+),(\d+)\]/);
+      const weightLogicalShapeM = line.match(/weight_logical=\[(\d+),(\d+)\]/);
+      const weightPhysicalShapeM = line.match(/weight_physical=\[(\d+),(\d+)\]/);
+      const storageDtypeM = line.match(/storage_dtype=(\S+)/);
+      const runtimeDtypeM = line.match(/runtime_dtype=(\S+)/);
+      const groupSizeM = line.match(/group_size=(\d+)/);
+      const bitsM = line.match(/bits=(\d+)/);
+      const transposeM = line.match(/transpose=(true|false)/);
+
+      if (layerProjM && kindProjM && familyM) {
+        const layerIndex = parseInt(layerProjM[1]!);
+        const kind = kindProjM[1]!;
+        const family = familyM[1]!;
+        const invocation = invocationM ? parseInt(invocationM[1]!) : undefined;
+
+        let stageId: string;
+        if (currentPhase === "decode_step" && tokenStep !== null) {
+          stageId = `decode_step_${tokenStep}_layer_${layerIndex}_${family}`;
+        } else {
+          stageId = `${currentPhase}_layer_${layerIndex}_${family}`;
+        }
+
+        // Build measurements — absent fields are OMITTED (never zero)
+        const measurements: Record<string, unknown> = {
+          grammar_version: "v3",
+        };
+        if (graphBuildNsM) measurements.projection_graph_build_ns = parseInt(graphBuildNsM[1]!);
+        if (inputShapeM) measurements.input_shape = [parseInt(inputShapeM[1]!), parseInt(inputShapeM[2]!)];
+        if (weightLogicalShapeM) measurements.weight_logical_shape = [parseInt(weightLogicalShapeM[1]!), parseInt(weightLogicalShapeM[2]!)];
+        if (weightPhysicalShapeM) measurements.weight_physical_shape = [parseInt(weightPhysicalShapeM[1]!), parseInt(weightPhysicalShapeM[2]!)];
+        if (storageDtypeM) measurements.storage_dtype = storageDtypeM[1]!;
+        if (runtimeDtypeM) measurements.runtime_dtype = runtimeDtypeM[1]!;
+        if (groupSizeM) measurements.group_size = parseInt(groupSizeM[1]!);
+        if (bitsM) measurements.bits = parseInt(bitsM[1]!);
+        if (transposeM) measurements.transpose = transposeM[1] === "true";
+
+        events.push({
+          schema_version: "1.0",
+          run_id: runId,
+          request_id: runId,
+          worker_id: "worker-1",
+          sequence_number: events.length + 1,
+          event_type: "projection_stage",
+          clock_domain: "worker_monotonic",
+          monotonic_ns: 0,
+          stage: {
+            stage_id: stageId,
+            substrate_id: "mlx_generic_gpu",
+            layer_index: layerIndex,
+            attention_kind: kind,
+            status: "completed",
+            phase: currentPhase || undefined,
+            forward_pass_index: forwardPassIndex || undefined,
+            token_step: tokenStep ?? undefined,
+            projection_family: family,
+            projection_invocation: invocation,
+            storage_dtype: storageDtypeM ? storageDtypeM[1]! : undefined,
+            runtime_dtype: runtimeDtypeM ? runtimeDtypeM[1]! : undefined,
+            input_shape: inputShapeM ? [parseInt(inputShapeM[1]!), parseInt(inputShapeM[2]!)] : undefined,
+            weight_logical_shape: weightLogicalShapeM ? [parseInt(weightLogicalShapeM[1]!), parseInt(weightLogicalShapeM[2]!)] : undefined,
+            weight_physical_shape: weightPhysicalShapeM ? [parseInt(weightPhysicalShapeM[1]!), parseInt(weightPhysicalShapeM[2]!)] : undefined,
+            group_size: groupSizeM ? parseInt(groupSizeM[1]!) : undefined,
+            bits: bitsM ? parseInt(bitsM[1]!) : undefined,
+            transpose: transposeM ? transposeM[1] === "true" : undefined,
+            measurements,
+          },
+        });
+      }
     }
   }
   return events;

@@ -117,3 +117,129 @@ test("Eight decode passes get correct forward_pass_index", () => {
     expect(events[s + 1]!.stage.token_step).toBe(s);
   }
 });
+
+test("V3 [proj] parser extracts all fields from a full projection line", () => {
+  const stderr = [
+    "[phase] prefill start",
+    "[proj] run_id=test-run phase=prefill forward_pass=1 token_step=_- layer=12 kind=full family=q_proj invocation=3 graph_build_ns=48521 input=[1,64] weight_logical=[64,64] weight_physical=[64,64] storage_dtype=Uint8 runtime_dtype=Float32 group_size=32 bits=4 transpose=true",
+    "[phase] prefill end",
+  ].join("\n");
+
+  const events = parseStandardLayerEvents(stderr, "run-v3-full");
+  expect(events.length).toBe(1);
+  expect(events[0]!.event_type).toBe("projection_stage");
+
+  const s = events[0]!.stage;
+  expect(s.layer_index).toBe(12);
+  expect(s.attention_kind).toBe("full");
+  expect(s.status).toBe("completed");
+  expect(s.stage_id).toBe("prefill_layer_12_q_proj");
+
+  const m = s.measurements;
+  expect(m.grammar_version).toBe("v3");
+  expect(m.projection_graph_build_ns).toBe(48521);
+  expect(m.input_shape).toEqual([1, 64]);
+  expect(m.weight_logical_shape).toEqual([64, 64]);
+  expect(m.weight_physical_shape).toEqual([64, 64]);
+  expect(m.storage_dtype).toBe("Uint8");
+  expect(m.runtime_dtype).toBe("Float32");
+  expect(m.group_size).toBe(32);
+  expect(m.bits).toBe(4);
+  expect(m.transpose).toBe(true);
+});
+
+test("V3 parser correctly sets event_type to projection_stage", () => {
+  const stderr = [
+    "[phase] prefill start",
+    "[proj] run_id=r phase=prefill forward_pass=1 token_step=_- layer=0 kind=sliding family=k_proj invocation=0 graph_build_ns=1000 input=[1,64] weight_logical=[64,64] weight_physical=[64,64]",
+    "[phase] prefill end",
+  ].join("\n");
+
+  const events = parseStandardLayerEvents(stderr, "run-v3-evtype");
+  expect(events.length).toBe(1);
+  expect(events[0]!.event_type).toBe("projection_stage");
+});
+
+test("V3 parser is backward-compatible (V1 and V2 lines still parse)", () => {
+  // Mix V1, V2, and V3 lines in one stderr dump
+  const stderr = [
+    "[phase] prefill start",
+    // V1 line
+    "[full-model] layer=0 kind=sliding_attention shape=[1,3840] finite=true segment=M bytes=0 elapsed_ms=1800 handles=0 active_mem=N/A",
+    // V2 line
+    "[full-model] layer=5 kind=full_attention shape=[1,3840] finite=true segment=M bytes=0 graph_us=1200 eval_us=300 rss=1.2GB→1.3GB active=500MB→600MB cache=100MB→150MB kv_seq=4096 kv_copy=8192 kv_alloc=16384",
+    // V3 line
+    "[proj] run_id=r phase=prefill forward_pass=1 token_step=_- layer=12 kind=full family=o_proj invocation=0 graph_build_ns=48521 input=[1,64] weight_logical=[64,64] weight_physical=[64,64]",
+    "[phase] prefill end",
+  ].join("\n");
+
+  const events = parseStandardLayerEvents(stderr, "run-v3-bc");
+  // V1 (stage) + V2 (stage) + V2 (memory_sample) + V3 (projection_stage) = 4 events
+  expect(events.length).toBe(4);
+
+  // V1: stage event with grammar_version v1
+  expect(events[0]!.event_type).toBe("stage");
+  expect(events[0]!.stage.layer_index).toBe(0);
+  expect(events[0]!.stage.measurements.grammar_version).toBe("v1");
+
+  // V2: memory_sample event (generated because V2 line has rss/active/cache)
+  expect(events[1]!.event_type).toBe("memory_sample");
+
+  // V2: stage event with grammar_version v2
+  expect(events[2]!.event_type).toBe("stage");
+  expect(events[2]!.stage.layer_index).toBe(5);
+  expect(events[2]!.stage.measurements.grammar_version).toBe("v2");
+
+  // V3: projection_stage event with grammar_version v3
+  expect(events[3]!.event_type).toBe("projection_stage");
+  expect(events[3]!.stage.layer_index).toBe(12);
+  expect(events[3]!.stage.measurements.grammar_version).toBe("v3");
+});
+
+test("V3 parser omits absent measurements (no phantom zeros)", () => {
+  // Minimal V3 line — only required fields, no optional fields
+  const stderr = [
+    "[phase] prefill start",
+    "[proj] run_id=r phase=prefill forward_pass=1 token_step=_- layer=7 kind=full family=v_proj invocation=2 graph_build_ns=12345 input=[1,128] weight_logical=[128,256] weight_physical=[128,256]",
+    "[phase] prefill end",
+  ].join("\n");
+
+  const events = parseStandardLayerEvents(stderr, "run-v3-omit");
+  expect(events.length).toBe(1);
+
+  const m = events[0]!.stage.measurements;
+  // Present fields
+  expect(m.grammar_version).toBe("v3");
+  expect(m.projection_graph_build_ns).toBe(12345);
+  expect(m.input_shape).toEqual([1, 128]);
+  expect(m.weight_logical_shape).toEqual([128, 256]);
+  expect(m.weight_physical_shape).toEqual([128, 256]);
+
+  // Absent fields are UNDEFINED (not zero/null)
+  expect(m.storage_dtype).toBeUndefined();
+  expect(m.runtime_dtype).toBeUndefined();
+  expect(m.group_size).toBeUndefined();
+  expect(m.bits).toBeUndefined();
+  expect(m.transpose).toBeUndefined();
+});
+
+test("V3 stage ID format is correct", () => {
+  // Prefill stage ID
+  const prefillStderr = [
+    "[phase] prefill start",
+    "[proj] run_id=r phase=prefill forward_pass=1 token_step=_- layer=3 kind=sliding family=gate_proj invocation=0 graph_build_ns=500 input=[1,64] weight_logical=[64,64] weight_physical=[64,64]",
+    "[phase] prefill end",
+  ].join("\n");
+  const prefillEvents = parseStandardLayerEvents(prefillStderr, "run-v3-sid");
+  expect(prefillEvents[0]!.stage.stage_id).toBe("prefill_layer_3_gate_proj");
+
+  // Decode stage ID
+  const decodeStderr = [
+    "[phase] decode_step start token_step=0",
+    "[proj] run_id=r phase=decode_step forward_pass=2 token_step=0 layer=12 kind=full family=up_proj invocation=1 graph_build_ns=3000 input=[1,128] weight_logical=[128,3840] weight_physical=[128,3840]",
+    "[phase] decode_step end",
+  ].join("\n");
+  const decodeEvents = parseStandardLayerEvents(decodeStderr, "run-v3-sid");
+  expect(decodeEvents.length).toBe(1);
+  expect(decodeEvents[0]!.stage.stage_id).toBe("decode_step_0_layer_12_up_proj");
+});
