@@ -363,6 +363,144 @@ impl ProjectionHarness {
         }
     }
 
+    /// ── Control B: Pipeline-warm test. ──
+    /// Create an owned synthetic weight tensor of the same shape and dtype,
+    /// run quantized_matmul with it first to warm Metal pipeline state, then
+    /// execute the real mapped projection.  If the mapped projection is still
+    /// slow, pipeline creation is NOT the main cause.
+    pub fn replay_with_pipeline_warm(&self) -> Vec<ReplaySample> {
+        let input_shape = self.input_shape_for();
+        let ws = self.weight.shape();
+        let mut results = Vec::new();
+
+        // Run cold mapped first (baseline)
+        results.push(self.replay_one(&input_shape, "decode_cold_baseline"));
+
+        // Create owned synthetic tensor of same shape and dtype
+        fn make_owned_array(shape: &[i32], fill: f32) -> Array {
+            Array::full::<f32>(shape, &Array::from_f32(fill))
+                .expect("create owned array")
+        }
+        let syn_w = make_owned_array(&ws.iter().map(|d| *d as i32).collect::<Vec<_>>(), 0.0);
+        let syn_s = make_owned_array(self.scale.shape(), 0.0);
+        let syn_b = make_owned_array(self.bias.shape(), 0.0);
+        let syn_in = make_owned_array(&input_shape, 0.5);
+
+        // Warm Metal pipeline with synthetic tensor (run 5 times)
+        for _ in 0..5 {
+            let _ = mlx_rs::ops::quantized_matmul(
+                &syn_in, &syn_w, &syn_s, &syn_b,
+                true, self.group_size, self.bits,
+            ).and_then(|r| r.eval()).ok();
+        }
+
+        // Now run real mapped projection
+        results.push(self.replay_one(&input_shape, "decode_post_synthetic_warm"));
+        results
+    }
+
+    /// ── Control C: Page pre-touch test. ──
+    /// Read every byte of the mapped weight via try_as_slice to force OS
+    /// page faults on the CPU before Metal execution.  If the cold penalty
+    /// disappears, mapped-page residency is the dominant cause.
+    pub fn replay_with_page_touch(&self) -> Vec<ReplaySample> {
+        let input_shape = self.input_shape_for();
+        let mut results = Vec::new();
+
+        // Cold baseline
+        results.push(self.replay_one(&input_shape, "decode_cold_baseline"));
+
+        // Pre-touch: force page faults on CPU by reading weight bytes
+        let _ = self.weight.try_as_slice::<u32>().map(|s| {
+            let sum: u64 = s.iter().map(|&x| x as u64).sum();
+            sum
+        });
+
+        // Now run projection with pretouched pages
+        results.push(self.replay_one(&input_shape, "decode_post_touch"));
+        results
+    }
+
+    /// Execute a single projection sample (used by controls).
+    fn replay_one(&self, input_shape: &[i32], label: &str) -> ReplaySample {
+        let input = Array::full::<f32>(input_shape, &Array::from_f32(0.5))
+            .expect("create input");
+        let ws = self.weight.shape();
+        let w_logical = ws.iter().map(|d| *d as i32).collect::<Vec<_>>();
+        let w_strides = self.weight.strides().to_vec();
+        let w_elem_count: usize = ws.iter().map(|d| *d as usize).product();
+        let w_elem_bytes = if w_elem_count > 0 { self.weight.nbytes() / w_elem_count } else { 0 };
+        let ptr_alignment = 4096;
+
+        let active_before = crate::compute_image::mlx_active_memory_bytes();
+        let cache_before = crate::compute_image::mlx_cache_memory_bytes();
+        let t_total = std::time::Instant::now();
+
+        let t_graph = std::time::Instant::now();
+        let result = mlx_rs::ops::quantized_matmul(
+            &input, &self.weight, &self.scale, &self.bias,
+            true, self.group_size, self.bits,
+        ).expect("qmatmul");
+        let graph_ns = t_graph.elapsed().as_nanos();
+
+        let t_eval = std::time::Instant::now();
+        result.eval().expect("eval");
+        let eval_ns = t_eval.elapsed().as_nanos();
+        let total_ns = t_total.elapsed().as_nanos();
+
+        let s = self.weight.strides();
+        let ndim = s.len();
+        let row_contig = if ndim >= 2 {
+            Some(s[ndim - 1] == 1 || s[ndim - 2] == ws[ndim - 1] as usize)
+        } else { None };
+
+        let digest = Self::compute_digest(&result);
+
+        ReplaySample {
+            sample_index: 0,
+            phase: label.to_string(),
+            projection_family: self.family.as_str().to_string(),
+            layer_index: self.layer_index,
+            attention_kind: self.attention_kind.clone(),
+            m: if input_shape.len() > 0 { input_shape[0] } else { 0 },
+            n: w_logical.get(0).copied().unwrap_or(0),
+            k: if input_shape.len() > 1 { input_shape[1] } else { 0 },
+            input_dtype: "Float32".to_string(),
+            manifest_weight_dtype: self.manifest_dtype.clone(),
+            mlx_weight_dtype: self.mlx_dtype.clone(),
+            scale_dtype: format!("{:?}", self.scale.dtype()),
+            bias_dtype: format!("{:?}", self.bias.dtype()),
+            group_size: self.group_size,
+            bits: self.bits,
+            transpose: true,
+            weight_logical_shape: w_logical.clone(),
+            weight_physical_shape: w_logical,
+            weight_strides: w_strides,
+            weight_element_bytes: w_elem_bytes,
+            weight_array_byte_count: self.weight.nbytes(),
+            manifest_byte_length: self.manifest_byte_length,
+            pointer_alignment: ptr_alignment,
+            storage_policy: "frozen_existing_mapped".to_string(),
+            row_contiguous: row_contig,
+            graph_build_ns: graph_ns,
+            forced_eval_ns: eval_ns,
+            synchronize_ns: 0,
+            total_ns,
+            mlx_active_before: if active_before > 0 { Some(active_before) } else { None },
+            mlx_active_after: Some(crate::compute_image::mlx_active_memory_bytes()),
+            mlx_cache_before: if cache_before > 0 { Some(cache_before) } else { None },
+            mlx_cache_after: Some(crate::compute_image::mlx_cache_memory_bytes()),
+            peak_mlx_memory: None,
+            process_rss: None,
+            output_digest: digest,
+            max_abs_error: None,
+            max_rel_error: None,
+            mean_abs_error: None,
+            cosine_similarity: None,
+            oracle_status: "skipped".to_string(),
+        }
+    }
+
     pub fn replay_decode(&self, samples: usize, warmups: usize) -> Vec<ReplaySample> {
         self.replay(samples, warmups, "decode")
     }

@@ -511,6 +511,8 @@ fn cmd_replay_projection(args: &[String]) -> Result<(), String> {
     let mut layer: Option<usize> = None;
     let mut family: Option<String> = None;
     let mut phase_shape = "decode".to_string();
+    let mut pipeline_warm = false;
+    let mut page_touch = false;
     let mut samples = 20usize;
     let mut warmups = 5usize;
     let mut i = 0;
@@ -520,6 +522,9 @@ fn cmd_replay_projection(args: &[String]) -> Result<(), String> {
             "--layer" => { i += 1; if i < args.len() { layer = Some(args[i].parse::<usize>().map_err(|_| format!("invalid layer: {}", args[i]))?); } }
             "--family" => { i += 1; if i < args.len() { family = Some(args[i].clone()); } }
             "--phase-shape" => { i += 1; if i < args.len() { phase_shape = args[i].clone(); } }
+            "--samples" => { i += 1; if i < args.len() { samples = args[i].parse::<usize>().map_err(|_| format!("invalid samples: {}", args[i]))?; } }
+            "--pipeline-warm" => { pipeline_warm = true; }
+            "--page-touch" => { page_touch = true; }
             "--samples" => { i += 1; if i < args.len() { samples = args[i].parse::<usize>().map_err(|_| format!("invalid samples: {}", args[i]))?; } }
             "--warmups" => { i += 1; if i < args.len() { warmups = args[i].parse::<usize>().map_err(|_| format!("invalid warmups: {}", args[i]))?; } }
             _ => { return Err(format!("unknown flag: {}", args[i])); }
@@ -539,7 +544,11 @@ fn cmd_replay_projection(args: &[String]) -> Result<(), String> {
         &family_name,
     ).map_err(|e| format!("harness open: {}", e))?;
 
-    let samples_vec = if phase_shape == "prefill" {
+    let samples_vec = if pipeline_warm {
+        harness.replay_with_pipeline_warm()
+    } else if page_touch {
+        harness.replay_with_page_touch()
+    } else if phase_shape == "prefill" {
         harness.replay_prefill(samples, warmups)
     } else {
         harness.replay_decode(samples, warmups)
