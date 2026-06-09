@@ -214,9 +214,9 @@ impl ProjectionHarness {
         &self,
         samples: usize,
         warmups: usize,
-        input_shape: &[i32],
         phase: &str,
     ) -> Vec<ReplaySample> {
+        let input_shape = self.input_shape_for();
         let mut results = Vec::with_capacity(samples + 1);
 
         let ws = self.weight.shape();
@@ -227,7 +227,7 @@ impl ProjectionHarness {
         let ptr_alignment = 4096usize;
 
         let run_one = |sample_index: usize, label: &str| -> ReplaySample {
-            let input = Array::full::<f32>(input_shape, &Array::from_f32(0.5))
+            let input = Array::full::<f32>(&input_shape, &Array::from_f32(0.5))
                 .expect("create input array");
 
             let active_before = crate::compute_image::mlx_active_memory_bytes();
@@ -263,7 +263,7 @@ impl ProjectionHarness {
 
             // Oracle comparison for M=1
             let (max_abs, max_rel, mean_abs, cosine, oracle_status) =
-                if input_shape[0] == 1 {
+                if input_shape.len() > 0 && input_shape[0] == 1 {
                     Self::compare_oracle(&result)
                 } else {
                     (None, None, None, None, "skipped (M != 1)".to_string())
@@ -284,9 +284,9 @@ impl ProjectionHarness {
                 projection_family: self.family.as_str().to_string(),
                 layer_index: self.layer_index,
                 attention_kind: self.attention_kind.clone(),
-                m: input_shape[0],
+                m: if input_shape.len() > 0 { input_shape[0] } else { 0 },
                 n: w_logical.get(0).copied().unwrap_or(0),
-                k: input_shape[1],
+                k: if input_shape.len() > 1 { input_shape[1] } else { 0 },
                 input_dtype: "Float32".to_string(),
                 manifest_weight_dtype: self.manifest_dtype.clone(),
                 mlx_weight_dtype: self.mlx_dtype.clone(),
@@ -339,12 +339,36 @@ impl ProjectionHarness {
         results
     }
 
+    /// Returns the correct input activation shape for this projection.
+    /// Q/K/V/Gate/Up take hidden_size (3840). O takes n_heads*head_dim (4096).
+    /// Down takes intermediate_size (15360).
+    fn input_shape_for(&self) -> Vec<i32> {
+        match self.family {
+            ProjectionFamily::QProj | ProjectionFamily::KProj | ProjectionFamily::VProj => {
+                vec![1, self.hidden_size]
+            }
+            ProjectionFamily::OProj => {
+                // O-proj input is attention output: n_heads * head_dim
+                // Default to 4096 (16 heads × 256) for interior layers
+                vec![1, 4096]
+            }
+            ProjectionFamily::GateProj | ProjectionFamily::UpProj => {
+                vec![1, self.hidden_size]
+            }
+            ProjectionFamily::DownProj => {
+                // Down-proj input is gated MLP output: intermediate_size
+                vec![1, 15360]
+            }
+            _ => vec![1, self.hidden_size],
+        }
+    }
+
     pub fn replay_decode(&self, samples: usize, warmups: usize) -> Vec<ReplaySample> {
-        self.replay(samples, warmups, &[1, self.hidden_size], "decode")
+        self.replay(samples, warmups, "decode")
     }
 
     pub fn replay_prefill(&self, samples: usize, warmups: usize) -> Vec<ReplaySample> {
-        self.replay(samples, warmups, &[4, self.hidden_size], "prefill")
+        self.replay(samples, warmups, "prefill")
     }
 
     fn compute_digest(result: &Array) -> String {
