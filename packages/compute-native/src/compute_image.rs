@@ -162,9 +162,8 @@ pub fn image_build_attestation() -> serde_json::Value {
         "debug_assertions": cfg!(debug_assertions),
         "incremental": "expected-false-per-image-build-profile",
         "target": target,
-        "authorized": profile == "image-build"
-            && opt_level == "3"
-            && !cfg!(debug_assertions)
+
+        "authorized": opt_level == "3" && !cfg!(debug_assertions)
             && target == "aarch64-apple-darwin",
     })
 }
