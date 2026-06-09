@@ -111,19 +111,19 @@ fn main() {
     // Print bottleneck-ledger-compatible rows.
     println!("variant\tM\tK\tN\tgroup_size\tmin_us\tmedian_us\tmean_us\tmax_us\tcorrect");
     println!(
-        "scalar\t1\t{}\t{}\t{}\t{}\t{}\t{}\t{}\ttrue",
+        "scalar_reference\t1\t{}\t{}\t{}\t{}\t{}\t{}\t{}\ttrue",
         k, n, group_size, s_min, s_med, s_mean, s_max
     );
     println!(
-        "auto\t1\t{}\t{}\t{}\t{}\t{}\t{}\t{}\ttrue",
+        "llvm_auto\t1\t{}\t{}\t{}\t{}\t{}\t{}\t{}\ttrue",
         k, n, group_size, a_min, a_med, a_mean, a_max
     );
     println!(
-        "neon\t1\t{}\t{}\t{}\t{}\t{}\t{}\t{}\ttrue",
+        "cache_blocked_scalar\t1\t{}\t{}\t{}\t{}\t{}\t{}\t{}\ttrue",
         k, n, group_size, n_min, n_med, n_mean, n_max
     );
     println!(
-        "neon_v2\t1\t{}\t{}\t{}\t{}\t{}\t{}\t{}\ttrue",
+        "neon_f32_fma_v1\t1\t{}\t{}\t{}\t{}\t{}\t{}\t{}\ttrue",
         k, n, group_size, n2_min, n2_med, n2_mean, n2_max
     );
 

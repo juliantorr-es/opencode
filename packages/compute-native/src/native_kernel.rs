@@ -466,14 +466,14 @@ mod tests {
             total_us[3] += qmatvec_neon_v2(&x, &w, &s, &b, K, N, GROUP_SIZE).elapsed_us;
     }
 
-        let labels = ["scalar", "auto", "neon", "neon_v2"];
+        let labels = ["scalar_reference", "llvm_auto", "cache_blocked_scalar", "neon_f32_fma_v1"];
         eprintln!("\n[NATIVE-KERNEL-BENCH] M=1 K={K} N={N} group_size={GROUP_SIZE}");
         let scalar_mean = total_us[0] / iters as u64;
         for i in 0..4 {
             let mean = total_us[i] / iters as u64;
             let speedup = scalar_mean as f64 / mean as f64;
             let label = labels[i];
-            eprintln!("  {label:>8}: {mean:>8} us mean   speedup vs scalar: {speedup:.2}x");
+            eprintln!("  {label:>8}: {mean:>8} us mean   speedup vs scalar_reference: {speedup:.2}x");
     }
     }
 }

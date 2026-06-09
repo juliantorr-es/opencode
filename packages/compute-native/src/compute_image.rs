@@ -183,6 +183,11 @@ pub struct Manifest {
     /// Capabilities the runtime must support to execute this image.
     #[serde(default)]
     pub required_capabilities: Vec<String>,
+    /// Weight tensor prepack layout.
+    /// "none" = source layout (int8 weights in standard [K,N] row-major).
+    /// "prepacked-int8-v1" = transposed [N,K] with interleaved scale/bias per group.
+    #[serde(default = "default_prepacked_layout")]
+    pub prepacked_layout: String,
     /// Execution plan emitted by the compiler (prologue, layers, epilogue).
     #[serde(default)]
     pub execution_plan: crate::config::ModelExecutionPlan,
@@ -190,6 +195,9 @@ pub struct Manifest {
 
 fn default_storage_abi() -> String {
     "copied-v0".to_string()
+}
+fn default_prepacked_layout() -> String {
+    "none".to_string()
 }
 fn default_alignment_bytes() -> u64 {
     4096
@@ -215,6 +223,9 @@ pub struct StorageAbiSpec {
     pub byte_order: String,
     /// Layout version for cache key stability.
     pub layout_version: u32,
+    /// Weight tensor prepack layout identity.
+    /// "none" for source layout, "prepacked-int8-v1" for transposed+interleaved.
+    pub prepacked_layout: String,
 }
 
 impl StorageAbiSpec {
@@ -229,6 +240,7 @@ impl StorageAbiSpec {
             ],
             byte_order: "le".into(),
             layout_version: 1,
+            prepacked_layout: "none".into(),
         }
     }
 }
@@ -818,6 +830,7 @@ impl ImageBuilder {
                 image_hash: String::new(),
                 required_storage_abi: "copied-v0".to_string(),
                 required_capabilities: Vec::new(),
+                prepacked_layout: "none".into(),
                 execution_plan: crate::config::ModelExecutionPlan::default(),
             },
             next_tensor_id: 0,
@@ -4178,6 +4191,7 @@ mod tests {
             image_hash: "dummy".into(),
             required_storage_abi: STORAGE_ABI_COPIED_V0.into(),
             required_capabilities: vec![],
+            prepacked_layout: "none".into(),
             execution_plan: crate::config::ModelExecutionPlan::default(),
         };
 
@@ -4273,6 +4287,7 @@ mod tests {
             image_hash: "dummy".into(),
             required_storage_abi: STORAGE_ABI_MAPPED_NO_COPY_V1.into(),
             required_capabilities: vec![],
+            prepacked_layout: "none".into(),
             execution_plan: crate::config::ModelExecutionPlan::default(),
         };
 
