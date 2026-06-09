@@ -986,6 +986,191 @@ impl ImageBuilder {
     pub fn set_execution_plan(&mut self, plan: crate::config::ModelExecutionPlan) {
         self.manifest.execution_plan = plan;
     }
+
+    /// Post-process: apply prepack-int8-v1 layout transform to all quantized
+    /// weight tensors that have companion scale/bias tensors in the same segment.
+    ///
+    /// Walks the tensor table looking for weight tensors (naming convention:
+    /// `*.weight`) that have corresponding `*.scales` and `*.biases` tensors in
+    /// the same segment. For each triplet found, transposes [K,N] to [N,K],
+    /// reorders by group, and interleaves scales/biases into one packed buffer.
+    ///
+    /// Updates tensor metadata and sets manifest.prepacked_layout.
+    /// Must be called before finalize().
+    pub fn prepack_quantized_weights(&mut self) -> napi::Result<()> {
+        use crate::layout_transform;
+
+        // Identify weight/scale/bias triplets.
+        // A weight tensor named "X.weight" with dtype U8 is prepacked if
+        // "X.scales" (F32) and "X.biases" (F32) exist in the same segment.
+        let n_tensors = self.tensors.len();
+        let mut prepack_count = 0u64;
+        let mut prepack_bytes_before = 0u64;
+        let mut prepack_bytes_after = 0u64;
+
+        for i in 0..n_tensors {
+            let t = &self.tensors[i];
+            if !t.name.ends_with(".weight") || t.storage_dtype != "U8" {
+                continue;
+    }
+            let base = &t.name[..t.name.len() - ".weight".len()];
+            let scale_name = format!("{}.scales", base);
+            let bias_name = format!("{}.biases", base);
+
+            // Find companion tensors in the same segment
+            let scale_idx = self.tensors.iter().position(|e| e.name == scale_name && e.segment == t.segment);
+            let bias_idx = self.tensors.iter().position(|e| e.name == bias_name && e.segment == t.segment);
+            let (si, bi) = match (scale_idx, bias_idx) {
+                (Some(s), Some(b)) => (s, b),
+                _ => continue,
+            };
+
+            // Determine dimensions from logical shape.
+            // Weight shape is [K, N] (in_features, out_features).
+            if t.logical_shape.len() != 2 {
+                continue; // skip non-matrix weights (e.g., norms)
+    }
+            let k = t.logical_shape[0] as usize;
+
+            // Determine group_size from quantization descriptor or default.
+            let group_size = t.quantization.as_ref()
+                .map(|q| q.group_size as usize)
+                .unwrap_or(64);
+
+            if k % group_size != 0 {
+                continue; // must be divisible
+    }
+
+            // Mark these tensors. We'll rebuild the segment data after
+            // collecting all triplets.
+            prepack_count += 1;
+            prepack_bytes_before += t.byte_length + self.tensors[si].byte_length + self.tensors[bi].byte_length;
+    }
+
+        if prepack_count == 0 {
+            return Ok(());
+    }
+
+        // Rebuild segment payloads with prepacked weights.
+        // For each segment, we walk its tensor_ids in order, writing either
+        // the original bytes or the prepacked bytes.
+        let n_segments = self.segments.len();
+        for seg_idx in 0..n_segments {
+            let seg = &self.segments[seg_idx];
+            let payload = &self.segment_payloads[seg_idx];
+            let mut new_payload = Vec::with_capacity(payload.len());
+
+            for &tid in &seg.tensor_ids {
+                let ti = self.tensors.iter().position(|t| t.id == tid)
+                    .expect("tensor_id in segment tensor_ids not found");
+                let t = &self.tensors[ti];
+
+                // Check if this tensor is part of a prepack triplet
+                let is_prepacked = t.name.ends_with(".weight") && t.storage_dtype == "U8";
+                if is_prepacked {
+                    let base = &t.name[..t.name.len() - ".weight".len()];
+                    let scale_name = format!("{}.scales", base);
+                    let bias_name = format!("{}.biases", base);
+                    let si = self.tensors.iter().position(|e| e.name == scale_name && e.segment == t.segment);
+                    let bi = self.tensors.iter().position(|e| e.name == bias_name && e.segment == t.segment);
+
+                    if let (Some(si), Some(bi)) = (si, bi) {
+                        let k = t.logical_shape[0] as usize;
+                        let n = t.logical_shape[1] as usize;
+                        let group_size = t.quantization.as_ref()
+                            .map(|q| q.group_size as usize)
+                            .unwrap_or(64);
+
+                        if k % group_size == 0 {
+                            // Extract weight, scale, bias bytes from payload
+                            let w_start = t.offset as usize;
+                            let w_len = t.byte_length as usize;
+                            let s_start = self.tensors[si].offset as usize;
+                            let s_len = self.tensors[si].byte_length as usize;
+                            let b_start = self.tensors[bi].offset as usize;
+                            let b_len = self.tensors[bi].byte_length as usize;
+
+                            let weight_bytes = &payload[w_start..w_start + w_len];
+                            let scale_bytes = &payload[s_start..s_start + s_len];
+                            let bias_bytes = &payload[b_start..b_start + b_len];
+
+                            // Convert f32 slices
+                            let scales: Vec<f32> = unsafe {
+                                std::slice::from_raw_parts(
+                                    scale_bytes.as_ptr() as *const f32,
+                                    s_len / 4,
+                                )
+                            }.to_vec();
+                            let biases: Vec<f32> = unsafe {
+                                std::slice::from_raw_parts(
+                                    bias_bytes.as_ptr() as *const f32,
+                                    b_len / 4,
+                                )
+                            }.to_vec();
+
+                            // Apply prepack
+                            let (packed, _meta) = layout_transform::prepack_pipeline(
+                                weight_bytes, &scales, &biases, k, n, group_size,
+                            );
+
+                            // Write prepacked weight to new payload
+                            let old_offset = new_payload.len();
+                            new_payload.extend_from_slice(&packed);
+
+                            // Update tensor metadata
+                            let t_mut = &mut self.tensors[ti];
+                            t_mut.offset = old_offset as u64;
+                            t_mut.byte_length = packed.len() as u64;
+                            t_mut.physical_shape = vec![n as u32 * (k as u32 / group_size as u32) * (group_size as u32 + 2)];
+                            t_mut.storage_dtype = "U8".into();
+                            t_mut.layout_version = 2;
+
+                            // Mark scale and bias as absorbed (zero-length)
+                            self.tensors[si].byte_length = 0;
+                            self.tensors[si].offset = old_offset as u64;
+                            self.tensors[bi].byte_length = 0;
+                            self.tensors[bi].offset = old_offset as u64;
+
+                            prepack_bytes_after += packed.len() as u64;
+
+                            continue; // skip original weight/scale/bias from new payload
+    }
+    }
+    }
+
+                // Skip zero-length tensors (absorbed scale/bias)
+                if t.byte_length == 0 {
+                    continue;
+    }
+
+                // Copy original tensor bytes unchanged
+                let old_offset = new_payload.len();
+                let start = t.offset as usize;
+                let len = t.byte_length as usize;
+                new_payload.extend_from_slice(&payload[start..start + len]);
+                // Update offset if it changed (subsequent tensors shift)
+                if old_offset != t.offset as usize {
+                    let t_mut = &mut self.tensors[ti];
+                    t_mut.offset = old_offset as u64;
+    }
+    }
+
+            // Update segment byte size
+            self.segments[seg_idx].byte_size = new_payload.len() as u64;
+            self.segment_payloads[seg_idx] = new_payload;
+    }
+
+        self.manifest.prepacked_layout = "prepacked-int8-v1".into();
+        let mb = |b: u64| format!("{:.1}MB", b as f64 / 1_048_576.0);
+        eprintln!(
+            "[compiler-prepack] tensors={} bytes_before={} bytes_after={}",
+            prepack_count,
+            mb(prepack_bytes_before),
+            mb(prepack_bytes_after),
+        );
+
+        Ok(())
+    }
 }
 
 // ── Compiler entry point ───────────────────────────────────────────────────
