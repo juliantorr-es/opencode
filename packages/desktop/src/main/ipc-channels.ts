@@ -95,6 +95,8 @@ export const IPC = {
     LOADING_WINDOW_COMPLETE: "tribunus:loading-window-complete",
     PLUGIN_SEND: "tribunus:plugin:send",
     RENDERER_READY: "tribunus:renderer-ready",
+    // ── System Status ───────────────────────────────────────
+    SYSTEM_STATUS: "tribunus:system-status",
   } as const,
   push: {
     INIT_STEP: "tribunus:init-step",

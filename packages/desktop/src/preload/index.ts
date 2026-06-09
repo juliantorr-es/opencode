@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer } from "electron"
-import type { ElectronAPI, InitStep, SafeModeAction, ServerReadyData, StorageMigrationProgress } from "./types"
+import type { ElectronAPI, InitStep, SafeModeAction, SafeModeDiagnostics, ServerReadyData, StorageMigrationProgress } from "./types"
 import { IPC } from "../main/ipc-channels"
 import { typedInvoke, typedSend, pluginSend, pluginInvoke } from "../main/ipc-contract"
 import { typedInvokeV2 } from "./ipc-client"
@@ -67,8 +67,11 @@ const api: ElectronAPI = {
 
   getGitStatus: () => typedInvoke(IPC.handle.GET_GIT_STATUS),
   getCapabilities: () => typedInvoke(IPC.handle.GET_CAPABILITIES),
-  getSafeModeDiagnostics: () => typedInvokeV2(IPC.handle.GET_SAFE_MODE_DIAGNOSTICS, null),
-  safeModeAction: (action: SafeModeAction) => typedInvokeV2(IPC.handle.SAFE_MODE_ACTION, null, action),
+  getSystemStatus: () => typedInvokeV2(IPC.handle.GET_WINDOW_CONFIG, null),
+  sidecarStatus: () => typedInvokeV2(IPC.handle.SIDECAR_STATUS, null) as unknown as Promise<{ ready: boolean; url: string | null }>,
+  getUpdateStatus: () => typedInvokeV2(IPC.handle.CHECK_UPDATE, null) as unknown as Promise<{ updateAvailable: boolean; version?: string }>,
+  getSafeModeDiagnostics: () => typedInvokeV2(IPC.handle.GET_SAFE_MODE_DIAGNOSTICS, null) as unknown as Promise<SafeModeDiagnostics>,
+  safeModeAction: (action: SafeModeAction) => typedInvokeV2(IPC.handle.SAFE_MODE_ACTION, null, action) as unknown as Promise<void>,
   openProject: (directory) => typedInvokeV2(IPC.handle.OPEN_PROJECT, null, directory),
 
   // --- Send methods (fire-and-forget) ---

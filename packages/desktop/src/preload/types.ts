@@ -203,7 +203,20 @@ export type ElectronAPI = {
   safeModeAction: (action: SafeModeAction) => Promise<void>
   openProject: (directory: string) => Promise<string>
 
-  /** Internal map for pluginOff() to look up the IPC listener by channel+handler key. */
+  getSystemStatus: () => Promise<{
+    sidecar: { ready: boolean; url: string | null; pid: number | null; restartCount: number; lastError: string | null }
+    server: { url: string | null; configured: boolean }
+    safeMode: boolean
+    degraded: boolean
+    degradedReason: string | null
+    ipc: { protocolVersion: number }
+    update: { status: string; version: string | null }
+    build: { version: string; channel: string; electronVersion: string }
+  }>
+  sidecarStatus: () => Promise<{ ready: boolean; url: string | null }>
+  getUpdateStatus: () => Promise<{ updateAvailable: boolean; version?: string }>
+
+  /** Internal map for pluginOff() to lookup the IPC listener by channel+handler key. */
   _pluginListeners: Map<string, (event: unknown, payload: { channel: string; data: unknown }) => void>
   /** Plugin transport — fire-and-forget message to main process */
   pluginSend: (channel: string, data?: unknown) => void
