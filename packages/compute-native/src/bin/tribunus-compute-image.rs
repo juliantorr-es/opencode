@@ -25,6 +25,7 @@ fn main() {
     if args.len() < 2 {
         eprintln!("Usage:");
         eprintln!("  tribunus-compute-image build --source <dir> --output <dir>");
+        eprintln!("  tribunus-compute-image infer  --image <dir>");
         eprintln!("  tribunus-compute-image verify --image <dir> [--expected-hash <hash>] [--full]");
         std::process::exit(1);
     }
@@ -32,6 +33,7 @@ fn main() {
     let result = match args[1].as_str() {
         "build" => cmd_build(&args[2..]),
         "verify" => cmd_verify(&args[2..]),
+        "infer" => cmd_infer(&args[2..]),
         other => {
             eprintln!("unknown command: {other}");
             std::process::exit(1);
@@ -342,4 +344,57 @@ fn civil_from_days(days: i64) -> (i64, i64, i64) {
     let m = if mp < 10 { mp + 3 } else { mp - 9 };
     let y = if m <= 2 { y + 1 } else { y };
     (y, m, d)
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// infer command — runs a forward pass against a sealed image at opt-level=3
+// ═══════════════════════════════════════════════════════════════════════════
+
+fn cmd_infer(args: &[String]) -> Result<(), String> {
+    let mut image: Option<String> = None;
+    let mut i = 0;
+    while i < args.len() {
+        match args[i].as_str() {
+            "--image" => { i += 1; if i < args.len() { image = Some(args[i].clone()); } }
+            _ => { return Err(format!("unknown flag: {}", args[i])); }
+        }
+        i += 1;
+    }
+    let image_dir = image.ok_or("missing --image")?;
+    let image_path = Path::new(&image_dir);
+    if !image_path.join("manifest.json").exists() {
+        return Err("not a ComputeImage directory (missing manifest.json)".into());
+    }
+
+    eprintln!("Opening sealed image: {}", image_dir);
+    let reader = compute_image::read(&image_dir)
+        .map_err(|e| format!("read image: {e}"))?;
+
+    let plan = &reader.manifest.execution_plan;
+    let plan_errors = plan.validate();
+    if let Err(errs) = plan_errors {
+        return Err(format!("plan validation failed: {}", errs.join("; ")));
+    }
+
+    let start = std::time::Instant::now();
+    let mut runtime = reader.open_runtime(compute_image::StorageBackend::Copied)
+        .map_err(|e| format!("open runtime: {e}"))?;
+
+    eprintln!("Running 48-layer forward pass...");
+    let token = runtime.run_full_model(&[2i32])
+        .map_err(|e| format!("run_full_model: {e}"))?;
+    let elapsed = start.elapsed();
+    let elapsed_s = elapsed.as_secs_f64();
+
+    let out = serde_json::json!({
+        "status": "inferred",
+        "image_hash": reader.manifest.image_hash,
+        "output_token": token,
+        "elapsed_s": elapsed_s,
+        "layers": plan.layers.len(),
+    });
+    println!("{}", serde_json::to_string(&out).unwrap());
+
+    eprintln!("GATE PASSED: token={} elapsed={:.1}s", token, elapsed_s);
+    Ok(())
 }

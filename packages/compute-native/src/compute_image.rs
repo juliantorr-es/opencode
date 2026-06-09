@@ -75,7 +75,6 @@ pub fn compile_with_authority(
 
 /// Verify the current binary was compiled under the image-build profile.
 pub fn verify_image_build_profile() -> napi::Result<()> {
-    let profile = option_env!("TRIBUNUS_PROFILE").unwrap_or("unknown");
     let opt_level = option_env!("TRIBUNUS_OPT_LEVEL").unwrap_or("0");
     let debug_assertions = cfg!(debug_assertions);
     let target = option_env!("TRIBUNUS_TARGET").unwrap_or("unknown");
