@@ -16,6 +16,8 @@ use rayon::prelude::*;
 use uuid::Uuid;
 
 use tribunus_compute_native::compute_image;
+use tribunus_compute_native::profiled_executor::{LoadedProfiledModel, ProfiledInferenceSession};
+use tribunus_compute_native::kv_cache::KvCache;
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Entry point
@@ -27,12 +29,14 @@ fn main() {
         eprintln!("Usage:");
         eprintln!("  tribunus-compute-image build --source <dir> --output <dir>");
         eprintln!("  tribunus-compute-image verify --image <dir> [--expected-hash <hash>] [--full]");
+        eprintln!("  tribunus-compute-image decode-one --image <dir>");
         std::process::exit(1);
     }
 
     let result = match args[1].as_str() {
         "build" => cmd_build(&args[2..]),
         "verify" => cmd_verify(&args[2..]),
+        "decode-one" => cmd_decode_one(&args[2..]),
         other => {
             eprintln!("unknown command: {other}");
             std::process::exit(1);
@@ -384,4 +388,75 @@ fn civil_from_days(days: i64) -> (i64, i64, i64) {
     let m = if mp < 10 { mp + 3 } else { mp - 9 };
     let y = if m <= 2 { y + 1 } else { y };
     (y, m, d)
+}
+fn cmd_decode_one(args: &[String]) -> Result<(), String> {
+    let mut image: Option<String> = None;
+    let mut i = 0;
+    while i < args.len() {
+        match args[i].as_str() {
+            "--image" => { i += 1; if i < args.len() { image = Some(args[i].clone()); } }
+            _ => { return Err(format!("unknown flag: {}", args[i])); }
+        }
+        i += 1;
+    }
+    let image_dir = image.ok_or("missing --image")?;
+    let image_path = Path::new(&image_dir);
+
+    eprintln!("Opening sealed image: {}", image_dir);
+    let reader = compute_image::read(&image_dir).map_err(|e| format!("read: {e}"))?;
+    let plan = &reader.manifest.execution_plan;
+
+    // Build KV caches (one per layer)
+    let kv_caches: Vec<KvCache> = plan.layers.iter().map(|lp| {
+        let is_sliding = lp.attention_kind == "sliding_attention";
+        let capacity: u32 = if is_sliding { 1024 } else { 8 };
+        let (n_kv_heads, head_dim) = if lp.attention_kind == "full_attention" {
+            (lp.n_global_kv_heads.unwrap_or(1) as u32, lp.global_head_dim.unwrap_or(512) as u32)
+        } else {
+            (lp.n_kv_heads as u32, lp.head_dim as u32)
+        };
+        KvCache::new(capacity, n_kv_heads, head_dim, is_sliding)
+    }).collect();
+
+    // Build the profiled model
+    let model = LoadedProfiledModel::new(image_path)
+        .map_err(|e| format!("load model: {e}"))?;
+    let mut session = ProfiledInferenceSession::new("decode-one".into(), kv_caches);
+
+    // Prefill with 4 tokens
+    let prompt: &[u32] = &[2, 42, 100, 500];
+    eprintln!("Prefill with {} tokens...", prompt.len());
+    let t0 = std::time::Instant::now();
+    let prefill_token = session.prefill(prompt, &model)
+        .map_err(|e| format!("prefill: {e}"))?;
+    let prefill_elapsed = t0.elapsed().as_secs_f64();
+    eprintln!("GATE: prefill_token={} elapsed={:.2}s", prefill_token, prefill_elapsed);
+
+    // Decode one token
+    eprintln!("Decode one...");
+    let t0 = std::time::Instant::now();
+    let decode_token = session.decode_one(prefill_token, &model)
+        .map_err(|e| format!("decode: {e}"))?;
+    let decode_elapsed = t0.elapsed().as_secs_f64();
+    eprintln!("GATE: decode_token={} elapsed={:.2}s", decode_token, decode_elapsed);
+
+    // Verify KV caches are committed correctly
+    for (l, kvc) in session.kv_caches.iter().enumerate() {
+        let committed = kvc.committed_len;
+        if committed != 5 { // 4 prefill + 1 decode = 5 total positions
+            eprintln!("WARN: layer {} has {} committed positions (expected 5)", l, committed);
+        }
+    }
+
+    let out = serde_json::json!({
+        "status": "decoded",
+        "image_hash": model.reader.manifest.image_hash,
+        "prefill_token": prefill_token,
+        "decode_token": decode_token,
+        "prefill_elapsed_s": prefill_elapsed,
+        "decode_elapsed_s": decode_elapsed,
+        "layers": plan.layers.len(),
+    });
+    println!("{}", serde_json::to_string(&out).unwrap());
+    Ok(())
 }

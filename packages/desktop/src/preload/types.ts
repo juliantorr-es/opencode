@@ -1,4 +1,5 @@
 import type { DesktopMenuAction } from "@tribunus/app/desktop-menu"
+import type { CoordinationSnapshot, CoordinationDelta } from "../renderer/coordination-store"
 
 export type InitStep =
   | { phase: "server_waiting" }
@@ -201,6 +202,9 @@ export type ElectronAPI = {
   getCapabilities: () => Promise<DesktopCapabilities>
   getSafeModeDiagnostics: () => Promise<SafeModeDiagnostics>
   safeModeAction: (action: SafeModeAction) => Promise<void>
+  getCoordinationSnapshot: () => Promise<CoordinationSnapshot>
+  subscribeCoordinationProjection: (cb: (delta: CoordinationDelta) => void) => () => void
+  requestCoordinationResync: () => void
   openProject: (directory: string) => Promise<string>
 
   getSystemStatus: () => Promise<{

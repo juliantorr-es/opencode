@@ -53,6 +53,7 @@ import { Deferred, Effect, Fiber, ManagedRuntime } from "effect"
 import { makeDesktopRuntime } from "./effect/desktop-runtime"
 import { registerQualificationDriver } from "./qualification-driver"
 import * as Sentry from "@sentry/electron"
+import { makeCoordinationProjectionService } from "./coordination-projection"
 
 const APP_NAMES: Record<string, string> = {
   dev: "Tribunus Dev",
@@ -128,6 +129,8 @@ function ensureLoopbackNoProxy() {
 registerQualificationDriver()
 
 const desktopRuntime = makeDesktopRuntime()
+
+const coordinationProjection = makeCoordinationProjectionService()
 
 const main = Effect.gen(function* () {
   contextMenu({ showSaveImageAs: true, showLookUpSelection: false, showSearchWithGoogle: false })

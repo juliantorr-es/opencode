@@ -1,4 +1,5 @@
 import { createSignal, createContext, useContext, type JSX } from "solid-js"
+import { createCoordinationStore, type CoordinationStore } from "./coordination-store"
 
 /** Sidecar lifecycle state */
 export interface SidecarState {
@@ -33,6 +34,7 @@ export interface DesktopRuntimeState {
   shutdown: boolean
   ipc: IpcState
   update: UpdateState
+  coordination: CoordinationStore
 }
 
 const DesktopRuntimeContext = createContext<{
@@ -44,6 +46,7 @@ const DesktopRuntimeContext = createContext<{
   setShutdown: (s: boolean) => void
   setIpc: (i: Partial<IpcState>) => void
   setUpdate: (u: Partial<UpdateState>) => void
+  coordination: CoordinationStore
 }>()
 
 export function useDesktopRuntime() {
@@ -75,6 +78,7 @@ export function DesktopRuntimeProvider(props: { children: JSX.Element }) {
     version: null,
     error: null,
   })
+  const coordination = createCoordinationStore()
 
   const state: DesktopRuntimeState = {
     get sidecar() { return sidecar() },
@@ -85,6 +89,7 @@ export function DesktopRuntimeProvider(props: { children: JSX.Element }) {
     get shutdown() { return shutdown() },
     get ipc() { return ipc() },
     get update() { return update() },
+    get coordination() { return coordination },
   }
 
   return (
@@ -98,6 +103,7 @@ export function DesktopRuntimeProvider(props: { children: JSX.Element }) {
         setShutdown,
         setIpc: (i) => setIpcSignal((prev) => ({ ...prev, ...i })),
         setUpdate: (u) => setUpdateSignal((prev) => ({ ...prev, ...u })),
+        coordination,
       }}
     >
       {props.children}
