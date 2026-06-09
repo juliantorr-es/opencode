@@ -42,6 +42,21 @@ type WorkloadDef = {
 };
 
 const WORKLOADS: Record<string, WorkloadDef> = {
+    "bos-precompiled": {
+    id: "bos-single-token",
+    testName: "real_full_model_from_compiled_image",
+    promptTokenIds: [2],
+    outputBudget: 1,
+    description: "BOS from precompiled image (TRIBUNUS_COMPILED_IMAGE) — ~2min",
+    requireLayers: 48,
+    parseTokens(_stdout: string, stderr: string): number[] {
+      const m = stderr.match(/GATE PASSED:\s*token=(\d+)/);
+      return m ? [parseInt(m[1]!)] : [];
+    },
+    parseLayerEvents(stderr: string, runId: string): Array<Record<string, unknown>> {
+      return parseStandardLayerEvents(stderr, runId);
+    },
+  },
   "bos-single-token": {
     id: "bos-single-token",
     testName: "real_checkpoint_full_model_gate",
