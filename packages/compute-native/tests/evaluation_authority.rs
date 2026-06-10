@@ -186,6 +186,29 @@ fn eager_without_deferred_deps_is_valid() {
 
 #[test]
 fn eager_with_crossing_deferred_dep_rejected() {
+    // Tensor 99 is NOT in materialized_outputs [10]
+    let plans = vec![
+        make_boundary(0, mlx(), &[1], &[10],
+            EvaluationPolicy::Eager { synchronize: true, release_inputs_after_use: true, prohibit_deferred_nodes: true },
+            &[]),
+        make_boundary(1, mlx(), &[2], &[11],
+            EvaluationPolicy::ExplicitRegion, &[]),
+    ];
+    let ctx = BoundaryValidationContext {
+        expected_operations: &[],
+        dependency_edges: &[
+            DependencyEdge { from: op(1), to: op(2), via_tensor: tid(99) },
+        ],
+        transfer_plans: &[],
+    };
+    let err = validate_boundary_plans(&plans, &ctx);
+    assert!(err.is_err(), "unevaluated crossing dep must be rejected");
+    assert!(err.unwrap_err().iter().any(|e| matches!(e, PlanValidationError::EagerWithDeferredDependency { .. })));
+}
+
+#[test]
+fn eager_materialized_crossing_allowed() {
+    // Tensor 10 IS materialized and boundary is synchronized
     let plans = vec![
         make_boundary(0, mlx(), &[1], &[10],
             EvaluationPolicy::Eager { synchronize: true, release_inputs_after_use: true, prohibit_deferred_nodes: true },
@@ -200,9 +223,8 @@ fn eager_with_crossing_deferred_dep_rejected() {
         ],
         transfer_plans: &[],
     };
-    let err = validate_boundary_plans(&plans, &ctx);
-    assert!(err.is_err());
-    assert!(err.unwrap_err().iter().any(|e| matches!(e, PlanValidationError::EagerWithDeferredDependency { .. })));
+    assert!(validate_boundary_plans(&plans, &ctx).is_ok(),
+        "materialized+synchronized crossing output must be allowed");
 }
 
 // ── Boundary digest ───────────────────────────────────────────────────────
