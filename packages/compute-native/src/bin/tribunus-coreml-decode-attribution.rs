@@ -38,7 +38,7 @@ fn main() {
         .cloned();
 
     // Check dirty-tree state.
-    let dirty_tree = check_dirty_tree();
+    let (repo_dirty, compute_dirty, dep_dirty, sample_paths) = check_provenance();
 
     let run_id = custom_run_id.unwrap_or_else(|| {
         format!(
@@ -69,7 +69,7 @@ fn main() {
     eprintln!("=== Decode Attribution Data Collection Gate ===");
     eprintln!("Run ID: {}", run_id);
     eprintln!("Output: {}", output_dir);
-    eprintln!("Dirty tree: {}", dirty_tree);
+    eprintln!("Dirty tree: global={} compute={} dep={}", repo_dirty, compute_dirty, dep_dirty);
     eprintln!("Warmup: {} iters, Steady: {} iters", DEFAULT_WARMUP, DEFAULT_STEADY);
     eprintln!("");
 
@@ -91,7 +91,7 @@ fn main() {
         write_jsonl(&output_dir, "matrix_lattice", &lattice);
 
         // Generate coverage lattice JSON artifact
-        let coverage = generate_coverage_json(&run_id, dirty_tree, &lattice);
+        let coverage = generate_coverage_json(&run_id, repo_dirty, compute_dirty, dep_dirty, sample_paths, &lattice);
         let coverage_path = format!("{}/coverage_lattice.json", output_dir);
         let coverage_json = serde_json::to_string_pretty(&coverage).expect("serialize coverage");
         let mut cf = fs::File::create(&coverage_path).expect("create coverage file");
@@ -198,17 +198,35 @@ fn write_jsonl(dir: &str, name: &str, receipts: &[tribunus_compute_native::decod
     eprintln!("  JSONL: {}", path);
 }
 
-/// Check whether the git tree has uncommitted changes.
-fn check_dirty_tree() -> bool {
+/// Check provenance across three scopes.
+/// Returns (global_dirty, compute_dirty, dep_dirty, dirty_paths_sample).
+fn check_provenance() -> (bool, bool, bool, Vec<String>) {
     use std::process::Command;
-    let output = Command::new("git")
-        .args(["status", "--porcelain"])
-        .output();
-    match output {
-        Ok(out) => !String::from_utf8_lossy(&out.stdout).trim().is_empty(),
-        Err(_) => {
-            eprintln!("  [warn] could not check git status; assuming dirty");
-            true
+
+    fn run_git(args: &[&str]) -> (String, bool) {
+        match Command::new("git").args(args).output() {
+            Ok(out) => (String::from_utf8_lossy(&out.stdout).trim().to_string(), false),
+            Err(_) => (String::new(), true),
         }
     }
+
+    let (global_out, _) = run_git(&["status", "--porcelain"]);
+    let (compute_out, compute_err) = run_git(&["status", "--porcelain", "--", "packages/compute-native/"]);
+    let (dep_out, dep_err) = run_git(&["status", "--porcelain", "--", "Cargo.toml", "Cargo.lock", ".cargo/", "rust-toolchain", "rust-toolchain.toml", "build.rs"]);
+
+    let repo_dirty = !global_out.is_empty();
+    let compute_dirty = !compute_out.is_empty();
+    let dep_dirty = !dep_out.is_empty();
+
+    let mut sample: Vec<String> = Vec::new();
+    for line in global_out.lines().take(10) {
+        sample.push(line.to_string());
+    }
+
+    if compute_err || dep_err {
+        eprintln!("  [warn] could not check scoped git status; assuming dirty");
+        return (true, true, true, sample);
+    }
+
+    (repo_dirty, compute_dirty, dep_dirty, sample)
 }

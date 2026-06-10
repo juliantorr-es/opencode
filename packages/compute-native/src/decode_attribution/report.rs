@@ -304,7 +304,12 @@ pub struct CoverageLattice {
     pub run_id: String,
     pub commit_sha: String,
     pub dirty_tree: bool,
-    pub provenance: String, // "clean" or "tainted"
+    pub repo_dirty_tree_global: bool,
+    pub compute_dirty_tree: bool,
+    pub dependency_scope_dirty: bool,
+    pub provenance: String, // "clean", "tainted", or "dependency_dirty"
+    pub provenance_scope: String, // "compute-native"
+    pub dirty_paths_sample: Vec<String>,
     pub schema_version: String,
     pub generated_at: String,
     pub total_rows: usize,
@@ -316,10 +321,13 @@ pub struct CoverageLattice {
 /// Validates:
 /// - All receipts share the same `run_id` and `commit_sha`
 /// - Rejects empty or mixed-provenance inputs
-/// - Marks `provenance: tainted` if `dirty_tree=true`
+/// - Provenance is computed from three scoped flags
 pub fn generate_coverage_json(
     run_id: &str,
-    dirty_tree: bool,
+    repo_dirty: bool,
+    compute_dirty: bool,
+    dep_dirty: bool,
+    dirty_paths: Vec<String>,
     receipts: &[DecodeAttributionReceipt],
 ) -> CoverageLattice {
     let ts = iso_timestamp();
@@ -344,12 +352,17 @@ pub fn generate_coverage_json(
         );
     }
 
-    let provenance = if dirty_tree { "tainted".to_string() } else { "clean".to_string() };
+    let provenance = if compute_dirty || dep_dirty {
+        "tainted".to_string()
+    } else {
+        "clean".to_string()
+    };
+    let provenance_scope = "compute-native".to_string();
 
     let rows: Vec<CoverageLatticeRow> = receipts.iter().map(|r| CoverageLatticeRow {
         run_id: r.run_id.clone(),
         commit_sha: r.commit_sha.clone(),
-        dirty_tree,
+        dirty_tree: repo_dirty,
         backend: r.backend.clone(),
         graph_family: r.graph_family.clone(),
         shape_profile: r.shape_profile.clone(),
@@ -372,8 +385,13 @@ pub fn generate_coverage_json(
     CoverageLattice {
         run_id: run_id.to_string(),
         commit_sha,
-        dirty_tree,
+        dirty_tree: repo_dirty,
+        repo_dirty_tree_global: repo_dirty,
+        compute_dirty_tree: compute_dirty,
+        dependency_scope_dirty: dep_dirty,
         provenance,
+        provenance_scope,
+        dirty_paths_sample: dirty_paths,
         schema_version: "coverage-lattice.v1".to_string(),
         generated_at: ts,
         total_rows,
@@ -384,8 +402,8 @@ pub fn generate_coverage_json(
 /// Generate a human-readable coverage table from the lattice.
 pub fn generate_coverage_table(lattice: &CoverageLattice) -> String {
     let mut lines = Vec::new();
-    lines.push(format!("Coverage Lattice: run_id={} commit={} dirty_tree={} provenance={} rows={}",
-        lattice.run_id, lattice.commit_sha, lattice.dirty_tree, lattice.provenance, lattice.total_rows));
+    lines.push(format!("Coverage Lattice: run_id={} commit={} compute_dirty={} dep_dirty={} global_dirty={} provenance={} scope={} rows={}",
+        lattice.run_id, lattice.commit_sha, lattice.compute_dirty_tree, lattice.dependency_scope_dirty, lattice.repo_dirty_tree_global, lattice.provenance, lattice.provenance_scope, lattice.total_rows));
     lines.push(String::new());
     lines.push(format!("{:<22} {:<12} {:<12} {:<18} {:<18} {:<14} ref_hashes",
         "Graph", "Shape", "Backend", "SupportTier", "PredictStatus", "P50(ns)"));
@@ -412,8 +430,7 @@ pub fn generate_coverage_table(lattice: &CoverageLattice) -> String {
     }
 
     lines.push(String::new());
-    lines.push(format!("Provenance: {} — {}",
-        lattice.provenance,
-        if lattice.dirty_tree { "NOT eligible for optimization decisions" } else { "eligible for optimization decisions" }));
+    let elig = if lattice.provenance == "clean" { "eligible for optimization decisions" } else { "NOT eligible" };
+    lines.push(format!("Provenance: {} — {}", lattice.provenance, elig));
     lines.join("\n")
 }
