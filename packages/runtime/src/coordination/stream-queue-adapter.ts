@@ -212,14 +212,3 @@ export function createStreamQueueAdapterWith(
   return new StreamQueueAdapter(workQueue, queueName, config)
 }
 
-// ── Exports ─────────────────────────────────────────────────────────────
-
-export {
-  StreamQueueAdapter,
-  createStreamQueueAdapter,
-  createStreamQueueAdapterWith,
-  DEFAULT_ADAPTER_CONFIG,
-}
-export type {
-  StreamQueueAdapterConfig,
-}

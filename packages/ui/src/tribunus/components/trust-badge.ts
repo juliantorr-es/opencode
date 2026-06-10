@@ -1,5 +1,4 @@
-// @ts-nocheck — lit css tagged template literal type (TS2345)
-import { LitElement, html, css, type TemplateResult, type CSSResultGroup } from "lit"
+import { LitElement, html, css, type TemplateResult } from "lit"
 import { customElement, property } from "lit/decorators.js"
 import { tokens } from "../tokens.js"
 
@@ -28,7 +27,7 @@ function scorePercent(score: number): string {
 
 @customElement("tribunus-trust-badge")
 export class TrustBadge extends LitElement {
-  static override styles = css` as CSSResultGroup
+  static override styles = css`
     :host {
       display: inline-block;
       container-type: inline-size;

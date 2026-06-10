@@ -12,7 +12,7 @@
  * - DuckDB remains downstream analytics/projection only.
  */
 
-import { pgTable, text, integer, bigint, jsonb, primaryKey, index } from "drizzle-orm/pg-core"
+import { pgTable, text, integer, bigint, boolean, jsonb, primaryKey, index } from "drizzle-orm/pg-core"
 import { TimestampsPg } from "@/storage/schema.pg.sql"
 import type { SessionID } from "@/session/schema"
 import type { ProjectID } from "@/project/schema"

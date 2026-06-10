@@ -406,16 +406,3 @@ export function createWorkSchedulerWith(
 }
 
 
-// ── Exports ─────────────────────────────────────────────────────────────
-
-export {
-  WorkScheduler,
-  createWorkScheduler,
-  createWorkSchedulerWith,
-  DEFAULT_SCHEDULER_CONFIG,
-}
-export type {
-  SchedulerConfig,
-  ScheduledWork,
-  SchedulerMetrics,
-}

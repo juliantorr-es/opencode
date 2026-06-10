@@ -9,8 +9,8 @@ import { Effect } from "effect"
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
-interface TaskID { readonly TaskID: unique symbol }
-type TaskID = string & TaskID
+interface TaskIDBrand { readonly TaskID: unique symbol }
+type TaskID = string & TaskIDBrand
 
 type TaskStatus = "running" | "completed" | "failed" | "timed_out" | "restarting"
 
@@ -130,7 +130,8 @@ function listTasks(): SupervisionRecord[] {
   return [...supervisionStore.values()]
 }
 
+export type { TaskID, SupervisionRecord, TaskStatus, TaskEvent }
 export {
   registerTask, heartbeat, checkHeartbeats, completeTask, getTask, listTasks,
-  subscribeEvents, supervisionStore, TaskID, SupervisionRecord, TaskStatus, TaskEvent,
+  subscribeEvents, supervisionStore,
 }

@@ -35,7 +35,7 @@ export const Capability = Schema.Struct({
   /** When this capability was granted */
   grantedAt: Schema.Number,
   /** When this capability expires (null = permanent) */
-  expiresAt: Schema.union(Schema.Number, Schema.Null),
+  expiresAt: Schema.Union(Schema.Number, Schema.Null),
   /** Whether this capability is currently active */
   isActive: Schema.Boolean,
 })
@@ -121,7 +121,7 @@ export const CapabilityGrant = Schema.Struct({
   scope: Schema.String,
   rights: Schema.Array(Schema.String),
   /** When this grant expires (null = permanent until revoked) */
-  expiresAt: Schema.union(Schema.Number, Schema.Null),
+  expiresAt: Schema.Union(Schema.Number, Schema.Null),
   /** Whether this grant is active */
   isActive: Schema.Boolean,
   /** The receipt ID in CapabilityAuthorityReceiptTable */

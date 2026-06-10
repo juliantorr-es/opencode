@@ -802,16 +802,16 @@ describe("PGlite-backed ACK Operations", () => {
       yield* pgStore.createWorkItem(workItemInput(workId))
 
       // Publish to Valkey stream
-      const entryId = await queue.publish(workEnvelope(workId))
+      const entryId = yield* Effect.promise(() => queue.publish(workEnvelope(workId)))
       expect(entryId).toBeDefined()
 
       // Read from stream — places entry in PEL
-      const claims = await queue.read({ count: 1, blockMs: 5000 })
+      const claims = yield* Effect.promise(() => queue.read({ count: 1, blockMs: 5000 }))
       expect(claims.length).toBe(1)
       expect(claims[0].envelope.workId).toBe(workId)
 
       // ACT: completeAndAck — writes PGlite first, then XACK
-      const receipt = await queue.completeAndAck(workId, claims[0].entryId, "test-result-ref")
+      const receipt = yield* Effect.promise(() => queue.completeAndAck(workId, claims[0].entryId, "test-result-ref"))
       expect(receipt.result.kind).toBe("completed")
       expect(receipt.durableWrittenAt).toBeLessThanOrEqual(receipt.acknowledgedAt)
 
@@ -828,10 +828,10 @@ describe("PGlite-backed ACK Operations", () => {
       expect(attempt!.produced_terminal_fact).toBe(true)
 
       // ASSERT Valkey state — no pending entries
-      const pending = await queue.getPendingSummary()
+      const pending = yield* Effect.promise(() => queue.getPendingSummary())
       expect(pending.count).toBe(0)
     } finally {
-      await redis.quit()
+      yield* Effect.promise(() => redis.quit())
     }
   })
 
@@ -846,20 +846,20 @@ describe("PGlite-backed ACK Operations", () => {
       const workId = "ack-failterm-001"
 
       yield* pgStore.createWorkItem(workItemInput(workId))
-      const entryId = await queue.publish(workEnvelope(workId))
+      const entryId = yield* Effect.promise(() => queue.publish(workEnvelope(workId)))
       expect(entryId).toBeDefined()
 
-      const claims = await queue.read({ count: 1, blockMs: 5000 })
+      const claims = yield* Effect.promise(() => queue.read({ count: 1, blockMs: 5000 }))
       expect(claims.length).toBe(1)
       expect(claims[0].envelope.workId).toBe(workId)
 
       // ACT: failTerminalAndAck
-      const receipt = await queue.failTerminalAndAck(
+      const receipt = yield* Effect.promise(() => queue.failTerminalAndAck(
         workId,
         claims[0].entryId,
         "test_error",
         "Terminal failure in test",
-      )
+      ))
       expect(receipt.result.kind).toBe("failed_terminal")
       expect(receipt.durableWrittenAt).toBeLessThanOrEqual(receipt.acknowledgedAt)
 
@@ -878,10 +878,10 @@ describe("PGlite-backed ACK Operations", () => {
       expect(attempt!.error_message).toBe("Terminal failure in test")
 
       // ASSERT Valkey state — no pending entries
-      const pending = await queue.getPendingSummary()
+      const pending = yield* Effect.promise(() => queue.getPendingSummary())
       expect(pending.count).toBe(0)
     } finally {
-      await redis.quit()
+      yield* Effect.promise(() => redis.quit())
     }
   })
 
@@ -896,20 +896,20 @@ describe("PGlite-backed ACK Operations", () => {
       const workId = "ack-retry-001"
 
       yield* pgStore.createWorkItem(workItemInput(workId))
-      const entryId = await queue.publish(workEnvelope(workId))
+      const entryId = yield* Effect.promise(() => queue.publish(workEnvelope(workId)))
       expect(entryId).toBeDefined()
 
-      const claims = await queue.read({ count: 1, blockMs: 5000 })
+      const claims = yield* Effect.promise(() => queue.read({ count: 1, blockMs: 5000 }))
       expect(claims.length).toBe(1)
 
       // ACT: failRetryableAndAck
-      const receipt = await queue.failRetryableAndAck(
+      const receipt = yield* Effect.promise(() => queue.failRetryableAndAck(
         workId,
         claims[0].entryId,
         "transient_error",
         "Retryable failure in test",
         60000,
-      )
+      ))
       expect(receipt.result.kind).toBe("failed_retryable")
       expect(receipt.durableWrittenAt).toBeLessThanOrEqual(receipt.acknowledgedAt)
 
@@ -934,10 +934,10 @@ describe("PGlite-backed ACK Operations", () => {
       expect(match!.status).toBe("scheduled")
 
       // ASSERT Valkey state — no pending entries
-      const pending = await queue.getPendingSummary()
+      const pending = yield* Effect.promise(() => queue.getPendingSummary())
       expect(pending.count).toBe(0)
     } finally {
-      await redis.quit()
+      yield* Effect.promise(() => redis.quit())
     }
   })
 
@@ -952,14 +952,14 @@ describe("PGlite-backed ACK Operations", () => {
       const workId = "ack-dl-001"
 
       yield* pgStore.createWorkItem(workItemInput(workId))
-      const entryId = await queue.publish(workEnvelope(workId))
+      const entryId = yield* Effect.promise(() => queue.publish(workEnvelope(workId)))
       expect(entryId).toBeDefined()
 
-      const claims = await queue.read({ count: 1, blockMs: 5000 })
+      const claims = yield* Effect.promise(() => queue.read({ count: 1, blockMs: 5000 }))
       expect(claims.length).toBe(1)
 
       // ACT: deadLetterAndAck
-      const receipt = await queue.deadLetterAndAck(workId, claims[0].entryId, "max_attempts_exceeded")
+      const receipt = yield* Effect.promise(() => queue.deadLetterAndAck(workId, claims[0].entryId, "max_attempts_exceeded"))
       expect(receipt.result.kind).toBe("dead_lettered")
       expect(receipt.durableWrittenAt).toBeLessThanOrEqual(receipt.acknowledgedAt)
 
@@ -979,10 +979,10 @@ describe("PGlite-backed ACK Operations", () => {
       expect(deadLetter!.reason).toBe("max_attempts_exceeded")
 
       // ASSERT Valkey state — no pending entries
-      const pending = await queue.getPendingSummary()
+      const pending = yield* Effect.promise(() => queue.getPendingSummary())
       expect(pending.count).toBe(0)
     } finally {
-      await redis.quit()
+      yield* Effect.promise(() => redis.quit())
     }
   })
 })

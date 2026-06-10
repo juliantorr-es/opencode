@@ -1,11 +1,10 @@
-// @ts-nocheck — interface/class name collision (TS2395), demo data only
-import { LitElement, html, css, type TemplateResult, type CSSResultGroup } from "lit"
+import { LitElement, html, css, type TemplateResult } from "lit"
 import { customElement, property } from "lit/decorators.js"
 import { tokens } from "../tokens.js"
 
 type Mode = "public" | "authenticated"
 
-interface ApprovalSheet {
+interface ApprovalSheetData {
   id: string
   title: string
   description: string
@@ -13,7 +12,7 @@ interface ApprovalSheet {
   requestedBy?: string
 }
 
-const DEMO_SHEET: ApprovalSheet = {
+const DEMO_SHEET: ApprovalSheetData = {
   id: "approval-001",
   title: "Release v3.2.0 to Production",
   description: "Approve promotion of build #4821 (commit a3f2c9e) from staging to production. Includes zero-trust IPC upgrade, agent health monitoring, and 14 bug fixes.",
@@ -21,7 +20,7 @@ const DEMO_SHEET: ApprovalSheet = {
   requestedBy: "Orion",
 }
 
-const STATUS_STYLE: Record<ApprovalSheet["status"], { color: string; label: string }> = {
+const STATUS_STYLE: Record<ApprovalSheetData["status"], { color: string; label: string }> = {
   pending: { color: tokens.color.warning.$value, label: "Pending" },
   approved: { color: tokens.color.success.$value, label: "Approved" },
   denied: { color: tokens.color.error.$value, label: "Denied" },
@@ -30,7 +29,7 @@ const STATUS_STYLE: Record<ApprovalSheet["status"], { color: string; label: stri
 
 @customElement("tribunus-approval-sheet")
 export class ApprovalSheet extends LitElement {
-  static override styles = css` as CSSResultGroup
+  static override styles = css`
     :host {
       display: block;
       container-type: inline-size;
@@ -131,9 +130,9 @@ export class ApprovalSheet extends LitElement {
   mode: Mode = "public"
 
   @property({ type: Object })
-  sheet?: ApprovalSheet
+  sheet?: ApprovalSheetData
 
-  private get _sheet(): ApprovalSheet {
+  private get _sheet(): ApprovalSheetData {
     if (this.mode === "public" || !this.sheet) return DEMO_SHEET
     return this.sheet
   }

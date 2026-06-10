@@ -9,8 +9,8 @@ import { Effect } from "effect"
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
-interface ResourceID { readonly ResourceID: unique symbol }
-type ResourceID = string & ResourceID
+interface ResourceIDBrand { readonly ResourceID: unique symbol }
+type ResourceID = string & ResourceIDBrand
 
 interface ResourceRecord {
   id: ResourceID
@@ -116,4 +116,5 @@ function leakReport(): { total: number; byType: Record<string, number>; byScope:
   return { total: registry.size, byType, byScope }
 }
 
-export { register, teardownAll, teardownScope, dumpLiveResources, leakReport, registry, acquisitionOrder, ResourceID, ResourceRecord }
+export type { ResourceID, ResourceRecord }
+export { register, teardownAll, teardownScope, dumpLiveResources, leakReport, registry, acquisitionOrder }

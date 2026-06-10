@@ -25,9 +25,6 @@ export {
   CoordinationWorkQueue,
   workQueueLayer,
   DEFAULT_CONFIG,
-  DEFAULT_STREAM_NAME,
-  DEFAULT_CONSUMER_GROUP,
-  DEFAULT_PENDING_IDLE_MS,
 } from "./work-queue"
 
 export type {
@@ -41,7 +38,6 @@ export type {
   TerminalResult,
   WorkResult,
   CompletionReceipt,
-  ConsumerIdentity,
 } from "./work-queue"
 
 // Low-level primitives (use sparingly - prefer high-level API)
@@ -49,6 +45,9 @@ export {
   ValkeyStreams,
   createValkeyStreams,
   createValkeyStreamsFor,
+  DEFAULT_STREAM_NAME,
+  DEFAULT_CONSUMER_GROUP,
+  DEFAULT_PENDING_IDLE_MS,
 } from "./stream-primitives"
 
 export type {
@@ -84,8 +83,6 @@ export type {
   SchedulerConfig,
   ScheduledWork,
   SchedulerMetrics,
-  ScheduleRetryOptions,
-  ScheduleOptions,
 } from "./scheduler"
 
 // Observability
@@ -118,17 +115,19 @@ export type {
 } from "./stream-queue-adapter"
 
 // Fabric interface and implementations
-export {
+export type {
   CoordinationFabric,
-  createFabric,
-  VALKEY_ENABLED,
-  isValkeyBinaryAvailable,
   AgentHeartbeat,
   LeaseRequest,
   LeaseResult,
   CoordinationEvent,
   CoordinationJob,
   BackpressureState,
+} from "./fabric"
+export {
+  createFabric,
+  VALKEY_ENABLED,
+  isValkeyBinaryAvailable,
 } from "./fabric"
 
 export { createValkeyFabric } from "./valkey-fabric"
@@ -140,10 +139,6 @@ export {
   CoordinationRecovery,
   recoveryLayer,
   DEFAULT_RECOVERY_CONFIG,
-  planCoordinationRecovery,
-  persistCoordinationRecoveryReceipt,
-  setRecoveryStatus,
-  getRecoveryStatus,
 } from "./recovery"
 
 export type {

@@ -1,11 +1,10 @@
-// @ts-nocheck — interface/class name collision (TS2395), demo data only
-import { LitElement, html, css, type TemplateResult, type CSSResultGroup } from "lit"
+import { LitElement, html, css, type TemplateResult } from "lit"
 import { customElement, property, state } from "lit/decorators.js"
 import { tokens } from "../tokens.js"
 
 type Mode = "public" | "authenticated"
 
-interface DiagnosticPacket {
+interface DiagnosticPacketEntry {
   id: string
   title: string
   severity: "info" | "warning" | "error" | "critical"
@@ -13,14 +12,14 @@ interface DiagnosticPacket {
   timestamp?: string
 }
 
-const DEMO_PACKETS: DiagnosticPacket[] = [
+const DEMO_PACKETS: DiagnosticPacketEntry[] = [
   { id: "d1", title: "Memory pressure on lane-04", severity: "warning", detail: "Heap usage at 87% (1.2GB / 1.4GB). GC cycles increasing. Consider scaling lane-04 to a larger instance or reducing batch size.", timestamp: new Date(Date.now() - 120000).toISOString() },
   { id: "d2", title: "IPC handshake timeout", severity: "error", detail: "Agent Orion failed to complete mTLS handshake within 30s window. Retry 3/5. Peer cert serial 0xAB12 appears expired.", timestamp: new Date(Date.now() - 60000).toISOString() },
   { id: "d3", title: "Schema validation passed", severity: "info", detail: "All 42 agent schemas validated against v3.1.0 protocol definition. No mismatches.", timestamp: new Date(Date.now() - 30000).toISOString() },
   { id: "d4", title: "Authority chain breach detected", severity: "critical", detail: "Unauthorized attestation attempt from unknown principal 0xDEAD:BEEF. Chain-of-trust verification failed at node 7. Immediate review required.", timestamp: new Date(Date.now() - 5000).toISOString() },
 ]
 
-const SEVERITY_STYLE: Record<DiagnosticPacket["severity"], { color: string; bg: string; icon: string; label: string }> = {
+const SEVERITY_STYLE: Record<DiagnosticPacketEntry["severity"], { color: string; bg: string; icon: string; label: string }> = {
   info: { color: tokens.color.accent.$value, bg: tokens.color.accent.$value, icon: "i", label: "Info" },
   warning: { color: tokens.color.warning.$value, bg: tokens.color.warning.$value, icon: "!", label: "Warning" },
   error: { color: tokens.color.error.$value, bg: tokens.color.error.$value, icon: "✗", label: "Error" },
@@ -29,7 +28,7 @@ const SEVERITY_STYLE: Record<DiagnosticPacket["severity"], { color: string; bg: 
 
 @customElement("tribunus-diagnostic-packet")
 export class DiagnosticPacket extends LitElement {
-  static override styles = css` as CSSResultGroup
+  static override styles = css`
     :host {
       display: block;
       container-type: inline-size;
@@ -133,9 +132,9 @@ export class DiagnosticPacket extends LitElement {
   mode: Mode = "public"
 
   @property({ type: Array })
-  packets?: DiagnosticPacket[]
+  packets?: DiagnosticPacketEntry[]
 
-  private get _packets(): DiagnosticPacket[] {
+  private get _packets(): DiagnosticPacketEntry[] {
     if (this.mode === "public" || !this.packets) return DEMO_PACKETS
     return this.packets
   }

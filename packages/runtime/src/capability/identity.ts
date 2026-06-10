@@ -65,7 +65,7 @@ export const Delegate = Schema.Struct({
   /** The capabilities being delegated */
   capabilityIds: Schema.Array(Schema.String),
   /** When this delegation expires (Unix ms). null = permanent until revoked */
-  expiresAt: Schema.union(Schema.Number, Schema.Null),
+  expiresAt: Schema.Union(Schema.Number, Schema.Null),
   /** The scope within which this delegation is valid */
   scope: Schema.String,
   /** The delegation chain: [rootPrincipal, ...intermediateDelegates, thisDelegate] */

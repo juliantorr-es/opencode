@@ -679,20 +679,3 @@ function getValkeyRedis(): Effect.Effect<Redis> {
   })
 }
 
-// ── Exports ─────────────────────────────────────────────────────────────
-
-export {
-  CoordinationRecovery,
-  recoveryLayer,
-  DEFAULT_RECOVERY_CONFIG,
-}
-export type {
-  CoordinationRecoveryState,
-  RecoveryOutcome,
-  RecoveryReceipt,
-  RecoveryPlan,
-  RecoveryConfig,
-  RebuildStats,
-  RebuildReceipt,
-}
-

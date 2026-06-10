@@ -1,11 +1,10 @@
-// @ts-nocheck — interface/class name collision (TS2395), demo data only
-import { LitElement, html, css, type TemplateResult, type CSSResultGroup } from "lit"
+import { LitElement, html, css, type TemplateResult } from "lit"
 import { customElement, property } from "lit/decorators.js"
 import { tokens } from "../tokens.js"
 
 type Mode = "public" | "authenticated"
 
-interface DevicePresence {
+interface DevicePresenceData {
   id: string
   name: string
   status: "online" | "offline" | "away" | "error"
@@ -13,7 +12,7 @@ interface DevicePresence {
   type?: string
 }
 
-const DEMO_DEVICES: DevicePresence[] = [
+const DEMO_DEVICES: DevicePresenceData[] = [
   { id: "dev-01", name: "Kernel Agent — Orion", status: "online", type: "daemon" },
   { id: "dev-02", name: "Build Runner — arm64", status: "online", type: "runner" },
   { id: "dev-03", name: "Scan Engine", status: "away", lastSeen: new Date(Date.now() - 300000).toISOString(), type: "service" },
@@ -21,7 +20,7 @@ const DEMO_DEVICES: DevicePresence[] = [
   { id: "dev-05", name: "Legacy Bridge Node", status: "offline", lastSeen: new Date(Date.now() - 86400000).toISOString(), type: "bridge" },
 ]
 
-const STATUS_STYLE: Record<DevicePresence["status"], { color: string; glow: string; label: string }> = {
+const STATUS_STYLE: Record<DevicePresenceData["status"], { color: string; glow: string; label: string }> = {
   online: { color: tokens.color.success.$value, glow: `${tokens.color.success.$value}66`, label: "Online" },
   offline: { color: tokens.color.text.$value, glow: "transparent", label: "Offline" },
   away: { color: tokens.color.warning.$value, glow: `${tokens.color.warning.$value}44`, label: "Away" },
@@ -38,7 +37,7 @@ const TYPE_ICON: Record<string, string> = {
 
 @customElement("tribunus-device-presence")
 export class DevicePresence extends LitElement {
-  static override styles = css` as CSSResultGroup
+  static override styles = css`
     :host {
       display: block;
       container-type: inline-size;
@@ -119,9 +118,9 @@ export class DevicePresence extends LitElement {
   mode: Mode = "public"
 
   @property({ type: Array })
-  devices?: DevicePresence[]
+  devices?: DevicePresenceData[]
 
-  private get _devices(): DevicePresence[] {
+  private get _devices(): DevicePresenceData[] {
     if (this.mode === "public" || !this.devices) return DEMO_DEVICES
     return this.devices
   }

@@ -1,40 +1,69 @@
-// @ts-nocheck — lit css tagged template literal type (TS2345)
 export { tokens, type Tokens } from "./tokens.js"
 
-export { SessionCard } from "./components/session-card.js"
-export { AgentRail } from "./components/agent-rail.js"
-export { CommandReceipt } from "./components/command-receipt.js"
-export { ProjectionStream } from "./components/projection-stream.js"
-export { TrustBadge } from "./components/trust-badge.js"
-export { ReceiptTimeline } from "./components/receipt-timeline.js"
-export { MissionCard } from "./components/mission-card.js"
-export { GateRequest } from "./components/gate-request.js"
-export { QueueItem } from "./components/queue-item.js"
-export { CodexNode } from "./components/codex-node.js"
-export { DiagnosticPacket } from "./components/diagnostic-packet.js"
-export { ApprovalSheet } from "./components/approval-sheet.js"
-export { DevicePresence } from "./components/device-presence.js"
-export { RelayStatus } from "./components/relay-status.js"
-export { DharmaScore } from "./components/dharma-score.js"
-export { StatusBadge } from "./components/status-badge.js"
-export { PriorityIndicator } from "./components/priority-indicator.js"
+import { SessionCard } from "./components/session-card.js"
+export { SessionCard }
+export type { SessionCard as SessionCardElement }
 
-export type {
-  SessionCard as SessionCardElement,
-  AgentRail as AgentRailElement,
-  CommandReceipt as CommandReceiptElement,
-  ProjectionStream as ProjectionStreamElement,
-  TrustBadge as TrustBadgeElement,
-  ReceiptTimeline as ReceiptTimelineElement,
-  MissionCard as MissionCardElement,
-  GateRequest as GateRequestElement,
-  QueueItem as QueueItemElement,
-  CodexNode as CodexNodeElement,
-  DiagnosticPacket as DiagnosticPacketElement,
-  ApprovalSheet as ApprovalSheetElement,
-  DevicePresence as DevicePresenceElement,
-  RelayStatus as RelayStatusElement,
-  DharmaScore as DharmaScoreElement,
-  StatusBadge as StatusBadgeElement,
-  PriorityIndicator as PriorityIndicatorElement,
-}
+import { AgentRail } from "./components/agent-rail.js"
+export { AgentRail }
+export type { AgentRail as AgentRailElement }
+
+import { CommandReceipt } from "./components/command-receipt.js"
+export { CommandReceipt }
+export type { CommandReceipt as CommandReceiptElement }
+
+import { ProjectionStream } from "./components/projection-stream.js"
+export { ProjectionStream }
+export type { ProjectionStream as ProjectionStreamElement }
+
+import { TrustBadge } from "./components/trust-badge.js"
+export { TrustBadge }
+export type { TrustBadge as TrustBadgeElement }
+
+import { ReceiptTimeline } from "./components/receipt-timeline.js"
+export { ReceiptTimeline }
+export type { ReceiptTimeline as ReceiptTimelineElement }
+
+import { MissionCard } from "./components/mission-card.js"
+export { MissionCard }
+export type { MissionCard as MissionCardElement }
+
+import { GateRequest } from "./components/gate-request.js"
+export { GateRequest }
+export type { GateRequest as GateRequestElement }
+
+import { QueueItem } from "./components/queue-item.js"
+export { QueueItem }
+export type { QueueItem as QueueItemElement }
+
+import { CodexNode } from "./components/codex-node.js"
+export { CodexNode }
+export type { CodexNode as CodexNodeElement }
+
+import { DiagnosticPacket } from "./components/diagnostic-packet.js"
+export { DiagnosticPacket }
+export type { DiagnosticPacket as DiagnosticPacketElement }
+
+import { ApprovalSheet } from "./components/approval-sheet.js"
+export { ApprovalSheet }
+export type { ApprovalSheet as ApprovalSheetElement }
+
+import { DevicePresence } from "./components/device-presence.js"
+export { DevicePresence }
+export type { DevicePresence as DevicePresenceElement }
+
+import { RelayStatus } from "./components/relay-status.js"
+export { RelayStatus }
+export type { RelayStatus as RelayStatusElement }
+
+import { DharmaScore } from "./components/dharma-score.js"
+export { DharmaScore }
+export type { DharmaScore as DharmaScoreElement }
+
+import { StatusBadge } from "./components/status-badge.js"
+export { StatusBadge }
+export type { StatusBadge as StatusBadgeElement }
+
+import { PriorityIndicator } from "./components/priority-indicator.js"
+export { PriorityIndicator }
+export type { PriorityIndicator as PriorityIndicatorElement }

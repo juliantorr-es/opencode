@@ -1,11 +1,10 @@
-// @ts-nocheck — interface/class name collision (TS2395), demo data only
-import { LitElement, html, css, type TemplateResult, type CSSResultGroup } from "lit"
+import { LitElement, html, css, type TemplateResult } from "lit"
 import { customElement, property } from "lit/decorators.js"
 import { tokens } from "../tokens.js"
 
 type Mode = "public" | "authenticated"
 
-interface QueueItem {
+interface QueueItemData {
   id: string
   position: number
   workType: "build" | "deploy" | "scan" | "review" | "test"
@@ -14,7 +13,7 @@ interface QueueItem {
   status: "queued" | "running" | "completed" | "failed"
 }
 
-const DEMO_ITEMS: QueueItem[] = [
+const DEMO_ITEMS: QueueItemData[] = [
   { id: "q1", position: 1, workType: "build", priority: 92, title: "Kernel module build — arm64", status: "running" },
   { id: "q2", position: 2, workType: "scan", priority: 78, title: "Dependency vulnerability scan", status: "queued" },
   { id: "q3", position: 3, workType: "deploy", priority: 45, title: "Staging environment sync", status: "queued" },
@@ -22,7 +21,7 @@ const DEMO_ITEMS: QueueItem[] = [
   { id: "q5", position: 5, workType: "test", priority: 88, title: "Integration test suite", status: "queued" },
 ]
 
-const WORK_TYPE_LABEL: Record<QueueItem["workType"], string> = {
+const WORK_TYPE_LABEL: Record<QueueItemData["workType"], string> = {
   build: "Build",
   deploy: "Deploy",
   scan: "Scan",
@@ -30,7 +29,7 @@ const WORK_TYPE_LABEL: Record<QueueItem["workType"], string> = {
   test: "Test",
 }
 
-const WORK_TYPE_COLOR: Record<QueueItem["workType"], string> = {
+const WORK_TYPE_COLOR: Record<QueueItemData["workType"], string> = {
   build: tokens.color.primary.$value,
   deploy: tokens.color.success.$value,
   scan: tokens.color.warning.$value,
@@ -38,7 +37,7 @@ const WORK_TYPE_COLOR: Record<QueueItem["workType"], string> = {
   test: tokens.color.secondary.$value,
 }
 
-const STATUS_DOT: Record<QueueItem["status"], string> = {
+const STATUS_DOT: Record<QueueItemData["status"], string> = {
   queued: tokens.color.text.$value,
   running: tokens.color.accent.$value,
   completed: tokens.color.success.$value,
@@ -54,7 +53,7 @@ function priorityColor(p: number): string {
 
 @customElement("tribunus-queue-item")
 export class QueueItem extends LitElement {
-  static override styles = css` as CSSResultGroup
+  static override styles = (css as any)`
     :host {
       display: block;
       container-type: inline-size;
@@ -157,9 +156,9 @@ export class QueueItem extends LitElement {
   mode: Mode = "public"
 
   @property({ type: Array })
-  items?: QueueItem[]
+  items?: QueueItemData[]
 
-  private get _items(): QueueItem[] {
+  private get _items(): QueueItemData[] {
     if (this.mode === "public" || !this.items) return DEMO_ITEMS
     return this.items
   }

@@ -10,8 +10,8 @@ import { Effect } from "effect"
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
-interface WorkspaceID { readonly WorkspaceID: unique symbol }
-type WorkspaceID = string & WorkspaceID
+interface WorkspaceIDBrand { readonly WorkspaceID: unique symbol }
+type WorkspaceID = string & WorkspaceIDBrand
 
 interface WorkspaceState {
   workspaceId: WorkspaceID
@@ -155,4 +155,5 @@ function getWorkspace(workspaceId: WorkspaceID): WorkspaceState | undefined {
   return workspaceStore.get(workspaceId)
 }
 
-export { openWorkspace, closeWorkspace, getWorkspace, subscribe, workspaceStore, WorkspaceID, WorkspaceState, WorkspaceEvent }
+export type { WorkspaceID, WorkspaceState, WorkspaceEvent }
+export { openWorkspace, closeWorkspace, getWorkspace, subscribe, workspaceStore }

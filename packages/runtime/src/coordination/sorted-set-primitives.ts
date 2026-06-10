@@ -342,16 +342,3 @@ export function createValkeySortedSets(redis: Redis): ValkeySortedSets {
   return new ValkeySortedSets(redis)
 }
 
-// ── Exports ─────────────────────────────────────────────────────────────
-
-export {
-  ValkeySortedSets,
-  createValkeySortedSets,
-  DEFAULT_DUE_SET_NAME,
-  DEFAULT_PRIORITY_SET_NAME,
-}
-export type {
-  SortedSetEntry,
-  SortedSetRangeOptions,
-  SortedSetRangeResult,
-}

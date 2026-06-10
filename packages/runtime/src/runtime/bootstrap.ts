@@ -259,4 +259,5 @@ function runBootstrap(): Effect.Effect<BootReport, never> {
   })
 }
 
-export { runBootstrap, BOOT_DEPENDENCIES, BootCheckError, BootReport, BootDependency, topologicalSort }
+export type { BootReport, BootDependency }
+export { runBootstrap, BOOT_DEPENDENCIES, BootCheckError, topologicalSort }

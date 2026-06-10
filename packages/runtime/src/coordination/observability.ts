@@ -788,21 +788,3 @@ export function createObservabilityWith(
   return new CoordinationObservability(redis, config, adapter)
 }
 
-// ── Exports ─────────────────────────────────────────────────────────────
-
-export {
-  CoordinationObservability,
-  createObservability,
-  createObservabilityWith,
-  DEFAULT_OBSERVABILITY_CONFIG,
-}
-export type {
-  StreamMetrics,
-  SortedSetMetrics,
-  WorkQueueMetrics,
-  PendingEntryInfo,
-  WorkItemInspection,
-  DivergenceReport,
-  ObservabilityReport,
-  ObservabilityConfig,
-}

@@ -10,8 +10,8 @@ import { Effect } from "effect"
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
-interface SessionID { readonly SessionID: unique symbol }
-type SessionID = string & SessionID
+interface SessionIDBrand { readonly SessionID: unique symbol }
+type SessionID = string & SessionIDBrand
 
 interface SessionState {
   sessionId: SessionID
@@ -142,6 +142,7 @@ function listActiveSessions(): SessionRecord[] {
   return [...sessionStore.values()].filter((r) => r.session.status !== "closed")
 }
 
+export type { SessionState, Checkpoint, SessionRecord }
 export {
   openSession,
   createCheckpoint,
@@ -150,7 +151,4 @@ export {
   getSession,
   listActiveSessions,
   sessionStore,
-  SessionState,
-  Checkpoint,
-  SessionRecord,
 }
