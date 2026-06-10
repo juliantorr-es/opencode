@@ -6,6 +6,9 @@
 
 pub mod routing;
 pub mod graph;
+pub mod tensor_registry;
+pub mod coreml;
+pub mod accelerate;
 
 use mlx_rs::Array;
 use mlx_rs::ops;
