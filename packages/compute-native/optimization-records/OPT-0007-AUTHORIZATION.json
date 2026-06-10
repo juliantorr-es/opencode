@@ -1,15 +1,35 @@
 {
   "mission": "0007",
   "title": "Compiler-Derived Execution Conditioning Experiment",
-  "status": "completed",
-  "revision": 1,
-  "source_commit": "13efcb56",
-  "image_identity": "770e6e1373f3adbb674e7777bbc06ac7005df63706f04af68b503023e9c2eee7",
+  "status": "exploratory_signal_identified_not_complete",
+  "revision": 2,
+  "source_commit": "8e848bd2",
+  "image_identity_logical": "d042df1e4062a53e3a003af4e2e8c714924fcf19f03b7cf0dd5f67293355d924",
+  "image_identity_compiled": "770e6e1373f3adbb674e7777bbc06ac7005df63706f04af68b503023e9c2eee7",
   "image_path": "/tmp/tribunus-image-d042df1e",
   "model": "Gemma 4 12B (8-bit quantized, safetensors compiled to ComputeImage)",
   "machine": "Apple M1, 16GB RAM, macOS",
-  "primary_conclusion": "pipeline_conditioning_improves_16pct_prefetch_rejected",
-  "decision_class": "promote_pipeline_conditioning",
+  "primary_conclusion": "cross_process_preconditioning_signal_detected_not_confirmed",
+  "decision_class": "continue_attribution",
+  "reason_not_complete": [
+    "Arm B conditioning runs in separate processes that exit before inference. Process-local MLX/Metal pipeline state is destroyed. The 16.4% decode improvement cannot be attributed to pipeline conditioning within the inference runtime.",
+    "Plausible alternative explanations: OS file page cache, mapped-page residency, shared Metal driver state, thermal/frequency effects, or scheduling artifacts.",
+    "Arm C used cat segment_*.bin (12.2GB full-model sweep), not the bounded one-layer prefetch coordinator. Mission spec prohibits full-model prefetch.",
+    "Arm C (4 runs), Arm D (2 runs), Arm E (4 runs) all below required 7 valid trials.",
+    "Arm E sham median (43.7s) is 4.4% *faster* than control (45.7s), not 7% overhead. Signal within noise of Arm A.",
+    "No statistical comparison: no confidence interval, no bootstrap, no paired treatment-minus-control. Arm B range (25.1-46.2s) overlaps control range (43.3-56.2s).",
+    "TRIBUNUS_SKIP_MANIFEST_HASH=1 disabled manifest integrity verification on all claim-grade runs.",
+    "Backend equivalence not demonstrated. Isolated M=1 replay runs on CPU; integrated decode uses GPU. Mandatory promotion gate."
+  ],
+  "valid_observation": "Cross-process preconditioning: running 3 real projection replays before decode is associated with 16.4% lower median decode time in 7-arm sample. The 152s startup cost and ~20 request break-even describe the observed sequence. Mechanism unknown.",
+  "required_corrections": [
+    "Replace Arm B with same-process conditioning: open model runtime, execute scratch full-layer recipe, retain runtime, run decode without exiting process.",
+    "Replace Arm C with bounded one-layer prefetch coordinator, not cat-over-full-image.",
+    "Collect >=7 valid interleaved runs for all five arms.",
+    "Enable manifest hash verification (remove SKIP_MANIFEST_HASH).",
+    "Demonstrate backend equivalence via Metal System Trace.",
+    "Compute paired statistical comparison with confidence interval."
+  ],
   "arms": {
     "A_frozen_control": {
       "runs": 13,
@@ -17,66 +37,32 @@
       "range_decode_s": [
         43.3,
         56.2
-      ],
-      "median_prefill_s": 15.4
+      ]
     },
-    "B_pipeline_warm": {
+    "B_cross_process_preconditioning": {
       "runs": 7,
       "median_decode_s": 38.2,
       "range_decode_s": [
         25.1,
         46.2
       ],
-      "median_prefill_s": 15.7,
-      "improvement_pct": 16.4,
-      "conditioning_median_ms": 152000,
-      "break_even_requests": 20,
-      "conditioning_method": "replay-projection layer 0, 3 families (q_proj, gate_proj, down_proj)",
-      "promoted": true,
-      "caveat": "Conditioning runs on CPU (M=1 projection path). Backend equivalence to integrated GPU path not demonstrated. Treat as experimental."
+      "note": "NOT pipeline conditioning. Separate replay-projection processes exit before decode. Effect is cross-process."
     },
-    "C_rolling_prefetch": {
+    "C_full_model_fadvise": {
       "runs": 4,
       "median_decode_s": 54.4,
-      "result": "No measurable benefit \u2014 median decode worse than control. Page cache warming via cat segment_*.bin caused memory contention.",
-      "promoted": false
+      "note": "NOT bounded rolling prefetch. 12.2GB full-model cat sweep. Mission spec violation."
     },
     "D_combined": {
       "runs": 2,
-      "median_decode_s": 36.9,
-      "result": "Similar to Arm B alone \u2014 no emergent interaction benefit from prefetch. Conditioning dominates.",
-      "promoted": false
+      "note": "Insufficient data for any conclusion."
     },
     "E_sham": {
       "runs": 4,
       "median_decode_s": 43.7,
-      "result": "7% overhead vs control (treatment orchestration label)"
+      "note": "4.4% FASTER than control. Within noise, not instrumentation overhead."
     }
   },
-  "authorization_detail": {
-    "pipeline_conditioning": "PROMOTED \u2014 16.4% median decode improvement exceeds 10% production threshold. Conditioning cost 152s, break-even ~20 requests. CPU substrate caveat: isolated M=1 replay runs on CPU while integrated layer uses GPU. Backend equivalence not physically demonstrated. Authorized for production integration with CPU-substrate disclosure.",
-    "rolling_prefetch": "REJECTED \u2014 no measurable integrated decode benefit. Page cache warming via fadvise caused memory pressure rather than latency reduction.",
-    "combined_treatment": "NO EMERGENT BENEFIT \u2014 Arm D performance within Arm B range. Prefetch adds overhead without decode improvement.",
-    "custom_metal_kernel": "NOT AUTHORIZED \u2014 pipeline conditioning achieved 16.4% improvement without custom kernels. No evidence quantized arithmetic kernel dominates integrated GPU path."
-  },
-  "startup_ledger": {
-    "conditioning_cost_s": 152,
-    "decode_savings_per_request_s": 7.5,
-    "break_even_requests": 20,
-    "model_open_time_arms_A_E_s": 45,
-    "latency_ready_time_arm_B_s": 197
-  },
-  "memory_ledger": {
-    "conditioning_scratch_mb": 0,
-    "prefetch_window_mb": 12200,
-    "post_conditioning_mlx_active_gb": 12.8,
-    "post_conditioning_rss_mb": 15
-  },
-  "correctness": {
-    "all_layers_finite": true,
-    "tokens_preserved": true,
-    "oracle_tolerance": "max_rel < 1e-2, cosine > 0.9999",
-    "conditioning_state_isolation": true
-  },
-  "next_safe_action": "Integrate pipeline conditioning into model-open lifecycle. Investigate GPU-path conditioning recipes for backend equivalence. Revisit bounded prefetch with per-layer madvise rather than full-model fadvise."
+  "next_safe_action": "Keep Mission 0007 active. Implement same-process conditioning (scratch full-layer graph within model runtime). Wire bounded one-layer prefetch coordinator. Re-run all five arms with >=7 valid interleaved trials, manifest verification enabled, and paired statistical analysis.",
+  "custom_metal_kernel": "NOT AUTHORIZED"
 }
