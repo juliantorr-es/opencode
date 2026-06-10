@@ -104,6 +104,21 @@ fn op_silu(builder: MilBuilder, input: &str, out_name: &str) -> MilBuilder {
     builder.operation(op, Some((out_name, vt)))
 }
 
+fn op_sigmoid(builder: MilBuilder, input: &str, out_name: &str) -> MilBuilder {
+    let mut inputs = HashMap::new();
+    inputs.insert("x".to_string(), manual_named_arg(input));
+    let vt = manual_float32_value_type_2d(1, 1);
+    let mut attrs = HashMap::new();
+    attrs.insert("name".to_string(), manual_string_attr(out_name));
+    attrs.insert("mode".to_string(), manual_string_attr("logistic"));
+    let op = mil_spec::Operation {
+        r#type: "element_wise".to_string(),
+        inputs, outputs: vec![mil_spec::NamedValueType { name: out_name.to_string(), r#type: Some(vt.clone()) }],
+        blocks: vec![], attributes: attrs,
+    };
+    builder.operation(op, Some((out_name, vt)))
+}
+
 fn op_softmax(builder: MilBuilder, input: &str, out_name: &str) -> MilBuilder {
     let mut inputs = HashMap::new();
     inputs.insert("x".to_string(), manual_named_arg(input));
@@ -176,13 +191,16 @@ fn build_matmul(builder: MilBuilder, profile: &ShapeProfile) -> MilBuilder {
 fn build_chain_matmul_add_silu(builder: MilBuilder, profile: &ShapeProfile) -> MilBuilder {
     let w = seeded_f32(10, (profile.weight_rows * profile.weight_cols) as usize);
     let bias = seeded_f32(11, profile.weight_cols as usize);
-    op_silu(
+    // SiLU(x) = x * sigmoid(x) — composite lowering is more portable than
+    // native MIL silu op (coremlcompiler rejects element_wise mode "silu").
+    let b = op_sigmoid(
         builder.input("x", mil_spec::DataType::Float32, &profile.input_shape_i64()).const_f32("w", &w, &profile.weight_shape_i64())
             .matmul("x", "w_0")
             .const_f32("bias", &bias, &[1, profile.weight_cols as i64])
             .add("matmul_1", "bias_2"),
-        "add_3", "silu_4",
-    ).output("silu_4")
+        "add_3", "sig_3",
+    );
+    b.mul("add_3", "sig_3").output("mul_4")
 }
 
 /// 3. branch_rejoin: wa_0, wb_1, matmul_2, matmul_3, add_4
@@ -302,7 +320,7 @@ pub fn all_families() -> Vec<&'static GraphFamily> {
 pub fn graph_output_names(family_name: &str) -> &[&'static str] {
     match family_name {
         "matmul" => &["matmul_1"],
-        "chain_matmul_add_silu" => &["silu_4"],
+        "chain_matmul_add_silu" => &["mul_4"],
         "branch_rejoin" => &["add_4"],
         "multi_output" => &["matmul_2", "add_3"],
         "constant_heavy" => &["matmul_6"],
