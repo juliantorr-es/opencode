@@ -42,7 +42,7 @@ function register(name: string, desc: string, props: ToolInputProps, req: string
 export function registerOmpRepoIntelTools(): void {
   register("tribunus_search", "Search for patterns in files using substring matching. Skips dot-directories, .git, and node_modules. Paths are validated against the worktree root.", {
     pattern: { type: "string" }, path: { type: "string" }, glob: { type: "string" }, max_results: { type: "number" },
-  }, ["pattern"], ["repository:read"], 30_000, async (_ctx, a) => {
+  }, ["pattern"], ["repository:read"], 30_000, async (ctx, a) => {
     const pattern = a.pattern as string
     let rawPath = (a.path as string) || process.cwd()
     const pathCheck = validatePath(rawPath, false)
@@ -80,7 +80,7 @@ export function registerOmpRepoIntelTools(): void {
 
   register("tribunus_find", "Find files and directories by name substring. Skips dot-directories, .git, and node_modules. The pattern is matched against the relative path using substring matching.", {
     pattern: { type: "string" }, path: { type: "string" }, type: { type: "string", enum: ["file","directory"] }, max_results: { type: "number" },
-  }, [], ["repository:read"], 30_000, async (_ctx, a) => {
+  }, [], ["repository:read"], 30_000, async (ctx, a) => {
     const pat = (a.pattern as string) || "*"
     let rawPath = (a.path as string) || process.cwd()
     const pathCheck = validatePath(rawPath, false)
@@ -111,7 +111,7 @@ export function registerOmpRepoIntelTools(): void {
 
   register("tribunus_source_read", "Read a source file with structured digest.", {
     file: { type: "string" }, focus: { type: "string" }, summary_only: { type: "boolean" },
-  }, ["file"], ["repository:read"], 15_000, async (_ctx, a) => {
+  }, ["file"], ["repository:read"], 15_000, async (ctx, a) => {
     const filePath = a.file as string
     const pathCheck = validatePath(filePath, false)
     if (!pathCheck.valid) return err(pathCheck.error || "path rejected")
@@ -129,7 +129,7 @@ export function registerOmpRepoIntelTools(): void {
     max_symbols: { type: "number", description: "Maximum symbols to return" },
     include_tests: { type: "boolean" },
     include_architecture: { type: "boolean" },
-  }, [], ["repository:index"], 60_000, async (_ctx, a) => {
+  }, [], ["repository:index"], 60_000, async (ctx, a) => {
     const result = await semanticRepoMap(process.cwd(), {
       focus_paths: a.focus_paths as string[] | undefined,
       focus_symbols: a.focus_symbols as string[] | undefined,
@@ -146,7 +146,7 @@ export function registerOmpRepoIntelTools(): void {
     path: { type: "string", description: "Limit to a specific file path" },
     include_references: { type: "boolean", description: "Include reference locations" },
     include_callers: { type: "boolean", description: "Include caller symbols" },
-  }, [], ["repository:index"], 30_000, async (_ctx, a) => {
+  }, [], ["repository:index"], 30_000, async (ctx, a) => {
     if (!a.symbol_name && !a.symbol_id) return err("symbol_name or symbol_id required")
     const result = await symbolLookup(process.cwd(), {
       symbol_name: a.symbol_name as string | undefined,
@@ -163,7 +163,7 @@ export function registerOmpRepoIntelTools(): void {
     symbols: { type: "array", items: { type: "string" }, description: "Symbols affected by the change" },
     proposed_change_summary: { type: "string", description: "Description of the proposed change" },
     include_tests: { type: "boolean", description: "Include affected tests" },
-  }, [], ["repository:index"], 60_000, async (_ctx, a) => {
+  }, [], ["repository:index"], 60_000, async (ctx, a) => {
     if (!a.paths && !a.symbols) return err("paths or symbols required")
     const result = await impactAnalysis(process.cwd(), {
       paths: a.paths as string[] | undefined,
@@ -176,7 +176,7 @@ export function registerOmpRepoIntelTools(): void {
 
   register("tribunus_authority_audit", "Audit authority-critical files and symbols from the Oxc semantic kernel.", {
     focus_tools: { type: "array", items: { type: "string" }, description: "Tool IDs to focus the audit on" },
-  }, [], ["repository:index"], 60_000, async (_ctx, a) => {
+  }, [], ["repository:index"], 60_000, async (ctx, a) => {
     const result = await authorityAudit(process.cwd(), {
       tool_ids: a.focus_tools as string[] | undefined,
     })
@@ -185,7 +185,7 @@ export function registerOmpRepoIntelTools(): void {
 
   register("tribunus_test_gap_report", "Analyze test coverage gaps using the Oxc semantic kernel. Returns a coverage matrix showing which files and symbols lack test coverage.", {
     focus_tools: { type: "array", items: { type: "string" }, description: "Tool IDs to focus the report on" },
-  }, [], ["repository:index"], 60_000, async (_ctx, a) => {
+  }, [], ["repository:index"], 60_000, async (ctx, a) => {
     const result = await testGapReport(process.cwd(), {
       focus_tools: a.focus_tools as string[] | undefined,
     })
@@ -198,7 +198,7 @@ export function registerOmpRepoIntelTools(): void {
     profile: { type: "string", enum: ["bootstrap_review","gemini_code_review"], description: "Export profile" },
     output_path: { type: "string", description: "Output .zip file path (use instead of output_dir for exact destination)" },
     output_dir: { type: "string", description: "Output directory for exported artifacts" },
-  }, [], ["artifact:write"], 300_000, async (_ctx, a) => {
+  }, [], ["artifact:write"], 300_000, async (ctx, a) => {
     const profile = (a.profile as "bootstrap_review" | "gemini_code_review") || "gemini_code_review"
     
     // Determine output path
@@ -228,10 +228,10 @@ export function registerOmpRepoIntelTools(): void {
       canonicalPath: outputPath,
       destinationMode: destinationMode as ("exact_path" | "directory"),
       retentionPolicy: "mission_evidence",
-      invocationId: _ctx.invocationId,
+      invocationId: ctx.invocationId,
       sessionId: undefined,
     })
-    await registry.beginProduction(reservation.artifactId, _ctx.invocationId)
+    await registry.beginProduction(reservation.artifactId, ctx.invocationId)
 
     // Build to temporary path
     const result = buildCodeReviewExport({
@@ -249,7 +249,7 @@ export function registerOmpRepoIntelTools(): void {
       mimeType: "application/zip",
       producerTool: "tribunus_code_review_export",
       producerToolVersion: "0.4.0",
-      invocationId: _ctx.invocationId,
+      invocationId: ctx.invocationId,
       metadata: {
         profile,
         warnings: result.warnings,
@@ -269,7 +269,7 @@ export function registerOmpRepoIntelTools(): void {
       warnings: result.warnings.length,
       dirty: result.isDirty,
       timing_ms: result.timingsMs,
-      invocation_id: _ctx.invocationId,
+      invocation_id: ctx.invocationId,
     })
   })
 
@@ -277,7 +277,7 @@ export function registerOmpRepoIntelTools(): void {
     semantic_output_path: { type: "string", description: "Path for semantic output" },
     source_output_path: { type: "string", description: "Path for source output" },
     force: { type: "boolean", description: "Overwrite existing output (default: true)" },
-  }, [], ["artifact:write"], 300_000, async (_ctx, a) => {
+  }, [], ["artifact:write"], 300_000, async (ctx, a) => {
     const db = await getStore()
     const registry = new ArtifactRegistryService(db)
 
@@ -290,10 +290,10 @@ export function registerOmpRepoIntelTools(): void {
         canonicalPath: check.resolved,
         destinationMode: "exact_path",
         retentionPolicy: "mission_evidence",
-        invocationId: _ctx.invocationId,
+        invocationId: ctx.invocationId,
         sessionId: undefined,
       })
-      await registry.beginProduction(semanticReservation.artifactId, _ctx.invocationId)
+      await registry.beginProduction(semanticReservation.artifactId, ctx.invocationId)
     }
 
     let sourceReservation
@@ -305,10 +305,10 @@ export function registerOmpRepoIntelTools(): void {
         canonicalPath: check.resolved,
         destinationMode: "exact_path",
         retentionPolicy: "mission_evidence",
-        invocationId: _ctx.invocationId,
+        invocationId: ctx.invocationId,
         sessionId: undefined,
       })
-      await registry.beginProduction(sourceReservation.artifactId, _ctx.invocationId)
+      await registry.beginProduction(sourceReservation.artifactId, ctx.invocationId)
     }
 
     const result = await reviewPacketExport(process.cwd(), {
@@ -327,7 +327,7 @@ export function registerOmpRepoIntelTools(): void {
           mimeType: "application/zip",
           producerTool: "tribunus_review_packet_export",
           producerToolVersion: "0.4.0",
-          invocationId: _ctx.invocationId,
+          invocationId: ctx.invocationId,
         })
       : undefined
 
@@ -341,7 +341,7 @@ export function registerOmpRepoIntelTools(): void {
           mimeType: "application/zip",
           producerTool: "tribunus_review_packet_export",
           producerToolVersion: "0.4.0",
-          invocationId: _ctx.invocationId,
+          invocationId: ctx.invocationId,
         })
       : undefined
 
@@ -363,7 +363,7 @@ export function registerOmpRepoIntelTools(): void {
   register("tribunus_semantic_review_export", "Export the semantic v1 review packet for Gemini-style code review.", {
     output_path: { type: "string", description: "Output path for the semantic packet" },
     force: { type: "boolean", description: "Overwrite existing output (default: true)" },
-  }, [], ["artifact:write"], 300_000, async (_ctx, a) => {
+  }, [], ["artifact:write"], 300_000, async (ctx, a) => {
     let outputPath: string | undefined
     if (a.output_path) {
       const check = validatePath(a.output_path as string, true)
@@ -377,10 +377,10 @@ export function registerOmpRepoIntelTools(): void {
       canonicalPath: outputPath || resolve(process.cwd(), "tribunus-semantic-review.zip"),
       destinationMode: "exact_path",
       retentionPolicy: "mission_evidence",
-      invocationId: _ctx.invocationId,
+      invocationId: ctx.invocationId,
       sessionId: undefined,
     })
-    await registry.beginProduction(reservation.artifactId, _ctx.invocationId)
+    await registry.beginProduction(reservation.artifactId, ctx.invocationId)
     await semanticReviewPacketExport(process.cwd(), {
       output_path: reservation.tempPath,
       force: a.force !== false,
@@ -395,15 +395,46 @@ export function registerOmpRepoIntelTools(): void {
       mimeType: "application/zip",
       producerTool: "tribunus_semantic_review_export",
       producerToolVersion: "0.4.0",
-      invocationId: _ctx.invocationId,
+      invocationId: ctx.invocationId,
     })
-    return ok({ artifact_id: finalized.artifactId, artifact_type: "review_semantic_zip_v1", path: finalized.canonicalPath, sha256: finalized.contentDigest, invocation_id: _ctx.invocationId })
+    return ok({ artifact_id: finalized.artifactId, artifact_type: "review_semantic_zip_v1", path: finalized.canonicalPath, sha256: finalized.contentDigest, invocation_id: ctx.invocationId })
   })
 
   register("tribunus_review_verify", "Verify source-review and Gemini IR ZIPs contain required Oxc source-graph evidence.", {
+    artifact_id: { type: "string", description: "Artifact ID to verify (preferred over path)" },
     source_zip_path: { type: "string", description: "Path to source-review ZIP" },
     ir_zip_path: { type: "string", description: "Path to Gemini IR ZIP" },
-  }, [], ["artifact:verify"], 120_000, async (_ctx, a) => {
+  }, [], ["artifact:verify"], 120_000, async (ctx, a) => {
+    const db = await getStore()
+    const registry = new ArtifactRegistryService(db)
+
+    // Artifact ID mode
+    if (a.artifact_id) {
+      const artifact = await registry.get(a.artifact_id as string)
+      let passed = false
+      let result: unknown = null
+      try {
+        result = await verifyReviewPackets(process.cwd(), { source_zip_path: artifact.canonical_path })
+        passed = true
+      } catch (e) {
+        result = { error: e instanceof Error ? e.message : String(e) }
+        passed = false
+      }
+      await registry.verify(artifact.artifact_id, {
+        verification_id: `verify-${Date.now()}`,
+        artifact_id: artifact.artifact_id,
+        artifact_type: artifact.artifact_type,
+        observed_digest: artifact.content_digest || "",
+        verifier_name: "tribunus_review_verify",
+        status: passed ? "passed" : "failed",
+        checks: [{ check: "review_packet_integrity", status: passed ? "pass" as const : "fail" as const }],
+        invocation_id: ctx.invocationId,
+        created_at: new Date().toISOString(),
+      })
+      return ok({ artifact_id: artifact.artifact_id, verification_status: artifact.verification_status, result })
+    }
+
+    // Path mode — import and verify
     let sourceZip: string | undefined
     if (a.source_zip_path) {
       const check = validatePath(a.source_zip_path as string, false)
@@ -420,6 +451,25 @@ export function registerOmpRepoIntelTools(): void {
       source_zip_path: sourceZip,
       ir_zip_path: irZip,
     })
-    return ok(result)
+
+    // Import as artifacts and verify
+    const imported: Array<{ artifact_id: string; artifact_type: string }> = []
+    if (sourceZip) {
+      const importedArtifact = await registry.import({
+        artifactType: "review_source_zip_v1",
+        canonicalPath: sourceZip,
+        invocationId: ctx.invocationId,
+      })
+      imported.push({ artifact_id: importedArtifact.artifact_id, artifact_type: "review_source_zip_v1" })
+    }
+    if (irZip) {
+      const importedArtifact = await registry.import({
+        artifactType: "review_gemini_zip_v1",
+        canonicalPath: irZip,
+        invocationId: ctx.invocationId,
+      })
+      imported.push({ artifact_id: importedArtifact.artifact_id, artifact_type: "review_gemini_zip_v1" })
+    }
+    return ok({ imported, result })
   })
 }
