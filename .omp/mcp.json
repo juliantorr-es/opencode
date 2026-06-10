@@ -26,9 +26,9 @@
       "command": "npx",
       "args": ["-y", "@porkbunllc/mcp-server"],
       "environment": {
-        "PORKBUN_API_KEY": "PORKBUN_API_KEY_REDACTED",
-        "PORKBUN_SECRET_API_KEY": "PORKBUN_SECRET_API_KEY_REDACTED"
-    }
+        "PORKBUN_API_KEY": "${PORKBUN_API_KEY}",
+        "PORKBUN_SECRET_API_KEY": "${PORKBUN_SECRET_API_KEY}"
+      }
     },
 
     "tribunus": {
