@@ -492,6 +492,8 @@ fn run_backend_coreml(
         Err(e) => {
             r.predict_status = "compile_limited".into();
             r.predict_failure_classification = "compile_limited".into();
+            r.terminal_phase = "mil_build".into();
+            r.failure_diagnostics = Some(format!("coreml prepare: {e}"));
             r.status = "compile_error".into();
             r.failure_reason = Some(format!("coreml prepare failed: {e}"));
             r.materialize_status = "error".into();
@@ -534,6 +536,8 @@ fn run_backend_coreml(
             r.status = "load_error".into();
             r.predict_status = "load_blocked".into();
             r.predict_failure_classification = "load_blocked".into();
+            r.terminal_phase = "load".into();
+            r.failure_diagnostics = Some("coreml model not loaded".into());
             r.failure_reason = Some("coreml model not loaded".into());
             r.load_status = "error".into();
             return;
@@ -578,6 +582,8 @@ fn run_backend_coreml(
             r.cold_status = "error".into();
             r.predict_status = "predict_blocked".into();
             r.predict_failure_classification = "predict_blocked".into();
+            r.terminal_phase = "predict".into();
+            r.failure_diagnostics = Some(format!("coreml cold predict: {e}"));
             r.status = "prediction_error".into();
             r.failure_reason = Some(format!("coreml cold predict: {e}"));
             return;
@@ -596,6 +602,8 @@ fn run_backend_coreml(
             r.warmup_status = "error".into();
             r.predict_status = "predict_blocked".into();
             r.predict_failure_classification = "predict_blocked".into();
+            r.terminal_phase = "predict".into();
+            r.failure_diagnostics = Some(format!("coreml warmup: {e}"));
             r.status = "prediction_error".into();
             r.failure_reason = Some(format!("coreml warmup: {e}"));
             return;
@@ -623,6 +631,8 @@ fn run_backend_coreml(
         }
         Err(e) => {
             r.steady_status = "error".into();
+            r.terminal_phase = "predict".into();
+            r.failure_diagnostics = Some(format!("coreml steady: {e}"));
             r.status = "prediction_error".into();
             r.failure_reason = Some(format!("coreml steady: {e}"));
             return;
@@ -643,6 +653,7 @@ fn run_backend_coreml(
     r.matches_tolerance = metrics.matches_tolerance;
 
     r.reference_status = "ok".to_string();
+    r.terminal_phase = "complete".into();
     if r.cold_first_predict_ns > 0 && r.steady_p50_ns > 0 {
         r.amortization_factor = Some(r.cold_first_predict_ns as f64 / r.steady_p50_ns as f64);
     }
@@ -814,9 +825,11 @@ fn run_backend_accelerate(
 
     if metrics.matches_tolerance {
         r.predict_status = "pass".to_string();
+        r.terminal_phase = "complete".into();
         r.status = "pass".to_string();
     } else {
         r.predict_status = "numerical_divergence".into();
+        r.terminal_phase = "conformance".into();
         r.status = "numerical_divergence".into();
         r.failure_reason = Some(format!(
             "max_absolute_error={}, tolerance={}",
