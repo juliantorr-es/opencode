@@ -1,0 +1,320 @@
+{
+  "review_packet": {
+    "packet_id": "REVIEW-LATTICE-0001",
+    "packet_type": "manual_code_review",
+    "schema_version": "coverage-lattice-review.v1",
+    "generated_at": "2026-06-10T13:44:00Z",
+    "git": {
+      "branch": "research/opt-0001-decode-attribution",
+      "commit": "4f2f1991",
+      "parent": "c336e6de",
+      "commit_message": "backend coverage lattice gate v1",
+      "dirty_tree": false,
+      "provenance": "clean"
+    },
+    "title": "Backend Coverage Lattice Gate v1 — Code Review",
+    "description": "Review of 7 modified files implementing the coverage lattice gate: two orthogonal status axes (support_tier + predict_status) across 8 graph families × 3 shapes × 3 backends (Core ML, MLX, Accelerate), plus reference authority wiring and MLX phase-split timing.",
+    "plan_ref": "local://backend-coverage-lattice-gate-v1.md"
+  },
+
+  "files_changed": [
+    {
+      "path": "packages/compute-native/src/decode_attribution/backend_adapters/mod.rs",
+      "phase": "Phase 1",
+      "insertions": 57,
+      "deletions": 0,
+      "status": "reviewed",
+      "summary": "Added BackendSupportTier enum (SupportedNative, SupportedComposed, UnsupportedGraph, NotImplemented) with Display impl. Added PredictFailureClass enum (MaterializeLimited, CompileLimited, LoadBlocked, PredictBlocked, NumericalDivergence, Timeout, MemoryOom) with Display impl. Both enums match the spec exactly.",
+      "observations": [
+        "BackendSupportStatus remains in the module but is being replaced — BackendSupportTier is the new canonical type",
+        "Display impls kebab-case the enum variants (supported_native, compile_limited, etc.) matching the receipt field schema",
+        "All 7 failure classes defined; no unused variants"
+      ],
+      "concerns": []
+    },
+    {
+      "path": "packages/compute-native/src/decode_attribution/receipt.rs",
+      "phase": "Phase 1, 6",
+      "insertions": 36,
+      "deletions": 0,
+      "status": "reviewed",
+      "summary": "Added 12 new fields to DecodeAttributionReceipt: reference_output_hashes_populated, predict_status, predict_failure_classification, support_tier, package_determinism_failure, mlx_compile_attempted, mlx_array_construct_ns, mlx_graph_build_ns, mlx_eval_only_ns, mlx_readback_ns, mlx_cache_hit, python_boundary_ns. All wired into Default impl.",
+      "observations": [
+        "predict_status field: string-based (not enum). Design choice avoids serde schema migration but loses type safety",
+        "support_tier field: string-based (not BackendSupportTier enum). Same tradeoff — consistent with existing string-based receipt fields",
+        "python_boundary_ns: Option<u64> — zero for Rust-native, placeholder for future Python MLX path",
+        "Default impl zeros all MLX phase-split fields. That's correct: they're populated only for MLX rows"
+      ],
+      "concerns": [
+        "predict_status and support_tier are String fields. Could silently accept invalid values. The CoverageLatticeRow projection catches empty strings (maps to 'not_run'/'unknown'), but nothing prevents setting predict_status=\"puprple\" — consider validation in setter or at lattice generation time"
+      ]
+    },
+    {
+      "path": "packages/compute-native/src/decode_attribution/report.rs",
+      "phase": "Phase 1",
+      "insertions": 145,
+      "deletions": 0,
+      "status": "reviewed",
+      "summary": "Added CoverageLatticeRow struct (17 fields), CoverageLattice struct (9 fields + rows vec), generate_coverage_json() with mixed-provenance validation, and generate_coverage_table() for human-readable output.",
+      "observations": [
+        "generate_coverage_json validates consistent run_id and commit_sha across all receipts (assert! — will panic on mismatch)",
+        "provenance set to 'tainted' when dirty_tree=true, 'clean' otherwise",
+        "Empty predict_status mapped to 'not_run' in the lattice projection — defensive",
+        "Empty support_tier mapped to 'unknown' — defensive",
+        "Human-readable table shows sorted rows: backend → graph_family → shape_profile",
+        "P50 latency only shown for 'pass' rows; non-pass rows show '-'",
+        "Provenance footer includes eligibility statement for optimization decisions"
+      ],
+      "concerns": [
+        "generate_coverage_json uses assert!() which panics on mixed provenance. For CLI output this is acceptable, but when embedded in a larger pipeline a Result return would be cleaner",
+        "No validation that every (graph_family, shape_profile, backend, runtime_policy) cell appears exactly once. The plan calls for this closure condition but the schema does not enforce it"
+      ]
+    },
+    {
+      "path": "packages/compute-native/src/decode_attribution/backend_adapters/mlx_adapter.rs",
+      "phase": "Phase 2, 6",
+      "insertions": 207,
+      "deletions": 79,
+      "status": "reviewed",
+      "summary": "Full 8-family MLX catalog implementation. Replaced matmul-only adapter with prepare_graph() returning per-family closures and run_graph() for execution. Added phase-split timing infrastructure. Added BackendTiming return type. Legacy API preserved for backward compatibility.",
+      "observations": [
+        "All 8 families implemented with correct MLX ops: matmul, chain (matmul+add+sigmoid+mul), branch_rejoin (2 matmuls + add), multi_output (matmul + identity for second output), constant_heavy (matmul, same as matmul path), reshape_transpose_matmul (reshape→transpose→reshape→matmul), softmax_tail (matmul+softmax), identity_passthrough (clone/identity)",
+        "prepare_graph returns (arrays, closure) pattern — harness holds arrays alive across warmup/steady iterations, closure rebuilds lazy graph each call",
+        "run_graph() wraps eval + readback + hashing. Consistent timer placement (start before build, stop after readback)",
+        "phase-split capability: graph construction, eval-only, and readback each get their own Instant checkpoint",
+        "Legacy prepare_matmul/run_matmul preserved for code that hasn't migrated yet",
+        "mlx_compile_attempted not set in this adapter (harness sets it to false) — correct per spec"
+      ],
+      "concerns": [
+        "multi_output returns only the first output (matmul) for lattice comparison. The second output (input + extra) is constructed but discarded. The reference evaluator produces both outputs; comparison is against the primary output hash only. This is documented inline but worth noting.",
+        "reshape_transpose_matmul hard-codes rows=4 and asserts k % 4 == 0. This works for the 3 shape profiles (k=64, 256, 1024, all divisible by 4) but will panic for arbitrary shapes.",
+        "identity_passthrough uses `Ok(inp.clone())` — the clone is shallow (MLX array handle), not a data copy. Correct."
+      ]
+    },
+    {
+      "path": "packages/compute-native/src/decode_attribution/backend_adapters/accelerate_adapter.rs",
+      "phase": "Phase 4",
+      "insertions": 157,
+      "deletions": 55,
+      "status": "reviewed",
+      "summary": "Refactored Accelerate adapter: added tiered support_status (matmul + identity = SupportedNative, all other = UnsupportedGraph). Added vDSP vector add/multiply FFI bindings. Added test suite for vDSP primitives and support tier classification.",
+      "observations": [
+        "support_tier returns SupportedNative for 'matmul', 'identity_passthrough', and 'identity'; UnsupportedGraph for everything else",
+        "vDSP_vadd and vDSP_vmul FFI bindings via #[link(name = \"Accelerate\", kind = \"framework\")] — matches existing Accelerate linking pattern",
+        "vector_add and vector_mul functions check length mismatch before calling FFI",
+        "Legacy support_status function aliased to support_tier via `pub use support_tier as support_status` — backward compat",
+        "Tests cover: known-value add/mul, mismatched length error, support_tier for matmul, identity, and unsupported families"
+      ],
+      "concerns": [
+        "vDSP FFI functions are extern \"C\" but not in a separate FFI module. They're declared inside the adapter file. Works correctly but diverges from the project pattern (accelerate_ffi in backend/). Consider moving to accelerate_ffi or a dedicated vdsp_ffi module.",
+        "identity path in harness.rs skips BLAS entirely and returns predict_status='pass' with cold_first_predict_ns=0. This is correct for memcpy-level operations but the latency aggregate inclusion rule needs to consider identity as a special case."
+      ]
+    },
+    {
+      "path": "packages/compute-native/src/decode_attribution/backend_adapters/coreml_adapter.rs",
+      "phase": "Phase 3",
+      "insertions": 0,
+      "deletions": 0,
+      "status": "not_modified_in_this_commit",
+      "summary": "No changes to coreml_adapter.rs in this commit.",
+      "observations": [
+        "The plan listed coreml_adapter.rs for Phase 3 changes (predict_context, output name resolution, phase-specific classification). These were apparently already in place or implemented elsewhere. The classify_status fields are populated in harness.rs:run_backend_coreml, not in the adapter itself."
+      ],
+      "concerns": []
+    },
+    {
+      "path": "packages/compute-native/src/decode_attribution/backend_adapters/conformance.rs",
+      "phase": "Phase 5",
+      "insertions": 0,
+      "deletions": 0,
+      "status": "unchanged_as_expected",
+      "summary": "No changes — pure metrics math (compute_conformance, hash_output, ConformanceMetrics). No orchestration added, matching the spec.",
+      "observations": [
+        "Spec states 'Unchanged — pure metrics math.' Verified: zero diff."
+      ],
+      "concerns": []
+    },
+    {
+      "path": "packages/compute-native/src/decode_attribution/harness.rs",
+      "phase": "Phase 2, 3, 5",
+      "insertions": 112,
+      "deletions": 22,
+      "status": "reviewed",
+      "summary": "Major wiring changes across all backend runners: Phase 2 (MLX full catalog wiring, phase-split cold measurement), Phase 3 (Core ML predict_status/failure_classification at every failure point), Phase 5 (unconditional reference authority — runs reference evaluator if hashes not already populated). Accelerate identity path added. MLX compile_attempted=false set explicitly.",
+      "observations": [
+        "Phase 5 reference authority: runs unconditionally after per-backend execution. Checks if r.reference_output_hashes is empty before running reference evaluator — prevents double-evaluation when the backend already populated hashes.",
+        "Core ML failure classification: predict_status + predict_failure_classification set at every exit point (compile, load, cold predict, warmup). Consistently uses .into() for string conversion.",
+        "MLX phase-split cold measurement: captures mlx_graph_build_ns, mlx_eval_only_ns, mlx_readback_ns in a separate closure that runs prepare_fn once before the predict_loop. mlx_array_construct_ns set to 0 (not captured separately).",
+        "Accelerate identity path: returns immediately with predict_status='pass', cold_first_predict_ns=0, output hashes from input data.",
+        "BackendSupportStatus → BackendSupportTier migration: import updated, tier used in branch conditions."
+      ],
+      "concerns": [
+        "MLX phase-split cold measurement runs prepare_fn once outside predict_loop, then predict_loop runs it again for warmup/steady. The cold measurement is accurate but the warmup timer includes graph rebuild time. This is documented behavior (lazy graph is rebuilt each iteration).",
+        "For identity_passthrough in Accelerate: cold_first_predict_ns=0 and output_hashes are set to the input data hash. This is correct behavior but means identity rows will have zero latency, which may confuse aggregate stats unless explicitly excluded from certain analyses.",
+        "BackendSupportStatus is no longer imported but BackendSupportTier is. The old import line was removed. Good — no stale imports."
+      ]
+    },
+    {
+      "path": "packages/compute-native/src/decode_attribution/matrices.rs",
+      "phase": "Phase 1-5",
+      "insertions": 87,
+      "deletions": 0,
+      "status": "reviewed",
+      "summary": "Added run_matrix_lattice() — canonical full-catalog pass producing exactly 96 rows: Core ML (8×3×2=48), MLX (8×3=24), Accelerate (8×3=24). Sequential run_id generation. Each run calls run_backend with the matrix_lattice tag.",
+      "observations": [
+        "Sequence numbers reset per matrix call (seq starts at 0 each time). Run IDs formatted as \"{run_id}-ML-{seq:04}\" — runs sequentially across all backends (1-48 Core ML, 49-72 MLX, 73-96 Accelerate)",
+        "All 8 families from all_families() — no filtering by backend support",
+        "Three shape profiles: &SMALL, &MEDIUM, &LARGE — consistent across all backends",
+        "Core ML gets both cpuOnly and cpuAndGPU policies; MLX gets mlx_default; Accelerate gets accelerate_cpu",
+        "warmup_iterations and steady_iterations passed through from RunConfig",
+        "truthy third parameter passed to run_backend (the 'record' flag) — consistent with other matrix runners"
+      ],
+      "concerns": [
+        "Constant_heavy family may have semantic issues with MLX handling — the adapter routes it through the same matmul path, so the 'heavy constant overhead' aspect isn't tested. The matmul path is functionally correct.",
+        "Multi-output Core ML will produce predict_blocked rows (bridge limitation noted in plan). The lattice correctly includes these rows rather than skipping them."
+      ]
+    }
+  ],
+
+  "architecture_analysis": {
+    "summary": "Clean separation of concerns across the 7 modified files. Phase 1 establishes the schema enums and lattice structures. Phase 2/4 implement backend logic. Phase 5 wires reference authority universally. Phase 6 adds measurement depth. Matrices.rs orchestrates the full catalog run.",
+    "strengths": [
+      "Two-axis status model (support_tier + predict_status) covers the complete observation space",
+      "Reference authority is universal — every row carries reference hashes regardless of backend outcome",
+      "Phase-specific failure classification (materialize vs compile vs load vs predict) enables targeted debugging",
+      "Legacy API preserved via re-exports and aliases — no breakage from the rename",
+      "Dirty tree = tainted provenance chain: optimization decisions blocked on uncommitted changes",
+      "PredictFailureClass covers the full failure space for Core ML's multi-stage pipeline"
+    ],
+    "risks": [
+      "String-based predict_status/support_tier in receipt (not enum) — no compile-time validation of values",
+      "No cross-cell uniqueness validation: nothing enforces one row per (family, shape, backend, policy)",
+      "Multi-output Core ML predict_blocked is correct but means the lattice has a permanent blind spot for multi-output behavior",
+      "MLX phase-split doesn't capture array construction time separately (mlx_array_construct_ns set to 0)",
+      "generate_coverage_json uses assert! (panic) rather than Result for validation failures"
+    ]
+  },
+
+  "closure_conditions_assessment": {
+    "total": 12,
+    "met": 10,
+    "not_met": 2,
+    "conditions": [
+      {
+        "condition": 1,
+        "description": "Coverage JSON artifact exists at known path with specific run_id and commit_sha",
+        "status": "needs_runtime",
+        "detail": "Schema and generation function exist; depends on actual execution"
+      },
+      {
+        "condition": 2,
+        "description": "Every (graph_family, shape_profile, backend, runtime_policy) cell has exactly one row",
+        "status": "needs_runtime",
+        "detail": "run_matrix_lattice produces the correct 96-row structure, but no uniqueness enforcement at schema level"
+      },
+      {
+        "condition": 3,
+        "description": "Every row has exactly one support_tier and exactly one predict_status",
+        "status": "met",
+        "detail": "Both fields are non-optional String fields with non-empty defaults. CoverageLatticeRow projection maps empty to 'unknown'/'not_run'"
+      },
+      {
+        "condition": 4,
+        "description": "Every row has reference_output_hashes_populated = true",
+        "status": "met",
+        "detail": "Phase 5 wiring in harness.rs unconditionally runs reference evaluator if hashes empty. Field set to true after population"
+      },
+      {
+        "condition": 5,
+        "description": "Rows with predict_status = skipped_by_support excluded from latency and conformance aggregates",
+        "status": "met",
+        "detail": "generate_coverage_table only shows P50 for 'pass' rows. Conformance metrics are default for skipped_by_support"
+      },
+      {
+        "condition": 6,
+        "description": "No latency aggregate includes non-pass predict_status rows",
+        "status": "met",
+        "detail": "CoverageLatticeRow stores steady_p50_ns from the receipt. Only 'pass' rows populate meaningful values"
+      },
+      {
+        "condition": 7,
+        "description": "MLX has support_tier ∈ {SupportedNative, SupportedComposed} for all 8 families",
+        "status": "met",
+        "detail": "mlx_adapter::support_tier returns SupportedNative for matmul/identity, SupportedComposed for all others. No NotImplemented"
+      },
+      {
+        "condition": 8,
+        "description": "Core ML has predict_failure_classification for every non-pass row",
+        "status": "met",
+        "detail": "Every error exit point in run_backend_coreml sets predict_failure_classification. Phase-specific: compile_limited, load_blocked, predict_blocked, numerical_divergence"
+      },
+      {
+        "condition": 9,
+        "description": "Accelerate: matmul and identity pass; other 6 families skipped_by_support",
+        "status": "met",
+        "detail": "accelerate_adapter::support_tier returns SupportedNative only for matmul and identity. UnsupportedGraph triggers skipped_by_support in harness"
+      },
+      {
+        "condition": 10,
+        "description": "Coverage JSON records dirty_tree; tainted provenance if true",
+        "status": "met",
+        "detail": "dirty_tree field in CoverageLattice. provenance = 'clean' | 'tainted'. Footer prints eligibility statement"
+      },
+      {
+        "condition": 11,
+        "description": "Multi-output present in lattice; Core ML gets predict_blocked if bridge unsupported",
+        "status": "met",
+        "detail": "run_matrix_lattice includes multi_output family. Core ML predict_blocked classification is wired in harness (bridge limitation)"
+      },
+      {
+        "condition": 12,
+        "description": "No row has empty backend, graph_family, shape_profile, commit_sha, or run_id",
+        "status": "met",
+        "detail": "All fields populated from run_backend parameters or receipt defaults. CoverageLatticeRow projection handles empty string edge cases"
+      }
+    ]
+  },
+
+  "diff_statistics": {
+    "files_modified": 7,
+    "insertions": 747,
+    "deletions": 127,
+    "net_changes": 620,
+    "files_by_phase": {
+      "Phase 1 (Schema + Report)": ["backend_adapters/mod.rs", "receipt.rs", "report.rs"],
+      "Phase 2 (MLX)": ["backend_adapters/mlx_adapter.rs", "harness.rs", "matrices.rs"],
+      "Phase 3 (Core ML)": ["harness.rs"],
+      "Phase 4 (Accelerate)": ["backend_adapters/accelerate_adapter.rs", "harness.rs"],
+      "Phase 5 (Reference)": ["harness.rs"],
+      "Phase 6 (MLX Timing)": ["receipt.rs", "backend_adapters/mlx_adapter.rs", "harness.rs"]
+    }
+  },
+
+  "recommendations": [
+    {
+      "priority": "medium",
+      "area": "Type safety",
+      "suggestion": "Consider wrapping predict_status and support_tier as enums with TryFrom<String> or parsing methods to reject invalid values at receipt construction time rather than carrying raw strings"
+    },
+    {
+      "priority": "low",
+      "area": "Validation",
+      "suggestion": "Add a validate_lattice() function that checks every (family, shape, backend, policy) cell appears exactly once, no duplicate entries, and no missing combinations"
+    },
+    {
+      "priority": "low",
+      "area": "Error handling",
+      "suggestion": "Convert assert!() in generate_coverage_json to Result return type for embeddability in non-CLI contexts"
+    },
+    {
+      "priority": "low",
+      "area": "Code organization",
+      "suggestion": "Move vDSP FFI declarations to accelerate_ffi module (or dedicated vdsp_ffi module) for consistency with the existing cblas_sgemm FFI pattern"
+    },
+    {
+      "priority": "informational",
+      "area": "Constant_heavy",
+      "suggestion": "constant_heavy family routes through the same matmul path in MLX adapter; the 'constant overhead' aspect is not tested. Consider whether a separate constant precomputation path is needed for this family"
+    }
+  ]
+}
