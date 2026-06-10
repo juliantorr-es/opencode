@@ -1,23 +1,6 @@
-/**
- * Managed PGlite Store — MCP-owned, single-owner, versioned schema.
- *
- * Default path (bootstrap): packages/tribunus-mcp/state/pglite/
- * Production: set TRIBUNUS_STORE_DIR to XDG state or Application Support.
- *
- * Single-owner: acquires an OS-level lock file on init. Fails clearly
- * if another process holds the lock.
- *
- * Schema versioning: monotonic version in schema_version table.
- * Ordered migrations in MIGRATIONS array. Single initialization
- * transaction prevents concurrent init races.
- *
- * Migration from OMP: logical table export/import, never raw file copy.
- * Records source/destination, row counts, schema identity, and validation
- * result in store_migrations table.
- */
-
 import { resolve, join } from "node:path"
 import { mkdir, open, unlink, writeFile, readFile } from "node:fs/promises"
+import type { FileHandle } from "node:fs/promises"
 import { homedir } from "node:os"
 import * as crypto from "node:crypto"
 
@@ -31,14 +14,8 @@ function bootstrapStoreDir(): string {
   return resolve(process.cwd(), "packages", "tribunus-mcp", "state", "pglite")
 }
 
-function xdgStoreDir(): string {
-  const xdg = process.env.XDG_STATE_HOME || join(homedir(), ".local", "state")
-  return join(xdg, "tribunus", "pglite")
-}
-
 export function getStoreDir(): string {
   if (process.env.TRIBUNUS_STORE_DIR) return resolve(process.env.TRIBUNUS_STORE_DIR)
-  // Bootstrap profile: repo-local. Production should set TRIBUNUS_STORE_DIR.
   return bootstrapStoreDir()
 }
 
@@ -177,7 +154,7 @@ const CURRENT_SCHEMA_VERSION = MIGRATIONS[MIGRATIONS.length - 1].version
 
 let _storeDir: string | null = null
 let _db: PgliteDb | null = null
-import type { FileHandle } from "node:fs/promises"
+let _lockHandle: FileHandle | null = null
 
 // ── Locking ─────────────────────────────────────────────────────────────────
 
@@ -185,38 +162,35 @@ async function acquireLock(dir: string): Promise<void> {
   const lockPath = lockFilePath(dir)
   const pid = String(process.pid)
   try {
-    const fd = await open(lockPath, "wx", 0o644)
-    await writeFile(fd, pid + "\n")
-    _lockFd = fd
+    const handle = await open(lockPath, "wx", 0o644)
+    await handle.writeFile(pid + "\n")
+    _lockHandle = handle
   } catch {
-    // Lock exists — check if owner is alive
     let existingPid = ""
-    try {
-      existingPid = (await readFile(lockPath, "utf-8")).trim()
-    } catch {}
+    try { existingPid = (await readFile(lockPath, "utf-8")).trim() } catch {}
     const isAlive = existingPid
       ? (() => { try { process.kill(Number(existingPid), 0); return true } catch { return false } })()
       : false
     if (isAlive) {
       throw new Error(
-        `Store at ${dir} is locked by process ${existingPid}. Only one MCP server may open the PGlite store. ` +
+        `Store at ${dir} is locked by process ${existingPid}. ` +
+        `Only one MCP server may open the PGlite store. ` +
         `If the previous process crashed, delete ${lockPath}.`,
       )
     }
-    // Stale lock — take it over
     await unlink(lockPath).catch(() => {})
-    const fd = await open(lockPath, "wx", 0o644)
-    await writeFile(fd, pid + "\n")
-    _lockFd = fd
+    const handle = await open(lockPath, "wx", 0o644)
+    await handle.writeFile(pid + "\n")
+    _lockHandle = handle
   }
 }
 
 async function releaseLock(): Promise<void> {
-  if (_lockFd !== null) {
-    const dir = getStoreDir()
-    const lockPath = lockFilePath(dir)
-    try { await unlink(lockPath) } catch {}
-    _lockFd = null
+  if (_lockHandle) {
+    const lockPath = lockFilePath(getStoreDir())
+    await _lockHandle.close().catch(() => {})
+    await unlink(lockPath).catch(() => {})
+    _lockHandle = null
   }
 }
 
@@ -233,7 +207,6 @@ async function loadPGlite(): Promise<{ PGlite: new (dir: string) => PgliteDb }> 
 // ── Schema Management ───────────────────────────────────────────────────────
 
 async function applyMigrations(db: PgliteDb): Promise<void> {
-  // Ensure schema_version table exists (may be created by migration 1)
   await db.exec(
     "CREATE TABLE IF NOT EXISTS schema_version (version INTEGER PRIMARY KEY, applied_at TIMESTAMP DEFAULT NOW(), checksum TEXT)",
   )
@@ -243,7 +216,6 @@ async function applyMigrations(db: PgliteDb): Promise<void> {
 
   for (const migration of MIGRATIONS) {
     if (migration.version <= currentVersion) continue
-
     const checksum = sha256Hex(migration.sql)
     await db.exec(migration.sql)
     await db.query(
@@ -259,25 +231,21 @@ async function migrateFromOmp(db: PgliteDb): Promise<void> {
   const migrationId = crypto.randomUUID()
   const startedAt = new Date().toISOString()
 
-  // Check if OMP store exists
   let ompEntries: string[] = []
   try {
     const { readdir } = await import("node:fs/promises")
     ompEntries = await readdir(OMP_STORE_DIR)
   } catch {
-    return // No OMP store to migrate
+    return
   }
-
   if (ompEntries.length === 0) return
 
-  // Check if we already migrated
   const existing = await db.query(
     "SELECT 1 FROM store_migrations WHERE source_path = $1 AND status = 'completed'",
     [OMP_STORE_DIR],
   )
-  if (existing.rows.length > 0) return // Already migrated, idempotent
+  if (existing.rows.length > 0) return
 
-  // Record migration start
   await db.query(
     `INSERT INTO store_migrations (id, source_path, dest_path, started_at, status)
      VALUES ($1, $2, $3, $4, 'running')`,
@@ -289,11 +257,9 @@ async function migrateFromOmp(db: PgliteDb): Promise<void> {
   let error: string | null = null
 
   try {
-    // Open OMP PGlite for read-only logical export
     const PGliteMod = await loadPGlite()
     const ompDb = new PGliteMod.PGlite(OMP_STORE_DIR)
 
-    // Export sessions
     try {
       const sessions = await ompDb.query("SELECT * FROM sessions")
       for (const row of sessions.rows) {
@@ -305,9 +271,8 @@ async function migrateFromOmp(db: PgliteDb): Promise<void> {
       }
       tablesCopied++
       rowsCopied += sessions.rows.length
-    } catch { /* sessions table may not exist */ }
+    } catch {}
 
-    // Export invocations
     try {
       const invocations = await ompDb.query("SELECT * FROM invocations")
       for (const row of invocations.rows) {
@@ -321,7 +286,6 @@ async function migrateFromOmp(db: PgliteDb): Promise<void> {
       rowsCopied += invocations.rows.length
     } catch {}
 
-    // Record source schema version
     let sourceSchemaVersion: number | null = null
     try {
       const sv = await ompDb.query("SELECT MAX(version) as v FROM schema_version")
@@ -330,7 +294,6 @@ async function migrateFromOmp(db: PgliteDb): Promise<void> {
 
     ompDb.close()
 
-    // Mark migration complete
     await db.query(
       `UPDATE store_migrations
        SET status = 'completed', completed_at = NOW(), tables_copied = $1, rows_copied = $2,
@@ -346,20 +309,18 @@ async function migrateFromOmp(db: PgliteDb): Promise<void> {
     )
   }
 
-  if (rowsCopied > 0 || tablesCopied > 0) {
-    process.stderr.write(
-      JSON.stringify({
-        event: "store_migration",
-        migration_id: migrationId,
-        source: OMP_STORE_DIR,
-        dest: getStoreDir(),
-        tables_copied: tablesCopied,
-        rows_copied: rowsCopied,
-        status: error ? "failed" : "completed",
-        error,
-      }) + "\n",
-    )
-  }
+  process.stderr.write(
+    JSON.stringify({
+      event: "store_migration",
+      migration_id: migrationId,
+      source: OMP_STORE_DIR,
+      dest: getStoreDir(),
+      tables_copied: tablesCopied,
+      rows_copied: rowsCopied,
+      status: error ? "failed" : "completed",
+      error,
+    }) + "\n",
+  )
 }
 
 // ── Public API ──────────────────────────────────────────────────────────────
@@ -369,17 +330,12 @@ export async function getStore(): Promise<PgliteDb> {
 
   const dir = getStoreDir()
   await mkdir(dir, { recursive: true })
-
-  // Acquire single-owner lock
   await acquireLock(dir)
 
   const PGliteMod = await loadPGlite()
   const db = new PGliteMod.PGlite(dir)
 
-  // Apply schema migrations in a single path
   await applyMigrations(db)
-
-  // Logical migration from OMP (idempotent)
   await migrateFromOmp(db)
 
   _storeDir = dir

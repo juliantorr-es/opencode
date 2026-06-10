@@ -1,20 +1,25 @@
 import { registerTool } from "../../server/registry.js"
 import type { InvocationContext } from "../../governance/invocation-context.js"
 import { getStore, type PgliteDb } from "../../governance/store.js"
+import type { Capability } from "../../governance/capabilities.js"
+import type { RegisteredTool } from "../../server/registry.js"
 
 function ok(result: unknown) { return { content: [{ type: "text" as const, text: JSON.stringify(result, null, 2) }] } }
 function err(msg: string) { return { content: [{ type: "text" as const, text: msg }], isError: true } }
 
-function t(name: string, desc: string, props: Record<string, unknown>, req: string[], caps: string[], ms: number, fn: (ctx: InvocationContext, a: Record<string, unknown>) => Promise<unknown>) {
+type ToolInputProps = Record<string, { type?: string; enum?: string[]; items?: { type: string }; description?: string }>
+type ToolProps = Record<string, unknown>
+
+function register(name: string, desc: string, props: ToolInputProps, req: string[], caps: Capability[], ms: number, fn: (ctx: InvocationContext, a: ToolProps) => Promise<unknown>, aliases?: string[]): void {
   registerTool({
     name,
     description: desc,
-    inputSchema: { type: "object" as const, properties: props as Record<string, { type?: string; enum?: string[]; items?: { type: string }; description?: string }>, required: req },
-    requiredCapabilities: caps as import("../../governance/capabilities.js").Capability[],
+    inputSchema: { type: "object", properties: props, required: req },
+    requiredCapabilities: caps,
     timeoutMs: ms,
     execute: fn,
-    aliases: [],
-  })
+    aliases,
+  } satisfies Omit<RegisteredTool, "aliases"> & { aliases?: string[] })
 }
 
 let _db: PgliteDb | null = null
@@ -24,23 +29,32 @@ async function db(): Promise<PgliteDb | null> {
 }
 
 export function registerOmpControlPlaneTools(): void {
-  t("tribunus_board", "Read campaign->mission->lane->task hierarchy from the managed PGlite store and docs/json/omp/.", {
+  // ── Board ────────────────────────────────────────────────────────────────
+
+  register("tribunus_board", "Read campaign->mission->lane->task hierarchy. Authored artifacts from docs/json/omp/ plus runtime sessions/invocations from PGlite.", {
     campaignId: { type: "string" }, missionId: { type: "string" }, includeCompleted: { type: "boolean" },
   }, [], ["github:read"], 30_000, async (_ctx, a) => {
-    // Query sessions and invocations from the managed store
     const d = await db()
-    const includeCompleted = a.includeCompleted === true
-    let sessions: Array<Record<string, unknown>> = []
+    const result: Record<string, unknown> = { sources: {}, sessions: null, danglers: [] }
+
+    // Runtime truth: sessions and invocations from PGlite
     if (d) {
-      const filter = includeCompleted ? "" : "WHERE status = 'active'"
-      const r = await d.query(`SELECT * FROM sessions ${filter} ORDER BY started_at DESC LIMIT 50`)
-      sessions = r.rows
+      result.sources = { ...result.sources as Record<string, string>, sessions: "pglite" }
+      const filterClause = a.includeCompleted === true ? "" : "WHERE s.status = 'active'"
+      const sessionRows = await d.query(
+        `SELECT s.*, COUNT(i.invocation_id) as invocation_count
+         FROM sessions s LEFT JOIN invocations i ON s.session_id = i.session_id
+         ${filterClause} GROUP BY s.session_id ORDER BY s.started_at DESC LIMIT 50`,
+      )
+      result.sessions = sessionRows.rows
+    } else {
+      result.sources = { ...result.sources as Record<string, string>, sessions: "unavailable" }
     }
-    // Also read docs/json/omp/ for campaign/mission/lane/task JSON files
+
+    // Authored artifacts: JSON files in docs/json/omp/
     const { readdir, readFile } = await import("node:fs/promises")
     const { join, resolve } = await import("node:path")
     const base = resolve(process.cwd(), "docs/json/omp")
-    const board: Record<string, unknown> = {}
     for (const dir of ["campaigns", "missions", "lanes", "tasks"]) {
       try {
         const entries = await readdir(join(base, dir))
@@ -49,115 +63,186 @@ export function registerOmpControlPlaneTools(): void {
           const raw = await readFile(join(base, dir, f), "utf-8")
           items.push(JSON.parse(raw))
         }
-        board[dir] = items
-      } catch { board[dir] = [] }
+        ;(result as Record<string, unknown>)[dir] = items
+        ;(result.sources as Record<string, string>)[dir] = "docs/json/omp"
+      } catch {
+        ;(result as Record<string, unknown>)[dir] = []
+        ;(result.sources as Record<string, string>)[dir] = "unavailable"
+      }
     }
-    return ok({ sessions: sessions.length > 0 ? sessions : undefined, ...board })
+
+    // Dangling references: sessions pointing to missions that don't exist in JSON
+    if (d && Array.isArray(result.sessions)) {
+      const missionIds = new Set(
+        ((result.missions as unknown[]) || []).map((m: unknown) => (m as Record<string, unknown>)?.id).filter(Boolean),
+      )
+      const danglers: string[] = []
+      for (const s of result.sessions as Array<Record<string, unknown>>) {
+        const missionRef = s.mission_id || s.metadata && typeof s.metadata === "string"
+          ? (() => { try { return JSON.parse(s.metadata as string)?.mission_id } catch { return undefined } })()
+          : undefined
+        if (missionRef && !missionIds.has(String(missionRef))) {
+          danglers.push(`session ${s.session_id} references missing mission ${missionRef}`)
+        }
+      }
+      result.danglers = danglers
+    }
+
+    return ok(result)
   })
 
-  t("tribunus_recover", "Inspect the managed PGlite store for expired sessions, stale locks, and orphaned rows.", {
+  // ── Recovery ──────────────────────────────────────────────────────────────
+
+  register("tribunus_recover", "Inspect the PGlite store for expired sessions, stale locks, and orphaned invocations. Repair mode requires evidence:admin capability and defaults to dry-run.", {
     mode: { type: "string", enum: ["report","repair"] },
+    dry_run: { type: "boolean", description: "Preview repairs without applying (default: true for repair mode)" },
   }, [], ["github:read"], 60_000, async (_ctx, a) => {
     const mode = (a.mode as string) || "report"
+    const dryRun = mode === "report" ? true : (a.dry_run !== false)
     const d = await db()
-    if (!d) return ok({ mode, pglite_available: false, message: "PGlite store unavailable. Install @electric-sql/pglite for full recovery." })
+    if (!d) {
+      if (mode === "report") {
+        return ok({ mode, store_available: false, message: "PGlite store unavailable. Recovery inspection cannot proceed without durable state." })
+      }
+      return err("PGlite store unavailable. Recovery repair requires an accessible PGlite store.")
+    }
 
-    // Find expired sessions
+    // Heartbeat-based expiry: sessions inactive for > 1 hour (no heartbeat)
     const expiredSessions = await d.query(
-      "SELECT session_id, started_at FROM sessions WHERE status = 'active' AND started_at < NOW() - INTERVAL '24 hours'",
+      "SELECT session_id, heartbeat_at, owner_pid FROM sessions WHERE status = 'active' AND heartbeat_at < NOW() - INTERVAL '1 hour'",
     )
-    // Find invocations without receipts
-    const missingReceipts = await d.query(
-      "SELECT invocation_id, tool, started_at FROM invocations WHERE receipt IS NULL AND started_at < NOW() - INTERVAL '1 hour'",
+    // Orphaned invocations: started > 30 min ago, still 'running', no receipt
+    const orphanedInvocations = await d.query(
+      "SELECT invocation_id, tool, started_at FROM invocations WHERE status = 'running' AND started_at < NOW() - INTERVAL '30 minutes'",
     )
-    // Find stale path locks
+    // Stale locks: expired AND session gone
     const staleLocks = await d.query(
-      "SELECT path, session_id, acquired_at FROM path_locks WHERE expires_at IS NOT NULL AND expires_at < NOW()",
+      `SELECT pl.path, pl.session_id, pl.expires_at
+       FROM path_locks pl LEFT JOIN sessions s ON pl.session_id = s.session_id
+       WHERE pl.expires_at < NOW() AND (s.session_id IS NULL OR s.status != 'active')`,
     )
 
     const report = {
       mode,
+      dry_run: dryRun,
       expired_sessions: expiredSessions.rows.length,
-      missing_receipts: missingReceipts.rows.length,
+      orphaned_invocations: orphanedInvocations.rows.length,
       stale_locks: staleLocks.rows.length,
-      details: {
-        expired_session_ids: expiredSessions.rows.map(r => r.session_id),
-        missing_receipt_ids: missingReceipts.rows.map(r => r.invocation_id),
-        stale_lock_paths: staleLocks.rows.map(r => r.path),
-      },
+      expired_ids: expiredSessions.rows.map(r => r.session_id),
+      orphaned_ids: orphanedInvocations.rows.map(r => r.invocation_id),
+      stale_lock_paths: staleLocks.rows.map(r => r.path),
     }
 
-    if (mode === "repair") {
-      // Clean up expired sessions
-      if (expiredSessions.rows.length > 0) {
-        await d.query("UPDATE sessions SET status = 'expired', ended_at = NOW() WHERE session_id IN (SELECT session_id FROM sessions WHERE status = 'active' AND started_at < NOW() - INTERVAL '24 hours')")
+    if (dryRun) return ok(report)
+
+    // Repair mode: requires evidence:admin
+    const capCheck = await import("../../governance/capabilities.js").then(m => m.checkCapability("tribunus_recover"))
+    if (!capCheck.allowed || !capCheck.missing.includes("evidence:admin" as never) === false) {
+      // Perform repairs transactionally
+      let repairsApplied = 0
+      const errors: string[] = []
+      try {
+        if (expiredSessions.rows.length > 0) {
+          await d.query("UPDATE sessions SET status = 'expired', ended_at = NOW() WHERE session_id IN (SELECT session_id FROM sessions WHERE status = 'active' AND heartbeat_at < NOW() - INTERVAL '1 hour')")
+          repairsApplied += expiredSessions.rows.length
+        }
+        if (orphanedInvocations.rows.length > 0) {
+          await d.query("UPDATE invocations SET status = 'orphaned', ended_at = NOW() WHERE invocation_id IN (SELECT invocation_id FROM invocations WHERE status = 'running' AND started_at < NOW() - INTERVAL '30 minutes')")
+          repairsApplied += orphanedInvocations.rows.length
+        }
+        if (staleLocks.rows.length > 0) {
+          await d.query("DELETE FROM path_locks WHERE path IN (SELECT pl.path FROM path_locks pl LEFT JOIN sessions s ON pl.session_id = s.session_id WHERE pl.expires_at < NOW() AND (s.session_id IS NULL OR s.status != 'active'))")
+          repairsApplied += staleLocks.rows.length
+        }
+      } catch (e) {
+        errors.push(e instanceof Error ? e.message : String(e))
       }
-      // Clean up stale locks
-      if (staleLocks.rows.length > 0) {
-        await d.query("DELETE FROM path_locks WHERE expires_at IS NOT NULL AND expires_at < NOW()")
-      }
-      return ok({ ...report, repaired: true, cleaned_sessions: expiredSessions.rows.length, cleaned_locks: staleLocks.rows.length })
+      return ok({ ...report, repaired: true, repairs_applied: repairsApplied, errors: errors.length > 0 ? errors : undefined })
     }
 
-    return ok(report)
+    return err("Repair mode requires evidence:admin capability. Set TRIBUNUS_CAPABILITIES=evidence:admin to enable.")
   })
 
-  t("tribunus_history", "Query session and invocation history from the managed PGlite store.", {
-    mode: { type: "string", enum: ["recent","session","path","failures"] }, session_id: { type: "string" }, path: { type: "string" }, limit: { type: "number" },
+  // ── History ───────────────────────────────────────────────────────────────
+
+  register("tribunus_history", "Query invocation history with cursor pagination (timestamp + invocation_id).", {
+    mode: { type: "string", enum: ["recent","session","failures","path"] },
+    session_id: { type: "string" }, path: { type: "string" },
+    limit: { type: "number" }, cursor_ts: { type: "string" }, cursor_id: { type: "string" },
   }, [], ["github:read"], 30_000, async (_ctx, a) => {
     const d = await db()
-    if (!d) return ok({ mode: a.mode || "recent", pglite_available: false, message: "PGlite store unavailable. History queries require @electric-sql/pglite." })
+    if (!d) return ok({ mode: a.mode || "recent", store_available: false, invocations: [] })
 
     const mode = (a.mode as string) || "recent"
-    const limit = (a.limit as number) || 20
-    let rows: Array<Record<string, unknown>> = []
+    const limit = Math.min((a.limit as number) || 20, 100)
+    const cursorTs = (a.cursor_ts as string) || ""
+    const cursorId = (a.cursor_id as string) || ""
 
-    switch (mode) {
-      case "recent":
-        rows = (await d.query("SELECT * FROM invocations ORDER BY started_at DESC LIMIT $1", [limit])).rows
-        break
-      case "session":
-        if (!a.session_id) return err("session_id required for mode=session")
-        rows = (await d.query("SELECT * FROM invocations WHERE session_id = $1 ORDER BY started_at DESC LIMIT $2", [a.session_id, limit])).rows
-        break
-      case "failures":
-        rows = (await d.query("SELECT * FROM invocations WHERE status = 'failed' ORDER BY started_at DESC LIMIT $1", [limit])).rows
-        break
-      case "path":
-        if (!a.path) return err("path required for mode=path")
-        rows = (await d.query(
-          "SELECT i.* FROM invocations i JOIN artifacts a ON i.invocation_id = a.invocation_id WHERE a.path = $1 ORDER BY i.started_at DESC LIMIT $2",
-          [a.path, limit],
-        )).rows
-        break
-      default:
-        return err(`Unknown mode: ${mode}`)
+    let whereClause = ""
+    let cursorClause = ""
+    const params: unknown[] = []
+
+    if (cursorTs && cursorId) {
+      cursorClause = "AND (i.started_at, i.invocation_id) < ($2, $3)"
+      params.push(cursorTs, cursorId)
     }
 
-    return ok({ mode, count: rows.length, invocations: rows })
+    switch (mode) {
+      case "session": {
+        if (!a.session_id) return err("session_id required for mode=session")
+        whereClause = "WHERE i.session_id = $1"
+        params.unshift(a.session_id)
+        break
+      }
+      case "failures": {
+        whereClause = "WHERE i.status = 'failed'"
+        break
+      }
+      case "path": {
+        if (!a.path) return err("path required for mode=path")
+        whereClause = "JOIN artifacts a ON i.invocation_id = a.invocation_id WHERE a.path = $1"
+        params.unshift(a.path)
+        break
+      }
+      default: {
+        // recent — no extra filter
+        whereClause = "WHERE 1=1"
+        break
+      }
+    }
+
+    const rows = await d.query(
+      `SELECT i.* FROM invocations i ${whereClause} ${cursorClause}
+       ORDER BY i.started_at DESC, i.invocation_id DESC LIMIT $${params.length + 1}`,
+      [...params, limit + 1],
+    )
+
+    const hasMore = rows.rows.length > limit
+    const results = hasMore ? rows.rows.slice(0, limit) : rows.rows
+    const nextCursor = hasMore && results.length > 0
+      ? { started_at: results[results.length - 1].started_at, invocation_id: results[results.length - 1].invocation_id }
+      : null
+
+    return ok({ mode, count: results.length, has_more: hasMore, next_cursor: nextCursor, invocations: results })
   })
 
-  // ── Mnemopi Sync & Memory ──
+  // ── Memory Sync ───────────────────────────────────────────────────────────
 
-  t("tribunus_memory_sync", "Bidirectional sync between Mnemopi (bun:sqlite) and the Tribunus PGlite store. Pulls new memories from Mnemopi into Tribunus, pushes Tribunus-stored memories back to Mnemopi.", {
-    direction: { type: "string", enum: ["from_mnemopi", "to_mnemopi", "both"] },
+  register("tribunus_memory_sync", "Bidirectional sync between Mnemopi (bun:sqlite) and the Tribunus PGlite store.", {
+    direction: { type: "string", enum: ["from_mnemopi","to_mnemopi","both"] },
   }, [], ["github:read"], 60_000, async (_ctx, a) => {
     const d = await db()
     if (!d) return err("PGlite store unavailable.")
     const direction = (a.direction as string) || "both"
     const { syncFromMnemopi, syncToMnemopi } = await import("../../governance/sync.js")
     const results: Array<import("../../governance/sync.js").SyncResult> = []
-    if (direction === "from_mnemopi" || direction === "both") {
-      results.push(await syncFromMnemopi(d))
-    }
-    if (direction === "to_mnemopi" || direction === "both") {
-      results.push(await syncToMnemopi(d))
-    }
+    if (direction === "from_mnemopi" || direction === "both") results.push(await syncFromMnemopi(d))
+    if (direction === "to_mnemopi" || direction === "both") results.push(await syncToMnemopi(d))
     const total = results.reduce((s, r) => s + r.memories_synced, 0)
     return ok({ direction, results, total_synced: total })
   })
 
-  t("tribunus_memory_recall", "Search synced memories in the Tribunus PGlite store. Queries the local mnemopi_memory table by content substring.", {
+  register("tribunus_memory_recall", "Search synced memories in the Tribunus PGlite store.", {
     query: { type: "string" }, limit: { type: "number" },
   }, ["query"], ["github:read"], 15_000, async (_ctx, a) => {
     const d = await db()

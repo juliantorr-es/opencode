@@ -13,7 +13,7 @@ import type {
   Lane,
   Task,
   Checkpoint,
-  Receipt as unknown as ReceiptType,
+  Receipt as ReceiptType,
   MemoryLink,
   Event,
 } from "./schema";

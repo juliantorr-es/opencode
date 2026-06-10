@@ -9,6 +9,12 @@ export type Capability =
   | "evidence:admin"
   | "model:acquire"
   | "hardware:monitor"
+  | "repository:read"
+  | "repository:index"
+  | "artifact:write"
+  | "artifact:verify"
+  | "control-plane:read"
+  | "control-plane:write"
 
 export const TOOL_CAPABILITIES: Record<string, Capability[]> = {
   // GitHub
@@ -64,6 +70,20 @@ export const TOOL_CAPABILITIES: Record<string, Capability[]> = {
   omp_read_source: ["github:read"],
   omp_semantic_repo_map: ["github:read"],
   omp_smart_bun: ["compute:build"],
+  // Tribunus-branded tools
+  tribunus_search: ["repository:read"],
+  tribunus_find: ["repository:read"],
+  tribunus_source_read: ["repository:read"],
+  tribunus_repository_map: ["repository:index"],
+  tribunus_code_review_export: ["artifact:write"],
+  tribunus_review_packet_export: ["artifact:write"],
+  tribunus_semantic_review_export: ["artifact:write"],
+  tribunus_review_verify: ["artifact:verify"],
+  tribunus_board: ["control-plane:read"],
+  tribunus_recover: ["control-plane:read"],
+  tribunus_history: ["control-plane:read"],
+  tribunus_memory_sync: ["control-plane:read"],
+  tribunus_memory_recall: ["control-plane:read"],
 }
 
 export function checkCapability(tool: string): { allowed: boolean; missing: Capability[] } {

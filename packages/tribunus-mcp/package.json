@@ -1,14 +1,19 @@
 {
   "name": "@tribunus-ai/tribunus-mcp",
   "private": true,
-  "version": "0.3.0",
+  "version": "0.4.0",
   "type": "module",
   "scripts": {
     "typecheck": "tsgo --noEmit"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.27.1",
-    "duckdb": "^1.2.0"
+    "duckdb": "^1.2.0",
+    "oxc-parser": "^0.134.0",
+    "oxc-resolver": "^11.20.0",
+    "tree-sitter-typescript": "^0.23.2",
+    "typescript": "^5.8.2",
+    "web-tree-sitter": "^0.26.9"
   },
   "devDependencies": {
     "@types/node": "latest"
