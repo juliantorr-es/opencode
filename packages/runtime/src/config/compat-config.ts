@@ -95,10 +95,11 @@ export function resolveConfigPath(cwd: string): {
  * Returns the parsed config object, or `undefined` when no config file
  * is found.
  */
-export const loadConfig = Effect.fn("ConfigCompat.loadConfig")(function* (
+export const loadConfig = Effect.fn("ConfigCompat.loadConfig")(function (
   cwd: string,
 ): Effect.Effect<Config | undefined> {
-  const fs = yield* AppFileSystem.Service
+  return Effect.gen(function* () {
+    const fs = yield* AppFileSystem.Service
   const { canonical, legacy, active } = resolveConfigPath(cwd)
 
   // 1. Try canonical (tribunus.jsonc) — exclusively when active
@@ -120,7 +121,8 @@ export const loadConfig = Effect.fn("ConfigCompat.loadConfig")(function* (
     if (content !== undefined) return content
   }
 
-  return undefined
+    return undefined
+  })
 })
 
 // ---------------------------------------------------------------------------
@@ -141,8 +143,9 @@ const MIGRATION_MARKER = ".migration-receipt"
  * receipt without touching disk.
  */
 export const migrateLegacyConfig = Effect.fn("ConfigCompat.migrateLegacyConfig")(
-  function* (cwd: string): Effect.Effect<MigrationReceipt> {
-    const fs = yield* AppFileSystem.Service
+  function (cwd: string): Effect.Effect<MigrationReceipt> {
+    return Effect.gen(function* () {
+      const fs = yield* AppFileSystem.Service
     const { canonical, legacy } = resolveConfigPath(cwd)
     const now = new Date().toISOString()
 
@@ -202,7 +205,8 @@ export const migrateLegacyConfig = Effect.fn("ConfigCompat.migrateLegacyConfig")
     }
     yield* fs.writeFileString(markerPath, JSON.stringify(marker, null, 2) + "\n")
 
-    return marker
+      return marker
+    })
   },
 )
 
@@ -217,7 +221,7 @@ export const migrateLegacyConfig = Effect.fn("ConfigCompat.migrateLegacyConfig")
 function readJsoncFile(
   fs: AppFileSystem.Interface,
   filepath: string,
-): Effect.Effect<Config | undefined> {
+): Effect.Effect<Config | undefined, Error> {
   return Effect.gen(function* () {
     const raw = yield* fs.readFileStringSafe(filepath)
     if (raw === undefined) return undefined

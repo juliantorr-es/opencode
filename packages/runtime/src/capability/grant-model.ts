@@ -29,7 +29,7 @@ export const Capability = Schema.Struct({
   /** The specific rights this capability confers */
   rights: Schema.Array(Schema.String),
   /** Where this capability originated */
-  source: Schema.Literals("grant", "delegation", "intrinsic", "break_glass"),
+  source: Schema.Literals(["grant", "delegation", "intrinsic", "break_glass"]),
   /** The grant receipt ID that backs this capability */
   grantReceiptId: Schema.String,
   /** When this capability was granted */
@@ -121,7 +121,7 @@ export const CapabilityGrant = Schema.Struct({
   scope: Schema.String,
   rights: Schema.Array(Schema.String),
   /** When this grant expires (null = permanent until revoked) */
-  expiresAt: Schema.Union(Schema.Number, Schema.Null),
+  expiresAt: Schema.Union([Schema.Number, Schema.Null]),
   /** Whether this grant is active */
   isActive: Schema.Boolean,
   /** The receipt ID in CapabilityAuthorityReceiptTable */

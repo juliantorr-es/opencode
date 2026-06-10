@@ -120,7 +120,7 @@ export class ValkeyStreams {
    * WARNING: This is a destructive operation. Only use for testing/admin.
    */
   async destroyGroup(groupName: string): Promise<number> {
-    return this.redis.xgroup("DESTROY", this.streamName, groupName)
+    return this.redis.xgroup("DESTROY", this.streamName, groupName) as unknown as Promise<number>
   }
 
   /**
@@ -133,7 +133,7 @@ export class ValkeyStreams {
       this.streamName,
       groupName,
       consumerName
-    )
+    ) as unknown as Promise<number>
   }
 
   /**
@@ -141,7 +141,7 @@ export class ValkeyStreams {
    */
   async listGroups(): Promise<StreamGroupInfo[]> {
     const result = await this.redis.xinfo("GROUPS", this.streamName)
-    return result as StreamGroupInfo[]
+    return (result as any) as StreamGroupInfo[]
   }
 
   /**
@@ -167,7 +167,7 @@ export class ValkeyStreams {
       entryId ?? "*",
       ...Object.entries(values).flatMap(([key, value]) => [key, value]),
     ]
-    return this.redis.xadd(args) as Promise<string>
+    return (this.redis.xadd as any)(args) as Promise<string>
   }
 
   /**
@@ -176,19 +176,19 @@ export class ValkeyStreams {
    */
   async trim(maxLength: number, approximate: boolean = true): Promise<number> {
     const mode = approximate ? "~" : ""
-    return this.redis.xtrim(
+    return (this.redis.xtrim as any)(
       this.streamName,
       mode,
       "MAXLEN",
       maxLength
-    )
+    ) as Promise<number>
   }
 
   /**
    * Get stream information.
    */
   async getStreamInfo(): Promise<StreamInfo> {
-    const result = await this.redis.xinfo("STREAM", this.streamName)
+    const result: any = await this.redis.xinfo("STREAM", this.streamName)
     return {
       length: result.length,
       radixTreeKeys: result.radix_tree_keys,
@@ -255,7 +255,7 @@ export class ValkeyStreams {
       args.push("NOACK")
     }
 
-    const result = await this.redis.xreadgroup(
+    const result: any = await (this.redis.xreadgroup as any)(
       args,
       "STREAMS",
       this.streamName,
@@ -287,11 +287,11 @@ export class ValkeyStreams {
    */
   async ack(groupName: string, entryIds: string[]): Promise<number> {
     if (entryIds.length === 0) return 0
-    return this.redis.xack(
+    return (this.redis.xack as any)(
       this.streamName,
       groupName,
       ...entryIds
-    )
+    ) as Promise<number>
   }
 
   /**
@@ -314,7 +314,7 @@ export class ValkeyStreams {
     maxIdleMs: number | null
     consumers: Record<string, number>
   }> {
-    const result = await this.redis.xpending(
+    const result: any = await this.redis.xpending(
       this.streamName,
       groupName
     )
@@ -366,7 +366,7 @@ export class ValkeyStreams {
     }
 
     // Use XPENDING with range to get entries
-    const result = await this.redis.send_command(
+    const result: any = await this.redis.send_command(
       "XPENDING",
       [
         this.streamName,
@@ -415,7 +415,7 @@ export class ValkeyStreams {
     count: number = 10,
     justId: boolean = false
   ): Promise<ClaimedEntry[]> {
-    const result = await this.redis.xautoclaim(
+    const result: any = await (this.redis.xautoclaim as any)(
       this.streamName,
       groupName,
       consumerName,
@@ -454,7 +454,7 @@ export class ValkeyStreams {
   ): Promise<ClaimedEntry[]> {
     if (entryIds.length === 0) return []
 
-    const result = await this.redis.xclaim(
+    const result: any = await (this.redis.xclaim as any)(
       this.streamName,
       groupName,
       consumerName,
@@ -497,7 +497,7 @@ export class ValkeyStreams {
       this.streamName,
       groupName
     )
-    return result as unknown as {
+    return (result as any) as unknown as {
       name: string
       seen_time: number
       active_time: number
@@ -550,7 +550,7 @@ export class ValkeyStreams {
     }
     args.push(end)
 
-    const result = await this.redis.xrange(args)
+    const result: any = await (this.redis.xrange as any)(args)
 
     if (!result || !Array.isArray(result)) return []
 

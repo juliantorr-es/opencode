@@ -78,7 +78,7 @@ export class ValkeySortedSets {
     for (const entry of entries) {
       args.push(entry.score, entry.value)
     }
-    return this.redis.zadd(args) as Promise<number>
+    return (this.redis.zadd as any)(args) as Promise<number>
   }
 
   /**
@@ -116,7 +116,7 @@ export class ValkeySortedSets {
       args.push("LIMIT", offset, limit)
     }
 
-    const result = await this.redis.zrange(args, "WITHSCORES")
+    const result: any = await (this.redis.zrange as any)(args, "WITHSCORES")
 
     // Parse result: [value1, score1, value2, score2, ...]
     const entries: SortedSetEntry[] = []
@@ -148,7 +148,7 @@ export class ValkeySortedSets {
       args.push("LIMIT", offset, limit)
     }
 
-    const result = await this.redis.zrevrange(args, "WITHSCORES")
+    const result: any = await (this.redis.zrevrange as any)(args, "WITHSCORES")
 
     // Parse result: [value1, score1, value2, score2, ...]
     const entries: SortedSetEntry[] = []
@@ -198,7 +198,7 @@ export class ValkeySortedSets {
    * Returns the new score.
    */
   async incrementScore(setName: string, value: string, increment: number): Promise<number> {
-    return this.redis.zincrby(setName, increment, value) as Promise<number>
+    return (this.redis.zincrby as any)(setName, increment, value) as Promise<number>
   }
 
   // ── Count Operations ───────────────────────────────────────────────

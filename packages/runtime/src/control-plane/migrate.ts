@@ -254,7 +254,7 @@ export function migrateAll(
     const completedMigrations = yield* adapter.query((db) =>
       db.select({ name: DataMigrationTable.name }).from(DataMigrationTable).execute()
     )
-    const completed = new Set(completedMigrations.map((r) => r.name))
+    const completed = new Set(completedMigrations.map((r: { name: string }) => r.name))
 
     const progress: MigrationProgress[] = []
 

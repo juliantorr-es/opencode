@@ -30,7 +30,7 @@ const AgentSchema = Schema.StructWithRest(
     tools: Schema.optional(
       Schema.Union([
         Schema.Record(Schema.String, Schema.Boolean),
-        Schema.Array(Schema.String),
+        Schema.mutable(Schema.Array(Schema.String)),
         Schema.String,
       ])
     ).annotate({

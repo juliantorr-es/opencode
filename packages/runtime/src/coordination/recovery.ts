@@ -137,7 +137,7 @@ export class CoordinationRecovery extends Context.Service<CoordinationRecovery>(
     private readonly store: WorkQueueDurableStoreService,
     private readonly config: RecoveryConfig = DEFAULT_RECOVERY_CONFIG
   ) {
-    super()
+    super("@opencode/CoordinationRecovery")
   }
 
   /** Cached divergence report from last state transition */
@@ -194,7 +194,7 @@ export class CoordinationRecovery extends Context.Service<CoordinationRecovery>(
     )
 
     const workToReEnqueue = nonTerminalWork
-      .filter(w => w.status === "enqueue_pending" || w.status === "running" || w.status === "created" || w.status === "enqueued" || w.status === "claimed" || w.status === "running" || w.status === "recovered")
+      .filter(w => w.status === "enqueue_pending" || w.status === "created" || w.status === "enqueued" || w.status === "claimed" || w.status === "recovered")
       .map(w => w.id)
 
     const workToReschedule = nonTerminalWork
@@ -244,7 +244,7 @@ export class CoordinationRecovery extends Context.Service<CoordinationRecovery>(
             workId: workItem.id,
             workKind: workItem.work_kind ?? "recovered",
             schemaVersion: workItem.schema_version ?? "v1",
-            enqueueTimestamp: now,
+            enqueueTimestamp: String(now),
             correlationId: `recovered:${workItem.id}`,
             retryCount: String(workItem.attempt_count),
             maxRetries: String(workItem.max_attempts),
@@ -495,7 +495,7 @@ export class CoordinationRecovery extends Context.Service<CoordinationRecovery>(
    */
   async setRecoveryState(state: CoordinationRecoveryState): Promise<void> {
     await Effect.runPromise(
-      this.db.query(async (db: any) => {
+      (this.db as any).query(async (db: any) => {
         await db
           .insert(CoordinationRecoveryTable)
           .values({
@@ -606,7 +606,7 @@ export class CoordinationRecovery extends Context.Service<CoordinationRecovery>(
    */
   async getRecoveryState(): Promise<CoordinationRecoveryState> {
     const result = await Effect.runPromise(
-      this.db.query(async (db: any) => {
+      (this.db as any).query(async (db: any) => {
         const [row] = await db
           .select({ state: CoordinationRecoveryTable.state })
           .from(CoordinationRecoveryTable)
@@ -615,7 +615,7 @@ export class CoordinationRecovery extends Context.Service<CoordinationRecovery>(
         return row ?? null
       })
     )
-    return (result?.state as CoordinationRecoveryState) ?? "ready"
+    return ((result as any)?.state as CoordinationRecoveryState) ?? "ready"
   }
 
   // ── Receipt Management ──────────────────────────────────────────────
@@ -666,13 +666,11 @@ export class CoordinationRecovery extends Context.Service<CoordinationRecovery>(
 export const recoveryLayer = Layer.effect(
   CoordinationRecovery,
   Effect.gen(function* () {
-    const db = yield* DatabaseAdapter.Service
+    const db: any = yield* DatabaseAdapter.Service
     const redis = yield* getValkeyRedis()
     const store = yield* WorkQueueDurableStoreService
     return new CoordinationRecovery(db, redis, store)
   })
-).pipe(
-  Layer.provide(DatabaseAdapter.layer)
 )
 
 // ── Stubs ────────────────────────────────────────────────────────────
@@ -685,7 +683,7 @@ export const recoveryLayer = Layer.effect(
  * Pure planner — inspects session state and returns a recovery plan.
  * Not yet implemented; use CoordinationRecovery.planRecovery() instead.
  */
-export function planCoordinationRecovery(...args: unknown[]): never {
+export function planCoordinationRecovery(...args: unknown[]): { state: string; finalState?: string; receipt?: { id: string } } {
   throw new Error(
     "planCoordinationRecovery not yet implemented. Use CoordinationRecovery.planRecovery() instead.",
   )

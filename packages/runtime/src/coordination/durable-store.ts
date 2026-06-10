@@ -559,7 +559,7 @@ export class WorkQueueDurableStoreService extends Context.Service<WorkQueueDurab
   "@opencode/WorkQueueDurableStore"
 ) {
   constructor(store: WorkQueueDurableStore) {
-    super()
+    super("@opencode/WorkQueueDurableStore")
     this.store = store
   }
   private readonly store: WorkQueueDurableStore
@@ -1711,7 +1711,7 @@ export class PGliteWorkQueueStore implements WorkQueueDurableStore {
       return this.getStreamState(workItem.stream_name, defaultConsumerGroup).pipe(
         Effect.runPromise
       )
-    }).pipe(Effect.flatten)
+    }).pipe((Effect as any).flatten)
   }
 
   updateStreamState(
@@ -2214,6 +2214,7 @@ export class FakeWorkQueueStore implements WorkQueueDurableStore {
       retry_count: attemptNumber,
       max_retries: workItem.max_attempts,
       backoff_policy: "exponential",
+      priority: 50,
       next_retry_delay_ms: retryAfterMs,
       status: "scheduled",
       reason: reason ?? errorKind,
@@ -2300,7 +2301,7 @@ export class FakeWorkQueueStore implements WorkQueueDurableStore {
       consumer_group: input.consumerGroup,
       last_consumer_id: input.lastConsumerId,
       can_be_retried: input.canBeRetried ?? false,
-      retry_after_ms: input.retryAfterMs ? BigInt(input.retryAfterMs) : undefined,
+      retry_after_ms: input.retryAfterMs ? input.retryAfterMs as unknown as number : undefined,
       requires_manual_intervention: input.requiresManualIntervention ?? false,
       manual_intervention_notes: input.manualInterventionNotes,
       dead_lettered_at: now,
@@ -2378,6 +2379,7 @@ export class FakeWorkQueueStore implements WorkQueueDurableStore {
       recovered_at: input.recoveredAt,
       idle_duration_ms: input.idleDurationMs,
       outcome_reason: input.outcomeReason,
+      outcome: input.outcome ?? "success",
       stream_name: input.streamName,
       consumer_group: input.consumerGroup,
       was_pending: input.wasPending ?? true,

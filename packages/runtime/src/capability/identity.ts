@@ -22,7 +22,7 @@ import { Schema } from "effect"
 export const Principal = Schema.Struct({
   _tag: Schema.Literal("principal"),
   id: Schema.String,
-  kind: Schema.Literals("user", "organization", "system_root"),
+  kind: Schema.Literals(["user", "organization", "system_root"]),
   displayName: Schema.String,
   handle: Schema.optional(Schema.String),
 })
@@ -39,7 +39,7 @@ export type Principal = typeof Principal.Type
 export const Actor = Schema.Struct({
   _tag: Schema.Literal("actor"),
   id: Schema.String,
-  kind: Schema.Literals("agent", "tool", "automated_process", "human"),
+  kind: Schema.Literals(["agent", "tool", "automated_process", "human"]),
   principalId: Schema.String,
   displayName: Schema.String,
   /** The capability IDs this actor currently holds */
@@ -65,7 +65,7 @@ export const Delegate = Schema.Struct({
   /** The capabilities being delegated */
   capabilityIds: Schema.Array(Schema.String),
   /** When this delegation expires (Unix ms). null = permanent until revoked */
-  expiresAt: Schema.Union(Schema.Number, Schema.Null),
+  expiresAt: Schema.Union([Schema.Number, Schema.Null]),
   /** The scope within which this delegation is valid */
   scope: Schema.String,
   /** The delegation chain: [rootPrincipal, ...intermediateDelegates, thisDelegate] */
@@ -87,7 +87,7 @@ export type Delegate = typeof Delegate.Type
 export const ServiceIdentity = Schema.Struct({
   _tag: Schema.Literal("service_identity"),
   id: Schema.String,
-  kind: Schema.Literals("internal_service", "external_service", "sidecar", "plugin"),
+  kind: Schema.Literals(["internal_service", "external_service", "sidecar", "plugin"]),
   displayName: Schema.String,
   /** The service's public key for signature verification */
   publicKey: Schema.optional(Schema.String),
@@ -104,12 +104,12 @@ export type ServiceIdentity = typeof ServiceIdentity.Type
  * Any identity reference in the Tribunus authority model.
  * All subsystems use this union type, never raw strings.
  */
-export const AuthorityIdentity = Schema.Union(
+export const AuthorityIdentity = Schema.Union([
   Principal,
   Actor,
   Delegate,
   ServiceIdentity,
-)
+])
 
 export type AuthorityIdentity = typeof AuthorityIdentity.Type
 
