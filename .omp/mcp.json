@@ -1,0 +1,44 @@
+{
+  "mcpServers": {
+    "postgres": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-postgres", "${OPENCODE_DATABASE_URL}"]
+    },
+    "playwright": {
+      "command": "npx",
+      "args": ["@playwright/mcp@latest", "--headless", "--browser=chromium", "--isolated"]
+    },
+    "tmux": {
+      "command": "npx",
+      "args": ["-y", "tmux-mcp-server"]
+    },
+    "sentry": {
+      "type": "http",
+      "url": "https://mcp.sentry.dev/mcp"
+    },
+
+    "mnemopi": {
+      "command": "bun",
+      "args": ["run", "node_modules/@oh-my-pi/pi-mnemopi/src/cli.ts", "mcp", "--transport", "stdio"]
+    },
+
+    "porkbun": {
+      "command": "npx",
+      "args": ["-y", "@porkbunllc/mcp-server"],
+      "environment": {
+        "PORKBUN_API_KEY": "PORKBUN_API_KEY_REDACTED",
+        "PORKBUN_SECRET_API_KEY": "PORKBUN_SECRET_API_KEY_REDACTED"
+    }
+    },
+
+    "tribunus": {
+      "command": "bun",
+      "args": ["run", "packages/tribunus-mcp/src/index.ts"],
+      "environment": {
+        "GITHUB_APP_ID": "3774417",
+        "GITHUB_APP_INSTALLATION_ID": "133860977",
+        "GITHUB_APP_PRIVATE_KEY_PATH": ".omp/github-app-private-key.pem"
+      }
+    }
+  }
+}
