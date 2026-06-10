@@ -11,7 +11,7 @@ import { resolve } from "node:path"
 import { createHash } from "node:crypto"
 import type { PGliteLike } from "./pglite-runtime.js"
 
-const MIGRATIONS_DIR = resolve(import.meta.dirname, "migrations")
+const MIGRATIONS_DIR = resolve(new URL(".", import.meta.url).pathname, "migrations")
 
 async function ensureTrackingTable(db: PGliteLike): Promise<void> {
   await db.exec(`
@@ -67,11 +67,18 @@ export async function runMigrations(db: PGliteLike): Promise<void> {
   for (const m of migrations) {
     if (applied.has(m.version)) continue
     const sql = readFileSync(m.path, "utf-8")
-    await db.exec(sql)
-    await db.query(
-      "INSERT INTO schema_migrations (version, checksum) VALUES ($1, $2)",
-      [m.version, m.checksum],
-    )
+    await db.exec("BEGIN")
+    try {
+      await db.exec(sql)
+      await db.query(
+        "INSERT INTO schema_migrations (version, checksum) VALUES ($1, $2)",
+        [m.version, m.checksum],
+      )
+      await db.exec("COMMIT")
+    } catch (e) {
+      await db.exec("ROLLBACK")
+      throw e
+    }
   }
 }
 

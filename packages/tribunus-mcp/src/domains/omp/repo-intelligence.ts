@@ -38,7 +38,7 @@ function register(name: string, desc: string, props: ToolInputProps, req: string
 }
 
 export function registerOmpRepoIntelTools(): void {
-  register("tribunus_search", "Search for patterns in files. Pure TypeScript. Respects .gitignore.", {
+  register("tribunus_search", "Search for patterns in files using substring matching. Skips dot-directories, .git, and node_modules. Paths are validated against the worktree root.", {
     pattern: { type: "string" }, path: { type: "string" }, glob: { type: "string" }, max_results: { type: "number" },
   }, ["pattern"], ["repository:read"], 30_000, async (_ctx, a) => {
     const pattern = a.pattern as string
@@ -76,7 +76,7 @@ export function registerOmpRepoIntelTools(): void {
     return ok({ pattern, results, count: results.length })
   })
 
-  register("tribunus_find", "Find files and directories. Respects .gitignore.", {
+  register("tribunus_find", "Find files and directories by name substring. Skips dot-directories, .git, and node_modules. The pattern is matched against the relative path using substring matching.", {
     pattern: { type: "string" }, path: { type: "string" }, type: { type: "string", enum: ["file","directory"] }, max_results: { type: "number" },
   }, [], ["repository:read"], 30_000, async (_ctx, a) => {
     const pat = (a.pattern as string) || "*"
@@ -196,6 +196,10 @@ export function registerOmpRepoIntelTools(): void {
     profile: { type: "string", enum: ["bootstrap_review","gemini_code_review"], description: "Export profile" },
     output_dir: { type: "string", description: "Output directory for exported artifacts" },
   }, [], ["artifact:write"], 300_000, async (_ctx, a) => {
+    if (a.output_dir) {
+      const check = validatePath(a.output_dir as string, true)
+      if (!check.valid) return err(check.error || "output path rejected")
+    }
     const result = buildCodeReviewExport({
       repoRoot: process.cwd(),
       profile: (a.profile as "bootstrap_review" | "gemini_code_review") || "gemini_code_review",
@@ -217,6 +221,14 @@ export function registerOmpRepoIntelTools(): void {
     source_output_path: { type: "string", description: "Path for source output" },
     force: { type: "boolean", description: "Overwrite existing output (default: true)" },
   }, [], ["artifact:write"], 300_000, async (_ctx, a) => {
+    if (a.semantic_output_path) {
+      const check = validatePath(a.semantic_output_path as string, true)
+      if (!check.valid) return err(check.error || "semantic output path rejected")
+    }
+    if (a.source_output_path) {
+      const check = validatePath(a.source_output_path as string, true)
+      if (!check.valid) return err(check.error || "source output path rejected")
+    }
     const result = await reviewPacketExport(process.cwd(), {
       semantic_output_path: a.semantic_output_path as string | undefined,
       source_output_path: a.source_output_path as string | undefined,
@@ -229,6 +241,10 @@ export function registerOmpRepoIntelTools(): void {
     output_path: { type: "string", description: "Output path for the semantic packet" },
     force: { type: "boolean", description: "Overwrite existing output (default: true)" },
   }, [], ["artifact:write"], 300_000, async (_ctx, a) => {
+    if (a.output_path) {
+      const check = validatePath(a.output_path as string, true)
+      if (!check.valid) return err(check.error || "output path rejected")
+    }
     const result = await semanticReviewPacketExport(process.cwd(), {
       output_path: a.output_path as string | undefined,
       force: a.force !== false,
@@ -240,6 +256,14 @@ export function registerOmpRepoIntelTools(): void {
     source_zip_path: { type: "string", description: "Path to source-review ZIP" },
     ir_zip_path: { type: "string", description: "Path to Gemini IR ZIP" },
   }, [], ["artifact:verify"], 120_000, async (_ctx, a) => {
+    if (a.source_zip_path) {
+      const check = validatePath(a.source_zip_path as string, false)
+      if (!check.valid) return err(check.error || "source zip path rejected")
+    }
+    if (a.ir_zip_path) {
+      const check = validatePath(a.ir_zip_path as string, false)
+      if (!check.valid) return err(check.error || "IR zip path rejected")
+    }
     const result = await verifyReviewPackets(process.cwd(), {
       source_zip_path: a.source_zip_path as string | undefined,
       ir_zip_path: a.ir_zip_path as string | undefined,

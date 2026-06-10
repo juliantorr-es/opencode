@@ -24,5 +24,5 @@ export function getCodeIntelligenceDbDir(): string {
 }
 
 export function getCodeIntelligenceMigrationDir(): string {
-  return resolve(process.cwd(), "packages", "tribunus-mcp", "src", "services", "code-intelligence", "store", "migrations")
+  return resolve(new URL("..", import.meta.url).pathname, "services", "code-intelligence", "store", "migrations")
 }
