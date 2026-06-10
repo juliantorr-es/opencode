@@ -4,6 +4,9 @@
 //! through opaque generational-handle indices. The MlxBackend implementation wraps
 //! `mlx_rs::Array` operations behind a generational slot-map registry.
 
+pub mod routing;
+pub mod graph;
+
 use mlx_rs::Array;
 use mlx_rs::ops;
 
