@@ -85,6 +85,12 @@ strip = "symbols"
 lto = true
 codegen-units = 1
 
+[profile.dev]
+opt-level = 3
+
+[profile.test]
+opt-level = 3
+
 [profile.image-build]
 inherits = "release"
 opt-level = 3
