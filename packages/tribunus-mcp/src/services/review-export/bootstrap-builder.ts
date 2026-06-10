@@ -405,9 +405,6 @@ export function buildCodeReviewExport(
     // Copy file
     const buf = readFileSync(src);
     const sha256 = createHash("sha256").update(buf).digest("hex");
-    const destAbs = resolve(repoDir, relPath);
-    mkdirSync(dirname(destAbs), { recursive: true });
-    writeFileSync(destAbs, buf);
 
     includedFiles.push({
       path: relPath,
@@ -484,12 +481,10 @@ export function buildCodeReviewExport(
 
   // ADR JSONs
   if (existsSync(adrDir)) {
-    mkdirSync(adrDestDir, { recursive: true });
     for (const f of readdirSync(adrDir).filter((f) => f.endsWith(".v1.json")).sort()) {
       const src = resolve(adrDir, f);
       const buf = readFileSync(src);
       const sha256 = createHash("sha256").update(buf).digest("hex");
-      writeFileSync(resolve(adrDestDir, f), buf);
       includedFiles.push({
         path: `adr/${f}`,
         size_bytes: buf.length,
@@ -505,7 +500,6 @@ export function buildCodeReviewExport(
       const src = resolve(adrDir, f);
       const buf = readFileSync(src);
       const sha256 = createHash("sha256").update(buf).digest("hex");
-      writeFileSync(resolve(adrDestDir, f), buf);
       includedFiles.push({
         path: `adr/${f}`,
         size_bytes: buf.length,
@@ -519,13 +513,10 @@ export function buildCodeReviewExport(
   for (const dir of ["campaigns", "missions", "lanes", "tasks"]) {
     const srcDir = resolve(w, "docs/json/omp", dir);
     if (existsSync(srcDir)) {
-      const destDir2 = resolve(boardDir, dir);
-      mkdirSync(destDir2, { recursive: true });
       for (const f of readdirSync(srcDir).filter((f) => f.endsWith(".v1.json")).sort()) {
         const src = resolve(srcDir, f);
         const buf = readFileSync(src);
         const sha256 = createHash("sha256").update(buf).digest("hex");
-        writeFileSync(resolve(destDir2, f), buf);
         includedFiles.push({
           path: `board/${dir}/${f}`,
           size_bytes: buf.length,
@@ -539,13 +530,10 @@ export function buildCodeReviewExport(
   // Memory links
   const memoryLinksDir = resolve(w, "docs/json/omp/research/memory-links");
   if (existsSync(memoryLinksDir)) {
-    const destDir2 = resolve(boardDir, "memory-links");
-    mkdirSync(destDir2, { recursive: true });
     for (const f of readdirSync(memoryLinksDir).filter((f) => f.endsWith(".v1.json")).sort()) {
       const src = resolve(memoryLinksDir, f);
       const buf = readFileSync(src);
       const sha256 = createHash("sha256").update(buf).digest("hex");
-      writeFileSync(resolve(destDir2, f), buf);
       includedFiles.push({
         path: `board/memory-links/${f}`,
         size_bytes: buf.length,
@@ -572,7 +560,6 @@ export function buildCodeReviewExport(
         const buf = readFileSync(srcPath);
         const sha256 = createHash("sha256").update(buf).digest("hex");
         const destRel = `research/${rel}`;
-        writeFileSync(resolve(reviewDir, destRel), buf);
         includedFiles.push({
           path: destRel,
           size_bytes: buf.length,
@@ -582,7 +569,6 @@ export function buildCodeReviewExport(
       }
     }
   };
-  mkdirSync(researchDestDir, { recursive: true });
   collectResearch(researchSrcDir, "");
 
   // ── Stage: Required path checking ──
@@ -843,6 +829,44 @@ export function buildCodeReviewExport(
     JSON.stringify(manifest, null, 2),
   );
 
+  // ── Stage: Stage files from manifest ──
+
+  phase = "staging_from_manifest";
+
+  // Collect all zip entries — these are authoritative: the zip will contain
+  // exactly these paths relative to reviewDir (plus metadata/manifest files).
+  const zipManifestEntries: string[] = [];
+
+  for (const f of includedFiles) {
+    let sourcePath: string;
+    let zipEntry: string;
+
+    if (f.category === "source") {
+      sourcePath = resolve(w, f.path);
+      zipEntry = `repo/${f.path}`;
+    } else if (f.category === "adr") {
+      // f.path is "adr/<filename>" → source is "docs/adr/<filename>"
+      sourcePath = resolve(w, "docs/adr", basename(f.path));
+      zipEntry = f.path;
+    } else if (f.category === "board") {
+      // f.path is "board/<dir>/<file>" → source is "docs/json/omp/<dir>/<file>"
+      sourcePath = resolve(w, "docs/json/omp", f.path.slice("board/".length));
+      zipEntry = f.path;
+    } else if (f.category === "research") {
+      // f.path is "research/<rel>" → source is "docs/json/omp/research/<rel>"
+      sourcePath = resolve(w, "docs/json/omp/research", f.path.slice("research/".length));
+      zipEntry = f.path;
+    } else {
+      sourcePath = resolve(w, f.path);
+      zipEntry = f.path;
+    }
+
+    const dst = resolve(reviewDir, zipEntry);
+    mkdirSync(dirname(dst), { recursive: true });
+    writeFileSync(dst, readFileSync(sourcePath));
+    zipManifestEntries.push(zipEntry);
+  }
+
   // ── Stage: Write warnings markdown ──
 
   phase = "writing_warnings";
@@ -974,16 +998,38 @@ export function buildCodeReviewExport(
 
   phase = "zipping";
 
+  // Append metadata and review packet entries to the manifest-derived list
+  // (these were written to staging by earlier phases, not from includedFiles)
+  const extraEntries: string[] = [
+    "REVIEW_PACKET_MANIFEST.json",
+    "REVIEW_PACKET_WARNINGS.md",
+    "REVIEW_PACKET_SUMMARY.md",
+    "REVIEW_PACKET_TREE.txt",
+    "metadata/git-status.txt",
+    "metadata/tracked-files.txt",
+    "metadata/included-files.txt",
+    "metadata/excluded-files.txt",
+    "metadata/oversized-files.txt",
+    "metadata/export-policy.json",
+    "metadata/checksums.sha256",
+    "metadata/unresolved-imports.txt",
+    "metadata/missing-expected-files.txt",
+  ];
+  if (diffPath) extraEntries.push("metadata/git-diff.patch");
+  if (profile === "gemini_code_review") extraEntries.push("GEMINI_REVIEW_GUIDE.md");
+
+  const finalZipEntries = [...zipManifestEntries, ...extraEntries];
+
   if (signal?.aborted) throw new Error("code_review_export cancelled before zip");
 
   const zipPath = outputPath ? resolve(outputPath) : resolve(w, getZipName(profile));
   const tmpZipPath = resolve(dirname(zipPath), `.${packetRoot}.${Date.now()}.zip.tmp`);
 
   const archive = createZipCliArchiveBackend();
-  const zipResult = archive.zipDirectory({
+  const zipResult = archive.zipManifest({
     source_dir: reviewDir,
     archive_path: tmpZipPath,
-    stage: "semantic_zip" as const,
+    entries: finalZipEntries,
   });
 
   // Atomically replace

@@ -107,6 +107,26 @@ export class ArtifactRegistryService {
     await this.emitEvent(artifactId, record.state, "producing", "artifact_production_started", invocationId)
   }
 
+  async failProduction(artifactId: string, input: {
+    phase: string
+    errorClass: string
+    stderrPath?: string
+    partialArtifactPath?: string
+    reason?: string
+    invocationId?: string
+  }): Promise<void> {
+    const record = await this.get(artifactId)
+    if (record.state !== 'reserved' && record.state !== 'producing') {
+      return // Already finalized or already failed — idempotent
+    }
+    await this.db.query(
+      `UPDATE artifacts_v2 SET state='partial', metadata = COALESCE(metadata::jsonb, '{}'::jsonb) || $1::jsonb
+       WHERE artifact_id=$2`,
+      [JSON.stringify({ error_phase: input.phase, error_class: input.errorClass, stderr_path: input.stderrPath, partial_path: input.partialArtifactPath, reason: input.reason }), artifactId],
+    )
+    await this.emitEvent(artifactId, record.state, 'partial', 'artifact_partial', input.invocationId, input.reason ?? `Failed at phase ${input.phase}: ${input.errorClass}`)
+  }
+
   async finalizeFile(input: FinalizeInput): Promise<FinalizeOutput> {
     const record = await this.get(input.artifactId)
     if (record.state === "finalized" && input.idempotencyKey) {
