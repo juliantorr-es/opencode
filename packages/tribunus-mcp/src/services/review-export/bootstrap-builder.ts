@@ -13,6 +13,7 @@ import {
   statSync,
   renameSync,
 } from "node:fs";
+import { execSync } from "node:child_process";
 import { resolve, dirname, basename } from "node:path";
 import { createHash } from "node:crypto";
 import { tmpdir } from "node:os";
@@ -166,7 +167,12 @@ export function buildCodeReviewExport(
   if (signal?.aborted) throw new Error("code_review_export cancelled");
 
   const packetRoot = getPacketRoot(profile);
-  const now = new Date().toISOString();
+  // Deterministic: use git commit timestamp, not wall-clock time
+  let now = new Date().toISOString()
+  try {
+    const gitDate = execSync("git log -1 --format=%cI", { cwd: w, stdio: ["ignore", "pipe", "ignore"], encoding: "utf-8" }).toString().trim()
+    if (gitDate) now = gitDate
+  } catch {}
   let phase = "reading";
   const exportStarted = performance.now();
   const timingsMs: Record<string, number> = {};
