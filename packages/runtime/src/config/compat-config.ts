@@ -97,9 +97,8 @@ export function resolveConfigPath(cwd: string): {
  */
 export const loadConfig = Effect.fn("ConfigCompat.loadConfig")(function (
   cwd: string,
-): Effect.Effect<Config | undefined> {
+): Effect.Effect<Config | undefined, Error, AppFileSystem.Service> {
   return Effect.gen(function* () {
-    // @ts-expect-error Effect 4 Service dependency inference
     const fs = yield* AppFileSystem.Service
   const { canonical, legacy, active } = resolveConfigPath(cwd)
 
@@ -144,9 +143,8 @@ const MIGRATION_MARKER = ".migration-receipt"
  * receipt without touching disk.
  */
 export const migrateLegacyConfig = Effect.fn("ConfigCompat.migrateLegacyConfig")(
-  function (cwd: string): Effect.Effect<MigrationReceipt> {
+  function (cwd: string): Effect.Effect<MigrationReceipt, Error, AppFileSystem.Service> {
     return Effect.gen(function* () {
-      // @ts-expect-error Effect 4 Service dependency inference
       const fs = yield* AppFileSystem.Service
     const { canonical, legacy } = resolveConfigPath(cwd)
     const now = new Date().toISOString()

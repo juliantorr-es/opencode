@@ -36,6 +36,7 @@ async function xreadgroupOp() {
   )
   // Narrow null first, then destructure
   if (result) {
+    // @ts-expect-error ioredis xreadgroup returns unknown; runtime destructure is correct
     for (const [streamName, entries] of result) {
       void streamName
       if (entries) {

@@ -310,8 +310,8 @@ const parser = lazy(async () => {
     with: { type: "wasm" },
   })
   const treePath = resolveWasm(treeWasm)
+  // @ts-expect-error EmscriptenModule type mismatch
   await Parser.init({
-    // @ts-expect-error EmscriptenModule type mismatch — runtime args are correct
     locateFile() {
       return treePath
     },

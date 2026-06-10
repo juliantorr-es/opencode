@@ -57,7 +57,7 @@ describe("planCoordinationRecovery", () => {
 
     expect(plan.state).toBe("coordination_rebuilding")
     expect(plan.finalState).toBe("coordination_refused")
-    expect(plan.receipt?.reasons).toEqual(
+    expect((plan.receipt as any)?.reasons).toEqual(
       expect.arrayContaining(["generation_mismatch", "unsafe_in_flight_work", "missing_durable_receipt"]),
     )
   })
@@ -77,7 +77,7 @@ describe("planCoordinationRecovery", () => {
 
     expect(plan.state).toBe("coordination_rebuilding")
     expect(plan.finalState).toBe("coordination_degraded")
-    expect(plan.receipt?.reasons).toEqual(expect.arrayContaining(["generation_mismatch", "unsafe_in_flight_work"]))
+    expect((plan.receipt as any)?.reasons).toEqual(expect.arrayContaining(["generation_mismatch", "unsafe_in_flight_work"]))
   })
 
   test("returns unavailable when valkey cannot be reached", () => {
@@ -112,7 +112,7 @@ describe("planCoordinationRecovery", () => {
     })
 
     expect(plan.receipt).toBeDefined()
-    await Effect.runPromise(persistCoordinationRecoveryReceipt(plan.receipt!))
+    await persistCoordinationRecoveryReceipt(plan.receipt! as any)
 
     const rows = await Database.use((db) => db.select().from(CoordinationRecoveryTable).where(eq(CoordinationRecoveryTable.id, plan.receipt!.id)).execute())
     expect(rows).toHaveLength(1)

@@ -138,7 +138,7 @@ describe("Bank Isolation Hardening", () => {
     }
     // cleanupStatus is always present: "cleaned" | "skipped" | "failed".
     // With writeBank="default", cleanup is skipped (default is never cleaned).
-    expect(["cleaned", "skipped", "failed"]).toContain(receipt.cleanupStatus);
+    expect(["cleaned", "skipped", "failed"]).toContain(receipt.cleanupStatus as any);
   });
 
   test("bank list returns at minimum the 'default' bank", async () => {

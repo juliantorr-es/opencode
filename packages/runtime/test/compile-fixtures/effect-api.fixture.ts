@@ -43,6 +43,7 @@ class LoggerService extends Context.Service<LoggerService, LoggerShape>()(
   undefined
 ) {
   constructor(private readonly prefix: string) {
+    // @ts-expect-error ServiceClass constructor inference limitation in beta.66
     super()
   }
   log(msg: string): Effect.Effect<void> {

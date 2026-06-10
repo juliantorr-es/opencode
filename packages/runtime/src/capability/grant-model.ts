@@ -33,7 +33,6 @@ export const Capability = Schema.Struct({
   /** The grant receipt ID that backs this capability */
   grantReceiptId: Schema.String,
   /** When this capability was granted */
-  // @ts-expect-error Schema v4 Struct accepts raw schema, tsgo can't prove it
   grantedAt: Schema.Number,
   /** When this capability expires (null = permanent) */
   // @ts-expect-error Schema v4 Struct accepts raw schema, tsgo can't prove it
@@ -56,7 +55,7 @@ export function composeCapabilities(a: Capability, b: Capability): Capability {
   const expiresAt =
     a.expiresAt === null ? b.expiresAt :
     b.expiresAt === null ? a.expiresAt :
-    Math.min(a.expiresAt, b.expiresAt)
+    Math.min(a.expiresAt as number, b.expiresAt as number)
 
   return {
     ...a,

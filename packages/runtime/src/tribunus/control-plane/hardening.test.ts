@@ -194,7 +194,7 @@ describe("Domain 1: Relational Integrity", () => {
       scope: "test",
       status: "idle",
       writePaths: ["/test"],
-    }, TEST_DB);
+    } as any, TEST_DB)
     expect(receipt.success).toBe(false);
     expect(receipt.verdict).toBe("fail");
     expect(receipt.error).toContain("INVALID_PARENT");

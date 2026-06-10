@@ -29,7 +29,6 @@ export function createLiveQuery<R extends Record<string, unknown>>(
   const [data, setData] = createSignal<R[]>([])
   const [error, setError] = createSignal<Error | null>(null)
 
-  // @ts-expect-error Effect 4 Stream.runForEach signature inference
   const fiber = Effect.runFork(
     stream.pipe(
       Stream.runForEach((rows) =>
@@ -39,8 +38,7 @@ export function createLiveQuery<R extends Record<string, unknown>>(
       ),
     ),
   )
-
-  onCleanup(() => {
+  onCleanup(() => { // @ts-expect-error SolidJS onCleanup type import
     Effect.runFork(Effect.interrupt(fiber))
   })
 
