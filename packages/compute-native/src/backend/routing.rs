@@ -591,40 +591,39 @@ pub fn validate_boundary_plans(
             _ => {}
         }
 
-        // Eager: only reject unevaluated deferred dependencies that cross
-        // the boundary.  A dependency whose output is materialized and
-        // synchronized in this boundary is allowed to be consumed downstream.
-        if let EvaluationPolicy::Eager { prohibit_deferred_nodes: true, .. } = &plan.policy {
+        // ── Per-edge validation (runs for every crossing dependency) ──
+        for edge in ctx.dependency_edges {
+            let from_boundary = op_to_boundary.get(&edge.from);
+            let to_boundary = op_to_boundary.get(&edge.to);
+            if from_boundary != Some(&plan.group_id)
+                || to_boundary.is_none()
+                || to_boundary == from_boundary
+            {
+                continue;
+            }
 
-            let is_synchronized = plan.synchronization.is_synchronized();
-            for edge in ctx.dependency_edges {
-                let from_boundary = op_to_boundary.get(&edge.from);
-                let to_boundary = op_to_boundary.get(&edge.to);
-                if from_boundary == Some(&plan.group_id)
-                    && to_boundary.is_some()
-                    && to_boundary != from_boundary
-                {
-                    // Allow if the via tensor is materialized in this
-                    // boundary AND the boundary is synchronized.
-                    let output_is_materialized = materialized_outputs
-                        .get(&plan.group_id)
-                        .map(|outputs| outputs.contains(&edge.via_tensor))
-                        .unwrap_or(false);
-                    // Release-liveness: consumed downstream must not be released here
-                    let released_here = plan.release_after.contains(&edge.via_tensor);
-                    if released_here {
-                        errors.push(PlanValidationError::EagerWithDeferredDependency {
-                            op: edge.from,
-                            via: edge.via_tensor,
-                            crosses_boundary_to: *to_boundary.unwrap(),
-                        });
-                    } else if !(output_is_materialized && is_synchronized) {
-                        errors.push(PlanValidationError::EagerWithDeferredDependency {
-                            op: edge.from,
-                            via: edge.via_tensor,
-                            crosses_boundary_to: *to_boundary.unwrap(),
-                        });
-                    }
+            // Release-liveness: a tensor consumed downstream must not be
+            // released at the producing boundary (graph invariant, all policies).
+            if plan.release_after.contains(&edge.via_tensor) {
+                errors.push(PlanValidationError::EagerWithDeferredDependency {
+                    op: edge.from,
+                    via: edge.via_tensor,
+                    crosses_boundary_to: *to_boundary.unwrap(),
+                });
+            }
+
+            // Eager-specific: unevaluated deferred dependency crossing check
+            if let EvaluationPolicy::Eager { prohibit_deferred_nodes: true, .. } = &plan.policy {
+                let output_is_materialized = materialized_outputs
+                    .get(&plan.group_id)
+                    .map(|outputs| outputs.contains(&edge.via_tensor))
+                    .unwrap_or(false);
+                if !(output_is_materialized && plan.synchronization.is_synchronized()) {
+                    errors.push(PlanValidationError::EagerWithDeferredDependency {
+                        op: edge.from,
+                        via: edge.via_tensor,
+                        crosses_boundary_to: *to_boundary.unwrap(),
+                    });
                 }
             }
         }
