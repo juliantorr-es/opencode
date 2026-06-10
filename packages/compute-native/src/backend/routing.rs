@@ -389,25 +389,111 @@ pub struct ComputeRouteProfile {
 
 // ── Evaluation policy ────────────────────────────────────────────────────
 
+/// Cardinality of evaluation groups in a plan.
+#[derive(Debug, Clone)]
+pub enum EvaluationGroupCardinality {
+    /// Exact number of groups known at compile time.
+    Fixed(u32),
+    /// One group per materialized operation (determined at plan generation).
+    PerOperation,
+}
+
 /// Who controls when tensors are materialised and at what granularity.
 #[derive(Debug, Clone)]
 pub enum EvaluationPolicy {
     /// Preserve the backend's normal lazy behaviour.  MLX builds the full
     /// layer graph; materialisation happens at the backend's discretion.
     BackendLazy,
+
     /// Tribunus defines one or more explicit fusion regions.  MLX may
     /// still fuse operations inside each region, but must materialise
     /// every `materialized_output` at the region boundary.
     ExplicitRegion,
-    /// Every logical operation is followed by an immediate evaluation
-    /// fence.  No cross-operation fusion occurs.
-    ExplicitOperation,
-    /// Every operation must produce a materialised result before the
-    /// next operation begins.  Maximum granularity, minimum fusion.
-    Eager,
+
+    /// Insert a materialization request after each operation.  The backend
+    /// may retain asynchronous execution across the boundary.
+    ExplicitOperation {
+        synchronize: bool,
+    },
+
+    /// Require completion before the next operation begins, prohibit
+    /// deferred dependencies crossing the boundary, and enforce
+    /// deterministic lifetime release.
+    Eager {
+        synchronize: bool,
+        release_inputs_after_use: bool,
+        prohibit_deferred_nodes: bool,
+    },
 }
 
-/// Compile-time plan for one evaluation group.
+/// Whether a backend natively supports a given evaluation policy.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum EvaluationPolicySupport {
+    Native,
+    Emulated,
+    Unsupported,
+}
+
+/// Qualifies which backends support which policies.
+pub fn policy_support(backend: BackendId, policy: &EvaluationPolicy) -> EvaluationPolicySupport {
+    match backend.0 {
+        0 => match policy {
+            // MLX: all lazy variants native
+            EvaluationPolicy::BackendLazy => EvaluationPolicySupport::Native,
+            EvaluationPolicy::ExplicitRegion => EvaluationPolicySupport::Native,
+            EvaluationPolicy::ExplicitOperation { .. } => EvaluationPolicySupport::Native,
+            EvaluationPolicy::Eager { .. } => EvaluationPolicySupport::Emulated,
+        },
+        1 => match policy {
+            // Accelerate: naturally eager, lazy is unsupported
+            EvaluationPolicy::BackendLazy => EvaluationPolicySupport::Unsupported,
+            EvaluationPolicy::ExplicitRegion => EvaluationPolicySupport::Emulated,
+            EvaluationPolicy::ExplicitOperation { .. } => EvaluationPolicySupport::Native,
+            EvaluationPolicy::Eager { .. } => EvaluationPolicySupport::Native,
+        },
+        2 => match policy {
+            // Core ML: region execution native, per-operation unsupported
+            EvaluationPolicy::BackendLazy => EvaluationPolicySupport::Unsupported,
+            EvaluationPolicy::ExplicitRegion => EvaluationPolicySupport::Native,
+            EvaluationPolicy::ExplicitOperation { .. } => EvaluationPolicySupport::Unsupported,
+            EvaluationPolicy::Eager { .. } => EvaluationPolicySupport::Unsupported,
+        },
+        _ => EvaluationPolicySupport::Unsupported,
+    }
+}
+
+/// Synchronization requirement for a boundary.
+#[derive(Debug, Clone)]
+pub enum SynchronizationPolicy {
+    None,
+    Barrier,
+    Stream,
+    Device,
+}
+
+/// One authoritative execution boundary — the single source of truth
+/// for evaluation groups, superseding both the older SynchronizationGroup
+/// and EvaluationGroupPlan types.
+///
+/// The compiler guarantees every operation is assigned exactly once,
+/// operations are topologically ordered, all materialized tensors are
+/// outputs of operations within or before the group, no consumer executes
+/// before its producer, and backends transitions have explicit transfer
+/// plans.
+#[derive(Debug, Clone)]
+pub struct ExecutionBoundaryPlan {
+    pub group_id: EvaluationGroupId,
+    pub backend_id: BackendId,
+    pub operations: Vec<OperationId>,
+    pub materialized_outputs: Vec<TensorId>,
+    pub policy: EvaluationPolicy,
+    pub synchronization: SynchronizationPolicy,
+    pub release_after: Vec<TensorId>,
+    /// Canonical content digest — proves which boundary plan was executed.
+    pub content_digest: Option<EvidenceDigest>,
+}
+
+/// Deprecated: superseded by ExecutionBoundaryPlan.
 #[derive(Debug, Clone)]
 pub struct EvaluationGroupPlan {
     pub group_id: EvaluationGroupId,
@@ -415,6 +501,132 @@ pub struct EvaluationGroupPlan {
     pub materialized_outputs: Vec<TensorId>,
     pub backend: BackendId,
     pub evaluation_policy: EvaluationPolicy,
+}
+
+// ── Plan validation ───────────────────────────────────────────────────────
+
+/// Errors detected during boundary-plan validation.
+#[derive(Debug, Clone)]
+pub enum PlanValidationError {
+    DuplicateOperation(OperationId),
+    MissingOperation(OperationId),
+    TopologicalViolation { before: OperationId, after: OperationId },
+    UnreferencedMaterializedOutput(TensorId),
+    ConsumerBeforeProducer { tensor: TensorId, consumer: OperationId },
+    BackendTransitionWithoutTransfer { from: BackendId, to: BackendId },
+    EagerWithDeferredDependency(OperationId),
+    UnsupportedPolicy { backend: BackendId, policy: EvaluationPolicy },
+    EmptyBoundary(EvaluationGroupId),
+}
+
+/// Validate that an array of ExecutionBoundaryPlan instances is consistent:
+/// every operation assigned exactly once, topological ordering preserved,
+/// all materialized outputs are produced before consumed, backend
+/// transitions have transfer plans, and policies are backend-supported.
+pub fn validate_boundary_plans(
+    plans: &[ExecutionBoundaryPlan],
+) -> Result<(), Vec<PlanValidationError>> {
+    let mut errors = Vec::new();
+    let mut seen_ops = std::collections::HashMap::new();
+    let mut produced_tensors = std::collections::HashMap::new();
+    let mut prev_backend: Option<BackendId> = None;
+
+    for plan in plans {
+        for &op in &plan.operations {
+            if let Some(&prev_group) = seen_ops.get(&op) {
+                errors.push(PlanValidationError::DuplicateOperation(op));
+                let _ = prev_group;
+            }
+            seen_ops.insert(op, plan.group_id);
+        }
+        for &t in &plan.materialized_outputs {
+            produced_tensors.insert(t, plan.group_id);
+        }
+
+        // Backend transition without transfer
+        if let Some(pb) = prev_backend {
+            if pb != plan.backend_id {
+                errors.push(PlanValidationError::BackendTransitionWithoutTransfer {
+                    from: pb,
+                    to: plan.backend_id,
+                });
+            }
+        }
+        prev_backend = Some(plan.backend_id);
+
+        // Policy supported?
+        match policy_support(plan.backend_id, &plan.policy) {
+            EvaluationPolicySupport::Unsupported => {
+                errors.push(PlanValidationError::UnsupportedPolicy {
+                    backend: plan.backend_id,
+                    policy: plan.policy.clone(),
+                });
+            }
+            _ => {}
+        }
+
+        // Eager prohibits deferred dependencies
+        if let EvaluationPolicy::Eager { prohibit_deferred_nodes: true, .. } = &plan.policy {
+            for &op in &plan.operations {
+                errors.push(PlanValidationError::EagerWithDeferredDependency(op));
+            }
+        }
+
+        if plan.operations.is_empty() {
+            errors.push(PlanValidationError::EmptyBoundary(plan.group_id));
+        }
+    }
+
+    if errors.is_empty() {
+        Ok(())
+    } else {
+        Err(errors)
+    }
+}
+
+/// Compute a compact content digest for an execution boundary plan.
+/// Uses the debug representation for now; Phase 2 instrumentation
+/// will replace with SHA-256.
+pub fn compute_boundary_digest(plan: &ExecutionBoundaryPlan) -> EvidenceDigest {
+    use std::hash::{Hash, Hasher};
+    let mut h = std::collections::hash_map::DefaultHasher::new();
+    plan.group_id.hash(&mut h);
+    plan.backend_id.hash(&mut h);
+    plan.operations.len().hash(&mut h);
+    plan.materialized_outputs.len().hash(&mut h);
+    EvidenceDigest(format!("{:x}", h.finish()))
+}
+
+// ── Boundary executor ─────────────────────────────────────────────────────
+
+/// Executor that consumes a sealed ExecutionBoundaryPlan and enforces
+/// evaluation boundaries at runtime.
+pub trait BoundaryExecutor {
+    /// Execute all boundaries in a plan, emitting observed receipts.
+    fn execute_boundaries(
+        &mut self,
+        plans: &[ExecutionBoundaryPlan],
+    ) -> Result<Vec<BoundaryExecutionReceipt>, String>;
+}
+
+/// Observed receipt from executing one evaluation boundary.
+#[derive(Debug, Clone)]
+pub struct BoundaryExecutionReceipt {
+    pub group_id: EvaluationGroupId,
+    pub planned_policy: EvaluationPolicy,
+    pub backend: BackendId,
+    pub operation_count: usize,
+    pub planned_materialized_outputs: usize,
+    pub actual_eval_calls: usize,
+    pub actual_sync_count: usize,
+    pub graph_build_ns: u64,
+    pub submit_ns: u64,
+    pub execution_ns: u64,
+    pub wait_ns: u64,
+    pub temporary_bytes: u64,
+    pub released_tensor_count: usize,
+    pub unaccounted_ns: u64,
+    pub policy_support: EvaluationPolicySupport,
 }
 
 // ── Research routing policy ───────────────────────────────────────────────

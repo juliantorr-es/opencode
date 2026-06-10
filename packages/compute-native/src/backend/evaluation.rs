@@ -16,13 +16,13 @@
 
 use super::routing::*;
 
-/// Named evaluation-boundary profile.
+/// Named evaluation-boundary profile with typed cardinality.
 #[derive(Debug, Clone)]
 pub struct EvaluationSweepProfile {
     pub name: String,
     pub policy: EvaluationPolicy,
     pub description: String,
-    pub group_count: usize,
+    pub cardinality: EvaluationGroupCardinality,
 }
 
 /// The four canonical profiles for the evaluation-boundary sweep.
@@ -32,25 +32,29 @@ pub fn sweep_profiles() -> Vec<EvaluationSweepProfile> {
             name: "EVAL-P0".into(),
             policy: EvaluationPolicy::BackendLazy,
             description: "Full-layer MLX lazy graph — one evaluation fence".into(),
-            group_count: 1,
+            cardinality: EvaluationGroupCardinality::Fixed(1),
         },
         EvaluationSweepProfile {
             name: "EVAL-P1".into(),
             policy: EvaluationPolicy::ExplicitRegion,
             description: "Attention + MLP split into two evaluation groups".into(),
-            group_count: 2,
+            cardinality: EvaluationGroupCardinality::Fixed(2),
         },
         EvaluationSweepProfile {
             name: "EVAL-P2".into(),
             policy: EvaluationPolicy::ExplicitRegion,
             description: "Projection-family boundaries (qkv, attn, o, mlp)".into(),
-            group_count: 4,
+            cardinality: EvaluationGroupCardinality::Fixed(4),
         },
         EvaluationSweepProfile {
             name: "EVAL-P3".into(),
-            policy: EvaluationPolicy::Eager,
+            policy: EvaluationPolicy::Eager {
+                synchronize: true,
+                release_inputs_after_use: true,
+                prohibit_deferred_nodes: true,
+            },
             description: "Every operation materialised individually".into(),
-            group_count: 0,
+            cardinality: EvaluationGroupCardinality::PerOperation,
         },
     ]
 }
