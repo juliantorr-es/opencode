@@ -9,6 +9,7 @@ pub mod graph;
 pub mod tensor_registry;
 pub mod coreml;
 pub mod accelerate;
+pub mod accelerate_ffi;
 pub mod evaluation;
 
 use mlx_rs::Array;

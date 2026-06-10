@@ -24,6 +24,10 @@ pub struct RegionExecutionReceipt {
     pub execution: BackendExecutionReceipt,
     pub compile_cache_hit: bool,
     pub compile_ns: u64,
+    /// Logical tensor IDs consumed by this region execution.
+    pub input_tensors: Vec<crate::backend::routing::TensorId>,
+    /// Logical tensor IDs produced.
+    pub output_tensors: Vec<crate::backend::routing::TensorId>,
 }
 
 /// Backend that executes compiled graph regions rather than individual
@@ -44,7 +48,7 @@ pub trait GraphBackend {
     fn execute_region(
         &mut self,
         region: CompiledRegionHandle,
-        inputs: &[TensorHandle],
+        inputs: &[crate::backend::routing::TensorId],
     ) -> Result<RegionExecutionReceipt, String>;
 
     /// Return the backend identity.

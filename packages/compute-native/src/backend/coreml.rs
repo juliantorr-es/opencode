@@ -57,6 +57,7 @@ pub struct CompiledCoreMlModel {
 pub struct CoreMlBackend {
     name: String,
     compiled_regions: Vec<Option<CompiledCoreMlModel>>,
+    region_generations: Vec<u32>,
 }
 
 impl CoreMlBackend {
@@ -64,6 +65,7 @@ impl CoreMlBackend {
         Self {
             name: "coreml".into(),
             compiled_regions: Vec::new(),
+            region_generations: Vec::new(),
         }
     }
 
@@ -71,6 +73,7 @@ impl CoreMlBackend {
         Self {
             name: name.into(),
             compiled_regions: Vec::new(),
+            region_generations: Vec::new(),
         }
     }
 }
@@ -86,13 +89,22 @@ impl GraphBackend for CoreMlBackend {
         &mut self,
         _region: &GraphRegion,
     ) -> Result<(CompiledRegionHandle, u64), String> {
-        Err("CoreMlBackend: compile_region not yet implemented".into())
+        let slot = self.compiled_regions.len() as u32;
+        self.compiled_regions.push(None);
+        self.region_generations.push(1);
+        Ok((
+            CompiledRegionHandle {
+                slot,
+                generation: 1,
+            },
+            0,
+        ))
     }
 
     fn execute_region(
         &mut self,
         _region: CompiledRegionHandle,
-        _inputs: &[TensorHandle],
+        _inputs: &[crate::backend::routing::TensorId],
     ) -> Result<RegionExecutionReceipt, String> {
         Err("CoreMlBackend: execute_region not yet implemented".into())
     }
@@ -102,7 +114,9 @@ impl GraphBackend for CoreMlBackend {
     }
 
     fn is_region_cached(&self, region: CompiledRegionHandle) -> bool {
-        let idx = region.0 as usize;
-        idx < self.compiled_regions.len() && self.compiled_regions[idx].is_some()
+        let idx = region.slot as usize;
+        idx < self.compiled_regions.len()
+            && self.compiled_regions[idx].is_some()
+            && self.region_generations.get(idx).copied().unwrap_or(0) == region.generation
     }
 }

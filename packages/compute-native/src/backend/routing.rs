@@ -38,7 +38,12 @@ pub struct TensorMaterializationId(pub u64);
 
 /// Identifies a compiled graph region.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub struct CompiledRegionHandle(pub u64);
+pub struct CompiledRegionHandle {
+    /// Slot index into the backend's compiled region array.
+    pub slot: u32,
+    /// Generation counter, bumped on eviction/replacement.
+    pub generation: u32,
+}
 
 /// Identifies an evaluation group (synchronization fence).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]

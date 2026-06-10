@@ -6,6 +6,7 @@
 //! component handles each operation family.
 
 use super::routing::*;
+use super::accelerate_ffi;
 use super::*;
 
 /// Sublibrary within the Accelerate framework.
@@ -46,17 +47,31 @@ pub fn sublibrary_for(family: OperationFamily) -> Option<AccelerateSubLibrary> {
 /// Accelerate CPU backend.
 pub struct AccelerateBackend {
     name: String,
+    tensors: Vec<Option<Vec<f32>>>,
+    generations: Vec<u32>,
+    shapes: Vec<Option<Vec<i32>>>,
+    free_list: Vec<usize>,
 }
 
 impl AccelerateBackend {
     pub fn new() -> Self {
         Self {
             name: "accelerate".into(),
+            tensors: Vec::new(),
+            generations: Vec::new(),
+            shapes: Vec::new(),
+            free_list: Vec::new(),
         }
     }
 
     pub fn with_name(name: impl Into<String>) -> Self {
-        Self { name: name.into() }
+        Self {
+            name: name.into(),
+            tensors: Vec::new(),
+            generations: Vec::new(),
+            shapes: Vec::new(),
+            free_list: Vec::new(),
+        }
     }
 
     /// Dispatch a single operation through the routing layer
@@ -81,8 +96,23 @@ impl Default for AccelerateBackend {
 }
 
 impl TensorBackend for AccelerateBackend {
-    fn create_f32(&mut self, _data: &[f32], _shape: &[i32]) -> Result<TensorHandle, String> {
-        Err("AccelerateBackend: create_f32 not yet implemented".into())
+    fn create_f32(&mut self, data: &[f32], shape: &[i32]) -> Result<TensorHandle, String> {
+        let idx = if let Some(idx) = self.free_list.pop() {
+            self.generations[idx] += 1;
+            self.tensors[idx] = Some(data.to_vec());
+            self.shapes[idx] = Some(shape.to_vec());
+            idx
+        } else {
+            let idx = self.tensors.len();
+            self.tensors.push(Some(data.to_vec()));
+            self.generations.push(1);
+            self.shapes.push(Some(shape.to_vec()));
+            idx
+        };
+        Ok(TensorHandle {
+            slot: idx as u32,
+            generation: self.generations[idx],
+        })
     }
     fn create_u32(&mut self, _data: &[u32], _shape: &[i32]) -> Result<TensorHandle, String> {
         Err("AccelerateBackend: create_u32 not yet implemented".into())
@@ -112,13 +142,39 @@ impl TensorBackend for AccelerateBackend {
     ) -> Result<TensorHandle, String> {
         Err("AccelerateBackend: quantized_matmul not yet implemented".into())
     }
-    fn matmul(
-        &mut self,
-        _op: &MatmulOp,
-        _a: TensorHandle,
-        _b: TensorHandle,
-    ) -> Result<TensorHandle, String> {
-        Err("AccelerateBackend: matmul not yet implemented".into())
+    fn matmul(&mut self, op: &MatmulOp, a: TensorHandle, b: TensorHandle) -> Result<TensorHandle, String> {
+        let a_data = self.read_f32(a)?;
+        let b_data = self.read_f32(b)?;
+
+        let m = op.m as i32;
+        let n = op.n as i32;
+        let k = op.k as i32;
+        let mut c_data = vec![0.0f32; (m * n) as usize];
+
+        let alpha: f32 = 1.0;
+        let beta: f32 = 0.0;
+
+        unsafe {
+            accelerate_ffi::cblas_sgemm(
+                accelerate_ffi::CBLAS_ROW_MAJOR,
+                accelerate_ffi::CBLAS_NO_TRANS,
+                accelerate_ffi::CBLAS_NO_TRANS,
+                m,
+                n,
+                k,
+                &alpha as *const f32,
+                a_data.data.as_ptr(),
+                k,
+                b_data.data.as_ptr(),
+                n,
+                &beta as *const f32,
+                c_data.as_mut_ptr(),
+                n,
+            );
+        }
+
+        let out = self.create_f32(&c_data, &[m, n])?;
+        Ok(out)
     }
     fn rms_norm(
         &mut self,
@@ -172,17 +228,57 @@ impl TensorBackend for AccelerateBackend {
     ) -> Result<EvaluationReceipt, String> {
         Err("AccelerateBackend: evaluate not yet implemented".into())
     }
-    fn read_f32(&mut self, _handle: TensorHandle) -> Result<ReadbackReceipt, String> {
-        Err("AccelerateBackend: read_f32 not yet implemented".into())
+    fn read_f32(&mut self, handle: TensorHandle) -> Result<ReadbackReceipt, String> {
+        let slot = handle.slot as usize;
+        let gen = handle.generation;
+        match self.tensors.get(slot) {
+            Some(Some(data)) if gen == self.generations[slot] => Ok(ReadbackReceipt {
+                data: data.clone(),
+                forced_eval: false,
+                sync_ns: 0,
+                observed_substrate: Some("accelerate".into()),
+            }),
+            _ => Err(format!(
+                "AccelerateBackend: invalid tensor handle (slot={}, gen={})",
+                slot, gen,
+            )),
+        }
     }
-    fn shape(&self, _handle: TensorHandle) -> Result<Vec<i32>, String> {
-        Err("AccelerateBackend: shape not yet implemented".into())
+    fn shape(&self, handle: TensorHandle) -> Result<Vec<i32>, String> {
+        let slot = handle.slot as usize;
+        let gen = handle.generation;
+        match self.shapes.get(slot) {
+            Some(Some(shape)) if gen == self.generations[slot] => Ok(shape.clone()),
+            _ => Err(format!(
+                "AccelerateBackend: invalid tensor handle (slot={}, gen={})",
+                slot, gen,
+            )),
+        }
     }
-    fn release(&mut self, _handle: TensorHandle) -> Result<(), String> {
-        Err("AccelerateBackend: release not yet implemented".into())
+    fn release(&mut self, handle: TensorHandle) -> Result<(), String> {
+        let slot = handle.slot as usize;
+        let gen = handle.generation;
+        match self.tensors.get(slot) {
+            Some(Some(_)) if gen == self.generations[slot] => {
+                self.tensors[slot] = None;
+                self.shapes[slot] = None;
+                self.free_list.push(slot);
+                Ok(())
+            }
+            _ => Err(format!(
+                "AccelerateBackend: invalid tensor handle (slot={}, gen={})",
+                slot, gen,
+            )),
+        }
     }
     fn active_memory(&self) -> (u64, u64) {
-        (0, 0)
+        let active: u64 = self
+            .tensors
+            .iter()
+            .filter_map(|t| t.as_ref())
+            .map(|d| (d.len() * 4) as u64)
+            .sum();
+        (active, 0)
     }
     fn backend_capabilities(&self) -> BackendCapabilities {
         BackendCapabilities {
