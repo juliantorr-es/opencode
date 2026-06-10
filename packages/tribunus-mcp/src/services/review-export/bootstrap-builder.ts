@@ -61,6 +61,7 @@ import type { ReviewExportProgressEventV1 } from "./progress.js";
 export interface BuildCodeReviewExportOptions {
   repoRoot: string;
   profile: "bootstrap_review" | "gemini_code_review";
+  outputPath?: string;
   includeUntracked?: boolean;
   onProgress?: (event: ReviewExportProgressEventV1) => void;
   signal?: AbortSignal;
@@ -157,6 +158,7 @@ export function buildCodeReviewExport(
     repoRoot: w,
     profile,
     includeUntracked = false,
+    outputPath,
     onProgress,
     signal,
   } = options;
@@ -974,7 +976,7 @@ export function buildCodeReviewExport(
 
   if (signal?.aborted) throw new Error("code_review_export cancelled before zip");
 
-  const zipPath = resolve(w, getZipName(profile));
+  const zipPath = outputPath ? resolve(outputPath) : resolve(w, getZipName(profile));
   const tmpZipPath = resolve(
     w,
     `.${packetRoot}.${Date.now()}.zip.tmp`,

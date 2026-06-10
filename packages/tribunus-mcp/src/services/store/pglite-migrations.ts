@@ -11,7 +11,9 @@ import { resolve } from "node:path"
 import { createHash } from "node:crypto"
 import type { PGliteLike } from "./pglite-runtime.js"
 
-const MIGRATIONS_DIR = resolve(new URL(".", import.meta.url).pathname, "migrations")
+import { fileURLToPath } from "node:url"
+
+const MIGRATIONS_DIR = resolve(fileURLToPath(new URL(".", import.meta.url)), "migrations")
 
 async function ensureTrackingTable(db: PGliteLike): Promise<void> {
   await db.exec(`

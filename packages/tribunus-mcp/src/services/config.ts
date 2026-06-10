@@ -3,6 +3,7 @@
  * consistently with the MCP-managed store skeleton.
  */
 
+import { fileURLToPath } from "node:url"
 import { resolve, join } from "node:path"
 import { homedir } from "node:os"
 
@@ -24,5 +25,5 @@ export function getCodeIntelligenceDbDir(): string {
 }
 
 export function getCodeIntelligenceMigrationDir(): string {
-  return resolve(new URL("..", import.meta.url).pathname, "services", "code-intelligence", "store", "migrations")
+  return resolve(fileURLToPath(new URL("..", import.meta.url)), "services", "code-intelligence", "store", "migrations")
 }

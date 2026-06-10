@@ -196,13 +196,16 @@ export function registerOmpRepoIntelTools(): void {
     profile: { type: "string", enum: ["bootstrap_review","gemini_code_review"], description: "Export profile" },
     output_dir: { type: "string", description: "Output directory for exported artifacts" },
   }, [], ["artifact:write"], 300_000, async (_ctx, a) => {
+    let outputPath: string | undefined
     if (a.output_dir) {
       const check = validatePath(a.output_dir as string, true)
       if (!check.valid) return err(check.error || "output path rejected")
+      outputPath = check.resolved
     }
     const result = buildCodeReviewExport({
       repoRoot: process.cwd(),
       profile: (a.profile as "bootstrap_review" | "gemini_code_review") || "gemini_code_review",
+      outputPath,
     })
     return ok({
       profile: a.profile || "gemini_code_review",
@@ -221,17 +224,21 @@ export function registerOmpRepoIntelTools(): void {
     source_output_path: { type: "string", description: "Path for source output" },
     force: { type: "boolean", description: "Overwrite existing output (default: true)" },
   }, [], ["artifact:write"], 300_000, async (_ctx, a) => {
+    let semanticPath: string | undefined
     if (a.semantic_output_path) {
       const check = validatePath(a.semantic_output_path as string, true)
       if (!check.valid) return err(check.error || "semantic output path rejected")
+      semanticPath = check.resolved
     }
+    let sourcePath: string | undefined
     if (a.source_output_path) {
       const check = validatePath(a.source_output_path as string, true)
       if (!check.valid) return err(check.error || "source output path rejected")
+      sourcePath = check.resolved
     }
     const result = await reviewPacketExport(process.cwd(), {
-      semantic_output_path: a.semantic_output_path as string | undefined,
-      source_output_path: a.source_output_path as string | undefined,
+      semantic_output_path: semanticPath,
+      source_output_path: sourcePath,
       force: a.force !== false,
     })
     return ok(result)
@@ -241,12 +248,14 @@ export function registerOmpRepoIntelTools(): void {
     output_path: { type: "string", description: "Output path for the semantic packet" },
     force: { type: "boolean", description: "Overwrite existing output (default: true)" },
   }, [], ["artifact:write"], 300_000, async (_ctx, a) => {
+    let outputPath: string | undefined
     if (a.output_path) {
       const check = validatePath(a.output_path as string, true)
       if (!check.valid) return err(check.error || "output path rejected")
+      outputPath = check.resolved
     }
     const result = await semanticReviewPacketExport(process.cwd(), {
-      output_path: a.output_path as string | undefined,
+      output_path: outputPath,
       force: a.force !== false,
     })
     return ok(result)
@@ -256,17 +265,21 @@ export function registerOmpRepoIntelTools(): void {
     source_zip_path: { type: "string", description: "Path to source-review ZIP" },
     ir_zip_path: { type: "string", description: "Path to Gemini IR ZIP" },
   }, [], ["artifact:verify"], 120_000, async (_ctx, a) => {
+    let sourceZip: string | undefined
     if (a.source_zip_path) {
       const check = validatePath(a.source_zip_path as string, false)
       if (!check.valid) return err(check.error || "source zip path rejected")
+      sourceZip = check.resolved
     }
+    let irZip: string | undefined
     if (a.ir_zip_path) {
       const check = validatePath(a.ir_zip_path as string, false)
       if (!check.valid) return err(check.error || "IR zip path rejected")
+      irZip = check.resolved
     }
     const result = await verifyReviewPackets(process.cwd(), {
-      source_zip_path: a.source_zip_path as string | undefined,
-      ir_zip_path: a.ir_zip_path as string | undefined,
+      source_zip_path: sourceZip,
+      ir_zip_path: irZip,
     })
     return ok(result)
   })
