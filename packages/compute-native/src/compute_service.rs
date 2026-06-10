@@ -103,6 +103,7 @@ impl ComputeService for ComputeServiceClient {
             .send(ComputeCommand::OpenSession {
                 request_id,
                 model_id,
+                lease_id: None,
                 session_policy,
                 reply: tx,
             })
@@ -124,6 +125,7 @@ impl ComputeService for ComputeServiceClient {
             .send(ComputeCommand::Prefill {
                 request_id,
                 session_id,
+                lease_id: None,
                 tokens,
                 reply: tx,
             })
@@ -148,6 +150,7 @@ impl ComputeService for ComputeServiceClient {
             .send(ComputeCommand::Decode {
                 request_id,
                 session_id,
+                lease_id: None,
                 budget,
                 reply: event_tx,
             })

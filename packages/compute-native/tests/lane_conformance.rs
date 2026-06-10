@@ -175,7 +175,7 @@ async fn cancel_prevents_subsequent_decode() {
                         // Mark as cancelled — subsequent decode would be prevented
                         cancelled_captured.store(1, Ordering::SeqCst);
                     }
-                    Some(ComputeCommand::Decode { request_id: _, session_id, budget: _, reply }) => {
+                    Some(ComputeCommand::Decode { request_id: _, session_id, lease_id: _, budget: _, reply }) => {
                         if cancelled_captured.load(Ordering::SeqCst) == 1 {
                             // Should send an error because cancelled
                             // In a real lane, this would be checked before execution.
@@ -217,6 +217,7 @@ async fn cancel_prevents_subsequent_decode() {
         .send(ComputeCommand::Decode {
             request_id: RequestId(5),
             session_id: SessionId(1),
+            lease_id: None,
             budget: 10,
             reply: decode_tx,
         })

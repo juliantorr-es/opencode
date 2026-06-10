@@ -153,18 +153,21 @@ pub enum ComputeCommand {
     OpenSession {
         request_id: RequestId,
         model_id: ModelRuntimeId,
+        lease_id: Option<ComputeLeaseId>,
         session_policy: SessionPolicy,
         reply: oneshot::Sender<Result<SessionReceipt, ComputeError>>,
     },
     Prefill {
         request_id: RequestId,
         session_id: SessionId,
+        lease_id: Option<ComputeLeaseId>,
         tokens: Arc<[u32]>,
         reply: oneshot::Sender<Result<PrefillReceipt, ComputeError>>,
     },
     Decode {
         request_id: RequestId,
         session_id: SessionId,
+        lease_id: Option<ComputeLeaseId>,
         budget: u32,
         reply: mpsc::Sender<DecodeEvent>,
     },

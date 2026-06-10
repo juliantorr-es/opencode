@@ -176,7 +176,47 @@ fn grouped_evaluation_one_fence() {
     // sync_ns must be measured
     assert!(receipt.sync_ns > 0, "sync duration must be recorded");
 
+    // One output, one dependency chain => one eval call
+    assert_eq!(receipt.eval_calls, 1, "single dependency chain should need 1 eval");
+
+    // observed_substrate must be None until Phase 2 native instrumentation
+    assert!(receipt.observed_substrate.is_none(), "substrate must be None until Phase 2");
+
     be.release(c).expect("release c");
+    be.release(b).expect("release b");
+    be.release(a).expect("release a");
+}
+
+// ── Multi-output grouped evaluation ────────────────────────────────────
+
+#[test]
+fn grouped_evaluation_two_independent_outputs() {
+    let mut be = fixture_backend();
+    // Create two independent branches: A+B and A*B
+    let a = create_2x3_f32(&mut be);
+    let b = create_2x3_f32(&mut be);
+
+    let sum = be.add(a, b).expect("add");
+    let prod = be.multiply(a, b).expect("multiply");
+
+    // Evaluate both in one group — independent branches may need 2 eval calls
+    let receipt = be.evaluate(7, &[sum, prod]).expect("group eval");
+
+    assert_eq!(receipt.group_id, 7);
+    assert_eq!(receipt.output_count, 2);
+    // eval_calls reports honestly: >1 means backend emitted multiple fences
+    assert!(receipt.eval_calls >= 1);
+    assert!(receipt.sync_ns > 0);
+    assert!(receipt.observed_substrate.is_none());
+
+    // Both outputs must be readable
+    let sum_data = be.read_f32(sum).expect("read sum");
+    let prod_data = be.read_f32(prod).expect("read prod");
+    assert_eq!(sum_data.data.len(), 6);
+    assert_eq!(prod_data.data.len(), 6);
+
+    be.release(prod).expect("release prod");
+    be.release(sum).expect("release sum");
     be.release(b).expect("release b");
     be.release(a).expect("release a");
 }

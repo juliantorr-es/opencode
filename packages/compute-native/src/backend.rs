@@ -85,7 +85,16 @@ pub struct EvaluationReceipt {
     pub output_count: usize,
     pub active_memory_after: u64,
     pub cache_memory_after: u64,
-    pub observed_substrate: Option<String>, // "cpu", "gpu", or None
+    /// Observed execution substrate — `None` until native instrumentation
+    /// observes the actual dispatch path.  `can_gpu` in BackendCapabilities
+    /// reports what the backend *can* do, not what a specific evaluation
+    /// *did*.
+    pub observed_substrate: Option<String>,
+
+    /// Number of eval() calls issued (>=1).  When >1, the backend emitted
+    /// multiple evaluation fences for this group because not all outputs
+    /// shared a dependency chain.
+    pub eval_calls: usize,
 }
 
 // ── Readback receipt ───────────────────────────────────────────────────────
@@ -267,6 +276,7 @@ pub trait TensorBackend {
 pub struct MlxBackend {
     arrays: Vec<Option<Array>>,
     generations: Vec<u32>,
+    materialised: Vec<bool>,
     free_list: Vec<usize>,
     weight_arrays: Vec<Option<Array>>,
     weight_generations: Vec<u32>,
@@ -280,6 +290,7 @@ impl MlxBackend {
         Self {
             arrays: Vec::new(),
             generations: Vec::new(),
+            materialised: Vec::new(),
             free_list: Vec::new(),
             weight_arrays: Vec::new(),
             weight_generations: Vec::new(),
@@ -293,6 +304,7 @@ impl MlxBackend {
         Self {
             arrays: Vec::new(),
             generations: Vec::new(),
+            materialised: Vec::new(),
             free_list: Vec::new(),
             weight_arrays: Vec::new(),
             weight_generations: Vec::new(),
@@ -630,21 +642,22 @@ impl TensorBackend for MlxBackend {
     ) -> Result<EvaluationReceipt, String> {
         let start = std::time::Instant::now();
 
-        // In MLX, evaluating one output evaluates the full graph for all
-        // outputs. Pick the first output, eval it once.
-        if let Some(&h) = outputs.first() {
+        let mut eval_calls: usize = 0;
+        for &h in outputs {
             let arr = self.get(h)?;
             arr.eval().map_err(|e| format!("evaluate failed: {:?}", e))?;
+            eval_calls += 1;
+        }
+
+        for &h in outputs {
+            let slot = h.slot as usize;
+            if slot < self.materialised.len() && h.generation == self.generations[slot] {
+                self.materialised[slot] = true;
+            }
         }
 
         let elapsed = start.elapsed();
         let (active, cached) = self.active_memory();
-
-        let observed = if cfg!(target_os = "macos") {
-            Some("gpu".into())
-        } else {
-            Some("cpu".into())
-        };
 
         Ok(EvaluationReceipt {
             group_id,
@@ -654,16 +667,24 @@ impl TensorBackend for MlxBackend {
             output_count: outputs.len(),
             active_memory_after: active,
             cache_memory_after: cached,
-            observed_substrate: observed,
+            observed_substrate: None,
+            eval_calls,
         })
     }
 
     fn read_f32(&self, handle: TensorHandle) -> Result<ReadbackReceipt, String> {
         let start = std::time::Instant::now();
         let arr = self.get(handle)?;
-        // TODO: MLX arrays are always materialised after eval(). There is no
-        // reliable way to check if materialised without calling eval(). For
-        // now we always eval and set forced_eval=true.
+
+        // Check whether a prior evaluate() already materialised this tensor.
+        let was_materialised = {
+            let slot = handle.slot as usize;
+            slot < self.materialised.len()
+                && handle.generation == self.generations[slot]
+                && self.materialised[slot]
+        };
+
+        // Ensure the array is materialised (may be a no-op).
         arr.eval().map_err(|e| format!("read_f32 eval failed: {:?}", e))?;
         let elapsed = start.elapsed();
         let data = arr
@@ -671,17 +692,11 @@ impl TensorBackend for MlxBackend {
             .map(|s| s.to_vec())
             .map_err(|e| format!("read_f32 failed: {:?}", e))?;
 
-        let observed = if cfg!(target_os = "macos") {
-            Some("gpu".into())
-        } else {
-            Some("cpu".into())
-        };
-
         Ok(ReadbackReceipt {
             data,
-            forced_eval: true,
+            forced_eval: !was_materialised,
             sync_ns: elapsed.as_nanos() as u64,
-            observed_substrate: observed,
+            observed_substrate: None,
         })
     }
 
