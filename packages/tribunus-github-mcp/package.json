@@ -1,13 +1,14 @@
 {
   "name": "@tribunus-ai/tribunus-github-mcp",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.2.0",
   "type": "module",
   "scripts": {
     "typecheck": "tsgo --noEmit"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.27.1"
+    "@modelcontextprotocol/sdk": "^1.27.1",
+    "duckdb": "^1.2.0"
   },
   "devDependencies": {
     "@types/node": "latest"

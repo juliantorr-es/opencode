@@ -7,6 +7,10 @@ import {
 } from "@modelcontextprotocol/sdk/types.js"
 import * as crypto from "node:crypto"
 import { readFile } from "node:fs/promises"
+import { spawn, execFile } from "node:child_process"
+import { access, mkdir, stat } from "node:fs/promises"
+import { homedir } from "node:os"
+import { join, resolve } from "node:path"
 
 // ── Config ──────────────────────────────────────────────────────────────────
 
@@ -14,6 +18,15 @@ const APP_ID = process.env.GITHUB_APP_ID
 const INSTALLATION_ID = process.env.GITHUB_APP_INSTALLATION_ID
 const PRIVATE_KEY_PATH = process.env.GITHUB_APP_PRIVATE_KEY_PATH
 const GITHUB_API = "https://api.github.com"
+
+// ── Compute Kernel Config ──────────────────────────────────────────────────
+
+const COMPUTE_NATIVE_DIR = process.env.TRIBUNUS_COMPUTE_DIR || resolve(process.cwd(), "packages/compute-native")
+const HF_API = process.env.HF_API || "https://huggingface.co/api"
+const HF_TOKEN = process.env.HF_TOKEN || ""
+const MACMON_URL = process.env.MACMONT_URL || "http://localhost:9090/metrics"
+const EVIDENCE_DB = process.env.TRIBUNUS_EVIDENCE_DB || join(COMPUTE_NATIVE_DIR, "evidence.duckdb")
+const MLX_MODEL_DIR = process.env.TRIBUNUS_MLX_MODEL_DIR || join(homedir(), ".cache/tribunus/models")
 
 // ── Auth ────────────────────────────────────────────────────────────────────
 
@@ -102,6 +115,103 @@ async function ghRequest(
     parsed = JSON.parse(text)
   } catch {}
   return { status: res.status, body: parsed }
+}
+
+// ── HuggingFace HTTP ────────────────────────────────────────────────────────
+
+function hfHeaders(): Record<string, string> {
+  const h: Record<string, string> = { Accept: "application/json" }
+  if (HF_TOKEN) h["Authorization"] = `Bearer ${HF_TOKEN}`
+  return h
+}
+
+async function hfGet(path: string) {
+  const res = await fetch(`${HF_API}${path}`, { headers: hfHeaders() })
+  const text = await res.text()
+  let body: unknown = text
+  try { body = JSON.parse(text) } catch {}
+  return { status: res.status, body }
+}
+
+// ── macmon HTTP ─────────────────────────────────────────────────────────────
+
+interface MacmonMetric {
+  name: string
+  value: number
+  labels: Record<string, string>
+}
+
+function parsePrometheusMetrics(raw: string): MacmonMetric[] {
+  const metrics: MacmonMetric[] = []
+  for (const line of raw.split("\n")) {
+    const trimmed = line.trim()
+    if (!trimmed || trimmed.startsWith("#")) continue
+    const spaceIdx = trimmed.lastIndexOf(" ")
+    if (spaceIdx === -1) continue
+    const nameAndLabels = trimmed.slice(0, spaceIdx)
+    const value = parseFloat(trimmed.slice(spaceIdx + 1))
+    if (isNaN(value)) continue
+    const braceIdx = nameAndLabels.indexOf("{")
+    if (braceIdx === -1) {
+      metrics.push({ name: nameAndLabels, value, labels: {} })
+    } else {
+      const name = nameAndLabels.slice(0, braceIdx)
+      const labelsStr = nameAndLabels.slice(braceIdx + 1, nameAndLabels.indexOf("}"))
+      const labels: Record<string, string> = {}
+      for (const pair of labelsStr.split(",")) {
+        const [k, v] = pair.split("=").map(s => s.replace(/"/g, "").trim())
+        if (k && v !== undefined) labels[k] = v
+      }
+      metrics.push({ name, value, labels })
+    }
+  }
+  return metrics
+}
+
+async function macmonFetch(): Promise<MacmonMetric[]> {
+  const res = await fetch(MACMON_URL)
+  if (!res.ok) throw new Error(`macmon fetch failed: ${res.status} ${res.statusText}`)
+  return parsePrometheusMetrics(await res.text())
+}
+
+// ── Subprocess ──────────────────────────────────────────────────────────────
+
+interface SubprocessResult {
+  stdout: string
+  stderr: string
+  code: number | null
+  signal: NodeJS.Signals | null
+  ok: boolean
+}
+
+function run(
+  command: string,
+  args: string[],
+  opts?: { cwd?: string; timeout?: number; env?: Record<string, string> },
+): Promise<SubprocessResult> {
+  return new Promise((resolve) => {
+    const child = spawn(command, args, {
+      cwd: opts?.cwd,
+      env: { ...process.env, ...opts?.env },
+      stdio: ["ignore", "pipe", "pipe"],
+    })
+    let stdout = ""
+    let stderr = ""
+    child.stdout.on("data", (d: Buffer) => { stdout += d.toString() })
+    child.stderr.on("data", (d: Buffer) => { stderr += d.toString() })
+    const timer = opts?.timeout
+      ? setTimeout(() => { child.kill("SIGTERM")
+        setTimeout(() => { child.kill("SIGKILL") }, 5000) }, opts.timeout)
+      : null
+    child.on("close", (code, signal) => {
+      if (timer) clearTimeout(timer)
+      resolve({ stdout, stderr, code, signal, ok: code === 0 })
+    })
+    child.on("error", (err) => {
+      if (timer) clearTimeout(timer)
+      resolve({ stdout, stderr: err.message, code: null, signal: null, ok: false })
+    })
+  })
 }
 
 async function ghGet(path: string) {
@@ -575,6 +685,282 @@ const TOOLS = [
       },
 ]
 
+  // ═══════════════════════════════════════════════════════════════════════
+  // Compute Kernel Tools
+  // ═══════════════════════════════════════════════════════════════════════
+
+  // ── HuggingFace Model Acquisition ──
+  {
+    name: "hf_search_models",
+    description:
+      "Search HuggingFace Hub for models. Returns model IDs, tags, downloads, and pipeline types. " +
+      "Use this to discover models, find Gemma variants, or check model availability before downloading.",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        query: { type: "string", description: "Search query (e.g. 'gemma-4', 'mlx-community/Gemma') " },
+        limit: { type: "number", description: "Max results (default: 10, max: 100)" },
+        author: { type: "string", description: "Filter by author/org (e.g. 'google', 'mlx-community')" },
+        pipeline_tag: {
+          type: "string",
+          description: "Filter by pipeline type (e.g. 'text-generation', 'feature-extraction')",
+        },
+      },
+      required: ["query"],
+    },
+  },
+  {
+    name: "hf_get_model_info",
+    description:
+      "Get detailed metadata for a HuggingFace model: description, tags, license, downloads, " +
+      "safetensors parameters, file list with SHA-256 digests. Use before downloading to verify model identity.",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        model_id: {
+          type: "string",
+          description: "Full model ID (e.g. 'google/gemma-4-12b-it', 'mlx-community/gemma-4-12b-it-4bit')",
+        },
+      },
+      required: ["model_id"],
+    },
+  },
+  {
+    name: "hf_download_model",
+    description:
+      "Download safetensors and config files for a HuggingFace model to the local MLX model cache. " +
+      "Uses huggingface-cli. Downloads model weights, tokenizer, and config. Skips files already present.",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        model_id: { type: "string", description: "Full model ID (e.g. 'google/gemma-4-12b-it')" },
+        target_dir: {
+          type: "string",
+          description: "Target directory (default: TRIBUNUS_MLX_MODEL_DIR / model_id)",
+        },
+        include: {
+          type: "string",
+          description: "Glob pattern for files to include (default: '*.safetensors,*.json,tokenizer*')",
+        },
+      },
+      required: ["model_id"],
+    },
+  },
+
+  // ── macmon Hardware Monitoring ──
+  {
+    name: "macmon_metrics",
+    description:
+      "Read real-time Apple Silicon hardware metrics: CPU/GPU/ANE power (watts), utilization (%), " +
+      "memory pressure, temperature sensors, and GPU frequency. Requires macmon running locally. " +
+      "Returns parsed Prometheus metrics as structured JSON. Use during benchmarks to measure power efficiency.",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        filter: {
+          type: "string",
+          description: "Substring to filter metric names (e.g. 'gpu' for GPU-only, 'power' for power metrics)",
+        },
+      },
+      required: [],
+    },
+  },
+
+  // ── Cargo Build & Benchmark ──
+  {
+    name: "cargo_build",
+    description:
+      "Build the Tribunus compute kernel with cargo. Supports the five custom profiles: " +
+      "image-build (slim release), inference-research (debug symbols + LTO), inference-debug (full debug), " +
+      "inference-evidence (profile-guided), inference-evidence-fat (PGO + fat LTO). " +
+      "Runs from COMPUTE_NATIVE_DIR.",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        profile: {
+          type: "string",
+          description: "Cargo profile (default: image-build). Options: image-build, inference-research, inference-debug, inference-evidence, inference-evidence-fat",
+        },
+        features: {
+          type: "string",
+          description: "Comma-separated feature flags (e.g. 'metal,neon,bench')",
+        },
+        target: { type: "string", description: "Build target triple (default: aarch64-apple-darwin)" },
+        release: { type: "boolean", description: "Build in release mode (sets --release)" },
+      },
+      required: [],
+    },
+  },
+  {
+    name: "cargo_bench",
+    description:
+      "Run Criterion benchmarks for the compute kernel. Runs specific or all benchmarks and " +
+      "returns the results (throughput, latency, variance). Use to measure inference performance.",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        bench: {
+          type: "string",
+          description: "Benchmark name filter (e.g. 'decode', 'prefill'). Omit for all benchmarks.",
+        },
+        profile: {
+          type: "string",
+          description: "Cargo profile for benchmarks (default: inference-research)",
+        },
+        features: { type: "string", description: "Comma-separated feature flags" },
+      },
+      required: [],
+    },
+  },
+  {
+    name: "cargo_check",
+    description:
+      "Run cargo check (fast compile-check without codegen) on the compute kernel. " +
+      "Use for quick type-checking after changes without waiting for a full build.",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        features: { type: "string", description: "Comma-separated feature flags" },
+        profile: { type: "string", description: "Cargo profile (default: image-build)" },
+      },
+      required: [],
+    },
+  },
+
+  // ── Metal GPU Tooling ──
+  {
+    name: "metal_compile",
+    description:
+      "Compile a Metal Shading Language (.metal) file to an Apple Intermediate Representation (.air) file. " +
+      "Runs 'xcrun -sdk macosx metal'. Use for verifying shader compilation and inspecting AIR output.",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        source: {
+          type: "string",
+          description: "Path to .metal source file (absolute or relative to COMPUTE_NATIVE_DIR)",
+        },
+        output: {
+          type: "string",
+          description: "Path for the .air output (default: source with .air extension)",
+        },
+        opt: {
+          type: "string",
+          enum: ["none", "fast", "faster", "fastest"],
+          description: "Optimization level for metal compiler (default: fastest)",
+        },
+      },
+      required: ["source"],
+    },
+  },
+  {
+    name: "xctrace_record",
+    description:
+      "Profile a native binary with xctrace (Instruments CLI). Captures CPU, GPU, and Metal performance " +
+      "counters. Use to profile compute kernel inference runs. Requires Xcode.",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        binary: {
+          type: "string",
+          description: "Path to the binary to profile (absolute or relative to COMPUTE_NATIVE_DIR)",
+        },
+        args: { type: "string", description: "Arguments to pass to the binary" },
+        template: {
+          type: "string",
+          description: "Instruments template (default: 'Metal System Trace'). Options: 'Time Profiler', 'Metal System Trace', 'CPU Counters', 'GPU Capture'",
+        },
+        output: {
+          type: "string",
+          description: "Path for the .trace output file (default: /tmp/tribunus-profile-{timestamp}.trace)",
+        },
+        time_limit: {
+          type: "number",
+          description: "Time limit in seconds (default: 30)",
+        },
+      },
+      required: ["binary"],
+    },
+  },
+
+  // ── DuckDB Evidence Analytics ──
+  {
+    name: "duckdb_query",
+    description:
+      "Run a SQL query against the Tribunus evidence DuckDB database. " +
+      "The evidence DB contains benchmark results, optimization records, inference traces, " +
+      "and experiment metadata. Use for analyzing compute kernel performance data.",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        sql: { type: "string", description: "SQL query to execute (SELECT, DESCRIBE, SHOW, etc.)" },
+        db_path: {
+          type: "string",
+          description: "Path to DuckDB database (default: TRIBUNUS_EVIDENCE_DB)",
+        },
+      },
+      required: ["sql"],
+    },
+  },
+  {
+    name: "duckdb_list_tables",
+    description:
+      "List all tables in the Tribunus evidence DuckDB database with row counts. " +
+      "Quick overview of what benchmark and experiment data is available.",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        db_path: {
+          type: "string",
+          description: "Path to DuckDB database (default: TRIBUNUS_EVIDENCE_DB)",
+        },
+      },
+      required: [],
+    },
+  },
+
+  // ── MLX Inference ──
+  {
+    name: "mlx_inference",
+    description:
+      "Run MLX inference on a loaded model. Executes a Python script that uses the MLX framework " +
+      "to perform text generation. Requires mlx and mlx-lm Python packages installed.",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        model_id: {
+          type: "string",
+          description: "HuggingFace model ID or local path (e.g. 'mlx-community/gemma-4-12b-it-4bit')",
+        },
+        prompt: { type: "string", description: "Input prompt for generation" },
+        max_tokens: { type: "number", description: "Maximum tokens to generate (default: 256)" },
+        temperature: { type: "number", description: "Sampling temperature (default: 0.7)" },
+        top_p: { type: "number", description: "Nucleus sampling top-p (default: 0.95)" },
+        seed: { type: "number", description: "Random seed for reproducibility" },
+      },
+      required: ["model_id", "prompt"],
+    },
+  },
+  {
+    name: "mlx_benchmark",
+    description:
+      "Benchmark MLX inference: measure prefill latency, decode token/s throughput, and memory usage. " +
+      "Runs multiple iterations and returns aggregated stats (median, p95, p99).",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        model_id: { type: "string", description: "HuggingFace model ID or local path" },
+        prompt_length: {
+          type: "number",
+          description: "Approximate prompt length in tokens (default: 128)",
+        },
+        max_tokens: { type: "number", description: "Tokens to generate per iteration (default: 256)" },
+        iterations: { type: "number", description: "Number of benchmark iterations (default: 3)" },
+      },
+      required: ["model_id"],
+    },
+  },
+
 // ── Helpers ─────────────────────────────────────────────────────────────────
 
 function qs(params: Record<string, unknown>): string {
@@ -604,7 +990,7 @@ function parseBody(args: Record<string, unknown> | undefined): { body: unknown; 
 // ── Tool dispatch ───────────────────────────────────────────────────────────
 
 const server = new Server(
-  { name: "tribunus-github", version: "0.1.0" },
+  { name: "tribunus", version: "0.2.0" },
   { capabilities: { tools: {} } },
 )
 
@@ -807,6 +1193,253 @@ server.setRequestHandler(CallToolRequestSchema, async (request: CallToolRequest)
 
       case "request_build":
         return ok(await ghPost(`/repos/${repo}/pages/builds`))
+
+      // ═══════════════════════════════════════════════════════════════════
+      // Compute Kernel Dispatch
+      // ═══════════════════════════════════════════════════════════════════
+
+      // ── HuggingFace Model Acquisition ──
+      case "hf_search_models": {
+        const params: Record<string, string> = {}
+        if (a?.query) params.search = String(a.query)
+        if (a?.author) params.author = String(a.author)
+        if (a?.pipeline_tag) params.pipeline_tag = String(a.pipeline_tag)
+        if (a?.limit) params.limit = String(Math.min(Number(a.limit), 100))
+        params.expand = "author,downloads,likes,pipeline_tag,safetensors"
+        const r = await hfGet(`/models${qs(params as Record<string, unknown>)}`)
+        return ok(r)
+      }
+
+      case "hf_get_model_info": {
+        const modelId = a?.model_id as string
+        const [info, files] = await Promise.all([
+          hfGet(`/models/${modelId}`),
+          hfGet(`/models/${modelId}?expand[]=siblings`),
+        ])
+        const result: Record<string, unknown> = { model_id: modelId }
+        if (info.status === 200 && typeof info.body === "object" && info.body) {
+          const m = info.body as Record<string, unknown>
+          result.description = m.description
+          result.tags = m.tags
+          result.pipeline_tag = m.pipeline_tag
+          result.likes = m.likes
+          result.downloads = m.downloads
+          result.license = m.license
+          const sp = m.safetensors as Record<string, unknown> | undefined
+          if (sp) result.safetensors_parameters = sp.parameters
+        }
+        if (files.status === 200 && typeof files.body === "object" && files.body) {
+          const f = files.body as Record<string, unknown>
+          const siblings = (f.siblings || []) as Array<Record<string, unknown>>
+          result.files = siblings.map((s) => ({
+            name: s.rfilename,
+            size: s.size,
+            sha256: s.blob_id || s.lfs?.sha256,
+          }))
+        }
+        return ok(result)
+      }
+
+      case "hf_download_model": {
+        const modelId = a?.model_id as string
+        const targetDir = (a?.target_dir as string) || join(MLX_MODEL_DIR, modelId.replace("/", "_"))
+        const include = (a?.include as string) || "*.safetensors,*.json,tokenizer*"
+        await mkdir(targetDir, { recursive: true })
+        const args = ["huggingface-cli", "download", modelId, "--local-dir", targetDir, "--include", include]
+        const result = await run("bun", ["x", ...args], { timeout: 600_000 })
+        if (!result.ok) return err(`Download failed (exit ${result.code}):\n${result.stderr}`)
+        return ok({ model_id: modelId, target_dir: targetDir, message: "Download complete", stderr: result.stderr })
+      }
+
+      // ── macmon Hardware Monitoring ──
+      case "macmon_metrics": {
+        const filter = (a?.filter as string) || ""
+        const metrics = await macmonFetch()
+        const filtered = filter
+          ? metrics.filter((m) => m.name.toLowerCase().includes(filter.toLowerCase()))
+          : metrics
+        const summary: Record<string, number> = {}
+        for (const m of filtered) {
+          const key = Object.keys(m.labels).length > 0
+            ? `${m.name}{${Object.entries(m.labels).map(([k, v]) => `${k}=${v}`).join(",")}}`
+            : m.name
+          summary[key] = m.value
+        }
+        return ok({ count: filtered.length, metrics: summary, raw: filtered })
+      }
+
+      // ── Cargo Build & Benchmark ──
+      case "cargo_build": {
+        const profile = (a?.profile as string) || "image-build"
+        const features = (a?.features as string) || ""
+        const target = (a?.target as string) || ""
+        const release = a?.release === true
+        const args = ["build"]
+        if (release) args.push("--release")
+        else if (profile) args.push("--profile", profile)
+        if (features) args.push("--features", features)
+        if (target) args.push("--target", target)
+        const result = await run("cargo", args, { cwd: COMPUTE_NATIVE_DIR, timeout: 600_000 })
+        if (!result.ok) return err(`cargo build failed (exit ${result.code}):\n${result.stderr}`)
+        return ok({ exit_code: result.code, stdout: result.stdout, stderr: result.stderr })
+      }
+
+      case "cargo_bench": {
+        const bench = (a?.bench as string) || ""
+        const profile = (a?.profile as string) || "inference-research"
+        const features = (a?.features as string) || ""
+        const args = ["bench"]
+        if (profile) args.push("--profile", profile)
+        if (features) args.push("--features", features)
+        if (bench) args.push("--bench", bench)
+        const result = await run("cargo", args, { cwd: COMPUTE_NATIVE_DIR, timeout: 600_000 })
+        if (!result.ok) return err(`cargo bench failed (exit ${result.code}):\n${result.stderr}`)
+        return ok({ exit_code: result.code, stdout: result.stdout, stderr: result.stderr })
+      }
+
+      case "cargo_check": {
+        const features = (a?.features as string) || ""
+        const profile = (a?.profile as string) || "image-build"
+        const args = ["check"]
+        if (profile) args.push("--profile", profile)
+        if (features) args.push("--features", features)
+        const result = await run("cargo", args, { cwd: COMPUTE_NATIVE_DIR, timeout: 300_000 })
+        if (!result.ok) return err(`cargo check failed (exit ${result.code}):\n${result.stderr}`)
+        return ok({ exit_code: result.code, stderr: result.stderr })
+      }
+
+      // ── Metal GPU Tooling ──
+      case "metal_compile": {
+        const source = resolve(String(a?.source))
+        const airOut = (a?.output as string) || source.replace(/\.metal$/, ".air")
+        const optFlag = (a?.opt as string) || "fastest"
+        const args = ["-sdk", "macosx", "metal", "-O" + optFlag, "-c", source, "-o", airOut]
+        const result = await run("xcrun", args, { timeout: 60_000 })
+        if (!result.ok) return err(`metal compile failed:\n${result.stderr}`)
+        return ok({ source, output: airOut, optimization: optFlag, stderr: result.stderr })
+      }
+
+      case "xctrace_record": {
+        const binary = resolve(String(a?.binary))
+        const binArgs = (a?.args as string) || ""
+        const template = (a?.template as string) || "Metal System Trace"
+        const timeLimit = String((a?.time_limit as number) || 30) + "s"
+        const timestamp = Date.now()
+        const output = (a?.output as string) || `/tmp/tribunus-profile-${timestamp}.trace`
+        const args = [
+          "xctrace", "record",
+          "--template", template,
+          "--time-limit", timeLimit,
+          "--output", output,
+          "--target-stdout", "-",
+          "--launch", "--", binary,
+          ...(binArgs ? binArgs.split(" ") : []),
+        ]
+        const result = await run("xcrun", args, { timeout: (Number(a?.time_limit || 30) + 15) * 1000 })
+        if (!result.ok) return err(`xctrace failed (exit ${result.code}):\n${result.stderr}`)
+        return ok({ binary, output, template, time_limit: timeLimit, stderr: result.stderr })
+      }
+
+      // ── DuckDB Evidence Analytics ──
+      case "duckdb_query": {
+        const sql = a?.sql as string
+        const dbPath = (a?.db_path as string) || EVIDENCE_DB
+        try {
+          const db = await import("duckdb")
+          const conn = new db.Database(dbPath)
+          const result = conn.all(sql)
+          conn.close()
+          return ok({ query: sql, rows: result, row_count: result.length })
+        } catch (e) {
+          if (e instanceof Error && e.message.includes("Cannot find module")) {
+            return err("duckdb npm package not installed. Run: npm install duckdb")
+          }
+          return err(e instanceof Error ? e.message : String(e))
+        }
+      }
+
+      case "duckdb_list_tables": {
+        const dbPath = (a?.db_path as string) || EVIDENCE_DB
+        try {
+          const db = await import("duckdb")
+          const conn = new db.Database(dbPath)
+          const tables = conn.all(
+            "SELECT table_name, estimated_visible_rows as row_count FROM duckdb_tables() ORDER BY table_name",
+          )
+          conn.close()
+          return ok({ database: dbPath, tables, table_count: tables.length })
+        } catch (e) {
+          if (e instanceof Error && e.message.includes("Cannot find module")) {
+            return err("duckdb npm package not installed. Run: npm install duckdb")
+          }
+          return err(e instanceof Error ? e.message : String(e))
+        }
+      }
+
+      // ── MLX Inference ──
+      case "mlx_inference": {
+        const modelId = a?.model_id as string
+        const prompt = a?.prompt as string
+        const maxTokens = String(a?.max_tokens || 256)
+        const temp = String(a?.temperature ?? 0.7)
+        const topP = String(a?.top_p ?? 0.95)
+        const code = [
+          "from mlx_lm import load, generate",
+          `model, tokenizer = load("${modelId}")`,
+          `response = generate(model, tokenizer, prompt="${prompt.replace(/"/g, '\\"')}", max_tokens=${maxTokens}, temp=${temp}, top_p=${topP})`,
+          "print(response)",
+        ].join("\n")
+        if (a?.seed) code.unshift(`import random; random.seed(${a.seed})`)
+        const tmpScript = join("/tmp", `tribunus-mlx-inference-${Date.now()}.py`)
+        const { writeFile, unlink } = await import("node:fs/promises")
+        await writeFile(tmpScript, code)
+        try {
+          const result = await run("python3", [tmpScript], { timeout: 300_000 })
+          if (!result.ok) return err(`MLX inference failed (exit ${result.code}):\n${result.stderr}`)
+          return ok({ model_id: modelId, prompt, response: result.stdout.trim(), stderr: result.stderr })
+        } finally {
+          await unlink(tmpScript).catch(() => {})
+        }
+      }
+
+      case "mlx_benchmark": {
+        const modelId = a?.model_id as string
+        const promptLen = String(a?.prompt_length || 128)
+        const maxTokens = String(a?.max_tokens || 256)
+        const iters = String(a?.iterations || 3)
+        const code = [
+          "from mlx_lm import load, generate",
+          "import time",
+          `model, tokenizer = load("${modelId}")`,
+          `prompt = "Benchmark test. " * ${promptLen}`,
+          "print('model_id', '${modelId}'.split('/')[-1])",
+          "print('iterations', ${iters})",
+          "print('prompt_length', len(tokenizer.encode(prompt)))",
+          "latencies = []",
+          `for i in range(${iters}):`,
+          "    t0 = time.perf_counter()",
+          `    response = generate(model, tokenizer, prompt=prompt, max_tokens=${maxTokens})`,
+          "    dt = time.perf_counter() - t0",
+          "    tokens = len(tokenizer.encode(response))",
+          "    latencies.append(dt)",
+          "    print(f'iter_{i}_latency_s', round(dt, 4))",
+          "    print(f'iter_{i}_tokens', tokens)",
+          "    print(f'iter_{i}_tokens_per_sec', round(tokens / dt, 1))",
+          "latencies.sort()",
+          "print('latency_median_s', round(latencies[len(latencies)//2], 4))",
+          `print('total_tokens', ${maxTokens} * ${iters})`,
+        ].join("\n")
+        const tmpScript = join("/tmp", `tribunus-mlx-bench-${Date.now()}.py`)
+        const { writeFile, unlink } = await import("node:fs/promises")
+        await writeFile(tmpScript, code)
+        try {
+          const result = await run("python3", [tmpScript], { timeout: 600_000 })
+          if (!result.ok) return err(`MLX benchmark failed (exit ${result.code}):\n${result.stderr}`)
+          return ok({ model_id: modelId, stdout: result.stdout, stderr: result.stderr })
+        } finally {
+          await unlink(tmpScript).catch(() => {})
+        }
+      }
 
       default:
         return err(`Unknown tool: ${name}`)

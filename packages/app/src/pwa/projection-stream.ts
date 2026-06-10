@@ -177,12 +177,13 @@ export function createProjectionStream(): ProjectionStreamClient {
 
   function scheduleReconnect() {
     if (intentionalClose || !connectTarget) return
+    const target = connectTarget; // narrow for TS
     const exponential = Math.min(RECONNECT_BASE_MS * 2 ** reconnectAttempt, RECONNECT_MAX_MS)
     const jitter = Math.floor(Math.random() * JITTER_MAX_MS)
     const delay = exponential + jitter
     reconnectAttempt++
     setStatus("reconnecting")
-    reconnectTimer = setTimeout(() => connect(connectTarget.url, connectTarget.token), delay)
+    reconnectTimer = setTimeout(() => connect(target.url, target.token), delay)
   }
 
   function clearReconnect() {

@@ -764,9 +764,10 @@
     },
     "packages/tribunus-github-mcp": {
       "name": "@tribunus-ai/tribunus-github-mcp",
-      "version": "0.1.0",
+      "version": "0.2.0",
       "dependencies": {
         "@modelcontextprotocol/sdk": "^1.27.1",
+        "duckdb": "^1.2.0",
       },
       "devDependencies": {
         "@types/node": "latest",
