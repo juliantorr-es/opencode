@@ -1,14 +1,16 @@
 // E0002 finalize → normalize → DuckDB pipeline
 import { join } from "path";
+import { RunDirectory } from "../src/recorder/run-dir.js";
 import { finalizeRun } from "../src/recorder/finalize.js";
 import { normalizeRun } from "../src/normalize/normalize.js";
 import { buildDuckDb } from "../src/normalize/duckdb.js";
+import type { DuckDbResult } from "../src/normalize/duckdb.js";
 import { createHash } from "crypto";
 import { readdirSync, existsSync } from "fs";
 
 const RESEARCH_DATA = join(import.meta.dir, "..", "..", "compute-native", "research-data");
 const RUN_ID = "E0002-R1-20260609";
-const runDir = join(RESEARCH_DATA, RUN_ID);
+const runDir = new RunDirectory(RUN_ID, RESEARCH_DATA);
 const finalDir = join(RESEARCH_DATA, `${RUN_ID}-final`);
 const normDir = join(RESEARCH_DATA, `${RUN_ID}-norm`);
 const dbPath = join(RESEARCH_DATA, `${RUN_ID}.duckdb`);
@@ -41,11 +43,11 @@ const normDigest = h.digest("hex");
 console.log("  normalized_dataset_digest:", normDigest);
 
 console.log("\n=== DuckDB ===");
-let dbResult = { executed: false, error: "DuckDB CLI not available" };
+let dbResult: DuckDbResult = { db_path: dbPath, executed: false, error: "DuckDB CLI not available" };
 try {
   dbResult = buildDuckDb(normDir, dbPath);
 } catch (e: unknown) {
-  dbResult.error = e instanceof Error ? e.message : String(e);
+  dbResult = { db_path: dbPath, executed: false, error: e instanceof Error ? e.message : String(e) };
 }
 console.log("  executed:", dbResult.executed);
 if (dbResult.error) console.log("  error:", dbResult.error);
