@@ -50,7 +50,7 @@ function isRedisAvailable(): boolean {
 
 describe("Stream Group Management", () => {
   test("ensureGroup creates group idempotently", async () => {
-    if (!isRedisAvailable()) return test.skip()
+    if (!isRedisAvailable()) return
 
     // First call should create the group
     const first = await streams.ensureGroup("test-group")
@@ -66,7 +66,7 @@ describe("Stream Group Management", () => {
   })
 
   test("listGroups returns all groups", async () => {
-    if (!isRedisAvailable()) return test.skip()
+    if (!isRedisAvailable()) return
 
     await streams.ensureGroup("group1")
     await streams.ensureGroup("group2")
@@ -78,7 +78,7 @@ describe("Stream Group Management", () => {
   })
 
   test("destroyGroup removes group", async () => {
-    if (!isRedisAvailable()) return test.skip()
+    if (!isRedisAvailable()) return
 
     await streams.ensureGroup("to-destroy")
     await streams.destroyGroup("to-destroy")
@@ -92,7 +92,7 @@ describe("Stream Group Management", () => {
 
 describe("Stream Entry Management", () => {
   test("addEntry appends to stream", async () => {
-    if (!isRedisAvailable()) return test.skip()
+    if (!isRedisAvailable()) return
 
     const entryId = await streams.addEntry({ workId: "work1", kind: "test" })
     expect(entryId).toBeDefined()
@@ -103,7 +103,7 @@ describe("Stream Entry Management", () => {
   })
 
   test("addEntry with custom ID", async () => {
-    if (!isRedisAvailable()) return test.skip()
+    if (!isRedisAvailable()) return
 
     const customId = "custom-entry-id"
     const entryId = await streams.addEntry({ workId: "work1" }, customId)
@@ -111,7 +111,7 @@ describe("Stream Entry Management", () => {
   })
 
   test("trim reduces stream length", async () => {
-    if (!isRedisAvailable()) return test.skip()
+    if (!isRedisAvailable()) return
 
     // Add multiple entries
     for (let i = 0; i < 10; i++) {
@@ -126,7 +126,7 @@ describe("Stream Entry Management", () => {
   })
 
   test("getStreamInfo returns correct info", async () => {
-    if (!isRedisAvailable()) return test.skip()
+    if (!isRedisAvailable()) return
 
     await streams.addEntry({ workId: "work1" })
     await streams.addEntry({ workId: "work2" })
@@ -141,7 +141,7 @@ describe("Stream Entry Management", () => {
 
 describe("Consumer Operations", () => {
   test("readGroup reads entries as consumer", async () => {
-    if (!isRedisAvailable()) return test.skip()
+    if (!isRedisAvailable()) return
 
     await streams.ensureGroup("test-group")
     await streams.addEntry({ workId: "work1", kind: "test" })
@@ -152,7 +152,7 @@ describe("Consumer Operations", () => {
   })
 
   test("readGroup with no entries returns empty", async () => {
-    if (!isRedisAvailable()) return test.skip()
+    if (!isRedisAvailable()) return
 
     await streams.ensureGroup("test-group")
     
@@ -161,7 +161,7 @@ describe("Consumer Operations", () => {
   })
 
   test("ack removes entry from pending", async () => {
-    if (!isRedisAvailable()) return test.skip()
+    if (!isRedisAvailable()) return
 
     await streams.ensureGroup("test-group")
     const entryId = await streams.addEntry({ workId: "work1" })
@@ -182,7 +182,7 @@ describe("Consumer Operations", () => {
   })
 
   test("ackOne acknowledges single entry", async () => {
-    if (!isRedisAvailable()) return test.skip()
+    if (!isRedisAvailable()) return
 
     await streams.ensureGroup("test-group")
     const entryId = await streams.addEntry({ workId: "work1" })
@@ -199,7 +199,7 @@ describe("Consumer Operations", () => {
 
 describe("Pending Entry Inspection", () => {
   test("getPendingSummary returns correct counts", async () => {
-    if (!isRedisAvailable()) return test.skip()
+    if (!isRedisAvailable()) return
 
     await streams.ensureGroup("test-group")
     
@@ -215,7 +215,7 @@ describe("Pending Entry Inspection", () => {
   })
 
   test("getPendingEntries returns detailed pending info", async () => {
-    if (!isRedisAvailable()) return test.skip()
+    if (!isRedisAvailable()) return
 
     await streams.ensureGroup("test-group")
     
@@ -229,7 +229,7 @@ describe("Pending Entry Inspection", () => {
   })
 
   test("getConsumerPending returns entries for specific consumer", async () => {
-    if (!isRedisAvailable()) return test.skip()
+    if (!isRedisAvailable()) return
 
     await streams.ensureGroup("test-group")
     
@@ -249,7 +249,7 @@ describe("Pending Entry Inspection", () => {
 
 describe("Claim Operations", () => {
   test("autoClaim reclaims idle entries", async () => {
-    if (!isRedisAvailable()) return test.skip()
+    if (!isRedisAvailable()) return
 
     await streams.ensureGroup("test-group")
     
@@ -267,7 +267,7 @@ describe("Claim Operations", () => {
   })
 
   test("claim reclaims specific entries", async () => {
-    if (!isRedisAvailable()) return test.skip()
+    if (!isRedisAvailable()) return
 
     await streams.ensureGroup("test-group")
     
@@ -288,7 +288,7 @@ describe("Claim Operations", () => {
 
 describe("Consumer Management", () => {
   test("listConsumers returns all consumers in group", async () => {
-    if (!isRedisAvailable()) return test.skip()
+    if (!isRedisAvailable()) return
 
     await streams.ensureGroup("test-group")
     
@@ -306,7 +306,7 @@ describe("Consumer Management", () => {
   })
 
   test("deleteConsumer removes consumer from group", async () => {
-    if (!isRedisAvailable()) return test.skip()
+    if (!isRedisAvailable()) return
 
     await streams.ensureGroup("test-group")
     
@@ -324,7 +324,7 @@ describe("Consumer Management", () => {
 
 describe("Utility Operations", () => {
   test("getLastEntryId returns last entry ID", async () => {
-    if (!isRedisAvailable()) return test.skip()
+    if (!isRedisAvailable()) return
 
     await streams.addEntry({ workId: "work1" })
     await streams.addEntry({ workId: "work2" })
@@ -335,7 +335,7 @@ describe("Utility Operations", () => {
   })
 
   test("streamExists returns true for existing stream", async () => {
-    if (!isRedisAvailable()) return test.skip()
+    if (!isRedisAvailable()) return
 
     await streams.addEntry({ workId: "work1" })
     
@@ -344,7 +344,7 @@ describe("Utility Operations", () => {
   })
 
   test("getStreamLength returns correct length", async () => {
-    if (!isRedisAvailable()) return test.skip()
+    if (!isRedisAvailable()) return
 
     await streams.addEntry({ workId: "work1" })
     await streams.addEntry({ workId: "work2" })
@@ -355,7 +355,7 @@ describe("Utility Operations", () => {
   })
 
   test("readRange reads entries by ID range", async () => {
-    if (!isRedisAvailable()) return test.skip()
+    if (!isRedisAvailable()) return
 
     const entryId1 = await streams.addEntry({ workId: "work1" })
     const entryId2 = await streams.addEntry({ workId: "work2" })

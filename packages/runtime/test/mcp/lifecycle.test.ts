@@ -216,9 +216,9 @@ const runLifecycle = <A, E, R>(
   )
 
 const it = {
-  instance: <A, E>(
+  instance: <A, E, R>(
     name: string,
-    body: () => Effect.Effect<A, E, never>,
+    body: () => Effect.Effect<A, E, R>,
     options?: { git?: boolean; config?: Partial<Record<string, unknown>> | (() => Partial<Record<string, unknown>>) } | number,
     _opts?: number,
   ) =>
@@ -226,7 +226,7 @@ const it = {
       const lifecycleOptions = typeof options === "number" ? undefined : options
       return runLifecycle(body(), lifecycleOptions)
     }, { timeout: 30000 }),
-  live: <A, E>(name: string, body: () => Effect.Effect<A, E, never>) =>
+  live: <A, E, R>(name: string, body: () => Effect.Effect<A, E, R>) =>
     test(name, () => runLifecycle(body()), { timeout: 30000 }),
 }
 

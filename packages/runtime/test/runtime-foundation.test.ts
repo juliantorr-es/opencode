@@ -53,8 +53,8 @@ describe("Background Supervision (0058)", () => {
     expect(getTask(id)!.lastHeartbeat).toBeGreaterThanOrEqual(before)
   })
 
-  test("checkHeartbeats detects timed-out tasks", () => {
-    const id = registerTask("slow-task", 10, 5_000, 1)
+  test("checkHeartbeats detects timed-out tasks", async () => {
+    const id = await Effect.runPromise(registerTask("slow-task", 10, 5_000, 1))
     // Do NOT call heartbeat — it will time out on check
     // Simulate elapsed time by setting lastHeartbeat far in the past
     const rec = supervisionStore.get(id)

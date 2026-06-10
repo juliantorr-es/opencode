@@ -274,7 +274,7 @@ test("drops in-memory session state on teardown and keeps durable recovery recei
         yield* seedAccount({ accountID: "account-teardown", url: "https://teardown.example.com" })
         const status = yield* SessionStatus.Service
         yield* setRecoveryStatus(sessionID, "coordination_degraded")
-        yield* persistCoordinationRecoveryReceipt(receipt)
+        yield* Effect.promise(() => persistCoordinationRecoveryReceipt(receipt))
         expect(yield* status.get(sessionID)).toEqual({ type: "coordination_degraded" })
       }).pipe(provideInstance(dirTmp.path), Effect.scoped, Effect.provide(runtime)),
     )
