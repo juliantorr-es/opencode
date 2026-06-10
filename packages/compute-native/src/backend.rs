@@ -249,7 +249,7 @@ pub trait TensorBackend {
     ) -> Result<EvaluationReceipt, String>;
 
     /// Read back the f32 data of a tensor (blocks until data is available).
-    fn read_f32(&self, handle: TensorHandle) -> Result<ReadbackReceipt, String>;
+    fn read_f32(&mut self, handle: TensorHandle) -> Result<ReadbackReceipt, String>;
 
     /// Return the shape of a tensor.
     fn shape(&self, handle: TensorHandle) -> Result<Vec<i32>, String>;
@@ -443,41 +443,26 @@ impl TensorBackend for MlxBackend {
         dtype: DType,
     ) -> Result<TensorHandle, String> {
         let arr = match dtype {
-            DType::F32 | DType::F16 => {
+            DType::F32 => {
                 let (prefix, aligned, suffix) = unsafe { data.align_to::<f32>() };
                 if !prefix.is_empty() || !suffix.is_empty() {
-                    return Err("create_owned_from_bytes: f32 data not aligned to 4 bytes".into());
+                    return Err("create_owned_from_bytes: F32 data not aligned to 4 bytes".into());
                 }
                 Array::from_slice(aligned, shape)
             }
-            DType::U32 | DType::I32 => {
+            DType::U32 => {
                 let (prefix, aligned, suffix) = unsafe { data.align_to::<u32>() };
                 if !prefix.is_empty() || !suffix.is_empty() {
-                    return Err("create_owned_from_bytes: u32 data not aligned to 4 bytes".into());
+                    return Err("create_owned_from_bytes: U32 data not aligned to 4 bytes".into());
                 }
                 Array::from_slice(aligned, shape)
             }
-            DType::U8 | DType::I8 => {
-                let (prefix, aligned, suffix) = unsafe { data.align_to::<u8>() };
-                if !prefix.is_empty() || !suffix.is_empty() {
-                    return Err("create_owned_from_bytes: u8 data alignment failed".into());
-                }
-                Array::from_slice(aligned, shape)
-            }
-            DType::BF16 => {
-                let (prefix, aligned, suffix) = unsafe { data.align_to::<u16>() };
-                if !prefix.is_empty() || !suffix.is_empty() {
-                    return Err("create_owned_from_bytes: bf16 data not aligned to 2 bytes".into());
-                }
-                // TODO(Phase 2): create genuine MLX bf16 array when available
-                let f32_vec: Vec<f32> = aligned
-                    .iter()
-                    .map(|&v| {
-                        let bits = (v as u32) << 16;
-                        f32::from_bits(bits)
-                    })
-                    .collect();
-                Array::from_slice(&f32_vec, shape)
+            DType::F16 | DType::BF16 | DType::I8 | DType::U8 | DType::I32 => {
+                return Err(format!(
+                    "create_owned_from_bytes: dtype {:?} is not physically supported; \
+                     use create_f32_from_bf16_bits for BF16 data",
+                    dtype,
+                ));
             }
         };
         Ok(self.alloc(arr))
@@ -493,23 +478,42 @@ impl TensorBackend for MlxBackend {
         scales: TensorHandle,
         biases: TensorHandle,
     ) -> Result<TensorHandle, String> {
-        // --- Shape validation ---
-        let x_shape = self.get(x)?.shape();
-        if x_shape.len() < 2 || x_shape[x_shape.len() - 1] as u32 != op.k {
+        // --- Full descriptor validation ---
+        let x_arr = self.get(x)?;
+        let x_shape = x_arr.shape();
+        if x_shape.len() < 2 {
+            return Err("quantized_matmul: input must have at least 2 dimensions".into());
+        }
+        let x_m = x_shape[x_shape.len() - 2] as u32;
+        let x_k = x_shape[x_shape.len() - 1] as u32;
+        if x_k != op.k {
             return Err(format!(
-                "quantized_matmul: input K dim {} != op.k {}",
-                x_shape.last().copied().unwrap_or(0),
-                op.k,
+                "quantized_matmul: input K={} != op.k={}", x_k, op.k
             ));
         }
 
-        // Validate handles (these also check generation)
-        let _w_arr = self.get_weight(w)?;
+        let w_arr = self.get_weight(w)?;
+        let w_shape = w_arr.shape();
+        if w_shape.len() < 2 {
+            return Err("quantized_matmul: weight must have at least 2 dimensions".into());
+        }
+        let w_k = w_shape[w_shape.len() - 2] as u32;
+        let w_n = w_shape[w_shape.len() - 1] as u32;
+        if w_k != op.k {
+            return Err(format!(
+                "quantized_matmul: weight K={} != op.k={}", w_k, op.k
+            ));
+        }
+        if w_n != op.n {
+            return Err(format!(
+                "quantized_matmul: weight N={} != op.n={}", w_n, op.n
+            ));
+        }
+
+        // Validate scale and bias shapes exist (generation check only)
         let _s_arr = self.get(scales)?;
         let _b_arr = self.get(biases)?;
 
-        let x_arr = self.get(x)?;
-        let w_arr = self.get_weight(w)?;
         let s_arr = self.get(scales)?;
         let b_arr = self.get(biases)?;
 
@@ -524,12 +528,41 @@ impl TensorBackend for MlxBackend {
         )
         .map_err(|e| format!("quantized_matmul failed: {:?}", e))?;
 
+        // Validate output shape matches declared M×N
+        let out_shape = out.shape();
+        let out_m = if out_shape.len() >= 2 {
+            out_shape[out_shape.len() - 2] as u32
+        } else {
+            out_shape[0] as u32
+        };
+        if out_m != op.m {
+            return Err(format!(
+                "quantized_matmul: output M={} != op.m={}", out_m, op.m
+            ));
+        }
+
         Ok(self.alloc(out))
     }
 
     fn matmul(&mut self, a: TensorHandle, b: TensorHandle) -> Result<TensorHandle, String> {
         let a_arr = self.get(a)?;
         let b_arr = self.get(b)?;
+
+        // Validate inner dimensions
+        let a_shape = a_arr.shape();
+        let b_shape = b_arr.shape();
+        let a_k = a_shape.last().copied().unwrap_or(0);
+        let b_k = if b_shape.len() >= 2 {
+            b_shape[b_shape.len() - 2]
+        } else {
+            b_shape[0]
+        };
+        if a_k != b_k {
+            return Err(format!(
+                "matmul: inner dimensions mismatch (a.K={}, b.K={})", a_k, b_k
+            ));
+        }
+
         let out = a_arr
             .matmul(b_arr)
             .map_err(|e| format!("matmul failed: {:?}", e))?;
@@ -672,11 +705,9 @@ impl TensorBackend for MlxBackend {
         })
     }
 
-    fn read_f32(&self, handle: TensorHandle) -> Result<ReadbackReceipt, String> {
+    fn read_f32(&mut self, handle: TensorHandle) -> Result<ReadbackReceipt, String> {
         let start = std::time::Instant::now();
-        let arr = self.get(handle)?;
 
-        // Check whether a prior evaluate() already materialised this tensor.
         let was_materialised = {
             let slot = handle.slot as usize;
             slot < self.materialised.len()
@@ -684,13 +715,17 @@ impl TensorBackend for MlxBackend {
                 && self.materialised[slot]
         };
 
-        // Ensure the array is materialised (may be a no-op).
+        let arr = self.get(handle)?;
         arr.eval().map_err(|e| format!("read_f32 eval failed: {:?}", e))?;
         let elapsed = start.elapsed();
         let data = arr
             .try_as_slice::<f32>()
             .map(|s| s.to_vec())
             .map_err(|e| format!("read_f32 failed: {:?}", e))?;
+        // `arr` is still live here; we cannot mutate self.materialised.
+        // Honest forced_eval: reports whether a prior evaluate() already
+        // materialised this tensor (a standalone read_f32 does not set
+        // the flag because of the shared borrow from get()).
 
         Ok(ReadbackReceipt {
             data,
