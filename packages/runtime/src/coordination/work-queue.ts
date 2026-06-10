@@ -163,7 +163,7 @@ export class CoordinationWorkQueue extends Context.Service<CoordinationWorkQueue
     private readonly consumerId: string,
     private readonly store: WorkQueueDurableStoreService
   ) {
-    super()
+    super(undefined as any)
   }
 
   // ── Queue Management ────────────────────────────────────────────────

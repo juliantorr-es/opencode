@@ -65,7 +65,7 @@ function generateId(): string {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
 }
 
-function generateReceipt<T extends Record<string, unknown>>(
+function generateReceipt<T>(
   operation: string,
   entityType: string,
   entityId: string,
@@ -144,7 +144,7 @@ export function tribunusProjectCreate(
     );
 
     const created = database.query("SELECT * FROM projects WHERE id = ?").get(id) as unknown as Project;
-    return generateReceipt("create", "project", id, true, created, undefined, "pass");
+    return generateReceipt("create", "project", id, true, created as unknown as Record<string, unknown>, undefined, "pass");
   } catch (error) {
     return generateReceipt("create", "project", id, false, undefined, String(error), "fail");
   }
@@ -199,7 +199,7 @@ export function tribunusCampaignCreate(
       INSERT INTO campaigns (id, type, projectId, name, slug, description, objective, status, startDate, endDate, memoryBank, createdAt, updatedAt, createdBy)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
-    stmt.run(
+    (stmt as any).run(
       id,
       campaign.type,
       campaign.projectId,

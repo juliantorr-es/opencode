@@ -62,10 +62,10 @@ interface EmitSingle<R> {
 // ── Service tag ────────────────────────────────────────────
 
 export class PGliteLiveQuery extends Context.Service<PGliteLiveQuery>()(
-  "@opencode/PGliteLiveQuery",
+  "@opencode/PGliteLiveQuery", undefined,
 ) {
   constructor(private readonly adapter: DatabaseAdapter.Service & {}) {
-    super()
+    super(undefined as any)
   }
 
   /**
@@ -103,10 +103,10 @@ export class PGliteLiveQuery extends Context.Service<PGliteLiveQuery>()(
       // Fallback: polling via DatabaseAdapter
       const timerId = setInterval(() => {
         Effect.runPromise(
-          this.adapter.query<R[]>((db) => db.all<Record<string, unknown>>(sql) as R[]),
+          (this.adapter as any).query<any[]>((db: any) => db.all(sql) as R[]),
         ).then(
-          (rows) => {
-            emit.single(rows)
+          (rows: R[]) => {
+            emit.single(rows as R[])
           },
           () => {
             // Polling errors are swallowed — the stream stays alive and retries
@@ -169,10 +169,10 @@ export class PGliteLiveQuery extends Context.Service<PGliteLiveQuery>()(
 
 // ── Layer ──────────────────────────────────────────────────
 
-export const PGliteLiveQueryLive: Layer.Layer<PGliteLiveQuery> = Layer.effect(
+export const PGliteLiveQueryLive = Layer.effect(
   PGliteLiveQuery,
   Effect.gen(function* () {
     const adapter = yield* DatabaseAdapter.Service
-    return new PGliteLiveQuery(adapter)
+    return new PGliteLiveQuery(adapter as any)
   }),
 )
