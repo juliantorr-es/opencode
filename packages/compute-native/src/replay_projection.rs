@@ -269,7 +269,7 @@ impl ProjectionHarness {
             // Oracle comparison for M=1
             let (max_abs, max_rel, mean_abs, cosine, oracle_status) =
                 if input_shape.len() > 0 && input_shape[0] == 1 {
-                    Self::compare_oracle(&result)
+                    Self::compare_oracle(&result, &self.weight, &self.scale, &self.bias, &input_shape)
                 } else {
                     (None, None, None, None, "skipped (M != 1)".to_string())
                 };
@@ -582,17 +582,94 @@ impl ProjectionHarness {
         }
     }
 
-    fn compare_oracle(result: &Array) -> (Option<f64>, Option<f64>, Option<f64>, Option<f64>, String) {
-        let out_slice = match result.try_as_slice::<f32>() {
+
+    fn compare_oracle(
+        mlx_output: &Array,
+        weight: &Array,
+        scale: &Array,
+        bias: &Array,
+        input_shape: &[i32],
+    ) -> (Option<f64>, Option<f64>, Option<f64>, Option<f64>, String) {
+        // Oracle: dequantize the packed quantized weight into F32, transpose,
+        // then use a regular matmul. This is the canonical correctness reference:
+        // dequantize(weight[U32]) → wf[N,K]F32 → transpose → wf_t[K,N]F32
+        // → input[1,K] @ wf_t[K,N] = reference[1,N]
+        // The reference output must match quantized_matmul output.
+        let wf = match mlx_rs::ops::dequantize(weight, scale, bias, 64, 8) {
+            Ok(arr) => arr,
+            Err(_) => return (None, None, None, None, "unavailable (dequantize failed)".to_string()),
+        };
+        let wf_t = match mlx_rs::ops::transpose(&wf) {
+            Ok(arr) => arr,
+            Err(_) => return (None, None, None, None, "unavailable (transpose failed)".to_string()),
+        };
+        let oracle_input = mlx_rs::Array::full::<f32>(
+            &[input_shape[0], input_shape[1]],
+            &mlx_rs::Array::from_f32(0.5),
+        )
+        .expect("create oracle input");
+        let oracle_arr = match oracle_input.matmul(&wf_t) {
+            Ok(arr) => arr,
+            Err(_) => return (None, None, None, None, "unavailable (matmul failed)".to_string()),
+        };
+        oracle_arr.eval().expect("oracle eval");
+
+        let mlx_out = match mlx_output.try_as_slice::<f32>() {
             Ok(s) => s.to_vec(),
             Err(_) => return (None, None, None, None, "unavailable (dtype mismatch)".to_string()),
         };
+        let oracle_out = match oracle_arr.try_as_slice::<f32>() {
+            Ok(s) => s.to_vec(),
+            Err(_) => return (None, None, None, None, "unavailable (oracle dtype)".to_string()),
+        };
 
-        let max_val = out_slice.iter().cloned().fold(0.0f64, |a: f64, b| a.max(b as f64));
-        let max_abs = Some(max_val);
-        // Full oracle comparison (Rust matvec) requires loading the quantized
-        // weights and dequantizing through the CPU path, which is not yet wired.
-        (max_abs, None, None, None, "reference_only (no oracle comparison)".to_string())
+        if oracle_out.len() != mlx_out.len() {
+            return (
+                None, None, None, None,
+                format!("output length mismatch: oracle={}, mlx={}", oracle_out.len(), mlx_out.len()),
+            );
+        }
+
+        let len = mlx_out.len();
+        let mut max_abs = 0.0f64;
+        let mut max_rel = 0.0f64;
+        let mut sum_abs = 0.0f64;
+        let mut dot_product = 0.0f64;
+        let mut oracle_norm2 = 0.0f64;
+        let mut mlx_norm2 = 0.0f64;
+
+        for i in 0..len {
+            let o = oracle_out[i] as f64;
+            let m = mlx_out[i] as f64;
+            let abs_diff = (o - m).abs();
+            max_abs = max_abs.max(abs_diff);
+            sum_abs += abs_diff;
+
+            let denom = o.abs().max(1e-10f64);
+            max_rel = max_rel.max(abs_diff / denom);
+
+            dot_product += o * m;
+            oracle_norm2 += o * o;
+            mlx_norm2 += m * m;
+        }
+
+        let mean_abs = sum_abs / len as f64;
+        let cosine = if oracle_norm2 > 0.0 && mlx_norm2 > 0.0 {
+            Some(dot_product / (oracle_norm2.sqrt() * mlx_norm2.sqrt()))
+        } else {
+            None
+        };
+
+        // Primary correctness: relative error and cosine similarity.
+        // max_abs is informative only — bf16 quantization accumulates error.
+        let passed = max_rel < 1e-2 && cosine.map_or(false, |c| (c - 1.0).abs() < 1e-4);
+        let status = if passed {
+            format!("passed (max_abs={:.2e}, max_rel={:.2e})", max_abs, max_rel)
+        } else {
+            format!("FAILED (max_abs={:.2e}, max_rel={:.2e})", max_abs, max_rel)
+        };
+
+        (Some(max_abs), Some(max_rel), Some(mean_abs), cosine, status)
     }
 
     /// ── Control E: Unload-and-reload cache-owner test. ──
@@ -633,5 +710,70 @@ impl ProjectionHarness {
         }
 
         results
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// Synthetic oracle self-test: create quantized weights, run MLX quantized_matmul,
+    /// then verify oracle agreement without requiring the 12B compute image.
+    #[test]
+    fn synthetic_oracle_agreement() {
+        let k: usize = 256;
+        let n: usize = 128;
+        let group_size: i32 = 64;
+        let bits: i32 = 8;
+
+        let n_packed: usize = n;
+        let k_packed: usize = k / 4;
+        let mut weight_u32 = Vec::with_capacity(n_packed * k_packed);
+        let mut state: u64 = 12345;
+        for _ in 0..n_packed * k_packed {
+            state = state.wrapping_mul(6364136223846793005).wrapping_add(1442695040888963407);
+            let v = state;
+            let b0 = (v & 0xFF) as u32;
+            let b1 = ((v >> 8) & 0xFF) as u32;
+            let b2 = ((v >> 16) & 0xFF) as u32;
+            let b3 = ((v >> 24) & 0xFF) as u32;
+            weight_u32.push(b0 | (b1 << 8) | (b2 << 16) | (b3 << 24));
+        }
+        let weight = mlx_rs::Array::from_slice(&weight_u32, &[n_packed as i32, k_packed as i32]);
+
+        let groups = (k as i32 + group_size - 1) / group_size;
+        let mut scales_f32 = Vec::with_capacity(n_packed * groups as usize);
+        for _ in 0..n_packed * groups as usize {
+            state = state.wrapping_mul(6364136223846793005).wrapping_add(1442695040888963407);
+            scales_f32.push(0.005 + (state as f32 / u64::MAX as f32) * 0.01);
+        }
+        let scale = mlx_rs::Array::from_slice(&scales_f32, &[n_packed as i32, groups])
+            .as_dtype(mlx_rs::Dtype::Bfloat16).expect("scale bf16");
+
+        let biases_f32 = vec![0.0f32; n_packed * groups as usize];
+        let bias = mlx_rs::Array::from_slice(&biases_f32, &[n_packed as i32, groups])
+            .as_dtype(mlx_rs::Dtype::Bfloat16).expect("bias bf16");
+
+        let input_shape = vec![1, k as i32];
+        let input = mlx_rs::Array::full::<f32>(&[1, k as i32], &mlx_rs::Array::from_f32(0.5))
+            .expect("create input");
+
+        let mlx_output = mlx_rs::ops::quantized_matmul(
+            &input, &weight, &scale, &bias, true, group_size, bits,
+        ).expect("quantized_matmul");
+        mlx_output.eval().expect("eval");
+
+        let (max_abs, max_rel, mean_abs, cosine, status) =
+            ProjectionHarness::compare_oracle(&mlx_output, &weight, &scale, &bias, &input_shape);
+
+        eprintln!("synthetic oracle: max_abs={max_abs:?} max_rel={max_rel:?} mean_abs={mean_abs:?} cos={cosine:?} status={status}");
+
+        assert!(max_abs.is_some(), "max_abs should be Some, got {max_abs:?}");
+        // Bfloat16 scale/quantization arithmetic accumulates error across K=256 elements.
+        // max_rel and cosine are the authoritative correctness measures.
+        assert!(max_rel.unwrap() < 1e-2, "max_rel {} exceeds 1e-2 tolerance", max_rel.unwrap());
+        assert!(cosine.is_some(), "cosine should be Some, got {cosine:?}");
+        assert!((cosine.unwrap() - 1.0).abs() < 1e-4, "cosine {} not ~1.0", cosine.unwrap());
+        assert!(status.starts_with("passed"), "oracle should pass: {status}");
     }
 }

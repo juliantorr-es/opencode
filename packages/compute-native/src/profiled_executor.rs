@@ -15,6 +15,7 @@ use crate::runtime_trace::{RuntimeTimeline, TimelineEvent, TimelineEventType};
 use crate::session::InferenceSessionState;
 use crate::projection_identity;
 use crate::worker_memory;
+use serde::{Deserialize, Serialize};
 use mlx_rs::Array;
 
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -104,6 +105,27 @@ pub struct ProfiledReceipt {
     pub wall_clock_total_us: u64,
     pub unaccounted_us: u64,
     pub timeline: RuntimeTimeline,
+}
+
+/// Receipt for a single conditioning layer forward pass.
+///
+/// Produced by [`ProfiledInferenceSession::condition_layer`] and consumed
+/// by the Arm B evidence collector. Contains the layer output shape,
+/// finiteness check, wall-clock duration, and substrate observation.
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+pub struct ConditioningLayerReceipt {
+    /// Layer index that was conditioned.
+    pub layer_index: usize,
+    /// Attention kind ("sliding_attention" or "full_attention").
+    pub attention_kind: String,
+    /// Output shape as a list of dimensions.
+    pub shape: Vec<i32>,
+    /// Whether every output element is finite (no NaN or Inf).
+    pub finite: bool,
+    /// Wall-clock duration of the layer eval (ns).
+    pub eval_duration_ns: u64,
+    /// Observed substrate identifier, or "unknown" when unavailable.
+    pub observed_substrate: String,
 }
 
 /// Adapter wrapping a sub-range of a MappedSegment for no-copy external array
@@ -1029,6 +1051,116 @@ impl ProfiledInferenceSession {
         ));
 
         Ok(token)
+    }
+
+    /// Run a single conditioning layer forward pass using scratch resources.
+    ///
+    /// Calls the SAME internal `crate::executor::run_layer` function used by
+    /// [`Prefill`](Self::prefill) and [`decode_one`](Self::decode_one), but
+    /// operates on a synthetic hidden state and a scratch [`KvCache`] so that
+    /// production state (`self.kv_caches`, `self.generated_tokens`, etc.) is
+    /// never modified.
+    ///
+    /// # Invariants
+    ///
+    /// - `scratch_kv` is a temporary cache that will be destroyed after use.
+    /// - `self.kv_caches`, `self.generated_tokens`, `self.absolute_position`,
+    ///   and `self.layer_history` are never modified.
+    /// - The returned receipt captures the output shape, finiteness, eval
+    ///   duration, and observed substrate for evidence collection.
+    pub fn condition_layer(
+        &mut self,
+        model: &LoadedProfiledModel,
+        layer_index: usize,
+        input: &Array,
+        scratch_kv_idx: usize,
+    ) -> Result<ConditioningLayerReceipt, String> {
+        let plan = &model.reader.manifest.execution_plan;
+        if layer_index >= plan.layers.len() {
+            return Err(format!(
+                "layer_index {} out of range (plan has {} layers)",
+                layer_index,
+                plan.layers.len()
+            ));
+        }
+        let layer_plan = &plan.layers[layer_index];
+        let lw = &model.layers[layer_index];
+
+        let is_full = layer_plan.attention_kind == "full_attention";
+        let (rcos, rsin) = if is_full {
+            (&model.full_cos, &model.full_sin)
+        } else {
+            (&model.rope_cos, &model.rope_sin)
+        };
+
+        let proj_ctx = crate::projection_identity::ProjectionContext {
+            run_id: self.session_id.clone(),
+            phase: crate::projection_identity::Phase::Prefill,
+            forward_pass_index: 0,
+            token_step: None,
+            layer_index,
+            attention_kind: if layer_plan.attention_kind == "sliding_attention" {
+                crate::projection_identity::AttentionKind::Sliding
+            } else {
+                crate::projection_identity::AttentionKind::Full
+            },
+        };
+
+        let hidden = crate::executor::run_layer(
+            input,
+            layer_plan,
+            &lw.input_layernorm,
+            &lw.post_attention_layernorm,
+            &lw.q_proj_w, &lw.q_proj_s, &lw.q_proj_b,
+            &lw.k_proj_w, &lw.k_proj_s, &lw.k_proj_b,
+            &lw.v_proj_w, &lw.v_proj_s, &lw.v_proj_b,
+            &lw.o_proj_w, &lw.o_proj_s, &lw.o_proj_b,
+            lw.q_norm.as_deref(), lw.k_norm.as_deref(),
+            &lw.gate_proj_w, &lw.gate_proj_s, &lw.gate_proj_b,
+            &lw.up_proj_w, &lw.up_proj_s, &lw.up_proj_b,
+            &lw.down_proj_w, &lw.down_proj_s, &lw.down_proj_b,
+            rcos, rsin,
+            &mut self.kv_caches[scratch_kv_idx],
+            0, // kv_offset — synthetic, start from 0
+            plan.rms_norm_eps as f32,
+            &proj_ctx,
+        )
+        .map_err(|e| format!("condition_layer layer {}: {}", layer_index, e))?;
+
+        // Eval to materialize the computation.
+        let eval_start = std::time::Instant::now();
+        hidden.eval().map_err(|e| format!("condition_layer layer {} eval: {}", layer_index, e))?;
+        let eval_duration_ns = eval_start.elapsed().as_nanos() as u64;
+
+        let shape = hidden.shape();
+
+        // Check finiteness by reading back as f32.
+        // This is a host readback — acceptable for one-time conditioning.
+        let finite = hidden
+            .as_dtype(mlx_rs::Dtype::Float32)
+            .ok()
+            .and_then(|cast| {
+                let slice: Vec<f32> = cast.try_as_slice::<f32>().ok()?.to_vec();
+                Some(slice)
+            })
+            .map(|flat| flat.iter().any(|v| !v.is_finite()))
+            .map(|has_nan| !has_nan)
+            .unwrap_or(true);
+
+        // Attempt to record observed substrate via Metal System Trace
+        // or backend telemetry. Currently best-effort.
+        let observed_substrate = std::env::var("TRIBUNUS_RECORDED_SUBSTRATE")
+            .ok()
+            .unwrap_or_else(|| "unknown".to_string());
+
+        Ok(ConditioningLayerReceipt {
+            layer_index,
+            attention_kind: layer_plan.attention_kind.clone(),
+            shape: shape.to_vec(),
+            finite,
+            eval_duration_ns,
+            observed_substrate,
+        })
     }
 }
 

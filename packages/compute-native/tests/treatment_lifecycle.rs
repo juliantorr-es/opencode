@@ -134,7 +134,7 @@ fn arm_a_no_treatment_execution() {
 // asserts the *same* instance handles every transition.
 
 #[test]
-fn arm_b_same_runtime_identity() {
+fn arm_b_readiness_manager_identity_preserved() {
     // Use the pointer of the ReadinessManager as a stable identity proxy.
     // Even though Rust doesn't guarantee pointer stability across moves in
     // all cases, a single mutable reference throughout the test exercises
