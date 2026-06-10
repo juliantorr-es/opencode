@@ -2,10 +2,10 @@
   "mission": "0007",
   "title": "Compiler-Derived Execution Conditioning Experiment",
   "status": "exploratory_signal_identified_not_complete",
-  "revision": 2,
+  "revision": 3,
   "source_commit": "8e848bd2",
   "image_identity_logical": "d042df1e4062a53e3a003af4e2e8c714924fcf19f03b7cf0dd5f67293355d924",
-  "image_identity_compiled": "770e6e1373f3adbb674e7777bbc06ac7005df63706f04af68b503023e9c2eee7",
+  "image_identity_compiled": "compiled_directory_sha256 (770e6e13... \u2014 not the logical image hash d042df1e, not the artifact-root hash 3a0c6d47)",
   "image_path": "/tmp/tribunus-image-d042df1e",
   "model": "Gemma 4 12B (8-bit quantized, safetensors compiled to ComputeImage)",
   "machine": "Apple M1, 16GB RAM, macOS",
@@ -48,11 +48,6 @@
       ],
       "note": "NOT pipeline conditioning. Separate replay-projection processes exit before decode. Effect is cross-process."
     },
-    "C_full_model_fadvise": {
-      "runs": 4,
-      "median_decode_s": 54.4,
-      "note": "NOT bounded rolling prefetch. 12.2GB full-model cat sweep. Mission spec violation."
-    },
     "D_combined": {
       "runs": 2,
       "note": "Insufficient data for any conclusion."
@@ -61,6 +56,11 @@
       "runs": 4,
       "median_decode_s": 43.7,
       "note": "4.4% FASTER than control. Within noise, not instrumentation overhead."
+    },
+    "C_full_model_sequential_read_sweep": {
+      "runs": 4,
+      "median_decode_s": 54.4,
+      "note": "NOT bounded rolling prefetch. 12.2GB full-model cat sweep. Mission spec violation."
     }
   },
   "next_safe_action": "Keep Mission 0007 active. Implement same-process conditioning (scratch full-layer graph within model runtime). Wire bounded one-layer prefetch coordinator. Re-run all five arms with >=7 valid interleaved trials, manifest verification enabled, and paired statistical analysis.",
