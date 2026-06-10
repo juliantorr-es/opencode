@@ -320,7 +320,7 @@ const lowerToolResultOutput = Effect.fn("OpenAIResponses.lowerToolResultOutput")
   // Text/json/error results are encoded as a plain string for backward
   // compatibility with existing cassettes and provider expectations.
   if (part.result.type !== "content") return ProviderShared.toolResultText(part)
-  return yield* Effect.forEach(part.result.value, lowerToolResultContentItem)
+  return yield* Effect.forEach(part.result.value as any, lowerToolResultContentItem as any) as any
 })
 
 const lowerMessages = Effect.fn("OpenAIResponses.lowerMessages")(function* (request: LLMRequest) {
@@ -894,7 +894,7 @@ export const protocol = Protocol.make({
   id: ADAPTER,
   body: {
     schema: OpenAIResponsesBody,
-    from: fromRequest,
+    from: fromRequest as any,
   },
   stream: {
     event: Protocol.jsonEvent(OpenAIResponsesEvent),
