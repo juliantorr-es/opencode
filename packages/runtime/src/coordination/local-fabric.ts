@@ -1,4 +1,5 @@
 import type { CoordinationFabric, AgentHeartbeat, LeaseRequest, LeaseResult, CoordinationEvent, CoordinationJob, BackpressureState } from "./fabric"
+import type { ValkeyStreams } from "./stream-primitives"
 
 export function createLocalFabric(): CoordinationFabric {
   const heartbeats = new Map<string, AgentHeartbeat>()
@@ -67,5 +68,14 @@ export function createLocalFabric(): CoordinationFabric {
       subscribers.clear()
       queues.clear()
     },
+    streams: new Proxy({} as ValkeyStreams, {
+      get(_target, prop) {
+        throw new Error(
+          `LocalFabric has no Valkey streams. ` +
+          `Accessing .streams.${String(prop)} requires a stream-capable fabric. ` +
+          `Use StreamingCoordinationFabric or provide a real Valkey backend.`
+        )
+      },
+    }),
   }
 }

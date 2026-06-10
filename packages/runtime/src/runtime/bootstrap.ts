@@ -175,7 +175,7 @@ function topologicalSort(deps: BootDependency[]): BootDependency[] {
 
 // ── Bootstrap Runner ─────────────────────────────────────────────────────────
 
-function runBootstrap(): Effect.Effect<BootReport, never> {
+function runBootstrap(): Effect.Effect<BootReport, BootCheckError> {
   return Effect.gen(function* () {
     const sorted = topologicalSort(BOOT_DEPENDENCIES)
     const results: BootCheckResult[] = []

@@ -423,14 +423,14 @@ export const layer = Layer.effect(
                 const result = yield* Effect.promise(() =>
                   def.execute(toolCtx.callID || "unknown", args, onUpdate, ompCtx, signal),
                 )
-                const outputText = result && Array.isArray(result.content)
-                  ? result.content.map((c: any) => c?.text ?? "").join("\n")
+                const outputText = result && Array.isArray((result as Record<string, unknown>).content)
+                  ? (result as Record<string, unknown>).content.map((c: any) => c?.text ?? "").join("\n")
                   : result && typeof result === "object" && "content" in result
-                  ? String(result.content || "")
+                  ? String((result as Record<string, unknown>).content || "")
                   : typeof result === "string"
                   ? result
                   : String(result ?? "")
-                const metadata = (result && typeof result === "object" && result.details) ? result.details : {}
+                const metadata = (result && typeof result === "object" && (result as Record<string, unknown>).details) ? (result as Record<string, unknown>).details : {}
                 const title = def.label ?? id
                 const info = yield* agent.get(toolCtx.agent)
                 const out = yield* truncate.output(outputText, {}, info)

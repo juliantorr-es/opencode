@@ -76,7 +76,7 @@ function readEntityFiles(entityType: string): Record<string, any>[] {
 // ── Migration Functions ──────────────────────────────────────────────────────
 
 function migrateCampaigns(
-  adapter: DatabaseAdapter,
+  adapter: DatabaseAdapter.Interface,
   dryRun: boolean
 ): Effect.Effect<MigrationProgress, Error> {
   return Effect.gen(function* () {
@@ -154,7 +154,7 @@ function migrateCampaigns(
 }
 
 function migrateMissions(
-  adapter: DatabaseAdapter,
+  adapter: DatabaseAdapter.Interface,
   dryRun: boolean
 ): Effect.Effect<MigrationProgress, Error> {
   return Effect.gen(function* () {
@@ -244,7 +244,7 @@ function migrateMissions(
 // ── Migration Orchestrator ───────────────────────────────────────────────────
 
 export function migrateAll(
-  adapter: DatabaseAdapter,
+  adapter: DatabaseAdapter.Interface,
   dryRun = false
 ): Effect.Effect<MigrationReport, Error> {
   return Effect.gen(function* () {

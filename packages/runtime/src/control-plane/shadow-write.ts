@@ -115,7 +115,7 @@ export function shadowWrite(
   entityType: string,
   entityId: string,
   data: Record<string, unknown>,
-  adapter: DatabaseAdapter,
+  adapter: DatabaseAdapter.Interface,
   config: ShadowWriteConfig = DEFAULT_SHADOW_CONFIG
 ): Effect.Effect<ShadowWriteResult, Error> {
   return Effect.gen(function* () {

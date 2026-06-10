@@ -163,7 +163,6 @@ export {
 
 export type {
   WorkItemStatus,
-  WorkStatus,
   DeadLetterReason,
   RecoveryAction,
 } from "./work-queue.pg.sql"

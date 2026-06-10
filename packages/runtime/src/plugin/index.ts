@@ -27,7 +27,7 @@ import { EffectBridge } from "@/effect/bridge"
 import { InstanceState } from "@/effect/instance-state"
 import { errorMessage } from "@/util/error"
 import { HealthRegistry, HealthStatus } from "@/server/health"
-import { Global } from "@tribunus/core/global"
+import { Path } from "@tribunus/core/global"
 import { PluginLoader } from "./loader"
 import { parsePluginSpecifier, readPluginId, readV1Plugin, resolvePluginId } from "./shared"
 import { registerAdapter } from "@/control-plane/adapters"
@@ -52,7 +52,7 @@ interface PluginHealthStore {
   plugins: Record<string, PluginHealthEntry>
 }
 
-const PLUGIN_HEALTH_FILE = path.join(Global.Path.data, "plugin-health.json")
+const PLUGIN_HEALTH_FILE = path.join(Path.data, "plugin-health.json")
 
 function loadPluginHealthStore(): Effect.Effect<PluginHealthStore> {
   return Effect.promise<PluginHealthStore>(async () => {
