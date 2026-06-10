@@ -31,6 +31,7 @@ import {
   WorkQueueDurableStoreService,
   FakeWorkQueueStore,
 } from "@/coordination/durable-store"
+import { makeSessionIDUnsafe, makeProjectIDUnsafe } from "@/runtime/id-factory"
 import Redis from "ioredis"
 
 // ── Test Setup ────────────────────────────────────────────────────────
@@ -769,8 +770,8 @@ async function ensureAckTestQueue(redis: Redis, streams: ValkeyStreams) {
 function workItemInput(id: string) {
   return {
     id,
-    sessionId: "test-session" as const,
-    projectId: "test-project" as const,
+    sessionId: makeSessionIDUnsafe("test-session"),
+    projectId: makeProjectIDUnsafe("test-project"),
     workKind: "test",
     schemaVersion: "v1",
     correlationId: "test-corr",

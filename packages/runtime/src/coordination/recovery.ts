@@ -30,13 +30,22 @@ import type { DivergenceReport } from "./observability"
 
 /** Recovery state */
 export type CoordinationRecoveryState =
-  | "unavailable"
-  | "degraded"
-  | "rebuilding"
-  | "recovered"
+
+  | "ready"
+  | "coordination_unavailable"
+  | "coordination_degraded"
+  | "coordination_rebuilding"
+  | "coordination_refused"
+
+/** Recovery workflow status — separate from steady runtime state */
+export type RecoveryWorkflowStatus =
+  | "not_started"
+  | "planned"
+  | "in_progress"
+  | "succeeded"
+  | "failed"
 
 /** Recovery outcome */
-export type RecoveryOutcome =
   | "success"
   | "partial"
   | "failed"
@@ -153,7 +162,7 @@ export class CoordinationRecovery extends Context.Service<CoordinationRecovery>(
       // Valkey is unavailable - need recovery
       return {
         needsRecovery: true,
-        state: "unavailable",
+        state: "coordination_unavailable",
         workToReEnqueue: [],
         workToReschedule: [],
         terminalWork: [],
@@ -171,7 +180,7 @@ export class CoordinationRecovery extends Context.Service<CoordinationRecovery>(
       // Stream or group missing - need rebuild
       return {
         needsRecovery: true,
-        state: "rebuilding",
+        state: "coordination_rebuilding",
         workToReEnqueue: [],
         workToReschedule: [],
         terminalWork: [],
@@ -195,7 +204,7 @@ export class CoordinationRecovery extends Context.Service<CoordinationRecovery>(
 
     return {
       needsRecovery: workToReEnqueue.length > 0 || workToReschedule.length > 0,
-      state: workToReEnqueue.length > 0 || workToReschedule.length > 0 ? "degraded" : "recovered",
+      state: workToReEnqueue.length > 0 || workToReschedule.length > 0 ? "coordination_degraded" : "ready",
       workToReEnqueue,
       workToReschedule,
       terminalWork,
@@ -468,9 +477,9 @@ export class CoordinationRecovery extends Context.Service<CoordinationRecovery>(
     }
 
     // Stream is empty or missing — rebuild from PGlite
-    await this.setRecoveryState("rebuilding")
+    await this.setRecoveryState("coordination_rebuilding")
     const receipt = await this.rebuildFromPGlite()
-    await this.setRecoveryState("recovered")
+    await this.setRecoveryState("ready")
 
     return receipt
   }
@@ -605,7 +614,7 @@ export class CoordinationRecovery extends Context.Service<CoordinationRecovery>(
         return row ?? null
       })
     )
-    return (result?.state as CoordinationRecoveryState) ?? "recovered"
+    return (result?.state as CoordinationRecoveryState) ?? "ready"
   }
 
   // ── Receipt Management ──────────────────────────────────────────────
