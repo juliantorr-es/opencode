@@ -145,7 +145,14 @@ fn backend_transition_without_transfer_rejected() {
         make_boundary(0, mlx(), &[1], &[10], EvaluationPolicy::BackendLazy, &[]),
         make_boundary(1, accel(), &[2], &[11], EvaluationPolicy::BackendLazy, &[]),
     ];
-    let err = validate_boundary_plans(&plans, &no_ctx());
+    let ctx = BoundaryValidationContext {
+        expected_operations: &[],
+        dependency_edges: &[
+            DependencyEdge { from: op(1), to: op(2), via_tensor: tid(99) },
+        ],
+        transfer_plans: &[],
+    };
+    let err = validate_boundary_plans(&plans, &ctx);
     assert!(err.is_err());
     assert!(err.unwrap_err().iter().any(|e| matches!(e, PlanValidationError::BackendTransitionWithoutTransfer { .. })));
 }

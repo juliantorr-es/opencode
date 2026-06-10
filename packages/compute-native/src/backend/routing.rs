@@ -377,7 +377,7 @@ pub struct ComputeRouteProfile {
     pub backend_artifacts: BackendArtifactManifest,
     /// Single source of truth for evaluation boundaries — supersedes
     /// both SynchronizationGroup and EvaluationGroupPlan.
-    pub execution_boundaries: Vec<ExecutionBoundaryPlan>,
+    pub execution_boundaries: Vec<SealedExecutionBoundaryPlan>,
     pub evidence_basis: Vec<EvidenceDigest>,
 }
 
@@ -491,6 +491,23 @@ pub struct ExecutionBoundaryPlan {
     pub content_digest: Option<EvidenceDigest>,
 }
 
+/// Sealed plan — digest is mandatory.
+#[derive(Debug, Clone)]
+pub struct SealedExecutionBoundaryPlan {
+    pub plan: ExecutionBoundaryPlan,
+    pub content_digest: EvidenceDigest,
+}
+
+impl SealedExecutionBoundaryPlan {
+    pub fn seal(plan: ExecutionBoundaryPlan) -> Self {
+        let digest = compute_boundary_digest(&plan);
+        Self { plan, content_digest: digest }
+    }
+    pub fn verify(&self) -> bool {
+        self.content_digest == compute_boundary_digest(&self.plan)
+    }
+}
+
 /// Directed edge in the operation dependency graph.
 #[derive(Debug, Clone)]
 pub struct DependencyEdge {
@@ -550,21 +567,32 @@ pub fn validate_boundary_plans(
         }
     }
 
-    // Backend transitions: for each crossing dependency edge, require
-    // a matching transfer plan for edge.via_tensor.
-    for w in plans.windows(2) {
-        let prev = &w[0];
-        let next = &w[1];
-        if prev.backend_id != next.backend_id {
-            let has_transfer = ctx.transfer_plans.iter().any(|tp| {
-                tp.source_backend == prev.backend_id
-                    && tp.destination_backend == next.backend_id
-            });
-            if !has_transfer {
-                errors.push(PlanValidationError::BackendTransitionWithoutTransfer {
-                    from: prev.backend_id,
-                    to: next.backend_id,
+    // Backend transitions: every crossing dependency whose producer and
+    // consumer occupy different backends must have a matching transfer
+    // plan for the exact edge.via_tensor.
+    {
+        let mut backend_of: std::collections::HashMap<EvaluationGroupId, BackendId> =
+            std::collections::HashMap::new();
+        for plan in plans {
+            backend_of.insert(plan.group_id, plan.backend_id);
+        }
+        for edge in ctx.dependency_edges {
+            let from_gid = op_to_boundary.get(&edge.from);
+            let to_gid = op_to_boundary.get(&edge.to);
+            let (Some(&fg), Some(&tg)) = (from_gid, to_gid) else { continue };
+            let (Some(&fb), Some(&tb)) = (backend_of.get(&fg), backend_of.get(&tg)) else { continue };
+            if fb != tb {
+                let has_transfer = ctx.transfer_plans.iter().any(|tp| {
+                    tp.tensor_id == edge.via_tensor
+                        && tp.source_backend == fb
+                        && tp.destination_backend == tb
                 });
+                if !has_transfer {
+                    errors.push(PlanValidationError::BackendTransitionWithoutTransfer {
+                        from: fb,
+                        to: tb,
+                    });
+                }
             }
         }
     }
