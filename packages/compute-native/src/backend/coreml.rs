@@ -89,16 +89,7 @@ impl GraphBackend for CoreMlBackend {
         &mut self,
         _region: &GraphRegion,
     ) -> Result<(CompiledRegionHandle, u64), String> {
-        let slot = self.compiled_regions.len() as u32;
-        self.compiled_regions.push(None);
-        self.region_generations.push(1);
-        Ok((
-            CompiledRegionHandle {
-                slot,
-                generation: 1,
-            },
-            0,
-        ))
+        Err("CoreMlBackend: compile_region not yet implemented".into())
     }
 
     fn execute_region(
