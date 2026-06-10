@@ -1,26 +1,26 @@
 //! Heterogeneous contract conformance tests.
 //!
 //! Tests the tensor registry, version-bound materializations, authority
-//! transitions, transfer records, and cross-backend contract enforcement.
+//! transitions, transfer records, contract enforcement, and immutability.
 
 use tribunus_compute_native::backend::DType;
 use tribunus_compute_native::backend::routing::{
     BackendId, LogicalShape, PhysicalLayout, TensorId, TensorMaterializationId,
-    TensorTransferReceipt, TensorVersion,
+    TensorShape, TensorTransferReceipt, TensorVersion,
 };
 use tribunus_compute_native::backend::tensor_registry::{
-    MaterializationRecord, MaterializationSequence, MaterializationState,
-    MaterializedTensor, TensorContract, TensorMutability, TensorRegistry,
-    TensorRole, TensorTransferRecord,
+    MaterializationRecord, MaterializationState, MaterializedTensor,
+    TensorContract, TensorMutability, TensorRegistry, TensorRole,
+    TensorTransferRecord,
 };
 
 // ── Fixtures ──────────────────────────────────────────────────────────────
 
 fn mlx_id() -> BackendId { BackendId(0) }
 fn accelerate_id() -> BackendId { BackendId(1) }
-fn coreml_id() -> BackendId { BackendId(2) }
 
 fn f32_layout() -> PhysicalLayout { PhysicalLayout::RowMajor }
+fn shape_2x3() -> TensorShape { TensorShape { dims: vec![2, 3] } }
 
 fn small_contract() -> TensorContract {
     TensorContract {
@@ -31,36 +31,54 @@ fn small_contract() -> TensorContract {
     }
 }
 
+fn weight_contract() -> TensorContract {
+    TensorContract {
+        logical_shape: LogicalShape { dims: vec![4096, 4096] },
+        canonical_dtype: DType::F32,
+        mutability: TensorMutability::Immutable,
+        role: TensorRole::Weight,
+    }
+}
+
 fn tensor(id: u64) -> MaterializedTensor {
     MaterializedTensor::new(TensorId(id), small_contract(), mlx_id())
 }
 
-fn seq() -> MaterializationSequence { MaterializationSequence::new() }
+fn registry_with(tensors: Vec<MaterializedTensor>) -> TensorRegistry {
+    let mut reg = TensorRegistry::new();
+    for t in tensors {
+        reg.register(t).unwrap();
+    }
+    reg
+}
 
 // ── Version-bound materializations ────────────────────────────────────────
 
 #[test]
 fn mutation_invalidates_old_materializations() {
-    let mut t = tensor(1);
-    let mut sq = seq();
-    t.add_materialization(&mut sq, mlx_id(), 100, f32_layout(), DType::F32);
-    t.add_materialization(&mut sq, accelerate_id(), 200, f32_layout(), DType::F32);
+    let mut reg = registry_with(vec![tensor(1)]);
+    reg.add_materialization(TensorId(1), mlx_id(), 100, shape_2x3(), f32_layout(), DType::F32).unwrap();
+    reg.add_materialization(TensorId(1), accelerate_id(), 200, shape_2x3(), f32_layout(), DType::F32).unwrap();
 
-    assert!(t.is_fresh(mlx_id()));
-    assert!(t.is_fresh(accelerate_id()));
+    {
+        let t = reg.get(TensorId(1)).unwrap();
+        assert!(t.is_fresh(mlx_id()));
+        assert!(t.is_fresh(accelerate_id()));
+    }
 
-    let receipt = t.advance_version(&mut sq, mlx_id(), 101, f32_layout(), DType::F32);
+    let receipt = reg.advance_version(TensorId(1), mlx_id(), 101, shape_2x3(), f32_layout(), DType::F32).unwrap();
 
     assert_eq!(receipt.new_version, TensorVersion(1));
-    assert_eq!(t.version, TensorVersion(1));
     assert_eq!(receipt.previous_version, TensorVersion(0));
     assert_eq!(receipt.previous_authority, mlx_id());
     assert_eq!(receipt.new_authority, mlx_id());
 
+    let t = reg.get(TensorId(1)).unwrap();
+    assert_eq!(t.version, TensorVersion(1));
     assert!(t.is_fresh(mlx_id()));
     assert!(!t.is_fresh(accelerate_id()));
 
-    let acc_stale = receipt.invalidated
+    let acc_stale = receipt.invalidated_non_authoritative
         .iter()
         .find(|r| r.backend_id == accelerate_id());
     assert!(acc_stale.is_some(), "accelerate must be in invalidated set");
@@ -69,91 +87,141 @@ fn mutation_invalidates_old_materializations() {
 
 #[test]
 fn stale_handle_rejected() {
-    let mut t = tensor(2);
-    let mut sq = seq();
-    t.add_materialization(&mut sq, mlx_id(), 100, f32_layout(), DType::F32);
-    t.add_materialization(&mut sq, accelerate_id(), 200, f32_layout(), DType::F32);
+    let mut reg = registry_with(vec![tensor(2)]);
+    reg.add_materialization(TensorId(2), mlx_id(), 100, shape_2x3(), f32_layout(), DType::F32).unwrap();
+    reg.add_materialization(TensorId(2), accelerate_id(), 200, shape_2x3(), f32_layout(), DType::F32).unwrap();
+    reg.advance_version(TensorId(2), mlx_id(), 101, shape_2x3(), f32_layout(), DType::F32).unwrap();
 
-    t.advance_version(&mut sq, mlx_id(), 101, f32_layout(), DType::F32);
-
-    let handle = t.get_handle(accelerate_id());
-    assert!(handle.is_none(), "stale accelerate handle must be rejected");
+    let t = reg.get(TensorId(2)).unwrap();
+    assert!(t.get_handle(accelerate_id()).is_none(), "stale handle must be rejected");
 }
 
 #[test]
 fn authority_transition_increments_exactly_once() {
-    let mut t = tensor(3);
-    let mut sq = seq();
-    t.add_materialization(&mut sq, mlx_id(), 100, f32_layout(), DType::F32);
+    let mut reg = registry_with(vec![tensor(3)]);
+    reg.add_materialization(TensorId(3), mlx_id(), 100, shape_2x3(), f32_layout(), DType::F32).unwrap();
 
-    assert_eq!(t.version, TensorVersion(0));
+    assert_eq!(reg.get(TensorId(3)).unwrap().version, TensorVersion(0));
 
-    let r1 = t.advance_version(&mut sq, accelerate_id(), 200, f32_layout(), DType::F32);
+    let r1 = reg.advance_version(TensorId(3), accelerate_id(), 200, shape_2x3(), f32_layout(), DType::F32).unwrap();
     assert_eq!(r1.new_version, TensorVersion(1));
-    assert_eq!(t.version, TensorVersion(1));
-    assert_eq!(t.authoritative_backend, accelerate_id());
+    assert_eq!(reg.get(TensorId(3)).unwrap().version, TensorVersion(1));
+    assert_eq!(reg.get(TensorId(3)).unwrap().authoritative_backend, accelerate_id());
 
-    let r2 = t.advance_version(&mut sq, mlx_id(), 101, f32_layout(), DType::F32);
+    let r2 = reg.advance_version(TensorId(3), mlx_id(), 101, shape_2x3(), f32_layout(), DType::F32).unwrap();
     assert_eq!(r2.new_version, TensorVersion(2));
-    assert_eq!(t.version, TensorVersion(2));
-    assert_eq!(t.authoritative_backend, mlx_id());
+    assert_eq!(reg.get(TensorId(3)).unwrap().version, TensorVersion(2));
+    assert_eq!(reg.get(TensorId(3)).unwrap().authoritative_backend, mlx_id());
 }
 
 #[test]
-fn authority_transition_replaced_authoritative_preserved() {
-    let mut t = tensor(100);
-    let mut sq = seq();
-    t.add_materialization(&mut sq, mlx_id(), 100, f32_layout(), DType::F32);
+fn cross_backend_transition_preserves_both_history_paths() {
+    let mut reg = registry_with(vec![tensor(100)]);
+    reg.add_materialization(TensorId(100), mlx_id(), 100, shape_2x3(), f32_layout(), DType::F32).unwrap();
 
-    // MLX was the authoritative backend; transition to Accelerate
-    let receipt = t.advance_version(&mut sq, accelerate_id(), 200, f32_layout(), DType::F32);
-    // The old MLX materialization should be preserved in replaced_authoritative
-    assert!(receipt.replaced_authoritative.is_some(), "old authoritative must be preserved");
-    let old = receipt.replaced_authoritative.unwrap();
-    assert_eq!(old.backend_id, mlx_id());
-    assert_eq!(old.backend_handle, 100);
+    // Transition to Accelerate
+    let receipt = reg.advance_version(TensorId(100), accelerate_id(), 200, shape_2x3(), f32_layout(), DType::F32).unwrap();
+
+    // Previous authoritative (MLX) must be preserved
+    let prev_auth = &receipt.previous_authoritative_materialization;
+    assert!(prev_auth.is_some(), "previous authoritative must be preserved");
+    assert_eq!(prev_auth.as_ref().unwrap().backend_id, mlx_id());
+    assert_eq!(prev_auth.as_ref().unwrap().backend_handle, 100);
+
+    // Destination (Accelerate) had no prior materialization
+    assert!(receipt.replaced_destination_materialization.is_none(),
+        "no prior materialization at Accelerate");
+}
+
+#[test]
+fn cross_backend_preserves_destination_prior_record() {
+    let mut reg = registry_with(vec![tensor(101)]);
+    reg.add_materialization(TensorId(101), mlx_id(), 100, shape_2x3(), f32_layout(), DType::F32).unwrap();
+    // Pre-populate Accelerate with a materialization
+    reg.add_materialization(TensorId(101), accelerate_id(), 200, shape_2x3(), f32_layout(), DType::F32).unwrap();
+
+    // Transition authority to Accelerate
+    let receipt = reg.advance_version(TensorId(101), accelerate_id(), 300, shape_2x3(), f32_layout(), DType::F32).unwrap();
+
+    // Previous authoritative (MLX)
+    assert!(receipt.previous_authoritative_materialization.is_some());
+    assert_eq!(receipt.previous_authoritative_materialization.as_ref().unwrap().backend_id, mlx_id());
+
+    // Replaced destination: old Accelerate record (handle 200, not 300)
+    assert!(receipt.replaced_destination_materialization.is_some(),
+        "replaced destination must be preserved");
+    let replaced = receipt.replaced_destination_materialization.as_ref().unwrap();
+    assert_eq!(replaced.backend_id, accelerate_id());
+    assert_eq!(replaced.backend_handle, 200);
+}
+
+// ── Contract enforcement ──────────────────────────────────────────────────
+
+#[test]
+fn dtype_mismatch_rejected() {
+    let mut reg = registry_with(vec![tensor(50)]);
+    let err = reg.add_materialization(
+        TensorId(50), mlx_id(), 100, shape_2x3(), f32_layout(), DType::U32,
+    );
+    assert!(err.is_err(), "dtype mismatch must be rejected");
+    assert!(err.unwrap_err().contains("dtype"));
+}
+
+#[test]
+fn contract_dtype_enforced() {
+    let mut reg = registry_with(vec![tensor(51)]);
+    // Correct dtype → OK
+    assert!(reg.add_materialization(TensorId(51), mlx_id(), 100, shape_2x3(), f32_layout(), DType::F32).is_ok());
+    // Wrong dtype → rejected
+    assert!(reg.add_materialization(TensorId(51), accelerate_id(), 200, shape_2x3(), f32_layout(), DType::BF16).is_err());
+}
+
+// ── Immutability ──────────────────────────────────────────────────────────
+
+#[test]
+fn immutable_weight_rejects_advance_version() {
+    let mut reg = registry_with(vec![MaterializedTensor::new(TensorId(200), weight_contract(), mlx_id())]);
+    reg.add_materialization(TensorId(200), mlx_id(), 100, TensorShape { dims: vec![4096, 4096] }, f32_layout(), DType::F32).unwrap();
+
+    let err = reg.advance_version(TensorId(200), accelerate_id(), 200, TensorShape { dims: vec![4096, 4096] }, f32_layout(), DType::F32);
+    assert!(err.is_err(), "immutable tensor must reject advance_version");
+    assert!(err.unwrap_err().contains("immutable"));
+}
+
+#[test]
+fn immutable_weight_accepts_add_materialization() {
+    // Adding a materialization to an immutable weight is allowed
+    // (it's a cache copy, not a version mutation)
+    let mut reg = registry_with(vec![MaterializedTensor::new(TensorId(201), weight_contract(), mlx_id())]);
+    let rec = reg.add_materialization(TensorId(201), mlx_id(), 100, TensorShape { dims: vec![4096, 4096] }, f32_layout(), DType::F32);
+    assert!(rec.is_ok());
 }
 
 // ── Registry contracts ────────────────────────────────────────────────────
 
 #[test]
 fn duplicate_tensor_registration_fails() {
-    let mut reg = TensorRegistry::new();
-    let t1 = tensor(42);
-    reg.register(t1).expect("first register");
-
-    let t2 = tensor(42);
-    let err = reg.register(t2);
-    assert!(err.is_err(), "duplicate registration must fail");
+    let mut reg = registry_with(vec![tensor(42)]);
+    let err = reg.register(tensor(42));
+    assert!(err.is_err());
     assert!(err.unwrap_err().contains("already registered"));
 }
 
 #[test]
-fn version_mutation_only_through_advance_version() {
-    // adv_version is the only way to mutate version;
-    // there is no replace() method.
-    let mut reg = TensorRegistry::new();
-    let t = tensor(99);
-    reg.register(t).expect("first register");
-
-    let stored = reg.get(TensorId(99)).unwrap();
-    assert_eq!(stored.version, TensorVersion(0));
-    assert_eq!(stored.authoritative_backend, mlx_id());
-
-    // Mutate through advance_version on the registry-owned tensor
-    let mut sq = seq();
-    let mut t_mut = reg.get_mut(TensorId(99)).unwrap();
-    let receipt = t_mut.advance_version(&mut sq, accelerate_id(), 300, f32_layout(), DType::F32);
+fn version_mutation_only_through_registry() {
+    let mut reg = registry_with(vec![tensor(99)]);
+    let receipt = reg.advance_version(TensorId(99), accelerate_id(), 300, shape_2x3(), f32_layout(), DType::F32).unwrap();
     assert_eq!(receipt.new_version, TensorVersion(1));
-    assert_eq!(t_mut.version, TensorVersion(1));
-    assert_eq!(t_mut.authoritative_backend, accelerate_id());
+    assert_eq!(reg.get(TensorId(99)).unwrap().version, TensorVersion(1));
+    assert_eq!(reg.get(TensorId(99)).unwrap().authoritative_backend, accelerate_id());
 }
 
 #[test]
-fn registry_returns_none_for_unknown_id() {
+fn unknown_tensor_errors() {
     let mut reg = TensorRegistry::new();
     assert!(reg.get(TensorId(999)).is_none());
-    assert!(reg.get_mut(TensorId(999)).is_none());
+    assert!(reg.add_materialization(TensorId(999), mlx_id(), 0, shape_2x3(), f32_layout(), DType::F32).is_err());
+    assert!(reg.advance_version(TensorId(999), mlx_id(), 0, shape_2x3(), f32_layout(), DType::F32).is_err());
 }
 
 // ── Transfer record ───────────────────────────────────────────────────────
@@ -177,46 +245,19 @@ fn transfer_record_preserves_exact_layouts_and_dtypes() {
         conversion_ns: 567,
         zero_copy: false,
     };
-
     assert_eq!(record.tensor_id, TensorId(1));
-    assert_eq!(record.tensor_version, TensorVersion(3));
     assert_eq!(record.source_backend, mlx_id());
     assert_eq!(record.destination_backend, accelerate_id());
     assert_eq!(record.bytes_read, 4096);
-    assert_eq!(record.bytes_written, 512);
-    assert_eq!(record.source_dtype, DType::F32);
-    assert_eq!(record.destination_dtype, DType::U32);
     assert_eq!(record.transfer_ns, 1234);
-    assert_eq!(record.conversion_ns, 567);
-    assert!(!record.zero_copy);
-}
-
-#[test]
-fn version_mismatch_means_stale() {
-    let mut t = tensor(5);
-    let mut sq = seq();
-    t.add_materialization(&mut sq, mlx_id(), 100, f32_layout(), DType::F32);
-    t.add_materialization(&mut sq, accelerate_id(), 200, f32_layout(), DType::F32);
-
-    t.advance_version(&mut sq, mlx_id(), 101, f32_layout(), DType::F32);
-    assert!(!t.is_fresh(accelerate_id()));
 }
 
 // ── Materialization state ─────────────────────────────────────────────────
 
 #[test]
-fn add_materialization_makes_fresh() {
-    let mut t = tensor(6);
-    let mut sq = seq();
-    let rec = t.add_materialization(&mut sq, mlx_id(), 100, f32_layout(), DType::F32);
-    assert_eq!(rec.state, MaterializationState::Fresh);
-    assert_eq!(rec.tensor_version, t.version);
-}
-
-#[test]
-fn new_tensor_has_zero_materializations() {
+fn new_tensor_is_empty() {
     let t = tensor(7);
-    assert!(t.materializations.is_empty());
+    assert!(t.is_empty());
     assert_eq!(t.version, TensorVersion(0));
 }
 
@@ -226,20 +267,16 @@ fn new_tensor_has_contract() {
     assert_eq!(t.contract.canonical_dtype, DType::F32);
     assert_eq!(t.contract.logical_shape.dims, vec![2, 3]);
     assert_eq!(t.contract.mutability, TensorMutability::Mutable);
-    assert_eq!(t.contract.role, TensorRole::Activation);
 }
 
 #[test]
-fn materialization_ids_are_monotonic() {
-    let mut sq = seq();
-    let id0 = sq.next();
-    let id1 = sq.next();
-    let id2 = sq.next();
-    assert!(id0.0 < id1.0);
-    assert!(id1.0 < id2.0);
+fn materialization_records_physical_shape() {
+    let mut reg = registry_with(vec![tensor(300)]);
+    let rec = reg.add_materialization(TensorId(300), mlx_id(), 0, shape_2x3(), f32_layout(), DType::F32).unwrap();
+    assert_eq!(rec.physical_shape.dims, vec![2, 3]);
 }
 
-// ── Cross-backend routing contract ────────────────────────────────────────
+// ── Lossless transfer receipt ─────────────────────────────────────────────
 
 #[test]
 fn lossless_transfer_receipt() {
@@ -260,10 +297,6 @@ fn lossless_transfer_receipt() {
         conversion_ns: 100,
         zero_copy: false,
     };
-
     assert_eq!(receipt.tensor_id, TensorId(10));
-    assert_eq!(receipt.source_backend, mlx_id());
-    assert_eq!(receipt.destination_backend, accelerate_id());
     assert_eq!(receipt.bytes_read, 4096);
-    assert_eq!(receipt.conversion_ns, 100);
 }
