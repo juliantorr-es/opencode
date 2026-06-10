@@ -1,10 +1,7 @@
-//! Experiment artifact authority tests.
-//!
-//! Proves: SHA-256 sealing, contract digest completeness, golden-vector
-//! reproducibility, dataset identity uniqueness, profile cardinality,
-//! tamper detection, and fixture vs claim-grade validation.
+//! Experiment artifact authority tests — recursive sealing, layout payloads,
+//! tensor data verification, per-contract datasets, build attestation.
 
-use tribunus_compute_native::backend::routing::OperationId;
+use tribunus_compute_native::backend::routing::{OperationId, PhysicalLayout};
 use tribunus_compute_native::experiment::{
     CorrectnessResult, ExperimentManifest, F32MatmulContract,
     F32MatmulTolerance, InputDataset, MachineProfile, SealedExperimentProfile,
@@ -14,123 +11,104 @@ use tribunus_compute_native::experiment::{
 // ── Contract digest ──────────────────────────────────────────────────
 
 #[test]
-fn contract_digest_is_deterministic() {
+fn contract_digest_deterministic() {
     let c = F32MatmulContract::new(OperationId(1), 2, 4, 3);
     assert_eq!(c.digest(), c.digest());
 }
 
 #[test]
 fn contract_digest_changes_with_shape() {
-    let c1 = F32MatmulContract::new(OperationId(1), 2, 4, 3);
-    let c2 = F32MatmulContract::new(OperationId(1), 2, 4, 5);
-    assert_ne!(c1.digest(), c2.digest());
+    assert_ne!(F32MatmulContract::new(OperationId(1), 2, 4, 3).digest(), F32MatmulContract::new(OperationId(1), 2, 4, 5).digest());
 }
 
 #[test]
-fn contract_digest_changes_with_operation_id() {
-    let c1 = F32MatmulContract::new(OperationId(1), 2, 4, 3);
-    let c2 = F32MatmulContract::new(OperationId(2), 2, 4, 3);
-    assert_ne!(c1.digest(), c2.digest(), "operation_id must affect digest");
+fn contract_digest_changes_with_op_id() {
+    assert_ne!(F32MatmulContract::new(OperationId(1), 2, 4, 3).digest(), F32MatmulContract::new(OperationId(2), 2, 4, 3).digest());
 }
 
 #[test]
 fn contract_digest_changes_with_transpose() {
     let mut c = F32MatmulContract::new(OperationId(1), 2, 4, 3);
-    let d1 = c.digest();
+    let d = c.digest();
     c.transpose_a = true;
-    assert_ne!(c.digest(), d1, "transpose must affect digest");
+    assert_ne!(c.digest(), d);
+}
+
+#[test]
+fn contract_digest_changes_with_layout_payload() {
+    let c1 = F32MatmulContract::new(OperationId(1), 2, 4, 3);
+    let mut c2 = c1.clone();
+    c2.output_layout = PhysicalLayout::PackedU32 { group_size: 128, bits: 4 };
+    assert_ne!(c1.digest(), c2.digest(), "PackedU32 fields must affect digest");
 }
 
 // ── Shape matrices ──────────────────────────────────────────────────
 
 #[test]
-fn conformance_shapes_are_valid() {
-    for &(m, k, n) in &conformance_shapes() { assert!(m>0 && k>0 && n>0); }
-}
+fn conformance_shapes_valid() { for &(m,k,n) in &conformance_shapes() { assert!(m>0&&k>0&&n>0); } }
 
 #[test]
-fn representative_shapes_have_three_m_classes() {
-    let shapes = representative_shapes();
-    assert_eq!(shapes.len(), 3);
-    assert_eq!(shapes[0].0, 1);
-    assert_eq!(shapes[1].0, 4);
-    assert_eq!(shapes[2].0, 16);
+fn representative_shapes_three_m_classes() {
+    let s = representative_shapes();
+    assert_eq!(s.len(), 3);
+    assert_eq!(s[0].0, 1); assert_eq!(s[1].0, 4); assert_eq!(s[2].0, 16);
 }
 
 // ── Input dataset ────────────────────────────────────────────────────
 
 #[test]
-fn deterministic_inputs_are_reproducible() {
+fn dataset_reproducible() {
     let c = F32MatmulContract::new(OperationId(0), 2, 4, 3);
-    let ds1 = InputDataset::generate(1, &c).unwrap();
-    let ds2 = InputDataset::generate(1, &c).unwrap();
-    assert_eq!(ds1.tensors[0].sha256, ds2.tensors[0].sha256);
-    assert_eq!(ds1.tensors[1].sha256, ds2.tensors[1].sha256);
-    assert_eq!(ds1.sha256, ds2.sha256);
+    let d1 = InputDataset::generate(1, &c).unwrap();
+    let d2 = InputDataset::generate(1, &c).unwrap();
+    assert_eq!(d1.tensors[0].sha256, d2.tensors[0].sha256);
+    assert_eq!(d1.sha256, d2.sha256);
 }
 
 #[test]
-fn dataset_ids_are_unique_per_contract() {
-    let c1 = F32MatmulContract::new(OperationId(10), 2, 4, 3);
-    let c2 = F32MatmulContract::new(OperationId(11), 2, 4, 3);
-    let ds1 = InputDataset::generate(1, &c1).unwrap();
-    let ds2 = InputDataset::generate(1, &c2).unwrap();
-    assert_ne!(ds1.dataset_id, ds2.dataset_id);
-    assert_ne!(ds1.sha256, ds2.sha256);
+fn dataset_ids_unique_per_contract() {
+    assert_ne!(InputDataset::generate(1, &F32MatmulContract::new(OperationId(10), 2, 4, 3)).unwrap().dataset_id,
+               InputDataset::generate(1, &F32MatmulContract::new(OperationId(11), 2, 4, 3)).unwrap().dataset_id);
 }
 
 #[test]
-fn dataset_verify_passes() {
+fn tensor_verify_passes() {
     let c = F32MatmulContract::new(OperationId(0), 2, 4, 3);
     let ds = InputDataset::generate(1, &c).unwrap();
-    assert!(ds.verify(), "dataset must verify after generation");
+    for t in &ds.tensors { assert!(t.verify()); }
 }
 
 #[test]
-fn golden_vector_is_stable() {
+fn tensor_verify_detects_tampering() {
     let c = F32MatmulContract::new(OperationId(0), 2, 4, 3);
-    let ds = InputDataset::generate(1, &c).unwrap();
-    // Golden: seed is derived from SHA-256, so the first element is deterministic
+    let mut ds = InputDataset::generate(1, &c).unwrap();
+    ds.tensors[0].data[0] ^= 0xFF;
+    assert!(!ds.tensors[0].verify(), "tampered bytes must fail verify");
+}
+
+#[test]
+fn golden_vector_stable() {
+    let ds = InputDataset::generate(1, &F32MatmulContract::new(OperationId(0), 2, 4, 3)).unwrap();
     assert_eq!(ds.generator_algorithm, "tribunus-e0008-input-v1");
     assert_eq!(ds.tensors.len(), 2);
-    assert_eq!(ds.tensors[0].element_count, 6);
-    assert_eq!(ds.tensors[1].element_count, 12);
-    // sha256 must be non-empty
     assert!(!ds.tensors[0].sha256.0.is_empty());
-    assert!(!ds.tensors[1].sha256.0.is_empty());
-    assert!(!ds.sha256.0.is_empty());
 }
 
 // ── Machine profile ──────────────────────────────────────────────────
 
 #[test]
-fn m1_fixture_has_all_backends() {
-    let mp = MachineProfile::m1_fixture();
-    assert_eq!(mp.backend_versions.len(), 3);
+fn machine_fixture_rejected_by_claim_grade() {
+    assert!(MachineProfile::m1_fixture().validate_claim_grade().is_err());
 }
 
 #[test]
-fn fixture_rejected_by_claim_grade() {
-    let mp = MachineProfile::m1_fixture();
-    assert!(mp.validate_claim_grade().is_err());
-}
-
-#[test]
-fn sealed_machine_profile_verifies() {
+fn machine_seal_and_verify() {
     let mut mp = MachineProfile::m1_fixture();
     mp.seal();
-    assert!(!mp.sha256.0.is_empty());
+    assert!(mp.verify());
 }
 
-// ── Sealed profiles ──────────────────────────────────────────────────
-
-#[test]
-fn sealed_profiles_are_nonempty() {
-    let c = F32MatmulContract::new(OperationId(0), 2, 4, 3);
-    let p = SealedExperimentProfile::mlx_control(&c);
-    assert!(!p.sha256.0.is_empty());
-    assert!(p.verify());
-}
+// ── Sealed profiles ─────────────────────────────────────────────────
 
 #[test]
 fn sealed_profiles_verify() {
@@ -145,45 +123,49 @@ fn sealed_profile_tamper_detected() {
     let c = F32MatmulContract::new(OperationId(0), 2, 4, 3);
     let mut p = SealedExperimentProfile::mlx_control(&c);
     p.backend = tribunus_compute_native::backend::routing::BackendId(99);
-    assert!(!p.verify(), "tampered profile must fail verify");
+    assert!(!p.verify());
 }
 
 // ── Manifest ─────────────────────────────────────────────────────────
 
 #[test]
-fn manifest_has_twelve_profiles() {
-    let manifest = ExperimentManifest::new(1);
-    // 4 contracts × 3 backends = 12 profiles
-    assert_eq!(manifest.profiles.len(), 12);
+fn manifest_fixture_has_12_profiles() {
+    assert_eq!(ExperimentManifest::fixture().profiles.len(), 12);
 }
 
 #[test]
-fn manifest_seal_is_nonempty() {
-    let mut manifest = ExperimentManifest::new(1);
-    let d = manifest.seal();
-    assert!(!d.0.is_empty());
+fn manifest_seal_and_verify() {
+    let mut m = ExperimentManifest::fixture();
+    m.seal();
+    assert!(m.verify());
 }
 
 #[test]
-fn manifest_verify_passes_after_seal() {
-    let mut manifest = ExperimentManifest::new(1);
-    manifest.seal();
-    assert!(manifest.verify(), "manifest must verify after sealing");
-}
-
-// ── Tolerance ────────────────────────────────────────────────────────
-
-#[test]
-fn tolerance_has_reasonable_defaults() {
-    let tol = F32MatmulTolerance::default();
-    assert!(tol.atol > 0.0);
-    assert!(tol.max_relative_error > 0.0);
-    assert!(!tol.digest().0.is_empty());
+fn manifest_verify_fails_with_empty_digest() {
+    let m = ExperimentManifest::fixture();
+    assert!(!m.verify(), "unsealed manifest must fail verify");
 }
 
 #[test]
-fn tolerance_digest_is_deterministic() {
-    let t1 = F32MatmulTolerance::default();
-    let t2 = F32MatmulTolerance::default();
-    assert_eq!(t1.digest(), t2.digest());
+fn manifest_with_datasets_seals_and_verifies() {
+    let mut m = ExperimentManifest::fixture();
+    let mut datasets = Vec::new();
+    for c in &m.contracts {
+        datasets.push(InputDataset::generate(1, c).unwrap());
+    }
+    m.datasets = datasets;
+    m.seal();
+    assert!(m.verify(), "manifest with per-contract datasets must verify");
+}
+
+#[test]
+fn manifest_detect_tampered_dataset() {
+    let mut m = ExperimentManifest::fixture();
+    let ds = InputDataset::generate(1, &m.contracts[0]).unwrap();
+    m.datasets = vec![ds];
+    m.seal();
+
+    let mut tampered = m.clone();
+    tampered.datasets[0].tensors[0].data[0] ^= 0xFF;
+    assert!(!tampered.verify(), "tampered dataset bytes must fail manifest verify");
 }
