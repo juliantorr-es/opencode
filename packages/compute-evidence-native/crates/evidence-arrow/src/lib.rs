@@ -366,6 +366,7 @@ impl BatchBuilder for CorrectnessCheckpointBatchBuilder {
 pub struct BatchDispatcher {
     pub layer_stage: LayerStageBatchBuilder,
     pub projection_graph: ProjectionGraphBatchBuilder,
+    pub readiness: ReadinessTransitionBatchBuilder,
     pub correctness: CorrectnessCheckpointBatchBuilder,
     flush_row_limit: usize,
 }
@@ -375,6 +376,7 @@ impl BatchDispatcher {
         Self {
             layer_stage: LayerStageBatchBuilder::new(),
             projection_graph: ProjectionGraphBatchBuilder::new(),
+            readiness: ReadinessTransitionBatchBuilder::new(),
             correctness: CorrectnessCheckpointBatchBuilder::new(),
             flush_row_limit,
         }
@@ -385,6 +387,7 @@ impl BatchDispatcher {
         match &ev.payload {
             EventPayloadV4::LayerStage(_) => self.layer_stage.append(ev),
             EventPayloadV4::ProjectionGraph(_) => self.projection_graph.append(ev),
+            EventPayloadV4::ReadinessTransition(_) => self.readiness.append(ev),
             EventPayloadV4::CorrectnessCheckpoint(_) => self.correctness.append(ev),
             // Other payloads not yet batch-built
             _ => {}
@@ -395,6 +398,10 @@ impl BatchDispatcher {
     pub fn flush_all(&mut self) -> Vec<(String, RecordBatch)> {
         let mut batches = Vec::new();
         for builder in [
+            (
+                "readiness_transitions",
+                &mut self.readiness as &mut dyn BatchBuilder,
+            ),
             ("layer_stage_events", &mut self.layer_stage as &mut dyn BatchBuilder),
             (
                 "projection_graph_events",
@@ -533,4 +540,68 @@ mod tests {
             + final_batches.iter().map(|(_, b)| b.num_rows()).sum::<usize>();
         assert_eq!(total, 3);
     }
+}
+
+pub struct ReadinessTransitionBatchBuilder {
+    schema: Arc<Schema>,
+    run_ids: StringBuilder,
+    resource_ids: StringBuilder,
+    previous_states: StringBuilder,
+    current_states: StringBuilder,
+    reasons: StringBuilder,
+    transition_ns: UInt64Builder,
+    row_count: usize,
+}
+
+impl ReadinessTransitionBatchBuilder {
+    pub fn new() -> Self {
+        let schema = Arc::new(Schema::new(vec![
+            Field::new("run_id", DataType::Utf8, false),
+            Field::new("resource_id", DataType::Utf8, false),
+            Field::new("previous", DataType::Utf8, false),
+            Field::new("current", DataType::Utf8, false),
+            Field::new("reason", DataType::Utf8, true),
+            Field::new("transition_ns", DataType::UInt64, false),
+        ]));
+        Self {
+            schema,
+            run_ids: StringBuilder::new(),
+            resource_ids: StringBuilder::new(),
+            previous_states: StringBuilder::new(),
+            current_states: StringBuilder::new(),
+            reasons: StringBuilder::new(),
+            transition_ns: UInt64Builder::new(),
+            row_count: 0,
+        }
+    }
+}
+
+impl BatchBuilder for ReadinessTransitionBatchBuilder {
+    fn schema(&self) -> Arc<Schema> { self.schema.clone() }
+    fn append(&mut self, ev: &EvidenceEventV4) {
+        if let EventPayloadV4::ReadinessTransition(rt) = &ev.payload {
+            self.run_ids.append_value(&ev.run_id.0);
+            self.resource_ids.append_value(&rt.resource_id.0);
+            self.previous_states.append_value(&format!("{:?}", rt.previous));
+            self.current_states.append_value(&format!("{:?}", rt.current));
+            self.reasons.append_value(&rt.reason);
+            self.transition_ns.append_value(rt.transition_ns);
+            self.row_count += 1;
+        }
+    }
+    fn row_count(&self) -> usize { self.row_count }
+    fn build(&mut self) -> Option<RecordBatch> {
+        if self.row_count == 0 { return None; }
+        let batch = RecordBatch::try_new(self.schema.clone(), vec![
+            Arc::new(self.run_ids.finish()),
+            Arc::new(self.resource_ids.finish()),
+            Arc::new(self.previous_states.finish()),
+            Arc::new(self.current_states.finish()),
+            Arc::new(self.reasons.finish()),
+            Arc::new(self.transition_ns.finish()),
+        ]).ok();
+        self.reset();
+        batch
+    }
+    fn reset(&mut self) { *self = Self::new(); }
 }
