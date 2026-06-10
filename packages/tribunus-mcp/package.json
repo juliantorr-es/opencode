@@ -7,6 +7,7 @@
     "typecheck": "tsgo --noEmit"
   },
   "dependencies": {
+    "@electric-sql/pglite": "0.5.1",
     "@modelcontextprotocol/sdk": "^1.27.1",
     "duckdb": "^1.2.0",
     "oxc-parser": "^0.134.0",

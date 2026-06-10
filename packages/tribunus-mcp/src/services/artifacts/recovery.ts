@@ -21,7 +21,7 @@ export async function scanArtifacts(
   const registry = new ArtifactRegistryService(db)
 
   const staleReservations = await db.query(
-    "SELECT artifact_id, canonical_path FROM artifacts_v2 WHERE state IN ('reserved','producing') AND created_at < ((to_char(CURRENT_TIMESTAMP AT TIME ZONE 'UTC', 'YYYY-MM-DD\"T\"HH24:MI:SS.MS\"Z\"'))::timestamp - INTERVAL '30 minutes')",
+    "SELECT artifact_id, canonical_path FROM artifacts_v2 WHERE state IN ('reserved','producing') AND created_at::timestamp < (NOW() - INTERVAL '30 minutes')",
   )
 
   // Check finalized artifacts for missing bytes

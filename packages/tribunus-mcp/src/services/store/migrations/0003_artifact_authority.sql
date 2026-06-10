@@ -87,11 +87,17 @@ CREATE TABLE IF NOT EXISTS artifact_events (
 );
 
 -- Migrate existing artifacts records if the old table exists
-INSERT OR IGNORE INTO artifacts_v2 (
-  artifact_id, invocation_id, path, digest, size_bytes, created_at, state, content_digest, canonical_path, byte_count, provenance, retention_policy
-)
-SELECT artifact_id, invocation_id, path, digest, size_bytes, created_at, 'finalized', digest, path, size_bytes, 'imported', 'imported_external'
-FROM artifacts WHERE 1=1;
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'artifacts') THEN
+    INSERT INTO artifacts_v2 (
+      artifact_id, invocation_id, canonical_path, content_digest, byte_count, state, provenance, retention_policy
+    )
+    SELECT artifact_id, invocation_id, path, digest, size_bytes, 'finalized', 'imported', 'imported_external'
+    FROM artifacts
+    ON CONFLICT (artifact_id) DO NOTHING;
+  END IF;
+END $$;
 
 CREATE INDEX IF NOT EXISTS idx_artifacts_v2_invocation ON artifacts_v2(invocation_id);
 CREATE INDEX IF NOT EXISTS idx_artifacts_v2_state ON artifacts_v2(state);

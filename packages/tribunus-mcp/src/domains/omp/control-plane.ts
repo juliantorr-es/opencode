@@ -122,7 +122,7 @@ export function registerOmpControlPlaneTools(): void {
        WHERE pl.expires_at < NOW() AND (s.session_id IS NULL OR s.status != 'active')`,
     )
 
-    const staleReservations = await d.query(`SELECT artifact_id, canonical_path, created_at FROM artifacts_v2 WHERE state IN ('reserved','producing') AND created_at < ((to_char(CURRENT_TIMESTAMP AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"'))::timestamp - INTERVAL '30 minutes')`)
+    const staleReservations = await d.query(`SELECT artifact_id, canonical_path, created_at FROM artifacts_v2 WHERE state IN ('reserved','producing') AND created_at::timestamp < (NOW() - INTERVAL '30 minutes')`)
     const finalizedWithoutBytes = await d.query(`SELECT artifact_id, canonical_path FROM artifacts_v2 WHERE state = 'finalized' AND content_digest IS NOT NULL`)
 
     const report = {
