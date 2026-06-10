@@ -206,7 +206,7 @@
     },
     "conclusion": "Pipeline construction and page residency both contribute. Neither dominates alone. Tensor-specific first-use tax persists."
   },
-  "primary_conclusion": "no_single_cause_multiple_treatments_required",
+  "primary_conclusion": "single_cause_not_established_multiple_treatments_authorized_for_experiment",
   "authorization_decision": "authorize_experimental_pipeline_warm_and_prefetch_for_mission_0007",
   "authorization_detail": {
     "pipeline_warm_at_model_load": "EXPERIMENTALLY AUTHORIZED FOR MISSION 0007 \u2014 causal benefit not established. Control B observed 44x improvement but did not isolate pipeline warm-up from prior real tensor evaluation. Synthetic warm-up plausible but unproven.",
@@ -224,8 +224,8 @@
   },
   "unaccounted_duration": {
     "gap_ms": 588.23,
-    "reconciliation_pending": false,
-    "attribution": "Substrate change + unresolved integration overhead. The isolated M=1 replay path executes on CPU (Accelerate/BLAS, confirmed by Metal System Trace showing 0 tribunus GPU intervals). The integrated layer graph dispatches through a GPU backend. The 8.27ms isolated sum is not warm CPU execution of the same integrated GPU workload \u2014 it is a different backend path selected for M=1 operations. The 588.23ms difference includes substrate change and unresolved integration overhead. Its division among pipeline compilation, command submission, GPU scheduling, memory migration, and other work has not been measured."
+    "attribution": "Substrate change + unresolved integration overhead. The isolated M=1 replay path executes on CPU (Accelerate/BLAS, confirmed by Metal System Trace showing 0 tribunus GPU intervals). The integrated layer graph dispatches through a GPU backend. The 8.27ms isolated sum is not warm CPU execution of the same integrated GPU workload \u2014 it is a different backend path selected for M=1 operations. The 588.23ms difference includes substrate change and unresolved integration overhead. Its division among pipeline compilation, command submission, GPU scheduling, memory migration, and other work has not been measured.",
+    "reconciliation_status": "partial_substrate_attribution_complete"
   },
   "next_safe_action": "Mission 0007: Run pipeline signature warm-up and bounded rolling prefetch as controlled experimental treatments. Measure against 0001 baseline (38.30s). Validate or refute with clean isolation experiments.",
   "run_timestamp": "2026-06-09T17:30:00Z",
@@ -280,7 +280,7 @@
       "conclusion": "dequantize+transpose+matmul oracle matches quantized_matmul on all 7 families within bf16 accumulation tolerance (cos > 0.9999, max_rel < 1e-2). Oracle correctness gate CLOSED."
     }
   },
-  "revision": 6,
+  "revision": 7,
   "control_experiments": {
     "control_b_pipeline_warm": {
       "status": "suggestive_not_isolated",
