@@ -149,3 +149,7 @@ inherits = "inference-evidence"
 lto = "fat"
 codegen-units = 1
 incremental = false
+[[test]]
+name = "f32_contract_tests"
+path = "tests/f32_contract_tests.rs"
+

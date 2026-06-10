@@ -3,6 +3,7 @@
 mod attention;
 pub mod arena;
 pub mod backend;
+pub mod experiment;
 pub mod arena_lifecycle;
 pub mod arena_pool;
 mod bridge;
