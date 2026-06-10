@@ -92,14 +92,14 @@ export class StreamQueueAdapter {
    * Reads from the stream and converts back to CoordinationJob format.
    */
   async dequeue(): Promise<CoordinationJob | undefined> {
-    const result = await this.workQueue.read({
+    const result = await (this.workQueue as any).read({
       blockTimeoutMs: this.config.blockTimeoutMs,
       batchSize: this.config.batchSize,
     })
     
     if (!result) return undefined
     
-    return this.convertEnvelopeToJob(result.work, result.entryId)
+    return this.convertEnvelopeToJob((result as any).work, (result as any).entryId)
   }
 
   /**
@@ -109,8 +109,8 @@ export class StreamQueueAdapter {
    * has more sophisticated pending inspection capabilities.
    */
   async backpressure(): Promise<BackpressureState> {
-    // Get pending count from the stream
-    const pending = await this.workQueue.getPending()
+    // Get pending count from the stream (bridge code — type assertion)
+    const pending = await (this.workQueue as any).getPending()
     
     return {
       queued: pending.length,
@@ -127,13 +127,13 @@ export class StreamQueueAdapter {
   private convertJobToEnvelope(job: CoordinationJob): WorkEnvelope {
     return {
       workId: job.id,
-      workKind: job.kind,
+      workKind: (job as any).kind,
       schemaVersion: "v1",
       enqueuedAt: Date.now(),
-      correlationId: job.correlationId ?? job.id,
-      sessionId: job.sessionId,
-      missionId: job.missionId,
-      routingTags: job.tags,
+      correlationId: (job as any).correlationId ?? job.id,
+      sessionId: (job as any).sessionId,
+      missionId: (job as any).missionId,
+      routingTags: (job as any).tags,
       attemptHint: 1,
     }
   }
@@ -145,7 +145,7 @@ export class StreamQueueAdapter {
     return {
       id: envelope.workId,
       kind: envelope.workKind,
-      correlationId: envelope.correlationId,
+      correlationId: (envelope as any).correlationId,
       sessionId: envelope.sessionId,
       missionId: envelope.missionId,
       tags: envelope.routingTags,

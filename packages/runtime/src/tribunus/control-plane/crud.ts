@@ -13,7 +13,7 @@ import type {
   Lane,
   Task,
   Checkpoint,
-  Receipt as ReceiptType,
+  Receipt as unknown as ReceiptType,
   MemoryLink,
   Event,
 } from "./schema";
@@ -141,7 +141,7 @@ export function tribunusProjectCreate(
       "system"
     );
 
-    const created = database.query("SELECT * FROM projects WHERE id = ?").get(id) as Project;
+    const created = database.query("SELECT * FROM projects WHERE id = ?").get(id) as unknown as Project;
     return generateReceipt("create", "project", id, true, created, undefined, "pass");
   } catch (error) {
     return generateReceipt("create", "project", id, false, undefined, String(error), "fail");
@@ -150,17 +150,17 @@ export function tribunusProjectCreate(
 
 export function tribunusProjectGet(id: string, dbPath?: string): Project | null {
   const database = getDb(dbPath);
-  return database.query("SELECT * FROM projects WHERE id = ?").get(id) as Project | null;
+  return database.query("SELECT * FROM projects WHERE id = ?").get(id) as unknown as Project | null;
 }
 
 export function tribunusProjectGetBySlug(slug: string, dbPath?: string): Project | null {
   const database = getDb(dbPath);
-  return database.query("SELECT * FROM projects WHERE slug = ?").get(slug) as Project | null;
+  return database.query("SELECT * FROM projects WHERE slug = ?").get(slug) as unknown as Project | null;
 }
 
 export function tribunusProjectList(dbPath?: string): Project[] {
   const database = getDb(dbPath);
-  return database.query("SELECT * FROM projects").all() as Project[];
+  return database.query("SELECT * FROM projects").all() as unknown as Project[];
 }
 
 // ============================================================================
@@ -214,7 +214,7 @@ export function tribunusCampaignCreate(
       "system"
     );
 
-    const created = database.query("SELECT * FROM campaigns WHERE id = ?").get(id) as Campaign;
+    const created = database.query("SELECT * FROM campaigns WHERE id = ?").get(id) as unknown as Campaign;
     return generateReceipt("create", "campaign", id, true, created, undefined, "pass");
   } catch (error) {
     return generateReceipt("create", "campaign", id, false, undefined, String(error), "fail");
@@ -223,20 +223,20 @@ export function tribunusCampaignCreate(
 
 export function tribunusCampaignGet(id: string, dbPath?: string): Campaign | null {
   const database = getDb(dbPath);
-  return database.query("SELECT * FROM campaigns WHERE id = ?").get(id) as Campaign | null;
+  return database.query("SELECT * FROM campaigns WHERE id = ?").get(id) as unknown as Campaign | null;
 }
 
 export function tribunusCampaignGetBySlug(projectId: string, slug: string, dbPath?: string): Campaign | null {
   const database = getDb(dbPath);
-  return database.query("SELECT * FROM campaigns WHERE projectId = ? AND slug = ?").get(projectId, slug) as Campaign | null;
+  return database.query("SELECT * FROM campaigns WHERE projectId = ? AND slug = ?").get(projectId, slug) as unknown as Campaign | null;
 }
 
 export function tribunusCampaignList(projectId?: string, dbPath?: string): Campaign[] {
   const database = getDb(dbPath);
   if (projectId) {
-    return database.query("SELECT * FROM campaigns WHERE projectId = ?").all(projectId) as Campaign[];
+    return database.query("SELECT * FROM campaigns WHERE projectId = ?").all(projectId) as unknown as Campaign[];
   }
-  return database.query("SELECT * FROM campaigns").all() as Campaign[];
+  return database.query("SELECT * FROM campaigns").all() as unknown as Campaign[];
 }
 
 // ============================================================================
@@ -290,7 +290,7 @@ export function tribunusMissionCreate(
       "system"
     );
 
-    const created = database.query("SELECT * FROM missions WHERE id = ?").get(id) as Mission;
+    const created = database.query("SELECT * FROM missions WHERE id = ?").get(id) as unknown as Mission;
     return generateReceipt("create", "mission", id, true, created, undefined, "pass");
   } catch (error) {
     return generateReceipt("create", "mission", id, false, undefined, String(error), "fail");
@@ -299,7 +299,7 @@ export function tribunusMissionCreate(
 
 export function tribunusMissionGet(id: string, dbPath?: string): Mission | null {
   const database = getDb(dbPath);
-  const row = database.query("SELECT * FROM missions WHERE id = ?").get(id) as Mission | null;
+  const row = database.query("SELECT * FROM missions WHERE id = ?").get(id) as unknown as Mission | null;
   if (row) {
     row.acceptanceCriteria = JSON.parse(row.acceptanceCriteria as unknown as string);
   }
@@ -308,7 +308,7 @@ export function tribunusMissionGet(id: string, dbPath?: string): Mission | null 
 
 export function tribunusMissionGetBySlug(campaignId: string, slug: string, dbPath?: string): Mission | null {
   const database = getDb(dbPath);
-  const row = database.query("SELECT * FROM missions WHERE campaignId = ? AND slug = ?").get(campaignId, slug) as Mission | null;
+  const row = database.query("SELECT * FROM missions WHERE campaignId = ? AND slug = ?").get(campaignId, slug) as unknown as Mission | null;
   if (row) {
     row.acceptanceCriteria = JSON.parse(row.acceptanceCriteria as unknown as string);
   }
@@ -319,9 +319,9 @@ export function tribunusMissionList(campaignId?: string, dbPath?: string): Missi
   const database = getDb(dbPath);
   let rows: Mission[];
   if (campaignId) {
-    rows = database.query("SELECT * FROM missions WHERE campaignId = ?").all(campaignId) as Mission[];
+    rows = database.query("SELECT * FROM missions WHERE campaignId = ?").all(campaignId) as unknown as Mission[];
   } else {
-    rows = database.query("SELECT * FROM missions").all() as Mission[];
+    rows = database.query("SELECT * FROM missions").all() as unknown as Mission[];
   }
   return rows.map(row => ({
     ...row,
@@ -384,7 +384,7 @@ export function tribunusLaneCreate(
       "system"
     );
 
-    const created = database.query("SELECT * FROM lanes WHERE id = ?").get(id) as Lane;
+    const created = database.query("SELECT * FROM lanes WHERE id = ?").get(id) as unknown as Lane;
     if (created) {
       created.isReadOnly = Boolean(created.isReadOnly);
       created.writePaths = created.writePaths ? JSON.parse(created.writePaths) : [];
@@ -397,7 +397,7 @@ export function tribunusLaneCreate(
 
 export function tribunusLaneGet(id: string, dbPath?: string): Lane | null {
   const database = getDb(dbPath);
-  const row = database.query("SELECT * FROM lanes WHERE id = ?").get(id) as Lane | null;
+  const row = database.query("SELECT * FROM lanes WHERE id = ?").get(id) as unknown as Lane | null;
   if (row) {
     row.isReadOnly = Boolean(row.isReadOnly);
     row.writePaths = row.writePaths ? JSON.parse(row.writePaths) : [];
@@ -407,7 +407,7 @@ export function tribunusLaneGet(id: string, dbPath?: string): Lane | null {
 
 export function tribunusLaneGetBySlug(missionId: string, slug: string, dbPath?: string): Lane | null {
   const database = getDb(dbPath);
-  const row = database.query("SELECT * FROM lanes WHERE missionId = ? AND slug = ?").get(missionId, slug) as Lane | null;
+  const row = database.query("SELECT * FROM lanes WHERE missionId = ? AND slug = ?").get(missionId, slug) as unknown as Lane | null;
   if (row) {
     row.isReadOnly = Boolean(row.isReadOnly);
     row.writePaths = row.writePaths ? JSON.parse(row.writePaths) : [];
@@ -419,9 +419,9 @@ export function tribunusLaneList(missionId?: string, dbPath?: string): Lane[] {
   const database = getDb(dbPath);
   let rows: Lane[];
   if (missionId) {
-    rows = database.query("SELECT * FROM lanes WHERE missionId = ?").all(missionId) as Lane[];
+    rows = database.query("SELECT * FROM lanes WHERE missionId = ?").all(missionId) as unknown as Lane[];
   } else {
-    rows = database.query("SELECT * FROM lanes").all() as Lane[];
+    rows = database.query("SELECT * FROM lanes").all() as unknown as Lane[];
   }
   return rows.map(row => ({
     ...row,
@@ -501,7 +501,7 @@ export function tribunusTaskCreate(
       "system"
     );
 
-    const created = database.query("SELECT * FROM tasks WHERE id = ?").get(id) as Task;
+    const created = database.query("SELECT * FROM tasks WHERE id = ?").get(id) as unknown as Task;
     return generateReceipt("create", "task", id, true, created, undefined, "pass");
   } catch (error) {
     return generateReceipt("create", "task", id, false, undefined, String(error), "fail");
@@ -510,7 +510,7 @@ export function tribunusTaskCreate(
 
 export function tribunusTaskGet(id: string, dbPath?: string): Task | null {
   const database = getDb(dbPath);
-  const row = database.query("SELECT * FROM tasks WHERE id = ?").get(id) as Task | null;
+  const row = database.query("SELECT * FROM tasks WHERE id = ?").get(id) as unknown as Task | null;
   if (row) {
     row.dependsOn = JSON.parse(row.dependsOn as unknown as string);
     row.blocks = JSON.parse(row.blocks as unknown as string);
@@ -520,7 +520,7 @@ export function tribunusTaskGet(id: string, dbPath?: string): Task | null {
 
 export function tribunusTaskGetBySlug(missionId: string, slug: string, dbPath?: string): Task | null {
   const database = getDb(dbPath);
-  const row = database.query("SELECT * FROM tasks WHERE missionId = ? AND slug = ?").get(missionId, slug) as Task | null;
+  const row = database.query("SELECT * FROM tasks WHERE missionId = ? AND slug = ?").get(missionId, slug) as unknown as Task | null;
   if (row) {
     row.dependsOn = JSON.parse(row.dependsOn as unknown as string);
     row.blocks = JSON.parse(row.blocks as unknown as string);
@@ -532,13 +532,13 @@ export function tribunusTaskList(laneId?: string, missionId?: string, dbPath?: s
   const database = getDb(dbPath);
   let rows: Task[];
   if (laneId && missionId) {
-    rows = database.query("SELECT * FROM tasks WHERE laneId = ? AND missionId = ?").all(laneId, missionId) as Task[];
+    rows = database.query("SELECT * FROM tasks WHERE laneId = ? AND missionId = ?").all(laneId, missionId) as unknown as Task[];
   } else if (laneId) {
-    rows = database.query("SELECT * FROM tasks WHERE laneId = ?").all(laneId) as Task[];
+    rows = database.query("SELECT * FROM tasks WHERE laneId = ?").all(laneId) as unknown as Task[];
   } else if (missionId) {
-    rows = database.query("SELECT * FROM tasks WHERE missionId = ?").all(missionId) as Task[];
+    rows = database.query("SELECT * FROM tasks WHERE missionId = ?").all(missionId) as unknown as Task[];
   } else {
-    rows = database.query("SELECT * FROM tasks").all() as Task[];
+    rows = database.query("SELECT * FROM tasks").all() as unknown as Task[];
   }
   return rows.map(row => ({
     ...row,
@@ -625,7 +625,7 @@ export function tribunusCheckpointCreate(
       "system"
     );
 
-    const created = database.query("SELECT * FROM checkpoints WHERE id = ?").get(id) as Checkpoint;
+    const created = database.query("SELECT * FROM checkpoints WHERE id = ?").get(id) as unknown as Checkpoint;
     return generateReceipt("create", "checkpoint", id, true, created, undefined, "pass");
   } catch (error) {
     return generateReceipt("create", "checkpoint", id, false, undefined, String(error), "fail");
@@ -634,7 +634,7 @@ export function tribunusCheckpointCreate(
 
 export function tribunusCheckpointGet(id: string, dbPath?: string): Checkpoint | null {
   const database = getDb(dbPath);
-  const row = database.query("SELECT * FROM checkpoints WHERE id = ?").get(id) as Checkpoint | null;
+  const row = database.query("SELECT * FROM checkpoints WHERE id = ?").get(id) as unknown as Checkpoint | null;
   if (row) {
     row.stateSnapshot = JSON.parse(row.stateSnapshot as unknown as string);
     row.memoryResults = row.memoryResults ? JSON.parse(row.memoryResults) : undefined;
@@ -653,15 +653,15 @@ export function tribunusCheckpointList(
 
   if (taskId && laneId && missionId) {
     rows = database.query("SELECT * FROM checkpoints WHERE taskId = ? AND laneId = ? AND missionId = ?")
-      .all(taskId, laneId, missionId) as Checkpoint[];
+      .all(taskId, laneId, missionId) as unknown as Checkpoint[];
   } else if (taskId) {
-    rows = database.query("SELECT * FROM checkpoints WHERE taskId = ?").all(taskId) as Checkpoint[];
+    rows = database.query("SELECT * FROM checkpoints WHERE taskId = ?").all(taskId) as unknown as Checkpoint[];
   } else if (laneId) {
-    rows = database.query("SELECT * FROM checkpoints WHERE laneId = ?").all(laneId) as Checkpoint[];
+    rows = database.query("SELECT * FROM checkpoints WHERE laneId = ?").all(laneId) as unknown as Checkpoint[];
   } else if (missionId) {
-    rows = database.query("SELECT * FROM checkpoints WHERE missionId = ?").all(missionId) as Checkpoint[];
+    rows = database.query("SELECT * FROM checkpoints WHERE missionId = ?").all(missionId) as unknown as Checkpoint[];
   } else {
-    rows = database.query("SELECT * FROM checkpoints").all() as Checkpoint[];
+    rows = database.query("SELECT * FROM checkpoints").all() as unknown as Checkpoint[];
   }
 
   return rows.map(row => ({
@@ -723,7 +723,7 @@ export function tribunusReceiptCreate(
       "system"
     );
 
-    const created = database.query("SELECT * FROM receipts WHERE id = ?").get(id) as ReceiptType;
+    const created = database.query("SELECT * FROM receipts WHERE id = ?").get(id) as unknown as ReceiptType;
     if (created) {
       created.success = Boolean(created.success);
       created.previousState = created.previousState ? JSON.parse(created.previousState) : undefined;
@@ -733,7 +733,7 @@ export function tribunusReceiptCreate(
     // Return the actual stored receipt, not a synthetic one.
     // The stored row carries the caller's verdict, actor, source, and error.
     const storedReceipt: ReceiptType = {
-      ...(created || {} as ReceiptType),
+      ...(created || {} as unknown as ReceiptType),
       id: created?.id || id,
       operation: "create",
       entityType: "receipt",
@@ -757,7 +757,7 @@ export function tribunusReceiptCreate(
 
 export function tribunusReceiptGet(id: string, dbPath?: string): ReceiptType | null {
   const database = getDb(dbPath);
-  const row = database.query("SELECT * FROM receipts WHERE id = ?").get(id) as ReceiptType | null;
+  const row = database.query("SELECT * FROM receipts WHERE id = ?").get(id) as unknown as ReceiptType | null;
   if (row) {
     row.success = Boolean(row.success);
     row.previousState = row.previousState ? JSON.parse(row.previousState) : undefined;
@@ -777,11 +777,11 @@ export function tribunusReceiptList(
 
   if (entityType && entityId) {
     rows = database.query("SELECT * FROM receipts WHERE entityType = ? AND entityId = ?")
-      .all(entityType, entityId) as ReceiptType[];
+      .all(entityType, entityId) as unknown as ReceiptType[];
   } else if (entityType) {
-    rows = database.query("SELECT * FROM receipts WHERE entityType = ?").all(entityType) as ReceiptType[];
+    rows = database.query("SELECT * FROM receipts WHERE entityType = ?").all(entityType) as unknown as ReceiptType[];
   } else {
-    rows = database.query("SELECT * FROM receipts").all() as ReceiptType[];
+    rows = database.query("SELECT * FROM receipts").all() as unknown as ReceiptType[];
   }
 
   return rows.map(row => ({

@@ -6,7 +6,7 @@
  * DatabaseAdapter when the extension isn't loaded or the backend isn't PGlite.
  */
 
-import { Context, Effect, Layer, Stream } from "effect"
+import { Context, Effect, Layer, Queue, Stream } from "effect"
 import { DatabaseAdapter } from "./adapter"
 import { Database } from "./db"
 
@@ -82,14 +82,22 @@ export class PGliteLiveQuery extends Context.Service<PGliteLiveQuery>()(
   ): Stream.Stream<R[], never> {
     const interval = pollIntervalMs ?? 1000
 
-    return Stream.async<R[]>((emit) => {
+    return Stream.callback<R[], never>((queue) => {
+      // Create a compat emit wrapper using Queue.offerUnsafe
+      const emit: EmitSingle<R[]> = {
+        single(rows) {
+          Queue.offerUnsafe(queue, rows)
+        },
+      }
+
       // Attempt native PGlite live query first
       const liveSub = this.tryLiveSubscription<R>(sql, params ?? [], emit)
 
       if (liveSub) {
-        return Effect.sync(() => {
-          liveSub.unsubscribe()
-        })
+        return Effect.acquireRelease(
+          Effect.void,
+          () => Effect.sync(() => liveSub.unsubscribe()),
+        )
       }
 
       // Fallback: polling via DatabaseAdapter
@@ -107,9 +115,10 @@ export class PGliteLiveQuery extends Context.Service<PGliteLiveQuery>()(
         )
       }, interval)
 
-      return Effect.sync(() => {
-        clearInterval(timerId)
-      })
+      return Effect.acquireRelease(
+        Effect.void,
+        () => Effect.sync(() => clearInterval(timerId)),
+      )
     })
   }
 

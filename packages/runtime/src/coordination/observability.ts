@@ -233,11 +233,11 @@ export class CoordinationObservability {
       streamName: this.config.streamName,
       consumerGroup: this.config.consumerGroup,
       totalEntries: streamInfo?.length ?? 0,
-      consumerCount: groupInfo?.consumerCount ?? 0,
+      consumerCount: (groupInfo as any)?.consumerCount ?? 0,
       pendingCount: pending.length,
       oldestPendingAgeMs,
-      newestEntryId: streamInfo?.newestEntryId ?? null,
-      oldestEntryId: streamInfo?.oldestEntryId ?? null,
+      newestEntryId: (streamInfo as any)?.newestEntryId ?? null,
+      oldestEntryId: (streamInfo as any)?.oldestEntryId ?? null,
     }
   }
 
@@ -411,7 +411,7 @@ export class CoordinationObservability {
     const streams = new ValkeyStreams(this.redis, this.config.streamName)
     
     // Get the entry details
-    const entries = await streams.readEntries(entryId, 1)
+    const entries = await (streams as any).readEntries(entryId, 1)
     if (entries.length === 0) return null
     
     const entry = entries[0]

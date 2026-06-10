@@ -46,6 +46,7 @@ export type RecoveryWorkflowStatus =
   | "failed"
 
 /** Recovery outcome */
+export type RecoveryOutcome =
   | "success"
   | "partial"
   | "failed"
@@ -673,6 +674,36 @@ export const recoveryLayer = Layer.effect(
 ).pipe(
   Layer.provide(DatabaseAdapter.layer)
 )
+
+// ── Stubs ────────────────────────────────────────────────────────────
+// TODO: These will be implemented when the recovery-state repository is complete.
+// For now, provide compile-time stubs that throw at runtime.
+
+/**
+ * Plan coordination recovery.
+ *
+ * Pure planner — inspects session state and returns a recovery plan.
+ * Not yet implemented; use CoordinationRecovery.planRecovery() instead.
+ */
+export function planCoordinationRecovery(...args: unknown[]): never {
+  throw new Error(
+    "planCoordinationRecovery not yet implemented. Use CoordinationRecovery.planRecovery() instead.",
+  )
+}
+
+/**
+ * Persist a coordination recovery receipt.
+ *
+ * Writes the receipt to the durable store.
+ * Not yet implemented; use CoordinationRecovery.persistRecoveryReceipt() instead.
+ */
+export async function persistCoordinationRecoveryReceipt(
+  ...args: unknown[]
+): Promise<never> {
+  throw new Error(
+    "persistCoordinationRecoveryReceipt not yet implemented.",
+  )
+}
 
 // ── Helper to get Valkey Redis ────────────────────────────────────────
 

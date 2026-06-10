@@ -139,11 +139,14 @@ export {
   CoordinationRecovery,
   recoveryLayer,
   DEFAULT_RECOVERY_CONFIG,
+  planCoordinationRecovery,
+  persistCoordinationRecoveryReceipt,
 } from "./recovery"
 
 export type {
   CoordinationRecoveryState,
   RecoveryOutcome,
+  RecoveryWorkflowStatus,
   RecoveryReceipt,
   RecoveryPlan,
   RecoveryConfig,

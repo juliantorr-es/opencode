@@ -67,7 +67,7 @@ function seedProject(db?: string): Project {
     status: "active",
   }, db);
   if (!receipt.success) throw new Error(`Seed project failed: ${receipt.error}`);
-  return receipt.output as Project;
+  return receipt.output as unknown as Project;
 }
 
 function seedCampaign(projectId: string, db?: string): Campaign {
@@ -82,7 +82,7 @@ function seedCampaign(projectId: string, db?: string): Campaign {
     memoryBank: "tribunus-core",
   }, db);
   if (!receipt.success) throw new Error(`Seed campaign failed: ${receipt.error}`);
-  return receipt.output as Campaign;
+  return receipt.output as unknown as Campaign;
 }
 
 function seedMission(campaignId: string, db?: string): Mission {
@@ -99,7 +99,7 @@ function seedMission(campaignId: string, db?: string): Mission {
     memoryBank: "tribunus-core",
   }, db);
   if (!receipt.success) throw new Error(`Seed mission failed: ${receipt.error}`);
-  return receipt.output as Mission;
+  return receipt.output as unknown as Mission;
 }
 
 function seedLane(missionId: string, opts?: { isReadOnly?: boolean; writePaths?: string[]; slug?: string }, db?: string): Lane {
@@ -115,7 +115,7 @@ function seedLane(missionId: string, opts?: { isReadOnly?: boolean; writePaths?:
     writePaths: opts?.writePaths ?? ["/test/hardening"],
   }, db);
   if (!receipt.success) throw new Error(`Seed lane failed: ${receipt.error}`);
-  return receipt.output as Lane;
+  return receipt.output as unknown as Lane;
 }
 
 function seedTask(laneId: string, missionId: string, opts?: { slug?: string }, db?: string): Task {
@@ -132,7 +132,7 @@ function seedTask(laneId: string, missionId: string, opts?: { slug?: string }, d
     blocks: [],
   }, db);
   if (!receipt.success) throw new Error(`Seed task failed: ${receipt.error}`);
-  return receipt.output as Task;
+  return receipt.output as unknown as Task;
 }
 
 // ============================================================================
@@ -695,7 +695,7 @@ describe("Domain 5: Checkpoint Lineage Validation", () => {
 
     if (!receipt.success) console.log("CHECKPOINT ERROR:", receipt.error);
     expect(receipt.success).toBe(true);
-    const checkpoint = receipt.output as Checkpoint;
+    const checkpoint = receipt.output as unknown as Checkpoint;
     expect(checkpoint.projectId).toBe(project.id);
     expect(checkpoint.campaignId).toBe(campaign.id);
     expect(checkpoint.memoryContextStatus).toBe("success");

@@ -211,7 +211,7 @@ export async function tribunusCheckpointCreateWithMemory(
     throw new Error(`Failed to create checkpoint: ${checkpointReceipt.error}`);
   }
 
-  const createdCheckpoint = checkpointReceipt.output as Checkpoint;
+  const createdCheckpoint = checkpointReceipt.output as unknown as Checkpoint;
 
   // Create receipt — verdict reflects overall status
   const receiptVerdict: "pass" | "fail" | "warning" = 
@@ -259,7 +259,7 @@ export async function tribunusCheckpointCreateWithMemory(
     operationalState,
     memoryContext: memoryRecall.results.map(r => ({ ...r, bank: memoryBank })),
     memoryContextStatus: memoryRecall.status,
-    receipt: receiptReceipt.success ? (receiptReceipt.output as ReceiptType) : receiptReceipt,
+    receipt: receiptReceipt.success ? (receiptReceipt.output as unknown as ReceiptType) : receiptReceipt,
   };
 
   return resumePacket;

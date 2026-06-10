@@ -280,7 +280,7 @@ async function main() {
       closeDb();
       process.exit(1);
     }
-    const project = projectReceipt.output as Project;
+    const project = projectReceipt.output as unknown as Project;
     result.project = { created: true, id: project.id };
     result.summary.totalCreated++;
     console.log(`✓ Project created: ${project.name} (${project.id})`);
@@ -304,7 +304,7 @@ async function main() {
       closeDb();
       process.exit(1);
     }
-    const campaign = campaignReceipt.output as Campaign;
+    const campaign = campaignReceipt.output as unknown as Campaign;
     result.campaign = { created: true, id: campaign.id };
     result.summary.totalCreated++;
     console.log(`✓ Campaign created: ${campaign.name} (${campaign.id})`);
@@ -330,7 +330,7 @@ async function main() {
         closeDb();
         process.exit(1);
       }
-      const created = receipt.output as Mission;
+      const created = receipt.output as unknown as Mission;
       result.missions.push({ created: true, id: created.id, name: created.name });
       result.summary.totalCreated++;
       console.log(`  ✓ Mission created: ${created.name} (${created.id})`);
@@ -367,7 +367,7 @@ async function main() {
         closeDb();
         process.exit(1);
       }
-      const created = receipt.output as Lane;
+      const created = receipt.output as unknown as Lane;
       result.lanes.push({ created: true, id: created.id, name: created.name });
       result.summary.totalCreated++;
       console.log(`  ✓ Lane created: ${created.name} (${created.id})`);
@@ -421,7 +421,7 @@ async function main() {
         closeDb();
         process.exit(1);
       }
-      const created = receipt.output as Task;
+      const created = receipt.output as unknown as Task;
       result.tasks.push({ created: true, id: created.id, name: created.name });
       result.summary.totalCreated++;
       taskSlugToId[task.slug] = created.id;
