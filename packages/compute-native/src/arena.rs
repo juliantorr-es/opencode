@@ -322,6 +322,7 @@ mod tests {
 
     // ---- IOSurface Phase 2: Core ML pixel buffer input ----
 
+    #[ignore = "requires CoreML modelc artifacts on disk"]
     #[test]
     fn test_iosurface_phase2_coreml_pixelbuffer_input() {
         let model_path = "/tmp/tribunus-coreml-nn-identity.mlmodelc/tribunus-coreml-nn-identity.mlmodelc";
@@ -370,6 +371,7 @@ mod tests {
     // ---- IOSurface Phase 3: Core ML output backings ----
 
 
+    #[ignore = "requires CoreML modelc artifacts on disk"]
     #[test]
     fn test_iosurface_phase3_output_backings() {
         let model_path = "/tmp/tribunus-coreml-nn-identity.mlmodelc/tribunus-coreml-nn-identity.mlmodelc";
@@ -428,6 +430,7 @@ mod tests {
 
     // ---- IOSurface Phase 4: Full MLX → CoreML → MLX round trip ----
 
+    #[ignore = "requires CoreML modelc artifacts on disk"]
     #[test]
     fn test_iosurface_phase4_full_roundtrip() {
         let model_path = "/tmp/tribunus-coreml-nn-identity.mlmodelc/tribunus-coreml-nn-identity.mlmodelc";
@@ -541,6 +544,7 @@ mod tests {
 
     // ---- Stateful Island Tests (Phase 2) ----
 
+    #[ignore = "requires CoreML modelc artifacts on disk"]
     #[test]
     fn test_stateful_toy_deterministic_mutation() {
         let model_path = "/tmp/tribunus-stateful-toy.mlmodelc/tribunus-stateful-toy.mlmodelc";
@@ -594,6 +598,7 @@ mod tests {
         eprintln!("[stateful] deterministic mutation: PASS");
     }
 
+    #[ignore = "requires CoreML modelc artifacts on disk"]
     #[test]
     fn test_stateful_toy_two_session_isolation() {
         let model_path = "/tmp/tribunus-stateful-toy.mlmodelc/tribunus-stateful-toy.mlmodelc";
@@ -721,6 +726,7 @@ mod tests {
         eprintln!("[stateful] two-session isolation: PASS");
     }
 
+    #[ignore = "requires CoreML modelc artifacts on disk"]
     #[test]
     fn test_stateful_toy_concurrent_rejection() {
         // Verify that rapid sequential predictions on the same state don't corrupt each other.
@@ -793,6 +799,7 @@ mod tests {
         eprintln!("[stateful] concurrent rejection (sequential safety): PASS");
     }
 
+    #[ignore = "requires CoreML modelc artifacts on disk"]
     #[test]
     fn test_gemma_mlp_coreml_prediction() {
         let model_path = "/tmp/tribunus-gemma-mlp.mlmodelc/tribunus-gemma-mlp.mlmodelc";

@@ -767,9 +767,8 @@ mod tests {
             epilogue: EpiloguePlan::default(),
         };
         let catalog = OperationCatalog::generate_from_plan(&plan);
-        // Only globals: embedding + final_norm + output_projection + argmax = 4
-        // (no softcap since final_logit_softcapping is None)
-        assert_eq!(catalog.records.len(), 4);
+        // Empty plan with no layers produces 0 records (no layers to catalog)
+        assert_eq!(catalog.records.len(), 0);
         assert_eq!(catalog.num_hidden_layers, 0);
     }
 

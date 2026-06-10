@@ -101,6 +101,33 @@ impl Default for CoreMlBackend {
 }
 
 impl GraphBackend for CoreMlBackend {
+    fn validate_region(
+        &self,
+        region: &GraphRegion,
+    ) -> Result<BackendLegalityReceipt, String> {
+        let start = std::time::Instant::now();
+        let mut violations: Vec<String> = Vec::new();
+        let mut ids: Vec<String> = Vec::new();
+
+        if region.operations.is_empty() {
+            violations.push("empty region".into());
+            ids.push("coreml:empty_region".into());
+        }
+
+        // TODO: add Core ML-specific legality checks once the bridge is integrated
+
+        Ok(BackendLegalityReceipt {
+            legal: violations.is_empty(),
+            region_digest: EvidenceDigest(
+                format!("region_{}", region.region_id)
+            ),
+            machine_profile_digest: EvidenceDigest("coreml_macOS".into()),
+            violations,
+            violation_constraint_ids: ids,
+            validation_ns: start.elapsed().as_nanos() as u64,
+        })
+    }
+
     fn compile_region(
         &mut self,
         region: &GraphRegion,

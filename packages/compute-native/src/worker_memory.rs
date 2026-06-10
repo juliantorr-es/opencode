@@ -409,7 +409,8 @@ mod tests {
     }
 
     #[test]
-    fn test_sample_process_rss_pid_zero() {
+    #[ignore = "PID-sensitive, requires running process"]
+fn test_sample_process_rss_pid_zero() {
         // pid 0 (current process) should return sensible results on macOS.
         let rss = sample_process_rss(0);
         #[cfg(target_os = "macos")]

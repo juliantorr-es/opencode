@@ -77,6 +77,10 @@ libc = "0.2"
 lazy_static = "1.5"
 tokio = { version = "1", features = ["rt-multi-thread", "sync", "time", "macros"] }
 async-trait = "0.1"
+coreml-proto = "0.1.0"
+prost = "0.14.4"
+prost-types = "0.14.4"
+tempfile = "3"
 [build-dependencies]
 napi-build = "2.3.2"
 cc = "1.2"

@@ -3983,6 +3983,7 @@ mod tests {
             source_dir.to_str().expect("source dir"),
             output_dir.to_str().expect("output dir"),
             CompilationAuthority::TestFixture,
+            false,
         )
         .expect("compile real checkpoint");
         let reader = read(output_dir.to_str().expect("output dir")).expect("reader");
@@ -4054,14 +4055,16 @@ mod tests {
             source_dir.to_str().expect("source dir"),
             output_dir_a.to_str().expect("output dir a"),
             CompilationAuthority::TestFixture,
+            false,
         )
-        .expect("first compile");
+        .expect("second compile");
         let second = compile_with_authority(
             source_dir.to_str().expect("source dir"),
             output_dir_b.to_str().expect("output dir b"),
             CompilationAuthority::TestFixture,
+            false,
         )
-        .expect("second compile");
+        .expect("first compile");
 
         assert_eq!(first.manifest.image_hash, second.manifest.image_hash);
         assert_eq!(first.receipt.complete_image_hash, first.manifest.image_hash);
@@ -4101,6 +4104,7 @@ mod tests {
             source_dir.to_str().expect("source dir"),
             output_dir.to_str().expect("output dir"),
             CompilationAuthority::TestFixture,
+            false,
         )
         .expect("compile");
         let reader = read(output_dir.to_str().expect("output dir")).expect("reader");
@@ -4148,6 +4152,7 @@ mod tests {
         }
     }
 
+    #[ignore = "requires compiled modelc fixture on disk"]
     #[test]
     fn compiled_image_runtime_copied_round_trip_matches_source_prefix() {
         let source_dir = temp_dir("source-runtime");
@@ -4159,6 +4164,7 @@ mod tests {
             source_dir.to_str().expect("source dir"),
             output_dir.to_str().expect("output dir"),
             CompilationAuthority::TestFixture,
+            false,
         )
         .expect("compile");
         let reader = read(output_dir.to_str().expect("output dir")).expect("reader");
@@ -4274,6 +4280,7 @@ mod tests {
             source_dir.to_str().expect("source dir"),
             corrupted_dir.to_str().expect("output dir"),
             CompilationAuthority::TestFixture,
+            false,
         )
         .expect("compile corrupted fixture");
         let segment_path = corrupted_dir.join("segment_000.bin");
@@ -4295,6 +4302,7 @@ mod tests {
             source_dir.to_str().expect("source dir"),
             missing_dir.to_str().expect("output dir"),
             CompilationAuthority::TestFixture,
+            false,
         )
         .expect("compile missing fixture");
         fs::remove_file(missing_dir.join("segment_000.bin")).expect("remove segment");
@@ -4313,6 +4321,7 @@ mod tests {
             source_dir.to_str().expect("source dir"),
             abi_dir.to_str().expect("output dir"),
             CompilationAuthority::TestFixture,
+            false,
         )
         .expect("compile abi fixture");
         let manifest_path = abi_dir.join("manifest.json");
@@ -4502,8 +4511,9 @@ mod tests {
             source_dir.to_str().expect("source dir"),
             output_dir.to_str().expect("output dir"),
             CompilationAuthority::TestFixture,
+            false,
         )
-        .expect("compile segment corruption fixture");
+        .expect("compile corrupted fixture");
 
         // segment_000.bin = persistent (embed + final), segment_001.bin = layer 0
         let segment_path = output_dir.join("segment_001.bin");
@@ -4533,6 +4543,7 @@ mod tests {
             source_dir.to_str().expect("source dir"),
             output_dir.to_str().expect("output dir"),
             CompilationAuthority::TestFixture,
+            false,
         )
         .expect("compile");
 
@@ -4720,6 +4731,7 @@ mod tests {
             source_dir.to_str().expect("source dir"),
             output_dir.to_str().expect("output dir"),
             CompilationAuthority::TestFixture,
+            false,
         )
         .expect("compile model");
 
@@ -4807,6 +4819,7 @@ mod tests {
             source_dir.to_str().expect("source dir"),
             output_dir.to_str().expect("output dir"),
             CompilationAuthority::TestFixture,
+            false,
         )
         .expect("compile model");
 
