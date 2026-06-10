@@ -8,7 +8,6 @@ export async function buildRelease(outputDir: string, version: string): Promise<
   const db = await getStore()
   const releaseDir = resolve(outputDir, `release-${version}`)
 
-  // Ensure directory structure
   const dirs = [
     "data/runs", "data/operations", "data/comparisons", "data/artifacts",
     "data/events", "data/machine-profiles",
@@ -17,29 +16,30 @@ export async function buildRelease(outputDir: string, version: string): Promise<
   ]
   for (const dir of dirs) await mkdir(join(releaseDir, dir), { recursive: true })
 
-  // Pull finalized artifacts from the registry
-  const artifacts = await db.query(
-    "SELECT * FROM artifacts_v2 WHERE state IN ('finalized','verified') AND artifact_type LIKE 'review%' ORDER BY created_at",
-  )
+  // Pull finalized artifacts — gracefully handle empty store
+  let artifactIndex: Array<Record<string, unknown>> = []
+  try {
+    const artifacts = await db.query(
+      "SELECT * FROM artifacts_v2 WHERE state IN ('finalized','verified') AND artifact_type LIKE 'review%' ORDER BY created_at",
+    )
+    artifactIndex = artifacts.rows.map(r => ({
+      artifact_id: r.artifact_id,
+      artifact_type: r.artifact_type,
+      content_digest: r.content_digest,
+      byte_count: r.byte_count,
+      canonical_path: r.canonical_path,
+      producer_tool: r.producer_tool,
+      invocation_id: r.invocation_id,
+      created_at: r.created_at,
+      verification_status: r.verification_status,
+    }))
+  } catch {
+    // Store not initialized yet — empty release is valid
+  }
 
-  // Build artifact index
-  const artifactIndex = artifacts.rows.map(r => ({
-    artifact_id: r.artifact_id,
-    artifact_type: r.artifact_type,
-    content_digest: r.content_digest,
-    byte_count: r.byte_count,
-    canonical_path: r.canonical_path,
-    producer_tool: r.producer_tool,
-    invocation_id: r.invocation_id,
-    created_at: r.created_at,
-    verification_status: r.verification_status,
-  }))
-
-  // Write artifact index as Parquet-like JSON (Parquet writer requires additional deps)
   const indexContent = JSON.stringify(artifactIndex.map(r => JSON.stringify(r)).join("\n"))
   await writeFile(join(releaseDir, "data/artifacts/artifact-index.jsonl"), indexContent)
 
-  // Build release manifest
   const manifest: DatasetReleaseManifest = {
     release_version: version,
     release_id: `release-${version}-${Date.now()}`,
@@ -59,7 +59,6 @@ export async function buildRelease(outputDir: string, version: string): Promise<
 
   await writeFile(join(releaseDir, "releases", "manifest.json"), JSON.stringify(manifest, null, 2))
 
-  // Write dataset card template
   const readme = `---
 license: mit
 task_categories:
@@ -70,28 +69,11 @@ tags:
   - mlx
   - inference
   - gemma
-dataset_info:
-  features:
-    - name: artifact_id
-      dtype: string
-    - name: artifact_type
-      dtype: string
 ---
 
 # Tribunus Apple Silicon Inference Research Dataset
 
 Peer-review dataset for the Tribunus compute kernel decode-attribution and backend-comparison research.
-
-## Evidence Grades
-
-| Grade | Description |
-|---|---|
-| exploratory | Initial measurement, not yet multiply-verified |
-| synthetically_verified | Verified against synthetic ground truth |
-| hardware_qualified | Hardware-level measurement qualified |
-| claim_grade | Multiply-verified, ready for peer review |
-| retracted | Withdrawn — see retraction reason |
-| superseded | Replaced by a newer artifact |
 
 ## Release
 

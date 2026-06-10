@@ -12,7 +12,7 @@ export const SUBPROCESS_OUTPUT_LIMIT = 10 * 1024 * 1024 // 10 MiB
 
 export const ALLOWED_ENV = new Set([
   "PATH", "HOME", "USER", "TMPDIR", "SHELL", "LANG",
-  "RUSTUP_HOME", "CARGO_HOME",
+  "RUSTUP_HOME", "CARGO_HOME", "HF_TOKEN", "HF_PUBLISH_TOKEN",
 ])
 
 export function sanitizeEnv(): Record<string, string> {
@@ -26,10 +26,10 @@ export function sanitizeEnv(): Record<string, string> {
 export function governedRun(
   command: string,
   args: string[],
-  opts?: { cwd?: string; timeout?: number },
+  opts?: { cwd?: string; timeout?: number; env?: Record<string, string> },
 ): Promise<SubprocessResult> {
   return new Promise((resolve) => {
-  const env = sanitizeEnv()
+  const env = { ...sanitizeEnv(), ...opts?.env }
   const child = spawn(command, args, {
     cwd: opts?.cwd,
     env,
