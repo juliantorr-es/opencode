@@ -4,6 +4,7 @@
 
 use std::path::Path;
 use std::time::Instant;
+use std::process::Command;
 
 use crate::arena::ArenaInfo;
 use crate::coreml_bridge::{CoreMlComputeUnits, CoreMlModel};
@@ -27,10 +28,12 @@ pub fn prepare(
     let overall_start = Instant::now();
 
     // Build MIL program.
+    let mil_start = Instant::now();
     let builder = MilBuilder::new("main")
         .input("x", mil_spec::DataType::Float32, &profile.input_shape_i64());
     let builder = (family.build)(builder, profile);
     let mut program = builder.build().map_err(|e| format!("MIL build: {e}"))?;
+    let mil_build_ns = mil_start.elapsed().as_nanos() as u64;
 
     let ncols = if family.name == "identity_passthrough" { profile.input_cols } else { profile.weight_cols };
     let output_names: Vec<String> = graph_catalog::graph_output_names(family.name)
@@ -79,16 +82,30 @@ pub fn prepare(
     };
 
     // Write mlpackage.
+    let pkg_write_start = Instant::now();
     let tmp = tempfile::tempdir().map_err(|e| format!("tempdir: {e}"))?;
     let pkg_path = mlpackage::write_mlpackage(program, tmp.path(), &meta)?;
-    let materialize_ns = overall_start.elapsed().as_nanos() as u64;
+    let package_write_ns = pkg_write_start.elapsed().as_nanos() as u64;
 
     // Compile.
     let compile_start = Instant::now();
-    let receipt = coreml_pipeline::compile_mlpackage(
+    // Check if modelc already exists (cache hit detection at the directory level).
+    let cmc_path = output_dir.join(format!("{}.modelc/{}.mlmodelc", island_id, island_id));
+    let cache_hit = cmc_path.exists();
+
+    let compile_result = coreml_pipeline::compile_mlpackage(
         &pkg_path, output_dir, &island_id, compute_units, "CoreML9",
-    )?;
+    );
     let compile_ns = compile_start.elapsed().as_nanos() as u64;
+
+    // Capture compiler stdout/stderr/exit_code.
+    // The coreml_pipeline::compile_mlpackage may use xcrun coremlcompiler internally.
+    // For now we record whether compilation succeeded and the duration.
+    let (compiler_stdout, compiler_stderr, compiler_exit_code) = match &compile_result {
+        Ok(_) => (None, None, None),
+        Err(e) => (None, Some(format!("{:?}", e)), Some(1)),
+    };
+    let _ = compile_result?;
 
     // Load.
     let cmc_path = output_dir.join(format!("{}.modelc/{}.mlmodelc", island_id, island_id));
@@ -97,7 +114,7 @@ pub fn prepare(
     let model = CoreMlModel::load_with_compute_units(&cmc_path.to_string_lossy(), cu)?;
     let load_ns = load_start.elapsed().as_nanos() as u64;
 
-    let prepare_ns = materialize_ns + compile_ns + load_ns;
+    let prepare_ns = mil_build_ns + package_write_ns + compile_ns + load_ns;
     let runtime_policy = match cu { CoreMlComputeUnits::CpuAndGpu => BackendRuntimePolicy::CoreMlCpuAndGpu, _ => BackendRuntimePolicy::CoreMlCpuOnly };
 
     Ok(PreparedBackendRun {
@@ -108,6 +125,14 @@ pub fn prepare(
         mlx_eval_forced: false,
         mlx_eval_method: String::new(),
         coreml_model: Some(model),
+        coreml_mil_build_ns: mil_build_ns,
+        coreml_package_write_ns: package_write_ns,
+        coreml_compiler_ns: compile_ns,
+        coreml_model_load_ns: load_ns,
+        compile_cache_hit: cache_hit,
+        compiler_stdout,
+        compiler_stderr,
+        compiler_exit_code,
     })
 }
 

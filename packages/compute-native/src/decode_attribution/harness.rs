@@ -507,6 +507,18 @@ fn run_backend_coreml(
     r.process_rss_before_load_kb = resident_size_kb();
     r.load_duration_ns = prepared.prepare_duration_ns;
     r.load_success = true;
+    r.coreml_mil_build_ns = prepared.coreml_mil_build_ns;
+    r.coreml_package_write_ns = prepared.coreml_package_write_ns;
+    r.coreml_compiler_ns = prepared.coreml_compiler_ns;
+    r.coreml_model_load_ns = prepared.coreml_model_load_ns;
+    r.compile_cache_hit = prepared.compile_cache_hit;
+    if let Some(stdout) = &prepared.compiler_stdout {
+        r.compiler_stdout = Some(stdout.clone());
+    }
+    if let Some(stderr) = &prepared.compiler_stderr {
+        r.compiler_stderr = Some(stderr.clone());
+    }
+    r.compiler_exit_code = prepared.compiler_exit_code;
 
     // Phase 4: MLComputePlan (stub)
     r.compute_plan_status = "unavailable".to_string();
@@ -631,6 +643,9 @@ fn run_backend_coreml(
     r.matches_tolerance = metrics.matches_tolerance;
 
     r.reference_status = "ok".to_string();
+    if r.cold_first_predict_ns > 0 && r.steady_p50_ns > 0 {
+        r.amortization_factor = Some(r.cold_first_predict_ns as f64 / r.steady_p50_ns as f64);
+    }
 
     if metrics.matches_tolerance {
         r.status = "pass".to_string();
@@ -791,6 +806,11 @@ fn run_backend_accelerate(
     r.matches_tolerance = metrics.matches_tolerance;
 
     r.reference_status = "ok".to_string();
+
+    // Compute amortization factor if both cold and steady are available.
+    if r.cold_first_predict_ns > 0 && r.steady_p50_ns > 0 {
+        r.amortization_factor = Some(r.cold_first_predict_ns as f64 / r.steady_p50_ns as f64);
+    }
 
     if metrics.matches_tolerance {
         r.predict_status = "pass".to_string();

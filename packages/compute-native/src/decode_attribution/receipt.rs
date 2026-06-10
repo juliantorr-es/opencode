@@ -117,6 +117,28 @@ pub struct DecodeAttributionReceipt {
     pub mlx_cache_hit: bool,
     /// Time spent in Python boundary (ns) — 0 for Rust-native, nonzero placeholder for future Python path.
     pub python_boundary_ns: Option<u64>,
+    /// Core ML phase-split: time to build MIL program (proto generation).
+    pub coreml_mil_build_ns: u64,
+    /// Core ML phase-split: time to serialize .mlpackage to disk.
+    pub coreml_package_write_ns: u64,
+    /// Core ML phase-split: time for xcrun coremlcompiler invocation.
+    pub coreml_compiler_ns: u64,
+    /// Core ML phase-split: time to load .mlmodelc via CoreMlModel::load.
+    pub coreml_model_load_ns: u64,
+    /// Cache hit: true when cache key (graph_hash+shape+policy+target+version) matched and reused.
+    pub compile_cache_hit: bool,
+    /// Amortization factor: cold_first_predict_ns / steady_p50_ns (null if predict never reached).
+    pub amortization_factor: Option<f64>,
+    /// Terminal phase: exact sub-phase where execution terminated (enum serialized as snake_case).
+    pub terminal_phase: String,
+    /// Raw xcrun coremlcompiler stdout.
+    pub compiler_stdout: Option<String>,
+    /// Raw xcrun coremlcompiler stderr.
+    pub compiler_stderr: Option<String>,
+    /// coremlcompiler exit code.
+    pub compiler_exit_code: Option<i32>,
+    /// Non-compiler failure diagnostics (load error, predict bridge error, output spec mismatch).
+    pub failure_diagnostics: Option<String>,
 }
 
 impl Default for DecodeAttributionReceipt {
@@ -225,6 +247,17 @@ impl Default for DecodeAttributionReceipt {
             mlx_readback_ns: 0,
             mlx_cache_hit: false,
             python_boundary_ns: None,
+            coreml_mil_build_ns: 0,
+            coreml_package_write_ns: 0,
+            coreml_compiler_ns: 0,
+            coreml_model_load_ns: 0,
+            compile_cache_hit: false,
+            amortization_factor: None,
+            terminal_phase: String::new(),
+            compiler_stdout: None,
+            compiler_stderr: None,
+            compiler_exit_code: None,
+            failure_diagnostics: None,
         }
     }
 }

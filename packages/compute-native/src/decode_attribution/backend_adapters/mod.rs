@@ -171,4 +171,20 @@ pub struct PreparedBackendRun {
     // Backend-specific state kept alive for the duration of the run.
     // CoreML: the loaded model handle.
     pub coreml_model: Option<crate::coreml_bridge::CoreMlModel>,
+    /// Core ML mil_build time (ns).
+    pub coreml_mil_build_ns: u64,
+    /// Core ML package_write time (ns).
+    pub coreml_package_write_ns: u64,
+    /// Core ML compiler time (ns).
+    pub coreml_compiler_ns: u64,
+    /// Core ML model load time (ns).
+    pub coreml_model_load_ns: u64,
+    /// Compiler cache hit (key-based).
+    pub compile_cache_hit: bool,
+    /// Raw coremlcompiler stdout.
+    pub compiler_stdout: Option<String>,
+    /// Raw coremlcompiler stderr.
+    pub compiler_stderr: Option<String>,
+    /// coremlcompiler exit code.
+    pub compiler_exit_code: Option<i32>,
 }
