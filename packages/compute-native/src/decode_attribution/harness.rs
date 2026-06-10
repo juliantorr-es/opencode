@@ -41,7 +41,7 @@ use std::ffi::c_void;
 use crate::arena::ArenaInfo;
 use crate::decode_attribution::backend_adapters::{
     coreml_adapter, accelerate_adapter, mlx_adapter, conformance, predict_loop,
-    reference_adapter as ref_eval, BackendSupportStatus,
+    reference_adapter as ref_eval, BackendSupportTier,
 };
 
 /// Run one decode-attribution measurement.
@@ -439,6 +439,24 @@ pub fn run_backend(
         }
     }
 
+    // ── Phase 5: Unconditional reference authority ────────────────────────
+    // Every lattice row carries reference output hashes, regardless of backend
+    // outcome. If the per-backend runner did not populate reference hashes
+    // (e.g., skipped_by_support or error paths), run the reference evaluator here.
+    if r.reference_output_hashes.is_empty() {
+        let input_data = generate_input_data(profile);
+        let weights = backend_weights(family.name, profile);
+        let ref_outputs = ref_eval::evaluate_graph(family.name, &input_data, &weights, profile);
+        r.reference_output_hashes = ref_outputs
+            .iter()
+            .map(|o| conformance::hash_output(o))
+            .collect();
+        r.reference_output_hashes_populated = true;
+        r.reference_status = "ok".to_string();
+    } else {
+        r.reference_output_hashes_populated = true;
+    }
+
     r
 }
 
@@ -466,11 +484,14 @@ fn run_backend_coreml(
     r.load_kind = "mlmodel_load".to_string();
     r.execution_kind = "coreml_predict".to_string();
     r.backend_support_status = "supported".to_string();
+    r.support_tier = "supported_native".to_string();
 
     // ── Phases 1-3: Materialize + Compile + Load ────────────────────────
     let prepared = match coreml_adapter::prepare(family, profile, compute_units, output_dir) {
         Ok(p) => p,
         Err(e) => {
+            r.predict_status = "compile_limited".into();
+            r.predict_failure_classification = "compile_limited".into();
             r.status = "compile_error".into();
             r.failure_reason = Some(format!("coreml prepare failed: {e}"));
             r.materialize_status = "error".into();
@@ -499,6 +520,8 @@ fn run_backend_coreml(
         Some(m) => m,
         None => {
             r.status = "load_error".into();
+            r.predict_status = "load_blocked".into();
+            r.predict_failure_classification = "load_blocked".into();
             r.failure_reason = Some("coreml model not loaded".into());
             r.load_status = "error".into();
             return;
@@ -541,6 +564,8 @@ fn run_backend_coreml(
         }
         Err(e) => {
             r.cold_status = "error".into();
+            r.predict_status = "predict_blocked".into();
+            r.predict_failure_classification = "predict_blocked".into();
             r.status = "prediction_error".into();
             r.failure_reason = Some(format!("coreml cold predict: {e}"));
             return;
@@ -557,6 +582,8 @@ fn run_backend_coreml(
         }
         Err(e) => {
             r.warmup_status = "error".into();
+            r.predict_status = "predict_blocked".into();
+            r.predict_failure_classification = "predict_blocked".into();
             r.status = "prediction_error".into();
             r.failure_reason = Some(format!("coreml warmup: {e}"));
             return;
@@ -607,8 +634,10 @@ fn run_backend_coreml(
 
     if metrics.matches_tolerance {
         r.status = "pass".to_string();
+        r.predict_status = "pass".to_string();
     } else {
         r.status = "numerical_divergence".into();
+        r.predict_status = "numerical_divergence".into();
         r.failure_reason = Some(format!(
             "max_absolute_error={}, tolerance={}",
             metrics.max_absolute_error, tolerance
@@ -633,12 +662,17 @@ fn run_backend_accelerate(
     r.compile_status = "not_applicable".to_string();
     r.load_status = "not_applicable".to_string();
 
-    let support = accelerate_adapter::support_status(family.name);
-    r.backend_support_status = support.to_string();
+    let tier = accelerate_adapter::support_tier(family.name);
+    r.backend_support_status = tier.to_string();
+    r.support_tier = tier.to_string();
 
-    if !matches!(support, BackendSupportStatus::Supported) {
+    if matches!(tier, BackendSupportTier::UnsupportedGraph | BackendSupportTier::NotImplemented) {
+        r.predict_status = "skipped_by_support".to_string();
         // Unsupported graph — record pass (no prediction attempted).
         r.status = "pass".to_string();
+        r.cold_status = "skipped".to_string();
+        r.warmup_status = "skipped".to_string();
+        r.steady_status = "skipped".to_string();
         return;
     }
 
@@ -646,6 +680,20 @@ fn run_backend_accelerate(
     let n = profile.weight_cols as i32;
     let input_data = generate_input_data(profile);
     let weights = backend_weights(family.name, profile);
+
+    // Handle identity family: trivial passthrough, no BLAS needed.
+    if family.name == "identity_passthrough" || family.name == "identity" {
+        r.execution_kind = "identity_memcpy".to_string();
+        r.cold_status = "ok".to_string();
+        r.warmup_status = "ok".to_string();
+        r.steady_status = "ok".to_string();
+        r.cold_first_predict_ns = 0;
+        r.cold_output_hashes = vec![conformance::hash_output(&input_data)];
+        r.predict_status = "pass".to_string();
+        r.status = "pass".to_string();
+        r.reference_status = "ok".to_string();
+        return;
+    }
 
     let (input_vec, weight_vec, mut output_vec) = match accelerate_adapter::prepare_matmul(
         &input_data, &weights, 1, k, n,
@@ -677,6 +725,8 @@ fn run_backend_accelerate(
         }
         Err(e) => {
             r.cold_status = "error".into();
+            r.predict_status = "predict_blocked".into();
+            r.predict_failure_classification = "predict_blocked".into();
             r.status = "prediction_error".into();
             r.failure_reason = Some(format!("accelerate cold: {e}"));
             return;
@@ -693,6 +743,8 @@ fn run_backend_accelerate(
         }
         Err(e) => {
             r.warmup_status = "error".into();
+            r.predict_status = "predict_blocked".into();
+            r.predict_failure_classification = "predict_blocked".into();
             r.status = "prediction_error".into();
             r.failure_reason = Some(format!("accelerate warmup: {e}"));
             return;
@@ -741,8 +793,10 @@ fn run_backend_accelerate(
     r.reference_status = "ok".to_string();
 
     if metrics.matches_tolerance {
+        r.predict_status = "pass".to_string();
         r.status = "pass".to_string();
     } else {
+        r.predict_status = "numerical_divergence".into();
         r.status = "numerical_divergence".into();
         r.failure_reason = Some(format!(
             "max_absolute_error={}, tolerance={}",
@@ -768,11 +822,16 @@ fn run_backend_mlx(
     r.compile_status = "not_applicable".to_string();
     r.load_status = "not_applicable".to_string();
 
-    let support = mlx_adapter::support_status(family.name);
-    r.backend_support_status = support.to_string();
+    let tier = mlx_adapter::support_tier(family.name);
+    r.backend_support_status = tier.to_string();
+    r.support_tier = tier.to_string();
 
-    if !matches!(support, BackendSupportStatus::Supported) {
+    if matches!(tier, BackendSupportTier::UnsupportedGraph | BackendSupportTier::NotImplemented) {
+        r.predict_status = "skipped_by_support".to_string();
         r.status = "pass".to_string();
+        r.cold_status = "skipped".to_string();
+        r.warmup_status = "skipped".to_string();
+        r.steady_status = "skipped".to_string();
         return;
     }
 
@@ -780,31 +839,61 @@ fn run_backend_mlx(
     r.mlx_device = device_name;
     r.mlx_eval_forced = true;
     r.mlx_eval_method = "eval()".to_string();
+    r.mlx_compile_attempted = false;
 
-    let k = profile.input_cols as i32;
-    let n = profile.weight_cols as i32;
-    let m = 1i32;
     let input_data = generate_input_data(profile);
     let weights = backend_weights(family.name, profile);
 
-    let (input_arr, weight_arr, _output_arr) = match mlx_adapter::prepare_matmul(
-        &input_data, &weights, m, k, n,
+    let (arrays, mut prepare_fn) = match mlx_adapter::prepare_graph(
+        family.name, &input_data, &weights, profile,
     ) {
-        Ok(triple) => triple,
+        Ok(pair) => pair,
         Err(e) => {
+            r.predict_status = "predict_blocked".to_string();
+            r.predict_failure_classification = "predict_blocked".to_string();
             r.status = "prediction_error".into();
-            r.failure_reason = Some(format!("mlx prepare_matmul: {e}"));
+            r.failure_reason = Some(format!("mlx prepare_graph: {e}"));
             return;
         }
     };
+    // Keep arrays alive across repeated predictions
+    let _alive = arrays;
     r.backend_prepare_duration_ns = 0;
     r.process_rss_before_load_kb = resident_size_kb();
 
+    // ── Phase-split cold measurement (first run captures split timings) ──
+    {
+        let cold_result = (|| -> Result<(), String> {
+        let t0 = Instant::now();
+        let result = prepare_fn().map_err(|e| format!("mlx prepare: {e}"))?;
+        let t1 = Instant::now();
+        result.eval().map_err(|e| format!("mlx eval: {e:?}"))?;
+        let t2 = Instant::now();
+        let _output_slice = result.try_as_slice::<f32>()
+            .map_err(|e| format!("mlx read: {e:?}"))?
+            .to_vec();
+        let t3 = Instant::now();
+
+        r.mlx_graph_build_ns = t1.duration_since(t0).as_nanos() as u64;
+        r.mlx_eval_only_ns = t2.duration_since(t1).as_nanos() as u64;
+        r.mlx_readback_ns = t3.duration_since(t2).as_nanos() as u64;
+            r.mlx_array_construct_ns = 0;
+        r.mlx_cache_hit = false;
+            r.python_boundary_ns = Some(0);
+            Ok(())
+        })();
+        if let Err(e) = cold_result {
+            r.predict_status = "predict_blocked".into();
+            r.predict_failure_classification = "predict_blocked".into();
+            r.status = "prediction_error".into();
+            r.failure_reason = Some(format!("mlx phase-split cold: {e}"));
+            return;
+    }
+    }
+
     let mut predict_fn = move || -> Result<(u64, Vec<String>, Vec<Vec<f32>>), String> {
         let start = Instant::now();
-        let result = input_arr
-            .matmul(&weight_arr)
-            .map_err(|e| format!("mlx matmul: {:?}", e))?;
+        let result = prepare_fn()?;
         result
             .eval()
             .map_err(|e| format!("mlx eval: {:?}", e))?;
@@ -891,8 +980,10 @@ fn run_backend_mlx(
 
     if metrics.matches_tolerance {
         r.status = "pass".to_string();
+        r.predict_status = "pass".to_string();
     } else {
         r.status = "numerical_divergence".into();
+        r.predict_status = "numerical_divergence".into();
         r.failure_reason = Some(format!(
             "max_absolute_error={}, tolerance={}",
             metrics.max_absolute_error, tolerance
@@ -1105,3 +1196,4 @@ fn resident_size_kb() -> u64 {
     let bytes = worker_memory::sample_process_rss_self();
     bytes / 1024
 }
+

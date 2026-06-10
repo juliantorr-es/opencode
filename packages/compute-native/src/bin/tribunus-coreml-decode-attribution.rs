@@ -6,6 +6,7 @@
 //! Usage:
 //!   cargo run --bin tribunus-coreml-decode-attribution --profile inference-evidence
 //!   cargo run --bin tribunus-coreml-decode-attribution --profile inference-evidence -- --include-gpu-shape-matrix
+//!   cargo run --bin tribunus-coreml-decode-attribution --profile inference-evidence -- --full-catalog --run-id LATTICE-0001
 //!
 //! Output: JSONL receipts in decode_attribution_runs/ plus rollup report.
 
@@ -13,9 +14,12 @@ use std::fs;
 use std::io::Write;
 
 use tribunus_compute_native::decode_attribution::matrices::{
-    RunConfig, run_matrix_a, run_matrix1, run_matrix2, run_matrix2b, run_negative_evidence_fixture,
+    RunConfig, run_matrix_a, run_matrix1, run_matrix2, run_matrix2b, run_matrix_lattice,
+    run_negative_evidence_fixture,
 };
-use tribunus_compute_native::decode_attribution::report::generate_report;
+use tribunus_compute_native::decode_attribution::report::{
+    generate_report, generate_coverage_json, generate_coverage_table,
+};
 
 const DEFAULT_WARMUP: u32 = 10;
 const DEFAULT_STEADY: u32 = 100;
@@ -24,10 +28,31 @@ const DEFAULT_TOLERANCE: f64 = 1e-4;
 fn main() {
     let args: Vec<String> = std::env::args().collect();
     let include_gpu = args.contains(&"--include-gpu-shape-matrix".to_string());
+    let full_catalog = args.contains(&"--full-catalog".to_string());
 
-    let run_id = format!("DA-{:04}-{:06}", 1, {
-        use std::time::{SystemTime, UNIX_EPOCH};
-        SystemTime::now().duration_since(UNIX_EPOCH).unwrap_or_default().as_secs() % 1_000_000
+    // Parse --run-id if provided.
+    let custom_run_id = args
+        .iter()
+        .position(|a| a == "--run-id")
+        .and_then(|i| args.get(i + 1))
+        .cloned();
+
+    // Check dirty-tree state.
+    let dirty_tree = check_dirty_tree();
+
+    let run_id = custom_run_id.unwrap_or_else(|| {
+        format!(
+            "DA-{:04}-{:06}",
+            1,
+            {
+                use std::time::{SystemTime, UNIX_EPOCH};
+                SystemTime::now()
+                    .duration_since(UNIX_EPOCH)
+                    .unwrap_or_default()
+                    .as_secs()
+                    % 1_000_000
+            }
+        )
     });
 
     let output_dir = format!("decode_attribution_runs/{}", run_id);
@@ -44,8 +69,48 @@ fn main() {
     eprintln!("=== Decode Attribution Data Collection Gate ===");
     eprintln!("Run ID: {}", run_id);
     eprintln!("Output: {}", output_dir);
+    eprintln!("Dirty tree: {}", dirty_tree);
     eprintln!("Warmup: {} iters, Steady: {} iters", DEFAULT_WARMUP, DEFAULT_STEADY);
     eprintln!("");
+
+    // ── Full Catalog Lattice Run (if requested) ──
+    if full_catalog {
+        eprintln!("=== Full Catalog Lattice Run ===");
+        let lattice = run_matrix_lattice(&config);
+        eprintln!("  {} total rows", lattice.len());
+
+        // Validate row count expectation: 48 Core ML + 24 MLX + 24 Accelerate = 96
+        let coreml_count = lattice.iter().filter(|r| r.backend == "coreml").count();
+        let mlx_count = lattice.iter().filter(|r| r.backend == "mlx").count();
+        let accel_count = lattice.iter().filter(|r| r.backend == "accelerate").count();
+        eprintln!("  Core ML: {} rows", coreml_count);
+        eprintln!("  MLX: {} rows", mlx_count);
+        eprintln!("  Accelerate: {} rows", accel_count);
+
+        // Write lattice rows as JSONL
+        write_jsonl(&output_dir, "matrix_lattice", &lattice);
+
+        // Generate coverage lattice JSON artifact
+        let coverage = generate_coverage_json(&run_id, dirty_tree, &lattice);
+        let coverage_path = format!("{}/coverage_lattice.json", output_dir);
+        let coverage_json = serde_json::to_string_pretty(&coverage).expect("serialize coverage");
+        let mut cf = fs::File::create(&coverage_path).expect("create coverage file");
+        cf.write_all(coverage_json.as_bytes()).expect("write coverage");
+        eprintln!("  Coverage JSON: {}", coverage_path);
+
+        // Print human-readable coverage table
+        eprintln!("");
+        eprintln!("Coverage Table:");
+        let table = generate_coverage_table(&coverage);
+        eprintln!("{}", table);
+
+        // Do not run standard matrices when --full-catalog is specified.
+        eprintln!("");
+        eprintln!("=== Coverage Lattice Gate Complete ===");
+        eprintln!("Rows: {}", lattice.len());
+        eprintln!("Coverage: {}", coverage_path);
+        return;
+    }
 
     // ── Matrix 1: Compute Unit × Graph Family ──
     eprintln!("--- Matrix 1: Compute Unit × Graph Family ---");
@@ -131,4 +196,19 @@ fn write_jsonl(dir: &str, name: &str, receipts: &[tribunus_compute_native::decod
         writeln!(f, "{}", line).expect("write jsonl line");
     }
     eprintln!("  JSONL: {}", path);
+}
+
+/// Check whether the git tree has uncommitted changes.
+fn check_dirty_tree() -> bool {
+    use std::process::Command;
+    let output = Command::new("git")
+        .args(["status", "--porcelain"])
+        .output();
+    match output {
+        Ok(out) => !String::from_utf8_lossy(&out.stdout).trim().is_empty(),
+        Err(_) => {
+            eprintln!("  [warn] could not check git status; assuming dirty");
+            true
+        }
+    }
 }

@@ -272,3 +272,148 @@ fn iso_timestamp() -> String {
     let day = doy - accum;
     format!("{:04}-{:02}-{:02}T{:02}:{:02}:{:02}Z", y, month, day, h, m, s)
 }
+
+// ── Coverage Lattice ────────────────────────────────────────────────────────
+
+/// A single row in the coverage lattice.
+#[derive(Debug, Clone, Serialize)]
+pub struct CoverageLatticeRow {
+    pub run_id: String,
+    pub commit_sha: String,
+    pub dirty_tree: bool,
+    pub backend: String,
+    pub graph_family: String,
+    pub shape_profile: String,
+    pub runtime_policy: String,
+    pub support_tier: String,
+    pub predict_status: String,
+    pub predict_failure_classification: String,
+    pub max_absolute_error: f64,
+    pub steady_p50_ns: u64,
+    pub materialize_duration_ns: u64,
+    pub compile_duration_ns: u64,
+    pub load_duration_ns: u64,
+    pub cold_first_predict_ns: u64,
+    pub reference_output_hashes_populated: bool,
+    pub reference_status: String,
+}
+
+/// The full coverage lattice artifact.
+#[derive(Debug, Clone, Serialize)]
+pub struct CoverageLattice {
+    pub run_id: String,
+    pub commit_sha: String,
+    pub dirty_tree: bool,
+    pub provenance: String, // "clean" or "tainted"
+    pub schema_version: String,
+    pub generated_at: String,
+    pub total_rows: usize,
+    pub rows: Vec<CoverageLatticeRow>,
+}
+
+/// Generate a coverage lattice JSON artifact from a collection of receipts.
+///
+/// Validates:
+/// - All receipts share the same `run_id` and `commit_sha`
+/// - Rejects empty or mixed-provenance inputs
+/// - Marks `provenance: tainted` if `dirty_tree=true`
+pub fn generate_coverage_json(
+    run_id: &str,
+    dirty_tree: bool,
+    receipts: &[DecodeAttributionReceipt],
+) -> CoverageLattice {
+    let ts = iso_timestamp();
+
+    // Validate consistent run_id
+    for r in receipts {
+        assert_eq!(
+            r.run_id, run_id,
+            "mixed run_id in lattice: '{}' vs '{}'",
+            r.run_id, run_id
+        );
+    }
+
+    let commit_sha = receipts.first().map(|r| r.commit_sha.clone()).unwrap_or_default();
+
+    // Validate consistent commit_sha
+    for r in receipts {
+        assert_eq!(
+            r.commit_sha, commit_sha,
+            "mixed commit_sha in lattice: '{}' vs '{}'",
+            r.commit_sha, commit_sha
+        );
+    }
+
+    let provenance = if dirty_tree { "tainted".to_string() } else { "clean".to_string() };
+
+    let rows: Vec<CoverageLatticeRow> = receipts.iter().map(|r| CoverageLatticeRow {
+        run_id: r.run_id.clone(),
+        commit_sha: r.commit_sha.clone(),
+        dirty_tree,
+        backend: r.backend.clone(),
+        graph_family: r.graph_family.clone(),
+        shape_profile: r.shape_profile.clone(),
+        runtime_policy: r.backend_runtime_policy.clone(),
+        support_tier: if r.support_tier.is_empty() { "unknown".to_string() } else { r.support_tier.clone() },
+        predict_status: if r.predict_status.is_empty() { "not_run".to_string() } else { r.predict_status.clone() },
+        predict_failure_classification: r.predict_failure_classification.clone(),
+        max_absolute_error: r.max_absolute_error,
+        steady_p50_ns: r.steady_p50_ns,
+        materialize_duration_ns: r.materialize_duration_ns,
+        compile_duration_ns: r.compile_duration_ns,
+        load_duration_ns: r.load_duration_ns,
+        cold_first_predict_ns: r.cold_first_predict_ns,
+        reference_output_hashes_populated: r.reference_output_hashes_populated,
+        reference_status: r.reference_status.clone(),
+    }).collect();
+
+    let total_rows = rows.len();
+
+    CoverageLattice {
+        run_id: run_id.to_string(),
+        commit_sha,
+        dirty_tree,
+        provenance,
+        schema_version: "coverage-lattice.v1".to_string(),
+        generated_at: ts,
+        total_rows,
+        rows,
+    }
+}
+
+/// Generate a human-readable coverage table from the lattice.
+pub fn generate_coverage_table(lattice: &CoverageLattice) -> String {
+    let mut lines = Vec::new();
+    lines.push(format!("Coverage Lattice: run_id={} commit={} dirty_tree={} provenance={} rows={}",
+        lattice.run_id, lattice.commit_sha, lattice.dirty_tree, lattice.provenance, lattice.total_rows));
+    lines.push(String::new());
+    lines.push(format!("{:<22} {:<12} {:<12} {:<18} {:<18} {:<14} ref_hashes",
+        "Graph", "Shape", "Backend", "SupportTier", "PredictStatus", "P50(ns)"));
+    lines.push("-".repeat(100));
+
+    let mut sorted = lattice.rows.clone();
+    sorted.sort_by(|a, b| {
+        a.backend.cmp(&b.backend)
+            .then(a.graph_family.cmp(&b.graph_family))
+            .then(a.shape_profile.cmp(&b.shape_profile))
+    });
+
+    for row in &sorted {
+        let p50 = if row.predict_status == "pass" {
+            format!("{}", row.steady_p50_ns)
+        } else {
+            "-".to_string()
+        };
+        lines.push(format!("{:<22} {:<12} {:<12} {:<18} {:<18} {:<14} {}",
+            row.graph_family, row.shape_profile, row.backend,
+            row.support_tier, row.predict_status, p50,
+            row.reference_output_hashes_populated,
+        ));
+    }
+
+    lines.push(String::new());
+    lines.push(format!("Provenance: {} — {}",
+        lattice.provenance,
+        if lattice.dirty_tree { "NOT eligible for optimization decisions" } else { "eligible for optimization decisions" }));
+    lines.join("\n")
+}

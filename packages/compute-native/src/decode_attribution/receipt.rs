@@ -88,11 +88,35 @@ pub struct DecodeAttributionReceipt {
     pub cosine_similarity: f64,
     pub matches_tolerance: bool,
     pub reference_output_hashes: Vec<String>,
+    /// True when reference evaluator ran and produced hashes for this row (always true in lattice mode).
+    pub reference_output_hashes_populated: bool,
     pub accelerate_status: String,
     pub accelerate_duration_ns: Option<u64>,
     pub accelerate_output_hashes: Vec<String>,
     pub status: String,
+    /// Observed runtime outcome: pass | materialize_limited | compile_limited | load_blocked | predict_blocked | numerical_divergence | timeout | memory_oom | skipped_by_support.
+    pub predict_status: String,
+    /// Phase-specific failure classification for non-pass rows.
+    pub predict_failure_classification: String,
+    /// Static capability tier: supported_native | supported_composed | unsupported_graph | not_implemented.
+    pub support_tier: String,
+    /// True if package SHA changed between runs for same graph/shape (determinism failure).
+    pub package_determinism_failure: bool,
     pub failure_reason: Option<String>,
+    /// True if MLX compile() was attempted (false for this gate; future gates may set true).
+    pub mlx_compile_attempted: bool,
+    /// MLX phase-split timing: time to construct MLX arrays from host data.
+    pub mlx_array_construct_ns: u64,
+    /// MLX phase-split timing: time to build lazy graph nodes (ops, no eval).
+    pub mlx_graph_build_ns: u64,
+    /// MLX phase-split timing: time for .eval() only (no graph build, no readback).
+    pub mlx_eval_only_ns: u64,
+    /// MLX phase-split timing: time to read output back to host (.try_as_slice).
+    pub mlx_readback_ns: u64,
+    /// True if MLX cache hit (plan cache reuse) — always false for this gate.
+    pub mlx_cache_hit: bool,
+    /// Time spent in Python boundary (ns) — 0 for Rust-native, nonzero placeholder for future Python path.
+    pub python_boundary_ns: Option<u64>,
 }
 
 impl Default for DecodeAttributionReceipt {
@@ -184,11 +208,23 @@ impl Default for DecodeAttributionReceipt {
             cosine_similarity: 0.0,
             matches_tolerance: false,
             reference_output_hashes: vec![],
+            reference_output_hashes_populated: false,
             accelerate_status: String::new(),
             accelerate_duration_ns: None,
             accelerate_output_hashes: vec![],
             status: String::new(),
+            predict_status: String::new(),
+            predict_failure_classification: String::new(),
+            support_tier: String::new(),
+            package_determinism_failure: false,
             failure_reason: None,
+            mlx_compile_attempted: false,
+            mlx_array_construct_ns: 0,
+            mlx_graph_build_ns: 0,
+            mlx_eval_only_ns: 0,
+            mlx_readback_ns: 0,
+            mlx_cache_hit: false,
+            python_boundary_ns: None,
         }
     }
 }

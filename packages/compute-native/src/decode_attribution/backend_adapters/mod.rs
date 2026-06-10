@@ -41,6 +41,63 @@ impl fmt::Display for BackendKind {
     }
 }
 
+/// Static capability tier: what a backend can represent in principle.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum BackendSupportTier {
+    /// Backend has a direct kernel for this graph family.
+    SupportedNative,
+    /// Built from supported primitives (e.g., MLX chain = matmul+add+silu).
+    SupportedComposed,
+    /// Cannot express this graph in the backend's execution model.
+    UnsupportedGraph,
+    /// Backend has the primitives but no adapter yet.
+    NotImplemented,
+}
+
+impl fmt::Display for BackendSupportTier {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            BackendSupportTier::SupportedNative => write!(f, "supported_native"),
+            BackendSupportTier::SupportedComposed => write!(f, "supported_composed"),
+            BackendSupportTier::UnsupportedGraph => write!(f, "unsupported_graph"),
+            BackendSupportTier::NotImplemented => write!(f, "not_implemented"),
+        }
+    }
+}
+
+/// Phase-specific failure classification for observed runtime outcomes.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum PredictFailureClass {
+    /// MIL program generation failed (package write, protobuf build).
+    MaterializeLimited,
+    /// Core ML compiler (coremlcompiler) failed.
+    CompileLimited,
+    /// Load of compiled model failed (CoreMlModel::load).
+    LoadBlocked,
+    /// Prediction bridge (tribunus_coreml_predict) failed.
+    PredictBlocked,
+    /// Output diverged from reference beyond tolerance.
+    NumericalDivergence,
+    /// Execution exceeded timeout.
+    Timeout,
+    /// Out-of-memory during execution.
+    MemoryOom,
+}
+
+impl fmt::Display for PredictFailureClass {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            PredictFailureClass::MaterializeLimited => write!(f, "materialize_limited"),
+            PredictFailureClass::CompileLimited => write!(f, "compile_limited"),
+            PredictFailureClass::LoadBlocked => write!(f, "load_blocked"),
+            PredictFailureClass::PredictBlocked => write!(f, "predict_blocked"),
+            PredictFailureClass::NumericalDivergence => write!(f, "numerical_divergence"),
+            PredictFailureClass::Timeout => write!(f, "timeout"),
+            PredictFailureClass::MemoryOom => write!(f, "memory_oom"),
+        }
+    }
+}
+
 /// Runtime policy per backend.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum BackendRuntimePolicy {

@@ -46,6 +46,93 @@ pub fn run_matrix1(config: &RunConfig) -> Vec<DecodeAttributionReceipt> {
     receipts
 }
 
+/// Run Matrix Lattice: Full catalog coverage across all backends.
+///
+/// Produces exactly 96 rows:
+/// - Core ML: 8 families × 3 shapes × 2 policies = 48
+/// - MLX: 8 families × 3 shapes = 24
+/// - Accelerate: 8 families × 3 shapes = 24
+///
+/// Reference hashes are embedded per row via `run_backend` (Phase 5 wiring).
+pub fn run_matrix_lattice(config: &RunConfig) -> Vec<DecodeAttributionReceipt> {
+    let total = 48 + 24 + 24;
+    let mut receipts = Vec::with_capacity(total);
+    let families = all_families();
+    let shapes = [&SMALL, &MEDIUM, &LARGE];
+    let mut seq: u32 = 0;
+
+    // ── Core ML: 8 families × 3 shapes × 2 policies = 48 ──────────────
+    let coreml_policies = ["cpuOnly", "cpuAndGPU"];
+    for family in &families {
+        for shape in &shapes {
+            for policy in &coreml_policies {
+                seq += 1;
+                let run_id = format!("{}-ML-{:04}", config.run_id, seq);
+                let r = run_backend(
+                    &run_id,
+                    "coreml",
+                    family,
+                    shape,
+                    policy,
+                    "matrix_lattice",
+                    true,
+                    config.warmup_iterations,
+                    config.steady_iterations,
+                    config.tolerance,
+                    Path::new(&config.output_dir),
+                );
+                receipts.push(r);
+            }
+        }
+    }
+
+    // ── MLX: 8 families × 3 shapes = 24 ───────────────────────────────
+    for family in &families {
+        for shape in &shapes {
+            seq += 1;
+            let run_id = format!("{}-ML-{:04}", config.run_id, seq);
+            let r = run_backend(
+                &run_id,
+                "mlx",
+                family,
+                shape,
+                "mlx_default",
+                "matrix_lattice",
+                true,
+                config.warmup_iterations,
+                config.steady_iterations,
+                config.tolerance,
+                Path::new(&config.output_dir),
+            );
+            receipts.push(r);
+        }
+    }
+
+    // ── Accelerate: 8 families × 3 shapes = 24 ────────────────────────
+    for family in &families {
+        for shape in &shapes {
+            seq += 1;
+            let run_id = format!("{}-ML-{:04}", config.run_id, seq);
+            let r = run_backend(
+                &run_id,
+                "accelerate",
+                family,
+                shape,
+                "accelerate_cpu",
+                "matrix_lattice",
+                true,
+                config.warmup_iterations,
+                config.steady_iterations,
+                config.tolerance,
+                Path::new(&config.output_dir),
+            );
+            receipts.push(r);
+        }
+    }
+
+    receipts
+}
+
 /// Run Matrix 2: Shape × Graph Family (CPU-only).
 /// Canonical shape-scaling baseline. 5 graphs × 3 shapes = 15 runs.
 pub fn run_matrix2(config: &RunConfig) -> Vec<DecodeAttributionReceipt> {
