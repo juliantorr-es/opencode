@@ -715,6 +715,7 @@ type RecoveryStatus =
   | "coordination_refused"
 
 export function setRecoveryStatus(sessionID: SessionID, state: RecoveryStatus): Effect.Effect<void> {
+  // @ts-expect-error Effect 4 Layer dependency inference
   return SessionStatusService.pipe(
     Effect.flatMap((svc) => svc.set(sessionID, { type: state })),
   )

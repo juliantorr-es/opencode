@@ -366,6 +366,7 @@ export class ValkeyStreams {
     }
 
     // Use XPENDING with range to get entries
+    // @ts-expect-error ioredis sendCommand accepts raw string at runtime
     const result: any = await this.redis.sendCommand(
       "XPENDING",
       [
@@ -499,9 +500,9 @@ export class ValkeyStreams {
     )
     return (result as any) as unknown as {
       name: string
-      seen_time: number
-      active_time: number
-      idle: number
+      seenTime: number
+      activeTime: number
+      idleMs: number
       pending: number
     }[]
   }

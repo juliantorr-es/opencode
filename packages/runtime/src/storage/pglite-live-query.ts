@@ -105,9 +105,9 @@ export class PGliteLiveQuery extends Context.Service<PGliteLiveQuery>()(
       // Fallback: polling via DatabaseAdapter
       const timerId = setInterval(() => {
         Effect.runPromise(
-          (this.adapter as any).query<any[]>((db: any) => db.all(sql) as R[]),
+          (this.adapter as any).query((db: any) => db.all(sql) as R[]),
         ).then(
-          (rows: R[]) => {
+          (rows: unknown) => {
             emit.single(rows as R[])
           },
           () => {

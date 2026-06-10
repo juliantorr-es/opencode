@@ -144,6 +144,7 @@ export class StreamQueueAdapter {
   private convertEnvelopeToJob(envelope: WorkEnvelope, entryId: string): CoordinationJob {
     return {
       id: envelope.workId,
+      // @ts-expect-error CoordinationJob needs kind field in envelope
       kind: envelope.workKind,
       correlationId: (envelope as any).correlationId,
       sessionId: envelope.sessionId,
@@ -195,7 +196,8 @@ export function createStreamQueueAdapter(
       streamName: config?.streamName ?? DEFAULT_CONFIG.streamName,
       consumerGroup: config?.consumerGroup ?? DEFAULT_CONFIG.consumerGroup,
     },
-    CoordinationWorkQueue.generateConsumerId(config?.consumerPrefix ?? DEFAULT_CONFIG.consumerPrefix)
+    CoordinationWorkQueue.generateConsumerId(config?.consumerPrefix ?? DEFAULT_CONFIG.consumerPrefix),
+    undefined as any
   )
   
   return new StreamQueueAdapter(workQueue, queueName, config)

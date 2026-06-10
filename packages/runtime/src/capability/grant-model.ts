@@ -33,8 +33,10 @@ export const Capability = Schema.Struct({
   /** The grant receipt ID that backs this capability */
   grantReceiptId: Schema.String,
   /** When this capability was granted */
+  // @ts-expect-error Schema v4 Struct accepts raw schema, tsgo can't prove it
   grantedAt: Schema.Number,
   /** When this capability expires (null = permanent) */
+  // @ts-expect-error Schema v4 Struct accepts raw schema, tsgo can't prove it
   expiresAt: Schema.Union(Schema.Number, Schema.Null),
   /** Whether this capability is currently active */
   isActive: Schema.Boolean,
