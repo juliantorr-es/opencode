@@ -16,6 +16,8 @@
     "lib": ["es2023", "dom", "dom.iterable"],
     // Type Checking & Safety
     "strict": true,
+    "experimentalDecorators": true,
+    "useDefineForClassFields": false,
     "types": ["vite/client", "bun"]
   },
   "exclude": ["**/*.stories.*", "**/*.mdx"]

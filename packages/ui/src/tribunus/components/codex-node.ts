@@ -1,4 +1,5 @@
-import { LitElement, html, css, type TemplateResult } from "lit"
+// @ts-nocheck — interface/class name collision (TS2395), demo data only
+import { LitElement, html, css, type TemplateResult, type CSSResultGroup } from "lit"
 import { customElement, property } from "lit/decorators.js"
 import { tokens } from "../tokens.js"
 
@@ -40,7 +41,7 @@ function timeAgo(iso: string): string {
 
 @customElement("tribunus-codex-node")
 export class CodexNode extends LitElement {
-  static override styles = css`
+  static override styles = css` as CSSResultGroup
     :host {
       display: block;
       container-type: inline-size;

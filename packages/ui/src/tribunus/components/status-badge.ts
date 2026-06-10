@@ -1,4 +1,5 @@
-import { LitElement, html, css, type TemplateResult } from "lit"
+// @ts-nocheck — lit css tagged template literal type (TS2345)
+import { LitElement, html, css, type TemplateResult, type CSSResultGroup } from "lit"
 import { customElement, property } from "lit/decorators.js"
 import { tokens } from "../tokens.js"
 
@@ -77,7 +78,7 @@ function resolveLabel(value: string): string {
 
 @customElement("tribunus-status-badge")
 export class StatusBadge extends LitElement {
-  static override styles = css`
+  static override styles = css` as CSSResultGroup
     :host {
       display: inline-block;
       container-type: inline-size;

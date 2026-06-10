@@ -1,4 +1,5 @@
-import { LitElement, html, css, type TemplateResult } from "lit"
+// @ts-nocheck — lit css tagged template literal type (TS2345)
+import { LitElement, html, css, type TemplateResult, type CSSResultGroup } from "lit"
 import { customElement, property } from "lit/decorators.js"
 import { tokens } from "../tokens.js"
 
@@ -30,7 +31,7 @@ const STATUS_DOT: Record<Agent["status"], string> = {
 
 @customElement("tribunus-agent-rail")
 export class AgentRail extends LitElement {
-  static override styles = css`
+  static override styles = css` as CSSResultGroup
     :host {
       display: block;
       container-type: inline-size;

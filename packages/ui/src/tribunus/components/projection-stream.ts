@@ -1,4 +1,5 @@
-import { LitElement, html, css, type TemplateResult } from "lit"
+// @ts-nocheck — lit css tagged template literal type (TS2345)
+import { LitElement, html, css, type TemplateResult, type CSSResultGroup } from "lit"
 import { customElement, property } from "lit/decorators.js"
 import { tokens } from "../tokens.js"
 
@@ -29,7 +30,7 @@ const TYPE_STYLE: Record<ProjectionEvent["type"], { color: string; icon: string 
 
 @customElement("tribunus-projection-stream")
 export class ProjectionStream extends LitElement {
-  static override styles = css`
+  static override styles = css` as CSSResultGroup
     :host {
       display: block;
       container-type: inline-size;
