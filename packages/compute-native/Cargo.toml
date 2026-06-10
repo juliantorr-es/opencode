@@ -40,6 +40,10 @@ path = "tests/backend_conformance.rs"
 name = "lane_conformance"
 path = "tests/lane_conformance.rs"
 
+[[test]]
+name = "heterogeneous_conformance"
+path = "tests/heterogeneous_conformance.rs"
+
 [dependencies]
 napi = { version = "3.9.0", features = ["napi8", "serde-json"], default-features = false }
 napi-derive = "3.5.6"

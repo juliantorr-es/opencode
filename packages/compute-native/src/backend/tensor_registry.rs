@@ -1,83 +1,151 @@
-//! Logical-tensor registry — tracks tensor identity and per-backend
-//! materializations independently of any single backend's handle space.
+//! Logical-tensor registry — version-bound materializations across backends.
+//!
+//! This is the CANONICAL registry.  Only one logical tensor type and one
+//! backend materialization type exist across the entire backend module.
+//! routing.rs re-exports `MaterializedTensor` as `LogicalTensor` for
+//! backward compatibility of the routing schema.
 
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 
 use super::DType;
 use super::routing::{
-    BackendId, ConversionKind, LayoutConversion, LogicalShape, PhysicalLayout,
-    Substrate, TensorContract, TensorId, TensorTransferPlan, TensorTransferReceipt,
+    BackendId, PhysicalLayout, TensorId, TensorMaterializationId,
     TensorVersion,
 };
 
-/// Handle to a backend-specific tensor materialization.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub struct BackendTensorHandle {
-    pub backend_id: BackendId,
-    pub handle: u64,
+// ── Materialization ───────────────────────────────────────────────────
+
+/// The state of a backend materialization relative to the logical tensor.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum MaterializationState {
+    /// This materialization represents the current logical version.
+    Fresh,
+    /// The logical tensor has advanced past this materialization.
+    Stale,
+    /// The materialization is being transferred or created.
+    Pending,
 }
 
-/// A tensor that may have multiple physical materializations.
+/// One backend-specific physical materialization of a logical tensor.
+#[derive(Debug, Clone)]
+pub struct MaterializationRecord {
+    pub materialization_id: TensorMaterializationId,
+    pub backend_id: BackendId,
+    pub tensor_version: TensorVersion,
+    pub physical_layout: PhysicalLayout,
+    pub dtype: DType,
+    pub state: MaterializationState,
+    /// Opaque backend-local handle (meaningful only to `backend_id`).
+    pub backend_handle: u64,
+}
+
+// ── Logical tensor ────────────────────────────────────────────────────
+
+/// The canonical logical-tensor type for the entire backend module.
+///
+/// Every tensor has exactly one authoritative backend whose materialization
+/// defines the current logical version.  Other backends may hold stale
+/// materializations until re-materialised.
 #[derive(Debug, Clone)]
 pub struct MaterializedTensor {
     pub tensor_id: TensorId,
-    pub contract: TensorContract,
-    pub materializations: HashMap<BackendId, BackendTensorHandle>,
+    /// The backend whose materialization defines the truth.
     pub authoritative_backend: BackendId,
+    /// Current logical version — incremented on every authority transition.
     pub version: TensorVersion,
-    pub stale_materializations: HashSet<BackendId>,
+    /// All known materializations, keyed by backend ID.
+    pub materializations: HashMap<BackendId, MaterializationRecord>,
 }
 
 impl MaterializedTensor {
     pub fn new(
         tensor_id: TensorId,
-        contract: TensorContract,
         authoritative_backend: BackendId,
     ) -> Self {
         Self {
             tensor_id,
-            contract,
-            materializations: HashMap::new(),
             authoritative_backend,
             version: TensorVersion(0),
-            stale_materializations: HashSet::new(),
+            materializations: HashMap::new(),
         }
     }
 
-    /// Register a backend materialization.
-    pub fn add_materialization(&mut self, backend: BackendId, handle: u64) {
+    /// Register a materialization at the current version (fresh).
+    pub fn add_materialization(
+        &mut self,
+        backend_id: BackendId,
+        backend_handle: u64,
+        layout: PhysicalLayout,
+        dtype: DType,
+    ) -> MaterializationRecord {
+        let id = TensorMaterializationId(self.materializations.len() as u64);
+        let record = MaterializationRecord {
+            materialization_id: id,
+            backend_id,
+            tensor_version: self.version,
+            physical_layout: layout,
+            dtype,
+            state: MaterializationState::Fresh,
+            backend_handle,
+        };
+        self.materializations.insert(backend_id, record.clone());
+        record
+    }
+
+    /// Check whether a backend's materialization is current.
+    pub fn is_fresh(&self, backend_id: BackendId) -> bool {
         self.materializations
-            .insert(backend, BackendTensorHandle { backend_id: backend, handle });
-        self.stale_materializations.remove(&backend);
+            .get(&backend_id)
+            .map(|r| r.state == MaterializationState::Fresh
+                && r.tensor_version == self.version)
+            .unwrap_or(false)
     }
 
-    /// Mark all non-authoritative materializations as stale.
-    pub fn invalidate_non_authoritative(&mut self) {
-        for &backend in self.materializations.keys() {
-            if backend != self.authoritative_backend {
-                self.stale_materializations.insert(backend);
-            }
-        }
-        self.version = TensorVersion(self.version.0 + 1);
-    }
-
-    /// Check whether a backend's materialization is fresh.
-    pub fn is_fresh(&self, backend: BackendId) -> bool {
-        self.materializations.contains_key(&backend)
-            && !self.stale_materializations.contains(&backend)
-    }
-
-    /// Get a backend's materialization handle.
-    pub fn get_handle(&self, backend: BackendId) -> Option<BackendTensorHandle> {
-        if self.is_fresh(backend) {
-            self.materializations.get(&backend).copied()
+    /// Get a backend's materialization handle (fresh only).
+    pub fn get_handle(&self, backend_id: BackendId) -> Option<u64> {
+        if self.is_fresh(backend_id) {
+            self.materializations.get(&backend_id).map(|r| r.backend_handle)
         } else {
             None
         }
     }
+
+    /// Execute an authority transition: a backend produces a new logical
+    /// version.  All non-authoritative materializations become stale.
+    /// Returns the records that were invalidated.
+    pub fn advance_version(
+        &mut self,
+        new_authoritative_backend: BackendId,
+        new_handle: u64,
+        layout: PhysicalLayout,
+        dtype: DType,
+    ) -> (TensorVersion, Vec<MaterializationRecord>) {
+        self.version = TensorVersion(self.version.0 + 1);
+        self.authoritative_backend = new_authoritative_backend;
+
+        let mut invalidated = Vec::new();
+        for record in self.materializations.values_mut() {
+            if record.backend_id != new_authoritative_backend {
+                record.state = MaterializationState::Stale;
+                invalidated.push(record.clone());
+            }
+        }
+
+        let new_record = self.add_materialization(
+            new_authoritative_backend,
+            new_handle,
+            layout,
+            dtype,
+        );
+        invalidated.push(new_record);
+
+        (self.version, invalidated)
+    }
 }
 
-/// Central registry for all logical tensors.
+// ── Registry ──────────────────────────────────────────────────────────
+
+/// Central registry for all logical tensors in a model runtime.
 #[derive(Debug, Default)]
 pub struct TensorRegistry {
     tensors: HashMap<TensorId, MaterializedTensor>,
@@ -88,7 +156,24 @@ impl TensorRegistry {
         Self { tensors: HashMap::new() }
     }
 
-    pub fn register(&mut self, tensor: MaterializedTensor) {
+    /// Register a new tensor.  Fails if the ID already exists (no silent
+    /// overwrite — use `replace` for explicit replacement).
+    pub fn register(
+        &mut self,
+        tensor: MaterializedTensor,
+    ) -> Result<(), String> {
+        if self.tensors.contains_key(&tensor.tensor_id) {
+            return Err(format!(
+                "TensorRegistry: tensor {:?} already registered — use replace()",
+                tensor.tensor_id,
+            ));
+        }
+        self.tensors.insert(tensor.tensor_id, tensor);
+        Ok(())
+    }
+
+    /// Explicitly replace a tensor registration (authority transition).
+    pub fn replace(&mut self, tensor: MaterializedTensor) {
         self.tensors.insert(tensor.tensor_id, tensor);
     }
 
@@ -113,47 +198,25 @@ impl TensorRegistry {
     }
 }
 
-/// Records the transfer of a tensor between two backends.
+// ── Transfer record ───────────────────────────────────────────────────
+
+/// Lossless transfer record — preserves exact source and destination
+/// layouts, dtypes, and timings.  No invented detail.
 #[derive(Debug, Clone)]
 pub struct TensorTransferRecord {
     pub tensor_id: TensorId,
+    pub tensor_version: TensorVersion,
+    pub source_materialization: TensorMaterializationId,
+    pub destination_materialization: TensorMaterializationId,
     pub source_backend: BackendId,
     pub destination_backend: BackendId,
-    pub bytes: u64,
-    pub conversion: Option<ConversionKind>,
+    pub source_layout: PhysicalLayout,
+    pub destination_layout: PhysicalLayout,
+    pub source_dtype: DType,
+    pub destination_dtype: DType,
+    pub bytes_read: u64,
+    pub bytes_written: u64,
     pub transfer_ns: u64,
+    pub conversion_ns: u64,
     pub zero_copy: bool,
-}
-
-impl TensorTransferRecord {
-    pub fn to_receipt(&self) -> TensorTransferReceipt {
-        TensorTransferReceipt {
-            tensor_id: self.tensor_id,
-            source_backend: self.source_backend,
-            destination_backend: self.destination_backend,
-            bytes: self.bytes,
-            conversion: self.conversion.as_ref().map(|c| match c {
-                ConversionKind::LayoutConversion => LayoutConversion::Contiguous,
-                ConversionKind::DtypeCast => LayoutConversion::Cast {
-                    from: DType::F32,
-                    to: DType::F32,
-                },
-                _ => LayoutConversion::None,
-            }),
-            transfer_ns: self.transfer_ns,
-            zero_copy: self.zero_copy,
-        }
-    }
-
-    pub fn from_plan(plan: &TensorTransferPlan, actual_ns: u64, zero_copy: bool) -> Self {
-        Self {
-            tensor_id: plan.tensor_id,
-            source_backend: plan.source_backend,
-            destination_backend: plan.destination_backend,
-            bytes: plan.expected_bytes,
-            conversion: Some(plan.conversion.clone()),
-            transfer_ns: actual_ns,
-            zero_copy,
-        }
-    }
 }

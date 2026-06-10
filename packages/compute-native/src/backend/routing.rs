@@ -277,48 +277,33 @@ pub enum LayoutConversion {
 }
 
 /// Receipt for explicit cross-backend tensor movement.
+///
+/// Preserves exact source and destination layouts, dtypes, and timings.
+/// No invented detail — every field is observed or absent.
 #[derive(Debug, Clone)]
 pub struct TensorTransferReceipt {
     pub tensor_id: TensorId,
+    pub tensor_version: TensorVersion,
+    pub source_materialization: TensorMaterializationId,
+    pub destination_materialization: TensorMaterializationId,
     pub source_backend: BackendId,
     pub destination_backend: BackendId,
-    pub bytes: u64,
-    pub conversion: Option<LayoutConversion>,
+    pub source_layout: PhysicalLayout,
+    pub destination_layout: PhysicalLayout,
+    pub source_dtype: DType,
+    pub destination_dtype: DType,
+    pub bytes_read: u64,
+    pub bytes_written: u64,
     pub transfer_ns: u64,
+    pub conversion_ns: u64,
     pub zero_copy: bool,
 }
 
-// ── Logical tensor registry ────────────────────────────────────────────────
-
-/// Contract describing a tensor independent of any backend.
-#[derive(Debug, Clone)]
-pub struct TensorContract {
-    pub tensor_id: TensorId,
-    pub logical_shape: LogicalShape,
-    pub dtype: DType,
-    pub immutable: bool,
-}
+// ── Tensor version ────────────────────────────────────────────────────────
 
 /// Version counter for a logical tensor (incremented on mutation).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct TensorVersion(pub u64);
-
-/// Handle to a backend-specific tensor materialization.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct BackendTensorHandle {
-    pub backend_id: BackendId,
-    pub handle: u64, // opaque backend-local handle
-}
-
-/// A tensor that may have multiple physical materializations across backends.
-#[derive(Debug, Clone)]
-pub struct LogicalTensor {
-    pub tensor_id: TensorId,
-    pub contract: TensorContract,
-    pub materializations: HashMap<BackendId, BackendTensorHandle>,
-    pub authoritative_materialization: BackendId,
-    pub version: TensorVersion,
-}
 
 // ── Transfer plan ──────────────────────────────────────────────────────────
 
