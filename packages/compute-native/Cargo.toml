@@ -32,6 +32,14 @@ path = "tests/treatment_qualification.rs"
 name = "treatment_lifecycle"
 path = "tests/treatment_lifecycle.rs"
 
+[[test]]
+name = "backend_conformance"
+path = "tests/backend_conformance.rs"
+
+[[test]]
+name = "lane_conformance"
+path = "tests/lane_conformance.rs"
+
 [dependencies]
 napi = { version = "3.9.0", features = ["napi8", "serde-json"], default-features = false }
 napi-derive = "3.5.6"

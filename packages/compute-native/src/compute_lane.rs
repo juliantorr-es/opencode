@@ -7,12 +7,17 @@
 
 use std::sync::Arc;
 use std::thread;
+use std::time::Instant;
 use tokio::sync::{mpsc, oneshot};
 
 // ── Lane identity ──────────────────────────────────────────────────────
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct ComputeLaneId(pub u32);
+
+/// Identifies a resource admission lease.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct ComputeLeaseId(pub u64);
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct RequestId(pub u64);
@@ -87,6 +92,19 @@ pub struct UnloadReceipt {
     pub bytes_released: u64,
 }
 
+/// Cancellation lifecycle receipt — measures latency across all phases.
+#[derive(Debug, Clone)]
+pub struct CancellationReceipt {
+    pub request_id: RequestId,
+    pub session_id: SessionId,
+    pub received_at: std::time::SystemTime,
+    pub lane_accepted_ns: u64,
+    pub current_eval_completed_ns: u64,
+    pub next_work_suppressed_ns: u64,
+    pub session_cancelled_ns: u64,
+    pub resources_released_ns: u64,
+}
+
 #[derive(Debug, Clone)]
 pub enum CancellationReason {
     Timeout,
@@ -109,7 +127,7 @@ pub struct ComputeError {
     pub message: String,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ComputeErrorKind {
     BackendError,
     ModelNotFound,
@@ -168,6 +186,11 @@ pub enum ComputeCommand {
     Shutdown {
         reason: ShutdownReason,
     },
+    /// Query lane lifecycle state.
+    Status {
+        request_id: RequestId,
+        reply: oneshot::Sender<LaneStatus>,
+    },
 }
 
 // ── Lane handle (Tokio-facing) ─────────────────────────────────────────
@@ -197,7 +220,108 @@ impl LaneHandle {
     }
 }
 
-// ── Lane spawn ─────────────────────────────────────────────────────────
+// ── Lane lifecycle ────────────────────────────────────────────────────
+
+/// Lifecycle state of the lane thread.
+#[derive(Debug, Clone)]
+pub enum LaneLifecycle {
+    Starting,
+    Active,
+    Draining,
+    Stopped,
+    Panicked(String),
+}
+
+/// Snapshot of lane state (returned by Status command).
+#[derive(Debug, Clone)]
+pub struct LaneStatus {
+    pub lane_id: ComputeLaneId,
+    pub lifecycle: LaneLifecycle,
+    pub active_sessions: u32,
+    pub active_models: u32,
+    pub active_memory_bytes: u64,
+    pub command_queue_depth: usize,
+}
+
+// ── Resource admission ────────────────────────────────────────────────
+
+/// A resource admission lease issued by the local scheduler.
+///
+/// The lane may execute only commands backed by a valid, unexpired lease.
+/// This prevents silent oversubscription of unified memory.
+#[derive(Debug, Clone)]
+pub struct ComputeLease {
+    pub lease_id: ComputeLeaseId,
+    pub lane_id: ComputeLaneId,
+    pub model_id: ModelRuntimeId,
+    pub session_id: SessionId,
+    pub reserved_kv_bytes: u64,
+    pub reserved_scratch_bytes: u64,
+    pub expires_at: Instant,
+}
+
+impl ComputeLease {
+    pub fn is_expired(&self) -> bool {
+        Instant::now() >= self.expires_at
+}
+}
+
+// ── Lane runtime (device-lane-owned state) ────────────────────────────
+
+/// The lane thread's owned state.
+///
+/// Generic over B so a fixture backend can be substituted for tests.
+/// Not exposed across the thread boundary — lives entirely on the lane thread.
+pub struct ComputeLaneRuntime<B> {
+    pub backend: B,
+    pub lane_id: ComputeLaneId,
+    pub lifecycle: LaneLifecycle,
+    pub active_leases: Vec<ComputeLease>,
+    pub active_sessions: u32,
+    pub active_models: u32,
+}
+
+impl<B> ComputeLaneRuntime<B> {
+    pub fn new(backend: B, lane_id: ComputeLaneId) -> Self {
+        Self {
+            backend,
+            lane_id,
+            lifecycle: LaneLifecycle::Starting,
+            active_leases: Vec::new(),
+            active_sessions: 0,
+            active_models: 0,
+}
+}
+
+    /// Admit a lease.  Returns `Ok(())` if capacity is available,
+    /// `Err` if the lane cannot accept the lease.
+    pub fn admit_lease(&mut self, lease: ComputeLease) -> Result<(), ComputeError> {
+        if lease.is_expired() {
+            return Err(ComputeError {
+                kind: ComputeErrorKind::LeaseExpired,
+                message: format!("lease {} already expired", lease.lease_id.0),
+            });
+}
+        self.active_leases.retain(|l| !l.is_expired());
+        self.active_leases.push(lease);
+        Ok(())
+}
+
+    /// Release a specific lease.
+    pub fn release_lease(&mut self, lease_id: ComputeLeaseId) {
+        self.active_leases.retain(|l| l.lease_id != lease_id);
+}
+
+    /// Total reserved bytes across all active leases.
+    pub fn total_reserved_bytes(&self) -> u64 {
+        self.active_leases
+            .iter()
+            .map(|l| l.reserved_kv_bytes + l.reserved_scratch_bytes)
+            .sum()
+}
+}
+
+// ── Lane lifecycle ────────────────────────────────────────────────────
 
 /// Spawn a compute lane on a dedicated OS thread.
 ///
