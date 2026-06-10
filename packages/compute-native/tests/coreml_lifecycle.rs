@@ -5,8 +5,11 @@
 //! native Core ML FFI — uses the scaffolding backend directly.
 
 use tribunus_compute_native::backend::coreml::CoreMlBackend;
-use tribunus_compute_native::backend::graph::{CompiledRegionHandle, GraphBackend, RegionExecutionReceipt};
-use tribunus_compute_native::backend::routing::{GraphRegion, OperationFamily, TensorShape, TensorId};
+use tribunus_compute_native::backend::graph::GraphBackend;
+use tribunus_compute_native::backend::graph::RegionExecutionReceipt;
+use tribunus_compute_native::backend::routing::{
+    CompiledRegionHandle, GraphRegion, OperationFamily,
+};
 
 // ── Generational handles ──────────────────────────────────────────────
 
