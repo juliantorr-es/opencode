@@ -11,9 +11,10 @@ export async function fileDigest(path: string): Promise<{ digest: string; byteCo
     const hash = createHash("sha256")
     let byteCount = 0
     const stream = createReadStream(path)
-    stream.on("data", (chunk: Buffer) => {
-      hash.update(chunk)
-      byteCount += chunk.length
+    stream.on("data", (chunk: string | Buffer) => {
+      const buf = typeof chunk === "string" ? Buffer.from(chunk) : chunk
+      hash.update(buf)
+      byteCount += buf.length
     })
     stream.on("end", () => resolve({ digest: hash.digest("hex"), byteCount }))
     stream.on("error", reject)

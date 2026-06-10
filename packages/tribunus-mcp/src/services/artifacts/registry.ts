@@ -1,10 +1,10 @@
 import * as crypto from "node:crypto"
-import { rename } from "node:fs/promises"
 import type { PgliteDb } from "../../governance/store.js"
 import type { ArtifactRecord, ArtifactState, ArtifactType, DestinationMode, RetentionPolicy, VerificationReceipt, ArtifactRelationship, RelationshipKind } from "./types.js"
 import { validateTransition } from "./lifecycle.js"
 import { ArtifactNotFoundError, ArtifactConflictError, ArtifactDigestMismatchError, ArtifactStateError } from "./errors.js"
 import { fileDigest } from "./identity.js"
+import { rename } from "node:fs/promises"
 
 export interface ReserveInput {
   artifactType: ArtifactType
@@ -184,7 +184,7 @@ export class ArtifactRegistryService {
         [receipt.verification_id, artifactId, receipt.artifact_type, receipt.observed_digest, receipt.verifier_name, receipt.status, JSON.stringify(receipt.checks), receipt.invocation_id || null],
       )
       await this.db.query(
-        "UPDATE artifacts_v2 SET state='verified', verification_status='passed', verification_receipt_id=$1, verified_at=(to_char(CURRENT_TIMESTAMP AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"')) WHERE artifact_id=$2",
+        `UPDATE artifacts_v2 SET state='verified', verification_status='passed', verification_receipt_id=$1, verified_at=(to_char(CURRENT_TIMESTAMP AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"')) WHERE artifact_id=$2`,
         [receipt.verification_id, artifactId],
       )
       await this.emitEvent(artifactId, record.state, "verified", "artifact_verified", receipt.invocation_id || undefined)
@@ -216,7 +216,7 @@ export class ArtifactRegistryService {
     const record = await this.get(artifactId)
     validateTransition(artifactId, record.state, "superseded")
     await this.db.query(
-      "UPDATE artifacts_v2 SET state='superseded', superseded_by_id=$1, superseded_at=(to_char(CURRENT_TIMESTAMP AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"')) WHERE artifact_id=$2",
+      `UPDATE artifacts_v2 SET state='superseded', superseded_by_id=$1, superseded_at=(to_char(CURRENT_TIMESTAMP AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"')) WHERE artifact_id=$2`,
       [supersededById, artifactId],
     )
     await this.emitEvent(artifactId, record.state, "superseded", "artifact_superseded")
@@ -232,7 +232,7 @@ export class ArtifactRegistryService {
   async requestDeletion(artifactId: string): Promise<void> {
     const record = await this.get(artifactId)
     validateTransition(artifactId, record.state, "deletion_pending")
-    await this.db.query("UPDATE artifacts_v2 SET state='deletion_pending', deleted_at=(to_char(CURRENT_TIMESTAMP AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"')) WHERE artifact_id=$1", [artifactId])
+    await this.db.query(`UPDATE artifacts_v2 SET state='deletion_pending', deleted_at=(to_char(CURRENT_TIMESTAMP AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"')) WHERE artifact_id=$1`, [artifactId])
     await this.emitEvent(artifactId, record.state, "deletion_pending", "artifact_deletion_requested")
   }
 

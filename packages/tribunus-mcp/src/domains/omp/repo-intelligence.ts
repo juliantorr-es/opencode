@@ -7,6 +7,8 @@ import { join, resolve, relative, dirname } from "node:path"
 import type { Dirent } from "node:fs"
 import { fileURLToPath } from "node:url"
 import { validatePath } from "../../governance/paths.js"
+import { getStore } from "../../governance/store.js"
+import { ArtifactRegistryService } from "../../services/artifacts/registry.js"
 
 // Oxc services
 import { semanticRepoMap } from "../../services/code-intelligence/queries/semantic-repo-map.js"
@@ -197,7 +199,11 @@ export function registerOmpRepoIntelTools(): void {
     output_path: { type: "string", description: "Output .zip file path (use instead of output_dir for exact destination)" },
     output_dir: { type: "string", description: "Output directory for exported artifacts" },
   }, [], ["artifact:write"], 300_000, async (_ctx, a) => {
+    const profile = (a.profile as "bootstrap_review" | "gemini_code_review") || "gemini_code_review"
+    
+    // Determine output path
     let outputPath: string | undefined
+    let destinationMode: string = "exact_path"
     if (a.output_path) {
       const check = validatePath(a.output_path as string, true)
       if (!check.valid) return err(check.error || "output path rejected")
@@ -205,26 +211,65 @@ export function registerOmpRepoIntelTools(): void {
     } else if (a.output_dir) {
       const check = validatePath(a.output_dir as string, true)
       if (!check.valid) return err(check.error || "output path rejected")
-      const { getZipName } = await import("../../services/review-export/constants.js")
-      outputPath = resolve(check.resolved, getZipName((a.profile as "bootstrap_review" | "gemini_code_review") || "gemini_code_review"))
+      destinationMode = "directory"
+      outputPath = check.resolved
+    } else {
+      outputPath = resolve(process.cwd(), `tribunus-gemini-code-review.zip`)
     }
     if (a.output_path && a.output_dir) {
       return err("Cannot specify both output_path and output_dir")
     }
+
+    // Reserve artifact
+    const db = await getStore()
+    const registry = new ArtifactRegistryService(db)
+    const reservation = await registry.reserve({
+      artifactType: "review_gemini_zip_v1",
+      canonicalPath: outputPath,
+      destinationMode: destinationMode as ("exact_path" | "directory"),
+      retentionPolicy: "mission_evidence",
+      invocationId: _ctx.invocationId,
+      sessionId: undefined,
+    })
+    await registry.beginProduction(reservation.artifactId, _ctx.invocationId)
+
+    // Build to temporary path
     const result = buildCodeReviewExport({
       repoRoot: process.cwd(),
-      profile: (a.profile as "bootstrap_review" | "gemini_code_review") || "gemini_code_review",
-      outputPath,
+      profile,
+      outputPath: reservation.tempPath,
     })
+
+    // Finalize
+    const finalized = await registry.finalizeFile({
+      artifactId: reservation.artifactId,
+      tempPath: reservation.tempPath,
+      byteCount: result.zipSize,
+      fileCount: result.includedFiles.length,
+      mimeType: "application/zip",
+      producerTool: "tribunus_code_review_export",
+      producerToolVersion: "0.4.0",
+      invocationId: _ctx.invocationId,
+      metadata: {
+        profile,
+        warnings: result.warnings,
+        timing_ms: result.timingsMs,
+        dirty: result.isDirty,
+      },
+    })
+
     return ok({
-      profile: a.profile || "gemini_code_review",
-      zip_path: result.zipPath,
-      zip_sha256: result.zipSha256,
-      zip_size: result.zipSize,
-      file_count: result.includedFiles.length,
+      artifact_id: finalized.artifactId,
+      artifact_type: "review_gemini_zip_v1",
+      path: finalized.canonicalPath,
+      sha256: finalized.contentDigest,
+      byte_count: finalized.byteCount,
+      file_count: finalized.fileCount,
+      profile,
       warnings: result.warnings.length,
       dirty: result.isDirty,
       timing_ms: result.timingsMs,
+      invocation_id: _ctx.invocationId,
     })
   })
 
