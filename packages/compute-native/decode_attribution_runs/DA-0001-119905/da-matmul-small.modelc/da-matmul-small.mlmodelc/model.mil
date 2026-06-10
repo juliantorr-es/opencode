@@ -1,8 +1,0 @@
-program(1.3)
-[buildInfo = dict<string, string>({{"coremlc-component-MIL", "3510.2.1"}, {"coremlc-version", "3500.32.1"}})]
-{
-    func main<ios19>(tensor<fp32, [1, 4]> x) {
-            tensor<fp32, [4, 1]> w_0 = const()[name = string("w_0"), val = tensor<fp32, [4, 1]>([[0x1.d152cap+0], [-0x1.0db4c4p+1], [-0x1.82a208p+0], [0x1.a4f676p+0]])];
-            tensor<fp32, [1, 1]> matmul_1 = matmul(transpose_x = bool(false), transpose_y = bool(false), x = x, y = w_0)[name = string("matmul_1")];
-        } -> (matmul_1);
-}
