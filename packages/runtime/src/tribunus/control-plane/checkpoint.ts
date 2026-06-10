@@ -272,13 +272,13 @@ export async function tribunusCheckpointCreateWithMemory(
 function getGitState(): GitStateResult {
   try {
     const commitProc = Bun.spawnSync(["git", "rev-parse", "HEAD"], { stdout: "pipe", stderr: "pipe", cwd: process.cwd() });
-    const commit = commitProc.stdout?.text().trim() || undefined;
+    const commit = commitProc.stdout?.toString().trim() || undefined;
 
     const branchProc = Bun.spawnSync(["git", "branch", "--show-current"], { stdout: "pipe", stderr: "pipe", cwd: process.cwd() });
-    const branch = branchProc.stdout?.text().trim() || undefined;
+    const branch = branchProc.stdout?.toString().trim() || undefined;
 
     const statusProc = Bun.spawnSync(["git", "status", "--porcelain"], { stdout: "pipe", stderr: "pipe", cwd: process.cwd() });
-    const status = statusProc.stdout?.text().trim() || "";
+    const status = statusProc.stdout?.toString().trim() || "";
     const dirty = status.length > 0;
 
     if (!commit && !branch) {

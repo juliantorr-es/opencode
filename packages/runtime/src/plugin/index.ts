@@ -128,9 +128,9 @@ function internalPlugins(flags: RuntimeFlags.Info): PluginInstance[] {
       CodexAuthPlugin(input, {
         experimentalWebSockets: experimentalWebSocketsEnabled({ enabled: flags.experimentalWebSockets }),
       }),
-    CopilotAuthPlugin,
-    GitlabAuthPlugin,
-    PoeAuthPlugin,
+    CopilotAuthPlugin as any,
+    GitlabAuthPlugin as any,
+    PoeAuthPlugin as any,
     CloudflareWorkersAuthPlugin,
     CloudflareAIGatewayAuthPlugin,
     AzureAuthPlugin,

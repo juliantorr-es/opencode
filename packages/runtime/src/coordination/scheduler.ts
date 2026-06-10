@@ -278,7 +278,7 @@ export class WorkScheduler {
           workId: work.workId,
           workKind: "scheduled",
           schemaVersion: "v1",
-          enqueueTimestamp: now,
+          enqueueTimestamp: String(now),
           correlationId: `scheduled:${work.workId}`,
           retryCount: String(work.retryCount),
           maxRetries: String(work.maxRetries),

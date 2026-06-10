@@ -366,7 +366,7 @@ export class ValkeyStreams {
     }
 
     // Use XPENDING with range to get entries
-    const result: any = await this.redis.send_command(
+    const result: any = await this.redis.sendCommand(
       "XPENDING",
       [
         this.streamName,
