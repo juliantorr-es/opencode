@@ -1118,7 +1118,8 @@ fn backend_weights(family_name: &str, profile: &ShapeProfile) -> Vec<f32> {
     let weight_len = (k * n) as usize;
 
     match family_name {
-        "matmul" | "constant_heavy" => seeded_f32(1, weight_len),
+        "matmul" => seeded_f32(1, weight_len),
+        "constant_heavy" => seeded_f32(40, weight_len),
         "chain_matmul_add_silu" => {
             let mut w = seeded_f32(10, weight_len);
             w.extend(seeded_f32(11, n as usize));
