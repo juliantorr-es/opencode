@@ -56,6 +56,10 @@ path = "tests/accelerate_qualification.rs"
 name = "mlx_accelerate_smoke"
 path = "tests/mlx_accelerate_smoke.rs"
 
+[[test]]
+name = "coreml_lifecycle"
+path = "tests/coreml_lifecycle.rs"
+
 [dependencies]
 napi = { version = "3.9.0", features = ["napi8", "serde-json"], default-features = false }
 napi-derive = "3.5.6"
