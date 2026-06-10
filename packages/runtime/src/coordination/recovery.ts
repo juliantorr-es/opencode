@@ -24,6 +24,8 @@ import { WorkQueueDurableStoreService } from "./durable-store"
 import { DEFAULT_STREAM_NAME, DEFAULT_CONSUMER_GROUP } from "./stream-primitives"
 import { DEFAULT_DUE_SET_NAME } from "./sorted-set-primitives"
 import { CoordinationRecoveryTable } from "./recovery.pg.sql"
+import { SessionID } from "@/session/schema"
+import { Service as SessionStatusService } from "@/session/status"
 import type { DivergenceReport } from "./observability"
 
 // ── Types ──────────────────────────────────────────────────────────────
@@ -697,9 +699,22 @@ export function planCoordinationRecovery(...args: unknown[]): { state: string; f
  */
 export async function persistCoordinationRecoveryReceipt(
   ...args: unknown[]
-): Promise<never> {
+): Promise<void> {
   throw new Error(
     "persistCoordinationRecoveryReceipt not yet implemented.",
+  )
+}
+
+type RecoveryStatus =
+  | "coordination_unavailable"
+  | "coordination_rebuilding"
+  | "coordination_recovered"
+  | "coordination_degraded"
+  | "coordination_refused"
+
+export function setRecoveryStatus(sessionID: SessionID, state: RecoveryStatus): Effect.Effect<void> {
+  return SessionStatusService.pipe(
+    Effect.flatMap((svc) => svc.set(sessionID, { type: state })),
   )
 }
 
