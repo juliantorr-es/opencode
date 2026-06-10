@@ -28,6 +28,10 @@ path = "src/bin/tribunus-native-bench.rs"
 name = "treatment_qualification"
 path = "tests/treatment_qualification.rs"
 
+[[test]]
+name = "treatment_lifecycle"
+path = "tests/treatment_lifecycle.rs"
+
 [dependencies]
 napi = { version = "3.9.0", features = ["napi8", "serde-json"], default-features = false }
 napi-derive = "3.5.6"
