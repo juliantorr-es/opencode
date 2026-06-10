@@ -182,7 +182,7 @@ pub trait TensorBackend {
     ) -> Result<TensorHandle, String>;
 
     /// Standard matrix multiplication: `y = a @ b`.
-    fn matmul(&mut self, a: TensorHandle, b: TensorHandle) -> Result<TensorHandle, String>;
+    fn matmul(&mut self, op: &MatmulOp, a: TensorHandle, b: TensorHandle) -> Result<TensorHandle, String>;
 
     /// Root Mean Square normalization: `y = rms_norm(x, weight)`.
     fn rms_norm(
@@ -486,6 +486,11 @@ impl TensorBackend for MlxBackend {
         }
         let x_m = x_shape[x_shape.len() - 2] as u32;
         let x_k = x_shape[x_shape.len() - 1] as u32;
+        if x_m != op.m {
+            return Err(format!(
+                "quantized_matmul: input M={} != op.m={}", x_m, op.m
+            ));
+        }
         if x_k != op.k {
             return Err(format!(
                 "quantized_matmul: input K={} != op.k={}", x_k, op.k
@@ -498,15 +503,21 @@ impl TensorBackend for MlxBackend {
             return Err("quantized_matmul: weight must have at least 2 dimensions".into());
         }
         let w_k = w_shape[w_shape.len() - 2] as u32;
-        let w_n = w_shape[w_shape.len() - 1] as u32;
+        // NOTE: The last dimension of the stored quantized weight is the
+        // *logical* N dimension, NOT the packed-word count.  The packed-U32
+        // ABI established in Mission 0006A encodes multiple quantized values
+        // per word; the physical packed dimension differs from logical N.
+        // If this assumption is wrong, production weights will fail
+        // validation.  Phase 2 native tensor introspection must confirm.
+        let w_n_logical = w_shape[w_shape.len() - 1] as u32;
         if w_k != op.k {
             return Err(format!(
                 "quantized_matmul: weight K={} != op.k={}", w_k, op.k
             ));
         }
-        if w_n != op.n {
+        if w_n_logical != op.n {
             return Err(format!(
-                "quantized_matmul: weight N={} != op.n={}", w_n, op.n
+                "quantized_matmul: weight logical-N={} != op.n={}", w_n_logical, op.n
             ));
         }
 
@@ -541,31 +552,49 @@ impl TensorBackend for MlxBackend {
             ));
         }
 
+        let out_n = out_shape.last().copied().unwrap_or(0) as u32;
+        if out_n != op.n {
+            return Err(format!(
+                "quantized_matmul: output N={} != op.n={}", out_n, op.n
+            ));
+        }
+
         Ok(self.alloc(out))
     }
 
-    fn matmul(&mut self, a: TensorHandle, b: TensorHandle) -> Result<TensorHandle, String> {
+    fn matmul(&mut self, op: &MatmulOp, a: TensorHandle, b: TensorHandle) -> Result<TensorHandle, String> {
         let a_arr = self.get(a)?;
         let b_arr = self.get(b)?;
 
-        // Validate inner dimensions
         let a_shape = a_arr.shape();
         let b_shape = b_arr.shape();
-        let a_k = a_shape.last().copied().unwrap_or(0);
-        let b_k = if b_shape.len() >= 2 {
-            b_shape[b_shape.len() - 2]
-        } else {
-            b_shape[0]
-        };
-        if a_k != b_k {
-            return Err(format!(
-                "matmul: inner dimensions mismatch (a.K={}, b.K={})", a_k, b_k
-            ));
+        let a_m = if a_shape.len() >= 2 { a_shape[a_shape.len() - 2] as u32 } else { 1 };
+        let a_k = a_shape.last().copied().unwrap_or(0) as u32;
+        let b_k = if b_shape.len() >= 2 { b_shape[b_shape.len() - 2] as u32 } else { b_shape[0] as u32 };
+        let b_n = b_shape.last().copied().unwrap_or(0) as u32;
+
+        if a_m != op.m {
+            return Err(format!("matmul: A.M={} != op.m={}", a_m, op.m));
+        }
+        if a_k != op.k || b_k != op.k {
+            return Err(format!("matmul: K mismatch (A.K={}, B.K={}, op.k={})", a_k, b_k, op.k));
+        }
+        if b_n != op.n {
+            return Err(format!("matmul: B.N={} != op.n={}", b_n, op.n));
         }
 
         let out = a_arr
             .matmul(b_arr)
             .map_err(|e| format!("matmul failed: {:?}", e))?;
+
+        // Validate output shape
+        let out_shape = out.shape();
+        let out_m = if out_shape.len() >= 2 { out_shape[out_shape.len() - 2] as u32 } else { 1 };
+        let out_n = out_shape.last().copied().unwrap_or(0) as u32;
+        if out_m != op.m || out_n != op.n {
+            return Err(format!("matmul: output ({},{}) != op ({},{})", out_m, out_n, op.m, op.n));
+        }
+
         Ok(self.alloc(out))
     }
 
@@ -715,22 +744,30 @@ impl TensorBackend for MlxBackend {
                 && self.materialised[slot]
         };
 
-        let arr = self.get(handle)?;
-        arr.eval().map_err(|e| format!("read_f32 eval failed: {:?}", e))?;
-        let elapsed = start.elapsed();
-        let data = arr
-            .try_as_slice::<f32>()
-            .map(|s| s.to_vec())
-            .map_err(|e| format!("read_f32 failed: {:?}", e))?;
-        // `arr` is still live here; we cannot mutate self.materialised.
-        // Honest forced_eval: reports whether a prior evaluate() already
-        // materialised this tensor (a standalone read_f32 does not set
-        // the flag because of the shared borrow from get()).
+        let (data, sync_ns): (Vec<f32>, u64) = match self.get(handle) {
+            Ok(arr) => {
+                arr.eval().map_err(|e| format!("read_f32 eval failed: {:?}", e))?;
+                let elapsed = start.elapsed();
+                let data = arr
+                    .try_as_slice::<f32>()
+                    .map(|s| s.to_vec())
+                    .map_err(|e| format!("read_f32 failed: {:?}", e))?;
+                (data, elapsed.as_nanos() as u64)
+            }
+            Err(e) => return Err(e),
+        };
+
+        if !was_materialised {
+            let slot = handle.slot as usize;
+            if slot < self.materialised.len() && handle.generation == self.generations[slot] {
+                self.materialised[slot] = true;
+            }
+        }
 
         Ok(ReadbackReceipt {
             data,
             forced_eval: !was_materialised,
-            sync_ns: elapsed.as_nanos() as u64,
+            sync_ns,
             observed_substrate: None,
         })
     }
