@@ -355,14 +355,6 @@ pub enum FallbackPolicy {
     RetryOnce(BackendId),
 }
 
-/// One synchronization group in a route profile.
-#[derive(Debug, Clone)]
-pub struct SynchronizationGroup {
-    pub group_id: EvaluationGroupId,
-    pub operations: Vec<OperationId>,
-    pub barrier: bool,
-}
-
 /// Manifest of backend-specific artifacts referenced by a route profile.
 #[derive(Debug, Clone)]
 pub struct BackendArtifactManifest {
@@ -370,6 +362,8 @@ pub struct BackendArtifactManifest {
     pub accelerate: Vec<BackendArtifactId>,
     pub mlx: Vec<BackendArtifactId>,
 }
+
+// ── Route profile ──────────────────────────────────────────────────────────
 
 /// A sealed, deterministic route profile — compiled, not improvised.
 #[derive(Debug, Clone)]
@@ -380,10 +374,10 @@ pub struct ComputeRouteProfile {
     pub machine_profile: MachineProfileId,
     pub operations: Vec<RoutedOperation>,
     pub transfers: Vec<TensorTransferPlan>,
-    pub synchronization_groups: Vec<SynchronizationGroup>,
     pub backend_artifacts: BackendArtifactManifest,
-    /// Compile-time evaluation-group plans.
-    pub evaluation_plans: Vec<EvaluationGroupPlan>,
+    /// Single source of truth for evaluation boundaries — supersedes
+    /// both SynchronizationGroup and EvaluationGroupPlan.
+    pub execution_boundaries: Vec<ExecutionBoundaryPlan>,
     pub evidence_basis: Vec<EvidenceDigest>,
 }
 
@@ -493,7 +487,7 @@ pub struct ExecutionBoundaryPlan {
     pub content_digest: Option<EvidenceDigest>,
 }
 
-/// Deprecated: superseded by ExecutionBoundaryPlan.
+/// Deprecated: use ExecutionBoundaryPlan.
 #[derive(Debug, Clone)]
 pub struct EvaluationGroupPlan {
     pub group_id: EvaluationGroupId,
@@ -501,6 +495,22 @@ pub struct EvaluationGroupPlan {
     pub materialized_outputs: Vec<TensorId>,
     pub backend: BackendId,
     pub evaluation_policy: EvaluationPolicy,
+}
+
+/// Directed edge in the operation dependency graph.
+#[derive(Debug, Clone)]
+pub struct DependencyEdge {
+    pub from: OperationId,
+    pub to: OperationId,
+    pub via_tensor: TensorId,
+}
+
+/// Complete context for boundary-plan validation.
+#[derive(Debug, Clone)]
+pub struct BoundaryValidationContext<'a> {
+    pub expected_operations: &'a [OperationId],
+    pub dependency_edges: &'a [DependencyEdge],
+    pub transfer_plans: &'a [TensorTransferPlan],
 }
 
 // ── Plan validation ───────────────────────────────────────────────────────
@@ -514,45 +524,70 @@ pub enum PlanValidationError {
     UnreferencedMaterializedOutput(TensorId),
     ConsumerBeforeProducer { tensor: TensorId, consumer: OperationId },
     BackendTransitionWithoutTransfer { from: BackendId, to: BackendId },
-    EagerWithDeferredDependency(OperationId),
+    EagerWithDeferredDependency { op: OperationId, via: TensorId, crosses_boundary_to: EvaluationGroupId },
     UnsupportedPolicy { backend: BackendId, policy: EvaluationPolicy },
     EmptyBoundary(EvaluationGroupId),
 }
 
-/// Validate that an array of ExecutionBoundaryPlan instances is consistent:
-/// every operation assigned exactly once, topological ordering preserved,
-/// all materialized outputs are produced before consumed, backend
-/// transitions have transfer plans, and policies are backend-supported.
+/// Validate boundary plans against the full operation graph, dependency
+/// edges, and transfer plans.  Every operation in `ctx.expected_operations`
+/// must be assigned exactly once.  Backend transitions must have matching
+/// transfer plans.  Eager boundaries fail only when a dependency edge
+/// proves a deferred node crosses the boundary.
 pub fn validate_boundary_plans(
     plans: &[ExecutionBoundaryPlan],
+    ctx: &BoundaryValidationContext,
 ) -> Result<(), Vec<PlanValidationError>> {
     let mut errors = Vec::new();
     let mut seen_ops = std::collections::HashMap::new();
-    let mut produced_tensors = std::collections::HashMap::new();
-    let mut prev_backend: Option<BackendId> = None;
 
+    // Build operation→boundary index
+    let mut op_to_boundary = std::collections::HashMap::new();
     for plan in plans {
         for &op in &plan.operations {
+            if let Some(&prev) = op_to_boundary.get(&op) {
+                errors.push(PlanValidationError::DuplicateOperation(op));
+                let _ = prev;
+            }
+            op_to_boundary.insert(op, plan.group_id);
             if let Some(&prev_group) = seen_ops.get(&op) {
                 errors.push(PlanValidationError::DuplicateOperation(op));
                 let _ = prev_group;
             }
             seen_ops.insert(op, plan.group_id);
         }
-        for &t in &plan.materialized_outputs {
-            produced_tensors.insert(t, plan.group_id);
-        }
+    }
 
-        // Backend transition without transfer
-        if let Some(pb) = prev_backend {
-            if pb != plan.backend_id {
+    // Check every expected operation is covered
+    for &op in ctx.expected_operations {
+        if !seen_ops.contains_key(&op) {
+            errors.push(PlanValidationError::MissingOperation(op));
+        }
+    }
+
+    // Backend transitions: must have matching transfer plan
+    for w in plans.windows(2) {
+        let prev = &w[0];
+        let next = &w[1];
+        if prev.backend_id != next.backend_id {
+            let has_transfer = ctx.transfer_plans.iter().any(|tp| {
+                tp.source_backend == prev.backend_id
+                    && tp.destination_backend == next.backend_id
+            });
+            if !has_transfer {
                 errors.push(PlanValidationError::BackendTransitionWithoutTransfer {
-                    from: pb,
-                    to: plan.backend_id,
+                    from: prev.backend_id,
+                    to: next.backend_id,
                 });
             }
         }
-        prev_backend = Some(plan.backend_id);
+    }
+
+    for plan in plans {
+        // Empty boundary?
+        if plan.operations.is_empty() {
+            errors.push(PlanValidationError::EmptyBoundary(plan.group_id));
+        }
 
         // Policy supported?
         match policy_support(plan.backend_id, &plan.policy) {
@@ -565,15 +600,23 @@ pub fn validate_boundary_plans(
             _ => {}
         }
 
-        // Eager prohibits deferred dependencies
+        // Eager: check actual deferred dependencies crossing the boundary
         if let EvaluationPolicy::Eager { prohibit_deferred_nodes: true, .. } = &plan.policy {
-            for &op in &plan.operations {
-                errors.push(PlanValidationError::EagerWithDeferredDependency(op));
+            for edge in ctx.dependency_edges {
+                let from_boundary = op_to_boundary.get(&edge.from);
+                let to_boundary = op_to_boundary.get(&edge.to);
+                // Dependency crosses from this boundary to another
+                if from_boundary == Some(&plan.group_id)
+                    && to_boundary.is_some()
+                    && to_boundary != from_boundary
+                {
+                    errors.push(PlanValidationError::EagerWithDeferredDependency {
+                        op: edge.from,
+                        via: edge.via_tensor,
+                        crosses_boundary_to: *to_boundary.unwrap(),
+                    });
+                }
             }
-        }
-
-        if plan.operations.is_empty() {
-            errors.push(PlanValidationError::EmptyBoundary(plan.group_id));
         }
     }
 
@@ -584,17 +627,24 @@ pub fn validate_boundary_plans(
     }
 }
 
-/// Compute a compact content digest for an execution boundary plan.
-/// Uses the debug representation for now; Phase 2 instrumentation
-/// will replace with SHA-256.
+/// Canonical SHA-256 content digest for an execution boundary plan.
+/// Covers every execution-relevant field so materially different plans
+/// produce different digests.
 pub fn compute_boundary_digest(plan: &ExecutionBoundaryPlan) -> EvidenceDigest {
-    use std::hash::{Hash, Hasher};
-    let mut h = std::collections::hash_map::DefaultHasher::new();
-    plan.group_id.hash(&mut h);
-    plan.backend_id.hash(&mut h);
-    plan.operations.len().hash(&mut h);
-    plan.materialized_outputs.len().hash(&mut h);
-    EvidenceDigest(format!("{:x}", h.finish()))
+    use std::fmt::Write;
+    let mut s = String::new();
+    let _ = write!(s, "g{}b{}o", plan.group_id.0, plan.backend_id.0);
+    for op in &plan.operations { let _ = write!(s, "{}", op.0); }
+    let _ = write!(s, "m");
+    for t in &plan.materialized_outputs { let _ = write!(s, "{}", t.0); }
+    let _ = write!(s, "p{:?}", plan.policy);
+    let _ = write!(s, "s{:?}", plan.synchronization);
+    let _ = write!(s, "r");
+    for t in &plan.release_after { let _ = write!(s, "{}", t.0); }
+    // SHA-256 digest
+    use sha2::{Sha256, Digest};
+    let hash = Sha256::digest(s.as_bytes());
+    EvidenceDigest(format!("{:x}", hash))
 }
 
 // ── Boundary executor ─────────────────────────────────────────────────────
