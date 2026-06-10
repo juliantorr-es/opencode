@@ -522,7 +522,10 @@ export function buildCodeReviewExport(
           size_bytes: buf.length,
           sha256,
           category: "board",
-        });
+        })
+        const dst = resolve(reviewDir, `board/${dir}/${f}`)
+        mkdirSync(dirname(dst), { recursive: true })
+        writeFileSync(dst, buf)
       }
     }
   }
@@ -539,7 +542,10 @@ export function buildCodeReviewExport(
         size_bytes: buf.length,
         sha256,
         category: "board",
-      });
+      })
+      const dst = resolve(reviewDir, `board/memory-links/${f}`)
+      mkdirSync(dirname(dst), { recursive: true })
+      writeFileSync(dst, buf)
     }
   }
 
@@ -565,10 +571,13 @@ export function buildCodeReviewExport(
           size_bytes: buf.length,
           sha256,
           category: "research",
-        });
+        })
+        const rdst = resolve(reviewDir, destRel)
+        mkdirSync(dirname(rdst), { recursive: true })
+        writeFileSync(rdst, buf)
       }
     }
-  };
+      }
   collectResearch(researchSrcDir, "");
 
   // ── Stage: Required path checking ──
@@ -849,12 +858,12 @@ export function buildCodeReviewExport(
       sourcePath = resolve(w, "docs/adr", basename(f.path));
       zipEntry = f.path;
     } else if (f.category === "board") {
-      // f.path is "board/<dir>/<file>" → source is "docs/json/omp/<dir>/<file>"
-      sourcePath = resolve(w, "docs/json/omp", f.path.slice("board/".length));
+      // Board data is generated during export — read from reviewDir where earlier phases staged it
+      sourcePath = resolve(reviewDir, f.path);
       zipEntry = f.path;
     } else if (f.category === "research") {
-      // f.path is "research/<rel>" → source is "docs/json/omp/research/<rel>"
-      sourcePath = resolve(w, "docs/json/omp/research", f.path.slice("research/".length));
+      // Research data is generated during export — read from reviewDir
+      sourcePath = resolve(reviewDir, f.path);
       zipEntry = f.path;
     } else {
       sourcePath = resolve(w, f.path);
