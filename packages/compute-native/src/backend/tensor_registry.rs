@@ -139,9 +139,11 @@ impl MaterializedTensor {
                 dtype, self.contract.canonical_dtype, self.tensor_id,
             ));
         }
-        // Shape compatibility: physical dims must match logical dims
-        // count (backend-specific packing may change individual dims,
-        // but for now require exact match).
+        // Rank validation: physical and logical shapes must have the
+        // same number of dimensions.  Individual dimension values are NOT
+        // validated — backend-specific packing (e.g. PackedU32) may change
+        // individual dimensions.  Full layout-aware shape validation is
+        // deferred to Phase 8 native-materialization gate.
         if shape.dims.len() != self.contract.logical_shape.dims.len() {
             return Err(format!(
                 "physical shape has {} dims, logical contract has {}",
