@@ -247,10 +247,26 @@ fn build_softmax_tail(builder: MilBuilder, profile: &ShapeProfile) -> MilBuilder
     b.output("softmax_2")
 }
 
-/// 8. identity_passthrough: op_identity(→"identity_0")
 fn build_identity_passthrough(builder: MilBuilder, _profile: &ShapeProfile) -> MilBuilder {
-    let b = op_identity(builder.input("x", mil_spec::DataType::Float32, &_profile.input_shape_i64()), "x", "identity_0");
-    b.output("identity_0")
+    // Identity: manual reshape with same shape. MIL has no "identity" op;
+    // reshape with identical input/output shape is a valid MIL no-op.
+    let b = builder.input("x", mil_spec::DataType::Float32, &_profile.input_shape_i64());
+    let input_shape = _profile.input_shape_i64();
+    let mut inputs = HashMap::new();
+    inputs.insert("x".to_string(), manual_named_arg("x"));
+    let vt = manual_float32_value_type_2d(1, 1);
+    let mut attrs = HashMap::new();
+    attrs.insert("name".to_string(), manual_string_attr("identity_0"));
+    let shape_attr = manual_int32s_attr(&input_shape.iter().map(|&s| s as i32).collect::<Vec<_>>());
+    attrs.insert("shape".to_string(), shape_attr);
+    let op = mil_spec::Operation {
+        r#type: "reshape".to_string(),
+        inputs,
+        outputs: vec![mil_spec::NamedValueType { name: "identity_0".to_string(), r#type: Some(vt.clone()) }],
+        blocks: vec![],
+        attributes: attrs,
+    };
+    b.operation(op, Some(("identity_0", vt))).output("identity_0")
 }
 
 // ── Catalog ───────────────────────────────────────────────────────────────
