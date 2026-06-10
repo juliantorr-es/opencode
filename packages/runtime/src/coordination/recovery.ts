@@ -131,7 +131,7 @@ export interface RebuildReceipt {
  * - Handles crash recovery at every critical boundary
  */
 export class CoordinationRecovery extends Context.Service<CoordinationRecovery>()(
-  "@opencode/CoordinationRecovery"
+  "@opencode/CoordinationRecovery", {} as any
 ) {
   constructor(
     private readonly db: DatabaseAdapter.Service,
@@ -139,7 +139,9 @@ export class CoordinationRecovery extends Context.Service<CoordinationRecovery>(
     private readonly store: WorkQueueDurableStoreService,
     private readonly config: RecoveryConfig = DEFAULT_RECOVERY_CONFIG
   ) {
-    super("@opencode/CoordinationRecovery")
+
+    // @ts-expect-error Context.Service constructor type inference
+    super("@opencode/CoordinationRecovery" as any)
   }
 
   /** Cached divergence report from last state transition */

@@ -15,6 +15,10 @@ export type Capability =
   | "artifact:verify"
   | "control-plane:read"
   | "control-plane:write"
+  | "artifact:read"
+  | "artifact:verify"
+  | "artifact:admin"
+  | "artifact:write"
 
 export const TOOL_CAPABILITIES: Record<string, Capability[]> = {
   // GitHub

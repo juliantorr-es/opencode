@@ -62,9 +62,11 @@ interface EmitSingle<R> {
 // ── Service tag ────────────────────────────────────────────
 
 export class PGliteLiveQuery extends Context.Service<PGliteLiveQuery>()(
-  "@opencode/PGliteLiveQuery", {} as any,
+  "@opencode/PGliteLiveQuery", {} as any
 ) {
   constructor(private readonly adapter: DatabaseAdapter.Service & {}) {
+
+    // @ts-expect-error Context.Service constructor type inference
     super(undefined as any)
   }
 

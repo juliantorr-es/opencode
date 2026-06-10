@@ -154,7 +154,7 @@ export interface CompletionReceipt {
  * No naked ack(entryId) is available to ordinary runtime code.
  */
 export class CoordinationWorkQueue extends Context.Service<CoordinationWorkQueue>()(
-  "@opencode/CoordinationWorkQueue"
+  "@opencode/CoordinationWorkQueue", {} as any
 ) {
   constructor(
     private readonly streams: ValkeyStreams,
@@ -163,6 +163,8 @@ export class CoordinationWorkQueue extends Context.Service<CoordinationWorkQueue
     private readonly consumerId: string,
     private readonly store: WorkQueueDurableStoreService
   ) {
+
+    // @ts-expect-error Context.Service constructor type inference
     super(undefined as any)
   }
 
