@@ -62,7 +62,7 @@ interface EmitSingle<R> {
 // ── Service tag ────────────────────────────────────────────
 
 export class PGliteLiveQuery extends Context.Service<PGliteLiveQuery>()(
-  "@opencode/PGliteLiveQuery", undefined,
+  "@opencode/PGliteLiveQuery", {} as any,
 ) {
   constructor(private readonly adapter: DatabaseAdapter.Service & {}) {
     super(undefined as any)

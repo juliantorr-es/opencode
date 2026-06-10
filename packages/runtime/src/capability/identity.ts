@@ -136,21 +136,21 @@ export function resolveIdentity(identity: AuthorityIdentity): {
     case "actor":
       return {
         kind: "actor",
-        capabilityIds: identity.capabilityIds,
+        capabilityIds: identity.capabilityIds as string[],
         isDelegated: false,
         rootPrincipalId: identity.principalId,
       }
     case "delegate":
       return {
         kind: "delegate",
-        capabilityIds: identity.capabilityIds,
+        capabilityIds: identity.capabilityIds as string[],
         isDelegated: true,
         rootPrincipalId: identity.delegationChain[0] ?? identity.grantorId,
       }
     case "service_identity":
       return {
         kind: "service_identity",
-        capabilityIds: identity.capabilityIds,
+        capabilityIds: identity.capabilityIds as string[],
         isDelegated: false,
         rootPrincipalId: identity.id,
       }
