@@ -96,7 +96,12 @@ impl Default for AccelerateBackend {
 
 impl TensorBackend for AccelerateBackend {
     fn create_f32(&mut self, data: &[f32], shape: &[i32]) -> Result<TensorHandle, String> {
-        let expected: usize = shape.iter().map(|&d| d as usize).product();
+        if shape.is_empty() || shape.iter().any(|&d| d <= 0) {
+            return Err(format!("create_f32: shape {:?} contains invalid dimensions", shape));
+        }
+        let expected: usize = shape.iter()
+            .try_fold(1usize, |acc, &d| acc.checked_mul(d as usize))
+            .ok_or_else(|| format!("create_f32: shape product overflow for {:?}", shape))?;
         if data.len() != expected {
             return Err(format!(
                 "create_f32: data length {} != shape product {} for shape {:?}",
@@ -138,21 +143,22 @@ impl TensorBackend for AccelerateBackend {
         // Shape validation before FFI
         let a_shape = self.stored_shape(a)?;
         let b_shape = self.stored_shape(b)?;
-        if a_shape.len() < 2 || b_shape.len() < 2 {
-            return Err("matmul: tensors must have at least 2 dimensions".into());
+        if a_shape.len() != 2 || b_shape.len() != 2 {
+            return Err(format!("matmul: requires exactly 2D tensors, got {}D and {}D", a_shape.len(), b_shape.len()));
         }
-        let a_m = a_shape[a_shape.len() - 2] as u32;
-        let a_k = a_shape[a_shape.len() - 1] as u32;
-        let b_k = b_shape[b_shape.len() - 2] as u32;
-        let b_n = b_shape[b_shape.len() - 1] as u32;
+        let a_m = a_shape[0] as u32;
+        let a_k = a_shape[1] as u32;
+        let b_k = b_shape[0] as u32;
+        let b_n = b_shape[1] as u32;
         if a_m != op.m { return Err(format!("A.M={a_m} != op.m={}", op.m)); }
         if a_k != op.k || b_k != op.k { return Err(format!("K mismatch: A.K={a_k}, B.K={b_k}, op.k={}", op.k)); }
         if b_n != op.n { return Err(format!("B.N={b_n} != op.n={}", op.n)); }
         if op.m == 0 || op.n == 0 || op.k == 0 { return Err("matmul: dimensions must be positive".into()); }
 
-        let m = op.m as i32;
-        let n = op.n as i32;
-        let k = op.k as i32;
+        let m = i32::try_from(op.m).map_err(|_| format!("matmul: M={} exceeds i32", op.m))?;
+        let n = i32::try_from(op.n).map_err(|_| format!("matmul: N={} exceeds i32", op.n))?;
+        let k = i32::try_from(op.k).map_err(|_| format!("matmul: K={} exceeds i32", op.k))?;
+
         let out_len = (m as usize).checked_mul(n as usize)
             .ok_or("matmul: output size overflow")?;
         let mut c_data = vec![0.0f32; out_len];
@@ -207,7 +213,10 @@ impl TensorBackend for AccelerateBackend {
     }
 
     fn evaluate(&mut self, group_id: u64, outputs: &[TensorHandle]) -> Result<EvaluationReceipt, String> {
-        // Accelerate executes eagerly — outputs are already materialised.
+        // Validate every output handle before issuing receipt
+        for &h in outputs {
+            let _ = self.data(h)?;
+        }
         let (active, cached) = self.active_memory();
         Ok(EvaluationReceipt {
             group_id,
@@ -241,6 +250,9 @@ impl TensorBackend for AccelerateBackend {
         let gen = handle.generation;
         if slot >= self.tensors.len() || self.generations[slot] != gen {
             return Err(format!("AccelerateBackend: invalid handle slot={slot} gen={gen}"));
+        }
+        if self.tensors[slot].is_none() {
+            return Err(format!("AccelerateBackend: slot {slot} already released"));
         }
         self.tensors[slot] = None;
         self.shapes[slot] = None;
