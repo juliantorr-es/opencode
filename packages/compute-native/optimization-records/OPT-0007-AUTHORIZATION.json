@@ -1,0 +1,82 @@
+{
+  "mission": "0007",
+  "title": "Compiler-Derived Execution Conditioning Experiment",
+  "status": "completed",
+  "revision": 1,
+  "source_commit": "13efcb56",
+  "image_identity": "770e6e1373f3adbb674e7777bbc06ac7005df63706f04af68b503023e9c2eee7",
+  "image_path": "/tmp/tribunus-image-d042df1e",
+  "model": "Gemma 4 12B (8-bit quantized, safetensors compiled to ComputeImage)",
+  "machine": "Apple M1, 16GB RAM, macOS",
+  "primary_conclusion": "pipeline_conditioning_improves_16pct_prefetch_rejected",
+  "decision_class": "promote_pipeline_conditioning",
+  "arms": {
+    "A_frozen_control": {
+      "runs": 13,
+      "median_decode_s": 45.7,
+      "range_decode_s": [
+        43.3,
+        56.2
+      ],
+      "median_prefill_s": 15.4
+    },
+    "B_pipeline_warm": {
+      "runs": 7,
+      "median_decode_s": 38.2,
+      "range_decode_s": [
+        25.1,
+        46.2
+      ],
+      "median_prefill_s": 15.7,
+      "improvement_pct": 16.4,
+      "conditioning_median_ms": 152000,
+      "break_even_requests": 20,
+      "conditioning_method": "replay-projection layer 0, 3 families (q_proj, gate_proj, down_proj)",
+      "promoted": true,
+      "caveat": "Conditioning runs on CPU (M=1 projection path). Backend equivalence to integrated GPU path not demonstrated. Treat as experimental."
+    },
+    "C_rolling_prefetch": {
+      "runs": 4,
+      "median_decode_s": 54.4,
+      "result": "No measurable benefit \u2014 median decode worse than control. Page cache warming via cat segment_*.bin caused memory contention.",
+      "promoted": false
+    },
+    "D_combined": {
+      "runs": 2,
+      "median_decode_s": 36.9,
+      "result": "Similar to Arm B alone \u2014 no emergent interaction benefit from prefetch. Conditioning dominates.",
+      "promoted": false
+    },
+    "E_sham": {
+      "runs": 4,
+      "median_decode_s": 43.7,
+      "result": "7% overhead vs control (treatment orchestration label)"
+    }
+  },
+  "authorization_detail": {
+    "pipeline_conditioning": "PROMOTED \u2014 16.4% median decode improvement exceeds 10% production threshold. Conditioning cost 152s, break-even ~20 requests. CPU substrate caveat: isolated M=1 replay runs on CPU while integrated layer uses GPU. Backend equivalence not physically demonstrated. Authorized for production integration with CPU-substrate disclosure.",
+    "rolling_prefetch": "REJECTED \u2014 no measurable integrated decode benefit. Page cache warming via fadvise caused memory pressure rather than latency reduction.",
+    "combined_treatment": "NO EMERGENT BENEFIT \u2014 Arm D performance within Arm B range. Prefetch adds overhead without decode improvement.",
+    "custom_metal_kernel": "NOT AUTHORIZED \u2014 pipeline conditioning achieved 16.4% improvement without custom kernels. No evidence quantized arithmetic kernel dominates integrated GPU path."
+  },
+  "startup_ledger": {
+    "conditioning_cost_s": 152,
+    "decode_savings_per_request_s": 7.5,
+    "break_even_requests": 20,
+    "model_open_time_arms_A_E_s": 45,
+    "latency_ready_time_arm_B_s": 197
+  },
+  "memory_ledger": {
+    "conditioning_scratch_mb": 0,
+    "prefetch_window_mb": 12200,
+    "post_conditioning_mlx_active_gb": 12.8,
+    "post_conditioning_rss_mb": 15
+  },
+  "correctness": {
+    "all_layers_finite": true,
+    "tokens_preserved": true,
+    "oracle_tolerance": "max_rel < 1e-2, cosine > 0.9999",
+    "conditioning_state_isolation": true
+  },
+  "next_safe_action": "Integrate pipeline conditioning into model-open lifecycle. Investigate GPU-path conditioning recipes for backend equivalence. Revisit bounded prefetch with per-layer madvise rather than full-model fadvise."
+}
