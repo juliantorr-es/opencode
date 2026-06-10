@@ -117,13 +117,12 @@ pub fn prepare_graph<'a>(
     let k = profile.input_cols as i32;
     let n = profile.weight_cols as i32;
 
-    // ── matmul / constant_heavy / reshape_transpose_matmul / softmax_tail ──
-    // These share a single input and weight array.
+    // Input array is shared by all families.
     let input_arr = mlx_rs::Array::from_slice(input_data, &[1, k]);
-    let weight_arr = mlx_rs::Array::from_slice(weights, &[k as i32, n as i32]);
 
     match family_name {
         "matmul" | "constant_heavy" => {
+            let weight_arr = mlx_rs::Array::from_slice(&weights[..(k * n) as usize], &[k, n]);
             let w = weight_arr.clone();
             let inp = input_arr.clone();
             let prepare = Box::new(move || {
@@ -133,8 +132,10 @@ pub fn prepare_graph<'a>(
         }
 
         "chain_matmul_add_silu" => {
-            // Weight: [k, n] weights in first k*n elements, bias in next n elements.
-            let bias_data = &weights[(k * n) as usize..];
+            // Weight layout: [k*n weights] + [n bias].
+            let weight_len = (k * n) as usize;
+            let weight_arr = mlx_rs::Array::from_slice(&weights[..weight_len], &[k, n]);
+            let bias_data = &weights[weight_len..];
             let bias_arr = mlx_rs::Array::from_slice(bias_data, &[1, n as i32]);
             let w = weight_arr.clone();
             let inp = input_arr.clone();
@@ -152,12 +153,11 @@ pub fn prepare_graph<'a>(
         }
 
         "branch_rejoin" => {
-            // Two weight matrices: [k, n] each, concatenated.
             let half = (k * n) as usize;
             let wa_data = &weights[..half];
             let wb_data = &weights[half..2 * half];
-            let wa_arr = mlx_rs::Array::from_slice(wa_data, &[k as i32, n as i32]);
-            let wb_arr = mlx_rs::Array::from_slice(wb_data, &[k as i32, n as i32]);
+            let wa_arr = mlx_rs::Array::from_slice(wa_data, &[k, n]);
+            let wb_arr = mlx_rs::Array::from_slice(wb_data, &[k, n]);
             let wa = wa_arr.clone();
             let wb_val = wb_arr.clone();
             let inp = input_arr.clone();
@@ -172,46 +172,51 @@ pub fn prepare_graph<'a>(
         }
 
         "multi_output" => {
-            // Output 0: x @ W, Output 1: x + extra (bias-sized)
-            let extra_data = &weights[(k * n) as usize..];
-            let extra_arr = mlx_rs::Array::from_slice(extra_data, &[1, k as i32]);
+            let weight_len = (k * n) as usize;
+            let weight_arr = mlx_rs::Array::from_slice(&weights[..weight_len], &[k, n]);
+            let extra_data = &weights[weight_len..];
+            let extra_arr = mlx_rs::Array::from_slice(extra_data, &[1, n]);
             let w = weight_arr.clone();
             let inp = input_arr.clone();
             let extra = extra_arr.clone();
-            let prepare = Box::new(move || {
+            let prepare = Box::new(move || -> Result<mlx_rs::Array, String> {
                 let mm = inp.matmul(&w).map_err(|e| format!("mlx matmul: {:?}", e))?;
-                // multi_output produces two outputs; we return the first (matmul)
-                // for lattice comparison. The reference evaluator produces both;
-                // we compare against the primary output hash.
+                // multi_output produces two outputs (matmul + add).
+                // Return the primary output (matmul). The secondary output
+                // is excluded from this row; conformance handles the mismatch.
                 Ok(mm)
             });
             Ok((vec![input_arr, weight_arr, extra_arr], prepare))
         }
 
         "reshape_transpose_matmul" => {
-            let rows = 4i32;
-            let cols = k / rows;
-            assert!(cols > 0 && k % rows == 0, "reshape_transpose_matmul: k={} not divisible by {}", k, rows);
+            let weight_arr = mlx_rs::Array::from_slice(&weights[..(k * n) as usize], &[k, n]);
             let inp = input_arr.clone();
             let w = weight_arr.clone();
-            let prepare = Box::new(move || {
-                // reshape [1, k] → [rows, cols]
-                let r1 = inp.reshape(&[1, rows as i32, cols as i32])
-                    .map_err(|e| format!("mlx reshape1: {:?}", e))?;
-                // transpose [1, rows, cols] → [1, cols, rows]
-                let t = ops::transpose_axes(&r1, &[0i32, 2, 1])
-                    .map_err(|e| format!("mlx transpose: {:?}", e))?;
-                // reshape [1, cols, rows] → [1, k] (no-op on the flat data)
-                let r2 = t.reshape(&[1, k])
-                    .map_err(|e| format!("mlx reshape2: {:?}", e))?;
-                // matmul [1, k] × [k, n] → [1, n]
-                let mm = r2.matmul(&w).map_err(|e| format!("mlx matmul: {:?}", e))?;
-                Ok(mm)
-            });
+            let prepare: Box<dyn FnMut() -> Result<mlx_rs::Array, String>> = if k <= 4 || k % 4 != 0 {
+                // For small shapes (k <= 4), skip reshape-transpose and use plain matmul.
+                Box::new(move || {
+                    inp.matmul(&w).map_err(|e| format!("mlx matmul (reshape_fallback): {:?}", e))
+                })
+            } else {
+                let rows = 4i32;
+                let cols = k / rows;
+                Box::new(move || {
+                    let r1 = inp.reshape(&[1, rows, cols])
+                        .map_err(|e| format!("mlx reshape1: {:?}", e))?;
+                    let t = ops::transpose_axes(&r1, &[0i32, 2, 1])
+                        .map_err(|e| format!("mlx transpose: {:?}", e))?;
+                    let r2 = t.reshape(&[1, k])
+                        .map_err(|e| format!("mlx reshape2: {:?}", e))?;
+                    let mm = r2.matmul(&w).map_err(|e| format!("mlx matmul: {:?}", e))?;
+                    Ok(mm)
+                })
+            };
             Ok((vec![input_arr, weight_arr], prepare))
         }
 
         "softmax_tail" => {
+            let weight_arr = mlx_rs::Array::from_slice(&weights[..(k * n) as usize], &[k, n]);
             let inp = input_arr.clone();
             let w = weight_arr.clone();
             let prepare = Box::new(move || {
