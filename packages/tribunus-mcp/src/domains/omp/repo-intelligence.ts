@@ -2,7 +2,7 @@ import { registerTool } from "../../server/registry.js"
 import type { InvocationContext } from "../../governance/invocation-context.js"
 import type { Capability } from "../../governance/capabilities.js"
 import type { RegisteredTool } from "../../server/registry.js"
-import { readdir, readFile } from "node:fs/promises"
+import { readdir, readFile, stat } from "node:fs/promises"
 import { join, resolve, relative, dirname } from "node:path"
 import type { Dirent } from "node:fs"
 import { fileURLToPath } from "node:url"
@@ -278,24 +278,86 @@ export function registerOmpRepoIntelTools(): void {
     source_output_path: { type: "string", description: "Path for source output" },
     force: { type: "boolean", description: "Overwrite existing output (default: true)" },
   }, [], ["artifact:write"], 300_000, async (_ctx, a) => {
-    let semanticPath: string | undefined
+    const db = await getStore()
+    const registry = new ArtifactRegistryService(db)
+
+    let semanticReservation
     if (a.semantic_output_path) {
       const check = validatePath(a.semantic_output_path as string, true)
       if (!check.valid) return err(check.error || "semantic output path rejected")
-      semanticPath = check.resolved
+      semanticReservation = await registry.reserve({
+        artifactType: "review_semantic_zip_v1",
+        canonicalPath: check.resolved,
+        destinationMode: "exact_path",
+        retentionPolicy: "mission_evidence",
+        invocationId: _ctx.invocationId,
+        sessionId: undefined,
+      })
+      await registry.beginProduction(semanticReservation.artifactId, _ctx.invocationId)
     }
-    let sourcePath: string | undefined
+
+    let sourceReservation
     if (a.source_output_path) {
       const check = validatePath(a.source_output_path as string, true)
       if (!check.valid) return err(check.error || "source output path rejected")
-      sourcePath = check.resolved
+      sourceReservation = await registry.reserve({
+        artifactType: "review_source_zip_v1",
+        canonicalPath: check.resolved,
+        destinationMode: "exact_path",
+        retentionPolicy: "mission_evidence",
+        invocationId: _ctx.invocationId,
+        sessionId: undefined,
+      })
+      await registry.beginProduction(sourceReservation.artifactId, _ctx.invocationId)
     }
+
     const result = await reviewPacketExport(process.cwd(), {
-      semantic_output_path: semanticPath,
-      source_output_path: sourcePath,
+      semantic_output_path: semanticReservation?.tempPath,
+      source_output_path: sourceReservation?.tempPath,
       force: a.force !== false,
     })
-    return ok(result)
+
+    const semanticFinalized = semanticReservation
+      ? await registry.finalizeFile({
+          artifactId: semanticReservation.artifactId,
+          tempPath: semanticReservation.tempPath,
+          byteCount: (await stat(semanticReservation.tempPath)).size,
+          contentDigest: result.semantic_zip_sha256,
+          fileCount: 1,
+          mimeType: "application/zip",
+          producerTool: "tribunus_review_packet_export",
+          producerToolVersion: "0.4.0",
+          invocationId: _ctx.invocationId,
+        })
+      : undefined
+
+    const sourceFinalized = sourceReservation
+      ? await registry.finalizeFile({
+          artifactId: sourceReservation.artifactId,
+          tempPath: sourceReservation.tempPath,
+          byteCount: (await stat(sourceReservation.tempPath)).size,
+          contentDigest: result.source_zip_sha256,
+          fileCount: 1,
+          mimeType: "application/zip",
+          producerTool: "tribunus_review_packet_export",
+          producerToolVersion: "0.4.0",
+          invocationId: _ctx.invocationId,
+        })
+      : undefined
+
+    return ok({
+      snapshot_id: result.snapshot_id,
+      semantic_artifact_id: semanticFinalized?.artifactId,
+      semantic_artifact_type: "review_semantic_zip_v1",
+      semantic_path: semanticFinalized?.canonicalPath,
+      semantic_sha256: semanticFinalized?.contentDigest,
+      source_artifact_id: sourceFinalized?.artifactId,
+      source_artifact_type: "review_source_zip_v1",
+      source_path: sourceFinalized?.canonicalPath,
+      source_sha256: sourceFinalized?.contentDigest,
+      warnings: result.warnings,
+      timing_ms: result.timings_ms,
+    })
   })
 
   register("tribunus_semantic_review_export", "Export the semantic v1 review packet for Gemini-style code review.", {
@@ -308,11 +370,34 @@ export function registerOmpRepoIntelTools(): void {
       if (!check.valid) return err(check.error || "output path rejected")
       outputPath = check.resolved
     }
-    const result = await semanticReviewPacketExport(process.cwd(), {
-      output_path: outputPath,
+    const db = await getStore()
+    const registry = new ArtifactRegistryService(db)
+    const reservation = await registry.reserve({
+      artifactType: "review_semantic_zip_v1",
+      canonicalPath: outputPath || resolve(process.cwd(), "tribunus-semantic-review.zip"),
+      destinationMode: "exact_path",
+      retentionPolicy: "mission_evidence",
+      invocationId: _ctx.invocationId,
+      sessionId: undefined,
+    })
+    await registry.beginProduction(reservation.artifactId, _ctx.invocationId)
+    await semanticReviewPacketExport(process.cwd(), {
+      output_path: reservation.tempPath,
       force: a.force !== false,
     })
-    return ok(result)
+    const { stat: fsStat } = await import("node:fs/promises")
+    const fileStat = await fsStat(reservation.tempPath)
+    const finalized = await registry.finalizeFile({
+      artifactId: reservation.artifactId,
+      tempPath: reservation.tempPath,
+      byteCount: fileStat.size,
+      fileCount: 1,
+      mimeType: "application/zip",
+      producerTool: "tribunus_semantic_review_export",
+      producerToolVersion: "0.4.0",
+      invocationId: _ctx.invocationId,
+    })
+    return ok({ artifact_id: finalized.artifactId, artifact_type: "review_semantic_zip_v1", path: finalized.canonicalPath, sha256: finalized.contentDigest, invocation_id: _ctx.invocationId })
   })
 
   register("tribunus_review_verify", "Verify source-review and Gemini IR ZIPs contain required Oxc source-graph evidence.", {

@@ -122,6 +122,9 @@ export function registerOmpControlPlaneTools(): void {
        WHERE pl.expires_at < NOW() AND (s.session_id IS NULL OR s.status != 'active')`,
     )
 
+    const staleReservations = await d.query(`SELECT artifact_id, canonical_path, created_at FROM artifacts_v2 WHERE state IN ('reserved','producing') AND created_at < ((to_char(CURRENT_TIMESTAMP AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"'))::timestamp - INTERVAL '30 minutes')`)
+    const finalizedWithoutBytes = await d.query(`SELECT artifact_id, canonical_path FROM artifacts_v2 WHERE state = 'finalized' AND content_digest IS NOT NULL`)
+
     const report = {
       mode,
       dry_run: dryRun,
@@ -131,6 +134,8 @@ export function registerOmpControlPlaneTools(): void {
       expired_ids: expiredSessions.rows.map(r => r.session_id),
       orphaned_ids: orphanedInvocations.rows.map(r => r.invocation_id),
       stale_lock_paths: staleLocks.rows.map(r => r.path),
+      stale_reservations_count: staleReservations.rows.length,
+      finalized_without_bytes_count: finalizedWithoutBytes.rows.length,
     }
 
     if (dryRun) return ok(report)
@@ -153,6 +158,11 @@ export function registerOmpControlPlaneTools(): void {
         if (staleLocks.rows.length > 0) {
           await d.query("DELETE FROM path_locks WHERE path IN (SELECT pl.path FROM path_locks pl LEFT JOIN sessions s ON pl.session_id = s.session_id WHERE pl.expires_at < NOW() AND (s.session_id IS NULL OR s.status != 'active'))")
           repairsApplied += staleLocks.rows.length
+        }
+        if (staleReservations.rows.length > 0) {
+          const ids = staleReservations.rows.map((r) => r.artifact_id)
+          await d.query("UPDATE artifacts_v2 SET state = 'partial' WHERE artifact_id = ANY($1::text[])", [ids])
+          repairsApplied += staleReservations.rows.length
         }
       } catch (e) {
         errors.push(e instanceof Error ? e.message : String(e))
