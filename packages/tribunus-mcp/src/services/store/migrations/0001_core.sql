@@ -7,7 +7,7 @@ CREATE TABLE IF NOT EXISTS actors (
   provider   TEXT,
   model      TEXT,
   display_name TEXT,
-  created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
+  created_at TEXT NOT NULL DEFAULT (to_char(CURRENT_TIMESTAMP AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"'))
 );
 
 CREATE TABLE IF NOT EXISTS sessions (
@@ -16,8 +16,8 @@ CREATE TABLE IF NOT EXISTS sessions (
   status           TEXT NOT NULL DEFAULT 'starting'
                      CHECK (status IN ('starting', 'active', 'idle', 'closing', 'closed', 'abandoned')),
   purpose          TEXT,
-  started_at       TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
-  last_heartbeat_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
+  started_at       TEXT NOT NULL DEFAULT (to_char(CURRENT_TIMESTAMP AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"')),
+  last_heartbeat_at TEXT NOT NULL DEFAULT (to_char(CURRENT_TIMESTAMP AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"')),
   closed_at        TEXT
 );
 
@@ -29,8 +29,8 @@ CREATE TABLE IF NOT EXISTS work_items (
                CHECK (status IN ('queued', 'claimed', 'running', 'blocked', 'completed', 'failed', 'cancelled')),
   priority   INTEGER NOT NULL DEFAULT 0,
   created_by_session_id TEXT REFERENCES sessions(session_id),
-  created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
-  updated_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
+  created_at TEXT NOT NULL DEFAULT (to_char(CURRENT_TIMESTAMP AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"')),
+  updated_at TEXT NOT NULL DEFAULT (to_char(CURRENT_TIMESTAMP AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"'))
 );
 
 CREATE TABLE IF NOT EXISTS work_claims (
@@ -39,7 +39,7 @@ CREATE TABLE IF NOT EXISTS work_claims (
   session_id TEXT NOT NULL REFERENCES sessions(session_id),
   status     TEXT NOT NULL DEFAULT 'active'
                CHECK (status IN ('active', 'released', 'expired', 'completed')),
-  claimed_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
+  claimed_at TEXT NOT NULL DEFAULT (to_char(CURRENT_TIMESTAMP AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"')),
   expires_at TEXT NOT NULL,
   released_at TEXT
 );
@@ -56,7 +56,7 @@ CREATE TABLE IF NOT EXISTS path_locks (
   work_id    TEXT REFERENCES work_items(work_id),
   status     TEXT NOT NULL DEFAULT 'active'
                CHECK (status IN ('active', 'released', 'expired')),
-  acquired_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
+  acquired_at TEXT NOT NULL DEFAULT (to_char(CURRENT_TIMESTAMP AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"')),
   expires_at  TEXT NOT NULL,
   released_at TEXT
 );
@@ -121,8 +121,8 @@ CREATE TABLE IF NOT EXISTS write_journals (
   session_id   TEXT NOT NULL REFERENCES sessions(session_id),
   status       TEXT NOT NULL DEFAULT 'prepared'
                  CHECK (status IN ('prepared', 'committing', 'committed', 'rollback_needed', 'rolled_back', 'abandoned')),
-  created_at   TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
-  updated_at   TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
+  created_at   TEXT NOT NULL DEFAULT (to_char(CURRENT_TIMESTAMP AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"')),
+  updated_at   TEXT NOT NULL DEFAULT (to_char(CURRENT_TIMESTAMP AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"')),
   journal_path TEXT NOT NULL
 );
 
@@ -133,11 +133,11 @@ CREATE TABLE IF NOT EXISTS coordination_events (
   invocation_id TEXT REFERENCES tool_invocations(invocation_id),
   event_type  TEXT NOT NULL,
   payload_json TEXT NOT NULL DEFAULT '{}',
-  created_at  TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
+  created_at  TEXT NOT NULL DEFAULT (to_char(CURRENT_TIMESTAMP AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"'))
 );
 
 CREATE TABLE IF NOT EXISTS schema_migrations (
   version     TEXT PRIMARY KEY,
-  applied_at  TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
+  applied_at  TEXT NOT NULL DEFAULT (to_char(CURRENT_TIMESTAMP AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"')),
   checksum    TEXT
 );

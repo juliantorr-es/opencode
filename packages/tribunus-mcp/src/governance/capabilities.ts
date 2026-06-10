@@ -82,6 +82,7 @@ export const TOOL_CAPABILITIES: Record<string, Capability[]> = {
   tribunus_symbol_lookup: ["repository:index"],
   tribunus_impact_analysis: ["repository:index"],
   tribunus_authority_audit: ["repository:index"],
+  tribunus_test_gap_report: ["repository:index"],
   tribunus_board: ["control-plane:read"],
   tribunus_recover: ["control-plane:read"],
   tribunus_history: ["control-plane:read"],

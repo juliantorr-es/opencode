@@ -6,12 +6,14 @@ import { readdir, readFile } from "node:fs/promises"
 import { join, resolve, relative, dirname } from "node:path"
 import type { Dirent } from "node:fs"
 import { fileURLToPath } from "node:url"
+import { validatePath } from "../../governance/paths.js"
 
 // Oxc services
 import { semanticRepoMap } from "../../services/code-intelligence/queries/semantic-repo-map.js"
 import { symbolLookup } from "../../services/code-intelligence/queries/symbol-lookup.js"
 import { impactAnalysis } from "../../services/code-intelligence/queries/impact-analysis.js"
 import { authorityAudit } from "../../services/code-intelligence/queries/authority-audit.js"
+import { testGapReport } from "../../services/code-intelligence/queries/test-gap-report.js"
 import { buildCodeReviewExport } from "../../services/review-export/bootstrap-builder.js"
 import { reviewPacketExport } from "../../services/code-intelligence/exports/review-packet-export.js"
 import { semanticReviewPacketExport } from "../../services/code-intelligence/exports/semantic-review-packet-export.js"
@@ -40,7 +42,10 @@ export function registerOmpRepoIntelTools(): void {
     pattern: { type: "string" }, path: { type: "string" }, glob: { type: "string" }, max_results: { type: "number" },
   }, ["pattern"], ["repository:read"], 30_000, async (_ctx, a) => {
     const pattern = a.pattern as string
-    const searchPath = (a.path as string) || process.cwd()
+    let rawPath = (a.path as string) || process.cwd()
+    const pathCheck = validatePath(rawPath, false)
+    if (!pathCheck.valid) return err(pathCheck.error || "path rejected")
+    const searchPath = pathCheck.resolved
     const maxResults = (a.max_results as number) || 30
     const results: Array<{ file: string; line: number; text: string }> = []
     async function walk(dir: string) {
@@ -75,7 +80,10 @@ export function registerOmpRepoIntelTools(): void {
     pattern: { type: "string" }, path: { type: "string" }, type: { type: "string", enum: ["file","directory"] }, max_results: { type: "number" },
   }, [], ["repository:read"], 30_000, async (_ctx, a) => {
     const pat = (a.pattern as string) || "*"
-    const searchPath = (a.path as string) || process.cwd()
+    let rawPath = (a.path as string) || process.cwd()
+    const pathCheck = validatePath(rawPath, false)
+    if (!pathCheck.valid) return err(pathCheck.error || "path rejected")
+    const searchPath = pathCheck.resolved
     const maxResults = (a.max_results as number) || 50
     const results: string[] = []
     async function walk(dir: string) {
@@ -103,7 +111,9 @@ export function registerOmpRepoIntelTools(): void {
     file: { type: "string" }, focus: { type: "string" }, summary_only: { type: "boolean" },
   }, ["file"], ["repository:read"], 15_000, async (_ctx, a) => {
     const filePath = a.file as string
-    const content = await readFile(resolve(process.cwd(), filePath), "utf-8")
+    const pathCheck = validatePath(filePath, false)
+    if (!pathCheck.valid) return err(pathCheck.error || "path rejected")
+    const content = await readFile(pathCheck.resolved, "utf-8")
     const summary = a.summary_only
     if (summary) return ok({ file: filePath, lines: content.split("\n").length, size: content.length, preview: content.split("\n").slice(0, 5).join("\n") })
     return ok({ file: filePath, lines: content.split("\n").length, size: content.length, content })
@@ -171,17 +181,35 @@ export function registerOmpRepoIntelTools(): void {
     return ok(result)
   })
 
+  register("tribunus_test_gap_report", "Analyze test coverage gaps using the Oxc semantic kernel. Returns a coverage matrix showing which files and symbols lack test coverage.", {
+    focus_tools: { type: "array", items: { type: "string" }, description: "Tool IDs to focus the report on" },
+  }, [], ["repository:index"], 60_000, async (_ctx, a) => {
+    const result = await testGapReport(process.cwd(), {
+      focus_tools: a.focus_tools as string[] | undefined,
+    })
+    return ok(result)
+  })
+
   // ── Review Export (Oxc-based, native) ───────────────────────────────
 
   register("tribunus_code_review_export", "Export code review packets using the Oxc parser and review-export pipeline.", {
     profile: { type: "string", enum: ["bootstrap_review","gemini_code_review"], description: "Export profile" },
     output_dir: { type: "string", description: "Output directory for exported artifacts" },
   }, [], ["artifact:write"], 300_000, async (_ctx, a) => {
-    await buildCodeReviewExport({
+    const result = buildCodeReviewExport({
       repoRoot: process.cwd(),
       profile: (a.profile as "bootstrap_review" | "gemini_code_review") || "gemini_code_review",
     })
-    return ok({ profile: a.profile || "gemini_code_review", status: "completed" })
+    return ok({
+      profile: a.profile || "gemini_code_review",
+      zip_path: result.zipPath,
+      zip_sha256: result.zipSha256,
+      zip_size: result.zipSize,
+      file_count: result.includedFiles.length,
+      warnings: result.warnings.length,
+      dirty: result.isDirty,
+      timing_ms: result.timingsMs,
+    })
   })
 
   register("tribunus_review_packet_export", "Export the source review packet (Oxc source graph + review manifests).", {

@@ -29,6 +29,7 @@ import type {
 import type { PGliteConstructor, PGliteLike } from "./pglite-runtime.js"
 import { loadPGliteConstructor } from "./pglite-runtime.js"
 import { runMigrations } from "./pglite-migrations.js"
+import { getPgliteDir } from "../config.js"
 
 // ── Defaults ──
 
@@ -136,7 +137,7 @@ class PGliteStoreV1Impl implements OmpRelationalStoreV1 {
 
   constructor(options: PGliteStoreOptionsV1) {
     this.options = { ...options }
-    this.stateDir = resolve(options.repoRoot, ".omp/state/pglite")
+    this.stateDir = getPgliteDir()
   }
 
   // ── Connection ──

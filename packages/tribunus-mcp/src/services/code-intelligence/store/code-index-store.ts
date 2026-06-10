@@ -1,5 +1,6 @@
 import { existsSync, mkdirSync, readFileSync } from "node:fs"
 import { resolve } from "node:path"
+import { getCodeIntelligenceMigrationDir } from "../../config.js"
 import type { PGliteConstructor, PGliteLike } from "../../store/pglite-runtime.js"
 import { loadPGliteConstructor } from "../../store/pglite-runtime.js"
 import type {
@@ -64,7 +65,7 @@ export class CodeIndexStoreV1 {
 
   async migrate(): Promise<void> {
     const db = await this.ensureDb()
-    const migrationDir = resolve(this.repoRoot, ".omp/tools/_lib/code-intelligence/store/migrations")
+    const migrationDir = getCodeIntelligenceMigrationDir()
     for (const file of MIGRATION_FILES) {
       const sqlPath = resolve(migrationDir, file)
       if (!existsSync(sqlPath)) continue

@@ -1,5 +1,6 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs"
 import { resolve } from "node:path"
+import { getCodeIntelligenceDir, getCodeIntelligenceDbDir } from "../config.js"
 import type { CodeIndexSnapshotV1 } from "./store/code-index-types.js"
 
 export type CodeIndexContextV1 = {
@@ -12,8 +13,8 @@ export type CodeIndexContextV1 = {
 }
 
 export function createCodeIndexContext(repoRoot: string): CodeIndexContextV1 {
-  const stateDir = resolve(repoRoot, ".omp/state/code-intelligence")
-  const dbDir = resolve(stateDir, "pglite")
+  const stateDir = getCodeIntelligenceDir()
+  const dbDir = getCodeIntelligenceDbDir()
   return {
     repoRoot,
     stateDir,
