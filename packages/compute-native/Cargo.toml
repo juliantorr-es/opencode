@@ -35,11 +35,11 @@ rayon = "1"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 parking_lot = "0.12"
+tribunus-evidence-schema = { path = "../compute-evidence-native/crates/evidence-schema" }
 libc = "0.2"
 lazy_static = "1.5"
 tokio = { version = "1", features = ["rt-multi-thread", "sync", "time", "macros"] }
 uuid = { version = "1", features = ["v4", "serde"] }
-
 [build-dependencies]
 napi-build = "2.3.2"
 cc = "1.2"

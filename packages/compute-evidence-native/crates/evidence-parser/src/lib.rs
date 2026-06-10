@@ -559,6 +559,101 @@ mod tests {
     }
 
     #[test]
+    #[test]
+    #[test]
+    fn test_mission0007_readiness_transition_roundtrip() {
+        use tribunus_evidence_schema::mission0007::{
+            ConditioningArm, ModelReadiness, ReadinessTransitionEvent,
+        };
+        use tribunus_evidence_schema::{EvidenceEventV4, RunId, RequestId, WorkerId};
+
+        let rt = ReadinessTransitionEvent {
+            resource_id: "m7-test-model".into(),
+            previous: ModelReadiness::MappedReady,
+            current: ModelReadiness::LatencyReady,
+            reason: "conditioning completed".to_string(),
+            transition_ns: 500_000_000,
+        };
+        let ev = EvidenceEventV4::new(
+            RunId::from("m7-test"),
+            RequestId::from("req-1"),
+            WorkerId::from("w-1"),
+            tribunus_evidence_schema::EventPayloadV4::ReadinessTransition(rt),
+        );
+        let json = serde_json::to_string(&ev).unwrap();
+        let parsed: EvidenceEventV4 = serde_json::from_str(&json).unwrap();
+        match &parsed.payload {
+            tribunus_evidence_schema::EventPayloadV4::ReadinessTransition(rt2) => {
+                assert_eq!(rt2.previous, ModelReadiness::MappedReady);
+                assert_eq!(rt2.current, ModelReadiness::LatencyReady);
+            }
+            _ => panic!("wrong payload type"),
+        }
+    }
+
+    fn test_correctness_checkpoint_roundtrip() {
+        use tribunus_evidence_schema::{
+            CorrectnessCheckpointEvent, EvidenceEventV4, ProjectionFamily,
+            RunId, RequestId, WorkerId,
+        };
+
+        // Build a synthetic correctness checkpoint matching what the replay CLI emits
+        let cc = CorrectnessCheckpointEvent {
+            family: ProjectionFamily::QProj,
+            input_digest: "abc123def456".into(),
+            reference_impl: "mlx_rs::ops::dequantize+transpose+matmul".into(),
+            reference_output_digest: "dequantize_reference".into(),
+            treatment_output_digest: "abc123def456".into(),
+            max_abs_error: 0.0719,
+            mean_abs_error: 0.0165,
+            max_rel_error: Some(0.000357),
+            mean_rel_error: None,
+            cosine_similarity: Some(0.999999992008538),
+            tolerance: 1e-2,
+            passed: true,
+        };
+
+        let ev = EvidenceEventV4::new(
+            RunId::from("test-run"),
+            RequestId::from("req-1"),
+            WorkerId::from("w-1"),
+            tribunus_evidence_schema::EventPayloadV4::CorrectnessCheckpoint(cc),
+        );
+
+        // Serialize roundtrip
+        let json = serde_json::to_string(&ev).unwrap();
+        let parsed: EvidenceEventV4 = serde_json::from_str(&json).unwrap();
+
+        match &parsed.payload {
+            EventPayloadV4::CorrectnessCheckpoint(cc2) => {
+                assert_eq!(cc2.family, ProjectionFamily::QProj);
+                assert_eq!(cc2.input_digest, "abc123def456");
+                assert_eq!(cc2.reference_impl, "mlx_rs::ops::dequantize+transpose+matmul");
+                assert!((cc2.max_abs_error - 0.0719).abs() < 1e-10);
+                assert!((cc2.mean_abs_error - 0.0165).abs() < 1e-10);
+                assert_eq!(cc2.max_rel_error, Some(0.000357));
+                assert_eq!(cc2.mean_rel_error, None);
+                assert!((cc2.cosine_similarity.unwrap() - 0.999999992008538).abs() < 1e-15);
+                assert!((cc2.tolerance - 0.01).abs() < 1e-10);
+                assert!(cc2.passed);
+            }
+            _ => panic!("wrong payload type"),
+        }
+
+        // Streaming decoder roundtrip
+        let ndjson = format!("{}\n", json);
+        let mut chunk = InputChunk::from_bytes(ndjson.into_bytes());
+        let mut decoder = SerdeStreamingDecoder::new(ValidationMode::ControlledResearch);
+        let decoded = decoder.decode_next(&mut chunk).unwrap().unwrap();
+        match &decoded.event.payload {
+            EventPayloadV4::CorrectnessCheckpoint(cc3) => {
+                assert!(cc3.passed);
+                assert_eq!(cc3.family, ProjectionFamily::QProj);
+            }
+            _ => panic!("decoded wrong payload type"),
+        }
+    }
+
     fn test_migrate_v2_layer() {
         let line = "[full-model] layer=12 kind=full_attention graph_us=1000 eval_us=5000 rss=1GB→500MB handles=0→0 active=5GB→5GB cache=0B→0B kv_seq=1 kv_copy=0 kv_alloc=16384 shape=[1,3840] finite=true";
         let ev = migrate_v2_layer(line, "test-run").unwrap();

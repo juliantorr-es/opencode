@@ -18,6 +18,21 @@
 
 use serde::{Deserialize, Serialize};
 use std::fmt;
+pub mod mission0007;
+// Re-export Mission 0007 types (all except `AttentionKind` which already
+// exists in this module with an additional `Embedding` variant).
+pub use mission0007::{
+    ArtifactPreparationBackend, ArtifactRange, ConditioningArm,
+    ConditioningFallbackPolicy, ConditioningRecipe,
+    ConditioningRecipeCompletionState, ConditioningRecipeEvent,
+    ConditioningRecipeId, DType, ExecutionConditioningPolicy,
+    ExecutionStepId, ExpectedSubstrate, KernelSignature, KernelSignatureId,
+    MemoryPressureThreshold, ModelReadiness, OperationFamily, PhaseShape,
+    PipelinePlanVersion, PrefetchLifecycleEvent, PrefetchLifecycleStage,
+    PreparationError, PreparationReceipt, ReadinessTransitionEvent,
+    ResidencyGroup, ResidencyGroupId, ResidencyPlanVersion, ResidencyPriority,
+    ResourceId, ScratchKvContract, SyntheticInputContract, TreatmentSummaryEvent,
+};
 
 // ── Schema version ─────────────────────────────────────────────────────────
 
@@ -247,6 +262,11 @@ pub enum EventPayloadV4 {
     Lifecycle(LifecycleEvent),
     ResourceLifecycle(ResourceLifecycleEvent),
     Diagnostic(DiagnosticEvent),
+    // ── Mission 0007: conditioning-aware pipeline events ──
+    ConditioningRecipe(ConditioningRecipeEvent),
+    PrefetchLifecycle(PrefetchLifecycleEvent),
+    ReadinessTransition(ReadinessTransitionEvent),
+    TreatmentSummary(TreatmentSummaryEvent),
 }
 
 // ── LayerStageEvent ────────────────────────────────────────────────────────

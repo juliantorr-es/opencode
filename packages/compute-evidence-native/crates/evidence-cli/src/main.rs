@@ -156,6 +156,10 @@ fn cmd_inspect(file_path: &str) {
                     tribunus_evidence_schema::EventPayloadV4::Lifecycle(_) => "lifecycle",
                     tribunus_evidence_schema::EventPayloadV4::Diagnostic(_) => "diagnostic",
                     tribunus_evidence_schema::EventPayloadV4::ResourceLifecycle(_) => "resource_lifecycle",
+                    tribunus_evidence_schema::EventPayloadV4::ConditioningRecipe(_) => "conditioning_recipe",
+                    tribunus_evidence_schema::EventPayloadV4::PrefetchLifecycle(_) => "prefetch_lifecycle",
+                    tribunus_evidence_schema::EventPayloadV4::ReadinessTransition(_) => "readiness_transition",
+                    tribunus_evidence_schema::EventPayloadV4::TreatmentSummary(_) => "treatment_summary",
                 };
                 *counts.entry(tag.to_string()).or_insert(0) += 1;
             }
