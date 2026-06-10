@@ -47,6 +47,7 @@ tribunus-evidence-schema = { path = "../compute-evidence-native/crates/evidence-
 libc = "0.2"
 lazy_static = "1.5"
 tokio = { version = "1", features = ["rt-multi-thread", "sync", "time", "macros"] }
+async-trait = "0.1"
 uuid = { version = "1", features = ["v4", "serde"] }
 [build-dependencies]
 napi-build = "2.3.2"

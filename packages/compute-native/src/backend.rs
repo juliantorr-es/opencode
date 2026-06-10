@@ -1,20 +1,42 @@
 //! Backend abstraction layer — generic TensorBackend trait and MlxBackend adapter.
 //!
 //! The trait exposes model-level operations (matmul, rms_norm, RoPE, etc.)
-//! through opaque `TensorHandle` indices. The MlxBackend implementation wraps
-//! `mlx_rs::Array` operations behind a handle-based registry.
+//! through opaque generational-handle indices. The MlxBackend implementation wraps
+//! `mlx_rs::Array` operations behind a generational slot-map registry.
 
 use mlx_rs::Array;
 use mlx_rs::ops;
 
+// ── DType ──────────────────────────────────────────────────────────────────
+
+/// Canonical element type enumeration.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum DType {
+    F32,
+    F16,
+    BF16,
+    I8,
+    U8,
+    I32,
+    U32,
+}
+
 // ── Handle types ───────────────────────────────────────────────────────────
 
-/// Opaque handle for a tensor stored in a backend's internal registry.
-pub type TensorHandle = usize;
+/// Generational handle for a tensor stored in a backend's internal registry.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct TensorHandle {
+    pub slot: u32,
+    pub generation: u32,
+}
 
-/// Opaque handle for a quantized weight tensor (stored separately from
+/// Generational handle for a quantized weight tensor (stored separately from
 /// regular tensors for quantization-specific operations).
-pub type QuantizedWeightHandle = usize;
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct QuantizedWeightHandle {
+    pub slot: u32,
+    pub generation: u32,
+}
 
 // ── Operation descriptors ──────────────────────────────────────────────────
 
@@ -23,11 +45,11 @@ pub struct QuantizedMatmulOp {
     pub m: u32,
     pub n: u32,
     pub k: u32,
-    pub input_dtype: String,
-    pub weight_dtype: String,
-    pub scale_dtype: String,
-    pub bias_dtype: String,
-    pub output_dtype: String,
+    pub input_dtype: DType,
+    pub weight_dtype: DType,
+    pub scale_dtype: DType,
+    pub bias_dtype: DType,
+    pub output_dtype: DType,
     pub group_size: u32,
     pub bits: u8,
     pub transpose: bool,
@@ -56,20 +78,50 @@ pub struct RoPEOp {
 
 /// Telemetry from an [`evaluate`](TensorBackend::evaluate) call.
 pub struct EvaluationReceipt {
-    pub eval_duration_ns: u64,
-    pub gpu_duration_ns: Option<u64>,
+    pub group_id: u64,
+    pub graph_build_ns: u64, // reserved for Phase 2 (set to 0 now)
+    pub submit_ns: u64,      // reserved for Phase 2 (set to 0 now)
+    pub sync_ns: u64,        // wall time of eval() call
+    pub output_count: usize,
     pub active_memory_after: u64,
     pub cache_memory_after: u64,
+    pub observed_substrate: Option<String>, // "cpu", "gpu", or None
+}
+
+// ── Readback receipt ───────────────────────────────────────────────────────
+
+/// Telemetry from a [`read_f32`](TensorBackend::read_f32) call.
+pub struct ReadbackReceipt {
+    pub data: Vec<f32>,
+    pub forced_eval: bool, // true if readback triggered eval
+    pub sync_ns: u64,      // wall time spent waiting
+    pub observed_substrate: Option<String>,
+}
+
+// ── Backend capabilities ───────────────────────────────────────────────────
+
+/// Describes the capabilities of a backend implementation.
+#[derive(Debug, Clone)]
+pub struct BackendCapabilities {
+    pub can_gpu: bool,
+    pub can_cpu: bool,
+    pub supports_quantized: bool,
+    pub supports_bf16_native: bool,
+    pub backend_name: String,
 }
 
 // ── Backend trait ──────────────────────────────────────────────────────────
 
 /// Abstract tensor-compute backend.
 ///
-/// Every operation returns a new `TensorHandle`.  The backend owns the
+/// Every operation returns a new `TensorHandle`. The backend owns the
 /// underlying arrays and manages their lifecycle through
 /// [`create_*`](TensorBackend::create_f32) and
 /// [`release`](TensorBackend::release).
+///
+/// Release of a handle invalidates that generation; the underlying storage
+/// may persist if other lazy arrays retain dependencies. Physical release
+/// must be measured separately via `active_memory()`.
 pub trait TensorBackend {
     // ── Creation ───────────────────────────────────────────────────────
 
@@ -79,19 +131,34 @@ pub trait TensorBackend {
     /// Create a tensor from u32 data.
     fn create_u32(&mut self, data: &[u32], shape: &[i32]) -> Result<TensorHandle, String>;
 
-    /// Create a tensor from bfloat16 data (stored as u16 per element).
-    fn create_bf16(&mut self, data: &[u16], shape: &[i32]) -> Result<TensorHandle, String>;
+    /// Create a tensor from bfloat16 bits stored as u16 — converts to f32
+    /// (no native BF16 array is created; see TODO in MlxBackend).
+    fn create_f32_from_bf16_bits(
+        &mut self,
+        data: &[u16],
+        shape: &[i32],
+    ) -> Result<TensorHandle, String>;
 
-    /// Create a tensor from raw bytes, interpreting them as `dtype`.
-    ///
-    /// Supported dtype strings: `"float32"`, `"bfloat16"`, `"float16"`,
-    /// `"uint32"`, `"uint8"`, `"int8"`.
-    fn create_external(
+    /// Create an owned tensor from raw bytes, copying the data and
+    /// interpreting them as `dtype`.
+    fn create_owned_from_bytes(
         &mut self,
         data: &[u8],
         shape: &[i32],
-        dtype: &str,
+        dtype: DType,
     ) -> Result<TensorHandle, String>;
+
+    /// Reserve an externally-owned allocation for zero-copy use.
+    /// Default implementation returns an error.
+    fn bind_external(
+        &mut self,
+        _owner_token: u64,
+        _data: &[u8],
+        _shape: &[i32],
+        _dtype: DType,
+    ) -> Result<TensorHandle, String> {
+        Err("bind_external: not implemented for this backend".into())
+    }
 
     // ── Core compute ───────────────────────────────────────────────────
 
@@ -145,40 +212,65 @@ pub trait TensorBackend {
         axis: i32,
     ) -> Result<TensorHandle, String>;
 
+    // ── Missing ops (stubs) ────────────────────────────────────────────
+
+    /// Concatenate tensors along an axis.
+    fn concatenate(&mut self, _tensors: &[TensorHandle], _axis: i32) -> Result<TensorHandle, String> {
+        Err("concatenate: not implemented".into())
+    }
+
+    /// Slice a tensor.
+    fn slice(&mut self, _x: TensorHandle, _start: &[i32], _stop: &[i32], _step: &[i32]) -> Result<TensorHandle, String> {
+        Err("slice: not implemented".into())
+    }
+
+    /// Cast a tensor to the given element type.
+    fn cast(&mut self, _x: TensorHandle, _dtype: DType) -> Result<TensorHandle, String> {
+        Err("cast: not implemented".into())
+    }
+
     // ── Lifecycle / inspection ─────────────────────────────────────────
 
     /// Evaluate one or more output tensors, materialising the computation
-    /// graph.  Returns telemetry.
-    fn evaluate(&mut self, outputs: &[TensorHandle]) -> Result<EvaluationReceipt, String>;
+    /// graph. Returns telemetry.
+    fn evaluate(
+        &mut self,
+        group_id: u64,
+        outputs: &[TensorHandle],
+    ) -> Result<EvaluationReceipt, String>;
 
     /// Read back the f32 data of a tensor (blocks until data is available).
-    fn read_f32(&self, handle: TensorHandle) -> Result<Vec<f32>, String>;
+    fn read_f32(&self, handle: TensorHandle) -> Result<ReadbackReceipt, String>;
 
     /// Return the shape of a tensor.
     fn shape(&self, handle: TensorHandle) -> Result<Vec<i32>, String>;
 
-    /// Release a tensor handle, freeing its underlying storage.
+    /// Release this backend handle. The underlying storage may persist
+    /// if other lazy arrays retain dependencies; physical release must be
+    /// measured separately via `active_memory()`.
     fn release(&mut self, handle: TensorHandle) -> Result<(), String>;
 
     /// Return `(active_bytes, cache_bytes)` for the backend's allocator.
     fn active_memory(&self) -> (u64, u64);
 
-    /// A short, human-readable name for this backend (e.g. `"mlx"`).
-    fn backend_name(&self) -> &'static str;
-
-    /// Which substrate this backend runs on: `"cpu"` or `"gpu"`.
-    fn backend_substrate(&self) -> String;
+    /// Describe the capabilities of this backend.
+    fn backend_capabilities(&self) -> BackendCapabilities;
 }
 
 // ── MLX backend ────────────────────────────────────────────────────────────
 
 /// MLX-backed implementation of [`TensorBackend`].
 ///
-/// Stores arrays in a slot-map indexed by `TensorHandle`.  A free list
-/// recycles slots from released handles.
+/// Stores arrays in generational slot-maps indexed by `TensorHandle`. A free
+/// list recycles slots from released handles. Slot generations are bumped
+/// on reuse so stale handles are detected.
 pub struct MlxBackend {
     arrays: Vec<Option<Array>>,
+    generations: Vec<u32>,
     free_list: Vec<usize>,
+    weight_arrays: Vec<Option<Array>>,
+    weight_generations: Vec<u32>,
+    weight_free_list: Vec<usize>,
     name: String,
 }
 
@@ -187,7 +279,11 @@ impl MlxBackend {
     pub fn new() -> Self {
         Self {
             arrays: Vec::new(),
+            generations: Vec::new(),
             free_list: Vec::new(),
+            weight_arrays: Vec::new(),
+            weight_generations: Vec::new(),
+            weight_free_list: Vec::new(),
             name: "mlx".to_string(),
         }
     }
@@ -196,7 +292,11 @@ impl MlxBackend {
     pub fn with_name(name: impl Into<String>) -> Self {
         Self {
             arrays: Vec::new(),
+            generations: Vec::new(),
             free_list: Vec::new(),
+            weight_arrays: Vec::new(),
+            weight_generations: Vec::new(),
+            weight_free_list: Vec::new(),
             name: name.into(),
         }
     }
@@ -204,29 +304,85 @@ impl MlxBackend {
     /// Allocate a slot for `arr` and return the handle.
     fn alloc(&mut self, arr: Array) -> TensorHandle {
         if let Some(idx) = self.free_list.pop() {
+            self.generations[idx] += 1;
             self.arrays[idx] = Some(arr);
-            idx
+            TensorHandle {
+                slot: idx as u32,
+                generation: self.generations[idx],
+            }
         } else {
             let idx = self.arrays.len();
             self.arrays.push(Some(arr));
-            idx
+            self.generations.push(1);
+            TensorHandle {
+                slot: idx as u32,
+                generation: 1,
+            }
         }
     }
 
-    /// Get an immutable reference to the array at `handle`.
-    fn get(&self, handle: TensorHandle) -> Result<&Array, String> {
-        self.arrays
-            .get(handle)
-            .and_then(|opt| opt.as_ref())
-            .ok_or_else(|| format!("MlxBackend: invalid tensor handle {}", handle))
+    /// Allocate a slot for a quantized weight array and return the handle.
+    fn alloc_weight(&mut self, arr: Array) -> QuantizedWeightHandle {
+        if let Some(idx) = self.weight_free_list.pop() {
+            self.weight_generations[idx] += 1;
+            self.weight_arrays[idx] = Some(arr);
+            QuantizedWeightHandle {
+                slot: idx as u32,
+                generation: self.weight_generations[idx],
+            }
+        } else {
+            let idx = self.weight_arrays.len();
+            self.weight_arrays.push(Some(arr));
+            self.weight_generations.push(1);
+            QuantizedWeightHandle {
+                slot: idx as u32,
+                generation: 1,
+            }
+        }
     }
 
-    /// Get a mutable reference to the array at `handle`.
+    /// Get an immutable reference to the array at `handle`, validating
+    /// slot and generation.
+    fn get(&self, handle: TensorHandle) -> Result<&Array, String> {
+        let slot = handle.slot as usize;
+        let gen = handle.generation;
+        match self.arrays.get(slot) {
+            Some(Some(arr)) if gen == self.generations[slot] => Ok(arr),
+            _ => Err(format!(
+                "MlxBackend: invalid tensor handle (slot={}, gen={})",
+                slot, gen,
+            )),
+        }
+    }
+
+    /// Get a mutable reference to the array at `handle`, validating
+    /// slot and generation.
     fn get_mut(&mut self, handle: TensorHandle) -> Result<&mut Array, String> {
-        self.arrays
-            .get_mut(handle)
-            .and_then(|opt| opt.as_mut())
-            .ok_or_else(|| format!("MlxBackend: invalid tensor handle {}", handle))
+        let slot = handle.slot as usize;
+        let gen = handle.generation;
+        let arr_gen = self.generations.get(slot).copied();
+        if let Some(Some(arr)) = self.arrays.get_mut(slot) {
+            if arr_gen == Some(gen) {
+                return Ok(arr);
+            }
+        }
+        Err(format!(
+            "MlxBackend: invalid tensor handle (slot={}, gen={})",
+            slot, gen,
+        ))
+    }
+
+    /// Get an immutable reference to a quantized weight array at `handle`.
+    fn get_weight(&self, handle: QuantizedWeightHandle) -> Result<&Array, String> {
+        let slot = handle.slot as usize;
+        let gen = handle.generation;
+        match self.weight_arrays.get(slot) {
+            Some(Some(arr)) if gen == self.weight_generations[slot] => Ok(arr),
+            _ => Err(format!(
+                "MlxBackend: invalid weight handle (slot={}, gen={})",
+                slot, gen,
+            )),
+        }
     }
 }
 
@@ -249,9 +405,14 @@ impl TensorBackend for MlxBackend {
         Ok(self.alloc(arr))
     }
 
-    fn create_bf16(&mut self, data: &[u16], shape: &[i32]) -> Result<TensorHandle, String> {
-        // bfloat16: store as u16 bytes then cast.  MLX doesn't have a
-        // public from_slice for bf16, so we create an f32 array and convert.
+    fn create_f32_from_bf16_bits(
+        &mut self,
+        data: &[u16],
+        shape: &[i32],
+    ) -> Result<TensorHandle, String> {
+        // TODO(Phase 2): create genuine MLX bf16 array via
+        //   mlx_rs::Array::from_slice_bf16 when available.
+        // For now we convert bf16 bits to f32 and store as f32.
         let f32_vec: Vec<f32> = data
             .iter()
             .map(|&v| {
@@ -263,39 +424,40 @@ impl TensorBackend for MlxBackend {
         Ok(self.alloc(arr))
     }
 
-    fn create_external(
+    fn create_owned_from_bytes(
         &mut self,
         data: &[u8],
         shape: &[i32],
-        dtype: &str,
+        dtype: DType,
     ) -> Result<TensorHandle, String> {
         let arr = match dtype {
-            "float32" | "f32" => {
+            DType::F32 | DType::F16 => {
                 let (prefix, aligned, suffix) = unsafe { data.align_to::<f32>() };
                 if !prefix.is_empty() || !suffix.is_empty() {
-                    return Err("create_external: f32 data not aligned to 4 bytes".into());
+                    return Err("create_owned_from_bytes: f32 data not aligned to 4 bytes".into());
                 }
                 Array::from_slice(aligned, shape)
             }
-            "uint32" | "u32" => {
+            DType::U32 | DType::I32 => {
                 let (prefix, aligned, suffix) = unsafe { data.align_to::<u32>() };
                 if !prefix.is_empty() || !suffix.is_empty() {
-                    return Err("create_external: u32 data not aligned to 4 bytes".into());
+                    return Err("create_owned_from_bytes: u32 data not aligned to 4 bytes".into());
                 }
                 Array::from_slice(aligned, shape)
             }
-            "uint8" | "u8" => {
+            DType::U8 | DType::I8 => {
                 let (prefix, aligned, suffix) = unsafe { data.align_to::<u8>() };
                 if !prefix.is_empty() || !suffix.is_empty() {
-                    return Err("create_external: u8 data alignment failed".into());
+                    return Err("create_owned_from_bytes: u8 data alignment failed".into());
                 }
                 Array::from_slice(aligned, shape)
             }
-            "bfloat16" | "bf16" => {
+            DType::BF16 => {
                 let (prefix, aligned, suffix) = unsafe { data.align_to::<u16>() };
                 if !prefix.is_empty() || !suffix.is_empty() {
-                    return Err("create_external: bf16 data not aligned to 2 bytes".into());
+                    return Err("create_owned_from_bytes: bf16 data not aligned to 2 bytes".into());
                 }
+                // TODO(Phase 2): create genuine MLX bf16 array when available
                 let f32_vec: Vec<f32> = aligned
                     .iter()
                     .map(|&v| {
@@ -304,12 +466,6 @@ impl TensorBackend for MlxBackend {
                     })
                     .collect();
                 Array::from_slice(&f32_vec, shape)
-            }
-            _ => {
-                return Err(format!(
-                    "create_external: unsupported dtype '{}'",
-                    dtype
-                ));
             }
         };
         Ok(self.alloc(arr))
@@ -325,8 +481,23 @@ impl TensorBackend for MlxBackend {
         scales: TensorHandle,
         biases: TensorHandle,
     ) -> Result<TensorHandle, String> {
+        // --- Shape validation ---
+        let x_shape = self.get(x)?.shape();
+        if x_shape.len() < 2 || x_shape[x_shape.len() - 1] as u32 != op.k {
+            return Err(format!(
+                "quantized_matmul: input K dim {} != op.k {}",
+                x_shape.last().copied().unwrap_or(0),
+                op.k,
+            ));
+        }
+
+        // Validate handles (these also check generation)
+        let _w_arr = self.get_weight(w)?;
+        let _s_arr = self.get(scales)?;
+        let _b_arr = self.get(biases)?;
+
         let x_arr = self.get(x)?;
-        let w_arr = self.get(w)?;
+        let w_arr = self.get_weight(w)?;
         let s_arr = self.get(scales)?;
         let b_arr = self.get(biases)?;
 
@@ -452,12 +623,16 @@ impl TensorBackend for MlxBackend {
 
     // ── Lifecycle / inspection ─────────────────────────────────────────
 
-    fn evaluate(&mut self, outputs: &[TensorHandle]) -> Result<EvaluationReceipt, String> {
+    fn evaluate(
+        &mut self,
+        group_id: u64,
+        outputs: &[TensorHandle],
+    ) -> Result<EvaluationReceipt, String> {
         let start = std::time::Instant::now();
 
-        // Evaluate each output tensor.  In MLX, eval() materialises the
-        // lazy computation graph for all dependencies.
-        for &h in outputs {
+        // In MLX, evaluating one output evaluates the full graph for all
+        // outputs. Pick the first output, eval it once.
+        if let Some(&h) = outputs.first() {
             let arr = self.get(h)?;
             arr.eval().map_err(|e| format!("evaluate failed: {:?}", e))?;
         }
@@ -465,21 +640,49 @@ impl TensorBackend for MlxBackend {
         let elapsed = start.elapsed();
         let (active, cached) = self.active_memory();
 
+        let observed = if cfg!(target_os = "macos") {
+            Some("gpu".into())
+        } else {
+            Some("cpu".into())
+        };
+
         Ok(EvaluationReceipt {
-            eval_duration_ns: elapsed.as_nanos() as u64,
-            gpu_duration_ns: None, // Phase 2: track GPU timing separately
+            group_id,
+            graph_build_ns: 0,
+            submit_ns: 0,
+            sync_ns: elapsed.as_nanos() as u64,
+            output_count: outputs.len(),
             active_memory_after: active,
             cache_memory_after: cached,
+            observed_substrate: observed,
         })
     }
 
-    fn read_f32(&self, handle: TensorHandle) -> Result<Vec<f32>, String> {
+    fn read_f32(&self, handle: TensorHandle) -> Result<ReadbackReceipt, String> {
+        let start = std::time::Instant::now();
         let arr = self.get(handle)?;
-        // Ensure the array is materialised
+        // TODO: MLX arrays are always materialised after eval(). There is no
+        // reliable way to check if materialised without calling eval(). For
+        // now we always eval and set forced_eval=true.
         arr.eval().map_err(|e| format!("read_f32 eval failed: {:?}", e))?;
-        arr.try_as_slice::<f32>()
+        let elapsed = start.elapsed();
+        let data = arr
+            .try_as_slice::<f32>()
             .map(|s| s.to_vec())
-            .map_err(|e| format!("read_f32 failed: {:?}", e))
+            .map_err(|e| format!("read_f32 failed: {:?}", e))?;
+
+        let observed = if cfg!(target_os = "macos") {
+            Some("gpu".into())
+        } else {
+            Some("cpu".into())
+        };
+
+        Ok(ReadbackReceipt {
+            data,
+            forced_eval: true,
+            sync_ns: elapsed.as_nanos() as u64,
+            observed_substrate: observed,
+        })
     }
 
     fn shape(&self, handle: TensorHandle) -> Result<Vec<i32>, String> {
@@ -488,14 +691,27 @@ impl TensorBackend for MlxBackend {
     }
 
     fn release(&mut self, handle: TensorHandle) -> Result<(), String> {
-        if handle >= self.arrays.len() {
-            return Err(format!("release: invalid handle {}", handle));
+        let slot = handle.slot as usize;
+        let gen = handle.generation;
+
+        // Validate slot and generation match
+        if slot >= self.arrays.len() {
+            return Err(format!("release: invalid handle (slot={}, gen={})", slot, gen));
         }
-        if self.arrays[handle].is_none() {
-            return Err(format!("release: handle {} already released", handle));
+        let current_gen = self.generations[slot];
+        if gen != current_gen {
+            return Err(format!(
+                "release: stale handle (slot={}, gen={}, current={})",
+                slot, gen, current_gen,
+            ));
         }
-        self.arrays[handle] = None;
-        self.free_list.push(handle);
+        if self.arrays[slot].is_none() {
+            return Err(format!("release: handle already released (slot={}, gen={})", slot, gen));
+        }
+
+        self.arrays[slot] = None;
+        self.generations[slot] += 1;
+        self.free_list.push(slot);
         Ok(())
     }
 
@@ -516,18 +732,13 @@ impl TensorBackend for MlxBackend {
         }
     }
 
-    fn backend_name(&self) -> &'static str {
-        "mlx"
-    }
-
-    fn backend_substrate(&self) -> String {
-        #[cfg(target_os = "macos")]
-        {
-            "gpu".to_string()
-        }
-        #[cfg(not(target_os = "macos"))]
-        {
-            "cpu".to_string()
+    fn backend_capabilities(&self) -> BackendCapabilities {
+        BackendCapabilities {
+            can_gpu: cfg!(target_os = "macos"),
+            can_cpu: true,
+            supports_quantized: true,
+            supports_bf16_native: false,
+            backend_name: self.name.clone(),
         }
     }
 }

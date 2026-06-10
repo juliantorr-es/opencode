@@ -8,6 +8,8 @@ pub mod arena_pool;
 mod bridge;
 pub mod capability;
 pub mod compute_image;
+pub mod compute_lane;
+pub mod compute_service;
 pub mod compile_pipeline;
 pub mod copy_ledger;
 pub mod compile_progress;
