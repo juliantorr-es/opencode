@@ -404,17 +404,15 @@ pub enum EvaluationPolicy {
     /// every `materialized_output` at the region boundary.
     ExplicitRegion,
 
-    /// Insert a materialization request after each operation.  The backend
-    /// may retain asynchronous execution across the boundary.
-    ExplicitOperation {
-        synchronize: bool,
-    },
+    /// Insert a materialization request after each operation.  Synchronization
+    /// is controlled by the boundary's SynchronizationPolicy, not the policy itself.
+    ExplicitOperation,
 
     /// Require completion before the next operation begins, prohibit
     /// deferred dependencies crossing the boundary, and enforce
-    /// deterministic lifetime release.
+    /// deterministic lifetime release.  Synchronization level is derived
+    /// from the boundary's SynchronizationPolicy.
     Eager {
-        synchronize: bool,
         release_inputs_after_use: bool,
         prohibit_deferred_nodes: bool,
     },
@@ -435,21 +433,21 @@ pub fn policy_support(backend: BackendId, policy: &EvaluationPolicy) -> Evaluati
             // MLX: all lazy variants native
             EvaluationPolicy::BackendLazy => EvaluationPolicySupport::Native,
             EvaluationPolicy::ExplicitRegion => EvaluationPolicySupport::Native,
-            EvaluationPolicy::ExplicitOperation { .. } => EvaluationPolicySupport::Native,
+            EvaluationPolicy::ExplicitOperation => EvaluationPolicySupport::Native,
             EvaluationPolicy::Eager { .. } => EvaluationPolicySupport::Emulated,
         },
         1 => match policy {
             // Accelerate: naturally eager, lazy is unsupported
             EvaluationPolicy::BackendLazy => EvaluationPolicySupport::Unsupported,
             EvaluationPolicy::ExplicitRegion => EvaluationPolicySupport::Emulated,
-            EvaluationPolicy::ExplicitOperation { .. } => EvaluationPolicySupport::Native,
+            EvaluationPolicy::ExplicitOperation => EvaluationPolicySupport::Native,
             EvaluationPolicy::Eager { .. } => EvaluationPolicySupport::Native,
         },
         2 => match policy {
             // Core ML: region execution native, per-operation unsupported
             EvaluationPolicy::BackendLazy => EvaluationPolicySupport::Unsupported,
             EvaluationPolicy::ExplicitRegion => EvaluationPolicySupport::Native,
-            EvaluationPolicy::ExplicitOperation { .. } => EvaluationPolicySupport::Unsupported,
+            EvaluationPolicy::ExplicitOperation => EvaluationPolicySupport::Unsupported,
             EvaluationPolicy::Eager { .. } => EvaluationPolicySupport::Unsupported,
         },
         _ => EvaluationPolicySupport::Unsupported,
@@ -463,6 +461,12 @@ pub enum SynchronizationPolicy {
     Barrier,
     Stream,
     Device,
+}
+
+impl SynchronizationPolicy {
+    pub fn is_synchronized(&self) -> bool {
+        !matches!(self, SynchronizationPolicy::None)
+    }
 }
 
 /// One authoritative execution boundary — the single source of truth
@@ -592,10 +596,7 @@ pub fn validate_boundary_plans(
         // synchronized in this boundary is allowed to be consumed downstream.
         if let EvaluationPolicy::Eager { prohibit_deferred_nodes: true, .. } = &plan.policy {
 
-            let is_synchronized = match &plan.policy {
-                EvaluationPolicy::Eager { synchronize: true, .. } => true,
-                _ => false,
-            };
+            let is_synchronized = plan.synchronization.is_synchronized();
             for edge in ctx.dependency_edges {
                 let from_boundary = op_to_boundary.get(&edge.from);
                 let to_boundary = op_to_boundary.get(&edge.to);
@@ -609,7 +610,15 @@ pub fn validate_boundary_plans(
                         .get(&plan.group_id)
                         .map(|outputs| outputs.contains(&edge.via_tensor))
                         .unwrap_or(false);
-                    if !(output_is_materialized && is_synchronized) {
+                    // Release-liveness: consumed downstream must not be released here
+                    let released_here = plan.release_after.contains(&edge.via_tensor);
+                    if released_here {
+                        errors.push(PlanValidationError::EagerWithDeferredDependency {
+                            op: edge.from,
+                            via: edge.via_tensor,
+                            crosses_boundary_to: *to_boundary.unwrap(),
+                        });
+                    } else if !(output_is_materialized && is_synchronized) {
                         errors.push(PlanValidationError::EagerWithDeferredDependency {
                             op: edge.from,
                             via: edge.via_tensor,
@@ -651,22 +660,17 @@ pub fn compute_boundary_digest(plan: &ExecutionBoundaryPlan) -> EvidenceDigest {
         buf.extend_from_slice(&t.0.to_le_bytes());
     }
 
-    // policy discriminant + variant fields
-    let policy_disc: u8 = match &plan.policy {
-        EvaluationPolicy::BackendLazy => 0,
-        EvaluationPolicy::ExplicitRegion => 1,
-        EvaluationPolicy::ExplicitOperation { synchronize } => {
-            buf.push(*synchronize as u8);
-            2
-        }
-        EvaluationPolicy::Eager { synchronize, release_inputs_after_use, prohibit_deferred_nodes } => {
-            buf.push(*synchronize as u8);
+    // Policy discriminant (4 bits) + variant fields for Eager
+    match &plan.policy {
+        EvaluationPolicy::BackendLazy => buf.push(0u8),
+        EvaluationPolicy::ExplicitRegion => buf.push(1u8),
+        EvaluationPolicy::ExplicitOperation => buf.push(2u8),
+        EvaluationPolicy::Eager { release_inputs_after_use, prohibit_deferred_nodes } => {
+            buf.push(3u8);
             buf.push(*release_inputs_after_use as u8);
             buf.push(*prohibit_deferred_nodes as u8);
-            3
         }
-    };
-    buf.push(policy_disc);
+    }
 
     // synchronization discriminant
     let sync_disc: u8 = match &plan.synchronization {

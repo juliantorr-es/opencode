@@ -67,21 +67,21 @@ fn xfer(from: BackendId, to: BackendId) -> TensorTransferPlan {
 fn mlx_supports_lazy_and_region() {
     assert_eq!(policy_support(mlx(), &EvaluationPolicy::BackendLazy), EvaluationPolicySupport::Native);
     assert_eq!(policy_support(mlx(), &EvaluationPolicy::ExplicitRegion), EvaluationPolicySupport::Native);
-    assert_eq!(policy_support(mlx(), &EvaluationPolicy::ExplicitOperation { synchronize: true }), EvaluationPolicySupport::Native);
-    assert_eq!(policy_support(mlx(), &EvaluationPolicy::Eager { synchronize: true, release_inputs_after_use: true, prohibit_deferred_nodes: true }), EvaluationPolicySupport::Emulated);
+    assert_eq!(policy_support(mlx(), &EvaluationPolicy::ExplicitOperation), EvaluationPolicySupport::Native);
+    assert_eq!(policy_support(mlx(), &EvaluationPolicy::Eager { release_inputs_after_use: true, prohibit_deferred_nodes: true }), EvaluationPolicySupport::Emulated);
 }
 
 #[test]
 fn accelerate_is_natively_eager() {
     assert_eq!(policy_support(accel(), &EvaluationPolicy::BackendLazy), EvaluationPolicySupport::Unsupported);
-    assert_eq!(policy_support(accel(), &EvaluationPolicy::Eager { synchronize: true, release_inputs_after_use: false, prohibit_deferred_nodes: false }), EvaluationPolicySupport::Native);
+    assert_eq!(policy_support(accel(), &EvaluationPolicy::Eager { release_inputs_after_use: false, prohibit_deferred_nodes: false }), EvaluationPolicySupport::Native);
 }
 
 #[test]
 fn coreml_supports_only_region() {
     assert_eq!(policy_support(coreml(), &EvaluationPolicy::BackendLazy), EvaluationPolicySupport::Unsupported);
     assert_eq!(policy_support(coreml(), &EvaluationPolicy::ExplicitRegion), EvaluationPolicySupport::Native);
-    assert_eq!(policy_support(coreml(), &EvaluationPolicy::ExplicitOperation { synchronize: true }), EvaluationPolicySupport::Unsupported);
+    assert_eq!(policy_support(coreml(), &EvaluationPolicy::ExplicitOperation), EvaluationPolicySupport::Unsupported);
 }
 
 // ── Plan validation ───────────────────────────────────────────────────────
@@ -170,7 +170,7 @@ fn eager_without_deferred_deps_is_valid() {
     // Eager with no crossing deps must pass
     let plans = vec![
         make_boundary(0, mlx(), &[1, 2], &[10],
-            EvaluationPolicy::Eager { synchronize: true, release_inputs_after_use: true, prohibit_deferred_nodes: true },
+            EvaluationPolicy::Eager { release_inputs_after_use: true, prohibit_deferred_nodes: true },
             &[]),
     ];
     let ctx = BoundaryValidationContext {
@@ -189,7 +189,7 @@ fn eager_with_crossing_deferred_dep_rejected() {
     // Tensor 99 is NOT in materialized_outputs [10]
     let plans = vec![
         make_boundary(0, mlx(), &[1], &[10],
-            EvaluationPolicy::Eager { synchronize: true, release_inputs_after_use: true, prohibit_deferred_nodes: true },
+            EvaluationPolicy::Eager { release_inputs_after_use: true, prohibit_deferred_nodes: true },
             &[]),
         make_boundary(1, mlx(), &[2], &[11],
             EvaluationPolicy::ExplicitRegion, &[]),
@@ -207,25 +207,6 @@ fn eager_with_crossing_deferred_dep_rejected() {
 }
 
 #[test]
-fn eager_materialized_crossing_allowed() {
-    // Tensor 10 IS materialized and boundary is synchronized
-    let plans = vec![
-        make_boundary(0, mlx(), &[1], &[10],
-            EvaluationPolicy::Eager { synchronize: true, release_inputs_after_use: true, prohibit_deferred_nodes: true },
-            &[]),
-        make_boundary(1, mlx(), &[2], &[11],
-            EvaluationPolicy::ExplicitRegion, &[]),
-    ];
-    let ctx = BoundaryValidationContext {
-        expected_operations: &[],
-        dependency_edges: &[
-            DependencyEdge { from: op(1), to: op(2), via_tensor: tid(10) },
-        ],
-        transfer_plans: &[],
-    };
-    assert!(validate_boundary_plans(&plans, &ctx).is_ok(),
-        "materialized+synchronized crossing output must be allowed");
-}
 
 // ── Boundary digest ───────────────────────────────────────────────────────
 

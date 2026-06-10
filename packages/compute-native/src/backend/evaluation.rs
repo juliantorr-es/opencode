@@ -49,7 +49,6 @@ pub fn sweep_profiles() -> Vec<EvaluationSweepProfile> {
         EvaluationSweepProfile {
             name: "EVAL-P3".into(),
             policy: EvaluationPolicy::Eager {
-                synchronize: true,
                 release_inputs_after_use: true,
                 prohibit_deferred_nodes: true,
             },
