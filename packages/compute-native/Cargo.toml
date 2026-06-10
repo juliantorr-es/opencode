@@ -9,6 +9,10 @@ license = "AGPL-3.0-only"
 crate-type = ["cdylib", "rlib"]
 
 [[bin]]
+name = "tribunus-coreml-decode-attribution"
+path = "src/bin/tribunus-coreml-decode-attribution.rs"
+
+[[bin]]
 name = "tribunus-compute-worker"
 path = "src/bin/tribunus-compute-worker.rs"
 

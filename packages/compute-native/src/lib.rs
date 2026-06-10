@@ -15,6 +15,7 @@ pub mod compile_pipeline;
 pub mod copy_ledger;
 pub mod compile_progress;
 pub mod compute_ir;
+pub mod decode_attribution;
 pub mod compile_state;
 pub mod config;
 pub mod projection_identity;

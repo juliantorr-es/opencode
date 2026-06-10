@@ -1,6 +1,14 @@
 // Tribunus Core ML execution bridge — stateless prediction path.
 // Stateful path requires macOS 15 SDK; will be layered in Phase 5.
 
+#import <os/log.h>
+#import <os/signpost.h>
+#import <os/signpost.h>
+
+// OSLog handle for signpost instrumentation (visible in Instruments).
+// Separate from JSONL receipts — for interactive profiling, not automated analysis.
+static os_log_t tribunus_coreml_log = OS_LOG_CREATE("com.tribunus.compute", "coreml_bridge");
+
 #import <CoreML/CoreML.h>
 #import <Foundation/Foundation.h>
 #import <CoreVideo/CoreVideo.h>
@@ -56,6 +64,7 @@ static NSString* _assertFeature(MLFeatureDescription* fd,
 int tribunus_coreml_load_model(void** out_model,
                                 const char* model_path,
                                 int64_t compute_units) {
+    os_signpost_interval_begin(tribunus_coreml_log, 0, "load_model", "path=%s units=%lld", model_path, compute_units);
     if (!out_model || !model_path) return -1;
     *out_model = NULL;
 
@@ -76,6 +85,7 @@ int tribunus_coreml_load_model(void** out_model,
                 fprintf(stderr, "coreml_load_model: %s\n",
                         error.localizedDescription.UTF8String);
             }
+            os_signpost_interval_end(tribunus_coreml_log, 0, "load_model", "error=%s", error ? error.localizedDescription.UTF8String : "nil");
             return -2;
         }
 
@@ -97,11 +107,13 @@ int tribunus_coreml_load_model(void** out_model,
 
         *out_model = (__bridge_retained void*)model;
     } @catch (NSException* exc) {
+        os_signpost_interval_end(tribunus_coreml_log, 0, "load_model", "exception=%s", exc.description.UTF8String);
         fprintf(stderr, "coreml_load_model EXCEPTION: %s\n",
                 exc.description.UTF8String);
         return -10;
     }
     } // @autoreleasepool
+    os_signpost_interval_end(tribunus_coreml_log, 0, "load_model", "ok");
     return 0;
 }
 
@@ -120,8 +132,12 @@ int tribunus_coreml_predict(
     const char* output_name,
     const TribunusArenaInfo* output_arena) {
 
-    if (!model_ptr || !input_name || !input_arena || !output_name || !output_arena)
+    os_signpost_interval_begin(tribunus_coreml_log, 0, "predict", "model=%p", model_ptr);
+
+    if (!model_ptr || !input_name || !input_arena || !output_name || !output_arena) {
+        os_signpost_interval_end(tribunus_coreml_log, 0, "predict", "null_args");
         return -1;
+    }
 
     @autoreleasepool {
     @try {
@@ -205,9 +221,11 @@ int tribunus_coreml_predict(
     } @catch (NSException* exc) {
         fprintf(stderr, "coreml_predict EXCEPTION: %s\n",
                 exc.description.UTF8String);
+        os_signpost_interval_end(tribunus_coreml_log, 0, "predict", "exception=%s", exc.description.UTF8String);
         return -20;
     }
     } // @autoreleasepool
+    os_signpost_interval_end(tribunus_coreml_log, 0, "predict", "ok");
     return 0;
 }
 
