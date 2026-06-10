@@ -22,6 +22,7 @@ import { registerOmpControlPlaneTools } from "./domains/omp/control-plane.js"
 import { registerOmpRepoIntelTools } from "./domains/omp/repo-intelligence.js"
 import { registerCrossCuttingTools } from "./tools/index.js"
 import { registerArtifactTools } from "./domains/artifacts/index.js"
+import { registerPublicationTools } from "./domains/publication/index.js"
 
 registerGitHubTools()
 registerComputeTools()
@@ -31,5 +32,6 @@ registerOmpControlPlaneTools()
 registerOmpRepoIntelTools()
 registerCrossCuttingTools()
 registerArtifactTools()
+registerPublicationTools()
 
 await startServer(server)

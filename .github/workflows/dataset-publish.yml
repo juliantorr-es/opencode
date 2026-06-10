@@ -1,0 +1,45 @@
+name: Dataset Publication
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version (e.g. 0.1.0)'
+        required: true
+        default: '0.1.0'
+      stage_only:
+        description: 'Stage release candidate without publishing'
+        type: boolean
+        default: true
+  push:
+    tags:
+      - 'dataset-v*'
+
+jobs:
+  build-and-stage:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: '1.3.14'
+
+      - name: Build release candidate
+        run: |
+          bun run packages/tribunus-mcp/src/index.ts &
+          sleep 3
+        env:
+          HF_DATASET_REPO: Tribunus-dev/compute-kernel-evidence
+          HF_PUBLISH_TOKEN: ${{ secrets.HF_PUBLISH_TOKEN }}
+          TRIBUNUS_STORE_DIR: ${{ github.workspace }}/state/pglite
+
+      - name: Upload candidate as Actions artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dataset-release-${{ github.event.inputs.version || github.ref_name }}
+          path: |
+            release-*/
+            manifest.json
+            README.md
+          retention-days: 30

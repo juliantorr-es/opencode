@@ -12,6 +12,7 @@ export type Capability =
   | "repository:read"
   | "repository:index"
   | "artifact:write"
+  | "publication:write"
   | "artifact:verify"
   | "control-plane:read"
   | "control-plane:write"
