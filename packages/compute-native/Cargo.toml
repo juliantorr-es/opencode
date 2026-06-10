@@ -87,3 +87,29 @@ debug = false
 debug-assertions = false
 overflow-checks = false
 strip = "symbols"
+
+[profile.inference-research]
+inherits = "release"
+opt-level = 3
+debug = "full"
+split-debuginfo = "unpacked"
+strip = "none"
+debug-assertions = false
+overflow-checks = false
+lto = "thin"
+codegen-units = 4
+incremental = false
+panic = "unwind"
+
+[profile.inference-evidence]
+inherits = "release"
+opt-level = 3
+debug = "full"
+split-debuginfo = "unpacked"
+strip = "none"
+debug-assertions = false
+overflow-checks = false
+lto = true
+codegen-units = 1
+incremental = false
+panic = "unwind"
