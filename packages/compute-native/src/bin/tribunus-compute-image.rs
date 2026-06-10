@@ -448,11 +448,13 @@ fn cmd_infer(args: &[String]) -> Result<(), String> {
 
 fn cmd_decode_one(args: &[String]) -> Result<(), String> {
     let mut image: Option<String> = None;
+    let mut arm = String::from("A");
     let mut layout_policy = tribunus_compute_native::profiled_executor::LayoutPolicy::FrozenExisting;
     let mut i = 0;
     while i < args.len() {
         match args[i].as_str() {
             "--image" => { i += 1; if i < args.len() { image = Some(args[i].clone()); } }
+            "--arm" => { i += 1; if i < args.len() { arm = args[i].clone(); } }
             "--layout-policy" => {
                 i += 1;
                 if i < args.len() {
