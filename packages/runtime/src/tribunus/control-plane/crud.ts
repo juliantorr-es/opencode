@@ -24,10 +24,12 @@ import { ALL_SCHEMA, PRAGMA_FOREIGN_KEYS_ON } from "./schema";
 // ============================================================================
 
 let db: Database | null = null;
+let currentDbPath: string = "tribunus-control-plane.db";
 
 function getDb(dbPath: string = "tribunus-control-plane.db"): Database {
-  if (!db || db.name !== dbPath) {
+  if (!db || currentDbPath !== dbPath) {
     db = new Database(dbPath, { create: true });
+    currentDbPath = dbPath;
     initializeSchema(db);
   }
   return db;
@@ -63,7 +65,7 @@ function generateId(): string {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
 }
 
-function generateReceipt<T>(
+function generateReceipt<T extends Record<string, unknown>>(
   operation: string,
   entityType: string,
   entityId: string,
@@ -120,7 +122,7 @@ export function tribunusProjectCreate(
     const existing = database.query("SELECT id FROM projects WHERE slug = ?").get(project.slug);
     if (existing) {
       return generateReceipt("create", "project", id, false, undefined, 
-        `DUPLICATE_SLUG: Project with slug '${project.slug}' already exists (${existing.id})`,
+        `DUPLICATE_SLUG: Project with slug '${project.slug}' already exists (${(existing as { id: string }).id})`,
         "fail");
     }
 
@@ -189,7 +191,7 @@ export function tribunusCampaignCreate(
     ).get(campaign.projectId, campaign.slug);
     if (existing) {
       return generateReceipt("create", "campaign", id, false, undefined,
-        `DUPLICATE_SLUG: Campaign with slug '${campaign.slug}' already exists in project (${existing.id})`,
+        `DUPLICATE_SLUG: Campaign with slug '${campaign.slug}' already exists in project (${(existing as { id: string }).id})`,
         "fail");
     }
 
@@ -265,7 +267,7 @@ export function tribunusMissionCreate(
     ).get(mission.campaignId, mission.slug);
     if (existing) {
       return generateReceipt("create", "mission", id, false, undefined,
-        `DUPLICATE_SLUG: Mission with slug '${mission.slug}' already exists in campaign (${existing.id})`,
+        `DUPLICATE_SLUG: Mission with slug '${mission.slug}' already exists in campaign (${(existing as { id: string }).id})`,
         "fail");
     }
 
@@ -355,7 +357,7 @@ export function tribunusLaneCreate(
     ).get(lane.missionId, lane.slug);
     if (existing) {
       return generateReceipt("create", "lane", id, false, undefined,
-        `DUPLICATE_SLUG: Lane with slug '${lane.slug}' already exists in mission (${existing.id})`,
+        `DUPLICATE_SLUG: Lane with slug '${lane.slug}' already exists in mission (${(existing as { id: string }).id})`,
         "fail");
     }
 
@@ -387,7 +389,7 @@ export function tribunusLaneCreate(
     const created = database.query("SELECT * FROM lanes WHERE id = ?").get(id) as unknown as Lane;
     if (created) {
       created.isReadOnly = Boolean(created.isReadOnly);
-      created.writePaths = created.writePaths ? JSON.parse(created.writePaths) : [];
+      created.writePaths = created.writePaths ? JSON.parse(created.writePaths as unknown as string) : [];
     }
     return generateReceipt("create", "lane", id, true, created, undefined, "pass");
   } catch (error) {
@@ -400,7 +402,7 @@ export function tribunusLaneGet(id: string, dbPath?: string): Lane | null {
   const row = database.query("SELECT * FROM lanes WHERE id = ?").get(id) as unknown as Lane | null;
   if (row) {
     row.isReadOnly = Boolean(row.isReadOnly);
-    row.writePaths = row.writePaths ? JSON.parse(row.writePaths) : [];
+    row.writePaths = row.writePaths ? JSON.parse(row.writePaths as unknown as string) : [];
   }
   return row;
 }
@@ -410,7 +412,7 @@ export function tribunusLaneGetBySlug(missionId: string, slug: string, dbPath?: 
   const row = database.query("SELECT * FROM lanes WHERE missionId = ? AND slug = ?").get(missionId, slug) as unknown as Lane | null;
   if (row) {
     row.isReadOnly = Boolean(row.isReadOnly);
-    row.writePaths = row.writePaths ? JSON.parse(row.writePaths) : [];
+    row.writePaths = row.writePaths ? JSON.parse(row.writePaths as unknown as string) : [];
   }
   return row;
 }
@@ -426,7 +428,7 @@ export function tribunusLaneList(missionId?: string, dbPath?: string): Lane[] {
   return rows.map(row => ({
     ...row,
     isReadOnly: Boolean(row.isReadOnly),
-    writePaths: row.writePaths ? JSON.parse(row.writePaths) : [],
+    writePaths: row.writePaths ? JSON.parse(row.writePaths as unknown as string) : [],
   }));
 }
 
@@ -471,7 +473,7 @@ export function tribunusTaskCreate(
     ).get(task.missionId, task.slug);
     if (existing) {
       return generateReceipt("create", "task", id, false, undefined,
-        `DUPLICATE_SLUG: Task with slug '${task.slug}' already exists in mission (${existing.id})`,
+        `DUPLICATE_SLUG: Task with slug '${task.slug}' already exists in mission (${(existing as { id: string }).id})`,
         "fail");
     }
 
@@ -637,7 +639,7 @@ export function tribunusCheckpointGet(id: string, dbPath?: string): Checkpoint |
   const row = database.query("SELECT * FROM checkpoints WHERE id = ?").get(id) as unknown as Checkpoint | null;
   if (row) {
     row.stateSnapshot = JSON.parse(row.stateSnapshot as unknown as string);
-    row.memoryResults = row.memoryResults ? JSON.parse(row.memoryResults) : undefined;
+    row.memoryResults = row.memoryResults ? JSON.parse(row.memoryResults as unknown as string) : undefined;
   }
   return row;
 }
@@ -667,7 +669,7 @@ export function tribunusCheckpointList(
   return rows.map(row => ({
     ...row,
     stateSnapshot: JSON.parse(row.stateSnapshot as unknown as string),
-    memoryResults: row.memoryResults ? JSON.parse(row.memoryResults) : undefined,
+    memoryResults: row.memoryResults ? JSON.parse(row.memoryResults as unknown as string) : undefined,
   }));
 }
 
@@ -726,9 +728,9 @@ export function tribunusReceiptCreate(
     const created = database.query("SELECT * FROM receipts WHERE id = ?").get(id) as unknown as ReceiptType;
     if (created) {
       created.success = Boolean(created.success);
-      created.previousState = created.previousState ? JSON.parse(created.previousState) : undefined;
-      created.nextState = created.nextState ? JSON.parse(created.nextState) : undefined;
-      created.payload = created.payload ? JSON.parse(created.payload) : undefined;
+      created.previousState = created.previousState ? JSON.parse(created.previousState as unknown as string) : undefined;
+      created.nextState = created.nextState ? JSON.parse(created.nextState as unknown as string) : undefined;
+      created.payload = created.payload ? JSON.parse(created.payload as unknown as string) : undefined;
     }
     // Return the actual stored receipt, not a synthetic one.
     // The stored row carries the caller's verdict, actor, source, and error.
@@ -760,9 +762,9 @@ export function tribunusReceiptGet(id: string, dbPath?: string): ReceiptType | n
   const row = database.query("SELECT * FROM receipts WHERE id = ?").get(id) as unknown as ReceiptType | null;
   if (row) {
     row.success = Boolean(row.success);
-    row.previousState = row.previousState ? JSON.parse(row.previousState) : undefined;
-    row.nextState = row.nextState ? JSON.parse(row.nextState) : undefined;
-    row.payload = row.payload ? JSON.parse(row.payload) : undefined;
+    row.previousState = row.previousState ? JSON.parse(row.previousState as unknown as string) : undefined;
+    row.nextState = row.nextState ? JSON.parse(row.nextState as unknown as string) : undefined;
+    row.payload = row.payload ? JSON.parse(row.payload as unknown as string) : undefined;
   }
   return row;
 }
@@ -787,9 +789,9 @@ export function tribunusReceiptList(
   return rows.map(row => ({
     ...row,
     success: Boolean(row.success),
-    previousState: row.previousState ? JSON.parse(row.previousState) : undefined,
-    nextState: row.nextState ? JSON.parse(row.nextState) : undefined,
-    payload: row.payload ? JSON.parse(row.payload) : undefined,
+    previousState: row.previousState ? JSON.parse(row.previousState as unknown as string) : undefined,
+    nextState: row.nextState ? JSON.parse(row.nextState as unknown as string) : undefined,
+    payload: row.payload ? JSON.parse(row.payload as unknown as string) : undefined,
   }));
 }
 
@@ -819,7 +821,7 @@ export function tribunusMemoryLinkCreate(
     ).get(link.entityType, link.entityId, link.memoryBank, link.memoryId);
     if (existing) {
       return generateReceipt("create", "memory_link", id, false, undefined,
-        `DUPLICATE_LINK: Memory link already exists (${existing.id})`,
+        `DUPLICATE_LINK: Memory link already exists (${(existing as { id: string }).id})`,
         "fail");
     }
 
@@ -938,9 +940,9 @@ export function tribunusEventList(
 
   return rows.map(row => ({
     ...row,
-    previousState: row.previousState ? JSON.parse(row.previousState) : undefined,
-    newState: row.newState ? JSON.parse(row.newState) : undefined,
-    changedFields: row.changedFields ? JSON.parse(row.changedFields) : undefined,
+    previousState: row.previousState ? JSON.parse(row.previousState as unknown as string) : undefined,
+    newState: row.newState ? JSON.parse(row.newState as unknown as string) : undefined,
+    changedFields: row.changedFields ? JSON.parse(row.changedFields as unknown as string) : undefined,
   }));
 }
 
@@ -1219,7 +1221,7 @@ export function tribunusTaskTransition(
     const setClauses = Object.keys(updates).map(k => `${k} = ?`).join(", ");
     const values = Object.values(updates);
 
-    database.prepare(`UPDATE tasks SET ${setClauses} WHERE id = ?`).run(...values, taskId);
+    database.prepare(`UPDATE tasks SET ${setClauses} WHERE id = ?`).run(...(values as unknown as string[]), taskId);
 
     const updated = database.query("SELECT * FROM tasks WHERE id = ?").get(taskId) as Task;
 
