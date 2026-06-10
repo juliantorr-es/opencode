@@ -5,57 +5,62 @@
 
 use tribunus_compute_native::backend::DType;
 use tribunus_compute_native::backend::routing::{
-    BackendId, PhysicalLayout, TensorId, TensorMaterializationId,
+    BackendId, LogicalShape, PhysicalLayout, TensorId, TensorMaterializationId,
     TensorTransferReceipt, TensorVersion,
 };
 use tribunus_compute_native::backend::tensor_registry::{
-    MaterializationRecord, MaterializationState, MaterializedTensor,
-    TensorRegistry, TensorTransferRecord,
+    MaterializationRecord, MaterializationSequence, MaterializationState,
+    MaterializedTensor, TensorContract, TensorMutability, TensorRegistry,
+    TensorRole, TensorTransferRecord,
 };
 
 // ── Fixtures ──────────────────────────────────────────────────────────────
 
-fn mlx_id() -> BackendId {
-    BackendId(0)
-}
-fn accelerate_id() -> BackendId {
-    BackendId(1)
-}
-fn coreml_id() -> BackendId {
-    BackendId(2)
-}
+fn mlx_id() -> BackendId { BackendId(0) }
+fn accelerate_id() -> BackendId { BackendId(1) }
+fn coreml_id() -> BackendId { BackendId(2) }
 
-fn f32_layout() -> PhysicalLayout {
-    PhysicalLayout::RowMajor
+fn f32_layout() -> PhysicalLayout { PhysicalLayout::RowMajor }
+
+fn small_contract() -> TensorContract {
+    TensorContract {
+        logical_shape: LogicalShape { dims: vec![2, 3] },
+        canonical_dtype: DType::F32,
+        mutability: TensorMutability::Mutable,
+        role: TensorRole::Activation,
+    }
 }
 
 fn tensor(id: u64) -> MaterializedTensor {
-    MaterializedTensor::new(TensorId(id), mlx_id())
+    MaterializedTensor::new(TensorId(id), small_contract(), mlx_id())
 }
+
+fn seq() -> MaterializationSequence { MaterializationSequence::new() }
 
 // ── Version-bound materializations ────────────────────────────────────────
 
 #[test]
 fn mutation_invalidates_old_materializations() {
     let mut t = tensor(1);
-    t.add_materialization(mlx_id(), 100, f32_layout(), DType::F32);
-    t.add_materialization(accelerate_id(), 200, f32_layout(), DType::F32);
+    let mut sq = seq();
+    t.add_materialization(&mut sq, mlx_id(), 100, f32_layout(), DType::F32);
+    t.add_materialization(&mut sq, accelerate_id(), 200, f32_layout(), DType::F32);
 
     assert!(t.is_fresh(mlx_id()));
     assert!(t.is_fresh(accelerate_id()));
 
-    // Advance version — MLX produces new authority
-    let (new_ver, invalidated) =
-        t.advance_version(mlx_id(), 101, f32_layout(), DType::F32);
+    let receipt = t.advance_version(&mut sq, mlx_id(), 101, f32_layout(), DType::F32);
 
-    assert_eq!(new_ver, TensorVersion(1));
+    assert_eq!(receipt.new_version, TensorVersion(1));
     assert_eq!(t.version, TensorVersion(1));
-    // MLX should still be fresh (it IS the authority)
+    assert_eq!(receipt.previous_version, TensorVersion(0));
+    assert_eq!(receipt.previous_authority, mlx_id());
+    assert_eq!(receipt.new_authority, mlx_id());
+
     assert!(t.is_fresh(mlx_id()));
-    // Accelerate should now be stale
     assert!(!t.is_fresh(accelerate_id()));
-    // At least one invalidated record for Accelerate
-    let acc_stale = invalidated
+
+    let acc_stale = receipt.invalidated
         .iter()
         .find(|r| r.backend_id == accelerate_id());
     assert!(acc_stale.is_some(), "accelerate must be in invalidated set");
@@ -65,12 +70,12 @@ fn mutation_invalidates_old_materializations() {
 #[test]
 fn stale_handle_rejected() {
     let mut t = tensor(2);
-    t.add_materialization(mlx_id(), 100, f32_layout(), DType::F32);
-    t.add_materialization(accelerate_id(), 200, f32_layout(), DType::F32);
+    let mut sq = seq();
+    t.add_materialization(&mut sq, mlx_id(), 100, f32_layout(), DType::F32);
+    t.add_materialization(&mut sq, accelerate_id(), 200, f32_layout(), DType::F32);
 
-    t.advance_version(mlx_id(), 101, f32_layout(), DType::F32);
+    t.advance_version(&mut sq, mlx_id(), 101, f32_layout(), DType::F32);
 
-    // Accelerate handle should now be rejected
     let handle = t.get_handle(accelerate_id());
     assert!(handle.is_none(), "stale accelerate handle must be rejected");
 }
@@ -78,19 +83,35 @@ fn stale_handle_rejected() {
 #[test]
 fn authority_transition_increments_exactly_once() {
     let mut t = tensor(3);
-    t.add_materialization(mlx_id(), 100, f32_layout(), DType::F32);
+    let mut sq = seq();
+    t.add_materialization(&mut sq, mlx_id(), 100, f32_layout(), DType::F32);
 
     assert_eq!(t.version, TensorVersion(0));
 
-    let (v1, _) = t.advance_version(accelerate_id(), 200, f32_layout(), DType::F32);
-    assert_eq!(v1, TensorVersion(1));
+    let r1 = t.advance_version(&mut sq, accelerate_id(), 200, f32_layout(), DType::F32);
+    assert_eq!(r1.new_version, TensorVersion(1));
     assert_eq!(t.version, TensorVersion(1));
     assert_eq!(t.authoritative_backend, accelerate_id());
 
-    let (v2, _) = t.advance_version(mlx_id(), 101, f32_layout(), DType::F32);
-    assert_eq!(v2, TensorVersion(2));
+    let r2 = t.advance_version(&mut sq, mlx_id(), 101, f32_layout(), DType::F32);
+    assert_eq!(r2.new_version, TensorVersion(2));
     assert_eq!(t.version, TensorVersion(2));
     assert_eq!(t.authoritative_backend, mlx_id());
+}
+
+#[test]
+fn authority_transition_replaced_authoritative_preserved() {
+    let mut t = tensor(100);
+    let mut sq = seq();
+    t.add_materialization(&mut sq, mlx_id(), 100, f32_layout(), DType::F32);
+
+    // MLX was the authoritative backend; transition to Accelerate
+    let receipt = t.advance_version(&mut sq, accelerate_id(), 200, f32_layout(), DType::F32);
+    // The old MLX materialization should be preserved in replaced_authoritative
+    assert!(receipt.replaced_authoritative.is_some(), "old authoritative must be preserved");
+    let old = receipt.replaced_authoritative.unwrap();
+    assert_eq!(old.backend_id, mlx_id());
+    assert_eq!(old.backend_handle, 100);
 }
 
 // ── Registry contracts ────────────────────────────────────────────────────
@@ -108,15 +129,24 @@ fn duplicate_tensor_registration_fails() {
 }
 
 #[test]
-fn explicit_replace_succeeds() {
+fn version_mutation_only_through_advance_version() {
+    // adv_version is the only way to mutate version;
+    // there is no replace() method.
     let mut reg = TensorRegistry::new();
-    let t1 = tensor(99);
-    reg.register(t1).expect("first register");
-    assert_eq!(reg.get(TensorId(99)).unwrap().version, TensorVersion(0));
+    let t = tensor(99);
+    reg.register(t).expect("first register");
 
-    let t2 = tensor(99);
-    reg.replace(t2);
-    assert_eq!(reg.get(TensorId(99)).unwrap().version, TensorVersion(0));
+    let stored = reg.get(TensorId(99)).unwrap();
+    assert_eq!(stored.version, TensorVersion(0));
+    assert_eq!(stored.authoritative_backend, mlx_id());
+
+    // Mutate through advance_version on the registry-owned tensor
+    let mut sq = seq();
+    let mut t_mut = reg.get_mut(TensorId(99)).unwrap();
+    let receipt = t_mut.advance_version(&mut sq, accelerate_id(), 300, f32_layout(), DType::F32);
+    assert_eq!(receipt.new_version, TensorVersion(1));
+    assert_eq!(t_mut.version, TensorVersion(1));
+    assert_eq!(t_mut.authoritative_backend, accelerate_id());
 }
 
 #[test]
@@ -138,10 +168,7 @@ fn transfer_record_preserves_exact_layouts_and_dtypes() {
         source_backend: mlx_id(),
         destination_backend: accelerate_id(),
         source_layout: PhysicalLayout::RowMajor,
-        destination_layout: PhysicalLayout::PackedU32 {
-            group_size: 128,
-            bits: 4,
-        },
+        destination_layout: PhysicalLayout::PackedU32 { group_size: 128, bits: 4 },
         source_dtype: DType::F32,
         destination_dtype: DType::U32,
         bytes_read: 4096,
@@ -151,7 +178,6 @@ fn transfer_record_preserves_exact_layouts_and_dtypes() {
         zero_copy: false,
     };
 
-    // Verify all fields survive round-trip
     assert_eq!(record.tensor_id, TensorId(1));
     assert_eq!(record.tensor_version, TensorVersion(3));
     assert_eq!(record.source_backend, mlx_id());
@@ -168,14 +194,11 @@ fn transfer_record_preserves_exact_layouts_and_dtypes() {
 #[test]
 fn version_mismatch_means_stale() {
     let mut t = tensor(5);
-    t.add_materialization(mlx_id(), 100, f32_layout(), DType::F32);
+    let mut sq = seq();
+    t.add_materialization(&mut sq, mlx_id(), 100, f32_layout(), DType::F32);
+    t.add_materialization(&mut sq, accelerate_id(), 200, f32_layout(), DType::F32);
 
-    // Manually create a situation where a materialization's version
-    // doesn't match the logical tensor's version
-    t.add_materialization(accelerate_id(), 200, f32_layout(), DType::F32);
-    // Bump version without formally recording an accelerate materialization
-    t.advance_version(mlx_id(), 101, f32_layout(), DType::F32);
-    // Old accelerate materialization should be stale
+    t.advance_version(&mut sq, mlx_id(), 101, f32_layout(), DType::F32);
     assert!(!t.is_fresh(accelerate_id()));
 }
 
@@ -184,7 +207,8 @@ fn version_mismatch_means_stale() {
 #[test]
 fn add_materialization_makes_fresh() {
     let mut t = tensor(6);
-    let rec = t.add_materialization(mlx_id(), 100, f32_layout(), DType::F32);
+    let mut sq = seq();
+    let rec = t.add_materialization(&mut sq, mlx_id(), 100, f32_layout(), DType::F32);
     assert_eq!(rec.state, MaterializationState::Fresh);
     assert_eq!(rec.tensor_version, t.version);
 }
@@ -194,6 +218,25 @@ fn new_tensor_has_zero_materializations() {
     let t = tensor(7);
     assert!(t.materializations.is_empty());
     assert_eq!(t.version, TensorVersion(0));
+}
+
+#[test]
+fn new_tensor_has_contract() {
+    let t = tensor(8);
+    assert_eq!(t.contract.canonical_dtype, DType::F32);
+    assert_eq!(t.contract.logical_shape.dims, vec![2, 3]);
+    assert_eq!(t.contract.mutability, TensorMutability::Mutable);
+    assert_eq!(t.contract.role, TensorRole::Activation);
+}
+
+#[test]
+fn materialization_ids_are_monotonic() {
+    let mut sq = seq();
+    let id0 = sq.next();
+    let id1 = sq.next();
+    let id2 = sq.next();
+    assert!(id0.0 < id1.0);
+    assert!(id1.0 < id2.0);
 }
 
 // ── Cross-backend routing contract ────────────────────────────────────────
@@ -218,7 +261,6 @@ fn lossless_transfer_receipt() {
         zero_copy: false,
     };
 
-    // Verify no fields were lost
     assert_eq!(receipt.tensor_id, TensorId(10));
     assert_eq!(receipt.source_backend, mlx_id());
     assert_eq!(receipt.destination_backend, accelerate_id());
