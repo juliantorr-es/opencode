@@ -6,9 +6,8 @@ import {
   type CallToolRequest,
 } from "@modelcontextprotocol/sdk/types.js"
 import * as crypto from "node:crypto"
-import { readFile } from "node:fs/promises"
-import { spawn, execFile } from "node:child_process"
-import { access, mkdir, stat } from "node:fs/promises"
+import { readFile, mkdir } from "node:fs/promises"
+import { spawn } from "node:child_process"
 import { homedir } from "node:os"
 import { join, resolve } from "node:path"
 
@@ -236,7 +235,7 @@ async function ghDelete(path: string) {
 
 // ── Tool definitions ────────────────────────────────────────────────────────
 
-const TOOLS = [
+const GITHUB_TOOLS = [
   // ── Generic proxy ──
   {
     name: "github_api",
@@ -682,29 +681,27 @@ const TOOLS = [
         },
         required: ["owner", "repo", "run_id"],
       },
-      },
-]
+    },
+  ]
 
-  // ═══════════════════════════════════════════════════════════════════════
-  // Compute Kernel Tools
-  // ═══════════════════════════════════════════════════════════════════════
 
+// ═══════════════════════════════════════════════════════════════════════
+// Compute Kernel Tools
+// ═══════════════════════════════════════════════════════════════════════
+
+const COMPUTE_TOOLS = [
   // ── HuggingFace Model Acquisition ──
   {
     name: "hf_search_models",
     description:
-      "Search HuggingFace Hub for models. Returns model IDs, tags, downloads, and pipeline types. " +
-      "Use this to discover models, find Gemma variants, or check model availability before downloading.",
+      "Search HuggingFace Hub for models. Returns model IDs, tags, downloads, and pipeline types.",
     inputSchema: {
       type: "object" as const,
       properties: {
-        query: { type: "string", description: "Search query (e.g. 'gemma-4', 'mlx-community/Gemma') " },
+        query: { type: "string", description: "Search query (e.g. 'gemma-4', 'mlx-community/Gemma')" },
         limit: { type: "number", description: "Max results (default: 10, max: 100)" },
         author: { type: "string", description: "Filter by author/org (e.g. 'google', 'mlx-community')" },
-        pipeline_tag: {
-          type: "string",
-          description: "Filter by pipeline type (e.g. 'text-generation', 'feature-extraction')",
-        },
+        pipeline_tag: { type: "string", description: "Filter by pipeline type (e.g. 'text-generation')" },
       },
       required: ["query"],
     },
@@ -713,14 +710,11 @@ const TOOLS = [
     name: "hf_get_model_info",
     description:
       "Get detailed metadata for a HuggingFace model: description, tags, license, downloads, " +
-      "safetensors parameters, file list with SHA-256 digests. Use before downloading to verify model identity.",
+      "safetensors parameters, file list with SHA-256 digests.",
     inputSchema: {
       type: "object" as const,
       properties: {
-        model_id: {
-          type: "string",
-          description: "Full model ID (e.g. 'google/gemma-4-12b-it', 'mlx-community/gemma-4-12b-it-4bit')",
-        },
+        model_id: { type: "string", description: "Full model ID (e.g. 'google/gemma-4-12b-it')" },
       },
       required: ["model_id"],
     },
@@ -729,19 +723,13 @@ const TOOLS = [
     name: "hf_download_model",
     description:
       "Download safetensors and config files for a HuggingFace model to the local MLX model cache. " +
-      "Uses huggingface-cli. Downloads model weights, tokenizer, and config. Skips files already present.",
+      "Uses huggingface-cli. Skips files already present.",
     inputSchema: {
       type: "object" as const,
       properties: {
         model_id: { type: "string", description: "Full model ID (e.g. 'google/gemma-4-12b-it')" },
-        target_dir: {
-          type: "string",
-          description: "Target directory (default: TRIBUNUS_MLX_MODEL_DIR / model_id)",
-        },
-        include: {
-          type: "string",
-          description: "Glob pattern for files to include (default: '*.safetensors,*.json,tokenizer*')",
-        },
+        target_dir: { type: "string", description: "Target directory (default: TRIBUNUS_MLX_MODEL_DIR/model_id)" },
+        include: { type: "string", description: "Glob for files to include (default: '*.safetensors,*.json,tokenizer*')" },
       },
       required: ["model_id"],
     },
@@ -752,15 +740,11 @@ const TOOLS = [
     name: "macmon_metrics",
     description:
       "Read real-time Apple Silicon hardware metrics: CPU/GPU/ANE power (watts), utilization (%), " +
-      "memory pressure, temperature sensors, and GPU frequency. Requires macmon running locally. " +
-      "Returns parsed Prometheus metrics as structured JSON. Use during benchmarks to measure power efficiency.",
+      "memory pressure, temperature sensors, and GPU frequency. Requires macmon running locally.",
     inputSchema: {
       type: "object" as const,
       properties: {
-        filter: {
-          type: "string",
-          description: "Substring to filter metric names (e.g. 'gpu' for GPU-only, 'power' for power metrics)",
-        },
+        filter: { type: "string", description: "Substring to filter metric names (e.g. 'gpu', 'power')" },
       },
       required: [],
     },
@@ -770,21 +754,13 @@ const TOOLS = [
   {
     name: "cargo_build",
     description:
-      "Build the Tribunus compute kernel with cargo. Supports the five custom profiles: " +
-      "image-build (slim release), inference-research (debug symbols + LTO), inference-debug (full debug), " +
-      "inference-evidence (profile-guided), inference-evidence-fat (PGO + fat LTO). " +
-      "Runs from COMPUTE_NATIVE_DIR.",
+      "Build the Tribunus compute kernel with cargo. Supports five custom profiles: image-build, " +
+      "inference-research, inference-debug, inference-evidence, inference-evidence-fat. Runs from COMPUTE_NATIVE_DIR.",
     inputSchema: {
       type: "object" as const,
       properties: {
-        profile: {
-          type: "string",
-          description: "Cargo profile (default: image-build). Options: image-build, inference-research, inference-debug, inference-evidence, inference-evidence-fat",
-        },
-        features: {
-          type: "string",
-          description: "Comma-separated feature flags (e.g. 'metal,neon,bench')",
-        },
+        profile: { type: "string", description: "Cargo profile (default: image-build)" },
+        features: { type: "string", description: "Comma-separated feature flags (e.g. 'metal,neon,bench')" },
         target: { type: "string", description: "Build target triple (default: aarch64-apple-darwin)" },
         release: { type: "boolean", description: "Build in release mode (sets --release)" },
       },
@@ -794,19 +770,12 @@ const TOOLS = [
   {
     name: "cargo_bench",
     description:
-      "Run Criterion benchmarks for the compute kernel. Runs specific or all benchmarks and " +
-      "returns the results (throughput, latency, variance). Use to measure inference performance.",
+      "Run Criterion benchmarks for the compute kernel. Returns throughput, latency, and variance.",
     inputSchema: {
       type: "object" as const,
       properties: {
-        bench: {
-          type: "string",
-          description: "Benchmark name filter (e.g. 'decode', 'prefill'). Omit for all benchmarks.",
-        },
-        profile: {
-          type: "string",
-          description: "Cargo profile for benchmarks (default: inference-research)",
-        },
+        bench: { type: "string", description: "Benchmark name filter (e.g. 'decode', 'prefill')" },
+        profile: { type: "string", description: "Cargo profile for benchmarks (default: inference-research)" },
         features: { type: "string", description: "Comma-separated feature flags" },
       },
       required: [],
@@ -815,8 +784,7 @@ const TOOLS = [
   {
     name: "cargo_check",
     description:
-      "Run cargo check (fast compile-check without codegen) on the compute kernel. " +
-      "Use for quick type-checking after changes without waiting for a full build.",
+      "Run cargo check (fast compile-check without codegen) on the compute kernel.",
     inputSchema: {
       type: "object" as const,
       properties: {
@@ -831,24 +799,14 @@ const TOOLS = [
   {
     name: "metal_compile",
     description:
-      "Compile a Metal Shading Language (.metal) file to an Apple Intermediate Representation (.air) file. " +
-      "Runs 'xcrun -sdk macosx metal'. Use for verifying shader compilation and inspecting AIR output.",
+      "Compile a Metal Shading Language (.metal) file to Apple Intermediate Representation (.air). " +
+      "Runs 'xcrun -sdk macosx metal'.",
     inputSchema: {
       type: "object" as const,
       properties: {
-        source: {
-          type: "string",
-          description: "Path to .metal source file (absolute or relative to COMPUTE_NATIVE_DIR)",
-        },
-        output: {
-          type: "string",
-          description: "Path for the .air output (default: source with .air extension)",
-        },
-        opt: {
-          type: "string",
-          enum: ["none", "fast", "faster", "fastest"],
-          description: "Optimization level for metal compiler (default: fastest)",
-        },
+        source: { type: "string", description: "Path to .metal source file" },
+        output: { type: "string", description: "Path for .air output (default: source with .air extension)" },
+        opt: { type: "string", enum: ["none", "fast", "faster", "fastest"], description: "Optimization level (default: fastest)" },
       },
       required: ["source"],
     },
@@ -856,28 +814,15 @@ const TOOLS = [
   {
     name: "xctrace_record",
     description:
-      "Profile a native binary with xctrace (Instruments CLI). Captures CPU, GPU, and Metal performance " +
-      "counters. Use to profile compute kernel inference runs. Requires Xcode.",
+      "Profile a native binary with xctrace (Instruments CLI). Captures CPU, GPU, and Metal performance counters.",
     inputSchema: {
       type: "object" as const,
       properties: {
-        binary: {
-          type: "string",
-          description: "Path to the binary to profile (absolute or relative to COMPUTE_NATIVE_DIR)",
-        },
+        binary: { type: "string", description: "Path to the binary to profile" },
         args: { type: "string", description: "Arguments to pass to the binary" },
-        template: {
-          type: "string",
-          description: "Instruments template (default: 'Metal System Trace'). Options: 'Time Profiler', 'Metal System Trace', 'CPU Counters', 'GPU Capture'",
-        },
-        output: {
-          type: "string",
-          description: "Path for the .trace output file (default: /tmp/tribunus-profile-{timestamp}.trace)",
-        },
-        time_limit: {
-          type: "number",
-          description: "Time limit in seconds (default: 30)",
-        },
+        template: { type: "string", description: "Instruments template (default: 'Metal System Trace')" },
+        output: { type: "string", description: "Path for .trace output (default: /tmp/tribunus-profile-{ts}.trace)" },
+        time_limit: { type: "number", description: "Time limit in seconds (default: 30)" },
       },
       required: ["binary"],
     },
@@ -887,17 +832,13 @@ const TOOLS = [
   {
     name: "duckdb_query",
     description:
-      "Run a SQL query against the Tribunus evidence DuckDB database. " +
-      "The evidence DB contains benchmark results, optimization records, inference traces, " +
-      "and experiment metadata. Use for analyzing compute kernel performance data.",
+      "Run a SQL query against the Tribunus evidence DuckDB database. Contains benchmark results, " +
+      "optimization records, inference traces, and experiment metadata.",
     inputSchema: {
       type: "object" as const,
       properties: {
-        sql: { type: "string", description: "SQL query to execute (SELECT, DESCRIBE, SHOW, etc.)" },
-        db_path: {
-          type: "string",
-          description: "Path to DuckDB database (default: TRIBUNUS_EVIDENCE_DB)",
-        },
+        sql: { type: "string", description: "SQL query to execute" },
+        db_path: { type: "string", description: "Path to DuckDB database (default: TRIBUNUS_EVIDENCE_DB)" },
       },
       required: ["sql"],
     },
@@ -905,15 +846,11 @@ const TOOLS = [
   {
     name: "duckdb_list_tables",
     description:
-      "List all tables in the Tribunus evidence DuckDB database with row counts. " +
-      "Quick overview of what benchmark and experiment data is available.",
+      "List all tables in the Tribunus evidence DuckDB database with row counts.",
     inputSchema: {
       type: "object" as const,
       properties: {
-        db_path: {
-          type: "string",
-          description: "Path to DuckDB database (default: TRIBUNUS_EVIDENCE_DB)",
-        },
+        db_path: { type: "string", description: "Path to DuckDB database (default: TRIBUNUS_EVIDENCE_DB)" },
       },
       required: [],
     },
@@ -923,15 +860,12 @@ const TOOLS = [
   {
     name: "mlx_inference",
     description:
-      "Run MLX inference on a loaded model. Executes a Python script that uses the MLX framework " +
-      "to perform text generation. Requires mlx and mlx-lm Python packages installed.",
+      "Run MLX inference on a loaded model. Uses Python mlx-lm to perform text generation. " +
+      "Requires mlx and mlx-lm Python packages installed.",
     inputSchema: {
       type: "object" as const,
       properties: {
-        model_id: {
-          type: "string",
-          description: "HuggingFace model ID or local path (e.g. 'mlx-community/gemma-4-12b-it-4bit')",
-        },
+        model_id: { type: "string", description: "HF model ID or local path (e.g. 'mlx-community/gemma-4-12b-it-4bit')" },
         prompt: { type: "string", description: "Input prompt for generation" },
         max_tokens: { type: "number", description: "Maximum tokens to generate (default: 256)" },
         temperature: { type: "number", description: "Sampling temperature (default: 0.7)" },
@@ -949,17 +883,20 @@ const TOOLS = [
     inputSchema: {
       type: "object" as const,
       properties: {
-        model_id: { type: "string", description: "HuggingFace model ID or local path" },
-        prompt_length: {
-          type: "number",
-          description: "Approximate prompt length in tokens (default: 128)",
-        },
+        model_id: { type: "string", description: "HF model ID or local path" },
+        prompt_length: { type: "number", description: "Approximate prompt length in tokens (default: 128)" },
         max_tokens: { type: "number", description: "Tokens to generate per iteration (default: 256)" },
         iterations: { type: "number", description: "Number of benchmark iterations (default: 3)" },
       },
       required: ["model_id"],
     },
   },
+]
+
+const TOOLS = [
+  ...GITHUB_TOOLS,
+  ...COMPUTE_TOOLS,
+]
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -1234,7 +1171,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request: CallToolRequest)
           result.files = siblings.map((s) => ({
             name: s.rfilename,
             size: s.size,
-            sha256: s.blob_id || s.lfs?.sha256,
+            sha256: s.blob_id ?? (s.lfs as Record<string, string | undefined> | undefined)?.["sha256"],
           }))
         }
         return ok(result)
@@ -1349,7 +1286,8 @@ server.setRequestHandler(CallToolRequestSchema, async (request: CallToolRequest)
           const conn = new db.Database(dbPath)
           const result = conn.all(sql)
           conn.close()
-          return ok({ query: sql, rows: result, row_count: result.length })
+          const rows = result as unknown as unknown[]
+          return ok({ query: sql, rows, row_count: rows.length })
         } catch (e) {
           if (e instanceof Error && e.message.includes("Cannot find module")) {
             return err("duckdb npm package not installed. Run: npm install duckdb")
@@ -1367,7 +1305,8 @@ server.setRequestHandler(CallToolRequestSchema, async (request: CallToolRequest)
             "SELECT table_name, estimated_visible_rows as row_count FROM duckdb_tables() ORDER BY table_name",
           )
           conn.close()
-          return ok({ database: dbPath, tables, table_count: tables.length })
+          const rows = tables as unknown as unknown[]
+          return ok({ database: dbPath, tables: rows, table_count: rows.length })
         } catch (e) {
           if (e instanceof Error && e.message.includes("Cannot find module")) {
             return err("duckdb npm package not installed. Run: npm install duckdb")
@@ -1388,11 +1327,13 @@ server.setRequestHandler(CallToolRequestSchema, async (request: CallToolRequest)
           `model, tokenizer = load("${modelId}")`,
           `response = generate(model, tokenizer, prompt="${prompt.replace(/"/g, '\\"')}", max_tokens=${maxTokens}, temp=${temp}, top_p=${topP})`,
           "print(response)",
-        ].join("\n")
+        ]
         if (a?.seed) code.unshift(`import random; random.seed(${a.seed})`)
+        const scriptText = code.join("\n")
         const tmpScript = join("/tmp", `tribunus-mlx-inference-${Date.now()}.py`)
         const { writeFile, unlink } = await import("node:fs/promises")
         await writeFile(tmpScript, code)
+        await writeFile(tmpScript, scriptText)
         try {
           const result = await run("python3", [tmpScript], { timeout: 300_000 })
           if (!result.ok) return err(`MLX inference failed (exit ${result.code}):\n${result.stderr}`)
