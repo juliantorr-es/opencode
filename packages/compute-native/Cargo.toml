@@ -87,29 +87,47 @@ debug = false
 debug-assertions = false
 overflow-checks = false
 strip = "symbols"
-
 [profile.inference-research]
 inherits = "release"
 opt-level = 3
-debug = "full"
+debug = "line-tables-only"
 split-debuginfo = "unpacked"
 strip = "none"
 debug-assertions = false
 overflow-checks = false
 lto = "thin"
-codegen-units = 4
-incremental = false
+codegen-units = 16
+incremental = true
 panic = "unwind"
 
-[profile.inference-evidence]
+[profile.inference-debug]
 inherits = "release"
 opt-level = 3
 debug = "full"
 split-debuginfo = "unpacked"
 strip = "none"
 debug-assertions = false
+overflow-checks = true
+lto = "off"
+codegen-units = 16
+incremental = true
+panic = "unwind"
+
+[profile.inference-evidence]
+inherits = "release"
+opt-level = 3
+debug = "line-tables-only"
+split-debuginfo = "unpacked"
+strip = "none"
+debug-assertions = false
 overflow-checks = false
-lto = true
-codegen-units = 1
+lto = "thin"
+codegen-units = 8
 incremental = false
 panic = "unwind"
+
+[profile.inference-evidence-fat]
+inherits = "inference-evidence"
+lto = "fat"
+codegen-units = 1
+incremental = false

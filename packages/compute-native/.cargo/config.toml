@@ -1,0 +1,4 @@
+[build]
+# Use all logical CPUs for parallel crate compilation.
+# "default" resolves to the machine's CPU count (e.g. 8 on M1).
+jobs = "default"
