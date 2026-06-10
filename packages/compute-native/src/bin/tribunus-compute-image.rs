@@ -15,6 +15,7 @@ use serde_json::json;
 use rayon::prelude::*;
 use sha2::{Digest, Sha256};
 use uuid::Uuid;
+use mlx_rs::Array;
 
 use tribunus_compute_native::profiled_executor::{LoadedProfiledModel, ProfiledInferenceSession};
 use tribunus_compute_native::kv_cache::KvCache;
@@ -32,6 +33,7 @@ fn main() {
         eprintln!("  tribunus-compute-image metal-capture --image <dir> [--output <path>]");
         eprintln!("  tribunus-compute-image replay-projection --image <dir> --layer <N> --family <name>");
         eprintln!("  tribunus-compute-image decode-one --image <dir>");
+        eprintln!("  tribunus-compute-image mission-0007-run --image <dir> --arm A|B|C|D|E --run-id <id>");
         eprintln!("  tribunus-compute-image infer  --image <dir>");
         eprintln!("  tribunus-compute-image verify --image <dir> [--expected-hash <hash>] [--full]");
         std::process::exit(1);
@@ -44,6 +46,7 @@ fn main() {
         "metal-capture" => cmd_metal_capture(&args[2..]),
         "replay-projection" => cmd_replay_projection(&args[2..]),
         "decode-one" => cmd_decode_one(&args[2..]),
+        "mission-0007-run" => cmd_mission0007_run(&args[2..]),
         other => {
             eprintln!("unknown command: {other}");
             std::process::exit(1);
@@ -475,7 +478,6 @@ fn cmd_decode_one(args: &[String]) -> Result<(), String> {
     eprintln!("Loading profiled model: {} (layout_policy={})", image_dir, layout_policy.as_str());
     let model = LoadedProfiledModel::new_with_policy(image_path, layout_policy)
         .map_err(|e| format!("load: {e}"))?;
-
     let plan = &model.reader.manifest.execution_plan;
     let kv_caches: Vec<KvCache> = plan.layers.iter().map(|lp| {
         let is_sliding = lp.attention_kind == "sliding_attention";
@@ -622,6 +624,264 @@ fn cmd_replay_projection(args: &[String]) -> Result<(), String> {
 
     eprintln!("Done: {} samples ({})", samples_vec.len(), phase_shape);
     Ok(())
+}
+
+// ── mission-0007-run command ──────────────────────────────────────────
+
+fn cmd_mission0007_run(args: &[String]) -> Result<(), String> {
+    let image_dir = get_opt(args, "--image").ok_or("missing --image")?;
+    let arm_str = get_opt(args, "--arm").ok_or("missing --arm")?;
+    let run_id = get_opt(args, "--run-id").ok_or("missing --run-id")?;
+    let _conditioning_sidecar = get_opt(args, "--conditioning-sidecar");
+    let _evidence_root = get_opt(args, "--evidence-root");
+
+    let arm = arm_str.chars().next().unwrap_or('?');
+    if !matches!(arm, 'A' | 'B' | 'C' | 'D' | 'E') {
+        return Err(format!("invalid arm: {arm_str}. Must be A, B, C, D, or E"));
+    }
+
+    let image_path = Path::new(image_dir);
+    if !image_path.join("manifest.json").exists() {
+        return Err("not a ComputeImage directory (missing manifest.json)".into());
+    }
+
+    // Binary SHA-256 for evidence binding
+    let binary_sha256 = {
+        let exe_path = std::env::current_exe()
+            .map_err(|e| format!("current_exe: {e}"))?;
+        let mut file = File::open(&exe_path)
+            .map_err(|e| format!("open {:?}: {e}", exe_path))?;
+        let mut hasher = Sha256::new();
+        let mut buf = [0u8; 65536];
+        loop {
+            let n = file.read(&mut buf)
+                .map_err(|e| format!("read {:?}: {e}", exe_path))?;
+            if n == 0 { break; }
+            hasher.update(&buf[..n]);
+        }
+        format!("{:x}", hasher.finalize())
+    };
+
+    // Gather image hash before loading model
+    let manifest_text = fs::read_to_string(image_path.join("manifest.json"))
+        .map_err(|e| format!("read manifest.json: {e}"))?;
+    let manifest: serde_json::Value = serde_json::from_str(&manifest_text)
+        .map_err(|e| format!("parse manifest.json: {e}"))?;
+    let image_hash = manifest["image_hash"]
+        .as_str()
+        .unwrap_or("unknown")
+        .to_string();
+
+    // Load model — same pattern as decode-one
+    eprintln!("[M0007] Loading profiled model: {} (arm={arm_str})", image_dir);
+    let model = LoadedProfiledModel::new_with_policy(
+        image_path,
+        tribunus_compute_native::profiled_executor::LayoutPolicy::FrozenExisting,
+    )
+    .map_err(|e| format!("load model: {e}"))?;
+
+    let plan = &model.reader.manifest.execution_plan;
+    let layer_count = plan.layers.len();
+
+    // Create KV caches — same pattern as decode-one
+    let kv_caches: Vec<KvCache> = plan.layers.iter().map(|lp| {
+        let is_sliding = lp.attention_kind == "sliding_attention";
+        let (n_kv, hd) = if lp.attention_kind == "full_attention" {
+            (lp.n_global_kv_heads.unwrap_or(1), lp.global_head_dim.unwrap_or(512))
+        } else {
+            (lp.n_kv_heads, lp.head_dim)
+        };
+        KvCache::new(if is_sliding { 1024 } else { 8 }, n_kv, hd, is_sliding)
+    }).collect();
+
+    // ── Treatment phase ────────────────────────────────────────────────
+    let wall_before = Instant::now();
+
+    let treatment = match arm {
+        'A' => {
+            // FrozenControl — no treatment
+            json!({
+                "conditioning_duration_ns": 0u64,
+                "prefetch_bytes": 0u64,
+                "recipes_completed": 0u64,
+                "treatment_events": []
+            })
+        }
+        'B' => {
+            // PipelineWarmOnly — scratch conditioning via quantized_matmul
+            run_arm_b_conditioning(&model)
+        }
+        'C' => {
+            // RollingPrefetchOnly — read layer segments into page cache
+            run_arm_c_prefetch(image_path, &model.reader)
+        }
+        'D' => {
+            // Combined: conditioning THEN prefetch
+            let cond = run_arm_b_conditioning(&model);
+            let pref = run_arm_c_prefetch(image_path, &model.reader);
+            json!({
+                "conditioning_duration_ns": cond["conditioning_duration_ns"].as_u64().unwrap_or(0),
+                "prefetch_bytes": pref["prefetch_bytes"].as_u64().unwrap_or(0),
+                "prefetch_duration_ns": pref["prefetch_duration_ns"].as_u64().unwrap_or(0),
+                "recipes_completed": cond["recipes_completed"].as_u64().unwrap_or(0),
+                "layer_count": pref["layer_count"].as_u64().unwrap_or(0),
+                "treatment_events": []
+            })
+        }
+        'E' => {
+            // Sham — record treatment event markers
+            let wall_ns = wall_before.elapsed().as_nanos() as u64;
+            json!({
+                "conditioning_duration_ns": 0u64,
+                "prefetch_bytes": 0u64,
+                "recipes_completed": 0u64,
+                "treatment_events": [
+                    {"event": "readiness_check", "timestamp_ns": wall_ns},
+                    {"event": "treatment_ready", "timestamp_ns": wall_ns},
+                    {"event": "begin_inference", "timestamp_ns": wall_ns}
+                ]
+            })
+        }
+        _ => unreachable!()
+    };
+
+    // ── Inference phase ────────────────────────────────────────────────
+    let prompt: &[u32] = &[2, 42, 100, 500];
+    let mut session = ProfiledInferenceSession::new(run_id.to_string(), kv_caches);
+
+    eprintln!("[M0007] Prefill {} tokens (arm={arm_str})...", prompt.len());
+    let t0 = Instant::now();
+    let tok0 = session.prefill(prompt, &model)
+        .map_err(|e| format!("prefill: {e}"))?;
+    let prefill_s = t0.elapsed().as_secs_f64();
+    eprintln!("[M0007] prefill token={tok0} elapsed={prefill_s:.3}s");
+
+    eprintln!("[M0007] Decode (arm={arm_str})...");
+    let t0 = Instant::now();
+    let tok1 = session.decode_one(tok0, &model)
+        .map_err(|e| format!("decode: {e}"))?;
+    let decode_s = t0.elapsed().as_secs_f64();
+    let total_s = prefill_s + decode_s;
+    eprintln!("[M0007] decode token={tok1} elapsed={decode_s:.3}s");
+
+    let out = json!({
+        "arm": arm_str,
+        "run_id": run_id,
+        "prefill_s": prefill_s,
+        "decode_s": decode_s,
+        "total_s": total_s,
+        "layers": layer_count,
+        "status": "decoded",
+        "treatment": treatment,
+        "image_hash": image_hash,
+        "binary_sha256": binary_sha256,
+        "prefill_token": tok0,
+        "decode_token": tok1,
+    });
+    println!("{}", serde_json::to_string(&out).unwrap());
+
+    Ok(())
+}
+
+/// Run scratch conditioning recipe for Arm B: quantized_matmul on
+/// q_proj, k_proj, v_proj, o_proj of layer 0 to force Metal pipeline
+/// compilation on the same model instance that will run inference.
+fn run_arm_b_conditioning(model: &LoadedProfiledModel) -> serde_json::Value {
+    let cond_start = Instant::now();
+    let layer0 = &model.layers[0];
+    let families: [(String, &Array, &Array, &Array); 4] = [
+        ("q_proj".into(), &layer0.q_proj_w, &layer0.q_proj_s, &layer0.q_proj_b),
+        ("k_proj".into(), &layer0.k_proj_w, &layer0.k_proj_s, &layer0.k_proj_b),
+        ("v_proj".into(), &layer0.v_proj_w, &layer0.v_proj_s, &layer0.v_proj_b),
+        ("o_proj".into(), &layer0.o_proj_w, &layer0.o_proj_s, &layer0.o_proj_b),
+    ];
+
+    let mut recipe_count = 0u64;
+    for (_name, weight, scale, bias) in &families {
+        if weight.shape().len() < 2 {
+            eprintln!("[M0007-B] skip {_name}: unexpected weight shape {:?}", weight.shape());
+            continue;
+        }
+        let k = weight.shape()[1]; // input dim
+
+        // Derive group_size from scale shape (same pattern as ProjectionHarness)
+        let group_size = if scale.shape().len() >= 1 {
+            if scale.shape()[scale.shape().len() - 1] > 0 {
+                (k * 4) / scale.shape()[scale.shape().len() - 1]
+            } else {
+                64
+            }
+        } else {
+            64
+        };
+        let bits = 8i32;
+
+        // Create 1-token synthetic input
+        let input = match Array::full::<f32>(&[1, k], &Array::from_f32(0.5)) {
+            Ok(a) => a,
+            Err(e) => {
+                eprintln!("[M0007-B] create input array for {_name}: {e}");
+                continue;
+            }
+        };
+
+        match mlx_rs::ops::quantized_matmul(
+            &input, weight, scale, bias,
+            true, group_size, bits,
+        ) {
+            Ok(result) => {
+                if let Err(e) = result.eval() {
+                    eprintln!("[M0007-B] eval {_name}: {e}");
+                } else {
+                    recipe_count += 1;
+                }
+            }
+            Err(e) => {
+                eprintln!("[M0007-B] quantized_matmul {_name}: {e}");
+            }
+        }
+    }
+
+    let cond_ns = cond_start.elapsed().as_nanos() as u64;
+    json!({
+        "conditioning_duration_ns": cond_ns,
+        "prefetch_bytes": 0u64,
+        "recipes_completed": recipe_count,
+        "treatment_events": []
+    })
+}
+
+/// Prefetch layer segment files into page cache for Arm C.
+fn run_arm_c_prefetch(image_path: &Path, reader: &tribunus_compute_native::compute_image::CompiledImageReader) -> serde_json::Value {
+    let pref_start = Instant::now();
+    let mut prefetch_bytes: u64 = 0;
+    let mut layer_count: u64 = 0;
+
+    for seg in &reader.manifest.segments {
+        // Only prefetch Layer segments (not Persistent or Final)
+        if matches!(seg.kind, compute_image::SegmentKind::Layer(_)) {
+            let seg_path = image_path.join(&seg.filename);
+            match fs::read(&seg_path) {
+                Ok(bytes) => {
+                    prefetch_bytes += bytes.len() as u64;
+                    layer_count += 1;
+                }
+                Err(e) => {
+                    eprintln!("[M0007-C] prefetch failed for {}: {e}", seg.filename);
+                }
+            }
+        }
+    }
+
+    let prefetch_duration_ns = pref_start.elapsed().as_nanos() as u64;
+    json!({
+        "conditioning_duration_ns": 0u64,
+        "prefetch_bytes": prefetch_bytes,
+        "prefetch_duration_ns": prefetch_duration_ns,
+        "recipes_completed": 0u64,
+        "layer_count": layer_count,
+        "treatment_events": []
+    })
 }
 
 fn cmd_metal_capture(args: &[String]) -> Result<(), String> {
