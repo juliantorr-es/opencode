@@ -1,8 +1,8 @@
 //! Logical-tensor registry — version-bound materializations across backends.
 //!
 //! The `TensorRegistry` is the sole authority for materialization identity
-//! allocation and version transitions.  Mutable tensor access is private;
-//! all mutations go through the registry.
+//! allocation and version transitions.  All mutations are transactional:
+//! validation happens before any tensor state is modified.
 
 use std::collections::HashMap;
 
@@ -14,7 +14,6 @@ use super::routing::{
 
 // ── Materialization identity ──────────────────────────────────────────
 
-/// Monotonic allocator for materialization IDs (registry-private).
 #[derive(Debug)]
 struct MaterializationSequence(u64);
 
@@ -29,7 +28,6 @@ impl MaterializationSequence {
 
 // ── Tensor contract ───────────────────────────────────────────────────
 
-/// Mutability class for a logical tensor.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum TensorMutability {
     Immutable,
@@ -37,7 +35,6 @@ pub enum TensorMutability {
     Ephemeral,
 }
 
-/// Semantic role within the model graph.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum TensorRole {
     Weight,
@@ -49,7 +46,6 @@ pub enum TensorRole {
     Output,
 }
 
-/// Contract describing a logical tensor independent of any backend.
 #[derive(Debug, Clone)]
 pub struct TensorContract {
     pub logical_shape: LogicalShape,
@@ -60,7 +56,6 @@ pub struct TensorContract {
 
 // ── Materialization ───────────────────────────────────────────────────
 
-/// The state of a backend materialization relative to the logical tensor.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum MaterializationState {
     Fresh,
@@ -68,7 +63,6 @@ pub enum MaterializationState {
     Pending,
 }
 
-/// One backend-specific physical materialization of a logical tensor.
 #[derive(Debug, Clone)]
 pub struct MaterializationRecord {
     pub materialization_id: TensorMaterializationId,
@@ -81,16 +75,14 @@ pub struct MaterializationRecord {
     pub backend_handle: u64,
 }
 
-// ── Logical tensor (registry-private mutable access) ──────────────────
+// ── Logical tensor (fields private, read-only accessors) ──────────────
 
-/// The canonical logical-tensor type.  Mutable access is private to the
-/// registry; all mutations go through `TensorRegistry` methods.
 #[derive(Debug, Clone)]
 pub struct MaterializedTensor {
     pub tensor_id: TensorId,
-    pub contract: TensorContract,
-    pub authoritative_backend: BackendId,
-    pub version: TensorVersion,
+    contract: TensorContract,
+    authoritative_backend: BackendId,
+    version: TensorVersion,
     materializations: HashMap<BackendId, MaterializationRecord>,
 }
 
@@ -109,7 +101,12 @@ impl MaterializedTensor {
         }
     }
 
-    /// Check whether a backend's materialization is current.
+    // ── Read-only accessors ────────────────────────────────────────
+
+    pub fn contract(&self) -> &TensorContract { &self.contract }
+    pub fn authoritative_backend(&self) -> BackendId { self.authoritative_backend }
+    pub fn version(&self) -> TensorVersion { self.version }
+
     pub fn is_fresh(&self, backend_id: BackendId) -> bool {
         self.materializations
             .get(&backend_id)
@@ -118,7 +115,6 @@ impl MaterializedTensor {
             .unwrap_or(false)
     }
 
-    /// Get a backend's materialization handle (fresh only).
     pub fn get_handle(&self, backend_id: BackendId) -> Option<u64> {
         if self.is_fresh(backend_id) {
             self.materializations.get(&backend_id).map(|r| r.backend_handle)
@@ -127,16 +123,33 @@ impl MaterializedTensor {
         }
     }
 
-    /// Read-only access to materializations.
-    pub fn materialization_count(&self) -> usize {
-        self.materializations.len()
-    }
+    pub fn materialization_count(&self) -> usize { self.materializations.len() }
+    pub fn is_empty(&self) -> bool { self.materializations.is_empty() }
 
-    pub fn is_empty(&self) -> bool {
-        self.materializations.is_empty()
-    }
+    // ── Private mutations ──────────────────────────────────────────
 
-    // ── Private mutations (called only by TensorRegistry) ────────────
+    fn validate_materialization(
+        &self,
+        dtype: DType,
+        shape: &TensorShape,
+    ) -> Result<(), String> {
+        if dtype != self.contract.canonical_dtype {
+            return Err(format!(
+                "dtype {:?} != contract canonical {:?} for tensor {:?}",
+                dtype, self.contract.canonical_dtype, self.tensor_id,
+            ));
+        }
+        // Shape compatibility: physical dims must match logical dims
+        // count (backend-specific packing may change individual dims,
+        // but for now require exact match).
+        if shape.dims.len() != self.contract.logical_shape.dims.len() {
+            return Err(format!(
+                "physical shape has {} dims, logical contract has {}",
+                shape.dims.len(), self.contract.logical_shape.dims.len(),
+            ));
+        }
+        Ok(())
+    }
 
     fn add_materialization(
         &mut self,
@@ -147,13 +160,7 @@ impl MaterializedTensor {
         layout: PhysicalLayout,
         dtype: DType,
     ) -> Result<MaterializationRecord, String> {
-        // Contract compatibility: dtype must match or be explicitly converted
-        if dtype != self.contract.canonical_dtype {
-            return Err(format!(
-                "add_materialization: dtype {:?} != contract canonical {:?} for tensor {:?}",
-                dtype, self.contract.canonical_dtype, self.tensor_id,
-            ));
-        }
+        self.validate_materialization(dtype, &shape)?;
         let id = seq.next();
         let record = MaterializationRecord {
             materialization_id: id,
@@ -169,37 +176,52 @@ impl MaterializedTensor {
         Ok(record)
     }
 
-    fn advance_version(
+    /// Prepare a transition receipt WITHOUT mutating tensor state.
+    /// Used by the registry for transactional validation.
+    fn prepare_transition(
+        &self,
+        new_authoritative_backend: BackendId,
+        dtype: DType,
+        shape: &TensorShape,
+    ) -> Result<(), String> {
+        if self.contract.mutability == TensorMutability::Immutable {
+            return Err(format!(
+                "tensor {:?} is immutable (role {:?})",
+                self.tensor_id, self.contract.role,
+            ));
+        }
+        self.validate_materialization(dtype, shape)?;
+        let _ = new_authoritative_backend;
+        Ok(())
+    }
+
+    /// Commit a previously-validated transition.  All validation
+    /// must pass before calling this method — it never returns Err.
+    fn commit_transition(
         &mut self,
-        seq: &mut MaterializationSequence,
         new_authoritative_backend: BackendId,
         new_handle: u64,
         shape: TensorShape,
         layout: PhysicalLayout,
         dtype: DType,
-    ) -> Result<AuthorityTransitionReceipt, String> {
-        // Immutable weights cannot be version-incremented.
-        if self.contract.mutability == TensorMutability::Immutable {
-            return Err(format!(
-                "advance_version: tensor {:?} is immutable (role {:?})",
-                self.tensor_id, self.contract.role,
-            ));
-        }
-
+        seq: &mut MaterializationSequence,
+    ) -> AuthorityTransitionReceipt {
         let previous_version = self.version;
         let previous_authority = self.authoritative_backend;
 
-        // Preserve the previous authoritative record.
         let previous_authoritative_materialization =
             self.materializations.get(&self.authoritative_backend).cloned();
 
-        // Preserve any existing record at the destination backend.
         let replaced_destination_materialization =
             self.materializations.get(&new_authoritative_backend).cloned();
 
+        // Commit mutations
         self.version = TensorVersion(self.version.0 + 1);
         self.authoritative_backend = new_authoritative_backend;
 
+        // The previous authoritative backend is now non-authoritative
+        // and marked stale.  It also appears in
+        // previous_authoritative_materialization for clarity.
         let mut invalidated_non_authoritative = Vec::new();
         for record in self.materializations.values_mut() {
             if record.backend_id != new_authoritative_backend {
@@ -208,16 +230,13 @@ impl MaterializedTensor {
             }
         }
 
+        // add_materialization can't fail here because dtype/shape were
+        // validated in prepare_transition.
         let new_authoritative = self.add_materialization(
-            seq,
-            new_authoritative_backend,
-            new_handle,
-            shape,
-            layout,
-            dtype,
-        )?;
+            seq, new_authoritative_backend, new_handle, shape, layout, dtype,
+        ).expect("add_materialization after validated prepare must succeed");
 
-        Ok(AuthorityTransitionReceipt {
+        AuthorityTransitionReceipt {
             tensor_id: self.tensor_id,
             previous_version,
             new_version: self.version,
@@ -227,11 +246,17 @@ impl MaterializedTensor {
             replaced_destination_materialization,
             invalidated_non_authoritative,
             new_authoritative_materialization: new_authoritative,
-        })
+        }
     }
 }
 
 /// Structured receipt from an authority transition.
+///
+/// `previous_authoritative_materialization` may also appear in
+/// `invalidated_non_authoritative` if the previous authority is
+/// not the new authority (cross-backend transition).  Consumers
+/// should treat `previous_authoritative_materialization` as the
+/// canonical location of the replaced authority record.
 #[derive(Debug, Clone)]
 pub struct AuthorityTransitionReceipt {
     pub tensor_id: TensorId,
@@ -245,10 +270,8 @@ pub struct AuthorityTransitionReceipt {
     pub new_authoritative_materialization: MaterializationRecord,
 }
 
-// ── Registry (sole mutation authority) ────────────────────────────────
+// ── Registry ──────────────────────────────────────────────────────────
 
-/// Central registry for all logical tensors.  Owns materialization identity
-/// allocation and version transitions exclusively.
 #[derive(Debug)]
 pub struct TensorRegistry {
     tensors: HashMap<TensorId, MaterializedTensor>,
@@ -267,19 +290,27 @@ impl TensorRegistry {
         }
     }
 
-    /// Register a new tensor.  Fails if the ID already exists.
     pub fn register(&mut self, tensor: MaterializedTensor) -> Result<(), String> {
         if self.tensors.contains_key(&tensor.tensor_id) {
-            return Err(format!(
-                "TensorRegistry: tensor {:?} already registered",
-                tensor.tensor_id,
-            ));
+            return Err(format!("TensorRegistry: tensor {:?} already registered", tensor.tensor_id));
         }
         self.tensors.insert(tensor.tensor_id, tensor);
         Ok(())
     }
 
-    /// Add a materialization to a registered tensor through the registry.
+    /// Read-only access to a registered tensor.
+    pub fn get(&self, id: TensorId) -> Option<&MaterializedTensor> {
+        self.tensors.get(&id)
+    }
+
+    pub fn remove(&mut self, id: TensorId) -> Option<MaterializedTensor> {
+        self.tensors.remove(&id)
+    }
+
+    pub fn len(&self) -> usize { self.tensors.len() }
+    pub fn is_empty(&self) -> bool { self.tensors.is_empty() }
+
+    /// Add a materialization through the registry.
     pub fn add_materialization(
         &mut self,
         tensor_id: TensorId,
@@ -293,12 +324,14 @@ impl TensorRegistry {
             format!("TensorRegistry: tensor {:?} not found", tensor_id)
         })?;
         tensor.add_materialization(
-            &mut self.materialization_seq,
-            backend_id, backend_handle, shape, layout, dtype,
+            &mut self.materialization_seq, backend_id, backend_handle, shape, layout, dtype,
         )
     }
 
-    /// Execute an authority transition through the registry.
+    /// Execute an authority transition transactionally.
+    ///
+    /// All validation (immutability, dtype, shape) happens before any
+    /// tensor state is mutated.  On error, the tensor is unchanged.
     pub fn advance_version(
         &mut self,
         tensor_id: TensorId,
@@ -308,31 +341,25 @@ impl TensorRegistry {
         layout: PhysicalLayout,
         dtype: DType,
     ) -> Result<AuthorityTransitionReceipt, String> {
-        let tensor = self.tensors.get_mut(&tensor_id).ok_or_else(|| {
-            format!("TensorRegistry: tensor {:?} not found", tensor_id)
-        })?;
-        tensor.advance_version(
-            &mut self.materialization_seq,
+        // Phase 1: validate without mutation
+        {
+            let tensor = self.tensors.get(&tensor_id).ok_or_else(|| {
+                format!("TensorRegistry: tensor {:?} not found", tensor_id)
+            })?;
+            tensor.prepare_transition(new_authoritative_backend, dtype, &shape)?;
+        }
+
+        // Phase 2: commit (cannot fail)
+        let tensor = self.tensors.get_mut(&tensor_id).unwrap();
+        Ok(tensor.commit_transition(
             new_authoritative_backend, new_handle, shape, layout, dtype,
-        )
+            &mut self.materialization_seq,
+        ))
     }
-
-    pub fn get(&self, id: TensorId) -> Option<&MaterializedTensor> {
-        self.tensors.get(&id)
-    }
-
-    pub fn remove(&mut self, id: TensorId) -> Option<MaterializedTensor> {
-        self.tensors.remove(&id)
-    }
-
-    pub fn len(&self) -> usize { self.tensors.len() }
-    pub fn is_empty(&self) -> bool { self.tensors.is_empty() }
 }
 
 // ── Transfer record ───────────────────────────────────────────────────
 
-/// Lossless transfer record — preserves exact source and destination
-/// layouts, dtypes, and timings.  No invented detail.
 #[derive(Debug, Clone)]
 pub struct TensorTransferRecord {
     pub tensor_id: TensorId,
