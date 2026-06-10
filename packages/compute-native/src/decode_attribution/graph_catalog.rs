@@ -275,3 +275,29 @@ pub fn all_families() -> Vec<&'static GraphFamily> {
     for f in BASELINE_FAMILIES { v.push(f); }
     v
 }
+
+/// Canonical output SSA names per graph family.
+///
+/// SINGLE AUTHORITY for output names. Every caller (MIL package metadata,
+/// Core ML predict, reference evaluator, harness) must use this mapping
+/// instead of maintaining duplicates. The names are traced from counter=0
+/// per MilBuilder instance, accounting for manual ops that don't advance
+/// the counter.
+pub fn graph_output_names(family_name: &str) -> &[&'static str] {
+    match family_name {
+        "matmul" => &["matmul_1"],
+        "chain_matmul_add_silu" => &["silu_4"],
+        "branch_rejoin" => &["add_4"],
+        "multi_output" => &["matmul_2", "add_3"],
+        "constant_heavy" => &["matmul_6"],
+        "reshape_transpose_matmul" => &["matmul_1"],
+        "softmax_tail" => &["softmax_2"],
+        "identity_passthrough" => &["identity_0"],
+        other => panic!("unknown family '{other}'"),
+    }
+}
+
+/// Primary (first) output name for convenience.
+pub fn graph_primary_output(family_name: &str) -> &'static str {
+    graph_output_names(family_name)[0]
+}

@@ -1,0 +1,405 @@
+{
+  "report_id": "DA-0001-120814",
+  "generated_at": "2026-06-10T19:47:08Z",
+  "commit_sha": "unknown",
+  "schema_version": "decode-attribution.v1",
+  "percentile_method": "nearest_rank",
+  "host": {
+    "chip": "Apple M1",
+    "macos": "26.5.1",
+    "xcode": "17C519"
+  },
+  "config": {
+    "warmup_iterations": 10,
+    "steady_iterations": 100,
+    "tolerance": 0.0001
+  },
+  "matrices": {
+    "matrix1_compute_units": {
+      "runs": 16,
+      "passed": 0,
+      "failed": 16
+    },
+    "matrix2_shape_scaling_cpu": {
+      "runs": 15,
+      "passed": 0,
+      "failed": 15
+    },
+    "matrix_a": {
+      "runs": 15,
+      "passed": 9,
+      "failed": 6
+    },
+    "negative_evidence": {
+      "runs": 1,
+      "passed": 0,
+      "failed": 1
+    }
+  },
+  "key_findings": [
+    {
+      "question": "steady_state_latency_by_backend",
+      "answer": "2 backends produced matmul data",
+      "data": {
+        "accelerate": [
+          {
+            "cold_ns": 41083,
+            "compile_duration_ns": 0,
+            "load_duration_ns": 0,
+            "shape": "small",
+            "steady_p50_ns": 42
+          },
+          {
+            "cold_ns": 5000,
+            "compile_duration_ns": 0,
+            "load_duration_ns": 0,
+            "shape": "medium",
+            "steady_p50_ns": 667
+          },
+          {
+            "cold_ns": 113667,
+            "compile_duration_ns": 0,
+            "load_duration_ns": 0,
+            "shape": "large",
+            "steady_p50_ns": 27583
+          }
+        ],
+        "mlx": [
+          {
+            "cold_ns": 4149625,
+            "compile_duration_ns": 0,
+            "load_duration_ns": 0,
+            "shape": "small",
+            "steady_p50_ns": 160959
+          },
+          {
+            "cold_ns": 1603542,
+            "compile_duration_ns": 0,
+            "load_duration_ns": 0,
+            "shape": "medium",
+            "steady_p50_ns": 185625
+          },
+          {
+            "cold_ns": 1941959,
+            "compile_duration_ns": 0,
+            "load_duration_ns": 0,
+            "shape": "large",
+            "steady_p50_ns": 258000
+          }
+        ]
+      }
+    }
+  ],
+  "baseline_exclusions": [
+    {
+      "graph_family": "identity_passthrough",
+      "reason": "bridge/load/predict overhead baseline; excluded from scaling conclusions"
+    }
+  ],
+  "failures": [
+    {
+      "graph_family": "matmul",
+      "shape_profile": "small",
+      "runtime_compute_units": "cpuOnly",
+      "reason": "coreml prepare failed: coremlcompiler failed: coremlcompiler: error: compiler error: Error reading protobuf spec. validator error: Description of multiarray feature 'matmul_1' has an invalid shape. Element 1 has non-positive value -1.\n"
+    },
+    {
+      "graph_family": "matmul",
+      "shape_profile": "medium",
+      "runtime_compute_units": "cpuOnly",
+      "reason": "coreml prepare failed: coremlcompiler failed: coremlcompiler: error: compiler error: Error reading protobuf spec. validator error: Description of multiarray feature 'matmul_1' has an invalid shape. Element 1 has non-positive value -1.\n"
+    },
+    {
+      "graph_family": "matmul",
+      "shape_profile": "large",
+      "runtime_compute_units": "cpuOnly",
+      "reason": "coreml prepare failed: coremlcompiler failed: coremlcompiler: error: compiler error: Error reading protobuf spec. validator error: Description of multiarray feature 'matmul_1' has an invalid shape. Element 1 has non-positive value -1.\n"
+    },
+    {
+      "graph_family": "matmul",
+      "shape_profile": "small",
+      "runtime_compute_units": "cpuAndGPU",
+      "reason": "coreml prepare failed: coremlcompiler failed: coremlcompiler: error: compiler error: Error reading protobuf spec. validator error: Description of multiarray feature 'matmul_1' has an invalid shape. Element 1 has non-positive value -1.\n"
+    },
+    {
+      "graph_family": "matmul",
+      "shape_profile": "medium",
+      "runtime_compute_units": "cpuAndGPU",
+      "reason": "coreml prepare failed: coremlcompiler failed: coremlcompiler: error: compiler error: Error reading protobuf spec. validator error: Description of multiarray feature 'matmul_1' has an invalid shape. Element 1 has non-positive value -1.\n"
+    },
+    {
+      "graph_family": "matmul",
+      "shape_profile": "large",
+      "runtime_compute_units": "cpuAndGPU",
+      "reason": "coreml prepare failed: coremlcompiler failed: coremlcompiler: error: compiler error: Error reading protobuf spec. validator error: Description of multiarray feature 'matmul_1' has an invalid shape. Element 1 has non-positive value -1.\n"
+    },
+    {
+      "graph_family": "matmul",
+      "shape_profile": "medium",
+      "runtime_compute_units": "",
+      "reason": "coremlcompiler compilation failed: coremlcompiler failed: coremlcompiler: error: Failed to read model package at file:///var/folders/72/cyz7gwcd5jsg_71j09s7pnmm0000gn/T/.tmpiQmXw4/model.mlpackage/. Error: A valid manifest does not exist at path: /var/folders/72/cyz7gwcd5jsg_71j09s7pnmm0000gn/T/.tmpiQmXw4/model.mlpackage/Manifest.json\n"
+    },
+    {
+      "graph_family": "matmul",
+      "shape_profile": "medium",
+      "runtime_compute_units": "",
+      "reason": "coremlcompiler compilation failed: coremlcompiler failed: coremlcompiler: error: Failed to read model package at file:///var/folders/72/cyz7gwcd5jsg_71j09s7pnmm0000gn/T/.tmp6adN2Q/model.mlpackage/. Error: A valid manifest does not exist at path: /var/folders/72/cyz7gwcd5jsg_71j09s7pnmm0000gn/T/.tmp6adN2Q/model.mlpackage/Manifest.json\n"
+    },
+    {
+      "graph_family": "chain_matmul_add_silu",
+      "shape_profile": "medium",
+      "runtime_compute_units": "",
+      "reason": "coremlcompiler compilation failed: coremlcompiler failed: coremlcompiler: error: Failed to read model package at file:///var/folders/72/cyz7gwcd5jsg_71j09s7pnmm0000gn/T/.tmpVo2wtS/model.mlpackage/. Error: A valid manifest does not exist at path: /var/folders/72/cyz7gwcd5jsg_71j09s7pnmm0000gn/T/.tmpVo2wtS/model.mlpackage/Manifest.json\n"
+    },
+    {
+      "graph_family": "chain_matmul_add_silu",
+      "shape_profile": "medium",
+      "runtime_compute_units": "",
+      "reason": "coremlcompiler compilation failed: coremlcompiler failed: coremlcompiler: error: Failed to read model package at file:///var/folders/72/cyz7gwcd5jsg_71j09s7pnmm0000gn/T/.tmpH3ZGwR/model.mlpackage/. Error: A valid manifest does not exist at path: /var/folders/72/cyz7gwcd5jsg_71j09s7pnmm0000gn/T/.tmpH3ZGwR/model.mlpackage/Manifest.json\n"
+    },
+    {
+      "graph_family": "branch_rejoin",
+      "shape_profile": "medium",
+      "runtime_compute_units": "",
+      "reason": "coremlcompiler compilation failed: coremlcompiler failed: coremlcompiler: error: Failed to read model package at file:///var/folders/72/cyz7gwcd5jsg_71j09s7pnmm0000gn/T/.tmpsKCmNb/model.mlpackage/. Error: A valid manifest does not exist at path: /var/folders/72/cyz7gwcd5jsg_71j09s7pnmm0000gn/T/.tmpsKCmNb/model.mlpackage/Manifest.json\n"
+    },
+    {
+      "graph_family": "branch_rejoin",
+      "shape_profile": "medium",
+      "runtime_compute_units": "",
+      "reason": "coremlcompiler compilation failed: coremlcompiler failed: coremlcompiler: error: Failed to read model package at file:///var/folders/72/cyz7gwcd5jsg_71j09s7pnmm0000gn/T/.tmpE1HhVt/model.mlpackage/. Error: A valid manifest does not exist at path: /var/folders/72/cyz7gwcd5jsg_71j09s7pnmm0000gn/T/.tmpE1HhVt/model.mlpackage/Manifest.json\n"
+    },
+    {
+      "graph_family": "multi_output",
+      "shape_profile": "medium",
+      "runtime_compute_units": "",
+      "reason": "coremlcompiler compilation failed: coremlcompiler failed: coremlcompiler: error: Failed to read model package at file:///var/folders/72/cyz7gwcd5jsg_71j09s7pnmm0000gn/T/.tmpwbGqt0/model.mlpackage/. Error: A valid manifest does not exist at path: /var/folders/72/cyz7gwcd5jsg_71j09s7pnmm0000gn/T/.tmpwbGqt0/model.mlpackage/Manifest.json\n"
+    },
+    {
+      "graph_family": "multi_output",
+      "shape_profile": "medium",
+      "runtime_compute_units": "",
+      "reason": "coremlcompiler compilation failed: coremlcompiler failed: coremlcompiler: error: Failed to read model package at file:///var/folders/72/cyz7gwcd5jsg_71j09s7pnmm0000gn/T/.tmp7MdW5O/model.mlpackage/. Error: A valid manifest does not exist at path: /var/folders/72/cyz7gwcd5jsg_71j09s7pnmm0000gn/T/.tmp7MdW5O/model.mlpackage/Manifest.json\n"
+    },
+    {
+      "graph_family": "constant_heavy",
+      "shape_profile": "medium",
+      "runtime_compute_units": "",
+      "reason": "coremlcompiler compilation failed: coremlcompiler failed: coremlcompiler: error: Failed to read model package at file:///var/folders/72/cyz7gwcd5jsg_71j09s7pnmm0000gn/T/.tmprrLqRj/model.mlpackage/. Error: A valid manifest does not exist at path: /var/folders/72/cyz7gwcd5jsg_71j09s7pnmm0000gn/T/.tmprrLqRj/model.mlpackage/Manifest.json\n"
+    },
+    {
+      "graph_family": "constant_heavy",
+      "shape_profile": "medium",
+      "runtime_compute_units": "",
+      "reason": "coremlcompiler compilation failed: coremlcompiler failed: coremlcompiler: error: Failed to read model package at file:///var/folders/72/cyz7gwcd5jsg_71j09s7pnmm0000gn/T/.tmpc4aQDQ/model.mlpackage/. Error: A valid manifest does not exist at path: /var/folders/72/cyz7gwcd5jsg_71j09s7pnmm0000gn/T/.tmpc4aQDQ/model.mlpackage/Manifest.json\n"
+    },
+    {
+      "graph_family": "reshape_transpose_matmul",
+      "shape_profile": "medium",
+      "runtime_compute_units": "",
+      "reason": "coremlcompiler compilation failed: coremlcompiler failed: coremlcompiler: error: Failed to read model package at file:///var/folders/72/cyz7gwcd5jsg_71j09s7pnmm0000gn/T/.tmpFCbLOT/model.mlpackage/. Error: A valid manifest does not exist at path: /var/folders/72/cyz7gwcd5jsg_71j09s7pnmm0000gn/T/.tmpFCbLOT/model.mlpackage/Manifest.json\n"
+    },
+    {
+      "graph_family": "reshape_transpose_matmul",
+      "shape_profile": "medium",
+      "runtime_compute_units": "",
+      "reason": "coremlcompiler compilation failed: coremlcompiler failed: coremlcompiler: error: Failed to read model package at file:///var/folders/72/cyz7gwcd5jsg_71j09s7pnmm0000gn/T/.tmpj9h1zn/model.mlpackage/. Error: A valid manifest does not exist at path: /var/folders/72/cyz7gwcd5jsg_71j09s7pnmm0000gn/T/.tmpj9h1zn/model.mlpackage/Manifest.json\n"
+    },
+    {
+      "graph_family": "softmax_tail",
+      "shape_profile": "medium",
+      "runtime_compute_units": "",
+      "reason": "coremlcompiler compilation failed: coremlcompiler failed: coremlcompiler: error: Failed to read model package at file:///var/folders/72/cyz7gwcd5jsg_71j09s7pnmm0000gn/T/.tmpFK2aFI/model.mlpackage/. Error: A valid manifest does not exist at path: /var/folders/72/cyz7gwcd5jsg_71j09s7pnmm0000gn/T/.tmpFK2aFI/model.mlpackage/Manifest.json\n"
+    },
+    {
+      "graph_family": "softmax_tail",
+      "shape_profile": "medium",
+      "runtime_compute_units": "",
+      "reason": "coremlcompiler compilation failed: coremlcompiler failed: coremlcompiler: error: Failed to read model package at file:///var/folders/72/cyz7gwcd5jsg_71j09s7pnmm0000gn/T/.tmpex7MCZ/model.mlpackage/. Error: A valid manifest does not exist at path: /var/folders/72/cyz7gwcd5jsg_71j09s7pnmm0000gn/T/.tmpex7MCZ/model.mlpackage/Manifest.json\n"
+    },
+    {
+      "graph_family": "identity_passthrough",
+      "shape_profile": "medium",
+      "runtime_compute_units": "",
+      "reason": "coremlcompiler compilation failed: coremlcompiler failed: coremlcompiler: error: Failed to read model package at file:///var/folders/72/cyz7gwcd5jsg_71j09s7pnmm0000gn/T/.tmpYKzUy8/model.mlpackage/. Error: A valid manifest does not exist at path: /var/folders/72/cyz7gwcd5jsg_71j09s7pnmm0000gn/T/.tmpYKzUy8/model.mlpackage/Manifest.json\n"
+    },
+    {
+      "graph_family": "identity_passthrough",
+      "shape_profile": "medium",
+      "runtime_compute_units": "",
+      "reason": "coremlcompiler compilation failed: coremlcompiler failed: coremlcompiler: error: Failed to read model package at file:///var/folders/72/cyz7gwcd5jsg_71j09s7pnmm0000gn/T/.tmpuRP3kz/model.mlpackage/. Error: A valid manifest does not exist at path: /var/folders/72/cyz7gwcd5jsg_71j09s7pnmm0000gn/T/.tmpuRP3kz/model.mlpackage/Manifest.json\n"
+    },
+    {
+      "graph_family": "matmul",
+      "shape_profile": "small",
+      "runtime_compute_units": "",
+      "reason": "coremlcompiler compilation failed: coremlcompiler failed: coremlcompiler: error: Failed to read model package at file:///var/folders/72/cyz7gwcd5jsg_71j09s7pnmm0000gn/T/.tmpbCxAt5/model.mlpackage/. Error: A valid manifest does not exist at path: /var/folders/72/cyz7gwcd5jsg_71j09s7pnmm0000gn/T/.tmpbCxAt5/model.mlpackage/Manifest.json\n"
+    },
+    {
+      "graph_family": "matmul",
+      "shape_profile": "medium",
+      "runtime_compute_units": "",
+      "reason": "coremlcompiler compilation failed: coremlcompiler failed: coremlcompiler: error: Failed to read model package at file:///var/folders/72/cyz7gwcd5jsg_71j09s7pnmm0000gn/T/.tmppOZQii/model.mlpackage/. Error: A valid manifest does not exist at path: /var/folders/72/cyz7gwcd5jsg_71j09s7pnmm0000gn/T/.tmppOZQii/model.mlpackage/Manifest.json\n"
+    },
+    {
+      "graph_family": "matmul",
+      "shape_profile": "large",
+      "runtime_compute_units": "",
+      "reason": "coremlcompiler compilation failed: coremlcompiler failed: coremlcompiler: error: Failed to read model package at file:///var/folders/72/cyz7gwcd5jsg_71j09s7pnmm0000gn/T/.tmpDWZWc4/model.mlpackage/. Error: A valid manifest does not exist at path: /var/folders/72/cyz7gwcd5jsg_71j09s7pnmm0000gn/T/.tmpDWZWc4/model.mlpackage/Manifest.json\n"
+    },
+    {
+      "graph_family": "chain_matmul_add_silu",
+      "shape_profile": "small",
+      "runtime_compute_units": "",
+      "reason": "coremlcompiler compilation failed: coremlcompiler failed: coremlcompiler: error: Failed to read model package at file:///var/folders/72/cyz7gwcd5jsg_71j09s7pnmm0000gn/T/.tmpkyGnBj/model.mlpackage/. Error: A valid manifest does not exist at path: /var/folders/72/cyz7gwcd5jsg_71j09s7pnmm0000gn/T/.tmpkyGnBj/model.mlpackage/Manifest.json\n"
+    },
+    {
+      "graph_family": "chain_matmul_add_silu",
+      "shape_profile": "medium",
+      "runtime_compute_units": "",
+      "reason": "coremlcompiler compilation failed: coremlcompiler failed: coremlcompiler: error: Failed to read model package at file:///var/folders/72/cyz7gwcd5jsg_71j09s7pnmm0000gn/T/.tmpMFEFAF/model.mlpackage/. Error: A valid manifest does not exist at path: /var/folders/72/cyz7gwcd5jsg_71j09s7pnmm0000gn/T/.tmpMFEFAF/model.mlpackage/Manifest.json\n"
+    },
+    {
+      "graph_family": "chain_matmul_add_silu",
+      "shape_profile": "large",
+      "runtime_compute_units": "",
+      "reason": "coremlcompiler compilation failed: coremlcompiler failed: coremlcompiler: error: Failed to read model package at file:///var/folders/72/cyz7gwcd5jsg_71j09s7pnmm0000gn/T/.tmpsvhDmZ/model.mlpackage/. Error: A valid manifest does not exist at path: /var/folders/72/cyz7gwcd5jsg_71j09s7pnmm0000gn/T/.tmpsvhDmZ/model.mlpackage/Manifest.json\n"
+    },
+    {
+      "graph_family": "branch_rejoin",
+      "shape_profile": "small",
+      "runtime_compute_units": "",
+      "reason": "coremlcompiler compilation failed: coremlcompiler failed: coremlcompiler: error: Failed to read model package at file:///var/folders/72/cyz7gwcd5jsg_71j09s7pnmm0000gn/T/.tmp3kmQD1/model.mlpackage/. Error: A valid manifest does not exist at path: /var/folders/72/cyz7gwcd5jsg_71j09s7pnmm0000gn/T/.tmp3kmQD1/model.mlpackage/Manifest.json\n"
+    },
+    {
+      "graph_family": "branch_rejoin",
+      "shape_profile": "medium",
+      "runtime_compute_units": "",
+      "reason": "coremlcompiler compilation failed: coremlcompiler failed: coremlcompiler: error: Failed to read model package at file:///var/folders/72/cyz7gwcd5jsg_71j09s7pnmm0000gn/T/.tmpvOnDmf/model.mlpackage/. Error: A valid manifest does not exist at path: /var/folders/72/cyz7gwcd5jsg_71j09s7pnmm0000gn/T/.tmpvOnDmf/model.mlpackage/Manifest.json\n"
+    },
+    {
+      "graph_family": "branch_rejoin",
+      "shape_profile": "large",
+      "runtime_compute_units": "",
+      "reason": "coremlcompiler compilation failed: coremlcompiler failed: coremlcompiler: error: Failed to read model package at file:///var/folders/72/cyz7gwcd5jsg_71j09s7pnmm0000gn/T/.tmpXHtsc1/model.mlpackage/. Error: A valid manifest does not exist at path: /var/folders/72/cyz7gwcd5jsg_71j09s7pnmm0000gn/T/.tmpXHtsc1/model.mlpackage/Manifest.json\n"
+    },
+    {
+      "graph_family": "multi_output",
+      "shape_profile": "small",
+      "runtime_compute_units": "",
+      "reason": "coremlcompiler compilation failed: coremlcompiler failed: coremlcompiler: error: Failed to read model package at file:///var/folders/72/cyz7gwcd5jsg_71j09s7pnmm0000gn/T/.tmp0NIebE/model.mlpackage/. Error: A valid manifest does not exist at path: /var/folders/72/cyz7gwcd5jsg_71j09s7pnmm0000gn/T/.tmp0NIebE/model.mlpackage/Manifest.json\n"
+    },
+    {
+      "graph_family": "multi_output",
+      "shape_profile": "medium",
+      "runtime_compute_units": "",
+      "reason": "coremlcompiler compilation failed: coremlcompiler failed: coremlcompiler: error: Failed to read model package at file:///var/folders/72/cyz7gwcd5jsg_71j09s7pnmm0000gn/T/.tmpWWXp6R/model.mlpackage/. Error: A valid manifest does not exist at path: /var/folders/72/cyz7gwcd5jsg_71j09s7pnmm0000gn/T/.tmpWWXp6R/model.mlpackage/Manifest.json\n"
+    },
+    {
+      "graph_family": "multi_output",
+      "shape_profile": "large",
+      "runtime_compute_units": "",
+      "reason": "coremlcompiler compilation failed: coremlcompiler failed: coremlcompiler: error: Failed to read model package at file:///var/folders/72/cyz7gwcd5jsg_71j09s7pnmm0000gn/T/.tmp6TpJcr/model.mlpackage/. Error: A valid manifest does not exist at path: /var/folders/72/cyz7gwcd5jsg_71j09s7pnmm0000gn/T/.tmp6TpJcr/model.mlpackage/Manifest.json\n"
+    },
+    {
+      "graph_family": "constant_heavy",
+      "shape_profile": "small",
+      "runtime_compute_units": "",
+      "reason": "coremlcompiler compilation failed: coremlcompiler failed: coremlcompiler: error: Failed to read model package at file:///var/folders/72/cyz7gwcd5jsg_71j09s7pnmm0000gn/T/.tmpCcpANx/model.mlpackage/. Error: A valid manifest does not exist at path: /var/folders/72/cyz7gwcd5jsg_71j09s7pnmm0000gn/T/.tmpCcpANx/model.mlpackage/Manifest.json\n"
+    },
+    {
+      "graph_family": "constant_heavy",
+      "shape_profile": "medium",
+      "runtime_compute_units": "",
+      "reason": "coremlcompiler compilation failed: coremlcompiler failed: coremlcompiler: error: Failed to read model package at file:///var/folders/72/cyz7gwcd5jsg_71j09s7pnmm0000gn/T/.tmp8WSCag/model.mlpackage/. Error: A valid manifest does not exist at path: /var/folders/72/cyz7gwcd5jsg_71j09s7pnmm0000gn/T/.tmp8WSCag/model.mlpackage/Manifest.json\n"
+    },
+    {
+      "graph_family": "constant_heavy",
+      "shape_profile": "large",
+      "runtime_compute_units": "",
+      "reason": "coremlcompiler compilation failed: coremlcompiler failed: coremlcompiler: error: Failed to read model package at file:///var/folders/72/cyz7gwcd5jsg_71j09s7pnmm0000gn/T/.tmpnpSlSm/model.mlpackage/. Error: A valid manifest does not exist at path: /var/folders/72/cyz7gwcd5jsg_71j09s7pnmm0000gn/T/.tmpnpSlSm/model.mlpackage/Manifest.json\n"
+    },
+    {
+      "graph_family": "negative_evidence_matmul",
+      "shape_profile": "medium",
+      "runtime_compute_units": "",
+      "reason": "compilation: coremlcompiler failed: coremlcompiler: error: Failed to read model package at file:///var/folders/72/cyz7gwcd5jsg_71j09s7pnmm0000gn/T/.tmpiYF5Vx/neg.mlpackage/. Error: A valid manifest does not exist at path: /var/folders/72/cyz7gwcd5jsg_71j09s7pnmm0000gn/T/.tmpiYF5Vx/neg.mlpackage/Manifest.json\n"
+    }
+  ],
+  "backend_support_matrix": {
+    "/branch_rejoin": [
+      "",
+      "",
+      "",
+      "",
+      ""
+    ],
+    "/chain_matmul_add_silu": [
+      "",
+      "",
+      "",
+      "",
+      ""
+    ],
+    "/constant_heavy": [
+      "",
+      "",
+      "",
+      "",
+      ""
+    ],
+    "/identity_passthrough": [
+      "",
+      ""
+    ],
+    "/matmul": [
+      "",
+      "",
+      "",
+      "",
+      ""
+    ],
+    "/multi_output": [
+      "",
+      "",
+      "",
+      "",
+      ""
+    ],
+    "/negative_evidence_matmul": [
+      ""
+    ],
+    "/reshape_transpose_matmul": [
+      "",
+      ""
+    ],
+    "/softmax_tail": [
+      "",
+      ""
+    ],
+    "accelerate/matmul": [
+      "supported",
+      "supported",
+      "supported"
+    ],
+    "coreml/matmul": [
+      "supported",
+      "supported",
+      "supported",
+      "supported",
+      "supported",
+      "supported"
+    ],
+    "mlx/matmul": [
+      "supported",
+      "supported",
+      "supported"
+    ],
+    "reference/matmul": [
+      "supported",
+      "supported",
+      "supported"
+    ]
+  },
+  "break_even_analysis": []
+}

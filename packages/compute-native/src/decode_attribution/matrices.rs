@@ -51,7 +51,7 @@ pub fn run_matrix1(config: &RunConfig) -> Vec<DecodeAttributionReceipt> {
 pub fn run_matrix2(config: &RunConfig) -> Vec<DecodeAttributionReceipt> {
     let mut receipts = Vec::with_capacity(15);
     // Use the 5 families that differ meaningfully by shape
-    let families = [&NORMAL_FAMILIES[0], &NORMAL_FAMILIES[1], &NORMAL_FAMILIES[2], &NORMAL_FAMILIES[3], &NORMAL_FAMILIES[4]];
+    let families = [&NORMAL_FAMILIES[0], &NORMAL_FAMILIES[1], &NORMAL_FAMILIES[2], &NORMAL_FAMILIES[4], &NORMAL_FAMILIES[5]];
     let shapes = [&SMALL, &MEDIUM, &LARGE];
     let mut seq: u32 = 0;
 
@@ -59,8 +59,9 @@ pub fn run_matrix2(config: &RunConfig) -> Vec<DecodeAttributionReceipt> {
         for shape in &shapes {
             seq += 1;
             let run_id = format!("{}-M2-{:04}", config.run_id, seq);
-            let r = run_one(
+            let r = run_backend(
                 &run_id,
+                "coreml",
                 family,
                 shape,
                 "cpuOnly",
@@ -81,7 +82,7 @@ pub fn run_matrix2(config: &RunConfig) -> Vec<DecodeAttributionReceipt> {
 /// Gated behind --include-gpu-shape-matrix flag.
 pub fn run_matrix2b(config: &RunConfig) -> Vec<DecodeAttributionReceipt> {
     let mut receipts = Vec::with_capacity(15);
-    let families = [&NORMAL_FAMILIES[0], &NORMAL_FAMILIES[1], &NORMAL_FAMILIES[2], &NORMAL_FAMILIES[3], &NORMAL_FAMILIES[4]];
+    let families = [&NORMAL_FAMILIES[0], &NORMAL_FAMILIES[1], &NORMAL_FAMILIES[2], &NORMAL_FAMILIES[4], &NORMAL_FAMILIES[5]];
     let shapes = [&SMALL, &MEDIUM, &LARGE];
     let mut seq: u32 = 0;
 
@@ -89,8 +90,9 @@ pub fn run_matrix2b(config: &RunConfig) -> Vec<DecodeAttributionReceipt> {
         for shape in &shapes {
             seq += 1;
             let run_id = format!("{}-M2b-{:04}", config.run_id, seq);
-            let r = run_one(
+            let r = run_backend(
                 &run_id,
+                "coreml",
                 family,
                 shape,
                 "cpuAndGPU",

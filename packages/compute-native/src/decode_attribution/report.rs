@@ -210,7 +210,7 @@ fn generate_break_even(matrix_receipts: &[(&'static str, Vec<DecodeAttributionRe
     for cm in &coreml_rows {
         for d in &direct_rows {
             if cm.shape_profile != d.shape_profile { continue; }
-            let lifecycle_tax = cm.compile_duration_ns + cm.load_duration_ns;
+            let lifecycle_tax = cm.materialize_duration_ns + cm.compile_duration_ns + cm.load_duration_ns;
             let prepare_tax = d.backend_prepare_duration_ns;
             let cm_steady = cm.steady_p50_ns;
             let d_steady = d.steady_p50_ns;

@@ -32,6 +32,7 @@ use crate::worker_memory;
 
 use crate::decode_attribution::compute_plan::inspect_compute_plan;
 use crate::decode_attribution::environment::{self, capture_host_environment};
+use crate::decode_attribution::graph_catalog;
 use crate::decode_attribution::graph_catalog::GraphFamily;
 use crate::decode_attribution::receipt::DecodeAttributionReceipt;
 use crate::decode_attribution::shape_profiles::ShapeProfile;
@@ -491,7 +492,7 @@ fn run_backend_coreml(
 
     // ── Build predict closure ───────────────────────────────────────────
     let input_data = generate_input_data(profile);
-    let output_name = coreml_output_name(family);
+    let output_name = graph_catalog::graph_primary_output(family.name);
     let output_len = coreml_output_len(family.name, profile);
 
     let model = match prepared.coreml_model.as_ref() {

@@ -1,0 +1,539 @@
+{
+  "report_id": "DA-0001-121161",
+  "generated_at": "2026-06-10T19:52:58Z",
+  "commit_sha": "a9a993abd2c44438dd1e3581bd2de305af5d7f93",
+  "schema_version": "decode-attribution.v1",
+  "percentile_method": "nearest_rank",
+  "host": {
+    "chip": "Apple M1",
+    "macos": "26.5.1",
+    "xcode": "17C519"
+  },
+  "config": {
+    "warmup_iterations": 10,
+    "steady_iterations": 100,
+    "tolerance": 0.0001
+  },
+  "matrices": {
+    "matrix1_compute_units": {
+      "runs": 16,
+      "passed": 0,
+      "failed": 16
+    },
+    "matrix2_shape_scaling_cpu": {
+      "runs": 15,
+      "passed": 4,
+      "failed": 11
+    },
+    "matrix_a": {
+      "runs": 15,
+      "passed": 15,
+      "failed": 0
+    },
+    "negative_evidence": {
+      "runs": 1,
+      "passed": 0,
+      "failed": 1
+    }
+  },
+  "key_findings": [
+    {
+      "question": "steady_state_latency_by_backend",
+      "answer": "3 backends produced matmul data",
+      "data": {
+        "accelerate": [
+          {
+            "cold_ns": 33667,
+            "compile_duration_ns": 0,
+            "load_duration_ns": 0,
+            "shape": "small",
+            "steady_p50_ns": 42
+          },
+          {
+            "cold_ns": 3667,
+            "compile_duration_ns": 0,
+            "load_duration_ns": 0,
+            "shape": "medium",
+            "steady_p50_ns": 667
+          },
+          {
+            "cold_ns": 116709,
+            "compile_duration_ns": 0,
+            "load_duration_ns": 0,
+            "shape": "large",
+            "steady_p50_ns": 27916
+          }
+        ],
+        "coreml": [
+          {
+            "cold_ns": 257875,
+            "compile_duration_ns": 0,
+            "load_duration_ns": 220278625,
+            "shape": "small",
+            "steady_p50_ns": 38541
+          },
+          {
+            "cold_ns": 264667,
+            "compile_duration_ns": 0,
+            "load_duration_ns": 236653251,
+            "shape": "medium",
+            "steady_p50_ns": 48709
+          },
+          {
+            "cold_ns": 633708,
+            "compile_duration_ns": 0,
+            "load_duration_ns": 784107417,
+            "shape": "large",
+            "steady_p50_ns": 68500
+          },
+          {
+            "cold_ns": 246625,
+            "compile_duration_ns": 0,
+            "load_duration_ns": 221393209,
+            "shape": "small",
+            "steady_p50_ns": 29000
+          },
+          {
+            "cold_ns": 248334,
+            "compile_duration_ns": 0,
+            "load_duration_ns": 260597958,
+            "shape": "medium",
+            "steady_p50_ns": 34208
+          },
+          {
+            "cold_ns": 622334,
+            "compile_duration_ns": 0,
+            "load_duration_ns": 1484954459,
+            "shape": "large",
+            "steady_p50_ns": 68000
+          },
+          {
+            "cold_ns": 2817750,
+            "compile_duration_ns": 0,
+            "load_duration_ns": 229192583,
+            "shape": "small",
+            "steady_p50_ns": 29208
+          },
+          {
+            "cold_ns": 745042,
+            "compile_duration_ns": 0,
+            "load_duration_ns": 231666042,
+            "shape": "medium",
+            "steady_p50_ns": 34709
+          },
+          {
+            "cold_ns": 6059666,
+            "compile_duration_ns": 0,
+            "load_duration_ns": 801863207,
+            "shape": "large",
+            "steady_p50_ns": 53292
+          }
+        ],
+        "mlx": [
+          {
+            "cold_ns": 3181416,
+            "compile_duration_ns": 0,
+            "load_duration_ns": 0,
+            "shape": "small",
+            "steady_p50_ns": 174625
+          },
+          {
+            "cold_ns": 1560750,
+            "compile_duration_ns": 0,
+            "load_duration_ns": 0,
+            "shape": "medium",
+            "steady_p50_ns": 196000
+          },
+          {
+            "cold_ns": 1936583,
+            "compile_duration_ns": 0,
+            "load_duration_ns": 0,
+            "shape": "large",
+            "steady_p50_ns": 256083
+          }
+        ]
+      }
+    }
+  ],
+  "baseline_exclusions": [
+    {
+      "graph_family": "identity_passthrough",
+      "reason": "bridge/load/predict overhead baseline; excluded from scaling conclusions"
+    }
+  ],
+  "failures": [
+    {
+      "graph_family": "matmul",
+      "shape_profile": "medium",
+      "runtime_compute_units": "",
+      "reason": "coremlcompiler compilation failed: coremlcompiler failed: coremlcompiler: error: Failed to read model package at file:///var/folders/72/cyz7gwcd5jsg_71j09s7pnmm0000gn/T/.tmph2mezi/model.mlpackage/. Error: A valid manifest does not exist at path: /var/folders/72/cyz7gwcd5jsg_71j09s7pnmm0000gn/T/.tmph2mezi/model.mlpackage/Manifest.json\n"
+    },
+    {
+      "graph_family": "matmul",
+      "shape_profile": "medium",
+      "runtime_compute_units": "",
+      "reason": "coremlcompiler compilation failed: coremlcompiler failed: coremlcompiler: error: Failed to read model package at file:///var/folders/72/cyz7gwcd5jsg_71j09s7pnmm0000gn/T/.tmpSIcp3I/model.mlpackage/. Error: A valid manifest does not exist at path: /var/folders/72/cyz7gwcd5jsg_71j09s7pnmm0000gn/T/.tmpSIcp3I/model.mlpackage/Manifest.json\n"
+    },
+    {
+      "graph_family": "chain_matmul_add_silu",
+      "shape_profile": "medium",
+      "runtime_compute_units": "",
+      "reason": "coremlcompiler compilation failed: coremlcompiler failed: coremlcompiler: error: Failed to read model package at file:///var/folders/72/cyz7gwcd5jsg_71j09s7pnmm0000gn/T/.tmpX5UjtM/model.mlpackage/. Error: A valid manifest does not exist at path: /var/folders/72/cyz7gwcd5jsg_71j09s7pnmm0000gn/T/.tmpX5UjtM/model.mlpackage/Manifest.json\n"
+    },
+    {
+      "graph_family": "chain_matmul_add_silu",
+      "shape_profile": "medium",
+      "runtime_compute_units": "",
+      "reason": "coremlcompiler compilation failed: coremlcompiler failed: coremlcompiler: error: Failed to read model package at file:///var/folders/72/cyz7gwcd5jsg_71j09s7pnmm0000gn/T/.tmpThrbQT/model.mlpackage/. Error: A valid manifest does not exist at path: /var/folders/72/cyz7gwcd5jsg_71j09s7pnmm0000gn/T/.tmpThrbQT/model.mlpackage/Manifest.json\n"
+    },
+    {
+      "graph_family": "branch_rejoin",
+      "shape_profile": "medium",
+      "runtime_compute_units": "",
+      "reason": "coremlcompiler compilation failed: coremlcompiler failed: coremlcompiler: error: Failed to read model package at file:///var/folders/72/cyz7gwcd5jsg_71j09s7pnmm0000gn/T/.tmpKLnxR0/model.mlpackage/. Error: A valid manifest does not exist at path: /var/folders/72/cyz7gwcd5jsg_71j09s7pnmm0000gn/T/.tmpKLnxR0/model.mlpackage/Manifest.json\n"
+    },
+    {
+      "graph_family": "branch_rejoin",
+      "shape_profile": "medium",
+      "runtime_compute_units": "",
+      "reason": "coremlcompiler compilation failed: coremlcompiler failed: coremlcompiler: error: Failed to read model package at file:///var/folders/72/cyz7gwcd5jsg_71j09s7pnmm0000gn/T/.tmpkzt31a/model.mlpackage/. Error: A valid manifest does not exist at path: /var/folders/72/cyz7gwcd5jsg_71j09s7pnmm0000gn/T/.tmpkzt31a/model.mlpackage/Manifest.json\n"
+    },
+    {
+      "graph_family": "multi_output",
+      "shape_profile": "medium",
+      "runtime_compute_units": "",
+      "reason": "coremlcompiler compilation failed: coremlcompiler failed: coremlcompiler: error: Failed to read model package at file:///var/folders/72/cyz7gwcd5jsg_71j09s7pnmm0000gn/T/.tmpmSjwqp/model.mlpackage/. Error: A valid manifest does not exist at path: /var/folders/72/cyz7gwcd5jsg_71j09s7pnmm0000gn/T/.tmpmSjwqp/model.mlpackage/Manifest.json\n"
+    },
+    {
+      "graph_family": "multi_output",
+      "shape_profile": "medium",
+      "runtime_compute_units": "",
+      "reason": "coremlcompiler compilation failed: coremlcompiler failed: coremlcompiler: error: Failed to read model package at file:///var/folders/72/cyz7gwcd5jsg_71j09s7pnmm0000gn/T/.tmpNgfikB/model.mlpackage/. Error: A valid manifest does not exist at path: /var/folders/72/cyz7gwcd5jsg_71j09s7pnmm0000gn/T/.tmpNgfikB/model.mlpackage/Manifest.json\n"
+    },
+    {
+      "graph_family": "constant_heavy",
+      "shape_profile": "medium",
+      "runtime_compute_units": "",
+      "reason": "coremlcompiler compilation failed: coremlcompiler failed: coremlcompiler: error: Failed to read model package at file:///var/folders/72/cyz7gwcd5jsg_71j09s7pnmm0000gn/T/.tmpvBkeIv/model.mlpackage/. Error: A valid manifest does not exist at path: /var/folders/72/cyz7gwcd5jsg_71j09s7pnmm0000gn/T/.tmpvBkeIv/model.mlpackage/Manifest.json\n"
+    },
+    {
+      "graph_family": "constant_heavy",
+      "shape_profile": "medium",
+      "runtime_compute_units": "",
+      "reason": "coremlcompiler compilation failed: coremlcompiler failed: coremlcompiler: error: Failed to read model package at file:///var/folders/72/cyz7gwcd5jsg_71j09s7pnmm0000gn/T/.tmpVKmvaK/model.mlpackage/. Error: A valid manifest does not exist at path: /var/folders/72/cyz7gwcd5jsg_71j09s7pnmm0000gn/T/.tmpVKmvaK/model.mlpackage/Manifest.json\n"
+    },
+    {
+      "graph_family": "reshape_transpose_matmul",
+      "shape_profile": "medium",
+      "runtime_compute_units": "",
+      "reason": "coremlcompiler compilation failed: coremlcompiler failed: coremlcompiler: error: Failed to read model package at file:///var/folders/72/cyz7gwcd5jsg_71j09s7pnmm0000gn/T/.tmpxTTwnC/model.mlpackage/. Error: A valid manifest does not exist at path: /var/folders/72/cyz7gwcd5jsg_71j09s7pnmm0000gn/T/.tmpxTTwnC/model.mlpackage/Manifest.json\n"
+    },
+    {
+      "graph_family": "reshape_transpose_matmul",
+      "shape_profile": "medium",
+      "runtime_compute_units": "",
+      "reason": "coremlcompiler compilation failed: coremlcompiler failed: coremlcompiler: error: Failed to read model package at file:///var/folders/72/cyz7gwcd5jsg_71j09s7pnmm0000gn/T/.tmpEQ28pO/model.mlpackage/. Error: A valid manifest does not exist at path: /var/folders/72/cyz7gwcd5jsg_71j09s7pnmm0000gn/T/.tmpEQ28pO/model.mlpackage/Manifest.json\n"
+    },
+    {
+      "graph_family": "softmax_tail",
+      "shape_profile": "medium",
+      "runtime_compute_units": "",
+      "reason": "coremlcompiler compilation failed: coremlcompiler failed: coremlcompiler: error: Failed to read model package at file:///var/folders/72/cyz7gwcd5jsg_71j09s7pnmm0000gn/T/.tmpHDCj7J/model.mlpackage/. Error: A valid manifest does not exist at path: /var/folders/72/cyz7gwcd5jsg_71j09s7pnmm0000gn/T/.tmpHDCj7J/model.mlpackage/Manifest.json\n"
+    },
+    {
+      "graph_family": "softmax_tail",
+      "shape_profile": "medium",
+      "runtime_compute_units": "",
+      "reason": "coremlcompiler compilation failed: coremlcompiler failed: coremlcompiler: error: Failed to read model package at file:///var/folders/72/cyz7gwcd5jsg_71j09s7pnmm0000gn/T/.tmpq0ALn0/model.mlpackage/. Error: A valid manifest does not exist at path: /var/folders/72/cyz7gwcd5jsg_71j09s7pnmm0000gn/T/.tmpq0ALn0/model.mlpackage/Manifest.json\n"
+    },
+    {
+      "graph_family": "identity_passthrough",
+      "shape_profile": "medium",
+      "runtime_compute_units": "",
+      "reason": "coremlcompiler compilation failed: coremlcompiler failed: coremlcompiler: error: Failed to read model package at file:///var/folders/72/cyz7gwcd5jsg_71j09s7pnmm0000gn/T/.tmpgzN5m5/model.mlpackage/. Error: A valid manifest does not exist at path: /var/folders/72/cyz7gwcd5jsg_71j09s7pnmm0000gn/T/.tmpgzN5m5/model.mlpackage/Manifest.json\n"
+    },
+    {
+      "graph_family": "identity_passthrough",
+      "shape_profile": "medium",
+      "runtime_compute_units": "",
+      "reason": "coremlcompiler compilation failed: coremlcompiler failed: coremlcompiler: error: Failed to read model package at file:///var/folders/72/cyz7gwcd5jsg_71j09s7pnmm0000gn/T/.tmpDEQsWI/model.mlpackage/. Error: A valid manifest does not exist at path: /var/folders/72/cyz7gwcd5jsg_71j09s7pnmm0000gn/T/.tmpDEQsWI/model.mlpackage/Manifest.json\n"
+    },
+    {
+      "graph_family": "chain_matmul_add_silu",
+      "shape_profile": "small",
+      "runtime_compute_units": "cpuOnly",
+      "reason": "coreml prepare failed: coremlcompiler failed: coremlcompiler: error: Failed to parse the model specification. Error: Unable to parse ML Program: in operation silu_4: Unknown operator 'element_wise'.\n"
+    },
+    {
+      "graph_family": "chain_matmul_add_silu",
+      "shape_profile": "medium",
+      "runtime_compute_units": "cpuOnly",
+      "reason": "coreml prepare failed: coremlcompiler failed: coremlcompiler: error: Failed to parse the model specification. Error: Unable to parse ML Program: in operation silu_4: Unknown operator 'element_wise'.\n"
+    },
+    {
+      "graph_family": "chain_matmul_add_silu",
+      "shape_profile": "large",
+      "runtime_compute_units": "cpuOnly",
+      "reason": "coreml prepare failed: coremlcompiler failed: coremlcompiler: error: Failed to parse the model specification. Error: Unable to parse ML Program: in operation silu_4: Unknown operator 'element_wise'.\n"
+    },
+    {
+      "graph_family": "branch_rejoin",
+      "shape_profile": "medium",
+      "runtime_compute_units": "cpuOnly",
+      "reason": "coreml prepare failed: coremlcompiler failed: coremlcompiler: error: Failed to parse the model specification. Error: Unable to parse ML Program: in operation add_4: Output '0' has unexpected type 'ios19.add'. Expected tensor<fp32, [1, 1]>; got tensor<fp32, [1, 128]>.\n"
+    },
+    {
+      "graph_family": "branch_rejoin",
+      "shape_profile": "large",
+      "runtime_compute_units": "cpuOnly",
+      "reason": "coreml prepare failed: coremlcompiler failed: coremlcompiler: error: Failed to parse the model specification. Error: Unable to parse ML Program: in operation add_4: Output '0' has unexpected type 'ios19.add'. Expected tensor<fp32, [1, 1]>; got tensor<fp32, [1, 1024]>.\n"
+    },
+    {
+      "graph_family": "constant_heavy",
+      "shape_profile": "small",
+      "runtime_compute_units": "cpuOnly",
+      "reason": "max_absolute_error=0.28918659687042236, tolerance=0.0001"
+    },
+    {
+      "graph_family": "constant_heavy",
+      "shape_profile": "medium",
+      "runtime_compute_units": "cpuOnly",
+      "reason": "max_absolute_error=34.21351146697998, tolerance=0.0001"
+    },
+    {
+      "graph_family": "constant_heavy",
+      "shape_profile": "large",
+      "runtime_compute_units": "cpuOnly",
+      "reason": "max_absolute_error=128.54619979858398, tolerance=0.0001"
+    },
+    {
+      "graph_family": "reshape_transpose_matmul",
+      "shape_profile": "small",
+      "runtime_compute_units": "cpuOnly",
+      "reason": "coreml prepare failed: coremlcompiler failed: coremlcompiler: error: Failed to parse the model specification. Error: Unable to parse ML Program: at unknown location: Tensor storage and type have different number of elements\n"
+    },
+    {
+      "graph_family": "reshape_transpose_matmul",
+      "shape_profile": "medium",
+      "runtime_compute_units": "cpuOnly",
+      "reason": "coreml prepare failed: coremlcompiler failed: coremlcompiler: error: Failed to parse the model specification. Error: Unable to parse ML Program: at unknown location: Tensor storage and type have different number of elements\n"
+    },
+    {
+      "graph_family": "reshape_transpose_matmul",
+      "shape_profile": "large",
+      "runtime_compute_units": "cpuOnly",
+      "reason": "coreml prepare failed: coremlcompiler failed: coremlcompiler: error: Failed to parse the model specification. Error: Unable to parse ML Program: at unknown location: Tensor storage and type have different number of elements\n"
+    },
+    {
+      "graph_family": "negative_evidence_matmul",
+      "shape_profile": "medium",
+      "runtime_compute_units": "",
+      "reason": "compilation: coremlcompiler failed: coremlcompiler: error: Failed to read model package at file:///var/folders/72/cyz7gwcd5jsg_71j09s7pnmm0000gn/T/.tmpd5p5Na/neg.mlpackage/. Error: A valid manifest does not exist at path: /var/folders/72/cyz7gwcd5jsg_71j09s7pnmm0000gn/T/.tmpd5p5Na/neg.mlpackage/Manifest.json\n"
+    }
+  ],
+  "backend_support_matrix": {
+    "/branch_rejoin": [
+      "",
+      ""
+    ],
+    "/chain_matmul_add_silu": [
+      "",
+      ""
+    ],
+    "/constant_heavy": [
+      "",
+      ""
+    ],
+    "/identity_passthrough": [
+      "",
+      ""
+    ],
+    "/matmul": [
+      "",
+      ""
+    ],
+    "/multi_output": [
+      "",
+      ""
+    ],
+    "/negative_evidence_matmul": [
+      ""
+    ],
+    "/reshape_transpose_matmul": [
+      "",
+      ""
+    ],
+    "/softmax_tail": [
+      "",
+      ""
+    ],
+    "accelerate/matmul": [
+      "supported",
+      "supported",
+      "supported"
+    ],
+    "coreml/branch_rejoin": [
+      "supported",
+      "supported",
+      "supported"
+    ],
+    "coreml/chain_matmul_add_silu": [
+      "supported",
+      "supported",
+      "supported"
+    ],
+    "coreml/constant_heavy": [
+      "supported",
+      "supported",
+      "supported"
+    ],
+    "coreml/matmul": [
+      "supported",
+      "supported",
+      "supported",
+      "supported",
+      "supported",
+      "supported",
+      "supported",
+      "supported",
+      "supported"
+    ],
+    "coreml/reshape_transpose_matmul": [
+      "supported",
+      "supported",
+      "supported"
+    ],
+    "mlx/matmul": [
+      "supported",
+      "supported",
+      "supported"
+    ],
+    "reference/matmul": [
+      "supported",
+      "supported",
+      "supported"
+    ]
+  },
+  "break_even_analysis": [
+    {
+      "break_even_iterations": "no_break_even",
+      "coreml_backend": "cpuOnly",
+      "coreml_lifecycle_tax_ns": 220278625,
+      "coreml_steady_p50_ns": 38541,
+      "direct_backend": "accelerate",
+      "direct_prepare_tax_ns": 0,
+      "direct_steady_p50_ns": 42,
+      "shape": "small"
+    },
+    {
+      "break_even_iterations": "1619",
+      "coreml_backend": "cpuOnly",
+      "coreml_lifecycle_tax_ns": 220278625,
+      "coreml_steady_p50_ns": 38541,
+      "direct_backend": "mlx",
+      "direct_prepare_tax_ns": 0,
+      "direct_steady_p50_ns": 174625,
+      "shape": "small"
+    },
+    {
+      "break_even_iterations": "no_break_even",
+      "coreml_backend": "cpuOnly",
+      "coreml_lifecycle_tax_ns": 236653251,
+      "coreml_steady_p50_ns": 48709,
+      "direct_backend": "accelerate",
+      "direct_prepare_tax_ns": 0,
+      "direct_steady_p50_ns": 667,
+      "shape": "medium"
+    },
+    {
+      "break_even_iterations": "1607",
+      "coreml_backend": "cpuOnly",
+      "coreml_lifecycle_tax_ns": 236653251,
+      "coreml_steady_p50_ns": 48709,
+      "direct_backend": "mlx",
+      "direct_prepare_tax_ns": 0,
+      "direct_steady_p50_ns": 196000,
+      "shape": "medium"
+    },
+    {
+      "break_even_iterations": "no_break_even",
+      "coreml_backend": "cpuOnly",
+      "coreml_lifecycle_tax_ns": 784107417,
+      "coreml_steady_p50_ns": 68500,
+      "direct_backend": "accelerate",
+      "direct_prepare_tax_ns": 0,
+      "direct_steady_p50_ns": 27916,
+      "shape": "large"
+    },
+    {
+      "break_even_iterations": "4181",
+      "coreml_backend": "cpuOnly",
+      "coreml_lifecycle_tax_ns": 784107417,
+      "coreml_steady_p50_ns": 68500,
+      "direct_backend": "mlx",
+      "direct_prepare_tax_ns": 0,
+      "direct_steady_p50_ns": 256083,
+      "shape": "large"
+    },
+    {
+      "break_even_iterations": "no_break_even",
+      "coreml_backend": "cpuAndGPU",
+      "coreml_lifecycle_tax_ns": 221393209,
+      "coreml_steady_p50_ns": 29000,
+      "direct_backend": "accelerate",
+      "direct_prepare_tax_ns": 0,
+      "direct_steady_p50_ns": 42,
+      "shape": "small"
+    },
+    {
+      "break_even_iterations": "1521",
+      "coreml_backend": "cpuAndGPU",
+      "coreml_lifecycle_tax_ns": 221393209,
+      "coreml_steady_p50_ns": 29000,
+      "direct_backend": "mlx",
+      "direct_prepare_tax_ns": 0,
+      "direct_steady_p50_ns": 174625,
+      "shape": "small"
+    },
+    {
+      "break_even_iterations": "no_break_even",
+      "coreml_backend": "cpuAndGPU",
+      "coreml_lifecycle_tax_ns": 260597958,
+      "coreml_steady_p50_ns": 34208,
+      "direct_backend": "accelerate",
+      "direct_prepare_tax_ns": 0,
+      "direct_steady_p50_ns": 667,
+      "shape": "medium"
+    },
+    {
+      "break_even_iterations": "1611",
+      "coreml_backend": "cpuAndGPU",
+      "coreml_lifecycle_tax_ns": 260597958,
+      "coreml_steady_p50_ns": 34208,
+      "direct_backend": "mlx",
+      "direct_prepare_tax_ns": 0,
+      "direct_steady_p50_ns": 196000,
+      "shape": "medium"
+    },
+    {
+      "break_even_iterations": "no_break_even",
+      "coreml_backend": "cpuAndGPU",
+      "coreml_lifecycle_tax_ns": 1484954459,
+      "coreml_steady_p50_ns": 68000,
+      "direct_backend": "accelerate",
+      "direct_prepare_tax_ns": 0,
+      "direct_steady_p50_ns": 27916,
+      "shape": "large"
+    },
+    {
+      "break_even_iterations": "7896",
+      "coreml_backend": "cpuAndGPU",
+      "coreml_lifecycle_tax_ns": 1484954459,
+      "coreml_steady_p50_ns": 68000,
+      "direct_backend": "mlx",
+      "direct_prepare_tax_ns": 0,
+      "direct_steady_p50_ns": 256083,
+      "shape": "large"
+    }
+  ]
+}
