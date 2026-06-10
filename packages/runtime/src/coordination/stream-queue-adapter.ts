@@ -46,8 +46,8 @@ export const DEFAULT_ADAPTER_CONFIG: StreamQueueAdapterConfig = {
   streamName: DEFAULT_CONFIG.streamName,
   consumerGroup: DEFAULT_CONFIG.consumerGroup,
   consumerPrefix: DEFAULT_CONFIG.consumerPrefix,
-  blockTimeoutMs: DEFAULT_CONFIG.blockTimeoutMs,
-  batchSize: DEFAULT_CONFIG.batchSize,
+  blockTimeoutMs: 5000,
+  batchSize: 10,
 }
 
 // ── Adapter ─────────────────────────────────────────────────────────────
