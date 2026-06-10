@@ -2,8 +2,34 @@
 
 use crate::arena::ArenaInfo;
 
+/// Compute unit policy for Core ML model loading.
+/// Maps to MLComputeUnits in the ObjC bridge.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[repr(i64)]
+pub enum CoreMlComputeUnits {
+    CpuOnly = 0,
+    CpuAndGpu = 1,
+    CpuAndNeuralEngine = 2,
+    All = 3,
+}
+
+impl CoreMlComputeUnits {
+    pub fn name(&self) -> &'static str {
+        match self {
+            CoreMlComputeUnits::CpuOnly => "cpuOnly",
+            CoreMlComputeUnits::CpuAndGpu => "cpuAndGPU",
+            CoreMlComputeUnits::CpuAndNeuralEngine => "cpuAndNeuralEngine",
+            CoreMlComputeUnits::All => "all",
+        }
+    }
+}
+
 extern "C" {
-    fn tribunus_coreml_load_model(out_model: *mut *mut std::ffi::c_void, path: *const i8) -> i32;
+    fn tribunus_coreml_load_model(
+        out_model: *mut *mut std::ffi::c_void,
+        path: *const i8,
+        compute_units: i64,
+    ) -> i32;
     fn tribunus_coreml_free_model(model: *mut std::ffi::c_void);
     fn tribunus_coreml_predict(
         model: *mut std::ffi::c_void,
@@ -27,11 +53,18 @@ pub(crate) ptr: *mut std::ffi::c_void,
 }
 
 impl CoreMlModel {
-    /// Load a compiled Core ML model from disk.
+    /// Load a compiled Core ML model from disk with the given compute unit policy.
     pub fn load(path: &str) -> Result<Self, String> {
+        Self::load_with_compute_units(path, CoreMlComputeUnits::CpuAndGpu)
+    }
+
+    /// Load with explicit compute unit policy.
+    pub fn load_with_compute_units(path: &str, compute_units: CoreMlComputeUnits) -> Result<Self, String> {
         let c_path = std::ffi::CString::new(path).map_err(|e| format!("CString: {}", e))?;
         let mut ptr: *mut std::ffi::c_void = std::ptr::null_mut();
-        let status = unsafe { tribunus_coreml_load_model(&mut ptr, c_path.as_ptr()) };
+        let status = unsafe {
+            tribunus_coreml_load_model(&mut ptr, c_path.as_ptr(), compute_units as i64)
+        };
         if status != 0 {
             return Err(format!("tribunus_coreml_load_model failed: {}", status));
         }

@@ -82,6 +82,12 @@ pub struct MilBuilder {
     weights: HashMap<String, Vec<u8>>,
 }
 
+impl Default for MilBuilder {
+    fn default() -> Self {
+        Self::new("__default__")
+    }
+}
+
 impl MilBuilder {
     pub fn new(function_name: &str) -> Self {
         Self {
@@ -106,6 +112,38 @@ impl MilBuilder {
             r#type: Some(vt),
         });
         self
+    }
+
+    /// Override the opset identifier (default: "CoreML9").
+    pub fn set_opset(mut self, opset: &str) -> Self {
+        self.opset = opset.to_string();
+        self
+    }
+
+    /// Return the current opset identifier.
+    pub fn get_opset(&self) -> &str {
+        &self.opset
+    }
+
+    /// Add a pre-built MIL operation to the block.
+    pub fn operation(mut self, op: mil_spec::Operation, output_type: Option<(&str, mil_spec::ValueType)>) -> Self {
+        if let Some((name, vt)) = output_type {
+            self.value_types.insert(name.to_string(), vt);
+        }
+        self.ops.push(op);
+        self
+    }
+
+    /// Explicitly register a value type.
+    pub fn register_type(&mut self, name: &str, vt: mil_spec::ValueType) {
+        self.value_types.insert(name.to_string(), vt);
+    }
+
+    /// Access the current ops list.
+    pub fn ops(&self) -> &[mil_spec::Operation] { &self.ops }
+    /// Add a weight for mlpackage serialization.
+    pub fn add_weight(&mut self, name: &str, data: Vec<u8>) {
+        self.weights.insert(name.to_string(), data);
     }
 
     /// Add a const operation with f32 immediate values.

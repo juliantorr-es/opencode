@@ -54,7 +54,8 @@ static NSString* _assertFeature(MLFeatureDescription* fd,
 /// The path must point directly to the directory containing metadata.json.
 /// Returns 0 on success.
 int tribunus_coreml_load_model(void** out_model,
-                                const char* model_path) {
+                                const char* model_path,
+                                int64_t compute_units) {
     if (!out_model || !model_path) return -1;
     *out_model = NULL;
 
@@ -65,7 +66,7 @@ int tribunus_coreml_load_model(void** out_model,
 
         NSError* error = nil;
         MLModelConfiguration* config = [[MLModelConfiguration alloc] init];
-        config.computeUnits = MLComputeUnitsCPUAndGPU;
+        config.computeUnits = (MLComputeUnits)compute_units;
 
         MLModel* model = [MLModel modelWithContentsOfURL:url
                                            configuration:config
