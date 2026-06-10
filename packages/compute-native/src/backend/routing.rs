@@ -397,7 +397,39 @@ pub struct ComputeRouteProfile {
     pub transfers: Vec<TensorTransferPlan>,
     pub synchronization_groups: Vec<SynchronizationGroup>,
     pub backend_artifacts: BackendArtifactManifest,
+    /// Compile-time evaluation-group plans.
+    pub evaluation_plans: Vec<EvaluationGroupPlan>,
     pub evidence_basis: Vec<EvidenceDigest>,
+}
+
+// ── Evaluation policy ────────────────────────────────────────────────────
+
+/// Who controls when tensors are materialised and at what granularity.
+#[derive(Debug, Clone)]
+pub enum EvaluationPolicy {
+    /// Preserve the backend's normal lazy behaviour.  MLX builds the full
+    /// layer graph; materialisation happens at the backend's discretion.
+    BackendLazy,
+    /// Tribunus defines one or more explicit fusion regions.  MLX may
+    /// still fuse operations inside each region, but must materialise
+    /// every `materialized_output` at the region boundary.
+    ExplicitRegion,
+    /// Every logical operation is followed by an immediate evaluation
+    /// fence.  No cross-operation fusion occurs.
+    ExplicitOperation,
+    /// Every operation must produce a materialised result before the
+    /// next operation begins.  Maximum granularity, minimum fusion.
+    Eager,
+}
+
+/// Compile-time plan for one evaluation group.
+#[derive(Debug, Clone)]
+pub struct EvaluationGroupPlan {
+    pub group_id: EvaluationGroupId,
+    pub operation_ids: Vec<OperationId>,
+    pub materialized_outputs: Vec<TensorId>,
+    pub backend: BackendId,
+    pub evaluation_policy: EvaluationPolicy,
 }
 
 // ── Research routing policy ───────────────────────────────────────────────
