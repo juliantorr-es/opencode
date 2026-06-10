@@ -194,13 +194,22 @@ export function registerOmpRepoIntelTools(): void {
 
   register("tribunus_code_review_export", "Export code review packets using the Oxc parser and review-export pipeline.", {
     profile: { type: "string", enum: ["bootstrap_review","gemini_code_review"], description: "Export profile" },
+    output_path: { type: "string", description: "Output .zip file path (use instead of output_dir for exact destination)" },
     output_dir: { type: "string", description: "Output directory for exported artifacts" },
   }, [], ["artifact:write"], 300_000, async (_ctx, a) => {
     let outputPath: string | undefined
-    if (a.output_dir) {
-      const check = validatePath(a.output_dir as string, true)
+    if (a.output_path) {
+      const check = validatePath(a.output_path as string, true)
       if (!check.valid) return err(check.error || "output path rejected")
       outputPath = check.resolved
+    } else if (a.output_dir) {
+      const check = validatePath(a.output_dir as string, true)
+      if (!check.valid) return err(check.error || "output path rejected")
+      const { getZipName } = await import("../../services/review-export/constants.js")
+      outputPath = resolve(check.resolved, getZipName((a.profile as "bootstrap_review" | "gemini_code_review") || "gemini_code_review"))
+    }
+    if (a.output_path && a.output_dir) {
+      return err("Cannot specify both output_path and output_dir")
     }
     const result = buildCodeReviewExport({
       repoRoot: process.cwd(),

@@ -977,10 +977,7 @@ export function buildCodeReviewExport(
   if (signal?.aborted) throw new Error("code_review_export cancelled before zip");
 
   const zipPath = outputPath ? resolve(outputPath) : resolve(w, getZipName(profile));
-  const tmpZipPath = resolve(
-    w,
-    `.${packetRoot}.${Date.now()}.zip.tmp`,
-  );
+  const tmpZipPath = resolve(dirname(zipPath), `.${packetRoot}.${Date.now()}.zip.tmp`);
 
   const archive = createZipCliArchiveBackend();
   const zipResult = archive.zipDirectory({
