@@ -1,4 +1,4 @@
-import type { OmpRelationalStoreV1 } from "./pglite-types.js"
+import type { OmpRelationalStoreV1 } from "../../store/pglite-types.js"
 import type {
   ReviewExportProgressSinkV1,
   ReviewExportTimingsV1,

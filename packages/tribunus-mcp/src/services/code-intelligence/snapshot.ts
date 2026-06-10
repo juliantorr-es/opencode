@@ -3,8 +3,6 @@ import { basename, relative, resolve } from "node:path"
 import { spawnSync } from "node:child_process"
 import { createHash } from "node:crypto"
 import { performance } from "node:perf_hooks"
-import { z } from "zod"
-import codeReviewExportFactory from "../../code_review_export.js"
 import { createReviewExportTimeline, type ReviewExportProgressEventV1, type ReviewExportProgressSinkV1, type ReviewExportTimingsV1 } from "../review-export/progress.js"
 import { createZipCliArchiveBackend } from "../review-export/archive.js"
 import { getCodeIndexStore } from "./store/code-index-store.js"
@@ -528,34 +526,15 @@ async function ensureSemanticPacketZip(
   if (!force && existsSync(zipPath)) {
     return { zipPath }
   }
-  const tool = codeReviewExportFactory({ cwd: repoRoot, zod: z })
-  const result = await tool.execute(
-    "code-intelligence-bootstrap",
-    { include_untracked: true, profile: "gemini_structured_ir_v1" },
-    (update) => {
-      const details = update.details as Record<string, unknown> | undefined
-      const stage = typeof details?.stage === "string" ? details.stage : undefined
-      const status = typeof details?.status === "string" ? details.status : undefined
-      if (!stage || !status) return
-      const text = Array.isArray(update.content)
-        ? update.content
-            .map((item) => (item && typeof item === "object" && "text" in item ? String((item as { text?: unknown }).text ?? "") : ""))
-            .filter(Boolean)
-            .join(" ")
-        : undefined
-      const event: ReviewExportProgressEventV1 = {
-        stage: stage as ReviewExportProgressEventV1["stage"],
-        status: status as ReviewExportProgressEventV1["status"],
-        message: typeof details?.message === "string" ? details.message : text,
-      }
-      options?.progress?.(event)
-    },
-    { sessionId: `code-intelligence-${Date.now()}` },
-    undefined,
-  )
-  const details = (result as { details?: Record<string, unknown> }).details
-  const outputZip = typeof details?.zipPath === "string" ? details.zipPath : zipPath
-  return { zipPath: outputZip, zipSha256: typeof details?.zipSha256 === "string" ? details.zipSha256 : undefined }
+  const { default: buildGeminiIRArchive } = await import("../review-export/gemini-ir-builder.js")
+  await buildGeminiIRArchive({
+    repoRoot,
+    packetRoot: resolve(repoRoot, "tribunus-source-review"),
+    zipPath,
+    now: new Date().toISOString(),
+    includeUntracked: true,
+  })
+  return { zipPath }
 }
 
 function packetZipSha256(zipPath: string): string {

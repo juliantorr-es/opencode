@@ -218,7 +218,7 @@ export function analyzeSourceGraphFile(args: {
 }): SourceGraphAnalysisV1 {
   const started = performance.now()
   const normalized = normalize(args.text)
-  const parseOptions = {
+  const parseOptions: { lang: "js" | "ts" | "tsx"; sourceType: "unambiguous"; range: boolean; preserveParens: boolean } = {
     lang: args.path.endsWith(".tsx") ? "tsx" : args.path.endsWith(".ts") || args.path.endsWith(".mts") || args.path.endsWith(".cts") ? "ts" : "js",
     sourceType: "unambiguous" as const,
     range: true,
@@ -362,7 +362,7 @@ export function analyzeSourceGraphFile(args: {
     const requireImports = parseRequireImports(normalized).map((entry) => entry.specifier)
     const imports = [...dynamicImports, ...requireImports].map((specifier, index) => ({
       specifier,
-      import_kind: dynamicImports.includes(specifier) ? "dynamic" : "require",
+      import_kind: (dynamicImports.includes(specifier) ? "dynamic" : "require") as "dynamic" | "require",
       start_line: 1,
       end_line: 1,
       start_byte: index,

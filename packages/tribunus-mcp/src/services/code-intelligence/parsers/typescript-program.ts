@@ -42,7 +42,7 @@ export function buildTypeScriptProgram(repoRoot: string, filePaths: string[]): T
 
   const program = ts.createProgram({ rootNames, options, host })
   const checker = program.getTypeChecker()
-  const diagnostics = ts.getPreEmitDiagnostics(program)
+  const diagnostics = [...ts.getPreEmitDiagnostics(program)]
   return { program, checker, diagnostics }
 }
 

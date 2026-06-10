@@ -72,11 +72,11 @@ export function createReviewExportTimeline(progress?: ReviewExportProgressSinkV1
     stage: T,
     event: Omit<Extract<ReviewExportProgressEventV1, { stage: T }>, "stage" | "status" | "timings_ms"> & {
       status?: "start" | "progress" | "done"
-    } = {},
+    } = {} as Omit<Extract<ReviewExportProgressEventV1, { stage: T }>, "stage" | "status" | "timings_ms"> & { status?: "start" | "progress" | "done" },
   ) => {
     emit({ stage, status: event.status ?? "start", ...event } as ReviewExportProgressEventV1)
     const started = performance.now()
-    return (next: Omit<Extract<ReviewExportProgressEventV1, { stage: T }>, "stage" | "status" | "timings_ms"> = {}, status: "progress" | "done" = "done") => {
+    return (next: Omit<Extract<ReviewExportProgressEventV1, { stage: T }>, "stage" | "status" | "timings_ms"> = {} as Omit<Extract<ReviewExportProgressEventV1, { stage: T }>, "stage" | "status" | "timings_ms">, status: "progress" | "done" = "done") => {
       timings[stage] = Math.max(0, Math.round(performance.now() - started))
       emit({ stage, status, ...next, timings_ms: { ...timings } } as ReviewExportProgressEventV1)
       return timings[stage] ?? 0
@@ -127,7 +127,7 @@ export function formatReviewExportProgress(event: ReviewExportProgressEventV1): 
     if (event.stage === "complete") {
       return "export complete"
     }
-    return event.message ?? event.status
+    return (event as { message?: string; status?: string }).message ?? (event as { status?: string }).status ?? "unknown"
   })()
 
   const timing = event.timings_ms ? Object.entries(event.timings_ms).map(([stage, ms]) => `${stage}=${ms}ms`).join(", ") : ""

@@ -89,6 +89,7 @@ export async function parseTreeSitterDeclarations(path: string, source: string):
   parser.setLanguage(languageForPath(path, tsLang, tsxLang))
   const tree = parser.parse(source)
   const declarations: TreeSitterDeclarationV1[] = []
+  if (!tree) return declarations
   walkDeclarations(tree.rootNode, declarations)
   return declarations
 }
@@ -111,6 +112,6 @@ export async function findTreeSitterNode(
     }
     for (const child of node.namedChildren) visit(child)
   }
-  visit(tree.rootNode)
+  if (tree) visit(tree.rootNode)
   return match
 }

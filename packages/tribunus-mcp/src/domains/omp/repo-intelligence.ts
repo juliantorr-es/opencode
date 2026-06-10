@@ -1,39 +1,52 @@
 import { registerTool } from "../../server/registry.js"
 import type { InvocationContext } from "../../governance/invocation-context.js"
-import { governedRun } from "../../governance/subprocess.js"
+import type { Capability } from "../../governance/capabilities.js"
+import type { RegisteredTool } from "../../server/registry.js"
+import { readdir, readFile } from "node:fs/promises"
+import { join, resolve, relative, dirname } from "node:path"
+import type { Dirent } from "node:fs"
+import { fileURLToPath } from "node:url"
+
+// Oxc services
+import { semanticRepoMap } from "../../services/code-intelligence/queries/semantic-repo-map.js"
+import { symbolLookup } from "../../services/code-intelligence/queries/symbol-lookup.js"
+import { impactAnalysis } from "../../services/code-intelligence/queries/impact-analysis.js"
+import { authorityAudit } from "../../services/code-intelligence/queries/authority-audit.js"
+import { buildCodeReviewExport } from "../../services/review-export/bootstrap-builder.js"
+import { reviewPacketExport } from "../../services/code-intelligence/exports/review-packet-export.js"
+import { semanticReviewPacketExport } from "../../services/code-intelligence/exports/semantic-review-packet-export.js"
+import { verifyReviewPackets } from "../../services/review-export/verify-packets.js"
 
 function ok(result: unknown) { return { content: [{ type: "text" as const, text: JSON.stringify(result, null, 2) }] } }
+function err(msg: string) { return { content: [{ type: "text" as const, text: msg }], isError: true } }
 
+type ToolInputProps = Record<string, { type?: string; enum?: string[]; items?: { type: string }; description?: string }>
+type ToolProps = Record<string, unknown>
 
-import type { Capability } from "../../governance/capabilities.js"
-import { fileURLToPath } from "node:url"
-import { dirname } from "node:path"
-
-function t(name: string, desc: string, props: Record<string, unknown>, req: string[], caps: Capability[], ms: number, fn: (ctx: InvocationContext, a: Record<string, unknown>) => Promise<unknown>) {
+function register(name: string, desc: string, props: ToolInputProps, req: string[], caps: Capability[], ms: number, fn: (ctx: InvocationContext, a: ToolProps) => Promise<unknown>, aliases?: string[]): void {
   registerTool({
     name,
     description: desc,
-    inputSchema: { type: "object", properties: props as Record<string, { type?: string; enum?: string[]; items?: { type: string }; description?: string }>, required: req },
-    requiredCapabilities: caps as import("../../governance/capabilities.js").Capability[],
+    inputSchema: { type: "object", properties: props, required: req },
+    requiredCapabilities: caps,
     timeoutMs: ms,
     execute: fn,
-  })
+    aliases,
+  } satisfies Omit<RegisteredTool, "aliases"> & { aliases?: string[] })
 }
 
 export function registerOmpRepoIntelTools(): void {
-  t("tribunus_search", "Search for patterns in files. Pure TypeScript. Respects .gitignore.", {
+  register("tribunus_search", "Search for patterns in files. Pure TypeScript. Respects .gitignore.", {
     pattern: { type: "string" }, path: { type: "string" }, glob: { type: "string" }, max_results: { type: "number" },
   }, ["pattern"], ["repository:read"], 30_000, async (_ctx, a) => {
     const pattern = a.pattern as string
     const searchPath = (a.path as string) || process.cwd()
     const maxResults = (a.max_results as number) || 30
-    const { readdir, readFile } = await import("node:fs/promises")
-    const { join, resolve, relative } = await import("node:path")
     const results: Array<{ file: string; line: number; text: string }> = []
     async function walk(dir: string) {
       if (results.length >= maxResults) return
-      let entries: import("node:fs").Dirent[] = []
-      try { entries = await readdir(dir, { withFileTypes: true }) as any } catch { return }
+      let entries: Dirent[] = []
+      try { entries = await readdir(dir, { withFileTypes: true }) } catch { return }
       for (const e of entries) {
         if (e.name.startsWith(".")) continue
         if (e.name === "node_modules" || e.name === ".git") continue
@@ -58,19 +71,17 @@ export function registerOmpRepoIntelTools(): void {
     return ok({ pattern, results, count: results.length })
   })
 
-  t("tribunus_find", "Find files and directories. Respects .gitignore.", {
+  register("tribunus_find", "Find files and directories. Respects .gitignore.", {
     pattern: { type: "string" }, path: { type: "string" }, type: { type: "string", enum: ["file","directory"] }, max_results: { type: "number" },
   }, [], ["repository:read"], 30_000, async (_ctx, a) => {
     const pat = (a.pattern as string) || "*"
     const searchPath = (a.path as string) || process.cwd()
     const maxResults = (a.max_results as number) || 50
-    const { readdir } = await import("node:fs/promises")
-    const { join, resolve, relative } = await import("node:path")
     const results: string[] = []
     async function walk(dir: string) {
       if (results.length >= maxResults) return
-      let entries: import("node:fs").Dirent[] = []
-      try { entries = await readdir(dir, { withFileTypes: true }) as any } catch { return }
+      let entries: Dirent[] = []
+      try { entries = await readdir(dir, { withFileTypes: true }) } catch { return }
       for (const e of entries) {
         if (e.name.startsWith(".")) continue
         if (e.name === "node_modules" || e.name === ".git") continue
@@ -88,71 +99,123 @@ export function registerOmpRepoIntelTools(): void {
     return ok({ pattern: pat, results: results.slice(0, maxResults), count: results.length })
   })
 
-  t("tribunus_source_read", "Read a source file with structured digest.", {
+  register("tribunus_source_read", "Read a source file with structured digest.", {
     file: { type: "string" }, focus: { type: "string" }, summary_only: { type: "boolean" },
   }, ["file"], ["repository:read"], 15_000, async (_ctx, a) => {
     const filePath = a.file as string
-    const { readFile } = await import("node:fs/promises")
-    const { resolve } = await import("node:path")
     const content = await readFile(resolve(process.cwd(), filePath), "utf-8")
     const summary = a.summary_only
     if (summary) return ok({ file: filePath, lines: content.split("\n").length, size: content.length, preview: content.split("\n").slice(0, 5).join("\n") })
     return ok({ file: filePath, lines: content.split("\n").length, size: content.length, content })
   })
 
-  t("tribunus_repository_map", "Rank important files and symbols from semantic kernel.", {
-    focus_paths: { type: "array", items: { type: "string" } }, max_symbols: { type: "number" },
-  }, [], ["repository:index"], 30_000, async (_ctx, a) => {
-    return ok({ message: "Semantic repository map — Oxc-based implementation pending port from OMP tools", max_symbols: a.max_symbols || 50 })
+  // ── Code Intelligence (Oxc-based, native) ───────────────────────────
+
+  register("tribunus_repository_map", "Rank the most important files and symbols from the Oxc semantic kernel snapshot.", {
+    focus_paths: { type: "array", items: { type: "string" }, description: "Focus on specific paths" },
+    focus_symbols: { type: "array", items: { type: "string" }, description: "Focus on specific symbols" },
+    max_symbols: { type: "number", description: "Maximum symbols to return" },
+    include_tests: { type: "boolean" },
+    include_architecture: { type: "boolean" },
+  }, [], ["repository:index"], 60_000, async (_ctx, a) => {
+    const result = await semanticRepoMap(process.cwd(), {
+      focus_paths: a.focus_paths as string[] | undefined,
+      focus_symbols: a.focus_symbols as string[] | undefined,
+      max_symbols: (a.max_symbols as number) || 50,
+      include_tests: a.include_tests === true,
+      include_architecture: a.include_architecture === true,
+    })
+    return ok(result)
   })
 
-  // ── Review Export (Oxc-based, governed subprocess wrappers) ──
-  // TEMPORARY COMPATIBILITY ADAPTERS — not native ports.
-  // These four tools depend on the OMP _lib/ tree (Oxc parser, tree-sitter, @oh-my-pi/pi-coding-agent).
-  // They run via a focused review-export-runner.ts that instantiates the CustomToolFactory,
-  // constructs mock pi/ctx, and calls execute(). Will be replaced by direct imports from
-  // @tribunus-ai/repository-intelligence once the Oxc stack is extracted.
+  register("tribunus_symbol_lookup", "Look up a symbol in the Oxc semantic kernel by name or ID.", {
+    symbol_name: { type: "string", description: "Symbol name to look up" },
+    symbol_id: { type: "string", description: "Symbol ID (alternative to name)" },
+    path: { type: "string", description: "Limit to a specific file path" },
+    include_references: { type: "boolean", description: "Include reference locations" },
+    include_callers: { type: "boolean", description: "Include caller symbols" },
+  }, [], ["repository:index"], 30_000, async (_ctx, a) => {
+    if (!a.symbol_name && !a.symbol_id) return err("symbol_name or symbol_id required")
+    const result = await symbolLookup(process.cwd(), {
+      symbol_name: a.symbol_name as string | undefined,
+      symbol_id: a.symbol_id as string | undefined,
+      path: a.path as string | undefined,
+      include_references: a.include_references === true,
+      include_callers: a.include_callers === true,
+    })
+    return ok(result)
+  })
 
-  const RUNNER_PATH = `${dirname(fileURLToPath(import.meta.url))}/review-export-runner.ts`
+  register("tribunus_impact_analysis", "Analyze the blast radius of a proposed change using the Oxc dependency graph.", {
+    paths: { type: "array", items: { type: "string" }, description: "File paths affected by the change" },
+    symbols: { type: "array", items: { type: "string" }, description: "Symbols affected by the change" },
+    proposed_change_summary: { type: "string", description: "Description of the proposed change" },
+    include_tests: { type: "boolean", description: "Include affected tests" },
+  }, [], ["repository:index"], 60_000, async (_ctx, a) => {
+    if (!a.paths && !a.symbols) return err("paths or symbols required")
+    const result = await impactAnalysis(process.cwd(), {
+      paths: a.paths as string[] | undefined,
+      symbols: a.symbols as string[] | undefined,
+      proposed_change_summary: a.proposed_change_summary as string | undefined,
+      include_tests: a.include_tests === true,
+    })
+    return ok(result)
+  })
 
-  function runReviewTool(toolName: string, params: Record<string, unknown>): Promise<{ stdout: string; stderr: string; ok: boolean }> {
-    return governedRun("bun", ["run", RUNNER_PATH, toolName, JSON.stringify(params)], { timeout: 300_000 })
-  }
+  register("tribunus_authority_audit", "Audit authority-critical files and symbols from the Oxc semantic kernel.", {
+    focus_tools: { type: "array", items: { type: "string" }, description: "Tool IDs to focus the audit on" },
+  }, [], ["repository:index"], 60_000, async (_ctx, a) => {
+    const result = await authorityAudit(process.cwd(), {
+      tool_ids: a.focus_tools as string[] | undefined,
+    })
+    return ok(result)
+  })
 
-  t("tribunus_code_review_export", "Export code review packets (bootstrap + Gemini IR + zip attachment). Runs the OMP Oxc-based export pipeline.", {
-    profile: { type: "string", enum: ["bootstrap_review","gemini_code_review","gemini_ir","gemini_structured_ir_v1","gemini_zip_attachment"], description: "Export profile (default: gemini_code_review)" },
+  // ── Review Export (Oxc-based, native) ───────────────────────────────
+
+  register("tribunus_code_review_export", "Export code review packets using the Oxc parser and review-export pipeline.", {
+    profile: { type: "string", enum: ["bootstrap_review","gemini_code_review"], description: "Export profile" },
     output_dir: { type: "string", description: "Output directory for exported artifacts" },
   }, [], ["artifact:write"], 300_000, async (_ctx, a) => {
-    const result = await runReviewTool("code_review_export", { profile: a.profile || "gemini_code_review", output_dir: a.output_dir })
-    if (!result.ok) return { content: [{ type: "text" as const, text: `Export failed: ${result.stderr}` }], isError: true }
-    return ok({ profile: a.profile || "gemini_code_review", stdout: result.stdout })
+    await buildCodeReviewExport({
+      repoRoot: process.cwd(),
+      profile: (a.profile as "bootstrap_review" | "gemini_code_review") || "gemini_code_review",
+    })
+    return ok({ profile: a.profile || "gemini_code_review", status: "completed" })
   })
 
-  t("tribunus_review_packet_export", "Export the source review packet (Oxc source graph + review manifests).", {
+  register("tribunus_review_packet_export", "Export the source review packet (Oxc source graph + review manifests).", {
     semantic_output_path: { type: "string", description: "Path for semantic output" },
     source_output_path: { type: "string", description: "Path for source output" },
     force: { type: "boolean", description: "Overwrite existing output (default: true)" },
   }, [], ["artifact:write"], 300_000, async (_ctx, a) => {
-    const result = await runReviewTool("review_packet_export", { semantic_output_path: a.semantic_output_path, source_output_path: a.source_output_path, force: a.force !== false })
-    if (!result.ok) return { content: [{ type: "text" as const, text: `Export failed: ${result.stderr}` }], isError: true }
-    return ok({ stdout: result.stdout, stderr: result.stderr })
+    const result = await reviewPacketExport(process.cwd(), {
+      semantic_output_path: a.semantic_output_path as string | undefined,
+      source_output_path: a.source_output_path as string | undefined,
+      force: a.force !== false,
+    })
+    return ok(result)
   })
 
-  t("tribunus_semantic_review_export", "Export the semantic v1 review packet for Gemini-style code review.", {
+  register("tribunus_semantic_review_export", "Export the semantic v1 review packet for Gemini-style code review.", {
     output_path: { type: "string", description: "Output path for the semantic packet" },
     force: { type: "boolean", description: "Overwrite existing output (default: true)" },
   }, [], ["artifact:write"], 300_000, async (_ctx, a) => {
-    const result = await runReviewTool("semantic_review_packet_export", { output_path: a.output_path, force: a.force !== false })
-    if (!result.ok) return { content: [{ type: "text" as const, text: `Export failed: ${result.stderr}` }], isError: true }
-    return ok({ stdout: result.stdout, stderr: result.stderr })
+    const result = await semanticReviewPacketExport(process.cwd(), {
+      output_path: a.output_path as string | undefined,
+      force: a.force !== false,
+    })
+    return ok(result)
   })
 
-  t("tribunus_review_verify", "Verify source-review and Gemini IR ZIPs contain required Oxc source-graph evidence.", {
+  register("tribunus_review_verify", "Verify source-review and Gemini IR ZIPs contain required Oxc source-graph evidence.", {
     source_zip_path: { type: "string", description: "Path to source-review ZIP" },
     ir_zip_path: { type: "string", description: "Path to Gemini IR ZIP" },
   }, [], ["artifact:verify"], 120_000, async (_ctx, a) => {
-    const result = await runReviewTool("verify_review_packets", { source_zip_path: a.source_zip_path, ir_zip_path: a.ir_zip_path })
-    if (!result.ok) return { content: [{ type: "text" as const, text: `Verification failed: ${result.stderr}` }], isError: true }
-    return ok({ stdout: result.stdout, stderr: result.stderr })
+    const result = await verifyReviewPackets(process.cwd(), {
+      source_zip_path: a.source_zip_path as string | undefined,
+      ir_zip_path: a.ir_zip_path as string | undefined,
+    })
+    return ok(result)
   })
 }

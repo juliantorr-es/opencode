@@ -14,15 +14,13 @@ export async function ensureTreeSitterLanguages(): Promise<{
     return { ParserCtor, tsLang, tsxLang }
   }
 
-  const mod: {
-    default: { init(): Promise<void>; Language: typeof Language; Parser: typeof Parser }
-  } = await import("web-tree-sitter")
-  await mod.default.init()
+  const mod = await import("web-tree-sitter")
+  await mod.Parser.init()
   const base = import.meta.resolve("tree-sitter-typescript")
   const baseDir = base.replace("file://", "").replace("/tree-sitter.json", "")
-  tsLang = await mod.default.Language.load(`${baseDir}/tree-sitter-typescript.wasm`)
-  tsxLang = await mod.default.Language.load(`${baseDir}/tree-sitter-tsx.wasm`)
-  ParserCtor = mod.default.Parser
+  tsLang = await mod.Language.load(`${baseDir}/tree-sitter-typescript.wasm`)
+  tsxLang = await mod.Language.load(`${baseDir}/tree-sitter-tsx.wasm`)
+  ParserCtor = mod.Parser
   initialized = true
   return { ParserCtor, tsLang, tsxLang }
 }

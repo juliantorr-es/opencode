@@ -49,6 +49,8 @@ function createSourceExcerpt(args: {
   endLine?: number;
   symbolId?: string;
   omittedReason?: string;
+  line_count?: number;
+  byte_count?: number;
 }): SourceExcerptV1 {
   const maxChars = args.maxChars ?? 4000;
   const text = normalizeLineBreaks(args.text);
@@ -71,8 +73,8 @@ function createSourceExcerpt(args: {
     },
     inclusion: args.inclusion,
     reason: args.reason,
-    line_count: lineCountForText(text),
-    byte_count: Buffer.byteLength(text, "utf8"),
+    line_count: args.line_count ?? lineCountForText(text),
+    byte_count: args.byte_count ?? Buffer.byteLength(text, "utf8"),
     ...(content ? { content } : {}),
     ...(args.inclusion === "full" ? {} : { omitted_bytes }),
     ...(args.omittedReason ? { omitted_reason: args.omittedReason } : {}),

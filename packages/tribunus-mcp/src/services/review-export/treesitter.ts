@@ -56,15 +56,9 @@ export async function getTreeSitterBundle(): Promise<TreeSitterBundle> {
   if (!treeSitterBundlePromise) {
     treeSitterBundlePromise = (async () => {
       const { Parser, Language } = await import("web-tree-sitter");
-      const { default: treeWasm } = await import("web-tree-sitter/web-tree-sitter.wasm" as string, {
-        with: { type: "wasm" },
-      });
-      const { default: tsWasm } = await import("tree-sitter-typescript/tree-sitter-typescript.wasm" as string, {
-        with: { type: "wasm" },
-      });
-      const { default: tsxWasm } = await import("tree-sitter-typescript/tree-sitter-tsx.wasm" as string, {
-        with: { type: "wasm" },
-      });
+      const { default: treeWasm } = await import("web-tree-sitter/web-tree-sitter.wasm");
+      const { default: tsWasm } = await import("tree-sitter-typescript/tree-sitter-typescript.wasm");
+      const { default: tsxWasm } = await import("tree-sitter-typescript/tree-sitter-tsx.wasm");
       await Parser.init({ locateFile: () => resolveWasmAsset(treeWasm) });
       const [typescript, tsx] = await Promise.all([
         Language.load(resolveWasmAsset(tsWasm)),
@@ -96,8 +90,8 @@ export async function treeSitterParseStatus(path: string, text: string): Promise
     const bundle = await getTreeSitterBundle();
     const parser = new Parser();
     parser.setLanguage(path.endsWith(".tsx") || path.endsWith(".jsx") ? bundle.tsx : bundle.typescript);
-    const tree = parser.parse(text);
-    return tree.rootNode.hasError ? "parse_error" : "parsed";
+    const tree = parser.parse(text)
+    return tree?.rootNode.hasError ? "parse_error" : tree ? "parsed" : "parse_error"
   } catch {
     return "unsupported_language";
   }

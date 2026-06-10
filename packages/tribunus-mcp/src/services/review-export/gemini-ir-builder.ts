@@ -855,7 +855,8 @@ export default async function buildGeminiIRArchive(args: {
       };
       const flowPatterns = flowPatternsByTool[toolId] ?? [];
       const criticalFlow = flowPatterns.map((item) => {
-        const anchor = findFirstPatternAnchor({ path, text, patterns: [item.pattern], symbolId: `flow:${toolId}:${item.step}` });
+        const pattern = item.pattern instanceof RegExp ? item.pattern : new RegExp(String(item.pattern))
+        const anchor = findFirstPatternAnchor({ path, text, patterns: [pattern], symbolId: `flow:${toolId}:${item.step}` });
         return {
           step: item.step,
           detected: Boolean(anchor),
@@ -1594,7 +1595,6 @@ export default async function buildGeminiIRArchive(args: {
   };
 
   const fileIndexArtifact = {
-    schema: "tribunus.semantic_review.file_index.v1",
     ...createV1ArtifactHeader({
       artifact_id: "02_file_index.json",
       schema: "tribunus.semantic_review.file_index.v1",
@@ -1609,7 +1609,6 @@ export default async function buildGeminiIRArchive(args: {
   };
 
   const moduleGraphArtifact = {
-    schema: "tribunus.semantic_review.module_graph.v1",
     ...createV1ArtifactHeader({
       artifact_id: "03_module_graph.json",
       schema: "tribunus.semantic_review.module_graph.v1",
@@ -1629,7 +1628,6 @@ export default async function buildGeminiIRArchive(args: {
   };
 
   const symbolIndexArtifact = {
-    schema: "tribunus.semantic_review.symbol_index.v1",
     ...createV1ArtifactHeader({
       artifact_id: "04_symbol_index.json",
       schema: "tribunus.semantic_review.symbol_index.v1",
@@ -1645,7 +1643,6 @@ export default async function buildGeminiIRArchive(args: {
   };
 
   const typeApiSurfaceArtifact = {
-    schema: "tribunus.semantic_review.type_api_surface.v1",
     ...createV1ArtifactHeader({
       artifact_id: "05_type_api_surface.json",
       schema: "tribunus.semantic_review.type_api_surface.v1",
@@ -1664,17 +1661,17 @@ export default async function buildGeminiIRArchive(args: {
       code: diagnostic.code,
       message: ts.flattenDiagnosticMessageText(diagnostic.messageText, "\n"),
       severity: diagnostic.category === ts.DiagnosticCategory.Error ? "error" as const : diagnostic.category === ts.DiagnosticCategory.Warning ? "warning" as const : "info" as const,
-    })).concat(toolContracts.flatMap((tool) => tool.manifest_implementation_mismatches.map((mismatch) => ({
+    })),
+    ...toolContracts.flatMap((tool) => tool.manifest_implementation_mismatches.map((mismatch) => ({
       path: tool.implementation_path,
       category: "manifest" as const,
       code: mismatch.field,
       message: `${tool.tool_id}: ${mismatch.field} mismatch`,
       severity: mismatch.severity === "critical" ? "error" as const : "warning" as const,
-    })))),
+    })))
   };
 
   const toolKernelIrArtifact = {
-    schema: "tribunus.semantic_review.tool_kernel_ir.v1",
     ...createV1ArtifactHeader({
       artifact_id: "06_tool_kernel_ir.json",
       schema: "tribunus.semantic_review.tool_kernel_ir.v1",
@@ -1696,7 +1693,6 @@ export default async function buildGeminiIRArchive(args: {
   };
 
   const pgliteDuckdbIrArtifact = {
-    schema: "tribunus.semantic_review.pglite_duckdb_ir.v1",
     ...createV1ArtifactHeader({
       artifact_id: "07_pglite_duckdb_ir.json",
       schema: "tribunus.semantic_review.pglite_duckdb_ir.v1",
@@ -1754,7 +1750,6 @@ export default async function buildGeminiIRArchive(args: {
   };
 
   const testsAndCiIrArtifact = {
-    schema: "tribunus.semantic_review.tests_and_ci_ir.v1",
     ...createV1ArtifactHeader({
       artifact_id: "08_tests_and_ci_ir.json",
       schema: "tribunus.semantic_review.tests_and_ci_ir.v1",
@@ -1780,7 +1775,6 @@ export default async function buildGeminiIRArchive(args: {
   };
 
   const architectureContextArtifact = {
-    schema: "tribunus.semantic_review.architecture_context.v1",
     ...createV1ArtifactHeader({
       artifact_id: "09_architecture_context.json",
       schema: "tribunus.semantic_review.architecture_context.v1",
@@ -1799,7 +1793,6 @@ export default async function buildGeminiIRArchive(args: {
   };
 
   const reviewFindingsArtifact = {
-    schema: "tribunus.semantic_review.findings.v1",
     ...createV1ArtifactHeader({
       artifact_id: "10_review_findings.json",
       schema: "tribunus.semantic_review.findings.v1",
@@ -1845,7 +1838,6 @@ export default async function buildGeminiIRArchive(args: {
       git_head_sha: gitHeadSha,
       dirty,
     }),
-    schema: "tribunus.semantic_review.manifest.v1",
     profile: "gemini_structured_ir_v1",
     limits: {
       max_zip_files: 10,
