@@ -1,0 +1,7 @@
+program(1.3)
+[buildInfo = dict<string, string>({{"coremlc-component-MIL", "3510.2.1"}, {"coremlc-version", "3500.32.1"}})]
+{
+    func main<ios19>(tensor<fp32, [1, 4]> x) {
+            tensor<fp32, [1, 4]> sig_0 = sigmoid(x = x)[name = string("sig_0")];
+        } -> (sig_0);
+}

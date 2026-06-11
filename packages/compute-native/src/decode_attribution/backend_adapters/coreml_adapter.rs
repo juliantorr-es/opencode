@@ -81,6 +81,11 @@ pub fn prepare(
         ..Default::default()
     };
 
+    // ── Shape-contract verifier (before write_mlpackage consumes program) ──
+    if let Err(shapes) = verify_shape_contract(&program, &output_names, ncols, &meta) {
+        return Err(shapes);
+    }
+
     // Write mlpackage.
     let pkg_write_start = Instant::now();
     let tmp = tempfile::tempdir().map_err(|e| format!("tempdir: {e}"))?;
@@ -105,7 +110,13 @@ pub fn prepare(
         Ok(_) => (None, None, None),
         Err(e) => (None, Some(format!("{:?}", e)), Some(1)),
     };
-    let _ = compile_result?;
+
+    // Save artifacts (before error propagation so compile failures are preserved).
+    if let Ok(bc_path) = std::env::var("CML_BREADCRUMB_PATH") {
+        save_coreml_artifacts(&pkg_path, &cmc_path, &island_id, &bc_path);
+    }
+
+    let cm_receipt = compile_result?;
 
     // Load.
     let cmc_path = output_dir.join(format!("{}.modelc/{}.mlmodelc", island_id, island_id));
@@ -117,6 +128,7 @@ pub fn prepare(
     let prepare_ns = mil_build_ns + package_write_ns + compile_ns + load_ns;
     let runtime_policy = match cu { CoreMlComputeUnits::CpuAndGpu => BackendRuntimePolicy::CoreMlCpuAndGpu, _ => BackendRuntimePolicy::CoreMlCpuOnly };
 
+    // Save compiled artifacts to crash repro directory (if breadcrumbs enabled).
     Ok(PreparedBackendRun {
         backend: super::BackendKind::CoreMl,
         runtime_policy,
@@ -130,6 +142,8 @@ pub fn prepare(
         coreml_compiler_ns: compile_ns,
         coreml_model_load_ns: load_ns,
         compile_cache_hit: cache_hit,
+        source_package_sha256: cm_receipt.model_hash,
+        compiled_artifact_sha256: cm_receipt.compiled_hash,
         compiler_stdout,
         compiler_stderr,
         compiler_exit_code,
@@ -138,6 +152,10 @@ pub fn prepare(
 
 pub fn cold_predict(prepared: &PreparedBackendRun, input_name: &str, output_name: &str, input_data: &[f32], output_len: usize) -> Result<u64, String> {
     let model = prepared.coreml_model.as_ref().ok_or("no model loaded")?;
+    
+    // Breadcrumb 1: input feature construction
+    crate::decode_attribution::breadcrumb::write_breadcrumb("input_feature_construction");
+    
     let mut input_arena: ArenaInfo = unsafe { std::mem::zeroed() };
     input_arena.logical_dim0 = 1;
     input_arena.logical_dim1 = input_data.len() as i32;
@@ -145,7 +163,10 @@ pub fn cold_predict(prepared: &PreparedBackendRun, input_name: &str, output_name
     input_arena.bytes_per_row = input_arena.byte_size;
     let mut input_buf = input_data.to_vec();
     input_arena.base_address = input_buf.as_mut_ptr() as *mut std::ffi::c_void;
-
+    
+    // Breadcrumb 2: output arena construction
+    crate::decode_attribution::breadcrumb::write_breadcrumb("output_arena_construction");
+    
     let mut output_buffer = vec![0.0f32; output_len];
     let mut output_arena: ArenaInfo = unsafe { std::mem::zeroed() };
     output_arena.logical_dim0 = 1;
@@ -153,8 +174,132 @@ pub fn cold_predict(prepared: &PreparedBackendRun, input_name: &str, output_name
     output_arena.byte_size = (output_len * 4) as i32;
     output_arena.bytes_per_row = output_arena.byte_size;
     output_arena.base_address = output_buffer.as_mut_ptr() as *mut std::ffi::c_void;
-
+    
+    // Breadcrumb 3: model predict call
+    crate::decode_attribution::breadcrumb::write_breadcrumb("model_predict_call");
+    
     let start = Instant::now();
     model.predict(input_name, &input_arena, output_name, &output_arena)?;
+    
+    // Breadcrumb 4: output extracted
+    crate::decode_attribution::breadcrumb::write_breadcrumb("output_extracted");
+    
     Ok(start.elapsed().as_nanos() as u64)
+}
+
+/// Recursive directory copy. Silently ignores errors (best-effort for artifact preservation).
+fn copy_dir_recursive(src: &std::path::Path, dst: &std::path::Path) -> std::io::Result<()> {
+    if !src.is_dir() { return Ok(()); }
+    let _ = std::fs::create_dir_all(dst);
+    for entry in std::fs::read_dir(src)? {
+        let entry = entry?;
+        let ft = entry.file_type()?;
+        let src_path = entry.path();
+        let dst_path = dst.join(entry.file_name());
+        if ft.is_dir() {
+            copy_dir_recursive(&src_path, &dst_path)?;
+        } else if ft.is_file() {
+            let _ = std::fs::copy(&src_path, &dst_path);
+        }
+    }
+    Ok(())
+}
+
+/// Save .mlpackage and .mlmodelc artifacts to the crash repro directory.
+/// Called before error propagation so artifacts survive both compile failures
+/// and predict crashes.
+fn save_coreml_artifacts(pkg_path: &std::path::Path, cmc_path: &std::path::Path, island_id: &str, breadcrumb_path: &str) {
+    let repro_parent = std::path::Path::new(breadcrumb_path).parent();
+    let Some(repro_dir) = repro_parent else { return };
+    let art_dir = repro_dir.join("artifacts");
+    let _ = std::fs::create_dir_all(&art_dir);
+    let pkg_dst = art_dir.join(format!("{}.mlpackage", island_id));
+    if !pkg_dst.exists() {
+        let _ = copy_dir_recursive(pkg_path, &pkg_dst);
+    }
+    let modelc_dst = art_dir.join(format!("{}.modelc", island_id));
+    if !modelc_dst.exists() {
+        let _ = copy_dir_recursive(cmc_path.parent().unwrap_or(cmc_path), &modelc_dst);
+    }
+}
+
+/// Verify that all output-shape-bearing locations agree before compiling.
+/// Returns Ok(()) or Err with structured diagnostic naming the mismatched layers.
+fn verify_shape_contract(
+    program: &mil_spec::Program,
+    output_names: &[String],
+    ncols: u32,
+    meta: &mlpackage::ModelMeta,
+) -> Result<(), String> {
+    let expected = vec![1i64, ncols as i64];
+    let mut errors: Vec<String> = Vec::new();
+
+    // Layer 1: Model description function output shape
+    for (out_name, shape) in &meta.outputs {
+        if *shape != expected {
+            errors.push(format!(
+                "model_desc_output: name={} shape={:?} expected={:?}",
+                out_name, shape, expected
+            ));
+        }
+    }
+
+    // Layer 2: MIL program function output value types
+    for (_, func) in &program.functions {
+        for (_, block) in &func.block_specializations {
+            for op in &block.operations {
+                let op_name = op.outputs.first().map(|o| o.name.as_str()).unwrap_or("");
+                if !output_names.iter().any(|n| n == op_name) { continue; }
+                for (i, out) in op.outputs.iter().enumerate() {
+                    if let Some(ref vt) = out.r#type {
+                        if let Some(mil_spec::value_type::Type::TensorType(ref tt)) = vt.r#type {
+                            let dims: Vec<i64> = tt.dimensions.iter().filter_map(|d| {
+                                match d.dimension.as_ref()? {
+                                    mil_spec::dimension::Dimension::Constant(c) => Some(c.size as i64),
+                                    _ => None,
+                                }
+                            }).collect();
+                            if dims != expected && !dims.is_empty() {
+                                errors.push(format!(
+                                    "mil_op_output: op={} output[{}] dims={:?} expected={:?}",
+                                    op_name, i, dims, expected
+                                ));
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // Layer 3: Check intermediate values for unknown dimensions
+    for (_, func) in &program.functions {
+        for (_, block) in &func.block_specializations {
+            for op in &block.operations {
+                for out in &op.outputs {
+                    let op_name = op.outputs.first().map(|o| o.name.as_str()).unwrap_or("");
+                    if output_names.iter().any(|n| n == op_name) { continue; }
+                    if let Some(ref vt) = out.r#type {
+                        if let Some(mil_spec::value_type::Type::TensorType(ref tt)) = vt.r#type {
+                            let has_unknown = tt.dimensions.iter().any(|d| {
+                                !matches!(d.dimension.as_ref(), Some(mil_spec::dimension::Dimension::Constant(_)))
+                            });
+                            if has_unknown {
+                                errors.push(format!(
+                                    "unknown_intermediate_shape: op={} output={} has unknown/ dynamic dimensions",
+                                    op_name, out.name
+                                ));
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    if errors.is_empty() {
+        Ok(())
+    } else {
+        Err(format!("shape_contract_failed: {}", errors.join("; ")))
+    }
 }

@@ -1,0 +1,97 @@
+[
+  {
+    "shortDescription" : "basic matmul with n=2",
+    "metadataOutputVersion" : "3.0",
+    "outputSchema" : [
+      {
+        "hasShapeFlexibility" : "0",
+        "isOptional" : "0",
+        "dataType" : "Float32",
+        "formattedType" : "MultiArray (Float32 1 × 1)",
+        "shortDescription" : "",
+        "shape" : "[1, 1]",
+        "name" : "matmul_1",
+        "type" : "MultiArray"
+      }
+    ],
+    "version" : "1.0.0",
+    "modelParameters" : [
+
+    ],
+    "author" : "Tribunus Compute",
+    "specificationVersion" : 9,
+    "functions" : [
+      {
+        "computePrecision" : "Float32",
+        "outputSchema" : [
+          {
+            "hasShapeFlexibility" : "0",
+            "isOptional" : "0",
+            "dataType" : "Float32",
+            "formattedType" : "MultiArray (Float32 1 × 1)",
+            "shortDescription" : "",
+            "shape" : "[1, 1]",
+            "name" : "matmul_1",
+            "type" : "MultiArray"
+          }
+        ],
+        "stateSchema" : [
+
+        ],
+        "name" : "main",
+        "mlProgramOperationTypeHistogram" : {
+          "Ios18.matmul" : 1
+        },
+        "inputSchema" : [
+          {
+            "hasShapeFlexibility" : "0",
+            "isOptional" : "0",
+            "dataType" : "Float32",
+            "formattedType" : "MultiArray (Float32 1 × 4)",
+            "shortDescription" : "",
+            "shape" : "[1, 4]",
+            "name" : "x",
+            "type" : "MultiArray"
+          }
+        ]
+      }
+    ],
+    "mlProgramOperationTypeHistogram" : {
+      "Ios18.matmul" : 1
+    },
+    "stateSchema" : [
+
+    ],
+    "isUpdatable" : "0",
+    "availability" : {
+      "macOS" : "15.0",
+      "tvOS" : "18.0",
+      "visionOS" : "2.0",
+      "watchOS" : "11.0",
+      "iOS" : "18.0",
+      "macCatalyst" : "18.0"
+    },
+    "computePrecision" : "Float32",
+    "modelType" : {
+      "name" : "MLModelType_mlProgram"
+    },
+    "inputSchema" : [
+      {
+        "hasShapeFlexibility" : "0",
+        "isOptional" : "0",
+        "dataType" : "Float32",
+        "formattedType" : "MultiArray (Float32 1 × 4)",
+        "shortDescription" : "",
+        "shape" : "[1, 4]",
+        "name" : "x",
+        "type" : "MultiArray"
+      }
+    ],
+    "defaultFunctionName" : "main",
+    "generatedClassName" : "diag_matmul_n2",
+    "userDefinedMetadata" : {
+
+    },
+    "method" : "predict"
+  }
+]

@@ -232,6 +232,111 @@ pub fn prepare_graph<'a>(
             Ok((vec![input_arr], prepare))
         }
 
+        // ── Tier 1: standalone elementwise ops ───────────────────────────
+        "add_standalone" => {
+            // Bias vector of length n (seeded_f32(11, n))
+            let bias_arr = mlx_rs::Array::from_slice(&weights[..n as usize], &[1, n]);
+            let inp = input_arr.clone();
+            let bias = bias_arr.clone();
+            let prepare = Box::new(move || {
+                ops::add(&inp, &bias).map_err(|e| format!("mlx add: {:?}", e))
+            });
+            Ok((vec![input_arr, bias_arr], prepare))
+        }
+
+        "mul_standalone" => {
+            let weight_arr = mlx_rs::Array::from_slice(&weights[..(k * n) as usize], &[k, n]);
+            let inp = input_arr.clone();
+            let w = weight_arr.clone();
+            let prepare = Box::new(move || {
+                ops::multiply(&inp, &w).map_err(|e| format!("mlx mul: {:?}", e))
+            });
+            Ok((vec![input_arr, weight_arr], prepare))
+        }
+
+        "sigmoid_standalone" => {
+            let inp = input_arr.clone();
+            let prepare = Box::new(move || {
+                ops::sigmoid(&inp).map_err(|e| format!("mlx sigmoid: {:?}", e))
+            });
+            Ok((vec![input_arr], prepare))
+        }
+
+        "silu_standalone" => {
+            let inp = input_arr.clone();
+            let prepare = Box::new(move || {
+                let sig = ops::sigmoid(&inp).map_err(|e| format!("mlx sigmoid: {:?}", e))?;
+                ops::multiply(&inp, &sig).map_err(|e| format!("mlx mul: {:?}", e))
+            });
+            Ok((vec![input_arr], prepare))
+        }
+
+        // ── Tier 1: matmul compositions ──────────────────────────────────
+        "matmul_projection" => {
+            // Same as "matmul": weight matrix [k, n]
+            let weight_arr = mlx_rs::Array::from_slice(&weights[..(k * n) as usize], &[k, n]);
+            let inp = input_arr.clone();
+            let w = weight_arr.clone();
+            let prepare = Box::new(move || {
+                inp.matmul(&w).map_err(|e| format!("mlx matmul: {:?}", e))
+            });
+            Ok((vec![input_arr, weight_arr], prepare))
+        }
+
+        "matmul_residual_add" => {
+            // Weight layout: [k*n weights] + [n bias]
+            let weight_len = (k * n) as usize;
+            let weight_arr = mlx_rs::Array::from_slice(&weights[..weight_len], &[k, n]);
+            let bias_data = &weights[weight_len..];
+            let bias_arr = mlx_rs::Array::from_slice(bias_data, &[1, n as i32]);
+            let w = weight_arr.clone();
+            let inp = input_arr.clone();
+            let bias = bias_arr.clone();
+            let prepare = Box::new(move || {
+                let mm = inp.matmul(&w).map_err(|e| format!("mlx matmul: {:?}", e))?;
+                ops::add(&mm, &bias).map_err(|e| format!("mlx add: {:?}", e))
+            });
+            Ok((vec![input_arr, weight_arr, bias_arr], prepare))
+        }
+
+        "two_matmul_add" => {
+            // Two weight matrices: A is [k, n], B is [k, n]
+            let half = (k * n) as usize;
+            let wa_data = &weights[..half];
+            let wb_data = &weights[half..2 * half];
+            let wa_arr = mlx_rs::Array::from_slice(wa_data, &[k, n]);
+            let wb_arr = mlx_rs::Array::from_slice(wb_data, &[k, n]);
+            let wa = wa_arr.clone();
+            let wb_val = wb_arr.clone();
+            let inp = input_arr.clone();
+            let prepare = Box::new(move || {
+                let out_a = inp.matmul(&wa).map_err(|e| format!("mlx matmul a: {:?}", e))?;
+                let out_b = inp.matmul(&wb_val).map_err(|e| format!("mlx matmul b: {:?}", e))?;
+                ops::add(&out_a, &out_b).map_err(|e| format!("mlx add: {:?}", e))
+            });
+            Ok((vec![input_arr, wa_arr, wb_arr], prepare))
+        }
+
+        "matmul_add_silu" => {
+            // Same layout as chain_matmul_add_silu: weight [k,n] + bias [n]
+            let weight_len = (k * n) as usize;
+            let weight_arr = mlx_rs::Array::from_slice(&weights[..weight_len], &[k, n]);
+            let bias_data = &weights[weight_len..];
+            let bias_arr = mlx_rs::Array::from_slice(bias_data, &[1, n as i32]);
+            let w = weight_arr.clone();
+            let inp = input_arr.clone();
+            let bias = bias_arr.clone();
+            let prepare = Box::new(move || {
+                let mm = inp.matmul(&w).map_err(|e| format!("mlx matmul: {:?}", e))?;
+                let biased = ops::add(&mm, &bias).map_err(|e| format!("mlx add: {:?}", e))?;
+                let sig = ops::sigmoid(&biased)
+                    .map_err(|e| format!("mlx sigmoid: {:?}", e))?;
+                ops::multiply(&biased, &sig)
+                    .map_err(|e| format!("mlx mul: {:?}", e))
+            });
+            Ok((vec![input_arr, weight_arr, bias_arr], prepare))
+        }
+
         unknown => Err(format!("mlx_adapter: unknown family '{unknown}'")),
     }
 }

@@ -13,6 +13,10 @@ name = "tribunus-coreml-decode-attribution"
 path = "src/bin/tribunus-coreml-decode-attribution.rs"
 
 [[bin]]
+name = "tribunus-coreml-minimal-repro"
+path = "src/bin/tribunus-coreml-minimal-repro.rs"
+
+[[bin]]
 name = "tribunus-compute-worker"
 path = "src/bin/tribunus-compute-worker.rs"
 
@@ -27,6 +31,18 @@ path = "src/bin/tribunus-compute-image.rs"
 [[bin]]
 name = "tribunus-native-bench"
 path = "src/bin/tribunus-native-bench.rs"
+ 
+ [[bin]]
+ name = "tribunus-tier1-defect-cluster"
+ path = "src/bin/tribunus-tier1-defect-cluster.rs"
+ 
+ [[bin]]
+ name = "tribunus-tier2-manifest-gen"
+ path = "src/bin/tribunus-tier2-manifest-gen.rs"
+
+[[bin]]
+name = "tribunus-decode-attribution-measure"
+path = "src/bin/tribunus-decode-attribution-measure.rs"
 
 [[test]]
 name = "treatment_qualification"
@@ -63,6 +79,10 @@ path = "tests/mlx_accelerate_smoke.rs"
 [[test]]
 name = "coreml_lifecycle"
 path = "tests/coreml_lifecycle.rs"
+
+[[test]]
+name = "pipeline_parity_contract"
+path = "tests/pipeline_parity_contract.rs"
 
 [dependencies]
 napi = { version = "3.9.0", features = ["napi8", "serde-json"], default-features = false }

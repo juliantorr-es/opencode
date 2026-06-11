@@ -1,0 +1,11 @@
+program(1.3)
+[buildInfo = dict<string, string>({{"coremlc-component-MIL", "3510.2.1"}, {"coremlc-version", "3500.32.1"}})]
+{
+    func main<ios19>(tensor<fp32, [1, 4]> x) {
+            tensor<fp32, [4, 2]> wa_0 = const()[name = string("wa_0"), val = tensor<fp32, [4, 2]>([[0x1p+0, 0x1p+1], [0x1.8p+1, 0x1p+2], [0x1.4p+2, 0x1.8p+2], [0x1.cp+2, 0x1p+3]])];
+            tensor<fp32, [4, 2]> wb_1 = const()[name = string("wb_1"), val = tensor<fp32, [4, 2]>([[0x1.4p+2, 0x1.8p+2], [0x1.cp+2, 0x1p+3], [0x1.2p+3, 0x1.4p+3], [0x1.6p+3, 0x1.8p+3]])];
+            tensor<fp32, [1, 1]> matmul_2 = matmul(transpose_x = bool(false), transpose_y = bool(false), x = x, y = wa_0)[name = string("matmul_2")];
+            tensor<fp32, [1, 1]> matmul_3 = matmul(transpose_x = bool(false), transpose_y = bool(false), x = x, y = wb_1)[name = string("matmul_3")];
+            tensor<fp32, [1, 1]> add_4 = add(x = matmul_2, y = matmul_3)[name = string("add_4")];
+        } -> (add_4);
+}

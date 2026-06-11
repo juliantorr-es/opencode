@@ -30,6 +30,7 @@ pub fn run_negative_evidence(run_id: &str, _output_dir: &Path) -> DecodeAttribut
             macos_version: "unknown".into(),
             xcode_build_version: "unknown".into(),
             coremlcompiler_version: "unknown".into(),
+        coreml_compiler_available: false,
         }
     });
 

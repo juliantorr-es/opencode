@@ -1,4 +1,4 @@
-import { resolve } from "node:path"
+import { resolve, relative, isAbsolute } from "node:path"
 import { realpathSync } from "node:fs"
 
 const AUTHORIZED_ROOTS: { root: string; writable: boolean }[] = []
@@ -12,6 +12,9 @@ export function initPathPolicy(worktree: string, evidenceDir: string, modelDir: 
     { root: resolve(modelDir), writable: true },
     { root: resolve(tmpDir), writable: true },
   )
+  // Most specific (longest) roots first so writable subdirectory
+  // roots win over broader read-only roots on first match.
+  AUTHORIZED_ROOTS.sort((a, b) => b.root.length - a.root.length)
 }
 
 export function validatePath(p: string, mustBeWritable: boolean): { valid: boolean; resolved: string; error?: string } {
@@ -19,7 +22,9 @@ export function validatePath(p: string, mustBeWritable: boolean): { valid: boole
   const real: string = (() => { try { return realpathSync(resolvedPath) } catch { return resolvedPath } })()
   for (const root of AUTHORIZED_ROOTS) {
     const rootResolved = resolve(root.root)
-    if (real.startsWith(rootResolved + "/") || real === rootResolved) {
+    const rel = relative(rootResolved, real)
+    const inside = rel === '' || (!rel.startsWith('..') && !isAbsolute(rel))
+    if (inside) {
       if (mustBeWritable && !root.writable) {
         return { valid: false, resolved: real, error: `path ${real} is not in a writable root` }
       }

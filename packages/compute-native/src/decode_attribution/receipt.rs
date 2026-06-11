@@ -1,16 +1,157 @@
 use serde::{Deserialize, Serialize};
 
+/// Structured per-backend version information.
+///
+/// Each backend has its own fields; null + diagnostic for unavailable info.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct BackendVersionInfo {
+    // ── Core ML ──────────────────────────────────────────────────────────
+    /// Xcode version (e.g. "17.0"), null if unknown.
+    pub coreml_xcode_version: Option<String>,
+    /// Path to coremlcompiler binary found via xcrun.
+    pub coreml_coremlcompiler_path: Option<String>,
+    /// Core ML compiler version string, null if unavailable.
+    pub coreml_compiler_version: Option<String>,
+    /// Diagnostic note if any Core ML version is unavailable.
+    pub coreml_diagnostic: Option<String>,
+    // ── MLX ──────────────────────────────────────────────────────────────
+    /// MLX library version string (e.g. "0.22.1"), null if unknown.
+    pub mlx_version: Option<String>,
+    /// Diagnostic note if MLX version is unavailable.
+    pub mlx_diagnostic: Option<String>,
+    // ── Accelerate ───────────────────────────────────────────────────────
+    /// Accelerate SDK / macOS version string (e.g. "15.5"), null if unknown.
+    pub accelerate_sdk_version: Option<String>,
+    /// Observed or set BLAS threading controls, null if none.
+    pub accelerate_blas_threading_controls: Option<String>,
+    /// Diagnostic note if Accelerate version is unavailable.
+    pub accelerate_diagnostic: Option<String>,
+}
+
+impl Default for BackendVersionInfo {
+    fn default() -> Self {
+        Self {
+            coreml_xcode_version: None,
+            coreml_coremlcompiler_path: None,
+            coreml_compiler_version: None,
+            coreml_diagnostic: None,
+            mlx_version: None,
+            mlx_diagnostic: None,
+            accelerate_sdk_version: None,
+            accelerate_blas_threading_controls: None,
+            accelerate_diagnostic: None,
+        }
+    }
+}
+
+/// What engine actually executed the graph for this row.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum ExecutionKind {
+    /// The named backend ran the graph directly.
+    NativeBackend,
+    /// A CPU-specific domain adapter (not the generic reference evaluator).
+    DomainCpuAdapter,
+    /// The generic pure-Rust reference evaluator produced the output.
+    ReferenceEvaluator,
+    /// Intentionally unsupported family for this backend.
+    Unsupported,
+    /// Native bridge fault during execution; no engine reached predict.
+    Crashed,
+}
+
+impl Default for ExecutionKind {
+    fn default() -> Self { Self::Unsupported }
+}
+
+/// Structured proof of what engine executed each operation in this row.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ExecutionProof {
+    /// Engine identifier: "coreml", "mlx", "accelerate", "reference", "domain_cpu".
+    pub engine: String,
+    /// Operations executed by the named backend.
+    pub accelerated_ops: Vec<String>,
+    /// Operations executed by CPU fallback/adapter.
+    pub cpu_ops: Vec<String>,
+    /// Operations executed by the generic reference evaluator.
+    pub reference_ops: Vec<String>,
+    /// Accelerate BLAS operations (e.g., "matmul:cblas_sgemm").
+    pub accelerate_blas_ops: Vec<String>,
+    /// Accelerate vDSP operations (e.g., "add:vDSP_vadd", "mul:vDSP_vmul").
+    pub accelerate_vdsp_ops: Vec<String>,
+    /// Accelerate vForce operations (e.g., "sigmoid:vvexpf").
+    pub accelerate_vforce_ops: Vec<String>,
+    /// Tribunus-owned CPU glue (scalar loops, negate, reciprocal, etc.).
+    pub cpu_glue_ops: Vec<String>,
+    /// Backend execution path (Core ML model path, MLX eval path).
+    pub bridge_path: Option<String>,
+    /// Human-readable execution summary.
+    pub notes: Option<String>,
+}
+
+impl Default for ExecutionProof {
+    fn default() -> Self {
+        Self {
+            engine: String::new(),
+            accelerated_ops: vec![],
+            cpu_ops: vec![],
+            reference_ops: vec![],
+            accelerate_blas_ops: vec![],
+            accelerate_vdsp_ops: vec![],
+            accelerate_vforce_ops: vec![],
+            cpu_glue_ops: vec![],
+            bridge_path: None,
+            notes: None,
+        }
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DecodeAttributionReceipt {
+    // ── Provenance scopes ─────────────────────────────────────────────────
     pub run_id: String,
     pub commit_sha: String,
     pub branch: String,
+    /// Structured proof of what executed each operation.
+    pub execution_proof: ExecutionProof,
+    /// True when any file in the repo is dirty.
+    pub repo_dirty_tree_global: bool,
+    /// True when dirty files exist under packages/compute-native/.
+    pub compute_dirty_tree: bool,
+    /// True when Cargo.toml, Cargo.lock, build.rs, or .cargo/ is dirty.
+    pub dependency_scope_dirty: bool,
     pub timestamp: String,
     pub schema_version: String,
     pub host_chip: String,
     pub macos_version: String,
     pub xcode_version: String,
     pub coremlcompiler_version: String,
+    /// Structured per-backend version information (replaces flat fields where structured form is useful).
+    pub backend_versions: Option<BackendVersionInfo>,
+    // ── Timer overhead metadata ───────────────────────────────────────────
+    /// Measured empty-loop Instant::now() overhead in ns, null if not measured.
+    pub timer_overhead_ns: Option<u64>,
+    /// How timer_overhead_ns was measured: "empty_loop_calibration" or "back_to_back_now".
+    pub timer_overhead_method: Option<String>,
+    /// False this gate — raw timings are not adjusted for overhead.
+    pub raw_timing_adjusted: bool,
+    // ── Skipped-by-support diagnostics ────────────────────────────────────
+    /// When status="skipped_by_support": why the adapter does not support this family.
+    pub unsupported_reason: Option<String>,
+    /// When status="skipped_by_support": which adapter module would need implementation.
+    pub missing_adapter: Option<String>,
+    /// When status="skipped_by_support": list of families this backend does support.
+    pub supported_families: Vec<String>,
+    /// Canonical inference pipeline phase (e.g. "qkv_projection", "activation").
+    /// `None` for harness control families or legacy receipts that predate this field.
+    pub pipeline_phase: Option<String>,
+    /// Phase variant disambiguating different operations within a phase
+    /// (e.g. "generic_projection" vs "parallel_projection_rejoin" for projection phases).
+    #[serde(default)]
+    pub phase_variant: String,
+    /// Full semantic contract ID encoding (phase/variant), enabling comparison
+    /// grouping to distinguish different operations within the same phase.
+    #[serde(default)]
+    pub semantic_contract_id: String,
     pub graph_family: String,
     pub shape_profile: String,
     pub graph_status: String,
@@ -98,6 +239,8 @@ pub struct DecodeAttributionReceipt {
     pub predict_status: String,
     /// Phase-specific failure classification for non-pass rows.
     pub predict_failure_classification: String,
+    /// Last completed predict breadcrumb before crash (empty if predict completed).
+    pub last_completed_predict_breadcrumb: String,
     /// Static capability tier: supported_native | supported_composed | unsupported_graph | not_implemented.
     pub support_tier: String,
     /// True if package SHA changed between runs for same graph/shape (determinism failure).
@@ -139,6 +282,10 @@ pub struct DecodeAttributionReceipt {
     pub compiler_exit_code: Option<i32>,
     /// Non-compiler failure diagnostics (load error, predict bridge error, output spec mismatch).
     pub failure_diagnostics: Option<String>,
+    /// Structural verification status: "pending" | "pass" | "fail" with specific error code.
+    pub structural_status: String,
+    /// Machine-readable structural error codes (comma-separated).
+    pub structural_errors: String,
 }
 
 impl Default for DecodeAttributionReceipt {
@@ -146,13 +293,27 @@ impl Default for DecodeAttributionReceipt {
         Self {
             run_id: String::new(),
             commit_sha: String::new(),
-            branch: String::new(),
+branch: String::new(),
+            execution_proof: ExecutionProof::default(),
+            repo_dirty_tree_global: false,
+            compute_dirty_tree: false,
+            dependency_scope_dirty: false,
             timestamp: String::new(),
             schema_version: String::new(),
             host_chip: String::new(),
             macos_version: String::new(),
             xcode_version: String::new(),
-            coremlcompiler_version: String::new(),
+coremlcompiler_version: String::new(),
+            backend_versions: None,
+            timer_overhead_ns: None,
+            timer_overhead_method: None,
+            raw_timing_adjusted: false,
+            unsupported_reason: None,
+            missing_adapter: None,
+            supported_families: vec![],
+            pipeline_phase: None,
+            phase_variant: String::new(),
+            semantic_contract_id: String::new(),
             graph_family: String::new(),
             shape_profile: String::new(),
             graph_status: String::new(),
@@ -237,6 +398,7 @@ impl Default for DecodeAttributionReceipt {
             status: String::new(),
             predict_status: String::new(),
             predict_failure_classification: String::new(),
+            last_completed_predict_breadcrumb: String::new(),
             support_tier: String::new(),
             package_determinism_failure: false,
             failure_reason: None,
@@ -258,6 +420,8 @@ impl Default for DecodeAttributionReceipt {
             compiler_stderr: None,
             compiler_exit_code: None,
             failure_diagnostics: None,
+            structural_status: String::new(),
+            structural_errors: String::new(),
         }
     }
 }

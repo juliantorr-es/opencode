@@ -12,11 +12,13 @@ pub struct HostEnvironment {
     pub xcode_build_version: String,
     /// coremlcompiler version string
     pub coremlcompiler_version: String,
+    /// Whether coremlcompiler is reachable via xcrun and returned a valid version.
+    pub coreml_compiler_available: bool,
 }
 
 /// Capture the current machine environment by probing sysctl, sw_vers,
-/// and toolchain_attest. Returns an Err only if coremlcompiler is completely
-/// unreachable (which is a hard failure for the benchmark).
+/// and toolchain_attest. Records coreml_compiler_available = false when
+/// coremlcompiler is unreachable, rather than returning a hard error.
 pub fn capture_host_environment() -> Result<HostEnvironment, String> {
     // ── Host chip ─────────────────────────────────────────────────────────────
     // On arm64, `machdep.cpu.brand_string` is empty, so fall back to `hw.machine`
@@ -58,12 +60,24 @@ pub fn capture_host_environment() -> Result<HostEnvironment, String> {
     // ── Toolchain attestation (xcode build + coremlcompiler) ──────────────────
     // This is the hard gate: if coremlcompiler is unreachable the benchmark
     // cannot proceed.
-    let attest = ToolchainAttestation::probe()?;
+    let attest = match ToolchainAttestation::probe() {
+        Ok(a) => a,
+        Err(diag) => {
+            return Ok(HostEnvironment {
+                host_chip,
+                macos_version,
+                xcode_build_version: "unknown".into(),
+                coremlcompiler_version: format!("unavailable: {diag}"),
+                coreml_compiler_available: false,
+            });
+        }
+    };
 
     Ok(HostEnvironment {
         host_chip,
         macos_version,
         xcode_build_version: attest.xcode_build_version,
         coremlcompiler_version: attest.coremlcompiler_version,
+        coreml_compiler_available: true,
     })
 }

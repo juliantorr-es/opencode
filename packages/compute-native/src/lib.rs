@@ -54,6 +54,7 @@ pub mod profiled_executor;
 mod loader;
 mod model;
 pub mod operation_catalog;
+pub mod pipeline_parity;
 pub mod primitives;
 pub mod metal_capture;
 pub mod replay_projection;

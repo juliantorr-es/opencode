@@ -42,6 +42,11 @@ pub enum MilBuildError {
     UnknownType {
         name: String,
     },
+    /// An unsupported unary operation mode was requested (e.g., "gelu" with
+    /// no matching Core ML MIL op type).
+    UnsupportedUnaryOpMode {
+        mode: String,
+    },
 }
 
 impl std::fmt::Display for MilBuildError {
@@ -58,6 +63,9 @@ impl std::fmt::Display for MilBuildError {
             }
             MilBuildError::UnknownType { name } => {
                 write!(f, "unknown type for value '{name}'")
+            }
+            MilBuildError::UnsupportedUnaryOpMode { mode } => {
+                write!(f, "unsupported unary op mode: {mode}")
             }
         }
     }
@@ -146,6 +154,61 @@ impl MilBuilder {
         self.weights.insert(name.to_string(), data);
     }
 
+    /// Infer the matmul output shape from input dimensions: [M, K] x [K, N] = [M, N].
+    fn infer_matmul_output_shape(&self, a: &str, b: &str) -> Vec<i64> {
+        fn get_dims(types: &HashMap<String, mil_spec::ValueType>, key: &str) -> Option<(i64, i64)> {
+            let vt = types.get(key)?;
+            let tt = vt.r#type.as_ref()?;
+            if let mil_spec::value_type::Type::TensorType(ref tensor) = tt {
+                let dims: Vec<i64> = tensor.dimensions.iter().filter_map(|d| {
+                    match d.dimension.as_ref()? {
+                        dimension::Dimension::Constant(c) => Some(c.size as i64),
+                        _ => None,
+    }
+                }).collect();
+                if dims.len() >= 2 { Some((dims[0], dims[1])) } else { None }
+            } else { None }
+    }
+        match (get_dims(&self.value_types, a), get_dims(&self.value_types, b)) {
+            (Some((m, _)), Some((_, n))) => vec![m, n],
+            _ => vec![1, 1],
+    }
+    }
+
+    /// Resolve the output shape for a binary elementwise operation from input shapes.
+    /// Both inputs should have the same shape. Returns [?, ?] if shapes cannot be resolved.
+    fn resolve_elementwise_output_shape(&self, a: &str, b: &str) -> Vec<mil_spec::Dimension> {
+        let a_dims = self.value_types.get(a).and_then(|vt| {
+            if let mil_spec::value_type::Type::TensorType(ref tt) = vt.r#type.as_ref()? {
+                Some(&tt.dimensions)
+            } else { None }
+        });
+        let b_dims = self.value_types.get(b).and_then(|vt| {
+            if let mil_spec::value_type::Type::TensorType(ref tt) = vt.r#type.as_ref()? {
+                Some(&tt.dimensions)
+            } else { None }
+        });
+
+        match (a_dims, b_dims) {
+            (Some(a), Some(b)) if a == b => a.clone(),  // same shape → preserve
+            _ => {
+                // Unknown — use [?, ?] as fallback
+                vec![
+                    mil_spec::Dimension {
+                        dimension: Some(dimension::Dimension::Unknown(
+                            dimension::UnknownDimension { variadic: false },
+                        )),
+                    },
+                    mil_spec::Dimension {
+                        dimension: Some(dimension::Dimension::Unknown(
+                            dimension::UnknownDimension { variadic: false },
+                        )),
+                    },
+                ]
+            }
+        }
+    }
+
     /// Add a const operation with f32 immediate values.
     /// Returns `Self` with the constant's SSA name tracked.
     pub fn const_f32(mut self, name_hint: &str, values: &[f32], shape: &[i64]) -> Self {
@@ -188,9 +251,10 @@ impl MilBuilder {
         let dtype = self.require_dtype(a).expect("SSA: unknown value");
         let _ = self.require_dtype(b).expect("SSA: unknown value");
 
-        // Hard-coded output [1, 1] for known-answer test; future:
-        // infer from actual input dims.
-        let vt = value_type_tensor(tensor_type(dtype, &[1, 1]));
+        // Infer matmul output shape from inputs: [M, K] × [K, N] = [M, N].
+        // M = A rows (dim 0), N = B cols (dim 1).
+        let output_dims = self.infer_matmul_output_shape(a, b);
+        let vt = value_type_tensor(tensor_type(dtype, &output_dims));
 
         let mut inputs_map = HashMap::new();
         inputs_map.insert("x".to_string(), named_arg(a));
@@ -211,22 +275,12 @@ impl MilBuilder {
         let dtype = self.require_dtype(a).expect("SSA: unknown value");
         let _ = self.require_dtype(b).expect("SSA: unknown value");
 
-        // Broadcast output: same type, rank-2 unknown dims
+        // Resolve output shape from inputs; fall back to [?,?]
+        let dimensions = self.resolve_elementwise_output_shape(a, b);
         let vt = value_type_tensor(mil_spec::TensorType {
             data_type: dtype as i32,
             rank: 2,
-            dimensions: vec![
-                mil_spec::Dimension {
-                    dimension: Some(dimension::Dimension::Unknown(
-                        dimension::UnknownDimension { variadic: false },
-                    )),
-                },
-                mil_spec::Dimension {
-                    dimension: Some(dimension::Dimension::Unknown(
-                        dimension::UnknownDimension { variadic: false },
-                    )),
-                },
-            ],
+            dimensions,
             attributes: HashMap::new(),
         });
 
@@ -247,21 +301,11 @@ impl MilBuilder {
         let dtype = self.require_dtype(a).expect("SSA: unknown value");
         let _ = self.require_dtype(b).expect("SSA: unknown value");
 
+        let dimensions = self.resolve_elementwise_output_shape(a, b);
         let vt = value_type_tensor(mil_spec::TensorType {
             data_type: dtype as i32,
             rank: 2,
-            dimensions: vec![
-                mil_spec::Dimension {
-                    dimension: Some(dimension::Dimension::Unknown(
-                        dimension::UnknownDimension { variadic: false },
-                    )),
-                },
-                mil_spec::Dimension {
-                    dimension: Some(dimension::Dimension::Unknown(
-                        dimension::UnknownDimension { variadic: false },
-                    )),
-                },
-            ],
+            dimensions,
             attributes: HashMap::new(),
         });
 
@@ -377,7 +421,58 @@ impl MilBuilder {
     /// Access stored weights (for mlpackage serialization).
     pub fn weights(&self) -> &HashMap<String, Vec<u8>> {
         &self.weights
+}
+
+    /// Get shapes of all tracked values (for graph_catalog shape inference).
+    pub fn value_shapes(&self) -> HashMap<String, Vec<i64>> {
+        let mut shapes = HashMap::new();
+        for (name, vt) in &self.value_types {
+            if let Some(mil_spec::value_type::Type::TensorType(ref tt)) = vt.r#type.as_ref() {
+                let dims: Vec<i64> = tt.dimensions.iter().filter_map(|d| {
+                    match d.dimension.as_ref()? {
+                        dimension::Dimension::Constant(c) => Some(c.size as i64),
+                        _ => None,
+}
+                }).collect();
+                if !dims.is_empty() {
+                    shapes.insert(name.clone(), dims);
+}
+            }
+        }
+        shapes
     }
+}
+
+// ── CoreML unary op type compatibility map ──────────────────────────────
+
+/// Describes a Core ML MIL serialized unary op type.
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+pub struct CoreMlUnaryOpType {
+    /// The MIL op type string accepted by coremlcompiler (e.g., "sigmoid").
+    pub mil_op_type: &'static str,
+    /// Whether this op requires additional attributes (e.g., gelu may need `approximation`).
+    pub requires_attrs: bool,
+}
+
+/// Maps Tribunus internal unary semantic modes to compiler-accepted Core ML
+/// MIL serialized op type strings. This is the single authority for unary op
+/// type emission — no code should emit `"element_wise"` as a MIL op type.
+const COREML_MIL_UNARY_OP_TYPE_MAP: &[(&str, CoreMlUnaryOpType)] = &[
+    ("logistic", CoreMlUnaryOpType { mil_op_type: "sigmoid", requires_attrs: false }),  // canonical
+    ("sigmoid",  CoreMlUnaryOpType { mil_op_type: "sigmoid", requires_attrs: false }),  // alias
+    ("silu",     CoreMlUnaryOpType { mil_op_type: "silu",    requires_attrs: false }),
+];
+
+/// Resolve an internal unary semantic mode to its Core ML MIL op type.
+///
+/// Returns `None` if the mode is not recognized. Callers MUST fail closed
+/// (return `MilBuildError::UnsupportedUnaryOpMode`) rather than falling back
+/// to a generic op type.
+pub fn resolve_unary_op_type(mode: &str) -> Option<CoreMlUnaryOpType> {
+    COREML_MIL_UNARY_OP_TYPE_MAP
+        .iter()
+        .find(|(key, _)| *key == mode)
+        .map(|(_, entry)| *entry)
 }
 
 // ── operation constructor (always installs the "name" attribute) ─────────
@@ -494,6 +589,36 @@ fn string_attr(val: &str) -> mil_spec::Value {
 mod tests {
     use super::*;
     use prost::Message;
+
+    // ── unary op type resolution tests ─────────────────────────────────--
+
+    #[test]
+    fn resolve_logistic_to_sigmoid() {
+        let result = resolve_unary_op_type("logistic").unwrap();
+        assert_eq!(result, CoreMlUnaryOpType { mil_op_type: "sigmoid", requires_attrs: false });
+    }
+
+    #[test]
+    fn resolve_sigmoid_alias() {
+        let result = resolve_unary_op_type("sigmoid").unwrap();
+        assert_eq!(result, CoreMlUnaryOpType { mil_op_type: "sigmoid", requires_attrs: false });
+    }
+
+    #[test]
+    fn resolve_silu() {
+        let result = resolve_unary_op_type("silu").unwrap();
+        assert_eq!(result, CoreMlUnaryOpType { mil_op_type: "silu", requires_attrs: false });
+    }
+
+    #[test]
+    fn resolve_unknown_mode_returns_none() {
+        assert!(resolve_unary_op_type("gelu").is_none());
+        assert!(resolve_unary_op_type("relu").is_none());
+        assert!(resolve_unary_op_type("tanh").is_none());
+        assert!(resolve_unary_op_type("element_wise").is_none());
+    }
+
+    // ── MIL program construction tests ─────────────────────────────────--
 
     #[test]
     fn build_simple_matmul() {

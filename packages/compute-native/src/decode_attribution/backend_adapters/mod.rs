@@ -181,6 +181,10 @@ pub struct PreparedBackendRun {
     pub coreml_model_load_ns: u64,
     /// Compiler cache hit (key-based).
     pub compile_cache_hit: bool,
+    /// SHA-256 of the source .mlpackage directory.
+    pub source_package_sha256: String,
+    /// SHA-256 of the compiled .mlmodelc directory.
+    pub compiled_artifact_sha256: String,
     /// Raw coremlcompiler stdout.
     pub compiler_stdout: Option<String>,
     /// Raw coremlcompiler stderr.

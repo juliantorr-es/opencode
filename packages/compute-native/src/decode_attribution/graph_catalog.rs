@@ -10,7 +10,7 @@
 use std::collections::HashMap;
 use coreml_proto::proto::mil_spec::{self, argument, dimension, tensor_value, value};
 
-use crate::mil_builder::MilBuilder;
+use crate::mil_builder::{MilBuilder, resolve_unary_op_type};
 use super::shape_profiles::ShapeProfile;
 
 pub struct GraphFamily {
@@ -90,14 +90,15 @@ fn manual_int32s_attr(vals: &[i32]) -> mil_spec::Value {
 }
 
 fn op_silu(builder: MilBuilder, input: &str, out_name: &str) -> MilBuilder {
+    let entry = resolve_unary_op_type("silu")
+        .expect("'silu' must have a mapped op type");
     let mut inputs = HashMap::new();
     inputs.insert("x".to_string(), manual_named_arg(input));
     let vt = manual_float32_value_type_2d(1, 1);
     let mut attrs = HashMap::new();
     attrs.insert("name".to_string(), manual_string_attr(out_name));
-    attrs.insert("mode".to_string(), manual_string_attr("silu"));
     let op = mil_spec::Operation {
-        r#type: "element_wise".to_string(),
+        r#type: entry.mil_op_type.to_string(),
         inputs, outputs: vec![mil_spec::NamedValueType { name: out_name.to_string(), r#type: Some(vt.clone()) }],
         blocks: vec![], attributes: attrs,
     };
@@ -105,14 +106,17 @@ fn op_silu(builder: MilBuilder, input: &str, out_name: &str) -> MilBuilder {
 }
 
 fn op_sigmoid(builder: MilBuilder, input: &str, out_name: &str) -> MilBuilder {
+    let entry = resolve_unary_op_type("logistic")
+        .expect("'logistic' must have a mapped op type");
     let mut inputs = HashMap::new();
     inputs.insert("x".to_string(), manual_named_arg(input));
-    let vt = manual_float32_value_type_2d(1, 1);
+    // Use the input's shape for the output — sigmoid preserves dimensions.
+    let input_dims = builder.value_shapes().get(input).cloned().unwrap_or(vec![1, 1]);
+    let vt = manual_float32_value_type_2d(input_dims[0] as u64, input_dims[1] as u64);
     let mut attrs = HashMap::new();
     attrs.insert("name".to_string(), manual_string_attr(out_name));
-    attrs.insert("mode".to_string(), manual_string_attr("logistic"));
     let op = mil_spec::Operation {
-        r#type: "element_wise".to_string(),
+        r#type: entry.mil_op_type.to_string(),
         inputs, outputs: vec![mil_spec::NamedValueType { name: out_name.to_string(), r#type: Some(vt.clone()) }],
         blocks: vec![], attributes: attrs,
     };
@@ -287,6 +291,87 @@ fn build_identity_passthrough(builder: MilBuilder, _profile: &ShapeProfile) -> M
     b.operation(op, Some(("identity_0", vt))).output("identity_0")
 }
 
+// ── Tier 1 graph builders ─────────────────────────────────────────────────
+
+fn build_add_standalone(builder: MilBuilder, profile: &ShapeProfile) -> MilBuilder {
+    let n = profile.weight_cols as usize;
+    let bias = seeded_f32(11, n);
+    builder.input("x", mil_spec::DataType::Float32, &profile.input_shape_i64())
+        .const_f32("bias", &bias, &[1, profile.weight_cols as i64])
+        .add("x", "bias_0")
+        .output("add_1")
+}
+
+fn build_mul_standalone(builder: MilBuilder, profile: &ShapeProfile) -> MilBuilder {
+    let w = seeded_f32(12, (profile.weight_rows * profile.weight_cols) as usize);
+    builder.input("x", mil_spec::DataType::Float32, &profile.input_shape_i64())
+        .const_f32("w", &w, &profile.weight_shape_i64())
+        .mul("x", "w_0")
+        .output("mul_1")
+}
+
+fn build_sigmoid_standalone(builder: MilBuilder, profile: &ShapeProfile) -> MilBuilder {
+    op_sigmoid(
+        builder.input("x", mil_spec::DataType::Float32, &profile.input_shape_i64()),
+        "x", "sig_0",
+    )
+    .output("sig_0")
+}
+
+fn build_silu_standalone(builder: MilBuilder, profile: &ShapeProfile) -> MilBuilder {
+    // SiLU(x) = x * sigmoid(x)
+    let b = op_sigmoid(
+        builder.input("x", mil_spec::DataType::Float32, &profile.input_shape_i64()),
+        "x", "sig_0",
+    );
+    b.mul("x", "sig_0").output("mul_0")
+}
+
+fn build_matmul_projection(builder: MilBuilder, profile: &ShapeProfile) -> MilBuilder {
+    let w = seeded_f32(1, (profile.weight_rows * profile.weight_cols) as usize);
+    builder.input("x", mil_spec::DataType::Float32, &profile.input_shape_i64())
+        .const_f32("w", &w, &profile.weight_shape_i64())
+        .matmul("x", "w_0")
+        .output("matmul_1")
+}
+
+fn build_matmul_residual_add(builder: MilBuilder, profile: &ShapeProfile) -> MilBuilder {
+    let w = seeded_f32(1, (profile.weight_rows * profile.weight_cols) as usize);
+    let bias = seeded_f32(11, profile.weight_cols as usize);
+    builder.input("x", mil_spec::DataType::Float32, &profile.input_shape_i64())
+        .const_f32("w", &w, &profile.weight_shape_i64())
+        .matmul("x", "w_0")
+        .const_f32("bias", &bias, &[1, profile.weight_cols as i64])
+        .add("matmul_1", "bias_2")
+        .output("add_3")
+}
+
+fn build_two_matmul_add(builder: MilBuilder, profile: &ShapeProfile) -> MilBuilder {
+    let wa = seeded_f32(20, (profile.weight_rows * profile.weight_cols) as usize);
+    let wb = seeded_f32(21, (profile.weight_rows * profile.weight_cols) as usize);
+    builder.input("x", mil_spec::DataType::Float32, &profile.input_shape_i64())
+        .const_f32("wa", &wa, &profile.weight_shape_i64())
+        .const_f32("wb", &wb, &profile.weight_shape_i64())
+        .matmul("x", "wa_0")
+        .matmul("x", "wb_1")
+        .add("matmul_2", "matmul_3")
+        .output("add_4")
+}
+
+fn build_matmul_add_silu(builder: MilBuilder, profile: &ShapeProfile) -> MilBuilder {
+    let w = seeded_f32(10, (profile.weight_rows * profile.weight_cols) as usize);
+    let bias = seeded_f32(11, profile.weight_cols as usize);
+    let b = op_sigmoid(
+        builder.input("x", mil_spec::DataType::Float32, &profile.input_shape_i64())
+            .const_f32("w", &w, &profile.weight_shape_i64())
+            .matmul("x", "w_0")
+            .const_f32("bias", &bias, &[1, profile.weight_cols as i64])
+            .add("matmul_1", "bias_2"),
+        "add_3", "sig_3",
+    );
+    b.mul("add_3", "sig_3").output("mul_4")
+}
+
 // ── Catalog ───────────────────────────────────────────────────────────────
 
 pub const NORMAL_FAMILIES: &[GraphFamily] = &[
@@ -303,6 +388,41 @@ pub const BASELINE_FAMILIES: &[GraphFamily] = &[
     GraphFamily { name: "identity_passthrough", status: "baseline", op_count: 1, build: build_identity_passthrough },
 ];
 
+pub const TIER1_FAMILIES: &[GraphFamily] = &[
+    GraphFamily { name: "add_standalone", status: "tier1", op_count: 1, build: build_add_standalone },
+    GraphFamily { name: "mul_standalone", status: "tier1", op_count: 1, build: build_mul_standalone },
+    GraphFamily { name: "sigmoid_standalone", status: "tier1", op_count: 1, build: build_sigmoid_standalone },
+    GraphFamily { name: "silu_standalone", status: "tier1", op_count: 2, build: build_silu_standalone },
+    GraphFamily { name: "matmul_projection", status: "tier1", op_count: 1, build: build_matmul_projection },
+    GraphFamily { name: "matmul_residual_add", status: "tier1", op_count: 2, build: build_matmul_residual_add },
+    GraphFamily { name: "two_matmul_add", status: "tier1", op_count: 3, build: build_two_matmul_add },
+    GraphFamily { name: "matmul_add_silu", status: "tier1", op_count: 3, build: build_matmul_add_silu },
+];
+
+/// Tier 2 decode Batch 1 family names (no build function — uses DecodeShapeBinding).
+/// Build functions are implemented in harness.rs / backend_adapters.
+pub const DECODE_BATCH1_NAMES: &[&str] = &[
+    "decode_qkv_projection",
+    "decode_attention_output_projection",
+    "decode_residual_add_1",
+    "decode_mlp_gate_up_silu",
+    "decode_mlp_down",
+    "decode_residual_add_2",
+    "decode_lm_head",
+];
+
+/// Tier 2 Batch 1 family op counts (used for summary metadata when no GraphFamily build available).
+pub const DECODE_BATCH1_OP_COUNTS: &[u32] = &[
+    1, // decode_qkv_projection: matmul [hidden_dim, 3*hidden_dim]
+    1, // decode_attention_output_projection: matmul [hidden_dim, hidden_dim]
+    1, // decode_residual_add_1: element-wise add
+    4, // decode_mlp_gate_up_silu: matmul(gate) + matmul(up) + sigmoid + mul
+    1, // decode_mlp_down: matmul [intermediate_dim, hidden_dim]
+    1, // decode_residual_add_2: element-wise add
+    1, // decode_lm_head: matmul [hidden_dim, vocab_dim]
+];
+
+/// Combine all family lists.
 pub fn all_families() -> Vec<&'static GraphFamily> {
     let mut v = Vec::with_capacity(NORMAL_FAMILIES.len() + BASELINE_FAMILIES.len());
     for f in NORMAL_FAMILIES { v.push(f); }
@@ -327,6 +447,21 @@ pub fn graph_output_names(family_name: &str) -> &[&'static str] {
         "reshape_transpose_matmul" => &["matmul_1"],
         "softmax_tail" => &["softmax_2"],
         "identity_passthrough" => &["identity_0"],
+        "add_standalone" => &["add_1"],
+        "mul_standalone" => &["mul_1"],
+        "sigmoid_standalone" => &["sig_0"],
+        "silu_standalone" => &["mul_0"],
+        "matmul_projection" => &["matmul_1"],
+        "matmul_residual_add" => &["add_3"],
+        "two_matmul_add" => &["add_4"],
+        "matmul_add_silu" => &["mul_4"],
+        "decode_qkv_projection" => &["matmul_qkv"],
+        "decode_attention_output_projection" => &["matmul_attn_out"],
+        "decode_residual_add_1" => &["add_residual_1"],
+        "decode_mlp_gate_up_silu" => &["mul_gated"],
+        "decode_mlp_down" => &["matmul_mlp_down"],
+        "decode_residual_add_2" => &["add_residual_2"],
+        "decode_lm_head" => &["matmul_lm_head"],
         other => panic!("unknown family '{other}'"),
     }
 }
@@ -334,4 +469,66 @@ pub fn graph_output_names(family_name: &str) -> &[&'static str] {
 /// Primary (first) output name for convenience.
 pub fn graph_primary_output(family_name: &str) -> &'static str {
     graph_output_names(family_name)[0]
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::mil_builder::MilBuilder;
+    use crate::decode_attribution::suite_manifest::{tier0_manifest, tier1_manifest};
+    use crate::decode_attribution::shape_profiles::{SMALL, MEDIUM};
+
+    /// Every manifest family must have its graph_output_names() entries
+    /// produced by the actual graph builder for both small and medium shapes.
+    #[test]
+    fn graph_output_names_are_produced_for_all_manifest_families() {
+        // Collect unique family names from the manifest (the suite authority)
+        let t0 = tier0_manifest();
+        let t1 = tier1_manifest();
+        let mut families: std::collections::BTreeSet<&str> = std::collections::BTreeSet::new();
+        for row in t0.rows.iter().chain(t1.rows.iter()) {
+            families.insert(row.family.as_str());
+        }
+
+        // Build a lookup from family name to GraphFamily
+        let catalog: std::collections::HashMap<&str, &GraphFamily> =
+            NORMAL_FAMILIES.iter()
+                .chain(BASELINE_FAMILIES.iter())
+                .chain(TIER1_FAMILIES.iter())
+                .map(|f| (f.name, f))
+                .collect();
+
+        for family_name in &families {
+            let family = catalog.get(family_name)
+                .unwrap_or_else(|| panic!("family '{family_name}' in manifest but not in catalog"));
+
+            for profile in &[SMALL, MEDIUM] {
+                let builder = MilBuilder::new("test");
+                let builder = (family.build)(builder, profile);
+                let program = builder.build()
+                    .unwrap_or_else(|e| panic!("build failed for {} shape {}: {}", family.name, profile.name, e));
+
+                // Collect all SSA names produced by the program
+                let mut produced_names: std::collections::HashSet<&str> = std::collections::HashSet::new();
+                for func in program.functions.values() {
+                    for block in func.block_specializations.values() {
+                        for op in &block.operations {
+                            for out in &op.outputs {
+                                produced_names.insert(out.name.as_str());
+                            }
+                        }
+                    }
+                }
+
+                let expected = graph_output_names(family.name);
+                for name in expected {
+                    assert!(
+                        produced_names.contains(name),
+                        "family '{}' shape '{}': expected output name '{}' not found in produced SSA names {:?}",
+                        family.name, profile.name, name, produced_names
+                    );
+                }
+            }
+        }
+    }
 }

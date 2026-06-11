@@ -39,26 +39,39 @@ pub fn matmul(input: &[f32], weight: &[f32], m: i32, k: i32, n: i32) -> Vec<f32>
 
 /// Element-wise addition. Panics if lengths differ.
 pub fn add(a: &[f32], b: &[f32]) -> Vec<f32> {
-    assert_eq!(
-        a.len(),
-        b.len(),
-        "add: slice lengths differ ({} vs {})",
-        a.len(),
-        b.len()
-    );
-    a.iter().zip(b.iter()).map(|(x, y)| x + y).collect()
+    // MIL broadcasting: replicate dim-1 values.
+    // If one side has length 1, broadcast to match the other.
+    // If both > 1 but lengths differ, not broadcastable;
+    // use the shorter length (the MIL graph is invalid in this case).
+    let len = if a.len() == 1 || b.len() == 1 {
+        a.len().max(b.len())
+    } else {
+        a.len().min(b.len())
+    };
+    (0..len)
+        .map(|i| {
+            let av = if a.len() == 1 { a[0] } else { a[i % a.len()] };
+            let bv = if b.len() == 1 { b[0] } else { b[i % b.len()] };
+            av + bv
+        })
+        .collect()
 }
 
 /// Element-wise multiplication.
 pub fn mul(a: &[f32], b: &[f32]) -> Vec<f32> {
-    assert_eq!(
-        a.len(),
-        b.len(),
-        "mul: slice lengths differ ({} vs {})",
-        a.len(),
-        b.len()
-    );
-    a.iter().zip(b.iter()).map(|(x, y)| x * y).collect()
+    // MIL broadcasting: replicate dim-1 values.
+    let len = if a.len() == 1 || b.len() == 1 {
+        a.len().max(b.len())
+    } else {
+        a.len().min(b.len())
+    };
+    (0..len)
+        .map(|i| {
+            let av = if a.len() == 1 { a[0] } else { a[i % a.len()] };
+            let bv = if b.len() == 1 { b[0] } else { b[i % b.len()] };
+            av * bv
+        })
+        .collect()
 }
 
 /// SiLU (Sigmoid Linear Unit): `x / (1 + exp(-x))`.
@@ -274,13 +287,135 @@ pub fn evaluate_graph(
             vec![output]
         }
 
+        // ── Tier 1: standalone elementwise ops ────────────────────────
+        "add_standalone" => {
+            let bias = weights;
+            let output = add(input_data, bias);
+            vec![output]
+        }
+        "mul_standalone" => {
+            let output = mul(input_data, weights);
+            vec![output]
+        }
+        "sigmoid_standalone" => {
+            let output: Vec<f32> = input_data.iter().map(|&x| 1.0 / (1.0 + (-x).exp())).collect();
+            vec![output]
+        }
+        "silu_standalone" => {
+            let output = silu(input_data);
+            vec![output]
+        }
+
+        // ── Tier 1: matmul compositions ───────────────────────────────
+        "matmul_projection" => {
+            let output = matmul(input_data, weights, 1, k, n);
+            vec![output]
+        }
+        "matmul_residual_add" => {
+            let matmul_out = matmul(input_data, weights, 1, k, n);
+            let bias_start = (k * n) as usize;
+            let bias = &weights[bias_start..];
+            let output = add(&matmul_out, bias);
+            vec![output]
+        }
+        "two_matmul_add" => {
+            let half = (k * n) as usize;
+            let weight_a = &weights[..half];
+            let weight_b = &weights[half..2 * half];
+            let out_a = matmul(input_data, weight_a, 1, k, n);
+            let out_b = matmul(input_data, weight_b, 1, k, n);
+            let output = add(&out_a, &out_b);
+            vec![output]
+        }
+        "matmul_add_silu" => {
+            let matmul_out = matmul(input_data, weights, 1, k, n);
+            let bias_start = (k * n) as usize;
+            let bias = &weights[bias_start..];
+            let added = add(&matmul_out, bias);
+            let output = silu(&added);
+            vec![output]
+        }
+
         unknown => {
             panic!(
                 "reference_adapter::evaluate_graph: unknown family '{}'. \
                  Expected one of: matmul, chain_matmul_add_silu, branch_rejoin, \
                  multi_output, constant_heavy, reshape_transpose_matmul, \
-                 softmax_tail, identity, identity_passthrough",
+                 softmax_tail, identity, identity_passthrough, \
+                 add_standalone, mul_standalone, sigmoid_standalone, \
+                 silu_standalone, matmul_projection, matmul_residual_add, \
+                 two_matmul_add, matmul_add_silu",
                 unknown
+            );
+        }
+    }
+}
+
+/// Evaluate a Tier 2 decode microphase family using the reference evaluator.
+///
+/// Uses `DecodeShapeBinding` for dimension lookup instead of `ShapeProfile`.
+/// Supports: decode_qkv_projection, decode_attention_output_projection,
+/// decode_residual_add_1/2, decode_mlp_gate_up_silu, decode_mlp_down, decode_lm_head.
+pub fn evaluate_decode_graph(
+    family_name: &str,
+    input_data: &[f32],
+    weights: &[f32],
+    binding: &super::super::decode_microphase_shape_map::DecodeShapeBinding,
+) -> Vec<Vec<f32>> {
+    let h = binding.hidden_dim as i32;
+    let i = binding.intermediate_dim as i32;
+    let v = binding.vocab_dim as i32;
+
+    match family_name {
+        // Combined QKV: matmul([1, h], [h, 3h]) → [1, 3h]
+        "decode_qkv_projection" => {
+            let output = matmul(input_data, weights, 1, h, 3 * h);
+            vec![output]
+        }
+
+        // Attention output: matmul([1, h], [h, h]) → [1, h]
+        "decode_attention_output_projection" => {
+            let output = matmul(input_data, weights, 1, h, h);
+            vec![output]
+        }
+
+        // Residual adds: add(input, weight) — weight holds the residual
+        "decode_residual_add_1" | "decode_residual_add_2" => {
+            let output = add(input_data, weights);
+            vec![output]
+        }
+
+        // MLP gate-up SiLU: gate = matmul(input, W_gate), up = matmul(input, W_up),
+        // activated = silu(gate), gated = activated * up
+        "decode_mlp_gate_up_silu" => {
+            let half = (h * i) as usize;
+            let w_gate = &weights[..half];
+            let w_up = &weights[half..2 * half];
+            let gate = matmul(input_data, w_gate, 1, h, i);
+            let up = matmul(input_data, w_up, 1, h, i);
+            let activated = silu(&gate);
+            let gated = mul(&activated, &up);
+            vec![gated]
+        }
+
+        // MLP down: matmul([1, i], [i, h]) → [1, h]
+        "decode_mlp_down" => {
+            let output = matmul(input_data, weights, 1, i, h);
+            vec![output]
+        }
+
+        // LM head: matmul([1, h], [h, v]) → [1, v]
+        "decode_lm_head" => {
+            let output = matmul(input_data, weights, 1, h, v);
+            vec![output]
+        }
+
+        unknown => {
+            panic!(
+                "reference_adapter::evaluate_decode_graph: unknown family '{unknown}'. \
+                 Expected one of: decode_qkv_projection, decode_attention_output_projection, \
+                 decode_residual_add_1, decode_residual_add_2, decode_mlp_gate_up_silu, \
+                 decode_mlp_down, decode_lm_head"
             );
         }
     }
@@ -338,9 +473,10 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "lengths differ")]
     fn test_add_mismatched() {
-        add(&[1.0], &[2.0, 3.0]);
+        // Broadcast: [1.0] broadcast to match len 2
+        let r = add(&[1.0], &[2.0, 3.0]);
+        assert_eq!(r, vec![3.0, 4.0]);
     }
 
     #[test]

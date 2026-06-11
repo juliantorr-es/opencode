@@ -68,7 +68,10 @@ pub fn compile_mlpackage(
     }
 
     let inner = find_model_dir(&dest).ok_or_else(|| format!("no metadata.json in {:?}", dest))?;
-    let compiled_hash = file_sha256(&inner.join("metadata.json"));
+    let compiled_hash = match crate::decode_attribution::artifact_hash::hash_directory_deterministic(&inner, &[]) {
+        Ok(r) => r.digest,
+        Err(_) => String::new(),
+    };
 
     Ok(CoreMlIslandReceipt {
         island_id: island_id.to_string(),
