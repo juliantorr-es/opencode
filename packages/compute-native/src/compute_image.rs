@@ -4587,6 +4587,82 @@ mod tests {
     }
 
     #[test]
+    fn test_synthetic_prefill_decode_parity() {
+        std::env::set_var("TRIBUNUS_COMPUTE_ALLOW_HIGH_MEMORY", "1");
+        let source_dir = temp_dir("source-parity");
+        let output_dir = temp_dir("out-parity");
+
+        write_two_layer_fixture_model(&source_dir, &["sliding_attention", "full_attention"]);
+
+        let compiled = compile_with_authority(
+            source_dir.to_str().expect("source dir"),
+            output_dir.to_str().expect("output dir"),
+            CompilationAuthority::TestFixture,
+            false,
+        )
+        .expect("compile");
+
+        let reader = read(output_dir.to_str().expect("output dir")).expect("reader");
+
+        let profiled_model = crate::profiled_executor::LoadedProfiledModel::new(&output_dir)
+            .expect("load bindings");
+
+        let build_kv_caches = || -> Vec<crate::kv_cache::KvCache> {
+            profiled_model.reader.manifest.execution_plan.layers
+                .iter()
+                .map(|layer| {
+                    let capacity = if layer.attention_kind == "sliding_attention" {
+                        layer.sliding_window
+                    } else {
+                        16
+                    };
+                    let n_kv_heads = layer.n_global_kv_heads.unwrap_or(layer.n_kv_heads);
+                    let head_dim = layer.global_head_dim.unwrap_or(layer.head_dim);
+                    crate::kv_cache::KvCache::new(
+                        capacity,
+                        n_kv_heads,
+                        head_dim,
+                        layer.attention_kind == "sliding_attention",
+                    )
+                })
+                .collect()
+        };
+
+        let mut session = crate::profiled_executor::ProfiledInferenceSession::new(
+            "test-parity-session".to_string(),
+            build_kv_caches(),
+        );
+
+        // Prefill parity
+        let prompt = vec![2u32, 10u32, 15u32];
+        let prompt_i32: Vec<i32> = prompt.iter().map(|&t| t as i32).collect();
+        
+        let t1_cached = session.prefill(&prompt, &profiled_model).expect("prefill");
+        let t1_uncached = reader.open_runtime(StorageBackend::Copied).expect("runtime")
+            .run_full_model(&prompt_i32).expect("run_full_model");
+        assert_eq!(t1_cached, t1_uncached, "Prefill token parity mismatch");
+
+        // Decode Step 1 parity
+        let mut history = prompt.clone();
+        history.push(t1_cached);
+        let history_i32: Vec<i32> = history.iter().map(|&t| t as i32).collect();
+
+        let t2_cached = session.decode_one(t1_cached, &profiled_model).expect("decode_one step 1");
+        let t2_uncached = reader.open_runtime(StorageBackend::Copied).expect("runtime")
+            .run_full_model(&history_i32).expect("run_full_model step 1");
+        assert_eq!(t2_cached, t2_uncached, "Decode step 1 token parity mismatch");
+
+        // Decode Step 2 parity
+        history.push(t2_cached);
+        let history_i32_2: Vec<i32> = history.iter().map(|&t| t as i32).collect();
+
+        let t3_cached = session.decode_one(t2_cached, &profiled_model).expect("decode_one step 2");
+        let t3_uncached = reader.open_runtime(StorageBackend::Copied).expect("runtime")
+            .run_full_model(&history_i32_2).expect("run_full_model step 2");
+        assert_eq!(t3_cached, t3_uncached, "Decode step 2 token parity mismatch");
+    }
+
+    #[test]
     #[ignore = "requires sealed image at TRIBUNUS_COMPILED_IMAGE"]
     fn real_checkpoint_full_model_gate() {
         let image_dir = std::env::var("TRIBUNUS_COMPILED_IMAGE")

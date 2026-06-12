@@ -188,3 +188,11 @@ path = "tests/f32_contract_tests.rs"
 [[test]]
 name = "three_backend_conformance"
 path = "tests/three_backend_conformance.rs"
+
+[[bench]]
+name = "benchmark_placement"
+harness = false
+path = "benches/benchmark_placement.rs"
+
+[dev-dependencies]
+criterion = { version = "0.5", features = ["html_reports"] }
