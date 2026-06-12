@@ -11,12 +11,13 @@
 
 use crate::engine_error::{EngineError, EngineErrorCode};
 use crate::engine_policy::{DeadlineGuard, ExecutionPolicy};
+use crate::contracts::RunInstrumentationContext;
 use crate::streaming::{
     generation_channel, GenerationEvent, GenerationHandle, GenerationSender,
 };
 use crate::worker_protocol::{
     Frame, HeartbeatPayload, HostCommand, MessageKind, PolicySnapshotPayload,
-    ProtocolValidator, StartGenerationPayload, TokenPayload, WorkerEvent,
+    ProtocolValidator, ResearchTraceBatchPayload, StartGenerationPayload, TokenPayload, WorkerEvent,
     MAX_FRAME_SIZE_BYTES,
 };
 use parking_lot::Mutex;
@@ -680,6 +681,7 @@ pub struct WorkerSupervisor {
     pub runtime_state: Arc<WorkerRuntimeState>,
     pub registry: Arc<ActiveRequestRegistry>,
     pub diagnostics: Arc<WorkerDiagnosticsCollector>,
+    pub telemetry: RunInstrumentationContext,
     pub policy: ExecutionPolicy,
     pub event_reader_handle: Option<JoinHandle<()>>,
     pub watchdog_handle: Option<JoinHandle<()>>,
@@ -753,6 +755,7 @@ impl WorkerSupervisor {
         let diagnostics = Arc::new(WorkerDiagnosticsCollector::new(
             policy.stderr_diagnostic_ceiling_bytes,
         ));
+        let telemetry = RunInstrumentationContext::new(256);
 
         // Spawn stderr reader if we captured stderr.
         let diagnostics_handle = stderr.map(|err| {
@@ -782,6 +785,7 @@ impl WorkerSupervisor {
         let er_runtime = Arc::clone(&runtime_state);
         let er_registry = Arc::clone(&registry);
         let er_diagnostics = Arc::clone(&diagnostics);
+        let er_telemetry = telemetry.clone();
         let er_process = Arc::clone(&process_ctrl);
         let er_policy = policy.clone();
 
@@ -793,6 +797,7 @@ impl WorkerSupervisor {
                     &er_runtime,
                     &er_registry,
                     &er_diagnostics,
+                    &er_telemetry,
                     &er_process,
                     &er_policy,
                     &handshake_tx,
@@ -859,6 +864,7 @@ impl WorkerSupervisor {
             runtime_state,
             registry,
             diagnostics,
+            telemetry,
             policy,
             event_reader_handle: Some(event_reader_handle),
             watchdog_handle: Some(watchdog_handle),
@@ -1149,6 +1155,7 @@ impl WorkerSupervisor {
         runtime: &WorkerRuntimeState,
         registry: &ActiveRequestRegistry,
         diagnostics: &WorkerDiagnosticsCollector,
+        telemetry: &RunInstrumentationContext,
         process: &WorkerProcessControl,
         _policy: &ExecutionPolicy,
         handshake_tx: &std::sync::mpsc::Sender<Result<Frame, EngineError>>,
@@ -1305,7 +1312,46 @@ impl WorkerSupervisor {
                         runtime.clear_model_loaded();
                     }
 
-                    WorkerEvent::HelloAck | WorkerEvent::ModelLoadStarted | WorkerEvent::ResearchTraceBatch => {}
+                    WorkerEvent::ResearchTraceBatch => {
+                        match serde_json::from_value::<ResearchTraceBatchPayload>(frame.payload.clone()) {
+                            Ok(batch) => {
+                                let (materialized_bytes, file_read_bytes, kv_bytes) = batch
+                                    .events
+                                    .iter()
+                                    .fold((0u64, 0u64, 0u64), |(materialized, file_read, kv), event| {
+                                        (
+                                            materialized + u64::from(event.materialized_bytes),
+                                            file_read + u64::from(event.file_read_bytes),
+                                            kv + event.kv_delta.max(0) as u64,
+                                        )
+                                    });
+
+                                telemetry.record_trace_batch_summary(
+                                    materialized_bytes,
+                                    file_read_bytes,
+                                    kv_bytes,
+                                );
+
+                                diagnostics.append_line(&format!(
+                                    "research trace batch: request={} batch={} events={} drops={} overflowed={} materialized={} file_read={} kv={} batches={}",
+                                    batch.request_id,
+                                    batch.batch_index,
+                                    batch.events.len(),
+                                    batch.buffer_drops,
+                                    batch.buffer_overflowed,
+                                    materialized_bytes,
+                                    file_read_bytes,
+                                    kv_bytes,
+                                    telemetry.trace_batch_count(),
+                                ));
+                            }
+                            Err(err) => diagnostics.append_line(&format!(
+                                "research trace batch decode failed: {err}"
+                            )),
+                        }
+                    }
+
+                    WorkerEvent::HelloAck | WorkerEvent::ModelLoadStarted => {}
                 },
 
                 _ => {

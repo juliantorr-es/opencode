@@ -196,7 +196,16 @@ int tribunus_coreml_predict_stateful(
     return 0;
 }
 
-// ── predict_stateful_async (stub) ──────────────────────────────────────────
+extern "C" void tribunus_coreml_wake_waker(void* waker);
+
+struct TribunusCoreMlStatefulRequest {
+    dispatch_semaphore_t sem;
+    int status;
+    BOOL completed;
+    void* waker;
+};
+
+// ── predict_stateful_async ──────────────────────────────────────────
 
 int tribunus_coreml_predict_stateful_async(
     TribunusCoreMlStatefulRequest** out_request,
@@ -207,32 +216,141 @@ int tribunus_coreml_predict_stateful_async(
     const char* output_name,
     void* output_arena_info) {
 
-    (void)out_request;
-    (void)model_ptr;
-    (void)state;
-    (void)input_name;
-    (void)input_arena_info;
-    (void)output_name;
-    (void)output_arena_info;
-    fprintf(stderr, "coreml_predict_stateful_async: not yet implemented\n");
-    return -99;
+    if (!out_request || !model_ptr || !state || !input_name || !input_arena_info ||
+        !output_name || !output_arena_info)
+        return -1;
+
+    *out_request = NULL;
+
+    @autoreleasepool {
+    @try {
+        MLModel* mlmodel = (__bridge MLModel*)model_ptr;
+        MLState* mlstate = (__bridge MLState*)state;
+        NSError* error = nil;
+
+        const TribunusArenaInfo* input_arena = (const TribunusArenaInfo*)input_arena_info;
+        TribunusArenaInfo* output_arena = (TribunusArenaInfo*)output_arena_info;
+
+        if (!input_arena->cv_buffer || !output_arena->base_address) return -1;
+
+        NSString* inName = [NSString stringWithUTF8String:input_name];
+        NSString* outName = [NSString stringWithUTF8String:output_name];
+
+        // Validate against model description.
+        MLModelDescription* desc = mlmodel.modelDescription;
+        NSArray<NSNumber*>* shape = @[
+            @(input_arena->logical_dim0),
+            @(input_arena->logical_dim1),
+        ];
+
+        // Wrap input CVPixelBuffer as MLMultiArray (zero-copy).
+        CVPixelBufferRef pixelBuffer = (CVPixelBufferRef)input_arena->cv_buffer;
+        MLMultiArray* input_ma = [[MLMultiArray alloc]
+            initWithPixelBuffer:pixelBuffer shape:shape];
+        if (!input_ma) {
+            fprintf(stderr, "coreml_predict_stateful_async: input MLMultiArray failed\n");
+            return -2;
+        }
+
+        // Wrap output arena memory as MLMultiArray (zero-copy).
+        MLMultiArray* output_ma = [[MLMultiArray alloc]
+            initWithDataPointer:output_arena->base_address
+                          shape:@[@(output_arena->logical_dim0), @(output_arena->logical_dim1)]
+                       dataType:MLMultiArrayDataTypeFloat16
+                         strides:@[@(output_arena->logical_dim1), @1]
+                     deallocator:^(void* p) { (void)p; }
+                           error:&error];
+        if (!output_ma) {
+            fprintf(stderr, "coreml_predict_stateful_async: output MLMultiArray failed: %s\n",
+                    error.localizedDescription.UTF8String);
+            return -3;
+        }
+
+        // Build input feature provider.
+        MLFeatureValue* input_fv = [MLFeatureValue featureValueWithMultiArray:input_ma];
+        NSDictionary* input_dict = @{ inName: input_fv };
+        MLDictionaryFeatureProvider* input_provider =
+            [[MLDictionaryFeatureProvider alloc] initWithDictionary:input_dict error:&error];
+        if (!input_provider) {
+            fprintf(stderr, "coreml_predict_stateful_async: input provider failed: %s\n",
+                    error.localizedDescription.UTF8String);
+            return -4;
+        }
+
+        // Configure output backing and options.
+        MLPredictionOptions* options = [[MLPredictionOptions alloc] init];
+        options.outputBackings = @{ outName: output_ma };
+
+        // Allocate request structure
+        TribunusCoreMlStatefulRequest* req = (TribunusCoreMlStatefulRequest*)calloc(1, sizeof(TribunusCoreMlStatefulRequest));
+        if (!req) return -6;
+        req->sem = dispatch_semaphore_create(0);
+        req->status = 0;
+        req->completed = NO;
+        req->waker = NULL;
+
+        *out_request = req;
+
+        // Run stateful prediction via macOS 15+ async API:
+        [mlmodel predictionFromFeatures:input_provider
+                             usingState:mlstate
+                                options:options
+                      completionHandler:^(id<MLFeatureProvider> _Nullable result, NSError * _Nullable err_cb) {
+            if (!result) {
+                fprintf(stderr, "coreml_predict_stateful_async callback: prediction failed: %s\n",
+                        err_cb ? err_cb.localizedDescription.UTF8String : "unknown error");
+                req->status = -5;
+            } else {
+                req->status = 0;
+            }
+            req->completed = YES;
+            dispatch_semaphore_signal(req->sem);
+            if (req->waker) {
+                tribunus_coreml_wake_waker(req->waker);
+                req->waker = NULL;
+            }
+        }];
+    } @catch (NSException* exc) {
+        fprintf(stderr, "coreml_predict_stateful_async EXCEPTION: %s\n",
+                exc.description.UTF8String);
+        return -20;
+    }
+    } // @autoreleasepool
+    return 0;
 }
 
-// ── request lifecycle stubs ───────────────────────────────────────────────
+// ── request lifecycle ───────────────────────────────────────────────
 
 int tribunus_coreml_stateful_request_is_complete(TribunusCoreMlStatefulRequest* request) {
-    (void)request;
-    return -99; // not yet implemented
+    if (!request) return -1;
+    return request->completed ? 1 : 0;
+}
+
+void tribunus_coreml_stateful_request_set_waker(TribunusCoreMlStatefulRequest* request, void* waker) {
+    if (!request) return;
+    if (request->waker && request->waker != waker) {
+        tribunus_coreml_wake_waker(request->waker);
+    }
+    request->waker = waker;
+    if (request->completed && request->waker) {
+        tribunus_coreml_wake_waker(request->waker);
+        request->waker = NULL;
+    }
 }
 
 int tribunus_coreml_stateful_request_wait(TribunusCoreMlStatefulRequest* request) {
-    (void)request;
-    return -99; // not yet implemented
+    if (!request) return -1;
+    dispatch_semaphore_wait(request->sem, DISPATCH_TIME_FOREVER);
+    return request->status;
 }
 
 void tribunus_coreml_stateful_request_destroy(TribunusCoreMlStatefulRequest* request) {
-    (void)request;
-    // no-op stub
+    if (!request) return;
+    if (request->waker) {
+        tribunus_coreml_wake_waker(request->waker);
+    }
+    free(request);
 }
 
 } // extern "C"
+

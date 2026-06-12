@@ -53,6 +53,9 @@ int tribunus_coreml_predict_stateful_async(
 // Returns 1 if complete, 0 if still pending, negative on error.
 int tribunus_coreml_stateful_request_is_complete(TribunusCoreMlStatefulRequest* request);
 
+// Set the Rust waker to wake when complete.
+void tribunus_coreml_stateful_request_set_waker(TribunusCoreMlStatefulRequest* request, void* waker);
+
 // Wait for async request completion (blocking). Returns 0 on success.
 int tribunus_coreml_stateful_request_wait(TribunusCoreMlStatefulRequest* request);
 

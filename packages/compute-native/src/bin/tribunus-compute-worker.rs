@@ -28,6 +28,7 @@ use parking_lot::Mutex;
 use serde_json::Value;
 
 use tribunus_compute_native::kv_cache::KvCache;
+use tribunus_compute_native::contracts::RunInstrumentationContext;
 use tribunus_compute_native::profiled_executor::{LoadedProfiledModel, ProfiledInferenceSession};
 use tribunus_compute_native::worker_memory::{
     configure_mlx_memory_limits, sample_mlx_memory, sample_process_rss_self,
@@ -245,18 +246,28 @@ fn main() {
     // ── Shared infrastructure ─────────────────────────────────────────────
     let writer = Arc::new(WorkerEventWriter::new(worker_id.clone()));
     let state = Arc::new(InferenceState::new());
+    let telemetry = Arc::new(RunInstrumentationContext::new(256));
     let (cmd_tx, cmd_rx) = mpsc::channel::<InferenceCommand>();
     let shutdown = Arc::new(AtomicBool::new(false));
 
     // ── Spawn inference thread ────────────────────────────────────────────
     let inf_writer = Arc::clone(&writer);
     let inf_state = Arc::clone(&state);
+    let inf_telemetry = Arc::clone(&telemetry);
     let inf_worker_id = worker_id.clone();
     let inf_shutdown = Arc::clone(&shutdown);
     let inf_handle = std::thread::Builder::new()
         .name("inference".into())
         .spawn(move || {
-            inference_thread(inf_worker_id, &image_dir, cmd_rx, inf_writer, inf_state, inf_shutdown);
+            inference_thread(
+                inf_worker_id,
+                &image_dir,
+                cmd_rx,
+                inf_writer,
+                inf_state,
+                inf_telemetry,
+                inf_shutdown,
+            );
         })
         .expect("spawn inference thread");
 
@@ -495,6 +506,7 @@ fn inference_thread(
     rx: mpsc::Receiver<InferenceCommand>,
     writer: Arc<WorkerEventWriter>,
     state: Arc<InferenceState>,
+    telemetry: Arc<RunInstrumentationContext>,
     shutdown: Arc<AtomicBool>,
 ) {
     let mut model: Option<LoadedProfiledModel> = None;
@@ -512,6 +524,8 @@ fn inference_thread(
                 model = None;
                 state.reset();
                 state.cancel.store(false, Ordering::Relaxed);
+                telemetry.reset_counters();
+                telemetry.reset_trace_batches();
                 // Response already sent by command thread.
             }
 
@@ -533,7 +547,13 @@ fn inference_thread(
                     worker_id, active_limit, cache_limit
                 );
 
-                match LoadedProfiledModel::new(image_dir) {
+                telemetry.reset_counters();
+                telemetry.reset_trace_batches();
+
+                match LoadedProfiledModel::new_with_telemetry(
+                    image_dir,
+                    Some(telemetry.counter.as_ref()),
+                ) {
                     Ok(m) => {
                         eprintln!("[worker {}] model loaded successfully", worker_id);
                         writer.write_event(

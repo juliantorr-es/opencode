@@ -22,6 +22,7 @@ pub const CAP_COREML_ASYNC_STATEFUL: &str = "coreml_async_stateful_prediction";
 pub const CAP_ARENA_POOLING: &str = "arena_pooling";
 pub const CAP_STATE_LEASE_ISOLATION: &str = "state_lease_isolation";
 pub const CAP_HYBRID_COMPUTE_IMAGE: &str = "hybrid_compute_image";
+pub const CAP_ANE_PRIVATE_RUNTIME: &str = "ane_private_runtime";
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SharedTensorCapabilityReport {
@@ -50,6 +51,9 @@ pub struct SharedTensorCapabilityReport {
     pub supports_coreml_stateful_models: bool,
     pub supports_coreml_multifunction_models: bool,
     pub supports_coreml_async_stateful_prediction: bool,
+
+    // ANE private API runtime
+    pub supports_ane_private_runtime: bool,
 
     // Infrastructure
     pub supports_arena_pooling: bool,
@@ -94,6 +98,18 @@ impl SharedTensorCapabilityReport {
             supports_coreml_stateful_models: cfg!(target_os = "macos") && is_macos_15,
             supports_coreml_multifunction_models: cfg!(target_os = "macos") && is_macos_15,
             supports_coreml_async_stateful_prediction: cfg!(target_os = "macos") && is_macos_15,
+
+            // ANE private API runtime
+            supports_ane_private_runtime: {
+                #[cfg(target_os = "macos")]
+                {
+                    crate::ane_bridge::AneProgram::init().is_ok()
+                }
+                #[cfg(not(target_os = "macos"))]
+                {
+                    false
+                }
+            },
 
             // Infrastructure — false until proven by runtime tests
             supports_arena_pooling: false,

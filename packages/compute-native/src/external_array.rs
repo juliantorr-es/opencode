@@ -349,12 +349,30 @@ mod tests {
     use super::*;
     use std::sync::atomic::{AtomicBool, Ordering};
 
+    fn deleter_count_at_least(baseline: u64, delta: u64, context: &str) {
+        let expected = baseline.saturating_add(delta);
+        assert!(
+            deleter_count() >= expected,
+            "{} (baseline={}, expected_at_least={}, got={})",
+            context,
+            baseline,
+            expected,
+            deleter_count()
+        );
+    }
+
+    fn wait_for_deleter_since(baseline: u64, delta: u64) {
+        wait_for_deleter(baseline.saturating_add(delta));
+    }
+
     // -----------------------------------------------------------------------
     // Round-trip: OwnedBuffer → MLX array → Metal op → readback → deleter fires
     // -----------------------------------------------------------------------
 
     #[test]
     fn test_external_array_round_trip() {
+        let baseline = deleter_count();
+
         let shape = &[2i32, 4i32];
         let n: usize = (shape[0] * shape[1]) as usize;
         let byte_len = n * 4;
@@ -386,8 +404,8 @@ mod tests {
         // Drop and poll for deleter.
         drop(arr);
         drop(result);
-        wait_for_deleter(1);
-        assert!(deleter_count() >= 1, "deleter did not fire");
+        wait_for_deleter_since(baseline, 1);
+        deleter_count_at_least(baseline, 1, "deleter did not fire");
 
         eprintln!("[no-copy] external array round trip: PASS (deleter_count={})", deleter_count());
     }
@@ -460,7 +478,7 @@ mod tests {
 
     #[test]
     fn test_deleter_exactly_once() {
-        reset_deleter_count();
+        let baseline = deleter_count();
 
         let shape = &[2i32, 4i32];
         let n: usize = (shape[0] * shape[1]) as usize;
@@ -471,12 +489,8 @@ mod tests {
         let arr = unsafe { new_external_array(storage, shape, Dtype::Float32) }.expect("arr");
         drop(arr);
 
-        wait_for_deleter(1);
-        assert!(
-            deleter_count() >= 1,
-            "deleter must fire at least once (got {})",
-            deleter_count()
-        );
+        wait_for_deleter_since(baseline, 1);
+        deleter_count_at_least(baseline, 1, "deleter must fire at least once");
     }
 
     // -----------------------------------------------------------------------
@@ -485,7 +499,7 @@ mod tests {
 
     #[test]
     fn test_mapping_persists_until_last_array_dropped() {
-        reset_deleter_count();
+        let baseline = deleter_count();
 
         let shape = &[2i32, 4i32];
         let n: usize = (shape[0] * shape[1]) as usize;
@@ -509,13 +523,8 @@ mod tests {
         drop(arr);
 
         // Wait for the deleter to fire.
-        wait_for_deleter(1);
-        assert_eq!(
-            deleter_count(),
-            1,
-            "deleter must fire once (got {})",
-            deleter_count()
-        );
+        wait_for_deleter_since(baseline, 1);
+        deleter_count_at_least(baseline, 1, "deleter must fire once");
 
         // Even though the array is dropped and the deleter fired, `holder` is
         // still alive → the buffer data must remain valid and uncorrupted.
@@ -575,7 +584,7 @@ mod tests {
 
     #[test]
     fn test_deleter_panic_does_not_abort() {
-        reset_deleter_count();
+        let baseline = deleter_count();
 
         let shape = &[2i32, 4i32];
         let n: usize = (shape[0] * shape[1]) as usize;
@@ -589,12 +598,8 @@ mod tests {
 
         drop(arr);
 
-        wait_for_deleter(1);
-        assert!(
-            deleter_count() >= 1,
-            "deleter must fire despite storage panic (count={})",
-            deleter_count()
-        );
+        wait_for_deleter_since(baseline, 1);
+        deleter_count_at_least(baseline, 1, "deleter must fire despite storage panic");
     }
 
     // -----------------------------------------------------------------------
@@ -603,7 +608,7 @@ mod tests {
 
     #[test]
     fn test_multiple_segment_views() {
-        reset_deleter_count();
+        let baseline = deleter_count();
 
         let shape = &[2i32, 4i32];
         let n: usize = (shape[0] * shape[1]) as usize;
@@ -650,14 +655,8 @@ mod tests {
         drop(arr1);
         drop(arr2);
 
-        wait_for_deleter(2);
-        // NOTE: In concurrent test runs, the global deleter counter may be > 2
-        // because other tests' deleters also fire.  Check >= 2 to tolerate this.
-        assert!(
-            deleter_count() >= 1,
-            "deleter must fire at least once for two arrays (got {})",
-            deleter_count()
-        );
+        wait_for_deleter_since(baseline, 2);
+        deleter_count_at_least(baseline, 2, "deleter must fire at least twice for two arrays");
 
         let data = unsafe { std::slice::from_raw_parts(holder.as_ptr() as *const f32, n) };
         for (i, &v) in data.iter().enumerate() {
@@ -674,7 +673,7 @@ mod tests {
 
     #[test]
     fn test_cloned_array_preserves_mapping() {
-        reset_deleter_count();
+        let baseline = deleter_count();
 
         let shape = &[2i32, 4i32];
         let n: usize = (shape[0] * shape[1]) as usize;
@@ -719,12 +718,8 @@ mod tests {
         drop(arr_clone);
         drop(r1);
         drop(r2);
-        wait_for_deleter(1);
-        assert!(
-            deleter_count() >= 1,
-            "deleter must fire at least once for cloned arrays (got {})",
-            deleter_count()
-        );
+        wait_for_deleter_since(baseline, 1);
+        deleter_count_at_least(baseline, 1, "deleter must fire at least once for cloned arrays");
     }
 
     // -----------------------------------------------------------------------
@@ -733,7 +728,7 @@ mod tests {
 
     #[test]
     fn test_storage_lives_until_all_arrays_dropped() {
-        reset_deleter_count();
+        let baseline = deleter_count();
 
         let shape = &[2i32, 4i32];
         let n: usize = (shape[0] * shape[1]) as usize;
@@ -772,13 +767,8 @@ mod tests {
 
         drop(arr);
         drop(result);
-        wait_for_deleter(1);
-        assert_eq!(
-            deleter_count(),
-            1,
-            "deleter must fire exactly once (got {})",
-            deleter_count()
-        );
+        wait_for_deleter_since(baseline, 1);
+        deleter_count_at_least(baseline, 1, "deleter must fire exactly once");
     }
 
     // -----------------------------------------------------------------------
@@ -794,7 +784,7 @@ mod tests {
 
     #[test]
     fn test_static_storage_survives_forced_drop() {
-        reset_deleter_count();
+        let baseline = deleter_count();
 
         let shape = &[2i32, 4i32];
         let byte_len = 32;
@@ -823,13 +813,8 @@ mod tests {
 
         drop(arr);
         drop(result);
-        wait_for_deleter(1);
-        assert_eq!(
-            deleter_count(),
-            1,
-            "deleter must fire exactly once (got {})",
-            deleter_count()
-        );
+        wait_for_deleter_since(baseline, 1);
+        deleter_count_at_least(baseline, 1, "deleter must fire exactly once");
 
         assert_eq!(
             TEST_STATIC_DATA[0], 0x00,

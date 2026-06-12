@@ -6,8 +6,8 @@
 //! cumulative counters use relaxed atomic loads.
 
 use crate::research_contracts::{
-    ClockSource, CounterSource, MemorySource, DEFAULT_CLOCK_SOURCE, DEFAULT_COUNTER_SOURCE,
-    DEFAULT_MEMORY_SOURCE,
+    ClockSource, CounterSource, DEFAULT_CLOCK_SOURCE, DEFAULT_COUNTER_SOURCE,
+    DEFAULT_MEMORY_SOURCE, MemorySource,
 };
 use crate::research_trace::{ClockDomain, StageId, SubstrateId, TraceEvent};
 /// Record that `bytes` weight-tensor data was materialized (dequantized,
@@ -128,6 +128,7 @@ fn clamp_u32(v: u64) -> u32 {
 /// ```
 pub struct StageEventBuilder {
     start_ns: u64,
+    clock_domain: ClockDomain,
     stage_id: StageId,
     substrate_id: SubstrateId,
     layer_index: u8,
@@ -142,7 +143,12 @@ impl StageEventBuilder {
     /// + sync_ns`. The builder stores only the start instant; `finish`
     /// records the end instant and computes the split.
     pub fn begin(stage: StageId, substrate: SubstrateId) -> Self {
-        Self::begin_at(stage, substrate, monotonic_now())
+        Self::begin_at(
+            stage,
+            substrate,
+            ClockDomain::WorkerMonotonic,
+            monotonic_now(),
+        )
     }
 
     /// Begin a stage event using an injected clock source.
@@ -151,12 +157,18 @@ impl StageEventBuilder {
         substrate: SubstrateId,
         clock: &dyn ClockSource,
     ) -> Self {
-        Self::begin_at(stage, substrate, clock.now_ns())
+        Self::begin_at(stage, substrate, clock.domain(), clock.now_ns())
     }
 
-    fn begin_at(stage: StageId, substrate: SubstrateId, start_ns: u64) -> Self {
+    fn begin_at(
+        stage: StageId,
+        substrate: SubstrateId,
+        clock_domain: ClockDomain,
+        start_ns: u64,
+    ) -> Self {
         Self {
             start_ns,
+            clock_domain,
             stage_id: stage,
             substrate_id: substrate,
             layer_index: 0,
@@ -184,7 +196,7 @@ impl StageEventBuilder {
     /// baseline (the snapshot itself — the consumer applies their own
     /// baseline across a batch).
     ///
-    /// The returned [`TraceEvent`] uses `ClockDomain::WorkerMonotonic` and
+    /// The returned [`TraceEvent`] uses the builder's clock domain and
     /// zeroes out the sub-stage timing splits (`graph_build_ns`, `eval_ns`,
     /// `sync_ns`) so the consumer can fill them. The `monotonic_ns` field
     /// holds the finish timestamp.
@@ -212,7 +224,7 @@ impl StageEventBuilder {
             monotonic_ns: now_ns,
             stage_id: self.stage_id as u16,
             substrate_id: self.substrate_id as u8,
-            clock_domain: ClockDomain::WorkerMonotonic as u8,
+            clock_domain: self.clock_domain as u8,
             layer_index: self.layer_index,
             attention_kind: self.attention_kind,
             status: 0, // success; failures are reported via separate path
@@ -265,6 +277,10 @@ mod tests {
     impl ClockSource for FixedClock {
         fn now_ns(&self) -> u64 {
             self.0
+        }
+
+        fn domain(&self) -> ClockDomain {
+            ClockDomain::HostMonotonic
         }
     }
 
@@ -411,6 +427,7 @@ mod tests {
 
         assert_eq!(ev.monotonic_ns, 1234);
         assert_eq!(ev.graph_build_ns, 0);
+        assert_eq!(ev.clock_domain, ClockDomain::HostMonotonic as u8);
     }
 
     #[test]

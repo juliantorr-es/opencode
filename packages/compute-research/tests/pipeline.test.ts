@@ -16,6 +16,7 @@ import { RunDirectory } from "../src/recorder/run-dir.js";
 import { finalizeRun } from "../src/recorder/finalize.js";
 import { normalizeRun } from "../src/normalize/normalize.js";
 import { buildDuckDb } from "../src/normalize/duckdb.js";
+import { NORMALIZED_TABLE_SCHEMAS } from "../src/normalize/schema.js";
 import { runComparison } from "../src/compare/index.js";
 import { bootstrapIndependentCI, bootstrapPairedCI } from "../src/compare/statistics.js";
 
@@ -394,6 +395,39 @@ describe("Pipeline E2E", () => {
     expect(compRecord.ci.upper).toBeGreaterThanOrEqual(0);
     expect(compRecord.recommendation).not.toBe("promoted");
     expect(compRecord.evidenceComplete).toBe(true);
+  });
+
+  test("same-length samples default to independent bootstrap unless paired is explicit", async () => {
+    const root = tempDir();
+    tmpRoots.push(root);
+
+    const baselineValues = [100, 200, 300, 400, 500];
+    const treatmentValues = [92, 208, 294, 412, 518];
+    const baselineRd = createCompareRun(root, "default-independent-baseline", baselineValues);
+    const treatmentRd = createCompareRun(root, "default-independent-treatment", treatmentValues);
+    finalizeRun(baselineRd);
+    finalizeRun(treatmentRd);
+
+    const compRecord = await runComparison("default-independent-baseline", "default-independent-treatment", {
+      baselineRoot: root,
+      treatmentRoot: root,
+      outputRoot: join(root, "comparisons"),
+      primaryMetric: "token_latency_ms",
+      randomSeed: 123,
+      nBootstrap: 2_000,
+    });
+
+    const expected = bootstrapIndependentCI(baselineValues, treatmentValues, 0.95, 2_000, 123);
+    expect(compRecord.analysis_method).toBe("independent");
+    expect(compRecord.ci.lower).toBe(expected.lower);
+    expect(compRecord.ci.upper).toBe(expected.upper);
+  });
+
+  test("normalized runs contract exposes projection_stage_count consistently", () => {
+    expect(Object.keys(NORMALIZED_TABLE_SCHEMAS.runs)).toContain("projection_stage_count");
+    const viewsSql = readFileSync(join(process.cwd(), "..", "..", "research", "sql", "views.sql"), "utf-8");
+    expect(viewsSql).toContain("projection_stage_count");
+    expect(viewsSql).toContain("projection_stage_events");
   });
 
   test("bootstrap: independent vs paired produces different CIs for correlated data", () => {

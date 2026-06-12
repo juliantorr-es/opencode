@@ -53,6 +53,11 @@ pub(crate) ptr: *mut std::ffi::c_void,
 }
 
 impl CoreMlModel {
+    /// Return the raw underlying FFI pointer.
+    pub fn raw_ptr(&self) -> *mut std::ffi::c_void {
+        self.ptr
+    }
+
     /// Load a compiled Core ML model from disk with the given compute unit policy.
     pub fn load(path: &str) -> Result<Self, String> {
         Self::load_with_compute_units(path, CoreMlComputeUnits::CpuAndGpu)

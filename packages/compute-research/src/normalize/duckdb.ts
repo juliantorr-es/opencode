@@ -1,6 +1,7 @@
 import { execSync } from "node:child_process";
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from "node:fs";
 import { join, resolve } from "node:path";
+import { NORMALIZED_TABLE_SCHEMAS } from "./schema.js";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -17,132 +18,6 @@ export interface DuckDbResult {
   readonly error?: string;
   readonly smoke_query_result?: { count: number }[];
 }
-
-// ── Schema definitions (mirrors normalize.ts SCHEMAS) ─────────────────────────
-
-const SCHEMAS: Record<string, Record<string, string>> = {
-  runs: {
-    run_id: "VARCHAR",
-    experiment_id: "VARCHAR",
-    optimization_id: "VARCHAR",
-    study_id: "VARCHAR",
-    trial_index: "INTEGER",
-    run_grade: "VARCHAR",
-    status: "VARCHAR",
-    start_time: "VARCHAR",
-    end_time: "VARCHAR",
-    source_revision: "VARCHAR",
-    workload_id: "VARCHAR",
-    machine_anon_id: "VARCHAR",
-    machine_chip: "VARCHAR",
-    machine_memory: "VARCHAR",
-    model_image_hash: "VARCHAR",
-    instrumentation_mode: "VARCHAR",
-    page_cache_class: "VARCHAR",
-    power_class: "VARCHAR",
-    thermal_class: "VARCHAR",
-    worker_id: "VARCHAR",
-    event_count: "BIGINT",
-    stage_event_count: "BIGINT",
-    memory_sample_count: "BIGINT",
-    token_metric_count: "BIGINT",
-    checkpoint_count: "BIGINT",
-  },
-  stage_events: {
-    run_id: "VARCHAR",
-    request_id: "VARCHAR",
-    worker_id: "VARCHAR",
-    sequence_number: "BIGINT",
-    event_type: "VARCHAR",
-    clock_domain: "VARCHAR",
-    monotonic_ns: "BIGINT",
-    wall_ns: "BIGINT",
-    stage_id: "VARCHAR",
-    substrate_id: "VARCHAR",
-    layer_index: "INTEGER",
-    attention_kind: "VARCHAR",
-    graph_region_id: "VARCHAR",
-    kernel_id: "VARCHAR",
-    stage_status: "VARCHAR",
-    measurements: "VARCHAR",
-  },
-  memory_samples: {
-    run_id: "VARCHAR",
-    request_id: "VARCHAR",
-    worker_id: "VARCHAR",
-    sequence_number: "BIGINT",
-    event_type: "VARCHAR",
-    clock_domain: "VARCHAR",
-    monotonic_ns: "BIGINT",
-    wall_ns: "BIGINT",
-    stage_id: "VARCHAR",
-    substrate_id: "VARCHAR",
-    layer_index: "INTEGER",
-    resident_bytes: "DOUBLE",
-    wired_bytes: "DOUBLE",
-    active_bytes: "DOUBLE",
-    compressed_bytes: "DOUBLE",
-  },
-  token_metrics: {
-    run_id: "VARCHAR",
-    request_id: "VARCHAR",
-    worker_id: "VARCHAR",
-    sequence_number: "BIGINT",
-    event_type: "VARCHAR",
-    clock_domain: "VARCHAR",
-    monotonic_ns: "BIGINT",
-    wall_ns: "BIGINT",
-    token_index: "BIGINT",
-    token_id: "BIGINT",
-    decode_ns: "DOUBLE",
-    attention_ns: "DOUBLE",
-    mlp_ns: "DOUBLE",
-    norm_ns: "DOUBLE",
-    sample_ns: "DOUBLE",
-  },
-  projection_stage_events: {
-    run_id: "VARCHAR",
-    request_id: "VARCHAR",
-    worker_id: "VARCHAR",
-    sequence_number: "BIGINT",
-    event_type: "VARCHAR",
-    clock_domain: "VARCHAR",
-    monotonic_ns: "BIGINT",
-    wall_ns: "BIGINT",
-    stage_id: "VARCHAR",
-    substrate_id: "VARCHAR",
-    layer_index: "INTEGER",
-    attention_kind: "VARCHAR",
-    projection_family: "VARCHAR",
-    projection_invocation: "BIGINT",
-    storage_dtype: "VARCHAR",
-    runtime_dtype: "VARCHAR",
-    input_shape: "VARCHAR",
-    weight_logical_shape: "VARCHAR",
-    weight_physical_shape: "VARCHAR",
-    group_size: "INTEGER",
-    bits: "INTEGER",
-    transpose: "BOOLEAN",
-    measurements: "VARCHAR",
-  },
-  correctness_checkpoints: {
-    run_id: "VARCHAR",
-    request_id: "VARCHAR",
-    checkpoint_id: "VARCHAR",
-    layer_or_stage: "VARCHAR",
-    tensor_name: "VARCHAR",
-    comparison_method: "VARCHAR",
-    reference_hash: "VARCHAR",
-    treatment_hash: "VARCHAR",
-    max_abs_error: "DOUBLE",
-    mean_abs_error: "DOUBLE",
-    max_rel_error: "DOUBLE",
-    mean_rel_error: "DOUBLE",
-    cosine_similarity: "DOUBLE",
-    tolerance: "DOUBLE",
-    passed: "BOOLEAN",
-  },
-};
 
 // ── Arrow → NDJSON ───────────────────────────────────────────────────────────
 
@@ -243,7 +118,7 @@ export function buildDuckDb(
   const ndjsonDir = join(outputBase, "ndjson");
   mkdirSync(ndjsonDir, { recursive: true });
 
-  for (const [tableName, cols] of Object.entries(SCHEMAS)) {
+  for (const [tableName, cols] of Object.entries(NORMALIZED_TABLE_SCHEMAS)) {
     const colDefs = Object.entries(cols)
       .map(([name, type]) => `  "${name}" ${type}`)
       .join(",\n");
@@ -290,14 +165,17 @@ export function buildDuckDb(
     "",
   ];
 
-  for (const tableName of Object.keys(SCHEMAS)) {
+  for (const [tableName, cols] of Object.entries(NORMALIZED_TABLE_SCHEMAS)) {
     const ndjsonPath = join(ndjsonDir, `${tableName}.ndjson`);
     // Only INSERT if there are rows; otherwise the empty NDJSON causes
     // read_json_auto to infer 0 columns (DuckDB issue with empty files).
     const ndjsonContent = readFileSync(ndjsonPath, "utf-8").trim();
     if (ndjsonContent.length > 0) {
+      const columnList = Object.keys(cols)
+        .map((name) => `"${name}"`)
+        .join(", ");
       loadLines.push(
-        `INSERT INTO "${tableName}" SELECT * FROM read_json_auto('${ndjsonPath}');`,
+        `INSERT INTO "${tableName}" (${columnList}) SELECT ${columnList} FROM read_json_auto('${ndjsonPath}');`,
       );
     }
   }

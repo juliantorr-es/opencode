@@ -2,7 +2,8 @@
 -- Analytical Views — compute-research evidence plane
 -- ============================================================================
 -- These views sit atop the normalized tables emitted by the normalize module
--- (runs, stage_events, memory_samples, token_metrics, correctness_checkpoints).
+-- (runs, stage_events, memory_samples, token_metrics, projection_stage_events,
+-- correctness_checkpoints).
 --
 -- DuckDB-compatible SQL.  Register by running:
 --   .read research/sql/views.sql
@@ -33,6 +34,7 @@ SELECT
   stage_event_count,
   memory_sample_count,
   token_metric_count,
+  projection_stage_count,
   checkpoint_count
 FROM runs
 WHERE run_grade = 'claim_candidate'

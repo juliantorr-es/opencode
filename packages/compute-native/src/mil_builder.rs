@@ -441,6 +441,180 @@ impl MilBuilder {
         }
         shapes
     }
+
+    /// Format and export the builder state as a raw MIL text string.
+    pub fn to_mil_text(&self) -> String {
+        let mut mil = String::new();
+        mil.push_str("program(1.3)\n");
+        mil.push_str("[buildInfo = dict<string, string>({{\"coremlc-component-MIL\", \"3510.2.1\"}, {\"coremlc-version\", \"3500.32.1\"}})]\n");
+        mil.push_str("{\n");
+        
+        // Function signature
+        mil.push_str(&format!("    func {}<{}>(", self.function_name, self.opset.to_lowercase()));
+        for (i, input) in self.inputs.iter().enumerate() {
+            if i > 0 {
+                mil.push_str(", ");
+            }
+            let type_str = format_value_type(input.r#type.as_ref().unwrap());
+            mil.push_str(&format!("{} {}", type_str, input.name));
+        }
+        mil.push_str(") {\n");
+
+        // Operations
+        for op in &self.ops {
+            mil.push_str("            ");
+            // Outputs
+            let out_type = format_value_type(op.outputs[0].r#type.as_ref().unwrap());
+            let out_name = &op.outputs[0].name;
+            mil.push_str(&format!("{} {} = {}(", out_type, out_name, op.r#type));
+
+            // Inputs (arguments)
+            let mut first_arg = true;
+            let mut sorted_inputs: Vec<_> = op.inputs.iter().collect();
+            sorted_inputs.sort_by_key(|(k, _)| *k);
+
+            for (arg_name, arg) in sorted_inputs {
+                if !first_arg {
+                    mil.push_str(", ");
+                }
+                first_arg = false;
+                mil.push_str(&format!("{} = ", arg_name));
+                // Format binding
+                if let Some(binding) = arg.arguments.first().and_then(|b| b.binding.as_ref()) {
+                    match binding {
+                        argument::binding::Binding::Name(n) => {
+                            mil.push_str(n);
+                        }
+                        argument::binding::Binding::Value(v) => {
+                            mil.push_str(&format_value(v));
+                        }
+                    }
+                }
+            }
+            mil.push_str(")[");
+            
+            // Attributes
+            let mut first_attr = true;
+            let mut sorted_attrs: Vec<_> = op.attributes.iter().collect();
+            sorted_attrs.sort_by_key(|(k, _)| *k);
+            for (attr_name, attr_val) in sorted_attrs {
+                if !first_attr {
+                    mil.push_str(", ");
+                }
+                first_attr = false;
+                mil.push_str(&format!("{} = {}", attr_name, format_value(attr_val)));
+            }
+            mil.push_str("];\n");
+        }
+
+        // Return block outputs
+        mil.push_str("        } -> (");
+        for (i, out) in self.block_outputs.iter().enumerate() {
+            if i > 0 {
+                mil.push_str(", ");
+            }
+            mil.push_str(out);
+        }
+        mil.push_str(");\n");
+        mil.push_str("}\n");
+
+        mil
+    }
+}
+
+fn format_value_type(vt: &mil_spec::ValueType) -> String {
+    if let Some(mil_spec::value_type::Type::TensorType(ref tt)) = vt.r#type {
+        let dtype_str = match mil_spec::DataType::try_from(tt.data_type) {
+            Ok(mil_spec::DataType::Float32) => "fp32",
+            Ok(mil_spec::DataType::Float16) => "fp16",
+            Ok(mil_spec::DataType::Int32) => "int32",
+            Ok(mil_spec::DataType::Bool) => "bool",
+            Ok(mil_spec::DataType::String) => "string",
+            _ => "fp32",
+        };
+        let mut dims = String::new();
+        for (i, d) in tt.dimensions.iter().enumerate() {
+            if i > 0 {
+                dims.push_str(", ");
+            }
+            if let Some(ref dimension) = d.dimension {
+                match dimension {
+                    dimension::Dimension::Constant(c) => dims.push_str(&c.size.to_string()),
+                    dimension::Dimension::Unknown(_) => dims.push_str("?"),
+                }
+            }
+        }
+        format!("tensor<{}, [{}]>", dtype_str, dims)
+    } else {
+        "tensor<fp32, []>".to_string()
+    }
+}
+
+fn format_value(val: &mil_spec::Value) -> String {
+    if let Some(value::Value::ImmediateValue(ref iv)) = val.value {
+        if let Some(value::immediate_value::Value::Tensor(ref tv)) = iv.value {
+            if let Some(ref tensor_val) = tv.value {
+                match tensor_val {
+                    tensor_value::Value::Strings(s) => {
+                        format!("string(\"{}\")", s.values.first().cloned().unwrap_or_default())
+                    }
+                    tensor_value::Value::Bools(b) => {
+                        format!("bool({})", b.values.first().cloned().unwrap_or(false))
+                    }
+                    tensor_value::Value::Floats(f) => {
+                        if let Some(mil_spec::value_type::Type::TensorType(ref tt)) = val.r#type.as_ref().and_then(|vt| vt.r#type.as_ref()) {
+                            let shape: Vec<usize> = tt.dimensions.iter().filter_map(|d| {
+                                if let Some(dimension::Dimension::Constant(c)) = d.dimension.as_ref() {
+                                    Some(c.size as usize)
+                                } else {
+                                    None
+                                }
+                            }).collect();
+                            
+                            if shape.len() == 2 {
+                                let rows = shape[0];
+                                let cols = shape[1];
+                                let mut res = String::new();
+                                res.push_str(&format!("tensor<fp32, [{}, {}]>([", rows, cols));
+                                for r in 0..rows {
+                                    if r > 0 {
+                                        res.push_str(", ");
+                                    }
+                                    res.push_str("[");
+                                    for c in 0..cols {
+                                        if c > 0 {
+                                            res.push_str(", ");
+                                        }
+                                        let idx = r * cols + c;
+                                        if idx < f.values.len() {
+                                            res.push_str(&format!("{:?}", f.values[idx]));
+                                        } else {
+                                            res.push_str("0.0");
+                                        }
+                                    }
+                                    res.push_str("]");
+                                }
+                                res.push_str("])");
+                                return res;
+                            }
+                        }
+                        if f.values.len() == 1 {
+                            format!("{:?}", f.values[0])
+                        } else {
+                            format!("{:?}", f.values)
+                        }
+                    }
+                    _ => "unknown".to_string()
+                }
+            } else {
+                "nil".to_string()
+            }
+        } else {
+            "nil".to_string()
+        }
+    } else {
+        "nil".to_string()
+    }
 }
 
 // ── CoreML unary op type compatibility map ──────────────────────────────
@@ -692,5 +866,22 @@ mod tests {
             .build()
             .expect_err("must reject undefined block output");
         assert!(matches!(err, MilBuildError::UndefinedBlockOutput { .. }));
+    }
+
+    #[test]
+    fn test_to_mil_text() {
+        let builder = MilBuilder::new("main")
+            .input("x", mil_spec::DataType::Float32, &[1, 4])
+            .const_f32("w", &[1.0, 2.0, 3.0, 4.0], &[4, 1])
+            .matmul("x", "w_0")
+            .output("matmul_1");
+        
+        let text = builder.to_mil_text();
+        assert!(text.contains("program(1.3)"));
+        assert!(text.contains("func main<coreml9>"));
+        assert!(text.contains("tensor<fp32, [1, 4]> x"));
+        assert!(text.contains("const()["));
+        assert!(text.contains("matmul("));
+        assert!(text.contains("-> (matmul_1)"));
     }
 }

@@ -51,6 +51,12 @@ fn main() {
             .flag("-fblocks")
             .flag("-std=c++17")
             .compile("coreml_state");
+        cc::Build::new()
+            .file("src/bridge/ane_private.mm")
+            .flag("-fobjc-arc")
+            .flag("-fblocks")
+            .flag("-std=c++17")
+            .compile("ane_private");
         println!("cargo:rustc-link-lib=framework=CoreML");
         println!("cargo:rustc-link-lib=framework=CoreVideo");
         println!("cargo:rustc-link-lib=framework=IOSurface");

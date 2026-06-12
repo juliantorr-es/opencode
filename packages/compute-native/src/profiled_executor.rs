@@ -8,6 +8,7 @@
 
 use crate::compute_image::{CompiledImageReader, CopyClassification, TensorEntry};
 use crate::engine_error::{EngineError, EngineErrorCode};
+use crate::research_contracts::CounterSource;
 use crate::kv_cache::KvCache;
 use crate::mapped_image::MappedImage;
 use crate::placement_profile::ExecutionPlacementProfile;
@@ -376,13 +377,28 @@ impl LoadedProfiledModel {
     pub fn new(
         image_dir: &Path,
     ) -> napi::Result<Self> {
-        Self::new_with_policy(image_dir, LayoutPolicy::FrozenExisting)
+        Self::new_with_policy_and_telemetry(image_dir, LayoutPolicy::FrozenExisting, None)
     }
 
     pub fn new_with_policy(
         image_dir: &Path,
         layout_policy: LayoutPolicy,
         ) -> napi::Result<Self> {
+        Self::new_with_policy_and_telemetry(image_dir, layout_policy, None)
+    }
+
+    pub fn new_with_telemetry(
+        image_dir: &Path,
+        telemetry: Option<&dyn CounterSource>,
+    ) -> napi::Result<Self> {
+        Self::new_with_policy_and_telemetry(image_dir, LayoutPolicy::FrozenExisting, telemetry)
+    }
+
+    pub fn new_with_policy_and_telemetry(
+        image_dir: &Path,
+        layout_policy: LayoutPolicy,
+        telemetry: Option<&dyn CounterSource>,
+    ) -> napi::Result<Self> {
         let handle_baseline = crate::bridge::handle_count();
         let reader = CompiledImageReader::open(image_dir)?;
 
@@ -583,6 +599,13 @@ impl LoadedProfiledModel {
             format_bytes(postload_active), format_bytes(postload_cache),
             handle_baseline, handle_after, handle_delta,
         );
+
+        if let Some(counter) = telemetry {
+            counter.record_materialized(materialized_bytes);
+            if copied_weight_bytes > 0 {
+                counter.record_file_read(copied_weight_bytes);
+            }
+        }
 
         Ok(Self {
             image_dir: image_dir.to_path_buf(),

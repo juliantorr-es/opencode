@@ -16,7 +16,7 @@ import {
 } from "./statistics.js";
 import type { PairedDifference } from "./statistics.js";
 import { readFileSync, writeFileSync, mkdirSync } from "fs";
-import { join, resolve } from "path";
+import { basename, join, resolve } from "path";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -40,10 +40,52 @@ export interface ComparisonConfig {
   readonly confidence?: number;
   /** Number of bootstrap resamples (default 10_000). */
   readonly nBootstrap?: number;
-  /** Force paired analysis (default: auto-detect when lengths match). */
+  /** Force paired analysis when observations are known to be aligned. */
   readonly paired?: boolean;
   /** Seed for reproducible bootstrap resampling. */
   readonly randomSeed?: number;
+}
+
+export interface ComparisonRunSnapshot {
+  readonly runDir: string;
+  readonly runId: string;
+  readonly manifest: Record<string, unknown> | null;
+  readonly workload: Record<string, unknown> | null;
+  readonly provenance: Record<string, unknown> | null;
+  readonly dataset: ReturnType<typeof loadComparisonDataset>;
+}
+
+export interface RunReader {
+  read(runDir: string): ComparisonRunSnapshot;
+}
+
+export interface MetricExtractor {
+  extract(records: ComparisonObservation[], metric: string): number[];
+}
+
+export interface CorrectnessGate {
+  evaluate(
+    records: ComparisonObservation[],
+    sourceKind: "receipt" | "event",
+    manifest: Record<string, unknown> | null,
+    config: ComparisonConfig,
+  ): Record<string, CorrectnessGateResult>;
+}
+
+export interface RecommendationPolicy {
+  derive(input: {
+    readonly correctness: Record<string, CorrectnessGateResult>;
+    readonly evidenceComplete: boolean;
+    readonly effectSize: number;
+    readonly ci: { lower: number; upper: number };
+  }): ComparisonRecommendation;
+}
+
+export interface ComparisonPipeline {
+  readonly runReader: RunReader;
+  readonly metricExtractor: MetricExtractor;
+  readonly correctnessGate: CorrectnessGate;
+  readonly recommendationPolicy: RecommendationPolicy;
 }
 
 export type ComparisonRecommendation =
@@ -129,47 +171,37 @@ export async function runComparison(
   treatmentRunId: string,
   config: ComparisonConfig,
 ): Promise<ComparisonRecord> {
+  return runComparisonWithPipeline(baselineRunId, treatmentRunId, config, DEFAULT_COMPARISON_PIPELINE);
+}
+
+export async function runComparisonWithPipeline(
+  baselineRunId: string,
+  treatmentRunId: string,
+  config: ComparisonConfig,
+  pipeline: ComparisonPipeline,
+): Promise<ComparisonRecord> {
   // 1. Load run manifests & metadata
   const baselineDir = resolve(config.baselineRoot, baselineRunId);
   const treatmentDir = resolve(config.treatmentRoot, treatmentRunId);
-
-  const baselineManifest = readJsonFile<Record<string, unknown>>(
-    join(baselineDir, "run-manifest.json"),
-  );
-  const treatmentManifest = readJsonFile<Record<string, unknown>>(
-    join(treatmentDir, "run-manifest.json"),
-  );
-  const baselineWorkload = readJsonFile<Record<string, unknown>>(
-    join(baselineDir, "workload.json"),
-  );
-  const treatmentWorkload = readJsonFile<Record<string, unknown>>(
-    join(treatmentDir, "workload.json"),
-  );
-  const baselineData = loadComparisonDataset(baselineDir);
-  const treatmentData = loadComparisonDataset(treatmentDir);
-  const baselineProvenance = readJsonFile<Record<string, unknown>>(
-    join(baselineDir, "provenance.json"),
-  );
-  const treatmentProvenance = readJsonFile<Record<string, unknown>>(
-    join(treatmentDir, "provenance.json"),
-  );
+  const baseline = pipeline.runReader.read(baselineDir);
+  const treatment = pipeline.runReader.read(treatmentDir);
 
   // 2. Extract metadata
   const workload = String(
-    baselineWorkload?.name ?? treatmentWorkload?.name ?? "unknown",
+    baseline.workload?.name ?? treatment.workload?.name ?? "unknown",
   );
-  const machine = extractMachine(baselineProvenance, treatmentProvenance);
+  const machine = extractMachine(baseline.provenance, treatment.provenance);
   const instrumentation = String(
-    baselineManifest?.instrumentation ?? treatmentManifest?.instrumentation ?? "unknown",
+    baseline.manifest?.instrumentation ?? treatment.manifest?.instrumentation ?? "unknown",
   );
   const warmupClass = String(
-    baselineManifest?.warmupClass ?? baselineManifest?.warmup_class ?? treatmentManifest?.warmupClass ?? "none",
+    baseline.manifest?.warmupClass ?? baseline.manifest?.warmup_class ?? treatment.manifest?.warmupClass ?? "none",
   );
 
   // 3. Extract primary metric values
   const primaryMetric = config.primaryMetric;
-  const baselineValues = extractMetric(baselineData.records, primaryMetric);
-  const treatmentValues = extractMetric(treatmentData.records, primaryMetric);
+  const baselineValues = pipeline.metricExtractor.extract(baseline.dataset.records, primaryMetric);
+  const treatmentValues = pipeline.metricExtractor.extract(treatment.dataset.records, primaryMetric);
 
   // 4. Compute summary statistics
   const baselineSummary = computeSummaryStats(baselineValues);
@@ -183,8 +215,7 @@ export async function runComparison(
       : 0;
 
   // 6. Bootstrap CI on the difference of means (treatment - baseline)
-  const isPaired =
-    config.paired ?? (baselineValues.length === treatmentValues.length);
+  const isPaired = config.paired === true;
   const nBootstrap = config.nBootstrap ?? 10_000;
   const confidenceLevel = config.confidence ?? 0.95;
 
@@ -192,6 +223,11 @@ export async function runComparison(
   if (baselineValues.length < 2 || treatmentValues.length < 2) {
     ci = { lower: 0, upper: 0 };
   } else if (isPaired) {
+    if (baselineValues.length !== treatmentValues.length) {
+      throw new Error(
+        `paired comparison requires equal-length samples, got ${baselineValues.length} and ${treatmentValues.length}`,
+      );
+    }
     const diffs = baselineValues.map((b, i) => treatmentValues[i]! - b);
     ci = bootstrapPairedCI(
       diffs,
@@ -235,36 +271,31 @@ export async function runComparison(
 
   // 10. Bottleneck analysis
   const bottleneckLedger = buildBottleneckLedger(
-    baselineData.records,
-    treatmentData.records,
+    baseline.dataset.records,
+    treatment.dataset.records,
   );
 
   // 11. Correctness gates
-  const correctness = checkCorrectnessGates(
-    treatmentData.records,
-    treatmentData.sourceKind,
-    treatmentManifest,
+  const correctness = pipeline.correctnessGate.evaluate(
+    treatment.dataset.records,
+    treatment.dataset.sourceKind,
+    treatment.manifest,
     config,
   );
 
   // 12. Evidence completeness
   const evidenceComplete = checkEvidenceComplete(
     {
-      manifest: baselineManifest,
-      workload: baselineWorkload,
-      provenance: baselineProvenance,
-      records: baselineData.records.length,
+      manifest: baseline.manifest,
+      workload: baseline.workload,
+      provenance: baseline.provenance,
+      records: baseline.dataset.records.length,
     },
-    { manifest: treatmentManifest, workload: treatmentWorkload, provenance: treatmentProvenance, records: treatmentData.records.length },
+    { manifest: treatment.manifest, workload: treatment.workload, provenance: treatment.provenance, records: treatment.dataset.records.length },
   );
 
   // 13. Recommendation
-  const recommendation = deriveRecommendation(
-    correctness,
-    evidenceComplete,
-    effectSize,
-    ci,
-  );
+  const recommendation = pipeline.recommendationPolicy.derive({ correctness, evidenceComplete, effectSize, ci });
 
   const record: ComparisonRecord = {
     timestamp: new Date().toISOString(),
@@ -464,6 +495,51 @@ function checkCorrectnessGates(
 
   return gates;
 }
+
+const DEFAULT_COMPARISON_PIPELINE: ComparisonPipeline = {
+  runReader: {
+    read(runDir: string): ComparisonRunSnapshot {
+      return {
+        runDir,
+        runId: basename(runDir),
+        manifest: readJsonFile<Record<string, unknown>>(join(runDir, "run-manifest.json")),
+        workload: readJsonFile<Record<string, unknown>>(join(runDir, "workload.json")),
+        provenance: readJsonFile<Record<string, unknown>>(join(runDir, "provenance.json")),
+        dataset: loadComparisonDataset(runDir),
+      };
+    },
+  },
+  metricExtractor: {
+    extract(records: ComparisonObservation[], metric: string): number[] {
+      return extractMetric(records, metric);
+    },
+  },
+  correctnessGate: {
+    evaluate(
+      records: ComparisonObservation[],
+      sourceKind: "receipt" | "event",
+      manifest: Record<string, unknown> | null,
+      config: ComparisonConfig,
+    ): Record<string, CorrectnessGateResult> {
+      return checkCorrectnessGates(records, sourceKind, manifest, config);
+    },
+  },
+  recommendationPolicy: {
+    derive(input: {
+      readonly correctness: Record<string, CorrectnessGateResult>;
+      readonly evidenceComplete: boolean;
+      readonly effectSize: number;
+      readonly ci: { lower: number; upper: number };
+    }): ComparisonRecommendation {
+      return deriveRecommendation(
+        input.correctness,
+        input.evidenceComplete,
+        input.effectSize,
+        input.ci,
+      );
+    },
+  },
+};
 
 // ── Evidence completeness ─────────────────────────────────────────────────────
 
