@@ -7,7 +7,9 @@
 //! Only the topologies defined in [`graph_catalog`] are supported.
 //! This is not a general compute graph evaluator.
 
+use crate::decode_attribution::decode_microphase_shape_map::DecodeShapeBinding;
 use crate::decode_attribution::shape_profiles::ShapeProfile;
+use crate::pipeline_parity::{KvCachePhaseContract, KvMutationMode};
 
 // ── Primitive operations ──────────────────────────────────────────────────
 
@@ -421,6 +423,290 @@ pub fn evaluate_decode_graph(
     }
 }
 
+/// Metadata about a KV cache operation outcome.
+#[derive(Debug, Clone)]
+pub struct KvCacheMetadata {
+    pub logical_cache_len_after: u32,
+    pub position: u32,
+    pub append_len: u32,
+    pub layout_valid: bool,
+    pub position_valid: bool,
+    pub mutation_applied: bool,
+}
+
+/// Evaluate decode attention with explicit KV cache input/output.
+///
+/// Returns (attention_output, updated_cache_k, updated_cache_v, cache_metadata).
+/// Panics on position mismatch.
+pub fn evaluate_decode_attention_with_cache(
+    hidden: &[f32],
+    qkv_weights: &[f32],
+    attn_out_weights: &[f32],
+    cache_k_in: Option<&[f32]>,
+    cache_v_in: Option<&[f32]>,
+    binding: &DecodeShapeBinding,
+    contract: &KvCachePhaseContract,
+) -> (Vec<f32>, Option<Vec<f32>>, Option<Vec<f32>>, KvCacheMetadata) {
+    let h = binding.hidden_dim as usize;
+    let kv_heads = binding.kv_heads as usize;
+    let head_dim = binding.head_dim as usize;
+    let cache_len = contract.cache_len as usize;
+    let position = contract.position as usize;
+    let append_len = contract.append_len as usize;
+
+    // QKV projection: [1, h] × [h, 3h] → [1, 3h]
+    let qkv = matmul(hidden, qkv_weights, 1, h as i32, (3 * h) as i32);
+    // Split Q, K, V — each is [1, h]
+    let q: Vec<f32> = qkv[..h].to_vec();
+    let k: Vec<f32> = qkv[h..2 * h].to_vec();
+    let v: Vec<f32> = qkv[2 * h..].to_vec();
+
+    // Reshape Q, K, V for multi-head attention: [1, kv_heads, head_dim]
+    // Since num_heads == kv_heads for these toy profiles, q_split = [1, kv_heads, head_dim]
+    let q_split: Vec<Vec<f32>> = (0..kv_heads)
+        .map(|i| {
+            let start = i * head_dim;
+            q[start..start + head_dim].to_vec()
+        })
+        .collect();
+    let k_split: Vec<Vec<f32>> = (0..kv_heads)
+        .map(|i| {
+            let start = i * head_dim;
+            k[start..start + head_dim].to_vec()
+        })
+        .collect();
+    let v_split: Vec<Vec<f32>> = (0..kv_heads)
+        .map(|i| {
+            let start = i * head_dim;
+            v[start..start + head_dim].to_vec()
+        })
+        .collect();
+
+    // Handle cacheless path
+    if cache_len == 0 {
+        // Compute attention without cache
+        let output = compute_attention(
+            &q_split, &k_split, &v_split,
+            &[], &[], // no cached keys/values
+            kv_heads, head_dim, 0, position,
+        );
+
+        // Project attention output through attn_out_weights: [1, h] × [h, h] → [1, h]
+        let projected = matmul(&output, attn_out_weights, 1, h as i32, h as i32);
+
+        let metadata = KvCacheMetadata {
+            logical_cache_len_after: 0,
+            position: position as u32,
+            append_len: 0,
+            layout_valid: true,
+            position_valid: true,
+            mutation_applied: false,
+        };
+        return (projected, None, None, metadata);
+    }
+
+    // Unwrap cache inputs
+    let cache_k = cache_k_in.expect("cache_k_in required when cache_len > 0");
+    let cache_v = cache_v_in.expect("cache_v_in required when cache_len > 0");
+    let expected_total_elements = 1 * kv_heads * cache_len * head_dim;
+    assert_eq!(
+        cache_k.len(),
+        expected_total_elements,
+        "cache_k shape mismatch: expected {expected_total_elements} elements, got {}",
+        cache_k.len()
+    );
+    assert_eq!(
+        cache_v.len(),
+        expected_total_elements,
+        "cache_v shape mismatch"
+    );
+
+    // Parse cache as [1, kv_heads, cache_len, head_dim]
+    let cache_k_3d: Vec<Vec<Vec<f32>>> = (0..kv_heads)
+        .map(|h_i| {
+            let head_start = h_i * cache_len * head_dim;
+            (0..cache_len)
+                .map(|t| {
+                    let pos_start = head_start + t * head_dim;
+                    cache_k[pos_start..pos_start + head_dim].to_vec()
+                })
+                .collect()
+        })
+        .collect();
+    let cache_v_3d: Vec<Vec<Vec<f32>>> = (0..kv_heads)
+        .map(|h_i| {
+            let head_start = h_i * cache_len * head_dim;
+            (0..cache_len)
+                .map(|t| {
+                    let pos_start = head_start + t * head_dim;
+                    cache_v[pos_start..pos_start + head_dim].to_vec()
+                })
+                .collect()
+        })
+        .collect();
+
+    match contract.mutation {
+        KvMutationMode::ReadOnly | KvMutationMode::ViewOnly => {
+            // Read K/V from cache at position, compute attention
+            let (new_k, new_v) = if cache_len > 0 {
+                // Use cached K/V
+                let cached_k_at_pos: Vec<Vec<f32>> = (0..kv_heads)
+                    .map(|h_i| cache_k_3d[h_i][position % cache_len].clone())
+                    .collect();
+                let cached_v_at_pos: Vec<Vec<f32>> = (0..kv_heads)
+                    .map(|h_i| cache_v_3d[h_i][position % cache_len].clone())
+                    .collect();
+                (cached_k_at_pos, cached_v_at_pos)
+            } else {
+                (k_split.clone(), v_split.clone())
+            };
+
+            let output = compute_attention(
+                &q_split, &new_k, &new_v,
+                &[], &[],
+                kv_heads, head_dim, 0, position,
+            );
+            let projected = matmul(&output, attn_out_weights, 1, h as i32, h as i32);
+
+            let metadata = KvCacheMetadata {
+                logical_cache_len_after: cache_len as u32,
+                position: position as u32,
+                append_len: 0,
+                layout_valid: true,
+                position_valid: position < cache_len,
+                mutation_applied: false,
+            };
+            (projected, None, None, metadata)
+        }
+        KvMutationMode::Append => {
+            assert_eq!(
+                position, cache_len,
+                "position mismatch: expected {cache_len}, got {position}",
+            );
+
+            // Extend cache with new K/V
+            let mut new_cache_k = cache_k_3d.clone();
+            let mut new_cache_v = cache_v_3d.clone();
+            for h_i in 0..kv_heads {
+                new_cache_k[h_i].push(k_split[h_i].clone());
+                new_cache_v[h_i].push(v_split[h_i].clone());
+            }
+            let new_len = cache_len + append_len;
+
+            // Flatten cache back
+            let flat_cache_k: Vec<f32> = new_cache_k.iter()
+                .flat_map(|head| head.iter().flat_map(|t| t.iter()))
+                .copied()
+                .collect();
+            let flat_cache_v: Vec<f32> = new_cache_v.iter()
+                .flat_map(|head| head.iter().flat_map(|t| t.iter()))
+                .copied()
+                .collect();
+
+            // Compute attention with extended cache + new K/V
+            let output = compute_attention(
+                &q_split, &k_split, &v_split,
+                &[], &[],
+                kv_heads, head_dim, 0, position,
+            );
+            let projected = matmul(&output, attn_out_weights, 1, h as i32, h as i32);
+
+            let metadata = KvCacheMetadata {
+                logical_cache_len_after: new_len as u32,
+                position: position as u32,
+                append_len: append_len as u32,
+                layout_valid: true,
+                position_valid: true,
+                mutation_applied: true,
+            };
+            (projected, Some(flat_cache_k), Some(flat_cache_v), metadata)
+        }
+        KvMutationMode::WriteAtPosition => {
+            assert!(
+                position < cache_len,
+                "position mismatch: expected position < cache_len ({cache_len}), got {position}",
+            );
+
+            // Write K/V at position into cache
+            let mut new_cache_k = cache_k_3d.clone();
+            let mut new_cache_v = cache_v_3d.clone();
+            for h_i in 0..kv_heads {
+                new_cache_k[h_i][position] = k_split[h_i].clone();
+                new_cache_v[h_i][position] = v_split[h_i].clone();
+            }
+
+            // Flatten cache back
+            let flat_cache_k: Vec<f32> = new_cache_k.iter()
+                .flat_map(|head| head.iter().flat_map(|t| t.iter()))
+                .copied()
+                .collect();
+            let flat_cache_v: Vec<f32> = new_cache_v.iter()
+                .flat_map(|head| head.iter().flat_map(|t| t.iter()))
+                .copied()
+                .collect();
+
+            // Compute attention with updated cache
+            let cached_k_at_pos: Vec<Vec<f32>> = (0..kv_heads)
+                .map(|h_i| new_cache_k[h_i][position].clone())
+                .collect();
+            let cached_v_at_pos: Vec<Vec<f32>> = (0..kv_heads)
+                .map(|h_i| new_cache_v[h_i][position].clone())
+                .collect();
+            let output = compute_attention(
+                &q_split, &cached_k_at_pos, &cached_v_at_pos,
+                &[], &[],
+                kv_heads, head_dim, 0, position,
+            );
+            let projected = matmul(&output, attn_out_weights, 1, h as i32, h as i32);
+
+            let metadata = KvCacheMetadata {
+                logical_cache_len_after: cache_len as u32,
+                position: position as u32,
+                append_len: 0,
+                layout_valid: true,
+                position_valid: true,
+                mutation_applied: true,
+            };
+            (projected, Some(flat_cache_k), Some(flat_cache_v), metadata)
+        }
+        KvMutationMode::ExternalHostManaged => {
+            panic!("ExternalHostManaged not implemented in reference adapter");
+        }
+    }
+}
+
+/// Compute single-head attention scores, softmax, and attend over values.
+fn compute_attention(
+    q_heads: &[Vec<f32>],
+    k_heads: &[Vec<f32>],
+    v_heads: &[Vec<f32>],
+    cached_k: &[Vec<Vec<f32>>],
+    cached_v: &[Vec<Vec<f32>>],
+    kv_heads: usize,
+    head_dim: usize,
+    _cache_len: usize,
+    _position: usize,
+) -> Vec<f32> {
+    let mut output = vec![0.0f32; kv_heads * head_dim];
+    for h_i in 0..kv_heads {
+        let q = &q_heads[h_i];
+        let k = &k_heads[h_i];
+        let v = &v_heads[h_i];
+        let d = head_dim as f32;
+        let scale = 1.0 / d.sqrt();
+
+        // Score: q · k_transpose → scalar
+        let score: f32 = q.iter().zip(k.iter()).map(|(a, b)| a * b).sum::<f32>() * scale;
+        // Softmax over single position → all probability on this position
+        let prob = score.exp();
+        // Attend: prob * v
+        for j in 0..head_dim {
+            output[h_i * head_dim + j] += prob * v[j];
+        }
+    }
+    output
+}
+
 // ── Tests ─────────────────────────────────────────────────────────────────
 
 #[cfg(test)]
@@ -653,5 +939,122 @@ mod tests {
         //   reshape [1,4]→[1,4] (no-op)
         //   matmul = 25.0
         assert!((result[0][0] - 25.0).abs() < 1e-5);
+    }
+
+    // ── KV cache attention tests ──────────────────────────────────────
+
+    fn kv_test_hidden() -> Vec<f32> {
+        vec![1.0; 16] // [1, 16] hidden
+    }
+
+    fn kv_test_qkv_weights() -> Vec<f32> {
+        vec![0.1; 16 * 48] // [16, 48]
+    }
+
+    fn kv_test_attn_out_weights() -> Vec<f32> {
+        vec![0.2; 16 * 16] // [16, 16]
+    }
+
+    fn kv_test_cache(cache_len: usize, kv_heads: usize, head_dim: usize) -> Vec<f32> {
+        vec![0.5; 1 * kv_heads * cache_len * head_dim]
+    }
+
+    fn kv_small_binding() -> super::super::super::decode_microphase_shape_map::DecodeShapeBinding {
+        super::super::super::decode_microphase_shape_map::DECODE_SMALL_V1
+    }
+
+    fn kv_read_contract(cache_len: u32, position: u32) -> super::KvCachePhaseContract {
+        let binding = kv_small_binding();
+        binding.to_kv_contract(
+            crate::pipeline_parity::PipelinePhase::KvRead,
+            cache_len, position, 1, 0,
+        )
+    }
+
+    #[test]
+    fn attention_cacheless() {
+        let binding = kv_small_binding();
+        let contract = binding.to_kv_contract(
+            crate::pipeline_parity::PipelinePhase::KvRead, 0, 0, 0, 0,
+        );
+        let (output, update_k, update_v, meta) = super::evaluate_decode_attention_with_cache(
+            &kv_test_hidden(),
+            &kv_test_qkv_weights(),
+            &kv_test_attn_out_weights(),
+            None,
+            None,
+            &binding,
+            &contract,
+        );
+        assert!(!output.is_empty(), "cacheless attention must produce output");
+        assert!(update_k.is_none(), "cacheless must not produce cache_k");
+        assert!(update_v.is_none(), "cacheless must not produce cache_v");
+        assert_eq!(meta.logical_cache_len_after, 0);
+        assert!(meta.layout_valid);
+    }
+
+    #[test]
+    fn attention_cache_read_only() {
+        let binding = kv_small_binding();
+        let cache = kv_test_cache(16, 2, 8);
+        let contract = kv_read_contract(16, 0);
+        let (output, update_k, update_v, meta) = super::evaluate_decode_attention_with_cache(
+            &kv_test_hidden(),
+            &kv_test_qkv_weights(),
+            &kv_test_attn_out_weights(),
+            Some(&cache),
+            Some(&cache),
+            &binding,
+            &contract,
+        );
+        assert!(!output.is_empty(), "read-only attention must produce output");
+        assert!(update_k.is_none(), "read-only must not update cache_k");
+        assert!(update_v.is_none(), "read-only must not update cache_v");
+        assert!(!meta.mutation_applied, "read-only must not apply mutation");
+    }
+
+    #[test]
+    fn attention_cache_append() {
+        let binding = kv_small_binding();
+        let cache = kv_test_cache(16, 2, 8);
+        let contract = binding.to_kv_contract(
+            crate::pipeline_parity::PipelinePhase::KvAppend, 16, 16, 1, 0,
+        );
+        let (output, update_k, update_v, meta) = super::evaluate_decode_attention_with_cache(
+            &kv_test_hidden(),
+            &kv_test_qkv_weights(),
+            &kv_test_attn_out_weights(),
+            Some(&cache),
+            Some(&cache),
+            &binding,
+            &contract,
+        );
+        assert!(!output.is_empty(), "append attention must produce output");
+        assert!(update_k.is_some(), "append must return updated cache_k");
+        assert!(update_v.is_some(), "append must return updated cache_v");
+        assert!(meta.mutation_applied, "append must apply mutation");
+        // Cache should be extended by 1 position
+        let expected_elements = 1 * 2 * (16 + 1) * 8;
+        assert_eq!(update_k.as_ref().unwrap().len(), expected_elements,
+            "appended cache_k should have {} elements", expected_elements);
+    }
+
+    #[test]
+    #[should_panic(expected = "position mismatch")]
+    fn attention_cache_position_mismatch_panics() {
+        let binding = kv_small_binding();
+        let cache = kv_test_cache(16, 2, 8);
+        let contract = binding.to_kv_contract(
+            crate::pipeline_parity::PipelinePhase::KvAppend, 16, 0, 1, 0, // position=0 != cache_len=16
+        );
+        super::evaluate_decode_attention_with_cache(
+            &kv_test_hidden(),
+            &kv_test_qkv_weights(),
+            &kv_test_attn_out_weights(),
+            Some(&cache),
+            Some(&cache),
+            &binding,
+            &contract,
+        );
     }
 }

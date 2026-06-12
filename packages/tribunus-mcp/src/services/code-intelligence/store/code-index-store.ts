@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, readFileSync } from "node:fs"
+import { existsSync, mkdirSync, readFileSync, rmSync } from "node:fs"
 import { resolve } from "node:path"
 import { getCodeIntelligenceMigrationDir } from "../../config.js"
 import type { PGliteConstructor, PGliteLike } from "../../store/pglite-runtime.js"
@@ -41,6 +41,11 @@ function tableRows<T extends Record<string, unknown>>(rows: T[]): T[] {
   return rows.map((row) => JSON.parse(JSON.stringify(row)) as T)
 }
 
+function isRecoverablePGliteError(error: unknown): boolean {
+  const message = error instanceof Error ? error.message : String(error)
+  return /PGlite failed to initialize properly|postmaster\.pid|\.s\.PGSQL|database is locked/i.test(message)
+}
+
 export class CodeIndexStoreV1 {
   private db: PGliteLike | null = null
   private dbCtor: PGliteConstructor | null = null
@@ -63,14 +68,36 @@ export class CodeIndexStoreV1 {
     return this.db
   }
 
-  async migrate(): Promise<void> {
-    const db = await this.ensureDb()
-    const migrationDir = getCodeIntelligenceMigrationDir()
-    for (const file of MIGRATION_FILES) {
-      const sqlPath = resolve(migrationDir, file)
-      if (!existsSync(sqlPath)) continue
-      await db.exec(readFileSync(sqlPath, "utf8"))
+  private async resetDb(): Promise<void> {
+    const ctx = this.context
+    try {
+      await this.db?.close()
+    } catch {}
+    this.db = null
+    rmSync(ctx.dbDir, { recursive: true, force: true })
+    ensureCodeIndexStateDir(ctx)
+  }
+
+  private async withDbRecovery<T>(operation: () => Promise<T>): Promise<T> {
+    try {
+      return await operation()
+    } catch (error) {
+      if (!isRecoverablePGliteError(error)) throw error
+      await this.resetDb()
+      return await operation()
     }
+  }
+
+  async migrate(): Promise<void> {
+    return this.withDbRecovery(async () => {
+      const db = await this.ensureDb()
+      const migrationDir = getCodeIntelligenceMigrationDir()
+      for (const file of MIGRATION_FILES) {
+        const sqlPath = resolve(migrationDir, file)
+        if (!existsSync(sqlPath)) continue
+        await db.exec(readFileSync(sqlPath, "utf8"))
+      }
+    })
   }
 
   async loadSnapshot(): Promise<CodeIndexSnapshotV1 | null> {
@@ -84,12 +111,13 @@ export class CodeIndexStoreV1 {
   }
 
   async saveSnapshot(snapshot: CodeIndexSnapshotV1): Promise<void> {
-    const db = await this.ensureDb()
-    await this.migrate()
+    return this.withDbRecovery(async () => {
+      const db = await this.ensureDb()
+      await this.migrate()
 
-    await db.exec("BEGIN")
-    try {
-      for (const statement of [
+      await db.exec("BEGIN")
+      try {
+        for (const statement of [
         "DELETE FROM code_review_packets",
         "DELETE FROM code_index_events",
         "DELETE FROM code_authority_flows",
@@ -101,12 +129,12 @@ export class CodeIndexStoreV1 {
         "DELETE FROM code_symbols",
         "DELETE FROM code_files",
         "DELETE FROM code_index_snapshots",
-      ]) {
-        await db.exec(statement)
-      }
+        ]) {
+          await db.exec(statement)
+        }
 
-      for (const file of tableRows(snapshot.file_index)) {
-        await db.query(
+        for (const file of tableRows(snapshot.file_index)) {
+          await db.query(
           `INSERT INTO code_files (
             file_id, path, language, category, sha256, size_bytes, line_count,
             importance, inclusion_status, parse_status, parse_error, indexed_at, last_seen_at
@@ -126,11 +154,11 @@ export class CodeIndexStoreV1 {
             file.indexed_at,
             file.last_seen_at,
           ],
-        )
-      }
+          )
+        }
 
-      for (const symbol of tableRows(snapshot.symbol_index)) {
-        await db.query(
+        for (const symbol of tableRows(snapshot.symbol_index)) {
+          await db.query(
           `INSERT INTO code_symbols (
             symbol_id, file_id, name, kind, exported, start_line, end_line, start_byte, end_byte,
             signature, doc_summary, authority_role, symbol_hash, created_at
@@ -151,11 +179,11 @@ export class CodeIndexStoreV1 {
             symbol.symbol_hash ?? null,
             symbol.created_at,
           ],
-        )
-      }
+          )
+        }
 
-      for (const imp of tableRows(snapshot.imports)) {
-        await db.query(
+        for (const imp of tableRows(snapshot.imports)) {
+          await db.query(
           `INSERT INTO code_imports (
             import_id, from_file_id, specifier, import_kind, resolution_status,
             resolved_file_id, resolved_path, reason, start_line, end_line
@@ -172,11 +200,11 @@ export class CodeIndexStoreV1 {
             imp.start_line ?? null,
             imp.end_line ?? null,
           ],
-        )
-      }
+          )
+        }
 
-      for (const ref of tableRows(snapshot.references)) {
-        await db.query(
+        for (const ref of tableRows(snapshot.references)) {
+          await db.query(
           `INSERT INTO code_references (
             reference_id, from_file_id, from_symbol_id, to_symbol_id, reference_kind,
             start_line, end_line, confidence
@@ -191,10 +219,11 @@ export class CodeIndexStoreV1 {
             ref.end_line ?? null,
             ref.confidence,
           ],
-        )
-      }
+          )
+        }
 
-      for (const test of tableRows(snapshot.tests)) {
+      const fileIds = new Set(snapshot.file_index.map((file) => file.file_id))
+      for (const test of tableRows(snapshot.tests).filter((entry) => fileIds.has(entry.file_id))) {
         await db.query(
           `INSERT INTO code_tests (
             test_id, file_id, suite_name, test_name, framework, target_file_id, target_symbol_id,
@@ -213,11 +242,11 @@ export class CodeIndexStoreV1 {
             test.end_line ?? null,
             test.confidence,
           ],
-        )
-      }
+          )
+        }
 
-      for (const flow of tableRows(snapshot.authority_flows)) {
-        await db.query(
+        for (const flow of tableRows(snapshot.authority_flows)) {
+          await db.query(
           `INSERT INTO code_authority_flows (
             flow_id, tool_id, file_id, flow_step, detected, symbol_id, start_line, end_line, confidence, notes
           ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)`,
@@ -233,10 +262,9 @@ export class CodeIndexStoreV1 {
             flow.confidence,
             flow.notes ?? null,
           ],
-        )
-      }
+          )
+        }
 
-      const fileIds = new Set(snapshot.file_index.map((file) => file.file_id))
       for (const manifest of tableRows(snapshot.manifests).filter((entry) => fileIds.has(entry.file_id))) {
         await db.query(
           `INSERT INTO code_manifests (
@@ -257,11 +285,11 @@ export class CodeIndexStoreV1 {
             stableJson(manifest.side_effects_json),
             stableJson(manifest.raw_json),
           ],
-        )
-      }
+          )
+        }
 
-      for (const finding of tableRows(snapshot.findings)) {
-        await db.query(
+        for (const finding of tableRows(snapshot.findings)) {
+          await db.query(
           `INSERT INTO code_findings (
             finding_id, severity, category, message, path, symbol_id, source_anchor_json, recommended_fix, created_at
           ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
@@ -276,10 +304,10 @@ export class CodeIndexStoreV1 {
             finding.recommended_fix ?? null,
             finding.created_at,
           ],
-        )
-      }
+          )
+        }
 
-      await db.query(
+        await db.query(
         `INSERT INTO code_index_snapshots (
           snapshot_id, created_at, git_sha, git_branch, dirty, file_count, parsed_file_count,
           symbol_count, import_count, reference_count, test_count, finding_count,
@@ -301,10 +329,10 @@ export class CodeIndexStoreV1 {
           snapshot.semantic_packet_path ?? null,
           snapshot.source_packet_path ?? null,
         ],
-      )
+        )
 
-      for (const event of tableRows(snapshot.events)) {
-        await db.query(
+        for (const event of tableRows(snapshot.events)) {
+          await db.query(
           `INSERT INTO code_index_events (
             event_id, snapshot_id, event_type, path, payload_json, created_at
           ) VALUES ($1,$2,$3,$4,$5,$6)`,
@@ -316,16 +344,17 @@ export class CodeIndexStoreV1 {
             stableJson(event.payload_json),
             event.created_at,
           ],
-        )
-      }
+          )
+        }
 
-      await db.exec("COMMIT")
-      this.latestSnapshot = snapshot
-      writeSnapshotFile(this.context, snapshot)
-    } catch (error) {
-      await db.exec("ROLLBACK")
-      throw error
-    }
+        await db.exec("COMMIT")
+        this.latestSnapshot = snapshot
+        writeSnapshotFile(this.context, snapshot)
+      } catch (error) {
+        await db.exec("ROLLBACK")
+        throw error
+      }
+    })
   }
 
   async recordPacket(input: {
@@ -335,21 +364,23 @@ export class CodeIndexStoreV1 {
     zip_sha256: string
     warnings: string[]
   }): Promise<void> {
-    const db = await this.ensureDb()
-    await this.migrate()
-    await db.query(
-      `INSERT INTO code_review_packets (
-        packet_id, snapshot_id, packet_kind, zip_path, zip_sha256, warnings_json
-      ) VALUES ($1,$2,$3,$4,$5,$6)`,
-      [
-        `packet:${input.packet_kind}:${input.snapshot_id}`,
-        input.snapshot_id,
-        input.packet_kind,
-        input.zip_path,
-        input.zip_sha256,
-        stableJson(input.warnings),
-      ],
-    )
+    return this.withDbRecovery(async () => {
+      const db = await this.ensureDb()
+      await this.migrate()
+      await db.query(
+        `INSERT INTO code_review_packets (
+          packet_id, snapshot_id, packet_kind, zip_path, zip_sha256, warnings_json
+        ) VALUES ($1,$2,$3,$4,$5,$6)`,
+        [
+          `packet:${input.packet_kind}:${input.snapshot_id}`,
+          input.snapshot_id,
+          input.packet_kind,
+          input.zip_path,
+          input.zip_sha256,
+          stableJson(input.warnings),
+        ],
+      )
+    })
   }
 
   async loadSnapshotFromDiskOrDb(): Promise<CodeIndexSnapshotV1 | null> {
@@ -358,19 +389,23 @@ export class CodeIndexStoreV1 {
       this.latestSnapshot = fromDisk
       return fromDisk
     }
-    const db = await this.ensureDb()
-    await this.migrate()
-    const result = await db.query(`SELECT * FROM code_index_snapshots ORDER BY created_at DESC LIMIT 1`)
-    const row = (result.rows?.[0] as Record<string, unknown> | undefined) ?? null
-    if (!row) return null
-    return this.latestSnapshot
+    return this.withDbRecovery(async () => {
+      const db = await this.ensureDb()
+      await this.migrate()
+      const result = await db.query(`SELECT * FROM code_index_snapshots ORDER BY created_at DESC LIMIT 1`)
+      const row = (result.rows?.[0] as Record<string, unknown> | undefined) ?? null
+      if (!row) return null
+      return this.latestSnapshot
+    })
   }
 
   async latestCounts(): Promise<CodeIndexSnapshotRecordV1 | null> {
-    const db = await this.ensureDb()
-    await this.migrate()
-    const result = await db.query(`SELECT * FROM code_index_snapshots ORDER BY created_at DESC LIMIT 1`)
-    return (result.rows?.[0] as CodeIndexSnapshotRecordV1 | undefined) ?? null
+    return this.withDbRecovery(async () => {
+      const db = await this.ensureDb()
+      await this.migrate()
+      const result = await db.query(`SELECT * FROM code_index_snapshots ORDER BY created_at DESC LIMIT 1`)
+      return (result.rows?.[0] as CodeIndexSnapshotRecordV1 | undefined) ?? null
+    })
   }
 }
 

@@ -1,4 +1,4 @@
-import { copyFileSync, existsSync, readFileSync } from "node:fs"
+import { copyFileSync, existsSync, mkdirSync, readFileSync } from "node:fs"
 import { resolve } from "node:path"
 import type {
   AuthorityAuditQueryV1,
@@ -558,9 +558,11 @@ class CodeIntelligenceKernelImpl implements OmpCodeIntelligenceKernelV1 {
     const semanticZipPath = input.semantic_output_path ?? paired.semanticZipPath
     const sourceZipPath = input.source_output_path ?? paired.sourceZipPath
     if (semanticZipPath !== paired.semanticZipPath) {
+      mkdirSync(resolve(semanticZipPath, ".."), { recursive: true })
       copyFileSync(paired.semanticZipPath, semanticZipPath)
     }
     if (sourceZipPath !== paired.sourceZipPath) {
+      mkdirSync(resolve(sourceZipPath, ".."), { recursive: true })
       copyFileSync(paired.sourceZipPath, sourceZipPath)
     }
     await store.recordPacket({

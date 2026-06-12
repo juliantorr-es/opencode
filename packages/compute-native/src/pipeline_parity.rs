@@ -111,7 +111,7 @@ impl fmt::Display for TensorContract {
 /// This enum encodes inference pipeline semantics only. Harness control
 /// families (e.g. `identity_passthrough`) are excluded — they map to no
 /// phase and never enter comparison groups.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord, Serialize, Deserialize)]
 pub enum PipelinePhase {
     /// Embed token IDs into dense vectors.
     TokenEmbedding,
@@ -121,6 +121,12 @@ pub enum PipelinePhase {
     QkvProjection,
     /// Read KV from cache.
     KvRead,
+    /// Write KV key-value at position.
+    KvWrite,
+    /// Append KV key-value to cache.
+    KvAppend,
+    /// View slice from cache without mutation.
+    KvView,
     /// Compute attention scores: Q @ K^T.
     AttentionScores,
     /// Apply causal mask to attention scores.
@@ -158,6 +164,9 @@ impl fmt::Display for PipelinePhase {
             PipelinePhase::PositionEncodingOrRope => "position_encoding_or_rope",
             PipelinePhase::QkvProjection => "qkv_projection",
             PipelinePhase::KvRead => "kv_read",
+            PipelinePhase::KvWrite => "kv_write",
+            PipelinePhase::KvAppend => "kv_append",
+            PipelinePhase::KvView => "kv_view",
             PipelinePhase::AttentionScores => "attention_scores",
             PipelinePhase::MaskApply => "mask_apply",
             PipelinePhase::Softmax => "softmax",
@@ -186,6 +195,9 @@ impl FromStr for PipelinePhase {
             "position_encoding_or_rope" => Ok(PipelinePhase::PositionEncodingOrRope),
             "qkv_projection" => Ok(PipelinePhase::QkvProjection),
             "kv_read" => Ok(PipelinePhase::KvRead),
+            "kv_write" => Ok(PipelinePhase::KvWrite),
+            "kv_append" => Ok(PipelinePhase::KvAppend),
+            "kv_view" => Ok(PipelinePhase::KvView),
             "attention_scores" => Ok(PipelinePhase::AttentionScores),
             "mask_apply" => Ok(PipelinePhase::MaskApply),
             "softmax" => Ok(PipelinePhase::Softmax),
@@ -212,11 +224,14 @@ impl PipelinePhase {
     }
 }
 
-const ALL_PHASES: [PipelinePhase; 18] = [
+const ALL_PHASES: [PipelinePhase; 21] = [
     PipelinePhase::TokenEmbedding,
     PipelinePhase::PositionEncodingOrRope,
     PipelinePhase::QkvProjection,
     PipelinePhase::KvRead,
+    PipelinePhase::KvWrite,
+    PipelinePhase::KvAppend,
+    PipelinePhase::KvView,
     PipelinePhase::AttentionScores,
     PipelinePhase::MaskApply,
     PipelinePhase::Softmax,
@@ -307,6 +322,48 @@ pub const PHASE_CONTRACTS: &[PhaseContract] = &[
         ],
         tolerance: 1e-4,
         description: "Read current-position K, V entries from KV cache (pre-filled or cached).",
+    },
+    PhaseContract {
+        phase: PipelinePhase::KvWrite,
+        inputs: &[
+            TensorContract { name: "k", role: TensorRole::PrimaryInput, shape_pattern: &[Known(1), Symbol("num_kv_heads"), Known(1), Symbol("head_dim")], dtype: "float32" },
+            TensorContract { name: "v", role: TensorRole::SecondaryInput, shape_pattern: &[Known(1), Symbol("num_kv_heads"), Known(1), Symbol("head_dim")], dtype: "float32" },
+            TensorContract { name: "position", role: TensorRole::SecondaryInput, shape_pattern: &[Known(1)], dtype: "int32" },
+        ],
+        outputs: &[
+            TensorContract { name: "cache_k", role: TensorRole::Output, shape_pattern: &[Known(1), Symbol("num_kv_heads"), Symbol("cache_len"), Symbol("head_dim")], dtype: "float32" },
+            TensorContract { name: "cache_v", role: TensorRole::Output, shape_pattern: &[Known(1), Symbol("num_kv_heads"), Symbol("cache_len"), Symbol("head_dim")], dtype: "float32" },
+        ],
+        tolerance: 1e-4,
+        description: "Write K, V at position into KV cache (single-position write).",
+    },
+    PhaseContract {
+        phase: PipelinePhase::KvAppend,
+        inputs: &[
+            TensorContract { name: "k", role: TensorRole::PrimaryInput, shape_pattern: &[Known(1), Symbol("num_kv_heads"), Known(1), Symbol("head_dim")], dtype: "float32" },
+            TensorContract { name: "v", role: TensorRole::SecondaryInput, shape_pattern: &[Known(1), Symbol("num_kv_heads"), Known(1), Symbol("head_dim")], dtype: "float32" },
+            TensorContract { name: "cache_k", role: TensorRole::SecondaryInput, shape_pattern: &[Known(1), Symbol("num_kv_heads"), Symbol("cache_len"), Symbol("head_dim")], dtype: "float32" },
+            TensorContract { name: "cache_v", role: TensorRole::SecondaryInput, shape_pattern: &[Known(1), Symbol("num_kv_heads"), Symbol("cache_len"), Symbol("head_dim")], dtype: "float32" },
+        ],
+        outputs: &[
+            TensorContract { name: "cache_k", role: TensorRole::Output, shape_pattern: &[Known(1), Symbol("num_kv_heads"), Symbol("extended_len"), Symbol("head_dim")], dtype: "float32" },
+            TensorContract { name: "cache_v", role: TensorRole::Output, shape_pattern: &[Known(1), Symbol("num_kv_heads"), Symbol("extended_len"), Symbol("head_dim")], dtype: "float32" },
+        ],
+        tolerance: 1e-4,
+        description: "Append K, V to the end of KV cache (extend sequence dimension).",
+    },
+    PhaseContract {
+        phase: PipelinePhase::KvView,
+        inputs: &[
+            TensorContract { name: "cache_k", role: TensorRole::PrimaryInput, shape_pattern: &[Known(1), Symbol("num_kv_heads"), Symbol("cache_len"), Symbol("head_dim")], dtype: "float32" },
+            TensorContract { name: "cache_v", role: TensorRole::SecondaryInput, shape_pattern: &[Known(1), Symbol("num_kv_heads"), Symbol("cache_len"), Symbol("head_dim")], dtype: "float32" },
+        ],
+        outputs: &[
+            TensorContract { name: "k_view", role: TensorRole::Output, shape_pattern: &[Known(1), Symbol("num_kv_heads"), Symbol("visible_len"), Symbol("head_dim")], dtype: "float32" },
+            TensorContract { name: "v_view", role: TensorRole::Output, shape_pattern: &[Known(1), Symbol("num_kv_heads"), Symbol("visible_len"), Symbol("head_dim")], dtype: "float32" },
+        ],
+        tolerance: 1e-4,
+        description: "Extract a view/slice of KV cache without mutation.",
     },
     PhaseContract {
         phase: PipelinePhase::AttentionScores,
@@ -471,6 +528,84 @@ pub const PHASE_CONTRACTS: &[PhaseContract] = &[
 ];
 
 // ═══════════════════════════════════════════════════════════════════════════
+// KV Cache Phase Contract Types
+// ═══════════════════════════════════════════════════════════════════════════
+
+/// Layout of KV cache tensor dimensions.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum KvCacheLayout {
+    #[serde(rename = "batch_seq_head_dim")]
+    BatchSeqHeadDim,
+    #[serde(rename = "batch_head_seq_dim")]
+    BatchHeadSeqDim,
+    #[serde(rename = "seq_batch_head_dim")]
+    SeqBatchHeadDim,
+}
+
+/// How a KV cache mutation phase accesses the cache.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum KvMutationMode {
+    #[serde(rename = "read_only")]
+    ReadOnly,
+    #[serde(rename = "write_at_position")]
+    WriteAtPosition,
+    #[serde(rename = "append")]
+    Append,
+    #[serde(rename = "view_only")]
+    ViewOnly,
+    #[serde(rename = "external_host_managed")]
+    ExternalHostManaged,
+}
+
+/// Who owns the KV cache memory and mutation lifecycle.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum KvOwnership {
+    #[serde(rename = "backend_owned")]
+    BackendOwned,
+    #[serde(rename = "host_owned_backend_consumed")]
+    HostOwnedBackendConsumed,
+    #[serde(rename = "backend_computed_host_written")]
+    BackendComputedHostWritten,
+    #[serde(rename = "unsupported")]
+    Unsupported,
+    #[serde(rename = "pending_qualification")]
+    PendingQualification,
+}
+
+/// Evidence status for a KV cache contract entry.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum EvidenceStatus {
+    #[serde(rename = "qualified")]
+    Qualified,
+    #[serde(rename = "shape_only")]
+    ShapeOnly,
+    #[serde(rename = "pending_runtime_proof")]
+    PendingRuntimeProof,
+    #[serde(rename = "tier1_blocked")]
+    Tier1Blocked,
+    #[serde(rename = "unsupported")]
+    Unsupported,
+}
+
+/// Full contract record for one KV cache phase at one shape/position/layer.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct KvCachePhaseContract {
+    pub contract_id: String,
+    pub profile_id: String,
+    pub layer_index: u32,
+    pub batch: u32,
+    pub kv_heads: u32,
+    pub head_dim: u32,
+    pub cache_len: u32,
+    pub position: u32,
+    pub append_len: u32,
+    pub dtype: String,
+    pub layout: KvCacheLayout,
+    pub mutation: KvMutationMode,
+    pub ownership: KvOwnership,
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
 // PhaseSupportStatus — structured reason codes
 // ═══════════════════════════════════════════════════════════════════════════
 
@@ -604,6 +739,9 @@ pub fn coreml_support_matrix() -> BackendPhaseSupportMatrix {
             (PositionEncodingOrRope, Pending { code: MilOpNotWired, reason: "RoPE not yet compiled via MIL" }),
             (QkvProjection, Native),
             (KvRead, Unsupported { code: StatefulBoundary, reason: "KV cache is dynamic/stateful; Core ML static model boundary" }),
+            (KvWrite, Unsupported { code: StatefulBoundary, reason: "Core ML static model cannot own cache mutation" }),
+            (KvAppend, Unsupported { code: StatefulBoundary, reason: "Core ML static model cannot extend cache" }),
+            (KvView, Unsupported { code: StatefulBoundary, reason: "Core ML cannot produce mutable view of runtime cache" }),
             (AttentionScores, Pending { code: BridgeNotQualified, reason: "reshape→transpose→matmul works in MIL but predict bridge not fully qualified" }),
             (MaskApply, Unsupported { code: DynamicShapeIncompatible, reason: "causal mask requires dynamic sequence dimension in compiled model" }),
             (Softmax, Composed),
@@ -636,6 +774,9 @@ pub fn mlx_support_matrix() -> BackendPhaseSupportMatrix {
             (PositionEncodingOrRope, Native),
             (QkvProjection, Native),
             (KvRead, Composed),
+            (KvWrite, Composed),
+            (KvAppend, Composed),
+            (KvView, Composed),
             (AttentionScores, Native),
             (MaskApply, Composed),
             (Softmax, Native),
@@ -675,6 +816,9 @@ pub fn accelerate_support_matrix() -> BackendPhaseSupportMatrix {
             (PositionEncodingOrRope, Unsupported { code: MissingPrimitive, reason: "RoPE not available as single Accelerate primitive" }),
             (QkvProjection, Composed),
             (KvRead, Unsupported { code: StatefulBoundary, reason: "KV cache is dynamic state; Accelerate is stateless kernel library" }),
+            (KvWrite, Unsupported { code: StatefulBoundary, reason: "KV cache mutation above Accelerate kernel library surface" }),
+            (KvAppend, Unsupported { code: StatefulBoundary, reason: "KV cache append is stateful; Accelerate is stateless" }),
+            (KvView, Unsupported { code: StatefulBoundary, reason: "Cache view assembly requires graph-level scheduler" }),
             (AttentionScores, Unsupported { code: NeedsGraphScheduling, reason: "needs graph scheduling above BLAS to manage Q/K/V setup and batching" }),
             (MaskApply, Unsupported { code: NeedsGraphScheduling, reason: "mask broadcast needs composite graph awareness" }),
             (Softmax, Unsupported { code: NeedsGraphScheduling, reason: "softmax requires elementwise+broadcast scheduling above Accelerate surface" }),
@@ -751,6 +895,63 @@ pub fn decode_microphase_support_for(family: &str, backend: BackendKind) -> Phas
         },
         BackendKind::Reference => Composed,
     }
+}
+
+/// Return KV phase support for a given backend.
+///
+/// Core ML → all Unsupported (StatefulBoundary).
+/// MLX → all Composed.
+/// Accelerate → all Unsupported (StatefulBoundary).
+pub fn kv_phase_support_for(
+    backend: BackendKind,
+) -> std::collections::BTreeMap<PipelinePhase, PhaseSupportStatus> {
+    let kv_phases = [
+        PipelinePhase::KvRead,
+        PipelinePhase::KvWrite,
+        PipelinePhase::KvAppend,
+        PipelinePhase::KvView,
+    ];
+    use crate::decode_attribution::backend_adapters::BackendKind::*;
+    let status = match backend {
+        CoreMl => Unsupported { code: StatefulBoundary, reason: "KV cache is dynamic/stateful beyond Core ML static model boundary" },
+        Mlx => Composed,
+        Accelerate => Unsupported { code: StatefulBoundary, reason: "KV cache mutation is stateful; Accelerate is stateless kernel library" },
+        Reference => Composed,
+    };
+    kv_phases.iter().map(|&p| (p, status.clone())).collect()
+}
+
+/// Generate all KV cache phase contracts for a given backend and shape binding.
+///
+/// For each cache length in CACHE_LENGTHS and each KV phase, builds a KvCachePhaseContract
+/// with ownership set from kv_phase_support_for.
+pub fn kv_contracts_for_backend(
+    binding: &crate::decode_attribution::decode_microphase_shape_map::DecodeShapeBinding,
+    backend: BackendKind,
+) -> Vec<KvCachePhaseContract> {
+    use crate::decode_attribution::decode_microphase_shape_map::CACHE_LENGTHS;
+    let support = kv_phase_support_for(backend);
+    let kv_phases = [
+        PipelinePhase::KvRead,
+        PipelinePhase::KvWrite,
+        PipelinePhase::KvAppend,
+        PipelinePhase::KvView,
+    ];
+    let mut contracts = Vec::new();
+    for &cache_len in CACHE_LENGTHS {
+        for &phase in &kv_phases {
+            let mut contract = binding.to_kv_contract(phase, cache_len, cache_len, 1, 0);
+            // Set ownership based on support status
+            contract.ownership = match support.get(&phase) {
+                Some(Composed) => crate::pipeline_parity::KvOwnership::HostOwnedBackendConsumed,
+                Some(Unsupported { .. }) => crate::pipeline_parity::KvOwnership::Unsupported,
+                Some(Native) => crate::pipeline_parity::KvOwnership::BackendOwned,
+                _ => crate::pipeline_parity::KvOwnership::PendingQualification,
+            };
+            contracts.push(contract);
+        }
+    }
+    contracts
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -1399,5 +1600,95 @@ mod tests {
         // Legacy default: pipeline_phase is None for backward compatibility.
         assert!(r.pipeline_phase.is_none() || r.pipeline_phase.as_ref().unwrap().is_empty(),
             "default receipt should have empty/missing pipeline_phase");
+    }
+
+    // ── KV cache phase tests ──────────────────────────────────────────
+
+    #[test]
+    fn kv_phases_roundtrip_serde() {
+        for phase in &[PipelinePhase::KvWrite, PipelinePhase::KvAppend, PipelinePhase::KvView] {
+            let s = phase.to_string();
+            let parsed: PipelinePhase = s.parse().unwrap_or_else(|e| panic!("cannot parse '{s}': {e}"));
+            assert_eq!(*phase, parsed, "roundtrip failed for '{s}'");
+        }
+    }
+
+    #[test]
+    fn all_phases_count_is_21() {
+        assert_eq!(ALL_PHASES.len(), 21, "ALL_PHASES must have exactly 21 entries after KV phase addition");
+    }
+
+    #[test]
+    fn kv_contracts_have_all_phases() {
+        let matrices = [
+            coreml_support_matrix(),
+            mlx_support_matrix(),
+            accelerate_support_matrix(),
+        ];
+        for matrix in &matrices {
+            for &phase in &[PipelinePhase::KvWrite, PipelinePhase::KvAppend, PipelinePhase::KvView] {
+                let found = matrix.phases.iter().any(|(p, _)| *p == phase);
+                assert!(found, "phase '{phase}' missing from {} support matrix", matrix.backend);
+            }
+        }
+    }
+
+    #[test]
+    fn kv_phases_display_snake_case() {
+        for phase in &[PipelinePhase::KvWrite, PipelinePhase::KvAppend, PipelinePhase::KvView] {
+            let s = phase.to_string();
+            assert!(!s.contains(' '), "Display of '{phase:?}' contains whitespace: '{s}'");
+            assert!(
+                s.chars().all(|c| c.is_ascii_lowercase() || c == '_'),
+                "Display of '{:?}' has non-snake_case chars: '{s}'", phase
+            );
+        }
+    }
+
+    #[test]
+    fn kv_contracts_for_small_v1_yields_eight_entries() {
+        use crate::decode_attribution::decode_microphase_shape_map::DECODE_SMALL_V1;
+        let contracts = kv_contracts_for_backend(&DECODE_SMALL_V1, BackendKind::Mlx);
+        // 4 phases × 2 cache lengths = 8 entries
+        assert_eq!(contracts.len(), 8, "expected 8 KV contracts for small_v1/mlx, got {}", contracts.len());
+    }
+
+    #[test]
+    fn coreml_kv_all_unsupported() {
+        let matrix = coreml_support_matrix();
+        for &phase in &[PipelinePhase::KvWrite, PipelinePhase::KvAppend, PipelinePhase::KvView] {
+            let status = matrix.support_for(phase).expect("CoreML must have entry for {phase}");
+            match status {
+                PhaseSupportStatus::Unsupported { code, .. } => {
+                    assert_eq!(*code, UnsupportedCode::StatefulBoundary,
+                        "CoreML {phase} should be StatefulBoundary");
+                }
+                _ => panic!("CoreML {phase} should be Unsupported, got {status:?}"),
+            }
+        }
+    }
+
+    #[test]
+    fn mlx_kv_all_composed() {
+        let matrix = mlx_support_matrix();
+        for &phase in &[PipelinePhase::KvWrite, PipelinePhase::KvAppend, PipelinePhase::KvView] {
+            let status = matrix.support_for(phase).expect("MLX must have entry for {phase}");
+            assert_eq!(*status, PhaseSupportStatus::Composed, "MLX {phase} should be Composed");
+        }
+    }
+
+    #[test]
+    fn accelerate_kv_all_unsupported() {
+        let matrix = accelerate_support_matrix();
+        for &phase in &[PipelinePhase::KvWrite, PipelinePhase::KvAppend, PipelinePhase::KvView] {
+            let status = matrix.support_for(phase).expect("Accelerate must have entry for {phase}");
+            match status {
+                PhaseSupportStatus::Unsupported { code, .. } => {
+                    assert_eq!(*code, UnsupportedCode::StatefulBoundary,
+                        "Accelerate {phase} should be StatefulBoundary");
+                }
+                _ => panic!("Accelerate {phase} should be Unsupported, got {status:?}"),
+            }
+        }
     }
 }

@@ -2,6 +2,7 @@
 //!
 //! Writes:
 //! - decode_microphase_manifest.json     — Suite manifest for all 42 Batch 1 rows
+//! - support_matrix.json                  — Claimed support matrix for the report
 //! - decode_microphase_support_matrix.json — Per-backend support classification
 //! - decode_microphase_shape_map.json    — Symbolic dim bindings for decode profiles
 //! - decode_microphase_receipt_index.json — Row metadata index for compute-image ingestion
@@ -14,6 +15,7 @@ use tribunus_compute_native::decode_attribution::decode_microphase_shape_map::{
 };
 use tribunus_compute_native::decode_attribution::graph_catalog::{DECODE_BATCH1_NAMES, DECODE_BATCH1_OP_COUNTS};
 use tribunus_compute_native::decode_attribution::suite_manifest::{tier2_batch1_manifest, SupportStatus, SuiteRow, SuiteTier};
+use tribunus_compute_native::pipeline_parity::kv_contracts_for_backend;
 use tribunus_compute_native::pipeline_parity::decode_microphase_support_for;
 use tribunus_compute_native::decode_attribution::backend_adapters::BackendKind;
 
@@ -31,6 +33,16 @@ struct SupportMatrixEntry {
 }
 
 #[derive(serde::Serialize)]
+struct ClaimedSupportMatrixEntry {
+    row_id: String,
+    backend: String,
+    backend_policy: String,
+    support_status: String,
+    execution_kind_if_supported: Option<String>,
+    reason: Option<String>,
+}
+
+#[derive(serde::Serialize)]
 struct ReceiptIndexEntry {
     row_id: String,
     tier: String,
@@ -44,6 +56,8 @@ struct ReceiptIndexEntry {
     support_status: String,
     blocked: bool,
     comparison_eligible: bool,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    kv_contract_ids: Vec<String>,
 }
 
 fn backend_kind_from_str(s: &str) -> BackendKind {
@@ -101,6 +115,42 @@ fn main() {
 
     // ── 2. Generate and write support matrix ───────────────────────────
     eprintln!("Generating support matrix...");
+    let claimed_matrix_entries: Vec<ClaimedSupportMatrixEntry> = manifest.rows.iter().map(|row| {
+        let backend = backend_kind_from_str(&row.backend);
+        let status = decode_microphase_support_for(&row.family, backend);
+        let (support_status, execution_kind_if_supported, reason) = match &status {
+            tribunus_compute_native::pipeline_parity::PhaseSupportStatus::Native => {
+                ("supported_native".to_string(), Some(row.backend.clone()), None)
+            }
+            tribunus_compute_native::pipeline_parity::PhaseSupportStatus::Composed => {
+                ("supported_domain_adapter".to_string(), Some(row.backend.clone()), None)
+            }
+            tribunus_compute_native::pipeline_parity::PhaseSupportStatus::Unsupported { code, reason } => {
+                (format!("unsupported_{:?}", code), None, Some(reason.to_string()))
+            }
+            tribunus_compute_native::pipeline_parity::PhaseSupportStatus::Pending { code, reason } => {
+                (format!("pending_{:?}", code), None, Some(reason.to_string()))
+            }
+        };
+
+        ClaimedSupportMatrixEntry {
+            row_id: row.row_id.clone(),
+            backend: row.backend.clone(),
+            backend_policy: row.backend_policy.clone(),
+            support_status,
+            execution_kind_if_supported,
+            reason,
+        }
+    }).collect();
+
+    let claimed_matrix_path = output_dir.join("support_matrix.json");
+    serde_json::to_writer_pretty(std::fs::File::create(&claimed_matrix_path).unwrap(), &claimed_matrix_entries)
+        .unwrap_or_else(|e| {
+            eprintln!("Error writing claimed support matrix: {e}");
+            std::process::exit(1);
+        });
+    eprintln!("  Wrote {} entries to {:?}", claimed_matrix_entries.len(), claimed_matrix_path);
+
     let mut matrix_entries: Vec<SupportMatrixEntry> = Vec::new();
     for row in &manifest.rows {
         let backend = backend_kind_from_str(&row.backend);
@@ -198,6 +248,7 @@ fn main() {
             }.into(),
             blocked: is_blocked,
             comparison_eligible: is_eligible,
+            kv_contract_ids: Vec::new(),
         }
     }).collect();
 
@@ -208,6 +259,23 @@ fn main() {
             std::process::exit(1);
         });
     eprintln!("  Wrote {} entries to {:?}", index_entries.len(), index_path);
+
+    // ── 5. Generate and write KV contracts ─────────────────────────────
+    eprintln!("Generating KV contracts...");
+    let kv_backends = ["coreml", "mlx", "accelerate"];
+    let all_kv_contracts: Vec<_> = ALL_DECODE_SHAPES.iter().flat_map(|binding| {
+        kv_backends.iter().flat_map(|&backend_name| {
+            let backend = backend_kind_from_str(backend_name);
+            kv_contracts_for_backend(binding, backend)
+        })
+    }).collect();
+    let kv_path = output_dir.join("kv_contracts.json");
+    serde_json::to_writer_pretty(std::fs::File::create(&kv_path).unwrap(), &all_kv_contracts)
+        .unwrap_or_else(|e| {
+            eprintln!("Error writing KV contracts: {e}");
+            std::process::exit(1);
+        });
+    eprintln!("  Wrote {} entries to {:?}", all_kv_contracts.len(), kv_path);
 
     let elapsed = start.elapsed();
     eprintln!();

@@ -38,6 +38,11 @@ pub enum ClusterKind {
     ShapeProfileSpecific,
     PolicySpecific,
     ReceiptOrHarnessDefect,
+    KvShapeMismatch,
+    KvLayoutMismatch,
+    KvPositionMismatch,
+    KvMutationUnsupported,
+    KvOwnershipViolation,
 }
 
 impl ClusterKind {
@@ -52,6 +57,11 @@ impl ClusterKind {
             ClusterKind::ShapeProfileSpecific => "shape_profile_specific",
             ClusterKind::PolicySpecific => "policy_specific",
             ClusterKind::ReceiptOrHarnessDefect => "receipt_or_harness_defect",
+            ClusterKind::KvShapeMismatch => "kv_shape_mismatch",
+            ClusterKind::KvLayoutMismatch => "kv_layout_mismatch",
+            ClusterKind::KvPositionMismatch => "kv_position_mismatch",
+            ClusterKind::KvMutationUnsupported => "kv_mutation_unsupported",
+            ClusterKind::KvOwnershipViolation => "kv_ownership_violation",
         }
     }
 }
@@ -521,6 +531,27 @@ fn classify_observation(obs: &DefectObservation, receipt: &DecodeAttributionRece
     }
 }
 
+/// Classify a KV defect reason string to a cluster kind.
+///
+/// Returns `Some(ClusterKind)` when the reason matches a known KV defect category.
+/// This is a forward hook; actual classification will be wired in a later gate
+/// when KV execution receipts exist.
+pub fn classify_kv_defect(reason: &str) -> Option<ClusterKind> {
+    if reason.contains("shape") {
+        Some(ClusterKind::KvShapeMismatch)
+    } else if reason.contains("layout") {
+        Some(ClusterKind::KvLayoutMismatch)
+    } else if reason.contains("position") {
+        Some(ClusterKind::KvPositionMismatch)
+    } else if reason.contains("mutation unsupported") {
+        Some(ClusterKind::KvMutationUnsupported)
+    } else if reason.contains("ownership violation") {
+        Some(ClusterKind::KvOwnershipViolation)
+    } else {
+        None
+    }
+}
+
 // ═══════════════════════════════════════════════════════════════════════════
 // Cluster builder
 // ═══════════════════════════════════════════════════════════════════════════
@@ -659,6 +690,11 @@ fn build_clusters(
             ClusterKind::CrossBackendSemanticMismatch => Severity::S2BlocksBackendParity,
             ClusterKind::ShapeProfileSpecific => Severity::S4DiagnosticOnly,
             ClusterKind::PolicySpecific => Severity::S4DiagnosticOnly,
+            ClusterKind::KvShapeMismatch => Severity::S3BackendSpecificGap,
+            ClusterKind::KvLayoutMismatch => Severity::S3BackendSpecificGap,
+            ClusterKind::KvPositionMismatch => Severity::S3BackendSpecificGap,
+            ClusterKind::KvMutationUnsupported => Severity::S3BackendSpecificGap,
+            ClusterKind::KvOwnershipViolation => Severity::S3BackendSpecificGap,
         };
 
         let recommended_next_gate = match kind {
@@ -670,6 +706,11 @@ fn build_clusters(
             ClusterKind::CrossBackendSemanticMismatch => "FIX-SEMANTIC-CONTRACT-REFERENCE-EVALUATOR",
             ClusterKind::ShapeProfileSpecific => "DEFER-SHAPE-PROFILE-TIER2",
             ClusterKind::PolicySpecific => "DEFER-POLICY-EXPANSION",
+            ClusterKind::KvShapeMismatch => "KV-CACHE-SHAPE-CONTRACT-QUALIFICATION",
+            ClusterKind::KvLayoutMismatch => "KV-CACHE-LAYOUT-QUALIFICATION",
+            ClusterKind::KvPositionMismatch => "KV-CACHE-POSITION-QUALIFICATION",
+            ClusterKind::KvMutationUnsupported => "KV-CACHE-MUTATION-QUALIFICATION",
+            ClusterKind::KvOwnershipViolation => "KV-CACHE-OWNERSHIP-QUALIFICATION",
             ClusterKind::ReceiptOrHarnessDefect => "FIX-RECEIPT-HARNESS-EVIDENCE",
         }
         .into();
@@ -1285,5 +1326,65 @@ mod tests {
         assert_eq!(obs.backend, "");
         assert!(obs.max_absolute_error.is_none());
         assert!(obs.cosine_similarity.is_none());
+    }
+
+    // ── KV defect clustering tests ────────────────────────────────────
+
+    #[test]
+    fn kv_cluster_kinds_count_14() {
+        // 9 original + 5 new KV = 14
+        let kinds = vec![
+            ClusterKind::CoremlCompileContract,
+            ClusterKind::CoremlPredictContract,
+            ClusterKind::MlxExecutionContract,
+            ClusterKind::MlxNumericalSemantics,
+            ClusterKind::AccelerateNumericalSemantics,
+            ClusterKind::CrossBackendSemanticMismatch,
+            ClusterKind::ShapeProfileSpecific,
+            ClusterKind::PolicySpecific,
+            ClusterKind::ReceiptOrHarnessDefect,
+            ClusterKind::KvShapeMismatch,
+            ClusterKind::KvLayoutMismatch,
+            ClusterKind::KvPositionMismatch,
+            ClusterKind::KvMutationUnsupported,
+            ClusterKind::KvOwnershipViolation,
+        ];
+        assert_eq!(kinds.len(), 14, "ClusterKind must have 14 variants");
+        // Verify all serialize/deserialize
+        for kind in &kinds {
+            let json = serde_json::to_string(kind).expect("ClusterKind must serialize");
+            let back: ClusterKind = serde_json::from_str(&json).expect("ClusterKind must deserialize");
+            assert_eq!(*kind, back, "roundtrip failed for {kind:?}");
+        }
+    }
+
+    #[test]
+    fn kv_cluster_kinds_serde_roundtrip() {
+        // New KV kinds specifically
+        for kind in &[
+            ClusterKind::KvShapeMismatch,
+            ClusterKind::KvLayoutMismatch,
+            ClusterKind::KvPositionMismatch,
+            ClusterKind::KvMutationUnsupported,
+            ClusterKind::KvOwnershipViolation,
+        ] {
+            let json = serde_json::to_string(kind).expect("KV ClusterKind must serialize");
+            let back: ClusterKind = serde_json::from_str(&json).expect("KV ClusterKind must deserialize");
+            assert_eq!(*kind, back, "serde roundtrip failed for {kind:?}");
+        }
+    }
+
+    #[test]
+    fn classify_kv_defect_shape() {
+        let kind = super::classify_kv_defect("shape mismatch in KV cache");
+        assert_eq!(kind, Some(ClusterKind::KvShapeMismatch),
+            "should return KvShapeMismatch for shape-related reason");
+    }
+
+    #[test]
+    fn classify_kv_defect_position() {
+        let kind = super::classify_kv_defect("position out of bounds");
+        assert_eq!(kind, Some(ClusterKind::KvPositionMismatch),
+            "should return KvPositionMismatch for position-related reason");
     }
 }

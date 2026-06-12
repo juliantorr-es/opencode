@@ -2,7 +2,7 @@
 // Implements OmpRelationalStoreV1 using @electric-sql/pglite as the backend.
 // Singleton per repo — use getPgliteStore() factory.
 
-import { existsSync, mkdirSync } from "node:fs"
+import { existsSync, mkdirSync, rmSync } from "node:fs"
 import { resolve } from "node:path"
 import { randomUUID } from "node:crypto"
 import type {
@@ -36,6 +36,11 @@ import { getPgliteDir } from "../config.js"
 const DEFAULT_SESSION_TTL_MS = 30 * 60 * 1000   // 30 minutes
 const DEFAULT_PATH_LOCK_TTL_MS = 5 * 60 * 1000  // 5 minutes
 const DEFAULT_WORK_CLAIM_TTL_MS = 10 * 60 * 1000 // 10 minutes
+
+function isRecoverablePGliteError(error: unknown): boolean {
+  const message = error instanceof Error ? error.message : String(error)
+  return /PGlite failed to initialize properly|postmaster\.pid|\.s\.PGSQL|database is locked/i.test(message)
+}
 
 // ── Row mapping helpers ──
 
@@ -157,24 +162,47 @@ class PGliteStoreV1Impl implements OmpRelationalStoreV1 {
     return this.db
   }
 
-  private async tx<T>(fn: (db: PGliteLike) => Promise<T>): Promise<T> {
-    const db = await this.ensureDb()
-    await db.exec("BEGIN")
+  private async resetDbState(): Promise<void> {
     try {
-      const result = await fn(db)
-      await db.exec("COMMIT")
-      return result
-    } catch (err) {
-      await db.exec("ROLLBACK")
-      throw err
+      await this.db?.close()
+    } catch {}
+    this.db = null
+    rmSync(this.stateDir, { recursive: true, force: true })
+    mkdirSync(this.stateDir, { recursive: true })
+  }
+
+  private async withDbRecovery<T>(operation: () => Promise<T>): Promise<T> {
+    try {
+      return await operation()
+    } catch (error) {
+      if (!isRecoverablePGliteError(error)) throw error
+      await this.resetDbState()
+      return await operation()
     }
+  }
+
+  private async tx<T>(fn: (db: PGliteLike) => Promise<T>): Promise<T> {
+    return this.withDbRecovery(async () => {
+      const db = await this.ensureDb()
+      await db.exec("BEGIN")
+      try {
+        const result = await fn(db)
+        await db.exec("COMMIT")
+        return result
+      } catch (err) {
+        await db.exec("ROLLBACK")
+        throw err
+      }
+    })
   }
 
   // ── Migrate ──
 
   async migrate(): Promise<void> {
-    const db = await this.ensureDb()
-    await runMigrations(db)
+    return this.withDbRecovery(async () => {
+      const db = await this.ensureDb()
+      await runMigrations(db)
+    })
   }
 
   /** Close the underlying PGlite database connection. */

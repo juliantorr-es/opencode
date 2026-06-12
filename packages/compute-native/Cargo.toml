@@ -36,9 +36,13 @@ path = "src/bin/tribunus-native-bench.rs"
  name = "tribunus-tier1-defect-cluster"
  path = "src/bin/tribunus-tier1-defect-cluster.rs"
  
- [[bin]]
- name = "tribunus-tier2-manifest-gen"
- path = "src/bin/tribunus-tier2-manifest-gen.rs"
+[[bin]]
+name = "tribunus-tier2-manifest-gen"
+path = "src/bin/tribunus-tier2-manifest-gen.rs"
+
+[[bin]]
+name = "tribunus-compute-gap-report"
+path = "src/bin/tribunus-compute-gap-report.rs"
 
 [[bin]]
 name = "tribunus-decode-attribution-measure"
@@ -184,4 +188,3 @@ path = "tests/f32_contract_tests.rs"
 [[test]]
 name = "three_backend_conformance"
 path = "tests/three_backend_conformance.rs"
-

@@ -12,6 +12,8 @@
 
 use serde::{Deserialize, Serialize};
 
+use crate::pipeline_parity::{self, KvCacheLayout, KvMutationMode, KvCachePhaseContract};
+
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 pub struct DecodeShapeBinding {
     pub profile_name: &'static str,
@@ -19,12 +21,17 @@ pub struct DecodeShapeBinding {
     pub query_tokens: u32,
     pub hidden_dim: u32,
     pub num_heads: u32,
+    /// Number of KV heads. Equals num_heads for non-GQA profiles.
+    pub kv_heads: u32,
     pub head_dim: u32,
     pub past_kv_len: u32,
     pub kv_len: u32,
     pub intermediate_dim: u32,
     pub vocab_dim: u32,
 }
+
+/// Cache lengths to generate KV contracts for.
+pub const CACHE_LENGTHS: &[u32] = &[0, 16];
 
 impl DecodeShapeBinding {
     /// QKV combined projection weight: [hidden_dim, 3 * hidden_dim]
@@ -61,6 +68,39 @@ impl DecodeShapeBinding {
     pub fn hidden_shape(&self) -> (u32, u32) {
         (self.batch, self.hidden_dim)
     }
+
+    /// Build a KV cache phase contract for a given phase, cache length, position, append length, and layer index.
+    pub fn to_kv_contract(
+        &self,
+        phase: pipeline_parity::PipelinePhase,
+        cache_len: u32,
+        position: u32,
+        append_len: u32,
+        layer_index: u32,
+    ) -> KvCachePhaseContract {
+        let mutation = match phase {
+            pipeline_parity::PipelinePhase::KvRead | pipeline_parity::PipelinePhase::KvView => KvMutationMode::ReadOnly,
+            pipeline_parity::PipelinePhase::KvWrite => KvMutationMode::WriteAtPosition,
+            pipeline_parity::PipelinePhase::KvAppend => KvMutationMode::Append,
+            _ => KvMutationMode::ReadOnly,
+        };
+        let contract_id = format!("kv.{phase}/{}/len{cache_len}", self.profile_name);
+        KvCachePhaseContract {
+            contract_id,
+            profile_id: self.profile_name.to_string(),
+            layer_index,
+            batch: self.batch,
+            kv_heads: self.kv_heads,
+            head_dim: self.head_dim,
+            cache_len,
+            position,
+            append_len,
+            dtype: "float32".to_string(),
+            layout: KvCacheLayout::BatchSeqHeadDim,
+            mutation,
+            ownership: crate::pipeline_parity::KvOwnership::PendingQualification,
+        }
+    }
 }
 
 /// decode_small_v1: hidden_dim=16, num_heads=2, head_dim=8, past_kv_len=8
@@ -70,6 +110,7 @@ pub const DECODE_SMALL_V1: DecodeShapeBinding = DecodeShapeBinding {
     query_tokens: 1,
     hidden_dim: 16,
     num_heads: 2,
+    kv_heads: 2,
     head_dim: 8,
     past_kv_len: 8,
     kv_len: 8,
@@ -84,6 +125,7 @@ pub const DECODE_MEDIUM_V1: DecodeShapeBinding = DecodeShapeBinding {
     query_tokens: 1,
     hidden_dim: 64,
     num_heads: 4,
+    kv_heads: 4,
     head_dim: 16,
     past_kv_len: 32,
     kv_len: 32,
@@ -131,5 +173,51 @@ mod tests {
         assert!(decode_shape_for("decode_small_v1").is_some());
         assert!(decode_shape_for("decode_medium_v1").is_some());
         assert!(decode_shape_for("unknown").is_none());
+    }
+
+    // ── KV cache contract tests ───────────────────────────────────────
+
+    #[test]
+    fn decode_small_v1_has_kv_heads() {
+        assert_eq!(DECODE_SMALL_V1.kv_heads, 2, "decode_small_v1 must have kv_heads=2");
+    }
+
+    #[test]
+    fn decode_medium_v1_has_kv_heads() {
+        assert_eq!(DECODE_MEDIUM_V1.kv_heads, 4, "decode_medium_v1 must have kv_heads=4");
+    }
+
+    #[test]
+    fn to_kv_contract_read_only() {
+        let contract = DECODE_SMALL_V1.to_kv_contract(
+            crate::pipeline_parity::PipelinePhase::KvRead, 16, 0, 1, 0,
+        );
+        assert_eq!(contract.mutation, crate::pipeline_parity::KvMutationMode::ReadOnly,
+            "KvRead contract should have ReadOnly mutation");
+        assert_eq!(contract.cache_len, 16);
+        assert_eq!(contract.kv_heads, 2);
+    }
+
+    #[test]
+    fn to_kv_contract_append() {
+        let contract = DECODE_MEDIUM_V1.to_kv_contract(
+            crate::pipeline_parity::PipelinePhase::KvAppend, 32, 32, 1, 0,
+        );
+        assert_eq!(contract.mutation, crate::pipeline_parity::KvMutationMode::Append,
+            "KvAppend contract should have Append mutation");
+        assert_eq!(contract.cache_len, 32);
+        assert_eq!(contract.kv_heads, 4);
+    }
+
+    #[test]
+    fn kv_contracts_serialize() {
+        let contract = DECODE_SMALL_V1.to_kv_contract(
+            crate::pipeline_parity::PipelinePhase::KvRead, 16, 0, 1, 0,
+        );
+        let json = serde_json::to_string(&contract).expect("KvCachePhaseContract must serialize to JSON");
+        assert!(!json.is_empty(), "serialized JSON must not be empty");
+        // Verify it has expected fields
+        assert!(json.contains("kv_read"), "serialized JSON should contain phase id");
+        assert!(json.contains("batch_seq_head_dim"), "serialized JSON should contain layout");
     }
 }

@@ -423,4 +423,10 @@ mod tests {
         ids.dedup();
         assert_eq!(ids.len(), 42, "all 42 row IDs must be unique");
     }
+
+    #[test]
+    fn tier2_manifest_still_42_rows() {
+        let m = tier2_batch1_manifest();
+        assert_eq!(m.rows.len(), 42, "Tier 2 Batch 1 manifest must still have 42 rows after KV phase addition");
+    }
 }

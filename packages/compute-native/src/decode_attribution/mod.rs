@@ -23,4 +23,5 @@ pub mod suite_manifest;
 pub mod decode_microphase_shape_map;
 pub mod report;
 pub mod defect_clustering;
+pub mod gap_report;
 pub mod backend_adapters;

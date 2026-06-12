@@ -1,4 +1,7 @@
-import { resolve, join } from "node:path"
+import { createRequire } from "node:module"
+import { resolve, join, dirname } from "node:path"
+import { rmSync, readFileSync } from "node:fs"
+import { pathToFileURL, fileURLToPath } from "node:url"
 import { mkdir, open, unlink, writeFile, readFile } from "node:fs/promises"
 import type { FileHandle } from "node:fs/promises"
 import { homedir } from "node:os"
@@ -24,6 +27,11 @@ function lockFilePath(dir: string): string {
 }
 
 const OMP_STORE_DIR = resolve(process.cwd(), ".omp", "state", "pglite")
+
+function isRecoverablePGliteError(error: unknown): boolean {
+  const message = error instanceof Error ? error.message : String(error)
+  return /PGlite failed to initialize properly|postmaster\.pid|\.s\.PGSQL|database is locked/i.test(message)
+}
 
 // ── Types ───────────────────────────────────────────────────────────────────
 
@@ -146,6 +154,14 @@ const MIGRATIONS: Migration[] = [
       CREATE INDEX IF NOT EXISTS idx_path_locks_expires ON path_locks(expires_at);
     `,
   },
+  {
+    version: 2,
+    name: "artifact_authority",
+    sql: readFileSync(
+      resolve(fileURLToPath(new URL("..", import.meta.url)), "services", "store", "migrations", "0003_artifact_authority.sql"),
+      "utf-8",
+    ),
+  },
 ]
 
 const CURRENT_SCHEMA_VERSION = MIGRATIONS[MIGRATIONS.length - 1].version
@@ -198,6 +214,26 @@ async function releaseLock(): Promise<void> {
 
 async function loadPGlite(): Promise<{ PGlite: new (dir: string) => PgliteDb }> {
   try {
+    const require = createRequire(import.meta.url)
+    const searchRoots = [
+      resolve(process.cwd(), "node_modules"),
+      resolve(process.cwd(), "node_modules/.bun/node_modules"),
+      resolve(process.cwd(), "node_modules/.bun"),
+      resolve(dirname(getStoreDir()), "node_modules"),
+    ]
+
+    try {
+      const resolved = require.resolve("@electric-sql/pglite")
+      return await import(pathToFileURL(resolved).href) as { PGlite: new (dir: string) => PgliteDb }
+    } catch {}
+
+    for (const searchRoot of searchRoots) {
+      try {
+        const resolved = require.resolve("@electric-sql/pglite", { paths: [searchRoot] })
+        return await import(pathToFileURL(resolved).href) as { PGlite: new (dir: string) => PgliteDb }
+      } catch {}
+    }
+
     return await Function('return import("@electric-sql/pglite")')() as { PGlite: new (dir: string) => PgliteDb }
   } catch {
     throw new Error("PGlite unavailable. Install @electric-sql/pglite: bun add @electric-sql/pglite")
@@ -223,6 +259,28 @@ async function applyMigrations(db: PgliteDb): Promise<void> {
       [migration.version, checksum],
     )
   }
+}
+
+async function assertRequiredTables(db: PgliteDb): Promise<void> {
+  const requiredTables = [
+    "artifacts_v2",
+    "artifact_manifests",
+    "artifact_relationships",
+    "artifact_verifications",
+    "artifact_events",
+  ]
+
+  const result = await db.query<{ table_name: string }>(
+    `SELECT table_name
+     FROM information_schema.tables
+     WHERE table_schema = 'public' AND table_name = ANY($1::text[])`,
+    [requiredTables],
+  )
+  const present = new Set(result.rows.map((row) => row.table_name))
+  const missing = requiredTables.filter((table) => !present.has(table))
+  if (missing.length === 0) return
+
+  throw new Error(`PGlite failed to initialize properly: missing required table ${missing[0]}`)
 }
 
 // ── Logical Migration from OMP ──────────────────────────────────────────────
@@ -323,24 +381,50 @@ async function migrateFromOmp(db: PgliteDb): Promise<void> {
   )
 }
 
+async function resetStoreState(dir: string): Promise<void> {
+  try {
+    await _db?.close()
+  } catch {}
+  _db = null
+  _storeDir = null
+  await releaseLock()
+  rmSync(dir, { recursive: true, force: true })
+  await mkdir(dir, { recursive: true })
+}
+
 // ── Public API ──────────────────────────────────────────────────────────────
 
 export async function getStore(): Promise<PgliteDb> {
   if (_db) return _db
 
   const dir = getStoreDir()
-  await mkdir(dir, { recursive: true })
-  await acquireLock(dir)
 
-  const PGliteMod = await loadPGlite()
-  const db = new PGliteMod.PGlite(dir)
+  const openStore = async (): Promise<PgliteDb> => {
+    await mkdir(dir, { recursive: true })
+    await acquireLock(dir)
+    try {
+      const PGliteMod = await loadPGlite()
+      const db = new PGliteMod.PGlite(dir)
+      await applyMigrations(db)
+      await assertRequiredTables(db)
+      await migrateFromOmp(db)
+      await assertRequiredTables(db)
+      _storeDir = dir
+      _db = db
+      return db
+    } catch (error) {
+      await releaseLock()
+      throw error
+    }
+  }
 
-  await applyMigrations(db)
-  await migrateFromOmp(db)
-
-  _storeDir = dir
-  _db = db
-  return db
+  try {
+    return await openStore()
+  } catch (error) {
+    if (!isRecoverablePGliteError(error)) throw error
+    await resetStoreState(dir)
+    return await openStore()
+  }
 }
 
 export async function closeStore(): Promise<void> {

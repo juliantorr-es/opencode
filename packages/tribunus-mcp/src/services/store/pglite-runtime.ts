@@ -1,5 +1,5 @@
 import { createRequire } from "node:module"
-import { resolve } from "node:path"
+import { dirname, resolve } from "node:path"
 import { pathToFileURL } from "node:url"
 
 export type PGliteLike = {
@@ -41,9 +41,36 @@ function extractConstructor(mod: Record<string, unknown>): PGliteConstructor | n
 async function tryLoadFromPackageJson(packageJsonPath: string): Promise<PGliteConstructor | null> {
   try {
     const require = createRequire(packageJsonPath)
-    const resolved = require.resolve("@electric-sql/pglite")
-    const mod = (await import(pathToFileURL(resolved).href)) as Record<string, unknown>
-    return extractConstructor(mod)
+    const searchRoots = [
+      dirname(packageJsonPath),
+      resolve(dirname(packageJsonPath), "node_modules"),
+      resolve(dirname(packageJsonPath), "node_modules/.bun/node_modules"),
+      resolve(dirname(packageJsonPath), "node_modules/.bun"),
+      resolve(packageJsonPath, "..", "..", "node_modules"),
+      resolve(packageJsonPath, "..", "..", "node_modules/.bun/node_modules"),
+      resolve(packageJsonPath, "..", "..", "node_modules/.bun"),
+    ]
+
+    const resolveAndLoad = async (modulePath: string): Promise<PGliteConstructor | null> => {
+      const mod = (await import(pathToFileURL(modulePath).href)) as Record<string, unknown>
+      return extractConstructor(mod)
+    }
+
+    try {
+      const resolved = require.resolve("@electric-sql/pglite")
+      const ctor = await resolveAndLoad(resolved)
+      if (ctor) return ctor
+    } catch {}
+
+    for (const searchRoot of searchRoots) {
+      try {
+        const resolved = require.resolve("@electric-sql/pglite", { paths: [searchRoot] })
+        const ctor = await resolveAndLoad(resolved)
+        if (ctor) return ctor
+      } catch {}
+    }
+
+    return null
   } catch {
     return null
   }
