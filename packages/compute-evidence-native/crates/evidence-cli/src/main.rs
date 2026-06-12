@@ -71,7 +71,10 @@ fn cmd_ingest(file_path: &str) {
             Err(e) => {
                 eprintln!("error at event {}: {}", decoder.event_count(), e);
                 if decoder.event_count() > 0 {
-                    eprintln!("  (continuing — {} events ingested before error)", decoder.event_count());
+                    eprintln!(
+                        "  (continuing — {} events ingested before error)",
+                        decoder.event_count()
+                    );
                 }
                 std::process::exit(1);
             }
@@ -146,20 +149,36 @@ fn cmd_inspect(file_path: &str) {
             Ok(Some(decoded)) => {
                 let tag = match &decoded.event.payload {
                     tribunus_evidence_schema::EventPayloadV4::LayerStage(_) => "layer_stage",
-                    tribunus_evidence_schema::EventPayloadV4::ProjectionGraph(_) => "projection_graph",
-                    tribunus_evidence_schema::EventPayloadV4::ProjectionReplay(_) => "projection_replay",
+                    tribunus_evidence_schema::EventPayloadV4::ProjectionGraph(_) => {
+                        "projection_graph"
+                    }
+                    tribunus_evidence_schema::EventPayloadV4::ProjectionReplay(_) => {
+                        "projection_replay"
+                    }
                     tribunus_evidence_schema::EventPayloadV4::MetalCommand(_) => "metal_command",
                     tribunus_evidence_schema::EventPayloadV4::MemorySample(_) => "memory_sample",
-                    tribunus_evidence_schema::EventPayloadV4::CorrectnessCheckpoint(_) => "correctness",
+                    tribunus_evidence_schema::EventPayloadV4::CorrectnessCheckpoint(_) => {
+                        "correctness"
+                    }
                     tribunus_evidence_schema::EventPayloadV4::ModelLoad(_) => "model_load",
                     tribunus_evidence_schema::EventPayloadV4::TokenMetric(_) => "token_metric",
                     tribunus_evidence_schema::EventPayloadV4::Lifecycle(_) => "lifecycle",
                     tribunus_evidence_schema::EventPayloadV4::Diagnostic(_) => "diagnostic",
-                    tribunus_evidence_schema::EventPayloadV4::ResourceLifecycle(_) => "resource_lifecycle",
-                    tribunus_evidence_schema::EventPayloadV4::ConditioningRecipe(_) => "conditioning_recipe",
-                    tribunus_evidence_schema::EventPayloadV4::PrefetchLifecycle(_) => "prefetch_lifecycle",
-                    tribunus_evidence_schema::EventPayloadV4::ReadinessTransition(_) => "readiness_transition",
-                    tribunus_evidence_schema::EventPayloadV4::TreatmentSummary(_) => "treatment_summary",
+                    tribunus_evidence_schema::EventPayloadV4::ResourceLifecycle(_) => {
+                        "resource_lifecycle"
+                    }
+                    tribunus_evidence_schema::EventPayloadV4::ConditioningRecipe(_) => {
+                        "conditioning_recipe"
+                    }
+                    tribunus_evidence_schema::EventPayloadV4::PrefetchLifecycle(_) => {
+                        "prefetch_lifecycle"
+                    }
+                    tribunus_evidence_schema::EventPayloadV4::ReadinessTransition(_) => {
+                        "readiness_transition"
+                    }
+                    tribunus_evidence_schema::EventPayloadV4::TreatmentSummary(_) => {
+                        "treatment_summary"
+                    }
                 };
                 *counts.entry(tag.to_string()).or_insert(0) += 1;
             }

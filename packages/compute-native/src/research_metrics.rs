@@ -5,66 +5,42 @@
 //! POD struct, [`StageEventBuilder`] produces a packed [`TraceEvent`], and
 //! cumulative counters use relaxed atomic loads.
 
-use crate::compute_image;
+use crate::research_contracts::{
+    ClockSource, CounterSource, MemorySource, DEFAULT_CLOCK_SOURCE, DEFAULT_COUNTER_SOURCE,
+    DEFAULT_MEMORY_SOURCE,
+};
 use crate::research_trace::{ClockDomain, StageId, SubstrateId, TraceEvent};
-use crate::worker_memory;
-use std::sync::atomic::{AtomicU64, Ordering};
-use std::time::Instant;
-
-// ── Cumulative counters ────────────────────────────────────────────────────
-
-/// Cumulative bytes of weight-tensor data that required a layout conversion
-/// (dequantization, dtype promotion, transpose) at runtime.
-static MATERIALIZED_BYTES: AtomicU64 = AtomicU64::new(0);
-
-/// Cumulative bytes of segment data read from disk (file I/O).
-static FILE_READ_BYTES: AtomicU64 = AtomicU64::new(0);
-
-/// Cumulative bytes allocated or committed for KV cache data.
-static KV_BYTES: AtomicU64 = AtomicU64::new(0);
-
 /// Record that `bytes` weight-tensor data was materialized (dequantized,
 /// dtype-cast, etc.) since the last snapshot.
 pub fn record_materialized(bytes: u64) {
-    MATERIALIZED_BYTES.fetch_add(bytes, Ordering::Relaxed);
+    DEFAULT_COUNTER_SOURCE.record_materialized(bytes);
 }
 
 /// Record that `bytes` of segment data were read from disk.
 pub fn record_file_read(bytes: u64) {
-    FILE_READ_BYTES.fetch_add(bytes, Ordering::Relaxed);
+    DEFAULT_COUNTER_SOURCE.record_file_read(bytes);
 }
 
 /// Record that `bytes` of KV cache memory were committed.
 pub fn record_kv(bytes: u64) {
-    KV_BYTES.fetch_add(bytes, Ordering::Relaxed);
+    DEFAULT_COUNTER_SOURCE.record_kv(bytes);
 }
 
 /// Reset all cumulative counters to zero (e.g. at worker-start or generation
 /// boundary).
 pub fn reset_counters() {
-    MATERIALIZED_BYTES.store(0, Ordering::Relaxed);
-    FILE_READ_BYTES.store(0, Ordering::Relaxed);
-    KV_BYTES.store(0, Ordering::Relaxed);
+    DEFAULT_COUNTER_SOURCE.reset();
 }
 
 // ── Monotonic clock ────────────────────────────────────────────────────────
 
 /// Returns a monotonic timestamp in nanoseconds since an unspecified epoch.
 ///
-/// Uses [`Instant::now`] under the hood. The absolute value is meaningful
+/// Uses the default worker monotonic clock. The absolute value is meaningful
 /// only for computing deltas within the same process lifetime.
 #[inline]
 pub fn monotonic_now() -> u64 {
-    // Instant::now() on all supported platforms returns a monotonic clock.
-    // We anchor it to an origin so the u64 value stays compact.
-    let d = Instant::now().duration_since(origin());
-    d.as_nanos() as u64
-}
-
-static ORIGIN: std::sync::OnceLock<Instant> = std::sync::OnceLock::new();
-
-fn origin() -> Instant {
-    *ORIGIN.get_or_init(|| Instant::now())
+    DEFAULT_CLOCK_SOURCE.now_ns()
 }
 
 // ── Memory snapshot ────────────────────────────────────────────────────────
@@ -93,19 +69,14 @@ pub struct MemorySnapshot {
 impl MemorySnapshot {
     /// Take a live memory snapshot.
     ///
-    /// Reads MLX allocator counters via [`compute_image`] bridge functions,
-    /// process RSS via [`worker_memory::sample_process_rss_self`], and
-    /// cumulative materialized / file-read / KV byte counters from the
-    /// global atomic accumulators.
+    /// Reads allocator and process state via the default memory source.
     pub fn take() -> Self {
-        Self {
-            mlx_active: compute_image::mlx_active_memory_bytes(),
-            mlx_cache: compute_image::mlx_cache_memory_bytes(),
-            rss: worker_memory::sample_process_rss_self(),
-            materialized: MATERIALIZED_BYTES.load(Ordering::Relaxed),
-            file_read: FILE_READ_BYTES.load(Ordering::Relaxed),
-            kv: KV_BYTES.load(Ordering::Relaxed),
-        }
+        DEFAULT_MEMORY_SOURCE.sample()
+    }
+
+    /// Take a snapshot from an injected memory source.
+    pub fn take_with(source: &dyn MemorySource) -> Self {
+        source.sample()
     }
 
     /// Compute i32 deltas from `baseline` to `self`.
@@ -171,8 +142,21 @@ impl StageEventBuilder {
     /// + sync_ns`. The builder stores only the start instant; `finish`
     /// records the end instant and computes the split.
     pub fn begin(stage: StageId, substrate: SubstrateId) -> Self {
+        Self::begin_at(stage, substrate, monotonic_now())
+    }
+
+    /// Begin a stage event using an injected clock source.
+    pub fn begin_with_clock(
+        stage: StageId,
+        substrate: SubstrateId,
+        clock: &dyn ClockSource,
+    ) -> Self {
+        Self::begin_at(stage, substrate, clock.now_ns())
+    }
+
+    fn begin_at(stage: StageId, substrate: SubstrateId, start_ns: u64) -> Self {
         Self {
-            start_ns: monotonic_now(),
+            start_ns,
             stage_id: stage,
             substrate_id: substrate,
             layer_index: 0,
@@ -205,7 +189,19 @@ impl StageEventBuilder {
     /// `sync_ns`) so the consumer can fill them. The `monotonic_ns` field
     /// holds the finish timestamp.
     pub fn finish(self, snapshot: &MemorySnapshot) -> TraceEvent {
-        let now_ns = monotonic_now();
+        self.finish_at(snapshot, monotonic_now())
+    }
+
+    /// Finalise the event using an injected clock reading.
+    pub fn finish_with_clock(
+        self,
+        snapshot: &MemorySnapshot,
+        clock: &dyn ClockSource,
+    ) -> TraceEvent {
+        self.finish_at(snapshot, clock.now_ns())
+    }
+
+    fn finish_at(self, snapshot: &MemorySnapshot, now_ns: u64) -> TraceEvent {
         let elapsed_ns = now_ns.saturating_sub(self.start_ns);
 
         // Decompose total elapsed into graph_build_ns. The caller may
@@ -261,6 +257,25 @@ pub enum InstrumentationMode {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::research_contracts::{ClockSource, MemorySource};
+
+    #[derive(Debug, Clone, Copy)]
+    struct FixedClock(u64);
+
+    impl ClockSource for FixedClock {
+        fn now_ns(&self) -> u64 {
+            self.0
+        }
+    }
+
+    #[derive(Debug, Clone, Copy)]
+    struct FixedMemorySource(MemorySnapshot);
+
+    impl MemorySource for FixedMemorySource {
+        fn sample(&self) -> MemorySnapshot {
+            self.0
+        }
+    }
 
     #[test]
     fn test_monotonic_now_increases() {
@@ -274,6 +289,22 @@ mod tests {
         let snap = MemorySnapshot::take();
         // RSS should be > 0 on any real process.
         assert!(snap.rss > 0, "RSS must be positive in a running process");
+    }
+
+    #[test]
+    fn test_memory_snapshot_take_with_source() {
+        let source = FixedMemorySource(MemorySnapshot {
+            mlx_active: 11,
+            mlx_cache: 22,
+            rss: 33,
+            materialized: 44,
+            file_read: 55,
+            kv: 66,
+        });
+        let snap = MemorySnapshot::take_with(&source);
+        assert_eq!(snap.mlx_active, 11);
+        assert_eq!(snap.file_read, 55);
+        assert_eq!(snap.kv, 66);
     }
 
     #[test]
@@ -317,7 +348,7 @@ mod tests {
 
     #[test]
     #[ignore = "requires running worker process"]
-fn test_memory_snapshot_delta_negative() {
+    fn test_memory_snapshot_delta_negative() {
         let base = MemorySnapshot {
             mlx_active: 5000,
             mlx_cache: 3000,
@@ -360,6 +391,29 @@ fn test_memory_snapshot_delta_negative() {
     }
 
     #[test]
+    fn test_stage_event_builder_uses_injected_clock() {
+        let clock = FixedClock(1234);
+        let snap = FixedMemorySource(MemorySnapshot {
+            mlx_active: 1,
+            mlx_cache: 2,
+            rss: 3,
+            materialized: 4,
+            file_read: 5,
+            kv: 6,
+        })
+        .sample();
+        let ev = StageEventBuilder::begin_with_clock(
+            StageId::WorkerLaunch,
+            SubstrateId::ControlPlane,
+            &clock,
+        )
+        .finish_with_clock(&snap, &clock);
+
+        assert_eq!(ev.monotonic_ns, 1234);
+        assert_eq!(ev.graph_build_ns, 0);
+    }
+
+    #[test]
     fn test_counters_round_trip() {
         reset_counters();
         record_materialized(1024);
@@ -382,6 +436,9 @@ fn test_memory_snapshot_delta_negative() {
 
     #[test]
     fn test_instrumentation_mode_default() {
-        assert_eq!(InstrumentationMode::default(), InstrumentationMode::ResearchStandard);
+        assert_eq!(
+            InstrumentationMode::default(),
+            InstrumentationMode::ResearchStandard
+        );
     }
 }

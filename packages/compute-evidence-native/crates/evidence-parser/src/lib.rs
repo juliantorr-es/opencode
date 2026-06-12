@@ -21,7 +21,7 @@ use serde_json::de::IoRead;
 use std::io::{BufReader, Cursor, Read};
 use std::path::Path;
 use tribunus_evidence_schema::{
-    AttentionKind, EvidenceEventV4, EventPayloadV4, IngestionProvenance, LayerStageEvent,
+    AttentionKind, EventPayloadV4, EvidenceEventV4, IngestionProvenance, LayerStageEvent,
     ProjectionFamily, ProjectionGraphEvent, SchemaVersion, ValidationMode,
 };
 
@@ -46,11 +46,18 @@ impl std::fmt::Display for DecodeError {
         match self {
             DecodeError::Io(e) => write!(f, "I/O error: {}", e),
             DecodeError::Json(e) => write!(f, "JSON parse error: {}", e),
-            DecodeError::Validation { event_index, message } => {
+            DecodeError::Validation {
+                event_index,
+                message,
+            } => {
                 write!(f, "validation error at event {}: {}", event_index, message)
             }
             DecodeError::UnknownSchemaVersion { found, event_index } => {
-                write!(f, "unknown schema version {} at event {}", found, event_index)
+                write!(
+                    f,
+                    "unknown schema version {} at event {}",
+                    found, event_index
+                )
             }
         }
     }
@@ -108,10 +115,7 @@ impl InputChunk {
 // ── Event decoder trait ────────────────────────────────────────────────────
 
 pub trait EventDecoder {
-    fn decode_next(
-        &mut self,
-        input: &mut InputChunk,
-    ) -> Result<Option<DecodedEvent>, DecodeError>;
+    fn decode_next(&mut self, input: &mut InputChunk) -> Result<Option<DecodedEvent>, DecodeError>;
 }
 
 // ── Serde streaming decoder ────────────────────────────────────────────────
@@ -143,10 +147,7 @@ impl SerdeStreamingDecoder {
 }
 
 impl EventDecoder for SerdeStreamingDecoder {
-    fn decode_next(
-        &mut self,
-        input: &mut InputChunk,
-    ) -> Result<Option<DecodedEvent>, DecodeError> {
+    fn decode_next(&mut self, input: &mut InputChunk) -> Result<Option<DecodedEvent>, DecodeError> {
         if input.byte_offset >= input.data.len() as u64 {
             return Ok(None);
         }
@@ -181,8 +182,7 @@ impl EventDecoder for SerdeStreamingDecoder {
         }
 
         // Deserialize
-        let ev: EvidenceEventV4 =
-            serde_json::from_slice(json_bytes).map_err(DecodeError::Json)?;
+        let ev: EvidenceEventV4 = serde_json::from_slice(json_bytes).map_err(DecodeError::Json)?;
 
         // Schema version check
         if !ev.schema_version.is_compatible() {
@@ -463,19 +463,18 @@ pub fn migrate_v3_projection(line: &str, run_id: &str) -> Option<EvidenceEventV4
 /// Simple regex match: find the first capture group.
 fn regex_match<'a>(haystack: &'a str, pattern: &str) -> Option<&'a str> {
     // Simplified: find `key=value` by splitting
-    let prefix = pattern.trim_end_matches(r"(\S+)").trim_end_matches(r"(\d+)");
+    let prefix = pattern
+        .trim_end_matches(r"(\S+)")
+        .trim_end_matches(r"(\d+)");
     let prefix = prefix.trim_end_matches('=');
     if let Some(pos) = haystack.find(&format!("{}=", prefix)) {
         let rest = &haystack[pos + prefix.len() + 1..];
-        let end = rest
-            .find(|c: char| c.is_whitespace())
-            .unwrap_or(rest.len());
+        let end = rest.find(|c: char| c.is_whitespace()).unwrap_or(rest.len());
         Some(&rest[..end])
     } else {
         None
     }
 }
-
 
 #[cfg(test)]
 mod tests {
@@ -565,7 +564,7 @@ mod tests {
         use tribunus_evidence_schema::mission0007::{
             ConditioningArm, ModelReadiness, ReadinessTransitionEvent,
         };
-        use tribunus_evidence_schema::{EvidenceEventV4, RunId, RequestId, WorkerId};
+        use tribunus_evidence_schema::{EvidenceEventV4, RequestId, RunId, WorkerId};
 
         let rt = ReadinessTransitionEvent {
             resource_id: "m7-test-model".into(),
@@ -593,8 +592,8 @@ mod tests {
 
     fn test_correctness_checkpoint_roundtrip() {
         use tribunus_evidence_schema::{
-            CorrectnessCheckpointEvent, EvidenceEventV4, ProjectionFamily,
-            RunId, RequestId, WorkerId,
+            CorrectnessCheckpointEvent, EvidenceEventV4, ProjectionFamily, RequestId, RunId,
+            WorkerId,
         };
 
         // Build a synthetic correctness checkpoint matching what the replay CLI emits
@@ -628,7 +627,10 @@ mod tests {
             EventPayloadV4::CorrectnessCheckpoint(cc2) => {
                 assert_eq!(cc2.family, ProjectionFamily::QProj);
                 assert_eq!(cc2.input_digest, "abc123def456");
-                assert_eq!(cc2.reference_impl, "mlx_rs::ops::dequantize+transpose+matmul");
+                assert_eq!(
+                    cc2.reference_impl,
+                    "mlx_rs::ops::dequantize+transpose+matmul"
+                );
                 assert!((cc2.max_abs_error - 0.0719).abs() < 1e-10);
                 assert!((cc2.mean_abs_error - 0.0165).abs() < 1e-10);
                 assert_eq!(cc2.max_rel_error, Some(0.000357));

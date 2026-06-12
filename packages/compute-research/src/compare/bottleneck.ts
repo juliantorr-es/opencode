@@ -5,7 +5,7 @@
  * whether the bottleneck migrated between baseline and treatment.
  */
 
-import type { Event } from "./index.js";
+import type { ComparisonObservation } from "./receipts.js";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -44,8 +44,8 @@ export interface BottleneckLedger {
  * to that stage's total. Stages are ordered by descending share.
  */
 export function buildBottleneckLedger(
-  baselineEvents: Event[],
-  treatmentEvents: Event[],
+  baselineEvents: ComparisonObservation[],
+  treatmentEvents: ComparisonObservation[],
 ): BottleneckLedger {
   const baselineShares = computeStageShares(baselineEvents);
   const treatmentShares = computeStageShares(treatmentEvents);
@@ -80,7 +80,7 @@ export function buildBottleneckLedger(
 
 // ── Internal ─────────────────────────────────────────────────────────────────
 
-function computeStageShares(events: Event[]): StageShare[] {
+function computeStageShares(events: ComparisonObservation[]): StageShare[] {
   const totals = new Map<string, number>();
   let totalMs = 0;
 

@@ -114,6 +114,44 @@ function createCompareRun(rootDir: string, runId: string, latencyValues: number[
   return rd;
 }
 
+function writeComparisonReceipt(
+  rd: InstanceType<typeof RunDirectory>,
+  fileName: string,
+  steadyMeanNs: number,
+  fileReadBytes: number,
+): void {
+  writeFileSync(
+    join(rd.receiptsDir, fileName),
+    JSON.stringify(
+      {
+        schema_version: "1",
+        run_id: rd.runId,
+        timestamp: "2026-06-09T01:00:00Z",
+        backend: "mlx",
+        backend_support_status: "supported_native",
+        graph_family: "matmul",
+        pipeline_phase: "steady",
+        status: "pass",
+        predict_status: "pass",
+        load_status: "pass",
+        compile_status: "pass",
+        warmup_status: "pass",
+        steady_status: "pass",
+        matches_tolerance: true,
+        reference_output_hashes_populated: true,
+        steady_mean_ns: steadyMeanNs,
+        steady_p50_ns: steadyMeanNs,
+        file_read_bytes: fileReadBytes,
+        load_duration_ns: 2_000_000,
+        materialize_duration_ns: 1_000_000,
+        process_rss_after_steady_kb: 128,
+      },
+      null,
+      2,
+    ) + "\n",
+  );
+}
+
 describe("Pipeline E2E", () => {
   const tmpRoots: string[] = [];
   afterAll(() => { for (const d of tmpRoots) rmrf(d); });
@@ -192,6 +230,41 @@ describe("Pipeline E2E", () => {
     expect(compRecord.baselineSummary.mean).toBeCloseTo(100, 0);
     expect(compRecord.treatmentSummary.mean).toBeCloseTo(95, 0);
   }, 60_000);
+
+  test("comparison prefers structured receipts over event fallbacks", async () => {
+    const root = tempDir();
+    tmpRoots.push(root);
+
+    const baselineRd = createCompareRun(root, "receipt-baseline", [100, 101, 99]);
+    const treatmentRd = createCompareRun(root, "receipt-treatment", [95, 96, 94]);
+    writeComparisonReceipt(baselineRd, "receipt.json", 11, 4096);
+    writeComparisonReceipt(baselineRd, "secondary.json", 12, 8192);
+    writeComparisonReceipt(baselineRd, "tertiary.json", 10, 2048);
+    writeComparisonReceipt(treatmentRd, "receipt.json", 7, 1024);
+    writeComparisonReceipt(treatmentRd, "secondary.json", 8, 2048);
+    writeComparisonReceipt(treatmentRd, "tertiary.json", 6, 4096);
+    finalizeRun(baselineRd);
+    finalizeRun(treatmentRd);
+
+    const compRecord = await runComparison("receipt-baseline", "receipt-treatment", {
+      baselineRoot: root,
+      treatmentRoot: root,
+      outputRoot: join(root, "comparison-results"),
+      primaryMetric: "steady_mean_ns",
+      paired: true,
+      randomSeed: 7,
+    });
+
+    expect(compRecord.baselineSummary.n).toBe(3);
+    expect(compRecord.treatmentSummary.n).toBe(3);
+    expect(compRecord.baselineSummary.mean).toBeCloseTo(11, 0);
+    expect(compRecord.treatmentSummary.mean).toBeCloseTo(7, 0);
+    expect(compRecord.correctness.tokenMatch.pass).toBe(true);
+    expect(compRecord.correctness.handleCleanup.pass).toBe(true);
+    expect(compRecord.correctness.fileIO.pass).toBe(true);
+    expect(compRecord.correctness.workerContainment.pass).toBe(true);
+    expect(compRecord.evidenceComplete).toBe(true);
+  });
 
   test("structurally invalid provenance rejected at finalization", () => {
     const root = tempDir();

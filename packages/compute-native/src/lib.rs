@@ -68,6 +68,7 @@ pub mod runtime_trace;
 pub mod sidecar;
 pub mod streaming;
 pub mod receipts;
+pub mod research_contracts;
 pub mod research_trace;
 pub mod research_metrics;
 mod session;

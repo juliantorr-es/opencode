@@ -6,8 +6,8 @@
 
 use std::cell::UnsafeCell;
 use std::sync::atomic::{AtomicBool, AtomicU64, AtomicUsize, Ordering};
-use std::sync::LazyLock;
-use std::time::Instant;
+
+use crate::research_contracts::{ClockSource, TraceSink, DEFAULT_CLOCK_SOURCE};
 
 // ---------------------------------------------------------------------------
 // Stage IDs (phase 0 taxonomy, stable numeric)
@@ -297,12 +297,19 @@ impl TraceBuffer {
     }
 }
 
-// ---------------------------------------------------------------------------
-// Clock helpers
-// ---------------------------------------------------------------------------
+impl TraceSink for TraceBuffer {
+    fn push(&self, event: TraceEvent) -> bool {
+        TraceBuffer::push(self, event)
+    }
 
-/// Epoch anchor for [`monotonic_now`].
-static MONOTONIC_EPOCH: LazyLock<Instant> = LazyLock::new(Instant::now);
+    fn drops(&self) -> u64 {
+        TraceBuffer::drops(self)
+    }
+
+    fn overflowed(&self) -> bool {
+        TraceBuffer::overflowed(self)
+    }
+}
 
 /// Get worker monotonic nanoseconds.
 ///
@@ -310,9 +317,7 @@ static MONOTONIC_EPOCH: LazyLock<Instant> = LazyLock::new(Instant::now);
 /// within the process lifetime.  It is stable within a single worker process
 /// and is the default timestamp for [`TraceEvent::monotonic_ns`].
 pub fn monotonic_now() -> u64 {
-    Instant::now()
-        .duration_since(*MONOTONIC_EPOCH)
-        .as_nanos() as u64
+    DEFAULT_CLOCK_SOURCE.now_ns()
 }
 
 // ---------------------------------------------------------------------------
@@ -414,10 +419,12 @@ mod tests {
         }
 
         // All 1024 slots should be filled; remaining pushes were dropped.
-        assert!(buf.drops() > 0 || !buf.overflowed() || {
-            let mut b = Arc::try_unwrap(buf).unwrap();
-            b.drain().len() == 1024
-        });
+        assert!(
+            buf.drops() > 0 || !buf.overflowed() || {
+                let mut b = Arc::try_unwrap(buf).unwrap();
+                b.drain().len() == 1024
+            }
+        );
     }
 
     #[test]

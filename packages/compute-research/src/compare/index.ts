@@ -6,6 +6,7 @@
 
 import type { StageShare, BottleneckLedger } from "./bottleneck.js";
 import { buildBottleneckLedger } from "./bottleneck.js";
+import { loadComparisonDataset, type ComparisonObservation } from "./receipts.js";
 import {
   bootstrapIndependentCI,
   bootstrapPairedCI,
@@ -18,16 +19,6 @@ import { readFileSync, writeFileSync, mkdirSync } from "fs";
 import { join, resolve } from "path";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
-
-/** An event logged during a run (one line of the events JSONL file). */
-export interface Event {
-  /** Event category or stage label, e.g. `"inference"`, `"tokenize"`. */
-  stage?: string;
-  /** Wall-clock duration in milliseconds (when applicable). */
-  durationMs?: number;
-  /** Arbitrary metadata attached at record time. */
-  [key: string]: unknown;
-}
 
 /** Configuration for a comparison operation. */
 export interface ComparisonConfig {
@@ -154,8 +145,8 @@ export async function runComparison(
   const treatmentWorkload = readJsonFile<Record<string, unknown>>(
     join(treatmentDir, "workload.json"),
   );
-  const baselineEvents = readEvents(baselineDir);
-  const treatmentEvents = readEvents(treatmentDir);
+  const baselineData = loadComparisonDataset(baselineDir);
+  const treatmentData = loadComparisonDataset(treatmentDir);
   const baselineProvenance = readJsonFile<Record<string, unknown>>(
     join(baselineDir, "provenance.json"),
   );
@@ -177,8 +168,8 @@ export async function runComparison(
 
   // 3. Extract primary metric values
   const primaryMetric = config.primaryMetric;
-  const baselineValues = extractMetric(baselineEvents, primaryMetric);
-  const treatmentValues = extractMetric(treatmentEvents, primaryMetric);
+  const baselineValues = extractMetric(baselineData.records, primaryMetric);
+  const treatmentValues = extractMetric(treatmentData.records, primaryMetric);
 
   // 4. Compute summary statistics
   const baselineSummary = computeSummaryStats(baselineValues);
@@ -243,19 +234,28 @@ export async function runComparison(
   const outlierIndices = outlierDetect(treatmentValues, "iqr");
 
   // 10. Bottleneck analysis
-  const bottleneckLedger = buildBottleneckLedger(baselineEvents, treatmentEvents);
+  const bottleneckLedger = buildBottleneckLedger(
+    baselineData.records,
+    treatmentData.records,
+  );
 
   // 11. Correctness gates
   const correctness = checkCorrectnessGates(
-    treatmentEvents,
+    treatmentData.records,
+    treatmentData.sourceKind,
     treatmentManifest,
     config,
   );
 
   // 12. Evidence completeness
   const evidenceComplete = checkEvidenceComplete(
-    { manifest: baselineManifest, workload: baselineWorkload, provenance: baselineProvenance, events: baselineEvents.length },
-    { manifest: treatmentManifest, workload: treatmentWorkload, provenance: treatmentProvenance, events: treatmentEvents.length },
+    {
+      manifest: baselineManifest,
+      workload: baselineWorkload,
+      provenance: baselineProvenance,
+      records: baselineData.records.length,
+    },
+    { manifest: treatmentManifest, workload: treatmentWorkload, provenance: treatmentProvenance, records: treatmentData.records.length },
   );
 
   // 13. Recommendation
@@ -308,24 +308,47 @@ export async function runComparison(
 // ── Correctness gates ─────────────────────────────────────────────────────────
 
 function checkCorrectnessGates(
-  events: Event[],
+  records: ComparisonObservation[],
+  sourceKind: "receipt" | "event",
   manifest: Record<string, unknown> | null,
   config: ComparisonConfig,
 ): Record<string, CorrectnessGateResult> {
   const gates: Record<string, CorrectnessGateResult> = {};
 
-  // Token match: check for tokenization events that match expected counts
-  gates.tokenMatch = checkGate(
-    events.some((e) => {
-      const stage = (e as Record<string, unknown>).stage;
-      return stage != null && String(stage).includes("token");
-    }),
-    "No token events found; token match not verifiable",
-  );
+  if (sourceKind === "receipt") {
+    const hasTolerance = records.some((record) => record.matches_tolerance === true);
+    const hasReferenceHashes = records.some((record) => record.reference_output_hashes_populated === true);
+    const hasPassStatus = records.some((record) =>
+      isSuccessStatus(record.status) ||
+      isSuccessStatus(record.predict_status) ||
+      isSuccessStatus(record.load_status) ||
+      isSuccessStatus(record.compile_status) ||
+      isSuccessStatus(record.steady_status) ||
+      isSuccessStatus(record.warmup_status),
+    );
+    gates.tokenMatch = checkGate(
+      hasTolerance || hasReferenceHashes || hasPassStatus,
+      hasTolerance
+        ? "Structured receipts reported tolerance satisfaction"
+        : hasReferenceHashes
+          ? "Structured receipts reported reference hashes"
+          : hasPassStatus
+            ? "Structured receipts reported a terminal success status"
+            : "No structured receipt evidence for tolerance or reference hashes",
+    );
+  } else {
+    gates.tokenMatch = checkGate(
+      records.some((record) => {
+        const stage = record.stage;
+        return stage != null && String(stage).includes("token");
+      }),
+      "No token events found; token match not verifiable",
+    );
+  }
 
   // Numerical tolerance: flag if any value is NaN or Infinity
   const metric = config.primaryMetric;
-  const values = extractMetric(events, metric);
+  const values = extractMetric(records, metric);
   const hasInvalid = values.some((v) => !Number.isFinite(v));
   gates.numericalTolerance = checkGate(
     !hasInvalid,
@@ -335,26 +358,45 @@ function checkCorrectnessGates(
   );
 
   // Handle cleanup: check for start/finish events
-  const hasStart = events.some(
-    (e) => (e as Record<string, unknown>).event === "start" || (e as Record<string, unknown>).stage === "start",
-  );
-  const hasFinish = events.some(
-    (e) => (e as Record<string, unknown>).event === "finish" || (e as Record<string, unknown>).stage === "finish",
-  );
-  gates.handleCleanup = checkGate(
-    hasStart && hasFinish,
-    hasStart
-      ? "Run started but no finish event found"
-      : hasFinish
-        ? "Run has finish event but no start event"
-        : "No start or finish events — handle lifecycle incomplete",
-  );
+  if (sourceKind === "receipt") {
+    const hasTerminalSuccess = records.some((record) =>
+      isSuccessStatus(record.status) ||
+      isSuccessStatus(record.predict_status) ||
+      isSuccessStatus(record.load_status) ||
+      isSuccessStatus(record.compile_status) ||
+      isSuccessStatus(record.cold_status) ||
+      isSuccessStatus(record.warmup_status) ||
+      isSuccessStatus(record.steady_status) ||
+      isSuccessStatus(record.reference_status),
+    );
+    gates.handleCleanup = checkGate(
+      hasTerminalSuccess,
+      hasTerminalSuccess
+        ? "Structured receipts reached a terminal success status"
+        : "Structured receipts did not report a terminal success status",
+    );
+  } else {
+    const hasStart = records.some(
+      (record) => record.event === "start" || record.stage === "start",
+    );
+    const hasFinish = records.some(
+      (record) => record.event === "finish" || record.stage === "finish",
+    );
+    gates.handleCleanup = checkGate(
+      hasStart && hasFinish,
+      hasStart
+        ? "Run started but no finish event found"
+        : hasFinish
+          ? "Run has finish event but no start event"
+          : "No start or finish events — handle lifecycle incomplete",
+    );
+  }
 
   // Wall-clock budget
   if (config.wallClockBudgetMs != null) {
     // Sum durations from timed events as a proxy for wall clock
-    const totalTime = events.reduce(
-      (sum, e) => sum + ((e as Record<string, unknown>).durationMs as number ?? 0),
+    const totalTime = records.reduce(
+      (sum, record) => sum + (record.durationMs ?? 0),
       0,
     );
     gates.wallClockBudget = checkGate(
@@ -368,7 +410,7 @@ function checkCorrectnessGates(
   // Memory ceiling
   if (config.memoryCeilingBytes != null) {
     const maxMem = Math.max(
-      ...events.map((e) => (e as Record<string, unknown>).memoryBytes as number ?? 0),
+      ...records.map((record) => record.memoryBytes ?? 0),
     );
     gates.memoryCeiling = checkGate(
       maxMem <= config.memoryCeilingBytes,
@@ -379,28 +421,46 @@ function checkCorrectnessGates(
   }
 
   // Worker containment: check for worker-related events
-  const workerCount = events.filter(
-    (e) => String((e as Record<string, unknown>).stage ?? "").includes("worker"),
+  const workerCount = records.filter(
+    (record) => String(record.stage ?? "").includes("worker"),
   ).length;
   gates.workerContainment = checkGate(
-    workerCount > 0,
-    workerCount === 0
-      ? "No worker events — worker containment not verified"
-      : `${workerCount} worker events recorded`,
+    sourceKind === "receipt" ? records.some((record) => isSupportedBackendStatus(record.backend_support_status)) : workerCount > 0,
+    sourceKind === "receipt"
+      ? "Structured receipts reported backend support status"
+      : workerCount === 0
+        ? "No worker events — worker containment not verified"
+        : `${workerCount} worker events recorded`,
   );
 
   // File I/O: check for I/O events
-  const ioEvents = events.filter(
-    (e) =>
-      String((e as Record<string, unknown>).stage ?? "").includes("io") ||
-      String((e as Record<string, unknown>).stage ?? "").includes("file"),
-  );
-  gates.fileIO = checkGate(
-    ioEvents.length > 0,
-    ioEvents.length === 0
-      ? "No file I/O events recorded"
-      : `${ioEvents.length} file I/O events recorded`,
-  );
+  if (sourceKind === "receipt") {
+    const fileReadBytes = records.some((record) => (numericField(record, "file_read_bytes") ?? 0) > 0);
+    const loadBytes = records.some((record) => (numericField(record, "load_duration_ns") ?? 0) > 0);
+    const materializationBytes = records.some((record) => (numericField(record, "materialize_duration_ns") ?? 0) > 0);
+    gates.fileIO = checkGate(
+      fileReadBytes || loadBytes || materializationBytes,
+      fileReadBytes
+        ? "Structured receipts reported file read bytes"
+        : loadBytes
+          ? "Structured receipts reported load duration"
+          : materializationBytes
+            ? "Structured receipts reported materialization duration"
+            : "Structured receipts did not expose file I/O evidence",
+    );
+  } else {
+    const ioEvents = records.filter(
+      (record) =>
+        String(record.stage ?? "").includes("io") ||
+        String(record.stage ?? "").includes("file"),
+    );
+    gates.fileIO = checkGate(
+      ioEvents.length > 0,
+      ioEvents.length === 0
+        ? "No file I/O events recorded"
+        : `${ioEvents.length} file I/O events recorded`,
+    );
+  }
 
   return gates;
 }
@@ -412,24 +472,24 @@ function checkEvidenceComplete(
     manifest: Record<string, unknown> | null;
     workload: Record<string, unknown> | null;
     provenance: Record<string, unknown> | null;
-    events: number;
+    records: number;
   },
   treatment: {
     manifest: Record<string, unknown> | null;
     workload: Record<string, unknown> | null;
     provenance: Record<string, unknown> | null;
-    events: number;
+    records: number;
   },
 ): boolean {
   return (
     baseline.manifest != null &&
     baseline.workload != null &&
     baseline.provenance != null &&
-    baseline.events > 0 &&
+    baseline.records > 0 &&
     treatment.manifest != null &&
     treatment.workload != null &&
     treatment.provenance != null &&
-    treatment.events > 0
+    treatment.records > 0
   );
 }
 
@@ -483,39 +543,18 @@ function readJsonFile<T>(path: string): T | null {
   }
 }
 
-function readEvents(runDir: string): Event[] {
-  try {
-    const raw = readFileSync(join(runDir, "events.jsonl"), "utf-8");
-    const lines = raw.trim().split("\n");
-    const events: Event[] = [];
-    for (const line of lines) {
-      const trimmed = line.trim();
-      if (trimmed) {
-        try {
-          events.push(JSON.parse(trimmed) as Event);
-        } catch {
-          // skip malformed lines
-        }
-      }
-    }
-    return events;
-  } catch {
-    return [];
-  }
-}
-
 /** Extract numeric values for a named metric from the event stream. */
-function extractMetric(events: Event[], metric: string): number[] {
+function extractMetric(events: ComparisonObservation[], metric: string): number[] {
   const values: number[] = [];
   for (const ev of events) {
-    const v = (ev as Record<string, unknown>)[metric];
+    const v = ev[metric];
     if (typeof v === "number" && Number.isFinite(v)) {
       values.push(v);
     }
   }
   // Also check for a nested `metrics` object
   for (const ev of events) {
-    const metrics = (ev as Record<string, unknown>).metrics as Record<string, unknown> | undefined;
+    const metrics = ev.metrics as Record<string, unknown> | undefined;
     if (metrics && typeof metrics[metric] === "number") {
       values.push(metrics[metric] as number);
     }
@@ -615,6 +654,26 @@ function extractMachine(
       tMachine.model_identifier ??
       "unknown",
   );
+}
+
+function isSuccessStatus(value: unknown): boolean {
+  if (typeof value !== "string") {
+    return false;
+  }
+  const normalized = value.toLowerCase();
+  return normalized === "pass" || normalized === "ok" || normalized === "completed" || normalized === "success";
+}
+
+function isSupportedBackendStatus(value: unknown): boolean {
+  if (typeof value !== "string") {
+    return false;
+  }
+  return value.toLowerCase().includes("supported");
+}
+
+function numericField(record: ComparisonObservation, field: string): number | undefined {
+  const value = record[field];
+  return typeof value === "number" && Number.isFinite(value) ? value : undefined;
 }
 
 // ── Re-exports ────────────────────────────────────────────────────────────────

@@ -96,8 +96,7 @@ impl BatchBuilder for LayerStageBatchBuilder {
             self.run_ids.append_value(&ev.run_id.0);
             self.sequence_numbers.append_value(ev.sequence_number);
             self.phases.append_value(ev.phase.as_str());
-            self.layer_indices
-                .append_option(ev.layer_index.map(|l| l));
+            self.layer_indices.append_option(ev.layer_index.map(|l| l));
             self.attention_kinds
                 .append_option(ev.attention_kind.as_ref().map(|k| match k {
                     AttentionKind::Sliding => "sliding",
@@ -217,8 +216,7 @@ impl BatchBuilder for ProjectionGraphBatchBuilder {
             self.run_ids.append_value(&ev.run_id.0);
             self.sequence_numbers.append_value(ev.sequence_number);
             self.phases.append_value(ev.phase.as_str());
-            self.layer_indices
-                .append_option(ev.layer_index.map(|l| l));
+            self.layer_indices.append_option(ev.layer_index.map(|l| l));
             self.families.append_value(pg.family.as_str());
             self.invocations.append_value(pg.invocation);
             self.graph_build_ns.append_value(pg.graph_build_ns);
@@ -318,8 +316,7 @@ impl BatchBuilder for CorrectnessCheckpointBatchBuilder {
         if let EventPayloadV4::CorrectnessCheckpoint(cc) = &ev.payload {
             self.run_ids.append_value(&ev.run_id.0);
             self.families.append_value(cc.family.as_str());
-            self.layer_indices
-                .append_value(ev.layer_index.unwrap_or(0));
+            self.layer_indices.append_value(ev.layer_index.unwrap_or(0));
             self.input_digests.append_value(&cc.input_digest);
             self.reference_impls.append_value(&cc.reference_impl);
             self.max_abs_errors.append_value(cc.max_abs_error);
@@ -402,7 +399,10 @@ impl BatchDispatcher {
                 "readiness_transitions",
                 &mut self.readiness as &mut dyn BatchBuilder,
             ),
-            ("layer_stage_events", &mut self.layer_stage as &mut dyn BatchBuilder),
+            (
+                "layer_stage_events",
+                &mut self.layer_stage as &mut dyn BatchBuilder,
+            ),
             (
                 "projection_graph_events",
                 &mut self.projection_graph as &mut dyn BatchBuilder,
@@ -443,7 +443,7 @@ impl BatchDispatcher {
 mod tests {
     use super::*;
     use tribunus_evidence_schema::{
-        EvidenceEventV4, EventPayloadV4, LayerStageEvent, ProjectionGraphEvent, RunId, RequestId,
+        EventPayloadV4, EvidenceEventV4, LayerStageEvent, ProjectionGraphEvent, RequestId, RunId,
         WorkerId,
     };
 
@@ -537,7 +537,10 @@ mod tests {
         // Flushed at row 2 (reached limit), then 1 remains
         let final_batches = dispatcher.flush_all_final();
         let total: usize = batches.iter().map(|(_, b)| b.num_rows()).sum::<usize>()
-            + final_batches.iter().map(|(_, b)| b.num_rows()).sum::<usize>();
+            + final_batches
+                .iter()
+                .map(|(_, b)| b.num_rows())
+                .sum::<usize>();
         assert_eq!(total, 3);
     }
 }
@@ -577,31 +580,45 @@ impl ReadinessTransitionBatchBuilder {
 }
 
 impl BatchBuilder for ReadinessTransitionBatchBuilder {
-    fn schema(&self) -> Arc<Schema> { self.schema.clone() }
+    fn schema(&self) -> Arc<Schema> {
+        self.schema.clone()
+    }
     fn append(&mut self, ev: &EvidenceEventV4) {
         if let EventPayloadV4::ReadinessTransition(rt) = &ev.payload {
             self.run_ids.append_value(&ev.run_id.0);
             self.resource_ids.append_value(&rt.resource_id.0);
-            self.previous_states.append_value(&format!("{:?}", rt.previous));
-            self.current_states.append_value(&format!("{:?}", rt.current));
+            self.previous_states
+                .append_value(&format!("{:?}", rt.previous));
+            self.current_states
+                .append_value(&format!("{:?}", rt.current));
             self.reasons.append_value(&rt.reason);
             self.transition_ns.append_value(rt.transition_ns);
             self.row_count += 1;
         }
     }
-    fn row_count(&self) -> usize { self.row_count }
+    fn row_count(&self) -> usize {
+        self.row_count
+    }
     fn build(&mut self) -> Option<RecordBatch> {
-        if self.row_count == 0 { return None; }
-        let batch = RecordBatch::try_new(self.schema.clone(), vec![
-            Arc::new(self.run_ids.finish()),
-            Arc::new(self.resource_ids.finish()),
-            Arc::new(self.previous_states.finish()),
-            Arc::new(self.current_states.finish()),
-            Arc::new(self.reasons.finish()),
-            Arc::new(self.transition_ns.finish()),
-        ]).ok();
+        if self.row_count == 0 {
+            return None;
+        }
+        let batch = RecordBatch::try_new(
+            self.schema.clone(),
+            vec![
+                Arc::new(self.run_ids.finish()),
+                Arc::new(self.resource_ids.finish()),
+                Arc::new(self.previous_states.finish()),
+                Arc::new(self.current_states.finish()),
+                Arc::new(self.reasons.finish()),
+                Arc::new(self.transition_ns.finish()),
+            ],
+        )
+        .ok();
         self.reset();
         batch
     }
-    fn reset(&mut self) { *self = Self::new(); }
+    fn reset(&mut self) {
+        *self = Self::new();
+    }
 }

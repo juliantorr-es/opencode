@@ -48,13 +48,28 @@ macro_rules! id_wrapper {
 
 // ── ID newtype wrappers ───────────────────────────────────────────────────
 
-id_wrapper!(KernelSignatureId, "Unique identifier for a kernel signature.");
-id_wrapper!(ConditioningRecipeId, "Unique identifier for a conditioning recipe.");
+id_wrapper!(
+    KernelSignatureId,
+    "Unique identifier for a kernel signature."
+);
+id_wrapper!(
+    ConditioningRecipeId,
+    "Unique identifier for a conditioning recipe."
+);
 id_wrapper!(ResidencyGroupId, "Unique identifier for a residency group.");
-id_wrapper!(ExecutionStepId, "Unique identifier for an execution step (scoped to request).");
+id_wrapper!(
+    ExecutionStepId,
+    "Unique identifier for an execution step (scoped to request)."
+);
 id_wrapper!(ResourceId, "Unique identifier for a tracked resource.");
-id_wrapper!(PipelinePlanVersion, "Semantic version string for the pipeline plan.");
-id_wrapper!(ResidencyPlanVersion, "Semantic version string for the residency plan.");
+id_wrapper!(
+    PipelinePlanVersion,
+    "Semantic version string for the pipeline plan."
+);
+id_wrapper!(
+    ResidencyPlanVersion,
+    "Semantic version string for the residency plan."
+);
 
 // ── ConditioningArm ────────────────────────────────────────────────────────
 

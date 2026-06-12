@@ -22,16 +22,14 @@ pub mod mission0007;
 // Re-export Mission 0007 types (all except `AttentionKind` which already
 // exists in this module with an additional `Embedding` variant).
 pub use mission0007::{
-    ArtifactPreparationBackend, ArtifactRange, ConditioningArm,
-    ConditioningFallbackPolicy, ConditioningRecipe,
-    ConditioningRecipeCompletionState, ConditioningRecipeEvent,
-    ConditioningRecipeId, DType, ExecutionConditioningPolicy,
-    ExecutionStepId, ExpectedSubstrate, KernelSignature, KernelSignatureId,
-    MemoryPressureThreshold, ModelReadiness, OperationFamily, PhaseShape,
-    PipelinePlanVersion, PrefetchLifecycleEvent, PrefetchLifecycleStage,
-    PreparationError, PreparationReceipt, ReadinessTransitionEvent,
-    ResidencyGroup, ResidencyGroupId, ResidencyPlanVersion, ResidencyPriority,
-    ResourceId, ScratchKvContract, SyntheticInputContract, TreatmentSummaryEvent,
+    ArtifactPreparationBackend, ArtifactRange, ConditioningArm, ConditioningFallbackPolicy,
+    ConditioningRecipe, ConditioningRecipeCompletionState, ConditioningRecipeEvent,
+    ConditioningRecipeId, DType, ExecutionConditioningPolicy, ExecutionStepId, ExpectedSubstrate,
+    KernelSignature, KernelSignatureId, MemoryPressureThreshold, ModelReadiness, OperationFamily,
+    PhaseShape, PipelinePlanVersion, PrefetchLifecycleEvent, PrefetchLifecycleStage,
+    PreparationError, PreparationReceipt, ReadinessTransitionEvent, ResidencyGroup,
+    ResidencyGroupId, ResidencyPlanVersion, ResidencyPriority, ResourceId, ScratchKvContract,
+    SyntheticInputContract, TreatmentSummaryEvent,
 };
 
 // ── Schema version ─────────────────────────────────────────────────────────
@@ -230,13 +228,31 @@ impl EvidenceEventV4 {
     pub fn stage_id(&self) -> String {
         match &self.payload {
             EventPayloadV4::ProjectionGraph(p) => {
-                let ts = self.token_step.map(|s| format!("step_{}", s)).unwrap_or_default();
-                let li = self.layer_index.map(|l| format!("layer_{}", l)).unwrap_or_default();
-                format!("{}_{}_{}_{}", self.phase.as_str(), ts, li, p.family.as_str())
+                let ts = self
+                    .token_step
+                    .map(|s| format!("step_{}", s))
+                    .unwrap_or_default();
+                let li = self
+                    .layer_index
+                    .map(|l| format!("layer_{}", l))
+                    .unwrap_or_default();
+                format!(
+                    "{}_{}_{}_{}",
+                    self.phase.as_str(),
+                    ts,
+                    li,
+                    p.family.as_str()
+                )
             }
             EventPayloadV4::LayerStage(_) => {
-                let ts = self.token_step.map(|s| format!("step_{}", s)).unwrap_or_default();
-                let li = self.layer_index.map(|l| format!("layer_{}", l)).unwrap_or_default();
+                let ts = self
+                    .token_step
+                    .map(|s| format!("step_{}", s))
+                    .unwrap_or_default();
+                let li = self
+                    .layer_index
+                    .map(|l| format!("layer_{}", l))
+                    .unwrap_or_default();
                 format!("{}_{}_layer_{}", self.phase.as_str(), ts, li)
             }
             _ => {
